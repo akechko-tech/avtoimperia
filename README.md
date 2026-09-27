@@ -7,3 +7,7 @@
 
 Чтобы обновить игру: замените app/src/main/assets/index.html новой версией и соберите заново.
 Для Google Play / RuStore нужна подписанная release-сборка: Build → Generate Signed App Bundle / APK.
+
+## iPhone (веб-приложение)
+Папка `docs/` публикуется через GitHub Pages: https://akechko-tech.github.io/avtoimperia/
+Откройте ссылку в Safari → «Поделиться» → «На экран „Домой“». Игра работает офлайн, сохранения хранятся на телефоне.
