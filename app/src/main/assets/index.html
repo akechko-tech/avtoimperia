@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+</head><body>
+<title>Автоимперия</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0d2136; --panel:#122d4a; --panel2:#0f2740; --line:#2a5178; --line-soft:#1d3d5e;
+  --text:#e6eef7; --muted:#8ea8c3; --brass:#d9ab52; --brass-ink:#1c1406;
+  --good:#74d39a; --bad:#ff8474; --warn:#f0c75e;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+html,body{height:100%}
+body{
+  margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.45;
+  background-color:var(--bg);
+  background-image:linear-gradient(rgba(142,168,195,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(142,168,195,.06) 1px,transparent 1px);
+  background-size:24px 24px;-webkit-tap-highlight-color:transparent;
+}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 190px}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(var(--bg) 82%,rgba(13,33,54,0));
+  margin-inline:-16px;padding:12px 16px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.co{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.date{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;letter-spacing:.01em;display:inline-block}
+.date span{color:var(--brass)}
+.date.flip{animation:flip .45s ease-out}
+@keyframes flip{0%{transform:perspective(300px) rotateX(-80deg);opacity:.2}100%{transform:none;opacity:1}}
+.cash{text-align:right}
+.cash b{display:block;font-family:var(--mono);font-size:20px;font-weight:500}
+.cash b.neg{color:var(--bad)}
+.iconbtn{background:none;border:1px solid var(--line);border-radius:50%;width:30px;height:30px;color:var(--muted);cursor:pointer;flex:none;padding:0}
+
+.label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.row+.row{margin-top:10px}
+.hr{height:1px;background:var(--line-soft);margin-block:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.kpi{background:var(--panel2);padding:10px 12px}
+.kpi b{display:block;font-family:var(--mono);font-size:17px;font-weight:500;margin-top:2px}
+.good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)} .muted{color:var(--muted)}
+h2{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;margin:0;text-transform:uppercase;text-wrap:balance}
+h3{font-size:17px;margin:0;font-weight:600}
+p{margin:0}
+.small{font-size:13px}
+
+.btn{background:transparent;border:1px solid var(--line);border-radius:5px;padding:8px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:var(--brass-ink);font-weight:600}
+.btn.block{width:100%;padding:12px}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.step button{background:var(--panel2);border:0;width:38px;height:36px;font-size:18px;cursor:pointer}
+.step span{min-width:84px;text-align:center;font-family:var(--mono);font-size:15px}
+
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.bar{height:8px;background:var(--panel2);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--line-soft)}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:4px;transition:width .5s ease}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.meta div{font-size:12px;color:var(--muted)}
+.meta b{display:block;font-family:var(--mono);font-weight:500;font-size:15px;color:var(--text)}
+.spec{font-size:13px;color:var(--muted);margin-top:4px}
+
+.spark{width:100%;height:64px;display:block;margin-top:8px}
+.spark .zero{stroke:var(--bad);stroke-dasharray:3 3;stroke-width:1;vector-effect:non-scaling-stroke}
+.empty-chart{font-size:13px;color:var(--muted);padding:18px 0;text-align:center;border:1px dashed var(--line-soft);border-radius:4px;margin-top:8px}
+input[type=range]{width:100%;accent-color:var(--brass)}
+input[type=text]{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:10px;font:inherit;color:var(--text)}
+
+/* scenes */
+.scene{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#0a1a2b}
+.scene svg{display:block;width:100%;height:auto}
+.carbox{background:linear-gradient(180deg,rgba(142,168,195,.05),rgba(142,168,195,.12));border:1px solid var(--line-soft);border-radius:5px;margin-top:10px;overflow:hidden}
+.carbox svg{display:block;width:100%;height:auto;max-height:130px}
+.car .spin{animation:spin .7s linear infinite;animation-play-state:paused}
+.car.anim .spin{animation-play-state:running}
+.car.anim .body{animation:bob .35s ease-in-out infinite alternate}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes bob{to{transform:translateY(-.8px)}}
+.carbox.enter svg{animation:enter .7s cubic-bezier(.2,.8,.3,1)}
+@keyframes enter{from{transform:translateX(-60%)}}
+.smoke{transform-box:fill-box;transform-origin:center;animation:smoke 3.2s linear infinite}
+@keyframes smoke{0%{transform:translate(0,0) scale(.5);opacity:.75}100%{transform:translate(14px,-30px) scale(2);opacity:0}}
+.roadcar{animation:drive 9s linear infinite}
+@keyframes drive{from{transform:translateX(-50px)}to{transform:translateX(420px)}}
+.roadcar .w{transform-box:fill-box;transform-origin:center;animation:spin .5s linear infinite}
+
+/* bottom bar */
+.bar-nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(10,26,43,.97);border-top:1px solid var(--line);
+  padding:10px 16px calc(6px + env(safe-area-inset-bottom,0px))}
+.bar-nav .in{max-width:560px;margin:0 auto}
+.next{display:flex;align-items:stretch;gap:8px}
+.next .btn.primary{flex:1;padding:13px;font-size:16px}
+.next .btn.q{padding:0 12px;min-width:46px}
+.next .btn.q.on{border-color:var(--brass);color:var(--brass)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);margin-top:8px}
+.tab{background:none;border:0;padding:6px 0;font-size:11px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6}
+.tab.on{color:var(--brass)}
+
+.toast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:7;background:var(--panel);border:1px solid var(--brass);
+  border-radius:99px;padding:8px 14px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.4);white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
+.toast.show{animation:toast 2.2s ease forwards}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,10px)}12%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
+
+.sheet{position:fixed;inset:0;z-index:10;background:rgba(4,12,22,.75);display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;width:100%;max-width:560px;max-height:90vh;overflow:auto;
+  padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:7px 10px;font-size:13px;cursor:pointer;text-align:left}
+.chip small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.chip.on{border-color:var(--brass);background:rgba(217,171,82,.14)}
+.swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.swatch.on{border-color:var(--brass);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--brass)}
+.country{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.country .chip{padding:10px}
+
+.log{list-style:none;margin:0;padding:0}
+.log li{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:14px}
+.log li time{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:2px}
+.log li.good p{color:var(--good)} .log li.bad p{color:var(--bad)} .log li.hist p{color:var(--brass)}
+.tech{display:grid;grid-template-columns:48px 1fr auto;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line-soft)}
+.tech.off{color:var(--muted);opacity:.6}
+.tech .num{color:var(--muted)}
+table.pl{width:100%;border-collapse:collapse;font-size:14px}
+table.pl td{padding:4px 0}
+table.pl td:last-child,table.pl th:last-child{text-align:right}
+table.pl td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+table.pl th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:left;padding-bottom:6px}
+table.pl th.n{text-align:right}
+table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-weight:600}
+.comp{display:grid;grid-template-columns:12px 1fr 90px 44px;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+.comp .dot{width:10px;height:10px;border-radius:50%}
+.comp.you{color:var(--brass);font-weight:600}
+.ach{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.ach div{border:1px solid var(--line-soft);border-radius:5px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.ach div b{display:block;font-size:13px;color:var(--muted)}
+.ach div.got{border-color:var(--brass)}
+.ach div.got b{color:var(--brass)}
+
+/* race */
+.race-wrap{position:relative}
+#raceCanvas{width:100%;height:240px;display:block;border-radius:6px;border:1px solid var(--line);background:#8ec5ea;touch-action:none}
+.gas{margin-top:12px;width:100%;height:78px;border-radius:10px;border:2px solid var(--brass);background:rgba(217,171,82,.12);color:var(--brass);
+  font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:.08em;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
+.gas.down{background:var(--brass);color:var(--brass-ink)}
+@media (prefers-reduced-motion:no-preference){.sheet .panel{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+@media (prefers-reduced-motion:reduce){.car .spin,.smoke,.roadcar,.roadcar .w,.car.anim .body,.date.flip,.carbox.enter svg{animation:none!important}}
+@media (max-width:380px){.meta{grid-template-columns:repeat(2,1fr)}.date{font-size:28px}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="co" id="co"></div>
+      <div class="date" id="date"></div>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <div class="cash"><span class="label">Касса</span><b id="cash"></b></div>
+      <button class="iconbtn" data-act="help" aria-label="Меню и правила">?</button>
+    </div>
+  </header>
+  <main id="view" class="stack"></main>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<nav class="bar-nav">
+  <div class="in">
+    <div class="next">
+      <button class="btn primary" id="nextBtn" data-act="next">Следующий месяц</button>
+      <button class="btn q" id="qBtn" data-act="quarter" aria-label="Три месяца подряд">×3</button>
+      <button class="btn q" id="autoBtn" data-act="auto" aria-label="Автоигра">▶</button>
+    </div>
+    <div class="tabs">
+      <button class="tab" data-act="tab" data-t="plant"><svg viewBox="0 0 24 24"><path d="M3 21V10l6 4V10l6 4V6h6v15z"/></svg>Завод</button>
+      <button class="tab" data-act="tab" data-t="models"><svg viewBox="0 0 24 24"><path d="M3 15h18v3H3zM5 15l2-5h9l3 5"/><circle cx="7" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>Модели</button>
+      <button class="tab" data-act="tab" data-t="market"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 17V11M11 17V7M16 17v-4M20 17V9"/></svg>Рынок</button>
+      <button class="tab" data-act="tab" data-t="race"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h13l-2 4 2 4H5"/></svg>Гонки</button>
+      <button class="tab" data-act="tab" data-t="log"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 9h8M8 13h8M8 17h5"/></svg>Хроника</button>
+    </div>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" hidden><div class="panel" id="sheetBody"></div></div>
+
+<script>
+/* ================= DATA ================= */
+const MONTHS=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+const COUNTRIES={
+  de:{name:'Германия',city:'Штутгарт',market:0.8,wage:55,cash:40000,note:'Дешёвые рабочие руки, средний рынок'},
+  fr:{name:'Франция',city:'Париж',market:1.1,wage:65,cash:40000,note:'Самый большой рынок Европы на старте'},
+  uk:{name:'Великобритания',city:'Ковентри',market:0.7,wage:75,cash:45000,note:'До 1896 мешает «закон о красном флаге»'},
+  us:{name:'США',city:'Детройт',market:2.0,wage:100,cash:50000,note:'Огромный рынок, жёсткая конкуренция'}
+};
+const ENGINES=[
+  {id:'e1',name:'1 цил., 3 л.с.',y:1885,hp:3,q:8,c:700},
+  {id:'e2',name:'2 цил., 8 л.с.',y:1898,hp:8,q:16,c:900},
+  {id:'e3',name:'4 цил., 16 л.с.',y:1903,hp:16,q:26,c:1200},
+  {id:'e4',name:'4 цил., 25 л.с.',y:1908,hp:25,q:36,c:1400},
+  {id:'e5',name:'6 цил., 40 л.с.',y:1912,hp:40,q:48,c:1900},
+  {id:'e6',name:'V8, 60 л.с.',y:1916,hp:60,q:58,c:2300},
+  {id:'e7',name:'4 цил. OHV, 50 л.с.',y:1922,hp:50,q:62,c:1800},
+  {id:'e8',name:'V8, 90 л.с.',y:1927,hp:90,q:78,c:2600}
+];
+const CHASSIS=[
+  {id:'c1',name:'Деревянная рама',y:1885,max:6,q:6,c:400},
+  {id:'c2',name:'Усиленная деревянная',y:1896,max:12,q:12,c:500},
+  {id:'c3',name:'Стальная лестничная',y:1902,max:30,q:20,c:700},
+  {id:'c4',name:'Штампованная сталь',y:1910,max:60,q:30,c:900},
+  {id:'c5',name:'Рама с тормозами на 4 колеса',y:1920,max:120,q:42,c:1100}
+];
+const BODIES=[
+  {id:'b1',name:'Открытый двухместный',y:1885,q:5,c:300},
+  {id:'b2',name:'Тонно, 4 места',y:1899,q:10,c:450},
+  {id:'b3',name:'Фаэтон',y:1904,q:16,c:600},
+  {id:'b4',name:'Закрытый седан',y:1911,q:24,c:900},
+  {id:'b5',name:'Цельнометаллический седан',y:1923,q:32,c:1000},
+  {id:'b6',name:'Фургон',y:1900,q:8,c:500,truck:true},
+  {id:'b7',name:'Грузовик 1,5 т',y:1910,q:18,c:800,truck:true},
+  {id:'b8',name:'Грузовик 3 т',y:1920,q:28,c:1100,truck:true}
+];
+const TRIMS=[
+  {id:'t0',name:'Базовая',y:1885,q:0,c:0},
+  {id:'t1',name:'Комфорт',y:1885,q:6,c:300},
+  {id:'t2',name:'Люкс',y:1885,q:12,c:800}
+];
+const PAINTS=[
+  {id:'#1b1d22',name:'Чёрный'},{id:'#1f4a36',name:'Зелёный'},{id:'#9e2b25',name:'Красный'},
+  {id:'#23427a',name:'Синий'},{id:'#e3d6b4',name:'Сливочный'},{id:'#5c1e2a',name:'Бордо'}
+];
+const SEGK=['people','middle','lux','truck'];
+const SEG={
+  people:{name:'Народный',el:3.0,qe:1.5,prem:1.0},
+  middle:{name:'Средний',el:2.2,qe:2.0,prem:1.1},
+  lux:{name:'Люкс',el:1.3,qe:3.0,prem:1.45},
+  truck:{name:'Грузовой',el:2.0,qe:1.8,prem:1.05}
+};
+const OTHER=0.35;
+const COMPS={
+  de:[['Келлер & Зон','#b5523b',1.0,1,1.05,['people','middle'],1895,0],['Рейнмотор','#4f8fbf',0.9,2,0.95,['people','truck'],1895,1],['Фалькенверк','#8f7ad6',1.1,1,1.15,['middle','lux'],1899,0],['Брандт','#5fae7a',0.9,2,1.0,['people','middle','truck'],1905,0]],
+  fr:[['Дюпре-Фрер','#8f7ad6',1.1,0,1.1,['middle','lux'],1895,0],['Моро','#b5523b',1.0,1,1.0,['people','middle'],1895,0],['Лафорж','#4f8fbf',0.9,2,0.95,['people','truck'],1898,1],['Сен-Клер','#c9a0d8',1.0,1,1.25,['lux'],1902,0]],
+  uk:[['Эшфорд','#5fae7a',1.0,1,1.1,['middle','lux'],1896,0],['Хэтэуэй','#b5523b',0.9,2,1.0,['people','middle'],1898,0],['Бридж & Коул','#4f8fbf',0.9,2,1.0,['truck','middle'],1903,0],['Норбери','#8f7ad6',0.9,2,0.95,['people'],1905,1]],
+  us:[['Грант Моторс','#4f8fbf',1.2,1,1.0,['people','middle','truck'],1895,0],['Кэллоуэй','#8f7ad6',1.0,1,1.2,['lux','middle'],1899,0],['Лейксайд','#b5523b',1.0,2,0.9,['people'],1903,1],['Мэйфлауэр','#5fae7a',1.0,1,1.05,['middle','truck'],1908,0]]
+};
+const byId=(a,id)=>a.find(x=>x.id===id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const money=n=>(n<0?'−':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru-RU');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= MODEL ================= */
+let G=null,tab='plant',draft=null,auto=null,race=null;
+const T=s=>(s.y-1895)+s.m/12;
+const mi=s=>(s.y-1895)*12+s.m;
+const dstr=s=>MONTHS[s.m]+' '+s.y;
+const unlocked=(arr,s)=>arr.filter(x=>x.y<=s.y);
+const isTruck=md=>!!byId(BODIES,md.b).truck;
+const segOf=md=>isTruck(md)?'truck':md.t==='t0'?'people':md.t==='t1'?'middle':'lux';
+function priceIndex(s){const t=T(s);return t<13?1-0.012*t:Math.max(0.42,0.844-0.03*(t-13));}
+function bestQ(arr,y,f){const a=arr.filter(x=>x.y<=y&&(!f||f(x)));return a.length?Math.max(...a.map(x=>x.q)):0;}
+function eraBest(s,truck){let b=bestQ(BODIES,s.y,x=>!!x.truck===!!truck);if(!b)b=bestQ(BODIES,s.y,x=>!x.truck);return bestQ(ENGINES,s.y)+bestQ(CHASSIS,s.y)+b+12;}
+const parts=md=>({e:byId(ENGINES,md.e),c:byId(CHASSIS,md.c),b:byId(BODIES,md.b),t:byId(TRIMS,md.t)});
+function overpower(md){const p=parts(md);return p.e.hp>p.c.max;}
+function modelQ(md){const p=parts(md);const q=p.e.q+p.c.q+p.b.q+p.t.q;return overpower(md)?q*0.6:q;}
+function modelR(md,s){return Math.min(1.1,modelQ(md)/eraBest(s,isTruck(md)));}
+function baseCost(md){const p=parts(md);return p.e.c+p.c.c+p.b.c+p.t.c;}
+function matCost(md,s){return baseCost(md)*priceIndex(s);}
+function refPrice(md,s){return 1.9*matCost(md,s)*(0.55+0.45*modelR(md,s))*SEG[segOf(md)].prem;}
+function econ(y,m,c){
+  let f=1,label='Стабильно',tone='good',war=false;
+  if(c==='uk'&&(y<1896||(y===1896&&m<10))){f*=0.45;label='Закон о красном флаге';tone='warn';}
+  war=c==='us'?((y===1917&&m>=3)||(y===1918&&m<=10)):((y===1914&&m>=7)||(y>=1915&&y<=1917)||(y===1918&&m<=10));
+  if(war){label='Война';tone='bad';}
+  if(y===1919||y===1920){f*=1.3;label='Послевоенный бум';tone='good';}
+  if(y===1921){f*=0.75;label='Спад';tone='warn';}
+  if(y===1923&&c==='de'){f*=0.35;label='Гиперинфляция';tone='bad';}
+  if(y>=1924&&y<=1928){f*=c==='us'?1.25:1.1;label='Ревущие двадцатые';tone='good';}
+  if(y===1929&&m>=9){f*=0.55;label='Биржевой крах';tone='bad';}
+  return {f,label,tone,war};
+}
+function segShares(s){
+  const t=T(s);let truck=s.y<1900?0:0.05+Math.min(0.10,t*0.004);
+  const people=0.40+(t>13?Math.min(0.15,(t-13)*0.015):0),lux=0.20-(t>13?Math.min(0.1,(t-13)*0.01):0);
+  return {people,middle:1-people-lux-truck,lux,truck};
+}
+function marketSize(s,c){return 40*Math.exp(0.13*T(s))*COUNTRIES[c].market*econ(s.y,s.m,c).f;}
+function segSize(s,c,g){const e=econ(s.y,s.m,c);let z=marketSize(s,c)*segShares(s)[g];if(e.war)z*=g==='truck'?1.3:(c==='us'?0.5:0.2);return z;}
+function totalSize(s,c){return SEGK.reduce((a,g)=>a+segSize(s,c,g),0);}
+function adRef(s){return 300*(1+T(s)*0.15);}
+function appeal(md,s,c){
+  const g=segOf(md),S=SEG[g],r=modelR(md,s),pr=Math.pow(refPrice(md,s)/md.price,S.el);
+  const adF=1+0.8*(1-Math.exp(-s.ad/adRef(s))),repF=0.6+s.rep/100*0.8;
+  const age=mi(s)-md.launched,nov=age<12?1.2:(age>96?0.8:1);
+  return Math.pow(0.2+r,S.qe)*pr*adF*repF*nov*(c===s.country?1:0.8);
+}
+function massOn(cp,s,c){return cp.mass&&mi(s)>=(c==='us'?(1908-1895)*12+9:(1910-1895)*12);}
+function compR(cp,s,g){
+  const y=s.y-cp.lag,truck=g==='truck';
+  const b=bestQ(BODIES,y,x=>!!x.truck===truck);if(!b)return 0;
+  const q=bestQ(ENGINES,y)+bestQ(CHASSIS,y)+b+(g==='middle'?6:g==='lux'?12:0);
+  return Math.min(1.05,q/eraBest(s,truck));
+}
+function compA(cp,s,g,c){
+  if(!cp.alive||!cp.segs.includes(g))return 0;const r=compR(cp,s,g);if(!r)return 0;
+  const m=massOn(cp,s,c)&&g==='people';const S=SEG[g];
+  return Math.pow(0.2+r,S.qe)*Math.pow(1/(cp.pm*(m?0.75:1)),S.el)*cp.str*(m?2.5:1)*0.9;
+}
+function lastOf(arr,y,f){const a=arr.filter(x=>x.y<=y&&(!f||f(x)));return a[a.length-1];}
+function compCar(cp,s,g){const y=s.y-cp.lag;const truck=g==='truck';
+  return {e:lastOf(ENGINES,y).id,c:lastOf(CHASSIS,y).id,b:(lastOf(BODIES,y,x=>!!x.truck===truck)||BODIES[0]).id,t:g==='lux'?'t2':g==='middle'?'t1':'t0',paint:cp.color};}
+function lineCost(s){return Math.round(6000*(1+0.03*T(s))/100)*100;}
+function branchCost(s){return Math.round(15000*(1+0.03*T(s))/100)*100;}
+function capParts(s){const byLines=s.lines*(s.conveyor?30:8),byWorkers=Math.floor(s.workers*(s.conveyor?2.4:0.8));return {byLines,byWorkers,cap:Math.min(byLines,byWorkers)};}
+function maxLoan(s){return 20000+s.lines*6000;}
+function devCost(md){return Math.round((2000+modelQ(md)*70)/100)*100;}
+function devMonths(md){return 2+Math.ceil(modelQ(md)/30);}
+function conveyorOpen(s){return mi(s)>=(1913-1895)*12+9;}
+function qLabel(r){return r<0.45?['Устарела','bad']:r<0.8?['Средняя','warn']:['Передовая','good'];}
+function wageNow(s){return COUNTRIES[s.country].wage*(1+0.02*T(s))*s.wageMul;}
+function totalSold(s){return s.models.reduce((a,m)=>a+m.totalSold,0);}
+function addLog(text,kind=''){G.log.push({d:dstr(G),text,kind});if(G.log.length>400)G.log.shift();}
+
+function newGame(country,company){
+  const C=COUNTRIES[country];
+  const comps={};for(const k in COMPS)comps[k]=COMPS[k].map(a=>({name:a[0],color:a[1],str:a[2],lag:a[3],pm:a[4],segs:a[5],since:a[6],mass:!!a[7],alive:a[6]<=1895,last:0}));
+  G={v:2,y:1895,m:0,country,company:company||'Моторные мастерские',cash:C.cash,loan:0,lines:1,workers:10,wageMul:1,ad:200,rep:30,
+     conveyor:false,military:false,strikeNext:false,supplyNext:1,nextId:2,branches:[],comps,raceDone:0,raceLog:[],ach:{},
+     models:[{id:1,name:'Тип 1',e:'e1',c:'c1',b:'b1',t:'t0',paint:'#1b1d22',price:2400,status:'prod',devLeft:0,launched:0,stock:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0}],
+     hist:{cash:[],sales:[],market:[],profit:[]},last:null,log:[],pending:[],seen:{},over:false};
+  addLog(`Основана компания «${G.company}», ${C.city}. На линии первая модель «Тип 1».`,'hist');
+  if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
+}
+
+/* ================= EVENTS ================= */
+const HIST=[
+  {y:1896,m:10,c:'uk',title:'Флажок больше не нужен',text:'Парламент отменил «закон о красном флаге». Британский рынок оживает.'},
+  {y:1900,m:0,title:'Грузовики',text:'Торговцы и почта хотят фургоны. В конструкторе появился грузовой кузов — новый сегмент рынка.'},
+  {y:1901,m:2,title:'Новый эталон',text:'Лёгкий мощный «Мерседес» задаёт планку. Покупатели ждут большего от всех марок.'},
+  {y:1908,m:9,title:'Автомобиль для всех',text:'Форд выпустил Model T. Цены падают, в народном сегменте появляются массовые марки-конкуренты.'},
+  {y:1913,m:9,title:'Движущийся конвейер',text:'Сборка на конвейере сокращает время выпуска в разы. На вкладке «Завод» доступна модернизация.'},
+  {y:1914,m:7,c:'!us',title:'Началась война',text:'Спрос на легковые машины рухнул, грузовики нужны армии. Военное ведомство предлагает контракт: 40% мощностей по себестоимости +35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
+  {y:1917,m:3,c:'us',title:'США вступают в войну',text:'Спрос на легковые машины упал вдвое. Армия предлагает контракт: 40% мощностей по себестоимости +35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
+  {y:1918,m:10,title:'Перемирие',text:'Война окончена. Военные заказы прекращены, впереди послевоенный бум.',fx:s=>{s.military=false;}},
+  {y:1921,m:0,title:'Послевоенный спад',text:'Кредиты дорожают, покупатели осторожничают.'},
+  {y:1923,m:0,c:'de',title:'Гиперинфляция',text:'Марка обесценивается каждый день. Немецкий рынок почти замер.'},
+  {y:1924,m:0,title:'Ревущие двадцатые',text:'Экономика растёт, автомобиль становится вещью среднего класса.'},
+  {y:1929,m:9,title:'Чёрный вторник',text:'Крах на Нью-Йоркской бирже. Покупатели откладывают покупки.'}
+];
+const RANDOM=[
+  {w:3,title:'Рабочие грозят забастовкой',text:'Профсоюз требует прибавки. Без неё в следующем месяце выпуск упадёт вдвое.',choices:[['Поднять зарплату на 10%','raise'],['Переждать','wait']]},
+  {w:1,title:'Пожар на складе',text:'Огонь уничтожил треть готовых машин.',fx:s=>{s.models.forEach(m=>m.stock=Math.floor(m.stock*0.67));}},
+  {w:2,title:'Хвалебная статья',text:'Автомобильный журнал назвал ваши машины надёжными. Репутация выросла.',fx:s=>{s.rep=clamp(s.rep+6,0,100);}},
+  {w:2,title:'Перебои у поставщиков',text:'В следующем месяце детали подорожают на 25%.',fx:s=>{s.supplyNext=1.25;}},
+  {w:1,title:'Заказ от почтового ведомства',text:'Почта закупает партию машин. В кассу поступила предоплата.',fx:s=>{const v=Math.round(4000*(1+T(s)*0.1)/100)*100;s.cash+=v;}},
+  {w:1,cond:s=>s.models.some(m=>m.status==='prod'&&overpower(m)),title:'Скандал с поломками',text:'Покупатели жалуются: рама не выдерживает мотор. Репутация упала.',fx:s=>{s.rep=clamp(s.rep-8,0,100);}}
+];
+function pushEvent(ev){
+  const text=typeof ev.text==='function'?ev.text(G):ev.text;
+  if(ev.fx)ev.fx(G);
+  addLog(`${ev.title}. ${text}`,'hist');
+  G.pending.push({title:ev.title,text,choices:ev.choices||[['Понятно','ok']]});
+}
+function checkEvents(){
+  const s=G;
+  HIST.forEach((h,i)=>{
+    if(h.y!==s.y||h.m!==s.m||s.seen['h'+i])return;
+    if(h.c&&h.c[0]==='!'&&s.country===h.c.slice(1))return;
+    if(h.c&&h.c[0]!=='!'&&s.country!==h.c)return;
+    s.seen['h'+i]=1;pushEvent(h);
+  });
+  if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){
+    const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),tot=pool.reduce((a,r)=>a+r.w,0);
+    let x=Math.random()*tot;for(const r of pool){x-=r.w;if(x<=0){pushEvent(r);break;}}
+  }
+}
+function yearlyCompetitors(s){
+  for(const c in s.comps)s.comps[c].forEach(cp=>{
+    const home=c===s.country;
+    if(!cp.alive&&cp.since===s.y&&!cp.dead){cp.alive=true;if(home)addLog(`На рынок вышла новая марка «${cp.name}».`,'bad');return;}
+    if(!cp.alive)return;
+    const r=Math.random();
+    if(r<0.3&&cp.lag>0){cp.lag--;if(home)addLog(`«${cp.name}» представила новую модель.`);}
+    else if(r>0.85&&cp.lag<5)cp.lag++;
+    cp.str=clamp(cp.str*(0.9+Math.random()*0.24),0.25,2.2);
+    if(cp.str<0.4&&Math.random()<0.4){cp.alive=false;cp.dead=true;if(home)addLog(`Марка «${cp.name}» обанкротилась.`,'good');}
+  });
+}
+function resolve(key){
+  const s=G;
+  if(key==='raise'){s.wageMul*=1.1;addLog('Зарплата поднята на 10%. Забастовки не будет.');}
+  if(key==='wait')s.strikeNext=true;
+  if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
+  if(key==='restart'){openNewGame();return;}
+  s.pending.shift();save();render();
+}
+const ACH=[
+  {id:'s100',name:'Первая сотня',desc:'Продано 100 машин',test:s=>totalSold(s)>=100},
+  {id:'s1000',name:'Тысячник',desc:'Продано 1 000 машин',test:s=>totalSold(s)>=1000},
+  {id:'s10k',name:'Массовое производство',desc:'Продано 10 000 машин',test:s=>totalSold(s)>=10000},
+  {id:'models',name:'Главный конструктор',desc:'Разработано 5 моделей',test:s=>s.models.length>=5},
+  {id:'truck',name:'Грузоперевозки',desc:'Грузовик в продаже',test:s=>s.models.some(m=>m.status==='prod'&&isTruck(m))},
+  {id:'export',name:'На экспорт',desc:'Филиал за границей',test:s=>s.branches.length>0},
+  {id:'conv',name:'Конвейер',desc:'Конвейерная сборка',test:s=>s.conveyor},
+  {id:'race',name:'Первый на финише',desc:'Победа в гонке',test:s=>s.raceLog.some(r=>r.place===1)},
+  {id:'war',name:'Пережили войну',desc:'Дожили до 1919 года',test:s=>s.y>=1919},
+  {id:'lines',name:'Индустриальный гигант',desc:'10 линий',test:s=>s.lines>=10},
+  {id:'rich',name:'Четверть миллиона',desc:'$250 000 в кассе',test:s=>s.cash>=250000},
+  {id:'leader',name:'Лидер рынка',desc:'Первое место по продажам дома',test:s=>{const L=s.last;if(!L||!L.sold)return false;return s.comps[s.country].every(cp=>!cp.alive||cp.last<=L.homeSold);}}
+];
+let pendingToasts=[];
+function checkAch(){ACH.forEach(a=>{if(!G.ach[a.id]&&a.test(G)){G.ach[a.id]=dstr(G);addLog(`Достижение: ${a.name}.`,'good');pendingToasts.push('🏆 '+a.name);}});}
+
+/* ================= TURN ================= */
+function step(){
+  const s=G;if(!s||s.over||s.pending.length)return false;
+  const t=T(s),markets=[s.country,...s.branches],eHome=econ(s.y,s.m,s.country);
+  const r={rev:0,mat:0,wage:0,upk:0,br:0,ad:s.ad,sto:0,int:0,mil:0,milN:0,made:0,sold:0,demand:0,homeSold:0,mk:{}};
+  s.models.forEach(md=>{if(md.status==='dev'){md.devLeft--;if(md.devLeft<=0){md.status='prod';md.launched=mi(s);md.fresh=1;addLog(`Модель «${md.name}» пошла в серию.`,'good');}}});
+  const act=s.models.filter(md=>md.status==='prod');
+  const dem={};act.forEach(md=>dem[md.id]={});
+  s.comps[s.country].forEach(cp=>cp.last=0);
+  markets.forEach(c=>{
+    const M={size:0,sold:0,segs:{}};r.mk[c]=M;
+    SEGK.forEach(g=>{
+      const z=segSize(s,c,g);M.size+=z;M.segs[g]={size:z,you:0};
+      const pm=act.filter(md=>segOf(md)===g),pa=pm.map(md=>appeal(md,s,c)),ca=s.comps[c].map(cp=>compA(cp,s,g,c));
+      const tot=pa.reduce((a,b)=>a+b,0)+ca.reduce((a,b)=>a+b,0)+OTHER;
+      pm.forEach((md,i)=>{dem[md.id][c]=Math.max(0,Math.round(z*pa[i]/tot*(0.85+Math.random()*0.3)));});
+      if(c===s.country)s.comps[c].forEach((cp,i)=>{cp.last+=z*ca[i]/tot;});
+    });
+  });
+  let cap=capParts(s).cap;const strike=s.strikeNext;if(strike){cap=Math.floor(cap/2);s.strikeNext=false;}
+  let milCap=0;if(eHome.war&&s.military&&act.length){milCap=Math.floor(cap*0.4);cap-=milCap;}
+  const tdem=act.map(md=>Object.values(dem[md.id]).reduce((a,b)=>a+b,0));
+  const need=act.map((md,i)=>Math.max(0,Math.ceil(tdem[i]*1.3)+2-md.stock));
+  const totNeed=need.reduce((a,b)=>a+b,0),k=totNeed>cap?cap/totNeed:1;
+  const shock=s.supplyNext;s.supplyNext=1;
+  act.forEach((md,i)=>{
+    const made=Math.floor(need[i]*k);md.stock+=made;md.lastMade=made;r.made+=made;r.mat+=made*matCost(md,s)*shock;
+    const f=tdem[i]>0?Math.min(1,md.stock/tdem[i]):0;let sold=0;const g=segOf(md);
+    for(const c in dem[md.id]){const so=Math.floor(dem[md.id][c]*f);sold+=so;r.mk[c].sold+=so;r.mk[c].segs[g].you+=so;if(c===s.country)r.homeSold+=so;}
+    md.stock-=sold;md.lastDem=tdem[i];md.lastSold=sold;md.totalSold+=sold;r.sold+=sold;r.demand+=tdem[i];r.rev+=sold*md.price;
+  });
+  if(milCap>0){
+    const trucks=act.filter(isTruck),pool=trucks.length?trucks:act;
+    const cheap=pool.reduce((a,b)=>matCost(a,s)<matCost(b,s)?a:b),mc=matCost(cheap,s);
+    r.mat+=milCap*mc*shock;r.mil=milCap*mc*(trucks.length?1.6:1.35);r.milN=milCap;r.made+=milCap;
+  }
+  r.wage=s.workers*wageNow(s);
+  r.upk=s.lines*120*(s.conveyor?2:1)*(1+0.02*t);
+  r.br=s.branches.length*400*(1+0.02*t);
+  r.sto=s.models.reduce((a,md)=>a+md.stock,0)*4;
+  r.int=s.loan*0.01;
+  r.profit=r.rev+r.mil-r.mat-r.wage-r.upk-r.br-r.ad-r.sto-r.int;
+  s.cash+=r.profit;
+  if(r.sold>0){let wr=0,op=0;act.forEach(md=>{wr+=modelR(md,s)*md.lastSold;if(overpower(md)&&md.lastSold>0)op=1;});wr/=r.sold;s.rep+=(wr-0.55)*4-op*2;}else s.rep-=0.3;
+  s.rep=clamp(s.rep,0,100);
+  const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);
+  s.last=r;
+  const H=s.hist;H.cash.push(s.cash);H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(r.profit);
+  for(const k2 in H)if(H[k2].length>420)H[k2].shift();
+  if(strike)addLog('Забастовка: выпуск упал вдвое.','bad');
+  s.m++;
+  if(s.m>11){s.m=0;s.y++;
+    const fresh=[...ENGINES,...CHASSIS,...BODIES].filter(x=>x.y===s.y).map(x=>x.name);
+    if(fresh.length)addLog('Поставщики предлагают новинки: '+fresh.join(', ')+'.','good');
+    yearlyCompetitors(s);
+  }
+  const ri=raceInfo(s);if(s.m===3&&ri.open)addLog(`Открыт сезон: «${ri.name}». Приз ${money(ri.prize)}. Заявка — на вкладке «Гонки».`,'hist');
+  checkAch();
+  if(s.cash<0&&s.cash>=-15000)addLog('Касса в минусе. Возьмите кредит или сократите расходы.','bad');
+  if(s.cash<-15000){s.over=true;s.pending.push({title:'Банкротство',text:`Долги превысили допустимый предел. Компания «${s.company}» закрыта в ${dstr(s)}.`,choices:[['Новая игра','restart']]});}
+  else if(s.y>=1930){s.over=true;const v=companyValue(s);s.pending.push({title:'1930 год: итоги',text:`Компания «${s.company}» прошла 35 лет автомобильной истории. Продано машин: ${totalSold(s).toLocaleString('ru-RU')}. Стоимость компании: ${money(v)}. Звание: ${rank(v)}.`,choices:[['Новая игра','restart']]});}
+  else checkEvents();
+  return true;
+}
+function companyValue(s){return s.cash-s.loan+s.lines*lineCost(s)*0.5+(s.conveyor?15000:0)+s.branches.length*branchCost(s)*0.5+s.rep*500;}
+function rank(v){return v<50000?'Мастерская':v<250000?'Фабрика':v<1000000?'Концерн':'Автоимперия';}
+function raceInfo(s){
+  const war=econ(s.y,s.m,s.country).war;
+  let name;if(s.country==='us'&&s.y>=1911)name='Гонка 500 миль';else if(s.y<1900)name='Международный автопробег';else if(s.y<=1905)name='Кубок Гордона Беннетта';else name='Гран-при, '+COUNTRIES[s.country].name;
+  const prize=Math.round(3000*(1+T(s)*0.12)/100)*100,fee=Math.round(prize*0.1/10)*10;
+  const season=s.m>=3&&s.m<=8,done=s.raceDone===s.y;
+  return {name,prize,fee,war,season,done,open:season&&!done&&!war};
+}
+
+/* ================= STORAGE ================= */
+const KEY='avtoimperia-v2';
+function save(){try{localStorage.setItem(KEY,JSON.stringify(G));}catch(e){}}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.v===2)return x;}catch(e){}return null;}
+
+/* ================= ART ================= */
+function carSVG(md,opt={}){
+  const p=parts(md),ei=ENGINES.indexOf(p.e),ci=CHASSIS.indexOf(p.c),bid=p.b.id;
+  const paint=md.paint||'#1b1d22',dark='#15161a',leather='#4a2f1f',glass='#a9c6db';
+  const hoodL=[0,16,24,30,38,44,40,50][ei],R=[17,17,15,14,13][ci],GY=94,wy=GY-R,railY=wy-3;
+  const truck=!!p.b.truck,rx=48,wb=62+hoodL*0.9+((bid==='b3'||bid==='b4'||bid==='b5')?10:0)+(truck?18:0),fx=rx+wb;
+  const front=fx+14,x0=front-hoodL-4,rear=rx-22;
+  const metal=ci>=4?'#cfd3da':(md.t==='t0'?'#34363c':'#c9a24a');
+  const hoodH=hoodL?12+(ei>=4?4:0)+(ei>=7?2:0):0;
+  let b='';
+  // fenders & running board
+  if(ci>=2){
+    const fen=cx=>`<path d="M${cx-R-4},${wy+2} Q${cx-R-4},${wy-R-6} ${cx},${wy-R-6} Q${cx+R+4},${wy-R-6} ${cx+R+4},${wy+2} L${cx+R+1},${wy+2} Q${cx+R},${wy-R-2} ${cx},${wy-R-2} Q${cx-R},${wy-R-2} ${cx-R-1},${wy+2}Z" fill="${ci>=4?paint:dark}"/>`;
+    b+=fen(rx)+fen(fx);
+    if(!truck)b+=`<rect x="${rx+R+2}" y="${wy-2}" width="${fx-rx-2*R-4}" height="3" fill="${dark}"/>`;
+  }
+  b+=`<rect x="${rear}" y="${railY-2}" width="${front-rear}" height="4" fill="${dark}"/>`;
+  const driver=(x,y)=>`<rect x="${x-5}" y="${y}" width="10" height="11" rx="3" fill="#3c3f47"/><circle cx="${x}" cy="${y-4}" r="4.2" fill="#e0b894"/><path d="M${x-5},${y-5} q5,-6 10,0 z" fill="${dark}"/>`;
+  if(bid==='b1'){
+    b+=`<rect x="${rear+4}" y="${railY-14}" width="${x0-rear-4}" height="14" rx="2" fill="${paint}"/>`;
+    b+=`<path d="M${rear+6},${railY-14} v-18 q0,-4 4,-4 h14 q4,0 4,4 v18z" fill="${leather}"/>`;
+    b+=driver(rear+22,railY-30);
+    b+=`<line x1="${x0-2}" y1="${railY-14}" x2="${x0-10}" y2="${railY-30}" stroke="${dark}" stroke-width="2"/><ellipse cx="${x0-10}" cy="${railY-30}" rx="4" ry="1.6" fill="${dark}"/>`;
+  }else if(bid==='b2'){
+    b+=`<path d="M${x0},${railY} L${rear+10},${railY} Q${rear-2},${railY} ${rear-2},${railY-12} Q${rear-2},${railY-26} ${rear+12},${railY-26} L${x0},${railY-18}Z" fill="${paint}"/>`;
+    b+=`<path d="M${rear+4},${railY-24} v-10 q0,-3 3,-3 h12 q3,0 3,3 v10z" fill="${leather}"/>`;
+    b+=`<path d="M${x0-26},${railY-18} v-14 q0,-3 3,-3 h10 q3,0 3,3 v14z" fill="${leather}"/>`;
+    b+=driver(x0-14,railY-32);
+    b+=`<line x1="${x0-2}" y1="${railY-18}" x2="${x0-8}" y2="${railY-32}" stroke="${dark}" stroke-width="2"/>`;
+  }else if(bid==='b3'){
+    b+=`<path d="M${rear},${railY} L${rear},${railY-16} Q${rear},${railY-20} ${rear+4},${railY-20} L${x0},${railY-18} L${x0},${railY}Z" fill="${paint}"/>`;
+    b+=`<rect x="${rear-3}" y="${railY-30}" width="18" height="10" rx="4" fill="#2b2620"/>`;
+    b+=`<path d="M${rear+18},${railY-20} v-12 q0,-3 3,-3 h10 q3,0 3,3 v12z" fill="${leather}"/>`;
+    b+=`<path d="M${x0-30},${railY-19} v-13 q0,-3 3,-3 h10 q3,0 3,3 v13z" fill="${leather}"/>`;
+    b+=driver(x0-16,railY-33);
+    b+=`<rect x="${x0-3}" y="${railY-40}" width="3" height="22" fill="${glass}" opacity=".55"/><rect x="${x0-3}" y="${railY-40}" width="3" height="2" fill="${metal}"/>`;
+  }else if(bid==='b4'){
+    b+=`<rect x="${rear+2}" y="${railY-46}" width="${x0-rear-2}" height="46" rx="2" fill="${paint}"/>`;
+    b+=`<rect x="${rear}" y="${railY-48}" width="${x0-rear+2}" height="4" rx="1" fill="${dark}"/>`;
+    const ww=(x0-rear-14)/2;
+    b+=`<rect x="${rear+6}" y="${railY-40}" width="${ww}" height="16" fill="${glass}" opacity=".85"/><rect x="${rear+10+ww}" y="${railY-40}" width="${ww-2}" height="16" fill="${glass}" opacity=".85"/>`;
+    b+=`<rect x="${rear+2}" y="${railY-20}" width="${x0-rear-2}" height="2" fill="${metal}" opacity=".7"/>`;
+  }else if(bid==='b5'){
+    b+=`<path d="M${rear},${railY} L${rear},${railY-18} Q${rear+2},${railY-40} ${rear+24},${railY-42} L${x0-14},${railY-42} Q${x0-3},${railY-40} ${x0},${railY-20} L${x0},${railY}Z" fill="${paint}"/>`;
+    b+=`<path d="M${rear+8},${railY-22} Q${rear+10},${railY-36} ${rear+26},${railY-37} L${(rear+x0)/2},${railY-37} L${(rear+x0)/2},${railY-22}Z" fill="${glass}" opacity=".85"/>`;
+    b+=`<path d="M${(rear+x0)/2+3},${railY-22} L${(rear+x0)/2+3},${railY-37} L${x0-15},${railY-37} Q${x0-6},${railY-35} ${x0-4},${railY-22}Z" fill="${glass}" opacity=".85"/>`;
+    b+=`<rect x="${rear}" y="${railY-16}" width="${x0-rear}" height="2" fill="${metal}" opacity=".8"/>`;
+  }else if(bid==='b6'){
+    b+=`<rect x="${rear}" y="${railY-44}" width="${x0-18-rear}" height="44" rx="2" fill="${paint}"/>`;
+    b+=`<rect x="${rear+6}" y="${railY-34}" width="${x0-30-rear}" height="3" fill="${metal}"/>`;
+    b+=`<rect x="${x0-18}" y="${railY-40}" width="18" height="3" fill="${dark}"/><rect x="${x0-18}" y="${railY-16}" width="18" height="16" fill="${paint}"/>`;
+    b+=driver(x0-9,railY-30);
+  }else{
+    const big=bid==='b8';
+    b+=`<rect x="${x0-24}" y="${railY-42}" width="24" height="42" rx="2" fill="${paint}"/><rect x="${x0-19}" y="${railY-36}" width="14" height="13" fill="${glass}" opacity=".85"/>`;
+    b+=`<rect x="${rear-(big?8:4)}" y="${railY-12}" width="${x0-26-rear+(big?8:4)}" height="9" fill="#6b4a2b"/>`;
+    for(let x=rear-(big?6:2);x<x0-28;x+=12)b+=`<rect x="${x}" y="${railY-24}" width="2" height="12" fill="#6b4a2b"/>`;
+    b+=`<rect x="${rear-(big?8:4)}" y="${railY-24}" width="${x0-26-rear+(big?8:4)}" height="2" fill="#6b4a2b"/>`;
+  }
+  if(hoodL){
+    b+=`<path d="M${x0},${railY} L${x0},${railY-hoodH} L${front-8},${railY-hoodH+2} Q${front-4},${railY-hoodH+3} ${front-4},${railY-hoodH+6} L${front-4},${railY}Z" fill="${paint}"/>`;
+    if(ei>=3)for(let i=0;i<Math.min(6,ei);i++)b+=`<rect x="${x0+6+i*5}" y="${railY-hoodH+5}" width="2" height="${hoodH-9}" fill="${dark}" opacity=".45"/>`;
+    b+=`<rect x="${front-5}" y="${railY-hoodH}" width="5" height="${hoodH}" rx="1" fill="${metal}"/>`;
+    b+=`<circle cx="${front+1}" cy="${railY-hoodH+3}" r="3.2" fill="${metal}" stroke="${dark}" stroke-width="1"/>`;
+  }else{
+    b+=`<circle cx="${x0+2}" cy="${railY-16}" r="3" fill="${metal}" stroke="${dark}" stroke-width="1"/>`;
+  }
+  const wheel=cx=>{
+    let w=`<circle cx="${cx}" cy="${wy}" r="${R}" fill="${dark}"/>`;
+    if(md.t==='t2'&&ci>=3)w+=`<circle cx="${cx}" cy="${wy}" r="${R-3}" fill="none" stroke="#e8e6df" stroke-width="2.2"/>`;
+    if(ci>=4){w+=`<circle cx="${cx}" cy="${wy}" r="${R-5}" fill="#2e3036"/><g class="spin" style="transform-origin:${cx}px ${wy}px"><circle cx="${cx}" cy="${wy}" r="${R-8}" fill="none" stroke="${metal}" stroke-width="1.2" stroke-dasharray="3 3"/></g><circle cx="${cx}" cy="${wy}" r="3" fill="${metal}"/>`;}
+    else{const wood=ci<=1?'#caa46b':'#8e6f45';w+=`<circle cx="${cx}" cy="${wy}" r="${R-3}" fill="none" stroke="${wood}" stroke-width="2"/><g class="spin" style="transform-origin:${cx}px ${wy}px">`;
+      const n=ci<=1?12:10;for(let i=0;i<n;i++){const a=i/n*Math.PI*2;w+=`<line x1="${cx}" y1="${wy}" x2="${(cx+Math.cos(a)*(R-3)).toFixed(1)}" y2="${(wy+Math.sin(a)*(R-3)).toFixed(1)}" stroke="${wood}" stroke-width="1.4"/>`;}
+      w+=`</g><circle cx="${cx}" cy="${wy}" r="3" fill="${metal}"/>`;}
+    return w;
+  };
+  let wheels=wheel(fx)+(bid==='b8'?wheel(rx-6):'')+wheel(rx);
+  const shadow=`<ellipse cx="${(rx+fx)/2}" cy="${GY+2}" rx="${wb/2+34}" ry="3" fill="#000" opacity=".28"/>`;
+  const xmlns=opt.standalone?' xmlns="http://www.w3.org/2000/svg" width="220" height="100"':'';
+  return `<svg${xmlns} viewBox="0 0 220 100" class="car ${opt.anim?'anim':''}" role="img" aria-label="${esc(md.name||'Автомобиль')}">${shadow}<g class="body">${b}</g>${wheels}</svg>`;
+}
+const carURI=md=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(carSVG(md,{standalone:true}));
+
+function miniCar(x,color,i){return `<g class="roadcar" style="animation-delay:-${(i*2.1).toFixed(1)}s"><g transform="translate(${x},0)"><rect x="0" y="137" width="22" height="7" rx="2" fill="${color}"/><rect x="5" y="131" width="11" height="7" rx="2" fill="${color}"/><circle class="w" cx="5" cy="145" r="3" fill="#15161a"/><circle class="w" cx="17" cy="145" r="3" fill="#15161a"/></g></g>`;}
+function factorySVG(s){
+  const L=s.last,e=econ(s.y,s.m,s.country),winter=s.m===11||s.m<=1,war=e.war,crash=e.tone==='bad'&&!war;
+  const sky=war?['#4c5561','#8e959d']:crash?['#58606c','#a0a7b0']:winter?['#6f8fb0','#cfdce8']:['#3f78b3','#aacbe6'];
+  const ground=winter?'#dce5ec':'#56703f',late=s.y>=1920,brick=late?'#9aa0a6':'#8a4b3a',roofC=late?'#5d636b':'#4a3a33';
+  const W=360,gy=126,halls=Math.min(s.lines,6),extra=s.lines-halls;
+  const cp=capParts(s),busy=L?clamp(L.made/Math.max(1,cp.cap),0,1):0.3;
+  let o=`<svg viewBox="0 0 ${W} 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Завод компании"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>`;
+  o+=`<rect width="${W}" height="160" fill="url(#sk)"/>`;
+  o+=`<circle cx="${300}" cy="${winter?36:28}" r="12" fill="${war?'#c7c9c9':'#f6e7b0'}" opacity="${war?.35:.9}"/>`;
+  let city='';const nb=6+Math.floor(T(s)/4);for(let i=0;i<nb;i++){const h=10+((i*37)%23)+(late?(i%3)*8:0);const x=(i*W/nb);city+=`<rect x="${x.toFixed(0)}" y="${gy-h-6}" width="${(W/nb-4).toFixed(0)}" height="${h}" fill="#000" opacity=".12"/>`;}
+  o+=city;
+  o+=`<rect y="${gy}" width="${W}" height="34" fill="${ground}"/><rect y="${gy+12}" width="${W}" height="14" fill="#3b3f45"/>`;
+  for(let x=6;x<W;x+=24)o+=`<rect x="${x}" y="${gy+18}" width="12" height="2" fill="#e5e0c8" opacity=".5"/>`;
+  // admin
+  o+=`<rect x="8" y="${gy-40}" width="48" height="40" fill="${brick}"/><rect x="24" y="${gy-56}" width="16" height="16" fill="${brick}"/><polygon points="22,${gy-56} 32,${gy-66} 42,${gy-56}" fill="${roofC}"/><circle cx="32" cy="${gy-48}" r="4.5" fill="#f3ead0"/><line x1="32" y1="${gy-48}" x2="32" y2="${gy-51}" stroke="#222"/><line x1="32" y1="${gy-48}" x2="34" y2="${gy-48}" stroke="#222"/>`;
+  for(let r=0;r<2;r++)for(let c=0;c<4;c++)o+=`<rect x="${13+c*11}" y="${gy-34+r*14}" width="6" height="8" fill="#f2d98a" opacity=".85"/>`;
+  o+=`<line x1="32" y1="${gy-66}" x2="32" y2="${gy-80}" stroke="#ddd"/><rect x="32" y="${gy-80}" width="12" height="7" fill="#d9ab52"/>`;
+  if(winter)o+=`<polygon points="22,${gy-56} 32,${gy-66} 42,${gy-56} 40,${gy-58} 32,${gy-63} 24,${gy-58}" fill="#fff"/>`;
+  // halls
+  for(let i=0;i<halls;i++){
+    const x=64+i*38,hw=34,hh=30;
+    o+=`<rect x="${x}" y="${gy-hh}" width="${hw}" height="${hh}" fill="${brick}"/>`;
+    if(s.conveyor){let d=`M${x},${gy-hh}`;for(let k=0;k<3;k++){const a=x+k*hw/3;d+=` L${a},${gy-hh-10} L${a+hw/3},${gy-hh}`;}o+=`<path d="${d}Z" fill="${roofC}"/>`;for(let k=0;k<3;k++)o+=`<rect x="${x+k*hw/3+1}" y="${gy-hh-9}" width="2" height="8" fill="#cfe2f1" opacity=".7"/>`;}
+    else o+=`<polygon points="${x-2},${gy-hh} ${x+hw/2},${gy-hh-11} ${x+hw+2},${gy-hh}" fill="${roofC}"/>`;
+    if(winter)o+=`<rect x="${x}" y="${gy-hh-2}" width="${hw}" height="2" fill="#fff"/>`;
+    for(let k=0;k<3;k++)o+=`<rect x="${x+4+k*10}" y="${gy-hh+7}" width="6" height="8" fill="${busy>0.05?'#f2d98a':'#39424c'}" opacity=".85"/>`;
+    o+=`<rect x="${x+12}" y="${gy-12}" width="10" height="12" fill="#2a2b30"/>`;
+    if(i%2===0){const cx=x+hw-7,top=gy-hh-30;o+=`<rect x="${cx}" y="${top}" width="5" height="30" fill="${late?'#6c7178':'#7a3b2c'}"/>`;
+      if(busy>0.05)for(let k=0;k<3;k++)o+=`<circle class="smoke" cx="${cx+2.5}" cy="${top-3}" r="${4+busy*3}" fill="${war?'#555':'#d8dde2'}" style="animation-delay:-${(k*1.05).toFixed(2)}s"/>`;}
+  }
+  if(extra>0)o+=`<text x="${64+halls*38+2}" y="${gy-8}" font-family="IBM Plex Mono,monospace" font-size="11" fill="#fff">+${extra}</text>`;
+  // warehouse
+  const wx=W-64,stock=s.models.reduce((a,m)=>a+m.stock,0);
+  o+=`<path d="M${wx},${gy} L${wx},${gy-22} Q${wx+28},${gy-38} ${wx+56},${gy-22} L${wx+56},${gy}Z" fill="${late?'#7f868d':'#6d5d4f'}"/>`;
+  if(winter)o+=`<path d="M${wx},${gy-22} Q${wx+28},${gy-38} ${wx+56},${gy-22} Q${wx+28},${gy-35} ${wx},${gy-22}Z" fill="#fff"/>`;
+  o+=`<text x="${wx+28}" y="${gy-7}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#fff">СКЛАД ${stock}</text>`;
+  const color=(s.models.find(m=>m.status==='prod')||{}).paint||'#1b1d22';
+  const n=L?Math.min(5,Math.ceil(L.sold/Math.max(1,cp.cap/4))):0;
+  for(let i=0;i<n;i++)o+=miniCar(0,i%2?'#e3d6b4':color,i);
+  return o+'</svg>';
+}
+
+/* ================= RENDER ================= */
+function spark(data,color='var(--brass)'){
+  const w=320,h=64;if(data.length<2)return '<div class="empty-chart">График появится через пару месяцев</div>';
+  const min=Math.min(0,...data),max=Math.max(1,...data),span=max-min||1;
+  const x=i=>i*(w/(data.length-1)),y=v=>h-3-(v-min)/span*(h-6);
+  const pts=data.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  const zero=min<0?`<line class="zero" x1="0" x2="${w}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>`:'';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polygon points="0,${y(min)} ${pts} ${w},${y(min)}" fill="${color}" fill-opacity=".14"/>${zero}<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function qbar(r){const [l,tone]=qLabel(r);return `<div class="row small" style="margin-top:10px"><span class="muted">Качество по меркам эпохи</span><span class="${tone}">${l} · <span class="num">${Math.round(r*100)}%</span></span></div><div class="bar" style="margin-top:6px"><i style="width:${Math.min(100,r*100)}%;background:var(--${tone})"></i></div>`;}
+
+function vPlant(){
+  const s=G,L=s.last,cp=capParts(s),lc=lineCost(s),ml=maxLoan(s);
+  const limit=cp.byLines<cp.byWorkers?'упирается в линии':cp.byWorkers<cp.byLines?'упирается в рабочих':'линии и рабочие в балансе';
+  const ideal=s.lines*(s.conveyor?13:10);
+  const pl=L?`<table class="pl">
+    <tr><td>Продажи</td><td class="n">${money(L.rev)}</td></tr>
+    ${L.mil?`<tr><td>Военный заказ (${L.milN} шт.)</td><td class="n">${money(L.mil)}</td></tr>`:''}
+    <tr><td>Детали и материалы</td><td class="n">−${money(L.mat)}</td></tr>
+    <tr><td>Зарплата</td><td class="n">−${money(L.wage)}</td></tr>
+    <tr><td>Содержание линий</td><td class="n">−${money(L.upk)}</td></tr>
+    ${L.br?`<tr><td>Филиалы</td><td class="n">−${money(L.br)}</td></tr>`:''}
+    <tr><td>Реклама</td><td class="n">−${money(L.ad)}</td></tr>
+    <tr><td>Склад</td><td class="n">−${money(L.sto)}</td></tr>
+    ${L.int?`<tr><td>Проценты по кредиту</td><td class="n">−${money(L.int)}</td></tr>`:''}
+    <tr class="tot"><td>Итог за ${L.label}</td><td class="n ${L.profit>=0?'good':'bad'}">${money(L.profit)}</td></tr></table>`
+    :'<p class="small muted">Отчёт появится после первого месяца. Нажмите «Следующий месяц» внизу.</p>';
+  let conv='';
+  if(s.conveyor)conv='<p class="small good">Конвейер работает: линия выпускает до 30 машин в месяц.</p>';
+  else if(conveyorOpen(s))conv=`<div class="row"><div><h3>Конвейер</h3><p class="small muted">Линия ×3,75, рабочий ×3, содержание ×2</p></div><button class="btn primary" data-act="conveyor" ${s.cash<30000?'disabled':''}>${money(30000)}</button></div>`;
+  else conv='<p class="small muted">Конвейерная сборка появится в октябре 1913 года.</p>';
+  return `
+  <div class="scene">${factorySVG(s)}</div>
+  <div class="kpis">
+    <div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div>
+    <div class="kpi"><span class="label">Продано</span><b>${L?L.sold+' шт.':'—'}</b></div>
+    <div class="kpi"><span class="label">Репутация</span><b>${Math.round(s.rep)}<span class="muted small">/100</span></b></div>
+  </div>
+  <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${s.hist.cash.length} мес.</span></div>${spark(s.hist.cash)}</section>
+  <section class="card">
+    <h2>Производство</h2>
+    <div class="row" style="margin-top:10px"><div><h3>Линии: <span class="num">${s.lines}</span></h3><p class="small muted">До ${s.conveyor?30:8} машин в месяц на линию</p></div>
+      <div class="btns">${s.lines>1?`<button class="btn sm" data-act="sellline">Продать</button>`:''}<button class="btn" data-act="line" ${s.cash<lc?'disabled':''}>+ ${money(lc)}</button></div></div>
+    <div class="row"><div><h3>Рабочие: <span class="num">${s.workers}</span></h3><p class="small muted">${money(wageNow(s))} в месяц · нужно ${ideal}</p></div>
+      <div class="step"><button data-act="workers" data-d="-5" aria-label="Уволить пятерых">−</button><span>${s.workers}</span><button data-act="workers" data-d="5" aria-label="Нанять пятерых">+</button></div></div>
+    ${s.workers!==ideal?`<div class="row"><span class="small muted">Подогнать штат под линии</span><button class="btn sm" data-act="balance">${s.workers<ideal?'Нанять':'Сократить'} до ${ideal}</button></div>`:''}
+    <div class="hr"></div>
+    <div class="row"><span>Мощность</span><span><b class="num">${cp.cap}</b> <span class="muted small">авто/мес · ${limit}</span></span></div>
+    <div class="bar" style="margin-top:8px"><i style="width:${L?Math.min(100,L.made/Math.max(1,cp.cap)*100):0}%;background:var(--brass)"></i></div>
+    <p class="small muted" style="margin-top:4px">Загрузка в прошлом месяце: ${L?Math.round(Math.min(1,L.made/Math.max(1,cp.cap))*100):0}%</p>
+    <div class="hr"></div>${conv}
+  </section>
+  <section class="card">
+    <div class="row"><h2>Реклама</h2><b class="num" id="adVal">${money(s.ad)}</b></div>
+    <input type="range" id="ad" min="0" max="${Math.round(adRef(s)*4/50)*50}" step="50" value="${s.ad}" aria-label="Бюджет рекламы в месяц" style="margin-top:10px">
+    <p class="small muted">В месяц. Отдача падает после ${money(adRef(s)*2)}.</p>
+  </section>
+  <section class="card"><h2>Финансы</h2><div style="margin-top:10px">${pl}</div>
+    <div class="hr"></div>
+    <div class="row"><div><h3>Кредит: <span class="num">${money(s.loan)}</span></h3><p class="small muted">1% в месяц, лимит ${money(ml)}</p></div>
+      <div class="btns"><button class="btn" data-act="loan" ${s.loan+10000>ml?'disabled':''}>+10 000</button><button class="btn" data-act="repay" ${s.loan<10000||s.cash<10000?'disabled':''}>Погасить</button></div></div>
+  </section>`;
+}
+
+function vModels(){
+  const s=G,ord={prod:0,dev:1,off:2};
+  const cards=s.models.slice().sort((a,b)=>ord[a.status]-ord[b.status]||b.id-a.id).map(md=>{
+    const p=parts(md),r=modelR(md,s),mc=matCost(md,s),ref=refPrice(md,s),g=segOf(md);
+    const pill=md.status==='prod'?'<span class="pill good">В продаже</span>':md.status==='dev'?`<span class="pill warn">Разработка · ${md.devLeft} мес.</span>`:'<span class="pill muted">Снята</span>';
+    const margin=md.price-mc,enter=md.fresh?' enter':'';md.fresh=0;
+    return `<article class="card">
+      <div class="row"><div><h3>${esc(md.name)}</h3><span class="label">${SEG[g].name} сегмент</span></div>${pill}</div>
+      <div class="carbox${enter}">${carSVG(md,{anim:md.status==='prod'})}</div>
+      <p class="spec">${p.e.name} · ${p.c.name} · ${p.b.name} · ${p.t.name}</p>
+      ${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
+      ${qbar(r)}
+      ${md.status!=='off'?`<div class="row" style="margin-top:12px"><div><span class="label">Цена</span><p class="small muted">рыночная ≈ <span class="num">${money(ref)}</span></p></div>
+        <div class="step"><button data-act="price" data-id="${md.id}" data-d="-1" aria-label="Снизить цену">−</button><span>${money(md.price)}</span><button data-act="price" data-id="${md.id}" data-d="1" aria-label="Поднять цену">+</button></div></div>`:''}
+      <div class="meta">
+        <div>Спрос<b>${md.status==='prod'?md.lastDem:'—'}</b></div>
+        <div>Продано<b>${md.status==='prod'?md.lastSold:'—'}</b></div>
+        <div>Склад<b>${md.stock}</b></div>
+        <div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b></div>
+      </div>
+      <div class="row small muted" style="margin-top:10px"><span>Всего продано</span><span class="num">${md.totalSold.toLocaleString('ru-RU')}</span></div>
+      ${md.status==='prod'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="retire" data-id="${md.id}">Снять с производства</button></div>`:''}
+      ${md.status==='off'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="revive" data-id="${md.id}">Вернуть в производство</button></div>`:''}
+    </article>`;}).join('');
+  return `<button class="btn primary block" data-act="design">+ Новая модель</button>${cards}`;
+}
+
+function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?'':'off'}"><span class="num">${x.y<=1895?'—':x.y}</span><span>${x.name}</span><span class="num">${extra(x)}</span></div>`).join('');}
+function vMarket(){
+  const s=G,e=econ(s.y,s.m,s.country),L=s.last,home=s.country,size=totalSize(s,home),M=L&&L.mk[home];
+  const segRows=SEGK.map(g=>{const z=segSize(s,home,g);const you=M?M.segs[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${Math.round(z)}</td><td class="n">${M?you:'—'}</td><td class="n">${M&&z>0?(you/z*100).toFixed(1)+'%':'—'}</td></tr>`;}).join('');
+  const rows=[{name:s.company,color:'var(--brass)',sales:L?L.homeSold:0,you:1},...s.comps[home].filter(c=>c.alive).map(c=>({name:c.name+(massOn(c,s,home)?' · массовая':''),color:c.color,sales:c.last}))].sort((a,b)=>b.sales-a.sales);
+  const mx=Math.max(1,...rows.map(r=>r.sales));
+  const comp=rows.map(r=>`<div class="comp ${r.you?'you':''}"><span class="dot" style="background:${r.color}"></span><span>${esc(r.name)}</span><div class="bar"><i style="width:${r.sales/mx*100}%;background:${r.color}"></i></div><span class="num" style="text-align:right">${Math.round(r.sales)}</span></div>`).join('');
+  const bc=branchCost(s);
+  const br=Object.keys(COUNTRIES).filter(c=>c!==home).map(c=>{
+    const open=s.branches.includes(c),ec=econ(s.y,s.m,c),z=totalSize(s,c),mk=L&&L.mk[c];
+    return `<div class="row" style="padding-block:6px;border-bottom:1px solid var(--line-soft)"><div><h3>${COUNTRIES[c].name}</h3><p class="small muted">Рынок ${Math.round(z)} авто/мес · <span class="${ec.tone}">${ec.label}</span></p></div>
+      ${open?`<span class="small good num">${mk?mk.sold:0} шт.</span>`:`<button class="btn sm" data-act="branch" data-c="${c}" ${s.cash<bc?'disabled':''}>Открыть ${money(bc)}</button>`}</div>`;}).join('');
+  return `
+  <section class="card">
+    <div class="row"><h2>${COUNTRIES[home].name}</h2><span class="pill ${e.tone}">${e.label}</span></div>
+    <div class="meta">
+      <div>Рынок<b>${Math.round(size)}</b></div>
+      <div>Ваши<b>${L?L.homeSold:'—'}</b></div>
+      <div>Доля<b>${L?(L.share*100).toFixed(1)+'%':'—'}</b></div>
+      <div>Цены<b>${Math.round(priceIndex(s)*100)}%</b></div>
+    </div>
+    <div class="hr"></div>
+    <table class="pl"><tr><th>Сегмент</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th></tr>${segRows}</table>
+    <p class="small muted" style="margin-top:10px">Сегмент задают кузов и оснащение: базовая — народный, комфорт — средний, люкс — люкс, грузовой кузов — грузовой.</p>
+  </section>
+  <section class="card"><h2>Конкуренты</h2><p class="small muted" style="margin-top:2px">Продажи за прошлый месяц, авто</p><div style="margin-top:8px">${comp}</div></section>
+  <section class="card"><h2>Экспорт</h2><p class="small muted" style="margin-top:2px">Филиал продаёт все ваши модели в стране. Спрос ниже на 20% из-за доставки. Содержание ${money(400*(1+0.02*T(s)))} в месяц.</p><div style="margin-top:6px">${br}</div></section>
+  <section class="card"><span class="label">Объём рынка, авто/мес</span>${spark(s.hist.market,'var(--muted)')}
+    <div class="hr"></div><span class="label">Ваши продажи, авто/мес</span>${spark(s.hist.sales,'var(--good)')}</section>
+  <section class="card">
+    <h2>Технологии</h2>
+    <p class="small muted" style="margin-top:4px">Серые позиции появятся в указанном году.</p>
+    <div class="label" style="margin-top:12px">Двигатели</div>${techRows(ENGINES,s,x=>x.hp+' л.с.')}
+    <div class="label" style="margin-top:12px">Рамы</div>${techRows(CHASSIS,s,x=>'до '+x.max+' л.с.')}
+    <div class="label" style="margin-top:12px">Кузова</div>${techRows(BODIES,s,x=>x.truck?'груз.':'кач. '+x.q)}
+  </section>`;
+}
+
+function vRace(){
+  const s=G,ri=raceInfo(s),prod=s.models.filter(m=>m.status==='prod');
+  if(!G.raceSel||!prod.find(m=>m.id===G.raceSel))G.raceSel=prod.length?prod.slice().sort((a,b)=>raceScore(b,s)-raceScore(a,s))[0].id:null;
+  const md=prod.find(m=>m.id===G.raceSel);
+  let status;
+  if(ri.war)status='<p class="warn">Во время войны гонки отменены.</p>';
+  else if(ri.done)status=`<p class="muted">В ${s.y} году вы уже участвовали. Следующий сезон — с апреля ${s.y+1}.</p>`;
+  else if(!ri.season)status=`<p class="muted">Сезон гонок — с апреля по сентябрь.</p>`;
+  else status=`<p class="good">Сезон открыт. Заявка до конца сентября.</p>`;
+  const hist=s.raceLog.slice().reverse().map(r=>`<tr><td>${r.y}</td><td>${esc(r.name)}</td><td>${esc(r.model)}</td><td class="n ${r.place===1?'good':''}">${r.place}-е</td></tr>`).join('');
+  return `
+  <section class="card">
+    <span class="label">Сезон ${s.y}</span>
+    <h2 style="margin-top:2px">${ri.name}</h2>
+    <div style="margin-top:8px">${status}</div>
+    <div class="meta"><div>Приз<b>${money(ri.prize)}</b></div><div>Взнос<b>${money(ri.fee)}</b></div><div>Репутация<b>до +10</b></div><div>Соперники<b>${Math.min(4,s.comps[s.country].filter(c=>c.alive).length)}</b></div></div>
+  </section>
+  <section class="card">
+    <h2>Машина</h2>
+    ${prod.length?`<div class="chips">${prod.map(m=>`<button class="chip ${m.id===G.raceSel?'on':''}" data-act="racesel" data-id="${m.id}">${esc(m.name)}<small>${parts(m).e.hp} л.с.</small></button>`).join('')}</div>
+    <div class="carbox">${carSVG(md,{anim:true})}</div>
+    <div class="row small" style="margin-top:10px"><span class="muted">Скорость</span><span class="num">${Math.round(raceScore(md,s)*100)}</span></div>
+    <div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,raceScore(md,s)*90)}%;background:var(--brass)"></i></div>
+    <div class="row small" style="margin-top:10px"><span class="muted">Надёжность</span><span class="num">${Math.round(raceRel(md,s)*100)}</span></div>
+    <div class="bar" style="margin-top:4px"><i style="width:${raceRel(md,s)*100}%;background:var(--good)"></i></div>
+    <p class="small muted" style="margin-top:10px">Держите «Газ», чтобы разгоняться. Мотор греется: перегрев — вынужденная остановка. Чем надёжнее машина, тем медленнее нагрев.</p>
+    <button class="btn primary block" style="margin-top:12px" data-act="race" ${ri.open&&s.cash>=ri.fee&&!s.pending.length?'':'disabled'}>Выйти на старт · ${money(ri.fee)}</button>`
+    :'<p class="small muted" style="margin-top:6px">Нет машин в продаже.</p>'}
+  </section>
+  ${hist?`<section class="card"><h2>Результаты</h2><table class="pl" style="margin-top:8px"><tr><th>Год</th><th>Гонка</th><th>Машина</th><th class="n">Место</th></tr>${hist}</table></section>`:''}`;
+}
+function vLog(){
+  const got=ACH.filter(a=>G.ach[a.id]).length;
+  return `<section class="card"><div class="row"><h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span></div>
+    <div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div></section>
+  <section class="card"><h2>Хроника</h2><ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul></section>`;
+}
+
+let shownCash=null,cashRaf=0,lastDate='';
+function setCash(v){
+  const el=document.getElementById('cash');el.className=v<0?'neg':'';
+  if(shownCash===null||REDUCE){shownCash=v;el.textContent=money(v);return;}
+  const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);
+  const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=money(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};
+  cashRaf=requestAnimationFrame(tick);
+}
+function render(){
+  const s=G;
+  document.getElementById('co').textContent=`${s.company} · ${COUNTRIES[s.country].city}`;
+  const d=document.getElementById('date'),ds=dstr(s);
+  d.innerHTML=`${MONTHS[s.m]} <span>${s.y}</span>`;
+  if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
+  lastDate=ds;setCash(s.cash);
+  const v=document.getElementById('view');
+  v.innerHTML=tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():tab==='race'?vRace():vLog();
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  const nb=document.getElementById('nextBtn'),qb=document.getElementById('qBtn'),ab=document.getElementById('autoBtn');
+  const blocked=s.pending.length>0||s.over;
+  nb.disabled=qb.disabled=ab.disabled=blocked;
+  nb.textContent=s.over?'Игра окончена':blocked?'Сначала решите событие':'Следующий месяц →';
+  ab.textContent=auto?'❚❚':'▶';ab.classList.toggle('on',!!auto);
+  const ad=document.getElementById('ad');
+  if(ad)ad.addEventListener('input',e=>{G.ad=+e.target.value;document.getElementById('adVal').textContent=money(G.ad);save();});
+  if(s.pending.length){stopAuto();showEvent();}
+}
+let toastQ=[],toastBusy=false;
+function toast(msg){toastQ.push(msg);if(!toastBusy)nextToast();}
+function nextToast(){const m=toastQ.shift();const el=document.getElementById('toast');if(!m){toastBusy=false;el.hidden=true;return;}
+  toastBusy=true;el.textContent=m;el.hidden=false;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(nextToast,auto?1000:2200);}
+function afterStep(){const L=G.last;if(L){toastQ=toastQ.slice(-1);toast(`${L.label}: продано ${L.sold} · ${L.profit>=0?'+':''}${money(L.profit)}`);}pendingToasts.forEach(toast);pendingToasts=[];}
+
+/* ================= SHEETS ================= */
+const sheet=document.getElementById('sheet'),sb=document.getElementById('sheetBody');
+function openSheet(html){sb.innerHTML=html;sheet.hidden=false;sb.scrollTop=0;}
+function closeSheet(){sheet.hidden=true;draft=null;}
+sheet.addEventListener('click',e=>{if(e.target===sheet&&!G.pending.length&&!race&&!(draft&&draft.ng&&!G))closeSheet();});
+function showEvent(){
+  if(race)return;const ev=G.pending[0];
+  openSheet(`<span class="label">${dstr(G)}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2><p style="margin-top:10px">${esc(ev.text)}</p>
+    <div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
+}
+function bestId(arr,f){const u=unlocked(arr,G).filter(x=>!f||f(x));return u[u.length-1].id;}
+function openDesigner(){
+  draft={name:'Тип '+(G.models.length+1),e:bestId(ENGINES),c:bestId(CHASSIS),b:bestId(BODIES,x=>!x.truck),t:'t0',paint:PAINTS[G.models.length%PAINTS.length].id};
+  renderDesigner();
+}
+function renderDesigner(){
+  const s=G,d=draft,md={...d},p=parts(md),r=modelR(md,s),mc=matCost(md,s),ref=refPrice(md,s),dc=devCost(md),dm=devMonths(md),g=segOf(md);
+  const chips=(arr,k,sub)=>`<div class="chips">${unlocked(arr,s).map(x=>`<button class="chip ${d[k]===x.id?'on':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${x.name}<small>${sub(x)}</small></button>`).join('')}</div>`;
+  const hpPct=Math.min(100,p.e.hp/p.c.max*100);
+  openSheet(`
+    <div class="row"><h2>Новая модель</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
+    <div class="carbox">${carSVG(md,{anim:true})}</div>
+    <div class="row" style="margin-top:8px"><span class="pill warn">${SEG[g].name} сегмент</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
+    <label class="label" for="mname" style="display:block;margin-top:12px">Название</label>
+    <input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
+    <div class="label" style="margin-top:14px">Двигатель</div>${chips(ENGINES,'e',x=>`${x.hp} л.с. · ${money(x.c*priceIndex(s))}`)}
+    <div class="label" style="margin-top:14px">Рама</div>${chips(CHASSIS,'c',x=>`до ${x.max} л.с. · ${money(x.c*priceIndex(s))}`)}
+    <div class="label" style="margin-top:14px">Кузов</div>${chips(BODIES,'b',x=>`${x.truck?'грузовой':'кач. '+x.q} · ${money(x.c*priceIndex(s))}`)}
+    <div class="label" style="margin-top:14px">Оснащение</div>${chips(TRIMS,'t',x=>`+${x.q} кач. · ${money(x.c*priceIndex(s))}`)}
+    <div class="card" style="margin-top:16px;background:var(--panel2)">
+      <div class="row small"><span class="muted">Нагрузка на раму</span><span class="num ${overpower(md)?'bad':''}">${p.e.hp} / ${p.c.max} л.с.</span></div>
+      <div class="bar" style="margin-top:6px"><i style="width:${hpPct}%;background:var(--${overpower(md)?'bad':hpPct>80?'warn':'good'})"></i></div>
+      ${overpower(md)?'<p class="small bad" style="margin-top:6px">Рама не выдержит: качество −40% и удар по репутации.</p>':''}
+      ${qbar(r)}
+      <div class="meta"><div>Себест.<b>${money(mc)}</b></div><div>Цена ≈<b>${money(ref)}</b></div><div>Срок<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div></div>
+    </div>
+    <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
+  document.getElementById('mname').addEventListener('input',e=>{draft.name=e.target.value;});
+}
+function openNewGame(){
+  const prev=draft&&draft.ng?draft:null;
+  draft={ng:true,country:prev?prev.country:'de',company:prev?prev.company:'Моторные мастерские'};
+  const canClose=G&&!G.over;
+  openSheet(`
+    <div class="row"><h2>Новая игра</h2>${canClose?'<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>':''}</div>
+    <p class="small muted" style="margin-top:6px">Январь 1895 года. Вы открываете автомобильную мастерскую. Игра идёт до конца 1929-го.</p>
+    <label class="label" for="cname" style="display:block;margin-top:14px">Название компании</label>
+    <input type="text" id="cname" value="${esc(draft.company)}" maxlength="28" style="margin-top:6px">
+    <div class="label" style="margin-top:14px">Страна</div>
+    <div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.country===k?'on':''}" data-act="country" data-v="${k}">${c.name}<small>${c.city} · ${money(c.cash)}</small><small>${c.note}</small></button>`).join('')}</div>
+    <button class="btn primary block" style="margin-top:16px" data-act="startgame">Основать компанию</button>`);
+  document.getElementById('cname').addEventListener('input',e=>{draft.company=e.target.value;});
+}
+function openHelp(){
+  openSheet(`<div class="row"><h2>Как играть</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
+  <div class="stack small" style="margin-top:12px">
+    <p>Один ход — один месяц. Завод сам выпускает машины под спрос, вы решаете главное. ▶ включает автоигру, она останавливается на событиях.</p>
+    <p><b>Модели.</b> Собирайте автомобиль из доступных деталей. Качество считается относительно лучших технологий года, поэтому модели устаревают.</p>
+    <p><b>Сегменты.</b> Народный покупатель считает каждый доллар, люкс платит за качество, грузовики нужны торговле и армии.</p>
+    <p><b>Цена.</b> Ориентир — «рыночная цена». Дешевле — больше спрос, дороже — выше маржа.</p>
+    <p><b>Завод.</b> Мощность ограничена линиями и рабочими: 10 рабочих на линию, после конвейера около 13.</p>
+    <p><b>Конкуренты и экспорт.</b> Четыре марки в каждой стране выпускают новинки, растут и разоряются. Филиалы открывают чужие рынки.</p>
+    <p><b>Гонки.</b> Раз в сезон, с апреля по сентябрь: приз и репутация.</p>
+    <p><b>Цель.</b> Дожить до 1930 года с максимальной стоимостью компании. Долг свыше ${money(15000)} — банкротство.</p>
+  </div>
+  <div class="hr"></div>
+  <button class="btn block" data-act="newgame">Начать заново</button>`);
+}
+
+/* ================= RACE ================= */
+function raceScore(md,s){const eraHp=Math.max(...unlocked(ENGINES,s).map(e=>e.hp));return 0.55*Math.min(1.2,parts(md).e.hp/eraHp)+0.45*modelR(md,s);}
+function raceRel(md,s){return clamp(0.5+0.5*modelR(md,s)-(overpower(md)?0.3:0),0.15,1);}
+let raceRaf=0;
+function startRace(){
+  const s=G,md=s.models.find(m=>m.id===G.raceSel),ri=raceInfo(s);if(!md||!ri.open||s.cash<ri.fee)return;
+  stopAuto();s.cash-=ri.fee;s.raceDone=s.y;save();
+  const rel=raceRel(md,s);
+  const rs=[{name:s.company,label:md.name,player:true,car:md,vmax:170+230*raceScore(md,s),rel,heatMul:1.5-rel*0.7}];
+  s.comps[s.country].filter(c=>c.alive).slice(0,4).forEach(cp=>{
+    const g=cp.segs.includes('lux')?'lux':cp.segs.includes('middle')?'middle':'people',rc=compR(cp,s,g);
+    const sc=clamp(rc*0.95+(cp.str-1)*0.08+(Math.random()*0.12-0.06),0.2,1.1);
+    rs.push({name:cp.name,car:compCar(cp,s,g),vmax:170+230*sc,rel:0.45+0.5*rc,phase:Math.random()*6});
+  });
+  const pi=Math.min(2,rs.length-1);[rs[0],rs[pi]]=[rs[pi],rs[0]];
+  rs.forEach((r,i)=>{r.lane=i;r.x=0;r.v=0;r.heat=0;r.broken=0;r.fin=null;r.img=new Image();r.img.src=carURI(r.car);});
+  race={rs,L:4200,t:-3,ri,throttle:false,done:false,era:s.y,lastT:performance.now()};
+  openSheet(`<div class="row"><div><span class="label">${s.y} · ${esc(ri.name)}</span><h2 style="margin-top:2px">${esc(md.name)}</h2></div></div>
+    <div class="race-wrap" style="margin-top:10px"><canvas id="raceCanvas"></canvas></div>
+    <button class="gas" id="gas">ГАЗ</button>
+    <p class="small muted" style="margin-top:8px;text-align:center">Держите кнопку или пробел. Следите за температурой мотора.</p>`);
+  const gas=document.getElementById('gas');
+  const on=e=>{e.preventDefault();race&&(race.throttle=true);gas.classList.add('down');},off=()=>{race&&(race.throttle=false);gas.classList.remove('down');};
+  gas.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(t=>gas.addEventListener(t,off));
+  gas.addEventListener('contextmenu',e=>e.preventDefault());
+  raceRaf=requestAnimationFrame(raceLoop);
+}
+document.addEventListener('keydown',e=>{if(race&&e.code==='Space'){e.preventDefault();race.throttle=true;const g=document.getElementById('gas');g&&g.classList.add('down');}});
+document.addEventListener('keyup',e=>{if(race&&e.code==='Space'){race.throttle=false;const g=document.getElementById('gas');g&&g.classList.remove('down');}});
+function raceLoop(now){
+  if(!race||race.done)return;
+  const dt=Math.min(0.05,(now-race.lastT)/1000);race.lastT=now;race.t+=dt;
+  if(race.t>0){
+    race.rs.forEach(r=>{
+      if(r.fin!==null){r.v=Math.max(0,r.v-r.vmax*0.5*dt);r.x+=r.v*dt;return;}
+      if(r.player){
+        if(r.broken>0){r.broken-=dt;r.v=Math.max(0,r.v-r.vmax*1.5*dt);r.heat=Math.max(0,r.heat-15*dt);}
+        else if(race.throttle){r.v=Math.min(r.vmax,r.v+r.vmax*0.55*dt);r.heat+=30*r.heatMul*dt;if(r.heat>=100){r.broken=2.2;r.heat=45;}}
+        else{if(r.v>r.vmax*0.35)r.v=Math.max(r.vmax*0.35,r.v-r.vmax*0.3*dt);r.heat=Math.max(0,r.heat-25*dt);}
+      }else{
+        if(r.broken>0){r.broken-=dt;r.v=Math.max(0,r.v-r.vmax*1.2*dt);}
+        else{const tg=r.vmax*(0.86+0.07*Math.sin(race.t*0.9+r.phase));r.v+=clamp(tg-r.v,-r.vmax*0.4*dt,r.vmax*0.55*dt);if(Math.random()<(1-r.rel)*0.07*dt)r.broken=1.8;}
+      }
+      r.x+=r.v*dt;if(r.x>=race.L)r.fin=race.t;
+    });
+    const me=race.rs.find(r=>r.player);
+    if(me.fin!==null&&(race.rs.every(r=>r.fin!==null)||race.t>me.fin+2.5)){finishRace();return;}
+  }
+  drawRace();raceRaf=requestAnimationFrame(raceLoop);
+}
+function drawRace(){
+  const cv=document.getElementById('raceCanvas');if(!cv)return;
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=240;
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=H*dpr;}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+  const me=race.rs.find(r=>r.player),cam=clamp(me.x-70,0,race.L-W+140),early=race.era<1910;
+  const g=c.createLinearGradient(0,0,0,110);g.addColorStop(0,'#6aa6d6');g.addColorStop(1,'#d6e9f5');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle='#9bb58a';c.beginPath();c.moveTo(0,110);for(let x=0;x<=W;x+=10){const wx=x+cam*0.15;c.lineTo(x,80-Math.sin(wx/90)*14-Math.sin(wx/37)*6);}c.lineTo(W,110);c.fill();
+  c.fillStyle='#6f9a5a';c.beginPath();c.moveTo(0,112);for(let x=0;x<=W;x+=10){const wx=x+cam*0.35;c.lineTo(x,98-Math.sin(wx/60)*8);}c.lineTo(W,112);c.fill();
+  c.fillStyle='#5d8a47';c.fillRect(0,108,W,14);
+  const off=cam*0.6;for(let k=Math.floor(off/70)-1;k<(off+W)/70+1;k++){const x=k*70-off;c.fillStyle='#6b4a2b';c.fillRect(x+8,96,4,14);c.fillStyle='#3f6b3a';c.beginPath();c.arc(x+10,92,10,0,7);c.fill();}
+  const standX=[0,race.L];standX.forEach(sx=>{const x=sx-cam-40;if(x>-120&&x<W+40){c.fillStyle='#8a4b3a';c.fillRect(x,98,90,14);for(let i=0;i<30;i++){c.fillStyle=['#d9ab52','#e6eef7','#b5523b','#4f8fbf'][i%4];c.beginPath();c.arc(x+5+(i%15)*6,100+Math.floor(i/15)*6,2.2,0,7);c.fill();}}});
+  c.fillStyle=early?'#b09468':'#4d5157';c.fillRect(0,122,W,H-122);
+  c.fillStyle=early?'#9c8258':'#3f4247';for(let i=0;i<5;i++)c.fillRect(0,122+i*22+20,W,1);
+  c.fillStyle=early?'rgba(255,255,255,.25)':'rgba(255,255,255,.5)';
+  for(let i=1;i<5;i++){const y=122+i*22;for(let x=-((cam)%40);x<W;x+=40)c.fillRect(x,y-1,20,2);}
+  for(let m=500;m<race.L;m+=500){const x=m-cam;if(x>-10&&x<W+10){c.fillStyle='#fff';c.fillRect(x,110,3,12);c.fillStyle='#1c1406';c.font='600 10px "IBM Plex Mono",monospace';c.fillText(Math.round(m/race.L*100)+'%',x+5,118);}}
+  const fx=race.L-cam;if(fx>-20&&fx<W+20){for(let y=122;y<H;y+=8)for(let k=0;k<2;k++){c.fillStyle=((y/8+k)%2)?'#111':'#fff';c.fillRect(fx+k*8,y,8,8);}}
+  race.rs.slice().sort((a,b)=>a.lane-b.lane).forEach(r=>{
+    const x=r.x-cam,y=122+r.lane*22+18;
+    if(x<-80||x>W+20)return;
+    const bob=r.v>5&&r.broken<=0?Math.sin(race.t*30+r.lane)*0.6:0;
+    if(r.img.complete&&r.img.naturalWidth)c.drawImage(r.img,x-4,y-38+bob,88,40);
+    if(r.broken>0){for(let i=0;i<3;i++){c.fillStyle=`rgba(80,80,80,${0.5-i*0.12})`;c.beginPath();c.arc(x+60+i*6,y-40-i*8-(race.t*20%10),6+i*3,0,7);c.fill();}}
+    if(r.player){c.fillStyle='#d9ab52';c.beginPath();c.moveTo(x+38,y-48);c.lineTo(x+44,y-56);c.lineTo(x+32,y-56);c.fill();}
+  });
+  const order=race.rs.slice().sort((a,b)=>(a.fin??1e9)-(b.fin??1e9)||b.x-a.x),pos=order.indexOf(me)+1;
+  c.fillStyle='rgba(13,33,54,.85)';c.fillRect(8,8,W-16,26);
+  c.fillStyle='#e6eef7';c.font='600 13px "IBM Plex Sans",sans-serif';c.fillText(`Место ${pos}/${race.rs.length}`,16,26);
+  c.fillStyle='#8ea8c3';c.fillText(`${Math.round(me.v/4)} км/ч`,110,26);
+  const hx=W-130;c.fillStyle='#8ea8c3';c.font='500 11px "IBM Plex Mono",monospace';c.fillText('МОТОР',hx-48,25);
+  c.fillStyle='#0f2740';c.fillRect(hx,16,112,10);
+  c.fillStyle=me.heat>80?'#ff8474':me.heat>55?'#f0c75e':'#74d39a';c.fillRect(hx,16,112*Math.min(1,me.heat/100),10);
+  c.fillStyle='rgba(255,255,255,.3)';c.fillRect(8,36,W-16,3);c.fillStyle='#d9ab52';c.fillRect(8,36,(W-16)*Math.min(1,me.x/race.L),3);
+  if(race.t<0){c.fillStyle='rgba(13,33,54,.6)';c.fillRect(0,0,W,H);c.fillStyle='#d9ab52';c.font='800 72px "Big Shoulders Display",Impact,sans-serif';c.textAlign='center';c.fillText(Math.ceil(-race.t),W/2,150);c.textAlign='left';}
+  else if(race.t<0.8){c.fillStyle='#d9ab52';c.font='800 56px "Big Shoulders Display",Impact,sans-serif';c.textAlign='center';c.fillText('СТАРТ!',W/2,150);c.textAlign='left';}
+  if(me.broken>0){c.fillStyle='#ff8474';c.font='800 30px "Big Shoulders Display",Impact,sans-serif';c.textAlign='center';c.fillText('ПЕРЕГРЕВ',W/2,78);c.textAlign='left';}
+}
+function finishRace(){
+  const s=G;race.done=true;cancelAnimationFrame(raceRaf);drawRace();
+  race.rs.forEach(r=>{if(r.fin===null)r.fin=race.t+(race.L-r.x)/(r.vmax*0.85);});
+  const order=race.rs.slice().sort((a,b)=>a.fin-b.fin),me=race.rs.find(r=>r.player),place=order.indexOf(me)+1;
+  const prize=[1,0.5,0.25][place-1]||0,rep=[10,5,2][place-1]||0,win=Math.round(race.ri.prize*prize);
+  s.cash+=win;s.rep=clamp(s.rep+rep,0,100);
+  s.raceLog.push({y:s.y,name:race.ri.name,model:me.label,place});
+  addLog(`${race.ri.name}: «${me.label}» — ${place}-е место${win?`, приз ${money(win)}`:''}.`,place===1?'good':'');
+  checkAch();save();
+  const rows=order.map((r,i)=>`<tr class="${r.player?'tot':''}"><td>${i+1}</td><td>${esc(r.name)}${r.player?' · '+esc(r.label):''}</td><td class="n">${r.fin.toFixed(1)} с</td></tr>`).join('');
+  const box=document.createElement('div');box.className='card';box.style.marginTop='12px';
+  box.innerHTML=`<h2 class="${place===1?'good':''}">${place===1?'Победа!':place+'-е место'}</h2>
+    <p class="small muted" style="margin-top:4px">${win?`Приз ${money(win)}, репутация +${rep}.`:'Без призовых. Попробуйте в следующем сезоне с более быстрой машиной.'}</p>
+    <table class="pl" style="margin-top:10px">${rows}</table>
+    <button class="btn primary block" style="margin-top:12px" data-act="raceclose">Готово</button>`;
+  const gas=document.getElementById('gas');if(gas)gas.replaceWith(box);
+  pendingToasts.forEach(toast);pendingToasts=[];
+}
+
+/* ================= ACTIONS ================= */
+function stopAuto(){if(auto){clearInterval(auto);auto=null;const ab=document.getElementById('autoBtn');if(ab){ab.textContent='▶';ab.classList.remove('on');}}}
+function doStep(){if(step()){save();render();afterStep();return true;}return false;}
+const ACT={
+  tab:d=>{tab=d.t;render();window.scrollTo(0,0);},
+  next:()=>doStep(),
+  quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
+  auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
+  line:()=>{const c=lineCost(G);if(G.cash>=c){G.cash-=c;G.lines++;addLog(`Построена линия №${G.lines} за ${money(c)}.`);checkAch();save();render();pendingToasts.forEach(toast);pendingToasts=[];}},
+  sellline:()=>{if(G.lines>1){const v=Math.round(lineCost(G)*0.4);G.lines--;G.cash+=v;addLog(`Линия продана за ${money(v)}.`);save();render();}},
+  workers:d=>{G.workers=Math.max(0,G.workers+ +d.d);save();render();},
+  balance:()=>{G.workers=G.lines*(G.conveyor?13:10);save();render();},
+  conveyor:()=>{if(G.cash>=30000&&!G.conveyor){G.cash-=30000;G.conveyor=true;addLog('Завод переведён на конвейерную сборку.','good');checkAch();save();render();pendingToasts.forEach(toast);pendingToasts=[];}},
+  loan:()=>{if(G.loan+10000<=maxLoan(G)){G.loan+=10000;G.cash+=10000;save();render();}},
+  repay:()=>{if(G.loan>=10000&&G.cash>=10000){G.loan-=10000;G.cash-=10000;save();render();}},
+  price:d=>{const md=G.models.find(m=>m.id===+d.id);const st=Math.max(10,Math.round(md.price*0.05/10)*10);md.price=Math.max(50,md.price+st*(+d.d));save();render();},
+  retire:d=>{const md=G.models.find(m=>m.id===+d.id);const rev=md.stock*md.price*0.6;G.cash+=rev;
+    addLog(`«${md.name}» снята с производства${md.stock?`, остаток ${md.stock} шт. распродан за ${money(rev)}`:''}.`);md.stock=0;md.status='off';save();render();},
+  revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';addLog(`«${md.name}» снова в производстве.`);save();render();},
+  branch:d=>{const c=branchCost(G);if(G.cash>=c&&!G.branches.includes(d.c)){G.cash-=c;G.branches.push(d.c);addLog(`Открыт филиал: ${COUNTRIES[d.c].name}.`,'good');checkAch();save();render();pendingToasts.forEach(toast);pendingToasts=[];}},
+  design:()=>openDesigner(),
+  pick:d=>{draft[d.k]=d.v;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  startdev:()=>{const md={...draft},dc=devCost(md);if(G.cash<dc)return;G.cash-=dc;
+    const nm=(draft.name||'').trim()||('Тип '+G.nextId);
+    G.models.push({id:G.nextId++,name:nm,e:md.e,c:md.c,b:md.b,t:md.t,paint:md.paint,price:Math.round(refPrice(md,G)*1.05/50)*50,status:'dev',devLeft:devMonths(md),launched:0,stock:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0});
+    addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
+  close:()=>closeSheet(),
+  choose:d=>{closeSheet();resolve(d.k);},
+  help:()=>openHelp(),
+  newgame:()=>{draft=null;stopAuto();openNewGame();},
+  country:d=>{draft.country=d.v;draft.company=document.getElementById('cname').value;openNewGame();},
+  startgame:()=>{newGame(draft.country,(draft.company||'').trim());closeSheet();tab='plant';shownCash=null;save();render();},
+  racesel:d=>{G.raceSel=+d.id;render();},
+  race:()=>startRace(),
+  raceclose:()=>{race=null;closeSheet();render();}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
+
+/* ================= BOOT ================= */
+G=load();
+if(!G){newGame('de','Моторные мастерские');save();}
+render();
+</script>
+
+</body></html>
