@@ -48,7 +48,7 @@ def main():
     print('photos:', len(set(v['src'] for v in manifest.values())), 'titles:', len(manifest), 'of', len(titles))
 
 MUSIC_Q = [
-     ['Daisy Bell',1895,'song'],['Washington Post march',1895,'march'],['Semper Fidelis march',1896,'march'],['Stars and Stripes Forever',1897,'march'],
+     ['Daisy Bell Bicycle Built for Two Edison',1895,'song'],['Washington Post march',1895,'march'],['Semper Fidelis march',1896,'march'],['Stars and Stripes Forever',1897,'march'],
      ['Maple Leaf Rag',1899,'rag'],['Over the Waves Rosas waltz',1900,'waltz'],['Skaters Waltz Waldteufel',1900,'waltz'],['Peacherine Rag',1901,'rag'],
      ['The Entertainer Joplin',1902,'rag'],['Elite Syncopations',1902,'rag'],['Weeping Willow rag',1903,'rag'],['Entry of the Gladiators',1904,'march'],
      ['In My Merry Oldsmobile',1905,'song'],['Merry Widow Waltz',1906,'waltz'],['Dill Pickles rag',1906,'rag'],['Frog Legs Rag',1906,'rag'],
@@ -59,7 +59,7 @@ MUSIC_Q = [
      ['Tiger Rag Original Dixieland Jass Band',1918,'jazz'],['Darktown Strutters Ball',1917,'jazz'],['Swanee Jolson',1920,'song'],['Crazy Blues Mamie Smith',1920,'jazz'],
      ['Whispering Paul Whiteman',1920,'jazz'],['Royal Garden Blues',1920,'jazz'],['Aint We Got Fun',1921,'song'],['Yes We Have No Bananas',1923,'song'],
      ['Dipper Mouth Blues',1923,'jazz'],['Wolverine Blues',1923,'jazz'],['Rhapsody in Blue 1924',1924,'jazz'],['Charleston 1925',1925,'jazz'],
-     ['Sweet Georgia Brown 1925',1925,'jazz'],['Bye Bye Blackbird',1926,'song'],['Black Bottom Stomp',1926,'jazz'],['West End Blues',1928,'jazz']]
+     ['Sweet Georgia Brown 1925',1925,'jazz'],['Bye Bye Blackbird Gene Austin',1926,'song'],['Black Bottom Stomp',1926,'jazz'],['West End Blues',1928,'jazz']]
 
 BAKE_LIMIT = 40e6   # bytes of music baked into the APK; the rest stream from Wikimedia
 
@@ -71,13 +71,12 @@ def music():
     out_dir = os.path.join(ROOT, 'app', 'src', 'main', 'assets', 'music'); os.makedirs(out_dir, exist_ok=True)
     api = 'https://commons.wikimedia.org/w/api.php?format=json&action=query'
     man, seen, baked = {}, set(), 0
-    # interleave eras so baked tracks cover every period, not only the early years
-    for q, y, st in [MUSIC_Q[i] for i in sorted(range(len(MUSIC_Q)), key=lambda i: (i % 3, i))]:
+    for q, y, st in MUSIC_Q:
         try:
             sr = json.loads(get(api + '&list=search&srnamespace=6&srlimit=4&srsearch=' + urllib.parse.quote(q + ' filetype:audio')))
             kw = keywords(q)
             titles = [x['title'] for x in sr.get('query', {}).get('search', [])]
-            titles = [t for t in titles if not re.search(r'midi|\.mid\b|ringtone', t, re.I) and (not kw or any(w in t.lower() for w in kw))][:2]
+            titles = [t for t in titles if not re.search(r'midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder', t, re.I) and (not kw or any(w in t.lower() for w in kw))][:2]
             if not titles: print('music: nothing for', q); continue
             vi = json.loads(get(api + '&prop=videoinfo&viprop=url|size|mime|derivatives|extmetadata&titles=' + urllib.parse.quote('|'.join(titles))))
             pages = list(vi.get('query', {}).get('pages', {}).values())
@@ -94,19 +93,26 @@ def music():
                 if src.startswith('//'): src = 'https:' + src
                 entry = {'src': src, 'y': y, 'title': re.sub(r'\.[a-z0-9]+$', '', t.replace('File:', ''), flags=re.I).replace('_', ' '),
                          'page': info.get('descriptionurl', '')}
-                if baked < BAKE_LIMIT:
-                    ext = '.mp3' if (mp3 or 'mpeg' in info.get('mime', '')) else '.ogg'
-                    fn = hashlib.md5(t.encode()).hexdigest()[:12] + ext
-                    path = os.path.join(out_dir, fn)
-                    try:
-                        if not os.path.exists(path): open(path, 'wb').write(get(src)); time.sleep(0.3)
-                        baked += os.path.getsize(path); entry['src'] = 'music/' + fn
-                    except Exception as e:
-                        print('music download failed, will stream', t, e)
+                entry['_ext'] = '.mp3' if (mp3 or 'mpeg' in info.get('mime', '')) else '.ogg'; entry['_t'] = t
                 seen.add(t); man.setdefault(st, []).append(entry)
                 break
         except Exception as e:
             print('music error', q, e)
+    # bake round-robin across styles so every style has offline tracks; the rest stream
+    queues = {k: list(v) for k, v in man.items()}
+    while baked < BAKE_LIMIT and any(queues.values()):
+        for st in list(queues):
+            if not queues[st] or baked >= BAKE_LIMIT: continue
+            e = queues[st].pop(0)
+            fn = hashlib.md5(e['_t'].encode()).hexdigest()[:12] + e['_ext']
+            path = os.path.join(out_dir, fn)
+            try:
+                if not os.path.exists(path): open(path, 'wb').write(get(e['src'])); time.sleep(0.3)
+                baked += os.path.getsize(path); e['src'] = 'music/' + fn
+            except Exception as ex:
+                print('music download failed, will stream', e['_t'], ex)
+    for v in man.values():
+        for e in v: e.pop('_t', None); e.pop('_ext', None)
     with open(os.path.join(out_dir, 'music.js'), 'w', encoding='utf-8') as f:
         f.write('window.MUSIC_MANIFEST=' + json.dumps(man, ensure_ascii=False) + ';')
     print('music:', {k: len(v) for k, v in man.items()}, 'baked MB', round(baked / 1e6, 1))
