@@ -1274,6 +1274,14 @@ const ACT={
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 
+// Кнопка «Назад» на Android: закрываем окна по очереди
+window.androidBack=function(){
+  if(R){finishRace(true);return true;}
+  if(!PW.hidden){const b=PW.querySelector('.p-btn');if(b)b.click();else closePaper();return true;}
+  if(!sheet.hidden){if(G.pending.length||(draft&&draft.ng&&G.over))return true;closeSheet();return true;}
+  if(tab!=='plant'){tab='plant';render();window.scrollTo(0,0);return true;}
+  return false;
+};
 /* ================= BOOT ================= */
 loadImages();
 G=load();

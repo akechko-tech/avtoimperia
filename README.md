@@ -1,3 +1,11 @@
+# Автоимперия
+
+**Скачать для Android:** https://github.com/akechko-tech/avtoimperia/releases/latest/download/avtoimperia.apk
+**Играть в браузере / на iPhone:** https://akechko-tech.github.io/avtoimperia/
+
+Каждое изменение в ветке main автоматически собирает новый APK и публикует его по ссылке выше.
+Приложение подписано постоянным ключом (app/avtoimperia.keystore), поэтому обновления ставятся поверх без потери сохранений.
+
 # Автоимперия — Android-проект
 
 1. Установите Android Studio (бесплатно, developer.android.com/studio).
