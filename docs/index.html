@@ -143,8 +143,9 @@ table.pl td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-ali
 table.pl th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:left;padding-bottom:6px}
 table.pl th.n{text-align:right}
 table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-weight:600}
-.comp{display:grid;grid-template-columns:12px 1fr 90px 44px;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
-.comp .dot{width:10px;height:10px;border-radius:50%}
+.comp{display:grid;grid-template-columns:44px 1fr 80px 40px;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+.comp .dot{width:12px;height:12px;border-radius:50%;margin-left:16px}
+.comp small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
 .comp.you{color:var(--brass);font-weight:600}
 .ach{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
 .ach div{border:1px solid var(--line-soft);border-radius:5px;padding:8px 10px;font-size:12px;color:var(--muted)}
@@ -156,6 +157,16 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .race-item .mo{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .hist{font-family:var(--serif);font-size:15px;line-height:1.5;color:#d9d2c0;border-left:2px solid var(--brass);padding-left:12px;margin-top:10px}
 
+/* photos */
+.ph-oval{width:64px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--brass);box-sizing:border-box;background:#5a5048}
+.ph-oval img{width:100%;height:100%;object-fit:cover;filter:sepia(.35) contrast(1.05)}
+.thumb{width:44px;height:32px;border-radius:3px;object-fit:cover;display:block;filter:sepia(.25)}
+.photo{position:relative;margin-top:10px;border-radius:5px;overflow:hidden;border:1px solid var(--line-soft)}
+.photo img{display:block;width:100%;max-height:220px;object-fit:cover;filter:sepia(.3) contrast(1.05)}
+.credit{display:block;font-size:10px;font-family:var(--mono);color:var(--muted);text-decoration:none;padding:3px 6px}
+.photo .credit{position:absolute;right:0;bottom:0;background:rgba(0,0,0,.55);color:#ddd}
+.p-fig img{display:block;width:100%;max-height:260px;object-fit:cover;filter:grayscale(1) sepia(.4) contrast(1.25)}
+.p-fig .credit{color:var(--ink);text-align:right;background:transparent}
 /* newspaper */
 .paperwrap{position:fixed;inset:0;z-index:15;background:rgba(3,8,14,.82);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow:auto}
 .paper{background:var(--paper);color:var(--ink);width:100%;max-width:520px;max-height:100%;overflow:auto;box-sizing:border-box;padding:18px 18px 16px;font-family:var(--serif);box-shadow:0 20px 60px rgba(0,0,0,.6);
@@ -256,28 +267,32 @@ const COUNTRIES={
   it:{name:'Италия',city:'Турин',market:0.5,wage:115,cash:35000,note:'Маленький рынок, великие гонки'}
 };
 const PIONEERS={
-  ford:{name:'Генри Форд',yrs:'1863–1947',c:'us',co:'Форд Мотор',beard:0,bio:'Сделал автомобиль массовым: Model T (1908) и движущийся конвейер (1913).',plus:['Мощность линий +25%','Конвейер на год раньше','Народный сегмент +15%'],minus:['Люкс −15%'],b:{lineCap:1.25,convEarly:12,seg:{people:1.15,lux:0.85}}},
-  olds:{name:'Рэнсом Олдс',yrs:'1864–1950',c:'us',co:'Олдс Мотор Воркс',beard:0,bio:'Curved Dash 1901 года собирали на поточной линии — задолго до конвейера Форда.',plus:['Рабочие +20%','Линии дешевле на 20%'],minus:[],b:{workerEff:1.2,lineCost:0.8}},
-  benz:{name:'Карл Бенц',yrs:'1844–1929',c:'de',co:'Бенц и Ко',beard:1,bio:'Патент 1886 года на «моторваген» — первый настоящий автомобиль.',plus:['Разработка на 30% быстрее','Качество +5%'],minus:[],b:{devTime:0.7,quality:1.05}},
-  maybach:{name:'Вильгельм Майбах',yrs:'1846–1929',c:'de',co:'Майбах Моторенбау',beard:1,bio:'Создатель поплавкового карбюратора и первого «Мерседеса» 1901 года.',plus:['Качество +8%','Гонки +8%'],minus:['Разработка дороже на 10%'],b:{quality:1.08,race:0.08,devCost:1.1}},
-  renault:{name:'Луи Рено',yrs:'1877–1944',c:'fr',co:'Рено Фрер',beard:0,bio:'Изобрёл прямую передачу (1899). Его гонщик Шиз выиграл первое Гран-при в 1906 году.',plus:['Гонки +10%','Разработка дешевле на 20%'],minus:[],b:{race:0.1,devCost:0.8}},
-  peugeot:{name:'Арман Пежо',yrs:'1849–1915',c:'fr',co:'Пежо',beard:1,bio:'Наследник промышленной династии. «Пежо» участвовал в первой гонке Париж — Бордо — Париж.',plus:['Стартовый капитал +40%','Репутация 45','Реклама +20%'],minus:[],b:{cash:1.4,rep:45,adEff:1.2}},
-  lanchester:{name:'Фредерик Ланчестер',yrs:'1868–1946',c:'uk',co:'Ланчестер Энджин',beard:1,bio:'Построил один из первых британских бензиновых автомобилей (1895). Инженер-теоретик.',plus:['Качество +10%','Рамы держат на 25% больше л.с.'],minus:[],b:{quality:1.1,chassisTol:1.25}},
-  bugatti:{name:'Этторе Бугатти',yrs:'1881–1947',c:'fr',co:'Бугатти',beard:0,bio:'Художник среди инженеров. Type 35 — одна из самых побеждающих гоночных машин 1920-х.',plus:['Люкс +25%','Гонки +12%'],minus:['Детали дороже на 10%'],b:{seg:{lux:1.25},race:0.12,matCost:1.1}},
-  ferrari:{name:'Энцо Феррари',yrs:'1898–1988',c:'it',co:'Скудерия Феррари',beard:0,bio:'Гонщик Alfa Romeo, в 1929 году основал Scuderia Ferrari. В игре — альтернативная история.',plus:['Гонки +15%','Репутация от побед ×2'],minus:['Рабочие −10%'],b:{race:0.15,raceRep:2,workerEff:0.9}},
-  agnelli:{name:'Джованни Аньелли',yrs:'1866–1945',c:'it',co:'ФИАТ',beard:0,bio:'Один из основателей FIAT (1899). Построил завод Линготто с испытательным треком на крыше.',plus:['Капитал +20%','Мощность линий +10%','Репутация 40'],minus:[],b:{cash:1.2,lineCap:1.1,rep:40}},
+  ford:{wiki:'Henry Ford',name:'Генри Форд',yrs:'1863–1947',c:'us',co:'Форд Мотор',beard:0,bio:'Сделал автомобиль массовым: Model T (1908) и движущийся конвейер (1913).',plus:['Мощность линий +25%','Конвейер на год раньше','Народный сегмент +15%'],minus:['Люкс −15%'],b:{lineCap:1.25,convEarly:12,seg:{people:1.15,lux:0.85}}},
+  olds:{wiki:'Ransom E. Olds',name:'Рэнсом Олдс',yrs:'1864–1950',c:'us',co:'Олдс Мотор Воркс',beard:0,bio:'Curved Dash 1901 года собирали на поточной линии — задолго до конвейера Форда.',plus:['Рабочие +20%','Линии дешевле на 20%'],minus:[],b:{workerEff:1.2,lineCost:0.8}},
+  benz:{wiki:'Carl Benz',name:'Карл Бенц',yrs:'1844–1929',c:'de',co:'Бенц и Ко',beard:1,bio:'Патент 1886 года на «моторваген» — первый настоящий автомобиль.',plus:['Разработка на 30% быстрее','Качество +5%'],minus:[],b:{devTime:0.7,quality:1.05}},
+  maybach:{wiki:'Wilhelm Maybach',name:'Вильгельм Майбах',yrs:'1846–1929',c:'de',co:'Майбах Моторенбау',beard:1,bio:'Создатель поплавкового карбюратора и первого «Мерседеса» 1901 года.',plus:['Качество +8%','Гонки +8%'],minus:['Разработка дороже на 10%'],b:{quality:1.08,race:0.08,devCost:1.1}},
+  renault:{wiki:'Louis Renault (industrialist)',name:'Луи Рено',yrs:'1877–1944',c:'fr',co:'Рено Фрер',beard:0,bio:'Изобрёл прямую передачу (1899). Его гонщик Шиз выиграл первое Гран-при в 1906 году.',plus:['Гонки +10%','Разработка дешевле на 20%'],minus:[],b:{race:0.1,devCost:0.8}},
+  peugeot:{wiki:'Armand Peugeot',name:'Арман Пежо',yrs:'1849–1915',c:'fr',co:'Пежо',beard:1,bio:'Наследник промышленной династии. «Пежо» участвовал в первой гонке Париж — Бордо — Париж.',plus:['Стартовый капитал +40%','Репутация 45','Реклама +20%'],minus:[],b:{cash:1.4,rep:45,adEff:1.2}},
+  lanchester:{wiki:'Frederick W. Lanchester',name:'Фредерик Ланчестер',yrs:'1868–1946',c:'uk',co:'Ланчестер Энджин',beard:1,bio:'Построил один из первых британских бензиновых автомобилей (1895). Инженер-теоретик.',plus:['Качество +10%','Рамы держат на 25% больше л.с.'],minus:[],b:{quality:1.1,chassisTol:1.25}},
+  bugatti:{wiki:'Ettore Bugatti',name:'Этторе Бугатти',yrs:'1881–1947',c:'fr',co:'Бугатти',beard:0,bio:'Художник среди инженеров. Type 35 — одна из самых побеждающих гоночных машин 1920-х.',plus:['Люкс +25%','Гонки +12%'],minus:['Детали дороже на 10%'],b:{seg:{lux:1.25},race:0.12,matCost:1.1}},
+  ferrari:{wiki:'Enzo Ferrari',name:'Энцо Феррари',yrs:'1898–1988',c:'it',co:'Скудерия Феррари',beard:0,bio:'Гонщик Alfa Romeo, в 1929 году основал Scuderia Ferrari. В игре — альтернативная история.',plus:['Гонки +15%','Репутация от побед ×2'],minus:['Рабочие −10%'],b:{race:0.15,raceRep:2,workerEff:0.9}},
+  agnelli:{wiki:'Giovanni Agnelli',name:'Джованни Аньелли',yrs:'1866–1945',c:'it',co:'ФИАТ',beard:0,bio:'Один из основателей FIAT (1899). Построил завод Линготто с испытательным треком на крыше.',plus:['Капитал +20%','Мощность линий +10%','Репутация 40'],minus:[],b:{cash:1.2,lineCap:1.1,rep:40}},
   custom:{name:'Свой персонаж',yrs:'',c:'de',co:'Моторные мастерские',beard:0,bio:'Никаких бонусов и слабостей. Только вы и эпоха.',plus:[],minus:[],b:{}}
 };
 const ENGINES=[
-  {id:'e1',name:'1 цил., 3 л.с.',y:1885,hp:3,q:8,c:700},{id:'e2',name:'2 цил., 8 л.с.',y:1898,hp:8,q:16,c:900},
-  {id:'e3',name:'4 цил., 16 л.с.',y:1903,hp:16,q:26,c:1200},{id:'e4',name:'4 цил., 25 л.с.',y:1908,hp:25,q:36,c:1400},
-  {id:'e5',name:'6 цил., 40 л.с.',y:1912,hp:40,q:48,c:1900},{id:'e6',name:'V8, 60 л.с.',y:1916,hp:60,q:58,c:2300},
-  {id:'e7',name:'4 цил. OHV, 50 л.с.',y:1922,hp:50,q:62,c:1800},{id:'e8',name:'V8, 90 л.с.',y:1927,hp:90,q:78,c:2600}
+  {id:'e1',name:'De Dion-Bouton, 1 цил. 3 л.с.',y:1885,hp:3,q:8,c:700,note:'Самый массовый мотор эпохи: его ставили десятки марок'},
+  {id:'e2',name:'Daimler Phönix, 2 цил. 8 л.с.',y:1898,hp:8,q:16,c:900,note:'Двигатель Майбаха с распылительным карбюратором'},
+  {id:'e3',name:'Aster, 4 цил. 16 л.с.',y:1903,hp:16,q:26,c:1200,note:'Французский поставщик моторов для многих марок'},
+  {id:'e4',name:'Continental, 4 цил. 25 л.с.',y:1908,hp:25,q:36,c:1400,note:'Американский независимый поставщик моторов'},
+  {id:'e5',name:'Knight, бесклапанный 6 цил. 40 л.с.',y:1912,hp:40,q:48,c:1900,note:'Тихий гильзовый газораспределитель, выбор Daimler'},
+  {id:'e6',name:'V8 по схеме Cadillac, 60 л.с.',y:1916,hp:60,q:58,c:2300,note:'Первый массовый V8 появился у Cadillac в 1914 году'},
+  {id:'e7',name:'Верхнеклапанный 4 цил., 50 л.с.',y:1922,hp:50,q:62,c:1800,note:'Лёгкий и экономичный мотор двадцатых'},
+  {id:'e8',name:'Рядная «восьмёрка», 90 л.с.',y:1927,hp:90,q:78,c:2600,note:'Мотор роскошных машин конца двадцатых'}
 ];
 const CHASSIS=[
-  {id:'c1',name:'Деревянная рама',y:1885,max:6,q:6,c:400},{id:'c2',name:'Усиленная деревянная',y:1896,max:12,q:12,c:500},
-  {id:'c3',name:'Стальная лестничная',y:1902,max:30,q:20,c:700},{id:'c4',name:'Штампованная сталь',y:1910,max:60,q:30,c:900},
-  {id:'c5',name:'Рама с тормозами на 4 колеса',y:1920,max:120,q:42,c:1100}
+  {id:'c1',name:'Деревянная рама, колёса Michelin',y:1885,max:6,q:6,c:400},{id:'c2',name:'Рама «система Панар», шины Dunlop',y:1896,max:12,q:12,c:500},
+  {id:'c3',name:'Стальная рама, магнето Bosch',y:1902,max:30,q:20,c:700},{id:'c4',name:'Штампованная сталь, колёса Rudge-Whitworth',y:1910,max:60,q:30,c:900},
+  {id:'c5',name:'Рама с гидравлическими тормозами на 4 колеса',y:1920,max:120,q:42,c:1100}
 ];
 const BODIES=[
   {id:'b1',name:'Открытый двухместный',y:1885,q:5,c:300},{id:'b2',name:'Тонно, 4 места',y:1899,q:10,c:450},
@@ -285,18 +300,46 @@ const BODIES=[
   {id:'b5',name:'Цельнометаллический седан',y:1923,q:32,c:1000},{id:'b6',name:'Фургон',y:1900,q:8,c:500,truck:true},
   {id:'b7',name:'Грузовик 1,5 т',y:1910,q:18,c:800,truck:true},{id:'b8',name:'Грузовик 3 т',y:1920,q:28,c:1100,truck:true}
 ];
-const TRIMS=[{id:'t0',name:'Базовая',y:1885,q:0,c:0},{id:'t1',name:'Комфорт',y:1885,q:6,c:300},{id:'t2',name:'Люкс',y:1885,q:12,c:800}];
+const TRIMS=[{id:'t0',name:'Базовая',y:1885,q:0,c:0},{id:'t1',name:'Комфорт: фонари, тент',y:1885,q:6,c:300},{id:'t2',name:'Люкс: кожа, латунь, стартер Delco',y:1885,q:12,c:800}];
 const PAINTS=[{id:'#1b1d22',name:'Чёрный'},{id:'#1f4a36',name:'Зелёный'},{id:'#9e2b25',name:'Красный'},{id:'#23427a',name:'Синий'},{id:'#e3d6b4',name:'Сливочный'},{id:'#5c1e2a',name:'Бордо'}];
 const SEGK=['people','middle','lux','truck'];
 const SEG={people:{name:'Народный',el:3.0,qe:1.5,prem:1.0},middle:{name:'Средний',el:2.2,qe:2.0,prem:1.05},lux:{name:'Люкс',el:1.3,qe:3.0,prem:1.3},truck:{name:'Грузовой',el:2.0,qe:1.8,prem:1.02}};
 const OTHER=0.35,MARKUP=1.25;
 const COMPS={
-  de:[['Келлер & Зон','#b5523b',1.0,1,1.05,['people','middle'],1895,0],['Рейнмотор','#4f8fbf',0.9,2,0.95,['people','truck'],1895,1],['Фалькенверк','#8f7ad6',1.1,1,1.15,['middle','lux'],1899,0],['Брандт','#5fae7a',0.9,2,1.0,['people','middle','truck'],1905,0]],
-  fr:[['Дюпре-Фрер','#8f7ad6',1.1,0,1.1,['middle','lux'],1895,0],['Моро','#b5523b',1.0,1,1.0,['people','middle'],1895,0],['Лафорж','#4f8fbf',0.9,2,0.95,['people','truck'],1898,1],['Сен-Клер','#c9a0d8',1.0,1,1.25,['lux'],1902,0]],
-  uk:[['Эшфорд','#5fae7a',1.0,1,1.1,['middle','lux'],1896,0],['Хэтэуэй','#b5523b',0.9,2,1.0,['people','middle'],1898,0],['Бридж & Коул','#4f8fbf',0.9,2,1.0,['truck','middle'],1903,0],['Норбери','#8f7ad6',0.9,2,0.95,['people'],1905,1]],
-  us:[['Грант Моторс','#4f8fbf',1.2,1,1.0,['people','middle','truck'],1895,0],['Кэллоуэй','#8f7ad6',1.0,1,1.2,['lux','middle'],1899,0],['Лейксайд','#b5523b',1.0,2,0.9,['people'],1903,1],['Мэйфлауэр','#5fae7a',1.0,1,1.05,['middle','truck'],1908,0]],
-  it:[['Торрини','#b5523b',1.0,1,1.0,['people','middle'],1899,0],['Велокс','#4f8fbf',0.9,2,0.95,['people','truck'],1900,1],['Ломбарда','#8f7ad6',1.0,1,1.2,['middle','lux'],1906,0],['Сан-Марко','#5fae7a',0.9,1,1.1,['lux'],1910,0]]
+  de:[{n:'Benz & Cie.',str:1.1,lag:0,segs:['people','middle'],since:1895,pk:'benz',models:[[1894,'Velo','Benz Velo'],[1909,'Blitzen-Benz','Blitzen Benz']]},
+      {n:'Daimler',str:1.1,lag:0,pm:1.15,segs:['middle','lux'],since:1895,pk:'maybach',models:[[1895,'Riemenwagen','Daimler-Motoren-Gesellschaft'],[1901,'Mercedes 35 PS','Mercedes 35 hp'],[1928,'Mercedes-Benz SSK','Mercedes-Benz SSK']]},
+      {n:'Opel',str:0.9,lag:2,pm:0.95,segs:['people','middle'],since:1899,mass:1,models:[[1899,'System Lutzmann','Opel'],[1924,'4 PS «Laubfrosch»','Opel 4 PS']]},
+      {n:'Horch',str:0.9,lag:1,pm:1.2,segs:['middle','lux'],since:1900,models:[[1900,'Horch','Horch']]},
+      {n:'Adler',str:0.9,lag:2,segs:['people','truck'],since:1900,models:[[1900,'Adler','Adlerwerke']]}],
+  fr:[{n:'Panhard et Levassor',str:1.1,lag:0,pm:1.15,segs:['middle','lux'],since:1895,models:[[1895,'Panhard et Levassor','Panhard']]},
+      {n:'Peugeot',str:1.0,lag:1,segs:['people','middle'],since:1895,pk:'peugeot',models:[[1895,'Type 3','Peugeot Type 3'],[1913,'Bébé','Peugeot Bébé'],[1929,'201','Peugeot 201']]},
+      {n:'De Dion-Bouton',str:1.0,lag:1,pm:0.95,segs:['people','middle'],since:1895,models:[[1899,'Vis-à-vis','De Dion-Bouton']]},
+      {n:'Renault',str:1.0,lag:1,segs:['people','middle','truck'],since:1899,pk:'renault',models:[[1899,'Voiturette','Renault Voiturette'],[1905,'AG «такси Марны»','Renault AG']]},
+      {n:'Citroën',str:1.1,lag:1,pm:0.9,segs:['people'],since:1919,mass:1,models:[[1919,'Type A','Citroën Type A'],[1922,'5CV','Citroën 5CV']]},
+      {n:'Bugatti',str:0.9,lag:0,pm:1.3,segs:['lux'],since:1910,pk:'bugatti',models:[[1910,'Type 13','Bugatti Type 13'],[1924,'Type 35','Bugatti Type 35']]}],
+  uk:[{n:'Daimler (Coventry)',str:1.0,lag:1,pm:1.1,segs:['middle','lux'],since:1897,models:[[1897,'Daimler','Daimler Motor Company']]},
+      {n:'Wolseley',str:1.0,lag:1,segs:['people','middle'],since:1901,models:[[1901,'Wolseley','Wolseley Motors']]},
+      {n:'Lanchester',str:0.9,lag:0,pm:1.2,segs:['lux'],since:1899,pk:'lanchester',models:[[1901,'Lanchester','Lanchester Motor Company']]},
+      {n:'Rolls-Royce',str:1.1,lag:0,pm:1.35,segs:['lux'],since:1906,models:[[1907,'Silver Ghost','Rolls-Royce Silver Ghost'],[1925,'Phantom','Rolls-Royce Phantom I']]},
+      {n:'Austin',str:1.0,lag:1,segs:['people','middle'],since:1906,models:[[1906,'Austin','Austin Motor Company'],[1922,'Seven','Austin 7']]},
+      {n:'Morris',str:1.0,lag:1,pm:0.9,segs:['people'],since:1913,mass:1,models:[[1913,'Oxford «Bullnose»','Bullnose Morris']]},
+      {n:'Bentley',str:0.8,lag:0,pm:1.3,segs:['lux'],since:1920,models:[[1921,'3 Litre','Bentley 3 Litre']]}],
+  us:[{n:'Duryea',str:0.9,lag:1,segs:['middle'],since:1895,until:1917,models:[[1895,'Motor Wagon','Duryea Motor Wagon Company']]},
+      {n:'Oldsmobile',str:1.1,lag:1,pm:0.95,segs:['people','middle'],since:1897,pk:'olds',models:[[1901,'Curved Dash','Oldsmobile Curved Dash']]},
+      {n:'Packard',str:1.0,lag:0,pm:1.3,segs:['lux'],since:1899,models:[[1899,'Packard','Packard'],[1915,'Twin Six','Packard Twin Six']]},
+      {n:'Cadillac',str:1.0,lag:0,pm:1.15,segs:['middle','lux'],since:1902,models:[[1903,'Model A','Cadillac Model A'],[1915,'Type 51 V8','Cadillac Type 51']]},
+      {n:'Ford',str:1.1,lag:1,pm:0.9,segs:['people','truck'],since:1903,pk:'ford',mass:1,models:[[1903,'Model A','Ford Model A (1903–04)'],[1908,'Model T','Ford Model T'],[1927,'Model A','Ford Model A (1927–1931)']]},
+      {n:'Buick',str:1.0,lag:1,segs:['middle'],since:1904,models:[[1908,'Model 10','Buick Model 10']]},
+      {n:'Chevrolet',str:1.0,lag:1,pm:0.9,segs:['people'],since:1911,mass:1,models:[[1915,'Series 490','Chevrolet Series 490']]},
+      {n:'Dodge Brothers',str:1.0,lag:1,segs:['middle','truck'],since:1914,models:[[1914,'Model 30','Dodge Model 30']]},
+      {n:'Duesenberg',str:0.8,lag:0,pm:1.4,segs:['lux'],since:1920,models:[[1921,'Model A','Duesenberg Model A'],[1928,'Model J','Duesenberg Model J']]}],
+  it:[{n:'FIAT',str:1.2,lag:1,pm:0.95,segs:['people','middle','truck'],since:1899,pk:'agnelli',mass:1,models:[[1899,'4 HP','Fiat 4 HP'],[1912,'Zero','Fiat Zero'],[1919,'501','Fiat 501'],[1925,'509','Fiat 509']]},
+      {n:'Isotta Fraschini',str:0.9,lag:0,pm:1.35,segs:['lux'],since:1900,models:[[1900,'Isotta Fraschini','Isotta Fraschini'],[1919,'Tipo 8','Isotta Fraschini Tipo 8']]},
+      {n:'Itala',str:1.0,lag:0,pm:1.15,segs:['middle','lux'],since:1904,models:[[1907,'35/45 HP','Itala 35/45 HP']]},
+      {n:'Lancia',str:1.0,lag:0,segs:['middle'],since:1907,models:[[1908,'Alpha','Lancia Alpha'],[1922,'Lambda','Lancia Lambda']]},
+      {n:'Alfa Romeo',str:1.0,lag:0,pm:1.15,segs:['middle','lux'],since:1910,models:[[1910,'24 HP','A.L.F.A 24 HP'],[1927,'6C','Alfa Romeo 6C']]}]
 };
+const COMP_COLORS=['#4f8fbf','#b5523b','#8f7ad6','#5fae7a','#c9a0d8','#d08b3e','#6fb3b8','#a4a86a','#c76f93'];
 const MAST={de:['Motor-Rundschau','10 Pfennig',1],fr:['Le Moteur Illustré','10 centimes',0],uk:['The Motoring Gazette','One Penny',0],us:['The Detroit Chronicle','Two Cents',0],it:['Corriere dei Motori','10 centesimi',0]};
 const FLAVOR=[
   [1895,0,'Велосипедная лихорадка охватила города Европы'],[1896,0,'Братья Люмьер показывают в Париже «живые картины»'],[1896,3,'В Афинах прошли первые Олимпийские игры'],
@@ -358,10 +401,15 @@ const RACE_REC=[
   {id:'degp',c:'de',t:'circuit',km:509,m:6,years:[1928,1929],track:'nurb',name:'Гран-при Германии',hist:'«Северная петля» Нюрбургринга: 170 поворотов в лесах Эйфеля.'},
   {id:'mille',c:'it',t:'road',km:1600,m:3,mo:{1927:2},years:range(1927,1929),name:'Милле Милья',win1:'Фердинандо Миноя и Джузеппе Моранди (OM)',hist1:'Тысяча миль по дорогам Италии: Брешиа — Рим — Брешиа. Победители провели за рулём больше 21 часа.',hist:'Тысяча миль по дорогам Италии без остановки.'}
 ];
+const RACE_IMG={pbp:'Paris–Bordeaux–Paris',chicago:'Chicago Times-Herald race',pmp:'Paris–Marseille–Paris',pap:'Paris–Amsterdam–Paris',tdf:'Tour de France Automobile',thousand:'Thousand Miles Trial',
+  gb1900:'Gordon Bennett Cup (auto racing)',gb1903:'1903 Gordon Bennett Cup',gb1904:'Gordon Bennett Cup (auto racing)',gb1905:'Gordon Bennett Cup (auto racing)',pb1901:'Paris–Berlin race',pv1902:'Paris–Vienna race',pm1903:'Paris–Madrid race',
+  peking:'Peking to Paris',kaiser:'Kaiserpreis',nyparis:'1908 New York to Paris Race',savannah:'American Grand Prize',dieppe:'1912 French Grand Prix',lyon1914:'1914 French Grand Prix',pikes:'Pikes Peak International Hill Climb',
+  lm1921:'1921 French Grand Prix',brescia:'1921 Italian Grand Prix',monza1922:'1922 Italian Grand Prix',europe1924:'1924 European Grand Prix',avus1926:'1926 German Grand Prix',nurb1927:'1927 German Grand Prix',monaco:'1929 Monaco Grand Prix',
+  gpacf:'1906 French Grand Prix',vanderbilt:'Vanderbilt Cup',tt:'RAC Tourist Trophy',herkomer:'Herkomer Trophy',henry:'Prince Henry Tour',glidden:'Glidden Tour',targa:'Targa Florio',brooklands:'Brooklands',indy:'1911 Indianapolis 500',itgp:'Italian Grand Prix',lemans:'1923 24 Hours of Le Mans',degp:'Nürburgring',mille:'Mille Miglia'};
 const RACES=[];
 RACE_DEFS.forEach(r=>RACES.push({...r,key:r.id+'-'+r.y}));
 RACE_REC.forEach(r=>r.years.forEach((y,i)=>RACES.push({id:r.id,key:r.id+'-'+y,y,m:(r.mo&&r.mo[y]!==undefined)?r.mo[y]:r.m,c:r.c,t:r.t,km:r.km,track:r.track,crowd:r.crowd,name:r.name+(i?'':' '),win:i===0?r.win1:null,hist:i===0?r.hist1:r.hist,first:i===0})));
-RACES.forEach(r=>r.name=r.name.trim());
+RACES.forEach(r=>{r.name=r.name.trim();r.img=RACE_IMG[r.id]||'';if(!r.first&&RACE_REC.some(x=>x.id===r.id))r.img={gpacf:'French Grand Prix',indy:'Indianapolis 500',lemans:'24 Hours of Le Mans'}[r.id]||r.img;});
 RACES.sort((a,b)=>a.y-b.y||a.m-b.m);
 
 /* ================= MODEL ================= */
@@ -415,7 +463,8 @@ function appeal(md,s,c){
 }
 function massOn(cp,s,c){return cp.mass&&mi(s)>=(c==='us'?(1908-1895)*12+9:(1910-1895)*12);}
 function compR(cp,s,g){const y=s.y-cp.lag,truck=g==='truck';const b=bestQ(BODIES,y,x=>!!x.truck===truck);if(!b)return 0;const q=bestQ(ENGINES,y)+bestQ(CHASSIS,y)+b+(g==='middle'?6:g==='lux'?12:0);return Math.min(1.05,q/eraBest(s,truck));}
-function compA(cp,s,g,c){if(!cp.alive||!cp.segs.includes(g))return 0;const r=compR(cp,s,g);if(!r)return 0;const m=massOn(cp,s,c)&&g==='people';const S=SEG[g];return Math.pow(0.2+r,S.qe)*Math.pow(1/(cp.pm*(m?0.75:1)),S.el)*cp.str*(m?2.5:1)*0.9;}
+function compA(cp,s,g,c){if(!cp.alive||!cp.segs.includes(g))return 0;const r=compR(cp,s,g);if(!r)return 0;const m=massOn(cp,s,c)&&g==='people';const S=SEG[g];const n=s.comps[c].filter(x=>x.alive&&x.segs.includes(g)).length;return Math.pow(0.2+r,S.qe)*Math.pow(1/(cp.pm*(m?0.75:1)),S.el)*cp.str*(m?2.5:1)*0.9*Math.min(1,2.2/Math.max(1,n));}
+function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
 function lastOf(arr,y,f){const a=arr.filter(x=>x.y<=y&&(!f||f(x)));return a[a.length-1];}
 function compCar(cp,s,g){const y=s.y-cp.lag,truck=g==='truck';return {e:lastOf(ENGINES,y).id,c:lastOf(CHASSIS,y).id,b:(lastOf(BODIES,y,x=>!!x.truck===truck)||BODIES[0]).id,t:g==='lux'?'t2':g==='middle'?'t1':'t0',paint:cp.color};}
 function lineCost(s){return Math.round(6000*(1+0.03*T(s))*bn('lineCost')/100)*100;}
@@ -437,7 +486,7 @@ function hostName(c){return c==='intl'?'Международная':COUNTRIES[c]
 
 function newGame(pioneer,country,company){
   const C=COUNTRIES[country];
-  const comps={};for(const k in COMPS)comps[k]=COMPS[k].map(a=>({name:a[0],color:a[1],str:a[2],lag:a[3],pm:a[4],segs:a[5],since:a[6],mass:!!a[7],alive:a[6]<=1895,last:0}));
+  const comps={};for(const k in COMPS)comps[k]=COMPS[k].filter(a=>a.pk!==pioneer).map((a,i)=>({name:a.n,color:COMP_COLORS[i%COMP_COLORS.length],str:a.str,lag:a.lag,pm:a.pm||1,segs:a.segs,since:a.since,until:a.until||0,mass:!!a.mass,models:a.models,alive:a.since<=1895,last:0}));
   G={v:3,pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,lines:1,workers:10,wageMul:1,ad:200,rep:30,
      conveyor:false,military:false,strikeNext:false,supplyNext:1,nextId:2,branches:[],comps,raceDone:{},raceLog:[],ach:{},papers:[],
      models:[{id:1,name:'Тип 1',e:'e1',c:'c1',b:'b1',t:'t0',paint:'#1b1d22',price:2400,status:'prod',devLeft:0,launched:0,stock:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0}],
@@ -450,19 +499,19 @@ function newGame(pioneer,country,company){
 
 /* ================= EVENTS ================= */
 const HIST=[
-  {y:1896,m:10,c:'uk',title:'Флажок больше не нужен',deck:'Парламент отменил «закон о красном флаге»',text:'Автомобилям больше не нужен пешеход с флажком впереди, а скорость разрешили поднять до 14 миль в час. Британский рынок оживает; в честь события автомобилисты устроили пробег из Лондона в Брайтон.'},
+  {y:1896,m:10,c:'uk',img:'Red flag traffic laws',title:'Флажок больше не нужен',deck:'Парламент отменил «закон о красном флаге»',text:'Автомобилям больше не нужен пешеход с флажком впереди, а скорость разрешили поднять до 14 миль в час. Британский рынок оживает; в честь события автомобилисты устроили пробег из Лондона в Брайтон.'},
   {y:1900,m:0,title:'Грузовики выходят на улицы',deck:'Торговцы и почта хотят фургоны',text:'Лавочники, пивовары и почтовые ведомства присматриваются к моторным фургонам. В конструкторе появился грузовой кузов — это новый сегмент рынка.'},
-  {y:1901,m:2,title:'«Мерседес» задаёт новую планку',deck:'Низкая рама, сотовый радиатор, 35 сил',text:'Машина, построенная Вильгельмом Майбахом по заказу Эмиля Еллинека, выиграла гонки в Ницце. Лёгкая, низкая и мощная, она похожа скорее на автомобиль будущего, чем на карету без лошади. Покупатели ждут того же от всех марок.'},
-  {y:1908,m:9,title:'Автомобиль для всех',deck:'Генри Форд представил Model T',text:'Простая, прочная и дешёвая машина обещает сделать автомобиль доступным фермеру и рабочему. Цены по всему миру начинают падать, в народном сегменте появляются массовые марки.'},
-  {y:1913,m:9,title:'Движущийся конвейер',deck:'В Хайленд-Парке сборка шасси ускорилась в разы',text:'Машина едет к рабочему, а не рабочий к машине. Время сборки шасси сократилось с двенадцати часов до полутора. На вкладке «Завод» доступна модернизация.'},
+  {y:1901,m:2,img:'Mercedes 35 hp',title:'«Мерседес» задаёт новую планку',deck:'Низкая рама, сотовый радиатор, 35 сил',text:'Машина, построенная Вильгельмом Майбахом по заказу Эмиля Еллинека, выиграла гонки в Ницце. Лёгкая, низкая и мощная, она похожа скорее на автомобиль будущего, чем на карету без лошади. Покупатели ждут того же от всех марок.'},
+  {y:1908,m:9,img:'Ford Model T',title:'Автомобиль для всех',deck:'Генри Форд представил Model T',text:'Простая, прочная и дешёвая машина обещает сделать автомобиль доступным фермеру и рабочему. Цены по всему миру начинают падать, в народном сегменте появляются массовые марки.'},
+  {y:1913,m:9,img:'Highland Park Ford Plant',title:'Движущийся конвейер',deck:'В Хайленд-Парке сборка шасси ускорилась в разы',text:'Машина едет к рабочему, а не рабочий к машине. Время сборки шасси сократилось с двенадцати часов до полутора. На вкладке «Завод» доступна модернизация.'},
   {y:1914,m:7,c:'!us,it',title:'Война!',deck:'Мобилизация объявлена по всей Европе',text:'Спрос на легковые машины рухнул, армии нужны грузовики. Военное ведомство предлагает контракт: 40% мощностей по себестоимости плюс 35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
   {y:1915,m:4,c:'it',title:'Италия вступает в войну',deck:'Королевство объявило войну Австро-Венгрии',text:'Спрос на легковые машины рухнул, армии нужны грузовики. Военное ведомство предлагает контракт: 40% мощностей по себестоимости плюс 35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
   {y:1917,m:3,c:'us',title:'США вступают в войну',deck:'Конгресс объявил войну Германии',text:'Спрос на легковые машины упал вдвое. Армия предлагает контракт: 40% мощностей по себестоимости плюс 35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
-  {y:1918,m:10,title:'Перемирие!',deck:'Орудия умолкли 11 ноября в 11 часов',text:'Война окончена. Военные заказы прекращены, впереди послевоенный бум: вернувшиеся солдаты научились водить и хотят автомобили.',fx:s=>{s.military=false;}},
+  {y:1918,m:10,img:'Armistice of 11 November 1918',title:'Перемирие!',deck:'Орудия умолкли 11 ноября в 11 часов',text:'Война окончена. Военные заказы прекращены, впереди послевоенный бум: вернувшиеся солдаты научились водить и хотят автомобили.',fx:s=>{s.military=false;}},
   {y:1921,m:0,title:'Послевоенный спад',deck:'Кредиты дорожают, склады полны',text:'Покупатели осторожничают, цены падают. Выживут те, кто умеет считать.'},
-  {y:1923,m:0,c:'de',title:'Гиперинфляция',deck:'Буханка хлеба стоит миллиарды марок',text:'Марка обесценивается каждый день. Немецкий рынок почти замер, зарплату выдают дважды в день.'},
-  {y:1924,m:0,title:'Ревущие двадцатые',deck:'Автомобиль становится вещью среднего класса',text:'Экономика растёт, в моде джаз, радио и автомобиль в рассрочку.'},
-  {y:1929,m:9,title:'Чёрный вторник',deck:'Крах на Нью-Йоркской фондовой бирже',text:'Акции обесценились за несколько дней. Покупатели откладывают покупки, банки требуют вернуть кредиты.'}
+  {y:1923,m:0,c:'de',img:'Hyperinflation in the Weimar Republic',title:'Гиперинфляция',deck:'Буханка хлеба стоит миллиарды марок',text:'Марка обесценивается каждый день. Немецкий рынок почти замер, зарплату выдают дважды в день.'},
+  {y:1924,m:0,img:'Roaring Twenties',title:'Ревущие двадцатые',deck:'Автомобиль становится вещью среднего класса',text:'Экономика растёт, в моде джаз, радио и автомобиль в рассрочку.'},
+  {y:1929,m:9,img:'Wall Street crash of 1929',title:'Чёрный вторник',deck:'Крах на Нью-Йоркской фондовой бирже',text:'Акции обесценились за несколько дней. Покупатели откладывают покупки, банки требуют вернуть кредиты.'}
 ];
 const RANDOM=[
   {w:3,title:'Рабочие грозят забастовкой',text:'Профсоюз требует прибавки. Без неё в следующем месяце выпуск упадёт вдвое.',choices:[['Поднять зарплату на 10%','raise'],['Переждать','wait']]},
@@ -476,7 +525,7 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
@@ -490,12 +539,17 @@ function yearlyCompetitors(s){
     const home=c===s.country;
     if(!cp.alive&&cp.since===s.y&&!cp.dead){cp.alive=true;if(home)addLog(`На рынок вышла новая марка «${cp.name}».`,'bad');return;}
     if(!cp.alive)return;
+    if(cp.until&&s.y>=cp.until){cp.alive=false;cp.dead=true;if(home)addLog(`Марка «${cp.name}» прекратила выпуск автомобилей.`,'good');return;}
+    const nm=(cp.models||[]).find(x=>x[0]===s.y);if(nm&&home&&s.y>1895)addLog(`«${cp.name}» представила ${nm[1]}.`,'bad');
     const r=Math.random();
     if(r<0.3&&cp.lag>0){cp.lag--;if(home)addLog(`«${cp.name}» представила новую модель.`);}
     else if(r>0.85&&cp.lag<5)cp.lag++;
     cp.str=clamp(cp.str*(0.9+Math.random()*0.24),0.25,2.2);
-    if(cp.str<0.4&&Math.random()<0.4){cp.alive=false;cp.dead=true;if(home)addLog(`Марка «${cp.name}» обанкротилась.`,'good');}
+    if(cp.str<0.4&&Math.random()<0.25){cp.alive=false;cp.dead=true;if(home)addLog(`Марка «${cp.name}» обанкротилась.`,'good');}
   });
+  if(s.y===1926){const d=s.comps.de,b=d.find(x=>x.name==='Benz & Cie.'),m=d.find(x=>x.name==='Daimler');
+    if(m&&m.alive){if(b){b.alive=false;b.dead=true;}m.name='Mercedes-Benz';m.str=Math.max(m.str,1.3);m.segs=['people','middle','lux'];
+      if(s.country==='de'||s.branches.includes('de'))pushEvent({title:'Рождение «Мерседес-Бенц»',deck:'Daimler и Benz объединились',text:'Два старейших автомобильных дома Германии слились в концерн Daimler-Benz. Все машины теперь выходят под маркой Mercedes-Benz — сильнейший конкурент на рынке.',img:'Mercedes-Benz'},true);}}
 }
 function resolve(key){
   const s=G;
@@ -662,6 +716,37 @@ function factorySVG(s){
   return o+'</svg>';
 }
 
+/* ================= PHOTOS (Wikipedia / Wikimedia Commons) ================= */
+const IMG={};let imgTried=false;
+function allTitles(){const t=new Set();Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
+  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));t.add('Mercedes-Benz');return [...t];}
+async function loadImages(){
+  if(imgTried)return;imgTried=true;
+  try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===1&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}
+  try{
+    const titles=allTitles(),map={};
+    for(let i=0;i<titles.length;i+=40){
+      const chunk=titles.slice(i,i+40);
+      const url='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail|name&pithumbsize=480&titles='+encodeURIComponent(chunk.join('|'));
+      const j=await fetch(url).then(r=>r.json());const q=j.query||{};const alias={};
+      (q.normalized||[]).forEach(n=>alias[n.to]=(alias[n.to]||[]).concat(n.from));
+      (q.redirects||[]).forEach(n=>{alias[n.to]=(alias[n.to]||[]).concat(n.from,...(alias[n.from]||[]));});
+      Object.values(q.pages||{}).forEach(pg=>{
+        if(!pg.thumbnail||!pg.pageimage)return;
+        if(!/\/wikipedia\/commons\//.test(pg.thumbnail.source))return;
+        if(/logo|map|layout|circuit|coat_of_arms|flag|emblem|\.svg$/i.test(pg.pageimage))return;
+        const v={src:pg.thumbnail.source,file:pg.pageimage};map[pg.title]=v;(alias[pg.title]||[]).forEach(a=>map[a]=v);
+      });
+    }
+    Object.assign(IMG,map);
+    try{localStorage.setItem('avt-img',JSON.stringify({v:1,t:Date.now(),map}));}catch(e){}
+    if(G)render();
+  }catch(e){}
+}
+const credit=im=>`<a class="credit" href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(im.file)}" target="_blank" rel="noopener">Фото: Wikimedia Commons</a>`;
+function photoHTML(title){const im=title&&IMG[title];return im?`<div class="photo"><img src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">${credit(im)}</div>`:'';}
+function portraitHTML(key){const P=PIONEERS[key],im=P.wiki&&IMG[P.wiki];return im?`<div class="ph-oval"><img src="${im.src}" alt="${esc(P.name)}" referrerpolicy="no-referrer"></div>`:portraitSVG(key);}
+
 /* ================= NEWSPAPER ================= */
 function flavorLine(s){let f=FLAVOR[0][2];FLAVOR.forEach(x=>{if(x[0]<s.y||(x[0]===s.y&&x[1]<=s.m))f=x[2];});return f;}
 function paperHTML(o,s){
@@ -672,7 +757,8 @@ function paperHTML(o,s){
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
     <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
-    <figure class="p-fig" style="margin-inline:0">${carSVG(md)}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>
+    ${o.img&&IMG[o.img]?`<figure class="p-fig" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
+      :`<figure class="p-fig" style="margin-inline:0">${carSVG(md)}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>`}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0?'lead':''}">${esc(p)}</p>`).join('')}</div>
     <div class="p-side"><div><b>Также в номере</b>${esc(flavorLine(s))}</div><div><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
     <div class="p-btns">${(o.choices||[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
@@ -680,7 +766,7 @@ function paperHTML(o,s){
 }
 const PW=document.getElementById('paperWrap');
 function showPaper(o,store=true){
-  if(store){G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||''});if(G.papers.length>40)G.papers.shift();save();}
+  if(store){G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||''});if(G.papers.length>40)G.papers.shift();save();}
   PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}
@@ -709,7 +795,7 @@ function vPlant(){
   const P=PIONEERS[s.pioneer];
   return `<div class="scene">${factorySVG(s)}</div>
   <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?L.sold+' шт.':'—'}</b></div><div class="kpi"><span class="label">Репутация</span><b>${Math.round(s.rep)}<span class="muted small">/100</span></b></div></div>
-  ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center"><div style="width:48px">${portraitSVG(s.pioneer)}</div><div><h3>${P.name}</h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
+  ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><div style="width:64px">${portraitHTML(s.pioneer)}</div><div><h3>${P.name}</h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
   <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${s.hist.cash.length} мес.</span></div>${spark(s.hist.cash)}</section>
   <section class="card"><h2>Производство</h2>
     <div class="row" style="margin-top:10px"><div><h3>Линии: <span class="num">${s.lines}</span></h3><p class="small muted">До ${Math.round(perLine(s))} машин в месяц на линию</p></div><div class="btns">${s.lines>1?`<button class="btn sm" data-act="sellline">Продать</button>`:''}<button class="btn" data-act="line" ${s.cash<lc?'disabled':''}>+ ${money(lc)}</button></div></div>
@@ -744,9 +830,10 @@ function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?''
 function vMarket(){
   const s=G,e=econ(s.y,s.m,s.country),L=s.last,home=s.country,size=totalSize(s,home),M=L&&L.mk[home];
   const segRows=SEGK.map(g=>{const z=segSize(s,home,g),you=M?M.segs[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${Math.round(z)}</td><td class="n">${M?you:'—'}</td><td class="n">${M&&z>0?(you/z*100).toFixed(1)+'%':'—'}</td></tr>`;}).join('');
-  const rows=[{name:s.company,color:'var(--brass)',sales:L?L.homeSold:0,you:1},...s.comps[home].filter(c=>c.alive).map(c=>({name:c.name+(massOn(c,s,home)?' · массовая':''),color:c.color,sales:c.last}))].sort((a,b)=>b.sales-a.sales);
+  const top=s.models.filter(m=>m.status==='prod').sort((a,b)=>b.lastSold-a.lastSold)[0];
+  const rows=[{name:s.company,color:'var(--brass)',sales:L?L.homeSold:0,you:1,model:top?top.name:''},...s.comps[home].filter(c=>c.alive).map(c=>{const m=compModel(c,s);return {name:c.name,color:c.color,sales:c.last,model:(m?m[1]:'')+(massOn(c,s,home)?' · массовая':''),img:m&&m[2]};})].sort((a,b)=>b.sales-a.sales);
   const mx=Math.max(1,...rows.map(r=>r.sales));
-  const comp=rows.map(r=>`<div class="comp ${r.you?'you':''}"><span class="dot" style="background:${r.color}"></span><span>${esc(r.name)}</span><div class="bar"><i style="width:${r.sales/mx*100}%;background:${r.color}"></i></div><span class="num" style="text-align:right">${Math.round(r.sales)}</span></div>`).join('');
+  const comp=rows.map(r=>`<div class="comp ${r.you?'you':''}">${r.img&&IMG[r.img]?`<img class="thumb" src="${IMG[r.img].src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="dot" style="background:${r.color}"></span>`}<span>${esc(r.name)}${r.model?`<small>${esc(r.model)}</small>`:''}</span><div class="bar"><i style="width:${r.sales/mx*100}%;background:${r.color}"></i></div><span class="num" style="text-align:right">${Math.round(r.sales)}</span></div>`).join('');
   const bc=branchCost(s);
   const br=Object.keys(COUNTRIES).filter(c=>c!==home).map(c=>{const open=s.branches.includes(c),ec=econ(s.y,s.m,c),z=totalSize(s,c),mk=L&&L.mk[c];
     return `<div class="row" style="padding-block:6px;border-bottom:1px solid var(--line-soft)"><div><h3>${COUNTRIES[c].name}</h3><p class="small muted">Рынок ${Math.round(z)} авто/мес · <span class="${ec.tone}">${ec.label}</span></p></div>${open?`<span class="small good num">${mk?mk.sold:0} шт.</span>`:`<button class="btn sm" data-act="branch" data-c="${c}" ${s.cash<bc?'disabled':''}>Открыть ${money(bc)}</button>`}</div>`;}).join('');
@@ -754,7 +841,7 @@ function vMarket(){
     <div class="meta"><div>Рынок<b>${Math.round(size)}</b></div><div>Ваши<b>${L?L.homeSold:'—'}</b></div><div>Доля<b>${L?(L.share*100).toFixed(1)+'%':'—'}</b></div><div>Цены<b>${Math.round(priceIndex(s)*100)}%</b></div></div><div class="hr"></div>
     <table class="pl"><tr><th>Сегмент</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th></tr>${segRows}</table>
     <p class="small muted" style="margin-top:10px">Сегмент задают кузов и оснащение: базовая — народный, комфорт — средний, люкс — люкс, грузовой кузов — грузовой.</p></section>
-  <section class="card"><h2>Конкуренты</h2><p class="small muted" style="margin-top:2px">Продажи за прошлый месяц, авто</p><div style="margin-top:8px">${comp}</div></section>
+  <section class="card"><h2>Конкуренты</h2><p class="small muted" style="margin-top:2px">Реальные марки эпохи и их актуальные модели. Продажи за прошлый месяц, авто</p><div style="margin-top:8px">${comp}</div></section>
   <section class="card"><h2>Экспорт</h2><p class="small muted" style="margin-top:2px">Филиал продаёт все ваши модели в стране и открывает её гонки. Спрос ниже на 20% из-за доставки. Содержание ${money(400*(1+0.02*T(s)))} в месяц.</p><div style="margin-top:6px">${br}</div></section>
   <section class="card"><span class="label">Объём рынка, авто/мес</span>${spark(s.hist.market,'var(--muted)')}<div class="hr"></div><span class="label">Ваши продажи, авто/мес</span>${spark(s.hist.sales,'var(--good)')}</section>
   <section class="card"><h2>Технологии</h2><p class="small muted" style="margin-top:4px">Серые позиции появятся в указанном году.</p>
@@ -818,7 +905,7 @@ function closeSheet(){sheet.hidden=true;draft=null;}
 sheet.addEventListener('click',e=>{if(e.target===sheet&&!G.pending.length&&!(draft&&draft.ng&&G.over))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
-  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,choices:ev.choices,act:'choose',kicker:G.over?'Последний выпуск':'Экстренный выпуск'});return;}
+  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,choices:ev.choices,act:'choose',kicker:G.over?'Последний выпуск':'Экстренный выпуск'});return;}
   openSheet(`<span class="label">${dstr(G)}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2><p style="margin-top:10px">${esc(ev.text)}</p><div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 function bestId(arr,f){const u=unlocked(arr,G).filter(x=>!f||f(x));return u[u.length-1].id;}
@@ -831,7 +918,7 @@ function renderDesigner(){
     <div class="carbox">${carSVG(md,{anim:true})}</div>
     <div class="row" style="margin-top:8px"><span class="pill warn">${SEG[g].name} сегмент</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
-    <div class="label" style="margin-top:14px">Двигатель</div>${chips(ENGINES,'e',x=>`${x.hp} л.с. · ${money(x.c*priceIndex(s)*bn('matCost'))}`)}
+    <div class="label" style="margin-top:14px">Двигатель</div>${chips(ENGINES,'e',x=>`${x.hp} л.с. · ${money(x.c*priceIndex(s)*bn('matCost'))}`)}<p class="small muted" style="margin-top:6px">${esc(p.e.note||'')}</p>
     <div class="label" style="margin-top:14px">Рама</div>${chips(CHASSIS,'c',x=>`до ${Math.round(x.max*bn('chassisTol'))} л.с. · ${money(x.c*priceIndex(s)*bn('matCost'))}`)}
     <div class="label" style="margin-top:14px">Кузов</div>${chips(BODIES,'b',x=>`${x.truck?'грузовой':'кач. '+x.q} · ${money(x.c*priceIndex(s)*bn('matCost'))}`)}
     <div class="label" style="margin-top:14px">Оснащение</div>${chips(TRIMS,'t',x=>`+${x.q} кач. · ${money(x.c*priceIndex(s)*bn('matCost'))}`)}
@@ -847,7 +934,7 @@ function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
   draft={ng:true,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co};
   const canClose=G&&!G.over;
-  const list=Object.entries(PIONEERS).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitSVG(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
+  const list=Object.entries(PIONEERS).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
   openSheet(`<div class="row"><h2>Кто вы?</h2>${canClose?'<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>':''}</div>
     <p class="small muted" style="margin-top:6px">Январь 1895 года. Выберите пионера автопрома: у каждого свои сильные стороны. Игра идёт до конца 1929-го.</p>
     <div class="stack" style="margin-top:12px;gap:8px">${list}</div>
@@ -868,7 +955,9 @@ function openHelp(){
     <p><b>Экспорт.</b> Филиалы открывают чужие рынки и их гонки.</p>
     <p><b>Гонки.</b> Реальный календарь 1895–1929. За рулём: ◀ ▶ — руль, ГАЗ и ТОРМОЗ. В поворотах сбрасывайте скорость, иначе вынесет с дороги. Следите за мотором и шинами. На кольцевых трассах сбросьте скорость на линии старта — механики сменят шины и зальют топливо.</p>
     <p><b>Цель.</b> Дожить до 1930 года с максимальной стоимостью компании. Долг свыше ${money(15000)} — банкротство.</p></div>
-  <div class="hr"></div><button class="btn block" data-act="newgame">Начать заново</button>`);
+  <div class="hr"></div><button class="btn block" data-act="newgame">Начать заново</button>
+  <div class="hr"></div><h3>Фотографии</h3><p class="small muted" style="margin-top:4px">Исторические фото загружаются из Википедии и Wikimedia Commons (в основном общественное достояние). Авторы и лицензии — на странице каждого файла. Без интернета игра рисует машины сама.</p>
+  <div class="small" style="margin-top:6px;columns:2;column-gap:12px">${Object.entries(IMG).filter((e,i,a)=>a.findIndex(x=>x[1].file===e[1].file)===i).map(([t,im])=>`<a class="credit" style="padding:2px 0" href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(im.file)}" target="_blank" rel="noopener">${esc(t)}</a>`).join('')||'<span class="muted">пока не загружены</span>'}</div>`);
 }
 
 /* ================= RACE SETUP ================= */
@@ -883,7 +972,7 @@ function openRaceSetup(key){
   const sc=raceScore(md,s)+PREP[draft.prep].add,rel=raceRel(md,s);
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
     <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · приз ${money(racePrize(rc))}</p>
-    <div class="hist">${esc(rc.hist)}</div>
+    ${photoHTML(rc.img)}<div class="hist">${esc(rc.hist)}</div>
     <div class="label" style="margin-top:16px">Машина</div><div class="chips">${prod.map(m=>`<button class="chip ${m.id===md.id?'on':''}" data-act="rset" data-k="car" data-v="${m.id}">${esc(m.name)}<small>${parts(m).e.hp} л.с.</small></button>`).join('')}</div>
     <div class="carbox">${carSVG(md,{anim:true})}</div>
     <div class="row small" style="margin-top:10px"><span class="muted">Скорость</span><span class="num">${Math.round(sc*100)}</span></div><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,sc*85)}%;background:var(--brass)"></i></div>
@@ -975,7 +1064,7 @@ function startRace(){
   while(comps.length<4)comps.push({name:'Частный гонщик '+(comps.length+1),color:['#777','#a33','#357','#573'][comps.length],str:0.9,lag:2,segs:['middle']});
   const ai=comps.map((cp,i)=>{const g=cp.segs.includes('lux')?'lux':cp.segs.includes('middle')?'middle':'people',rc2=cp.segs?compR(cp,s,g)||0.5:0.5;
     const sc2=clamp(rc2*0.95+(cp.str-1)*0.08+(Math.random()*0.12-0.06),0.25,1.1);
-    return {name:cp.name,color:cp.color,dist:(i+1)*SEGL*4,x:[-0.55,0.55,0,-0.3,0.3][i%5],v:0,vmax:TOPV*clamp(0.5+0.45*sc2,0.4,1.05)*0.93,rel:0.45+0.5*rc2,broken:0,phase:Math.random()*6,fin:null};});
+    return {name:cp.name,color:cp.color,dist:(i+1)*SEGL*4,x:[-0.55,0.55,0,-0.3,0.3][i%5],v:0,vmax:TOPV*clamp(0.5+0.45*sc2,0.4,1.05)*0.9,rel:0.45+0.5*rc2,broken:0,phase:Math.random()*6,fin:null};});
   const eraHp=parts(md).e.hp,kmh=Math.min(230,(18+eraHp*1.5)*(1+gear*0.08)*(0.9+sc*0.2));
   R={rc,trk,me,all:[me,...ai],t:-3,time:0,kmh,sky:0,done:false,lastT:performance.now(),pitT:0,msgT:0,msg:'',lapPrev:0,night:false};
   document.getElementById('rName').textContent=`${rc.y} · ${rc.name}`;
@@ -1140,7 +1229,7 @@ function finishRace(quit){
   const deck=`${rc.name}, ${MONTHS_N[rc.m]} ${rc.y}`;
   const body=`${quit?'Команда «'+s.company+'» не дошла до финиша.':place===1?'Машина компании «'+s.company+'» первой пересекла финишную черту под рёв толпы. Приз — '+money(win)+'.':'Машина компании «'+s.company+'» финишировала '+place+'-й'+(win?'. Приз — '+money(win)+'.':'.')}\nИтоговый протокол: ${table}.\n${rc.hist}${rc.win?'\nВ реальной истории этой гонки победил '+rc.win+'.':''}`;
   R=null;
-  showPaper({title:head,deck,text:body,car:me.car,kicker:'Спортивный выпуск',caption:`«${me.label}» на трассе`,choices:[['Дальше','close']],act:'paperClose'});
+  showPaper({title:head,deck,text:body,car:me.car,img:rc.img,imgCap:rc.name+' — историческое фото',kicker:'Спортивный выпуск',caption:`«${me.label}» на трассе`,choices:[['Дальше','close']],act:'paperClose'});
   pendingToasts.forEach(toast);pendingToasts=[];render();
 }
 document.getElementById('rQuit').addEventListener('click',()=>finishRace(true));
@@ -1194,6 +1283,7 @@ const ACT={
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 
 /* ================= BOOT ================= */
+loadImages();
 G=load();
 if(!G){newGame('custom','de','Моторные мастерские');G.fresh=1;}
 render();
