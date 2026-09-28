@@ -32,9 +32,10 @@ function step(){
   const ship=shipCost(s),tp=dealerTP(s),dealerCap={},want_c={};
   act.forEach((md,i)=>{for(const c in dem[i])want_c[c]=(want_c[c]||0)+dem[i][c];});
   for(const c in want_c)dealerCap[c]=dealerCount(s,c)*tp*(c===s.country?1.3:1);
+  const lostC={};
   act.forEach((md,i)=>{
     const d=dem[i],sumD=tot[i],bl=md.backlog||0;let req={};let reqT=0;
-    for(const c in d){let q=d[c]+(sumD>0?bl*d[c]/sumD:0);const fc=want_c[c]>dealerCap[c]?dealerCap[c]/want_c[c]:1;r.lostDlr+=q*(1-fc);q*=fc;req[c]=q;reqT+=q;}
+    for(const c in d){let q=d[c]+(sumD>0?bl*d[c]/sumD:0);const fc=want_c[c]>dealerCap[c]?dealerCap[c]/want_c[c]:1;r.lostDlr+=q*(1-fc);lostC[c]=(lostC[c]||0)+q*(1-fc);q*=fc;req[c]=q;reqT+=q;}
     const avail=md.stock,f=reqT>avail?avail/Math.max(1e-9,reqT):1;let sold=0;
     for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const net=md.price*(1-DEALER_MARGIN)-(c===s.country?0:ship);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
     sold=Math.min(sold,md.stock);md.stock-=sold;const unmet=Math.max(0,reqT-sold);md.backlog=Math.min(unmet*0.5,md.fc*0.8);r.lostCap+=unmet-md.backlog;
@@ -43,6 +44,11 @@ function step(){
   if(techLv(s,'credit'))r.fin=r.rev*0.03;
   // расходы
   r.rd=rdUpkeep(s);r.drv=driverPayroll(s);r.team=teamUpkeep(s);
+  // конструкторское бюро: проект продвигается каждый месяц
+  if(s.rd.proj){s.rd.prog+=rdPoints(s);const pj=s.rd.proj;if(s.rd.prog>=pj.need){
+    if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
+    else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);}
+    s.rd.proj=null;s.rd.prog=0;s.rd.idleSaid=0;}}
   r.wage=s.workers*wageNow(s);r.ovh=plantOverhead(s)*(s.shifts>1?1.1:1);
   r.dlr=Object.values(s.dealers).reduce((a,b)=>a+b,0)*dealerUpkeep(s);
   r.sto=s.models.reduce((a,md)=>a+md.stock*matCost(md,s),0)*0.015;r.int=s.loan*0.005;
@@ -55,11 +61,14 @@ function step(){
     const target=clamp(22+50*clamp((wr-0.6)/0.7,0,1)+10*clamp(Math.log10(1+r.sold)/4.5,0,1)-(defectRate(s)-0.03)*160-(r.lostCap>r.sold*0.5?6:0)+(s.wagePol==='five'?4:0),5,95);
     s.rep+=(target-s.rep)*0.035+(act.some(m=>overpower(m)&&m.lastSold>0)?-1.5:0);}else s.rep-=0.2;
   s.rep=clamp(s.rep,0,100);
-  // конкуренты и рынки для экрана «Рынок»
-  for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>x.last=0);let size=0,you=0;const sg={};
-    SEGK.forEach(g=>{const m=D.mk[c].segs[g];size+=m.total||0;sg[g]={size:m.total||0,you:0,pot:m.pot||0};m.comps.forEach(o=>{if(L[o.i])L[o.i].last+=o.sales;});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;}
-  act.forEach((md,i)=>{const g=segOf(md);for(const c in dem[i]){const so=tot[i]>0?md.lastSold*dem[i][c]/tot[i]:0;if(r.mk[c]&&r.mk[c].segs[g])r.mk[c].segs[g].you+=so;}});
+  // конкуренты и рынки для экрана «Рынок»: сколько купили у реальных марок и у вас
+  for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>x.last=0);const MC=D.mk[c],sg={};let size=0;
+    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{if(L[o.i])L[o.i].last+=o.sales;});});
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.lostDlr=lostC[c]||0;}
+  act.forEach((md,i)=>{const g=segOf(md);for(const c in dem[i]){const so=tot[i]>0?md.lastSold*dem[i][c]/tot[i]:0,m=r.mk[c];if(m&&m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
+  // машины на дорогах: новые прибавились, старые ушли на свалку
+  if(!s.fleet)s.fleet={};if(!s.mkY)s.mkY={};const life=tabAt(CAR_LIFE,yf(s));
+  for(const c in COUNTRIES){const m=r.mk[c],cars=m.size-m.segs.truck.size,f0=fleetOf(s,c);s.fleet[c]=Math.max(0,f0+cars-f0/(12*life));s.mkY[c]=m.size*12/SEASON[s.m];}
   // ценовая война: конкуренты отвечают на демпинг
   SEGK.forEach(g=>{const ms=act.filter(md=>segOf(md)===g),cur=s.pw[g]||1;if(!ms.length){s.pw[g]=Math.min(1,cur+0.01);return;}
     const ratio=ms.reduce((a,md)=>a+md.price/refPrice(md,s),0)/ms.length,sg=r.mk[s.country].segs[g],sh=sg.size>0?sg.you/sg.size:0;
@@ -78,6 +87,11 @@ function step(){
   seasonTick(s);
   checkAch();
   if(s.cash<0&&s.cash>=-DIF().debt*cpi(s))addLog('Касса в минусе. Возьмите кредит или сократите расходы.','bad');
+  // склад растёт — подсказка раз в полгода
+  act.forEach(md=>{if(stockWarn(md)&&mi(s)-(md.stockSaid||-99)>=6){md.stockSaid=mi(s);addLog(`На складе «${md.name}» — ${fmtN(md.stock)} машин без покупателей. Снизьте выпуск или цену.`,'bad');pendingToasts.push('📦 Склад растёт: «'+md.name+'»');}});
+  // до банкротства рукой подать — предупреждаем газетой один раз в год
+  const lim=DIF().debt*cpi(s);if(s.cash<-lim*0.5&&s.cash>=-lim&&mi(s)-(s.debtSaid||-99)>=12){s.debtSaid=mi(s);
+    pushEvent({title:'Банк предупреждает',deck:`До банкротства — ${money(lim+s.cash)}`,text:`Касса в минусе на ${money(-s.cash)}. Если долг превысит ${money(lim)}, кредиторы закроют завод. Возьмите кредит на экране «Завод», сократите рекламу, лишних дилеров и расходы КБ, продайте склад со скидкой — и проверьте, покупают ли ваши машины: цена и дилеры на экранах «Модели» и «Рынок».`,choices:[['Понятно','ok']]},false);}
   if(s.cash<-DIF().debt*cpi(s)){s.over=true;s.pending.push({title:'Банкротство',deck:`Компания «${s.company}» закрыта`,text:`Долги превысили допустимый предел. Кредиторы описали завод в ${dstr(s)}.`,paper:true,choices:[['Итоги','final']]});}
   else if(s.y>=1930){s.over=true;finalResults(s);}
   else checkEvents();

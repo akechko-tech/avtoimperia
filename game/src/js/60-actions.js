@@ -21,9 +21,9 @@ const ACT={
   repay:d=>{const n=Math.min(+d.n,G.loan);if(n>0&&G.cash>=n){G.loan-=n;G.cash-=n;rerender();}},
   // модели
   price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);md.price=Math.max(20,md.price+st*(+d.d));rerender();},
-  planManual:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan=Math.max(0,Math.round(md.fc||md.lastMade||1));rerender();},
+  planManual:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.plan==='auto'||md.plan===undefined)md.plan=autoPlan(md);rerender();},
   planAuto:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan='auto';rerender();},
-  plan:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan=Math.max(0,(+md.plan||0)+(+d.d));rerender();},
+  plan:d=>{const md=G.models.find(m=>m.id===+d.id),base=md.plan==='auto'||md.plan===undefined?autoPlan(md):+md.plan;md.plan=Math.max(0,base+(+d.d));rerender();},
   retire:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.6);G.cash+=rev;addLog(`«${md.name}» снята с производства${md.stock?`, остаток ${fmtN(md.stock)} шт. распродан за ${money(rev)}`:''}.`);md.stock=0;md.backlog=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
@@ -36,7 +36,7 @@ const ACT={
   rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj){G.rd.proj=pj;G.rd.prog=0;addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<5&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро расширено до ${G.rd.lvl}-го уровня.`,'good');checkAch();rerender();flushToasts();}},
   // рынок
-  dealers:d=>{const n=+d.n,c=n*dealerCost(G);if(G.cash<c)return;G.cash-=c;const was=dealerCount(G,d.c);G.dealers[d.c]=was+n;if(!was&&d.c!==G.country)addLog(`Открыты первые дилеры: ${COUNTRIES[d.c].name}.`,'good');checkAch();rerender();flushToasts();},
+  dealers:d=>{const need=Math.round(dealerNeed(d.c,G)),have=dealerCount(G,d.c),mk=G.last&&G.last.mk[d.c],lost=mk&&mk.lostDlr||0;let n=+d.n;if(have>=need&&lost<0.5)return;if(have<need)n=Math.min(n,need-have);const c=n*dealerCost(G);if(n<1||G.cash<c)return;G.cash-=c;const was=dealerCount(G,d.c);G.dealers[d.c]=was+n;if(!was&&d.c!==G.country)addLog(`Открыты первые дилеры: ${COUNTRIES[d.c].name}.`,'good');checkAch();rerender();flushToasts();},
   dealersCut:d=>{const was=dealerCount(G,d.c),n=Math.max(1,Math.round(was*0.2));G.dealers[d.c]=Math.max(d.c===G.country?1:0,was-n);rerender();},
   // окна
   close:()=>closeSheet(),

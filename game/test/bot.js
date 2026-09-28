@@ -6,7 +6,7 @@ function design(seg0){let best=null,bv=-1e18;
   for(const seg of (seg0==='people'?['people','middle']:[seg0])){const t=seg==='people'?'t0':seg==='middle'?'t1':'t2';
   for(const e of unlockedP(ENGINES,G))for(const c of unlockedP(CHASSIS,G))for(const b of unlockedP(BODIES,G).filter(x=>!x.truck))for(const w of unlockedP(TYRES,G)){
     const md={id:-1,e:e.id,c:c.id,b:b.id,w:w.id,t,vol:500,made:0,launched:mi(G),status:'prod',price:0};if(overpower(md))continue;
-    const ref=refPrice(md,G);for(const k of [0.85,1,1.15,1.3]){md.price=ref*k;const d=segMarket(G.country,seg,G,[md]).you;const v=d*(md.price*(1-DEALER_MARGIN)-unitCost(md));if(v>bv){bv=v;best=Object.assign({},md);}}}}
+    const ref=refPrice(md,G);for(const k of [0.85,1,1.15,1.3]){md.price=ref*k;const d=forecastDemand(md,G);const v=d*(md.price*(1-DEALER_MARGIN)-unitCost(md));if(v>bv){bv=v;best=Object.assign({},md);}}}}
   best.id=G.nextId++;best.name='M'+best.id;best.paint='#333';best.plan='auto';best.devLeft=0;best.stock=0;best.backlog=0;best.lastDem=0;best.lastSold=0;best.lastMade=0;best.totalSold=0;best.made=0;best.fc=0;best.vol=0;best.price=Math.round(best.price);return best;}
 function botMonth(strat){
   const s=G;const act=s.models.filter(m=>m.status==='prod');

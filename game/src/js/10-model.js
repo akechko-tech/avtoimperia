@@ -89,73 +89,6 @@ function dealerUpkeep(s){return 10*cpi(s);}
 function dealerCount(s,c){return (s.dealers&&s.dealers[c])||0;}
 function tariffAt(c,s){return tabAt(TARIFF[c],yf(s));}
 function shipCost(s){return 60*cpi(s);}
-/* ---------- the market ---------- */
-function isWar(y,m,c){
-  if(c==='us')return (y===1917&&m>=3)||(y===1918&&m<=10);
-  if(c==='it')return (y===1915&&m>=4)||(y>=1916&&y<=1917)||(y===1918&&m<=10);
-  return (y===1914&&m>=7)||(y>=1915&&y<=1917)||(y===1918&&m<=10);
-}
-function econ(y,m,c){
-  let f=1,label='Стабильно',tone='good';const war=isWar(y,m,c);
-  if(c==='uk'&&(y<1896||(y===1896&&m<10))){label='Закон о красном флаге';tone='warn';}
-  if(war){label='Война';tone='bad';}
-  if(y===1919||y===1920){label='Послевоенный бум';tone='good';}
-  if(y===1921){label='Спад';tone='warn';}
-  if(y===1923&&c==='de'){label='Гиперинфляция';tone='bad';}
-  if(y>=1924&&y<=1928){label='Ревущие двадцатые';tone='good';}
-  if(y===1929&&m>=9){f=0.55;label='Биржевой крах';tone='bad';}
-  return {f,label,tone,war};
-}
-const SEASON=[0.72,0.76,0.95,1.15,1.25,1.2,1.1,1.02,0.97,0.95,0.8,0.92];
-function taxRate(y){return y<1914?0.08:y<=1919?0.25:0.15;}
-function segAnnual(c,g,s){const t=yf(s);if(g==='truck')return tabAt(MKT_TRUCK[c],t,true);const sh=tabAt(c==='us'?SEGSH.us:SEGSH.eu,t);return tabAt(MKT[c],t,true)*sh[{people:0,middle:1,lux:2}[g]];}
-function segMonth(c,g,s){return segAnnual(c,g,s)/12*SEASON[s.m]*econ(s.y,s.m,c).f;}
-function prefP(g,c,s){return tabAt(PREF[g],yf(s))*PREF_C[c][g];}
-function qrefQ(g,s){return eraBest(s,g==='truck')*{people:0.62,middle:0.8,lux:1.0,truck:0.75}[g];}
-function sinBase(g,s){return tabAt(SIN[g],yf(s));}
-const ALPHA_P={people:5,middle:3.5,lux:1.8,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,truck:1.8},LAMBDA=0.25;
-function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*Math.pow(clamp(modelQ(md)/qrefQ(g,s),0.3,2),ALPHA_Q[g]/ALPHA_P[g]);}
-function compVol(cp,s){const t=yf(s);if(t<cp.since||(cp.until&&t>=cp.until))return 0;return tabAt(cp.v,t,true);}
-function compAlive(cp,s){return compVol(cp,s)>0;}
-function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
-function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
-function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer);}
-function adRef(s,c){return 100*cpi(s)*Math.pow(1+tabAt(MKT[c||s.country],yf(s),true)/1000,0.75);}
-function adEffect(s,c){const a=(s.ad||0)*(c===s.country?1:0.35)*bn('adEff');return 0.55*(1-Math.exp(-a/adRef(s,c)));}
-function dealerEffect(s,c){const d=dealerCount(s,c);if(!d)return -9;return 0.35*Math.log(clamp(d/dealerNeed(c,s),0.02,1));}
-function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
-function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0);}
-function C0(g,s){const si=sinBase(g,s),K=si/(1-si);return Math.log(0.12*(1+K));}
-// Полезность модели для покупателя страны c: качество, цена (с пошлиной), репутация, реклама, дилеры, новизна, гонки
-function modelU(md,c,s,price){
-  const g=segOf(md),home=c===s.country,P=(price??md.price)*(home?1:1+tariffAt(c,s))+(home?0:shipCost(s));
-  const r=modelQ(md)/qrefQ(g,s),p=parts(md),hpr=engineHp(p.e)/tabAt(ERA_HP[g],yf(s));
-  return C0(g,s)+ALPHA_Q[g]*Math.log(Math.max(0.05,r))-6*Math.max(0,0.6-r)-3.5*Math.max(0,Math.log(0.65/hpr))-(p.w.id==='w1'&&g!=='truck'&&s.y>=1905?1.5:0)-ALPHA_P[g]*Math.log(P/prefP(g,c,s))+1.3*(s.rep-50)/50+adEffect(s,c)+dealerEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);
-}
-// Рынок одного сегмента страны: конкуренты откалиброваны так, чтобы без игрока продажи совпадали с историей
-function segMarket(c,g,s,models,override){
-  const S=segMonth(c,g,s);if(S<=0)return {S:0,pot:0,you:0,total:0,den:1,A:0,K:0,comps:[],fringe:0,models:[]};
-  const si=sinBase(g,s),K0=si/(1-si),pot=S/si,ef=SEASON[s.m]*econ(s.y,s.m,c).f;
-  const named=[];let sum=0;
-  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx)return;const v=compVol(cp,s)*mx/12*ef;if(v>0){named.push({cp,i,v,ghost:cp.pk===s.pioneer});sum+=v;}});
-  const scale=sum>S*0.95?S*0.95/sum:1,pw=(c===s.country&&s.pw&&s.pw[g])||1;
-  let K=0;named.forEach(n=>{n.A=K0*n.v*scale/S*Math.pow(1/pw,ALPHA_P[g]*0.6);if(!n.ghost)K+=n.A;});
-  const fringeA=K0*Math.max(0,1-sum*scale/S);K+=fringeA;
-  const us=models.map(md=>({md,u:modelU(md,c,s,override&&override.id===md.id?override.price:undefined)}));
-  let A=0;if(us.length){const mx=Math.max(...us.map(x=>x.u/LAMBDA));const z=us.reduce((a,x)=>a+Math.exp(x.u/LAMBDA-mx),0);A=Math.exp(LAMBDA*(Math.log(z)+mx));us.forEach(x=>x.w=Math.exp(x.u/LAMBDA-mx)/z);}
-  const den=1+K+A,you=pot*A/den;us.forEach(x=>x.d=you*x.w);
-  return {S,pot,you,den,A,K,total:pot*(K+A)/den,comps:named.filter(n=>!n.ghost).map(n=>({cp:n.cp,i:n.i,sales:pot*n.A/den})),fringe:pot*fringeA/den,models:us};
-}
-function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
-// Спрос на все модели во всех странах на текущий месяц
-function demandAll(s,override){
-  const act=s.models.filter(m=>m.status==='prod');const res={by:{},mk:{}};act.forEach(m=>res.by[m.id]={});
-  Object.keys(COUNTRIES).forEach(c=>{const mk={size:0,you:0,segs:{}};res.mk[c]=mk;const open=c===s.country||dealerCount(s,c)>0;
-    SEGK.forEach(g=>{const ms=open?act.filter(m=>segOf(m)===g):[];const r=segMarket(c,g,s,ms,override);mk.segs[g]=r;mk.size+=r.total||0;mk.you+=r.you||0;r.models.forEach(x=>res.by[x.md.id][c]=x.d);});});
-  return res;
-}
-// Оценка спроса на модель при другой цене (для подсказки игроку)
-function demandAt(md,s,price){const r=demandAll(s,{id:md.id,price});return Object.values(r.by[md.id]||{}).reduce((a,b)=>a+b,0)*(techLv(s,'credit')?1.15:1);}
 /* ---------- finance ---------- */
 function stockValue(s){return s.models.reduce((a,m)=>a+m.stock*matCost(m,s),0);}
 function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+Math.max(0,avg*12*7);}
@@ -180,8 +113,11 @@ function newGame(pioneer,country,company,diff){
   G.plantVal=G.cap*capUnitCost(G);
   G.cash=Math.round(C.cash*bn('cash')*DIF().cash);G.rep=bn('rep',30);
   const md=G.models[0];md.price=Math.round(refPrice(md,G)/10)*10;
+  G.dealers[country]=Math.max(1,Math.round(dealerNeed(country,G)/3));
+  G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,1895);const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
   const P=PIONEERS[pioneer];
-  addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${C.city}. В мастерской ${G.workers} рабочих, первая модель — «Тип 1».`,'hist');
+  addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${C.city}. В мастерской ${G.workers} рабочих, первая модель — «Тип 1», дилеров — ${G.dealers[country]}.`,'hist');
   if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
-  if(country==='us')addLog('В Америке машин почти не покупают: до 1900 года выгоднее продавать в Европу через агентов.','hist');
+  if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит открыть агентов.','hist');
+  if(country==='it')addLog('Богатых семей в Италии немного, и свой рынок крошечный. Покупателей в разы больше во Франции и Германии — откройте там дилеров.','hist');
 }

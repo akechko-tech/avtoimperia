@@ -29,8 +29,10 @@ function renderRace(dt){
   const prog=F.prog/T.raceLen,night=cfg.night&&prog>0.35&&prog<0.75,dusk=cfg.night&&((prog>0.25&&prog<=0.35)||(prog>=0.75&&prog<0.85));
   // камера: чуть позади машины, мягко догоняет её смещение и разворот
   const roadYaw=i=>Math.atan2(T.T[i][0],T.T[i][1]);
-  const rel=angWrap(F.yaw-roadYaw(F.idx));
-  cam.lat+=(F.lat-cam.lat)*Math.min(1,dt*5);cam.psi+=(rel*0.55-cam.psi)*Math.min(1,dt*3);cam.y+=((F.y||0)-cam.y)*Math.min(1,dt*6);
+  // направление дороги под машиной — плавно между участками, иначе картинка дёргается на каждом стыке
+  const i0=F.idx,ip=T.closed?(i0-1+n)%n:Math.max(0,i0-1),inx=T.closed?(i0+1)%n:Math.min(n-1,i0+1);
+  const rel=angWrap(F.yaw-(roadYaw(i0)+(F.segT||0)*angWrap(roadYaw(inx)-roadYaw(ip))/2));
+  cam.lat+=(F.lat-cam.lat)*Math.min(1,dt*5);cam.psi+=(clamp(rel*0.3,-0.1,0.1)-cam.psi)*Math.min(1,dt*2);cam.y+=((F.y||0)-cam.y)*Math.min(1,dt*6);
   cam.sky+=(T.K[F.idx]||0)*Math.max(0,F.vx)*dt*60;cam.phaseT+=dt;if(cam.phaseT>0.11){cam.phaseT=0;cam.phase^=1;}
   const carS=(F.idx+F.segT)*step,camS=carS-RV.BACK;let base=Math.floor(camS/step),frac=camS/step-base;
   if(T.closed)base=((base%n)+n)%n;else if(base<0){base=0;frac=0;}
@@ -45,7 +47,8 @@ function renderRace(dt){
   [[R.bg.far,0.25],[R.bg.near,0.6]].forEach(([img,par])=>{const off=(((-cam.sky*par)%bw)+bw)%bw;c.globalAlpha=night?0.35:1;for(let x=off-bw;x<W;x+=bw)c.drawImage(img,x,horY-bgH+4,bw,bgH);c.globalAlpha=1;});
   const g0=TERR[T.terrAt(base)]||TERR.dirt;c.fillStyle=night?'#0c1016':g0.g;c.fillRect(0,horY,W,H-horY);
   // дорога: сегменты от ближних к дальним, с отсечением за гребнем холма
-  const segs=[];let L=0,theta=0,maxy=H;const clampT=1.15;
+  // камера поворачивает вместе с дорогой плавно, а не рывком на стыке участков
+  const segs=[];let L=0,theta=-(T.K[base]||0)*step*frac,maxy=H;const clampT=1.15;
   for(let k=0;k<=RV.DRAW;k++){
     let j=base+k;if(T.closed)j%=n;else if(j>=n)break;
     const z=Math.max(0.35,(k-frac)*step);

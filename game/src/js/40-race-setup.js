@@ -16,7 +16,7 @@ function entryCost(rc,e,s){const d=drvObj(e.drv),hire=d&&!(s.drivers||[]).includ
 function setupTotal(rc,s){return RS.entries.reduce((a,e)=>{const c=entryCost(rc,e,s);a.fee+=c.fee;a.prep+=c.prep;a.hire+=c.hire;a.total+=c.total;return a;},{fee:0,prep:0,hire:0,total:0});}
 // Оценка шанса доехать до финиша: та же модель отказов, что и в гонке
 function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
-function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]||TERR.dirt;return Math.round(p.w.life*(tr.tyre||1)*(1+0.12*upgL(p.w.id))/(e.tyre==='soft'?1.35:0.8));}
+function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]||TERR.dirt;return Math.round(p.w.life*(tr.tyre||1)*(1+0.12*upgL(p.w.id))/(e.tyre==='soft'?1.25:0.8));}
 function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'колодочные на задние колёса':b<0.8?'усиленные':'гидравлика на все колёса';}
 function openRaceSetup(key){
   const s=G,rc=RACES.find(r=>r.key===key);if(!rc||R)return;

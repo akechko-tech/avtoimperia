@@ -156,7 +156,7 @@ function mkRaceCar(e,y,trk){
   let v=20;for(let i=0;i<30;i++){const f=kd*v*v*v+crr*m*GRAV*v-P,df=3*kd*v*v+crr*m*GRAV;v=Math.max(3,v-f/df);}
   const ng=y<1905?3:4,L=st.wb;
   c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
-  c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.35:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
+  c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.25:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
   c.L=L;c.a=L*0.46;c.b=L*0.54;c.h=st.cg;c.Iz=m*(L*L+1.9)/12*1.4;
   return c;
 }
@@ -209,12 +209,16 @@ function carStep(c,trk,dt){
   c.y+=((c.gy||0)-(c.y||0))*Math.min(1,dt*12);
   // износ: шины, топливо, мотор — по реальной дистанции гонки
   const dist=sp*dt,ord=c.order==='push'?1.25:c.order==='save'?0.8:1;
-  c.tyre+=dist*c.tyreRate*(1+5*(c.slipR+c.slipF)+spin*2)*c.wearK*ord*(c.off?1.8:1);
-  if(!c.punct&&(c.tyre>=100||Math.random()<c.punctRate*dist*(c.off?3:1))){c.punct=true;c.punctN=(c.punctN||0)+1;}
+  c.tyre+=dist*c.tyreRate*(1+1.5*(c.slipR+c.slipF)+spin*0.8)*c.wearK*ord*(c.off?1.6:1);
+  // прокол: свежая шина держит, стёртая лопается чаще; на первых километрах у города дорога хорошая
+  const pr=c.punctRate*dist*(c.off?2:1)*(0.25+1.5*Math.min(1,c.tyre/100))*(c.prog<trk.raceLen*0.06?0:1);
+  if(!c.punct&&(c.tyre>=100||Math.random()<pr)){c.punct=true;c.punctN=(c.punctN||0)+1;}
   if(c.fuelRate)c.fuel=Math.max(0,c.fuel-dist*c.fuelRate*(0.35+0.65*c.thr));
-  if(c.rpm>0.9&&c.thr>0.5)c.heat+=7*(1.5-c.rel*0.7)*dt*(c.order==='push'?1.25:1);else c.heat=Math.max(0,c.heat-9*dt);
-  if(c.heat>=100){c.overheat=4;c.heat=55;}if(c.overheat>0)c.overheat-=dt;
-  if(!c.dnf&&c.fin===null&&sp>3){const stress=1+1.5*Math.max(0,(c.heat-60)/40)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
+  // мотор: греется от нагрузки, остывает от встречного воздуха; медленный подъём на полном газу — перегрев
+  const load=c.thr*(0.35+0.65*Math.min(1,c.rpm)),cool=0.55+0.45*Math.min(1,sp/20),heatT=15+62*load*(1.3-0.5*c.rel)*(c.order==='push'?1.25:c.order==='save'?0.85:1)/cool;
+  c.heat+=(heatT-c.heat)*Math.min(1,dt/(heatT>c.heat?7:11));
+  if(c.heat>=100){c.overheat=4;c.heat=60;}if(c.overheat>0)c.overheat-=dt;
+  if(!c.dnf&&c.fin===null&&sp>3){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
     const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов
@@ -300,7 +304,7 @@ function dnfTarget(y,t){const base=y<1900?0.5:y<1906?0.45:y<1912?0.38:y<1920?0.3
 function wearSetup(c,trk,rc){
   const tr=TERR[trk.cfg.terr]||TERR.dirt,p=parts(c.md),km=Math.max(20,rc.km);
   const life=p.w.life*(tr.tyre||1)*(1+0.12*upgL(p.w.id)*(c.you?1:0));
-  const lifeFrac=clamp(life/km,0.6,3);c.tyreRate=100/(lifeFrac*trk.raceLen);
+  const lifeFrac=clamp(life/km,0.7,3);c.tyreRate=100/(lifeFrac*trk.raceLen);
   const expP=clamp(km*p.w.punct*(tr.rough||1)/1100,0,1.4);c.punctRate=expP/trk.raceLen;
   if(trk.cfg.pits){const range=280/(p.e.fuel||1),frac=clamp(range/km,0.55,1.6);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
   c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022:p.c.wire?0.028:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);

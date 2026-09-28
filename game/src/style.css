@@ -272,3 +272,12 @@ table.res td small{display:block}
 @media (max-width:380px){.stat-grid{grid-template-columns:1fr}.rs-top .rs-car{width:80px;height:70px}.mgr-btns button{font-size:13px}}
 table.res td:first-child,table.res th:first-child{width:26px;text-align:left;color:var(--muted);padding-right:6px}
 .champ table.pl td:first-child,.sheet table.pl td.n:first-child{width:24px;text-align:left;color:var(--muted);padding-right:6px}
+/* план выпуска */
+.step.sm button{width:34px;height:34px;font-size:17px}
+.step.sm span{min-width:52px;font-size:14px}
+.plan-row{padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.plan-row:last-of-type{border-bottom:0}
+.plan-row h3{font-size:15px}
+.plan-row h3 .pill{font-size:10px;padding:2px 6px;margin-left:4px;vertical-align:2px}
+.row.ctl{flex-wrap:wrap}
+.row.ctl>.step{margin-left:auto;flex-shrink:0}
