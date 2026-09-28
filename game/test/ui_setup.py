@@ -6,7 +6,7 @@ with sync_playwright() as p:
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
     pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
-    pg.evaluate("""()=>{closeSheet();closePaper();G.pending=[];const rc=RACES.find(r=>r.key==='gpacf-1906');G.y=rc.y;G.m=rc.m-1;G.cash=1e6;G.rdept=1;G.drivers=[];const md=G.models[0];md.e=lastOf(ENGINES,rc.y).id;md.c=lastOf(CHASSIS,rc.y).id;md.w=lastOf(TYRES,rc.y).id;md.b='b2';openRaceSetup(rc.key);}""")
+    pg.evaluate("""()=>{closeSheet();closePaper();G.pending=[];const rc=RACES.find(r=>r.key==='gpacf-1906');G.y=rc.y;G.m=rc.m-1;G.cash=1e6;G.rdept=1;G.drivers=[];const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b='b2';openRaceSetup(rc.key);}""")
     pg.wait_for_timeout(500);pg.screenshot(path=out+'ui_setup1.png')
     pg.evaluate("document.querySelector('#sheetBody').scrollTop=520");pg.wait_for_timeout(200);pg.screenshot(path=out+'ui_setup2.png')
     pg.evaluate("document.querySelector('[data-act=rAdvice]')&&document.querySelector('[data-act=rAdvice]').click()");pg.wait_for_timeout(300)

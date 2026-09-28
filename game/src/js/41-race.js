@@ -325,11 +325,11 @@ function dnfTarget(y,t){const base=y<1900?0.5:y<1906?0.45:y<1912?0.38:y<1920?0.3
 // Параметры износа машины на конкретной гонке: шины, проколы, топливо
 function wearSetup(c,trk,rc){
   const tr=TERR[trk.cfg.terr]||TERR.dirt,p=parts(c.md),km=Math.max(20,rc.km);
-  const life=p.w.life*(tr.tyre||1)*(1+0.12*upgL(p.w.id)*(c.you?1:0));
+  const life=p.w.life*(tr.tyre||1)*(1+0.1*upgOf(c.md,p.w.id));
   const lifeFrac=clamp(life/km,0.7,3);c.tyreRate=100/(lifeFrac*trk.raceLen);
   const expP=clamp(km*p.w.punct*(tr.rough||1)/1100,0,1.4);c.punctRate=expP/trk.raceLen;
   if(trk.cfg.pits){const range=280/(p.e.fuel||1),frac=clamp(range/km,0.55,1.6);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
-  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022:p.c.wire?0.028:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);
+  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);
 }
 function startRace(setup){
   const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
@@ -339,7 +339,7 @@ function startRace(setup){
   const ai=raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
   const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));
   const trk=buildTrack(rc,vref);
-  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);c.style=carStyle(c.md,c.prep,rc.y);c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':parts(c.md).c.wire||rc.y>=1912?'wire':'wood';c.mech=c.st.mech;const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid;c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid};wearSetup(c,trk,rc);return c;});
+  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);c.style=carStyle(c.md,c.prep,rc.y);c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);c.mech=c.st.mech;const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid;c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid};wearSetup(c,trk,rc);return c;});
   // стартовая решётка: быстрые и опытные впереди, немного случайности
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
   cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
@@ -363,8 +363,10 @@ function fieldTeams(rc,s,nTeam){
   const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(t);});
   return out;
 }
-function aiCarMd(y,name){const md={e:lastOf(ENGINES,y).id,c:lastOf(CHASSIS,y).id,b:'b1',w:lastOf(TYRES,y).id,t:'t0',paint:'#333',name:name||'',made:0};
-  if(overpower(md))md.e=ENGINES.filter(e=>e.y<=y&&e.hp<=byId(CHASSIS,md.c).max).pop().id;return md;}
+// Гоночная машина соперников: самая прочная рама, самый мощный мотор, который она выдержит, лучшие коробка, тормоза и шины своего года
+function bestPart(arr,y,key,f){return arr.filter(x=>x.y<=y&&(!f||f(x))).reduce((a,x)=>!a||x[key]>a[key]?x:a,null);}
+function aiCarMd(y,name){const c=bestPart(CHASSIS,y,'max'),e=bestPart(ENGINES,y,'hp',x=>x.hp<=c.max)||ENGINES[0];
+  return {e:e.id,g:bestPart(GEARBOX,y,'eff').id,c:c.id,k:bestPart(BRAKES,y,'brk').id,b:'b1',w:TYRES.filter(x=>x.y<=y&&(!x.solid||y<1895)).reduce((a,x)=>!a||x.grip+(x.pit?0.004:0)>a.grip+(a.pit?0.004:0)?x:a,null).id,t:'t0',paint:'#333',name:name||'',made:0,ai:1};}
 // Типичная ненадёжность соперников: от неё считается частота поломок в гонке
 function fieldRelRef(rc,s){const T=fieldTeams(rc,s,1);if(!T.length)return 0.2;const prep=rc.t==='endurance'||rc.t==='rally'?1:2,st=carStats(aiCarMd(rc.y),prep,rc.y);return Math.max(0.05,1-T.reduce((a,t)=>a+clamp(st.rel*Math.pow(t.str,0.6),0.3,0.995),0)/T.length);}
 function teamBoost(t,rc){return (t.boost&&Object.keys(t.boost).some(k=>rc.y>=+k)?1.06:1)*(rc.t==='endurance'&&t.endur?t.endur:1);}

@@ -30,9 +30,10 @@ const FLEET0={us:300,fr:1000,uk:100,de:400,it:60};
 const CAR_LIFE={1895:6,1910:7,1920:8,1929:9},HOLD={1895:3,1910:3.5,1920:4,1929:4};
 // Насколько машина вообще нужна семье: надёжность, дороги, бензин, мастерские
 const APPEAL={1895:-2.2,1900:-0.6,1905:0.6,1910:1.2,1913:1.4,1916:1.4,1920:1.2,1925:1.4,1929:2};
-// Грузовики покупает бизнес: доля ВВП, которую он готов тратить на грузовики
-// (в США грузовиков берут вдвое больше: дешёвые Ford TT, фермы, большие расстояния)
-const TRUCK_PHI={1895:0,1898:0.00001,1900:0.00003,1902:0.0001,1905:0.0003,1910:0.001,1913:0.002,1916:0.0035,1918:0.005,1920:0.005,1922:0.0035,1925:0.0035,1929:0.0045};
+// Грузовики и фургоны покупает бизнес: лавки, пивоварни, почта, стройки. Каждый месяц часть фирм обновляет
+// свой транспорт — это доля ВВП; каждая фирма выбирает между лошадью с телегой и мотором.
+// Сколько из них возьмут мотор, решают цена, надёжность и дороги эпохи (сила марок подобрана по истории).
+const TRUCK_POOL={1895:0.0025,1905:0.0028,1913:0.003,1917:0.0045,1920:0.005,1925:0.0055,1929:0.0065};
 const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=1.5,LAM=0.25,AQT=1.8,BT=4;
 // Качество машин конкурентов в классе — доля лучшей машины эпохи
 const QG={people:0.62,middle:0.8,lux:1,truck:0.75};
@@ -83,10 +84,9 @@ function taxRate(y){return y<1914?0.08:y<=1919?0.25:0.15;}
 // История продаж — только для подбора силы конкурентов
 function segAnnual(c,g,s){const t=yf(s);if(g==='truck')return tabAt(MKT_TRUCK[c],t,true);const sh=tabAt(c==='us'?SEGSH.us:SEGSH.eu,t);return tabAt(MKT[c],t,true)*sh[{people:0,middle:1,lux:2}[g]];}
 function prefP(g,c,s){return tabAt(PREF[g],yf(s))*PREF_C[c][g];}
-function qrefQ(g,s){return eraBest(s,g==='truck')*QG[g];}
 // Типичная цена машины такого класса и качества — ориентир для игрока
 const ALPHA_P={people:5,middle:3.5,lux:1.8,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,truck:1.8};
-function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*Math.pow(clamp(modelQ(md)/qrefQ(g,s),0.3,2),ALPHA_Q[g]/ALPHA_P[g]);}
+function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),ALPHA_Q[g]/ALPHA_P[g]);}
 /* ---------- конкуренты ---------- */
 function compVol(cp,s){const t=yf(s);if(t<cp.since||(cp.until&&t>=cp.until))return 0;return tabAt(cp.v,t,true);}
 function compAlive(cp,s){return compVol(cp,s)>0;}
@@ -98,7 +98,9 @@ function ghostShare(c,g,s){const cp=(COMPS[c]||[]).find(x=>x.pk===s.pioneer);if(
 // Сила конкурентов класса: подобрана по истории (CALIB), плюс сложность игры
 function kappa(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Object.keys(tb).length?tabAt(tb,yf(s)):-6;
   k+=Math.log(DIF().comp||1);const gs=ghostShare(c,g,s);if(gs>0)k+=Math.log(Math.max(0.03,1-gs));return k;}
-function pwOf(s,c,g){return (c===s.country&&s.pw&&s.pw[g])||1;}
+function pwOf(s,c,g){return (s.pw&&s.pw[c]&&s.pw[c][g])||1;}
+// Ответ конкурентов на ваш успех: новые модели, дилеры и реклама делают их машины привлекательнее
+function rivalBoost(s,c,g){return (s.rv&&s.rv[c]&&s.rv[c][g])||0;}
 // Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
 function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
   (COMPS[c]||[]).forEach(cp=>{if(cp.pk===s.pioneer)return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
@@ -106,9 +108,13 @@ function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)r
 // Ваша марка — одна из марок своего рынка: те же условия эпохи (дороги, надёжность, мода — поправка класса κ),
 // а исходная доля — как у средней новой марки или как у исторической марки основателя, если она была больше.
 // Всё остальное решают цена, качество, дилеры, реклама, репутация и гонки.
+// Сколько покупателей найдёт новая марка фургонов, пока грузовиков почти нет (в США до 1906 года мешают дороги)
+const TRUCK_FLOOR={us:-5.8,fr:-3.6,de:-3.2,uk:-3.5,it:-4.4};
 function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Object.keys(tb).length?tabAt(tb,yf(s)):-6;
-  if(g==='truck')k=Math.max(k,-2); // грузовиков в истории ещё не было — первых покупателей даёт пул бизнеса
-  return k+Math.log(Math.max(ghostShare(c,g,s),1/(brandsN(c,g,s)+1)))-Math.log(DIF().comp||1);}
+  // грузовиков у конкурентов ещё нет — первые фургоны берут самые смелые фирмы
+  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),1/(brandsN(c,g,s)+1)));
+  if(g==='truck')b=Math.max(b,TRUCK_FLOOR[c]); // смелые фирмы найдутся всегда: лавки, пивоварни, почта
+  return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
   (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer)return;const v=compVol(cp,s)*mx;if(v>0){out.push({cp,i,v});sum+=v;}});
@@ -121,8 +127,10 @@ function adEffect(s,c){const a=(s.ad||0)*(c===s.country?1:0.35)*bn('adEff');retu
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
 function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0);}
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
-function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md),hpr=engineHp(p.e)/tabAt(ERA_HP[g],yf(s));
-  return -3.5*Math.max(0,Math.log(0.65/hpr))-(p.w.id==='w1'&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+// Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
+function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
+function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
+  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
 function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffAt(c,s))+(home?0:shipCost(s));}
 /* ---------- рынок страны ---------- */
@@ -131,10 +139,10 @@ function budget(x){return x<=0.9?Math.log(1-Math.max(0,x)):Math.log(0.1)-10*(x-0
 // models — ваши модели в продаже в этой стране; ov — {id, price}: «а если поставить другую цену»; kap — сила конкурентов вместо таблицы (для подбора)
 function mkCountry(c,s,models,ov,kap,rhoOv){
   const t=yf(s),ec=econ(s.y,s.m,c),f=SEASON[s.m]*ec.f,H=households(c,s),inc=incomeOf(c,s),k=affordK(c,s),u0=appeal(c,s),hold=tabAt(HOLD,t);
-  const pm=prefP('middle',c,s),ebC=eraBest(s,false),rho=rhoOv!=null?rhoOv:models.length?reachOf(s,c):0,K=g=>kap?kap[g]:kappa(c,g,s);
+  const pm=prefP('middle',c,s),rho=rhoOv!=null?rhoOv:models.length?reachOf(s,c):0,K=g=>kap?kap[g]:kappa(c,g,s)+rivalBoost(s,c,g);
   const rivals=['people','middle','lux'].map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g)}));
   const pr=md=>offerPrice(md,c,s,ov&&ov.id===md.id?ov.price:undefined);
-  const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>md.probe?{md,...md.probe}:{md,g:segOf(md),q:Math.max(0.05,modelQ(md)/ebC),P:pr(md),fair:refPrice(md,s,c),e:modelExtras(md,c,s)});
+  const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>md.probe?{md,...md.probe}:{md,g:segOf(md),q:mq(md,s,c),P:pr(md),fair:refPrice(md,s,c),e:modelExtras(md,c,s)});
   const BK={};['people','middle','lux'].forEach(g=>BK[g]=brandK(c,g,s));
   const R={c,f,H,inc,k,rho,fleet:fleetOf(s,c),shop:0,buyers:0,segs:{},by:{}};
   SEGK.forEach(g=>R.segs[g]={inc:0,you:0,size:0,price:prefP(g,c,s)});models.forEach(m=>R.by[m.id]=0);
@@ -157,13 +165,15 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   SEGK.forEach(g=>{const z=R.segs[g];z.size=z.inc+z.you;});
   return R;
 }
-// Грузовики: покупает бизнес, спрос — от размера экономики и цены
+// Грузовики: покупает бизнес — фирмы выбирают между лошадью и мотором; фургон сравнивают с грузовиком по цене за тонну груза
+// в Америке грузовиков на доллар ВВП втрое больше: фермы, большие расстояния, дешёвые Ford TT
+function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*tabAt(INC[c],t)/0.72*tabAt(TRUCK_POOL,t)*(c==='us'?3:1)/prefP('truck',c,s)/12*SEASON[s.m]*(ec.war?2.5:ec.f);}
 function truckMarket(R,c,s,ms,pr,K,u0){
   // в войну грузовики берёт армия
-  const t=yf(s),ec=econ(s.y,s.m,c),PT=prefP('truck',c,s),pool=R.H*tabAt(INC[c],t)/0.72*tabAt(TRUCK_PHI,t)*(c==='us'?2.6:1)/PT/12*SEASON[s.m]*(ec.war?2.5:ec.f),z=R.segs.truck;z.pool=pool;if(pool<=0)return;
-  const eb=eraBest(s,true),U=(q,P)=>u0-0.5+AQT*Math.log(q/QG.truck)-BT*Math.log(P/PT);
-  const ei=Math.exp(U(QG.truck,PT*pwOf(s,c,'truck'))+K('truck'));let m=-1e9;
-  const bk=brandK(c,'truck',s),L=ms.map(md=>{const v=(md.probe?U(md.probe.q,md.probe.P)+md.probe.e:U(Math.max(0.05,modelQ(md)/eb),pr(md))+modelExtras(md,c,s))/LAM+bk/LAM;if(v>m)m=v;return {md,v};});
+  const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;if(pool<=0)return;
+  const U=(q,P,fair)=>u0-0.5+AQT*Math.log(q/QG.truck)-BT*Math.log(P/fair);
+  const ei=Math.exp(U(QG.truck,PT*pwOf(s,c,'truck'),PT)+K('truck'));let m=-1e9;
+  const bk=brandK(c,'truck',s),L=ms.map(md=>{const v=(md.probe?U(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e:U(mq(md,s,c),pr(md),PT*payK(md))+modelExtras(md,c,s))/LAM+bk/LAM;if(v>m)m=v;return {md,v};});
   let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
   const dr=1+ei+A,du=1+ei;z.inc+=pool*ei*(R.rho/dr+(1-R.rho)/du);R.shop+=pool;
   L.forEach(x=>{const d=pool*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;});

@@ -1,9 +1,9 @@
 /* ================= ART ================= */
 function carSVG(md,opt={}){
-  const p=parts(md),ei=ENGINES.indexOf(p.e),ci=CHASSIS.indexOf(p.c),bid=p.b.id;
+  const p=parts(md),hp=p.e.hp,ei=hp<=3?0:hp<=8?1:hp<=16?2:hp<=25?3:hp<=40?4:hp<=60?5:7,cy=p.c.y,ci=cy<1896?0:cy<1902?1:cy<1910?2:cy<1920?3:4,bid=({b9:'b4',b11:'b4',b10:'b1'})[p.b.id]||p.b.id;
   const paint=md.paint||'#1b1d22',dark='#15161a',leather='#4a2f1f',glass='#a9c6db';
   const hoodL=[0,16,24,30,38,44,40,50][ei],R=[17,17,15,14,13][ci],GY=94,wy=GY-R,railY=wy-3;
-  const truck=!!p.b.truck,rx=48,wb=62+hoodL*0.9+((bid==='b3'||bid==='b4'||bid==='b5')?10:0)+(truck?18:0),fx=rx+wb;
+  const truck=!!p.b.truck,rx=48,wb=62+hoodL*0.9+((bid==='b3'||bid==='b4'||bid==='b5'||bid==='b9'||bid==='b11')?10:0)+(truck?18:0),fx=rx+wb;
   const front=fx+14,x0=front-hoodL-4,rear=rx-22;
   const metal=ci>=4?'#cfd3da':(md.t==='t0'?'#34363c':'#c9a24a');
   const hoodH=hoodL?12+(ei>=4?4:0)+(ei>=7?2:0):0;

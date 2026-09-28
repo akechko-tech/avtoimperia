@@ -3,6 +3,9 @@ function stopAuto(){if(auto){clearInterval(auto);auto=null;const ab=document.get
 function doStep(){if(step()){save();render();afterStep();return true;}return false;}
 function flushToasts(){pendingToasts.forEach(toast);pendingToasts=[];}
 function rerender(){const top=window.scrollY;save();render();window.scrollTo(0,top);}
+// Второе нажатие подтверждает необратимое действие
+let confirmKey='',confirmT=0;
+function confirmOnce(k,msg){const now=Date.now();if(confirmKey===k&&now-confirmT<4000){confirmKey='';return true;}confirmKey=k;confirmT=now;toast(msg);return false;}
 const ACT={
   tab:d=>{tab=d.t;render();window.scrollTo(0,0);},
   next:()=>doStep(),
@@ -10,6 +13,9 @@ const ACT={
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
   // завод
   capAdd:d=>{const n=+d.n,c=n*capUnitCost(G);if(G.cash<c)return;G.cash-=c;G.plantVal+=c;G.capBuild.push({units:n,left:2});addLog(`Заложен новый цех: +${fmtN(n)} мест, ${money(c)}.`);rerender();},
+  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){t.run();save();render();flushToasts();}},
+  helperToggle:()=>{if(!G)return;G.helper=G.helper||{};G.helper.on=!G.helper.on;toast(G.helper.on?'Помощник управляющего включён':'Помощник выключен');save();openSettings();render();},
+  whAdd:d=>{const n=+d.n,c=n*whUnitCost(G);if(G.cash<c)return;G.cash-=c;G.plantVal+=c;G.whBuild=G.whBuild||[];G.whBuild.push({units:n,left:1});addLog(`Строится склад на ${fmtN(n)} машин (${money(c)}).`);rerender();},
   capSell:()=>{if(G.cap<=3)return;const n=Math.max(1,Math.round(G.cap*0.2)),v=Math.round(G.plantVal*n/G.cap*0.4);G.cap-=n;G.plantVal-=G.plantVal*n/(G.cap+n);G.cash+=v;addLog(`Часть цехов продана за ${money(v)}.`);rerender();},
   shifts:d=>{G.shifts=+d.v;rerender();},
   staffAuto:d=>{G.staffAuto=d.v==='1';rerender();},
@@ -28,13 +34,19 @@ const ACT={
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
   pick:d=>{draft[d.k]=d.v;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  dsec:d=>{draft.open=draft.open===d.k?null:d.k;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  dclass:d=>{const was=designKind(draft),k=d.v;if(kindIsTruck(k)!==kindIsTruck(was)||(kindIsTruck(k)&&k!==was))Object.assign(draft,rivalDesign(k,G.y));else draft.t=KIND_TRIM[k];const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  dauto:()=>{const k=designKind(draft),base={};PART_KEYS.forEach(x=>base[x]=draft[x]);const md=autoDesign(k,G,base);PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;toast('Подобраны детали для наибольшей прибыли');},
   startdev:()=>{const md={...draft},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||('Тип '+G.nextId);
-    const m={id:G.nextId++,name:nm,e:md.e,c:md.c,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+    const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
     m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
   rdPick:()=>openRD(),
-  rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj){G.rd.proj=pj;G.rd.prog=0;addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
-  rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<5&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро расширено до ${G.rd.lvl}-го уровня.`,'good');checkAch();rerender();flushToasts();}},
+  rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj&&rdActive(G).length<rdSlots(G)){G.rd.projs.push({...pj,prog:0});addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
+  rdStop:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;if(!confirmOnce('rdStop'+(+d.k),'Нажмите ещё раз: сделанное по проекту пропадёт'))return;G.rd.projs.splice(+d.k,1);addLog(`КБ остановило проект: ${pj.name}.`);rerender();},
+  rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<RD_MAX&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро выросло: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень.`,'good');checkAch();rerender();flushToasts();}},
+  fold:d=>{UIF[d.k]=!isOpen(d.k,d.def==='1');if(!sheet.hidden&&draft===null&&sb.querySelector('[data-k="'+d.k+'"]')){const top=sb.scrollTop;openRD();sb.scrollTop=top;return;}rerender();},
   // рынок
   dealers:d=>{const need=Math.round(dealerNeed(d.c,G)),have=dealerCount(G,d.c),mk=G.last&&G.last.mk[d.c],lost=mk&&mk.lostDlr||0,tpNeed=mk&&lost>0.5?Math.ceil(((mk.sold||0)+lost)/dealerTP(G)):0,target=Math.max(need,tpNeed);let n=Math.min(+d.n,target-have);if(n<1)return;const c=n*dealerCost(G);if(n<1||G.cash<c)return;G.cash-=c;const was=dealerCount(G,d.c);G.dealers[d.c]=was+n;if(!was&&d.c!==G.country)addLog(`Открыты первые дилеры: ${COUNTRIES[d.c].name}.`,'good');checkAch();rerender();flushToasts();},
   dealersCut:d=>{const was=dealerCount(G,d.c),n=Math.max(1,Math.round(was*0.2));G.dealers[d.c]=Math.max(d.c===G.country?1:0,was-n);rerender();},
@@ -57,10 +69,10 @@ const ACT={
   toMenu:()=>{if(G)save();closeSheet();closePaper();showMainMenu();},
   continue:()=>{if(loadSlot('auto')){hideMainMenu();tab='plant';shownCash=null;lastDate='';render();if(G.over&&G.final)openFinal();}},
   newgame:()=>{draft=null;stopAuto();openNewGame();},
-  pion:d=>{const top=sb.scrollTop;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
-  country:d=>{const top=sb.scrollTop;draft.country=d.v;draft.company=document.getElementById('cname').value;openNewGame();sb.scrollTop=top;},
-  diff:d=>{const top=sb.scrollTop;draft.diff=d.v;draft.company=document.getElementById('cname').value;openNewGame();sb.scrollTop=top;},
-  startgame:()=>{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
+  pion:d=>{const top=sb.scrollTop,f=document.getElementById('fname');if(f)draft.first=f.value;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
+  country:d=>{const top=sb.scrollTop;draft.country=d.v;draft.company=document.getElementById('cname').value;draft.first=document.getElementById('fname').value;openNewGame();sb.scrollTop=top;},
+  diff:d=>{const top=sb.scrollTop;draft.diff=d.v;draft.company=document.getElementById('cname').value;draft.first=document.getElementById('fname').value;openNewGame();sb.scrollTop=top;},
+  startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},

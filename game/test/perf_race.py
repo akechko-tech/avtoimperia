@@ -10,7 +10,7 @@ with sync_playwright() as p:
     pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     cdp=pg.context.new_cdp_session(pg);cdp.send('Emulation.setCPUThrottlingRate',{'rate':rate})
     for key in keys:
-        pg.evaluate("""k=>{const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];md.e=lastOf(ENGINES,rc.y).id;md.c=lastOf(CHASSIS,rc.y).id;md.w=lastOf(TYRES,rc.y).id;md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;if(overpower(md))md.e=ENGINES.filter(e=>e.y<=rc.y&&e.hp<=byId(CHASSIS,md.c).max).pop().id;
+        pg.evaluate("""k=>{const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
           const t0=performance.now();startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});window.__start=performance.now()-t0;R.me.player=false;R.me=null;
           window.__fr=[];window.__rt=[];window.__tt=[];window.__at=[];const orig=renderRace;window.renderRace=function(dt){const a=performance.now();orig(dt);window.__rt.push(performance.now()-a);};const ot=raceTick;window.raceTick=function(dt){const a=performance.now();ot(dt);window.__tt.push(performance.now()-a);};const oa=auRaceTick;window.auRaceTick=function(){const a=performance.now();oa();window.__at.push(performance.now()-a);};
           let last=performance.now();const loop=t=>{window.__fr.push(t-last);last=t;if(R)requestAnimationFrame(loop);};requestAnimationFrame(loop);}""",key)

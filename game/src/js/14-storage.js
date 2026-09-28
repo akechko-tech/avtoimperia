@@ -10,7 +10,16 @@ function deleteSlot(k){try{localStorage.removeItem(slotKey(k));}catch(e){}}
 function migrate(x){
   x.tech=x.tech||{};x.dealers=x.dealers||{[x.country]:1};x.capBuild=x.capBuild||[];x.peak=x.peak||{year:0,share:{}};x.firsts=x.firsts||{};x.titles=x.titles||[];
   x.season=x.season||{};x.cres=x.cres||{};x.rdept=x.rdept||0;x.contracts=x.contracts||{};x.hist.share=x.hist.share||[];x.pw=x.pw||{};x.drivers=x.drivers||[];
-  x.models.forEach(m=>{if(m.plan===undefined)m.plan='auto';if(m.backlog===undefined)m.backlog=0;if(m.fc===undefined)m.fc=m.lastDem||0;});
+  x.models.forEach(m=>{if(m.plan===undefined)m.plan='auto';if(m.backlog===undefined)m.backlog=0;if(m.fc===undefined)m.fc=m.lastDem||0;
+    // 0.10: коробка передач и тормоза стали отдельными деталями
+    const y=m.status==='dev'?x.y:1895+Math.floor((m.launched||0)/12);
+    if(!m.g)m.g=defGear(y);if(!m.k)m.k=m.c==='c5'?(y>=1921?'k4':'k3'):y>=1902&&m.c!=='c1'&&m.c!=='c2'?'k2':'k1';});
+  // 0.10: несколько проектов КБ, склад, ответ конкурентов, заказы
+  const rd=x.rd||(x.rd={lvl:1,upg:{},early:[]});if(!rd.projs){rd.projs=rd.proj?[{...rd.proj,prog:rd.prog||0}]:[];delete rd.proj;delete rd.prog;}
+  if(x.wh===undefined){x.wh=Math.max(12,Math.round(x.models.reduce((a,m)=>a+(m.stock||0),0)*1.3),Math.round((x.cap||3)*1.5));x.whBuild=[];}
+  if(x.pw&&SEGK.some(g=>typeof x.pw[g]==='number'))x.pw={[x.country]:x.pw};
+  x.rv=x.rv||{};x.orders=x.orders||[];x.tenders=x.tenders||[];x.ui=x.ui||{};
+  for(const c in x.comps||{})x.comps[c].forEach(o=>{if(o.yr===undefined){o.yr=0;o.prev=0;}});
   return x;
 }
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}

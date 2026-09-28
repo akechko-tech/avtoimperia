@@ -90,7 +90,7 @@ function mSteer(M,x,y,z,r,S){const deco=[],seg=14,tilt=0.75,P=a=>[x+Math.cos(a)*
 function carModel(S){
   MLOD=S.lod==='lo'?0:1;const M=new Mesh(),st=S.style,y=S.y,col=S.color||'#23427a',brass=y<1916?'#c9a24a':'#c8ccd2',dark='#1c1d21',leather=y<1920?'#5a3a24':'#6e2a22';
   const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y);
-  let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':'wood';
+  let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':S.wheel==='disc'?'disc':'wood';
   const G={}; // размеры
   const wheels=(wb,t,rF,rR,tw,dual,solid)=>{[-1,1].forEach(sd=>{mWheel(M,sd*t/2,rF,wb/2,rF,tw,wt,W,solid);mWheel(M,sd*t/2,rR,-wb/2,rR,tw,wt,W,solid);if(dual)mWheel(M,sd*(t/2+tw+0.02),rR,-wb/2,rR,tw,wt,W,solid);});
     [-1,1].forEach(sd=>mBox(M,sd*0.36-0.035,rR-0.02,-wb/2-0.35,sd*0.36+0.035,rR+0.09,wb/2+0.3,dark,'matte'));

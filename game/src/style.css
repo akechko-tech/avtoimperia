@@ -127,7 +127,7 @@ table.pl td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-ali
 table.pl th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:left;padding-bottom:6px}
 table.pl th.n{text-align:right}
 table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-weight:600}
-.comp{display:grid;grid-template-columns:44px 1fr 80px 40px;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+.comp{display:grid;grid-template-columns:44px minmax(0,1fr) 64px 64px;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
 .comp .dot{width:12px;height:12px;border-radius:50%;margin-left:16px}
 .comp small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
 .comp.you{color:var(--brass);font-weight:600}
@@ -292,3 +292,31 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .carbox.enter img.car3d{animation:enter .7s cubic-bezier(.2,.8,.3,1)}
 @media (prefers-reduced-motion:no-preference){.carbox img.car3d.anim{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-1.5px)}}}
 .p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.7) grayscale(.35) contrast(1.15)}
+/* 0.10: конструктор — разделы деталей раскрываются по нажатию, сравнение с соперником класса */
+.dsecs{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.dsec{background:var(--panel2);border:1px solid var(--line-soft);border-radius:6px;padding:0}
+.dsec.open{border-color:var(--line);padding-bottom:10px}
+.dsec .chips{padding:0 10px}.dsec>p{padding:0 10px}
+.dsec-h{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto auto;column-gap:8px;width:100%;background:none;border:0;text-align:left;padding:9px 10px;cursor:pointer}
+.dsec-h .label{grid-column:1}.dsec-h b{grid-column:1;font-weight:600;font-size:14px}.dsec-h small{grid-column:1;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.dsec-h i{grid-column:2;grid-row:1/4;align-self:center;font-style:normal;color:var(--brass);font-size:14px}
+.cmp-ph{width:74px;height:54px;object-fit:cover;border-radius:4px;flex:none;filter:sepia(.35)}
+.cmp-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 48px;gap:8px;align-items:center;padding:3px 0;font-size:13px}
+.cmp-row small{display:block;font-size:10px;color:var(--brass);letter-spacing:1px;line-height:1}
+.cmp-bar{height:8px;background:var(--bg);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--line-soft)}
+.cmp-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.cmp-bar b{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--text);opacity:.55}
+.cmp-row .num{text-align:right}
+.bar.qb b{position:absolute;left:66.6%;top:-2px;bottom:-2px;width:2px;background:var(--text);opacity:.5}
+.fold-h{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:none;border:0;border-top:1px solid var(--line-soft);margin-top:10px;padding:10px 0 2px;cursor:pointer;text-align:left;font-weight:600;font-size:14px}
+.fold-h small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.fold-h i{font-style:normal;color:var(--brass)}
+.fold-b{margin-top:6px}
+.iconbtn.sm{width:24px;height:24px;font-size:13px;line-height:1}
+.rd-row{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)}
+.comp .num small{display:block;font-size:10px}
+.advisor{border-color:var(--brass)}
+.tip{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line-soft)}
+.tip:first-of-type{border-top:0}
+.tip .ic{font-size:18px;line-height:1}
+.tip .btn{white-space:normal;text-align:center;max-width:140px}

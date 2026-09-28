@@ -1,9 +1,10 @@
 /* ================= EVENTS ================= */
 const HIST=[
   {y:1896,m:10,c:'uk',img:'Red flag traffic laws',title:'Флажок больше не нужен',deck:'Парламент отменил «закон о красном флаге»',text:'Автомобилям больше не нужен пешеход с флажком впереди, а скорость разрешили поднять до 14 миль в час. Британский рынок оживает; в честь события автомобилисты устроили пробег из Лондона в Брайтон.'},
-  {y:1900,m:0,title:'Грузовики выходят на улицы',deck:'Торговцы и почта хотят фургоны',text:'Лавочники, пивовары и почтовые ведомства присматриваются к моторным фургонам. В конструкторе появился грузовой кузов — это новый сегмент рынка.'},
+  {y:1896,m:3,img:'Daimler Motor-Lastwagen',title:'Мотор вместо лошади',deck:'Daimler построил первый грузовик',text:'Готлиб Даймлер отправил в Лондон моторную телегу, которая везёт полторы тонны груза. Лавочники, пивовары и почта присматриваются: лошадь нужно кормить каждый день, а мотор — только когда он работает. В конструкторе появился фургон — новый класс покупателей: фирмы и ведомства.'},
   {y:1901,m:2,img:'Mercedes 35 hp',title:'«Мерседес» задаёт новую планку',deck:'Низкая рама, сотовый радиатор, 35 сил',text:'Машина, построенная Вильгельмом Майбахом по заказу Эмиля Еллинека, выиграла гонки в Ницце. Лёгкая, низкая и мощная, она похожа скорее на автомобиль будущего, чем на карету без лошади. Покупатели ждут того же от всех марок.'},
   {y:1908,m:9,img:'Ford Model T',title:'Автомобиль для всех',deck:'Генри Форд представил Model T',text:'Простая, прочная и дешёвая машина обещает сделать автомобиль доступным фермеру и рабочему. Цены по всему миру начинают падать, в народном сегменте появляются массовые марки.'},
+  {y:1912,m:1,img:'Charles F. Kettering',title:'Мотор заводится кнопкой',deck:'Cadillac ставит электрический стартер Кеттеринга',text:'Больше не нужно крутить заводную ручку и рисковать рукой: стартер Delco запускает мотор нажатием педали. Водить машину теперь может каждый. Покупатели дорогих машин ждут стартер в люксовом оснащении.'},
   {y:1913,m:9,img:'Highland Park Ford Plant',title:'Движущийся конвейер',deck:'В Хайленд-Парке сборка шасси ускорилась в разы',text:'Машина едет к рабочему, а не рабочий к машине. Время сборки шасси сократилось с двенадцати часов до полутора. На вкладке «Завод» доступна модернизация.'},
   {y:1914,m:7,c:'!us,it',title:'Война!',deck:'Мобилизация объявлена по всей Европе',text:'Спрос на легковые машины рухнул, армии нужны грузовики. Военное ведомство предлагает контракт: 40% мощностей по себестоимости плюс 35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
   {y:1915,m:4,c:'it',title:'Италия вступает в войну',deck:'Королевство объявило войну Австро-Венгрии',text:'Спрос на легковые машины рухнул, армии нужны грузовики. Военное ведомство предлагает контракт: 40% мощностей по себестоимости плюс 35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
@@ -11,7 +12,9 @@ const HIST=[
   {y:1918,m:10,img:'Armistice of 11 November 1918',title:'Перемирие!',deck:'Орудия умолкли 11 ноября в 11 часов',text:'Война окончена. Военные заказы прекращены, впереди послевоенный бум: вернувшиеся солдаты научились водить и хотят автомобили.',fx:s=>{s.military=false;}},
   {y:1921,m:0,title:'Послевоенный спад',deck:'Кредиты дорожают, склады полны',text:'Покупатели осторожничают, цены падают. Выживут те, кто умеет считать.'},
   {y:1923,m:0,c:'de',img:'Hyperinflation in the Weimar Republic',title:'Гиперинфляция',deck:'Буханка хлеба стоит миллиарды марок',text:'Марка обесценивается каждый день. Немецкий рынок почти замер, зарплату выдают дважды в день.'},
+  {y:1922,m:6,img:'Austin 7',title:'Машина размером с мотоцикл',deck:'Austin Seven и Citroën 5CV открывают эпоху малолитражек',text:'Маленький мотор, четыре тесных места и цена мотоцикла с коляской. В Европе, где налог берут с каждой лошадиной силы, малолитражка становится машиной для всех. У поставщиков появился малолитражный мотор.'},
   {y:1924,m:0,img:'Roaring Twenties',title:'Ревущие двадцатые',deck:'Автомобиль становится вещью среднего класса',text:'Экономика растёт, в моде джаз, радио и автомобиль в рассрочку.'},
+  {y:1927,m:11,img:'Ford Model A (1927–1931)',title:'Ford показал Model A',deck:'После 15 миллионов Model T — новая машина',text:'Полгода заводы Форда стояли: конвейер перестраивали под новую модель. Model A — тормоза на все колёса, безопасное стекло, четыре цвета вместо одного чёрного. В первые дни на неё записались сотни тысяч покупателей. Даже Форд понял: одна модель на века больше не работает.'},
   {y:1929,m:9,img:'Wall Street crash of 1929',title:'Чёрный вторник',deck:'Крах на Нью-Йоркской фондовой бирже',text:'Акции обесценились за несколько дней. Покупатели откладывают покупки, банки требуют вернуть кредиты.'}
 ];
 const RANDOM=[
@@ -27,15 +30,57 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',kicker:ev.kicker||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
   const s=G;
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
+  checkTenders(s);
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
+/* ---------- конкуренты отвечают ---------- */
+function topRivals(c,g,s,n){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v).slice(0,n||2).map(o=>o.cp);}
+function rivalNews(s,c,g,nv){
+  if(s.pending.length||mi(s)-(s.rvSaid||-99)<10)return;const L=topRivals(c,g,s,2);if(!L.length)return;s.rvSaid=mi(s);
+  const a=compName(L[0],s),b=L[1]?compName(L[1],s):null,m=compModel(L[0],s),MV=['снизили цены','выпустили обновлённые модели','открыли дилеров в каждом городе','удвоили рекламу в газетах','переманивают ваших дилеров'];
+  const i=mi(s)%MV.length,mv=MV[i]+' и '+MV[(i+2)%MV.length];
+  pushEvent({title:'Конкуренты наступают',kicker:'Рынок',img:m&&m[2]&&IMG[m[2]]?m[2]:'',imgCap:m?`${a} ${m[1]}`:'',deck:`${b?`«${a}» и «${b}»`:`«${a}»`} отвечают на успех «${s.company}»`,
+    text:`Покупатели класса «${SEG[g].name}» всё чаще выбирают «${s.company}», и старые марки не собираются сдаваться: они ${mv}. Теперь их машины привлекательнее на ${Math.round((Math.exp(nv)-1)*100)}%.\nОтветить можно новой моделью и улучшениями в конструкторском бюро, рекламой и ценой — или завоевать другой класс и заграничные рынки. История помнит: Ford держал половину рынка США, пока General Motors не предложил покупателям выбор.`},true);}
+/* ---------- заказы ведомств и фирм ---------- */
+const TENDERS={
+  post:{y:1897,kind:'van',n:[4,16],lim:1.1,mo:6,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии'}[c]),
+    text:(o)=>`${o.who} меняет конные повозки на моторные и закупает ${o.n} фургонов для посылок. Главное для почты — надёжность и цена.`},
+  brew:{y:1898,kind:'van',n:[3,10],lim:1.05,mo:5,who:c=>({fr:'Большие магазины «Бон Марше»',de:'Пивоварня «Лёвенброй»',uk:'Универмаг «Хэрродс»',us:'Пивоварня «Анхойзер-Буш»',it:'Пивоварня «Перони»'}[c]),
+    text:(o)=>`${o.who} хочет развозить товар на моторах: заказ на ${o.n} фургонов. Если машины не подведут, будут и новые заказы.`},
+  taxi:{y:1905,kind:'car',n:[20,80],lim:0.92,mo:6,who:c=>'Таксомоторный парк '+({fr:'Парижа',de:'Берлина',uk:'Лондона',us:'Нью-Йорка',it:'Милана'}[c]),
+    text:(o)=>`${o.who} покупает ${o.n} машин для такси. Парк берёт оптом и торгуется, зато машины будут на глазах у всего города.`},
+  fire:{y:1906,kind:'truck',n:[2,8],lim:1.3,mo:6,who:c=>'Пожарная команда '+({fr:'Парижа',de:'Берлина',uk:'Лондона',us:'Нью-Йорка',it:'Турина'}[c]),
+    text:(o)=>`${o.who} переходит с лошадей на моторы: нужно ${o.n} машин, которые заводятся с полоборота и не ломаются в пути.`},
+  army:{y:1908,to:1914,kind:'truck',n:[10,40],lim:1.2,mo:8,cs:['de','fr','uk'],who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Пруссии',uk:'Военное министерство Британии'}[c]),
+    text:(o)=>`${o.who} платит за грузовики, которые в войну можно будет призвать в армию. Заказ — ${o.n} машин с поставкой за ${o.mo} месяцев.`},
+  city:{y:1912,kind:'truck',n:[5,25],lim:1.1,mo:7,who:c=>'Городская управа '+({fr:'Лиона',de:'Мюнхена',uk:'Манчестера',us:'Чикаго',it:'Рима'}[c]),
+    text:(o)=>`${o.who} закупает ${o.n} грузовиков для уборки улиц и стройки.`}
+};
+function tenderModel(s,kind){return s.models.filter(m=>m.status==='prod'&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
+function checkTenders(s){
+  if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
+  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=18&&tenderModel(s,t.kind));if(!L.length)return;
+  const [k,t]=L[Math.floor(Math.random()*L.length)],md=tenderModel(s,t.kind),scale=(1+T(s)/10)*(s.country==='us'?1.8:1);
+  const n=Math.max(2,Math.round((t.n[0]+Math.random()*(t.n[1]-t.n[0]))*scale)),lim=Math.round(refPrice(md,s)*t.lim/10)*10;
+  s.tenderSaid=s.tenderSaid||{};s.tenderSaid[k]=mi(s);
+  const o={k,who:t.who(s.country),n,mo:t.mo,md:md.id,lim,bids:[Math.round(lim*0.88/10)*10,lim]};s.tenderNow=o;
+  const S=classScore(md,s),cost=unitCost(md,s);
+  pushEvent({title:'Заказ: '+o.who,kicker:'Деловой заказ',deck:`${n} машин · до ${money(lim)} за штуку · поставка за ${t.mo} мес.`,
+    text:t.text(o)+`\nВаша модель для заказа — «${md.name}»: против соперников ${Math.round(S*100)}%, себестоимость около ${money(cost)}. Чем дешевле предложение и лучше машина, тем больше шансов. Машины для заказа завод сделает сверх плана, а не поставить в срок — неустойка и удар по репутации.`,
+    choices:[[`Предложить ${money(o.bids[0])} — шансы выше`,'tbid0'],[`Предложить ${money(o.bids[1])}`,'tbid1'],['Не участвовать','tskip']]},false);}
+function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key==='tskip'){if(o)addLog(`Вы не стали участвовать в заказе: ${o.who}.`);return;}
+  const md=s.models.find(m=>m.id===o.md);if(!md)return;const bid=o.bids[key==='tbid0'?0:1],S=classScore(md,s);
+  const p=clamp(0.35+0.8*(S-1)+2.2*(1-bid/o.lim)+(s.rep-50)/250,0.05,0.95);
+  if(Math.random()<p){s.orders.push({id:mi(s)+'-'+o.k,md:md.id,n:o.n,left:o.n,price:bid,due:mi(s)+o.mo,who:o.who,start:mi(s)});
+    addLog(`Заказ выигран: ${o.who} — ${fmtN(o.n)} машин «${md.name}» по ${money(bid)}. Срок — ${o.mo} мес.`,'good');pendingToasts.push('📜 Заказ ваш: '+o.who);}
+  else{const L=topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
 function yearlyCompetitors(s){
   for(const c in COMPS)COMPS[c].forEach((cp,i)=>{
     if(cp.pk===s.pioneer)return;const home=c===s.country||dealerCount(s,c)>0;if(!home)return;
@@ -51,6 +96,7 @@ function resolve(key){
   if(key==='raise'){s.wagePol=s.wagePol==='low'?'market':s.wagePol==='market'?'good':s.wagePol;addLog(`Зарплата поднята: ${WAGE_POL[s.wagePol].name.toLowerCase()}. Забастовки не будет.`);}
   if(key==='wait')s.strikeNext=true;
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
+  if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='restart'){s.pending=[];openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();
@@ -71,6 +117,8 @@ const ACH=[
   {id:'legend',name:'Легенда гонок',desc:'10 побед в гонках',test:s=>s.raceLog.filter(r=>r.place===1).length>=10},
   {id:'champ',name:'Чемпион',desc:'Титул в чемпионате',test:s=>(s.titles||[]).length>0},
   {id:'rd',name:'Инженерная школа',desc:'КБ 5-го уровня',test:s=>s.rd&&s.rd.lvl>=5},
+  {id:'rd8',name:'Институт автомобиля',desc:'КБ 8-го уровня',test:s=>s.rd&&s.rd.lvl>=8},
+  {id:'order',name:'Деловой партнёр',desc:'Выполнен заказ ведомства или фирмы',test:s=>(s.ordersDone||0)>0},
   {id:'star',name:'Звёздная команда',desc:'Нанят гонщик',test:s=>s.drivers&&s.drivers.length>0},
   {id:'first',name:'Первопроходец',desc:'Опередили историю',test:s=>Object.keys(s.firsts||{}).length>0},
   {id:'war',name:'Пережили войну',desc:'Дожили до 1919 года',test:s=>s.y>=1919},

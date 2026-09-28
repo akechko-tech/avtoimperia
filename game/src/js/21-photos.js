@@ -1,10 +1,10 @@
 /* ================= PHOTOS (Wikipedia / Wikimedia Commons) ================= */
 const IMG={};let imgTried=false;
 function allTitles(){const t=new Set();Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
-  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(CAR_REF).flat().forEach(x=>t.add(x[1]));t.add('Mercedes-Benz');return [...t];}
+  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));t.add('Mercedes-Benz');return [...t];}
 async function loadImages(){
   if(imgTried)return;imgTried=true;
-  try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===1&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}
+  try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===2&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}
   try{
     const titles=allTitles(),map={};
     for(let i=0;i<titles.length;i+=40){
@@ -21,7 +21,7 @@ async function loadImages(){
       });
     }
     Object.assign(IMG,map);
-    try{localStorage.setItem('avt-img',JSON.stringify({v:1,t:Date.now(),map}));}catch(e){}
+    try{localStorage.setItem('avt-img',JSON.stringify({v:2,t:Date.now(),map}));}catch(e){}
     if(G)render();
   }catch(e){}
 }

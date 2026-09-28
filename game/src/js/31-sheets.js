@@ -5,60 +5,83 @@ function closeSheet(){sheet.hidden=true;draft=null;}
 sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&!G.pending.length&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
-  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
-  openSheet(`<span class="label">${dstr(G)}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2><p style="margin-top:10px">${esc(ev.text)}</p><div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
+  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
+  openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
-function bestId(arr,f){const u=unlockedP(arr,G).filter(x=>!f||f(x)).sort((a,b)=>a.y-b.y);return u[u.length-1].id;}
-function openDesigner(){draft={name:'Тип '+(G.models.length+1),e:bestId(ENGINES),c:bestId(CHASSIS),b:bestId(BODIES,x=>!x.truck),w:bestId(TYRES),t:G.y>=1908?'t0':'t1',paint:PAINTS[G.models.length%PAINTS.length].id};renderDesigner();}
+function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
+function openDesigner(kind){kind=kind||(G.y>=1908?'people':'middle');
+  draft={name:'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};renderDesigner();}
+// Важность черты для покупателей класса: ●●● главное, ●● важно, ● немного
+function wDots(w){return w>=0.24?'●●●':w>=0.12?'●●○':w>0?'●○○':'○○○';}
+function compareHTML(md,s){const C=classCompare(md,s,s.country),ph=C.ref.name&&IMG[C.ref.name];
+  const rows=CHAR_K.filter(k=>C.W[k]>0||C.by[k]!==1).map(k=>{const r=C.by[k],tone=r>=1.05?'good':r<0.95?'bad':'muted',w=Math.min(100,r/2*100);
+    return `<div class="cmp-row"><span>${CHAR_NAMES[k]}<small>${wDots(C.W[k])}</small></span><div class="cmp-bar"><i style="width:${w}%;background:var(--${tone==='muted'?'line':tone})"></i><b></b></div><span class="num ${tone}">${Math.round(r*100)}%</span></div>`;}).join('');
+  return `<div class="card cmp" style="margin-top:12px;background:var(--panel2)"><div class="row" style="align-items:flex-start">${ph?`<img class="cmp-ph" src="${IMG[C.ref.name].src}" alt="" referrerpolicy="no-referrer">`:''}<div style="flex:1"><span class="label">Соперник в классе «${esc(KIND_NAME[C.ref.kind])}»</span><h3 style="margin-top:2px">${esc(C.ref.name)} <span class="muted small">${C.ref.y}</span></h3><p class="small muted">Покупатели сравнивают вашу машину с этой. 100% — так же, как у соперника; ●●● — что для них главное.</p></div></div>
+    <div style="margin-top:8px">${rows}</div>${qbar(C.S,'Итог против соперника')}</div>`;}
 function renderDesigner(){
-  const s=G,d=draft,md={...d,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0},p=parts(md),r=modelR(md,s),g=segOf(md),mx=chassisMax(p.c);
+  const s=G,d=draft,md={...d,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0},p=parts(md),mx=chassisMax(p.c,md),kind=designKind(d);
   const uc=unitCost(md,s),ref=refPrice(md,s),dc=devCost(md,s),dm=devMonths(md),tc=toolingCost(md,s),st=carStats(md,0,s.y),hrs=hoursPerCar(md,s),net=ref*(1-DEALER_MARGIN);
-  md.price=Math.round(ref/10)*10;const dem=forecastDemand(md,s);
-  const chips=(arr,k,sub)=>`<div class="chips">${unlockedP(arr,s).map(x=>`<button class="chip ${d[k]===x.id?'on':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${arr===TRIMS?trimName(x,s):x.name}${upgL(x.id)?' ★'+upgL(x.id):''}${x.y>s.y?' 🔬':''}<small>${sub(x)}</small></button>`).join('')}</div>`;
-  const hpPct=Math.min(100,engineHp(p.e)/mx*100),rf=refCar(md,s),pc=x=>money(partCost(x,s));
+  md.price=Math.round(ref/10)*10;const dem=forecastDemand(md,s),pc=x=>money(partCost(x,s));
+  const chips=(arr,k,sub,f)=>`<div class="chips">${unlockedP(arr,s).filter(x=>!f||f(x)).map(x=>`<button class="chip ${d[k]===x.id?'on':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${arr===TRIMS?trimName(x,s):x.name}${upgL(x.id)?' ★'+upgL(x.id):''}${x.y>s.y?' 🔬':''}<small>${sub(x)}</small></button>`).join('')}</div>`;
+  const ease=x=>x>=0.8?'лёгкая':x>=0.5?'обычная':'тяжёлая',pedal=x=>x>=0.8?'мягкая педаль':'тугая педаль',star=x=>upgL(x.id)?' ★'+upgL(x.id):'';
+  const SUB={e:x=>`${Math.round(engineHp(x))} л.с. · ${x.kg} кг · расход ${Math.round(x.fuel*100)} · ${pc(x)}`,g:x=>`КПД ${Math.round(x.eff*100)}% · ${ease(x.ease)} · ${pc(x)}`,
+    c:x=>`до ${Math.round(chassisMax(x))} л.с. · ${x.kg} кг · ход ${Math.round(x.ride*100)} · ${pc(x)}`,w:x=>`сцепление ${Math.round(x.grip*100)} · ресурс ${fmtN(x.life)} км · ${pc(x)}`,
+    k:x=>`сила ${Math.round(x.brk*100)} · ${pedal(x.ease)} · ${pc(x)}`,t:x=>`${({t0:'народный',t1:'средний',t2:'люкс'})[x.id]} класс · ${money(x.c*cpi(s))}`,b:x=>`${x.truck?(x.pay+' т груза'):(x.seats+' мест')}${x.closed?' · закрытый':''} · ${x.kg} кг · ${pc(x)}`};
+  const sec=(cat)=>{const x=p[cat.k],open=d.open===cat.k;return `<div class="dsec${open?' open':''}"><button class="dsec-h" data-act="dsec" data-k="${cat.k}"><span class="label">${cat.name}</span><b>${esc(cat.k==='t'?trimName(x,s):x.name)}${star(x)}</b><small>${SUB[cat.k](x)}</small><i>${open?'▴':'▾'}</i></button>
+    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>kindIsTruck(kind)?!!y.truck:!y.truck):null)+(x.note?`<p class="small muted" style="margin-top:6px">${esc(x.note)}</p>`:''):''}</div>`;};
+  const classChips=[['people','t0'],['middle','t1'],['lux','t2']].map(([g2,t])=>`<button class="chip ${!kindIsTruck(kind)&&d.t===t?'on':''}" data-act="dclass" data-v="${g2}">${SEG[g2].name}<small>${money(prefP(g2,s.country,s))}</small></button>`).join('')
+    +(s.y>=1896||unlockedP(BODIES,s).some(b=>b.truck)?`<button class="chip ${kind==='van'?'on':''}" data-act="dclass" data-v="van">Фургон<small>для бизнеса</small></button>`:'')
+    +(unlockedP(BODIES,s).some(b=>b.truck&&b.id!=='b6')?`<button class="chip ${kind==='truck'?'on':''}" data-act="dclass" data-v="truck">Грузовик<small>для бизнеса</small></button>`:'');
   openSheet(`<div class="row"><h2>Новая модель</h2>${X}</div>
-    <div class="carbox">${carArt(md,{anim:true})}</div>${rf&&IMG[rf[1]]?photoHTML(rf[1])+`<p class="small muted" style="margin-top:4px">Такие машины сейчас в моде: ${esc(rf[1])}</p>`:''}
-    <div class="row" style="margin-top:8px"><span class="pill warn">${SEG[g].name} сегмент</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
+    <div class="carbox">${carArt(md,{anim:true})}</div>
+    <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
-    <div class="label" style="margin-top:14px">Двигатель</div>${chips(ENGINES,'e',x=>`${x.hp} л.с. · ${x.kg} кг · ${pc(x)}`)}<p class="small muted" style="margin-top:6px">${esc(p.e.note||'')}</p>
-    <div class="label" style="margin-top:14px">Рама</div>${chips(CHASSIS,'c',x=>`до ${Math.round(chassisMax(x))} л.с. · тормоза ${Math.round(x.brk*100)} · ${pc(x)}`)}
-    <div class="label" style="margin-top:14px">Кузов</div>${chips(BODIES,'b',x=>`${x.truck?'грузовой':'кач. '+x.q} · ${x.kg} кг · ${pc(x)}`)}
-    <div class="label" style="margin-top:14px">Шины</div>${chips(TYRES,'w',x=>`сцепление ${Math.round(x.grip*100*(1+0.08*upgL(x.id)))} · ${pc(x)}`)}<p class="small muted" style="margin-top:6px">${esc(p.w.note||'')}</p>
-    <div class="label" style="margin-top:14px">Оснащение</div>${chips(TRIMS,'t',x=>`+${x.q} кач. · ${money(x.c*cpi(s))}`)}
-    <div class="card" style="margin-top:16px;background:var(--panel2)">
-      <div class="row small"><span class="muted">Нагрузка на раму</span><span class="num ${overpower(md)?'bad':''}">${Math.round(engineHp(p.e))} / ${Math.round(mx)} л.с.</span></div>
-      <div class="bar" style="margin-top:6px"><i style="width:${hpPct}%;background:var(--${overpower(md)?'bad':hpPct>80?'warn':'good'})"></i></div>
-      ${overpower(md)?'<p class="small bad" style="margin-top:6px">Рама не выдержит: качество −40% и удар по репутации.</p>':''}${qbar(r)}
+    <div class="label" style="margin-top:14px">Для кого машина</div><div class="chips">${classChips}</div>
+    ${compareHTML(md,s)}
+    <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button></div>
+    <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
+    <div class="dsecs">${PART_CATS.map(sec).join('')}${sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>
+    <div class="card" style="margin-top:14px;background:var(--panel2)">
+      <div class="row small"><span class="muted">Нагрузка на раму</span><span class="num ${overpower(md)?'bad':''}">${Math.round(p.e.hp)} / ${Math.round(mx)} л.с.</span></div>
+      <div class="bar" style="margin-top:6px"><i style="width:${Math.min(100,p.e.hp/mx*100)}%;background:var(--${overpower(md)?'bad':p.e.hp/mx>0.8?'warn':'good'})"></i></div>
+      ${overpower(md)?'<p class="small bad" style="margin-top:6px">Рама не выдержит мотор: машины будут ломаться, покупатели и репутация пострадают.</p>':''}
       <div class="row small" style="margin-top:10px"><span class="muted">На ходу</span><span class="num">${statsLine(st)}</span></div>
-      <div class="meta"><div>Себест.<b>${money(uc)}</b></div><div>Цена ≈<b>${money(ref)}</b></div><div>Маржа<b class="${net-uc<0?'bad':''}">${money(net-uc)}</b></div><div>Спрос ≈<b>${fmtN(dem)}/мес</b></div></div>
+      <div class="meta"><div>Себест.<b>${money(uc)}</b></div><div>Цена ≈<b>${money(ref)}</b></div><div>Маржа<b class="${net-uc<0?'bad':''}">${money(net-uc)}</b></div><div>Спрос ≈<b>${fmtD(dem)}/мес</b></div></div>
       <div class="meta"><div>Часов<b>${fmtN(Math.round(hrs))}</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Оснастка<b>${money(tc)}</b></div></div>
       <p class="small muted" style="margin-top:8px">Себестоимость — детали и работа на заводе при нынешних технологиях; с ростом выпуска она падает. Оснастку оплатите при запуске в серию${techLv(s,'line')===2?': конвейер под новую модель перестраивать дорого':''}.</p></div>
     <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
   document.getElementById('mname').addEventListener('input',e=>{draft.name=e.target.value;});
 }
+function kindIsTruck(k){return k==='van'||k==='truck';}
 function openRD(){
-  const s=G,L=rdProjects(s),pts=rdPoints(s);
-  const item=pj=>`<div class="race-item"><div class="row"><div><span class="mo">${pj.cat} · ${pj.kind==='upg'?'улучшение ★'+pj.lvl:'прототип на '+pj.yrs+' г. раньше'}</span><h3 style="margin-top:2px">${esc(pj.name)}</h3></div><button class="btn sm" data-act="rdStart" data-k="${pj.kind}:${pj.id}">~${Math.ceil(pj.need/pts)} мес.</button></div>
-    <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?(pj.cat==='Двигатель'?'+12% к качеству и +10% к мощности':pj.cat==='Рама'?'+12% к качеству, +15% к допустимой мощности, рама легче':pj.cat==='Шины'?'+12% к качеству, +8% сцепления и −12% износа в гонках':'+12% к качеству кузова'):'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}</p></div>`;
+  const s=G,L=rdProjects(s),pts=rdPoints(s),free=rdSlots(s)-rdActive(s).length;
+  const item=pj=>`<div class="race-item"><div class="row"><div><span class="mo">${pj.cat} · ${pj.kind==='upg'?'улучшение ★'+pj.lvl:'прототип на '+pj.yrs+' г. раньше'}</span><h3 style="margin-top:2px">${esc(pj.name)}</h3></div><button class="btn sm" data-act="rdStart" data-k="${pj.kind}:${pj.id}" ${free<=0?'disabled':''}>~${Math.ceil(pj.need/pts)} мес.</button></div>
+    <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?UPG_TXT[pj.ck]:'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}</p></div>`;
+  const mine=L.filter(p=>p.kind==='upg'&&p.mine),other=L.filter(p=>p.kind==='upg'&&!p.mine),early=L.filter(p=>p.kind==='early');
   openSheet(`<div class="row"><h2>Проекты КБ</h2>${X}</div>
-    <p class="small muted" style="margin-top:6px">Бюро ${s.rd.lvl}-го уровня делает ${pts} очк. в месяц. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.${s.rd.proj?' Смена проекта обнулит прогресс текущего.':''}</p>
-    <div style="margin-top:6px">${L.map(item).join('')||'<p class="small muted">Все доступные детали улучшены до предела.</p>'}</div>`);
+    <p class="small muted" style="margin-top:6px">${RD_LV[s.rd.lvl]}: ${pts.toFixed(1).replace('.0','').replace('.',',')} очк. в месяц на проект, свободных мест — ${Math.max(0,free)}. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.</p>
+    ${mine.length?`<div class="label" style="margin-top:12px">Детали ваших машин — улучшения сразу в деле</div>${mine.map(item).join('')}`:''}
+    ${early.length?`<div class="label" style="margin-top:12px">Прототипы будущих деталей</div>${early.map(item).join('')}`:''}
+    ${other.length?`<div style="margin-top:12px">${fold('rdOther','Другие детали',other.map(item).join(''),!mine.length,other.length+' проектов')}</div>`:''}
+    ${!L.length?'<p class="small muted" style="margin-top:10px">Все доступные детали улучшены до предела.</p>':''}`);
 }
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
-  draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal'};
+  draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1'};
   const list=Object.entries(PIONEERS).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
   openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
     <p class="small muted" style="margin-top:6px">Январь 1895 года. Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
     <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
     <label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(draft.company)}" maxlength="28" style="margin-top:6px">
+    <label class="label" for="fname" style="display:block;margin-top:12px">Как назовёте первую машину?</label><input type="text" id="fname" value="${esc(draft.first||'Тип 1')}" maxlength="24" style="margin-top:6px" placeholder="Тип 1">
     <div class="label" style="margin-top:14px">Страна</div>
     <div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.country===k?'on':''}" data-act="country" data-v="${k}">${c.name}<small>${c.city} · ${money(c.cash)} · гоночный цвет — ${c.raceName}</small><small>${c.note}</small></button>`).join('')}</div>
     <div class="label" style="margin-top:14px">Сложность</div>
     <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,d])=>`<button class="chip ${draft.diff===k?'on':''}" data-act="diff" data-v="${k}">${d.name}<small>${d.desc}</small></button>`).join('')}</div>
     <button class="btn primary block" style="margin-top:16px" data-act="startgame">Основать компанию</button>`);
   document.getElementById('cname').addEventListener('input',e=>{draft.company=e.target.value;});
+  document.getElementById('fname').addEventListener('input',e=>{draft.first=e.target.value;});
 }
 function openMenuSheet(){
   openSheet(`<div class="row"><h2>Меню</h2>${X}</div>
@@ -81,6 +104,7 @@ function openSlots(mode){
 function openSettings(){
   openSheet(`<div class="row"><h2>Звук и управление</h2>${X}</div>
     <div class="label" style="margin-top:12px">Звук</div><div class="btns" style="margin-top:6px"><button class="btn ${AU.on.music?'primary':''}" data-act="audio" data-k="music">Музыка: ${AU.on.music?'вкл':'выкл'}</button><button class="btn ${AU.on.sfx?'primary':''}" data-act="audio" data-k="sfx">Звуки: ${AU.on.sfx?'вкл':'выкл'}</button><button class="btn ${AU.on.race?'primary':''}" data-act="audio" data-k="race">Музыка в гонке: ${AU.on.race?'вкл':'выкл'}</button><button class="btn" data-act="plMode">Плейлист: ${AU.on.mode==='all'?'все годы':'эпоха'}</button></div>
+    ${G?`<div class="label" style="margin-top:14px">Помощник управляющего</div><p class="small muted" style="margin-top:4px">Каждый месяц сам ставит выгодные цены, открывает дилеров, строит цеха и склад, выбирает проекты КБ и берёт кредит, если касса в минусе. Машины придумываете вы.</p><div class="btns" style="margin-top:6px"><button class="btn ${helperOn(G)?'primary':''}" data-act="helperToggle">Помощник: ${helperOn(G)?'вкл':'выкл'}</button></div>`:''}
     <div class="label" style="margin-top:14px">Руль в гонке</div><div class="btns" style="margin-top:6px">${[['wheel','Колесо: вести пальцем'],['keys','Кнопки ◀ ▶'],['tilt','Наклон телефона']].map(([k,l])=>`<button class="btn ${(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))===k?'primary':''}" data-act="ctlTilt" data-v="${k}">${l}</button>`).join('')}</div>
     <div class="hr"></div><h3>Музыка</h3><p class="small muted" style="margin-top:4px">Настоящие записи эпохи из общественного достояния (Wikimedia Commons). Без интернета звучит «Оркестрион».${AU.nowPlaying?` Сейчас: <a class="credit" style="display:inline;padding:0" href="${AU.nowPlaying.page}" target="_blank" rel="noopener">${esc(AU.nowPlaying.title)}</a>`:''}</p>
     <div class="hr"></div><h3>Фотографии</h3><p class="small muted" style="margin-top:4px">Исторические фото — Википедия и Wikimedia Commons (в основном общественное достояние). Авторы и лицензии — на странице каждого файла.</p>
@@ -89,13 +113,14 @@ function openSettings(){
 function openHelp(){
   openSheet(`<div class="row"><h2>Как играть</h2>${X}</div>
   <div class="stack small" style="margin-top:12px">
-    <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях.</p>
-    <p><b>Рынок.</b> Покупатели — живые семьи. В каждой стране семьи разделены по доходу, от бедной половины до богатейших. Каждый месяц часть семей присматривается к машине: новички и владельцы, которые меняют старую. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить, как Model T. Когда почти у всех, кто может себе позволить, машина уже есть, спрос держится на замене. Реальные марки без вас продают примерно столько, сколько в истории. Похожие модели одной марки мешают друг другу.</p>
-    <p><b>Модели.</b> Собирайте машину из деталей эпохи. Покупатель сравнивает её с ровесницами: слабый мотор или устаревшие шины не спасёт никакая цена. Для каждой модели видно, как спрос ответит на изменение цены.</p>
-    <p><b>Производство.</b> Задайте план выпуска или доверьте его прогнозу. Лишние машины лежат на складе и дешевеют, нехватка — это очереди и потерянные покупатели. Мощность — цеха и смены; выработку поднимают станки, электрификация, взаимозаменяемые детали, конвейер и зарплата.</p>
-    <p><b>Дилеры.</b> Продают машины за ${Math.round(DEALER_MARGIN*100)}% цены. Где нет вашего дилера, там о вас не знают: сеть открывает вам покупателей страны, первые дилеры — в больших городах. За границей покупатель платит пошлину, а вы — доставку. На экране «Рынок» видно, сколько машин вы продавали бы в каждой стране при полной сети.</p>
-    <p><b>КБ.</b> Улучшает детали (★) и строит прототипы будущих деталей. С 3-го уровня открывает технологии завода раньше истории — это «первенства».</p>
-    <p><b>Гонки.</b> Сезоны и чемпионаты своего времени: до 1925 года очки марок считают газеты, в 1925–1927 разыгрывается первый чемпионат мира AIACR, в Америке — чемпионат AAA. Команда до трёх машин: одну можно вести самому, остальные ведут гонщики по контракту или приглашённые на одну гонку. Гонку можно пройти за рулём, руководить командой или сразу узнать итог. Характеристики машины считаются из деталей: вес, мощность, кузов, тормоза, шины. Шины, топливо и мотор расходуются, машины ломаются. Гоночный отдел даёт заводской гоночный кузов, надёжность и быстрые пит-стопы.</p>
+    <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
+    <p><b>Модели.</b> Машина собирается из деталей: двигатель, коробка передач, рама с подвеской, колёса и шины, тормоза, кузов, оснащение. Покупатели сравнивают её с типичной машиной соперников своего класса — по мощности, надёжности, комфорту, простоте вождения, тормозам, экономичности и вместимости. Народному классу важнее экономичность и надёжность, люксу — комфорт и мощность. Дешёвые решения вроде планетарной коробки и ванадиевой рамы Ford T часто выгоднее самых дорогих деталей. Кнопка «Подобрать детали повыгоднее» предложит конструкцию сама.</p>
+    <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства: их соперник — лошадь с телегой. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
+    <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
+    <p><b>Производство.</b> План «авто» делает столько, сколько купят, и не больше, чем поместится на складе. Всё лишнее уходит перекупщикам за полцены. Мощность — цеха и смены; выработку поднимают станки, электрификация, взаимозаменяемые детали, конвейер и зарплата.</p>
+    <p><b>Дилеры.</b> Продают машины за ${Math.round(DEALER_MARGIN*100)}% цены. Где нет вашего дилера, там о вас не знают. На карточке модели видно, почему продали меньше, чем хотели купить: не хватило машин или дилеры не успели.</p>
+    <p><b>КБ.</b> Восемь уровней: чем больше бюро, тем больше проектов одновременно. Улучшает детали (★) и строит прототипы будущих деталей; с 3-го уровня открывает технологии завода раньше истории — это «первенства».</p>
+    <p><b>Гонки.</b> Сезоны и чемпионаты своего времени. Команда до трёх машин: одну можно вести самому. Характеристики машины считаются из деталей: вес, мощность, коробка, тормоза, шины. Гоночный отдел (шесть уровней) даёт заводской кузов, надёжность, мощность и быстрые пит-стопы.</p>
     <p><b>Цель.</b> Величайшая автоимперия эпохи: в 1930 году компанию сравнят с реальными по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
 }
 function openLegacyInfo(){

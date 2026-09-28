@@ -5,7 +5,7 @@ require('./harness.js')(`
 Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:${Y},key:'handling-test',terr:'macadam'});
-const md=G.models[0];md.e=lastOf(ENGINES,rc.y).id;md.c=lastOf(CHASSIS,rc.y).id;md.w=lastOf(TYRES,rc.y).id;md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;if(overpower(md))md.e=ENGINES.filter(e=>e.y<=rc.y&&e.hp<=byId(CHASSIS,md.c).max).pop().id;
+const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
 function run(name,script,T,prep){
   startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});
   const me=R.me;R.cars=[me];R.t=0.001;me.vx=${V0};me.gear=me.gr.length;me.lat=0;

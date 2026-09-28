@@ -5,7 +5,7 @@ Math.random=(()=>{let a=+(${JSON.stringify(process.argv[4]||'5')});return()=>{a=
 const key=${JSON.stringify(process.argv[2]||'gpacf-1906')},mode=${JSON.stringify(process.argv[3]||'sim')};
 newGame('custom','fr','T','normal');
 const rc=RACES.find(r=>r.key===key);G.y=rc.y;G.m=rc.m;G.cash=1e7;
-G.models[0].e=lastOf(ENGINES,rc.y).id;G.models[0].c=lastOf(CHASSIS,rc.y).id;G.models[0].w=lastOf(TYRES,rc.y).id;G.rdept=1;
+{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>G.models[0][k]=a[k]);}G.rdept=1;
 const acc=new Map();const origStep=carStep;
 carStep=function(c,trk,h){let a=acc.get(c);if(!a){a={stop:0,pit:0,fix:0,move:0,dist:0,slow:0,off:0,resp:0,hits:0};acc.set(c,a);}
   if(c.stopT>0)a.stop+=h;else if(c.pitT>0)a.pit+=h;else if(c.punct&&c.vx<1.2)a.fix+=h;else {a.move+=h;a.dist+=Math.max(0,c.vx)*h;if(c.vx<5)a.slow+=h;if(c.off)a.off+=h;}

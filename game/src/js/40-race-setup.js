@@ -16,8 +16,8 @@ function entryCost(rc,e,s){const d=drvObj(e.drv),hire=d&&!(s.drivers||[]).includ
 function setupTotal(rc,s){return RS.entries.reduce((a,e)=>{const c=entryCost(rc,e,s);a.fee+=c.fee;a.prep+=c.prep;a.hire+=c.hire;a.total+=c.total;return a;},{fee:0,prep:0,hire:0,total:0});}
 // Оценка шанса доехать до финиша: та же модель отказов, что и в гонке
 function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
-function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]||TERR.dirt;return Math.round(p.w.life*(tr.tyre||1)*(1+0.12*upgL(p.w.id))/(e.tyre==='soft'?1.25:0.8));}
-function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'колодочные на задние колёса':b<0.8?'усиленные':'гидравлика на все колёса';}
+function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]||TERR.dirt;return Math.round(p.w.life*(tr.tyre||1)*(1+0.1*upgOf(md,p.w.id))/(e.tyre==='soft'?1.25:0.8));}
+function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'барабаны на задних колёсах':b<0.8?'на все четыре колеса':'гидравлика или сервоусилитель';}
 function openRaceSetup(key){
   const s=G,rc=RACES.find(r=>r.key===key);if(!rc||R)return;
   if(!raceCarsFor(s).length){toast('Нет машин в производстве');return;}
@@ -100,7 +100,7 @@ function terrName(cfg){return {dirt:'грунт',macadam:'щебёнка',asphal
 function drawSetupSprites(){
   const rc=RACES.find(r=>r.key===RS.key);
   document.querySelectorAll('#sheetBody .rs-car').forEach(cv=>{const i=+cv.dataset.i,e=RS.entries[i],md=G.models.find(m=>m.id===e.car);if(!md)return;
-    const style=carStyle(md,e.prep,rc.y),col=e.prep===2&&rc.y>=1903?COUNTRIES[G.country].race:md.paint,wheel=parts(md).c.wire||rc.y>=1912?'wire':'wood',mech=mechanicEra(rc.y);
+    const style=carStyle(md,e.prep,rc.y),col=e.prep===2&&rc.y>=1903?COUNTRIES[G.country].race:md.paint,wheel=wheelKind(md,rc.y),mech=mechanicEra(rc.y);
     const bid=parts(md).b.id,spec={key:'rs'+style+col+(i+1)+wheel+(mech?1:0)+bid,style,color:col,y:rc.y,wheel,mech,num:i+1,b:bid};
     const k='rsv|'+spec.key;let sp=CAR3D.cache.get(k);if(!sp){sp=renderModel(carModelFor(spec,true),0.62,0.36,70*Math.min(2,window.devicePixelRatio||1));CAR3D.cache.set(k,sp);}
     const g=cv.getContext('2d');if(!g)return;g.clearRect(0,0,cv.width,cv.height);const kk=Math.min(cv.width*0.98/sp.img.width,cv.height*0.98/sp.img.height),w=sp.img.width*kk,h=sp.img.height*kk;g.drawImage(sp.img,(cv.width-w)/2,cv.height-h,w,h);});

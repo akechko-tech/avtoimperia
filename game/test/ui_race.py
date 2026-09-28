@@ -14,7 +14,7 @@ with sync_playwright() as p:
     pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     # перенести игру к месяцу гонки, дать денег и подходящую машину
     pg.evaluate(f"""(()=>{{const rc=RACES.find(r=>r.key==='{race}');G.pending=[];G.y=rc.y;G.m=Math.max(0,rc.m-1);G.cash=200000;G.rdept=1;
-      const md=G.models[0];md.e=lastOf(ENGINES,rc.y).id;md.c=lastOf(CHASSIS,rc.y).id;md.w=lastOf(TYRES,rc.y).id;if(overpower(md))md.e=ENGINES.filter(e=>e.y<=rc.y&&e.hp<=byId(CHASSIS,md.c).max).pop().id;
+      const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}
       G.drivers=availDrivers(G).sort((a,b)=>b.sk-a.sk).slice(0,2).map(d=>d.id);tab='race';render();}})()""")
     pg.wait_for_timeout(300);pg.screenshot(path=out+f'r_tab_{tag}.png',full_page=True)
     jsclick=lambda sel:pg.evaluate("s=>document.querySelector(s).click()",sel)
