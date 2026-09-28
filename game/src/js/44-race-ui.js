@@ -30,6 +30,7 @@ function raceItem(rc,s){
     ${r&&r.w&&!r.x?`<p class="small ${r.w===s.company?'good':'muted'}" style="margin-top:4px">Победа: ${esc(r.w)}${r.d?` (${esc(r.d)})`:''}</p>`:`<p class="small muted" style="margin-top:4px">Приз ${money(racePrize(rc))} · взнос ${money(raceFee(rc))} с машины</p>`}
     ${open?`<button class="btn primary block" style="margin-top:8px" data-act="raceSetup" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Заявить команду</button>`:''}</div>`;
 }
+let TEAM_FREE=false;
 function teamCard(s){
   const lv=s.rdept||0,D=RDEPT[lv],N=RDEPT[lv+1],c=rdeptCost(s),own=(s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean);
   const free=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,6);
@@ -38,7 +39,7 @@ function teamCard(s){
     ${N?`<div class="tech-row"><div><h3>${esc(N.name)}</h3><p class="small muted">${N.desc} Содержание ${money(Math.round(N.up*cpi(s)))} в месяц.</p></div><button class="btn sm" data-act="rdeptUp" ${s.cash<c?'disabled':''}>${money(c)}</button></div>`:''}
     <div class="label" style="margin-top:14px">Пилоты по контракту · ${own.length} из 3</div>
     ${own.length?own.map(d=>`<div class="race-item"><div class="row"><div><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)} · до ${d.to}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="fire" data-k="${d.id}">Уволить</button></div><p class="small muted">Жалованье ${money(driverSalary(d,s))} в месяц${d.note?' · '+esc(d.note):''}</p></div>`).join(''):'<p class="small muted" style="margin-top:4px">Пока никого. На любую гонку можно пригласить свободного пилота разово — или сесть за руль самому.</p>'}
-    ${own.length<3&&free.length?`<div class="label" style="margin-top:12px">Свободные пилоты ${s.y}: контракт на сезон</div>${free.map(d=>`<div class="race-item"><div class="row"><div><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="hire" data-k="${d.id}" ${s.cash<driverFee(d,s)?'disabled':''}>${money(driverFee(d,s))}</button></div><p class="small muted">Затем ${money(driverSalary(d,s))} в месяц · разово на гонку ${money(driverRaceFee(d,s))}${d.note?' · '+esc(d.note):''}</p></div>`).join('')}`:''}
+    ${own.length<3&&free.length?`<button class="btn block" style="margin-top:12px" data-act="teamFree">${TEAM_FREE?'Свернуть список пилотов':`Нанять пилота на сезон ▾ · свободных ${free.length}`}</button>`+(TEAM_FREE?`<div class="label" style="margin-top:12px">Свободные пилоты ${s.y}: контракт на сезон</div>`+free.map(d=>`<div class="race-item"><div class="row"><div><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="hire" data-k="${d.id}" ${s.cash<driverFee(d,s)?'disabled':''}>${money(driverFee(d,s))}</button></div><p class="small muted">Затем ${money(driverSalary(d,s))} в месяц · разово на гонку ${money(driverRaceFee(d,s))}${d.note?' · '+esc(d.note):''}</p></div>`).join(''):''):''}
   </section>`;
 }
 function vRace(){
@@ -64,5 +65,6 @@ Object.assign(RACE_ACT,{
   hire:d=>{const s=G,dr=DRIVERS.find(x=>x.id===d.k),f=driverFee(dr,s);if(!dr||s.cash<f||(s.drivers||[]).length>=3)return;s.cash-=f;s.drivers.push(dr.id);addLog(`${dr.n} подписал контракт с «${s.company}» (${money(f)}, жалованье ${money(driverSalary(dr,s))} в месяц).`,'good');checkAch();rerender();flushToasts();},
   fire:d=>{const s=G,dr=DRIVERS.find(x=>x.id===d.k);s.drivers=s.drivers.filter(id=>id!==d.k);if(dr)addLog(`${dr.n} покинул команду.`);rerender();},
   rdeptUp:()=>{const s=G,c=rdeptCost(s);if(!RDEPT[(s.rdept||0)+1]||s.cash<c)return;s.cash-=c;s.plantVal+=c*0.3;s.rdept=(s.rdept||0)+1;addLog(`Создан новый уровень гоночного отдела: ${RDEPT[s.rdept].name} (${money(c)}).`,'good');rerender();},
-  raceResult:()=>openRaceResult()
+  raceResult:()=>openRaceResult(),
+  teamFree:()=>{TEAM_FREE=!TEAM_FREE;rerender();}
 });

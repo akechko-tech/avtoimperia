@@ -7,8 +7,10 @@ function carStats(md,prep,y){
   const p=parts(md);prep=prep||0;y=y||(G?G.y:1895);
   let bodyKg=p.b.kg,cd=p.b.cd,cg=p.b.cg,hpK=1,relK=1;
   if(p.t.id==='t2')bodyKg+=40;else if(p.t.id==='t1')bodyKg+=15;
-  if(prep===1){bodyKg*=0.72;cd*=0.88;hpK=1.05;relK=0.98;cg-=0.03;}
-  if(prep===2){bodyKg=70+(y<1905?40:0);cd=racingCd(y);cg=0.6;hpK=1.25;relK=0.93;}
+  // гоночный кузов легче серийного, но класс остаётся: четырёхместная база тяжелее двухместной; грузовику гоночный кузов не поставить
+  if(prep===2&&p.b.truck)prep=1;
+  if(prep===1){bodyKg*=p.b.truck?0.9:0.72;cd*=0.88;hpK=1.05;relK=0.98;cg-=0.03;}
+  if(prep===2){bodyKg=50+0.4*p.b.kg+(y<1905?40:0);cd=Math.min(cd,racingCd(y)*(0.9+0.12*(p.b.seats||2)/5));cg=0.6+0.04*((p.b.seats||2)-2)/3;hpK=1.25;relK=0.93;}
   const hp=engineHp(p.e)*hpK,crew=75+(mechanicEra(y)?70:0);
   const m=p.e.kg+p.c.kg*(1-0.05*upgL(p.c.id))+bodyKg+p.w.kg+crew+40;
   const P=hp*745.7*0.82,kd=0.5*1.2*cd,crr=p.w.id==='w1'?0.03:0.016,g=9.81;

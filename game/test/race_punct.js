@@ -9,6 +9,6 @@ for(const key of keys){const rc=RACES.find(r=>r.key===key);G.pending=[];G.y=rc.y
   const RL=R.trk.raceLen,cars=R.cars,trkLen=Math.round(R.trk.raceLen);let tEnd=0;
   while(R&&!R.done&&f<60*400){f++;R.time+=dt;R.t+=dt;tEnd=R.time;raceTick(dt);if(!R)break;R.cars.forEach(c=>{if(c.punct&&first[c.num]===undefined)first[c.num]={t:R.t,prog:c.prog/RL,tyre:Math.round(c.tyre),off:c.off,worn:c.tyre>=100};});heatMax=Math.max(heatMax,me.heat);heatAvg+=me.heat;n++;}
   const fr=Object.values(first);const early=fr.filter(x=>x.prog<0.1).length;
-  console.log(rc.y,rc.name.slice(0,28).padEnd(28),'km',rc.km,'len',trkLen,'dur',Math.round(tEnd)+'s','cars',cars.length,'punct',fr.length,'в первые 10%:',early,'me:',first[me.num]?JSON.stringify(first[me.num]):'—','heat max',Math.round(heatMax),'avg',Math.round(heatAvg/n),'tyre at end',Math.round(me.tyre));
+  console.log(rc.y,rc.name.slice(0,28).padEnd(28),'km',rc.km,'len',trkLen,'dur',Math.round(tEnd)+'s','cars',cars.length,'punct',fr.length,'в первые 10%:',early,'me:',first[me.num]?JSON.stringify(first[me.num]):'—','heat max',Math.round(heatMax),'avg',Math.round(heatAvg/n),'tyre at end',Math.round(me.tyre),'me.dnf',me.dnf,'dmg',Math.round(me.dmg),'fin',me.fin&&Math.round(me.fin));
   if(R)finishRace(true);closeSheet();closePaper();G.pending=[];}
 `);

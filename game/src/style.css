@@ -193,7 +193,9 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 #rReset{position:absolute;left:50%;bottom:14px;transform:translateX(-50%)}
 #rTilt.on{border-color:var(--brass);color:var(--brass)}
 .r-msg{position:absolute;left:0;right:0;top:40%;text-align:center;font-family:var(--display);font-weight:800;font-size:46px;color:var(--brass);text-shadow:0 3px 12px rgba(0,0,0,.7);pointer-events:none}
-.r-ctrl{display:grid;grid-template-columns:1fr 1fr 12px 1fr 1.3fr;gap:8px;padding:10px 12px;touch-action:none;user-select:none;-webkit-user-select:none}
+.r-ctrl{display:grid;grid-template-columns:2.1fr 6px 1fr 1.25fr;gap:8px;padding:10px 12px;touch-action:none;user-select:none;-webkit-user-select:none}
+.r-wheel{height:84px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.06);touch-action:none;position:relative;overflow:hidden;cursor:grab}
+.r-wheel canvas{width:100%;height:100%;display:block;touch-action:none}
 .r-ctrl button{height:84px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.08);font-family:var(--display);font-weight:800;font-size:22px;color:var(--text);touch-action:none;cursor:pointer}
 .r-ctrl button.down{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
 .r-ctrl .gas{border-color:var(--brass);color:var(--brass)}
@@ -204,7 +206,7 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 @media (prefers-reduced-motion:no-preference){.sheet .panel{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 .r-hud b{font-size:15px}
 @media (prefers-reduced-motion:reduce){.cloud,.car .spin,.smoke,.roadcar,.roadcar .w,.car.anim .body,.date.flip,.carbox.enter svg,.paper.spin{animation:none!important}}
-@media (max-width:380px){.meta{grid-template-columns:repeat(2,1fr)}.date{font-size:28px}.r-ctrl button{height:72px}}
+@media (max-width:380px){.meta{grid-template-columns:repeat(2,1fr)}.date{font-size:28px}.r-ctrl button,.r-wheel{height:72px}}
 /* v0.8: главное меню, технологии, дилеры, наследие */
 #menuScreen{position:fixed;inset:0;z-index:9;overflow:auto;background:radial-gradient(120% 80% at 50% 0%,#1d3a5c 0%,var(--bg) 60%);padding:env(safe-area-inset-top,0px) 16px calc(24px + env(safe-area-inset-bottom,0px))}
 .menu-in{max-width:520px;margin:0 auto;padding-top:14px}
@@ -281,3 +283,12 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .plan-row h3 .pill{font-size:10px;padding:2px 6px;margin-left:4px;vertical-align:2px}
 .row.ctl{flex-wrap:wrap}
 .row.ctl>.step{margin-left:auto;flex-shrink:0}
+
+.advice{margin-top:10px;padding:10px 12px;border:1px solid var(--brass);border-radius:10px;background:rgba(233,196,106,.06)}
+.advice ul{margin:6px 0 0;padding-left:18px}
+.advice li{font-size:13px;line-height:1.4;margin:3px 0;color:var(--text)}
+.advice .btn{margin-top:8px}
+.carbox img.car3d{display:block;margin:6px auto 2px;height:132px;width:auto;max-width:96%;object-fit:contain}
+.carbox.enter img.car3d{animation:enter .7s cubic-bezier(.2,.8,.3,1)}
+@media (prefers-reduced-motion:no-preference){.carbox img.car3d.anim{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-1.5px)}}}
+.p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.7) grayscale(.35) contrast(1.15)}

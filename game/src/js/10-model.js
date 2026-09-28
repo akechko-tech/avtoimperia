@@ -84,8 +84,9 @@ function plantOverhead(s){return s.plantVal*0.009+30*cpi(s)*(1+s.workers/150);}
 /* ---------- sales network ---------- */
 function dealerNeed(c,s){return tabAt(DEALER_NEED[c],yf(s));}
 function dealerTP(s){return tabAt(DEALER_TP,yf(s));}
-function dealerCost(s){return Math.round(220*cpi(s)*(1+T(s)*0.02));}
-function dealerUpkeep(s){return 10*cpi(s);}
+// Новый дилер: демонстрационная машина со скидкой, вывеска, запас запчастей, выучка механика
+function dealerCost(s){return Math.round(560*cpi(s)*(1+T(s)*0.02));}
+function dealerUpkeep(s){return 22*cpi(s);}
 function dealerCount(s,c){return (s.dealers&&s.dealers[c])||0;}
 function tariffAt(c,s){return tabAt(TARIFF[c],yf(s));}
 function shipCost(s){return 60*cpi(s);}

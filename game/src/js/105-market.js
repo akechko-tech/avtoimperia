@@ -99,6 +99,16 @@ function ghostShare(c,g,s){const cp=(COMPS[c]||[]).find(x=>x.pk===s.pioneer);if(
 function kappa(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Object.keys(tb).length?tabAt(tb,yf(s)):-6;
   k+=Math.log(DIF().comp||1);const gs=ghostShare(c,g,s);if(gs>0)k+=Math.log(Math.max(0.03,1-gs));return k;}
 function pwOf(s,c,g){return (c===s.country&&s.pw&&s.pw[g])||1;}
+// Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
+function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
+  (COMPS[c]||[]).forEach(cp=>{if(cp.pk===s.pioneer)return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
+  const rest=Math.max(0,1-sum),nr=clamp(3+(yf(s)-1895)*0.8,3,15);return clamp(1/Math.max(1e-6,sq+rest*rest/nr),1,40);}
+// Ваша марка — одна из марок своего рынка: те же условия эпохи (дороги, надёжность, мода — поправка класса κ),
+// а исходная доля — как у средней новой марки или как у исторической марки основателя, если она была больше.
+// Всё остальное решают цена, качество, дилеры, реклама, репутация и гонки.
+function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Object.keys(tb).length?tabAt(tb,yf(s)):-6;
+  if(g==='truck')k=Math.max(k,-2); // грузовиков в истории ещё не было — первых покупателей даёт пул бизнеса
+  return k+Math.log(Math.max(ghostShare(c,g,s),1/(brandsN(c,g,s)+1)))-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
   (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer)return;const v=compVol(cp,s)*mx;if(v>0){out.push({cp,i,v});sum+=v;}});
@@ -125,6 +135,7 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   const rivals=['people','middle','lux'].map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g)}));
   const pr=md=>offerPrice(md,c,s,ov&&ov.id===md.id?ov.price:undefined);
   const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>md.probe?{md,...md.probe}:{md,g:segOf(md),q:Math.max(0.05,modelQ(md)/ebC),P:pr(md),fair:refPrice(md,s,c),e:modelExtras(md,c,s)});
+  const BK={};['people','middle','lux'].forEach(g=>BK[g]=brandK(c,g,s));
   const R={c,f,H,inc,k,rho,fleet:fleetOf(s,c),shop:0,buyers:0,segs:{},by:{}};
   SEGK.forEach(g=>R.segs[g]={inc:0,you:0,size:0,price:prefP(g,c,s)});models.forEach(m=>R.by[m.id]=0);
   let own=R.fleet;
@@ -136,7 +147,7 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
     let Si=0;const ei=rivals.map(x=>{const e=Math.exp(U(x.q,x.P,x.fair)+x.k);Si+=e;return e;});
     // ваши модели: внутри класса похожие машины делят покупателей
     let Sp=0;const nest={};
-    offs.forEach(o2=>{o2.v=(U(o2.q,o2.P,o2.fair)+o2.e)/LAM;const N=nest[o2.g]=nest[o2.g]||{m:-1e9,list:[]};N.list.push(o2);if(o2.v>N.m)N.m=o2.v;});
+    offs.forEach(o2=>{o2.v=(U(o2.q,o2.P,o2.fair)+o2.e+BK[o2.g])/LAM;const N=nest[o2.g]=nest[o2.g]||{m:-1e9,list:[]};N.list.push(o2);if(o2.v>N.m)N.m=o2.v;});
     for(const g in nest){const N=nest[g];N.z=N.list.reduce((a,o2)=>a+Math.exp(o2.v-N.m),0);N.A=Math.exp(LAM*(Math.log(N.z)+N.m));Sp+=N.A;}
     const dr=1+Si+Sp,du=1+Si;
     rivals.forEach((x,j)=>{const d=sh*ei[j]*(rho/dr+(1-rho)/du);R.segs[x.g].inc+=d;R.buyers+=d;});
@@ -152,7 +163,7 @@ function truckMarket(R,c,s,ms,pr,K,u0){
   const t=yf(s),ec=econ(s.y,s.m,c),PT=prefP('truck',c,s),pool=R.H*tabAt(INC[c],t)/0.72*tabAt(TRUCK_PHI,t)*(c==='us'?2.6:1)/PT/12*SEASON[s.m]*(ec.war?2.5:ec.f),z=R.segs.truck;z.pool=pool;if(pool<=0)return;
   const eb=eraBest(s,true),U=(q,P)=>u0-0.5+AQT*Math.log(q/QG.truck)-BT*Math.log(P/PT);
   const ei=Math.exp(U(QG.truck,PT*pwOf(s,c,'truck'))+K('truck'));let m=-1e9;
-  const L=ms.map(md=>{const v=(md.probe?U(md.probe.q,md.probe.P)+md.probe.e:U(Math.max(0.05,modelQ(md)/eb),pr(md))+modelExtras(md,c,s))/LAM;if(v>m)m=v;return {md,v};});
+  const bk=brandK(c,'truck',s),L=ms.map(md=>{const v=(md.probe?U(md.probe.q,md.probe.P)+md.probe.e:U(Math.max(0.05,modelQ(md)/eb),pr(md))+modelExtras(md,c,s))/LAM+bk/LAM;if(v>m)m=v;return {md,v};});
   let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
   const dr=1+ei+A,du=1+ei;z.inc+=pool*ei*(R.rho/dr+(1-R.rho)/du);R.shop+=pool;
   L.forEach(x=>{const d=pool*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;});

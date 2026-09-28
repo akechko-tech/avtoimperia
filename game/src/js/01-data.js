@@ -59,10 +59,10 @@ const CHASSIS=[
   {id:'c5',name:'Рама с гидравлическими тормозами на 4 колеса',y:1920,max:120,q:42,c:300,kg:280,brk:0.85,wb:2.8,cx:1.05,wire:1}
 ];
 const BODIES=[
-  {id:'b1',name:'Открытый двухместный',y:1885,q:5,c:70,kg:60,cd:0.9,cg:0.62,cx:0.8,seats:2},{id:'b2',name:'Тонно, 4 места',y:1899,q:10,c:170,kg:110,cd:1.1,cg:0.7,cx:0.9,seats:4},
-  {id:'b3',name:'Фаэтон',y:1904,q:16,c:220,kg:150,cd:1.2,cg:0.72,cx:1.0,seats:5},{id:'b4',name:'Закрытый седан',y:1911,q:24,c:520,kg:300,cd:1.5,cg:0.86,cx:1.4,seats:5,closed:1},
-  {id:'b5',name:'Цельнометаллический седан',y:1923,q:32,c:330,kg:260,cd:1.35,cg:0.8,cx:1.15,seats:5,closed:1},{id:'b6',name:'Фургон',y:1900,q:8,c:180,kg:250,cd:1.8,cg:0.9,cx:1.0,truck:true,seats:2},
-  {id:'b7',name:'Грузовик 1,5 т',y:1910,q:18,c:260,kg:420,cd:2.0,cg:0.95,cx:1.2,truck:true,seats:2},{id:'b8',name:'Грузовик 3 т',y:1920,q:28,c:400,kg:620,cd:2.3,cg:1.0,cx:1.4,truck:true,seats:2}
+  {id:'b1',name:'Открытый двухместный',y:1885,q:5,c:70,kg:90,cd:0.9,cg:0.62,cx:0.8,seats:2},{id:'b2',name:'Тонно, 4 места',y:1899,q:10,c:170,kg:220,cd:1.1,cg:0.7,cx:0.9,seats:4},
+  {id:'b3',name:'Фаэтон',y:1904,q:16,c:220,kg:300,cd:1.2,cg:0.72,cx:1.0,seats:5},{id:'b4',name:'Закрытый седан',y:1911,q:24,c:520,kg:450,cd:1.5,cg:0.86,cx:1.4,seats:5,closed:1},
+  {id:'b5',name:'Цельнометаллический седан',y:1923,q:32,c:330,kg:380,cd:1.35,cg:0.8,cx:1.15,seats:5,closed:1},{id:'b6',name:'Фургон',y:1900,q:8,c:180,kg:450,cd:1.8,cg:0.9,cx:1.0,truck:true,seats:2},
+  {id:'b7',name:'Грузовик 1,5 т',y:1910,q:18,c:260,kg:900,cd:2.0,cg:0.95,cx:1.2,truck:true,seats:2},{id:'b8',name:'Грузовик 3 т',y:1920,q:28,c:400,kg:1500,cd:2.3,cg:1.0,cx:1.4,truck:true,seats:2}
 ];
 const TYRES=[
   {id:'w1',name:'Сплошные резиновые',y:1885,q:2,c:60,grip:0.85,wear:0.6,life:2500,punct:0.02,kg:40,note:'Как у карет: прочные, но жёсткие и скользкие'},

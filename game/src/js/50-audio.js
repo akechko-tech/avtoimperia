@@ -149,15 +149,27 @@ function auRaceStart(rc){
   const o1=c.createOscillator(),o2=c.createOscillator(),lfo=c.createOscillator(),lg=c.createGain(),f=c.createBiquadFilter(),g=c.createGain(),am=c.createGain();
   o1.type='sawtooth';o2.type='square';lfo.type='square';f.type='lowpass';f.frequency.value=500;g.gain.value=0;am.gain.value=1;
   o1.connect(f);o2.connect(f);f.connect(am);am.connect(g);g.connect(AU.fx);lfo.connect(lg);lg.connect(am.gain);lg.gain.value=rc.y<1906?0.5:0.15;
-  const sc=c.createBufferSource(),sf=c.createBiquadFilter(),sg=c.createGain();sc.buffer=AU.noise;sc.loop=true;sf.type='bandpass';sf.frequency.value=2400;sf.Q.value=4;sg.gain.value=0;sc.connect(sf);sf.connect(sg);sg.connect(AU.fx);
-  [o1,o2,lfo,sc].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sg,sc,early:rc.y<1906};
+  // визг шин: тон с дрожанием + шипящий шум; скрип тормозов: высокий тон; шорох и гул обочины
+  const noise=(type,fr,q)=>{const s=c.createBufferSource(),fl=c.createBiquadFilter(),gg=c.createGain();s.buffer=AU.noise;s.loop=true;fl.type=type;fl.frequency.value=fr;fl.Q.value=q;gg.gain.value=0;s.connect(fl);fl.connect(gg);gg.connect(AU.fx);return {s,fl,g:gg};};
+  const tone=(type,fr,bp,q,vib,vd)=>{const o=c.createOscillator(),fl=c.createBiquadFilter(),gg=c.createGain(),v=c.createOscillator(),vg=c.createGain();o.type=type;o.frequency.value=fr;fl.type='bandpass';fl.frequency.value=bp;fl.Q.value=q;gg.gain.value=0;v.frequency.value=vib;vg.gain.value=vd;v.connect(vg);vg.connect(o.frequency);o.connect(fl);fl.connect(gg);gg.connect(AU.fx);return {o,v,fl,g:gg};};
+  const sq=tone('sawtooth',950,1100,5,9,45),sn=noise('bandpass',1700,1.4),br=tone('sawtooth',2600,2700,9,5,70),bn=noise('bandpass',900,2),rb=noise('lowpass',260,0.7);
+  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,early:rc.y<1906,drum:rc.y>=1912};
 }
 function auRaceTick(){
-  const a=AU.race;if(!a||!R||!(R.me||R.follow))return;const t=AU.ctx.currentTime,me=R.me||R.follow,vol=R.me?1:0.6,p=clamp(me.rpm||0,0,1.1),thr=me.thr||0;auScreech(Math.min(1,Math.max(0,(me.slipR||0)-0.1)*4+(me.spinw>0.3?0.3:0)));
+  const a=AU.race;if(!a||!R||!(R.me||R.follow))return;const t=AU.ctx.currentTime,me=R.me||R.follow,vol=R.me?1:0.6,p=clamp(me.rpm||0,0,1.1),thr=me.thr||0,sp=Math.max(0,me.vx||0);
   const base=(a.early?30:42)+p*(a.early?80:150)+(me.overheat>0?-15:0);
   a.o1.frequency.setTargetAtTime(base,t,0.05);a.o2.frequency.setTargetAtTime(base*0.5,t,0.05);a.lfo.frequency.setTargetAtTime(base/(a.early?2:4),t,0.05);
   a.f.frequency.setTargetAtTime(350+p*1200+thr*500,t,0.08);a.g.gain.setTargetAtTime((R.t<0?0.05:(0.05+p*0.08+thr*0.07)*(me.overheat>0?0.4:1)*(me.dnf?0.2:1))*vol,t,0.08);
+  // занос: чем сильнее срыв, тем громче и выше визг; на грунте — больше шороха, на асфальте — чистый тон
+  const tr=TERR[R.trk.terrAt(me.idx)]||TERR.dirt,soft=tr.dust||tr===TERR.mud||tr===TERR.snow||tr===TERR.sand||tr===TERR.beach?1:0;
+  const skid=sp>3?clamp((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5+(me.spinw>0.3?0.25:0),0,1):0;
+  a.sq.o.frequency.setTargetAtTime(760+skid*420+sp*5,t,0.06);a.sq.g.gain.setTargetAtTime(skid*(soft?0.05:0.13)*vol,t,skid>0?0.04:0.08);a.sn.g.gain.setTargetAtTime(skid*(soft?0.2:0.11)*vol,t,0.05);
+  // тормоза скрипят при сильном нажатии на ходу, громче — если машину при этом несёт
+  const brk=(me.brk||0)>0.3&&sp>3&&R.t>0?clamp((me.brk-0.3)*1.4*(0.35+0.65*Math.min(1,sp/18))*(1+skid*0.8),0,1):0;
+  a.br.o.frequency.setTargetAtTime((a.drum?2500:1900)+brk*500+Math.sin(t*3)*60,t,0.05);a.br.g.gain.setTargetAtTime(brk*(a.drum?0.07:0.035)*vol,t,brk>0?0.03:0.1);a.bn.g.gain.setTargetAtTime(brk*(a.drum?0.03:0.1)*vol,t,0.05);
+  // гул и камни на обочине
+  a.rb.g.gain.setTargetAtTime((me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
 }
-function auScreech(v){const a=AU.race;if(a)a.sg.gain.setTargetAtTime(v*0.22,AU.ctx.currentTime,0.05);}
-function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);a.sg.gain.setTargetAtTime(0,t,0.05);[a.o1,a.o2,a.lfo,a.sc].forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
+function auScreech(v){}
+function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb].forEach(x=>x.g.gain.setTargetAtTime(0,t,0.05));[a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s].forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
 

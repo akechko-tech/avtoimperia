@@ -36,7 +36,7 @@ const ACT={
   rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj){G.rd.proj=pj;G.rd.prog=0;addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<5&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро расширено до ${G.rd.lvl}-го уровня.`,'good');checkAch();rerender();flushToasts();}},
   // рынок
-  dealers:d=>{const need=Math.round(dealerNeed(d.c,G)),have=dealerCount(G,d.c),mk=G.last&&G.last.mk[d.c],lost=mk&&mk.lostDlr||0;let n=+d.n;if(have>=need&&lost<0.5)return;if(have<need)n=Math.min(n,need-have);const c=n*dealerCost(G);if(n<1||G.cash<c)return;G.cash-=c;const was=dealerCount(G,d.c);G.dealers[d.c]=was+n;if(!was&&d.c!==G.country)addLog(`Открыты первые дилеры: ${COUNTRIES[d.c].name}.`,'good');checkAch();rerender();flushToasts();},
+  dealers:d=>{const need=Math.round(dealerNeed(d.c,G)),have=dealerCount(G,d.c),mk=G.last&&G.last.mk[d.c],lost=mk&&mk.lostDlr||0,tpNeed=mk&&lost>0.5?Math.ceil(((mk.sold||0)+lost)/dealerTP(G)):0,target=Math.max(need,tpNeed);let n=Math.min(+d.n,target-have);if(n<1)return;const c=n*dealerCost(G);if(n<1||G.cash<c)return;G.cash-=c;const was=dealerCount(G,d.c);G.dealers[d.c]=was+n;if(!was&&d.c!==G.country)addLog(`Открыты первые дилеры: ${COUNTRIES[d.c].name}.`,'good');checkAch();rerender();flushToasts();},
   dealersCut:d=>{const was=dealerCount(G,d.c),n=Math.max(1,Math.round(was*0.2));G.dealers[d.c]=Math.max(d.c===G.country?1:0,was-n);rerender();},
   // окна
   close:()=>closeSheet(),
@@ -65,7 +65,7 @@ const ACT={
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
   audio:d=>{AU.on[d.k]=!AU.on[d.k];auApply();openSettings();},
-  ctlTilt:d=>{AU.on.tilt=d.v==='1';auApply();openSettings();}
+  ctlTilt:d=>{AU.on.steer=d.v;AU.on.tilt=d.v==='tilt';auApply();openSettings();}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
