@@ -6,3 +6,4 @@ local.properties
 *.iml
 app/src/main/assets/img/
 app/src/main/assets/music/
+game/dist/

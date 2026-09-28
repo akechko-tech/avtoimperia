@@ -1,0 +1,44 @@
+
+<div class="wrap">
+  <header class="top">
+    <div><div class="co" id="co"></div><div class="date" id="date"></div></div>
+    <div class="row" style="align-items:flex-end">
+      <div class="cash"><span class="label">Касса</span><b id="cash"></b></div>
+      <button class="iconbtn" id="sndBtn" data-act="snd" aria-label="Музыка">♪</button><button class="iconbtn" data-act="menu" aria-label="Меню">☰</button>
+    </div>
+  </header>
+  <main id="view" class="stack"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div id="menuScreen" hidden></div>
+<nav class="bar-nav">
+  <div class="in">
+    <div class="player"><button class="plb" data-act="plMode"><span class="plMode">Эпоха</span></button><button class="plb" data-act="plPrev" aria-label="Предыдущая">⏮</button><button class="plb plPlay" data-act="plPlay" aria-label="Пауза">▶</button><button class="plb" data-act="plNext" aria-label="Следующая">⏭</button><span class="plTitle">Фонотека загружается…</span></div>
+    <div class="next">
+      <button class="btn primary" id="nextBtn" data-act="next">Следующий месяц</button>
+      <button class="btn q" id="qBtn" data-act="quarter" aria-label="Три месяца подряд">×3</button>
+      <button class="btn q" id="autoBtn" data-act="auto" aria-label="Автоигра">▶</button>
+    </div>
+    <div class="tabs">
+      <button class="tab" data-act="tab" data-t="plant"><svg viewBox="0 0 24 24"><path d="M3 21V10l6 4V10l6 4V6h6v15z"/></svg>Завод</button>
+      <button class="tab" data-act="tab" data-t="models"><svg viewBox="0 0 24 24"><path d="M3 15h18v3H3zM5 15l2-5h9l3 5"/><circle cx="7" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>Модели</button>
+      <button class="tab" data-act="tab" data-t="market"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 17V11M11 17V7M16 17v-4M20 17V9"/></svg>Рынок</button>
+      <button class="tab" data-act="tab" data-t="race"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h13l-2 4 2 4H5"/></svg>Гонки</button>
+      <button class="tab" data-act="tab" data-t="log"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 9h8M8 13h8M8 17h5"/></svg>Хроника</button>
+    </div>
+  </div>
+</nav>
+<div class="sheet" id="sheet" hidden><div class="panel" id="sheetBody"></div></div>
+<div class="paperwrap" id="paperWrap" hidden></div>
+<div id="raceScreen" hidden>
+  <div class="r-top"><span class="label" id="rName"></span><div class="btns"><button class="btn sm" id="rMus" aria-label="Следующая мелодия">♪ ⏭</button><button class="btn sm" id="rCam" aria-label="Сменить камеру">Вид</button><button class="btn sm" id="rTilt">Наклон</button><button class="btn sm" id="rQuit">Выход</button></div></div>
+  <div class="r-hud"><div>Место<b id="hPos">–</b></div><div id="hLapL">Дистанция<b id="hLap">–</b></div><div>Время<b id="hTime">0:00</b></div><div>км/ч · <span id="hGear">1</span><b id="hSpd">0</b></div></div>
+  <div class="r-bars"><div>МОТОР<div class="bar"><i id="bHeat" style="width:0;background:var(--good)"></i></div></div><div>ШИНЫ<div class="bar"><i id="bTyre" style="width:100%;background:var(--good)"></i></div></div><div>КУЗОВ<div class="bar"><i id="bDmg" style="width:100%;background:var(--good)"></i></div></div><div id="fuelBox">ТОПЛИВО<div class="bar"><i id="bFuel" style="width:100%;background:var(--brass)"></i></div></div></div>
+  <div style="position:relative;flex:1;min-height:0;display:flex"><canvas id="rcv"></canvas><canvas id="rMap" width="180" height="180"></canvas><div class="r-board" id="rBoard"></div><div class="r-msg" id="rMsg"></div><button class="btn primary" id="rReset" hidden>Вернуться на трассу (+3 с)</button></div>
+  <div class="r-ctrl" id="rCtrl">
+    <button data-k="left" aria-label="Руль влево">◀</button><button data-k="right" aria-label="Руль вправо">▶</button><span></span>
+    <button class="brk" data-k="brake">ТОРМОЗ</button><button class="gas" data-k="gas">ГАЗ</button>
+  </div>
+  <div class="r-mgr" id="rMgr" hidden></div>
+</div>
+

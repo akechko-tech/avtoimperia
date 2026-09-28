@@ -1,0 +1,416 @@
+/* ================= RACE ENGINE: track, vehicle physics, AI, lifecycle ================= */
+const GRAV=9.81;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+// Покрытия: цвета псевдо-3D, сцепление, качение, живучесть шин, пыль, тряска
+const TERR={
+  dirt:{road:'#b39a6c',road2:'#a88f62',edge:'#8f7a52',edge2:'#9c865c',g:'#6f8f45',g2:'#67873f',mu:0.82,crr:1.5,tyre:0.7,dust:1,rough:1.3,ruts:1},
+  macadam:{road:'#8f887b',road2:'#877f73',edge:'#6f6a60',edge2:'#7a7468',g:'#628b3e',g2:'#5a8338',mu:0.92,crr:1.15,tyre:0.85,dust:0.45,rough:1.0,ruts:1},
+  asphalt:{road:'#6e6e70',road2:'#676769',edge:'#b8322a',edge2:'#efefea',line:'#e8e6de',g:'#5f8a3c',g2:'#588236',mu:1.0,crr:1,tyre:1,rough:0.8},
+  brick:{road:'#9a4f36',road2:'#914a33',edge:'#efefea',edge2:'#3a3a3a',g:'#5f8a3c',g2:'#588236',mu:0.95,crr:1.1,tyre:0.9,rough:0.9,bricks:1},
+  board:{road:'#b8905c',road2:'#ae8753',edge:'#efefea',edge2:'#8a6a44',g:'#7a8a5a',g2:'#728252',mu:0.97,crr:0.9,tyre:1.1,rough:0.7,planks:1},
+  concrete:{road:'#a5a39c',road2:'#9d9b94',edge:'#6f6d68',edge2:'#7d7b75',g:'#5f8a3c',g2:'#588236',mu:0.97,crr:1,tyre:1,rough:0.9},
+  snow:{road:'#d8dde3',road2:'#cfd5dc',edge:'#aab3bd',edge2:'#b8c0c8',g:'#eef1f4',g2:'#e6eaee',mu:0.55,crr:1.8,tyre:1.2,rough:1.1,ruts:1},
+  mud:{road:'#6b5033',road2:'#62492f',edge:'#4d3a26',edge2:'#56422b',g:'#556b3a',g2:'#4e6335',mu:0.62,crr:2,tyre:0.8,rough:1.3,ruts:1},
+  sand:{road:'#d9bb7c',road2:'#d1b373',edge:'#c2a263',edge2:'#cbab6b',g:'#e3cc92',g2:'#dcc488',mu:0.72,crr:2.2,tyre:0.8,dust:1.2,rough:1.0},
+  mount:{road:'#a8977a',road2:'#9f8e72',edge:'#857658',edge2:'#8f7f60',g:'#7a8a52',g2:'#72824b',mu:0.85,crr:1.3,tyre:0.75,dust:0.9,rough:1.4,ruts:1},
+  beach:{road:'#e2cfa0',road2:'#dac795',edge:'#f1e6c8',edge2:'#e8dbb8',g:'#3f7fa8',g2:'#3a78a0',mu:0.8,crr:1.6,tyre:1,dust:0.4,rough:0.8}
+};
+// Пейзаж по стране гонки
+const SCEN_SETS={
+  fr:{trees:['plane','poplar','oak'],alley:'plane',houses:['farm_fr','house_fr'],town:['house_fr','house_fr','cafe','house_fr'],extra:['km','hay','vine','bush','cart'],sky:['#6fa0cc','#ecdfc4'],hills:'#7f9a6a'},
+  it:{trees:['cypress','olive','pine','cypress'],alley:'cypress',houses:['house_it'],town:['house_it','house_it','house_it'],extra:['wall','olive','rock','cart','vine'],sky:['#4f8ccf','#f1e2c0'],hills:'#9c9a78',mount:1},
+  de:{trees:['fir','oak','birch','fir'],alley:'oak',houses:['fachwerk'],town:['fachwerk','fachwerk'],extra:['bush','hay','fence'],sky:['#6b94bd','#dfe3e2'],hills:'#5f7f55'},
+  uk:{trees:['oak','elm','oak'],alley:'oak',houses:['cottage','pub'],town:['cottage','pub','cottage'],extra:['hedge','wall','bush'],sky:['#7898b4','#dfe2e0'],hills:'#6f8d5c'},
+  us:{trees:['elm','oak'],alley:'elm',houses:['farm_us','barn'],town:['farm_us','billboard','farm_us'],extra:['fence','billboard','hay','pole'],sky:['#5f95c8','#e6ecef'],hills:'#8a9a6a',flat:1},
+  be:{trees:['fir','birch','oak'],alley:'poplar',houses:['house_fr','fachwerk'],town:['house_fr','cafe'],extra:['bush','fence'],sky:['#6f92b4','#dde2e0'],hills:'#5f7f55'},
+  mc:{trees:['palm','pine'],alley:'palm',houses:['villa'],town:['villa','villa','cafe'],extra:['lamp','bush'],sky:['#4f98d6','#f3ead8'],hills:'#8a8a6a',sea:1,mount:1},
+  at:{trees:['fir','fir','birch'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1},
+  ch:{trees:['fir','fir'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1},
+  es:{trees:['pine','olive','cypress'],alley:'pine',houses:['house_it'],town:['house_it','house_it'],extra:['wall','rock'],sky:['#4f98d6','#f3e6c8'],hills:'#a89a74',mount:1},
+  other:{trees:['birch','fir','birch'],alley:'birch',houses:['izba'],town:['izba','izba'],extra:['fence','cart'],sky:['#7a9cc0','#e2e4e0'],hills:'#6f8a5a',flat:1}
+};
+function trackCfg(rc){
+  const early=rc.y<1910;
+  let c={closed:false,laps:1,len:2400,curvy:0.45,hilly:0.35,crowd:0.25,terr:early?'dirt':rc.y<1920?'macadam':'asphalt',pits:false,night:false,uphill:false,oval:false,town:true,sprint:false,width:early?8:9,host:rc.host||'fr',banked:false};
+  if(rc.t==='circuit')Object.assign(c,{closed:true,laps:2,len:1500,curvy:0.6,pits:true});
+  if(rc.t==='endurance')Object.assign(c,{closed:true,laps:3,len:1400,curvy:0.45,pits:true,night:rc.id==='lemans'||rc.id==='spa24',town:false});
+  if(rc.t==='hill')Object.assign(c,{len:1400,curvy:1,hilly:0.2,uphill:true,terr:'mount',town:false,crowd:0.2,width:7});
+  if(rc.t==='rally')Object.assign(c,{len:2600,curvy:0.55,hilly:0.6,stages:['snow','mud','dirt'],crowd:0.06});
+  if(rc.t==='oval')Object.assign(c,{closed:true,laps:3,len:1250,oval:true,pits:true,town:false,crowd:0.6,width:14,terr:rc.y<1920?'concrete':'asphalt'});
+  if(rc.t==='sprint')Object.assign(c,{len:1100,sprint:true,town:false,crowd:0.5,terr:'beach',width:16});
+  if(rc.track==='indy')c.terr='brick';
+  if(rc.track==='board'){c.terr='board';c.banked=true;}
+  if(rc.track==='brooklands'){c.terr='concrete';c.banked=true;}
+  if(rc.track==='monza')Object.assign(c,{curvy:0.35,len:1800});
+  if(rc.track==='nurb')Object.assign(c,{curvy:0.95,hilly:0.9,len:1900,host:'de'});
+  if(rc.track==='monaco')Object.assign(c,{curvy:1,hilly:0.25,town:true,crowd:0.7,len:1100,width:8,terr:'asphalt',host:'mc'});
+  if(rc.track==='lemans')Object.assign(c,{curvy:0.35,len:1700});
+  if(rc.track==='targa')Object.assign(c,{curvy:1,hilly:0.9,terr:'mount',host:'it'});
+  if(rc.crowd)c.crowd=0.7;
+  if(rc.terr){c.terr=rc.terr;if(c.stages)c.stages=[rc.terr,'mud',rc.terr];}
+  if(!SCEN_SETS[c.host])c.host='fr';
+  return c;
+}
+/* ---------- track generation ---------- */
+function buildTrack(rc,vref){
+  const cfg=trackCfg(rc);if(vref){const dur={road:110,circuit:120,endurance:170,hill:65,rally:130,oval:100,sprint:40}[rc.t]||110,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?650:500,cfg.closed?2600:3600);if(cfg.sprint)cfg.len=clamp(vref*42,500,1600);cfg.dur=dur;}
+  const rnd=mulberry32(hashStr(rc.key)),STEP=4;let pts=[];
+  if(cfg.closed){
+    const fine=[];const M=3000;
+    if(cfg.oval){const Rr=cfg.len*0.11,Ls=(cfg.len-2*Math.PI*Rr)/2;
+      for(let i=0;i<M;i++){const u=i/M*cfg.len;let x,z;
+        if(u<Ls){x=Rr;z=-Ls/2+u;}else if(u<Ls+Math.PI*Rr){const a=(u-Ls)/Rr;x=Rr*Math.cos(a);z=Ls/2+Rr*Math.sin(a);}
+        else if(u<2*Ls+Math.PI*Rr){x=-Rr;z=Ls/2-(u-Ls-Math.PI*Rr);}else{const a=(u-2*Ls-Math.PI*Rr)/Rr;x=-Rr*Math.cos(a);z=-Ls/2-Rr*Math.sin(a);}
+        fine.push([x,0,z]);}}
+    else{const R0=cfg.len/(2*Math.PI),H=[];let sum=0;for(let k=2;k<=5;k++){const a=rnd()*0.13*cfg.curvy*(k<4?1:0.6);sum+=a;H.push([k,a,rnd()*6.28]);}
+      const sc=sum>0.38?0.38/sum:1,Hy=[[1,rnd()*6.28],[2,rnd()*6.28],[3,rnd()*6.28]];
+      for(let i=0;i<M;i++){const th=i/M*Math.PI*2;let r=1;H.forEach(([k,a,ph])=>r+=a*sc*Math.cos(k*th+ph));r*=R0;
+        let y=0;Hy.forEach(([k,ph],j)=>y+=Math.sin(k*th+ph)*cfg.hilly*(9-j*2.5));fine.push([Math.cos(th)*r,y,Math.sin(th)*r]);}}
+    const cum=[0];for(let i=1;i<=M;i++){const a=fine[i-1],b=fine[i%M];cum.push(cum[i-1]+Math.hypot(b[0]-a[0],b[2]-a[2]));}
+    const L=cum[M],n=Math.floor(L/STEP);let j=0;
+    for(let i=0;i<n;i++){const d=i*L/n;while(cum[j+1]<d)j++;const t=(d-cum[j])/(cum[j+1]-cum[j]||1),a=fine[j],b=fine[(j+1)%M];pts.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]);}
+  }else{
+    let x=0,y=0,z=0,h=0,slope=0;const push=()=>pts.push([x,y,z]);push();
+    const straight=len=>{for(let d=0;d<len;d+=STEP){x+=Math.sin(h)*STEP;z+=Math.cos(h)*STEP;y+=slope*STEP;push();}};
+    const arc=(R,ang)=>{const n=Math.max(2,Math.round(Math.abs(ang)*R/STEP)),da=ang/n;for(let i=0;i<n;i++){h+=da;x+=Math.sin(h)*STEP;z+=Math.cos(h)*STEP;y+=slope*STEP;push();}};
+    straight(120);
+    while(pts.length*STEP<cfg.len-160){
+      slope=cfg.uphill?0.06+rnd()*0.05:(rnd()*2-1)*0.05*cfg.hilly;
+      if(cfg.sprint){straight(200);continue;}
+      const r=rnd(),dir=rnd()<0.5?-1:1;
+      if(r<0.35-cfg.curvy*0.2)straight(40+rnd()*160);
+      else if(r<0.35+cfg.curvy*0.25){arc(12+rnd()*18,dir*(1.6+rnd()*1.3));straight(20+rnd()*30);}
+      else arc(40+rnd()*160,dir*(0.4+rnd()*1.1));
+      if(Math.abs(h)>1.75){arc(60,-Math.sign(h)*0.9);}
+    }
+    slope=cfg.uphill?0.03:0;straight(200);
+  }
+  const n=pts.length,closed=cfg.closed,T=[],N=[],K=[];
+  for(let i=0;i<n;i++){const a=pts[closed?(i-1+n)%n:Math.max(0,i-1)],b=pts[closed?(i+1)%n:Math.min(n-1,i+1)];let tx=b[0]-a[0],tz=b[2]-a[2];const l=Math.hypot(tx,tz)||1;T.push([tx/l,tz/l]);N.push([-tz/l,tx/l]);}
+  for(let i=0;i<n;i++){const a=T[closed?(i-1+n)%n:Math.max(0,i-1)],b=T[closed?(i+1)%n:Math.min(n-1,i+1)];const cr=a[0]*b[1]-a[1]*b[0],dt=a[0]*b[0]+a[1]*b[1];K.push(Math.atan2(cr,dt)/(2*STEP));}
+  const W=cfg.width,terrAt=i=>cfg.stages?cfg.stages[Math.min(2,Math.floor(i/n*3))]:cfg.terr;
+  const trk={pts,T,N,K,n,step:STEP,closed,len:n*STEP,W,cfg,terrAt,col:[],grid:{},rc,spr:[],bar:[]};
+  trk.startIdx=closed?0:30;trk.finishIdx=closed?0:n-40;
+  trk.raceLen=closed?cfg.laps*trk.len:(trk.finishIdx-trk.startIdx)*STEP;
+  trk.cgrid={};for(let i=0;i<n;i+=2){const k=Math.floor(pts[i][0]/30)+','+Math.floor(pts[i][2]/30);(trk.cgrid[k]=trk.cgrid[k]||[]).push(i);}
+  placeScenery(trk,rnd);
+  return trk;
+}
+function nearTrack(trk,x,z,rad,skip){const cx=Math.floor(x/30),cz=Math.floor(z/30);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;for(const i of L){if(skip!==undefined&&Math.abs(i-skip)<8)continue;const p=trk.pts[i];if((p[0]-x)**2+(p[2]-z)**2<rad*rad)return true;}}return false;}
+function addCollider(trk,x,z,r,kind,i){const o={x,z,r,kind};trk.col.push(o);if(!trk.segCol)trk.segCol=[];const n=trk.n;for(let k=-3;k<=3;k++){const j=trk.closed?((i+k)%n+n)%n:i+k;if(j<0||j>=n)continue;(trk.segCol[j]=trk.segCol[j]||[]).push(o);}}
+// Декорации вдоль трассы: t — тип спрайта, off — смещение от оси (м, + влево), v — вариант
+function placeScenery(trk,rnd){
+  const {n,W,cfg,pts,N}=trk,set=SCEN_SETS[cfg.host],spr=trk.spr;for(let i=0;i<n;i++){spr.push([]);trk.bar.push(null);}
+  const add=(i,t,off,v,kind,colR)=>{i=((i%n)+n)%n;const p=pts[i],nn=N[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;if(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i))return false;
+    spr[i].push({t,off,v:v||0,k:kind||'s'});if(colR)addCollider(trk,x,z,colR,t,i);return true;};
+  const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
+  const townAt=i=>cfg.town&&!cfg.oval&&(Math.floor(i/150)%3===1)&&(i%150)>8&&(i%150)<60;
+  let alley=0;
+  for(let i=0;i<n;i++){
+    const tr=trk.terrAt(i),town=townAt(i)||(trk.rc.track==='monaco');
+    if(cfg.oval){if(i%5===0){add(i,'stand',-(W/2+10),0,'s',0);}if(i%7===3)add(i,'fence',W/2+2,0);if(i%9===0&&rnd()<0.6)add(i,rnd()<0.5?'elm':'oak',W/2+14+rnd()*10,0,'s',0.6);continue;}
+    if(tr==='beach'){if(i%6===0)add(i,'sea',W/2+22,0);if(i%9===0)add(i,'dune',-(W/2+12+rnd()*8));if(i%11===0&&rnd()<cfg.crowd)add(i,'crowd',-(W/2+4),Math.floor(rnd()*4),'p');continue;}
+    if(town){
+      if(i%4===0){[-1,1].forEach(sd=>{const t=set.town[Math.floor(rnd()*set.town.length)];if(add(i,t,sd*(W/2+6.5+rnd()*1.5),Math.floor(rnd()*3),'s',3.5))trk.bar[i]=Object.assign(trk.bar[i]||{},sd>0?{L:W/2+2.5}:{R:W/2+2.5});});}
+      if(i%150===34)add(i,'church',-(W/2+9),0,'s',4);
+      if(i%6===2)add(i,'lamp',(i%12===2?1:-1)*(W/2+1.8),0,'s',0.25);
+      if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+2.8),Math.floor(rnd()*4),'p');
+      if(i%37===0)add(i,'gend',(rnd()<0.5?-1:1)*(W/2+2.2),0,'p');
+      if(i%53===7)add(i,'cart',(rnd()<0.5?-1:1)*(W/2+3.5),0,'s',1.2);
+      continue;}
+    // аллеи: ровные ряды деревьев вдоль дороги
+    if(alley<=0&&rnd()<0.012)alley=30+Math.floor(rnd()*60);
+    if(alley>0){alley--;if(i%4===0){add(i,set.alley,W/2+2.6,Math.floor(rnd()*3),'s',0.55);add(i,set.alley,-(W/2+2.6),Math.floor(rnd()*3),'s',0.55);}}
+    else if(rnd()<(tr==='sand'?0.12:0.32)){const sd=rnd()<0.5?-1:1,off=sd*(W/2+3.5+Math.pow(rnd(),1.4)*40),t=tr==='snow'?'fir':tr==='mount'&&set.mount&&rnd()<0.45?'rock':set.trees[Math.floor(rnd()*set.trees.length)];add(i,t,off,Math.floor(rnd()*3)+(tr==='snow'?1:0),'s',Math.abs(off)<W/2+10?0.55:0);}
+    if(i%47===11&&rnd()<0.7){const sd=rnd()<0.5?-1:1;add(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+14+rnd()*14),Math.floor(rnd()*3),'s',0);}
+    if(i%31===5&&rnd()<0.6){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
+    if(i%50===0&&set.extra.includes('km'))add(i,'km',-(W/2+1.3),0,'s',0.25);
+    if(i%12===0&&tr!=='sand'&&!cfg.sprint)add(i,'pole',W/2+3,0,'s',0.3);
+    if((tr==='mount'||cfg.uphill)&&i%10===0&&set.mount)add(i,'cliff',(i%20===0?1:-1)*(W/2+9),0,'s',0);
+    // зрители, маршалы, фотографы — у поворотов и на старте
+    if(sharp(i)&&rnd()<cfg.crowd*0.9){const sd=trk.K[i]>0?-1:1;add(i,'crowd',sd*(W/2+4+rnd()*2),Math.floor(rnd()*4),'p');if(rnd()<0.25)add(i,'marsh',sd*(W/2+2.2),Math.floor(rnd()*2),'p');if(rnd()<0.08)add(i,'photo',sd*(W/2+3),0,'p');}
+    else if(rnd()<cfg.crowd*0.06)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+4),Math.floor(rnd()*4),'p');
+    // знак перед крутым поворотом
+    const ah=i+14;if((cfg.closed||ah<n)&&Math.abs(trk.K[ah%n])>1/45&&Math.abs(trk.K[i])<1/200&&i%4===0){const sd=trk.K[ah%n]>0?-1:1;add(i,'sign',sd*(W/2+2.4),trk.K[ah%n]>0?0:1,'s',0.3);}
+  }
+  // старт, финиш, трибуны, боксы
+  const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});
+  if(cfg.closed||cfg.crowd>0.3){for(let k=-6;k<=6;k+=3){const i=((fi+k)%n+n)%n;spr[i].push({t:'stand',off:-(W/2+9),v:0,k:'s'});spr[i].push({t:'crowd',off:W/2+3.5,v:Math.abs(k)%4,k:'p'});}}
+  if(cfg.pits){const pi=(n-18)%n;spr[pi].push({t:'pits',off:W/2+8,v:0,k:'s'});}
+}
+/* ---------- машина в гонке ---------- */
+// Машина в гонке. Все поля заданы сразу в одном порядке: у всех машин одна «форма» объекта — расчёт быстрее
+class RaceCar{constructor(e){
+  this.you=!!e.you;this.player=!!e.player;this.name=e.name||'';this.label=e.label||'';this.drvName=e.drvName||'';this.drvId=e.drvId||null;this.sk=e.sk||0.8;
+  this.md=e.md;this.prep=e.prep||0;this.tyreType=e.tyre||'hard';this.gearSet=e.gear||0;this.color=e.color||'#333';this.num=e.num||0;this.pw=e.pw||1;this.relK=e.relK||1;this.pitK=e.pitK||1;this.tc=e.tc||'';
+  this.st=null;this.m=0;this.P=0;this.kd=0;this.crr=0;this.vtop=0;this.gr=null;this.brakeK=0;this.grip=1;this.wearK=1;this.rel=0.8;this.L=2.5;this.a=0;this.b=0;this.h=0.7;this.Iz=1;
+  this.x=0;this.z=0;this.y=0;this.gy=0;this.yaw=0;this.vx=0;this.vy=0;this.r=0;this.delta=0;this.gear=1;this.rpm=0;this.shift=0;this.thr=0;this.brk=0;this.steer=0;
+  this.idx=0;this.lat=0;this.segT=0;this.lap=0;this.prog=0;this.fin=null;this.lapSeen=-9;this.q=0;this.lane=0;this.laneT=undefined;this.follow=null;
+  this.heat=0;this.tyre=0;this.fuel=100;this.eng=0;this.dmg=0;this.punct=false;this.punctN=0;this.dnf=null;this.stopT=0;this.stopWhy='';this.pitT=0;this.order='norm';this.pitCall=false;
+  this.slipR=0;this.slipF=0;this.spinw=0;this.off=0;this.stuck=0;this.lastIdx=0;this.overheat=0;this.limp=false;this.fix=0;this.draft=0;this.hit=0;this.err=0;this.st2=0;this.parked=0;this.outT=0;
+  this.tyreRate=0;this.punctRate=0;this.fuelRate=0;this.wheelChange=0;this.style='';this.wheel='';this.mech=false;this.spriteKey='';this.punctSaid=0;this.skidSaid=0;this.fuelSaid=0;}}
+function mkRaceCar(e,y,trk){
+  const st=carStats(e.md,e.prep,y),terr=TERR[trk.cfg.terr]||TERR.dirt,c=new RaceCar(e);
+  const m=st.kg,P=st.P*(e.pw||1),kd=st.kd,crr=st.crr*(terr.crr||1);
+  let v=20;for(let i=0;i<30;i++){const f=kd*v*v*v+crr*m*GRAV*v-P,df=3*kd*v*v+crr*m*GRAV;v=Math.max(3,v-f/df);}
+  const ng=y<1905?3:4,L=st.wb;
+  c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
+  c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.35:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
+  c.L=L;c.a=L*0.46;c.b=L*0.54;c.h=st.cg;c.Iz=m*(L*L+1.9)/12*1.4;
+  return c;
+}
+function trackLocal(trk,c){
+  const {pts,n,closed}=trk;let best=c.idx,bd=1e18;
+  const win=(k0,k1)=>{for(let k=k0;k<=k1;k++){let i=c.idx+k;if(closed)i=(i+n)%n;else if(i<0||i>=n)continue;const p=pts[i],d=(p[0]-c.x)**2+(p[2]-c.z)**2;if(d<bd){bd=d;best=i;}}};
+  win(-5,5);if(Math.abs(best-c.idx)>=5&&Math.abs(best-c.idx)<n-5)win(-14,14);
+  if(bd>900){for(let i=0;i<n;i+=3){const p=pts[i],d=(p[0]-c.x)**2+(p[2]-c.z)**2;if(d<bd){bd=d;best=i;}}}
+  const p=pts[best],nn=trk.N[best],t=trk.T[best],lat=(c.x-p[0])*nn[0]+(c.z-p[2])*nn[1];
+  if(closed){const di=best-c.idx;if(di<-n/2)c.lap++;else if(di>n/2)c.lap--;}
+  c.idx=best;c.lat=lat;c.gy=p[1];c.segT=clamp(((c.x-p[0])*t[0]+(c.z-p[2])*t[1])/trk.step,-0.5,0.5);
+  c.prog=closed?c.lap*trk.len+(best+c.segT)*trk.step:(best+c.segT-trk.startIdx)*trk.step;
+  return lat;
+}
+function carStep(c,trk,dt){
+  const lat=trackLocal(trk,c),W=trk.W,tr=TERR[trk.terrAt(c.idx)]||TERR.dirt,bar=trk.bar[c.idx];
+  let mu=tr.mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(c.punct?0.72:1),crr=c.crr*(c.punct?3:1);
+  const al=Math.abs(lat);c.off=al>W/2+1.2?1:0;
+  if(al>W/2+1.2){mu*=0.6;crr=c.crr*4;}else if(al>W/2){mu*=0.85;crr=c.crr*1.6;}
+  const stopped=c.stopT>0||c.pitT>0||c.dnf||(c.punct&&!c.player);
+  const pw=c.P*(1-c.dmg/250)*(c.overheat>0?0.3:1)*(c.fuel<=0?0.1:1)*(c.draft?1.06:1)*(c.limp?0.65:1);
+  const v=c.vx;
+  let vg=c.gr[c.gear-1];c.rpm=Math.max(0.12,Math.abs(v)/vg);
+  if(c.shift>0)c.shift-=dt;else{if(c.rpm>0.96&&c.gear<c.gr.length){c.gear++;c.shift=0.28;}else if(c.gear>1&&Math.abs(v)<c.gr[c.gear-2]*0.55){c.gear--;c.shift=0.2;}}
+  vg=c.gr[c.gear-1];
+  const Fzf=c.m*GRAV*c.b/c.L,Fzr=c.m*GRAV*c.a/c.L;
+  let Fx=0;const thr=stopped?0:c.thr,brk=stopped?1:c.brk;
+  if(brk>0.05&&v>0.3)Fx=-brk*c.brakeK*mu*c.m*GRAV;
+  else if(brk>0.05&&v<=0.3&&!stopped){Fx=-brk*c.m*1.8;}
+  else if(c.shift<=0&&v<vg*1.02){Fx=thr*pw/Math.max(v,2.2+0.22*vg);}
+  if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);
+  const Fxmax=mu*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
+  const drag=c.kd*v*Math.abs(v)+crr*c.m*GRAV*Math.sign(v);
+  const sp=Math.abs(v);
+  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;}
+  else{
+    const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
+    const sat=(a,Fz,capK)=>{const x=11*a;const f=Math.tanh(x)*(1-0.12*Math.min(1,Math.max(0,Math.abs(x)-1.6)/3));return -mu*Fz*capK*f;};
+    const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(mu*Fzr+1)),2)));
+    const Fyf=sat(af,Fzf,1),Fyr=sat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)));
+    const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
+    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz;
+    c.vx+=dvx*dt;c.vy+=dvy*dt;c.r+=dr*dt;c.r*=0.9995;c.slipR=Math.abs(ar);c.slipF=Math.abs(af);
+  }
+  c.spinw=spin;
+  if(Math.abs(c.vx)<0.05&&c.thr<0.05&&c.brk<0.05){c.vx=0;c.vy*=0.5;}
+  c.yaw+=c.r*dt;
+  const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw);
+  c.x+=(fx*c.vx+rx*c.vy)*dt;c.z+=(fz*c.vx+rz*c.vy)*dt;
+  c.y+=((c.gy||0)-(c.y||0))*Math.min(1,dt*12);
+  // износ: шины, топливо, мотор — по реальной дистанции гонки
+  const dist=sp*dt,ord=c.order==='push'?1.25:c.order==='save'?0.8:1;
+  c.tyre+=dist*c.tyreRate*(1+5*(c.slipR+c.slipF)+spin*2)*c.wearK*ord*(c.off?1.8:1);
+  if(!c.punct&&(c.tyre>=100||Math.random()<c.punctRate*dist*(c.off?3:1))){c.punct=true;c.punctN=(c.punctN||0)+1;}
+  if(c.fuelRate)c.fuel=Math.max(0,c.fuel-dist*c.fuelRate*(0.35+0.65*c.thr));
+  if(c.rpm>0.9&&c.thr>0.5)c.heat+=7*(1.5-c.rel*0.7)*dt*(c.order==='push'?1.25:1);else c.heat=Math.max(0,c.heat-9*dt);
+  if(c.heat>=100){c.overheat=4;c.heat=55;}if(c.overheat>0)c.overheat-=dt;
+  if(!c.dnf&&c.fin===null&&sp>3){const stress=1+1.5*Math.max(0,(c.heat-60)/40)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
+    const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
+    if(Math.random()<h*dt)carFailure(c);}
+  // столкновения с декорациями и стенами домов
+  const L=trk.segCol&&trk.segCol[c.idx];
+  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z;if(dx*dx+dz*dz>30)continue;const d=Math.hypot(dx,dz),rr=o.r+1.0;if(d<rr&&d>0.001){
+    const nx=dx/d,nz=dz/d;c.x=o.x+nx*rr;c.z=o.z+nz*rr;const Vx=fx*c.vx+rx*c.vy,Vz=fz*c.vx+rz*c.vy,vn=Vx*nx+Vz*nz;
+    if(vn<0){const e=0.25,nVx=(Vx-(1+e)*vn*nx)*0.7,nVz=(Vz-(1+e)*vn*nz)*0.7;c.vx=nVx*fx+nVz*fz;c.vy=nVx*rx+nVz*rz;c.r+=(Math.random()-0.5)*Math.min(3,-vn*0.15);
+      const imp=-vn;if(imp>2){c.dmg=Math.min(100,c.dmg+imp*1.3);c.hit=imp;}}}}
+  if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const p=trk.pts[c.idx],nn=trk.N[c.idx],sg=Math.sign(lat);c.x=p[0]+nn[0]*sg*lim;c.z=p[2]+nn[1]*sg*lim;
+    const vlat=(fx*c.vx+rx*c.vy)*nn[0]+(fz*c.vx+rz*c.vy)*nn[1];if(vlat*sg>0){const imp=Math.abs(vlat);c.vy*=-0.3;c.vx*=0.85;if(imp>2){c.dmg=Math.min(100,c.dmg+imp*1.1);c.hit=imp;}}}}
+}
+function carFailure(c){
+  const early=R.rc.y<1906,terminal=Math.random()<0.6;
+  const what=pick(['мотор','зажигание','цепь привода','подшипник','рессора','карбюратор','радиатор',early?'цепь':'клапан']);
+  if(terminal){c.dnf=what;c.thr=0;if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — ${what}`,2.5);}
+  else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ремонт на обочине — ${what}`,2);}
+}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function carsCollide(A,B){const dx=A.x-B.x,dz=A.z-B.z,d=Math.hypot(dx,dz),rr=2.1;if(d>=rr||d<0.001)return 0;
+  const nx=dx/d,nz=dz/d,push=(rr-d)/2;A.x+=nx*push;A.z+=nz*push;B.x-=nx*push;B.z-=nz*push;
+  const V=c=>[Math.sin(c.yaw)*c.vx+Math.cos(c.yaw)*c.vy,Math.cos(c.yaw)*c.vx-Math.sin(c.yaw)*c.vy];
+  const va=V(A),vb=V(B),rel=(va[0]-vb[0])*nx+(va[1]-vb[1])*nz;if(rel>=0)return 0;
+  const j=-(1.3)*rel/2;const na=[va[0]+j*nx,va[1]+j*nz],nb=[vb[0]-j*nx,vb[1]-j*nz];
+  const set=(c,w)=>{const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw);c.vx=w[0]*fx+w[1]*fz;c.vy=w[0]*rx+w[1]*rz;};set(A,na);set(B,nb);
+  A.r+=(Math.random()-0.5)*0.6;B.r+=(Math.random()-0.5)*0.6;const imp=-rel,dk=(A.you||B.you)?0.6:0.25;if(imp>1.5){A.dmg=Math.min(100,A.dmg+imp*dk);B.dmg=Math.min(100,B.dmg+imp*dk);}return imp;}
+/* ---------- пилоты: ИИ и игрок ---------- */
+function aiControl(c,trk,dt){
+  const {pts,n,closed,step}=trk,sk=c.sk||0.8,v=Math.max(0,c.vx);
+  const look=6+v*0.75,ai=Math.round(look/step);let ti=c.idx+ai;if(closed)ti%=n;else ti=Math.min(n-1,ti);
+  const tp=pts[ti],tn=trk.N[ti],off=c.laneT!==undefined?c.laneT:(c.lane||0);const tx=tp[0]+tn[0]*off,tz=tp[2]+tn[1]*off;
+  const dx=tx-c.x,dz=tz-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);const lz=dx*fx+dz*fz,lx=dx*Math.cos(c.yaw)-dz*Math.sin(c.yaw);
+  // руль: кривизна дуги до точки впереди + поправка по скорости вращения (шинам нужен угол увода)
+  const kap=2*lx/Math.max(16,lz*lz+lx*lx);let want=Math.atan(c.L*kap);if(v>5)want+=clamp((kap*v-c.r)*0.3,-0.2,0.2);
+  const dmax=0.6/(1+v/20);c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-2.2*dt,2.2*dt);
+  const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
+  const mu=(TERR[trk.terrAt(c.idx)]||TERR.dirt).mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(0.8+0.17*sk)*(c.punct?0.5:1)*ordK,muC=mu*0.9;
+  const bdec=c.brakeK*mu*GRAV*0.85;let vt=c.vtop*1.05;
+  for(let d=0;d<Math.min(170,40+v*4.5);d+=step*2){let j=c.idx+Math.round(d/step);if(closed)j%=n;else if(j>=n)break;const k=Math.abs(trk.K[j])+1e-4,vc=Math.sqrt(muC*GRAV/k),va=Math.sqrt(vc*vc+2*bdec*Math.max(0,d-3));if(va<vt)vt=va;}
+  if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
+  const kN=trk.K[c.idx]||0,latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
+  c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
+  // выносит наружу поворота — сбросить газ и подтормозить
+  const wide=-Math.sign(kN)*c.lat-(trk.W/2-1.5);if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,0.2);c.brk=Math.max(c.brk,Math.min(0.5,wide*0.15));}
+  if(c.heat>82&&c.rpm>0.85)c.thr=Math.min(c.thr,c.order==='push'?0.7:0.5);
+  if(c.slipR>0.14&&c.thr>0.5)c.thr=0.5;
+  if(c.off&&v>8){c.thr=Math.min(c.thr,0.3);c.brk=Math.max(c.brk,0.2);}
+  // боксы: шины, топливо, повреждения или приказ команды
+  const cfg=trk.cfg,rem=Math.max(0,trk.raceLen-c.prog);if(cfg.pits&&c.lap<cfg.laps-1&&(c.tyre+rem*c.tyreRate*1.5>97||(c.fuelRate&&c.fuel<rem*c.fuelRate+4)||c.dmg>55||c.pitCall)){const toLine=((n-c.idx)%n)*step;if(toLine<110){c.brk=v>13?0.8:0;c.thr=v<10?0.4:0;}}
+  if(c.follow&&!c.punct){c.thr=0;if(c.vx>c.follow.vx+2)c.brk=Math.max(c.brk,0.35);}
+  if(c.punct){c.thr=0;c.brk=1;}
+  if(c.fuelRate&&c.fuel<=0&&!(c.pitT>0)&&!c.dnf){c.dnf='кончилось топливо';if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — кончилось топливо`,2.5);}
+}
+// Движение в потоке: обгон медленной машины впереди, съезд к обочине для ремонта
+function aiTraffic(T){
+  const W2=T.W/2-1.3;
+  R.cars.forEach(c=>{if(c.player||c.dnf||c.fin!==null)return;
+    if(c.stopT>0||c.punct||(c.pitT>0)){c.laneT=c.pitT>0?undefined:-W2;return;}
+    let blk=null,best=1e9;
+    R.cars.forEach(o=>{if(o===c||o.parked||(o.dnf&&Math.abs(o.lat)>T.W/2))return;const gap=o.prog-c.prog;if(gap<=0||gap>8+c.vx*0.9)return;const dl=o.lat-c.lat;if(Math.abs(dl)<2.3&&gap<best){best=gap;blk=o;}});
+    if(blk&&blk.vx<c.vx+1){const L=blk.lat+2.9,Rr=blk.lat-2.9,okL=L<=W2,okR=Rr>=-W2;
+      c.laneT=okL&&(!okR||Math.abs(L-c.lat)<=Math.abs(Rr-c.lat))?L:okR?Rr:c.lat;
+      if(blk.vx>2&&best<5+c.vx*0.25&&Math.abs(blk.lat-c.lat)<1.9&&c.vx>blk.vx){c.follow=blk;}else c.follow=null;}
+    else{c.laneT=undefined;c.follow=null;}
+  });
+}
+const rKeys={left:false,right:false,gas:false,brake:false};
+function playerControl(c,dt){
+  let target=0;
+  if(R.tilt&&R.tiltVal!==undefined)target=clamp(R.tiltVal/22,-1,1);else target=rKeys.left?-1:rKeys.right?1:0;
+  c.steer+=clamp(target-c.steer,-(target===0?4.5:2.6)*dt,(target===0?4.5:2.6)*dt);
+  const v=Math.max(0,c.vx),dmax=0.5/(1+v/15);let want=c.steer*dmax;
+  if(G.diff!=='hist'&&v>5){want-=clamp(c.vy*0.06,-0.15,0.15);c.r*=1-Math.min(0.5,dt*1.5*Math.max(0,c.slipR-0.08)*10);}
+  c.delta+=clamp(want-c.delta,-2.2*dt,2.2*dt);
+  c.thr+=clamp((rKeys.gas?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((rKeys.brake?1:0)-c.brk,-8*dt,6*dt);
+  if(G.diff!=='hist'&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
+}
+/* ---------- гонка: старт, такт, финиш ---------- */
+let R=null,rRaf=0;
+function rMsg(t,dur=1.6){if(R&&R.mode!=='sim'){R.msg=t;R.msgT=dur;}}
+function rMsgT(t,dur){if(R&&R.mode!=='sim'){R.msg=t;R.msgT=dur;}}
+function dnfTarget(y,t){const base=y<1900?0.5:y<1906?0.45:y<1912?0.38:y<1920?0.32:y<1925?0.27:0.2;return base*({road:1.15,rally:1.2,endurance:1.3,hill:0.4,sprint:0.3,oval:1,circuit:1}[t]||1);}
+// Параметры износа машины на конкретной гонке: шины, проколы, топливо
+function wearSetup(c,trk,rc){
+  const tr=TERR[trk.cfg.terr]||TERR.dirt,p=parts(c.md),km=Math.max(20,rc.km);
+  const life=p.w.life*(tr.tyre||1)*(1+0.12*upgL(p.w.id)*(c.you?1:0));
+  const lifeFrac=clamp(life/km,0.6,3);c.tyreRate=100/(lifeFrac*trk.raceLen);
+  const expP=clamp(km*p.w.punct*(tr.rough||1)/1100,0,1.4);c.punctRate=expP/trk.raceLen;
+  if(trk.cfg.pits){const range=280/(p.e.fuel||1),frac=clamp(range/km,0.55,1.6);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
+  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022:p.c.wire?0.028:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);
+}
+function startRace(setup){
+  const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
+  const teamCars=setup.entries.map((e,i)=>{const d=e.drv==='me'?null:DRIVERS.find(x=>x.id===e.drv),me=e.drv==='me';
+    return {you:true,name:s.company,label:e.md.name,drvName:me?(setup.mode==='drive'?'Вы':pio.name):d.n,drvId:e.drv,sk:me?(pd?pd.sk:0.72):d.sk,
+    md:e.md,prep:e.prep,tyre:e.tyre,gear:e.gear,color:e.prep===2&&rc.y>=1903?COUNTRIES[s.country].race:e.md.paint,num:i+1,player:me&&setup.mode==='drive',pw:(1+bn('race',0))*(dl.pw||1),relK:dl.rel||1,pitK:dl.pit||1};});
+  const ai=raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
+  const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));
+  const trk=buildTrack(rc,vref);
+  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);c.style=carStyle(c.md,c.prep,rc.y);c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':parts(c.md).c.wire||rc.y>=1912?'wire':'wood';c.mech=c.st.mech;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0);wearSetup(c,trk,rc);return c;});
+  // стартовая решётка: быстрые и опытные впереди, немного случайности
+  cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
+  cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
+    const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
+  const me=cars.find(c=>c.player)||null,team=cars.filter(c=>c.you);
+  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:!!AU.on.tilt,speed:1,setup,
+    hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:Math.max(0.05,1-ai.reduce((a,e)=>a+cars.find(c=>c.name===e.name&&!c.you).rel,0)/Math.max(1,ai.length))};
+  if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
+  document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
+  document.getElementById('fuelBox').style.visibility=trk.cfg.pits?'visible':'hidden';
+  document.getElementById('hLapL').firstChild.textContent=trk.cfg.laps>1?'Круг':'Дистанция';
+  setupRaceUI();setupRender();auRaceStart(rc);R.lastT=performance.now();rRaf=requestAnimationFrame(raceLoop);
+}
+// Соперники: заводские команды своего года (те же, что и в зачёте сезона), с реальными пилотами
+function fieldTeams(rc,s,nTeam){
+  const y=rc.y,intl=rc.c==='intl'||rc.major,host=COUNTRIES[rc.c]?rc.c:null;
+  let teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&t.pk!==s.pioneer&&(intl||t.c===host||(!host)));
+  if(rc.id==='indy'||rc.track==='board')teams=teams.filter(t=>t.c==='us'||t.str>=1.05);
+  teams.sort((a,b)=>b.str-a.str);
+  if(/^gb\d/.test(rc.id)){const cnt={[s.country]:nTeam};teams=teams.filter(t=>['fr','de','uk','us','it'].includes(t.c)&&(cnt[t.c]=(cnt[t.c]||0)+1)<=3);}
+  const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(t);});
+  return out;
+}
+function aiCarMd(y,name){const md={e:lastOf(ENGINES,y).id,c:lastOf(CHASSIS,y).id,b:(lastOf(BODIES,y,x=>!x.truck)||BODIES[0]).id,w:lastOf(TYRES,y).id,t:'t0',paint:'#333',name:name||'',made:0};
+  if(overpower(md))md.e=ENGINES.filter(e=>e.y<=y&&e.hp<=byId(CHASSIS,md.c).max).pop().id;return md;}
+// Типичная ненадёжность соперников: от неё считается частота поломок в гонке
+function fieldRelRef(rc,s){const T=fieldTeams(rc,s,1);if(!T.length)return 0.2;const prep=rc.t==='endurance'||rc.t==='rally'?1:2,st=carStats(aiCarMd(rc.y),prep,rc.y);return Math.max(0.05,1-T.reduce((a,t)=>a+clamp(st.rel*Math.pow(t.str,0.6),0.3,0.995),0)/T.length);}
+function teamBoost(t,rc){return (t.boost&&Object.keys(t.boost).some(k=>rc.y>=+k)?1.06:1)*(rc.t==='endurance'&&t.endur?t.endur:1);}
+function teamDrivers(t,y,used){return DRIVERS.filter(d=>d.from<=y&&d.to>=y&&!(used&&used.has(d.id))&&d.mq.some(m=>t.mq.includes(m)));}
+function raceField(rc,s,nTeam,taken){
+  const y=rc.y,pickT=fieldTeams(rc,s,nTeam),host=COUNTRIES[rc.c]?rc.c:null;
+  while(pickT.length<3)pickT.push({n:'Частная машина',c:host||'fr',str:0.85,mq:[]});
+  const pio=PIONEERS[s.pioneer],used=new Set([...(s.drivers||[]),...(taken||[]),pio.drv].filter(Boolean)),out=[];
+  pickT.forEach((t,i)=>{
+    const pool=teamDrivers(t,y,used),any=DRIVERS.filter(d=>d.from<=y&&d.to>=y&&!used.has(d.id)),L=pool.length?pool:any;
+    const d=L.sort((a,b)=>b.sk-a.sk)[Math.floor(Math.random()*Math.min(2,L.length))]||{n:'',sk:0.75};if(d.id)used.add(d.id);
+    const md=aiCarMd(y,t.n);
+    const boost=teamBoost(t,rc)*DIF().race;
+    out.push({you:false,name:t.n,label:t.n,drvName:d.n,sk:d.sk||0.75,md,prep:rc.t==='endurance'||rc.t==='rally'?1:2,tyre:Math.random()<0.5?'soft':'hard',gear:0,color:y>=1903?(t.c==='intl'||!COUNTRIES[t.c]?'#F28C00':COUNTRIES[t.c].race):['#2b2320','#3a2a1c','#1f2b3a','#4a1f1a'][i%4],pw:Math.pow(t.str,1.6)*boost,relK:Math.pow(t.str,0.6),tc:t.c});
+  });
+  return out;
+}
+function raceTick(dt){
+  const T=R.trk,cfg=T.cfg;
+  if(R.t<0){R.cars.forEach(c=>{c.thr=0;c.brk=1;});return;}
+  aiTraffic(T);
+  R.cars.forEach(c=>{
+    if(c.fin!==null||c.dnf){if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
+    if(!c.player||R.mode!=='drive')aiControl(c,T,dt);
+    if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
+      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
+    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0&&c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}
+    else if(c.punct&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
+  });
+  const sub=R.mode==='sim'?3:4,h=dt/sub;
+  for(let k=0;k<sub;k++){R.cars.forEach(c=>{if(!c.dnf||c.vx>0.2)carStep(c,T,h);});for(let i=0;i<R.cars.length;i++)for(let j=i+1;j<R.cars.length;j++){const A=R.cars[i],B=R.cars[j];if(A.dnf&&B.dnf)continue;const imp=carsCollide(A,B);if(imp>1.5&&(A===R.follow||B===R.follow)){R.shake=Math.min(0.6,imp*0.05);auSfx('bump',Math.min(1,imp/10));}}}
+  R.cars.forEach(c=>{c.draft=0;if(c.dnf)return;R.cars.forEach(o=>{if(o===c||o.dnf)return;const gap=o.prog-c.prog;if(gap>4&&gap<25){const dx=o.x-c.x,dz=o.z-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),latd=Math.abs(dx*fz-dz*fx);if(latd<1.6)c.draft=1;}});});
+  const me=R.me;
+  if(me){if(me.hit){if(me.hit>6){R.shake=0.6;rMsg('УДАР!',0.9);auSfx('crash',Math.min(1,me.hit/15));}else auSfx('bump',0.5);me.hit=0;}
+    if(me.overheat>3.9)rMsg('ПЕРЕГРЕВ!',2);
+    if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.tyre>=100?'ШИНЫ СТЁРТЫ!':'ПРОКОЛ!',2);}if(!me.punct)me.punctSaid=0;
+    if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
+    if(me.fuel<12&&T.cfg.pits&&!me.fuelSaid){me.fuelSaid=1;rMsg('В БОКСЫ: сбавьте ход у финишной линии',2.5);}
+    me.stuck=(Math.abs(me.lat)>T.W/2+8||me.vx<1.5)&&R.t>2&&!me.stopT&&!me.pitT&&!me.punct&&!me.dnf?me.stuck+dt:0;}
+  R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
+    if((!c.player)&&!c.dnf&&!(c.stopT>0)&&!(c.pitT>0)&&!c.punct&&c.fin===null&&R.t>4){const bad=Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5;
+      c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
+    if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
+  const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);
+  if(R.endT===undefined){
+    if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);}}
+    else if(!me&&(!teamLive.length||!live.length)){R.endT=R.mode==='sim'?0:2;if(R.cars.some(c=>c.you&&c.fin!==null))auSfx('cheer',1);}
+    else if(R.time>(T.cfg.dur||120)*4)R.endT=0;}
+  if(R.endT!==undefined){R.endT-=dt;if(R.endT<=0){finishRace(false);return;}}
+  if(R.msgT>0)R.msgT-=dt;R.shake=Math.max(0,R.shake-dt*1.5);
+}
+// Досчитать гонку мгновенно (режим руководителя): та же физика без отрисовки
+function raceFastForward(){if(!R||R.done)return;R.ff=true;if(R.t<0)R.t=0;const dt=1/20;let f=0;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);}
+function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);c.vx=0;c.vy=0;c.r=0;c.delta=0;c.stuck=0;}
+function raceLoop(now){
+  if(!R||R.done)return;
+  const dt=Math.min(0.05,(now-R.lastT)/1000);R.lastT=now;
+  for(let k=0;k<(R.speed||1);k++){R.t+=dt;if(R.t>0){R.time+=dt;if(R.me)playerControl(R.me,dt);}raceTick(dt);if(!R||R.done)break;}
+  if(R&&!R.done){renderRace(dt);auRaceTick();}
+  if(R&&!R.done)rRaf=requestAnimationFrame(raceLoop);
+}
+function raceOrder(){return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
+function finishRace(quit){
+  const s=G;if(!R||R.done)return;R.done=true;cancelAnimationFrame(rRaf);if(R.mode!=='sim')auRaceStop();
+  const T=R.trk;
+  R.cars.forEach(o=>{if(o.fin!==null)o.dnf=null;});
+  // незавершённые: игрок, покинувший гонку, сходит; остальных досчитываем — с шансом поломки на оставшейся дистанции
+  R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
+    const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
+    if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0}));
+  document.getElementById('raceScreen').hidden=true;
+  const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
+  raceResults(rc,res,mode,info);
+}
