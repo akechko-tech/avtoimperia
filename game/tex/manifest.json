@@ -1,0 +1,468 @@
+{
+ "license": "CC0 1.0 — Poly Haven (polyhaven.com)",
+ "size": 512,
+ "mat": {
+  "grass": {
+   "id": "leafy_grass",
+   "name": "Leafy Grass",
+   "authors": [
+    "Charlotte Baglioni"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": "ids",
+   "nor": true,
+   "arm": true
+  },
+  "dry_grass": {
+   "id": "forrest_ground_01",
+   "name": "Forest Ground 01",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": 25.51,
+   "nor": true,
+   "arm": true
+  },
+  "dirt": {
+   "id": "dirt_floor",
+   "name": "Dirt Floor",
+   "authors": [
+    "eye-candy.xyz"
+   ],
+   "dims_mm": [
+    2069.9996948242188,
+    2069.9996948242188
+   ],
+   "m": 2.07,
+   "why": "ids",
+   "nor": true,
+   "arm": true
+  },
+  "dirt_road": {
+   "id": "rocky_trail_02",
+   "name": "Rocky Trail 02",
+   "authors": [
+    "Amal Kumar"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": 35.03,
+   "nor": true,
+   "arm": true
+  },
+  "gravel": {
+   "id": "red_laterite_soil_stones",
+   "name": "Red Laterite Soil Stones",
+   "authors": [
+    "Amal Kumar"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": 34.85,
+   "nor": true,
+   "arm": true
+  },
+  "cobble": {
+   "id": "square_cobblestone",
+   "name": "Square Cobblestone",
+   "authors": [
+    "Sơn Nguyễn"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": 34.2,
+   "nor": true,
+   "arm": true
+  },
+  "brick_road": {
+   "id": "herringbone_brick_02",
+   "name": "Herringbone Brick 02",
+   "authors": [
+    "Charlotte Baglioni"
+   ],
+   "dims_mm": [
+    1840.0001525878906,
+    1840.0001525878906
+   ],
+   "m": 1.84,
+   "why": 43.99,
+   "nor": true,
+   "arm": true
+  },
+  "asphalt": {
+   "id": "gravel_road",
+   "name": "Gravel Road",
+   "authors": [
+    "Amal Kumar"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": 34.25,
+   "nor": true,
+   "arm": true
+  },
+  "concrete": {
+   "id": "gravel_embedded_concrete",
+   "name": "Gravel Embedded Concrete",
+   "authors": [
+    "Charlotte Baglioni"
+   ],
+   "dims_mm": [
+    2000,
+    2000
+   ],
+   "m": 2.0,
+   "why": 35.04,
+   "nor": true,
+   "arm": true
+  },
+  "planks": {
+   "id": "old_wood_floor",
+   "name": "Old Wood Floor",
+   "authors": [
+    "Guillaume Monsergent"
+   ],
+   "dims_mm": [
+    3000,
+    3000
+   ],
+   "m": 3.0,
+   "why": 54.57,
+   "nor": true,
+   "arm": true
+  },
+  "sand": {
+   "id": "coast_sand_01",
+   "name": "Coast Sand 01",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    15000,
+    15000
+   ],
+   "m": 15.0,
+   "why": 24.96,
+   "nor": true,
+   "arm": true
+  },
+  "snow": {
+   "id": "snow_field_aerial",
+   "name": "Snow Field Aerial",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    80000,
+    80000
+   ],
+   "m": 80.0,
+   "why": 14.79,
+   "nor": true,
+   "arm": true
+  },
+  "rock": {
+   "id": "cliff_side",
+   "name": "Cliff Side",
+   "authors": [
+    "James Ray Cock",
+    "Jenelle van Heerden",
+    "Dario Barresi"
+   ],
+   "dims_mm": [
+    1830.0000429153442,
+    1830.0000429153442
+   ],
+   "m": 1.83,
+   "why": 34.71,
+   "nor": true,
+   "arm": true
+  },
+  "forest": {
+   "id": "brown_mud_leaves_01",
+   "name": "Brown Mud Leaves 01",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    1299.9998331069946,
+    1299.9998331069946
+   ],
+   "m": 1.3,
+   "why": "ids",
+   "nor": true,
+   "arm": true
+  },
+  "mud": {
+   "id": "muddy_tracks",
+   "name": "Muddy Tracks",
+   "authors": [
+    "Amal Kumar"
+   ],
+   "dims_mm": [
+    2250,
+    2250
+   ],
+   "m": 2.25,
+   "why": 33.77,
+   "nor": true,
+   "arm": true
+  },
+  "brick_wall": {
+   "id": "mixed_brick_wall",
+   "name": "Mixed Brick Wall",
+   "authors": [
+    "Dimitrios Savva"
+   ],
+   "dims_mm": [
+    1700.0000476837158,
+    1700.0000476837158
+   ],
+   "m": 1.7,
+   "why": 44.51,
+   "nor": true,
+   "arm": true
+  },
+  "plaster": {
+   "id": "concrete_wall_003",
+   "name": "Concrete Wall 003",
+   "authors": [
+    "Dimitrios Savva",
+    "Rico Cilliers"
+   ],
+   "dims_mm": [
+    3000,
+    3000.000238418579
+   ],
+   "m": 3.0,
+   "why": 25.03,
+   "nor": true,
+   "arm": true
+  },
+  "stone_wall": {
+   "id": "castle_wall_slates",
+   "name": "Castle Wall Slates",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    2500,
+    2500
+   ],
+   "m": 2.5,
+   "why": 54.99,
+   "nor": true,
+   "arm": true
+  },
+  "wood_wall": {
+   "id": "brown_planks_09",
+   "name": "Brown Planks 09",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    1000,
+    1000
+   ],
+   "m": 1.0,
+   "why": 44.62,
+   "nor": true,
+   "arm": true
+  },
+  "roof_tiles": {
+   "id": "roof_09",
+   "name": "Roof 09",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    4000,
+    4000
+   ],
+   "m": 4.0,
+   "why": 24.96,
+   "nor": true,
+   "arm": true
+  },
+  "roof_slate": {
+   "id": "grey_roof_01",
+   "name": "Grey Roof 01",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    8000,
+    8000
+   ],
+   "m": 8.0,
+   "why": 24.86,
+   "nor": true,
+   "arm": true
+  },
+  "thatch": {
+   "id": "thatch_roof_angled",
+   "name": "Thatch Roof Angled",
+   "authors": [
+    "Rob Tuytel",
+    "Dimitrios Savva"
+   ],
+   "dims_mm": [
+    539.9999618530273,
+    539.9999618530273
+   ],
+   "m": 0.54,
+   "why": 24.67,
+   "nor": true,
+   "arm": true
+  },
+  "bark": {
+   "id": "bark_brown_02",
+   "name": "Bark Brown 02",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "dims_mm": [
+    999.9990463256836,
+    999.998927116394
+   ],
+   "m": 1.0,
+   "why": 25.36,
+   "nor": true,
+   "arm": true
+  },
+  "metal_roof": {
+   "id": "corrugated_iron",
+   "name": "Corrugated Iron",
+   "authors": [
+    "Jenelle van Heerden",
+    "Dimitrios Savva"
+   ],
+   "dims_mm": [
+    1120.0000047683716,
+    1120.0000047683716
+   ],
+   "m": 1.12,
+   "why": 25.0,
+   "nor": true,
+   "arm": true
+  }
+ },
+ "sky": {
+  "clear": {
+   "id": "qwantani_noon_puresky",
+   "name": "Qwantani Noon (Pure Sky)",
+   "sun": [
+    36.0,
+    49.9
+   ],
+   "hz": [
+    0.913,
+    0.942,
+    0.972
+   ],
+   "ze": [
+    0.558,
+    0.675,
+    0.837
+   ],
+   "score": 34.71
+  },
+  "cloudy": {
+   "id": "kloofendal_48d_partly_cloudy_puresky",
+   "name": "Kloofendal 48d Partly Cloudy (Pure Sky)",
+   "sun": [
+    34.1,
+    48.0
+   ],
+   "hz": [
+    0.752,
+    0.769,
+    0.822
+   ],
+   "ze": [
+    0.717,
+    0.757,
+    0.843
+   ],
+   "score": 25.94
+  },
+  "overcast": {
+   "id": "overcast_soil_puresky",
+   "name": "Overcast Soil (Pure Sky)",
+   "sun": [
+    -12.0,
+    34.8
+   ],
+   "hz": [
+    0.542,
+    0.528,
+    0.513
+   ],
+   "ze": [
+    0.762,
+    0.76,
+    0.763
+   ],
+   "score": 15.54
+  },
+  "evening": {
+   "id": "evening_road_01_puresky",
+   "name": "Evening Road 01 (Pure Sky)",
+   "sun": [
+    34.5,
+    10.0
+   ],
+   "hz": [
+    0.709,
+    0.748,
+    0.754
+   ],
+   "ze": [
+    0.418,
+    0.56,
+    0.684
+   ],
+   "score": 25.35
+  },
+  "morning": {
+   "id": "kloofendal_28d_misty_puresky",
+   "name": "Kloofendal 28d Misty (Pure Sky)",
+   "sun": [
+    -10.9,
+    28.7
+   ],
+   "hz": [
+    0.818,
+    0.821,
+    0.835
+   ],
+   "ze": [
+    0.594,
+    0.63,
+    0.698
+   ],
+   "score": 24.48
+  }
+ }
+}
