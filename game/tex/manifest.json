@@ -18,17 +18,17 @@
    "arm": true
   },
   "dry_grass": {
-   "id": "forrest_ground_01",
-   "name": "Forest Ground 01",
+   "id": "withered_grass",
+   "name": "Withered Grass",
    "authors": [
-    "Rob Tuytel"
+    "Charlotte Baglioni"
    ],
    "dims_mm": [
-    2000,
-    2000
+    1999.9996423721313,
+    1999.9996423721313
    ],
    "m": 2.0,
-   "why": 25.51,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -63,17 +63,33 @@
    "arm": true
   },
   "gravel": {
-   "id": "red_laterite_soil_stones",
-   "name": "Red Laterite Soil Stones",
+   "id": "gravel_ground_01",
+   "name": "Gravel Ground 01",
    "authors": [
-    "Amal Kumar"
+    "Rob Tuytel"
    ],
    "dims_mm": [
-    2000,
-    2000
+    3000,
+    3000
    ],
-   "m": 2.0,
-   "why": 34.85,
+   "m": 3.0,
+   "why": "ids",
+   "nor": true,
+   "arm": true
+  },
+  "macadam": {
+   "id": "rocky_gravel",
+   "name": "Rocky Gravel",
+   "authors": [
+    "Dario Barresi",
+    "Dimitrios Savva"
+   ],
+   "dims_mm": [
+    1809.999942779541,
+    1809.999942779541
+   ],
+   "m": 1.81,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -108,17 +124,18 @@
    "arm": true
   },
   "asphalt": {
-   "id": "gravel_road",
-   "name": "Gravel Road",
+   "id": "asphalt_01",
+   "name": "Asphalt 01",
    "authors": [
-    "Amal Kumar"
+    "Dario Barresi",
+    "Charlotte Baglioni"
    ],
    "dims_mm": [
-    2000,
-    2000
+    2079.9994468688965,
+    2079.9996852874756
    ],
-   "m": 2.0,
-   "why": 34.25,
+   "m": 2.08,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -153,32 +170,32 @@
    "arm": true
   },
   "sand": {
-   "id": "coast_sand_01",
-   "name": "Coast Sand 01",
+   "id": "sand_03",
+   "name": "Sand 03",
    "authors": [
-    "Rob Tuytel"
+    "Charlotte Baglioni"
    ],
    "dims_mm": [
-    15000,
-    15000
+    2000,
+    2000
    ],
-   "m": 15.0,
-   "why": 24.96,
+   "m": 2.0,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
   "snow": {
-   "id": "snow_field_aerial",
-   "name": "Snow Field Aerial",
+   "id": "snow_02",
+   "name": "Snow 02",
    "authors": [
     "Rob Tuytel"
    ],
    "dims_mm": [
-    80000,
-    80000
+    2000,
+    2000
    ],
-   "m": 80.0,
-   "why": 14.79,
+   "m": 2.0,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -200,16 +217,16 @@
    "arm": true
   },
   "forest": {
-   "id": "brown_mud_leaves_01",
-   "name": "Brown Mud Leaves 01",
+   "id": "forest_leaves_02",
+   "name": "Forest Leaves 02",
    "authors": [
     "Rob Tuytel"
    ],
    "dims_mm": [
-    1299.9998331069946,
-    1299.9998331069946
+    3000.9725093841553,
+    3000.9801387786865
    ],
-   "m": 1.3,
+   "m": 3.0,
    "why": "ids",
    "nor": true,
    "arm": true
@@ -245,18 +262,17 @@
    "arm": true
   },
   "plaster": {
-   "id": "concrete_wall_003",
-   "name": "Concrete Wall 003",
+   "id": "white_stucco",
+   "name": "White Stucco",
    "authors": [
-    "Dimitrios Savva",
-    "Rico Cilliers"
+    "Amal Kumar"
    ],
    "dims_mm": [
-    3000,
-    3000.000238418579
+    1998.0629682540894,
+    1998.0640411376953
    ],
-   "m": 3.0,
-   "why": 25.03,
+   "m": 2.0,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -276,17 +292,17 @@
    "arm": true
   },
   "wood_wall": {
-   "id": "brown_planks_09",
-   "name": "Brown Planks 09",
+   "id": "weathered_plank_siding",
+   "name": "Weathered Plank Siding",
    "authors": [
-    "Rob Tuytel"
+    "Dimitrios Savva"
    ],
    "dims_mm": [
-    1000,
-    1000
+    1570.0000524520874,
+    1570.0000524520874
    ],
-   "m": 1.0,
-   "why": 44.62,
+   "m": 1.57,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -306,17 +322,17 @@
    "arm": true
   },
   "roof_slate": {
-   "id": "grey_roof_01",
-   "name": "Grey Roof 01",
+   "id": "roof_slates_02",
+   "name": "Roof Slates 02",
    "authors": [
     "Rob Tuytel"
    ],
    "dims_mm": [
-    8000,
-    8000
+    3000,
+    3000
    ],
-   "m": 8.0,
-   "why": 24.86,
+   "m": 3.0,
+   "why": "ids",
    "nor": true,
    "arm": true
   },
@@ -654,6 +670,48 @@
     "gravel_ground_01",
     24.4,
     "gravel pathway path stones ground sidewalk rural farm"
+   ]
+  ],
+  "macadam": [
+   [
+    "rocky_trail_02",
+    25.0,
+    "stones earthy rugged rough terrain gravelly pathway gritty"
+   ],
+   [
+    "grass_path_2",
+    24.9,
+    "grass pathway path ground stones sidewalk rural farm"
+   ],
+   [
+    "grass_path_3",
+    24.6,
+    "grass pathway path ground stones sidewalk rural farm"
+   ],
+   [
+    "gravel_stones",
+    24.5,
+    "rough uneven stones gravel gritty grey pebbles coarse"
+   ],
+   [
+    "patterned_cobblestone",
+    24.5,
+    "uneven weathered cobblestone walkway bricks pattern pavement ground"
+   ],
+   [
+    "coral_mud_01",
+    24.5,
+    "coral ground costal stones gravel gravelly coastal sediment rock fragments"
+   ],
+   [
+    "gravel_ground_01",
+    24.4,
+    "gravel pathway path stones ground sidewalk rural farm"
+   ],
+   [
+    "pebble_ground_01",
+    24.4,
+    "pebble stones even pebbles pebbly sticks scattered pebbles small stones"
    ]
   ],
   "cobble": [
@@ -1463,6 +1521,600 @@
     "nettle_plant",
     "searsia_lucida"
    ]
+  },
+  "_dbg": {
+   "broad": {
+    "searsia_lucida": [
+     "searsia_lucida.bin",
+     "textures/searsia_lucida_arm_1k.jpg",
+     "textures/searsia_lucida_diff_1k.jpg",
+     "textures/searsia_lucida_nor_gl_1k.jpg"
+    ],
+    "othonna_cerarioides": [
+     "othonna_cerarioides.bin",
+     "textures/othonna_cerarioides_arm_1k.jpg",
+     "textures/othonna_cerarioides_diff_1k.jpg",
+     "textures/othonna_cerarioides_nor_gl_1k.jpg"
+    ],
+    "searsia_burchellii": [
+     "searsia_burchellii.bin",
+     "textures/searsia_burchellii_arm_1k.jpg",
+     "textures/searsia_burchellii_diff_1k.jpg",
+     "textures/searsia_burchellii_nor_gl_1k.jpg"
+    ],
+    "island_tree_02": [
+     "island_tree_02.bin",
+     "textures/island_tree_02_arm_1k.jpg",
+     "textures/island_tree_02_branches_arm_1k.jpg",
+     "textures/island_tree_02_branches_diff_1k.jpg",
+     "textures/island_tree_02_branches_nor_gl_1k.jpg",
+     "textures/island_tree_02_diff_1k.jpg",
+     "textures/island_tree_02_leaves_arm_1k.jpg",
+     "textures/island_tree_02_leaves_diff_1k.jpg",
+     "textures/island_tree_02_leaves_nor_gl_1k.jpg",
+     "textures/island_tree_02_nor_gl_1k.jpg"
+    ],
+    "fern_02": [
+     "fern_02.bin",
+     "textures/fern_02_arm_1k.jpg",
+     "textures/fern_02_diff_1k.jpg",
+     "textures/fern_02_nor_gl_1k.jpg"
+    ],
+    "island_tree_01": [
+     "island_tree_01.bin",
+     "textures/island_tree_01_arm_1k.jpg",
+     "textures/island_tree_01_branches_arm_1k.jpg",
+     "textures/island_tree_01_branches_diff_1k.jpg",
+     "textures/island_tree_01_branches_nor_gl_1k.jpg",
+     "textures/island_tree_01_diff_1k.jpg",
+     "textures/island_tree_01_leaves_arm_1k.jpg",
+     "textures/island_tree_01_leaves_diff_1k.jpg",
+     "textures/island_tree_01_leaves_nor_gl_1k.jpg",
+     "textures/island_tree_01_nor_gl_1k.jpg"
+    ],
+    "anthurium_botany_01": [
+     "anthurium_botany_01.bin",
+     "textures/anthurium_botany_01_arm_1k.jpg",
+     "textures/anthurium_botany_01_diff_1k.jpg",
+     "textures/anthurium_botany_01_nor_gl_1k.jpg"
+    ],
+    "nettle_plant": [
+     "nettle_plant.bin",
+     "textures/nettle_plant_arm_1k.jpg",
+     "textures/nettle_plant_diff_1k.jpg",
+     "textures/nettle_plant_nor_gl_1k.jpg"
+    ],
+    "weed_plant_02": [
+     "textures/weed_plant_02_arm_1k.jpg",
+     "textures/weed_plant_02_diff_1k.jpg",
+     "textures/weed_plant_02_nor_gl_1k.jpg",
+     "weed_plant_02.bin"
+    ],
+    "calathea_orbifolia_01": [
+     "calathea_orbifolia_01.bin",
+     "textures/calathea_orbifolia_01_arm_1k.jpg",
+     "textures/calathea_orbifolia_01_diff_1k.jpg",
+     "textures/calathea_orbifolia_01_nor_gl_1k.jpg"
+    ],
+    "island_tree_03": [
+     "island_tree_03.bin",
+     "textures/island_tree_03_arm_1k.jpg",
+     "textures/island_tree_03_branches_arm_1k.jpg",
+     "textures/island_tree_03_branches_diff_1k.jpg",
+     "textures/island_tree_03_branches_nor_gl_1k.jpg",
+     "textures/island_tree_03_diff_1k.jpg",
+     "textures/island_tree_03_leaves_arm_1k.jpg",
+     "textures/island_tree_03_leaves_diff_1k.jpg",
+     "textures/island_tree_03_leaves_nor_gl_1k.jpg",
+     "textures/island_tree_03_nor_gl_1k.jpg"
+    ],
+    "shrub_04": [
+     "shrub_04.bin",
+     "textures/shrub_04_arm_1k.jpg",
+     "textures/shrub_04_diff_1k.jpg",
+     "textures/shrub_04_nor_gl_1k.jpg"
+    ],
+    "pachira_aquatica_01": [
+     "pachira_aquatica_01.bin",
+     "textures/pachira_aquatica_01_bark_arm_1k.jpg",
+     "textures/pachira_aquatica_01_bark_diff_1k.jpg",
+     "textures/pachira_aquatica_01_bark_nor_gl_1k.jpg",
+     "textures/pachira_aquatica_01_leaves_arm_1k.jpg",
+     "textures/pachira_aquatica_01_leaves_diff_1k.jpg",
+     "textures/pachira_aquatica_01_leaves_nor_gl_1k.jpg"
+    ],
+    "periwinkle_plant": [
+     "periwinkle_plant.bin",
+     "textures/periwinkle_plant_arm_1k.jpg",
+     "textures/periwinkle_plant_diff_1k.jpg",
+     "textures/periwinkle_plant_nor_gl_1k.jpg"
+    ],
+    "shrub_02": [
+     "shrub_02.bin",
+     "textures/shrub_02_arm_1k.jpg",
+     "textures/shrub_02_diff_1k.jpg",
+     "textures/shrub_02_nor_gl_1k.jpg"
+    ],
+    "shrub_03": [
+     "shrub_03.bin",
+     "textures/shrub_03_arm_1k.jpg",
+     "textures/shrub_03_diff_1k.jpg",
+     "textures/shrub_03_nor_gl_1k.jpg"
+    ],
+    "wild_rooibos_bush": [
+     "textures/wild_rooibos_bush_arm_1k.jpg",
+     "textures/wild_rooibos_bush_diff_1k.jpg",
+     "textures/wild_rooibos_bush_nor_gl_1k.jpg",
+     "wild_rooibos_bush.bin"
+    ],
+    "grass_medium_01": [
+     "grass_medium_01.bin",
+     "textures/grass_medium_01_arm_1k.jpg",
+     "textures/grass_medium_01_diff_1k.jpg",
+     "textures/grass_medium_01_nor_gl_1k.jpg"
+    ],
+    "tree_small_02": [
+     "textures/tree_small_02_arm_1k.jpg",
+     "textures/tree_small_02_branch_arm_1k.jpg",
+     "textures/tree_small_02_branch_diff_1k.jpg",
+     "textures/tree_small_02_branch_nor_gl_1k.jpg",
+     "textures/tree_small_02_diff_1k.jpg",
+     "textures/tree_small_02_leaves_arm_1k.jpg",
+     "textures/tree_small_02_leaves_diff_1k.jpg",
+     "textures/tree_small_02_leaves_nor_gl_1k.jpg",
+     "textures/tree_small_02_nor_gl_1k.jpg",
+     "tree_small_02.bin"
+    ],
+    "jacaranda_tree": [
+     "jacaranda_tree.bin",
+     "textures/jacaranda_tree_branches_arm_1k.jpg",
+     "textures/jacaranda_tree_branches_diff_1k.jpg",
+     "textures/jacaranda_tree_branches_nor_gl_1k.jpg",
+     "textures/jacaranda_tree_leaves_arm_1k.jpg",
+     "textures/jacaranda_tree_leaves_diff_1k.jpg",
+     "textures/jacaranda_tree_leaves_nor_gl_1k.jpg",
+     "textures/jacaranda_tree_trunk_arm_1k.jpg",
+     "textures/jacaranda_tree_trunk_diff_1k.jpg",
+     "textures/jacaranda_tree_trunk_nor_gl_1k.jpg"
+    ],
+    "grass_bermuda_01": [
+     "grass_bermuda_01.bin",
+     "textures/grass_bermuda_01_arm_1k.jpg",
+     "textures/grass_bermuda_01_diff_1k.jpg",
+     "textures/grass_bermuda_01_nor_gl_1k.jpg"
+    ],
+    "grass_medium_02": [
+     "grass_medium_02.bin",
+     "textures/grass_medium_02_arm_1k.jpg",
+     "textures/grass_medium_02_diff_1k.jpg",
+     "textures/grass_medium_02_nor_gl_1k.jpg"
+    ],
+    "moss_01": [
+     "moss_01.bin",
+     "textures/moss_01_arm_1k.jpg",
+     "textures/moss_01_diff_1k.jpg",
+     "textures/moss_01_nor_gl_1k.jpg"
+    ],
+    "quiver_tree_02": [
+     "quiver_tree_02.bin",
+     "textures/quiver_tree_02_arm_1k.jpg",
+     "textures/quiver_tree_02_diff_1k.jpg",
+     "textures/quiver_tree_02_nor_gl_1k.jpg"
+    ],
+    "root_cluster_01": [
+     "root_cluster_01.bin",
+     "textures/root_cluster_01_arm_1k.jpg",
+     "textures/root_cluster_01_diff_1k.jpg",
+     "textures/root_cluster_01_nor_gl_1k.jpg"
+    ],
+    "single_root": [
+     "single_root.bin",
+     "textures/single_root_arm_1k.jpg",
+     "textures/single_root_diff_1k.jpg",
+     "textures/single_root_nor_gl_1k.jpg"
+    ],
+    "quiver_tree_01": [
+     "quiver_tree_01.bin",
+     "textures/quiver_tree_01_leaf_arm_1k.jpg",
+     "textures/quiver_tree_01_leaf_diff_1k.jpg",
+     "textures/quiver_tree_01_leaf_nor_gl_1k.jpg",
+     "textures/quiver_tree_01_trunk_arm_1k.jpg",
+     "textures/quiver_tree_01_trunk_diff_1k.jpg",
+     "textures/quiver_tree_01_trunk_nor_gl_1k.jpg"
+    ]
+   },
+   "conifer": {
+    "fir_tree_01": [
+     "fir_tree_01.bin",
+     "textures/fir_tree_01_bark_arm_1k.jpg",
+     "textures/fir_tree_01_bark_diff_1k.jpg",
+     "textures/fir_tree_01_bark_nor_gl_1k.jpg",
+     "textures/fir_tree_01_trunk_a_arm_1k.jpg",
+     "textures/fir_tree_01_trunk_a_diff_1k.jpg",
+     "textures/fir_tree_01_trunk_a_nor_gl_1k.jpg",
+     "textures/fir_tree_01_trunk_b_arm_1k.jpg",
+     "textures/fir_tree_01_trunk_b_diff_1k.jpg",
+     "textures/fir_tree_01_trunk_b_nor_gl_1k.jpg",
+     "textures/fir_tree_01_twig_arm_1k.jpg",
+     "textures/fir_tree_01_twig_diff_1k.jpg"
+    ],
+    "fir_sapling_medium": [
+     "fir_sapling_medium.bin",
+     "textures/fir_sapling_medium_branches_arm_1k.jpg",
+     "textures/fir_sapling_medium_branches_diff_1k.jpg",
+     "textures/fir_sapling_medium_branches_nor_gl_1k.jpg",
+     "textures/fir_sapling_medium_twigs_arm_1k.jpg",
+     "textures/fir_sapling_medium_twigs_diff_1k.jpg",
+     "textures/fir_sapling_medium_twigs_nor_gl_1k.jpg"
+    ],
+    "fir_sapling": [
+     "fir_sapling.bin",
+     "textures/fir_sapling_branches_arm_1k.jpg",
+     "textures/fir_sapling_branches_diff_1k.jpg",
+     "textures/fir_sapling_branches_nor_gl_1k.jpg",
+     "textures/fir_sapling_twigs_arm_1k.jpg",
+     "textures/fir_sapling_twigs_diff_1k.jpg",
+     "textures/fir_sapling_twigs_nor_gl_1k.jpg"
+    ],
+    "pine_tree_01": [
+     "pine_tree_01.bin",
+     "textures/pine_tree_01_bark_arm_1k.jpg",
+     "textures/pine_tree_01_bark_diff_1k.jpg",
+     "textures/pine_tree_01_bark_nor_gl_1k.jpg",
+     "textures/pine_tree_01_trunk_a_arm_1k.jpg",
+     "textures/pine_tree_01_trunk_a_diff_1k.jpg",
+     "textures/pine_tree_01_trunk_a_nor_gl_1k.jpg",
+     "textures/pine_tree_01_trunk_b_arm_1k.jpg",
+     "textures/pine_tree_01_trunk_b_diff_1k.jpg",
+     "textures/pine_tree_01_trunk_b_nor_gl_1k.jpg",
+     "textures/pine_tree_01_twig_arm_1k.jpg",
+     "textures/pine_tree_01_twig_diff_1k.jpg"
+    ],
+    "pine_sapling_medium": [
+     "pine_sapling_medium.bin",
+     "textures/pine_sapling_medium_bark_arm_1k.jpg",
+     "textures/pine_sapling_medium_bark_diff_1k.jpg",
+     "textures/pine_sapling_medium_bark_nor_gl_1k.jpg",
+     "textures/pine_sapling_medium_twig_arm_1k.jpg",
+     "textures/pine_sapling_medium_twig_diff_1k.jpg",
+     "textures/pine_sapling_medium_twig_nor_gl_1k.jpg"
+    ],
+    "pine_sapling_small": [
+     "pine_sapling_small.bin",
+     "textures/pine_sapling_small_bark_arm_1k.jpg",
+     "textures/pine_sapling_small_bark_diff_1k.jpg",
+     "textures/pine_sapling_small_bark_nor_gl_1k.jpg",
+     "textures/pine_sapling_small_twig_arm_1k.jpg",
+     "textures/pine_sapling_small_twig_diff_1k.jpg",
+     "textures/pine_sapling_small_twig_nor_gl_1k.jpg"
+    ],
+    "grass_medium_01": [
+     "grass_medium_01.bin",
+     "textures/grass_medium_01_arm_1k.jpg",
+     "textures/grass_medium_01_diff_1k.jpg",
+     "textures/grass_medium_01_nor_gl_1k.jpg"
+    ],
+    "rock_moss_set_02": [
+     "rock_moss_set_02.bin",
+     "textures/rock_moss_set_02_diff_1k.jpg",
+     "textures/rock_moss_set_02_nor_gl_1k.jpg",
+     "textures/rock_moss_set_02_rough_1k.jpg"
+    ],
+    "rock_moss_set_01": [
+     "rock_moss_set_01.bin",
+     "textures/rock_moss_set_01_diff_1k.jpg",
+     "textures/rock_moss_set_01_nor_gl_1k.jpg",
+     "textures/rock_moss_set_01_rough_1k.jpg"
+    ],
+    "fern_02": [
+     "fern_02.bin",
+     "textures/fern_02_arm_1k.jpg",
+     "textures/fern_02_diff_1k.jpg",
+     "textures/fern_02_nor_gl_1k.jpg"
+    ],
+    "moss_01": [
+     "moss_01.bin",
+     "textures/moss_01_arm_1k.jpg",
+     "textures/moss_01_diff_1k.jpg",
+     "textures/moss_01_nor_gl_1k.jpg"
+    ],
+    "stone_fire_pit": [
+     "stone_fire_pit.bin",
+     "textures/stone_fire_pit_arm_1k.jpg",
+     "textures/stone_fire_pit_diff_1k.jpg",
+     "textures/stone_fire_pit_nor_gl_1k.jpg"
+    ],
+    "wooden_display_shelves_01": [
+     "textures/wooden_display_shelves_01_arm_1k.jpg",
+     "textures/wooden_display_shelves_01_diff_1k.jpg",
+     "textures/wooden_display_shelves_01_nor_gl_1k.jpg",
+     "wooden_display_shelves_01.bin"
+    ],
+    "mantel_clock_01": [
+     "mantel_clock_01.bin",
+     "textures/mantel_clock_01_arm_1k.jpg",
+     "textures/mantel_clock_01_diff_1k.jpg",
+     "textures/mantel_clock_01_nor_gl_1k.jpg"
+    ],
+    "barrel_stove": [
+     "barrel_stove.bin",
+     "textures/barrel_stove_arm_1k.jpg",
+     "textures/barrel_stove_diff_1k.jpg",
+     "textures/barrel_stove_nor_gl_1k.jpg"
+    ],
+    "korean_fire_extinguisher_01": [
+     "korean_fire_extinguisher_01.bin",
+     "textures/korean_fire_extinguisher_01_body_arm_1k.jpg",
+     "textures/korean_fire_extinguisher_01_body_diff_1k.jpg",
+     "textures/korean_fire_extinguisher_01_body_nor_gl_1k.jpg",
+     "textures/korean_fire_extinguisher_01_glass_arm_1k.jpg",
+     "textures/korean_fire_extinguisher_01_glass_diff_1k.jpg",
+     "textures/korean_fire_extinguisher_01_glass_nor_gl_1k.jpg",
+     "textures/korean_fire_extinguisher_01_paper_arm_1k.jpg",
+     "textures/korean_fire_extinguisher_01_paper_diff_1k.jpg",
+     "textures/korean_fire_extinguisher_01_paper_nor_gl_1k.jpg"
+    ],
+    "modular_fire_escape": [
+     "modular_fire_escape.bin",
+     "textures/modular_fire_escape_01_arm_1k.jpg",
+     "textures/modular_fire_escape_01_diff_1k.jpg",
+     "textures/modular_fire_escape_01_nor_gl_1k.jpg",
+     "textures/modular_fire_escape_02_arm_1k.jpg",
+     "textures/modular_fire_escape_02_diff_1k.jpg",
+     "textures/modular_fire_escape_02_nor_gl_1k.jpg"
+    ],
+    "fire_hydrant": [
+     "fire_hydrant.bin",
+     "textures/fire_hydrant_aged_arm_1k.jpg",
+     "textures/fire_hydrant_aged_diff_1k.jpg",
+     "textures/fire_hydrant_aged_nor_gl_1k.jpg",
+     "textures/fire_hydrant_arm_1k.jpg",
+     "textures/fire_hydrant_diff_1k.jpg",
+     "textures/fire_hydrant_nor_gl_1k.jpg"
+    ],
+    "wooden_axe_02": [
+     "textures/wooden_axe_02_arm_1k.jpg",
+     "textures/wooden_axe_02_diff_1k.jpg",
+     "textures/wooden_axe_02_nor_gl_1k.jpg",
+     "wooden_axe_02.bin"
+    ],
+    "wooden_axe": [
+     "textures/wooden_axe_arm_1k.jpg",
+     "textures/wooden_axe_diff_1k.jpg",
+     "textures/wooden_axe_nor_gl_1k.jpg",
+     "wooden_axe.bin"
+    ],
+    "service_pistol": [
+     "service_pistol.bin",
+     "textures/service_pistol_arm_1k.jpg",
+     "textures/service_pistol_diff_1k.jpg",
+     "textures/service_pistol_nor_gl_1k.jpg"
+    ],
+    "wooden_axe_03": [
+     "textures/wooden_axe_03_arm_1k.jpg",
+     "textures/wooden_axe_03_diff_1k.jpg",
+     "textures/wooden_axe_03_nor_gl_1k.jpg",
+     "wooden_axe_03.bin"
+    ],
+    "hatchet": [
+     "hatchet.bin",
+     "textures/hatchet_arm_1k.jpg",
+     "textures/hatchet_diff_1k.jpg",
+     "textures/hatchet_nor_gl_1k.jpg"
+    ],
+    "bolt_action_rifle_7_62": [
+     "bolt_action_rifle_7_62.bin",
+     "textures/bolt_action_rifle_7_62_accesories_arm_1k.jpg",
+     "textures/bolt_action_rifle_7_62_accesories_diff_1k.jpg",
+     "textures/bolt_action_rifle_7_62_accesories_nor_gl_1k.jpg",
+     "textures/bolt_action_rifle_7_62_arm_1k.jpg",
+     "textures/bolt_action_rifle_7_62_diff_1k.jpg",
+     "textures/bolt_action_rifle_7_62_nor_gl_1k.jpg"
+    ],
+    "fire_alarm": [
+     "fire_alarm.bin",
+     "textures/fire_alarm_arm_1k.jpg",
+     "textures/fire_alarm_diff_1k.jpg",
+     "textures/fire_alarm_nor_gl_1k.jpg"
+    ],
+    "scandinavian_masonry_heater": [
+     "scandinavian_masonry_heater.bin",
+     "textures/scandinavian_masonry_heater_arm_1k.jpg",
+     "textures/scandinavian_masonry_heater_diff_1k.jpg",
+     "textures/scandinavian_masonry_heater_nor_gl_1k.jpg"
+    ],
+    "medical_box": [
+     "medical_box.bin",
+     "textures/medical_box_arm_1k.jpg",
+     "textures/medical_box_diff_1k.jpg",
+     "textures/medical_box_nor_gl_1k.jpg"
+    ]
+   },
+   "shrub": {
+    "fern_02": [
+     "fern_02.bin",
+     "textures/fern_02_arm_1k.jpg",
+     "textures/fern_02_diff_1k.jpg",
+     "textures/fern_02_nor_gl_1k.jpg"
+    ],
+    "weed_plant_02": [
+     "textures/weed_plant_02_arm_1k.jpg",
+     "textures/weed_plant_02_diff_1k.jpg",
+     "textures/weed_plant_02_nor_gl_1k.jpg",
+     "weed_plant_02.bin"
+    ],
+    "grass_medium_01": [
+     "grass_medium_01.bin",
+     "textures/grass_medium_01_arm_1k.jpg",
+     "textures/grass_medium_01_diff_1k.jpg",
+     "textures/grass_medium_01_nor_gl_1k.jpg"
+    ],
+    "grass_bermuda_01": [
+     "grass_bermuda_01.bin",
+     "textures/grass_bermuda_01_arm_1k.jpg",
+     "textures/grass_bermuda_01_diff_1k.jpg",
+     "textures/grass_bermuda_01_nor_gl_1k.jpg"
+    ],
+    "dandelion_01": [
+     "dandelion_01.bin",
+     "textures/dandelion_01_arm_1k.jpg",
+     "textures/dandelion_01_diff_1k.jpg",
+     "textures/dandelion_01_nor_gl_1k.jpg"
+    ],
+    "grass_medium_02": [
+     "grass_medium_02.bin",
+     "textures/grass_medium_02_arm_1k.jpg",
+     "textures/grass_medium_02_diff_1k.jpg",
+     "textures/grass_medium_02_nor_gl_1k.jpg"
+    ],
+    "shrub_sorrel_01": [
+     "shrub_sorrel_01.bin",
+     "textures/shrub_sorrel_01_arm_1k.jpg",
+     "textures/shrub_sorrel_01_diff_1k.jpg",
+     "textures/shrub_sorrel_01_nor_gl_1k.jpg"
+    ],
+    "anthurium_botany_01": [
+     "anthurium_botany_01.bin",
+     "textures/anthurium_botany_01_arm_1k.jpg",
+     "textures/anthurium_botany_01_diff_1k.jpg",
+     "textures/anthurium_botany_01_nor_gl_1k.jpg"
+    ],
+    "nettle_plant": [
+     "nettle_plant.bin",
+     "textures/nettle_plant_arm_1k.jpg",
+     "textures/nettle_plant_diff_1k.jpg",
+     "textures/nettle_plant_nor_gl_1k.jpg"
+    ],
+    "searsia_lucida": [
+     "searsia_lucida.bin",
+     "textures/searsia_lucida_arm_1k.jpg",
+     "textures/searsia_lucida_diff_1k.jpg",
+     "textures/searsia_lucida_nor_gl_1k.jpg"
+    ],
+    "calathea_orbifolia_01": [
+     "calathea_orbifolia_01.bin",
+     "textures/calathea_orbifolia_01_arm_1k.jpg",
+     "textures/calathea_orbifolia_01_diff_1k.jpg",
+     "textures/calathea_orbifolia_01_nor_gl_1k.jpg"
+    ],
+    "shrub_01": [
+     "shrub_01.bin",
+     "textures/shrub_01_arm_1k.jpg",
+     "textures/shrub_01_diff_1k.jpg",
+     "textures/shrub_01_nor_gl_1k.jpg"
+    ],
+    "othonna_cerarioides": [
+     "othonna_cerarioides.bin",
+     "textures/othonna_cerarioides_arm_1k.jpg",
+     "textures/othonna_cerarioides_diff_1k.jpg",
+     "textures/othonna_cerarioides_nor_gl_1k.jpg"
+    ],
+    "shrub_04": [
+     "shrub_04.bin",
+     "textures/shrub_04_arm_1k.jpg",
+     "textures/shrub_04_diff_1k.jpg",
+     "textures/shrub_04_nor_gl_1k.jpg"
+    ],
+    "pachira_aquatica_01": [
+     "pachira_aquatica_01.bin",
+     "textures/pachira_aquatica_01_bark_arm_1k.jpg",
+     "textures/pachira_aquatica_01_bark_diff_1k.jpg",
+     "textures/pachira_aquatica_01_bark_nor_gl_1k.jpg",
+     "textures/pachira_aquatica_01_leaves_arm_1k.jpg",
+     "textures/pachira_aquatica_01_leaves_diff_1k.jpg",
+     "textures/pachira_aquatica_01_leaves_nor_gl_1k.jpg"
+    ],
+    "searsia_burchellii": [
+     "searsia_burchellii.bin",
+     "textures/searsia_burchellii_arm_1k.jpg",
+     "textures/searsia_burchellii_diff_1k.jpg",
+     "textures/searsia_burchellii_nor_gl_1k.jpg"
+    ],
+    "didelta_spinosa": [
+     "didelta_spinosa.bin",
+     "textures/didelta_spinosa_arm_1k.jpg",
+     "textures/didelta_spinosa_diff_1k.jpg",
+     "textures/didelta_spinosa_nor_gl_1k.jpg"
+    ],
+    "periwinkle_plant": [
+     "periwinkle_plant.bin",
+     "textures/periwinkle_plant_arm_1k.jpg",
+     "textures/periwinkle_plant_diff_1k.jpg",
+     "textures/periwinkle_plant_nor_gl_1k.jpg"
+    ],
+    "shrub_02": [
+     "shrub_02.bin",
+     "textures/shrub_02_arm_1k.jpg",
+     "textures/shrub_02_diff_1k.jpg",
+     "textures/shrub_02_nor_gl_1k.jpg"
+    ],
+    "shrub_03": [
+     "shrub_03.bin",
+     "textures/shrub_03_arm_1k.jpg",
+     "textures/shrub_03_diff_1k.jpg",
+     "textures/shrub_03_nor_gl_1k.jpg"
+    ],
+    "wild_rooibos_bush": [
+     "textures/wild_rooibos_bush_arm_1k.jpg",
+     "textures/wild_rooibos_bush_diff_1k.jpg",
+     "textures/wild_rooibos_bush_nor_gl_1k.jpg",
+     "wild_rooibos_bush.bin"
+    ],
+    "island_tree_02": [
+     "island_tree_02.bin",
+     "textures/island_tree_02_arm_1k.jpg",
+     "textures/island_tree_02_branches_arm_1k.jpg",
+     "textures/island_tree_02_branches_diff_1k.jpg",
+     "textures/island_tree_02_branches_nor_gl_1k.jpg",
+     "textures/island_tree_02_diff_1k.jpg",
+     "textures/island_tree_02_leaves_arm_1k.jpg",
+     "textures/island_tree_02_leaves_diff_1k.jpg",
+     "textures/island_tree_02_leaves_nor_gl_1k.jpg",
+     "textures/island_tree_02_nor_gl_1k.jpg"
+    ],
+    "celandine_01": [
+     "celandine_01.bin",
+     "textures/celandine_01_arm_1k.jpg",
+     "textures/celandine_01_diff_1k.jpg",
+     "textures/celandine_01_nor_gl_1k.jpg"
+    ],
+    "island_tree_01": [
+     "island_tree_01.bin",
+     "textures/island_tree_01_arm_1k.jpg",
+     "textures/island_tree_01_branches_arm_1k.jpg",
+     "textures/island_tree_01_branches_diff_1k.jpg",
+     "textures/island_tree_01_branches_nor_gl_1k.jpg",
+     "textures/island_tree_01_diff_1k.jpg",
+     "textures/island_tree_01_leaves_arm_1k.jpg",
+     "textures/island_tree_01_leaves_diff_1k.jpg",
+     "textures/island_tree_01_leaves_nor_gl_1k.jpg",
+     "textures/island_tree_01_nor_gl_1k.jpg"
+    ],
+    "moss_01": [
+     "moss_01.bin",
+     "textures/moss_01_arm_1k.jpg",
+     "textures/moss_01_diff_1k.jpg",
+     "textures/moss_01_nor_gl_1k.jpg"
+    ],
+    "island_tree_03": [
+     "island_tree_03.bin",
+     "textures/island_tree_03_arm_1k.jpg",
+     "textures/island_tree_03_branches_arm_1k.jpg",
+     "textures/island_tree_03_branches_diff_1k.jpg",
+     "textures/island_tree_03_branches_nor_gl_1k.jpg",
+     "textures/island_tree_03_diff_1k.jpg",
+     "textures/island_tree_03_leaves_arm_1k.jpg",
+     "textures/island_tree_03_leaves_diff_1k.jpg",
+     "textures/island_tree_03_leaves_nor_gl_1k.jpg",
+     "textures/island_tree_03_nor_gl_1k.jpg"
+    ],
+    "flower_heliophila": [
+     "flower_heliophila.bin",
+     "textures/flower_heliophila_arm_1k.jpg",
+     "textures/flower_heliophila_diff_1k.jpg",
+     "textures/flower_heliophila_nor_gl_1k.jpg"
+    ]
+   }
   }
  }
 }
