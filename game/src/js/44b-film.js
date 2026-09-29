@@ -21,6 +21,8 @@ const lerp3=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
 function trkAt(i,d,off){const T=R.trk,n=T.n,j=T.closed?(((i+Math.round(d/T.step))%n)+n)%n:clamp(i+Math.round(d/T.step),0,n-1),p=T.pts[j],nn=T.N[j],o=off||0;return {j,p:[p[0]+nn[0]*o,p[1]+(R3.on?roadY(j,clamp(o,-T.W/2,T.W/2)):p[1]),p[2]+nn[1]*o],t:T.T[j],n:nn};}
 // Место для камеры у обочины: рядом нет дерева, столба или дома
 function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
+// Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
+function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
 /* ---------- заставка перед стартом ---------- */
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];
@@ -44,11 +46,11 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   // 2) самое интересное впереди: пролёт вдоль дороги
   if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:poi.at,mid:poi.cap},poi:i,
     cam:u=>{const e=ease(u),a=trkAt(i,-90+80*e,18),b=trkAt(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
-  // 3) стартовая решётка: камера идёт вдоль машин
+  // 3) стартовая решётка: камера едет по обочине вдоль машин — по самой трассе (на изгибе тоже), с той стороны, где свободно
   const grid=R.cars.slice().sort((a,b)=>b.prog-a.prog),back=grid[grid.length-1],front=grid[0];
-  const favs=filmFavorites();
-  shots.push({d:4,cap:{kick:'Стартовая решётка',list:favs.length?['Фавориты:',...favs]:[]},
-    cam:u=>{const e=ease(u),A=[back.x-fw[0]*6,0,back.z-fw[2]*6],B=[front.x+fw[0]*4,0,front.z+fw[2]*4],P=lerp3(A,B,e),o=T.W/2+3.5,eye=[P[0]+side[0]*o,sp.p[1]+1.25,P[2]+side[2]*o],lk=[P[0]+fw[0]*7-side[0]*1.5,sp.p[1]+0.8,P[2]+fw[2]*7-side[2]*1.5];return {eye,look:lk,fov:0.75,near:0.1};}});
+  const favs=filmFavorites(),iB=back.idx,dI=T.closed?((front.idx-iB)%T.n+T.n)%T.n:Math.max(0,front.idx-iB),gLen=dI*T.step+14,gs=filmSide(iB,dI,T.W/2+2.2);
+  shots.push({d:4.4,cap:{kick:'Стартовая решётка',list:favs.length?['Фавориты:',...favs]:[]},
+    cam:u=>{const e=ease(u),d=-8+gLen*e,a=trkAt(iB,d,gs*(T.W/2+2.2)),l=trkAt(iB,d+9,-gs*T.W*0.12);return {eye:[a.p[0],a.p[1]+1.35,a.p[2]],look:[l.p[0],l.p[1]+0.75,l.p[2]],fov:0.78,near:0.1};}});
   // 4) ваша машина крупно
   const who=me.player?`Вы — ${PIONEERS[G.pioneer].name}`:(me.drvName||me.label),car=me.label||me.name;
   shots.push({d:3.4,cap:{kick:`№${me.num}`,mid:`${who}${car?' · «'+car+'»':''}`},
@@ -59,7 +61,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   const el=filmEl();el.hidden=false;el.className='r-film';el.innerHTML=`<div class="rf-bar top"></div><div class="rf-bar bot"></div><div class="rf-card" id="rfCard"></div><button class="rf-skip" id="rfSkip">Пропустить ▸▸</button>`;
   document.getElementById('raceScreen').classList.add('filming');document.getElementById('rfSkip').onclick=filmSkip;el.onclick=e=>{if(e.target===el)filmSkip();};
   auReelFanfare();
-  if(reelVoiceOn()&&n<6){const say=`${rc.name}. ${rc.y} год.${rc.hist?' '+String(rc.hist).split(/(?<=[.!?])\s/)[0]:''}`;setTimeout(()=>{if(R&&R.film)ttsSay(say);},500);}
+  if(reelVoiceOn()&&n<6){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?]/),say=`${rc.name}. ${rc.y} год.${h1?' '+h1[0]:''}`;setTimeout(()=>{if(R&&R.film)ttsSay(say);},500);}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;

@@ -21,6 +21,8 @@ function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'б�
 function openRaceSetup(key){
   const s=G,rc=RACES.find(r=>r.key===key);if(!rc||R)return;
   if(!raceCarsFor(s).length){toast('Нет машин в производстве');return;}
+  // пока игрок выбирает машины и пилотов — фото-материалы гонки уже грузятся
+  try{texPrefetch();}catch(_){}
   if(!RS||RS.key!==key)RS={key,entries:[defaultEntry(s,rc,[])],open:0,mode:'drive',more:false};
   renderRaceSetup();
 }

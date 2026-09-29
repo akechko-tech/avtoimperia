@@ -27,7 +27,7 @@ function showMainMenu(){
       <button class="btn ${cont?'':'primary'} block" data-act="newgame">Новая игра</button>
       <button class="btn block" data-act="loadOpen">Загрузить</button>
       <button class="btn block" data-act="fame">Зал славы</button>
-      <button class="btn block" data-act="settings">Звук и управление</button>
+      <button class="btn block" data-act="settings">Звук, графика и управление</button>
       <button class="btn block" data-act="about">Об игре</button></div>
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
     <p class="small muted menu-foot">Вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;

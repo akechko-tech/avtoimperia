@@ -54,11 +54,13 @@ function fTree(t,v,lod){const key=t+'|'+v+'|'+lod;if(FT[key])return FT[key];cons
     if(hi)for(let i=0;i<4;i++){const a=i/4*6.28+r();fLimb(wb,[0.35,H*0.85,0.18],[Math.cos(a),0.6,Math.sin(a)],2.4,0.12,0.05,col,0.4,r,2);}
     fCrown(lb,r,[0.4,H+0.8,0.2],[3.4,1.3,3.4],N(26),2.4,FOLC.pine,[124,130,112],sw,true);}
   else if(t==='fir'||t==='cypress'){const cyp=t==='cypress',H=cyp?12+v*0.7:13+v,R0=cyp?1.3:3.2,col='#5a4636';fTrunk(wb,[0,-0.3,0],[0,H*0.95,0],cyp?0.2:0.26,0.05,col,hi?6:4);
-    const lv=Math.max(4,Math.round((cyp?16:13)*(hi?1:0.45)*gq().trees)),per=cyp?4:hi?7:5,uv=folUV(FOLC.fir),tint=cyp?[100,112,96]:v===1?[150,154,150]:[112,122,108];
+    // тёмная сердцевина ели ярусами — сквозь лапы не просвечивает пустота, силуэт плотный, как у настоящей ели
+    if(!cyp)for(let i=0;i<3;i++){const y0=1.2+i*H*0.27,rr=R0*0.66*(1-i*0.24);pCone(wb,0,y0,0,rr,H*0.46-i*0.6,v===1?'#3a4a40':'#1f3526',hi?9:6,0,MID.leaf,0);}
+    const lv=Math.max(4,Math.round((cyp?16:14)*(hi?1:0.45)*gq().trees)),per=cyp?4:hi?8:5,uv=folUV(FOLC.fir),tint=cyp?[100,112,96]:v===1?[150,154,150]:[112,122,108];
     for(let k=0;k<lv;k++){const f=k/lv,y=(cyp?0.9:1.6)+f*(H-(cyp?1.6:2.4)),rad=R0*Math.pow(1-f,cyp?0.55:0.95)*(cyp?Math.min(1,0.45+f*3):1)+0.25;
       for(let j=0;j<per;j++){const a=(j+(k%2)*0.5)/per*6.283+r()*0.3,dx=Math.cos(a),dz=Math.sin(a),dr=cyp?0.2:0.28+0.1*r();
         // лапа: от ствола наружу и вниз; u — от ствола к кончику
-        const ax=[dx*rad*1.15,-dr*rad,dz*rad*1.15],c=[dx*rad*0.55,y,dz*rad*0.55],w=rad*(cyp?1.1:0.95),ay=[-dz*w,0.12*w,dx*w];
+        const ax=[dx*rad*1.15,-dr*rad,dz*rad*1.15],c=[dx*rad*0.55,y,dz*rad*0.55],w=rad*(cyp?1.1:1.08),ay=[-dz*w,0.12*w,dx*w];
         const n=v3n([dx*0.7,0.55,dz*0.7]);fCard(lb,c,ax,ay,uv,n,fTint(r,tint,0.1),0.45+0.55*f,cyp?40:70);
         if(hi){const ay2=[0,w*0.9,0];fCard(lb,[c[0],c[1]+0.1,c[2]],ax,ay2,uv,n,fTint(r,tint,0.1),0.4+0.5*f,cyp?40:70);}}}}
   else if(t==='palm'){let p=[0,-0.3,0];const col='#8a7458',segs=hi?8:5;for(let s=0;s<segs;s++){const q=[0.9*Math.sin((s+1)/segs*1.6)*(s+1)/segs,(s+1)*11.5/segs,0];fTrunk(wb,p,q,0.28-s*0.012,0.26-(s+1)*0.012,col,hi?7:5);p=q;}

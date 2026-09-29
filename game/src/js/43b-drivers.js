@@ -204,10 +204,15 @@ function yearAwards(s,y){
   const SC=chalSales(s,y);if(SC)lines.push(SC.win?`Пари по продажам выиграно: «${s.company}» — ${carsN(SC.you)} класса «${SEG[SC.C.g].name}», ${SC.C.mq} — ${fmtN(SC.them)}. Выигрыш ${money(SC.C.stake)}.`:`Пари по продажам проиграно: ${SC.C.mq} — ${carsN(SC.them)} класса «${SEG[SC.C.g].name}», «${s.company}» — ${fmtN(SC.you)}. Проигрыш ${money(SC.C.stake)}.`);
   s.kings={y,lines,mine:mine.slice()};goalsResolve(s,y,mine);
   if(s.dch)Object.keys(s.dch).forEach(k=>{if(+k<y-2)delete s.dch[k];});
-  if(!lines.length)return;
+  // наследие: новое лучшее место среди великих марок — строка в итогах, а вход в десятку, тройку и первое место — праздник
+  let lp=0,legUp=null;try{lp=legacyTable(s).place;}catch(_){}
+  const lb=s.legBest||99;if(lp&&lp<lb){s.legBest=lp;if(lb<99){lines.push(`Наследие: «${s.company}» поднялась на ${lp}-е место среди великих марок эпохи (было ${lb}-е).`);if(lp===1||(lp<=3&&lb>3)||(lp<=10&&lb>10))legUp=lp;}}
+  // кинохроника года: продажи, лучшая машина, победы, титулы и место в наследии — в газете с итогами
+  let yr='';try{yearRecord(s,y);yr='year:'+y;reelUnlock(s,yr);}catch(e){console.warn('year reel',e);}
+  if(!lines.length){const ev=yr&&s.pending.find(e=>e.kicker==='Итоги года');if(ev)ev.choices=(ev.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника года','reel:'+yr]]);return;}
   const own=mine.filter(t=>t!=='гонщик года'),dw=DC&&DC.mine?DC.w:null,dd=dw&&DRIVERS.find(x=>x.id===dw.id);
   const title=own.length?`«${s.company}» — ${own[0].charAt(0).toLowerCase()+own[0].slice(1)} ${y} года!`:dw?`${dw.n} — гонщик ${y} года!`:`Короли ${y} года`;
-  pushEvent({own:mine.length?1:0,kicker:'Итоги года · по версии прессы',title,deck:own.length>1?`И ещё: ${own.slice(1).join(', ').toLowerCase()}`:`Автомобильные обозреватели назвали лучших за ${y} год`,
-    img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',
+  pushEvent({own:mine.length?1:0,cel:own.length?['Титул года!',own.join(' · '),'👑']:legUp?[legUp===1?'Величайшая марка эпохи!':`${legUp}-е место в наследии!`,`«${s.company}» среди великих`,'🏛']:null,kicker:'Итоги года · по версии прессы',title,deck:own.length>1?`И ещё: ${own.slice(1).join(', ').toLowerCase()}`:`Автомобильные обозреватели назвали лучших за ${y} год`,
+    img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',choices:yr?[['Читать дальше','ok'],['▶ Кинохроника года','reel:'+yr]]:undefined,
     text:lines.map(l=>'— '+l).join('\n')+'\n'+(mine.length?'Титулы — бесплатная реклама: целый год покупатели будут помнить, чья марка лучшая, и охотнее выбирать ваши машины.':'Ваша марка пока без титулов. Победы в гонках, новинки раньше всех и продажи в своём классе — и газеты напишут о вас.')},true);
 }

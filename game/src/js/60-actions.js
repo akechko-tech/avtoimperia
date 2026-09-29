@@ -99,6 +99,8 @@ const ACT={
   gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');},
   sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
   boardTake:d=>{boardTake(G,d.k);},
+  gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
+  demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},
   gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);

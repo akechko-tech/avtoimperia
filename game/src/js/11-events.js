@@ -40,7 +40,7 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){

@@ -30,24 +30,26 @@ function paperHTML(o,s){
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
       :md?`<figure class="p-fig" style="margin-inline:0">${carArt(md,Object.assign({paper:1},o.carOpt||{}))}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>`:'';
   const hist=o.hist&&IMG[o.hist]?`<div class="p-hist"><img src="${IMG[o.hist].src}" alt="" referrerpolicy="no-referrer"><span>${esc(o.histCap||'Так было в истории')}</span></div>`:'';
+  // кинохроника — кадром плёнки прямо в номере (кнопка «▶» запускает ролик, газета остаётся открытой)
+  const rid=paperReelId(o),reel=rid?paperReelHTML(rid,s):'',ch=(o.choices||[['Дальше','close']]).filter(c=>!(reel&&/^reel:/.test(c[1])));
   return `<article class="paper ${REDUCE?'':'spin'}">
     <div class="p-top"><span>${COUNTRIES[s.country].city} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
     <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
-    ${fig}
+    ${fig}${reel}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
       <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
-    <div class="p-btns">${(o.choices||[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
+    <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
   </article>`;
 }
 const PW=document.getElementById('paperWrap');
 let PAPER_CUR=null;
 function showPaper(o,store=true){
   if(store){if(!o.also)o.also=flavorPick(G,G.y,G.m,2,G.papers.length+mi(G),true);
-    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also});if(G.papers.length>40)G.papers.shift();save();}
+    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||''});if(G.papers.length>40)G.papers.shift();save();}
   PAPER_CUR=o;PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}
@@ -70,7 +72,7 @@ const MILES=[[100,'Сотая машина','Сто машин — это сто
   [100000,'Сто тысяч машин','Ford впервые перешагнул сотню тысяч машин в год в 1912 году. Ваша марка — среди великих.'],
   [1000000,'Миллионная машина','Миллионный Ford T сошёл с конвейера в декабре 1915 года. Теперь и у вас миллион!']];
 function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms];if(!m||n<m[0])return;s.ms++;const top=s.models.filter(x=>x.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
-  pushEvent({own:1,carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);}
+  pushEvent({own:1,cel:[m[1]+'!',`«${s.company}» · продано ${fmtN(m[0])} машин`,'🚗'],carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);}
 function launchPaper(s,md){if(s.pending.length>1)return;const C=classCompare(md,s,s.country),ks=CHAR_K.filter(k=>C.W[k]>0),best=ks.slice().sort((a,b)=>C.by[b]-C.by[a])[0],worst=ks.slice().sort((a,b)=>C.by[a]-C.by[b])[0],ref=refPrice(md,s),pr=md.price/ref-1;
   const verdict=C.S>=1.08?'машина лучше соперников':C.S>=0.9?'машина не хуже соперников':'машина уступает соперникам';
   reelUnlock(s,'model:'+md.id);

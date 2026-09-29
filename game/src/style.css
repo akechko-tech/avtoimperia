@@ -177,6 +177,19 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .p-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .p-btn{font-family:var(--sans);background:var(--ink);color:var(--paper);border:0;border-radius:4px;padding:12px;font-size:15px;font-weight:600;cursor:pointer}
 .p-btn.alt{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+/* кинохроника в газете: кадр плёнки с перфорацией и кнопкой ▶ */
+.p-reel{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 10px;padding:12px 12px;border:0;border-radius:3px;cursor:pointer;text-align:left;color:#efe6d0;font-family:var(--sans);background:#18140f;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent}
+.p-reel::before,.p-reel::after{content:"";position:absolute;left:5px;right:5px;height:5px;background:repeating-linear-gradient(90deg,rgba(239,230,208,.55) 0 6px,transparent 6px 14px);border-radius:1px}
+.p-reel::before{top:3px}.p-reel::after{bottom:3px}
+.p-reel:active{transform:scale(.99)}
+.p-reel-f{position:relative;flex:0 0 46%;aspect-ratio:4/3;overflow:hidden;border-radius:2px;background:#2b251d}
+.p-reel-f img,.p-reel-f svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(.5) contrast(1.2) brightness(.9)}
+.p-reel-f em{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;letter-spacing:.3em;opacity:.5}
+.p-reel-f i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(10,8,6,.6);border:2px solid #efe6d0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:18px;padding-left:4px;box-sizing:border-box;box-shadow:0 0 0 6px rgba(239,230,208,.12);animation:reelPulse 2.4s ease-in-out infinite}
+@keyframes reelPulse{50%{box-shadow:0 0 0 11px rgba(239,230,208,0)}}
+.p-reel-t{flex:1;min-width:0;font-size:15px;line-height:1.25;font-weight:600}
+.p-reel-t b{display:block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#d9b45e;margin-bottom:4px}
+.p-reel-t small{display:block;font-size:12px;opacity:.7;font-weight:400;margin-top:6px}
 
 /* race screen */
 #raceScreen{position:fixed;inset:0;z-index:20;background:#070f18;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -587,3 +600,13 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 #menuScreen.live.ready .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #menuScreen.live.ready .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
 #menuScreen.live.ready .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+/* праздник: победа, титул, рекорд */
+.cel{position:fixed;inset:0;z-index:96;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;transition:opacity .5s;background:radial-gradient(ellipse at 50% 32%,rgba(8,6,3,.35),rgba(8,6,3,.62));animation:celBg .4s ease}
+@keyframes celBg{0%{opacity:0}}
+.cel.out{opacity:0}
+.cel canvas{position:absolute;inset:0;width:100%;height:100%}
+.cel-t{position:relative;margin-top:calc(18vh + env(safe-area-inset-top,0px));text-align:center;padding:16px 26px 18px;border-radius:12px;background:linear-gradient(#1b140b,#0f0b06);border:1px solid rgba(241,210,122,.55);box-shadow:0 0 0 4px rgba(15,11,6,.6),0 24px 60px rgba(0,0,0,.65);max-width:86vw;box-sizing:border-box;animation:celIn .7s cubic-bezier(.2,1.4,.3,1)}
+.cel-t i{display:block;font-style:normal;font-size:44px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.cel-t b{display:block;font-family:"Playfair Display",var(--serif);font-weight:900;font-size:clamp(34px,11vw,64px);line-height:1.02;letter-spacing:.02em;color:#f1d27a;text-shadow:0 2px 0 #6b4a12,0 6px 22px rgba(0,0,0,.6);margin-top:6px}
+.cel-t span{display:block;margin-top:8px;font-size:15px;font-weight:600;color:#f6ecd2;text-shadow:0 1px 6px rgba(0,0,0,.8);max-width:80vw}
+@keyframes celIn{0%{transform:scale(.4) translateY(30px);opacity:0}100%{transform:none;opacity:1}}

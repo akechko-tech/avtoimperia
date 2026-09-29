@@ -441,7 +441,9 @@ function r3dCamera(dt,W,H){
     eye=[p[0]+sh[0]*0.4,p[1]+0.14+sh[1]*0.6,p[2]];const f2=[Math.sin(F.yaw),0,Math.cos(F.yaw)];look=[eye[0]+f2[0]*25,eye[1]-0.95,eye[2]+f2[2]*25];near=0.08;}
   else if(v===3){// осмотр машины со стороны (для проверки моделей)
     const a=F.yaw+(R3.orbA||0),Dd=R3.orbD||4.6;eye=[F.x-Math.sin(a)*Dd,cm.y+(R3.orbH||1.5),F.z-Math.cos(a)*Dd];look=[F.x,cm.y+0.7,F.z];near=0.1;}
-  else{const D=v===1?8.8:5.4,Hc=v===1?3.5:2.25,A=v===1?12:8,LH=v===1?0.2:0.55;
+  else{// чувство скорости: на разгоне камера чуть отстаёт и опускается, на торможении — подъезжает к машине
+    const ac=cm.v0===undefined?0:(F.vx-cm.v0)/Math.max(0.005,dt);cm.v0=F.vx;cm.lag=(cm.lag||0)+(clamp(ac*0.07,-0.55,0.75)-(cm.lag||0))*Math.min(1,dt*2.5);
+    const D=(v===1?8.8:5.4)*(1+0.07*sp)+cm.lag,Hc=(v===1?3.5:2.25)*(1-0.1*sp),A=v===1?12:8,LH=v===1?0.2:0.55;
     let back=cm.y;const bi=R3.T.closed?((F.idx-Math.round(D/R3.T.step))%R3.T.n+R3.T.n)%R3.T.n:Math.max(0,F.idx-Math.round(D/R3.T.step));back=Math.max(back,R3.T.pts[bi][1]);
     // камера не уходит в склон: над землёй по пути от машины к камере; круча между ними — подъезжаем ближе и выше
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}
@@ -449,7 +451,7 @@ function r3dCamera(dt,W,H){
     cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*6);
     eye=[F.x-fw[0]*cm.dd+sh[0],Math.max(cm.ey,ey-0.6)+sh[1],F.z-fw[2]*cm.dd];look=[F.x+fw[0]*A,cm.y+LH,F.z+fw[2]*A];}
   const f=v3n([look[0]-eye[0],look[1]-eye[1],look[2]-eye[2]]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);
-  const asp=W/H,hf=v===2?1.1:1.05;let vf0=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.95;if(2*Math.atan(Math.tan(vf0/2)*asp)>1.75)vf0=2*Math.atan(Math.tan(0.875)/asp);cm.fov+=((1+sp*0.1)-cm.fov)*Math.min(1,dt*2);
+  const asp=W/H,hf=v===2?1.1:1.05;let vf0=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.95;if(2*Math.atan(Math.tan(vf0/2)*asp)>1.75)vf0=2*Math.atan(Math.tan(0.875)/asp);cm.fov+=((1+sp*0.15)-cm.fov)*Math.min(1,dt*2);
   const vf=Math.min(1.55,vf0*cm.fov);R3.eye=eye;R3.camR=rt;R3.camU=up;R3.camF=f;
   const P=R3.P||(R3.P=m4()),V=R3.V||(R3.V=m4()),VP=R3.VP||(R3.VP=m4());m4persp(P,vf,asp,near,1500);m4view(V,eye,rt,up,f);m4mul(VP,P,V);R3.fr=frustumOf(VP,R3.fr);
 }

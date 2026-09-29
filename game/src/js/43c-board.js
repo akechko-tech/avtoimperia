@@ -70,4 +70,4 @@ function boardCard(s){const O=boardOffers(s),A=[],C=s.chal&&s.chal.acc?s.chal:nu
 function empireStrip(s){if(!s)return '';let t=null;try{t=legacyTable(s);}catch(_){}
   const L=sagaList(s),seen=((s.saga||{}).seen||[]).length,tit=(s.titles||[]).filter(x=>/^king-/.test(x.id||'')).length,act=(s.chal&&s.chal.acc?1:0)+(s.goals||[]).filter(q=>q.y===s.y).length;
   const above=t&&t.place>1?t.rows[t.place-2]:null;
-  return `<span class="es-a">🏛 Наследие <b>${t?Math.round(t.me.total):0}</b></span><span class="es-b">${t?t.place+'-е место':''}${above?` · до ${esc(above.n)} ${Math.max(1,Math.round(above.L.total-t.me.total))}`:''}</span><span class="es-c">👑 ${tit} · ⚔️ ${act} · 🎬 ${seen}/${L.length}</span>`;}
+  return `<span class="es-a">🏛 Наследие <b>${t?Math.round(t.me.total):0}</b></span><span class="es-b">${t?t.place+'-е место':''}${above?` · догнать ${esc(above.n)}: +${Math.max(1,Math.round(above.L.total-t.me.total))}`:t&&t.place===1?' · вы первые!':''}</span><span class="es-c">👑 ${tit} · ⚔️ ${act} · 🎬 ${seen}/${L.length}</span>`;}

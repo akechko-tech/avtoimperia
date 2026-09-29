@@ -169,21 +169,45 @@ function r3dRails(T){if(!T.rails||!T.rails.length)return null;const mb=new MB();
       // столбы телеграфа вдоль дороги
       if(Math.round(s/6)%8===0&&Math.abs(s)>12){const q=P(s,4.2,-0.3);pTrunk(mb,q[0],q[1],q[2],q[0],q[1]+6.5,q[2],0.1,0.08,'#6a5440',6,MID.wood);pBox(mb,q[0],q[1]+6,q[2],0.9,0.1,0.06,'#5a4632',MID.wood,Math.atan2(sx,sz));}}});
   return mb;}
-// Поезд: паровоз, тендер и вагоны — простые формы с фото-материалами
-function r3dTrainMesh(y){const C=G3.cache,key='train'+(y<1905?0:1);if(C[key])return C[key];const L=new MB(),cars=[];
-  const loco=new MB(),blk='#1e1e20',red='#8a2a22',brass='#b8923a';
-  pTrunk(loco,0,1.9,-3.2,0,1.9,2.8,0.78,0.78,blk,14,MID.metal);// котёл
-  loco.poly(Array.from({length:14},(_,k)=>{const a=k/14*6.283;return [Math.cos(a)*0.8,1.9+Math.sin(a)*0.8,2.85];}),[0,0,1],hex2rgb('#2a2a2c'),MID.metal);
-  pTrunk(loco,0,2.6,2.2,0,3.6,2.2,0.24,0.3,blk,10,MID.metal);pTrunk(loco,0,2.6,0.2,0,3.0,0.2,0.34,0.26,brass,10,MID.chrome);// труба, сухопарник
-  pBox(loco,0,1.1,-4.4,1.35,2.5,1.25,'#26282c',MID.metal);pBox(loco,0,3.6,-4.4,1.45,0.12,1.4,blk,MID.metal);pBox(loco,1.36,2.2,-4.4,0.02,0.8,0.7,'#cfe0e8',MID.glass);pBox(loco,-1.36,2.2,-4.4,0.02,0.8,0.7,'#cfe0e8',MID.glass);
-  pBox(loco,0,0.9,-0.2,1.4,0.25,4.2,red,MID.paint);pBox(loco,0,0.55,3.4,1.3,0.4,0.25,red,MID.paint);
-  [[-2.3,0.85],[-0.5,0.85],[1.8,0.5],[2.9,0.5]].forEach(([z,r])=>[-1,1].forEach(sd=>{loco.e[0]=0;pTrunk(loco,sd*1.05,r,z,sd*1.25,r,z,r,r,'#1a1a1a',14,MID.metal);}));
-  const X0=X3(0,1,[0,0,0]);L.add(loco,X0);cars.push({mb:L,len:9.5});
-  const tender=new MB();pBox(tender,0,0.9,0,1.3,1.9,2.4,'#24262a',MID.metal);pBox(tender,0,2.8,0,1.1,0.35,2.0,'#141414',MID.matte);[-1.5,1.5].forEach(z=>[-1,1].forEach(sd=>pTrunk(tender,sd*1.0,0.5,z,sd*1.2,0.5,z,0.5,0.5,'#1a1a1a',12,MID.metal)));cars.push({mb:tender,len:5.4});
-  for(let k=0;k<4;k++){const w=new MB(),col=['#3e4a32','#5a3a26','#3e4a32','#5a3a26'][k];w.e[3]=txLay('wood_wall',1);pBox(w,0,1.0,0,1.35,2.2,4.3,col,MID.wood);w.e[3]=txLay('roof_slate',1);
-    w.poly([[-1.45,3.2,-4.4],[1.45,3.2,-4.4],[1.45,3.2,4.4],[-1.45,3.2,4.4]],[0,1,0],hex2rgb('#4a4a4c'),MID.roof);pBox(w,0,3.2,0,1.2,0.3,4.3,'#4a4a4c',MID.roof);w.e[3]=0;
-    for(let j=-3;j<=3;j++)[-1,1].forEach(sd=>pBox(w,sd*1.36,2.1,j*1.15,0.02,0.55,0.4,'#cfd8dc',MID.glass));
-    [-3,3].forEach(z=>[-1,1].forEach(sd=>pTrunk(w,sd*1.0,0.5,z,sd*1.2,0.5,z,0.48,0.48,'#1a1a1a',12,MID.metal)));cars.push({mb:w,len:9.4});}
+// Цилиндр по любой оси (котёл, колёса, трубы): гладкие бока и крышки на концах
+function pCyl(mb,a,b,r0,r1,col,sides,mat,caps){sides=sides||12;const c=Array.isArray(col)?col:hex2rgb(col),M=mat===undefined?MID.metal:mat,d=v3n([b[0]-a[0],b[1]-a[1],b[2]-a[2]]),up=Math.abs(d[1])<0.9?[0,1,0]:[1,0,0],u=v3n(v3x(d,up)),v=v3x(u,d);
+  const Nn=t=>[u[0]*Math.cos(t)+v[0]*Math.sin(t),u[1]*Math.cos(t)+v[1]*Math.sin(t),u[2]*Math.cos(t)+v[2]*Math.sin(t)],R=(p,r,t)=>{const n=Nn(t);return [p[0]+n[0]*r,p[1]+n[1]*r,p[2]+n[2]*r];};
+  for(let k=0;k<sides;k++){const t0=k/sides*6.2832,t1=(k+1)/sides*6.2832,n0=Nn(t0),n1=Nn(t1);mb.polyN([R(a,r0,t0),R(a,r0,t1),R(b,r1,t1),R(b,r1,t0)],Nn((t0+t1)/2),[n0,n1,n1,n0],c,M);}
+  if(caps!==false){const ring=(p,r)=>Array.from({length:sides},(_,k)=>R(p,r,k/sides*6.2832));if(r0>0.02)mb.poly(ring(a,r0),[-d[0],-d[1],-d[2]],c,M);if(r1>0.02)mb.poly(ring(b,r1),d,c,M);}}
+// Колесо сбоку (ось поперёк): обод, ступица цвета рамы
+function pWheelX(mb,x,y,z,r,sd,hub){pCyl(mb,[x,y,z],[x+sd*0.16,y,z],r,r,'#1b1b1c',16,MID.metal);pCyl(mb,[x+sd*0.16,y,z],[x+sd*0.19,y,z],r*0.82,r*0.3,hub||'#7a2620',12,MID.paint);}
+// Поезд: паровоз (котёл, труба, сухопарник, будка, колёса с дышлом), тендер с углём и вагоны с полукруглой крышей
+function r3dTrainMesh(y){const C=G3.cache,key='train'+(y<1905?0:1);if(C[key])return C[key];const cars=[],old=y<1905;
+  const loco=new MB(),blk='#1c1d20',red=old?'#7a2a20':'#6a1f1c',brass='#b8923a',grey='#2c2e33';
+  pBox(loco,0,0.95,0.1,1.32,0.26,3.5,red,MID.paint);// рама (площадка)
+  pCyl(loco,[0,1.98,-3.1],[0,1.98,2.7],0.8,0.8,blk,20,MID.metal);// котёл
+  [-2.2,-0.6,1.0,2.4].forEach(z=>pCyl(loco,[0,1.98,z],[0,1.98,z+0.08],0.815,0.815,brass,20,MID.chrome,false));// латунные бандажи котла
+  pCyl(loco,[0,1.98,2.7],[0,1.98,3.2],0.86,0.86,grey,20,MID.metal);pCyl(loco,[0,1.98,3.2],[0,1.98,3.27],0.62,0.5,'#3a3c40',16,MID.metal);// дымовая коробка и дверца
+  pCyl(loco,[0,2.7,2.85],[0,3.95,2.85],0.2,0.3,blk,14,MID.metal,false);pCyl(loco,[0,3.9,2.85],[0,4.05,2.85],0.36,0.36,blk,14,MID.metal);// труба с венцом
+  pCyl(loco,[0,2.7,0.5],[0,3.1,0.5],0.38,0.3,brass,14,MID.chrome);pCyl(loco,[0,2.7,-1.4],[0,2.95,-1.4],0.26,0.2,blk,12,MID.metal);// сухопарник, песочница
+  pCyl(loco,[0.25,2.72,-2.6],[0.25,3.1,-2.6],0.05,0.05,brass,8,MID.chrome);// свисток
+  // будка машиниста: стенки с окнами, крыша с напуском
+  pBox(loco,0,1.2,-4.2,1.36,2.35,1.05,'#23252a',MID.metal);pBox(loco,0,3.55,-4.2,1.5,0.1,1.3,blk,MID.metal);
+  [-1,1].forEach(sd=>{pBox(loco,sd*1.37,2.35,-3.9,0.02,0.6,0.5,'#d6e4ea',MID.glass);pBox(loco,sd*1.37,2.35,-4.75,0.02,0.6,0.3,'#d6e4ea',MID.glass);});
+  pBox(loco,0,2.35,-3.14,0.9,0.55,0.02,'#d6e4ea',MID.glass);
+  // колёса: ведущие большие, бегунковые спереди; дышло и цилиндры
+  [-1,1].forEach(sd=>{[-2.5,-0.9,0.7].forEach(z=>pWheelX(loco,sd*1.02,0.86,z,0.86,sd,red));pWheelX(loco,sd*0.98,0.5,2.35,0.5,sd,red);
+    pBox(loco,sd*1.25,0.8,-0.9,0.035,0.11,1.75,'#9a9ca0',MID.chrome);pCyl(loco,[sd*1.1,0.95,1.7],[sd*1.1,0.95,2.8],0.34,0.34,grey,14,MID.metal);
+    pCyl(loco,[sd*0.85,1.05,3.3],[sd*0.85,1.05,3.62],0.09,0.09,'#8a8c90',8,MID.chrome);pCyl(loco,[sd*0.85,1.05,3.62],[sd*0.85,1.05,3.66],0.2,0.2,'#6a6c70',12,MID.chrome);});
+  pBox(loco,0,0.8,3.25,1.4,0.45,0.1,red,MID.paint);// буферный брус
+  loco.e[1]=4;pCyl(loco,[0,3.0,3.1],[0,3.0,3.36],0.17,0.17,'#fff0c0',12,MID.glass);loco.e[1]=0;// фонарь
+  cars.push({mb:loco,len:9.2});
+  const tender=new MB();pBox(tender,0,0.95,0,1.3,1.75,2.5,'#23252a',MID.metal);pBox(tender,0,0.95,0,1.33,0.12,2.55,red,MID.paint);
+  tender.e[3]=txLay('gravel',1);pBox(tender,0,2.7,0.2,1.12,0.28,1.8,'#141414',MID.matte);tender.e[3]=0;
+  [-1.6,0,1.6].forEach(z=>[-1,1].forEach(sd=>pWheelX(tender,sd*1.0,0.5,z,0.5,sd,red)));cars.push({mb:tender,len:5.4});
+  for(let k=0;k<4;k++){const w=new MB(),col=old?['#3e4a32','#5a3a26','#3e4a32','#4a3a2a'][k]:['#5a2a22','#3a4a3a','#5a2a22','#2e3a4a'][k];
+    w.e[3]=txLay('wood_wall',1);pBox(w,0,1.0,0,1.38,2.2,4.3,col,MID.wood);w.e[3]=0;pBox(w,0,0.92,0,1.3,0.1,4.4,'#1c1d20',MID.metal);
+    // полукруглая крыша
+    w.e[3]=txLay('roof_slate',1);for(let j=0;j<8;j++){const a0=Math.PI*j/8,a1=Math.PI*(j+1)/8,X=a=>-Math.cos(a)*1.46,Y=a=>3.2+Math.sin(a)*0.38,nm=[-Math.cos((a0+a1)/2),Math.sin((a0+a1)/2)*2.5,0];
+      w.poly([[X(a0),Y(a0),-4.45],[X(a1),Y(a1),-4.45],[X(a1),Y(a1),4.45],[X(a0),Y(a0),4.45]],v3n(nm),hex2rgb('#4a4a4c'),MID.roof);}w.e[3]=0;
+    [-4.45,4.45].forEach(z=>w.poly(Array.from({length:9},(_,j)=>{const a=Math.PI*j/8;return [-Math.cos(a)*1.46,3.2+Math.sin(a)*0.38,z];}),[0,0,Math.sign(z)],hex2rgb(col),MID.wood));
+    for(let j=-3;j<=3;j++)[-1,1].forEach(sd=>{pBox(w,sd*1.39,1.9,j*1.15,0.02,0.72,0.38,'#d6e0e4',MID.glass);pBox(w,sd*1.39,2.66,j*1.15,0.025,0.05,0.44,'#c9a860',MID.chrome);});
+    [-3,-1.9,1.9,3].forEach(z=>[-1,1].forEach(sd=>pWheelX(w,sd*1.0,0.46,z,0.46,sd,'#2a2a2c')));cars.push({mb:w,len:9.4});}
   return C[key]={cars:cars.map(c=>({m:g3Mesh(c.mb),len:c.len}))};}
 // Когда поезд идёт: машина подъезжает к переезду — поезд успевает пройти перед ней (шлагбаумы опускаются)
 function r3dTrainTick(dt){const T=R3.T;if(!T.rails||!T.rails.length)return;const F=R.follow;

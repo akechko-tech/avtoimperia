@@ -32,8 +32,11 @@ function texFit(im,S){if(im.width===S&&im.height===S)return im;const c=mkCanvas(
 function texAvg(im){const c=mkCanvas(8,8),g=c.getContext('2d');g.drawImage(im,0,0,8,8);const d=g.getImageData(0,0,8,8).data,o=[0,0,0];
   for(let i=0;i<64;i++)for(let k=0;k<3;k++)o[k]+=Math.pow(d[i*4+k]/255,2.2)/64;return o;}
 // Всё в видеокарту: массивы слоёв и листва (один раз на контекст WebGL)
+// Сменили качество — слои другого размера: старые освобождаем, грузим заново
+function texFree(){const C=G3.cache,tx=C.tx,gl=G3.gl;C.tx=null;if(!tx||!gl)return;
+  try{[tx.alb,tx.dat,tx.fol,...Object.values(tx.sky).map(v=>v&&v.t)].forEach(t=>{if(t)gl.deleteTexture(t);});}catch(e){}}
 async function texUpload(){
-  const C=G3.cache;if(C.tx)return C.tx;if(C.txP)return C.txP;
+  const C=G3.cache;if(C.tx&&C.tx.S!==gq().tex&&!C.txP)texFree();if(C.tx)return C.tx;if(C.txP)return C.txP;
   const run=async()=>{
     await texLoad();const gl=G3.gl;if(!gl||gl.isContextLost())throw new Error('нет контекста');
     const D=TX.D,n=D.lay.length,S=gq().tex,lv=Math.floor(Math.log2(S))+1;texPS(gl);
@@ -60,7 +63,7 @@ async function texUpload(){
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
       if(G3.an)gl.texParameterf(gl.TEXTURE_2D,G3.an.TEXTURE_MAX_ANISOTROPY_EXT,Math.min(4,G3.anMax));}
     gl.activeTexture(gl.TEXTURE0);
-    return C.tx={alb,dat,fol,lay,avg,sky:{},n};};
+    return C.tx={alb,dat,fol,lay,avg,sky:{},n,S};};
   C.txP=run().catch(e=>{C.txP=null;throw e;});return C.txP;}
 // Небо: фото нужного настроения — в видеокарту (с мип-уровнями для размытых отражений)
 async function texSky(mood){
