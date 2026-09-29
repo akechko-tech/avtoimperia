@@ -154,7 +154,7 @@ function raceResults(rc,res,mode,info){
   addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${won?`, призовые ${money(won)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
   lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal};
   openRaceResult();
-  if(best===1)showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);
+  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }

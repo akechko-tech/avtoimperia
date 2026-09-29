@@ -92,7 +92,7 @@ function poachCheck(s){
 /* ---------- вызовы конкурентов ---------- */
 // На гонку: пари, чья машина финиширует выше. По продажам: кто продаст больше машин класса дома до конца года.
 function chalCheck(s){
-  if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<8||Math.random()>0.12)return;
+  if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<5||Math.random()>0.2)return;
   const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+3&&!GBC_IDS.includes(rc.id)&&raceEligible(rc,s)&&!raceWarBlocked(rc,s)&&!s.cres[rc.key]&&s.raceDone[rc.key]===undefined);
   if(!L.length||!raceCarsFor(s).length)return;
   const rc=L.slice().sort((a,b)=>(b.major?1:0)-(a.major?1:0)||a.m-b.m)[0];
@@ -106,7 +106,7 @@ function chalCheck(s){
     choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);
 }
 function salesChalCheck(s){
-  if(s.pending.length||s.chal||s.m<1||s.m>6||mi(s)-(s.chalLast??-99)<8||Math.random()>0.07)return;
+  if(s.pending.length||s.chal||s.m<1||s.m>6||mi(s)-(s.chalLast??-99)<5||Math.random()>0.1)return;
   const L=s.last,home=s.country,mk=L&&L.mk&&L.mk[home];if(!mk||!mk.segs)return;
   const g=SEGK.filter(g=>(mk.segs[g].you||0)>=3).sort((a,b)=>mk.segs[b].you-mk.segs[a].you)[0];if(!g)return;
   const you=mk.segs[g].you,cps=(COMPS[home]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>x.cp.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v);
@@ -202,12 +202,17 @@ function yearAwards(s,y){
   // гонщик года и пари по продажам
   const DC=dchFinish(s,y);if(DC){lines.push(`Гонщик года — ${DC.w.n}${DC.w.mq?` (${DC.w.mq})`:''}: ${fmtPts('gp',DC.w.pts)} очков, побед: ${DC.w.w}.`);if(DC.mine){mine.push('гонщик года');fx.dch=until;}}
   const SC=chalSales(s,y);if(SC)lines.push(SC.win?`Пари по продажам выиграно: «${s.company}» — ${carsN(SC.you)} класса «${SEG[SC.C.g].name}», ${SC.C.mq} — ${fmtN(SC.them)}. Выигрыш ${money(SC.C.stake)}.`:`Пари по продажам проиграно: ${SC.C.mq} — ${carsN(SC.them)} класса «${SEG[SC.C.g].name}», «${s.company}» — ${fmtN(SC.you)}. Проигрыш ${money(SC.C.stake)}.`);
-  s.kings={y,lines,mine:mine.slice()};
+  s.kings={y,lines,mine:mine.slice()};goalsResolve(s,y,mine);
   if(s.dch)Object.keys(s.dch).forEach(k=>{if(+k<y-2)delete s.dch[k];});
-  if(!lines.length)return;
+  // наследие: новое лучшее место среди великих марок — строка в итогах, а вход в десятку, тройку и первое место — праздник
+  let lp=0,legUp=null;try{lp=legacyTable(s).place;}catch(_){}
+  const lb=s.legBest||99;if(lp&&lp<lb){s.legBest=lp;if(lb<99){lines.push(`Наследие: «${s.company}» поднялась на ${lp}-е место среди великих марок эпохи (было ${lb}-е).`);if(lp===1||(lp<=3&&lb>3)||(lp<=10&&lb>10))legUp=lp;}}
+  // кинохроника года: продажи, лучшая машина, победы, титулы и место в наследии — в газете с итогами
+  let yr='';try{yearRecord(s,y);yr='year:'+y;reelUnlock(s,yr);}catch(e){console.warn('year reel',e);}
+  if(!lines.length){const ev=yr&&s.pending.find(e=>e.kicker==='Итоги года');if(ev)ev.choices=(ev.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника года','reel:'+yr]]);return;}
   const own=mine.filter(t=>t!=='гонщик года'),dw=DC&&DC.mine?DC.w:null,dd=dw&&DRIVERS.find(x=>x.id===dw.id);
   const title=own.length?`«${s.company}» — ${own[0].charAt(0).toLowerCase()+own[0].slice(1)} ${y} года!`:dw?`${dw.n} — гонщик ${y} года!`:`Короли ${y} года`;
-  pushEvent({own:mine.length?1:0,kicker:'Итоги года · по версии прессы',title,deck:own.length>1?`И ещё: ${own.slice(1).join(', ').toLowerCase()}`:`Автомобильные обозреватели назвали лучших за ${y} год`,
-    img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',
+  pushEvent({own:mine.length?1:0,cel:own.length?['Титул года!',own.join(' · '),'👑']:legUp?[legUp===1?'Величайшая марка эпохи!':`${legUp}-е место в наследии!`,`«${s.company}» среди великих`,'🏛']:null,kicker:'Итоги года · по версии прессы',title,deck:own.length>1?`И ещё: ${own.slice(1).join(', ').toLowerCase()}`:`Автомобильные обозреватели назвали лучших за ${y} год`,
+    img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',choices:yr?[['Читать дальше','ok'],['▶ Кинохроника года','reel:'+yr]]:undefined,
     text:lines.map(l=>'— '+l).join('\n')+'\n'+(mine.length?'Титулы — бесплатная реклама: целый год покупатели будут помнить, чья марка лучшая, и охотнее выбирать ваши машины.':'Ваша марка пока без титулов. Победы в гонках, новинки раньше всех и продажи в своём классе — и газеты напишут о вас.')},true);
 }

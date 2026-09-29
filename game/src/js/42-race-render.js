@@ -3,10 +3,20 @@ const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
 // 3D (WebGL2), если телефон умеет; иначе — прежняя псевдо-3D картинка
 function setupRender(){
-  R.gl=false;if(r3dWanted()){try{r3dSetup();R.gl=true;}catch(e){console.error(e);R.gl=false;try{r3dDispose();}catch(_){}}}
-  if(!R.gl){const g=document.getElementById('rgl');if(g)g.hidden=true;document.getElementById('rcv').hidden=false;}
-  setupRender2d(!R.gl);
+  R.gl=false;setupRender2d(false);
+  if(r3dWanted()){let ok=false;try{ok=g3Init(document.getElementById('rgl'));}catch(e){ok=false;}
+    if(ok){
+      // фото-материалы и небо в видеокарту (первая гонка — загрузка), потом мир и заставка
+      R.loading=true;raceLoadUI(true);const t0=performance.now();
+      texPrepare(R.wx.mood,res=>{if(!R||R.done)return;
+        if(res){try{r3dSetup();R.gl=true;}catch(e){console.error(e);R.gl=false;try{r3dDispose();}catch(_){}}}
+        const go=()=>{if(!R||R.done)return;R.loading=false;raceLoadUI(false);if(!R.gl){render2dFallback();toast('3D-графика недоступна — упрощённая картинка');driveTipsAtStart();}else filmStart();R.lastT=performance.now();};
+        // дать кадру загрузки хоть мгновение, чтобы не мигал
+        const w=Math.max(0,450-(performance.now()-t0));w?setTimeout(go,w):go();});
+      return;}}
+  render2dFallback();driveTipsAtStart();
 }
+function render2dFallback(){const g=document.getElementById('rgl');if(g)g.hidden=true;document.getElementById('rcv').hidden=false;setupRender2d(true);}
 function setupRender2d(full){
   const T=R.trk,F=R.follow;R.cam={lat:F?F.lat:0,psi:0,y:F?F.y:0,sky:0,phaseT:0,phase:0};
   const mc=document.getElementById('rMap');const g=mc.getContext('2d');const W=mc.width=180,H=mc.height=180;let mnx=1e9,mxx=-1e9,mnz=1e9,mxz=-1e9;T.pts.forEach(p=>{mnx=Math.min(mnx,p[0]);mxx=Math.max(mxx,p[0]);mnz=Math.min(mnz,p[2]);mxz=Math.max(mxz,p[2]);});
@@ -84,7 +94,7 @@ function renderRace(dt){
   for(let k=segs.length-2;k>=0;k--){
     const a=segs[k];if(!a.scale)continue;const clip=a.clip,items=T.spr[a.j];
     if(items&&items.length&&a.z>1.2){c.save();c.beginPath();c.rect(0,0,W,clip);c.clip();
-      for(const it of items){if(it.k==='L')continue;const sp=it.k==='p'?peopleSprite(it.t,it.v,phase&&it.v%2?1:0):scenSprite(it.t,it.v,it.off);if(!sp)continue;
+      for(const it of items){if(it.k==='L'||it.k==='W')continue;const sp=it.k==='p'?peopleSprite(it.t,it.v,phase&&it.v%2?1:0):scenSprite(it.t,it.v,it.off);if(!sp)continue;
         const x=half-(a.Lc+it.off-cam.lat+cam.psi*a.z)*a.scale,w=sp.wM*a.scale,h=sp.hM*a.scale;if(x+w*(1-sp.ax)<0||x-w*sp.ax>W||h<1)continue;
         c.drawImage((night?nightOf(sp):sp).img,x-w*sp.ax,a.sy-h*sp.ay,w,h);}
       c.restore();}

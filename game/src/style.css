@@ -177,6 +177,19 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .p-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .p-btn{font-family:var(--sans);background:var(--ink);color:var(--paper);border:0;border-radius:4px;padding:12px;font-size:15px;font-weight:600;cursor:pointer}
 .p-btn.alt{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+/* кинохроника в газете: кадр плёнки с перфорацией и кнопкой ▶ */
+.p-reel{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 10px;padding:12px 12px;border:0;border-radius:3px;cursor:pointer;text-align:left;color:#efe6d0;font-family:var(--sans);background:#18140f;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent}
+.p-reel::before,.p-reel::after{content:"";position:absolute;left:5px;right:5px;height:5px;background:repeating-linear-gradient(90deg,rgba(239,230,208,.55) 0 6px,transparent 6px 14px);border-radius:1px}
+.p-reel::before{top:3px}.p-reel::after{bottom:3px}
+.p-reel:active{transform:scale(.99)}
+.p-reel-f{position:relative;flex:0 0 46%;aspect-ratio:4/3;overflow:hidden;border-radius:2px;background:#2b251d}
+.p-reel-f img,.p-reel-f svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(.5) contrast(1.2) brightness(.9)}
+.p-reel-f em{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;letter-spacing:.3em;opacity:.5}
+.p-reel-f i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(10,8,6,.6);border:2px solid #efe6d0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:18px;padding-left:4px;box-sizing:border-box;box-shadow:0 0 0 6px rgba(239,230,208,.12);animation:reelPulse 2.4s ease-in-out infinite}
+@keyframes reelPulse{50%{box-shadow:0 0 0 11px rgba(239,230,208,0)}}
+.p-reel-t{flex:1;min-width:0;font-size:15px;line-height:1.25;font-weight:600}
+.p-reel-t b{display:block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#d9b45e;margin-bottom:4px}
+.p-reel-t small{display:block;font-size:12px;opacity:.7;font-weight:400;margin-top:6px}
 
 /* race screen */
 #raceScreen{position:fixed;inset:0;z-index:20;background:#070f18;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -482,3 +495,118 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .rl-btn{min-width:48px;height:44px;border-radius:22px;border:1px solid #6d6350;background:#1a1815;color:#efe6cf;font-size:16px;padding:0 14px}
 .rl-title{margin-bottom:12px;font:12px/1.3 var(--mono,monospace);letter-spacing:.08em;text-transform:uppercase;color:#9b917c;text-align:center;padding:0 16px}
 @media (prefers-reduced-motion:reduce){.rl-grain,.rl-scr,.rl-flick{display:none}}
+/* ---------- кино в гонке: загрузка, заставка перед стартом, повтор финиша ---------- */
+.r-film{position:absolute;inset:0;z-index:6;pointer-events:auto;overflow:hidden;color:#f3ead6}
+.r-film[hidden]{display:none!important}
+.r-film.loading{background:radial-gradient(120% 90% at 50% 40%,#1c2a3a 0%,#070d15 70%)}
+.rf-bar{position:absolute;left:0;right:0;height:10.5%;background:#000;z-index:1}
+.rf-bar.top{top:0}.rf-bar.bot{bottom:0}
+.rf-card{position:absolute;left:6%;right:6%;bottom:14%;z-index:2;text-align:left;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .8s ease;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9)}
+.r-film.loading .rf-card{top:34%;bottom:auto;text-align:center;opacity:1;transform:none}
+.rf-card.in{opacity:1;transform:none}
+.rf-kick{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#e2c47a}
+.rf-big{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(26px,6.4vw,54px);line-height:1.02;margin-top:4px;color:#fbf4e2}
+.rf-mid{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(19px,4.4vw,32px);line-height:1.15;margin-top:4px;color:#fbf4e2}
+.rf-sub{font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:clamp(14px,3.2vw,20px);margin-top:6px;color:#e9dfc8}
+.rf-list{margin-top:6px;font-family:'Old Standard TT',Georgia,serif;font-size:clamp(15px,3.4vw,22px);line-height:1.3}
+.rf-list .h{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e2c47a}
+.rf-load{width:min(320px,70%);height:3px;margin:18px auto 10px;background:rgba(255,255,255,.14);border-radius:2px;overflow:hidden}
+.rf-load i{display:block;height:100%;width:38%;background:linear-gradient(90deg,transparent,#e2c47a,transparent);animation:rfload 1.3s ease-in-out infinite}
+@keyframes rfload{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
+.rf-skip{position:absolute;right:10px;bottom:calc(10.5% + 10px);z-index:3;background:rgba(10,16,24,.55);color:#f3ead6;border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:7px 14px;font:600 13px var(--sans,system-ui);letter-spacing:.02em}
+.rf-rec{position:absolute;left:12px;top:calc(10.5% + 10px);z-index:3;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:#ff5b4a;animation:rfblink 1.2s steps(2) infinite}
+@keyframes rfblink{50%{opacity:.35}}
+#raceScreen.filming .r-top,#raceScreen.filming .r-hud,#raceScreen.filming .r-bars,#raceScreen.filming .r-ctrl{display:none}
+#raceScreen.filming #rMap,#raceScreen.filming .r-board,#raceScreen.filming .r-msg,#raceScreen.filming .r-note,#raceScreen.filming .r-grip,#raceScreen.filming #rSvc,#raceScreen.filming #rReset,#raceScreen.filming .r-mgr{visibility:hidden}
+/* 0.17: в горизонтальном положении — картинка гонки на весь экран, приборы и кнопки поверх неё */
+@media (orientation:landscape) and (max-height:900px){
+  #raceScreen{display:block}
+  #rView{position:absolute!important;inset:0}
+  #raceScreen .r-top{position:absolute;left:0;right:0;top:0;z-index:5;padding:calc(6px + env(safe-area-inset-top,0px)) 10px 14px;background:linear-gradient(rgba(4,9,16,.72),rgba(4,9,16,0))}
+  #raceScreen .r-top .btn.sm{padding:4px 9px;font-size:12px;min-height:30px;background:rgba(8,16,26,.45)}
+  #raceScreen .r-hud{position:absolute;left:50%;transform:translateX(-50%);top:calc(38px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:18px;padding:4px 14px;border-radius:10px;background:rgba(5,12,22,.5);font-size:10px;white-space:nowrap}
+  #raceScreen .r-hud b{font-size:17px;display:inline;margin-left:4px}
+  #raceScreen .r-bars{position:absolute;left:10px;right:auto;top:calc(76px + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;gap:3px;width:150px;padding:6px 8px;border-radius:8px;background:rgba(5,12,22,.42)}
+  #raceScreen .r-bars .bar{height:5px;margin-top:1px}
+  #raceScreen .r-board{top:calc(160px + env(safe-area-inset-top,0px))}
+  #raceScreen #rMap{top:calc(44px + env(safe-area-inset-top,0px));right:10px}
+  #raceScreen .r-ctrl{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:8px calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));grid-template-columns:96px 96px 1fr 104px 118px;pointer-events:none}
+  #raceScreen .r-ctrl>*{pointer-events:auto}
+  #raceScreen .r-ctrl .lft{grid-column:1}#raceScreen .r-ctrl .rgt{grid-column:2}#raceScreen .r-ctrl .brk{grid-column:4}#raceScreen .r-ctrl .gas{grid-column:5}
+  #raceScreen .r-ctrl button{height:84px;background:rgba(10,18,28,.34);border-color:rgba(255,255,255,.28);backdrop-filter:blur(2px)}
+  #raceScreen .r-ctrl .r-wheel{grid-column:1/3;height:110px;background:rgba(10,18,28,.25)}
+  #raceScreen .r-mgr{position:absolute;left:0;right:0;bottom:0;z-index:5;background:rgba(5,12,22,.72)}
+  #raceScreen .r-msg{top:30%}
+}
+/* ---------- 0.17: фильм о персонаже ---------- */
+.sg{position:fixed;inset:0;z-index:60;background:#050608;color:#f4ecd8;overflow:hidden;animation:sgIn .5s ease}
+.sg.out{animation:sgOut .4s ease forwards}
+@keyframes sgIn{from{opacity:0}}@keyframes sgOut{to{opacity:0}}
+.sg-bg{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 35%,#3a3024 0%,#0b0a09 75%)}
+.sg-bg img{position:absolute;inset:-6%;width:112%;height:112%;object-fit:cover;filter:sepia(.35) saturate(.85) contrast(1.05) brightness(.82);opacity:0;transition:opacity .8s}
+.sg.noimg .sg-bg img{display:none}
+.sg-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,.25) 55%,rgba(0,0,0,.82) 100%),radial-gradient(100% 80% at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%)}
+.sg-bar{position:absolute;left:0;right:0;height:9%;background:#000;z-index:2}.sg-bar.top{top:0}.sg-bar.bot{bottom:0}
+.sg-body{position:absolute;left:0;right:0;top:9%;bottom:9%;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;padding:0 max(6%,18px) 5%;cursor:pointer}
+.sg-body .in{animation:sgUp .7s ease both}@keyframes sgUp{from{opacity:0;transform:translateY(10px)}}
+.sg-title{align-self:center;margin:auto 0;text-align:center}
+.sg-kick{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#e2c47a}
+.sg-ch{font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:clamp(18px,4vw,26px);margin-top:14px;color:#e9dcc0}
+.sg-t{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(30px,8vw,64px);line-height:1.02;margin-top:4px;text-shadow:0 3px 18px rgba(0,0,0,.8)}
+.sg-y{font-family:var(--mono);font-size:14px;letter-spacing:.3em;margin-top:10px;color:#cdbf9e}
+.sg-say p,.sg-line p{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(18px,4.2vw,28px);line-height:1.35;text-shadow:0 2px 12px rgba(0,0,0,.9);max-width:900px}
+.sg-line p{font-style:italic}
+.sg-who{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#e2c47a;margin-bottom:6px}
+.sg-q{max-width:760px;cursor:default}
+.sg-q h3{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(22px,5vw,34px);line-height:1.1;margin-bottom:12px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+.sg-o{display:block;width:100%;text-align:left;margin-top:8px;padding:12px 14px;border-radius:10px;border:1px solid rgba(226,196,122,.55);background:rgba(12,10,8,.62);color:#f4ecd8;font:inherit;cursor:pointer}
+.sg-o b{display:block;font-size:16px}.sg-o small{display:block;margin-top:3px;font-size:12px;color:#d9c89c;font-family:var(--mono)}
+.sg-o:active{background:rgba(226,196,122,.25)}
+.sg-res{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(17px,4vw,24px);line-height:1.35;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+.sg-fx{font-family:var(--mono);font-size:12px;color:#e2c47a;margin-top:8px}
+.sg-ctrl{position:absolute;right:12px;top:calc(9% + 10px);z-index:4}
+.sg-skip{background:rgba(0,0,0,.45);color:#f4ecd8;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:7px 14px;font:600 13px var(--sans,system-ui)}
+.sg-card .sg-list{display:grid;gap:6px;margin-top:10px}
+.sg-li{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit}
+.sg-li small{color:var(--muted);font-size:12px;margin-top:2px}.sg-li.got{border-color:rgba(226,196,122,.45)}.sg-li.got b{color:var(--brass)}.sg-li[disabled]{opacity:.55}
+/* ---------- 0.17: империя на виду ---------- */
+.empstrip{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;width:100%;margin:0 0 10px;padding:8px 12px;border-radius:12px;border:1px solid rgba(226,196,122,.4);background:linear-gradient(90deg,rgba(226,196,122,.14),rgba(226,196,122,.04));color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.empstrip[hidden]{display:none}
+.empstrip b{color:var(--brass);font-size:16px}.empstrip .es-b{color:var(--muted)}.empstrip .es-c{margin-left:auto;white-space:nowrap}
+.emp-head{border-color:rgba(226,196,122,.45);background:linear-gradient(180deg,rgba(226,196,122,.12),transparent)}
+.tr-row{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)}
+.tr-row.lead .tr-h span{color:var(--brass)}
+.tr-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600}
+.tr-h small{color:var(--muted);font-weight:400}
+.board-o{text-align:left}.board-o b{display:block}.board-o small{display:block;font-size:12px;opacity:.8;margin-top:2px}
+.board-o{white-space:normal!important;height:auto!important}
+/* ---------- 0.17: титульный экран — живая гонка за меню ---------- */
+#raceScreen.demo{z-index:5}
+#raceScreen.demo .r-top,#raceScreen.demo .r-hud,#raceScreen.demo .r-bars,#raceScreen.demo .r-ctrl,#raceScreen.demo #rMap,#raceScreen.demo .r-board,#raceScreen.demo .r-msg,#raceScreen.demo .r-note,#raceScreen.demo .r-grip,#raceScreen.demo #rSvc,#raceScreen.demo #rReset,#raceScreen.demo .r-mgr,#raceScreen.demo .r-tips,#raceScreen.demo .r-film{display:none!important}
+#raceScreen.demo #rView{position:absolute!important;inset:0}
+#menuScreen{z-index:9}
+#menuScreen.live{background:transparent}
+#menuScreen.live.ready{background:linear-gradient(180deg,rgba(3,6,10,.72) 0%,rgba(3,6,10,.15) 26%,rgba(3,6,10,0) 50%,rgba(3,6,10,.55) 72%,rgba(3,6,10,.88) 100%)}
+#menuScreen.live.ready .menu-hero{display:none}
+.menu-in{display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
+.menu-gap{flex:1;min-height:12px}
+.menu-titlebox{text-align:center;margin-top:10px}
+.menu-kick{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:#e2c47a;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.menu-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(30px,10.4vw,76px);letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;
+  background:linear-gradient(180deg,#fff3cf 0%,#e2c47a 45%,#a8782e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 10px rgba(0,0,0,.75))}
+.menu-sub{text-align:center;color:#e9dfc8;margin:4px 0 0;font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:15px;letter-spacing:.02em;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+.menu-cap{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e2c47a;opacity:.9;margin:0 0 10px;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+.menu-cap b{color:#f4ecd8;font-weight:500}
+#menuScreen.live.ready .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#menuScreen.live.ready .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
+#menuScreen.live.ready .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+/* праздник: победа, титул, рекорд */
+.cel{position:fixed;inset:0;z-index:96;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;transition:opacity .5s;background:radial-gradient(ellipse at 50% 32%,rgba(8,6,3,.35),rgba(8,6,3,.62));animation:celBg .4s ease}
+@keyframes celBg{0%{opacity:0}}
+.cel.out{opacity:0}
+.cel canvas{position:absolute;inset:0;width:100%;height:100%}
+.cel-t{position:relative;margin-top:calc(18vh + env(safe-area-inset-top,0px));text-align:center;padding:16px 26px 18px;border-radius:12px;background:linear-gradient(#1b140b,#0f0b06);border:1px solid rgba(241,210,122,.55);box-shadow:0 0 0 4px rgba(15,11,6,.6),0 24px 60px rgba(0,0,0,.65);max-width:86vw;box-sizing:border-box;animation:celIn .7s cubic-bezier(.2,1.4,.3,1)}
+.cel-t i{display:block;font-style:normal;font-size:44px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.cel-t b{display:block;font-family:"Playfair Display",var(--serif);font-weight:900;font-size:clamp(34px,11vw,64px);line-height:1.02;letter-spacing:.02em;color:#f1d27a;text-shadow:0 2px 0 #6b4a12,0 6px 22px rgba(0,0,0,.6);margin-top:6px}
+.cel-t span{display:block;margin-top:8px;font-size:15px;font-weight:600;color:#f6ecd2;text-shadow:0 1px 6px rgba(0,0,0,.8);max-width:80vw}
+@keyframes celIn{0%{transform:scale(.4) translateY(30px);opacity:0}100%{transform:none;opacity:1}}

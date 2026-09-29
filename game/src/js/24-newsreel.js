@@ -163,15 +163,49 @@ function reelPart(id,s){const cat=PART_CATS.find(c=>byId(c.arr(),id)),x=cat&&byI
     ...(x.note?[{c:cat.name,s:x.note}]:[]),
     ...(best?[{car:best,yaw:0.62,cap:`«${best.name}»`,say:first?`В истории это сделали ${h?h[1]:'другие'}${h?' в '+h[0]+' году':''}, а «{co}» — раньше. Газеты всего мира пишут о новинке.`:`Новую деталь можно поставить на машины «{co}» — раньше, чем её предложат поставщики.`}]:[]),
     {c:first?'Первыми в мире':'Раньше рынка',s:h?`В истории — ${h[1]}, ${h[0]}`:''}]};}
+/* ---------- итоги года: ролик собирается из того, что случилось с компанией за год ---------- */
+// Снимок года делается в январе, когда пресса называет королей: продажи, лучшая машина, победы, титулы, место в наследии
+function yearRecord(s,y){const R=s.yrec=s.yrec||{};
+  const log=(s.raceLog||[]).filter(r=>r.y===y),wins=log.filter(r=>r.place===1).map(r=>{const rc=RACES.find(x=>x.key===r.key);return {n:r.name,m:r.model||'',d:r.drv||'',maj:r.major?1:0,img:rc&&rc.img&&IMG[rc.img]?rc.img:''};});
+  wins.sort((a,b)=>b.maj-a.maj||(b.img?1:0)-(a.img?1:0));
+  // продано за год: дилерами и по заказам (разница с прошлогодним снимком); в первый раз — по продажам дилеров
+  const pod=log.filter(r=>r.place>1&&r.place<=3).length,had=!!s.ytot,prevT=s.ytot||{},cur={};let best=null,bv=0,sum=0;
+  s.models.forEach(m=>{const t=m.totalSold||0;cur[m.id]=t;const d=Math.max(0,t-(prevT[m.id]||0));sum+=d;if(d>bv){bv=d;best=m;}});s.ytot=cur;
+  const sold=had?sum:(s.peakLast||0);if(!had)bv=Math.min(bv,sold);
+  let place=0,ahead='';try{const t=legacyTable(s);place=t.place;const a=t.rows[t.place-2];ahead=a?a.n:'';}catch(e){}
+  const flv=FLAVOR.filter(f=>f[0]===y&&f[3]&&IMG[f[3]]).slice(-2).map(f=>f[2]);
+  R[y]={sold,rank:s.lastRank&&s.lastRank<99?s.lastRank:0,wins:wins.slice(0,4),nw:wins.length,pod,top:best?best.id:null,topN:bv,
+    titles:(s.kings&&s.kings.y===y?s.kings.mine:[]).slice(),place,ahead,flv};
+  Object.keys(R).forEach(k=>{if(+k<y-40)delete R[k];});}
+const capF=t=>t.charAt(0).toUpperCase()+t.slice(1);
+function reelYear(y,s){const r=(s.yrec||{})[y];if(!r)return null;const md=r.top!==null&&s.models.find(m=>m.id===r.top),sh=[{c:`Итоги ${y} года`,s:'«{co}» · {city}'}];
+  sh.push({plant:1,say:r.sold>0?`За ${y} год «{co}» продала ${carsN(r.sold)}${r.rank?` — ${r.rank}-е место среди марок страны`:''}.`:`${y} год «{co}» провела в мастерской: машины ещё только готовятся к продаже.`});
+  if(md&&r.topN>0)sh.push({car:md,yaw:0.62,cap:`«${md.name}»`,say:`Главная машина года — «${md.name}»${r.topN<r.sold?`: ${carsN(r.topN)} из ${fmtN(r.sold)}`:''}.`});
+  r.wins.slice(0,2).forEach(w=>sh.push(w.img?{i:w.img,cap:`${w.n} · ${y}`,say:`Победа в гонке «${w.n}»${w.d?`: за рулём ${w.d}`:''}${w.m?`, машина «${w.m}»`:''}.`}:{c:`Победа: ${w.n}`,s:[w.d,w.m?'«'+w.m+'»':''].filter(Boolean).join(' · ')}));
+  if(r.nw>2)sh.push({c:`Всего ${r.nw} ${plural(r.nw,'победа','победы','побед')} за год`,s:'гоночная слава продаёт машины'});
+  else if(!r.nw&&r.pod)sh.push({c:`${r.pod} ${plural(r.pod,'подиум','подиума','подиумов')} в гонках`,s:'первая победа — впереди'});
+  if(r.titles.length)sh.push({c:'👑 '+r.titles.map(capF).join(' · '),s:'титулы года по версии прессы',say:`Газеты назвали «{co}»: ${r.titles.join(', ').toLowerCase()}.`});
+  (r.flv||[]).slice(0,1).forEach(t=>{const f=flvByTitle(t);if(!f)return;const m=String(FLAVOR_TXT[t]||t).match(/^[^.!?]*[.!?]/);sh.push({i:f[3],cap:t,say:m?m[0]:t});});
+  if(r.place)sh.push({c:`Наследие: ${r.place}-е место`,s:r.ahead?`впереди — ${r.ahead}`:'«{co}» — первая среди великих марок',say:r.place===1?'В гонке за наследие эпохи «{co}» впереди всех.':`В гонке за наследие эпохи «{co}» на ${r.place}-м месте. Следующая цель — ${r.ahead}.`});
+  sh.push({c:String(y+1),s:'Новый год — новые машины, гонки и рекорды'});
+  return {t:`Итоги ${y} года`,y,sh};}
 function reelGet(id,s){if(REELS[id])return REELS[id];
   if(id.startsWith('model:')){const md=s.models.find(m=>m.id===+id.slice(6));return md?reelModel(md,s):null;}
   if(id.startsWith('part:'))return reelPart(id.slice(5),s);
+  if(id.startsWith('year:'))return reelYear(+id.slice(5),s);
   return null;}
+/* ---------- кинохроника прямо в газете: кадр плёнки с кнопкой ▶ ---------- */
+function paperReelId(o){if(o.reel)return o.reel;const c=(o.choices||[]).find(c=>/^reel:/.test(c[1]));return c?c[1].slice(5):'';}
+function reelPoster(R,s){for(const x of R.sh)if(x.i&&IMG[x.i])return `<img src="${IMG[x.i].src}" alt="" referrerpolicy="no-referrer">`;
+  const c=R.sh.find(x=>x.car);if(c)return carArt(c.car,{w:360,yaw:c.yaw||0.62,pitch:0.28});
+  try{const v=plantImage(s);if(v&&v.url)return `<img src="${v.url}" alt="">`;}catch(e){}return '<em>КИНО</em>';}
+function paperReelHTML(id,s){const R=id&&reelGet(id,s);if(!R)return '';const d=Math.round(R.sh.reduce((a,x)=>a+reelShotDur(x),2.6));
+  return `<button class="p-reel" data-act="reel" data-k="${esc(id)}" aria-label="Смотреть кинохронику"><span class="p-reel-f">${reelPoster(R,s)}<i>▶</i></span><span class="p-reel-t"><b>Кинохроника</b>${esc(reelFill(R.t,s))}<small>${d<60?d+' сек':'около '+Math.round(d/60)+' мин'} · смотреть</small></span></button>`;}
 function reelTitle(id,s){const R=reelGet(id,s);return R?R.t:'';}
 // Открыть ролик для хроники и предложить посмотреть: событие с кнопкой «Кинохроника»
 function reelUnlock(s,id){s.reels=s.reels||[];if(!s.reels.includes(id)){s.reels.push(id);if(s.reels.length>60)s.reels.shift();}}
 function reelOffer(s,id,title,deck,text){if(!reelGet(id,s))return;reelUnlock(s,id);
-  pushEvent({kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['▶ Смотреть кинохронику','reel:'+id],['Дальше','ok']]},false);}
+  pushEvent({own:1,kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['Дальше','ok'],['▶ Смотреть кинохронику','reel:'+id]]},true);}
 /* ---------- голос диктора ---------- */
 const REEL_VOICE_KEY='avt-reel-voice';
 function reelVoiceOn(){try{return localStorage.getItem(REEL_VOICE_KEY)!=='0';}catch(e){return true;}}
@@ -206,7 +240,7 @@ function playReel(id){
   // Safari разрешает голос только после нажатия: «разогреваем» синтезатор тихой фразой прямо в обработчике нажатия
   try{if(reelVoiceOn()&&!window.AndroidTTS&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}
   const el=document.createElement('div');el.id='reel';el.className='reel';
-  el.innerHTML=`<div class="rl-title">Кинохроника · ${esc(reelFill(R0.t,s))}${R0.y?' · '+R0.y:''}</div>
+  el.innerHTML=`<div class="rl-title">Кинохроника · ${esc(reelFill(R0.t,s))}${R0.y&&!String(R0.t).includes(R0.y)?' · '+R0.y:''}</div>
     <div class="rl-frame"><div class="rl-shots"></div><canvas class="rl-grain" width="160" height="120"></canvas><i class="rl-scr"></i><i class="rl-scr b"></i><div class="rl-flick"></div><div class="rl-vig"></div><div class="rl-bar"><i></i></div></div>
     <div class="rl-sub"></div>
     <div class="rl-ctl"><button class="rl-btn" data-rl="voice" aria-label="Голос диктора">${reelVoiceOn()?'🔊':'🔇'}</button><button class="rl-btn" data-rl="next" aria-label="Следующий кадр">▸▸</button><button class="rl-btn" data-rl="close" aria-label="Закрыть">✕</button></div>`;
@@ -255,5 +289,5 @@ function auReelTick(){try{if(AU.ctx&&AU.on.sfx)vNoise(AU.ctx.currentTime,0.05,0.
 function reelsCard(s){const L=['intro',...(s.reels||[]).filter(id=>id!=='intro')].filter(id=>reelGet(id,s));
   return foldCard('reels',false,`<h2>Кинохроника</h2><span class="num muted">${L.length}</span>`,
     `<p class="small muted" style="margin-top:4px">Короткие фильмы о технологиях и событиях автопрома — новые появляются, когда вы внедряете технологии, строите прототипы, выпускаете модели и когда меняется история. Голос диктора — если устройство умеет читать по-русски.</p>
-    <div class="reel-list">${L.slice().reverse().map(id=>{const R=reelGet(id,s);return `<button class="chip" style="width:100%;margin-top:6px" data-act="reel" data-k="${esc(id)}"><small>${R.y||''}${R.y?' · ':''}${id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':'история'}</small>▶ ${esc(reelFill(R.t,s))}</button>`;}).join('')}</div>`,
+    <div class="reel-list">${L.slice().reverse().map(id=>{const R=reelGet(id,s);return `<button class="chip" style="width:100%;margin-top:6px" data-act="reel" data-k="${esc(id)}"><small>${R.y||''}${R.y?' · ':''}${id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':id.startsWith('year:')?'итоги года':'история'}</small>▶ ${esc(reelFill(R.t,s))}</button>`;}).join('')}</div>`,
     `${L.length} ${plural(L.length,'фильм','фильма','фильмов')}`);}

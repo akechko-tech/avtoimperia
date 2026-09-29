@@ -94,7 +94,8 @@ function bez2(a,c,b,n){const P=[];for(let k=1;k<=n;k++){const t=k/n,u=1-t;P.push
 function mCrew2(M,x,seatY,z,kit,mech,S,hand){
   const hi=MLOD===1,sg=hi?12:6,coat=mech?shade(kit.coat,-0.12):kit.coat,y0=seatY+0.02;
   // торс: горизонтальные сечения-эллипсы от сиденья до плеч, чуть откинут назад
-  const lv=[[0,0.17,0.12,0],[0.2,0.16,0.11,-0.02],[0.4,0.19,0.125,-0.05],[0.54,0.2,0.1,-0.07],[0.6,0.12,0.075,-0.07],[0.64,0.06,0.05,-0.06]];
+  // плечи — широкие и прямые (раньше торс сужался «бутылкой»)
+  const lv=[[0,0.18,0.13,0],[0.18,0.165,0.12,-0.02],[0.36,0.2,0.13,-0.04],[0.5,0.225,0.12,-0.06],[0.57,0.232,0.105,-0.07],[0.615,0.17,0.085,-0.07],[0.65,0.075,0.06,-0.06]];
   const G=lv.map(([h,wx,wz,dz])=>{const row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2;row.push([x+Math.cos(a)*wx,y0+h,z+dz+Math.sin(a)*wz]);}return row;});
   mGrid(M,G,coat,'cloth',{wrap:true,ref:(c,i)=>[x,y0+(lv[i][0]+lv[i+1][0])/2,z+lv[i][3]]});
   // голова, шлем или кепи, очки
@@ -108,7 +109,7 @@ function mCrew2(M,x,seatY,z,kit,mech,S,hand){
   if(hi)[-1,1].forEach(sd=>mLathe(M,[x+sd*0.042,hy+0.025,hz+0.1],'z',[[0.03,-0.02],[0.032,0.012],[0.024,0.02],[0,0.021]],8,'#8a6a3a','metal'));
   if(hi)mTube(M,[[x-0.11,hy+0.03,hz+0.02],[x-0.1,hy+0.032,hz+0.08],[x-0.06,hy+0.03,hz+0.1],[x+0.06,hy+0.03,hz+0.1],[x+0.1,hy+0.032,hz+0.08],[x+0.11,hy+0.03,hz+0.02]],0.008,'#2b1d12','leather',3);
   // руки к рулю (у механика — к борту и поручню)
-  const sy=y0+0.52,sz=z-0.06;[-1,1].forEach(sd=>{const sx=x+sd*0.19,h=mech?[x+sd*0.3,seatY+0.3,z+0.12]:[x+sd*0.13,hand[1],hand[2]],el=[(sx+h[0])/2+sd*0.06,(sy+h[1])/2-0.12,(sz+h[2])/2-0.02];
+  const sy=y0+0.53,sz=z-0.07;[-1,1].forEach(sd=>{const sx=x+sd*0.2,h=mech?[x+sd*0.3,seatY+0.3,z+0.12]:[x+sd*0.13,hand[1],hand[2]],el=[(sx+h[0])/2+sd*0.06,(sy+h[1])/2-0.12,(sz+h[2])/2-0.02];
     mTube(M,[[sx,sy,sz],el,h],[0.052,0.046,0.04],hi?6:3,coat,'cloth');mLathe(M,h,'y',[[0,-0.035],[0.035,-0.02],[0.04,0.01],[0.025,0.035],[0,0.04]],hi?8:4,'#6b4a30','leather');});
   // шарф: кольцо на шее и развевающийся конец
   if(!mech&&hi){const sc=S.y<1920?'#ece6d4':'#b8322a';mTube(M,[[x-0.07,y0+0.63,z-0.06],[x,y0+0.65,z+0.0],[x+0.07,y0+0.63,z-0.06],[x,y0+0.62,z-0.13],[x-0.07,y0+0.63,z-0.06]],0.03,sc,'cloth',5);
@@ -284,8 +285,8 @@ function carModel(S){
     mGrid(M,G,K.tyre,'tyre',{wrap:true,ref:c=>{if(ax==='z'){const dx=c[0]-x,dy=c[1]-yy,l=Math.hypot(dx,dy)||1;return [x+dx/l*R0,yy+dy/l*R0,z];}const dz=c[2]-z,dy=c[1]-yy,l=Math.hypot(dz,dy)||1;return [x,yy+dy/l*R0,z+dz/l*R0];}});
     mLathe(M,[x,yy,z],ax,[[R0-tr,-tw*0.3],[R0-tr*0.7,tw*0.3],[0,tw*0.3]],seg,K.chassis,'paint');};
   const bumper=(z,w,yy)=>{[-0.035,0.035].forEach(dy=>tube([[-w,yy+dy,z-0.06],[-w*0.9,yy+dy,z],[w*0.9,yy+dy,z],[w,yy+dy,z-0.06]],0.018,K.bright,K.brightMat,5));};
-  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew2(M,x,seatY,z,crewKit3(y),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
-  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew2(M,x,seatY,z,crewKit3(y),true,S,null);};
+  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew2(M,x,seatY,z,crewKit3(y,S.num),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
+  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew2(M,x,seatY,z,crewKit3(y,(S.num|0)+1),true,S,null);};
   const eyeAt=(x,seatY,z)=>{if(!M.eye)M.eye=[x,seatY+0.8,z+0.06];};
   // табличка с номером: центр c, нормаль nrm (наружу), ось «вправо» u; w×h
   const plate=(c,nrm,u,w,h,round)=>{if(!S.num||!hi)return;const v=v3x(nrm,u).map(q=>-q),P=[],k=round?10:4;
