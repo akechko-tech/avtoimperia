@@ -45,7 +45,11 @@ SEARCH_Q = {
     'Adlerwerke': 'Adler automobile 1901', 'Brennabor': 'Brennabor automobile', 'Amilcar': 'Amilcar CC 1922',
     'Lanchester Motor Company': 'Lanchester 1901 car', 'Singer Motor Company': 'Singer car 1905 veteran', 'Austin Motor Company': 'Austin 1907 car veteran',
     'MG M-type Midget': 'MG M-type Midget', 'Plymouth Model Q': 'Plymouth Model Q 1928', 'Rambler (1900–1914)': 'Rambler 1902 car',
-    'Studebaker': 'Studebaker 1904 car', 'Mercer Raceabout': 'Mercer Raceabout', 'Bianchi': 'Bianchi automobile 1907', 'Isotta Fraschini': 'Isotta Fraschini 1908 car'}
+    'Studebaker': 'Studebaker 1904 car', 'Mercer Raceabout': 'Mercer Raceabout', 'Bianchi': 'Bianchi automobile 1907', 'Isotta Fraschini': 'Isotta Fraschini 1908 car',
+    # 0.17: фото для глав фильма о героях и газет
+    'Benz Patent-Motorwagen': 'Benz Patent-Motorwagen 1886', 'Giovanni Agnelli': 'Giovanni Agnelli 1866', 'Chicago Times-Herald race': 'Duryea Motor Wagon 1895',
+    '1906 French Grand Prix': 'Szisz Renault 1906 Grand Prix', '1924 European Grand Prix': 'Grand Prix Lyon 1924', 'Coppa Acerbo': 'Coppa Acerbo',
+    'Mercedes-Benz': 'Mercedes-Benz SSK', 'Battle of Verdun': 'Verdun 1916 soldiers'}
 SKIP = re.compile(r'logo|emblem|badge|poster|advert|\bad\b|map|engine|interior|dashboard|plate|hood ornament|mascot|bicycle|truck|bus\b|tractor|aircraft|plane|train|factory|building|drawing|\.pdf$|\.svg$|\.tif', re.I)
 
 def commons_search(q):
