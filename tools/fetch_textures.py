@@ -62,18 +62,22 @@ SKIES = [
 def text_of(i, a):
     return ' '.join([i.replace('_', ' '), a.get('name', ''), ' '.join(a.get('tags', [])), ' '.join(a.get('categories', []))]).lower()
 
-def pick(assets, spec, used):
-    best, bs = None, -1e9
-    ids = [x for x in spec.get('ids', []) if x in assets and x not in used]
-    if ids: return ids[0], 'ids'
+CANDS = {}
+def pick(assets, spec, used, slot=''):
+    L = []
     for i, a in assets.items():
-        if i in used: continue
         t = text_of(i, a)
         if any(re.search(r'\b' + re.escape(n) + r'\b', t) for n in spec.get('no', [])): continue
         if not all(any(re.search(r'\b' + re.escape(w), t) for w in grp) for grp in spec['must']): continue
         s = 10 * sum(1 for w in spec.get('prefer', []) if re.search(r'\b' + re.escape(w), t)) + math.log10(1 + a.get('download_count', 0))
-        if s > bs: best, bs = i, s
-    return best, round(bs, 2)
+        L.append((s, i))
+    L.sort(reverse=True)
+    CANDS[slot] = [[i, round(s, 1), ' '.join(assets[i].get('tags', [])[:8])] for s, i in L[:8]]
+    ids = [x for x in spec.get('ids', []) if x in assets and x not in used]
+    if ids: return ids[0], 'ids'
+    for s, i in L:
+        if i not in used: return i, round(s, 2)
+    return None, 0
 
 def find_map(files, names):
     low = {k.lower(): k for k in files}
@@ -96,7 +100,7 @@ def textures():
     print('textures on Poly Haven:', len(assets))
     man, used, prev = {}, set(), []
     for slot, spec in SLOTS:
-        aid, why = pick(assets, spec, used)
+        aid, why = pick(assets, spec, used, slot)
         if not aid:
             print('slot', slot, ': nothing'); man[slot] = None; continue
         used.add(aid); a = assets[aid]
@@ -183,6 +187,45 @@ def skies():
             print('sky', mood, 'error', best, e)
     return man
 
+def foliage():
+    from PIL import Image
+    assets = jget(API + '/assets?t=models')
+    want = [('broad', ['tree', 'oak', 'maple', 'beech', 'birch', 'ash', 'poplar', 'shrub', 'bush'], ['fir', 'pine', 'spruce', 'palm', 'cactus', 'dead', 'stump', 'log', 'potted', 'pot', 'indoor', 'flower']),
+            ('conifer', ['fir', 'pine', 'spruce', 'conifer', 'cypress'], ['dead', 'stump', 'log', 'potted', 'pot', 'indoor']),
+            ('shrub', ['shrub', 'bush', 'hedge', 'fern', 'grass', 'weed'], ['dead', 'potted', 'pot', 'indoor', 'flower pot'])]
+    out, used, cands = {}, set(), {}
+    for kind, words, no in want:
+        L = []
+        for i, a in assets.items():
+            t = text_of(i, a)
+            if not any(re.search(r'\b' + w, t) for w in words) or any(re.search(r'\b' + n + r'\b', t) for n in no): continue
+            L.append((sum(1 for w in words if re.search(r'\b' + w, t)) * 5 + math.log10(1 + a.get('download_count', 0)), i))
+        L.sort(reverse=True); cands[kind] = [i for s, i in L[:10]]
+        for s, i in L:
+            if i in used: continue
+            try:
+                files = jget(API + '/files/' + i)
+                g = files.get('gltf', {})
+                node = g.get('1k') or g.get('2k') or {}
+                inc = (node.get('gltf') or {}).get('include', {})
+                leaf = [k for k in inc if re.search(r'leaf|leaves|foliage|needle|branch|twig', k, re.I) and re.search(r'diff|col|albedo', k, re.I)]
+                if not leaf: continue
+                k0 = sorted(leaf, key=len)[0]
+                im = Image.open(io.BytesIO(get(inc[k0]['url']))).convert('RGBA')
+                al = [k for k in inc if re.search(r'leaf|leaves|foliage|needle|branch|twig', k, re.I) and re.search(r'alpha|opacity|mask', k, re.I)]
+                if al:
+                    a2 = Image.open(io.BytesIO(get(inc[al[0]]['url']))).convert('L').resize(im.size)
+                    im.putalpha(a2)
+                if im.getextrema()[3][0] > 200: continue          # нет прозрачности — не годится
+                im = im.resize((512, 512), Image.LANCZOS)
+                im.save(os.path.join(OUT, 'leaf_' + kind + '.png'), 'PNG', optimize=True)
+                used.add(i); out[kind] = {'id': i, 'name': assets[i].get('name', i), 'file': k0}
+                print('leaf', kind, '->', i, k0); break
+            except Exception as e:
+                print('leaf', kind, i, 'error', e)
+    out['_cands'] = cands
+    return out
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     man = {'license': 'CC0 1.0 — Poly Haven (polyhaven.com)', 'size': SIZE, 'mat': {}, 'sky': {}}
@@ -190,6 +233,9 @@ def main():
     except Exception as e: print('textures failed', e)
     try: man['sky'] = skies()
     except Exception as e: print('skies failed', e)
+    man['cands'] = CANDS
+    try: man['leaf'] = foliage()
+    except Exception as e: print('foliage failed', e)
     with open(os.path.join(OUT, 'manifest.json'), 'w', encoding='utf-8') as f: json.dump(man, f, ensure_ascii=False, indent=1)
     print('done:', sum(1 for v in man['mat'].values() if v), 'materials,', len(man['sky']), 'skies')
 
