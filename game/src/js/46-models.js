@@ -83,7 +83,12 @@ function mCrew(M,x,seatY,z,kit,mech,S,handZ){
   // шарф у пилота
   if(!mech){const sc=S.y<1920?'#ece6d4':'#b8322a';mFace(M,[[x-0.04,sh+0.02,z-0.08],[x+0.04,sh+0.02,z-0.08],[x+0.14,sh-0.08,z-0.42],[x+0.06,sh-0.1,z-0.42]],sc,'cloth',null,true);}
 }
-function crewKit3(y){return y<1906?{coat:'#6b5a44',cap:'cap',hat:'#3a3026'}:y<1915?{coat:'#7a6a55',cap:'helmet',hat:'#5a3f28'}:y<1922?{coat:'#8a8272',cap:'helmet',hat:'#4d3524'}:{coat:'#d8d4c8',cap:'helmet',hat:'#5b4030'};}
+// Одежда экипажа по эпохе; n — номер машины: у разных экипажей разные пыльники и кожанки (светлый комбинезон, чёрная кожа, хаки)
+function crewKit3(y,n){const k=Math.abs(n|0)%4;
+  if(y<1906)return {coat:['#6b5a44','#4a4038','#7d6e58','#3c3a38'][k],cap:k===2?'helmet':'cap',hat:['#3a3026','#2a2622','#5a3f28','#3a3026'][k]};
+  if(y<1915)return {coat:['#7a6a55','#d2cbbb','#4a3f36','#8a7a60'][k],cap:'helmet',hat:['#5a3f28','#4a3524','#2a2420','#6a4a2e'][k]};
+  if(y<1922)return {coat:['#8a8272','#3a3632','#cfc8b8','#6a5e4a'][k],cap:'helmet',hat:['#4d3524','#2a2420','#5a3f28','#4d3524'][k]};
+  return {coat:['#d8d4c8','#3a3a3c','#e6e2d8','#7a6e5a'][k],cap:'helmet',hat:['#5b4030','#2a2420','#6a4a30','#4a3a2a'][k]};}
 // Руль: обод и колонка — линии, наклонённые к пилоту
 function mSteer(M,x,y,z,r,S){const deco=[],seg=14,tilt=0.75,P=a=>[x+Math.cos(a)*r,y+Math.sin(a)*r*Math.cos(tilt),z-Math.sin(a)*r*Math.sin(tilt)];
   for(let k=0;k<seg;k++)deco.push({a:P(k/seg*6.283),b:P((k+1)/seg*6.283),w:0.028,c:S.y<1912?'#5a3a22':'#1f1f22'});
@@ -92,7 +97,7 @@ function mSteer(M,x,y,z,r,S){const deco=[],seg=14,tilt=0.75,P=a=>[x+Math.cos(a)*
 // ---------- модели по облику (прежние, простые; новые — в 46b-cars.js) ----------
 function carModelV1(S){
   MLOD=S.lod==='lo'?0:1;const M=new Mesh(),st=S.style,y=S.y,col=S.color||'#23427a',brass=y<1916?'#c9a24a':'#c8ccd2',dark='#1c1d21',leather=y<1920?'#5a3a24':'#6e2a22';
-  const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y);
+  const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y,S.num);
   let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':S.wheel==='disc'?'disc':'wood';
   const G={}; // размеры
   // колесо помечается номером: в 3D оно крутится, передние ещё и поворачивают (радиус со знаком «−»)

@@ -20,7 +20,7 @@ with sync_playwright() as p:
         while pg.evaluate("R&&R.loading")and time.time()-t0<60: pg.wait_for_timeout(200)
         print(key,'loaded in',round(time.time()-t0,1),'s; gl',pg.evaluate("R&&R.gl"),'wx',pg.evaluate("R&&JSON.stringify(R.wx)"))
         if film=='shots':
-            for i,ft in enumerate([1.5,5.5,9.5,13.2]):
+            for i,ft in enumerate([1.5,5.5,11.0,14.8]):
                 pg.evaluate("t=>{if(R&&R.film){R.film.t=t;}}",ft);pg.wait_for_timeout(900)
                 pg.screenshot(path=out+f'f17_{key}_film{i}.png',timeout=120000)
         pg.evaluate("if(R&&R.film)filmSkip();document.getElementById('rTips').hidden=true;if(R)R.hold=false;")

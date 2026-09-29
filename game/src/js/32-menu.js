@@ -1,4 +1,5 @@
 /* ================= MAIN MENU ================= */
+const GAME_VER='0.17';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -30,7 +31,7 @@ function showMainMenu(){
       <button class="btn block" data-act="settings">Звук, графика и управление</button>
       <button class="btn block" data-act="about">Об игре</button></div>
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
-    <p class="small muted menu-foot">Вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
+    <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
   MS.hidden=false;
   // живая гонка за меню — чуть позже, чтобы меню появилось сразу
   setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
@@ -39,4 +40,5 @@ function hideMainMenu(){demoStop();MS.hidden=true;MS.innerHTML='';MS.classList.r
 function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
   <div class="stack small" style="margin-top:10px"><p>«Автоимперия» — современная версия классических экономических стратегий об автомобильной индустрии начала XX века в духе Motor City / Oldtimer (1994). Название, графика и код — оригинальные.</p>
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
-  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p></div>`);}
+  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p>
+  <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p><p class="muted">Версия ${GAME_VER}</p></div>`);}

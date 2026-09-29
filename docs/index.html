@@ -196,6 +196,19 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .p-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .p-btn{font-family:var(--sans);background:var(--ink);color:var(--paper);border:0;border-radius:4px;padding:12px;font-size:15px;font-weight:600;cursor:pointer}
 .p-btn.alt{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+/* кинохроника в газете: кадр плёнки с перфорацией и кнопкой ▶ */
+.p-reel{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 10px;padding:12px 12px;border:0;border-radius:3px;cursor:pointer;text-align:left;color:#efe6d0;font-family:var(--sans);background:#18140f;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent}
+.p-reel::before,.p-reel::after{content:"";position:absolute;left:5px;right:5px;height:5px;background:repeating-linear-gradient(90deg,rgba(239,230,208,.55) 0 6px,transparent 6px 14px);border-radius:1px}
+.p-reel::before{top:3px}.p-reel::after{bottom:3px}
+.p-reel:active{transform:scale(.99)}
+.p-reel-f{position:relative;flex:0 0 46%;aspect-ratio:4/3;overflow:hidden;border-radius:2px;background:#2b251d}
+.p-reel-f img,.p-reel-f svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(.5) contrast(1.2) brightness(.9)}
+.p-reel-f em{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;letter-spacing:.3em;opacity:.5}
+.p-reel-f i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(10,8,6,.6);border:2px solid #efe6d0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:18px;padding-left:4px;box-sizing:border-box;box-shadow:0 0 0 6px rgba(239,230,208,.12);animation:reelPulse 2.4s ease-in-out infinite}
+@keyframes reelPulse{50%{box-shadow:0 0 0 11px rgba(239,230,208,0)}}
+.p-reel-t{flex:1;min-width:0;font-size:15px;line-height:1.25;font-weight:600}
+.p-reel-t b{display:block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#d9b45e;margin-bottom:4px}
+.p-reel-t small{display:block;font-size:12px;opacity:.7;font-weight:400;margin-top:6px}
 
 /* race screen */
 #raceScreen{position:fixed;inset:0;z-index:20;background:#070f18;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -606,6 +619,16 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 #menuScreen.live.ready .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #menuScreen.live.ready .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
 #menuScreen.live.ready .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+/* праздник: победа, титул, рекорд */
+.cel{position:fixed;inset:0;z-index:96;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;transition:opacity .5s;background:radial-gradient(ellipse at 50% 32%,rgba(8,6,3,.35),rgba(8,6,3,.62));animation:celBg .4s ease}
+@keyframes celBg{0%{opacity:0}}
+.cel.out{opacity:0}
+.cel canvas{position:absolute;inset:0;width:100%;height:100%}
+.cel-t{position:relative;margin-top:calc(18vh + env(safe-area-inset-top,0px));text-align:center;padding:16px 26px 18px;border-radius:12px;background:linear-gradient(#1b140b,#0f0b06);border:1px solid rgba(241,210,122,.55);box-shadow:0 0 0 4px rgba(15,11,6,.6),0 24px 60px rgba(0,0,0,.65);max-width:86vw;box-sizing:border-box;animation:celIn .7s cubic-bezier(.2,1.4,.3,1)}
+.cel-t i{display:block;font-style:normal;font-size:44px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.cel-t b{display:block;font-family:"Playfair Display",var(--serif);font-weight:900;font-size:clamp(34px,11vw,64px);line-height:1.02;letter-spacing:.02em;color:#f1d27a;text-shadow:0 2px 0 #6b4a12,0 6px 22px rgba(0,0,0,.6);margin-top:6px}
+.cel-t span{display:block;margin-top:8px;font-size:15px;font-weight:600;color:#f6ecd2;text-shadow:0 1px 6px rgba(0,0,0,.8);max-width:80vw}
+@keyframes celIn{0%{transform:scale(.4) translateY(30px);opacity:0}100%{transform:none;opacity:1}}
 </style>
 
 <div class="wrap">
@@ -2003,7 +2026,7 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
@@ -2885,24 +2908,26 @@ function paperHTML(o,s){
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
       :md?`<figure class="p-fig" style="margin-inline:0">${carArt(md,Object.assign({paper:1},o.carOpt||{}))}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>`:'';
   const hist=o.hist&&IMG[o.hist]?`<div class="p-hist"><img src="${IMG[o.hist].src}" alt="" referrerpolicy="no-referrer"><span>${esc(o.histCap||'Так было в истории')}</span></div>`:'';
+  // кинохроника — кадром плёнки прямо в номере (кнопка «▶» запускает ролик, газета остаётся открытой)
+  const rid=paperReelId(o),reel=rid?paperReelHTML(rid,s):'',ch=(o.choices||[['Дальше','close']]).filter(c=>!(reel&&/^reel:/.test(c[1])));
   return `<article class="paper ${REDUCE?'':'spin'}">
     <div class="p-top"><span>${COUNTRIES[s.country].city} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
     <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
-    ${fig}
+    ${fig}${reel}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
       <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
-    <div class="p-btns">${(o.choices||[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
+    <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
   </article>`;
 }
 const PW=document.getElementById('paperWrap');
 let PAPER_CUR=null;
 function showPaper(o,store=true){
   if(store){if(!o.also)o.also=flavorPick(G,G.y,G.m,2,G.papers.length+mi(G),true);
-    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also});if(G.papers.length>40)G.papers.shift();save();}
+    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||''});if(G.papers.length>40)G.papers.shift();save();}
   PAPER_CUR=o;PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}
@@ -2925,7 +2950,7 @@ const MILES=[[100,'Сотая машина','Сто машин — это сто
   [100000,'Сто тысяч машин','Ford впервые перешагнул сотню тысяч машин в год в 1912 году. Ваша марка — среди великих.'],
   [1000000,'Миллионная машина','Миллионный Ford T сошёл с конвейера в декабре 1915 года. Теперь и у вас миллион!']];
 function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms];if(!m||n<m[0])return;s.ms++;const top=s.models.filter(x=>x.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
-  pushEvent({own:1,carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);}
+  pushEvent({own:1,cel:[m[1]+'!',`«${s.company}» · продано ${fmtN(m[0])} машин`,'🚗'],carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);}
 function launchPaper(s,md){if(s.pending.length>1)return;const C=classCompare(md,s,s.country),ks=CHAR_K.filter(k=>C.W[k]>0),best=ks.slice().sort((a,b)=>C.by[b]-C.by[a])[0],worst=ks.slice().sort((a,b)=>C.by[a]-C.by[b])[0],ref=refPrice(md,s),pr=md.price/ref-1;
   const verdict=C.S>=1.08?'машина лучше соперников':C.S>=0.9?'машина не хуже соперников':'машина уступает соперникам';
   reelUnlock(s,'model:'+md.id);
@@ -3280,15 +3305,49 @@ function reelPart(id,s){const cat=PART_CATS.find(c=>byId(c.arr(),id)),x=cat&&byI
     ...(x.note?[{c:cat.name,s:x.note}]:[]),
     ...(best?[{car:best,yaw:0.62,cap:`«${best.name}»`,say:first?`В истории это сделали ${h?h[1]:'другие'}${h?' в '+h[0]+' году':''}, а «{co}» — раньше. Газеты всего мира пишут о новинке.`:`Новую деталь можно поставить на машины «{co}» — раньше, чем её предложат поставщики.`}]:[]),
     {c:first?'Первыми в мире':'Раньше рынка',s:h?`В истории — ${h[1]}, ${h[0]}`:''}]};}
+/* ---------- итоги года: ролик собирается из того, что случилось с компанией за год ---------- */
+// Снимок года делается в январе, когда пресса называет королей: продажи, лучшая машина, победы, титулы, место в наследии
+function yearRecord(s,y){const R=s.yrec=s.yrec||{};
+  const log=(s.raceLog||[]).filter(r=>r.y===y),wins=log.filter(r=>r.place===1).map(r=>{const rc=RACES.find(x=>x.key===r.key);return {n:r.name,m:r.model||'',d:r.drv||'',maj:r.major?1:0,img:rc&&rc.img&&IMG[rc.img]?rc.img:''};});
+  wins.sort((a,b)=>b.maj-a.maj||(b.img?1:0)-(a.img?1:0));
+  // продано за год: дилерами и по заказам (разница с прошлогодним снимком); в первый раз — по продажам дилеров
+  const pod=log.filter(r=>r.place>1&&r.place<=3).length,had=!!s.ytot,prevT=s.ytot||{},cur={};let best=null,bv=0,sum=0;
+  s.models.forEach(m=>{const t=m.totalSold||0;cur[m.id]=t;const d=Math.max(0,t-(prevT[m.id]||0));sum+=d;if(d>bv){bv=d;best=m;}});s.ytot=cur;
+  const sold=had?sum:(s.peakLast||0);if(!had)bv=Math.min(bv,sold);
+  let place=0,ahead='';try{const t=legacyTable(s);place=t.place;const a=t.rows[t.place-2];ahead=a?a.n:'';}catch(e){}
+  const flv=FLAVOR.filter(f=>f[0]===y&&f[3]&&IMG[f[3]]).slice(-2).map(f=>f[2]);
+  R[y]={sold,rank:s.lastRank&&s.lastRank<99?s.lastRank:0,wins:wins.slice(0,4),nw:wins.length,pod,top:best?best.id:null,topN:bv,
+    titles:(s.kings&&s.kings.y===y?s.kings.mine:[]).slice(),place,ahead,flv};
+  Object.keys(R).forEach(k=>{if(+k<y-40)delete R[k];});}
+const capF=t=>t.charAt(0).toUpperCase()+t.slice(1);
+function reelYear(y,s){const r=(s.yrec||{})[y];if(!r)return null;const md=r.top!==null&&s.models.find(m=>m.id===r.top),sh=[{c:`Итоги ${y} года`,s:'«{co}» · {city}'}];
+  sh.push({plant:1,say:r.sold>0?`За ${y} год «{co}» продала ${carsN(r.sold)}${r.rank?` — ${r.rank}-е место среди марок страны`:''}.`:`${y} год «{co}» провела в мастерской: машины ещё только готовятся к продаже.`});
+  if(md&&r.topN>0)sh.push({car:md,yaw:0.62,cap:`«${md.name}»`,say:`Главная машина года — «${md.name}»${r.topN<r.sold?`: ${carsN(r.topN)} из ${fmtN(r.sold)}`:''}.`});
+  r.wins.slice(0,2).forEach(w=>sh.push(w.img?{i:w.img,cap:`${w.n} · ${y}`,say:`Победа в гонке «${w.n}»${w.d?`: за рулём ${w.d}`:''}${w.m?`, машина «${w.m}»`:''}.`}:{c:`Победа: ${w.n}`,s:[w.d,w.m?'«'+w.m+'»':''].filter(Boolean).join(' · ')}));
+  if(r.nw>2)sh.push({c:`Всего ${r.nw} ${plural(r.nw,'победа','победы','побед')} за год`,s:'гоночная слава продаёт машины'});
+  else if(!r.nw&&r.pod)sh.push({c:`${r.pod} ${plural(r.pod,'подиум','подиума','подиумов')} в гонках`,s:'первая победа — впереди'});
+  if(r.titles.length)sh.push({c:'👑 '+r.titles.map(capF).join(' · '),s:'титулы года по версии прессы',say:`Газеты назвали «{co}»: ${r.titles.join(', ').toLowerCase()}.`});
+  (r.flv||[]).slice(0,1).forEach(t=>{const f=flvByTitle(t);if(!f)return;const m=String(FLAVOR_TXT[t]||t).match(/^[^.!?]*[.!?]/);sh.push({i:f[3],cap:t,say:m?m[0]:t});});
+  if(r.place)sh.push({c:`Наследие: ${r.place}-е место`,s:r.ahead?`впереди — ${r.ahead}`:'«{co}» — первая среди великих марок',say:r.place===1?'В гонке за наследие эпохи «{co}» впереди всех.':`В гонке за наследие эпохи «{co}» на ${r.place}-м месте. Следующая цель — ${r.ahead}.`});
+  sh.push({c:String(y+1),s:'Новый год — новые машины, гонки и рекорды'});
+  return {t:`Итоги ${y} года`,y,sh};}
 function reelGet(id,s){if(REELS[id])return REELS[id];
   if(id.startsWith('model:')){const md=s.models.find(m=>m.id===+id.slice(6));return md?reelModel(md,s):null;}
   if(id.startsWith('part:'))return reelPart(id.slice(5),s);
+  if(id.startsWith('year:'))return reelYear(+id.slice(5),s);
   return null;}
+/* ---------- кинохроника прямо в газете: кадр плёнки с кнопкой ▶ ---------- */
+function paperReelId(o){if(o.reel)return o.reel;const c=(o.choices||[]).find(c=>/^reel:/.test(c[1]));return c?c[1].slice(5):'';}
+function reelPoster(R,s){for(const x of R.sh)if(x.i&&IMG[x.i])return `<img src="${IMG[x.i].src}" alt="" referrerpolicy="no-referrer">`;
+  const c=R.sh.find(x=>x.car);if(c)return carArt(c.car,{w:360,yaw:c.yaw||0.62,pitch:0.28});
+  try{const v=plantImage(s);if(v&&v.url)return `<img src="${v.url}" alt="">`;}catch(e){}return '<em>КИНО</em>';}
+function paperReelHTML(id,s){const R=id&&reelGet(id,s);if(!R)return '';const d=Math.round(R.sh.reduce((a,x)=>a+reelShotDur(x),2.6));
+  return `<button class="p-reel" data-act="reel" data-k="${esc(id)}" aria-label="Смотреть кинохронику"><span class="p-reel-f">${reelPoster(R,s)}<i>▶</i></span><span class="p-reel-t"><b>Кинохроника</b>${esc(reelFill(R.t,s))}<small>${d<60?d+' сек':'около '+Math.round(d/60)+' мин'} · смотреть</small></span></button>`;}
 function reelTitle(id,s){const R=reelGet(id,s);return R?R.t:'';}
 // Открыть ролик для хроники и предложить посмотреть: событие с кнопкой «Кинохроника»
 function reelUnlock(s,id){s.reels=s.reels||[];if(!s.reels.includes(id)){s.reels.push(id);if(s.reels.length>60)s.reels.shift();}}
 function reelOffer(s,id,title,deck,text){if(!reelGet(id,s))return;reelUnlock(s,id);
-  pushEvent({kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['▶ Смотреть кинохронику','reel:'+id],['Дальше','ok']]},false);}
+  pushEvent({own:1,kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['Дальше','ok'],['▶ Смотреть кинохронику','reel:'+id]]},true);}
 /* ---------- голос диктора ---------- */
 const REEL_VOICE_KEY='avt-reel-voice';
 function reelVoiceOn(){try{return localStorage.getItem(REEL_VOICE_KEY)!=='0';}catch(e){return true;}}
@@ -3323,7 +3382,7 @@ function playReel(id){
   // Safari разрешает голос только после нажатия: «разогреваем» синтезатор тихой фразой прямо в обработчике нажатия
   try{if(reelVoiceOn()&&!window.AndroidTTS&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}
   const el=document.createElement('div');el.id='reel';el.className='reel';
-  el.innerHTML=`<div class="rl-title">Кинохроника · ${esc(reelFill(R0.t,s))}${R0.y?' · '+R0.y:''}</div>
+  el.innerHTML=`<div class="rl-title">Кинохроника · ${esc(reelFill(R0.t,s))}${R0.y&&!String(R0.t).includes(R0.y)?' · '+R0.y:''}</div>
     <div class="rl-frame"><div class="rl-shots"></div><canvas class="rl-grain" width="160" height="120"></canvas><i class="rl-scr"></i><i class="rl-scr b"></i><div class="rl-flick"></div><div class="rl-vig"></div><div class="rl-bar"><i></i></div></div>
     <div class="rl-sub"></div>
     <div class="rl-ctl"><button class="rl-btn" data-rl="voice" aria-label="Голос диктора">${reelVoiceOn()?'🔊':'🔇'}</button><button class="rl-btn" data-rl="next" aria-label="Следующий кадр">▸▸</button><button class="rl-btn" data-rl="close" aria-label="Закрыть">✕</button></div>`;
@@ -3372,7 +3431,7 @@ function auReelTick(){try{if(AU.ctx&&AU.on.sfx)vNoise(AU.ctx.currentTime,0.05,0.
 function reelsCard(s){const L=['intro',...(s.reels||[]).filter(id=>id!=='intro')].filter(id=>reelGet(id,s));
   return foldCard('reels',false,`<h2>Кинохроника</h2><span class="num muted">${L.length}</span>`,
     `<p class="small muted" style="margin-top:4px">Короткие фильмы о технологиях и событиях автопрома — новые появляются, когда вы внедряете технологии, строите прототипы, выпускаете модели и когда меняется история. Голос диктора — если устройство умеет читать по-русски.</p>
-    <div class="reel-list">${L.slice().reverse().map(id=>{const R=reelGet(id,s);return `<button class="chip" style="width:100%;margin-top:6px" data-act="reel" data-k="${esc(id)}"><small>${R.y||''}${R.y?' · ':''}${id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':'история'}</small>▶ ${esc(reelFill(R.t,s))}</button>`;}).join('')}</div>`,
+    <div class="reel-list">${L.slice().reverse().map(id=>{const R=reelGet(id,s);return `<button class="chip" style="width:100%;margin-top:6px" data-act="reel" data-k="${esc(id)}"><small>${R.y||''}${R.y?' · ':''}${id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':id.startsWith('year:')?'итоги года':'история'}</small>▶ ${esc(reelFill(R.t,s))}</button>`;}).join('')}</div>`,
     `${L.length} ${plural(L.length,'фильм','фильма','фильмов')}`);}
 
 /* ================= ФИЛЬМ О ПЕРСОНАЖЕ: главы по настоящей истории, выбор в конце главы влияет на игру ================= */
@@ -4468,6 +4527,7 @@ function closeSheet(){sheet.hidden=true;draft=null;}
 sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&!G.pending.length&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
+  if(ev.cel&&!ev.celOn){ev.celOn=1;try{celebrate(ev.cel[0],ev.cel[1],ev.cel[2]);}catch(_){}}
   if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
   if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
@@ -4565,7 +4625,7 @@ function openMenuSheet(){
       <button class="btn block" data-act="loadOpen">Загрузить</button>
       <button class="btn block" data-act="legacyInfo">Цель и наследие</button>
       <button class="btn block" data-act="help">Как играть</button>
-      <button class="btn block" data-act="settings">Звук и управление</button>
+      <button class="btn block" data-act="settings">Звук, графика и управление</button>
       <button class="btn block" data-act="fame">Зал славы</button>
       <button class="btn block" data-act="toMenu">Выйти в главное меню</button></div>`);
 }
@@ -4576,11 +4636,13 @@ function openSlots(mode){
     ${mode==='save'?'<p class="small muted" style="margin-top:10px">Автосохранение пишется каждый месяц само. Слоты 1–3 — ваши точки возврата.</p>':''}`);
 }
 function openSettings(){
-  openSheet(`<div class="row"><h2>Звук и управление</h2>${X}</div>
+  openSheet(`<div class="row"><h2>Настройки</h2>${X}</div>
     <div class="label" style="margin-top:12px">Звук</div><div class="btns" style="margin-top:6px"><button class="btn ${AU.on.music?'primary':''}" data-act="audio" data-k="music">Музыка: ${AU.on.music?'вкл':'выкл'}</button><button class="btn ${AU.on.sfx?'primary':''}" data-act="audio" data-k="sfx">Звуки: ${AU.on.sfx?'вкл':'выкл'}</button><button class="btn ${AU.on.race?'primary':''}" data-act="audio" data-k="race">Музыка в гонке: ${AU.on.race?'вкл':'выкл'}</button><button class="btn" data-act="plMode">Плейлист: ${AU.on.mode==='all'?'все годы':'эпоха'}</button></div>
     ${G?`<div class="label" style="margin-top:14px">Помощник управляющего</div><p class="small muted" style="margin-top:4px">Каждый месяц сам ставит выгодные цены, открывает дилеров, строит цеха и склад, выбирает проекты КБ и берёт кредит, если касса в минусе. Машины придумываете вы.</p><div class="btns" style="margin-top:6px"><button class="btn ${helperOn(G)?'primary':''}" data-act="helperToggle">Помощник: ${helperOn(G)?'вкл':'выкл'}</button></div>`:''}
     <div class="label" style="margin-top:14px">Руль в гонке</div><div class="btns" style="margin-top:6px">${[['keys','Кнопки ◀ ▶'],['tilt','Наклон телефона']].map(([k,l])=>`<button class="btn ${steerMode()===k?'primary':''}" data-act="ctlTilt" data-v="${k}">${l}</button>`).join('')}</div>
-    <div class="label" style="margin-top:14px">Графика гонок</div><div class="btns" style="margin-top:6px">${[['3d','Объёмная (3D)'],['2d','Простая — для слабых телефонов']].map(([k,l])=>`<button class="btn ${(g3Can()?gfxMode():'2d')===k?'primary':''}" data-act="gfx" data-v="${k}" ${k==='3d'&&!g3Can()?'disabled':''}>${l}</button>`).join('')}</div>${g3Can()?'':'<p class="small muted" style="margin-top:4px">На этом устройстве объёмная графика недоступна — гонки рисуются по-простому.</p>'}${g3Can()&&gfxMode()==='3d'?`<div class="btns" style="margin-top:6px"><button class="btn ${AU.on.post===false?'':'primary'}" data-act="gfxPost">Кино-обработка: ${AU.on.post===false?'выкл':'вкл'}</button></div><p class="small muted" style="margin-top:4px">Свечение, «плёночный» цвет, виньетка и смаз на скорости — как в кино. На слабом телефоне выключается сама.</p>`:''}
+    <div class="label" style="margin-top:14px">Графика гонок</div><div class="btns" style="margin-top:6px">${[['3d','Объёмная (3D)'],['2d','Простая — для слабых телефонов']].map(([k,l])=>`<button class="btn ${(g3Can()?gfxMode():'2d')===k?'primary':''}" data-act="gfx" data-v="${k}" ${k==='3d'&&!g3Can()?'disabled':''}>${l}</button>`).join('')}</div>${g3Can()?'':'<p class="small muted" style="margin-top:4px">На этом устройстве объёмная графика недоступна — гонки рисуются по-простому.</p>'}${g3Can()&&gfxMode()==='3d'?`<div class="label" style="margin-top:12px">Качество картинки</div><div class="btns" style="margin-top:6px">${[['eco','Экономно'],['hd','HD'],['cine','Кино']].map(([k,l])=>`<button class="btn ${gfxQ()===k?'primary':''}" data-act="gq" data-v="${k}">${l}</button>`).join('')}</div>
+    <p class="small muted" style="margin-top:4px">${{eco:'Экономно — для слабых телефонов и долгой батареи: меньше травы и деревьев, текстуры попроще.',hd:'HD — чёткая картинка с фото-текстурами, тенями и травой. Подходит большинству телефонов.',cine:'Кино — максимум: больше деревьев и травы, дальше видно, блики солнца. Для мощных телефонов (Galaxy Fold 7, Xiaomi 13T и новее).'}[gfxQ()]} Если кадры начнут запаздывать, игра сама немного снизит чёткость.</p>
+    <div class="btns" style="margin-top:6px"><button class="btn ${AU.on.post===false?'':'primary'}" data-act="gfxPost">Кино-обработка: ${AU.on.post===false?'выкл':'вкл'}</button><button class="btn ${AU.on.demo===false?'':'primary'}" data-act="demoToggle">Гонка на заставке: ${AU.on.demo===false?'выкл':'вкл'}</button></div><p class="small muted" style="margin-top:4px">Кино-обработка — свечение, «плёночный» цвет, виньетка и смаз на скорости. Гонка на заставке — за главным меню едет настоящая гонка эпохи.</p>`:''}
     <div class="hr"></div><h3>Музыка</h3><p class="small muted" style="margin-top:4px">Настоящие записи эпохи из общественного достояния (Wikimedia Commons). Без интернета звучит «Оркестрион».${AU.nowPlaying?` Сейчас: <a class="credit" style="display:inline;padding:0" href="${AU.nowPlaying.page}" target="_blank" rel="noopener">${esc(AU.nowPlaying.title)}</a>`:''}</p>
     <div class="hr"></div><h3>Фотографии</h3><p class="small muted" style="margin-top:4px">Исторические фото — Википедия и Wikimedia Commons (в основном общественное достояние). Авторы и лицензии — на странице каждого файла.</p>
     <div class="small" style="margin-top:6px;columns:2;column-gap:12px">${Object.entries(IMG).filter((e,i,a)=>a.findIndex(x=>x[1].file===e[1].file)===i).map(([t,im])=>`<a class="credit" style="padding:2px 0" href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(im.file)}" target="_blank" rel="noopener">${esc(t)}</a>`).join('')||'<span class="muted">пока не загружены</span>'}</div>`);
@@ -4588,7 +4650,7 @@ function openSettings(){
 function openHelp(){
   openSheet(`<div class="row"><h2>Как играть</h2>${X}</div>
   <div class="stack small" style="margin-top:12px">
-    <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
+    <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук, графика и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
     <p><b>Модели.</b> Машина собирается из деталей: двигатель, коробка передач, рама с подвеской, колёса и шины, тормоза, кузов, оснащение. Покупатели сравнивают её с типичной машиной соперников своего класса — по мощности, надёжности, комфорту, простоте вождения, тормозам, экономичности и вместимости. Народному классу важнее экономичность и надёжность, люксу — комфорт и мощность. Дешёвые решения вроде планетарной коробки и ванадиевой рамы Ford T часто выгоднее самых дорогих деталей. Кнопка «Подобрать детали повыгоднее» предложит конструкцию сама.</p>
     <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства: их соперник — лошадь с телегой. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
     <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
@@ -4649,6 +4711,7 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
     ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
+const GAME_VER='0.17';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -4677,10 +4740,10 @@ function showMainMenu(){
       <button class="btn ${cont?'':'primary'} block" data-act="newgame">Новая игра</button>
       <button class="btn block" data-act="loadOpen">Загрузить</button>
       <button class="btn block" data-act="fame">Зал славы</button>
-      <button class="btn block" data-act="settings">Звук и управление</button>
+      <button class="btn block" data-act="settings">Звук, графика и управление</button>
       <button class="btn block" data-act="about">Об игре</button></div>
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
-    <p class="small muted menu-foot">Вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
+    <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
   MS.hidden=false;
   // живая гонка за меню — чуть позже, чтобы меню появилось сразу
   setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
@@ -4689,7 +4752,8 @@ function hideMainMenu(){demoStop();MS.hidden=true;MS.innerHTML='';MS.classList.r
 function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
   <div class="stack small" style="margin-top:10px"><p>«Автоимперия» — современная версия классических экономических стратегий об автомобильной индустрии начала XX века в духе Motor City / Oldtimer (1994). Название, графика и код — оригинальные.</p>
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
-  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p></div>`);}
+  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p>
+  <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p><p class="muted">Версия ${GAME_VER}</p></div>`);}
 
 /* ================= ТИТУЛЬНЫЙ ЭКРАН: живая 3D-гонка эпохи за меню (как заставка в кино) ================= */
 // Пока открыто главное меню, за ним идёт настоящая гонка знаменитого года: машины едут сами, камера — как в кино
@@ -4748,6 +4812,34 @@ function demoStop(fail){if(DEMO.raf)cancelAnimationFrame(DEMO.raf);DEMO.raf=0;co
   const scr=document.getElementById('raceScreen');if(scr&&was){scr.hidden=true;scr.classList.remove('demo');}
   MS.classList.remove('ready');if(fail)MS.classList.remove('live');}
 
+/* ================= ПРАЗДНИК: победа, титул, рекорд — золотое конфетти, фанфары и крики толпы ================= */
+// Большие успехи должны ощущаться: на пару секунд поверх экрана — надпись, конфетти цветов эпохи (золото, латунь, сукно, бумага), фанфары.
+// Не мешает нажатиям (сквозь него можно листать газету), при «уменьшить движение» — только надпись.
+let CEL=null;
+function celebrate(big,sub,icon){
+  try{if(CEL){CEL.el.remove();cancelAnimationFrame(CEL.raf);}}catch(_){}
+  const el=document.createElement('div');el.className='cel';
+  el.innerHTML=`<canvas></canvas><div class="cel-t"><i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`;
+  document.body.appendChild(el);
+  try{if(AU.ctx&&AU.on.music)auReelFanfare();auSfx('cheer',1);}catch(_){}
+  try{navigator.vibrate&&navigator.vibrate([40,60,40]);}catch(_){}
+  const Q=CEL={el,t0:performance.now(),raf:0,P:[]};
+  const cv=el.querySelector('canvas'),dpr=Math.min(1.5,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;
+  if(!REDUCE&&cv.getContext){cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
+    const C=['#e8c35a','#d4a73a','#f3e2b0','#b8322a','#f7f1e1','#c98f2a','#8a1f1a'];
+    // два залпа из нижних углов + дождь сверху
+    for(let k=0;k<150;k++){const side=k%3,ang=side===0?-1.05-Math.random()*0.5:side===1?-2.09+Math.random()*0.5:1.57,sp=side===2?60+Math.random()*80:520+Math.random()*420;
+      Q.P.push({x:side===0?-10:side===1?W+10:Math.random()*W,y:side===2?-20-Math.random()*H*0.5:H*0.92,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,r:Math.random()*6.28,vr:(Math.random()-0.5)*14,
+        w:5+Math.random()*6,h:3+Math.random()*4,c:C[k%C.length],ph:Math.random()*6.28,d:side===2?0.2+Math.random()*0.5:0});}
+    let last=performance.now();
+    const loop=now=>{if(CEL!==Q)return;const dt=Math.min(0.05,(now-last)/1000);last=now;const age=(now-Q.t0)/1000;g.clearRect(0,0,W,H);
+      const fade=age>2.6?Math.max(0,1-(age-2.6)/0.8):1;g.globalAlpha=fade;
+      for(const p of Q.P){if(p.d>0){p.d-=dt;continue;}p.vx*=Math.pow(0.35,dt);p.vy=p.vy*Math.pow(0.5,dt)+260*dt;p.x+=(p.vx+Math.sin(age*5+p.ph)*40)*dt;p.y+=p.vy*dt;p.r+=p.vr*dt;
+        g.save();g.translate(p.x,p.y);g.rotate(p.r);g.scale(1,Math.abs(Math.cos(age*6+p.ph))*0.9+0.1);g.fillStyle=p.c;g.fillRect(-p.w/2,-p.h/2,p.w,p.h);g.restore();}
+      if(age<3.4)Q.raf=requestAnimationFrame(loop);};
+    Q.raf=requestAnimationFrame(loop);}
+  setTimeout(()=>{if(CEL===Q){el.classList.add('out');setTimeout(()=>{try{el.remove();}catch(_){}if(CEL===Q)CEL=null;},500);}},REDUCE?1800:3300);}
+
 /* ================= RACE SETUP: team of up to 3 cars, drivers, preparation, mode ================= */
 const RACE_ACT={};
 let RS=null;   // заявка на гонку: {key, entries:[{drv,car,prep,tyre,gear}], open, mode, more}
@@ -4771,6 +4863,8 @@ function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'б�
 function openRaceSetup(key){
   const s=G,rc=RACES.find(r=>r.key===key);if(!rc||R)return;
   if(!raceCarsFor(s).length){toast('Нет машин в производстве');return;}
+  // пока игрок выбирает машины и пилотов — фото-материалы гонки уже грузятся
+  try{texPrefetch();}catch(_){}
   if(!RS||RS.key!==key)RS={key,entries:[defaultEntry(s,rc,[])],open:0,mode:'drive',more:false};
   renderRaceSetup();
 }
@@ -6101,7 +6195,7 @@ function raceResults(rc,res,mode,info){
   addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${won?`, призовые ${money(won)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
   lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal};
   openRaceResult();
-  if(best===1)showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);
+  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
@@ -6341,11 +6435,16 @@ function yearAwards(s,y){
   const SC=chalSales(s,y);if(SC)lines.push(SC.win?`Пари по продажам выиграно: «${s.company}» — ${carsN(SC.you)} класса «${SEG[SC.C.g].name}», ${SC.C.mq} — ${fmtN(SC.them)}. Выигрыш ${money(SC.C.stake)}.`:`Пари по продажам проиграно: ${SC.C.mq} — ${carsN(SC.them)} класса «${SEG[SC.C.g].name}», «${s.company}» — ${fmtN(SC.you)}. Проигрыш ${money(SC.C.stake)}.`);
   s.kings={y,lines,mine:mine.slice()};goalsResolve(s,y,mine);
   if(s.dch)Object.keys(s.dch).forEach(k=>{if(+k<y-2)delete s.dch[k];});
-  if(!lines.length)return;
+  // наследие: новое лучшее место среди великих марок — строка в итогах, а вход в десятку, тройку и первое место — праздник
+  let lp=0,legUp=null;try{lp=legacyTable(s).place;}catch(_){}
+  const lb=s.legBest||99;if(lp&&lp<lb){s.legBest=lp;if(lb<99){lines.push(`Наследие: «${s.company}» поднялась на ${lp}-е место среди великих марок эпохи (было ${lb}-е).`);if(lp===1||(lp<=3&&lb>3)||(lp<=10&&lb>10))legUp=lp;}}
+  // кинохроника года: продажи, лучшая машина, победы, титулы и место в наследии — в газете с итогами
+  let yr='';try{yearRecord(s,y);yr='year:'+y;reelUnlock(s,yr);}catch(e){console.warn('year reel',e);}
+  if(!lines.length){const ev=yr&&s.pending.find(e=>e.kicker==='Итоги года');if(ev)ev.choices=(ev.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника года','reel:'+yr]]);return;}
   const own=mine.filter(t=>t!=='гонщик года'),dw=DC&&DC.mine?DC.w:null,dd=dw&&DRIVERS.find(x=>x.id===dw.id);
   const title=own.length?`«${s.company}» — ${own[0].charAt(0).toLowerCase()+own[0].slice(1)} ${y} года!`:dw?`${dw.n} — гонщик ${y} года!`:`Короли ${y} года`;
-  pushEvent({own:mine.length?1:0,kicker:'Итоги года · по версии прессы',title,deck:own.length>1?`И ещё: ${own.slice(1).join(', ').toLowerCase()}`:`Автомобильные обозреватели назвали лучших за ${y} год`,
-    img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',
+  pushEvent({own:mine.length?1:0,cel:own.length?['Титул года!',own.join(' · '),'👑']:legUp?[legUp===1?'Величайшая марка эпохи!':`${legUp}-е место в наследии!`,`«${s.company}» среди великих`,'🏛']:null,kicker:'Итоги года · по версии прессы',title,deck:own.length>1?`И ещё: ${own.slice(1).join(', ').toLowerCase()}`:`Автомобильные обозреватели назвали лучших за ${y} год`,
+    img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',choices:yr?[['Читать дальше','ok'],['▶ Кинохроника года','reel:'+yr]]:undefined,
     text:lines.map(l=>'— '+l).join('\n')+'\n'+(mine.length?'Титулы — бесплатная реклама: целый год покупатели будут помнить, чья марка лучшая, и охотнее выбирать ваши машины.':'Ваша марка пока без титулов. Победы в гонках, новинки раньше всех и продажи в своём классе — и газеты напишут о вас.')},true);
 }
 
@@ -6421,7 +6520,7 @@ function boardCard(s){const O=boardOffers(s),A=[],C=s.chal&&s.chal.acc?s.chal:nu
 function empireStrip(s){if(!s)return '';let t=null;try{t=legacyTable(s);}catch(_){}
   const L=sagaList(s),seen=((s.saga||{}).seen||[]).length,tit=(s.titles||[]).filter(x=>/^king-/.test(x.id||'')).length,act=(s.chal&&s.chal.acc?1:0)+(s.goals||[]).filter(q=>q.y===s.y).length;
   const above=t&&t.place>1?t.rows[t.place-2]:null;
-  return `<span class="es-a">🏛 Наследие <b>${t?Math.round(t.me.total):0}</b></span><span class="es-b">${t?t.place+'-е место':''}${above?` · до ${esc(above.n)} ${Math.max(1,Math.round(above.L.total-t.me.total))}`:''}</span><span class="es-c">👑 ${tit} · ⚔️ ${act} · 🎬 ${seen}/${L.length}</span>`;}
+  return `<span class="es-a">🏛 Наследие <b>${t?Math.round(t.me.total):0}</b></span><span class="es-b">${t?t.place+'-е место':''}${above?` · догнать ${esc(above.n)}: +${Math.max(1,Math.round(above.L.total-t.me.total))}`:t&&t.place===1?' · вы первые!':''}</span><span class="es-c">👑 ${tit} · ⚔️ ${act} · 🎬 ${seen}/${L.length}</span>`;}
 
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
@@ -6527,6 +6626,8 @@ const lerp3=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
 function trkAt(i,d,off){const T=R.trk,n=T.n,j=T.closed?(((i+Math.round(d/T.step))%n)+n)%n:clamp(i+Math.round(d/T.step),0,n-1),p=T.pts[j],nn=T.N[j],o=off||0;return {j,p:[p[0]+nn[0]*o,p[1]+(R3.on?roadY(j,clamp(o,-T.W/2,T.W/2)):p[1]),p[2]+nn[1]*o],t:T.T[j],n:nn};}
 // Место для камеры у обочины: рядом нет дерева, столба или дома
 function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
+// Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
+function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
 /* ---------- заставка перед стартом ---------- */
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];
@@ -6550,11 +6651,11 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   // 2) самое интересное впереди: пролёт вдоль дороги
   if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:poi.at,mid:poi.cap},poi:i,
     cam:u=>{const e=ease(u),a=trkAt(i,-90+80*e,18),b=trkAt(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
-  // 3) стартовая решётка: камера идёт вдоль машин
+  // 3) стартовая решётка: камера едет по обочине вдоль машин — по самой трассе (на изгибе тоже), с той стороны, где свободно
   const grid=R.cars.slice().sort((a,b)=>b.prog-a.prog),back=grid[grid.length-1],front=grid[0];
-  const favs=filmFavorites();
-  shots.push({d:4,cap:{kick:'Стартовая решётка',list:favs.length?['Фавориты:',...favs]:[]},
-    cam:u=>{const e=ease(u),A=[back.x-fw[0]*6,0,back.z-fw[2]*6],B=[front.x+fw[0]*4,0,front.z+fw[2]*4],P=lerp3(A,B,e),o=T.W/2+3.5,eye=[P[0]+side[0]*o,sp.p[1]+1.25,P[2]+side[2]*o],lk=[P[0]+fw[0]*7-side[0]*1.5,sp.p[1]+0.8,P[2]+fw[2]*7-side[2]*1.5];return {eye,look:lk,fov:0.75,near:0.1};}});
+  const favs=filmFavorites(),iB=back.idx,dI=T.closed?((front.idx-iB)%T.n+T.n)%T.n:Math.max(0,front.idx-iB),gLen=dI*T.step+14,gs=filmSide(iB,dI,T.W/2+2.2);
+  shots.push({d:4.4,cap:{kick:'Стартовая решётка',list:favs.length?['Фавориты:',...favs]:[]},
+    cam:u=>{const e=ease(u),d=-8+gLen*e,a=trkAt(iB,d,gs*(T.W/2+2.2)),l=trkAt(iB,d+9,-gs*T.W*0.12);return {eye:[a.p[0],a.p[1]+1.35,a.p[2]],look:[l.p[0],l.p[1]+0.75,l.p[2]],fov:0.78,near:0.1};}});
   // 4) ваша машина крупно
   const who=me.player?`Вы — ${PIONEERS[G.pioneer].name}`:(me.drvName||me.label),car=me.label||me.name;
   shots.push({d:3.4,cap:{kick:`№${me.num}`,mid:`${who}${car?' · «'+car+'»':''}`},
@@ -6565,7 +6666,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   const el=filmEl();el.hidden=false;el.className='r-film';el.innerHTML=`<div class="rf-bar top"></div><div class="rf-bar bot"></div><div class="rf-card" id="rfCard"></div><button class="rf-skip" id="rfSkip">Пропустить ▸▸</button>`;
   document.getElementById('raceScreen').classList.add('filming');document.getElementById('rfSkip').onclick=filmSkip;el.onclick=e=>{if(e.target===el)filmSkip();};
   auReelFanfare();
-  if(reelVoiceOn()&&n<6){const say=`${rc.name}. ${rc.y} год.${rc.hist?' '+String(rc.hist).split(/(?<=[.!?])\s/)[0]:''}`;setTimeout(()=>{if(R&&R.film)ttsSay(say);},500);}
+  if(reelVoiceOn()&&n<6){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?]/),say=`${rc.name}. ${rc.y} год.${h1?' '+h1[0]:''}`;setTimeout(()=>{if(R&&R.film)ttsSay(say);},500);}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;
@@ -6737,7 +6838,12 @@ function mCrew(M,x,seatY,z,kit,mech,S,handZ){
   // шарф у пилота
   if(!mech){const sc=S.y<1920?'#ece6d4':'#b8322a';mFace(M,[[x-0.04,sh+0.02,z-0.08],[x+0.04,sh+0.02,z-0.08],[x+0.14,sh-0.08,z-0.42],[x+0.06,sh-0.1,z-0.42]],sc,'cloth',null,true);}
 }
-function crewKit3(y){return y<1906?{coat:'#6b5a44',cap:'cap',hat:'#3a3026'}:y<1915?{coat:'#7a6a55',cap:'helmet',hat:'#5a3f28'}:y<1922?{coat:'#8a8272',cap:'helmet',hat:'#4d3524'}:{coat:'#d8d4c8',cap:'helmet',hat:'#5b4030'};}
+// Одежда экипажа по эпохе; n — номер машины: у разных экипажей разные пыльники и кожанки (светлый комбинезон, чёрная кожа, хаки)
+function crewKit3(y,n){const k=Math.abs(n|0)%4;
+  if(y<1906)return {coat:['#6b5a44','#4a4038','#7d6e58','#3c3a38'][k],cap:k===2?'helmet':'cap',hat:['#3a3026','#2a2622','#5a3f28','#3a3026'][k]};
+  if(y<1915)return {coat:['#7a6a55','#d2cbbb','#4a3f36','#8a7a60'][k],cap:'helmet',hat:['#5a3f28','#4a3524','#2a2420','#6a4a2e'][k]};
+  if(y<1922)return {coat:['#8a8272','#3a3632','#cfc8b8','#6a5e4a'][k],cap:'helmet',hat:['#4d3524','#2a2420','#5a3f28','#4d3524'][k]};
+  return {coat:['#d8d4c8','#3a3a3c','#e6e2d8','#7a6e5a'][k],cap:'helmet',hat:['#5b4030','#2a2420','#6a4a30','#4a3a2a'][k]};}
 // Руль: обод и колонка — линии, наклонённые к пилоту
 function mSteer(M,x,y,z,r,S){const deco=[],seg=14,tilt=0.75,P=a=>[x+Math.cos(a)*r,y+Math.sin(a)*r*Math.cos(tilt),z-Math.sin(a)*r*Math.sin(tilt)];
   for(let k=0;k<seg;k++)deco.push({a:P(k/seg*6.283),b:P((k+1)/seg*6.283),w:0.028,c:S.y<1912?'#5a3a22':'#1f1f22'});
@@ -6746,7 +6852,7 @@ function mSteer(M,x,y,z,r,S){const deco=[],seg=14,tilt=0.75,P=a=>[x+Math.cos(a)*
 // ---------- модели по облику (прежние, простые; новые — в 46b-cars.js) ----------
 function carModelV1(S){
   MLOD=S.lod==='lo'?0:1;const M=new Mesh(),st=S.style,y=S.y,col=S.color||'#23427a',brass=y<1916?'#c9a24a':'#c8ccd2',dark='#1c1d21',leather=y<1920?'#5a3a24':'#6e2a22';
-  const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y);
+  const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y,S.num);
   let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':S.wheel==='disc'?'disc':'wood';
   const G={}; // размеры
   // колесо помечается номером: в 3D оно крутится, передние ещё и поворачивают (радиус со знаком «−»)
@@ -7005,7 +7111,8 @@ function bez2(a,c,b,n){const P=[];for(let k=1;k<=n;k++){const t=k/n,u=1-t;P.push
 function mCrew2(M,x,seatY,z,kit,mech,S,hand){
   const hi=MLOD===1,sg=hi?12:6,coat=mech?shade(kit.coat,-0.12):kit.coat,y0=seatY+0.02;
   // торс: горизонтальные сечения-эллипсы от сиденья до плеч, чуть откинут назад
-  const lv=[[0,0.17,0.12,0],[0.2,0.16,0.11,-0.02],[0.4,0.19,0.125,-0.05],[0.54,0.2,0.1,-0.07],[0.6,0.12,0.075,-0.07],[0.64,0.06,0.05,-0.06]];
+  // плечи — широкие и прямые (раньше торс сужался «бутылкой»)
+  const lv=[[0,0.18,0.13,0],[0.18,0.165,0.12,-0.02],[0.36,0.2,0.13,-0.04],[0.5,0.225,0.12,-0.06],[0.57,0.232,0.105,-0.07],[0.615,0.17,0.085,-0.07],[0.65,0.075,0.06,-0.06]];
   const G=lv.map(([h,wx,wz,dz])=>{const row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2;row.push([x+Math.cos(a)*wx,y0+h,z+dz+Math.sin(a)*wz]);}return row;});
   mGrid(M,G,coat,'cloth',{wrap:true,ref:(c,i)=>[x,y0+(lv[i][0]+lv[i+1][0])/2,z+lv[i][3]]});
   // голова, шлем или кепи, очки
@@ -7019,7 +7126,7 @@ function mCrew2(M,x,seatY,z,kit,mech,S,hand){
   if(hi)[-1,1].forEach(sd=>mLathe(M,[x+sd*0.042,hy+0.025,hz+0.1],'z',[[0.03,-0.02],[0.032,0.012],[0.024,0.02],[0,0.021]],8,'#8a6a3a','metal'));
   if(hi)mTube(M,[[x-0.11,hy+0.03,hz+0.02],[x-0.1,hy+0.032,hz+0.08],[x-0.06,hy+0.03,hz+0.1],[x+0.06,hy+0.03,hz+0.1],[x+0.1,hy+0.032,hz+0.08],[x+0.11,hy+0.03,hz+0.02]],0.008,'#2b1d12','leather',3);
   // руки к рулю (у механика — к борту и поручню)
-  const sy=y0+0.52,sz=z-0.06;[-1,1].forEach(sd=>{const sx=x+sd*0.19,h=mech?[x+sd*0.3,seatY+0.3,z+0.12]:[x+sd*0.13,hand[1],hand[2]],el=[(sx+h[0])/2+sd*0.06,(sy+h[1])/2-0.12,(sz+h[2])/2-0.02];
+  const sy=y0+0.53,sz=z-0.07;[-1,1].forEach(sd=>{const sx=x+sd*0.2,h=mech?[x+sd*0.3,seatY+0.3,z+0.12]:[x+sd*0.13,hand[1],hand[2]],el=[(sx+h[0])/2+sd*0.06,(sy+h[1])/2-0.12,(sz+h[2])/2-0.02];
     mTube(M,[[sx,sy,sz],el,h],[0.052,0.046,0.04],hi?6:3,coat,'cloth');mLathe(M,h,'y',[[0,-0.035],[0.035,-0.02],[0.04,0.01],[0.025,0.035],[0,0.04]],hi?8:4,'#6b4a30','leather');});
   // шарф: кольцо на шее и развевающийся конец
   if(!mech&&hi){const sc=S.y<1920?'#ece6d4':'#b8322a';mTube(M,[[x-0.07,y0+0.63,z-0.06],[x,y0+0.65,z+0.0],[x+0.07,y0+0.63,z-0.06],[x,y0+0.62,z-0.13],[x-0.07,y0+0.63,z-0.06]],0.03,sc,'cloth',5);
@@ -7195,8 +7302,8 @@ function carModel(S){
     mGrid(M,G,K.tyre,'tyre',{wrap:true,ref:c=>{if(ax==='z'){const dx=c[0]-x,dy=c[1]-yy,l=Math.hypot(dx,dy)||1;return [x+dx/l*R0,yy+dy/l*R0,z];}const dz=c[2]-z,dy=c[1]-yy,l=Math.hypot(dz,dy)||1;return [x,yy+dy/l*R0,z+dz/l*R0];}});
     mLathe(M,[x,yy,z],ax,[[R0-tr,-tw*0.3],[R0-tr*0.7,tw*0.3],[0,tw*0.3]],seg,K.chassis,'paint');};
   const bumper=(z,w,yy)=>{[-0.035,0.035].forEach(dy=>tube([[-w,yy+dy,z-0.06],[-w*0.9,yy+dy,z],[w*0.9,yy+dy,z],[w,yy+dy,z-0.06]],0.018,K.bright,K.brightMat,5));};
-  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew2(M,x,seatY,z,crewKit3(y),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
-  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew2(M,x,seatY,z,crewKit3(y),true,S,null);};
+  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew2(M,x,seatY,z,crewKit3(y,S.num),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
+  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew2(M,x,seatY,z,crewKit3(y,(S.num|0)+1),true,S,null);};
   const eyeAt=(x,seatY,z)=>{if(!M.eye)M.eye=[x,seatY+0.8,z+0.06];};
   // табличка с номером: центр c, нормаль nrm (наружу), ось «вправо» u; w×h
   const plate=(c,nrm,u,w,h,round)=>{if(!S.num||!hi)return;const v=v3x(nrm,u).map(q=>-q),P=[],k=round?10:4;
@@ -8494,8 +8601,11 @@ function texFit(im,S){if(im.width===S&&im.height===S)return im;const c=mkCanvas(
 function texAvg(im){const c=mkCanvas(8,8),g=c.getContext('2d');g.drawImage(im,0,0,8,8);const d=g.getImageData(0,0,8,8).data,o=[0,0,0];
   for(let i=0;i<64;i++)for(let k=0;k<3;k++)o[k]+=Math.pow(d[i*4+k]/255,2.2)/64;return o;}
 // Всё в видеокарту: массивы слоёв и листва (один раз на контекст WebGL)
+// Сменили качество — слои другого размера: старые освобождаем, грузим заново
+function texFree(){const C=G3.cache,tx=C.tx,gl=G3.gl;C.tx=null;if(!tx||!gl)return;
+  try{[tx.alb,tx.dat,tx.fol,...Object.values(tx.sky).map(v=>v&&v.t)].forEach(t=>{if(t)gl.deleteTexture(t);});}catch(e){}}
 async function texUpload(){
-  const C=G3.cache;if(C.tx)return C.tx;if(C.txP)return C.txP;
+  const C=G3.cache;if(C.tx&&C.tx.S!==gq().tex&&!C.txP)texFree();if(C.tx)return C.tx;if(C.txP)return C.txP;
   const run=async()=>{
     await texLoad();const gl=G3.gl;if(!gl||gl.isContextLost())throw new Error('нет контекста');
     const D=TX.D,n=D.lay.length,S=gq().tex,lv=Math.floor(Math.log2(S))+1;texPS(gl);
@@ -8522,7 +8632,7 @@ async function texUpload(){
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
       if(G3.an)gl.texParameterf(gl.TEXTURE_2D,G3.an.TEXTURE_MAX_ANISOTROPY_EXT,Math.min(4,G3.anMax));}
     gl.activeTexture(gl.TEXTURE0);
-    return C.tx={alb,dat,fol,lay,avg,sky:{},n};};
+    return C.tx={alb,dat,fol,lay,avg,sky:{},n,S};};
   C.txP=run().catch(e=>{C.txP=null;throw e;});return C.txP;}
 // Небо: фото нужного настроения — в видеокарту (с мип-уровнями для размытых отражений)
 async function texSky(mood){
@@ -8984,7 +9094,9 @@ function r3dCamera(dt,W,H){
     eye=[p[0]+sh[0]*0.4,p[1]+0.14+sh[1]*0.6,p[2]];const f2=[Math.sin(F.yaw),0,Math.cos(F.yaw)];look=[eye[0]+f2[0]*25,eye[1]-0.95,eye[2]+f2[2]*25];near=0.08;}
   else if(v===3){// осмотр машины со стороны (для проверки моделей)
     const a=F.yaw+(R3.orbA||0),Dd=R3.orbD||4.6;eye=[F.x-Math.sin(a)*Dd,cm.y+(R3.orbH||1.5),F.z-Math.cos(a)*Dd];look=[F.x,cm.y+0.7,F.z];near=0.1;}
-  else{const D=v===1?8.8:5.4,Hc=v===1?3.5:2.25,A=v===1?12:8,LH=v===1?0.2:0.55;
+  else{// чувство скорости: на разгоне камера чуть отстаёт и опускается, на торможении — подъезжает к машине
+    const ac=cm.v0===undefined?0:(F.vx-cm.v0)/Math.max(0.005,dt);cm.v0=F.vx;cm.lag=(cm.lag||0)+(clamp(ac*0.07,-0.55,0.75)-(cm.lag||0))*Math.min(1,dt*2.5);
+    const D=(v===1?8.8:5.4)*(1+0.07*sp)+cm.lag,Hc=(v===1?3.5:2.25)*(1-0.1*sp),A=v===1?12:8,LH=v===1?0.2:0.55;
     let back=cm.y;const bi=R3.T.closed?((F.idx-Math.round(D/R3.T.step))%R3.T.n+R3.T.n)%R3.T.n:Math.max(0,F.idx-Math.round(D/R3.T.step));back=Math.max(back,R3.T.pts[bi][1]);
     // камера не уходит в склон: над землёй по пути от машины к камере; круча между ними — подъезжаем ближе и выше
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}
@@ -8992,7 +9104,7 @@ function r3dCamera(dt,W,H){
     cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*6);
     eye=[F.x-fw[0]*cm.dd+sh[0],Math.max(cm.ey,ey-0.6)+sh[1],F.z-fw[2]*cm.dd];look=[F.x+fw[0]*A,cm.y+LH,F.z+fw[2]*A];}
   const f=v3n([look[0]-eye[0],look[1]-eye[1],look[2]-eye[2]]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);
-  const asp=W/H,hf=v===2?1.1:1.05;let vf0=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.95;if(2*Math.atan(Math.tan(vf0/2)*asp)>1.75)vf0=2*Math.atan(Math.tan(0.875)/asp);cm.fov+=((1+sp*0.1)-cm.fov)*Math.min(1,dt*2);
+  const asp=W/H,hf=v===2?1.1:1.05;let vf0=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.95;if(2*Math.atan(Math.tan(vf0/2)*asp)>1.75)vf0=2*Math.atan(Math.tan(0.875)/asp);cm.fov+=((1+sp*0.15)-cm.fov)*Math.min(1,dt*2);
   const vf=Math.min(1.55,vf0*cm.fov);R3.eye=eye;R3.camR=rt;R3.camU=up;R3.camF=f;
   const P=R3.P||(R3.P=m4()),V=R3.V||(R3.V=m4()),VP=R3.VP||(R3.VP=m4());m4persp(P,vf,asp,near,1500);m4view(V,eye,rt,up,f);m4mul(VP,P,V);R3.fr=frustumOf(VP,R3.fr);
 }
@@ -9250,13 +9362,18 @@ function fTree(t,v,lod){const key=t+'|'+v+'|'+lod;if(FT[key])return FT[key];cons
     if(hi)for(let i=0;i<4;i++){const a=i/4*6.28+r();fLimb(wb,[0.35,H*0.85,0.18],[Math.cos(a),0.6,Math.sin(a)],2.4,0.12,0.05,col,0.4,r,2);}
     fCrown(lb,r,[0.4,H+0.8,0.2],[3.4,1.3,3.4],N(26),2.4,FOLC.pine,[124,130,112],sw,true);}
   else if(t==='fir'||t==='cypress'){const cyp=t==='cypress',H=cyp?12+v*0.7:13+v,R0=cyp?1.3:3.2,col='#5a4636';fTrunk(wb,[0,-0.3,0],[0,H*0.95,0],cyp?0.2:0.26,0.05,col,hi?6:4);
-    const lv=Math.max(4,Math.round((cyp?16:13)*(hi?1:0.45)*gq().trees)),per=cyp?4:hi?7:5,uv=folUV(FOLC.fir),tint=cyp?[100,112,96]:v===1?[150,154,150]:[112,122,108];
+    // тёмная сердцевина ели ярусами — сквозь лапы не просвечивает пустота, силуэт плотный, как у настоящей ели
+    if(!cyp)pCone(wb,0,1.3,0,R0*0.4,H*0.9,v===1?'#34443a':'#1d3024',hi?8:5,0,MID.leaf,0);
+    // в клетке атласа лапа занимает полосу посередине (≈36–84% высоты): берём только её — карточка вся в хвое, без пустых краёв
+    const lv=Math.max(4,Math.round((cyp?16:14)*(hi?1:0.45)*gq().trees)),per=cyp?4:hi?8:5,uv0=folUV(FOLC.fir),uv=cyp?uv0:[uv0[0],uv0[1]+(uv0[3]-uv0[1])*0.36,uv0[2],uv0[1]+(uv0[3]-uv0[1])*0.84],tint=cyp?[100,112,96]:v===1?[150,154,150]:[112,122,108];
     for(let k=0;k<lv;k++){const f=k/lv,y=(cyp?0.9:1.6)+f*(H-(cyp?1.6:2.4)),rad=R0*Math.pow(1-f,cyp?0.55:0.95)*(cyp?Math.min(1,0.45+f*3):1)+0.25;
       for(let j=0;j<per;j++){const a=(j+(k%2)*0.5)/per*6.283+r()*0.3,dx=Math.cos(a),dz=Math.sin(a),dr=cyp?0.2:0.28+0.1*r();
         // лапа: от ствола наружу и вниз; u — от ствола к кончику
-        const ax=[dx*rad*1.15,-dr*rad,dz*rad*1.15],c=[dx*rad*0.55,y,dz*rad*0.55],w=rad*(cyp?1.1:0.95),ay=[-dz*w,0.12*w,dx*w];
+        const ax=[dx*rad*1.15,-dr*rad,dz*rad*1.15],c=[dx*rad*0.55,y,dz*rad*0.55],w=rad*(cyp?1.1:0.62)+(cyp?0:0.25),ay=[-dz*w,0.12*w,dx*w];
         const n=v3n([dx*0.7,0.55,dz*0.7]);fCard(lb,c,ax,ay,uv,n,fTint(r,tint,0.1),0.45+0.55*f,cyp?40:70);
-        if(hi){const ay2=[0,w*0.9,0];fCard(lb,[c[0],c[1]+0.1,c[2]],ax,ay2,uv,n,fTint(r,tint,0.1),0.4+0.5*f,cyp?40:70);}}}}
+        // вторая лапа — поперёк, по поверхности конуса: ель плотная с любой стороны, а не «ёршик» из палочек
+        if(cyp){if(hi){const ay2=[0,w*0.9,0];fCard(lb,[c[0],c[1]+0.1,c[2]],ax,ay2,uv,n,fTint(r,tint,0.1),0.4+0.5*f,40);}}
+        else if(hi||j%2===0){const L=rad*1.05+0.3,cc=[dx*rad*0.8,y-rad*0.14,dz*rad*0.8],h=rad*0.5+0.25;fCard(lb,cc,[-dz*L,0,dx*L],[dx*h*0.45,h,dz*h*0.45],uv,v3n([dx,0.4,dz]),fTint(r,tint,0.12),0.5+0.5*f,70);}}}}
   else if(t==='palm'){let p=[0,-0.3,0];const col='#8a7458',segs=hi?8:5;for(let s=0;s<segs;s++){const q=[0.9*Math.sin((s+1)/segs*1.6)*(s+1)/segs,(s+1)*11.5/segs,0];fTrunk(wb,p,q,0.28-s*0.012,0.26-(s+1)*0.012,col,hi?7:5);p=q;}
     const uv=folUV(FOLC.palm);for(let i=0;i<(hi?11:6);i++){const a=i/(hi?11:6)*6.283+r()*0.3,dx=Math.cos(a),dz=Math.sin(a),L=3.4+r()*0.8,droop=0.3+r()*0.5;
       // лист из двух изогнутых отрезков: u — вдоль листа
@@ -9541,21 +9658,45 @@ function r3dRails(T){if(!T.rails||!T.rails.length)return null;const mb=new MB();
       // столбы телеграфа вдоль дороги
       if(Math.round(s/6)%8===0&&Math.abs(s)>12){const q=P(s,4.2,-0.3);pTrunk(mb,q[0],q[1],q[2],q[0],q[1]+6.5,q[2],0.1,0.08,'#6a5440',6,MID.wood);pBox(mb,q[0],q[1]+6,q[2],0.9,0.1,0.06,'#5a4632',MID.wood,Math.atan2(sx,sz));}}});
   return mb;}
-// Поезд: паровоз, тендер и вагоны — простые формы с фото-материалами
-function r3dTrainMesh(y){const C=G3.cache,key='train'+(y<1905?0:1);if(C[key])return C[key];const L=new MB(),cars=[];
-  const loco=new MB(),blk='#1e1e20',red='#8a2a22',brass='#b8923a';
-  pTrunk(loco,0,1.9,-3.2,0,1.9,2.8,0.78,0.78,blk,14,MID.metal);// котёл
-  loco.poly(Array.from({length:14},(_,k)=>{const a=k/14*6.283;return [Math.cos(a)*0.8,1.9+Math.sin(a)*0.8,2.85];}),[0,0,1],hex2rgb('#2a2a2c'),MID.metal);
-  pTrunk(loco,0,2.6,2.2,0,3.6,2.2,0.24,0.3,blk,10,MID.metal);pTrunk(loco,0,2.6,0.2,0,3.0,0.2,0.34,0.26,brass,10,MID.chrome);// труба, сухопарник
-  pBox(loco,0,1.1,-4.4,1.35,2.5,1.25,'#26282c',MID.metal);pBox(loco,0,3.6,-4.4,1.45,0.12,1.4,blk,MID.metal);pBox(loco,1.36,2.2,-4.4,0.02,0.8,0.7,'#cfe0e8',MID.glass);pBox(loco,-1.36,2.2,-4.4,0.02,0.8,0.7,'#cfe0e8',MID.glass);
-  pBox(loco,0,0.9,-0.2,1.4,0.25,4.2,red,MID.paint);pBox(loco,0,0.55,3.4,1.3,0.4,0.25,red,MID.paint);
-  [[-2.3,0.85],[-0.5,0.85],[1.8,0.5],[2.9,0.5]].forEach(([z,r])=>[-1,1].forEach(sd=>{loco.e[0]=0;pTrunk(loco,sd*1.05,r,z,sd*1.25,r,z,r,r,'#1a1a1a',14,MID.metal);}));
-  const X0=X3(0,1,[0,0,0]);L.add(loco,X0);cars.push({mb:L,len:9.5});
-  const tender=new MB();pBox(tender,0,0.9,0,1.3,1.9,2.4,'#24262a',MID.metal);pBox(tender,0,2.8,0,1.1,0.35,2.0,'#141414',MID.matte);[-1.5,1.5].forEach(z=>[-1,1].forEach(sd=>pTrunk(tender,sd*1.0,0.5,z,sd*1.2,0.5,z,0.5,0.5,'#1a1a1a',12,MID.metal)));cars.push({mb:tender,len:5.4});
-  for(let k=0;k<4;k++){const w=new MB(),col=['#3e4a32','#5a3a26','#3e4a32','#5a3a26'][k];w.e[3]=txLay('wood_wall',1);pBox(w,0,1.0,0,1.35,2.2,4.3,col,MID.wood);w.e[3]=txLay('roof_slate',1);
-    w.poly([[-1.45,3.2,-4.4],[1.45,3.2,-4.4],[1.45,3.2,4.4],[-1.45,3.2,4.4]],[0,1,0],hex2rgb('#4a4a4c'),MID.roof);pBox(w,0,3.2,0,1.2,0.3,4.3,'#4a4a4c',MID.roof);w.e[3]=0;
-    for(let j=-3;j<=3;j++)[-1,1].forEach(sd=>pBox(w,sd*1.36,2.1,j*1.15,0.02,0.55,0.4,'#cfd8dc',MID.glass));
-    [-3,3].forEach(z=>[-1,1].forEach(sd=>pTrunk(w,sd*1.0,0.5,z,sd*1.2,0.5,z,0.48,0.48,'#1a1a1a',12,MID.metal)));cars.push({mb:w,len:9.4});}
+// Цилиндр по любой оси (котёл, колёса, трубы): гладкие бока и крышки на концах
+function pCyl(mb,a,b,r0,r1,col,sides,mat,caps){sides=sides||12;const c=Array.isArray(col)?col:hex2rgb(col),M=mat===undefined?MID.metal:mat,d=v3n([b[0]-a[0],b[1]-a[1],b[2]-a[2]]),up=Math.abs(d[1])<0.9?[0,1,0]:[1,0,0],u=v3n(v3x(d,up)),v=v3x(u,d);
+  const Nn=t=>[u[0]*Math.cos(t)+v[0]*Math.sin(t),u[1]*Math.cos(t)+v[1]*Math.sin(t),u[2]*Math.cos(t)+v[2]*Math.sin(t)],R=(p,r,t)=>{const n=Nn(t);return [p[0]+n[0]*r,p[1]+n[1]*r,p[2]+n[2]*r];};
+  for(let k=0;k<sides;k++){const t0=k/sides*6.2832,t1=(k+1)/sides*6.2832,n0=Nn(t0),n1=Nn(t1);mb.polyN([R(a,r0,t0),R(a,r0,t1),R(b,r1,t1),R(b,r1,t0)],Nn((t0+t1)/2),[n0,n1,n1,n0],c,M);}
+  if(caps!==false){const ring=(p,r)=>Array.from({length:sides},(_,k)=>R(p,r,k/sides*6.2832));if(r0>0.02)mb.poly(ring(a,r0),[-d[0],-d[1],-d[2]],c,M);if(r1>0.02)mb.poly(ring(b,r1),d,c,M);}}
+// Колесо сбоку (ось поперёк): обод, ступица цвета рамы
+function pWheelX(mb,x,y,z,r,sd,hub){pCyl(mb,[x,y,z],[x+sd*0.16,y,z],r,r,'#1b1b1c',16,MID.metal);pCyl(mb,[x+sd*0.16,y,z],[x+sd*0.19,y,z],r*0.82,r*0.3,hub||'#7a2620',12,MID.paint);}
+// Поезд: паровоз (котёл, труба, сухопарник, будка, колёса с дышлом), тендер с углём и вагоны с полукруглой крышей
+function r3dTrainMesh(y){const C=G3.cache,key='train'+(y<1905?0:1);if(C[key])return C[key];const cars=[],old=y<1905;
+  const loco=new MB(),blk='#1c1d20',red=old?'#7a2a20':'#6a1f1c',brass='#b8923a',grey='#2c2e33';
+  pBox(loco,0,0.95,0.1,1.32,0.26,3.5,red,MID.paint);// рама (площадка)
+  pCyl(loco,[0,1.98,-3.1],[0,1.98,2.7],0.8,0.8,blk,20,MID.metal);// котёл
+  [-2.2,-0.6,1.0,2.4].forEach(z=>pCyl(loco,[0,1.98,z],[0,1.98,z+0.08],0.815,0.815,brass,20,MID.chrome,false));// латунные бандажи котла
+  pCyl(loco,[0,1.98,2.7],[0,1.98,3.2],0.86,0.86,grey,20,MID.metal);pCyl(loco,[0,1.98,3.2],[0,1.98,3.27],0.62,0.5,'#3a3c40',16,MID.metal);// дымовая коробка и дверца
+  pCyl(loco,[0,2.7,2.85],[0,3.95,2.85],0.2,0.3,blk,14,MID.metal,false);pCyl(loco,[0,3.9,2.85],[0,4.05,2.85],0.36,0.36,blk,14,MID.metal);// труба с венцом
+  pCyl(loco,[0,2.7,0.5],[0,3.1,0.5],0.38,0.3,brass,14,MID.chrome);pCyl(loco,[0,2.7,-1.4],[0,2.95,-1.4],0.26,0.2,blk,12,MID.metal);// сухопарник, песочница
+  pCyl(loco,[0.25,2.72,-2.6],[0.25,3.1,-2.6],0.05,0.05,brass,8,MID.chrome);// свисток
+  // будка машиниста: стенки с окнами, крыша с напуском
+  pBox(loco,0,1.2,-4.2,1.36,2.35,1.05,'#23252a',MID.metal);pBox(loco,0,3.55,-4.2,1.5,0.1,1.3,blk,MID.metal);
+  [-1,1].forEach(sd=>{pBox(loco,sd*1.37,2.35,-3.9,0.02,0.6,0.5,'#d6e4ea',MID.glass);pBox(loco,sd*1.37,2.35,-4.75,0.02,0.6,0.3,'#d6e4ea',MID.glass);});
+  pBox(loco,0,2.35,-3.14,0.9,0.55,0.02,'#d6e4ea',MID.glass);
+  // колёса: ведущие большие, бегунковые спереди; дышло и цилиндры
+  [-1,1].forEach(sd=>{[-2.5,-0.9,0.7].forEach(z=>pWheelX(loco,sd*1.02,0.86,z,0.86,sd,red));pWheelX(loco,sd*0.98,0.5,2.35,0.5,sd,red);
+    pBox(loco,sd*1.25,0.8,-0.9,0.035,0.11,1.75,'#9a9ca0',MID.chrome);pCyl(loco,[sd*1.1,0.95,1.7],[sd*1.1,0.95,2.8],0.34,0.34,grey,14,MID.metal);
+    pCyl(loco,[sd*0.85,1.05,3.3],[sd*0.85,1.05,3.62],0.09,0.09,'#8a8c90',8,MID.chrome);pCyl(loco,[sd*0.85,1.05,3.62],[sd*0.85,1.05,3.66],0.2,0.2,'#6a6c70',12,MID.chrome);});
+  pBox(loco,0,0.8,3.25,1.4,0.45,0.1,red,MID.paint);// буферный брус
+  loco.e[1]=4;pCyl(loco,[0,3.0,3.1],[0,3.0,3.36],0.17,0.17,'#fff0c0',12,MID.glass);loco.e[1]=0;// фонарь
+  cars.push({mb:loco,len:9.2});
+  const tender=new MB();pBox(tender,0,0.95,0,1.3,1.75,2.5,'#23252a',MID.metal);pBox(tender,0,0.95,0,1.33,0.12,2.55,red,MID.paint);
+  tender.e[3]=txLay('gravel',1);pBox(tender,0,2.7,0.2,1.12,0.28,1.8,'#141414',MID.matte);tender.e[3]=0;
+  [-1.6,0,1.6].forEach(z=>[-1,1].forEach(sd=>pWheelX(tender,sd*1.0,0.5,z,0.5,sd,red)));cars.push({mb:tender,len:5.4});
+  for(let k=0;k<4;k++){const w=new MB(),col=old?['#3e4a32','#5a3a26','#3e4a32','#4a3a2a'][k]:['#5a2a22','#3a4a3a','#5a2a22','#2e3a4a'][k];
+    w.e[3]=txLay('wood_wall',1);pBox(w,0,1.0,0,1.38,2.2,4.3,col,MID.wood);w.e[3]=0;pBox(w,0,0.92,0,1.3,0.1,4.4,'#1c1d20',MID.metal);
+    // полукруглая крыша
+    w.e[3]=txLay('roof_slate',1);for(let j=0;j<8;j++){const a0=Math.PI*j/8,a1=Math.PI*(j+1)/8,X=a=>-Math.cos(a)*1.46,Y=a=>3.2+Math.sin(a)*0.38,nm=[-Math.cos((a0+a1)/2),Math.sin((a0+a1)/2)*2.5,0];
+      w.poly([[X(a0),Y(a0),-4.45],[X(a1),Y(a1),-4.45],[X(a1),Y(a1),4.45],[X(a0),Y(a0),4.45]],v3n(nm),hex2rgb('#4a4a4c'),MID.roof);}w.e[3]=0;
+    [-4.45,4.45].forEach(z=>w.poly(Array.from({length:9},(_,j)=>{const a=Math.PI*j/8;return [-Math.cos(a)*1.46,3.2+Math.sin(a)*0.38,z];}),[0,0,Math.sign(z)],hex2rgb(col),MID.wood));
+    for(let j=-3;j<=3;j++)[-1,1].forEach(sd=>{pBox(w,sd*1.39,1.9,j*1.15,0.02,0.72,0.38,'#d6e0e4',MID.glass);pBox(w,sd*1.39,2.66,j*1.15,0.025,0.05,0.44,'#c9a860',MID.chrome);});
+    [-3,-1.9,1.9,3].forEach(z=>[-1,1].forEach(sd=>pWheelX(w,sd*1.0,0.46,z,0.46,sd,'#2a2a2c')));cars.push({mb:w,len:9.4});}
   return C[key]={cars:cars.map(c=>({m:g3Mesh(c.mb),len:c.len}))};}
 // Когда поезд идёт: машина подъезжает к переезду — поезд успевает пройти перед ней (шлагбаумы опускаются)
 function r3dTrainTick(dt){const T=R3.T;if(!T.rails||!T.rails.length)return;const F=R.follow;
@@ -9836,8 +9977,8 @@ function auRaceStart(rc){
   // визг шин: тон с дрожанием + шипящий шум; скрип тормозов: высокий тон; шорох и гул обочины
   const noise=(type,fr,q)=>{const s=c.createBufferSource(),fl=c.createBiquadFilter(),gg=c.createGain();s.buffer=AU.noise;s.loop=true;fl.type=type;fl.frequency.value=fr;fl.Q.value=q;gg.gain.value=0;s.connect(fl);fl.connect(gg);gg.connect(AU.fx);return {s,fl,g:gg};};
   const tone=(type,fr,bp,q,vib,vd)=>{const o=c.createOscillator(),fl=c.createBiquadFilter(),gg=c.createGain(),v=c.createOscillator(),vg=c.createGain();o.type=type;o.frequency.value=fr;fl.type='bandpass';fl.frequency.value=bp;fl.Q.value=q;gg.gain.value=0;v.frequency.value=vib;vg.gain.value=vd;v.connect(vg);vg.connect(o.frequency);o.connect(fl);fl.connect(gg);gg.connect(AU.fx);return {o,v,fl,g:gg};};
-  const sq=tone('sawtooth',950,1100,5,9,45),sn=noise('bandpass',1700,1.4),br=tone('sawtooth',2600,2700,9,5,70),bn=noise('bandpass',900,2),rb=noise('lowpass',260,0.7);
-  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,early:rc.y<1906,drum:rc.y>=1912};
+  const sq=tone('sawtooth',950,1100,5,9,45),sn=noise('bandpass',1700,1.4),br=tone('sawtooth',2600,2700,9,5,70),bn=noise('bandpass',900,2),rb=noise('lowpass',260,0.7),wd=noise('bandpass',520,0.45);
+  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,early:rc.y<1906,drum:rc.y>=1912};
 }
 function auRaceTick(){
   const a=AU.race;if(!a||!R||!(R.me||R.follow))return;const t=AU.ctx.currentTime,me=R.me||R.follow,vol=R.me?1:0.6,p=clamp(me.rpm||0,0,1.1),thr=me.thr||0,sp=Math.max(0,me.vx||0);
@@ -9854,9 +9995,11 @@ function auRaceTick(){
   a.br.o.frequency.setTargetAtTime((a.drum?2500:1900)+brk*500+Math.sin(t*3)*60,t,0.05);a.br.g.gain.setTargetAtTime(brk*(a.drum?0.07:0.035)*vol,t,brk>0?0.03:0.1);a.bn.g.gain.setTargetAtTime(brk*(a.drum?0.03:0.1)*vol,t,0.05);
   // гул и камни на обочине
   a.rb.g.gain.setTargetAtTime((me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
+  // ветер в открытой машине: на скорости свистит всё громче и выше
+  const w=clamp((sp-7)/38,0,1);a.wd.fl.frequency.setTargetAtTime(380+sp*14,t,0.2);a.wd.g.gain.setTargetAtTime(Math.pow(w,1.4)*0.11*vol*(R.t>0?1:0),t,0.25);
 }
 function auScreech(v){}
-function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb].forEach(x=>x.g.gain.setTargetAtTime(0,t,0.05));[a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s].forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
+function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd].forEach(x=>x.g.gain.setTargetAtTime(0,t,0.05));[a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s,a.wd.s].forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
 
 
 /* ================= ACTIONS ================= */
@@ -9960,6 +10103,8 @@ const ACT={
   gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');},
   sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
   boardTake:d=>{boardTake(G,d.k);},
+  gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
+  demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},
   gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
