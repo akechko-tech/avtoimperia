@@ -241,5 +241,57 @@ def build():
     bg.convert('RGB').resize((1024, 512)).save('/tmp/foliage_preview.jpg', quality=88)
     print('foliage atlas', atlas.size)
 
-if __name__ == '__main__' and (len(sys.argv) == 1 or sys.argv[1] != 'list'):
+if __name__ == '__main__' and (len(sys.argv) == 1 or sys.argv[1] == 'atlas'):
     build()
+
+# ---------- луг сверху: плитка из фото-травинок и клевера (у Poly Haven нет сочной травы) ----------
+def paste_wrap(canvas, im, x, y):
+    S = canvas.width
+    for dx in (-S, 0, S):
+        for dy in (-S, 0, S):
+            X, Y = int(x - im.width / 2 + dx), int(y - im.height / 2 + dy)
+            if X > S or Y > S or X + im.width < 0 or Y + im.height < 0: continue
+            canvas.alpha_composite(im, (X, Y)) if (X >= 0 and Y >= 0 and X + im.width <= S and Y + im.height <= S) else canvas.paste(im, (X, Y), im)
+
+def build_meadow(name='meadow', dry=False, seed=5):
+    import cv2
+    rng = random.Random(seed); S = 1024
+    blades = pick('grass_medium_02', [0, 1, 3, 4, 5, 8, 9]) + pick('grass_bermuda_01', [4, 5, 6, 7, 11, 12, 14])
+    tufts = pick('grass_medium_01', [12, 13, 14, 15, 16])
+    clover = pick('shrub_sorrel_01', [0, 1, 4])
+    drybl = pick('grass_medium_02', [6, 7])
+    # основа: тёмная земля с пятнами
+    base = np.zeros((S, S, 3), np.float32) + (np.array([58, 50, 34]) / 255.0 if not dry else np.array([96, 82, 60]) / 255.0)
+    noise = cv2.GaussianBlur(np.random.RandomState(seed).rand(S, S).astype(np.float32), (0, 0), 18)
+    noise = (noise - noise.min()) / (noise.max() - noise.min() + 1e-6)
+    base *= (0.75 + 0.5 * noise)[..., None]
+    cv = Image.fromarray((base * 255).astype(np.uint8), 'RGB').convert('RGBA')
+    G = [(0.78, 1.0, 0.62), (0.7, 0.95, 0.55), (0.9, 1.02, 0.66), (0.62, 0.86, 0.5)] if not dry else [(1.1, 0.98, 0.62), (1.02, 0.92, 0.58), (0.92, 0.88, 0.56), (1.2, 1.02, 0.6)]
+    for layer in range(3):
+        n = [2600, 3600, 3000][layer]
+        for i in range(n):
+            if layer == 1 and rng.random() < 0.08: sp = rng.choice(tufts); ln = rng.uniform(60, 110)
+            elif layer == 2 and not dry and rng.random() < 0.05: sp = rng.choice(clover); ln = rng.uniform(26, 44)
+            elif dry and rng.random() < 0.07: sp = rng.choice(drybl); ln = rng.uniform(30, 70)
+            else: sp = rng.choice(blades); ln = rng.uniform(34, 86)
+            br = [0.45, 0.7, 0.95][layer] * rng.uniform(0.8, 1.2)
+            im = rot_scale(sp, ln, rng.uniform(0, 360), br, rng.choice(G))
+            paste_wrap(cv, im, rng.uniform(0, S), rng.uniform(0, S))
+    col = np.asarray(cv.convert('RGB')).astype(np.float32) / 255
+    lum = col @ np.array([0.3, 0.59, 0.11], np.float32)
+    h = cv2.GaussianBlur(lum, (0, 0), 1.2)
+    gx = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * 0.5; gy = (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * 0.5
+    k = 12.0; nx, ny = -gx * k, gy * k; nz = np.ones_like(nx); l = np.sqrt(nx * nx + ny * ny + nz * nz)
+    nrm = np.dstack([nx / l, ny / l, nz / l]) * 0.5 + 0.5
+    ao = np.clip(0.55 + 0.9 * (h - cv2.GaussianBlur(h, (0, 0), 6)) + 0.45, 0.4, 1)
+    rough = np.full_like(h, 0.86)
+    def save(arr, fn, q=88, sub=None):
+        im = Image.fromarray((np.clip(arr, 0, 1) * 255 + 0.5).astype(np.uint8)).resize((512, 512), Image.LANCZOS)
+        kw = {'subsampling': sub} if sub is not None else {}
+        im.save(os.path.join(OUT, fn), 'JPEG', quality=q, optimize=True, **kw)
+    save(col, name + '_c.jpg'); save(nrm, name + '_n.jpg', 90, 0); save(np.dstack([ao, rough, np.zeros_like(h)]), name + '_r.jpg', 88, 0)
+    Image.fromarray((np.clip(col, 0, 1) * 255).astype(np.uint8)).resize((512, 512)).save('/tmp/' + name + '_preview.jpg', quality=88)
+    print('meadow', name)
+
+if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'meadow':
+    build_meadow('meadow', False, 5); build_meadow('meadow_dry', True, 7)

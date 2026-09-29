@@ -503,4 +503,25 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .rf-skip{position:absolute;right:10px;bottom:calc(10.5% + 10px);z-index:3;background:rgba(10,16,24,.55);color:#f3ead6;border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:7px 14px;font:600 13px var(--sans,system-ui);letter-spacing:.02em}
 .rf-rec{position:absolute;left:12px;top:calc(10.5% + 10px);z-index:3;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:#ff5b4a;animation:rfblink 1.2s steps(2) infinite}
 @keyframes rfblink{50%{opacity:.35}}
-#raceScreen.filming .r-hud,#raceScreen.filming .r-bars,#raceScreen.filming .r-ctrl,#raceScreen.filming #rMap,#raceScreen.filming .r-board,#raceScreen.filming .r-msg,#raceScreen.filming .r-note,#raceScreen.filming .r-grip,#raceScreen.filming #rSvc,#raceScreen.filming #rReset,#raceScreen.filming .r-mgr{visibility:hidden}
+#raceScreen.filming .r-top,#raceScreen.filming .r-hud,#raceScreen.filming .r-bars,#raceScreen.filming .r-ctrl{display:none}
+#raceScreen.filming #rMap,#raceScreen.filming .r-board,#raceScreen.filming .r-msg,#raceScreen.filming .r-note,#raceScreen.filming .r-grip,#raceScreen.filming #rSvc,#raceScreen.filming #rReset,#raceScreen.filming .r-mgr{visibility:hidden}
+/* 0.17: в горизонтальном положении — картинка гонки на весь экран, приборы и кнопки поверх неё */
+@media (orientation:landscape) and (max-height:900px){
+  #raceScreen{display:block}
+  #rView{position:absolute!important;inset:0}
+  #raceScreen .r-top{position:absolute;left:0;right:0;top:0;z-index:5;padding:calc(6px + env(safe-area-inset-top,0px)) 10px 14px;background:linear-gradient(rgba(4,9,16,.72),rgba(4,9,16,0))}
+  #raceScreen .r-top .btn.sm{padding:4px 9px;font-size:12px;min-height:30px;background:rgba(8,16,26,.45)}
+  #raceScreen .r-hud{position:absolute;left:50%;transform:translateX(-50%);top:calc(38px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:18px;padding:4px 14px;border-radius:10px;background:rgba(5,12,22,.5);font-size:10px;white-space:nowrap}
+  #raceScreen .r-hud b{font-size:17px;display:inline;margin-left:4px}
+  #raceScreen .r-bars{position:absolute;left:10px;right:auto;top:calc(76px + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;gap:3px;width:150px;padding:6px 8px;border-radius:8px;background:rgba(5,12,22,.42)}
+  #raceScreen .r-bars .bar{height:5px;margin-top:1px}
+  #raceScreen .r-board{top:calc(160px + env(safe-area-inset-top,0px))}
+  #raceScreen #rMap{top:calc(44px + env(safe-area-inset-top,0px));right:10px}
+  #raceScreen .r-ctrl{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:8px calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));grid-template-columns:96px 96px 1fr 104px 118px;pointer-events:none}
+  #raceScreen .r-ctrl>*{pointer-events:auto}
+  #raceScreen .r-ctrl .lft{grid-column:1}#raceScreen .r-ctrl .rgt{grid-column:2}#raceScreen .r-ctrl .brk{grid-column:4}#raceScreen .r-ctrl .gas{grid-column:5}
+  #raceScreen .r-ctrl button{height:84px;background:rgba(10,18,28,.34);border-color:rgba(255,255,255,.28);backdrop-filter:blur(2px)}
+  #raceScreen .r-ctrl .r-wheel{grid-column:1/3;height:110px;background:rgba(10,18,28,.25)}
+  #raceScreen .r-mgr{position:absolute;left:0;right:0;bottom:0;z-index:5;background:rgba(5,12,22,.72)}
+  #raceScreen .r-msg{top:30%}
+}

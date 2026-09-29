@@ -1,0 +1,65 @@
+/* ================= СЦЕНАРИЙ ТРАССЫ: города и сёла, лес и аллеи, поля, мост через реку, переезд, серпантин, берег моря ================= */
+// Раньше пейзаж повторялся по кругу (городок каждые 600 м). Теперь у каждой гонки свой «сценарий»: старт и финиш в городе,
+// между ними — поля и сёла, лес, аллеи, виноградники, мост через реку, железнодорожный переезд с поездом, в горах — серпантин
+// со скалой с одной стороны и обрывом с другой, у моря — дорога по берегу. Сценарий один и тот же для одной и той же гонки.
+const RSEG={fields:0,town:1,village:2,forest:3,avenue:4,bridge:5,rail:6,serp:7,coast:8,vine:9};
+const RIVERS={fr:['Сену','Луару','Марну','Рону','Сону','Уазу'],it:['По','Тибр','Адидже','Арно'],de:['Рейн','Майн','Неккар','Мозель','Эльбу'],uk:['Темзу','Северн','Трент'],
+  us:['Гудзон','Огайо','Делавэр','Миссисипи'],be:['Маас','Шельду'],at:['Дунай','Инн','Мур'],ch:['Рейн','Аре','Рону'],es:['Эбро','Тахо'],ru:['Волхов','Мсту','Тверцу','Волгу'],ie:['Шаннон','Лиффи'],ly:['вади'],mc:['Вар'],other:['реку']};
+const COASTS={mc:'Лазурный берег',it:'берег Тирренского моря',es:'берег Средиземного моря',fr:'берег Ла-Манша',uk:'берег Ла-Манша',ie:'берег Ирландского моря',us:'берег Атлантики',ly:'берег Средиземного моря'};
+function planRoute(trk,rnd){
+  const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);
+  if(cfg.oval||rc.track==='board'||cfg.sprint||rc.track==='brooklands'||rc.track==='indy'||rc.track==='monaco')return;
+  const r=mulberry32(hashStr('route|'+rc.key)),hill=!!cfg.uphill,mount=hill||cfg.terr==='mount'||(!!set.mount&&cfg.hilly>=0.6),closed=cfg.closed;
+  const s0=closed?0:trk.startIdx,f0=closed?n-1:trk.finishIdx,dry=!!set.dry||['it','es','ly','mc'].includes(cfg.host),wine=['fr','it','es','de','at'].includes(cfg.host);
+  const put=(type,a,b,extra)=>{a=clamp(a,0,n-1);b=clamp(b,0,n-1);if(b<=a)return null;for(let i=a;i<=b;i++)S[i]=type;const o=Object.assign({type,i0:a,i1:b,i:Math.round((a+b)/2)},extra||{});list.push(o);return o;};
+  const curvy=(i,len)=>{let m=0;for(let k=i;k<Math.min(n,i+len);k++)m=Math.max(m,Math.abs(K[k]));return m;};
+  // 1) основа: чередование полей, сёл, леса, аллей, виноградников (в горах — серпантин и лес)
+  let i=closed?0:Math.max(0,s0-40);const end=closed?n:Math.min(n,f0+40);let last=-1;
+  while(i<end){const q=r();let type,len;
+    if(mount&&curvy(i,60)>1/60&&q<0.55){type=RSEG.serp;len=90+Math.floor(r()*120);}
+    else if(mount&&q<0.8){type=RSEG.forest;len=60+Math.floor(r()*80);}
+    else{const w=[[RSEG.fields,dry?0.34:0.3],[RSEG.village,0.2],[RSEG.forest,dry?0.1:0.2],[RSEG.avenue,0.14],[RSEG.vine,wine?(dry?0.18:0.1):0]],tot=w.reduce((a,x)=>a+x[1],0);let z=r()*tot;type=RSEG.fields;for(const [t,p] of w){z-=p;if(z<=0){type=t;break;}}
+      if(type===last)type=type===RSEG.fields?RSEG.village:RSEG.fields;len={0:70,2:55,3:70,4:40,9:60}[type]+Math.floor(r()*70);}
+    put(type,i,i+len-1);last=type;i+=len;}
+  // 2) города: старт и финиш дорожных гонок — в городе, по пути — раз в 1,6–2,4 км
+  if(cfg.town!==false){
+    if(!closed){put(RSEG.town,s0-50,s0+45,{cap:null});put(RSEG.town,f0-70,f0+25,{cap:'Финиш — в городе: мостовая и толпа'});}
+    else put(RSEG.village,n-40,n-1);
+    const step=420+Math.floor(r()*180);for(let j=(closed?s0+160:s0+step);j<(closed?n-120:f0-160);j+=step+Math.floor(r()*120)){if(mount&&S[j]===RSEG.serp)continue;put(RSEG.town,j,j+50+Math.floor(r()*30),{cap:'Городок: узкая улица, мостовая, зрители у домов'});}}
+  // 3) мост через реку: прямой участок в полях или лесу, не у старта
+  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=RIVERS[cfg.host]||RIVERS.other;
+  for(let k=0;k<riverN;k++){for(let t=0;t<40;t++){const j=(closed?s0+100:s0+80)+Math.floor(r()*((closed?n-200:f0-s0-200)));
+      if(j<2||j>n-40||curvy(j-20,40)>1/120)continue;let ok=true;for(let a=j-30;a<=j+30;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail||S[a]===RSEG.serp)ok=false;if(!ok)continue;
+      const span=9+Math.floor(r()*4),nm=rn[Math.floor(r()*rn.length)];put(RSEG.bridge,j-span,j+span,{cap:`Мост через ${nm}`,alt:34,w:3});for(let a=j-span;a<=j+span;a++)trk.bridge[a]=1;
+      trk.rivers.push({i:j,w:14+r()*10,d:4.5+r()*2,ph:r()*6.28,name:nm});break;}}
+  // 4) железнодорожный переезд: поезд может пройти перед самым носом
+  if(rc.y>=1880&&!hill&&n>380){for(let t=0;t<40;t++){const j=(closed?s0+60:s0+60)+Math.floor(r()*((closed?n-120:f0-s0-120)));
+      if(j<2||j>n-30||curvy(j-15,30)>1/200)continue;let ok=true;for(let a=j-25;a<=j+25;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.serp)ok=false;if(!ok)continue;
+      put(RSEG.rail,j-6,j+6,{cap:'Железнодорожный переезд: смотрите на шлагбаум',alt:26,w:2});trk.rails.push({i:j,ang:(r()-0.5)*0.5});break;}}
+  // 5) берег моря: дорога вдоль воды (Ривьера, Сицилия, Испания, Ла-Манш)
+  const sea=!!set.sea||['targa','mc','x22765'].includes(rc.track)||/turbie|monte|nice|riviera|sitges|coppa|florio|boulogne|dieppe|brighton/i.test(rc.id+' '+rc.name);
+  let yMin=1e9;trk.pts.forEach(p=>{yMin=Math.min(yMin,p[1]);});
+  if(sea&&n>300&&!hill){for(let t=0;t<40;t++){const len=120+Math.floor(r()*90),j=(closed?60:s0+100)+Math.floor(r()*Math.max(1,(closed?n-len-120:f0-s0-len-160)));
+      let ok=true,lo=1e9,hi=-1e9;for(let a=j;a<j+len;a++){if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail)ok=false;else{lo=Math.min(lo,trk.pts[a][1]);hi=Math.max(hi,trk.pts[a][1]);}}
+      // у моря дорога идёт низко и ровно: вода — ниже всей трассы
+      if(!ok||lo>yMin+9||hi-lo>14)continue;
+      // море — с внешней стороны дуги (или где ниже)
+      let kk=0;for(let a=j;a<j+len;a++)kk+=K[a];const side=kk>0?-1:1;put(RSEG.coast,j,j+len,{cap:COASTS[cfg.host]||'Дорога вдоль моря',alt:40,w:4,side});trk.coast.push({i0:j,i1:j+len,side});break;}}
+  // подписи для заставки: самые приметные участки
+  list.forEach(o=>{if(o.cap===undefined)o.cap=o.type===RSEG.serp?'Серпантин: скала с одной стороны, обрыв — с другой':o.type===RSEG.forest&&o.i1-o.i0>90?'Лесная дорога: тень и корни':o.type===RSEG.avenue?'Аллея: деревья у самой дороги':o.type===RSEG.vine?'Виноградники по обе стороны':null;});}
+// Тип участка у точки трассы
+function segAt(trk,i){return trk.segT?trk.segT[((i%trk.n)+trk.n)%trk.n]:RSEG.fields;}
+/* ---------- река и берег в рельефе: русло с берегами под мостом, спуск к морю ---------- */
+// Река идёт поперёк дороги (с изгибами); вода — ниже моста, берега пологие
+function riverLine(trk,rv){const p=trk.pts[rv.i],t=trk.T[rv.i],d=[t[1],-t[0]];return {p,d,t};}
+function riverDist(trk,rv,x,z){const L=riverLine(trk,rv),dx=x-L.p[0],dz=z-L.p[2],s=dx*L.d[0]+dz*L.d[1],e=dx*L.t[0]+dz*L.t[1];
+  const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s));return {s,e:e-m};}
+function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
+  (trk.rivers||[]).forEach(rv=>{const y0=P[rv.i][1],bed=y0-rv.d,bank=rv.w/2+10,R=1300;
+    for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)>R||Math.abs(dd.e)>bank+30)continue;
+      const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const tgt=bed+(y0-1.2-bed)*(1-prof)*0.4;const h=F.H[q]+(Math.min(F.H[q],tgt)-F.H[q])*sstep(0,1,prof*1.6);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
+  let yMin=1e9;P.forEach(p=>{yMin=Math.min(yMin,p[1]);});
+  (trk.coast||[]).forEach(c=>{const sea=yMin-4;c.sea=sea;
+    for(let i=c.i0;i<=c.i1;i+=2){const p=P[i],nn=trk.N[i];for(let a=16;a<520;a+=6){const x=p[0]+nn[0]*c.side*(trk.W/2+a),z=p[2]+nn[1]*c.side*(trk.W/2+a);
+      const k=Math.round((x-F.x0)/F.S),j=Math.round((z-F.z0)/F.S);if(k<0||j<0||k>=F.nx||j>=F.nz)continue;const q=j*F.nx+k,w=sstep(16,60,a),tg=p[1]+(sea-6-p[1])*w;
+      for(const qq of [q,q+1,q-1,q+F.nx,q-F.nx])if(qq>=0&&qq<F.H.length&&F.D[qq]>trk.W/2+14){F.H[qq]=Math.min(F.H[qq],tg);F.G[qq]=Math.min(F.G[qq],F.H[qq]);}}}});}

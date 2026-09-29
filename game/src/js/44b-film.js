@@ -27,7 +27,7 @@ function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1
   if(!out.length&&T.town){for(let i=s0+40;i<lim;i++)if(T.town[i]){out.push({i:i+8,cap:'Городок на пути: мостовая, зрители, узкие улицы',w:1,alt:22});break;}}
   if(!out.length){let bi=-1,bk=0;for(let i=s0+60;i<Math.min(lim,s0+900);i++){const k=Math.abs(T.K[i]||0);if(k>bk){bk=k;bi=i;}}if(bi>0)out.push({i:bi,cap:bk>1/25?'Крутой поворот — здесь многие вылетали':'Длинная дуга: держите скорость',w:1,alt:28});}
   out.sort((a,b)=>b.w-a.w||a.i-b.i);const first=out[0];if(!first)return null;
-  const km=((first.i-s0)*T.step)/1000;first.km=km;return first;}
+  first.at=!T.closed&&first.i>T.finishIdx-60?'на финише':first.i-s0<120?'сразу после старта':'впереди';return first;}
 const LM_NAME={eiffel:'Париж, Эйфелева башня — старт у заставы',bigben:'Лондон: Вестминстер',gate_spb:'Петербург: Триумфальные ворота',kremlin:'Москва: Кремль',church_ru:'Сельская церковь у тракта',mill_ru:'Ветряная мельница',
   trophy:'Ла-Тюрби: римский трофей над Монако',observatory:'Вершина Ванту: обсерватория',viaduct:'Земмеринг: каменный виадук',castle:'Замок над дорогой',pagoda:'Индианаполис: пагода судей',funkturm:'Берлин: радиобашня',
   obelisk:'Обелиск на площади',round_tower:'Круглая башня',minaret:'Триполи: минарет',casino:'Монте-Карло: казино'};
@@ -40,7 +40,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
     cam:u=>{const e=ease(u),a=trkAt(s0,-150+70*e,-40+25*e),look=trkAt(s0,40+30*e);return {eye:[a.p[0],a.p[1]+95-60*e,a.p[2]],look:[look.p[0],look.p[1]+2,look.p[2]],fov:0.85};}});
   // 2) самое интересное впереди: пролёт вдоль дороги
-  if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:`через ${poi.km<1?Math.round(poi.km*1000)+' м':poi.km.toFixed(1).replace('.',',')+' км'}`,mid:poi.cap},poi:i,
+  if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:poi.at,mid:poi.cap},poi:i,
     cam:u=>{const e=ease(u),a=trkAt(i,-90+80*e,18),b=trkAt(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
   // 3) стартовая решётка: камера идёт вдоль машин
   const grid=R.cars.slice().sort((a,b)=>b.prog-a.prog),back=grid[grid.length-1],front=grid[0];

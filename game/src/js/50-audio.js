@@ -239,6 +239,10 @@ function auSfx(type,v){
   if(type==='bump')vNoise(t,0.15,0.3*v,'lowpass',500,AU.fx);
   if(type==='cheer'){const s=AU.ctx.createBufferSource(),f=AU.ctx.createBiquadFilter(),g=AU.ctx.createGain();s.buffer=AU.noise;s.loop=true;f.type='bandpass';f.frequency.value=1100;f.Q.value=0.6;s.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.35,t+0.8);g.gain.exponentialRampToValueAtTime(0.0001,t+3.5);s.start(t);s.stop(t+3.6);}
   if(type==='paper')vNoise(t,0.25,0.12,'highpass',3000,AU.fx);
+  // гудок паровоза: два тона с дрожанием, долгий и короткий
+  if(type==='whistle'){[[0,1.4],[1.7,0.6]].forEach(([d,l])=>[[587,0.05],[740,0.04],[880,0.02]].forEach(([f,a])=>{const o=AU.ctx.createOscillator(),g=AU.ctx.createGain(),lf=AU.ctx.createOscillator(),lg=AU.ctx.createGain();
+    o.type='triangle';o.frequency.value=f;lf.frequency.value=5.5;lg.gain.value=f*0.012;lf.connect(lg);lg.connect(o.frequency);o.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(a*v,t+d+0.08);g.gain.setValueAtTime(a*v,t+d+l-0.15);g.gain.exponentialRampToValueAtTime(0.0001,t+d+l);
+    o.start(t+d);lf.start(t+d);o.stop(t+d+l+0.05);lf.stop(t+d+l+0.05);}));vNoise(t,1.4,0.04*v,'bandpass',2400,AU.fx);}
 }
 function auRaceStart(rc){
   if(!AU.ctx)return;auApply();

@@ -55,7 +55,8 @@ function r3dField(T){
   (T.lm||[]).forEach(lm=>{if(!lm.off)return;const k0=Math.round((lm.x-x0)/S),j0=Math.round((lm.z-z0)/S);if(k0<0||j0<0||k0>=nx||j0>=nz)return;const h0=H[j0*nx+k0],R0=lm.r*0.9,R1=lm.r*1.5,rc2=Math.ceil(R1/S);
     for(let j=Math.max(0,j0-rc2);j<=Math.min(nz-1,j0+rc2);j++)for(let k=Math.max(0,k0-rc2);k<=Math.min(nx-1,k0+rc2);k++){const q=j*nx+k,dd=Math.hypot(x0+k*S-lm.x,z0+j*S-lm.z),w=1-sstep(R0,R1,dd);if(w>0)H[q]+=(h0-H[q])*w;}});
   for(let q=0;q<N;q++){let h=H[q];if(h>Cap[q])h=Cap[q];H[q]=h;G[q]=h-0.45*(1-sstep(W/2+13,W/2+20,D[q]));}
-  return {x0,z0,S,nx,nz,D,I,L,Sg,H,G,mount:alp,flat,beach,seed};
+  const Fo={x0,z0,S,nx,nz,D,I,L,Sg,H,G,mount:alp,flat,beach,seed};carveField(T,Fo);
+  return Fo;
 }
 function fSample(F,A,x,z){const fx=clamp((x-F.x0)/F.S,0,F.nx-1.001),fz=clamp((z-F.z0)/F.S,0,F.nz-1.001),k=Math.floor(fx),j=Math.floor(fz),u=fx-k,v=fz-j,q=j*F.nx+k;
   return (A[q]*(1-u)+A[q+1]*u)*(1-v)+(A[q+F.nx]*(1-u)+A[q+F.nx+1]*u)*v;}
@@ -80,7 +81,7 @@ function surfAt(c){const T=R3.T,n=T.n,i=c.idx,j=T.closed?(i+(c.segT>=0?1:n-1))%n
 const R3SIZE={plane:4.5,oak:4.5,elm:4,poplar:1.6,cypress:1.2,olive:2.8,pine:3.2,fir:2.2,birch:2,palm:2,house_fr:6,farm_fr:6,house_it:6,fachwerk:6,cottage:5,pub:5,farm_us:6.5,barn:7,izba:5,villa:7,cafe:6,church:8,stand:8,pits:7,
   church_ru:9,church_uk:8,church_us:8,church_at:8,campanile:3.5,minaret:6,house_ly:6,cottage_ie:5,mill_ru:3,stog:2.2,cactus:1.2,well:1.2};
 /* ---------- покрытие дороги по участку: в городах до 1920-х — брусчатка ---------- */
-function r3dTexKey(i){const T=R3.T,t=T.terrAt(i);return R3.town[i]&&T.rc.y<1920&&(t==='dirt'||t==='macadam')?'pave':t;}
+function r3dTexKey(i){const T=R3.T,t=T.terrAt(i);return R3.town[i]&&T.rc.y<1922&&(t==='dirt'||t==='macadam'||t==='mount'||t==='mud')?'pave':t;}
 /* ---------- заготовки: деревья, камни, мелочи у дороги ---------- */
 const PR3={};
 function proto(key,make){let p=PR3[key];if(p)return p;const mb=new MB();make(mb,mulberry32(hashStr(key)));PR3[key]=mb;return mb;}
@@ -132,7 +133,7 @@ function pTree(t,v){return proto('tree|'+t+'|'+v,(mb,r)=>{
         const up=n[1]<0?[-n[0],-n[1],-n[2]]:n;mb.poly(q,up,c,MID.leaf);mb.poly(q,[-up[0],-up[1],-up[2]],cMul(c,0.7),MID.leaf);}e[2]=0;}
     pBlob(mb,top[0],top[1],0,0.35,0.3,0.35,'#6b5334',r,0,MID.bark);}
   else if(t==='bush'){for(let i=0;i<4;i++)pBlob(mb,(r()-0.5)*1.8,0.6+r()*0.5,(r()-0.5)*1.8,0.7+r()*0.3,0.6+r()*0.2,0.7+r()*0.3,['#4a6f35','#557a3a','#46693a'][(i+v)%3],r,0,undefined,0.3);}
-  else if(t==='rock'){mb.e[3]=txLay('rock',1,1);for(let i=0;i<3;i++)pBlob(mb,(i-1)*0.9+(r()-0.5)*0.4,0.25+r()*0.3,(r()-0.5)*0.8,0.9+r()*0.6,0.55+r()*0.4,0.8+r()*0.5,['#a09a90','#aaa498','#949088'][i],r,1,MID.stone);mb.e[3]=0;}
+  else if(t==='rock'){mb.e[3]=txLay('rock',1,1);for(let i=0;i<3;i++)pBlob(mb,(i-1)*0.9+(r()-0.5)*0.4,0.25+r()*0.3,(r()-0.5)*0.8,0.9+r()*0.6,0.55+r()*0.4,0.8+r()*0.5,['#7c766c','#857f74','#716b62'][i],r,1,MID.stone);mb.e[3]=0;}
   else if(t==='hay'){mb.e[3]=txLay('thatch',1);const c='#c9a64e';for(let k=0;k<5;k++){const y0=k*0.62,y1=(k+1)*0.62,r0=1.9*Math.sqrt(1-Math.pow(y0/3.1,2)),r1=k===4?0.15:1.9*Math.sqrt(1-Math.pow(y1/3.1,2));pTrunk(mb,0,y0,0,0,y1,0,r0,r1,k%2?'#c9a64e':'#bfa048',10,MID.cloth);}mb.e[3]=0;}
   else if(t==='dune'){mb.e[3]=txLay('sand',1,1);pBlob(mb,0,-0.4,0,5.5,2.6,3.6,'#e8d4a0',r,1,MID.stone);mb.e[3]=0;for(let i=0;i<6;i++)pBlob(mb,(r()-0.5)*7,1+r()*0.8,(r()-0.5)*4,0.35,0.3,0.35,'#8a9a5a',r,0,undefined,0.4);}
   else if(t==='cactus'){// опунция (фико д'Индия) Сицилии: плоские «лепёшки» ветками, рыжие плоды
@@ -144,7 +145,7 @@ function pTree(t,v){return proto('tree|'+t+'|'+v,(mb,r)=>{
   else if(t==='stog'){// стог на шесте
     mb.e[3]=txLay('thatch',1);for(let k=0;k<6;k++){const y0=k*0.75,y1=(k+1)*0.75,rr=y=>1.75*Math.pow(Math.max(0,1-y/4.6),0.85);pTrunk(mb,0,y0,0,0,y1,0,rr(y0)+0.02,Math.max(0.1,rr(y1)),k%2?'#b8984e':'#ab8c48',10,MID.cloth);}
     mb.e[3]=0;pTrunk(mb,0,4.2,0,0.05,5.4,0,0.06,0.04,'#6a5440',5,MID.wood);[-1,1].forEach(s2=>pTrunk(mb,0,3.9,0,s2*0.9,4.9,0.2,0.04,0.03,'#6a5440',4,MID.wood));}
-  else if(t==='cliff'){mb.e[3]=txLay('rock',1,1);for(let i=0;i<5;i++)pBlob(mb,(i-2)*2.8+(r()-0.5),2.5+r()*3,(r()-0.5)*1.5,2.2+r()*1.2,3.5+r()*2.5,1.8+r()*0.8,['#c8c0b0','#b8b0a0','#aca492'][i%3],r,1,MID.stone);mb.e[3]=0;pBlob(mb,-3,8,0,1.6,0.5,1,'#6f7d4e',r,0,undefined,0.3);}
+  else if(t==='cliff'){mb.e[3]=txLay('rock',1,1);for(let i=0;i<5;i++)pBlob(mb,(i-2)*2.8+(r()-0.5),2.5+r()*3,(r()-0.5)*1.5,2.2+r()*1.2,3.5+r()*2.5,1.8+r()*0.8,['#8e8676','#857d6e','#7a7264'][i%3],r,1,MID.stone);mb.e[3]=0;pBlob(mb,-3,8,0,1.6,0.5,1,'#6f7d4e',r,0,undefined,0.3);}
   });}
 // Мелочи у дороги (собираются в осях предмета: +x — к дороге, z — вдоль неё)
 function pProp(t,v){return proto('prop|'+t+'|'+v,(mb,r)=>{
@@ -170,6 +171,14 @@ function pProp(t,v){return proto('prop|'+t+'|'+v,(mb,r)=>{
   else if(t==='well'){// колодец-журавль: сруб, столб-рогатина, длинный шест с бадьёй
     pBox(mb,0,0,0,0.7,0.9,0.7,'#7a5a3a',MID.wood);pBox(mb,0,0.9,0,0.74,0.1,0.74,'#6a4a2e',MID.wood);pTrunk(mb,-1.4,0,0,-1.4,4.2,0,0.14,0.11,'#6a5440',6,MID.wood);
     pTrunk(mb,-4.6,1.1,0,1.2,6.4,0,0.07,0.05,'#8a7050',5,MID.wood);pBox(mb,-4.6,0.9,0,0.28,0.35,0.28,'#6a4a2e',MID.wood);pTrunk(mb,1.2,6.4,0,1.2,2.2,0,0.02,0.02,'#5a4a3a',3,MID.wood);pTrunk(mb,1.2,2.2,0,1.2,1.9,0,0.18,0.16,'#6a4a2e',6,MID.wood);}
+  else if(t==='gstone'){mb.e[3]=txLay('plaster',1);pBox(mb,0,0,0,0.16,0.62,0.2,'#e8e4d8',MID.stone);pBox(mb,0,0.62,0,0.12,0.06,0.16,'#e8e4d8',MID.stone);mb.e[3]=0;pBox(mb,0.005,0.42,0,0.165,0.1,0.205,'#1c1c1c',MID.paint);}
+  else if(t==='rgate'){// столб шлагбаума с противовесом; сама стрела рисуется отдельно (опускается перед поездом)
+    pBox(mb,0,0,0,0.11,1.25,0.11,'#f0ece2',MID.paint);for(let k=0;k<4;k++)pBox(mb,0.004,0.1+k*0.3,0,0.115,0.14,0.115,'#b8322a',MID.paint);pBox(mb,0,1.2,0,0.16,0.12,0.16,'#2a2a2a',MID.metal);}
+  else if(t==='rhut'){// будка сторожа переезда
+    mb.e[3]=txLay('wood_wall',1);pBox(mb,0,0,0,1.6,2.4,1.3,'#8a6a4a',MID.wood);mb.e[3]=txLay('roof_slate',1);
+    const R=(a,b,c,d,n)=>mb.poly([a,b,c,d],n,hex2rgb('#6a6258'),MID.roof);R([-1.8,2.4,-1.5],[1.8,2.4,-1.5],[1.8,3.3,0],[-1.8,3.3,0],[0,0.86,-0.5]);R([-1.8,2.4,1.5],[-1.8,3.3,0],[1.8,3.3,0],[1.8,2.4,1.5],[0,0.86,0.5]);
+    mb.e[3]=txLay('wood_wall',1);[-1,1].forEach(s2=>mb.poly([[s2*1.6,2.4,-1.3],[s2*1.6,3.25,0],[s2*1.6,2.4,1.3]],[s2,0,0],hex2rgb('#8a6a4a'),MID.wood));mb.e[3]=0;
+    pBox(mb,1.61,0.9,0.3,0.02,0.8,0.45,'#cfe0e8',MID.glass);pBox(mb,1.61,0,-0.55,0.02,1.9,0.4,'#4a3424',MID.wood);}
   else if(t==='fence_ru'){// частокол
     mb.e[3]=txLay('wood_wall',1);for(let z=-5;z<=5.01;z+=0.34){const h=1.55+((z*13|0)%3)*0.05;pBox(mb,0,0,z,0.05,h,0.07,'#8a7258');mb.poly([[0.05,h,z-0.07],[0.05,h,z+0.07],[0,h+0.16,z]],[1,0.3,0],hex2rgb('#7a6248'),MID.wood);}
     [0.35,1.15].forEach(y=>pBox(mb,-0.06,y,0,0.03,0.1,5.05,'#6a543e'));mb.e[3]=0;}
@@ -208,7 +217,7 @@ function r3dPeopleAtlas(y){
 function mbGrid(mb,rows,uvs,cols,mat,tint){const R=rows.length,C=rows[0].length,i0=mb.n,fn=typeof cols==='function';
   for(let r=0;r<R;r++)for(let c=0;c<C;c++){const p=rows[r][c],a=rows[Math.min(R-1,r+1)][c],b=rows[Math.max(0,r-1)][c],e=rows[r][Math.min(C-1,c+1)],f=rows[r][Math.max(0,c-1)];
     let n=v3x([a[0]-b[0],a[1]-b[1],a[2]-b[2]],[e[0]-f[0],e[1]-f[1],e[2]-f[2]]);if(n[1]<0)n=[-n[0],-n[1],-n[2]];const t=uvs&&uvs[r][c];
-    mb.v(p[0],p[1],p[2],n[0],n[1],n[2],fn?cols(r,c):tint?tint[r]:cols,mat,t&&t[0],t&&t[1]);}
+    const cc=fn?cols(r,c):tint?tint[r]:cols;mb.v(p[0],p[1],p[2],n[0],n[1],n[2],cc,cc.length>3?cc[3]:mat,t&&t[0],t&&t[1]);}
   for(let r=0;r<R-1;r++)for(let c=0;c<C-1;c++){const a=i0+r*C+c,b=a+1,d=a+C,e=d+1;if(windUp(mb,a,b,e)){mb.tri(a,b,e);mb.tri(a,e,d);}else{mb.tri(a,e,b);mb.tri(a,d,e);}}}
 function windUp(mb,a,b,c){const f=mb.f,s=mb.st>>2,ax=f[a*s],az=f[a*s+2],ux=f[b*s]-ax,uz=f[b*s+2]-az,vx=f[c*s]-ax,vz=f[c*s+2]-az;return (uz*vx-ux*vz)>=0;}
 function r3dVeg(i0,i1){const T=R3.T,cfg=T.cfg,A=R3.veg,n=T.n,W=T.W;if(!A||cfg.terr==='snow'||cfg.oval||T.rc.track==='board')return null;
@@ -230,6 +239,7 @@ function r3dSection(i,iu){
   const road=[P(W/2),P(W/4),P(0),P(-W/4),P(-W/2)],uv=[[0,v],[0.25,v],[0.5,v],[0.75,v],[1,v]];
   let kmax=0;for(let d=-3;d<=3;d++){const j=T.closed?((i+d)%n+n)%n:clamp(i+d,0,n-1);if(Math.abs(T.K[j])>Math.abs(kmax))kmax=T.K[j];}
   const town=R3.town[i];
+  if(T.bridge&&T.bridge[i])return {road,uv,sh:[null,null],tex:r3dTexKey(i),tint:0.92+0.16*vnz(iu/9,0.5,5),town,i,bridge:1};
   const sh=[1,-1].map(sd=>{const inner=kmax*sd>0,aMax=inner?Math.min(14,0.85/Math.abs(kmax)-W/2):14;
     const A=(town?[0,0.12,3,6,14]:[0,1.5,4,8.5,14]).filter(a=>a<=aMax);if(A.length<2)return null;
     const pts=A.map((a,k)=>{const off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;let y=a===14?fH(x,z)-0.6:shoulderY(i,sd,a,x,z);if(a===0)y-=0.02;return [x,y,z];});pts.A=A;return pts;});
@@ -240,14 +250,16 @@ function r3dChunk(k){
   const roads={},gnd=new MB(),lit=new MB(),leaf=new MB(true),S=[];for(let i=i0;i<=i1;i++)S.push(r3dSection(i%n,i));R3.curLeaf=leaf;
   const hard=['asphalt','concrete','brick','board'].includes(T.cfg.terr),beach=T.cfg.terr==='beach';
   // доля земли на обочине: у края дороги — пыльная полоса, дальше трава
-  const verge=a=>{const d=hard?[0.55,0.22,0.08,0.02,0]:[1,0.72,0.34,0.12,0];const A=[0,1.5,4,8.5,14];for(let q=1;q<A.length;q++)if(a<=A[q]){const t=(a-A[q-1])/(A[q]-A[q-1]);return d[q-1]+(d[q]-d[q-1])*t;}return 0;};
+  const lerpA=(d,a)=>{const A=[0,1.5,4,8.5,14];for(let q=1;q<A.length;q++)if(a<=A[q]){const t=(a-A[q-1])/(A[q]-A[q-1]);return d[q-1]+(d[q]-d[q-1])*t;}return 0;};
+  const verge=a=>lerpA(hard?[0.45,0.15,0.04,0,0]:[0.95,0.5,0.14,0.03,0],a),tramp=a=>lerpA(hard?[0.5,0.55,0.35,0.12,0]:[0.25,0.6,0.5,0.2,0],a);
   for(let s=0;s<S.length-1;s++){const A=S[s],B=S[s+1],rm=roadM(A.tex),mb=roads[A.tex]||(roads[A.tex]=new MB(true));const tc=(t)=>[clamp(255*rm.t[0]*t,0,255)|0,clamp(255*rm.t[1]*t,0,255)|0,clamp(255*rm.t[2]*t,0,255)|0];
     mbGrid(mb,[A.road,B.road],[A.uv,B.uv],null,MID.stone,[tc(A.tint*0.9),tc(B.tint*0.9)]);
     [0,1].forEach(sd=>{let a=A.sh[sd],b=B.sh[sd];if(!a||!b)return;let m=Math.min(a.length,b.length),aa=a.A;
       // город: ступень тротуара и плиты — фото-камень; земля — за тротуаром
-      if(A.town&&aa[0]===0&&m>=3){const L=txLay(T.rc.y>=1920?'concrete':'cobble',1),Lc=txLay('stone_wall',1);lit.e[3]=Lc;mbGrid(lit,[a.slice(0,2),b.slice(0,2)],null,[176,170,160],MID.stone);lit.e[3]=L;mbGrid(lit,[a.slice(1,3),b.slice(1,3)],null,[200,196,186],MID.stone);lit.e[3]=0;
+      if(A.town&&aa[0]===0&&m>=3){const L=txLay(T.rc.y>=1920?'concrete':'cobble',0),Lc=txLay('stone_wall',0);lit.e[3]=Lc;mbGrid(lit,[a.slice(0,2),b.slice(0,2)],null,[176,170,160],MID.stone);lit.e[3]=L;mbGrid(lit,[a.slice(1,3),b.slice(1,3)],null,[200,196,186],MID.stone);lit.e[3]=0;
         a=a.slice(2);b=b.slice(2);aa=aa.slice(2);m=Math.min(a.length,b.length);if(m<2)return;}
-      mbGrid(gnd,[a.slice(0,m),b.slice(0,m)],null,(r,c)=>{const v=A.town?0:verge(aa[c]);return beach?[0,0,255]:[v*255|0,0,0];},MID.matte);});}
+      mbGrid(gnd,[a.slice(0,m),b.slice(0,m)],null,(r,c)=>{const v=A.town?0:verge(aa[c]),w=A.town?0.3:tramp(aa[c]);return beach?[0,0,255,0]:[v*255|0,0,0,w*255|0];},MID.matte);});}
+  r3dChunkExtras(S,lit);
   const people=[];
   for(let i=i0;i<i1;i++){const j=i%n;for(const it of T.spr[j])r3dItem(it,j,lit,people);}
   // старт и финиш: клетчатая линия поперёк дороги
@@ -273,6 +285,8 @@ function r3dItem(it,i,mb,people){
       mb.add(pTree(it.t,(it.v||0)%3),X3(rnd()*6.28,0.85+rnd()*0.3,[x,y-0.05,z]));return;
     case 'dune':case 'cliff':mb.add(pTree(it.t,0),X3(face+(rnd()-0.5)*0.4,0.9+rnd()*0.2,[x,y-0.3,z]));return;
     case 'fence':case 'wall':case 'vine':mb.add(pProp(it.t,0),X3(face,1,[x,y,z]));return;
+    case 'gstone':case 'rhut':mb.add(pProp(it.t,0),X3(face,1,[x,y,z]));return;
+    case 'rgate':{mb.add(pProp('rgate',0),X3(face,1,[x,y,z]));(R3.gates=R3.gates||[]).push({x,y,z,face,side,i});return;}
     case 'verst':case 'well':case 'fence_ru':
     case 'pole':case 'km':case 'sign':case 'lamp':case 'cart':case 'billboard':mb.add(pProp(it.t,it.v||0),X3(face,1,[x,y,z]));if(it.t==='billboard')r3dAd(it.v||0,x,y,z,face);return;
     case 'stand':{const P=pStand(),X=X3(face,1,[x,y,z]);mb.add(P,X);const rr=mulberry32(h+5);P.people.forEach(q=>{const w=r3dXf(X,q);people.push([w[0],w[1]+0.05,w[2],R3.atlas.crowd[Math.floor(rr()*R3.atlas.crowd.length)],0.95+rr()*0.1,rr()<0.25]);});return;}
@@ -334,9 +348,9 @@ function r3dCarState(c){if(!c.v3)c.v3={roll:0,pitch:0,heave:0,vr:0,vp:0,vh:0,spi
 /* ---------- установка сцены (фото-текстуры уже в видеокарте: texPrepare) ---------- */
 // Слои земли гонки: основа (трава или сухая трава, песок, снег), вторая трава, земля, камень; покров, лесная подстилка; высота снега, крутизна камня
 function r3dLayers(T,F){const cfg=T.cfg,set=SCEN_SETS[cfg.host],L=k=>Math.max(0,texLi(k)),snowy=cfg.terr==='snow',sandy=cfg.terr==='sand'||cfg.terr==='beach',dry=!!set.dry||['it','es','ly','mc'].includes(cfg.host);
-  const base=snowy?'snow':sandy?'sand':dry?'dry_grass':'grass',alt=dry||sandy?'grass':'dry_grass',cov=snowy||(set.snow&&F.mount)?'snow':'sand';
+  const base=snowy?'snow':sandy?'sand':dry?'meadow_dry':'meadow',alt=dry||sandy?'dry_grass':'meadow_dry',cov=snowy||(set.snow&&F.mount)?'snow':'sand';
   let hMin=1e9;T.pts.forEach(p=>{hMin=Math.min(hMin,p[1]);});
-  return {tl:[L(base),L(alt),L('dirt'),L('rock')],tl2:[L(cov),L('forest'),0,0],tp:[set.snow&&F.mount&&!snowy?hMin+80:1e5,45,F.mount?1:set.mount||cfg.uphill?0.75:0.35,0]};}
+  return {tl:[L(base),L(alt),L('dirt'),L('rock')],tl2:[L(cov),L('forest'),L('grass'),0],tp:[set.snow&&F.mount&&!snowy?hMin+80:1e5,45,F.mount?1:set.mount||cfg.uphill?0.75:0.35,0]};}
 function r3dSetup(){
   const cv=document.getElementById('rgl');cv.hidden=false;document.getElementById('rcv').hidden=true;
   if(!g3Init(cv))throw new Error('no webgl2');
@@ -361,7 +375,9 @@ function r3dSetup(){
   r3dSkidInit();
   if(!cfg.closed)r3dBannerStart();
   // море у пляжа и берега: большая гладь чуть ниже дороги (земля к воде опускается)
-  if(R3.F.beach||SCEN_SETS[cfg.host].sea){const F=R3.F,mb=new MB();let lo=1e9;T.pts.forEach(p=>{lo=Math.min(lo,p[1]);});const y=lo-1.1,x0=F.x0-6000,z0=F.z0-6000,x1=F.x0+(F.nx-1)*F.S+6000,z1=F.z0+(F.nz-1)*F.S+6000,c=hex2rgb('#1f5a78');
+  {const wm=r3dWaters(T);if(wm&&!R3.F.beach)R3.water=g3Mesh(wm);}
+  {const rm=r3dRails(T);if(rm)R3.rails=g3Mesh(rm);}
+  if(R3.F.beach){const F=R3.F,mb=new MB();let lo=1e9;T.pts.forEach(p=>{lo=Math.min(lo,p[1]);});const y=lo-1.1,x0=F.x0-6000,z0=F.z0-6000,x1=F.x0+(F.nx-1)*F.S+6000,z1=F.z0+(F.nz-1)*F.S+6000,c=hex2rgb('#1f5a78');
     const N=10;for(let a=0;a<N;a++)for(let b=0;b<N;b++){const xa=x0+(x1-x0)*a/N,xb=x0+(x1-x0)*(a+1)/N,za=z0+(z1-z0)*b/N,zb=z0+(z1-z0)*(b+1)/N;mb.poly([[xa,y,za],[xb,y,za],[xb,y,zb],[xa,y,zb]],[0,1,0],c,MID.water);}
     R3.water=g3Mesh(mb);}
   // очередь постройки: куски трассы от старта вперёд, земля — от старта во все стороны
@@ -476,7 +492,8 @@ function r3dRender(dt){
   r3dDrawCars(E,bw,bh);
   // декорации и стволы
   let P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.uniform4f(P.u.u_lamp,0,0,E.lamp,0);
-  vis.forEach(([,ch])=>g3Draw(ch.lit));tiles.forEach(([,t])=>g3Draw(t.t));if(R3.startMesh)g3Draw(R3.startMesh);
+  vis.forEach(([,ch])=>g3Draw(ch.lit));tiles.forEach(([,t])=>g3Draw(t.t));if(R3.startMesh)g3Draw(R3.startMesh);if(R3.rails)g3Draw(R3.rails);
+  r3dTrainTick(dt);r3dTrainDraw(E,bw,bh);P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());
   // листва: карточки с прозрачностью (сглаженный край — «прозрачность в покрытие»)
   P=r3dUse('leaf',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
   gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);vis.forEach(([,ch])=>g3Draw(ch.leaf));tiles.forEach(([,t])=>g3Draw(t.l));gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);
@@ -546,7 +563,7 @@ function r3dPostRun(P,bw,bh,E){const gl=G3.gl;
   // блик солнца в объективе: только «Кино» и если солнце в кадре
   let fl=[0,0,0,0];if(gq().flare&&E.night<0.3){const s=E.sun,e=R3.eye,p=[e[0]+s[0]*1000,e[1]+s[1]*1000,e[2]+s[2]*1000],M=R3.VP,cw=M[3]*p[0]+M[7]*p[1]+M[11]*p[2]+M[15];
     if(cw>0){const x=(M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12])/cw,y=(M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13])/cw;if(Math.abs(x)<1.1&&Math.abs(y)<1.1)fl=[x*0.5+0.5,y*0.5+0.5,(1-Math.max(Math.abs(x),Math.abs(y))*0.8)*(R3.sunVis===undefined?1:R3.sunVis),0];}}
-  gl.uniform4fv(Q.u.u_flare,fl);gl.drawArrays(gl.TRIANGLES,0,3);G3.dc+=5;
+  gl.uniform4fv(Q.u.u_flare,fl);gl.uniform1f(Q.u.u_rain,R3.W&&R3.W.rain&&R3.view!==2?1:R3.W&&R3.W.rain?0.5:0);gl.drawArrays(gl.TRIANGLES,0,3);G3.dc+=5;
   gl.activeTexture(gl.TEXTURE0);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);}
 function r3dUse(name,E,bw,bh){const gl=G3.gl,P=G3.P[name];gl.useProgram(P.p);const u=P.u;
   gl.uniformMatrix4fv(u.u_vp,false,R3.VP);if(u.u_shm)gl.uniformMatrix4fv(u.u_shm,false,R3.SHM||m4());
@@ -622,6 +639,6 @@ function r3dPeopleUpload(){const P=R3.people,I=R3.pI,n=Math.min(P.length,I.max),
 // Отказ 3D (потерян контекст и т.п.): дальше гонка рисуется по-старому
 function r3dFail(why){R3.on=false;R.gl=false;const cv=document.getElementById('rgl');if(cv)cv.hidden=true;const c2=document.getElementById('rcv');if(c2)c2.hidden=false;try{setupRender2d();}catch(_){}}
 function r3dDispose(){if(!R3.on)return;const gl=G3.gl;R3.on=false;if(gl&&!gl.isContextLost()){(R3.chunks||[]).forEach(ch=>{if(!ch)return;g3Free(ch.gnd);g3Free(ch.lit);g3Free(ch.leaf);ch.roads.forEach(r=>g3Free(r.m));});
-  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);g3Free(R3.water);g3Free(R3.far);g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
+  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
   [R3.texCM,R3.texSM,R3.texLab].forEach(t=>t&&gl.deleteTexture(t));if(R3.onDispose)try{R3.onDispose();}catch(_){}}
   const keep=['on'];Object.keys(R3).forEach(k=>{if(!keep.includes(k))delete R3[k];});}

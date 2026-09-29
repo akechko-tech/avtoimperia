@@ -9,13 +9,21 @@ TEX = os.path.join(HERE, 'tex')
 PACK = os.path.join(TEX, 'pack')
 def rd(p): return open(os.path.join(HERE, p), encoding='utf-8').read()
 
+def manifest():
+    """Манифест Poly Haven (обновляет сборка «Текстуры») + свои материалы (game/tex/extra.json: луг из фото-травинок)."""
+    man = json.load(open(os.path.join(TEX, 'manifest.json'), encoding='utf-8'))
+    ex = os.path.join(TEX, 'extra.json')
+    if os.path.exists(ex):
+        for k, v in json.load(open(ex, encoding='utf-8')).get('mat', {}).items(): man['mat'][k] = v
+    return man
+
 def pack_textures():
     """Цвет × затенение (AO) и «данные» (нормаль XY + шероховатость) — по одной картинке на слой массива текстур."""
     try:
         from PIL import Image, ImageChops
     except Exception:
         print('PIL нет — беру готовые game/tex/pack'); return
-    man = json.load(open(os.path.join(TEX, 'manifest.json'), encoding='utf-8'))
+    man = manifest()
     os.makedirs(PACK, exist_ok=True)
     for slot, m in man['mat'].items():
         if not m: continue
@@ -39,7 +47,7 @@ def pack_textures():
         print('pack', slot)
 
 def tex_js():
-    man = json.load(open(os.path.join(TEX, 'manifest.json'), encoding='utf-8'))
+    man = manifest()
     img, lay = {}, []
     def put(key, path):
         with open(path, 'rb') as f: img[key] = 'data:image/jpeg;base64,' + base64.b64encode(f.read()).decode('ascii')

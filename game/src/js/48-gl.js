@@ -163,6 +163,9 @@ vec4 lA(float L,vec2 uv){return texture(u_alb,vec3(uv,L));}
 vec4 lD(float L,vec2 uv){return texture(u_dat,vec3(uv,L));}
 // нормаль из карты: T — вправо по картинке, B — вверх по картинке
 vec3 nmap(vec3 N,vec3 T,vec3 B,vec4 d,float k){vec2 q=(d.rg*2.-1.)*k;return normalize(T*q.x+B*q.y+N*sqrt(max(.05,1.-dot(q,q))));}
+// окраска фото цветом вершины: яркость — как у цвета, оттенок — наполовину (фактура не «выгорает»)
+vec3 tintBy(vec3 tex,vec3 vc,vec3 avg){float lv=dot(vc,vec3(.3,.59,.11)),la=max(dot(avg,vec3(.3,.59,.11)),.02);vec3 hv=vc/max(lv,.02),ha=avg/la;
+  return tex*clamp(lv/la,.25,3.)*clamp(mix(vec3(1.),hv/max(ha,vec3(.08)),.6),vec3(.45),vec3(2.));}
 void main(){
   vec3 N=normalize(v_n),V=u_cam-v_wp;float dist=length(V);V/=dist;
 #ifdef LEAF
@@ -186,6 +189,7 @@ void main(){
     vec3 c=mix(A.rgb,A2.rgb,.22+.4*nz);float lay=u_tl.x;
     if(wAlt>.01){vec3 B=lA(u_tl.y,uv*u_lay[int(u_tl.y)].x).rgb;float w=clamp(wAlt*1.7-.35+(dot(B,vec3(.33))-hb)*1.2,0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl.y;}
     if(wFor>.01){vec3 B=lA(u_tl2.y,uv*u_lay[int(u_tl2.y)].x).rgb;float w=clamp(wFor*1.6-.3+(nz2-.5)*.6,0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl2.y;}
+    if(v_col.a>.01){vec3 B=lA(u_tl2.z,uv*u_lay[int(u_tl2.z)].x).rgb;float w=clamp(v_col.a*1.5-.2+(nz2-.5)*.5,0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl2.z;}
     if(wDirt>.01){vec3 B=lA(u_tl.z,uv*u_lay[int(u_tl.z)].x).rgb;float w=clamp(wDirt*1.7-.35+(nz2-.5)*.5+(hb-dot(B,vec3(.33))),0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl.z;}
     if(wRock>.01){float sr=u_lay[int(u_tl.w)].x;vec2 wx=N.xz*N.xz;wx/=max(wx.x+wx.y,.001);
       vec3 B=lA(u_tl.w,vec2(v_wp.z,-v_wp.y)*sr).rgb*wx.x+lA(u_tl.w,vec2(v_wp.x,-v_wp.y)*sr).rgb*wx.y;
@@ -219,7 +223,7 @@ void main(){
       c=lA(L,vec2(v_wp.z,-v_wp.y)*sL).rgb*w.x+lA(L,vec2(v_wp.x,-v_wp.z)*sL).rgb*w.y+lA(L,vec2(v_wp.x,-v_wp.y)*sL).rgb*w.z;rough=.85;}
     else{vec3 B=abs(N.y)<.98?normalize(vec3(0.,1.,0.)-N*N.y):vec3(0.,0.,1.),T=cross(N,B);vec2 uv=vec2(dot(v_wp,T),-dot(v_wp,B))*sL;
       c=lA(L,uv).rgb;vec4 D=lD(L,uv);rough=D.b;if(u_tq.x>.5&&dist<50.)N=nmap(N,T,B,D,1.-smoothstep(20.,50.,dist));}
-    alb=c*mix(vec3(1.),alb/max(u_lavg[v_lay].rgb,vec3(.03)),v_tk);spec=1.;envK=max(envK,.3);}
+    alb=v_tk>.5?tintBy(c,alb,u_lavg[v_lay].rgb):c;spec=1.;envK=max(envK,.3);}
 #endif
 #ifdef UV
 #ifndef ROAD
@@ -301,7 +305,7 @@ void main(){vec2 uv=v_p*.5+.5;vec3 c=texture(u_src,uv+u_px*vec2(-1.,-1.)).rgb+te
 const G3FS_BLUR=`in vec2 v_p;uniform sampler2D u_src;uniform vec2 u_dir;out vec4 o;
 void main(){vec2 uv=v_p*.5+.5;vec3 c=texture(u_src,uv).rgb*.227+(texture(u_src,uv+u_dir*1.385).rgb+texture(u_src,uv-u_dir*1.385).rgb)*.316+(texture(u_src,uv+u_dir*3.231).rgb+texture(u_src,uv-u_dir*3.231).rgb)*.07;o=vec4(c,1.);}`;
 // итог: смаз к краям на скорости, лёгкая аберрация, свечение, «плёночный» цвет (тёплые света, прохладные тени), виньетка, зерно, блик солнца
-const G3FS_POST=`in vec2 v_p;uniform sampler2D u_src,u_blm;uniform vec2 u_res;uniform float u_time,u_mb,u_blk,u_grain,u_vig2;uniform vec4 u_flare;out vec4 o;
+const G3FS_POST=`in vec2 v_p;uniform sampler2D u_src,u_blm;uniform vec2 u_res;uniform float u_time,u_mb,u_blk,u_grain,u_vig2,u_rain;uniform vec4 u_flare;out vec4 o;
 float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 void main(){vec2 uv=v_p*.5+.5,dc=uv-.5;float r2=dot(dc,dc);vec3 c;
   if(u_mb>.0005){float k=u_mb*r2*4.;c=vec3(0.);for(int i=0;i<5;i++)c+=texture(u_src,uv-dc*k*float(i)*.25).rgb;c*=.2;}else c=texture(u_src,uv).rgb;
@@ -309,6 +313,10 @@ void main(){vec2 uv=v_p*.5+.5,dc=uv-.5;float r2=dot(dc,dc);vec3 c;
   c+=texture(u_blm,uv).rgb*u_blk;
   if(u_flare.z>0.){vec2 sp=u_flare.xy,asp=vec2(u_res.x/u_res.y,1.);for(int i=1;i<5;i++){float t=float(i)*.32;vec2 fp=mix(sp,vec2(.5),t*2.2);float dd=length((uv-fp)*asp);c+=vec3(1.,.8,.55)*u_flare.z*.05*(1.-smoothstep(0.,.02+.018*float(i),dd))*(1.-t*.4);}
     c+=vec3(1.,.9,.7)*u_flare.z*.18*exp(-length((uv-sp)*asp)*7.);}
+  // дождь: косые струи в два слоя, картинка чуть серее
+  if(u_rain>0.){vec2 asp=vec2(u_res.x/u_res.y,1.);float rs=0.;for(int k=0;k<2;k++){float sc=k==0?1.:.55;vec2 q=uv*asp*vec2(70.,5.)*sc;q.y+=u_time*(k==0?11.:7.);q.x+=q.y*.07;vec2 id=floor(q);float h=h21(id+float(k)*17.),f=fract(q.y);
+      rs+=step(.9,h)*smoothstep(0.,.08,f)*(1.-smoothstep(.25,.55,f))*(1.-smoothstep(.0,.3,abs(fract(q.x)-.5)))*(k==0?1.:.6);}
+    float lr=dot(c,vec3(.33));c=mix(c,vec3(lr)*vec3(.94,.97,1.),.18*u_rain);c+=vec3(.16,.17,.19)*rs*u_rain;}
   float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,.95);
   c*=mix(vec3(.96,.99,1.05),vec3(1.05,1.,.92),smoothstep(.15,.85,l));
   c=mix(c,c*c*(3.-2.*c),.28);c=c*.978+.01;

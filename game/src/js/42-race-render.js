@@ -94,7 +94,7 @@ function renderRace(dt){
   for(let k=segs.length-2;k>=0;k--){
     const a=segs[k];if(!a.scale)continue;const clip=a.clip,items=T.spr[a.j];
     if(items&&items.length&&a.z>1.2){c.save();c.beginPath();c.rect(0,0,W,clip);c.clip();
-      for(const it of items){if(it.k==='L')continue;const sp=it.k==='p'?peopleSprite(it.t,it.v,phase&&it.v%2?1:0):scenSprite(it.t,it.v,it.off);if(!sp)continue;
+      for(const it of items){if(it.k==='L'||it.k==='W')continue;const sp=it.k==='p'?peopleSprite(it.t,it.v,phase&&it.v%2?1:0):scenSprite(it.t,it.v,it.off);if(!sp)continue;
         const x=half-(a.Lc+it.off-cam.lat+cam.psi*a.z)*a.scale,w=sp.wM*a.scale,h=sp.hM*a.scale;if(x+w*(1-sp.ax)<0||x-w*sp.ax>W||h<1)continue;
         c.drawImage((night?nightOf(sp):sp).img,x-w*sp.ax,a.sy-h*sp.ay,w,h);}
       c.restore();}

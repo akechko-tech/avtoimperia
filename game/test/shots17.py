@@ -22,13 +22,13 @@ with sync_playwright() as p:
         if film=='shots':
             for i,ft in enumerate([1.5,5.5,9.5,13.2]):
                 pg.evaluate("t=>{if(R&&R.film){R.film.t=t;}}",ft);pg.wait_for_timeout(900)
-                pg.screenshot(path=out+f'f17_{key}_film{i}.png')
+                pg.screenshot(path=out+f'f17_{key}_film{i}.png',timeout=120000)
         pg.evaluate("if(R&&R.film)filmSkip();document.getElementById('rTips').hidden=true;if(R)R.hold=false;")
         if skip>0:pg.evaluate("s=>{R.t=Math.max(R.t,0);const dt=1/30;for(let i=0;i<s*30&&R&&!R.done;i++){R.t+=dt;R.time+=dt;raceTick(dt);}}",skip)
         last=0
         for t in times:
             pg.wait_for_timeout(int((t-last)*1000));last=t
-            pg.screenshot(path=out+f'g17_{key}_{int(t)}.png')
+            pg.screenshot(path=out+f'g17_{key}_{int(t)}.png',timeout=120000)
         print(key,pg.evaluate("R?{gl:R.gl,t:+R.time.toFixed(1),prog:Math.round(R.follow.prog),dc:G3.dc,tri:G3.tri,chunks:R3.chunks?R3.chunks.filter(Boolean).length+'/'+R3.nCh:0,tiles:R3.tiles?Object.keys(R3.tiles).length:0,people:R3.pN,veg:R3.vN,scale:R3.scale,ft:R3.ftAvg}:null"))
         pg.evaluate("if(R)finishRace(true);closeSheet();closePaper();G.pending=[];")
     print('\n'.join(errs[:14]))
