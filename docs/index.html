@@ -6574,14 +6574,14 @@ async function musicLoad(){
     const found=[];let qi=0;
     const worker=async()=>{while(qi<MUSIC_Q.length){const [q,y,st]=MUSIC_Q[qi++];
       try{const sr=await fetch(api+'&list=search&srnamespace=6&srlimit=4&srsearch='+encodeURIComponent(q+' filetype:audio')).then(r=>r.json());
-        const kw=musKey(q);const t=((sr.query||{}).search||[]).map(x=>x.title).filter(t=>!/midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder/i.test(t)&&(!kw.length||kw.filter(w=>t.toLowerCase().includes(w)).length>=(kw.length>=3?2:1)));
+        const kw=musKey(q);const t=((sr.query||{}).search||[]).map(x=>x.title).filter(t=>!/midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder|pronunciation|prononciation|lingua libre/i.test(t)&&!/^File:(LL-Q\d|[A-Z][a-z](-[a-z]{2})?-)/.test(t)&&(!kw.length||kw.filter(w=>t.toLowerCase().includes(w)).length>=(kw.length>=3?2:1)));
         if(t.length)found.push({q,y,st,titles:t.slice(0,2)});}catch(e){}}};
     await Promise.all([0,1,2,3,4,5].map(worker));
     const all=[...new Set(found.flatMap(f=>f.titles))],info={};
     for(let i=0;i<all.length;i+=40){const vi=await fetch(api+'&prop=videoinfo&viprop=url|size|mime|derivatives|extmetadata&titles='+encodeURIComponent(all.slice(i,i+40).join('|'))).then(r=>r.json());
       Object.values((vi.query||{}).pages||{}).forEach(p=>{if(p.videoinfo)info[p.title]=p.videoinfo[0];});}
     const out={};const seen=new Set();
-    for(const f of found){for(const t of f.titles){const v=info[t];if(!v||v.size>14e6||seen.has(t))continue;
+    for(const f of found){for(const t of f.titles){const v=info[t];if(!v||v.size>14e6||v.size<150e3||seen.has(t))continue;
       const lic=(((v.extmetadata||{}).LicenseShortName||{}).value||'');if(!/public domain|pd|cc/i.test(lic))continue;
       const mp3=(v.derivatives||[]).find(d=>/mpeg|mp3/.test(d.type||'')||d.transcodekey==='mp3');
       const src=mp3?mp3.src:(/mpeg/.test(v.mime)?v.url:(ogg&&/ogg/.test(v.mime)?v.url:null));if(!src)continue;
@@ -6590,7 +6590,7 @@ async function musicLoad(){
   }catch(e){}
   musBuild(true);
 }
-function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>L.push(Object.assign({st,y:ST_DEFY[st]||1910},t)));return L;}
+function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L;}
 function musSynth(){const y=G?G.y:1895,sts=AU.on.mode==='all'?['rag','march','jazz']:[styleFor()],R2=['I','II','III'];
   return [0,1,2].flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]})));}
 function musBuild(start){

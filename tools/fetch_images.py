@@ -132,7 +132,7 @@ def music():
             sr = json.loads(get(api + '&list=search&srnamespace=6&srlimit=4&srsearch=' + urllib.parse.quote(q + ' filetype:audio')))
             kw = keywords(q)
             titles = [x['title'] for x in sr.get('query', {}).get('search', [])]
-            titles = [t for t in titles if not re.search(r'midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder', t, re.I) and (not kw or sum(w in t.lower() for w in kw) >= (2 if len(kw) >= 3 else 1))][:2]
+            titles = [t for t in titles if not re.search(r'midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder|pronunciation|prononciation|lingua libre', t, re.I) and not re.match(r'File:(LL-Q\d|[A-Z][a-z](-[a-z]{2})?-)', t) and (not kw or sum(w in t.lower() for w in kw) >= (2 if len(kw) >= 3 else 1))][:2]
             if not titles: print('music: nothing for', q); continue
             vi = json.loads(get(api + '&prop=videoinfo&viprop=url|size|mime|derivatives|extmetadata&titles=' + urllib.parse.quote('|'.join(titles))))
             pages = list(vi.get('query', {}).get('pages', {}).values())
@@ -140,7 +140,7 @@ def music():
                 if t in seen: continue
                 pg = next((x for x in pages if x.get('title') == t), None)
                 info = pg and pg.get('videoinfo', [None])[0]
-                if not info or info.get('size', 0) > 14e6: continue
+                if not info or info.get('size', 0) > 14e6 or info.get('size', 0) < 150e3: continue   # слова-произношения (Lingua Libre) — не музыка
                 lic = info.get('extmetadata', {}).get('LicenseShortName', {}).get('value', '')
                 if not re.search(r'public domain|pd|cc', lic, re.I): continue
                 mp3 = next((d for d in info.get('derivatives', []) if 'mpeg' in d.get('type', '') or d.get('transcodekey') == 'mp3'), None)
