@@ -1,5 +1,5 @@
 /* ================= RACE RENDER: pseudo-3D road over real physics, sprites, HUD ================= */
-const RV={CAMH:1.9,BACK:3.4,CAMD:1.15,DRAW:190,HOR:0.4};
+const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
 function setupRender(){
   const T=R.trk,F=R.follow;R.cam={lat:F?F.lat:0,psi:0,y:F?F.y:0,sky:0,phaseT:0,phase:0};

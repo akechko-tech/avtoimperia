@@ -37,7 +37,7 @@ function vPlant(){
   return `<div class="scene">${factorySVG(s)}</div>
   ${advisorCard(s)}
   <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?fmtN(L.sold)+' шт.':'—'}</b></div><div class="kpi"><span class="label">Репутация</span><b>${Math.round(s.rep)}<span class="muted small">/100</span></b></div></div>
-  ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><div style="width:64px">${portraitHTML(s.pioneer)}</div><div><h3>${P.name}</h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
+  ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><h3>${P.name} <button class="btn sm" data-act="founder">О нём ▸</button></h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
   <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${money(s.cash)}</span></div>${spark(s.hist.cash)}</section>
   <section class="card"><h2>Мощности</h2>
     <div class="row" style="margin-top:8px"><div><h3><span class="num">${fmtN(Math.round(cap))}</span> машин в месяц</h3><p class="small muted">${s.shifts>1?'Две смены':'Одна смена'} · простая машина в пересчёте${building?` · строится ещё ${fmtN(Math.round(building*techMul(s,'cap')*(s.shifts>1?1.85:1)))}`:''}</p></div><span class="num ${util>0.95?'warn':''}">${Math.round(util*100)}%</span></div>
@@ -93,21 +93,21 @@ function ordersCard(s){const L=s.orders||[];if(!L.length)return '';
   return `<section class="card"><div class="row"><h2>Заказы</h2><span class="pill good">${L.length}</span></div>${L.map(o=>{const md=s.models.find(m=>m.id===o.md),done=o.n-o.left,left=o.due-mi(s);
     return `<div class="plan-row"><div class="row"><div><h3>${esc(o.who)}</h3><p class="small muted">«${esc(md?md.name:'?')}» · ${money(o.price)} за машину · осталось ${left} мес.</p></div><span class="num">${fmtN(done)}/${fmtN(o.n)}</span></div><div class="bar" style="margin-top:6px"><i style="width:${done/o.n*100}%;background:var(--good)"></i></div></div>`;}).join('')}
     <p class="small muted" style="margin-top:8px">Машины для заказов завод делает сверх плана и отдаёт в первую очередь. Не успеете к сроку — неустойка и удар по репутации.</p></section>`;}
-function rdCardHTML(s){const rd=s.rd,L=rdActive(s),pts=rdPoints(s),slots=rdSlots(s),free=slots-L.length;
-  const rows=L.map((pj,i)=>`<div class="rd-row"><div class="row small"><span>${pj.kind==='upg'?'Улучшение':'Прототип'}: <b>${esc(pj.name)}</b>${pj.kind==='upg'?' ★'+pj.lvl:''}</span><button class="iconbtn sm" data-act="rdStop" data-k="${i}" aria-label="Остановить проект">×</button></div>
+function rdCardHTML(s){const rd=s.rd,L=rdActive(s),tot=rdTotal(s),slots=rdSlots(s),free=slots-L.length;
+  const rows=L.map((pj,i)=>{const pts=rdPtsOf(s,pj);return `<div class="rd-row"><div class="row small"><span>${pj.kind==='upg'?'Улучшение':'Прототип'}: <b>${esc(pj.name)}</b>${pj.kind==='upg'?' ★'+pj.lvl:''}</span><button class="iconbtn sm" data-act="rdStop" data-k="${i}" aria-label="Остановить проект">×</button></div>
     <div class="bar" style="margin-top:6px"><i style="width:${Math.max(2,Math.min(100,(pj.prog||0)/pj.need*100))}%;background:var(--brass)"></i></div>
-    <div class="row small muted" style="margin-top:4px"><span>${Math.floor(pj.prog||0)} из ${pj.need} очков</span><span class="num">готово через ~${Math.max(1,Math.ceil((pj.need-(pj.prog||0))/pts))} мес.</span></div></div>`).join('');
+    <div class="row small muted" style="margin-top:4px"><span>${Math.floor(pj.prog||0)} из ${pj.need} · готово через ~${Math.max(1,Math.ceil((pj.need-(pj.prog||0))/pts))} мес.</span>${L.length>1?`<div class="step sm"><button data-act="rdW" data-k="${i}" data-d="-1" aria-label="Меньше сил">−</button><span>${Math.round(rdShare(s,pj)*100)}%</span><button data-act="rdW" data-k="${i}" data-d="1" aria-label="Больше сил">+</button></div>`:'<span>все силы бюро</span>'}</div></div>`;}).join('');
   return `<section class="card"><div class="row"><h2>Конструкторское бюро</h2><span class="pill warn">${rd.lvl}/${RD_MAX}</span></div>
-    <p class="small muted" style="margin-top:4px">${RD_LV[rd.lvl]} · инженеров ${rd.lvl*4} · ${money(rdUpkeep(s))} в месяц · проектов одновременно: ${slots}. Улучшения сразу делают лучше все ваши машины с этой деталью.</p>
-    ${rows}${free>0?`<p class="small ${L.length?'muted':'warn'}" style="margin-top:10px">${L.length?`Свободно мест для проектов: ${free}.`:'Бюро простаивает — выберите проект.'}</p>`:''}
+    <p class="small muted" style="margin-top:4px">${RD_LV[rd.lvl]} · инженеров ${rd.lvl*4} · ${money(rdUpkeep(s))} в месяц · ${tot.toFixed(1).replace('.0','').replace('.',',')} очк. в месяц на всё бюро. Один проект получает все силы; если ведёте несколько, распределите силы кнопками − и +. Одновременно — до ${slots} проектов.</p>
+    ${rows}${!L.length?'<p class="small warn" style="margin-top:10px">Бюро простаивает — выберите проект.</p>':''}
     <div class="btns" style="margin-top:10px">${free>0?`<button class="btn ${L.length?'':'primary'}" data-act="rdPick">+ Проект</button>`:''}<button class="btn" data-act="rdUp" ${rd.lvl>=RD_MAX||s.cash<rdUpCost(s)?'disabled':''}>${rd.lvl>=RD_MAX?'Высший уровень':'Расширить · '+money(rdUpCost(s))}</button></div>
-    ${rd.lvl<RD_MAX?`<p class="small muted" style="margin-top:6px">Уровень ${rd.lvl+1} — «${RD_LV[rd.lvl+1]}»: ${rdSlots({rd:{lvl:rd.lvl+1}})>slots?'ещё один проект одновременно, ':''}проекты быстрее${rd.lvl+1>=5&&rd.lvl<5?', улучшения до ★4':rd.lvl+1>=7&&rd.lvl<7?', улучшения до ★5':''}, прототипы дальше в будущее.</p>`:''}</section>`;}
+    ${rd.lvl<RD_MAX?`<p class="small muted" style="margin-top:6px">Уровень ${rd.lvl+1} — «${RD_LV[rd.lvl+1]}»: больше инженеров${rdSlots({rd:{lvl:rd.lvl+1}})>slots?', ещё один проект одновременно':''}${rd.lvl+1>=5&&rd.lvl<5?', улучшения до ★4':rd.lvl+1>=7&&rd.lvl<7?', улучшения до ★5':''}, прототипы дальше в будущее.</p>`:''}</section>`;}
 function specLine(md,s){const p=parts(md),st=x=>upgL(x.id)?' ★'+upgL(x.id):'';return PART_KEYS.map(k=>p[k].name+st(p[k])).join(' · ')+' · '+trimName(p.t,s);}
 function vModels(){
-  const s=G,ord={prod:0,dev:1,off:2};
+  const s=G,ord={prod:0,sale:1,dev:2,off:3};
   const cards=s.models.slice().sort((a,b)=>ord[a.status]-ord[b.status]||b.id-a.id).map(md=>{
     const g=segOf(md),uc=unitCost(md,s),ref=refPrice(md,s),net=md.price*(1-DEALER_MARGIN),C=classCompare(md,s,s.country);
-    const pill=md.status==='prod'?'<span class="pill good">В продаже</span>':md.status==='dev'?`<span class="pill warn">Разработка · ${md.devLeft} мес.</span>`:'<span class="pill muted">Снята</span>';
+    const pill=md.status==='sale'?`<span class="pill warn">Распродажа · ${fmtN(md.stock)} шт.</span>`:md.status==='prod'?'<span class="pill good">В продаже</span>':md.status==='dev'?`<span class="pill warn">Разработка · ${md.devLeft} мес.</span>`:'<span class="pill muted">Снята</span>';
     const margin=net-uc,enter=md.fresh?' enter':'';md.fresh=0;
     let el='';if(md.status==='prod'){const d0=demandAt(md,s,md.price),dm=demandAt(md,s,md.price*0.9),dp=demandAt(md,s,md.price*1.1),b0=Math.max(0.01,d0);
       el=`<p class="small muted" style="margin-top:4px">Спрос сейчас ≈ <b class="num">${fmtD(d0)}</b> в месяц · цена −10% → <span class="good">${dm>=b0?'+':''}${Math.round((dm/b0-1)*100)}%</span> · +10% → <span class="bad">${Math.round((dp/b0-1)*100)}%</span></p>`;}
@@ -126,6 +126,7 @@ function vModels(){
       ${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
       <div class="row small muted" style="margin-top:10px"><span>Всего продано</span><span class="num">${md.totalSold.toLocaleString('ru-RU')}</span></div>
       ${md.status==='prod'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="retire" data-id="${md.id}">Снять с производства</button></div>`:''}
+      ${md.status==='sale'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="saleNow" data-id="${md.id}">Отдать остаток перекупщикам (−50%)</button></div>`:''}
       ${md.status==='off'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="revive" data-id="${md.id}">Вернуть в производство</button></div>`:''}</article>`;}).join('');
   return `${advisorCard(s,'models')}${ordersCard(s)}${planCard(s)}${rdCardHTML(s)}<button class="btn primary block" data-act="design">+ Новая модель</button><p class="small muted" style="padding:0 4px">Похожие модели одной марки отбирают покупателей друг у друга: выгоднее разные машины для разных классов, чем несколько одинаковых.</p>${cards}`;
 }

@@ -304,7 +304,9 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .carbox img.car3d{display:block;margin:6px auto 2px;height:132px;width:auto;max-width:96%;object-fit:contain}
 .carbox.enter img.car3d{animation:enter .7s cubic-bezier(.2,.8,.3,1)}
 @media (prefers-reduced-motion:no-preference){.carbox img.car3d.anim{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-1.5px)}}}
-.p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.7) grayscale(.35) contrast(1.15)}
+.p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.15) contrast(1.05)}
+.drv-ph{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;filter:sepia(.3)}
+.pion-link{background:none;border:0;padding:0;cursor:pointer}
 /* 0.10: конструктор — разделы деталей раскрываются по нажатию, сравнение с соперником класса */
 .dsecs{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .dsec{background:var(--panel2);border:1px solid var(--line-soft);border-radius:6px;padding:0}
@@ -801,6 +803,10 @@ function rdUpkeep(s){return Math.round(60*Math.pow(s.rd.lvl,1.35)*cpi(s)*(1+0.03
 function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
 function rdHorizon(s){return [0,2,3,4,4,5,6,7,7][s.rd.lvl]||2;}
 function rdActive(s){return s.rd.projs||[];}
+// Все инженеры бюро делят силы между проектами по долям: один проект получает всё
+function rdTotal(s){return rdPoints(s)*rdSlots(s);}
+function rdShare(s,pj){const L=rdActive(s),sw=L.reduce((a,p)=>a+(p.w||1),0);return sw?(pj.w||1)/sw:1;}
+function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};
 function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
@@ -1162,7 +1168,7 @@ function truckMarket(R,c,s,ms,pr,K,u0){
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
 // Спрос на все модели во всех странах на текущий месяц
 function demandAll(s,ov){
-  const act=s.models.filter(m=>m.status==='prod');const res={by:{},mk:{}};act.forEach(m=>res.by[m.id]={});
+  const act=s.models.filter(m=>m.status==='prod'||m.status==='sale');const res={by:{},mk:{}};act.forEach(m=>res.by[m.id]={});
   Object.keys(COUNTRIES).forEach(c=>{const open=c===s.country||dealerCount(s,c)>0,R=mkCountry(c,s,open?act:[],ov);res.mk[c]=R;if(open)act.forEach(m=>res.by[m.id][c]=R.by[m.id]||0);});
   return res;
 }
@@ -1334,7 +1340,9 @@ function step(){
   s.whBuild=(s.whBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.wh=(s.wh||0)+b.units;addLog(`Новый склад готов: ${fmtN(s.wh)} мест для машин.`,'good');return false;}return true;});
   if(s.techBuild){s.techBuild.left--;if(s.techBuild.left<=0){const k=s.techBuild.k;s.tech[k]=(s.tech[k]||0)+1;const lv=TECH[k].lv[s.tech[k]-1];addLog(`Внедрено: ${lv.name}.`,'good');checkFirstTech(k,s.tech[k]);s.techBuild=null;}}
   s.supplyNow=s.supplyNext||1;s.supplyNext=1;s.strikeNow=!!s.strikeNext;s.strikeNext=false;
-  const act=s.models.filter(m=>m.status==='prod');
+  // распродажа: снятая модель продаётся со склада по сниженной цене, пока остаток не кончится
+  s.models.forEach(m=>{if(m.status==='sale'&&m.stock<=0){m.status='off';m.backlog=0;addLog(`Распродажа «${m.name}» закончена.`);}});
+  const act=s.models.filter(m=>m.status==='prod'||m.status==='sale');
   // спрос
   const D=demandAll(s),creditK=techLv(s,'credit')?1.15:1;
   const dem=act.map(md=>{const o={};for(const c in D.by[md.id])o[c]=D.by[md.id][c]*creditK;return o;});
@@ -1346,7 +1354,7 @@ function step(){
   const capCiv=Math.max(0,cap-milCap);
   // заказы ведомств и фирм: их машины делаются сверх плана
   const ordNeed={};(s.orders||[]).forEach(o=>{ordNeed[o.md]=(ordNeed[o.md]||0)+Math.ceil(o.left/Math.max(1,o.due-mi(s)));});
-  const want=act.map(md=>(md.plan==='auto'?Math.max(0,Math.round(md.fc*1.04+(md.backlog||0)-(md.stock-0.35*md.fc))):Math.max(0,Math.round(+md.plan||0)))+(ordNeed[md.id]||0));
+  const want=act.map(md=>md.status==='sale'?0:(md.plan==='auto'?Math.max(0,Math.round(md.fc*1.04+(md.backlog||0)-(md.stock-0.35*md.fc))):Math.max(0,Math.round(+md.plan||0)))+(ordNeed[md.id]||0));
   // «авто» не делает больше, чем поместится на складе
   {const stock0=act.reduce((a,m)=>a+m.stock,0),exp=act.reduce((a,m,i)=>a+want[i]-(m.fc||0)-(ordNeed[m.id]||0),0),over=stock0+exp-whCap(s);
     if(over>0){const autoW=act.reduce((a,m,i)=>a+(m.plan==='auto'?Math.max(0,want[i]-(ordNeed[m.id]||0)):0),0);if(autoW>0){const kk=Math.max(0,1-over/autoW);act.forEach((m,i)=>{if(m.plan==='auto'){const o=ordNeed[m.id]||0;want[i]=o+Math.round((want[i]-o)*kk);}});}}}
@@ -1386,7 +1394,7 @@ function step(){
   // расходы
   r.rd=rdUpkeep(s);r.drv=driverPayroll(s);r.team=teamUpkeep(s);
   // конструкторское бюро: каждый проект продвигается каждый месяц
-  {const pts=rdPoints(s);s.rd.projs=(s.rd.projs||[]).filter(pj=>{pj.prog=(pj.prog||0)+pts;if(pj.prog<pj.need)return true;
+  {const share=(s.rd.projs||[]).map(pj=>rdPtsOf(s,pj));s.rd.projs=(s.rd.projs||[]).filter((pj,i)=>{pj.prog=(pj.prog||0)+share[i];if(pj.prog<pj.need)return true;
     if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);}
     return false;});}
@@ -1760,7 +1768,10 @@ function factorySVG(s){
 
 /* ================= PHOTOS (Wikipedia / Wikimedia Commons) ================= */
 const IMG={};let imgTried=false;
-function allTitles(){const t=new Set();Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
+// Фото гонщиков — статьи английской Википедии
+const DRIVER_WIKI={"levassor": "Émile Levassor", "de_dion": "Jules-Albert de Dion", "charron": "Fernand Charron", "jenatzy": "Camille Jenatzy", "winton": "Alexander Winton", "edge": "Selwyn Edge", "rolls": "Charles Rolls", "l_renault": "Louis Renault (industrialist)", "m_renault": "Marcel Renault", "vanderbilt": "William Kissam Vanderbilt II", "lancia": "Vincenzo Lancia", "nazzaro": "Felice Nazzaro", "h_ford": "Henry Ford", "oldfield": "Barney Oldfield", "wagner": "Louis Wagner (racing driver)", "szisz": "Ferenc Szisz", "l_chevrolet": "Louis Chevrolet", "goux": "Jules Goux", "lautenschlager": "Christian Lautenschlager", "borghese": "Scipione Borghese", "depalma": "Ralph DePalma", "harroun": "Ray Harroun", "porsche": "Ferdinand Porsche", "rickenbacker": "Eddie Rickenbacker", "milton": "Tommy Milton", "ascari": "Antonio Ascari", "murphy": "Jimmy Murphy (racing driver)", "ferrari": "Enzo Ferrari", "campari": "Giuseppe Campari", "campbell": "Malcolm Campbell", "segrave": "Henry Segrave", "nuvolari": "Tazio Nuvolari", "caracciola": "Rudolf Caracciola", "chiron": "Louis Chiron", "varzi": "Achille Varzi", "birkin": "Tim Birkin", "barnato": "Woolf Barnato", "divo": "Albert Divo", "benoist": "Robert Benoist", "junek": "Eliška Junková", "helle_nice": "Hellé Nice", "g_boillot": "Georges Boillot", "resta": "Dario Resta", "shaw": "Wilbur Shaw", "meyer": "Louis Meyer (racing driver)", "de_knyff": "René de Knyff", "fournier": "Henri Fournier", "thery": "Léon Théry", "h_farman": "Henri Farman", "a_michelin": "André Michelin", "e_michelin": "Édouard Michelin", "jellinek": "Emil Jellinek", "parry_thomas": "J. G. Parry-Thomas", "stuck": "Hans Stuck", "materassi": "Emilio Materassi", "a_maserati": "Alfieri Maserati", "kl_guinness": "Kenelm Lee Guinness", "lockhart": "Frank Lockhart (racing driver)", "w_opel": "Wilhelm von Opel"};
+function drvPhoto(d){const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<img class="drv-ph" src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:'';}
+function allTitles(){const t=new Set();Object.values(DRIVER_WIKI).forEach(x=>t.add(x));Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
   HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));t.add('Mercedes-Benz');return [...t];}
 async function loadImages(){
   if(imgTried)return;imgTried=true;
@@ -1887,7 +1898,7 @@ function vPlant(){
   return `<div class="scene">${factorySVG(s)}</div>
   ${advisorCard(s)}
   <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?fmtN(L.sold)+' шт.':'—'}</b></div><div class="kpi"><span class="label">Репутация</span><b>${Math.round(s.rep)}<span class="muted small">/100</span></b></div></div>
-  ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><div style="width:64px">${portraitHTML(s.pioneer)}</div><div><h3>${P.name}</h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
+  ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><h3>${P.name} <button class="btn sm" data-act="founder">О нём ▸</button></h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
   <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${money(s.cash)}</span></div>${spark(s.hist.cash)}</section>
   <section class="card"><h2>Мощности</h2>
     <div class="row" style="margin-top:8px"><div><h3><span class="num">${fmtN(Math.round(cap))}</span> машин в месяц</h3><p class="small muted">${s.shifts>1?'Две смены':'Одна смена'} · простая машина в пересчёте${building?` · строится ещё ${fmtN(Math.round(building*techMul(s,'cap')*(s.shifts>1?1.85:1)))}`:''}</p></div><span class="num ${util>0.95?'warn':''}">${Math.round(util*100)}%</span></div>
@@ -1943,21 +1954,21 @@ function ordersCard(s){const L=s.orders||[];if(!L.length)return '';
   return `<section class="card"><div class="row"><h2>Заказы</h2><span class="pill good">${L.length}</span></div>${L.map(o=>{const md=s.models.find(m=>m.id===o.md),done=o.n-o.left,left=o.due-mi(s);
     return `<div class="plan-row"><div class="row"><div><h3>${esc(o.who)}</h3><p class="small muted">«${esc(md?md.name:'?')}» · ${money(o.price)} за машину · осталось ${left} мес.</p></div><span class="num">${fmtN(done)}/${fmtN(o.n)}</span></div><div class="bar" style="margin-top:6px"><i style="width:${done/o.n*100}%;background:var(--good)"></i></div></div>`;}).join('')}
     <p class="small muted" style="margin-top:8px">Машины для заказов завод делает сверх плана и отдаёт в первую очередь. Не успеете к сроку — неустойка и удар по репутации.</p></section>`;}
-function rdCardHTML(s){const rd=s.rd,L=rdActive(s),pts=rdPoints(s),slots=rdSlots(s),free=slots-L.length;
-  const rows=L.map((pj,i)=>`<div class="rd-row"><div class="row small"><span>${pj.kind==='upg'?'Улучшение':'Прототип'}: <b>${esc(pj.name)}</b>${pj.kind==='upg'?' ★'+pj.lvl:''}</span><button class="iconbtn sm" data-act="rdStop" data-k="${i}" aria-label="Остановить проект">×</button></div>
+function rdCardHTML(s){const rd=s.rd,L=rdActive(s),tot=rdTotal(s),slots=rdSlots(s),free=slots-L.length;
+  const rows=L.map((pj,i)=>{const pts=rdPtsOf(s,pj);return `<div class="rd-row"><div class="row small"><span>${pj.kind==='upg'?'Улучшение':'Прототип'}: <b>${esc(pj.name)}</b>${pj.kind==='upg'?' ★'+pj.lvl:''}</span><button class="iconbtn sm" data-act="rdStop" data-k="${i}" aria-label="Остановить проект">×</button></div>
     <div class="bar" style="margin-top:6px"><i style="width:${Math.max(2,Math.min(100,(pj.prog||0)/pj.need*100))}%;background:var(--brass)"></i></div>
-    <div class="row small muted" style="margin-top:4px"><span>${Math.floor(pj.prog||0)} из ${pj.need} очков</span><span class="num">готово через ~${Math.max(1,Math.ceil((pj.need-(pj.prog||0))/pts))} мес.</span></div></div>`).join('');
+    <div class="row small muted" style="margin-top:4px"><span>${Math.floor(pj.prog||0)} из ${pj.need} · готово через ~${Math.max(1,Math.ceil((pj.need-(pj.prog||0))/pts))} мес.</span>${L.length>1?`<div class="step sm"><button data-act="rdW" data-k="${i}" data-d="-1" aria-label="Меньше сил">−</button><span>${Math.round(rdShare(s,pj)*100)}%</span><button data-act="rdW" data-k="${i}" data-d="1" aria-label="Больше сил">+</button></div>`:'<span>все силы бюро</span>'}</div></div>`;}).join('');
   return `<section class="card"><div class="row"><h2>Конструкторское бюро</h2><span class="pill warn">${rd.lvl}/${RD_MAX}</span></div>
-    <p class="small muted" style="margin-top:4px">${RD_LV[rd.lvl]} · инженеров ${rd.lvl*4} · ${money(rdUpkeep(s))} в месяц · проектов одновременно: ${slots}. Улучшения сразу делают лучше все ваши машины с этой деталью.</p>
-    ${rows}${free>0?`<p class="small ${L.length?'muted':'warn'}" style="margin-top:10px">${L.length?`Свободно мест для проектов: ${free}.`:'Бюро простаивает — выберите проект.'}</p>`:''}
+    <p class="small muted" style="margin-top:4px">${RD_LV[rd.lvl]} · инженеров ${rd.lvl*4} · ${money(rdUpkeep(s))} в месяц · ${tot.toFixed(1).replace('.0','').replace('.',',')} очк. в месяц на всё бюро. Один проект получает все силы; если ведёте несколько, распределите силы кнопками − и +. Одновременно — до ${slots} проектов.</p>
+    ${rows}${!L.length?'<p class="small warn" style="margin-top:10px">Бюро простаивает — выберите проект.</p>':''}
     <div class="btns" style="margin-top:10px">${free>0?`<button class="btn ${L.length?'':'primary'}" data-act="rdPick">+ Проект</button>`:''}<button class="btn" data-act="rdUp" ${rd.lvl>=RD_MAX||s.cash<rdUpCost(s)?'disabled':''}>${rd.lvl>=RD_MAX?'Высший уровень':'Расширить · '+money(rdUpCost(s))}</button></div>
-    ${rd.lvl<RD_MAX?`<p class="small muted" style="margin-top:6px">Уровень ${rd.lvl+1} — «${RD_LV[rd.lvl+1]}»: ${rdSlots({rd:{lvl:rd.lvl+1}})>slots?'ещё один проект одновременно, ':''}проекты быстрее${rd.lvl+1>=5&&rd.lvl<5?', улучшения до ★4':rd.lvl+1>=7&&rd.lvl<7?', улучшения до ★5':''}, прототипы дальше в будущее.</p>`:''}</section>`;}
+    ${rd.lvl<RD_MAX?`<p class="small muted" style="margin-top:6px">Уровень ${rd.lvl+1} — «${RD_LV[rd.lvl+1]}»: больше инженеров${rdSlots({rd:{lvl:rd.lvl+1}})>slots?', ещё один проект одновременно':''}${rd.lvl+1>=5&&rd.lvl<5?', улучшения до ★4':rd.lvl+1>=7&&rd.lvl<7?', улучшения до ★5':''}, прототипы дальше в будущее.</p>`:''}</section>`;}
 function specLine(md,s){const p=parts(md),st=x=>upgL(x.id)?' ★'+upgL(x.id):'';return PART_KEYS.map(k=>p[k].name+st(p[k])).join(' · ')+' · '+trimName(p.t,s);}
 function vModels(){
-  const s=G,ord={prod:0,dev:1,off:2};
+  const s=G,ord={prod:0,sale:1,dev:2,off:3};
   const cards=s.models.slice().sort((a,b)=>ord[a.status]-ord[b.status]||b.id-a.id).map(md=>{
     const g=segOf(md),uc=unitCost(md,s),ref=refPrice(md,s),net=md.price*(1-DEALER_MARGIN),C=classCompare(md,s,s.country);
-    const pill=md.status==='prod'?'<span class="pill good">В продаже</span>':md.status==='dev'?`<span class="pill warn">Разработка · ${md.devLeft} мес.</span>`:'<span class="pill muted">Снята</span>';
+    const pill=md.status==='sale'?`<span class="pill warn">Распродажа · ${fmtN(md.stock)} шт.</span>`:md.status==='prod'?'<span class="pill good">В продаже</span>':md.status==='dev'?`<span class="pill warn">Разработка · ${md.devLeft} мес.</span>`:'<span class="pill muted">Снята</span>';
     const margin=net-uc,enter=md.fresh?' enter':'';md.fresh=0;
     let el='';if(md.status==='prod'){const d0=demandAt(md,s,md.price),dm=demandAt(md,s,md.price*0.9),dp=demandAt(md,s,md.price*1.1),b0=Math.max(0.01,d0);
       el=`<p class="small muted" style="margin-top:4px">Спрос сейчас ≈ <b class="num">${fmtD(d0)}</b> в месяц · цена −10% → <span class="good">${dm>=b0?'+':''}${Math.round((dm/b0-1)*100)}%</span> · +10% → <span class="bad">${Math.round((dp/b0-1)*100)}%</span></p>`;}
@@ -1976,6 +1987,7 @@ function vModels(){
       ${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
       <div class="row small muted" style="margin-top:10px"><span>Всего продано</span><span class="num">${md.totalSold.toLocaleString('ru-RU')}</span></div>
       ${md.status==='prod'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="retire" data-id="${md.id}">Снять с производства</button></div>`:''}
+      ${md.status==='sale'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="saleNow" data-id="${md.id}">Отдать остаток перекупщикам (−50%)</button></div>`:''}
       ${md.status==='off'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="revive" data-id="${md.id}">Вернуть в производство</button></div>`:''}</article>`;}).join('');
   return `${advisorCard(s,'models')}${ordersCard(s)}${planCard(s)}${rdCardHTML(s)}<button class="btn primary block" data-act="design">+ Новая модель</button><p class="small muted" style="padding:0 4px">Похожие модели одной марки отбирают покупателей друг у друга: выгоднее разные машины для разных классов, чем несколько одинаковых.</p>${cards}`;
 }
@@ -2123,12 +2135,12 @@ function renderDesigner(){
 }
 function kindIsTruck(k){return k==='van'||k==='truck';}
 function openRD(){
-  const s=G,L=rdProjects(s),pts=rdPoints(s),free=rdSlots(s)-rdActive(s).length;
+  const s=G,L=rdProjects(s),pts=rdTotal(s)/(rdActive(s).length+1),free=rdSlots(s)-rdActive(s).length;
   const item=pj=>`<div class="race-item"><div class="row"><div><span class="mo">${pj.cat} · ${pj.kind==='upg'?'улучшение ★'+pj.lvl:'прототип на '+pj.yrs+' г. раньше'}</span><h3 style="margin-top:2px">${esc(pj.name)}</h3></div><button class="btn sm" data-act="rdStart" data-k="${pj.kind}:${pj.id}" ${free<=0?'disabled':''}>~${Math.ceil(pj.need/pts)} мес.</button></div>
     <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?UPG_TXT[pj.ck]:'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}</p></div>`;
   const mine=L.filter(p=>p.kind==='upg'&&p.mine),other=L.filter(p=>p.kind==='upg'&&!p.mine),early=L.filter(p=>p.kind==='early');
   openSheet(`<div class="row"><h2>Проекты КБ</h2>${X}</div>
-    <p class="small muted" style="margin-top:6px">${RD_LV[s.rd.lvl]}: ${pts.toFixed(1).replace('.0','').replace('.',',')} очк. в месяц на проект, свободных мест — ${Math.max(0,free)}. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.</p>
+    <p class="small muted" style="margin-top:6px">${RD_LV[s.rd.lvl]}: силы бюро поровну делятся между проектами (потом можно перераспределить), свободных мест — ${Math.max(0,free)}. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.</p>
     ${mine.length?`<div class="label" style="margin-top:12px">Детали ваших машин — улучшения сразу в деле</div>${mine.map(item).join('')}`:''}
     ${early.length?`<div class="label" style="margin-top:12px">Прототипы будущих деталей</div>${early.map(item).join('')}`:''}
     ${other.length?`<div style="margin-top:12px">${fold('rdOther','Другие детали',other.map(item).join(''),!mine.length,other.length+' проектов')}</div>`:''}
@@ -2219,6 +2231,26 @@ function openFame(){
   openSheet(`<div class="row"><h2>Зал славы</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="Назад">×</button>'}</div>
     ${L.length?`<table class="pl" style="margin-top:10px"><tr><th></th><th>Компания</th><th class="n">Очки</th></tr>${L.map((e,i)=>`<tr><td>${i+1}.</td><td>${esc(e.company)}<small>${esc(e.title)} · ${e.place}-е место · ${COUNTRIES[e.country]?COUNTRIES[e.country].name:''} · ${DIFFS[e.diff]?DIFFS[e.diff].name:''}${e.bankrupt?' · банкротство':''}</small></td><td class="n">${e.score}</td></tr>`).join('')}</table>`:'<p class="small muted" style="margin-top:10px">Здесь появятся ваши завершённые партии — с местом среди реальных компаний эпохи.</p>'}`);
 }
+
+// Рассказ об основателе: открывается нажатием на портрет
+const FOUNDER_STORY={
+  ford:['Сын фермера из Мичигана, механик по призванию. Ночами после смены на электростанции Эдисона собирал в сарае свой «квадрицикл» (1896) — и выломал стену, чтобы выкатить его наружу.','Две первые компании Форда прогорели. Третья, Ford Motor Company (1903), выпустила Model T — простую, прочную и дешёвую. С движущимся конвейером (1913) сборка машины сократилась с 12 часов до полутора, а цена упала с $850 до $260.','В 1914 году Форд поднял зарплату до «пяти долларов в день» — вдвое выше рынка: текучесть кадров исчезла, а рабочие сами смогли купить свои машины. К 1927 году продано 15 миллионов Model T.'],
+  olds:['Рэнсом Олдс вырос в мастерской отца, делавшей паровые двигатели. Первую машину построил в 1896 году.','Oldsmobile Curved Dash (1901) с изогнутым передком стоил $650 и собирался на поточной линии — это был первый массовый автомобиль Америки: в 1904 году продано около 5 000 машин.','Поссорившись с инвесторами, Олдс ушёл и основал REO. Его имя осталось в марке Oldsmobile, которая прожила до 2004 года.'],
+  benz:['Карл Бенц рос без отца — тот, машинист паровоза, погиб. Мать отдала последнее, чтобы сын учился на инженера.','29 января 1886 года он получил патент на «моторваген» с бензиновым двигателем — день рождения автомобиля. Первую дальнюю поездку совершила его жена Берта: в 1888 году она тайком от мужа проехала с сыновьями 106 км до Пфорцхайма, чиня машину шпилькой и подвязкой.','Benz & Cie. к 1900 году была крупнейшим автозаводом мира. В 1926 году она объединилась с Daimler — так родился Mercedes-Benz.'],
+  maybach:['Вильгельм Майбах рано осиротел и вырос в приюте, где его талант заметил Готлиб Даймлер. Всю жизнь они работали вместе.','Майбах придумал распылительный карбюратор, сотовый радиатор и мотор «Феникс». В 1901 году по заказу Эмиля Еллинека построил машину Mercedes 35 hp — низкую, длинную и мощную. Её называют первым современным автомобилем.','Позже Майбах строил моторы для дирижаблей Цеппелина, а его сын Карл — роскошные машины Maybach.'],
+  renault:['Луи Рено в 21 год собрал в садовом сарае под Парижем «воатюретку» и в канун Рождества 1898 года поспорил с друзьями, что она въедет на крутую улицу Лепик на Монмартре. Выиграл спор — и 12 заказов.','Он запатентовал прямую передачу и вместе с братьями Марселем и Фернаном основал Renault Frères. Братья сами гоняли: Марсель выиграл Париж — Вену (1902) и погиб в гонке Париж — Мадрид (1903).','В 1906 году гонщик Рено Ференц Сис выиграл первое Гран-при. В 1914 году 600 такси Renault перевезли солдат на Марну.'],
+  peugeot:['Семья Пежо с XIX века делала всё из стали: пилы, кофемолки, корсетные пластины, велосипеды. Арман Пежо учился в Англии и увидел будущее в моторах.','Первая машина Пежо (1889) была паровой, потом он поставил мотор Daimler. Peugeot участвовал в гонке Париж — Руан 1894 года и в Париж — Бордо — Париж 1895 года.','В 1896 году Арман основал отдельную «Общество автомобилей Пежо». Позже гоночные Peugeot с двумя распредвалами выигрывали Гран-при и Индианаполис.'],
+  lanchester:['Фредерик Ланчестер — инженер-теоретик, один из первых, кто научно рассчитывал автомобиль, а позже и крыло самолёта.','Его машина 1895 года стала одной из первых британских бензиновых. Ланчестер придумал дисковые тормоза, червячную передачу и сбалансированный мотор.','Братья Ланчестер строили машины высочайшего качества, но медленно и дорого — фирма так и осталась маленькой.'],
+  bugatti:['Этторе Бугатти — сын миланского мебельщика-художника. В 17 лет построил моторный трицикл, в 20 — свою первую машину.','Свой завод открыл в Мольсайме в 1909 году. Машины Bugatti были лёгкими, красивыми и быстрыми, а его подковообразный радиатор узнают до сих пор.','Type 35 (1924) выиграла больше тысячи гонок, в том числе Тарга Флорио пять раз подряд.'],
+  ferrari:['Энцо Феррари мечтал стать оперным певцом или журналистом, но в 1919 году стал гонщиком, а потом — пилотом Alfa Romeo.','В 1929 году основал в Модене «Скудерию Феррари» — команду, которая выставляла машины Alfa Romeo. Гарцующий конь на эмблеме — подарок семьи лётчика Франческо Баракки.','Свои машины Ferrari начал строить только после Второй мировой войны. В игре — альтернативная история.'],
+  agnelli:['Джованни Аньелли — кавалерийский офицер из пьемонтской семьи землевладельцев. В 1899 году вместе с друзьями основал в Турине компанию FIAT.','Он быстро понял силу массового выпуска: съездил к Форду и построил завод Линготто (1923) с испытательным треком на крыше.','FIAT стал крупнейшей компанией Италии: около 80% рынка страны в 1920-х.'],
+  custom:['Вы — безвестный механик или предприниматель с мечтой. У вас нет знаменитой фамилии, связей и чужих побед.','Зато вы не связаны ничьей историей: все решения — ваши.']};
+function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[];
+  openSheet(`<div class="row"><h2>${esc(P.name)}</h2>${X}</div><p class="small muted">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name} · «${esc(P.co)}»</p>
+    <div style="width:140px;margin:12px auto 0">${portraitHTML(G.pioneer)}</div>
+    <div class="stack small" style="margin-top:12px">${L.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
+    <div class="bon" style="margin-top:12px">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div>
+    ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
 const MS=document.getElementById('menuScreen');
@@ -2830,7 +2862,7 @@ function finishRace(quit){
 }
 
 /* ================= RACE RENDER: pseudo-3D road over real physics, sprites, HUD ================= */
-const RV={CAMH:1.9,BACK:3.4,CAMD:1.15,DRAW:190,HOR:0.4};
+const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
 function setupRender(){
   const T=R.trk,F=R.follow;R.cam={lat:F?F.lat:0,psi:0,y:F?F.y:0,sky:0,phaseT:0,phase:0};
@@ -3240,8 +3272,8 @@ function teamCard(s){
     <p class="small muted" style="margin-top:4px">${D.desc}${lv?` Содержание ${money(teamUpkeep(s))} в месяц.`:''}</p>
     ${N?`<div class="tech-row"><div><h3>${esc(N.name)}</h3><p class="small muted">${N.desc} Содержание ${money(Math.round(N.up*cpi(s)))} в месяц.</p></div><button class="btn sm" data-act="rdeptUp" ${s.cash<c?'disabled':''}>${money(c)}</button></div>`:''}
     <div class="label" style="margin-top:14px">Пилоты по контракту · ${own.length} из 3</div>
-    ${own.length?own.map(d=>`<div class="race-item"><div class="row"><div><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)} · до ${d.to}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="fire" data-k="${d.id}">Уволить</button></div><p class="small muted">Жалованье ${money(driverSalary(d,s))} в месяц${d.note?' · '+esc(d.note):''}</p></div>`).join(''):'<p class="small muted" style="margin-top:4px">Пока никого. На любую гонку можно пригласить свободного пилота разово — или сесть за руль самому.</p>'}
-    ${own.length<3&&free.length?`<button class="btn block" style="margin-top:12px" data-act="teamFree">${TEAM_FREE?'Свернуть список пилотов':`Нанять пилота на сезон ▾ · свободных ${free.length}`}</button>`+(TEAM_FREE?`<div class="label" style="margin-top:12px">Свободные пилоты ${s.y}: контракт на сезон</div>`+free.map(d=>`<div class="race-item"><div class="row"><div><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="hire" data-k="${d.id}" ${s.cash<driverFee(d,s)?'disabled':''}>${money(driverFee(d,s))}</button></div><p class="small muted">Затем ${money(driverSalary(d,s))} в месяц · разово на гонку ${money(driverRaceFee(d,s))}${d.note?' · '+esc(d.note):''}</p></div>`).join(''):''):''}
+    ${own.length?own.map(d=>`<div class="race-item"><div class="row">${drvPhoto(d)}<div style="flex:1"><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)} · до ${d.to}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="fire" data-k="${d.id}">Уволить</button></div><p class="small muted">Жалованье ${money(driverSalary(d,s))} в месяц${d.note?' · '+esc(d.note):''}</p></div>`).join(''):'<p class="small muted" style="margin-top:4px">Пока никого. На любую гонку можно пригласить свободного пилота разово — или сесть за руль самому.</p>'}
+    ${own.length<3&&free.length?`<button class="btn block" style="margin-top:12px" data-act="teamFree">${TEAM_FREE?'Свернуть список пилотов':`Нанять пилота на сезон ▾ · свободных ${free.length}`}</button>`+(TEAM_FREE?`<div class="label" style="margin-top:12px">Свободные пилоты ${s.y}: контракт на сезон</div>`+free.map(d=>`<div class="race-item"><div class="row">${drvPhoto(d)}<div style="flex:1"><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="hire" data-k="${d.id}" ${s.cash<driverFee(d,s)?'disabled':''}>${money(driverFee(d,s))}</button></div><p class="small muted">Затем ${money(driverSalary(d,s))} в месяц · разово на гонку ${money(driverRaceFee(d,s))}${d.note?' · '+esc(d.note):''}</p></div>`).join(''):''):''}
   </section>`;
 }
 function vRace(){
@@ -4159,7 +4191,8 @@ const ACT={
   planManual:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.plan==='auto'||md.plan===undefined)md.plan=autoPlan(md);rerender();},
   planAuto:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan='auto';rerender();},
   plan:d=>{const md=G.models.find(m=>m.id===+d.id),base=md.plan==='auto'||md.plan===undefined?autoPlan(md):+md.plan;md.plan=Math.max(0,base+(+d.d));rerender();},
-  retire:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.6);G.cash+=rev;addLog(`«${md.name}» снята с производства${md.stock?`, остаток ${fmtN(md.stock)} шт. распродан за ${money(rev)}`:''}.`);md.stock=0;md.backlog=0;md.status='off';rerender();},
+  retire:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.stock>0){md.salePrev=md.price;md.price=Math.max(20,Math.round(md.price*0.7/10)*10);md.status='sale';md.plan='auto';md.backlog=0;addLog(`«${md.name}» снята с производства. Остаток ${fmtN(md.stock)} шт. распродаётся по ${money(md.price)} (−30%).`);}else{md.status='off';md.backlog=0;addLog(`«${md.name}» снята с производства.`);}rerender();},
+  saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
   pick:d=>{draft[d.k]=d.v;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
@@ -4173,6 +4206,7 @@ const ACT={
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
   rdPick:()=>openRD(),
   rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj&&rdActive(G).length<rdSlots(G)){G.rd.projs.push({...pj,prog:0});addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
+  rdW:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;pj.w=clamp((pj.w||1)+(+d.d)*0.5,0.5,4);rerender();},
   rdStop:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;if(!confirmOnce('rdStop'+(+d.k),'Нажмите ещё раз: сделанное по проекту пропадёт'))return;G.rd.projs.splice(+d.k,1);addLog(`КБ остановило проект: ${pj.name}.`);rerender();},
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<RD_MAX&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро выросло: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень.`,'good');checkAch();rerender();flushToasts();}},
   fold:d=>{UIF[d.k]=!isOpen(d.k,d.def==='1');if(!sheet.hidden&&draft===null&&sb.querySelector('[data-k="'+d.k+'"]')){const top=sb.scrollTop;openRD();sb.scrollTop=top;return;}rerender();},
@@ -4191,6 +4225,7 @@ const ACT={
   legacyInfo:()=>openLegacyInfo(),
   fame:()=>openFame(),
   about:()=>openAbout(),
+  founder:()=>openFounder(),
   saveOpen:()=>openSlots('save'),
   loadOpen:()=>openSlots('load'),
   saveSlot:d=>{if(saveTo(d.k)){toast('Сохранено: слот '+d.k);closeSheet();}else toast('Не удалось сохранить');},

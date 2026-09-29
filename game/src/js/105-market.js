@@ -181,7 +181,7 @@ function truckMarket(R,c,s,ms,pr,K,u0){
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
 // Спрос на все модели во всех странах на текущий месяц
 function demandAll(s,ov){
-  const act=s.models.filter(m=>m.status==='prod');const res={by:{},mk:{}};act.forEach(m=>res.by[m.id]={});
+  const act=s.models.filter(m=>m.status==='prod'||m.status==='sale');const res={by:{},mk:{}};act.forEach(m=>res.by[m.id]={});
   Object.keys(COUNTRIES).forEach(c=>{const open=c===s.country||dealerCount(s,c)>0,R=mkCountry(c,s,open?act:[],ov);res.mk[c]=R;if(open)act.forEach(m=>res.by[m.id][c]=R.by[m.id]||0);});
   return res;
 }

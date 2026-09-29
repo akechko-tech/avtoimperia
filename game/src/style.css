@@ -292,7 +292,9 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .carbox img.car3d{display:block;margin:6px auto 2px;height:132px;width:auto;max-width:96%;object-fit:contain}
 .carbox.enter img.car3d{animation:enter .7s cubic-bezier(.2,.8,.3,1)}
 @media (prefers-reduced-motion:no-preference){.carbox img.car3d.anim{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-1.5px)}}}
-.p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.7) grayscale(.35) contrast(1.15)}
+.p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.15) contrast(1.05)}
+.drv-ph{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;filter:sepia(.3)}
+.pion-link{background:none;border:0;padding:0;cursor:pointer}
 /* 0.10: конструктор — разделы деталей раскрываются по нажатию, сравнение с соперником класса */
 .dsecs{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .dsec{background:var(--panel2);border:1px solid var(--line-soft);border-radius:6px;padding:0}

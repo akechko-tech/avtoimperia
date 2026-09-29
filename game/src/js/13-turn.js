@@ -12,7 +12,9 @@ function step(){
   s.whBuild=(s.whBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.wh=(s.wh||0)+b.units;addLog(`Новый склад готов: ${fmtN(s.wh)} мест для машин.`,'good');return false;}return true;});
   if(s.techBuild){s.techBuild.left--;if(s.techBuild.left<=0){const k=s.techBuild.k;s.tech[k]=(s.tech[k]||0)+1;const lv=TECH[k].lv[s.tech[k]-1];addLog(`Внедрено: ${lv.name}.`,'good');checkFirstTech(k,s.tech[k]);s.techBuild=null;}}
   s.supplyNow=s.supplyNext||1;s.supplyNext=1;s.strikeNow=!!s.strikeNext;s.strikeNext=false;
-  const act=s.models.filter(m=>m.status==='prod');
+  // распродажа: снятая модель продаётся со склада по сниженной цене, пока остаток не кончится
+  s.models.forEach(m=>{if(m.status==='sale'&&m.stock<=0){m.status='off';m.backlog=0;addLog(`Распродажа «${m.name}» закончена.`);}});
+  const act=s.models.filter(m=>m.status==='prod'||m.status==='sale');
   // спрос
   const D=demandAll(s),creditK=techLv(s,'credit')?1.15:1;
   const dem=act.map(md=>{const o={};for(const c in D.by[md.id])o[c]=D.by[md.id][c]*creditK;return o;});
@@ -24,7 +26,7 @@ function step(){
   const capCiv=Math.max(0,cap-milCap);
   // заказы ведомств и фирм: их машины делаются сверх плана
   const ordNeed={};(s.orders||[]).forEach(o=>{ordNeed[o.md]=(ordNeed[o.md]||0)+Math.ceil(o.left/Math.max(1,o.due-mi(s)));});
-  const want=act.map(md=>(md.plan==='auto'?Math.max(0,Math.round(md.fc*1.04+(md.backlog||0)-(md.stock-0.35*md.fc))):Math.max(0,Math.round(+md.plan||0)))+(ordNeed[md.id]||0));
+  const want=act.map(md=>md.status==='sale'?0:(md.plan==='auto'?Math.max(0,Math.round(md.fc*1.04+(md.backlog||0)-(md.stock-0.35*md.fc))):Math.max(0,Math.round(+md.plan||0)))+(ordNeed[md.id]||0));
   // «авто» не делает больше, чем поместится на складе
   {const stock0=act.reduce((a,m)=>a+m.stock,0),exp=act.reduce((a,m,i)=>a+want[i]-(m.fc||0)-(ordNeed[m.id]||0),0),over=stock0+exp-whCap(s);
     if(over>0){const autoW=act.reduce((a,m,i)=>a+(m.plan==='auto'?Math.max(0,want[i]-(ordNeed[m.id]||0)):0),0);if(autoW>0){const kk=Math.max(0,1-over/autoW);act.forEach((m,i)=>{if(m.plan==='auto'){const o=ordNeed[m.id]||0;want[i]=o+Math.round((want[i]-o)*kk);}});}}}
@@ -64,7 +66,7 @@ function step(){
   // расходы
   r.rd=rdUpkeep(s);r.drv=driverPayroll(s);r.team=teamUpkeep(s);
   // конструкторское бюро: каждый проект продвигается каждый месяц
-  {const pts=rdPoints(s);s.rd.projs=(s.rd.projs||[]).filter(pj=>{pj.prog=(pj.prog||0)+pts;if(pj.prog<pj.need)return true;
+  {const share=(s.rd.projs||[]).map(pj=>rdPtsOf(s,pj));s.rd.projs=(s.rd.projs||[]).filter((pj,i)=>{pj.prog=(pj.prog||0)+share[i];if(pj.prog<pj.need)return true;
     if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);}
     return false;});}
