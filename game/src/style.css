@@ -482,3 +482,25 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .rl-btn{min-width:48px;height:44px;border-radius:22px;border:1px solid #6d6350;background:#1a1815;color:#efe6cf;font-size:16px;padding:0 14px}
 .rl-title{margin-bottom:12px;font:12px/1.3 var(--mono,monospace);letter-spacing:.08em;text-transform:uppercase;color:#9b917c;text-align:center;padding:0 16px}
 @media (prefers-reduced-motion:reduce){.rl-grain,.rl-scr,.rl-flick{display:none}}
+/* ---------- кино в гонке: загрузка, заставка перед стартом, повтор финиша ---------- */
+.r-film{position:absolute;inset:0;z-index:6;pointer-events:auto;overflow:hidden;color:#f3ead6}
+.r-film[hidden]{display:none!important}
+.r-film.loading{background:radial-gradient(120% 90% at 50% 40%,#1c2a3a 0%,#070d15 70%)}
+.rf-bar{position:absolute;left:0;right:0;height:10.5%;background:#000;z-index:1}
+.rf-bar.top{top:0}.rf-bar.bot{bottom:0}
+.rf-card{position:absolute;left:6%;right:6%;bottom:14%;z-index:2;text-align:left;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .8s ease;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9)}
+.r-film.loading .rf-card{top:34%;bottom:auto;text-align:center;opacity:1;transform:none}
+.rf-card.in{opacity:1;transform:none}
+.rf-kick{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#e2c47a}
+.rf-big{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(26px,6.4vw,54px);line-height:1.02;margin-top:4px;color:#fbf4e2}
+.rf-mid{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(19px,4.4vw,32px);line-height:1.15;margin-top:4px;color:#fbf4e2}
+.rf-sub{font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:clamp(14px,3.2vw,20px);margin-top:6px;color:#e9dfc8}
+.rf-list{margin-top:6px;font-family:'Old Standard TT',Georgia,serif;font-size:clamp(15px,3.4vw,22px);line-height:1.3}
+.rf-list .h{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e2c47a}
+.rf-load{width:min(320px,70%);height:3px;margin:18px auto 10px;background:rgba(255,255,255,.14);border-radius:2px;overflow:hidden}
+.rf-load i{display:block;height:100%;width:38%;background:linear-gradient(90deg,transparent,#e2c47a,transparent);animation:rfload 1.3s ease-in-out infinite}
+@keyframes rfload{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
+.rf-skip{position:absolute;right:10px;bottom:calc(10.5% + 10px);z-index:3;background:rgba(10,16,24,.55);color:#f3ead6;border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:7px 14px;font:600 13px var(--sans,system-ui);letter-spacing:.02em}
+.rf-rec{position:absolute;left:12px;top:calc(10.5% + 10px);z-index:3;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:#ff5b4a;animation:rfblink 1.2s steps(2) infinite}
+@keyframes rfblink{50%{opacity:.35}}
+#raceScreen.filming .r-hud,#raceScreen.filming .r-bars,#raceScreen.filming .r-ctrl,#raceScreen.filming #rMap,#raceScreen.filming .r-board,#raceScreen.filming .r-msg,#raceScreen.filming .r-note,#raceScreen.filming .r-grip,#raceScreen.filming #rSvc,#raceScreen.filming #rReset,#raceScreen.filming .r-mgr{visibility:hidden}

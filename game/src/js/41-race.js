@@ -493,13 +493,15 @@ function startRace(setup){
   cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
     const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
   const me=cars.find(c=>c.player)||null,team=cars.filter(c=>c.you);
-  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,
+  // погода гонки: в дождь шины держат хуже
+  const wx=r3dWeather(trk);if(wx.rain)cars.forEach(c=>{c.grip*=0.87;});
+  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
     hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
   document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
   document.getElementById('fuelBox').style.visibility=trk.cfg.pits?'visible':'hidden';
   document.getElementById('hLapL').firstChild.textContent=trk.cfg.laps>1?'Круг':'Дистанция';
-  document.getElementById('rTips').hidden=true;setupRaceUI();setupRender();auRaceStart(rc);driveTipsAtStart();R.lastT=performance.now();rRaf=requestAnimationFrame(raceLoop);
+  document.getElementById('rTips').hidden=true;setupRaceUI();setupRender();auRaceStart(rc);R.lastT=performance.now();rRaf=requestAnimationFrame(raceLoop);
 }
 // Соперники: заводские команды своего года (те же, что и в зачёте сезона), с реальными пилотами
 function fieldTeams(rc,s,nTeam){
@@ -661,7 +663,7 @@ function raceTick(dt){
     if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);}}
     else if(!me&&(!teamLive.length||!live.length)){R.endT=R.mode==='sim'?0:2;if(R.cars.some(c=>c.you&&c.fin!==null))auSfx('cheer',1);}
     else if(R.time>(T.cfg.dur||120)*4)R.endT=0;}
-  if(R.endT!==undefined){R.endT-=dt;if(R.endT<=0){finishRace(false);return;}}
+  if(R.endT!==undefined){R.endT-=dt;if(R.endT<=0){if(!R.replayed&&R.me&&R.me.fin!==null&&R.mode==='drive'&&!R.ff){R.replayed=1;if(replayStart())return;}finishRace(false);return;}}
   if(R.msgT>0)R.msgT-=dt;R.shake=Math.max(0,R.shake-dt*1.5);
 }
 // Досчитать гонку мгновенно (режим руководителя): та же физика без отрисовки
@@ -675,10 +677,11 @@ function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);l
 function respawnAt(c,i,lap){const T=R.trk;c.idx=clamp(i,0,T.n-1);if(lap!==undefined)c.lap=lap;respawn(c);c.offIdx=-1;trackLocal(T,c);}
 function raceLoop(now){
   if(!R||R.done)return;
-  const dt=Math.min(0.05,(now-R.lastT)/1000);R.lastT=now;
+  const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;
+  if(R.loading){rRaf=requestAnimationFrame(raceLoop);return;}
   if(R.hold){renderRace(dt);rRaf=requestAnimationFrame(raceLoop);return;}
   for(let k=0;k<(R.speed||1);k++){R.t+=dt;if(R.t>0){R.time+=dt;if(R.me)playerControl(R.me,dt);}raceTick(dt);if(!R||R.done)break;}
-  if(R&&!R.done){renderRace(dt);auRaceTick();}
+  if(R&&!R.done){if(R.gl)replayRec(dt*(R.speed||1));renderRace(dt);auRaceTick();}
   if(R&&!R.done)rRaf=requestAnimationFrame(raceLoop);
 }
 function raceOrder(){return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
