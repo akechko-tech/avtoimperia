@@ -16,7 +16,7 @@ function botMonth(strat){
   const util=L.made/Math.max(1,capEff(s)),pend=s.capBuild.reduce((a,b)=>a+b.units,0),dem=act.reduce((a,m)=>a+m.fc,0);
   if((util>0.85||dem>capEff(s)*0.9)&&!pend){const add=Math.max(2,Math.round(s.cap*0.5)),cost=add*capUnitCost(s);if(s.cash>cost*2){s.cash-=cost;s.plantVal+=cost;s.capBuild.push({units:add,left:2});}}
   const fcT=act.reduce((a,m)=>a+m.fc,0);
-  for(const c of [s.country,...(s.country==='us'&&s.y<1901?['fr']:[])]){const need=dealerNeed(c,s),have=dealerCount(s,c),tgt=strat==='nodealers'?1:Math.max(c===s.country?1:3,Math.min(need*0.7,3+fcT*2.5/dealerTP(s)));if(have<tgt){const n=Math.max(1,Math.round((tgt-have)*0.3)),cst=n*dealerCost(s);if(s.cash>cst*2){s.cash-=cst;s.dealers[c]=have+n;}}}
+  for(const c of [s.country,...(s.country==='us'&&s.y<1901?['fr']:[])]){if(c!==s.country&&!impLv(s,c)){if(s.cash>impCost(s,c,1)*2)impUp(s,c);continue;}const need=dealerNeed(c,s),have=dealerCount(s,c),tgt=strat==='nodealers'?1:Math.max(c===s.country?1:3,Math.min(need*0.7,3+fcT*2.5/dealerTP(s)));if(have<tgt){const n=Math.min(dealerRoom(s,c),Math.max(1,Math.round((tgt-have)*0.3))),cst=n*dealerCost(s);if(n<1)continue;if(s.cash>cst*2){s.cash-=cst;s.dealers[c]=have+n;}}}
   s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(0,(L.rev||0)*0.04)));
   if(!s.techBuild)for(const k of TECH_ORDER){if(k==='credit')continue;if(techOpen(s,k)){const c=techCost(s,k);if(s.cash>c*1.5){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:3};break;}}}
   if(s.cash<0&&s.loan+5000<=maxLoan(s)){s.loan+=5000;s.cash+=5000;}

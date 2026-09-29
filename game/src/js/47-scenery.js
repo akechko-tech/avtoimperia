@@ -402,12 +402,11 @@ function scenQueue(T){SCQ.length=0;const seen=new Set(),start=T.startIdx||0;cons
 /* ---------- машина в карточке модели: та же 3D-модель, что и в гонке, в три четверти спереди ---------- */
 const CARD3D=new Map();
 function carArt(md,opt={}){
-  try{const p=parts(md),y=md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895);
-    // тот же облик, что в гонке (серийная подготовка): кузов, цвет, колёса, капот по мотору
-    const S=modelSpec(md,0,y,{mech:false}),key='card|'+S.key+'|'+p.c.id;
-    let url=CARD3D.get(key);
-    if(!url){const M=carModel(Object.assign({},S,{key,lod:'hi'})),dpr=Math.min(2,window.devicePixelRatio||1),sp=renderModel(M,2.1,0.28,52*dpr,{shadow:0.4,blur:0.22});
-      url=sp.img.toDataURL('image/png');if(CARD3D.size>40)CARD3D.delete(CARD3D.keys().next().value);CARD3D.set(key,url);}
-    return `<img class="car3d${opt.anim?' anim':''}" src="${url}" alt="${esc(md.name||'Автомобиль')}">`;
+  try{const y=opt.y||(md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895));
+    // тот же облик, что в гонке: кузов, цвет, колёса, капот по мотору; для газеты о гонке — в гоночной подготовке, с номером и экипажем
+    const prep=opt.prep||0,crew=prep>0,S=modelSpec(md,prep,y,{mech:crew&&mechanicEra(y),num:crew?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:600,crew};
+    const key=stuKey(S,o);let url=STU.cache.get(key);
+    if(!url){stuQueue(key,S,o,()=>{const M=carModel(Object.assign({},S,{lod:'hi',crew:crew?1:0})),dpr=Math.min(2,window.devicePixelRatio||1);return renderModel(M,2.1,0.28,52*dpr,{shadow:0.4,blur:0.22}).img.toDataURL('image/png');});url=STU_BLANK;}
+    return `<img class="car3d${opt.anim?' anim':''}" data-stu="${stuId(key)}" src="${url}" alt="${esc(md.name||'Автомобиль')}">`;
   }catch(e){return carSVG(md,opt);}
 }

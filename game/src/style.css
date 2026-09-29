@@ -228,6 +228,7 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .leg-row .bar{height:8px}
 .leg-row b{text-align:right}
 table.pl tr.you td{color:var(--brass);font-weight:600}
+table.pl tr.mine td{color:var(--brass)}table.pl tr.mine td small{color:var(--brass);opacity:.85}
 table.pl td small{display:block;color:var(--muted);font-size:11px;font-weight:400;line-height:1.3}
 .chip[disabled]{opacity:.45}
 
@@ -238,6 +239,7 @@ table.pl td small{display:block;color:var(--muted);font-size:11px;font-weight:40
 .r-board div small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .r-board div em{font-style:normal;color:var(--muted)}
 .r-board div.you{background:rgba(120,90,20,.55)}
+.r-board div.mine{background:rgba(90,70,20,.45)}
 .r-board div.me{outline:1px solid var(--brass)}
 .r-msg.small{font-size:26px}
 .r-mgr{padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px}
@@ -358,5 +360,46 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .plant3d>img{display:block;width:100%;height:100%}
 .pl-smoke{position:absolute;width:5%;aspect-ratio:1;margin:-2.5% 0 0 -2.5%;border-radius:50%;background:radial-gradient(circle,rgba(226,230,234,.85) 0,rgba(226,230,234,.4) 45%,rgba(226,230,234,0) 70%);pointer-events:none;animation:plSmoke 3.3s linear infinite;opacity:0}
 @keyframes plSmoke{0%{transform:translate(0,0) scale(.5);opacity:0}12%{opacity:.85}100%{transform:translate(160%,-420%) scale(calc(2.6*var(--s,1)));opacity:0}}
-.pl-car{position:absolute;left:0;top:0;height:auto;pointer-events:none;animation:plCar 14s linear infinite;transform:translate(-50%,-80%)}
-@keyframes plCar{0%{left:var(--x0);top:var(--y0)}100%{left:var(--x1);top:var(--y1)}}
+.plant3d>img.pl-car{position:absolute;height:auto;max-width:none;pointer-events:none;transform:translate(-50%,-80%)}
+/* сворачиваемые карточки: заголовок — кнопка, свёрнутая показывает строку итога */
+.card-h{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent}
+.card-h>i{font-style:normal;color:var(--brass);font-size:15px;margin-left:auto;flex:none;padding-left:4px}
+.card-h .ch{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+.card-h .ch h2{margin:0}
+.card.folded{padding-top:12px;padding-bottom:12px}
+.card-sum{margin-top:4px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* карточка модели: миниатюра, название цветом «против соперников», коротко об итогах месяца */
+.mcard .card-h{align-items:center}
+.mh{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.mthumb{flex:none;width:92px;height:52px;border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#223a52,#101c2a);display:flex;align-items:center;justify-content:center}
+.mthumb img{display:block;width:100%;height:100%;object-fit:cover}
+.mt{display:flex;flex-direction:column;min-width:0}
+.mt b{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt b.good{color:var(--good)}.mt b.warn{color:var(--warn)}.mt b.bad{color:var(--bad)}
+.mcard .card-h .pill{flex:none;font-size:10px;padding:2px 6px}
+@media (max-width:420px){.mcard .card-h .pill{display:none}}
+.ptab td small{color:var(--muted);font-size:11px}
+.ptab tr.you td{color:var(--text)}
+.plan-row h3 small.num{font-size:11px;font-weight:500}
+.mt small+small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* газета: «Также в номере» с фото события, врезка «так было в истории», старая плёнка у исторических снимков */
+.p-also{display:flex;gap:8px;align-items:flex-start}
+.p-also img{flex:none;width:64px;height:48px;object-fit:cover;border:1px solid var(--ink);filter:grayscale(1) sepia(.45) contrast(1.2)}
+.p-also span{min-width:0}
+.p-hist{display:flex;gap:10px;align-items:center;border-top:1px dashed rgba(34,28,20,.55);margin-top:6px;padding-top:6px;font-size:12px;font-style:italic}
+.p-hist img{flex:none;width:96px;height:64px;object-fit:cover;border:1px solid var(--ink);filter:grayscale(1) sepia(.45) contrast(1.2)}
+.p-fig.old{position:relative;overflow:hidden}
+.p-fig.old::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(40,28,12,.38) 100%);mix-blend-mode:multiply}
+@media (prefers-reduced-motion:no-preference){.p-fig.old img{animation:filmFlick 3.2s steps(1) infinite}
+  @keyframes filmFlick{0%{filter:grayscale(1) sepia(.4) contrast(1.25) brightness(1)}8%{filter:grayscale(1) sepia(.4) contrast(1.25) brightness(1.05)}9%{filter:grayscale(1) sepia(.4) contrast(1.25) brightness(.96)}40%{filter:grayscale(1) sepia(.4) contrast(1.28) brightness(1.02)}41%{filter:grayscale(1) sepia(.4) contrast(1.25) brightness(1)}77%{filter:grayscale(1) sepia(.42) contrast(1.22) brightness(1.04)}78%{filter:grayscale(1) sepia(.4) contrast(1.25) brightness(.98)}}}
+/* гонщик: фото-кнопка с «i», история в листе */
+.drv-btn{position:relative;flex:none;background:none;border:0;padding:0;cursor:pointer;border-radius:50%}
+.drv-btn i{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:var(--brass);color:#1a1408;font:700 12px/18px var(--serif);font-style:italic;text-align:center}
+.drv-ini{display:flex;align-items:center;justify-content:center;background:#2c3e52;color:var(--text);font-family:var(--display);font-weight:700;font-size:18px}
+.drv-big img{max-height:340px;object-fit:cover;object-position:center 20%}
+.linkbtn{background:none;border:0;padding:0;color:var(--brass);font:inherit;cursor:pointer;text-decoration:underline}
+/* бензин: метка — сколько нужно до финиша; оранжевый — не хватит */
+.fuelbar{position:relative;overflow:visible}
+#bFuelNeed{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);display:none}
+#rReset{z-index:5;box-shadow:0 4px 18px rgba(0,0,0,.45)}

@@ -53,7 +53,7 @@ function renderRaceSetup(keepScroll){
         ${RS.more?pool.map(x=>chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · на гонку ${money(driverRaceFee(x,s))}`)).join(''):''}
         ${pool.length?`<button class="chip" data-act="rMore">${RS.more?'Свернуть список':'Пригласить пилота на гонку ▾'}<small>${RS.more?'оставить выбранного':`свободных в ${rc.y}: ${pool.length}`}</small></button>`:''}
       </div>
-      ${d&&d.note?`<p class="small muted" style="margin-top:6px">${esc(d.note)}</p>`:''}
+      ${d&&d.id?`<div class="row" style="margin-top:6px;gap:10px;justify-content:flex-start">${drvPhoto(d)}<p class="small muted" style="flex:1">${esc(d.note||'')} <button class="linkbtn" data-act="drvBio" data-k="${d.id}">История ▸</button></p></div>`:''}
       <div class="label" style="margin-top:10px">Машина</div><div class="chips">${cars.map(m=>{const x=carStats(m,e.prep,rc.y);return `<button class="chip ${m.id===md.id?'on':''}" data-act="rset" data-i="${i}" data-k="car" data-v="${m.id}">${esc(m.name)}<small>${Math.round(x.hp)} л.с. · ${Math.round(x.vmax*3.6)} км/ч</small></button>`;}).join('')}</div>
       <div class="label" style="margin-top:10px">Подготовка</div><div class="chips">${PREP.map(p=>{const ok=prepAllowed(p.id,s,rc,md);return `<button class="chip ${e.prep===p.id?'on':''}" data-act="rset" data-i="${i}" data-k="prep" data-v="${p.id}" ${ok?'':'disabled'}>${p.name}<small>${ok?(p.cost?money(prepCost(rc,p.id,s)):'бесплатно'):isTruck(md)&&p.id===2?'грузовику гоночный кузов не поставить':'нужна гоночная мастерская'} · ${p.desc}</small></button>`;}).join('')}</div>
       <div class="label" style="margin-top:10px">Шины</div><div class="chips"><button class="chip ${e.tyre==='soft'?'on':''}" data-act="rset" data-i="${i}" data-k="tyre" data-v="soft">Мягкие<small>цепко держат, быстро стираются</small></button><button class="chip ${e.tyre==='hard'?'on':''}" data-act="rset" data-i="${i}" data-k="tyre" data-v="hard">Жёсткие<small>живут дольше, чаще скользят</small></button></div>
@@ -65,6 +65,7 @@ function renderRaceSetup(keepScroll){
     <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · ${terrName(cfg)}${cfg.pits?' · боксы':''}${cfg.night?' · ночь':''} · приз ${money(racePrize(rc))}</p>
     ${champs.length||gb?`<div class="tags">${champs.map(c=>`<span class="pill warn">${esc(c)}</span>`).join('')}${gb?'<span class="pill good">Кубок наций: до 3 машин от страны</span>':''}</div>`:''}
     ${photoHTML(rc.img)}${rc.hist?`<div class="hist">${esc(rc.hist)}</div>`:''}
+    <p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>
     <div class="label" style="margin-top:16px">Команда · ${n} из ${MAX_ENTRIES}</div>
     <div class="entries">${RS.entries.map(entryHTML).join('')}</div>
     ${n<MAX_ENTRIES?`<button class="btn block" style="margin-top:8px" data-act="rAdd">+ Ещё машина в команду</button>`:''}
@@ -101,8 +102,10 @@ function drawSetupSprites(){
   const rc=RACES.find(r=>r.key===RS.key);
   document.querySelectorAll('#sheetBody .rs-car').forEach(cv=>{const i=+cv.dataset.i,e=RS.entries[i],md=G.models.find(m=>m.id===e.car);if(!md)return;
     const spec=modelSpec(md,e.prep,rc.y,{country:G.country,num:i+1});
-    const k='rsv|'+spec.key;let sp=CAR3D.cache.get(k);if(!sp){sp=renderModel(carModelFor(spec,true),0.62,0.36,70*Math.min(2,window.devicePixelRatio||1));CAR3D.cache.set(k,sp);}
-    const g=cv.getContext('2d');if(!g)return;g.clearRect(0,0,cv.width,cv.height);const kk=Math.min(cv.width*0.98/sp.img.width,cv.height*0.98/sp.img.height),w=sp.img.width*kk,h=sp.img.height*kk;g.drawImage(sp.img,(cv.width-w)/2,cv.height-h,w,h);});
+    // портрет из студии (видеокарта); без неё — программная отрисовка
+    let img=stuCanvas(spec,{w:360,crew:true,yaw:0.95,pitch:0.3});
+    if(!img){const k='rsv|'+spec.key;let sp=CAR3D.cache.get(k);if(!sp){sp=renderModel(carModelFor(spec,true),0.62,0.36,70*Math.min(2,window.devicePixelRatio||1));CAR3D.cache.set(k,sp);}img=sp.img;}
+    const g=cv.getContext('2d');if(!g)return;g.clearRect(0,0,cv.width,cv.height);const kk=Math.min(cv.width*0.98/img.width,cv.height*0.98/img.height),w=img.width*kk,h=img.height*kk;g.drawImage(img,(cv.width-w)/2,cv.height-h,w,h);});
 }
 Object.assign(RACE_ACT,{
   raceSetup:d=>openRaceSetup(d.k),

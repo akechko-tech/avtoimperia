@@ -39,6 +39,22 @@ let best=null;for(let i=60;i<T2.n-60;i+=5)for(const sd of [1,-1]){const nn=T2.N[
 {const {i,sd,h}=best,p=T2.pts[i],nn=T2.N[i];me.idx=i;me.x=p[0]+nn[0]*sd*(T2.W/2+3);me.z=p[2]+nn[1]*sd*(T2.W/2+3);me.yaw=Math.atan2(nn[0]*sd,nn[1]*sd);me.vx=14;me.vy=0;me.r=0;trackLocal(T2,me);T2.segCol=[];T2.bar=T2.bar.map(()=>null);
   let maxLat=0,g0=0;for(let f=0;f<60*6;f++){rKeys.gas=true;R.t+=1/60;R.time+=1/60;me.steer=0;me.delta=0;raceTick(1/60);maxLat=Math.max(maxLat,Math.abs(me.lat));g0=Math.max(g0,me.grade);}
   ok(maxLat<T2.W/2+45,'склон горы ('+h.toFixed(0)+' м над дорогой в 60 м): уклон до '+(g0*100).toFixed(0)+'%, отъехал от края дороги на '+(maxLat-T2.W/2).toFixed(1)+' м, скорость '+Math.round(me.vx*3.6)+' км/ч, кузов '+Math.round(100-me.dmg)+'%');}
-R3.on=false;finishRace(true);
+R3.on=false;finishRace(true);closeSheet();closePaper();G.pending=[];
+// 6) прокол у самого финиша: гонщик команды (ИИ) доезжает на спущенном колесе, а не меняет его
+{const rc6=RACES.find(r=>r.t==='circuit'&&r.y>=1906&&r.y<1914);{const a=aiCarMd(rc6.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}
+  startRace({rc:rc6,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0},{drv:DRIVERS.find(d=>d.from<=rc6.y&&d.to>=rc6.y).id,md,prep:2,tyre:'hard',gear:0}]});R.t=0.01;R.hz0=0;
+  const ai=R.cars.find(c=>c.you&&!c.player),T6=R.trk;ai.punctRate=0;R.cars.forEach(c=>{c.punctRate=0;});
+  // ставим его почти на финиш, на ходу, и прокалываем
+  ai.lap=T6.cfg.laps-1;ai.idx=T6.closed?Math.max(0,T6.n-Math.round(60/T6.step)):T6.n-Math.round(60/T6.step);const P6=T6.pts[ai.idx],TT6=T6.T[ai.idx];ai.x=P6[0];ai.z=P6[2];ai.yaw=Math.atan2(TT6[0],TT6[1]);ai.vx=25;trackLocal(T6,ai);
+  ai.prog=T6.raceLen-60;ai.punct=true;ai.flat=flatRun(ai,T6);let stopped=0;for(let f=0;f<60*20&&ai.fin===null;f++){R.t+=1/60;R.time+=1/60;raceTick(1/60);if(ai.vx<0.5)stopped++;}
+  ok(ai.flat&&ai.fin!==null&&stopped<30,'прокол за 60 м до финиша: ехать дальше — '+ai.flat+', финишировал: '+(ai.fin!==null)+', стоял кадров: '+stopped);
+  // а в начале гонки — меняет колесо
+  const far=flatRun({...ai,prog:T6.raceLen*0.3},T6);ok(!far,'прокол в начале гонки: менять колесо — '+(!far));
+  finishRace(true);closeSheet();closePaper();G.pending=[];}
+// 7) бензин: если бака почти хватает на гонку, механики заливают с запасом — до финиша хватает
+{const rc7=RACES.find(r=>r.t==='circuit'&&r.y>=1920);{const a=aiCarMd(rc7.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}
+  startRace({rc:rc7,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});const c7=R.me,T7=R.trk,p7=parts(c7.md),range=280/(p7.e.fuel||1),f0=range/Math.max(20,rc7.km);
+  const used=c7.fuelRate*T7.raceLen;ok(f0<0.9?used>100:used<=88,'бензин на '+rc7.km+' км: бака на '+Math.round(f0*100)+'% гонки, расход за гонку '+Math.round(used)+'% бака'+(f0<0.9?' — нужна заправка':' — до финиша хватит'));
+  finishRace(true);}
 console.log(bad?'ОШИБОК: '+bad:'всё в порядке');
 `);

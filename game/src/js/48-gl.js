@@ -45,22 +45,33 @@ const v3n=v=>{const l=Math.hypot(v[0],v[1],v[2])||1;return [v[0]/l,v[1]/l,v[2]/l
 const v3x=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const lin=c=>{const v=hex2rgb(c);return [Math.pow(v[0]/255,2.2),Math.pow(v[1]/255,2.2),Math.pow(v[2]/255,2.2)];};
 /* ---------- материалы: блеск, гладкость, металл, отражение неба (−1 листва, −3 вода) ---------- */
-const MID={matte:0,paint:1,metal:2,glass:3,skin:4,wall:5,roof:6,wood:7,cloth:8,leather:9,leaf:10,stone:11,bark:12,water:13,tyre:14,glow:15};
-const MPAR=new Float32Array([.03,6,0,0, .6,70,0,.28, 1,36,1,.5, 1,110,0,.85, .1,10,0,0, .03,6,0,0, .12,14,0,0, .1,14,0,0, .02,4,0,0, .3,24,0,.05, .04,8,0,-1, .05,8,0,0, .03,6,0,0, 1,160,0,-3, .14,12,0,0, 0,1,0,-4]);
+const MID={matte:0,paint:1,metal:2,glass:3,skin:4,wall:5,roof:6,wood:7,cloth:8,leather:9,leaf:10,stone:11,bark:12,water:13,tyre:14,glow:15,chrome:16,lens:17};
+const MPAR=new Float32Array([.03,6,0,0, .6,70,0,.28, 1,36,1,.5, 1,110,0,.85, .1,10,0,0, .03,6,0,0, .12,14,0,0, .1,14,0,0, .02,4,0,0, .3,24,0,.05, .04,8,0,-1, .05,8,0,0, .03,6,0,0, 1,160,0,-3, .14,12,0,0, 0,1,0,-4, 1.3,140,1,.72, 1,120,0,.6]);
 /* ---------- шейдеры ---------- */
 const G3LIB=`
 uniform vec3 u_sun,u_sunC,u_skyC,u_gndC,u_hzC,u_zeC,u_fogS,u_cam;uniform float u_fogD,u_exp,u_time,u_vig;uniform vec2 u_res;
-vec3 skyCol(vec3 d){float h=d.y;return h<0.?mix(u_hzC,u_gndC*.9,clamp(-h*3.,0.,1.)):mix(u_hzC,u_zeC,pow(clamp(h,0.,1.),.4));}
+vec3 skyCol(vec3 d){float h=d.y;
+#ifdef STUDIO
+  vec3 c=mix(u_gndC*.5,u_hzC,smoothstep(-.3,0.,h));c=mix(c,u_zeC*.3,smoothstep(0.,.5,h));
+  c+=vec3(1.7,1.68,1.64)*smoothstep(.48,.6,h)*(1.-smoothstep(.5,.9,abs(d.x)));
+  c+=vec3(1.05,1.04,1.)*smoothstep(.02,.06,h)*(1.-smoothstep(.12,.18,h));
+  return c;
+#else
+  return h<0.?mix(u_hzC,u_gndC*.9,clamp(-h*3.,0.,1.)):mix(u_hzC,u_zeC,pow(clamp(h,0.,1.),.4));
+#endif
+}
 vec3 tone(vec3 c){c*=u_exp;c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.);c=pow(c,vec3(1./2.2));
   vec2 q=gl_FragCoord.xy/u_res-.5;return c*(1.-u_vig*dot(q,q)*1.3);}
 vec3 fogIt(vec3 c,vec3 V,float d){float f=1.-exp(-d*d*u_fogD*u_fogD);vec3 fc=mix(u_hzC,u_fogS,pow(max(dot(-V,u_sun),0.),6.));return mix(c,fc,f);}
 `;
+// Тень для частиц и плоских фигур: одна выборка карты глубины
+const G3SHP=`float shadowP(vec4 sp){if(u_shI.y<.5)return 1.;vec3 p=sp.xyz/sp.w*.5+.5;if(p.z>=1.||p.x<.01||p.y<.01||p.x>.99||p.y>.99)return 1.;return texture(u_sh,vec3(p.xy,p.z-.0015));}`;
 const G3VS=`
 in vec3 a_pos;in vec4 a_nrm;in vec4 a_col;in vec4 a_ext;
 #ifdef UV
 in vec2 a_uv;out vec2 v_uv;
 #endif
-uniform mat4 u_vp,u_model,u_shm;uniform float u_time;uniform vec4 u_mat[16];
+uniform mat4 u_vp,u_model,u_shm;uniform float u_time;uniform vec4 u_mat[18];
 #ifdef CAR
 uniform vec4 u_wc[6];uniform vec4 u_wr;uniform vec4 u_body;
 #endif
@@ -102,6 +113,9 @@ uniform sampler2D u_cmap,u_det;uniform vec4 u_cm;uniform float u_rk;
 #endif
 uniform vec4 u_lamp;uniform vec3 u_hlP,u_hlD;uniform float u_hl;
 uniform highp sampler2DShadow u_sh;uniform vec3 u_shI;
+#ifdef CATCH
+uniform vec4 u_foot;
+#endif
 out vec4 o;
 ${G3LIB}
 float shadowF(vec4 sp){if(u_shI.y<.5)return 1.;vec3 p=sp.xyz/sp.w*.5+.5;if(p.z>=1.)return 1.;vec2 e=min(p.xy,1.-p.xy);float f=smoothstep(0.,.07,min(e.x,e.y));if(f<=0.)return 1.;
@@ -131,6 +145,9 @@ void main(){
   alpha=v_col.a;
 #endif
   float sh=shadowF(v_sp);
+#ifdef CATCH
+  {vec2 q=(v_wp.xz-u_foot.xy)/u_foot.zw;float e=length(q),ao=(1.-smoothstep(.3,1.2,e))*.42;o=vec4(0.,0.,0.,clamp((1.-sh)*.58*(1.-smoothstep(1.3,2.8,e))+ao,0.,.85));return;}
+#endif
   if(m.w<-2.5&&m.w>-3.5){float t=u_time;vec3 wn=normalize(vec3(sin(v_wp.x*.9+t*1.3)*.05+sin(v_wp.z*1.7-t*1.1)*.04,1.,cos(v_wp.z*.8+t)*.05+sin(v_wp.x*1.9+t*1.7)*.03));N=wn;}
   float nl=dot(N,u_sun),dif=max(nl,0.);
   if(m.w<-.5&&m.w>-1.5){dif=max((nl+.55)/1.55,0.)*.9;dif+=pow(max(dot(-V,u_sun),0.),3.)*.35;}
@@ -161,18 +178,22 @@ void main(){vec4 w=u_ivp*vec4(v_p,1.,1.);vec3 d=normalize(w.xyz/w.w-u_cam);
   c=mix(c,mix(u_hzC,u_fogS,pow(max(dot(d,u_sun),0.),6.)),exp(-max(d.y,0.)*40.)*.35);
   o=vec4(tone(c),1.);}`;
 // Зрители и люди у дороги: плоские фигуры, всегда повёрнутые к камере; два кадра — машут руками
-const G3VS_BILL=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;in vec4 i_c;uniform mat4 u_vp;uniform vec3 u_camR;uniform float u_time;out vec2 v_uv;out vec3 v_wp;flat out float v_l;
+const G3VS_BILL=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;in vec4 i_c;uniform mat4 u_vp,u_shm;uniform vec3 u_camR;uniform float u_time;out vec2 v_uv;out vec3 v_wp;flat out float v_l;out vec4 v_sp;
 void main(){vec3 wp=i_a.xyz+u_camR*a_pos.x*i_a.w+vec3(0.,a_pos.y*i_b.x,0.);wp+=u_camR*(a_pos.y*a_pos.y*i_c.w*.12*i_b.x*sin(u_time*1.9+i_a.x*.41+i_a.z*.29));float fr=i_c.y>0.?floor(mod(u_time*2.6+i_a.x*.37+i_a.z*.29,2.)):0.;
-  v_uv=vec2(i_b.y+(a_pos.x+.5)*i_b.w+fr*i_b.w,i_b.z+(1.-a_pos.y)*i_c.x);v_wp=wp;v_l=i_c.z;gl_Position=u_vp*vec4(wp,1.);}`;
-const G3FS_BILL=`in vec2 v_uv;in vec3 v_wp;flat in float v_l;uniform sampler2D u_tex;uniform float u_bl;out vec4 o;
+  v_uv=vec2(i_b.y+(a_pos.x+.5)*i_b.w+fr*i_b.w,i_b.z+(1.-a_pos.y)*i_c.x);v_wp=wp;v_l=i_c.z;v_sp=u_shm*vec4(wp+vec3(0.,.15,0.),1.);gl_Position=u_vp*vec4(wp,1.);}`;
+const G3FS_BILL=`in vec2 v_uv;in vec3 v_wp;flat in float v_l;in vec4 v_sp;uniform sampler2D u_tex;uniform float u_bl;uniform highp sampler2DShadow u_sh;uniform vec3 u_shI;out vec4 o;
 ${G3LIB}
-void main(){vec4 t=texture(u_tex,v_uv);if(t.a<.35)discard;vec3 c=pow(t.rgb/max(t.a,.001),vec3(2.2))*u_bl*(v_l>0.?v_l:1.);vec3 V=u_cam-v_wp;float d=length(V);o=vec4(tone(fogIt(c,V/d,d)),t.a);}`;
+${G3SHP}
+void main(){vec4 t=texture(u_tex,v_uv);if(t.a<.35)discard;vec3 c=pow(t.rgb/max(t.a,.001),vec3(2.2))*u_bl*(v_l>0.?v_l:1.)*mix(.6,1.,shadowP(v_sp));vec3 V=u_cam-v_wp;float d=length(V);o=vec4(tone(fogIt(c,V/d,d)),t.a);}`;
 // Пыль, дым, пар: мягкие клубы (заранее умноженная прозрачность)
-const G3VS_PART=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;uniform mat4 u_vp;uniform vec3 u_camR,u_camU;out vec2 v_q;out vec4 v_c;out vec3 v_wp;
-void main(){vec3 wp=i_a.xyz+(u_camR*a_pos.x+u_camU*a_pos.y)*i_a.w;v_q=a_pos.xy+.5;v_c=i_b;v_wp=wp;gl_Position=u_vp*vec4(wp,1.);}`;
-const G3FS_PART=`in vec2 v_q;in vec4 v_c;in vec3 v_wp;uniform sampler2D u_tex;out vec4 o;
+const G3VS_PART=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;uniform mat4 u_vp,u_shm;uniform vec3 u_camR,u_camU;out vec2 v_q;out vec4 v_c;out vec3 v_wp;out vec4 v_sp;
+void main(){vec3 wp=i_a.xyz+(u_camR*a_pos.x+u_camU*a_pos.y)*i_a.w;v_q=a_pos.xy+.5;v_c=i_b;v_wp=wp;v_sp=u_shm*vec4(wp,1.);gl_Position=u_vp*vec4(wp,1.);}`;
+// пыль освещена солнцем и лежит в тени деревьев и домов; у самой камеры клубы тают — не закрывают обзор завесой
+const G3FS_PART=`in vec2 v_q;in vec4 v_c;in vec3 v_wp;in vec4 v_sp;uniform sampler2D u_tex;uniform highp sampler2DShadow u_sh;uniform vec3 u_shI;out vec4 o;
 ${G3LIB}
-void main(){float a=texture(u_tex,v_q).a*v_c.a;if(a<.004)discard;vec3 V=u_cam-v_wp;float d=length(V);vec3 c=tone(fogIt(pow(v_c.rgb,vec3(2.2)),V/d,d));o=vec4(c*a,a);}`;
+${G3SHP}
+void main(){vec3 V=u_cam-v_wp;float d=length(V);float a=texture(u_tex,v_q).a*v_c.a*smoothstep(1.5,9.,d);if(a<.004)discard;
+  float sh=shadowP(v_sp);vec3 alb=pow(v_c.rgb,vec3(2.2));vec3 c=tone(fogIt(alb*(u_sunC*(.12+.5*sh)+u_skyC*.95),V/d,d));o=vec4(c*a,a);}`;
 /* ---------- инициализация ---------- */
 function g3Prog(vs,fs,defs){const gl=G3.gl,hd='#version 300 es\nprecision highp float;precision highp int;\n'+(defs||[]).map(d=>'#define '+d+'\n').join('');
   const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,hd+s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){const e=gl.getShaderInfoLog(o);throw new Error('shader: '+e+' ['+(defs||[]).join(',')+']');}return o;};
@@ -229,6 +250,10 @@ class MB{
     for(let i=0;i<k;i++){const q=P[rev?k-1-i:i],t=uv&&uv[rev?k-1-i:i];this.v(q[0],q[1],q[2],n[0],n[1],n[2],c,m,t&&t[0],t&&t[1]);}
     for(let i=1;i<k-1;i++)this.tri(i0,i0+i,i0+i+1);}
   quad(a,b,c,d,n,col,m){this.poly([a,b,c,d],n,col,m);}
+  // То же с нормалями в вершинах (гладкая поверхность): n — нормаль грани для обхода, N — нормали вершин
+  polyN(P,n,N,c,m){const k=P.length;if(k<3)return;const g=newell(P);let rev=g[0]*n[0]+g[1]*n[1]+g[2]*n[2]<0;const i0=this.n;
+    for(let i=0;i<k;i++){const j=rev?k-1-i:i,q=P[j],nn=N[j];this.v(q[0],q[1],q[2],nn[0],nn[1],nn[2],c,m);}
+    for(let i=1;i<k-1;i++)this.tri(i0,i0+i,i0+i+1);}
   // Линия-ленточка на грани (спица, рамка окна): лежит в плоскости грани с нормалью n
   strip(a,b,w,n,c,m,lift){const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],s=v3n(v3x(n,d)),h=w/2,L=lift||0.004,o=[n[0]*L,n[1]*L,n[2]*L];
     const P=[[a[0]+s[0]*h+o[0],a[1]+s[1]*h+o[1],a[2]+s[2]*h+o[2]],[b[0]+s[0]*h+o[0],b[1]+s[1]*h+o[1],b[2]+s[2]*h+o[2]],[b[0]-s[0]*h+o[0],b[1]-s[1]*h+o[1],b[2]-s[2]*h+o[2]],[a[0]-s[0]*h+o[0],a[1]-s[1]*h+o[1],a[2]-s[2]*h+o[2]]];

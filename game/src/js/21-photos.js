@@ -2,7 +2,18 @@
 const IMG={};let imgTried=false;
 // Фото гонщиков — статьи английской Википедии
 const DRIVER_WIKI={"levassor": "Émile Levassor", "de_dion": "Jules-Albert de Dion", "charron": "Fernand Charron", "jenatzy": "Camille Jenatzy", "winton": "Alexander Winton", "edge": "Selwyn Edge", "rolls": "Charles Rolls", "l_renault": "Louis Renault (industrialist)", "m_renault": "Marcel Renault", "vanderbilt": "William Kissam Vanderbilt II", "lancia": "Vincenzo Lancia", "nazzaro": "Felice Nazzaro", "h_ford": "Henry Ford", "oldfield": "Barney Oldfield", "wagner": "Louis Wagner (racing driver)", "szisz": "Ferenc Szisz", "l_chevrolet": "Louis Chevrolet", "goux": "Jules Goux", "lautenschlager": "Christian Lautenschlager", "borghese": "Scipione Borghese, 10th Prince of Sulmona", "depalma": "Ralph DePalma", "harroun": "Ray Harroun", "porsche": "Ferdinand Porsche", "rickenbacker": "Eddie Rickenbacker", "milton": "Tommy Milton", "ascari": "Antonio Ascari", "murphy": "Jimmy Murphy (racing driver)", "ferrari": "Enzo Ferrari", "campari": "Giuseppe Campari", "campbell": "Malcolm Campbell", "segrave": "Henry Segrave", "nuvolari": "Tazio Nuvolari", "caracciola": "Rudolf Caracciola", "chiron": "Louis Chiron", "varzi": "Achille Varzi", "birkin": "Tim Birkin", "barnato": "Woolf Barnato", "divo": "Albert Divo", "benoist": "Robert Benoist", "junek": "Eliška Junková", "helle_nice": "Hellé Nice", "g_boillot": "Georges Boillot", "resta": "Dario Resta", "shaw": "Wilbur Shaw", "meyer": "Louis Meyer (racing driver)", "de_knyff": "René de Knyff", "fournier": "Henri Fournier", "thery": "Léon Théry", "h_farman": "Henri Farman", "a_michelin": "André Michelin", "e_michelin": "Édouard Michelin", "jellinek": "Emil Jellinek", "parry_thomas": "J. G. Parry-Thomas", "stuck": "Hans Stuck", "materassi": "Emilio Materassi", "a_maserati": "Alfieri Maserati", "kl_guinness": "Kenelm Lee Guinness", "lockhart": "Frank Lockhart (racing driver)", "w_opel": "Wilhelm von Opel"};
-function drvPhoto(d){const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<img class="drv-ph" src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:'';}
+// Фото гонщика — кнопка: по нажатию открывается его история
+function drvPhoto(d){if(!d||!d.id)return '';const im=IMG[DRIVER_WIKI[d.id]],ini=d.n.replace(/[«»]/g,'').split(' ').filter(w=>w.length>1).map(w=>w[0]).slice(-2).join('');
+  return `<button class="drv-btn" data-act="drvBio" data-k="${d.id}" aria-label="История: ${esc(d.n)}">${im?`<img class="drv-ph" src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="drv-ph drv-ini">${esc(ini)}</span>`}<i>i</i></button>`;}
+function drvBioHTML(d,s){const im=IMG[DRIVER_WIKI[d.id]],bio=DRIVER_BIO[d.id],wins=drvWins(d),mine=(s.drivers||[]).includes(d.id);
+  return `<div class="row"><span class="label">История гонщика</span>${X}</div>
+    <div class="drv-bio">${im?`<figure class="photo drv-big"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
+    <h2 style="margin-top:8px">${esc(d.n)}</h2><p class="small muted">${esc(d.nat)} · гонки ${d.from}–${d.to} · мастерство ${Math.round(d.sk*100)}${mine?' · <span class="good">в вашей команде</span>':''}</p>
+    ${(d.mq||[]).length?`<p class="small" style="margin-top:6px">Марки: ${d.mq.map(esc).join(', ')}</p>`:''}
+    ${(bio||d.note||'').split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}
+    ${bio&&d.note&&!bio.includes(d.note.slice(0,20))?`<p class="small muted" style="margin-top:8px">${esc(d.note)}</p>`:''}
+    ${wins.length?`<div class="label" style="margin-top:14px">Победы в хронике игры</div><ul class="log" style="margin-top:4px">${wins.map(w=>`<li class="good"><time>${w.y}</time><p>${esc(w.name)}</p></li>`).join('')}</ul>`:''}</div>
+    <button class="btn primary block" style="margin-top:14px" data-act="close">Закрыть</button>`;}
 // Точные фото машин (файлы Wikimedia Commons). Главное фото статьи о марке бывает логотипом, заводом,
 // мостом или машиной совсем другой эпохи — тогда берём снимок нужной модели и года; null — фото не показываем
 const PHOTO_FILE={
@@ -21,12 +32,13 @@ const PHOTO_FILE={
   'Maxwell Motor Company':'Maxwell 1908-1910 A.JPG','Hudson Motor Car Company':'1910 Hudson (5755006199).jpg','Pierce-Arrow':'Pierce 1905 Great Arrow Suburban Ad (14783076205).jpg',
   'Itala 35/45 HP':"1907 Itala 35-45 HP (Pechino-Parigi) Museo Nazionale dell'Automobile Torino.jpg",'Lancia Alpha':'Vettura Lancia Alfa 12 HP Double Paheton, 1907-1909 - san dl SAN IMG-00001301.jpg',
   'Alfa Romeo 6C':'1929 Alfa Romeo 6C 1750 Gran Turismo (35269018545).jpg','Mille Miglia':'1928-04-01 Mille Miglia winner Alfa Romeo 6C 1500 Campari Ramponi.jpg',
-  'Ormond Beach, Florida':'Ormond Garage - Side View - ca. 1904.jpg','Mack Trucks':null,'Imperial Institute':null,'Commonwealth Education Trust':null
+  'Ormond Beach, Florida':'Ormond Garage - Side View - ca. 1904.jpg','Prinz-Heinrich-Fahrt 1910':'A. Menzendorf Ferdinand Porsche Prinz-Heinrich-Fahrt 1910.jpg',
+  'Austro-Daimler Prince Henry':'1910 Austro-Daimler Prince Henry.jpg','Mack Trucks':null,'Imperial Institute':null,'Commonwealth Education Trust':null
 };
 // Старый набор фото (собран до уточнений): чужие снимки убираем — лучше без фото, чем с ошибочным
 function fixPhotos(){const nf=f=>String(f||'').replace(/ /g,'_');for(const t in PHOTO_FILE){const f=PHOTO_FILE[t];if(IMG[t]&&(f===null||nf(IMG[t].file)!==nf(f)))delete IMG[t];}}
 function allTitles(){const t=new Set();Object.values(DRIVER_WIKI).forEach(x=>t.add(x));Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
-  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));(typeof SHOWS!=='undefined'?SHOWS:[]).forEach(x=>x.img&&t.add(x.img));t.add('Mercedes-Benz');return [...t];}
+  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));(typeof SHOWS!=='undefined'?SHOWS:[]).forEach(x=>x.img&&t.add(x.img));FLAVOR.forEach(f=>f[3]&&t.add(f[3]));t.add('Mercedes-Benz');return [...t];}
 async function loadImages(){
   if(imgTried)return;imgTried=true;
   try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===3&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}

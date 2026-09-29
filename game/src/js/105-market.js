@@ -36,7 +36,7 @@ const APPEAL={1895:-2.2,1900:-0.6,1905:0.6,1910:1.2,1913:1.4,1916:1.4,1920:1.2,1
 const TRUCK_POOL={1895:0.0025,1905:0.0028,1913:0.003,1917:0.0045,1920:0.005,1925:0.0055,1929:0.0065};
 const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=1.5,LAM=0.25,AQT=2.6,BT=4;
 // Качество машин конкурентов в классе — доля лучшей машины эпохи
-const QG={people:0.62,middle:0.8,lux:1,truck:0.75};
+const QG={people:0.62,middle:0.8,lux:1,sport:0.92,truck:0.75};
 /* ---------- доходы семей ---------- */
 function ncdf(z){const t=1/(1+0.2316419*Math.abs(z)),d=0.3989423*Math.exp(-z*z/2),p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;}
 function ninv(p){const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],
@@ -82,10 +82,13 @@ function econ(y,m,c){
 const SEASON=[0.72,0.76,0.95,1.15,1.25,1.2,1.1,1.02,0.97,0.95,0.8,0.92];
 function taxRate(y){return y<1914?0.08:y<=1919?0.25:0.15;}
 // История продаж — только для подбора силы конкурентов
-function segAnnual(c,g,s){const t=yf(s);if(g==='truck')return tabAt(MKT_TRUCK[c],t,true);const sh=tabAt(c==='us'?SEGSH.us:SEGSH.eu,t);return tabAt(MKT[c],t,true)*sh[{people:0,middle:1,lux:2}[g]];}
+// Спортивные машины — отдельный класс с 1910 года: их берут у среднего класса и люкса (в Европе спортивных больше)
+const SPORTSH={us:{1895:0,1909.9:0,1910:0.004,1912:0.01,1916:0.008,1920:0.01,1925:0.012,1929:0.012},eu:{1895:0,1909.9:0,1910:0.008,1913:0.015,1920:0.02,1925:0.03,1929:0.035}};
+function segAnnual(c,g,s){const t=yf(s);if(g==='truck')return tabAt(MKT_TRUCK[c],t,true);const sh=tabAt(c==='us'?SEGSH.us:SEGSH.eu,t),sp=tabAt(SPORTSH[c==='us'?'us':'eu'],t),M=tabAt(MKT[c],t,true);
+  if(g==='sport')return M*sp;const k={people:0,middle:1,lux:2}[g];return M*(k===1?Math.max(0,sh[1]-sp*0.6):k===2?Math.max(0,sh[2]-sp*0.4):sh[k]);}
 function prefP(g,c,s){return tabAt(PREF[g],yf(s))*PREF_C[c][g];}
 // Типичная цена машины такого класса и качества — ориентир для игрока
-const ALPHA_P={people:5,middle:3.5,lux:1.8,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,truck:2.6};
+const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,sport:3,truck:2.6};
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),ALPHA_Q[g]/ALPHA_P[g]);}
 /* ---------- конкуренты ---------- */
 function compVol(cp,s){const t=yf(s);if(t<cp.since||(cp.until&&t>=cp.until))return 0;return tabAt(cp.v,t,true);}
@@ -123,16 +126,16 @@ function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах
 function reachOf(s,c){const d=dealerCount(s,c);return d?Math.pow(Math.min(1,d/dealerNeed(c,s)),0.7):0;}
 function adRef(s,c){c=c||s.country;const y=(s.mkY&&s.mkY[c])||1000;return 100*cpi(s)*Math.pow(1+y/1000,0.75);}
-function adEffect(s,c){const a=(s.ad||0)*(c===s.country?1:0.35)*bn('adEff');return 0.55*(1-Math.exp(-a/adRef(s,c)));}
+function adEffect(s,c){const IL=impOf(s,c||s.country),a=(s.ad||0)*(IL?IL.ad||0.35:1)*bn('adEff');return 0.55*(1-Math.exp(-a/adRef(s,c)));}
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
 function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0);}
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-((impOf(s,c)||IMP_LV[1]).pen))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
-function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffAt(c,s))+(home?0:shipCost(s));}
+function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffAt(c,s)*impTar(s,c))+(home?0:shipCost(s)*impShip(s,c));}
 /* ---------- рынок страны ---------- */
 // Чем большую часть бюджета съедает машина, тем меньше хочется её брать; дороже бюджета — почти никто
 function budget(x){return x<=0.9?Math.log(1-Math.max(0,x)):Math.log(0.1)-10*(x-0.9);}
@@ -140,10 +143,10 @@ function budget(x){return x<=0.9?Math.log(1-Math.max(0,x)):Math.log(0.1)-10*(x-0
 function mkCountry(c,s,models,ov,kap,rhoOv){
   const t=yf(s),ec=econ(s.y,s.m,c),f=SEASON[s.m]*ec.f,H=households(c,s),inc=incomeOf(c,s),k=affordK(c,s),u0=appeal(c,s),hold=tabAt(HOLD,t);
   const pm=prefP('middle',c,s),rho=rhoOv!=null?rhoOv:models.length?reachOf(s,c):0,K=g=>kap?kap[g]:kappa(c,g,s)+rivalBoost(s,c,g);
-  const rivals=['people','middle','lux'].map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g)}));
+  const rivals=CARSEG.map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g)}));
   const pr=md=>offerPrice(md,c,s,ov&&ov.id===md.id?ov.price:undefined);
   const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>md.probe?{md,...md.probe}:{md,g:segOf(md),q:mq(md,s,c),P:pr(md),fair:refPrice(md,s,c),e:modelExtras(md,c,s)});
-  const BK={};['people','middle','lux'].forEach(g=>BK[g]=brandK(c,g,s));
+  const BK={};CARSEG.forEach(g=>BK[g]=brandK(c,g,s));
   const R={c,f,H,inc,k,rho,fleet:fleetOf(s,c),shop:0,buyers:0,segs:{},by:{}};
   SEGK.forEach(g=>R.segs[g]={inc:0,you:0,size:0,price:prefP(g,c,s)});models.forEach(m=>R.by[m.id]=0);
   let own=R.fleet;

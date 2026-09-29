@@ -5,7 +5,7 @@ const PART_HIST={e2:[1898,'Daimler (мотор «Феникс»)'],e3:[1903,'Ast
   b4:[1911,'закрытые кузова Cadillac и Hudson'],b5:[1923,'Dodge и Citroën (цельностальной кузов)'],w3:[1905,'Michelin и Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1912,'кордовые шины Palmer и Goodyear'],w6:[1923,'Firestone (баллонные шины)']};
 function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
   s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
-  if(!G.pending.length)pushEvent({title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`},true);
+  if(!G.pending.length)pushEvent({own:1,title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`},true);
   s.rep=clamp(s.rep+4,0,100);}
 function checkFirstParts(md){const s=G,p=parts(md);[p.e,p.c,p.b,p.w].forEach(x=>{const h=PART_HIST[x.id];if(h&&s.y<h[0])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}

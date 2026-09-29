@@ -6,7 +6,10 @@ const yf=s=>s.y+s.m/12;
 const dstr=s=>MONTHS[s.m]+' '+s.y;
 const unlocked=(arr,s)=>arr.filter(x=>x.y<=s.y);
 const isTruck=md=>!!byId(BODIES,md.b).truck;
-const segOf=md=>isTruck(md)?'truck':md.t==='t0'?'people':md.t==='t1'?'middle':'lux';
+const segOf=md=>isTruck(md)?'truck':md.t==='t0'?'people':md.t==='t1'?'middle':md.t==='t3'?'sport':'lux';
+// Спортивное оснащение — только на открытом кузове
+const OPEN_B=['b1','b2','b3','b10'];
+const bodyOpen=id=>OPEN_B.includes(id);
 function DIF(){return DIFFS[(G&&G.diff)||'normal'];}
 const upgL=id=>(G&&G.rd&&G.rd.upg[id])||0;
 function unlockedP(arr,s){return arr.filter(x=>x.y<=s.y||(s.rd&&s.rd.early.includes(x.id)));}
@@ -84,6 +87,8 @@ const CHAR_HINT={perf:'лошадиных сил на тонну',rel:'реже 
 const CHAR_W={people:{perf:0.12,rel:0.25,comf:0.07,ease:0.15,safe:0.05,econ:0.28,cap:0.08},
   middle:{perf:0.21,rel:0.18,comf:0.21,ease:0.1,safe:0.08,econ:0.08,cap:0.14},
   lux:{perf:0.25,rel:0.14,comf:0.36,ease:0.1,safe:0.1,econ:0,cap:0.05},
+  // спортивные: скорость и разгон, тормоза и сцепление, лёгкость управления; комфорт почти не важен
+  sport:{perf:0.42,rel:0.12,comf:0.04,ease:0.14,safe:0.22,econ:0,cap:0.06},
   truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0}};
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
@@ -93,7 +98,7 @@ function carChar(md,y){
   const mtbf=1/Math.max(0.01,1-st.rel),smooth=({1:0.75,2:0.85,4:1,6:1.15,8:1.25}[p.e.cyl]||1)*(p.e.sleeve?1.1:1);
   const fuel=p.e.fuel*Math.pow(mass/1000,0.6)/eff;
   return {perf:st.hp*eff/mass*1000,rel:Math.sqrt(mtbf),
-    comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6}[p.t.id]||1),
+    comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6,t3:0.95}[p.t.id]||1),
     ease:p.g.ease*(1+0.04*U(p.g.id))*(0.6+0.4*p.k.ease)*(p.w.solid?0.85:1)*Math.pow(1000/Math.max(500,mass),0.2),
     safe:st.brk*st.grip,econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
     cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel};
@@ -103,7 +108,7 @@ function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
 // С кем сравнивают: фургон — с фургонами, грузовик — с грузовиками, легковую — с машинами своего класса
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
-function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y);return {name:r[1],y:r[0],kind,md:{...r[2],t:kind==='lux'?'t2':kind==='middle'?'t1':'t0',ref:1,rl:Math.round(clamp(0.3*(y-r[0]),0,2.5)*10)/10}};}
+function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y);return {name:r[1],y:r[0],kind,md:{...r[2],t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round(clamp(0.3*(y-r[0]),0,2.5)*10)/10}};}
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
 function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={};let lnS=0;
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4);by[k]=r;if(W[k])lnS+=W[k]*Math.log(r);});
@@ -114,9 +119,9 @@ function mq(md,s,c){return Math.max(0.05,QG[segOf(md)]*classScore(md,s,c));}
 function modelR(md,s){return classScore(md,s);}
 // Грузоподъёмность: фургон стоит дешевле грузовика, трёхтонка — дороже
 function payK(md){const b=byId(BODIES,md.b);return b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1;}
-const KIND_TRIM={people:'t0',middle:'t1',lux:'t2',van:'t0',truck:'t0'};
-const KIND_NAME={people:'Народная',middle:'Средний класс',lux:'Люкс',van:'Фургон',truck:'Грузовик'};
-function kindBodyOk(kind,b){return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&b.id!=='b6':!b.truck;}
+const KIND_TRIM={people:'t0',middle:'t1',lux:'t2',sport:'t3',van:'t0',truck:'t0'};
+const KIND_NAME={people:'Народная',middle:'Средний класс',lux:'Люкс',sport:'Спортивная',van:'Фургон',truck:'Грузовик'};
+function kindBodyOk(kind,b){return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&b.id!=='b6':kind==='sport'?bodyOpen(b.id):!b.truck;}
 // Конструкция соперника класса — отправная точка для новой модели
 function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRIM[kind]};}
 // Подбор конструкции: по очереди меняем каждую деталь на лучшую для прибыли при подходящей цене
@@ -176,26 +181,86 @@ function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap
 function capUnitCost(s){return Math.round(1500*cpi(s)*(1+0.12*techLv(s,'tools')+0.08*techLv(s,'elec'))*bn('lineCost'));}
 function plantOverhead(s){return s.plantVal*0.009+30*cpi(s)*(1+s.workers/150);}
 /* ---------- sales network ---------- */
+// Дилер — независимый торговец в своём городе: покупает у завода машины со скидкой (16% цены), продаёт их,
+// держит мастерскую и запчасти. Завод платит за разъездных агентов, вывеску, демонстрационную машину и выучку механика.
+// Сколько городов нужно, чтобы вашу машину можно было купить по всей стране, — DEALER_NEED; в больших городах дилеров
+// несколько, поэтому всего сеть не больше ~1,3 от этого числа. Лишних дилеров не бывает: им негде торговать.
+// За границей всё начинается с импортёра, потом — своё отделение, потом — сборочный завод (так шёл Ford: агент
+// Персиваль Перри в Англии 1904, отделение Ford of Britain 1909, сборка в Траффорд-парке 1911).
 function dealerNeed(c,s){return tabAt(DEALER_NEED[c],yf(s));}
+// Сколько машин в месяц продаёт новый дилер; большой — с продавцами, гаражом и складом — втрое-вчетверо больше
 function dealerTP(s){return tabAt(DEALER_TP,yf(s));}
+function dealerTPmax(s){return dealerTP(s)*3.5;}
+// Представительство за границей: импортёр берёт свою долю и торгует только в больших городах;
+// своё отделение — вся страна и никаких посредников; сборочный завод собирает машины из комплектов: пошлина и доставка меньше, машины «свои»
+const IMP_LV=[{n:'Нет'},{n:'Импортёр',cut:0.08,cap:0.4,pen:0.3,ad:0.35},{n:'Своё отделение',cut:0,cap:1.3,pen:0.22,ad:0.5,cost:40000,up:600},
+  {n:'Сборочный завод',cut:0,cap:1.3,pen:0.14,ad:0.6,cost:200000,up:3000,tar:0.8,ship:0.5,y:1904}];
+function impLv(s,c){return c===s.country?9:(s.imp&&s.imp[c])||0;}
+function impOf(s,c){return c===s.country?null:IMP_LV[impLv(s,c)||1];}
+function impTar(s,c){const L=impOf(s,c);return L&&L.tar?L.tar:1;}
+function impShip(s,c){const L=impOf(s,c);return L&&L.ship?L.ship:1;}
+// Размер рынка страны (машин в год) — от него зависят цена отделения и завода
+function impK(s,c){return clamp(Math.sqrt(((s.mkY&&s.mkY[c])||3000)/3000),1,12);}
+function impCost(s,c,lv){if(lv===1)return Math.round(1000*cpi(s)/100)*100;return Math.round(IMP_LV[lv].cost*cpi(s)*impK(s,c)/1000)*1000;}
+function impUpkeep(s,c){const L=impOf(s,c);return L&&L.up?L.up*cpi(s)*impK(s,c):0;}
+// Сколько дилеров может быть в стране: дома — все города; у импортёра — только большие города
+function dealerMax(s,c){const n=dealerNeed(c,s);if(c===s.country)return Math.ceil(n*1.3);const lv=impLv(s,c);return lv?Math.max(3,Math.ceil(n*IMP_LV[lv].cap)):0;}
+function dealerRoom(s,c){return Math.max(0,dealerMax(s,c)-dealerCount(s,c));}
 // Новый дилер: демонстрационная машина со скидкой, вывеска, запас запчастей, выучка механика
 function dealerCost(s){return Math.round(560*cpi(s)*(1+T(s)*0.02));}
-// Сколько машин в месяц продаёт дилер в стране: дома — на 30% больше (свой город, свой склад)
-function dealerTPc(s,c){return dealerTP(s)*(c===s.country?1.3:1);}
-// Сколько дилеров ещё нужно, чтобы обслужить всех покупателей прошлого месяца
-function dealersShort(s,c){const mk=s.last&&s.last.mk[c],lost=mk&&mk.lostDlr||0;return lost>0.5?Math.ceil(lost/dealerTPc(s,c)):0;}
-// Открыть дилеров: деньги, журнал и сразу поправка прогноза — завод сделает машины и для новых дилеров
-function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc));if(n<1)return 0;
-  const was=dealerCount(s,c),tp=dealerTPc(s,c),k=was>0?(was+n)/was:2;s.cash-=n*dc;s.dealers[c]=was+n;
+// Сколько машин в месяц продаёт один дилер: новичок — dealerTP; большой салон с продавцами, гаражом и запасом машин — больше
+// (множитель s.dcap[c], растёт, когда вы вкладываетесь в салоны дилеров); дома — на 30% больше (завод рядом)
+const DLR_MULT_MAX=3.5;
+function dealerMult(s,c){return Math.max(1,(s.dcap&&s.dcap[c])||1);}
+function dealerTPc(s,c){return dealerTP(s)*dealerMult(s,c)*(c===s.country?1.3:1);}
+function dealerCapOf(s,c){return dealerCount(s,c)*dealerTPc(s,c);}
+// Сколько дилеров ещё можно открыть, чтобы обслужить покупателей, ушедших ни с чем (не больше, чем осталось городов)
+function dealersShort(s,c){const mk=s.last&&s.last.mk[c],tpc=dealerTPc(s,c),lost=(mk&&mk.lostDlr||0)-((s.dAdd&&s.dAdd[c])||0)*tpc;return lost>0.5?Math.min(dealerRoom(s,c),Math.ceil(lost/tpc)):0;}
+// Салоны побольше: +25% продаж на каждого дилера (продавцы, гараж, запас машин в кредит) — когда городов уже не осталось
+function dealerGrowCost(s,c){return Math.round(dealerCount(s,c)*0.25*dealerCost(s)/10)*10;}
+function dealerGrowOk(s,c){return dealerCount(s,c)>0&&dealerMult(s,c)<DLR_MULT_MAX;}
+function dealerGrow(s,c){if(!dealerGrowOk(s,c))return false;const cost=dealerGrowCost(s,c);if(s.cash<cost)return false;s.cash-=cost;s.dcap=s.dcap||{};
+  const was=dealerCapOf(s,c);s.dcap[c]=+Math.min(DLR_MULT_MAX,dealerMult(s,c)+0.25).toFixed(3);s.dAdd=s.dAdd||{};s.dAdd[c]=(s.dAdd[c]||0)+(dealerCapOf(s,c)-was)/dealerTPc(s,c);
+  (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*1.2);});
+  const where=c!==s.country?' ('+COUNTRIES[c].name+')':'';addLog(`Дилеры${where} расширили салоны: сеть продаёт до ${fmtN(dealerCapOf(s,c))} машин в месяц (было ${fmtN(was)}).`,'good');
+  pendingToasts.push(`🏪 Салоны дилеров${where}: до ${fmtN(dealerCapOf(s,c))} машин в месяц`);return true;}
+// Сколько раз расширить салоны, чтобы обслужить всех ушедших покупателей
+function dealerGrowSteps(s,c){const mk=s.last&&s.last.mk[c],d=dealerCount(s,c),lost=(mk&&mk.lostDlr||0)-((s.dAdd&&s.dAdd[c])||0)*dealerTPc(s,c);if(lost<=0.5||!d)return 0;
+  return Math.min(Math.ceil((DLR_MULT_MAX-dealerMult(s,c))/0.25-1e-9),Math.ceil(lost/(d*0.25*dealerTP(s)*(c===s.country?1.3:1))));}
+// Открыть дилеров в новых городах: деньги, журнал и сразу поправка прогноза — завод сделает машины и для новых дилеров
+function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc),dealerRoom(s,c));if(n<1)return 0;
+  const was=dealerCount(s,c),r0=reachOf(s,c),k=was>0?(was+n)/was:2;s.cash-=n*dc;s.dealers[c]=was+n;s.dAdd=s.dAdd||{};s.dAdd[c]=(s.dAdd[c]||0)+n;const r1=reachOf(s,c);
   (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*k);});
-  if(!was&&c!==s.country)addLog(`Открыты первые дилеры: ${COUNTRIES[c].name}.`,'good');
-  else addLog(`Открыто ${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}${c!==s.country?' ('+COUNTRIES[c].name+')':''}: смогут продать ещё до ${fmtN(Math.round(n*tp))} машин в месяц.`,'good');
-  pendingToasts.push(`🏪 +${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}: ещё до ${fmtN(Math.round(n*tp))} машин в месяц`);
+  const where=c!==s.country?' ('+COUNTRIES[c].name+')':'';
+  addLog(`Открыто ${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')} в новых городах${where}: ваши машины теперь видят ${Math.round(r1*100)}% покупателей${r1>r0+0.005?` (было ${Math.round(r0*100)}%)`:''}.`,'good');
+  pendingToasts.push(`🏪 +${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}${where}: покупателей видят ${Math.round(r1*100)}%`);
   return n;}
-function dealerUpkeep(s){return 22*cpi(s);}
+// Представительство за границей: договор с импортёром → своё отделение → сборочный завод
+function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=3)return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
+  if(s.cash<cost||(L.y&&s.y<L.y))return false;s.cash-=cost;s.imp=s.imp||{};s.imp[c]=lv+1;const C=COUNTRIES[c];
+  if(lv+1===1){s.dealers[c]=Math.max(dealerCount(s,c),2);addLog(`${C.name}: подписан договор с импортёром. Он берёт ${Math.round(IMP_LV[1].cut*100)}% цены и продаёт ваши машины через агентов в больших городах.`,'good');pendingToasts.push('🤝 Импортёр: '+C.name);}
+  else if(lv+1===2){s.plantVal+=cost*0.3;addLog(`${C.name}: открыто своё отделение «${s.company}». Посредник больше не берёт свою долю, дилеров можно открыть по всей стране.`,'good');pendingToasts.push('🏢 Отделение: '+C.name);}
+  else{s.plantVal+=cost*0.6;addLog(`${C.name}: сборочный завод собирает машины из комплектов. Пошлина за комплекты ниже, доставка дешевле, а покупатели считают машины своими.`,'good');pendingToasts.push('🏭 Сборочный завод: '+C.name);}
+  return true;}
+// Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
+// сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=3||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+  const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
+  const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
+  const gain=lv===1?sold*P*IMP_LV[1].cut*1.3:sold*(P*tariffAt(c,s)*(1-IMP_LV[3].tar)*0.6+shipCost(s)*(1-IMP_LV[3].ship));
+  return gain>up?cost/(gain-up):Infinity;}
+function dealerUpkeep(s,c){return 22*cpi(s)*(c?dealerMult(s,c):1);}
 function dealerCount(s,c){return (s.dealers&&s.dealers[c])||0;}
 function tariffAt(c,s){return tabAt(TARIFF[c],yf(s));}
 function shipCost(s){return 60*cpi(s);}
+// Сеть живёт сама: когда покупателей больше, чем успевают обслужить, дилеры понемногу нанимают продавцов сами (до +25%);
+// дома к марке, которая хорошо продаётся, новые города просятся сами (за границей сеть растит импортёр или ваше отделение)
+function dealersMonth(s,r){s.dcap=s.dcap||{};s.dsm=s.dsm||{};s.dAdd={};
+  for(const c in s.dealers){const d=dealerCount(s,c);if(!d)continue;const mk=r.mk[c]||{},sold=mk.sold||0,lost=mk.lostDlr||0,k=dealerMult(s,c);
+    if(lost>0.5&&k<1.25)s.dcap[c]=+Math.min(1.25,k*1.01).toFixed(3);
+    const sm=s.dsm[c]=s.dsm[c]===undefined?sold:s.dsm[c]*0.75+sold*0.25,spd=sm/d,v=tabAt({1895:0.25,1905:0.4,1913:0.8,1920:1.2,1929:1.5},yf(s)),room=dealerRoom(s,c);
+    if(c===s.country&&mi(s)>=12&&room>0&&spd>3*v&&(s.models||[]).some(m=>m.status==='prod')){const n=Math.max(1,Math.round(room*0.01));s.dealers[c]=d+n;
+      if(mi(s)-(s.dlrSaid||-99)>=12){s.dlrSaid=mi(s);addLog(`Торговцы сами просятся в дилеры: ${fmtN(n)} ${plural(n,'новый город','новых города','новых городов')}${c!==s.country?' ('+COUNTRIES[c].name+')':''}. Марка, которая хорошо продаётся, нужна всем.`,'good');}}}}
 /* ---------- finance ---------- */
 function stockValue(s){return s.models.reduce((a,m)=>a+m.stock*matCost(m,s),0);}
 function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+Math.max(0,avg*12*7);}
@@ -214,7 +279,7 @@ function newGame(pioneer,country,company,diff,firstName){
   const comps={};for(const k in COMPS)comps[k]=COMPS[k].map((a,i)=>({name:a.n,color:COMP_COLORS[i%COMP_COLORS.length],last:0,yr:0,prev:0}));
   const mname=(firstName||'').trim()||'Тип 1';
   G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
-     cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},ad:30,rep:30,wh:12,whBuild:[],
+     cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},imp:{},dcap:{},ad:30,rep:30,wh:12,whBuild:[],
      military:false,strikeNext:false,supplyNext:1,nextId:2,comps,pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
@@ -227,6 +292,6 @@ function newGame(pioneer,country,company,diff,firstName){
   const P=PIONEERS[pioneer];
   addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${C.city}. В мастерской ${G.workers} рабочих, первая модель — «${mname}», дилеров — ${G.dealers[country]}.`,'hist');
   if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
-  if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит открыть агентов.','hist');
-  if(country==='it')addLog('Богатых семей в Италии немного, и свой рынок крошечный. Покупателей в разы больше во Франции и Германии — откройте там дилеров.','hist');
+  if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит найти импортёра.','hist');
+  if(country==='it')addLog('Богатых семей в Италии немного, и свой рынок крошечный. Покупателей в разы больше во Франции и Германии — найдите там импортёров.','hist');
 }

@@ -89,8 +89,8 @@ function mSteer(M,x,y,z,r,S){const deco=[],seg=14,tilt=0.75,P=a=>[x+Math.cos(a)*
   for(let k=0;k<seg;k++)deco.push({a:P(k/seg*6.283),b:P((k+1)/seg*6.283),w:0.028,c:S.y<1912?'#5a3a22':'#1f1f22'});
   [0,Math.PI/2,Math.PI,Math.PI*1.5].forEach(a=>deco.push({a:[x,y,z],b:P(a),w:0.014,c:'#8a8f96'}));deco.push({a:[x,y,z],b:[x,y-0.45,z+0.38],w:0.03,c:'#2a2a2e'});
   M.F.push({p:[[x,y,z]],n:[0,0,-1],col:[0,0,0],mat:MATS.matte,two:true,deco,point:true});}
-// ---------- модели по облику ----------
-function carModel(S){
+// ---------- модели по облику (прежние, простые; новые — в 46b-cars.js) ----------
+function carModelV1(S){
   MLOD=S.lod==='lo'?0:1;const M=new Mesh(),st=S.style,y=S.y,col=S.color||'#23427a',brass=y<1916?'#c9a24a':'#c8ccd2',dark='#1c1d21',leather=y<1920?'#5a3a24':'#6e2a22';
   const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y);
   let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':S.wheel==='disc'?'disc':'wood';

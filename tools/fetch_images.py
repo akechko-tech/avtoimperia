@@ -98,9 +98,26 @@ MUSIC_Q = [
      ['Tiger Rag Original Dixieland Jass Band',1918,'jazz'],['Darktown Strutters Ball',1917,'jazz'],['Swanee Jolson',1920,'song'],['Crazy Blues Mamie Smith',1920,'jazz'],
      ['Whispering Paul Whiteman',1920,'jazz'],['Royal Garden Blues',1920,'jazz'],['Aint We Got Fun',1921,'song'],['Yes We Have No Bananas',1923,'song'],
      ['Dipper Mouth Blues',1923,'jazz'],['Wolverine Blues',1923,'jazz'],['Rhapsody in Blue 1924',1924,'jazz'],['Charleston 1925',1925,'jazz'],
-     ['Sweet Georgia Brown 1925',1925,'jazz'],['Bye Bye Blackbird Gene Austin',1926,'song'],['Black Bottom Stomp',1926,'jazz'],['West End Blues',1928,'jazz']]
+     ['Sweet Georgia Brown 1925',1925,'jazz'],['Bye Bye Blackbird Gene Austin',1926,'song'],['Black Bottom Stomp',1926,'jazz'],['West End Blues',1928,'jazz'],
+     ['Liberty Bell march Sousa',1895,'march'],['El Capitan march Sousa',1896,'march'],['The Thunderer Sousa',1895,'march'],['Under the Double Eagle march',1897,'march'],
+     ['Radetzky March',1900,'march'],['Alte Kameraden',1899,'march'],['National Emblem march',1906,'march'],['Anchors Aweigh',1907,'march'],['Blaze Away march',1902,'march'],
+     ['Sambre et Meuse',1905,'march'],['Marche Lorraine',1908,'march'],['Pomp and Circumstance Elgar',1902,'march'],['The Great Little Army Alford',1916,'march'],
+     ['Original Rags Joplin',1899,'rag'],['Swipesy cakewalk',1900,'rag'],['At a Georgia Camp Meeting',1898,'rag'],['The Cascades Joplin',1904,'rag'],['The Chrysanthemum Joplin',1904,'rag'],
+     ['Gladiolus Rag',1907,'rag'],['Wall Street Rag',1909,'rag'],['Twelfth Street Rag',1914,'rag'],['Magnetic Rag Joplin',1914,'rag'],['Nola Arndt',1916,'rag'],['Kitten on the Keys',1921,'rag'],
+     ['Blue Danube waltz',1900,'waltz'],['Emperor Waltz Strauss',1905,'waltz'],['Gold and Silver waltz Lehar',1902,'waltz'],['Estudiantina waltz',1900,'waltz'],['Wiener Blut',1905,'waltz'],
+     ['Valse triste Sibelius',1904,'waltz'],['Bethena waltz Joplin',1905,'waltz'],['Destiny waltz Baynes',1912,'waltz'],['Missouri Waltz',1916,'waltz'],
+     ['Hello Ma Baby',1899,'song'],['Bill Bailey Wont You Please Come Home',1902,'song'],['Give My Regards to Broadway',1904,'song'],['Yankee Doodle Boy Billy Murray',1904,'song'],
+     ['Meet Me in St Louis 1904',1904,'song'],['Wait Till the Sun Shines Nellie',1905,'song'],['Glow Worm Lincke',1907,'song'],['Beside the Seaside',1909,'song'],['Row Row Row 1912',1912,'song'],
+     ['Ballin the Jack',1913,'song'],['Poor Butterfly',1917,'song'],['K-K-K-Katy',1918,'song'],['Dardanella',1919,'song'],['Avalon Al Jolson',1920,'song'],['April Showers Jolson',1921,'song'],
+     ['Toot Toot Tootsie',1922,'song'],['Tea for Two 1925',1925,'song'],['Aint She Sweet 1927',1927,'song'],
+     ['La Madelon',1914,'song'],['Frou-frou chanson',1898,'song'],['La Petite Tonkinoise',1906,'song'],['Sous les ponts de Paris',1913,'song'],['Mon homme Mistinguett',1920,'song'],['Valencia Mistinguett',1926,'song'],
+     ['O Sole Mio Caruso',1905,'song'],['Funiculi Funicula',1900,'song'],['Santa Lucia Caruso',1910,'song'],['Vesti la giubba Caruso',1907,'song'],['Torna a Surriento',1905,'song'],
+     ['Burlington Bertie',1900,'song'],['Hold Your Hand Out Naughty Boy',1913,'song'],['Berliner Luft Lincke',1904,'song'],
+     ['Memphis Blues',1912,'jazz'],['St Louis Blues 1914',1915,'jazz'],['Clarinet Marmalade',1918,'jazz'],['At the Jazz Band Ball',1918,'jazz'],['Fidgety Feet',1918,'jazz'],
+     ['Canal Street Blues King Oliver',1923,'jazz'],['King Porter Stomp Morton',1923,'jazz'],['Tin Roof Blues',1923,'jazz'],['Jelly Roll Blues',1924,'jazz'],['Heebie Jeebies Armstrong',1926,'jazz'],
+     ['Muskrat Ramble',1926,'jazz'],['Potato Head Blues',1927,'jazz'],['Singin the Blues Bix',1927,'jazz'],['Weather Bird',1928,'jazz']]
 
-BAKE_LIMIT = 40e6   # bytes of music baked into the APK; the rest stream from Wikimedia
+BAKE_LIMIT = 50e6   # bytes of music baked into the APK; the rest stream from Wikimedia
 
 def keywords(q):
     ws = re.sub(r'[^a-z0-9]+', ' ', q.lower()).split()
@@ -115,7 +132,7 @@ def music():
             sr = json.loads(get(api + '&list=search&srnamespace=6&srlimit=4&srsearch=' + urllib.parse.quote(q + ' filetype:audio')))
             kw = keywords(q)
             titles = [x['title'] for x in sr.get('query', {}).get('search', [])]
-            titles = [t for t in titles if not re.search(r'midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder', t, re.I) and (not kw or any(w in t.lower() for w in kw))][:2]
+            titles = [t for t in titles if not re.search(r'midi|\.mid\b|ringtone|dectalk|slowed|remix|synth|vocoder', t, re.I) and (not kw or sum(w in t.lower() for w in kw) >= (2 if len(kw) >= 3 else 1))][:2]
             if not titles: print('music: nothing for', q); continue
             vi = json.loads(get(api + '&prop=videoinfo&viprop=url|size|mime|derivatives|extmetadata&titles=' + urllib.parse.quote('|'.join(titles))))
             pages = list(vi.get('query', {}).get('pages', {}).values())

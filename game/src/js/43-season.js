@@ -48,7 +48,7 @@ function champRecord(s,rc,order){
     const k=champKey(id,rc.y),ch=s.season[k]=s.season[k]||{id,y:rc.y,rows:{},races:[],done:false};
     if(ch.races.includes(rc.key))return;ch.races.push(rc.key);
     const seen=new Set();let pos=0;
-    order.forEach(o=>{pos++;if(!o.name||o.name==='Частная машина'||seen.has(o.name))return;seen.add(o.name);
+    order.forEach(o=>{pos++;if(!o.name||o.priv||o.name==='Частная машина'||seen.has(o.name))return;seen.add(o.name);
       (ch.rows[o.name]=ch.rows[o.name]||{r:{}}).r[rc.key]=champValue(id,rc,pos,!!o.dnf);});
   });
 }
@@ -74,7 +74,7 @@ function champFinish(s,id,y){
   if(win&&win.you){
     s.titles.push({y,id,name:C.title(y),w:C.w});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+(C.off?8:5)*bn('raceRep'),0,100);
     const second=tb.find(r=>!r.you&&r.el);
-    pushEvent({kicker:'Спорт',title:id==='aiacr'?`«${s.company}» — чемпион мира!`:id==='aaa'?`«${s.company}» — чемпион Америки!`:`«${s.company}» — марка сезона!`,
+    pushEvent({own:1,kicker:'Спорт',title:id==='aiacr'?`«${s.company}» — чемпион мира!`:id==='aaa'?`«${s.company}» — чемпион Америки!`:`«${s.company}» — марка сезона!`,
       deck:`${C.name(y)} ${y}: ${fmtPts(id,win.pts)} ${id==='aiacr'?'штрафных очков':'очков'}`,
       text:`${C.name(y)} ${y} года завершён, и первое место в зачёте марок принадлежит «${s.company}». ${second?`Ближайший соперник — ${second.n} (${fmtPts(id,second.pts)}).`:''}\n${id==='aiacr'?'Титул чемпиона мира — главная награда для автомобильного завода. Покупатели по всему миру знают теперь вашу марку.':'Газеты называют вашу марку лучшей в сезоне. Покупатели охотнее выбирают машины победителя.'}\nСпрос на все модели компании вырос на год вперёд.`},true);
     addLog(`🏆 ${C.title(y)}!`,'good');pendingToasts.push('🏆 '+C.title(y));
@@ -89,10 +89,29 @@ function simRace(s,rc){
   if(raceWarBlocked(rc,s)){s.cres[rc.key]={x:1};return;}
   const teams=fieldTeams(rc,s,0),hw=histWinnerTeam(rc,teams),dnf=dnfTarget(rc.y,rc.t)*0.9;
   const rows=teams.map(t=>({name:t.n,t,perf:Math.pow(t.str,1.6)*teamBoost(t,rc)*(t===hw?1.12:1)*(0.92+Math.random()*0.16),dnf:t!==hw&&Math.random()<dnf*clamp(1.4-0.4*t.str,0.6,1.3)?1:0}));
+  // частники: любители на купленных машинах (и на ваших тоже)
+  privField(rc,s,new Set()).forEach(e=>rows.push({name:e.name,priv:1,pmy:e.pmy||0,drv:e.drvName,label:e.label,tc:e.tc,prep:e.prep,perf:privPerf(e,rc)*(0.92+Math.random()*0.16),dnf:Math.random()<dnf*1.1?1:0}));
   rows.sort((a,b)=>(a.dnf-b.dnf)||(b.perf-a.perf));
   const w=rows[0];
-  s.cres[rc.key]={w:w?w.name:'',d:w?simDriver(w.t,rc,w.t===hw):'',me:0,c:w?w.t.c:''};
+  s.cres[rc.key]={w:w?w.name:'',d:w?(w.priv?w.drv:simDriver(w.t,rc,w.t===hw)):'',me:0,c:w?(w.priv?w.tc:w.t.c):'',pv:w&&w.priv?1:0};
   champRecord(s,rc,rows);
+  const mine=rows.findIndex(r=>r.pmy&&!r.dnf);if(mine>=0&&mine<3)privPublicity(s,rc,rows[mine],mine+1,false);
+}
+// Частник на вашей машине в призах: бесплатная реклама — спрос на модель и немного славы марке
+function privPublicity(s,rc,row,pos,live){
+  const md=s.models.find(m=>m.id===row.pmy);if(!md)return;
+  if(pos<=2)md.raceBoost=Math.max(md.raceBoost||0,mi(s)+(pos===1?(rc.major?4:2):1));
+  s.rep=clamp(s.rep+(pos===1?(rc.major?2:1):pos===2?0.5:0.25)*bn('raceRep'),0,100);
+  if(pos===1){const P=privPaper(s,rc,row,md,live);if(live)showPaper(P,true);else pushEvent(P,true);return;}
+  addLog(`Частник ${row.drv||''} на вашей «${md.name}» — ${pos}-е место в гонке «${rc.name}». Покупатели заметили!`,'good');
+  pendingToasts.push(`🏁 Частник на «${md.name}» — ${pos}-е место`);
+}
+function privPaper(s,rc,row,md,live){
+  const drv=row.drv||'Частный владелец';
+  return {kicker:'Спорт',own:1,title:`Любитель на «${md.name}» выигрывает ${rc.name}!`,deck:`${drv} купил машину «${s.company}» у дилера — и обогнал заводские команды`,
+    text:`Гонку «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) выиграл не заводской экипаж, а частник: ${drv} на собственной «${md.name}». Завод к этой победе руки не приложил — тем больше о ней говорят: серийная машина «${s.company}» обходит гоночные!\nТакая реклама дороже любой афиши. Спрос на «${md.name}» вырастет на ближайшие месяцы.`,
+    carId:md.id,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${md.name}» частного владельца — победитель гонки «${rc.name}»`,
+    hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:rc.name,act:'paperClose',choices:live?[['К итогам гонки','close']]:undefined};
 }
 function seasonTick(s){
   if(!s.cres)s.cres={};if(!s.season)s.season={};
@@ -119,8 +138,8 @@ function raceResults(rc,res,mode,info){
   s.raceLog.push({y:rc.y,key:rc.key,name:rc.name,model:bestRow?bestRow.label:'',place:best,drv:bestRow?bestRow.drv:'',major,team:team.map(r=>r.dnf?0:r.pos)});
   if(s.raceLog.length>300)s.raceLog.shift();
   const w=res[0];
-  s.cres[rc.key]={w:w.you?s.company:w.name,d:w.drv||'',me:best||-1,c:w.you?s.country:(w.tc||'')};
-  champRecord(s,rc,res.map(r=>({name:r.you?s.company:r.name,dnf:!!r.dnf})));
+  s.cres[rc.key]={w:w.you?s.company:w.name,d:w.drv||'',me:best||-1,c:w.you?s.country:(w.tc||''),pv:w.priv?1:0};
+  champRecord(s,rc,res.map(r=>({name:r.you?s.company:r.name,dnf:!!r.dnf,priv:r.priv})));
   // Кубок Гордона Беннетта: трофей уходит стране победителя
   let cupTitle='';
   if(GBC_IDS.includes(rc.id)){if(best===1){cupTitle=`Кубок Гордона Беннетта ${rc.y}`;s.titles.push({y:rc.y,id:'gbc',name:cupTitle,w:0.5});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+5*rk,0,100);}
@@ -131,6 +150,7 @@ function raceResults(rc,res,mode,info){
   lastRace={rc,res,k,won,best,mode,cup:cupTitle};
   openRaceResult();
   if(best===1)showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);
+  else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
 function racePaper(rc,res,row,k,cup){
@@ -141,12 +161,15 @@ function racePaper(rc,res,row,k,cup){
   return {kicker:cup?'Кубок Гордона Беннетта':'Спорт',title:cup?`Кубок Гордона Беннетта — у «${s.company}»!`:`«${s.company}» выигрывает ${rc.name}!`,
     deck:`${drv} на «${row.label}» — первым на финише${row.fin!=null?` за ${fmtRaceTime(row.fin*k)}`:''}`,
     text:`Гонка «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) завершилась победой машины «${s.company}». ${second?`Второе место — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\n${hist}\nПобеда в гонке — лучшая реклама: покупатели ${rc.major?'по всей стране':'в округе'} только о ней и говорят. Спрос на «${row.label}» вырастет на ближайшие месяцы.`,
-    img:rc.img,imgCap:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};
+    carId:row.md?row.md.id:null,own:1,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${row.label}» компании «${s.company}» — победитель гонки «${rc.name}»${row.drv?`, за рулём ${row.player?drv:row.drv}`:''}`,
+    hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:real?`В ${rc.y} году в настоящей истории: ${real}`:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};
 }
 function openRaceResult(){
   const L=lastRace;if(!L)return;const s=G,{rc,res,k,won}=L,lead=res[0];
-  const rows=res.filter((r,i)=>i<10||r.you).map(r=>{const t=r.dnf?`<span class="bad">сход${r.dnf&&r.dnf!=='сошёл'?': '+esc(r.dnf):''}</span>`:r.pos===1?fmtRaceTime(r.fin*k):'+'+fmtRaceTime((r.fin-lead.fin)*k);
-    return `<tr class="${r.you?'you':''}"><td class="n">${r.dnf?'—':r.pos}</td><td>${esc(r.drv||'—')}<small>${esc(r.you?r.label:r.name)}</small></td><td class="n">${t}${r.prize?`<small class="good">${money(r.prize)}</small>`:''}</td></tr>`;}).join('');
+  const rows=res.filter((r,i)=>i<10||r.you||r.pmy).map(r=>{const t=r.dnf?`<span class="bad">сход${r.dnf&&r.dnf!=='сошёл'?': '+esc(r.dnf):''}</span>`:r.pos===1?fmtRaceTime(r.fin*k):'+'+fmtRaceTime((r.fin-lead.fin)*k);
+    const car=r.you?r.label:r.pmy?`«${r.label}» · частник на вашей машине`:r.priv?`${r.label} · частник`:r.name;
+    return `<tr class="${r.you?'you':r.pmy?'mine':''}"><td class="n">${r.dnf?'—':r.pos}</td><td>${esc(r.drv||'—')}<small>${esc(car)}</small></td><td class="n">${t}${r.prize?`<small class="good">${money(r.prize)}</small>`:''}</td></tr>`;}).join('');
+  const nPv=res.filter(r=>r.priv).length,pr=privRule(rc);
   const champs=raceChamps(rc).map(id=>{const tb=champTable(s,id,rc.y),me=tb.findIndex(r=>r.you),C=CHAMPS[id];
     return `<div class="label" style="margin-top:14px">${C.name(rc.y)} ${rc.y}</div><table class="pl" style="margin-top:4px">${tb.slice(0,4).concat(me>=4?[tb[me]]:[]).map(r=>`<tr class="${r.you?'you':''}"><td class="n">${tb.indexOf(r)+1}</td><td>${esc(r.n)}</td><td class="n">${r.el?'':'['}${fmtPts(id,r.pts)}${r.el?'':']'}</td></tr>`).join('')}</table>`;}).join('');
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">Итоги: ${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
@@ -154,6 +177,7 @@ function openRaceResult(){
     ${L.cup?`<p class="good" style="margin-top:8px"><b>🏆 ${esc(L.cup)}</b></p>`:''}
     <table class="pl res" style="margin-top:10px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время</th></tr>${rows}</table>
     <p style="margin-top:10px">${L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` Призовые: <b class="good">${money(won)}</b>.`:''}</p>
+    ${nPv?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${champs}
     <button class="btn primary block" style="margin-top:16px" data-act="close">Дальше</button>`);
 }

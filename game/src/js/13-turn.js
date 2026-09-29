@@ -48,13 +48,13 @@ function step(){
   // продажи: дилеры, склад, очередь
   const ship=shipCost(s),tp=dealerTP(s),dealerCap={},want_c={};
   act.forEach((md,i)=>{for(const c in dem[i])want_c[c]=(want_c[c]||0)+dem[i][c];});
-  for(const c in want_c)dealerCap[c]=dealerCount(s,c)*tp*(c===s.country?1.3:1);
+  for(const c in want_c)dealerCap[c]=dealerCapOf(s,c);
   const lostC={};
   act.forEach((md,i)=>{
     const d=dem[i],sumD=tot[i],bl=md.backlog||0;let req={};let reqT=0;
     let lostD=0;for(const c in d){let q=d[c]+(sumD>0?bl*d[c]/sumD:0);const fc=want_c[c]>dealerCap[c]?dealerCap[c]/want_c[c]:1;r.lostDlr+=q*(1-fc);lostD+=q*(1-fc);lostC[c]=(lostC[c]||0)+q*(1-fc);q*=fc;req[c]=q;reqT+=q;}
     const avail=md.stock,f=reqT>avail?avail/Math.max(1e-9,reqT):1;let sold=0;
-    md.soldBy={};for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const net=md.price*(1-DEALER_MARGIN)-(c===s.country?0:ship);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
+    md.soldBy={};for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const IL=impOf(s,c),net=md.price*(1-DEALER_MARGIN-(IL&&IL.cut||0))-(c===s.country?0:ship*impShip(s,c));mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
     sold=Math.min(sold,md.stock);md.stock-=sold;const unmet=Math.max(0,reqT-sold);md.backlog=Math.min(unmet*0.5,md.fc*0.8);r.lostCap+=unmet-md.backlog;
     // почему купили меньше, чем хотели: не хватило машин (часть ждёт в очереди) или дилеры не успели
     md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;r.sold+=sold;r.demand+=sumD;
@@ -72,7 +72,7 @@ function step(){
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);}
     return false;});}
   r.wage=s.workers*wageNow(s);r.ovh=plantOverhead(s)*(s.shifts>1?1.1:1);
-  r.dlr=Object.values(s.dealers).reduce((a,b)=>a+b,0)*dealerUpkeep(s);
+  r.dlr=Object.keys(s.dealers).reduce((a,c)=>a+dealerCount(s,c)*dealerUpkeep(s,c),0)+Object.keys(COUNTRIES).reduce((a,c)=>a+impUpkeep(s,c),0);
   r.sto=s.models.reduce((a,md)=>a+md.stock*matCost(md,s),0)*0.015;r.int=s.loan*0.005;
   r.profit=r.rev+r.mil+r.ord+r.dump-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine;
   r.tax=r.profit>0?r.profit*taxRate(s.y):0;r.profit-=r.tax;
@@ -90,7 +90,7 @@ function step(){
   act.forEach(md=>{const g=segOf(md);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(m&&m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   // продажи марок за год — для таблицы конкурентов
   for(const c in s.comps)s.comps[c].forEach(o=>{o.yr=(o.yr||0)+(o.last||0);});s.homeY=(s.homeY||0)+r.homeSold;
-  rivalsReact(s,r);
+  rivalsReact(s,r);dealersMonth(s,r);
   // машины на дорогах: новые прибавились, старые ушли на свалку
   if(!s.fleet)s.fleet={};if(!s.mkY)s.mkY={};const life=tabAt(CAR_LIFE,yf(s));
   for(const c in COUNTRIES){const m=r.mk[c],cars=m.size-m.segs.truck.size,f0=fleetOf(s,c);s.fleet[c]=Math.max(0,f0+cars-f0/(12*life));s.mkY[c]=m.size*12/SEASON[s.m];}
@@ -143,6 +143,6 @@ function rivalsReact(s,r){const D=DIF(),T0=D.share||0.2,rate=D.rvRate||1,mx=D.rv
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;const rv=s.rv[c]=s.rv[c]||{};
     SEGK.forEach(g=>{const z=mk.segs[g];if(!z||z.size<3){rv[g]=Math.max(0,(rv[g]||0)-0.004);return;}const sh=z.you/z.size,cur=rv[g]||0;
       let nv=sh>T0?cur+0.015*rate*Math.min(3,(sh-T0)/T0):cur-0.006;nv=clamp(nv,0,mx);rv[g]=nv;
-      if(c===s.country&&nv>0.25&&Math.floor(nv/0.4)>Math.floor(cur/0.4))rivalNews(s,c,g,nv);});}}
+      if(c===s.country&&nv>0.25&&Math.floor(nv/0.4)>Math.floor(cur/0.4))rivalNews(s,c,g,nv,cur);});}}
 function strikeThreat(){pushEvent({title:'Рабочие грозят забастовкой',text:'Профсоюз требует прибавки. Без неё в следующем месяце выпуск упадёт вдвое.',choices:[['Поднять зарплату','raise'],['Переждать','wait']]},false);}
 function rank(v){return v<200000?'Мастерская':v<2000000?'Фабрика':v<20000000?'Концерн':'Автоимперия';}

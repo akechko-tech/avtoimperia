@@ -157,8 +157,8 @@ const ICO=(()=>{const t=(1+Math.sqrt(5))/2;let V=[[-1,t,0],[1,t,0],[-1,-t,0],[1,
   const L0={V:V.slice(),F:F.slice()};const mid={},F2=[];const m=(a,b)=>{const k=a<b?a+'_'+b:b+'_'+a;if(mid[k]!==undefined)return mid[k];V.push(v3n([(V[a][0]+V[b][0])/2,(V[a][1]+V[b][1])/2,(V[a][2]+V[b][2])/2]));return mid[k]=V.length-1;};
   F.forEach(([a,b,c])=>{const ab=m(a,b),bc=m(b,c),ca=m(c,a);F2.push([a,ab,ca],[b,bc,ab],[c,ca,bc],[ab,bc,ca]);});return [L0,{V,F:F2}];})();
 // Шар листвы: неровная сфера, нормали от центра (мягкий объём); низ темнее; sway — сила качания на ветру
-function pBlob(mb,cx,cy,cz,rx,ry,rz,col,r,lod,mat,sway){const I=ICO[lod?1:0],c0=hex2rgb(col),M=mat===undefined?MID.leaf:mat,i0=mb.n,e=mb.e,ez=e[2];
-  I.V.forEach(n=>{const j=1+(r()-0.5)*0.3,sh=0.8+0.32*(n[1]*0.5+0.5)+(r()-0.5)*0.14;e[2]=sway?Math.round(255*sway*clamp(0.3+0.7*(n[1]*0.5+0.5),0,1)):ez;
+function pBlob(mb,cx,cy,cz,rx,ry,rz,col,r,lod,mat,sway){const I=ICO[lod?1:0],c0=hex2rgb(col),M=mat===undefined?MID.leaf:mat,i0=mb.n,e=mb.e,ez=e[2],jj=lod?0.16:0.3,cn=lod?0.07:0.14;
+  I.V.forEach(n=>{const j=1+(r()-0.5)*jj,sh=0.8+0.32*(n[1]*0.5+0.5)+(r()-0.5)*cn;e[2]=sway?Math.round(255*sway*clamp(0.3+0.7*(n[1]*0.5+0.5),0,1)):ez;
     mb.v(cx+n[0]*rx*j,cy+n[1]*ry*j,cz+n[2]*rz*j,n[0]/rx,n[1]/ry,n[2]/rz,cMul(c0,sh),M);});
   e[2]=ez;I.F.forEach(f=>mb.tri(i0+f[0],i0+f[1],i0+f[2]));}
 // Ствол: сужающаяся призма; можно с изгибом (x1,z1 — смещение верха)
@@ -181,16 +181,16 @@ function pBox(mb,cx,y0,cz,hx,h,hz,col,mat,a){a=a||0;const c=Math.cos(a),s=Math.s
 function pTree(t,v){return proto('tree|'+t+'|'+v,(mb,r)=>{
   const G=['#4d7836','#557d38','#4a7234'],sw=0.5;
   if(t==='plane'){pTrunk(mb,0,0,0,0.2,7.5,0.1,0.42,0.26,'#a8a28a',7);for(let i=0;i<3;i++)pTrunk(mb,0.2,6.5,0.1,(i-1)*2.2,9.6,(r()-0.5)*2,0.22,0.1,'#9a947c',5);
-    for(let i=0;i<9+v;i++)pBlob(mb,(r()-0.5)*6,9.2+r()*3.4,(r()-0.5)*6,1.9+r()*0.8,1.5+r()*0.5,1.9+r()*0.8,G[(i+v)%3],r,0,undefined,sw);}
+    for(let i=0;i<5+(v>>1);i++)pBlob(mb,(r()-0.5)*5.4,9.4+r()*3,(r()-0.5)*5.4,2.4+r()*0.8,1.8+r()*0.5,2.4+r()*0.8,G[(i+v)%3],r,1,undefined,sw);}
   else if(t==='poplar'){pTrunk(mb,0,0,0,0,4,0,0.28,0.2,'#5d4a36',6);for(let i=0;i<9;i++){const y=3.5+i*1.7,w=1.35*Math.sin(Math.PI*Math.min(1,0.12+i/9*0.95))+0.25;pBlob(mb,(r()-0.5)*0.4,y,(r()-0.5)*0.4,w,1.6,w,['#3e6a31','#44713a','#3a6330'][(i+v)%3],r,0,undefined,sw*0.8);}}
   else if(t==='cypress'){pTrunk(mb,0,0,0,0,1.4,0,0.18,0.14,'#4a3a28',5);const H=12+v*0.7;for(let i=0;i<7;i++){const f=i/6,w=1.05*Math.pow(Math.sin(Math.PI*(0.1+f*0.88)),0.8)*(1-f*0.35)+0.1;pBlob(mb,0,1.4+f*(H-2.6),0,w,H/7*0.85,w,'#2e4c2f',r,0,undefined,sw*0.6);}}
-  else if(t==='olive'){pTrunk(mb,0,0,0,-0.4,2.2,0.1,0.36,0.2,'#6a5c4a',6);pTrunk(mb,0.1,0.5,0,0.8,2.5,-0.2,0.22,0.14,'#6a5c4a',5);for(let i=0;i<7;i++)pBlob(mb,(r()-0.5)*4,2.8+r()*1.4,(r()-0.5)*4,1.3+r()*0.5,0.8+r()*0.3,1.3+r()*0.5,['#7b8a62','#86946a','#71805a'][i%3],r,0,undefined,sw);}
-  else if(t==='pine'){pTrunk(mb,0,0,0,0.5,9.6,0.2,0.3,0.16,'#7a5a3e',6);for(let i=0;i<7;i++)pBlob(mb,0.4+(r()-0.5)*5,10.4+r()*1.2,(r()-0.5)*5,1.6+r()*0.6,0.7+r()*0.2,1.6+r()*0.6,['#3b5f33','#436b3a'][i%2],r,0,undefined,sw);}
+  else if(t==='olive'){pTrunk(mb,0,0,0,-0.4,2.2,0.1,0.36,0.2,'#6a5c4a',6);pTrunk(mb,0.1,0.5,0,0.8,2.5,-0.2,0.22,0.14,'#6a5c4a',5);for(let i=0;i<5;i++)pBlob(mb,(r()-0.5)*3.6,2.9+r()*1.3,(r()-0.5)*3.6,1.6+r()*0.5,0.95+r()*0.3,1.6+r()*0.5,['#7b8a62','#86946a','#71805a'][i%3],r,1,undefined,sw);}
+  else if(t==='pine'){pTrunk(mb,0,0,0,0.5,9.6,0.2,0.3,0.16,'#7a5a3e',6);for(let i=0;i<5;i++)pBlob(mb,0.4+(r()-0.5)*4.4,10.4+r()*1.1,(r()-0.5)*4.4,1.9+r()*0.6,0.8+r()*0.2,1.9+r()*0.6,['#3b5f33','#436b3a'][i%2],r,1,undefined,sw);}
   else if(t==='fir'){pTrunk(mb,0,0,0,0,2,0,0.22,0.16,'#4a3626',5);const snow=v===1;for(let i=0;i<5;i++){const y0=1.1+i*2.1,w=2.4-i*0.4,h=3.2-i*0.2;pCone(mb,0,y0,0,w,h,snow&&i%2?'#dfe6ec':['#2f5d3c','#2a5436'][i%2],9,0,undefined,0.25);}}
   else if(t==='oak'){pTrunk(mb,0,0,0,0.1,4.2,0,0.55,0.38,'#5f4a36',7);for(let i=0;i<3;i++)pTrunk(mb,0.1,3.8,0,(i-1)*2.4,6.4,(r()-0.5)*1.6,0.3,0.14,'#5a4632',5);
-    for(let i=0;i<10+v;i++)pBlob(mb,(r()-0.5)*6.5,6.2+r()*3,(r()-0.5)*6.5,2+r()*0.7,1.6+r()*0.5,2+r()*0.7,['#48692f','#4e7034','#43642c'][(i+v)%3],r,0,undefined,sw);}
+    for(let i=0;i<6+(v>>1);i++)pBlob(mb,(r()-0.5)*5.8,6.4+r()*2.8,(r()-0.5)*5.8,2.5+r()*0.7,2+r()*0.5,2.5+r()*0.7,['#48692f','#4e7034','#43642c'][(i+v)%3],r,1,undefined,sw);}
   else if(t==='elm'){pTrunk(mb,0,0,0,0,3.6,0,0.42,0.3,'#5d4a35',6);[-1,-0.35,0.35,1].forEach(k=>pTrunk(mb,0,3.4,0,k*2.4,8,(r()-0.5)*1.4,0.22,0.1,'#58452f',5));
-    for(let i=0;i<10;i++)pBlob(mb,(r()-0.5)*6,8.2+r()*2.4,(r()-0.5)*6,1.8+r()*0.6,1.4+r()*0.4,1.8+r()*0.6,['#557a37','#5b8039'][i%2],r,0,undefined,sw);}
+    for(let i=0;i<6;i++)pBlob(mb,(r()-0.5)*5.4,8.4+r()*2.2,(r()-0.5)*5.4,2.3+r()*0.6,1.75+r()*0.4,2.3+r()*0.6,['#557a37','#5b8039'][i%2],r,1,undefined,sw);}
   else if(t==='birch'){for(let s=0;s<6;s++)pTrunk(mb,s*0.04,s*1.6,0,(s+1)*0.04,(s+1)*1.6,0,0.2-s*0.018,0.2-(s+1)*0.018,s%2?'#e9e8e0':'#d8d6cc',6);
     for(let i=0;i<8;i++)pBlob(mb,0.2+(r()-0.5)*2.8,8+r()*3,(r()-0.5)*2.8,1.2+r()*0.4,1.5+r()*0.5,1.2+r()*0.4,['#79a24b','#83a852'][i%2],r,0,undefined,sw*1.2);}
   else if(t==='palm'){let x=0,y=0;for(let s=0;s<8;s++){const x2=0.9*Math.sin((s+1)/8*1.6)*(s+1)/8,y2=(s+1)*1.42;pTrunk(mb,x,y,0,x2,y2,0,0.26-s*0.012,0.25-(s+1)*0.012,s%2?'#8a6c4c':'#9c7c58',6);x=x2;y=y2;}
@@ -228,7 +228,8 @@ function pProp(t,v){return proto('prop|'+t+'|'+v,(mb,r)=>{
 // Здания и трибуны — модели из 47-scenery.js, с цоколем, чтобы на склоне не висели в воздухе
 function mbFromMesh(mb,M,o){o=o||{};const lift=o.lift||0.005,step=o.step===undefined?lift*0.35:o.step,gm=o.glass;const e=mb.e;
   for(const f of M.F){const mat=MID[f.mat&&f.mat.k]||0,c=f.col,tg=(gm&&f.mat===MATS.glass)?gm:mb;tg.e[0]=f.w||0;tg.e[1]=f.l||0;
-    if(!f.point){tg.poly(f.p,f.n,c,mat);if(f.two)tg.poly(f.p,[-f.n[0],-f.n[1],-f.n[2]],c,mat);}
+    if(!f.point){if(f.vn){tg.polyN(f.p,f.n,f.vn,c,mat);if(f.two)tg.polyN(f.p,[-f.n[0],-f.n[1],-f.n[2]],f.vn.map(q=>[-q[0],-q[1],-q[2]]),c,mat);}
+      else{tg.poly(f.p,f.n,c,mat);if(f.two)tg.poly(f.p,[-f.n[0],-f.n[1],-f.n[2]],c,mat);}}
     if(f.deco){let k=0;const n=f.point?null:f.n;for(const d of f.deco){k++;const L=lift+k*step,dc=hex2rgb(d.c||'#000'),dm=d.gl?MID.glass:(mat===MID.glass?MID.paint:mat);
       if(d.poly){if(!n)continue;tg.poly(d.poly.map(q=>[q[0]+n[0]*L,q[1]+n[1]*L,q[2]+n[2]*L]),n,dc,dm);}
       else if(d.text){if(o.texts&&n)o.texts.push({d,n,L});}
@@ -577,7 +578,7 @@ function r3dShadowPass(E,vis){const gl=G3.gl;R3.shOn=!!G3.shFB&&E.sun[1]>0.15&&E
   let Pp=G3.P.dLit;gl.useProgram(Pp.p);gl.uniformMatrix4fv(Pp.u.u_vp,false,M);gl.uniformMatrix4fv(Pp.u.u_model,false,m4());gl.uniform1f(Pp.u.u_time,R3.time);gl.uniform4fv(Pp.u.u_mat,MPAR);
   vis.forEach(([,ch])=>{if(ch.lit&&inFrustum(fr,ch.lit.c,ch.lit.r))g3Draw(ch.lit);});
   Pp=G3.P.dCar;gl.useProgram(Pp.p);gl.uniformMatrix4fv(Pp.u.u_vp,false,M);gl.uniform4fv(Pp.u.u_mat,MPAR);
-  R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(Math.hypot(c.x-cc[0],c.z-cc[2])>S*1.5)return;const m=r3dCarMesh(c.spec3,c===R.follow||st.near);r3dCarUniforms(Pp,c,st,m);g3Draw(m.op);});
+  R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(Math.hypot(c.x-cc[0],c.z-cc[2])>S*1.5)return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);r3dCarUniforms(Pp,c,st,m);g3Draw(m.op);});
   gl.disable(gl.POLYGON_OFFSET_FILL);gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
 /* ---------- машины: положение на дороге, крен, клевок, колёса, пыль ---------- */
 function r3dCarUpdate(c,dt,E){
@@ -599,8 +600,9 @@ function r3dCarUpdate(c,dt,E){
   // пыль из-под колёс (сухое покрытие), дым заноса, пар перегрева
   const me=c===R.follow;if(d>160)return;const bx=c.x-fw[0]*1.2,bz=c.z-fw[2]*1.2;
   const dusty=(tr.dust||0)*(c.off?1.3:1)+(c.off&&tr!==TERR.asphalt?0.5:0);
-  if(dusty>0&&v>4){st.dust+=dt*v*dusty*(me?0.9:1.2);const dc=hex2rgb(c.off?TERR.dirt.road:tr.road),col=cMix(dc,[235,225,205],0.35);
-    while(st.dust>1.2){st.dust-=1.2;const sd=Math.random()<0.5?-1:1;r3dPart(bx+rt[0]*sd*0.6,yc+0.25,bz+rt[2]*sd*0.6,-fw[0]*v*0.12+(Math.random()-0.5)*1.5,0.5+Math.random()*0.9,-fw[2]*v*0.12+(Math.random()-0.5)*1.5,0.8,2.6+v*0.08,1.6+Math.random()*1.2,col,0.32*Math.min(1,dusty));}}
+  // своя пыль летит прямо в камеру: её меньше и она прозрачнее, иначе за машиной встаёт сплошная завеса
+  if(dusty>0&&v>4){st.dust+=dt*v*dusty*(me?0.35:1.1);const dc=hex2rgb(c.off?TERR.dirt.road:tr.road),col=cMix(dc,[235,225,205],0.35);
+    while(st.dust>1.2){st.dust-=1.2;const sd=Math.random()<0.5?-1:1,sp=me?1.6:0.6;r3dPart(bx-fw[0]*(me?0.5:0)+rt[0]*sd*sp,yc+0.2,bz-fw[2]*(me?0.5:0)+rt[2]*sd*sp,-fw[0]*v*0.1+rt[0]*sd*(me?1.8:0)+(Math.random()-0.5)*1.5,0.4+Math.random()*0.7,-fw[2]*v*0.1+rt[2]*sd*(me?1.8:0)+(Math.random()-0.5)*1.5,0.8,1.8+v*0.05,1.4+Math.random()*1.0,col,(me?0.16:0.26)*Math.min(1,dusty));}}
   if((c.slipR>0.15||c.spinw>0.4||(c.brk>0.8&&v>8))&&v>4){if(Math.random()<0.6)r3dPart(bx,yc+0.2,bz,(Math.random()-0.5)*2,0.6,(Math.random()-0.5)*2,0.6,2.2,1.1,[236,236,236],tr.dust?0.18:0.3);
     // следы шин
     [-1,1].forEach((sd,k)=>{const p=[c.x-fw[0]*1.0+rt[0]*sd*0.62,yc,c.z-fw[2]*1.0+rt[2]*sd*0.62],pr=st.mk[k];if(pr&&Math.hypot(p[0]-pr[0],p[2]-pr[2])>0.35){r3dSkidAdd(pr,p,0.16,tr.dust?[90,72,50]:[30,30,32],tr.dust?0.28:0.42);st.mk[k]=p;}else if(!pr)st.mk[k]=p;});}
@@ -610,7 +612,7 @@ function r3dCarUpdate(c,dt,E){
 }
 function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
 function r3dDrawCars(E,bw,bh,glass){const gl=G3.gl,P=r3dUse('car',E,bw,bh);
-  R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<60);
+  R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);
     if(glass&&!m.gl)return;r3dCarUniforms(P,c,st,m);gl.uniform4f(P.u.u_lamp,c.brk>0.3&&c.vx>1?1:0,E.hl,0,0);g3Draw(glass?m.gl:m.op);});}
 function r3dPartsUpdate(dt){const P=R3.parts;for(let i=P.length-1;i>=0;i--){const p=P[i];p.life-=dt;if(p.life<=0){P.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vx*=1-dt*0.8;p.vz*=1-dt*0.8;p.vy*=1-dt*0.5;}}
 function r3dDrawParts(E,bw,bh){const P=R3.parts;if(!P.length)return;const gl=G3.gl,I=R3.partI,e=R3.eye,L=P.map(p=>[(p.x-e[0])**2+(p.z-e[2])**2,p]).sort((a,b)=>b[0]-a[0]);

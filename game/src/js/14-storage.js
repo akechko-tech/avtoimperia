@@ -22,6 +22,13 @@ function migrate(x){
   // 0.11: выставки
   x.shows=x.shows||{};x.showFx=x.showFx||{};x.medals=x.medals||[];
   for(const c in x.comps||{})x.comps[c].forEach(o=>{if(o.yr===undefined){o.yr=0;o.prev=0;}});
+  // 0.13: новые марки (Stutz, Mercer, Vauxhall, MG, Amilcar) — дописываем в таблицы конкурентов
+  x.comps=x.comps||{};for(const k in COMPS){const L=x.comps[k]=x.comps[k]||[];while(L.length<COMPS[k].length){const i=L.length;L.push({name:COMPS[k][i].n,color:COMP_COLORS[i%COMP_COLORS.length],last:0,yr:0,prev:0});}}
+  // 0.13: дилеров не больше, чем городов; за границей — импортёр или своё отделение. Сколько машин сеть уже умела продавать — сохраняем
+  if(!x.imp){x.imp={};x.dcap={};const t=x.y+x.m/12;
+    for(const c in x.dealers){const d=x.dealers[c]||0;if(!d)continue;
+      if(c!==x.country)x.imp[c]=d>tabAt(DEALER_NEED[c],t)*0.4?2:1;
+      const mx=dealerMax(x,c);if(d>mx){x.dcap[c]=+(d/mx).toFixed(3);x.dealers[c]=mx;}}}
   return x;
 }
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}

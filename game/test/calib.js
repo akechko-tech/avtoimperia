@@ -5,20 +5,20 @@ const write=process.argv.includes('--write');
 require('./harness.js')(`
 const out={k:{},fleet:{}},warn=[],diag=[];
 for(const c of Object.keys(COUNTRIES)){
-  out.k[c]={people:{},middle:{},lux:{},truck:{}};out.fleet[c]={};
+  out.k[c]={};SEGK.forEach(g=>out.k[c][g]={});out.fleet[c]={};
   const s={y:1895,m:0,country:'none',pioneer:'none',models:[],dealers:{},fleet:{[c]:FLEET0[c]},pw:{},rep:50,diff:'normal'};G=s;
-  const kap={people:-4,middle:-4,lux:-4,truck:-4};
+  const kap={};SEGK.forEach(g=>kap[g]=-4);
   for(let y=1895;y<=1930;y++){
     out.fleet[c][y]=Math.round(s.fleet[c]);if(y===1930)break;
-    const ya={people:0,middle:0,lux:0,truck:0},yn={people:0,middle:0,lux:0,truck:0},ymax={people:-99,middle:-99,lux:-99,truck:-99};let conv=0,shop=0,sold=0,probe='';
+    const ya={},yn={},ymax={};SEGK.forEach(g=>{ya[g]=0;yn[g]=0;ymax[g]=-99;});let conv=0,shop=0,sold=0,probe='';
     for(let m=0;m<12;m++){s.y=y;s.m=m;
       const tgt={};SEGK.forEach(g=>tgt[g]=segAnnual(c,g,s)/12*SEASON[m]);
       let R;for(let it=0;it<80;it++){R=mkCountry(c,s,[],null,kap);let err=0;
         for(const g of SEGK){const d=R.segs[g].inc,T=tgt[g];if(T<=1e-6){kap[g]=-14;continue;}const dl=Math.log(T/Math.max(1e-12,d));kap[g]=clamp(kap[g]+dl*0.9,-14,9);if(kap[g]<9)err=Math.max(err,Math.abs(dl));}
         if(err<2e-4)break;}
       SEGK.forEach(g=>{if(kap[g]<9){ya[g]+=kap[g];yn[g]++;}else warn.push(c+' '+y+' '+g+' не хватает покупателей');ymax[g]=Math.max(ymax[g],kap[g]);});
-      const cars=tgt.people+tgt.middle+tgt.lux;sold+=cars;shop+=R.shop-R.segs.truck.pool;
-      if(m===5){const pr=[];for(const g of ['people','middle','lux']){const P=prefP(g,c,s);const pb={id:'pb',probe:{g,q:QG[g]*1.05,P,fair:P,e:1.3*(30-50)/50}};const R2=mkCountry(c,s,[pb],null,kap,1);pr.push(g[0]+Math.round(R2.by.pb));}const PT=prefP('truck',c,s);const R3=mkCountry(c,s,[{id:'tb',probe:{g:'truck',q:QG.truck*1.05,P:PT,e:-0.52}}],null,kap,1);pr.push('t'+Math.round(R3.by.tb));probe=pr.join(' ');}
+      const cars=CARSEG.reduce((a,g)=>a+tgt[g],0);sold+=cars;shop+=R.shop-R.segs.truck.pool;
+      if(m===5){const pr=[];for(const g of CARSEG){if(tgt[g]<=1e-6)continue;const P=prefP(g,c,s);const pb={id:'pb',probe:{g,q:QG[g]*1.05,P,fair:P,e:1.3*(30-50)/50}};const R2=mkCountry(c,s,[pb],null,kap,1);pr.push(g[0]+Math.round(R2.by.pb));}const PT=prefP('truck',c,s);const R3=mkCountry(c,s,[{id:'tb',probe:{g:'truck',q:QG.truck*1.05,P:PT,e:-0.52}}],null,kap,1);pr.push('t'+Math.round(R3.by.tb));probe=pr.join(' ');}
       s.fleet[c]+=cars-s.fleet[c]/(12*tabAt(CAR_LIFE,yf(s)));}
     SEGK.forEach(g=>{ya[g]=yn[g]?ya[g]/yn[g]:ymax[g];out.k[c][g][y+0.5]=+ya[g].toFixed(3);});
     diag.push(c+' '+y+' sold '+Math.round(sold)+' shoppers '+Math.round(shop)+' conv '+(sold/shop*100).toFixed(2)+'% k '+SEGK.map(g=>g[0]+ya[g].toFixed(2)).join(' ')+' fleet '+Math.round(s.fleet[c])+' | новичок/мес '+probe);

@@ -103,8 +103,11 @@ function plantHTML(s){try{const key=JSON.stringify(plantState(s));let v=PLANT3D.
     else if(!v)v=PLANT_LAST&&PLANT_BUSY?PLANT_LAST:plantImage(s);
     if(!v)return factorySVG(s);PLANT_LAST=PLANT_LAST||v;if(PLANT3D.get(key))PLANT_LAST=v;
     const L=s.last,busy=L?clamp(L.made/Math.max(1,capEff(s)),0,1):0.3,sm=busy>0.05?v.smoke.map((p,i)=>[0,1,2].map(k=>`<i class="pl-smoke" style="left:${p[0].toFixed(1)}%;top:${p[1].toFixed(1)}%;animation-delay:-${(k*1.1+i*0.4).toFixed(2)}s;--s:${(0.8+busy*0.6).toFixed(2)}"></i>`).join('')).join(''):'';
-    const car=v.car&&L&&L.sold>0?`<img class="pl-car" src="${v.car}" alt="" style="--x0:${v.road[0].toFixed(1)}%;--y0:${v.road[1].toFixed(1)}%;--x1:${v.road[2].toFixed(1)}%;--y1:${v.road[3].toFixed(1)}%;width:${v.carW.toFixed(1)}%">`:'';
+    const car=v.car&&L&&L.sold>0?`<img class="pl-car" src="${v.car}" alt="" data-r="${v.road.map(x=>x.toFixed(1)).join(',')}" style="left:${v.road[0].toFixed(1)}%;top:${v.road[1].toFixed(1)}%;width:${v.carW.toFixed(1)}%">`:'';
     return `<div class="plant3d"><img src="${v.url}" alt="Завод компании">${sm}${car}</div>`;}catch(e){return factorySVG(s);}}
+// Машина едет по улице перед заводом: путь задан числами (анимация через Web Animations — без CSS-переменных в keyframes)
+function plantAnim(){document.querySelectorAll('.pl-car[data-r]').forEach(el=>{const r=el.dataset.r.split(',').map(Number);if(r.length<4||!el.animate)return;
+  try{el.animate([{left:r[0]+'%',top:r[1]+'%'},{left:r[2]+'%',top:r[3]+'%'}],{duration:14000,iterations:Infinity,delay:-(Date.now()%14000)});}catch(_){}});}
 function plantImage(s){const S=plantState(s),key=JSON.stringify(S);let v=PLANT3D.get(key);if(v)return v;
   const W=720,H=330,yaw=0.5,pitch=0.43,cv=mkCanvas(W,H),g=cv.getContext('2d'),cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
   const winter=S.sea==='w',autumn=S.sea==='a',rnd=mulberry32(hashStr(key));
@@ -159,12 +162,12 @@ function plantImage(s){const S=plantState(s),key=JSON.stringify(S);let v=PLANT3D
   all.sort((a,b)=>b.z-a.z).forEach(o=>o.d());
   // готовые машины на площадке у склада — ваших цветов; грузовик, если делаете грузовики
   const nCars=[0,2,4,7,10][S.st]||0,paints=S.pa.length?S.pa:['#1b1d22'],style=S.era===0?'runabout':S.era===1?'tourer':'sedan';
-  const carSp=(col,st)=>{const k='plc|'+st+'|'+col+'|'+S.y+'|'+ppm.toFixed(2);let r=CARD3D.get(k);if(!r){r=renderModel(carModel({key:k,style:st,color:col,y:S.y,wheel:S.era===0?'wood':'wire',mech:false,num:0,b:st==='truck'?'b7':'b1',lod:'lo'}),yaw+Math.PI/2,pitch,ppm,{shadow:0.3,outline:0.8});CARD3D.set(k,r);}return r;};
+  const carSp=(col,st,crew,k2)=>{k2=k2||1;const k='plc|'+st+'|'+col+'|'+S.y+'|'+ppm.toFixed(2)+(crew?'|c':'')+k2;let r=CARD3D.get(k);if(!r){r=renderModel(carModel({key:k,style:st,color:col,y:S.y,wheel:S.era===0?'wood':'wire',mech:false,num:0,b:st==='truck'?'b7':st==='tourer'?'b3':st==='sedan'?'b4':'b1',lod:k2>1?'hi':'lo',crew:crew?1:0}),yaw+Math.PI/2,pitch,ppm*k2,{shadow:0.3,outline:0.8});CARD3D.set(k,r);}return r;};
   for(let i=0;i<nCars;i++){const x=dep.x1-3-(i%5)*3.6,z=-1.4-Math.floor(i/5)*0.1,r=carSp(paints[i%paints.length],style),p=P(x,0,z+(i>=5?-3.2:0)+3);g.drawImage(r.img,p[0]-r.ax*r.img.width,p[1]-r.ay*r.img.height);}
   if(S.tr){const r=carSp(paints[0],'truck'),p=P(xh-2,0,1);g.drawImage(r.img,p[0]-r.ax*r.img.width,p[1]-r.ay*r.img.height);}
   // рабочие у ворот
   for(let i=0;i<3+S.h;i++){const x=-34+(rnd()-0.5)*9,z=-3.2+rnd()*2.5,p=P(x,0,z),k=ppm*0.95;g.save();g.translate(p[0],p[1]);g.scale(k,k);drawPerson(g,mulberry32(hashStr('w'+i+S.y)),Object.assign(personLook(mulberry32(i*31+S.y),S.y,'crowd'),{frame:i%2}));g.restore();}
   // машина едет по улице (анимация поверх картинки): её путь и спрайт
-  const a=P(-160,0,-13.2),b=P(260,0,-13.2),cs=carSp(paints[0],style);
-  v={url:cv.toDataURL('image/webp',0.9),smoke:smoke.map(t=>{const p=P(t[0],t[1],t[2]);return [p[0]/W*100,p[1]/H*100];}),road:[a[0]/W*100,a[1]/H*100,b[0]/W*100,b[1]/H*100],car:cs.img.toDataURL('image/png'),carW:cs.img.width/W*100};
+  const a=P(-160,0,-13.2),b=P(260,0,-13.2),cs=carSp(paints[0],style,1,3);
+  v={url:cv.toDataURL('image/webp',0.9),smoke:smoke.map(t=>{const p=P(t[0],t[1],t[2]);return [p[0]/W*100,p[1]/H*100];}),road:[a[0]/W*100,a[1]/H*100,b[0]/W*100,b[1]/H*100],car:cs.img.toDataURL('image/png'),carW:cs.img.width/3/W*100};
   if(PLANT3D.size>6)PLANT3D.delete(PLANT3D.keys().next().value);PLANT3D.set(key,v);return v;}

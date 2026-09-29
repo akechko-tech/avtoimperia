@@ -4,6 +4,7 @@ const HIST=[
   {y:1896,m:3,img:'Daimler Motor-Lastwagen',title:'Мотор вместо лошади',deck:'Daimler построил первый грузовик',text:'Готлиб Даймлер отправил в Лондон моторную телегу, которая везёт полторы тонны груза. Лавочники, пивовары и почта присматриваются: лошадь нужно кормить каждый день, а мотор — только когда он работает. В конструкторе появился фургон — новый класс покупателей: фирмы и ведомства.'},
   {y:1901,m:2,img:'Mercedes 35 hp',title:'«Мерседес» задаёт новую планку',deck:'Низкая рама, сотовый радиатор, 35 сил',text:'Машина, построенная Вильгельмом Майбахом по заказу Эмиля Еллинека, выиграла гонки в Ницце. Лёгкая, низкая и мощная, она похожа скорее на автомобиль будущего, чем на карету без лошади. Покупатели ждут того же от всех марок.'},
   {y:1908,m:9,img:'Ford Model T',title:'Автомобиль для всех',deck:'Генри Форд представил Model T',text:'Простая, прочная и дешёвая машина обещает сделать автомобиль доступным фермеру и рабочему. Цены по всему миру начинают падать, в народном сегменте появляются массовые марки.'},
+  {y:1910,m:5,img:'Prinz-Heinrich-Fahrt 1910',imgCap:'Фердинанд Порше на Austro-Daimler, пробег принца Генриха, 1910',title:'Рождение спортивной машины',deck:'Пробег принца Генриха выиграл Austro-Daimler Фердинанда Порше',text:'Призы для туристических машин учредил брат кайзера, принц Генрих Прусский, но заводы привезли на пробег лёгкие быстрые машины с мощными моторами. Первые три места заняли Austro-Daimler, за рулём победителя был их конструктор Фердинанд Порше — машину так и назвали: «Принц Генрих». Vauxhall тоже зовёт свою новинку «Принцем Генрихом», а в Америке готовят Mercer Raceabout.\nВ конструкторе появилось спортивное оснащение: облегчённый открытый кузов, ковшеобразные сиденья и настроенный мотор. Спортивные машины берут богатые любители скорости — их немного, но платят они щедро и ценят мощность и тормоза больше комфорта.'},
   {y:1912,m:1,img:'Charles F. Kettering',title:'Мотор заводится кнопкой',deck:'Cadillac ставит электрический стартер Кеттеринга',text:'Больше не нужно крутить заводную ручку и рисковать рукой: стартер Delco запускает мотор нажатием педали. Водить машину теперь может каждый. Покупатели дорогих машин ждут стартер в люксовом оснащении.'},
   {y:1913,m:9,img:'Highland Park Ford Plant',title:'Движущийся конвейер',deck:'В Хайленд-Парке сборка шасси ускорилась в разы',text:'Машина едет к рабочему, а не рабочий к машине. Время сборки шасси сократилось с двенадцати часов до полутора. На вкладке «Завод» доступна модернизация.'},
   {y:1914,m:7,c:'!us,it',title:'Война!',deck:'Мобилизация объявлена по всей Европе',text:'Спрос на легковые машины рухнул, армии нужны грузовики. Военное ведомство предлагает контракт: 40% мощностей по себестоимости плюс 35%.',choices:[['Принять военный заказ','mil'],['Отказаться','ok']]},
@@ -30,24 +31,32 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
   const s=G;
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;pushEvent(h,true);});
-  if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
+  if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
   checkShows(s);checkTenders(s);
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
 function topRivals(c,g,s,n){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v).slice(0,n||2).map(o=>o.cp);}
-function rivalNews(s,c,g,nv){
-  if(s.pending.length||mi(s)-(s.rvSaid||-99)<10)return;const L=topRivals(c,g,s,2);if(!L.length)return;s.rvSaid=mi(s);
-  const a=compName(L[0],s),b=L[1]?compName(L[1],s):null,m=compModel(L[0],s),MV=['снизили цены','выпустили обновлённые модели','открыли дилеров в каждом городе','удвоили рекламу в газетах','переманивают ваших дилеров'];
-  const i=mi(s)%MV.length,mv=MV[i]+' и '+MV[(i+2)%MV.length];
-  pushEvent({title:'Конкуренты наступают',kicker:'Рынок',img:m&&m[2]&&IMG[m[2]]?m[2]:'',imgCap:m?`${a} ${m[1]}`:'',deck:`${b?`«${a}» и «${b}»`:`«${a}»`} отвечают на успех «${s.company}»`,
-    text:`Покупатели класса «${SEG[g].name}» всё чаще выбирают «${s.company}», и старые марки не собираются сдаваться: они ${mv}. Теперь их машины привлекательнее на ${Math.round((Math.exp(nv)-1)*100)}%.\nОтветить можно новой моделью и улучшениями в конструкторском бюро, рекламой и ценой — или завоевать другой класс и заграничные рынки. История помнит: Ford держал половину рынка США, пока General Motors не предложил покупателям выбор.`},true);}
+// Что именно сделали конкуренты: прибавку их привлекательности раскладываем на цену, новинку и дилеров с рекламой
+function rivalNews(s,c,g,nv,cur){
+  if(s.pending.length||mi(s)-(s.rvSaid||-99)<10)return;const L=topRivals(c,g,s,3);if(!L.length)return;s.rvSaid=mi(s);
+  s.rvNews=s.rvNews||{};const k0=c+g,dv=Math.max(0.1,nv-(s.rvNews[k0]||0));s.rvNews[k0]=nv;
+  const cut=1-Math.exp(-dv*0.45/BR),qUp=Math.exp(dv*0.35/AQ)-1,nDl=Math.max(10,Math.round(dealerNeed(c,s)*dv*0.3/5)*5);
+  const P=prefP(g,c,s)*pwOf(s,c,g),mdl=cp=>{const m=compModel(cp,s);return m?m[1]:'';},nm=cp=>compName(cp,s);
+  const A=L[0],B=L[1],C=L[2],lines=[];
+  lines.push(`— ${nm(A)} снизил цену${mdl(A)?` «${mdl(A)}»`:''} на ${Math.max(2,Math.round(cut*100))}% — теперь около ${money(P*(1-cut))}`);
+  if(B)lines.push(`— ${nm(B)} выпустил обновлённую${mdl(B)?` «${mdl(B)}»`:' модель'}: мотор мощнее, рама крепче — на ${Math.max(2,Math.round(qUp*100))}% лучше прежней`);
+  lines.push(`— ${nm(C||B||A)} открыл дилеров ещё в ${fmtN(nDl)} городах и удвоил рекламу в газетах`);
+  const mk=s.last&&s.last.mk&&s.last.mk[c],z=mk&&mk.segs&&mk.segs[g],sh=z&&z.size>0?z.you/z.size:0,sh2=sh>0?sh/(sh+(1-sh)*Math.exp(dv)):0;
+  const mine=(s.models||[]).filter(m=>m.status==='prod'&&segOf(m)===g).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],TT=mine?techTone(mine,s):null,m0=compModel(A,s);
+  pushEvent({title:'Конкуренты наступают',kicker:'Рынок · '+SEG[g].name.toLowerCase()+' класс',img:m0&&m0[2]&&IMG[m0[2]]?m0[2]:'',imgCap:m0?`${nm(A)} ${m0[1]}`:'',deck:`${B?`«${nm(A)}», «${nm(B)}»${C?` и «${nm(C)}»`:''}`:`«${nm(A)}»`} отвечают на успех «${s.company}»`,
+    text:`Покупатели класса «${SEG[g].name}» всё чаще выбирают «${s.company}»${z?`: в прошлом месяце ваших машин купили ${fmtN(z.you)} из ${fmtN(z.size)} (${pct(sh,0)})`:''}. Старые марки ответили:\n${lines.join('\n')}\nТеперь их машины для покупателей привлекательнее на ${Math.round((Math.exp(nv)-1)*100)}%, чем до вашего наступления${sh>0?`, и ваша доля в классе может упасть примерно до ${pct(sh2,0)}`:''}.\nКак ответить: ${mine?`«${mine.name}» сейчас — ${Math.round(TT.r*100)}% соперника; `:''}улучшения в конструкторском бюро, новая модель, цена и реклама — или другие классы и страны. История помнит: Ford держал половину рынка США, пока General Motors не предложил покупателям выбор.`},true);}
 /* ---------- заказы ведомств и фирм ---------- */
 const TENDERS={
   post:{y:1897,kind:'van',n:[4,16],lim:1.1,mo:6,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии'}[c]),
@@ -72,7 +81,7 @@ function checkTenders(s){
   s.tenderSaid=s.tenderSaid||{};s.tenderSaid[k]=mi(s);
   const o={k,who:t.who(s.country),n,mo:t.mo,md:md.id,lim,bids:[Math.round(lim*0.88/10)*10,lim]};s.tenderNow=o;
   const S=classScore(md,s),cost=unitCost(md,s);
-  pushEvent({title:'Заказ: '+o.who,kicker:'Деловой заказ',deck:`${n} машин · до ${money(lim)} за штуку · поставка за ${t.mo} мес.`,
+  pushEvent({carId:md.id,title:'Заказ: '+o.who,kicker:'Деловой заказ',deck:`${n} машин · до ${money(lim)} за штуку · поставка за ${t.mo} мес.`,
     text:t.text(o)+`\nВаша модель для заказа — «${md.name}»: против соперников ${Math.round(S*100)}%, себестоимость около ${money(cost)}. Чем дешевле предложение и лучше машина, тем больше шансов. Машины для заказа завод сделает сверх плана, а не поставить в срок — неустойка и удар по репутации.`,
     choices:[[`Предложить ${money(o.bids[0])} — шансы выше`,'tbid0'],[`Предложить ${money(o.bids[1])}`,'tbid1'],['Не участвовать','tskip']]},false);}
 function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key==='tskip'){if(o)addLog(`Вы не стали участвовать в заказе: ${o.who}.`);return;}

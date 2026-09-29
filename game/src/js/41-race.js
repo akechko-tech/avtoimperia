@@ -166,7 +166,7 @@ function placeScenery(trk,rnd){
 // Машина в гонке. Все поля заданы сразу в одном порядке: у всех машин одна «форма» объекта — расчёт быстрее
 class RaceCar{constructor(e){
   this.you=!!e.you;this.player=!!e.player;this.name=e.name||'';this.label=e.label||'';this.drvName=e.drvName||'';this.drvId=e.drvId||null;this.sk=e.sk||0.8;
-  this.md=e.md;this.prep=e.prep||0;this.tyreType=e.tyre||'hard';this.gearSet=e.gear||0;this.color=e.color||'#333';this.num=e.num||0;this.pw=e.pw||1;this.relK=e.relK||1;this.pitK=e.pitK||1;this.tc=e.tc||'';
+  this.md=e.md;this.prep=e.prep||0;this.tyreType=e.tyre||'hard';this.gearSet=e.gear||0;this.color=e.color||'#333';this.num=e.num||0;this.pw=e.pw||1;this.relK=e.relK||1;this.pitK=e.pitK||1;this.tc=e.tc||'';this.priv=!!e.priv;this.pmy=e.pmy||0;this.spec=!!e.spec;
   this.st=null;this.m=0;this.P=0;this.kd=0;this.crr=0;this.vtop=0;this.gr=null;this.brakeK=0;this.grip=1;this.wearK=1;this.rel=0.8;this.L=2.5;this.a=0;this.b=0;this.h=0.7;this.Iz=1;
   this.x=0;this.z=0;this.y=0;this.gy=0;this.yaw=0;this.vx=0;this.vy=0;this.r=0;this.delta=0;this.gear=1;this.rpm=0;this.shift=0;this.thr=0;this.brk=0;this.steer=0;
   this.idx=0;this.lat=0;this.segT=0;this.lap=0;this.prog=0;this.fin=null;this.lapSeen=-9;this.q=0;this.lane=0;this.laneT=undefined;this.follow=null;
@@ -202,6 +202,10 @@ function gradeAt(c,trk,lat){const n=trk.n,i=c.idx,P=trk.pts,a=P[trk.closed?(i-1+
   if(e>0&&typeof R3!=='undefined'&&R3.on&&R3.F&&R3.T===trk){const w=Math.min(1,e/10),d=2,gt=(fH(c.x+fx*d,c.z+fz*d)-fH(c.x-fx*d,c.z-fz*d))/(2*d);g+=(gt-g)*w;}
   return clamp(g,-0.9,0.9);}
 // Сервис у обочины (кнопка 🔧): машина тормозит до остановки, механик меняет шины, доливает бензин, подтягивает поломки
+// Прокол у самого финиша: доехать на спущенном колесе быстрее, чем остановиться и менять
+function flatRun(c,T){const rem=Math.max(0,T.raceLen-c.prog),vF=Math.max(6,c.vtop*0.45),vN=Math.max(8,c.vtop*0.75);return rem/vF-rem/vN<(c.wheelChange||8)+8;}
+// Сколько бензина нужно до финиша (в процентах бака, при обычном газе)
+function fuelNeed(c,T){return c.fuelRate?Math.max(0,T.raceLen-c.prog)*c.fuelRate*0.85:0;}
 function svcNeed(c){return {tyre:c.punct||c.tyre>20,fuel:!!c.fuelRate&&c.fuel<92,dmg:c.dmg>15||!!c.limp};}
 function svcPlan(c){const T=R.trk,need=svcNeed(c),what=[];let t=2.5;
   if(need.tyre){t+=c.wheelChange*(c.punct&&c.tyre<60?1:1.8);what.push('шины');}
@@ -213,7 +217,7 @@ function svcPlan(c){const T=R.trk,need=svcNeed(c),what=[];let t=2.5;
 function svcDone(c){const need=svcNeed(c);if(need.tyre){c.tyre=0;c.punct=false;}if(need.fuel)c.fuel=100;if(need.dmg){c.dmg=Math.round(c.dmg*0.35);c.limp=false;}c.heat=Math.min(c.heat,45);c.overheat=0;c.fix=0;}
 function playerService(c,dt){
   if(c.fuelRate&&c.fuel<=0&&!c.svc&&!(c.pitT>0)){c.svc=1;rMsg('БЕНЗИН КОНЧИЛСЯ — ДОЛЬЁМ ИЗ КАНИСТРЫ',2.6);}
-  if(c.punct&&c.vx<1.2&&!c.svc&&!(c.pitT>0))c.svc=1;
+  if(c.punct&&c.vx<1.2&&!c.svc&&!(c.pitT>0)&&!c.flat)c.svc=1;
   if(c.svc===1){c.thr=0;c.brk=1;if(Math.abs(c.vx)<0.6){const S=svcPlan(c);c.svc=2;c.svcT=S.t;c.svcWhat=S.what.join(', ')||'осмотр';rMsg((S.pit?'БОКСЫ: ':'МЕХАНИК: ')+c.svcWhat,1.8);}}
   else if(c.svc===2){c.thr=0;c.brk=1;c.svcT-=dt;if(c.svcT<=0){svcDone(c);c.svc=0;rMsg('ГОТОВО! ПОЕХАЛИ',1.4);}}}
 function carStep(c,trk,dt){
@@ -221,7 +225,7 @@ function carStep(c,trk,dt){
   let mu=tr.mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(c.punct?0.72:1),crr=c.crr*(c.punct?3:1);
   const al=Math.abs(lat);c.off=al>W/2+1.2?1:0;
   if(al>W/2+1.2){mu*=0.6;crr=c.crr*4;}else if(al>W/2){mu*=0.85;crr=c.crr*1.6;}
-  const stopped=c.stopT>0||c.pitT>0||c.svc===2||c.dnf||(c.punct&&!c.player);
+  const stopped=c.stopT>0||c.pitT>0||c.svc===2||c.dnf||(c.punct&&!c.player&&!c.flat);
   const pw=c.P*(1-c.dmg/250)*(c.overheat>0?0.3:1)*(c.fuel<=0?0.1:1)*(c.draft?1.06:1)*(c.limp?0.65:1);
   const v=c.vx;
   let vg=c.gr[c.gear-1];c.rpm=Math.max(0.12,Math.abs(v)/vg);
@@ -263,7 +267,8 @@ function carStep(c,trk,dt){
   c.tyre+=dist*c.tyreRate*(1+1.5*(c.slipR+c.slipF)+spin*0.8)*c.wearK*ord*(c.off?1.6:1);
   // прокол: свежая шина держит, стёртая лопается чаще; на первых километрах у города дорога хорошая
   const pr=c.punctRate*dist*(c.off?2:1)*(0.25+1.5*Math.min(1,c.tyre/100))*(c.prog<trk.raceLen*0.06?0:1);
-  if(!c.punct&&(c.tyre>=100||Math.random()<pr)){c.punct=true;c.punctN=(c.punctN||0)+1;}
+  if(!c.punct&&(c.tyre>=100||Math.random()<pr)){c.punct=true;c.punctN=(c.punctN||0)+1;c.flat=flatRun(c,trk);}
+  if(!c.punct)c.flat=false;else if(c.flat&&c.vx>2)c.dmg=Math.min(100,c.dmg+dt*0.8);
   if(c.fuelRate)c.fuel=Math.max(0,c.fuel-dist*c.fuelRate*(0.35+0.65*c.thr));
   // мотор: греется от нагрузки, остывает от встречного воздуха; медленный подъём на полном газу — перегрев
   const load=c.thr*(0.35+0.65*Math.min(1,c.rpm)),cool=0.55+0.45*Math.min(1,sp/20),heatT=15+62*load*(1.3-0.5*c.rel)*(c.order==='push'?1.25:c.order==='save'?0.85:1)/cool;
@@ -351,7 +356,8 @@ function aiControl(c,trk,dt){
   // боксы: шины, топливо, повреждения или приказ команды
   const cfg=trk.cfg,rem=Math.max(0,trk.raceLen-c.prog);if(cfg.pits&&c.lap<cfg.laps-1&&(c.tyre+rem*c.tyreRate*1.5>97||(c.fuelRate&&c.fuel<rem*c.fuelRate+4)||c.dmg>55||c.pitCall)){const toLine=((n-c.idx)%n)*step;if(toLine<110){c.brk=v>13?0.8:0;c.thr=v<10?0.4:0;}}
   if(c.follow&&!c.punct){c.thr=0;if(c.vx>c.follow.vx+2)c.brk=Math.max(c.brk,0.35);}
-  if(c.punct){c.thr=0;c.brk=1;}
+  // на спущенном колесе у самого финиша — доезжаем осторожно, иначе останавливаемся менять
+  if(c.punct){if(c.flat){const vF=Math.max(6,c.vtop*0.45);c.thr=v<vF?Math.min(c.thr,0.55):0;if(v>vF+1.5)c.brk=Math.max(c.brk,0.3);}else{c.thr=0;c.brk=1;}}
   if(c.fuelRate&&c.fuel<=0&&!(c.pitT>0)&&!c.dnf){c.dnf='кончилось топливо';if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — кончилось топливо`,2.5);}
 }
 // Движение в потоке: обгон медленной машины впереди, съезд к обочине для ремонта
@@ -402,7 +408,8 @@ function wearSetup(c,trk,rc){
   const life=p.w.life*(tr.tyre||1)*(1+0.1*upgOf(c.md,p.w.id));
   const lifeFrac=clamp(life/km,0.7,3);c.tyreRate=100/(lifeFrac*trk.raceLen);
   const expP=clamp(km*p.w.punct*(tr.rough||1)/1100,0,1.4);c.punctRate=expP/trk.raceLen;
-  if(trk.cfg.pits){const range=280/(p.e.fuel||1),frac=clamp(range/km,0.55,1.6);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
+  // бака почти хватает на всю гонку — механики заливают с запасом, чтобы доехать без заправки; иначе нужна остановка
+  if(trk.cfg.pits){const range=280/(p.e.fuel||1),f0=range/km,frac=f0>=0.9?clamp(Math.max(f0,1.15),1.15,1.6):clamp(f0,0.55,0.9);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
   c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);
 }
 function startRace(setup){
@@ -415,7 +422,7 @@ function startRace(setup){
   const trk=buildTrack(rc,vref);
   const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);c.mech=c.st.mech;
     // ваша машина — такая же, как в конструкторе: её цвет и кузов; соперники — гоночные машины в цветах своих стран
-    if(c.you){const sp=modelSpec(c.md,c.prep,rc.y,{country:s.country,num:c.num,mech:c.mech});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
+    if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you?s.country:c.tc,num:c.num,mech:c.mech});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
     else{c.style=carStyle(c.md,c.prep,rc.y);c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid;c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid};}
     wearSetup(c,trk,rc);return c;});
   // стартовая решётка: быстрые и опытные впереди, немного случайности
@@ -424,7 +431,7 @@ function startRace(setup){
     const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
   const me=cars.find(c=>c.player)||null,team=cars.filter(c=>c.you);
   R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,
-    hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:Math.max(0.05,1-ai.reduce((a,e)=>a+cars.find(c=>c.name===e.name&&!c.you).rel,0)/Math.max(1,ai.length))};
+    hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
   document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
   document.getElementById('fuelBox').style.visibility=trk.cfg.pits?'visible':'hidden';
@@ -436,32 +443,121 @@ function fieldTeams(rc,s,nTeam){
   const y=rc.y,intl=rc.c==='intl'||rc.major,host=COUNTRIES[rc.c]?rc.c:null;
   let teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&t.pk!==s.pioneer&&(intl||t.c===host||(!host)));
   if(rc.id==='indy'||rc.track==='board')teams=teams.filter(t=>t.c==='us'||t.str>=1.05);
+  if(rc.t==='endurance'||rc.t==='rally'||rc.id==='mille')teams=teams.filter(t=>!['Miller','Duesenberg','Frontenac','Durant'].includes(t.n));
   teams.sort((a,b)=>b.str-a.str);
   if(/^gb\d/.test(rc.id)){const cnt={[s.country]:nTeam};teams=teams.filter(t=>['fr','de','uk','us','it'].includes(t.c)&&(cnt[t.c]=(cnt[t.c]||0)+1)<=3);}
   const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(t);});
   return out;
 }
 // Гоночная машина соперников: самая прочная рама, самый мощный мотор, который она выдержит, лучшие коробка, тормоза и шины своего года
+// Подготовка заводских машин: на выносливость, в марафонах и в «Милле Милья» — серийный кузов, иначе гоночный
+function aiPrep(rc){return rc.t==='endurance'||rc.t==='rally'||rc.id==='mille'?1:2;}
 function bestPart(arr,y,key,f){return arr.filter(x=>x.y<=y&&(!f||f(x))).reduce((a,x)=>!a||x[key]>a[key]?x:a,null);}
 function aiCarMd(y,name){const c=bestPart(CHASSIS,y,'max'),e=bestPart(ENGINES,y,'hp',x=>x.hp<=c.max)||ENGINES[0];
   return {e:e.id,g:bestPart(GEARBOX,y,'eff').id,c:c.id,k:bestPart(BRAKES,y,'brk').id,b:'b1',w:TYRES.filter(x=>x.y<=y&&(!x.solid||y<1895)).reduce((a,x)=>!a||x.grip+(x.pit?0.004:0)>a.grip+(a.pit?0.004:0)?x:a,null).id,t:'t0',paint:'#333',name:name||'',made:0,ai:1};}
 // Типичная ненадёжность соперников: от неё считается частота поломок в гонке
-function fieldRelRef(rc,s){const T=fieldTeams(rc,s,1);if(!T.length)return 0.2;const prep=rc.t==='endurance'||rc.t==='rally'?1:2,st=carStats(aiCarMd(rc.y),prep,rc.y);return Math.max(0.05,1-T.reduce((a,t)=>a+clamp(st.rel*Math.pow(t.str,0.6),0.3,0.995),0)/T.length);}
+function fieldRelRef(rc,s){const T=fieldTeams(rc,s,1);if(!T.length)return 0.2;const prep=aiPrep(rc),st=carStats(aiCarMd(rc.y),prep,rc.y);return Math.max(0.05,1-T.reduce((a,t)=>a+clamp(st.rel*Math.pow(t.str,0.6),0.3,0.995),0)/T.length);}
 function teamBoost(t,rc){return (t.boost&&Object.keys(t.boost).some(k=>rc.y>=+k)?1.06:1)*(rc.t==='endurance'&&t.endur?t.endur:1);}
 function teamDrivers(t,y,used){return DRIVERS.filter(d=>d.from<=y&&d.to>=y&&!(used&&used.has(d.id))&&d.mq.some(m=>t.mq.includes(m)));}
 function raceField(rc,s,nTeam,taken){
-  const y=rc.y,pickT=fieldTeams(rc,s,nTeam),host=COUNTRIES[rc.c]?rc.c:null;
-  while(pickT.length<3)pickT.push({n:'Частная машина',c:host||'fr',str:0.85,mq:[]});
+  const y=rc.y,pickT=fieldTeams(rc,s,nTeam),host=COUNTRIES[rc.c]?rc.c:null,PR=privRule(rc);
+  const nPriv=Math.min(PR.n+(rc.major&&PR.n>=3?1:0),Math.max(0,14-nTeam-pickT.length));
+  while(pickT.length+nPriv<3)pickT.push({n:'Частная машина',c:host||'fr',str:0.85,mq:[]});
   const pio=PIONEERS[s.pioneer],used=new Set([...(s.drivers||[]),...(taken||[]),pio.drv].filter(Boolean)),out=[];
   pickT.forEach((t,i)=>{
     const pool=teamDrivers(t,y,used),any=DRIVERS.filter(d=>d.from<=y&&d.to>=y&&!used.has(d.id)),L=pool.length?pool:any;
     const d=L.sort((a,b)=>b.sk-a.sk)[Math.floor(Math.random()*Math.min(2,L.length))]||{n:'',sk:0.75};if(d.id)used.add(d.id);
     const md=aiCarMd(y,t.n);
     const boost=teamBoost(t,rc)*DIF().race;
-    out.push({you:false,name:t.n,label:t.n,drvName:d.n,sk:d.sk||0.75,md,prep:rc.t==='endurance'||rc.t==='rally'?1:2,tyre:Math.random()<0.5?'soft':'hard',gear:0,color:y>=1903?(t.c==='intl'||!COUNTRIES[t.c]?'#F28C00':COUNTRIES[t.c].race):['#2b2320','#3a2a1c','#1f2b3a','#4a1f1a'][i%4],pw:Math.pow(t.str,1.6)*boost,relK:Math.pow(t.str,0.6),tc:t.c});
+    out.push({you:false,name:t.n,label:t.n,drvName:d.n,drvId:d.id||null,sk:d.sk||0.75,md,prep:aiPrep(rc),tyre:Math.random()<0.5?'soft':'hard',gear:0,color:y>=1903?(t.c==='intl'||!COUNTRIES[t.c]?'#F28C00':COUNTRIES[t.c].race):['#2b2320','#3a2a1c','#1f2b3a','#4a1f1a'][i%4],pw:Math.pow(t.str,1.6)*boost,relK:Math.pow(t.str,0.6),tc:t.c});
   });
+  return out.concat(privField(rc,s,used,nPriv));
+}
+/* ---------- частники: любители на купленных машинах ---------- */
+// Регламент эпохи: Кубок Гордона Беннетта — только сборные стран, Гран-при до 1925 года — только заводы.
+// В открытых гонках по дорогам, в горах, марафонах, на выносливость и в клубных гонках едут и любители — в том числе на ваших машинах.
+// k: 'race' — купленная у завода гоночная машина, 'prod' — серийная; my — какие ваши машины покупают частники для этой гонки
+const GP_FACTORY=['gpacf','dieppe','lyon1914','lm1921','brescia','monza1922','europe1924','itgp'];
+function privRule(rc){
+  const id=rc.id,y=rc.y,t=rc.t;
+  if(/^gb\d/.test(id))return {n:0,txt:'Кубок наций: до трёх машин от страны, целиком построенных в ней. Частников нет.'};
+  if(id==='daytona1927')return {n:0,txt:'Попытка рекорда скорости: на пляже только машины-рекордсмены.'};
+  if(GP_FACTORY.includes(id))return y>=1925?{n:1,k:'race',txt:'Гран-при: заявляют заводы, но допускают и частников на купленных гоночных машинах.'}:{n:0,txt:'Гран-при — гонка заводов: заявки принимают только от изготовителей машин. Частников нет.'};
+  if(id==='monaco')return {n:3,k:'race',my:'sport',txt:'Свободная формула: больше половины участников — частники на купленных гоночных машинах.'};
+  if(id==='savannah'||id==='kaiser'||id==='bgp1926')return {n:1,k:id==='kaiser'?'prod':'race',my:'sport',txt:'В основном заводские команды, частных заявок — единицы.'};
+  if(id==='indy'||/^board/.test(id))return {n:id==='indy'?2:1,k:'race',txt:'Правила AAA: многие машины принадлежат самим гонщикам и частным владельцам.'};
+  if(t==='road'&&y<1904)return {n:4,k:'race',my:'all',txt:'Открытая гонка: вместе с заводскими машинами едут частники — тяжёлые машины, лёгкие и вуатюретки в одном потоке.'};
+  if(t==='rally')return {n:4,k:'prod',my:'all',txt:'Испытание туристических машин: за рулём и заводские экипажи, и владельцы-любители.'};
+  if(t==='hill')return {n:3,k:'prod',my:'all',txt:'Гонка в гору открыта всем: и заводам, и любителям на своих машинах.'};
+  if(t==='endurance')return {n:3,k:'prod',my:'all',txt:'Серийные машины с полным оснащением: заявляют и заводы, и частные владельцы.'};
+  if(id==='mille')return {n:4,k:'prod',my:'all',txt:'Серийные машины на дорогах Италии: большинство экипажей — частники.'};
+  if(id==='brooklands'||id==='jcc200')return {n:3,k:'prod',my:'all',txt:'Клубные гонки Бруклендса: много любителей на своих машинах.'};
+  if(id==='ormond')return {n:2,k:'race',my:'sport',txt:'Скоростная неделя: рекорды ставят и заводы, и богатые любители.'};
+  if(id==='tt')return {n:2,k:'prod',my:'all',txt:'Турист Трофи: туристические машины заводов и частных владельцев.'};
+  if(id==='santamonica'||id==='elgin')return {n:2,k:'prod',my:'sport',txt:'Гонка серийных машин: заявляют заводы, дилеры и частные владельцы.'};
+  return {n:2,k:y>=1910?'prod':'race',my:'sport',txt:'Заявки принимают и от заводов, и от частных владельцев.'};
+}
+// «Джентльмены-гонщики» эпохи, которые гонялись на собственных купленных машинах: марка (или [до какого года, марка])
+const PRIV_DRV={chasseloup:'De Dion-Bouton',jellinek:'Mercedes',e_zborowski:'Mercedes',de_crawhez:'Panhard et Levassor',rolls:'Panhard et Levassor',vanderbilt:'Mercedes',m_farman:'Panhard et Levassor',h_farman:'Panhard et Levassor',
+  jarrott:[[1902,'Panhard et Levassor'],[1904,'De Dietrich']],du_gast:'De Dietrich',de_caters:'Mercedes',levitt:'Napier',poge:'Mercedes',florio:'Itala',moore_brabazon:'Minerva',borghese:'Itala',bragg:'Fiat',
+  wishart:[[1912,'Mercedes'],[1914,'Mercer']],nagel:'Руссо-Балт',suvorin:'Benz',l_zborowski:'Aston Martin',g_masetti:[[1921,'Fiat'],[1926,'Mercedes']],materassi:[[1924,'Itala'],[1929,'Bugatti']],junek:'Bugatti',vizcaya:'Bugatti',
+  sabipa:'Bugatti',campbell:[[1922,'Sunbeam'],[1935,'Bugatti']],kaye_don:'Sunbeam',etancelin:'Bugatti',williams:'Bugatti',helle_nice:'Bugatti',nuvolari:[[1926,'Bianchi'],[1929,'Bugatti']],stuck:'Austro-Daimler',
+  ivanowski:'Alfa Romeo',barnato:'Bentley',birkin:'Bentley',kidston:'Bentley',rubin:'Bentley',benjafield:'Bentley',c_durant:'Miller',woodbury:'Miller',devore:'Miller',souders:'Duesenberg'};
+const NAT_C={'Франция':'fr','Бельгия':'fr','Монако':'fr','Испания':'fr','США':'us','Канада':'us','Великобритания':'uk','Австралия':'uk','Германия':'de','Австро-Венгрия':'de','Чехословакия':'de','Швейцария':'de','Венгрия':'de','Россия':'de','Италия':'it'};
+const AMATEUR={fr:['Месье','Бертен','Дюбуа','Лефевр','Моро','Жирар','Ренье','Фавр','Лакомб'],uk:['Мистер','Эшворт','Кларк','Хардинг','Беннет','Филдинг','Прайс','Лоуренс'],de:['Герр','Шмидт','Вебер','Краус','Хоффман','Беккер','Ланге','Фогель'],
+  us:['Мистер','Келлер','Бёрнс','Мейсон','Прескотт','Картер','Холлоуэй','Рид'],it:['Синьор','Галли','Риччи','Бьянки','Конти','Марини','Фаббри','Серра']};
+function playerMarque(m,s){return RACE_TEAMS.some(t=>t.pk===s.pioneer&&(t.n===m||t.mq.includes(m)))||Object.values(COMPS).some(L=>L.some(b=>b.pk===s.pioneer&&(b.n.includes(m)||(b.models||[]).some(x=>x[1].includes(m)))));}
+function privMarque(id,y){const v=PRIV_DRV[id];if(typeof v==='string')return v;const x=v.find(a=>y<=a[0]);return x?x[1]:v[v.length-1][1];}
+function wpick(a,wf){const w=a.map(wf),t=w.reduce((x,y)=>x+y,0);let r=Math.random()*t;for(let i=0;i<a.length;i++){r-=w[i];if(r<=0)return a[i];}return a[a.length-1];}
+const TRIM_OF={people:'t0',middle:'t1',lux:'t2',sport:'t3'};
+const brandShort=n=>n.replace(/ & Cie\.| \(.*\)| \/ .*$/g,'');
+// Какие ваши машины частники покупают для этой гонки: сколько-то уже продано, не грузовики
+function privMyModels(rc,s,PR){if(!PR.my)return [];
+  return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&(m.totalSold||0)>=10&&(PR.my==='all'||['sport','lux'].includes(segOf(m))));}
+// Серийная машина частника: типичная для класса машина эпохи, в цвете владельца
+function privProdCar(y,brand,segs){
+  let seg=null;if(brand&&brand.mix){const L=segs.filter(g=>brand.mix[g]);if(L.length)seg=wpick(L,g=>brand.mix[g]);}
+  if(!seg)seg=wpick(segs,g=>({lux:3,middle:2,sport:3,people:1})[g]);
+  const r=rivalCar(seg,y);return {...r[2],t:TRIM_OF[seg],paint:pick(PAINTS).id,name:'',made:0,ai:1};}
+function privField(rc,s,used,n){
+  const PR=privRule(rc);if(n===undefined)n=PR.n;if(!PR.n||n<=0)return [];
+  const y=rc.y,host=COUNTRIES[rc.c]?rc.c:COUNTRIES[rc.host]?rc.host:'fr',intl=rc.c==='intl'||!!rc.major,out=[],names=new Set(),dr=DIF().race;
+  const segs=rc.id==='jcc200'?['people','middle']:['lux','middle'].concat(y>=1910?['sport']:[],rc.id==='mille'||rc.t==='rally'?['people']:[]);
+  const amateur=c=>{const L=AMATEUR[c]||AMATEUR[host]||AMATEUR.fr;for(let k=0;k<20;k++){const nm=L[0]+' '+L[1+Math.floor(Math.random()*(L.length-1))];if(!names.has(nm)){names.add(nm);return {n:nm,sk:0.58+Math.random()*0.12,c};}}return {n:'Любитель',sk:0.6,c};};
+  // джентльмены своей страны; на международных гонках — и гости из-за границы
+  const gent=()=>{const L=DRIVERS.filter(d=>PRIV_DRV[d.id]&&d.from<=y&&d.to>=y&&!used.has(d.id)),H=L.filter(d=>NAT_C[d.nat]===host);
+    const reg=c=>c==='us'?1:0,F=L.filter(d=>intl||reg(NAT_C[d.nat]||'fr')===reg(host)),P=H.length&&Math.random()<(intl?0.7:0.9)?H:intl||Math.random()<0.3?F:[];if(!P.length)return null;
+    const d=pick(P);used.add(d.id);return {n:d.n,sk:d.sk,id:d.id,c:NAT_C[d.nat]||host,m:privMarque(d.id,y)};};
+  const who=()=>Math.random()<0.55&&gent()||amateur(Math.random()<(intl?0.6:0.85)?host:pick(Object.keys(AMATEUR)));
+  const col=c=>y>=1903&&COUNTRIES[c]?COUNTRIES[c].race:pick(PAINTS).id;
+  // 1) ваши машины: их покупают любители — чем больше вы продаёте в стране гонки, тем вероятнее встретить их на старте
+  const my=privMyModels(rc,s,PR);
+  const addMy=d=>{const md=wpick(my,m=>1+(m.totalSold||0)+(m.lastSold||0)*6);
+    out.push({you:false,priv:1,pmy:md.id,spec:1,name:s.company,label:md.name,drvName:d.n,drvId:d.id||null,sk:d.sk,md,prep:['rally','endurance'].includes(rc.t)?0:1,tyre:'hard',gear:0,color:md.paint,pw:1,relK:0.97,tc:s.country});};
+  if(my.length){const mk=s.last&&s.last.mk&&s.last.mk[host],sh=mk&&mk.size>0?mk.sold/mk.size:0,sold=my.reduce((a,m)=>a+(m.totalSold||0),0),here=host===s.country||((s.dealers||{})[host]||0)>0;
+    let p=clamp(0.2+sh*3+Math.min(0.3,sold/4000),0,0.85)*(here?1:0.35);
+    for(let k=0;k<2&&out.length<n;k++){if(Math.random()>=p)break;p*=0.4;addMy(Math.random()<0.3&&gent()||amateur(host));}}
+  // 2) «джентльмены» эпохи и безымянные любители: на купленных гоночных машинах или на серийных
+  const teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&t.pk!==s.pioneer&&COUNTRIES[t.c]);
+  while(out.length<n){const d=who();
+    // джентльмен гонялся на марке, которой в этой истории управляете вы: теперь он на вашей машине
+    if(d.m&&playerMarque(d.m,s)){if(my.length){addMy(d);continue;}d.m=null;}
+    if(PR.k==='race'&&teams.length){
+      const t=d.m?(teams.find(t=>t.n===d.m||t.mq.includes(d.m))||{n:d.m,c:d.c,str:0.95}):wpick(teams,t=>t.c===host?3:1);
+      out.push({you:false,priv:1,name:t.n,label:t.n,drvName:d.n,drvId:d.id||null,sk:d.sk,md:aiCarMd(Math.max(1894,y-1),t.n),prep:2,tyre:Math.random()<0.5?'soft':'hard',gear:0,color:col(d.c),pw:Math.pow(t.str||0.95,1.6)*0.9*dr,relK:0.95,tc:t.c||d.c});
+    }else{
+      const pool=[].concat(...Object.keys(COMPS).map(c=>COMPS[c].filter(b=>b.since<=y&&(!b.until||b.until>=y)&&!b.imp&&b.pk!==s.pioneer&&segs.some(g=>b.mix[g])).map(b=>({b,c}))));
+      let bc=null;if(d.m)bc=pool.find(x=>x.b.n.includes(d.m)||(x.b.models||[]).some(m=>m[1].includes(d.m)));
+      if(!bc&&!d.m&&pool.length)bc=wpick(pool,x=>(x.c===host?3:intl?0.5:0.05)*Math.pow(tabAt(x.b.v,y)||1,0.35));
+      const md=privProdCar(y,bc&&bc.b,segs),mm0=bc?(bc.b.models||[]).filter(m=>m[0]<=y&&y-m[0]<=8).pop():null,mm=mm0&&[mm0[0],mm0[1].replace(/\s*«.*?»/g,'')],bnm=bc?brandShort(bc.b.n):d.m||'Серийная машина';
+      const w0=bnm.split(/[ -]/)[0].toLowerCase(),label=d.m?d.m:mm?(mm[1].toLowerCase().includes(w0)?mm[1]:bnm.toLowerCase().includes(mm[1].toLowerCase())?bnm:bnm+' '+mm[1]):bnm;md.name=label;
+      out.push({you:false,priv:1,spec:1,name:d.m||bnm,label,drvName:d.n,drvId:d.id||null,sk:d.sk,md,prep:['rally','endurance'].includes(rc.t)?0:1,tyre:'hard',gear:0,color:md.paint,pw:Math.pow(dr,0.5),relK:0.97,tc:bc?bc.c:d.c});
+    }}
   return out;
 }
+// Сила частника для быстрого итога гонки (без вас): его машина против заводской гоночной машины эпохи
+function rankOf(md,prep,y){const st=carStats(md,prep,y);return st.vmax*(0.55+0.45*st.rel)/(1+st.acc/60);}
+function privPerf(e,rc){const pr=aiPrep(rc),ref=rankOf(aiCarMd(rc.y),pr,rc.y);return Math.pow(rankOf(e.md,e.prep,rc.y)/ref,1.6)*Math.pow(e.pw||1,0.8)*(0.8+0.4*((e.sk||0.65)-0.5));}
 function raceTick(dt){
   const T=R.trk,cfg=T.cfg;
   if(R.t<0){R.cars.forEach(c=>{c.thr=0;c.brk=1;});return;}
@@ -472,7 +568,7 @@ function raceTick(dt){
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
     if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0&&c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}
-    else if(c.punct&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
+    else if(c.punct&&!c.flat&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
   });
   const sub=R.mode==='sim'?3:4,h=dt/sub;
   for(let k=0;k<sub;k++){R.cars.forEach(c=>{if(!c.dnf||c.vx>0.2)carStep(c,T,h);});for(let i=0;i<R.cars.length;i++)for(let j=i+1;j<R.cars.length;j++){const A=R.cars[i],B=R.cars[j];if(A.dnf&&B.dnf)continue;const imp=carsCollide(A,B);if(imp>1.5&&(A===R.follow||B===R.follow)){R.shake=Math.min(0.6,imp*0.05);auSfx('bump',Math.min(1,imp/10));}}}
@@ -480,10 +576,10 @@ function raceTick(dt){
   const me=R.me;
   if(me){if(me.hit){if(me.hit>6){R.shake=0.6;rMsg('УДАР!',0.9);auSfx('crash',Math.min(1,me.hit/15));}else auSfx('bump',0.5);me.hit=0;}
     if(me.overheat>3.9)rMsg('ПЕРЕГРЕВ!',2);
-    if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
+    if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.flat?'ПРОКОЛ! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ':me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
-    if(me.fuelRate&&me.fuel<14&&!me.fuelSaid){me.fuelSaid=1;rMsg('МАЛО БЕНЗИНА — ЖМИТЕ 🔧',2.5);}if(me.fuel>50)me.fuelSaid=0;
-    me.stuck=(Math.abs(me.lat)>T.W/2+8||me.vx<1.5)&&R.t>2&&!me.stopT&&!me.pitT&&!me.punct&&!me.dnf?me.stuck+dt:0;
+    if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
+    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.stopT&&!me.pitT&&!me.svc&&!me.dnf&&me.fin===null?me.stuck+dt:0;}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;
@@ -531,7 +627,7 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0}));
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
   const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
   raceResults(rc,res,mode,info);

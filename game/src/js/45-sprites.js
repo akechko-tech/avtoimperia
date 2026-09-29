@@ -16,7 +16,7 @@ function carStyle(md,prep,y,own){
   if(prep===2)return y<1901?'carriage':y<1907?'gp1901':y<1912?'gp1907':y<1925?'gp1912':'gp1925';
   if(y<1901&&(b==='b1'||!own))return 'carriage';
   if(prep===1&&!own)return y<1912?'gp1901':'sport';
-  return b==='b1'||b==='b10'?(y<1912?'runabout':'sport'):b==='b2'?'tonneau':b==='b3'?'tourer':'sedan';
+  return b==='b10'||(b==='b1'&&md.t==='t3'&&y>=1910)?'sport':b==='b1'?'runabout':b==='b2'?'tonneau':b==='b3'?'tourer':'sedan';
 }
 // Облик машины игрока в 3D — тот же, что у модели: её цвет и кузов, капот тем длиннее, чем больше мотор;
 // заводской гоночный кузов — узкий гоночный, но в цвете модели с полосой национального гоночного цвета

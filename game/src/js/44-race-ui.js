@@ -27,7 +27,7 @@ function raceItem(rc,s){
   const [st,tone,open]=raceStatus(rc,s),r=s.cres&&s.cres[rc.key],tags=raceChamps(rc).map(id=>CHAMPS[id].short).concat(GBC_IDS.includes(rc.id)?['Кубок наций']:[]);
   return `<div class="race-item"><div class="row"><div><span class="mo">${MONTHS[rc.m]} · ${hostName(rc.c)} · ${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км</span><h3 style="margin-top:2px">${esc(rc.name)}${rc.major?' <span class="star" title="Большая гонка">★</span>':''}</h3></div><span class="pill ${tone}">${st}</span></div>
     ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
-    ${r&&r.w&&!r.x?`<p class="small ${r.w===s.company?'good':'muted'}" style="margin-top:4px">Победа: ${esc(r.w)}${r.d?` (${esc(r.d)})`:''}</p>`:`<p class="small muted" style="margin-top:4px">Приз ${money(racePrize(rc))} · взнос ${money(raceFee(rc))} с машины</p>`}
+    ${r&&r.w&&!r.x?`<p class="small ${r.w===s.company?'good':'muted'}" style="margin-top:4px">Победа: ${esc(r.w)}${r.d?` (${esc(r.d)})`:''}${r.pv?' · частник':''}</p>`:`<p class="small muted" style="margin-top:4px">Приз ${money(racePrize(rc))} · взнос ${money(raceFee(rc))} с машины</p>`}
     ${open?`<button class="btn primary block" style="margin-top:8px" data-act="raceSetup" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Заявить команду</button>`:''}</div>`;
 }
 let TEAM_FREE=false;
@@ -47,19 +47,20 @@ function vRace(){
   const wins=s.raceLog.filter(r=>r.place===1).length,pod=s.raceLog.filter(r=>r.place>0&&r.place<=3).length;
   const hist=s.raceLog.slice(-12).reverse().map(r=>`<tr><td>${r.y}</td><td>${esc(r.name)}<small>${esc(r.model||'')}${r.drv?' · '+esc(r.drv):''}</small></td><td class="n ${r.place===1?'good':r.place?'':'bad'}">${r.place?r.place+'-е':'сход'}</td></tr>`).join('');
   const nextMaj=RACES.filter(r=>r.y===y+1&&r.major);
-  return `<section class="card"><span class="label">Гоночный сезон ${y}</span><h2 style="margin-top:2px">Чемпионаты</h2>
+  const openR=cur.filter(r=>raceStatus(r,s)[2]);
+  return `${foldCard('champs',true,`<h2>Чемпионаты ${y}</h2>`,`
     <p class="small muted" style="margin-top:4px">Гонки идут сезонами, как в истории. В каждой гонке марка получает очки за лучшую свою машину. Титул приносит славу на год вперёд, а победы и чемпионства входят в наследие компании.</p>
     ${ch.length?ch.map(id=>champBlock(s,id,y)).join(''):'<p class="small muted" style="margin-top:8px">В этом году чемпионатов нет — только отдельные гонки.</p>'}
-    ${prevCh.map(id=>champBlock(s,id,y-1)).join('')}</section>
-  <section class="card"><span class="label">Календарь ${y}</span><h2 style="margin-top:2px">Гонки года</h2>
-    <p class="small muted" style="margin-top:4px">Запись открывается за месяц до старта. В команде до трёх машин; каждую ведёт свой пилот — вы сами, гонщик по контракту или приглашённый на одну гонку.</p>
-    <div style="margin-top:6px">${cur.length?cur.map(r=>raceItem(r,s)).join(''):'<p class="small muted" style="padding-block:10px">В этом году больших гонок нет.</p>'}</div></section>
+    ${prevCh.map(id=>champBlock(s,id,y-1)).join('')}`,ch.length?ch.map(id=>CHAMPS[id].name(y)).join(' · '):'в этом году чемпионатов нет')}
+  ${foldCard('rcal',true,`<h2>Гонки ${y} года</h2>${openR.length?'<span class="pill good">запись открыта</span>':''}`,`
+    <p class="small muted" style="margin-top:4px">Запись открывается за месяц до старта. В команде до трёх машин; каждую ведёт свой пилот — вы сами, гонщик по контракту или приглашённый на одну гонку. Во многих гонках едут и частники — любители на купленных машинах, в том числе на ваших.</p>
+    <div style="margin-top:6px">${cur.length?cur.map(r=>raceItem(r,s)).join(''):'<p class="small muted" style="padding-block:10px">В этом году больших гонок нет.</p>'}</div>`,`${cur.length} ${plural(cur.length,'гонка','гонки','гонок')}${openR.length?' · запись: '+openR.map(r=>esc(r.name)).join(', '):''}`)}
   ${teamCard(s)}
-  <section class="card"><span class="label">Трофеи</span><h2 style="margin-top:2px">${wins} ${plural(wins,'победа','победы','побед')} · ${(s.titles||[]).length} ${plural((s.titles||[]).length,'титул','титула','титулов')}</h2>
+  ${foldCard('trophy',false,`<h2>Трофеи</h2><span class="label">${wins} ${plural(wins,'победа','победы','побед')} · ${(s.titles||[]).length} ${plural((s.titles||[]).length,'титул','титула','титулов')}</span>`,`
     ${(s.titles||[]).length?`<div class="trophies">${s.titles.map(t=>`<span>🏆 ${esc(t.name)}</span>`).join('')}</div>`:''}
     <p class="small muted" style="margin-top:4px">Подиумов: ${pod}. Гонок: ${s.raceLog.length}.</p>
-    ${hist?`<table class="pl" style="margin-top:8px"><tr><th>Год</th><th>Гонка</th><th class="n">Место</th></tr>${hist}</table>`:''}</section>
-  ${nextMaj.length?`<section class="card"><span class="label">Анонс ${y+1}</span><div style="margin-top:6px">${nextMaj.map(r=>`<div class="race-item"><span class="mo">${MONTHS[r.m]} · ${hostName(r.c)} · ${RTYPE[r.t]}</span><h3>${esc(r.name)}</h3></div>`).join('')}</div></section>`:''}`;
+    ${hist?`<table class="pl" style="margin-top:8px"><tr><th>Год</th><th>Гонка</th><th class="n">Место</th></tr>${hist}</table>`:''}`,`подиумов ${pod} · гонок ${s.raceLog.length}`)}
+  ${nextMaj.length?foldCard('annc',false,`<h2>Анонс ${y+1}</h2>`,`<div style="margin-top:6px">${nextMaj.map(r=>`<div class="race-item"><span class="mo">${MONTHS[r.m]} · ${hostName(r.c)} · ${RTYPE[r.t]}</span><h3>${esc(r.name)}</h3></div>`).join('')}</div>`,nextMaj.map(r=>esc(r.name)).slice(0,3).join(' · ')):''}`;
 }
 Object.assign(RACE_ACT,{
   hire:d=>{const s=G,dr=DRIVERS.find(x=>x.id===d.k),f=driverFee(dr,s);if(!dr||s.cash<f||(s.drivers||[]).length>=3)return;s.cash-=f;s.drivers.push(dr.id);addLog(`${dr.n} подписал контракт с «${s.company}» (${money(f)}, жалованье ${money(driverSalary(dr,s))} в месяц).`,'good');checkAch();rerender();flushToasts();},
