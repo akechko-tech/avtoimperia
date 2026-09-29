@@ -218,12 +218,12 @@ function carStep(c,trk,dt){
   const load=c.thr*(0.35+0.65*Math.min(1,c.rpm)),cool=0.55+0.45*Math.min(1,sp/20),heatT=15+62*load*(1.3-0.5*c.rel)*(c.order==='push'?1.25:c.order==='save'?0.85:1)/cool;
   c.heat+=(heatT-c.heat)*Math.min(1,dt/(heatT>c.heat?7:11));
   if(c.heat>=100){c.overheat=4;c.heat=60;}if(c.overheat>0)c.overheat-=dt;
-  if(!c.dnf&&c.fin===null&&sp>3){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
+  if(!c.dnf&&c.fin===null&&sp>3&&c.prog>trk.raceLen*0.08){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
     const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
   const L=trk.segCol&&trk.segCol[c.idx];
-  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z;if(dx*dx+dz*dz>30)continue;const d=Math.hypot(dx,dz),rr=o.r+1.0;if(d<rr&&d>0.001){
+  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z;if(dx*dx+dz*dz>(o.r+2.5)*(o.r+2.5))continue;const d=Math.hypot(dx,dz),rr=o.r+1.0;if(d<rr&&d>0.001){
     const nx=dx/d,nz=dz/d;c.x=o.x+nx*rr;c.z=o.z+nz*rr;wallHit(c,nx,nz,0.15,1.3);}}
   if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1);}}
 }
@@ -242,10 +242,11 @@ function wallHit(c,nx,nz,e,dmgK){
   if(imp>2){c.dmg=Math.min(100,c.dmg+imp*dmgK);c.hit=Math.max(c.hit,imp);}
 }
 function carFailure(c){
-  const early=R.rc.y<1906,terminal=Math.random()<0.6;
+  // у своих машин механик почти всегда успевает починить на обочине; сход — только при тяжёлой поломке или после сильных ударов
+  const early=R.rc.y<1906,terminal=Math.random()<(c.you?0.12+Math.min(0.5,c.dmg/200):0.6);
   const what=pick(['мотор','зажигание','цепь привода','подшипник','рессора','карбюратор','радиатор',early?'цепь':'клапан']);
   if(terminal){c.dnf=what;c.thr=0;if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — ${what}`,2.5);}
-  else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ремонт на обочине — ${what}`,2);}
+  else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 function carsCollide(A,B){const dx=A.x-B.x,dz=A.z-B.z,d=Math.hypot(dx,dz),rr=2.1;if(d>=rr||d<0.001)return 0;
@@ -297,11 +298,13 @@ function aiTraffic(T){
 }
 const rKeys={left:false,right:false,gas:false,brake:false};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
-const RW={mode:'wheel',drag:null,target:0};
+const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
   const v=Math.max(0,c.vx),hist=G.diff==='hist';
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
-  const back=(0.35+0.75*Math.min(1,v/20))*dt;
+  const back=(1.6+1.4*Math.min(1,v/20))*dt;
+  // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
+  c.vy*=1-Math.min(0.3,dt*5);c.r*=1-Math.min(0.2,dt*2.5);
   if(R.tilt&&R.tiltVal!==undefined)c.steer+=clamp(clamp(R.tiltVal/22,-1,1)-c.steer,-4*dt,4*dt);
   else if(RW.drag)c.steer+=clamp(RW.target-c.steer,-7*dt,7*dt);
   else{const dir=rKeys.left?-1:rKeys.right?1:0;

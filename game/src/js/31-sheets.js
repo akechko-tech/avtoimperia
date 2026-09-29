@@ -34,7 +34,7 @@ function renderDesigner(){
     +(s.y>=1896||unlockedP(BODIES,s).some(b=>b.truck)?`<button class="chip ${kind==='van'?'on':''}" data-act="dclass" data-v="van">Фургон<small>для бизнеса</small></button>`:'')
     +(unlockedP(BODIES,s).some(b=>b.truck&&b.id!=='b6')?`<button class="chip ${kind==='truck'?'on':''}" data-act="dclass" data-v="truck">Грузовик<small>для бизнеса</small></button>`:'');
   openSheet(`<div class="row"><h2>Новая модель</h2>${X}</div>
-    <div class="carbox">${carArt(md,{anim:true})}</div>
+    <div class="carbox">${carArt(md,{anim:true})}</div>${(()=>{const n=rivalCar(kind,s.y)[1];return IMG[n]?photoHTML(n)+`<p class="small muted" style="margin-top:4px">Такие машины сейчас в моде: ${esc(n)}</p>`:'';})()}
     <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого машина</div><div class="chips">${classChips}</div>

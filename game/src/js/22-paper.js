@@ -1,5 +1,6 @@
 /* ================= NEWSPAPER ================= */
-function flavorLine(s){let f=FLAVOR[0][2];FLAVOR.forEach(x=>{if(x[0]<s.y||(x[0]===s.y&&x[1]<=s.m))f=x[2];});return f;}
+// Свежая новость держится пару месяцев, потом «Также в номере» перебирает события эпохи
+function flavorLine(s){const past=FLAVOR.filter(x=>x[0]<s.y||(x[0]===s.y&&x[1]<=s.m));if(!past.length)return FLAVOR[0][2];const L=past[past.length-1],age=(s.y-L[0])*12+s.m-L[1];return age<=3?L[2]:past[mi(s)%past.length][2];}
 function paperHTML(o,s){
   const M=MAST[s.country],md=o.car||(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0])||s.models[0];
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean);

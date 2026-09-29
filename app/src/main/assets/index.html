@@ -205,10 +205,11 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 #rReset{position:absolute;left:50%;bottom:14px;transform:translateX(-50%)}
 #rTilt.on{border-color:var(--brass);color:var(--brass)}
 .r-msg{position:absolute;left:0;right:0;top:40%;text-align:center;font-family:var(--display);font-weight:800;font-size:46px;color:var(--brass);text-shadow:0 3px 12px rgba(0,0,0,.7);pointer-events:none}
-.r-ctrl{display:grid;grid-template-columns:2.1fr 6px 1fr 1.25fr;gap:8px;padding:10px 12px;touch-action:none;user-select:none;-webkit-user-select:none}
+.r-ctrl{display:grid;grid-template-columns:1fr 1fr 0.9fr 1.1fr;gap:8px;padding:10px 12px;touch-action:none;user-select:none;-webkit-user-select:none}
 .r-wheel{height:84px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.06);touch-action:none;position:relative;overflow:hidden;cursor:grab}
 .r-wheel canvas{width:100%;height:100%;display:block;touch-action:none}
-.r-ctrl button{height:84px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.08);font-family:var(--display);font-weight:800;font-size:22px;color:var(--text);touch-action:none;cursor:pointer}
+.r-ctrl .lft,.r-ctrl .rgt{font-size:40px}
+.r-ctrl button{height:96px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.08);font-family:var(--display);font-weight:800;font-size:22px;color:var(--text);touch-action:none;cursor:pointer}
 .r-ctrl button.down{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
 .r-ctrl .gas{border-color:var(--brass);color:var(--brass)}
 .r-ctrl .brk{border-color:#8a4a44;color:var(--bad)}
@@ -371,7 +372,8 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
   <div class="r-bars"><div>МОТОР<div class="bar"><i id="bHeat" style="width:0;background:var(--good)"></i></div></div><div>ШИНЫ<div class="bar"><i id="bTyre" style="width:100%;background:var(--good)"></i></div></div><div>КУЗОВ<div class="bar"><i id="bDmg" style="width:100%;background:var(--good)"></i></div></div><div id="fuelBox">ТОПЛИВО<div class="bar"><i id="bFuel" style="width:100%;background:var(--brass)"></i></div></div></div>
   <div style="position:relative;flex:1;min-height:0;display:flex"><canvas id="rcv"></canvas><canvas id="rMap" width="180" height="180"></canvas><div class="r-board" id="rBoard"></div><div class="r-msg" id="rMsg"></div><button class="btn primary" id="rReset" hidden>Вернуться на трассу (+3 с)</button></div>
   <div class="r-ctrl" id="rCtrl">
-    <div class="r-wheel" id="rWheel" aria-label="Руль: ведите пальцем влево-вправо"><canvas id="rWheelC"></canvas></div><span></span>
+    <div class="r-wheel" id="rWheel" hidden><canvas id="rWheelC"></canvas></div>
+    <button class="lft" data-k="left" aria-label="Влево">◀</button><button class="rgt" data-k="right" aria-label="Вправо">▶</button>
     <button class="brk" data-k="brake">ТОРМОЗ</button><button class="gas" data-k="gas">ГАЗ</button>
   </div>
   <div class="r-mgr" id="rMgr" hidden></div>
@@ -1789,7 +1791,8 @@ function portraitHTML(key){const P=PIONEERS[key],im=P.wiki&&IMG[P.wiki];return i
 
 
 /* ================= NEWSPAPER ================= */
-function flavorLine(s){let f=FLAVOR[0][2];FLAVOR.forEach(x=>{if(x[0]<s.y||(x[0]===s.y&&x[1]<=s.m))f=x[2];});return f;}
+// Свежая новость держится пару месяцев, потом «Также в номере» перебирает события эпохи
+function flavorLine(s){const past=FLAVOR.filter(x=>x[0]<s.y||(x[0]===s.y&&x[1]<=s.m));if(!past.length)return FLAVOR[0][2];const L=past[past.length-1],age=(s.y-L[0])*12+s.m-L[1];return age<=3?L[2]:past[mi(s)%past.length][2];}
 function paperHTML(o,s){
   const M=MAST[s.country],md=o.car||(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0])||s.models[0];
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean);
@@ -1965,6 +1968,7 @@ function vModels(){
       <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><div>Себест.<b>${money(uc)}</b></div><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b></div></div>
       ${lostLine(md)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}
       <div class="carbox${enter}">${carArt(md,{anim:md.status==='prod'})}</div>
+      ${IMG[C.ref.name]?photoHTML(C.ref.name)+`<p class="small muted" style="margin-top:4px">Главный соперник: ${esc(C.ref.name)}</p>`:''}
       ${qbar(C.S,'Против соперника: '+C.ref.name)}
       ${fold('cmp'+md.id,'Что ценят покупатели',`<div>${cmpRows}</div><p class="small muted" style="margin-top:6px">●●● — главное для покупателей класса. 100% — как у соперника. Улучшения в КБ поднимают эти цифры у всех ваших машин.</p>`,false)}
       <p class="spec">${specLine(md,s)}</p>
@@ -2098,7 +2102,7 @@ function renderDesigner(){
     +(s.y>=1896||unlockedP(BODIES,s).some(b=>b.truck)?`<button class="chip ${kind==='van'?'on':''}" data-act="dclass" data-v="van">Фургон<small>для бизнеса</small></button>`:'')
     +(unlockedP(BODIES,s).some(b=>b.truck&&b.id!=='b6')?`<button class="chip ${kind==='truck'?'on':''}" data-act="dclass" data-v="truck">Грузовик<small>для бизнеса</small></button>`:'');
   openSheet(`<div class="row"><h2>Новая модель</h2>${X}</div>
-    <div class="carbox">${carArt(md,{anim:true})}</div>
+    <div class="carbox">${carArt(md,{anim:true})}</div>${(()=>{const n=rivalCar(kind,s.y)[1];return IMG[n]?photoHTML(n)+`<p class="small muted" style="margin-top:4px">Такие машины сейчас в моде: ${esc(n)}</p>`:'';})()}
     <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого машина</div><div class="chips">${classChips}</div>
@@ -2597,12 +2601,12 @@ function carStep(c,trk,dt){
   const load=c.thr*(0.35+0.65*Math.min(1,c.rpm)),cool=0.55+0.45*Math.min(1,sp/20),heatT=15+62*load*(1.3-0.5*c.rel)*(c.order==='push'?1.25:c.order==='save'?0.85:1)/cool;
   c.heat+=(heatT-c.heat)*Math.min(1,dt/(heatT>c.heat?7:11));
   if(c.heat>=100){c.overheat=4;c.heat=60;}if(c.overheat>0)c.overheat-=dt;
-  if(!c.dnf&&c.fin===null&&sp>3){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
+  if(!c.dnf&&c.fin===null&&sp>3&&c.prog>trk.raceLen*0.08){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
     const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
   const L=trk.segCol&&trk.segCol[c.idx];
-  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z;if(dx*dx+dz*dz>30)continue;const d=Math.hypot(dx,dz),rr=o.r+1.0;if(d<rr&&d>0.001){
+  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z;if(dx*dx+dz*dz>(o.r+2.5)*(o.r+2.5))continue;const d=Math.hypot(dx,dz),rr=o.r+1.0;if(d<rr&&d>0.001){
     const nx=dx/d,nz=dz/d;c.x=o.x+nx*rr;c.z=o.z+nz*rr;wallHit(c,nx,nz,0.15,1.3);}}
   if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1);}}
 }
@@ -2621,10 +2625,11 @@ function wallHit(c,nx,nz,e,dmgK){
   if(imp>2){c.dmg=Math.min(100,c.dmg+imp*dmgK);c.hit=Math.max(c.hit,imp);}
 }
 function carFailure(c){
-  const early=R.rc.y<1906,terminal=Math.random()<0.6;
+  // у своих машин механик почти всегда успевает починить на обочине; сход — только при тяжёлой поломке или после сильных ударов
+  const early=R.rc.y<1906,terminal=Math.random()<(c.you?0.12+Math.min(0.5,c.dmg/200):0.6);
   const what=pick(['мотор','зажигание','цепь привода','подшипник','рессора','карбюратор','радиатор',early?'цепь':'клапан']);
   if(terminal){c.dnf=what;c.thr=0;if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — ${what}`,2.5);}
-  else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ремонт на обочине — ${what}`,2);}
+  else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 function carsCollide(A,B){const dx=A.x-B.x,dz=A.z-B.z,d=Math.hypot(dx,dz),rr=2.1;if(d>=rr||d<0.001)return 0;
@@ -2676,11 +2681,13 @@ function aiTraffic(T){
 }
 const rKeys={left:false,right:false,gas:false,brake:false};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
-const RW={mode:'wheel',drag:null,target:0};
+const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
   const v=Math.max(0,c.vx),hist=G.diff==='hist';
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
-  const back=(0.35+0.75*Math.min(1,v/20))*dt;
+  const back=(1.6+1.4*Math.min(1,v/20))*dt;
+  // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
+  c.vy*=1-Math.min(0.3,dt*5);c.r*=1-Math.min(0.2,dt*2.5);
   if(R.tilt&&R.tiltVal!==undefined)c.steer+=clamp(clamp(R.tiltVal/22,-1,1)-c.steer,-4*dt,4*dt);
   else if(RW.drag)c.steer+=clamp(RW.target-c.steer,-7*dt,7*dt);
   else{const dir=rKeys.left?-1:rKeys.right?1:0;
@@ -2929,7 +2936,8 @@ function drawRaceCar(c,o,s,segs,k,half,cam,phase,W,H,night,clip,camS){
   // угол машины к лучу зрения (+ — нос вправо): курс к дороге, поворот дороги на экране, поворот камеры и то, левее или правее нас машина
   const rel=angWrap(angWrap(o.yaw-roadYaw)-th-cam.psi+Math.atan2(Lr,z)),near=o===R.follow||z<9;
   if(o!==R.follow&&z<1.6)return;
-  const sp=car3dSprite(o.spec3,rel,near,o),w=sp.wM*scale,h=sp.hM*scale;
+  // свою машину показываем почти строго сзади: в повороте она лишь чуть доворачивает, без бокового ракурса
+  const sp=car3dSprite(o.spec3,o===R.follow?clamp(rel*0.45,-0.2,0.2):rel,near,o),w=sp.wM*scale,h=sp.hM*scale;
   if(sx+w<0||sx-w>W||w<2)return;
   const bounce=(o.vx>3?Math.sin(R.time*25+o.num)*0.012*Math.min(1,o.vx/20)*(TERR[T.terrAt(o.idx)]||TERR.dirt).rough:0)*scale;
   c.save();if(o!==R.follow){c.beginPath();c.rect(0,0,W,clip);c.clip();if(z<2.6)c.globalAlpha=clamp((z-1.6)/1,0,1);}
@@ -2949,7 +2957,7 @@ const PUFF={};function puff(col){if(PUFF[col])return PUFF[col];const c=mkCanvas(
 function drawParticles(c,dt,W,H){R.parts=R.parts.filter(p=>(p.life-=dt||0.016)>0);if(R.parts.length>240)R.parts.splice(0,R.parts.length-240);
   R.parts.forEach(p=>{p.x+=p.vx*(dt||0.016);p.y+=p.vy*(dt||0.016);const k=1-p.life/p.max,r=p.r+p.gr*k;c.globalAlpha=(p.a||0.4)*(1-k)*Math.min(1,k*6+0.3);c.drawImage(puff(p.col),p.x-r,p.y-r,r*2,r*2);});c.globalAlpha=1;}
 /* ---------- табло, управление, приказы ---------- */
-function setupRaceUI(){
+function setupRaceUI(){RW.mode=steerMode();
   const drive=R.mode==='drive',ctl=document.getElementById('rCtrl'),mg=document.getElementById('rMgr');
   ctl.hidden=!drive;mg.hidden=drive;document.getElementById('rTilt').hidden=!drive;steerApply(steerMode());RW.used=0;document.getElementById('rCam').textContent=drive?'Вид':'Машина';
   if(!drive)renderMgr();
@@ -2981,10 +2989,10 @@ document.getElementById('rMus').addEventListener('click',()=>{auInit();if(!AU.on
 document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу
 const STEER_NAMES={wheel:'Колесо',keys:'Кнопки',tilt:'Наклон'};
-function steerMode(){return AU.on.steer||(AU.on.tilt?'tilt':'wheel');}
+function steerMode(){const m=AU.on.steer||(AU.on.tilt?'tilt':'keys');return m==='wheel'?'keys':m;}
 function steerApply(m){AU.on.steer=m;AU.on.tilt=m==='tilt';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}RW.mode=m;RW.drag=null;rKeys.left=rKeys.right=false;
   if(R){R.tilt=m==='tilt';}const b=document.getElementById('rTilt');if(b)b.textContent=STEER_NAMES[m];}
-document.getElementById('rTilt').addEventListener('click',async()=>{if(!R)return;const order=['wheel','keys','tilt'],m=order[(order.indexOf(steerMode())+1)%3];
+document.getElementById('rTilt').addEventListener('click',async()=>{if(!R)return;const order=['keys','tilt'],m=order[(order.indexOf(steerMode())+1)%3];
   if(m==='tilt'&&window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){try{const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted'){toast('Нет доступа к датчику наклона');steerApply('wheel');return;}}catch(_){}}
   steerApply(m);rMsg({wheel:'РУЛЬ: ВЕДИТЕ ПАЛЬЦЕМ',keys:'РУЛЬ: КНОПКИ ◀ ▶',tilt:'РУЛЬ: НАКЛОН'}[m],1.4);});
 document.getElementById('rMgr').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!R)return;const F=R.follow;

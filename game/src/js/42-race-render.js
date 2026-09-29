@@ -105,7 +105,8 @@ function drawRaceCar(c,o,s,segs,k,half,cam,phase,W,H,night,clip,camS){
   // угол машины к лучу зрения (+ — нос вправо): курс к дороге, поворот дороги на экране, поворот камеры и то, левее или правее нас машина
   const rel=angWrap(angWrap(o.yaw-roadYaw)-th-cam.psi+Math.atan2(Lr,z)),near=o===R.follow||z<9;
   if(o!==R.follow&&z<1.6)return;
-  const sp=car3dSprite(o.spec3,rel,near,o),w=sp.wM*scale,h=sp.hM*scale;
+  // свою машину показываем почти строго сзади: в повороте она лишь чуть доворачивает, без бокового ракурса
+  const sp=car3dSprite(o.spec3,o===R.follow?clamp(rel*0.45,-0.2,0.2):rel,near,o),w=sp.wM*scale,h=sp.hM*scale;
   if(sx+w<0||sx-w>W||w<2)return;
   const bounce=(o.vx>3?Math.sin(R.time*25+o.num)*0.012*Math.min(1,o.vx/20)*(TERR[T.terrAt(o.idx)]||TERR.dirt).rough:0)*scale;
   c.save();if(o!==R.follow){c.beginPath();c.rect(0,0,W,clip);c.clip();if(z<2.6)c.globalAlpha=clamp((z-1.6)/1,0,1);}
@@ -125,7 +126,7 @@ const PUFF={};function puff(col){if(PUFF[col])return PUFF[col];const c=mkCanvas(
 function drawParticles(c,dt,W,H){R.parts=R.parts.filter(p=>(p.life-=dt||0.016)>0);if(R.parts.length>240)R.parts.splice(0,R.parts.length-240);
   R.parts.forEach(p=>{p.x+=p.vx*(dt||0.016);p.y+=p.vy*(dt||0.016);const k=1-p.life/p.max,r=p.r+p.gr*k;c.globalAlpha=(p.a||0.4)*(1-k)*Math.min(1,k*6+0.3);c.drawImage(puff(p.col),p.x-r,p.y-r,r*2,r*2);});c.globalAlpha=1;}
 /* ---------- табло, управление, приказы ---------- */
-function setupRaceUI(){
+function setupRaceUI(){RW.mode=steerMode();
   const drive=R.mode==='drive',ctl=document.getElementById('rCtrl'),mg=document.getElementById('rMgr');
   ctl.hidden=!drive;mg.hidden=drive;document.getElementById('rTilt').hidden=!drive;steerApply(steerMode());RW.used=0;document.getElementById('rCam').textContent=drive?'Вид':'Машина';
   if(!drive)renderMgr();
@@ -157,10 +158,10 @@ document.getElementById('rMus').addEventListener('click',()=>{auInit();if(!AU.on
 document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу
 const STEER_NAMES={wheel:'Колесо',keys:'Кнопки',tilt:'Наклон'};
-function steerMode(){return AU.on.steer||(AU.on.tilt?'tilt':'wheel');}
+function steerMode(){const m=AU.on.steer||(AU.on.tilt?'tilt':'keys');return m==='wheel'?'keys':m;}
 function steerApply(m){AU.on.steer=m;AU.on.tilt=m==='tilt';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}RW.mode=m;RW.drag=null;rKeys.left=rKeys.right=false;
   if(R){R.tilt=m==='tilt';}const b=document.getElementById('rTilt');if(b)b.textContent=STEER_NAMES[m];}
-document.getElementById('rTilt').addEventListener('click',async()=>{if(!R)return;const order=['wheel','keys','tilt'],m=order[(order.indexOf(steerMode())+1)%3];
+document.getElementById('rTilt').addEventListener('click',async()=>{if(!R)return;const order=['keys','tilt'],m=order[(order.indexOf(steerMode())+1)%3];
   if(m==='tilt'&&window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){try{const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted'){toast('Нет доступа к датчику наклона');steerApply('wheel');return;}}catch(_){}}
   steerApply(m);rMsg({wheel:'РУЛЬ: ВЕДИТЕ ПАЛЬЦЕМ',keys:'РУЛЬ: КНОПКИ ◀ ▶',tilt:'РУЛЬ: НАКЛОН'}[m],1.4);});
 document.getElementById('rMgr').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!R)return;const F=R.follow;
