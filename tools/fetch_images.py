@@ -21,6 +21,25 @@ def get(url):
             if k == 3: raise
         time.sleep(2 ** k * 1.5)
 
+def shrink(path):
+    """Большие PNG (иллюстрации, сканы) — в JPEG до 720 px: APK и веб-версия легче в разы."""
+    try:
+        from PIL import Image
+    except Exception:
+        return
+    try:
+        with open(path, 'rb') as f: head = f.read(8)
+        if head != b'\x89PNG\r\n\x1a\n' and os.path.getsize(path) < 160e3: return
+        im = Image.open(path)
+        if im.width > 720: im = im.resize((720, round(im.height * 720 / im.width)), Image.LANCZOS)
+        if im.mode in ('RGBA', 'LA', 'P'):
+            im = im.convert('RGBA'); bg = Image.new('RGB', im.size, (242, 236, 220)); bg.paste(im, mask=im.split()[3]); im = bg
+        else:
+            im = im.convert('RGB')
+        im.save(path, 'JPEG', quality=82, optimize=True, progressive=True)
+    except Exception as e:
+        print('shrink', path, e)
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     titles = json.load(open(os.path.join(ROOT, 'tools', 'titles.json'), encoding='utf-8'))
@@ -56,7 +75,7 @@ def main():
             path = os.path.join(OUT, fn)
             if not os.path.exists(path):
                 try:
-                    open(path, 'wb').write(get(th)); time.sleep(0.2)
+                    open(path, 'wb').write(get(th)); shrink(path); time.sleep(0.2)
                 except Exception as e:
                     print('download error', name, e); continue
             for t in want.get(norm.get(pg['title'], pg['title']), []) + want.get(pg['title'], []):
@@ -81,7 +100,7 @@ def main():
             path = os.path.join(OUT, fn)
             if not os.path.exists(path):
                 try:
-                    open(path, 'wb').write(get(th['source'])); time.sleep(0.2)
+                    open(path, 'wb').write(get(th['source'])); shrink(path); time.sleep(0.2)
                 except Exception as e:
                     print('download error', name, e); continue
             v = {'src': 'img/' + fn, 'file': name}

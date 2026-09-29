@@ -17,6 +17,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
+      - name: Pillow для сжатия фото
+        run: python3 -m pip install --quiet --user --break-system-packages pillow || python3 -m pip install --quiet pillow || echo 'без Pillow'
       - name: Скачать исторические фото
         run: python3 tools/fetch_images.py || echo 'без фото'
       - name: Собрать APK
