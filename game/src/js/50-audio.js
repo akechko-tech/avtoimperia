@@ -162,7 +162,8 @@ function auRaceTick(){
   a.f.frequency.setTargetAtTime(350+p*1200+thr*500,t,0.08);a.g.gain.setTargetAtTime((R.t<0?0.05:(0.05+p*0.08+thr*0.07)*(me.overheat>0?0.4:1)*(me.dnf?0.2:1))*vol,t,0.08);
   // занос: чем сильнее срыв, тем громче и выше визг; на грунте — больше шороха, на асфальте — чистый тон
   const tr=TERR[R.trk.terrAt(me.idx)]||TERR.dirt,soft=tr.dust||tr===TERR.mud||tr===TERR.snow||tr===TERR.sand||tr===TERR.beach?1:0;
-  const skid=sp>3?clamp((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5+(me.spinw>0.3?0.25:0),0,1):0;
+  // шины начинают петь у предела сцепления (с 80% занятого), срываются — визжат во весь голос
+  const skid=sp>3?clamp(Math.max((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5,((me.gu||0)-0.8)*3.5)+(me.spinw>0.3?0.25:0),0,1):0;
   a.sq.o.frequency.setTargetAtTime(760+skid*420+sp*5,t,0.06);a.sq.g.gain.setTargetAtTime(skid*(soft?0.05:0.13)*vol,t,skid>0?0.04:0.08);a.sn.g.gain.setTargetAtTime(skid*(soft?0.2:0.11)*vol,t,0.05);
   // тормоза скрипят при сильном нажатии на ходу, громче — если машину при этом несёт
   const brk=(me.brk||0)>0.3&&sp>3&&R.t>0?clamp((me.brk-0.3)*1.4*(0.35+0.65*Math.min(1,sp/18))*(1+skid*0.8),0,1):0;

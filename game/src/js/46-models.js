@@ -3,6 +3,9 @@
 // Спрайт рисуется программно: поворот к камере, наклон камеры, свет и блики, тёмный контур, мягкая тень.
 const MATS={paint:{a:0.38,d:0.68,s:0.36,p:14},metal:{a:0.44,d:0.5,s:0.8,p:24},matte:{a:0.5,d:0.46,s:0.03,p:4},glass:{a:0.32,d:0.25,s:0.9,p:30,al:0.8},
   skin:{a:0.55,d:0.52,s:0.05,p:6},wall:{a:0.64,d:0.44,s:0.03,p:4},roof:{a:0.52,d:0.56,s:0.1,p:8},wood:{a:0.5,d:0.56,s:0.1,p:8},cloth:{a:0.5,d:0.54,s:0.02,p:4},leather:{a:0.44,d:0.56,s:0.14,p:10}};
+Object.keys(MATS).forEach(k=>MATS[k].k=k);
+// Метки граней для 3D: w — номер колеса (вращается и поворачивает), l — лампа (1 — задний фонарь, 2 — фара, 3 — водитель, 5 — фонарь улицы)
+const MTAG={w:0,l:0};
 const H2R={};function hex2rgb(h){if(H2R[h])return H2R[h];let v;if(h[0]==='#'){const n=parseInt(h.slice(1),16);v=[n>>16,n>>8&255,n&255];}else v=(h.match(/\d+/g)||[0,0,0]).slice(0,3).map(Number);return H2R[h]=v;}
 class Mesh{constructor(){this.F=[];this.lamps=[];}}
 let MLOD=1; // 1 — подробная модель (ближний план), 0 — упрощённая (дальний)
@@ -12,7 +15,7 @@ function mCenter(p){const c=[0,0,0];p.forEach(q=>{c[0]+=q[0];c[1]+=q[1];c[2]+=q[
 // Грань: нормаль разворачивается «от центра детали» ctr; two — видна с обеих сторон; deco — линии поверх грани
 function mFace(M,pts,col,mat,ctr,two,deco){
   let n=newell(pts);if(ctr){const m=mCenter(pts);if(n[0]*(m[0]-ctr[0])+n[1]*(m[1]-ctr[1])+n[2]*(m[2]-ctr[2])<0)n=n.map(v=>-v);}
-  const f={p:pts,n,col:hex2rgb(col),mat:MATS[mat||'paint'],two:!!two,deco:deco||null};M.F.push(f);return f;}
+  const f={p:pts,n,col:hex2rgb(col),mat:MATS[mat||'paint'],two:!!two,deco:deco||null,w:MTAG.w,l:MTAG.l};M.F.push(f);return f;}
 function mBox(M,x0,y0,z0,x1,y1,z1,col,mat,skip){const c=[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2];
   const F={b:[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]],f:[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],l:[[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],
     r:[[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]],t:[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],d:[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]]};
@@ -92,7 +95,9 @@ function carModel(S){
   const W={wood:y<1906?'#b58a52':'#9a7248',y,dcol:shade(col,-0.2)},kit=crewKit3(y);
   let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':S.wheel==='disc'?'disc':'wood';
   const G={}; // размеры
-  const wheels=(wb,t,rF,rR,tw,dual,solid)=>{[-1,1].forEach(sd=>{mWheel(M,sd*t/2,rF,wb/2,rF,tw,wt,W,solid);mWheel(M,sd*t/2,rR,-wb/2,rR,tw,wt,W,solid);if(dual)mWheel(M,sd*(t/2+tw+0.02),rR,-wb/2,rR,tw,wt,W,solid);});
+  // колесо помечается номером: в 3D оно крутится, передние ещё и поворачивают (радиус со знаком «−»)
+  M.wheels=[];const WH=(cx,cy,cz,r,tw,solid)=>{M.wheels.push([cx,cy,cz,cz>0?-r:r]);MTAG.w=M.wheels.length;mWheel(M,cx,cy,cz,r,tw,wt,W,solid);MTAG.w=0;};
+  const wheels=(wb,t,rF,rR,tw,dual,solid)=>{[-1,1].forEach(sd=>{WH(sd*t/2,rF,wb/2,rF,tw,solid);WH(sd*t/2,rR,-wb/2,rR,tw,solid);if(dual)WH(sd*(t/2+tw+0.02),rR,-wb/2,rR,tw,solid);});
     [-1,1].forEach(sd=>mBox(M,sd*0.36-0.035,rR-0.02,-wb/2-0.35,sd*0.36+0.035,rR+0.09,wb/2+0.3,dark,'matte'));
     mBox(M,-t/2,rR-0.025,-wb/2-0.025,t/2,rR+0.025,-wb/2+0.025,dark,'matte');mBox(M,-t/2,rF-0.025,wb/2-0.025,t/2,rF+0.025,wb/2+0.025,dark,'matte');};
   const radiator=(z,w,yb,yt,kind)=>{mBox(M,-w-0.03,yb-0.02,z,w+0.03,yt+0.03,z+0.07,brass,'metal');
@@ -101,11 +106,11 @@ function carModel(S){
     else{for(let k=-4;k<=4;k++)deco.push({a:[k*w/5,yb,z+0.08],b:[k*w/5,yt,z+0.08],w:0.01,c:'#55575c'});}g.deco=deco;};
   const hood=(z0,z1,w,yb,yt,louv)=>{const f=mLoft(M,[sec(z0,w,yb,yt,0.12),sec(z1,w*0.98,yb,yt-0.01,0.12)],col,'paint',false);
     if(louv)f.forEach(fc=>{if(Math.abs(fc.n[0])>0.9){const sd=Math.sign(fc.n[0]),x=sd*(w+0.004),deco=[];for(let k=0;k<6;k++){const zz=z1+(z0-z1)*(0.25+k*0.1);deco.push({a:[x,yb+0.12,zz],b:[x,yt-0.14,zz],w:0.012,c:shade(col,-0.45)});}fc.deco=deco;}});};
-  const lamps=(z,x,yy,r)=>{[-1,1].forEach(sd=>{mCylZ(M,sd*x,yy,r,z,z+0.14,8,brass,'metal','#f4ecd0');});};
-  const tailLamp=(z,x,yy)=>{mBox(M,x-0.045,yy-0.05,z-0.06,x+0.045,yy+0.05,z,'#6a1a14','metal');M.lamps.push([x,yy,z-0.07]);};
+  const lamps=(z,x,yy,r)=>{[-1,1].forEach(sd=>{const cp=mCylZ(M,sd*x,yy,r,z,z+0.14,8,brass,'metal','#f4ecd0');cp[1].l=2;});};
+  const tailLamp=(z,x,yy)=>{MTAG.l=1;mBox(M,x-0.045,yy-0.05,z-0.06,x+0.045,yy+0.05,z,'#6a1a14','metal');MTAG.l=0;M.lamps.push([x,yy,z-0.07]);};
   const seats=(z,xs,yb,back,sw)=>{xs.forEach(x=>{mBox(M,x-sw,yb,z-0.28,x+sw,yb+0.1,z+0.12,leather,'leather');mBox(M,x-sw,yb+0.05,z-0.36,x+sw,yb+back,z-0.26,leather,'leather');});};
   const runboard=(z0,z1,x,yy)=>{[-1,1].forEach(sd=>mBox(M,sd*x-0.16,yy-0.03,z0,sd*x+0.16,yy,z1,dark,'matte'));};
-  const drv=(x,seatY,z,handZ)=>{mCrew(M,x,seatY,z,kit,false,S,handZ);},mechc=(x,seatY,z)=>{mCrew(M,x,seatY,z,kit,true,S);};
+  const drv=(x,seatY,z,handZ)=>{MTAG.l=3;mCrew(M,x,seatY,z,kit,false,S,handZ);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];},mechc=(x,seatY,z)=>{mCrew(M,x,seatY,z,kit,true,S);};
   if(st==='carriage'){
     const wb=1.85,t=1.25,rF=0.4,rR=0.48;wt='wood';wheels(wb,t,rF,rR,0.06);
     mBox(M,-0.33,0.45,0.5,0.33,0.86,0.98,col,'paint');radiator(0.98,0.28,0.42,0.8,'coil');

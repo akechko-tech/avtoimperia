@@ -80,7 +80,8 @@ const ACT={
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
   audio:d=>{AU.on[d.k]=!AU.on[d.k];auApply();openSettings();},
-  ctlTilt:d=>{AU.on.steer=d.v;AU.on.tilt=d.v==='tilt';auApply();openSettings();}
+  ctlTilt:d=>{AU.on.steer=d.v;AU.on.tilt=d.v==='tilt';auApply();openSettings();},
+  gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});

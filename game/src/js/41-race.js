@@ -1,5 +1,7 @@
 /* ================= RACE ENGINE: track, vehicle physics, AI, lifecycle ================= */
 const GRAV=9.81;
+// Жёсткость шин (на рад угла увода) и «держалка» для машины игрока — подобраны так, чтобы машина ехала туда, куда смотрит нос
+const PHY={tk:11,hold:1};
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 // Покрытия: цвета псевдо-3D, сцепление, качение, живучесть шин, пыль, тряска
@@ -97,22 +99,42 @@ function buildTrack(rc,vref){
   placeScenery(trk,rnd);
   return trk;
 }
-function nearTrack(trk,x,z,rad,skip){const cx=Math.floor(x/30),cz=Math.floor(z/30);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;for(const i of L){if(skip!==undefined&&Math.abs(i-skip)<8)continue;const p=trk.pts[i];if((p[0]-x)**2+(p[2]-z)**2<rad*rad)return true;}}return false;}
-function addCollider(trk,x,z,r,kind,i){const o={x,z,r,kind};trk.col.push(o);if(!trk.segCol)trk.segCol=[];const n=trk.n;for(let k=-3;k<=3;k++){const j=trk.closed?((i+k)%n+n)%n:i+k;if(j<0||j>=n)continue;(trk.segCol[j]=trk.segCol[j]||[]).push(o);}}
+// Ближе ли точка к оси дороги, чем rad (по отрезкам между точками трассы); skip — не смотреть ±8 точек вокруг своей
+function nearTrack(trk,x,z,rad,skip){const cx=Math.floor(x/30),cz=Math.floor(z/30),n=trk.n,P=trk.pts;
+  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;
+    for(const i of L){if(skip!==undefined&&Math.abs(i-skip)<8)continue;for(const j of [i-1,i]){const j0=trk.closed?(j+n)%n:j,j1=trk.closed?(j+1)%n:j+1;if(j0<0||j1>=n)continue;
+      const A=P[j0],B=P[j1],dx=B[0]-A[0],dz=B[2]-A[2],l2=dx*dx+dz*dz||1;let t=((x-A[0])*dx+(z-A[2])*dz)/l2;t=t<0?0:t>1?1:t;const qx=A[0]+dx*t-x,qz=A[2]+dz*t-z;if(qx*qx+qz*qz<rad*rad)return true;}}}
+  return false;}
+// Твёрдые предметы: круг (r) или прямоугольник [вдоль дороги, поперёк, сдвиг вдоль, сдвиг к дороге] — как у 3D-моделей
+const SOLID={plane:{r:0.5},oak:{r:0.6},elm:{r:0.5},poplar:{r:0.32},cypress:{r:0.3},olive:{r:0.45},pine:{r:0.35},fir:{r:0.35},birch:{r:0.25},palm:{r:0.32},
+  bush:{r:1.0},rock:{r:1.6},hay:{r:1.8},dune:{r:3.4},cliff:{box:[6.5,2.2]},fence:{box:[5,0.12]},wall:{box:[5,0.35]},hedge:{box:[5.8,0.8]},vine:{box:[5.5,0.5]},
+  pole:{r:0.16},km:{r:0.3},sign:{r:0.14},lamp:{r:0.16},cart:{box:[2.8,0.95,-0.35]},billboard:{box:[4,0.25]},
+  house_fr:{box:[4.5,3.5]},farm_fr:{box:[5.5,3.25]},house_it:{box:[4,3.5]},fachwerk:{box:[4,3.5]},cottage:{box:[4,3]},pub:{box:[4,3.1]},farm_us:{box:[5,4.5,0,1]},barn:{box:[6,4]},izba:{box:[3.5,3]},
+  villa:{box:[6,4]},cafe:{box:[4.5,4.45,0,0.95]},church:{box:[9.4,4,-1.7]},pits:{box:[7.5,2.5]},stand:{box:[8,3.4]},crowd:{box:[2.8,0.6,0,-0.45]},marsh:{r:0.3},gend:{r:0.3},photo:{r:0.6}};
+// Препятствие у дороги: форма по типу, оси прямоугольника — вдоль дороги и к ней (как повёрнута 3D-модель)
+function solidAt(trk,t,i,off){const S=SOLID[t];if(!S)return null;const p=trk.pts[i],nn=trk.N[i],tt=trk.T[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;
+  if(S.r)return {x,z,r:S.r,kind:t};const sd=off>0?1:-1,ux=tt[0]*sd,uz=tt[1]*sd,vx=-nn[0]*sd,vz=-nn[1]*sd,[hu,hv,du,dv]=[S.box[0],S.box[1],S.box[2]||0,S.box[3]||0];
+  return {x:x+ux*du+vx*dv,z:z+uz*du+vz*dv,r:Math.hypot(hu,hv),kind:t,box:{ux,uz,vx,vz,hu,hv}};}
+// Не мешает ли предмет дороге: центр и углы дальше края дороги (с запасом)
+function solidClear(trk,o){const W=trk.W,m=W/2+0.6;if(!o.box)return !nearTrack(trk,o.x,o.z,m+o.r);const b=o.box;
+  for(const [a,c] of [[1,1],[1,-1],[-1,1],[-1,-1],[0,0],[1,0],[-1,0]]){const x=o.x+b.ux*b.hu*a+b.vx*b.hv*c,z=o.z+b.uz*b.hu*a+b.vz*b.hv*c;if(nearTrack(trk,x,z,m))return false;}return true;}
+function addCollider(trk,x,z,r,kind,i,o){o=o||{x,z,r,kind};trk.col.push(o);if(!trk.segCol)trk.segCol=[];const n=trk.n,sp=Math.ceil((o.r||r)/trk.step)+2;for(let k=-sp;k<=sp;k++){const j=trk.closed?((i+k)%n+n)%n:i+k;if(j<0||j>=n)continue;(trk.segCol[j]=trk.segCol[j]||[]).push(o);}}
 // Декорации вдоль трассы: t — тип спрайта, off — смещение от оси (м, + влево), v — вариант
 function placeScenery(trk,rnd){
-  const {n,W,cfg,pts,N}=trk,set=SCEN_SETS[cfg.host],spr=trk.spr;for(let i=0;i<n;i++){spr.push([]);trk.bar.push(null);}
-  const add=(i,t,off,v,kind,colR)=>{i=((i%n)+n)%n;const p=pts[i],nn=N[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;if(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i))return false;
-    spr[i].push({t,off,v:v||0,k:kind||'s'});if(colR)addCollider(trk,x,z,colR,t,i);return true;};
+  const {n,W,cfg,pts,N}=trk,set=SCEN_SETS[cfg.host],spr=trk.spr;trk.town=new Uint8Array(n);for(let i=0;i<n;i++){spr.push([]);trk.bar.push(null);}
+  const add=(i,t,off,v,kind,colR)=>{i=((i%n)+n)%n;const p=pts[i],nn=N[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;
+    const o=solidAt(trk,t,i,off);if(o?!solidClear(trk,o):(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i)))return false;
+    spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
   const townAt=i=>cfg.town&&!cfg.oval&&(Math.floor(i/150)%3===1)&&(i%150)>8&&(i%150)<60;
   let alley=0;
   for(let i=0;i<n;i++){
-    const tr=trk.terrAt(i),town=townAt(i)||(trk.rc.track==='monaco');
+    const tr=trk.terrAt(i),town=townAt(i)||(trk.rc.track==='monaco');if(town)trk.town[i]=1;
     if(cfg.oval){if(i%5===0&&(i%150)<75){add(i,'stand',-(W/2+10),0,'s',0);}if(i%7===3)add(i,'fence',W/2+2,0);if(i%9===0&&rnd()<0.6)add(i,rnd()<0.5?'elm':'oak',W/2+14+rnd()*10,0,'s',0.6);continue;}
-    if(tr==='beach'){if(i%3===0)add(i,'sea',W/2+14,0);if(i%9===0)add(i,'dune',-(W/2+12+rnd()*8));if(i%11===0&&rnd()<cfg.crowd)add(i,'crowd',-(W/2+4),Math.floor(rnd()*4),'p');continue;}
+    if(tr==='beach'){trk.bar[i]={L:W/2+11};if(i%3===0)add(i,'sea',W/2+14,0);if(i%9===0)add(i,'dune',-(W/2+12+rnd()*8));if(i%11===0&&rnd()<cfg.crowd)add(i,'crowd',-(W/2+4),Math.floor(rnd()*4),'p');continue;}
     if(town){
-      if(i%4===0){[-1,1].forEach(sd=>{const t=set.town[Math.floor(rnd()*set.town.length)];if(add(i,t,sd*(W/2+6.5+rnd()*1.5),Math.floor(rnd()*3),'s',3.5))trk.bar[i]=Object.assign(trk.bar[i]||{},sd>0?{L:W/2+2.5}:{R:W/2+2.5});});}
+      trk.bar[i]={L:W/2+2.2,R:W/2+2.2};
+      if(i%4===0){[-1,1].forEach(sd=>{const t=set.town[Math.floor(rnd()*set.town.length)];add(i,t,sd*(W/2+7+rnd()*1.5),Math.floor(rnd()*3),'s',3.5);});}
       if(i%150===34)add(i,'church',-(W/2+9),0,'s',4);
       if(i%6===2)add(i,'lamp',(i%12===2?1:-1)*(W/2+1.8),0,'s',0.25);
       if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+2.8),Math.floor(rnd()*4),'p');
@@ -135,7 +157,8 @@ function placeScenery(trk,rnd){
     const ah=i+14;if((cfg.closed||ah<n)&&Math.abs(trk.K[ah%n])>1/45&&Math.abs(trk.K[i])<1/200&&i%4===0){const sd=trk.K[ah%n]>0?-1:1;add(i,'sign',sd*(W/2+2.4),trk.K[ah%n]>0?0:1,'s',0.3);}
   }
   // старт, финиш, трибуны, боксы
-  const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});
+  const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});[1,-1].forEach(sd=>{const p=pts[fi],nn=N[fi];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',fi);});
+  if(!cfg.closed){const si=Math.min(n-1,trk.startIdx+1);[1,-1].forEach(sd=>{const p=pts[si],nn=N[si];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',si);});}
   if(cfg.closed||cfg.crowd>0.3){[-9,-4,1].forEach(k=>{const i=((fi+k)%n+n)%n;spr[i].push({t:'stand',off:-(W/2+9),v:0,k:'s'});});for(let k=-8;k<=4;k+=2){const i=((fi+k)%n+n)%n;spr[i].push({t:'crowd',off:W/2+3.5,v:Math.abs(k)%4,k:'p'});}}
   if(cfg.pits){const pi=(n-18)%n;spr[pi].push({t:'pits',off:W/2+8,v:0,k:'s'});}
 }
@@ -148,7 +171,7 @@ class RaceCar{constructor(e){
   this.x=0;this.z=0;this.y=0;this.gy=0;this.yaw=0;this.vx=0;this.vy=0;this.r=0;this.delta=0;this.gear=1;this.rpm=0;this.shift=0;this.thr=0;this.brk=0;this.steer=0;
   this.idx=0;this.lat=0;this.segT=0;this.lap=0;this.prog=0;this.fin=null;this.lapSeen=-9;this.q=0;this.lane=0;this.laneT=undefined;this.follow=null;
   this.heat=0;this.tyre=0;this.fuel=100;this.eng=0;this.dmg=0;this.punct=false;this.punctN=0;this.dnf=null;this.stopT=0;this.stopWhy='';this.pitT=0;this.order='norm';this.pitCall=false;
-  this.slipR=0;this.slipF=0;this.spinw=0;this.off=0;this.stuck=0;this.lastIdx=0;this.overheat=0;this.limp=false;this.fix=0;this.draft=0;this.hit=0;this.err=0;this.st2=0;this.parked=0;this.outT=0;
+  this.slipR=0;this.slipF=0;this.gu=0;this.spinw=0;this.off=0;this.stuck=0;this.lastIdx=0;this.overheat=0;this.limp=false;this.fix=0;this.draft=0;this.hit=0;this.err=0;this.st2=0;this.parked=0;this.outT=0;
   this.tyreRate=0;this.punctRate=0;this.fuelRate=0;this.wheelChange=0;this.style='';this.wheel='';this.mech=false;this.spriteKey='';this.spec3=null;this.angI=0;this.angN=false;this.hold=0;this.punctSaid=0;this.skidSaid=0;this.fuelSaid=0;}}
 function mkRaceCar(e,y,trk){
   const st=carStats(e.md,e.prep,y),terr=TERR[trk.cfg.terr]||TERR.dirt,c=new RaceCar(e);
@@ -191,15 +214,17 @@ function carStep(c,trk,dt){
   const Fxmax=mu*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
   const drag=c.kd*v*Math.abs(v)+crr*c.m*GRAV*Math.sign(v);
   const sp=Math.abs(v);
-  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;}
+  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;c.gu*=0.9;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;}
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
-    const sat=(a,Fz,capK)=>{const x=11*a;const f=Math.tanh(x)*(1-0.12*Math.min(1,Math.max(0,Math.abs(x)-1.6)/3));return -mu*Fz*capK*f;};
+    const sat=(a,Fz,capK)=>{const x=PHY.tk*a;const f=Math.tanh(x)*(1-0.12*Math.min(1,Math.max(0,Math.abs(x)-1.6)/3));return -mu*Fz*capK*f;};
     const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(mu*Fzr+1)),2)));
     const Fyf=sat(af,Fzf,1),Fyr=sat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)));
     const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
     const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz;
     c.vx+=dvx*dt;c.vy+=dvy*dt;c.r+=dr*dt;c.r*=0.9995;c.slipR=Math.abs(ar);c.slipF=Math.abs(af);
+    // сколько сцепления шин уже занято (1 — предел): боковая сила по углу увода + тяга или торможение
+    const gl=Math.tanh(PHY.tk*Math.max(c.slipF,c.slipR)),gx=Math.min(1.3,Math.abs(Fx)/(mu*c.m*GRAV+1));c.gu+=(Math.min(1.5,Math.hypot(gl,gx)+spin*0.5)-c.gu)*Math.min(1,dt*20);
   }
   c.spinw=spin;
   if(Math.abs(c.vx)<0.05&&c.thr<0.05&&c.brk<0.05){c.vx=0;c.vy*=0.5;}
@@ -223,10 +248,25 @@ function carStep(c,trk,dt){
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
   const L=trk.segCol&&trk.segCol[c.idx];
-  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z;if(dx*dx+dz*dz>(o.r+2.5)*(o.r+2.5))continue;const d=Math.hypot(dx,dz),rr=o.r+1.0;if(d<rr&&d>0.001){
-    const nx=dx/d,nz=dz/d;c.x=o.x+nx*rr;c.z=o.z+nz*rr;wallHit(c,nx,nz,0.15,1.3);}}
+  if(L)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
   if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1);}}
 }
+// Машина — капсула вдоль курса (от заднего до переднего свеса), радиус — полширины
+const CAR_R=0.78;
+function carCapsule(c){const h=Math.max(0.6,(c.L||2.5)/2-0.2),fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);return [c.x-fx*h,c.z-fz*h,c.x+fx*h,c.z+fz*h];}
+function segPt(ax,az,bx,bz,px,pz){const dx=bx-ax,dz=bz-az,l2=dx*dx+dz*dz||1;let t=((px-ax)*dx+(pz-az)*dz)/l2;t=t<0?0:t>1?1:t;return [ax+dx*t,az+dz*t];}
+// Ближайшие точки двух отрезков на плоскости
+function segSeg(S,Q){const d1x=S[2]-S[0],d1z=S[3]-S[1],d2x=Q[2]-Q[0],d2z=Q[3]-Q[1],rx=S[0]-Q[0],rz=S[1]-Q[1],a=d1x*d1x+d1z*d1z||1e-9,e=d2x*d2x+d2z*d2z||1e-9,f=d2x*rx+d2z*rz,c=d1x*rx+d1z*rz,b=d1x*d2x+d1z*d2z,den=a*e-b*b;
+  let s=den>1e-9?clamp((b*f-c*e)/den,0,1):0,t=(b*s+f)/e;if(t<0){t=0;s=clamp(-c/a,0,1);}else if(t>1){t=1;s=clamp((b-c)/a,0,1);}
+  return [S[0]+d1x*s,S[1]+d1z*s,Q[0]+d2x*t,Q[1]+d2z*t];}
+// Столкновение с препятствием: круг (дерево, столб) или прямоугольник (дом, забор, трибуна, толпа)
+function obstacleHit(c,o){const [ax,az,bx,bz]=carCapsule(c);
+  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R;if(d>=rr)return;const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3);return;}
+  const b=o.box;let best=null;
+  for(let k=0;k<=4;k++){const t=k/4,px=ax+(bx-ax)*t,pz=az+(bz-az)*t,lx=(px-o.x)*b.ux+(pz-o.z)*b.uz,lz=(px-o.x)*b.vx+(pz-o.z)*b.vz,cx=clamp(lx,-b.hu,b.hu),cz=clamp(lz,-b.hv,b.hv),dx=lx-cx,dz=lz-cz,d=Math.hypot(dx,dz);let pen,nl;
+    if(d>1e-4){if(d>=CAR_R)continue;pen=CAR_R-d;nl=[dx/d,dz/d];}else{const ex=b.hu-Math.abs(lx),ez=b.hv-Math.abs(lz);if(ex<ez){nl=[Math.sign(lx)||1,0];pen=ex+CAR_R;}else{nl=[0,Math.sign(lz)||1];pen=ez+CAR_R;}}
+    if(!best||pen>best.pen)best={pen,nl};}
+  if(!best)return;const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2);}
 // Удар о препятствие с нормалью (nx,nz), направленной к машине: поперечная скорость отражается с потерей,
 // продольная теряет лишь трение удара, а сам удар разворачивает машину вдоль стены — она скользит и уходит от неё, а не липнет
 function wallHit(c,nx,nz,e,dmgK){
@@ -249,13 +289,17 @@ function carFailure(c){
   else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
-function carsCollide(A,B){const dx=A.x-B.x,dz=A.z-B.z,d=Math.hypot(dx,dz),rr=2.1;if(d>=rr||d<0.001)return 0;
-  const nx=dx/d,nz=dz/d,push=(rr-d)/2;A.x+=nx*push;A.z+=nz*push;B.x-=nx*push;B.z-=nz*push;
+// Машины — капсулы: сталкиваются корпусами (нос в корму тоже), удар в угол разворачивает
+function carsCollide(A,B){const dx0=A.x-B.x,dz0=A.z-B.z;if(dx0*dx0+dz0*dz0>26)return 0;
+  const S=carCapsule(A),Q=carCapsule(B),[px,pz,qx,qz]=segSeg(S,Q),ddx=px-qx,ddz=pz-qz,d=Math.hypot(ddx,ddz),rr=CAR_R*2;if(d>=rr)return 0;
+  const l0=Math.hypot(dx0,dz0)||1,nx=d>1e-4?ddx/d:dx0/l0,nz=d>1e-4?ddz/d:dz0/l0,push=(rr-d)/2;A.x+=nx*push;A.z+=nz*push;B.x-=nx*push;B.z-=nz*push;
   const V=c=>[Math.sin(c.yaw)*c.vx+Math.cos(c.yaw)*c.vy,Math.cos(c.yaw)*c.vx-Math.sin(c.yaw)*c.vy];
   const va=V(A),vb=V(B),rel=(va[0]-vb[0])*nx+(va[1]-vb[1])*nz;if(rel>=0)return 0;
   const j=-(1.3)*rel/2;const na=[va[0]+j*nx,va[1]+j*nz],nb=[vb[0]-j*nx,vb[1]-j*nz];
   const set=(c,w)=>{const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw);c.vx=w[0]*fx+w[1]*fz;c.vy=w[0]*rx+w[1]*rz;};set(A,na);set(B,nb);
-  A.r+=(Math.random()-0.5)*0.6;B.r+=(Math.random()-0.5)*0.6;const imp=-rel,dk=(A.you||B.you)?0.6:0.25;if(imp>1.5){A.dmg=Math.min(100,A.dmg+imp*dk);B.dmg=Math.min(100,B.dmg+imp*dk);}return imp;}
+  // вращение от удара: плечо от центра до точки касания
+  const mz=(c,lx,lz,jx,jz)=>{c.r=clamp(c.r+(lz*jx-lx*jz)*12/(1.4*((c.L||2.5)**2+1.9)),-2.5,2.5);};mz(A,px-A.x,pz-A.z,j*nx,j*nz);mz(B,qx-B.x,qz-B.z,-j*nx,-j*nz);
+  const imp=-rel,dk=(A.you||B.you)?0.6:0.25;if(imp>1.5){A.dmg=Math.min(100,A.dmg+imp*dk);B.dmg=Math.min(100,B.dmg+imp*dk);}return imp;}
 /* ---------- пилоты: ИИ и игрок ---------- */
 function aiControl(c,trk,dt){
   const {pts,n,closed,step}=trk,sk=c.sk||0.8,v=Math.max(0,c.vx);
@@ -304,7 +348,7 @@ function playerControl(c,dt){
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
-  c.vy*=1-Math.min(0.3,dt*5);c.r*=1-Math.min(0.2,dt*2.5);
+  if(PHY.hold){c.vy*=1-Math.min(0.3,dt*5*PHY.hold);c.r*=1-Math.min(0.2,dt*2.5*PHY.hold);}
   if(R.tilt&&R.tiltVal!==undefined)c.steer+=clamp(clamp(R.tiltVal/22,-1,1)-c.steer,-4*dt,4*dt);
   else if(RW.drag)c.steer+=clamp(RW.target-c.steer,-7*dt,7*dt);
   else{const dir=rKeys.left?-1:rKeys.right?1:0;
@@ -354,7 +398,7 @@ function startRace(setup){
   document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
   document.getElementById('fuelBox').style.visibility=trk.cfg.pits?'visible':'hidden';
   document.getElementById('hLapL').firstChild.textContent=trk.cfg.laps>1?'Круг':'Дистанция';
-  setupRaceUI();setupRender();auRaceStart(rc);R.lastT=performance.now();rRaf=requestAnimationFrame(raceLoop);
+  document.getElementById('rTips').hidden=true;setupRaceUI();setupRender();auRaceStart(rc);driveTipsAtStart();R.lastT=performance.now();rRaf=requestAnimationFrame(raceLoop);
 }
 // Соперники: заводские команды своего года (те же, что и в зачёте сезона), с реальными пилотами
 function fieldTeams(rc,s,nTeam){
@@ -408,7 +452,8 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.tyre>=100?'ШИНЫ СТЁРТЫ!':'ПРОКОЛ!',2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
     if(me.fuel<12&&T.cfg.pits&&!me.fuelSaid){me.fuelSaid=1;rMsg('В БОКСЫ: сбавьте ход у финишной линии',2.5);}
-    me.stuck=(Math.abs(me.lat)>T.W/2+8||me.vx<1.5)&&R.t>2&&!me.stopT&&!me.pitT&&!me.punct&&!me.dnf?me.stuck+dt:0;}
+    me.stuck=(Math.abs(me.lat)>T.W/2+8||me.vx<1.5)&&R.t>2&&!me.stopT&&!me.pitT&&!me.punct&&!me.dnf?me.stuck+dt:0;
+    if(Math.abs(me.lat)>T.W/2+32&&!me.dnf){respawn(me);R.time+=3;rMsg('ВНЕ ТРАССЫ · +3 с',1.6);}}
   R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
     if((!c.player)&&!c.dnf&&!(c.stopT>0)&&!(c.pitT>0)&&!c.punct&&c.fin===null&&R.t>4){const bad=Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5;
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
@@ -427,6 +472,7 @@ function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];
 function raceLoop(now){
   if(!R||R.done)return;
   const dt=Math.min(0.05,(now-R.lastT)/1000);R.lastT=now;
+  if(R.hold){renderRace(dt);rRaf=requestAnimationFrame(raceLoop);return;}
   for(let k=0;k<(R.speed||1);k++){R.t+=dt;if(R.t>0){R.time+=dt;if(R.me)playerControl(R.me,dt);}raceTick(dt);if(!R||R.done)break;}
   if(R&&!R.done){renderRace(dt);auRaceTick();}
   if(R&&!R.done)rRaf=requestAnimationFrame(raceLoop);
@@ -441,7 +487,7 @@ function finishRace(quit){
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
   const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0}));
-  document.getElementById('raceScreen').hidden=true;
+  document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
   const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
   raceResults(rc,res,mode,info);
 }

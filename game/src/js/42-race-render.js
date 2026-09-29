@@ -1,16 +1,23 @@
 /* ================= RACE RENDER: pseudo-3D road over real physics, sprites, HUD ================= */
 const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
+// 3D (WebGL2), если телефон умеет; иначе — прежняя псевдо-3D картинка
 function setupRender(){
+  R.gl=false;if(r3dWanted()){try{r3dSetup();R.gl=true;}catch(e){console.error(e);R.gl=false;try{r3dDispose();}catch(_){}}}
+  if(!R.gl){const g=document.getElementById('rgl');if(g)g.hidden=true;document.getElementById('rcv').hidden=false;}
+  setupRender2d(!R.gl);
+}
+function setupRender2d(full){
   const T=R.trk,F=R.follow;R.cam={lat:F?F.lat:0,psi:0,y:F?F.y:0,sky:0,phaseT:0,phase:0};
   const mc=document.getElementById('rMap');const g=mc.getContext('2d');const W=mc.width=180,H=mc.height=180;let mnx=1e9,mxx=-1e9,mnz=1e9,mxz=-1e9;T.pts.forEach(p=>{mnx=Math.min(mnx,p[0]);mxx=Math.max(mxx,p[0]);mnz=Math.min(mnz,p[2]);mxz=Math.max(mxz,p[2]);});
   const scl=Math.min((W-20)/(mxx-mnx||1),(H-20)/(mxz-mnz||1));R.map={g,W,H,f:(x,z)=>[10+(x-mnx)*scl+((W-20)-(mxx-mnx)*scl)/2,H-10-(z-mnz)*scl-((H-20)-(mxz-mnz)*scl)/2]};
   const off=document.createElement('canvas');off.width=W;off.height=H;const og=off.getContext('2d');og.strokeStyle='rgba(255,255,255,.85)';og.lineWidth=3;og.beginPath();T.pts.forEach((p,i)=>{const [x,y]=R.map.f(p[0],p[2]);i?og.lineTo(x,y):og.moveTo(x,y);});if(T.closed)og.closePath();og.stroke();R.map.bg=off;
-  const set=SCEN_SETS[T.cfg.host];R.bg=mkBackdrop(set,T.cfg);
+  if(full===false)return;const set=SCEN_SETS[T.cfg.host];R.bg=mkBackdrop(set,T.cfg);
   car3dQueue(R.cars.map(c=>c.spec3),F&&F.spec3);scenQueue(T);
 }
 function renderRace(dt){
-  const cv=document.getElementById('rcv');if(!cv||!R)return;
+  if(R&&R.gl){try{r3dRender(dt);}catch(e){console.error(e);r3dFail('error');}if(R&&R.gl){raceMiniMap();updateRaceHUD();return;}}
+  const cv=document.getElementById('rcv');if(!cv||!R)return;if(!R.bg)setupRender2d(true);
   // чёткость подстраивается под телефон: если кадры тянутся дольше ~27 мс, рисуем чуть крупнее пиксель
   R.ftAvg=(R.ftAvg||0.016)*0.95+Math.min(0.1,dt||0.016)*0.05;if(R.t>1.5&&R.ftAvg>0.027&&(R.dprK||1)>0.6){R.dprK=(R.dprK||1)-0.125;R.ftAvg=0.018;}
   const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1)*(R.dprK||1)),W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;
@@ -91,10 +98,10 @@ function renderRace(dt){
   const sp=Math.max(0,F.vx)/Math.max(1,F.vtop);if(sp>0.8&&!night){c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=1.5;for(let i=0;i<8;i++){const a=(i*0.7+R.time*3)%1,side=i%2?1:-1,sx=W/2+side*W*(0.3+a*0.25);c.beginPath();c.moveTo(sx,H*0.55+a*H*0.4);c.lineTo(sx+side*W*0.06,H*0.6+a*H*0.45);c.stroke();}}
   if(F.pitT>0||F.stopT>0){c.fillStyle='rgba(0,0,0,.25)';c.fillRect(0,0,W,H);}
   if(R.mode==='drive'&&RW.mode==='wheel'&&!RW.used&&R.time<10){const wz=document.getElementById('rWheel'),cx=wz?wz.offsetLeft+wz.offsetWidth/2:W*0.27;c.font='600 14px system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';const tw=c.measureText('ведите пальцем по рулю').width+22,lx=Math.max(tw/2+8,cx);rrect(c,lx-tw/2,H-34,tw,26,13,'rgba(10,16,24,.72)');c.fillStyle='#e9c46a';c.fillText('ведите пальцем по рулю',lx,H-21);c.beginPath();c.moveTo(cx-7,H-8);c.lineTo(cx+7,H-8);c.lineTo(cx,H-1);c.closePath();c.fill();}
-  // мини-карта
-  const m=R.map;if(m){m.g.clearRect(0,0,m.W,m.H);m.g.drawImage(m.bg,0,0);R.cars.forEach(o=>{const [x,y]=m.f(o.x,o.z);m.g.fillStyle=o===F?'#ffd66b':o.you?'#f0c75e':o.dnf?'#555':'#fff';m.g.beginPath();m.g.arc(x,y,o===F?5:3.2,0,7);m.g.fill();});}
-  updateRaceHUD();drawWheelUI();
+  raceMiniMap();updateRaceHUD();drawWheelUI();
 }
+// мини-карта
+function raceMiniMap(){const m=R.map,F=R.follow;if(m){m.g.clearRect(0,0,m.W,m.H);m.g.drawImage(m.bg,0,0);R.cars.forEach(o=>{const [x,y]=m.f(o.x,o.z);m.g.fillStyle=o===F?'#ffd66b':o.you?'#f0c75e':o.dnf?'#555':'#fff';m.g.beginPath();m.g.arc(x,y,o===F?5:3.2,0,7);m.g.fill();});}}
 // Ночная копия спрайта: затемнение только по нарисованным пикселям (без тёмных прямоугольников)
 function nightOf(sp){if(sp.night)return sp.night;const cv=mkCanvas(sp.img.width,sp.img.height),g=cv.getContext('2d');g.drawImage(sp.img,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='rgba(6,9,20,.62)';g.fillRect(0,0,cv.width,cv.height);sp.night={img:cv,wM:sp.wM,hM:sp.hM,ax:sp.ax,ay:sp.ay};return sp.night;}
 function drawRaceCar(c,o,s,segs,k,half,cam,phase,W,H,night,clip,camS){
@@ -148,14 +155,45 @@ function updateRaceHUD(){
   document.getElementById('rReset').hidden=!(R.me&&R.me.stuck>2.5);
   const lead=order[0],board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard');if(bd.dataset.t!==String(Math.floor(R.time*2))){bd.dataset.t=String(Math.floor(R.time*2));bd.innerHTML=board;}
+  raceAssistHUD();
   const m=document.getElementById('rMsg');
   m.textContent=R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
   m.classList.toggle('small',m.textContent.length>14);
 }
+/* ---------- подсказки водителю: ближайший поворот и его скорость, сцепление шин ---------- */
+// Ближайший поворот впереди (до 200 м): сторона, скорость, с которой шины его удержат, расстояние, нужно ли тормозить
+function paceNote(F){const T=R.trk,n=T.n,st=T.step,tr=TERR[T.terrAt(F.idx)]||TERR.dirt,mu=tr.mu*F.grip*(1-0.3*Math.min(1,F.tyre/100))*(F.punct?0.72:1)*1.08;
+  let j0=-1,kmax=0,dir=0;for(let d=0;d<50;d++){let j=F.idx+d;if(T.closed)j%=n;else if(j>=n)break;const k=T.K[j];
+    if(j0<0){if(Math.abs(k)>1/75){j0=d;dir=Math.sign(k);kmax=Math.abs(k);}}else{if(Math.sign(k)===dir&&Math.abs(k)>1/160)kmax=Math.max(kmax,Math.abs(k));else break;}}
+  if(j0<0)return null;const vc=Math.sqrt(mu*GRAV/kmax);if(vc>F.vtop*0.97)return null;
+  const v=Math.max(0,F.vx),dist=Math.max(0,j0*st-(F.segT||0)*st),bdec=F.brakeK*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0;
+  return {dir,kmh:Math.max(5,Math.round(vc*3.6/5)*5),dist,lvl:v<=vc*1.04?'ok':need>dist*0.9?'bad':'warn',hair:1/kmax<20};}
+function raceAssistHUD(){const me=R.me,note=document.getElementById('rNote'),grip=document.getElementById('rGrip');
+  const on=me&&R.mode==='drive'&&!me.dnf&&me.fin===null&&!(me.stopT>0)&&!(me.pitT>0);
+  const pn=on&&R.t>0?paceNote(me):null;
+  const sig=pn?pn.dir+'|'+pn.kmh+'|'+pn.lvl+'|'+Math.round(pn.dist/10)+'|'+pn.hair:'';
+  if(note.dataset.s!==sig){note.dataset.s=sig;note.hidden=!pn;if(pn){note.className='r-note '+pn.lvl;note.firstChild.textContent=(pn.dir>0?'↰ ':'↱ ')+pn.kmh;
+    note.lastChild.textContent=pn.lvl==='bad'?'ТОРМОЗИ!':pn.dist<6?(pn.hair?'шпилька · км/ч':'поворот · км/ч'):'через '+Math.round(pn.dist/10)*10+' м · км/ч';}}
+  const g=on&&R.t>0?me.gu||0:-1,lv=g<0?-1:Math.min(5,Math.round(g*5)),cls=g<0?'':g>0.95||me.slipR>0.16?'g3':g>0.75?'g2':'g1',gs=lv+cls;
+  if(grip.dataset.s!==gs){grip.dataset.s=gs;grip.hidden=g<0;grip.className='r-grip '+cls;grip.querySelectorAll('i').forEach((el,k)=>el.classList.toggle('on',k<lv));}}
+// Как ехать: коротко о физике гонки. Первые две гонки — перед стартом (гонка ждёт), потом — по кнопке «?» (пауза)
+const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса поворачивают сильнее; отпустили — сами встают прямо.'],
+  ['↱ 45','справа вверху — впереди поворот, шины удержат машину до 45 км/ч. Жёлтая рамка — сбавьте, красная — тормозите сейчас.'],
+  ['ШИНЫ','слева внизу — сколько сцепления занято: зелёные держат, жёлтые с визгом — на пределе, красные — машину несёт наружу.'],
+  ['Тормоз','— на прямой, до поворота. В повороте ровный газ, на выходе — полный. Резкий тормоз в повороте может развернуть.'],
+  ['Дорога','асфальт и кирпич держат лучше всего, гравий хуже, грязь, песок и снег — плохо: тормозите раньше.'],
+  ['Твёрдое','деревья, дома, заборы и зрители не пропускают. Удар — повреждение; поломку механик чинит на обочине.'],
+  ['Вид','— кнопка вверху: сзади, сверху, из кабины. «?» — эта подсказка и пауза.']];
+function showDriveTips(pause){const el=document.getElementById('rTips');if(!R)return;R.hold=true;
+  el.innerHTML=`<h3>Как ехать</h3><ul>${DRIVE_TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
+  document.getElementById('rTipsGo').onclick=()=>{el.hidden=true;if(R){R.hold=false;R.lastT=performance.now();}};}
+function driveTipsAtStart(){if(!R||R.mode!=='drive')return;let n=0;try{n=+localStorage.getItem('avt-tips3d')||0;}catch(_){}
+  if(n<2){try{localStorage.setItem('avt-tips3d',n+1);}catch(_){}showDriveTips(false);}}
+document.getElementById('rHelp').addEventListener('click',()=>{if(!R)return;const el=document.getElementById('rTips');if(!el.hidden){el.hidden=true;R.hold=false;R.lastT=performance.now();return;}showDriveTips(R.t>0);});
 document.getElementById('rQuit').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive')finishRace(true);else raceFastForward();});
 document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me){respawn(R.me);R.time+=3;rMsg('+3 с',1);}});
 document.getElementById('rMus').addEventListener('click',()=>{auInit();if(!AU.on.race){AU.on.race=true;}musNext(1);toast('♪ '+(musCur()?musCur().title:''));});
-document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
+document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%3;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ'][R3.view],1);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу
 const STEER_NAMES={wheel:'Колесо',keys:'Кнопки',tilt:'Наклон'};
 function steerMode(){const m=AU.on.steer||(AU.on.tilt?'tilt':'keys');return m==='wheel'?'keys':m;}

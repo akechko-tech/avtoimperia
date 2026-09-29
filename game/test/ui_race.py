@@ -12,9 +12,10 @@ with sync_playwright() as p:
     pg.click('[data-act=newgame]');pg.wait_for_timeout(200)
     pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150)
     pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.evaluate("()=>{for(let i=0;i<6;i++)closePaper();closeSheet();}");pg.wait_for_timeout(200)
     # перенести игру к месяцу гонки, дать денег и подходящую машину
     pg.evaluate(f"""(()=>{{const rc=RACES.find(r=>r.key==='{race}');G.pending=[];G.y=rc.y;G.m=Math.max(0,rc.m-1);G.cash=200000;G.rdept=1;
-      const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}
+      const md=G.models[0];{{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}}
       G.drivers=availDrivers(G).sort((a,b)=>b.sk-a.sk).slice(0,2).map(d=>d.id);tab='race';render();}})()""")
     pg.wait_for_timeout(300);pg.screenshot(path=out+f'r_tab_{tag}.png',full_page=True)
     jsclick=lambda sel:pg.evaluate("s=>document.querySelector(s).click()",sel)
@@ -24,7 +25,10 @@ with sync_playwright() as p:
     pg.screenshot(path=out+f'r_setup_{tag}.png',full_page=False)
     pg.evaluate("sb.scrollTop=sb.scrollHeight");pg.wait_for_timeout(200);pg.screenshot(path=out+f'r_setup2_{tag}.png')
     pg.click('[data-act=rMode][data-v=drive]');pg.wait_for_timeout(200)
-    pg.click('[data-act=raceGo]');pg.wait_for_timeout(4500)
+    pg.click('[data-act=raceGo]');pg.wait_for_timeout(1500)
+    pg.screenshot(path=out+f'r_tips_{tag}.png')
+    if pg.evaluate("!document.getElementById('rTips').hidden"):pg.click('#rTipsGo')
+    pg.wait_for_timeout(4500)
     pg.screenshot(path=out+f'r_drive1_{tag}.png')
     pg.keyboard.down('ArrowUp');pg.wait_for_timeout(5000);pg.screenshot(path=out+f'r_drive2_{tag}.png')
     pg.keyboard.down('ArrowLeft');pg.wait_for_timeout(700);pg.keyboard.up('ArrowLeft');pg.wait_for_timeout(2500);pg.screenshot(path=out+f'r_drive3_{tag}.png')
