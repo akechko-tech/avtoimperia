@@ -130,7 +130,7 @@ function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
 function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffAt(c,s))+(home?0:shipCost(s));}
 /* ---------- рынок страны ---------- */

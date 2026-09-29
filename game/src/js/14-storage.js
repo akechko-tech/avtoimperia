@@ -19,6 +19,8 @@ function migrate(x){
   if(x.wh===undefined){x.wh=Math.max(12,Math.round(x.models.reduce((a,m)=>a+(m.stock||0),0)*1.3),Math.round((x.cap||3)*1.5));x.whBuild=[];}
   if(x.pw&&SEGK.some(g=>typeof x.pw[g]==='number'))x.pw={[x.country]:x.pw};
   x.rv=x.rv||{};x.orders=x.orders||[];x.tenders=x.tenders||[];x.ui=x.ui||{};
+  // 0.11: выставки
+  x.shows=x.shows||{};x.showFx=x.showFx||{};x.medals=x.medals||[];
   for(const c in x.comps||{})x.comps[c].forEach(o=>{if(o.yr===undefined){o.yr=0;o.prev=0;}});
   return x;
 }

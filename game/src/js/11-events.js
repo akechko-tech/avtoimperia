@@ -30,14 +30,14 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
   const s=G;
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
-  checkTenders(s);
+  checkShows(s);checkTenders(s);
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
@@ -97,6 +97,7 @@ function resolve(key){
   if(key==='wait')s.strikeNext=true;
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
+  if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
   if(key==='restart'){s.pending=[];openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();
@@ -119,6 +120,8 @@ const ACH=[
   {id:'rd',name:'Инженерная школа',desc:'КБ 5-го уровня',test:s=>s.rd&&s.rd.lvl>=5},
   {id:'rd8',name:'Институт автомобиля',desc:'КБ 8-го уровня',test:s=>s.rd&&s.rd.lvl>=8},
   {id:'order',name:'Деловой партнёр',desc:'Выполнен заказ ведомства или фирмы',test:s=>(s.ordersDone||0)>0},
+  {id:'show',name:'На выставке',desc:'Свой стенд на автосалоне',test:s=>(s.showsDone||0)>0},
+  {id:'medal',name:'Медаль выставки',desc:'Медаль Всемирной выставки 1900 года',test:s=>(s.medals||[]).length>0},
   {id:'star',name:'Звёздная команда',desc:'Нанят гонщик',test:s=>s.drivers&&s.drivers.length>0},
   {id:'first',name:'Первопроходец',desc:'Опередили историю',test:s=>Object.keys(s.firsts||{}).length>0},
   {id:'war',name:'Пережили войну',desc:'Дожили до 1919 года',test:s=>s.y>=1919},

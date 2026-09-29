@@ -186,7 +186,7 @@ function newGame(pioneer,country,company,diff,firstName){
   const mname=(firstName||'').trim()||'Тип 1';
   G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
      cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},ad:30,rep:30,wh:12,whBuild:[],
-     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,pw:{},rv:{},orders:[],tenders:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
+     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};

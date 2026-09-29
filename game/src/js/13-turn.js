@@ -41,8 +41,9 @@ function step(){
   // поставки по заказам — в первую очередь
   s.orders=(s.orders||[]).filter(o=>{const md=act.find(m=>m.id===o.md);const need=Math.ceil(o.left/Math.max(1,o.due-mi(s)));
     if(md){const n=Math.min(o.left,md.stock,need*2);if(n>0){md.stock-=n;o.left-=n;r.ord+=n*o.price;r.ordN+=n;md.totalSold+=n;md.ordSold=(md.ordSold||0)+n;}}
-    if(o.left<=0){s.ordersDone=(s.ordersDone||0)+1;addLog(`Заказ выполнен: ${o.who} получил все ${fmtN(o.n)} машин.`,'good');pendingToasts.push('📜 Заказ выполнен: '+o.who);s.rep=clamp(s.rep+2,0,100);return false;}
-    if(mi(s)>=o.due){const fine=Math.round(o.left*o.price*0.15);r.fine+=fine;s.rep=clamp(s.rep-4,0,100);addLog(`Сорван заказ: ${o.who} не получил ${fmtN(o.left)} машин. Неустойка ${money(fine)}.`,'bad');return false;}
+    const shw=String(o.id).startsWith('show-');
+    if(o.left<=0){if(!shw){s.ordersDone=(s.ordersDone||0)+1;s.rep=clamp(s.rep+2,0,100);}addLog(`Заказ выполнен: ${o.who} получил все ${fmtN(o.n)} машин.`,'good');pendingToasts.push('📜 Заказ выполнен: '+o.who);return false;}
+    if(mi(s)>=o.due){const fine=Math.round(o.left*o.price*(shw?0.08:0.15));r.fine+=fine;s.rep=clamp(s.rep-(shw?2:4),0,100);addLog(`Сорван заказ: ${o.who} не получил ${fmtN(o.left)} машин. Неустойка ${money(fine)}.`,'bad');return false;}
     return true;});
   // продажи: дилеры, склад, очередь
   const ship=shipCost(s),tp=dealerTP(s),dealerCap={},want_c={};

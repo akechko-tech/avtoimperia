@@ -995,7 +995,7 @@ function newGame(pioneer,country,company,diff,firstName){
   const mname=(firstName||'').trim()||'Тип 1';
   G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
      cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},ad:30,rep:30,wh:12,whBuild:[],
-     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,pw:{},rv:{},orders:[],tenders:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
+     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};
@@ -1143,7 +1143,7 @@ function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+1.3*(s.rep-50)/50+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+(home?0:-0.3)+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
 function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffAt(c,s))+(home?0:shipCost(s));}
 /* ---------- рынок страны ---------- */
@@ -1241,14 +1241,14 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,paper:!!paper,choices:ev.choices||[['Читать дальше','ok']]});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
   const s=G;
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
-  checkTenders(s);
+  checkShows(s);checkTenders(s);
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
@@ -1308,6 +1308,7 @@ function resolve(key){
   if(key==='wait')s.strikeNext=true;
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
+  if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
   if(key==='restart'){s.pending=[];openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();
@@ -1330,6 +1331,8 @@ const ACH=[
   {id:'rd',name:'Инженерная школа',desc:'КБ 5-го уровня',test:s=>s.rd&&s.rd.lvl>=5},
   {id:'rd8',name:'Институт автомобиля',desc:'КБ 8-го уровня',test:s=>s.rd&&s.rd.lvl>=8},
   {id:'order',name:'Деловой партнёр',desc:'Выполнен заказ ведомства или фирмы',test:s=>(s.ordersDone||0)>0},
+  {id:'show',name:'На выставке',desc:'Свой стенд на автосалоне',test:s=>(s.showsDone||0)>0},
+  {id:'medal',name:'Медаль выставки',desc:'Медаль Всемирной выставки 1900 года',test:s=>(s.medals||[]).length>0},
   {id:'star',name:'Звёздная команда',desc:'Нанят гонщик',test:s=>s.drivers&&s.drivers.length>0},
   {id:'first',name:'Первопроходец',desc:'Опередили историю',test:s=>Object.keys(s.firsts||{}).length>0},
   {id:'war',name:'Пережили войну',desc:'Дожили до 1919 года',test:s=>s.y>=1919},
@@ -1395,8 +1398,9 @@ function step(){
   // поставки по заказам — в первую очередь
   s.orders=(s.orders||[]).filter(o=>{const md=act.find(m=>m.id===o.md);const need=Math.ceil(o.left/Math.max(1,o.due-mi(s)));
     if(md){const n=Math.min(o.left,md.stock,need*2);if(n>0){md.stock-=n;o.left-=n;r.ord+=n*o.price;r.ordN+=n;md.totalSold+=n;md.ordSold=(md.ordSold||0)+n;}}
-    if(o.left<=0){s.ordersDone=(s.ordersDone||0)+1;addLog(`Заказ выполнен: ${o.who} получил все ${fmtN(o.n)} машин.`,'good');pendingToasts.push('📜 Заказ выполнен: '+o.who);s.rep=clamp(s.rep+2,0,100);return false;}
-    if(mi(s)>=o.due){const fine=Math.round(o.left*o.price*0.15);r.fine+=fine;s.rep=clamp(s.rep-4,0,100);addLog(`Сорван заказ: ${o.who} не получил ${fmtN(o.left)} машин. Неустойка ${money(fine)}.`,'bad');return false;}
+    const shw=String(o.id).startsWith('show-');
+    if(o.left<=0){if(!shw){s.ordersDone=(s.ordersDone||0)+1;s.rep=clamp(s.rep+2,0,100);}addLog(`Заказ выполнен: ${o.who} получил все ${fmtN(o.n)} машин.`,'good');pendingToasts.push('📜 Заказ выполнен: '+o.who);return false;}
+    if(mi(s)>=o.due){const fine=Math.round(o.left*o.price*(shw?0.08:0.15));r.fine+=fine;s.rep=clamp(s.rep-(shw?2:4),0,100);addLog(`Сорван заказ: ${o.who} не получил ${fmtN(o.left)} машин. Неустойка ${money(fine)}.`,'bad');return false;}
     return true;});
   // продажи: дилеры, склад, очередь
   const ship=shipCost(s),tp=dealerTP(s),dealerCap={},want_c={};
@@ -1521,6 +1525,8 @@ function migrate(x){
   if(x.wh===undefined){x.wh=Math.max(12,Math.round(x.models.reduce((a,m)=>a+(m.stock||0),0)*1.3),Math.round((x.cap||3)*1.5));x.whBuild=[];}
   if(x.pw&&SEGK.some(g=>typeof x.pw[g]==='number'))x.pw={[x.country]:x.pw};
   x.rv=x.rv||{};x.orders=x.orders||[];x.tenders=x.tenders||[];x.ui=x.ui||{};
+  // 0.11: выставки
+  x.shows=x.shows||{};x.showFx=x.showFx||{};x.medals=x.medals||[];
   for(const c in x.comps||{})x.comps[c].forEach(o=>{if(o.yr===undefined){o.yr=0;o.prev=0;}});
   return x;
 }
@@ -1719,6 +1725,115 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*0.04))/10)*10;
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}
 
+/* ================= ВЫСТАВКИ: стенд за деньги — репутация, заказы, дилеры, медали ================= */
+// Настоящие выставки эпохи: даты, места и цифры — по истории Парижского салона, IAA, SMMT, Нью-Йоркской выставки и спискам
+// Туринского музея автомобиля. Месяцы небольших выставок (Берлин 1902–1928, Чикаго) — примерные.
+const SHOW_HOST={
+  paris:{c:'fr',name:'Парижский автосалон',w:3},expo:{c:'fr',name:'Всемирная выставка в Париже',w:3.5},berlin:{c:'de',name:'Берлинская автовыставка',w:2},
+  london:{c:'uk',name:'Лондонский автосалон',w:2.5},ny:{c:'us',name:'Нью-Йоркская автовыставка',w:2.5},chicago:{c:'us',name:'Чикагская автовыставка',w:1.6},
+  turin:{c:'it',name:'Туринский автосалон',w:1.5},milan:{c:'it',name:'Миланский автосалон',w:1.5},rome:{c:'it',name:'Римский автосалон',w:1.2}};
+const SHOWS=(()=>{const L=[],add=(h,y,m,venue,facts,x)=>L.push(Object.assign({id:h+'-'+y+'-'+m,h,y,m,venue,facts:facts||''},x||{}));
+  // Париж: первая в мире выставка автомобилей, потом — Гран-Пале
+  add('paris',1898,5,'сад Тюильри','15 июня — 3 июля 1898 года: первая в мире выставка автомобилей. 232 машины, 140 тысяч посетителей. Допускали только те машины, что своим ходом съездили из Парижа в Версаль и обратно — около 40 километров.',{ver:1});
+  add('paris',1899,5,'сад Тюильри','Вторая выставка в Тюильри. Здесь Луи Рено показал «Тип А» с прямой передачей: посетители сами двигали рычаг — и он получил около 60 твёрдых заказов.',{alt:{renault:'Вторая выставка в Тюильри. Лучше всего продаёт машину то, что её можно потрогать: посетители сами двигают рычаги, садятся за руль, заводят мотор.'}});
+  add('expo',1900,6,'Венсенн','Всемирная выставка (14 апреля — 12 ноября, больше 50 миллионов посетителей). Салона в этом году нет: вместо него в Венсенне — 14 конкурсов автомобилей с медалями: двух- и четырёхместные машины, такси, фургоны, грузовики, пожарная машина. В гонке Париж — Тулуза — Париж победили Луи Рено (малые машины) и «Левег» на Mors.',{medals:1,img:'Exposition Universelle (1900)',alt:{renault:'Всемирная выставка (14 апреля — 12 ноября, больше 50 миллионов посетителей). Салона в этом году нет: вместо него в Венсенне — 14 конкурсов автомобилей с медалями: двух- и четырёхместные машины, такси, фургоны, грузовики, пожарная машина. В гонке Париж — Тулуза — Париж среди больших машин победил «Левег» на Mors.'}});
+  add('paris',1901,0,'Гран-Пале','Салон переехал в новый Гран-Пале: 600 стендов. Зимой залы не топили — их прозвали «маленькой Сибирью».',{img:'Grand Palais'});
+  for(let y=1902;y<=1908;y++)add('paris',y,11,'Гран-Пале',y===1902?'230 тысяч посетителей. Впервые — электрический свет и кинематограф Гомона.':y===1904?'Гран-Пале стал тесен: грузовики вынесли на набережную Кур-ля-Рен.':'',{img:'Grand Palais'});
+  for(let y=1910;y<=1913;y++)add('paris',y,9,'Гран-Пале',y===1910?'Салон вернулся после года перерыва.':y===1913?'Показывают Ford T — машину с движущегося конвейера.':'',{img:'Grand Palais'});
+  for(let y=1919;y<=1930;y++)if(y!==1925)add('paris',y,9,'Гран-Пале',y===1919?'Первый салон после войны — только 15-й по счёту: 118 экспонентов.':y===1921?'Ситроен показывает малолитражку 5 CV.':y===1924?'116 экспонентов.':y===1926?'Салон вернулся: в 1925 году Гран-Пале отдали Выставке декоративных искусств.':'',{img:'Grand Palais'});
+  // Берлин
+  add('berlin',1897,8,'отель «Бристоль» на Унтер-ден-Линден','30 сентября 1897 года — первая немецкая автовыставка: всего 8 машин — Benz Velo, Lutzmann, Kühlstein и Daimler.',{img:'Hotel Bristol (Berlin)'});
+  add('berlin',1898,8,'выставочный парк у Лертерского вокзала','Вторая выставка: машин уже столько, что в отеле им тесно.');
+  add('berlin',1899,8,'выставочный парк у Лертерского вокзала','');
+  add('berlin',1902,2,'Берлин','Выставку впервые устраивает Союз немецких автопромышленников.');
+  add('berlin',1905,1,'Берлин','Выставку открывает кайзер Вильгельм II.');
+  add('berlin',1906,1,'Берлин','Спрос так велик, что выставки идут дважды в год.');add('berlin',1906,9,'Берлин','');add('berlin',1907,1,'Берлин','');add('berlin',1907,9,'Берлин','');
+  add('berlin',1911,9,'Берлин','');
+  add('berlin',1921,8,'новый зал на Кайзердамм','Первая выставка после войны: 67 немецких фирм, 90 машин.');
+  [1923,1924,1925,1926,1928].forEach(y=>add('berlin',y,9,'зал на Кайзердамм',y===1923?'Больше 600 экспонентов.':''));
+  // Лондон
+  add('london',1896,4,'Имперский институт, Южный Кенсингтон','Первая британская выставка «безлошадных экипажей» — её устроил «Моторный клуб» Гарри Лоусона.',{img:'Imperial Institute'});
+  add('london',1903,1,'Хрустальный дворец','Первый салон Общества автопромышленников и торговцев (SMMT). В этом году предел скорости подняли с 14 до 20 миль в час.',{img:'The Crystal Palace'});
+  add('london',1904,1,'Хрустальный дворец','',{img:'The Crystal Palace'});
+  for(let y=1905;y<=1913;y++)add('london',y,10,'зал «Олимпия»',y===1905?'Салон переехал в «Олимпию» — здесь он будет 32 года.':'',{img:'Olympia London'});
+  for(let y=1919;y<=1930;y++)add('london',y,10,'зал «Олимпия»',y===1919?'Первый салон после войны.':'',{img:'Olympia London'});
+  // США
+  add('ny',1900,10,'Мэдисон-сквер-гарден','3–10 ноября 1900 года — первая национальная автовыставка: 160 машин, 48 тысяч посетителей по 50 центов. Вокруг стендов — дорожка для показа езды и 60-метровая горка для проверки подъёма. Больше всего нравились электромобили, потом паровые машины, бензиновые — только третьи.',{img:'Madison Square Garden (1890)'});
+  add('ny',1901,10,'Мэдисон-сквер-гарден','',{img:'Madison Square Garden (1890)'});
+  for(let y=1903;y<=1930;y++)add('ny',y,0,y<1926?'Мэдисон-сквер-гарден':'Нью-Йорк',y===1926?'Старый Мэдисон-сквер-гарден снесли — выставка переехала.':'',y<1926?{img:'Madison Square Garden (1890)'}:{});
+  for(let y=1901;y<=1930;y++)add('chicago',y,y===1901?2:1,'Чикаго',y===1901?'Первая автовыставка в Чикаго.':'');
+  // Италия
+  [[1900,3,'turin','замок Валентино','21–24 апреля 1900 года — первый итальянский салон: 19 марок (10 итальянских, 8 французских, 1 немецкая), около 2 тысяч посетителей, билет — 20 чентезимо.',{img:'Castello del Valentino'}],
+   [1901,4,'milan'],[1902,5,'turin'],[1904,1,'turin'],[1905,0,'turin'],[1905,4,'milan'],[1906,1,'turin'],[1906,3,'milan'],[1907,1,'turin'],[1907,4,'milan'],[1908,0,'turin'],[1909,0,'turin'],[1910,3,'turin'],[1911,6,'turin'],[1913,3,'turin'],
+   [1920,3,'milan'],[1921,3,'milan'],[1922,3,'milan'],[1923,3,'milan'],[1924,3,'milan'],[1925,3,'milan'],[1926,3,'milan'],[1927,3,'milan'],[1928,4,'milan'],[1929,0,'rome'],[1930,3,'milan']]
+   .forEach(([y,m,h,v,f,x])=>add(h,y,m,v||({turin:'Турин',milan:'Милан',rome:'Рим'}[h]),f||'',x));
+  return L.sort((a,b)=>(a.y*12+a.m)-(b.y*12+b.m));})();
+const showMi=sh=>(sh.y-1895)*12+sh.m;
+// Историческая справка; если в ней — сам основатель вашей марки, газета пишет иначе
+function showFacts(sh,s){return (sh.alt&&sh.alt[s.pioneer])||sh.facts;}
+function showName(sh){return SHOW_HOST[sh.h].name+' '+sh.y;}
+// Приглашают на выставки дома, там, где есть дилеры, и на самые большие (Париж, Лондон, Нью-Йорк, Всемирная)
+function showRelevant(sh,s){const H=SHOW_HOST[sh.h];return H.c===s.country||dealerCount(s,H.c)>0||H.w>=2.5;}
+// Чужие выставки без своих дилеров зовут реже: не чаще раза в три года (Всемирная — всегда)
+function showAskOk(sh,s){const H=SHOW_HOST[sh.h];if(H.c===s.country||dealerCount(s,H.c)>0||sh.medals)return true;const t=(s.showAsk||{})[sh.h];return t===undefined||mi(s)-t>=34;}
+function standCost(sh,s,big){return Math.round(260*tabAt(CPI,sh.y)*(1+(sh.y-1895)*0.06)*SHOW_HOST[sh.h].w*(big?3:1)/50)*50;}
+// Что везти: лучшая машина в продаже; если продаж ещё нет — прототип из разработки
+function showModel(s){const act=s.models.filter(m=>m.status==='prod').sort((a,b)=>classScore(b,s)-classScore(a,s));return act[0]||s.models.find(m=>m.status==='dev')||null;}
+// Интерес покупателей после выставки: полезность марки в стране, затухает за полгода-год
+function showEffect(s,c){const f=s.showFx&&s.showFx[c];if(!f)return 0;const age=mi(s)-f.t;return age<0?0:f.u*Math.exp(-age/7);}
+function checkShows(s){
+  if(s.over)return;s.shows=s.shows||{};
+  // выставка этого месяца, на которую сняли стенд
+  SHOWS.forEach(sh=>{if(showMi(sh)===mi(s)){const e=s.shows[sh.id];if(e&&e.cost&&!e.done)showRun(s,sh,e);else if((!e||e.skip)&&showRelevant(sh,s)&&SHOW_HOST[sh.h].c===s.country)addLog(`Прошёл ${showName(sh)} — без вашего стенда.`,'hist');}});
+  // приглашение за месяц: одна выставка в месяц, самая важная
+  const next=SHOWS.filter(sh=>showMi(sh)===mi(s)+1&&!s.shows[sh.id]&&showRelevant(sh,s)&&showAskOk(sh,s)).sort((a,b)=>SHOW_HOST[b.h].w-SHOW_HOST[a.h].w+(SHOW_HOST[b.h].c===s.country?1:0)-(SHOW_HOST[a.h].c===s.country?1:0))[0];
+  if(next&&showModel(s))showInvite(s,next);}
+function showInvite(s,sh){const H=SHOW_HOST[sh.h],md=showModel(s),c1=standCost(sh,s,false),c2=standCost(sh,s,true),home=H.c===s.country,dl=dealerCount(s,H.c);
+  s.shows[sh.id]={inv:1,md:md.id};s.showNow=sh.id;s.showAsk=s.showAsk||{};s.showAsk[sh.h]=mi(s);
+  const proto=md.status==='dev';
+  pushEvent({kicker:'Приглашение на выставку',title:showName(sh),deck:`${sh.venue} · ${MONTHS_N[sh.m]} ${sh.y}`,carId:md.id,
+    text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}Устроители предлагают «${s.company}» место на выставке. Малый стенд — машина на подиуме, большой — ещё и мотор в разрезе, продавцы, буклеты и пробные поездки.\n`
+      +`Повезём ${proto?'прототип':'модель'} «${md.name}». На выставке ${proto?'покупатели узнают о новинке заранее':'подписывают заказы'}, о марке пишут газеты${home?'':`, а местные торговцы ищут, чьи машины продавать${dl?'':` — так можно открыть первых дилеров: ${COUNTRIES[H.c].name}`}`}.${sh.ver?'\nУсловие устроителей: машина должна своим ходом доехать из Парижа в Версаль и обратно. Ненадёжная может сломаться в пути — тогда вернут половину платы.':''}${sh.medals?'\nНа Всемирной выставке жюри раздаёт медали: чем лучше машина против соперников, тем выше шанс на золото.':''}`,
+    choices:[[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0']]},true);}
+function showBook(s,key){const id=s.showNow;s.showNow=null;const sh=SHOWS.find(x=>x.id===id);if(!sh)return;const e=s.shows[id]||(s.shows[id]={});
+  if(key==='show0'){e.skip=1;addLog(`Вы не поехали на выставку: ${showName(sh)}.`);return;}
+  const big=key==='show2',cost=standCost(sh,s,big);if(s.cash<cost){e.skip=1;addLog(`Не хватило денег на стенд: ${showName(sh)}.`,'bad');pendingToasts.push('Не хватило денег на стенд');return;}
+  s.cash-=cost;e.big=big?1:0;e.cost=cost;e.inv=0;addLog(`Снят ${big?'большой':'малый'} стенд: ${showName(sh)} (${money(cost)}).`,'good');pendingToasts.push('🏛 Стенд на выставке: '+SHOW_HOST[sh.h].name);}
+// День выставки: проверка в пути (Париж 1898), заказы, дилеры, интерес покупателей, медали; газета об итогах
+function showRun(s,sh,e){e.done=1;const H=SHOW_HOST[sh.h],c=H.c,home=c===s.country,md=s.models.find(m=>m.id===e.md)||showModel(s);if(!md)return;
+  const big=!!e.big,S=clamp(classScore(md,s),0.4,1.8),proto=md.status==='dev',out=[];let rep=0,u=0,orders=0,dl=0,medal=null;
+  if(sh.ver){const rel=carBase(md,0,s.y).rel,p=clamp(0.45+0.55*rel,0.5,0.97);if(Math.random()>p){const back=Math.round((e.cost||0)/2);s.cash+=back;e.fail=1;
+    pushEvent({kicker:'Выставка',title:showName(sh),deck:`«${md.name}» не доехал до Версаля`,carId:md.id,text:`${showFacts(sh,s)}\nПроверочная поездка не задалась: в пути у «${md.name}» случилась поломка, и устроители не допустили машину на выставку. Половину платы за стенд — ${money(back)} — вернули.\nНадёжность — первое, что покупатели проверяют сами.`},true);
+    addLog(`«${md.name}» сломался по дороге в Версаль и не попал на выставку. Вернули ${money(back)}.`,'bad');return;}
+    out.push(`«${md.name}» своим ходом съездил в Версаль и обратно — машину допустили.`);}
+  // репутация растёт понемногу и тем медленнее, чем она выше; интерес покупателей — на полгода
+  rep=(big?1.5:0.6)*H.w/3*(s.rep<55?1:s.rep<70?0.5:0.2);if(s.showRepY===s.y)rep*=0.25;else s.showRepY=s.y;u=(big?0.16:0.08)*H.w/3*(proto?1.2:1)*clamp(S,0.6,1.4);
+  if(!proto&&md.status==='prod'){const mk=s.last&&s.last.mk&&s.last.mk[c],size=mk&&mk.size?mk.size:SEGK.reduce((a,g)=>a+mkCountry(c,s,[]).segs[g].inc,0);
+    orders=Math.round(0.4*Math.pow(Math.max(1,size),0.7)*(big?2:1)*S*S*(home?1:0.5)*H.w/3);orders=Math.min(orders,Math.max(8,Math.round((md.vol||md.fc||4)*3)));
+    if(orders>=2&&(s.orders||[]).length<5){s.orders=s.orders||[];s.orders.push({id:'show-'+sh.id,md:md.id,n:orders,left:orders,price:md.price,due:mi(s)+5,who:'Покупатели выставки: '+SHOW_HOST[sh.h].name,start:mi(s)});
+      out.push(`Подписано ${fmtN(orders)} ${plural(orders,'твёрдый заказ','твёрдых заказа','твёрдых заказов')} на «${md.name}» по ${money(md.price)} — поставка за 5 месяцев сверх плана.`);}else orders=0;}
+  if(proto)out.push(`Прототип «${md.name}» собрал толпу: покупатели ждут начала продаж.`);
+  if(!home){dl=big?(H.w>=2.5?2:1):(H.w>=2.5&&!dealerCount(s,c)?1:0);if(dl){s.dealers[c]=dealerCount(s,c)+dl;out.push(`Торговцы подписали договоры: ${fmtN(dl)} ${plural(dl,'новый дилер','новых дилера','новых дилеров')} — ${COUNTRIES[c].name}.`);}}
+  if(sh.medals){const p=clamp((S-0.85)*1.6+(big?0.12:0),0.06,0.85),r=Math.random();medal=r<p*0.45?'gold':r<p*0.8?'silver':r<p?'bronze':null;
+    if(medal){const M={gold:['золотую',4,0.08],silver:['серебряную',2.5,0.05],bronze:['бронзовую',1.5,0.03]}[medal];rep+=M[1];u+=M[2];s.medals=s.medals||[];s.medals.push({y:sh.y,name:showName(sh),kind:medal,md:md.name});out.push(`Жюри присудило «${md.name}» ${M[0]} медаль!`);}
+    else out.push('Медали достались другим: жюри сочло соперников сильнее.');}
+  rep=Math.round(rep*10)/10;s.rep=clamp(s.rep+rep,0,100);s.showFx=s.showFx||{};const prev=showEffect(s,c);s.showFx[c]={u:Math.min(0.35,Math.max(prev,u)+0.3*Math.min(prev,u)),t:mi(s)};s.showsDone=(s.showsDone||0)+1;
+  e.res={orders,dl,rep,medal};
+  const rv=showRivals(s,c);
+  pushEvent({kicker:'Выставка',title:showName(sh),deck:`Стенд «${s.company}»: ${[orders?fmtN(orders)+' заказов':'',dl?'+'+dl+' дилеров':'',medal?{gold:'золото',silver:'серебро',bronze:'бронза'}[medal]:'','репутация +'+rep].filter(Boolean).join(' · ')}`,img:sh.img&&IMG[sh.img]?sh.img:'',imgCap:sh.img?`${sh.venue} — ${SHOW_HOST[sh.h].name}`:'',carId:md.id,
+    text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}${big?'Большой':'Малый'} стенд «${s.company}» — «${md.name}». ${out.join(' ')}\n${rv.length?`Рядом стенды ${rv.map(n=>'«'+n+'»').join(', ')}. `:''}Интерес покупателей к марке продержится несколько месяцев${home?'':' — и не только в этой стране'}.`},true);
+  addLog(`${showName(sh)}: ${out.join(' ')}`,'good');}
+function showRivals(s,c){const L=(COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,3).map(cp=>compName(cp,s));return L;}
+// Карточка на «Рынке»: ближайшие выставки и прошлые стенды
+function showsCard(s){const now=mi(s),up=SHOWS.filter(sh=>showMi(sh)>=now&&showMi(sh)<=now+13&&showRelevant(sh,s)).slice(0,5),past=SHOWS.filter(sh=>s.shows&&s.shows[sh.id]&&s.shows[sh.id].done).slice(-3).reverse();
+  if(!up.length&&!past.length)return '';
+  const st=sh=>{const e=s.shows&&s.shows[sh.id];if(e&&e.done)return e.fail?'<span class="pill bad">не допущены</span>':'<span class="pill good">были</span>';if(e&&e.cost)return `<span class="pill good">${e.big?'большой':'малый'} стенд</span>`;if(e&&e.skip)return '<span class="pill muted">не едем</span>';return showMi(sh)-now<=1?'<span class="pill warn">приглашение</span>':`<span class="pill muted">${money(standCost(sh,s,false))}+</span>`;};
+  const row=sh=>`<div class="race-item"><div class="row"><div><span class="mo">${MONTHS[sh.m]} ${sh.y} · ${COUNTRIES[SHOW_HOST[sh.h].c].name}</span><h3 style="margin-top:2px">${esc(SHOW_HOST[sh.h].name)}</h3><p class="small muted">${esc(sh.venue)}</p></div>${st(sh)}</div></div>`;
+  const res=sh=>{const r=s.shows[sh.id].res;return r?`<p class="small muted" style="margin-top:-4px;padding:0 4px">${[r.orders?fmtN(r.orders)+' заказов':'',r.dl?'+'+r.dl+' дилеров':'',r.medal?{gold:'золотая медаль',silver:'серебряная медаль',bronze:'бронзовая медаль'}[r.medal]:'','репутация +'+r.rep].filter(Boolean).join(' · ')}</p>`:'';};
+  return `<section class="card"><h2>Выставки</h2><p class="small muted" style="margin-top:2px">Автосалоны эпохи: стенд стоит денег, зато приносит заказы, внимание газет и покупателей, а за границей — первых дилеров. Приглашение приходит за месяц.</p>
+    ${up.length?`<div style="margin-top:6px">${up.map(row).join('')}</div>`:''}${past.length?`<div class="label" style="margin-top:10px">Ваши стенды</div>${past.map(sh=>row(sh)+res(sh)).join('')}`:''}
+    ${(s.medals||[]).length?`<div class="trophies" style="margin-top:8px">${s.medals.map(m=>`<span>${{gold:'🥇',silver:'🥈',bronze:'🥉'}[m.kind]} ${esc(m.name)}</span>`).join('')}</div>`:''}</section>`;}
+
 /* ================= ART ================= */
 function carSVG(md,opt={}){
   const p=parts(md),hp=p.e.hp,ei=hp<=3?0:hp<=8?1:hp<=16?2:hp<=25?3:hp<=40?4:hp<=60?5:7,cy=p.c.y,ci=cy<1896?0:cy<1902?1:cy<1910?2:cy<1920?3:4,bid=({b9:'b4',b11:'b4',b10:'b1'})[p.b.id]||p.b.id;
@@ -1798,7 +1913,7 @@ const IMG={};let imgTried=false;
 const DRIVER_WIKI={"levassor": "Émile Levassor", "de_dion": "Jules-Albert de Dion", "charron": "Fernand Charron", "jenatzy": "Camille Jenatzy", "winton": "Alexander Winton", "edge": "Selwyn Edge", "rolls": "Charles Rolls", "l_renault": "Louis Renault (industrialist)", "m_renault": "Marcel Renault", "vanderbilt": "William Kissam Vanderbilt II", "lancia": "Vincenzo Lancia", "nazzaro": "Felice Nazzaro", "h_ford": "Henry Ford", "oldfield": "Barney Oldfield", "wagner": "Louis Wagner (racing driver)", "szisz": "Ferenc Szisz", "l_chevrolet": "Louis Chevrolet", "goux": "Jules Goux", "lautenschlager": "Christian Lautenschlager", "borghese": "Scipione Borghese", "depalma": "Ralph DePalma", "harroun": "Ray Harroun", "porsche": "Ferdinand Porsche", "rickenbacker": "Eddie Rickenbacker", "milton": "Tommy Milton", "ascari": "Antonio Ascari", "murphy": "Jimmy Murphy (racing driver)", "ferrari": "Enzo Ferrari", "campari": "Giuseppe Campari", "campbell": "Malcolm Campbell", "segrave": "Henry Segrave", "nuvolari": "Tazio Nuvolari", "caracciola": "Rudolf Caracciola", "chiron": "Louis Chiron", "varzi": "Achille Varzi", "birkin": "Tim Birkin", "barnato": "Woolf Barnato", "divo": "Albert Divo", "benoist": "Robert Benoist", "junek": "Eliška Junková", "helle_nice": "Hellé Nice", "g_boillot": "Georges Boillot", "resta": "Dario Resta", "shaw": "Wilbur Shaw", "meyer": "Louis Meyer (racing driver)", "de_knyff": "René de Knyff", "fournier": "Henri Fournier", "thery": "Léon Théry", "h_farman": "Henri Farman", "a_michelin": "André Michelin", "e_michelin": "Édouard Michelin", "jellinek": "Emil Jellinek", "parry_thomas": "J. G. Parry-Thomas", "stuck": "Hans Stuck", "materassi": "Emilio Materassi", "a_maserati": "Alfieri Maserati", "kl_guinness": "Kenelm Lee Guinness", "lockhart": "Frank Lockhart (racing driver)", "w_opel": "Wilhelm von Opel"};
 function drvPhoto(d){const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<img class="drv-ph" src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:'';}
 function allTitles(){const t=new Set();Object.values(DRIVER_WIKI).forEach(x=>t.add(x));Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
-  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));t.add('Mercedes-Benz');return [...t];}
+  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));(typeof SHOWS!=='undefined'?SHOWS:[]).forEach(x=>x.img&&t.add(x.img));t.add('Mercedes-Benz');return [...t];}
 async function loadImages(){
   if(imgTried)return;imgTried=true;
   try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===2&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}
@@ -1831,7 +1946,7 @@ function portraitHTML(key){const P=PIONEERS[key],im=P.wiki&&IMG[P.wiki];return i
 // Свежая новость держится пару месяцев, потом «Также в номере» перебирает события эпохи
 function flavorLine(s){const past=FLAVOR.filter(x=>x[0]<s.y||(x[0]===s.y&&x[1]<=s.m));if(!past.length)return FLAVOR[0][2];const L=past[past.length-1],age=(s.y-L[0])*12+s.m-L[1];return age<=3?L[2]:past[mi(s)%past.length][2];}
 function paperHTML(o,s){
-  const M=MAST[s.country],md=o.car||(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0])||s.models[0];
+  const M=MAST[s.country],md=o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0])||s.models[0];
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean);
   return `<article class="paper ${REDUCE?'':'spin'}">
     <div class="p-top"><span>${COUNTRIES[s.country].city} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
@@ -2056,6 +2171,7 @@ function vMarket(){
     <p class="small muted" style="margin-top:8px">Машина по карману, если стоит не больше ${pct(K,0)} годового дохода семьи${K>0.5?' — помогает рассрочка':''}. Каждый месяц к машине присматривается часть семей: новички и владельцы, которые меняют старую. Берут то, что лучше за свои деньги, или ждут. Чем дешевле хорошая машина, тем больше семей может её купить.</p>`,false,`семей ${fmtN(H)} · с машиной ${pct(Math.min(1,fleet/H),fleet/H<0.01?2:1)}`)}</section>
   <section class="card"><div class="row"><h2>Конкуренты</h2><span class="pill ${place<=3?'good':'warn'}">вы ${place}-е</span></div><p class="small muted" style="margin-top:2px">Реальные марки эпохи и их модели. Продано машин ${full?`за ${s.y-1} год, стрелка — к ${s.y-2} году`:'с начала года'}.</p><div style="margin-top:8px">${comp}</div>
     ${rvT?`<p class="small warn" style="margin-top:8px">Конкуренты отвечают на ваш успех: их машины привлекательнее — ${rvT}. Держите позиции новыми моделями, улучшениями и ценой.</p>`:`<p class="small muted" style="margin-top:8px">Если заберёте у конкурентов много покупателей, они ответят: новыми моделями, ценами и рекламой.</p>`}</section>
+  ${showsCard(s)}
   <section class="card"><h2>Дилеры и экспорт</h2><p class="small muted" style="margin-top:2px">Где нет вашего дилера, там машину не купить: первые дилеры открываются в больших городах и сразу видят большую часть покупателей. Дилер берёт ${Math.round(DEALER_MARGIN*100)}% цены и продаёт до ${fmtN(Math.round(dealerTP(s)))} машин в месяц. Новый дилер — ${money(dc)}, содержание ${money(dealerUpkeep(s))} в месяц. За границей покупатель платит пошлину, а вы — доставку ${money(shipCost(s))}.</p><div style="margin-top:6px">${net}</div></section>
   ${DIF().simple&&helperOn(s)?`<section class="card"><div class="row"><h2>Реклама</h2><b class="num">${money(s.ad)}</b></div><p class="small muted" style="margin-top:6px">Рекламой занимается помощник: около 4% выручки.</p></section>`:`  <section class="card"><div class="row"><h2>Реклама</h2><b class="num" id="adVal">${money(s.ad)}</b></div><input type="range" id="ad" min="0" max="${Math.round(adRef(s)*4/10)*10}" step="${Math.max(10,Math.round(adRef(s)/50/10)*10)}" value="${s.ad}" aria-label="Бюджет рекламы в месяц" style="margin-top:10px"><p class="small muted">В месяц. Отдача падает после ${money(adRef(s)*2)}; за границей реклама работает на треть.</p></section>`}
   <section class="card"><span class="label">Объём рынка, машин в месяц</span>${spark(s.hist.market,'var(--muted)')}<div class="hr"></div><span class="label">Ваши продажи, машин в месяц</span>${spark(s.hist.sales,'var(--good)')}<div class="hr"></div><span class="label">Ваша доля дома, %</span>${spark(s.hist.share||[],'var(--brass)')}</section>
@@ -2111,7 +2227,7 @@ function closeSheet(){sheet.hidden=true;draft=null;}
 sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&!G.pending.length&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
-  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
+  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
@@ -2225,9 +2341,10 @@ function openHelp(){
     <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства: их соперник — лошадь с телегой. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
     <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
     <p><b>Производство.</b> План «авто» делает столько, сколько купят, и не больше, чем поместится на складе. Всё лишнее уходит перекупщикам за полцены. Мощность — цеха и смены; выработку поднимают станки, электрификация, взаимозаменяемые детали, конвейер и зарплата.</p>
+    <p><b>Выставки.</b> Настоящие автосалоны эпохи: Париж (с 1898 года, первым был сад Тюильри), Берлин (1897), Лондон (1896), Нью-Йорк (1900), Турин (1900) и другие, а в 1900 году — Всемирная выставка с медалями. За месяц приходит приглашение: стенд стоит денег, зато приносит заказы, интерес покупателей и газет, а за границей — первых дилеров. Список ближайших — на вкладке «Рынок».</p>
     <p><b>Дилеры.</b> Продают машины за ${Math.round(DEALER_MARGIN*100)}% цены. Где нет вашего дилера, там о вас не знают. На карточке модели видно, почему продали меньше, чем хотели купить: не хватило машин или дилеры не успели.</p>
     <p><b>КБ.</b> Восемь уровней: чем больше бюро, тем больше проектов одновременно. Улучшает детали (★) и строит прототипы будущих деталей; с 3-го уровня открывает технологии завода раньше истории — это «первенства».</p>
-    <p><b>Гонки.</b> Сезоны и чемпионаты своего времени. Команда до трёх машин: одну можно вести самому. Характеристики машины считаются из деталей: вес, мощность, коробка, тормоза, шины. Гоночный отдел (шесть уровней) даёт заводской кузов, надёжность, мощность и быстрые пит-стопы.</p>
+    <p><b>Гонки.</b> Сезоны и чемпионаты своего времени. Команда до трёх машин: одну можно вести самому — в объёмной 3D-графике (на слабых телефонах можно включить простую). Характеристики машины считаются из деталей: вес, мощность, коробка, тормоза, шины. В гонке справа вверху видно ближайший поворот и скорость, на которой его можно пройти, слева внизу — сколько сцепления шин уже занято; «?» — как ехать. Гоночный отдел (шесть уровней) даёт заводской кузов, надёжность, мощность и быстрые пит-стопы.</p>
     <p><b>Цель.</b> Величайшая автоимперия эпохи: в 1930 году компанию сравнят с реальными по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
 }
 function openLegacyInfo(){
