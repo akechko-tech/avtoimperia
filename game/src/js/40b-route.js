@@ -55,9 +55,10 @@ function riverLine(trk,rv){const p=trk.pts[rv.i],t=trk.T[rv.i],d=[t[1],-t[0]];re
 function riverDist(trk,rv,x,z){const L=riverLine(trk,rv),dx=x-L.p[0],dz=z-L.p[2],s=dx*L.d[0]+dz*L.d[1],e=dx*L.t[0]+dz*L.t[1];
   const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s));return {s,e:e-m};}
 function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
+  // русло режется от местной земли: где низина — река ещё ниже, под мостом — не выше отметки «дорога минус глубина»
   (trk.rivers||[]).forEach(rv=>{const y0=P[rv.i][1],bed=y0-rv.d,bank=rv.w/2+10,R=1300;
     for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)>R||Math.abs(dd.e)>bank+30)continue;
-      const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const tgt=bed+(y0-1.2-bed)*(1-prof)*0.4;const h=F.H[q]+(Math.min(F.H[q],tgt)-F.H[q])*sstep(0,1,prof*1.6);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
+      const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const bedL=Math.min(bed,F.H[q]-rv.d*0.7),h=F.H[q]+(bedL-F.H[q])*sstep(0,1,prof*1.4);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
   let yMin=1e9;P.forEach(p=>{yMin=Math.min(yMin,p[1]);});
   (trk.coast||[]).forEach(c=>{const sea=yMin-4;c.sea=sea;
     for(let i=c.i0;i<=c.i1;i+=2){const p=P[i],nn=trk.N[i];for(let a=16;a<520;a+=6){const x=p[0]+nn[0]*c.side*(trk.W/2+a),z=p[2]+nn[1]*c.side*(trk.W/2+a);

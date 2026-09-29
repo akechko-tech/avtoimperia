@@ -242,7 +242,8 @@ function vLog(){
   const got=ACH.filter(a=>G.ach[a.id]).length;
   const papers=G.papers.slice().reverse().map((p,i)=>`<button class="chip" style="width:100%;margin-top:6px" data-act="reopenPaper" data-k="${G.papers.length-1-i}"><small>${p.d}</small>${esc(p.title)}</button>`).join('');
   const last=G.papers[G.papers.length-1];
-  return `${legacyCard()}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
+  return `<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя. Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
+  ${legacyCard()}${titlesCard(G)}${boardCard(G)}${sagaCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
   ${foldCard('ach',false,`<h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span>`,`<div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div>`,`получено ${got} из ${ACH.length}`)}
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
@@ -256,6 +257,7 @@ function render(){
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
   lastDate=ds;setCash(s.cash);
   document.getElementById('view').innerHTML=tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():tab==='race'?vRace():vLog();
+  {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log';}}
   if(tab==='plant')plantAnim();
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
   const nb=document.getElementById('nextBtn'),qb=document.getElementById('qBtn'),ab=document.getElementById('autoBtn');

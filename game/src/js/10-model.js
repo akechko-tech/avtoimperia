@@ -39,8 +39,8 @@ function rdProjects(s){
   return list;
 }
 function PB(){return (G&&PIONEERS[G.pioneer]||PIONEERS.custom).b;}
-function bn(k,d=1){const b=PB();return b[k]!==undefined?b[k]:d;}
-function segBonus(g){const b=PB();return b.seg&&b.seg[g]||1;}
+function bn(k,d=1){const b=PB();return sagaBn(k,b[k]!==undefined?b[k]:d);}
+function segBonus(g){const b=PB();return (b.seg&&b.seg[g]||1)*sagaSegK(g);}
 /* ---------- prices, wages, parts ---------- */
 function cpi(s){return tabAt(CPI,yf(s));}
 function wageBase(s,c){return tabAt(WAGE[c||s.country],yf(s));}

@@ -148,9 +148,10 @@ function r3dChunkExtras(S,lit){const T=R3.T,W=T.W,st=T.step,e3=lit.e[3];
       lit.e[3]=e3;});}}
 /* ---------- реки: полоса воды вдоль русла; берег моря — гладь до горизонта ---------- */
 function r3dWaters(T){const mb=new MB(),c=hex2rgb('#1f5a78');let any=false;
-  (T.rivers||[]).forEach(rv=>{const L=riverLine(T,rv),y=T.pts[rv.i][1]-rv.d+0.9,w=rv.w/2+1.5;let prev=null;
+  // вода — на 0,9 м выше дна русла в каждом месте (река понемногу течёт под уклон)
+  (T.rivers||[]).forEach(rv=>{const L=riverLine(T,rv),w=rv.w/2+1.5;let prev=null;
     for(let s=-1300;s<=1300;s+=12){const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s)),cx=L.p[0]+L.d[0]*s+L.t[0]*m,cz=L.p[2]+L.d[1]*s+L.t[1]*m;
-      const a=[cx+L.t[0]*w,y,cz+L.t[1]*w],b=[cx-L.t[0]*w,y,cz-L.t[1]*w];if(prev)mb.poly([prev[0],prev[1],b,a],[0,1,0],c,MID.water);prev=[a,b];}any=true;});
+      const y=fH(cx,cz)+0.9,a=[cx+L.t[0]*w,y,cz+L.t[1]*w],b=[cx-L.t[0]*w,y,cz-L.t[1]*w];if(prev)mb.poly([prev[0],prev[1],b,a],[0,1,0],c,MID.water);prev=[a,b];}any=true;});
   // море: гладь начинается в ~300 м от берега и уходит к горизонту (ближе — земля срезана ниже воды)
   (T.coast||[]).forEach(cs=>{const y=(cs.sea===undefined?T.pts[cs.i0][1]-5:cs.sea)+0.2,mid=Math.round((cs.i0+cs.i1)/2),p=T.pts[mid],nn=T.N[mid],o=cs.side,D=[nn[0]*o,nn[1]*o],Tn=[-D[1],D[0]];
     const P=(u,v)=>[p[0]+D[0]*u+Tn[0]*v,y,p[2]+D[1]*u+Tn[1]*v];for(let a=0;a<6;a++)for(let b=-4;b<4;b++){const u0=40+a*1500,u1=u0+1500,v0=b*1500,v1=v0+1500;mb.poly([P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],[0,1,0],c,MID.water);}any=true;});

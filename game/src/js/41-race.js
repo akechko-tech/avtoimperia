@@ -692,7 +692,7 @@ function raceTick(dt){
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
     if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
   const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);
-  if(R.endT===undefined){
+  if(R.endT===undefined&&!R.demo){
     if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);}}
     else if(!me&&(!teamLive.length||!live.length)){R.endT=R.mode==='sim'?0:2;if(R.cars.some(c=>c.you&&c.fin!==null))auSfx('cheer',1);}
     else if(R.time>(T.cfg.dur||120)*4)R.endT=0;}

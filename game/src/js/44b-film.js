@@ -19,6 +19,8 @@ const ease=u=>u*u*(3-2*u);
 const lerp3=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
 // Точка трассы на расстоянии d метров от индекса i (с высотой дороги)
 function trkAt(i,d,off){const T=R.trk,n=T.n,j=T.closed?(((i+Math.round(d/T.step))%n)+n)%n:clamp(i+Math.round(d/T.step),0,n-1),p=T.pts[j],nn=T.N[j],o=off||0;return {j,p:[p[0]+nn[0]*o,p[1]+(R3.on?roadY(j,clamp(o,-T.W/2,T.W/2)):p[1]),p[2]+nn[1]*o],t:T.T[j],n:nn};}
+// Место для камеры у обочины: рядом нет дерева, столба или дома
+function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
 /* ---------- заставка перед стартом ---------- */
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];
@@ -102,9 +104,9 @@ function replayCam(dt,W,H){const Rp=R.replay;if(!Rp){R3.camHook=null;return;}con
   // смена камеры по времени: 0 — у дороги впереди, 1 — низко спереди, 2 — у финишной линии
   const left=Rp.fin-Rp.t,cut=left>5.5?0:left>2.2?1:2;
   if(cut!==Rp.cut){Rp.cut=cut;const T=R.trk,sd=Math.random()<0.5?1:-1;
-    if(cut===0){const a=trkAt(me.idx,55,sd*(T.W/2+5));Rp.pos=[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=0.42;}
+    if(cut===0){const a=camSpot(me.idx,55,sd);Rp.pos=[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=0.42;}
     else if(cut===1){Rp.pos=null;Rp.fov=0.7;}
-    else{const f=trkAt(T.finishIdx,4,sd*(T.W/2+3.2));Rp.pos=[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=0.6;}}
+    else{const f=camSpot(T.finishIdx,4,sd,[3.2,4.5,6,8]);Rp.pos=[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=0.6;}}
   const st=me.v3,y=st&&st.y!==null?st.y:me.y,tg=[me.x,y+0.8,me.z];let eye;
   if(cut===1){const fw=[Math.sin(me.yaw),0,Math.cos(me.yaw)],rt=[fw[2],0,-fw[0]];eye=[me.x+fw[0]*7+rt[0]*2.2,y+0.7,me.z+fw[2]*7+rt[2]*2.2];}
   else eye=Rp.pos;

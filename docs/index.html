@@ -544,6 +544,68 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
   #raceScreen .r-mgr{position:absolute;left:0;right:0;bottom:0;z-index:5;background:rgba(5,12,22,.72)}
   #raceScreen .r-msg{top:30%}
 }
+/* ---------- 0.17: фильм о персонаже ---------- */
+.sg{position:fixed;inset:0;z-index:60;background:#050608;color:#f4ecd8;overflow:hidden;animation:sgIn .5s ease}
+.sg.out{animation:sgOut .4s ease forwards}
+@keyframes sgIn{from{opacity:0}}@keyframes sgOut{to{opacity:0}}
+.sg-bg{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 35%,#3a3024 0%,#0b0a09 75%)}
+.sg-bg img{position:absolute;inset:-6%;width:112%;height:112%;object-fit:cover;filter:sepia(.35) saturate(.85) contrast(1.05) brightness(.82);opacity:0;transition:opacity .8s}
+.sg.noimg .sg-bg img{display:none}
+.sg-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,.25) 55%,rgba(0,0,0,.82) 100%),radial-gradient(100% 80% at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%)}
+.sg-bar{position:absolute;left:0;right:0;height:9%;background:#000;z-index:2}.sg-bar.top{top:0}.sg-bar.bot{bottom:0}
+.sg-body{position:absolute;left:0;right:0;top:9%;bottom:9%;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;padding:0 max(6%,18px) 5%;cursor:pointer}
+.sg-body .in{animation:sgUp .7s ease both}@keyframes sgUp{from{opacity:0;transform:translateY(10px)}}
+.sg-title{align-self:center;margin:auto 0;text-align:center}
+.sg-kick{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#e2c47a}
+.sg-ch{font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:clamp(18px,4vw,26px);margin-top:14px;color:#e9dcc0}
+.sg-t{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(30px,8vw,64px);line-height:1.02;margin-top:4px;text-shadow:0 3px 18px rgba(0,0,0,.8)}
+.sg-y{font-family:var(--mono);font-size:14px;letter-spacing:.3em;margin-top:10px;color:#cdbf9e}
+.sg-say p,.sg-line p{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(18px,4.2vw,28px);line-height:1.35;text-shadow:0 2px 12px rgba(0,0,0,.9);max-width:900px}
+.sg-line p{font-style:italic}
+.sg-who{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#e2c47a;margin-bottom:6px}
+.sg-q{max-width:760px;cursor:default}
+.sg-q h3{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(22px,5vw,34px);line-height:1.1;margin-bottom:12px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+.sg-o{display:block;width:100%;text-align:left;margin-top:8px;padding:12px 14px;border-radius:10px;border:1px solid rgba(226,196,122,.55);background:rgba(12,10,8,.62);color:#f4ecd8;font:inherit;cursor:pointer}
+.sg-o b{display:block;font-size:16px}.sg-o small{display:block;margin-top:3px;font-size:12px;color:#d9c89c;font-family:var(--mono)}
+.sg-o:active{background:rgba(226,196,122,.25)}
+.sg-res{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(17px,4vw,24px);line-height:1.35;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+.sg-fx{font-family:var(--mono);font-size:12px;color:#e2c47a;margin-top:8px}
+.sg-ctrl{position:absolute;right:12px;top:calc(9% + 10px);z-index:4}
+.sg-skip{background:rgba(0,0,0,.45);color:#f4ecd8;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:7px 14px;font:600 13px var(--sans,system-ui)}
+.sg-card .sg-list{display:grid;gap:6px;margin-top:10px}
+.sg-li{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit}
+.sg-li small{color:var(--muted);font-size:12px;margin-top:2px}.sg-li.got{border-color:rgba(226,196,122,.45)}.sg-li.got b{color:var(--brass)}.sg-li[disabled]{opacity:.55}
+/* ---------- 0.17: империя на виду ---------- */
+.empstrip{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;width:100%;margin:0 0 10px;padding:8px 12px;border-radius:12px;border:1px solid rgba(226,196,122,.4);background:linear-gradient(90deg,rgba(226,196,122,.14),rgba(226,196,122,.04));color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.empstrip[hidden]{display:none}
+.empstrip b{color:var(--brass);font-size:16px}.empstrip .es-b{color:var(--muted)}.empstrip .es-c{margin-left:auto;white-space:nowrap}
+.emp-head{border-color:rgba(226,196,122,.45);background:linear-gradient(180deg,rgba(226,196,122,.12),transparent)}
+.tr-row{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)}
+.tr-row.lead .tr-h span{color:var(--brass)}
+.tr-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600}
+.tr-h small{color:var(--muted);font-weight:400}
+.board-o{text-align:left}.board-o b{display:block}.board-o small{display:block;font-size:12px;opacity:.8;margin-top:2px}
+.board-o{white-space:normal!important;height:auto!important}
+/* ---------- 0.17: титульный экран — живая гонка за меню ---------- */
+#raceScreen.demo{z-index:5}
+#raceScreen.demo .r-top,#raceScreen.demo .r-hud,#raceScreen.demo .r-bars,#raceScreen.demo .r-ctrl,#raceScreen.demo #rMap,#raceScreen.demo .r-board,#raceScreen.demo .r-msg,#raceScreen.demo .r-note,#raceScreen.demo .r-grip,#raceScreen.demo #rSvc,#raceScreen.demo #rReset,#raceScreen.demo .r-mgr,#raceScreen.demo .r-tips,#raceScreen.demo .r-film{display:none!important}
+#raceScreen.demo #rView{position:absolute!important;inset:0}
+#menuScreen{z-index:9}
+#menuScreen.live{background:transparent}
+#menuScreen.live.ready{background:linear-gradient(180deg,rgba(3,6,10,.72) 0%,rgba(3,6,10,.15) 26%,rgba(3,6,10,0) 50%,rgba(3,6,10,.55) 72%,rgba(3,6,10,.88) 100%)}
+#menuScreen.live.ready .menu-hero{display:none}
+.menu-in{display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
+.menu-gap{flex:1;min-height:12px}
+.menu-titlebox{text-align:center;margin-top:10px}
+.menu-kick{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:#e2c47a;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.menu-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(30px,10.4vw,76px);letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;
+  background:linear-gradient(180deg,#fff3cf 0%,#e2c47a 45%,#a8782e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 10px rgba(0,0,0,.75))}
+.menu-sub{text-align:center;color:#e9dfc8;margin:4px 0 0;font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:15px;letter-spacing:.02em;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+.menu-cap{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e2c47a;opacity:.9;margin:0 0 10px;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+.menu-cap b{color:#f4ecd8;font-weight:500}
+#menuScreen.live.ready .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#menuScreen.live.ready .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
+#menuScreen.live.ready .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
 </style>
 
 <div class="wrap">
@@ -554,6 +616,7 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
       <button class="iconbtn" id="sndBtn" data-act="snd" aria-label="Музыка">♪</button><button class="iconbtn" data-act="menu" aria-label="Меню">☰</button>
     </div>
   </header>
+  <button class="empstrip" id="empStrip" data-act="tab" data-t="log" aria-label="Империя: наследие, титулы, вызовы, фильм"></button>
   <main id="view" class="stack"></main>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -571,7 +634,7 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
       <button class="tab" data-act="tab" data-t="models"><svg viewBox="0 0 24 24"><path d="M3 15h18v3H3zM5 15l2-5h9l3 5"/><circle cx="7" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>Модели</button>
       <button class="tab" data-act="tab" data-t="market"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 17V11M11 17V7M16 17v-4M20 17V9"/></svg>Рынок</button>
       <button class="tab" data-act="tab" data-t="race"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h13l-2 4 2 4H5"/></svg>Гонки</button>
-      <button class="tab" data-act="tab" data-t="log"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 9h8M8 13h8M8 17h5"/></svg>Хроника</button>
+      <button class="tab" data-act="tab" data-t="log"><svg viewBox="0 0 24 24"><path d="M3 18h18l-1.5-9-4.5 4-3-7-3 7-4.5-4zM4 21h16"/></svg>Империя</button>
     </div>
   </div>
 </nav>
@@ -1440,8 +1503,8 @@ function rdProjects(s){
   return list;
 }
 function PB(){return (G&&PIONEERS[G.pioneer]||PIONEERS.custom).b;}
-function bn(k,d=1){const b=PB();return b[k]!==undefined?b[k]:d;}
-function segBonus(g){const b=PB();return b.seg&&b.seg[g]||1;}
+function bn(k,d=1){const b=PB();return sagaBn(k,b[k]!==undefined?b[k]:d);}
+function segBonus(g){const b=PB();return (b.seg&&b.seg[g]||1)*sagaSegK(g);}
 /* ---------- prices, wages, parts ---------- */
 function cpi(s){return tabAt(CPI,yf(s));}
 function wageBase(s,c){return tabAt(WAGE[c||s.country],yf(s));}
@@ -1944,7 +2007,7 @@ function pushEvent(ev,paper){
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
-  const s=G;
+  const s=G;sagaCheck(s);
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;
     const rid=HIST_REEL[h.img];if(rid){reelUnlock(s,rid);pushEvent({...h,choices:(h.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника','reel:'+rid]])},true);}else pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
@@ -2015,6 +2078,7 @@ function yearlyCompetitors(s){
 }
 function resolve(key){
   const s=G;
+  if(key==='saga'){const ev=s.pending[0];if(ev&&ev.saga)sagaAuto(s,ev.saga);else s.pending.shift();save();render();return;}
   if(key==='raise'){s.wagePol=s.wagePol==='low'?'market':s.wagePol==='market'?'good':s.wagePol;addLog(`Зарплата поднята: ${WAGE_POL[s.wagePol].name.toLowerCase()}. Забастовки не будет.`);}
   if(key==='wait')s.strikeNext=true;
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
@@ -3311,6 +3375,818 @@ function reelsCard(s){const L=['intro',...(s.reels||[]).filter(id=>id!=='intro')
     <div class="reel-list">${L.slice().reverse().map(id=>{const R=reelGet(id,s);return `<button class="chip" style="width:100%;margin-top:6px" data-act="reel" data-k="${esc(id)}"><small>${R.y||''}${R.y?' · ':''}${id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':'история'}</small>▶ ${esc(reelFill(R.t,s))}</button>`;}).join('')}</div>`,
     `${L.length} ${plural(L.length,'фильм','фильма','фильмов')}`);}
 
+/* ================= ФИЛЬМ О ПЕРСОНАЖЕ: главы по настоящей истории, выбор в конце главы влияет на игру ================= */
+// Семь глав на героя (25b-saga-a.js, 25c-saga-b.js): начало пути, первая машина, гонки, большой успех, война, кризис, 1929 год.
+// Глава приходит, когда в игре наступил её момент (год, продажи, первая гонка…). Смотреть можно заново — во вкладке «Империя».
+const SAGA={};
+const BN_ADD={race:1,convEarly:1};
+function sagaList(s){return SAGA[s.pioneer]||SAGA.custom||[];}
+function sagaFill(t,s){const P=PIONEERS[s.pioneer]||PIONEERS.custom;return String(t||'').replace(/\{name\}/g,s.pioneer==='custom'?(s.hero||'Основатель'):P.name).replace(/\{co\}/g,s.company).replace(/\{city\}/g,(COUNTRIES[s.country]||{}).city||'').replace(/\{y\}/g,s.y);}
+// Момент главы: год, первая машина, гонка, победа, продажи, война, кризис, 1929…
+function sagaCond(s,w){const S=s.saga||{};
+  if(w==='start')return true;
+  if(w==='firstProd')return s.models.some(m=>m.id!==1&&(m.status==='prod'||m.status==='sale'))||mi(s)-(S.t0||0)>=10;
+  if(w==='firstRace')return (s.raceLog||[]).length>0;
+  if(w==='firstWin')return (s.raceLog||[]).some(r=>r.place===1);
+  if(w==='cashLow')return s.cash<0;
+  if(w==='war')return s.country==='us'?(s.y>1917||(s.y===1917&&s.m>=3)):(s.y>1914||(s.y===1914&&s.m>=7));
+  if(w==='crisis')return s.y>=1920;
+  if(w==='finale')return s.y>=1929;
+  if(w==='tech:line')return ((s.tech||{}).line||0)>=1;
+  if(w==='king')return (s.titles||[]).some(t=>/^king-/.test(t.id||''));
+  const m=/^(y|sold|yearSold):(\d+)$/.exec(w);if(m){const v=+m[2];return m[1]==='y'?s.y>=v:m[1]==='sold'?totalSold(s)>=v:Math.max((s.peak||{}).year||0,s.yearSold||0)>=v;}
+  return false;}
+function sagaReady(s,ch){const W=Array.isArray(ch.when)?ch.when:[ch.when];if(W.every(w=>sagaCond(s,w)))return true;
+  // запасной путь: глава не «застревает», если игрок не гоняется или продаёт мало — через три года после её даты она всё равно придёт
+  return !W.includes('start')&&!W.includes('finale')&&ch.y>0&&s.y>=ch.y+3;}
+// Проверка раз в месяц: не чаще одной главы в два месяца, по порядку
+function sagaCheck(s){if(!s||s.over)return;const S=s.saga=s.saga||{seen:[],pick:{},last:-99,t0:mi(s)};if(!S.seen)S.seen=[];
+  if(s.pending.some(p=>p.saga))return;if(S.seen.length&&mi(s)-S.last<2)return;
+  const L=sagaList(s);for(let k=0;k<L.length;k++){const ch=L[k];if(S.seen.includes(ch.id))continue;if(!sagaReady(s,ch))continue;
+    s.pending.push({saga:ch.id,title:'Фильм: '+ch.t,text:'',choices:[['Смотреть главу','saga']]});S.last=mi(s);return;}}
+// Без экрана (проверки, автоигра): глава засчитывается с первым вариантом выбора
+function sagaAuto(s,id){const ch=sagaList(s).find(c=>c.id===id),o=ch&&ch.o&&ch.o[0];if(o)sagaApply(s,o.fx);const S=s.saga=s.saga||{seen:[],pick:{}};if(!S.seen.includes(id))S.seen.push(id);S.pick=S.pick||{};if(o)S.pick[id]=0;
+  const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);}
+/* ---------- что даёт выбор: деньги, репутация, временные бонусы, спрос, настроение пилотов ---------- */
+const SAGA_B={lineCap:['Выпуск',1],quality:['Качество',1],workerEff:['Выработка рабочих',1],devTime:['Разработка',-1],devCost:['Стоимость разработки',-1],adEff:['Отдача рекламы',1],matCost:['Детали',-1],race:['Скорость в гонках',1],raceRep:['Слава побед',1],drvFee:['Гонорары пилотов',-1]};
+function sagaMonths(n){return n>=24&&n%12===0?`${n/12} ${plural(n/12,'год','года','лет')}`:`${n} ${plural(n,'месяц','месяца','месяцев')}`;}
+function sagaFxText(fx,s){const L=[];if(!fx)return '';
+  if(fx.cash)L.push(`${fx.cash>0?'+':'−'}${money(Math.abs(fx.cash)*cpi(s))}`);
+  if(fx.rep)L.push(`репутация ${fx.rep>0?'+':'−'}${Math.abs(fx.rep)}`);
+  Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const d=SAGA_B[k];if(!d)return;
+    if(k==='race'){L.push(`скорость в гонках +${Math.round(v*100)}% на ${sagaMonths(mo)}`);return;}
+    const pc=Math.round((v-1)*100);if(!pc)return;const good=pc*d[1]>0;
+    L.push(k==='devTime'?`разработка ${pc<0?'быстрее':'медленнее'} на ${Math.abs(pc)}% (${sagaMonths(mo)})`:`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
+  Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const pc=Math.round((v-1)*100);if(pc&&SEG[g])L.push(`спрос: ${SEG[g].name.toLowerCase()} класс ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
+  if(fx.mood)L.push(`настроение пилотов ${fx.mood>0?'+':'−'}${Math.abs(fx.mood)}`);
+  return L.join(' · ');}
+function sagaApply(s,fx){if(!fx)return;const now=mi(s);
+  if(fx.cash)s.cash+=Math.round(fx.cash*cpi(s));
+  if(fx.rep)s.rep=clamp(s.rep+fx.rep,0,100);
+  const B=s.sagaB=s.sagaB||{};Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const o=B[k];if(o&&now<o.until){o.v=BN_ADD[k]?o.v+v:o.v*v;o.until=Math.max(o.until,now+mo);}else B[k]={v,until:now+mo};});
+  const SG=s.sagaSeg=s.sagaSeg||{};Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const o=SG[g];if(o&&now<o.until){o.v*=v;o.until=Math.max(o.until,now+mo);}else SG[g]={v,until:now+mo};});
+  if(fx.mood&&typeof moodAdd==='function')(s.drivers||[]).forEach(id=>moodAdd(s,id,fx.mood));}
+// Бонусы глав действуют вместе с чертами героя (10-model.js: bn, segBonus)
+function sagaBn(k,v){const S=G&&G.sagaB&&G.sagaB[k];if(!S||mi(G)>=S.until)return v;return BN_ADD[k]?v+S.v:v*S.v;}
+function sagaSegK(g){const S=G&&G.sagaSeg&&G.sagaSeg[g];return S&&mi(G)<S.until?S.v:1;}
+/* ---------- кинозал: титр главы, сцены с голосом, выбор, итог ---------- */
+let SAGAP=null;
+function sagaImg(key){const im=key&&IMG[key];return im&&im.src?im.src:'';}
+function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=L[k];if(!ch){if(!replay)sagaDone(id,-1);return;}
+  sagaStop();const P=PIONEERS[s.pioneer]||PIONEERS.custom,el=document.createElement('div');el.className='sg';el.id='sagaScreen';
+  el.innerHTML=`<div class="sg-bg"><img alt=""></div><div class="sg-shade"></div><div class="sg-bar top"></div><div class="sg-bar bot"></div>
+    <div class="sg-body"></div><div class="sg-ctrl"><button class="sg-skip">Пропустить ▸▸</button></div>`;
+  if(!el.querySelector||!el.querySelector('.sg-skip')){if(!replay)sagaAuto(s,id);return;}// без экрана (проверки)
+  document.body.appendChild(el);SAGAP={id,ch,k,el,i:-1,replay:!!replay,timer:0,portrait:sagaImg(P.wiki)};
+  el.querySelector('.sg-skip').onclick=()=>sagaQuestion();el.querySelector('.sg-body').onclick=()=>sagaNext();
+  try{auInit();auReelFanfare();}catch(_){}
+  sagaTitle();}
+function sagaSetBg(src){const Q=SAGAP;if(!Q)return;const im=Q.el.querySelector('.sg-bg img');if(!src){Q.el.classList.add('noimg');im.removeAttribute('src');return;}
+  Q.el.classList.remove('noimg');if(im.getAttribute('src')!==src){im.style.opacity=0;im.onload=()=>{im.style.opacity=1;};im.src=src;}
+  // медленный наезд камеры по фото (каждый раз — в свою сторону)
+  const a=Math.random()<0.5?-1:1;im.style.transition='none';im.style.transform=`scale(1.02) translate(${a*1.5}%,0)`;void im.offsetWidth;im.style.transition='transform 9s ease-out,opacity .8s';im.style.transform=`scale(1.14) translate(${-a*2}%,-1.5%)`;}
+function sagaTitle(){const Q=SAGAP,s=G,ch=Q.ch,n=Q.k+1;
+  sagaSetBg(sagaImg((ch.sc.find(x=>x.img)||{}).img)||Q.portrait);
+  Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-title in"><div class="sg-kick">${esc(PIONEERS[s.pioneer]&&s.pioneer!=='custom'?PIONEERS[s.pioneer].name:sagaFill('{name}',s))} · фильм</div><div class="sg-ch">Глава ${n}</div><div class="sg-t">${esc(sagaFill(ch.t,s))}</div>${ch.y?`<div class="sg-y">${ch.y}</div>`:''}</div>`;
+  clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),2600);}
+function sagaNext(){const Q=SAGAP;if(!Q||Q.q)return;clearTimeout(Q.timer);ttsStop();Q.i++;const s=G,sc=Q.ch.sc[Q.i];if(!sc){sagaQuestion();return;}
+  if(sc.img)sagaSetBg(sagaImg(sc.img)||Q.portrait);else if(Q.i===0)sagaSetBg(Q.portrait);
+  const txt=sagaFill(sc.say||sc.line||'',s),who=sc.who?sagaFill(sc.who,s):'';
+  Q.el.querySelector('.sg-body').innerHTML=sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
+  const dur=Math.max(3.8,1.6+txt.length/14)*1000;let spoke=false;
+  if(reelVoiceOn()&&ttsReady()){spoke=true;ttsSay(txt,()=>{if(SAGAP===Q&&!Q.q){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),700);}});}
+  Q.timer=setTimeout(()=>sagaNext(),spoke?dur+6000:dur);}
+function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);ttsStop();const s=G,ch=Q.ch;Q.q=1;
+  if(Q.replay){const pk=(s.saga&&s.saga.pick||{})[ch.id],o=ch.o&&ch.o[pk];Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${o?`<p class="sg-res">Ваш выбор: «${esc(sagaFill(o.t,s))}». ${esc(sagaFill(o.res,s))}</p>`:''}<button class="sg-o" data-k="-1"><b>Закрыть</b></button></div>`;}
+  else Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${(ch.o||[]).map((o,i)=>`<button class="sg-o" data-k="${i}"><b>${esc(sagaFill(o.t,s))}</b><small>${esc(sagaFxText(o.fx,s))}</small></button>`).join('')}</div>`;
+  Q.el.querySelector('.sg-skip').style.visibility='hidden';
+  Q.el.querySelectorAll('.sg-o').forEach(b=>b.onclick=e=>{e.stopPropagation();sagaPick(+b.dataset.k);});
+  if(reelVoiceOn()&&ttsReady()&&!Q.replay)ttsSay(sagaFill(ch.q,s));}
+function sagaPick(k){const Q=SAGAP;if(!Q)return;const s=G,ch=Q.ch,o=ch.o&&ch.o[k];
+  if(Q.replay||k<0||!o){sagaStop();return;}
+  sagaApply(s,o.fx);addLog(`🎬 «${sagaFill(ch.t,s)}»: ${sagaFill(o.t,s)}. ${sagaFill(o.res,s)}`,'hist');
+  Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><p class="sg-res">${esc(sagaFill(o.res,s))}</p><p class="sg-fx">${esc(sagaFxText(o.fx,s))}</p><button class="sg-o" data-k="-1"><b>Дальше ▸</b></button></div>`;
+  Q.el.querySelector('.sg-o').onclick=e=>{e.stopPropagation();sagaDone(ch.id,k);};
+  if(reelVoiceOn()&&ttsReady())ttsSay(sagaFill(o.res,s));}
+function sagaDone(id,k){const s=G,S=s.saga=s.saga||{seen:[],pick:{},last:mi(s)};if(!S.seen.includes(id))S.seen.push(id);if(k>=0){S.pick=S.pick||{};S.pick[id]=k;}
+  sagaStop();const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);save();render();}
+function sagaStop(){const Q=SAGAP;SAGAP=null;ttsStop();if(!Q)return;clearTimeout(Q.timer);Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},400);}
+// Карточка «Фильм о вас»: просмотренные главы и следующая
+function sagaCard(s){const L=sagaList(s),S=s.saga||{seen:[]},seen=L.filter(c=>(S.seen||[]).includes(c.id)),next=L.find(c=>!(S.seen||[]).includes(c.id));
+  const P=PIONEERS[s.pioneer]||PIONEERS.custom;
+  return `<section class="card sg-card"><div class="row"><h2>🎬 Фильм: ${esc(s.pioneer==='custom'?s.company:P.name)}</h2><span class="pill">${seen.length} из ${L.length}</span></div>
+    <p class="small muted" style="margin-top:4px">Художественный фильм по настоящей истории: глава приходит, когда в игре наступает её момент. Выбор в конце главы влияет на компанию.</p>
+    <div class="sg-list">${L.map((c,i)=>{const got=(S.seen||[]).includes(c.id),pk=S.pick&&S.pick[c.id];return `<button class="sg-li ${got?'got':''}" ${got?`data-act="sagaReplay" data-k="${c.id}"`:'disabled'}><b>${i+1}. ${esc(got?sagaFill(c.t,s):'Ещё впереди')}</b><small>${got?(c.y?c.y+' · ':'')+(pk!==undefined&&c.o[pk]?'выбор: '+esc(sagaFill(c.o[pk].t,s)):'смотреть снова ▸'):c===next?'следующая глава':''}</small></button>`;}).join('')}</div></section>`;}
+
+/* ================= ФИЛЬМ О ПЕРСОНАЖЕ: Форд, Олдс, Бенц, Майбах, Ланчестер ================= */
+SAGA.ford=[
+  {id:'ford1',t:'Сарай на Бэгли-авеню',y:1896,when:'start',
+   sc:[{img:'Ford Quadricycle',say:'Детройт, 1896 год. В кирпичном сарае за домом пятьдесят восемь по Бэгли-авеню главный инженер электростанции Эдисона Генри Форд ночами собирает свою первую машину: четыре велосипедных колеса и мотор в четыре лошадиные силы.'},
+       {say:'Три месяца назад по Детройту уже проехал автомобиль Чарльза Кинга. Форд катил следом на велосипеде и с тех пор почти не спит.'},
+       {who:'Клара Форд',line:'Генри, уже три часа ночи. Эдсел опять проснулся от твоего молотка.'},
+       {who:'Генри Форд',line:'Ещё немного, Клара. Она почти готова.'},
+       {say:'Перед рассветом четвёртого июня квадрицикл готов. И тут выясняется: он шире двери сарая.'}],
+   q:'Как вывести машину на улицу?',
+   o:[{t:'Взять топор и разбить стену',fx:{rep:2,cash:-150,b:{devTime:[0.92,24]}},res:'Кирпичи летят во двор, и квадрицикл выкатывается в ночь. Друг Форда Джим Бишоп едет впереди на велосипеде и предупреждает извозчиков.'},
+      {t:'Разобрать машину и собрать во дворе',fx:{b:{quality:[1.04,36],devTime:[1.06,12]}},res:'Уходит ещё день, зато каждый узел проверен и подтянут. Машина выезжает позже, но ломается реже.'},
+      {t:'Дождаться утра и позвать плотника',fx:{cash:-200,b:{lineCap:[1.05,24]}},res:'Плотник прорубает широкие ворота, и сарай становится настоящей мастерской. А соседи так и не узнают, что творится там по ночам.'}]},
+  {id:'ford2',t:'Совет Эдисона',y:1899,when:'firstProd',
+   sc:[{img:'Henry Ford',say:'Август 1896 года, съезд электрических компаний в Нью-Йорке. Молодой инженер из Детройта рассказывает о своей машине, и его слушает сам Томас Эдисон.'},
+       {who:'Томас Эдисон',line:'Молодой человек, вот оно! Ваша машина сама везёт свою силу: ни проводов, ни котла, ни дыма. Продолжайте!'},
+       {say:'Через три года начальство предлагает Форду пост управляющего, если он бросит бензиновый мотор. Форд уходит и становится главным инженером Детройтской автомобильной компании.'},
+       {who:'Уильям Мёрфи',line:'Генри, акционеры ждут машин на продажу, а не новых чертежей.'},
+       {say:'Первый фургон готов, но Форд им недоволен: тяжёлый, капризный, дорогой.'}],
+   q:'Выпускать машину сейчас или доводить?',
+   o:[{t:'Остановить сборку и доводить',fx:{cash:-600,b:{quality:[1.06,36]}},res:'Форд переделывает машину снова и снова. К началу 1901 года компания закрывается, выпустив около двадцати машин, но Форд теперь точно знает, чего хочет.'},
+      {t:'Гнать выпуск, как хотят акционеры',fx:{cash:800,rep:-1,b:{quality:[0.95,24]}},res:'Фургоны уходят к покупателям, деньги — в кассу. Жалобы на поломки приходят почти так же быстро, как чеки.'},
+      {t:'Выпускать понемногу и чинить за свой счёт',fx:{cash:-200,rep:2,b:{lineCap:[0.93,18]}},res:'Машин мало, зато каждую механики знают наизусть. Покупатели рассказывают друзьям о фирме, которая не бросает клиента.'}]},
+  {id:'ford3',t:'Десять миль в Гросс-Пойнте',y:1901,when:'firstRace',
+   sc:[{say:'Октябрь 1901 года, ипподром Гросс-Пойнт под Детройтом. Первая компания Форда прогорела, денег нет. Осталась одна надежда — гоночная машина.'},
+       {img:'Alexander Winton',say:'Против него — Александр Уинтон, знаменитый фабрикант и гонщик. Восемь тысяч зрителей не сомневаются, кто победит.'},
+       {who:'Спайдер Хафф',line:'Генри, на поворотах я вылезу на подножку и повисну снаружи, чтобы машину не занесло.'},
+       {say:'Уинтон уходит вперёд, но к концу гонки его мотор дымит и сдаёт. Форд проносится мимо под рёв трибун.'}],
+   q:'Как распорядиться славой победителя?',
+   o:[{t:'Найти под победу новых инвесторов',fx:{cash:1500,b:{devTime:[1.08,18]}},res:'Уже через месяц появляется «Генри Форд Компани». Но инвесторы хотят машину на продажу, а Форд — гоночную, и вскоре фирма уйдёт от него и станет «Кадиллаком».'},
+      {t:'Строить ещё более быструю машину',fx:{cash:-800,mood:8,b:{race:[0.03,24],raceRep:[1.1,24]}},res:'Через год ревущий «999» с Барни Олдфилдом за рулём обгоняет всех. Олдфилд прежде ни разу не водил машину, но Америка запоминает имя Форда.'},
+      {t:'Вернуться к машине для покупателей',fx:{rep:1,seg:{people:[1.06,24]},b:{devTime:[0.95,24]}},res:'Приз — хрустальная чаша для пунша — остаётся в доме Фордов. А Генри садится за чертежи машины, которую сможет купить фермер.'}]},
+  {id:'ford4',t:'Машина для множества',y:1908,when:['y:1908','sold:2000'],
+   sc:[{img:'Ford Model A (1903–04)',say:'В 1903 году дюжина компаньонов вложила в «Форд Мотор» двадцать восемь тысяч долларов. Первые машины продаются хорошо, но Форд мечтает о другом.'},
+       {say:'В потайной комнате завода на Пикетт-авеню Форд и его чертёжники рисуют мелом на доске новую машину: высокую, лёгкую, из прочной ванадиевой стали.'},
+       {who:'Генри Форд',line:'Я построю автомобиль для великого множества людей. Такой дешёвый, что его сможет купить каждый, кто получает приличное жалованье.'},
+       {img:'Ford Model T',say:'Осенью 1908 года «Модель Т» поступает в продажу за восемьсот пятьдесят долларов. Дилеры просят: дайте нам и другие модели.'}],
+   q:'Сколько моделей выпускать?',
+   o:[{t:'Только одну, для всех',fx:{seg:{people:[1.12,36],middle:[0.9,24]},b:{lineCap:[1.06,36]}},res:'В 1909 году Форд объявляет: отныне только «Модель Т». Позже он пошутит, что покупатель может выбрать любой цвет, если этот цвет чёрный.'},
+      {t:'Держать широкую линейку',fx:{seg:{middle:[1.08,24],lux:[1.05,24]},b:{devCost:[1.08,24]}},res:'В каталоге снова модели на любой кошелёк. Дилеры довольны, а заводу приходится перестраиваться под каждую.'},
+      {t:'Одна модель, но дорогая и отделанная',fx:{cash:-500,seg:{lux:[1.1,24]},b:{quality:[1.04,36]}},res:'Машина выходит солидной и блестящей. Её покупают врачи и адвокаты, а фермеры по-прежнему запрягают лошадей.'}]},
+  {id:'ford5',t:'Пять долларов в день',y:1913,when:'y:1913',
+   sc:[{img:'Highland Park Ford Plant',say:'Хайленд-Парк, 1913 год. Шасси тянут тросом вдоль цеха: машина едет к рабочему, а не рабочий к машине. Сборка сокращается с двенадцати с половиной часов до полутора.'},
+       {say:'Но люди не выдерживают однообразия. Чтобы держать на заводе четырнадцать тысяч рабочих, за год пришлось нанять больше пятидесяти тысяч.'},
+       {who:'Джеймс Кузенс',line:'Генри, давай платить пять долларов в день — вдвое больше, чем где-либо в Детройте.'},
+       {who:'Генри Форд',line:'И тогда наши рабочие сами станут нашими покупателями.'}],
+   q:'Как удержать людей у конвейера?',
+   o:[{t:'Платить пять долларов в день',fx:{cash:-3000,rep:4,b:{workerEff:[1.12,36]}},res:'Пятого января 1914 года Форд объявляет новую плату, и к воротам сбегаются тысячи — в мороз толпу разгоняют пожарными шлангами. Зато текучесть почти исчезает.'},
+      {t:'Ускорить конвейер и нанимать новых',fx:{cash:500,b:{lineCap:[1.1,24],workerEff:[0.92,24]}},res:'Линия бежит быстрее, машины дешевеют. Но новички уходят раньше, чем успевают научиться.'},
+      {t:'Вернуть бригадную сборку',fx:{b:{quality:[1.05,36],lineCap:[0.9,24]}},res:'Опытные бригады собирают машины бережно и не спеша. Люди остаются, но завод выпускает заметно меньше.'}]},
+  {id:'ford6',t:'Деньги без банкиров',y:1921,when:'crisis',
+   sc:[{img:'Dodge Brothers',say:'После суда с братьями Додж Форд выкупил доли всех компаньонов. Для этого он занял семьдесят пять миллионов долларов, и теперь пришло время платить.'},
+       {img:'Ford River Rouge complex',say:'А в стране кризис: покупатели исчезли, склады забиты машинами, на реке Руж стоит недостроенный завод-гигант.'},
+       {who:'Эдсел Форд',line:'Отец, нью-йоркские банкиры готовы дать заём. Но хотят посадить своего человека в правление.'},
+       {who:'Генри Форд',line:'Пусть поищут другого клиента. Деньги мы найдём у себя.'}],
+   q:'Где взять деньги на долг?',
+   o:[{t:'Отправить дилерам машины за наличные',fx:{cash:3000,rep:-3,b:{matCost:[0.94,24]}},res:'Форд останавливает завод, распродаёт запасы, урезает расходы и шлёт дилерам машины, которые те обязаны оплатить сразу. К весне долг погашен, но дилеры этого не забудут.'},
+      {t:'Взять заём у банкиров',fx:{cash:2500,rep:1,b:{devCost:[1.1,36],devTime:[1.08,24]}},res:'Деньги приходят быстро. Но люди банка сидят на каждом совещании и требуют отчёта за каждый доллар.'},
+      {t:'Резко снизить цены',fx:{cash:800,seg:{people:[1.1,18],middle:[0.95,18]}},res:'Ценники падают, и покупатели возвращаются. Прибыли почти нет, зато склады пустеют.'}]},
+  {id:'ford7',t:'Последняя Лиззи',y:1927,when:'finale',
+   sc:[{img:'Ford Model T',say:'Двадцать шестого мая 1927 года с конвейера сходит пятнадцатимиллионная «Модель Т». Её ласково зовут «Жестянкой Лиззи», но покупатели уходят: у «Шевроле» есть цвета, три передачи и рассрочка.'},
+       {who:'Эдсел Форд',line:'Отец, людям нужна новая машина. Я уже нарисовал для неё кузов.'},
+       {who:'Генри Форд',line:'Хорошо. Но она должна быть лучше всего, что мы делали.'},
+       {img:'Ford Model A (1927–1931)',say:'Заводы встают на полгода, шестьдесят тысяч рабочих ждут. Второго декабря публике показывают новую «Модель А», и посмотреть на неё приходят миллионы.'}],
+   q:'Чем закончить эпоху «Модели Т»?',
+   o:[{t:'Остановить заводы ради новой машины',fx:{cash:-3000,rep:5,seg:{people:[1.1,24]}},res:'Остановка стоила огромных денег, но «Модель А» стала хитом. Меньше чем за полтора года выпущен миллион машин, и Форд снова обгоняет «Шевроле».'},
+      {t:'Выжать из «Лиззи» ещё год',fx:{cash:2000,rep:-3,seg:{people:[0.92,24]}},res:'Заводы работают, касса полна. Но покупатели уходят к соседям, и каждый месяц промедления стоит всё дороже.'},
+      {t:'Отдать сыну руль компании',fx:{rep:2,b:{devTime:[0.9,36],quality:[1.03,36]}},res:'Эдсел, президент компании с 1919 года, впервые решает сам. Новые машины выходят красивее, а старик Форд ворчит, но не вмешивается.'}]}
+];
+SAGA.olds=[
+  {id:'olds1',t:'Пар или бензин',y:1896,when:'start',
+   sc:[{img:'Ransom E. Olds',say:'Лансинг, штат Мичиган, 1896 год. В мастерской «Олдс и сын» стучат маленькие моторы — их покупают фермеры и мастерские.'},
+       {say:'Младший Олдс, Рэнсом, уже строил паровые коляски. Одну из них даже купили для далёкого Бомбея.'},
+       {who:'Плини Олдс',line:'Сын, пар мы знаем. А бензин — это взрыв у тебя под сиденьем.'},
+       {who:'Рэнсом Олдс',line:'Бензиновый мотор легче и заводится сразу, отец. За ним будущее.'},
+       {say:'Летом 1896 года первая бензиновая машина Олдса выезжает на улицы Лансинга.'}],
+   q:'На чём строить машины для продажи?',
+   o:[{t:'На бензине',fx:{cash:-300,b:{devTime:[0.9,24]}},res:'В 1897 году Олдс с лансингскими дельцами основывает автомобильную компанию. Первые машины собирают почти вручную, но это уже фирма, а не мастерская.'},
+      {t:'На паре, как привыкли',fx:{b:{quality:[1.04,24],devTime:[1.1,18]}},res:'Паровая машина тиха и сильна, но котёл тяжёл, а разогрев занимает долгие минуты. Покупатели восхищаются — и ждут.'},
+      {t:'Пока делать моторы для других',fx:{cash:800,rep:-1},res:'Моторы расходятся хорошо, касса растёт. Но в Детройте и Кливленде уже строят автомобили, и время работает на них.'}]},
+  {id:'olds2',t:'Пожар на Джефферсон-авеню',y:1901,when:'firstProd',
+   sc:[{say:'Детройт, 1901 год. Лесопромышленник Сэмюэл Смит вложил в «Олдс Мотор Воркс» огромные деньги. Завод строит опытные машины, одну дороже другой.'},
+       {say:'Девятого марта цех охватывает пламя. Огонь пожирает станки и опытные машины.'},
+       {img:'Oldsmobile Curved Dash',say:'По легенде, табельщик Джеймс Брэди выкатывает из огня единственную машину — лёгкий двухместный «Кёрвд Дэш» с изогнутым, как у саней, передком.'},
+       {who:'Рэнсом Олдс',line:'Всё сгорело, а она уцелела. Значит, её и будем строить: одну модель, дёшево и много.'}],
+   q:'Что строить после пожара?',
+   o:[{t:'Только маленький «Кёрвд Дэш»',fx:{seg:{people:[1.1,36]},b:{lineCap:[1.08,24],quality:[0.97,24]}},res:'Машина стоит шестьсот пятьдесят долларов, моторы для неё делает Лиланд, коробки передач — братья Додж. В 1901 году собрано четыреста двадцать пять машин, через год — две с половиной тысячи.'},
+      {t:'Восстановить всю линейку',fx:{cash:-1500,seg:{middle:[1.08,24],lux:[1.06,24]}},res:'Инженеры по памяти восстанавливают чертежи больших машин. Через год в каталоге снова солидные модели — но и цены под стать.'},
+      {t:'Перенести завод в Лансинг',fx:{cash:-600,b:{lineCap:[1.1,36],devTime:[1.08,12]}},res:'Лансинг дарит Олдсу землю под новый завод. Выпуск начинается позже, зато потом идёт широким потоком.'}]},
+  {id:'olds3',t:'Восемьсот миль грязи',y:1901,when:'firstRace',
+   sc:[{say:'Осень 1901 года. Чтобы привезти машину на выставку в Нью-Йорк, молодой испытатель Рой Чапин едет туда своим ходом из Детройта.'},
+       {img:'Oldsmobile Curved Dash',say:'Дороги размыты дождями. Чапин объезжает грязь по бечевнику канала Эри, сам чинит машину и едет семь с половиной дней.'},
+       {who:'Рой Чапин',line:'В «Уолдорф-Асторию» меня не пустили через парадный вход — слишком грязный. Зато машина доехала сама!'},
+       {say:'В Нью-Йорке это видят все. Торговец Рэй Оуэн готов заказать тысячу машин — неслыханный заказ.'}],
+   q:'Принять заказ на тысячу машин?',
+   o:[{t:'Принять и строить потоком',fx:{cash:2000,b:{lineCap:[1.1,24],quality:[0.95,24]}},res:'Олдс принимает заказ, и цеха переходят на поточную сборку. В 1904 году «Олдсмобиль» продаёт около пяти тысяч машин — больше всех в Америке.'},
+      {t:'Взять половину, но без спешки',fx:{cash:900,rep:2,b:{quality:[1.03,24]}},res:'Торговец ворчит, но соглашается. Машины приходят позже, зато без переделок.'},
+      {t:'Отправить Чапина в новые пробеги',fx:{cash:-400,rep:3,mood:6,b:{raceRep:[1.12,24]}},res:'Газеты печатают снимки грязной машины у дверей лучшего отеля Нью-Йорка. Такую рекламу не купишь ни за какие деньги.'}]},
+  {id:'olds4',t:'Спор о большой машине',y:1903,when:['y:1903','sold:1000'],
+   sc:[{img:'Oldsmobile Curved Dash',say:'1903 год. Маленький «Олдсмобиль» — самая продаваемая машина Америки, завод в Лансинге выпускает их тысячами.'},
+       {who:'Фред Смит',line:'Рэнсом, мой отец вложил в этот завод целое состояние. На дешёвых машинах много не заработаешь — нам нужны большие, солидные и дорогие.'},
+       {who:'Рэнсом Олдс',line:'Люди ждут машину, которую можно купить. Если мы её бросим, её сделает кто-то другой.'},
+       {img:'Ransom E. Olds',say:'Совет директоров на стороне Смитов. Олдса, чьё имя стоит на каждой машине, отстраняют от управления заводом.'}],
+   q:'Уступить инвесторам или уйти?',
+   o:[{t:'Уйти и начать своё дело',fx:{cash:-1000,rep:3,b:{devTime:[0.9,24]}},res:'В 1904 году Олдс уходит и с лансингскими друзьями основывает новую фирму. «Олдсмобиль» без него строит большие машины, и продажи падают.'},
+      {t:'Уступить и строить дорогие машины',fx:{cash:1200,seg:{lux:[1.1,24],people:[0.9,24]}},res:'В каталоге появляются тяжёлые машины с большими моторами. Выручка с каждой растёт, а покупателей становится меньше.'},
+      {t:'Предложить две линейки сразу',fx:{seg:{people:[1.05,24],middle:[1.05,24]},b:{devCost:[1.08,24],devTime:[1.06,18]}},res:'Инженеры тянут два проекта одновременно. Живут и дешёвая машина, и дорогая, но обе выходят позже, чем хотелось бы.'}]},
+  {id:'olds5',t:'Три миллиона наличными',y:1908,when:'y:1908',
+   sc:[{say:'Новая фирма Олдса хотела носить его имя, но бывшие компаньоны пригрозили судом. Тогда он сложил название из своих инициалов: Р, Е, О — «Рео».'},
+       {say:'А Америка распевает песенку «В моём весёлом Олдсмобиле» — о машине, которой он больше не владеет.'},
+       {img:'William C. Durant',say:'1908 год. Бенджамин Бриско и Уильям Дюрант задумали собрать крупнейшие марки в один концерн и зовут на переговоры Олдса и Форда.'},
+       {who:'Уильям Дюрант',line:'Мистер Олдс, вместе мы будем сильнее всех. Акции нового концерна вас озолотят.'}],
+   q:'Войти в большой концерн?',
+   o:[{t:'Только за три миллиона наличными',fx:{cash:-200,rep:2,b:{devTime:[0.93,24]}},res:'Форд и Олдс требуют по три миллиона наличными, банкиры отказываются, и «Рео» остаётся независимой. Дюрант создаёт «Дженерал Моторс» без них — и в том же году покупает «Олдсмобиль».'},
+      {t:'Войти в концерн за акции',fx:{cash:2500,rep:-2,b:{devCost:[0.92,36],devTime:[1.08,36]}},res:'Олдс получает пакет акций и место в совете. Деньги концерна кстати, но теперь каждое решение приходится согласовывать в Нью-Йорке.'}]},
+  {id:'olds6',t:'Скоростной фургон',y:1917,when:'war',
+   sc:[{say:'1915 год. «Рео» выпускает лёгкий и быстрый грузовичок — «Спид Вэгон», «скоростной фургон».'},
+       {who:'Рэнсом Олдс',line:'Фермеру и лавочнику не нужна пятитонная махина. Им нужен фургон, который бегает как легковая машина и стоит не дороже её.'},
+       {img:'Liberty truck',say:'В 1917 году Америка вступает в войну. Армии нужны тысячи грузовиков, а сталь и рабочие руки теперь на вес золота.'},
+       {who:'Ричард Скотт',line:'Мистер Олдс, легковые почти не покупают, а за грузовиками очередь. Может, отдать под них весь завод?'}],
+   q:'Что строить в годы войны?',
+   o:[{t:'Отдать завод грузовикам',fx:{cash:1500,seg:{truck:[1.15,36],people:[0.92,24]}},res:'Грузовички «Рео» разъезжаются по фермам, складам и стройкам. После войны «Спид Вэгон» станет одним из самых известных грузовиков Америки.'},
+      {t:'Держаться легковых машин',fx:{rep:1,seg:{middle:[1.06,24]},b:{matCost:[1.08,24]}},res:'Сталь дорожает, покупателей мало, но марка не исчезает из витрин. Когда война кончится, покупатели вспомнят, кто их не бросил.'},
+      {t:'Выполнять военные заказы',fx:{cash:2500,rep:-1,b:{workerEff:[1.05,24],quality:[0.97,24]}},res:'Армейские заказы идут по твёрдой цене, завод работает в три смены. Но спешка сказывается на отделке.'}]},
+  {id:'olds7',t:'Башня над Лансингом',y:1929,when:'finale',
+   sc:[{img:'Ransom E. Olds',say:'Лансинг, 1929 год. Олдсу шестьдесят пять. Его имя носят две марки: «Олдсмобиль», давно принадлежащий «Дженерал Моторс», и «Рео», сложенная из его инициалов.'},
+       {say:'Он построил в городе отель, подарил колледжу инженерный корпус, а рабочим «Рео» — клуб.'},
+       {img:'Roaring Twenties',say:'А Америка веселится: джаз, чарльстон, и акции дорожают каждый день.'},
+       {who:'Ричард Скотт',line:'Мистер Олдс, вся страна скупает акции. Может, и нам пустить свободные деньги на биржу?'},
+       {who:'Рэнсом Олдс',line:'Я верю в то, что можно потрогать руками: в заводы, дома и машины.'}],
+   q:'Куда вложить состояние в 1929 году?',
+   o:[{t:'Строить в Лансинге',fx:{cash:-2000,rep:5},res:'Над Лансингом поднимается башня Олдса — самое высокое здание города. Когда в октябре рухнет биржа, стройка даст людям работу.'},
+      {t:'Вложить в роскошную новую модель',fx:{cash:-1500,seg:{lux:[1.12,24]}},res:'Инженеры «Рео» готовят роскошную восьмицилиндровую машину. Она удалась, но выйдет в самый неудачный момент — в разгар Великой депрессии.'},
+      {t:'Держать деньги наготове',fx:{cash:1500,rep:-1},res:'Олдс не играет на бирже, и октябрьский крах почти не задевает его. Но и городу от этих денег ни тепло ни холодно.'}]}
+];
+SAGA.benz=[
+  {id:'benz1',t:'Экипаж с газовым двигателем',y:1886,when:'start',
+   sc:[{img:'Benz Patent-Motorwagen',say:'Мангейм, 1886 год. Двадцать девятого января Карл Бенц получает патент на «экипаж с газовым двигателем»: три колеса, мотор под сиденьем, меньше одной лошадиной силы.'},
+       {img:'Carl Benz',say:'Летом он впервые выезжает на Рингштрассе на глазах у публики. Прохожие шарахаются, лошади встают на дыбы.'},
+       {who:'Макс Розе',line:'Карл, фирму кормят газовые моторы для мастерских. А твоя коляска только пугает лошадей.'},
+       {who:'Берта Бенц',line:'Я вложила в твоё дело своё приданое, Карл. Не для того, чтобы ты всю жизнь строил моторы для чужих станков.'}],
+   q:'Во что вложить доходы от газовых моторов?',
+   o:[{t:'В самодвижущийся экипаж',fx:{cash:-400,b:{devTime:[0.88,24]}},res:'Бенц строит вторую и третью модель. Компаньоны Розе и Эсслингер через несколько лет уйдут из фирмы, зато у Бенца будет машина, которую можно продавать.'},
+      {t:'В газовые моторы, как хотят компаньоны',fx:{cash:900,b:{devTime:[1.1,18]}},res:'Моторы расходятся хорошо, касса полна. А коляска пылится в углу мастерской.'},
+      {t:'Найти новых компаньонов с деньгами',fx:{cash:500,rep:-1,b:{devCost:[0.92,24]}},res:'Новые пайщики дают деньги на опыты, но требуют отчёта за каждую марку. Работа идёт, хотя и под чужим присмотром.'}]},
+  {id:'benz2',t:'Сто шесть километров',y:1888,when:'firstProd',
+   sc:[{img:'Carl Benz',say:'Август 1888 года. Машины Бенца почти никто не покупает: кто рискнёт ехать в экипаже, который дальше окраины не бывал?'},
+       {img:'Benz Patent-Motorwagen',say:'На рассвете Берта Бенц тайком от мужа выкатывает машину и с сыновьями Ойгеном и Рихардом едет к матери в Пфорцхайм.'},
+       {say:'Засорилась топливная трубка — Берта прочищает её шляпной булавкой, подвязкой изолирует провод. Кончился бензин — она покупает лигроин в аптеке Вислоха. Сапожник набивает кожу на тормозные колодки.'},
+       {who:'Берта Бенц',line:'Карл, мы доехали! Только в гору пришлось толкать. Машине нужна ещё одна, низкая передача.'}],
+   q:'Что делать после поездки Берты?',
+   o:[{t:'Добавить передачу для подъёмов',fx:{b:{quality:[1.05,36],devTime:[1.06,12]}},res:'Бенц ставит низшую передачу, а сапожная кожа становится первыми тормозными накладками. Осенью машина получает золотую медаль на выставке в Мюнхене.'},
+      {t:'Рассказать о поездке всем газетам',fx:{cash:-300,rep:3,b:{adEff:[1.1,24]}},res:'Все говорят о женщине, проехавшей сто шесть километров без лошади. Покупатели впервые спрашивают о цене.'},
+      {t:'Отвезти машину в Париж, к агенту',fx:{cash:600,seg:{lux:[1.08,24]}},res:'Парижский агент Эмиль Роже берётся продавать машины Бенца во Франции — там автомобиль ждут охотнее, чем дома.'}]},
+  {id:'benz3',t:'Снег над Чикаго',y:1895,when:'firstRace',
+   sc:[{img:'Benz Velo',say:'1895 год. Фирма Бенца строит «Вело» — лёгкую четырёхколёсную машину, первую в мире, которую выпускают сериями.'},
+       {img:'Chicago Times-Herald race',say:'Чикаго, День благодарения. По заснеженным улицам стартуют шесть машин, среди них — машины системы Бенца.'},
+       {who:'Чарльз Кинг',line:'Мюллер потерял сознание! Держите его, я сам поведу машину до финиша.'},
+       {say:'Первым приходит американец Фрэнк Дурьеа. «Бенц» Оскара Мюллера — вторым: из шести машин до финиша добрались только две.'},
+       {who:'Карл Бенц',line:'Машина должна довезти, а не обогнать. Пусть гоняются другие.'}],
+   q:'Гоняться или строить надёжные машины?',
+   o:[{t:'Строить надёжные, а не быстрые',fx:{seg:{middle:[1.05,24]},b:{quality:[1.05,36],raceRep:[0.9,24]}},res:'«Вело» расходятся по всей Европе, и к 1900 году фирма Бенца — крупнейший автозавод мира. Но быстрые машины соперников уже наступают на пятки.'},
+      {t:'Выставлять машины на гонки',fx:{cash:-600,mood:6,b:{race:[0.03,24],raceRep:[1.12,24]}},res:'Машины Бенца выходят на старт по всей Европе. Побеждают они нечасто, но публика запоминает марку.'},
+      {t:'Продать лицензию американцам',fx:{cash:1200,rep:-1},res:'Заокеанские мастерские строят копии, и деньги за лицензию приходят исправно. Правда, копии не всегда так же хороши, как оригинал.'}]},
+  {id:'benz4',t:'Француз в Мангейме',y:1903,when:'y:1903',
+   sc:[{img:'Mercedes 35 hp',say:'1903 год. Низкий и быстрый «Мерседес» из Каннштатта уводит у Бенца покупателей. Продажи фирмы падают год от года.'},
+       {who:'Юлиус Ганс',line:'Господин Бенц, клиенты хотят машины, как у «Мерседеса». Мы пригласили француза Барбару с его инженерами.'},
+       {img:'Carl Benz',who:'Карл Бенц',line:'В моей фирме чертят чужие люди, а мои машины называют устаревшими. Я в этом участвовать не буду.'},
+       {say:'Сыновья Ойген и Рихард встают на сторону отца. В правлении спорят до хрипоты.'}],
+   q:'Как ответить на французские чертежи?',
+   o:[{t:'Уйти из фирмы, но не отступиться',fx:{cash:-800,rep:2,b:{quality:[1.04,36]}},res:'Бенц уходит из правления. Машины француза успеха не приносят, Барбару вскоре уезжает, а в 1906 году Карл с сыновьями открывает семейную фирму в Ладенбурге.'},
+      {t:'Принять француза и учиться',fx:{rep:-1,b:{devTime:[0.88,24],quality:[0.97,24]}},res:'Новые машины рождаются быстро, мотор теперь стоит впереди. Но старые мастера ворчат, а покупатели путаются в моделях.'},
+      {t:'Устроить конкурс чертежей',fx:{cash:-500,b:{devTime:[0.94,24],devCost:[1.06,24]}},res:'Свои и французские инженеры соревнуются проектами. Лучшие идеи идут в дело, хотя конкурс обходится недёшево.'}]},
+  {id:'benz5',t:'Молния',y:1909,when:'y:1909',
+   sc:[{img:'Blitzen Benz',say:'1909 год. Инженеры фирмы «Бенц» строят гоночного гиганта с мотором больше двадцати одного литра — «Блитцен-Бенц», «Молнию». В Бруклендсе француз Виктор Эмери разгоняет её быстрее двухсот километров в час.'},
+       {say:'Карл Бенц давно не руководит фирмой, но она носит его имя. Из Ладенбурга он следит за каждым рекордом.'},
+       {who:'Эрни Моросс',line:'Продайте мне эту машину. В Америке за её рёв будут платить тысячи зрителей.'},
+       {who:'Ойген Бенц',line:'Отец, это наша фамилия. Пусть весь мир услышит слово «Бенц».'}],
+   q:'Продать «Молнию» американцам?',
+   o:[{t:'Продать и отправить за океан',fx:{cash:1500,rep:3,mood:-5},res:'В 1910 году Барни Олдфилд разгоняет «Молнию» на пляже Дейтоны до двухсот одиннадцати километров в час, а через год Боб Бёрман — до двухсот двадцати восьми. Ни один самолёт тогда не летает так быстро.'},
+      {t:'Оставить заводской команде',fx:{cash:-800,mood:8,b:{race:[0.04,24],drvFee:[1.1,24]}},res:'«Молния» колесит по трассам Европы под заводским флагом. Гонщики рвутся за её руль, но и платить им приходится больше.'},
+      {t:'Разобрать и изучить',fx:{rep:-1,b:{devTime:[0.92,24],quality:[1.03,24]}},res:'Инженеры измеряют каждую деталь рекордного мотора. Уроки «Молнии» переходят в обычные машины, а публика так и не видит её на пляже.'}]},
+  {id:'benz6',t:'Моторы для фронта',y:1914,when:'war',
+   sc:[{img:'World War I',say:'Август 1914 года. Германия воюет. Рабочих фирмы «Бенц» забирают в армию, легковые машины реквизируют для штабов.'},
+       {say:'Армии нужны авиамоторы и грузовики. Моторы «Бенц» поднимают в небо немецкие самолёты.'},
+       {say:'Карлу Бенцу семьдесят. Он давно отошёл от дел фирмы, носящей его имя, и живёт с Бертой в Ладенбурге.'},
+       {who:'Берта Бенц',line:'Карл, мы строили машину, чтобы люди ездили в гости. А теперь она возит снаряды.'},
+       {who:'Карл Бенц',line:'Машина не выбирает, что везти, Берта. Выбирают люди.'}],
+   q:'Чем заняться заводу в войну?',
+   o:[{t:'Строить авиамоторы для армии',fx:{cash:2000,rep:-1,b:{quality:[1.04,36],lineCap:[0.92,24]}},res:'Авиамоторы учат мастеров работать с точностью до сотых долей миллиметра. После войны этот опыт пригодится в автомобилях.'},
+      {t:'Строить грузовики для фронта',fx:{cash:1500,seg:{truck:[1.15,36],people:[0.9,24]}},res:'Грузовики «Бенц» из Гаггенау тянут снаряды и хлеб по раскисшим дорогам. После войны многие из них вернутся на мирные улицы.'},
+      {t:'Беречь мастеров для мирных машин',fx:{cash:-1000,rep:2,b:{workerEff:[1.06,36]}},res:'Часть мастеров удаётся оставить у станков. Когда наступит мир, они первыми вернутся к легковым машинам.'}]},
+  {id:'benz7',t:'Звезда в лавровом венке',y:1929,when:'finale',
+   sc:[{img:'Hyperinflation in the Weimar Republic',say:'После войны Германия пережила нищету и инфляцию: в 1923 году буханка хлеба стоила миллиарды марок. Поодиночке автозаводы не выживают.'},
+       {img:'Mercedes-Benz',say:'В 1926 году «Бенц и Ко» и «Даймлер» объединяются. На радиаторах теперь трёхлучевая звезда Даймлера в лавровом венке Бенца.'},
+       {say:'Ладенбург, весна 1929 года. Восьмидесятичетырёхлетний Карл Бенц смотрит в окно на проезжающие машины. Рядом, как и сорок лет назад, Берта.'},
+       {img:'Carl Benz',who:'Карл Бенц',line:'Любовь к изобретательству не умирает никогда.'}],
+   q:'Что оставить после себя?',
+   o:[{t:'Передать дело объединённой фирме',fx:{cash:-500,rep:4,b:{quality:[1.04,36]}},res:'Четвёртого апреля 1929 года Карла Бенца не стало. Марка «Мерседес-Бенц» переживёт век, а Берта доживёт до девяноста пяти лет.'},
+      {t:'Сохранить семейную фирму сыновей',fx:{cash:1000,rep:1,seg:{lux:[1.08,24]}},res:'Мастерская в Ладенбурге остаётся семейной. Машин она выпускает немного, но каждая помнит руку мастера.'},
+      {t:'Открыть музей первых машин',fx:{cash:-800,rep:3,b:{adEff:[1.1,24]}},res:'Первый «Моторваген» встаёт под стекло, и к нему едут школьники со всей страны. Молодые инженеры видят, с чего всё началось.'}]}
+];
+SAGA.maybach=[
+  {id:'maybach1',t:'Теплица в Каннштатте',y:1882,when:'start',
+   sc:[{img:'Wilhelm Maybach',say:'Вильгельм Майбах рано осиротел и вырос в приюте в Ройтлингене. Там его заметил Готлиб Даймлер, и с тех пор они работают вместе.'},
+       {say:'1882 год. В саду виллы Даймлера в Каннштатте стоит теплица, переделанная в мастерскую. По ночам оттуда доносятся стук и звон металла.'},
+       {who:'Садовник',line:'Господин полицейский, они там что-то чеканят по ночам. Не иначе фальшивые монеты!'},
+       {say:'Полиция врывается в теплицу и находит только детали мотора. Через три года здесь заработает лёгкий быстроходный мотор, похожий на напольные часы.'}],
+   q:'Как работать дальше?',
+   o:[{t:'По-прежнему в тайне',fx:{rep:-1,b:{devTime:[0.88,24]}},res:'Слухи в Каннштатте не стихают, зато никто не мешает. В 1885 году мотор ставят на деревянный «Райтваген» — первый в мире мотоцикл, а в 1886 году — в карету.'},
+      {t:'Показать мотор властям и соседям',fx:{rep:2,b:{devTime:[1.06,12]}},res:'Полицейские уходят, качая головами, а по городу идёт слух о двух чудаках с мотором без лошади. Заказчики начинают стучаться в калитку.'},
+      {t:'Снять настоящую мастерскую',fx:{cash:-400,b:{lineCap:[1.06,24],quality:[1.02,24]}},res:'Теплицу сменяет просторный цех со станками. Работа идёт ровнее, хотя деньги Даймлера тают быстрее.'}]},
+  {id:'maybach2',t:'Пороховые компаньоны',y:1890,when:'firstProd',
+   sc:[{img:'Daimler-Motoren-Gesellschaft',say:'1890 год. Рождается «Даймлер Моторен Гезельшафт». Деньги дают пороховой фабрикант Макс Дуттенхофер и промышленник Вильгельм Лоренц.'},
+       {say:'А во Францию уже уезжают моторы Даймлера и Майбаха: по лицензии их ставят на свои машины Панар и Пежо.'},
+       {who:'Макс Дуттенхофер',line:'Автомобили — забава. Нам нужны моторы для лодок, насосов и мастерских: их покупают уже сегодня.'},
+       {say:'Майбаху, придумавшему половину этих моторов, предлагают место без права голоса и скромное жалованье.'},
+       {who:'Готлиб Даймлер',line:'Вильгельм, не уходи далеко. Я буду платить тебе сам, и мы продолжим.'}],
+   q:'Принять место в новой фирме?',
+   o:[{t:'Уйти и работать с Даймлером на свои',fx:{cash:-600,b:{devTime:[0.88,24],quality:[1.03,24]}},res:'В 1891 году Майбах уходит из фирмы. Вскоре они с Даймлером обосновываются в пустующем отеле «Герман» — там родятся их лучшие моторы.'},
+      {t:'Подписать и строить то, что продаётся',fx:{cash:1000,b:{lineCap:[1.06,24],devTime:[1.1,24]}},res:'Моторы для лодок и насосов уходят покупателям один за другим. Но на новые идеи не остаётся ни времени, ни права голоса.'}]},
+  {id:'maybach3',t:'Отель «Герман»',y:1895,when:'firstRace',
+   sc:[{say:'Каннштатт, пустующий отель «Герман». В его залах Майбах и Даймлер строят моторы на свои деньги.'},
+       {say:'В 1893 году Майбах придумывает карбюратор с форсункой: бензин распыляется в воздухе, как духи из флакона. Следом рождается мотор «Феникс».'},
+       {img:'Paris–Bordeaux–Paris',say:'А во Франции машины с моторами системы Даймлера выигрывают первые гонки: Париж — Руан, Париж — Бордо — Париж.'},
+       {who:'Фредерик Симмс',line:'Господа, английские деньги придут в фирму, только если вы оба вернётесь.'}],
+   q:'Вернуться в фирму, которая вас выставила?',
+   o:[{t:'Вернуться вместе с «Фениксом»',fx:{cash:1200,rep:2,b:{devTime:[1.05,12]}},res:'В 1895 году Даймлер и Майбах возвращаются, Майбах становится главным инженером. «Феникс» расходится по всему миру, но старые обиды никуда не делись.'},
+      {t:'Продать патенты на сторону',fx:{cash:2500,rep:-2,b:{devTime:[1.08,24]}},res:'Англичане и французы платят щедро. Но мотор, придуманный в Каннштатте, теперь прославляет чужие марки.'},
+      {t:'Остаться вольными изобретателями',fx:{cash:-700,b:{devTime:[0.88,24],quality:[1.03,24]}},res:'Отель «Герман» гудит от новых идей, но денег всё меньше. Каждый месяц свободы оплачен из кармана Даймлера.'}]},
+  {id:'maybach4',t:'Имя девочки',y:1900,when:'y:1900',
+   sc:[{say:'Март 1900 года. Умирает Готлиб Даймлер. Майбах остаётся один на один с правлением.'},
+       {img:'Emil Jellinek',who:'Эмиль Еллинек',line:'Мне нужна машина длинная, низкая и мощная — лучшая в мире. Я беру тридцать шесть штук, но она будет носить имя моей дочери.'},
+       {say:'Майбах ставит мотор в тридцать пять сил на штампованную стальную раму и придумывает сотовый радиатор. Имя машине — «Мерседес».'},
+       {img:'Mercedes 35 hp',say:'Весной 1901 года «Мерседес» выигрывает всё на гонках в Ницце. «Мы вступили в эру Мерседеса», — объявляет секретарь французского автоклуба.'}],
+   q:'Принять заказ Еллинека?',
+   o:[{t:'Строить машину его мечты',fx:{rep:4,seg:{lux:[1.12,36]},b:{devCost:[1.12,24]}},res:'«Мерседес» становится образцом для всех, а французы называют Майбаха королём конструкторов. Вскоре имя девочки получит вся марка.'},
+      {t:'Строить привычные надёжные машины',fx:{cash:1200,rep:-1,b:{quality:[1.03,24]}},res:'Старые модели продаются ровно и без хлопот. Но соперники уже ищут своего Еллинека.'},
+      {t:'Взять заказ, но под своей маркой',fx:{cash:600,rep:2,seg:{lux:[1.06,24]}},res:'Машина выходит под привычной маркой фирмы. Еллинек обижен и заказывает меньше, но имя основателя остаётся на радиаторе.'}]},
+  {id:'maybach5',t:'Моторы для неба',y:1908,when:['y:1908','sold:1000'],
+   sc:[{say:'1907 год. В фирме Даймлера Майбаха оттесняют от дел, и он уходит. Ему за шестьдесят, и кажется, что всё позади.'},
+       {img:'Zeppelin LZ 1',say:'Граф Фердинанд фон Цеппелин строит дирижабли с 1900 года. Летом 1908 года его новый корабль сгорает у Эхтердингена, и вся Германия собирает деньги на следующий.'},
+       {who:'Граф Цеппелин',line:'Господин Майбах, моим кораблям нужны моторы, которые не подведут над облаками.'},
+       {who:'Карл Майбах',line:'Отец, давай строить их вместе. Я поведу завод, а ты — чертежи.'}],
+   q:'Уйти в небо или остаться на земле?',
+   o:[{t:'Строить моторы для дирижаблей',fx:{cash:-500,b:{quality:[1.06,36],lineCap:[0.92,24]}},res:'В 1909 году появляется фирма авиамоторов Цеппелина и Майбахов, её ведёт Карл Майбах. Моторы, работающие сутками, учат делать вещи на века.'},
+      {t:'Вернуться к автомобилям',fx:{rep:1,seg:{lux:[1.08,24]},b:{devTime:[0.94,24]}},res:'Майбах снова чертит легковые машины. Богатые клиенты довольны, но небо достаётся другим.'},
+      {t:'Отдать дела сыну и отдохнуть',fx:{cash:800,b:{devTime:[1.05,24],workerEff:[1.04,24]}},res:'Карл берёт дела на себя, отец лишь изредка заглядывает в цех. Работа идёт спокойнее, но без прежних озарений.'}]},
+  {id:'maybach6',t:'С неба на дорогу',y:1921,when:'crisis',
+   sc:[{img:'World War I',say:'Всю войну моторы Майбаха поднимали в небо цеппелины и самолёты. В 1919 году Версальский договор запрещает Германии строить авиамоторы.'},
+       {img:'Hyperinflation in the Weimar Republic',say:'Марка тает, рабочим нечем платить. Завод во Фридрихсхафене стоит на краю.'},
+       {who:'Карл Майбах',line:'Мы умеем делать лучшие моторы в Германии. Если их не берут другие, построим автомобиль сами.'},
+       {who:'Вильгельм Майбах',line:'Тогда пусть это будет машина без компромиссов. Такая, чтобы не стыдно было написать на ней нашу фамилию.'}],
+   q:'Как пережить мир без авиамоторов?',
+   o:[{t:'Строить свой роскошный автомобиль',fx:{cash:-1500,seg:{lux:[1.12,36]},b:{quality:[1.04,36]}},res:'В 1921 году на выставке в Берлине показывают первый «Майбах» — огромный, тихий и очень дорогой. С тех пор эта фамилия стоит на самых роскошных машинах Германии.'},
+      {t:'Делать моторы для судов и поездов',fx:{cash:1200,seg:{truck:[1.08,24]},b:{lineCap:[1.05,24]}},res:'Тяжёлые моторы для судов и мотовагонов расходятся по заказам. Работа есть, хотя слава роскошных машин достаётся другим.'},
+      {t:'Продавать моторы другим заводам',fx:{cash:800,rep:-1,b:{matCost:[0.94,24]}},res:'Моторы Майбаха встают под капоты чужих марок. Денег меньше, чем хотелось бы, зато станки не простаивают.'}]},
+  {id:'maybach7',t:'Король конструкторов',y:1929,when:'finale',
+   sc:[{img:'LZ 127 Graf Zeppelin',say:'Август 1929 года. Дирижабль «Граф Цеппелин» облетает земной шар за двадцать один день. Все пять его моторов построил завод Майбахов.'},
+       {say:'В Токио и Лос-Анджелесе корабль встречают ликующие толпы.'},
+       {img:'Wilhelm Maybach',say:'Восьмидесятитрёхлетний Вильгельм Майбах читает газеты в Штутгарте. На заводе сына уже готов автомобиль с мотором в двенадцать цилиндров.'},
+       {who:'Карл Майбах',line:'Отец, тебя называют королём конструкторов. Что нам строить дальше?'},
+       {who:'Вильгельм Майбах',line:'То, что будет работать, когда нас уже не будет.'}],
+   q:'Каким будет последний замысел Майбаха?',
+   o:[{t:'Двенадцать цилиндров для лучших дорог',fx:{cash:-1500,rep:3,seg:{lux:[1.15,24]}},res:'Роскошные «Майбахи» с двенадцатицилиндровым мотором станут легендой. Двадцать девятого декабря 1929 года Вильгельма Майбаха не стало.'},
+      {t:'Моторы для скорых поездов',fx:{cash:1500,rep:2,b:{lineCap:[1.05,24]}},res:'Через несколько лет моторы Майбаха помчат скорый поезд из Берлина в Гамбург. Сам Вильгельм Майбах умер двадцать девятого декабря 1929 года.'},
+      {t:'Учить молодых инженеров',fx:{cash:-500,rep:4,b:{devTime:[0.92,24]}},res:'До последних дней старик разбирает с учениками чертежи. Его школа — инженеры, которые построят моторы нового века.'}]}
+];
+SAGA.lanchester=[
+  {id:'lanchester1',t:'С чистого листа',y:1895,when:'start',
+   sc:[{img:'Frederick W. Lanchester',say:'Бирмингем, 1895 год. Инженер Фредерик Ланчестер с братьями Джорджем и Фрэнком строит автомобиль — не копию немецкой машины, а свой, с чистого листа.'},
+       {img:'Red flag traffic laws',say:'Закон не на их стороне: самоходный экипаж должен ползти со скоростью пешехода, а впереди обязан идти человек.'},
+       {who:'Джордж Ланчестер',line:'Фред, проще купить «Бенц» и переделать. Зачем изобретать всё заново?'},
+       {who:'Фредерик Ланчестер',line:'Потому что немцы тоже ошибаются. Мотор должен работать без тряски, а машину надо рассчитывать, а не угадывать.'}],
+   q:'Копировать чужую машину или строить свою?',
+   o:[{t:'Строить всё с нуля',fx:{b:{quality:[1.06,36],devTime:[1.1,24]}},res:'Первая машина Ланчестеров выезжает на дороги в 1896 году — одна из самых первых в Британии. В ноябре того же года закон отменяет пешехода впереди, и путь открыт.'},
+      {t:'Взять за образец немецкую машину',fx:{rep:-1,b:{devTime:[0.85,24]}},res:'Машина готова быстро и едет исправно. Но все видят в ней немку с английским акцентом.'},
+      {t:'Сначала моторы для лодок',fx:{cash:700,b:{devTime:[1.05,18]}},res:'Моторы Ланчестера ставят на речные лодки, и заказы приносят деньги на опыты. Машина подождёт.'}]},
+  {id:'lanchester2',t:'Станки прежде машин',y:1899,when:'firstProd',
+   sc:[{img:'Lanchester Motor Company',say:'1899 год. Братья Ланчестеры основывают свою фирму. Но первой машины на продажу покупателям придётся ждать больше года.'},
+       {say:'Фредерик требует, чтобы любая деталь одной машины подходила к другой. Для этого он сам проектирует станки, калибры и приспособления.'},
+       {who:'Фрэнк Ланчестер',line:'Фред, покупатели ждут, акционеры ропщут, а ты всё строишь станки!'},
+       {who:'Фредерик Ланчестер',line:'Зато потом любую деталь можно будет заказать по почте, и она подойдёт без напильника.'}],
+   q:'Сначала станки или сразу машины?',
+   o:[{t:'Сначала станки и калибры',fx:{cash:-1000,b:{quality:[1.05,36],lineCap:[1.05,36],devTime:[1.1,12]}},res:'Выпуск начинается поздно, зато «Ланчестер» становится одной из самых точных машин своего времени. Детали и правда подходят без подгонки.'},
+      {t:'Собирать вручную, как все',fx:{cash:1000,b:{quality:[0.95,24],devTime:[0.92,12]}},res:'Машины идут к покупателям быстрее. Правда, каждую деталь механики подгоняют напильником.'}]},
+  {id:'lanchester3',t:'Тысяча миль',y:1900,when:'firstRace',
+   sc:[{say:'Весна 1900 года. Автомобильный клуб устраивает пробег на тысячу миль — от Лондона до Эдинбурга и обратно, через перевалы и вересковые пустоши.'},
+       {say:'Десятки машин три недели идут по дорогам Англии и Шотландии, а газеты каждый день печатают отчёты.'},
+       {img:'Frederick W. Lanchester',say:'Ланчестеры выставляют свою восьмисильную машину, уже отмеченную золотой медалью.'},
+       {who:'Фрэнк Ланчестер',line:'Фред, у соперников моторы мощнее. Наша машина выдержит горы?'},
+       {who:'Фредерик Ланчестер',line:'Выдержит. Мотор уравновешен, подвеска мягкая. Мы не будем гнаться — мы будем ехать.'}],
+   q:'Как пройти тысячу миль?',
+   o:[{t:'Ровно и бережно, без гонки',fx:{rep:3,mood:-2,b:{quality:[1.03,24]}},res:'Публика удивляется мягкому ходу машины из Бирмингема. О братьях Ланчестерах узнаёт вся Британия.'},
+      {t:'Выжать из мотора всё',fx:{mood:6,b:{race:[0.03,24],quality:[0.97,18]}},res:'На подъёмах «Ланчестер» обходит машины помощнее, но механикам приходится чинить его каждую ночь.'},
+      {t:'Посадить в машину репортёров',fx:{cash:-300,rep:2,b:{adEff:[1.08,24]}},res:'Газетчики трясутся на заднем сиденье и пишут о каждом подъёме. Машина идёт тяжелее, зато газеты полны её имени.'}]},
+  {id:'lanchester4',t:'Под опекой кредиторов',y:1904,when:'y:1904',
+   sc:[{img:'Lanchester Motor Company',say:'1904 год. «Ланчестер» — одна из лучших машин страны: мягкая подвеска, тихий уравновешенный мотор, планетарная коробка передач и червячный привод задних колёс.'},
+       {say:'Но машин слишком мало, и они слишком дороги. Фирма не может платить по счетам и переходит под управление кредиторов.'},
+       {who:'Управляющий от кредиторов',line:'Мистер Ланчестер, нам нужно меньше изобретений и больше проданных машин.'},
+       {who:'Фредерик Ланчестер',line:'Без изобретений эти машины ничем не лучше других. Их просто перестанут покупать.'}],
+   q:'Как спасти фирму?',
+   o:[{t:'Отдать управление, остаться конструктором',fx:{cash:1500,rep:-1,b:{devTime:[1.08,24],quality:[1.03,24]}},res:'Фирму перестраивают, у руля новые люди, а Фредерик ещё несколько лет остаётся главным конструктором. Машины по-прежнему лучшие и по-прежнему дорогие.'},
+      {t:'Продать патенты',fx:{cash:2500,rep:-2,b:{devTime:[1.08,24]}},res:'За патенты на тормоза и коробку передач платят хорошо. Но свои лучшие идеи фирма теперь делит с соперниками.'},
+      {t:'Упростить машину и снизить цену',fx:{cash:500,seg:{middle:[1.1,24],lux:[0.92,24]},b:{quality:[0.96,24]}},res:'Машина дешевеет и продаётся лучше, хотя знатоки ворчат: это уже не тот «Ланчестер».'}]},
+  {id:'lanchester5',t:'Теория крыла',y:1908,when:['y:1908','sold:500'],
+   sc:[{img:'Wilbur Wright',say:'1908 год. Уилбур Райт летает над Францией, и мир бредит аэропланами.'},
+       {say:'А Ланчестер давно рассчитал, как держит самолёт крыло. Ещё в 1897 году научное общество отказалось печатать его статью — теперь выходит его двухтомник «Воздушный полёт».'},
+       {img:'Daimler Motor Company',say:'Правительство зовёт его в комитет по воздухоплаванию, а фирма «Даймлер» из Ковентри — в консультанты.'},
+       {who:'Джордж Ланчестер',line:'Фред, нашей фирме нужен конструктор, который думает о машинах, а не о крыльях.'}],
+   q:'Кому чертить новые «Ланчестеры»?',
+   o:[{t:'Отдать чертёжную доску Джорджу',fx:{rep:1,b:{devTime:[0.9,24],quality:[0.98,24]}},res:'С 1909 года Фредерик работает на «Даймлер» и на авиацию, а Джордж становится главным конструктором «Ланчестера». Его машины будут выпускать до конца эпохи.'},
+      {t:'Остаться главным конструктором',fx:{b:{quality:[1.05,36],devTime:[1.1,24]}},res:'Фредерик разрывается между машинами и аэропланами. Каждый новый «Ланчестер» — шедевр, но ждать его приходится долго.'},
+      {t:'Строить аэропланы',fx:{cash:-1000,rep:3,b:{race:[0.02,24]}},res:'В мастерской появляется крыло, рассчитанное по новой теории. Публика в восторге, а гоночные машины фирмы становятся обтекаемыми.'}]},
+  {id:'lanchester6',t:'Броневики',y:1914,when:'war',
+   sc:[{img:'World War I',say:'Август 1914 года. Британия вступает в войну, и завод Ланчестеров в Бирмингеме переходит на военные заказы.'},
+       {say:'На шасси «Ланчестера» ставят броню и пулемётную башню. Броневики уходят на фронт, а потом и в Россию — на Кавказ, в Румынию и Галицию.'},
+       {say:'А Фредерик описывает войну формулами. Его закон квадратов гласит: сила армии растёт как квадрат её численности.'},
+       {who:'Фредерик Ланчестер',line:'Будущие войны решит воздух. Авиация — это четвёртый род войск.'}],
+   q:'Что строить в годы войны?',
+   o:[{t:'Броневики для Адмиралтейства',fx:{cash:1800,seg:{truck:[1.1,24],lux:[0.9,24]},b:{quality:[1.03,24]}},res:'Броневики «Ланчестер» проходят тысячи километров по бездорожью. После войны о надёжности марки знают даже генералы.'},
+      {t:'Работать на авиацию',fx:{cash:1000,rep:2,b:{devTime:[0.92,24]}},res:'Фредерик считает крылья и винты для комитета по воздухоплаванию, а инженеры завода учатся у авиации лёгкости и точности.'},
+      {t:'Беречь мастеров для мирных машин',fx:{cash:-800,rep:1,b:{workerEff:[1.06,36]}},res:'Лучшие мастера остаются у станков. После войны «Ланчестер» быстрее других вернётся к роскошным машинам.'}]},
+  {id:'lanchester7',t:'Последний расчёт',y:1929,when:'finale',
+   sc:[{img:'Wall Street crash of 1929',say:'1929 год. Крах на американской бирже докатывается до Британии. Богатые клиенты откладывают покупку дорогих машин.'},
+       {img:'Frederick W. Lanchester',say:'Фредерику Ланчестеру шестьдесят. Он член Королевского общества, автор множества патентов и теории, по которой летают самолёты.'},
+       {say:'Его фамилия стоит на радиаторах, но фирмой он давно не руководит. Брат Джордж чертит для неё роскошные машины с восьмицилиндровыми моторами.'},
+       {who:'Джордж Ланчестер',line:'Фред, дорогие машины сейчас никто не берёт. Может, пора искать сильного союзника?'},
+       {who:'Фредерик Ланчестер',line:'Главное, чтобы под капотом осталась честная инженерия. Остальное — вопрос вывески.'}],
+   q:'Как встретить трудные времена?',
+   o:[{t:'Продать фирму большому концерну',fx:{cash:3000,rep:-2},res:'В 1931 году «Ланчестер» покупает концерн «Би-эс-эй», владелец «Даймлера». Марка проживёт ещё двадцать с лишним лет, но уже как младшая сестра «Даймлера».'},
+      {t:'Остаться верными качеству',fx:{cash:-1500,rep:3,seg:{lux:[1.08,24]},b:{quality:[1.04,24]}},res:'Покупателей мало, но они не изменяют марке. Фредерик гордится: его идеи — дисковые тормоза и уравновешенный мотор — переживут эпоху.'},
+      {t:'Сделать машину подешевле',fx:{cash:500,seg:{middle:[1.1,24],lux:[0.92,24]},b:{quality:[0.97,24]}},res:'Небольшой «Ланчестер» для среднего класса продаётся неплохо, но старые клиенты ворчат.'}]}
+];
+
+/* ================= ФИЛЬМ О ПЕРСОНАЖЕ: Рено, Пежо, Бугатти, Феррари, Аньелли и свой герой ================= */
+SAGA.renault=[
+  {id:'renault1',t:'Сарай в Бийанкуре',y:1898,when:'start',
+   sc:[{img:'Renault Voiturette',say:'Бийанкур, 1898 год. В сарае за родительским домом младший из братьев Рено, Луи, переделывает трицикл Де Диона в маленькую четырёхколёсную машину.'},
+       {say:'Вместо цепей он ставит карданный вал, а в коробке передач придумывает прямую передачу: на высшей скорости мотор крутит колёса напрямую.'},
+       {who:'Марсель Рено',line:'Луи, отец хотел, чтобы ты учился, а не пачкал руки в сарае. Он бы этого не одобрил.'},
+       {who:'Луи Рено',line:'Отец продавал пуговицы и сукно. А я буду продавать скорость.'}],
+   q:'С чего начнёт Луи?',
+   o:[{t:'Запатентовать прямую передачу',fx:{cash:-300,rep:2,b:{devCost:[0.92,36]}},res:'В 1899 году патент готов. Скоро за право ставить прямую передачу другие заводы будут платить Рено.'},
+      {t:'Не ждать бумаг и строить',fx:{b:{devTime:[0.9,24]},seg:{people:[0.96,24]}},res:'Чертёж идёт прямо в мастерскую, и машина готова раньше. Но соперники разглядывают передачу Луи и тоже берутся за карандаши.'}]},
+  {id:'renault2',t:'Подъём на улицу Лепик',y:1898,when:'firstProd',
+   sc:[{img:'Renault Voiturette',say:'Сочельник 1898 года, Монмартр. Улица Лепик — крутой булыжный подъём, где не всякая лошадь вытянет пролётку.'},
+       {who:'Луи Рено',line:'Спорим, моя малышка въедет на самый верх? Садитесь, господа!'},
+       {say:'Мотор трещит, колёса скользят по булыжнику, зеваки расступаются — и машина взбирается на вершину. Той же ночью проигравшие спор друзья заказывают у Луи двенадцать таких же.'},
+       {say:'Двенадцать заказов, а мастерская по-прежнему одна — сарай в саду.'}],
+   q:'Как ответить на первый успех?',
+   o:[{t:'Позвать братьев в дело',fx:{cash:1200,b:{devCost:[1.05,24]}},res:'В 1899 году рождается фирма «Рено Фрер». Марсель и Фернан ведут дела и считают каждый франк, Луи отвечает за чертежи и мастерскую.'},
+      {t:'Собрать все машины своими руками',fx:{rep:2,b:{quality:[1.06,24],lineCap:[0.95,12]}},res:'Каждый винт Луи затягивает сам. Покупатели ждут дольше, зато о машинах из сарая идёт добрая слава.'},
+      {t:'Нанять рабочих и снять цех',fx:{cash:-600,b:{lineCap:[1.1,24]}},res:'Сарай обрастает пристройками, в Бийанкуре появляются первые рабочие. Пройдёт немного лет — и их будут тысячи.'}]},
+  {id:'renault3',t:'Гонка смерти',y:1903,when:'firstRace',
+   sc:[{img:'Marcel Renault',say:'Братья Рено гоняют сами. В 1902 году Марсель на лёгкой машине выиграл гонку Париж — Вена, обогнав в Альпах машины в несколько раз мощнее.'},
+       {img:'Paris–Madrid race',say:'Май 1903 года. Гонка Париж — Мадрид: больше двухсот машин, пыль столбом, толпы на обочинах. Луи первым в своём классе приходит в Бордо.'},
+       {say:'Там он узнаёт: Марсель разбился, обгоняя соперника в облаке пыли у деревни Куэ-Верак. Правительство останавливает гонку, и машины к вокзалу тащат лошади.'},
+       {who:'Луи Рено',line:'Больше я за руль в гонке не сяду. Никогда.'}],
+   q:'Что делать с гонками после гибели Марселя?',
+   o:[{t:'Уйти из гонок',fx:{mood:-6,b:{quality:[1.05,36],workerEff:[1.04,24]}},res:'Луи больше никогда не выйдет на старт. Всю свою ярость и горе он отдаёт заводу.'},
+      {t:'Гоняться в память о брате',fx:{mood:8,b:{race:[0.03,24],quality:[0.97,24]}},res:'Команда выходит на старт с чёрными лентами на капотах. Но заводу не хватает хозяйского глаза.'},
+      {t:'Посадить за руль наёмных гонщиков',fx:{cash:-500,mood:3,b:{raceRep:[1.1,24]}},res:'Братья больше не рискуют собой. За руль садятся профессионалы, среди них — бывший механик Луи, венгр Ференц Шиз.'}]},
+  {id:'renault4',t:'Первое Гран-при',y:1906,when:['firstRace','y:1906'],
+   sc:[{img:'Renault AG',say:'1905 год. Парижская компания таксомоторов заказывает у Рено сотни маленьких двухцилиндровых такси. Этот заказ меняет всё: завод растёт.'},
+       {img:'Ferenc Szisz',say:'Июнь 1906 года, Ле-Ман. Первое в истории Гран-при: двенадцать кругов, больше тысячи двухсот километров за два дня. За рулём «Рено» — бывший механик Луи, венгр Ференц Шиз.'},
+       {who:'Ференц Шиз',line:'Прокол? Снимаю обод вместе с шиной, ставлю запасной — и через несколько минут снова в пути. Соперники возятся с шинами по четверть часа.'},
+       {img:'1906 French Grand Prix',say:'Шиз выигрывает с отрывом больше получаса. Весь мир узнаёт слово «Гран-при» — и имя Рено.'}],
+   q:'Куда вложить славу Гран-при?',
+   o:[{t:'Строить такси для всех столиц',fx:{mood:-3,b:{lineCap:[1.1,36]},seg:{people:[1.06,36]}},res:'Такси «Рено» едут в Лондон и Нью-Йорк. Гоночный отдел ворчит: все деньги уходят в цеха такси.'},
+      {t:'Готовить новую гоночную машину',fx:{cash:-800,mood:6,b:{race:[0.04,24],raceRep:[1.1,24]}},res:'Шиз снова выходит на старт Гран-при. Но соперники учатся быстро: «Фиаты» и «Мерседесы» уже дышат в затылок.'},
+      {t:'Уйти из гонок на вершине',fx:{rep:3,mood:-5,b:{adEff:[1.08,36]}},res:'Титул победителя первого Гран-при у Рено уже никто не отнимет. Через пару лет фирма и вправду оставит большие гонки.'}]},
+  {id:'renault5',t:'Такси Марны',y:1914,when:'war',
+   sc:[{img:'World War I',say:'Сентябрь 1914 года. Германские армии в полусотне километров от Парижа, правительство уехало в Бордо.'},
+       {who:'Генерал Галлиени',line:'Мне нужны все такси Парижа. Этой же ночью.'},
+       {img:'Renault AG',say:'Около шестисот такси, в основном «Рено», везут к Марне тысячи солдат. Счётчики щёлкают всю дорогу: армия потом оплатит проезд.'},
+       {say:'Фронт на Марне устоял. А Бийанкур уже переходит на войну: грузовики, снаряды, моторы для аэропланов.'}],
+   q:'Чем заводу Рено служить войне?',
+   o:[{t:'Отдать завод фронту: грузовики и снаряды',fx:{cash:2500,seg:{truck:[1.12,36]},b:{quality:[0.97,24]}},res:'Цеха работают днём и ночью. В 1917 году отсюда выйдет лёгкий танк «Рено ФТ» — первый серийный танк с вращающейся башней.'},
+      {t:'Строить авиамоторы',fx:{cash:1200,b:{devTime:[0.9,36],devCost:[0.95,36]}},res:'Инженеры Рено учатся делать лёгкие и мощные моторы. После войны этот опыт пригодится и автомобилям.'},
+      {t:'Беречь мирные модели',fx:{rep:-3,b:{devTime:[0.92,24]},seg:{middle:[1.08,24]}},res:'Пока другие льют снаряды, в тихом углу завода чертят машины для мирного времени. Газеты косятся на Рено.'}]},
+  {id:'renault6',t:'Вызов Ситроена',y:1920,when:'crisis',
+   sc:[{img:'Citroën Type A',say:'Война окончена, а с ней и заказы армии. На набережной Жавель бывший снарядный король Андре Ситроен собирает по-американски, потоком, дешёвую машину для всех.'},
+       {who:'Андре Ситроен',line:'Я продаю машину целиком: с кузовом, фарами, стартером и запасным колесом. Садись и поезжай.'},
+       {who:'Луи Рено',line:'Ситроен — делец, а не инженер. Но покупателей он у нас отнимет по-настоящему.'},
+       {img:'Renault KJ',say:'Кризис 1920 года бьёт по всем: склады полны, банки требуют долги. На чертёжной доске Луи — маленькая дешёвая машина.'}],
+   q:'Как ответить на кризис и на вызов Ситроена?',
+   o:[{t:'Выпустить маленькую дешёвую машину',fx:{cash:-1000,seg:{people:[1.1,36]},b:{devCost:[1.05,24]}},res:'В 1922 году выходит маленький «Рено» в шесть налоговых сил. Гонка малолитражек между Бийанкуром и Жавелем началась.'},
+      {t:'Уйти в тракторы и грузовики',fx:{cash:800,seg:{truck:[1.12,36],people:[0.95,24]}},res:'Из танка ФТ уже вырос трактор для полей. Крестьяне и фирмы покупают надёжное железо, а малолитражки забирает Ситроен.'},
+      {t:'Держаться больших дорогих машин',fx:{rep:2,seg:{lux:[1.1,36]},b:{lineCap:[0.95,24]}},res:'Огромный «Рено» в сорок сил ставит рекорды скорости и возит президентов. Но цеха наполовину пусты.'}]},
+  {id:'renault7',t:'Остров Сеген',y:1929,when:'finale',
+   sc:[{img:'Louis Renault (industrialist)',say:'1929 год. Сарай в Бийанкуре разросся в целый город заводов. Теперь Луи Рено застраивает цехами остров Сеген посреди Сены.'},
+       {who:'Луи Рено',line:'Здесь всё будет своё: сталь, моторы, стекло, даже электростанция. Мне не нужны поставщики, которые подводят.'},
+       {img:'Wall Street crash of 1929',say:'Осенью из Нью-Йорка приходят страшные вести: биржа рухнула. Мир ещё не знает, что впереди долгие годы депрессии.'},
+       {say:'Тридцать лет назад Луи въехал на улицу Лепик. Теперь впереди самый крутой подъём.'}],
+   q:'Как встретить надвигающуюся бурю?',
+   o:[{t:'Достроить остров, несмотря ни на что',fx:{cash:-2000,b:{lineCap:[1.12,48],matCost:[0.95,48]}},res:'Остров Сеген станет символом французской промышленности. Заводы Рено проработают на нём больше шестидесяти лет.'},
+      {t:'Заморозить стройку и копить деньги',fx:{cash:2500,rep:-2,b:{lineCap:[0.95,24]}},res:'Сейф полон, а краны над островом стоят. Конкуренты шепчут, что хозяин Бийанкура испугался.'},
+      {t:'Снизить цены и драться за покупателя',fx:{cash:-800,seg:{people:[1.08,24],middle:[1.08,24]},b:{adEff:[1.05,24]}},res:'Машины Рено дешевеют, дилеры довольны. Ситроен отвечает тем же, и война цен только начинается.'}]}
+];
+SAGA.peugeot=[
+  {id:'peugeot1',t:'Пар или бензин',y:1889,when:'start',
+   sc:[{img:'Armand Peugeot',say:'Валантиньи, 1889 год. Фабрики семьи Пежо делают из стали всё: пилы, кофемолки, пружины для кринолинов, велосипеды. Арман Пежо, учившийся в английском Лидсе, мечтает о большем.'},
+       {who:'Леон Серполле',line:'Мой котёл даёт пар за считаные минуты, месье Пежо. Пар — сила, проверенная паровозами.'},
+       {say:'Паровой трицикл Серполле и Пежо показывают на Всемирной выставке в Париже. Но там же Арман видит лёгкую бензиновую машину Готлиба Даймлера.'},
+       {img:'Daimler-Motoren-Gesellschaft',who:'Готлиб Даймлер',line:'Мой мотор лёгок и заводится сразу. Не нужно ждать, пока закипит котёл, месье Пежо.'}],
+   q:'На что поставить — на пар или на бензин?',
+   o:[{t:'Ставить мотор Даймлера',fx:{b:{quality:[1.04,24],matCost:[1.04,24]}},res:'В 1890 году выходит первая бензиновая «Пежо» с мотором Даймлера, который по лицензии собирает Панар. Надёжно, но за каждый мотор приходится платить соседу.'},
+      {t:'Строить паровую машину Серполле',fx:{rep:2,seg:{lux:[1.06,24]},b:{devTime:[1.1,24]}},res:'Пар тих и привычен богатой публике. Но котлы тяжелы, и каждая новая модель рождается мучительно.'},
+      {t:'Пока держаться велосипедов',fx:{cash:1500,b:{devTime:[1.08,24]}},res:'Велосипеды «Пежо» раскупают по всей Франции, касса полна. А на дорогах тем временем появляются чужие моторы.'}]},
+  {id:'peugeot2',t:'Две тысячи километров',y:1891,when:'firstProd',
+   sc:[{img:'Peugeot Type 3',say:'Сентябрь 1891 года. Газета устраивает велогонку Париж — Брест — Париж, тысячу двести километров. Арман отправляет вслед за гонщиками свою новую машину.'},
+       {who:'Огюст Дорио',line:'Велосипедисты крутят педали без сна, а мы едем за ними по пыли и ухабам. И мотор тянет, как заведённый!'},
+       {say:'От завода до Парижа, до Бреста и обратно домой — больше двух тысяч километров. Такого пути автомобиль ещё не проделывал.'},
+       {say:'Теперь «Пежо» можно продавать. Вопрос только в том, как.'}],
+   q:'Как продавать первую серию?',
+   o:[{t:'Строить по заказу, для знатоков',fx:{rep:2,b:{quality:[1.05,24]},seg:{lux:[1.05,24]}},res:'Каждая машина делается под покупателя, как карета. Серия выходит всего в несколько десятков машин, зато о ней говорит вся Франция.'},
+      {t:'Катать машины по городам',fx:{cash:-400,b:{adEff:[1.12,24]}},res:'«Пежо» въезжают на площади городков под звуки оркестров. Реклама обходится дорого, но о марке узнают все.'},
+      {t:'Строить больше и дешевле',fx:{b:{lineCap:[1.08,24],quality:[0.96,24]}},res:'Машин больше, цена ниже. Только механикам приходится чаще выезжать к покупателям с ящиком инструментов.'}]},
+  {id:'peugeot3',t:'Приз за четыре места',y:1895,when:'firstRace',
+   sc:[{img:'Paris–Bordeaux–Paris',say:'Июнь 1895 года. Первая настоящая автомобильная гонка: Париж — Бордо — Париж, тысяча двести километров, днём и ночью.'},
+       {img:'Panhard et Levassor',say:'Первым финиширует Эмиль Левассор на «Панаре»: почти двое суток за рулём без смены. Но в его машине всего два места.'},
+       {who:'Поль Кёхлин',line:'По правилам главный приз получает машина на четыре места. А первая четырёхместная — моя «Пежо»!'},
+       {who:'Эмиль Левассор',line:'Бумаги есть бумаги, месье Пежо. Но все видели, кто пришёл первым.'}],
+   q:'Принять главный приз?',
+   o:[{t:'Принять: правила есть правила',fx:{cash:1200,rep:1,b:{adEff:[1.05,24]}},res:'Официальный победитель — «Пежо» Поля Кёхлина. А памятник у ворот Парижа потом поставят Левассору.'},
+      {t:'Уступить славу Левассору',fx:{rep:4,mood:4,b:{adEff:[0.95,12]}},res:'Арман при всех пожимает Левассору руку. Газеты хвалят благородство «Пежо», хотя приз и строчка в истории уходят сопернику.'}]},
+  {id:'peugeot4',t:'Кузен Эжен',y:1896,when:['firstRace','y:1896'],
+   sc:[{img:'Armand Peugeot',say:'1896 год. Семейным делом правит двоюродный брат Армана, Эжен Пежо. Ему милее велосипеды и пилы, чем шумные экипажи.'},
+       {who:'Эжен Пежо',line:'Автомобиль — игрушка для богачей, Арман. Я не стану рисковать ради неё деньгами семьи.'},
+       {who:'Арман Пежо',line:'Тогда я уйду и построю свой завод. «Пежо» будут ездить и без вас.'},
+       {say:'В 1896 году Арман основывает «Общество автомобилей Пежо». В Одинкуре строят новый завод и свой мотор — больше не нужно кланяться Даймлеру.'}],
+   q:'Уходить ли из семейного дела?',
+   o:[{t:'Уйти и строить свой завод',fx:{cash:-1000,rep:2,b:{devTime:[0.9,36],lineCap:[1.05,36]}},res:'Завод в Одинкуре растёт. А кузены позже начнут делать свои машины под маркой «Лион-Пежо» — родня станет соперником.'},
+      {t:'Остаться под крылом семьи',fx:{cash:1500,b:{matCost:[0.95,36],devTime:[1.1,24]}},res:'Семейные заводы дают дешёвую сталь и деньги. Но каждый новый мотор приходится выпрашивать у осторожного Эжена.'}]},
+  {id:'peugeot5',t:'Шарлатаны',y:1912,when:'y:1912',
+   sc:[{img:'Peugeot Bébé',say:'1912 год. С 1910 года кузены снова заодно с Арманом, и «Пежо» опять одна фирма. Чертёж народной малолитражки купили у молодого миланца Этторе Бугатти.'},
+       {img:'Georges Boillot',who:'Жорж Буало',line:'Месье Пежо, дайте нам троим мастерскую и одного чертёжника. Мы построим машину, которая обгонит «Фиаты».'},
+       {say:'Заводские инженеры зовут троицу гонщиков шарлатанами. А чертёжник Эрнест Анри ставит на мотор два распределительных вала и по четыре клапана на цилиндр.'},
+       {img:'1912 French Grand Prix',say:'Июнь 1912 года, Дьеп. Буало первым приходит в Гран-при Франции, обогнав огромный «Фиат».'}],
+   q:'Кому отдать деньги — гонщикам или инженерам?',
+   o:[{t:'Дать шарлатанам свободу',fx:{cash:-1200,mood:8,b:{race:[0.04,24],raceRep:[1.12,24]}},res:'В мае 1913 года Жюль Гу на «Пежо» выиграет «Индианаполис 500». Мотор Анри станет образцом для гоночных моторов на десятилетия.'},
+      {t:'Слушать заводских инженеров',fx:{mood:-5,b:{quality:[1.05,36],devCost:[0.95,24]}},res:'Инженеры строят надёжные серийные машины. А гоночная слава уходит к соперникам.'},
+      {t:'Бросить все силы на «Бебе»',fx:{cash:-600,seg:{people:[1.1,36]},b:{lineCap:[1.05,24]}},res:'«Бебе Пежо» разойдётся тиражом больше трёх тысяч. Малыша полюбят врачи, коммивояжёры и молодые семьи.'}]},
+  {id:'peugeot6',t:'Последняя зима',y:1914,when:'war',
+   sc:[{img:'World War I',say:'Август 1914 года. Заводы Пежо стоят недалеко от германской границы. Рабочие уходят на фронт, цеха переходят на снаряды и грузовики.'},
+       {img:'Battle of Verdun',say:'Жорж Буало, герой Гран-при, сначала возит генерала Жоффра, а потом становится лётчиком-истребителем и летает над Верденом.'},
+       {who:'Арман Пежо',line:'Я строил машины, чтобы люди ездили друг к другу в гости. А теперь они везут людей на войну.'},
+       {say:'Второго января 1915 года Арман Пежо умирает. Дело «Пежо» переходит к его родным.'}],
+   q:'Как заводам Пежо пережить войну?',
+   o:[{t:'Делать снаряды и грузовики для фронта',fx:{cash:2500,seg:{truck:[1.12,36]},b:{quality:[0.97,24]}},res:'Заводы работают на армию до самого перемирия. А Буало погибнет в воздушном бою под Верденом весной 1916 года.'},
+      {t:'Отправить гоночные машины в Америку',fx:{cash:-500,rep:2,mood:5,b:{raceRep:[1.15,36]}},res:'Там, где нет войны, «Пежо» продолжают побеждать: в 1916 году Дарио Реста выиграет на такой машине «Индианаполис».'}]},
+  {id:'peugeot7',t:'Двести первый',y:1929,when:'finale',
+   sc:[{img:'Grand Palais',say:'Октябрь 1929 года, Париж. Под стеклянным куполом Гран-Пале открывается автомобильный салон. На стенде Пежо — маленькая недорогая машина с номером двести один.'},
+       {img:'Peugeot 201',say:'Три цифры и ноль посередине. Так «Пежо» будет называть свои машины ещё много десятилетий.'},
+       {who:'Робер Пежо',line:'Арман мечтал о машине для каждой семьи. Вот она — пусть и через четырнадцать лет после него.'},
+       {img:'Wall Street crash of 1929',say:'А через несколько недель рушится нью-йоркская биржа. Мир входит в Великую депрессию.'}],
+   q:'Чем встретить трудные годы?',
+   o:[{t:'Поставить всё на дешёвый «двести первый»',fx:{cash:-1000,seg:{people:[1.1,36],middle:[1.06,36]}},res:'«Двести первый» станет машиной, которая проведёт «Пежо» через депрессию.'},
+      {t:'Беречь деньги и ждать',fx:{cash:2500,rep:-2,b:{devTime:[1.1,24]}},res:'Сейф полон, но конструкторы скучают. Покупатели уходят к тем, кто не побоялся.'}]}
+];
+SAGA.bugatti=[
+  {id:'bugatti1',t:'Сын художника',y:1901,when:'start',
+   sc:[{say:'Милан. Карло Бугатти делает мебель, похожую на сказочные дворцы. Сына Этторе он отдал в академию Брера — учиться рисовать и лепить.'},
+       {who:'Карло Бугатти',line:'Этторе, у тебя руки художника. Зачем тебе эти вонючие моторы?'},
+       {img:'Ettore Bugatti',who:'Этторе Бугатти',line:'Мотор тоже может быть красивым, отец. Я докажу.'},
+       {say:'В 1901 году первая машина Этторе получает приз на выставке в Милане. Фирма Де Дитрих из Эльзаса предлагает ему контракт. Этторе нет двадцати одного года, и бумагу подписывает отец.'}],
+   q:'Работать на чужой завод или строить своё?',
+   o:[{t:'Подписать контракт с Де Дитрихом',fx:{cash:1200,b:{quality:[1.04,24],devTime:[1.08,24]}},res:'Восемь лет Этторе строит машины под чужими именами: Де Дитрих, Матис, Дойц. Он учится и копит мечту о своём заводе.'},
+      {t:'Остаться в Милане и строить своё',fx:{rep:2,b:{devCost:[1.1,24],race:[0.02,24]}},res:'Маленькая мастерская, мало денег и много гордости. Каждая машина — как скульптура, и каждая обходится слишком дорого.'}]},
+  {id:'bugatti2',t:'Красильня в Мольсайме',y:1909,when:'firstProd',
+   sc:[{img:'Bugatti Type 13',say:'1909 год. Этторе снимает старую красильню в Мольсайме, в Эльзасе, который тогда принадлежит Германии. Здесь рождается «Бугатти».'},
+       {who:'Барбара Бугатти',line:'Этторе, у нас трое детей, а ты вкладываешь всё в сарай с чанами для краски.'},
+       {who:'Этторе Бугатти',line:'Не сарай, Барбара. Мастерская, где не будет ни одной некрасивой детали.'},
+       {say:'Первая серийная машина — лёгкий Тип 13. Этторе сам проверяет каждую деталь, и в цехах его уже зовут просто Патрон.'}],
+   q:'Сколько машин выпускать?',
+   o:[{t:'Строить мало, но безупречно',fx:{rep:3,b:{quality:[1.07,36],lineCap:[0.92,24]}},res:'В первый год из Мольсайма выходит лишь горстка машин. Зато каждую узнают издали.'},
+      {t:'Строить больше и дешевле',fx:{seg:{middle:[1.06,24]},b:{lineCap:[1.1,24],quality:[0.96,24]}},res:'Цеха работают быстрее, машины дешевеют. Патрон морщится, глядя на каждую лишнюю каплю краски.'}]},
+  {id:'bugatti3',t:'Малыш против гигантов',y:1911,when:'firstRace',
+   sc:[{img:'Bugatti Type 13',say:'Июль 1911 года, Ле-Ман, Гран-при Франции. На старте — огромные машины с моторами по десять литров. И крошечный «Бугатти» Эрнеста Фридриха с мотором чуть больше литра.'},
+       {who:'Эрнест Фридрих',line:'Патрон, на прямых они нас съедают. Но в поворотах я их догоняю!'},
+       {say:'Жара и пыль. Огромные машины ломаются одна за другой, а малыш всё едет. Фридрих приходит вторым — вслед за десятилитровым «Фиатом».'},
+       {who:'Этторе Бугатти',line:'Лишний вес — враг. Запомните это все.'}],
+   q:'Что строить после Ле-Мана?',
+   o:[{t:'Строить лёгкие быстрые машины',fx:{rep:1,b:{race:[0.04,24]},seg:{middle:[1.05,24]}},res:'Маленькие «Бугатти» становятся любимцами гонщиков-любителей. Лёгкость отныне — закон Мольсайма.'},
+      {t:'Построить большую гоночную машину',fx:{cash:-800,b:{raceRep:[1.12,24],matCost:[1.05,24]}},res:'В 1912 году Этторе строит пятилитрового гиганта. Одну такую машину купит знаменитый лётчик Ролан Гаррос.'}]},
+  {id:'bugatti4',t:'Бебе для Пежо',y:1912,when:['firstRace','y:1912'],
+   sc:[{img:'Peugeot Bébé',say:'1912 год. У Этторе в столе чертёж крошечной машины для всех: четыре цилиндра, два места, лёгкая, как игрушка.'},
+       {who:'Робер Пежо',line:'Месье Бугатти, у вас есть чертёж, у нас есть заводы. Продайте нам вашего малыша.'},
+       {who:'Этторе Бугатти',line:'Малыш будет носить ваше имя. Но все будут знать, кто его отец.'},
+       {say:'В Мольсайме такую машину тысячами не построить. А деньги на новые гоночные машины нужны уже сейчас.'}],
+   q:'Продать чертёж великану?',
+   o:[{t:'Продать чертёж Пежо',fx:{cash:2000,rep:1,seg:{people:[0.95,24]}},res:'«Бебе Пежо» разойдётся тиражом больше трёх тысяч. Деньги уходят на гоночные машины Мольсайма.'},
+      {t:'Строить малыша самому',fx:{cash:-800,seg:{people:[1.1,36]},b:{lineCap:[1.05,24],quality:[0.97,24]}},res:'Мольсайм спешно расширяется. Патрон ворчит: дешёвые машины плохо даются его вкусу.'}]},
+  {id:'bugatti5',t:'По ту сторону фронта',y:1914,when:'war',
+   sc:[{img:'World War I',say:'Август 1914 года. Мольсайм — в германском Эльзасе, а Этторе — итальянец, и сердцем он за Францию. Патрон увозит семью в Милан, а потом в Париж.'},
+       {who:'Эрнест Фридрих',line:'Патрон, а завод? Станки, чертежи, машины — всё останется немцам?'},
+       {who:'Этторе Бугатти',line:'Станки подождут. Сейчас небу нужны моторы.'},
+       {say:'В Париже он чертит для союзников авиамоторы на восемь и на шестнадцать цилиндров. Права на шестнадцатицилиндровый купят даже американцы.'}],
+   q:'Чем Бугатти служить войне?',
+   o:[{t:'Чертить авиамоторы для союзников',fx:{cash:1500,b:{devTime:[0.9,36],devCost:[0.95,36]}},res:'Война научила Этторе строить мощные многоцилиндровые моторы. После войны в Мольсайме появятся рядные восьмёрки.'},
+      {t:'Строить машины для штабов',fx:{cash:1200,seg:{lux:[1.06,24]},b:{quality:[0.97,24]}},res:'Штабные машины носятся вдоль фронта. Но тонкая работа Патрона не любит спешки.'}]},
+  {id:'bugatti6',t:'Лион, 1924',y:1924,when:'y:1924',
+   sc:[{say:'Эльзас снова французский. В 1921 году на гонке в Брешиа четыре «Бугатти» заняли четыре первых места, и покупатели выстроились в очередь.'},
+       {img:'Bugatti Type 35',say:'Август 1924 года, Лион. На Гран-при Европы Этторе привозит новый Тип 35: рядная восьмёрка, литые алюминиевые колёса, подкова радиатора. Красивее машины на старте нет.'},
+       {img:'1924 European Grand Prix',say:'Но в гонке с шин одна за другой слетают полосы протектора: их сделали наспех. «Бугатти» остаются далеко позади.'},
+       {who:'Эрнест Фридрих',line:'Патрон, машина быстрая. Нас подвели шины, а не она.'},
+       {who:'Этторе Бугатти',line:'Значит, в следующий раз не подведёт ничего.'}],
+   q:'Что делать после провала в Лионе?',
+   o:[{t:'Продавать Тип 35 гонщикам-частникам',fx:{cash:1500,seg:{sport:[1.12,36]},b:{raceRep:[1.1,36]}},res:'Тип 35 покупают гонщики по всему миру. Эта машина выиграет больше тысячи гонок и станет одной из самых побеждающих в истории.'},
+      {t:'Доводить машину втайне',fx:{cash:-800,b:{race:[0.04,24],quality:[1.04,24]}},res:'Мольсайм переделывает всё до последнего болта. Следующие «тридцать пятые» получат наддув.'}]},
+  {id:'bugatti7',t:'Королевская',y:1929,when:'finale',
+   sc:[{img:'Targa Florio',say:'Сицилия. С 1925 года «Бугатти» пять раз подряд выигрывают Тарга Флорио — самую трудную гонку в горах.'},
+       {say:'А в Мольсайме стоит «Королевская» — огромная машина для королей, с мотором почти в тринадцать литров. На пробке радиатора — слон, которого вылепил покойный брат Этторе, скульптор Рембрандт.'},
+       {who:'Жан Бугатти',line:'Отец, я нарисую для неё кузова, каких мир ещё не видел.'},
+       {img:'Wall Street crash of 1929',say:'Но осенью рушится биржа в Нью-Йорке. Короли и миллионеры начинают считать деньги.'}],
+   q:'Куда Патрону вести Мольсайм?',
+   o:[{t:'Строить «Королевскую» для королей',fx:{cash:-1500,rep:4,seg:{lux:[1.08,36]}},res:'Построят всего шесть «Королевских», и ни одна не достанется королю. Зато сегодня это одни из самых дорогих машин на свете.'},
+      {t:'Отдать силы спортивным машинам',fx:{cash:800,seg:{sport:[1.1,36]},b:{race:[0.03,24]}},res:'Мольсайм живёт гонками. Синие «Бугатти» продолжают побеждать, а «Королевская» пылится в углу цеха.'},
+      {t:'Поставить моторы «Королевской» на рельсы',fx:{cash:2000,rep:-1,b:{lineCap:[1.05,24]}},res:'Моторы, которые ждали королей, повезут пассажиров: скоростные мотрисы «Бугатти» помчатся по французским железным дорогам.'}]}
+];
+SAGA.ferrari=[
+  {id:'ferrari1',t:'Метель над Моденой',y:1898,when:'start',
+   sc:[{say:'Модена, февраль 1898 года. Метель заносит дороги, и новорождённого Энцо Феррари записывают в городские книги только через два дня.'},
+       {who:'Альфредо Феррари',line:'Моя мастерская гнёт железо для железной дороги, Адальджиза. А сыновья пусть знают и моторы.'},
+       {img:'Enzo Ferrari',say:'В нашем фильме время сдвинуто: мастерская Феррари становится автомобильной фирмой, пока Энцо ещё ребёнок. Но всё, что случится с ним самим, — правда.'}],
+   q:'С чего начать фирме Феррари?',
+   o:[{t:'Брать заказы железной дороги',fx:{cash:1500,b:{devTime:[1.08,24]}},res:'Навесы и мостики для железной дороги кормят семью, в кассе звенят лиры. Но чертёжные столы заняты чужими заказами.'},
+      {t:'Поставить всё на первый мотор',fx:{cash:-500,b:{devTime:[0.9,24]}},res:'Соседи крутят пальцем у виска: отец рискует мастерской ради мотора. А сыновья не отходят от верстака.'},
+      {t:'Сразу строить гоночную машину',fx:{b:{race:[0.03,24]},seg:{people:[0.95,24]}},res:'Феррари с первого дня думают о скорости. Покупатели удивляются: зачем семье машина, которая рычит, как зверь?'}]},
+  {id:'ferrari2',t:'Болонья, 1908',y:1908,when:'y:1908',
+   sc:[{img:'Felice Nazzaro',say:'1908 год. Альфредо Феррари везёт сыновей в Болонью, на автомобильную гонку. Десятилетний Энцо впервые видит, как в облаке пыли проносится Феличе Надзаро.'},
+       {img:'Vincenzo Lancia',say:'Винченцо Лянча проходит круг быстрее всех. Мальчик стоит у ограды и не дышит.'},
+       {who:'Энцо Феррари',line:'Папа, я буду оперным тенором. Или спортивным журналистом. Или гонщиком — как Надзаро!'},
+       {who:'Альфредо Феррари',line:'Ты будешь инженером, Энцо. Гонщиков много, а хороших инженеров мало.'}],
+   q:'Кем вырастет Энцо?',
+   o:[{t:'Учиться на инженера, как хочет отец',fx:{cash:-400,b:{devTime:[0.92,36],quality:[1.03,24]}},res:'Учебники Энцо терпеть не может, и инженером так и не станет. Но чертежи читать научится — и научится находить тех, кто их чертит.'},
+      {t:'Пусть пропадает у гоночных трасс',fx:{mood:5,b:{race:[0.03,24],devTime:[1.05,24]}},res:'Из трёх мечтаний побеждает третье. Энцо знает каждого гонщика Италии по имени.'},
+      {t:'Пусть пишет о спорте в газету',fx:{rep:2,b:{adEff:[1.08,24]}},res:'В шестнадцать лет Энцо отправит первую заметку в «Гадзетту делло спорт» — о футбольном матче. Дружбу с газетчиками он пронесёт через всю жизнь.'}]},
+  {id:'ferrari3',t:'Чёрный год',y:1916,when:'y:1916',
+   sc:[{img:'World War I',say:'1916 год. Италия второй год воюет. Старший брат Энцо, Альфредо, служит в армии.'},
+       {say:'В один год Энцо теряет отца и брата: отец умирает от воспаления лёгких, брат — от болезни, подхваченной на службе. Энцо восемнадцать лет.'},
+       {who:'Адальджиза Феррари',line:'Мастерская без отца — просто сарай, Энцо. Кто будет платить рабочим?'},
+       {say:'Семейное дело рушится. Скоро Энцо призовут в горную артиллерию — подковывать армейских мулов.'}],
+   q:'Что делать с мастерской отца?',
+   o:[{t:'Сохранить мастерскую и людей отца',fx:{cash:-800,rep:2,b:{workerEff:[1.05,36]}},res:'Старые мастера остаются. В цехе пахнет железом, как при отце, и работают здесь за двоих.'},
+      {t:'Продать станки и начать заново',fx:{cash:1500,rep:-1,b:{workerEff:[0.95,24]}},res:'В жизни мастерскую Альфредо пришлось закрыть. У Энцо осталась только мечта — и упрямство, которого хватит на всю жизнь.'}]},
+  {id:'ferrari4',t:'Скамейка в парке Валентино',y:1918,when:'y:1918',
+   sc:[{img:'Spanish flu',say:'1918 год. Испанка косит армию вернее пуль. Энцо тяжело болеет, чудом выживает, и его отпускают домой.'},
+       {img:'Castello del Valentino',say:'Зима, Турин. С письмом от полковника Энцо приходит в «Фиат». Ответ короткий: всех фронтовиков мы взять не можем.'},
+       {who:'Энцо Феррари',line:'Я вышел в парк Валентино, смахнул снег со скамейки и сел. Ни отца, ни брата. И я заплакал.'},
+       {say:'Вскоре он станет испытателем маленькой миланской фирмы, которая переделывает армейские грузовики в легковые машины. А в 1920 году — гонщиком «Альфа-Ромео».'}],
+   q:'К вашим воротам тоже пришли фронтовики. Как поступить?',
+   o:[{t:'Взять всех и выучить',fx:{rep:3,b:{lineCap:[1.06,24],workerEff:[0.95,12]}},res:'Цех гудит от новых голосов. Первое время суета и брак, но эти люди не забудут, кто открыл им двери.'},
+      {t:'Брать только опытных мастеров',fx:{rep:-2,b:{quality:[1.04,24]}},res:'Так ответил «Фиат» самому Энцо. Качество не пострадало, а сколько будущих чемпионов ушло к соперникам, не узнает никто.'},
+      {t:'Посадить за руль парня без рекомендаций',fx:{mood:6,b:{drvFee:[0.9,24],race:[0.02,12]}},res:'Именно так маленькая фирма взяла самого Энцо. В 1920 году он придёт вторым на Тарга Флорио.'}]},
+  {id:'ferrari5',t:'Гарцующий конь',y:1923,when:'y:1923',
+   sc:[{img:'Alfa Romeo RL',say:'Июнь 1923 года, Равенна. Энцо Феррари, гонщик «Альфа-Ромео», выигрывает гонку на кругу Савио.'},
+       {say:'После финиша к нему подходит граф Энрико Баракка — отец аса Франческо Баракки, погибшего на войне. На фюзеляже его истребителя был нарисован чёрный гарцующий конь.'},
+       {who:'Графиня Паолина Баракка',line:'Феррари, поставьте на свои машины гарцующего коня моего сына. Он принесёт вам удачу.'},
+       {say:'В тот год Энцо женится на Лауре Гарелло. Кажется, жизнь наконец наладилась.'}],
+   q:'Когда коню появиться на ваших машинах?',
+   o:[{t:'Поставить коня на каждую машину сразу',fx:{rep:3,mood:-2,b:{adEff:[1.1,24]}},res:'Конь бросается в глаза с любой афиши. Только гонщики ворчат: с таким знаком проигрывать нельзя.'},
+      {t:'Беречь знак до своей команды',fx:{mood:4,b:{raceRep:[1.12,36]}},res:'Энцо хранит подарок почти десять лет. Чёрный конь на жёлтом щите, цвете Модены, появится на машинах его Скудерии только в 1932 году.'}]},
+  {id:'ferrari6',t:'Лион без Энцо',y:1924,when:'y:1924',
+   sc:[{say:'Осенью 1923 года Энцо сам едет в Турин, к дому Витторио Яно — лучшего конструктора «Фиата», — и уговаривает его перейти в «Альфа-Ромео».'},
+       {who:'Витторио Яно',line:'Хорошо, Феррари, я приеду в Милан. Дайте мне людей и свободу — и через несколько месяцев у вас будет машина быстрее всех.'},
+       {img:'Coppa Acerbo',say:'Новая «П2» Яно выигрывает с первой попытки. В июле 1924 года Энцо сам побеждает в Пескаре, на Кубке Ачербо.'},
+       {img:'1924 European Grand Prix',say:'А в Лионе, перед Гран-при Европы, силы вдруг кончаются. Энцо снимается с гонки и уезжает домой. Гран-при выигрывает «Альфа» Кампари.'}],
+   q:'Кем теперь быть Энцо — гонщиком или хозяином команды?',
+   o:[{t:'Отойти от руля и собирать команду',fx:{mood:6,b:{raceRep:[1.1,36],drvFee:[1.1,24]}},res:'Энцо ещё выйдет на старт, но всё реже. Его настоящий дар — находить гонщиков, механиков и конструкторов и заставлять их побеждать.'},
+      {t:'Вернуться за руль как можно скорее',fx:{rep:2,b:{race:[0.03,12],workerEff:[0.95,12]}},res:'Он снова гоняется, стиснув зубы. Публика рукоплещет, а дела фирмы ждут хозяина, который заглядывает в контору раз в неделю.'}]},
+  {id:'ferrari7',t:'Скудерия',y:1929,when:'finale',
+   sc:[{img:'Antonio Ascari',say:'В 1925 году «Альфа» Яно выиграла первый чемпионат мира. Но в том же году во Франции разбился Антонио Аскари, и завод почти ушёл из больших гонок.'},
+       {img:'Alfa Romeo 6C',say:'Модена, 16 ноября 1929 года. Энцо собирает богатых гонщиков-любителей и основывает Скудерию Феррари — команду, которая будет выставлять «Альфы» в гонках.'},
+       {who:'Энцо Феррари',line:'Скудерия значит конюшня. У нас будут лучшие скакуны и самые смелые наездники.'},
+       {img:'Tazio Nuvolari',say:'Скоро за его «Альфы» сядет Тацио Нуволари. А машины под своим именем Феррари начнёт строить только после следующей войны.'}],
+   q:'На чьи деньги строить Скудерию?',
+   o:[{t:'Взять деньги богатых любителей',fx:{cash:2000,mood:-3,b:{raceRep:[1.1,36],drvFee:[0.9,24]}},res:'Любители платят за право гоняться рядом с чемпионами. Так Скудерия переживёт кризис, который как раз обрушился на мир.'},
+      {t:'Строить на свои, без компаньонов',fx:{cash:-1500,mood:6,b:{race:[0.03,24]}},res:'Своя команда, свои правила — и пустой сейф. Зато каждый гонщик знает: здесь решают не деньги, а скорость.'},
+      {t:'Пойти под крыло большого завода',fx:{cash:1000,rep:-1,b:{devCost:[0.9,36]}},res:'Заводские инженеры помогают, но в каждой победе звучит чужое имя.'}]}
+];
+SAGA.agnelli=[
+  {id:'agnelli1',t:'Палаццо Брикеразио',y:1899,when:'start',
+   sc:[{img:'Giovanni Agnelli',say:'Турин, 11 июля 1899 года. Во дворце графа Брикеразио собираются аристократы и дельцы. Среди них — бывший кавалерийский офицер из Виллар-Перозы, Джованни Аньелли.'},
+       {who:'Граф Брикеразио',line:'Господа, Италии нужна своя фабрика автомобилей. Не мастерская, а настоящая фабрика.'},
+       {who:'Джованни Аньелли',line:'Тогда не будем изобретать всё с нуля. У Чейрано уже есть готовая машина — купим её вместе с мастерами.'},
+       {img:'Fiat 4 HP',say:'Так рождается «Фиат» — Фабрика итальянских автомобилей Турина.'}],
+   q:'С чего начать новой фабрике?',
+   o:[{t:'Купить чертежи и мастеров Чейрано',fx:{cash:-600,b:{devTime:[0.85,24]}},res:'Первая машина «Фиат» в три с половиной лошадиные силы выходит уже в 1899 году. С мастерами Чейрано приходят молодые Лянча и Надзаро.'},
+      {t:'Строить свою машину с нуля',fx:{rep:2,b:{devTime:[1.1,24],quality:[1.04,24]}},res:'Инженеры фабрики начинают с чистого листа. Выходит дольше, зато в машине нет ни одного чужого винта.'}]},
+  {id:'agnelli2',t:'Корсо Данте',y:1900,when:'firstProd',
+   sc:[{img:'Fiat 4 HP',say:'1900 год. На туринском проспекте Корсо Данте открывается первый завод «Фиат»: полторы сотни рабочих — огромная цифра для Италии тех лет.'},
+       {who:'Граф Роберто Бискаретти',line:'Аньелли, мы же клуб благородных любителей. Зачем нам столько станков?'},
+       {who:'Джованни Аньелли',line:'Любители покупают по одной машине, граф. А фабрика должна продавать тысячи.'},
+       {say:'Аньелли всё твёрже берёт дело в свои руки. В 1902 году он станет управляющим директором, и главные решения будут за ним.'}],
+   q:'Как растить фабрику?',
+   o:[{t:'Строить большой завод на вырост',fx:{cash:-1500,b:{lineCap:[1.12,36],workerEff:[1.03,24]}},res:'Цеха стоят полупустыми, акционеры ворчат. Но когда придут заказы, «Фиат» будет к ним готов.'},
+      {t:'Расти осторожно, по заказам',fx:{cash:800,rep:1,b:{lineCap:[0.95,24]}},res:'Касса в порядке, граф Бискаретти доволен. Но покупатели ждут машин месяцами.'}]},
+  {id:'agnelli3',t:'Лянча и Надзаро',y:1907,when:'firstRace',
+   sc:[{img:'Vincenzo Lancia',say:'Заводские гонщики «Фиата» — два бывших ученика мастерской Чейрано: горячий Винченцо Лянча, самый быстрый и самый невезучий, и хладнокровный Феличе Надзаро.'},
+       {img:'Felice Nazzaro',say:'1907 год — год Надзаро. За один сезон он выигрывает Тарга Флорио, Кайзерпрайс в Германии и Гран-при Франции.'},
+       {who:'Винченцо Лянча',line:'Синьор Аньелли, у меня уже есть своя мастерская. Скоро мне будет не до гонок за «Фиат».'},
+       {who:'Джованни Аньелли',line:'Ты уйдёшь — и станешь нашим соперником, Винченцо.'}],
+   q:'Отпустить Лянчу?',
+   o:[{t:'Отпустить и остаться друзьями',fx:{rep:2,mood:4,seg:{middle:[0.96,24]}},res:'Лянча строит машины под своим именем, но ещё гоняется за «Фиат». Его марка прославится смелыми конструкциями.'},
+      {t:'Удержать большим жалованьем',fx:{cash:-800,b:{race:[0.03,24],drvFee:[1.12,24]}},res:'Лянча остаётся, но скучает. Звёзды за рулём стоят всё дороже.'}]},
+  {id:'agnelli4',t:'Процесс',y:1908,when:['firstRace','y:1908'],
+   sc:[{img:'Panic of 1907',say:'1907 год. По биржам мира катится паника. Акции «Фиата», ещё вчера взлетевшие до небес, падают в разы.'},
+       {say:'Аньелли спасает фабрику: перестраивает капитал, списывает убытки. А в 1908 году его обвиняют в подделке отчётов и игре на бирже.'},
+       {who:'Прокурор',line:'Синьор Аньелли, вы разбогатели, пока мелкие акционеры разорялись.'},
+       {who:'Джованни Аньелли',line:'Я спасал фабрику, а не себя. Без меня от неё остались бы одни станки. Пусть решает суд.'}],
+   q:'Как держаться под судом?',
+   o:[{t:'Бороться в суде и не выпускать руль',fx:{cash:-1000,rep:-2,b:{lineCap:[1.06,36]}},res:'Процесс тянется четыре года. В 1912 году Аньелли оправдают — а в том же году выйдет «Зеро», первый массовый «Фиат».'},
+      {t:'Уйти в тень до приговора',fx:{rep:2,b:{workerEff:[0.95,24],devTime:[1.08,24]}},res:'Газеты хвалят скромность, но без хозяина фабрика теряет темп.'},
+      {t:'Возместить убытки мелким акционерам',fx:{cash:-2000,rep:4},res:'Деньги уходят, зато в Турине говорят: Аньелли платит по счетам.'}]},
+  {id:'agnelli5',t:'Заказы войны',y:1915,when:'war',
+   sc:[{img:'World War I',say:'Европа воюет, а в мае 1915 года в войну вступает и Италия. Армии нужны грузовики, авиамоторы, пулемёты — и всё это заказывают «Фиату».'},
+       {who:'Джованни Аньелли',line:'Война кончится. А заводы, которые мы построим сейчас, останутся.'},
+       {say:'За войну на «Фиат» работают уже не четыре, а сорок тысяч человек. В 1916 году на окраине Турина начинают строить Линготто — один из самых больших заводов Европы.'}],
+   q:'Как распорядиться военными деньгами?',
+   o:[{t:'Брать всё, что заказывает армия',fx:{cash:3000,seg:{truck:[1.15,36]},b:{quality:[0.96,24]}},res:'«Фиат» становится крупнейшей фирмой Италии. Но после войны горы станков придётся чем-то занять.'},
+      {t:'Вложить деньги в Линготто',fx:{cash:-1000,b:{lineCap:[1.12,48],workerEff:[1.04,36]}},res:'Пять этажей бетона растут год за годом. Когда пушки умолкнут, у «Фиата» будет завод по-американски.'},
+      {t:'Сохранить мирные модели',fx:{rep:-2,seg:{middle:[1.08,24]},b:{devTime:[0.92,24]}},res:'Пока другие делают снаряды, конструкторы «Фиата» чертят машину для мирного времени. Она выйдет в 1919 году.'}]},
+  {id:'agnelli6',t:'Красный сентябрь',y:1920,when:'crisis',
+   sc:[{img:'Fiat 501',say:'Сентябрь 1920 года. Турин бастует. Рабочие занимают заводы «Фиат», поднимают красные флаги, ставят у ворот свою охрану и сами пускают станки.'},
+       {who:'Делегат заводского совета',line:'Фабрика принадлежит тем, кто на ней работает, синьор Аньелли!'},
+       {who:'Джованни Аньелли',line:'Хорошо. Тогда берите её целиком, делайте кооператив. Посмотрим, кто будет платить за сталь.'},
+       {say:'Правительство отказывается посылать солдат. Через несколько недель рабочие уходят из цехов, получив прибавку и обещания.'}],
+   q:'Как вернуть завод к работе?',
+   o:[{t:'Предложить рабочим кооператив',fx:{cash:-500,rep:3,b:{workerEff:[1.05,24]}},res:'Кооператива так и не случилось, и фабрика осталась у Аньелли. Но рабочие запомнили: хозяин не побоялся.'},
+      {t:'Прибавить жалованье',fx:{cash:-1500,rep:1,b:{workerEff:[1.06,24]}},res:'Станки снова гудят. Деньги ушли, зато цеха работают без злобы.'},
+      {t:'Переждать и не уступать',fx:{cash:800,rep:-3,b:{lineCap:[0.9,12]}},res:'Завод стоит, заказы уходят к соперникам. Жалованье сэкономлено, но потеряны месяцы.'}]},
+  {id:'agnelli7',t:'Трек на крыше',y:1929,when:'finale',
+   sc:[{say:'Линготто. Пять этажей цехов: сталь въезжает внизу, этаж за этажом становится машиной, а готовый автомобиль выезжает прямо на крышу, на испытательный трек.'},
+       {who:'Джакомо Матте-Трукко',line:'Синьор сенатор, на крыше — трек с настоящими виражами. Такого нет даже у Форда.'},
+       {img:'Fiat 509',say:'Маленький «Фиат 509» продают в рассрочку, и его покупают те, кто вчера ездил на велосипеде. Из пяти машин Италии четыре — «Фиаты».'},
+       {img:'Wall Street crash of 1929',say:'Осенью 1929 года из Америки приходит весть о крахе биржи. Мир, который строил Аньелли, вот-вот качнётся.'}],
+   q:'Как «Фиату» встретить бурю?',
+   o:[{t:'Расширить рассрочку для всех',fx:{cash:-1000,seg:{people:[1.1,36]},b:{adEff:[1.05,24]}},res:'Машина в рассрочку по карману даже в трудные годы. Скоро «Фиат» задумает совсем крошечную машину для каждой семьи.'},
+      {t:'Копить деньги и сократить выпуск',fx:{cash:2500,rep:-2,b:{lineCap:[0.92,24]}},res:'Касса полна, конвейер Линготто замедляется. Рабочие со страхом ждут списков на увольнение.'},
+      {t:'Искать покупателей за границей',fx:{cash:-600,seg:{middle:[1.06,36]},b:{adEff:[1.08,24]}},res:'«Фиат» уходит за границу: скоро его машины будут собирать в Германии, Польше и Франции.'}]}
+];
+SAGA.custom=[
+  {id:'custom1',t:'Вывеска над воротами',y:0,when:'start',
+   sc:[{img:'Safety bicycle',say:'{city}, {y} год. Вчерашний велосипедный мастер {name} снимает сарай на окраине и вешает над воротами вывеску: «{co}».'},
+       {who:'Мать',line:'Все сбережения — в железо? А если твоя машина не поедет?'},
+       {say:'{name} только улыбается. В сарае пахнет бензином и свежей стружкой, а на верстаке лежит чертёж мотора.'},
+       {who:'Старый мастер',line:'Денег хватит либо на станок, либо на толкового механика. На то и другое — нет.'}],
+   q:'На что потратить последние деньги?',
+   o:[{t:'Купить станок',fx:{cash:-500,b:{workerEff:[1.08,24]}},res:'Станок пахнет маслом и новой жизнью. Деталь, которую раньше пилили неделю, теперь готова за день.'},
+      {t:'Нанять механика с большого завода',fx:{cash:-400,b:{devTime:[0.9,24],quality:[1.02,24]}},res:'Механик знает, как устроены чужие моторы, и не повторяет чужих ошибок.'},
+      {t:'Чинить велосипеды, пока строится машина',fx:{cash:600,b:{devTime:[1.1,24]}},res:'Велосипеды кормят мастерскую, но машина рождается медленно, по вечерам.'}]},
+  {id:'custom2',t:'Первая машина',y:0,when:'firstProd',
+   sc:[{say:'{y} год. Первая машина «{co}» выезжает из ворот мастерской. Мальчишки бегут следом, лошади шарахаются к обочине.'},
+       {img:'De Dion-Bouton',say:'На дорогах правят большие марки: «Де Дион», «Панар», «Бенц». Рядом с ними машина из сарая кажется игрушкой.'},
+       {who:'Доктор',line:'Мне нужно успевать к больным и днём, и ночью. Лошадь устаёт. А ваша машина устаёт?'},
+       {say:'Покупателей двое: сельский доктор и богатый фабрикант, который готов заплатить вдвое, но хочет машину немедленно.'}],
+   q:'Кому продать первую машину?',
+   o:[{t:'Отдать доктору: пусть ездит по вызовам',fx:{rep:3,b:{adEff:[1.06,24]}},res:'Доктор ездит к больным в любую погоду и всем рассказывает о своей машине. Лучшей рекламы не купить.'},
+      {t:'Продать фабриканту за двойную цену',fx:{cash:700,rep:-1},res:'Деньги сразу уходят в мастерскую. А фабрикант через месяц жалуется всему клубу на скрипучие рессоры.'},
+      {t:'Оставить себе для испытаний',fx:{b:{quality:[1.05,24],devTime:[0.95,12]}},res:'Сотни километров по разбитым дорогам — и все слабые места найдены раньше, чем их нашли бы покупатели.'}]},
+  {id:'custom3',t:'Пыль и слава',y:0,when:'firstRace',
+   sc:[{img:'Paris–Bordeaux–Paris',say:'Первая гонка машины «{co}». Пыль столбом, толпы на обочинах, а где-то впереди — машины знаменитых марок.'},
+       {who:'Механик',line:'Мотор держит! Если бы не прокол у мельницы, мы были бы в первой десятке.'},
+       {say:'Вечером в трактире у трассы гонщики спорят до хрипоты. Одни говорят: гонки продают машины лучше любой рекламы. Другие: гонки разоряют маленькие фирмы.'},
+       {say:'{name} молча считает: шины, бензин, запчасти, жалованье гонщику.'}],
+   q:'Гнаться за скоростью дальше?',
+   o:[{t:'Создать гоночный отдел',fx:{cash:-800,mood:8,b:{race:[0.03,24],raceRep:[1.1,24]}},res:'В углу мастерской появляется гоночный цех со своими механиками. Там не спят перед стартами.'},
+      {t:'Гоняться только ради рекламы',fx:{mood:-3,b:{adEff:[1.06,24]}},res:'Машины выходят на старт, только когда рядом газетчики. Гонщики недовольны: так побеждать трудно.'},
+      {t:'Продавать копии гоночной машины',fx:{rep:1,seg:{middle:[1.06,24]},b:{quality:[0.97,24]}},res:'Богатые спортсмены хотят машину, как на гонке. Но гоночная начинка плохо терпит неопытные руки.'}]},
+  {id:'custom4',t:'Большой заказ',y:1911,when:'y:1911',
+   sc:[{img:'Grand Palais',say:'{y} год. На большом автомобильном салоне к стенду «{co}» подходит директор таксомоторной компании. Ему нужна сотня машин к весне.'},
+       {who:'Инженер-хронометрист',line:'Успеем, если убрать лишние движения. Секундомер на каждый пост и плата за норму, а не за день.'},
+       {who:'Старый мастер',line:'Мы люди, а не часы. Ребята говорят: если в цех придёт секундомер, завтра встанет весь завод.'},
+       {say:'{name} смотрит на контракт. Такой заказ бывает раз в жизни.'}],
+   q:'Как выполнить большой заказ?',
+   o:[{t:'Ввести секундомер и сдельщину',fx:{cash:1500,rep:-3,b:{workerEff:[1.1,24],lineCap:[0.95,12]}},res:'Две недели завод бастует. Потом люди возвращаются, выработка растёт, и заказ сдан в срок. Но в цехах стало холоднее.'},
+      {t:'Нанять людей и платить за сверхурочные',fx:{cash:300,rep:2,b:{lineCap:[1.08,24]}},res:'Цех работает в две смены. Денег уходит много, зато весной новые такси выезжают на улицы точно в срок.'},
+      {t:'Взять только половину заказа',fx:{cash:500,b:{quality:[1.04,24]}},res:'Остальные машины компания заказывает у соперника. Зато свои полсотни машин завод собирает без спешки и брака.'}]},
+  {id:'custom5',t:'Мобилизация',y:0,when:'war',
+   sc:[{img:'World War I',say:'{y} год. Война. На площадях играют марши, у вокзалов плачут матери. Мастера и гонщики фирмы «{co}» уходят на фронт.'},
+       {who:'Интендант',line:'Армии нужны грузовики. Много и быстро. Казна платит хорошо и о ценах не спорит.'},
+       {who:'Старый мастер',line:'А кто будет работать? Остались старики, женщины да мальчишки.'},
+       {say:'{name} смотрит на опустевший цех. Мирные заказы исчезли за одну неделю, а склад полон машин, которые никто не купит.'}],
+   q:'Чем заводу жить в войну?',
+   o:[{t:'Взять военный заказ на грузовики',fx:{cash:2500,seg:{truck:[1.12,36]},b:{quality:[0.97,24]}},res:'Цеха работают в три смены. Грузовики увозят снаряды и раненых по разбитым фронтовым дорогам.'},
+      {t:'Строить санитарные машины',fx:{cash:800,rep:4},res:'Машины с красным крестом возят раненых с передовой. Их водителей знает вся страна.'},
+      {t:'Беречь чертежи мирных машин',fx:{rep:-2,seg:{middle:[1.06,24]},b:{devTime:[0.9,36]}},res:'Пока другие делают снаряды, в конторе тайком чертят машину для мирного времени. Когда война кончится, у фирмы «{co}» уже будет новая модель.'}]},
+  {id:'custom6',t:'Пустые витрины',y:1920,when:'crisis',
+   sc:[{img:'Armistice of 11 November 1918',say:'Война кончилась. Год-другой все покупали машины, и казалось, что праздник будет вечным.'},
+       {say:'{y} год. Цены падают, банки требуют долги, у дилеров пылятся непроданные машины. Послевоенный кризис бьёт по всем.'},
+       {who:'Банкир',line:'Мне жаль, но продлить кредит мы не можем. Времена такие.'},
+       {who:'Старый мастер',line:'Людей увольнять будем? У многих семьи, а кто-то только что вернулся с фронта.'},
+       {say:'{name} впервые не знает, чем платить за сталь в следующем месяце.'}],
+   q:'Как пережить кризис?',
+   o:[{t:'Снизить цены, даже себе в убыток',fx:{cash:-1200,rep:2,seg:{people:[1.08,24],middle:[1.08,24]}},res:'Машины уходят со складов. Касса пустеет, зато покупатели запомнят, кто не задирал цены в трудный год.'},
+      {t:'Сократить выпуск и людей',fx:{cash:1500,rep:-3,b:{lineCap:[0.9,24]}},res:'Касса спасена, но в городе говорят, что на заводе «{co}» выгоняют фронтовиков.'},
+      {t:'Выпустить дешёвую малолитражку',fx:{cash:-800,seg:{people:[1.12,36]},b:{devCost:[1.05,24]}},res:'Маленькая машина с мотором в литр — то, что нужно небогатым семьям. Многие фирмы спасутся именно так.'}]},
+  {id:'custom7',t:'Чёрный четверг',y:1929,when:'finale',
+   sc:[{img:'Roaring Twenties',say:'Двадцатые годы. Джаз, чарльстон, машины в рассрочку. Фирма «{co}» прошла долгий путь от сарая на окраине.'},
+       {who:'Молодой инженер',line:'Мы можем строить больше, быстрее и дешевле. Дайте нам новый цех — и новую модель!'},
+       {img:'Wall Street crash of 1929',say:'Октябрь 1929 года. На нью-йоркской бирже паника: акции падают быстрее, чем их успевают продавать. По всему миру дрожат банки.'},
+       {say:'{name} стоит у окна конторы и вспоминает первую машину, которая когда-то выехала из ворот мастерской.'}],
+   q:'С чем фирма войдёт в тридцатые годы?',
+   o:[{t:'Вложить всё в новую модель',fx:{cash:-2000,seg:{middle:[1.08,36]},b:{devTime:[0.85,24]}},res:'Новая машина выйдет в самые трудные годы. Если она понравится, фирма «{co}» переживёт любую бурю.'},
+      {t:'Беречь деньги на чёрный день',fx:{cash:2500,rep:-2,b:{devTime:[1.1,24]}},res:'Сейф полон, конструкторы скучают. Зато банкиры снова здороваются первыми.'},
+      {t:'Продать долю большому концерну',fx:{cash:4000,rep:-4,b:{devCost:[0.95,24]}},res:'Концерн платит щедро. Вывеска «{co}» ещё висит над воротами, но решения теперь принимают другие.'}]}
+];
+
 /* ================= RENDER ================= */
 function spark(data,color='var(--brass)'){
   const w=320,h=64;if(data.length<2)return '<div class="empty-chart">График появится через пару месяцев</div>';
@@ -3555,7 +4431,8 @@ function vLog(){
   const got=ACH.filter(a=>G.ach[a.id]).length;
   const papers=G.papers.slice().reverse().map((p,i)=>`<button class="chip" style="width:100%;margin-top:6px" data-act="reopenPaper" data-k="${G.papers.length-1-i}"><small>${p.d}</small>${esc(p.title)}</button>`).join('');
   const last=G.papers[G.papers.length-1];
-  return `${legacyCard()}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
+  return `<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя. Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
+  ${legacyCard()}${titlesCard(G)}${boardCard(G)}${sagaCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
   ${foldCard('ach',false,`<h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span>`,`<div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div>`,`получено ${got} из ${ACH.length}`)}
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
@@ -3569,6 +4446,7 @@ function render(){
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
   lastDate=ds;setCash(s.cash);
   document.getElementById('view').innerHTML=tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():tab==='race'?vRace():vLog();
+  {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log';}}
   if(tab==='plant')plantAnim();
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
   const nb=document.getElementById('nextBtn'),qb=document.getElementById('qBtn'),ab=document.getElementById('autoBtn');
@@ -3590,6 +4468,7 @@ function closeSheet(){sheet.hidden=true;draft=null;}
 sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&!G.pending.length&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
+  if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
   if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
@@ -3789,7 +4668,10 @@ function menuArt(){
 function showMainMenu(){
   stopAuto&&stopAuto();closeSheet();closePaper();document.querySelector('.wrap').hidden=true;document.querySelector('.bar-nav').hidden=true;
   const cont=slotInfo('auto'),old=hasOldSave()&&!cont;
-  MS.innerHTML=`<div class="menu-in">${menuArt()}<h1 class="menu-title">Автоимперия</h1><p class="menu-sub">1895 — 1929 · экономическая стратегия и гонки</p>
+  MS.innerHTML=`<div class="menu-in"><div class="menu-hero">${menuArt()}</div>
+    <div class="menu-titlebox"><div class="menu-kick">1895 — 1929</div><h1 class="menu-title">Автоимперия</h1><p class="menu-sub">экономическая стратегия и гонки на заре автомобиля</p></div>
+    <div class="menu-gap"></div>
+    <p class="menu-cap" id="menuCap"></p>
     <div class="stack menu-btns">
       ${cont?`<button class="btn primary block" data-act="continue"><b>Продолжить</b><small>${esc(cont.company)} · ${MONTHS[cont.m]} ${cont.y}${cont.over?' · итоги':''}</small></button>`:''}
       <button class="btn ${cont?'':'primary'} block" data-act="newgame">Новая игра</button>
@@ -3800,12 +4682,71 @@ function showMainMenu(){
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
     <p class="small muted menu-foot">Вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
   MS.hidden=false;
+  // живая гонка за меню — чуть позже, чтобы меню появилось сразу
+  setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
 }
-function hideMainMenu(){MS.hidden=true;MS.innerHTML='';document.querySelector('.wrap').hidden=false;document.querySelector('.bar-nav').hidden=false;}
+function hideMainMenu(){demoStop();MS.hidden=true;MS.innerHTML='';MS.classList.remove('live','ready');document.querySelector('.wrap').hidden=false;document.querySelector('.bar-nav').hidden=false;}
 function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
   <div class="stack small" style="margin-top:10px"><p>«Автоимперия» — современная версия классических экономических стратегий об автомобильной индустрии начала XX века в духе Motor City / Oldtimer (1994). Название, графика и код — оригинальные.</p>
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
   <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p></div>`);}
+
+/* ================= ТИТУЛЬНЫЙ ЭКРАН: живая 3D-гонка эпохи за меню (как заставка в кино) ================= */
+// Пока открыто главное меню, за ним идёт настоящая гонка знаменитого года: машины едут сами, камера — как в кино
+// (сзади, у обочины, сверху). Первый раз фото-материалы грузятся секунду-другую — до этого виден рисунок заставки.
+const DEMO={on:false,key:null,cut:0,cutT:0,t:0,raf:0};
+const DEMO_RACES=['gpacf-1906','targa-1906','x87575-1908','pbp-1895','lemans-1923','gpacf-1914','targa-1924','kaiser-1907','pv1902-1902','monaco-1929','x22765-1924','gb1903-1903'];
+function demoWanted(){return !R&&typeof r3dWanted==='function'&&r3dWanted()&&!(AU.on&&AU.on.demo===false)&&!MS.hidden;}
+function demoStart(){if(DEMO.on||!demoWanted())return;
+  const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);if(!L.length)return;
+  const rc=L[(DEMO.n=(DEMO.n===undefined?Math.floor(Math.random()*L.length):DEMO.n+1))%L.length];
+  const s={pioneer:'custom',country:COUNTRIES[rc.c]?rc.c:'fr',company:'',drivers:[],models:[],y:rc.y,m:rc.m,cres:{},raceDone:{},titles:[],rep:50,rdept:0};
+  let cars,trk;
+  try{const ai=raceField(rc,s,0,[]);if(!ai.length)return;const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref);
+    cars=ai.map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:i+2}),rc.y,trk);c.mech=c.st.mech;c.style=carStyle(c.md,c.prep,rc.y);
+      c.wheel=wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name;
+      c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip:0,hp:3};wearSetup(c,trk,rc);return c;});}
+  catch(e){console.warn('demo',e);return;}
+  cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
+  cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
+    const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
+  // для заставки — красивый свет: вечер, утро или ясный день, без дождя
+  const wx=r3dWeather(trk);wx.rain=false;wx.mood=['evening','clear','morning','evening','cloudy'][DEMO.n%5];wx.mist=wx.mood==='morning'?1:0;
+  R={rc,trk,cars,all:cars,me:null,team:[],follow:cars[0],mode:'demo',t:-1.5,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],speed:1,setup:{},wx,hz0:0,relRef:0.2,demo:1};
+  DEMO.on=true;DEMO.key=rc.key;DEMO.t=0;DEMO.cut=-1;DEMO.cutT=0;
+  const scr=document.getElementById('raceScreen');scr.classList.add('demo');
+  if(!g3Init(document.getElementById('rgl'))){demoStop();return;}
+  R.loading=true;texPrepare(R.wx.mood,ok=>{if(!R||!R.demo)return;if(!ok){demoStop(true);return;}
+    try{r3dSetup();R.gl=true;}catch(e){console.warn('demo 3d',e);demoStop(true);return;}
+    R.loading=false;R3.camHook=demoCam;R.lastT=performance.now();const cap=document.getElementById('menuCap');if(cap)cap.innerHTML=`<b>${esc(rc.name)}</b> · ${rc.y}`;
+    document.getElementById('raceScreen').hidden=false;MS.classList.add('live','ready');DEMO.raf=requestAnimationFrame(demoLoop);});}
+function demoLoop(now){if(!R||!R.demo||R.done){DEMO.raf=0;return;}
+  const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;
+  if(!R.loading){R.t+=dt;if(R.t>0)R.time+=dt;
+    // гонка только для картинки: физика и соперники как обычно, без поломок и итогов
+    try{raceTick(dt);}catch(e){console.warn(e);}
+    if(!R||R.done||!R.demo){DEMO.raf=0;return;}
+    try{r3dRender(dt);}catch(e){console.warn('demo render',e);demoStop(true);return;}
+    DEMO.t+=dt;if(DEMO.t>75||R.cars.every(c=>c.fin!==null||c.dnf)){demoStop();setTimeout(demoStart,50);return;}}
+  DEMO.raf=requestAnimationFrame(demoLoop);}
+// Камера заставки: смена планов каждые 6–8 секунд — сзади за лидером, у обочины, сверху, сбоку рядом
+function demoCam(dt,W,H){const D=DEMO;D.cutT-=dt;
+  const live=R.cars.filter(c=>!c.dnf&&c.fin===null);if(!live.length){r3dCamera(dt,W,H);return;}
+  if(D.cutT<=0||!D.car||D.car.dnf||D.car.fin!==null){D.cut=(D.cut+1)%4;D.cutT=6+Math.random()*2.5;const L=live.slice().sort((a,b)=>b.prog-a.prog);D.car=L[Math.min(L.length-1,Math.floor(Math.random()*Math.min(3,L.length)))];R.follow=D.car;R3.cam=null;
+    const T=R.trk,c=D.car,sd=Math.random()<0.5?1:-1;
+    // камера у обочины — там, где рядом нет дерева или дома
+    if(D.cut===1){const a=camSpot(c.idx,70,sd);D.pos=[a.p[0],a.p[1]+1.7,a.p[2]];}}
+  const c=D.car,st=c.v3,y=st&&st.y!==null?st.y:c.y,fw=[Math.sin(c.yaw),0,Math.cos(c.yaw)],rt=[fw[2],0,-fw[0]];
+  if(D.cut===0){r3dCamera(dt,W,H);return;}
+  let eye,look=[c.x,y+0.9,c.z],fov=0.8;
+  if(D.cut===1){eye=D.pos;fov=0.45;}
+  else if(D.cut===2){const u=1-D.cutT/8;eye=[c.x-fw[0]*18+rt[0]*10,y+22-u*6,c.z-fw[2]*18+rt[2]*10];look=[c.x+fw[0]*12,y,c.z+fw[2]*12];fov=0.75;}
+  else{eye=[c.x+rt[0]*4.5+fw[0]*1.5,y+1.1,c.z+rt[2]*4.5+fw[2]*1.5];look=[c.x+fw[0]*3,y+0.8,c.z+fw[2]*3];fov=0.85;}
+  const g=fH(eye[0],eye[2])+0.5;if(eye[1]<g)eye[1]=g;r3dCamSet(eye,look,fov,W,H,0.1);}
+function demoStop(fail){if(DEMO.raf)cancelAnimationFrame(DEMO.raf);DEMO.raf=0;const was=DEMO.on;DEMO.on=false;
+  if(R&&R.demo){R.done=true;try{if(R.gl)r3dDispose();}catch(_){}R=null;}
+  const scr=document.getElementById('raceScreen');if(scr&&was){scr.hidden=true;scr.classList.remove('demo');}
+  MS.classList.remove('ready');if(fail)MS.classList.remove('live');}
 
 /* ================= RACE SETUP: team of up to 3 cars, drivers, preparation, mode ================= */
 const RACE_ACT={};
@@ -3990,9 +4931,10 @@ function riverLine(trk,rv){const p=trk.pts[rv.i],t=trk.T[rv.i],d=[t[1],-t[0]];re
 function riverDist(trk,rv,x,z){const L=riverLine(trk,rv),dx=x-L.p[0],dz=z-L.p[2],s=dx*L.d[0]+dz*L.d[1],e=dx*L.t[0]+dz*L.t[1];
   const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s));return {s,e:e-m};}
 function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
+  // русло режется от местной земли: где низина — река ещё ниже, под мостом — не выше отметки «дорога минус глубина»
   (trk.rivers||[]).forEach(rv=>{const y0=P[rv.i][1],bed=y0-rv.d,bank=rv.w/2+10,R=1300;
     for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)>R||Math.abs(dd.e)>bank+30)continue;
-      const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const tgt=bed+(y0-1.2-bed)*(1-prof)*0.4;const h=F.H[q]+(Math.min(F.H[q],tgt)-F.H[q])*sstep(0,1,prof*1.6);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
+      const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const bedL=Math.min(bed,F.H[q]-rv.d*0.7),h=F.H[q]+(bedL-F.H[q])*sstep(0,1,prof*1.4);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
   let yMin=1e9;P.forEach(p=>{yMin=Math.min(yMin,p[1]);});
   (trk.coast||[]).forEach(c=>{const sea=yMin-4;c.sea=sea;
     for(let i=c.i0;i<=c.i1;i+=2){const p=P[i],nn=trk.N[i];for(let a=16;a<520;a+=6){const x=p[0]+nn[0]*c.side*(trk.W/2+a),z=p[2]+nn[1]*c.side*(trk.W/2+a);
@@ -4693,7 +5635,7 @@ function raceTick(dt){
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
     if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
   const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);
-  if(R.endT===undefined){
+  if(R.endT===undefined&&!R.demo){
     if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);}}
     else if(!me&&(!teamLive.length||!live.length)){R.endT=R.mode==='sim'?0:2;if(R.cars.some(c=>c.you&&c.fin!==null))auSfx('cheer',1);}
     else if(R.time>(T.cfg.dur||120)*4)R.endT=0;}
@@ -5287,7 +6229,7 @@ function poachCheck(s){
 /* ---------- вызовы конкурентов ---------- */
 // На гонку: пари, чья машина финиширует выше. По продажам: кто продаст больше машин класса дома до конца года.
 function chalCheck(s){
-  if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<8||Math.random()>0.12)return;
+  if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<5||Math.random()>0.2)return;
   const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+3&&!GBC_IDS.includes(rc.id)&&raceEligible(rc,s)&&!raceWarBlocked(rc,s)&&!s.cres[rc.key]&&s.raceDone[rc.key]===undefined);
   if(!L.length||!raceCarsFor(s).length)return;
   const rc=L.slice().sort((a,b)=>(b.major?1:0)-(a.major?1:0)||a.m-b.m)[0];
@@ -5301,7 +6243,7 @@ function chalCheck(s){
     choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);
 }
 function salesChalCheck(s){
-  if(s.pending.length||s.chal||s.m<1||s.m>6||mi(s)-(s.chalLast??-99)<8||Math.random()>0.07)return;
+  if(s.pending.length||s.chal||s.m<1||s.m>6||mi(s)-(s.chalLast??-99)<5||Math.random()>0.1)return;
   const L=s.last,home=s.country,mk=L&&L.mk&&L.mk[home];if(!mk||!mk.segs)return;
   const g=SEGK.filter(g=>(mk.segs[g].you||0)>=3).sort((a,b)=>mk.segs[b].you-mk.segs[a].you)[0];if(!g)return;
   const you=mk.segs[g].you,cps=(COMPS[home]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>x.cp.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v);
@@ -5397,7 +6339,7 @@ function yearAwards(s,y){
   // гонщик года и пари по продажам
   const DC=dchFinish(s,y);if(DC){lines.push(`Гонщик года — ${DC.w.n}${DC.w.mq?` (${DC.w.mq})`:''}: ${fmtPts('gp',DC.w.pts)} очков, побед: ${DC.w.w}.`);if(DC.mine){mine.push('гонщик года');fx.dch=until;}}
   const SC=chalSales(s,y);if(SC)lines.push(SC.win?`Пари по продажам выиграно: «${s.company}» — ${carsN(SC.you)} класса «${SEG[SC.C.g].name}», ${SC.C.mq} — ${fmtN(SC.them)}. Выигрыш ${money(SC.C.stake)}.`:`Пари по продажам проиграно: ${SC.C.mq} — ${carsN(SC.them)} класса «${SEG[SC.C.g].name}», «${s.company}» — ${fmtN(SC.you)}. Проигрыш ${money(SC.C.stake)}.`);
-  s.kings={y,lines,mine:mine.slice()};
+  s.kings={y,lines,mine:mine.slice()};goalsResolve(s,y,mine);
   if(s.dch)Object.keys(s.dch).forEach(k=>{if(+k<y-2)delete s.dch[k];});
   if(!lines.length)return;
   const own=mine.filter(t=>t!=='гонщик года'),dw=DC&&DC.mine?DC.w:null,dd=dw&&DRIVERS.find(x=>x.id===dw.id);
@@ -5406,6 +6348,80 @@ function yearAwards(s,y){
     img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',
     text:lines.map(l=>'— '+l).join('\n')+'\n'+(mine.length?'Титулы — бесплатная реклама: целый год покупатели будут помнить, чья марка лучшая, и охотнее выбирать ваши машины.':'Ваша марка пока без титулов. Победы в гонках, новинки раньше всех и продажи в своём классе — и газеты напишут о вас.')},true);
 }
+
+/* ================= ИМПЕРИЯ НА ВИДУ: гонка за титулами года, доска вызовов, цели года ================= */
+// Титулы «королей» решаются в январе (43b-drivers.js: yearAwards). Здесь — как они разыгрываются прямо сейчас:
+// кто впереди, сколько у вас и чего не хватает. Доска вызовов: пари и цели можно брать самим, не дожидаясь газет.
+function titlesRace(s){const y=s.y,home=s.country,rows=[];
+  // король гонок: больше всех побед за год (не меньше двух)
+  const W={};RACES.filter(r=>r.y===y).forEach(r=>{const x=s.cres[r.key];if(!x||!x.w||x.x)return;(W[x.w]=W[x.w]||{n:x.w,w:0}).w++;});
+  const wl=Object.values(W).sort((a,b)=>b.w-a.w),me=(W[s.company]||{}).w||0,lead=wl.find(o=>o.n!==s.company),left=RACES.filter(r=>r.y===y&&r.m>=s.m&&!s.cres[r.key]).length;
+  rows.push({k:'race',icon:'🏁',t:'Король гонок',you:me,them:lead?lead.w:0,themN:lead?lead.n:'',min:2,unit:v=>`${v} ${plural(v,'победа','победы','побед')}`,
+    hint:me>=2&&me>(lead?lead.w:0)?'Титул ваш, если никто не обгонит до конца года':`Нужно не меньше 2 побед и больше, чем у других. Гонок до конца года: ${left}`});
+  // король технологий: первенство года или машина на 20% лучше соперников класса
+  const fr=Object.values(s.firsts||{}).filter(f=>f.y===y),act=s.models.filter(m=>m.status==='prod'||m.status==='sale'),best=act.map(m=>({m,S:classScore(m,s)})).sort((a,b)=>b.S-a.S)[0];
+  const pc=best?Math.round((best.S-1)*100):0,TK=TECH_KING[y];
+  rows.push({k:'tech',icon:'⚙️',t:'Король технологий',you:fr.length?100:Math.max(0,pc),them:20,themN:TK&&!playerMarque(TK[0],s)?TK[0]:'',min:20,pct:1,
+    unit:v=>fr.length?'первенство года':`«${best?best.m.name:'—'}»: +${Math.max(0,pc)}% к соперникам`,hint:fr.length?'Первенство в мире — титул почти наверняка ваш':`Нужна машина на 20% лучше соперников своего класса или первенство раньше истории${TK&&!playerMarque(TK[0],s)?` (в истории — ${TK[0]}: ${TK[1]})`:''}`});
+  // короли классов: больше всех машин класса, проданных в стране за год
+  SEGK.forEach(g=>{if(g==='sport'&&y<1910)return;const you=Math.round((s.segY||{})[g]||0);
+    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:Math.round((((s.comps[home]||[])[i]||{}).ys||{})[g]||0),pk:cp.pk})).filter(x=>x.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v);
+    if(!you&&!L.length)return;const top=L[0],mn=g==='sport'?12:30;
+    rows.push({k:g,icon:'👑',t:KING_SEG[g],you,them:top?top.v:0,themN:top?top.n:'',min:mn,unit:v=>carsN(v),hint:you>(top?top.v:0)&&you>=mn?'Вы впереди всех в стране':top?`Лидер — ${top.n}: ${carsN(top.v)} с января. Продажи в стране, класс «${SEG[g].name}»`:''});});
+  // гонщик года
+  const tb=typeof dchTable==='function'?dchTable(s,y):[];if(tb.length){const mine=tb.find(r=>r.mine),top=tb[0];
+    rows.push({k:'dch',icon:'🏆',t:'Гонщик года',you:mine?mine.pts:0,them:top&&!top.mine?top.pts:(tb.find(r=>!r.mine)||{}).pts||0,themN:top&&!top.mine?top.n:'',min:1,unit:v=>`${fmtPts('gp',v)} очк.`,hint:mine?`Ваш лучший пилот — ${mine.n}, ${tb.indexOf(mine)+1}-е место`:'Ваших пилотов ещё нет в зачёте'});}
+  return rows;}
+function titlesCard(s){const rows=titlesRace(s),K=s.kings;
+  const R=rows.map(r=>{const lead=r.you>=r.min&&r.you>r.them,mx=Math.max(1,r.you,r.them,r.min);
+    return `<div class="tr-row ${lead?'lead':''}"><div class="tr-h"><span>${r.icon} ${esc(r.t)}</span>${lead?'<b class="pill good">👑 ваш</b>':r.themN?`<small>впереди: ${esc(r.themN)}</small>`:''}</div>
+      <div class="leg-row"><span>Вы</span><div class="bar"><i style="width:${Math.min(100,r.you/mx*100)}%;background:var(--brass)"></i></div><b class="num">${r.pct?Math.round(r.you)+'%':fmtN(r.you)}</b></div>
+      ${r.them?`<div class="leg-row"><span>${esc((r.themN||'соперник').slice(0,12))}</span><div class="bar"><i style="width:${Math.min(100,r.them/mx*100)}%;background:var(--muted)"></i></div><b class="num">${r.pct?r.them+'%':fmtN(r.them)}</b></div>`:''}
+      <p class="small muted">${esc(r.unit(r.you))} · ${esc(r.hint||'')}</p></div>`;}).join('');
+  const got=(s.titles||[]).filter(t=>/^king-|^dch/.test(t.id||'')||/Гонщик года/.test(t.name||''));
+  return `<section class="card tr-card"><div class="row"><h2>Гонка за титулы ${s.y}</h2><span class="pill">${got.length?`👑 ${got.length}`:'титулов пока нет'}</span></div>
+    <p class="small muted" style="margin-top:4px">В январе газеты называют «королей» прошлого года. Титул — слава, и весь следующий год: гонки +10%, КБ +12% или спрос в классе +12%.</p>
+    ${R}${K&&K.lines&&K.lines.length?foldCard('kings'+K.y,false,`<h3>Короли ${K.y} года</h3>`,`<ul class="log">${K.lines.map(l=>`<li><p>${esc(l)}</p></li>`).join('')}</ul>`,K.mine&&K.mine.length?'ваши титулы: '+K.mine.join(', '):'без ваших титулов'):''}
+    ${got.length?`<div class="tags" style="margin-top:8px">${got.slice(-8).map(t=>`<span class="pill warn">👑 ${esc(t.name)}</span>`).join('')}</div>`:''}</section>`;}
+/* ---------- доска вызовов: пари с соперниками и цели года ---------- */
+function boardOffers(s){const out=[];if(s.over)return out;
+  if(!s.chal){
+    const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+4&&!GBC_IDS.includes(rc.id)&&raceEligible(rc,s)&&!raceWarBlocked(rc,s)&&!s.cres[rc.key]&&s.raceDone[rc.key]===undefined);
+    const rc=L.slice().sort((a,b)=>(b.major?1:0)-(a.major?1:0)||a.m-b.m)[0];
+    if(rc&&raceCarsFor(s).length){const T=fieldTeams(rc,s,3).filter(t=>t.mq&&t.mq.length),t=T.find(t=>t.c===s.country)||T[0];
+      if(t)out.push({id:'race',title:`Пари с ${t.n}: «${rc.name}»`,sub:`${MONTHS[rc.m]} ${rc.y} · ваша лучшая машина должна финишировать выше лучшей ${t.n}`,stake:Math.max(100,Math.round(racePrize(rc)*0.6/50)*50),C:{type:'race',rk:rc.key,mq:t.n}});}
+    const mk=s.last&&s.last.mk&&s.last.mk[s.country];
+    if(mk&&mk.segs&&s.m<=8){const g=SEGK.filter(g=>(mk.segs[g].you||0)>=3).sort((a,b)=>mk.segs[b].you-mk.segs[a].you)[0];
+      if(g){const you=mk.segs[g].you,cps=(COMPS[s.country]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>x.cp.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v),R=cps.find(x=>x.v<=you*12*3&&x.v>=you*12/3);
+        if(R){const nm=compName(R.cp,s);out.push({id:'sales',title:`Пари с ${nm}: класс «${SEG[g].name}»`,sub:`кто продаст больше в стране до конца ${s.y} года`,stake:Math.round(clamp(((s.last&&s.last.rev)||0)*0.15,200*cpi(s),25000*cpi(s))/50)*50,C:{type:'sales',g,mq:nm,ci:R.i,y:s.y}});}}}}
+  // цели года: без ставки, награда — деньги и репутация (провал — лишь немного репутации)
+  const G2=s.goals||[],has=k=>G2.some(q=>q.k===k&&q.y===s.y);
+  if(s.m<=9&&!has('race')&&RACES.filter(r=>r.y===s.y&&r.m>=s.m&&raceEligible(r,s)).length>=2)out.push({id:'goal:race',title:`Цель: Король гонок ${s.y}`,sub:'выиграть не меньше двух гонок за год — и больше всех',reward:Math.round(1500*cpi(s)/50)*50,goal:{k:'race'}});
+  const mk2=s.last&&s.last.mk&&s.last.mk[s.country];if(s.m<=6&&mk2&&mk2.segs){const g=SEGK.filter(g=>(mk2.segs[g].you||0)>=5).sort((a,b)=>mk2.segs[b].you-mk2.segs[a].you)[0];
+    if(g&&!has(g))out.push({id:'goal:'+g,title:`Цель: ${KING_SEG[g]} ${s.y}`,sub:`продать в стране больше всех машин класса «${SEG[g].name}» за год`,reward:Math.round(2500*cpi(s)/50)*50,goal:{k:g}});}
+  if(!has('tech')&&s.m<=9)out.push({id:'goal:tech',title:`Цель: Король технологий ${s.y}`,sub:'первенство раньше истории или машина на 20% лучше соперников класса',reward:Math.round(1200*cpi(s)/50)*50,goal:{k:'tech'}});
+  return out;}
+function boardTake(s,id){const o=boardOffers(s).find(x=>x.id===id);if(!o)return;
+  if(o.C){s.chal=Object.assign({},o.C,{stake:o.stake,acc:0});s.chalLast=mi(s);drvResolve(s,'chalYes');}
+  else if(o.goal){(s.goals=s.goals||[]).push({k:o.goal.k,y:s.y,reward:o.reward,name:o.title.replace(/^Цель: /,'')});addLog(`🎯 Цель года: ${o.title.replace(/^Цель: /,'')}. Награда — ${money(o.reward)} и слава.`,'good');pendingToasts.push('🎯 Цель принята');}
+  save();render();}
+// Итоги целей — в январе, вместе с «королями» года
+function goalsResolve(s,y,mine){const L=(s.goals||[]).filter(q=>q.y===y);if(!L.length)return;s.goals=(s.goals||[]).filter(q=>q.y!==y);
+  L.forEach(q=>{const title=q.k==='race'?'Король гонок':q.k==='tech'?'Король технологий':KING_SEG[q.k],ok=(mine||[]).some(t=>t===title);
+    if(ok){s.cash+=q.reward;s.rep=clamp(s.rep+2,0,100);addLog(`🎯 Цель года выполнена: ${q.name}. Награда ${money(q.reward)}.`,'good');pendingToasts.push(`🎯 ${q.name}: +${money(q.reward)}`);}
+    else{s.rep=clamp(s.rep-1,0,100);addLog(`Цель года не выполнена: ${q.name}. Газеты напомнили об обещании.`,'bad');}});}
+function boardCard(s){const O=boardOffers(s),A=[],C=s.chal&&s.chal.acc?s.chal:null,GL=(s.goals||[]).filter(q=>q.y===s.y);
+  if(C)A.push(chalCard(s,C.type==='race'?'race':'market'));
+  GL.forEach(q=>{const r=titlesRace(s).find(x=>x.k===q.k);A.push(`<section class="card chal"><div class="row"><span class="label">🎯 Цель года</span><span class="pill good">${money(q.reward)}</span></div><h3 style="margin-top:4px">${esc(q.name)}</h3>${r?`<p class="small" style="margin-top:4px">Сейчас: ${esc(r.unit(r.you))}${r.themN?` · впереди: ${esc(r.themN)} (${r.pct?r.them+'%':fmtN(r.them)})`:''}</p>`:''}</section>`);});
+  return `<section class="card board"><div class="row"><h2>⚔️ Доска вызовов</h2><span class="pill">${(C?1:0)+GL.length} ${plural((C?1:0)+GL.length,'активный','активных','активных')}</span></div>
+    <p class="small muted" style="margin-top:4px">Пари с соперниками и цели года: берите сами. Выигрыш — деньги и заголовки газет, проигрыш пари — ставка и насмешки прессы.</p>
+    ${A.join('')}
+    ${O.length?`<div class="stack" style="margin-top:8px">${O.map(o=>`<button class="btn block board-o" data-act="boardTake" data-k="${o.id}"><b>${esc(o.title)}</b><small>${esc(o.sub)} · ${o.stake?'ставка '+money(o.stake):'награда '+money(o.reward)}</small></button>`).join('')}</div>`:`<p class="small muted" style="margin-top:8px">${C?'Одно пари за раз: сначала завершите текущее.':'Новых вызовов пока нет — появятся с новыми гонками и продажами.'}</p>`}</section>`;}
+/* ---------- полоса «Империя» над вкладками: наследие, место, титулы, вызовы, фильм ---------- */
+function empireStrip(s){if(!s)return '';let t=null;try{t=legacyTable(s);}catch(_){}
+  const L=sagaList(s),seen=((s.saga||{}).seen||[]).length,tit=(s.titles||[]).filter(x=>/^king-/.test(x.id||'')).length,act=(s.chal&&s.chal.acc?1:0)+(s.goals||[]).filter(q=>q.y===s.y).length;
+  const above=t&&t.place>1?t.rows[t.place-2]:null;
+  return `<span class="es-a">🏛 Наследие <b>${t?Math.round(t.me.total):0}</b></span><span class="es-b">${t?t.place+'-е место':''}${above?` · до ${esc(above.n)} ${Math.max(1,Math.round(above.L.total-t.me.total))}`:''}</span><span class="es-c">👑 ${tit} · ⚔️ ${act} · 🎬 ${seen}/${L.length}</span>`;}
 
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
@@ -5509,6 +6525,8 @@ const ease=u=>u*u*(3-2*u);
 const lerp3=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
 // Точка трассы на расстоянии d метров от индекса i (с высотой дороги)
 function trkAt(i,d,off){const T=R.trk,n=T.n,j=T.closed?(((i+Math.round(d/T.step))%n)+n)%n:clamp(i+Math.round(d/T.step),0,n-1),p=T.pts[j],nn=T.N[j],o=off||0;return {j,p:[p[0]+nn[0]*o,p[1]+(R3.on?roadY(j,clamp(o,-T.W/2,T.W/2)):p[1]),p[2]+nn[1]*o],t:T.T[j],n:nn};}
+// Место для камеры у обочины: рядом нет дерева, столба или дома
+function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
 /* ---------- заставка перед стартом ---------- */
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];
@@ -5592,9 +6610,9 @@ function replayCam(dt,W,H){const Rp=R.replay;if(!Rp){R3.camHook=null;return;}con
   // смена камеры по времени: 0 — у дороги впереди, 1 — низко спереди, 2 — у финишной линии
   const left=Rp.fin-Rp.t,cut=left>5.5?0:left>2.2?1:2;
   if(cut!==Rp.cut){Rp.cut=cut;const T=R.trk,sd=Math.random()<0.5?1:-1;
-    if(cut===0){const a=trkAt(me.idx,55,sd*(T.W/2+5));Rp.pos=[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=0.42;}
+    if(cut===0){const a=camSpot(me.idx,55,sd);Rp.pos=[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=0.42;}
     else if(cut===1){Rp.pos=null;Rp.fov=0.7;}
-    else{const f=trkAt(T.finishIdx,4,sd*(T.W/2+3.2));Rp.pos=[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=0.6;}}
+    else{const f=camSpot(T.finishIdx,4,sd,[3.2,4.5,6,8]);Rp.pos=[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=0.6;}}
   const st=me.v3,y=st&&st.y!==null?st.y:me.y,tg=[me.x,y+0.8,me.z];let eye;
   if(cut===1){const fw=[Math.sin(me.yaw),0,Math.cos(me.yaw)],rt=[fw[2],0,-fw[0]];eye=[me.x+fw[0]*7+rt[0]*2.2,y+0.7,me.z+fw[2]*7+rt[2]*2.2];}
   else eye=Rp.pos;
@@ -7709,11 +8727,19 @@ function pProp(t,v){return proto('prop|'+t+'|'+v,(mb,r)=>{
     [0.35,1.15].forEach(y=>pBox(mb,-0.06,y,0,0.03,0.1,5.05,'#6a543e'));mb.e[3]=0;}
   });}
 // Здания и трибуны — модели из 47-scenery.js, с цоколем, чтобы на склоне не висели в воздухе
+function polyArea(P){let x=0,y=0,z=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];x+=a[1]*b[2]-a[2]*b[1];y+=a[2]*b[0]-a[0]*b[2];z+=a[0]*b[1]-a[1]*b[0];}return Math.hypot(x,y,z)/2;}
 function mbFromMesh(mb,M,o){o=o||{};const lift=o.lift||0.005,step=o.step===undefined?lift*0.35:o.step,gm=o.glass;const e=mb.e;
+  const lum=c=>(c[0]*0.3+c[1]*0.59+c[2]*0.11)/255;
   for(const f of M.F){const mat=MID[f.mat&&f.mat.k]||0,c=f.col,tg=(gm&&f.mat===MATS.glass)?gm:mb;tg.e[0]=f.w||0;tg.e[1]=f.l||0;
+    // стены и крыши зданий — фото-материалы (кирпич, штукатурка, камень, доски, черепица, шифер, солома)
+    const lay=o.tex&&!f.point&&tg===mb?faceLay(f):0;tg.e[3]=lay;
     if(!f.point){if(f.vn){tg.polyN(f.p,f.n,f.vn,c,mat);if(f.two)tg.polyN(f.p,[-f.n[0],-f.n[1],-f.n[2]],f.vn.map(q=>[-q[0],-q[1],-q[2]]),c,mat);}
       else{tg.poly(f.p,f.n,c,mat);if(f.two)tg.poly(f.p,[-f.n[0],-f.n[1],-f.n[2]],c,mat);}}
-    if(f.deco){let k=0;const n=f.point?null:f.n;for(const d of f.deco){k++;const L=lift+k*step,dc=hex2rgb(d.c||'#000'),dm=d.gl?MID.glass:(mat===MID.glass?MID.paint:mat);
+    tg.e[3]=0;
+    if(f.deco){let k=0;const n=f.point?null:f.n,fl=lum(c);for(const d of f.deco){k++;const L=lift+k*step,dc=hex2rgb(d.c||'#000'),dm=d.gl?MID.glass:(mat===MID.glass?MID.paint:mat);
+      // на фото-стене не нужны нарисованные брёвна, ряды черепицы и камни: их даёт сама фактура (окна, двери, балки остаются)
+      if(lay&&!d.gl&&!d.text&&!d.dot&&!d.ring){const dl=lum(dc),small=d.poly?polyArea(d.poly)<0.25:(d.w||0)<=0.32;
+        if(small&&Math.abs(dl-fl)<0.16)continue;}
       if(d.poly){if(!n)continue;tg.poly(d.poly.map(q=>[q[0]+n[0]*L,q[1]+n[1]*L,q[2]+n[2]*L]),n,dc,dm);}
       else if(d.text){if(o.texts&&n)o.texts.push({d,n,L});}
       else if(d.dot){if(!n)continue;const rr=Math.max(0.012,d.r*0.85),t1=v3n(Math.abs(n[1])>0.9?[1,0,0]:v3x([0,1,0],n)),t2=v3x(n,t1),P=[];for(let q=0;q<10;q++){const a=q/10*6.2832;P.push([d.dot[0]+(t1[0]*Math.cos(a)+t2[0]*Math.sin(a))*rr+n[0]*L*1.4,d.dot[1]+(t1[1]*Math.cos(a)+t2[1]*Math.sin(a))*rr+n[1]*L*1.4,d.dot[2]+(t1[2]*Math.cos(a)+t2[2]*Math.sin(a))*rr+n[2]*L*1.4]);}tg.poly(P,n,dc,dm);}
@@ -7722,9 +8748,9 @@ function mbFromMesh(mb,M,o){o=o||{};const lift=o.lift||0.005,step=o.step===undef
           tg.poly([pt(a0,ro),pt(a1,ro),pt(a1,ri),pt(a0,ri)],n,dc,dm);}}
       else if(d.a&&d.b){if(!n)tg.rod(d.a,d.b,Math.max(0.014,d.w),dc,dm);else tg.strip(d.a,d.b,Math.max(o.minW||0.008,d.w),n,dc,dm,L);}}}}
   mb.e[0]=mb.e[1]=0;if(gm){gm.e[0]=gm.e[1]=0;}}
-function pBld(t,v){return proto('bld|'+t+'|'+v,(mb,r)=>{const M=BLD[t](mulberry32(hashStr(t+v)),v||0);const texts=[];mbFromMesh(mb,M,{lift:0.03,step:0.012,minW:0.03,texts});mb.texts=texts;
-  const b=mb.bb,wc=[150,140,125];pBox(mb,(b[0]+b[3])/2,-2.4,(b[2]+b[5])/2,(b[3]-b[0])/2*0.96,2.42,(b[5]-b[2])/2*0.96,'#8a8274',MID.stone);});}
-function pStand(){return proto('stand',(mb)=>{const {M,R2,people}=standModel(1);mbFromMesh(mb,M,{lift:0.03,step:0.01});mbFromMesh(mb,R2,{lift:0.03,step:0.01});mb.people=people.map(q=>q.p);
+function pBld(t,v){return proto('bld|'+t+'|'+v,(mb,r)=>{const M=BLD[t](mulberry32(hashStr(t+v)),v||0);const texts=[];mbFromMesh(mb,M,{lift:0.03,step:0.012,minW:0.03,texts,tex:TX.st===2});mb.texts=texts;
+  const b=mb.bb,wc=[150,140,125];mb.e[3]=txLay('stone_wall',1);pBox(mb,(b[0]+b[3])/2,-2.4,(b[2]+b[5])/2,(b[3]-b[0])/2*0.96,2.42,(b[5]-b[2])/2*0.96,'#8a8274',MID.stone);mb.e[3]=0;});}
+function pStand(){return proto('stand',(mb)=>{const {M,R2,people}=standModel(1);mbFromMesh(mb,M,{lift:0.03,step:0.01,tex:TX.st===2});mbFromMesh(mb,R2,{lift:0.03,step:0.01});mb.people=people.map(q=>q.p);
   const b=mb.bb;pBox(mb,(b[0]+b[3])/2,-2.2,(b[2]+b[5])/2,(b[3]-b[0])/2*0.95,2.22,(b[5]-b[2])/2*0.95,'#6a5a48',MID.wood);});}
 /* ---------- люди: атлас фигур эпохи (два кадра — машут) ---------- */
 function r3dPeopleAtlas(y){
@@ -8494,9 +9520,10 @@ function r3dChunkExtras(S,lit){const T=R3.T,W=T.W,st=T.step,e3=lit.e[3];
       lit.e[3]=e3;});}}
 /* ---------- реки: полоса воды вдоль русла; берег моря — гладь до горизонта ---------- */
 function r3dWaters(T){const mb=new MB(),c=hex2rgb('#1f5a78');let any=false;
-  (T.rivers||[]).forEach(rv=>{const L=riverLine(T,rv),y=T.pts[rv.i][1]-rv.d+0.9,w=rv.w/2+1.5;let prev=null;
+  // вода — на 0,9 м выше дна русла в каждом месте (река понемногу течёт под уклон)
+  (T.rivers||[]).forEach(rv=>{const L=riverLine(T,rv),w=rv.w/2+1.5;let prev=null;
     for(let s=-1300;s<=1300;s+=12){const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s)),cx=L.p[0]+L.d[0]*s+L.t[0]*m,cz=L.p[2]+L.d[1]*s+L.t[1]*m;
-      const a=[cx+L.t[0]*w,y,cz+L.t[1]*w],b=[cx-L.t[0]*w,y,cz-L.t[1]*w];if(prev)mb.poly([prev[0],prev[1],b,a],[0,1,0],c,MID.water);prev=[a,b];}any=true;});
+      const y=fH(cx,cz)+0.9,a=[cx+L.t[0]*w,y,cz+L.t[1]*w],b=[cx-L.t[0]*w,y,cz-L.t[1]*w];if(prev)mb.poly([prev[0],prev[1],b,a],[0,1,0],c,MID.water);prev=[a,b];}any=true;});
   // море: гладь начинается в ~300 м от берега и уходит к горизонту (ближе — земля срезана ниже воды)
   (T.coast||[]).forEach(cs=>{const y=(cs.sea===undefined?T.pts[cs.i0][1]-5:cs.sea)+0.2,mid=Math.round((cs.i0+cs.i1)/2),p=T.pts[mid],nn=T.N[mid],o=cs.side,D=[nn[0]*o,nn[1]*o],Tn=[-D[1],D[0]];
     const P=(u,v)=>[p[0]+D[0]*u+Tn[0]*v,y,p[2]+D[1]*u+Tn[1]*v];for(let a=0;a<6;a++)for(let b=-4;b<4;b++){const u0=40+a*1500,u1=u0+1500,v0=b*1500,v1=v0+1500;mb.poly([P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],[0,1,0],c,MID.water);}any=true;});
@@ -8924,13 +9951,15 @@ const ACT={
   pion:d=>{const top=sb.scrollTop,f=document.getElementById('fname');if(f)draft.first=f.value;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
   country:d=>{const top=sb.scrollTop;draft.country=d.v;draft.company=document.getElementById('cname').value;draft.first=document.getElementById('fname').value;openNewGame();sb.scrollTop=top;},
   diff:d=>{const top=sb.scrollTop;draft.diff=d.v;draft.company=document.getElementById('cname').value;draft.first=document.getElementById('fname').value;openNewGame();sb.scrollTop=top;},
-  startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
+  startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
   audio:d=>{AU.on[d.k]=!AU.on[d.k];auApply();openSettings();},
   ctlTilt:d=>{AU.on.steer=d.v;AU.on.tilt=d.v==='tilt';auApply();openSettings();},
   gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');},
+  sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
+  boardTake:d=>{boardTake(G,d.k);},
   gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
