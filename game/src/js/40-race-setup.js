@@ -103,7 +103,7 @@ function drawSetupSprites(){
   document.querySelectorAll('#sheetBody .rs-car').forEach(cv=>{const i=+cv.dataset.i,e=RS.entries[i],md=G.models.find(m=>m.id===e.car);if(!md)return;
     const spec=modelSpec(md,e.prep,rc.y,{country:G.country,num:i+1});
     // портрет из студии (видеокарта); без неё — программная отрисовка
-    let img=stuCanvas(spec,{w:360,crew:true,yaw:0.95,pitch:0.3});
+    let img=stuCanvas(spec,{w:340,crew:true,yaw:0.5,pitch:0.32});
     if(!img){const k='rsv|'+spec.key;let sp=CAR3D.cache.get(k);if(!sp){sp=renderModel(carModelFor(spec,true),0.62,0.36,70*Math.min(2,window.devicePixelRatio||1));CAR3D.cache.set(k,sp);}img=sp.img;}
     const g=cv.getContext('2d');if(!g)return;g.clearRect(0,0,cv.width,cv.height);const kk=Math.min(cv.width*0.98/img.width,cv.height*0.98/img.height),w=img.width*kk,h=img.height*kk;g.drawImage(img,(cv.width-w)/2,cv.height-h,w,h);});
 }
