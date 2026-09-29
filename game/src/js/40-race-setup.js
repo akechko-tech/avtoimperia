@@ -48,7 +48,7 @@ function renderRaceSetup(keepScroll){
       ${adviceHTML(rc,e,md,st,s,i)}
       <div class="label" style="margin-top:10px">Пилот</div><div class="chips">
         ${!taken.includes('me')?chip('me','Вы за рулём',PIONEERS[s.pioneer].name):''}
-        ${own.map(x=>chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · по контракту`)).join('')}
+        ${own.map(x=>{const v=moodOf(s,x.id).v;return chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · по контракту · ${moodFace(v)} ${moodWord(v)}`);}).join('')}
         ${d&&!own.includes(d)&&!RS.more?chip(d.id,d.n,`мастерство ${Math.round(d.sk*100)} · на гонку ${money(driverRaceFee(d,s))}`):''}
         ${RS.more?pool.map(x=>chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · на гонку ${money(driverRaceFee(x,s))}`)).join(''):''}
         ${pool.length?`<button class="chip" data-act="rMore">${RS.more?'Свернуть список':'Пригласить пилота на гонку ▾'}<small>${RS.more?'оставить выбранного':`свободных в ${rc.y}: ${pool.length}`}</small></button>`:''}
@@ -66,6 +66,7 @@ function renderRaceSetup(keepScroll){
     ${champs.length||gb?`<div class="tags">${champs.map(c=>`<span class="pill warn">${esc(c)}</span>`).join('')}${gb?'<span class="pill good">Кубок наций: до 3 машин от страны</span>':''}</div>`:''}
     ${photoHTML(rc.img)}${rc.hist?`<div class="hist">${esc(rc.hist)}</div>`:''}
     <p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>
+    ${s.chal&&s.chal.acc&&s.chal.type==='race'&&s.chal.rk===rc.key?`<p class="small warn" style="margin-top:6px">⚔️ Вызов принят: ваша лучшая машина должна финишировать выше лучшей машины ${esc(s.chal.mq)}. Пари — ${money(s.chal.stake)}.</p>`:''}
     <div class="label" style="margin-top:16px">Команда · ${n} из ${MAX_ENTRIES}</div>
     <div class="entries">${RS.entries.map(entryHTML).join('')}</div>
     ${n<MAX_ENTRIES?`<button class="btn block" style="margin-top:8px" data-act="rAdd">+ Ещё машина в команду</button>`:''}

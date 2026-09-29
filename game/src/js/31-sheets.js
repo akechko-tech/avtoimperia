@@ -18,7 +18,11 @@ function compareHTML(md,s){const C=classCompare(md,s,s.country),ph=C.ref.name&&I
   const rows=CHAR_K.filter(k=>C.W[k]>0||C.by[k]!==1).map(k=>{const r=C.by[k],tone=r>=1.05?'good':r<0.95?'bad':'muted',w=Math.min(100,r/2*100);
     return `<div class="cmp-row"><span>${CHAR_NAMES[k]}<small>${wDots(C.W[k])}</small></span><div class="cmp-bar"><i style="width:${w}%;background:var(--${tone==='muted'?'line':tone})"></i><b></b></div><span class="num ${tone}">${Math.round(r*100)}%</span></div>`;}).join('');
   return `<div class="card cmp" style="margin-top:12px;background:var(--panel2)"><div class="row" style="align-items:flex-start">${ph?`<img class="cmp-ph" src="${IMG[C.ref.name].src}" alt="" referrerpolicy="no-referrer">`:''}<div style="flex:1"><span class="label">Соперник в классе «${esc(KIND_NAME[C.ref.kind])}»</span><h3 style="margin-top:2px">${esc(C.ref.name)} <span class="muted small">${C.ref.y}</span></h3><p class="small muted">Покупатели сравнивают вашу машину с этой. 100% — так же, как у соперника; ●●● — что для них главное.</p></div></div>
-    <div style="margin-top:8px">${rows}</div>${qbar(C.S,'Итог против соперника')}</div>`;}
+    <div style="margin-top:8px">${rows}</div>${qbar(C.S,'Итог против соперника')}${studyBtn(C.ref,s)}</div>`;}
+function studyBtn(ref,s){const c=studyList(s).find(o=>o.name===ref.name&&o.y===ref.y);if(!c)return '';
+  if(c.done)return `<p class="small good" style="margin-top:8px">🔍 КБ уже разобрало ${esc(c.name)}.</p>`;if(c.busy)return `<p class="small muted" style="margin-top:8px">🔍 КБ разбирает ${esc(c.name)}.</p>`;
+  const free=rdSlots(s)-rdActive(s).length;
+  return `<button class="btn sm block" style="margin-top:8px" data-act="rdStudy" data-k="${c.kind}" ${free<=0||s.cash<c.price?'disabled':''}>🔍 Купить и разобрать в КБ · ${money(c.price)}${free<=0?' — нет свободного места в КБ':''}</button>`;}
 function renderDesigner(){
   const s=G,d=draft,md={...d,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0},p=parts(md),mx=chassisMax(p.c,md),kind=designKind(d);
   const ref=refPrice(md,s),dc=devCost(md,s),dm=devMonths(md),tc=toolingCost(md,s),st=carStats(md,0,s.y),net=ref*(1-DEALER_MARGIN);
@@ -59,12 +63,16 @@ function kindIsTruck(k){return k==='van'||k==='truck';}
 function openRD(){
   const s=G,L=rdProjects(s),pts=rdTotal(s)/(rdActive(s).length+1),free=rdSlots(s)-rdActive(s).length;
   const item=pj=>`<div class="race-item"><div class="row"><div><span class="mo">${pj.cat} · ${pj.kind==='upg'?'улучшение ★'+pj.lvl:'прототип на '+pj.yrs+' г. раньше'}</span><h3 style="margin-top:2px">${esc(pj.name)}</h3></div><button class="btn sm" data-act="rdStart" data-k="${pj.kind}:${pj.id}" ${free<=0?'disabled':''}>~${Math.ceil(pj.need/pts)} мес.</button></div>
-    <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?UPG_TXT[pj.ck]:'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}</p></div>`;
+    <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?UPG_TXT[pj.ck]:'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}${pj.know?' · <span class="good">изучено на машине конкурента: на 40% быстрее</span>':''}${pj.mass?' · <span class="good">массовая деталь: на 20% быстрее</span>':''}</p></div>`;
+  const SL=studyList(s),sItem=c=>{const g=studyGain(c,s),dis=c.done||c.busy||free<=0||s.cash<c.price;
+    return `<div class="race-item"><div class="row"><div><span class="mo">${esc(KIND_NAME[c.kind])} · эталон класса ${c.y} года</span><h3 style="margin-top:2px">${esc(c.name)}</h3></div><button class="btn sm" data-act="rdStudy" data-k="${c.kind}" ${dis?'disabled':''}>${c.done?'Изучен':c.busy?'В работе':'Купить · '+money(c.price)}</button></div>
+      <p class="small muted" style="margin-top:4px">~${Math.ceil(STUDY_NEED/pts)} мес. в КБ. ${g.fut.length?`<span class="good">Внутри — то, чего нет у поставщиков: ${esc(g.fut.map(x=>x.name).join(', '))}.</span> `:''}${g.ups.length?`<span class="good">Доводка соперников: ${esc(g.ups.map(x=>x.name).join(', '))}.</span> `:''}Улучшать изученные детали станет быстрее, новая модель этого класса — дешевле.</p></div>`;};
   const mine=L.filter(p=>p.kind==='upg'&&p.mine),other=L.filter(p=>p.kind==='upg'&&!p.mine),early=L.filter(p=>p.kind==='early');
   openSheet(`<div class="row"><h2>Проекты КБ</h2>${X}</div>
     <p class="small muted" style="margin-top:6px">${RD_LV[s.rd.lvl]}: силы бюро поровну делятся между проектами (потом можно перераспределить), свободных мест — ${Math.max(0,free)}. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.</p>
     ${mine.length?`<div class="label" style="margin-top:12px">Детали ваших машин — улучшения сразу в деле</div>${mine.map(item).join('')}`:''}
     ${early.length?`<div class="label" style="margin-top:12px">Прототипы будущих деталей</div>${early.map(item).join('')}`:''}
+    ${SL.length?`<div style="margin-top:12px">${fold('rdStudyF','Купить и изучить машину конкурента',`<p class="small muted" style="margin-top:4px">С этими машинами покупатели сравнивают ваши. КБ разберёт машину до винтика: перенимет доводку соперников, а детали, которых ещё нет у поставщиков, сможет делать само.</p>${SL.map(sItem).join('')}`,SL.some(c=>!c.done&&studyGain(c,s).fut.length),SL.filter(c=>!c.done).length+' '+plural(SL.filter(c=>!c.done).length,'машина','машины','машин'))}</div>`:''}
     ${other.length?`<div style="margin-top:12px">${fold('rdOther','Другие детали',other.map(item).join(''),!mine.length,other.length+' проектов')}</div>`:''}
     ${!L.length?'<p class="small muted" style="margin-top:10px">Все доступные детали улучшены до предела.</p>':''}`);
 }

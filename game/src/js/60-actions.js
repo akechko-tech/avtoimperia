@@ -22,7 +22,7 @@ const ACT={
   workers:d=>{const k=Math.max(1,Math.round(G.workers*0.1));G.workers=Math.max(3,G.workers+k*(+d.d));if(+d.d>0){G.cash-=k*8*cpi(G);}rerender();},
   wagePol:d=>{const w=WAGE_POL[d.v];if(w.y&&G.y<w.y-techEarly(G))return;const was=G.wagePol;G.wagePol=d.v;
     if(d.v==='five'&&was!=='five'){addLog('Объявлена зарплата «пять долларов в день» — вдвое выше рынка. У ворот завода очередь из желающих.','good');if(G.y<1914)recordFirst(G,'wage:five','Зарплата «пять долларов в день»',1914,'Ford');G.rep=clamp(G.rep+4,0,100);flushToasts();}rerender();},
-  tech:d=>{const k=d.k,c=techCost(G,k);if(!techOpen(G,k)||G.techBuild||G.cash<c)return;G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:3};addLog(`Начато внедрение: ${techNext(G,k).name} (${money(c)}).`);rerender();},
+  tech:d=>{const k=d.k,c=techCost(G,k);if(!techOpen(G,k)||G.techBuild||G.cash<c)return;G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};addLog(`Начато внедрение: ${techNext(G,k).name} (${money(c)}).`);rerender();},
   loan:d=>{const n=+d.n;if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
   repay:d=>{const n=Math.min(+d.n,G.loan);if(n>0&&G.cash>=n){G.loan-=n;G.cash-=n;rerender();}},
   // модели
@@ -52,6 +52,8 @@ const ACT={
   rdPick:()=>openRD(),
   rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj&&rdActive(G).length<rdSlots(G)){G.rd.projs.push({...pj,prog:0});addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
   rdW:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;pj.w=clamp((pj.w||1)+(+d.d)*0.5,0.5,4);rerender();},
+  reel:d=>{auInit();playReel(d.k);},
+  rdStudy:d=>{if(studyStart(G,d.k)){closeSheet();checkAch();save();render();flushToasts();}},
   rdStop:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;if(!confirmOnce('rdStop'+(+d.k),'Нажмите ещё раз: сделанное по проекту пропадёт'))return;G.rd.projs.splice(+d.k,1);addLog(`КБ остановило проект: ${pj.name}.`);rerender();},
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<RD_MAX&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро выросло: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень.`,'good');checkAch();rerender();flushToasts();}},
   fold:d=>{setOpen(d.k,!isOpen(d.k,d.def==='1'));if(!sheet.hidden&&draft===null&&sb.querySelector('[data-k="'+d.k+'"]')){const top=sb.scrollTop;openRD();sb.scrollTop=top;return;}rerender();},
@@ -101,6 +103,7 @@ if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 // Кнопка «Назад» на Android: закрываем окна по очереди
 window.androidBack=function(){
+  if(REEL){reelClose();return true;}
   if(R){finishRace(true);return true;}
   if(!PW.hidden){const b=PW.querySelector('.p-btn');if(b)b.click();else closePaper();return true;}
   if(!sheet.hidden){if((G&&G.pending.length)||(draft&&draft.ng&&G&&G.over)||(draft&&draft.lock))return true;closeSheet();return true;}

@@ -21,7 +21,7 @@ function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <h2 class="p-head">${esc(t)}</h2>
     ${im?`<figure class="p-fig old" style="margin-inline:0"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
-    <div class="p-cols">${txt.split('\n').filter(Boolean).map((p,i)=>`<p class="${i===0&&!/^[\d«"]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>
+    <div class="p-cols">${txt.split('\n').filter(Boolean).map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>
     <div class="p-btns"><button class="p-btn" data-act="paperBack">← К номеру</button></div></article>`;}
 function paperHTML(o,s){
   // своя машина — только в новостях о компании; в остальных — фото события или ничего
@@ -36,7 +36,7 @@ function paperHTML(o,s){
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
     <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
     ${fig}
-    <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
+    <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
       <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
@@ -58,7 +58,7 @@ function closePaper(){PW.hidden=true;PW.innerHTML='';}
 const HIST_PHOTOS=['Benz Patent-Motorwagen','Highland Park Ford Plant','Charles F. Kettering','Austin 7','Ford Model A (1927–1931)','Daimler Motor-Lastwagen','Oldsmobile Curved Dash','Ford Model T'];
 const C_GEN={fr:'Франции',de:'Германии',uk:'Британии',us:'Америки',it:'Италии'};
 function introPapers(s){const P=PIONEERS[s.pioneer],C=COUNTRIES[s.country],md=s.models[0],p=parts(md),me=P.name==='Свой персонаж',kids=DIF().simple;
-  pushEvent({kicker:'Январь 1895',title:'Экипажи без лошадей',deck:'Моторная повозка из диковинки становится делом',img:'Benz Patent-Motorwagen',imgCap:'«Моторваген» Карла Бенца, 1886 год',
+  pushEvent({kicker:'Январь 1895',title:'Экипажи без лошадей',deck:'Моторная повозка из диковинки становится делом',img:'Benz Patent-Motorwagen',imgCap:'«Моторваген» Карла Бенца, 1886 год',choices:[['Читать дальше','ok'],['▶ Кинохроника','reel:intro']],
     text:'Десять лет назад Карл Бенц проехал по Мангейму на трёхколёсном «моторвагене», и прохожие шарахались от треска мотора. Теперь Панар и Левассор, Пежо и де Дион собирают экипажи, которые обгоняют почтовых лошадей, а газеты пишут о первых состязаниях моторов. Банкиры пожимают плечами, извозчики смеются: «Купите лучше лошадь».\nНо тот, кто сегодня откроет мастерскую, может посадить за руль весь мир.'},true);
   pushEvent({own:1,kicker:C.city,title:`«${s.company}» открывает мастерскую`,deck:`${me?'Новый фабрикант':P.name} берётся строить автомобили`,
     text:`В мастерской ${s.workers} рабочих, в кассе ${money(s.cash)}. Первая машина компании — «${md.name}»: ${p.e.name}, ${p.b.name.toLowerCase()}. Её уже продают ${s.dealers[s.country]} дилера в больших городах.\nЦель — к 1930 году стать величайшей автоимперией эпохи и потягаться с Ford, General Motors, Citroën и FIAT.\n`+
@@ -73,7 +73,8 @@ function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms
   pushEvent({own:1,carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);}
 function launchPaper(s,md){if(s.pending.length>1)return;const C=classCompare(md,s,s.country),ks=CHAR_K.filter(k=>C.W[k]>0),best=ks.slice().sort((a,b)=>C.by[b]-C.by[a])[0],worst=ks.slice().sort((a,b)=>C.by[a]-C.by[b])[0],ref=refPrice(md,s),pr=md.price/ref-1;
   const verdict=C.S>=1.08?'машина лучше соперников':C.S>=0.9?'машина не хуже соперников':'машина уступает соперникам';
-  pushEvent({carId:md.id,kicker:'Автомобильное обозрение',title:`Новинка: «${md.name}»`,deck:`${KIND_NAME[rivalKind(md)]} от «${s.company}» · ${money(md.price)}`,
+  reelUnlock(s,'model:'+md.id);
+  pushEvent({carId:md.id,kicker:'Автомобильное обозрение',title:`Новинка: «${md.name}»`,choices:[['Читать дальше','ok'],['▶ Кинохроника','reel:model:'+md.id]],deck:`${KIND_NAME[rivalKind(md)]} от «${s.company}» · ${money(md.price)}`,
     text:`Обозреватель «${MAST[s.country][0]}» сравнил «${md.name}» с ${C.ref.name}. ${CHAR_NAMES[best]} — ${Math.round(C.by[best]*100)}% от соперника${C.by[best]>1.05?': здесь новинка впереди':''}. ${C.by[worst]<0.95?`Слабое место — ${CHAR_NAMES[worst].toLowerCase()}: ${Math.round(C.by[worst]*100)}%.`:'Слабых мест обозреватель не нашёл.'}\nИтог: ${verdict} (${Math.round(C.S*100)}%). Цена ${money(md.price)} — ${Math.abs(pr)<0.04?'как у похожих машин':pr<0?`на ${Math.round(-pr*100)}% ниже, чем у похожих машин: покупатели заметят`:`на ${Math.round(pr*100)}% выше, чем у похожих машин`}.`},true);}
 // Итоги года: место среди марок страны; газета — когда место поменялось, при лидерстве и раз в пять лет
 function yearReview(s){const home=s.country;if(!(s.homePrev>0))return;

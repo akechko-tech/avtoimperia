@@ -100,7 +100,7 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;s.rd.projs.push({...pj,prog:0});msg.push('КБ: '+pj.name);}
   if(s.rd.lvl<5&&room()>rdUpCost(s)*5){const c=rdUpCost(s);s.cash-=c;s.rd.lvl++;msg.push('КБ расширено');}
   // технологии завода
-  if(!s.techBuild){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2.5);if(k){const c=techCost(s,k);s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:3};msg.push('внедряет: '+techNext(s,k).name);}}
+  if(!s.techBuild){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2.5);if(k){const c=techCost(s,k);s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}
   // реклама — около 4% выручки
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*0.04))/10)*10;
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}

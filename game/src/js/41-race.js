@@ -474,7 +474,7 @@ function wearSetup(c,trk,rc){
 function startRace(setup){
   const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
   const teamCars=setup.entries.map((e,i)=>{const d=e.drv==='me'?null:DRIVERS.find(x=>x.id===e.drv),me=e.drv==='me';
-    return {you:true,name:s.company,label:e.md.name,drvName:me?(setup.mode==='drive'?'Вы':pio.name):d.n,drvId:e.drv,sk:me?(pd?pd.sk:0.72):d.sk,
+    return {you:true,name:s.company,label:e.md.name,drvName:me?(setup.mode==='drive'?'Вы':pio.name):d.n,drvId:e.drv,sk:me?(pd?pd.sk:0.72):Math.min(0.99,d.sk*moodK(s,d.id)),
     md:e.md,prep:e.prep,tyre:e.tyre,gear:e.gear,color:e.md.paint,num:i+1,player:me&&setup.mode==='drive',pw:(1+bn('race',0))*(dl.pw||1),relK:dl.rel||1,pitK:dl.pit||1};});
   const ai=raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
   const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));

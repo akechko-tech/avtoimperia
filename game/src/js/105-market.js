@@ -128,7 +128,7 @@ function reachOf(s,c){const d=dealerCount(s,c);return d?Math.pow(Math.min(1,d/de
 function adRef(s,c){c=c||s.country;const y=(s.mkY&&s.mkY[c])||1000;return 100*cpi(s)*Math.pow(1+y/1000,0.75);}
 function adEffect(s,c){const IL=impOf(s,c||s.country),a=(s.ad||0)*(IL?IL.ad||0.35:1)*bn('adEff');return 0.55*(1-Math.exp(-a/adRef(s,c)));}
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
-function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0);}
+function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0)+kingEffect(md,s);}
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}

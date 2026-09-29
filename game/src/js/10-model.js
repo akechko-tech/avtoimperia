@@ -30,9 +30,9 @@ function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};
 function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
-  const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s);
+  const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s),MU=massParts(s.y);
   PART_CATS.forEach(cat=>{const arr=cat.arr();
-    unlockedP(arr,s).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cat.rd,ck:cat.k,name:x.name,lvl:l+1,mine:used.has(x.id),need:Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age))});});
+    unlockedP(arr,s).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cat.rd,ck:cat.k,name:x.name,lvl:l+1,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
     if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cat.rd,ck:cat.k,name:nx.name,need:10+6*(nx.y-s.y),yrs:nx.y-s.y});
   });
@@ -108,7 +108,7 @@ function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
 // С кем сравнивают: фургон — с фургонами, грузовик — с грузовиками, легковую — с машинами своего класса
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
-function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y);return {name:r[1],y:r[0],kind,md:{...r[2],t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round(clamp(0.3*(y-r[0]),0,2.5)*10)/10}};}
+function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y);return {name:r[1],y:r[0],kind,md:{...r[2],t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
 function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={};let lnS=0;
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4);by[k]=r;if(W[k])lnS+=W[k]*Math.log(r);});
@@ -170,7 +170,7 @@ function techLv(s,k){return (s.tech&&s.tech[k])||0;}
 function techNext(s,k){const d=TECH[k],l=techLv(s,k);return l<d.max?d.lv[l]:null;}
 function techEarly(s){const l=s.rd?s.rd.lvl:1;return (l>=7?4:l>=5?3:l>=4?2:l>=3?1:0)+(bn('convEarly',0)?1:0);}
 function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+techEarly(s))return false;if(nx.need)for(const r in nx.need)if(techLv(s,r)<nx.need[r])return false;return true;}
-function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)/100)*100;}
+function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)/100)*100;}
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
@@ -265,8 +265,8 @@ function dealersMonth(s,r){s.dcap=s.dcap||{};s.dsm=s.dsm||{};s.dAdd={};
 function stockValue(s){return s.models.reduce((a,m)=>a+m.stock*matCost(m,s),0);}
 function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+Math.max(0,avg*12*7);}
 function maxLoan(s){return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))/1000)*1000;}
-function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')/100)*100;}
-function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime')));}
+function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
+function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round((800+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
 function qLabel(r){return r<0.85?['Хуже соперников','bad']:r<1.08?['Как у соперников','warn']:['Лучше соперников','good'];}
 function totalSold(s){return s.models.reduce((a,m)=>a+m.totalSold,0);}

@@ -3,13 +3,28 @@ package ru.avtoimperia.game;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
     private WebView web;
+    private TextToSpeech tts;
+    private volatile boolean ttsOk = false;
+
+    /** Голос диктора для кинохроники: WebView не умеет Web Speech, поэтому говорит системный синтезатор речи. */
+    public class Voice {
+        @JavascriptInterface public boolean ttsReady() { return ttsOk; }
+        @JavascriptInterface public void speak(String text) {
+            if (ttsOk && tts != null) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "reel");
+        }
+        @JavascriptInterface public void stop() { if (tts != null) tts.stop(); }
+        @JavascriptInterface public boolean speaking() { return tts != null && tts.isSpeaking(); }
+    }
 
     @Override
     protected void onCreate(Bundle state) {
@@ -26,6 +41,17 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setTextZoom(100);                    // системный размер шрифта не ломает вёрстку
         web.setWebViewClient(new WebViewClient());
+        try {
+            tts = new TextToSpeech(this, status -> {
+                if (status == TextToSpeech.SUCCESS && tts != null) {
+                    int r = tts.setLanguage(new Locale("ru", "RU"));
+                    ttsOk = r != TextToSpeech.LANG_MISSING_DATA && r != TextToSpeech.LANG_NOT_SUPPORTED;
+                    tts.setSpeechRate(0.95f);
+                    tts.setPitch(0.9f);
+                }
+            });
+        } catch (Exception e) { tts = null; }
+        web.addJavascriptInterface(new Voice(), "AndroidTTS");
         if (state != null) web.restoreState(state);
         else web.loadUrl("file:///android_asset/index.html");
         setContentView(web);
@@ -38,7 +64,13 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onPause() { super.onPause(); web.onPause(); }
+    protected void onPause() { super.onPause(); web.onPause(); if (tts != null) tts.stop(); }
+
+    @Override
+    protected void onDestroy() {
+        if (tts != null) { tts.stop(); tts.shutdown(); tts = null; }
+        super.onDestroy();
+    }
 
     @Override
     protected void onResume() { super.onResume(); web.onResume(); }

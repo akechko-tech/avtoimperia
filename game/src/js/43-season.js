@@ -72,7 +72,7 @@ function champFinish(s,id,y){
   ch.done=true;const C=CHAMPS[id],tb=champTable(s,id,y),win=tb.find(r=>r.el&&(id==='aiacr'||r.pts>0));
   ch.win=win?win.n:'';const me=tb.findIndex(r=>r.you);
   if(win&&win.you){
-    s.titles.push({y,id,name:C.title(y),w:C.w});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+(C.off?8:5)*bn('raceRep'),0,100);
+    s.titles.push({y,id,name:C.title(y),w:C.w});s.titleBoost=mi(s)+12;(s.drivers||[]).forEach(d=>moodAdd(s,d,8,C.title(y)));s.rep=clamp(s.rep+(C.off?8:5)*bn('raceRep'),0,100);
     const second=tb.find(r=>!r.you&&r.el);
     pushEvent({own:1,kicker:'Спорт',title:id==='aiacr'?`«${s.company}» — чемпион мира!`:id==='aaa'?`«${s.company}» — чемпион Америки!`:`«${s.company}» — марка сезона!`,
       deck:`${C.name(y)} ${y}: ${fmtPts(id,win.pts)} ${id==='aiacr'?'штрафных очков':'очков'}`,
@@ -92,9 +92,11 @@ function simRace(s,rc){
   // частники: любители на купленных машинах (и на ваших тоже)
   privField(rc,s,new Set()).forEach(e=>rows.push({name:e.name,priv:1,pmy:e.pmy||0,drv:e.drvName,label:e.label,tc:e.tc,prep:e.prep,perf:privPerf(e,rc)*(0.92+Math.random()*0.16),dnf:Math.random()<dnf*1.1?1:0}));
   rows.sort((a,b)=>(a.dnf-b.dnf)||(b.perf-a.perf));
-  const w=rows[0];
-  s.cres[rc.key]={w:w?w.name:'',d:w?(w.priv?w.drv:simDriver(w.t,rc,w.t===hw)):'',me:0,c:w?(w.priv?w.tc:w.t.c):'',pv:w&&w.priv?1:0};
+  const w=rows[0];simDrivers(rows,rc,hw);
+  s.cres[rc.key]={w:w?w.name:'',d:w?(w.priv?w.drv:(w.dn||simDriver(w.t,rc,w.t===hw))):'',me:0,c:w?(w.priv?w.tc:w.t.c):'',pv:w&&w.priv?1:0};
   champRecord(s,rc,rows);
+  dchRecord(s,rc,rows.map(r=>({n:r.priv?r.drv:r.dn,id:r.did,mq:r.priv&&r.pmy?s.company:r.name,dnf:!!r.dnf})));
+  chalForfeit(s,rc);drvSkipped(s,rc);
   const mine=rows.findIndex(r=>r.pmy&&!r.dnf);if(mine>=0&&mine<3)privPublicity(s,rc,rows[mine],mine+1,false);
 }
 // Частник на вашей машине в призах: бесплатная реклама — спрос на модель и немного славы марке
@@ -118,6 +120,7 @@ function seasonTick(s){
   RACES.forEach(rc=>{if((rc.y<s.y||(rc.y===s.y&&rc.m<s.m))&&rc.y>=s.y-1&&!s.cres[rc.key])simRace(s,rc);});
   [s.y-1,s.y].forEach(y=>champsOf(y).forEach(id=>champFinish(s,id,y)));
   if(s.m===0){Object.keys(s.cres).forEach(k=>{if(+k.split('-').pop()<s.y-2)delete s.cres[k];});Object.keys(s.season).forEach(k=>{if(s.season[k].y<s.y-2)delete s.season[k];});}
+  drvMonth(s);
 }
 /* ---------- итоги гонки игрока ---------- */
 function fmtRaceTime(sec){sec=Math.max(0,sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=Math.floor(sec%60);return h?`${h} ч ${String(m).padStart(2,'0')} мин`:m?`${m} мин ${String(x).padStart(2,'0')} с`:`${(Math.round(sec*10)/10).toFixed(1).replace('.',',')} с`;}
@@ -140,6 +143,8 @@ function raceResults(rc,res,mode,info){
   const w=res[0];
   s.cres[rc.key]={w:w.you?s.company:w.name,d:w.drv||'',me:best||-1,c:w.you?s.country:(w.tc||''),pv:w.priv?1:0};
   champRecord(s,rc,res.map(r=>({name:r.you?s.company:r.name,dnf:!!r.dnf,priv:r.priv})));
+  dchRecord(s,rc,res.map(r=>{const me=r.you&&r.drvId==='me';return {n:me?meName(s):r.drv,id:me?meKey(s):(r.drvId||''),mq:r.you||r.pmy?s.company:r.name,dnf:!!r.dnf,mine:r.you?1:0};}));
+  s.raceMi=mi(s);drvAfterRace(s,rc,res);const chal=chalRace(s,rc,res);
   // Кубок Гордона Беннетта: трофей уходит стране победителя
   let cupTitle='';
   if(GBC_IDS.includes(rc.id)){if(best===1){cupTitle=`Кубок Гордона Беннетта ${rc.y}`;s.titles.push({y:rc.y,id:'gbc',name:cupTitle,w:0.5});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+5*rk,0,100);}
@@ -147,7 +152,7 @@ function raceResults(rc,res,mode,info){
   raceChamps(rc).forEach(id=>champFinish(s,id,rc.y));
   const dnfN=team.filter(r=>r.dnf).length;
   addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${won?`, призовые ${money(won)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
-  lastRace={rc,res,k,won,best,mode,cup:cupTitle};
+  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal};
   openRaceResult();
   if(best===1)showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
@@ -178,6 +183,7 @@ function openRaceResult(){
     <table class="pl res" style="margin-top:10px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время</th></tr>${rows}</table>
     <p style="margin-top:10px">${L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` Призовые: <b class="good">${money(won)}</b>.`:''}</p>
     ${nPv?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
-    ${champs}
+    ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ Пари с ${esc(L.chal.C.mq)} ${L.chal.res==='win'?'выиграно':'проиграно'}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}
+    ${champs}${dchMini(s,rc.y)}
     <button class="btn primary block" style="margin-top:16px" data-act="close">Дальше</button>`);
 }

@@ -181,7 +181,16 @@ MUSIC_Q = [
      ['Burlington Bertie',1900,'song'],['Hold Your Hand Out Naughty Boy',1913,'song'],['Berliner Luft Lincke',1904,'song'],
      ['Memphis Blues',1912,'jazz'],['St Louis Blues 1914',1915,'jazz'],['Clarinet Marmalade',1918,'jazz'],['At the Jazz Band Ball',1918,'jazz'],['Fidgety Feet',1918,'jazz'],
      ['Canal Street Blues King Oliver',1923,'jazz'],['King Porter Stomp Morton',1923,'jazz'],['Tin Roof Blues',1923,'jazz'],['Jelly Roll Blues',1924,'jazz'],['Heebie Jeebies Armstrong',1926,'jazz'],
-     ['Muskrat Ramble',1926,'jazz'],['Potato Head Blues',1927,'jazz'],['Singin the Blues Bix',1927,'jazz'],['Weather Bird',1928,'jazz']]
+     ['Muskrat Ramble',1926,'jazz'],['Potato Head Blues',1927,'jazz'],['Singin the Blues Bix',1927,'jazz'],['Weather Bird',1928,'jazz'],
+     ['In the Good Old Summer Time',1902,'song'],['Sweet Adeline',1903,'song'],['Sidewalks of New York',1895,'song'],['A Hot Time in the Old Town',1896,'song'],['My Wild Irish Rose',1899,'song'],['Hiawatha Moret intermezzo',1902,'rag'],
+     ['Creole Belles',1900,'rag'],['Smoky Mokes',1899,'rag'],['Whistling Rufus',1899,'rag'],['Under the Bamboo Tree',1902,'song'],['Oh You Beautiful Doll',1911,'song'],['Everybodys Doin It',1911,'song'],
+     ['Waiting for the Robert E Lee',1912,'song'],['When Irish Eyes Are Smiling',1912,'song'],['Peg o My Heart',1913,'song'],['Ragtime Cowboy Joe',1912,'song'],['Too Much Mustard',1913,'rag'],['Castle Walk Europe',1914,'jazz'],
+     ['Down Home Rag',1913,'rag'],['El Choclo tango',1913,'tango'],['La Cumparsita',1917,'tango'],['La Morocha tango',1905,'tango'],['Rodriguez Pena tango',1911,'tango'],['El Entrerriano tango',1897,'tango'],
+     ['Hindustan 1918',1918,'song'],['Till We Meet Again 1918',1918,'song'],['Smiles 1917',1917,'song'],['Japanese Sandman',1920,'jazz'],['Margie 1920',1920,'song'],['Stumbling Confrey',1922,'jazz'],
+     ['Chicago That Toddling Town',1922,'song'],['Three OClock in the Morning waltz',1922,'waltz'],['Somebody Stole My Gal',1923,'jazz'],['Everybody Loves My Baby',1924,'jazz'],['Yes Sir Thats My Baby',1925,'song'],['Five Foot Two Eyes of Blue',1925,'song'],
+     ['Amur Waves waltz',1906,'waltz'],['On the Hills of Manchuria waltz',1906,'waltz'],['Farewell of Slavianka',1912,'march'],['Waves of the Danube Ivanovici',1900,'waltz'],['Tales from the Vienna Woods',1900,'waltz'],['Voices of Spring Strauss',1900,'waltz'],
+     ['Florentiner March Fucik',1907,'march'],['Invercargill march',1909,'march'],['Caissons Go Rolling Along',1918,'march'],['Mademoiselle from Armentieres',1918,'song'],['St Louis Tickle',1904,'rag'],['Cannon Ball Rag',1905,'rag'],
+     ['Nobody Bert Williams',1905,'song']]
 
 BAKE_LIMIT = 36e6   # bytes of music baked into the APK; the rest stream from Wikimedia
 

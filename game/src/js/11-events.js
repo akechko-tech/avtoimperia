@@ -45,7 +45,8 @@ function pushEvent(ev,paper){
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
   const s=G;
-  HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;pushEvent(h,true);});
+  HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;
+    const rid=HIST_REEL[h.img];if(rid){reelUnlock(s,rid);pushEvent({...h,choices:(h.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника','reel:'+rid]])},true);}else pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
   checkShows(s);checkTenders(s);
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
@@ -119,6 +120,8 @@ function resolve(key){
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
+  if(/^(chal|poach)/.test(key))drvResolve(s,key);
+  if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
   if(key==='restart'){s.pending=[];openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();

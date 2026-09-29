@@ -10,7 +10,9 @@ function step(){
     const tc=toolingCost(md,s);s.cash-=tc;r.tool+=tc;addLog(`Модель «${md.name}» пошла в серию. Оснастка обошлась в ${money(tc)}.`,'good');checkFirstParts(md);launchPaper(s,md);}}});
   s.capBuild=(s.capBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.cap+=b.units;addLog(`Новый цех введён в строй: мощность ${fmtN(Math.round(capEff(s)))} машин в месяц.`,'good');return false;}return true;});
   s.whBuild=(s.whBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.wh=(s.wh||0)+b.units;addLog(`Новый склад готов: ${fmtN(s.wh)} мест для машин.`,'good');return false;}return true;});
-  if(s.techBuild){s.techBuild.left--;if(s.techBuild.left<=0){const k=s.techBuild.k;s.tech[k]=(s.tech[k]||0)+1;const lv=TECH[k].lv[s.tech[k]-1];addLog(`Внедрено: ${lv.name}.`,'good');checkFirstTech(k,s.tech[k]);s.techBuild=null;}}
+  if(s.techBuild){s.techBuild.left--;if(s.techBuild.left<=0){const k=s.techBuild.k;s.tech[k]=(s.tech[k]||0)+1;const lv=TECH[k].lv[s.tech[k]-1];addLog(`Внедрено: ${lv.name}.`,'good');
+    const n0=s.pending.length,rid='tech:'+k+':'+s.tech[k];checkFirstTech(k,s.tech[k]);s.techBuild=null;
+    if(REELS[rid]&&s.pending.length===n0)reelOffer(s,rid,'Внедрено: '+lv.name,techEffects(lv),TECH[k].desc);}}
   s.supplyNow=s.supplyNext||1;s.supplyNext=1;s.strikeNow=!!s.strikeNext;s.strikeNext=false;
   // распродажа: снятая модель продаётся со склада по сниженной цене, пока остаток не кончится
   s.models.forEach(m=>{if(m.status==='sale'&&m.stock<=0){m.status='off';m.backlog=0;addLog(`Распродажа «${m.name}» закончена.`);}});
@@ -68,8 +70,10 @@ function step(){
   r.rd=rdUpkeep(s);r.drv=driverPayroll(s);r.team=teamUpkeep(s);
   // конструкторское бюро: каждый проект продвигается каждый месяц
   {const share=(s.rd.projs||[]).map(pj=>rdPtsOf(s,pj));s.rd.projs=(s.rd.projs||[]).filter((pj,i)=>{pj.prog=(pj.prog||0)+share[i];if(pj.prog<pj.need)return true;
-    if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
-    else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);}
+    if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;if(s.rd.know)delete s.rd.know[pj.id];addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
+    else if(pj.kind==='study')studyDone(s,pj);
+    else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);
+      if(PART_HIST[pj.id])reelOffer(s,'part:'+pj.id,'Прототип готов: '+pj.name,`На ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше рынка`,`В истории такую деталь первыми сделали ${PART_HIST[pj.id][1]} в ${PART_HIST[pj.id][0]} году. Поставьте её на новую модель — и «${s.company}» опередит историю.`);}
     return false;});}
   r.wage=s.workers*wageNow(s);r.ovh=plantOverhead(s)*(s.shifts>1?1.1:1);
   r.dlr=Object.keys(s.dealers).reduce((a,c)=>a+dealerCount(s,c)*dealerUpkeep(s,c),0)+Object.keys(COUNTRIES).reduce((a,c)=>a+impUpkeep(s,c),0);
@@ -85,9 +89,11 @@ function step(){
   s.rep=clamp(s.rep,0,100);
   // конкуренты и рынки для экрана «Рынок»: сколько купили у реальных марок и у вас
   for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>x.last=0);const MC=D.mk[c],sg={};let size=0;
-    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{if(L[o.i])L[o.i].last+=o.sales;});});
+    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x)return;x.last+=o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}});});
     const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(m&&m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
+  // продажи по классам дома за год — для «королей года» и пари по продажам
+  {const hm=r.mk[s.country];if(hm&&hm.segs){const Y=s.segY=s.segY||{},YT=s.segYT=s.segYT||{};SEGK.forEach(g=>{Y[g]=(Y[g]||0)+(hm.segs[g].you||0);YT[g]=(YT[g]||0)+(hm.segs[g].size||0);});}}
   // продажи марок за год — для таблицы конкурентов
   for(const c in s.comps)s.comps[c].forEach(o=>{o.yr=(o.yr||0)+(o.last||0);});s.homeY=(s.homeY||0)+r.homeSold;
   rivalsReact(s,r);dealersMonth(s,r);
@@ -127,7 +133,8 @@ function step(){
 }
 function endOfYear(s){
   s.m=0;s.y++;
-  for(const c in s.comps)s.comps[c].forEach(o=>{o.prev2=o.prev||0;o.prev=o.yr||0;o.yr=0;});s.homePrev2=s.homePrev||0;s.homePrev=s.homeY||0;s.homeY=0;
+  for(const c in s.comps)s.comps[c].forEach(o=>{o.prev2=o.prev||0;o.prev=o.yr||0;o.yr=0;o.ysPrev=o.ys||{};o.ys={};});s.homePrev2=s.homePrev||0;s.homePrev=s.homeY||0;s.homeY=0;
+  s.segYPrev=s.segY||{};s.segY={};s.segYTPrev=s.segYT||{};s.segYT={};
   if((s.yearSold||0)>(s.peak.year||0))s.peak.year=s.yearSold;s.peakLast=s.yearSold||0;s.yearSold=0;
   const fresh=ALL_PARTS().filter(x=>x.y===s.y).map(x=>x.name);if(fresh.length)addLog('Поставщики предлагают новинки: '+fresh.join(', ')+'.','good');
   yearlyCompetitors(s);yearReview(s);

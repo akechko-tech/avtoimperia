@@ -5,9 +5,10 @@ const PART_HIST={e2:[1898,'Daimler (мотор «Феникс»)'],e3:[1903,'Ast
   b4:[1911,'закрытые кузова Cadillac и Hudson'],b5:[1923,'Dodge и Citroën (цельностальной кузов)'],w3:[1905,'Michelin и Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1912,'кордовые шины Palmer и Goodyear'],w6:[1923,'Firestone (баллонные шины)']};
 function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
   s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
-  if(!G.pending.length)pushEvent({own:1,title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`},true);
+  const rid=reelGet(key,s)?key:null;if(rid)reelUnlock(s,rid);
+  if(!G.pending.length)pushEvent({own:1,title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`,choices:rid?[['Читать дальше','ok'],['▶ Кинохроника','reel:'+rid]]:undefined},true);
   s.rep=clamp(s.rep+4,0,100);}
-function checkFirstParts(md){const s=G,p=parts(md);[p.e,p.c,p.b,p.w].forEach(x=>{const h=PART_HIST[x.id];if(h&&s.y<h[0])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
+function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p.e,p.c,p.b,p.w].forEach(x=>{const h=PART_HIST[x.id];if(h&&s.y<h[0]&&!cp[x.id])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}
 function plural(n,a,b,c){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c;}
 function legacyYear(s){if(!s.lhist)s.lhist=[];s.lhist.push({y:s.y-1,sold:s.peakLast||0,val:Math.round(companyValue(s)),rep:Math.round(s.rep)});if(s.lhist.length>40)s.lhist.shift();}
