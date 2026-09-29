@@ -1,7 +1,7 @@
 """Скачивает исторические фото из Википедии (только файлы Wikimedia Commons)
 и вшивает их в приложение: app/src/main/assets/img + manifest.js.
 Запускается в GitHub Actions перед сборкой APK. Ошибки не валят сборку."""
-import json, os, re, urllib.parse, urllib.request, hashlib, time
+import json, os, re, urllib.parse, urllib.request, urllib.error, hashlib, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'app', 'src', 'main', 'assets', 'img')
@@ -9,9 +9,17 @@ UA = 'AvtoimperiaBuild/1.0 (https://github.com/akechko-tech/avtoimperia; game bu
 BAD = re.compile(r'logo|map|layout|circuit|coat_of_arms|flag|emblem|embl%C3%A8me|emblème|blason|wappen|badge|\.svg$', re.I)
 
 def get(url):
-    req = urllib.request.Request(url, headers={'User-Agent': UA})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read()
+    # Википедия притормаживает частые запросы (429/503): ждём и пробуем ещё раз
+    for k in range(4):
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': UA})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 500, 502, 503, 504) or k == 3: raise
+        except urllib.error.URLError:
+            if k == 3: raise
+        time.sleep(2 ** k * 1.5)
 
 def main():
     os.makedirs(OUT, exist_ok=True)
@@ -117,7 +125,7 @@ MUSIC_Q = [
      ['Canal Street Blues King Oliver',1923,'jazz'],['King Porter Stomp Morton',1923,'jazz'],['Tin Roof Blues',1923,'jazz'],['Jelly Roll Blues',1924,'jazz'],['Heebie Jeebies Armstrong',1926,'jazz'],
      ['Muskrat Ramble',1926,'jazz'],['Potato Head Blues',1927,'jazz'],['Singin the Blues Bix',1927,'jazz'],['Weather Bird',1928,'jazz']]
 
-BAKE_LIMIT = 50e6   # bytes of music baked into the APK; the rest stream from Wikimedia
+BAKE_LIMIT = 36e6   # bytes of music baked into the APK; the rest stream from Wikimedia
 
 def keywords(q):
     ws = re.sub(r'[^a-z0-9]+', ' ', q.lower()).split()
@@ -129,6 +137,7 @@ def music():
     man, seen, baked = {}, set(), 0
     for q, y, st in MUSIC_Q:
         try:
+            time.sleep(0.25)
             sr = json.loads(get(api + '&list=search&srnamespace=6&srlimit=4&srsearch=' + urllib.parse.quote(q + ' filetype:audio')))
             kw = keywords(q)
             titles = [x['title'] for x in sr.get('query', {}).get('search', [])]
