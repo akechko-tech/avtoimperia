@@ -40,6 +40,26 @@ def shrink(path):
     except Exception as e:
         print('shrink', path, e)
 
+# Запросы к поиску Commons для марок, у чьих статей нет снимка машины
+SEARCH_Q = {
+    'Adlerwerke': 'Adler automobile 1901', 'Brennabor': 'Brennabor automobile', 'Amilcar': 'Amilcar CC 1922',
+    'Lanchester Motor Company': 'Lanchester 1901 car', 'Singer Motor Company': 'Singer car 1905 veteran', 'Austin Motor Company': 'Austin 1907 car veteran',
+    'MG M-type Midget': 'MG M-type Midget', 'Plymouth Model Q': 'Plymouth Model Q 1928', 'Rambler (1900–1914)': 'Rambler 1902 car',
+    'Studebaker': 'Studebaker 1904 car', 'Mercer Raceabout': 'Mercer Raceabout', 'Bianchi': 'Bianchi automobile 1907', 'Isotta Fraschini': 'Isotta Fraschini 1908 car'}
+SKIP = re.compile(r'logo|emblem|badge|poster|advert|\bad\b|map|engine|interior|dashboard|plate|hood ornament|mascot|bicycle|truck|bus\b|tractor|aircraft|plane|train|factory|building|drawing|\.pdf$|\.svg$|\.tif', re.I)
+
+def commons_search(q):
+    url = ('https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=15'
+           '&gsrsearch=' + urllib.parse.quote(q) + '&prop=imageinfo&iiprop=url|mime&iiurlwidth=640')
+    res = json.loads(get(url)).get('query', {})
+    for pg in sorted(res.get('pages', {}).values(), key=lambda p: p.get('index', 99)):
+        t = pg.get('title', '')
+        ii = (pg.get('imageinfo') or [{}])[0]
+        if ii.get('mime') not in ('image/jpeg', 'image/png') or SKIP.search(t) or BAD.search(t):
+            continue
+        return t[5:], ii.get('thumburl')
+    return None, None
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     titles = json.load(open(os.path.join(ROOT, 'tools', 'titles.json'), encoding='utf-8'))
@@ -109,6 +129,25 @@ def main():
     for t in fixed:
         manifest.pop(t, None)
     manifest.update(fm)
+    # у статьи нет фото машины (логотип, завод) — ищем снимок на Commons по запросу
+    for t, q in SEARCH_Q.items():
+        if t in manifest:
+            continue
+        try:
+            name, th = commons_search(q)
+        except Exception as e:
+            print('Commons search error', t, e); continue
+        if not th:
+            print('search: nothing for', t); continue
+        fn = hashlib.md5(name.replace(' ', '_').encode()).hexdigest()[:12] + '.jpg'
+        path = os.path.join(OUT, fn)
+        if not os.path.exists(path):
+            try:
+                open(path, 'wb').write(get(th)); shrink(path); time.sleep(0.2)
+            except Exception as e:
+                print('download error', name, e); continue
+        manifest[t] = {'src': 'img/' + fn, 'file': name.replace(' ', '_')}
+        print('search:', t, '->', name)
     with open(os.path.join(OUT, 'manifest.js'), 'w', encoding='utf-8') as f:
         f.write('window.IMG_MANIFEST=' + json.dumps(manifest, ensure_ascii=False) + ';')
     print('photos:', len(set(v['src'] for v in manifest.values())), 'titles:', len(manifest), 'of', len(titles) + len(fixed))

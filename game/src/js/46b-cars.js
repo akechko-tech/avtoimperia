@@ -129,6 +129,32 @@ function carKit(S){const y=S.y,col=S.color||'#23427a',lux=!!S.lux;
     leather:lux?'#6a2620':y<1920?'#4a3021':'#3b2a22',wood:y<1906?'#b98c52':'#9a7248',felloe:y<1906?'#a87c46':'#8a6440',
     tyre:y<1912?'#c9c4b8':'#1c1c1e',spoke:'#cfd2d6',discCol:shade(col,-0.15),hubCol:brassEra?'#c9a24a':'#cfd3d8',hubMat:brassEra?'metal':'chrome',
     glass:'#a9c3d2',canvas:'#2e2b27',fender:(S.style==='sport'&&y>=1912)?col:'#141518'};}
+/* ---------- гоночные машины заводских команд: у каждой марки свой облик ---------- */
+// rad — радиатор (dash — «совок» Рено: радиаторы по бокам у щитка), hood — высота капота, tank — бак (xcyl поперёк, zcyl вдоль, box, none),
+// spare — запаски стопкой за баком, tail — хвост поздних машин (point, round, boat, long), solo — без механика, exh — выхлоп слева (−1) или справа
+const MQV={
+  'Renault':{rad:'dash',tank:'box',spare:2,hood:0.94},'Clément-Bayard':{rad:'dash',tank:'xcyl',spare:1,hood:0.98},
+  'Mercedes':[[1912,{rad:'honey',tank:'xcyl',spare:2,hood:1.08,chain:1}],[1924,{rad:'vee',tail:'round',spare:2}],[1999,{rad:'vee',hump:1}]],
+  'Benz':[[1909,{rad:'vert',tank:'zcyl',spare:1,exh:-1}],[1999,{rad:'vee',tail:'boat'}]],
+  'FIAT':{rad:'vert',tank:'box',spare:2,hood:1.14,straps:1,chain:1},'Itala':{rad:'honey',tank:'zcyl',spare:1,louv:5},
+  'Panhard et Levassor':{rad:'coil',tank:'xcyl',spare:0,hood:1.1,chain:1},'Mors':{rad:'vert',tank:'box',spare:1,hood:0.9,exh:-1},
+  'De Dietrich':{rad:'vert',tank:'zcyl',spare:2,hood:0.96},'Darracq':{rad:'honey',tank:'box',spare:1,hood:0.92,exh:-1},
+  'Brasier':{rad:'round',tank:'xcyl',spare:1},'De Dion-Bouton':{rad:'coil',tank:'box',spare:0,hood:0.9},
+  'Peugeot':[[1900,{rad:'coil',tank:'box',spare:0}],[1999,{rad:'vert',tail:'point',hump:1}]],'Opel':{rad:'vert',tank:'zcyl',spare:2,straps:1},
+  'Austro-Daimler':{rad:'vee',tail:'boat',tank:'zcyl',spare:1},'Isotta Fraschini':{rad:'vert',tank:'xcyl',spare:2,exh:-1},
+  'Nazzaro':{rad:'vert',tail:'round',spare:1},'Napier':{rad:'coil',tank:'box',spare:1,hood:1.06},
+  'Sunbeam':{rad:'vert',tail:'point',exh:-1},'Vauxhall':{rad:'vee',flutes:1,tail:'boat',tank:'zcyl',spare:1},
+  'Delage':{rad:'vert',tail:'point',exh:-1},'Ballot':{rad:'vert',tail:'point',hump:1},'Bugatti':{rad:'round',tail:'point'},
+  'Talbot':{rad:'vert',tail:'round',exh:-1},'Alfa Romeo':{rad:'vert',tail:'point',hump:1},'Maserati':{rad:'vert',tail:'point',exh:-1},
+  'Bentley':{rad:'honey',tail:'round'},'Winton':{rad:'vert',tank:'box',spare:0,hood:1.1},'Locomobile':{rad:'vert',tank:'xcyl',spare:2,hood:1.08},
+  'Buick':{rad:'round',tank:'zcyl',spare:1},'Marmon':{rad:'vert',tail:'long',solo:1,tank:'zcyl',spare:0},'National':{rad:'vert',tank:'xcyl',spare:1,tail:'round'},
+  'Lozier':{rad:'vert',tank:'box',spare:2,tail:'round'},'Frontenac':{rad:'vert',tail:'point'},'Duesenberg':{rad:'vert',tail:'point',exh:-1},
+  'Miller':{rad:'round',tail:'point',hump:1},'Durant':{rad:'round',tail:'point'},'Руссо-Балт':{rad:'vert',tank:'zcyl',spare:1,hood:1.04}};
+function mqLook(S){const d={rad:null,hood:1,tank:'xcyl',spare:2,tail:'point',solo:0,exh:1,straps:0,louv:null,flutes:0,chain:0,hump:0};if(!S.mq)return d;
+  let v=MQV[S.mq];if(Array.isArray(v))v=(v.find(a=>S.y<=a[0])||v[v.length-1])[1];
+  if(!v){// незнакомая марка: облик по её имени, но всегда один и тот же
+    const h=hashStr(S.mq),p=(a,k)=>a[(h>>>k)%a.length];v={rad:p(['honey','vert','round','vee'],1),tank:p(['xcyl','zcyl','box'],4),spare:p([0,1,2],7),tail:p(['point','round','boat'],10),hood:0.92+((h>>>13)%9)*0.025,exh:(h>>>17)&1?1:-1};}
+  return Object.assign(d,v);}
 function carModel(S){
   MLOD=S.lod==='lo'?0:1;const hi=MLOD===1,M=new Mesh(),st=S.style,y=S.y,K=carKit(S),col=K.col,n=hi?3:1,crew=S.crew!==0&&S.crew!==false;
   let wt=S.wheel==='alloy'?'alloy':S.wheel==='wire'?'wire':S.wheel==='disc'?'disc':'wood';
@@ -169,9 +195,10 @@ function carModel(S){
   // ---------- капот: гладкий «домик» с жалюзи, петлёй посередине и ремнями у спортивных ----------
   const hood=(z0,z1,w0,w1,yb,yt0,yt1,o)=>{o=o||{};const r=o.r||0.1,secs=[];const N=hi?5:2;
     for(let k=0;k<=N;k++){const t=k/N,w=w0+(w1-w0)*t,yt=yt0+(yt1-yt0)*t;secs.push({z:z0+(z1-z0)*t,p:rsec(w,w*(o.top||0.97),yb,yt,0.01,r,n,'n')});}
-    const f=mLoft2(M,secs,col,'paint');
-    // шарнир посередине и жалюзи по бокам
+    const f=mLoft2(M,secs,col,'paint');if(o.cap)mCap(M,secs[0],col,'paint',1);
+    // шарнир посередине и жалюзи по бокам; «флейты» Воксхолла — желобки по верху боковин
     tube([[0,yt0+0.006,z0-0.01],[0,yt1+0.006,z1+0.01]],0.008,shade(col,-0.35),'paint',4);
+    if(o.flutes)[-1,1].forEach(sd=>tube([[sd*w0*0.8,yt0-0.035,z0-0.02],[sd*w1*0.8,yt1-0.035,z1+0.02]],0.02,shade(col,-0.25),'paint',hi?5:3));
     if(o.louv){const nl=o.louv,zz0=z0-0.12,zz1=z1+0.12;[-1,1].forEach(sd=>{for(let k=0;k<nl;k++){const t=(k+0.5)/nl,z=zz0+(zz1-zz0)*t,w=w0+(w1-w0)*((z0-z)/(z0-z1)),yt=yt0+(yt1-yt0)*((z0-z)/(z0-z1)),yA=yb+0.08,yB=yt-r-0.06;
       if(yB>yA)tube([[sd*(w+0.006),yA,z],[sd*(w+0.006),yB,z]],0.009,shade(col,-0.5),'paint',3);}});}
     if(o.straps)[-1,1].forEach(sd=>{const z=z0+(z1-z0)*(sd<0?0.3:0.65),w=w0+(w1-w0)*(sd<0?0.3:0.65),yt=yt0+(yt1-yt0)*(sd<0?0.3:0.65);tube([[-w-0.01,yb+0.1,z],[-w-0.01,yt-0.06,z],[-w+0.1,yt+0.012,z],[w-0.1,yt+0.012,z],[w+0.01,yt-0.06,z],[w+0.01,yb+0.1,z]],0.012,'#3a2a1c','leather',3);});
@@ -279,37 +306,58 @@ function carModel(S){
     sideLamp(-0.56,yb+0.35,0.62);sideLamp(0.56,yb+0.35,0.62);drvF(0.24,yb+0.4,-0.2,0.38);if(S.mech)mechF(-0.24,yb+0.4,-0.2);eyeAt(0.24,yb+0.4,-0.2);
     tailLamp(0.4,yb+0.2,zb0-0.02);len=[zb0-0.1,zb1+0.15];track=t;}
   else if(st==='gp1901'||st==='gp1907'){
-    const late=st==='gp1907',wb=late?2.7:2.45,t=1.4,r=late?0.44:0.45,yf=r+0.14;chassis(wb,t,r,r,late?0.1:0.09,{yf,zEng0:0.1,zEng1:wb/2});
-    const zr=wb/2+0.2,zd=0.12,yt=late?1.05:1.15;radiator(zr,0.36,yf-0.02,yt+0.02,'honey',{});hood(zr-0.04,zd,0.37,0.4,yf,yt,yt,{louv:hi?7:0,r:0.08});
+    const V=mqLook(S),late=st==='gp1907',wb=late?2.7:2.45,t=1.4,r=late?0.44:0.45,yf=r+0.14;chassis(wb,t,r,r,late?0.1:0.09,{yf,zEng0:0.1,zEng1:wb/2});
+    const zr=wb/2+0.2,zd=0.12,yt=yf+((late?1.05:1.15)-yf)*V.hood,rk=V.rad||'honey';
+    if(rk==='dash'){// Рено, Клеман-Байяр: капот «совком» к земле, радиаторы по бокам у щитка
+      hood(zr+0.04,zd,0.33,0.4,yf,yf+0.3,yt,{r:0.14,cap:true,louv:0});
+      [-1,1].forEach(sd=>{const x0=sd*0.41,x1=sd*0.53;mRBox(M,Math.min(x0,x1),yf-0.02,zd-0.12,Math.max(x0,x1),yt,zd+0.12,0.02,'#26261f','matte');
+        tube([[x1,yf-0.02,zd+0.13],[x1,yt,zd+0.13],[x1,yt,zd-0.13],[x1,yf-0.02,zd-0.13]],0.02,K.bright,K.brightMat,4);});}
+    else{radiator(zr,0.36,yf-0.02,yt+0.02,rk,{});hood(zr-0.04,zd,0.37,0.4,yf,yt,yt,{louv:hi?(V.louv===null?7:V.louv):0,r:0.08,straps:V.straps&&hi,flutes:V.flutes});}
     mRBox(M,-0.44,yf-0.02,zd-0.05,0.44,yt+0.02,zd+0.05,0.02,'#3a2a1c','wood');
-    [-1,1].forEach(sd=>plate([sd*(0.4+0.008),(yf+yt)/2+0.03,(zr+zd)/2],[sd,0,0],[0,0,sd],0.3,0.26,true));plate([0,yf+0.25,-1.47],[0,0,-1],[1,0,0],0.26,0.2);
-    const zs=-0.3;seat(0.24,zs,yf+0.28,0.2,0.4,0.36,{bucket:true});seat(-0.24,zs,yf+0.28,0.2,0.4,0.36,{bucket:true});
+    [-1,1].forEach(sd=>plate([sd*(0.4+0.008),(yf+yt)/2+0.03,(zr+zd)/2],[sd,0,0],[0,0,sd],0.3,0.26,true));
+    const zs=-0.3;seat(0.24,zs,yf+0.28,0.2,0.4,0.36,{bucket:true});if(!V.solo)seat(-0.24,zs,yf+0.28,0.2,0.4,0.36,{bucket:true});
     tube([[-0.45,yf+0.02,-0.1],[0.45,yf+0.02,-0.1]],0.03,K.chassis);
-    mLathe(M,[0,yf+0.3,-1.05],'x',[[0,-0.42],[0.2,-0.42],[0.24,-0.38],[0.24,0.38],[0.2,0.42],[0,0.42]],hi?14:8,late?K.bright:col,late?K.brightMat:'paint');
-    if(late){[-0.22,0.22].forEach(x=>spare(x,yf+0.35,-1.38,r,0.1,'z'));}else spare(0,yf+0.32,-1.42,r,0.09,'z');
+    // бак: поперечный цилиндр, продольная «торпеда» или ящик; за ним — запаски стопкой (сзади видна одна, с номером)
+    const tc=late?K.bright:col,tm=late?K.brightMat:'paint';let zBack=-1.29;
+    if(V.tank==='xcyl')mLathe(M,[0,yf+0.3,-1.05],'x',[[0,-0.42],[0.2,-0.42],[0.24,-0.38],[0.24,0.38],[0.2,0.42],[0,0.42]],hi?14:8,tc,tm);
+    else if(V.tank==='zcyl'){mLathe(M,[0,yf+0.33,-1.12],'z',[[0,-0.36],[0.15,-0.35],[0.22,-0.3],[0.23,0.26],[0.19,0.33],[0,0.35]],hi?14:8,tc,tm);zBack=-1.48;}
+    else if(V.tank==='box'){mRBox(M,-0.38,yf+0.06,-1.32,0.38,yf+0.5,-0.8,0.07,col,'paint');zBack=-1.32;}
+    const nSp=V.spare,sy=yf+0.36,sz0=zBack-0.08;for(let k=0;k<nSp;k++)spare(0,sy,sz0-k*0.12,r,0.1,'z');
+    if(nSp)plate([0,sy,sz0-(nSp-1)*0.12-0.058],[0,0,-1],[1,0,0],0.3,0.3,true);else plate([0,yf+0.3,zBack-0.012],[0,0,-1],[1,0,0],0.26,0.2);
     // цепная передача: звёздочки и цепи к задним колёсам
-    if(!late&&hi)[-1,1].forEach(sd=>{const x=sd*0.52;mLathe(M,[x,r,-wb/2],'x',[[0.13,-0.01],[0.13,0.01]],12,'#3a3a3e','metal');tube([[x,r+0.13,-wb/2],[x,yf-0.02,-0.25],[x,yf-0.18,-0.25],[x,r-0.13,-wb/2]],0.012,'#2a2a2e','metal',3);});
-    steer(0.24,yt+0.1,0.02,0.19,0.8);drvF(0.24,yf+0.3,zs,0.0,yt+0.1);if(S.mech)mechF(-0.24,yf+0.3,zs);eyeAt(0.24,yf+0.3,zs);
-    mTube(M,[[0.52,yf-0.05,0.3],[0.55,yf-0.1,-0.5],[0.56,yf-0.15,-1.3]],0.035,hi?6:4,'#4a4a4e','metal');tailLamp(0.36,yf+0.1,-1.3);len=[late?-1.6:-1.55,zr+0.12];track=t;
-    if(S.acc){tube([[0,yt+0.012,zd],[0,yt+0.012,zr-0.05]],0.04,S.acc,'paint',4);}}
+    if((!late||V.chain)&&hi)[-1,1].forEach(sd=>{const x=sd*0.52;mLathe(M,[x,r,-wb/2],'x',[[0.13,-0.01],[0.13,0.01]],12,'#3a3a3e','metal');tube([[x,r+0.13,-wb/2],[x,yf-0.02,-0.25],[x,yf-0.18,-0.25],[x,r-0.13,-wb/2]],0.012,'#2a2a2e','metal',3);});
+    steer(0.24,yt+0.1,0.02,0.19,0.8);drvF(0.24,yf+0.3,zs,0.0,yt+0.1);if(S.mech&&!V.solo)mechF(-0.24,yf+0.3,zs);eyeAt(0.24,yf+0.3,zs);
+    const ex=V.exh;mTube(M,[[ex*0.52,yf-0.05,0.3],[ex*0.55,yf-0.1,-0.5],[ex*0.56,yf-0.15,-1.3]],0.035,hi?6:4,'#4a4a4e','metal');tailLamp(-ex*0.36,yf+0.1,-1.3);len=[Math.min(late?-1.6:-1.55,sz0-nSp*0.12-0.1),zr+0.12];track=t;
+    if(S.acc){tube([[0,yt+0.012,zd],[0,(rk==='dash'?yf+0.3:yt)+0.012,zr-0.05]],0.04,S.acc,'paint',4);}}
   else if(st==='gp1912'||st==='gp1925'){
-    const late=st==='gp1925',wb=late?2.4:2.65,t=late?1.25:1.35,r=late?0.36:0.41,yf=r+(late?0.0:0.06),tw=late?0.13:0.11;chassis(wb,t,r,r,tw,{yf,fw:0.3,zEng0:0.2,zEng1:wb/2});
+    const V=mqLook(S),late=st==='gp1925',wb=late?2.4:2.65,t=late?1.25:1.35,r=late?0.36:0.41,yf=r+(late?0.0:0.06),tw=late?0.13:0.11;chassis(wb,t,r,r,tw,{yf,fw:0.3,zEng0:0.2,zEng1:wb/2});
     const zr=wb/2+0.14,top=late?0.92:1.02,w=late?0.26:0.3,yb=late?r-0.05:yf-0.02;
-    radiator(zr,w,yb+0.06,top,late&&S.acc!=='#1F4E9C'?'vert':late?'round':'vert',{});
-    // обтекаемый корпус: капот, кокпит, заострённый хвост
-    const P=(z,ww,yy,rr)=>({z,p:rsec(ww,ww*0.95,yb,yy,0.05,rr,n,'o')});
-    const body=[P(zr-0.02,w,top,0.1),P(0.5,w+0.03,top+0.01,0.12),P(0.05,w+0.1,top-0.02,0.12),P(-0.4,w+0.12,top-0.04,0.14),P(-0.9,w+0.06,top-0.08,0.14),P(-1.3,w*0.5,top-0.16,0.1),P(-1.58,0.04,yb+0.3,0.02)];
-    mLoft2(M,body,col,'paint',{wrap:true});mCap(M,body[0],col,'paint',1);
+    radiator(zr,w,yb+0.06,top,V.rad&&V.rad!=='dash'&&V.rad!=='coil'?V.rad:late&&S.acc!=='#1F4E9C'?'vert':late?'round':'vert',{});
+    // обтекаемый корпус: капот, кокпит и хвост по марке — острый, округлый с запасками, «лодочкой» вверх или длинный (Мармон «Оса»)
+    const P=(z,ww,yy,rr)=>({z,p:rsec(ww,ww*0.95,yb,yy,0.05,rr,n,'o')}),tl=V.tail;
+    const body=[P(zr-0.02,w,top,0.1),P(0.5,w+0.03,top+0.01,0.12),P(0.05,w+0.1,top-0.02,0.12),P(-0.4,w+0.12,top-0.04,0.14)];
+    let zt=-1.58;
+    if(tl==='round'){body.push(P(-0.95,w+0.1,top-0.06,0.16),P(-1.18,w+0.02,top-0.1,0.2),P(-1.26,w*0.72,top-0.16,0.14));zt=-1.26;}
+    else if(tl==='boat')body.push(P(-0.9,w+0.07,top-0.05,0.14),P(-1.3,w*0.55,top-0.06,0.1),P(-1.62,0.05,top-0.1,0.02));
+    else if(tl==='long'){body.push(P(-0.9,w+0.08,top-0.06,0.14),P(-1.5,w*0.62,top-0.1,0.12),P(-2.05,w*0.3,top-0.2,0.08),P(-2.35,0.03,yb+0.35,0.02));zt=-2.35;}
+    else body.push(P(-0.9,w+0.06,top-0.08,0.14),P(-1.3,w*0.5,top-0.16,0.1),P(-1.58,0.04,yb+0.3,0.02));
+    mLoft2(M,body,col,'paint',{wrap:true});mCap(M,body[0],col,'paint',1);if(tl==='round')mCap(M,body[body.length-1],col,'paint',-1);
     // вырез кокпита — тёмная ниша, кант, сиденье
-    const solo=late||!S.mech,sx=solo?0.1:0.18,zc0=0.02,zc1=-0.72;
+    const solo=late||!S.mech||V.solo,sx=solo?0.1:0.18,zc0=0.02,zc1=-0.72;
     mFace(M,[[-(w+0.06),top+0.012,zc0],[w+0.06,top+0.012,zc0],[w+0.08,top-0.02,zc1],[-(w+0.08),top-0.02,zc1]],'#1a1512','leather',[0,0,-0.35]);
     tube([[-(w+0.06),top+0.02,zc0],[w+0.06,top+0.02,zc0],[w+0.08,top-0.01,zc1],[-(w+0.08),top-0.01,zc1],[-(w+0.06),top+0.02,zc0]],0.018,K.leather,'leather',4);
     if(late)mFace(M,[[-0.12,top+0.02,zc0+0.02],[0.12,top+0.02,zc0+0.02],[0.1,top+0.14,zc0-0.03],[-0.1,top+0.14,zc0-0.03]],K.glass,'glass',[0,top,zc0-1],true);
+    // обтекатель-«горб» за головой пилота
+    if(V.hump)mLoft2(M,[{z:zc1,dx:sx,p:rsec(0.13,0.1,top-0.04,top+0.22,0.02,0.1,n,'n')},{z:zc1-0.35,dx:sx,p:rsec(0.1,0.07,top-0.06,top+0.12,0.02,0.07,n,'n')},{z:zc1-0.7,dx:sx,p:rsec(0.04,0.03,top-0.08,top-0.02,0.01,0.02,n,'n')}],col,'paint');
     steer(sx,top+0.13,0.1,0.19,0.95);drvF(sx,yb+0.28,-0.22,0.08,top+0.13);if(!solo)mechF(-sx,yb+0.28,-0.22);eyeAt(sx,yb+0.28,-0.22);
-    mTube(M,[[w+0.1,yb+0.12,0.6],[w+0.16,yb+0.1,-0.2],[w+0.17,yb+0.08,-1.1]],0.04,hi?6:4,'#9ea3aa','chrome');
-    if(!late)spare(0,top-0.02,-1.25,r,0.1,'z');
+    const ex=V.exh;mTube(M,[[ex*(w+0.1),yb+0.12,0.6],[ex*(w+0.16),yb+0.1,-0.2],[ex*(w+0.17),yb+0.08,-1.1]],0.04,hi?6:4,'#9ea3aa','chrome');
+    // запаски: в нише острого хвоста — одна; за округлым хвостом — две стопкой с номером
+    let lz=Math.max(zt+0.06,-1.52),lx=-ex*0.12,ly=yb+0.2;
+    if(!late&&tl==='round'){for(let k=0;k<2;k++)spare(0,yb+r+0.02,zt-0.1-k*0.12,r,0.1,'z');plate([0,yb+r+0.02,zt-0.1-0.12-0.058],[0,0,-1],[1,0,0],0.3,0.3,true);lx=-ex*0.22;ly=yb+0.02;lz=zt-0.02;zt-=0.4;}
+    else if(!late&&tl!=='long')spare(0,top-0.02,-1.25,r,0.1,'z');
+    if(tl==='long'&&hi){tube([[sx,top+0.1,-0.1],[sx+0.12,top+0.42,0.05]],0.01,'#8a8f96','chrome',4);mFace(M,[[sx+0.04,top+0.38,0.07],[sx+0.2,top+0.38,0.03],[sx+0.2,top+0.48,0.03],[sx+0.04,top+0.48,0.07]],'#d8dde2','chrome',[sx,top+0.43,-1],true);}
     [-1,1].forEach(sd=>plate([sd*(w+0.105),(yb+top)/2+0.02,-0.95],[sd,0,0],[0,0,sd],0.3,0.3,true));
-    tailLamp(0.12,yb+0.2,-1.52);len=[-1.62,zr+0.1];track=t;
+    tailLamp(lx,ly,lz);len=[Math.min(-1.62,zt-0.04),zr+0.1];track=t;
     if(S.acc)tube([[0,top+0.014,0.06],[0,top+0.014,zr-0.04]],0.035,S.acc,'paint',4);
     if(S.num&&hi){const f=mFace(M,[[-0.2,top-0.1,-1.02],[0.2,top-0.1,-1.02],[0.2,top-0.1,-0.72],[-0.2,top-0.1,-0.72]],col,'paint',[0,0,0]);}}
   else if(st==='van'||st==='truck'){

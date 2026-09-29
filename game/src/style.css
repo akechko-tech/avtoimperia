@@ -380,6 +380,9 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .mcard .card-h .pill{flex:none;font-size:10px;padding:2px 6px}
 @media (max-width:420px){.mcard .card-h .pill{display:none}}
 .ptab td small{color:var(--muted);font-size:11px}
+.pfc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;background:rgba(0,0,0,.14);border-radius:10px;padding:8px 10px}
+.pfc>div{font-size:11px;color:var(--muted);line-height:1.25}.pfc b{display:block;font-size:14px;color:var(--text);font-variant-numeric:tabular-nums;margin-top:2px}.pfc b small{font-size:11px;font-weight:600}
+.offlist .card{box-shadow:none;margin:8px 0 0}
 .ptab tr.you td{color:var(--text)}
 .plan-row h3 small.num{font-size:11px;font-weight:500}
 .mt small+small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -403,3 +406,30 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .fuelbar{position:relative;overflow:visible}
 #bFuelNeed{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);display:none}
 #rReset{z-index:5;box-shadow:0 4px 18px rgba(0,0,0,.45)}
+
+/* марки конкурентов: строка — кнопка с историей */
+button.comp{width:100%;background:none;border:0;border-bottom:1px solid var(--line-soft);color:inherit;font:inherit;text-align:left;padding:6px 0;cursor:pointer;border-radius:0}
+button.comp:active{background:rgba(255,255,255,.05)}
+.comp img.thumb.stu{object-fit:contain;background:rgba(255,255,255,.04)}
+.brand h2{margin-top:2px}.brand .photo img{width:100%;border-radius:10px}.blist{margin:6px 0 0;padding-left:0;list-style:none}.blist li{padding:3px 0;border-bottom:1px solid var(--line)}.blist .num{display:inline-block;min-width:44px;color:var(--brass)}
+.nw{white-space:nowrap}
+
+/* газета: «Также в номере» — несколько заметок, каждую можно открыть; листание архива */
+.p-side.p-alsos{display:block}
+.p-also-h{margin-bottom:4px}
+button.p-also{width:100%;background:none;border:0;border-top:1px dotted rgba(40,30,20,.45);padding:6px 0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+button.p-also:first-of-type{border-top:0}
+button.p-also span{font-size:13px;line-height:1.3}
+button.p-also i{display:block;font-style:italic;font-size:11px;opacity:.7;margin-top:2px}
+.p-mkt{border-top:1px solid var(--ink);margin-top:6px;padding-top:6px}
+.p-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;font-size:12px}
+.p-nav .p-btn{flex:none;padding:6px 10px;min-width:0}
+.p-nav .p-btn[disabled]{opacity:.35}
+
+/* фотоальбом модели */
+.cgal{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.cgal-b{background:rgba(255,255,255,.04);border:1px solid var(--line-soft);border-radius:8px;padding:4px 2px 2px;color:var(--muted);font:inherit;cursor:pointer;min-width:0}
+.cgal-b.on{border-color:var(--brass);color:var(--text)}
+.cgal-b small{display:block;font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cgal-i{width:100%;height:46px;object-fit:contain;display:block}
+.sheet .cgal{grid-template-columns:repeat(5,1fr)}

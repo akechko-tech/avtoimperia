@@ -26,7 +26,7 @@ const ACT={
   loan:d=>{const n=+d.n;if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
   repay:d=>{const n=Math.min(+d.n,G.loan);if(n>0&&G.cash>=n){G.loan-=n;G.cash-=n;rerender();}},
   // модели
-  price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);md.price=Math.max(20,md.price+st*(+d.d));rerender();},
+  price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);if(md.pPrevM!==mi(G)){md.pPrev=md.price;md.pPrevM=mi(G);}md.price=Math.max(20,md.price+st*(+d.d));rerender();},
   planManual:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.plan==='auto'||md.plan===undefined)md.plan=autoPlan(md);rerender();},
   planAuto:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan='auto';rerender();},
   plan:d=>{const md=G.models.find(m=>m.id===+d.id),base=md.plan==='auto'||md.plan===undefined?autoPlan(md):+md.plan;md.plan=Math.max(0,base+(+d.d));rerender();},
@@ -59,6 +59,8 @@ const ACT={
   dealers:d=>{const n=Math.min(+d.n,dealerRoom(G,d.c));if(n<1||G.cash<n*dealerCost(G))return;buyDealers(G,d.c,n);checkAch();rerender();flushToasts();},
   impUp:d=>{if(impUp(G,d.c)){checkAch();save();rerender();flushToasts();}},
   dealerGrow:d=>{if(dealerGrow(G,d.c)){rerender();flushToasts();}},
+  carGal:d=>{const md=G.models.find(m=>m.id===+d.id);if(md)openSheet(carGalHTML(md,d.k));},
+  brand:d=>{const h=brandHTML(d.c,+d.i,G);if(h)openSheet(h);},
   drvBio:d=>{const dr=DRIVERS.find(x=>x.id===d.k);if(dr)openSheet(drvBioHTML(dr,G));},
   dealersCut:d=>{const was=dealerCount(G,d.c),n=Math.max(1,Math.round(was*0.2));G.dealers[d.c]=Math.max(d.c===G.country?1:0,was-n);rerender();},
   // окна
@@ -66,7 +68,9 @@ const ACT={
   choose:d=>{closeSheet();closePaper();resolve(d.k);},
   paperClose:()=>{closePaper();render();},
   paperChoose:()=>{closePaper();},
-  reopenPaper:d=>{const p=G.papers[+d.k];if(p)showPaper({...p,deck:p.deck+' · '+p.d,choices:[['Закрыть','close']],act:'paperClose',kicker:p.kicker||'Из архива'},false);},
+  reopenPaper:d=>{const k=+d.k,p=G.papers[k];if(p)showPaper({...p,deck:p.deck+' · '+p.d,choices:[['Закрыть','close']],act:'paperClose',kicker:p.kicker||'Из архива',arch:k},false);},
+  paperAlso:d=>{const h=flavorHTML(d.k);if(h){PW.innerHTML=h;PW.scrollTop=0;auSfx('paper',1);}},
+  paperBack:()=>{if(PAPER_CUR){PW.innerHTML=paperHTML(PAPER_CUR,G);PW.scrollTop=0;}},
   menu:()=>{stopAuto();openMenuSheet();},
   help:()=>openHelp(),
   settings:()=>openSettings(),
@@ -90,7 +94,8 @@ const ACT={
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
   audio:d=>{AU.on[d.k]=!AU.on[d.k];auApply();openSettings();},
   ctlTilt:d=>{AU.on.steer=d.v;AU.on.tilt=d.v==='tilt';auApply();openSettings();},
-  gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');}
+  gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');},
+  gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});

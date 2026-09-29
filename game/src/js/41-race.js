@@ -20,17 +20,23 @@ const TERR={
 };
 // Пейзаж по стране гонки
 const SCEN_SETS={
-  fr:{trees:['plane','poplar','oak'],alley:'plane',houses:['farm_fr','house_fr'],town:['house_fr','house_fr','cafe','house_fr'],extra:['km','hay','vine','bush','cart'],sky:['#6fa0cc','#ecdfc4'],hills:'#7f9a6a'},
-  it:{trees:['cypress','olive','pine','cypress'],alley:'cypress',houses:['house_it'],town:['house_it','house_it','house_it'],extra:['wall','olive','rock','cart','vine'],sky:['#4f8ccf','#f1e2c0'],hills:'#9c9a78',mount:1},
-  de:{trees:['fir','oak','birch','fir'],alley:'oak',houses:['fachwerk'],town:['fachwerk','fachwerk'],extra:['bush','hay','fence'],sky:['#6b94bd','#dfe3e2'],hills:'#5f7f55'},
-  uk:{trees:['oak','elm','oak'],alley:'oak',houses:['cottage','pub'],town:['cottage','pub','cottage'],extra:['hedge','wall','bush'],sky:['#7898b4','#dfe2e0'],hills:'#6f8d5c'},
-  us:{trees:['elm','oak'],alley:'elm',houses:['farm_us','barn'],town:['farm_us','billboard','farm_us'],extra:['fence','billboard','hay','pole'],sky:['#5f95c8','#e6ecef'],hills:'#8a9a6a',flat:1},
-  be:{trees:['fir','birch','oak'],alley:'poplar',houses:['house_fr','fachwerk'],town:['house_fr','cafe'],extra:['bush','fence'],sky:['#6f92b4','#dde2e0'],hills:'#5f7f55'},
-  mc:{trees:['palm','pine'],alley:'palm',houses:['villa'],town:['villa','villa','cafe'],extra:['lamp','bush'],sky:['#4f98d6','#f3ead8'],hills:'#8a8a6a',sea:1,mount:1},
-  at:{trees:['fir','fir','birch'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1},
-  ch:{trees:['fir','fir'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1},
-  es:{trees:['pine','olive','cypress'],alley:'pine',houses:['house_it'],town:['house_it','house_it'],extra:['wall','rock'],sky:['#4f98d6','#f3e6c8'],hills:'#a89a74',mount:1},
-  other:{trees:['birch','fir','birch'],alley:'birch',houses:['izba'],town:['izba','izba'],extra:['fence','cart'],sky:['#7a9cc0','#e2e4e0'],hills:'#6f8a5a',flat:1}
+  fr:{trees:['plane','poplar','oak'],alley:'plane',houses:['farm_fr','house_fr'],town:['house_fr','house_fr','cafe','house_fr'],church:'church',extra:['km','hay','vine','bush','cart'],sky:['#6fa0cc','#ecdfc4'],hills:'#7f9a6a',bd:'spire'},
+  it:{trees:['cypress','olive','pine','cypress'],alley:'cypress',houses:['house_it'],town:['house_it','house_it','house_it'],church:'campanile',extra:['wall','olive','rock','cart','vine','cactus','agave'],sky:['#4f8ccf','#f1e2c0'],hills:'#9c9a78',mount:1,bd:'campanile'},
+  de:{trees:['fir','oak','birch','fir'],alley:'oak',houses:['fachwerk'],town:['fachwerk','fachwerk'],church:'church',extra:['bush','hay','fence'],sky:['#6b94bd','#dfe3e2'],hills:'#5f7f55',bd:'spire'},
+  uk:{trees:['oak','elm','oak'],alley:'oak',houses:['cottage','pub'],town:['cottage','pub','cottage'],church:'church_uk',extra:['hedge','wall','bush'],sky:['#7898b4','#dfe2e0'],hills:'#6f8d5c',bd:'square'},
+  us:{trees:['elm','oak'],alley:'elm',houses:['farm_us','barn','windmill_us'],town:['farm_us','billboard','farm_us'],church:'church_us',extra:['fence','billboard','hay','pole','windmill_us'],sky:['#5f95c8','#e6ecef'],hills:'#8a9a6a',flat:1,bd:'barn'},
+  be:{trees:['fir','birch','oak'],alley:'poplar',houses:['house_fr','fachwerk'],town:['house_fr','cafe'],church:'church',extra:['bush','fence'],sky:['#6f92b4','#dde2e0'],hills:'#5f7f55',bd:'spire'},
+  mc:{trees:['palm','pine'],alley:'palm',houses:['villa'],town:['villa','villa','cafe'],church:'campanile',extra:['lamp','bush','agave'],sky:['#4f98d6','#f3ead8'],hills:'#8a8a6a',sea:1,mount:1,bd:'campanile'},
+  at:{trees:['fir','fir','birch'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],church:'church_at',extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1,bd:'onion_at'},
+  ch:{trees:['fir','fir'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],church:'church_at',extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1,bd:'onion_at'},
+  es:{trees:['pine','olive','cypress'],alley:'pine',houses:['house_it'],town:['house_it','house_it'],church:'campanile',extra:['wall','rock','agave'],sky:['#4f98d6','#f3e6c8'],hills:'#a89a74',mount:1,bd:'campanile'},
+  // Россия: берёзы и ели, избы, полосатые вёрсты, колодцы-журавли, стога, мельницы, белые церкви с луковицами
+  ru:{trees:['birch','birch','fir','pine','birch'],alley:'birch',houses:['izba','izba','mill_ru'],town:['izba','izba','izba'],church:'church_ru',extra:['well','stog','fence_ru','cart','stog','mill_ru'],sky:['#7a9cc0','#e6e6de'],hills:'#6f8a5a',flat:1,bd:'onion',verst:1},
+  // Ирландия: белёные домики под соломой, каменные изгороди, круглые башни
+  ie:{trees:['oak','elm','bush','oak'],alley:'elm',houses:['cottage_ie','cottage_ie','farm_fr'],town:['cottage_ie','pub','cottage_ie'],church:'church_uk',extra:['wall','hedge','bush','hay'],sky:['#7898b4','#dfe2e0'],hills:'#6f9a5c',bd:'square'},
+  // Северная Африка (Триполи): пальмы, белые дома с плоскими крышами, минареты
+  ly:{trees:['palm','palm','olive'],alley:'palm',houses:['house_ly'],town:['house_ly','house_ly','house_ly'],church:'minaret',extra:['wall','rock','cart','agave'],sky:['#5a9ad6','#f3e6c8'],hills:'#c8b07a',grass:'#b8aa78',dry:1,flat:1,bd:'minaret'},
+  other:{trees:['birch','fir','birch'],alley:'birch',houses:['izba'],town:['izba','izba'],church:'church',extra:['fence','cart'],sky:['#7a9cc0','#e2e4e0'],hills:'#6f8a5a',flat:1,bd:'spire'}
 };
 function trackCfg(rc){
   const early=rc.y<1910;
@@ -38,7 +44,8 @@ function trackCfg(rc){
   if(rc.t==='circuit')Object.assign(c,{closed:true,laps:2,len:1500,curvy:0.6,pits:true});
   if(rc.t==='endurance')Object.assign(c,{closed:true,laps:3,len:1400,curvy:0.45,pits:true,night:rc.id==='lemans'||rc.id==='spa24',town:false});
   if(rc.t==='hill')Object.assign(c,{len:1400,curvy:1,hilly:0.2,uphill:true,terr:'mount',town:false,crowd:0.2,width:7});
-  if(rc.t==='rally')Object.assign(c,{len:2600,curvy:0.55,hilly:0.6,stages:['snow','mud','dirt'],crowd:0.06});
+  // марафоны: зимой (Нью-Йорк — Париж, ралли Монте-Карло) — снег на первом этапе, в остальное время — грязь и пыль
+  if(rc.t==='rally')Object.assign(c,{len:2600,curvy:0.55,hilly:0.6,stages:rc.m<=1||rc.m===11?['snow','mud','dirt']:['dirt','mud','dirt'],crowd:0.06});
   if(rc.t==='oval')Object.assign(c,{closed:true,laps:3,len:1250,oval:true,pits:true,town:false,crowd:0.6,width:14,terr:rc.y<1920?'concrete':'asphalt'});
   if(rc.t==='sprint')Object.assign(c,{len:1100,sprint:true,town:false,crowd:0.5,terr:'beach',width:16});
   if(rc.track==='indy')c.terr='brick';
@@ -76,17 +83,34 @@ function buildTrack(rc,vref){
     let x=0,y=0,z=0,h=0,slope=0;const push=()=>pts.push([x,y,z]);push();
     const straight=len=>{for(let d=0;d<len;d+=STEP){x+=Math.sin(h)*STEP;z+=Math.cos(h)*STEP;y+=slope*STEP;push();}};
     const arc=(R,ang)=>{const n=Math.max(2,Math.round(Math.abs(ang)*R/STEP)),da=ang/n;for(let i=0;i<n;i++){h+=da;x+=Math.sin(h)*STEP;z+=Math.cos(h)*STEP;y+=slope*STEP;push();}};
-    straight(120);
-    while(pts.length*STEP<cfg.len-160){
-      slope=cfg.uphill?0.06+rnd()*0.05:(rnd()*2-1)*0.05*cfg.hilly;
-      if(cfg.sprint){straight(200);continue;}
+    // дорога не должна пересекать себя и подходить к своему же участку ближе, чем позволяет склон между ними
+    // (иначе земля верхней петли накрывает нижнюю — дороги не видно); ножки одной шпильки — можно
+    const gap=cfg.width+26,clash=s0=>{const n0=pts.length,lim=n0-31;if(lim<=0)return null;const C=40,Gd=new Map();
+      for(let j=0;j<lim;j++){const q=pts[j],k=Math.floor(q[0]/C)*100003+Math.floor(q[2]/C);let L=Gd.get(k);if(!L)Gd.set(k,L=[]);L.push(j);}
+      for(let i=Math.max(s0,31);i<n0;i++){const p=pts[i],cx=Math.floor(p[0]/C),cz=Math.floor(p[2]/C);
+        for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++){const L=Gd.get((cx+a)*100003+cz+b);if(!L)continue;
+          for(const j of L){if(j>=i-30)continue;const q=pts[j],dx=p[0]-q[0],dz=p[2]-q[2],g=gap+0.5*Math.min(60,Math.abs(p[1]-q[1]));if(dx*dx+dz*dz<g*g)return q;}}}
+      return null;};
+    const seg=()=>{slope=cfg.uphill?0.06+rnd()*0.05:(rnd()*2-1)*0.05*cfg.hilly;
+      if(cfg.sprint){straight(200);return;}
       const r=rnd(),dir=rnd()<0.5?-1:1;
       if(r<0.35-cfg.curvy*0.2)straight(40+rnd()*160);
       else if(r<0.35+cfg.curvy*0.25){arc(12+rnd()*18,dir*(1.6+rnd()*1.3));straight(20+rnd()*30);}
       else arc(40+rnd()*160,dir*(0.4+rnd()*1.1));
-      if(Math.abs(h)>1.75){arc(60,-Math.sign(h)*0.9);}
-    }
-    slope=cfg.uphill?0.03:0;straight(200);
+      if(Math.abs(h)>1.75){arc(60,-Math.sign(h)*0.9);}};
+    straight(120);
+    // участок упёрся в старую дорогу — 8 попыток по-другому, потом шаг назад (отменить прошлый участок)
+    const stack=[];let budget=160;
+    for(;;){const sv=[x,y,z,h,pts.length];let ok=false;
+      if(pts.length*STEP>=cfg.len-160){// финишная прямая (можно с поворотом перед ней)
+        for(const a of [0,0.5,-0.5,1,-1]){[x,y,z,h]=sv;pts.length=sv[4];slope=cfg.uphill?0.03:0;if(a)arc(70,a);straight(a?160:200);if(!clash(sv[4])){ok=true;break;}}
+        if(ok||budget--<=0||!stack.length)break;
+      }else{
+        for(let tr=0;tr<8;tr++){if(tr){[x,y,z,h]=sv;pts.length=sv[4];}seg();if(!clash(sv[4])){ok=true;break;}}
+        if(ok){stack.push(sv);continue;}
+        if(budget--<=0||!stack.length){stack.push(sv);continue;}
+      }
+      const pv=stack.pop();[x,y,z,h]=pv;pts.length=pv[4];}
   }
   const n=pts.length,closed=cfg.closed,T=[],N=[],K=[];
   for(let i=0;i<n;i++){const a=pts[closed?(i-1+n)%n:Math.max(0,i-1)],b=pts[closed?(i+1)%n:Math.min(n-1,i+1)];let tx=b[0]-a[0],tz=b[2]-a[2];const l=Math.hypot(tx,tz)||1;T.push([tx/l,tz/l]);N.push([-tz/l,tx/l]);}
@@ -108,8 +132,9 @@ function nearTrack(trk,x,z,rad,skip){const cx=Math.floor(x/30),cz=Math.floor(z/3
 // Твёрдые предметы: круг (r) или прямоугольник [вдоль дороги, поперёк, сдвиг вдоль, сдвиг к дороге] — как у 3D-моделей
 const SOLID={plane:{r:0.5},oak:{r:0.6},elm:{r:0.5},poplar:{r:0.32},cypress:{r:0.3},olive:{r:0.45},pine:{r:0.35},fir:{r:0.35},birch:{r:0.25},palm:{r:0.32},
   bush:{r:1.0},rock:{r:1.6},hay:{r:1.8},dune:{r:3.4},cliff:{box:[6.5,2.2]},fence:{box:[5,0.12]},wall:{box:[5,0.35]},hedge:{box:[5.8,0.8]},vine:{box:[5.5,0.5]},
-  pole:{r:0.16},km:{r:0.3},sign:{r:0.14},lamp:{r:0.16},cart:{box:[2.8,0.95,-0.35]},billboard:{box:[4,0.25]},
-  house_fr:{box:[4.5,3.5]},farm_fr:{box:[5.5,3.25]},house_it:{box:[4,3.5]},fachwerk:{box:[4,3.5]},cottage:{box:[4,3]},pub:{box:[4,3.1]},farm_us:{box:[5,4.5,0,1]},barn:{box:[6,4]},izba:{box:[3.5,3]},
+  pole:{r:0.16},km:{r:0.3},sign:{r:0.14},lamp:{r:0.16},cart:{box:[2.8,0.95,-0.35]},billboard:{box:[4,0.25]},verst:{r:0.2},well:{r:0.8},stog:{r:1.7},fence_ru:{box:[5,0.12]},cactus:{r:0.9},agave:{r:0.7},
+  house_fr:{box:[4.5,3.5]},farm_fr:{box:[5.5,3.25]},house_it:{box:[4,3.5]},fachwerk:{box:[4,3.5]},cottage:{box:[4,3]},pub:{box:[4,3.1]},farm_us:{box:[5,4.5,0,1]},barn:{box:[6,4]},izba:{box:[3.9,4.05,0,0.75]},
+  church_ru:{box:[12.4,4.6,-4,0.2]},mill_ru:{box:[2.2,2]},campanile:{box:[2.9,2.9]},church_us:{box:[9,4.4,-0.6]},church_uk:{box:[10.2,4.4,-0.8]},church_at:{box:[10.2,4.4,-0.8]},minaret:{box:[5.5,6.3,0,4.2]},house_ly:{box:[4.5,3.5]},cottage_ie:{box:[4.5,3.2]},windmill_us:{box:[2,3,0,-0.6]},
   villa:{box:[6,4]},cafe:{box:[4.5,4.45,0,0.95]},church:{box:[9.4,4,-1.7]},pits:{box:[7.5,2.5]},stand:{box:[8,3.4]},crowd:{box:[2.8,0.6,0,-0.45]},marsh:{r:0.3},gend:{r:0.3},photo:{r:0.6}};
 // Препятствие у дороги: форма по типу, оси прямоугольника — вдоль дороги и к ней (как повёрнута 3D-модель)
 function solidAt(trk,t,i,off){const S=SOLID[t];if(!S)return null;const p=trk.pts[i],nn=trk.N[i],tt=trk.T[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;
@@ -119,10 +144,35 @@ function solidAt(trk,t,i,off){const S=SOLID[t];if(!S)return null;const p=trk.pts
 function solidClear(trk,o){const W=trk.W,m=W/2+0.6;if(!o.box)return !nearTrack(trk,o.x,o.z,m+o.r);const b=o.box;
   for(const [a,c] of [[1,1],[1,-1],[-1,1],[-1,-1],[0,0],[1,0],[-1,0]]){const x=o.x+b.ux*b.hu*a+b.vx*b.hv*c,z=o.z+b.uz*b.hu*a+b.vz*b.hv*c;if(nearTrack(trk,x,z,m))return false;}return true;}
 function addCollider(trk,x,z,r,kind,i,o){o=o||{x,z,r,kind};trk.col.push(o);if(!trk.segCol)trk.segCol=[];const n=trk.n,sp=Math.ceil((o.r||r)/trk.step)+2;for(let k=-sp;k<=sp;k++){const j=trk.closed?((i+k)%n+n)%n:i+k;if(j<0||j>=n)continue;(trk.segCol[j]=trk.segCol[j]||[]).push(o);}}
+// Приметы знаменитых мест: модель, привязка (start, finish или доля трассы), вперёд по трассе (м), вбок от края дороги (м, + влево; 0 — поперёк дороги), с какого года
+const LANDMARKS={
+  pbp:[['eiffel','start',760,-95]],pmp:[['eiffel','start',740,90]],pap:[['eiffel','start',780,-100]],tdf:[['eiffel','start',740,95]],gb1900:[['eiffel','start',760,-90]],pb1901:[['eiffel','start',740,95]],pv1902:[['eiffel','start',770,-95]],
+  brighton:[['bigben','start',300,-38]],thousand:[['bigben','start',310,40]],
+  x87575:[['gate_spb','start',60,0],['kremlin','finish',110,-60]],x80901:[['kremlin','start',200,-60],['gate_spb','finish',-50,0]],
+  x17567:[['church_ru',0.35,0,-60],['mill_ru',0.6,0,35]],x2844:[['church_ru',0.3,0,60]],peking:[['church_ru',0.5,0,-70]],
+  turbie:[['trophy','finish',60,-45]],ventoux:[['observatory','finish',40,-24]],semmering:[['viaduct',0.4,0,-150]],
+  gb1904:[['castle',0.3,0,-170]],kaiser:[['castle',0.45,0,180]],herkomer:[['castle',0.6,0,-190]],henry:[['castle',0.35,0,200]],nurb1927:[['castle',0.2,0,-160]],eifel:[['castle',0.2,0,-160]],degp:[['castle',0.2,0,-160]],
+  indy:[['pagoda','start',40,24,1913]],avus1926:[['funkturm','start',560,-90]],monaco:[['casino','finish',70,16]],
+  x22765:[['obelisk',0.35,0,-110]],gb1903:[['round_tower',0.4,0,-80],['round_tower',0.8,0,95]],x38768:[['minaret','start',130,-24]]};
+// Размер пятна примет (м): тут не ставятся деревья и дома
+const LM_R={eiffel:72,bigben:12,gate_spb:20,kremlin:40,church_ru:16,mill_ru:7,trophy:16,observatory:14,viaduct:72,castle:22,pagoda:11,funkturm:13,obelisk:15,round_tower:5,minaret:12,casino:24};
+// Место приметы: поперёк дороги — в точке трассы; остальные — от привязки по прямой вперёд и вбок (видны со старта), фасадом к дороге
+function landmarksOf(trk){const L=LANDMARKS[trk.rc.id]||[],n=trk.n,P=trk.pts,out=[];
+  L.forEach(([t,at,fw,off,y0])=>{if(y0&&trk.rc.y<y0)return;const a0=at==='start'?trk.startIdx:at==='finish'?trk.finishIdx:Math.round(at*(n-1)),wrap=i=>trk.closed?((i%n)+n)%n:clamp(i,2,n-3);
+    if(!off){const i=wrap(a0+Math.round(fw/trk.step)),p=P[i];out.push({t,i,off:0,x:p[0],z:p[2],r:LM_R[t]||12});return;}
+    const a=wrap(a0),p=P[a],tt=trk.T[a],nn=trk.N[a],R=LM_R[t]||12,need=R+trk.W/2+6;
+    // другая часть трассы рядом — пробуем по другую сторону, дальше или ближе вдоль
+    for(const [kf,ko] of [[1,1],[1,-1],[1,1.5],[1,-1.5],[0.7,1],[1.3,1],[0.7,-1],[1.3,-1],[1,2],[1,-2],[0.5,2.5],[0.5,-2.5]]){
+      const o=Math.sign(off)*ko*(trk.W/2+Math.abs(off)),x=p[0]+tt[0]*fw*kf+nn[0]*o,z=p[2]+tt[1]*fw*kf+nn[1]*o;
+      let bi=0,bd=1e18;for(let k=0;k<n;k++){const d=(P[k][0]-x)**2+(P[k][2]-z)**2;if(d<bd){bd=d;bi=k;}}
+      if(Math.sqrt(bd)<need)continue;const dx=P[bi][0]-x,dz=P[bi][2]-z;out.push({t,i:bi,off:Math.sqrt(bd)*Math.sign(o),x,z,rot:Math.atan2(-dz,dx),r:R,world:1});break;}});
+  return out;}
 // Декорации вдоль трассы: t — тип спрайта, off — смещение от оси (м, + влево), v — вариант
 function placeScenery(trk,rnd){
   const {n,W,cfg,pts,N}=trk,set=SCEN_SETS[cfg.host],spr=trk.spr;trk.town=new Uint8Array(n);for(let i=0;i<n;i++){spr.push([]);trk.bar.push(null);}
+  const LMs=trk.lm=landmarksOf(trk);
   const add=(i,t,off,v,kind,colR)=>{i=((i%n)+n)%n;const p=pts[i],nn=N[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;
+    if(LMs.length&&LMs.some(q=>Math.hypot(x-q.x,z-q.z)<q.r+2))return false;
     const o=solidAt(trk,t,i,off);if(o?!solidClear(trk,o):(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i)))return false;
     spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
@@ -135,7 +185,8 @@ function placeScenery(trk,rnd){
     if(town){
       trk.bar[i]={L:W/2+2.2,R:W/2+2.2};
       if(i%4===0){[-1,1].forEach(sd=>{const t=set.town[Math.floor(rnd()*set.town.length)];add(i,t,sd*(W/2+7+rnd()*1.5),Math.floor(rnd()*3),'s',3.5);});}
-      if(i%150===34)add(i,'church',-(W/2+9),0,'s',4);
+      if(i%150===34)add(i,set.church||'church',-(W/2+9),Math.floor(rnd()*3),'s',4);
+      if(set.verst&&i%150===20)add(i,rnd()<0.5?'well':'stog',(rnd()<0.5?-1:1)*(W/2+11),0,'s');
       if(i%6===2)add(i,'lamp',(i%12===2?1:-1)*(W/2+1.8),0,'s',0.25);
       if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+2.8),Math.floor(rnd()*4),'p');
       if(i%37===0)add(i,'gend',(rnd()<0.5?-1:1)*(W/2+2.2),0,'p');
@@ -148,6 +199,7 @@ function placeScenery(trk,rnd){
     if(i%47===11&&rnd()<0.7){const sd=rnd()<0.5?-1:1;add(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+14+rnd()*14),Math.floor(rnd()*3),'s',0);}
     if(i%31===5&&rnd()<0.6){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
     if(i%50===0&&set.extra.includes('km'))add(i,'km',-(W/2+1.3),0,'s',0.25);
+    if(set.verst&&i%60===7)add(i,'verst',-(W/2+1.5),0,'s');
     if(i%12===0&&tr!=='sand'&&!cfg.sprint)add(i,'pole',W/2+3,0,'s',0.3);
     if((tr==='mount'||cfg.uphill)&&i%10===0&&set.mount)add(i,'cliff',(i%20===0?1:-1)*(W/2+9),0,'s',0);
     // зрители, маршалы, фотографы — у поворотов и на старте
@@ -161,6 +213,10 @@ function placeScenery(trk,rnd){
   if(!cfg.closed){const si=Math.min(n-1,trk.startIdx+1);[1,-1].forEach(sd=>{const p=pts[si],nn=N[si];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',si);});}
   if(cfg.closed||cfg.crowd>0.3){[-9,-4,1].forEach(k=>{const i=((fi+k)%n+n)%n;spr[i].push({t:'stand',off:-(W/2+9),v:0,k:'s'});});for(let k=-8;k<=4;k+=2){const i=((fi+k)%n+n)%n;spr[i].push({t:'crowd',off:W/2+3.5,v:Math.abs(k)%4,k:'p'});}}
   if(cfg.pits){const pi=(n-18)%n;spr[pi].push({t:'pits',off:W/2+8,v:0,k:'s'});}
+  // приметы места: большие — вдали, без столкновений; ворота поперёк дороги — колонны твёрдые
+  LMs.forEach(q=>{spr[q.i].push(q.world?{t:q.t,off:q.off,v:0,k:'L',wx:q.x,wz:q.z,rot:q.rot}:{t:q.t,off:q.off,v:0,k:'L'});const p=pts[q.i],nn=N[q.i],tt=trk.T[q.i];
+    if(q.t==='gate_spb')[6.6,11,15.4].forEach(x=>[-1,1].forEach(sx=>[-2.3,2.3].forEach(zz=>addCollider(trk,p[0]+nn[0]*sx*x+tt[0]*zz,p[2]+nn[1]*sx*x+tt[1]*zz,1.05,'gate',q.i))));
+    else if(Math.abs(q.off)<70)addCollider(trk,q.x,q.z,Math.min(q.r*0.55,Math.abs(q.off)-W/2-1.5),q.t,q.i);});
 }
 /* ---------- машина в гонке ---------- */
 // Машина в гонке. Все поля заданы сразу в одном порядке: у всех машин одна «форма» объекта — расчёт быстрее
@@ -282,6 +338,9 @@ function carStep(c,trk,dt){
   // второй проход: удар разворачивает машину, и нос может задеть стену снова — выталкиваем ещё раз
   if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
   if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1);}}
+  // крутой склон горы — как стена: выше дороги по круче машина не въезжает, мягко скатывается назад
+  if(c.off&&typeof R3!=='undefined'&&R3.on&&R3.F&&R3.T===trk){const e=1.2,h0=fH(c.x,c.z),gx=(fH(c.x+e,c.z)-fH(c.x-e,c.z))/(2*e),gz=(fH(c.x,c.z+e)-fH(c.x,c.z-e))/(2*e),sl=Math.hypot(gx,gz);
+    if(sl>0.5&&h0>trk.pts[c.idx][1]+0.8){const ux=gx/sl,uz=gz/sl,k=Math.min(1,(sl-0.5)*2.5);c.x-=ux*0.04*k;c.z-=uz*0.04*k;wallHit(c,-ux,-uz,0.1,0.25);}}
 }
 // Машина — капсула вдоль курса (от заднего до переднего свеса), радиус — полширины
 const CAR_R=0.78;
@@ -423,7 +482,11 @@ function startRace(setup){
   const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);c.mech=c.st.mech;
     // ваша машина — такая же, как в конструкторе: её цвет и кузов; соперники — гоночные машины в цветах своих стран
     if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you?s.country:c.tc,num:c.num,mech:c.mech});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
-    else{c.style=carStyle(c.md,c.prep,rc.y);c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid;c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid};}
+    else{c.style=carStyle(c.md,c.prep,rc.y);let strip=0;
+      // облик по марке: «рейсэбауты» Мерсера и Стаца — как с завода; в 24-часовых гонках 1920-х — спортивные машины с крыльями и фарами (Бентли — туринг)
+      if(/^gp/.test(c.style)){if(['Mercer','Stutz'].includes(c.name)&&rc.y>=1911&&rc.y<1920){c.style='sport';strip=1;}else if(rc.t==='endurance'&&rc.y>=1920)c.style=c.name==='Bentley'?'tourer':'sport';}
+      c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name+strip;
+      c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3};}
     wearSetup(c,trk,rc);return c;});
   // стартовая решётка: быстрые и опытные впереди, немного случайности
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);

@@ -5,10 +5,28 @@ function flavorOf(s){const now=s.y*12+s.m,age=x=>now-(x[0]*12+x[1]),L=FLAVOR.fil
   if(!L.length){const past=FLAVOR.filter(x=>age(x)>=0);return past.length?past[past.length-1]:FLAVOR[0];}
   const fresh=L.filter(x=>age(x)<=2);return fresh.length?fresh[fresh.length-1]:L[mi(s)%L.length];}
 function flavorLine(s){return flavorOf(s)[2];}
+// «Также в номере» на выпуск: 2–3 заметки своего времени; свежие — первыми, остальные — те, что реже попадались (не повторяем одну и ту же)
+function flavorPick(s,y,m,n,seed,mark){const now=y*12+m,age=x=>now-(x[0]*12+x[1]),seen=s.flvSeen||(s.flvSeen={}),lim=mark?2:99;
+  // заметка попадает в газеты не больше двух раз; кончились свежие — «как это было» из прошлых лет (по разу), а нет и таких — место под рынок
+  let L=FLAVOR.filter(x=>{const a=age(x);return a>=0&&a<=(x[4]||18)&&(seen[x[2]]||0)<lim;});
+  if(!L.length)L=FLAVOR.filter(x=>{const a=age(x);return a>=12&&a<=72&&!(seen[x[2]]||0);}).slice(-6);
+  const r=mulberry32((seed||0)*7919+now*104729),sc=L.map(x=>{const n0=seen[x[2]]||0;return {x,k:(age(x)<=1&&!n0?-15:0)+n0*6+age(x)/6+r()*4};});sc.sort((a,b)=>a.k-b.k);
+  const out=sc.slice(0,n).map(o=>o.x[2]);if(mark)out.forEach(t=>seen[t]=(seen[t]||0)+1);return out;}
+const agoTxt=(f,y,m)=>{const a=Math.floor((y*12+m-(f[0]*12+f[1]))/12);return a<1?'':a===1?'Год назад: ':a<5?a+' года назад: ':a+' лет назад: ';};
+const flvByTitle=t=>FLAVOR.find(x=>x[2]===t);
+// Полная заметка «из того же номера»; назад — к выпуску
+function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[f[3]],txt=FLAVOR_TXT[t]||t,M=MAST[G.country];
+  return `<article class="paper">
+    <div class="p-top"><span>${MONTHS_N[f[1]]} ${f[0]}</span><span>Также в номере</span><span>${M[1]}</span></div>
+    <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
+    <h2 class="p-head">${esc(t)}</h2>
+    ${im?`<figure class="p-fig old" style="margin-inline:0"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
+    <div class="p-cols">${txt.split('\n').filter(Boolean).map((p,i)=>`<p class="${i===0&&!/^[\d«"]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>
+    <div class="p-btns"><button class="p-btn" data-act="paperBack">← К номеру</button></div></article>`;}
 function paperHTML(o,s){
   // своя машина — только в новостях о компании; в остальных — фото события или ничего
   const M=MAST[s.country],own=o.car||o.carId||o.own,md=o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
-  const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),F=flavorOf(s),fim=F[3]&&IMG[F[3]];
+  const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),py=o.y||s.y,pm=o.m===undefined?s.m:o.m,also=(o.also?o.also:flavorPick(s,py,pm,2,o.arch||0,false)).map(flvByTitle).filter(Boolean);
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
       :md?`<figure class="p-fig" style="margin-inline:0">${carArt(md,Object.assign({paper:1},o.carOpt||{}))}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>`:'';
   const hist=o.hist&&IMG[o.hist]?`<div class="p-hist"><img src="${IMG[o.hist].src}" alt="" referrerpolicy="no-referrer"><span>${esc(o.histCap||'Так было в истории')}</span></div>`:'';
@@ -18,15 +36,19 @@ function paperHTML(o,s){
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
     <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
     ${fig}
-    <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
-    <div class="p-side"><div class="p-also">${fim?`<img src="${fim.src}" alt="" referrerpolicy="no-referrer">`:''}<span><b>Также в номере</b>${esc(F[2])}</span></div><div><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
+    <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
+    <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
+      <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
+    ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
     <div class="p-btns">${(o.choices||[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
   </article>`;
 }
 const PW=document.getElementById('paperWrap');
+let PAPER_CUR=null;
 function showPaper(o,store=true){
-  if(store){G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||''});if(G.papers.length>40)G.papers.shift();save();}
-  PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
+  if(store){if(!o.also)o.also=flavorPick(G,G.y,G.m,2,G.papers.length+mi(G),true);
+    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also});if(G.papers.length>40)G.papers.shift();save();}
+  PAPER_CUR=o;PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}
 

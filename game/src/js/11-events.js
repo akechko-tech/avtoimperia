@@ -25,8 +25,17 @@ const RANDOM=[
   {w:1,good:1,title:'Заказ от почтового ведомства',text:'Почта закупает партию машин. В кассу поступила предоплата.',fx:s=>{s.cash+=Math.round(1200*cpi(s)*(1+T(s)*0.2)/100)*100;}},
   {w:1,cond:s=>s.models.some(m=>m.status==='prod'&&overpower(m)),title:'Скандал с поломками',text:'Покупатели жалуются: рама не выдерживает мотор. Репутация упала.',fx:s=>{s.rep=clamp(s.rep-8,0,100);}},
   {w:1,cond:s=>s.models.some(m=>m.stock>Math.max(20,m.fc*3)),title:'Склад переполнен',text:'Дилеры жалуются: машины стоят месяцами и выходят из моды. Остатки пришлось уценить на 15%.',fx:s=>{s.models.forEach(m=>{if(m.stock>Math.max(20,m.fc*3)){const loss=Math.round(m.stock*matCost(m,s)*0.15);s.cash-=loss;}});}},
-  {w:1,cond:s=>s.models.some(m=>(m.backlog||0)>Math.max(10,m.fc*0.5)),title:'Очереди у дилеров',text:'Покупатели месяцами ждут машину и уходят к конкурентам. Газеты пишут, что фирма не справляется с заказами.',fx:s=>{s.rep=clamp(s.rep-3,0,100);}}
+  // очереди — только когда выпуск и правда упёрся: в мощность завода, в рабочих, в склад или в ручной план (по цифрам прошлого месяца)
+  {w:1.4,cond:s=>!!queueCause(s),title:'Очереди у дилеров',text:s=>{const q=queueCause(s),m=q.md;
+    return `Покупатели ждут «${m.name}» неделями: в прошлом месяце хотели купить ≈ ${fmtD(m.lastWant||0)}, а получили ${fmtN(m.lastSold||0)} — ${fmtN(Math.round(m.queued||0))} ждут в очереди, остальные ушли к конкурентам. ${q.why}`;},fx:s=>{s.rep=clamp(s.rep-2,0,100);}}
 ];
+// Почему не хватило машин: завод на пределе, мало рабочих, склад мал, выпуск задан вручную (или спрос просто вырос — тогда «авто» догонит сам)
+function queueCause(s){const L=s.last;if(!L||!L.bneck)return null;const md=s.models.filter(m=>m.status==='prod'&&(m.backlog||0)>Math.max(10,(m.fc||0)*0.5)).sort((a,b)=>(b.backlog||0)-(a.backlog||0))[0];if(!md)return null;
+  const b=L.bneck;if(md.plan!=='auto'&&md.plan!==undefined&&+md.plan<(md.lastWant||0)*0.9)return {md,why:`Выпуск «${md.name}» задан вручную — ${fmtN(+md.plan)} в месяц. Прибавьте план или верните «авто» на вкладке «Модели».`};
+  if(b.cap<0.97)return {md,why:`Завод работает на пределе — загрузка ${pct(Math.min(1,b.load),0)}. Газеты пишут, что фирма не справляется: стройте цеха на вкладке «Завод».`};
+  if(b.lab<0.97)return {md,why:'Не хватает рабочих рук: наймите людей на вкладке «Завод» или включите автонайм.'};
+  if(b.wh)return {md,why:'Склад мал: завод не может делать машины впрок. Расширьте склад на вкладке «Завод».'};
+  return null;}
 function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
@@ -42,6 +51,9 @@ function checkEvents(){
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
+// Сила ответа словами (внутри — прибавка к привлекательности в логарифмах)
+function rvWord(v){return v<0.35?'слегка':v<0.8?'заметно':v<1.4?'сильно':'намного';}
+function rvBar(v){const n=v<0.15?0:v<0.35?1:v<0.8?2:v<1.4?3:4;return '▮'.repeat(n)+'▯'.repeat(4-n);}
 function topRivals(c,g,s,n){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v).slice(0,n||2).map(o=>o.cp);}
 // Что именно сделали конкуренты: прибавку их привлекательности раскладываем на цену, новинку и дилеров с рекламой
 function rivalNews(s,c,g,nv,cur){
@@ -56,7 +68,7 @@ function rivalNews(s,c,g,nv,cur){
   const mk=s.last&&s.last.mk&&s.last.mk[c],z=mk&&mk.segs&&mk.segs[g],sh=z&&z.size>0?z.you/z.size:0,sh2=sh>0?sh/(sh+(1-sh)*Math.exp(dv)):0;
   const mine=(s.models||[]).filter(m=>m.status==='prod'&&segOf(m)===g).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],TT=mine?techTone(mine,s):null,m0=compModel(A,s);
   pushEvent({title:'Конкуренты наступают',kicker:'Рынок · '+SEG[g].name.toLowerCase()+' класс',img:m0&&m0[2]&&IMG[m0[2]]?m0[2]:'',imgCap:m0?`${nm(A)} ${m0[1]}`:'',deck:`${B?`«${nm(A)}», «${nm(B)}»${C?` и «${nm(C)}»`:''}`:`«${nm(A)}»`} отвечают на успех «${s.company}»`,
-    text:`Покупатели класса «${SEG[g].name}» всё чаще выбирают «${s.company}»${z?`: в прошлом месяце ваших машин купили ${fmtN(z.you)} из ${fmtN(z.size)} (${pct(sh,0)})`:''}. Старые марки ответили:\n${lines.join('\n')}\nТеперь их машины для покупателей привлекательнее на ${Math.round((Math.exp(nv)-1)*100)}%, чем до вашего наступления${sh>0?`, и ваша доля в классе может упасть примерно до ${pct(sh2,0)}`:''}.\nКак ответить: ${mine?`«${mine.name}» сейчас — ${Math.round(TT.r*100)}% соперника; `:''}улучшения в конструкторском бюро, новая модель, цена и реклама — или другие классы и страны. История помнит: Ford держал половину рынка США, пока General Motors не предложил покупателям выбор.`},true);}
+    text:`Покупатели класса «${SEG[g].name}» всё чаще выбирают «${s.company}»${z?`: в прошлом месяце ваших машин купили ${fmtN(z.you)} из ${fmtN(z.size)} (${pct(sh,0)})`:''}. Старые марки ответили:\n${lines.join('\n')}\nТеперь их машины для покупателей ${rvWord(nv)} привлекательнее, чем до вашего наступления${sh>0?`, и ваша доля в классе может упасть примерно до ${pct(sh2,0)}`:''}.\nКак ответить: ${mine?`«${mine.name}» сейчас — ${Math.round(TT.r*100)}% соперника; `:''}улучшения в конструкторском бюро, новая модель, цена и реклама — или другие классы и страны. История помнит: Ford держал половину рынка США, пока General Motors не предложил покупателям выбор.`},true);}
 /* ---------- заказы ведомств и фирм ---------- */
 const TENDERS={
   post:{y:1897,kind:'van',n:[4,16],lim:1.1,mo:6,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии'}[c]),

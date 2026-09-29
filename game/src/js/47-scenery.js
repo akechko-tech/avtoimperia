@@ -119,6 +119,15 @@ Object.assign(SCENERY,{
     c.fillStyle='#2a2c30';c.beginPath();c.moveTo(-0.28,-4.45);c.lineTo(0.28,-4.45);c.lineTo(0.2,-5.0);c.lineTo(-0.2,-5.0);c.closePath();c.fill();
     const g=c.createRadialGradient(0,-4.72,0.02,0,-4.72,0.25);g.addColorStop(0,'#fff6d0');g.addColorStop(1,'#d8b058');c.fillStyle=g;c.fillRect(-0.18,-4.95,0.36,0.45);c.fillStyle='#2a2c30';c.fillRect(-0.02,-4.95,0.04,0.45);
     c.beginPath();c.moveTo(-0.3,-5);c.lineTo(0.3,-5);c.lineTo(0,-5.18);c.closePath();c.fill();}},
+  verst:{w:1.2,h:3,draw:(c,r)=>{gShadow(c,0.4,0.1,0.15);for(let k=0;k<9;k++){c.fillStyle=k%2?'#1c1c1c':'#f2efe6';c.fillRect(-0.12,-(k+1)*0.3,0.24,0.3);}c.fillStyle='#1c1c1c';c.fillRect(-0.15,-2.78,0.3,0.08);c.fillStyle='#f2efe6';c.fillRect(0.12,-2.47,0.36,0.42);}},
+  well:{w:8,h:6.6,draw:(c,r)=>{gShadow(c,1.2,0.3,0.2);c.fillStyle=hgrad(c,-0.7,0.7,[[0,'#8a6a44'],[1,'#5a4028']]);c.fillRect(-0.7,-0.9,1.4,0.9);for(let y=-0.9;y<0;y+=0.18){c.fillStyle='rgba(40,25,10,.35)';c.fillRect(-0.7,y,1.4,0.03);}
+    c.fillStyle='#6a5440';c.fillRect(-1.5,-4.2,0.24,4.2);c.strokeStyle='#8a7050';c.lineWidth=0.12;c.beginPath();c.moveTo(-3.8,-1.1);c.lineTo(1.4,-6.3);c.stroke();c.strokeStyle='#4a3a2a';c.lineWidth=0.03;c.beginPath();c.moveTo(1.4,-6.3);c.lineTo(1.4,-2.1);c.stroke();c.fillStyle='#6a4a2e';c.fillRect(1.25,-2.2,0.3,0.32);}},
+  stog:{w:4.2,h:5.5,draw:(c,r)=>{gShadow(c,1.9,0.45);c.beginPath();c.moveTo(-1.8,0);c.bezierCurveTo(-1.7,-2.4,-0.6,-4.2,0,-4.5);c.bezierCurveTo(0.6,-4.2,1.7,-2.4,1.8,0);c.closePath();c.fillStyle=hgrad(c,-1.8,1.8,[[0,'#d0b060'],[0.6,'#b8984e'],[1,'#8a7038']]);c.fill();
+    c.strokeStyle='rgba(90,70,30,.35)';c.lineWidth=0.05;for(let k=0;k<9;k++){c.beginPath();c.moveTo(-1.6+k*0.4,0);c.lineTo(-0.2+k*0.05,-4.3);c.stroke();}c.strokeStyle='#6a5440';c.lineWidth=0.1;c.beginPath();c.moveTo(0,-4.4);c.lineTo(0.05,-5.4);c.stroke();}},
+  fence_ru:{w:10,h:1.8,draw:(c,r)=>{for(let x=-5;x<=5.01;x+=0.34){c.fillStyle=hgrad(c,x-0.07,x+0.07,[[0,'#a08868'],[1,'#6a543e']]);c.beginPath();c.moveTo(x-0.07,0);c.lineTo(x-0.07,-1.55);c.lineTo(x,-1.72);c.lineTo(x+0.07,-1.55);c.lineTo(x+0.07,0);c.fill();}c.fillStyle='#5a4632';c.fillRect(-5,-1.2,10,0.08);c.fillRect(-5,-0.42,10,0.08);}},
+  cactus:{w:3,h:2.6,draw:(c,r)=>{gShadow(c,1.1,0.3);for(let b=0;b<5;b++){let x=(r()-0.5)*0.8,y=-0.3,a=(r()-0.5)*1.6;for(let k=0;k<3;k++){const s=1-k*0.12;c.fillStyle=['#5f8a48','#6a9450','#58804a'][(b+k)%3];c.beginPath();c.ellipse(x,y-0.5*s,0.4*s,0.52*s,a*0.4,0,7);c.fill();
+    if(r()<0.3){c.fillStyle='#d8602a';c.beginPath();c.arc(x+0.2,y-0.95*s,0.07,0,7);c.fill();}x+=Math.sin(a)*0.45;y-=0.75*s;a+=(r()-0.5)*1.2;}}}},
+  agave:{w:3.2,h:1.6,draw:(c,r)=>{gShadow(c,1.1,0.25);for(let k=0;k<11;k++){const a=-Math.PI*(0.08+0.84*k/10),L=1.1+r()*0.4;c.fillStyle=['#7f9a8a','#8aa494','#74907f'][k%3];c.beginPath();c.moveTo(-0.12,0);c.quadraticCurveTo(Math.cos(a)*L*0.5,Math.sin(a)*L*0.55,Math.cos(a)*L,Math.sin(a)*L);c.quadraticCurveTo(Math.cos(a)*L*0.5+0.1,Math.sin(a)*L*0.5,0.12,0);c.fill();}}},
   cart:{w:7.4,h:3,draw:(c,r)=>{gShadow(c,2.6,0.4,0.2);
     // лошадь
     const hc='#6e4a2c';c.fillStyle=vgrad(c,-2,-0.9,[[0,shade(hc,0.15)],[1,shade(hc,-0.25)]]);c.beginPath();c.ellipse(-2.1,-1.45,0.95,0.42,0,0,7);c.fill();
@@ -366,8 +375,16 @@ function mkBackdrop(set,cfg){
   for(let x=-10;x<W+10;x+=4+rnd()*5){const b=base(x),h=10+rnd()*16,r=5+rnd()*6;n.fillStyle=rnd()<0.5?tc:tc2;n.beginPath();n.ellipse(x,b-h*0.6,r,h*0.6,0,0,7);n.fill();n.fillStyle='rgba(255,255,255,.08)';n.beginPath();n.ellipse(x-r*0.3,b-h*0.8,r*0.5,h*0.3,0,0,7);n.fill();}
   const tall=set.alley==='poplar'||set.alley==='cypress'||set.alley==='fir';
   if(tall)for(let x=20;x<W;x+=30+rnd()*90){const b=base(x),h=26+rnd()*14;n.fillStyle=shade(hills,-0.38);n.beginPath();if(set.alley==='fir'){n.moveTo(x,b-h);n.lineTo(x+6,b);n.lineTo(x-6,b);}else n.ellipse(x,b-h/2,3.5,h/2,0,0,7);n.fill();}
-  for(let v=0;v<3;v++){const cx=200+v*520+rnd()*200,b=base(cx);for(let k=0;k<6;k++){const x=cx+(k-3)*16+rnd()*6,w=12+rnd()*8,h=8+rnd()*6;n.fillStyle=mix('#d8ccb0',sky1,0.25);n.fillRect(x,b-h,w,h);n.fillStyle=mix(set.host==='it'||set.host==='es'||set.host==='mc'?'#b0553a':'#7a5a4a',sky1,0.2);n.beginPath();n.moveTo(x-2,b-h);n.lineTo(x+w/2,b-h-6);n.lineTo(x+w+2,b-h);n.closePath();n.fill();}
-    n.fillStyle=mix('#cfc5ae',sky1,0.25);n.fillRect(cx+4,b-34,7,34);n.fillStyle=mix('#5a606a',sky1,0.2);n.beginPath();n.moveTo(cx+2,b-34);n.lineTo(cx+7.5,b-50);n.lineTo(cx+13,b-34);n.closePath();n.fill();}
+  for(let v=0;v<3;v++){const cx=200+v*520+rnd()*200,b=base(cx);for(let k=0;k<6;k++){const x=cx+(k-3)*16+rnd()*6,w=12+rnd()*8,h=8+rnd()*6;n.fillStyle=mix(cfg.host==='ru'?'#8a6a44':cfg.host==='ly'?'#efe8da':'#d8ccb0',sky1,0.25);n.fillRect(x,b-h,w,h);if(cfg.host==='ly')continue;n.fillStyle=mix(['it','es','mc'].includes(cfg.host)?'#b0553a':cfg.host==='ru'?'#6f675c':'#7a5a4a',sky1,0.2);n.beginPath();n.moveTo(x-2,b-h);n.lineTo(x+w/2,b-h-6);n.lineTo(x+w+2,b-h);n.closePath();n.fill();}
+    const bd=set.bd||'spire',wl=mix(bd==='onion'||bd==='minaret'||bd==='onion_at'?'#f1ece2':bd==='barn'?'#a8342a':bd==='campanile'?'#c99a70':'#cfc5ae',sky1,0.25),dk=mix('#5a606a',sky1,0.2);n.fillStyle=wl;
+    if(bd==='onion'){n.fillRect(cx+1,b-22,14,22);n.fillRect(cx+5.5,b-30,5,8);n.fillStyle=mix(v%2?'#c9a24a':'#3f7a52',sky1,0.2);n.beginPath();n.ellipse(cx+8,b-33,4.2,4.6,0,0,7);n.fill();n.beginPath();n.moveTo(cx+4.5,b-35);n.lineTo(cx+8,b-44);n.lineTo(cx+11.5,b-35);n.fill();
+      n.fillStyle=wl;n.fillRect(cx-9,b-30,5,30);n.fillStyle=dk;n.beginPath();n.moveTo(cx-10,b-30);n.lineTo(cx-6.5,b-45);n.lineTo(cx-3,b-30);n.closePath();n.fill();}
+    else if(bd==='onion_at'){n.fillRect(cx+4,b-32,7,32);n.fillStyle=mix('#4f7a64',sky1,0.2);n.beginPath();n.ellipse(cx+7.5,b-35,4,4.4,0,0,7);n.fill();n.beginPath();n.moveTo(cx+5.5,b-37);n.lineTo(cx+7.5,b-47);n.lineTo(cx+9.5,b-37);n.fill();}
+    else if(bd==='campanile'){n.fillRect(cx+4,b-40,7,40);n.fillStyle=dk;n.fillRect(cx+5.2,b-37,1.6,4);n.fillRect(cx+8.2,b-37,1.6,4);n.fillStyle=mix('#a8553a',sky1,0.2);n.beginPath();n.moveTo(cx+3,b-40);n.lineTo(cx+7.5,b-46);n.lineTo(cx+12,b-40);n.closePath();n.fill();}
+    else if(bd==='minaret'){n.fillRect(cx+6,b-44,4,44);n.fillRect(cx+4.5,b-36,7,1.6);n.fillStyle=mix('#3f7a5a',sky1,0.2);n.beginPath();n.moveTo(cx+5.5,b-44);n.lineTo(cx+8,b-50);n.lineTo(cx+10.5,b-44);n.fill();n.fillStyle=wl;n.beginPath();n.ellipse(cx+20,b-8,7,6,0,Math.PI,0);n.fill();}
+    else if(bd==='square'){n.fillRect(cx+3,b-30,9,30);for(let k=0;k<3;k++)n.fillRect(cx+3+k*3.6,b-33,1.8,3);}
+    else if(bd==='barn'){n.fillRect(cx+2,b-14,16,14);n.fillStyle=mix('#4a4f56',sky1,0.2);n.beginPath();n.moveTo(cx+1,b-14);n.lineTo(cx+10,b-22);n.lineTo(cx+19,b-14);n.fill();n.strokeStyle=mix('#8a8f96',sky1,0.3);n.lineWidth=1;n.beginPath();n.moveTo(cx+26,b);n.lineTo(cx+28,b-26);n.lineTo(cx+30,b);n.stroke();n.beginPath();n.arc(cx+28,b-27,4,0,7);n.stroke();}
+    else{n.fillRect(cx+4,b-34,7,34);n.fillStyle=dk;n.beginPath();n.moveTo(cx+2,b-34);n.lineTo(cx+7.5,b-50);n.lineTo(cx+13,b-34);n.closePath();n.fill();}}
   // облака: пухлые, со светлой макушкой и серым низом
   const clouds=[0,1,2,3,4].map(i=>{const cw=260,ch=110,[cv,g]=(()=>{const c=mkCanvas(cw,ch);return [c,c.getContext('2d')];})(),r2=mulberry32(hashStr('cl'+i+cfg.host));
     const puffs=[];for(let k=0;k<9;k++){const t=k/8,x=30+t*200+(r2()-0.5)*20,y=70-Math.sin(t*Math.PI)*28-r2()*14,r=18+Math.sin(t*Math.PI)*22+r2()*8;puffs.push([x,y,r]);}
@@ -399,14 +416,21 @@ function scenQueue(T){SCQ.length=0;const seen=new Set(),start=T.startIdx||0;cons
   order.forEach(i=>(T.spr[i]||[]).forEach(it=>{const key=it.k==='p'?'p|'+it.t+'|'+it.v:'s|'+it.t+'|'+it.v+'|'+(SCENERY[it.t]&&SCENERY[it.t].m3?Math.sign(it.off):0);if(seen.has(key))return;seen.add(key);
     SCQ.push(it.k==='p'?()=>{peopleSprite(it.t,it.v,0);peopleSprite(it.t,it.v,1);}:()=>scenSprite(it.t,it.v,it.off));}));}
 
+/* ---------- галерея модели: сбоку, сзади, сверху, с водителем ---------- */
+const CAR_VIEWS=[{k:'f',n:'Спереди',yaw:0.72,pitch:0.2},{k:'s',n:'Сбоку',yaw:1.5708,pitch:0.1},{k:'r',n:'Сзади',yaw:2.45,pitch:0.22},{k:'t',n:'Сверху',yaw:0.9,pitch:0.62},{k:'d',n:'За рулём',yaw:0.55,pitch:0.14,crew:1}];
+function carGallery(md){return `<div class="cgal">${CAR_VIEWS.slice(1).map(v=>`<button class="cgal-b" data-act="carGal" data-id="${md.id}" data-k="${v.k}" aria-label="${v.n}">${carArt(md,{w:220,yaw:v.yaw,pitch:v.pitch,crew:v.crew,cls:'cgal-i'})}<small>${v.n}</small></button>`).join('')}</div>`;}
+function carGalHTML(md,k){const v=CAR_VIEWS.find(x=>x.k===k)||CAR_VIEWS[0];
+  return `<div class="kicker">Фотоальбом модели</div><h2>${esc(md.name)}</h2><div class="carbox">${carArt(md,{w:640,yaw:v.yaw,pitch:v.pitch,crew:v.crew})}</div>
+    <div class="cgal">${CAR_VIEWS.map(x=>`<button class="cgal-b ${x.k===v.k?'on':''}" data-act="carGal" data-id="${md.id}" data-k="${x.k}" aria-label="${x.n}">${carArt(md,{w:220,yaw:x.yaw,pitch:x.pitch,crew:x.crew,cls:'cgal-i'})}<small>${x.n}</small></button>`).join('')}</div>
+    <p class="small muted" style="margin-top:8px">${esc(KIND_NAME[rivalKind(md)])} · ${specLine(md,G)}</p><div class="btns" style="margin-top:12px"><button class="btn" data-act="close">Закрыть</button></div>`;}
 /* ---------- машина в карточке модели: та же 3D-модель, что и в гонке, в три четверти спереди ---------- */
 const CARD3D=new Map();
 function carArt(md,opt={}){
   try{const y=opt.y||(md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895));
     // тот же облик, что в гонке: кузов, цвет, колёса, капот по мотору; для газеты о гонке — в гоночной подготовке, с номером и экипажем
-    const prep=opt.prep||0,crew=prep>0,S=modelSpec(md,prep,y,{mech:crew&&mechanicEra(y),num:crew?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:600,crew};
+    const prep=opt.prep||0,crew=prep>0||!!opt.crew,S=modelSpec(md,prep,y,{mech:prep>0&&mechanicEra(y),num:prep>0?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:opt.w||600,crew};if(opt.yaw!==undefined){o.yaw=opt.yaw;o.pitch=opt.pitch;}
     const key=stuKey(S,o);let url=STU.cache.get(key);
     if(!url){stuQueue(key,S,o,()=>{const M=carModel(Object.assign({},S,{lod:'hi',crew:crew?1:0})),dpr=Math.min(2,window.devicePixelRatio||1);return renderModel(M,2.1,0.28,52*dpr,{shadow:0.4,blur:0.22}).img.toDataURL('image/png');});url=STU_BLANK;}
-    return `<img class="car3d${opt.anim?' anim':''}" data-stu="${stuId(key)}" src="${url}" alt="${esc(md.name||'Автомобиль')}">`;
+    return `<img class="${opt.cls||('car3d'+(opt.anim?' anim':''))}" data-stu="${stuId(key)}" src="${url}" alt="${esc(md.name||'Автомобиль')}">`;
   }catch(e){return carSVG(md,opt);}
 }

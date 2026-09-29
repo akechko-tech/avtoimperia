@@ -13,7 +13,9 @@ function poly(c,pts,fill){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1])
 function carStyle(md,prep,y,own){
   const p=parts(md),b=p.b.id;
   if(p.b.truck)return b==='b6'?'van':'truck';
-  if(prep===2)return y<1901?'carriage':y<1907?'gp1901':y<1912?'gp1907':y<1925?'gp1912':'gp1925';
+  // своя спортивная модель и в заводской подготовке остаётся спортивной (без фар, с номерами)
+  const sport=b==='b10'||(b==='b1'&&md.t==='t3'&&y>=1910);
+  if(prep===2)return own&&sport?'sport':y<1901?'carriage':y<1907?'gp1901':y<1912?'gp1907':y<1925?'gp1912':'gp1925';
   if(y<1901&&(b==='b1'||!own))return 'carriage';
   if(prep===1&&!own)return y<1912?'gp1901':'sport';
   return b==='b10'||(b==='b1'&&md.t==='t3'&&y>=1910)?'sport':b==='b1'?'runabout':b==='b2'?'tonneau':b==='b3'?'tourer':'sedan';
@@ -22,6 +24,6 @@ function carStyle(md,prep,y,own){
 // заводской гоночный кузов — узкий гоночный, но в цвете модели с полосой национального гоночного цвета
 function modelSpec(md,prep,y,o){o=o||{};const p=parts(md),bid=p.b.id,style=carStyle(md,prep,y,true),hp=engineHp(p.e,md),hpB=hp<=4?0:hp<=10?1:hp<=20?2:hp<=35?3:hp<=60?4:5;
   const color=md.paint||'#23427a',acc=prep===2&&y>=1903&&o.country&&COUNTRIES[o.country]?COUNTRIES[o.country].race:null;
-  const wheel=o.wheel||wheelKind(md,y),mech=o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=prep===1&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
+  const wheel=o.wheel||wheelKind(md,y),mech=o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=(prep===1||(prep===2&&style==='sport'))&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
   const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y].join('|');
   return {key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux};}

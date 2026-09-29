@@ -79,7 +79,8 @@ EXTRA_RACES.forEach(r=>RACES.push({...r,key:r.id+'-'+r.y}));
 const BOARD=[['Беверли-Хиллз',2],['Алтуна',5],['Калвер-Сити',11],['Атлантик-Сити',4],['Сейлем',7],['Шарлотт',9],['Рокингем',6],['Фресно',8]];
 for(let y=1921;y<=1929;y++)[0,1].forEach(k=>{const b=BOARD[(y*3+k*5)%BOARD.length];RACES.push({id:'board'+k,key:'board'+k+'-'+y,y,m:b[1],c:'us',t:'oval',km:400,track:'board',name:'Дощатый трек '+b[0],hist:'Деревянный овал с виражами до 45 градусов: гонщики AAA мчались по сосновым доскам быстрее, чем где-либо в мире. Трек служил несколько сезонов — доски гнили и трескались.',win:''});});
 const MAJOR_IDS=['pbp','pmp','pap','tdf','gb1900','pb1901','pv1902','pm1903','gb1903','gb1904','gb1905','gpacf','dieppe','lyon1914','lm1921','europe1924','vanderbilt','targa','indy','itgp','brescia','monza1922','lemans','degp','avus1926','nurb1927','monaco','kaiser','savannah','peking','nyparis','mille','bgp1926','spa24'];
-const RACE_HOST={gb1900:'fr',pb1901:'fr',pv1902:'fr',peking:'other',nyparis:'us',monaco:'mc',semmering:'at',ardennes:'be',spa24:'be',klausen:'ch',alpen:'at'};
-RACES.forEach(r=>{if(MAJOR_IDS.includes(r.id))r.major=1;r.host=r.host&&r.host!=='intl'?r.host:(RACE_HOST[r.id]||(r.c==='intl'?'fr':r.c));});
+const RACE_HOST={gb1900:'fr',pb1901:'fr',pv1902:'fr',peking:'ru',nyparis:'us',monaco:'mc',semmering:'at',ardennes:'be',spa24:'be',klausen:'ch',alpen:'at',gb1903:'ie',
+  x80901:'ru',x87575:'ru',x17567:'ru',x2844:'ru',x38768:'ly',x22765:'ie'};
+RACES.forEach(r=>{if(MAJOR_IDS.includes(r.id))r.major=1;r.host=RACE_HOST[r.id]||(r.host&&r.host!=='intl'?r.host:(r.c==='intl'?'fr':r.c));});
 RACES.sort((a,b)=>a.y-b.y||a.m-b.m);
 

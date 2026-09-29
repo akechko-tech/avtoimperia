@@ -194,6 +194,27 @@ ${G3LIB}
 ${G3SHP}
 void main(){vec3 V=u_cam-v_wp;float d=length(V);float a=texture(u_tex,v_q).a*v_c.a*smoothstep(1.5,9.,d);if(a<.004)discard;
   float sh=shadowP(v_sp);vec3 alb=pow(v_c.rgb,vec3(2.2));vec3 c=tone(fogIt(alb*(u_sunC*(.12+.5*sh)+u_skyC*.95),V/d,d));o=vec4(c*a,a);}`;
+/* ---------- кино-обработка кадра (гонка): свечение ярких мест, цвет плёнки, виньетка, зерно, смаз на скорости ---------- */
+// яркие места кадра → в четверть размера
+const G3FS_BRIGHT=`in vec2 v_p;uniform sampler2D u_src;uniform vec2 u_px;out vec4 o;
+void main(){vec2 uv=v_p*.5+.5;vec3 c=texture(u_src,uv+u_px*vec2(-1.,-1.)).rgb+texture(u_src,uv+u_px*vec2(1.,-1.)).rgb+texture(u_src,uv+u_px*vec2(-1.,1.)).rgb+texture(u_src,uv+u_px*vec2(1.,1.)).rgb;c*=.25;
+  float l=dot(c,vec3(.2126,.7152,.0722));o=vec4(c*smoothstep(.7,1.,l),1.);}`;
+// размытие по одной оси (9 отсчётов через линейную выборку)
+const G3FS_BLUR=`in vec2 v_p;uniform sampler2D u_src;uniform vec2 u_dir;out vec4 o;
+void main(){vec2 uv=v_p*.5+.5;vec3 c=texture(u_src,uv).rgb*.227+(texture(u_src,uv+u_dir*1.385).rgb+texture(u_src,uv-u_dir*1.385).rgb)*.316+(texture(u_src,uv+u_dir*3.231).rgb+texture(u_src,uv-u_dir*3.231).rgb)*.07;o=vec4(c,1.);}`;
+// итог: смаз к краям на скорости, лёгкая аберрация, свечение, «плёночный» цвет (тёплые света, прохладные тени), виньетка, зерно
+const G3FS_POST=`in vec2 v_p;uniform sampler2D u_src,u_blm;uniform vec2 u_res;uniform float u_time,u_mb,u_blk,u_grain,u_vig2;out vec4 o;
+float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+void main(){vec2 uv=v_p*.5+.5,dc=uv-.5;float r2=dot(dc,dc);vec3 c;
+  if(u_mb>.0005){float k=u_mb*r2*4.;c=vec3(0.);for(int i=0;i<5;i++)c+=texture(u_src,uv-dc*k*float(i)*.25).rgb;c*=.2;}else c=texture(u_src,uv).rgb;
+  float ca=r2*.006;c.r=mix(c.r,texture(u_src,uv+dc*ca).r,.7);c.b=mix(c.b,texture(u_src,uv-dc*ca).b,.7);
+  c+=texture(u_blm,uv).rgb*u_blk;
+  float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,.93);
+  c*=mix(vec3(.95,.99,1.06),vec3(1.06,1.,.9),smoothstep(.15,.85,l));
+  c=mix(c,c*c*(3.-2.*c),.32);c=c*.975+.012;
+  c*=1.-u_vig2*r2*1.5;
+  c+=(h21(uv*u_res+fract(u_time*7.3)*113.)-.5)*u_grain;
+  o=vec4(clamp(c,0.,1.),1.);}`;
 /* ---------- инициализация ---------- */
 function g3Prog(vs,fs,defs){const gl=G3.gl,hd='#version 300 es\nprecision highp float;precision highp int;\n'+(defs||[]).map(d=>'#define '+d+'\n').join('');
   const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,hd+s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){const e=gl.getShaderInfoLog(o);throw new Error('shader: '+e+' ['+(defs||[]).join(',')+']');}return o;};
@@ -205,13 +226,14 @@ function g3Prog(vs,fs,defs){const gl=G3.gl,hd='#version 300 es\nprecision highp 
 function g3Init(cv){
   if(G3.gl&&G3.cv===cv&&!G3.gl.isContextLost())return true;
   const gl=cv.getContext('webgl2',{antialias:true,alpha:false,depth:true,stencil:false,premultipliedAlpha:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
-  if(!gl||gl.isContextLost())return false;G3.gl=gl;G3.cv=cv;G3.lost=false;G3.cache={};
+  if(!gl||gl.isContextLost())return false;G3.gl=gl;G3.cv=cv;G3.lost=false;G3.cache={};G3.post=null;
   // телефон может отобрать видеокарту (приложение свернули): эта гонка дорисуется по-простому, следующая снова в 3D
   if(!cv.dataset.g3){cv.dataset.g3=1;cv.addEventListener('webglcontextlost',e=>{e.preventDefault();G3.lost=true;G3.gl=null;},false);cv.addEventListener('webglcontextrestored',()=>{G3.lost=false;G3.gl=null;},false);}
   G3.an=gl.getExtension('EXT_texture_filter_anisotropic');G3.anMax=G3.an?Math.min(8,gl.getParameter(G3.an.MAX_TEXTURE_MAX_ANISOTROPY_EXT)):1;
   const lit=G3VS,fs=G3FS;
   G3.P={lit:g3Prog(lit,fs,[]),car:g3Prog(lit,fs,['CAR']),road:g3Prog(lit,fs,['UV','ROAD']),tex:g3Prog(lit,fs,['UV']),terr:g3Prog(lit,fs,['TERRAIN']),decal:g3Prog(lit,fs,['DECAL']),
     dLit:g3Prog(lit,G3FS_DEPTH,[]),dCar:g3Prog(lit,G3FS_DEPTH,['CAR']),sky:g3Prog(G3VS_SKY,G3FS_SKY,[]),bill:g3Prog(G3VS_BILL,G3FS_BILL,[]),part:g3Prog(G3VS_PART,G3FS_PART,[])};
+  try{Object.assign(G3.P,{pBright:g3Prog(G3VS_SKY,G3FS_BRIGHT,[]),pBlur:g3Prog(G3VS_SKY,G3FS_BLUR,[]),pFinal:g3Prog(G3VS_SKY,G3FS_POST,[])});G3.postOK=true;}catch(e){G3.postOK=false;console.warn(e);}
   // тень солнца: текстура глубины со сравнением (сглаженная выборка «из коробки»)
   const S=G3.shS=Math.min(2048,(window.devicePixelRatio||1)<=1.5&&!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?2048:1024);
   const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texStorage2D(gl.TEXTURE_2D,1,gl.DEPTH_COMPONENT24,S,S);
