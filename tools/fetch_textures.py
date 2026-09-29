@@ -189,9 +189,45 @@ def skies():
     return man
 
 DBG = {}
+def urls_of(node, path=''):
+    """Все ссылки в ответе /files — с путём ключей (ищем карты прозрачности листвы)."""
+    out = []
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == 'url' and isinstance(v, str): out.append((path, v))
+            else: out += urls_of(v, path + '/' + str(k))
+    return out
+
+def leaf_probe(ids):
+    """Разведка: какие карты листвы есть у моделей растений (полный список ссылок + уменьшенные картинки)."""
+    from PIL import Image
+    d = os.path.join(OUT, '_dbg'); os.makedirs(d, exist_ok=True)
+    for i in ids:
+        try:
+            files = jget(API + '/files/' + i)
+            U = urls_of(files)
+            json.dump(sorted(set(u for p, u in U)), open(os.path.join(d, i + '.json'), 'w'), indent=0)
+            pick_ = [u for p, u in U if re.search(r'leaf|leaves|twig|needle|foliage|alpha|opacity|mask', u, re.I) and re.search(r'_1k\.(jpg|png)$', u)]
+            n = 0
+            for u in sorted(set(pick_)):
+                if n >= 6: break
+                try:
+                    im = Image.open(io.BytesIO(get(u)))
+                    mode = im.mode
+                    im = im.convert('RGBA' if 'A' in mode else 'RGB'); im.thumbnail((512, 512))
+                    nm = os.path.basename(u).rsplit('.', 1)[0] + ('_A' if 'A' in mode else '') + ('.png' if 'A' in mode else '.jpg')
+                    im.save(os.path.join(d, nm)); n += 1
+                    print('probe', i, os.path.basename(u), mode, im.size)
+                except Exception as e:
+                    print('probe', i, u, 'error', e)
+        except Exception as e:
+            print('probe', i, 'error', e)
+
 def foliage():
     from PIL import Image
     assets = jget(API + '/assets?t=models')
+    try: leaf_probe(['island_tree_02', 'fir_tree_01', 'shrub_04', 'searsia_lucida', 'fern_02'])
+    except Exception as e: print('probe failed', e)
     want = [('broad', ['tree', 'oak', 'maple', 'beech', 'birch', 'ash', 'poplar', 'shrub', 'bush'], ['fir', 'pine', 'spruce', 'palm', 'cactus', 'dead', 'stump', 'log', 'potted', 'pot', 'indoor', 'flower']),
             ('conifer', ['fir', 'pine', 'spruce', 'conifer', 'cypress'], ['dead', 'stump', 'log', 'potted', 'pot', 'indoor']),
             ('shrub', ['shrub', 'bush', 'hedge', 'fern', 'grass', 'weed'], ['dead', 'potted', 'pot', 'indoor', 'flower pot'])]
