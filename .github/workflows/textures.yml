@@ -1,0 +1,26 @@
+name: Текстуры
+# Фото-текстуры и небо для 3D-гонок (Poly Haven, CC0): скачиваются здесь и коммитятся в game/tex
+on:
+  push:
+    branches: [main]
+    paths: ['tools/fetch_textures.py']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  tex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Библиотеки
+        run: python3 -m pip install --quiet --user --break-system-packages pillow numpy opencv-python-headless || python3 -m pip install --quiet pillow numpy opencv-python-headless
+      - name: Скачать текстуры и небо
+        run: python3 tools/fetch_textures.py
+      - name: Сохранить в репозиторий
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add game/tex
+          git commit -m "Текстуры и небо для гонок (Poly Haven, CC0)" || echo "без изменений"
+          git pull --rebase origin main || true
+          git push origin HEAD:main
