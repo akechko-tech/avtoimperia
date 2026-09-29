@@ -26,26 +26,27 @@ def jget(url): return json.loads(get(url))
 # ids — любимые ассеты, если они есть на Poly Haven. m — размер плитки в метрах по умолчанию.
 SLOTS = [
     ('grass',      dict(must=[['grass']], prefer=['meadow', 'field', 'wild', 'leafy', 'lawn', 'green'], no=['aerial', 'dry', 'dead', 'snow', 'path', 'artificial', 'rock', 'stone', 'wall', 'brick'], ids=['leafy_grass', 'grass_path_2'], m=2.5)),
-    ('dry_grass',  dict(must=[['grass', 'hay', 'straw ground', 'field']], prefer=['dry', 'dead', 'autumn', 'yellow', 'burnt', 'brown'], no=['aerial', 'snow', 'wall', 'roof'], m=2.5)),
+    ('dry_grass',  dict(must=[['grass', 'hay', 'straw ground', 'field']], prefer=['dry', 'dead', 'autumn', 'yellow', 'burnt', 'brown'], no=['aerial', 'snow', 'wall', 'roof'], ids=['withered_grass', 'dry_mud_field_001'], m=2.5)),
     ('dirt',       dict(must=[['dirt', 'soil', 'earth', 'ground']], prefer=['dry', 'soil', 'brown', 'cracked'], no=['aerial', 'snow', 'leaves', 'tiles', 'floor tiles', 'wall', 'brick', 'moss', 'road', 'path'], ids=['dirt_floor', 'brown_mud_03'], m=2.5)),
     ('dirt_road',  dict(must=[['road', 'path', 'track', 'trail', 'tyre', 'tire']], prefer=['dirt', 'mud', 'gravel', 'rocky', 'ruts', 'country'], no=['asphalt', 'aerial', 'marking', 'line', 'tarmac', 'concrete', 'brick'], m=3)),
-    ('gravel',     dict(must=[['gravel', 'pebbles', 'chipping']], prefer=['road', 'path', 'ground', 'grey'], no=['aerial', 'concrete', 'wall'], m=2)),
+    ('gravel',     dict(must=[['gravel', 'pebbles', 'chipping']], prefer=['road', 'path', 'ground', 'grey'], no=['aerial', 'concrete', 'wall'], ids=['gravel_ground_01', 'gravel_stones'], m=2)),
+    ('macadam',    dict(must=[['gravel', 'rocky', 'stones', 'pebbles']], prefer=['road', 'path', 'grey', 'ground'], no=['aerial', 'concrete', 'wall', 'red', 'river'], ids=['rocky_gravel', 'gravel_stones'], m=2)),
     ('cobble',     dict(must=[['cobble', 'cobblestone', 'sett', 'paving stones', 'pavement', 'paving']], prefer=['cobble', 'old', 'square', 'street'], no=['aerial', 'mossy', 'tiles', 'marble', 'modern'], m=2)),
     ('brick_road', dict(must=[['brick']], prefer=['floor', 'pavement', 'paving', 'road', 'ground', 'herringbone'], no=['wall', 'painted', 'white'], m=2)),
-    ('asphalt',    dict(must=[['asphalt', 'tarmac']], prefer=['road', 'old', 'worn'], no=['aerial', 'marking', 'lines', 'line', 'crosswalk'], m=3)),
+    ('asphalt',    dict(must=[['asphalt', 'tarmac']], prefer=['road', 'old', 'worn'], no=['aerial', 'marking', 'lines', 'line', 'crosswalk'], ids=['asphalt_01', 'worn_asphalt'], m=3)),
     ('concrete',   dict(must=[['concrete']], prefer=['floor', 'ground', 'slab', 'pavement', 'old'], no=['wall', 'tiles', 'painted', 'block'], m=3)),
     ('planks',     dict(must=[['plank', 'planks', 'boards', 'board']], prefer=['wood', 'old', 'weathered', 'floor', 'deck'], no=['painted', 'parquet', 'laminate', 'white'], m=2)),
-    ('sand',       dict(must=[['sand']], prefer=['beach', 'desert', 'dune', 'coast'], no=['stone', 'brick', 'wall', 'rocks', 'rock'], m=3)),
-    ('snow',       dict(must=[['snow']], prefer=['field', 'ground', 'fresh'], no=['rock', 'wall', 'roof'], m=3)),
+    ('sand',       dict(must=[['sand']], prefer=['beach', 'desert', 'dune', 'coast'], no=['stone', 'brick', 'wall', 'rocks', 'rock'], ids=['sand_03', 'coast_sand_02'], m=3)),
+    ('snow',       dict(must=[['snow']], prefer=['field', 'ground', 'fresh'], no=['rock', 'wall', 'roof'], ids=['snow_02', 'snow_04'], m=3)),
     ('rock',       dict(must=[['rock', 'cliff', 'boulder', 'rocky']], prefer=['cliff', 'face', 'rocky', 'mountain', 'layered'], no=['floor', 'wall', 'tiles', 'brick', 'paving', 'pebbles', 'aerial', 'path', 'gravel', 'sand'], m=4)),
-    ('forest',     dict(must=[['forest', 'leaves', 'needles', 'moss', 'leaf']], prefer=['ground', 'floor', 'forest', 'autumn'], no=['aerial', 'wall', 'roof', 'rock face'], ids=['brown_mud_leaves_01'], m=2.5)),
+    ('forest',     dict(must=[['forest', 'leaves', 'needles', 'moss', 'leaf']], prefer=['ground', 'floor', 'forest', 'autumn'], no=['aerial', 'wall', 'roof', 'rock face'], ids=['forest_leaves_02', 'brown_mud_leaves_01'], m=2.5)),
     ('mud',        dict(must=[['mud', 'muddy']], prefer=['wet', 'ground', 'puddle', 'track'], no=['wall', 'aerial', 'leaves'], m=2.5)),
     ('brick_wall', dict(must=[['brick']], prefer=['wall', 'red', 'old', 'worn'], no=['painted', 'white', 'floor', 'pavement', 'paving', 'grey'], m=2.5)),
-    ('plaster',    dict(must=[['plaster', 'stucco', 'render', 'rendered']], prefer=['white', 'wall', 'old', 'cream'], no=['brick', 'tiles', 'floor', 'ceiling', 'damaged'], m=3)),
+    ('plaster',    dict(must=[['plaster', 'stucco', 'render', 'rendered']], prefer=['white', 'wall', 'old', 'cream'], no=['brick', 'tiles', 'floor', 'ceiling', 'damaged'], ids=['white_stucco', 'yellow_plaster_02'], m=3)),
     ('stone_wall', dict(must=[['stone', 'castle', 'masonry', 'rubble']], prefer=['wall', 'block', 'old', 'castle', 'medieval'], no=['floor', 'paving', 'tiles', 'pebbles', 'gravel', 'marble', 'modern'], m=3)),
-    ('wood_wall',  dict(must=[['wood', 'wooden', 'log', 'timber']], prefer=['wall', 'siding', 'shed', 'barn', 'weathered', 'log', 'planks'], no=['floor', 'parquet', 'painted', 'laminate', 'bark', 'chips'], m=2.5)),
+    ('wood_wall',  dict(must=[['wood', 'wooden', 'log', 'timber']], prefer=['wall', 'siding', 'shed', 'barn', 'weathered', 'log', 'planks'], no=['floor', 'parquet', 'painted', 'laminate', 'bark', 'chips'], ids=['weathered_plank_siding', 'wooden_rough_planks'], m=2.5)),
     ('roof_tiles', dict(must=[['roof', 'roofing'], ['tile', 'tiles', 'clay', 'terracotta']], prefer=['clay', 'red', 'terracotta', 'old'], no=['slate', 'metal', 'shingle'], m=2.5)),
-    ('roof_slate', dict(must=[['slate', 'shingle', 'shingles']], prefer=['roof', 'grey', 'old'], no=['clay', 'terracotta', 'floor'], m=2.5)),
+    ('roof_slate', dict(must=[['slate', 'shingle', 'shingles']], prefer=['roof', 'grey', 'old'], no=['clay', 'terracotta', 'floor'], ids=['roof_slates_02', 'grey_roof_tiles_02'], m=2.5)),
     ('thatch',     dict(must=[['thatch', 'straw', 'hay', 'reed']], prefer=['roof', 'thatch'], no=['floor', 'mat'], m=2.5)),
     ('bark',       dict(must=[['bark']], prefer=['tree', 'oak', 'pine', 'brown'], no=['mulch', 'chips'], m=1.5)),
     ('metal_roof', dict(must=[['corrugated', 'metal sheet', 'sheet metal', 'tin']], prefer=['roof', 'rusty', 'old'], no=['painted', 'floor', 'plate'], m=2.5)),
@@ -187,6 +188,7 @@ def skies():
             print('sky', mood, 'error', best, e)
     return man
 
+DBG = {}
 def foliage():
     from PIL import Image
     assets = jget(API + '/assets?t=models')
@@ -208,6 +210,7 @@ def foliage():
                 g = files.get('gltf', {})
                 node = g.get('1k') or g.get('2k') or {}
                 inc = (node.get('gltf') or {}).get('include', {})
+                DBG.setdefault(kind, {})[i] = sorted(inc.keys())[:12] if inc else sorted(files.keys())
                 leaf = [k for k in inc if re.search(r'leaf|leaves|foliage|needle|branch|twig', k, re.I) and re.search(r'diff|col|albedo', k, re.I)]
                 if not leaf: continue
                 k0 = sorted(leaf, key=len)[0]
@@ -223,7 +226,7 @@ def foliage():
                 print('leaf', kind, '->', i, k0); break
             except Exception as e:
                 print('leaf', kind, i, 'error', e)
-    out['_cands'] = cands
+    out['_cands'] = cands; out['_dbg'] = DBG
     return out
 
 def main():
