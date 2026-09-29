@@ -100,8 +100,7 @@ function terrName(cfg){return {dirt:'грунт',macadam:'щебёнка',asphal
 function drawSetupSprites(){
   const rc=RACES.find(r=>r.key===RS.key);
   document.querySelectorAll('#sheetBody .rs-car').forEach(cv=>{const i=+cv.dataset.i,e=RS.entries[i],md=G.models.find(m=>m.id===e.car);if(!md)return;
-    const style=carStyle(md,e.prep,rc.y),col=e.prep===2&&rc.y>=1903?COUNTRIES[G.country].race:md.paint,wheel=wheelKind(md,rc.y),mech=mechanicEra(rc.y);
-    const bid=parts(md).b.id,spec={key:'rs'+style+col+(i+1)+wheel+(mech?1:0)+bid,style,color:col,y:rc.y,wheel,mech,num:i+1,b:bid};
+    const spec=modelSpec(md,e.prep,rc.y,{country:G.country,num:i+1});
     const k='rsv|'+spec.key;let sp=CAR3D.cache.get(k);if(!sp){sp=renderModel(carModelFor(spec,true),0.62,0.36,70*Math.min(2,window.devicePixelRatio||1));CAR3D.cache.set(k,sp);}
     const g=cv.getContext('2d');if(!g)return;g.clearRect(0,0,cv.width,cv.height);const kk=Math.min(cv.width*0.98/sp.img.width,cv.height*0.98/sp.img.height),w=sp.img.width*kk,h=sp.img.height*kk;g.drawImage(sp.img,(cv.width-w)/2,cv.height-h,w,h);});
 }

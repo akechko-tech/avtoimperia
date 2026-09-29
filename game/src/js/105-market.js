@@ -34,7 +34,7 @@ const APPEAL={1895:-2.2,1900:-0.6,1905:0.6,1910:1.2,1913:1.4,1916:1.4,1920:1.2,1
 // свой транспорт — это доля ВВП; каждая фирма выбирает между лошадью с телегой и мотором.
 // Сколько из них возьмут мотор, решают цена, надёжность и дороги эпохи (сила марок подобрана по истории).
 const TRUCK_POOL={1895:0.0025,1905:0.0028,1913:0.003,1917:0.0045,1920:0.005,1925:0.0055,1929:0.0065};
-const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=1.5,LAM=0.25,AQT=1.8,BT=4;
+const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=1.5,LAM=0.25,AQT=2.6,BT=4;
 // Качество машин конкурентов в классе — доля лучшей машины эпохи
 const QG={people:0.62,middle:0.8,lux:1,truck:0.75};
 /* ---------- доходы семей ---------- */
@@ -85,7 +85,7 @@ function taxRate(y){return y<1914?0.08:y<=1919?0.25:0.15;}
 function segAnnual(c,g,s){const t=yf(s);if(g==='truck')return tabAt(MKT_TRUCK[c],t,true);const sh=tabAt(c==='us'?SEGSH.us:SEGSH.eu,t);return tabAt(MKT[c],t,true)*sh[{people:0,middle:1,lux:2}[g]];}
 function prefP(g,c,s){return tabAt(PREF[g],yf(s))*PREF_C[c][g];}
 // Типичная цена машины такого класса и качества — ориентир для игрока
-const ALPHA_P={people:5,middle:3.5,lux:1.8,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,truck:1.8};
+const ALPHA_P={people:5,middle:3.5,lux:1.8,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,truck:2.6};
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),ALPHA_Q[g]/ALPHA_P[g]);}
 /* ---------- конкуренты ---------- */
 function compVol(cp,s){const t=yf(s);if(t<cp.since||(cp.until&&t>=cp.until))return 0;return tabAt(cp.v,t,true);}

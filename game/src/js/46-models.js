@@ -129,7 +129,9 @@ function carModel(S){
     mCylX(M,0,0.98,-1.0,0.23,-0.45,0.45,12,late?brass:col,late?'metal':'paint',shade(late?brass:col,-0.2));
     if(late){[-0.2,0.2].forEach(x=>mTyreZ(M,x,1.0,-1.3,0.43,0.1));}
     mSteer(M,0.24,1.18,0.05,0.18,S);drv(0.24,0.78,-0.3,0.02);if(S.mech)mechc(-0.24,0.78,-0.3);
-    mCylZ(M,0.56,0.52,0.04,-1.2,0.4,6,'#4a4a4e','metal');tailLamp(-1.25,0.38,0.7);G.len=[late?-1.6:-1.3,zf+0.1];G.t=t;}
+    mCylZ(M,0.56,0.52,0.04,-1.2,0.4,6,'#4a4a4e','metal');tailLamp(-1.25,0.38,0.7);G.len=[late?-1.6:-1.3,zf+0.1];G.t=t;
+    // полоса национального гоночного цвета по капоту и корме — кузов в цвете модели
+    if(S.acc){const yt=late?1.02:1.1;mBox(M,-0.075,yt-0.004,0.16,0.075,yt+0.016,zf,S.acc,'paint');mBox(M,-0.075,0.856,-0.72,0.075,0.876,0.08,S.acc,'paint');}}
   else if(st==='gp1912'||st==='gp1925'){
     const late=st==='gp1925',wb=late?2.4:2.65,t=late?1.25:1.35,r=late?0.37:0.41;wheels(wb,t,r,r,late?0.13:0.11);
     const zf=wb/2+0.14,top=late?0.9:1.0,w=late?0.27:0.31,yb=late?0.3:0.45;
@@ -141,7 +143,8 @@ function carModel(S){
     mSteer(M,sx,top+0.12,0.12,0.19,S);drv(sx,yb+0.3,-0.2,0.08);if(!solo)mechc(-sx,yb+0.3,-0.2);
     mBox(M,w+0.1,yb+0.08,-0.3,w+0.16,yb+0.14,0.9,'#3a3a3e','metal');
     // номер на хвосте
-    tailLamp(-1.3,0.18,yb+0.3);G.len=[-1.6,zf+0.1];G.t=t;}
+    tailLamp(-1.3,0.18,yb+0.3);G.len=[-1.6,zf+0.1];G.t=t;
+    if(S.acc)mBox(M,-0.065,top-0.004,0.05,0.065,top+0.016,zf,S.acc,'paint');}
   else if(st==='van'||st==='truck'){
     const truck=st==='truck',big=S.b==='b8',wb=truck?(big?3.6:3.2):2.5,t=1.45,rF=truck?0.46:0.44,rR=truck?0.5:0.44;wt='wood';wheels(wb,t,rF,rR,truck?0.12:0.08,big,truck);
     const zf=wb/2+0.3;radiator(zf,0.34,0.62,1.2,y<1906?'coil':'vert');hood(zf,wb/2-0.45,0.36,0.62,1.2,true);
@@ -155,11 +158,13 @@ function carModel(S){
     tailLamp(z0-0.02,0.6,0.95);G.len=[z0,zf+0.1];G.t=t+(big?0.3:0);}
   else{ // серийные: runabout, sport, tonneau, tourer, sedan
     const sedan=st==='sedan',tour=st==='tourer',ton=st==='tonneau',sport=st==='sport',run=st==='runabout';
-    const wb=run?1.95:sport?2.5:ton?2.25:tour?2.8:2.85,t=1.38,r=y<1906?0.44:y<1914?0.42:y<1922?0.39:0.36;
+    // капот тем длиннее, чем больше мотор (как на рисунке модели); облегчённая — без крыльев, подножек, фонарей, стекла и тента
+    const hk=S.hp===undefined?0:([-0.1,-0.05,0,0.1,0.22,0.36][S.hp]||0),strip=!!S.strip;
+    const wb=(run?1.95:sport?2.5:ton?2.25:tour?2.8:2.85)+hk,t=1.38,r=y<1906?0.44:y<1914?0.42:y<1922?0.39:0.36;
     if(y>=1922&&(sedan||tour))wt=S.wheel==='wire'?'wire':'disc';wheels(wb,t,r,r,y<1906?0.08:y<1922?0.1:0.13);
     const zf=wb/2+(run?0.05:0.22),yb=r+0.08,top=run?yb+0.42:yb+0.55;
-    radiator(zf,run?0.26:0.32,yb,top,y<1901?'coil':y<1906?'honey':'vert');hood(zf,wb/2-(run?0.35:0.7),run?0.28:0.34,yb,top,!run);
-    const zd=wb/2-(run?0.35:0.7);mBox(M,-0.5,yb,zd-0.08,0.5,top+0.06,zd+0.02,'#3a2a1c','wood');
+    radiator(zf,run?0.26:0.32,yb,top,y<1901?'coil':y<1906?'honey':'vert');hood(zf,wb/2-(run?0.35:0.7)-hk,run?0.28:0.34,yb,top,!run);
+    const zd=wb/2-(run?0.35:0.7)-hk;mBox(M,-0.5,yb,zd-0.08,0.5,top+0.06,zd+0.02,'#3a2a1c','wood');
     const zr=-wb/2-(sport?0.5:run?0.35:0.55),bw=sedan||tour?0.64:0.55,btop=top+(sedan?0:ton?0.12:0.02);
     const body=mLoft(M,[sec(zd,bw,yb,btop,0.06),sec(zr+0.25,bw,yb,btop,0.06),sec(zr,bw*0.9,yb+0.05,btop-(sport?0.2:0.05),sport?0.2:0.14)],col,'paint');
     if(ton)body.forEach(fc=>{if(fc.n[2]<-0.8)fc.deco=[{a:[-0.2,yb+0.05,zr-0.005],b:[-0.2,btop-0.1,zr-0.005],w:0.012,c:shade(col,-0.5)},{a:[0.2,yb+0.05,zr-0.005],b:[0.2,btop-0.1,zr-0.005],w:0.012,c:shade(col,-0.5)},{a:[-0.2,btop-0.1,zr-0.005],b:[0.2,btop-0.1,zr-0.005],w:0.012,c:shade(col,-0.5)},{dot:[0.14,(yb+btop)/2,zr-0.01],r:0.025,c:brass}];});
@@ -167,12 +172,12 @@ function carModel(S){
       cab.forEach(fc=>{if(Math.abs(fc.n[0])>0.8){const sd=Math.sign(fc.n[0]),x=sd*(bw-0.015),yw0=cy0+0.14,yw1=cy1-0.1,d=[];for(let k=0;k<3;k++){const z0w=zd-0.2-k*(zd-zr-0.4)/3,z1w=z0w-(zd-zr-0.4)/3+0.08;mFace(M,[[x+sd*0.004,yw0,z0w],[x+sd*0.004,yw0,z1w],[x+sd*0.004,yw1,z1w],[x+sd*0.004,yw1,z0w]],'#7fa0b6','glass',[0,cy0,(zd+zr)/2]);}}
         if(fc.n[2]<-0.8)mFace(M,[[-bw+0.12,cy0+0.14,zr+0.195],[bw-0.12,cy0+0.14,zr+0.195],[bw-0.12,cy1-0.12,zr+0.195],[-bw+0.12,cy1-0.12,zr+0.195]],'#7fa0b6','glass',[0,cy0,zd]);});}
     else{const rows=tour||ton?[-0.25,-0.25-(tour?1.0:0.8)]:[-0.1];rows.forEach(z=>seats(z,[-0.26,0.26],yb+0.18,0.42,0.22));
-      if(y>=1908&&!run)mFace(M,[[-0.46,top+0.06,zd-0.05],[0.46,top+0.06,zd-0.05],[0.46,top+0.5,zd-0.12],[-0.46,top+0.5,zd-0.12]],'#9fbccc','glass',[0,top,zd-1],true);
-      if(tour)mLoft(M,[sec(zr+0.25,bw-0.05,btop,btop+0.22,0.1),sec(zr-0.05,bw-0.08,btop,btop+0.18,0.1)],'#3a342c','cloth');
+      if(y>=1908&&!run&&!strip)mFace(M,[[-0.46,top+0.06,zd-0.05],[0.46,top+0.06,zd-0.05],[0.46,top+0.5,zd-0.12],[-0.46,top+0.5,zd-0.12]],'#9fbccc','glass',[0,top,zd-1],true);
+      if(tour&&!strip)mLoft(M,[sec(zr+0.25,bw-0.05,btop,btop+0.22,0.1),sec(zr-0.05,bw-0.08,btop,btop+0.18,0.1)],'#3a342c','cloth');
       if(sport&&y>=1910)mTyreZ(M,0,yb+0.3,zr-0.08,r,0.11);}
-    if(!run||y>=1903){const fl=y<1912?0.25:0.1;[-1,1].forEach(sd=>{mFender(M,sd*t/2,r,wb/2,r,0.2,sport&&y>=1912?col:dark,-0.2,Math.PI*0.95);mFender(M,sd*t/2,r,-wb/2,r,0.2,sport&&y>=1912?col:dark,Math.PI*0.05,Math.PI*1.1);});
+    if((!run||y>=1903)&&!strip){const fl=y<1912?0.25:0.1;[-1,1].forEach(sd=>{mFender(M,sd*t/2,r,wb/2,r,0.2,sport&&y>=1912?col:dark,-0.2,Math.PI*0.95);mFender(M,sd*t/2,r,-wb/2,r,0.2,sport&&y>=1912?col:dark,Math.PI*0.05,Math.PI*1.1);});
       if(!run)runboard(-wb/2+r+0.05,wb/2-r-0.05,t/2+0.02,yb-0.02);}
-    if(y>=1901&&!sedan)lamps(zf-0.2,0.42,top-0.05,0.08);
+    if(y>=1901&&!sedan&&!strip)lamps(zf-0.2,0.42,top-0.05,0.08);
     const dz=sedan?-0.1:-0.25;mSteer(M,0.26,top+0.22,zd-0.25,0.19,S);drv(0.26,yb+0.22,dz,zd-0.3);if(S.mech&&!sedan)mechc(-0.26,yb+0.22,dz);else if(S.mech)mechc(-0.26,yb+0.22,dz);
     tailLamp(zr-0.01,0.42,yb+0.2);G.len=[zr-0.1,zf+0.12];G.t=t;}
   M.len=G.len||[-1.5,1.5];M.track=G.t||1.35;return M;

@@ -117,6 +117,9 @@ void main(){
   // крутые склоны: сверху карта растягивается — рисуем пласты камня по высоте и боковую фактуру
   float stp=1.-smoothstep(.55,.85,N.y);if(stp>0.){float ds=texture(u_det,vec2(v_wp.x+v_wp.z,v_wp.y*1.6)*.12).r;dt=mix(dt,ds,stp);alb*=mix(1.,.86+.2*sin(v_wp.y*1.3+sin(v_wp.x*.05+v_wp.z*.04)*4.),stp*u_rk);}
   alb*=mix(.7+.6*dt,1.,smoothstep(30.,110.,dist)*(1.-stp*.6));
+  // вблизи — мелкие травинки, вдали — пятна посуше и посочнее: поле не выглядит крашеным
+  float d2=texture(u_det,v_wp.xz*1.43).r,mac=texture(u_det,v_wp.xz*.019).r;
+  alb*=mix(.8+.4*d2,1.,smoothstep(6.,34.,dist))*(.9+.2*mac);alb*=mix(vec3(1.),vec3(1.1,1.03,.8),smoothstep(.5,.8,mac)*.5*(1.-stp));
 #endif
 #ifdef UV
   vec4 tx=texture(u_tex,v_uv);alb*=pow(tx.rgb,vec3(2.2));alpha=tx.a;
@@ -159,7 +162,7 @@ void main(){vec4 w=u_ivp*vec4(v_p,1.,1.);vec3 d=normalize(w.xyz/w.w-u_cam);
   o=vec4(tone(c),1.);}`;
 // Зрители и люди у дороги: плоские фигуры, всегда повёрнутые к камере; два кадра — машут руками
 const G3VS_BILL=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;in vec4 i_c;uniform mat4 u_vp;uniform vec3 u_camR;uniform float u_time;out vec2 v_uv;out vec3 v_wp;flat out float v_l;
-void main(){vec3 wp=i_a.xyz+u_camR*a_pos.x*i_a.w+vec3(0.,a_pos.y*i_b.x,0.);float fr=i_c.y>0.?floor(mod(u_time*2.6+i_a.x*.37+i_a.z*.29,2.)):0.;
+void main(){vec3 wp=i_a.xyz+u_camR*a_pos.x*i_a.w+vec3(0.,a_pos.y*i_b.x,0.);wp+=u_camR*(a_pos.y*a_pos.y*i_c.w*.12*i_b.x*sin(u_time*1.9+i_a.x*.41+i_a.z*.29));float fr=i_c.y>0.?floor(mod(u_time*2.6+i_a.x*.37+i_a.z*.29,2.)):0.;
   v_uv=vec2(i_b.y+(a_pos.x+.5)*i_b.w+fr*i_b.w,i_b.z+(1.-a_pos.y)*i_c.x);v_wp=wp;v_l=i_c.z;gl_Position=u_vp*vec4(wp,1.);}`;
 const G3FS_BILL=`in vec2 v_uv;in vec3 v_wp;flat in float v_l;uniform sampler2D u_tex;uniform float u_bl;out vec4 o;
 ${G3LIB}

@@ -153,6 +153,7 @@ function updateRaceHUD(){
   const db=document.getElementById('bDmg'),dl=100-F.dmg;db.style.width=dl+'%';db.style.background=dl<40?'var(--bad)':dl<70?'var(--warn)':'var(--good)';
   document.getElementById('bFuel').style.width=F.fuel+'%';
   document.getElementById('rReset').hidden=!(R.me&&R.me.stuck>2.5);
+  svcHUD();
   const lead=order[0],board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard');if(bd.dataset.t!==String(Math.floor(R.time*2))){bd.dataset.t=String(Math.floor(R.time*2));bd.innerHTML=board;}
   raceAssistHUD();
@@ -160,6 +161,11 @@ function updateRaceHUD(){
   m.textContent=R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
   m.classList.toggle('small',m.textContent.length>14);
 }
+// Кнопка 🔧: что нужно машине; горит, когда без механика дальше плохо
+function svcHUD(){const b=document.getElementById('rSvc'),m=R.me,on=!!(m&&R.mode==='drive'&&!m.dnf&&m.fin===null&&R.t>0);
+  let lab='Сервис',hot=false;if(on){if(m.svc)lab=m.svc===2?Math.ceil(m.svcT)+' с':'стоп…';else{const tl=100-Math.min(100,m.tyre);
+    if(m.punct){lab='Колесо';hot=true;}else if(m.fuelRate&&m.fuel<15){lab='Бензин';hot=true;}else if(tl<25){lab='Шины';hot=true;}else if(m.dmg>55||m.limp){lab='Ремонт';hot=true;}}}
+  const sig=(on?1:0)+lab+hot;if(b.dataset.s===sig)return;b.dataset.s=sig;b.hidden=!on;b.classList.toggle('hot',hot);b.classList.toggle('busy',!!(m&&m.svc));b.lastChild.textContent=lab;}
 /* ---------- подсказки водителю: ближайший поворот и его скорость, сцепление шин ---------- */
 // Ближайший поворот впереди (до 200 м): сторона, скорость, с которой шины его удержат, расстояние, нужно ли тормозить
 function paceNote(F){const T=R.trk,n=T.n,st=T.step,tr=TERR[T.terrAt(F.idx)]||TERR.dirt,mu=tr.mu*F.grip*(1-0.3*Math.min(1,F.tyre/100))*(F.punct?0.72:1)*1.08;
@@ -183,6 +189,8 @@ const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса пово
   ['Тормоз','— на прямой, до поворота. В повороте ровный газ, на выходе — полный. Резкий тормоз в повороте может развернуть.'],
   ['Дорога','асфальт и кирпич держат лучше всего, гравий хуже, грязь, песок и снег — плохо: тормозите раньше.'],
   ['Твёрдое','деревья, дома, заборы и зрители не пропускают. Удар — повреждение; поломку механик чинит на обочине.'],
+  ['🔧','— сервис: машина остановится, механик сменит шины, дольёт бензин, подтянет поломки. Кнопка горит, когда пора.'],
+  ['Обочина','трава, камни и склоны тормозят и бьют подвеску; в гору на поле не заехать. Срезать нельзя — вернут туда, где съехали.'],
   ['Вид','— кнопка вверху: сзади, сверху, из кабины. «?» — эта подсказка и пауза.']];
 function showDriveTips(pause){const el=document.getElementById('rTips');if(!R)return;R.hold=true;
   el.innerHTML=`<h3>Как ехать</h3><ul>${DRIVE_TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
@@ -191,7 +199,9 @@ function driveTipsAtStart(){if(!R||R.mode!=='drive')return;let n=0;try{n=+localS
   if(n<2){try{localStorage.setItem('avt-tips3d',n+1);}catch(_){}showDriveTips(false);}}
 document.getElementById('rHelp').addEventListener('click',()=>{if(!R)return;const el=document.getElementById('rTips');if(!el.hidden){el.hidden=true;R.hold=false;R.lastT=performance.now();return;}showDriveTips(R.t>0);});
 document.getElementById('rQuit').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive')finishRace(true);else raceFastForward();});
-document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me){respawn(R.me);R.time+=3;rMsg('+3 с',1);}});
+document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me){const m=R.me;if(m.offIdx>=0)respawnAt(m,m.offIdx,m.offLap);else respawn(m);rMsg('НА ТРАССЕ',1);}});
+// Кнопка сервиса: машина остановится, механик сменит шины, дольёт бензин и подтянет поломки
+document.getElementById('rSvc').addEventListener('click',()=>{const m=R&&R.me;if(!m||R.mode!=='drive'||m.dnf||m.fin!==null||m.svc||m.pitT>0)return;m.svc=1;rMsg('ОСТАНАВЛИВАЕМСЯ',1);});
 document.getElementById('rMus').addEventListener('click',()=>{auInit();if(!AU.on.race){AU.on.race=true;}musNext(1);toast('♪ '+(musCur()?musCur().title:''));});
 document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%3;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ'][R3.view],1);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу

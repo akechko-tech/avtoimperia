@@ -50,7 +50,7 @@ const ACT={
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<RD_MAX&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро выросло: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень.`,'good');checkAch();rerender();flushToasts();}},
   fold:d=>{UIF[d.k]=!isOpen(d.k,d.def==='1');if(!sheet.hidden&&draft===null&&sb.querySelector('[data-k="'+d.k+'"]')){const top=sb.scrollTop;openRD();sb.scrollTop=top;return;}rerender();},
   // рынок
-  dealers:d=>{const need=Math.round(dealerNeed(d.c,G)),have=dealerCount(G,d.c),mk=G.last&&G.last.mk[d.c],lost=mk&&mk.lostDlr||0,tpNeed=mk&&lost>0.5?Math.ceil(((mk.sold||0)+lost)/dealerTP(G)):0,target=Math.max(need,tpNeed);let n=Math.min(+d.n,target-have);if(n<1)return;const c=n*dealerCost(G);if(n<1||G.cash<c)return;G.cash-=c;const was=dealerCount(G,d.c);G.dealers[d.c]=was+n;if(!was&&d.c!==G.country)addLog(`Открыты первые дилеры: ${COUNTRIES[d.c].name}.`,'good');checkAch();rerender();flushToasts();},
+  dealers:d=>{const need=Math.round(dealerNeed(d.c,G)),have=dealerCount(G,d.c),target=Math.max(need,have+dealersShort(G,d.c));let n=Math.min(+d.n,target-have);if(n<1||G.cash<n*dealerCost(G))return;buyDealers(G,d.c,n);checkAch();rerender();flushToasts();},
   dealersCut:d=>{const was=dealerCount(G,d.c),n=Math.max(1,Math.round(was*0.2));G.dealers[d.c]=Math.max(d.c===G.country?1:0,was-n);rerender();},
   // окна
   close:()=>closeSheet(),

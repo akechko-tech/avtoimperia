@@ -34,7 +34,7 @@ function vPlant(){
   const P=PIONEERS[s.pioneer],wp=s.wagePol||'market';
   const staffHTML=`    <div class="chips" style="margin-top:8px"><button class="chip ${s.staffAuto?'on':''}" data-act="staffAuto" data-v="1">Нанимать по плану выпуска<small>отдел кадров сам держит нужный штат</small></button><button class="chip ${s.staffAuto?'':'on'}" data-act="staffAuto" data-v="0">Вручную<small>шаг — 10% штата</small></button></div>
     <div class="label" style="margin-top:12px">Зарплата</div><div class="chips">${Object.entries(WAGE_POL).map(([k,w])=>`<button class="chip ${wp===k?'on':''}" data-act="wagePol" data-v="${k}" ${w.y&&s.y<w.y-techEarly(s)?'disabled':''}>${w.name}<small>×${String(w.k).replace('.',',')} ставки · выработка ${w.prod>=1?'+':'−'}${Math.round(Math.abs(w.prod-1)*100)}% · текучесть ${w.turn}${w.y&&s.y<w.y-techEarly(s)?' · с '+(w.y-techEarly(s))+' г.':''}</small></button>`).join('')}</div>`;
-  return `<div class="scene">${factorySVG(s)}</div>
+  return `<div class="scene">${plantHTML(s)}</div>
   ${advisorCard(s)}
   <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?fmtN(L.sold)+' шт.':'—'}</b></div><div class="kpi"><span class="label">Репутация</span><b>${Math.round(s.rep)}<span class="muted small">/100</span></b></div></div>
   ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><h3>${P.name} <button class="btn sm" data-act="founder">О нём ▸</button></h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
@@ -69,6 +69,12 @@ function autoPlan(md){return Math.max(0,Math.round((md.fc||0)*1.04+(md.backlog||
 const fmtD=x=>x>0&&x<10?(Math.round(x*10)/10).toString().replace('.',','):fmtN(x);
 function planStep(md,sm){const auto=md.plan==='auto'||md.plan===undefined,n=auto?autoPlan(md):+md.plan,st=Math.max(1,Math.round(Math.max(n,md.fc||1)*0.1));
   return `<div class="step${sm?' sm':''}"><button data-act="plan" data-id="${md.id}" data-d="${-st}" aria-label="Выпускать меньше">−</button><span>${fmtN(n)}</span><button data-act="plan" data-id="${md.id}" data-d="${st}" aria-label="Выпускать больше">+</button></div>`;}
+// Себестоимость и экономия масштаба: из чего она складывается и сколько стоила бы машина при большем выпуске
+function costHTML(md,s){if(md.status!=='prod')return '';const v=Math.max(1,modelVol(md)),mat=matCost(md,s),lab=hoursPerCar(md,s)/hoursPerWorker(s)*wageNow(s),at=k=>unitCost({...md,vol:v*k},s),l=1-labLearn(md);
+  return `<p class="small muted" style="margin-top:6px">Себестоимость ${money(mat+lab)} = детали ${money(mat)} + работа ${money(lab)} при выпуске ≈ ${fmtD(v)} в месяц. <span class="good">Больше выпуск — дешевле машина:</span> при ${fmtN(v*3)} в месяц — ${money(at(3))}, при ${fmtN(v*10)} — ${money(at(10))}${l>0.02?`. Опыт рабочих: ${fmtN(md.made||0)} машин уже собрано — работы на ${Math.round(l*100)}% меньше`:''}.</p>`;}
+// Грузовик: сколько фирм всё ещё берут лошадь
+function truckHint(md,s){if(md.status!=='prod'||!isTruck(md))return '';const h=horseSplit(s,s.country,s.last&&s.last.mk[s.country]);if(!h)return '';
+  return `<p class="small muted" style="margin-top:6px">🐴 Из ≈ ${fmtD(h.pool)} фирм, которые в месяц покупают транспорт, лошадь всё ещё берут ${pct(h.horse/h.pool)}. Чем надёжнее, экономичнее и дешевле ваша машина, тем больше их пересядет на мотор.</p>`;}
 function stockWarn(md){return md.status==='prod'&&md.stock>Math.max(3,(md.fc||0)*3);}
 // Сворачиваемые разделы: длинные списки открываются, когда нужны
 const UIF={};
@@ -116,7 +122,7 @@ function vModels(){
     return `<article class="card"><div class="row"><div><h3>${esc(md.name)}</h3><span class="label">${esc(KIND_NAME[rivalKind(md)])}</span></div>${pill}</div>
       ${ctl}
       <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><div>Себест.<b>${money(uc)}</b></div><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b></div></div>
-      ${lostLine(md)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}
+      ${lostLine(md)}${truckHint(md,s)}${costHTML(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}
       <div class="carbox${enter}">${carArt(md,{anim:md.status==='prod'})}</div>
       ${IMG[C.ref.name]?photoHTML(C.ref.name)+`<p class="small muted" style="margin-top:4px">Главный соперник: ${esc(C.ref.name)}</p>`:''}
       ${qbar(C.S,'Против соперника: '+C.ref.name)}
@@ -134,6 +140,14 @@ function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?''
 // Сколько продавали бы ваши модели в стране при полной сети дилеров
 function marketPotential(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length)return 0;const R=mkCountry(c,s,act,null,null,1);return act.reduce((a,m)=>a+(R.by[m.id]||0),0)*(techLv(s,'credit')?1.15:1);}
 function topIncome(inc,p){return inc.xT*Math.pow(p/INC_TOP,-1/inc.al);}
+// Грузовые машины: главный соперник — лошадь. Сколько фирм в месяц выбирают транспорт и что берут
+function horseSplit(s,c,M,R0){const TZ=M&&M.segs&&M.segs.truck,pool=(M&&M.tpool)||(R0||mkCountry(c,s,[])).segs.truck.pool||0;if(pool<=0)return null;
+  const you=TZ?TZ.you:0,riv=TZ?Math.max(0,TZ.size-TZ.you):(R0||mkCountry(c,s,[])).segs.truck.inc;return {pool,you,riv,horse:Math.max(0,pool-riv-you)};}
+function horseHTML(s,c,M,R0){if(s.y<1896)return '';const h=horseSplit(s,c,M,R0);if(!h)return '';const w=x=>Math.max(0,Math.min(100,x/h.pool*100)),pp=x=>pct(x/h.pool,x/h.pool<0.1?1:0);
+  return `<div style="margin-top:14px"><div class="row small"><span class="label">🐴 Лошадь или мотор</span><span class="muted">фирм в месяц ≈ ${fmtD(h.pool)}</span></div>
+    <div class="hbar" style="margin-top:6px"><i style="width:${w(h.horse)}%;background:#9a7448"></i><i style="width:${w(h.riv)}%;background:#6f8aa6"></i><i style="width:${w(h.you)}%;background:var(--brass)"></i></div>
+    <div class="hleg small"><span><i style="background:#9a7448"></i>лошадь ${pp(h.horse)}</span><span><i style="background:#6f8aa6"></i>моторы конкурентов ${pp(h.riv)}</span><span><i style="background:var(--brass)"></i>ваши ${pp(h.you)}</span></div>
+    <p class="small muted" style="margin-top:6px">Лавки, пивоварни, почта и стройки каждый месяц покупают транспорт. Мотор берут, когда он выгоднее лошади: надёжный, экономичный и недорогой за тонну груза. Хороший дешёвый фургон или грузовик уводит покупателей не только у конкурентов, но и у лошадей.</p></div>`;}
 function vMarket(){
   const s=G,home=s.country,e=econ(s.y,s.m,home),L=s.last,M=L&&L.mk[home],R0=mkCountry(home,s,[]),H=R0.H,inc=R0.inc,fleet=fleetOf(s,home),K=affordK(home,s);
   const segRows=SEGK.map(g=>{const z=M&&M.segs?M.segs[g].size:R0.segs[g].inc,you=M&&M.segs?M.segs[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${fmtD(z)}</td><td class="n">${M?fmtD(you):'—'}</td><td class="n">${M&&z>0?pct(you/z,1):'—'}</td><td class="n">${money(prefP(g,home,s))}</td></tr>`;}).join('');
@@ -148,20 +162,20 @@ function vMarket(){
   const rvT=SEGK.map(g=>{const v=rivalBoost(s,home,g);return v>0.05?`${SEG[g].name.toLowerCase()} +${Math.round((Math.exp(v)-1)*100)}%`:'';}).filter(Boolean).join(', ');
   const dc=dealerCost(s),netRow=c=>{const d=dealerCount(s,c),need=Math.round(dealerNeed(c,s)),cov=Math.min(1,d/need),ec=econ(s.y,s.m,c),mk=L&&L.mk[c],size=mk&&mk.size!=null?mk.size:SEGK.reduce((a,g)=>a+mkCountry(c,s,[]).segs[g].inc,0),tf=c===home?0:tariffAt(c,s),pot=marketPotential(s,c),lost=mk&&mk.lostDlr||0;
     // сколько дилеров нужно: покрыть страну и успеть продать всех покупателей (каждый дилер — до tp машин в месяц)
-    const tp=dealerTP(s),tpNeed=mk&&lost>0.5?Math.ceil(((mk.sold||0)+lost)/tp):0,target=Math.max(need,tpNeed),room=Math.max(0,target-d);
-    const add=(n,lab)=>{const k=Math.min(n,room);return `<button class="btn sm" data-act="dealers" data-c="${c}" data-n="${k}" ${s.cash<k*dc?'disabled':''}>+${fmtN(k)}${lab||''}</button>`;};const big=Math.max(5,Math.round(need*0.1/5)*5);
-    const btns=room<=0?'':d>=need?add(Math.max(1,Math.min(room,Math.round(need*0.1))),' — дилеры не успевают'):add(1)+(room>1?add(big):'');
+    const tp=dealerTPc(s,c),short=dealersShort(s,c),tpNeed=d+short,target=Math.max(need,tpNeed),room=Math.max(0,target-d);
+    const add=(n,lab,pri)=>{const k=Math.min(n,room);return `<button class="btn sm${pri?' primary':''}" data-act="dealers" data-c="${c}" data-n="${k}" ${s.cash<k*dc?'disabled':''}>+${fmtN(k)}${lab||''} · ${money(k*dc)}</button>`;};const big=Math.max(5,Math.round(need*0.1/5)*5);
+    const btns=room<=0?'':short>0?add(short,' — продать всем',1)+(short>=8?add(Math.max(1,Math.round(short/4)),''):''):add(1)+(room>1?add(big):'');
     return `<div class="net-row"><div class="row"><div><h3>${COUNTRIES[c].name}${c===home?' · дома':''}</h3><p class="small muted">Рынок ${fmtD(size)} в месяц · <span class="${ec.tone}">${ec.label}</span>${tf?` · пошлина ${Math.round(tf*100)}%`:''}</p></div><span class="num small ${mk&&mk.sold?'good':''}" style="white-space:nowrap">${mk?fmtN(mk.sold||0):0} шт.</span></div>
       ${pot>0?`<p class="small" style="margin-top:4px">Если открыть дилеров по всей стране, ваши модели брали бы ≈ <b class="num">${fmtD(pot)}</b> в месяц${d?` · сейчас ваша сеть видит ${Math.round(reachOf(s,c)*100)}% покупателей`:''}</p>`:''}
       <div class="row small" style="margin-top:6px"><span class="muted">Дилеров <b class="num">${fmtN(d)}</b> · всю страну покрывают ${fmtN(need)}</span><span class="num">${Math.round(cov*100)}%</span></div><div class="bar" style="margin-top:4px"><i style="width:${cov*100}%;background:var(--good)"></i></div>
-      ${d>=need?`<p class="small ${lost>0.5?'warn':'good'}" style="margin-top:4px">Сеть покрывает всю страну${lost>0.5?`, но дилеры не успевают: потеряно ≈ ${fmtD(lost)} покупателей. Для ваших продаж нужно ≈ ${fmtN(tpNeed)} дилеров — каждый продаёт до ${fmtN(Math.round(tp))} машин в месяц`:''}.</p>`:lost>0.5?`<p class="small warn" style="margin-top:4px">Дилеры не успевают: потеряно ≈ ${fmtD(lost)} покупателей.</p>`:''}
+      ${d>=need?`<p class="small ${lost>0.5?'warn':'good'}" style="margin-top:4px">Сеть покрывает всю страну${lost>0.5?`, но дилеры не успевают: в прошлом месяце ушли ни с чем ≈ ${fmtD(lost)} покупателей. Дилер продаёт до ${fmtN(Math.round(tp))} машин в месяц — нужно ещё ${fmtN(short)}`:''}.</p>`:lost>0.5?`<p class="small warn" style="margin-top:4px">Дилеры не успевают: ушли ни с чем ≈ ${fmtD(lost)} покупателей — нужно ещё ${fmtN(short)}.</p>`:''}
       <div class="btns" style="margin-top:6px">${btns}${d>(c===home?1:0)?`<button class="btn sm" data-act="dealersCut" data-c="${c}">Закрыть 20%</button>`:''}</div></div>`;};
   const abroad=Object.keys(COUNTRIES).filter(c=>c!==home),nAb=abroad.filter(c=>dealerCount(s,c)>0).length;
   const net=netRow(home)+fold('exp','Экспорт: '+(nAb?`дилеры в ${nAb} ${plural(nAb,'стране','странах','странах')}`:'пока нет'),abroad.map(netRow).join(''),nAb>0,'за границей покупатель платит пошлину, а вы — доставку');
   return `${advisorCard(s,'market')}<section class="card"><div class="row"><h2>${COUNTRIES[home].name}</h2><span class="pill ${e.tone}">${e.label}</span></div>
     <div class="meta"><div>Рынок/мес<b>${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))}</b></div><div>Ваши<b>${L?fmtN(L.homeSold):'—'}</b></div><div>Доля<b>${L?pct(L.share,1):'—'}</b></div><div>Цены к 1913<b>${Math.round(cpi(s)*100)}%</b></div></div>${home==='us'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Америке много, но дороги плохи, и машины пока берут неохотно. Во Франции машины уже в моде: откройте там дилеров ниже, пошлина невелика.</p>':''}${home==='it'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Италии мало, свой рынок крошечный. Продавайте и за границей: во Франции покупателей в разы больше, пошлина — 12%.</p>':''}<div class="hr"></div>
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
-    <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: они сравнивают фургоны и грузовики по цене за тонну груза и надёжности, а лошадь с телегой — их главный соперник.</p></section>
+    <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: они сравнивают фургоны и грузовики по цене за тонну груза и надёжности, а лошадь с телегой — их главный соперник.</p>${horseHTML(s,home,M,R0)}</section>
   <section class="card"><h2>Покупатели</h2>${fold('buyers','Кто может купить машину',`
     <div class="meta"><div>Семей<b>${fmtN(H)}</b></div><div>Доход семьи<b>${money(inc.med)}</b></div><div>Машин на дорогах<b>${fmtN(fleet)}</b></div><div>С машиной<b>${pct(Math.min(1,fleet/H),fleet/H<0.01?2:1)}</b></div></div>
     <p class="small muted" style="margin-top:6px">Доход — у средней семьи за год: половина семей беднее. Богатейшие 1% получают от ${money(topIncome(inc,0.01))} в год.</p>

@@ -6,7 +6,7 @@ import json, os, re, urllib.parse, urllib.request, hashlib, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'app', 'src', 'main', 'assets', 'img')
 UA = 'AvtoimperiaBuild/1.0 (https://github.com/akechko-tech/avtoimperia; game build)'
-BAD = re.compile(r'logo|map|layout|circuit|coat_of_arms|flag|emblem|\.svg$', re.I)
+BAD = re.compile(r'logo|map|layout|circuit|coat_of_arms|flag|emblem|embl%C3%A8me|emblème|blason|wappen|badge|\.svg$', re.I)
 
 def get(url):
     req = urllib.request.Request(url, headers={'User-Agent': UA})
@@ -16,7 +16,43 @@ def get(url):
 def main():
     os.makedirs(OUT, exist_ok=True)
     titles = json.load(open(os.path.join(ROOT, 'tools', 'titles.json'), encoding='utf-8'))
-    manifest = {}
+    # точные фото машин: файлы Commons вместо главного фото статьи (там бывают логотипы, заводы, мосты)
+    try:
+        files = json.load(open(os.path.join(ROOT, 'tools', 'photo_files.json'), encoding='utf-8'))
+    except Exception:
+        files = {}
+    manifest, fm = {}, {}
+    fixed = [t for t in titles if t in files]
+    titles = [t for t in titles if t not in files]
+    want = {}
+    for t in fixed:
+        if files[t]:
+            want.setdefault('File:' + files[t], []).append(t)
+    keys = list(want)
+    for i in range(0, len(keys), 40):
+        chunk = keys[i:i+40]
+        url = ('https://commons.wikimedia.org/w/api.php?action=query&format=json'
+               '&prop=imageinfo&iiprop=url&iiurlwidth=640&titles=' + urllib.parse.quote('|'.join(chunk)))
+        try:
+            q = json.loads(get(url)).get('query', {})
+        except Exception as e:
+            print('Commons API error', e); continue
+        norm = {n['to']: n['from'] for n in q.get('normalized', [])}
+        for pg in q.get('pages', {}).values():
+            ii = (pg.get('imageinfo') or [{}])[0]
+            th = ii.get('thumburl')
+            if not th:
+                print('no file', pg.get('title')); continue
+            name = pg['title'][5:].replace(' ', '_')
+            fn = hashlib.md5(name.encode()).hexdigest()[:12] + '.jpg'
+            path = os.path.join(OUT, fn)
+            if not os.path.exists(path):
+                try:
+                    open(path, 'wb').write(get(th)); time.sleep(0.2)
+                except Exception as e:
+                    print('download error', name, e); continue
+            for t in want.get(norm.get(pg['title'], pg['title']), []) + want.get(pg['title'], []):
+                fm[t] = {'src': 'img/' + fn, 'file': name}
     for i in range(0, len(titles), 40):
         chunk = titles[i:i+40]
         url = ('https://en.wikipedia.org/w/api.php?action=query&format=json&redirects=1'
@@ -43,9 +79,12 @@ def main():
             v = {'src': 'img/' + fn, 'file': name}
             manifest[pg['title']] = v
             for a in alias.get(pg['title'], []): manifest[a] = v
+    for t in fixed:
+        manifest.pop(t, None)
+    manifest.update(fm)
     with open(os.path.join(OUT, 'manifest.js'), 'w', encoding='utf-8') as f:
         f.write('window.IMG_MANIFEST=' + json.dumps(manifest, ensure_ascii=False) + ';')
-    print('photos:', len(set(v['src'] for v in manifest.values())), 'titles:', len(manifest), 'of', len(titles))
+    print('photos:', len(set(v['src'] for v in manifest.values())), 'titles:', len(manifest), 'of', len(titles) + len(fixed))
 
 MUSIC_Q = [
      ['Daisy Bell Bicycle Built for Two Edison',1895,'song'],['Washington Post march',1895,'march'],['Semper Fidelis march',1896,'march'],['Stars and Stripes Forever',1897,'march'],

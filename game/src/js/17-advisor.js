@@ -42,11 +42,13 @@ function adviceList(s){
     if((L.dumpN>0||whStock(s)>whCap(s)*0.9)&&!(s.whBuild||[]).length){const n=Math.max(5,Math.round(whCap(s)*0.5)),c=n*whUnitCost(s);if(s.cash>c*1.2)add(72,'🏚',`Склад ${L.dumpN?'переполнен — машины ушли перекупщикам за полцены':'почти полон'}. Расширьте его.`,`+${fmtN(n)} мест · ${money(c)}`,()=>ACT.whAdd({n}),'plant');}}
   // дилеры
   const dc=dealerCost(s),mk=L&&L.mk[home],need=Math.round(dealerNeed(home,s)),have=dealerCount(s,home);
-  if(mk&&(mk.lostDlr||0)>0.5){const n=Math.max(1,Math.min(20,Math.ceil(mk.lostDlr/dealerTP(s)))),c=n*dc;if(s.cash>c*1.5)add(68,'🏪',`Дилеры не успевают: ≈ ${fmtD(mk.lostDlr)} покупателей ушли ни с чем.`,`+${n} дилер${n===1?'':'а'}`,()=>{G.cash-=n*dealerCost(G);G.dealers[home]=dealerCount(G,home)+n;},'market');}
-  else if(act.length&&have<need*0.5){const n=Math.max(1,Math.min(need-have,Math.round(need*0.1))),c=n*dc;if(s.cash>c*3)add(48,'🏪',`Ваши дилеры есть не во всех городах: покупатели видят ${Math.round(reachOf(s,home)*100)}% ваших машин.`,`+${n} · ${money(c)}`,()=>{G.cash-=n*dealerCost(G);G.dealers[home]=dealerCount(G,home)+n;},'market');}
+  // дилеров столько, чтобы обслужить всех, кто хотел купить (а не «по 20»): иначе деньги уходят, а очередь почти не меняется
+  if(mk&&(mk.lostDlr||0)>0.5){const full=dealersShort(s,home),n=Math.min(full,Math.floor(Math.max(0,s.cash-2000*cpi(s))/dc));
+    if(n>=1)add(68,'🏪',`Дилеры не успевают: ≈ ${fmtD(mk.lostDlr)} покупателей в месяц ушли ни с чем. Дилер продаёт до ${fmtN(Math.round(dealerTPc(s,home)))} машин в месяц — чтобы обслужить всех, нужно ещё ${fmtN(full)}${n<full?`, денег хватает на ${fmtN(n)}`:''}.${(L.lostCap||0)>Math.max(1,L.sold*0.05)?' Машин тоже не хватает — нужны и цеха.':''}`,`+${fmtN(n)} · ${money(n*dc)}`,()=>{buyDealers(G,home,n);},'market');}
+  else if(act.length&&have<need*0.5){const n=Math.max(1,Math.min(need-have,Math.round(need*0.1))),c=n*dc;if(s.cash>c*3)add(48,'🏪',`Ваши дилеры есть не во всех городах: покупатели видят ${Math.round(reachOf(s,home)*100)}% ваших машин.`,`+${n} · ${money(c)}`,()=>{buyDealers(G,home,n);},'market');}
   // экспорт: где ваши машины брали бы
   if(act.length&&s.cash>dc*8){const hd=homeDemand(s);let bestC=null,bestP=0;Object.keys(COUNTRIES).forEach(c=>{if(c===home||dealerCount(s,c))return;const p=marketPotential(s,c);if(p>bestP){bestP=p;bestC=c;}});
-    if(bestC&&bestP>Math.max(1.5,hd*0.25)){const n=Math.max(2,Math.min(8,Math.round(dealerNeed(bestC,s)*0.15)));add(45,'🌍',`В стране «${COUNTRIES[bestC].name}» ваши машины брали бы ≈ ${fmtD(bestP)} в месяц. Откройте там дилеров.`,`+${n} дилеров`,()=>{G.cash-=n*dealerCost(G);G.dealers[bestC]=n;addLog(`Открыты первые дилеры: ${COUNTRIES[bestC].name}.`,'good');},'market');}}
+    if(bestC&&bestP>Math.max(1.5,hd*0.25)){const n=Math.max(2,Math.min(8,Math.round(dealerNeed(bestC,s)*0.15)));add(45,'🌍',`В стране «${COUNTRIES[bestC].name}» ваши машины брали бы ≈ ${fmtD(bestP)} в месяц. Откройте там дилеров.`,`+${n} ${plural(n,'дилер','дилера','дилеров')}`,()=>{buyDealers(G,bestC,n);},'market');}}
   // технологии завода
   if(!s.techBuild){const k=TECH_ORDER.find(k=>techOpen(s,k)&&s.cash>techCost(s,k)*1.8);if(k){const nx=techNext(s,k),c=techCost(s,k);add(40,'⚙️',`Можно внедрить «${nx.name}»: ${techEffects(nx)}.`,`Внедрить · ${money(c)}`,()=>ACT.tech({k}),'plant');}}
   // реклама
@@ -81,8 +83,8 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   if(L&&(L.dumpN>0||whStock(s)>whCap(s)*0.85)&&!(s.whBuild||[]).length){const n=Math.max(5,Math.round(whCap(s)*0.6)),c=n*whUnitCost(s);if(room()>c){s.cash-=c;s.plantVal+=c;s.whBuild=s.whBuild||[];s.whBuild.push({units:n,left:1});msg.push('расширил склад');}}
   // дилеры дома
   const mk=L&&L.mk[home],need=Math.round(dealerNeed(home,s)),have=dealerCount(s,home),dc=dealerCost(s);
-  let add=0;if(mk&&(mk.lostDlr||0)>0.5)add=Math.ceil(mk.lostDlr/dealerTP(s));else if(act.length&&have<need*0.7)add=Math.max(1,Math.round((need*0.7-have)*0.25));
-  add=Math.min(add,Math.floor(room()/dc/2));if(add>0){s.cash-=add*dc;s.dealers[home]=have+add;msg.push(`+${add} дилер${add===1?'':'а'}`);}
+  let add=0;if(mk&&(mk.lostDlr||0)>0.5)add=dealersShort(s,home);else if(act.length&&have<need*0.7)add=Math.max(1,Math.round((need*0.7-have)*0.25));
+  add=Math.min(add,Math.floor(room()/dc/2));if(add>0){s.cash-=add*dc;s.dealers[home]=have+add;msg.push(`+${add} ${plural(add,'дилер','дилера','дилеров')}`);}
   // экспорт — раз в полгода
   if(s.m%6===2&&act.length){Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const d=dealerCount(s,c),pot=marketPotential(s,c);if(!d&&pot>2&&room()>dc*8){const n=3;s.cash-=n*dc;s.dealers[c]=n;msg.push('дилеры: '+COUNTRIES[c].name);}
     else if(d&&d<dealerNeed(c,s)*0.5&&pot>d*dealerTP(s)*0.5&&room()>dc*4){const n=Math.max(1,Math.round(d*0.3));s.cash-=n*dc;s.dealers[c]=d+n;}});}

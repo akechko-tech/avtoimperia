@@ -403,9 +403,10 @@ function scenQueue(T){SCQ.length=0;const seen=new Set(),start=T.startIdx||0;cons
 const CARD3D=new Map();
 function carArt(md,opt={}){
   try{const p=parts(md),y=md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895);
-    const style=carStyle(md,0,y),wheel=wheelKind(md,y),col=md.paint||'#23427a',key=['card',style,col,y,p.b.id,p.c.id,p.e.id,wheel,md.t].join('|');
+    // тот же облик, что в гонке (серийная подготовка): кузов, цвет, колёса, капот по мотору
+    const S=modelSpec(md,0,y,{mech:false}),key='card|'+S.key+'|'+p.c.id;
     let url=CARD3D.get(key);
-    if(!url){const M=carModel({key,style,color:col,y,wheel,mech:false,num:0,b:p.b.id,lod:'hi'}),dpr=Math.min(2,window.devicePixelRatio||1),sp=renderModel(M,2.1,0.28,52*dpr,{shadow:0.4,blur:0.22});
+    if(!url){const M=carModel(Object.assign({},S,{key,lod:'hi'})),dpr=Math.min(2,window.devicePixelRatio||1),sp=renderModel(M,2.1,0.28,52*dpr,{shadow:0.4,blur:0.22});
       url=sp.img.toDataURL('image/png');if(CARD3D.size>40)CARD3D.delete(CARD3D.keys().next().value);CARD3D.set(key,url);}
     return `<img class="car3d${opt.anim?' anim':''}" src="${url}" alt="${esc(md.name||'Автомобиль')}">`;
   }catch(e){return carSVG(md,opt);}

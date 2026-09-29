@@ -49,13 +49,16 @@ const RIVAL_CAR={
     [1919,'Hispano-Suiza H6',{e:'e6',g:'g5',c:'c5',k:'k6',b:'b4',w:'w6'}],[1925,'Rolls-Royce Phantom I',{e:'e6',g:'g5',c:'c5',k:'k6',b:'b11',w:'w8'}],
     [1928,'Duesenberg Model J',{e:'e8',g:'g7',c:'c5',k:'k4',b:'b5',w:'w8'}]],
   van:[[1895,'Daimler Motor-Lastwagen',{e:'e1',g:'g2',c:'c1',k:'k1',b:'b6',w:'w1'}],[1898,'Daimler Motor-Lastwagen',{e:'e2',g:'g2',c:'c2',k:'k1',b:'b6',w:'w1'}],
-    [1903,'Renault AG',{e:'e3',g:'g2',c:'c3',k:'k2',b:'b6',w:'w1'}],[1910,'Ford Model T',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b6',w:'w3'}],
+    [1903,'Peugeot Type 64',{e:'e3',g:'g2',c:'c3',k:'k2',b:'b6',w:'w1'}],[1910,'Ford Model T',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b6',w:'w3'}],
     [1920,'Ford Model TT',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b6',w:'w7'}],[1927,'Ford Model A (1927–1931)',{e:'e14',g:'g6',c:'c5',k:'k5',b:'b6',w:'w8'}]],
-  truck:[[1895,'Daimler Motor-Lastwagen',{e:'e1',g:'g2',c:'c1',k:'k1',b:'b6',w:'w1'}],[1910,'Mack Trucks',{e:'e4',g:'g2',c:'c4',k:'k2',b:'b7',w:'w1'}],
+  truck:[[1895,'Daimler Motor-Lastwagen',{e:'e1',g:'g2',c:'c1',k:'k1',b:'b6',w:'w1'}],[1910,'Berliet CBA',{e:'e4',g:'g2',c:'c4',k:'k2',b:'b7',w:'w1'}],
     [1917,'Liberty truck',{e:'e14',g:'g6',c:'c4',k:'k2',b:'b7',w:'w1'}],[1920,'Mack AC',{e:'e14',g:'g6',c:'c5',k:'k2',b:'b7',w:'w1'}],
     [1925,'Ford Model TT',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b7',w:'w8'}]]
 };
-function rivalCar(kind,y){const L=RIVAL_CAR[kind];let r=L[0];L.forEach(x=>{if(x[0]<=y)r=x;});return r;}
+// Грузовиков до 1910 года почти нет: грузовик, построенный раньше (прототип КБ), сравнивают с фургоном эпохи
+function rivalCar(kind,y){const L=RIVAL_CAR[kind];let r=L[0];L.forEach(x=>{if(x[0]<=y)r=x;});
+  if(kind==='truck'&&r[2].b==='b6'){const v=rivalCar('van',y);r=[v[0],v[1],{...v[2],b:'b7'}];}
+  return r;}
 
 // Детали. c — цена в долларах 1913 года при появлении (потом дешевеет ~4% в год, но не ниже 40%);
 // q — сложность детали для конструкторов (от неё бюджет и срок разработки), kg — вес, cx — трудоёмкость сборки.

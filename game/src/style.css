@@ -65,7 +65,8 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 input[type=text]{width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:10px;font:inherit;color:var(--text)}
 .scene{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#0a1a2b}
 .scene svg{display:block;width:100%;height:auto}
-.carbox{background:linear-gradient(180deg,rgba(142,168,195,.05),rgba(142,168,195,.12));border:1px solid var(--line-soft);border-radius:5px;margin-top:10px;overflow:hidden}
+.carbox{position:relative;padding-bottom:22px;background:radial-gradient(ellipse 60% 42% at 50% 78%,rgba(255,236,190,.2),rgba(255,236,190,0) 70%),linear-gradient(180deg,#223a52 0,#18293b 62%,#101c2a 63%,#0c1622 100%);border:1px solid var(--line-soft);border-radius:5px;margin-top:10px;overflow:hidden}
+.carbox::before{content:'';position:absolute;left:0;right:0;top:0;height:62%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,rgba(255,255,255,0) 1px 38px);pointer-events:none}
 .carbox svg{display:block;width:100%;height:auto;max-height:130px}
 .car .spin{animation:spin .7s linear infinite;animation-play-state:paused}
 .car.anim .spin{animation-play-state:running}
@@ -290,7 +291,7 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .advice ul{margin:6px 0 0;padding-left:18px}
 .advice li{font-size:13px;line-height:1.4;margin:3px 0;color:var(--text)}
 .advice .btn{margin-top:8px}
-.carbox img.car3d{display:block;margin:6px auto 2px;height:132px;width:auto;max-width:96%;object-fit:contain}
+.carbox img.car3d{position:relative;display:block;margin:8px auto 2px;height:138px;width:auto;max-width:96%;object-fit:contain;-webkit-box-reflect:below -14px linear-gradient(transparent 72%,rgba(255,255,255,.16))}
 .carbox.enter img.car3d{animation:enter .7s cubic-bezier(.2,.8,.3,1)}
 @media (prefers-reduced-motion:no-preference){.carbox img.car3d.anim{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-1.5px)}}}
 .p-fig img.car3d{display:block;width:100%;height:auto;filter:sepia(.15) contrast(1.05)}
@@ -342,3 +343,20 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .r-tips ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13px;line-height:1.3}
 .r-tips li b{color:var(--brass)}
 .r-tips .btn{margin-top:12px;position:sticky;bottom:0;box-shadow:0 -8px 14px rgba(8,16,28,.95)}
+.hbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--panel2);border:1px solid var(--line-soft)}
+.hbar i{display:block;height:100%;transition:width .5s ease}
+.hleg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;color:var(--muted)}
+.hleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.r-svc{position:absolute;right:10px;bottom:12px;width:74px;height:74px;border-radius:50%;border:2px solid rgba(233,196,106,.7);background:rgba(10,20,34,.72);color:#efe6cf;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-family:var(--display);cursor:pointer;touch-action:manipulation;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.r-svc[hidden]{display:none}
+.r-svc b{font-size:26px;line-height:1}
+.r-svc small{font-size:11px;font-weight:700;letter-spacing:.02em}
+.r-svc.hot{border-color:#ff8a5c;background:rgba(150,40,20,.78);animation:svcPulse 0.9s ease-in-out infinite}
+.r-svc.busy{border-color:var(--good);background:rgba(20,80,40,.8);animation:none}
+@keyframes svcPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,138,92,.6)}50%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(255,138,92,0)}}
+.plant3d{position:relative;width:100%;aspect-ratio:720/330;overflow:hidden}
+.plant3d>img{display:block;width:100%;height:100%}
+.pl-smoke{position:absolute;width:5%;aspect-ratio:1;margin:-2.5% 0 0 -2.5%;border-radius:50%;background:radial-gradient(circle,rgba(226,230,234,.85) 0,rgba(226,230,234,.4) 45%,rgba(226,230,234,0) 70%);pointer-events:none;animation:plSmoke 3.3s linear infinite;opacity:0}
+@keyframes plSmoke{0%{transform:translate(0,0) scale(.5);opacity:0}12%{opacity:.85}100%{transform:translate(160%,-420%) scale(calc(2.6*var(--s,1)));opacity:0}}
+.pl-car{position:absolute;left:0;top:0;height:auto;pointer-events:none;animation:plCar 14s linear infinite;transform:translate(-50%,-80%)}
+@keyframes plCar{0%{left:var(--x0);top:var(--y0)}100%{left:var(--x1);top:var(--y1)}}

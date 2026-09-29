@@ -63,12 +63,18 @@ function overpower(md){const p=parts(md);return p.e.hp>chassisMax(p.c,md);}
 function designEffort(md){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+p[k].q*(1+0.12*upgOf(md,p[k].id)),0)+p.t.q;}
 function baseCost(md,s){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+partCost(p[k],s),0)+p.t.c*cpi(s);}
 function learn(md){return Math.max(0.85,Math.pow(1+(md.made||0)/200,-0.045));}
-// Скидка поставщиков за объём: единичные машины дороже, партии в десятки тысяч — дешевле
-// до массового производства (около 1908 года) большая партия почти не удешевляет детали: их делают вручную
-function volFactor(v,s){const lo=s?clamp(1.02-0.042*(yf(s)-1900),0.6,1):0.6;return clamp(1.3-0.13*Math.log10(1+Math.max(0,v)),lo,1.3);}
+// Экономия масштаба. Скидка поставщиков за объём: 5 машин в месяц — детали на четверть дороже обычного,
+// сотни — по обычной цене, тысячи и десятки тысяч — на 10–40% дешевле. До массового производства
+// (около 1908 года) скидка ограничена: детали всё равно точат и подгоняют вручную
+function volFactor(v,s){const lo=s?clamp(0.95-0.035*(yf(s)-1900),0.55,0.95):0.55;return clamp(1.36-0.16*Math.log10(1+Math.max(0,v)),lo,1.3);}
+// Опыт рабочих: с каждым удвоением выпущенных машин модели нужно ~9% меньше часов (до −55%)
+function labLearn(md){return Math.max(0.45,Math.pow(1+(md.made||0)/150,-0.14));}
+// Разделение труда: большой поток — у каждого рабочего своя операция; штучная сборка — мастера делают всё
+function labRate(v){return clamp(1.15-0.075*Math.log10(1+Math.max(0,v)),0.85,1.15);}
+function modelVol(md){return md.vol||md.lastMade||1;}
 function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
   if(tc.foundry)c-=partCost(p.e,s)*0.18;if(tc.press&&!isTruck(md))c-=partCost(p.b,s)*0.15;
-  return Math.max(10,c*volFactor(md.vol||md.lastMade||1,s)*learn(md)*bn('matCost')*(s.supplyNow||1));}
+  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1));}
 function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
@@ -114,16 +120,27 @@ function kindBodyOk(kind,b){return kind==='van'?b.id==='b6':kind==='truck'?!!b.t
 // Конструкция соперника класса — отправная точка для новой модели
 function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRIM[kind]};}
 // Подбор конструкции: по очереди меняем каждую деталь на лучшую для прибыли при подходящей цене
-function designValue(md,s){const ref=refPrice(md,s);let best=-1e18,bp=ref;
-  for(const k of [0.85,1,1.15,1.3]){md.price=Math.round(ref*k);const d=forecastDemand(md,s),v=d*(md.price*(1-DEALER_MARGIN)-unitCost(md,s));if(v>best){best=v;bp=md.price;}}
+// Себестоимость считаем при том выпуске, который купят (экономия масштаба); если по обычной цене
+// машина убыточна, пробуем и цену «себестоимость + 10–25%» — иначе «лучшей» оказалась бы машина, которую никто не берёт
+// Убыток считаем не меньше чем на плановый выпуск: иначе «выгоднее» всего машина, которую никто не купит
+function designValue(md,s){const ref=refPrice(md,s),V=Math.max(5,md.vol||20);let best=-1e18,bp=ref;
+  const uc0=unitCost({...md,vol:V},s),cands=[0.85,1,1.15,1.3].map(k=>ref*k).concat([1.1,1.25].map(k=>uc0/(1-DEALER_MARGIN)*k));
+  for(const P of cands){md.price=Math.round(P);const d=forecastDemand(md,s),m=md.price*(1-DEALER_MARGIN)-unitCost({...md,vol:Math.max(5,d)},s),v=m>0?d*m:m*Math.max(d,V);if(v>best){best=v;bp=md.price;}}
   md.price=bp;return best;}
 function autoDesign(kind,s,base){
   const vol=Math.max(20,(s.last&&s.last.made)||20);
   let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol,launched:mi(s),status:'prod',price:0};
-  const ok=(k,x)=>k!=='b'||kindBodyOk(kind,x);let bestV=designValue(md,s);
-  for(let pass=0;pass<2;pass++)for(const k of PART_KEYS){const arr=PART_CATS.find(c=>c.k===k).arr();let bx=md[k];
-    for(const x of unlockedP(arr,s)){if(x.id===md[k]||!ok(k,x))continue;const t={...md,[k]:x.id};if(overpower(t))continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=x.id;}}
-    md[k]=bx;}
+  const ok=(k,x)=>k!=='b'||kindBodyOk(kind,x),avail=(k,id)=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s).some(x=>x.id===id);
+  // кузов должен подходить классу и уже продаваться (грузовик до 1910 года — только прототип КБ)
+  if(!ok('b',byId(BODIES,md.b))||!avail('b',md.b)){const b=unlockedP(BODIES,s).find(x=>kindBodyOk(kind,x));if(b)md.b=b.id;else if(kind==='truck'){kind='van';md.b='b6';}}
+  PART_KEYS.forEach(k=>{if(k!=='b'&&!avail(k,md[k])){const L=unlockedP(PART_CATS.find(c=>c.k===k).arr(),s);if(L.length)md[k]=L[L.length-1].id;}});
+  // мотор мощнее рамы — подбираем к нему самую дешёвую раму, которая его выдержит
+  const fit=t=>{if(!overpower(t))return t;const cs=unlockedP(CHASSIS,s).filter(c=>!overpower({...t,c:c.id})).sort((a,b)=>partCost(a,s)-partCost(b,s));return cs.length?{...t,c:cs[0].id}:null;};
+  if(overpower(md))md=fit(md)||md;
+  let bestV=designValue(md,s);
+  for(let pass=0;pass<2;pass++)for(const k of PART_KEYS){const arr=PART_CATS.find(c=>c.k===k).arr();let bx=null;
+    for(const x of unlockedP(arr,s)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
+    if(bx)md=bx;}
   designValue(md,s);return md;}
 /* ---------- factory ---------- */
 const TECH={
@@ -153,7 +170,7 @@ function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.75:1)*complexity(md)*techMul(s,'hrs')*(conv&&act>1?1+0.12*(act-1):1)*Math.max(0.6,Math.pow(1+(md.made||0)/300,-0.09))*(md.ramp>0?1.5:1));}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.75:1)*complexity(md)*techMul(s,'hrs')*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
 function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap');}
 function capUnitCost(s){return Math.round(1500*cpi(s)*(1+0.12*techLv(s,'tools')+0.08*techLv(s,'elec'))*bn('lineCost'));}
@@ -163,6 +180,18 @@ function dealerNeed(c,s){return tabAt(DEALER_NEED[c],yf(s));}
 function dealerTP(s){return tabAt(DEALER_TP,yf(s));}
 // Новый дилер: демонстрационная машина со скидкой, вывеска, запас запчастей, выучка механика
 function dealerCost(s){return Math.round(560*cpi(s)*(1+T(s)*0.02));}
+// Сколько машин в месяц продаёт дилер в стране: дома — на 30% больше (свой город, свой склад)
+function dealerTPc(s,c){return dealerTP(s)*(c===s.country?1.3:1);}
+// Сколько дилеров ещё нужно, чтобы обслужить всех покупателей прошлого месяца
+function dealersShort(s,c){const mk=s.last&&s.last.mk[c],lost=mk&&mk.lostDlr||0;return lost>0.5?Math.ceil(lost/dealerTPc(s,c)):0;}
+// Открыть дилеров: деньги, журнал и сразу поправка прогноза — завод сделает машины и для новых дилеров
+function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc));if(n<1)return 0;
+  const was=dealerCount(s,c),tp=dealerTPc(s,c),k=was>0?(was+n)/was:2;s.cash-=n*dc;s.dealers[c]=was+n;
+  (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*k);});
+  if(!was&&c!==s.country)addLog(`Открыты первые дилеры: ${COUNTRIES[c].name}.`,'good');
+  else addLog(`Открыто ${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}${c!==s.country?' ('+COUNTRIES[c].name+')':''}: смогут продать ещё до ${fmtN(Math.round(n*tp))} машин в месяц.`,'good');
+  pendingToasts.push(`🏪 +${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}: ещё до ${fmtN(Math.round(n*tp))} машин в месяц`);
+  return n;}
 function dealerUpkeep(s){return 22*cpi(s);}
 function dealerCount(s,c){return (s.dealers&&s.dealers[c])||0;}
 function tariffAt(c,s){return tabAt(TARIFF[c],yf(s));}
