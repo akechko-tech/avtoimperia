@@ -464,5 +464,1005 @@
    ],
    "score": 24.48
   }
+ },
+ "cands": {
+  "grass": [
+   [
+    "leafy_grass",
+    25.0,
+    "grass green nature ground foliage leaves plants outdoors"
+   ],
+   [
+    "sparse_grass",
+    14.6,
+    "grass nature sparse roots root vegetation greenery landscape"
+   ],
+   [
+    "brown_mud_leaves_01",
+    5.7,
+    "grass mud moss stones orange forest"
+   ],
+   [
+    "thatch_roof_angled",
+    4.7,
+    "rough thatch reed roof roofing structure structural weathered"
+   ]
+  ],
+  "dry_grass": [
+   [
+    "forrest_ground_01",
+    25.5,
+    "grass twigs forest leaves sticks foliage dead grass plant litter"
+   ],
+   [
+    "dry_mud_field_001",
+    24.6,
+    "road mud dry uneven dirt farm ground rough"
+   ],
+   [
+    "dry_decay_leaves",
+    24.1,
+    "leaves forest dry sticks winter dead grass twigs nature"
+   ],
+   [
+    "withered_grass",
+    23.9,
+    "old weathered grass dead grass discolored driedup dry"
+   ],
+   [
+    "winter_leaves",
+    23.9,
+    "leaves forest dry sticks winter dead grass twigs nature"
+   ],
+   [
+    "grass_ground",
+    23.6,
+    "grass dry grass dirt root dead grass turf dry"
+   ],
+   [
+    "grass_concrete_pavement",
+    23.5,
+    "rough uneven weathered old discolored grass dead grass dry"
+   ],
+   [
+    "brown_mud_leaves_01",
+    15.7,
+    "grass mud moss stones orange forest"
+   ]
+  ],
+  "dirt": [
+   [
+    "brown_mud_03",
+    35.0,
+    "mud dirt stones dry ground soil wet soil footprints"
+   ],
+   [
+    "brown_mud_02",
+    34.9,
+    "mud dirt stones dry ground footprints soil compact soil"
+   ],
+   [
+    "brown_mud",
+    34.7,
+    "mud dirt stones dry ground soil plant debris granular"
+   ],
+   [
+    "dry_ground_rocks",
+    34.7,
+    "mud rocks cracked ground dry parched soil dirt"
+   ],
+   [
+    "red_mud_stones",
+    34.7,
+    "mud dirt flat dry rocks compact soil organic debris roots"
+   ],
+   [
+    "cracked_red_ground",
+    34.3,
+    "rough uneven old weathered worn cracked brown dirty"
+   ],
+   [
+    "wood_table_worn",
+    25.6,
+    "rough planks table worn old damaged discolored stained"
+   ],
+   [
+    "forest_ground_04",
+    25.2,
+    "rough uneven stones ground forest dry brown gravel"
+   ]
+  ],
+  "dirt_road": [
+   [
+    "rocky_trail_02",
+    35.0,
+    "stones earthy rugged rough terrain gravelly pathway gritty"
+   ],
+   [
+    "red_dirt_mud_01",
+    34.6,
+    "gravel mud dirt rough pathway path road village"
+   ],
+   [
+    "rocky_gravel",
+    33.9,
+    "rough stones rocks gravel dirt path nature leaves"
+   ],
+   [
+    "rocky_trail",
+    25.1,
+    "rough uneven stones rock gravel chipped rocks nature"
+   ],
+   [
+    "red_laterite_soil_stones",
+    24.9,
+    "rough red laterite stones ground dirt pebbles rocks"
+   ],
+   [
+    "dirt_floor",
+    24.7,
+    "dirt ground brown nature uneven mud debris forest"
+   ],
+   [
+    "dry_mud_field_001",
+    24.6,
+    "road mud dry uneven dirt farm ground rough"
+   ],
+   [
+    "forest_floor",
+    24.6,
+    "sand leaves autumn forest dirt nature dry mud"
+   ]
+  ],
+  "gravel": [
+   [
+    "red_laterite_soil_stones",
+    34.9,
+    "rough red laterite stones ground dirt pebbles rocks"
+   ],
+   [
+    "rocky_trail_02",
+    25.0,
+    "stones earthy rugged rough terrain gravelly pathway gritty"
+   ],
+   [
+    "terrain_red_01",
+    24.7,
+    "gravel stones rough pebbles railroad pathway path"
+   ],
+   [
+    "red_dirt_mud_01",
+    24.6,
+    "gravel mud dirt rough pathway path road village"
+   ],
+   [
+    "gravel_stones",
+    24.5,
+    "rough uneven stones gravel gritty grey pebbles coarse"
+   ],
+   [
+    "river_small_rocks",
+    24.5,
+    "rough uneven stones rock pebbles river pathway debris"
+   ],
+   [
+    "coral_mud_01",
+    24.5,
+    "coral ground costal stones gravel gravelly coastal sediment rock fragments"
+   ],
+   [
+    "gravel_ground_01",
+    24.4,
+    "gravel pathway path stones ground sidewalk rural farm"
+   ]
+  ],
+  "cobble": [
+   [
+    "square_cobblestone",
+    34.2,
+    "weathered worn chipped discolored grey concrete cobblestone cement"
+   ],
+   [
+    "cobblestone_floor_08",
+    24.7,
+    "cobblestone smooth old moss pavement"
+   ],
+   [
+    "cobblestone_color",
+    24.6,
+    "cobblestone old moss pavement"
+   ],
+   [
+    "cobblestone_01",
+    24.5,
+    "cobblestone old garden moss"
+   ],
+   [
+    "cobblestone_large_01",
+    24.5,
+    "cobblestone farm old village path dry mud"
+   ],
+   [
+    "cobblestone_floor_07",
+    24.5,
+    "cobblestone stacked moss old damp garden pavement"
+   ],
+   [
+    "cobblestone_05",
+    24.4,
+    "cobblestone old garden pathway moss pavement"
+   ],
+   [
+    "cobblestone_floor_13",
+    24.4,
+    "cobblestone farm rural old"
+   ]
+  ],
+  "brick_road": [
+   [
+    "herringbone_brick_02",
+    44.0,
+    "brick bricks interlocking bricks paving street herringbone herringbone pattern pavement"
+   ],
+   [
+    "mossy_brick_floor",
+    44.0,
+    "weathered worn brick bricks moss pattern outdoor worndown"
+   ],
+   [
+    "herringbone_brick",
+    43.9,
+    "herringbone interlocking bricks worndown brick bricks pavement sidewalk street"
+   ],
+   [
+    "brick_moss_001",
+    34.8,
+    "moss pavement dirty discolored damp pattern"
+   ],
+   [
+    "hexagonal_concrete_paving",
+    34.8,
+    "hexagon tiles bricks pavement paving courtyard"
+   ],
+   [
+    "brick_floor",
+    34.7,
+    "herringbone diagonal brick paving repeat pattern aged"
+   ],
+   [
+    "floor_pavement",
+    34.7,
+    "ground sidewalk cracked damaged floor pavement cement square"
+   ],
+   [
+    "patterned_cobblestone",
+    34.5,
+    "uneven weathered cobblestone walkway bricks pattern pavement ground"
+   ]
+  ],
+  "asphalt": [
+   [
+    "gravel_road",
+    34.2,
+    "old worn rough aged stone gravel gravelly gravelly texture"
+   ],
+   [
+    "asphalt_01",
+    24.9,
+    "rough dirty asphalt road worn"
+   ],
+   [
+    "asphalt_03",
+    24.1,
+    "rough worn dirty floor road asphalt city urban"
+   ],
+   [
+    "worn_asphalt",
+    23.7,
+    "asphalt asphalt road petals plant debris outdoor cracked driveway sticks"
+   ],
+   [
+    "tarred_gravel",
+    23.6,
+    "rough weathered uneven old worn floor tar gravel"
+   ],
+   [
+    "asphalt_02",
+    15.6,
+    "asphalt cracked flat road asphalt road tarmac road gritty weathered"
+   ],
+   [
+    "asphalt_pit_lane",
+    14.8,
+    "asphalt asphalt road road roadway tarmac road race track pit lane"
+   ],
+   [
+    "asphalt_04",
+    14.7,
+    "rough weathered dry cracked discolored asphalt road street"
+   ]
+  ],
+  "concrete": [
+   [
+    "gravel_embedded_concrete",
+    35.0,
+    "pavement rough concrete cement gravel coarse stony gravelly"
+   ],
+   [
+    "gravel_concrete_03",
+    35.0,
+    "rough weathered old urban sidewalk gravel concrete coarse"
+   ],
+   [
+    "pavement_02",
+    34.8,
+    "worn floor sidewalk pavement flat dirty city textured"
+   ],
+   [
+    "concrete_rock_path",
+    34.4,
+    "rough uneven old weathered brown rock dirty ground"
+   ],
+   [
+    "gravel_concrete_02",
+    34.1,
+    "rough uneven stones ground chipped pavement pebble gravel"
+   ],
+   [
+    "concrete_pavers_02",
+    33.9,
+    "weathered rough old concrete exterior cement coarse outdoor"
+   ],
+   [
+    "worn_patterned_pavers",
+    33.9,
+    "old weathered worn concrete chipped discolored scratched deteriorated"
+   ],
+   [
+    "gravel_concrete_04",
+    33.9,
+    "rough weathered old urban sidewalk gravel concrete coarse"
+   ]
+  ],
+  "planks": [
+   [
+    "old_wood_floor",
+    54.6,
+    "wood wooden deck planks old uneven weathered worn"
+   ],
+   [
+    "wood_cabinet_worn_long",
+    45.4,
+    "wood planks cabinet worn non square long rough old"
+   ],
+   [
+    "weathered_planks",
+    45.1,
+    "wood wooden bridge planks old weathered worn damaged"
+   ],
+   [
+    "wood_planks",
+    45.1,
+    "rough weathered old discolored wood floor wooden planks wooden flooring "
+   ],
+   [
+    "wood_floor_worn",
+    45.1,
+    "old weathered rough worn discolored flat pine wood"
+   ],
+   [
+    "dark_wooden_planks",
+    45.0,
+    "rough old weathered cracked damaged brown wood wooden"
+   ],
+   [
+    "plank_flooring_03",
+    44.5,
+    "rough weathered old worn wood wooden planks planks cabin"
+   ],
+   [
+    "planks_brown_10",
+    35.2,
+    "planks old discolored weathered rough"
+   ]
+  ],
+  "sand": [
+   [
+    "coast_sand_01",
+    25.0,
+    "beach costal ocean seaside sand brown rough gravel"
+   ],
+   [
+    "coast_sand_02",
+    24.6,
+    "beach sand seaside rough coastal ocean uneven stones"
+   ],
+   [
+    "sand_03",
+    24.5,
+    "sand sandy beach seaside gritty shore costal sandy beach"
+   ],
+   [
+    "coast_sand_04",
+    24.2,
+    "stones pebbles sand coastal coast dirt ocean beach"
+   ],
+   [
+    "sand_02",
+    24.1,
+    "dirty sand sandy beach gritty coast shore granular"
+   ],
+   [
+    "aerial_beach_01",
+    15.2,
+    "beach wavy costal ocean seaside"
+   ],
+   [
+    "sandy_gravel_02",
+    14.7,
+    "terrain sand gravel stony gravelly dusty desert ground"
+   ],
+   [
+    "aerial_beach_02",
+    14.6,
+    "beach flat costal ocean seaside"
+   ]
+  ],
+  "snow": [
+   [
+    "snow_field_aerial",
+    14.8,
+    "snow mud field uneven"
+   ],
+   [
+    "snow_04",
+    14.3,
+    "snow mud field uneven rough"
+   ],
+   [
+    "snow_02",
+    5.4,
+    "snow uneven smooth powdery frosty snowfield soft wintery"
+   ],
+   [
+    "snow_01",
+    5.0,
+    "snow rough uneven footprints powdery trail snowfield"
+   ],
+   [
+    "snow_03",
+    4.6,
+    "snow uneven rough trampled mud"
+   ],
+   [
+    "snow_05",
+    4.5,
+    "snow mud uneven rough"
+   ],
+   [
+    "snow_floor",
+    4.2,
+    "rough snow floor asphalt"
+   ],
+   [
+    "asphalt_snow",
+    4.1,
+    "rough asphalt road snow urban floor"
+   ]
+  ],
+  "rock": [
+   [
+    "cliff_side",
+    34.7,
+    "cliff rock face rugged eroded boulder landscape mountain terrain"
+   ],
+   [
+    "tiger_rock",
+    34.1,
+    "cliff boulder rock face cave weathered landscape solid rock mountain"
+   ],
+   [
+    "rock_06",
+    24.9,
+    "yellow cliff rough rock face solid rock rock striated geological"
+   ],
+   [
+    "lichen_rock",
+    24.8,
+    "rock cliff lichen moss rock face boulder mossy stone"
+   ],
+   [
+    "rock_boulder_cracked",
+    24.8,
+    "rough weathered rock face rock orange cliff cave stone"
+   ],
+   [
+    "worn_rock_natural_01",
+    24.7,
+    "weathered yellow rock face rock flat brown boulder cliff"
+   ],
+   [
+    "seaside_rock",
+    24.7,
+    "rough weathered seaside rock face rock coastal cliff shore"
+   ],
+   [
+    "rock_face",
+    24.4,
+    "terrain landscape rock face solid rock cliff solid"
+   ]
+  ],
+  "forest": [
+   [
+    "forest_floor",
+    44.6,
+    "sand leaves autumn forest dirt nature dry mud"
+   ],
+   [
+    "stony_dirt_path",
+    44.2,
+    "brown ground leaves rocks stones dirt pathway path"
+   ],
+   [
+    "forest_leaves_02",
+    35.2,
+    "moss sticks leaves twigs autumn mossy mosscovered mossy patches"
+   ],
+   [
+    "forest_leaves_04",
+    34.8,
+    "leaves nature ground dirt debris dry autumn sticks"
+   ],
+   [
+    "dirt_floor",
+    34.7,
+    "dirt ground brown nature uneven mud debris forest"
+   ],
+   [
+    "forest_leaves_03",
+    34.6,
+    "leaves autumn dry nature forest ground cover dirt"
+   ],
+   [
+    "leaves_forest_ground",
+    34.6,
+    "dirt forest leaves twigs yellow green sticks autumn"
+   ],
+   [
+    "mud_forest",
+    34.6,
+    "brown ground dirty leaves mud forest sticks"
+   ]
+  ],
+  "mud": [
+   [
+    "muddy_tracks",
+    33.8,
+    "mud muddy surface tracks tire tracks wet organic outdoor earth"
+   ],
+   [
+    "brown_mud_03",
+    25.0,
+    "mud dirt stones dry ground soil wet soil footprints"
+   ],
+   [
+    "brown_mud_02",
+    24.9,
+    "mud dirt stones dry ground footprints soil compact soil"
+   ],
+   [
+    "brown_mud_rocks_01",
+    24.7,
+    "gravel mud moss stones forest rocks loose stones plants"
+   ],
+   [
+    "rocks_ground_02",
+    15.2,
+    "rough mud rock stones uneven rocks scattered rocks gravel"
+   ],
+   [
+    "brown_mud_dry",
+    15.1,
+    "mud dirt stones dry ground"
+   ],
+   [
+    "brown_mud",
+    14.7,
+    "mud dirt stones dry ground soil plant debris granular"
+   ],
+   [
+    "dry_ground_rocks",
+    14.7,
+    "mud rocks cracked ground dry parched soil dirt"
+   ]
+  ],
+  "brick_wall": [
+   [
+    "mixed_brick_wall",
+    44.5,
+    "brick bricks masonry brick wall worndown walling mortar red brick"
+   ],
+   [
+    "church_bricks_03",
+    44.5,
+    "rough red uneven industrial factory brick bricks red brick"
+   ],
+   [
+    "castle_brick_02_red",
+    35.1,
+    "rough red sewer damp old uneven"
+   ],
+   [
+    "brick_wall_006",
+    34.9,
+    "rough wall chipped worn cracked discolored dry red"
+   ],
+   [
+    "factory_brick",
+    34.9,
+    "brown fatory bricks weathered brick wall worndown rough industrial"
+   ],
+   [
+    "damaged_plaster",
+    34.7,
+    "brick bricks plaster plasterconcrete chipped deteriorating weathered cracked"
+   ],
+   [
+    "red_brick_plaster_patch_02",
+    34.6,
+    "red rough broken bricks crumbling timeworn worn down exposed brick"
+   ],
+   [
+    "red_bricks_02",
+    34.4,
+    "rough broken red bricks brick wall old brick brick exposed brick"
+   ]
+  ],
+  "plaster": [
+   [
+    "concrete_wall_003",
+    25.0,
+    "worn painted discolored dirty yellow white weathered cracked"
+   ],
+   [
+    "concrete",
+    25.0,
+    "bare old weathered panels"
+   ],
+   [
+    "concrete_layers",
+    24.7,
+    "rough old concrete cracked chipped cement cracked cement worn"
+   ],
+   [
+    "white_stucco",
+    24.2,
+    "rough wall painted stucco white granular matte uneven"
+   ],
+   [
+    "yellow_plaster_02",
+    24.1,
+    "rough old yellow wall wood plastered cracks weathered"
+   ],
+   [
+    "rock_embedded_concrete_wall",
+    24.0,
+    "rough uneven old wall worn chipped cracked discolored"
+   ],
+   [
+    "plaster_stone_wall_02",
+    23.9,
+    "rough uneven weathered old stone embedded embedded rock concrete plaster"
+   ],
+   [
+    "concrete_slab_wall",
+    23.5,
+    "rough old concrete cracked chipped cement cracked cement worn"
+   ]
+  ],
+  "stone_wall": [
+   [
+    "castle_wall_slates",
+    55.0,
+    "wall rough blocks stacked old castle medieval"
+   ],
+   [
+    "castle_wall_varriation",
+    44.7,
+    "wall rough blocks old castle"
+   ],
+   [
+    "medieval_blocks_02",
+    44.4,
+    "stones sandstone old weathered rough uneven"
+   ],
+   [
+    "castle_brick_02_red",
+    35.1,
+    "rough red sewer damp old uneven"
+   ],
+   [
+    "stone_brick_wall_001",
+    35.0,
+    "stones bricks blocks castle fort dungeon dark"
+   ],
+   [
+    "castle_brick_07",
+    34.8,
+    "rough uneven loose gaps old castle"
+   ],
+   [
+    "castle_brick_broken_06",
+    34.6,
+    "rough uneven cracked loose gaps old castle"
+   ],
+   [
+    "castle_brick_01",
+    34.6,
+    "rough moss sewer damp dark wet old uneven"
+   ]
+  ],
+  "wood_wall": [
+   [
+    "brown_planks_09",
+    44.6,
+    "brown planks shed deck raw wood nail holes horizontal layout weathered wood"
+   ],
+   [
+    "wooden_rough_planks",
+    44.6,
+    "moss rough logs planks uneven round shed cabin"
+   ],
+   [
+    "dark_planks",
+    44.5,
+    "planks cabin shed overlapping planks  nail holes weathered distressed knots"
+   ],
+   [
+    "weathered_plank_siding",
+    43.5,
+    "rough wood wooden planks exterior rustic plank siding weathered weatherbeaten"
+   ],
+   [
+    "wood_planks_dirt",
+    35.2,
+    "planks even weathered"
+   ],
+   [
+    "planks_brown_10",
+    35.2,
+    "planks old discolored weathered rough"
+   ],
+   [
+    "raw_plank_wall",
+    34.9,
+    "weathered chipped worn scratched wooden discolored damaged wood"
+   ],
+   [
+    "brown_planks_04",
+    34.7,
+    "planks old untreated shed cabin cottage rough"
+   ]
+  ],
+  "roof_tiles": [
+   [
+    "roof_09",
+    25.0,
+    "ceramic old worn tiles roofing material roofing roof clay tiles"
+   ],
+   [
+    "clay_roof_tiles_02",
+    24.7,
+    "weathered old interlocking roof roofing tile roofing clay clay tiles"
+   ],
+   [
+    "roof_07",
+    24.6,
+    "ceramic tiles old worn damaged discolored roofing material roof"
+   ],
+   [
+    "roof_tiles",
+    24.1,
+    "roofing material roof tiles durable roofing ceramic tiles tiled roofing traditional roof tiles clay roof tiles roofing"
+   ],
+   [
+    "ceramic_roof_01",
+    14.9,
+    "ceramic tiles roof old city moss"
+   ],
+   [
+    "roof_tiles_14",
+    14.7,
+    "ceramic tiles moss old discolored weathered"
+   ],
+   [
+    "roof_3",
+    14.5,
+    "ceramic old worn tiles moss"
+   ],
+   [
+    "clay_roof_tiles_03",
+    14.4,
+    "weathered uneven clay clay tiles roof roofing tile roofing overlapping tiles"
+   ]
+  ],
+  "roof_slate": [
+   [
+    "grey_roof_01",
+    24.9,
+    "modern tiles roofing material gray gray roof tiled roofing interlocking tiles slate roofing"
+   ],
+   [
+    "grey_roof_tiles_02",
+    24.8,
+    "slates moss tiles cottage roofing material lichen housing material gray"
+   ],
+   [
+    "roof_slates_02",
+    24.7,
+    "slates uneven old tiles weathered discolored slate roofing slate"
+   ],
+   [
+    "red_slate_roof_tiles_01",
+    24.5,
+    "old slate moss roofing material roof tiles tiled roofing overlapping weathered"
+   ],
+   [
+    "castle_wall_slates",
+    15.0,
+    "wall rough blocks stacked old castle medieval"
+   ],
+   [
+    "roof_slates_03",
+    14.9,
+    "slates even tiles slate roof tiles overlapping roofing material aged"
+   ]
+  ],
+  "thatch": [
+   [
+    "thatch_roof_angled",
+    24.7,
+    "rough thatch reed roof roofing structure structural weathered"
+   ],
+   [
+    "reed_roof_04",
+    24.5,
+    "reed rough village thatch hay straw hut medieval"
+   ],
+   [
+    "riet_01",
+    24.5,
+    "reed grey old village straw hut thatch rural"
+   ],
+   [
+    "reed_roof_03",
+    24.4,
+    "reed rough village thatch hay straw hut medieval"
+   ]
+  ],
+  "bark": [
+   [
+    "bark_brown_02",
+    25.4,
+    "bark tree forest knots wooden knots tree trunk"
+   ],
+   [
+    "bark_brown_01",
+    25.1,
+    "bark tree forest knots bark grooves tree bark tree trunk"
+   ],
+   [
+    "bark_willow",
+    25.1,
+    "willow bark tree forest nature brown uneven sallow"
+   ],
+   [
+    "pine_bark",
+    24.8,
+    "rough weathered bark tree tree bark pine organic"
+   ],
+   [
+    "knotted_pine_bark",
+    23.8,
+    "bark tree tree bark tree trunk pine knotty pine pine bark  tree bark texture"
+   ],
+   [
+    "jolcham_oak_bark_01",
+    23.7,
+    "rough weathered uneven moss mossy mosscovered bark tree"
+   ],
+   [
+    "bark_willow_02",
+    15.1,
+    "rough dry nature tree bark wood forest"
+   ],
+   [
+    "tree_bark_03",
+    14.8,
+    "bark moss rough old"
+   ]
+  ],
+  "metal_roof": [
+   [
+    "corrugated_iron",
+    25.0,
+    "metal corrugated roof roofing steel metallic sheet metal sheet"
+   ],
+   [
+    "rusty_metal_03",
+    24.8,
+    "rough weathered worn old metal rusted rusty rust"
+   ],
+   [
+    "rusty_corrugated_iron",
+    23.6,
+    "rough old corrugated corrugation rusted rusty rust corroded metal sheet"
+   ],
+   [
+    "rusty_metal_04",
+    15.1,
+    "metal sheet metal rusted rusty rust steel oxidized corrosion"
+   ],
+   [
+    "factory_wall",
+    15.0,
+    "wall fence industrial corrugated"
+   ],
+   [
+    "rusty_metal_sheet",
+    15.0,
+    "metal rusty rust rusted corroded sheet tarnished oxidized"
+   ],
+   [
+    "corrugated_iron_02",
+    14.9,
+    "metal metallic metal sheet steel sheeting corrugation galvanized sheet roofing"
+   ],
+   [
+    "box_profile_metal_sheet",
+    14.7,
+    "sheet metal sheet box profile industrial corrugated steel red roofing material"
+   ]
+  ]
+ },
+ "leaf": {
+  "_cands": {
+   "broad": [
+    "searsia_lucida",
+    "othonna_cerarioides",
+    "searsia_burchellii",
+    "island_tree_02",
+    "fern_02",
+    "island_tree_01",
+    "anthurium_botany_01",
+    "nettle_plant",
+    "weed_plant_02",
+    "calathea_orbifolia_01"
+   ],
+   "conifer": [
+    "fir_tree_01",
+    "fir_sapling_medium",
+    "fir_sapling",
+    "pine_tree_01",
+    "pine_sapling_medium",
+    "pine_sapling_small",
+    "grass_medium_01",
+    "rock_moss_set_02",
+    "rock_moss_set_01",
+    "fern_02"
+   ],
+   "shrub": [
+    "fern_02",
+    "weed_plant_02",
+    "grass_medium_01",
+    "grass_bermuda_01",
+    "dandelion_01",
+    "grass_medium_02",
+    "shrub_sorrel_01",
+    "anthurium_botany_01",
+    "nettle_plant",
+    "searsia_lucida"
+   ]
+  }
  }
 }
