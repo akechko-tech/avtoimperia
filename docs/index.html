@@ -3053,6 +3053,12 @@ const REELS={
     {i:'Austin 7',cap:'Austin Seven',say:'Герберт Остин нарисовал на бильярдном столе крошечную машину: мотор меньше литра, четыре тесных места и цена мотоцикла с коляской.'},
     {i:'Citroën 5CV',cap:'Citroën 5CV',say:'В том же году Андре Ситроен выпустил 5CV — «маленький лимончик». В Европе, где налог берут с каждой лошадиной силы, малолитражка становится машиной для всех.'},
     {c:'Автомобиль приходит в каждую семью',s:'Даже там, где бензин дорог'}]},
+  'h:line':{t:'Движущийся конвейер',y:1913,sh:[
+    {c:'Движущийся конвейер',s:'Хайленд-Парк, октябрь 1913'},
+    {i:'Highland Park Ford Plant',cap:'Завод Форда в Хайленд-Парке',say:'Осенью 1913 года на заводе Форда шасси потянули тросом вдоль цеха. Машина едет к рабочему, рабочий стоит на месте.'},
+    {i:'Henry Ford',cap:'Генри Форд',say:'Сборка шасси сократилась с двенадцати с половиной часов до полутора. Через год Форд платил рабочим пять долларов в день — вдвое больше обычного.'},
+    {i:'Ford Model T',cap:'Ford Model T',say:'Model T дешевела год за годом: конвейер сделал автомобиль вещью для всех.'},
+    {c:'Эпоха массового производства',s:'Такой же конвейер можно построить у «{co}» — вкладка «Завод»'}]},
   'h:modelA':{t:'Ford показал Model A',y:1927,sh:[
     {c:'Прощай, Model T',s:'Детройт, декабрь 1927'},
     {i:'Ford Model A (1927–1931)',cap:'Ford Model A',say:'После пятнадцати миллионов Model T заводы Форда полгода стояли: конвейеры перестраивали под новую машину.'},
@@ -3150,7 +3156,7 @@ const REELS={
     {c:'Спрос выше',s:'Но касса ждёт денег дольше'}]}
 };
 // Какие исторические события сопровождаются роликом
-const HIST_REEL={'Daimler Motor-Lastwagen':'h:truck','Mercedes 35 hp':'h:merc','Ford Model T':'h:modelT','Prinz-Heinrich-Fahrt 1910':'h:henry','Charles F. Kettering':'h:starter','Highland Park Ford Plant':'tech:line:2','Austin 7':'h:small','Ford Model A (1927–1931)':'h:modelA'};
+const HIST_REEL={'Daimler Motor-Lastwagen':'h:truck','Mercedes 35 hp':'h:merc','Ford Model T':'h:modelT','Prinz-Heinrich-Fahrt 1910':'h:henry','Charles F. Kettering':'h:starter','Highland Park Ford Plant':'h:line','Austin 7':'h:small','Ford Model A (1927–1931)':'h:modelA'};
 /* ---------- ролики, которые пишет сама игра: новая модель и новая деталь ---------- */
 function reelModel(md,s){const p=parts(md),st=carStats(md,0,s.y),C=classCompare(md,s,s.country),g=KIND_NAME[rivalKind(md)];
   return {t:`Новинка «${md.name}»`,y:s.y,sh:[
@@ -3207,6 +3213,8 @@ function reelShotHTML(sh,s,Q){
   return img+(cap&&!/rl-card/.test(img)?`<div class="rl-cap">${esc(reelFill(cap,s))}</div>`:'');}
 function playReel(id){
   const s=G,R0=s&&reelGet(id,s);if(!R0||REEL)return;reelUnlock(s,id);
+  // Safari разрешает голос только после нажатия: «разогреваем» синтезатор тихой фразой прямо в обработчике нажатия
+  try{if(reelVoiceOn()&&!window.AndroidTTS&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}
   const el=document.createElement('div');el.id='reel';el.className='reel';
   el.innerHTML=`<div class="rl-title">Кинохроника · ${esc(reelFill(R0.t,s))}${R0.y?' · '+R0.y:''}</div>
     <div class="rl-frame"><div class="rl-shots"></div><canvas class="rl-grain" width="160" height="120"></canvas><i class="rl-scr"></i><i class="rl-scr b"></i><div class="rl-flick"></div><div class="rl-vig"></div><div class="rl-bar"><i></i></div></div>
