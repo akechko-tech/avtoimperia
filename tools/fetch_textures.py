@@ -99,6 +99,12 @@ def textures():
     from PIL import Image
     assets = jget(API + '/assets?t=textures')
     print('textures on Poly Haven:', len(assets))
+    # список для ручного выбора: всё про траву, землю, лес, камень (id, теги, категории, скачивания)
+    try:
+        L = {i: [a.get('name', ''), ' '.join(a.get('tags', [])), ' '.join(a.get('categories', [])), a.get('download_count', 0)] for i, a in assets.items()
+             if re.search(r'grass|meadow|lawn|moss|field|ground|forest|leaves|soil|earth|rock|cliff|gravel|road|dirt|mud', text_of(i, a))}
+        json.dump(L, open(os.path.join(OUT, '_list.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
+    except Exception as e: print('list failed', e)
     man, used, prev = {}, set(), []
     for slot, spec in SLOTS:
         aid, why = pick(assets, spec, used, slot)
@@ -220,8 +226,7 @@ def leaf_probe(ids):
 def foliage():
     from PIL import Image
     assets = jget(API + '/assets?t=models')
-    try: leaf_probe(['island_tree_01', 'island_tree_02', 'island_tree_03', 'tree_small_02', 'jacaranda_tree', 'searsia_lucida', 'searsia_burchellii', 'shrub_01', 'shrub_02', 'shrub_03', 'shrub_04', 'fir_tree_01', 'fir_sapling', 'pine_tree_01', 'pine_sapling_small', 'grass_medium_01', 'grass_medium_02', 'grass_bermuda_01', 'dandelion_01', 'fern_02', 'nettle_plant', 'weed_plant_02', 'shrub_sorrel_01', 'celandine_01', 'periwinkle_plant', 'moss_01'])
-    except Exception as e: print('probe failed', e)
+    if os.environ.get('LEAF_SRC'): leaf_probe(['island_tree_01', 'island_tree_02', 'island_tree_03', 'tree_small_02', 'jacaranda_tree', 'searsia_lucida', 'searsia_burchellii', 'shrub_01', 'shrub_02', 'shrub_03', 'shrub_04', 'fir_tree_01', 'fir_sapling', 'pine_tree_01', 'pine_sapling_small', 'grass_medium_01', 'grass_medium_02', 'grass_bermuda_01', 'dandelion_01', 'fern_02', 'nettle_plant', 'weed_plant_02', 'shrub_sorrel_01', 'celandine_01', 'periwinkle_plant', 'moss_01'])
     want = [('broad', ['tree', 'oak', 'maple', 'beech', 'birch', 'ash', 'poplar', 'shrub', 'bush'], ['fir', 'pine', 'spruce', 'palm', 'cactus', 'dead', 'stump', 'log', 'potted', 'pot', 'indoor', 'flower']),
             ('conifer', ['fir', 'pine', 'spruce', 'conifer', 'cypress'], ['dead', 'stump', 'log', 'potted', 'pot', 'indoor']),
             ('shrub', ['shrub', 'bush', 'hedge', 'fern', 'grass', 'weed'], ['dead', 'potted', 'pot', 'indoor', 'flower pot'])]
