@@ -581,8 +581,74 @@ def voice5():
     json.dump(idx, open(idx_path, 'w'), indent=0); json.dump(sorted(done), open(done_path, 'w'))
     log('voice5 done', n, 'new lines; total', len(idx), 'v5', len(done))
 
+
+# ---------------------------------------------------------------- 0.19: оркестровые записи и звуки окружения (Commons) → короткие файлы для игры
+def _src_for(v, limit=70e6):
+    """Оригинал, если он не слишком велик; иначе mp3-перекодировка Commons."""
+    ders = {d.get('transcodekey', ''): d.get('src') for d in (v.get('derivatives') or [])}
+    if (v.get('size') or 0) > limit and ders.get('mp3'): return ders['mp3']
+    return v.get('url')
+
+def music_cut():
+    L = json.load(open(os.path.join(TOOLS, 'music.json'), encoding='utf-8'))
+    D = os.path.join(MEDIA, 'music', 'clips'); os.makedirs(D, exist_ok=True)
+    info = video_info(sorted({e['title'] for e in L}))
+    man_path = os.path.join(D, 'index.json')
+    man = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
+    tmp = os.path.join(D, '_src.bin')
+    for e in L:
+        cid = e['id']; out = os.path.join(D, cid + '.m4a'); v = info.get(e['title'])
+        if not v: log('music: no info', e['title']); continue
+        key = '%s|%s|%s|%s|v2' % (e['title'], e.get('from'), e['d'], e.get('t', 0))
+        if os.path.exists(out) and man.get(cid, {}).get('key') == key: continue
+        try:
+            download(_src_for(v), tmp, 400e6)
+            dur = duration_of(v) or e.get('dur') or e['d']; d = min(e['d'], dur)
+            t0 = max(0, dur - d - 1.5) if e.get('from') == 'end' else e.get('t', 0)
+            fo = 3.5 if (t0 + d) < dur - 1 else 1.0
+            sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t0, '-i', tmp, '-t', '%.2f' % d, '-vn',
+                '-af', 'afade=t=in:st=0:d=%.2f,afade=t=out:st=%.2f:d=%.2f,loudnorm=I=-16:TP=-1.2:LRA=12' % (0.25 if t0 > 0 else 0.02, max(0, d - fo), fo),
+                '-ac', '2', '-ar', '44100', '-c:a', 'aac', '-b:a', '72k', '-movflags', '+faststart', '-y', out])
+            man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'by': meta_val(v, 'Artist')[:160],
+                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out)}
+            log('music', cid, round(d), 's', os.path.getsize(out))
+        except Exception as ex:
+            log('music error', cid, repr(ex)[:300])
+        json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    if os.path.exists(tmp): os.remove(tmp)
+
+def sfx_cut():
+    L = json.load(open(os.path.join(TOOLS, 'sfx.json'), encoding='utf-8'))
+    D = os.path.join(MEDIA, 'sfx', 'clips'); os.makedirs(D, exist_ok=True)
+    info = video_info(sorted({e['title'] for e in L}))
+    man_path = os.path.join(D, 'index.json')
+    man = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
+    tmp = os.path.join(D, '_src.bin')
+    for e in L:
+        cid = e['id']; v = info.get(e['title'])
+        if not v: log('sfx: no info', e['title']); continue
+        ref = e.get('ref'); out = os.path.join(D, cid + ('.flac' if ref else '.mp3'))
+        key = '%s|%s|%s|v1' % (e['title'], e['t'], e['d'])
+        if os.path.exists(out) and man.get(cid, {}).get('key') == key: continue
+        try:
+            download(_src_for(v, 90e6), tmp, 300e6)
+            if ref:
+                sh(['ffmpeg', '-v', 'error', '-ss', str(e['t']), '-i', tmp, '-t', str(e['d']), '-vn', '-ac', '1', '-ar', '32000', '-c:a', 'flac', '-y', out])
+            else:
+                d = e['d']
+                sh(['ffmpeg', '-v', 'error', '-ss', str(e['t']), '-i', tmp, '-t', str(d), '-vn',
+                    '-af', 'afade=t=in:st=0:d=0.05,afade=t=out:st=%.2f:d=0.05,loudnorm=I=-18:TP=-1.5:LRA=14' % max(0, d - 0.05),
+                    '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', '-y', out])
+            man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'by': meta_val(v, 'Artist')[:160],
+                        'g': e.get('g'), 'd': e['d'], 'size': os.path.getsize(out), 'ref': bool(ref)}
+            log('sfx', cid, os.path.getsize(out))
+        except Exception as ex:
+            log('sfx error', cid, repr(ex)[:300])
+        json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    if os.path.exists(tmp): os.remove(tmp)
+
 JOBS = {'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5}
+        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]

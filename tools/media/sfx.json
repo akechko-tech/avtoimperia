@@ -1,0 +1,230 @@
+[
+{
+"id": "crowd_big",
+"title": "File:360703 eguobyte large-crowd-medium-distance-stereo.wav",
+"t": 0,
+"d": 57,
+"g": "crowd"
+},
+{
+"id": "crowd_race",
+"title": "File:Circuit Zandvoort, algemene sfeer van een wielerwedstrijd - SoundCloud - Beeld en Geluid.ogg",
+"t": 0,
+"d": 37,
+"g": "crowd"
+},
+{
+"id": "crowd_murmur",
+"title": "File:Festival concert people crowd.ogg",
+"t": 0,
+"d": 60,
+"g": "crowd"
+},
+{
+"id": "applause",
+"title": "File:Slow starting applause.ogg",
+"t": 0,
+"d": 37,
+"g": "crowd"
+},
+{
+"id": "birds_town",
+"title": "File:Réveil des oiseaux.ogg",
+"t": 10,
+"d": 60,
+"g": "birds"
+},
+{
+"id": "birds_forest",
+"title": "File:Birds in mixed forest.wav",
+"t": 20,
+"d": 60,
+"g": "birds"
+},
+{
+"id": "birds_dawn",
+"title": "File:Early morning Birdsong Leersum.wav",
+"t": 30,
+"d": 60,
+"g": "birds"
+},
+{
+"id": "skylark",
+"title": "File:Eurasian Skylark (Alauda arvensis) (W1CDR0001421 BD2).ogg",
+"t": 0,
+"d": 48,
+"g": "birds"
+},
+{
+"id": "blackbird",
+"title": "File:Turdus merula - Common Blackbird XC125792.ogg",
+"t": 0,
+"d": 60,
+"g": "birds"
+},
+{
+"id": "cuckoo",
+"title": "File:Kuckuck im Rätikon 2023.flac",
+"t": 0,
+"d": 47,
+"g": "birds"
+},
+{
+"id": "sparrows",
+"title": "File:House Sparrow 202279702.wav",
+"t": 0,
+"d": 51,
+"g": "birds"
+},
+{
+"id": "crickets",
+"title": "File:Audio Hörbild Grillenzirpen - nachts um 3 im Föhrenwald Mödling.wav",
+"t": 0,
+"d": 40,
+"g": "night"
+},
+{
+"id": "cicada",
+"title": "File:Cicada 20200619.wav",
+"t": 0,
+"d": 60,
+"g": "insects"
+},
+{
+"id": "bells_city",
+"title": "File:2011 Christmas bells at Notre-Dame de Paris (excerpt).wav",
+"t": 0,
+"d": 64,
+"g": "bells"
+},
+{
+"id": "bells_village",
+"title": "File:Church bells evening, parish church Waidring.wav",
+"t": 0,
+"d": 60,
+"g": "bells"
+},
+{
+"id": "steam_whistle",
+"title": "File:WWS SteamWhistle.ogg",
+"t": 0,
+"d": 11,
+"g": "train"
+},
+{
+"id": "steam_whistle_us",
+"title": "File:2010 UP844 Whistle.ogg",
+"t": 0,
+"d": 40,
+"g": "train"
+},
+{
+"id": "steam_train",
+"title": "File:Train sounds from Iowa - Glaneur de sons.ogg",
+"t": 0,
+"d": 60,
+"g": "train"
+},
+{
+"id": "horse_carriage",
+"title": "File:2023-Mai-20 15h50min Wien Stephansplatz Ecke Schulerstraße Rotenturmgasse Fiaker Anhalten Abfahren.wav",
+"t": 0,
+"d": 48,
+"g": "town"
+},
+{
+"id": "dog_bark",
+"title": "File:A dog making noises and barking.flac",
+"t": 0,
+"d": 14,
+"g": "town"
+},
+{
+"id": "rooster",
+"title": "File:Kukuriku.flac",
+"t": 0,
+"d": 4,
+"g": "town"
+},
+{
+"id": "rain",
+"title": "File:Light Rain Distant Thunder July 5th 2016.wav",
+"t": 0,
+"d": 60,
+"g": "weather"
+},
+{
+"id": "thunder",
+"title": "File:Thunder crack 2B.wav",
+"t": 0,
+"d": 25,
+"g": "weather"
+},
+{
+"id": "stream",
+"title": "File:433589 jackthemurray stream-river-water-up-close.wav",
+"t": 0,
+"d": 40,
+"g": "nature"
+},
+{
+"id": "brass_parade",
+"title": "File:March brass band playing parading by.ogg",
+"t": 0,
+"d": 27,
+"g": "town"
+},
+{
+"id": "sheep",
+"title": "File:Corner of a sheep field in summer.ogg",
+"t": 0,
+"d": 28,
+"g": "nature"
+},
+{
+"id": "bugle",
+"title": "File:Assembly bugle call.ogg",
+"t": 0,
+"d": 8,
+"g": "race"
+},
+{
+"id": "fanfare",
+"title": "File:Jubilant Fanfare.mp3",
+"t": 0,
+"d": 41,
+"g": "race"
+},
+{
+"id": "ref_beetle",
+"title": "File:WWS VolkswagenBeetle8211engine.ogg",
+"t": 0,
+"d": 60,
+"g": "ref",
+"ref": 1
+},
+{
+"id": "ref_amos",
+"title": "File:Amos gas engine - Thinktank - Andy Mabbett - 2015-02-12 -01.flac",
+"t": 0,
+"d": 60,
+"g": "ref",
+"ref": 1
+},
+{
+"id": "ref_savery",
+"title": "File:Savery steam launch engine - Thinktank - Andy Mabbett - 2015-02-12 -02.flac",
+"t": 0,
+"d": 60,
+"g": "ref",
+"ref": 1
+},
+{
+"id": "ref_2t",
+"title": "File:USSR bicycle 2T engine D-4.wav",
+"t": 0,
+"d": 60,
+"g": "ref",
+"ref": 1
+}
+]
