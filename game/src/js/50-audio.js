@@ -10,7 +10,7 @@ function auInit(){
     const comp=c.createDynamicsCompressor();AU.mus.disconnect();AU.mus.connect(comp);comp.connect(AU.master);
     const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
     auApply();AU.next=c.currentTime+0.1;AU.timer=setInterval(auSched,30);}catch(e){}
-  musicLoad();
+  musicLoad();try{insLoad();}catch(e){}
 }
 function auApply(){try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}if(AU.ctx)musicPlay();if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.mus.gain.setTargetAtTime(AU.on.music?(R?0.07:0.16):0,t,0.3);AU.fx.gain.setTargetAtTime(AU.on.sfx?0.55:0,t,0.1);}
 document.addEventListener('pointerdown',auInit,{capture:true});
@@ -20,6 +20,36 @@ function vPiano(n,t,dur,v){const c=AU.ctx,o=c.createOscillator(),o2=c.createOsci
   const g2=c.createGain();g2.gain.value=0.35;o2.connect(g2);g2.connect(g);o.connect(g);f.type='lowpass';f.frequency.value=2600;g.connect(f);f.connect(AU.mus);env(g,t,0.006,v,dur*1.6);o.start(t);o2.start(t);o.stop(t+dur*1.8);o2.stop(t+dur*1.8);}
 function vBass(n,t,dur,v){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.value=mtof(n);o.connect(g);g.connect(AU.mus);env(g,t,0.01,v,dur*1.2);o.start(t);o.stop(t+dur*1.4);}
 function vNoise(t,dur,v,type,freq,dest){const c=AU.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=AU.noise;f.type=type;f.frequency.value=freq;s.connect(f);f.connect(g);g.connect(dest||AU.mus);env(g,t,0.003,v,dur);s.start(t,Math.random()*0.5);s.stop(t+dur+0.05);}
+/* ---------- живые инструменты: сэмплы FluidR3_GM (фортепиано, духовые, струнные, аккордеон, банджо, ударные) ---------- */
+// Каждый инструмент — одна «нарезка» mp3: ноты через малую терцию; нужная нота — ближайший сэмпл с поправкой высоты.
+// Пока сэмплы не загрузились (или устройство без Web Audio) — играет старый синтезатор.
+const INS={idx:null,buf:{},dead:{},loadP:null};
+function insLoad(){if(INS.loadP)return INS.loadP;
+  INS.loadP=new Promise(res=>{const go=()=>{INS.idx=window.SAMPLES_INDEX||null;if(!INS.idx||!AU.ctx){res(false);return;}
+      const L=Object.keys(INS.idx.inst);let left=L.length;
+      L.forEach(k=>{const I=INS.idx.inst[k];fetch('samples/'+I.file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(b=>new Promise((ok,no)=>AU.ctx.decodeAudioData(b,ok,no))).then(B=>{INS.buf[k]=B;
+          // «пустые» ячейки (нота вне диапазона инструмента) — не брать
+          const d=B.getChannelData(0),sr=B.sampleRate,n=(I.notes||I.hits||[]).length,dead=[];for(let q=0;q<n;q++){let e=0,c=0;for(let j=Math.floor(q*I.slot*sr),m=Math.min(d.length,j+Math.floor(0.4*sr));j<m;j+=7){e+=d[j]*d[j];c++;}if(c&&Math.sqrt(e/c)<0.004)dead.push(q);}INS.dead[k]=dead;})
+        .catch(()=>{}).finally(()=>{if(--left<=0)res(true);});});};
+    if(window.SAMPLES_INDEX){go();return;}
+    try{const s=document.createElement('script');s.src='samples/index.js';s.async=true;s.onload=go;s.onerror=()=>res(false);document.head.appendChild(s);}catch(e){res(false);}});
+  return INS.loadP;}
+// Нота инструмента: n — MIDI, t — время, dur — длина, v — громкость (0…1), dest — куда (по умолчанию музыка)
+function inst(name,n,t,dur,v,dest){const I=INS.idx&&INS.idx.inst[name],B=INS.buf[name],c=AU.ctx;
+  if(!I||!B||!c){if(name==='bass'||name==='tuba'||name==='pizz')vBass(n,t,dur,v*0.9);else vPiano(n,t,dur,v*0.45);return;}
+  const notes=I.notes,dead=INS.dead[name]||[];let k=-1,bd=1e9;for(let q=0;q<notes.length;q++){if(dead.includes(q))continue;const d=Math.abs(n-notes[q]);if(d<bd){bd=d;k=q;}}if(k<0)return;
+  const src=c.createBufferSource(),g=c.createGain(),rate=Math.pow(2,(n-notes[k])/12);src.buffer=B;src.playbackRate.value=rate;src.connect(g);g.connect(dest||AU.mus);
+  const hold=I.hold||1.2,end=Math.min(I.slot-0.06,Math.max(0.12,Math.min(dur,hold)+0.35)),rel=Math.min(0.25,0.06+dur*0.08);
+  g.gain.setValueAtTime(v,t);if(dur<hold){g.gain.setValueAtTime(v,t+dur);g.gain.setTargetAtTime(0.0001,t+dur,rel/3);}
+  src.start(t,k*I.slot,end);}
+// Ударные: kick, snare, rim, hat, hatp, crash, ride, wood, tri, tamb, clap, brush, tom, cym
+function drum(name,t,v,dest){const I=INS.idx&&INS.idx.inst.drums,B=INS.buf.drums,c=AU.ctx;
+  if(!I||!B||!c){if(name==='kick')vKick(t,v*0.6);else vNoise(t,name==='crash'||name==='cym'?0.4:0.07,v*0.25,name==='snare'||name==='brush'?'bandpass':'highpass',name==='snare'?1800:7000,dest);return;}
+  const k=I.hits.indexOf(name);if(k<0)return;const src=c.createBufferSource(),g=c.createGain();src.buffer=B;src.connect(g);g.connect(dest||AU.mus);g.gain.value=v;src.start(t,k*I.slot,I.slot-0.05);}
+// Оркестровки танцев эпохи: мелодия, подголосок, аккорды, бас, ударные
+const ARR={rag:{mel:'honky',ch:'piano',bass:'piano',dr:0},cake:{mel:'piano',ch:'banjo',bass:'tuba',dr:1},march:{mel:'cornet',mel2:'trumpet',ch:'trombone',bass:'tuba',dr:2},
+  waltz:{mel:'violin',ch:'pizz',bass:'bass',dr:0},tango:{mel:'accordion',mel2:'violin',ch:'piano',bass:'bass',dr:0},fox:{mel:'clarinet',ch:'banjo',bass:'tuba',dr:3},
+  charl:{mel:'trumpet',mel2:'clarinet',ch:'banjo',bass:'tuba',dr:4},jazz:{mel:'clarinet',mel2:'trumpet',ch:'piano',bass:'bass',dr:5}};
 function vKick(t,v){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(45,t+0.12);o.connect(g);g.connect(AU.mus);env(g,t,0.004,v,0.2);o.start(t);o.stop(t+0.3);}
 const CH={M:[0,4,7],D:[0,4,7,10],m:[0,3,7],m7:[0,3,7,10],M6:[0,4,7,9]};
 const STY={
@@ -90,7 +120,8 @@ const MUSIC_Q=[
  ['Florentiner March Fucik',1907,'march'],['Invercargill march',1909,'march'],['Caissons Go Rolling Along',1918,'march'],['Mademoiselle from Armentieres',1918,'song'],['St Louis Tickle',1904,'rag'],['Cannon Ball Rag',1905,'rag'],
  ['Nobody Bert Williams',1905,'song']];
 const ST_NAME={rag:'регтайм',march:'марш',jazz:'джаз',song:'песня',waltz:'вальс',tango:'танго',cake:'кекуок',fox:'фокстрот',charl:'чарльстон'},ST_DEFY={rag:1905,march:1915,jazz:1922,song:1910,waltz:1900,tango:1914};
-if(!AU.on.mode)AU.on.mode='era';if(AU.on.race===undefined)AU.on.race=true;
+// 0.18: в гонке по умолчанию без музыки — слышно мотор, шины и толпу; включается кнопкой ♪ в гонке или в настройках
+if(!AU.on.mode)AU.on.mode='era';if(AU.on.race===undefined||!AU.on.v18){AU.on.race=false;AU.on.v18=1;}
 AU.tracks={};AU.el=null;AU.pl=[];AU.idx=0;AU.paused=false;AU.synth=null;AU.errs=0;
 const musKey=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,' ').split(' ').filter(w=>w.length>3&&!/^(1\d{3}|rag|blues|march|waltz|band|original)$/.test(w));
 async function musicLoad(){
@@ -165,69 +196,74 @@ function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
   AU.mel=best;return best;}
 // Пьеса кончилась — следующая в плейлисте
 function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth===SY)musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
-// Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы
-function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats;
+// Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы (живыми инструментами)
+function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats,A=ARR[T.sty]||ARR.rag;
   if(!T._m){T._m=T.mel.replace(/\|/g,' ').trim().split(/\s+/);T._c=T.ch.trim().split(/\s+/).map(chordOf);}
   const M=T._m,len=M.length,idx=AU.step%len,pass=Math.floor(AU.step/len),bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0],tones=CH[ch[1]];
   if(play){
-    if(T.sty==='waltz'){if(pos===0)vBass(root-24,t,beat*0.9,0.28);else tones.forEach(i=>vPiano(root-12+i,t,beat*0.35,0.05));}
-    else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])vBass(root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.3);if(pos===4||pos===6)tones.forEach(i=>vPiano(root-12+i,t,sub*0.7,0.05));}
-    else{const h=spb/2;if(pos===0||pos===h)vBass(root-24+(pos===h?7:0),t,beat*0.9,0.28);if(pos===h/2||pos===h+h/2)tones.forEach(i=>vPiano(root-12+i,t,beat*0.35,0.06));if(T.sty==='march'&&(pos===spb-2||pos===spb-1))vNoise(t,0.08,0.05,'bandpass',1800);}
-    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok);vPiano(n,t,sub*d*0.95,0.12);if(d>=2||pass===1)vPiano(n-12,t,sub*d*0.9,pass===1?0.07:0.035);}
+    if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
+    else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.16));}
+    else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
+      if(T.sty==='march'){if(pos===0)drum('kick',t,0.5);if(pos===h)drum('crash',t,0.12);if(pos===spb-2||pos===spb-1)drum('snare',t,0.3);}}
+    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok),mi2=pass===1&&A.mel2?A.mel2:A.mel;
+      inst(mi2,n,t,sub*d*0.95,0.4);if(d>=2||pass===1)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
     if(AU.step>=len*3-1)musEnd(SY,t+sub);}
   return sub;}
 function auSched(){
   const c=AU.ctx;if(!c)return;
   while(AU.next<c.currentTime+0.15){
     if(AU.lastY!==(G&&G.y)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
-    const SY=AU.synth,play=SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race);
+    // под кинохронику — свой танец ролика, тихо
+    const RS=AU.reelSty&&typeof REEL!=='undefined'&&REEL?AU.reelSty:null;
+    const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race);
     if(SY&&SY.tune&&TUNES[SY.tune]){const d=tuneStep(SY,AU.next,play);AU.next+=d;AU.step++;continue;}
-    const st=SY&&STY[SY.st]?SY.st:styleFor();
+    const st=RS||(SY&&STY[SY.st]?SY.st:styleFor()),A=ARR[st]||ARR.rag;
     const S=STY[st],vv=SY?SY.v||0:0,beat=60/(S.bpm*[1,0.93,1.07][vv]),sub=beat/S.div,stepsBar=S.div*(S.beats||(st==='rag'?2:4));
     const bar=Math.floor(AU.step/stepsBar),pos=AU.step%stepsBar,ch=S.prog[bar%S.prog.length],root=S.key+[0,-3,2][vv]+ch[0],tones=CH[ch[1]];
     let dur=sub;if(S.swing){dur=pos%2===0?beat*S.swing:beat*(1-S.swing);}
     const t=AU.next;
-    if(play&&bar>=S.prog.length*4)musEnd(SY,t);
+    if(play&&SY&&bar>=S.prog.length*4)musEnd(SY,t);
     if(play){
-      const rnd=mulberry32(hashStr(st+vv+'-'+(bar%S.prog.length)+'-'+pos+'-'+Math.floor(bar/S.prog.length)%2));
+      const rnd=mulberry32(hashStr(st+vv+'-'+(bar%S.prog.length)+'-'+pos+'-'+Math.floor(bar/S.prog.length)%2)),pass=Math.floor(bar/S.prog.length)%2,mel=pass&&A.mel2?A.mel2:A.mel;
       if(st==='rag'){
-        if(pos===0||pos===4)vBass(root-24+(pos===4?7:0),t,beat*0.9,0.28);
-        if(pos===2||pos===6)tones.forEach(i=>vPiano(root-12+i,t,beat*0.35,0.07));
-        const pat=[1,0,1,1,0,1,0,1];if(pat[pos]&&rnd()<0.9){const deg=tones[Math.floor(rnd()*tones.length)]+(rnd()<0.3?2:0);vPiano(root+12+deg,t,sub*1.3,0.11);}
+        if(pos===0||pos===4)inst('piano',root-24+(pos===4?7:0),t,beat*0.9,0.45);
+        if(pos===2||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,beat*0.35,0.16));
+        const pat=[1,0,1,1,0,1,0,1];if(pat[pos]&&rnd()<0.9){const deg=tones[Math.floor(rnd()*tones.length)]+(rnd()<0.3?2:0);inst(mel,root+12+deg,t,sub*1.3,0.34);}
       }else if(st==='march'){
-        if(pos===0||pos===4)vBass(root-24+(pos===4?7:0),t,beat,0.3);
-        if(pos===2||pos===6)tones.forEach(i=>vPiano(root-12+i,t,beat*0.4,0.06));
-        if(pos===6||pos===7)vNoise(t,0.08,0.05,'bandpass',1800);
-        if(pos%2===0||rnd()<0.3){const deg=tones[Math.floor(rnd()*tones.length)];vPiano(root+12+deg,t,sub*(pos%2?1:1.8),0.1);}
+        if(pos===0||pos===4)inst('tuba',root-24+(pos===4?7:0),t,beat,0.55);
+        if(pos===2||pos===6)tones.forEach(i=>inst('trombone',root-12+i,t,beat*0.4,0.16));
+        if(pos===0)drum('kick',t,0.5);if(pos===4)drum('kick',t,0.35);if(pos===6||pos===7)drum('snare',t,0.28);if(pos===0&&bar%4===0)drum('crash',t,0.1);
+        if(pos%2===0||rnd()<0.3){const deg=tones[Math.floor(rnd()*tones.length)];inst(mel,root+12+deg,t,sub*(pos%2?1:1.8),0.36);}
       }else if(st==='waltz'){
-        if(pos===0)vBass(root-24,t,beat*0.9,0.28);else tones.forEach(i=>vPiano(root-12+i,t,beat*0.35,0.05));
-        if(pos===0){const n=melPick(root,tones,rnd,67,86),long=rnd()<0.55;AU.wl=long;vPiano(n,t,beat*(long?2.7:0.95),0.11);}
-        else if(!AU.wl&&rnd()<0.8){const n=melPick(root,tones.concat([2,9]),rnd,67,86);vPiano(n,t,beat*0.95,0.1);}
+        if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.16));
+        if(pos===0){const n=melPick(root,tones,rnd,67,86),long=rnd()<0.55;AU.wl=long;inst('violin',n,t,beat*(long?2.7:0.95),0.36);if(pass)inst('strings',n-12,t,beat*(long?2.7:0.95),0.14);}
+        else if(!AU.wl&&rnd()<0.8){const n=melPick(root,tones.concat([2,9]),rnd,67,86);inst('violin',n,t,beat*0.95,0.32);}
       }else if(st==='cake'){
-        if(pos===0||pos===4)vBass(root-24+(pos===4?7:0),t,beat*0.8,0.28);
-        if(pos===2||pos===6)tones.forEach(i=>vPiano(root-12+i,t,beat*0.3,0.06));
-        const pat=[1,2,0,1,2,0,2,0];if(pat[pos]&&rnd()<0.92){const n=melPick(root,tones,rnd,69,86);vPiano(n,t,sub*pat[pos]*1.05,0.11);}
+        if(pos===0||pos===4)inst('tuba',root-24+(pos===4?7:0),t,beat*0.8,0.5);
+        if(pos===2||pos===6)tones.forEach(i=>inst('banjo',root-12+i,t,beat*0.3,0.18));
+        if(pos===2||pos===6)drum('rim',t,0.18);
+        const pat=[1,2,0,1,2,0,2,0];if(pat[pos]&&rnd()<0.92){const n=melPick(root,tones,rnd,69,86);inst('piano',n,t,sub*pat[pos]*1.05,0.36);}
       }else if(st==='tango'){
-        const hab=[1,0,0,1,1,0,1,0];if(hab[pos])vBass(root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.3);
-        if(pos===4||pos===6)tones.forEach(i=>vPiano(root-12+i,t,sub*0.7,0.05));
-        if(pos===0){const n=melPick(root,tones,rnd,64,84);vPiano(n,t,sub*(rnd()<0.5?5.5:3),0.12);}
-        else if((pos===6&&rnd()<0.6)||(pos===7&&rnd()<0.45)){const n=melPick(root,tones.concat([2,5]),rnd,64,84);vPiano(n,t,sub*1.2,0.1);}
+        const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);
+        if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.15));
+        if(pos===0){const n=melPick(root,tones,rnd,64,84);inst(mel,n,t,sub*(rnd()<0.5?5.5:3),0.38);}
+        else if((pos===6&&rnd()<0.6)||(pos===7&&rnd()<0.45)){const n=melPick(root,tones.concat([2,5]),rnd,64,84);inst(mel,n,t,sub*1.2,0.33);}
       }else if(st==='fox'){
-        if(pos%2===0)vBass(root-24+[0,7,0,7][pos/2],t,beat*0.9,0.28);
-        if(pos===2||pos===6){tones.forEach(i=>vPiano(root-12+i,t,beat*0.45,0.05));vNoise(t,0.06,0.02,'highpass',6000);}
-        if(pos===0||pos===4){const n=melPick(root,tones,rnd,67,86);vPiano(n,t,beat*(rnd()<0.5?1.9:0.95),0.11);}
-        else if(pos%2===0&&rnd()<0.55){const n=melPick(root,tones.concat([2]),rnd,67,86);vPiano(n,t,beat*0.9,0.1);}
-        else if(pos%2===1&&rnd()<0.18){const n=melPick(root,tones,rnd,67,86);vPiano(n,t,dur*0.9,0.09);}
+        if(pos%2===0)inst('tuba',root-24+[0,7,0,7][pos/2],t,beat*0.9,0.5);
+        if(pos===2||pos===6){tones.forEach(i=>inst('banjo',root-12+i,t,beat*0.45,0.15));drum('brush',t,0.25);}
+        if(pos===0||pos===4)drum('hatp',t,0.2);
+        if(pos===0||pos===4){const n=melPick(root,tones,rnd,67,86);inst(mel,n,t,beat*(rnd()<0.5?1.9:0.95),0.36);}
+        else if(pos%2===0&&rnd()<0.55){const n=melPick(root,tones.concat([2]),rnd,67,86);inst(mel,n,t,beat*0.9,0.32);}
+        else if(pos%2===1&&rnd()<0.18){const n=melPick(root,tones,rnd,67,86);inst(mel,n,t,dur*0.9,0.28);}
       }else if(st==='charl'){
-        if(pos===0||pos===3){vBass(root-24+(pos===3?7:0),t,beat*0.8,0.3);tones.forEach(i=>vPiano(root-12+i,t,beat*0.3,0.06));}
-        if(pos===4||pos===6)vNoise(t,0.05,0.025,'highpass',7000);if(pos===0)vKick(t,0.1);
-        const pat=[1,0,1,1,0,1,1,0];if(pat[pos]&&rnd()<0.8){const n=melPick(root,tones.concat(rnd()<0.3?[3,10]:[]),rnd,67,86);vPiano(n,t,dur*1.2,0.1);}
+        if(pos===0||pos===3){inst('tuba',root-24+(pos===3?7:0),t,beat*0.8,0.52);tones.forEach(i=>inst('banjo',root-12+i,t,beat*0.3,0.17));}
+        if(pos===4||pos===6)drum('hat',t,0.22);if(pos===0)drum('kick',t,0.45);if(pos===3)drum('snare',t,0.22);
+        const pat=[1,0,1,1,0,1,1,0];if(pat[pos]&&rnd()<0.8){const n=melPick(root,tones.concat(rnd()<0.3?[3,10]:[]),rnd,67,86);inst(mel,n,t,dur*1.2,0.34);}
       }else{
-        if(pos%2===0){const walk=[0,tones[1],tones[2],tones[tones.length-1]][pos/2];vBass(root-24+walk,t,beat*0.9,0.3);}
-        if(pos===2||pos===6)tones.slice(1).concat([14]).forEach(i=>vPiano(root-12+i,t,beat*0.3,0.05));
-        vNoise(t,pos%2?0.05:0.12,pos%2?0.02:0.04,'highpass',7000);
-        if(pos===0)vKick(t,0.1);
-        if(rnd()<(pos%2?0.45:0.6)){const bl=[0,3,5,6,7,10][Math.floor(rnd()*6)];vPiano(root+12+bl,t,dur*1.5,0.09);}
+        if(pos%2===0){const walk=[0,tones[1],tones[2],tones[tones.length-1]][pos/2];inst('bass',root-24+walk,t,beat*0.9,0.55);}
+        if(pos===2||pos===6)tones.slice(1).concat([14]).forEach(i=>inst('piano',root-12+i,t,beat*0.3,0.14));
+        drum(pos%2?'hat':'ride',t,pos%2?0.14:0.22);if(pos===0)drum('kick',t,0.4);if(pos===2||pos===6)drum('snare',t,0.16);
+        if(rnd()<(pos%2?0.45:0.6)){const bl=[0,3,5,6,7,10][Math.floor(rnd()*6)];inst(mel,root+12+bl,t,dur*1.5,0.32);}
       }
     }
     AU.next+=dur;AU.step++;

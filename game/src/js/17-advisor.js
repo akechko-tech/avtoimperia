@@ -8,7 +8,10 @@ function bestPriceFor(md,s){const key=md.id+'|'+mi(s)+'|'+md.price+'|'+PART_KEYS
   const act=(s.models||[]).filter(m=>m.status==='prod'),made=act.reduce((a,m)=>a+(m.lastMade||0),0),capM=capEff(s)*(made>0?(md.lastMade||0)/made:1/Math.max(1,act.length));
   const lim=(md.lostS||0)+(md.lostD||0)>0.5?Math.max(1,(md.lastSold||0)*1.15,capM*0.95):Infinity,top=Math.max(md.price,Math.round(refPrice(md,s)*1.45/10)*10);
   // прибыль по странам: за границей из выручки вычитаем доставку
-  const uc=unitCost(md,s),ship=shipCost(s),ck=techLv(s,'credit')?1.15:1,prof=p=>{const by=demandAll(s,{id:md.id,price:p}).by[md.id]||{};let q=0,v=0;for(const c in by){const d=by[c]*ck;q+=d;v+=d*(p*(1-DEALER_MARGIN)-(c===s.country?0:ship)-uc);}return q>lim?v*lim/q:v;};
+  const uc=unitCost(md,s),ship=shipCost(s),ck=techLv(s,'credit')?1.15:1,oth=act.filter(m=>m.id!==md.id).map(m=>({m,uc:unitCost(m,s)}));
+  // 0.18: прибыль всей марки — дешёвая модель забирает покупателей у ваших же моделей (каннибализация)
+  const prof=p=>{const A=demandAll(s,{id:md.id,price:p}).by,by=A[md.id]||{};let q=0,v=0;for(const c in by){const d=by[c]*ck;q+=d;v+=d*(p*(1-DEALER_MARGIN)-(c===s.country?0:ship)-uc);}
+    let o=0;oth.forEach(x=>{const b2=A[x.m.id]||{};for(const c in b2)o+=b2[c]*ck*(x.m.price*(1-DEALER_MARGIN)-(c===s.country?0:ship)-x.uc);});return (q>lim?v*lim/q:v)+o;};
   const exp=(md.soldBy&&md.lastSold)?1-(md.soldBy[s.country]||0)/md.lastSold:0,floor=Math.round((uc+exp*ship)/(1-DEALER_MARGIN)*1.06/10)*10,p0=prof(md.price);let best={price:md.price,v:p0};
   for(const k of [0.8,0.9,1.1,1.2,1.35,1.6]){const p=Math.max(20,floor,Math.min(top,Math.round(md.price*k/10)*10)),v=prof(p);if(v>best.v)best={price:p,v};}
   if(md.price<floor&&best.price<floor)best={price:floor,v:prof(floor)};

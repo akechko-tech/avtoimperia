@@ -123,7 +123,11 @@ function seasonTick(s){
   drvMonth(s);
 }
 /* ---------- итоги гонки игрока ---------- */
-function fmtRaceTime(sec){sec=Math.max(0,sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=Math.floor(sec%60);return h?`${h} ч ${String(m).padStart(2,'0')} мин`:m?`${m} мин ${String(x).padStart(2,'0')} с`:`${(Math.round(sec*10)/10).toFixed(1).replace('.',',')} с`;}
+// Время гонки: «4 ч 07 мин 32 с», «38 мин 05 с», «52,4 с» — часы, минуты и секунды, как в отчётах эпохи
+function fmtRaceTime(sec){sec=Math.max(0,sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=Math.floor(sec%60),p=n=>String(n).padStart(2,'0');
+  return h?`${h} ч ${p(m)} мин ${p(x)} с`:m?`${m} мин ${p(x)} с`:`${(Math.round(sec*10)/10).toFixed(1).replace('.',',')} с`;}
+// Отставание от победителя: «+1 ч 02 мин 10 с», «+3 мин 05 с», «+8,4 с»
+function fmtGap(sec){return '+'+fmtRaceTime(sec);}
 let lastRace=null;
 function raceResults(rc,res,mode,info){
   const s=G;if(!s)return;info=info||{};
@@ -171,16 +175,16 @@ function racePaper(rc,res,row,k,cup){
 }
 function openRaceResult(){
   const L=lastRace;if(!L)return;const s=G,{rc,res,k,won}=L,lead=res[0];
-  const rows=res.filter((r,i)=>i<10||r.you||r.pmy).map(r=>{const t=r.dnf?`<span class="bad">сход${r.dnf&&r.dnf!=='сошёл'?': '+esc(r.dnf):''}</span>`:r.pos===1?fmtRaceTime(r.fin*k):'+'+fmtRaceTime((r.fin-lead.fin)*k);
+  const rows=res.filter((r,i)=>i<10||r.you||r.pmy).map(r=>{const sec=r.fin!=null?r.fin*k:0,avg=sec>0?Math.round(rc.km/(sec/3600)):0,t=r.dnf?`<span class="bad">сход${r.dnf&&r.dnf!=='сошёл'?': '+esc(r.dnf):''}</span>`:(r.pos===1?`<b>${fmtRaceTime(sec)}</b>`:fmtGap((r.fin-lead.fin)*k))+(avg?`<small class="muted">${avg} км/ч</small>`:'');
     const car=r.you?r.label:r.pmy?`«${r.label}» · частник на вашей машине`:r.priv?`${r.label} · частник`:r.name;
     return `<tr class="${r.you?'you':r.pmy?'mine':''}"><td class="n">${r.dnf?'—':r.pos}</td><td>${esc(r.drv||'—')}<small>${esc(car)}</small></td><td class="n">${t}${r.prize?`<small class="good">${money(r.prize)}</small>`:''}</td></tr>`;}).join('');
   const nPv=res.filter(r=>r.priv).length,pr=privRule(rc);
   const champs=raceChamps(rc).map(id=>{const tb=champTable(s,id,rc.y),me=tb.findIndex(r=>r.you),C=CHAMPS[id];
     return `<div class="label" style="margin-top:14px">${C.name(rc.y)} ${rc.y}</div><table class="pl" style="margin-top:4px">${tb.slice(0,4).concat(me>=4?[tb[me]]:[]).map(r=>`<tr class="${r.you?'you':''}"><td class="n">${tb.indexOf(r)+1}</td><td>${esc(r.n)}</td><td class="n">${r.el?'':'['}${fmtPts(id,r.pts)}${r.el?'':']'}</td></tr>`).join('')}</table>`;}).join('');
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">Итоги: ${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
-    <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · время пересчитано на полную дистанцию</p>
+    <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · у победителя — время всей гонки, у остальных — отставание от него; ниже — средняя скорость</p>
     ${L.cup?`<p class="good" style="margin-top:8px"><b>🏆 ${esc(L.cup)}</b></p>`:''}
-    <table class="pl res" style="margin-top:10px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время</th></tr>${rows}</table>
+    <table class="pl res" style="margin-top:10px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время / отставание</th></tr>${rows}</table>
     <p style="margin-top:10px">${L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` Призовые: <b class="good">${money(won)}</b>.`:''}</p>
     ${nPv?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ Пари с ${esc(L.chal.C.mq)} ${L.chal.res==='win'?'выиграно':'проиграно'}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}

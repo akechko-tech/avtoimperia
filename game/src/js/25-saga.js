@@ -55,15 +55,28 @@ function sagaSegK(g){const S=G&&G.sagaSeg&&G.sagaSeg[g];return S&&mi(G)<S.until?
 /* ---------- кинозал: титр главы, сцены с голосом, выбор, итог ---------- */
 let SAGAP=null;
 function sagaImg(key){const im=key&&IMG[key];return im&&im.src?im.src:'';}
+// Голоса фильма: рассказчица — baya, мужские роли — eugene, женские — xenia (записаны заранее; нет записи — синтезатор устройства)
+const SAGA_NARR='baya';
+function sagaVoiceOf(sc){return sc&&sc.who?voiceOfWho(sc.who):SAGA_NARR;}
 function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=L[k];if(!ch){if(!replay)sagaDone(id,-1);return;}
   sagaStop();const P=PIONEERS[s.pioneer]||PIONEERS.custom,el=document.createElement('div');el.className='sg';el.id='sagaScreen';
   el.innerHTML=`<div class="sg-bg"><img alt=""></div><div class="sg-shade"></div><div class="sg-bar top"></div><div class="sg-bar bot"></div>
-    <div class="sg-body"></div><div class="sg-ctrl"><button class="sg-skip">Пропустить ▸▸</button></div>`;
+    <div class="sg-body"></div><div class="sg-ctrl"><button class="sg-nav" data-sg="prev" aria-label="Назад">◀</button><button class="sg-nav" data-sg="next" aria-label="Дальше">▶</button><button class="sg-skip">К выбору ▸▸</button></div><div class="sg-dots"></div>`;
   if(!el.querySelector||!el.querySelector('.sg-skip')){if(!replay)sagaAuto(s,id);return;}// без экрана (проверки)
   document.body.appendChild(el);SAGAP={id,ch,k,el,i:-1,replay:!!replay,timer:0,portrait:sagaImg(P.wiki)};
-  el.querySelector('.sg-skip').onclick=()=>sagaQuestion();el.querySelector('.sg-body').onclick=()=>sagaNext();
+  try{voiceUnlock();}catch(_){}
+  const Q=SAGAP;
+  el.querySelector('.sg-skip').onclick=e=>{e.stopPropagation();sagaQuestion();};
+  el.querySelectorAll('.sg-nav').forEach(b=>b.onclick=e=>{e.stopPropagation();if(b.dataset.sg==='prev')sagaGo(Math.max(0,Q.i-1));else sagaNext();});
+  el.querySelector('.sg-body').onclick=()=>sagaNext();
+  // листание пальцем: влево — дальше, вправо — назад
+  let sx=null,sy=0;el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;},{passive:true});
+  el.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4&&!Q.q){Q.swiped=performance.now();if(dx<0)sagaNext();else sagaGo(Math.max(0,Q.i-1));}});
+  el.addEventListener('click',e=>{if(Q.swiped&&performance.now()-Q.swiped<300){e.stopPropagation();e.preventDefault();}},true);
   try{auInit();auReelFanfare();}catch(_){}
+  voiceLoad().then(()=>{if(SAGAP===Q)sagaDots();});sagaDots();
   sagaTitle();}
+function sagaDots(){const Q=SAGAP;if(!Q)return;const d=Q.el.querySelector('.sg-dots');if(!d)return;const n=Q.ch.sc.length;d.innerHTML=Array.from({length:n+1},(_,k)=>`<i class="${k<Q.i?'done':k===Q.i?'cur':''}"></i>`).join('');}
 function sagaSetBg(src){const Q=SAGAP;if(!Q)return;const im=Q.el.querySelector('.sg-bg img');if(!src){Q.el.classList.add('noimg');im.removeAttribute('src');return;}
   Q.el.classList.remove('noimg');if(im.getAttribute('src')!==src){im.style.opacity=0;im.onload=()=>{im.style.opacity=1;};im.src=src;}
   // медленный наезд камеры по фото (каждый раз — в свою сторону)
@@ -71,29 +84,33 @@ function sagaSetBg(src){const Q=SAGAP;if(!Q)return;const im=Q.el.querySelector('
 function sagaTitle(){const Q=SAGAP,s=G,ch=Q.ch,n=Q.k+1;
   sagaSetBg(sagaImg((ch.sc.find(x=>x.img)||{}).img)||Q.portrait);
   Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-title in"><div class="sg-kick">${esc(PIONEERS[s.pioneer]&&s.pioneer!=='custom'?PIONEERS[s.pioneer].name:sagaFill('{name}',s))} · фильм</div><div class="sg-ch">Глава ${n}</div><div class="sg-t">${esc(sagaFill(ch.t,s))}</div>${ch.y?`<div class="sg-y">${ch.y}</div>`:''}</div>`;
+  const sc0=ch.sc[0];if(sc0)try{voicePreload(sagaFill(sc0.say||sc0.line||'',s),sagaVoiceOf(sc0));}catch(_){}
   clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),2600);}
-function sagaNext(){const Q=SAGAP;if(!Q||Q.q)return;clearTimeout(Q.timer);ttsStop();Q.i++;const s=G,sc=Q.ch.sc[Q.i];if(!sc){sagaQuestion();return;}
-  if(sc.img)sagaSetBg(sagaImg(sc.img)||Q.portrait);else if(Q.i===0)sagaSetBg(Q.portrait);
+function sagaNext(){const Q=SAGAP;if(!Q||Q.q)return;sagaGo(Q.i+1);}
+function sagaGo(i){const Q=SAGAP;if(!Q)return;if(Q.q){Q.q=0;Q.el.querySelector('.sg-skip').style.visibility='';}clearTimeout(Q.timer);voiceStop();Q.i=i;const s=G,sc=Q.ch.sc[i];if(!sc){sagaQuestion();return;}
+  if(sc.img)sagaSetBg(sagaImg(sc.img)||Q.portrait);else if(i===0)sagaSetBg(Q.portrait);
   const txt=sagaFill(sc.say||sc.line||'',s),who=sc.who?sagaFill(sc.who,s):'';
   Q.el.querySelector('.sg-body').innerHTML=sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
-  const dur=Math.max(3.8,1.6+txt.length/14)*1000;let spoke=false;
-  if(reelVoiceOn()&&ttsReady()){spoke=true;ttsSay(txt,()=>{if(SAGAP===Q&&!Q.q){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),700);}});}
-  Q.timer=setTimeout(()=>sagaNext(),spoke?dur+6000:dur);}
-function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);ttsStop();const s=G,ch=Q.ch;Q.q=1;
+  sagaDots();
+  const nx=Q.ch.sc[i+1];if(nx)try{voicePreload(sagaFill(nx.say||nx.line||'',s),sagaVoiceOf(nx));}catch(_){}
+  // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения
+  const d=voiceSay(txt,sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),450);}});
+  Q.timer=setTimeout(()=>{if(SAGAP===Q&&Q.i===i)sagaNext();},(d?d+6:Math.max(3.8,1.6+txt.length/14))*1000);}
+function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);voiceStop();const s=G,ch=Q.ch;Q.q=1;Q.i=ch.sc.length;sagaDots();
   if(Q.replay){const pk=(s.saga&&s.saga.pick||{})[ch.id],o=ch.o&&ch.o[pk];Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${o?`<p class="sg-res">Ваш выбор: «${esc(sagaFill(o.t,s))}». ${esc(sagaFill(o.res,s))}</p>`:''}<button class="sg-o" data-k="-1"><b>Закрыть</b></button></div>`;}
   else Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${(ch.o||[]).map((o,i)=>`<button class="sg-o" data-k="${i}"><b>${esc(sagaFill(o.t,s))}</b><small>${esc(sagaFxText(o.fx,s))}</small></button>`).join('')}</div>`;
   Q.el.querySelector('.sg-skip').style.visibility='hidden';
   Q.el.querySelectorAll('.sg-o').forEach(b=>b.onclick=e=>{e.stopPropagation();sagaPick(+b.dataset.k);});
-  if(reelVoiceOn()&&ttsReady()&&!Q.replay)ttsSay(sagaFill(ch.q,s));}
+  if(!Q.replay)voiceSay(sagaFill(ch.q,s),SAGA_NARR);}
 function sagaPick(k){const Q=SAGAP;if(!Q)return;const s=G,ch=Q.ch,o=ch.o&&ch.o[k];
   if(Q.replay||k<0||!o){sagaStop();return;}
   sagaApply(s,o.fx);addLog(`🎬 «${sagaFill(ch.t,s)}»: ${sagaFill(o.t,s)}. ${sagaFill(o.res,s)}`,'hist');
   Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><p class="sg-res">${esc(sagaFill(o.res,s))}</p><p class="sg-fx">${esc(sagaFxText(o.fx,s))}</p><button class="sg-o" data-k="-1"><b>Дальше ▸</b></button></div>`;
   Q.el.querySelector('.sg-o').onclick=e=>{e.stopPropagation();sagaDone(ch.id,k);};
-  if(reelVoiceOn()&&ttsReady())ttsSay(sagaFill(o.res,s));}
+  voiceSay(sagaFill(o.res,s),SAGA_NARR);}
 function sagaDone(id,k){const s=G,S=s.saga=s.saga||{seen:[],pick:{},last:mi(s)};if(!S.seen.includes(id))S.seen.push(id);if(k>=0){S.pick=S.pick||{};S.pick[id]=k;}
   sagaStop();const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);save();render();}
-function sagaStop(){const Q=SAGAP;SAGAP=null;ttsStop();if(!Q)return;clearTimeout(Q.timer);Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},400);}
+function sagaStop(){const Q=SAGAP;SAGAP=null;voiceStop();if(!Q)return;clearTimeout(Q.timer);Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},400);}
 // Карточка «Фильм о вас»: просмотренные главы и следующая
 function sagaCard(s){const L=sagaList(s),S=s.saga||{seen:[]},seen=L.filter(c=>(S.seen||[]).includes(c.id)),next=L.find(c=>!(S.seen||[]).includes(c.id));
   const P=PIONEERS[s.pioneer]||PIONEERS.custom;

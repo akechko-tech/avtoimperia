@@ -24,6 +24,8 @@ jobs:
         run: python3 tools/fetch_images.py || echo 'без фото'
       - name: Фото-текстуры гонок (из веб-версии)
         run: mkdir -p app/src/main/assets/tex && cp docs/tex/tex.js app/src/main/assets/tex/tex.js
+      - name: Живые инструменты, кинохроника и голос диктора (из веб-версии)
+        run: for d in samples film voice; do if [ -d docs/$d ]; then mkdir -p app/src/main/assets/$d && cp -r docs/$d/. app/src/main/assets/$d/; fi; done
       - name: Собрать APK
         run: gradle assembleRelease --no-daemon
       - name: Переименовать

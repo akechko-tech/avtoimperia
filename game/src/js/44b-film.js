@@ -19,10 +19,18 @@ const ease=u=>u*u*(3-2*u);
 const lerp3=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
 // Точка трассы на расстоянии d метров от индекса i (с высотой дороги)
 function trkAt(i,d,off){const T=R.trk,n=T.n,j=T.closed?(((i+Math.round(d/T.step))%n)+n)%n:clamp(i+Math.round(d/T.step),0,n-1),p=T.pts[j],nn=T.N[j],o=off||0;return {j,p:[p[0]+nn[0]*o,p[1]+(R3.on?roadY(j,clamp(o,-T.W/2,T.W/2)):p[1]),p[2]+nn[1]*o],t:T.T[j],n:nn};}
+// Плавная точка трассы (дробный индекс, кривая Катмулла — Рома): для пролётов камеры — без ступенек между точками трассы
+function trkSmooth(i,d,off){const T=R.trk,n=T.n,f=i+d/T.step,j0=Math.floor(f),u=f-j0,o=off||0,idx=j=>T.closed?((j%n)+n)%n:clamp(j,0,n-1);
+  const P=j=>{const q=idx(j),p=T.pts[q],nn=T.N[q];return [p[0]+nn[0]*o,p[1],p[2]+nn[1]*o];},a=P(j0-1),b=P(j0),c=P(j0+1),e=P(j0+2),u2=u*u,u3=u2*u;
+  const cr=k=>0.5*(2*b[k]+(-a[k]+c[k])*u+(2*a[k]-5*b[k]+4*c[k]-e[k])*u2+(-a[k]+3*b[k]-3*c[k]+e[k])*u3);
+  const t0=T.T[idx(j0)],t1=T.T[idx(j0+1)],t=[t0[0]+(t1[0]-t0[0])*u,t0[1]+(t1[1]-t0[1])*u],tl=Math.hypot(t[0],t[1])||1;
+  return {j:idx(Math.round(f)),p:[cr(0),cr(1),cr(2)],t:[t[0]/tl,t[1]/tl],n:[t[1]/tl,-t[0]/tl]};}
 // Место для камеры у обочины: рядом нет дерева, столба или дома
 function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
 // Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
 function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
+// Слова диктора перед стартом: название, год и первая фраза истории гонки (их записал диктор заранее)
+function raceIntroText(rc){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?]/);return `${rc.name}. ${rc.y} год.${h1?' '+h1[0]:''}`;}
 /* ---------- заставка перед стартом ---------- */
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];
@@ -42,40 +50,46 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   const sp=trkAt(s0,0),fw=[sp.t[0],0,sp.t[1]],side=[sp.n[0],0,sp.n[1]];
   // 1) над стартом: высоко сзади — плавно вниз к машинам
   shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
-    cam:u=>{const e=ease(u),a=trkAt(s0,-150+70*e,-40+25*e),look=trkAt(s0,40+30*e);return {eye:[a.p[0],a.p[1]+95-60*e,a.p[2]],look:[look.p[0],look.p[1]+2,look.p[2]],fov:0.85};}});
+    cam:u=>{const e=ease(u),a=trkSmooth(s0,-150+70*e,-40+25*e),look=trkSmooth(s0,40+30*e);return {eye:[a.p[0],a.p[1]+95-60*e,a.p[2]],look:[look.p[0],look.p[1]+2,look.p[2]],fov:0.85};}});
   // 2) самое интересное впереди: пролёт вдоль дороги
   if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:poi.at,mid:poi.cap},poi:i,
-    cam:u=>{const e=ease(u),a=trkAt(i,-90+80*e,18),b=trkAt(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
+    cam:u=>{const e=ease(u),a=trkSmooth(i,-90+80*e,18),b=trkSmooth(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
   // 3) стартовая решётка: камера едет по обочине вдоль машин — по самой трассе (на изгибе тоже), с той стороны, где свободно
   const grid=R.cars.slice().sort((a,b)=>b.prog-a.prog),back=grid[grid.length-1],front=grid[0];
   const favs=filmFavorites(),iB=back.idx,dI=T.closed?((front.idx-iB)%T.n+T.n)%T.n:Math.max(0,front.idx-iB),gLen=dI*T.step+14,gs=filmSide(iB,dI,T.W/2+2.2);
   shots.push({d:4.4,cap:{kick:'Стартовая решётка',list:favs.length?['Фавориты:',...favs]:[]},
-    cam:u=>{const e=ease(u),d=-8+gLen*e,a=trkAt(iB,d,gs*(T.W/2+2.2)),l=trkAt(iB,d+9,-gs*T.W*0.12);return {eye:[a.p[0],a.p[1]+1.35,a.p[2]],look:[l.p[0],l.p[1]+0.75,l.p[2]],fov:0.78,near:0.1};}});
+    cam:u=>{const e=ease(u),d=-8+gLen*e,a=trkSmooth(iB,d,gs*(T.W/2+2.2)),l=trkSmooth(iB,d+9,-gs*T.W*0.12);a.p[1]+=R3.on?roadY(a.j,0)-R.trk.pts[a.j][1]:0;l.p[1]+=R3.on?roadY(l.j,0)-R.trk.pts[l.j][1]:0;return {eye:[a.p[0],a.p[1]+1.35,a.p[2]],look:[l.p[0],l.p[1]+0.75,l.p[2]],fov:0.78,near:0.1};}});
   // 4) ваша машина крупно
   const who=me.player?`Вы — ${PIONEERS[G.pioneer].name}`:(me.drvName||me.label),car=me.label||me.name;
   shots.push({d:3.4,cap:{kick:`№${me.num}`,mid:`${who}${car?' · «'+car+'»':''}`},
     cam:u=>{const e=ease(u),a=Math.atan2(fw[0],fw[2])+0.9+1.5*e,rr=5.2-0.8*e,eye=[me.x+Math.sin(a)*rr,me.y+1.1+0.6*e,me.z+Math.cos(a)*rr];return {eye,look:[me.x,me.y+0.7,me.z],fov:0.72,near:0.1};}});
   R.film={t:0,i:-1,shots,total:shots.reduce((a,s)=>a+s.d,0)};R.hold=true;R3.camHook=filmCam;
   // куски трассы у интересного места — построить заранее
-  if(poi){const k0=Math.floor((poi.i-40)/R3CH),k1=Math.floor((poi.i+40)/R3CH);for(let k=k0;k<=k1;k++){const kk=T.closed?((k%R3.nCh)+R3.nCh)%R3.nCh:k;if(kk>=0&&kk<R3.nCh&&!R3.chunks[kk]){const ch=r3dChunk(kk);if(ch)R3.chunks[kk]=ch;}}}
+  // всё, что попадёт в кадр, — построить заранее: иначе на пролёте кадры подвисают и камера идёт рывками
+  const pre=(i0,i1)=>{const k0=Math.floor(i0/R3CH),k1=Math.floor(i1/R3CH);for(let k=k0;k<=k1;k++){const kk=T.closed?((k%R3.nCh)+R3.nCh)%R3.nCh:k;if(kk>=0&&kk<R3.nCh&&!R3.chunks[kk]){const ch=r3dChunk(kk);if(ch)R3.chunks[kk]=ch;}}};
+  pre(s0-Math.round(170/T.step),s0+Math.round(90/T.step));if(poi)pre(poi.i-Math.round(100/T.step),poi.i+Math.round(60/T.step));
+  try{r3dTilesAround(sp.p[0],sp.p[2],320,400);if(poi){const q=T.pts[poi.i];r3dTilesAround(q[0],q[2],240,300);}}catch(_){}
   const el=filmEl();el.hidden=false;el.className='r-film';el.innerHTML=`<div class="rf-bar top"></div><div class="rf-bar bot"></div><div class="rf-card" id="rfCard"></div><button class="rf-skip" id="rfSkip">Пропустить ▸▸</button>`;
   document.getElementById('raceScreen').classList.add('filming');document.getElementById('rfSkip').onclick=filmSkip;el.onclick=e=>{if(e.target===el)filmSkip();};
   auReelFanfare();
-  if(reelVoiceOn()&&n<6){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?]/),say=`${rc.name}. ${rc.y} год.${h1?' '+h1[0]:''}`;setTimeout(()=>{if(R&&R.film)ttsSay(say);},500);}
+  // диктор: записанный голос — каждый раз; синтезатор устройства — только первые шесть гонок
+  {const say=raceIntroText(rc);if(reelVoiceOn()&&(voiceDur(say,'aidar')||n<6))setTimeout(()=>{if(R&&R.film)voiceSay(say,'aidar');},500);}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;
   el.innerHTML=(c.kick?`<div class="rf-kick">${esc(c.kick)}</div>`:'')+(c.big?`<div class="rf-big">${esc(c.big)}</div>`:'')+(c.mid?`<div class="rf-mid">${esc(c.mid)}</div>`:'')+(c.sub?`<div class="rf-sub">${esc(c.sub)}</div>`:'')+(c.list&&c.list.length?`<div class="rf-list">${c.list.map((x,i)=>`<div${i?'':' class="h"'}>${esc(x)}</div>`).join('')}</div>`:'');
   el.classList.add('in');}
-function filmCam(dt,W,H){const F=R.film;if(!F){R3.camHook=null;return;}F.t+=dt;let acc=0,i=0;for(;i<F.shots.length;i++){if(F.t<acc+F.shots[i].d)break;acc+=F.shots[i].d;}
+function filmCam(dt,W,H){const F=R.film;if(!F){R3.camHook=null;return;}F.t+=Math.min(dt,1/30);let acc=0,i=0;for(;i<F.shots.length;i++){if(F.t<acc+F.shots[i].d)break;acc+=F.shots[i].d;}
   if(i>=F.shots.length){filmEnd();r3dCamera(dt,W,H);return;}
-  const sh=F.shots[i];if(i!==F.i){F.i=i;filmCaption(sh.cap);}
+  const sh=F.shots[i],cut=i!==F.i;if(cut){F.i=i;filmCaption(sh.cap);}
   const u=clamp((F.t-acc)/sh.d,0,1),c=sh.cam(u);
-  // камера не уходит под землю
-  const g=fH(c.eye[0],c.eye[2])+0.6;if(c.eye[1]<g)c.eye[1]=g;
-  r3dCamSet(c.eye,c.look,c.fov,W,H,c.near);R3.cam=null;}
+  // камера не уходит под землю (земля — по нескольким точкам, чтобы высота не дёргалась над кочками)
+  const g=Math.max(fH(c.eye[0],c.eye[2]),(fH(c.eye[0]+3,c.eye[2])+fH(c.eye[0]-3,c.eye[2])+fH(c.eye[0],c.eye[2]+3)+fH(c.eye[0],c.eye[2]-3))/4)+0.6;if(c.eye[1]<g)c.eye[1]=g;
+  // мягкий «операторский кран»: без рывков и дрожи, на смене плана — сразу на место
+  const S=F.sm;if(cut||!S){F.sm={e:c.eye.slice(),l:c.look.slice()};}else{const k=1-Math.exp(-Math.min(dt,0.05)*9);for(let q=0;q<3;q++){S.e[q]+=(c.eye[q]-S.e[q])*k;S.l[q]+=(c.look[q]-S.l[q])*k;}}
+  r3dCamSet(F.sm.e,F.sm.l,c.fov,W,H,c.near);R3.cam=null;}
 function filmSkip(){if(R&&R.film)filmEnd();}
-function filmEnd(){if(!R)return;R.film=null;if(R3.camHook===filmCam)R3.camHook=null;R3.camTarget=null;R3.cam=null;R.hold=false;R.lastT=performance.now();ttsStop();
+function filmEnd(){if(!R)return;R.film=null;if(R3.camHook===filmCam)R3.camHook=null;R3.camTarget=null;R3.cam=null;R.hold=false;R.lastT=performance.now();voiceStop();
   const el=filmEl();if(el){el.hidden=true;el.innerHTML='';el.onclick=null;}document.getElementById('raceScreen').classList.remove('filming');driveTipsAtStart();}
 /* ---------- повтор финиша: последние ~12 секунд записываются, камеры у дороги, замедление на линии ---------- */
 const RPL_HZ=15,RPL_SEC=13,RPL_F=11;
@@ -96,9 +110,8 @@ function replayStart(){const me=R&&R.me;if(!R||!R.gl||!me||!R.rpl||R.rpl.n<RPL_H
   // камеры: две у дороги по пути к финишу, последняя — у самой линии (замедление)
   R.replay={t:t0,t0,t1:Math.min(t1,tFin+1.6),fin:tFin,cut:-1};R.hold=true;R3.camHook=replayCam;
   const el=filmEl();el.hidden=false;el.className='r-film replay';const pos=raceOrder().indexOf(me)+1;
-  el.innerHTML=`<div class="rf-bar top"></div><div class="rf-bar bot"></div><div class="rf-rec">● ПОВТОР</div><div class="rf-card in" id="rfCard"><div class="rf-kick">${pos}-е место · ${fmtRaceTime(tFin)}</div></div><button class="rf-skip" id="rfSkip">Итоги ▸▸</button>`;
+  el.innerHTML=`<div class="rf-bar top"></div><div class="rf-bar bot"></div><div class="rf-rec">● ПОВТОР</div><div class="rf-card in" id="rfCard"><div class="rf-kick">${pos}-е место · ${fmtRaceTime(tFin*R.rc.km*1000/Math.max(1,R.trk.raceLen))}</div></div><button class="rf-skip" id="rfSkip">Итоги ▸▸</button>`;
   document.getElementById('raceScreen').classList.add('filming');document.getElementById('rfSkip').onclick=replayEnd;return true;}
-function fmtRaceTime(t){const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1).replace('.',',');}
 function replayCam(dt,W,H){const Rp=R.replay;if(!Rp){R3.camHook=null;return;}const me=R.me;
   // у линии финиша — замедление
   const slow=Math.abs(Rp.t-Rp.fin)<1.2?0.35:1;Rp.t+=dt*slow;if(Rp.t>=Rp.t1){replayEnd();return;}

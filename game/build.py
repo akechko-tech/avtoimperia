@@ -83,5 +83,15 @@ def build():
     print('built', len(page), 'bytes')
     if os.path.exists(os.path.join(TEX, 'manifest.json')):
         pack_textures(); tex_js()
+    media_links()
+
+def media_links():
+    """Живые инструменты, кинохроника и голос лежат в docs/ (их забирает tools/sync_media.py из ветки media).
+    Для проверки из game/dist — ссылки на них; в APK их копирует сборка на GitHub."""
+    for d in ('samples', 'film', 'voice'):
+        src = os.path.join(ROOT, 'docs', d); dst = os.path.join(HERE, 'dist', d)
+        if not os.path.isdir(src) or os.path.lexists(dst): continue
+        try: os.symlink(src, dst)
+        except Exception as e: print('link', d, e)
 if __name__ == '__main__':
     build()

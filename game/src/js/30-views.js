@@ -122,14 +122,27 @@ function specLine(md,s){const p=parts(md),st=x=>upgL(x.id)?' ★'+upgL(x.id):'';
 function techTone(md,s){const r=classScore(md,s);return {r,tone:r>=1.08?'good':r>=0.9?'warn':'bad'};}
 // Что будет при другой цене: спрос, выпуск, себестоимость при этом выпуске (экономия масштаба) и прибыль
 // Прогноз при текущей цене и сдвиг против цены в начале месяца — видно сразу, как нажали − или +
-function priceFc(md,s,p){const d=demandAt(md,s,p),uc=unitCost({...md,vol:Math.max(1,d)},s),m=p*(1-DEALER_MARGIN)-uc;return {d,uc,m,pr:d*m};}
+// Прогноз цены — по всей марке, как в ходе месяца: дешевле эта модель — часть покупателей уходит к ней с ваших же моделей;
+// продать можно не больше, чем успеют дилеры в каждой стране и завод (мощность делится между моделями по спросу)
+function brandFc(md,s,p){const r=demandAll(s,{id:md.id,price:p}),cr=techLv(s,'credit')?1.15:1,act=s.models.filter(m=>m.status==='prod'||m.status==='sale');
+  const want={};act.forEach(m=>{for(const c in r.by[m.id])want[c]=(want[c]||0)+r.by[m.id][c]*cr;});
+  const fcC={};for(const c in want){const cap=dealerCapOf(s,c);fcC[c]=want[c]>cap&&want[c]>0?cap/want[c]:1;}
+  const wantM=act.map(m=>{let d=0;for(const c in r.by[m.id])d+=r.by[m.id][c]*cr;return d;}),dem=act.map(m=>{let d=0;for(const c in r.by[m.id])d+=r.by[m.id][c]*cr*fcC[c];return d;});
+  const cx=act.map(complexity),cap=capEff(s),need=dem.reduce((a,d,i)=>a+(act[i].status==='sale'?0:d*cx[i]),0),kC=need>0?Math.min(1,cap/need):1;
+  let tot=0,self=null,oth=0;act.forEach((m,i)=>{const pp=m.id===md.id?p:m.price,sold=m.status==='sale'?Math.min(dem[i],m.stock):dem[i]*kC+Math.min(Math.max(0,m.stock)/4,dem[i]*(1-kC));
+    const uc=unitCost({...m,vol:Math.max(1,sold)},s),mg=pp*(1-DEALER_MARGIN)-uc,pr=sold*mg;tot+=pr;if(m.id===md.id)self={d:sold,want:wantM[i],uc,m:mg,pr};else oth+=sold;});
+  return Object.assign(self||{d:0,want:0,uc:0,m:0,pr:0},{brand:tot,oth,lim:kC<0.98?'plant':Object.values(fcC).some(k=>k<0.98)?'dealers':''});}
+function priceFc(md,s,p){return brandFc(md,s,p);}
 function priceLine(md,s){if(md.status!=='prod')return '';const a=priceFc(md,s,md.price),b=md.pPrev&&md.pPrev!==md.price&&md.pPrevM===mi(s)?priceFc(md,s,md.pPrev):null;
   const dl=(x,y)=>{if(!b||Math.abs(y)<1e-6)return '';const r=(x-y)/Math.abs(y);if(Math.abs(r)<0.005)return '';return ` <small class="${r>0?'good':'bad'}">${r>0?'▲':'▼'}${Math.round(Math.abs(r)*100)}%</small>`;};
-  return `<div class="pfc"><div>Спрос в мес.<b>${fmtD(a.d)}${dl(a.d,b&&b.d)}</b></div><div>Маржа<b class="${a.m<0?'bad':''}">${money(a.m)}${dl(a.m,b&&b.m)}</b></div><div>Прибыль в мес.<b class="${a.pr<0?'bad':''}">${money(a.pr)}${dl(a.pr,b&&b.pr)}</b></div></div>${b?`<p class="small muted" style="margin-top:2px">Сравнение — с ценой в начале месяца (${money(md.pPrev)}).</p>`:''}`;}
-function priceTable(md,s){const P=md.price,rows=[[0.9,'−10%'],[1,'сейчас'],[1.1,'+10%']].map(([k,lab])=>{const p=Math.round(P*k/10)*10,d=demandAt(md,s,p),uc=unitCost({...md,vol:Math.max(1,d)},s),m=p*(1-DEALER_MARGIN)-uc;return {p,lab,d,uc,m,pr:d*m,now:k===1};});
-  const best=rows.reduce((a,b)=>b.pr>a.pr?b:a,rows[0]);
-  return `<table class="pl ptab" style="margin-top:8px"><tr><th>Цена</th><th class="n">Спрос</th><th class="n">Себест.</th><th class="n">Прибыль</th></tr>${rows.map(r=>`<tr class="${r.now?'you':''}"><td>${money(r.p)} <small>${r.lab}</small></td><td class="n">${fmtD(r.d)}</td><td class="n">${money(r.uc)}</td><td class="n ${r.pr<0?'bad':r===best?'good':''}">${money(r.pr)}</td></tr>`).join('')}</table>
-    <p class="small muted" style="margin-top:4px">В месяц. Себестоимость — при том выпуске, который купят по этой цене: больше продаёте — дешевле каждая машина (детали оптом, опыт рабочих).</p>`;}
+  const many=s.models.filter(m=>m.status==='prod'||m.status==='sale').length>1,dO=b&&many?a.oth-b.oth:0;
+  return `<div class="pfc"><div>Продажи в мес.<b>${fmtD(a.d)}${dl(a.d,b&&b.d)}</b></div><div>Маржа<b class="${a.m<0?'bad':''}">${money(a.m)}${dl(a.m,b&&b.m)}</b></div><div>${many?'Прибыль марки':'Прибыль в мес.'}<b class="${a.brand<0?'bad':''}">${money(a.brand)}${dl(a.brand,b&&b.brand)}</b></div></div>
+    ${a.lim?`<p class="small warn" style="margin-top:2px">Хотят купить ${fmtD(a.want)} в мес., но ${a.lim==='plant'?'завод не успеет выпустить больше':'дилеры не успеют продать больше'} — прогноз считает только то, что правда продастся.</p>`:''}
+    ${b?`<p class="small muted" style="margin-top:2px">Сравнение — с ценой в начале месяца (${money(md.pPrev)}).${Math.abs(dO)>=1?` Другие ваши модели: ${dO<0?'−':'+'}${fmtD(Math.abs(dO))} машин в мес. — ${dO<0?'часть покупателей ушла к этой модели':'часть покупателей вернулась к ним'}.`:''}</p>`:''}`;}
+function priceTable(md,s){const P=md.price,many=s.models.filter(m=>m.status==='prod'||m.status==='sale').length>1,rows=[[0.9,'−10%'],[1,'сейчас'],[1.1,'+10%']].map(([k,lab])=>{const p=Math.round(P*k/10)*10,f=brandFc(md,s,p);return {p,lab,d:f.d,uc:f.uc,pr:f.brand,oth:f.oth,now:k===1};});
+  const best=rows.reduce((a,b)=>b.pr>a.pr?b:a,rows[0]),o0=rows[1].oth;
+  return `<table class="pl ptab" style="margin-top:8px"><tr><th>Цена</th><th class="n">Продажи</th><th class="n">Себест.</th><th class="n">${many?'Прибыль марки':'Прибыль'}</th></tr>${rows.map(r=>`<tr class="${r.now?'you':''}"><td>${money(r.p)} <small>${r.lab}</small></td><td class="n">${fmtD(r.d)}${many&&!r.now&&Math.abs(r.oth-o0)>=1?`<small class="muted">другие ${r.oth<o0?'−':'+'}${fmtD(Math.abs(r.oth-o0))}</small>`:''}</td><td class="n">${money(r.uc)}</td><td class="n ${r.pr<0?'bad':r===best?'good':''}">${money(r.pr)}</td></tr>`).join('')}</table>
+    <p class="small muted" style="margin-top:4px">В месяц. ${many?'Прибыль — всей марки: подешевела эта модель — часть покупателей уходит к ней с других ваших моделей («другие −…»). ':''}Продажи — не больше, чем успеют завод и дилеры. Себестоимость — при таком выпуске: больше продаёте — дешевле каждая машина.</p>`;}
 function vModels(){
   const s=G,ord={prod:0,sale:1,dev:2,off:3},many=s.models.filter(m=>m.status!=='off').length>1;
   const card=md=>{
