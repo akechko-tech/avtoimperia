@@ -22,41 +22,8 @@
    "arm": true
   },
   "fabric2": {
-   "id": "cotton_jersey",
-   "name": "Cotton Jersey",
-   "authors": [
-    "colormass",
-    "Rico Cilliers"
-   ],
-   "m": 0.26,
-   "nor": true,
-   "arm": true
-  },
-  "rubber": {
-   "id": "moon_track_01",
-   "name": "Moon Track 01",
-   "authors": [
-    "Greg Zaal",
-    "Jenelle van Heerden",
-    "Rico Cilliers"
-   ],
-   "m": 0.4,
-   "nor": true,
-   "arm": true
-  },
-  "paint": {
-   "id": "blue_metal_plate",
-   "name": "Blue Metal Plate",
-   "authors": [
-    "Rob Tuytel"
-   ],
-   "m": 2.5,
-   "nor": true,
-   "arm": true
-  },
-  "brass": {
-   "id": "crepe_satin",
-   "name": "Crepe Satin",
+   "id": "rough_linen",
+   "name": "Rough Linen",
    "authors": [
     "colormass",
     "Rico Cilliers"
@@ -75,6 +42,18 @@
    "nor": true,
    "arm": true
   },
+  "cliff2": {
+   "id": "cliff_side",
+   "name": "Cliff Side",
+   "authors": [
+    "James Ray Cock",
+    "Jenelle van Heerden",
+    "Dario Barresi"
+   ],
+   "m": 1.83,
+   "nor": true,
+   "arm": true
+  },
   "scree": {
    "id": "rocky_trail_02",
    "name": "Rocky Trail 02",
@@ -86,12 +65,12 @@
    "arm": true
   },
   "rock_moss": {
-   "id": "brown_mud_leaves_01",
-   "name": "Brown Mud Leaves 01",
+   "id": "mossy_rock",
+   "name": "Mossy Rock",
    "authors": [
     "Rob Tuytel"
    ],
-   "m": 1.3,
+   "m": 3.0,
    "nor": true,
    "arm": true
   },
@@ -106,8 +85,8 @@
    "arm": true
   },
   "wood_var": {
-   "id": "silver_oak_veneer_02",
-   "name": "Silver Oak Veneer 02",
+   "id": "european_walnut_veneer_04",
+   "name": "European Walnut Veneer 04",
    "authors": [
     "Jenelle van Heerden"
    ],
@@ -116,12 +95,22 @@
    "arm": true
   },
   "factory": {
-   "id": "castle_brick_02_red",
-   "name": "Castle Brick 02 Red",
+   "id": "factory_brick",
+   "name": "Factory Brick",
    "authors": [
     "Rob Tuytel"
    ],
    "m": 1.5,
+   "nor": true,
+   "arm": true
+  },
+  "metal_old": {
+   "id": "green_metal_rust",
+   "name": "Green Metal Rust",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "m": 1.0,
    "nor": true,
    "arm": true
   }
@@ -152,31 +141,23 @@
   "fabric": [
    [
     "poly_wool_herringbone",
-    44.4
-   ],
-   [
-    "knitted_fleece",
-    34.1
-   ],
-   [
-    "hessian_230",
-    24.6
-   ],
-   [
-    "cotton_jersey",
-    24.6
-   ],
-   [
-    "rough_linen",
-    24.6
-   ],
-   [
-    "hessian_380",
     24.4
    ],
    [
     "wool_boucle",
     24.2
+   ],
+   [
+    "knitted_fleece",
+    24.1
+   ],
+   [
+    "cotton_jersey",
+    14.6
+   ],
+   [
+    "rough_linen",
+    14.6
    ],
    [
     "curly_teddy_natural",
@@ -189,364 +170,392 @@
    [
     "ribbed_corduroy",
     14.3
-   ]
-  ],
-  "fabric2": [
-   [
-    "cotton_jersey",
-    24.6
-   ],
-   [
-    "rough_linen",
-    24.6
-   ],
-   [
-    "jogging_melange",
-    24.2
-   ],
-   [
-    "curly_teddy_natural",
-    14.5
    ],
    [
     "terlenka",
     14.3
    ],
    [
-    "polar_fleece",
-    14.1
+    "terry_cloth",
+    14.2
+   ]
+  ],
+  "fabric2": [
+   [
+    "rough_linen",
+    24.6
+   ],
+   [
+    "cotton_jersey",
+    14.6
+   ],
+   [
+    "jogging_melange",
+    14.2
    ],
    [
     "stretch_poplin",
     13.8
    ],
    [
+    "leather_red_02",
+    5.4
+   ],
+   [
+    "brown_leather",
+    5.3
+   ],
+   [
+    "leather_white",
+    5.3
+   ],
+   [
     "denmin_fabric_02",
     5.3
    ],
    [
-    "denim_fabric",
-    5.0
+    "leather_red_03",
+    5.1
    ],
    [
-    "velour_velvet",
-    4.8
+    "fabric_leather_02",
+    5.1
    ]
   ],
-  "rubber": [
+  "cliff": [
    [
-    "moon_track_01",
-    2.9
+    "coast_sand_rocks_02",
+    15.7
    ],
    [
-    "moon_track_02",
-    2.8
+    "aerial_rocks_02",
+    15.6
    ],
    [
-    "moon_track_04",
-    2.6
+    "aerial_grass_rock",
+    15.6
    ],
    [
-    "moon_track_03",
-    2.6
+    "aerial_rocks_04",
+    15.3
+   ],
+   [
+    "rock_face_03",
+    15.3
+   ],
+   [
+    "aerial_rocks_01",
+    15.1
+   ],
+   [
+    "rocky_trail",
+    15.1
+   ],
+   [
+    "rock_06",
+    14.9
+   ],
+   [
+    "lichen_rock",
+    14.8
+   ],
+   [
+    "rock_boulder_cracked",
+    14.8
    ]
   ],
-  "paint": [
+  "cliff2": [
    [
-    "blue_metal_plate",
-    35.0
+    "coast_sand_rocks_02",
+    15.7
    ],
    [
-    "painted_metal_shutter",
-    34.7
+    "aerial_rocks_02",
+    15.6
    ],
+   [
+    "aerial_grass_rock",
+    15.6
+   ],
+   [
+    "aerial_rocks_04",
+    15.3
+   ],
+   [
+    "rock_face_03",
+    15.3
+   ],
+   [
+    "aerial_rocks_01",
+    15.1
+   ],
+   [
+    "rocky_trail",
+    15.1
+   ],
+   [
+    "rock_06",
+    14.9
+   ],
+   [
+    "lichen_rock",
+    14.8
+   ],
+   [
+    "rock_boulder_cracked",
+    14.8
+   ]
+  ],
+  "scree": [
+   [
+    "coast_sand_rocks_02",
+    15.7
+   ],
+   [
+    "rocks_ground_02",
+    15.2
+   ],
+   [
+    "rocky_trail_02",
+    15.0
+   ],
+   [
+    "rocks_ground_01",
+    14.9
+   ],
+   [
+    "red_laterite_soil_stones",
+    14.9
+   ],
+   [
+    "rocks_ground_05",
+    14.8
+   ],
+   [
+    "rocks_ground_06",
+    14.8
+   ],
+   [
+    "rocks_ground_04",
+    14.8
+   ],
+   [
+    "dry_ground_rocks",
+    14.7
+   ],
+   [
+    "rock_ground_02",
+    14.7
+   ]
+  ],
+  "rock_moss": [
+   [
+    "coast_sand_rocks_02",
+    15.7
+   ],
+   [
+    "aerial_rocks_02",
+    15.6
+   ],
+   [
+    "aerial_grass_rock",
+    15.6
+   ],
+   [
+    "aerial_rocks_04",
+    15.3
+   ],
+   [
+    "aerial_rocks_01",
+    15.1
+   ],
+   [
+    "mossy_rock",
+    15.1
+   ],
+   [
+    "rock_04",
+    14.9
+   ],
+   [
+    "rock_pitted_mossy",
+    14.9
+   ],
+   [
+    "lichen_rock",
+    14.8
+   ],
+   [
+    "brown_mud_rocks_01",
+    14.7
+   ]
+  ],
+  "tunnel": [
+   [
+    "rock_face_03",
+    15.3
+   ],
+   [
+    "red_brick",
+    15.2
+   ],
+   [
+    "red_brick_03",
+    15.2
+   ],
+   [
+    "medieval_blocks_03",
+    15.2
+   ],
+   [
+    "brick_4",
+    15.1
+   ],
+   [
+    "cracked_concrete_wall",
+    15.1
+   ],
+   [
+    "castle_brick_02_red",
+    15.1
+   ],
+   [
+    "rustic_stone_wall_02",
+    15.1
+   ],
+   [
+    "brick_wall_001",
+    15.1
+   ],
+   [
+    "stone_brick_wall_001",
+    15.0
+   ]
+  ],
+  "wood_var": [
+   [
+    "oak_veneer_01",
+    15.6
+   ],
+   [
+    "rosewood_veneer1",
+    15.1
+   ],
+   [
+    "walnut_veneer_02",
+    13.8
+   ],
+   [
+    "oak_veneer_05",
+    13.7
+   ],
+   [
+    "white_oak_veneer",
+    13.6
+   ],
+   [
+    "teak_veneer",
+    13.6
+   ],
+   [
+    "white_maple_veneer",
+    13.6
+   ],
+   [
+    "smoked_walnut_veneer",
+    13.6
+   ],
+   [
+    "cherry_veneer",
+    13.4
+   ],
+   [
+    "smoke_speckled_veneer",
+    13.4
+   ]
+  ],
+  "factory": [
+   [
+    "red_brick",
+    15.2
+   ],
+   [
+    "red_brick_03",
+    15.2
+   ],
+   [
+    "brick_4",
+    15.1
+   ],
+   [
+    "castle_brick_02_red",
+    15.1
+   ],
+   [
+    "brick_wall_001",
+    15.1
+   ],
+   [
+    "red_bricks_04",
+    15.0
+   ],
+   [
+    "brick_wall_006",
+    14.9
+   ],
+   [
+    "factory_brick",
+    14.9
+   ],
+   [
+    "medieval_red_brick",
+    14.8
+   ],
+   [
+    "large_red_bricks",
+    14.8
+   ]
+  ],
+  "metal_old": [
    [
     "green_metal_rust",
     25.5
    ],
    [
-    "worn_corrugated_iron",
-    24.5
+    "rusty_metal_02",
+    25.3
+   ],
+   [
+    "rusty_metal_grid",
+    24.6
    ],
    [
     "rusty_painted_metal",
     24.0
    ],
    [
-    "rusted_shutter",
-    14.1
-   ],
-   [
     "rusty_metal_shutter",
-    13.5
+    23.5
    ],
    [
-    "ceiling_interior",
-    4.0
-   ]
-  ],
-  "brass": [
-   [
-    "crepe_satin",
-    4.6
-   ]
-  ],
-  "cliff": [
-   [
-    "tiger_rock",
-    44.1
+    "rust_coarse_01",
+    15.4
    ],
    [
-    "worn_rock_natural_01",
-    34.7
-   ],
-   [
-    "cliff_side",
-    34.7
-   ],
-   [
-    "rock_06",
-    24.9
-   ],
-   [
-    "rock_boulder_cracked",
-    24.8
-   ],
-   [
-    "seaside_rock",
-    24.7
-   ],
-   [
-    "rock_face",
-    24.4
-   ],
-   [
-    "marble_rock_03",
-    23.7
-   ],
-   [
-    "rock_01",
+    "rusty_metal_04",
     15.1
    ],
    [
-    "rock_05",
+    "corrugated_iron",
     15.0
-   ]
-  ],
-  "scree": [
-   [
-    "rocky_trail_02",
-    35.0
    ],
    [
-    "rocks_ground_05",
-    34.8
+    "blue_metal_plate",
+    15.0
    ],
    [
-    "forest_ground_04",
-    25.2
-   ],
-   [
-    "brown_mud_dry",
-    25.1
-   ],
-   [
-    "brown_mud_03",
-    25.0
-   ],
-   [
-    "brown_mud_02",
-    24.9
-   ],
-   [
-    "rocks_ground_04",
-    24.8
-   ],
-   [
-    "brown_mud",
-    24.7
-   ],
-   [
-    "dry_ground_rocks",
-    24.7
-   ],
-   [
-    "brown_mud_rocks_01",
-    24.7
-   ]
-  ],
-  "rock_moss": [
-   [
-    "brown_mud_leaves_01",
-    25.7
-   ],
-   [
-    "mossy_rock",
-    25.1
-   ],
-   [
-    "rock_04",
-    24.9
-   ],
-   [
-    "rock_pitted_mossy",
-    24.9
-   ],
-   [
-    "lichen_rock",
-    24.8
-   ],
-   [
-    "brown_mud_rocks_01",
-    24.7
-   ],
-   [
-    "rock_3",
-    24.5
-   ],
-   [
-    "forest_ground_04",
-    15.2
-   ],
-   [
-    "leaf_scattered_gravel",
-    10.0
-   ],
-   [
-    "rocks_ground_02",
-    5.2
-   ]
-  ],
-  "tunnel": [
-   [
-    "castle_brick_01",
-    54.6
-   ],
-   [
-    "plaster_brick_01",
-    44.6
-   ],
-   [
-    "coral_fort_wall_01",
-    44.6
-   ],
-   [
-    "yellow_bricks",
-    44.5
-   ],
-   [
-    "rough_plaster_brick",
-    44.5
-   ],
-   [
-    "medieval_blocks_03",
-    35.2
-   ],
-   [
-    "rustic_stone_wall_02",
-    35.1
-   ],
-   [
-    "sandstone_blocks_05",
-    35.0
-   ],
-   [
-    "castle_wall_slates",
-    35.0
-   ],
-   [
-    "broken_wall",
-    35.0
-   ]
-  ],
-  "wood_var": [
-   [
-    "silver_oak_veneer_02",
-    33.2
-   ],
-   [
-    "european_walnut_veneer_04",
-    33.1
-   ],
-   [
-    "grey_oak_veneer_01",
-    32.9
-   ],
-   [
-    "black_walnut_veneer_01",
-    32.8
-   ],
-   [
-    "wood_table_001",
-    25.7
-   ],
-   [
-    "oak_veneer_01",
-    25.6
-   ],
-   [
-    "kitchen_wood",
-    25.3
-   ],
-   [
-    "walnut_veneer_02",
-    23.8
-   ],
-   [
-    "oak_veneer_05",
-    23.7
-   ],
-   [
-    "white_oak_veneer",
-    23.6
-   ]
-  ],
-  "factory": [
-   [
-    "castle_brick_02_red",
-    45.1
-   ],
-   [
-    "church_bricks_03",
-    44.5
-   ],
-   [
-    "red_bricks_02",
-    44.4
-   ],
-   [
-    "red_brick_03",
-    35.2
-   ],
-   [
-    "brick_4",
-    35.1
-   ],
-   [
-    "brick_wall_001",
-    35.1
-   ],
-   [
-    "factory_brick",
-    34.9
-   ],
-   [
-    "castle_brick_07",
-    34.8
-   ],
-   [
-    "box_profile_metal_sheet",
-    34.7
-   ],
-   [
-    "church_bricks_02",
-    34.7
-   ]
-  ],
-  "glass_roof": [
-   [
-    "fabric_pattern_05",
-    5.2
+    "rusty_metal_sheet",
+    15.0
    ]
   ]
  }
