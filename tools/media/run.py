@@ -191,12 +191,12 @@ def films_cut():
         src = pick_derivative(v, ('720p.vp9.webm', '720p.webm', '480p.vp9.webm', '480p.webm', '360p.vp9.webm', '360p.webm'))
         vf = []
         if e.get('crop'): vf.append('crop=%s' % e['crop'])
-        vf += ['scale=640:-2:flags=lanczos', 'setsar=1', 'format=yuv420p']
+        vf += ['hqdn3d=2:1.5:3:3', 'scale=640:-2:flags=lanczos', 'setsar=1', 'format=yuv420p']
         if e.get('speed'): vf.insert(0, 'setpts=PTS/%s' % e['speed'])
         try:
             vid = os.path.join(D, '_src.bin'); download(src, vid, 400e6)
             sh(['ffmpeg', '-v', 'error', '-ss', str(e['t']), '-i', vid, '-t', str(e['d']), '-an', '-vf', ','.join(vf),
-                '-c:v', 'libx264', '-profile:v', 'main', '-level', '3.1', '-preset', 'slow', '-crf', '26', '-movflags', '+faststart', '-r', '24', '-y', out])
+                '-c:v', 'libx264', '-profile:v', 'main', '-level', '3.1', '-preset', 'slow', '-crf', '27', '-movflags', '+faststart', '-r', '24', '-y', out])
             sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % min(1.0, e['d'] / 3), '-i', out, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', '-y', os.path.join(D, cid + '.jpg')])
             man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'artist': meta_val(v, 'Artist')[:120],
                         'cap': e.get('cap', ''), 'd': e['d'], 'size': os.path.getsize(out)}
