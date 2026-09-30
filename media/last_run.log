@@ -1,47 +1,5 @@
 == job films_cut
-cut vcup1904 File:1904 Vanderbil Cup Auto Race LOC 00060758.webm 38 10 790287
-cut vcup1904b File:1904 Vanderbil Cup Auto Race LOC 00060758.webm 8 9 376092
-cut parade1899 File:Automobile parade.ogv 18 11 746990
-cut parade1899b File:Automobile parade.ogv 60 11 932973
-cut gp1906a File:Shepard Calais 1906 FrenchGP.ogv 5 13 856452
-cut gp1906b File:Aldo weilschott 1906 gp startline.ogv 0.5 13 620008
-cut expo1900 File:Panoramic view of the Place de l'Concord.ogv 36 12 1101965
-cut expo1900b File:Panoramic view of the Place de l'Concord.ogv 66 11 1017488
-cut sf1906 File:A Trip down market street (1906).webm 30 12 914679
-cut sf1906b File:A Trip down market street (1906).webm 350 11 643597
-cut nyc1911 File:Surreal Old Timey Film Of New York City In 1911.webm 160 10 418713
-cut nyc1911b File:Surreal Old Timey Film Of New York City In 1911.webm 28 10 399432
-cut nyc1911c File:Surreal Old Timey Film Of New York City In 1911.webm 98 10 435896
-cut tanks1918 File:Tanks of WWI.ogv 44 10 360796
-cut tanks1918b File:Tanks of WWI.ogv 84 10 283223
-cut vanc1907 File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm 448 11 1175732
-cut vanc1907b File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm 345 11 1242384
-cut car1927 File:Two Men Get Into Car And Drive Away (1927).ogg 0 10 745215
-cut lumiere1895 File:La Sortie de l'usine Lumière à Lyon, III.webm 1 15 771465
-cut glidden1905 File:Glidden-Tour-1905.ogv 16 12 302163
-cut glidden1905b File:Glidden-Tour-1905.ogv 30 11 307699
-cut fordT1919 File:Ford Model T Assembly Line(1919).webm 25 12 549067
-cut fordT1919b File:Ford Model T Assembly Line(1919).webm 272 12 529373
-cut fordA1930 File:Ford assembly line(1930).webm 40 12 659808
-cut fordT1924 File:Model T assembling circa 1924.webm 12 12 604265
-cut fordT1924b File:Model T assembling circa 1924.webm 55 10 428359
-cut ford1916 File:Henry Ford clips.webm 12 12 1308899
-cut fordson1917 File:Henry Ford clips.webm 165 10 480842
-cut salon1919 File:Foule au 15ème Salon de l'automobile - AI111244.webm 3 12 1024331
-cut salon1921 File:La foule au salon de l'automobile au Grand Palais - AI49553.webm 76 12 1166704
-cut salon1926 File:Visite du président Doumergue au vingtième salon de l'automobile dans le Grand-Palais - AI53404.webm 27 12 596546
-cut rai1923 File:Autotentoonstelling in het rai gebouw-29098.ogv 78 9 296156
-cut london1903 File:Old London Street Scenes (1903).webm 170 12 1129108
-cut champs1900 File:Driving scene on the Champs Elysees.ogv 18 12 771857
-cut opera1900 File:Panorama of Place de L'Opera (1900).webm 6 12 761169
-cut moscow1908 File:Moscow clad in snow - Moscou sur la neige - Москва в снежном убранстве - Москва в снегу (1908), noaudio.ogv 100 12 730385
-cut moscow1908b File:Moscow clad in snow - Moscou sur la neige - Москва в снежном убранстве - Москва в снегу (1908), noaudio.ogv 175 10 840850
-cut flight1909 File:First flights in aviation history.ogv 42 12 692659
-cut armistice1918 File:Armistice Day 1918 - No sound.webm 10 12 956323
-cut moscow1919 File:Kinonedelja No. 31 (1919).webm 42 12 950912
-cut train1896 File:Arrivée d'un train à Perrache - Court métrage 1896.webm 1 12 400051
-cut flood1910 File:Crue de la Seine - AI48953.webm 195 12 702716
-cut ciotat1896 File:Ateliers de La Ciotat - Court métrage 1896.webm 4 12 776328
-cut crowd1900 File:Breaking of the crowd at military review at Longchamps.ogv 3 12 970574
-cut depart1896 File:Départ en voiture - Film 1896.webm 4 12 498479
-== job films_cut took 302 s
+cut glidden1905 File:Glidden-Tour-1905.ogv 18.5 10 256255
+cut glidden1905b File:Glidden-Tour-1905.ogv 32.5 9 277388
+cut flight1909 File:First flights in aviation history.ogv 44 10 608423
+== job films_cut took 15 s
