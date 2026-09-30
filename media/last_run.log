@@ -1,68 +1,85 @@
-== job voice5
-voice5 25 lines 22 s
-voice5 50 lines 42 s
-voice5 75 lines 62 s
-voice5 100 lines 82 s
-voice5 125 lines 102 s
-voice5 150 lines 122 s
-voice5 175 lines 143 s
-voice5 200 lines 162 s
-voice5 225 lines 182 s
-voice5 250 lines 202 s
-voice5 275 lines 222 s
-voice5 300 lines 242 s
-voice5 325 lines 260 s
-voice5 350 lines 280 s
-voice5 375 lines 300 s
-voice5 400 lines 320 s
-voice5 425 lines 342 s
-voice5 450 lines 362 s
-voice5 475 lines 382 s
-voice5 500 lines 402 s
-voice5 525 lines 422 s
-voice5 550 lines 443 s
-voice5 575 lines 463 s
-voice5 600 lines 482 s
-voice5 625 lines 502 s
-voice5 650 lines 522 s
-voice5 675 lines 541 s
-voice5 700 lines 553 s
-voice5 725 lines 568 s
-voice5 750 lines 582 s
-voice5 775 lines 596 s
-voice5 800 lines 610 s
-voice5 825 lines 624 s
-voice5 850 lines 638 s
-voice5 875 lines 652 s
-voice5 900 lines 665 s
-voice5 925 lines 679 s
-voice5 950 lines 692 s
-voice5 975 lines 706 s
-voice5 1000 lines 720 s
-voice5 1025 lines 734 s
-voice5 1050 lines 748 s
-voice5 1075 lines 761 s
-voice5 1100 lines 774 s
-voice5 1125 lines 786 s
-voice5 1150 lines 799 s
-voice5 1175 lines 814 s
-voice5 1200 lines 827 s
-voice5 1225 lines 839 s
-voice5 1250 lines 851 s
-voice5 1275 lines 862 s
-voice5 1300 lines 878 s
-voice5 1325 lines 892 s
-voice5 1350 lines 907 s
-voice5 1375 lines 920 s
-voice5 1400 lines 934 s
-voice5 1425 lines 948 s
-voice5 1450 lines 962 s
-voice5 1475 lines 976 s
-voice5 1500 lines 992 s
-voice5 1525 lines 1008 s
-voice5 1550 lines 1023 s
-voice5 1575 lines 1039 s
-voice5 1600 lines 1054 s
-voice5 1625 lines 1069 s
-voice5 done 1645 new lines; total 1645 v5 1645
-== job voice5 took 1094 s
+== job music_cut
+music stars_stripes 214 s 1972289
+music washington_post 158 s 1453616
+music liberty_bell 213 s 1962612
+music el_capitan 141 s 1301023
+music hands_sea 167 s 1539788
+music fairest_fair 213 s 1961557
+music minnesota 221 s 2032496
+music gladiators 155 s 1430045
+music florentiner 200 s 1845359
+music lassus 178 s 1644374
+music melody_shop 120 s 1110371
+music robinson 130 s 1197365
+music radetzky 155 s 1413341
+music genevieve 139 s 1243657
+music light_cavalry 200 s 1843056
+music furiant 126 s 1163946
+music polka_bride 200 s 1844761
+music bumblebee 84 s 773170
+music gypsy_baron 210 s 1935885
+music marek_weber 247 s 2348739
+music vienna_woods 250 s 2395940
+music maple_leaf 125 s 1134215
+music sunflower 199 s 1838890
+music entertainer 193 s 1794301
+music golliwog 160 s 1480858
+music panama 244 s 2255850
+music clarinet_marmalade 167 s 1544695
+music tiger_rag 131 s 1218730
+music after_gone 201 s 1846315
+music dada_strain 198 s 1828334
+music rhapsody_blue 225 s 2069295
+music adios_bsas 184 s 1698445
+music san_lorenzo 237 s 2187683
+music mercury 220 s 2030666
+music guarany 210 s 1935473
+music mogul 228 s 2083864
+music pomp 225 s 2073818
+music hungarian4 199 s 1831023
+music aase 200 s 1842716
+music anitra 240 s 2210888
+music brahms3 200 s 1844659
+music dvorak9 153 s 1413259
+music gymnopedie 172 s 1588801
+music chopin_waltz 230 s 2120572
+music look_busy 107 s 990020
+music hand_trolley 95 s 875562
+music plucky_daisy 171 s 1575794
+music olde_timey 195 s 1804428
+music keystone 84 s 763223
+== job music_cut took 564 s
+== job sfx_cut
+sfx crowd_big 456629
+sfx crowd_race 296168
+sfx crowd_murmur 480279
+sfx applause 295750
+sfx birds_town 480488
+sfx birds_forest 480488
+sfx birds_dawn 480488
+sfx skylark 384148
+sfx blackbird 480488
+sfx cuckoo 374953
+sfx sparrows 408390
+sfx crickets 320608
+sfx cicada 480707
+sfx bells_city 512044
+sfx bells_village 480488
+sfx steam_whistle 88024
+sfx steam_whistle_us 320618
+sfx steam_train 480488
+sfx horse_carriage 384731
+sfx dog_bark 112076
+sfx rooster 31274
+sfx rain 480488
+sfx thunder 200718
+sfx stream 320792
+sfx brass_parade 214248
+sfx sheep 223861
+sfx bugle 63782
+sfx fanfare 326521
+sfx ref_beetle 4117884
+sfx ref_amos 4176314
+sfx ref_savery 1168908
+sfx ref_2t 530134
+== job sfx_cut took 155 s
