@@ -30,8 +30,10 @@ with sync_playwright() as p:
     if js("!document.getElementById('rTips').hidden"):pg.click('#rTipsGo')
     print('gl',js("R.gl"),'scn',js("R.scn&&[R.scn.st,R.scn.h0,R.scn.span,R.scn.wxP.map(x=>x.join('/')).join(' ')]"))
     for k,t in enumerate(times):
-        js(f"(()=>{{R.hold=true;R.t=Math.max(R.t,1);R.time={t};R.cars.forEach(c=>{{if(c.wait&&R.time>=(c.relT||0)&&R.scn&&R.scn.st!=='lemans')c.wait=false;}});for(let i=0;i<40;i++)scnWxTick(0.5,R.time/Math.max(30,R.trk.cfg.dur));}})()")
+        mk=sys.argv[4] if len(sys.argv)>4 else ''
+        js(f"(()=>{{R.hold=true;R.t=Math.max(R.t,1);R.time={t};R.cars.forEach(c=>{{if(c.wait&&R.time>=(c.relT||0)&&R.scn&&R.scn.st!=='lemans')c.wait=false;}});for(let i=0;i<40;i++)scnWxTick(0.5,R.time/Math.max(30,R.trk.cfg.dur));if('{mk}')R.scn.moodK=+'{mk}'||0;}})()")
         pg.wait_for_timeout(2500)
+        print('skies',js("[Object.keys(G3.cache.tx.sky).join(','),JSON.stringify(R3.skyLoading||{}),!!R3.sky,!!R3.sky2,R3.E&&R3.E.skyMix]"))
         info=js("[scnClockTxt(),R.wx.mood,R.scn.moodA,R.scn.moodB,R.scn.moodK.toFixed(2),(R.rainK||0).toFixed(2),(R.wetK||0).toFixed(2),R3.sky2?'sky2':'-',document.getElementById('rClock').textContent,document.getElementById('rCap').textContent]")
         print('t',t,info)
         pg.screenshot(path=out+f'scn_{tag}_{k}.png',timeout=120000)

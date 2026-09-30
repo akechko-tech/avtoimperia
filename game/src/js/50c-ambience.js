@@ -70,7 +70,7 @@ function annPlay(text,vol,pan){if(!AU.ctx||!AU.on.sfx||!R||R.mode==='sim')return
     const s=c.createBufferSource();s.buffer=b;const ch=annChain(radio);s.connect(ch.inp);let out=c.createGain();out.gain.value=vol*1.4;ch.g.connect(out);ch.wet.connect(out);
     if(c.createStereoPanner&&pan){const p=c.createStereoPanner();p.pan.value=clamp(pan,-1,1);out.connect(p);p.connect(AU.fx);}else out.connect(AU.fx);s.start(t);});}
 // громкость диктора: он у трибун (старт и финиш); вдали не слышен (кроме «радио» 1920-х)
-function annVol(){const T=R.trk,me=R.follow;if(!me)return 0;if(R.rc.y>=1922&&R.gl)return 0.6;const n=T.n,dI=i=>{let d=Math.abs(me.idx-i);if(T.closed)d=Math.min(d,n-d);return d*T.step;};
+function annVol(){const T=R.trk,me=R.follow;if(!me)return 0;if(R.rc.y>=1922)return 0.5;const n=T.n,dI=i=>{let d=Math.abs(me.idx-i);if(T.closed)d=Math.min(d,n-d);return d*T.step;};
   const d=Math.min(dI(T.finishIdx),T.closed?1e9:dI(T.startIdx));return d<220?clamp(1.15-d/220,0.15,1):0;}
 function annCall(key,num){if(!R)return;const v=annVol();if(v<=0)return;const text=key==='go_n'?annGo(num):key==='lead'?annLead(num):key==='win'?annWin(num):ANN[key];if(text)annPlay(text,v,0);}
 // титры с голосом: рассказчик кинохроники (живой голос, если записан)
@@ -118,12 +118,18 @@ function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow;if
   {let tv=0;if(T.rails&&typeof railLine==='function')T.rails.forEach(rl=>{const st=rl.st;if(!st||st.state!==1)return;const L=railLine(T,rl),x=L.p[0]+L.d[0]*st.s,z=L.p[2]+L.d[1]*st.s,d=Math.hypot(x-me.x,z-me.z);tv=Math.max(tv,0.65/(1+d/35));});ambBed('steam_train',tv>0.02?tv:0,dt);}
   // соседи сигналят: догоняют и просят дорогу
   R.cars.forEach(c=>{if(c===me||c.dnf||c.wait)return;const dg=me.prog-c.prog;if(dg>3&&dg<14&&c.vx>me.vx+1.5&&Math.abs(c.lat-me.lat)<2.2&&ambCool('horn'+c.num,7)&&Math.random()<0.5)hornSfx(y,0.3,clamp((c.lat-me.lat)/3,-0.8,0.8));});
+  // комментатор: смена лидера, обгон, дождь, сумерки (каждые полсекунды)
+  AMB.ot=(AMB.ot||0)+dt;if(AMB.ot>0.5&&R.t>3){AMB.ot=0;const ord=raceOrder(),lead=ord[0],pos=ord.indexOf(me);
+    if(lead&&AMB.lastLead&&lead!==AMB.lastLead&&!lead.wait&&ambCool('leadc',18))annCall('lead',lead.num);AMB.lastLead=lead;
+    if(AMB.lastPos!==undefined&&pos>=0&&pos<AMB.lastPos&&R.me===me&&ambCool('ovt',15))annCall('overtake');AMB.lastPos=pos;
+    if(rain>0.3&&!AMB.rainSaid){AMB.rainSaid=1;annCall('rain');}if(rain<0.1)AMB.rainSaid=0;
+    if(S&&el<1&&AMB.elP>=1&&S.span>=6)annCall('night');AMB.elP=el;}
   // диктор: лидер на круге (у трибун), последний круг, финиш
   if(T.closed&&R.t>2){const ord=raceOrder(),lead=ord[0];if(lead&&lead.lap>=1&&!AMB.lapSaid[lead.lap]&&lead.idx<40&&annVol()>0){AMB.lapSaid[lead.lap]=1;if(lead.lap===T.cfg.laps-1)annCall('last');else annCall('lead',lead.num);}}
 }
 // события гонки → звук
 function ambEvent(k,arg){if(!AMB.on||!AU.ctx)return;const y=R?R.rc.y:1905;
-  if(k==='start'){if(R.scn&&(R.scn.st==='grid'||R.scn.st==='rolling'))setTimeout(()=>annCall('go'),50);if(Math.random()<0.7)setTimeout(()=>hornSfx(y,0.22,-0.5),600);if(Math.random()<0.5)setTimeout(()=>hornSfx(y,0.18,0.6),1100);ambOnce('crowd_big',0.5,0);}
+  if(k==='start'){if(!R.scn||R.scn.st==='grid')setTimeout(()=>annCall('go'),50);if(Math.random()<0.7)setTimeout(()=>hornSfx(y,0.22,-0.5),600);if(Math.random()<0.5)setTimeout(()=>hornSfx(y,0.18,0.6),1100);ambOnce('crowd_big',0.5,0);}
   if(k==='countdown')annCall('count');
   if(k==='ready'){annCall(R.scn&&R.scn.st==='lemans'?'lemans':'ready');}
   if(k==='finish'){ambOnce('applause',0.55,0);ambOnce('crowd_race',0.5,0.3);if(arg&&arg.win){ambOnce('fanfare',0.45,0);}setTimeout(()=>{const w=raceOrder()[0];if(w)annCall('win',w.num);else annCall('fin');},900);}

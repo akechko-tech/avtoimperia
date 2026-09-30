@@ -72,7 +72,12 @@ def music():
     for cid, m in man.items():
         if cid + '.m4a' not in have: continue
         n += pull('media/music/clips/%s.m4a' % cid, os.path.join(D, cid + '.m4a'))
-        idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'by', 'lic', 'page')}
+        t = m.get('title', '')
+        perf = ('Оркестр морской пехоты США' if 'Marine' in t else 'Оркестр ВВС США' if 'Air Force' in t else 'Оркестр ВМС США' if 'Navy' in t else
+                'Оркестр армии США' if 'Army' in t else 'Оркестр береговой охраны США' if 'Coast Guard' in t else 'Кевин Маклауд' if 'MacLeod' in t or 'ISRC USUAN' in t else
+                'Оркестр Пола Уайтмена, 1924' if 'Whiteman' in t else 'Оркестр Марека Вебера' if 'Marek Weber' in t else 'Берлинская опера' if 'Staatsoper' in t else
+                'Эдуардо Ароляс, 1917' if 'Arolas' in t else 'Оркестр ВВС США' if 'Holst' in t else 'Майкл Лаук' if 'Laucke' in t else 'Ольга Гуревич' if 'Gurevich' in t else 'Оркестр Гессенского радио' if 'Dvořák Symphony' in t or 'hr-Sinfonie' in (m.get('by') or '') else 'Пианист Эль Дуэнде Суарес' if 'Golliwog' in t else 'Musopen' if 'Musopen' in t or 'Peer Gynt Suite' in t or 'Brahms, Symphony' in t else m.get('by') or '')
+        idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'lic', 'page')}; idx[cid]['by'] = perf
     for f in os.listdir(D):
         if f.endswith('.m4a') and f[:-4] not in idx: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.MUSIC_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')

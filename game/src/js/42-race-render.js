@@ -212,7 +212,8 @@ const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса пово
   ['Твёрдое','деревья, дома, заборы и зрители не пропускают. Удар — повреждение; поломку механик чинит на обочине.'],
   ['🔧','— сервис: машина остановится, механик сменит шины, дольёт бензин, подтянет поломки. Кнопка горит, когда пора.'],
   ['Обочина','трава, камни и склоны тормозят и бьют подвеску; в гору на поле не заехать. Срезать нельзя — вернут туда, где съехали.'],
-  ['Вид','— кнопка вверху: сзади, сверху, из кабины. «?» — эта подсказка и пауза.']];
+  ['Назад','стоя держите «Тормоз» полсекунды — включится задний ход (на приборе R). «Газ» — снова вперёд. Застряли — кнопка «Вернуться на трассу».'],
+  ['Вид','— кнопка вверху: сзади, сверху, из кабины и «Кинохроника» (старая плёнка). «?» — эта подсказка и пауза.']];
 function showDriveTips(pause){const el=document.getElementById('rTips');if(!R)return;R.hold=true;
   el.innerHTML=`<h3>Как ехать</h3><ul>${DRIVE_TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
   document.getElementById('rTipsGo').onclick=()=>{el.hidden=true;if(R){R.hold=false;R.lastT=performance.now();}};}
@@ -277,6 +278,8 @@ function drawWheelUI(){
 }
 const KMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'gas',ArrowDown:'brake',Space:'gas'};
 document.addEventListener('keydown',e=>{if(R&&KMAP[e.code]){e.preventDefault();rKeys[KMAP[e.code]]=true;}});
+// рожок/клаксон своей машины: клавиша H
+document.addEventListener('keydown',e=>{if(R&&e.code==='KeyH'&&!e.repeat&&R.me){try{hornSfx(R.rc.y,0.4,0);}catch(_){}}});
 document.addEventListener('keyup',e=>{if(R&&KMAP[e.code]){rKeys[KMAP[e.code]]=false;}});
 
 // 0.19: «Кинохроника» — гонка как старая плёнка: сепия, зерно, царапины, мерцание и виньетка (вид сзади)

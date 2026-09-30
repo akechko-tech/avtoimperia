@@ -15,12 +15,12 @@ function avtEngineWorklet(){
   function run(f,x){const y=f.b0*x+f.b1*f.x1+f.b2*f.x2-f.a1*f.y1-f.a2*f.y2;f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;}
   function mkVoice(p){
     const nb=p.nb||1,v={p,ph:rnd(),nx:0,n:p.fire.length,jit:new Float32Array(p.fire.length),rpm:p.idle,rT:p.idle,ld:0,lT:0,g:0,gT:0,pan:0,pT:0,lpf:12000,lpT:12000,spd:0,
-      pa:new Float32Array(2),pb:new Float32Array(2),en:new Float32Array(2),nl:0,dl:[],di:[0,0],ls:new Float32Array(2),yp:new Float32Array(2),dc:0,dcx:0,
-      muf:lpSet(bq(),p.muff||900,0.85),m1:bpSet(bq(),(p.blk||1)*420,7),m2:bpSet(bq(),(p.blk||1)*980,9),m3:bpSet(bq(),(p.blk||1)*1900,10),kick:0,top:lpSet(bq(),p.open>0.5?7000:4500,0.7),inBP:bpSet(bq(),420,1.6),tkBP:bpSet(bq(),3600,1.8),chBP:bpSet(bq(),2600,2),burn:bpSet(bq(),170,0.9),
+      pa:new Float32Array(2),pb:new Float32Array(2),pr:new Float32Array(2),en:new Float32Array(2),nl:0,nm:0,mf2:bpSet(bq(),1500,0.7),dl:[],di:[0,0],ls:new Float32Array(2),yp:new Float32Array(2),dc:0,dcx:0,
+      muf:lpSet(bq(),p.muff||900,0.85),m1:bpSet(bq(),(p.blk||1)*420,7),m2:bpSet(bq(),(p.blk||1)*980,9),m3:bpSet(bq(),(p.blk||1)*1900,10),kick:0,top:lpSet(bq(),p.open>0.5?5000:3800,0.7),inBP:bpSet(bq(),420,1.6),tkBP:bpSet(bq(),3600,1.8),chBP:bpSet(bq(),2600,2),burn:bpSet(bq(),170,0.9),
       th:0,et:0,tk1:-1,tk2:-1,gph:0,sph:0,scA:0,cph:0,ec:0,ol:0,orr:0,mph:0,dead:false,fade:1,popT:0};
     for(let b=0;b<nb;b++){const L=(p.pipe&&p.pipe[b])||p.pipe[0]||1.2;v.dl.push(new Float32Array(Math.max(8,Math.round(SR*2*L/343))));}
     newCycle(v);return v;}
-  function newCycle(v){const p=v.p,n=v.n,j=p.jit||0.012;for(let k=0;k<n;k++){const f=p.fire[k],t=Math.min(0.999,Math.max(0,f+(k?nz()*j:Math.abs(nz())*j*0.5)));v.jit[k]=t-f;}}
+  function newCycle(v){const p=v.p,n=v.n,j=(p.jit||0.012)*Math.min(1,2.5/n);for(let k=0;k<n;k++){const f=p.fire[k],t=Math.min(0.999,Math.max(0,f+(k?nz()*j:Math.abs(nz())*j*0.5)));v.jit[k]=t-f;}}
   function fire(v,k){const p=v.p,rf=v.rpm/p.max;
     let A=p.amp[k]*(1+nz()*(p.rough||0.08));
     const idleLd=v.rpm<p.idle*1.35?0.28:0,L=0.07+0.93*Math.pow(Math.max(v.ld,idleLd),0.85);A*=L;
@@ -28,7 +28,7 @@ function avtEngineWorklet(){
     if(p.mis&&rnd()<p.mis*(1.2-rf))A*=0.08;                          // пропуск зажигания у старых моторов
     const b=p.bank?p.bank[k]:0;
     if(v.ld<0.06&&rf>0.45&&p.pop&&rnd()<p.pop){v.en[b]+=2.4;v.pa[b]+=1.2;}   // хлопок в трубе на сбросе газа
-    v.pa[b]+=A;v.en[b]+=A*(p.noise||0.5)*(0.4+0.6*v.ld);v.kick+=A*(0.5+0.5*v.ld);
+    v.pa[b]+=A;v.pr[b]+=A;v.en[b]+=A*(p.noise||0.5)*(0.5+0.5*v.ld);v.kick+=A*(0.6+0.4*v.ld);
     // клапаны: два щелчка между вспышками
     const si=1/(v.n*Math.max(1e-6,v.dph));v.tk1=Math.floor(si*0.3);v.tk2=Math.floor(si*0.62);}
   function voiceBlock(v,oL,oR,N){
@@ -40,8 +40,9 @@ function avtEngineWorklet(){
     const g1=v.g*v.fade,rpm=v.rpm,rf=rpm/p.max,ld=v.ld;
     const dph=rpm/60/SR/(p.cyc||2);v.dph=dph;
     // выхлопной импульс длится ~25° поворота вала: на низких оборотах — широкий «бух», на высоких — узкий, сливаются в вой
-    const tau=Math.min(0.0042,Math.max(0.00035,(p.tau||2.4)/2.4*12/(6*Math.max(rpm,120)))),dp=Math.exp(-1/(SR*tau)),kp=(1-dp)*2.2,dn=Math.exp(-1/(SR*(steam?0.028:tau*1.7)));
-    const cLP=opc(p.loss||2200),refl=p.refl===undefined?-0.74:p.refl,open=p.open||0,cTh=opc(95),cOut=opc(v.lpf),det=Math.exp(-1/(SR*0.00035)),dec=Math.exp(-1/(SR*0.0006)),cN=opc(steam?4200:1500),cDC=opc(22);
+    // импульс: резкий фронт (открылся выпускной клапан) и спад ~12° поворота вала; шум истечения газов — чуть дольше
+    const tau=Math.min(0.0042,Math.max(0.00035,(p.tau||2.4)/2.4*12/(6*Math.max(rpm,120)))),dp=Math.exp(-1/(SR*tau)),dr=Math.exp(-1/(SR*0.00022)),dn=Math.exp(-1/(SR*(steam?0.028:tau*1.8)));
+    const cLP=opc(p.loss||2200),refl=p.refl===undefined?-0.74:p.refl,open=p.open||0,cTh=opc(95),cOut=opc(v.lpf),det=Math.exp(-1/(SR*0.00035)),dec=Math.exp(-1/(SR*0.0006)),cN=opc(steam?2500:3200),cDC=opc(55),mech=(p.mech||0.035)*(0.4+0.6*Math.min(1.2,rf))*(steam||elec?0.3:1);
     bpSet(v.inBP,300+520*Math.min(1.2,rf),1.5);
     const intake=(p.intake||0.12)*ld*(0.2+0.8*Math.min(1,rf)),valve=(p.valve||0.1)*(0.35+0.65*Math.min(1,rf)),gw=(p.gearW||0)*rf*rf*(0.3+0.7*ld),gf=rpm/60*(p.gearT||19)/SR;
     const scT=p.sc===2?(ld>0.92?1:0):p.sc?0.35+0.65*ld:0,sf=rpm/60*(p.scR||1.3)*4/SR,scG=0.13*Math.pow(Math.min(1.1,rf),1.5);
@@ -54,19 +55,21 @@ function avtEngineWorklet(){
         while(v.nx<v.n&&v.ph>=p.fire[v.nx]+v.jit[v.nx]){fire(v,v.nx);v.nx++;}
         if(v.tk1>=0&&v.tk1--===0)v.et+=valve;if(v.tk2>=0&&v.tk2--===0)v.et+=valve*0.8;
       }
-      let ex=0,e1s=0;v.nl+=(nz()-v.nl)*cN;const nn=v.nl*2.2;
+      let ex=0,e1s=0;v.nl+=(nz()-v.nl)*cN;const nn=v.nl*1.4;
       for(let b=0;b<nb;b++){
         // импульс давления: вспышка «накачивает» первый каскад, второй даёт плавный горб (t·e^(−t/τ))
-        v.pa[b]*=dp;v.pb[b]=v.pb[b]*dp+v.pa[b]*kp;v.en[b]*=dn;const pu=v.pb[b];e1s+=pu;
-        const src=pu*(steam?0.2:1)+v.en[b]*nn*(steam?1.6:0.4);
+        v.pa[b]*=dp;v.pr[b]*=dr;v.en[b]*=dn;const pu=v.pa[b]-v.pr[b];e1s+=v.pa[b];
+        const src=pu*(steam?0.2:1)+v.en[b]*nn*(steam?1.6:0.9);
         const buf=v.dl[b],D=buf.length,j=v.di[b],yd=buf[j];v.ls[b]+=(yd-v.ls[b])*cLP;
         const y=src+refl*v.ls[b];buf[j]=y;v.di[b]=j+1===D?0:j+1;
         ex+=y-0.965*v.yp[b];v.yp[b]=y;}
       const m=run(v.muf,ex),t=run(v.top,ex);
       out=t*open+m*(1-open)*1.6;
-      v.th+=(e1s-v.th)*cTh;out+=v.th*(p.thump||0.5)*0.8;
+      v.th+=(e1s-v.th)*cTh;out+=v.th*(p.thump||0.5)*0.35;
+      // механика: клапаны, шестерни, цепь ГРМ — шум по всему спектру, чуть пульсирует со вспышками
+      out+=run(v.mf2,nz())*mech*(0.7+0.6*Math.min(1.5,e1s));
       // блок цилиндров звенит от каждой вспышки: «рык» и металл старого мотора
-      if(v.kick!==0||v.m1.y1!==0){const k=v.kick;v.kick=0;out+=(run(v.m1,k)*0.9+run(v.m2,k)*0.6+run(v.m3,k)*0.35)*blk;}
+      if(v.kick!==0||v.m1.y1!==0){const k=v.kick;v.kick=0;out+=(run(v.m1,k)*1.9+run(v.m2,k)*1.2+run(v.m3,k)*0.6)*blk;}
       if(intake>0.001)out+=run(v.inBP,nz())*(0.25+0.75*Math.min(2,e1s*3))*intake;
       if(v.et>1e-4){out+=run(v.tkBP,nz())*v.et;v.et*=det;}
       if(gw>0.0005){v.gph+=gf;if(v.gph>1)v.gph-=1;out+=Math.sin(TAU*v.gph)*gw;}
@@ -124,7 +127,8 @@ function avtEngineWorklet(){
     process(ins,outs){const o=outs[0],L=o[0],R=o[1]||o[0],N=L.length;
       for(const [id,v] of this.v){voiceBlock(v,L,R,N);if(v.dead&&v.fade<0.002)this.v.delete(id);}
       if(this.road)roadBlock(this.road,L,R,N);
-      for(let i=0;i<N;i++){const a=L[i],b=R[i];L[i]=a>1?1:a<-1?-1:a;if(R!==L)R[i]=b>1?1:b<-1?-1:b;}
+      // мягкий ограничитель: громкие вспышки не «рвут» звук
+      const sc=x=>x>1.5?1:x<-1.5?-1:x-x*x*x/6.75;for(let i=0;i<N;i++){L[i]=sc(L[i]);if(R!==L)R[i]=sc(R[i]);}
       return this.alive;}
   }
   registerProcessor('avt-engine',AvtEngine);
@@ -148,32 +152,32 @@ function enFire(kind){switch(kind){
   return enFire(4);}
 // Типы моторов гоночных машин и массовых моделей: цилиндры, обороты, трубы, глушитель, нагнетатель
 const EN_TYPE={
-  s1:{c:1,idle:420,max:1700,pipe:[1.1],tau:3,noise:0.5,valve:0.22,hm:0,mis:0.02,thump:0.7},            // одноцилиндровый «Де Дион»: частый «тук-тук»
-  s1h:{c:1,idle:230,max:700,pipe:[1.5],tau:5,noise:0.35,valve:0.25,hm:1,mis:0.04,thump:0.9,loss:2200},   // лежачий цилиндр Бенца: редкие тяжёлые вспышки
-  t2:{c:2,idle:280,max:900,pipe:[1.3],tau:4.2,noise:0.45,valve:0.2,hm:1,mis:0.03,thump:0.8},            // двухцилиндровый «Феникс» Даймлера
-  v2:{c:'v2',idle:380,max:1500,pipe:[1.0],tau:3.2,noise:0.5,valve:0.16,thump:0.7},
-  i4:{c:4,idle:330,max:1500,pipe:[1.6],tau:3,noise:0.5,valve:0.12,thump:0.55},
-  i4b:{c:4,idle:260,max:1300,pipe:[0.9],tau:4.5,noise:0.6,valve:0.16,thump:0.95,open:1,chain:0.12,pop:0.04,loss:2600}, // гоночные гиганты 10–28 л: тяжёлый «бух-бух», цепь
-  i4ohc:{c:4,idle:420,max:2600,pipe:[0.9],tau:2.8,noise:0.55,valve:0.1,gearW:0.004,open:1,pop:0.05},
-  i4d:{c:4,idle:500,max:3000,pipe:[0.85],tau:2.4,noise:0.55,valve:0.12,gearW:0.005,open:1,pop:0.05},
-  i4sc:{c:4,idle:520,max:4200,pipe:[0.8],tau:2.2,noise:0.55,valve:0.08,gearW:0.004,sc:1,scR:1.5,open:1,pop:0.06},
-  op4:{c:4,idle:300,max:1300,pipe:[0.9],tau:5,noise:0.55,valve:0.08,thump:1.1,open:1,chain:0.1,pop:0.04},  // Гоброн-Брийе: два поршня в цилиндре
-  v4:{c:'v4',idle:300,max:1300,pipe:[0.9,1.05],tau:4.2,noise:0.55,valve:0.14,thump:0.9,open:1},
-  i6:{c:6,idle:380,max:2400,pipe:[1.9],tau:2.3,noise:0.42,valve:0.08,thump:0.45},
-  i6r:{c:6,idle:420,max:3200,pipe:[1.0],tau:2.1,noise:0.5,valve:0.08,gearW:0.004,open:1,pop:0.05},
-  i6sc:{c:6,idle:480,max:3600,pipe:[1.0],tau:2.1,noise:0.5,valve:0.07,sc:2,scR:1.4,open:1,pop:0.05},       // «Мерседес» с нагнетателем: визг только в полный газ
-  aero6:{c:6,idle:220,max:1500,pipe:[0.6],tau:4.5,noise:0.65,valve:0.1,thump:1.1,open:1,chain:0.14,pop:0.06}, // авиамотор на шасси: «Читти-Бэнг-Бэнг»
-  i8:{c:8,idle:450,max:4200,pipe:[1.1],tau:1.9,noise:0.45,valve:0.07,gearW:0.004,open:1,pop:0.04},
-  i8sc:{c:8,idle:600,max:5600,pipe:[0.9],tau:1.7,noise:0.5,valve:0.06,gearW:0.005,sc:1,scR:1.25,open:1,pop:0.06},
-  i8road:{c:8,idle:360,max:3200,pipe:[2.4],tau:2,noise:0.35,valve:0.05,thump:0.4},
-  v8f:{c:'v8f',idle:380,max:2600,pipe:[1.9,2.0],tau:2.3,noise:0.42,valve:0.07,thump:0.55},
-  v8x:{c:'v8x',idle:420,max:3400,pipe:[1.7,2.05],tau:2.4,noise:0.45,valve:0.06,thump:0.7},
-  v8aero:{c:'v8f',idle:300,max:1400,pipe:[0.5,0.55],tau:3.5,noise:0.65,valve:0.1,thump:1,open:1,pop:0.06},
-  v12:{c:12,idle:480,max:5000,pipe:[1.0,1.08],tau:1.6,noise:0.45,valve:0.05,gearW:0.004,open:1,pop:0.04},
-  v12aero:{c:12,idle:260,max:1900,pipe:[0.55,0.6],tau:3.2,noise:0.65,valve:0.08,thump:1,open:1,pop:0.07},
-  v16:{c:16,idle:500,max:4800,pipe:[1.0,1.1],tau:1.4,noise:0.45,valve:0.05,sc:1,scR:1.3,open:1,pop:0.04},
-  steam:{c:'steam',kind:'steam',idle:0,max:900,pipe:[0.35],refl:-0.3,noise:1,valve:0,thump:0.2,burn:0.06,tau:6},
-  elec:{c:'elec',kind:'elec',idle:0,max:2400,pipe:[0.3],noise:0,valve:0,comm:22}};
+  s1:{lvl:5.5,c:1,idle:420,max:1700,pipe:[1.1],tau:3,noise:0.5,valve:0.22,hm:0,mis:0.02,thump:0.7},            // одноцилиндровый «Де Дион»: частый «тук-тук»
+  s1h:{lvl:5.5,c:1,idle:230,max:700,pipe:[1.5],tau:5,noise:0.35,valve:0.25,hm:1,mis:0.04,thump:0.9,loss:2200},   // лежачий цилиндр Бенца: редкие тяжёлые вспышки
+  t2:{lvl:4.6,c:2,idle:280,max:900,pipe:[1.3],tau:4.2,noise:0.45,valve:0.2,hm:1,mis:0.03,thump:0.8},            // двухцилиндровый «Феникс» Даймлера
+  v2:{lvl:4.4,c:'v2',idle:380,max:1500,pipe:[1.0],tau:3.2,noise:0.5,valve:0.16,thump:0.7},
+  i4:{lvl:4.3,c:4,idle:330,max:1500,pipe:[1.6],tau:3,noise:0.5,valve:0.12,thump:0.55},
+  i4b:{lvl:2.6,c:4,idle:260,max:1300,pipe:[0.9],tau:4.5,noise:0.6,valve:0.16,thump:0.95,open:1,chain:0.12,pop:0.04,loss:2600}, // гоночные гиганты 10–28 л: тяжёлый «бух-бух», цепь
+  i4ohc:{lvl:3.6,c:4,idle:420,max:2600,pipe:[0.9],tau:2.8,noise:0.55,valve:0.1,gearW:0.004,open:1,pop:0.05},
+  i4d:{lvl:3.6,c:4,idle:500,max:3000,pipe:[0.85],tau:2.4,noise:0.55,valve:0.12,gearW:0.005,open:1,pop:0.05},
+  i4sc:{lvl:3.2,c:4,idle:520,max:4200,pipe:[0.8],tau:2.2,noise:0.55,valve:0.08,gearW:0.004,sc:1,scR:1.5,open:1,pop:0.06},
+  op4:{lvl:2.7,c:4,idle:300,max:1300,pipe:[0.9],tau:5,noise:0.55,valve:0.08,thump:1.1,open:1,chain:0.1,pop:0.04},  // Гоброн-Брийе: два поршня в цилиндре
+  v4:{lvl:3.2,c:'v4',idle:300,max:1300,pipe:[0.9,1.05],tau:4.2,noise:0.55,valve:0.14,thump:0.9,open:1},
+  i6:{lvl:5.0,c:6,idle:380,max:2400,pipe:[1.9],tau:2.3,noise:0.42,valve:0.08,thump:0.45},
+  i6r:{lvl:4.0,c:6,idle:420,max:3200,pipe:[1.0],tau:2.1,noise:0.5,valve:0.08,gearW:0.004,open:1,pop:0.05},
+  i6sc:{lvl:3.6,c:6,idle:480,max:3600,pipe:[1.0],tau:2.1,noise:0.5,valve:0.07,sc:2,scR:1.4,open:1,pop:0.05},       // «Мерседес» с нагнетателем: визг только в полный газ
+  aero6:{lvl:2.5,c:6,idle:220,max:1500,pipe:[0.6],tau:4.5,noise:0.65,valve:0.1,thump:1.1,open:1,chain:0.14,pop:0.06}, // авиамотор на шасси: «Читти-Бэнг-Бэнг»
+  i8:{lvl:3.0,c:8,idle:450,max:4200,pipe:[1.1],tau:1.9,noise:0.45,valve:0.07,gearW:0.004,open:1,pop:0.04},
+  i8sc:{lvl:2.05,c:8,idle:600,max:5600,pipe:[0.9],tau:1.7,noise:0.5,valve:0.06,gearW:0.005,sc:1,scR:1.25,open:1,pop:0.06},
+  i8road:{lvl:4.5,c:8,idle:360,max:3200,pipe:[2.4],tau:2,noise:0.35,valve:0.05,thump:0.4},
+  v8f:{lvl:4.2,c:'v8f',idle:380,max:2600,pipe:[1.9,2.0],tau:2.3,noise:0.42,valve:0.07,thump:0.55},
+  v8x:{lvl:4.2,c:'v8x',idle:420,max:3400,pipe:[1.7,2.05],tau:2.4,noise:0.45,valve:0.06,thump:0.7},
+  v8aero:{lvl:2.6,c:'v8f',idle:300,max:1400,pipe:[0.5,0.55],tau:3.5,noise:0.65,valve:0.1,thump:1,open:1,pop:0.06},
+  v12:{lvl:2.6,c:12,idle:480,max:5000,pipe:[1.0,1.08],tau:1.6,noise:0.45,valve:0.05,gearW:0.004,open:1,pop:0.04},
+  v12aero:{lvl:2.4,c:12,idle:260,max:1900,pipe:[0.55,0.6],tau:3.2,noise:0.65,valve:0.08,thump:1,open:1,pop:0.07},
+  v16:{lvl:2.2,c:16,idle:500,max:4800,pipe:[1.0,1.1],tau:1.4,noise:0.45,valve:0.05,sc:1,scR:1.3,open:1,pop:0.04},
+  steam:{lvl:0.8,c:'steam',kind:'steam',idle:0,max:900,pipe:[0.35],refl:-0.3,noise:1,valve:0,thump:0.2,burn:0.06,tau:6},
+  elec:{lvl:1.05,c:'elec',kind:'elec',idle:0,max:2400,pipe:[0.3],noise:0,valve:0,comm:22}};
 // Марка гоночной машины → тип мотора (по годам: [до года, тип])
 const EN_MQ={'Panhard et Levassor':[[1895,'t2'],[1999,'i4b']],'Peugeot':[[1896,'t2'],[1911,'i4b'],[1999,'i4d']],"Peugeot «L'Éclair»":'t2','De Dion-Bouton':[[1895,'steam'],[1999,'s1']],
   'Bollée (пар)':'steam','Bollée':'steam','Léon Bollée':'s1h','Duryea':'t2','Riker Electric':'elec','Jeantaud':'elec','La Jamais Contente':'elec','C.G.V.':'i4b','Delahaye':[[1898,'t2'],[1999,'i4']],
@@ -188,14 +192,18 @@ const EN_MQ={'Panhard et Levassor':[[1895,'t2'],[1999,'i4b']],'Peugeot':[[1896,'
   'Opel':'i4b','Mercer':'i4ohc','Durant':'i4','Hispano-Suiza':'i4ohc','Руссо-Балт':'i4','Maxwell':'i4','Talbot':[[1925,'i4ohc'],[1999,'i6r']],'Talbot-Darracq':'i8','SCAT':'i4ohc','Ceirano':'i4',
   'Bentley':[[1927,'i4ohc'],[1999,'i6']],'Chevrolet':'i4','Monroe':'i4ohc','CMN':'i4','Diatto':'i4ohc','Maserati':'i8sc','Mercedes-Benz':[[1933,'i6sc'],[1999,'i8sc']],'Amilcar':[[1925,'i4'],[1999,'i6sc']],
   'Bluebird':'v12aero','AC':'i6r','Lea-Francis':'i4sc','Salmson':'i4d','Chitty Bang Bang':'aero6','Aston Martin':'i4ohc','Chiribiri':'i4ohc','Bianchi':'i4ohc','Leyland':'i8road',
-  'Thomas Special «Babs»':'v12aero','Packard Cable Special':'v12aero','Excelsior':'i6','Stutz Black Hawk':'i8','White Triplex':'v12aero','Omega-Six':'i6r'};
+  'Thomas Special «Babs»':'v12aero','Packard Cable Special':'v12aero','Excelsior':'i6','Stutz Black Hawk':'i8','White Triplex':'v12aero','Omega-Six':'i6r',
+  'FIAT':[[1921,'i4b'],[1922,'i6r'],[1999,'i8sc']],'Humber':[[1904,'s1'],[1999,'i4']],'Lanchester':[[1905,'t2'],[1910,'i4'],[1999,'i6']],'Horch':[[1926,'i4'],[1999,'i8road']],'Berliet':[[1912,'i4b'],[1999,'i4']],
+  'Adler':[[1903,'s1'],[1999,'i4']],'Nash':[[1916,'i4'],[1999,'i6']],'Rover':[[1905,'s1'],[1999,'i4']],'Stanley':'steam','Cadillac':[[1908,'s1h'],[1914,'i4'],[1922,'v8f'],[1999,'v8x']],
+  'Pierce-Arrow':[[1906,'i4'],[1999,'i6']],'Singer':'i4','Wolseley':[[1905,'t2'],[1999,'i4']],'Vauxhall':[[1905,'s1'],[1999,'i4ohc']],'Austin':'i4','Oldsmobile':[[1906,'s1h'],[1999,'i4']],
+  'Studebaker':[[1917,'i4'],[1999,'i6']],'Brennabor':'i4','Hudson-Essex':'i6','Willys-Overland':'i4','Lancia':[[1921,'i4ohc'],[1999,'v4']],'Morris':'i4','Dodge Brothers':'i4','Citroën':'i4','MG':'i4ohc'};
 function enMqType(name,y){const m=EN_MQ[name]||EN_MQ[(name||'').split(' ')[0]];if(!m)return null;if(typeof m==='string')return m;for(const [yy,t] of m)if(y<=yy)return t;return m[m.length-1][1];}
 function enEraType(y,race){return y<1896?'t2':y<1900?(race?'i4':'t2'):y<1912?(race?'i4b':'i4'):y<1920?(race?'i4ohc':'i4'):y<1926?(race?'i8':'i6'):(race?'i8sc':'i6');}
 // Профиль звука машины гонки: для машин игрока — по его мотору (цилиндры, год, гильзы Найта), для соперников — по марке и году
 function enProfile(c,y){
   let t=null,cyl=0,sleeve=false,yr=y,eng=null;
   try{if(c.md&&(c.you||c.spec)){eng=parts(c.md).e;cyl=eng.cyl||4;sleeve=!!eng.sleeve;yr=Math.min(y,Math.max(eng.y,y-8));}}catch(_){}
-  if(eng){t=cyl===1?(eng.y<1900?'s1h':'s1'):cyl===2?'t2':cyl===6?(y>=1920?'i6r':'i6'):cyl===8?(/V8/.test(eng.name)?(y>=1923?'v8x':'v8f'):(y>=1924?'i8':'i8road')):(y<1906?'i4b':y<1920?'i4':'i4ohc');}
+  if(eng){t=cyl===1?(/Cadillac|Бенц|Benz/.test(eng.name)?'s1h':'s1'):cyl===2?'t2':cyl===6?(y>=1920?'i6r':'i6'):cyl===8?(/V8/.test(eng.name)?(y>=1923?'v8x':'v8f'):(y>=1924?'i8':'i8road')):(y<1906?'i4b':y<1920?'i4':'i4ohc');}
   else t=enMqType(c.name,y)||enEraType(y,true);
   const T=Object.assign({},EN_TYPE[t]||EN_TYPE.i4),F=enFire(T.c);
   const p=Object.assign({kind:'ic',cyc:2},T,F,{type:t});
@@ -249,6 +257,6 @@ function enTick(a,me,vol){if(!EN.node||!R)return;const cars=R.cars,T=R.trk,msgs=
   if(R.me||R.follow){const S=me.surf||'asphalt',sp=Math.abs(me.vx||0),soft=/^(dirt|mud|mudhole|sand|beach|snow|grass|field|verge|forest)$/.test(S);
     const skid=sp>3?clamp(Math.max((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5,((me.gu||0)-0.8)*3.5)+(me.spinw>0.3?0.25:0),0,1):0;
     const wet=R.wx&&(R.wx.rain||R.wetK)?(me.tun?0:Math.max(R.wetK||0,R.wx.rain?1:0)):0;
-    road={v:sp,g:(R.t<0?0:1)*vol*(me.off?1.2:1),s:S==='puddle'?'puddle':S,wet:S==='puddle'?1:wet,sq:soft?0:skid,sc:soft?skid:0,ro:me.off?1:0.3,ty:EN_SURF_TY(R.rc.y)};}
+    road={v:sp,g:(R.t<0?0:1)*vol*(me.off?1.2:1)*0.5,s:S==='puddle'?'puddle':S,wet:S==='puddle'?1:wet,sq:soft?0:skid,sc:soft?skid:0,ro:me.off?1:0.3,ty:EN_SURF_TY(R.rc.y)};}
   msgs.push({t:'set',v:set,r:road});
   for(const m of msgs)EN.node.port.postMessage(m);}
