@@ -42,6 +42,7 @@ function paperHTML(o,s){
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
       <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
+    ${o.mean?`<div class="p-mean"><b>Что это значит для вас</b><span>${esc(o.mean)}</span></div>`:''}
     <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
   </article>`;
 }
@@ -49,7 +50,7 @@ const PW=document.getElementById('paperWrap');
 let PAPER_CUR=null;
 function showPaper(o,store=true){
   if(store){if(!o.also)o.also=flavorPick(G,G.y,G.m,2,G.papers.length+mi(G),true);
-    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||''});if(G.papers.length>40)G.papers.shift();save();}
+    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||'',mean:o.mean||''});if(G.papers.length>40)G.papers.shift();save();}
   PAPER_CUR=o;PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}

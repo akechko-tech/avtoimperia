@@ -231,7 +231,8 @@ function reelUnlock(s,id){s.reels=s.reels||[];if(!s.reels.includes(id)){s.reels.
 function reelOffer(s,id,title,deck,text){if(!reelGet(id,s))return;reelUnlock(s,id);
   pushEvent({own:1,kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['Дальше','ok'],['▶ Смотреть кинохронику','reel:'+id]]},true);}
 // Исторические ролики эпохи — по датам (один раз)
-const HIST_REEL_T=[[1914,7,'h:war','Война','Автомобиль уходит на фронт'],[1919,1,'h:peace','Мир','Заводы возвращаются к мирным машинам'],[1924,2,'h:twenties','Ревущие двадцатые','Джаз, кредит и машина для каждого'],[1929,10,'h:crash','Крах на Уолл-стрит','Конец эпохи']];
+// (война 1914 и крах 1929 — теперь мировые события с выбором: 11b-world.js)
+const HIST_REEL_T=[[1919,1,'h:peace','Мир','Заводы возвращаются к мирным машинам'],[1924,2,'h:twenties','Ревущие двадцатые','Джаз, кредит и машина для каждого']];
 function histReelCheck(s){HIST_REEL_T.forEach(([y,m,id,t,d])=>{const due=(y===1914&&s.country==='us')?[1917,3]:[y,m];if(s.y===due[0]&&s.m===due[1]&&!(s.reels||[]).includes(id)&&REELS[id])reelOffer(s,id,t,d,'');});}
 /* ---------- голос диктора (запасной: синтезатор устройства) ---------- */
 const REEL_VOICE_KEY='avt-reel-voice';

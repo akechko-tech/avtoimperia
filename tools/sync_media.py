@@ -102,9 +102,33 @@ def sfx():
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.SFX_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('sfx: updated', n, 'sounds', len(idx))
 
+# Лица гонщиков (0.21): из снимков конвейера — только проверенные вручную: на фото именно этот гонщик
+# (поиск по Викиданным иногда находил однофамильцев — писателей, актёров, художников; их здесь нет; нет и неудачных вырезок)
+FACE_OK = set("""levassor de_dion a_michelin l_bollee charron de_knyff chasseloup jenatzy levegh winton jellinek rolls fournier thery
+  l_renault m_renault vanderbilt m_farman h_farman lancia h_ford oldfield wagner hemery christie szisz robertson l_chevrolet
+  goux lautenschlager g_boillot depalma resta harroun porsche rickenbacker kl_guinness sailer milton f_elliott murphy ferrari
+  campari a_maserati benoist brilli_peri nuvolari parry_thomas materassi junek caracciola costantini barnato benjafield stuck
+  ivanowski chiron etancelin birkin keech shaw varzi""".split())
+def faces():
+    idx = json.loads(git('show', 'origin/media:media/faces/index.json'))
+    out, cred = {}, {}
+    for k, v in sorted(idx.items()):
+        if k not in FACE_OK or 'g' not in v: continue
+        out[k] = {'g': v['g'], 'w': v.get('w', 24), 'h': v.get('h', 32)}
+        cred[k] = {'file': v.get('file', ''), 'by': v.get('by', ''), 'lic': v.get('lic', ''), 'page': v.get('page', '')}
+    dst = os.path.join(ROOT, 'game', 'src', 'js', '016b-faces.js')
+    src = open(dst, encoding='utf-8').read()
+    fn = src[src.index('// раскодировать один раз'):]
+    js = ('/* Лица гонщиков по историческим фото (Wikimedia Commons, найдены по Википедии и Викиданным, проверены вручную):\n'
+          '   серый снимок 24×32 — для 3D-головы (0.21). Файл собирает tools/sync_media.py faces */\n'
+          'const FACES=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n'
+          'const FACE_CREDITS=' + json.dumps(cred, ensure_ascii=False, separators=(',', ':')) + ';\n' + fn)
+    open(dst, 'w', encoding='utf-8').write(js)
+    print('faces:', len(out), 'of', len(idx), 'approved; js', len(js))
+
 if __name__ == '__main__':
     git('fetch', '-q', 'origin', 'media')
     what = sys.argv[1:] or ['samples', 'film', 'voice', 'music', 'sfx']
     for w in what:
-        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx}[w]()
+        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx, 'faces': faces}[w]()
         except Exception as e: print(w, 'failed:', e)

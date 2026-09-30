@@ -43,7 +43,8 @@ function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button c
   <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons, общественное достояние.</p>
   <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p>
   <p id="abMus">Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.</p>
-  <p id="abSfx">Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.</p><p class="muted">Версия ${GAME_VER}</p></div>`);
+  <p id="abSfx">Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.</p>
+  <p id="abFace">Лица ${Object.keys(typeof FACES!=='undefined'?FACES:{}).length} гонщиков на трассе — по их историческим снимкам с Wikimedia Commons: ${aboutFaceCredits()}.</p><p class="muted">Версия ${GAME_VER}</p></div>`);
   // указатели музыки и звуков грузятся с сайта — когда придут, дописываем авторов
   try{Promise.all([typeof orchLoad==='function'?orchLoad():null,typeof ambIndex==='function'?ambIndex():null]).then(()=>{
     const a=document.getElementById('abMus'),b=document.getElementById('abSfx');
@@ -54,5 +55,7 @@ function aboutByLic(I){const M=new Map();Object.values(I||{}).forEach(x=>{if(!/C
   return [...M].map(([a,L])=>`${a} (${[...L].join(', ')})`).join(', ');}
 function aboutMusCredits(){const I=(typeof ORCH!=='undefined'&&ORCH.idx)||window.MUSIC_INDEX||null,L=aboutByLic(I);
   return 'записи военных оркестров США (общественное достояние), Musopen (CC0), пластинки 1917–1924 годов'+(L?'; '+L:'; музыка в духе немого кино — Kevin MacLeod (incompetech.com), CC BY 3.0/4.0');}
+function aboutFaceCredits(){const C=typeof FACE_CREDITS!=='undefined'?FACE_CREDITS:{},L=aboutByLic(C),pd=Object.values(C).filter(x=>!/CC BY/i.test(x.lic||'')).length;
+  return `${pd} — общественное достояние${L?'; '+L:''}`;}
 function aboutSfxCredits(){const I=(typeof AMB!=='undefined'&&AMB.idx)||window.SFX_INDEX||null,L=aboutByLic(I);
   return L?L+'; остальные — общественное достояние и CC0':'толпа, птицы, колокола, паровоз, дождь — записи в общественном достоянии и со свободными лицензиями (авторы указаны на страницах записей)';}

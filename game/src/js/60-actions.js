@@ -12,10 +12,10 @@ const ACT={
   quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
   // завод
-  capAdd:d=>{const n=+d.n,c=n*capUnitCost(G);if(G.cash<c)return;G.cash-=c;G.plantVal+=c;G.capBuild.push({units:n,left:2});addLog(`Заложен новый цех: +${fmtN(n)} мест, ${money(c)}.`);rerender();},
+  capAdd:d=>{if(capOrder(G,+d.n))rerender();},
   tip:d=>{const t=TIPS[+d.k];if(t&&t.run){t.run();save();render();flushToasts();}},
   helperToggle:()=>{if(!G)return;G.helper=G.helper||{};G.helper.on=!G.helper.on;toast(G.helper.on?'Помощник управляющего включён':'Помощник выключен');save();openSettings();render();},
-  whAdd:d=>{const n=+d.n,c=n*whUnitCost(G);if(G.cash<c)return;G.cash-=c;G.plantVal+=c;G.whBuild=G.whBuild||[];G.whBuild.push({units:n,left:1});addLog(`Строится склад на ${fmtN(n)} машин (${money(c)}).`);rerender();},
+  whAdd:d=>{if(whOrder(G,+d.n))rerender();},
   capSell:()=>{if(G.cap<=3)return;const n=Math.max(1,Math.round(G.cap*0.2)),v=Math.round(G.plantVal*n/G.cap*0.4);G.cap-=n;G.plantVal-=G.plantVal*n/(G.cap+n);G.cash+=v;addLog(`Часть цехов продана за ${money(v)}.`);rerender();},
   shifts:d=>{G.shifts=+d.v;rerender();},
   staffAuto:d=>{G.staffAuto=d.v==='1';rerender();},
@@ -23,7 +23,8 @@ const ACT={
   wagePol:d=>{const w=WAGE_POL[d.v];if(w.y&&G.y<w.y-techEarly(G))return;const was=G.wagePol;G.wagePol=d.v;
     if(d.v==='five'&&was!=='five'){addLog('Объявлена зарплата «пять долларов в день» — вдвое выше рынка. У ворот завода очередь из желающих.','good');if(G.y<1914)recordFirst(G,'wage:five','Зарплата «пять долларов в день»',1914,'Ford');G.rep=clamp(G.rep+4,0,100);flushToasts();}rerender();},
   tech:d=>{const k=d.k,c=techCost(G,k);if(!techOpen(G,k)||G.techBuild||G.cash<c)return;G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};addLog(`Начато внедрение: ${techNext(G,k).name} (${money(c)}).`);rerender();},
-  loan:d=>{const n=+d.n;if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
+  loan:d=>{const n=+d.n;if(!loanOpen(G)){toast(creditState(G).t);return;}if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
+  dpol:d=>{G.dpol=d.v;addLog(`Скидка дилерам: ${DPOL[d.v].n.toLowerCase()} (${Math.round(DPOL[d.v].m*100)}% цены).`);rerender();},
   repay:d=>{const n=Math.min(+d.n,G.loan);if(n>0&&G.cash>=n){G.loan-=n;G.cash-=n;rerender();}},
   // модели
   price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);if(md.pPrevM!==mi(G)){md.pPrev=md.price;md.pPrevM=mi(G);}md.price=Math.max(20,md.price+st*(+d.d));rerender();},
@@ -60,6 +61,9 @@ const ACT={
   // рынок
   dealers:d=>{const n=Math.min(+d.n,dealerRoom(G,d.c));if(n<1||G.cash<n*dealerCost(G))return;buyDealers(G,d.c,n);checkAch();rerender();flushToasts();},
   impUp:d=>{if(impUp(G,d.c)){checkAch();save();rerender();flushToasts();}},
+  brandBuy:d=>{if(!confirmOnce('brand'+d.c,'Нажмите ещё раз: покупка марки — большие деньги'))return;if(brandBuy(G,d.c,+d.i)){checkAch();save();rerender();flushToasts();}},
+  licStart:d=>{if(licStart(G,d.c)){save();rerender();flushToasts();}},
+  hubStart:d=>{if(hubStart(G)){save();rerender();}},
   dealerGrow:d=>{if(dealerGrow(G,d.c)){rerender();flushToasts();}},
   carGal:d=>{const md=G.models.find(m=>m.id===+d.id);if(md)openSheet(carGalHTML(md,d.k));},
   brand:d=>{const h=brandHTML(d.c,+d.i,G);if(h)openSheet(h);},

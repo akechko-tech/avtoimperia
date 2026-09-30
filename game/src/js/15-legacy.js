@@ -27,8 +27,9 @@ function playerLegacy(s){
   const wins=s.raceLog.filter(r=>r.place===1),major=wins.filter(r=>r.major).length,minor=wins.length-major;
   const bestModel=Math.max(0,...s.models.map(m=>m.totalSold));const longModel=s.models.some(m=>m.launched!==undefined&&m.status!=='dev'&&(mi(s)-m.launched)>=120&&m.totalSold>1000);
   const abroad=Object.keys(s.peak.share||{}).filter(c=>c!==s.country&&s.peak.share[c]>=0.05).length;
-  const techs=Object.values(s.tech||{}).reduce((a,b)=>a+b,0);
-  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0),share:(s.peak.share||{})[s.country]||0,abroad,firsts:Object.keys(s.firsts||{}).length,techs,wins:major,minor,titles:(s.titles||[]).reduce((a,t)=>a+(t.w||1),0),val:companyValue(s),rep:s.rep,legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
+  const techs=Math.min(8,Object.values(s.tech||{}).reduce((a,b)=>a+b,0));
+  // доля — лучшая годовая (старые сохранения: месячная); технологии эпохи — как у исторических марок (не больше 8), первенства — отдельно
+  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0),share:s.peak.shY!=null?s.peak.shY:((s.peak.share||{})[s.country]||0),abroad,firsts:Object.keys(s.firsts||{}).length,techs,wins:major,minor,titles:(s.titles||[]).reduce((a,t)=>a+(t.w||1),0),val:companyValue(s),rep:s.rep,legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
   // 0.21: очки наследия, выигранные в пари, — к имени марки
   if(s.legBonus){L.brand+=s.legBonus;L.total+=s.legBonus;}
   return L;
@@ -56,7 +57,7 @@ function legacyTitle(t){
 function finalResults(s,show){
   const t=legacyTable(s),[title,sub]=legacyTitle(t);
   s.final={place:t.place,total:Math.round(t.me.total),title};
-  if(!s.fameSaved){s.fameSaved=1;fameAdd({company:s.company,pioneer:s.pioneer,country:s.country,diff:s.diff,score:Math.round(t.me.total),place:t.place,title,year:s.y,sold:totalSold(s),bankrupt:!!(s.cash<-DIF().debt*cpi(s))});}
+  if(!s.fameSaved){s.fameSaved=1;fameAdd({company:s.company,pioneer:s.pioneer,country:s.country,diff:s.diff,score:Math.round(t.me.total),place:t.place,title,year:s.y,sold:totalSold(s),bankrupt:!!(s.cash<-debtLimit(s))});}
   const text=`${sub}\nКомпания «${s.company}» заняла ${t.place}-е место среди ${t.rows.length} автомобильных компаний эпохи. Очки наследия: ${Math.round(t.me.total)}.\nПродано машин: ${totalSold(s).toLocaleString('ru-RU')}. Лучший год: ${fmtN(s.peak.year||0)} машин. Побед в гонках: ${s.raceLog.filter(x=>x.place===1).length}. Титулов: ${(s.titles||[]).length}. Первенств: ${Object.keys(s.firsts||{}).length}. Стоимость компании: ${money(companyValue(s))}.`;
   if(show){openFinal();return;}
   s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает 1930 год`,text,paper:true,choices:[['Сравнить с историей','final']]});

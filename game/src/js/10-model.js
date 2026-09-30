@@ -24,7 +24,7 @@ function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
 function rdHorizon(s){return [0,2,3,4,4,5,6,7,7][s.rd.lvl]||2;}
 function rdActive(s){return s.rd.projs||[];}
 // Все инженеры бюро делят силы между проектами по долям: один проект получает всё
-function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15:1);}
+function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15:1)*((s.rd.engOut||0)>mi(s)?0.7:1);}
 function rdShare(s,pj){const L=rdActive(s),sw=L.reduce((a,p)=>a+(p.w||1),0);return sw?(pj.w||1)/sw:1;}
 function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};
@@ -69,7 +69,8 @@ function learn(md){return Math.max(0.85,Math.pow(1+(md.made||0)/200,-0.045));}
 // Экономия масштаба. Скидка поставщиков за объём: 5 машин в месяц — детали на четверть дороже обычного,
 // сотни — по обычной цене, тысячи и десятки тысяч — на 10–40% дешевле. До массового производства
 // (около 1908 года) скидка ограничена: детали всё равно точат и подгоняют вручную
-function volFactor(v,s){const lo=s?clamp(0.95-0.035*(yf(s)-1900),0.55,0.95):0.55;return clamp(1.36-0.16*Math.log10(1+Math.max(0,v)),lo,1.3);}
+// 0.21: у скидки за объём есть предел — поставщики тоже должны зарабатывать (не дешевле 66% обычной цены)
+function volFactor(v,s){const lo=s?clamp(0.95-0.035*(yf(s)-1900),0.66,0.95):0.66;return clamp(1.36-0.16*Math.log10(1+Math.max(0,v)),lo,1.3);}
 // Опыт рабочих: с каждым удвоением выпущенных машин модели нужно ~9% меньше часов (до −55%)
 function labLearn(md){return Math.max(0.45,Math.pow(1+(md.made||0)/150,-0.14));}
 // Разделение труда: большой поток — у каждого рабочего своя операция; штучная сборка — мастера делают всё
@@ -77,7 +78,7 @@ function labRate(v){return clamp(1.15-0.075*Math.log10(1+Math.max(0,v)),0.85,1.1
 function modelVol(md){return md.vol||md.lastMade||1;}
 function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
   if(tc.foundry)c-=partCost(p.e,s)*0.18;if(tc.press&&!isTruck(md))c-=partCost(p.b,s)*0.15;
-  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1));}
+  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s));}
 function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
@@ -129,8 +130,8 @@ function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRI
 // машина убыточна, пробуем и цену «себестоимость + 10–25%» — иначе «лучшей» оказалась бы машина, которую никто не берёт
 // Убыток считаем не меньше чем на плановый выпуск: иначе «выгоднее» всего машина, которую никто не купит
 function designValue(md,s){const ref=refPrice(md,s),V=Math.max(5,md.vol||20);let best=-1e18,bp=ref;
-  const uc0=unitCost({...md,vol:V},s),cands=[0.85,1,1.15,1.3].map(k=>ref*k).concat([1.1,1.25].map(k=>uc0/(1-DEALER_MARGIN)*k));
-  for(const P of cands){md.price=Math.round(P);const d=forecastDemand(md,s),m=md.price*(1-DEALER_MARGIN)-unitCost({...md,vol:Math.max(5,d)},s),v=m>0?d*m:m*Math.max(d,V);if(v>best){best=v;bp=md.price;}}
+  const uc0=unitCost({...md,vol:V},s),cands=[0.85,1,1.15,1.3].map(k=>ref*k).concat([1.1,1.25].map(k=>uc0/(1-dMargin(s))*k));
+  for(const P of cands){md.price=Math.round(P);const d=forecastDemand(md,s),m=md.price*(1-dMargin(s))-unitCost({...md,vol:Math.max(5,d)},s),v=m>0?d*m:m*Math.max(d,V);if(v>best){best=v;bp=md.price;}}
   md.price=bp;return best;}
 function autoDesign(kind,s,base){
   const vol=Math.max(20,(s.last&&s.last.made)||20);
@@ -175,10 +176,11 @@ function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.75:1)*complexity(md)*techMul(s,'hrs')*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.75:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
-function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap');}
-function capUnitCost(s){return Math.round(1500*cpi(s)*(1+0.12*techLv(s,'tools')+0.08*techLv(s,'elec'))*bn('lineCost'));}
+function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1);}
+// станки, конвейер и электромоторы делают цех производительнее — но и дороже: место в цеху стоит больше
+function capUnitCost(s){return Math.round(1500*cpi(s)*(1+0.12*techLv(s,'tools')+0.08*techLv(s,'elec'))*Math.pow(techMul(s,'cap'),0.6)*bn('lineCost')*worldCapK(s));}
 function plantOverhead(s){return s.plantVal*0.009+30*cpi(s)*(1+s.workers/150);}
 /* ---------- sales network ---------- */
 // Дилер — независимый торговец в своём городе: покупает у завода машины со скидкой (16% цены), продаёт их,
@@ -193,8 +195,10 @@ function dealerTP(s){return tabAt(DEALER_TP,yf(s));}
 function dealerTPmax(s){return dealerTP(s)*3.5;}
 // Представительство за границей: импортёр берёт свою долю и торгует только в больших городах;
 // своё отделение — вся страна и никаких посредников; сборочный завод собирает машины из комплектов: пошлина и доставка меньше, машины «свои»
-const IMP_LV=[{n:'Нет'},{n:'Импортёр',cut:0.08,cap:0.4,pen:0.3,ad:0.35},{n:'Своё отделение',cut:0,cap:1.3,pen:0.22,ad:0.5,cost:40000,up:600},
-  {n:'Сборочный завод',cut:0,cap:1.3,pen:0.14,ad:0.6,cost:200000,up:3000,tar:0.8,ship:0.5,y:1904}];
+// 0.21: сборка из комплектов (пошлина только на детали, 6–9 мес.) и свой завод в стране (как местная марка, 12–24 мес.)
+const IMP_LV=[{n:'Нет'},{n:'Импортёр',cut:0.08,cap:0.4,pen:0.3,ad:0.35,tar:1,ship:1},{n:'Своё отделение',cut:0,cap:1.3,pen:0.22,ad:0.5,cost:40000,up:600,tar:1,ship:1,mo:2},
+  {n:'Сборка из комплектов',cut:0,cap:1.3,pen:0.14,ad:0.6,cost:200000,up:3000,tar:0.6,ship:0.5,y:1904,mo:[6,9]},
+  {n:'Свой завод',cut:0,cap:1.3,pen:0.05,ad:0.7,cost:900000,up:9000,tar:0,ship:0,y:1908,mo:[12,24]}];
 function impLv(s,c){return c===s.country?9:(s.imp&&s.imp[c])||0;}
 function impOf(s,c){return c===s.country?null:IMP_LV[impLv(s,c)||1];}
 function impTar(s,c){const L=impOf(s,c);return L&&L.tar?L.tar:1;}
@@ -212,7 +216,7 @@ function dealerCost(s){return Math.round(560*cpi(s)*(1+T(s)*0.02));}
 // (множитель s.dcap[c], растёт, когда вы вкладываетесь в салоны дилеров); дома — на 30% больше (завод рядом)
 const DLR_MULT_MAX=3.5;
 function dealerMult(s,c){return Math.max(1,(s.dcap&&s.dcap[c])||1);}
-function dealerTPc(s,c){return dealerTP(s)*dealerMult(s,c)*(c===s.country?1.3:1);}
+function dealerTPc(s,c){return dealerTP(s)*dealerMult(s,c)*(c===s.country?1.3:1)*dTP(s,c);}
 function dealerCapOf(s,c){return dealerCount(s,c)*dealerTPc(s,c);}
 // Сколько дилеров ещё можно открыть, чтобы обслужить покупателей, ушедших ни с чем (не больше, чем осталось городов)
 function dealersShort(s,c){const mk=s.last&&s.last.mk[c],tpc=dealerTPc(s,c),lost=(mk&&mk.lostDlr||0)-((s.dAdd&&s.dAdd[c])||0)*tpc;return lost>0.5?Math.min(dealerRoom(s,c),Math.ceil(lost/tpc)):0;}
@@ -236,22 +240,27 @@ function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.
   pendingToasts.push(`🏪 +${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}${where}: покупателей видят ${Math.round(r1*100)}%`);
   return n;}
 // Представительство за границей: договор с импортёром → своё отделение → сборочный завод
-function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=3)return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
-  if(s.cash<cost||(L.y&&s.y<L.y))return false;s.cash-=cost;s.imp=s.imp||{};s.imp[c]=lv+1;const C=COUNTRIES[c];
+function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
+  if(s.cash<cost||(L.y&&s.y<L.y)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
+  // отделение, сборка и завод строятся месяцами (13b/105b): деньги сразу, уровень — когда достроят
+  const mo=impMonths(s,c,lv+1);if(mo>0){s.cash-=cost;s.impB=s.impB||{};s.impB[c]={lv:lv+1,left:mo,t:mo};addLog(`${COUNTRIES[c].name}: ${lv+1===2?'открываем своё отделение':lv+1===3?'строим цех сборки из комплектов':'строим свой завод'} — ${money(cost)}, ${mo} мес.`,'good');return true;}
+  s.cash-=cost;s.imp=s.imp||{};s.imp[c]=lv+1;const C=COUNTRIES[c];(s.impSince=s.impSince||{})[c]=s.impSince[c]??mi(s);
   if(lv+1===1){s.dealers[c]=Math.max(dealerCount(s,c),2);addLog(`${C.name}: подписан договор с импортёром. Он берёт ${Math.round(IMP_LV[1].cut*100)}% цены и продаёт ваши машины через агентов в больших городах.`,'good');pendingToasts.push('🤝 Импортёр: '+C.name);}
   else if(lv+1===2){s.plantVal+=cost*0.3;addLog(`${C.name}: открыто своё отделение «${s.company}». Посредник больше не берёт свою долю, дилеров можно открыть по всей стране.`,'good');pendingToasts.push('🏢 Отделение: '+C.name);}
   else{s.plantVal+=cost*0.6;addLog(`${C.name}: сборочный завод собирает машины из комплектов. Пошлина за комплекты ниже, доставка дешевле, а покупатели считают машины своими.`,'good');pendingToasts.push('🏭 Сборочный завод: '+C.name);}
   return true;}
 // Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
 // сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
-function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=3||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
   const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
   const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
-  const gain=lv===1?sold*P*IMP_LV[1].cut*1.3:sold*(P*tariffAt(c,s)*(1-IMP_LV[3].tar)*0.6+shipCost(s)*(1-IMP_LV[3].ship));
+  const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];
+  const gain=lv===1?sold*P*IMP_LV[1].cut*1.3:sold*(P*du*((cu.tar??1)-(nx.tar??1))*0.6+shipCostTo(s,c)*((cu.ship??1)-(nx.ship??1)))+sold*P*0.05*((cu.pen||0)-(nx.pen||0));
   return gain>up?cost/(gain-up):Infinity;}
 function dealerUpkeep(s,c){return 22*cpi(s)*(c?dealerMult(s,c):1);}
 function dealerCount(s,c){return (s.dealers&&s.dealers[c])||0;}
-function tariffAt(c,s){return tabAt(TARIFF[c],yf(s));}
+// пошлина страны для ваших машин (без учёта способа ввоза) и доставка — 105b-trade.js
+function tariffAt(c,s){const r=tradeRule(c,s.country,tNow(s));return r.ban?0:(r.duty||0);}
 function shipCost(s){return 60*cpi(s);}
 // Сеть живёт сама: когда покупателей больше, чем успевают обслужить, дилеры понемногу нанимают продавцов сами (до +25%);
 // дома к марке, которая хорошо продаётся, новые города просятся сами (за границей сеть растит импортёр или ваше отделение)
@@ -263,8 +272,9 @@ function dealersMonth(s,r){s.dcap=s.dcap||{};s.dsm=s.dsm||{};s.dAdd={};
       if(mi(s)-(s.dlrSaid||-99)>=12){s.dlrSaid=mi(s);addLog(`Торговцы сами просятся в дилеры: ${fmtN(n)} ${plural(n,'новый город','новых города','новых городов')}${c!==s.country?' ('+COUNTRIES[c].name+')':''}. Марка, которая хорошо продаётся, нужна всем.`,'good');}}}}
 /* ---------- finance ---------- */
 function stockValue(s){return s.models.reduce((a,m)=>a+m.stock*matCost(m,s),0);}
-function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+Math.max(0,avg*12*7);}
-function maxLoan(s){return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))/1000)*1000;}
+function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+arTotal(s)+Math.max(0,avg*12*7);}
+// Кредит под залог завода и склада; в кризисы банки урезают лимит (13b-economy.js: creditState)
+function maxLoan(s){return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*creditState(s).lim/1000)*1000;}
 function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round((800+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}

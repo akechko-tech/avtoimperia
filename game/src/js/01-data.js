@@ -24,11 +24,16 @@ const PIONEERS={
 };
 // share — какую долю класса конкуренты терпят без ответа; rvRate и rvMax — как быстро и как сильно они отвечают
 const DIFFS={
-  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха, склад и КБ, а вы придумываете машины и гоняетесь',cash:2,comp:0.7,race:0.9,bad:0.3,debt:80000,share:0.45,rvRate:0.5,rvMax:0.6,pwMin:0.85,helper:1,simple:1},
-  easy:{name:'Лёгкий',desc:'Больше денег, слабее конкуренты и соперники на трассе',cash:1.5,comp:0.8,race:0.93,bad:0.6,debt:25000,share:0.3,rvRate:0.8,rvMax:1.1,pwMin:0.8},
-  normal:{name:'Нормальный',desc:'Сбалансированная игра: конкуренты отвечают, если вы забираете их покупателей',cash:1,comp:1,race:1,bad:1,debt:15000,share:0.2,rvRate:1.2,rvMax:1.8,pwMin:0.7},
-  hard:{name:'Сложный',desc:'Меньше капитала, сильные и злые конкуренты, быстрые гонщики',cash:0.75,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:2.4,pwMin:0.65},
-  hist:{name:'Историк',desc:'Для тех, кто помнит оригинал: каждая ошибка стоит дорого',cash:0.6,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:2.8,pwMin:0.6}
+  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха, склад и КБ, а вы придумываете машины и гоняетесь',cash:2,comp:0.7,race:0.9,bad:0.3,debt:80000,share:0.45,rvRate:0.5,rvMax:0.6,pwMin:0.85,helper:1,simple:1,
+    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3},
+  easy:{name:'Лёгкая',desc:'Как раньше: больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.5,comp:0.8,race:0.93,bad:0.6,debt:25000,share:0.3,rvRate:0.8,rvMax:1.1,pwMin:0.8,
+    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25},
+  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1,comp:1,race:1,bad:1,debt:15000,share:0.2,rvRate:1.2,rvMax:1.8,pwMin:0.7,
+    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12},
+  hard:{name:'Магнат',desc:'Конкуренты агрессивнее, кредит дороже, кризисы и события сильнее',cash:0.75,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:2.4,pwMin:0.65,
+    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1},
+  hist:{name:'Историк',desc:'Для тех, кто помнит оригинал: каждая ошибка стоит дорого',cash:0.6,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:2.8,pwMin:0.6,
+    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08}
 };
 // Типичная машина соперников в каждом классе: с ней покупатель сравнивает вашу (год, прототип, детали)
 const RIVAL_CAR={

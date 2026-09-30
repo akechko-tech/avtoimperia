@@ -40,12 +40,14 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{})});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{})});
 }
+const HIST_WORLD=/^(Война!|Италия вступает в войну|США вступают в войну|Перемирие!|Послевоенный спад|Чёрный вторник)$/;
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
   const s=G;sagaCheck(s);
-  HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;
+  worldCheck(s);
+  HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country)||HIST_WORLD.test(h.title))return;s.seen['h'+i]=1;
     const rid=HIST_REEL[h.img];if(rid){reelUnlock(s,rid);pushEvent({...h,choices:(h.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника','reel:'+rid]])},true);}else pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
   checkShows(s);checkTenders(s);try{histReelCheck(s);}catch(e){console.warn('hist reel',e);}
@@ -118,10 +120,12 @@ function resolve(key){
   if(key==='saga'){const ev=s.pending[0];if(ev&&ev.saga)sagaAuto(s,ev.saga);else s.pending.shift();save();render();return;}
   if(key==='raise'){s.wagePol=s.wagePol==='low'?'market':s.wagePol==='market'?'good':s.wagePol;addLog(`Зарплата поднята: ${WAGE_POL[s.wagePol].name.toLowerCase()}. Забастовки не будет.`);}
   if(key==='wait')s.strikeNext=true;
-  if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');}
+  if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');const ev=s.pending[0];if(ev&&ev.world==='war')worldResolve(s,'w:war:mil');}
+  if(/^w:/.test(key))worldResolve(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
+  if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
   if(key==='restart'){s.pending=[];openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}

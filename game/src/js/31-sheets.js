@@ -10,7 +10,7 @@ function showEvent(){
   if(ev.cel&&!ev.celOn){ev.celOn=1;try{celebrate(ev.cel[0],ev.cel[1],ev.cel[2]);}catch(_){}}
   if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
   if(ev.duel){duelShow(ev);return;}
-  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
+  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск'),mean:ev.mean,reel:ev.reel});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
@@ -30,7 +30,7 @@ function studyBtn(ref,s){const c=studyList(s).find(o=>o.name===ref.name&&o.y===r
   return `<button class="btn sm block" style="margin-top:8px" data-act="rdStudy" data-k="${c.kind}" ${free<=0||s.cash<c.price?'disabled':''}>🔍 Купить и разобрать в КБ · ${money(c.price)}${free<=0?' — нет свободного места в КБ':''}</button>`;}
 function renderDesigner(){
   const s=G,d=draft,md={...d,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0},p=parts(md),mx=chassisMax(p.c,md),kind=designKind(d);
-  const ref=refPrice(md,s),dc=devCost(md,s),dm=devMonths(md),tc=toolingCost(md,s),st=carStats(md,0,s.y),net=ref*(1-DEALER_MARGIN);
+  const ref=refPrice(md,s),dc=devCost(md,s),dm=devMonths(md),tc=toolingCost(md,s),st=carStats(md,0,s.y),net=ref*(1-dMargin(s));
   md.price=Math.round(ref/10)*10;const dem=forecastDemand(md,s),pc=x=>money(partCost(x,s));
   // себестоимость — при том выпуске, который купят по этой цене: экономия масштаба
   md.vol=Math.max(3,dem);const uc=unitCost(md,s),hrs=hoursPerCar(md,s),ucAt=k=>unitCost({...md,vol:md.vol*k},s);
@@ -137,7 +137,7 @@ function openHelp(){
     <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
     <p><b>Производство.</b> План «авто» делает столько, сколько купят, и не больше, чем поместится на складе. Всё лишнее уходит перекупщикам за полцены. Мощность — цеха и смены; выработку поднимают станки, электрификация, взаимозаменяемые детали, конвейер и зарплата.</p>
     <p><b>Выставки.</b> Настоящие автосалоны эпохи: Париж (с 1898 года, первым был сад Тюильри), Берлин (1897), Лондон (1896), Нью-Йорк (1900), Турин (1900) и другие, а в 1900 году — Всемирная выставка с медалями. За месяц приходит приглашение: стенд стоит денег, зато приносит заказы, интерес покупателей и газет, а за границей — первых дилеров. Список ближайших — на вкладке «Рынок».</p>
-    <p><b>Дилеры.</b> Продают машины за ${Math.round(DEALER_MARGIN*100)}% цены. Где нет вашего дилера, там о вас не знают. На карточке модели видно, почему продали меньше, чем хотели купить: не хватило машин или дилеры не успели.</p>
+    <p><b>Дилеры.</b> Продают машины за ${Math.round(dMargin(G)*100)}% цены. Где нет вашего дилера, там о вас не знают. На карточке модели видно, почему продали меньше, чем хотели купить: не хватило машин или дилеры не успели.</p>
     <p><b>КБ.</b> Восемь уровней: чем больше бюро, тем больше проектов одновременно. Улучшает детали (★) и строит прототипы будущих деталей; с 3-го уровня открывает технологии завода раньше истории — это «первенства».</p>
     <p><b>Гонки.</b> Сезоны и чемпионаты своего времени. Команда до трёх машин: одну можно вести самому — в объёмной 3D-графике (на слабых телефонах можно включить простую). Характеристики машины считаются из деталей: вес, мощность, коробка, тормоза, шины. В гонке справа вверху видно ближайший поворот и скорость, на которой его можно пройти, слева внизу — сколько сцепления шин уже занято; «?» — как ехать. Гоночный отдел (шесть уровней) даёт заводской кузов, надёжность, мощность и быстрые пит-стопы.</p>
     <p><b>Цель.</b> Величайшая автоимперия эпохи: в 1930 году компанию сравнят с реальными по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
