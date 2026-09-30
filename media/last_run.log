@@ -1,0 +1,282 @@
+== job films_scan
+search automobile race 1905 -> 0
+search automobile race 1908 -> 0
+search car race 1910 film -> 0
+search motor race 1903 -> 0
+search Vanderbilt Cup race -> 1
+search Vanderbilt Cup 1905 -> 0
+search Gordon Bennett Cup automobile -> 0
+search Grand Prix automobile 1912 -> 0
+search Grand Prix de l'ACF -> 5
+search Targa Florio -> 1
+search Indianapolis 500 1911 -> 25
+search Indianapolis 500 1913 -> 0
+search Indianapolis speedway 1910s -> 0
+search Le Mans 1923 -> 19
+search Brooklands motor racing -> 0
+search Ormond Beach automobile race -> 0
+search automobile 1900 film -> 4
+search automobile 1896 film -> 2
+search Edison automobile film -> 3
+search Biograph automobile -> 0
+search Lumière automobile -> 25
+search early automobile film -> 8
+search horseless carriage film -> 0
+search motor car 1900s film -> 0
+search Ford assembly line -> 4
+search Ford factory 1914 -> 0
+search Ford Model T film -> 0
+search Highland Park Ford -> 0
+search River Rouge plant film -> 0
+search automobile factory 1920s -> 0
+search car factory assembly 1920s -> 0
+search Model T Ford 1915 film -> 0
+search Henry Ford film -> 12
+search Automobile show film -> 14
+search motor show 1920s film -> 0
+search Madison Square Garden automobile show -> 1
+search Paris 1900 street film -> 4
+search Paris 1910 street -> 23
+search New York street 1911 -> 3
+search Market Street 1906 -> 25
+search London street 1903 film -> 1
+search Berlin 1900 film -> 1
+search Torino film 1910 -> 0
+search Milano 1910 film -> 0
+search Rome 1910 film -> 1
+search traffic 1920s street film -> 2
+search taxi 1910s film -> 0
+search fire engine 1910s film -> 0
+search motor bus 1905 film -> 0
+search New York to Paris race 1908 -> 0
+search Glidden tour -> 1
+search hill climb automobile film -> 0
+search motorcycle race 1910s film -> 0
+search zeppelin film 1909 -> 0
+search Wright brothers flight film -> 4
+search Blériot flight film -> 0
+search World War I trucks film -> 2
+search World War I ambulance film -> 2
+search armistice 1918 film -> 3
+search Charleston dance 1920s film -> 0
+search Wall Street 1929 film -> 25
+search Paris 1920s film -> 1
+search steam locomotive 1900s film -> 0
+search railway train 1896 film -> 2
+search Barney Oldfield film -> 1
+search Mercedes race 1914 -> 0
+search Bugatti 1920s film -> 0
+search Fiat factory Lingotto -> 1
+search Renault factory film -> 0
+search Citroen 1920s film -> 0
+search Daimler film 1900s -> 0
+search Lanchester car film -> 0
+search Rolls-Royce 1910s film -> 0
+search Packard film 1920s -> 0
+search Oldsmobile film -> 1
+search Cadillac film 1910s -> 0
+search tractor 1910s film -> 0
+search road construction 1910s film -> 0
+search paving road film 1920s -> 0
+candidates 179 with info 179
+film 0 File:1904 Vanderbil Cup Auto Race LOC 00060758.webm 180.125 1904 Public domain
+no frames File:Shepard Calais 1906 FrenchGP.ogv
+no frames File:Aldo weilschott 1906 gp startline.ogv
+no frames File:Roubaix - Paris-Roubaix espoirs, 1er juin 2014, arrivée (B14C).ogv
+no frames File:Roubaix - Paris-Roubaix espoirs, 1er juin 2014, arrivée (B14A).ogv
+no frames File:Roubaix - Paris-Roubaix espoirs, 1er juin 2014, arrivée (B14B).ogv
+no frames File:1932-05-08 Targa Florio pitstop Maserati 8C 2800 Ruggeri.webm
+no frames File:2024 Indianapolis 500 - Sarah Stierch 02.webm
+no frames File:2008 Indy 500 video.ogv
+no frames File:NeiTech-Demo SBB RABDe 500.ogv
+no frames File:Cheetahs on the Edge (Director's Cut).ogv
+no frames File:500 Series Shinkansen Video.ogv
+no frames File:500 Door 01.ogv
+no frames File:2024 Indianapolis 500 - Sarah Stierch 05.webm
+no frames File:2024 Indianapolis 500 - Sarah Stierch 04.webm
+no frames File:2024 Indianapolis 500 - Sarah Stierch 11.webm
+no frames File:2022 Indianapolis 500 - Sarah Stierch 08.webm
+no frames File:Speedhub 500-14 Aufbau.ogv
+no frames File:2024 Indianapolis 500 - Sarah Stierch 08.webm
+no frames File:Launch of the R-500 against the Ukrainian Armed Forces.webm
+no frames File:2024 Indianapolis 500 - Sarah Stierch 01.webm
+no frames File:R-500 cruise missile.webm
+no frames File:Tranvia Milano-Desio arrivo Bloccato gr 500 a Desio Deposito.ogv
+no frames File:Alexander Rossi press conference at the 2016 Indianapolis 500.webm
+no frames File:ETR 500 Freccia Rossa.webm
+no frames File:Tranvia Milano-Desio incrocio Bloccati gr 500 a Cascina Calderara.ogv
+no frames File:Tranvia Milano-Desio partenza Bloccato gr 500 da Desio Deposito.ogv
+no frames File:EIDAN 500 - Buenos Aires Subway - B line.webm
+no frames File:Finnair ATR 72-500 taking off.webm
+no frames File:President Trump Delivers Remarks at the Daytona 500.webm
+no frames File:Tranvia Milano-Desio arrivo Bloccato gr 500 a Milano Parco Nord.ogv
+no frames File:President Donald Trump Delivers Remarks at the Daytona 500.webm
+no frames File:Voetbalwedstrijd duitsland - holland-30257.ogv
+no frames File:WP25 Anthem video.webm
+no frames File:Fokker restanten (01-3097, niet luchtvaart gerelateerd).webm
+no frames File:Kin Wikipedia 25 Anthem 90" 9x16 only SFX.webm
+no frames File:Kin Wikipedia 25 Anthem 15" 16x9 Caption.webm
+no frames File:Kin Wikipedia 25 ANTHEM 9x16 Caption.webm
+no frames File:WP25 Times Square billboard.webm
+no frames File:Kin Wikipedia 25 Anthem 15" 16x9.webm
+no frames File:Kin Wikipedia 25 15 9x16 Caption.webm
+no frames File:Kin Wikipedia 25 15 9x16 Clean.webm
+no frames File:Kin Wikipedia 25 Anthem 90" 9x16.webm
+no frames File:Kin Wikipedia 25 30" Humanity 9x16.webm
+no frames File:Kin Wikipedia 25 30" Humanity 16x9 Caption.webm
+no frames File:Kin Wikipedia 25 Anthem 30" AI 16x9.webm
+no frames File:Kin Wikipedia 25 30" Humanity 9x16 Caption.webm
+no frames File:Kin Wikipedia 25 Anthem 30" Humanity 16x9.webm
+no frames File:Kin Wikipedia 25 30" AI 9x16.webm
+no frames File:Kin Wikipedia 25 Anthem 30" AI 16x9 Caption.webm
+no frames File:Kin Wikipedia 25 30" AI 9x16 Caption.webm
+no frames File:Explosion of a Motor Car (1900).webm
+no frames File:Automobile parade.ogv
+no frames File:Panoramic view of the Place de l'Concord.ogv
+no frames File:Vague de froid sur Paris - AI48957.webm
+no frames File:Le Raid Paris–Monte Carlo en deux heures (1905).webm
+no frames File:The Adventure of the Hasty Elopement 1914 Octavius Amateur Detective Thomas Edison.webm
+no frames File:Accident d’automobile - Film 1905.webm
+no frames File:Russian Brick accident June 2012.webm
+no frames File:Las Vegas Boulevard 4 Car Accident No.2.webm
+no frames File:Postal Truck VS Ford Focus Motor Vehicle Accident - Pleasant Valley, New York.ogv
+no frames File:Jones Bouldevard and Coppper Crest Dr. Car Accident.webm
+no frames File:Ride On bus crash in Silver Spring, Maryland (20 August 2012).webm
+no frames File:2024-12-04 臺灣國道1號北向77.7公里處車禍事故 監視器畫面1（17750 國1北 77.530K）.webm
+no frames File:2024-12-04 臺灣國道1號北向77公里處車禍事故 監視器畫面2（17750 國1北 77.530K）.webm
+no frames File:2024-12-04 臺灣國道1號北向77.7公里處車禍事故 監視器畫面3（17640 國1南 76.453K）.webm
+no frames File:2024-12-04 臺灣國道1號北向77.7公里處車禍事故 監視器畫面2（17860 國1南 78.600K）.webm
+no frames File:2024-12-04 臺灣國道1號北向77公里處車禍事故 監視器畫面1（17640 國1南 76.453K）.webm
+no frames File:Chicago hit and run.webm
+no frames File:Automobilist maakt amok na kop-staartbotsing.webm
+no frames File:Auto na botsing ondersteboven op Energieweg.webm
+no frames File:Auto's op de kop in de sloot na ongeval Winssen.webm
+no frames File:Distracted woman driver crashes Turo rental car into mailbox in Snohomish County, Washington (August 2025).webm
+no frames File:Bestuurster rijdt tegen reclamebord op Wijchenseweg.webm
+no frames File:Één dode en één gewonde bij ongeval Nieuwe Ubbergseweg.webm
+no frames File:Gekantelde vrachtwagen op A50, 30 varkens gedood.webm
+no frames File:LAPD Cruiser Hits Civilian Car During Emergency Response.webm
+no frames File:FedEx truck gets hit.ogv
+no frames File:Auto over de kop op Oranjesingel Nijmegen.webm
+no frames File:Vijf auto's betrokken bij ernstig ongeval A73 bij Heumen.webm
+no frames File:Bardaskan County in Mehr News Agency 74.webm
+no frames File:1961 HORRIFIC DRIVER'S EDUCATION FILM MECHANIZED DEATH 43804.webm
+no frames File:Surreal Old Timey Film Of New York City In 1911.webm
+no frames File:A Trip down market street (1906).webm
+no frames File:Wet & Wild Main Street, Buffalo, New York - 20220926.webm
+no frames File:Melbourne trams and The Australian Hotel, circa 1955-1956.webm
+no frames File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm
+no frames File:Ford assembly line (1947).webm
+no frames File:Ford assembly line(1930).webm
+no frames File:Ford Model T Assembly Line(1919).webm
+no frames File:Model T assembling circa 1924.webm
+no frames File:How The West Was Won (1962) - Trailer.webm
+no frames File:Henry Ford clips.webm
+no frames File:The Village Blacksmith.webm
+no frames File:Between Showers (1914).webm
+no frames File:Between Showers (1914) Good Picture.webm
+no frames File:Detroit Today and Tomorrow - Detroit Clearing House and the Civic Center (1957).webm
+no frames File:The President- August 1968. MP899..webm
+no frames File:Autotentoonstelling in het rai gebouw-29098.ogv
+no frames File:Master Hands full movie.webm
+no frames File:(4k, 60 fps) San Francisco, a Trip down Market Street, April 14, 1906.webm
+no frames File:Seattle - c. 1930 street scenes, etc.ogv
+no frames File:United States. Department of Energy. National Nuclear Security Administration - Operation Doorstep and Operation Cue.webm
+no frames File:Chicago Photographed from Ray Knabenshue's Dirigible Air Ship (enhanced).webm
+no frames File:0603 Look at Pontiac for 1954 M02940 20 01 09 00 3mb.webm
+no frames File:Scene in the Swiss village at Paris Exposition.ogv
+no frames File:Paris Exhibition viewed from the Seine 2.ogv
+no frames File:Paris Exhibition viewed from the Seine 1.ogv
+no frames File:Adam Hochschild, Co-Founder, Mother Jones.webm
+no frames File:Tragic Muse-Auguste Rodin-MAHG 1896-0010-turntable-0001-0250.ogv
+no frames File:Faunesse à genoux-Auguste Rodin-MAHG 1961-0028-0001-0500.ogv
+no frames File:Faunesse à genoux-Auguste Rodin-MAHG 1961-0028-0001-0250.ogv
+no frames File:Reclining Figure- Arch Leg - Henry Moore-LH 610, Parc de l'Observatoire, Geneva-0001-0250.ogv
+no frames File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm
+no frames File:Titanic Disaster - Genuine Footage (1911-1912).webm
+no frames File:A Trip Down Market Street (High Res).webm
+no frames File:A Trip Down Market Street (1906).webm
+no frames File:San Francisco Earthquake aftermath, 1906.ogv
+no frames File:Exploded gas tanks us mint.ogv
+no frames File:Exploded gas tanks, U.S. Mint, Emporium and Spreckels Bld'g -.webm
+no frames File:A Trip Down Market Street Before the Fire 1906 San Francisco Pre Earthquake.webm
+no frames File:The Purpose of Copyright is to Build a Rich Public Domain.webm
+no frames File:Wikipedia - 25 years of humanity at its best.webm
+no frames File:When and how to contact OTRS.webm
+no frames File:When and how to contact OTRS (NO TITLES).webm
+no frames File:Early English Traffic, Turn of the Century London (1896-1903).webm
+no frames File:WP25Maxime.webm
+no frames File:Il ratto delle sabine (1910).webm
+no frames File:Glidden-Tour-1905.ogv
+no frames File:Aviation History - Wright Brothers part 3 (US Navy film).webm
+no frames File:First flights in aviation history.ogv
+no frames File:Bird's-eye view of San Francisco.ogv
+no frames File:(VIDEO) MARINA, UMBERTO GIORDANO'S LOST OPERA, MAKES WORLD STAGE PREMIERE IN FOGGIA.webm
+no frames File:Third Aviation Instruction Center (France, 1917-1918).webm
+no frames File:A Farewell to Arms (1932) by Frank Borzage, Trailer.webm
+no frames File:Armistice Day 1918 - No sound.webm
+no frames File:Paris manifeste sa joie le jour de l'Armistice - AI90875.webm
+no frames File:La journée de l'Armistice - AI90872.webm
+no frames File:Occupy Wall Street - Mic Check.webm
+no frames File:Wall Street Blues (1924).webm
+no frames File:Peoples Microphone Occupy Wall Street 2011 Shankbone.ogv
+no frames File:Sanitation Working Group - Occupy Wall Street Video.webm
+no frames File:Matt Taibbi on Bank of America - Occupy Wall Street Video.webm
+no frames File:How to explain Occupy Wall Street to a six-year-old.webm
+no frames File:Slavoj Zizek en Occupy Wall Street- Primera Parte.webm
+no frames File:Occupy Wall Street @ The NYC Gay Pride Parade 2012.webm
+no frames File:President Obama Speaks at the Wall Street Journal CEO Council Annual Meeting.webm
+no frames File:Cheri Honkala visits Occupy Wall Street.webm
+no frames File:President Reagan's Interview with the Wall Street Journal in the Oval Office on February 7, 1985.webm
+no frames File:Noam Chomsky's Thoughts on Occupy Wall Street.webm
+no frames File:Jeff Mangum at Occupy Wall Street.webm
+no frames File:Paul Krugman on Main Street, Wall Street and the Federal Reserve.webm
+no frames File:President Obama Speaks on Wall Street Reform.webm
+no frames File:Boots Riley Interview - Occupy Wall Street (OWS).webm
+no frames File:Senator Elizabeth Warren speaks to the Wall Street Journal's CEO Council.webm
+no frames File:Netroots Nation 2011- Mike Konczal on The Empire Strikes Back- The Fate of Wall Street Reform.webm
+no frames File:TOM MORELLO OCCUPY WALL ST. "THIS LAND IS YOUR LAND".webm
+no frames File:Naomi Klein- caso de Keystone XL demuestra cómo Wall Street está ocupando el gobierno de EEUU.webm
+no frames File:Presidential Candidate Harry Braun at -OccupyWallStreet 2-2.webm
+no frames File:Presidential Candidate Harry Braun at -OccupyWallStreet 1-2.webm
+no frames File:Aerial views of Downtown Manhattan, New York City, USA at night including Battery Park, Freedom Tower, Wall Street, The Oculus, West Side Highway and Hudson River.webm
+no frames File:What Would Jello Do- Part 11 Occupy Wall Street.webm
+no frames File:Steam Loco ΔΚ8.001 at Rack Railway's Festival, November 2016..webm
+no frames File:Kinonedelja No. 1 (1918).webm
+no frames File:Barney Oldfield's Race for a Life (1913).webm
+no frames File:A Touch of Magic, 1961 film.ogv
+scan done: new 1 total 1
+== job films_scan took 216 s
+== job samples
+inst piano 23 notes 690885 bytes
+inst honky 18 notes 432765 bytes
+inst bass 11 notes 221085 bytes
+inst tuba 12 notes 216765 bytes
+inst trumpet 12 notes 252765 bytes
+inst trombone 12 notes 240885 bytes
+inst clarinet 13 notes 286965 bytes
+inst violin 14 notes 365085 bytes
+inst strings 15 notes 420885 bytes
+inst accordion 13 notes 325845 bytes
+inst banjo 12 notes 216765 bytes
+inst cornet 11 notes 110925 bytes
+inst pizz 17 notes 204885 bytes
+inst glock 9 notes 162765 bytes
+inst organ 17 notes 340965 bytes
+drums 168885
+== job samples took 5 s
+== job tex
+tex leather -> brown_leather
+tex fabric -> poly_wool_herringbone
+tex fabric2 -> cotton_jersey
+tex rubber -> moon_track_01
+tex paint -> blue_metal_plate
+tex brass -> crepe_satin
+tex cliff -> tiger_rock
+tex scree -> rocky_trail_02
+tex rock_moss -> brown_mud_leaves_01
+tex tunnel -> castle_brick_01
+tex wood_var -> silver_oak_veneer_02
+tex factory -> castle_brick_02_red
+tex error glass_roof fabric_pattern_05 cannot identify image file <_io.BytesIO object at 0x7f0212f056c0>
+== job tex took 13 s
