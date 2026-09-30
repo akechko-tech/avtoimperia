@@ -148,7 +148,7 @@ function raceResults(rc,res,mode,info){
   s.cres[rc.key]={w:w.you?s.company:w.name,d:w.drv||'',me:best||-1,c:w.you?s.country:(w.tc||''),pv:w.priv?1:0};
   champRecord(s,rc,res.map(r=>({name:r.you?s.company:r.name,dnf:!!r.dnf,priv:r.priv})));
   dchRecord(s,rc,res.map(r=>{const me=r.you&&r.drvId==='me';return {n:me?meName(s):r.drv,id:me?meKey(s):(r.drvId||''),mq:r.you||r.pmy?s.company:r.name,dnf:!!r.dnf,mine:r.you?1:0};}));
-  s.raceMi=mi(s);drvAfterRace(s,rc,res);const chal=chalRace(s,rc,res);
+  s.raceMi=mi(s);drvAfterRace(s,rc,res);const chal=chalRace(s,rc,res);let inj=[];try{inj=injApply(s,rc,res);}catch(e){console.warn(e);}
   // Кубок Гордона Беннетта: трофей уходит стране победителя
   let cupTitle='';
   if(GBC_IDS.includes(rc.id)){if(best===1){cupTitle=`Кубок Гордона Беннетта ${rc.y}`;s.titles.push({y:rc.y,id:'gbc',name:cupTitle,w:0.5});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+5*rk,0,100);}
@@ -156,7 +156,7 @@ function raceResults(rc,res,mode,info){
   raceChamps(rc).forEach(id=>champFinish(s,id,rc.y));
   const dnfN=team.filter(r=>r.dnf).length;
   addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${won?`, призовые ${money(won)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
-  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal};
+  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj};
   openRaceResult();
   if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
@@ -188,6 +188,7 @@ function openRaceResult(){
     <p style="margin-top:10px">${L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` Призовые: <b class="good">${money(won)}</b>.`:''}</p>
     ${nPv?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ Пари с ${esc(L.chal.C.mq)} ${L.chal.res==='win'?'выиграно':'проиграно'}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}
+    ${(L.inj||[]).length?`<div class="label" style="margin-top:14px">Травмы</div>${L.inj.map(o=>`<p class="small ${o.mine?'bad':'muted'}" style="margin-top:4px">🏥 <b>${esc(o.nm)}</b> (${esc(o.car)}): ${esc(o.txt)} — ${o.retire?'уходит из гонок':'вернётся в '+miDate(o.until)}</p>`).join('')}`:''}
     ${champs}${dchMini(s,rc.y)}
     <button class="btn primary block" style="margin-top:16px" data-act="close">Дальше</button>`);
 }

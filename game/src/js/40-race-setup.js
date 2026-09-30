@@ -6,7 +6,7 @@ function raceCarsFor(s){return s.models.filter(m=>m.status==='prod');}
 function raceRank(md,rc){const st=carStats(md,2,rc.y);return st.vmax*(0.55+0.45*st.rel)/(1+st.acc/60);}
 function prepAllowed(p,s,rc,md){return p<2||((s.rdept||0)>=1&&!(md&&isTruck(md)));}
 function defaultEntry(s,rc,taken){
-  const cars=raceCarsFor(s).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc)),free=['me',...(s.drivers||[])].filter(d=>!taken.includes(d)),cfg=trackCfg(rc);
+  const cars=raceCarsFor(s).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc)),free=['me',...(s.drivers||[])].filter(d=>!taken.includes(d)&&!drvOut(s,d)),cfg=trackCfg(rc);
   // свободных своих пилотов нет — предложить лучшего свободного гонщика на одну гонку
   if(!free.length){const d=availDrivers(s).filter(x=>!taken.includes(x.id)).sort((a,b)=>b.sk-a.sk)[0];if(d)free.push(d.id);}
   return {drv:free[0]||null,car:cars[0]?cars[0].id:null,prep:(s.rdept||0)>=1&&!['rally','endurance'].includes(rc.t)?2:1,tyre:rc.km>600&&!cfg.pits?'hard':'soft',gear:['oval','sprint'].includes(rc.t)?1:rc.t==='hill'?-1:0};
@@ -29,7 +29,9 @@ function openRaceSetup(key){
 function renderRaceSetup(keepScroll){
   const s=G,rc=RACES.find(r=>r.key===RS.key),cfg=trackCfg(rc),cars=raceCarsFor(s),n=RS.entries.length,top=keepScroll?sb.scrollTop:0;
   RS.entries.forEach(e=>{if(!cars.some(m=>m.id===e.car))e.car=cars[0].id;if(!prepAllowed(e.prep,s,rc,cars.find(m=>m.id===e.car)))e.prep=1;});
-  const hasMe=RS.entries.some(e=>e.drv==='me');if(!hasMe&&RS.mode==='drive')RS.mode='manage';
+  // хозяин в больнице: пилотов команды не трогаем, а «Еду сам» — ведёте машину №1 вместо её пилота
+  RS.entries.forEach(e=>{if(e.drv&&drvOut(s,e.drv))e.drv=null;});
+  const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||(meSick&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
   const tot=setupTotal(rc,s),missing=RS.entries.findIndex(e=>!e.drv),champs=raceChamps(rc).map(id=>CHAMPS[id].name(rc.y));
   const gb=GBC_IDS.includes(rc.id);
   const entryHTML=(e,i)=>{
@@ -49,8 +51,8 @@ function renderRaceSetup(keepScroll){
       ${st.mech?'<p class="small muted" style="margin-top:6px">В машине едет механик: он чинит поломки и меняет колёса прямо на трассе.</p>':''}
       ${adviceHTML(rc,e,md,st,s,i)}
       <div class="label" style="margin-top:10px">Пилот</div><div class="chips">
-        ${!taken.includes('me')?chip('me','Вы за рулём',PIONEERS[s.pioneer].name):''}
-        ${own.map(x=>{const v=moodOf(s,x.id).v;return chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · по контракту · ${moodFace(v)} ${moodWord(v)}`);}).join('')}
+        ${!taken.includes('me')?(meOut(s)?`<button class="chip" disabled>Вы за рулём<small>${esc(injNote(s,'me'))}</small></button>`:chip('me','Вы за рулём',PIONEERS[s.pioneer].name)):''}
+        ${own.map(x=>{if(drvOut(s,x.id))return `<button class="chip" disabled>${esc(x.n)}<small>${esc(injNote(s,x.id))}</small></button>`;const v=moodOf(s,x.id).v;return chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · по контракту · ${moodFace(v)} ${moodWord(v)}`);}).join('')}
         ${d&&!own.includes(d)&&!RS.more?chip(d.id,d.n,`мастерство ${Math.round(d.sk*100)} · на гонку ${money(driverRaceFee(d,s))}`):''}
         ${RS.more?pool.map(x=>chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · на гонку ${money(driverRaceFee(x,s))}`)).join(''):''}
         ${pool.length?`<button class="chip" data-act="rMore">${RS.more?'Свернуть список':'Пригласить пилота на гонку ▾'}<small>${RS.more?'оставить выбранного':`свободных в ${rc.y}: ${pool.length}`}</small></button>`:''}
@@ -62,7 +64,7 @@ function renderRaceSetup(keepScroll){
       <div class="label" style="margin-top:10px">Передачи</div><div class="chips">${[[-1,'Короткие','разгон, повороты и горы'],[0,'Средние','на всё'],[1,'Длинные','прямые, овалы, спринт']].map(g=>`<button class="chip ${e.gear===g[0]?'on':''}" data-act="rset" data-i="${i}" data-k="gear" data-v="${g[0]}">${g[1]}<small>${g[2]}</small></button>`).join('')}</div>
       <p class="small muted" style="margin-top:8px">Экипаж: взнос ${money(c.fee)}${c.prep?` · подготовка ${money(c.prep)}`:''}${c.hire?` · пилот ${money(c.hire)}`:''}</p>
     </div>`;};
-  const modes=[['drive','Еду сам','вы за рулём, остальные — по приказу',!hasMe],['manage','Руковожу','приказы пилотам, ускорение ×4',false],['sim','Быстрый итог','результат сразу',false]];
+  const modes=[['drive','Еду сам',meSick?'хозяин в больнице — вы ведёте машину №1':'вы за рулём, остальные — по приказу',!hasMe],['manage','Руковожу','приказы пилотам, ускорение ×4',false],['sim','Быстрый итог','результат сразу',false]];
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
     <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · ${terrName(cfg)}${cfg.pits?' · боксы':''}${cfg.night?' · ночь':''} · приз ${money(racePrize(rc))}</p>
     ${champs.length||gb?`<div class="tags">${champs.map(c=>`<span class="pill warn">${esc(c)}</span>`).join('')}${gb?'<span class="pill good">Кубок наций: до 3 машин от страны</span>':''}</div>`:''}

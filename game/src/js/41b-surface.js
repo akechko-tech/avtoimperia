@@ -78,24 +78,46 @@ function crashKindOf(o){const t=o&&(o.kind||'');
 // Итог удара (зовёт wallHit): imp — скорость в препятствие, м/с; за шаг физики остаётся самый сильный удар
 function crashNote(c,imp,kind,x,z){if(!c.crash||imp>c.crash.imp)c.crash={imp,kind:kind||'wall',x:x===undefined?c.x:x,z:z===undefined?c.z:z};}
 const CRASH_TXT={curb:'удар о тумбу',tree:'удар о дерево',rock:'удар о скалу',house:'удар о дом',wall:'удар о стену',stand:'удар о трибуну',train:'столкновение с поездом',pole:'удар о столб',cart:'удар о телегу',
-  soft:'машина увязла',fence:'снесён забор',crowd:'зрители разбежались',slope:'удар о склон'};
+  soft:'машина увязла',fence:'снесён забор',crowd:'зрители разбежались',slope:'удар о склон',fall:'падение с обрыва'};
+// Сила удара решает всё: касание — лишь толчок; удар — заминка; сильный удар — ремонт, машина «хромает»;
+// тяжёлая авария — чаще сход, и гонщик с механиком могут пострадать (больница на месяцы, иногда — конец карьеры).
+// imp — скорость в препятствие поперёк (м/с); пороги сдвинуты для мягких (забор, кусты) и средних (столб, телега) препятствий
+const CRASH_TIER=['касание','удар','сильный удар','тяжёлая авария'];
+function crashTier(imp,kind){if(kind==='train')return imp>10?4:3;if(kind==='fall')return imp>11?4:imp>7?3:2;
+  const soft=kind==='fence'||kind==='crowd'||kind==='soft'||kind==='slope',mid=kind==='pole'||kind==='cart'||kind==='curb',L0=soft?9:kind==='curb'?8:mid?6:4.5;
+  if(imp<L0)return 0;if(soft)return imp<L0+6?1:2;const x=imp-L0;return x<3?1:x<7?2:x<13?3:4;}
 function crashResolve(c){const K=c.crash;c.crash=null;if(!K||c.dnf||c.fin!==null)return;
-  const imp=K.imp,kind=K.kind,soft=kind==='fence'||kind==='crowd'||kind==='soft'||kind==='slope',mid=kind==='pole'||kind==='cart'||kind==='curb',kids=DIF().simple,me=c===R.follow,lim=soft?9:kind==='curb'?8:mid?6:4.5;
-  // соперники и ваши наёмные пилоты — профессионалы: ошибка стоит им меньше (сходы в основном от поломок, как в истории)
-  const ai=!c.player,aiK=ai?0.5:1;
-  if(imp<lim){if(me&&imp>3)R.shake=Math.max(R.shake,0.25);return;}
-  // сильный удар: машина встаёт, механик чинит (без механика — дольше); очень сильный — сход
-  const what=CRASH_TXT[kind]||'удар';c.hit=0;c.crashN=(c.crashN||0)+1;if(window.CRASH_LOG)CRASH_LOG.push([c.label||c.name,kind,+imp.toFixed(1),+c.lat.toFixed(1),c.idx,c.player?1:0,c.surf]);
-  c.vx*=soft?0.3:0.08;c.vy*=0.2;c.r*=0.3;c.dmg=Math.min(100,c.dmg+(imp-lim)*(soft?0.3:mid?0.8:1.2));
-  const pDnf=(kids?0:kind==='train'?clamp(0.35+imp/25,0,0.9):soft||kind==='curb'?0:clamp((imp-14)/12,0,0.85)+(c.dmg>85?0.3:0))*(ai?0.25:1);
-  if(Math.random()<pDnf){c.dnf=kind==='train'?'поезд':'авария';c.thr=0;if(c.you)rMsgT(`${c.player?'':(c.drvName||c.label)+': '}СХОД — ${what}`,3);}
-  else{const t=(kind==='train'?30:soft?3+(imp-lim)*0.5:6+(imp-lim)*1.6)*(c.st&&c.st.mech?0.7:1)*(kids?0.5:1)*aiK;c.stopT=Math.max(c.stopT||0,t);c.stopWhy=what;
-    if(!soft&&imp>9&&Math.random()<0.45)c.limp=true;
-    if(c.you)rMsgT(`${c.player?'':(c.drvName||c.label)+': '}${what.toUpperCase()}! ${soft?'Выбираемся':c.st&&c.st.mech?'Механик чинит':'Ремонт'} — ~${Math.round(t)} с`,2.6);}
-  if(me){R.shake=Math.min(1.2,0.5+imp*0.05);try{auSfx('crash',Math.min(1,imp/12));if(kind==='tree'||kind==='fence'||kind==='cart'||kind==='soft')auSfx('wood',kind==='soft'?0.5:1);}catch(_){}
-    try{if(c.player&&navigator.vibrate)navigator.vibrate(Math.min(400,imp*25));}catch(_){}}
+  const imp=K.imp,kind=K.kind,kids=DIF().simple,me=c===R.follow,ai=!c.player,aiK=ai?0.5:1,tier=crashTier(imp,kind);
+  if(!tier){if(me&&imp>3)R.shake=Math.max(R.shake,0.25);return;}
+  const what=CRASH_TXT[kind]||'удар',who=c.player?'':(c.drvName||c.label)+': ',mech=c.st&&c.st.mech;c.hit=0;c.crashN=(c.crashN||0)+1;
+  if(window.CRASH_LOG)CRASH_LOG.push([c.label||c.name,kind,+imp.toFixed(1),+c.lat.toFixed(1),c.idx,c.player?1:0,c.surf,tier]);
+  if(tier===1){// касание: скорость теряется в самом ударе, немного помяли крыло — едем дальше
+    c.vx*=0.8;c.dmg=Math.min(100,c.dmg+1+imp*0.2);if(c.you&&c.player)rMsgT('ЗАДЕЛИ — '+what,1.1);}
+  else{const soft=kind==='fence'||kind==='crowd'||kind==='soft'||kind==='slope';c.vx*=soft?0.3:0.08;c.vy*=0.2;c.r*=0.3;
+    c.dmg=Math.min(100,c.dmg+[0,0,6,16,34][tier]+imp*(tier>=3?0.8:0.3));
+    const pDnf=kids?0:(kind==='train'?clamp(0.35+imp/25,0,0.9):tier===4?clamp(0.5+(imp-18)/25,0.5,0.92):tier===3?clamp(0.1+(imp-11)/40,0.1,0.3):0)*(ai?0.3:1)+(c.dmg>90&&!kids?0.25:0);
+    if(tier>=3&&!kids)crashInjury(c,tier,imp,kind);
+    if(c.inj&&c.inj.sev>=2&&!c.dnf){c.dnf='гонщик ранен';c.thr=0;if(c.you)rMsgT(`${who}${c.inj.txt.toUpperCase()} — СХОД`,3.4);}
+    else if(Math.random()<pDnf){c.dnf=kind==='train'?'поезд':kind==='fall'?'падение с обрыва':'авария';c.thr=0;if(c.you)rMsgT(`${who}СХОД — ${what}`,3);}
+    else if(kind==='fall'){// сорвались с обрыва: машину поднимают на дорогу верёвками и лошадьми
+      const t=(30+Math.min(20,c.fallDrop||8)*2)*(mech?0.8:1)*(kids?0.5:1)*aiK;c.inWater=2;c.rescueWhy='fall';c.rescueT=t;c.rescueIdx=c.offIdx>=0?c.offIdx:c.idx;c.vx=0;c.vy=0;c.r=0;c.limp=true;
+      if(c.you)rMsgT(`${who}СОРВАЛИСЬ С ОБРЫВА! Машину поднимают на дорогу — ~${Math.round(t)} с`+(c.inj&&c.inj.sev===1?' · '+c.inj.txt:''),3.2);}
+    else{const t=(tier===2?(soft?2+imp*0.15:3+(imp-7)*0.6):tier===3?10+(imp-11)*1.4:26+(imp-17)*0.9)*(kind==='train'?1.5:1)*(mech?0.7:1)*(kids?0.5:1)*aiK;
+      c.stopT=Math.max(c.stopT||0,t);c.stopWhy=what;if(tier===3&&!soft&&Math.random()<0.5||tier===4)c.limp=true;
+      if(c.you)rMsgT(`${who}${(tier===2?what:tier===3?'сильный '+what:'тяжёлая авария').toUpperCase()}! ${soft?'Выбираемся':mech?'Механик чинит':'Ремонт'} — ~${Math.round(t)} с`+(c.inj&&c.inj.sev===1?' · '+c.inj.txt:''),2.8);}}
+  if(me){R.shake=Math.min(1.2,0.3+imp*0.05*(tier>1?1:0.5));try{auSfx('crash',Math.min(1,imp/12)*(tier>1?1:0.5));if(kind==='tree'||kind==='fence'||kind==='cart'||kind==='soft')auSfx('wood',kind==='soft'?0.5:tier>1?1:0.5);}catch(_){}
+    try{if(c.player&&navigator.vibrate)navigator.vibrate(Math.min(400,imp*(tier>1?25:8)));}catch(_){}}
   else try{ambCrash(c,imp,kind);}catch(_){}
-  if(typeof R3!=='undefined'&&R3.on)try{crashFx(c,K);}catch(_){}}
+  if(typeof R3!=='undefined'&&R3.on&&tier>1)try{crashFx(c,K);}catch(_){}}
+// Травмы: в тяжёлой аварии гонщик (и механик, если едет рядом) может пострадать.
+// sev 1 — ушибы (едет дальше), 2 — больница на 1–3 месяца, 3 — тяжёлая травма: полгода и больше, иногда — уход из гонок
+const INJ_TXT={1:['ушибы','разбито колено','вывих плеча'],2:['перелом руки','сломаны рёбра','сотрясение'],3:['тяжёлые переломы','травма спины','сильные ожоги']};
+function crashInjury(c,tier,imp,kind){const base=tier===4?clamp(0.3+(imp-17)/30,0.3,0.75):clamp(0.06+(imp-11)/60,0.06,0.18),k=(kind==='fall'||kind==='train'?1.4:1)*(c.player?1:0.8);
+  const roll=who=>{if(Math.random()>=base*k)return null;const r=Math.random(),sev=tier===4?(r<0.35?1:r<0.8?2:3):(r<0.7?1:2);
+    const months=sev===1?0:sev===2?1+Math.floor(Math.random()*3):5+Math.floor(Math.random()*6),retire=sev===3&&Math.random()<(who==='drv'?0.35:0.3);
+    return {sev,months,retire,txt:pick(INJ_TXT[sev]),kind};};
+  const d=roll('drv');if(d&&(!c.inj||d.sev>c.inj.sev))c.inj=d;
+  if(c.st&&c.st.mech){const m=roll('mech');if(m&&(!c.mInj||m.sev>c.mInj.sev)){c.mInj=m;if(c.you&&m.sev>=2)rMsgT(`${c.player?'':(c.drvName||c.label)+': '}механик ранен — ${m.txt}`,2.6);}}}
 /* ---------- вода: машина глохнет, её вытаскивают на дорогу ---------- */
 function waterCheck(c,trk,dt){if(c.dnf||c.fin!==null||c.inWater>=2)return;
   if(Math.abs(c.lat)<trk.W/2+0.8){c.inWater=0;return;}
@@ -109,8 +131,16 @@ function waterCheck(c,trk,dt){if(c.dnf||c.fin!==null||c.inWater>=2)return;
     if(c.you)rMsgT(`${c.player?'':(c.drvName||c.label)+': '}В ВОДЕ! Мотор залило — машину вытаскивают (~${Math.round(t)} с)`,3.2);
     c.rescueT=t;c.rescueIdx=c.offIdx>=0?c.offIdx:c.idx;}}
 function rescueTick(c,dt){if(c.inWater!==2)return false;c.thr=0;c.brk=1;c.vx=0;c.vy=0;c.rescueT-=dt;
-  if(c.rescueT<=0){c.inWater=0;respawnAt(c,c.rescueIdx,c.lap);c.flood=14;c.offIdx=-1;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'МАШИНА НА ДОРОГЕ — мотор ещё кашляет',2);}
+  if(c.rescueT<=0){const fall=c.rescueWhy==='fall';c.inWater=0;c.rescueWhy='';c.fallen=0;respawnAt(c,c.rescueIdx,c.lap);if(!fall)c.flood=14;c.offIdx=-1;
+    if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+(fall?'МАШИНА НА ДОРОГЕ — помята, но едет':'МАШИНА НА ДОРОГЕ — мотор ещё кашляет'),2);}
   return true;}
+// Обрыв и ущелье: земля за обочиной круто уходит вниз от дороги — машина срывается.
+// В 3D — по рельефу (перепад от дороги и крутизна склона); без рельефа — у обрыва серпантина (со стороны тумб)
+function dropUnder(c,trk,lat){const W=trk.W;if(Math.abs(lat)<W/2+1.5)return 0;
+  if(typeof R3!=='undefined'&&R3.on&&R3.F&&R3.T===trk&&typeof fH==='function'){const h=fH(c.x,c.z),dr=trk.pts[c.idx][1]-h;if(dr<2.4)return 0;
+    const e=1.5,gx=(fH(c.x+e,c.z)-fH(c.x-e,c.z))/(2*e),gz=(fH(c.x,c.z+e)-fH(c.x,c.z-e))/(2*e),sl=Math.hypot(gx,gz);return sl>0.6||dr>7?dr:0;}
+  const sg=trk.segT&&trk.segT[c.idx];if(sg===RSEG.serp){const bend=trk.K[c.idx]>0?1:-1;if(Math.sign(lat)===-bend&&Math.abs(lat)>W/2+3.5)return 8;}
+  return 0;}
 /* ---------- поезд и шлагбаум ---------- */
 // Состав: паровоз, тендер и четыре вагона — около 56 м
 function trainSpan(rl){const st=rl.st;if(!st||st.state!==1)return null;const len=56;return {a:Math.min(st.s,st.s-st.dir*len),b:Math.max(st.s,st.s-st.dir*len)};}

@@ -75,6 +75,7 @@ function drvSkipped(s,rc){if(!(s.drivers||[]).length||rc.y<s.y-1||!raceEligible(
   (s.drivers||[]).forEach(id=>moodAdd(s,id,rc.major?-3:-1,`Команда пропустила гонку «${rc.name}»`));}
 function drvMonth(s){
   (s.drivers||[]).forEach(id=>{const o=moodOf(s,id);o.v+=(60-o.v)*0.05;if(s.cash<0)moodAdd(s,id,-2,'Задерживают жалованье');});
+  injMonth(s);
   if(s.over)return;poachCheck(s);chalCheck(s);salesChalCheck(s);
   if(s.m===0)yearAwards(s,s.y-1);
 }
@@ -216,3 +217,34 @@ function yearAwards(s,y){
     img:dd&&IMG[DRIVER_WIKI[dd.id]]?DRIVER_WIKI[dd.id]:'',imgCap:dd?dd.n:'',choices:yr?[['Читать дальше','ok'],['▶ Кинохроника года','reel:'+yr]]:undefined,
     text:lines.map(l=>'— '+l).join('\n')+'\n'+(mine.length?'Титулы — бесплатная реклама: целый год покупатели будут помнить, чья марка лучшая, и охотнее выбирать ваши машины.':'Ваша марка пока без титулов. Победы в гонках, новинки раньше всех и продажи в своём классе — и газеты напишут о вас.')},true);
 }
+
+/* ---------- травмы (0.21): после тяжёлой аварии гонщик и механик лечатся месяцами; тяжёлая травма иногда заканчивает карьеру ---------- */
+function miDate(t){return MONTHS_N[((t%12)+12)%12]+' '+(1895+Math.floor(t/12));}
+function injOf(s,id){const o=s&&s.inj&&s.inj[id];return o&&o.until>mi(s)?o:null;}
+function drvRetired(s,id){return !!(s&&s.retired&&s.retired[id]);}
+function drvOut(s,id){return !!injOf(s,id)||drvRetired(s,id);}
+function meOut(s){return drvOut(s,'me');}
+// соперник или свободный гонщик лечится или ушёл
+function aiOut(s,id){return !!(s&&((s.injAI&&(s.injAI[id]||0)>mi(s))||drvRetired(s,id)));}
+function injNote(s,id){const o=injOf(s,id);if(o)return `🏥 ${o.txt} · вернётся в ${miDate(o.until)}`;return drvRetired(s,id)?'ушёл из гонок после травмы':'';}
+function drvNameOf(s,id){return id==='me'?meName(s):id==='mech'?'Механик команды':(DRIVERS.find(d=>d.id===id)||{n:id}).n;}
+// итоги гонки → больница и уход из гонок (свои — в журнале и газете; соперники — пропустят гонки)
+function injApply(s,rc,res){s.inj=s.inj||{};s.injAI=s.injAI||{};s.retired=s.retired||{};const out=[],now=mi(s);
+  res.forEach(r=>{const I=r.inj,M=r.mInj;
+    if(I&&I.sev>=2&&r.drvId){const id=r.drvId,until=now+Math.max(1,I.months);
+      if(r.you)s.inj[id]={until,sev:I.sev,txt:I.txt,race:rc.name};else s.injAI[id]=Math.max(s.injAI[id]||0,until);
+      if(I.retire){s.retired[id]=rc.y;if(r.you&&id!=='me')s.drivers=(s.drivers||[]).filter(x=>x!==id);}
+      out.push({id,nm:r.you&&id==='me'?meName(s):r.drv||'пилот',mine:!!r.you,sev:I.sev,txt:I.txt,until,retire:!!I.retire,car:r.you?r.label:r.name});}
+    if(M&&M.sev>=2&&r.you){const until=now+Math.max(1,M.months);s.inj.mech={until,sev:M.sev,txt:M.txt,race:rc.name};
+      out.push({id:'mech',nm:'механик команды',mine:true,sev:M.sev,txt:M.txt,until,retire:false,car:r.label});}});
+  out.filter(o=>o.mine).forEach(o=>{const d=o.id!=='me'&&o.id!=='mech'&&DRIVERS.find(x=>x.id===o.id),img=d&&IMG[DRIVER_WIKI[d.id]]?DRIVER_WIKI[d.id]:'';
+    const who=o.id==='me'?'Вы':o.nm,back=`вернётся в ${miDate(o.until)}`;
+    const text=o.retire?`${o.txt}. Врачи запретили гонки — ${o.id==='me'?'за руль больше не сесть; гоняют пилоты по контракту':'он уходит из команды'}.`
+      :o.id==='me'?`${o.txt}. До ${miDate(o.until)} за руль нельзя — на гонки едут пилоты по контракту или приглашённые.`
+      :o.id==='mech'?`${o.txt}. Пока он в больнице, машины едут без механика — поломки чинить дольше.`:`${o.txt}. Пилот пропустит гонки и ${back}.`;
+    pushEvent({kicker:'Команда',own:1,title:o.retire?`${who} ${o.id==='me'?'уходите':'уходит'} из гонок`:`${who} в больнице`,deck:`Авария в гонке «${rc.name}»`,text,img,imgCap:img?o.nm:''});});
+  out.filter(o=>!o.mine).forEach(o=>addLog(`${o.nm} (${o.car}) после аварии в «${rc.name}»: ${o.txt}${o.retire?' — уходит из гонок':', пропустит гонки до '+miDate(o.until)}.`,'hist'));
+  return out;}
+// выписка из больницы
+function injMonth(s){if(!s.inj)return;const now=mi(s);Object.keys(s.inj).forEach(id=>{const o=s.inj[id];if(o&&o.until<=now){delete s.inj[id];
+  if(!drvRetired(s,id)&&(id==='me'||id==='mech'||(s.drivers||[]).includes(id)))addLog(`${id==='me'?'Вы вернулись':drvNameOf(s,id)+' вернулся'} из больницы — ${id==='me'?'можно снова садиться за руль':'снова в строю'}.`,'good');}});}
