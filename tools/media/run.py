@@ -18,7 +18,7 @@ LOG = []
 def log(*a):
     s = ' '.join(str(x) for x in a); print(s, flush=True); LOG.append(s)
 
-def get(url, tries=4, timeout=90):
+def get(url, tries=5, timeout=90):
     for k in range(tries):
         try:
             req = urllib.request.Request(url, headers={'User-Agent': UA})
@@ -26,6 +26,7 @@ def get(url, tries=4, timeout=90):
                 return r.read()
         except urllib.error.HTTPError as e:
             if e.code in (404, 403) or k == tries - 1: raise
+            if e.code == 429: time.sleep(40 * (k + 1)); continue
         except Exception:
             if k == tries - 1: raise
         time.sleep(2 ** k * 1.5)
@@ -89,15 +90,25 @@ def year_guess(v, title=''):
     return min(old) if old else (min(dto) if dto else None)
 
 def download(url, path, limit=220e6):
-    req = urllib.request.Request(url, headers={'User-Agent': UA})
-    n = 0
-    with urllib.request.urlopen(req, timeout=120) as r, open(path, 'wb') as f:
-        while True:
-            b = r.read(1 << 20)
-            if not b: break
-            n += len(b); f.write(b)
-            if n > limit: raise RuntimeError('too big')
-    return n
+    # Викисклад ограничивает частые скачивания (429): ждём и пробуем снова; между файлами — пауза
+    for k in range(5):
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': UA})
+            n = 0
+            with urllib.request.urlopen(req, timeout=180) as r, open(path, 'wb') as f:
+                while True:
+                    b = r.read(1 << 20)
+                    if not b: break
+                    n += len(b); f.write(b)
+                    if n > limit: raise RuntimeError('too big')
+            time.sleep(3)
+            return n
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or k == 4: raise
+            wait = 45 * (k + 1)
+            try: wait = max(wait, int(e.headers.get('Retry-After') or 0))
+            except Exception: pass
+            log('429, waiting', wait); time.sleep(wait)
 
 def frame_at(src, t, out, w=256):
     sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t, '-i', src, '-frames:v', '1', '-vf', 'scale=%d:-2' % w, '-y', out], check=True)
@@ -360,6 +371,8 @@ def tex():
 # ---------------------------------------------------------------- голос диктора (Silero TTS v4_ru; некоммерческая лицензия CC BY-NC-SA)
 def voice():
     import torch, numpy as np, wave
+    sys.path.insert(0, TOOLS)
+    from ru_norm import norm
     L = json.load(open(os.path.join(TOOLS, 'voice_lines.json'), encoding='utf-8'))
     D = os.path.join(MEDIA, 'voice'); os.makedirs(D, exist_ok=True)
     idx_path = os.path.join(D, 'index.json')
@@ -368,7 +381,7 @@ def voice():
     model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language='ru', speaker='v4_ru', trust_repo=True)
     SR = 48000; tmp = os.path.join(D, '_t.wav'); n = 0; t0 = time.time()
     for e in L:
-        h, text, spk = e['h'], e['s'], e.get('v', 'aidar')
+        h, text, spk = e['h'], norm(e['s']), e.get('v', 'aidar')
         out = os.path.join(D, h + '.mp3')
         if h in idx and os.path.exists(out): continue
         try:
