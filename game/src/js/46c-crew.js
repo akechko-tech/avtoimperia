@@ -3,10 +3,25 @@
 // усы у каждого второго (эпоха!), шея и воротник, широкие плечи и грудь, руки из плеча и предплечья с локтем, перчатки-краги.
 // Кожаный шлем с наушниками и швами или кепи (ранние гонщики носили его козырьком назад), очки-консервы с латунными ободками,
 // пыльник с поясом и пуговицами, шарф. Механик — в кепи и комбинезоне, одна рука на борту, другая держится за поручень.
-function crewLook(S,mech){const r=mulberry32(hashStr('crew|'+(S.num|0)+'|'+(S.mq||'')+(mech?'m':'d')+S.y));
+function crewLook(S,mech){const r=mulberry32(hashStr('crew|'+(S.num|0)+'|'+(S.mq||'')+(mech?'m':'d')+S.y+(S.drv||'')));
   const skins=['#d4a47c','#c8966e','#b98460','#dcae88','#a87452'],hairs=['#2a1f18','#3b2a1e','#5a4028','#1c1714','#6b5a48','#8a8074'];
-  return {skin:skins[Math.floor(r()*skins.length)],hair:hairs[Math.floor(r()*hairs.length)],stache:r()<(S.y<1915?0.6:0.35),beard:S.y<1906&&r()<0.18,
-    capBack:!mech&&S.y<1910&&r()<0.5,goggleUp:mech||r()<0.25,scarf:['#ece6d4','#b8322a','#e8e2cc','#2e4a78','#d9c9a0'][Math.floor(r()*5)]};}
+  const L={skin:skins[Math.floor(r()*skins.length)],hair:hairs[Math.floor(r()*hairs.length)],stache:r()<(S.y<1915?0.6:0.35),beard:S.y<1906&&r()<0.18,
+    capBack:!mech&&S.y<1910&&r()<0.5,goggleUp:mech||r()<0.25,scarf:['#ece6d4','#b8322a','#e8e2cc','#2e4a78','#d9c9a0'][Math.floor(r()*5)]};
+  // 0.21: лицо пилота — с его исторического фото (усы, борода, брови — уже на снимке); очки подняты, чтобы лицо было видно
+  const F=!mech&&S.drv&&typeof faceOf==='function'?faceOf(S.drv):null;if(F){L.face=F;L.stache=false;L.beard=false;L.goggleUp=true;L.hair=F.hair||L.hair;L.skin=F.skin||'#d4a882';}
+  return L;}
+// Лицо с фото — мозаикой по передней части головы: каждый пиксель снимка — маленький четырёхугольник цвета кожи нужной яркости
+function mFacePhoto(M,cx,cy,cz,L,s){const F=L.face,W=F.w,H=F.h,px=F.px,XW=0.064,h0=0.012,h1=0.206,sk=hex2rgb(L.skin),dk=[34,26,22],Mt=MATS.skin;
+  const row=h=>{let a=HEAD_ROWS[0],b=HEAD_ROWS[HEAD_ROWS.length-1];for(let i=0;i<HEAD_ROWS.length-1;i++)if(h>=HEAD_ROWS[i][0]&&h<=HEAD_ROWS[i+1][0]){a=HEAD_ROWS[i];b=HEAD_ROWS[i+1];break;}
+    const k=(h-a[0])/Math.max(1e-6,b[0]-a[0]);return [a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k,a[3]+(b[3]-a[3])*k];};
+  const V=[],NV=[],IN=[];for(let j=0;j<=H;j++){const h=h1-(h1-h0)*j/H,[rx,rz,dz]=row(h),r1=[],n1=[],i1=[];
+    for(let i=0;i<=W;i++){const x=(0.5-i/W)*2*XW,q=x/rx,inn=Math.abs(q)<0.93,zz=dz+rz*0.96*Math.sqrt(Math.max(0,1-q*q))+0.0016;
+      r1.push([cx+x*s,cy+h*s,cz+zz*s]);const nx=x/(rx*rx),nz=(zz-dz)/(rz*rz*0.92),l=Math.hypot(nx,nz)||1;n1.push([nx/l,0.08,nz/l]);i1.push(inn);}V.push(r1);NV.push(n1);IN.push(i1);}
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++){if(!(IN[j][i]&&IN[j][i+1]&&IN[j+1][i]&&IN[j+1][i+1]))continue;
+    // яркость относительно щёк: средний тон снимка = цвет кожи, тени — темнее (усы, брови, глаза — к тёмным волосам)
+    const rel=px[j*W+i]/Math.max(20,F.mean||128),k=clamp(0.12+0.88*rel,0.1,1.35),dd=clamp((0.5-rel)/0.35,0,1),c=[0,1,2].map(q=>Math.round(clamp(sk[q]*k*(1-dd)+dk[q]*dd,0,255)));
+    let p=[V[j][i],V[j][i+1],V[j+1][i+1],V[j+1][i]],vn=[NV[j][i],NV[j][i+1],NV[j+1][i+1],NV[j+1][i]],n=newell(p);if(n[2]<0){p=p.reverse();vn=vn.reverse();n=newell(p);}
+    M.F.push({p,n,vn,col:c,mat:Mt,two:false,deco:null,w:MTAG.w,l:MTAG.l});}}
 // Голова: ряды-эллипсы снизу (подбородок) вверх (макушка); лицо смотрит вперёд (+z)
 const HEAD_ROWS=[[0,0.022,0.02,0.07],[0.018,0.046,0.045,0.056],[0.045,0.063,0.07,0.034],[0.08,0.071,0.086,0.016],[0.115,0.076,0.095,0.006],[0.15,0.078,0.099,0],[0.18,0.076,0.097,-0.004],[0.205,0.066,0.085,-0.008],[0.222,0.046,0.06,-0.011],[0.232,0.012,0.016,-0.012]];
 function mHead(M,cx,cy,cz,L,hi,scale){const sg=hi?16:7,s=scale||1,rows=hi?HEAD_ROWS:HEAD_ROWS.filter((q,i)=>i%2===0||i===HEAD_ROWS.length-1);
@@ -15,6 +30,11 @@ function mHead(M,cx,cy,cz,L,hi,scale){const sg=hi?16:7,s=scale||1,rows=hi?HEAD_R
       const back=sn<0?1.05:0.96;row.push([cx+c*rx*s,cy+h*s,cz+(dz+sn*rz*back)*s]);}return row;});
   mGrid(M,G,L.skin,'skin',{wrap:true,ref:(c,i)=>[cx,cy+(rows[i][0]+rows[i+1][0])/2*s,cz+rows[i][3]*s]});
   if(!hi)return;
+  if(L.face&&L.face.px){mFacePhoto(M,cx,cy,cz,L,s);// нос и уши остаются объёмными; брови, глаза, рот, усы — со снимка
+    const P=(x,y,z)=>[cx+x*s,cy+y*s,cz+z*s];
+    [-1,1].forEach(sd=>mLathe(M,P(sd*0.077,0.125,0.0),'x',[[0,-sd*0.004],[0.022,0],[0.018,sd*0.008],[0,sd*0.009]],6,shade(L.skin,-0.06),'skin',{ref:()=>P(sd*0.06,0.125,0)}));
+    const hr=HEAD_ROWS.filter(q=>q[0]>=0.09),HG=hr.map(([h,rx,rz,dz])=>{const row=[];for(let k=0;k<=8;k++){const a=Math.PI+k/8*Math.PI,c=Math.cos(a),sn=Math.sin(a);row.push(P(c*rx*1.05,h+0.003,dz+sn*rz*1.1));}return row;});
+    mGrid(M,HG,L.hair,'cloth',{ref:()=>P(0,0.14,0)});return;}
   const fz=cz+0.098*s,P=(x,y,z)=>[cx+x*s,cy+y*s,cz+z*s];
   // нос: клин от переносицы к кончику
   mGrid(M,[[P(-0.004,0.15,0.1),P(0.004,0.15,0.1)],[P(-0.014,0.1,0.118),P(0.014,0.1,0.118)],[P(-0.012,0.088,0.106),P(0.012,0.088,0.106)]],shade(L.skin,-0.04),'skin',{ref:()=>P(0,0.11,0.07),two:true});

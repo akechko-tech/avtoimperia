@@ -576,12 +576,14 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const mechOut=typeof injOf==='function'&&injOf(s,'mech');
   const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);if(c.you&&mechOut&&c.st.mech)c.st.mech=false;c.mech=c.st.mech;
     // ваша машина — такая же, как в конструкторе: её цвет и кузов; соперники — гоночные машины в цветах своих стран
-    if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you?s.country:c.tc,num:c.num,mech:c.mech});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
+    const fdrv=c.drvId==='me'?(pio.drv||''):c.drvId;
+    if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you?s.country:c.tc,num:c.num,mech:c.mech,drv:fdrv});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
     else{c.style=carStyle(c.md,c.prep,rc.y);let strip=0;
       // облик по марке: «рейсэбауты» Мерсера и Стаца — как с завода; в 24-часовых гонках 1920-х — спортивные машины с крыльями и фарами (Бентли — туринг)
       if(/^gp/.test(c.style)){if(['Mercer','Stutz'].includes(c.name)&&rc.y>=1911&&rc.y<1920){c.style='sport';strip=1;}else if(rc.t==='endurance'&&rc.y>=1920)c.style=c.name==='Bentley'?'tourer':'sport';}
       c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name+strip;
-      c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3};}
+      const fd=fdrv&&typeof faceOf==='function'&&faceOf(fdrv)?fdrv:'';
+      c.spec3={key:c.spriteKey+(fd?'|'+fd:''),style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3,drv:fd};}
     wearSetup(c,trk,rc);return c;});
   // стартовая решётка: быстрые и опытные впереди, немного случайности
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);

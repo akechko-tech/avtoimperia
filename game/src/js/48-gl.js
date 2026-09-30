@@ -319,8 +319,9 @@ void main(){vec4 w=u_ivp*vec4(v_p,1.,1.);vec3 d=normalize(w.xyz/w.w-u_cam);
   c=mix(c,mix(u_hzC,u_fogS,pow(sd,6.)),exp(-max(d.y,0.)*40.)*.3);
   o=vec4(tone(c),1.);}`;
 // Зрители и люди у дороги: плоские фигуры, всегда повёрнутые к камере; два кадра — машут руками. FOL — трава из атласа листвы
-const G3VS_BILL=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;in vec4 i_c;uniform mat4 u_vp,u_shm;uniform vec3 u_camR;uniform float u_time;out vec2 v_uv;out vec3 v_wp;flat out float v_l;out vec4 v_sp;
-void main(){vec3 wp=i_a.xyz+u_camR*a_pos.x*i_a.w+vec3(0.,a_pos.y*i_b.x,0.);wp+=u_camR*(a_pos.y*a_pos.y*i_c.w*.12*i_b.x*sin(u_time*1.9+i_a.x*.41+i_a.z*.29));float fr=i_c.y>0.?floor(mod(u_time*2.6+i_a.x*.37+i_a.z*.29,2.)):0.;
+const G3VS_BILL=`in vec3 a_pos;in vec4 i_a;in vec4 i_b;in vec4 i_c;uniform mat4 u_vp,u_shm;uniform vec3 u_camR,u_cam;uniform float u_time,u_near;out vec2 v_uv;out vec3 v_wp;flat out float v_l;out vec4 v_sp;
+void main(){if(u_near>0.&&distance(i_a.xz,u_cam.xz)<u_near){gl_Position=vec4(0.,0.,-2.,1.);v_uv=vec2(0.);v_wp=vec3(0.);v_l=0.;v_sp=vec4(0.);return;}
+  vec3 wp=i_a.xyz+u_camR*a_pos.x*i_a.w+vec3(0.,a_pos.y*i_b.x,0.);wp+=u_camR*(a_pos.y*a_pos.y*i_c.w*.12*i_b.x*sin(u_time*1.9+i_a.x*.41+i_a.z*.29));float fr=i_c.y>0.?floor(mod(u_time*2.6+i_a.x*.37+i_a.z*.29,2.)):0.;
   v_uv=vec2(i_b.y+(a_pos.x+.5)*i_b.w+fr*i_b.w,i_b.z+(1.-a_pos.y)*i_c.x);v_wp=wp;v_l=i_c.z;v_sp=u_shm*vec4(wp+vec3(0.,.15,0.),1.);gl_Position=u_vp*vec4(wp,1.);}`;
 const G3FS_BILL=`in vec2 v_uv;in vec3 v_wp;flat in float v_l;in vec4 v_sp;uniform sampler2D u_tex;uniform float u_bl;uniform highp sampler2DShadow u_sh;uniform vec3 u_shI;out vec4 o;
 ${G3LIB}

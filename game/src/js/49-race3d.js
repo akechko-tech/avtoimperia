@@ -228,16 +228,18 @@ function r3dPeopleAtlas3D(y){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96
   const E={sun:v3n([-0.45,0.6,0.66]),sunC:[1.75,1.66,1.5],skyC:[0.52,0.56,0.63],gndC:[0.3,0.27,0.22],hzC:[0.7,0.74,0.78],zeC:[0.45,0.55,0.7],fogS:[1,1,1],fogD:0,exp:0.82,night:0,hl:0,lamp:0,envRot:0,envK:0.4};
   const sv={VP:R3.VP,eye:R3.eye,post:R3.post,shOn:R3.shOn};R3.post=true;R3.shOn=false;const Pm=m4(),V=m4(),VP=m4();
   let x=2,yy=2,rowH=0;const cell=(w,h)=>{if(x+w*2>W){x=2;yy+=rowH+4;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*2+4;return c;};
-  const shoot=(build,wm,hm,anim)=>{const c=cell(Math.round(wm*ppm),Math.round(hm*ppm));if(c.y+c.h>H)return null;
+  const shoot=(build,wm,hm,anim)=>{const c=cell(Math.round(wm*ppm),Math.round(hm*ppm));if(c.y+c.h>H)return null;const bld=build;
     for(let fr=0;fr<2;fr++){const M=new Mesh();build(M,fr);const mb=new MB();mbFromMesh(mb,M,{lift:0.003,step:0.001,car:true});const g=g3Mesh(mb);if(!g)continue;
       gl.viewport(c.x+fr*c.w,c.y,c.w,c.h);gl.scissor(c.x+fr*c.w,c.y,c.w,c.h);
       // вверх ногами: верх фигуры — в начале строки атласа (как у прежнего рисованного)
       const ey=hm*0.5+0.5;m4ortho(Pm,-wm/2,wm/2,hm-0.05-ey,-0.05-ey,0.1,40);const eye=[0,ey,10],f=v3n([0,-0.5,-10]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);m4view(V,eye,rt,up,f);m4mul(VP,Pm,V);R3.VP=VP;R3.eye=eye;
       const P=r3dUse('atl',E,W,H);gl.uniformMatrix4fv(P.u.u_model,false,m4());g3Draw(g);g3Free(g);}
-    return {u:c.x/W,v:c.y/H,du:c.w/W,dv:c.h/H,w:wm,h:hm,anim:anim?1:0};};
-  try{for(let i=0;i<30;i++){const o=personLook3(rnd,era,'crowd');o.wave=rnd()<0.45;const e=shoot((M,fr)=>mPerson3(M,o,fr),o.item==='umb'?1.2:0.9,o.type==='child'?1.7:2.3,o.wave);if(e){e.child=o.type==='child';out.crowd.push(e);}}
-    for(let v=0;v<2;v++){const o=personLook3(rnd,era,'marsh');const e=shoot((M,fr)=>mPerson3(M,o,fr),1.9,2.45,1);if(e)out.marsh.push(e);}
-    {const o=personLook3(rnd,era,'gend');const e=shoot((M,fr)=>mPerson3(M,o,0),0.9,2.1,0);if(e)out.gend.push(e);}
+    return {u:c.x/W,v:c.y/H,du:c.w/W,dv:c.h/H,w:wm,h:hm,anim:anim?1:0,bld};};
+  // у каждого — как построить его объёмную модель (рядом с камерой люди рисуются 3D, 0.21): полная и упрощённая
+  const lod0=o=>(M,fr)=>mPerson3(M,Object.assign({},o,{lod:0}),fr);
+  try{for(let i=0;i<30;i++){const o=personLook3(rnd,era,'crowd');o.wave=rnd()<0.45;const e=shoot((M,fr)=>mPerson3(M,o,fr),o.item==='umb'?1.2:0.9,o.type==='child'?1.7:2.3,o.wave);if(e){e.child=o.type==='child';e.bld0=lod0(o);out.crowd.push(e);}}
+    for(let v=0;v<2;v++){const o=personLook3(rnd,era,'marsh');const e=shoot((M,fr)=>mPerson3(M,o,fr),1.9,2.45,1);if(e){e.bld0=lod0(o);out.marsh.push(e);}}
+    {const o=personLook3(rnd,era,'gend');const e=shoot((M,fr)=>mPerson3(M,o,0),0.9,2.1,0);if(e){e.bld0=(M)=>mPerson3(M,Object.assign({},o,{lod:0}),0);out.gend.push(e);}}
     {const o=Object.assign(personLook3(rnd,era,'crowd'),{type:'man',hat:'cap',hatc:'#3a3026',frock:false});const e=shoot((M,fr)=>mPhotographer(M,o),1.9,2.1,0);if(e)out.photo.push(e);}}
   finally{gl.disable(gl.SCISSOR_TEST);Object.assign(R3,sv);}
   gl.bindFramebuffer(gl.READ_FRAMEBUFFER,fbM);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,fbT);gl.blitFramebuffer(0,0,W,H,0,0,W,H,gl.COLOR_BUFFER_BIT,gl.NEAREST);
@@ -246,7 +248,7 @@ function r3dPeopleAtlas3D(y){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   gl.enable(gl.CULL_FACE);gl.viewport(0,0,G3.cv.width,G3.cv.height);
   if(!out.crowd.length||!out.marsh.length||!out.gend.length||!out.photo.length){gl.deleteTexture(tex);throw new Error('atlas empty');}
-  return {a:out,t:tex};}
+  out.bld=true;return {a:out,t:tex};}
 function r3dPeopleAtlas(y){
   const S=1024,cv=mkCanvas(S,S),g=cv.getContext('2d'),P=48,cw=P,ch=Math.round(P*2.3),rnd=mulberry32(hashStr('crowd'+y)),out={crowd:[],marsh:[],gend:[],photo:[]};let x=0,yy=0,rowH=0;
   const cell=(w,h)=>{if(x+w*2>S){x=0;yy+=rowH+2;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*2+2;return c;};
@@ -338,16 +340,19 @@ function r3dItem(it,i,mb,people){
     case 'rgate':{mb.add(pProp('rgate',0),X3(face,1,[x,y,z]));(R3.gates=R3.gates||[]).push({x,y,z,face,side,i});return;}
     case 'verst':case 'well':case 'fence_ru':
     case 'pole':case 'km':case 'sign':case 'lamp':case 'cart':case 'billboard':mb.add(pProp(it.t,it.v||0),X3(face,1,[x,y,z]));if(it.t==='billboard')r3dAd(it.v||0,x,y,z,face);return;
-    case 'stand':{const P=pStand(),X=X3(face,1,[x,y,z]);mb.add(P,X);const rr=mulberry32(h+5);P.people.forEach(q=>{const w=r3dXf(X,q);people.push([w[0],w[1]+0.05,w[2],R3.atlas.crowd[Math.floor(rr()*R3.atlas.crowd.length)],0.95+rr()*0.1,rr()<0.25]);});return;}
+    case 'stand':{const P=pStand(),X=X3(face,1,[x,y,z]);mb.add(P,X);const rr=mulberry32(h+5);P.people.forEach(q=>{const w=r3dXf(X,q);people.push([w[0],w[1]+0.05,w[2],R3.atlas.crowd[Math.floor(rr()*R3.atlas.crowd.length)],0.95+rr()*0.1,rr()<0.25,faceRoad(i,w[0],w[2],rr)]);});return;}
     default:if(BLD[it.t]){const P=pBld(it.t,(it.v||0)%3),X=X3(face,1,[x,y,z]);mb.add(P,X);if(P.texts&&P.texts.length)r3dTexts(P.texts,X);}
   }
 }
 const r3dXf=(X,q)=>{const r=X.r,s=X.s;return [(r[0]*q[0]+r[1]*q[1]+r[2]*q[2])*s+X.t[0],(r[3]*q[0]+r[4]*q[1]+r[5]*q[2])*s+X.t[1],(r[6]*q[0]+r[7]*q[1]+r[8]*q[2])*s+X.t[2]];};
 // Толпа: 6–9 человек в два ряда вдоль дороги; маршал, жандарм, фотограф — по одному
+// лицом к дороге (к ближайшей точке оси), с небольшим разбросом — для объёмных людей рядом с камерой
+function faceRoad(i,x,z,rnd){const T=R3.T;let bi=i,bd=1e18;for(let k=-3;k<=3;k++){let j=i+k;if(T.closed)j=((j%T.n)+T.n)%T.n;else if(j<0||j>=T.n)continue;const p=T.pts[j],d=(p[0]-x)**2+(p[2]-z)**2;if(d<bd){bd=d;bi=j;}}
+  const p=T.pts[bi];return Math.atan2(p[0]-x,p[2]-z)+((rnd?rnd():Math.random())-0.5)*0.6;}
 function r3dCrowd(it,i,x,y,z,ry,side,rnd,people){const A=R3.atlas,tx=Math.sin(ry),tz=Math.cos(ry),T=R3.T,nn=T.N[i];
-  if(it.t!=='crowd'){const L=A[it.t]||A.crowd,s=L[(it.v||0)%L.length];people.push([x,y,z,s,1,s.anim]);return;}
+  if(it.t!=='crowd'){const L=A[it.t]||A.crowd,s=L[(it.v||0)%L.length];people.push([x,y,z,s,1,s.anim,faceRoad(i,x,z,rnd)]);return;}
   const k=6+Math.floor(rnd()*4);for(let q=0;q<k;q++){const back=q>=k*0.6,along=(rnd()-0.5)*5.4,out=(back?0.9:0)+(rnd()-0.5)*0.3,off=it.off+side*out;
-    const px=T.pts[i][0]+nn[0]*off+tx*along,pz=T.pts[i][2]+nn[1]*off+tz*along,s=A.crowd[Math.floor(rnd()*A.crowd.length)];people.push([px,groundAt(i,off),pz,s,0.93+rnd()*0.12,s.anim]);}}
+    const px=T.pts[i][0]+nn[0]*off+tx*along,pz=T.pts[i][2]+nn[1]*off+tz*along,s=A.crowd[Math.floor(rnd()*A.crowd.length)];people.push([px,groundAt(i,off),pz,s,0.93+rnd()*0.12,s.anim,faceRoad(i,px,pz,rnd)]);}}
 function r3dAddPeople(L){const P=R3.people;L.forEach(q=>P.push(q));R3.peopleDirty=true;}
 /* ---------- надписи: финиш, реклама, вывески ---------- */
 function r3dLabelAtlas(){const S=1024,cv=mkCanvas(S,S);R3.lab={cv,g:cv.getContext('2d'),x:0,y:0,h:0,S,slots:{}};}
@@ -415,7 +420,7 @@ function r3dSetup(){
   R3.F=r3dField(T);R3.W=R.wx||r3dWeather(T);R3.sky=tx.sky[R3.W.mood]||tx.sky.clear||Object.values(tx.sky)[0]||null;
   // фактуры, не зависящие от трассы, живут, пока жив 3D-контекст: следующая гонка стартует быстрее
   const C=G3.cache,era=R.rc.y<1906?0:R.rc.y<1919?1:2;
-  if(!C['atlas'+era]){try{C['atlas'+era]=r3dPeopleAtlas3D([1900,1910,1925][era]);}catch(e){console.warn('atlas3d',e);const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+era]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}}R3.atlas=C['atlas'+era].a;R3.texPeople=C['atlas'+era].t;
+  if(!C['atlas'+era]){try{C['atlas'+era]=r3dPeopleAtlas3D([1900,1910,1925][era]);}catch(e){console.warn('atlas3d',e);const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+era]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}}R3.atlas=C['atlas'+era].a;R3.atlasEra=era;R3.texPeople=C['atlas'+era].t;
   const M=r3dMaps(T,R3.F,R3.W);R3.texCM=g3TexBytes(M.SZ,M.A);R3.texSM=g3TexBytes(M.SZ,M.B);R3.cmU=M.u;R3.lays=r3dLayers(T,R3.F);
   // карта земли для физики (поле, лес, песок) — уменьшенная копия
   {const S=256,st=M.SZ/S,sm=new Uint8Array(S*S*4);for(let j=0;j<S;j++)for(let i=0;i<S;i++){const o=(Math.floor(j*st)*M.SZ+Math.floor(i*st))*4,q=(j*S+i)*4;sm[q]=M.B[o];sm[q+1]=M.B[o+1];sm[q+2]=M.B[o+2];sm[q+3]=M.B[o+3];}R3.smap=sm;R3.smapS=S;}
@@ -552,8 +557,8 @@ function r3dRender(dt){
   const PT=r3dPostOn()?r3dPostTargets(bw,bh):null;R3.post=!!PT;
   gl.bindFramebuffer(gl.FRAMEBUFFER,PT?PT.fbMS:null);gl.viewport(0,0,bw,bh);gl.clearColor(0.5,0.6,0.7,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.disable(gl.BLEND);
-  // машины — первыми (заслоняют больше всего), дальше спереди назад
-  r3dDrawCars(E,bw,bh);
+  // машины — первыми (заслоняют больше всего), дальше спереди назад; рядом с камерой — объёмные люди
+  r3dDrawCars(E,bw,bh);try{r3dPeople3dTick();r3dDrawPeople3d(E,bw,bh);}catch(e){R3.p3dOn=false;R3.atlas.bld=false;console.warn('p3d',e);}
   // декорации и стволы
   let P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.uniform4f(P.u.u_lamp,0,0,E.lamp,0);
   vis.forEach(([,ch])=>g3Draw(ch.lit));tiles.forEach(([,t])=>g3Draw(t.t));if(R3.startMesh)g3Draw(R3.startMesh);if(R3.rails)g3Draw(R3.rails);
@@ -586,10 +591,10 @@ function r3dRender(dt){
   gl.depthMask(false);P=r3dUse('sky',E,bw,bh);const IV=R3.IV||(R3.IV=m4());m4inv(IV,R3.VP);gl.uniformMatrix4fv(P.u.u_ivp,false,IV);gl.uniform1f(P.u.u_night,E.night);
   gl.uniform4f(P.u.u_panR,-0.012,0.16,2,0);gl.disable(gl.CULL_FACE);gl.bindVertexArray(G3.full.vao);gl.drawArrays(gl.TRIANGLES,0,3);G3.dc++;gl.depthMask(true);
   // люди
-  if(R3.pN){P=r3dUse('bill',E,bw,bh);gl.uniform3fv(P.u.u_camR,R3.camR);gl.uniform1f(P.u.u_bl,E.night>0.5?0.18:1.25-E.night*0.9);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,R3.texPeople);gl.activeTexture(gl.TEXTURE0);
+  if(R3.pN){P=r3dUse('bill',E,bw,bh);gl.uniform3fv(P.u.u_camR,R3.camR);if(P.u.u_near)gl.uniform1f(P.u.u_near,R3.p3dOn?P3D.R:0);gl.uniform1f(P.u.u_bl,E.night>0.5?0.18:1.25-E.night*0.9);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,R3.texPeople);gl.activeTexture(gl.TEXTURE0);
     gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.bindVertexArray(R3.pI.vao);gl.drawArraysInstanced(gl.TRIANGLES,0,6,R3.pN);G3.dc++;gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);}
   // трава и цветы у обочины
-  if(R3.vN&&!R3.lowQ){P=r3dUse('veg',E,bw,bh);gl.uniform3fv(P.u.u_camR,R3.camR);gl.uniform1f(P.u.u_bl,E.night>0.5?0.2:1);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
+  if(R3.vN&&!R3.lowQ){P=r3dUse('veg',E,bw,bh);gl.uniform3fv(P.u.u_camR,R3.camR);if(P.u.u_near)gl.uniform1f(P.u.u_near,0);gl.uniform1f(P.u.u_bl,E.night>0.5?0.2:1);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
     gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.bindVertexArray(R3.vI.vao);gl.drawArraysInstanced(gl.TRIANGLES,0,6,R3.vN);G3.dc++;gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);}
   // стёкла машин
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);r3dDrawCars(E,bw,bh,true);gl.depthMask(true);

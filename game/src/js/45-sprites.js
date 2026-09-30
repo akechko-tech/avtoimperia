@@ -25,5 +25,7 @@ function carStyle(md,prep,y,own){
 function modelSpec(md,prep,y,o){o=o||{};const p=parts(md),bid=p.b.id,style=carStyle(md,prep,y,true),hp=engineHp(p.e,md),hpB=hp<=4?0:hp<=10?1:hp<=20?2:hp<=35?3:hp<=60?4:5;
   const color=md.paint||'#23427a',acc=prep===2&&y>=1903&&o.country&&COUNTRIES[o.country]?COUNTRIES[o.country].race:null;
   const wheel=o.wheel||wheelKind(md,y),mech=o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=(prep===1||(prep===2&&style==='sport'))&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
-  const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y].join('|');
-  return {key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux};}
+  // 0.21: у пилота с историческим фото — его лицо на голове
+  const drv=o.drv&&typeof faceOf==='function'&&faceOf(o.drv)?o.drv:'';
+  const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv].join('|');
+  return {key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv};}
