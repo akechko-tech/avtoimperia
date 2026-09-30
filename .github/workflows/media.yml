@@ -35,6 +35,10 @@ jobs:
             python3 -m pip install --quiet --user --break-system-packages --upgrade --force-reinstall "opencv-python-headless<5" || python3 -m pip install --quiet "opencv-python-headless<5"
             python3 -c "import cv2,sys;print('cv2',cv2.__version__,cv2.__file__,hasattr(cv2,'CascadeClassifier'));print(sys.path)" 
           fi
+          if grep -qx 'terrain' tools/media/jobs.txt; then
+            python3 -m pip install --quiet --user --break-system-packages rasterio || python3 -m pip install --quiet rasterio
+            python3 -c "import rasterio;print('rasterio',rasterio.__version__)"
+          fi
       - name: Задания
         run: python3 tools/media/run.py
       - name: Сохранить в ветку media

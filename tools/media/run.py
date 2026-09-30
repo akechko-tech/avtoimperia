@@ -762,7 +762,12 @@ def faces():
     cv2.imwrite(os.path.join(D, 'sheet.jpg'), sheet, [cv2.IMWRITE_JPEG_QUALITY, 85])
     log('faces: new', n_new, 'total', len(got), 'of', len(L))
 
-JOBS = {'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
+def terrain():
+    sys.path.insert(0, TOOLS)
+    import terrain as T
+    T.run(log)
+
+JOBS = {'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
         'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces}
 
 if __name__ == '__main__':
