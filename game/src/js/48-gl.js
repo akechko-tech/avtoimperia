@@ -97,7 +97,7 @@ in vec2 a_uv;out vec2 v_uv;
 #endif
 uniform mat4 u_vp,u_model,u_shm;uniform float u_time;uniform vec4 u_mat[18];
 #ifdef CAR
-uniform vec4 u_wc[6];uniform vec4 u_wr;uniform vec4 u_body;
+uniform vec4 u_wc[6];uniform vec4 u_wr;uniform vec4 u_body;out vec3 v_op;out vec3 v_on;
 #endif
 out vec3 v_wp;out vec3 v_n;out vec4 v_col;flat out vec4 v_m;out vec4 v_sp;flat out float v_lamp;flat out int v_lay;flat out int v_lmode;flat out float v_tk;
 void main(){
@@ -113,6 +113,7 @@ void main(){
     p=vec3(p.x*cr+p.y*sr,p.y*cr-p.x*sr,p.z);n=vec3(n.x*cr+n.y*sr,n.y*cr-n.x*sr,n.z);
     p.y+=u_body.w+u_body.z;
     if(u_wr.z>.5&&abs(a_ext.y-3.)<.5)p=vec3(0.,-50.,0.);}
+  v_op=p;v_on=n;
 #endif
   vec4 wp=u_model*vec4(p,1.);
   if(a_ext.z>0.){float s=a_ext.z/255.;wp.x+=s*.12*sin(u_time*1.7+wp.x*.31+wp.z*.23);wp.z+=s*.09*sin(u_time*1.3+wp.z*.27+wp.x*.11);}
@@ -140,6 +141,9 @@ uniform sampler2D u_tex;
 uniform sampler2D u_fol;
 #endif
 uniform highp sampler2DArray u_alb,u_dat;uniform vec4 u_lay[40],u_lavg[40],u_tq;
+#ifdef CAR
+in vec3 v_op;in vec3 v_on;uniform vec4 u_dirt;
+#endif
 #ifdef TERRAIN
 uniform sampler2D u_cmap,u_smap;uniform vec4 u_cm,u_tl,u_tl2,u_tp;
 #endif
@@ -182,7 +186,8 @@ void main(){
   float rough=clamp(sqrt(2./(m.y+2.)),.05,1.),metal=m.z,spec=m.x,envK=max(m.w,0.),ao=1.;
 #ifdef TERRAIN
   {vec2 cu=(v_wp.xz-u_cm.xy)*u_cm.zw;vec4 cm=texture(u_cmap,cu),sm=texture(u_smap,cu);
-    float stp=smoothstep(.3,.62,1.-N.y),nz=vn2(v_wp.xz*.045),nz2=vn2(v_wp.xz*.19+7.);
+    // крутые склоны — скала (в горах уже с 12–15°, вдали — ещё раньше): трава «по отвесу» не тянется полосами
+    float st0=mix(.3,.17,u_tp.z)-smoothstep(150.,700.,dist)*.06*u_tp.z,stp=smoothstep(st0,st0+mix(.32,.26,u_tp.z),1.-N.y),nz=vn2(v_wp.xz*.045),nz2=vn2(v_wp.xz*.19+7.);
     float wAlt=sm.r,wDirt=max(sm.g,v_col.r),wFor=sm.b,wCov=max(sm.a,v_col.b),wRock=max(stp*u_tp.z,v_col.g);
     if(u_tp.x<9000.)wCov=max(wCov,smoothstep(u_tp.x,u_tp.x+u_tp.y,v_wp.y+(nz-.5)*30.)*(1.-smoothstep(.45,.75,1.-N.y)));
     vec2 uv=vec2(v_wp.x,-v_wp.z);float s0=u_lay[int(u_tl.x)].x;
@@ -192,11 +197,14 @@ void main(){
     if(wFor>.01){vec3 B=lA(u_tl2.y,uv*u_lay[int(u_tl2.y)].x).rgb;float w=clamp(wFor*1.6-.3+(nz2-.5)*.6,0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl2.y;}
     if(v_col.a>.01){vec3 B=lA(u_tl2.z,uv*u_lay[int(u_tl2.z)].x).rgb;float w=clamp(v_col.a*1.5-.2+(nz2-.5)*.5,0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl2.z;}
     if(wDirt>.01){vec3 B=lA(u_tl.z,uv*u_lay[int(u_tl.z)].x).rgb;float w=clamp(wDirt*1.7-.35+(nz2-.5)*.5+(hb-dot(B,vec3(.33))),0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl.z;}
-    if(wRock>.01){float sr=u_lay[int(u_tl.w)].x;vec2 wx=N.xz*N.xz;wx/=max(wx.x+wx.y,.001);
+    float wR=0.;if(wRock>.01){float sr=u_lay[int(u_tl.w)].x;vec2 wx=N.xz*N.xz;wx/=max(wx.x+wx.y,.001);
       vec3 B=lA(u_tl.w,vec2(v_wp.z,-v_wp.y)*sr).rgb*wx.x+lA(u_tl.w,vec2(v_wp.x,-v_wp.y)*sr).rgb*wx.y;
-      float w=clamp(wRock*1.5-.25+(nz2-.5)*.5,0.,1.);c=mix(c,B*u_tq.z,w);}
+      // вдали — та же скала крупнее (без мелкой ряби и полос), с пластами
+      float fd=smoothstep(50.,260.,dist);if(fd>0.){vec3 B2=lA(u_tl.w,vec2(v_wp.z,-v_wp.y)*sr*.18).rgb*wx.x+lA(u_tl.w,vec2(v_wp.x,-v_wp.y)*sr*.18).rgb*wx.y;B=mix(B,B2*(.85+.3*vn2(vec2(v_wp.y*.08,(v_wp.x+v_wp.z)*.01))),fd);}
+      wR=clamp(wRock*1.5-.25+(nz2-.5)*.5,0.,1.);c=mix(c,B*u_tq.z,wR);}
     if(wCov>.01){vec3 B=lA(u_tl2.x,uv*u_lay[int(u_tl2.x)].x).rgb;float w=clamp(wCov*1.8-.4+(nz-.5)*.6,0.,1.);c=mix(c,B,w);if(w>.5)lay=u_tl2.x;}
-    alb=c*cm.rgb*2.;ao=mix(1.,cm.a*1.25,.9);rough=.92;spec=.5;envK=.25;
+    // скала почти не красится картой оттенков (иначе — оранжевые горы)
+    alb=c*mix(cm.rgb*2.,vec3(.95),wR*.7);ao=mix(1.,cm.a*1.25,.9);rough=.92;spec=.5;envK=.25;
     if(u_tq.x>.5&&dist<70.){vec3 T=normalize(cross(N,vec3(0.,0.,1.))),B=cross(T,N);vec4 D=lD(lay,uv*u_lay[int(lay)].x);N=nmap(N,T,B,D,1.-smoothstep(30.,70.,dist));rough=D.b;}}
 #elif defined(ROAD)
   {float ax=v_uv.x,W=u_rd.y,L=u_rd.x,kind=u_rd.w;vec2 mm=vec2((ax-.5)*W,v_uv.y*u_rd.z);
@@ -230,11 +238,26 @@ void main(){
     alb=mix(c*alb,mud,mw);spec=1.;envK=1.+pud*1.3;}
 #else
   if(v_lay>=0){float L=float(v_lay),sL=u_lay[v_lay].x;vec3 c;
-    if(v_lmode==1){vec3 w=abs(N);w=w*w*w;w/=w.x+w.y+w.z;
-      c=lA(L,vec2(v_wp.z,-v_wp.y)*sL).rgb*w.x+lA(L,vec2(v_wp.x,-v_wp.z)*sL).rgb*w.y+lA(L,vec2(v_wp.x,-v_wp.y)*sL).rgb*w.z;rough=.85;}
-    else{vec3 B=abs(N.y)<.98?normalize(vec3(0.,1.,0.)-N*N.y):vec3(0.,0.,1.),T=cross(N,B);vec2 uv=vec2(dot(v_wp,T),-dot(v_wp,B))*sL;
-      c=lA(L,uv).rgb;vec4 D=lD(L,uv);rough=D.b;if(u_tq.x>.5&&dist<50.)N=nmap(N,T,B,D,1.-smoothstep(20.,50.,dist));}
+#ifdef CAR
+    // машина едет: фактура (кожа, дерево, ткань) — в координатах самой модели, иначе «поплывёт»
+    vec3 TP=v_op,TN=normalize(v_on);
+#else
+    vec3 TP=v_wp,TN=N;
+#endif
+    if(v_lmode==1){vec3 w=abs(TN);w=w*w*w;w/=w.x+w.y+w.z;
+      c=lA(L,vec2(TP.z,-TP.y)*sL).rgb*w.x+lA(L,vec2(TP.x,-TP.z)*sL).rgb*w.y+lA(L,vec2(TP.x,-TP.y)*sL).rgb*w.z;rough=.85;}
+    else{vec3 B=abs(TN.y)<.98?normalize(vec3(0.,1.,0.)-TN*TN.y):vec3(0.,0.,1.),T=cross(TN,B);vec2 uv=vec2(dot(TP,T),-dot(TP,B))*sL;
+      c=lA(L,uv).rgb;vec4 D=lD(L,uv);rough=D.b;
+#ifndef CAR
+      if(u_tq.x>.5&&dist<50.)N=nmap(N,T,B,D,1.-smoothstep(20.,50.,dist));
+#endif
+    }
     alb=v_tk>.5?tintBy(c,alb,u_lavg[v_lay].rgb):c;spec=1.;envK=max(envK,.3);}
+#ifdef CAR
+  // пыль и грязь: снизу вверх по кузову, пятнами; брызги грязи — выше
+  if(u_dirt.w>.01){float h=v_op.y+(vn2(v_op.xz*6.)-.5)*.35,dm=u_dirt.w*(1.-smoothstep(.2,1.15,h))*(.45+.55*vn2(v_op.zy*8.+v_op.x*4.));dm=clamp(dm,0.,.9);
+    alb=mix(alb,u_dirt.rgb,dm);rough=mix(rough,.92,dm);envK*=1.-dm*.85;metal*=1.-dm;}
+#endif
 #endif
 #ifdef UV
 #ifndef ROAD
@@ -259,6 +282,9 @@ void main(){
   if(u_hl>0.){vec3 Lh=u_hlP-v_wp;float dh=length(Lh);Lh/=dh;float spot=smoothstep(.8,.95,dot(-Lh,u_hlD))*u_hl/(1.+dh*dh*.0025);col+=alb*vec3(1.,.85,.6)*spot*max(dot(N,Lh),0.)*4.;}
   if(v_lamp>.5&&v_lamp<9.5){if(v_lamp<1.5)col+=vec3(1.,.07,.03)*(u_lamp.x*4.+u_lamp.y*1.2);else if(v_lamp<2.5)col+=vec3(1.,.88,.6)*u_lamp.y*4.;else if(v_lamp>4.5)col+=vec3(1.,.78,.42)*u_lamp.z*3.;}
   if(m.w<-3.5)col=alb*2.;
+#ifdef RAW
+  o=vec4(pow(clamp(col*u_exp,0.,1.),vec3(1./2.2)),alpha);return;
+#endif
   col=fogIt(col,V,dist);
   o=vec4(tone(col),alpha);}`;
 // Тени: та же форма (колёса, крен кузова, ветер), только глубина; листва — по прозрачности
@@ -355,7 +381,7 @@ function g3Init(cv){
   if(!cv.dataset.g3){cv.dataset.g3=1;cv.addEventListener('webglcontextlost',e=>{e.preventDefault();G3.lost=true;G3.gl=null;},false);cv.addEventListener('webglcontextrestored',()=>{G3.lost=false;G3.gl=null;},false);}
   G3.an=gl.getExtension('EXT_texture_filter_anisotropic');G3.anMax=G3.an?Math.min(8,gl.getParameter(G3.an.MAX_TEXTURE_MAX_ANISOTROPY_EXT)):1;
   const lit=G3VS,fs=G3FS;
-  G3.P={lit:g3Prog(lit,fs,[]),car:g3Prog(lit,fs,['CAR']),road:g3Prog(lit,fs,['UV','ROAD']),tex:g3Prog(lit,fs,['UV']),terr:g3Prog(lit,fs,['TERRAIN']),decal:g3Prog(lit,fs,['DECAL']),leaf:g3Prog(lit,fs,['LEAF']),
+  G3.P={lit:g3Prog(lit,fs,[]),car:g3Prog(lit,fs,['CAR']),road:g3Prog(lit,fs,['UV','ROAD']),tex:g3Prog(lit,fs,['UV']),terr:g3Prog(lit,fs,['TERRAIN']),decal:g3Prog(lit,fs,['DECAL']),leaf:g3Prog(lit,fs,['LEAF']),atl:g3Prog(lit,fs,['RAW']),
     dLit:g3Prog(lit,G3FS_DEPTH,[]),dCar:g3Prog(lit,G3FS_DEPTH,['CAR']),dLeaf:g3Prog(lit,G3FS_DEPTH,['LEAF']),sky:g3Prog(G3VS_SKY,G3FS_SKY,[]),bill:g3Prog(G3VS_BILL,G3FS_BILL,[]),veg:g3Prog(G3VS_BILL,G3FS_BILL,['FOL']),part:g3Prog(G3VS_PART,G3FS_PART,[])};
   // заглушки для фото-текстур (пока не загружены): массив 1×1 и картинка 1×1
   {const A=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D_ARRAY,A);gl.texImage3D(gl.TEXTURE_2D_ARRAY,0,gl.RGBA8,1,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([128,128,200,255]));

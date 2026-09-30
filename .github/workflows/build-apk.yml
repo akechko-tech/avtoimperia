@@ -25,7 +25,12 @@ jobs:
       - name: Фото-текстуры гонок (из веб-версии)
         run: mkdir -p app/src/main/assets/tex && cp docs/tex/tex.js app/src/main/assets/tex/tex.js
       - name: Живые инструменты, кинохроника и голос диктора (из веб-версии)
-        run: for d in samples film voice; do if [ -d docs/$d ]; then mkdir -p app/src/main/assets/$d && cp -r docs/$d/. app/src/main/assets/$d/; fi; done
+        # инструменты — одним скриптом (со страницы file:// fetch не работает), кинохроника — целиком; голос — только указатель (сам звук — с сайта, без сети — голос телефона)
+        run: |
+          mkdir -p app/src/main/assets/samples app/src/main/assets/film app/src/main/assets/voice
+          if [ -d docs/samples ]; then cp docs/samples/index.js docs/samples/pack.js app/src/main/assets/samples/ 2>/dev/null || true; fi
+          if [ -d docs/film ]; then cp -r docs/film/. app/src/main/assets/film/; fi
+          if [ -f docs/voice/index.js ]; then cp docs/voice/index.js app/src/main/assets/voice/; fi
       - name: Собрать APK
         run: gradle assembleRelease --no-daemon
       - name: Переименовать

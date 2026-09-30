@@ -285,8 +285,8 @@ function carModel(S){
     mGrid(M,G,K.tyre,'tyre',{wrap:true,ref:c=>{if(ax==='z'){const dx=c[0]-x,dy=c[1]-yy,l=Math.hypot(dx,dy)||1;return [x+dx/l*R0,yy+dy/l*R0,z];}const dz=c[2]-z,dy=c[1]-yy,l=Math.hypot(dz,dy)||1;return [x,yy+dy/l*R0,z+dz/l*R0];}});
     mLathe(M,[x,yy,z],ax,[[R0-tr,-tw*0.3],[R0-tr*0.7,tw*0.3],[0,tw*0.3]],seg,K.chassis,'paint');};
   const bumper=(z,w,yy)=>{[-0.035,0.035].forEach(dy=>tube([[-w,yy+dy,z-0.06],[-w*0.9,yy+dy,z],[w*0.9,yy+dy,z],[w,yy+dy,z-0.06]],0.018,K.bright,K.brightMat,5));};
-  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew2(M,x,seatY,z,crewKit3(y,S.num),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
-  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew2(M,x,seatY,z,crewKit3(y,(S.num|0)+1),true,S,null);};
+  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew3(M,x,seatY,z,crewKit3(y,S.num),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
+  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew3(M,x,seatY,z,crewKit3(y,(S.num|0)+1),true,S,null);};
   const eyeAt=(x,seatY,z)=>{if(!M.eye)M.eye=[x,seatY+0.8,z+0.06];};
   // табличка с номером: центр c, нормаль nrm (наружу), ось «вправо» u; w×h
   const plate=(c,nrm,u,w,h,round)=>{if(!S.num||!hi)return;const v=v3x(nrm,u).map(q=>-q),P=[],k=round?10:4;

@@ -1,21 +1,517 @@
 [
- {"id":"vcup1904","title":"File:1904 Vanderbil Cup Auto Race LOC 00060758.webm","t":38,"d":10,"tags":["race_run"],"cap":"Кубок Вандербильта, 1904","y":1904},
- {"id":"vcup1904b","title":"File:1904 Vanderbil Cup Auto Race LOC 00060758.webm","t":8,"d":9,"tags":["race_crowd"],"cap":"Зрители Кубка Вандербильта, 1904","y":1904},
- {"id":"parade1899","title":"File:Automobile parade.ogv","t":18,"d":11,"tags":["car_parade","street1900"],"cap":"Парад автомобилей, 1899","y":1899},
- {"id":"parade1899b","title":"File:Automobile parade.ogv","t":60,"d":11,"tags":["horse_cart","car_parade"],"cap":"Экипажи и моторы, 1899","y":1899},
- {"id":"gp1906a","title":"File:Shepard Calais 1906 FrenchGP.ogv","t":5,"d":13,"tags":["race_run"],"cap":"Гран-при Франции, 1906","y":1906},
- {"id":"gp1906b","title":"File:Aldo weilschott 1906 gp startline.ogv","t":0.5,"d":13,"tags":["race_start"],"cap":"Старт Гран-при, 1906","y":1906},
- {"id":"expo1900","title":"File:Panoramic view of the Place de l'Concord.ogv","t":36,"d":12,"tags":["expo1900","street1900"],"cap":"Всемирная выставка, Париж, 1900","y":1900},
- {"id":"expo1900b","title":"File:Panoramic view of the Place de l'Concord.ogv","t":66,"d":11,"tags":["horse_cart","expo1900"],"cap":"Площадь Согласия, 1900","y":1900},
- {"id":"sf1906","title":"File:A Trip down market street (1906).webm","t":30,"d":12,"tags":["street1910"],"cap":"Сан-Франциско, 1906","y":1906},
- {"id":"sf1906b","title":"File:A Trip down market street (1906).webm","t":350,"d":11,"tags":["street1910","bus_taxi"],"cap":"Маркет-стрит, 1906","y":1906},
- {"id":"nyc1911","title":"File:Surreal Old Timey Film Of New York City In 1911.webm","t":160,"d":10,"tags":["street1910"],"cap":"Нью-Йорк, 1911","y":1911},
- {"id":"nyc1911b","title":"File:Surreal Old Timey Film Of New York City In 1911.webm","t":28,"d":10,"tags":["street1910","horse_cart"],"cap":"Нью-Йорк, 1911","y":1911},
- {"id":"nyc1911c","title":"File:Surreal Old Timey Film Of New York City In 1911.webm","t":98,"d":10,"tags":["street1910"],"cap":"Бродвей, 1911","y":1911},
- {"id":"tanks1918","title":"File:Tanks of WWI.ogv","t":44,"d":10,"tags":["war_convoy"],"cap":"Фронт, 1918","y":1918},
- {"id":"tanks1918b","title":"File:Tanks of WWI.ogv","t":84,"d":10,"tags":["war_convoy"],"cap":"Танки на поле боя, 1918","y":1918},
- {"id":"vanc1907","title":"File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm","t":448,"d":11,"tags":["horse_cart","street1900"],"cap":"Улица, 1907","y":1907},
- {"id":"vanc1907b","title":"File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm","t":345,"d":11,"tags":["street1900"],"cap":"Трамвай и прохожие, 1907","y":1907},
- {"id":"car1927","title":"File:Two Men Get Into Car And Drive Away (1927).ogg","t":0,"d":10,"tags":["country_road","street1920"],"cap":"Поехали! 1927","y":1927},
- {"id":"lumiere1895","title":"File:La Sortie de l'usine Lumière à Lyon, III.webm","t":1,"d":15,"tags":["factory_work"],"cap":"Рабочие выходят с фабрики, Лион, 1895","y":1895}
+ {
+  "id": "vcup1904",
+  "title": "File:1904 Vanderbil Cup Auto Race LOC 00060758.webm",
+  "t": 38,
+  "d": 10,
+  "tags": [
+   "race_run"
+  ],
+  "cap": "Кубок Вандербильта, 1904",
+  "y": 1904
+ },
+ {
+  "id": "vcup1904b",
+  "title": "File:1904 Vanderbil Cup Auto Race LOC 00060758.webm",
+  "t": 8,
+  "d": 9,
+  "tags": [
+   "race_crowd"
+  ],
+  "cap": "Зрители Кубка Вандербильта, 1904",
+  "y": 1904
+ },
+ {
+  "id": "parade1899",
+  "title": "File:Automobile parade.ogv",
+  "t": 18,
+  "d": 11,
+  "tags": [
+   "car_parade",
+   "street1900"
+  ],
+  "cap": "Парад автомобилей, 1899",
+  "y": 1899
+ },
+ {
+  "id": "parade1899b",
+  "title": "File:Automobile parade.ogv",
+  "t": 60,
+  "d": 11,
+  "tags": [
+   "horse_cart",
+   "car_parade"
+  ],
+  "cap": "Экипажи и моторы, 1899",
+  "y": 1899
+ },
+ {
+  "id": "gp1906a",
+  "title": "File:Shepard Calais 1906 FrenchGP.ogv",
+  "t": 5,
+  "d": 13,
+  "tags": [
+   "race_run"
+  ],
+  "cap": "Гран-при Франции, 1906",
+  "y": 1906
+ },
+ {
+  "id": "gp1906b",
+  "title": "File:Aldo weilschott 1906 gp startline.ogv",
+  "t": 0.5,
+  "d": 13,
+  "tags": [
+   "race_start"
+  ],
+  "cap": "Старт Гран-при, 1906",
+  "y": 1906
+ },
+ {
+  "id": "expo1900",
+  "title": "File:Panoramic view of the Place de l'Concord.ogv",
+  "t": 36,
+  "d": 12,
+  "tags": [
+   "expo1900",
+   "street1900"
+  ],
+  "cap": "Всемирная выставка, Париж, 1900",
+  "y": 1900
+ },
+ {
+  "id": "expo1900b",
+  "title": "File:Panoramic view of the Place de l'Concord.ogv",
+  "t": 66,
+  "d": 11,
+  "tags": [
+   "horse_cart",
+   "expo1900"
+  ],
+  "cap": "Площадь Согласия, 1900",
+  "y": 1900
+ },
+ {
+  "id": "sf1906",
+  "title": "File:A Trip down market street (1906).webm",
+  "t": 30,
+  "d": 12,
+  "tags": [
+   "street1910"
+  ],
+  "cap": "Сан-Франциско, 1906",
+  "y": 1906
+ },
+ {
+  "id": "sf1906b",
+  "title": "File:A Trip down market street (1906).webm",
+  "t": 350,
+  "d": 11,
+  "tags": [
+   "street1910",
+   "bus_taxi"
+  ],
+  "cap": "Маркет-стрит, 1906",
+  "y": 1906
+ },
+ {
+  "id": "nyc1911",
+  "title": "File:Surreal Old Timey Film Of New York City In 1911.webm",
+  "t": 160,
+  "d": 10,
+  "tags": [
+   "street1910"
+  ],
+  "cap": "Нью-Йорк, 1911",
+  "y": 1911
+ },
+ {
+  "id": "nyc1911b",
+  "title": "File:Surreal Old Timey Film Of New York City In 1911.webm",
+  "t": 28,
+  "d": 10,
+  "tags": [
+   "street1910",
+   "horse_cart"
+  ],
+  "cap": "Нью-Йорк, 1911",
+  "y": 1911
+ },
+ {
+  "id": "nyc1911c",
+  "title": "File:Surreal Old Timey Film Of New York City In 1911.webm",
+  "t": 98,
+  "d": 10,
+  "tags": [
+   "street1910"
+  ],
+  "cap": "Бродвей, 1911",
+  "y": 1911
+ },
+ {
+  "id": "tanks1918",
+  "title": "File:Tanks of WWI.ogv",
+  "t": 44,
+  "d": 10,
+  "tags": [
+   "war_convoy"
+  ],
+  "cap": "Фронт, 1918",
+  "y": 1918
+ },
+ {
+  "id": "tanks1918b",
+  "title": "File:Tanks of WWI.ogv",
+  "t": 84,
+  "d": 10,
+  "tags": [
+   "war_convoy"
+  ],
+  "cap": "Танки на поле боя, 1918",
+  "y": 1918
+ },
+ {
+  "id": "vanc1907",
+  "title": "File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm",
+  "t": 448,
+  "d": 11,
+  "tags": [
+   "horse_cart",
+   "street1900"
+  ],
+  "cap": "Улица, 1907",
+  "y": 1907
+ },
+ {
+  "id": "vanc1907b",
+  "title": "File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm",
+  "t": 345,
+  "d": 11,
+  "tags": [
+   "street1900"
+  ],
+  "cap": "Трамвай и прохожие, 1907",
+  "y": 1907
+ },
+ {
+  "id": "car1927",
+  "title": "File:Two Men Get Into Car And Drive Away (1927).ogg",
+  "t": 0,
+  "d": 10,
+  "tags": [
+   "country_road",
+   "street1920"
+  ],
+  "cap": "Поехали! 1927",
+  "y": 1927
+ },
+ {
+  "id": "lumiere1895",
+  "title": "File:La Sortie de l'usine Lumière à Lyon, III.webm",
+  "t": 1,
+  "d": 15,
+  "tags": [
+   "factory_work"
+  ],
+  "cap": "Рабочие выходят с фабрики, Лион, 1895",
+  "y": 1895
+ },
+ {
+  "id": "glidden1905",
+  "title": "File:Glidden-Tour-1905.ogv",
+  "t": 16,
+  "d": 12,
+  "tags": [
+   "race_run",
+   "country_road"
+  ],
+  "cap": "Глидденский автопробег, 1905",
+  "y": 1905
+ },
+ {
+  "id": "glidden1905b",
+  "title": "File:Glidden-Tour-1905.ogv",
+  "t": 30,
+  "d": 11,
+  "tags": [
+   "race_crowd",
+   "race_run"
+  ],
+  "cap": "Машины Глидденского тура и публика, 1905",
+  "y": 1905
+ },
+ {
+  "id": "fordT1919",
+  "title": "File:Ford Model T Assembly Line(1919).webm",
+  "t": 25,
+  "d": 12,
+  "tags": [
+   "assembly_line",
+   "factory_work"
+  ],
+  "cap": "Конвейер «Форда», 1919",
+  "y": 1919
+ },
+ {
+  "id": "fordT1919b",
+  "title": "File:Ford Model T Assembly Line(1919).webm",
+  "t": 272,
+  "d": 12,
+  "tags": [
+   "assembly_line"
+  ],
+  "cap": "Сборка «Модели Т», 1919",
+  "y": 1919
+ },
+ {
+  "id": "fordA1930",
+  "title": "File:Ford assembly line(1930).webm",
+  "t": 40,
+  "d": 12,
+  "tags": [
+   "assembly_line"
+  ],
+  "cap": "Конвейер «Форда», 1930",
+  "y": 1930
+ },
+ {
+  "id": "fordT1924",
+  "title": "File:Model T assembling circa 1924.webm",
+  "t": 12,
+  "d": 12,
+  "tags": [
+   "factory_work",
+   "assembly_line"
+  ],
+  "cap": "Моторный цех «Форда», 1924",
+  "y": 1924
+ },
+ {
+  "id": "fordT1924b",
+  "title": "File:Model T assembling circa 1924.webm",
+  "t": 55,
+  "d": 10,
+  "tags": [
+   "country_road",
+   "street1920"
+  ],
+  "cap": "«Модели Т» на природе, 1924",
+  "y": 1924
+ },
+ {
+  "id": "ford1916",
+  "title": "File:Henry Ford clips.webm",
+  "t": 12,
+  "d": 12,
+  "tags": [
+   "factory_work"
+  ],
+  "cap": "Цех «Форда», 1916",
+  "y": 1916
+ },
+ {
+  "id": "fordson1917",
+  "title": "File:Henry Ford clips.webm",
+  "t": 165,
+  "d": 10,
+  "tags": [
+   "farm_tractor"
+  ],
+  "cap": "Трактор «Фордзон»",
+  "y": 1917
+ },
+ {
+  "id": "salon1919",
+  "title": "File:Foule au 15ème Salon de l'automobile - AI111244.webm",
+  "t": 3,
+  "d": 12,
+  "tags": [
+   "motor_show",
+   "street1920"
+  ],
+  "cap": "Автосалон в Гран-Пале, Париж, 1919",
+  "y": 1919
+ },
+ {
+  "id": "salon1921",
+  "title": "File:La foule au salon de l'automobile au Grand Palais - AI49553.webm",
+  "t": 76,
+  "d": 12,
+  "tags": [
+   "motor_show",
+   "street1920"
+  ],
+  "cap": "У Автосалона, Париж, 1921",
+  "y": 1921
+ },
+ {
+  "id": "salon1926",
+  "title": "File:Visite du président Doumergue au vingtième salon de l'automobile dans le Grand-Palais - AI53404.webm",
+  "t": 27,
+  "d": 12,
+  "tags": [
+   "motor_show"
+  ],
+  "cap": "Президент Думерг на Автосалоне, 1926",
+  "y": 1926
+ },
+ {
+  "id": "rai1923",
+  "title": "File:Autotentoonstelling in het rai gebouw-29098.ogv",
+  "t": 78,
+  "d": 9,
+  "tags": [
+   "motor_show"
+  ],
+  "cap": "Автовыставка в Амстердаме, 1923",
+  "y": 1923
+ },
+ {
+  "id": "london1903",
+  "title": "File:Old London Street Scenes (1903).webm",
+  "t": 170,
+  "d": 12,
+  "tags": [
+   "street1900",
+   "bus_taxi"
+  ],
+  "cap": "Лондон, 1903",
+  "y": 1903
+ },
+ {
+  "id": "champs1900",
+  "title": "File:Driving scene on the Champs Elysees.ogv",
+  "t": 18,
+  "d": 12,
+  "tags": [
+   "street1900",
+   "horse_cart"
+  ],
+  "cap": "Елисейские поля, 1900",
+  "y": 1900
+ },
+ {
+  "id": "opera1900",
+  "title": "File:Panorama of Place de L'Opera (1900).webm",
+  "t": 6,
+  "d": 12,
+  "tags": [
+   "street1900",
+   "bus_taxi"
+  ],
+  "cap": "Площадь Оперы, Париж, 1900",
+  "y": 1900
+ },
+ {
+  "id": "moscow1908",
+  "title": "File:Moscow clad in snow - Moscou sur la neige - Москва в снежном убранстве - Москва в снегу (1908), noaudio.ogv",
+  "t": 100,
+  "d": 12,
+  "tags": [
+   "street_ru",
+   "horse_cart"
+  ],
+  "cap": "Москва в снегу, 1908",
+  "y": 1908
+ },
+ {
+  "id": "moscow1908b",
+  "title": "File:Moscow clad in snow - Moscou sur la neige - Москва в снежном убранстве - Москва в снегу (1908), noaudio.ogv",
+  "t": 175,
+  "d": 10,
+  "tags": [
+   "street_ru"
+  ],
+  "cap": "Москва, 1908",
+  "y": 1908
+ },
+ {
+  "id": "flight1909",
+  "title": "File:First flights in aviation history.ogv",
+  "t": 42,
+  "d": 12,
+  "tags": [
+   "aviation"
+  ],
+  "cap": "Первые полёты",
+  "y": 1909
+ },
+ {
+  "id": "armistice1918",
+  "title": "File:Armistice Day 1918 - No sound.webm",
+  "t": 10,
+  "d": 12,
+  "tags": [
+   "armistice"
+  ],
+  "cap": "Перемирие! 11 ноября 1918",
+  "y": 1918
+ },
+ {
+  "id": "moscow1919",
+  "title": "File:Kinonedelja No. 31 (1919).webm",
+  "t": 42,
+  "d": 12,
+  "tags": [
+   "war_convoy",
+   "street_ru"
+  ],
+  "cap": "Москва, 1919",
+  "y": 1919
+ },
+ {
+  "id": "train1896",
+  "title": "File:Arrivée d'un train à Perrache - Court métrage 1896.webm",
+  "t": 1,
+  "d": 12,
+  "tags": [
+   "train_steam"
+  ],
+  "cap": "Прибытие поезда, Лион, 1896",
+  "y": 1896
+ },
+ {
+  "id": "flood1910",
+  "title": "File:Crue de la Seine - AI48953.webm",
+  "t": 195,
+  "d": 12,
+  "tags": [
+   "flood1910"
+  ],
+  "cap": "Наводнение в Париже, 1910",
+  "y": 1910
+ },
+ {
+  "id": "ciotat1896",
+  "title": "File:Ateliers de La Ciotat - Court métrage 1896.webm",
+  "t": 4,
+  "d": 12,
+  "tags": [
+   "factory_work"
+  ],
+  "cap": "Мастерские Ла-Сьота, 1896",
+  "y": 1896
+ },
+ {
+  "id": "crowd1900",
+  "title": "File:Breaking of the crowd at military review at Longchamps.ogv",
+  "t": 3,
+  "d": 12,
+  "tags": [
+   "race_crowd"
+  ],
+  "cap": "Публика, 1900",
+  "y": 1900
+ },
+ {
+  "id": "depart1896",
+  "title": "File:Départ en voiture - Film 1896.webm",
+  "t": 4,
+  "d": 12,
+  "tags": [
+   "horse_cart"
+  ],
+  "cap": "Отъезд экипажа, 1896",
+  "y": 1896
+ }
 ]

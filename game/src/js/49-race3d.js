@@ -48,7 +48,10 @@ function r3dField(T){
   for(let q=0;q<N;q++){const k=q%nx,j=(q/nx)|0,x=x0+k*S,z=z0+j*S,d=D[q],w=sstep(W/2+9,W/2+110,d);
     let h=B[q]+(fbm2(x/240,z/240,seed,3)-0.47)*2*amp*w+(vnz(x/60,z/60,seed+3)-0.5)*amp*0.18*w;
     if(mount&&I[q]>=0){const side=Sg[q]*(vnz(I[q]/70,0.5,seed+7)>0.5?1:-1),e=Math.max(0,d-W/2-13);h+=side*e*(side>0?0.2:0.26)*(alp?1:0.45)*sstep(0,40,e);}
-    if(alp&&d>200)h+=Math.pow(fbm2(x/500,z/500,seed+11,3),2)*120*sstep(200,600,d);
+    // Альпы: гребни и кулуары (гребенчатый шум с искривлением), а не гладкие конусы
+    if(alp&&d>160){const w=sstep(160,620,d);if(w>0){const wx=x+(fbm2(x/900,z/900,seed+21,2)-0.5)*700,wz=z+(fbm2(x/900+7.3,z/900,seed+22,2)-0.5)*700;
+      let r=0,a=1,f=1/760,pv=1;for(let o=0;o<5;o++){let q=1-Math.abs(vnz(wx*f,wz*f,seed+30+o)*2-1);q*=q;r+=q*a*pv;pv=Math.min(1,q*1.6);a*=0.48;f*=2.13;}
+      h+=(r*105-18)*w;}}
     if(beach&&Sg[q]>0)h-=sstep(W/2+10,W/2+26,d)*2.6;
     H[q]=h;}
   // площадки под приметами (замок, башни): земля ровная вокруг, дальше плавно переходит в склон
@@ -133,7 +136,7 @@ function pTree(t,v){return proto('tree|'+t+'|'+v,(mb,r)=>{
         const up=n[1]<0?[-n[0],-n[1],-n[2]]:n;mb.poly(q,up,c,MID.leaf);mb.poly(q,[-up[0],-up[1],-up[2]],cMul(c,0.7),MID.leaf);}e[2]=0;}
     pBlob(mb,top[0],top[1],0,0.35,0.3,0.35,'#6b5334',r,0,MID.bark);}
   else if(t==='bush'){for(let i=0;i<4;i++)pBlob(mb,(r()-0.5)*1.8,0.6+r()*0.5,(r()-0.5)*1.8,0.7+r()*0.3,0.6+r()*0.2,0.7+r()*0.3,['#4a6f35','#557a3a','#46693a'][(i+v)%3],r,0,undefined,0.3);}
-  else if(t==='rock'){mb.e[3]=txLay('rock',1,1);for(let i=0;i<3;i++)pBlob(mb,(i-1)*0.9+(r()-0.5)*0.4,0.25+r()*0.3,(r()-0.5)*0.8,0.9+r()*0.6,0.55+r()*0.4,0.8+r()*0.5,['#7c766c','#857f74','#716b62'][i],r,1,MID.stone);mb.e[3]=0;}
+  else if(t==='rock'){mb.e[3]=txLay(texLi('cliff')>=0?'cliff':'rock',1,1);for(let i=0;i<3;i++)pBlob(mb,(i-1)*0.9+(r()-0.5)*0.4,0.25+r()*0.3,(r()-0.5)*0.8,0.9+r()*0.6,0.55+r()*0.4,0.8+r()*0.5,['#7c766c','#857f74','#716b62'][i],r,1,MID.stone);mb.e[3]=0;}
   else if(t==='hay'){mb.e[3]=txLay('thatch',1);const c='#c9a64e';for(let k=0;k<5;k++){const y0=k*0.62,y1=(k+1)*0.62,r0=1.9*Math.sqrt(1-Math.pow(y0/3.1,2)),r1=k===4?0.15:1.9*Math.sqrt(1-Math.pow(y1/3.1,2));pTrunk(mb,0,y0,0,0,y1,0,r0,r1,k%2?'#c9a64e':'#bfa048',10,MID.cloth);}mb.e[3]=0;}
   else if(t==='dune'){mb.e[3]=txLay('sand',1,1);pBlob(mb,0,-0.4,0,5.5,2.6,3.6,'#e8d4a0',r,1,MID.stone);mb.e[3]=0;for(let i=0;i<6;i++)pBlob(mb,(r()-0.5)*7,1+r()*0.8,(r()-0.5)*4,0.35,0.3,0.35,'#8a9a5a',r,0,undefined,0.4);}
   else if(t==='cactus'){// опунция (фико д'Индия) Сицилии: плоские «лепёшки» ветками, рыжие плоды
@@ -145,7 +148,7 @@ function pTree(t,v){return proto('tree|'+t+'|'+v,(mb,r)=>{
   else if(t==='stog'){// стог на шесте
     mb.e[3]=txLay('thatch',1);for(let k=0;k<6;k++){const y0=k*0.75,y1=(k+1)*0.75,rr=y=>1.75*Math.pow(Math.max(0,1-y/4.6),0.85);pTrunk(mb,0,y0,0,0,y1,0,rr(y0)+0.02,Math.max(0.1,rr(y1)),k%2?'#b8984e':'#ab8c48',10,MID.cloth);}
     mb.e[3]=0;pTrunk(mb,0,4.2,0,0.05,5.4,0,0.06,0.04,'#6a5440',5,MID.wood);[-1,1].forEach(s2=>pTrunk(mb,0,3.9,0,s2*0.9,4.9,0.2,0.04,0.03,'#6a5440',4,MID.wood));}
-  else if(t==='cliff'){mb.e[3]=txLay('rock',1,1);for(let i=0;i<5;i++)pBlob(mb,(i-2)*2.8+(r()-0.5),2.5+r()*3,(r()-0.5)*1.5,2.2+r()*1.2,3.5+r()*2.5,1.8+r()*0.8,['#8e8676','#857d6e','#7a7264'][i%3],r,1,MID.stone);mb.e[3]=0;pBlob(mb,-3,8,0,1.6,0.5,1,'#6f7d4e',r,0,undefined,0.3);}
+  else if(t==='cliff'){mb.e[3]=txLay(texLi('cliff')>=0?'cliff':'rock',1,1);for(let i=0;i<5;i++)pBlob(mb,(i-2)*2.8+(r()-0.5),2.5+r()*3,(r()-0.5)*1.5,2.2+r()*1.2,3.5+r()*2.5,1.8+r()*0.8,['#8a8680','#7e7a74','#716d68'][i%3],r,1,MID.stone);mb.e[3]=0;pBlob(mb,-3,8,0,1.6,0.5,1,'#6f7d4e',r,0,undefined,0.3);}
   });}
 // Мелочи у дороги (собираются в осях предмета: +x — к дороге, z — вдоль неё)
 function pProp(t,v){return proto('prop|'+t+'|'+v,(mb,r)=>{
@@ -189,7 +192,7 @@ function mbFromMesh(mb,M,o){o=o||{};const lift=o.lift||0.005,step=o.step===undef
   const lum=c=>(c[0]*0.3+c[1]*0.59+c[2]*0.11)/255;
   for(const f of M.F){const mat=MID[f.mat&&f.mat.k]||0,c=f.col,tg=(gm&&f.mat===MATS.glass)?gm:mb;tg.e[0]=f.w||0;tg.e[1]=f.l||0;
     // стены и крыши зданий — фото-материалы (кирпич, штукатурка, камень, доски, черепица, шифер, солома)
-    const lay=o.tex&&!f.point&&tg===mb?faceLay(f):0;tg.e[3]=lay;
+    const lay=o.tex&&!f.point&&tg===mb?faceLay(f):o.car&&!f.point&&tg===mb?carLay(f):0;tg.e[3]=lay;
     if(!f.point){if(f.vn){tg.polyN(f.p,f.n,f.vn,c,mat);if(f.two)tg.polyN(f.p,[-f.n[0],-f.n[1],-f.n[2]],f.vn.map(q=>[-q[0],-q[1],-q[2]]),c,mat);}
       else{tg.poly(f.p,f.n,c,mat);if(f.two)tg.poly(f.p,[-f.n[0],-f.n[1],-f.n[2]],c,mat);}}
     tg.e[3]=0;
@@ -205,11 +208,45 @@ function mbFromMesh(mb,M,o){o=o||{};const lift=o.lift||0.005,step=o.step===undef
           tg.poly([pt(a0,ro),pt(a1,ro),pt(a1,ri),pt(a0,ri)],n,dc,dm);}}
       else if(d.a&&d.b){if(!n)tg.rod(d.a,d.b,Math.max(0.014,d.w),dc,dm);else tg.strip(d.a,d.b,Math.max(o.minW||0.008,d.w),n,dc,dm,L);}}}}
   mb.e[0]=mb.e[1]=0;if(gm){gm.e[0]=gm.e[1]=0;}}
+// Фото-материалы машины и экипажа: кожа сидений, шлемов и краг, дерево колёс и щитка, ткань пыльников и тентов
+function carLay(f){if(TX.st!==2)return 0;const k=f.mat&&f.mat.k;if(k==='leather')return txLay(texLi('leather')>=0?'leather':'wood_wall',1);if(k==='wood')return txLay(texLi('wood_var')>=0?'wood_var':'planks',1);
+  if(k==='cloth'){const c=f.col,l=(c[0]+c[1]+c[2])/3;return txLay(texLi(l>150?'fabric2':'fabric')>=0?(l>150?'fabric2':'fabric'):'plaster',1);}return 0;}
 function pBld(t,v){return proto('bld|'+t+'|'+v,(mb,r)=>{const M=BLD[t](mulberry32(hashStr(t+v)),v||0);const texts=[];mbFromMesh(mb,M,{lift:0.03,step:0.012,minW:0.03,texts,tex:TX.st===2});mb.texts=texts;
   const b=mb.bb,wc=[150,140,125];mb.e[3]=txLay('stone_wall',1);pBox(mb,(b[0]+b[3])/2,-2.4,(b[2]+b[5])/2,(b[3]-b[0])/2*0.96,2.42,(b[5]-b[2])/2*0.96,'#8a8274',MID.stone);mb.e[3]=0;});}
 function pStand(){return proto('stand',(mb)=>{const {M,R2,people}=standModel(1);mbFromMesh(mb,M,{lift:0.03,step:0.01,tex:TX.st===2});mbFromMesh(mb,R2,{lift:0.03,step:0.01});mb.people=people.map(q=>q.p);
   const b=mb.bb;pBox(mb,(b[0]+b[3])/2,-2.2,(b[2]+b[5])/2,(b[3]-b[0])/2*0.95,2.22,(b[5]-b[2])/2*0.95,'#6a5a48',MID.wood);});}
 /* ---------- люди: атлас фигур эпохи (два кадра — машут) ---------- */
+// Атлас зрителей из объёмных моделей (0.18): каждый снимается в 3D с мягким светом (два кадра — стоит и машет)
+function r3dPeopleAtlas3D(y){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96,rnd=mulberry32(hashStr('crowd3|'+y)),era=[1900,1910,1925][y<1906?0:y<1919?1:2],out={crowd:[],marsh:[],gend:[],photo:[]};
+  const lv=Math.floor(Math.log2(W))+1,tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texStorage2D(gl.TEXTURE_2D,lv,gl.RGBA8,W,H);
+  const fbT=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbT);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+  const ms=Math.max(0,Math.min(4,gl.getParameter(gl.MAX_SAMPLES)||0)),cb=gl.createRenderbuffer(),db=gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER,cb);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,ms,gl.RGBA8,W,H);gl.bindRenderbuffer(gl.RENDERBUFFER,db);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,ms,gl.DEPTH_COMPONENT24,W,H);
+  const fbM=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbM);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,cb);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,db);
+  if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('atlas fbo');
+  gl.viewport(0,0,W,H);gl.disable(gl.SCISSOR_TEST);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.enable(gl.SCISSOR_TEST);
+  const E={sun:v3n([-0.45,0.6,0.66]),sunC:[1.75,1.66,1.5],skyC:[0.52,0.56,0.63],gndC:[0.3,0.27,0.22],hzC:[0.7,0.74,0.78],zeC:[0.45,0.55,0.7],fogS:[1,1,1],fogD:0,exp:0.82,night:0,hl:0,lamp:0,envRot:0,envK:0.4};
+  const sv={VP:R3.VP,eye:R3.eye,post:R3.post,shOn:R3.shOn};R3.post=true;R3.shOn=false;const Pm=m4(),V=m4(),VP=m4();
+  let x=2,yy=2,rowH=0;const cell=(w,h)=>{if(x+w*2>W){x=2;yy+=rowH+4;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*2+4;return c;};
+  const shoot=(build,wm,hm,anim)=>{const c=cell(Math.round(wm*ppm),Math.round(hm*ppm));if(c.y+c.h>H)return null;
+    for(let fr=0;fr<2;fr++){const M=new Mesh();build(M,fr);const mb=new MB();mbFromMesh(mb,M,{lift:0.003,step:0.001,car:true});const g=g3Mesh(mb);if(!g)continue;
+      gl.viewport(c.x+fr*c.w,c.y,c.w,c.h);gl.scissor(c.x+fr*c.w,c.y,c.w,c.h);
+      // вверх ногами: верх фигуры — в начале строки атласа (как у прежнего рисованного)
+      const ey=hm*0.5+0.5;m4ortho(Pm,-wm/2,wm/2,hm-0.05-ey,-0.05-ey,0.1,40);const eye=[0,ey,10],f=v3n([0,-0.5,-10]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);m4view(V,eye,rt,up,f);m4mul(VP,Pm,V);R3.VP=VP;R3.eye=eye;
+      const P=r3dUse('atl',E,W,H);gl.uniformMatrix4fv(P.u.u_model,false,m4());g3Draw(g);g3Free(g);}
+    return {u:c.x/W,v:c.y/H,du:c.w/W,dv:c.h/H,w:wm,h:hm,anim:anim?1:0};};
+  try{for(let i=0;i<30;i++){const o=personLook3(rnd,era,'crowd');o.wave=rnd()<0.45;const e=shoot((M,fr)=>mPerson3(M,o,fr),o.item==='umb'?1.2:0.9,o.type==='child'?1.7:2.3,o.wave);if(e){e.child=o.type==='child';out.crowd.push(e);}}
+    for(let v=0;v<2;v++){const o=personLook3(rnd,era,'marsh');const e=shoot((M,fr)=>mPerson3(M,o,fr),1.9,2.45,1);if(e)out.marsh.push(e);}
+    {const o=personLook3(rnd,era,'gend');const e=shoot((M,fr)=>mPerson3(M,o,0),0.9,2.1,0);if(e)out.gend.push(e);}
+    {const o=Object.assign(personLook3(rnd,era,'crowd'),{type:'man',hat:'cap',hatc:'#3a3026',frock:false});const e=shoot((M,fr)=>mPhotographer(M,o),1.9,2.1,0);if(e)out.photo.push(e);}}
+  finally{gl.disable(gl.SCISSOR_TEST);Object.assign(R3,sv);}
+  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,fbM);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,fbT);gl.blitFramebuffer(0,0,W,H,0,0,W,H,gl.COLOR_BUFFER_BIT,gl.NEAREST);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);[fbM,fbT].forEach(f=>gl.deleteFramebuffer(f));[cb,db].forEach(b=>gl.deleteRenderbuffer(b));
+  gl.bindTexture(gl.TEXTURE_2D,tex);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.enable(gl.CULL_FACE);gl.viewport(0,0,G3.cv.width,G3.cv.height);
+  if(!out.crowd.length||!out.marsh.length||!out.gend.length||!out.photo.length){gl.deleteTexture(tex);throw new Error('atlas empty');}
+  return {a:out,t:tex};}
 function r3dPeopleAtlas(y){
   const S=1024,cv=mkCanvas(S,S),g=cv.getContext('2d'),P=48,cw=P,ch=Math.round(P*2.3),rnd=mulberry32(hashStr('crowd'+y)),out={crowd:[],marsh:[],gend:[],photo:[]};let x=0,yy=0,rowH=0;
   const cell=(w,h)=>{if(x+w*2>S){x=0;yy+=rowH+2;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*2+2;return c;};
@@ -354,7 +391,7 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
   return {g:g3Mesh(mb),t:g3Mesh(trees),l:g3Mesh(leaf),c:[(x0+x1)/2,0,(z0+z1)/2]};}
 /* ---------- машины: модель из 46-models.js, колёса крутятся, кузов кренится ---------- */
 function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.mech?1:0,spec.b,spec.y,spec.hp===undefined?'':spec.hp,spec.strip?1:0,spec.acc||'',spec.lux?1:0,spec.mq||'',spec.num||0].join('|')+(near?'|h':'|l');let m=R3.carM.get(key);if(m)return m;
-  const M=carModel(Object.assign({},spec,{lod:near?'hi':'lo'})),op=new MB(),gl=new MB();mbFromMesh(op,M,{lift:0.004,step:0.0016,glass:gl});
+  const M=carModel(Object.assign({},spec,{lod:near?'hi':'lo'})),op=new MB(),gl=new MB();mbFromMesh(op,M,{lift:0.004,step:0.0016,glass:gl,car:true});
   const wc=new Float32Array(24);(M.wheels||[]).slice(0,6).forEach((w,k)=>wc.set(w,k*4));
   m={op:g3Mesh(op),gl:g3Mesh(gl),wc,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42)};R3.carM.set(key,m);return m;}
 function r3dCarState(c){if(!c.v3)c.v3={roll:0,pitch:0,heave:0,vr:0,vp:0,vh:0,spin:0,vxp:c.vx,ax:0,mk:[null,null],dust:0,y:null};return c.v3;}
@@ -363,7 +400,9 @@ function r3dCarState(c){if(!c.v3)c.v3={roll:0,pitch:0,heave:0,vr:0,vp:0,vh:0,spi
 function r3dLayers(T,F){const cfg=T.cfg,set=SCEN_SETS[cfg.host],L=k=>Math.max(0,texLi(k)),snowy=cfg.terr==='snow',sandy=cfg.terr==='sand'||cfg.terr==='beach',dry=!!set.dry||['it','es','ly','mc'].includes(cfg.host);
   const base=snowy?'snow':sandy?'sand':dry?'meadow_dry':'meadow',alt=dry||sandy?'dry_grass':'meadow_dry',cov=snowy||(set.snow&&F.mount)?'snow':'sand';
   let hMin=1e9;T.pts.forEach(p=>{hMin=Math.min(hMin,p[1]);});
-  return {tl:[L(base),L(alt),L('dirt'),L('rock')],tl2:[L(cov),L('forest'),L('grass'),0],tp:[set.snow&&F.mount&&!snowy?hMin+80:1e5,45,F.mount?1:set.mount||cfg.uphill?0.75:0.35,0]};}
+  // снег на вершинах: летом — только высоко (у дороги перевала его нет), зимой и весной — ниже
+  const m=T.rc.m||6,summer=m>=5&&m<=9,rockK=texLi('cliff')>=0?'cliff':'rock';
+  return {tl:[L(base),L(alt),L('dirt'),L(rockK)],tl2:[L(cov),L('forest'),L('grass'),0],tp:[set.snow&&F.mount&&!snowy?hMin+(summer?340:120):1e5,summer?70:45,F.mount?1:set.mount||cfg.uphill?0.75:0.35,0]};}
 function r3dSetup(){
   const cv=document.getElementById('rgl');cv.hidden=false;document.getElementById('rcv').hidden=true;
   if(!g3Init(cv))throw new Error('no webgl2');
@@ -376,7 +415,7 @@ function r3dSetup(){
   R3.F=r3dField(T);R3.W=R.wx||r3dWeather(T);R3.sky=tx.sky[R3.W.mood]||tx.sky.clear||Object.values(tx.sky)[0]||null;
   // фактуры, не зависящие от трассы, живут, пока жив 3D-контекст: следующая гонка стартует быстрее
   const C=G3.cache,era=R.rc.y<1906?0:R.rc.y<1919?1:2;
-  if(!C['atlas'+era]){const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+era]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}R3.atlas=C['atlas'+era].a;R3.texPeople=C['atlas'+era].t;
+  if(!C['atlas'+era]){try{C['atlas'+era]=r3dPeopleAtlas3D([1900,1910,1925][era]);}catch(e){console.warn('atlas3d',e);const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+era]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}}R3.atlas=C['atlas'+era].a;R3.texPeople=C['atlas'+era].t;
   const M=r3dMaps(T,R3.F,R3.W);R3.texCM=g3TexBytes(M.SZ,M.A);R3.texSM=g3TexBytes(M.SZ,M.B);R3.cmU=M.u;R3.lays=r3dLayers(T,R3.F);
   // карта земли для физики (поле, лес, песок) — уменьшенная копия
   {const S=256,st=M.SZ/S,sm=new Uint8Array(S*S*4);for(let j=0;j<S;j++)for(let i=0;i<S;i++){const o=(Math.floor(j*st)*M.SZ+Math.floor(i*st))*4,q=(j*S+i)*4;sm[q]=M.B[o];sm[q+1]=M.B[o+1];sm[q+2]=M.B[o+2];sm[q+3]=M.B[o+3];}R3.smap=sm;R3.smapS=S;}
@@ -462,7 +501,9 @@ function r3dCamera(dt,W,H){
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}
       if(need<=0.02)break;if(need>2.5&&Dd>3.4)Dd*=0.8;else{ey+=need;break;}}
     cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*6);
-    eye=[F.x-fw[0]*cm.dd+sh[0],Math.max(cm.ey,ey-0.6)+sh[1],F.z-fw[2]*cm.dd];look=[F.x+fw[0]*A,cm.y+LH,F.z+fw[2]*A];}
+    // на подъёме смотрим на дорогу впереди, а не в землю
+    const T3=R3.T,ia=T3.closed?(F.idx+Math.round(A/T3.step))%T3.n:Math.min(T3.n-1,F.idx+Math.round(A/T3.step)),rise=clamp(T3.pts[ia][1]-cm.y,-3,6);cm.rise=cm.rise===undefined?rise:cm.rise+(rise-cm.rise)*Math.min(1,dt*3);
+    eye=[F.x-fw[0]*cm.dd+sh[0],Math.max(cm.ey,ey-0.6)+sh[1]+Math.max(0,cm.rise)*0.25,F.z-fw[2]*cm.dd];look=[F.x+fw[0]*A,cm.y+LH+cm.rise*0.85,F.z+fw[2]*A];}
   const f=v3n([look[0]-eye[0],look[1]-eye[1],look[2]-eye[2]]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);
   const asp=W/H,hf=v===2?1.1:1.05;let vf0=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.95;if(2*Math.atan(Math.tan(vf0/2)*asp)>1.75)vf0=2*Math.atan(Math.tan(0.875)/asp);cm.fov+=((1+sp*0.15)-cm.fov)*Math.min(1,dt*2);
   const vf=Math.min(1.55,vf0*cm.fov);R3.eye=eye;R3.camR=rt;R3.camU=up;R3.camF=f;
@@ -653,6 +694,11 @@ function r3dCarUpdate(c,dt,E){
 }
 // Вода и грязь из-под колёс: водяная пыль на мокрой дороге, веер брызг в луже, комья грязи; колея в грязи
 function r3dWetFx(c,st,yc,fw,rt,v,bx,bz,me,rain,dt){
+  // машина пачкается: пыль сухого грунта (светлая), брызги луж и грязь (тёмная, быстро)
+  {const s=c.surf||'',dry=!rain&&(s==='dirt'||s==='mount'||s==='macadam'||s==='sand'||s==='dune'||s==='beach'),mud=s==='mudhole'||s==='mud'||(rain&&(s==='dirt'||s==='mount'||s==='field'||s==='grass'||s==='verge'))||(c.off&&(s==='field'||s==='forest'));
+    const k=Math.min(1,v/14)*dt*(s==='mudhole'?0.09:mud?0.012:s==='puddle'?0.02:dry?0.0035:0),tgt=mud||s==='puddle'?[0.075,0.058,0.04]:[0.36,0.3,0.22];
+    if(k>0){st.dirt=Math.min(0.95,(st.dirt||0)+k);const d=st.dirtC||(st.dirtC=tgt.slice()),w=Math.min(1,k*6);for(let q=0;q<3;q++)d[q]+=(tgt[q]-d[q])*w;}
+    else if(rain&&st.dirt>0.35&&!c.tun)st.dirt-=dt*0.002;}
   if(c.surfIn>0){const k=c.surfIn,mud=c.surf==='mudhole';c.surfIn=0;r3dSplash(c,yc,fw,rt,v,k,mud);if(me)try{auSfx(mud?'mud':'splash',Math.min(1,0.35+k*0.5));}catch(_){}if(me&&k>0.6)R.shake=Math.max(R.shake,0.18+k*0.12);}
   const pud=c.surf==='puddle'||c.surf==='mudhole';
   if(pud&&v>3){st.spl=(st.spl||0)+dt*v*(me?0.9:1.4);while(st.spl>1){st.spl-=1;r3dSplash(c,yc,fw,rt,v,0.08,c.surf==='mudhole');}}
@@ -675,7 +721,7 @@ function r3dSplash(c,yc,fw,rt,v,k,mud){const col=mud?[92,74,52]:[214,222,230],n=
   for(let q=0;q<n;q++){const sd=Math.random()<0.5?-1:1,al=(Math.random()-0.35)*1.8,ox=c.x+fw[0]*al+rt[0]*sd*0.75,oz=c.z+fw[2]*al+rt[2]*sd*0.75,out=1.2+v*(0.08+Math.random()*0.12);
     r3dPart(ox,yc+0.15,oz,rt[0]*sd*out+fw[0]*v*0.3*Math.random(),1.2+v*0.1*Math.random()+Math.random()*2,rt[2]*sd*out+fw[2]*v*0.3*Math.random(),mud?0.11:0.09,mud?0.1:0.3,0.7+Math.random()*0.5,col,mud?0.95:0.6,1);}
   if(!mud&&k>0.3)for(let q=0;q<Math.round(6*k);q++)r3dPart(c.x+(Math.random()-0.5)*2,yc+0.5,c.z+(Math.random()-0.5)*2,(Math.random()-0.5)*2+fw[0]*v*0.3,0.8+Math.random(),(Math.random()-0.5)*2+fw[2]*v*0.3,0.6,2.2,1.1,[235,240,244],0.25);}
-function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
+function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);if(P.u.u_dirt){const d=st.dirtC||[0.3,0.25,0.18];gl.uniform4f(P.u.u_dirt,d[0],d[1],d[2],st.dirt||0);}gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
 function r3dDrawCars(E,bw,bh,glass){const gl=G3.gl,P=r3dUse('car',E,bw,bh);
   R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);
     if(glass&&!m.gl)return;r3dCarUniforms(P,c,st,m);gl.uniform4f(P.u.u_lamp,c.brk>0.3&&c.vx>1?1:0,E.hl,0,0);if(P.u.u_dark)gl.uniform1f(P.u.u_dark,tunDark(c));g3Draw(glass?m.gl:m.op);});

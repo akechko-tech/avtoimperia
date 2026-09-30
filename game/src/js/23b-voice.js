@@ -10,7 +10,9 @@ function voiceLoad(){if(VOICE.idx)return Promise.resolve(VOICE.idx);if(VOICE.loa
     try{const s=document.createElement('script');s.src='voice/index.js';s.async=true;s.onload=()=>{VOICE.idx=window.VOICE_INDEX||{};res(VOICE.idx);};s.onerror=()=>{VOICE.idx={};res(VOICE.idx);};document.head.appendChild(s);}catch(e){VOICE.idx={};res(VOICE.idx);}});
   return VOICE.loadP;}
 function voiceDur(text,spk){const d=VOICE.idx&&VOICE.idx[voiceHash(text,spk)];return d||0;}
-function voiceUrl(text,spk){return 'voice/'+voiceHash(text,spk)+'.mp3';}
+// В приложении (страница с file://) звук голоса берётся с сайта игры; без сети — говорит голос телефона
+const VOICE_REMOTE='https://akechko-tech.github.io/avtoimperia/';
+function voiceUrl(text,spk){return (location.protocol==='file:'?VOICE_REMOTE:'')+'voice/'+voiceHash(text,spk)+'.mp3';}
 // Разрешить звук: браузеры дают играть голос только после нажатия — «разогреваем» проигрыватель прямо в обработчике нажатия
 function voiceUnlock(){if(VOICE.unlocked)return;try{const a=VOICE.el||(VOICE.el=new Audio());a.src=VOICE_SILENT;const p=a.play();if(p&&p.then)p.then(()=>{VOICE.unlocked=true;}).catch(()=>{});else VOICE.unlocked=true;}catch(e){}}
 // Сказать строку. Возвращает длительность в секундах (0 — голоса нет); onEnd — когда договорит

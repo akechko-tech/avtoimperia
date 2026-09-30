@@ -72,7 +72,13 @@ function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
     for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)>R||Math.abs(dd.e)>bank+30)continue;
       const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const bedL=Math.min(bed,F.H[q]-rv.d*0.7),h=F.H[q]+(bedL-F.H[q])*sstep(0,1,prof*1.4);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
   let yMin=1e9;P.forEach(p=>{yMin=Math.min(yMin,p[1]);});
-  (trk.coast||[]).forEach(c=>{const sea=yMin-4;c.sea=sea;
-    for(let i=c.i0;i<=c.i1;i+=2){const p=P[i],nn=trk.N[i];for(let a=16;a<520;a+=6){const x=p[0]+nn[0]*c.side*(trk.W/2+a),z=p[2]+nn[1]*c.side*(trk.W/2+a);
-      const k=Math.round((x-F.x0)/F.S),j=Math.round((z-F.z0)/F.S);if(k<0||j<0||k>=F.nx||j>=F.nz)continue;const q=j*F.nx+k,w=sstep(16,60,a),tg=p[1]+(sea-6-p[1])*w;
-      for(const qq of [q,q+1,q-1,q+F.nx,q-F.nx])if(qq>=0&&qq<F.H.length&&F.D[qq]>trk.W/2+14){F.H[qq]=Math.min(F.H[qq],tg);F.G[qq]=Math.min(F.G[qq],F.H[qq]);}}}});}
+  if(!(trk.coast||[]).length)return;
+  // 0.18: берег без «игл». Каждой клетке — ближайшая точка дороги (волной от известных клеток); море — там, где ближайшая
+  // точка — на участке берега и клетка по морскую сторону; суша — всегда выше уровня моря (нет случайных «озёр» в низинах)
+  const sea=yMin-4,N=F.nx*F.nz,Ii=new Int32Array(N),Q=new Int32Array(N);let qh=0,qt=0;for(let q=0;q<N;q++){Ii[q]=F.I[q];if(Ii[q]>=0)Q[qt++]=q;}
+  while(qh<qt){const q=Q[qh++],k=q%F.nx,i=Ii[q];for(const qq of [k>0?q-1:-1,k<F.nx-1?q+1:-1,q-F.nx,q+F.nx]){if(qq<0||qq>=N||Ii[qq]>=0)continue;Ii[qq]=i;Q[qt++]=qq;}}
+  (trk.coast||[]).forEach(c=>{c.sea=sea;});
+  for(let q=0;q<N;q++){const i=Ii[q];if(i<0)continue;const x=F.x0+(q%F.nx)*F.S,z=F.z0+Math.floor(q/F.nx)*F.S,p=P[i],nn=trk.N[i],sd=(x-p[0])*nn[0]+(z-p[2])*nn[1];let carved=false;
+    for(const c of trk.coast){if(i<c.i0-12||i>c.i1+12||sd*c.side<=0)continue;const d=Math.hypot(x-p[0],z-p[2]);if(d<=trk.W/2+14)continue;
+      const ends=sstep(-12,14,Math.min(i-c.i0,c.i1-i)),w=sstep(16,70,d-trk.W/2)*ends,tg=p[1]+(sea-6-p[1])*w;if(w>0.02){F.H[q]=Math.min(F.H[q],tg);F.G[q]=Math.min(F.G[q],F.H[q]);carved=w>0.5;}}
+    if(!carved&&F.H[q]<sea+0.8){F.H[q]=sea+0.8;F.G[q]=Math.max(F.G[q],F.H[q]-0.45);}}}

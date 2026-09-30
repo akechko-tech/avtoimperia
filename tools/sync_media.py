@@ -3,7 +3,7 @@
   docs/film    — отобранная кинохроника (+ index.js: window.FILMS_INDEX — метки → ролики)
   docs/voice   — голос диктора (+ index.js: window.VOICE_INDEX — ключ строки → длительность)
 Запуск: python3 tools/sync_media.py [samples] [film] [voice]  (без аргументов — всё)"""
-import json, os, subprocess, sys
+import json, os, subprocess, sys, shutil, base64
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, 'docs')
@@ -27,7 +27,10 @@ def samples():
         if f.endswith('.mp3') or f.endswith('.json'): n += pull(f, os.path.join(D, os.path.basename(f)))
     idx = json.load(open(os.path.join(D, 'index.json')))
     open(os.path.join(D, 'index.js'), 'w').write('window.SAMPLES_INDEX=' + json.dumps(idx, separators=(',', ':')) + ';\n')
-    print('samples: updated', n, 'instruments', len(idx['inst']))
+    # для APK (страница с file://: fetch не работает) — те же mp3 внутри скрипта
+    pack = {k: base64.b64encode(open(os.path.join(D, I['file']), 'rb').read()).decode('ascii') for k, I in idx['inst'].items() if os.path.exists(os.path.join(D, I['file']))}
+    open(os.path.join(D, 'pack.js'), 'w').write('window.SAMPLES_PACK=' + json.dumps(pack, separators=(',', ':')) + ';\n')
+    print('samples: updated', n, 'instruments', len(idx['inst']), 'pack', round(os.path.getsize(os.path.join(D, 'pack.js')) / 1e6, 1), 'MB')
 
 def film():
     D = os.path.join(DOCS, 'film'); n = 0
@@ -46,15 +49,31 @@ def film():
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.FILMS_INDEX=' + json.dumps({'clips': clips, 'tags': tags}, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('film: updated', n, 'clips', len(clips), 'tags', {k: len(v) for k, v in tags.items()})
 
+def _enc(a):
+    src, dst = a
+    r = subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', src, '-ac', '1', '-ar', '24000', '-b:a', '32k', '-codec:a', 'libmp3lame', dst])
+    return r.returncode == 0
+
 def voice():
-    D = os.path.join(DOCS, 'voice'); n = 0
+    """Голос: 48 кбит/с из ветки media пережимается в 32 кбит/с (речь звучит так же, файлы на треть меньше)."""
+    import tempfile
+    from multiprocessing import Pool
+    D = os.path.join(DOCS, 'voice'); os.makedirs(D, exist_ok=True); n = 0
     idx = json.loads(git('show', 'origin/media:media/voice/index.json'))
     have = {os.path.basename(f) for f in files('media/voice')}
+    tmp = tempfile.mkdtemp(); jobs = []
     for h in idx:
-        if h + '.mp3' in have: n += pull('media/voice/%s.mp3' % h, os.path.join(D, h + '.mp3'))
+        if h + '.mp3' not in have: continue
+        dst = os.path.join(D, h + '.mp3')
+        if os.path.exists(dst): continue
+        src = os.path.join(tmp, h + '.mp3'); open(src, 'wb').write(git('show', 'origin/media:media/voice/%s.mp3' % h, binary=True)); jobs.append((src, dst))
+    with Pool(max(2, os.cpu_count() or 2)) as P: n = sum(P.map(_enc, jobs))
+    shutil.rmtree(tmp, ignore_errors=True)
     ok = {h: d for h, d in idx.items() if h + '.mp3' in have}
+    for f in os.listdir(D):
+        if f.endswith('.mp3') and f[:-4] not in ok: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w').write('window.VOICE_INDEX=' + json.dumps(ok, separators=(',', ':')) + ';\n')
-    print('voice: updated', n, 'lines', len(ok))
+    print('voice: encoded', n, 'lines', len(ok))
 
 if __name__ == '__main__':
     git('fetch', '-q', 'origin', 'media')

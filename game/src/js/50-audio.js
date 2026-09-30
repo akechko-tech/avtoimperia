@@ -27,12 +27,17 @@ const INS={idx:null,buf:{},dead:{},loadP:null};
 function insLoad(){if(INS.loadP)return INS.loadP;
   INS.loadP=new Promise(res=>{const go=()=>{INS.idx=window.SAMPLES_INDEX||null;if(!INS.idx||!AU.ctx){res(false);return;}
       const L=Object.keys(INS.idx.inst);let left=L.length;
-      L.forEach(k=>{const I=INS.idx.inst[k];fetch('samples/'+I.file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(b=>new Promise((ok,no)=>AU.ctx.decodeAudioData(b,ok,no))).then(B=>{INS.buf[k]=B;
+      // сэмпл: из сети (сайт) или из pack.js (приложение открыто с file:// — там fetch не работает)
+      const bytes=k=>{const P=window.SAMPLES_PACK;if(P&&P[k]){const s=atob(P[k]),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return Promise.resolve(u.buffer);}
+        return fetch('samples/'+INS.idx.inst[k].file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();});};
+      L.forEach(k=>{const I=INS.idx.inst[k];bytes(k).then(b=>new Promise((ok,no)=>AU.ctx.decodeAudioData(b,ok,no))).then(B=>{INS.buf[k]=B;
           // «пустые» ячейки (нота вне диапазона инструмента) — не брать
           const d=B.getChannelData(0),sr=B.sampleRate,n=(I.notes||I.hits||[]).length,dead=[];for(let q=0;q<n;q++){let e=0,c=0;for(let j=Math.floor(q*I.slot*sr),m=Math.min(d.length,j+Math.floor(0.4*sr));j<m;j+=7){e+=d[j]*d[j];c++;}if(c&&Math.sqrt(e/c)<0.004)dead.push(q);}INS.dead[k]=dead;})
         .catch(()=>{}).finally(()=>{if(--left<=0)res(true);});});};
-    if(window.SAMPLES_INDEX){go();return;}
-    try{const s=document.createElement('script');s.src='samples/index.js';s.async=true;s.onload=go;s.onerror=()=>res(false);document.head.appendChild(s);}catch(e){res(false);}});
+    const file=location.protocol==='file:',js=(src,cb,fail)=>{try{const s=document.createElement('script');s.src=src;s.async=true;s.onload=cb;s.onerror=fail;document.head.appendChild(s);}catch(e){fail();}};
+    const ready=()=>file&&!window.SAMPLES_PACK?js('samples/pack.js',go,go):go();
+    if(window.SAMPLES_INDEX){ready();return;}
+    js('samples/index.js',ready,()=>res(false));});
   return INS.loadP;}
 // Нота инструмента: n — MIDI, t — время, dur — длина, v — громкость (0…1), dest — куда (по умолчанию музыка)
 function inst(name,n,t,dur,v,dest){const I=INS.idx&&INS.idx.inst[name],B=INS.buf[name],c=AU.ctx;
