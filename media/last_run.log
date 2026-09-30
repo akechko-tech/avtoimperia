@@ -1,11 +1,3 @@
-== job voice5
-voice5 25 lines 14 s
-voice5 50 lines 26 s
-voice5 75 lines 37 s
-voice5 100 lines 48 s
-voice5 125 lines 55 s
-voice5 150 lines 59 s
-voice5 175 lines 63 s
-voice5 200 lines 67 s
-voice5 done 223 new lines; total 1868 v5 1868
-== job voice5 took 84 s
+== job faces
+job failed faces AttributeError("module 'cv2' has no attribute 'CascadeClassifier'")
+== job faces took 0 s
