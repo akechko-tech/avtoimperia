@@ -94,6 +94,7 @@ function crashResolve(c){const K=c.crash;c.crash=null;if(!K||c.dnf||c.fin!==null
     if(c.you)rMsgT(`${c.player?'':(c.drvName||c.label)+': '}${what.toUpperCase()}! ${soft?'Выбираемся':c.st&&c.st.mech?'Механик чинит':'Ремонт'} — ~${Math.round(t)} с`,2.6);}
   if(me){R.shake=Math.min(1.2,0.5+imp*0.05);try{auSfx('crash',Math.min(1,imp/12));if(kind==='tree'||kind==='fence'||kind==='cart'||kind==='soft')auSfx('wood',kind==='soft'?0.5:1);}catch(_){}
     try{if(c.player&&navigator.vibrate)navigator.vibrate(Math.min(400,imp*25));}catch(_){}}
+  else try{ambCrash(c,imp,kind);}catch(_){}
   if(typeof R3!=='undefined'&&R3.on)try{crashFx(c,K);}catch(_){}}
 /* ---------- вода: машина глохнет, её вытаскивают на дорогу ---------- */
 function waterCheck(c,trk,dt){if(c.dnf||c.fin!==null||c.inWater>=2)return;

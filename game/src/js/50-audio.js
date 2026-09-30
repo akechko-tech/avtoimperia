@@ -292,7 +292,8 @@ function auSfx(type,v){
   if(!AU.ctx||!AU.on.sfx||(R&&(R.mode==='sim'||R.ff)))return;const t=AU.ctx.currentTime;
   if(type==='crash'){vNoise(t,0.35,0.5*v,'lowpass',700,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(35,t+0.2);o.connect(g);g.connect(AU.fx);env(g,t,0.005,0.6*v,0.3);o.start(t);o.stop(t+0.4);}
   if(type==='bump')vNoise(t,0.15,0.3*v,'lowpass',500,AU.fx);
-  if(type==='cheer'&&typeof AMB!=='undefined'&&AMB.on&&AMB.buf.crowd_race){ambOnce('crowd_race',0.5*v,0);return;}
+  // в гонке трибуны кричат с места (слышно, если гонщик рядом); вне гонки — синтез
+  if(type==='cheer'&&typeof ambCheer==='function'&&R&&ambCheer(v))return;
   if(type==='tick'){vNoise(t,0.04,0.12*v,'bandpass',2200,AU.fx);return;}
   if(type==='grind'){const c=AU.ctx,o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter(),lf=c.createOscillator(),lg=c.createGain();o.type='sawtooth';o.frequency.value=620;lf.frequency.value=47;lg.gain.value=0.5;lf.connect(lg);lg.connect(g.gain);f.type='bandpass';f.frequency.value=2300;f.Q.value=3;o.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.09*v,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);lf.start(t);o.stop(t+0.3);lf.stop(t+0.3);vNoise(t,0.25,0.1*v,'bandpass',3200,AU.fx);return;}
   if(type==='shift'){vNoise(t,0.07,0.16*v,'bandpass',700,AU.fx);vNoise(t+0.03,0.05,0.08*v,'highpass',2500,AU.fx);return;}
@@ -302,8 +303,7 @@ function auSfx(type,v){
   if(type==='splash'){vNoise(t,0.55,0.55*v,'bandpass',950,AU.fx);vNoise(t,0.3,0.35*v,'lowpass',320,AU.fx);vNoise(t+0.05,0.7,0.18*v,'highpass',3200,AU.fx);}
   if(type==='mud'){vNoise(t,0.35,0.6*v,'lowpass',260,AU.fx);vNoise(t+0.04,0.22,0.25*v,'bandpass',620,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(55,t+0.25);o.connect(g);g.connect(AU.fx);env(g,t,0.01,0.3*v,0.25);o.start(t);o.stop(t+0.35);}
   if(type==='wood'){vNoise(t,0.09,0.5*v,'highpass',1800,AU.fx);vNoise(t+0.02,0.3,0.35*v,'bandpass',420,AU.fx);vNoise(t+0.12,0.5,0.12*v,'bandpass',2600,AU.fx);}
-  // гудок паровоза: два тона с дрожанием, долгий и короткий
-  if(type==='whistle'&&typeof AMB!=='undefined'&&AMB.on){const us=R&&R.trk&&R.trk.cfg.host==='us';if(ambOnce(us&&AMB.buf.steam_whistle_us?'steam_whistle_us':'steam_whistle',0.7*v,0.4))return;}
+  // гудок паровоза (синтез, если нет записи): два тона с дрожанием, долгий и короткий; громкость — по расстоянию до паровоза
   if(type==='whistle'){[[0,1.4],[1.7,0.6]].forEach(([d,l])=>[[587,0.05],[740,0.04],[880,0.02]].forEach(([f,a])=>{const o=AU.ctx.createOscillator(),g=AU.ctx.createGain(),lf=AU.ctx.createOscillator(),lg=AU.ctx.createGain();
     o.type='triangle';o.frequency.value=f;lf.frequency.value=5.5;lg.gain.value=f*0.012;lf.connect(lg);lg.connect(o.frequency);o.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(a*v,t+d+0.08);g.gain.setValueAtTime(a*v,t+d+l-0.15);g.gain.exponentialRampToValueAtTime(0.0001,t+d+l);
     o.start(t+d);lf.start(t+d);o.stop(t+d+l+0.05);lf.stop(t+d+l+0.05);}));vNoise(t,1.4,0.04*v,'bandpass',2400,AU.fx);}
@@ -324,7 +324,7 @@ function auRaceStart(rc){
   const ir=c.createBuffer(2,Math.round(c.sampleRate*1.7),c.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<d.length;i++){const q=i/c.sampleRate;d[i]=(Math.random()*2-1)*Math.exp(-q*3.1)*(q<0.01?q/0.01:1)*(1+0.6*Math.exp(-Math.pow((q-0.09)/0.01,2)));}}
   const cv=c.createConvolver();cv.buffer=ir;const rv=c.createGain();rv.gain.value=0;const dl=c.createDelay(0.6);dl.delayTime.value=0.13;const fb=c.createGain();fb.gain.value=0.3;const dg=c.createGain();dg.gain.value=0;
   g.connect(rv);rv.connect(cv);cv.connect(AU.fx);g.connect(dg);dg.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(AU.fx);
-  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s,rn.s,rl.s,wh.s,gr.s,sw.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,rn,rl,wh,gr,sw,rv,dg,early:rc.y<1906,drum:rc.y>=1912};
+  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s,rn.s,rl.s,wh.s,gr.s,sw.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,rn,rl,wh,gr,sw,rv,dg,dl,fb,early:rc.y<1906,drum:rc.y>=1912};
   // 0.19: живые моторы и шины (AudioWorklet); старый синтезатор молчит
   const wk=enStart(g);if(wk){AU.race.wk=wk;f.disconnect();g.gain.value=1;}
   try{ambStart();}catch(e){console.warn('amb',e);}AU.race.lt=t;
@@ -351,8 +351,10 @@ function auRaceTick(){
   a.rb.g.gain.setTargetAtTime(a.wk?0:(me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
   // ветер в открытой машине: на скорости свистит всё громче и выше
   const inT=me.tun?1:0,w=clamp((sp-7)/38,0,1);a.wd.fl.frequency.setTargetAtTime(380+sp*14,t,0.2);a.wd.g.gain.setTargetAtTime(Math.pow(w,1.4)*0.11*vol*(R.t>0?1:0)*(inT?0.35:1),t,0.25);
-  // тоннель: гул и эхо мотора
-  if(a.rv){a.rv.gain.setTargetAtTime(inT?0.6:0,t,inT?0.12:0.3);a.dg.gain.setTargetAtTime(inT?0.4:0,t,inT?0.12:0.3);}
+  // тоннель: гул и эхо мотора; улица между домами — короткое эхо от стен (в селе — слабее), в поле — нет
+  if(a.rv){const E=typeof AMB!=='undefined'&&AMB.E,ix=me.idx|0,tw=!inT&&E&&E.townD?Math.max(E.townD[ix]||0,0.45*(E.villD[ix]||0)):0;
+    a.rv.gain.setTargetAtTime(inT?0.6:tw*0.08,t,inT?0.12:0.3);a.dg.gain.setTargetAtTime(inT?0.4:tw*0.2,t,inT?0.12:0.3);
+    if(a.dl)a.dl.delayTime.setTargetAtTime(inT?0.13:0.042,t,0.25);if(a.fb)a.fb.gain.setTargetAtTime(inT?0.3:0.16,t,0.25);}
   if(a.rn){const S=me.surf||'',rain=!!(R.wx&&R.wx.rain);
     // дождь: шорох капель и гул; под сводом почти не слышен
     const rk=(R.rainK!==undefined?R.rainK:rain?1:0)*(typeof AMB!=='undefined'&&AMB.buf.rain?0.35:1);a.rn.g.gain.setTargetAtTime(rk*(inT?0.008:0.075)*vol,t,0.5);a.rl.g.gain.setTargetAtTime(rk*(inT?0.004:0.05)*vol,t,0.5);

@@ -231,9 +231,8 @@ function enRpm(c,p,thr){const r=clamp(c.rpm||0,0,1.12)*p.max;if(p.kind==='steam'
   const free=p.idle+thr*(0.62*p.max-p.idle);return Math.abs(c.vx||0)<1.6?Math.max(r,free):Math.max(r,p.idle*(c.shift>0?1.25:1));}
 const EN_SURF_TY=y=>y<1906?0:y<1922?1:2;
 function enTick(a,me,vol){if(!EN.node||!R)return;const cars=R.cars,T=R.trk,msgs=[],set=[];
-  // «уши»: камера (в 3D) или машина, за которой следим
-  let lx=me.x,lz=me.z,rx=Math.cos(me.yaw),rz=-Math.sin(me.yaw);
-  if(R.gl&&typeof R3!=='undefined'&&R3.eye&&R3.camR){lx=R3.eye[0];lz=R3.eye[2];const n=Math.hypot(R3.camR[0],R3.camR[2])||1;rx=R3.camR[0]/n;rz=R3.camR[2]/n;}
+  // «уши» — гонщик в кабине (при любом виде камеры): соседей слышно оттуда, где они относительно нашей машины
+  const lx=me.x,lz=me.z,rx=Math.cos(me.yaw),rz=-Math.sin(me.yaw);
   const pre=R.t<0,want=[];
   for(const c of cars){if(c===me||c.dnf==='застрял')continue;const d=Math.hypot(c.x-lx,c.z-lz);if(d<150)want.push([d,c]);}
   want.sort((x,y)=>x[0]-y[0]);const pick=new Set([me,...want.slice(0,pre?4:3).map(x=>x[1])]);

@@ -216,7 +216,7 @@ function r3dTrainTick(dt){const T=R3.T;if(!T.rails||!T.rails.length)return;const
   T.rails.forEach(rl=>{const st=rl.st||(rl.st={state:0,s:0,v:17});
     const dist=(rl.i-F.idx)*T.step*(T.closed?1:1);
     if(st.state===0&&R.t>0&&dist>180&&dist<420){const vc=Math.max(14,F.vx),tc=dist/vc,Lt=48;if(tc>7){st.state=1;st.dir=Math.random()<0.5?1:-1;st.s=-st.dir*(T.W+Lt+st.v*(tc-3.5)-Lt);st.whistle=0;}}
-    if(st.state===1){st.s+=st.dir*st.v*dt;const head=st.s*st.dir;if(!st.whistle&&head>-160){st.whistle=1;try{auSfx('whistle',1);}catch(_){}}
+    if(st.state===1){st.s+=st.dir*st.v*dt;const head=st.s*st.dir;if(!st.whistle&&head>-160){st.whistle=1;try{if(!(typeof ambTrainWhistle==='function'&&ambTrainWhistle(rl)))auSfx('whistle',1);}catch(_){}}
       if(head>600)st.state=2;
       // дым из трубы
       if(Math.random()<0.5){const L=railLine(T,rl),x=L.p[0]+L.d[0]*(st.s+st.dir*2.2),z=L.p[2]+L.d[1]*(st.s+st.dir*2.2),y=railY(T,rl,st.s)+3.8;r3dPart(x,y,z,(Math.random()-0.5)*0.6-L.d[0]*st.dir*2,1.6+Math.random(),(Math.random()-0.5)*0.6-L.d[1]*st.dir*2,1.2,4.5,3.2,[70,70,72],0.45);}}
