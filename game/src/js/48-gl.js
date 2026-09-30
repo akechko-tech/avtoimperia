@@ -281,7 +281,7 @@ void main(){
   // тоннель: под сводом нет ни солнца, ни неба — только фары и редкие лампы
   if(v_lamp>9.5)col*=1.-min(1.,(v_lamp-10.)/100.)*.95;
   col*=1.-u_dark*.93;
-  if(u_hl>0.){vec3 Lh=u_hlP-v_wp;float dh=length(Lh);Lh/=dh;float spot=smoothstep(.8,.95,dot(-Lh,u_hlD))*u_hl/(1.+dh*dh*.0025);col+=alb*vec3(1.,.85,.6)*spot*max(dot(N,Lh),0.)*4.;}
+  if(u_hl>0.){vec3 Lh=u_hlP-v_wp;float dh=length(Lh);Lh/=dh;float spot=smoothstep(.78,.95,dot(-Lh,u_hlD))*u_hl/(1.+dh*dh*.0012);col+=alb*vec3(1.,.85,.6)*spot*max(dot(N,Lh),0.)*4.4;}
   if(v_lamp>.5&&v_lamp<9.5){if(v_lamp<1.5)col+=vec3(1.,.07,.03)*(u_lamp.x*4.+u_lamp.y*1.2);else if(v_lamp<2.5)col+=vec3(1.,.88,.6)*u_lamp.y*4.;else if(v_lamp>4.5)col+=vec3(1.,.78,.42)*u_lamp.z*3.;}
   if(m.w<-3.5)col=alb*2.;
 #ifdef RAW
@@ -310,7 +310,11 @@ void main(){vec4 w=u_ivp*vec4(v_p,1.,1.);vec3 d=normalize(w.xyz/w.w-u_cam);
     c+=u_sunC*(smoothstep(.99965,.99985,sd)*5.*(1.-u_night)+pow(sd,300.)*.4);}
   else{c=skyCol(d);c+=u_sunC*(smoothstep(.99965,.99985,sd)*9.*(1.-u_night*.7)+pow(sd,14.)*.22+pow(sd,300.)*.6);
     float cv=1.-(el-.015)/.5;if(cv>0.&&cv<1.){vec4 cl=texture(u_cld,vec2(az*2.,cv));vec3 cc=mix(u_hzC,u_zeC,.2)*.35+u_sunC*.28+u_skyC*.3;c=mix(c,pow(cl.rgb,vec3(2.2))*cc*2.2,cl.a*.9);}}
-  if(u_night>.01&&d.y>0.){vec2 g=vec2(az*900.,el*300.);float st=step(.9965,h21(floor(g)));c+=vec3(st)*u_night*(.6+.4*sin(u_time*3.+g.x));}
+  // ночь: круглые звёзды (сетка по углам неба, в клетке — звезда в случайном месте), луна с ореолом там, где ночное «солнце»
+  if(u_night>.01&&d.y>0.){vec2 g=vec2(az*6.2832*cos(el),el)*90.;vec2 id=floor(g),f=fract(g)-.5;float h=h21(id);
+    if(h>.982){vec2 q=vec2(h21(id+3.1),h21(id+7.7))-.5;float r=length(f-q*.55),b=(h-.982)/.018;
+      c+=vec3(.9,.94,1.)*smoothstep(.2,.02,r)*u_night*(.3+1.1*b*b)*(.8+.2*sin(u_time*2.3+h*50.))*smoothstep(0.,.1,d.y);}
+    float md=dot(d,u_sun);c+=vec3(.95,.95,1.)*(smoothstep(.99955,.99975,md)*1.6+pow(max(md,0.),900.)*.35)*u_night;}
   float mv=1.-(el-u_panR.x)/u_panR.y;if(u_panR.w>.5&&mv>0.&&mv<1.){vec4 mt=texture(u_pan,vec2(az*u_panR.z,mv));vec3 mc=pow(mt.rgb,vec3(2.2))*(u_skyC*1.1+u_sunC*.45);c=mix(c,mix(mc,u_hzC,.45),mt.a);}
   c=mix(c,mix(u_hzC,u_fogS,pow(sd,6.)),exp(-max(d.y,0.)*40.)*.3);
   o=vec4(tone(c),1.);}`;
