@@ -132,5 +132,5 @@ Object.assign(RACE_ACT,{
 const SCN_ST_NAME={grid:'все вместе, по флагу',interval:'по одному, с интервалом',pairs:'парами, с интервалом',rolling:'с ходу, за машиной-лидером',lemans:'бегом к машинам (старт Ле-Мана)',solo:'поодиночке, на время'};
 function scnSetupHTML(rc){try{const S=scnFor(rc),hh=((S.h0%24)+24)%24,hm=String(Math.floor(hh)).padStart(2,'0')+':'+String(Math.round((hh%1)*60)).padStart(2,'0');
   const wx=S.named&&S.wx?S.wx.map(x=>(x[2]>0.3?'дождь':WX_NAME[x[1]]||x[1])).filter((v,i,a)=>a.indexOf(v)===i).join(' → '):'';
-  const night=S.span>=8&&[...Array(9)].some((_,k)=>scnSun(((S.h0+S.span*k/8)%24+24)%24,rc.m||5,S.lat||47).el<-0.05);
+  const night=S.span>=8&&[...Array(9)].some((_,k)=>scnSun(((S.h0+S.span*k/8)%24+24)%24,(rc.m??5),S.lat||47).el<-0.05);
   return `<div class="scn-card"><div class="label">Как это было</div><p class="small" style="margin-top:4px">Старт — ${SCN_ST_NAME[S.st]||S.st}, в ${hm}${night?' · гонка идёт и ночью':''}${S.span>=2?' · за гонку проходит ~'+Math.round(S.span)+' ч':''}${wx?' · погода: '+esc(wx):''}${S.dust>=2?' · пыль столбом':''}${S.crowdRoad?' · зрители прямо на дороге':''}${S.neutral?' · нейтрализация в пути':''}.</p>${S.b?`<p class="small muted" style="margin-top:4px">${esc(S.b)}</p>`:''}</div>`;}catch(e){return '';}}

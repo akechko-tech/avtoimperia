@@ -350,7 +350,7 @@ function reelClose(){const Q=REEL;if(!Q)return;REEL=null;clearTimeout(Q.timer);c
 function reelMood(id,R0){const t=((R0&&R0.t)||'')+' '+((R0&&R0.sh||[]).map(x=>x.say||'').join(' ').slice(0,600));
   if(/^race:/.test(id))return 'race';if(/^(tech|part):/.test(id))return 'industry';if(/^model:/.test(id))return 'lively';if(/^(year|show):/.test(id)||id==='intro')return 'triumph';
   if(/войн|погиб|гибел|катастроф|пожар|кризис|разорен|депресси|смерт|траур/i.test(t))return 'sad';if(/рекорд|побед|триумф|перв/i.test(t))return 'triumph';return R0&&R0.mus==='waltz'?'calm':'lively';}
-function reelAudio(on,mus,R0,id){try{
+function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
   const tr=on&&AU.on.music&&typeof orchPick==='function'&&R0?orchPick(reelMood(id||'',R0),R0.y||(G?G.y:1900),id):null;
   AU.reelSty=on&&!tr&&mus&&STY[mus]?mus:null;
   {const a=AU.reelEl;clearInterval(AU.reelDuck);if(on&&tr){const e=a||(AU.reelEl=new Audio());e.loop=true;e.src=tr.src;e.volume=0;const p=e.play();if(p&&p.catch)p.catch(()=>{});

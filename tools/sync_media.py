@@ -83,6 +83,9 @@ def music():
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.MUSIC_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('music: updated', n, 'tracks', len(idx))
 
+# авторы, которых нет в метаданных Commons (страница записи — источник)
+SFX_BY = {'skylark': 'British Library (Wildlife Sounds)'}
+
 def sfx():
     """0.19: звуки мира (mp3 64 кбит/с) → docs/sfx + index.js (window.SFX_INDEX)."""
     D = os.path.join(DOCS, 'sfx'); os.makedirs(D, exist_ok=True); n = 0
@@ -93,6 +96,7 @@ def sfx():
         if m.get('ref') or cid + '.mp3' not in have: continue
         n += pull('media/sfx/clips/%s.mp3' % cid, os.path.join(D, cid + '.mp3'))
         idx[cid] = {k: m.get(k) for k in ('g', 'd', 'by', 'lic', 'page')}
+        if not idx[cid].get('by'): idx[cid]['by'] = SFX_BY.get(cid, 'Wikimedia Commons')
     for f in os.listdir(D):
         if f.endswith('.mp3') and f[:-4] not in idx: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.SFX_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')

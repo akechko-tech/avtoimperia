@@ -1,5 +1,5 @@
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.18';
+const GAME_VER='0.19';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -31,7 +31,7 @@ function showMainMenu(){
       <button class="btn block" data-act="settings">Звук, графика и управление</button>
       <button class="btn block" data-act="about">Об игре</button></div>
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
-    <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
+    <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка, звуки и фото — Wikimedia Commons.</p></div>`;
   MS.hidden=false;
   // живая гонка за меню — чуть позже, чтобы меню появилось сразу
   setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
@@ -40,5 +40,19 @@ function hideMainMenu(){demoStop();MS.hidden=true;MS.innerHTML='';MS.classList.r
 function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
   <div class="stack small" style="margin-top:10px"><p>«Автоимперия» — современная версия классических экономических стратегий об автомобильной индустрии начала XX века в духе Motor City / Oldtimer (1994). Название, графика и код — оригинальные.</p>
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
-  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p>
-  <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p><p class="muted">Версия ${GAME_VER}</p></div>`);}
+  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons, общественное достояние.</p>
+  <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p>
+  <p id="abMus">Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.</p>
+  <p id="abSfx">Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.</p><p class="muted">Версия ${GAME_VER}</p></div>`);
+  // указатели музыки и звуков грузятся с сайта — когда придут, дописываем авторов
+  try{Promise.all([typeof orchLoad==='function'?orchLoad():null,typeof ambIndex==='function'?ambIndex():null]).then(()=>{
+    const a=document.getElementById('abMus'),b=document.getElementById('abSfx');
+    if(a)a.textContent=`Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.`;
+    if(b)b.textContent=`Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.`;}).catch(()=>{});}catch(_){}}
+// авторы записей со свободной лицензией (CC BY, CC BY-SA): автор — лицензии
+function aboutByLic(I){const M=new Map();Object.values(I||{}).forEach(x=>{if(!/CC BY/i.test(x.lic||''))return;const a=x.by||'Wikimedia Commons';if(!M.has(a))M.set(a,new Set());M.get(a).add(x.lic);});
+  return [...M].map(([a,L])=>`${a} (${[...L].join(', ')})`).join(', ');}
+function aboutMusCredits(){const I=(typeof ORCH!=='undefined'&&ORCH.idx)||window.MUSIC_INDEX||null,L=aboutByLic(I);
+  return 'записи военных оркестров США (общественное достояние), Musopen (CC0), пластинки 1917–1924 годов'+(L?'; '+L:'; музыка в духе немого кино — Kevin MacLeod (incompetech.com), CC BY 3.0/4.0');}
+function aboutSfxCredits(){const I=(typeof AMB!=='undefined'&&AMB.idx)||window.SFX_INDEX||null,L=aboutByLic(I);
+  return L?L+'; остальные — общественное достояние и CC0':'толпа, птицы, колокола, паровоз, дождь — записи в общественном достоянии и со свободными лицензиями (авторы указаны на страницах записей)';}

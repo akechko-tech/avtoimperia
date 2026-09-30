@@ -6,9 +6,13 @@
    Диктор с трибуны говорит в рупор (запись голоса + фильтр рупора и эхо трибун); в 1920-е — «как по радио». */
 const AMB={idx:null,loadP:null,buf:{},pend:{},beds:{},bus:null,on:false,feat:null,cd:{},seen:{},t:0,ann:{buf:{},pend:{},busy:0,q:[],said:{}}};
 const SFX_REMOTE=()=>(location.protocol==='file:'?VOICE_REMOTE:'');
+// указатель звуков — с сайта игры; без сети гонка идёт без записей, а через минуту (новая гонка) пробуем снова
 function ambIndex(){if(AMB.idx)return Promise.resolve(AMB.idx);if(AMB.loadP)return AMB.loadP;
+  if(AMB.failT&&Date.now()-AMB.failT<60000)return Promise.resolve({});
   AMB.loadP=new Promise(res=>{if(window.SFX_INDEX){AMB.idx=window.SFX_INDEX;res(AMB.idx);return;}
-    try{const s=document.createElement('script');s.src=SFX_REMOTE()+'sfx/index.js';s.async=true;s.onload=()=>{AMB.idx=window.SFX_INDEX||{};res(AMB.idx);};s.onerror=()=>{AMB.idx={};res(AMB.idx);};document.head.appendChild(s);}catch(e){AMB.idx={};res(AMB.idx);}});
+    const fail=()=>{AMB.loadP=null;AMB.failT=Date.now();res({});};
+    try{const s=document.createElement('script');s.src=SFX_REMOTE()+'sfx/index.js';s.async=true;
+      s.onload=()=>{AMB.idx=window.SFX_INDEX||{};AMB.failT=0;res(AMB.idx);};s.onerror=()=>{s.remove();fail();};document.head.appendChild(s);}catch(e){fail();}});
   return AMB.loadP;}
 // звук по имени: скачать и разобрать один раз
 function ambBuf(id){if(AMB.buf[id])return Promise.resolve(AMB.buf[id]);if(AMB.pend[id])return AMB.pend[id];if(!AU.ctx)return Promise.resolve(null);
@@ -83,7 +87,7 @@ function ambStart(){if(!AU.ctx||!R||R.mode==='sim')return;ambIndex();const c=AU.
   ['crowd_big','crowd_murmur','crowd_race','applause','birds_town','birds_forest','skylark','rain'].forEach(id=>ambBuf(id));
   const L=[ANN.ready,ANN.count,ANN.go];if(R.me)L.push(annGo(R.me.num||1));L.forEach(t=>annBuf(t));}
 function ambStop(){AMB.on=false;const t=AU.ctx?AU.ctx.currentTime:0;Object.values(AMB.beds).forEach(B=>{if(B.g){B.g.gain.setTargetAtTime(0,t,0.3);const s=B.src;setTimeout(()=>{try{s.stop();}catch(_){}},1500);}});AMB.beds={};}
-function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow;if(!me)return;AMB.t+=dt;const F=AMB.feat,S=R.scn,y=R.rc.y,mon=R.rc.m||5;
+function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow;if(!me)return;AMB.t+=dt;const F=AMB.feat,S=R.scn,y=R.rc.y,mon=(R.rc.m??5);
   const i=me.idx,sg=segAt(T,i),town=sg===RSEG.town||(T.town&&T.town[i]),vill=sg===RSEG.village,forest=sg===RSEG.forest||sg===RSEG.avenue||sg===RSEG.vine,mount=sg===RSEG.serp||T.cfg.uphill,inT=me.tun;
   const hh=S?((scnHour()%24)+24)%24:12,el=S?scnSun(hh,mon,S.lat||47).el*57.3:40,night=el<-4,dawn=!night&&el<12&&hh<12,rain=R.rainK||0,sp=Math.abs(me.vx||0);
   const q=inT?0.15:1,wind=clamp(1-sp/40,0.35,1);// на скорости ветер и мотор забивают тихие звуки

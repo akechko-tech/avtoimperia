@@ -7,14 +7,14 @@ function r3dSkyWant(m){const tx=G3.cache&&G3.cache.tx;if(!tx||!m)return null;if(
 function r3dSkyRot(m,th){const S=TX.D&&TX.D.sky&&TX.D.sky[m];return S?((S.sun[0]/360-th/6.2832+10)%1):0;}
 // заранее — все небеса, что понадобятся по сценарию (погода и сумерки)
 function r3dSkyPreload(){const S=R.scn;if(!S||!S.wxP)return;const ms=new Set(S.wxP.map(x=>x[1]));
-  for(let k=0;k<=12;k++){const h=S.h0+S.span*k/12,e=scnSun(((h%24)+24)%24,R.rc.m||5,S.lat||47).el*57.3;if(e<12&&e>-6)ms.add(((h%24)+24)%24<12?'morning':'evening');}
+  for(let k=0;k<=12;k++){const h=S.h0+S.span*k/12,e=scnSun(((h%24)+24)%24,(R.rc.m??5),S.lat||47).el*57.3;if(e<12&&e>-6)ms.add(((h%24)+24)%24<12?'morning':'evening');}
   ms.forEach(m=>r3dSkyWant(m));}
 function r3dEnvScn(){const S=R.scn,E0=R3.env,W=R3.W;
   const mix=(a,b,t)=>t<=0.001?a:t>=0.999?b:E0.mix(a,b,t);
   const A=r3dEnvMood(S.moodA),B=r3dEnvMood(S.moodB),k=clamp(S.moodK,0,1);
   let e=mix(A.day,B.day,k);
   // солнце по часам
-  const hh=((scnHour()%24)+24)%24,sn=scnSun(hh,R.rc.m||5,S.lat||47),el=sn.el*57.2958,th=(W.az||0)+sn.az;
+  const hh=((scnHour()%24)+24)%24,sn=scnSun(hh,(R.rc.m??5),S.lat||47),el=sn.el*57.2958,th=(W.az||0)+sn.az;
   const kd=clamp((12-el)/12,0,1),kn=clamp((-2-el)/8,0,1);
   if(kd>0.001)e=mix(e,B.dusk,kd*0.85);if(kn>0.001)e=mix(e,B.night,kn);
   if(e===A.day||e===B.day)e=Object.assign({},e);

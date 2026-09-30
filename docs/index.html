@@ -234,7 +234,7 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .r-ctrl button{height:96px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.08);font-family:var(--display);font-weight:800;font-size:22px;color:var(--text);touch-action:none;cursor:pointer}
 .r-ctrl button.down{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
 .r-ctrl .gas{border-color:var(--brass);color:var(--brass)}
-.r-ctrl .brk{border-color:#8a4a44;color:var(--bad)}
+.r-ctrl .brk{border-color:#8a4a44;color:var(--bad)}.r-ctrl .brk small{display:block;font-size:10px;font-weight:500;letter-spacing:0;opacity:.8;line-height:1.1;margin-top:2px}.r-ctrl .brk.rev{border-color:#c9a45c;color:#f3d38a;background:rgba(80,60,20,.55)}
 .r-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 0}
 .r-top .label{color:var(--brass);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .r-top .btns{flex-wrap:nowrap;flex:none}
@@ -650,6 +650,26 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .reel.paused .rl-frame::after{content:"❚❚";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:42px;color:rgba(255,255,255,.75);text-shadow:0 2px 12px #000;z-index:6}
 .rl-vid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(.45) contrast(1.18) brightness(.95)}
 .rl-card.q b{font-style:italic;font-size:clamp(18px,4.4vw,30px);line-height:1.25}
+
+/* 0.19: титры кинохроники в гонке и часы дня */
+.r-cap{position:absolute;left:50%;top:calc(92px + env(safe-area-inset-top,0px));transform:translate(-50%,-6px);max-width:min(86%,640px);padding:8px 18px;background:rgba(8,6,4,.78);color:#f1e7cf;
+  font-family:Georgia,'Times New Roman',serif;font-size:15px;letter-spacing:.06em;text-align:center;line-height:1.3;border-top:1px solid rgba(241,231,207,.55);border-bottom:1px solid rgba(241,231,207,.55);
+  opacity:0;transition:opacity .6s,transform .6s;pointer-events:none;z-index:6;text-shadow:0 1px 2px #000}
+.r-cap.on{opacity:1;transform:translate(-50%,0)}
+.r-clock{margin-left:10px;font-family:var(--mono);font-size:12px;color:#e9dcb8;opacity:.9;white-space:nowrap}
+#raceScreen.filming .r-cap{top:auto;bottom:18%}
+#raceScreen.demo .r-cap,#raceScreen.demo .r-clock{display:none!important}
+@media (max-width:380px){.r-cap{font-size:13px;padding:6px 10px}}
+
+/* 0.19: вид «Кинохроника» */
+#raceScreen.oldfilm #rgl,#raceScreen.oldfilm #rcv{filter:sepia(.88) saturate(.55) contrast(1.2) brightness(.92)}
+.r-old{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.r-old canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;mix-blend-mode:overlay;opacity:.55}
+.r-old i{position:absolute;top:0;bottom:0;width:1px;background:rgba(245,235,210,.55);opacity:0}
+.r-old i.b{width:2px;background:rgba(20,16,10,.45)}
+.r-old b{position:absolute;inset:0;background:#fff8e6;opacity:0}
+.r-old::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(10,6,2,.55) 100%)}
+.scn-card{margin-top:8px;padding:8px 10px;border-left:3px solid var(--brass);background:rgba(233,196,106,.06);border-radius:6px}
 </style>
 
 <div class="wrap">
@@ -685,10 +705,10 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 <div class="sheet" id="sheet" hidden><div class="panel" id="sheetBody"></div></div>
 <div class="paperwrap" id="paperWrap" hidden></div>
 <div id="raceScreen" hidden>
-  <div class="r-top"><span class="label" id="rName"></span><div class="btns"><button class="btn sm" id="rMus" aria-label="Музыка в гонке">♪ выкл</button><button class="btn sm" id="rCam" aria-label="Сменить камеру">Вид</button><button class="btn sm" id="rTilt" aria-label="Способ руления">Руль</button><button class="btn sm" id="rHelp" aria-label="Как ехать">?</button><button class="btn sm" id="rQuit">Выход</button></div></div>
+  <div class="r-top"><span class="label" id="rName"></span><span class="r-clock" id="rClock"></span><div class="btns"><button class="btn sm" id="rMus" aria-label="Музыка в гонке">♪ выкл</button><button class="btn sm" id="rCam" aria-label="Сменить камеру">Вид</button><button class="btn sm" id="rTilt" aria-label="Способ руления">Руль</button><button class="btn sm" id="rHelp" aria-label="Как ехать">?</button><button class="btn sm" id="rQuit">Выход</button></div></div>
   <div class="r-hud"><div>Место<b id="hPos">–</b></div><div id="hLapL">Дистанция<b id="hLap">–</b></div><div>Время<b id="hTime">0:00</b></div><div>км/ч · <span id="hGear">1</span><b id="hSpd">0</b></div></div>
   <div class="r-bars"><div>МОТОР<div class="bar"><i id="bHeat" style="width:0;background:var(--good)"></i></div></div><div>ШИНЫ<div class="bar"><i id="bTyre" style="width:100%;background:var(--good)"></i></div></div><div>КУЗОВ<div class="bar"><i id="bDmg" style="width:100%;background:var(--good)"></i></div></div><div id="fuelBox">ТОПЛИВО<div class="bar fuelbar"><i id="bFuel" style="width:100%;background:var(--brass)"></i><b id="bFuelNeed"></b></div></div></div>
-  <div id="rView" style="position:relative;flex:1;min-height:0;display:flex"><canvas id="rcv"></canvas><canvas id="rgl" hidden></canvas><canvas id="rMap" width="180" height="180"></canvas><div class="r-board" id="rBoard"></div><div class="r-msg" id="rMsg"></div><div class="r-note" id="rNote" hidden><b></b><span></span></div><div class="r-grip" id="rGrip" hidden><span>ШИНЫ</span><i></i><i></i><i></i><i></i><i></i><em id="rSurf"></em></div><div class="r-tips" id="rTips" hidden></div><div class="r-film" id="rFilm" hidden></div><button class="btn primary" id="rReset" hidden>↩ Вернуться на трассу</button><button class="r-svc" id="rSvc" hidden aria-label="Сервис: шины, бензин, ремонт"><b>🔧</b><small>Сервис</small></button></div>
+  <div id="rView" style="position:relative;flex:1;min-height:0;display:flex"><canvas id="rcv"></canvas><canvas id="rgl" hidden></canvas><canvas id="rMap" width="180" height="180"></canvas><div class="r-board" id="rBoard"></div><div class="r-msg" id="rMsg"></div><div class="r-cap" id="rCap"></div><div class="r-note" id="rNote" hidden><b></b><span></span></div><div class="r-grip" id="rGrip" hidden><span>ШИНЫ</span><i></i><i></i><i></i><i></i><i></i><em id="rSurf"></em></div><div class="r-tips" id="rTips" hidden></div><div class="r-film" id="rFilm" hidden></div><button class="btn primary" id="rReset" hidden>↩ Вернуться на трассу</button><button class="r-svc" id="rSvc" hidden aria-label="Сервис: шины, бензин, ремонт"><b>🔧</b><small>Сервис</small></button></div>
   <div class="r-ctrl" id="rCtrl">
     <div class="r-wheel" id="rWheel" hidden><canvas id="rWheelC"></canvas></div>
     <button class="lft" data-k="left" aria-label="Влево">◀</button><button class="rgt" data-k="right" aria-label="Вправо">▶</button>
@@ -3918,7 +3938,7 @@ function playReel(id){
   let sx=null,sy=0;el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;},{passive:true});
   el.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4){e.preventDefault();reelGo(dx<0?Q.i+1:Math.max(1,Q.i-1));Q.swiped=performance.now();}});
   el.addEventListener('click',e=>{if(Q.swiped&&performance.now()-Q.swiped<300){e.stopPropagation();e.preventDefault();}},true);
-  reelAudio(true,R0.mus);reelGo(0);reelFx();}
+  reelAudio(true,R0.mus,R0,id);reelGo(0);reelFx();}
 function reelPause(on){const Q=REEL;if(!Q)return;Q.paused=on;const b=Q.el.querySelector('[data-rl=pause]');if(b)b.textContent=on?'▶':'❚❚';Q.el.classList.toggle('paused',on);
   clearTimeout(Q.timer);Q.el.querySelectorAll('video').forEach(v=>{try{on?v.pause():v.play();}catch(_){}});
   if(on){voicePause(true);Q.left=Math.max(0.3,(Q.until||0)-performance.now()/1000);}
@@ -3954,8 +3974,17 @@ function reelFx(){const Q=REEL;if(!Q)return;const cv=Q.el.querySelector('.rl-gra
   Q.raf=requestAnimationFrame(loop);}
 function reelClose(){const Q=REEL;if(!Q)return;REEL=null;clearTimeout(Q.timer);cancelAnimationFrame(Q.raf);voiceStop();reelAudio(false);try{Q.el.querySelectorAll('video').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load();}catch(_){}});Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},350);}catch(_){}}
 // Звук: музыка эпохи тихо под диктора (свой танец у каждого ролика), трещит проектор; в начале — короткие фанфары
-function reelAudio(on,mus){try{
-  AU.reelSty=on&&mus&&STY[mus]?mus:null;
+// 0.19: музыка под кинохронику — настоящий оркестр по настроению ролика (гонка — галоп, завод — «деловая», итоги года — марш),
+// тише под голос диктора; без сети — прежний синтезатор
+function reelMood(id,R0){const t=((R0&&R0.t)||'')+' '+((R0&&R0.sh||[]).map(x=>x.say||'').join(' ').slice(0,600));
+  if(/^race:/.test(id))return 'race';if(/^(tech|part):/.test(id))return 'industry';if(/^model:/.test(id))return 'lively';if(/^(year|show):/.test(id)||id==='intro')return 'triumph';
+  if(/войн|погиб|гибел|катастроф|пожар|кризис|разорен|депресси|смерт|траур/i.test(t))return 'sad';if(/рекорд|побед|триумф|перв/i.test(t))return 'triumph';return R0&&R0.mus==='waltz'?'calm':'lively';}
+function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
+  const tr=on&&AU.on.music&&typeof orchPick==='function'&&R0?orchPick(reelMood(id||'',R0),R0.y||(G?G.y:1900),id):null;
+  AU.reelSty=on&&!tr&&mus&&STY[mus]?mus:null;
+  {const a=AU.reelEl;clearInterval(AU.reelDuck);if(on&&tr){const e=a||(AU.reelEl=new Audio());e.loop=true;e.src=tr.src;e.volume=0;const p=e.play();if(p&&p.catch)p.catch(()=>{});
+      AU.reelDuck=setInterval(()=>{if(!REEL){e.volume=Math.max(0,e.volume-0.05);if(e.volume<=0.01){e.pause();clearInterval(AU.reelDuck);}return;}const want=REEL.paused?0:VOICE.cb?0.1:0.3;e.volume=clamp(e.volume+(want-e.volume)*0.25,0,1);if(REEL.paused&&!e.paused)e.pause();else if(!REEL.paused&&e.paused){const q=e.play();if(q&&q.catch)q.catch(()=>{});}},120);}
+    else if(a&&!on){AU.reelDuck=setInterval(()=>{a.volume=Math.max(0,a.volume-0.06);if(a.volume<=0.01){a.pause();clearInterval(AU.reelDuck);}},80);}}
   if(AU.el){if(on){AU.reelWas=!AU.el.paused;if(AU.reelWas)AU.el.pause();}else if(AU.reelWas){AU.reelWas=false;musicPlay();}}
   if(AU.ctx&&AU.mus){AU.mus.gain.setTargetAtTime(on?0.045:(AU.on.music?(R?0.07:0.16):0),AU.ctx.currentTime,0.3);}
   clearInterval(AU.proj);AU.proj=0;
@@ -6262,7 +6291,7 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
     ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.18';
+const GAME_VER='0.19';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -6294,7 +6323,7 @@ function showMainMenu(){
       <button class="btn block" data-act="settings">Звук, графика и управление</button>
       <button class="btn block" data-act="about">Об игре</button></div>
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
-    <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка и фото — общественное достояние.</p></div>`;
+    <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка, звуки и фото — Wikimedia Commons.</p></div>`;
   MS.hidden=false;
   // живая гонка за меню — чуть позже, чтобы меню появилось сразу
   setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
@@ -6303,8 +6332,22 @@ function hideMainMenu(){demoStop();MS.hidden=true;MS.innerHTML='';MS.classList.r
 function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
   <div class="stack small" style="margin-top:10px"><p>«Автоимперия» — современная версия классических экономических стратегий об автомобильной индустрии начала XX века в духе Motor City / Oldtimer (1994). Название, графика и код — оригинальные.</p>
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
-  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии и записи музыки — Wikimedia Commons, общественное достояние.</p>
-  <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p><p class="muted">Версия ${GAME_VER}</p></div>`);}
+  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons, общественное достояние.</p>
+  <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p>
+  <p id="abMus">Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.</p>
+  <p id="abSfx">Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.</p><p class="muted">Версия ${GAME_VER}</p></div>`);
+  // указатели музыки и звуков грузятся с сайта — когда придут, дописываем авторов
+  try{Promise.all([typeof orchLoad==='function'?orchLoad():null,typeof ambIndex==='function'?ambIndex():null]).then(()=>{
+    const a=document.getElementById('abMus'),b=document.getElementById('abSfx');
+    if(a)a.textContent=`Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.`;
+    if(b)b.textContent=`Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.`;}).catch(()=>{});}catch(_){}}
+// авторы записей со свободной лицензией (CC BY, CC BY-SA): автор — лицензии
+function aboutByLic(I){const M=new Map();Object.values(I||{}).forEach(x=>{if(!/CC BY/i.test(x.lic||''))return;const a=x.by||'Wikimedia Commons';if(!M.has(a))M.set(a,new Set());M.get(a).add(x.lic);});
+  return [...M].map(([a,L])=>`${a} (${[...L].join(', ')})`).join(', ');}
+function aboutMusCredits(){const I=(typeof ORCH!=='undefined'&&ORCH.idx)||window.MUSIC_INDEX||null,L=aboutByLic(I);
+  return 'записи военных оркестров США (общественное достояние), Musopen (CC0), пластинки 1917–1924 годов'+(L?'; '+L:'; музыка в духе немого кино — Kevin MacLeod (incompetech.com), CC BY 3.0/4.0');}
+function aboutSfxCredits(){const I=(typeof AMB!=='undefined'&&AMB.idx)||window.SFX_INDEX||null,L=aboutByLic(I);
+  return L?L+'; остальные — общественное достояние и CC0':'толпа, птицы, колокола, паровоз, дождь — записи в общественном достоянии и со свободными лицензиями (авторы указаны на страницах записей)';}
 
 /* ================= ТИТУЛЬНЫЙ ЭКРАН: живая 3D-гонка эпохи за меню (как заставка в кино) ================= */
 // Пока открыто главное меню, за ним идёт настоящая гонка знаменитого года: машины едут сами, камера — как в кино
@@ -6460,6 +6503,7 @@ function renderRaceSetup(keepScroll){
     <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · ${terrName(cfg)}${cfg.pits?' · боксы':''}${cfg.night?' · ночь':''} · приз ${money(racePrize(rc))}</p>
     ${champs.length||gb?`<div class="tags">${champs.map(c=>`<span class="pill warn">${esc(c)}</span>`).join('')}${gb?'<span class="pill good">Кубок наций: до 3 машин от страны</span>':''}</div>`:''}
     ${photoHTML(rc.img)}${rc.hist?`<div class="hist">${esc(rc.hist)}</div>`:''}
+    ${scnSetupHTML(rc)}
     ${(()=>{const rid=raceReelId(rc);if(!rid)return '';try{reelUnlock(s,rid);}catch(_){}return `<div style="margin-top:8px">${paperReelHTML(rid,s)}</div>`;})()}
     <p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>
     ${s.chal&&s.chal.acc&&s.chal.type==='race'&&s.chal.rk===rc.key?`<p class="small warn" style="margin-top:6px">⚔️ Вызов принят: ваша лучшая машина должна финишировать выше лучшей машины ${esc(s.chal.mq)}. Пари — ${money(s.chal.stake)}.</p>`:''}
@@ -6519,6 +6563,13 @@ Object.assign(RACE_ACT,{
     const setup={rc,mode:RS.mode,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
     RS=null;closeSheet();stopAuto();save();startRace(setup);}
 });
+
+// 0.19: как проходила гонка на самом деле — старт, час, погода
+const SCN_ST_NAME={grid:'все вместе, по флагу',interval:'по одному, с интервалом',pairs:'парами, с интервалом',rolling:'с ходу, за машиной-лидером',lemans:'бегом к машинам (старт Ле-Мана)',solo:'поодиночке, на время'};
+function scnSetupHTML(rc){try{const S=scnFor(rc),hh=((S.h0%24)+24)%24,hm=String(Math.floor(hh)).padStart(2,'0')+':'+String(Math.round((hh%1)*60)).padStart(2,'0');
+  const wx=S.named&&S.wx?S.wx.map(x=>(x[2]>0.3?'дождь':WX_NAME[x[1]]||x[1])).filter((v,i,a)=>a.indexOf(v)===i).join(' → '):'';
+  const night=S.span>=8&&[...Array(9)].some((_,k)=>scnSun(((S.h0+S.span*k/8)%24+24)%24,(rc.m??5),S.lat||47).el<-0.05);
+  return `<div class="scn-card"><div class="label">Как это было</div><p class="small" style="margin-top:4px">Старт — ${SCN_ST_NAME[S.st]||S.st}, в ${hm}${night?' · гонка идёт и ночью':''}${S.span>=2?' · за гонку проходит ~'+Math.round(S.span)+' ч':''}${wx?' · погода: '+esc(wx):''}${S.dust>=2?' · пыль столбом':''}${S.crowdRoad?' · зрители прямо на дороге':''}${S.neutral?' · нейтрализация в пути':''}.</p>${S.b?`<p class="small muted" style="margin-top:4px">${esc(S.b)}</p>`:''}</div>`;}catch(e){return '';}}
 
 /* ================= СЦЕНАРИЙ ТРАССЫ: города и сёла, лес и аллеи, поля, мост через реку, переезд, серпантин, берег моря ================= */
 // Раньше пейзаж повторялся по кругу (городок каждые 600 м). Теперь у каждой гонки свой «сценарий»: старт и финиш в городе,
@@ -6666,6 +6717,8 @@ function trackCfg(rc){
   if(rc.crowd)c.crowd=0.7;
   if(rc.terr){c.terr=rc.terr;if(c.stages)c.stages=[rc.terr,'mud',rc.terr];}
   if(!SCEN_SETS[c.host])c.host='fr';
+  // 0.19: зрители прямо на дороге (Париж — Мадрид, Кубок Вандербильта) — гуще и ближе к колее
+  try{const S=scnFor(rc);if(S.crowdRoad){c.crowd=Math.max(c.crowd,0.75);c.crowdRoad=1;}}catch(_){}
   return c;
 }
 /* ---------- track generation ---------- */
@@ -6803,7 +6856,7 @@ function placeScenery(trk,rnd){
       if(i%150===34)add(i,set.church||'church',-(W/2+9),Math.floor(rnd()*3),'s',4);
       if(set.verst&&i%150===20)add(i,rnd()<0.5?'well':'stog',(rnd()<0.5?-1:1)*(W/2+11),0,'s');
       if(i%6===2)add(i,'lamp',(i%12===2?1:-1)*(W/2+1.8),0,'s',0.25);
-      if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+2.8),Math.floor(rnd()*4),'p');
+      if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+(cfg.crowdRoad?1.7:2.8)),Math.floor(rnd()*4),'p');
       if(i%37===0)add(i,'gend',(rnd()<0.5?-1:1)*(W/2+2.2),0,'p');
       if(i%53===7)add(i,'cart',(rnd()<0.5?-1:1)*(W/2+3.5),0,'s',1.2);
       continue;}
@@ -6821,7 +6874,7 @@ function placeScenery(trk,rnd){
       if(i%3===0&&(i%7)<5)add(i,fenceT,sd*(W/2+3.4),0,'s',0.4);
       if(i%29===9&&rnd()<0.6)add(i,rnd()<0.5?'cart':set.verst?'well':'bush',-sd*(W/2+4+rnd()*3),0,'s',1.2);
       if(!church&&S[i-20]===RSEG.village&&S[i+20]===RSEG.village&&rnd()<0.08){church=1;add(i,set.church||'church',-sd*(W/2+12),Math.floor(rnd()*3),'s',4);}
-      if(rnd()<0.08+cfg.crowd*0.2)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+3.2),Math.floor(rnd()*4),'p');}
+      if(rnd()<0.08+cfg.crowd*0.2)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+(cfg.crowdRoad?1.8:3.2)),Math.floor(rnd()*4),'p');}
     else if(sg===RSEG.vine){// виноградники: ряды вдоль дороги
       if(i%3===0)[1,-1].forEach(sd=>{for(let k=0;k<5;k++)add(i,'vine',sd*(W/2+5+k*2.6),0,'s',0);});if(i%40===11&&rnd()<0.6)tree((rnd()<0.5?-1:1)*(W/2+22),cfg.host==='it'||cfg.host==='es'?'cypress':'oak');}
     else if(sg===RSEG.serp){// серпантин: у обрыва — столбики-отбойники, у скалы — камни
@@ -6951,10 +7004,13 @@ function carStep(c,trk,dt){
   const grade=gradeAt(c,trk,lat);c.grade=grade;
   // на крутом подъёме первая передача «ползёт» (сцепление с проскальзыванием): слабые машины 1890-х не встают намертво
   const vLo=2.2+0.22*vg,vCr=c.gear===1&&grade>0.04?Math.max(1,vLo*(1-clamp((grade-0.04)/0.1,0,1)*0.6)):vLo;
+  if(c.rev&&!stopped){// задняя передача: медленно (до ~9 км/ч), торможение — «Газом»
+    const vr=-v;if(brk>0.05)Fx=vr>0.2?brk*c.brakeK*mu*c.m*GRAV:0;else if(thr>0.05)Fx=vr<2.4?-thr*Math.min(pw/2.2,c.m*2.4):-c.m*0.2;else Fx=vr>0.15?c.m*2.2:0;}
+  else{
   if(brk>0.05&&v>0.3)Fx=-brk*c.brakeK*mu*c.m*GRAV;
-  else if(brk>0.05&&v<=0.3&&!stopped){Fx=-brk*c.m*1.8;}
+  else if(brk>0.05&&v<=0.3&&!stopped){Fx=v>0.02?-brk*c.m*1.8:0;}
   else if(c.shift<=0&&v<vg*1.02){Fx=thr*pw/Math.max(v,vCr);}
-  if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);
+  if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);}
   const Fxmax=mu*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
   // вода в луже и жидкая грязь тормозят по квадрату скорости
   const wd=su.k==='puddle'?0.0016:su.k==='mudhole'?0.005:0;
@@ -6964,7 +7020,9 @@ function carStep(c,trk,dt){
   const bump=sp>5&&su.rough>0.95?(bumpNz(c.prog*0.45,c.num*7+3)-0.5)*2*1.7*(su.rough-0.9)*Math.min(1,sp/18):0;
   // пятно под одной стороной машины тянет её в сторону
   let pull=0;if(su.P&&sp>6){const dl=su.P.lat-lat;if(Math.abs(dl)>0.35)pull=-Math.sign(dl)*(su.k==='mudhole'?0.9:0.45)*Math.min(1,sp/20);}
-  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;c.gu*=0.9;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;}
+  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;c.gu*=0.9;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;
+    // тормоз на месте держит машину (и на подъёме не катится назад)
+    if(brk>0.3&&Math.abs(c.vx)<0.35)c.vx=0;}
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
     const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(mu*Fzr+1)),2)));
@@ -6997,7 +7055,7 @@ function carStep(c,trk,dt){
   const load=c.thr*(0.35+0.65*Math.min(1,c.rpm)),cool=0.55+0.45*Math.min(1,sp/20),heatT=15+62*load*(1.3-0.5*c.rel)*(c.order==='push'?1.25:c.order==='save'?0.85:1)/cool;
   c.heat+=(heatT-c.heat)*Math.min(1,dt/(heatT>c.heat?7:11));
   if(c.heat>=100){c.overheat=4;c.heat=60;}if(c.overheat>0)c.overheat-=dt;
-  if(!c.dnf&&c.fin===null&&sp>3&&c.prog>trk.raceLen*0.08){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
+  if(!c.dnf&&c.fin===null&&sp>3&&c.prog>trk.raceLen*0.08&&!(R.scn&&R.scn.st==='rolling'&&R.scn.greenAt===null)){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
     const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
@@ -7077,6 +7135,7 @@ function aiControl(c,trk,dt){
     for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
   // закрытый переезд: остановиться у шлагбаума
   const gs=aiGateStop(c,trk);c.gateWait=gs<6?1:0;if(gs<150){const va=Math.sqrt(2*bdec*Math.max(0,gs-1));if(va<vt)vt=va;}
+  if(c.vCap)vt=Math.min(vt,c.vCap);
   if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
   const kN=trk.K[c.idx]||0,latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
   c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
@@ -7113,6 +7172,7 @@ const rKeys={left:false,right:false,gas:false,brake:false};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
 const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
+  if(c.wait)return;
   const v=Math.max(0,c.vx),hist=G.diff==='hist';
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
@@ -7132,8 +7192,16 @@ function playerControl(c,dt){
   // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
   if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*0.7,-0.12,0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
-  c.thr+=clamp((rKeys.gas?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((rKeys.brake?1:0)-c.brk,-8*dt,6*dt);
+  // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
+  // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
+  const still=Math.abs(c.vx)<0.5;
+  if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
+  else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
+  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
+  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
+  // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
+  if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }
 /* ---------- гонка: старт, такт, финиш ---------- */
 let R=null,rRaf=0;
@@ -7174,9 +7242,11 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const me=cars.find(c=>c.player)||null,team=cars.filter(c=>c.you);
   // погода гонки: в дождь шины держат хуже
   const wx=r3dWeather(trk);planPatches(trk,!!wx.rain);
-  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
+  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-5,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
     hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
+  if(typeof SCN_OFF==='undefined'||!SCN_OFF)try{scnSetup();const S=R.scn;if(S.wetEver&&!wx.rain){planPatches(trk,true);(trk.patches||[]).forEach(P=>{if(P.kind==='puddle')P.rain=1;});}}catch(e){console.warn('scenario',e);R.scn=null;}
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
+  try{raceOldFilm(false);}catch(_){}
   document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
   document.getElementById('fuelBox').style.visibility=trk.cfg.pits?'visible':'hidden';
   document.getElementById('hLapL').firstChild.textContent=trk.cfg.laps>1?'Круг':'Дистанция';
@@ -7305,14 +7375,16 @@ function privPerf(e,rc){const pr=aiPrep(rc),ref=rankOf(aiCarMd(rc.y),pr,rc.y);re
 function raceTick(dt){
   const T=R.trk,cfg=T.cfg;
   if(R.t<0){R.cars.forEach(c=>{c.thr=0;c.brk=1;});return;}
+  if(R.scn)scnTick(dt);
   aiTraffic(T);
   R.cars.forEach(c=>{
     if(c.fin!==null||c.dnf){if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
     if(c.inWater===2){rescueTick(c,dt);return;}
+    if(c.wait){scnWaitControl(c,dt);return;}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
-    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0&&c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}
+    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if(c.punct&&!c.flat&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
   });
   const sub=R.mode==='sim'?3:4,h=dt/sub;
@@ -7326,7 +7398,7 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.flat?'ПРОКОЛ! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ':me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
-    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.stopT&&!me.pitT&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
+    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.wait&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;
@@ -7338,14 +7410,14 @@ function raceTick(dt){
       else me.offIdx=-1;}}
   R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
     // проколотое колесо «до финиша на ободе» (flat) — тоже вытаскиваем на дорогу, если машина увязла в траве
-    if((!c.player)&&!c.dnf&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
+    if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
     // 0.18: машина соперника (или вашего пилота) минуту не двигается к финишу — сход «застрял» (гонка не тянется бесконечно)
-    if(!c.player&&!c.dnf&&c.fin===null&&R.t>4){if(c.pgP===undefined||c.prog>c.pgP+8){c.pgP=c.prog;c.pgT=0;}else if(!(c.pitT>0)&&!c.gateWait&&!(c.stopT>0)&&!(c.punct&&!c.flat)&&!c.inWater&&!c.svc){c.pgT=(c.pgT||0)+dt;if(c.pgT>60){c.dnf='застрял';c.thr=0;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: СХОД — машина застряла`,2.5);}}}
+    if(!c.player&&!c.dnf&&!c.wait&&c.fin===null&&R.t>4){if(c.pgP===undefined||c.prog>c.pgP+8){c.pgP=c.prog;c.pgT=0;}else if(!(c.pitT>0)&&!c.gateWait&&!(c.stopT>0)&&!(c.punct&&!c.flat)&&!c.inWater&&!c.svc){c.pgT=(c.pgT||0)+dt;if(c.pgT>60){c.dnf='застрял';c.thr=0;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: СХОД — машина застряла`,2.5);}}}
     if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
   const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);
   if(R.endT===undefined&&!R.demo){
-    if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);}}
+    if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);try{ambEvent('finish',{win:raceOrder()[0]===me});}catch(_){}}}
     else if(!me&&(!teamLive.length||!live.length)){R.endT=R.mode==='sim'?0:2;if(R.cars.some(c=>c.you&&c.fin!==null))auSfx('cheer',1);}
     else if(R.time>(T.cfg.dur||120)*4)R.endT=0;}
   if(R.endT!==undefined){R.endT-=dt;if(R.endT<=0){if(!R.replayed&&R.me&&R.me.fin!==null&&R.mode==='drive'&&!R.ff){R.replayed=1;if(replayStart())return;}finishRace(false);return;}}
@@ -7353,7 +7425,7 @@ function raceTick(dt){
 }
 // Досчитать гонку мгновенно (режим руководителя): та же физика без отрисовки
 function raceFastForward(){if(!R||R.done)return;R.ff=true;if(R.t<0)R.t=0;const dt=1/20;let f=0;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);}
-function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);c.vx=0;c.vy=0;c.r=0;c.delta=0;c.stuck=0;}
+function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);c.vx=0;c.vy=0;c.r=0;c.delta=0;c.stuck=0;c.rev=false;c.revT=0;}
 // Ближайшая точка оси дороги по всей трассе (сетка 30 м): индекс и расстояние
 function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);let bi=-1,bd=1e18;
   for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;for(const i of L){const p=trk.pts[i],d=(p[0]-x)**2+(p[2]-z)**2;if(d<bd){bd=d;bi=i;}}}
@@ -7365,11 +7437,16 @@ function raceLoop(now){
   const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;
   if(R.loading){rRaf=requestAnimationFrame(raceLoop);return;}
   if(R.hold){renderRace(dt);rRaf=requestAnimationFrame(raceLoop);return;}
+  const tPrev=R.t;
   for(let k=0;k<(R.speed||1);k++){R.t+=dt;if(R.t>0){R.time+=dt;if(R.me)playerControl(R.me,dt);}raceTick(dt);if(!R||R.done)break;}
+  if(R&&!R.done&&R.mode!=='sim')raceCue(tPrev,R.t);
   if(R&&!R.done){if(R.gl)replayRec(dt*(R.speed||1));renderRace(dt);auRaceTick();}
   if(R&&!R.done)rRaf=requestAnimationFrame(raceLoop);
 }
-function raceOrder(){return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
+// звуковые вехи старта: диктор «Внимание!», отсчёт, «Марш!», гудки и гул трибун
+function raceCue(a,b){try{if(a<-4.9&&b>=-4.9)ambEvent('ready');if(a<-2.97&&b>=-2.97&&R.scn&&R.scn.st!=='lemans')ambEvent('countdown');if(a<0&&b>=0)ambEvent('start');}catch(_){}}
+function raceOrder(){if(R.scn&&R.scn.timed)return R.cars.slice().sort((a,b)=>{if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return scnOrderKey(a)-scnOrderKey(b);});
+  return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
 function finishRace(quit){
   const s=G;if(!R||R.done)return;R.done=true;cancelAnimationFrame(rRaf);if(R.mode!=='sim')auRaceStop();
   const T=R.trk;
@@ -7378,7 +7455,7 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0}));
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
   const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
   raceResults(rc,res,mode,info);
@@ -7406,15 +7483,17 @@ const SURF={
 // Покрытие дороги в точке: в городах до 1920-х — булыжник вместо грунта и щебня; в тоннеле — щебень (грунт под сводом сухой и укатан)
 function roadSurfKey(trk,i){const t=trk.terrAt(i),town=trk.town&&trk.town[i];if(town&&trk.rc.y<1922&&(t==='dirt'||t==='macadam'||t==='mount'||t==='mud'))return 'pave';
   if(trk.tunAt&&trk.tunAt[i]&&(t==='dirt'||t==='mud'||t==='mount'))return 'macadam';return SURF[t]?t:'dirt';}
-function rainOn(trk,i){return !!(R&&R.wx&&R.wx.rain)&&!(trk.tunAt&&trk.tunAt[i]);}
+function rainOn(trk,i){return rainW(trk,i)>0.35;}
+// 0.19: насколько мокрая дорога (0 — сухо, 1 — залита): дождь мочит постепенно, без дождя — сохнет; в тоннеле сухо
+function rainW(trk,i){if(!R||!R.wx||(trk.tunAt&&trk.tunAt[i]))return 0;return R.wetK!==undefined?R.wetK:R.wx.rain?1:0;}
 // Сцепление дороги для ИИ (планирование скорости) — с погодой
-function roadMuAt(trk,i){const k=roadSurfKey(trk,i),S=SURF[k];return S.mu*(rainOn(trk,i)?(S.wet||1):1);}
+function roadMuAt(trk,i){const k=roadSurfKey(trk,i),S=SURF[k],w=rainW(trk,i);return S.mu*(1+((S.wet||1)-1)*w);}
 // Что под колёсами машины: покрытие, сцепление, сопротивление, тряска (+ пятно, если в луже или грязи)
 function surfUnder(c,trk,lat){const W=trk.W,al=Math.abs(lat),i=c.idx;let k,P=null;
   if(al<=W/2+0.2){k=roadSurfKey(trk,i);P=patchAt(trk,c.x,c.z,i);if(P)k=P.kind;}
   else if(al<=W/2+1.5)k=trk.town&&trk.town[i]?'pave':trk.tunAt&&trk.tunAt[i]?'macadam':'verge';
   else k=offSurfKey(trk,c,al);
-  const S=SURF[k],rain=rainOn(trk,i);return {k,mu:S.mu*(rain?(S.wet||1):1),crr:S.crr*(rain?(S.wc||1):1),rough:S.rough,P,wet:rain};}
+  const S=SURF[k],w=rainW(trk,i);return {k,mu:S.mu*(1+((S.wet||1)-1)*w),crr:S.crr*(1+((S.wc||1)-1)*w),rough:S.rough,P,wet:w>0.35};}
 // Вне дороги: по карте земли 3D-мира (поле, лес, песок) или по участку трассы
 function offSurfKey(trk,c,al){const cfg=trk.cfg;if(cfg.terr==='snow')return 'snow';if(cfg.terr==='sand')return 'dune';if(cfg.terr==='beach')return 'sand';
   const sg=segAt(trk,c.idx);
@@ -7443,7 +7522,7 @@ function planPatches(trk,rain){const n=trk.n,r=mulberry32(hashStr('patch|'+trk.r
     i+=Math.max(2,Math.round((gap*(0.6+r()*0.8))/trk.step));}}
 function patchIn(P,x,z){const dx=x-P.x,dz=z-P.z,u=dx*P.tx+dz*P.tz,v=-dx*P.tz+dz*P.tx,an=Math.atan2(v,u);
   return Math.hypot(u/P.a,v/P.b)*(1+0.1*Math.sin(3*an+P.ph)+0.05*Math.sin(7*an+P.ph*2));}
-function patchAt(trk,x,z,i){if(!trk.patchAt)return null;const k=trk.patchAt[i];if(!k)return null;const P=trk.patches[k-1];return patchIn(P,x,z)<1?P:null;}
+function patchAt(trk,x,z,i){if(!trk.patchAt)return null;const k=trk.patchAt[i];if(!k)return null;const P=trk.patches[k-1];if(P.rain&&(!R||(R.wetK||0)<0.45))return null;return patchIn(P,x,z)<1?P:null;}
 /* ---------- вода: реки под мостами, море у берега, океан у пляжа ---------- */
 function waterAt(trk,x,z){if(typeof R3==='undefined'||!R3.on||R3.T!==trk||!R3.F)return null;
   for(const rv of trk.rivers||[]){const dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)<1300&&Math.abs(dd.e)<rv.w/2+1){const L=riverLine(trk,rv),m=dd.s,mc=Math.sin(m/170+rv.ph)*22*sstep(20,120,Math.abs(m))+Math.sin(m/61+rv.ph*2)*6*sstep(20,120,Math.abs(m));
@@ -7524,6 +7603,270 @@ function crashFx(c,K){const col=K.kind==='tree'?[120,90,60]:K.kind==='rock'?[150
   if(K.kind==='tree')for(let q=0;q<30;q++)r3dPart(K.x+(Math.random()-0.5)*4,y+4+Math.random()*4,K.z+(Math.random()-0.5)*4,(Math.random()-0.5)*1.2,-0.4-Math.random()*0.6,(Math.random()-0.5)*1.2,0.12,0.05,2.5+Math.random()*1.5,[70,98,48],0.9);
   for(let q=0;q<10;q++)r3dPart(K.x,y+0.6,K.z,(Math.random()-0.5)*2,0.8+Math.random(),(Math.random()-0.5)*2,0.8,2.5,1.8,[140,130,118],0.35);}
 
+/* ================= 0.19: ИСТОРИЧЕСКИЕ СЦЕНАРИИ ГОНОК =================
+   Как стартовали на самом деле (по одному с интервалом, парами, с ходу за машиной-лидером, бегом к машинам в Ле-Мане,
+   поодиночке на подъёмах), в котором часу и при какой погоде, что случилось в пути. Часы гонки идут: солнце встаёт и садится,
+   набегают тучи, начинается и кончается дождь, дорога мокнет и сохнет. В пути — титры кинохроники и голос диктора с трибун.
+   Поля: st — старт (grid, interval, pairs, rolling, lemans, solo), gap — интервал (с игры), h0 — час старта, span — сколько часов
+   проходит за гонку, wx — погода по ходу гонки [[доля пути, небо, дождь 0..1, туман 0..1]], dust — пыль (×), crowdRoad — зрители
+   на дороге, b — рассказ перед стартом, ev — события [{p, t — титр, v — сказать голосом}], lat — широта (для солнца). */
+const SCN={
+  pbp:{gt:'машины уходят каждые две минуты',st:'interval',gap:4,h0:12,span:48.8,lat:46,wx:[[0,'clear'],[0.5,'clear'],[0.62,'cloudy']],dust:1.6,
+    b:'Старт у Версаля в полдень. Машины уходят по одной с интервалом в две минуты. Впереди тысяча двести километров — туда и обратно, днём и ночью, при свете каретных фонарей.',
+    ev:[{p:0.03,t:'ВЕРСАЛЬ, ПОЛДЕНЬ. ПЕРВЫЕ МАШИНЫ УХОДЯТ К БОРДО',v:1},{p:0.2,t:'ВЕЧЕР: ЗАЖИГАЮТ ФОНАРИ СО СВЕЧАМИ'},{p:0.3,t:'РУФЕК, 3 ЧАСА НОЧИ. СМЕНЩИК ЛЕВАССОРА ЕЩЁ СПИТ — ОН ЕДЕТ ДАЛЬШЕ САМ',v:1},
+      {p:0.47,t:'БОРДО! РАЗВОРОТ — И ОБРАТНО В ПАРИЖ',v:1},{p:0.72,t:'ВТОРАЯ НОЧЬ В ПУТИ. ГЛАЗА СЛИПАЮТСЯ'},{p:0.93,t:'ПАРИЖ, ВОРОТА МАЙО: ТОЛПА ЖДЁТ ПОБЕДИТЕЛЯ',v:1}]},
+  chicago:{gt:'машины уходят по одной',st:'interval',gap:5,h0:8.9,span:10.4,lat:41.8,wx:[[0,'overcast',0,0.3],[0.4,'overcast',0,0.2],[0.8,'evening']],
+    b:'День благодарения, двадцать восьмое ноября. Улицы Чикаго завалены снегом, из шести машин многие не доедут. Старт в Джексон-парке, финиш — затемно.',
+    ev:[{p:0.04,t:'ДЖЕКСОН-ПАРК. СНЕГ ПО СТУПИЦЫ',v:1},{p:0.35,t:'ДУРЬЕА ЧИНИТ РУЛЕВОЕ В КУЗНИЦЕ У ДОРОГИ'},{p:0.7,t:'СМЕРКАЕТСЯ. ФОНАРЩИКИ ЗАЖИГАЮТ ГАЗ'},{p:0.95,t:'ФИНИШ В ТЕМНОТЕ. ДО КОНЦА ДОБРАЛИСЬ ЛИШЬ ДВЕ МАШИНЫ',v:1}]},
+  pmp:{gt:'машины уходят по одной',st:'interval',gap:4,h0:8,span:14,lat:45,wx:[[0,'cloudy'],[0.18,'overcast',0.6],[0.3,'overcast',1],[0.55,'overcast',0.7],[0.75,'cloudy']],dust:0.6,
+    b:'Десять этапов до Марселя и обратно. В первый же день на Францию налетела буря: деревья поперёк дороги, ливень и ветер.',
+    ev:[{p:0.2,t:'БУРЯ! ДЕРЕВЬЯ ПОПЕРЁК ДОРОГИ',v:1},{p:0.45,t:'ЛЕВАССОР ОБЪЕЗЖАЕТ СОБАКУ И ПЕРЕВОРАЧИВАЕТСЯ'},{p:0.8,t:'ДОЖДЬ СТИХАЕТ. ДОРОГА РАСКИСЛА'}]},
+  brighton:{gt:'колонна трогается по одной машине',st:'interval',gap:4,h0:10.5,span:6,lat:51.2,wx:[[0,'overcast',0.8],[0.6,'overcast',0.4],[0.85,'evening',0.3]],
+    b:'Англия отменила закон «о красном флаге»: больше никто не обязан идти перед машиной с флажком. Лорд Уинчелси рвёт красный флаг — и колонна трогается к морю под дождём.',
+    ev:[{p:0.03,t:'КРАСНЫЙ ФЛАГ РАЗОРВАН! ТЕПЕРЬ — ДО 14 МИЛЬ В ЧАС',v:1},{p:0.5,t:'ДОЖДЬ И ГРЯЗЬ НА ДОРОГЕ К БРАЙТОНУ'},{p:0.9,t:'БРАЙТОН. СТЕМНЕЛО — ПОСЛЕДНИЕ ДОБИРАЮТСЯ С ФОНАРЯМИ'}]},
+  pap:{gt:'машины уходят каждые две минуты',st:'interval',gap:4,h0:7,span:14,lat:50,wx:[[0,'clear'],[0.6,'clear']],dust:2,
+    b:'Три страны за одну гонку: через Бельгию в Амстердам и обратно. Июльская жара и пыль столбом за каждой машиной.',
+    ev:[{p:0.25,t:'БЕЛЬГИЙСКАЯ ГРАНИЦА. ТАМОЖНЯ МАШЕТ: ПРОЕЗЖАЙТЕ'},{p:0.5,t:'АМСТЕРДАМ, ПЛОТИНЫ И КАНАЛЫ',v:1},{p:0.85,t:'ПЫЛЬ ТАКАЯ, ЧТО ЕДУТ ПО ТЕНИ ДЕРЕВЬЕВ'}]},
+  tdf:{gt:'машины уходят по одной',st:'interval',gap:4,h0:6,span:14,lat:46,wx:[[0,'morning'],[0.25,'clear']],dust:2,
+    b:'Круг по всей Франции за неделю. Газеты печатают сводки каждый день — публика впервые следит за гонкой, как за романом с продолжением.',
+    ev:[{p:0.3,t:'ЖАРА. ВОДА В РАДИАТОРЕ КИПИТ'},{p:0.7,t:'ДЕРЕВНЯ ВЫСЫПАЛА НА ДОРОГУ'}]},
+  thousand:{gt:'машины уходят по одной',st:'interval',gap:5,h0:8,span:10,lat:54,wx:[[0,'cloudy'],[0.35,'overcast',0.7],[0.7,'cloudy']],
+    b:'Не гонка, а экзамен: тысяча миль от Лондона до Эдинбурга и обратно. Средняя — не больше двенадцати миль в час, главное — доехать без поломок.',
+    ev:[{p:0.3,t:'ПЕРЕВАЛ ШАП-ФЕЛЛ. МОТОРЫ ЕДВА ТЯНУТ',v:1},{p:0.55,t:'ДОЖДЬ В ШОТЛАНДИИ'},{p:0.9,t:'ЛОНДОН ВСТРЕЧАЕТ ТЕХ, КТО ДОЕХАЛ'}]},
+  gb1900:{gt:'машины уходят каждые две минуты',st:'interval',gap:6,h0:3.2,span:9,lat:46.5,wx:[[0,'morning',0,0.6],[0.35,'morning',0,0.2],[0.5,'clear']],dust:1.6,
+    b:'Первый Кубок Гордона Беннетта. Команды стран — по три машины. Старт в три часа утра, ещё в темноте.',
+    ev:[{p:0.02,t:'3:15 УТРА. СТАРТУЮТ ПРИ ФОНАРЯХ',v:1},{p:0.3,t:'У ШАРРОНА В РУЛЕВОМ ЗАСТРЯЛА СОБАКА — ОН ЕДЕТ ДАЛЬШЕ'},{p:0.9,t:'ЛИОН'}]},
+  pb1901:{gt:'машины уходят каждые две минуты',st:'interval',gap:4,h0:6,span:16,lat:51,wx:[[0,'clear'],[0.5,'cloudy'],[0.8,'clear']],dust:1.8,
+    b:'Две столицы-соперницы: Париж и Берлин. Три этапа, толпы у дорог; германский кайзер ждёт победителя.',
+    ev:[{p:0.2,t:'РЕЙМС. ЗРИТЕЛИ ВЫБЕГАЮТ НА ДОРОГУ',v:1},{p:0.55,t:'ГЕРМАНИЯ. НА ОБОЧИНАХ — СОЛДАТЫ'},{p:0.93,t:'БЕРЛИН, ФИНИШ НА ИППОДРОМЕ'}]},
+  pv1902:{gt:'машины уходят каждые две минуты',st:'interval',gap:4,h0:3.5,span:18,lat:47.5,wx:[[0,'morning'],[0.3,'clear'],[0.55,'cloudy',0,0.2],[0.75,'clear']],dust:1.5,neutral:[[0.4,0.5,'Швейцария запретила гонки: через страну — медленно, без счёта времени']],
+    b:'Париж — Вена через Альпы. По Швейцарии ехать разрешено только шагом, время там не считают. Главное испытание — перевал Арльберг.',
+    ev:[{p:0.4,t:'ШВЕЙЦАРИЯ: НЕЙТРАЛИЗАЦИЯ — ЕДЕМ МЕДЛЕННО, ЧАСЫ СТОЯТ',v:1},{p:0.58,t:'ПЕРЕВАЛ АРЛЬБЕРГ. ТОРМОЗА ДЫМЯТСЯ НА СПУСКЕ',v:1},{p:0.92,t:'ВЕНА! МАЛЕНЬКИЙ «РЕНО» ОБГОНЯЕТ ГИГАНТОВ'}]},
+  pm1903:{gt:'машины уходят каждую минуту',st:'interval',gap:3,h0:3.75,span:5.5,lat:46,wx:[[0,'morning',0,0.4],[0.3,'morning',0,0.2],[0.5,'clear']],dust:3,crowdRoad:1,
+    b:'Версаль, без четверти четыре утра. Сто тысяч зрителей ждали старта всю ночь. Двести машин уйдут по одной с интервалом в минуту — в облака пыли, которые не успевают оседать.',
+    ev:[{p:0.02,t:'3:45. СТАРТ ПРИ ФОНАРЯХ И ФАКЕЛАХ',v:1},{p:0.2,t:'ПЫЛЬ СТЕНОЙ: ЕДУТ ВСЛЕПУЮ, ПО ВЕРХУШКАМ ДЕРЕВЬЕВ',v:1},{p:0.45,t:'ЗРИТЕЛИ НА ДОРОГЕ! РАССТУПАЮТСЯ В ПОСЛЕДНИЙ МИГ'},
+      {p:0.62,t:'АВАРИИ ОДНА ЗА ДРУГОЙ. МАРСЕЛЬ РЕНО РАЗБИЛСЯ У КУЭ'},{p:0.9,t:'ПРАВИТЕЛЬСТВО ОСТАНАВЛИВАЕТ ГОНКУ В БОРДО',v:1}]},
+  ardennes:{gt:'машины уходят каждые две минуты',st:'interval',gap:5,h0:7,span:6,lat:50,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.7,'cloudy']],dust:1.3,
+    b:'Первая гонка по замкнутому кругу: леса Арденн, круг за кругом мимо одних и тех же трибун.',ev:[{p:0.5,t:'КРУГ ЗА КРУГОМ МИМО ТРИБУН БАСТОНИ'}]},
+  gb1903:{gt:'машины уходят каждые семь минут',st:'interval',gap:6,h0:7,span:7,lat:53,wx:[[0,'clear'],[0.6,'cloudy']],dust:1.2,
+    b:'Ирландия, графство Килдэр. В Англии гонки запрещены, поэтому Кубок везут сюда. Британские машины впервые выкрашены в зелёный — в честь Ирландии. Дорогу охраняют полиция и солдаты.',
+    ev:[{p:0.05,t:'БРИТАНСКИЙ ЗЕЛЁНЫЙ — В ЧЕСТЬ ИРЛАНДИИ',v:1},{p:0.4,t:'СОЛДАТЫ ДЕРЖАТ ЗРИТЕЛЕЙ ЗА ВЕРЁВКАМИ'},{p:0.85,t:'ЖЕНАТЦИ, «КРАСНЫЙ ДЬЯВОЛ», ВПЕРЕДИ'}]},
+  gb1904:{gt:'машины уходят каждые семь минут',st:'interval',gap:6,h0:7,span:6,lat:50.2,wx:[[0,'morning',0,0.3],[0.35,'clear']],dust:1.2,
+    b:'Горы Таунус под Франкфуртом. На старте — сам кайзер Вильгельм Второй. Машины уходят по одной, каждые семь минут.',
+    ev:[{p:0.03,t:'КАЙЗЕР НА ТРИБУНЕ',v:1},{p:0.5,t:'ЛЕСНЫЕ ПОВОРОТЫ ТАУНУСА'},{p:0.9,t:'ФРАНЦУЗ ТЕРИ ВЕЗЁТ КУБОК ДОМОЙ'}]},
+  gb1905:{gt:'машины уходят каждые пять минут',st:'interval',gap:6,h0:7,span:7,lat:45.7,wx:[[0,'clear']],dust:1.5,
+    b:'Овернь, круг среди потухших вулканов: подъёмы, спуски и сотни поворотов. Последний Кубок Гордона Беннетта.',
+    ev:[{p:0.3,t:'ВУЛКАНЫ ОВЕРНИ'},{p:0.9,t:'ПОСЛЕДНИЙ КУБОК: ДАЛЬШЕ — ГРАН-ПРИ',v:1}]},
+  vanderbilt:{gt:'машины уходят каждые две минуты',st:'interval',gap:5,h0:6,span:6,lat:40.8,wx:[[0,'morning',0,0.8],[0.25,'morning',0,0.4],[0.45,'clear']],dust:1.4,crowdRoad:1,
+    b:'Лонг-Айленд, рассвет в тумане. Двести тысяч зрителей стоят прямо на дороге и расступаются перед самыми радиаторами. Кубок Вандербильта — самая опасная гонка Америки.',
+    ev:[{p:0.02,t:'6 УТРА. ТУМАН НАД ЛОНГ-АЙЛЕНДОМ',v:1},{p:0.3,t:'ТОЛПА НА ДОРОГЕ! СИГНАЛЬТЕ!',v:1},{p:0.6,t:'ТУМАН РАССЕЯЛСЯ'},{p:0.9,t:'ФИНИШ НА ВИДУ У ТРИБУНЫ ВАНДЕРБИЛЬТА'}]},
+  targa:{gt:'машины уходят каждые десять минут',st:'interval',gap:5,h0:6,span:9,lat:37.9,wx:[[0,'morning'],[0.25,'clear']],dust:2,
+    b:'Сицилия, горы Мадоние. Старт в шесть утра у станции Черда. Сто сорок восемь километров серпантина на круг: козьи тропы, деревни на скалах, пыль и жара.',
+    ev:[{p:0.03,t:'ЧЕРДА, 6 УТРА. ВИНЧЕНЦО ФЛОРИО ДАЁТ СТАРТ',v:1},{p:0.3,t:'КАЛЬТАВУТУРО: ДЕРЕВНЯ НА СКАЛЕ'},{p:0.6,t:'ПОЛДЕНЬ. ЖАРА И ЦИКАДЫ'},{p:0.88,t:'ПОСЛЕДНИЙ СПУСК К МОРЮ',v:1}]},
+  gpacf:{gt:'машины уходят каждые полторы минуты',st:'interval',gap:4,h0:6,span:7,lat:48,wx:[[0,'morning',0,0.3],[0.3,'clear']],dust:1.3,
+    b:'Первый Гран-при в истории. Круг в сто километров под Ле-Маном. Дорогу залили гудроном от пыли, но жара плавит его, и гонщики едут в брызгах смолы. У «Рено» — съёмные обода «Мишлен»: колесо меняют за минуты.',
+    ev:[{p:0.03,t:'6 УТРА. ПЕРВЫЙ ГРАН-ПРИ. МАШИНЫ УХОДЯТ КАЖДЫЕ 90 СЕКУНД',v:1},{p:0.4,t:'ЖАРА ПЛАВИТ ГУДРОН. ГЛАЗА ЖЖЁТ',v:1},{p:0.7,t:'СЪЁМНЫЙ ОБОД: КОЛЕСО — ЗА ЧЕТЫРЕ МИНУТЫ'}]},
+  lyon1914:{gt:'парами каждые полминуты',st:'pairs',gap:4,h0:8,span:7,lat:45.7,wx:[[0,'clear']],dust:1,
+    b:'Лион, четвёртое июля четырнадцатого года. До войны — месяц. Машины стартуют парами каждые полминуты; «Мерседесы» идут командой, как по плану генштаба.',
+    ev:[{p:0.05,t:'СТАРТ ПАРАМИ, КАЖДЫЕ 30 СЕКУНД',v:1},{p:0.5,t:'«МЕРСЕДЕСЫ» ИДУТ КОМАНДОЙ'},{p:0.9,t:'ТРИ «МЕРСЕДЕСА» ПОДРЯД. ФРАНЦИЯ МОЛЧИТ',v:1}]},
+  dieppe:{gt:'машины уходят каждую минуту',st:'interval',gap:4,h0:5.5,span:14,lat:49.9,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.6,'cloudy']],dust:1.2,
+    b:'Дьепп, два дня гонки. Гиганты с моторами по пятнадцать литров против лёгких машин нового поколения.',ev:[{p:0.5,t:'ВТОРОЙ ДЕНЬ ГОНКИ'}]},
+  peking:{gt:'машины уходят по одной',st:'interval',gap:6,h0:5,span:14,lat:43,wx:[[0,'clear'],[0.3,'clear'],[0.55,'overcast',0.8],[0.8,'cloudy']],dust:2,
+    b:'Пекин — Париж: шестнадцать тысяч километров без дорог. Через пустыню Гоби, через Сибирь по грязи. Бензин везут на верблюдах, машины на руках переносят через горы.',
+    ev:[{p:0.1,t:'ПЕРЕВАЛ НАНКОУ: КУЛИ ТЯНУТ МАШИНЫ НА ВЕРЁВКАХ',v:1},{p:0.3,t:'ГОБИ. БЕНЗИН — НА ВЕРБЛЮДАХ'},{p:0.55,t:'СИБИРЬ. ДОЖДИ, ГРЯЗЬ ПО ОСИ',v:1},{p:0.75,t:'«ИТАЛА» ПРОВАЛИЛАСЬ СКВОЗЬ МОСТ'}]},
+  nyparis:{gt:'машины уходят по одной',st:'interval',gap:6,h0:11.25,span:8,lat:42,wx:[[0,'overcast',0,0.2],[0.2,'overcast'],[0.6,'cloudy']],
+    b:'Таймс-сквер, двенадцатое февраля. Двести пятьдесят тысяч человек провожают шесть машин в путь вокруг света. Сразу за Нью-Йорком — снежные заносы.',
+    ev:[{p:0.02,t:'ТАЙМС-СКВЕР. ВЫСТРЕЛ СТАРТОВОГО ПИСТОЛЕТА',v:1},{p:0.3,t:'СНЕЖНЫЕ ЗАНОСЫ. ЛОПАТЫ В ДЕЛО'},{p:0.8,t:'«ТОМАС ФЛАЕР» ВПЕРЕДИ'}]},
+  kaiser:{gt:'машины уходят каждую минуту',st:'interval',gap:5,h0:6,span:6,lat:50.2,wx:[[0,'morning',0,0.3],[0.3,'clear']],
+    b:'Приз кайзера: только для туристических машин с мотором до восьми литров. Таунус, сто машин и сам Вильгельм на трибуне.',ev:[{p:0.9,t:'НАЦЦАРО НА «ФИАТЕ» — ПОБЕДИТЕЛЬ'}]},
+  x80901:{gt:'машины уходят каждые две минуты',st:'interval',gap:5,h0:3,span:14,lat:57,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.7,'cloudy']],
+    b:'Белые ночи. Старт в три часа утра — а на дворе светло. Семьсот вёрст по Петербургскому шоссе, мимо почтовых станций и церквей.',
+    ev:[{p:0.03,t:'3 ЧАСА УТРА — А СВЕТЛО: БЕЛЫЕ НОЧИ',v:1},{p:0.4,t:'ВАЛДАЙ. КОЛОКОЛА НА ВЕСЬ ТРАКТ'},{p:0.9,t:'ПЕТЕРБУРГ',v:1}]},
+  x87575:{gt:'машины уходят каждые две минуты',st:'interval',gap:5,h0:3,span:10,lat:57,wx:[[0,'morning',0,0.3],[0.3,'clear']],
+    b:'Белые ночи и Московское шоссе. Анри Эмери на «Бенце» идёт быстрее поезда.',ev:[{p:0.03,t:'БЕЛЫЕ НОЧИ: СТАРТ НА РАССВЕТЕ',v:1},{p:0.9,t:'МОСКВА'}]},
+  x17567:{st:'interval',gap:5,h0:6,span:8,lat:59,wx:[[0,'clear'],[0.6,'cloudy']],b:'Большой приз Санкт-Петербургского автоклуба.',ev:[{p:0.9,t:'ФИНИШ ПОД ПЕТЕРБУРГОМ'}]},
+  brooklands:{st:'grid',h0:14,span:3,lat:51.3,wx:[[0,'cloudy'],[0.6,'cloudy',0.3]],
+    b:'Бруклендс — первый в мире трек, бетонный овал с виражами. Здесь всё как на скачках: гонщики в шёлковых куртках цветов конюшен, букмекеры принимают ставки.',
+    ev:[{p:0.05,t:'СТАВКИ ПРИНЯТЫ! ГОНЩИКИ В ЦВЕТАХ КОНЮШЕН',v:1},{p:0.5,t:'БЕТОННЫЙ ВИРАЖ: МАШИНУ ПРИЖИМАЕТ К СТЕНЕ'},{p:0.85,t:'«ГОРБ» У МОСТА: МАШИНЫ ВЗЛЕТАЮТ'}]},
+  jcc200:{st:'grid',h0:13,span:3,lat:51.3,wx:[[0,'cloudy']],b:'Двести миль Клуба младших автомобилистов на бетонном овале Бруклендса.',ev:[]},
+  bgp1926:{st:'grid',h0:14,span:4,lat:51.3,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Первый Гран-при Великобритании — на бетоне Бруклендса, с искусственными шиканами из мешков с песком.',ev:[{p:0.3,t:'ШИКАНЫ ИЗ МЕШКОВ С ПЕСКОМ'}]},
+  indy:{st:'rolling',h0:10,span:6.7,lat:39.8,wx:[[0,'clear']],
+    b:'Индианаполис, День памяти. Восемьдесят тысяч зрителей, трасса вымощена тремя миллионами кирпичей. Карл Фишер ведёт колонну на «Стоддард-Дейтоне»: круг прогрева — и старт с ходу.',
+    ev:[{p:0.01,t:'МАШИНА-ЛИДЕР ВЕДЁТ КОЛОННУ',v:1},{p:0.3,t:'КИРПИЧ ДРОЖИТ ПОД КОЛЁСАМИ'},{p:0.6,t:'БОКСЫ: МЕХАНИКИ МЕНЯЮТ ШИНЫ'},{p:0.92,t:'ПОСЛЕДНИЕ КРУГИ. ТРИБУНЫ ВСТАЛИ',v:1}]},
+  x51007:{gt:'экипажи уходят по одному',st:'interval',gap:5,h0:21,span:13,lat:44.5,wx:[[0,'overcast',0,0.3],[0.3,'overcast'],[0.7,'clear']],
+    b:'Ралли Монте-Карло: машины съезжаются в Монако из разных столиц Европы. Январь, ночь, заснеженные перевалы — а в конце солнце Лазурного берега.',
+    ev:[{p:0.03,t:'НОЧНОЙ СТАРТ. СНЕГ НА ФАРАХ',v:1},{p:0.45,t:'ПЕРЕВАЛ. ЦЕПИ НА КОЛЁСАХ'},{p:0.85,t:'РАССВЕТ НАД МОРЕМ. МОНАКО',v:1}]},
+  alpen:{gt:'машины уходят каждую минуту',st:'interval',gap:5,h0:6,span:11,lat:47,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.5,'overcast',0.6,0.3],[0.7,'cloudy']],
+    b:'Альпийское ралли: восемь перевалов за неделю. Моторы кипят на подъёмах, тормоза горят на спусках.',
+    ev:[{p:0.3,t:'КАЧБЕРГ: ПОДЪЁМ В ТРИДЦАТЬ ПРОЦЕНТОВ',v:1},{p:0.55,t:'ГРОЗА НА ПЕРЕВАЛЕ'},{p:0.85,t:'СПУСК К ВЕНЕ'}]},
+  glidden:{gt:'машины уходят каждую минуту',st:'interval',gap:5,h0:7,span:10,lat:42,wx:[[0,'clear'],[0.4,'overcast',0.6],[0.7,'cloudy']],
+    b:'Тур Глиддена: проверка надёжности по дорогам Америки. Штраф за каждую минуту опоздания на контрольный пункт.',
+    ev:[{p:0.45,t:'ЛИВЕНЬ. ГРЯЗЬ ПО ОСИ',v:1},{p:0.8,t:'КОНТРОЛЬНЫЙ ПУНКТ: СВЕРЯЮТ ЧАСЫ'}]},
+  henry:{st:'interval',gap:5,h0:7,span:10,lat:50,wx:[[0,'clear'],[0.6,'cloudy']],b:'Приз принца Генриха, брата кайзера: туристические машины через всю Германию.',ev:[{p:0.9,t:'ПОРШЕ НА «АУСТРО-ДАЙМЛЕРЕ» ВПЕРЕДИ'}]},
+  herkomer:{st:'interval',gap:5,h0:7,span:10,lat:48,wx:[[0,'clear'],[0.5,'cloudy']],b:'Приз Геркомера: туристические машины и строгие судьи. Художник Губерт фон Геркомер сам пишет портрет победителя.',ev:[]},
+  savannah:{st:'interval',gap:5,h0:9,span:6,lat:32,wx:[[0,'clear']],dust:1,b:'Саванна, Джорджия. Трассу охраняют солдаты национальной гвардии штата. Большой приз Америки собирает лучших гонщиков Европы.',ev:[{p:0.4,t:'СОЛДАТЫ НАЦГВАРДИИ ВДОЛЬ ТРАССЫ',v:1}]},
+  santamonica:{st:'interval',gap:5,h0:9,span:4,lat:34,wx:[[0,'clear']],b:'Санта-Моника: гонка по улицам и приморскому бульвару.',ev:[{p:0.5,t:'ОКЕАН СЛЕВА'}]},
+  elgin:{st:'interval',gap:5,h0:10,span:5,lat:42,wx:[[0,'clear'],[0.6,'cloudy']],b:'Элгин, Иллинойс: дорога среди кукурузных полей.',ev:[]},
+  turbie:{st:'solo',gap:10,h0:10,span:1,lat:43.7,wx:[[0,'clear']],b:'Неделя в Ницце: подъём на Ла-Тюрби над Монако. Заезжают поодиночке, на время.',ev:[{p:0.9,t:'ФИНИШ У РИМСКОГО ТРОФЕЯ'}]},
+  semmering:{st:'solo',gap:10,h0:9,span:1,lat:47.6,wx:[[0,'morning',0,0.3],[0.4,'clear']],b:'Земмеринг: десять километров в гору по перевалу. Каждый едет один, судьи с секундомерами.',ev:[{p:0.5,t:'ВИАДУК ЖЕЛЕЗНОЙ ДОРОГИ ВНИЗУ'}]},
+  ventoux:{st:'solo',gap:10,h0:9,span:1.5,lat:44.2,wx:[[0,'clear']],b:'Мон-Ванту: двадцать два километра к лысой белой вершине. Наверху дует мистраль.',ev:[{p:0.7,t:'ЛЫСЫЕ КАМНИ ВЕРШИНЫ. МИСТРАЛЬ'}]},
+  shelsley:{st:'solo',gap:10,h0:11,span:1,lat:52.2,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Шелсли-Уолш: короткий подъём через лес. Зрители сидят на склоне, как в амфитеатре.',ev:[]},
+  klausen:{st:'solo',gap:10,h0:9,span:1.5,lat:46.9,wx:[[0,'clear']],b:'Клаузен: двадцать один километр вверх по швейцарскому перевалу.',ev:[{p:0.7,t:'ЛЕДНИКИ НАД ДОРОГОЙ'}]},
+  pikes:{st:'solo',gap:10,h0:8,span:1.5,lat:38.8,wx:[[0,'clear'],[0.6,'cloudy']],b:'Пайкс-Пик: гонка к облакам, финиш на высоте четырёх тысяч трёхсот метров. Мотору не хватает воздуха.',ev:[{p:0.7,t:'ВЫСОТА: МОТОР ЗАДЫХАЕТСЯ',v:1}]},
+  ormond:{st:'solo',gap:10,h0:8,span:1,lat:29.3,wx:[[0,'clear']],b:'Ормонд-Бич: заезды на время по плотному песку, пока отлив. Слева прибой, справа дюны.',ev:[{p:0.5,t:'ОТЛИВ: ПЕСОК КАК БЕТОН'}]},
+  daytona1927:{st:'solo',gap:10,h0:9,span:1,lat:29.2,wx:[[0,'clear']],b:'Дейтона-Бич: попытка рекорда скорости на песке.',ev:[]},
+  tt:{gt:'машины уходят каждую минуту',st:'interval',gap:5,h0:9,span:6,lat:54.2,wx:[[0,'overcast',0.4],[0.4,'overcast',0.8],[0.75,'cloudy']],
+    b:'Остров Мэн, «Турист Трофи». Машины должны быть обычными туристическими, а бензина дают в обрез — побеждает не только быстрый, но и экономный.',
+    ev:[{p:0.4,t:'ДОЖДЬ НАД ОСТРОВОМ МЭН',v:1},{p:0.8,t:'БЕНЗИН НА ИСХОДЕ'}]},
+  lemans:{st:'lemans',h0:16,span:24,lat:48,wx:[[0,'clear'],[0.25,'cloudy'],[0.35,'overcast',0.7],[0.5,'overcast',0.4],[0.7,'cloudy'],[0.85,'clear']],
+    b:'Двадцать четыре часа Ле-Мана. В четыре часа дня гонщики бегут через дорогу к своим машинам. Впереди ночь при свете фар, дождь и рассвет над трассой Сарты.',
+    ev:[{p:0.01,t:'ГОНЩИКИ БЕГУТ К МАШИНАМ!',v:1},{p:0.22,t:'ЗАЖИГАЮТ ФАРЫ',v:1},{p:0.4,t:'ПОЛНОЧЬ. ДОЖДЬ НА МЮЛЬСАННСКОЙ ПРЯМОЙ'},{p:0.55,t:'РАССВЕТ. ТУМАН НАД ТРАССОЙ'},{p:0.93,t:'ЧЕТЫРЕ ЧАСА ДНЯ. ФЛАГ!',v:1}]},
+  spa24:{st:'lemans',h0:17,span:24,lat:50.4,wx:[[0,'cloudy'],[0.3,'overcast',0.8,0.2],[0.6,'overcast',0.5],[0.85,'cloudy']],
+    b:'Двадцать четыре часа Спа: Арденны, долгая ночь и дождь, который здесь идёт всегда.',ev:[{p:0.25,t:'НОЧЬ В АРДЕННАХ',v:1},{p:0.55,t:'ДОЖДЬ НА ОЛЬ-РУЖ'}]},
+  x79977:{st:'lemans',h0:8,span:12,lat:51.3,wx:[[0,'cloudy']],b:'«Двойная двенадцатка» в Бруклендсе: двенадцать часов днём, ночь машины стоят под замком, и ещё двенадцать утром.',ev:[]},
+  mille:{gt:'машины уходят каждую минуту',st:'interval',gap:4,h0:8,span:21,lat:44,wx:[[0,'clear'],[0.4,'cloudy'],[0.55,'overcast',0.6],[0.75,'cloudy']],dust:1.3,
+    b:'Милле Милья: тысяча миль по Италии — Брешиа, Рим и обратно. Старт каждую минуту, ночь в Апеннинах, города стоят вдоль дороги до утра.',
+    ev:[{p:0.2,t:'БОЛОНЬЯ, ПЕРЕВАЛ ФУТА'},{p:0.45,t:'РИМ. РАЗВОРОТ НА СЕВЕР',v:1},{p:0.6,t:'НОЧЬ В АПЕННИНАХ. ДОЖДЬ'},{p:0.93,t:'БРЕШИА. РАССВЕТ И ТОЛПЫ',v:1}]},
+  monaco:{st:'grid',h0:13.5,span:3.5,lat:43.7,wx:[[0,'clear']],b:'Первый Гран-при Монако: гонка по улицам княжества. Места на старте разыграли жребием.',ev:[{p:0.05,t:'МЕСТА НА СТАРТЕ — ПО ЖРЕБИЮ'},{p:0.4,t:'ТОННЕЛЬ И НАБЕРЕЖНАЯ',v:1}]},
+  nurb1927:{st:'grid',h0:11,span:5,lat:50.3,wx:[[0,'morning',0,0.5],[0.3,'cloudy'],[0.7,'overcast',0.3]],b:'Нюрбургринг, «Зелёный ад»: сто семьдесят поворотов в лесах Айфеля.',ev:[{p:0.1,t:'ТУМАН В АЙФЕЛЕ'}]},
+  degp:{st:'grid',h0:11,span:5,lat:50.3,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Гран-при Германии на Нюрбургринге.',ev:[]},
+  eifel:{st:'grid',h0:11,span:3,lat:50.3,wx:[[0,'morning',0,0.4],[0.4,'cloudy']],b:'Айфельреннен на Нюрбургринге.',ev:[]},
+  avus1926:{st:'grid',h0:14,span:3,lat:52.5,wx:[[0,'cloudy'],[0.4,'overcast',0.8]],b:'АФУС в Берлине: две прямые и два разворота. Дождь начинается прямо во время гонки.',ev:[{p:0.4,t:'ДОЖДЬ НА АФУСЕ',v:1}]},
+  itgp:{st:'grid',h0:10,span:5,lat:45.6,wx:[[0,'clear']],b:'Монца: королевский парк и скоростной трек.',ev:[]},
+  monza1922:{st:'grid',h0:10,span:5,lat:45.6,wx:[[0,'clear']],b:'Новая Монца: трек построили за сто десять дней.',ev:[{p:0.05,t:'ТРЕК ПОСТРОИЛИ ЗА 110 ДНЕЙ',v:1}]},
+  acerbo:{st:'interval',gap:5,h0:8,span:5,lat:42.5,wx:[[0,'clear']],dust:1.3,b:'Коппа Ачербо, Пескара: горы, море и длинные прямые вдоль берега Адриатики.',ev:[]},
+  acerbo1924:{st:'interval',gap:5,h0:8,span:5,lat:42.5,wx:[[0,'clear']],dust:1.3,b:'Первая Коппа Ачербо. Молодой Энцо Феррари ведёт «Альфа Ромео».',ev:[{p:0.9,t:'ЭНЦО ФЕРРАРИ ВПЕРЕДИ',v:1}]},
+  x38768:{st:'grid',h0:14,span:3,lat:32.9,wx:[[0,'clear']],b:'Триполи, Ливия: пальмы, песок и жара под сорок градусов.',ev:[{p:0.4,t:'ЖАРА. ПЕСОК НА ДОРОГЕ'}]},
+  europe1924:{st:'grid',h0:9,span:7,lat:45.7,wx:[[0,'clear']],b:'Гран-при Европы в Лионе: «Альфа Ромео Р2» и молодой Кампари.',ev:[]},
+  lm1921:{gt:'машины уходят каждые полминуты',st:'interval',gap:4,h0:9,span:5,lat:48,wx:[[0,'clear']],dust:2.2,b:'Ле-Ман, двадцать первый год. «Дюзенберг» — первый американец, выигравший Гран-при. Трасса разбита, камни летят в лица.',ev:[{p:0.4,t:'КАМНИ ЛЕТЯТ ИЗ-ПОД КОЛЁС',v:1},{p:0.9,t:'«ДЮЗЕНБЕРГ» — ПЕРВЫЙ АМЕРИКАНЕЦ'}]},
+};
+// у одних серий по годам свой старт
+const SCN_Y={gpacf:[[1906,{}],[1907,{gap:3}],[1908,{gap:3}],[1913,{st:'interval',gap:3}],[1929,{st:'grid'}]],indy:[[1929,{}]],brooklands:[[1929,{}]],
+  vanderbilt:[[1906,{}],[1911,{st:'grid',crowdRoad:0}]],targa:[[1914,{}],[1929,{gap:4,dust:1.4}]],tt:[[1908,{}],[1929,{st:'lemans',wx:[[0,'cloudy'],[0.4,'overcast',0.6],[0.8,'cloudy']]}]]};
+// Широта по стране-хозяйке (для высоты солнца)
+const SCN_LAT={fr:47,uk:52,ie:53,de:50,it:43,us:40,ru:57,at:47.5,ch:46.5,be:50.5,mc:43.7,ly:32.9,es:40,other:50,intl:47};
+// Средняя скорость эпохи (км/ч) — сколько часов шла гонка
+const scnAvg=(y,t)=>(t==='oval'?1.4:t==='hill'||t==='sprint'?0.7:1)*(y<1897?22:y<1900?35:y<1903?55:y<1908?80:y<1915?95:y<1925?105:115);
+function scnGeneric(rc){const t=rc.t,y=rc.y,s={lat:SCN_LAT[rc.c]||47};
+  if(t==='hill'||t==='sprint')Object.assign(s,{st:'solo',gap:10,h0:t==='sprint'?8.5:10,span:t==='sprint'?0.5:1.2});
+  else if(t==='oval')Object.assign(s,{st:rc.track==='board'||rc.track==='indy'||y>=1915?'rolling':'grid',h0:13,span:Math.min(6,rc.km/scnAvg(y,t))});
+  else if(t==='endurance')Object.assign(s,{st:y>=1925?'lemans':'grid',h0:16,span:24});
+  else if(t==='rally')Object.assign(s,{st:'interval',gap:5,h0:7,span:10});
+  else if(t==='road')Object.assign(s,{st:y<1920?'interval':'grid',gap:4,h0:y<1905?4.5:6.5,span:clamp(rc.km/scnAvg(y,t),1,30)});
+  else Object.assign(s,{st:y<1908?'interval':y<1914?'interval':'grid',gap:4,h0:y<1914?7:13,span:clamp(rc.km/scnAvg(y,t),1,10)});
+  s.dust=y<1910&&t!=='oval'&&t!=='sprint'?1.3:y<1920?1:0.7;return s;}
+function scnFor(rc){const g=scnGeneric(rc),S=SCN[rc.id],o=Object.assign({},g,S||{});
+  (SCN_Y[rc.id]||[]).some(([yy,v])=>{if(rc.y<=yy){Object.assign(o,v);return true;}return false;});
+  o.named=!!S;o.id=rc.id;return o;}
+/* ---------- солнце по часам: высота и азимут (день года — по месяцу гонки, широта — по месту) ---------- */
+function scnSun(h,month,lat){const doy=month*30.4+15,dec=23.44*Math.sin(2*Math.PI*(284+doy)/365)*Math.PI/180,phi=lat*Math.PI/180,H=(h-12)*15*Math.PI/180;
+  const sel=Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.cos(H),el=Math.asin(clamp(sel,-1,1));
+  const az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(phi)-Math.tan(dec)*Math.cos(phi));return {el,az};}
+// часы гонки: от старта по мере хода гонки (для лидера — по доле ожидаемого времени)
+function scnHour(){const S=R&&R.scn;if(!S)return 12;const p=clamp(Math.max(0,R.time)/Math.max(30,R.trk.cfg.dur||200),0,1.3);return S.h0+p*S.span;}
+function scnClockTxt(){const h=((scnHour()%24)+24)%24,hh=Math.floor(h),mm=Math.floor((h-hh)*60);return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+/* ---------- погода по ходу гонки ---------- */
+// Сценарий погоды: [[доля пути, небо, дождь, туман]]. Без сценария — от погоды старта, иногда меняется в пути
+function scnWxPlan(){const S=R.scn,W=R.wx,r=mulberry32(hashStr('wxplan|'+R.rc.key));
+  if(S.wx&&S.named)return S.wx.map(x=>[x[0],x[1],x[2]||0,x[3]||0]);
+  const m=W.mood,rain=W.rain?1:0,fog=W.mist?W.mist*0.5:0,q=r(),dry=R.trk.cfg.oval||R.rc.track==='board'||R.trk.cfg.terr==='snow';
+  const L=[[0,m,rain*0.9,fog]];
+  if(!dry){
+    if(rain&&q<0.4)L.push([0.45+r()*0.25,'cloudy',0,0]);                              // дождь кончается
+    else if(m==='cloudy'&&q<0.32){const p=0.3+r()*0.35;L.push([p,'overcast',0.25,0.1],[p+0.08,'overcast',0.85,0.15]);if(r()<0.5)L.push([p+0.3,'cloudy',0,0]);}  // набежали тучи — ливень
+    else if(m==='clear'&&q<0.1){const p=0.4+r()*0.3;L.push([p,'cloudy',0,0],[p+0.12,'overcast',0.6,0]);}
+    else if(m==='morning'&&q<0.8)L.push([0.35+r()*0.2,'clear',0,0]);                 // утренняя дымка рассеивается
+  }
+  return L;}
+function scnWxInit(){const S=R.scn,W=R.wx,P=S.wxP=scnWxPlan();const f=P[0];
+  W.mood=f[1];R.rainK=f[2];R.wetK=f[2]>0.2?0.85:0;R.fogK=f[3]||0;S.wxI=0;S.moodA=f[1];S.moodB=f[1];S.moodK=1;W.rain=R.rainK>0.15;
+  S.wetEver=P.some(x=>x[2]>0.3);}
+function scnWxTick(dt,p){const S=R.scn,P=S.wxP,W=R.wx;if(!P)return;
+  let i=S.wxI;while(i+1<P.length&&p>=P[i+1][0])i++;
+  if(i!==S.wxI){S.wxI=i;const nm=P[i][1];if(nm!==S.moodB){S.moodA=S.moodK>0.5?S.moodB:S.moodA;S.moodB=nm;S.moodK=0;try{if(R.gl&&typeof r3dSkyWant==='function')r3dSkyWant(nm);}catch(_){}}
+    const was=R.rainK;if(P[i][2]>0.3&&was<0.2&&R.me&&!R.film)scnCap(P[i][1]==='overcast'?'НАЧИНАЕТСЯ ДОЖДЬ':'ДОЖДЬ');else if(P[i][2]<0.1&&was>0.4&&R.me)scnCap('ДОЖДЬ ПРЕКРАТИЛСЯ. ДОРОГА ПОДСЫХАЕТ');}
+  const tg=P[i];S.moodK=Math.min(1,S.moodK+dt/14);
+  R.rainK+=clamp(tg[2]-R.rainK,-dt/9,dt/9);R.fogK+=clamp((tg[3]||0)-R.fogK,-dt/25,dt/25);
+  // дорога мокнет под дождём и сохнет без него (быстрее — на солнце и ветру)
+  if(R.rainK>0.05)R.wetK=Math.min(1,R.wetK+dt*R.rainK/16);else R.wetK=Math.max(0,R.wetK-dt/(S.moodB==='clear'?45:80));
+  W.rain=R.rainK>0.15;W.mood=S.moodK<0.5?S.moodA:S.moodB;}
+/* ---------- титры кинохроники и голос в пути ---------- */
+function scnCap(t,dur){const el=document.getElementById('rCap');if(!el||!R||R.mode==='sim')return;el.textContent=t;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),(dur||5.5)*1000);}
+function scnEvTick(){const S=R.scn,F=R.follow;if(!S.ev||!F||R.mode==='sim')return;const p=clamp(F.prog/R.trk.raceLen,0,1);
+  while(S.evI<S.ev.length&&p>=S.ev[S.evI].p){const e=S.ev[S.evI++];if(p-e.p>0.08)continue;scnCap(e.t,6);if(e.v)try{annSay(e.t,'narr');}catch(_){}}}
+/* ---------- старт по-исторически ---------- */
+function scnPlace(c,back,lat){const T=R.trk,n=T.n;let idx=T.startIdx-Math.round(back/T.step);if(T.closed)idx=(idx%n+n)%n;else idx=Math.max(0,idx);
+  const p=T.pts[idx],nn=T.N[idx],t=T.T[idx];c.idx=idx;c.x=p[0]+nn[0]*lat;c.z=p[2]+nn[1]*lat;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);c.lap=T.closed&&idx>n/2?-1:0;c.vx=0;c.vy=0;c.r=0;trackLocal(T,c);}
+function scnSetup(){const S=R.scn=scnFor(R.rc),T=R.trk,cars=R.cars,st=S.st;S.evI=0;S.ev=(S.ev||[]).slice().sort((a,b)=>a.p-b.p);
+  scnWxInit();cars.forEach(c=>{c.t0=0;c.relT=0;c.wait=false;c.neuT=0;});S.timed=st==='interval'||st==='pairs'||st==='solo';
+  const me=cars.find(c=>c.player)||null,vRef=T.raceLen/Math.max(30,T.cfg.dur||200);S.vRef=vRef;
+  if(S.timed){
+    // по одному (или парами) с интервалом: игрок — третьим, есть кого догонять; остальные — по жребию
+    const rr=mulberry32(hashStr('draw|'+R.rc.key)),L=cars.slice();for(let i=L.length-1;i>0;i--){const j=Math.floor(rr()*(i+1));[L[i],L[j]]=[L[j],L[i]];}if(me){L.splice(L.indexOf(me),1);L.splice(Math.min(2,L.length),0,me);}
+    const gap=S.gap||4;S.queue=L;S.slots=st==='pairs'?Math.ceil(L.length/2):L.length;
+    L.forEach((c,k)=>{const slot=st==='pairs'?Math.floor(k/2):k;c.slot=slot;c.relT=slot*gap;c.wait=true;c.t0=null;
+      scnPlace(c,4+slot*8,st==='pairs'?(k%2?1:-1)*T.W*0.22:0);});
+  }else if(st==='lemans'){
+    // Ле-Ман: машины наискосок у края, гонщики на другой стороне бегут к ним по сигналу
+    const L=cars.slice().sort((a,b)=>b.prog-a.prog);L.forEach((c,k)=>{scnPlace(c,4+k*7,T.W/2-1.3);c.yaw+=0.35;c.relT=c.player?99:1.1+Math.random()*1.3+(1-(c.sk||0.8))*3;c.wait=true;});
+    if(me){me.relT=99;me.leRun=0;}
+  }else if(st==='rolling'){
+    // старт с ходу: колонна за машиной-лидером; флаг — когда лидер уходит в боксы
+    S.vPace=clamp(Math.min(...cars.map(c=>c.vtop))*0.55,10,26);S.greenAt=null;
+    try{R.pace=scnPaceCar();}catch(e){console.warn('pace',e);R.pace=null;}
+    cars.forEach(c=>{c.vCap=S.vPace;c.t0=null;});
+  }
+  if(me&&me.wait&&S.timed)scnCap(`ВАШ СТАРТ — ${me.slot+1}-${st==='pairs'?'Й ПАРОЙ':'М'}. ${(S.gt||(st==='solo'?'каждый едет один, на время':'машины уходят по одной')).toUpperCase()}`,6);}
+// машина-лидер (Индианаполис): открытый туристический автомобиль в белом
+function scnPaceCar(){const y=R.rc.y,md=aiCarMd(y),e={you:false,name:'Машина-лидер',label:'Машина-лидер',drvName:y<=1912?'Карл Фишер':'Судья',md,prep:0,tyre:'hard',gear:0,color:'#ece6d6',pw:1,num:0,sk:0.9};
+  const c=mkRaceCar(e,y,R.trk);c.style=carStyle(md,0,y);if(/^gp/.test(c.style))c.style='tourer';c.wheel=wheelKind(md,y);const bid=parts(md).b.id;
+  c.spriteKey=c.style+c.color+'pace'+c.wheel+bid;c.spec3={key:c.spriteKey,style:c.style,color:c.color,y,wheel:c.wheel,mech:0,num:0,b:bid,mq:y<1914?'Stoddard-Dayton':'Packard',strip:1,hp:3};
+  c.pace=true;const lead=R.cars.slice().sort((a,b)=>b.prog-a.prog)[0];scnPlace(c,Math.max(0,-(lead?lead.prog:0))-26,0);c.vx=0;c.fin=null;c.dnf=null;return c;}
+function scnPaceTick(dt){const S=R.scn,c=R.pace,T=R.trk;if(!c)return;
+  const lead=R.cars.filter(x=>!x.dnf).sort((a,b)=>b.prog-a.prog)[0],gapL=lead?c.prog-lead.prog:30;
+  let vT=S.greenAt===null?Math.min(S.vPace,Math.max(0,S.vPace*(gapL<18?1.1:gapL>40?0.8:1))):Math.max(0,c.vx-dt*4);
+  if(S.greenAt===null&&R.t<0.4)vT=0;
+  c.vx+=clamp(vT-c.vx,-6*dt,3*dt);
+  // по осевой; после флага — к краю, в боксы
+  const lat=S.greenAt===null?0:-(T.W/2-1.1),i=c.idx,t=T.T[i],nn=T.N[i],p=T.pts[i];
+  c.x+=Math.sin(c.yaw)*c.vx*dt;c.z+=Math.cos(c.yaw)*c.vx*dt;const ex=(p[0]+nn[0]*lat)-c.x,ez=(p[2]+nn[1]*lat)-c.z;c.x+=ex*Math.min(1,dt*1.5);c.z+=ez*Math.min(1,dt*1.5);
+  trackLocal(T,c);c.yaw+=angWrap(Math.atan2(T.T[c.idx][0],T.T[c.idx][1])-c.yaw)*Math.min(1,dt*4);c.y=T.pts[c.idx][1];c.thr=vT>c.vx?0.6:0;c.brk=vT<c.vx-0.5?0.4:0;c.rpm=clamp(c.vx/c.gr[1],0.15,1);c.gear=2;
+  // флаг: колонна прошла полкруга (или 700 м) — лидер уходит, гонка началась
+  if(S.greenAt===null&&R.t>0&&(c.prog>Math.min(380,T.len*0.3)||R.t>18)){S.greenAt=R.time;R.cars.forEach(x=>{x.vCap=0;x.t0=R.time;});rMsg('ФЛАГ! СТАРТ С ХОДУ',2.2);try{auSfx('cheer',1);annCall('pace');}catch(_){}}
+  if(S.greenAt!==null&&R.time-S.greenAt>12)R.pace=null;}
+// Такт сценария: выпуск со старта, подъезд к линии, отсчёт, нейтрализация, погода, титры
+function scnTick(dt){const S=R.scn;if(!S)return;const T=R.trk,me=R.me;
+  const pT=clamp(Math.max(0,R.time)/Math.max(30,T.cfg.dur||200),0,1.3);scnWxTick(dt,pT);
+  if(S.st==='rolling')scnPaceTick(dt);
+  if(S.timed||S.st==='lemans'){let rel=0;
+    R.cars.forEach(c=>{if(!c.wait){if(c.t0===null&&c.prog>=0)c.t0=R.time;return;}
+      if(S.st==='lemans'){if(c.player){c.leRun+=dt;if(c.leRun>1.6&&(rKeys.gas||c.leRun>5)){c.wait=false;rMsg('ПОЕХАЛИ!',1);}}else if(R.time>=c.relT)c.wait=false;return;}
+      if(R.time>=c.relT){c.wait=false;if(R.mode!=='sim')try{if(!me||me.wait||c===me)annCall('go_n',c.num);}catch(_){}if(c.player){rMsg('ПОШЁЛ!',1.4);}else if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: старт!`,1);return;}
+      rel++;});
+    S.relN=R.cars.filter(c=>!c.wait).length;}
+  // нейтрализация: через города (или страну) медленно, время не считается
+  if(S.neutral)R.cars.forEach(c=>{const p=c.prog/T.raceLen;let inN=null;for(const z of S.neutral)if(p>=z[0]&&p<z[1]){inN=z;break;}
+    c.vCap=inN?8.5:(S.st==='rolling'&&S.greenAt===null?S.vPace:0);if(inN&&c.fin===null&&!c.dnf){c.neuT+=dt;if(c.player&&!c.neuSaid){c.neuSaid=1;scnCap('НЕЙТРАЛИЗАЦИЯ: '+inN[2].toUpperCase(),6);}}else if(c.player)c.neuSaid=0;});
+  scnEvTick();
+  if(me&&me.wait&&S.timed&&R.mode==='drive'){const left=Math.ceil(me.relT-R.time);if(left!==S.lastLeft){S.lastLeft=left;if(left<=5&&left>0){rMsg(String(left),0.9);try{auSfx('tick',0.6);}catch(_){}}else if(left>5)R.msg='';}}
+  if(me&&me.wait&&S.st==='lemans'&&R.mode==='drive'&&R.t>0){rMsg(me.leRun<1.6?'БЕГИТЕ К МАШИНЕ!':'ЗАВОДИТЕ! ЖМИТЕ «ГАЗ»',0.3);}}
+// Машина ждёт своего старта: подъезжает к линии вслед за ушедшими и стоит
+function scnWaitControl(c,dt){const S=R.scn,T=R.trk;if(S.st==='lemans'){c.thr=0;c.brk=1;return;}
+  const done=S.queue?S.queue.filter(x=>!x.wait).length:0,slotDone=S.st==='pairs'?Math.ceil(done/2):done,dT=4+(c.slot-slotDone)*8,dist=-c.prog-dT;
+  const wantV=dist>0.8?Math.min(3,Math.sqrt(3*dist)):0;aiControl(c,T,dt);c.thr=c.vx<wantV?0.32:0;c.brk=c.vx>wantV+0.3||wantV===0?(wantV===0?1:0.5):0;}
+// Время гонщика: с интервальным стартом — от пересечения линии, без нейтрализации
+function scnElapsed(c,t){const t0=c.t0===null||c.t0===undefined?(c.relT||0):c.t0;return t-t0-(c.neuT||0);}
+// Порядок в гонке с раздельным стартом: по расчётному времени
+function scnOrderKey(c){const S=R.scn,T=R.trk;if(c.fin!==null)return scnElapsed(c,c.fin);const t0=c.t0===null||c.t0===undefined?(c.relT||0):c.t0;
+  return (Math.max(0,R.time-t0)-(c.neuT||0))+Math.max(0,T.raceLen-c.prog)/Math.max(1,S.vRef);}
+// Кого рисовать: гонщики и машина-лидер
+function raceVisCars(){return R&&R.pace?R.cars.concat([R.pace]):R.cars;}
+// Титр → фраза для диктора: обычный регистр (первая буква и после точки — заглавные)
+function scnSpeech(t){const s=String(t||'').toLowerCase().replace(/(^|[.!?]\s+)([а-яёa-z])/g,(m,a,b)=>a+b.toUpperCase());return /[.!?]$/.test(s)?s:s+'.';}
+// Рассказ перед стартом: как стартовали и в котором часу
+function scnBrief(){const S=R&&R.scn;return S&&S.b?S.b:'';}
+
 /* ================= RACE RENDER: pseudo-3D road over real physics, sprites, HUD ================= */
 const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
@@ -7549,7 +7892,7 @@ function setupRender2d(full){
   const scl=Math.min((W-20)/(mxx-mnx||1),(H-20)/(mxz-mnz||1));R.map={g,W,H,f:(x,z)=>[10+(x-mnx)*scl+((W-20)-(mxx-mnx)*scl)/2,H-10-(z-mnz)*scl-((H-20)-(mxz-mnz)*scl)/2]};
   const off=document.createElement('canvas');off.width=W;off.height=H;const og=off.getContext('2d');og.strokeStyle='rgba(255,255,255,.85)';og.lineWidth=3;og.beginPath();T.pts.forEach((p,i)=>{const [x,y]=R.map.f(p[0],p[2]);i?og.lineTo(x,y):og.moveTo(x,y);});if(T.closed)og.closePath();og.stroke();R.map.bg=off;
   if(full===false)return;const set=SCEN_SETS[T.cfg.host];R.bg=mkBackdrop(set,T.cfg);
-  car3dQueue(R.cars.map(c=>c.spec3),F&&F.spec3);scenQueue(T);
+  car3dQueue(raceVisCars().map(c=>c.spec3),F&&F.spec3);scenQueue(T);
 }
 function renderRace(dt){
   if(R&&R.gl){try{r3dRender(dt);}catch(e){console.error(e);r3dFail('error');}if(R&&R.gl){raceMiniMap();updateRaceHUD();return;}}
@@ -7614,7 +7957,7 @@ function renderRace(dt){
   }
   // машины по сегментам
   const bySeg={};const lapLen=T.len;
-  R.cars.forEach(o=>{let s=(o.idx+o.segT)*step-camS;if(T.closed){s=((s%lapLen)+lapLen)%lapLen;if(s>lapLen-20)s-=lapLen;}const kk=Math.floor(s/step+frac);if(kk<0||kk>=segs.length-1)return;(bySeg[kk]=bySeg[kk]||[]).push({o,s});});
+  raceVisCars().forEach(o=>{let s=(o.idx+o.segT)*step-camS;if(T.closed){s=((s%lapLen)+lapLen)%lapLen;if(s>lapLen-20)s-=lapLen;}const kk=Math.floor(s/step+frac);if(kk<0||kk>=segs.length-1)return;(bySeg[kk]=bySeg[kk]||[]).push({o,s});});
   // декорации и машины: от дальних к ближним
   const phase=cam.phase;
   for(let k=segs.length-2;k>=0;k--){
@@ -7682,20 +8025,25 @@ function updateRaceHUD(){
   const F=R.follow,T=R.trk,order=raceOrder(),place=order.indexOf(F)+1;
   document.getElementById('hPos').textContent=place+'/'+R.cars.length;
   document.getElementById('hLap').textContent=T.cfg.laps>1?Math.min(T.cfg.laps,Math.max(1,F.lap+1))+'/'+T.cfg.laps:Math.round(clamp(F.prog/T.raceLen,0,1)*100)+'%';
-  const tm=Math.max(0,R.time);document.getElementById('hTime').textContent=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
-  document.getElementById('hSpd').textContent=Math.round(Math.max(0,F.vx)*3.6)+(F.draft?'⇶':'');document.getElementById('hGear').textContent=F.vx<-0.2?'R':F.gear;
+  // время гонщика (при раздельном старте — своё, от линии старта) и часы дня по-историческому
+  const tS=R.scn&&R.scn.timed&&F?(F.wait?0:F.fin!==null?scnElapsed(F,F.fin):scnElapsed(F,R.time)):R.time,tm=Math.max(0,tS);document.getElementById('hTime').textContent=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
+  {const ck=document.getElementById('rClock');if(ck&&R.scn){const v='🕓 '+scnClockTxt();if(ck.textContent!==v)ck.textContent=v;}}
+  document.getElementById('hSpd').textContent=Math.round(Math.abs(F.vx)*3.6)+(F.draft?'⇶':'');document.getElementById('hGear').textContent=F.rev||F.vx<-0.2?'R':F.gear;
   const hb=document.getElementById('bHeat');hb.style.width=Math.min(100,Math.max(F.heat,F.eng||0))+'%';hb.style.background=F.heat>80?'var(--bad)':F.heat>55?'var(--warn)':'var(--good)';
   const tb=document.getElementById('bTyre'),tl=F.punct?0:100-Math.min(100,F.tyre);tb.style.width=tl+'%';tb.style.background=tl<25?'var(--bad)':tl<50?'var(--warn)':'var(--good)';
   const db=document.getElementById('bDmg'),dl=100-F.dmg;db.style.width=dl+'%';db.style.background=dl<40?'var(--bad)':dl<70?'var(--warn)':'var(--good)';
   {const fb=document.getElementById('bFuel'),need=fuelNeed(F,T),ok=F.fuel>=need;fb.style.width=F.fuel+'%';fb.style.background=F.fuel<12?'var(--bad)':ok?'var(--brass)':'#e8894a';
    const nk=document.getElementById('bFuelNeed');if(nk){nk.style.left=Math.min(100,need)+'%';nk.style.display=F.fuelRate&&F.fin===null&&need>1?'block':'none';}}
   document.getElementById('rReset').hidden=!(R.me&&R.me.stuck>1.2);
+  // педаль тормоза подсказывает задний ход: на месте — «держи — назад», включён — «НАЗАД ◀»
+  {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
+    if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();
-  const lead=order[0],board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
+  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard');if(bd.dataset.t!==String(Math.floor(R.time*2))){bd.dataset.t=String(Math.floor(R.time*2));bd.innerHTML=board;}
   raceAssistHUD();
   const m=document.getElementById('rMsg');
-  m.textContent=R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
+  m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
   m.classList.toggle('small',m.textContent.length>14);
 }
 // Кнопка 🔧: что нужно машине; горит, когда без механика дальше плохо
@@ -7733,7 +8081,8 @@ const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса пово
   ['Твёрдое','деревья, дома, заборы и зрители не пропускают. Удар — повреждение; поломку механик чинит на обочине.'],
   ['🔧','— сервис: машина остановится, механик сменит шины, дольёт бензин, подтянет поломки. Кнопка горит, когда пора.'],
   ['Обочина','трава, камни и склоны тормозят и бьют подвеску; в гору на поле не заехать. Срезать нельзя — вернут туда, где съехали.'],
-  ['Вид','— кнопка вверху: сзади, сверху, из кабины. «?» — эта подсказка и пауза.']];
+  ['Назад','стоя держите «Тормоз» полсекунды — включится задний ход (на приборе R). «Газ» — снова вперёд. Застряли — кнопка «Вернуться на трассу».'],
+  ['Вид','— кнопка вверху: сзади, сверху, из кабины и «Кинохроника» (старая плёнка). «?» — эта подсказка и пауза.']];
 function showDriveTips(pause){const el=document.getElementById('rTips');if(!R)return;R.hold=true;
   el.innerHTML=`<h3>Как ехать</h3><ul>${DRIVE_TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
   document.getElementById('rTipsGo').onclick=()=>{el.hidden=true;if(R){R.hold=false;R.lastT=performance.now();}};}
@@ -7746,7 +8095,7 @@ document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me){cons
 document.getElementById('rSvc').addEventListener('click',()=>{const m=R&&R.me;if(!m||R.mode!=='drive'||m.dnf||m.fin!==null||m.svc||m.pitT>0)return;m.svc=1;rMsg('ОСТАНАВЛИВАЕМСЯ',1);});
 document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
 function rMusUI(){const b=document.getElementById('rMus');if(b){b.textContent=AU.on.race?'♪ вкл':'♪ выкл';b.classList.toggle('off',!AU.on.race);}}
-document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%3;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ'][R3.view],1);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
+document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%4;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ','КИНОХРОНИКА'][R3.view],1);raceOldFilm(R3.view===3);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу
 const STEER_NAMES={wheel:'Колесо',keys:'Кнопки',tilt:'Наклон'};
 function steerMode(){const m=AU.on.steer||(AU.on.tilt?'tilt':'keys');return m==='wheel'?'keys':m;}
@@ -7798,7 +8147,18 @@ function drawWheelUI(){
 }
 const KMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'gas',ArrowDown:'brake',Space:'gas'};
 document.addEventListener('keydown',e=>{if(R&&KMAP[e.code]){e.preventDefault();rKeys[KMAP[e.code]]=true;}});
+// рожок/клаксон своей машины: клавиша H
+document.addEventListener('keydown',e=>{if(R&&e.code==='KeyH'&&!e.repeat&&R.me){try{hornSfx(R.rc.y,0.4,0);}catch(_){}}});
 document.addEventListener('keyup',e=>{if(R&&KMAP[e.code]){rKeys[KMAP[e.code]]=false;}});
+
+// 0.19: «Кинохроника» — гонка как старая плёнка: сепия, зерно, царапины, мерцание и виньетка (вид сзади)
+function raceOldFilm(on){const rs=document.getElementById('raceScreen'),v=document.getElementById('rView');rs.classList.toggle('oldfilm',!!on);let el=document.getElementById('rOld');
+  if(on){if(!el){el=document.createElement('div');el.id='rOld';el.className='r-old';el.innerHTML='<canvas width="160" height="100"></canvas><i></i><i class="b"></i><b></b>';v.appendChild(el);}
+    const cv=el.querySelector('canvas'),g=cv.getContext('2d'),id=g.createImageData(160,100),sc=el.querySelectorAll('i'),fl=el.querySelector('b');let last=0;
+    const loop=now=>{if(!R||!rs.classList.contains('oldfilm')){return;}if(now-last>70){last=now;const d=id.data;for(let i=0;i<d.length;i+=4){const q=Math.random()*255;d[i]=d[i+1]=d[i+2]=q;d[i+3]=Math.random()<0.45?46:0;}g.putImageData(id,0,0);
+        sc.forEach(x=>{if(Math.random()<0.3){x.style.left=(Math.random()*100)+'%';x.style.opacity=(0.12+Math.random()*0.3).toFixed(2);}else if(Math.random()<0.3)x.style.opacity='0';});fl.style.opacity=(Math.random()*0.1).toFixed(3);}
+      requestAnimationFrame(loop);};requestAnimationFrame(loop);}
+  else if(el)el.remove();}
 
 /* ================= SEASONS: historical championships, standings, AI results, race outcome ================= */
 // Гоночный отдел завода: без него можно выставить только серийную или облегчённую машину
@@ -8419,11 +8779,15 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   const T=R.trk,rc=R.rc,cfg=T.cfg,W=R.wx||{mood:'clear'},s0=T.startIdx,me=R.follow,poi=filmPOI(),shots=[];
   const sp=trkAt(s0,0),fw=[sp.t[0],0,sp.t[1]],side=[sp.n[0],0,sp.n[1]];
   // 1) над стартом: высоко сзади — плавно вниз к машинам
-  shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
+  const brief=typeof scnBrief==='function'?scnBrief():'',dIn=voiceDur(raceIntroText(rc),'aidar'),dB=brief?voiceDur(brief,'aidar'):0;
+  shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}${R.scn?' · '+scnClockTxt():''}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
     cam:u=>{const e=ease(u),a=trkSmooth(s0,-150+70*e,-40+25*e),look=trkSmooth(s0,40+30*e);return {eye:[a.p[0],a.p[1]+95-60*e,a.p[2]],look:[look.p[0],look.p[1]+2,look.p[2]],fov:0.85};}});
   // 2) самое интересное впереди: пролёт вдоль дороги
   if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:poi.at,mid:poi.cap},poi:i,
     cam:u=>{const e=ease(u),a=trkSmooth(i,-90+80*e,18),b=trkSmooth(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
+  // 2б) как это было: старт по-историческому — высоко над стартом, медленный облёт
+  if(brief){const need=Math.max(5,(dIn+dB+1.2)-(shots.reduce((a,x)=>a+x.d,0))-7.8);shots.push({d:Math.min(16,need),cap:{kick:'Как это было',mid:brief},
+    cam:u=>{const e=ease(u),a=trkSmooth(s0,-60+30*e,32-20*e),look=trkSmooth(s0,20);return {eye:[a.p[0],a.p[1]+26-8*e,a.p[2]],look:[look.p[0],look.p[1]+1,look.p[2]],fov:0.8};}});}
   // 3) стартовая решётка: камера едет по обочине вдоль машин — по самой трассе (на изгибе тоже), с той стороны, где свободно
   const grid=R.cars.slice().sort((a,b)=>b.prog-a.prog),back=grid[grid.length-1],front=grid[0];
   const favs=filmFavorites(),iB=back.idx,dI=T.closed?((front.idx-iB)%T.n+T.n)%T.n:Math.max(0,front.idx-iB),gLen=dI*T.step+14,gs=filmSide(iB,dI,T.W/2+2.2);
@@ -8443,7 +8807,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   document.getElementById('raceScreen').classList.add('filming');document.getElementById('rfSkip').onclick=filmSkip;el.onclick=e=>{if(e.target===el)filmSkip();};
   auReelFanfare();
   // диктор: записанный голос — каждый раз; синтезатор устройства — только первые шесть гонок
-  {const say=raceIntroText(rc);if(reelVoiceOn()&&(voiceDur(say,'aidar')||n<6))setTimeout(()=>{if(R&&R.film)voiceSay(say,'aidar');},500);}
+  {const say=raceIntroText(rc);if(reelVoiceOn()&&(voiceDur(say,'aidar')||n<6))setTimeout(()=>{if(R&&R.film)voiceSay(say,'aidar',()=>{if(R&&R.film&&brief&&dB)setTimeout(()=>{if(R&&R.film)voiceSay(brief,'aidar');},250);});},500);}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;
@@ -10121,12 +10485,14 @@ const MPAR=new Float32Array([.03,6,0,0, .6,70,0,.28, 1,36,1,.5, 1,110,0,.85, .1,
 // Фото-текстуры (48b-tex.js): байт a_ext.w — номер слоя+1 (биты 0–5; 0 — без текстуры), бит 6 — «с трёх сторон» (камень), бит 7 — окрасить цветом вершины
 const TXM={tri:64,tint:128};
 // Постоянные номера текстурных блоков: у сэмплеров разных типов — свои блоки
-const G3UNIT={u_sh:0,u_tex:1,u_cmap:1,u_fol:1,u_src:0,u_blm:1,u_det:2,u_smap:2,u_alb:3,u_dat:4,u_env:5,u_pan:6,u_cld:7};
+const G3UNIT={u_sh:0,u_tex:1,u_cmap:1,u_fol:1,u_src:0,u_blm:1,u_det:2,u_smap:2,u_alb:3,u_dat:4,u_env:5,u_pan:6,u_cld:7,u_env2:8};
 /* ---------- шейдеры ---------- */
 const G3LIB=`
 uniform vec3 u_sun,u_sunC,u_skyC,u_gndC,u_hzC,u_zeC,u_fogS,u_cam;uniform float u_fogD,u_exp,u_time,u_vig;uniform vec2 u_res;
-uniform sampler2D u_env;uniform vec4 u_envR;
+uniform sampler2D u_env,u_env2;uniform vec4 u_envR,u_envR2;
 vec2 envUV(vec3 d){return vec2(atan(d.x,d.z)*.159155+.5+u_envR.x,acos(clamp(d.y,-1.,1.))*.31831);}
+// 0.19: второе небо — смена погоды и сумерки (плавный переход между двумя фото)
+vec3 envTex(vec3 d,float lod){vec3 c=textureLod(u_env,envUV(d),lod).rgb*u_envR.y;if(u_envR2.w>.001){vec2 q=vec2(atan(d.x,d.z)*.159155+.5+u_envR2.x,acos(clamp(d.y,-1.,1.))*.31831);c=mix(c,textureLod(u_env2,q,min(lod,u_envR2.z)).rgb*u_envR2.y,u_envR2.w);}return c;}
 vec3 skyCol(vec3 d){float h=d.y;
 #ifdef STUDIO
   vec3 c=mix(u_gndC*.5,u_hzC,smoothstep(-.3,0.,h));c=mix(c,u_zeC*.3,smoothstep(0.,.5,h));
@@ -10134,14 +10500,14 @@ vec3 skyCol(vec3 d){float h=d.y;
   c+=vec3(1.05,1.04,1.)*smoothstep(.02,.06,h)*(1.-smoothstep(.12,.18,h));
   return c;
 #else
-  if(u_envR.w>.5){vec3 c=textureLod(u_env,envUV(d),2.).rgb*u_envR.y;return h<0.?mix(c,u_gndC*.9,clamp(-h*4.,0.,1.)):c;}
+  if(u_envR.w>.5){vec3 c=envTex(d,2.);return h<0.?mix(c,u_gndC*.9,clamp(-h*4.,0.,1.)):c;}
   return h<0.?mix(u_hzC,u_gndC*.9,clamp(-h*3.,0.,1.)):mix(u_hzC,u_zeC,pow(clamp(h,0.,1.),.4));
 #endif
 }
 // отражение неба: фото, размытое по шероховатости (мип-уровни)
 vec3 envCol(vec3 d,float r){
 #ifndef STUDIO
-  if(u_envR.w>.5){vec3 c=textureLod(u_env,envUV(d),clamp(r*u_envR.z,0.,u_envR.z)).rgb*u_envR.y;return d.y<0.?mix(c,u_gndC*.8,clamp(-d.y*5.,0.,1.)):c;}
+  if(u_envR.w>.5){vec3 c=envTex(d,clamp(r*u_envR.z,0.,u_envR.z));return d.y<0.?mix(c,u_gndC*.8,clamp(-d.y*5.,0.,1.)):c;}
 #endif
   return skyCol(d);}
 vec3 tone(vec3 c){c*=u_exp;c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.);c=pow(c,vec3(1./2.2));
@@ -10375,7 +10741,7 @@ ${G3LIB}
 float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 void main(){vec4 w=u_ivp*vec4(v_p,1.,1.);vec3 d=normalize(w.xyz/w.w-u_cam);
   float az=atan(d.x,d.z)*.159155+.5,el=asin(clamp(d.y,-1.,1.)),sd=max(dot(d,u_sun),0.);vec3 c;
-  if(u_envR.w>.5){c=textureLod(u_env,envUV(d),0.).rgb*u_envR.y;if(d.y<0.)c=mix(c,u_hzC,clamp(-d.y*8.,0.,1.));c*=1.-u_night*.96;
+  if(u_envR.w>.5){c=envTex(d,0.);if(d.y<0.)c=mix(c,u_hzC,clamp(-d.y*8.,0.,1.));c*=1.-u_night*.96;
     c+=u_sunC*(smoothstep(.99965,.99985,sd)*5.*(1.-u_night)+pow(sd,300.)*.4);}
   else{c=skyCol(d);c+=u_sunC*(smoothstep(.99965,.99985,sd)*9.*(1.-u_night*.7)+pow(sd,14.)*.22+pow(sd,300.)*.6);
     float cv=1.-(el-.015)/.5;if(cv>0.&&cv<1.){vec4 cl=texture(u_cld,vec2(az*2.,cv));vec3 cc=mix(u_hzC,u_zeC,.2)*.35+u_sunC*.28+u_skyC*.3;c=mix(c,pow(cl.rgb,vec3(2.2))*cc*2.2,cl.a*.9);}}
@@ -10630,7 +10996,7 @@ async function texSky(mood){
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.activeTexture(gl.TEXTURE0);
   texClose(im);const w=eco?1024:(im.width||2048);return tx.sky[mood]={t,lv:Math.floor(Math.log2(w))+1};}
 // Привязать всё к своим блокам перед кадром (могли перебить студия или обработка кадра)
-function texBind(sky){const gl=G3.gl,tx=G3.cache.tx;
+function texBind(sky,sky2){const gl=G3.gl,tx=G3.cache.tx;gl.activeTexture(gl.TEXTURE8);gl.bindTexture(gl.TEXTURE_2D,sky2&&sky2.t?sky2.t:G3.dum2);
   gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D_ARRAY,tx?tx.alb:G3.dumA);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D_ARRAY,tx?tx.dat:G3.dumA);
   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,sky&&sky.t?sky.t:G3.dum2);gl.activeTexture(gl.TEXTURE0);}
 // Сразу всё для гонки: слои, листва и небо; по готовности — cb(true), при ошибке — cb(false) (гонка пойдёт по-старому)
@@ -11061,7 +11427,7 @@ function r3dSetup(){
   R3.texFor=key=>{const k='road|'+key+'|'+T.W;return C[k]||(C[k]=g3Tex(r3dChecker()));};
   r3dLabelAtlas();R3.signs=new MB(true);R3.texLab=null;
   R3.texPuff=C.puff||(C.puff=g3Tex(r3dPuff(),{cs:true,ct:true}));
-  R3.env=r3dEnvBase(T);
+  R3.env=r3dEnvBase(T);try{r3dSkyPreload();}catch(_){}
   R3.pI=g3Inst(9000,3,G3.quad);R3.partI=g3Inst(700,2,G3.quadC);
   R3.veg={list:folVegList()};R3.vI=g3Inst(Math.round(2600*gq().veg)+300,3,G3.quad);R3.vegK=-99;R3.vN=0;
   r3dSkidInit();
@@ -11078,7 +11444,7 @@ function r3dSetup(){
   const order=[];for(let k=0;k<nCh;k++){const kk=T.closed?((s0+k)%nCh+nCh)%nCh:s0+k;if(kk<nCh)order.push(kk);}if(!T.closed)for(let k=s0-1;k>=0;k--)order.push(k);
   if(T.closed){const back=[nCh-1,nCh-2];order.sort((a,b)=>(back.includes(a)?-0.5:0)-(back.includes(b)?-0.5:0));}
   R3.order=order;R3.next=0;
-  R.cars.forEach(c=>{r3dCarMesh(c.spec3,true);r3dCarMesh(c.spec3,false);c.v3=null;});
+  raceVisCars().forEach(c=>{r3dCarMesh(c.spec3,true);r3dCarMesh(c.spec3,false);c.v3=null;});
   R3.cam=null;R3.eye=[R.follow.x,R.follow.y+3,R.follow.z];
   // первые куски — сразу, чтобы старт не был пустым
   const tS=performance.now();while(R3.next<order.length&&(R3.next<2||performance.now()-tS<110))r3dBuildStep();
@@ -11086,7 +11452,7 @@ function r3dSetup(){
 }
 // Лужи и грязь для шейдера дороги: 12 ближайших к камере пятен (центр, направление, полуоси, вид, фаза края)
 function r3dPatUniforms(P){const gl=G3.gl,L=R3.T.patches||[],e=R3.eye;if(!R3.patU)R3.patU=new Float32Array(96);let n=0;
-  if(L.length){const cand=[];for(const Q of L){const d=(Q.x-e[0])**2+(Q.z-e[2])**2;if(d<230*230)cand.push([d,Q]);}cand.sort((a,b)=>a[0]-b[0]);
+  if(L.length){const cand=[];const wetOk=(R.wetK||0)>=0.45;for(const Q of L){if(Q.rain&&!wetOk)continue;const d=(Q.x-e[0])**2+(Q.z-e[2])**2;if(d<230*230)cand.push([d,Q]);}cand.sort((a,b)=>a[0]-b[0]);
     for(const [,Q] of cand){if(n>=12)break;R3.patU.set([Q.x,Q.z,Q.tx,Q.tz,Q.a,Q.b,Q.kind==='mudhole'?1:0,Q.ph],n*8);n++;}}
   if(P.u.u_pat)gl.uniform4fv(P.u.u_pat,R3.patU);if(P.u.u_patN)gl.uniform1f(P.u.u_patN,n);}
 function r3dChecker(){const c=mkCanvas(64,16),g=c.getContext('2d');for(let i=0;i<16;i++)for(let j=0;j<4;j++){g.fillStyle=(i+j)%2?'#141414':'#f4f2ea';g.fillRect(i*4,j*4,4,4);}return c;}
@@ -11098,14 +11464,14 @@ function r3dTilesAround(x,z,rad,budget){const F=R3.F,TS=16*F.S,t0=performance.no
   const L=[];for(let j=cz-r;j<=cz+r;j++)for(let k=cx-r;k<=cx+r;k++){if(k<0||j<0)continue;const key=k+','+j;if(R3.tiles[key]!==undefined)continue;L.push([Math.hypot(k-cx,j-cz),k,j,key]);}
   L.sort((a,b)=>a[0]-b[0]);for(const [,k,j,key] of L){if(performance.now()-t0>budget)break;R3.tiles[key]=r3dTile(k,j)||{skip:1};}}
 /* ---------- свет: день, сумерки, ночь ---------- */
-function r3dEnvBase(T){const set=SCEN_SETS[T.cfg.host],tr=TERR[T.cfg.terr]||TERR.dirt,mix3=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k],mul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
+function r3dEnvBase(T,W){W=W||R3.W;const set=SCEN_SETS[T.cfg.host],tr=TERR[T.cfg.terr]||TERR.dirt,mix3=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k],mul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
   const ze=lin(set.sky[0]),hz=lin(set.sky[1]),gr=lin(T.cfg.terr==='snow'?'#e9edf2':set.grass||tr.g),misty=T.cfg.stages||T.rc.y<1900;
   const zs=[ze[0]*0.62,ze[1]*0.72,ze[2]*0.94];
-  const day=(R3.W&&r3dEnvPhoto(T,R3.W))||{sun:v3n([-0.42,0.62,0.66]),sunC:[1.92,1.74,1.46],skyC:mul(mix3(zs,[0.62,0.66,0.72],0.55),0.8),gndC:mix3(mul(gr,0.35),[0.09,0.085,0.07],0.65),hzC:mix3(mul(hz,0.7),[0.44,0.54,0.68],0.72),zeC:zs,fogS:[0.88,0.82,0.69],fogD:misty?0.0015:0.0011,exp:0.92,night:0,hl:0,lamp:0,envRot:0,envK:0.78};
+  const day=(W&&r3dEnvPhoto(T,W))||{sun:v3n([-0.42,0.62,0.66]),sunC:[1.92,1.74,1.46],skyC:mul(mix3(zs,[0.62,0.66,0.72],0.55),0.8),gndC:mix3(mul(gr,0.35),[0.09,0.085,0.07],0.65),hzC:mix3(mul(hz,0.7),[0.44,0.54,0.68],0.72),zeC:zs,fogS:[0.88,0.82,0.69],fogD:misty?0.0015:0.0011,exp:0.92,night:0,hl:0,lamp:0,envRot:0,envK:0.78};
   const dusk={sun:v3n([day.sun[0]*0.4,0.09,day.sun[2]*0.4+0.3]),sunC:[1.5,0.72,0.38],skyC:[0.16,0.14,0.22],gndC:[0.05,0.04,0.04],hzC:[0.85,0.46,0.3],zeC:[0.12,0.13,0.3],fogS:[1.2,0.62,0.32],fogD:0.0025,exp:1.2,night:0.2,hl:0.6,lamp:0.6,envRot:day.envRot,envK:0.45};
   const night={sun:v3n([0.3,0.7,-0.5]),sunC:[0.12,0.15,0.24],skyC:[0.018,0.024,0.04],gndC:[0.006,0.007,0.01],hzC:[0.02,0.028,0.05],zeC:[0.004,0.006,0.016],fogS:[0.03,0.035,0.06],fogD:0.0045,exp:1.6,night:1,hl:1,lamp:1,envRot:day.envRot,envK:0.05};
   return {day,dusk,night,mix:(a,b,k)=>{const o={};for(const key in a)o[key]=Array.isArray(a[key])?mix3(a[key],b[key],k):a[key]+(b[key]-a[key])*k;o.sun=v3n(o.sun);return o;}};}
-function r3dEnvNow(){const E=R3.env,cfg=R3.T.cfg,F=R.follow;if(!cfg.night)return E.day;const p=clamp(F.prog/R3.T.raceLen,0,1);
+function r3dEnvNow(){const E=R3.env,cfg=R3.T.cfg,F=R.follow;if(R.scn&&typeof r3dEnvScn==='function')return r3dEnvScn();if(!cfg.night)return E.day;const p=clamp(F.prog/R3.T.raceLen,0,1);
   if(p<0.25||p>0.85)return E.day;if(p<0.3)return E.mix(E.day,E.dusk,(p-0.25)/0.05);if(p<0.35)return E.mix(E.dusk,E.night,(p-0.3)/0.05);if(p<0.75)return E.night;if(p<0.8)return E.mix(E.night,E.dusk,(p-0.75)/0.05);return E.mix(E.dusk,E.day,(p-0.8)/0.05);}
 /* ---------- частицы: пыль, дым заноса, пар; следы шин ---------- */
 function r3dSkidInit(){const gl=G3.gl,S=R3.skid,mb=new MB();mb.grow(S.max*4);mb.n=S.max*4;for(let q=0;q<S.max;q++){const a=q*4;mb.ix.push(a,a+1,a+2,a,a+2,a+3);}
@@ -11172,14 +11538,14 @@ function r3dRender(dt){
   const dpr=r3dScale(dt,W,H);
   const bw=Math.max(1,Math.round(W*dpr)),bh=Math.max(1,Math.round(H*dpr));if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;}
   const E=r3dTunEnv(r3dEnvNow(),dt);R3.E=E;
-  R.cars.forEach(c=>r3dCarUpdate(c,dt,E));
+  raceVisCars().forEach(c=>{if(c.pace&&!c.v3){r3dCarMesh(c.spec3,true);r3dCarMesh(c.spec3,false);}r3dCarUpdate(c,dt,E);});
   if(R3.camHook)R3.camHook(dt,W,H);else r3dCamera(dt,W,H);
   r3dPartsUpdate(dt);
   if(R3.peopleDirty)r3dPeopleUpload();
   {const kc=Math.floor(F.idx/R3CH);if(kc!==R3.vegK||R3.vegDirty)r3dVegUpload(kc);}
   if(R3.signsDirty){g3Free(R3.signM);R3.signM=g3Mesh(R3.signs);R3.signsDirty=false;}
   if(R3.labDirty){if(R3.texLab)gl.deleteTexture(R3.texLab);R3.texLab=g3Tex(R3.lab.cv,{cs:true,ct:true});R3.labDirty=false;}
-  G3.dc=0;G3.tri=0;texBind(R3.sky);
+  G3.dc=0;G3.tri=0;texBind(R3.sky,R3.sky2);
   // видимые куски
   const far=R3.lowQ?Q.far*0.6:Q.far,vis=[],eye=R3.eye;for(let k=0;k<R3.nCh;k++){const ch=R3.chunks[k];if(!ch)continue;const d=Math.hypot(ch.c[0]-eye[0],ch.c[2]-eye[2])-ch.r;if(d>far)continue;if(!inFrustum(R3.fr,ch.c,ch.r))continue;vis.push([d,ch]);}
   vis.sort((a,b)=>a[0]-b[0]);R3.vis=vis;
@@ -11208,7 +11574,7 @@ function r3dRender(dt){
   // дорога
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);
   P=r3dUse('road',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());let lastKey='';r3dPatUniforms(P);
-  const wet=R3.W&&R3.W.rain?1:0;
+  const wet=R.wetK!==undefined?clamp(R.wetK,0,1):R3.W&&R3.W.rain?1:0;
   vis.forEach(([,ch])=>ch.roads.forEach(r=>{if(!r.m||r.key==='__chk')return;if(r.key!==lastKey){const rm=roadM(r.key);lastKey=r.key;
     gl.uniform4f(P.u.u_rd,Math.max(0,texLi(rm.l)),T.W,R3.tile,rm.k);gl.uniform4f(P.u.u_rd2,Math.max(0,texLi(rm.v)),r.key==='asphalt'&&T.rc.y>=1920?1:0,wet,0);}g3Draw(r.m);}));
   // клетчатая линия старта и финиша
@@ -11266,7 +11632,7 @@ function r3dPostRun(P,bw,bh,E){const gl=G3.gl;
   // блик солнца в объективе: только «Кино» и если солнце в кадре
   let fl=[0,0,0,0];if(gq().flare&&E.night<0.3){const s=E.sun,e=R3.eye,p=[e[0]+s[0]*1000,e[1]+s[1]*1000,e[2]+s[2]*1000],M=R3.VP,cw=M[3]*p[0]+M[7]*p[1]+M[11]*p[2]+M[15];
     if(cw>0){const x=(M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12])/cw,y=(M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13])/cw;if(Math.abs(x)<1.1&&Math.abs(y)<1.1)fl=[x*0.5+0.5,y*0.5+0.5,(1-Math.max(Math.abs(x),Math.abs(y))*0.8)*(R3.sunVis===undefined?1:R3.sunVis),0];}}
-  gl.uniform4fv(Q.u.u_flare,fl);gl.uniform1f(Q.u.u_rain,R3.W&&R3.W.rain&&R3.view!==2?1:R3.W&&R3.W.rain?0.5:0);gl.drawArrays(gl.TRIANGLES,0,3);G3.dc+=5;
+  gl.uniform4fv(Q.u.u_flare,fl);gl.uniform1f(Q.u.u_rain,(R.rainK!==undefined?clamp(R.rainK,0,1):R3.W&&R3.W.rain?1:0)*(R3.view===2?0.5:1));gl.drawArrays(gl.TRIANGLES,0,3);G3.dc+=5;
   gl.activeTexture(gl.TEXTURE0);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);}
 function r3dUse(name,E,bw,bh){const gl=G3.gl,P=G3.P[name];gl.useProgram(P.p);const u=P.u;
   gl.uniformMatrix4fv(u.u_vp,false,R3.VP);if(u.u_shm)gl.uniformMatrix4fv(u.u_shm,false,R3.SHM||m4());
@@ -11277,6 +11643,7 @@ function r3dUse(name,E,bw,bh){const gl=G3.gl,P=G3.P[name];gl.useProgram(P.p);con
   if(u.u_hl){const F=R.follow;if(E.hl>0&&F){const fw=[Math.sin(F.yaw),-0.12,Math.cos(F.yaw)];gl.uniform3f(u.u_hlP,F.x+fw[0]*1.6,(r3dCarState(F).y||F.y)+0.9,F.z+fw[2]*1.6);gl.uniform3fv(u.u_hlD,v3n(fw));gl.uniform1f(u.u_hl,E.hl);}else gl.uniform1f(u.u_hl,0);}
   if(u.u_lamp)gl.uniform4f(u.u_lamp,0,E.hl,E.lamp,0);
   if(u.u_envR)gl.uniform4f(u.u_envR,E.envRot||0,E.envK===undefined?0.78:E.envK,R3.sky?R3.sky.lv-1:0,R3.sky?1:0);
+  if(u.u_envR2)gl.uniform4f(u.u_envR2,E.envRot2||0,E.envK2===undefined?(E.envK===undefined?0.78:E.envK):E.envK2,R3.sky2?R3.sky2.lv-1:0,R3.sky2&&R3.sky?(E.skyMix||0):0);
   if(u.u_lay){const tx=G3.cache.tx;if(tx){gl.uniform4fv(u.u_lay,tx.lay);gl.uniform4fv(u.u_lavg,tx.avg);}}
   if(u.u_tq)gl.uniform4f(u.u_tq,gq().nrm&&!R3.lowQ?1:0,0,1,1);
   return P;}
@@ -11295,7 +11662,7 @@ function r3dShadowPass(E,vis,tiles){const gl=G3.gl;R3.shOn=!!G3.shFB&&E.sun[1]>0
   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
   vis.forEach(([,ch])=>{if(ch.leaf&&inFrustum(fr,ch.leaf.c,ch.leaf.r))g3Draw(ch.leaf);});(tiles||[]).forEach(([d,t])=>{if(d<260&&t.l&&inFrustum(fr,t.l.c,t.l.r))g3Draw(t.l);});
   Pp=G3.P.dCar;gl.useProgram(Pp.p);gl.uniformMatrix4fv(Pp.u.u_vp,false,M);gl.uniform4fv(Pp.u.u_mat,MPAR);
-  R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(Math.hypot(c.x-cc[0],c.z-cc[2])>S*1.5)return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);r3dCarUniforms(Pp,c,st,m);g3Draw(m.op);});
+  raceVisCars().forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(Math.hypot(c.x-cc[0],c.z-cc[2])>S*1.5)return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);r3dCarUniforms(Pp,c,st,m);g3Draw(m.op);});
   gl.disable(gl.POLYGON_OFFSET_FILL);gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
 /* ---------- машины: положение на дороге, крен, клевок, колёса, пыль ---------- */
 function r3dCarUpdate(c,dt,E){
@@ -11318,7 +11685,7 @@ function r3dCarUpdate(c,dt,E){
   const me=c===R.follow;if(d>160)return;const bx=c.x-fw[0]*1.2,bz=c.z-fw[2]*1.2;
   // в дождь и в тоннеле пыли нет; в луже и грязи — брызги вместо пыли
   const rain=!!(R3.W&&R3.W.rain)&&!c.tun,wetK=c.surf==='puddle'||c.surf==='mudhole'||c.surf==='mud'||c.surf==='snow'?0:1;
-  const dusty=rain?0:((tr.dust||0)*(c.off?1.3:1)+(c.off&&tr!==TERR.asphalt?0.5:0))*wetK;
+  const dusty=rain?0:((tr.dust||0)*(c.off?1.3:1)+(c.off&&tr!==TERR.asphalt?0.5:0))*wetK*(R.scn&&R.scn.dust||1)*(1-clamp((R.wetK||0)*2.2,0,1));
   r3dWetFx(c,st,yc,fw,rt,v,bx,bz,me,rain,dt);
   // своя пыль летит прямо в камеру: её меньше и она прозрачнее, иначе за машиной встаёт сплошная завеса
   if(dusty>0&&v>4){st.dust+=dt*v*dusty*(me?0.35:1.1);const dc=hex2rgb(c.off?TERR.dirt.road:tr.road),col=cMix(dc,[235,225,205],0.35);
@@ -11361,7 +11728,7 @@ function r3dSplash(c,yc,fw,rt,v,k,mud){const col=mud?[92,74,52]:[214,222,230],n=
   if(!mud&&k>0.3)for(let q=0;q<Math.round(6*k);q++)r3dPart(c.x+(Math.random()-0.5)*2,yc+0.5,c.z+(Math.random()-0.5)*2,(Math.random()-0.5)*2+fw[0]*v*0.3,0.8+Math.random(),(Math.random()-0.5)*2+fw[2]*v*0.3,0.6,2.2,1.1,[235,240,244],0.25);}
 function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);if(P.u.u_dirt){const d=st.dirtC||[0.3,0.25,0.18];gl.uniform4f(P.u.u_dirt,d[0],d[1],d[2],st.dirt||0);}gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
 function r3dDrawCars(E,bw,bh,glass){const gl=G3.gl,P=r3dUse('car',E,bw,bh);
-  R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);
+  raceVisCars().forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);
     if(glass&&!m.gl)return;r3dCarUniforms(P,c,st,m);gl.uniform4f(P.u.u_lamp,c.brk>0.3&&c.vx>1?1:0,E.hl,0,0);if(P.u.u_dark)gl.uniform1f(P.u.u_dark,tunDark(c));g3Draw(glass?m.gl:m.op);});
   if(P.u.u_dark)gl.uniform1f(P.u.u_dark,0);}
 function r3dPartsUpdate(dt){const P=R3.parts;for(let i=P.length-1;i>=0;i--){const p=P[i];p.life-=dt;if(p.life<=0){P.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;
@@ -11874,6 +12241,38 @@ function r3dTunnels(){const T=R3.T;R3.tuns=[];if(!T.tunnels||!T.tunnels.length)r
 function r3dTunEnv(E,dt){const F=R.follow,dk=F?tunDark(F):0;R3.adapt=R3.adapt===undefined?1:R3.adapt+((1+1.15*dk)-R3.adapt)*Math.min(1,dt*(dk>0?1.4:2.2));
   if(R3.adapt<1.01&&dk<=0)return E;return Object.assign({},E,{exp:E.exp*R3.adapt,hl:Math.max(E.hl,dk>0.25?1:dk*4)});}
 
+/* ================= 0.19: небо, солнце и погода по ходу гонки =================
+   Часы гонки двигают солнце (высота и азимут — по месту, месяцу и часу), в сумерках небо переходит в закатное фото,
+   ночью горят фары и окна. Смена погоды — плавный переход между двумя фото неба и светом разных настроений. */
+function r3dEnvMood(m){const C=R3.envM||(R3.envM={});if(C[m])return C[m];const W=Object.assign({},R3.W,{mood:m,rain:m==='overcast'});return C[m]=r3dEnvBase(R3.T,W);}
+function r3dSkyWant(m){const tx=G3.cache&&G3.cache.tx;if(!tx||!m)return null;if(tx.sky[m])return tx.sky[m];const L=R3.skyLoading||(R3.skyLoading={});
+  if(!L[m]){L[m]=1;try{texSky(m).catch(()=>{});}catch(_){}}return null;}
+function r3dSkyRot(m,th){const S=TX.D&&TX.D.sky&&TX.D.sky[m];return S?((S.sun[0]/360-th/6.2832+10)%1):0;}
+// заранее — все небеса, что понадобятся по сценарию (погода и сумерки)
+function r3dSkyPreload(){const S=R.scn;if(!S||!S.wxP)return;const ms=new Set(S.wxP.map(x=>x[1]));
+  for(let k=0;k<=12;k++){const h=S.h0+S.span*k/12,e=scnSun(((h%24)+24)%24,(R.rc.m??5),S.lat||47).el*57.3;if(e<12&&e>-6)ms.add(((h%24)+24)%24<12?'morning':'evening');}
+  ms.forEach(m=>r3dSkyWant(m));}
+function r3dEnvScn(){const S=R.scn,E0=R3.env,W=R3.W;
+  const mix=(a,b,t)=>t<=0.001?a:t>=0.999?b:E0.mix(a,b,t);
+  const A=r3dEnvMood(S.moodA),B=r3dEnvMood(S.moodB),k=clamp(S.moodK,0,1);
+  let e=mix(A.day,B.day,k);
+  // солнце по часам
+  const hh=((scnHour()%24)+24)%24,sn=scnSun(hh,(R.rc.m??5),S.lat||47),el=sn.el*57.2958,th=(W.az||0)+sn.az;
+  const kd=clamp((12-el)/12,0,1),kn=clamp((-2-el)/8,0,1);
+  if(kd>0.001)e=mix(e,B.dusk,kd*0.85);if(kn>0.001)e=mix(e,B.night,kn);
+  if(e===A.day||e===B.day)e=Object.assign({},e);
+  const elc=Math.max(el,2)/57.2958;e.sun=kn>0.6?B.night.sun:v3n([Math.cos(elc)*Math.sin(th),Math.sin(elc),Math.cos(elc)*Math.cos(th)]);
+  e.hl=Math.max(e.hl||0,clamp((5-el)/8,0,1));e.lamp=Math.max(e.lamp||0,clamp((3-el)/8,0,1));
+  // туман и дымка
+  if(R.fogK>0.01){e.fogD=(e.fogD||0.001)*(1+R.fogK*3.2);e.fogS=e.fogS.map(v=>v+(1.05-v)*R.fogK*0.45);}
+  // небо: основное фото — погода; второе — сумерки или соседняя погода
+  const prim=k<0.5?S.moodA:S.moodB;let sec=null,mx=0;
+  if(kd>0.05&&kn<0.95&&prim!=='overcast'){sec=hh<12?'morning':'evening';mx=Math.min(0.92,kd*1.1);if(sec===prim){sec=null;mx=0;}}
+  else if(S.moodA!==S.moodB&&k>0.001&&k<0.999){sec=k<0.5?S.moodB:S.moodA;mx=k<0.5?k:1-k;}
+  const tx=G3.cache.tx,t1=r3dSkyWant(prim)||R3.sky,t2=sec?r3dSkyWant(sec):null;
+  R3.sky=t1;R3.sky2=t2&&mx>0.001?t2:null;e.skyMix=R3.sky2?mx:0;e.envRot=r3dSkyRot(prim,th);e.envRot2=sec?r3dSkyRot(sec,th):0;
+  return e;}
+
 /* ================= AUDIO: music of the era + race sounds ================= */
 const AU={ctx:null,on:{music:true,sfx:true},next:0,step:0,timer:0,style:'',race:null};
 try{const a=JSON.parse(localStorage.getItem('avt-audio')||'null');if(a)AU.on=a;}catch(e){}
@@ -11886,7 +12285,7 @@ function auInit(){
     const comp=c.createDynamicsCompressor();AU.mus.disconnect();AU.mus.connect(comp);comp.connect(AU.master);
     const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
     auApply();AU.next=c.currentTime+0.1;AU.timer=setInterval(auSched,30);}catch(e){}
-  musicLoad();try{insLoad();}catch(e){}
+  musicLoad();orchLoad();try{insLoad();}catch(e){}try{enLoad();}catch(e){}
 }
 function auApply(){try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}if(AU.ctx)musicPlay();if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.mus.gain.setTargetAtTime(AU.on.music?(R?0.07:0.16):0,t,0.3);AU.fx.gain.setTargetAtTime(AU.on.sfx?0.55:0,t,0.1);}
 document.addEventListener('pointerdown',auInit,{capture:true});
@@ -12029,16 +12428,30 @@ async function musicLoad(){
   }catch(e){}
   musBuild(true);
 }
-function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L;}
+/* ---------- 0.19: оркестровые записи (военные оркестры США, Musopen, пластинки 1920-х) — вместо оркестриона ---------- */
+const ORCH={idx:null,loadP:null};const ORCH_BASE=()=>(location.protocol==='file:'?VOICE_REMOTE:'');
+const ORCH_ST={march:'марш',galop:'галоп',waltz:'вальс',rag:'регтайм',cake:'кекуок',jazz:'джаз',fox:'фокстрот',tango:'танго',polka:'полька',classic:'классика',silent:'музыка немого кино'};
+// указатель оркестровых записей — с сайта игры; без сети — синтезатор, а через минуту (новая гонка, ролик) пробуем снова
+function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)return ORCH.loadP;
+  if(ORCH.failT&&Date.now()-ORCH.failT<60000)return Promise.resolve({});
+  ORCH.loadP=new Promise(res=>{if(window.MUSIC_INDEX){ORCH.idx=window.MUSIC_INDEX;res(ORCH.idx);return;}
+    const fail=()=>{ORCH.loadP=null;ORCH.failT=Date.now();res({});};
+    try{const s=document.createElement('script');s.src=ORCH_BASE()+'music/index.js';s.async=true;
+      s.onload=()=>{ORCH.idx=window.MUSIC_INDEX||{};ORCH.failT=0;res(ORCH.idx);AU.sig='';musBuild(false);};s.onerror=()=>{s.remove();fail();};document.head.appendChild(s);}catch(e){fail();}});
+  return ORCH.loadP;}
+function orchTracks(){const I=ORCH.idx||{};return Object.keys(I).map(id=>{const m=I[id];return {orch:true,id,src:ORCH_BASE()+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
+// оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
+function orchPick(mood,y,seed){const L=orchTracks().filter(t=>t.y<=y+3);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
+function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
 function eraStyles(y){return y<1906?['cake','rag','waltz']:y<1912?['rag','waltz','march']:y<1919?['march','tango'].concat(y>=1914?['fox']:['rag']):y<1923?['jazz','fox','tango','waltz']:['jazz','charl','fox','tango'];}
 function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','march','jazz','waltz','cake','tango','fox','charl']:eraStyles(y),R2=['I','II','III'];
   const L=Object.keys(TUNES).filter(k=>all||TUNES[k].y<=y).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
   return L.concat((all?[0]:[0,1]).flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]}))));}
 function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
-  if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&t.y>=y-14);if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
-  // оркестрион и свои мелодии игры — всегда, между пластинками эпохи
-  {const S=musSynth(),nR=L.length;L=nR?L.concat(S.slice(0,Math.max(3,Math.ceil(nR/2)))):S;}
+  if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
+  // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
+  {const hasO=L.some(t=>t.orch),S=musSynth(),nR=L.length;L=hasO?L:nR?L.concat(S.slice(0,Math.max(3,Math.ceil(nR/2)))):S;}
   const rnd=mulberry32(hashStr(AU.on.mode+y));for(let i=L.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[L[i],L[j]]=[L[j],L[i]];}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
   if(sig===AU.sig&&!start)return;AU.sig=sig;AU.pl=L;
@@ -12064,7 +12477,7 @@ function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)r
 function musToggle(){if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
 function musMode(){AU.on.mode=AU.on.mode==='all'?'era':'all';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}AU.sig='';musBuild(true);toast(AU.on.mode==='all'?'Вся фонотека 1895–1929':'Музыка текущей эпохи');}
 function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
-  const txt=tr?(tr.synth?tr.title:tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):'Фонотека загружается…';
+  const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):'Фонотека загружается…';
   document.querySelectorAll('.plTitle').forEach(e=>{e.textContent=txt;});
   document.querySelectorAll('.plPlay').forEach(e=>{e.textContent=on?'❚❚':'▶';});
   document.querySelectorAll('.plMode').forEach(e=>{e.textContent=AU.on.mode==='all'?'Все':'Эпоха';});
@@ -12154,6 +12567,10 @@ function auSfx(type,v){
   if(!AU.ctx||!AU.on.sfx||(R&&(R.mode==='sim'||R.ff)))return;const t=AU.ctx.currentTime;
   if(type==='crash'){vNoise(t,0.35,0.5*v,'lowpass',700,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(35,t+0.2);o.connect(g);g.connect(AU.fx);env(g,t,0.005,0.6*v,0.3);o.start(t);o.stop(t+0.4);}
   if(type==='bump')vNoise(t,0.15,0.3*v,'lowpass',500,AU.fx);
+  if(type==='cheer'&&typeof AMB!=='undefined'&&AMB.on&&AMB.buf.crowd_race){ambOnce('crowd_race',0.5*v,0);return;}
+  if(type==='tick'){vNoise(t,0.04,0.12*v,'bandpass',2200,AU.fx);return;}
+  if(type==='grind'){const c=AU.ctx,o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter(),lf=c.createOscillator(),lg=c.createGain();o.type='sawtooth';o.frequency.value=620;lf.frequency.value=47;lg.gain.value=0.5;lf.connect(lg);lg.connect(g.gain);f.type='bandpass';f.frequency.value=2300;f.Q.value=3;o.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.09*v,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);lf.start(t);o.stop(t+0.3);lf.stop(t+0.3);vNoise(t,0.25,0.1*v,'bandpass',3200,AU.fx);return;}
+  if(type==='shift'){vNoise(t,0.07,0.16*v,'bandpass',700,AU.fx);vNoise(t+0.03,0.05,0.08*v,'highpass',2500,AU.fx);return;}
   if(type==='cheer'){const s=AU.ctx.createBufferSource(),f=AU.ctx.createBiquadFilter(),g=AU.ctx.createGain();s.buffer=AU.noise;s.loop=true;f.type='bandpass';f.frequency.value=1100;f.Q.value=0.6;s.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.35,t+0.8);g.gain.exponentialRampToValueAtTime(0.0001,t+3.5);s.start(t);s.stop(t+3.6);}
   if(type==='paper')vNoise(t,0.25,0.12,'highpass',3000,AU.fx);
   // лужа: всплеск и шелест брызг; грязь — вязкий шлепок; дерево — треск
@@ -12161,12 +12578,13 @@ function auSfx(type,v){
   if(type==='mud'){vNoise(t,0.35,0.6*v,'lowpass',260,AU.fx);vNoise(t+0.04,0.22,0.25*v,'bandpass',620,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(55,t+0.25);o.connect(g);g.connect(AU.fx);env(g,t,0.01,0.3*v,0.25);o.start(t);o.stop(t+0.35);}
   if(type==='wood'){vNoise(t,0.09,0.5*v,'highpass',1800,AU.fx);vNoise(t+0.02,0.3,0.35*v,'bandpass',420,AU.fx);vNoise(t+0.12,0.5,0.12*v,'bandpass',2600,AU.fx);}
   // гудок паровоза: два тона с дрожанием, долгий и короткий
+  if(type==='whistle'&&typeof AMB!=='undefined'&&AMB.on){const us=R&&R.trk&&R.trk.cfg.host==='us';if(ambOnce(us&&AMB.buf.steam_whistle_us?'steam_whistle_us':'steam_whistle',0.7*v,0.4))return;}
   if(type==='whistle'){[[0,1.4],[1.7,0.6]].forEach(([d,l])=>[[587,0.05],[740,0.04],[880,0.02]].forEach(([f,a])=>{const o=AU.ctx.createOscillator(),g=AU.ctx.createGain(),lf=AU.ctx.createOscillator(),lg=AU.ctx.createGain();
     o.type='triangle';o.frequency.value=f;lf.frequency.value=5.5;lg.gain.value=f*0.012;lf.connect(lg);lg.connect(o.frequency);o.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(a*v,t+d+0.08);g.gain.setValueAtTime(a*v,t+d+l-0.15);g.gain.exponentialRampToValueAtTime(0.0001,t+d+l);
     o.start(t+d);lf.start(t+d);o.stop(t+d+l+0.05);lf.stop(t+d+l+0.05);}));vNoise(t,1.4,0.04*v,'bandpass',2400,AU.fx);}
 }
 function auRaceStart(rc){
-  if(!AU.ctx)return;auApply();
+  if(!AU.ctx)return;auApply();try{orchLoad();}catch(_){}
   if(!AU.on.sfx)return;const c=AU.ctx,t=c.currentTime;
   const o1=c.createOscillator(),o2=c.createOscillator(),lfo=c.createOscillator(),lg=c.createGain(),f=c.createBiquadFilter(),g=c.createGain(),am=c.createGain();
   o1.type='sawtooth';o2.type='square';lfo.type='square';f.type='lowpass';f.frequency.value=500;g.gain.value=0;am.gain.value=1;
@@ -12182,40 +12600,452 @@ function auRaceStart(rc){
   const cv=c.createConvolver();cv.buffer=ir;const rv=c.createGain();rv.gain.value=0;const dl=c.createDelay(0.6);dl.delayTime.value=0.13;const fb=c.createGain();fb.gain.value=0.3;const dg=c.createGain();dg.gain.value=0;
   g.connect(rv);rv.connect(cv);cv.connect(AU.fx);g.connect(dg);dg.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(AU.fx);
   [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s,rn.s,rl.s,wh.s,gr.s,sw.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,rn,rl,wh,gr,sw,rv,dg,early:rc.y<1906,drum:rc.y>=1912};
+  // 0.19: живые моторы и шины (AudioWorklet); старый синтезатор молчит
+  const wk=enStart(g);if(wk){AU.race.wk=wk;f.disconnect();g.gain.value=1;}
+  try{ambStart();}catch(e){console.warn('amb',e);}AU.race.lt=t;
 }
 function auRaceTick(){
   const a=AU.race;if(!a||!R||!(R.me||R.follow))return;const t=AU.ctx.currentTime,me=R.me||R.follow,vol=R.me?1:0.6,p=clamp(me.rpm||0,0,1.1),thr=me.thr||0,sp=Math.max(0,me.vx||0);
-  const base=(a.early?30:42)+p*(a.early?80:150)+(me.overheat>0?-15:0);
+  {const dtA=clamp(t-(a.lt||t),0,0.1);a.lt=t;try{ambTick(dtA);}catch(e){console.warn('amb',e);}}
+  // переключение передач: стук рычага; до синхронизаторов (1928) при сбросе иногда скрежет шестерён
+  if(R.me&&me===R.me){if(a.gear!==undefined&&me.gear!==a.gear&&sp>2){auSfx('shift',0.6);if(me.gear<a.gear&&R.rc.y<1928&&Math.random()<0.3)auSfx('grind',0.5);}a.gear=me.gear;}
+  if(a.wk){try{enTick(a,me,vol);}catch(e){console.warn(e);}}
+  else{  const base=(a.early?30:42)+p*(a.early?80:150)+(me.overheat>0?-15:0);
   a.o1.frequency.setTargetAtTime(base,t,0.05);a.o2.frequency.setTargetAtTime(base*0.5,t,0.05);a.lfo.frequency.setTargetAtTime(base/(a.early?2:4),t,0.05);
   a.f.frequency.setTargetAtTime(350+p*1200+thr*500,t,0.08);a.g.gain.setTargetAtTime((R.t<0?0.05:(0.05+p*0.08+thr*0.07)*(me.overheat>0?0.4:1)*(me.dnf?0.2:1))*vol,t,0.08);
+  }
   // занос: чем сильнее срыв, тем громче и выше визг; на грунте — больше шороха, на асфальте — чистый тон
   const tr=TERR[R.trk.terrAt(me.idx)]||TERR.dirt,soft=tr.dust||tr===TERR.mud||tr===TERR.snow||tr===TERR.sand||tr===TERR.beach?1:0;
   // шины начинают петь у предела сцепления (с 80% занятого), срываются — визжат во весь голос
   const skid=sp>3?clamp(Math.max((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5,((me.gu||0)-0.8)*3.5)+(me.spinw>0.3?0.25:0),0,1):0;
-  a.sq.o.frequency.setTargetAtTime(760+skid*420+sp*5,t,0.06);a.sq.g.gain.setTargetAtTime(skid*(soft?0.05:0.13)*vol,t,skid>0?0.04:0.08);a.sn.g.gain.setTargetAtTime(skid*(soft?0.2:0.11)*vol,t,0.05);
+  if(!a.wk){a.sq.o.frequency.setTargetAtTime(760+skid*420+sp*5,t,0.06);a.sq.g.gain.setTargetAtTime(skid*(soft?0.05:0.13)*vol,t,skid>0?0.04:0.08);a.sn.g.gain.setTargetAtTime(skid*(soft?0.2:0.11)*vol,t,0.05);}
   // тормоза скрипят при сильном нажатии на ходу, громче — если машину при этом несёт
   const brk=(me.brk||0)>0.3&&sp>3&&R.t>0?clamp((me.brk-0.3)*1.4*(0.35+0.65*Math.min(1,sp/18))*(1+skid*0.8),0,1):0;
   a.br.o.frequency.setTargetAtTime((a.drum?2500:1900)+brk*500+Math.sin(t*3)*60,t,0.05);a.br.g.gain.setTargetAtTime(brk*(a.drum?0.07:0.035)*vol,t,brk>0?0.03:0.1);a.bn.g.gain.setTargetAtTime(brk*(a.drum?0.03:0.1)*vol,t,0.05);
   // гул и камни на обочине
-  a.rb.g.gain.setTargetAtTime((me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
+  a.rb.g.gain.setTargetAtTime(a.wk?0:(me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
   // ветер в открытой машине: на скорости свистит всё громче и выше
   const inT=me.tun?1:0,w=clamp((sp-7)/38,0,1);a.wd.fl.frequency.setTargetAtTime(380+sp*14,t,0.2);a.wd.g.gain.setTargetAtTime(Math.pow(w,1.4)*0.11*vol*(R.t>0?1:0)*(inT?0.35:1),t,0.25);
   // тоннель: гул и эхо мотора
   if(a.rv){a.rv.gain.setTargetAtTime(inT?0.6:0,t,inT?0.12:0.3);a.dg.gain.setTargetAtTime(inT?0.4:0,t,inT?0.12:0.3);}
   if(a.rn){const S=me.surf||'',rain=!!(R.wx&&R.wx.rain);
     // дождь: шорох капель и гул; под сводом почти не слышен
-    a.rn.g.gain.setTargetAtTime(rain?(inT?0.008:0.075)*vol:0,t,0.5);a.rl.g.gain.setTargetAtTime(rain?(inT?0.004:0.05)*vol:0,t,0.5);
+    const rk=(R.rainK!==undefined?R.rainK:rain?1:0)*(typeof AMB!=='undefined'&&AMB.buf.rain?0.35:1);a.rn.g.gain.setTargetAtTime(rk*(inT?0.008:0.075)*vol,t,0.5);a.rl.g.gain.setTargetAtTime(rk*(inT?0.004:0.05)*vol,t,0.5);
     // мокрая дорога: шины шипят и разбрызгивают воду
-    a.wh.g.gain.setTargetAtTime((rain&&!inT&&!me.off&&S!=='puddle'?1:0)*Math.min(1,sp/25)*0.085*vol,t,0.1);
+    a.wh.g.gain.setTargetAtTime(a.wk?0:(rain&&!inT&&!me.off&&S!=='puddle'?1:0)*Math.min(1,sp/25)*0.085*vol,t,0.1);
     // щебень, грунт, булыжник, камни — хруст и дробь (прерывисто)
-    const cr=(S==='macadam'||S==='dirt'||S==='mount'||S==='verge'||S==='rock'||S==='pave'||S==='field')?Math.min(1,sp/14):0;a.gr.g.gain.setTargetAtTime(cr*(S==='pave'?0.05:0.08)*vol*(0.55+0.45*Math.random()),t,0.04);
+    const cr=!a.wk&&(S==='macadam'||S==='dirt'||S==='mount'||S==='verge'||S==='rock'||S==='pave'||S==='field')?Math.min(1,sp/14):0;a.gr.g.gain.setTargetAtTime(cr*(S==='pave'?0.05:0.08)*vol*(0.55+0.45*Math.random()),t,0.04);
     // в луже и грязи — плеск
     a.sw.g.gain.setTargetAtTime((S==='puddle'||S==='mudhole'?Math.min(1,sp/9):0)*0.2*vol,t,0.05);}
 }
 function auScreech(v){}
-function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd,a.rn,a.rl,a.wh,a.gr,a.sw].forEach(x=>x&&x.g.gain.setTargetAtTime(0,t,0.05));if(a.rv){a.rv.gain.setTargetAtTime(0,t,0.05);a.dg.gain.setTargetAtTime(0,t,0.05);}
+function auRaceStop(){try{ambStop();}catch(_){}const a=AU.race;if(a&&a.wk){const w=a.wk;a.g.gain.setTargetAtTime(0,AU.ctx.currentTime,0.12);setTimeout(()=>{if(EN.node===w)enStop();else try{w.disconnect();}catch(_){}},600);}if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd,a.rn,a.rl,a.wh,a.gr,a.sw].forEach(x=>x&&x.g.gain.setTargetAtTime(0,t,0.05));if(a.rv){a.rv.gain.setTargetAtTime(0,t,0.05);a.dg.gain.setTargetAtTime(0,t,0.05);}
   [a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s,a.wd.s].concat(a.rn?[a.rn.s,a.rl.s,a.wh.s,a.gr.s,a.sw.s]:[]).forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
 
+
+/* ================= 0.19: живой звук машин — моторы по числу цилиндров, шины по покрытию =================
+   Звук считается в отдельном потоке (AudioWorklet): для каждого цилиндра — вспышка в свой момент оборота,
+   выхлопная труба как резонатор (волна бежит по трубе и отражается от среза), глушитель, всасывание,
+   стук клапанов, вой нагнетателя, цепь привода; пар — «чух-чух» и гул горелки; электромотор — вой.
+   Дорога: шорох протектора, дробь брусчатки и кирпича, гул досок трека, хруст щебня, визг и шипение шин.
+   Нет AudioWorklet (старые браузеры) — играет прежний простой звук. */
+function avtEngineWorklet(){
+  const TAU=Math.PI*2,SR=sampleRate;
+  let seed=22222;const nz=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2147483648-1;},rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  const opc=fc=>1-Math.exp(-TAU*Math.min(fc,SR*0.45)/SR);
+  // двухполюсные фильтры (RBJ): полоса и нижние частоты
+  const bq=()=>({b0:0,b1:0,b2:0,a1:0,a2:0,x1:0,x2:0,y1:0,y2:0});
+  function bpSet(f,fc,Q){const w=TAU*Math.min(fc,SR*0.45)/SR,al=Math.sin(w)/(2*Q),a0=1+al;f.b0=al/a0;f.b1=0;f.b2=-al/a0;f.a1=-2*Math.cos(w)/a0;f.a2=(1-al)/a0;return f;}
+  function lpSet(f,fc,Q){const w=TAU*Math.min(fc,SR*0.45)/SR,al=Math.sin(w)/(2*Q),c=Math.cos(w),a0=1+al;f.b0=(1-c)/2/a0;f.b1=(1-c)/a0;f.b2=(1-c)/2/a0;f.a1=-2*c/a0;f.a2=(1-al)/a0;return f;}
+  function run(f,x){const y=f.b0*x+f.b1*f.x1+f.b2*f.x2-f.a1*f.y1-f.a2*f.y2;f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;}
+  function mkVoice(p){
+    const nb=p.nb||1,v={p,ph:rnd(),nx:0,n:p.fire.length,jit:new Float32Array(p.fire.length),rpm:p.idle,rT:p.idle,ld:0,lT:0,g:0,gT:0,pan:0,pT:0,lpf:12000,lpT:12000,spd:0,
+      pa:new Float32Array(2),pb:new Float32Array(2),pr:new Float32Array(2),en:new Float32Array(2),nl:0,nm:0,mf2:bpSet(bq(),1500,0.7),dl:[],di:[0,0],ls:new Float32Array(2),yp:new Float32Array(2),dc:0,dcx:0,
+      muf:lpSet(bq(),p.muff||900,0.85),m1:bpSet(bq(),(p.blk||1)*420,7),m2:bpSet(bq(),(p.blk||1)*980,9),m3:bpSet(bq(),(p.blk||1)*1900,10),kick:0,top:lpSet(bq(),p.open>0.5?5000:3800,0.7),inBP:bpSet(bq(),420,1.6),tkBP:bpSet(bq(),3600,1.8),chBP:bpSet(bq(),2600,2),burn:bpSet(bq(),170,0.9),
+      th:0,et:0,tk1:-1,tk2:-1,gph:0,sph:0,scA:0,cph:0,ec:0,ol:0,orr:0,mph:0,dead:false,fade:1,popT:0};
+    for(let b=0;b<nb;b++){const L=(p.pipe&&p.pipe[b])||p.pipe[0]||1.2;v.dl.push(new Float32Array(Math.max(8,Math.round(SR*2*L/343))));}
+    newCycle(v);return v;}
+  function newCycle(v){const p=v.p,n=v.n,j=(p.jit||0.012)*Math.min(1,2.5/n);for(let k=0;k<n;k++){const f=p.fire[k],t=Math.min(0.999,Math.max(0,f+(k?nz()*j:Math.abs(nz())*j*0.5)));v.jit[k]=t-f;}}
+  function fire(v,k){const p=v.p,rf=v.rpm/p.max;
+    let A=p.amp[k]*(1+nz()*(p.rough||0.08));
+    const idleLd=v.rpm<p.idle*1.35?0.28:0,L=0.07+0.93*Math.pow(Math.max(v.ld,idleLd),0.85);A*=L;
+    if(p.hm&&v.ld<0.15&&v.rpm<p.idle*1.5&&rnd()<0.5)A*=0.04;        // «тук… тук-тук»: регулятор пропускает вспышки на холостых
+    if(p.mis&&rnd()<p.mis*(1.2-rf))A*=0.08;                          // пропуск зажигания у старых моторов
+    const b=p.bank?p.bank[k]:0;
+    if(v.ld<0.06&&rf>0.45&&p.pop&&rnd()<p.pop){v.en[b]+=2.4;v.pa[b]+=1.2;}   // хлопок в трубе на сбросе газа
+    v.pa[b]+=A;v.pr[b]+=A;v.en[b]+=A*(p.noise||0.5)*(0.5+0.5*v.ld);v.kick+=A*(0.6+0.4*v.ld);
+    // клапаны: два щелчка между вспышками
+    const si=1/(v.n*Math.max(1e-6,v.dph));v.tk1=Math.floor(si*0.3);v.tk2=Math.floor(si*0.62);}
+  function voiceBlock(v,oL,oR,N){
+    const p=v.p,kind=p.kind||'ic',nb=p.nb||1,elec=kind==='elec',steam=kind==='steam';
+    // медленные величины — раз в блок
+    const kr=1-Math.exp(-N/(SR*0.045)),kl=1-Math.exp(-N/(SR*0.03)),kg=1-Math.exp(-N/(SR*0.06));
+    const r0=v.rpm,l0=v.ld,g0=v.g*v.fade;v.rpm+=(v.rT-v.rpm)*kr;v.ld+=(v.lT-v.ld)*kl;v.g+=(v.gT-v.g)*kg;v.pan+=(v.pT-v.pan)*kg;v.lpf+=(v.lpT-v.lpf)*kg;
+    if(v.dead){v.fade*=Math.exp(-N/(SR*0.12));}
+    const g1=v.g*v.fade,rpm=v.rpm,rf=rpm/p.max,ld=v.ld;
+    const dph=rpm/60/SR/(p.cyc||2);v.dph=dph;
+    // выхлопной импульс длится ~25° поворота вала: на низких оборотах — широкий «бух», на высоких — узкий, сливаются в вой
+    // импульс: резкий фронт (открылся выпускной клапан) и спад ~12° поворота вала; шум истечения газов — чуть дольше
+    const tau=Math.min(0.0042,Math.max(0.00035,(p.tau||2.4)/2.4*12/(6*Math.max(rpm,120)))),dp=Math.exp(-1/(SR*tau)),dr=Math.exp(-1/(SR*0.00022)),dn=Math.exp(-1/(SR*(steam?0.028:tau*1.8)));
+    const cLP=opc(p.loss||2200),refl=p.refl===undefined?-0.74:p.refl,open=p.open||0,cTh=opc(95),cOut=opc(v.lpf),det=Math.exp(-1/(SR*0.00035)),dec=Math.exp(-1/(SR*0.0006)),cN=opc(steam?2500:3200),cDC=opc(55),mech=(p.mech||0.035)*(0.4+0.6*Math.min(1.2,rf))*(steam||elec?0.3:1);
+    bpSet(v.inBP,300+520*Math.min(1.2,rf),1.5);
+    const intake=(p.intake||0.12)*ld*(0.2+0.8*Math.min(1,rf)),valve=(p.valve||0.1)*(0.35+0.65*Math.min(1,rf)),gw=(p.gearW||0)*rf*rf*(0.3+0.7*ld),gf=rpm/60*(p.gearT||19)/SR;
+    const scT=p.sc===2?(ld>0.92?1:0):p.sc?0.35+0.65*ld:0,sf=rpm/60*(p.scR||1.3)*4/SR,scG=0.13*Math.pow(Math.min(1.1,rf),1.5);
+    const chR=(p.chain||0)>0?v.spd/0.032/SR:0,chA=(p.chain||0)*Math.min(1,v.spd/25);
+    const cph=Math.PI/4*(v.pan+1),gl=Math.cos(cph),gr=Math.sin(cph),mf=rpm/60*(p.comm||22)/SR,lvl=p.lvl||1,blk=(p.blkA||0.55)*(steam||elec?0:1);
+    for(let i=0;i<N;i++){
+      let out=0;
+      if(!elec&&rpm>1){
+        v.ph+=dph;if(v.ph>=1){v.ph-=1;v.nx=0;newCycle(v);}
+        while(v.nx<v.n&&v.ph>=p.fire[v.nx]+v.jit[v.nx]){fire(v,v.nx);v.nx++;}
+        if(v.tk1>=0&&v.tk1--===0)v.et+=valve;if(v.tk2>=0&&v.tk2--===0)v.et+=valve*0.8;
+      }
+      let ex=0,e1s=0;v.nl+=(nz()-v.nl)*cN;const nn=v.nl*1.4;
+      for(let b=0;b<nb;b++){
+        // импульс давления: вспышка «накачивает» первый каскад, второй даёт плавный горб (t·e^(−t/τ))
+        v.pa[b]*=dp;v.pr[b]*=dr;v.en[b]*=dn;const pu=v.pa[b]-v.pr[b];e1s+=v.pa[b];
+        const src=pu*(steam?0.2:1)+v.en[b]*nn*(steam?1.6:0.9);
+        const buf=v.dl[b],D=buf.length,j=v.di[b],yd=buf[j];v.ls[b]+=(yd-v.ls[b])*cLP;
+        const y=src+refl*v.ls[b];buf[j]=y;v.di[b]=j+1===D?0:j+1;
+        ex+=y-0.965*v.yp[b];v.yp[b]=y;}
+      const m=run(v.muf,ex),t=run(v.top,ex);
+      out=t*open+m*(1-open)*1.6;
+      v.th+=(e1s-v.th)*cTh;out+=v.th*(p.thump||0.5)*0.35;
+      // механика: клапаны, шестерни, цепь ГРМ — шум по всему спектру, чуть пульсирует со вспышками
+      out+=run(v.mf2,nz())*mech*(0.7+0.6*Math.min(1.5,e1s));
+      // блок цилиндров звенит от каждой вспышки: «рык» и металл старого мотора
+      if(v.kick!==0||v.m1.y1!==0){const k=v.kick;v.kick=0;out+=(run(v.m1,k)*1.9+run(v.m2,k)*1.2+run(v.m3,k)*0.6)*blk;}
+      if(intake>0.001)out+=run(v.inBP,nz())*(0.25+0.75*Math.min(2,e1s*3))*intake;
+      if(v.et>1e-4){out+=run(v.tkBP,nz())*v.et;v.et*=det;}
+      if(gw>0.0005){v.gph+=gf;if(v.gph>1)v.gph-=1;out+=Math.sin(TAU*v.gph)*gw;}
+      if(p.sc){v.scA+=(scT-v.scA)*(scT>v.scA?0.00012:0.00004);if(v.scA>0.01){v.sph+=sf;if(v.sph>1)v.sph-=1;const s=v.sph*TAU;out+=(Math.sin(s)+0.45*Math.sin(2*s)+0.22*Math.sin(3*s))*v.scA*scG;}}
+      if(chR>0){v.cph+=chR;if(v.cph>1){v.cph-=1;v.ec+=chA*(0.5+0.5*rnd());}if(v.ec>1e-4){out+=run(v.chBP,nz())*v.ec;v.ec*=dec;}}
+      if(steam)out+=run(v.burn,nz())*(p.burn||0.05)+nz()*0.004;
+      if(elec){v.mph+=mf;if(v.mph>1)v.mph-=1;const s=v.mph*TAU,a=(0.25+0.75*ld)*Math.min(1,rf*1.4);out+=(Math.sin(s)*0.1+Math.sin(2*s)*0.04+Math.sin(s*0.37)*0.05)*a+nz()*0.012*rf;}
+      // без постоянной составляющей; громкость, «даль» (срез верхов)
+      v.dc+=(out-v.dc)*cDC;out=(out-v.dc)*g1*lvl;v.ol+=(out-v.ol)*cOut;
+      oL[i]+=v.ol*gl;oR[i]+=v.ol*gr;}
+  }
+  /* ---------- дорога под колёсами ---------- */
+  const SURF_S={// шорох: полоса, громкость; дробь: шаг (м) или случайные удары на метр, частота «звона», сила
+    asphalt:{f:900,a:0.5},concrete:{f:1000,a:0.55,jt:7.5},brick:{f:700,a:0.38,sp:0.11,rf:230,rq:3,ra:0.3},pave:{f:600,a:0.34,sp:0.16,rf:150,rq:2.2,ra:0.55,rr:0.7},
+    board:{f:820,a:0.3,sp:0.05,rf:330,rq:4,ra:0.34},macadam:{f:1300,a:0.45,po:16,rf:2700,rq:2,ra:0.22},dirt:{f:520,a:0.42,po:3,rf:900,rq:1.5,ra:0.2},
+    mount:{f:1100,a:0.42,po:9,rf:1800,rq:2,ra:0.32},mud:{f:340,a:0.5,po:2,rf:380,rq:1.2,ra:0.35,slurp:1},mudhole:{f:320,a:0.6,po:4,rf:340,rq:1.1,ra:0.5,slurp:1},
+    sand:{f:2600,a:0.36},beach:{f:2400,a:0.34},snow:{f:2200,a:0.3,po:28,rf:3200,rq:2,ra:0.13},grass:{f:1800,a:0.24,po:4,rf:700,rq:2,ra:0.28},
+    field:{f:1500,a:0.28,po:5,rf:600,rq:1.6,ra:0.34},verge:{f:1400,a:0.3,po:6,rf:900,rq:1.8,ra:0.3},forest:{f:1600,a:0.26,po:6,rf:650,rq:1.6,ra:0.3},
+    rock:{f:1200,a:0.32,po:7,rf:1500,rq:3,ra:0.5},puddle:{f:1500,a:0.75,wet:1}};
+  function mkRoad(){return {v:0,vT:0,g:0,gT:0,s:SURF_S.asphalt,sk:'asphalt',wet:0,wT:0,sq:0,sqT:0,sc:0,scT:0,ro:0,ty:1,
+    nbp:bpSet(bq(),900,0.7),rbp:bpSet(bq(),230,3),sq1:bpSet(bq(),1000,18),sq2:bpSet(bq(),1520,14),scb:bpSet(bq(),1300,1.4),hs:bpSet(bq(),5200,0.8),rat:bpSet(bq(),780,6),thp:bpSet(bq(),85,2.5),
+    ph:0,nxt:1,dj:0,j2:-1,ri:0,ti:0,rti:0,drift:0,pk:0,sl:0};}
+  function roadBlock(r,oL,oR,N){
+    const k=1-Math.exp(-N/(SR*0.05));r.v+=(r.vT-r.v)*k;r.g+=(r.gT-r.g)*k;r.wet+=(r.wT-r.wet)*k*0.4;r.sq+=(r.sqT-r.sq)*(r.sqT>r.sq?k*2:k);r.sc+=(r.scT-r.sc)*k;
+    const S=r.s,v=r.v,vf=Math.min(1.4,Math.pow(v/25,1.35)),ty=r.ty;
+    bpSet(r.nbp,S.f*(0.85+0.3*Math.min(1,v/30)),0.75);if(S.rf)bpSet(r.rbp,S.rf,S.rq||2);
+    r.drift+=nz()*0.06;r.drift*=0.97;const f1=Math.max(600,880+r.sq*300+v*4+r.drift*120);bpSet(r.sq1,f1,16);bpSet(r.sq2,f1*1.53,12);
+    const na=S.a*vf*(ty===0?0.75:1),impK=ty===0?1.5:ty===1?1.15:0.9,dstep=v/SR,rough=r.ro,ratR=(rough*0.6+0.15)*v/SR*(ty===0?1.6:1),wet=r.wet*Math.min(1,Math.pow(v/18,1.3));
+    const sqA=r.sq*0.5,scA=r.sc*0.4*Math.min(1,v/10),thD=Math.exp(-1/(SR*0.004)),slurp=S.slurp?1:0;
+    for(let i=0;i<N;i++){
+      let o=run(r.nbp,nz())*na;
+      if(slurp){r.sl+=0.00004;o*=0.6+0.4*Math.sin(r.sl*TAU*(2+v*0.2));}
+      // шаг покрытия: кирпич, брусчатка, доски — ровная дробь с разбросом; щебень, грунт — случайные удары
+      if(S.sp&&v>0.5){r.ph+=dstep;if(r.ph>=r.nxt){r.ph=0;r.nxt=S.sp*(0.8+0.4*rnd());r.ri+=S.ra*impK*Math.min(1.2,v/14)*(S.rr?(1-S.rr)+S.rr*rnd():0.7+0.3*rnd());}}
+      else if(S.po&&v>0.5&&rnd()<S.po*dstep){r.ri+=S.ra*impK*Math.min(1.2,v/12)*(0.3+0.7*rnd());}
+      if(r.ri>1e-5){o+=run(r.rbp,nz()*r.ri+r.ri*0.5);r.ri*=0.992;}
+      // бетон: стыки плит — «та-дам» передних и задних колёс
+      if(S.jt&&v>1){r.dj+=dstep;if(r.dj>=S.jt){r.dj=0;r.ti+=0.5*Math.min(1,v/20);r.j2=Math.floor(2.7/Math.max(1,v)*SR);}if(r.j2>=0&&r.j2--===0)r.ti+=0.4*Math.min(1,v/20);}
+      if(r.ti>1e-5){o+=run(r.thp,r.ti*nz()*0.3+r.ti);r.ti*=thD;}
+      // дребезг кузова и крыльев
+      if(rnd()<ratR){r.rti+=0.08*(0.4+0.6*rnd())*Math.min(1,v/15);}
+      if(r.rti>1e-5){o+=run(r.rat,nz()*r.rti);r.rti*=0.996;}
+      if(sqA>0.002){const x=nz();o+=(run(r.sq1,x)*1.0+run(r.sq2,x)*0.55)*sqA;}
+      if(scA>0.002)o+=run(r.scb,nz())*scA;
+      if(wet>0.002)o+=run(r.hs,nz())*wet*0.32;
+      o*=r.g;oL[i]+=o;oR[i]+=o;}
+  }
+  class AvtEngine extends AudioWorkletProcessor{
+    constructor(){super();this.v=new Map();this.road=null;this.alive=true;this.port.onmessage=e=>this.msg(e.data);}
+    msg(d){if(d.t==='mk'){const old=this.v.get(d.id);if(old&&!old.dead)return;this.v.set(d.id,mkVoice(d.p));}
+      else if(d.t==='rm'){const v=this.v.get(d.id);if(v)v.dead=true;}
+      else if(d.t==='set'){for(const s of d.v){const v=this.v.get(s.id);if(!v)continue;v.rT=s.rpm;v.lT=s.ld;v.gT=s.g;v.pT=s.pan;v.lpT=s.lp;v.spd=s.spd;}
+        if(d.r){if(!this.road)this.road=mkRoad();const r=this.road,q=d.r;r.vT=q.v;r.gT=q.g;r.wT=q.wet;r.sqT=q.sq;r.scT=q.sc;r.ro=q.ro;r.ty=q.ty;if(q.s!==r.sk&&SURF_S[q.s]){r.sk=q.s;r.s=SURF_S[q.s];}}}
+      else if(d.t==='stop'){this.alive=false;}}
+    process(ins,outs){const o=outs[0],L=o[0],R=o[1]||o[0],N=L.length;
+      for(const [id,v] of this.v){voiceBlock(v,L,R,N);if(v.dead&&v.fade<0.002)this.v.delete(id);}
+      if(this.road)roadBlock(this.road,L,R,N);
+      // мягкий ограничитель: громкие вспышки не «рвут» звук
+      const sc=x=>x>1.5?1:x<-1.5?-1:x-x*x*x/6.75;for(let i=0;i<N;i++){L[i]=sc(L[i]);if(R!==L)R[i]=sc(R[i]);}
+      return this.alive;}
+  }
+  registerProcessor('avt-engine',AvtEngine);
+}
+/* ---------- профили моторов ---------- */
+// Порядок вспышек: доля цикла (4-тактный — два оборота), сила по цилиндрам, ряд (для V-образных — своя труба)
+function enFire(kind){switch(kind){
+  case 1:return {fire:[0],amp:[1]};
+  case 2:return {fire:[0,0.5],amp:[1,0.93]};
+  case 'v2':return {fire:[0,0.5625],amp:[1,0.9]};                       // V-2 с развалом 45°: неровный «тук-тук… тук-тук»
+  case 4:return {fire:[0,0.25,0.5,0.75],amp:[1,0.94,0.98,0.91]};
+  case 'v4':return {fire:[0,0.3,0.5,0.8],amp:[1,0.9,0.97,0.88],bank:[0,1,0,1],nb:2};
+  case 6:return {fire:[0,1,2,3,4,5].map(k=>k/6),amp:[1,0.95,0.98,0.94,0.99,0.93]};
+  case 8:return {fire:[0,1,2,3,4,5,6,7].map(k=>k/8),amp:[1,0.96,0.99,0.95,0.98,0.94,0.99,0.96]};
+  case 'v8f':return {fire:[0,1,2,3,4,5,6,7].map(k=>k/8),amp:[1,0.95,0.98,0.94,0.99,0.95,0.97,0.93],bank:[0,1,0,1,0,1,0,1],nb:2};
+  case 'v8x':return {fire:[0,1,2,3,4,5,6,7].map(k=>k/8),amp:[1,0.93,0.98,0.95,0.97,0.92,0.99,0.94],bank:[0,1,0,0,1,1,1,0],nb:2}; // крестообразный вал: «бульканье»
+  case 12:return {fire:Array.from({length:12},(_,k)=>k/12),amp:Array.from({length:12},(_,k)=>0.94+0.06*((k*7)%5)/4),bank:Array.from({length:12},(_,k)=>k%2),nb:2};
+  case 16:return {fire:Array.from({length:16},(_,k)=>k/16),amp:Array.from({length:16},(_,k)=>0.94+0.06*((k*5)%7)/6),bank:Array.from({length:16},(_,k)=>k%2),nb:2};
+  case 'steam':return {fire:[0,0.25,0.5,0.75],amp:[1,0.78,0.95,0.72],cyc:1};
+  case 'elec':return {fire:[0],amp:[0],cyc:1};}
+  return enFire(4);}
+// Типы моторов гоночных машин и массовых моделей: цилиндры, обороты, трубы, глушитель, нагнетатель
+const EN_TYPE={
+  s1:{lvl:5.5,c:1,idle:420,max:1700,pipe:[1.1],tau:3,noise:0.5,valve:0.22,hm:0,mis:0.02,thump:0.7},            // одноцилиндровый «Де Дион»: частый «тук-тук»
+  s1h:{lvl:5.5,c:1,idle:230,max:700,pipe:[1.5],tau:5,noise:0.35,valve:0.25,hm:1,mis:0.04,thump:0.9,loss:2200},   // лежачий цилиндр Бенца: редкие тяжёлые вспышки
+  t2:{lvl:4.6,c:2,idle:280,max:900,pipe:[1.3],tau:4.2,noise:0.45,valve:0.2,hm:1,mis:0.03,thump:0.8},            // двухцилиндровый «Феникс» Даймлера
+  v2:{lvl:4.4,c:'v2',idle:380,max:1500,pipe:[1.0],tau:3.2,noise:0.5,valve:0.16,thump:0.7},
+  i4:{lvl:4.3,c:4,idle:330,max:1500,pipe:[1.6],tau:3,noise:0.5,valve:0.12,thump:0.55},
+  i4b:{lvl:2.6,c:4,idle:260,max:1300,pipe:[0.9],tau:4.5,noise:0.6,valve:0.16,thump:0.95,open:1,chain:0.12,pop:0.04,loss:2600}, // гоночные гиганты 10–28 л: тяжёлый «бух-бух», цепь
+  i4ohc:{lvl:3.6,c:4,idle:420,max:2600,pipe:[0.9],tau:2.8,noise:0.55,valve:0.1,gearW:0.004,open:1,pop:0.05},
+  i4d:{lvl:3.6,c:4,idle:500,max:3000,pipe:[0.85],tau:2.4,noise:0.55,valve:0.12,gearW:0.005,open:1,pop:0.05},
+  i4sc:{lvl:3.2,c:4,idle:520,max:4200,pipe:[0.8],tau:2.2,noise:0.55,valve:0.08,gearW:0.004,sc:1,scR:1.5,open:1,pop:0.06},
+  op4:{lvl:2.7,c:4,idle:300,max:1300,pipe:[0.9],tau:5,noise:0.55,valve:0.08,thump:1.1,open:1,chain:0.1,pop:0.04},  // Гоброн-Брийе: два поршня в цилиндре
+  v4:{lvl:3.2,c:'v4',idle:300,max:1300,pipe:[0.9,1.05],tau:4.2,noise:0.55,valve:0.14,thump:0.9,open:1},
+  i6:{lvl:5.0,c:6,idle:380,max:2400,pipe:[1.9],tau:2.3,noise:0.42,valve:0.08,thump:0.45},
+  i6r:{lvl:4.0,c:6,idle:420,max:3200,pipe:[1.0],tau:2.1,noise:0.5,valve:0.08,gearW:0.004,open:1,pop:0.05},
+  i6sc:{lvl:3.6,c:6,idle:480,max:3600,pipe:[1.0],tau:2.1,noise:0.5,valve:0.07,sc:2,scR:1.4,open:1,pop:0.05},       // «Мерседес» с нагнетателем: визг только в полный газ
+  aero6:{lvl:2.5,c:6,idle:220,max:1500,pipe:[0.6],tau:4.5,noise:0.65,valve:0.1,thump:1.1,open:1,chain:0.14,pop:0.06}, // авиамотор на шасси: «Читти-Бэнг-Бэнг»
+  i8:{lvl:3.0,c:8,idle:450,max:4200,pipe:[1.1],tau:1.9,noise:0.45,valve:0.07,gearW:0.004,open:1,pop:0.04},
+  i8sc:{lvl:2.05,c:8,idle:600,max:5600,pipe:[0.9],tau:1.7,noise:0.5,valve:0.06,gearW:0.005,sc:1,scR:1.25,open:1,pop:0.06},
+  i8road:{lvl:4.5,c:8,idle:360,max:3200,pipe:[2.4],tau:2,noise:0.35,valve:0.05,thump:0.4},
+  v8f:{lvl:4.2,c:'v8f',idle:380,max:2600,pipe:[1.9,2.0],tau:2.3,noise:0.42,valve:0.07,thump:0.55},
+  v8x:{lvl:4.2,c:'v8x',idle:420,max:3400,pipe:[1.7,2.05],tau:2.4,noise:0.45,valve:0.06,thump:0.7},
+  v8aero:{lvl:2.6,c:'v8f',idle:300,max:1400,pipe:[0.5,0.55],tau:3.5,noise:0.65,valve:0.1,thump:1,open:1,pop:0.06},
+  v12:{lvl:2.6,c:12,idle:480,max:5000,pipe:[1.0,1.08],tau:1.6,noise:0.45,valve:0.05,gearW:0.004,open:1,pop:0.04},
+  v12aero:{lvl:2.4,c:12,idle:260,max:1900,pipe:[0.55,0.6],tau:3.2,noise:0.65,valve:0.08,thump:1,open:1,pop:0.07},
+  v16:{lvl:2.2,c:16,idle:500,max:4800,pipe:[1.0,1.1],tau:1.4,noise:0.45,valve:0.05,sc:1,scR:1.3,open:1,pop:0.04},
+  steam:{lvl:0.8,c:'steam',kind:'steam',idle:0,max:900,pipe:[0.35],refl:-0.3,noise:1,valve:0,thump:0.2,burn:0.06,tau:6},
+  elec:{lvl:1.05,c:'elec',kind:'elec',idle:0,max:2400,pipe:[0.3],noise:0,valve:0,comm:22}};
+// Марка гоночной машины → тип мотора (по годам: [до года, тип])
+const EN_MQ={'Panhard et Levassor':[[1895,'t2'],[1999,'i4b']],'Peugeot':[[1896,'t2'],[1911,'i4b'],[1999,'i4d']],"Peugeot «L'Éclair»":'t2','De Dion-Bouton':[[1895,'steam'],[1999,'s1']],
+  'Bollée (пар)':'steam','Bollée':'steam','Léon Bollée':'s1h','Duryea':'t2','Riker Electric':'elec','Jeantaud':'elec','La Jamais Contente':'elec','C.G.V.':'i4b','Delahaye':[[1898,'t2'],[1999,'i4']],
+  'Bolide':'t2','Mors':[[1898,'t2'],[1999,'i4b']],'Mercedes':[[1913,'i4b'],[1921,'i4ohc'],[1926,'i4sc'],[1933,'i6sc'],[1999,'i8sc']],'Winton':[[1901,'s1h'],[1902,'i4'],[1904,'i8'],[1999,'i6']],
+  'Daimler':'i4b','Napier':[[1903,'i4b'],[1999,'i6r']],'Rolls-Royce':[[1904,'t2'],[1999,'i6']],'Hotchkiss':'i4b','Itala':[[1924,'i4b'],[1999,'i6r']],'Decauville':'t2','Richard-Brasier':'i4b','Brasier':'i4b',
+  'Renault':'i4b','Benz':[[1899,'s1h'],[1922,'i4b'],[1999,'i6sc']],'Laurin & Klement':'i4','Steyr':'i6r','De Dietrich':'i4b','Darracq':[[1904,'i4'],[1905,'v8aero'],[1999,'i4ohc']],
+  'Fiat':[[1921,'i4b'],[1922,'i6r'],[1999,'i8sc']],'Nazzaro':'i4ohc','Ford':'i4','Ford 999':'i4b','Peerless':'i4b','Christie':'v4','Miller':[[1922,'i8'],[1999,'i8sc']],'Gobron-Brillié':'op4',
+  'Delage':[[1922,'i4ohc'],[1925,'v12'],[1999,'i8sc']],'Turcat-Méry':'i4b','Ballot':[[1918,'i4d'],[1999,'i8']],'Alfa Romeo':[[1922,'i4ohc'],[1999,'i8sc']],'Clément-Bayard':'i4b','Locomobile':'i4b',
+  'Alda':'i4ohc','Simplex':'i4b','Buick':'i4','Frontenac':'i4d','Lion-Peugeot':'v2','Bugatti':[[1921,'i4ohc'],[1925,'i8'],[1999,'i8sc']],'Isotta Fraschini':[[1914,'i4b'],[1999,'i8road']],
+  'OM':'i6r','Sunbeam':[[1911,'i4ohc'],[1921,'i6r'],[1925,'i6sc'],[1999,'v12aero']],'Duesenberg':[[1919,'i4ohc'],[1999,'i8']],'Rolland-Pilain':'i8','Sizaire-Naudin':'s1','Minerva':'i4','Case':'i4',
+  'Lozier':'i6','Hudson':'i6','Thomas Flyer':'i4b','National':'i4b','Packard':[[1915,'i6'],[1999,'v12']],'Alco':'i6','Marmon':'i6r','Stutz':[[1925,'i4ohc'],[1999,'i8']],'Austro-Daimler':'i4ohc',
+  'Opel':'i4b','Mercer':'i4ohc','Durant':'i4','Hispano-Suiza':'i4ohc','Руссо-Балт':'i4','Maxwell':'i4','Talbot':[[1925,'i4ohc'],[1999,'i6r']],'Talbot-Darracq':'i8','SCAT':'i4ohc','Ceirano':'i4',
+  'Bentley':[[1927,'i4ohc'],[1999,'i6']],'Chevrolet':'i4','Monroe':'i4ohc','CMN':'i4','Diatto':'i4ohc','Maserati':'i8sc','Mercedes-Benz':[[1933,'i6sc'],[1999,'i8sc']],'Amilcar':[[1925,'i4'],[1999,'i6sc']],
+  'Bluebird':'v12aero','AC':'i6r','Lea-Francis':'i4sc','Salmson':'i4d','Chitty Bang Bang':'aero6','Aston Martin':'i4ohc','Chiribiri':'i4ohc','Bianchi':'i4ohc','Leyland':'i8road',
+  'Thomas Special «Babs»':'v12aero','Packard Cable Special':'v12aero','Excelsior':'i6','Stutz Black Hawk':'i8','White Triplex':'v12aero','Omega-Six':'i6r',
+  'FIAT':[[1921,'i4b'],[1922,'i6r'],[1999,'i8sc']],'Humber':[[1904,'s1'],[1999,'i4']],'Lanchester':[[1905,'t2'],[1910,'i4'],[1999,'i6']],'Horch':[[1926,'i4'],[1999,'i8road']],'Berliet':[[1912,'i4b'],[1999,'i4']],
+  'Adler':[[1903,'s1'],[1999,'i4']],'Nash':[[1916,'i4'],[1999,'i6']],'Rover':[[1905,'s1'],[1999,'i4']],'Stanley':'steam','Cadillac':[[1908,'s1h'],[1914,'i4'],[1922,'v8f'],[1999,'v8x']],
+  'Pierce-Arrow':[[1906,'i4'],[1999,'i6']],'Singer':'i4','Wolseley':[[1905,'t2'],[1999,'i4']],'Vauxhall':[[1905,'s1'],[1999,'i4ohc']],'Austin':'i4','Oldsmobile':[[1906,'s1h'],[1999,'i4']],
+  'Studebaker':[[1917,'i4'],[1999,'i6']],'Brennabor':'i4','Hudson-Essex':'i6','Willys-Overland':'i4','Lancia':[[1921,'i4ohc'],[1999,'v4']],'Morris':'i4','Dodge Brothers':'i4','Citroën':'i4','MG':'i4ohc'};
+function enMqType(name,y){const m=EN_MQ[name]||EN_MQ[(name||'').split(' ')[0]];if(!m)return null;if(typeof m==='string')return m;for(const [yy,t] of m)if(y<=yy)return t;return m[m.length-1][1];}
+function enEraType(y,race){return y<1896?'t2':y<1900?(race?'i4':'t2'):y<1912?(race?'i4b':'i4'):y<1920?(race?'i4ohc':'i4'):y<1926?(race?'i8':'i6'):(race?'i8sc':'i6');}
+// Профиль звука машины гонки: для машин игрока — по его мотору (цилиндры, год, гильзы Найта), для соперников — по марке и году
+function enProfile(c,y){
+  let t=null,cyl=0,sleeve=false,yr=y,eng=null;
+  try{if(c.md&&(c.you||c.spec)){eng=parts(c.md).e;cyl=eng.cyl||4;sleeve=!!eng.sleeve;yr=Math.min(y,Math.max(eng.y,y-8));}}catch(_){}
+  if(eng){t=cyl===1?(/Cadillac|Бенц|Benz/.test(eng.name)?'s1h':'s1'):cyl===2?'t2':cyl===6?(y>=1920?'i6r':'i6'):cyl===8?(/V8/.test(eng.name)?(y>=1923?'v8x':'v8f'):(y>=1924?'i8':'i8road')):(y<1906?'i4b':y<1920?'i4':'i4ohc');}
+  else t=enMqType(c.name,y)||enEraType(y,true);
+  const T=Object.assign({},EN_TYPE[t]||EN_TYPE.i4),F=enFire(T.c);
+  const p=Object.assign({kind:'ic',cyc:2},T,F,{type:t});
+  // обороты растут с годами; мотор игрока — по его мощности: большой тихоходный или маленький оборотистый
+  if(eng){const hp=eng.hp||20;p.max=Math.round(p.max*clamp(1.15-hp/260,0.75,1.1));}
+  if(sleeve){p.valve=0.015;p.noise*=0.8;}                      // гильзовый Найт — почти беззвучный
+  const race=!c.you||(c.prep||0)>=1;if(race&&p.open===undefined&&p.kind==='ic')p.open=0.55;
+  if(!race&&p.open)p.open*=0.4;
+  p.muff=p.open>0.5?1600:y<1906?1300:900;
+  if(c.chain===undefined&&yr<1911&&p.kind==='ic'&&!p.chain&&(t==='i4b'||t==='t2'))p.chain=0.08;
+  return p;}
+/* ---------- менеджер: какие машины звучат, громкость, панорама, эффект Доплера ---------- */
+const EN={ok:false,loading:null,node:null,slots:new Map(),nid:1,fail:false};
+function enLoad(){if(EN.ok||EN.loading||EN.fail||!AU.ctx||!AU.ctx.audioWorklet||typeof AudioWorkletNode==='undefined')return;
+  const src='('+avtEngineWorklet.toString()+')();';
+  const tryUrl=u=>AU.ctx.audioWorklet.addModule(u);
+  let url=null;try{url=URL.createObjectURL(new Blob([src],{type:'application/javascript'}));}catch(_){}
+  EN.loading=(url?tryUrl(url):Promise.reject()).catch(()=>tryUrl('data:application/javascript;charset=utf-8,'+encodeURIComponent(src)))
+    .then(()=>{EN.ok=true;}).catch(e=>{EN.fail=true;console.warn('engine worklet',e);});}
+function enStart(dest){if(!EN.ok||!AU.ctx)return null;if(EN.node)enStop();try{
+  const n=new AudioWorkletNode(AU.ctx,'avt-engine',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});n.connect(dest);EN.node=n;EN.slots.clear();return n;}catch(e){console.warn(e);return null;}}
+function enStop(){if(EN.node){try{EN.node.port.postMessage({t:'stop'});EN.node.disconnect();}catch(_){}EN.node=null;EN.slots.clear();}}
+// обороты для звука: по скорости и передаче; стоим — холостые, с газом — «перегазовка» (сцепление выжато)
+function enRpm(c,p,thr){const r=clamp(c.rpm||0,0,1.12)*p.max;if(p.kind==='steam'||p.kind==='elec')return Math.max(0,Math.abs(c.vx||0)<0.3?0:r);
+  const free=p.idle+thr*(0.62*p.max-p.idle);return Math.abs(c.vx||0)<1.6?Math.max(r,free):Math.max(r,p.idle*(c.shift>0?1.25:1));}
+const EN_SURF_TY=y=>y<1906?0:y<1922?1:2;
+function enTick(a,me,vol){if(!EN.node||!R)return;const cars=R.cars,T=R.trk,msgs=[],set=[];
+  // «уши»: камера (в 3D) или машина, за которой следим
+  let lx=me.x,lz=me.z,rx=Math.cos(me.yaw),rz=-Math.sin(me.yaw);
+  if(R.gl&&typeof R3!=='undefined'&&R3.eye&&R3.camR){lx=R3.eye[0];lz=R3.eye[2];const n=Math.hypot(R3.camR[0],R3.camR[2])||1;rx=R3.camR[0]/n;rz=R3.camR[2]/n;}
+  const pre=R.t<0,want=[];
+  for(const c of cars){if(c===me||c.dnf==='застрял')continue;const d=Math.hypot(c.x-lx,c.z-lz);if(d<150)want.push([d,c]);}
+  want.sort((x,y)=>x[0]-y[0]);const pick=new Set([me,...want.slice(0,pre?4:3).map(x=>x[1])]);
+  for(const [c,s] of EN.slots)if(!pick.has(c)){msgs.push({t:'rm',id:s.id});EN.slots.delete(c);}
+  for(const c of pick){if(!EN.slots.has(c)){const p=c.enP||(c.enP=enProfile(c,R.rc.y)),id=EN.nid++;EN.slots.set(c,{id,p});msgs.push({t:'mk',id,p});}}
+  const mvx=Math.sin(me.yaw)*(me.vx||0),mvz=Math.cos(me.yaw)*(me.vx||0);
+  for(const [c,s] of EN.slots){const p=s.p;
+    let thr=c.shift>0?0:(c.thr||0);
+    if(pre){thr=c===R.me?(rKeys.gas?1:0):0.18+0.3*Math.max(0,Math.sin(R.t*2.1+c.num*1.7))*(Math.sin(R.t*0.7+c.num)>0.3?1:0);}
+    if(c.dnf||c.fin!==null&&c!==me&&Math.abs(c.vx)<0.5)thr=0;
+    let rpm=enRpm(c,p,thr);if(c.dnf&&Math.abs(c.vx)<0.5)rpm=0;
+    let g,pan=0,lp=14000;
+    if(c===me){g=vol*(c.overheat>0?0.55:1)*(c.dnf?0.15:1);if(R.gl&&typeof R3!=='undefined'&&R3.view===2)lp=6500;}
+    else{const dx=c.x-lx,dz=c.z-lz,d=Math.hypot(dx,dz)||1;g=vol*0.95/(1+Math.pow(d/7,1.25));pan=clamp((dx*rx+dz*rz)/d,-1,1)*0.85;lp=clamp(15000/(1+d/22),900,15000);
+      // эффект Доплера: приближается — выше, удаляется — ниже
+      const cvx=Math.sin(c.yaw)*(c.vx||0),cvz=Math.cos(c.yaw)*(c.vx||0),vr=((cvx-mvx)*-dx+(cvz-mvz)*-dz)/d;rpm*=clamp(343/(343-clamp(vr,-60,60)),0.85,1.2);}
+    if(me.tun&&!c.tun)g*=0.5;
+    set.push({id:s.id,rpm,ld:thr,g,pan,lp,spd:Math.abs(c.vx||0)});}
+  // дорога под нашими колёсами
+  let road=null;
+  if(R.me||R.follow){const S=me.surf||'asphalt',sp=Math.abs(me.vx||0),soft=/^(dirt|mud|mudhole|sand|beach|snow|grass|field|verge|forest)$/.test(S);
+    const skid=sp>3?clamp(Math.max((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5,((me.gu||0)-0.8)*3.5)+(me.spinw>0.3?0.25:0),0,1):0;
+    const wet=R.wx&&(R.wx.rain||R.wetK)?(me.tun?0:Math.max(R.wetK||0,R.wx.rain?1:0)):0;
+    road={v:sp,g:(R.t<0?0:1)*vol*(me.off?1.2:1)*0.5,s:S==='puddle'?'puddle':S,wet:S==='puddle'?1:wet,sq:soft?0:skid,sc:soft?skid:0,ro:me.off?1:0.3,ty:EN_SURF_TY(R.rc.y)};}
+  msgs.push({t:'set',v:set,r:road});
+  for(const m of msgs)EN.node.port.postMessage(m);}
+
+/* ================= 0.19: звуки мира в гонке и голос с трибун =================
+   Записи с Викисклада (общественное достояние и свободные лицензии): трибуны, толпа у дороги, аплодисменты, птицы по месту
+   и времени суток (утренний хор, жаворонок над полем, воробьи в городе, кукушка в горах, цикады на юге, сверчки ночью),
+   колокола, лай собак, петух, извозчик на булыжнике, духовой оркестр, паровоз, дождь, гром, ручей у моста, овцы.
+   Рожки и клаксоны соседей по гонке — синтез: груша-рожок (1890–1900-е), «а-у-га» Klaxon (с 1908), электрический сигнал (1920-е).
+   Диктор с трибуны говорит в рупор (запись голоса + фильтр рупора и эхо трибун); в 1920-е — «как по радио». */
+const AMB={idx:null,loadP:null,buf:{},pend:{},beds:{},bus:null,on:false,feat:null,cd:{},seen:{},t:0,ann:{buf:{},pend:{},busy:0,q:[],said:{}}};
+const SFX_REMOTE=()=>(location.protocol==='file:'?VOICE_REMOTE:'');
+// указатель звуков — с сайта игры; без сети гонка идёт без записей, а через минуту (новая гонка) пробуем снова
+function ambIndex(){if(AMB.idx)return Promise.resolve(AMB.idx);if(AMB.loadP)return AMB.loadP;
+  if(AMB.failT&&Date.now()-AMB.failT<60000)return Promise.resolve({});
+  AMB.loadP=new Promise(res=>{if(window.SFX_INDEX){AMB.idx=window.SFX_INDEX;res(AMB.idx);return;}
+    const fail=()=>{AMB.loadP=null;AMB.failT=Date.now();res({});};
+    try{const s=document.createElement('script');s.src=SFX_REMOTE()+'sfx/index.js';s.async=true;
+      s.onload=()=>{AMB.idx=window.SFX_INDEX||{};AMB.failT=0;res(AMB.idx);};s.onerror=()=>{s.remove();fail();};document.head.appendChild(s);}catch(e){fail();}});
+  return AMB.loadP;}
+// звук по имени: скачать и разобрать один раз
+function ambBuf(id){if(AMB.buf[id])return Promise.resolve(AMB.buf[id]);if(AMB.pend[id])return AMB.pend[id];if(!AU.ctx)return Promise.resolve(null);
+  AMB.pend[id]=ambIndex().then(ix=>{if(!ix||!ix[id])return null;return fetch(SFX_REMOTE()+'sfx/'+id+'.mp3').then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab?new Promise((ok,no)=>AU.ctx.decodeAudioData(ab,ok,no)):null);})
+    .then(b=>{if(b)AMB.buf[id]=ambLoopable(b);return AMB.buf[id]||null;}).catch(()=>null);return AMB.pend[id];}
+// петля без щелчка: хвост плавно переходит в начало
+function ambLoopable(b){try{const n=b.length,x=Math.min(Math.floor(b.sampleRate*0.6),Math.floor(n/4));if(n<b.sampleRate*3)return b;
+  const out=AU.ctx.createBuffer(b.numberOfChannels,n-x,b.sampleRate);for(let ch=0;ch<b.numberOfChannels;ch++){const s=b.getChannelData(ch),d=out.getChannelData(ch);
+    for(let i=0;i<n-x;i++)d[i]=s[i];for(let i=0;i<x;i++){const k=i/x;d[i]=s[i]*k+s[n-x+i]*(1-k);}}return out;}catch(_){return b;}}
+/* ---------- особенности трассы: где толпа, церкви, города, мосты, лес, поле ---------- */
+function ambFeatures(T){const n=T.n,crowd=new Float32Array(n),church=[],set=SCEN_SETS[T.cfg.host]||{},ch=new Set([set.church,'church','campanile','minaret','spire','cathedral','church_ru'].filter(Boolean));
+  for(let i=0;i<n;i++){const L=T.spr&&T.spr[i];if(!L)continue;for(const it of L){if(it.k==='p'&&it.t==='crowd')crowd[i]+=8;else if(it.t==='stand')crowd[i]+=40;else if(ch.has(it.t))church.push(i);}}
+  (T.lm||[]).forEach(q=>{if(/church|campanile|minaret|kremlin|cathedral/.test(q.t))church.push(q.i);});
+  return {crowd,church:[...new Set(church)].sort((a,b)=>a-b)};}
+function ambNear(F,i,rad){const T=R.trk,n=T.n,st=T.step,k=Math.round(rad/st);let s=0;for(let d=-k;d<=k;d+=2){let j=i+d;if(T.closed)j=(j%n+n)%n;else if(j<0||j>=n)continue;const w=1-Math.abs(d)/(k+1);s+=F[j]*w;}return s;}
+/* ---------- фоновые петли ---------- */
+function ambBed(id,vol,dt,rate){const B=AMB.beds[id]||(AMB.beds[id]={id,g:null,src:null,v:0,idle:0});B.v=vol;
+  if(vol>0.003&&!B.src&&!B.loading){const b=AMB.buf[id];if(b){const g=AU.ctx.createGain();g.gain.value=0;g.connect(AMB.bus);const s=AU.ctx.createBufferSource();s.buffer=b;s.loop=true;if(rate)s.playbackRate.value=rate;s.connect(g);s.start(0,Math.random()*b.duration);B.src=s;B.g=g;}
+    else{B.loading=1;ambBuf(id).then(()=>{B.loading=0;});}}
+  if(B.g){B.g.gain.setTargetAtTime(vol,AU.ctx.currentTime,0.6);if(vol<0.003){B.idle+=dt;if(B.idle>6){try{B.src.stop();}catch(_){}B.src=null;B.g.disconnect();B.g=null;B.idle=0;}}else B.idle=0;}}
+function ambOnce(id,vol,pan,rate){const b=AMB.buf[id];if(!b){ambBuf(id);return false;}const c=AU.ctx,s=c.createBufferSource(),g=c.createGain();s.buffer=b;if(rate)s.playbackRate.value=rate;g.gain.value=vol;
+  let out=g;if(c.createStereoPanner&&pan){const p=c.createStereoPanner();p.pan.value=clamp(pan,-1,1);g.connect(p);out=p;}out.connect(AMB.bus);s.connect(g);s.start();return true;}
+function ambCool(key,sec){const t=AU.ctx.currentTime;if((AMB.cd[key]||-1e9)>t)return false;AMB.cd[key]=t+sec;return true;}
+/* ---------- рожки и клаксоны (синтез) ---------- */
+function hornSfx(y,vol,pan){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,t=c.currentTime,g=c.createGain(),f=c.createBiquadFilter(),o=c.createOscillator();let out=g;
+  if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=clamp(pan||0,-1,1);g.connect(p);out=p;}out.connect(AMB.bus||AU.fx);
+  if(y<1908){// груша-рожок: язычок и раструб — «ба-ап», с понижением тона
+    o.type='sawtooth';const f0=330+Math.random()*60;o.frequency.setValueAtTime(f0*1.08,t);o.frequency.exponentialRampToValueAtTime(f0*0.93,t+0.32);f.type='bandpass';f.frequency.value=900;f.Q.value=2.5;
+    o.connect(f);f.connect(g);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.03);g.gain.setValueAtTime(vol,t+0.22);g.gain.exponentialRampToValueAtTime(0.0001,t+0.4);o.start(t);o.stop(t+0.45);
+    if(Math.random()<0.5){const o2=c.createOscillator();o2.type='sawtooth';o2.frequency.setValueAtTime(f0*1.1,t+0.5);o2.frequency.exponentialRampToValueAtTime(f0*0.95,t+0.75);o2.connect(f);const g2=g;o2.start(t+0.5);o2.stop(t+0.8);g.gain.setValueAtTime(0.0001,t+0.48);g.gain.exponentialRampToValueAtTime(vol*0.9,t+0.52);g.gain.exponentialRampToValueAtTime(0.0001,t+0.8);}}
+  else if(y<1922){// Klaxon: мотор трёт мембрану — «а-у-га» с подъёмом и спадом
+    o.type='sawtooth';o.frequency.setValueAtTime(180,t);o.frequency.linearRampToValueAtTime(420,t+0.25);o.frequency.setValueAtTime(420,t+0.5);o.frequency.linearRampToValueAtTime(330,t+0.75);
+    const lf=c.createOscillator(),lg=c.createGain();lf.frequency.value=38;lg.gain.value=35;lf.connect(lg);lg.connect(o.frequency);f.type='bandpass';f.frequency.value=1100;f.Q.value=1.6;
+    o.connect(f);f.connect(g);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.08);g.gain.setValueAtTime(vol,t+0.65);g.gain.exponentialRampToValueAtTime(0.0001,t+0.85);o.start(t);lf.start(t);o.stop(t+0.9);lf.stop(t+0.9);}
+  else{// электрический сигнал: два тона, короткие гудки
+    const o2=c.createOscillator();o.type='square';o2.type='square';o.frequency.value=392;o2.frequency.value=494;f.type='lowpass';f.frequency.value=2400;o.connect(f);o2.connect(f);f.connect(g);
+    [0,0.28].forEach(d=>{g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(vol*0.6,t+d+0.02);g.gain.setValueAtTime(vol*0.6,t+d+0.18);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.22);});
+    o.start(t);o2.start(t);o.stop(t+0.55);o2.stop(t+0.55);}}
+/* ---------- диктор с трибуны: рупор ---------- */
+// Строки диктора (голос eugene) — их записывает конвейер голоса (tools/export_voice.js)
+const ANN={ready:'Внимание! Приготовиться!',count:'Три! Два! Один!',go:'Марш!',last:'Последний круг!',crash:'Авария на трассе!',rain:'Дождь! Будьте осторожны на поворотах!',
+  fin:'Финиш!',overtake:'Какой обгон!',pits:'Машина заходит в боксы.',crowd:'Зрители, освободите дорогу!',pace:'Машина-лидер уходит с трассы. Старт с хода!',lemans:'Гонщики, к машинам!',
+  neutral:'Нейтрализация! Сбавьте ход!',record:'Лучший круг гонки!',night:'Зажигайте фонари!'};
+const ANN_NUM=['','первый','второй','третий','четвёртый','пятый','шестой','седьмой','восьмой','девятый','десятый','одиннадцатый','двенадцатый','тринадцатый','четырнадцатый','пятнадцатый','шестнадцатый','семнадцатый','восемнадцатый','девятнадцатый','двадцатый',
+  'двадцать первый','двадцать второй','двадцать третий','двадцать четвёртый','двадцать пятый','двадцать шестой','двадцать седьмой','двадцать восьмой','двадцать девятый','тридцатый'];
+const annGo=n=>`Номер ${ANN_NUM[n]||n} — пошёл!`,annLead=n=>`Лидирует ${ANN_NUM[n]||n} номер!`,annWin=n=>`Победитель — ${ANN_NUM[n]||n} номер!`;
+function annLines(){const L=Object.values(ANN);for(let k=1;k<=30;k++)L.push(annGo(k),annLead(k),annWin(k));return L;}
+function annBuf(text){const A=AMB.ann,h=voiceHash(text,'eugene');if(A.buf[h])return Promise.resolve(A.buf[h]);if(A.pend[h])return A.pend[h];if(!AU.ctx)return Promise.resolve(null);
+  A.pend[h]=voiceLoad().then(()=>{if(!voiceDur(text,'eugene'))return null;return fetch(voiceUrl(text,'eugene')).then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab?new Promise((ok,no)=>AU.ctx.decodeAudioData(ab,ok,no)):null);})
+    .then(b=>{if(b)A.buf[h]=b;return b;}).catch(()=>null);return A.pend[h];}
+// цепочка рупора: полоса 450–3600 Гц, «жесть» раструба, перегруз, эхо трибун
+function annChain(radio){const c=AU.ctx,hp=c.createBiquadFilter(),pk=c.createBiquadFilter(),lp=c.createBiquadFilter(),ws=c.createWaveShaper(),g=c.createGain(),dl=c.createDelay(0.5),fb=c.createGain(),wet=c.createGain();
+  hp.type='highpass';hp.frequency.value=radio?280:480;pk.type='peaking';pk.frequency.value=radio?1800:2100;pk.Q.value=1.2;pk.gain.value=radio?4:8;lp.type='lowpass';lp.frequency.value=radio?3400:3900;
+  const cur=new Float32Array(1024);for(let i=0;i<1024;i++){const x=i/512-1;cur[i]=Math.tanh(x*(radio?1.6:2.6))/Math.tanh(radio?1.6:2.6);}ws.curve=cur;
+  hp.connect(pk);pk.connect(lp);lp.connect(ws);ws.connect(g);dl.delayTime.value=radio?0.05:0.16;fb.gain.value=radio?0.1:0.32;wet.gain.value=radio?0.08:0.3;g.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);
+  return {inp:hp,g,wet};}
+function annPlay(text,vol,pan){if(!AU.ctx||!AU.on.sfx||!R||R.mode==='sim')return;const A=AMB.ann,radio=R.rc.y>=1922;
+  annBuf(text).then(b=>{if(!b||!AU.ctx||!R)return;const c=AU.ctx,t=c.currentTime;if(A.busy>t+0.1)return;A.busy=t+b.duration;
+    const s=c.createBufferSource();s.buffer=b;const ch=annChain(radio);s.connect(ch.inp);let out=c.createGain();out.gain.value=vol*1.4;ch.g.connect(out);ch.wet.connect(out);
+    if(c.createStereoPanner&&pan){const p=c.createStereoPanner();p.pan.value=clamp(pan,-1,1);out.connect(p);p.connect(AU.fx);}else out.connect(AU.fx);s.start(t);});}
+// громкость диктора: он у трибун (старт и финиш); вдали не слышен (кроме «радио» 1920-х)
+function annVol(){const T=R.trk,me=R.follow;if(!me)return 0;if(R.rc.y>=1922)return 0.5;const n=T.n,dI=i=>{let d=Math.abs(me.idx-i);if(T.closed)d=Math.min(d,n-d);return d*T.step;};
+  const d=Math.min(dI(T.finishIdx),T.closed?1e9:dI(T.startIdx));return d<220?clamp(1.15-d/220,0.15,1):0;}
+function annCall(key,num){if(!R)return;const v=annVol();if(v<=0)return;const text=key==='go_n'?annGo(num):key==='lead'?annLead(num):key==='win'?annWin(num):ANN[key];if(text)annPlay(text,v,0);}
+// титры с голосом: рассказчик кинохроники (живой голос, если записан)
+function annSay(text,kind){if(!R||R.mode==='sim'||!AU.on.sfx||!reelVoiceOn())return;try{const say=scnSpeech(text);if(voiceDur(say,'aidar')&&!(VOICE.cb))voiceSay(say,'aidar');}catch(_){}}
+/* ---------- гонка: старт, такт, стоп ---------- */
+function ambStart(){if(!AU.ctx||!R||R.mode==='sim')return;ambIndex();const c=AU.ctx;if(AMB.bus){try{AMB.bus.disconnect();}catch(_){}}
+  AMB.bus=c.createGain();AMB.bus.gain.value=0.9;AMB.bus.connect(AU.fx);AMB.beds={};AMB.cd={};AMB.seen={};AMB.on=true;AMB.t=0;AMB.lastLead=null;AMB.lapSaid={};
+  try{AMB.feat=ambFeatures(R.trk);}catch(e){AMB.feat={crowd:new Float32Array(R.trk.n),church:[]};}
+  // заранее — самое нужное: трибуны, толпа, птицы
+  ['crowd_big','crowd_murmur','crowd_race','applause','birds_town','birds_forest','skylark','rain'].forEach(id=>ambBuf(id));
+  const L=[ANN.ready,ANN.count,ANN.go];if(R.me)L.push(annGo(R.me.num||1));L.forEach(t=>annBuf(t));}
+function ambStop(){AMB.on=false;const t=AU.ctx?AU.ctx.currentTime:0;Object.values(AMB.beds).forEach(B=>{if(B.g){B.g.gain.setTargetAtTime(0,t,0.3);const s=B.src;setTimeout(()=>{try{s.stop();}catch(_){}},1500);}});AMB.beds={};}
+function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow;if(!me)return;AMB.t+=dt;const F=AMB.feat,S=R.scn,y=R.rc.y,mon=(R.rc.m??5);
+  const i=me.idx,sg=segAt(T,i),town=sg===RSEG.town||(T.town&&T.town[i]),vill=sg===RSEG.village,forest=sg===RSEG.forest||sg===RSEG.avenue||sg===RSEG.vine,mount=sg===RSEG.serp||T.cfg.uphill,inT=me.tun;
+  const hh=S?((scnHour()%24)+24)%24:12,el=S?scnSun(hh,mon,S.lat||47).el*57.3:40,night=el<-4,dawn=!night&&el<12&&hh<12,rain=R.rainK||0,sp=Math.abs(me.vx||0);
+  const q=inT?0.15:1,wind=clamp(1-sp/40,0.35,1);// на скорости ветер и мотор забивают тихие звуки
+  // птицы: по месту и времени суток; в дождь почти молчат
+  const summer=mon>=3&&mon<=8,south=['it','ly','es','mc'].includes(T.cfg.host);
+  const bK=(night?0:1)*(1-rain*0.85)*q*wind*(T.cfg.oval?0.25:1);
+  ambBed('birds_dawn',dawn?0.5*bK:0,dt);
+  ambBed('birds_town',!dawn&&(town||vill)?0.34*bK:0,dt);
+  ambBed('birds_forest',!dawn&&forest?0.42*bK:0,dt);
+  ambBed('skylark',!dawn&&summer&&!town&&!forest&&!mount&&!T.cfg.oval?0.3*bK:0,dt);
+  ambBed('cuckoo',mount&&summer&&!night?0.28*bK:0,dt);
+  ambBed('cicada',south&&summer&&!night&&el>18&&!town?0.26*(1-rain)*q*wind:0,dt);
+  ambBed('crickets',night&&mon>=4&&mon<=8?0.32*(1-rain*0.7)*q:0,dt);
+  // толпа: трибуны и зрители у дороги — ближе и громче; гул, когда машины рядом
+  const cr=ambNear(F.crowd,i,120),crK=clamp(cr/60,0,1)*q;
+  ambBed('crowd_big',crK>0.35?crK*0.55:0,dt);ambBed('crowd_murmur',crK>0.05?Math.min(0.4,crK*0.6):0,dt);
+  if(cr>12&&sp>12&&ambCool('cheer'+Math.floor(i/40),25))ambOnce('crowd_race',0.3+0.35*clamp(cr/60,0,1),(Math.random()-0.5)*0.8);
+  if(S&&S.crowdRoad&&crK>0.1&&sp>10&&ambCool('road',14)){hornSfx(y,0.26,0);if(Math.random()<0.4)annPlay(ANN.crowd,0.45,0.4);}
+  // дождь и гром
+  ambBed('rain',rain>0.05?(0.25+0.55*rain)*(inT?0.2:1):0,dt);
+  if(rain>0.7&&!inT&&ambCool('thunder',25+Math.random()*30))ambOnce('thunder',0.35+Math.random()*0.3,(Math.random()-0.5)*1.4);
+  // вода у моста, извозчики в старом городе, овцы на горных пастбищах
+  const br=T.bridge&&(T.bridge[i]||T.bridge[Math.min(T.n-1,i+6)]);ambBed('stream',br?0.45*q:0,dt);
+  ambBed('horse_carriage',town&&y<1915&&!night?0.22*q*wind:0,dt);
+  if(mount&&summer&&!night&&ambCool('sheep',50)&&Math.random()<0.35)ambOnce('sheep',0.3,(Math.random()-0.5));
+  // деревня: собака, утром петух; город — колокола у церкви, иногда оркестр
+  if(vill&&!AMB.seen['v'+Math.floor(i/60)]){AMB.seen['v'+Math.floor(i/60)]=1;if(Math.random()<0.45)setTimeout(()=>ambOnce('dog_bark',0.4,(Math.random()<0.5?-1:1)*0.6),400+Math.random()*1500);
+    if(hh>4&&hh<10&&Math.random()<0.55)setTimeout(()=>ambOnce('rooster',0.35,(Math.random()-0.5)),800+Math.random()*2000);}
+  for(const ci of F.church){let d=Math.abs(ci-i);if(T.closed)d=Math.min(d,T.n-d);if(d*T.step<90&&!AMB.seen['c'+ci]&&ambCool('bells',45)){AMB.seen['c'+ci]=1;ambOnce(town&&y<1920&&T.cfg.host==='fr'?'bells_city':'bells_village',0.4*q,0.3);break;}}
+  if(town&&!night&&!AMB.seen['b'+Math.floor(i/80)]&&crK>0.05){AMB.seen['b'+Math.floor(i/80)]=1;if(Math.random()<0.18)ambOnce('brass_parade',0.35,0.5);}
+  // поезд у переезда: пыхтение паровоза и стук колёс
+  {let tv=0;if(T.rails&&typeof railLine==='function')T.rails.forEach(rl=>{const st=rl.st;if(!st||st.state!==1)return;const L=railLine(T,rl),x=L.p[0]+L.d[0]*st.s,z=L.p[2]+L.d[1]*st.s,d=Math.hypot(x-me.x,z-me.z);tv=Math.max(tv,0.65/(1+d/35));});ambBed('steam_train',tv>0.02?tv:0,dt);}
+  // соседи сигналят: догоняют и просят дорогу
+  R.cars.forEach(c=>{if(c===me||c.dnf||c.wait)return;const dg=me.prog-c.prog;if(dg>3&&dg<14&&c.vx>me.vx+1.5&&Math.abs(c.lat-me.lat)<2.2&&ambCool('horn'+c.num,7)&&Math.random()<0.5)hornSfx(y,0.3,clamp((c.lat-me.lat)/3,-0.8,0.8));});
+  // комментатор: смена лидера, обгон, дождь, сумерки (каждые полсекунды)
+  AMB.ot=(AMB.ot||0)+dt;if(AMB.ot>0.5&&R.t>3){AMB.ot=0;const ord=raceOrder(),lead=ord[0],pos=ord.indexOf(me);
+    if(lead&&AMB.lastLead&&lead!==AMB.lastLead&&!lead.wait&&ambCool('leadc',18))annCall('lead',lead.num);AMB.lastLead=lead;
+    if(AMB.lastPos!==undefined&&pos>=0&&pos<AMB.lastPos&&R.me===me&&ambCool('ovt',15))annCall('overtake');AMB.lastPos=pos;
+    if(rain>0.3&&!AMB.rainSaid){AMB.rainSaid=1;annCall('rain');}if(rain<0.1)AMB.rainSaid=0;
+    if(S&&el<1&&AMB.elP>=1&&S.span>=6)annCall('night');AMB.elP=el;}
+  // диктор: лидер на круге (у трибун), последний круг, финиш
+  if(T.closed&&R.t>2){const ord=raceOrder(),lead=ord[0];if(lead&&lead.lap>=1&&!AMB.lapSaid[lead.lap]&&lead.idx<40&&annVol()>0){AMB.lapSaid[lead.lap]=1;if(lead.lap===T.cfg.laps-1)annCall('last');else annCall('lead',lead.num);}}
+}
+// события гонки → звук
+function ambEvent(k,arg){if(!AMB.on||!AU.ctx)return;const y=R?R.rc.y:1905;
+  if(k==='start'){if(!R.scn||R.scn.st==='grid')setTimeout(()=>annCall('go'),50);if(Math.random()<0.7)setTimeout(()=>hornSfx(y,0.22,-0.5),600);if(Math.random()<0.5)setTimeout(()=>hornSfx(y,0.18,0.6),1100);ambOnce('crowd_big',0.5,0);}
+  if(k==='countdown')annCall('count');
+  if(k==='ready'){annCall(R.scn&&R.scn.st==='lemans'?'lemans':'ready');}
+  if(k==='finish'){ambOnce('applause',0.55,0);ambOnce('crowd_race',0.5,0.3);if(arg&&arg.win){ambOnce('fanfare',0.45,0);}setTimeout(()=>{const w=raceOrder()[0];if(w)annCall('win',w.num);else annCall('fin');},900);}
+  if(k==='crash')annCall('crash');}
 
 /* ================= ACTIONS ================= */
 function stopAuto(){if(auto){clearInterval(auto);auto=null;const ab=document.getElementById('autoBtn');if(ab){ab.textContent='▶';ab.classList.remove('on');}}}

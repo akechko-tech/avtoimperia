@@ -156,9 +156,13 @@ async function musicLoad(){
 /* ---------- 0.19: оркестровые записи (военные оркестры США, Musopen, пластинки 1920-х) — вместо оркестриона ---------- */
 const ORCH={idx:null,loadP:null};const ORCH_BASE=()=>(location.protocol==='file:'?VOICE_REMOTE:'');
 const ORCH_ST={march:'марш',galop:'галоп',waltz:'вальс',rag:'регтайм',cake:'кекуок',jazz:'джаз',fox:'фокстрот',tango:'танго',polka:'полька',classic:'классика',silent:'музыка немого кино'};
+// указатель оркестровых записей — с сайта игры; без сети — синтезатор, а через минуту (новая гонка, ролик) пробуем снова
 function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)return ORCH.loadP;
+  if(ORCH.failT&&Date.now()-ORCH.failT<60000)return Promise.resolve({});
   ORCH.loadP=new Promise(res=>{if(window.MUSIC_INDEX){ORCH.idx=window.MUSIC_INDEX;res(ORCH.idx);return;}
-    try{const s=document.createElement('script');s.src=ORCH_BASE()+'music/index.js';s.async=true;s.onload=()=>{ORCH.idx=window.MUSIC_INDEX||{};res(ORCH.idx);AU.sig='';musBuild(false);};s.onerror=()=>{ORCH.idx={};res(ORCH.idx);};document.head.appendChild(s);}catch(e){ORCH.idx={};res(ORCH.idx);}});
+    const fail=()=>{ORCH.loadP=null;ORCH.failT=Date.now();res({});};
+    try{const s=document.createElement('script');s.src=ORCH_BASE()+'music/index.js';s.async=true;
+      s.onload=()=>{ORCH.idx=window.MUSIC_INDEX||{};ORCH.failT=0;res(ORCH.idx);AU.sig='';musBuild(false);};s.onerror=()=>{s.remove();fail();};document.head.appendChild(s);}catch(e){fail();}});
   return ORCH.loadP;}
 function orchTracks(){const I=ORCH.idx||{};return Object.keys(I).map(id=>{const m=I[id];return {orch:true,id,src:ORCH_BASE()+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
@@ -305,7 +309,7 @@ function auSfx(type,v){
     o.start(t+d);lf.start(t+d);o.stop(t+d+l+0.05);lf.stop(t+d+l+0.05);}));vNoise(t,1.4,0.04*v,'bandpass',2400,AU.fx);}
 }
 function auRaceStart(rc){
-  if(!AU.ctx)return;auApply();
+  if(!AU.ctx)return;auApply();try{orchLoad();}catch(_){}
   if(!AU.on.sfx)return;const c=AU.ctx,t=c.currentTime;
   const o1=c.createOscillator(),o2=c.createOscillator(),lfo=c.createOscillator(),lg=c.createGain(),f=c.createBiquadFilter(),g=c.createGain(),am=c.createGain();
   o1.type='sawtooth';o2.type='square';lfo.type='square';f.type='lowpass';f.frequency.value=500;g.gain.value=0;am.gain.value=1;
