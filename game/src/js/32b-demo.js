@@ -42,7 +42,7 @@ function demoCam(dt,W,H){const D=DEMO;D.cutT-=dt;
   if(D.cutT<=0||!D.car||D.car.dnf||D.car.fin!==null){D.cut=(D.cut+1)%4;D.cutT=6+Math.random()*2.5;const L=live.slice().sort((a,b)=>b.prog-a.prog);D.car=L[Math.min(L.length-1,Math.floor(Math.random()*Math.min(3,L.length)))];R.follow=D.car;R3.cam=null;
     const T=R.trk,c=D.car,sd=Math.random()<0.5?1:-1;
     // камера у обочины — там, где рядом нет дерева или дома
-    if(D.cut===1){const a=camSpot(c.idx,70,sd);D.pos=[a.p[0],a.p[1]+1.7,a.p[2]];}}
+    if(D.cut===1){const a=camSpot(c.idx,70,sd);if(a.blocked)D.cut=2;else D.pos=[a.p[0],a.p[1]+1.7,a.p[2]];}}
   const c=D.car,st=c.v3,y=st&&st.y!==null?st.y:c.y,fw=[Math.sin(c.yaw),0,Math.cos(c.yaw)],rt=[fw[2],0,-fw[0]];
   if(D.cut===0){r3dCamera(dt,W,H);return;}
   let eye,look=[c.x,y+0.9,c.z],fov=0.8;

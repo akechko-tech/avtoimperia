@@ -26,7 +26,19 @@ function trkSmooth(i,d,off){const T=R.trk,n=T.n,f=i+d/T.step,j0=Math.floor(f),u=
   const t0=T.T[idx(j0)],t1=T.T[idx(j0+1)],t=[t0[0]+(t1[0]-t0[0])*u,t0[1]+(t1[1]-t0[1])*u],tl=Math.hypot(t[0],t[1])||1;
   return {j:idx(Math.round(f)),p:[cr(0),cr(1),cr(2)],t:[t[0]/tl,t[1]/tl],n:[t[1]/tl,-t[0]/tl]};}
 // Место для камеры у обочины: рядом нет дерева, столба или дома
-function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
+// Кроны и дома у дороги: камера не должна стоять в листве и смотреть сквозь ствол (повтор ночью упирался в дерево)
+const CAM_BLOCK={oak:5,plane:5.5,elm:4.5,poplar:2.2,cypress:1.6,olive:3.2,pine:3,fir:2.6,birch:2.6,palm:3,bush:1.6,house_fr:4,farm_fr:4.5,house_it:4,fachwerk:4,cottage:3.8,pub:3.8,farm_us:4.5,barn:5,izba:3.6,church:7,church_us:6,church_uk:6,church_at:6,church_ru:7,cottage_ie:3.8,house_ly:4};
+function camFree(a,i,d){const T=R.trk,n=T.n,S=T.spr;if(!S)return true;const st=Math.max(1,Math.round(d/T.step)),j0=a.j,idx=j=>T.closed?((j%n)+n)%n:clamp(j,0,n-1);
+  // куда смотрит камера: дорога от машины (i) до самой камеры — три точки на оси
+  const tg=[0.25,0.55,0.85].map(u=>{const q=T.pts[idx(i+Math.round(st*u))];return [q[0],q[2]];});
+  for(let k=j0-st-4;k<=j0+6;k++){const jj=idx(k),L=S[jj];if(!L||!L.length)continue;const p=T.pts[jj],nn=T.N[jj];
+    for(const it of L){const R0=CAM_BLOCK[it.t];if(!R0)continue;const x=it.wx!==undefined?it.wx:p[0]+nn[0]*it.off,z=it.wz!==undefined?it.wz:p[2]+nn[1]*it.off;
+      if(Math.hypot(x-a.p[0],z-a.p[2])<R0+1)return false;
+      for(const g of tg){const dx=g[0]-a.p[0],dz=g[1]-a.p[2],l2=dx*dx+dz*dz||1,u=clamp(((x-a.p[0])*dx+(z-a.p[2])*dz)/l2,0,1),ex=a.p[0]+dx*u-x,ez=a.p[2]+dz*u-z;if(u>0.05&&u<0.95&&ex*ex+ez*ez<R0*R0*0.5)return false;}}}
+  return true;}
+function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;if(!camFree(a,i,d))continue;return a;}
+  // всюду деревья (лесная дорога, аллея) — свободной обочины нет: пусть снимает камера у машины
+  const a=trkAt(i,d,sd*(T.W/2+1.6));a.blocked=1;return a;}
 // Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
 function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
 // Слова диктора перед стартом: название, год и первая фраза истории гонки (их записал диктор заранее)
@@ -126,11 +138,11 @@ function replayCam(dt,W,H){const Rp=R.replay;if(!Rp){R3.camHook=null;return;}con
   // смена камеры по времени: 0 — у дороги впереди, 1 — низко спереди, 2 — у финишной линии
   const left=Rp.fin-Rp.t,cut=left>5.5?0:left>2.2?1:2;
   if(cut!==Rp.cut){Rp.cut=cut;const T=R.trk,sd=Math.random()<0.5?1:-1;
-    if(cut===0){const a=camSpot(me.idx,55,sd);Rp.pos=[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=0.42;}
+    if(cut===0){const a=camSpot(me.idx,55,sd);Rp.pos=a.blocked?null:[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=a.blocked?0.7:0.42;Rp.near=a.blocked?sd:0;}
     else if(cut===1){Rp.pos=null;Rp.fov=0.7;}
-    else{const f=camSpot(T.finishIdx,4,sd,[3.2,4.5,6,8]);Rp.pos=[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=0.6;}}
+    else{const f=camSpot(T.finishIdx,4,sd,[3.2,4.5,6,8]);Rp.pos=f.blocked?null:[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=f.blocked?0.7:0.6;Rp.near=f.blocked?-sd:0;}}
   const st=me.v3,y=st&&st.y!==null?st.y:me.y,tg=[me.x,y+0.8,me.z];let eye;
-  if(cut===1){const fw=[Math.sin(me.yaw),0,Math.cos(me.yaw)],rt=[fw[2],0,-fw[0]];eye=[me.x+fw[0]*7+rt[0]*2.2,y+0.7,me.z+fw[2]*7+rt[2]*2.2];}
+  if(cut===1||!Rp.pos){const fw=[Math.sin(me.yaw),0,Math.cos(me.yaw)],rt=[fw[2],0,-fw[0]],sd=cut===1?1:(Rp.near||1);eye=[me.x+fw[0]*7+rt[0]*2.2*sd,y+0.7,me.z+fw[2]*7+rt[2]*2.2*sd];}
   else eye=Rp.pos;
   const g=fH(eye[0],eye[2])+0.5;if(eye[1]<g)eye[1]=g;
   r3dCamSet(eye,tg,Rp.fov,W,H,0.1);R3.cam=null;}

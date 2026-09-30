@@ -40,7 +40,10 @@ function homeDemand(s){return s.models.filter(m=>m.status==='prod').reduce((a,m)
 function suggestProject(s){const P=rdProjects(s);if(!P.length)return null;const top=s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
   const w={e:5,g:3,c:3,w:2,k:2,b:3};
   const mine=P.filter(p=>p.kind==='upg'&&top&&top[p.ck]===p.id).sort((a,b)=>(w[b.ck]||1)/b.need-(w[a.ck]||1)/a.need);
-  return mine[0]||P.filter(p=>p.kind==='upg'&&p.mine)[0]||P.find(p=>p.kind==='early')||P[0];}
+  // иначе — детали своих машин, ранний прототип; а если и их нет — самая новая массовая деталь эпохи, а не старьё
+  // (в 1917 году не улучшать одноцилиндровый De Dion 1895 года только потому, что он первый в списке)
+  const fresh=P.filter(p=>p.kind==='upg'&&p.py>=s.y-10).sort((a,b)=>((b.mass?1:0)-(a.mass?1:0))||(b.py-a.py)||(a.need-b.need));
+  return mine[0]||P.filter(p=>p.kind==='upg'&&p.mine)[0]||P.find(p=>p.kind==='early')||fresh[0]||null;}
 let TIPS=[];
 function adviceList(s){
   const T=[],L=s.last,act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev'),lim=debtLimit(s),home=s.country;

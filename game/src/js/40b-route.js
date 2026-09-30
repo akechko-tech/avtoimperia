@@ -6,6 +6,10 @@ const RSEG={fields:0,town:1,village:2,forest:3,avenue:4,bridge:5,rail:6,serp:7,c
 const RIVERS={fr:['Сену','Луару','Марну','Рону','Сону','Уазу'],it:['По','Тибр','Адидже','Арно'],de:['Рейн','Майн','Неккар','Мозель','Эльбу'],uk:['Темзу','Северн','Трент'],
   us:['Гудзон','Огайо','Делавэр','Миссисипи'],be:['Маас','Шельду'],at:['Дунай','Инн','Мур'],ch:['Рейн','Аре','Рону'],es:['Эбро','Тахо'],ru:['Волхов','Мсту','Тверцу','Волгу'],ie:['Шаннон','Лиффи'],ly:['вади'],mc:['Вар'],other:['реку']};
 const COASTS={mc:'Лазурный берег',it:'берег Тирренского моря',es:'берег Средиземного моря',fr:'берег Ла-Манша',uk:'берег Ла-Манша',ie:'берег Ирландского моря',us:'берег Атлантики',ly:'берег Средиземного моря'};
+// Реки и берег по месту гонки (а не по стране): у Санта-Моники — Тихий океан, у Саванны — река Саванна, в Элгине — Фокс
+const RIVERS_AT=[[/Санта-Моник|Беверли|Сан-Франциско|santamonica/,['ручей в каньоне'],'берег Тихого океана'],[/Саванн|savannah/,['Саванну','Огичи'],'берег Атлантики'],
+  [/Милуоки/,['Милуоки','Меномини'],'берег озера Мичиган'],[/Элгин|elgin/,['Фокс'],null],[/Вандербильт|vanderbilt|Лонг-Айленд/,['ручей'],'берег Лонг-Айленда'],[/chicago|Чикаго/,['Чикаго','Де-Плейнс'],'берег озера Мичиган']];
+function placeWater(rc,host){const t=(rc.id||'')+' '+(rc.name||'')+' '+(rc.hist||rc.hist1||'');for(const [re,rv,co] of RIVERS_AT)if(host==='us'&&re.test(t))return {rv,co:co||COASTS[host]};return {rv:RIVERS[host]||RIVERS.other,co:COASTS[host]};}
 function planRoute(trk,rnd){
   const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);trk.tunnels=[];trk.tunAt=new Uint8Array(n);
   // Монако: знаменитый тоннель у моря (с 1929 года)
@@ -31,7 +35,7 @@ function planRoute(trk,rnd){
     else put(RSEG.village,n-40,n-1);
     const step=420+Math.floor(r()*180);for(let j=(closed?s0+160:s0+step);j<(closed?n-120:f0-160);j+=step+Math.floor(r()*120)){if(mount&&S[j]===RSEG.serp)continue;put(RSEG.town,j,j+50+Math.floor(r()*30),{cap:'Городок: узкая улица, мостовая, зрители у домов'});}}
   // 3) мост через реку: прямой участок в полях или лесу, не у старта
-  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=RIVERS[cfg.host]||RIVERS.other;
+  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=placeWater(rc,cfg.host).rv;
   for(let k=0;k<riverN;k++){for(let t=0;t<40;t++){const j=(closed?s0+100:s0+80)+Math.floor(r()*((closed?n-200:f0-s0-200)));
       if(j<2||j>n-40||curvy(j-20,40)>1/120)continue;let ok=true;for(let a=j-30;a<=j+30;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       const span=9+Math.floor(r()*4),nm=rn[Math.floor(r()*rn.length)];put(RSEG.bridge,j-span,j+span,{cap:`Мост через ${nm}`,alt:34,w:3});for(let a=j-span;a<=j+span;a++)trk.bridge[a]=1;
@@ -48,7 +52,7 @@ function planRoute(trk,rnd){
       // у моря дорога идёт низко и ровно: вода — ниже всей трассы
       if(!ok||lo>yMin+9||hi-lo>14)continue;
       // море — с внешней стороны дуги (или где ниже)
-      let kk=0;for(let a=j;a<j+len;a++)kk+=K[a];const side=kk>0?-1:1;put(RSEG.coast,j,j+len,{cap:COASTS[cfg.host]||'Дорога вдоль моря',alt:40,w:4,side});trk.coast.push({i0:j,i1:j+len,side});break;}}
+      let kk=0;for(let a=j;a<j+len;a++)kk+=K[a];const side=kk>0?-1:1;put(RSEG.coast,j,j+len,{cap:placeWater(rc,cfg.host).co||'Дорога вдоль моря',alt:40,w:4,side});trk.coast.push({i0:j,i1:j+len,side});break;}}
   // 6) тоннель сквозь скалу: в горах — на пологом участке (свод, темнота, эхо мотора)
   if(mount&&n>300&&(!!set.mount||/turbie|klausen|semmering|alpen|pikes|targa/.test(rc.id))&&r()<0.8){const k=n>1100&&r()<0.5?2:1;for(let q=0;q<k;q++)planTunnel(trk,S,list,r,closed?s0+60:s0+90,closed?n-80:f0-120,26,44,'Тоннель сквозь скалу: темно, гулкое эхо мотора');}
   // подписи для заставки: самые приметные участки

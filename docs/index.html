@@ -1646,7 +1646,7 @@ function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
   const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s),MU=massParts(s.y);
   PART_CATS.forEach(cat=>{const arr=cat.arr();
-    unlockedP(arr,s).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cat.rd,ck:cat.k,name:x.name,lvl:l+1,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)))});});
+    unlockedP(arr,s).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cat.rd,ck:cat.k,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
     if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cat.rd,ck:cat.k,name:nx.name,need:10+6*(nx.y-s.y),yrs:nx.y-s.y});
   });
@@ -3146,7 +3146,10 @@ function homeDemand(s){return s.models.filter(m=>m.status==='prod').reduce((a,m)
 function suggestProject(s){const P=rdProjects(s);if(!P.length)return null;const top=s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
   const w={e:5,g:3,c:3,w:2,k:2,b:3};
   const mine=P.filter(p=>p.kind==='upg'&&top&&top[p.ck]===p.id).sort((a,b)=>(w[b.ck]||1)/b.need-(w[a.ck]||1)/a.need);
-  return mine[0]||P.filter(p=>p.kind==='upg'&&p.mine)[0]||P.find(p=>p.kind==='early')||P[0];}
+  // иначе — детали своих машин, ранний прототип; а если и их нет — самая новая массовая деталь эпохи, а не старьё
+  // (в 1917 году не улучшать одноцилиндровый De Dion 1895 года только потому, что он первый в списке)
+  const fresh=P.filter(p=>p.kind==='upg'&&p.py>=s.y-10).sort((a,b)=>((b.mass?1:0)-(a.mass?1:0))||(b.py-a.py)||(a.need-b.need));
+  return mine[0]||P.filter(p=>p.kind==='upg'&&p.mine)[0]||P.find(p=>p.kind==='early')||fresh[0]||null;}
 let TIPS=[];
 function adviceList(s){
   const T=[],L=s.last,act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev'),lim=debtLimit(s),home=s.country;
@@ -6973,7 +6976,7 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
     ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.20';
+const GAME_VER='0.21';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -7079,7 +7082,7 @@ function demoCam(dt,W,H){const D=DEMO;D.cutT-=dt;
   if(D.cutT<=0||!D.car||D.car.dnf||D.car.fin!==null){D.cut=(D.cut+1)%4;D.cutT=6+Math.random()*2.5;const L=live.slice().sort((a,b)=>b.prog-a.prog);D.car=L[Math.min(L.length-1,Math.floor(Math.random()*Math.min(3,L.length)))];R.follow=D.car;R3.cam=null;
     const T=R.trk,c=D.car,sd=Math.random()<0.5?1:-1;
     // камера у обочины — там, где рядом нет дерева или дома
-    if(D.cut===1){const a=camSpot(c.idx,70,sd);D.pos=[a.p[0],a.p[1]+1.7,a.p[2]];}}
+    if(D.cut===1){const a=camSpot(c.idx,70,sd);if(a.blocked)D.cut=2;else D.pos=[a.p[0],a.p[1]+1.7,a.p[2]];}}
   const c=D.car,st=c.v3,y=st&&st.y!==null?st.y:c.y,fw=[Math.sin(c.yaw),0,Math.cos(c.yaw)],rt=[fw[2],0,-fw[0]];
   if(D.cut===0){r3dCamera(dt,W,H);return;}
   let eye,look=[c.x,y+0.9,c.z],fov=0.8;
@@ -7267,6 +7270,10 @@ const RSEG={fields:0,town:1,village:2,forest:3,avenue:4,bridge:5,rail:6,serp:7,c
 const RIVERS={fr:['Сену','Луару','Марну','Рону','Сону','Уазу'],it:['По','Тибр','Адидже','Арно'],de:['Рейн','Майн','Неккар','Мозель','Эльбу'],uk:['Темзу','Северн','Трент'],
   us:['Гудзон','Огайо','Делавэр','Миссисипи'],be:['Маас','Шельду'],at:['Дунай','Инн','Мур'],ch:['Рейн','Аре','Рону'],es:['Эбро','Тахо'],ru:['Волхов','Мсту','Тверцу','Волгу'],ie:['Шаннон','Лиффи'],ly:['вади'],mc:['Вар'],other:['реку']};
 const COASTS={mc:'Лазурный берег',it:'берег Тирренского моря',es:'берег Средиземного моря',fr:'берег Ла-Манша',uk:'берег Ла-Манша',ie:'берег Ирландского моря',us:'берег Атлантики',ly:'берег Средиземного моря'};
+// Реки и берег по месту гонки (а не по стране): у Санта-Моники — Тихий океан, у Саванны — река Саванна, в Элгине — Фокс
+const RIVERS_AT=[[/Санта-Моник|Беверли|Сан-Франциско|santamonica/,['ручей в каньоне'],'берег Тихого океана'],[/Саванн|savannah/,['Саванну','Огичи'],'берег Атлантики'],
+  [/Милуоки/,['Милуоки','Меномини'],'берег озера Мичиган'],[/Элгин|elgin/,['Фокс'],null],[/Вандербильт|vanderbilt|Лонг-Айленд/,['ручей'],'берег Лонг-Айленда'],[/chicago|Чикаго/,['Чикаго','Де-Плейнс'],'берег озера Мичиган']];
+function placeWater(rc,host){const t=(rc.id||'')+' '+(rc.name||'')+' '+(rc.hist||rc.hist1||'');for(const [re,rv,co] of RIVERS_AT)if(host==='us'&&re.test(t))return {rv,co:co||COASTS[host]};return {rv:RIVERS[host]||RIVERS.other,co:COASTS[host]};}
 function planRoute(trk,rnd){
   const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);trk.tunnels=[];trk.tunAt=new Uint8Array(n);
   // Монако: знаменитый тоннель у моря (с 1929 года)
@@ -7292,7 +7299,7 @@ function planRoute(trk,rnd){
     else put(RSEG.village,n-40,n-1);
     const step=420+Math.floor(r()*180);for(let j=(closed?s0+160:s0+step);j<(closed?n-120:f0-160);j+=step+Math.floor(r()*120)){if(mount&&S[j]===RSEG.serp)continue;put(RSEG.town,j,j+50+Math.floor(r()*30),{cap:'Городок: узкая улица, мостовая, зрители у домов'});}}
   // 3) мост через реку: прямой участок в полях или лесу, не у старта
-  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=RIVERS[cfg.host]||RIVERS.other;
+  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=placeWater(rc,cfg.host).rv;
   for(let k=0;k<riverN;k++){for(let t=0;t<40;t++){const j=(closed?s0+100:s0+80)+Math.floor(r()*((closed?n-200:f0-s0-200)));
       if(j<2||j>n-40||curvy(j-20,40)>1/120)continue;let ok=true;for(let a=j-30;a<=j+30;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       const span=9+Math.floor(r()*4),nm=rn[Math.floor(r()*rn.length)];put(RSEG.bridge,j-span,j+span,{cap:`Мост через ${nm}`,alt:34,w:3});for(let a=j-span;a<=j+span;a++)trk.bridge[a]=1;
@@ -7309,7 +7316,7 @@ function planRoute(trk,rnd){
       // у моря дорога идёт низко и ровно: вода — ниже всей трассы
       if(!ok||lo>yMin+9||hi-lo>14)continue;
       // море — с внешней стороны дуги (или где ниже)
-      let kk=0;for(let a=j;a<j+len;a++)kk+=K[a];const side=kk>0?-1:1;put(RSEG.coast,j,j+len,{cap:COASTS[cfg.host]||'Дорога вдоль моря',alt:40,w:4,side});trk.coast.push({i0:j,i1:j+len,side});break;}}
+      let kk=0;for(let a=j;a<j+len;a++)kk+=K[a];const side=kk>0?-1:1;put(RSEG.coast,j,j+len,{cap:placeWater(rc,cfg.host).co||'Дорога вдоль моря',alt:40,w:4,side});trk.coast.push({i0:j,i1:j+len,side});break;}}
   // 6) тоннель сквозь скалу: в горах — на пологом участке (свод, темнота, эхо мотора)
   if(mount&&n>300&&(!!set.mount||/turbie|klausen|semmering|alpen|pikes|targa/.test(rc.id))&&r()<0.8){const k=n>1100&&r()<0.5?2:1;for(let q=0;q<k;q++)planTunnel(trk,S,list,r,closed?s0+60:s0+90,closed?n-80:f0-120,26,44,'Тоннель сквозь скалу: темно, гулкое эхо мотора');}
   // подписи для заставки: самые приметные участки
@@ -9878,7 +9885,19 @@ function trkSmooth(i,d,off){const T=R.trk,n=T.n,f=i+d/T.step,j0=Math.floor(f),u=
   const t0=T.T[idx(j0)],t1=T.T[idx(j0+1)],t=[t0[0]+(t1[0]-t0[0])*u,t0[1]+(t1[1]-t0[1])*u],tl=Math.hypot(t[0],t[1])||1;
   return {j:idx(Math.round(f)),p:[cr(0),cr(1),cr(2)],t:[t[0]/tl,t[1]/tl],n:[t[1]/tl,-t[0]/tl]};}
 // Место для камеры у обочины: рядом нет дерева, столба или дома
-function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;return a;}return trkAt(i,d,sd*(T.W/2+4));}
+// Кроны и дома у дороги: камера не должна стоять в листве и смотреть сквозь ствол (повтор ночью упирался в дерево)
+const CAM_BLOCK={oak:5,plane:5.5,elm:4.5,poplar:2.2,cypress:1.6,olive:3.2,pine:3,fir:2.6,birch:2.6,palm:3,bush:1.6,house_fr:4,farm_fr:4.5,house_it:4,fachwerk:4,cottage:3.8,pub:3.8,farm_us:4.5,barn:5,izba:3.6,church:7,church_us:6,church_uk:6,church_at:6,church_ru:7,cottage_ie:3.8,house_ly:4};
+function camFree(a,i,d){const T=R.trk,n=T.n,S=T.spr;if(!S)return true;const st=Math.max(1,Math.round(d/T.step)),j0=a.j,idx=j=>T.closed?((j%n)+n)%n:clamp(j,0,n-1);
+  // куда смотрит камера: дорога от машины (i) до самой камеры — три точки на оси
+  const tg=[0.25,0.55,0.85].map(u=>{const q=T.pts[idx(i+Math.round(st*u))];return [q[0],q[2]];});
+  for(let k=j0-st-4;k<=j0+6;k++){const jj=idx(k),L=S[jj];if(!L||!L.length)continue;const p=T.pts[jj],nn=T.N[jj];
+    for(const it of L){const R0=CAM_BLOCK[it.t];if(!R0)continue;const x=it.wx!==undefined?it.wx:p[0]+nn[0]*it.off,z=it.wz!==undefined?it.wz:p[2]+nn[1]*it.off;
+      if(Math.hypot(x-a.p[0],z-a.p[2])<R0+1)return false;
+      for(const g of tg){const dx=g[0]-a.p[0],dz=g[1]-a.p[2],l2=dx*dx+dz*dz||1,u=clamp(((x-a.p[0])*dx+(z-a.p[2])*dz)/l2,0,1),ex=a.p[0]+dx*u-x,ez=a.p[2]+dz*u-z;if(u>0.05&&u<0.95&&ex*ex+ez*ez<R0*R0*0.5)return false;}}}
+  return true;}
+function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;if(!camFree(a,i,d))continue;return a;}
+  // всюду деревья (лесная дорога, аллея) — свободной обочины нет: пусть снимает камера у машины
+  const a=trkAt(i,d,sd*(T.W/2+1.6));a.blocked=1;return a;}
 // Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
 function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
 // Слова диктора перед стартом: название, год и первая фраза истории гонки (их записал диктор заранее)
@@ -9978,11 +9997,11 @@ function replayCam(dt,W,H){const Rp=R.replay;if(!Rp){R3.camHook=null;return;}con
   // смена камеры по времени: 0 — у дороги впереди, 1 — низко спереди, 2 — у финишной линии
   const left=Rp.fin-Rp.t,cut=left>5.5?0:left>2.2?1:2;
   if(cut!==Rp.cut){Rp.cut=cut;const T=R.trk,sd=Math.random()<0.5?1:-1;
-    if(cut===0){const a=camSpot(me.idx,55,sd);Rp.pos=[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=0.42;}
+    if(cut===0){const a=camSpot(me.idx,55,sd);Rp.pos=a.blocked?null:[a.p[0],a.p[1]+1.6,a.p[2]];Rp.fov=a.blocked?0.7:0.42;Rp.near=a.blocked?sd:0;}
     else if(cut===1){Rp.pos=null;Rp.fov=0.7;}
-    else{const f=camSpot(T.finishIdx,4,sd,[3.2,4.5,6,8]);Rp.pos=[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=0.6;}}
+    else{const f=camSpot(T.finishIdx,4,sd,[3.2,4.5,6,8]);Rp.pos=f.blocked?null:[f.p[0],f.p[1]+1.1,f.p[2]];Rp.fov=f.blocked?0.7:0.6;Rp.near=f.blocked?-sd:0;}}
   const st=me.v3,y=st&&st.y!==null?st.y:me.y,tg=[me.x,y+0.8,me.z];let eye;
-  if(cut===1){const fw=[Math.sin(me.yaw),0,Math.cos(me.yaw)],rt=[fw[2],0,-fw[0]];eye=[me.x+fw[0]*7+rt[0]*2.2,y+0.7,me.z+fw[2]*7+rt[2]*2.2];}
+  if(cut===1||!Rp.pos){const fw=[Math.sin(me.yaw),0,Math.cos(me.yaw)],rt=[fw[2],0,-fw[0]],sd=cut===1?1:(Rp.near||1);eye=[me.x+fw[0]*7+rt[0]*2.2*sd,y+0.7,me.z+fw[2]*7+rt[2]*2.2*sd];}
   else eye=Rp.pos;
   const g=fH(eye[0],eye[2])+0.5;if(eye[1]<g)eye[1]=g;
   r3dCamSet(eye,tg,Rp.fov,W,H,0.1);R3.cam=null;}

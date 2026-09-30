@@ -1,4 +1,4 @@
-const CACHE='avtoimperia-v20';
+const CACHE='avtoimperia-v21';
 const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 // трассы по настоящей местности (≈0,9 МБ): докачиваются в кэш сразу после установки, чтобы гонки-эталоны шли и без сети
 const TERRAIN=['gb1903','gpacf','indy','pm1903','targa'].map(id=>'./terrain/'+id+'.js');
