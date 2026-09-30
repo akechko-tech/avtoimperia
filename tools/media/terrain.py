@@ -153,8 +153,10 @@ def dp_simplify(P, eps):
     if dmax <= eps: return [a, b]
     return dp_simplify(P[:imax + 1], eps)[:-1] + dp_simplify(P[imax:], eps)
 
+RU = {}
 def name_of(tags):
-    return tags.get('name:ru') or tags.get('name') or ''
+    n = tags.get('name') or ''
+    return RU.get(n) or RU.get(tags.get('name:ru') or '') or tags.get('name:ru') or n
 
 def year_of(tags):
     for k in ('start_date', 'opening_date', 'construction:start_date'):
@@ -211,6 +213,7 @@ def pack_grid(H):
 
 def build_race(R, out_dir):
     rid, year = R['id'], R['year']
+    global RU; RU = R.get('ru') or {}
     LOG('==== terrain', rid, R['name'], year)
     pts_ll = []
     for p in R['pts']:
@@ -349,7 +352,7 @@ def build_race(R, out_dir):
         try: pop = int(str(t.get('population', '')).replace(' ', '').replace(',', '').split(';')[0] or 0)
         except Exception: pop = 0
         if not pop: pop = {'city': 60000, 'town': 8000, 'village': 700, 'hamlet': 120}[pl]
-        pe = pop * popk; x, z = pr.xy(la, lo)
+        pe = min(pop, pop * popk + R.get('popmin', 0.4) * min(pop, 3000)); x, z = pr.xy(la, lo)
         r = min(1500, 90 + 8.5 * math.sqrt(pe)) if pl in ('city', 'town') else min(420, 50 + 7 * math.sqrt(pe))
         places.append({'x': x, 'z': z, 'pl': pl, 'pop': int(pe), 'r': r, 'name': name_of(t), 'name0': t.get('name', '')})
     forest = polys(lambda t: t.get('landuse') == 'forest' or t.get('natural') in ('wood',))
@@ -380,7 +383,7 @@ def build_race(R, out_dir):
             d = math.hypot(x - p['x'], z - p['z'])
             if d <= p['r'] and (best is None or d / p['r'] < best[0]): best = (d / p['r'], p)
         if best:
-            p = best[1]; S[k] = TY['town'] if (p['pl'] in ('city', 'town') and p['pop'] >= 1200) else TY['village']; town_at[k] = p; continue
+            p = best[1]; S[k] = TY['town'] if (p['pop'] >= 2000 or (p['pl'] in ('city', 'town') and p['pop'] >= 1200)) else TY['village']; town_at[k] = p; continue
         nx, nz = N[k]
         def inside(polys_, off):
             for sd in (1, -1):
@@ -390,7 +393,11 @@ def build_race(R, out_dir):
             return False
         if forest and inside(forest, 28): S[k] = TY['forest']
         elif vine and inside(vine, 40): S[k] = TY['vine']
-        if abs(K[k]) > 1 / 38 and k > 0 and abs(Y[k] - Y[k - 1]) / STEP > 0.04: S[k] = TY['serp']
+    # серпантин: на 240 м — два крутых поворота и подъём (спуск) не меньше 3,5%
+    for k in range(n):
+        a, b = max(0, k - 15), min(n - 1, k + 15)
+        sharp = sum(1 for q in range(a, b + 1) if abs(K[q]) > 1 / 45)
+        if sharp >= 4 and abs(Y[b] - Y[a]) / max(1, (b - a) * STEP) > 0.035 and S[k] in (0, 3, 9): S[k] = TY['serp']
     # мосты над водой
     bridges = []; k = 0
     while k < n:
@@ -424,6 +431,21 @@ def build_race(R, out_dir):
                 rx, rz = d[0] - c[0], d[1] - c[1]; rl = math.hypot(rx, rz) or 1
                 ang = math.asin(max(-1, min(1, (T[k][0] * rz - T[k][1] * rx) / rl)))
                 xings.append({'i': k, 'ang': round(math.pi / 2 - abs(ang), 3) * (1 if ang >= 0 else -1), 'name': name_of(t)})
+    if R['kind'] != 'oval':
+        railnode = {}
+        for t, L in rails:
+            pass
+        rn = set()
+        for w in ways:
+            t = w['tags']
+            if w.get('rel') or t.get('railway') not in ('rail', 'abandoned', 'disused', 'narrow_gauge'): continue
+            y = year_of(t)
+            if (y and y > year) or t.get('bridge') not in (None, 'no') or t.get('tunnel') not in (None, 'no'): continue
+            for nd in w['nodes']: rn.add(nd)
+        for nd in path:
+            if nd in rn and nd in XY:
+                px, pz = XY[nd]; k = int(np.argmin((X - px) ** 2 + (Z - pz) ** 2))
+                if not br[k]: xings.append({'i': k, 'ang': 0.25, 'name': ''})
     xs = []
     for x in sorted(xings, key=lambda q: q['i']):
         if not xs or x['i'] - xs[-1]['i'] > 12: xs.append(x)
@@ -432,7 +454,11 @@ def build_race(R, out_dir):
     # берег моря
     coast_runs = []
     if coast:
-        cpts = [p for t, L in coast for p in L]
+        cpts = []
+        for t, L in coast:
+            for c, d in zip(L, L[1:]):
+                m = max(1, int(math.dist(c, d) / 40))
+                for q in range(m): cpts.append((c[0] + (d[0] - c[0]) * q / m, c[1] + (d[1] - c[1]) * q / m))
         C = np.array(cpts) if cpts else None
         if C is not None and len(C):
             side = [0] * n
@@ -480,6 +506,8 @@ def build_race(R, out_dir):
         H = demxz(gx.ravel(), gz.ravel()).reshape(nz, nx)
         return {'x0': round(x0, 1), 'z0': round(z0, 1), 'S': cell, 'nx': nx, 'nz': nz, 'h': pack_grid(H)}, H
     near, Hn = grid(50.0, 2400.0); far, Hf = grid(250.0, 9500.0)
+    # ---------- покров земли на той же сетке 50 м: 1 лес, 2 город (в границах года гонки), 3 вода, 4 виноградник ----------
+    near['cover'] = cover_grid(near, forest, vine, water, rivers, places)
     # ---------- палитра ----------
     samp = []
     for k in range(0, n, 6):
@@ -528,6 +556,33 @@ def build_race(R, out_dir):
     LOG('  ->', rid + '.json', round(len(js) / 1024), 'KB,', n, 'points,', len(segs), 'segments, bridges', [b['name'] for b in bridges], 'rails', len(xs), 'coast', len(coast_runs))
     try: preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY)
     except Exception as e: LOG('  preview fail', repr(e)[:200])
+
+def cover_grid(G, forest, vine, water, rivers, places):
+    from PIL import Image, ImageDraw
+    nx, nz, x0, z0, S0 = G['nx'], G['nz'], G['x0'], G['z0'], G['S']
+    im = Image.new('L', (nx, nz), 0); d = ImageDraw.Draw(im)
+    P = lambda p: ((p[0] - x0) / S0, (p[1] - z0) / S0)
+    for poly in forest: d.polygon([P(p) for p in poly], fill=1)
+    for poly in vine: d.polygon([P(p) for p in poly], fill=4)
+    for p in places:
+        r = p['r'] * 0.9 / S0; c = P((p['x'], p['z'])); d.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r], fill=2)
+    for poly in water: d.polygon([P(p) for p in poly], fill=3)
+    for t, L in rivers:
+        if len(L) < 2 or t.get('waterway') == 'stream': continue
+        try: wd = float(str(t.get('width', '')).split()[0])
+        except Exception: wd = 25.0 if t.get('waterway') == 'river' else 14.0
+        d.line([P(p) for p in L], fill=3, width=max(1, int(round(wd / S0))))
+    A = np.asarray(im, dtype=np.uint8); rows = []
+    for j in range(nz):
+        r = A[j]; out = []; k = 0
+        while k < nx:
+            v = int(r[k]); e = k
+            while e + 1 < nx and r[e + 1] == v: e += 1
+            out += [v, e - k + 1]; k = e + 1
+        rows.append(out)
+    frac = {c: round(float((A == c).mean()), 3) for c in (1, 2, 3, 4)}
+    LOG('  cover', frac)
+    return rows
 
 def preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY):
     from PIL import Image, ImageDraw

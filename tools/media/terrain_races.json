@@ -1,31 +1,278 @@
 {
-  "_": "Реальные трассы (ТЗ 0.18, раздел 2). pts — опорные точки маршрута по старой схеме: q — поиск в Nominatim, ll — запасные координаты [широта, долгота]. Маршрут идёт по дорогам OSM через все опорные точки (без автомагистралей). kind: road — участок дороги, oval — трек (форма по размерам). pop — во сколько раз население городов в год гонки меньше нынешнего.",
-  "races": [
-    {"id": "pm1903", "name": "Париж — Мадрид", "year": 1903, "host": "fr", "kind": "road", "pop": 0.55,
-     "about": "Старая национальная дорога № 10 (Париж — Бордо) на юг от Шательро: город, мост через Клен, поля долины Вьенны",
-     "pts": [{"q": "Châtellerault, Vienne, France", "ll": [46.8178, 0.5460]},
-             {"q": "Cenon-sur-Vienne, Vienne, France", "ll": [46.7760, 0.5320]},
-             {"q": "Naintré, Vienne, France", "ll": [46.7640, 0.4870]},
-             {"q": "Beaumont Saint-Cyr, Vienne, France", "ll": [46.7240, 0.4430]}]},
-    {"id": "targa", "name": "Тарга Флорио", "year": 1906, "host": "it", "kind": "road", "pop": 0.8,
-     "about": "Спуск от Колле́зано к морю, прямая Буонфорнелло вдоль берега и поворот к трибунам Флориополи у станции Черда",
-     "pts": [{"q": "Collesano, Palermo, Italy", "ll": [37.9180, 13.9900]},
-             {"q": "Campofelice di Roccella, Palermo, Italy", "ll": [38.0020, 13.8780]},
-             {"q": "Buonfornello, Termini Imerese, Italy", "ll": [37.9720, 13.8250]},
-             {"q": "Stazione di Cerda, Sicily, Italy", "ll": [37.9440, 13.8110]}]},
-    {"id": "gpacf", "name": "Гран-при АКФ", "year": 1906, "host": "fr", "kind": "road", "pop": 0.6,
-     "about": "Круг Сарты 1906 года: от Сен-Кале к Вибре — лес Вибре и деревянный настил в обход городков",
-     "pts": [{"q": "Saint-Calais, Sarthe, France", "ll": [47.9210, 0.7470]},
-             {"q": "Semur-en-Vallon, Sarthe, France", "ll": [47.9960, 0.7020]},
-             {"q": "Vibraye, Sarthe, France", "ll": [48.0560, 0.7410]}]},
-    {"id": "gb1903", "name": "Кубок Гордона Беннетта: Ирландия", "year": 1903, "host": "ie", "kind": "road", "pop": 0.35,
-     "about": "Круг у Ати (графство Килдэр): город Ати и мост через Барроу, дорога на юг к Каслдермоту",
-     "pts": [{"q": "Athy, County Kildare, Ireland", "ll": [52.9910, -6.9860]},
-             {"q": "Kilkea, County Kildare, Ireland", "ll": [52.9460, -6.9060]},
-             {"q": "Castledermot, County Kildare, Ireland", "ll": [52.9110, -6.8360]}]},
-    {"id": "indy", "name": "Индианаполис 500", "year": 1911, "host": "us", "kind": "oval", "pop": 0.05,
-     "about": "Кирпичный овал 2,5 мили среди полей Индианы (1909): длинные прямые по 5/8 мили, повороты по 1/4 мили",
-     "oval": {"center": [39.7950, -86.2347], "straight": 1006, "chute": 201, "turn": 402, "heading": 0},
-     "pts": [{"q": "Indianapolis Motor Speedway, Indiana, USA", "ll": [39.7950, -86.2347]}]}
-  ]
+ "_": "Реальные трассы (ТЗ 0.18, раздел 2). pts — опорные точки маршрута по старой схеме: q — поиск в Nominatim, ll — запасные координаты [широта, долгота]. Маршрут идёт по дорогам OSM через все опорные точки (без автомагистралей). kind: road — участок дороги, oval — трек (форма по размерам). pop — во сколько раз население городов в год гонки меньше нынешнего.",
+ "races": [
+  {
+   "id": "pm1903",
+   "name": "Париж — Мадрид",
+   "year": 1903,
+   "host": "fr",
+   "kind": "road",
+   "pop": 0.55,
+   "about": "Старая национальная дорога № 10 (Париж — Бордо) на юг от Шательро: город, мост через Клен, поля долины Вьенны",
+   "pts": [
+    {
+     "q": "Châtellerault, Vienne, France",
+     "ll": [
+      46.8178,
+      0.546
+     ]
+    },
+    {
+     "q": "Cenon-sur-Vienne, Vienne, France",
+     "ll": [
+      46.776,
+      0.532
+     ]
+    },
+    {
+     "q": "Naintré, Vienne, France",
+     "ll": [
+      46.764,
+      0.487
+     ]
+    },
+    {
+     "q": "Beaumont Saint-Cyr, Vienne, France",
+     "ll": [
+      46.724,
+      0.443
+     ]
+    }
+   ],
+   "ru": {
+    "Cenon-sur-Vienne": "Сенон-сюр-Вьенн",
+    "Naintré": "Нентре",
+    "La Tricherie": "Ла-Тришри",
+    "Beaumont": "Бомон",
+    "Thuré": "Тюре",
+    "Vouneuil-sur-Vienne": "Вунёй-сюр-Вьенн",
+    "Colombiers": "Коломбье",
+    "Saint-Cyr": "Сен-Сир",
+    "Châtellerault": "Шательро",
+    "La Vienne": "Вьенна",
+    "Le Clain": "Клен",
+    "L'Envigne": "Анвинь",
+    "Vienne": "Вьенна",
+    "Clain": "Клен",
+    "Les Barres": "Ле-Барр",
+    "Cenon": "Сенон",
+    "Beaumont Saint-Cyr": "Бомон-Сен-Сир",
+    "Ingrandes": "Энгранд",
+    "Availles-en-Châtellerault": "Авай-ан-Шательро",
+    "Senillé": "Сенийе",
+    "Naintré-Les Barres": "Нентре"
+   },
+   "popmin": 0.4
+  },
+  {
+   "id": "targa",
+   "name": "Тарга Флорио",
+   "year": 1906,
+   "host": "it",
+   "kind": "road",
+   "pop": 0.8,
+   "about": "Спуск от Колле́зано к морю, прямая Буонфорнелло вдоль берега и поворот к трибунам Флориополи у станции Черда",
+   "pts": [
+    {
+     "q": "Collesano, Palermo, Italy",
+     "ll": [
+      37.918,
+      13.99
+     ]
+    },
+    {
+     "q": "Campofelice di Roccella, Palermo, Italy",
+     "ll": [
+      38.002,
+      13.878
+     ]
+    },
+    {
+     "q": "Buonfornello, Termini Imerese, Italy",
+     "ll": [
+      37.972,
+      13.825
+     ]
+    },
+    {
+     "q": "Stazione di Cerda, Sicily, Italy",
+     "ll": [
+      37.944,
+      13.811
+     ]
+    }
+   ],
+   "ru": {
+    "Collesano": "Коллезано",
+    "Campofelice di Roccella": "Кампофеличе-ди-Роччелла",
+    "Buonfornello": "Буонфорнелло",
+    "Cerda": "Черда",
+    "Lascari": "Ласкари",
+    "Fiume Grande Imera Settentrionale": "Имера",
+    "Fiume Imera Settentrionale": "Имера",
+    "Fiume Torto": "Торто",
+    "Termini Imerese": "Термини-Имерезе",
+    "Sciara": "Шара",
+    "Villaurea": "Виллауреа",
+    "Borgo Garbinogara": "Борго-Гарбиногара",
+    "Scillato": "Шиллато",
+    "Caltavuturo": "Кальтавутуро",
+    "Gratteri": "Граттери",
+    "Cefalù": "Чефалу",
+    "Fiume Roccella": "Роччелла",
+    "Torrente Roccella": "Роччелла"
+   },
+   "popmin": 0.4
+  },
+  {
+   "id": "gpacf",
+   "name": "Гран-при АКФ",
+   "year": 1906,
+   "host": "fr",
+   "kind": "road",
+   "pop": 0.6,
+   "about": "Круг Сарты 1906 года: от Сен-Кале к Вибре — лес Вибре и деревянный настил в обход городков",
+   "pts": [
+    {
+     "q": "Saint-Calais, Sarthe, France",
+     "ll": [
+      47.921,
+      0.747
+     ]
+    },
+    {
+     "q": "Semur-en-Vallon, Sarthe, France",
+     "ll": [
+      47.996,
+      0.702
+     ]
+    },
+    {
+     "q": "Vibraye, Sarthe, France",
+     "ll": [
+      48.056,
+      0.741
+     ]
+    }
+   ],
+   "ru": {
+    "Saint-Calais": "Сен-Кале",
+    "Vibraye": "Вибре",
+    "Lavaré": "Лавре",
+    "Montaillé": "Монтайе",
+    "Conflans-sur-Anille": "Конфлан-сюр-Аниль",
+    "Semur-en-Vallon": "Сёмюр-ан-Валлон",
+    "Berfay": "Берфе",
+    "Écorpain": "Экорпен",
+    "L'Anille": "Аниль",
+    "La Braye": "Брей",
+    "Anille": "Аниль",
+    "Braye": "Брей",
+    "Dollon": "Доллон",
+    "Lamnay": "Ламне",
+    "Valennes": "Валенн",
+    "Marolles-lès-Saint-Calais": "Мароль-ле-Сен-Кале",
+    "Rahay": "Рае",
+    "Bessé-sur-Braye": "Бессе-сюр-Брей",
+    "Cogners": "Коньер"
+   },
+   "popmin": 0.4
+  },
+  {
+   "id": "gb1903",
+   "name": "Кубок Гордона Беннетта: Ирландия",
+   "year": 1903,
+   "host": "ie",
+   "kind": "road",
+   "pop": 0.35,
+   "about": "Круг у Ати (графство Килдэр): город Ати и мост через Барроу, дорога на юг к Каслдермоту",
+   "pts": [
+    {
+     "q": "Athy, County Kildare, Ireland",
+     "ll": [
+      52.991,
+      -6.986
+     ]
+    },
+    {
+     "q": "Kilkea, County Kildare, Ireland",
+     "ll": [
+      52.946,
+      -6.906
+     ]
+    },
+    {
+     "q": "Castledermot, County Kildare, Ireland",
+     "ll": [
+      52.911,
+      -6.836
+     ]
+    }
+   ],
+   "ru": {
+    "Атай": "Ати",
+    "Athy": "Ати",
+    "Castledermot": "Каслдермот",
+    "Moone": "Мун",
+    "Kilkea": "Килки",
+    "Killeen": "Киллин",
+    "Ballyroe": "Баллирой",
+    "Greese": "Гриз",
+    "Barrow": "Барроу",
+    "River Barrow": "Барроу",
+    "Barrow Navigation": "Барроу",
+    "Grand Canal - Barrow Line": "Большой канал",
+    "Grand Canal": "Большой канал",
+    "Kilcullen": "Килкаллен",
+    "Ballitore": "Баллитор",
+    "Timolin": "Тимолин",
+    "Carlow": "Карлоу",
+    "Levitstown": "Левитстаун",
+    "Maganey": "Маганей",
+    "Mageney": "Маганей",
+    "Levistown": "Левитстаун",
+    "Kilmead": "Килмид",
+    "Crookstown": "Крукстаун",
+    "Ballindrum": "Баллиндрам",
+    "Grangemellon": "Грейнджмеллон",
+    "Belan": "Белан"
+   },
+   "popmin": 0.4
+  },
+  {
+   "id": "indy",
+   "name": "Индианаполис 500",
+   "year": 1911,
+   "host": "us",
+   "kind": "oval",
+   "pop": 0.05,
+   "about": "Кирпичный овал 2,5 мили среди полей Индианы (1909): длинные прямые по 5/8 мили, повороты по 1/4 мили",
+   "oval": {
+    "center": [
+     39.795,
+     -86.2347
+    ],
+    "straight": 1006,
+    "chute": 201,
+    "turn": 402,
+    "heading": 0
+   },
+   "pts": [
+    {
+     "q": "Indianapolis Motor Speedway, Indiana, USA",
+     "ll": [
+      39.795,
+      -86.2347
+     ]
+    }
+   ],
+   "ru": {
+    "Speedway": "Спидвей",
+    "Eagle Creek": "Игл-Крик",
+    "Indianapolis": "Индианаполис",
+    "Clermont": "Клермонт"
+   },
+   "popmin": 0
+  }
+ ]
 }
