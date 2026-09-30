@@ -1,12 +1,15 @@
 /* ================= SHEETS ================= */
 const sheet=document.getElementById('sheet'),sb=document.getElementById('sheetBody');
 function openSheet(html){sb.innerHTML=html;sheet.hidden=false;sb.scrollTop=0;}
-function closeSheet(){sheet.hidden=true;draft=null;}
-sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&!G.pending.length&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
+function closeSheet(){sheet.hidden=true;draft=null;if(evHold){evHold=0;setTimeout(()=>{if(G&&G.pending.length&&!R&&sheet.hidden)render();},80);}}
+// 0.21: пока открыты итоги гонки, новости (травмы, пари, титулы) ждут — покажутся, когда итоги закроют
+let evHold=0;
+sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&(!G.pending.length||evHold)&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
   if(ev.cel&&!ev.celOn){ev.celOn=1;try{celebrate(ev.cel[0],ev.cel[1],ev.cel[2]);}catch(_){}}
   if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
+  if(ev.duel){duelShow(ev);return;}
   if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск')});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }

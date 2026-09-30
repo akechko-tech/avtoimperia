@@ -40,7 +40,7 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{})});
 }
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
 function checkEvents(){
@@ -154,5 +154,6 @@ const ACH=[
   {id:'leader',name:'Лидер рынка',desc:'Первое место по продажам дома',test:s=>{const L=s.last;if(!L||!L.sold)return false;return (s.comps[s.country]||[]).every(cp=>(cp.last||0)<=L.homeSold);}}
 ];
 let pendingToasts=[];
-function checkAch(){ACH.forEach(a=>{if(!G.ach[a.id]&&a.test(G)){G.ach[a.id]=dstr(G);addLog(`Достижение: ${a.name}.`,'good');pendingToasts.push('🏆 '+a.name);}});}
+function checkAch(){ACH.forEach(a=>{if(!G.ach[a.id]&&a.test(G)){G.ach[a.id]=dstr(G);addLog(`Достижение: ${a.name}.`,'good');pendingToasts.push('🏆 '+a.name);
+  try{trophyAdd(G,{kind:'medal',title:a.name,sub:a.desc,story:`Достижение «${a.name}»: ${a.desc.toLowerCase()}.`,key:'ach|'+a.id});}catch(_){}}});}
 

@@ -576,9 +576,67 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .sg-li{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit}
 .sg-li small{color:var(--muted);font-size:12px;margin-top:2px}.sg-li.got{border-color:rgba(226,196,122,.45)}.sg-li.got b{color:var(--brass)}.sg-li[disabled]{opacity:.55}
 /* ---------- 0.17: империя на виду ---------- */
-.empstrip{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;width:100%;margin:0 0 10px;padding:8px 12px;border-radius:12px;border:1px solid rgba(226,196,122,.4);background:linear-gradient(90deg,rgba(226,196,122,.14),rgba(226,196,122,.04));color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer}
-.empstrip[hidden]{display:none}
-.empstrip b{color:var(--brass);font-size:16px}.empstrip .es-b{color:var(--muted)}.empstrip .es-c{margin-left:auto;white-space:nowrap}
+/* 0.21: витрина «Империя» над вкладками — место, цель, триумф, вызов, что дальше, значки */
+.empcard{margin:0 0 10px;padding:8px 10px 6px;border-radius:12px;border:1px solid rgba(226,196,122,.45);background:linear-gradient(180deg,rgba(226,196,122,.14),rgba(226,196,122,.03));font-size:13px;line-height:1.3;max-height:25vh;max-height:25svh;overflow:hidden}
+.empcard[hidden]{display:none}
+.empcard.flash{animation:ecFlash 1.8s ease-out}
+@keyframes ecFlash{0%{box-shadow:0 0 0 0 rgba(240,199,94,.95);background:rgba(240,199,94,.5);border-color:#f0c75e}60%{background:rgba(240,199,94,.18)}100%{box-shadow:0 0 0 16px rgba(240,199,94,0)}}
+.ec-top{display:flex;align-items:baseline;gap:8px;cursor:pointer}
+.ec-place b{font-family:var(--display);font-weight:800;font-size:30px;line-height:.9;color:var(--brass)}
+.ec-place b small{font-size:15px;margin-left:1px}
+.ec-place span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-left:6px}
+.ec-pts{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.ec-pts b{color:var(--text);font-size:14px;font-weight:500}
+.ec-pts em{font-style:normal;margin-left:4px}
+.ec-row{display:flex;align-items:center;gap:7px;width:100%;margin-top:4px;padding:3px 7px;border:0;border-radius:8px;background:rgba(8,20,34,.38);color:var(--text);font:inherit;font-size:13px;line-height:1.3;text-align:left;cursor:pointer;min-height:28px}
+.ec-row>i{font-style:normal;width:20px;text-align:center;flex:none}
+.ec-row .ec-ph{width:46px;height:30px;object-fit:contain;flex:none;margin:-4px -2px -4px -4px}
+.ec-row>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ec-row small{color:var(--muted);font-size:11px}
+.ec-row.goal>span{white-space:normal}
+.ec-row.first{background:rgba(116,211,154,.12)}
+.ec-row.chal{background:rgba(240,199,94,.14)}
+.ec-row.next{background:rgba(217,171,82,.2)}
+.ec-row.next b{color:var(--brass)}
+.ec-bar{display:block;height:4px;border-radius:2px;background:rgba(142,168,195,.25);margin-top:3px;overflow:hidden}
+.ec-bar b{display:block;height:100%;background:var(--brass);border-radius:2px}
+.ec-badges{display:flex;justify-content:space-between;gap:6px;margin-top:5px;padding:0 4px;font-family:var(--mono);font-size:12px;color:var(--muted);cursor:pointer}
+@media (max-height:640px) and (orientation:portrait){.empcard .ec-row.tri{display:none}}
+/* широкий экран в горизонтальном положении: витрина — колонкой справа */
+@media (orientation:landscape) and (min-width:760px){
+  .wrap{max-width:1140px;display:grid;grid-template-columns:minmax(0,1fr) 330px;column-gap:18px;align-items:start}
+  .wrap>.top{grid-column:1/-1}
+  .wrap>#view{grid-column:1;grid-row:2;min-width:0}
+  .wrap>.empcard{grid-column:2;grid-row:2;position:sticky;top:76px;max-height:none;margin:0;padding:12px}
+  .empcard .ec-row{min-height:34px;margin-top:6px}
+  .empcard .ec-row>span{white-space:normal}
+  .empcard .ec-row.tri{display:flex}
+}
+/* кабинет трофеев: полки по годам */
+.trocab .tro-shelf{margin-top:10px;padding-bottom:8px;border-bottom:3px solid rgba(160,110,50,.45);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.trocab .tro-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tro{display:flex;flex-direction:column;align-items:center;gap:1px;width:96px;padding:6px 4px;border:1px solid rgba(217,171,82,.35);border-radius:8px;background:linear-gradient(180deg,rgba(217,171,82,.14),rgba(217,171,82,.03));color:var(--text);cursor:pointer;text-align:center}
+.tro i{font-style:normal;font-size:24px;line-height:1.1}
+.tro b{font-size:11px;font-weight:600;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tro small{font-size:10px;color:var(--muted);line-height:1.2;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.tro-big{font-size:54px;text-align:center;margin-top:6px;line-height:1.1}
+.tro-car{margin-top:10px}
+.tro-ph{margin:10px 0 0}.tro-ph img{width:100%;max-height:260px;object-fit:cover;border-radius:6px;filter:sepia(.3)}
+/* сцена развязки пари */
+.duel{position:relative}
+.duel-top{display:flex;gap:12px;align-items:center;margin-top:8px}
+.duel-ph{width:72px;height:92px;flex:none}
+.duel-ini{display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:28px;color:var(--brass);background:var(--panel2)}
+.duel-q{margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--brass);background:rgba(8,20,34,.45);font-family:var(--serif);font-style:italic;font-size:17px;line-height:1.35}
+.duel.lose .duel-q{border-left-color:var(--bad)}
+.duel-score{display:flex;align-items:baseline;gap:10px;margin-top:10px;font-family:var(--mono)}
+.duel-score span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.duel-score b{font-size:18px;font-weight:600;color:var(--brass)}
+.duel-score em{font-style:normal;font-size:12px;color:var(--good);flex-basis:100%;margin-top:-4px}.duel-score em.bad{color:var(--bad)}.duel-score b{white-space:nowrap}
+.duel-score{flex-wrap:wrap}
+.duel-stamp{margin-left:auto;font-style:normal;font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:.08em;text-transform:uppercase;padding:1px 9px;border:3px solid var(--good);color:var(--good);border-radius:6px;transform:rotate(-7deg);opacity:.92}
+.duel.lose .duel-stamp{border-color:var(--bad);color:var(--bad)}
+@media (prefers-reduced-motion:no-preference){.duel-stamp{animation:stamp .5s cubic-bezier(.2,1.6,.4,1) .35s both}@keyframes stamp{from{transform:rotate(-8deg) scale(2.2);opacity:0}}}
 .emp-head{border-color:rgba(226,196,122,.45);background:linear-gradient(180deg,rgba(226,196,122,.12),transparent)}
 .tr-row{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)}
 .tr-row.lead .tr-h span{color:var(--brass)}

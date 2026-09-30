@@ -244,7 +244,7 @@ function legacyCard(){
   const bars=Object.keys(LEG_NAMES).map(k=>`<div class="leg-row"><span>${LEG_NAMES[k]}</span><div class="bar"><i style="width:${Math.min(100,me[k]/maxes[k]*100)}%;background:var(--brass)"></i></div><b class="num">${Math.round(me[k])}</b></div>`).join('');
   const near=t.rows.slice(Math.max(0,t.place-3),t.place+2).map((r,i)=>`<tr class="${r.you?'you':''}"><td>${t.rows.indexOf(r)+1}.</td><td>${esc(r.n)}</td><td class="n">${Math.round(r.L.total)}</td></tr>`).join('');
   const firsts=Object.values(s.firsts||{}).map(f=>`<li class="good"><time>${f.y}</time><p>${esc(f.name)} — раньше, чем ${esc(f.who)} (${f.hy})</p></li>`).join('');
-  return `<section class="card"><div class="row"><h2>Наследие</h2><span class="pill warn">${t.place}-е место</span></div>
+  return `<section class="card" id="sec-legacy"><div class="row"><h2>Наследие</h2><span class="pill warn">${t.place}-е место</span></div>
     <p class="small muted" style="margin-top:4px">Цель игры — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными: Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce и другими — по масштабу, доле рынка, изобретениям, победам, капиталу и имени.</p>
     <div style="margin-top:10px">${bars}</div><div class="row small" style="margin-top:6px"><span class="muted">Всего очков</span><b class="num">${Math.round(me.total)}</b></div>
     <table class="pl" style="margin-top:10px">${near}</table>
@@ -256,13 +256,15 @@ function vLog(){
   const papers=G.papers.slice().reverse().map((p,i)=>`<button class="chip" style="width:100%;margin-top:6px" data-act="reopenPaper" data-k="${G.papers.length-1-i}"><small>${p.d}</small>${esc(p.title)}</button>`).join('');
   const last=G.papers[G.papers.length-1];
   return `<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя. Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
-  ${legacyCard()}${titlesCard(G)}${boardCard(G)}${sagaCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
+  ${legacyCard()}${titlesCard(G)}${boardCard(G)}${trophyCabinetCard(G)}${sagaCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
   ${foldCard('ach',false,`<h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span>`,`<div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div>`,`получено ${got} из ${ACH.length}`)}
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
 let shownCash=null,cashRaf=0,lastDate='';
 function setCash(v){const el=document.getElementById('cash');el.className=v<0?'neg':'';if(shownCash===null||REDUCE){shownCash=v;el.textContent=money(v);return;}
   const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=money(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
+// широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
+function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
 function render(){
   const s=G;if(!s)return;
   document.getElementById('co').textContent=`${s.company} · ${COUNTRIES[s.country].city}`;
@@ -270,7 +272,8 @@ function render(){
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
   lastDate=ds;setCash(s.cash);
   document.getElementById('view').innerHTML=tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():tab==='race'?vRace():vLog();
-  {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log';}}
+  {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log'&&!wideLand();es.classList.remove('flash');if(EC_FLASH&&!REDUCE){void es.offsetWidth;es.classList.add('flash');}}}
+  document.body.dataset.tab=tab;
   if(tab==='plant')plantAnim();
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
   const nb=document.getElementById('nextBtn'),qb=document.getElementById('qBtn'),ab=document.getElementById('autoBtn');
@@ -278,7 +281,7 @@ function render(){
   nb.textContent=s.over?'Игра окончена':blocked?'Сначала решите событие':'Следующий месяц →';
   ab.textContent=auto?'❚❚':'▶';ab.classList.toggle('on',!!auto);
   const ad=document.getElementById('ad');if(ad)ad.addEventListener('input',e=>{G.ad=+e.target.value;document.getElementById('adVal').textContent=money(G.ad);save();});
-  if(s.pending.length&&!R){stopAuto();showEvent();}
+  if(s.pending.length&&!R&&!evHold){stopAuto();showEvent();}
 }
 let toastQ=[],toastBusy=false;
 function toast(msg){toastQ.push(msg);if(!toastBusy)nextToast();}

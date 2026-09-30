@@ -78,6 +78,7 @@ function champFinish(s,id,y){
       deck:`${C.name(y)} ${y}: ${fmtPts(id,win.pts)} ${id==='aiacr'?'штрафных очков':'очков'}`,
       text:`${C.name(y)} ${y} года завершён, и первое место в зачёте марок принадлежит «${s.company}». ${second?`Ближайший соперник — ${second.n} (${fmtPts(id,second.pts)}).`:''}\n${id==='aiacr'?'Титул чемпиона мира — главная награда для автомобильного завода. Покупатели по всему миру знают теперь вашу марку.':'Газеты называют вашу марку лучшей в сезоне. Покупатели охотнее выбирают машины победителя.'}\nСпрос на все модели компании вырос на год вперёд.`},true);
     addLog(`🏆 ${C.title(y)}!`,'good');pendingToasts.push('🏆 '+C.title(y));
+    trophyAdd(s,{kind:'cup',title:C.title(y),sub:`${C.name(y)} · ${fmtPts(id,win.pts)} ${id==='aiacr'?'штрафных очков':'очков'}`,story:`${C.name(y)} ${y} года: первое место в зачёте марок.${second?` Ближайший соперник — ${second.n}.`:''}`,key:'champ|'+id+'|'+y,pt:id==='aiacr'?`«${s.company}» — чемпион мира!`:id==='aaa'?`«${s.company}» — чемпион Америки!`:`«${s.company}» — марка сезона!`});
   }else if(me>=0)addLog(`${C.name(y)} ${y} завершён. Чемпион — ${ch.win||'не определён'}, «${s.company}» — ${me+1}-е место.`,'hist');
   else if(ch.win)addLog(`${C.name(y)} ${y}: чемпионом стала марка ${ch.win}.`,'hist');
 }
@@ -157,11 +158,15 @@ function raceResults(rc,res,mode,info){
   const dnfN=team.filter(r=>r.dnf).length;
   addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${won?`, призовые ${money(won)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
   lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj};
-  openRaceResult();
-  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}showPaper(racePaper(rc,res,bestRow,k,cupTitle),true);}
+  evHold=1;openRaceResult();
+  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle);showPaper(P,true);
+    try{trophyAdd(s,{kind:'cup',title:cupTitle||`Победа: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+(bestRow.player?'вы за рулём':bestRow.drv):''}`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,
+      carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,pt:P.title,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){console.warn('trophy',e);}}
+  else if(best&&best<=3)try{trophyAdd(s,{kind:'medal',title:`${best}-е место: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+bestRow.drv:''}`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).`,key:'race|'+rc.key,carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
+function L_hist(rc){return rc.win&&!/^Победителей/.test(rc.win)?` В настоящей истории здесь победил ${rc.win}.`:'';}
 function racePaper(rc,res,row,k,cup){
   const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0;
   const drv=row.player?(PIONEERS[s.pioneer].name+' лично'):(row.drv||'Пилот компании');

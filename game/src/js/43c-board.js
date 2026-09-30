@@ -28,7 +28,7 @@ function titlesCard(s){const rows=titlesRace(s),K=s.kings;
       ${r.them?`<div class="leg-row"><span>${esc((r.themN||'соперник').slice(0,12))}</span><div class="bar"><i style="width:${Math.min(100,r.them/mx*100)}%;background:var(--muted)"></i></div><b class="num">${r.pct?r.them+'%':fmtN(r.them)}</b></div>`:''}
       <p class="small muted">${esc(r.unit(r.you))} · ${esc(r.hint||'')}</p></div>`;}).join('');
   const got=(s.titles||[]).filter(t=>/^king-|^dch/.test(t.id||'')||/Гонщик года/.test(t.name||''));
-  return `<section class="card tr-card"><div class="row"><h2>Гонка за титулы ${s.y}</h2><span class="pill">${got.length?`👑 ${got.length}`:'титулов пока нет'}</span></div>
+  return `<section class="card tr-card" id="sec-titles"><div class="row"><h2>Гонка за титулы ${s.y}</h2><span class="pill">${got.length?`👑 ${got.length}`:'титулов пока нет'}</span></div>
     <p class="small muted" style="margin-top:4px">В январе газеты называют «королей» прошлого года. Титул — слава, и весь следующий год: гонки +10%, КБ +12% или спрос в классе +12%.</p>
     ${R}${K&&K.lines&&K.lines.length?foldCard('kings'+K.y,false,`<h3>Короли ${K.y} года</h3>`,`<ul class="log">${K.lines.map(l=>`<li><p>${esc(l)}</p></li>`).join('')}</ul>`,K.mine&&K.mine.length?'ваши титулы: '+K.mine.join(', '):'без ваших титулов'):''}
     ${got.length?`<div class="tags" style="margin-top:8px">${got.slice(-8).map(t=>`<span class="pill warn">👑 ${esc(t.name)}</span>`).join('')}</div>`:''}</section>`;}
@@ -38,11 +38,11 @@ function boardOffers(s){const out=[];if(s.over)return out;
     const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+4&&!GBC_IDS.includes(rc.id)&&raceEligible(rc,s)&&!raceWarBlocked(rc,s)&&!s.cres[rc.key]&&s.raceDone[rc.key]===undefined);
     const rc=L.slice().sort((a,b)=>(b.major?1:0)-(a.major?1:0)||a.m-b.m)[0];
     if(rc&&raceCarsFor(s).length){const T=fieldTeams(rc,s,3).filter(t=>t.mq&&t.mq.length),t=T.find(t=>t.c===s.country)||T[0];
-      if(t)out.push({id:'race',title:`Пари с ${t.n}: «${rc.name}»`,sub:`${MONTHS[rc.m]} ${rc.y} · ваша лучшая машина должна финишировать выше лучшей ${t.n}`,stake:Math.max(100,Math.round(racePrize(rc)*0.6/50)*50),C:{type:'race',rk:rc.key,mq:t.n}});}
+      if(t)out.push({id:'race',title:`Пари с ${t.n}: «${rc.name}»`,sub:`${MONTHS[rc.m]} ${rc.y} · ваша лучшая машина должна финишировать выше лучшей ${t.n}`,stake:Math.max(100,Math.round(racePrize(rc)*0.6/50)*50),C:{type:'race',rk:rc.key,mq:t.n,x:stakeExtra(s,t.n,'b')}});}
     const mk=s.last&&s.last.mk&&s.last.mk[s.country];
     if(mk&&mk.segs&&s.m<=8){const g=SEGK.filter(g=>(mk.segs[g].you||0)>=3).sort((a,b)=>mk.segs[b].you-mk.segs[a].you)[0];
       if(g){const you=mk.segs[g].you,cps=(COMPS[s.country]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>x.cp.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v),R=cps.find(x=>x.v<=you*12*3&&x.v>=you*12/3);
-        if(R){const nm=compName(R.cp,s);out.push({id:'sales',title:`Пари с ${nm}: класс «${SEG[g].name}»`,sub:`кто продаст больше в стране до конца ${s.y} года`,stake:Math.round(clamp(((s.last&&s.last.rev)||0)*0.15,200*cpi(s),25000*cpi(s))/50)*50,C:{type:'sales',g,mq:nm,ci:R.i,y:s.y}});}}}}
+        if(R){const nm=compName(R.cp,s);out.push({id:'sales',title:`Пари с ${nm}: класс «${SEG[g].name}»`,sub:`кто продаст больше в стране до конца ${s.y} года`,stake:Math.round(clamp(((s.last&&s.last.rev)||0)*0.15,200*cpi(s),25000*cpi(s))/50)*50,C:{type:'sales',g,mq:nm,ci:R.i,y:s.y,x:stakeExtra(s,nm,'b')}});}}}}
   // цели года: без ставки, награда — деньги и репутация (провал — лишь немного репутации)
   const G2=s.goals||[],has=k=>G2.some(q=>q.k===k&&q.y===s.y);
   if(s.m<=9&&!has('race')&&RACES.filter(r=>r.y===s.y&&r.m>=s.m&&raceEligible(r,s)).length>=2)out.push({id:'goal:race',title:`Цель: Король гонок ${s.y}`,sub:'выиграть не меньше двух гонок за год — и больше всех',reward:Math.round(1500*cpi(s)/50)*50,goal:{k:'race'}});
@@ -55,19 +55,16 @@ function boardTake(s,id){const o=boardOffers(s).find(x=>x.id===id);if(!o)return;
   else if(o.goal){(s.goals=s.goals||[]).push({k:o.goal.k,y:s.y,reward:o.reward,name:o.title.replace(/^Цель: /,'')});addLog(`🎯 Цель года: ${o.title.replace(/^Цель: /,'')}. Награда — ${money(o.reward)} и слава.`,'good');pendingToasts.push('🎯 Цель принята');}
   save();render();}
 // Итоги целей — в январе, вместе с «королями» года
-function goalsResolve(s,y,mine){const L=(s.goals||[]).filter(q=>q.y===y);if(!L.length)return;s.goals=(s.goals||[]).filter(q=>q.y!==y);
+function goalsResolve(s,y,mine,KW){const L=(s.goals||[]).filter(q=>q.y===y);if(!L.length)return;s.goals=(s.goals||[]).filter(q=>q.y!==y);KW=KW||{};
   L.forEach(q=>{const title=q.k==='race'?'Король гонок':q.k==='tech'?'Король технологий':KING_SEG[q.k],ok=(mine||[]).some(t=>t===title);
-    if(ok){s.cash+=q.reward;s.rep=clamp(s.rep+2,0,100);addLog(`🎯 Цель года выполнена: ${q.name}. Награда ${money(q.reward)}.`,'good');pendingToasts.push(`🎯 ${q.name}: +${money(q.reward)}`);}
-    else{s.rep=clamp(s.rep-1,0,100);addLog(`Цель года не выполнена: ${q.name}. Газеты напомнили об обещании.`,'bad');}});}
+    if(ok){s.cash+=q.reward;s.rep=clamp(s.rep+2,0,100);addLog(`🎯 Цель года выполнена: ${q.name}. Награда ${money(q.reward)}.`,'good');pendingToasts.push(`🎯 ${q.name}: +${money(q.reward)}`);
+      trophyAdd(s,{kind:'goal',title:`Цель ${y}: ${q.name}`,sub:`награда ${money(q.reward)}`,story:`Вы сами взяли эту цель на доске вызовов — и выполнили её.`,key:'goal|'+q.k+'|'+y,y,m:11});}
+    else{s.rep=clamp(s.rep-1,0,100);addLog(`Цель года не выполнена: ${q.name}. Газеты напомнили об обещании.`,'bad');}
+    try{goalScene(s,q,ok,KW[q.k]&&KW[q.k]!==s.company?KW[q.k]:'');}catch(e){console.warn('goal scene',e);}});}
 function boardCard(s){const O=boardOffers(s),A=[],C=s.chal&&s.chal.acc?s.chal:null,GL=(s.goals||[]).filter(q=>q.y===s.y);
   if(C)A.push(chalCard(s,C.type==='race'?'race':'market'));
   GL.forEach(q=>{const r=titlesRace(s).find(x=>x.k===q.k);A.push(`<section class="card chal"><div class="row"><span class="label">🎯 Цель года</span><span class="pill good">${money(q.reward)}</span></div><h3 style="margin-top:4px">${esc(q.name)}</h3>${r?`<p class="small" style="margin-top:4px">Сейчас: ${esc(r.unit(r.you))}${r.themN?` · впереди: ${esc(r.themN)} (${r.pct?r.them+'%':fmtN(r.them)})`:''}</p>`:''}</section>`);});
-  return `<section class="card board"><div class="row"><h2>⚔️ Доска вызовов</h2><span class="pill">${(C?1:0)+GL.length} ${plural((C?1:0)+GL.length,'активный','активных','активных')}</span></div>
+  return `<section class="card board" id="sec-board"><div class="row"><h2>⚔️ Доска вызовов</h2><span class="pill">${(C?1:0)+GL.length} ${plural((C?1:0)+GL.length,'активный','активных','активных')}</span></div>
     <p class="small muted" style="margin-top:4px">Пари с соперниками и цели года: берите сами. Выигрыш — деньги и заголовки газет, проигрыш пари — ставка и насмешки прессы.</p>
     ${A.join('')}
-    ${O.length?`<div class="stack" style="margin-top:8px">${O.map(o=>`<button class="btn block board-o" data-act="boardTake" data-k="${o.id}"><b>${esc(o.title)}</b><small>${esc(o.sub)} · ${o.stake?'ставка '+money(o.stake):'награда '+money(o.reward)}</small></button>`).join('')}</div>`:`<p class="small muted" style="margin-top:8px">${C?'Одно пари за раз: сначала завершите текущее.':'Новых вызовов пока нет — появятся с новыми гонками и продажами.'}</p>`}</section>`;}
-/* ---------- полоса «Империя» над вкладками: наследие, место, титулы, вызовы, фильм ---------- */
-function empireStrip(s){if(!s)return '';let t=null;try{t=legacyTable(s);}catch(_){}
-  const L=sagaList(s),seen=((s.saga||{}).seen||[]).length,tit=(s.titles||[]).filter(x=>/^king-/.test(x.id||'')).length,act=(s.chal&&s.chal.acc?1:0)+(s.goals||[]).filter(q=>q.y===s.y).length;
-  const above=t&&t.place>1?t.rows[t.place-2]:null;
-  return `<span class="es-a">🏛 Наследие <b>${t?Math.round(t.me.total):0}</b></span><span class="es-b">${t?t.place+'-е место':''}${above?` · догнать ${esc(above.n)}: +${Math.max(1,Math.round(above.L.total-t.me.total))}`:t&&t.place===1?' · вы первые!':''}</span><span class="es-c">👑 ${tit} · ⚔️ ${act} · 🎬 ${seen}/${L.length}</span>`;}
+    ${O.length?`<div class="stack" style="margin-top:8px">${O.map(o=>`<button class="btn block board-o" data-act="boardTake" data-k="${o.id}"><b>${esc(o.title)}</b><small>${esc(o.sub)} · ${o.stake?'ставка '+esc(stakeText({stake:o.stake,x:o.C.x})):'награда '+money(o.reward)}${o.C&&rivalryScore(s,o.C.mq)?' · счёт '+rivalryScore(s,o.C.mq):''}</small></button>`).join('')}</div>`:`<p class="small muted" style="margin-top:8px">${C?'Одно пари за раз: сначала завершите текущее.':'Новых вызовов пока нет — появятся с новыми гонками и продажами.'}</p>`}</section>`;}

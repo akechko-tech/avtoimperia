@@ -7,7 +7,7 @@ function rerender(){const top=window.scrollY;save();render();window.scrollTo(0,t
 let confirmKey='',confirmT=0;
 function confirmOnce(k,msg){const now=Date.now();if(confirmKey===k&&now-confirmT<4000){confirmKey='';return true;}confirmKey=k;confirmT=now;toast(msg);return false;}
 const ACT={
-  tab:d=>{tab=d.t;render();window.scrollTo(0,0);},
+  tab:d=>{tab=d.t;render();const e=d.sec&&document.getElementById(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
   next:()=>doStep(),
   quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
@@ -99,6 +99,8 @@ const ACT={
   gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');},
   sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
   boardTake:d=>{boardTake(G,d.k);},
+  trophy:d=>{trophyReplay(+d.k);},
+  troRace:()=>{openRaceResult();},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
   demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},
   gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');},
@@ -111,7 +113,7 @@ window.androidBack=function(){
   if(REEL){reelClose();return true;}
   if(R){finishRace(true);return true;}
   if(!PW.hidden){const b=PW.querySelector('.p-btn');if(b)b.click();else closePaper();return true;}
-  if(!sheet.hidden){if((G&&G.pending.length)||(draft&&draft.ng&&G&&G.over)||(draft&&draft.lock))return true;closeSheet();return true;}
+  if(!sheet.hidden){if((G&&G.pending.length&&!evHold)||(draft&&draft.ng&&G&&G.over)||(draft&&draft.lock))return true;closeSheet();return true;}
   if(!MS.hidden)return false;
   if(tab!=='plant'){tab='plant';render();window.scrollTo(0,0);return true;}
   ACT.toMenu();return true;
