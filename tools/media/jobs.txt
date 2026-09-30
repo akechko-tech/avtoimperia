@@ -1,2 +1,1 @@
-music_cut
-sfx_cut
+voice5
