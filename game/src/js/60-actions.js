@@ -101,7 +101,8 @@ const ACT={
   boardTake:d=>{boardTake(G,d.k);},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
   demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},
-  gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');}
+  gfxPost:()=>{AU.on.post=AU.on.post===false;auApply();openSettings();toast(AU.on.post===false?'Кино-обработка выключена':'Кино-обработка включена');},
+  plantLive:()=>{AU.on.plantImg=!AU.on.plantImg;auApply();openSettings();if(AU.on.plantImg&&typeof PLG!=='undefined'&&PLG.cv){PLG.cv.remove();PLG.ready=false;}render();toast(AU.on.plantImg?'Завод — картинкой':'Завод — вживую, в 3D');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});

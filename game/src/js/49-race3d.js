@@ -192,15 +192,15 @@ function mbFromMesh(mb,M,o){o=o||{};const lift=o.lift||0.005,step=o.step===undef
   const lum=c=>(c[0]*0.3+c[1]*0.59+c[2]*0.11)/255;
   for(const f of M.F){const mat=MID[f.mat&&f.mat.k]||0,c=f.col,tg=(gm&&f.mat===MATS.glass)?gm:mb;tg.e[0]=f.w||0;tg.e[1]=f.l||0;
     // стены и крыши зданий — фото-материалы (кирпич, штукатурка, камень, доски, черепица, шифер, солома)
-    const lay=o.tex&&!f.point&&tg===mb?faceLay(f):o.car&&!f.point&&tg===mb?carLay(f):0;tg.e[3]=lay;
+    const lay=o.tex&&!f.point&&tg===mb?(o.lay?o.lay(f):faceLay(f)):o.car&&!f.point&&tg===mb?carLay(f):0;tg.e[3]=lay;
     if(!f.point){if(f.vn){tg.polyN(f.p,f.n,f.vn,c,mat);if(f.two)tg.polyN(f.p,[-f.n[0],-f.n[1],-f.n[2]],f.vn.map(q=>[-q[0],-q[1],-q[2]]),c,mat);}
       else{tg.poly(f.p,f.n,c,mat);if(f.two)tg.poly(f.p,[-f.n[0],-f.n[1],-f.n[2]],c,mat);}}
     tg.e[3]=0;
-    if(f.deco){let k=0;const n=f.point?null:f.n,fl=lum(c);for(const d of f.deco){k++;const L=lift+k*step,dc=hex2rgb(d.c||'#000'),dm=d.gl?MID.glass:(mat===MID.glass?MID.paint:mat);
+    if(f.deco&&!o.noDeco){let k=0;const n=f.point?null:f.n,fl=lum(c);for(const d of f.deco){k++;const L=lift+k*step,dc=hex2rgb(d.c||'#000'),dm=d.gl?MID.glass:(mat===MID.glass?MID.paint:mat);
       // на фото-стене не нужны нарисованные брёвна, ряды черепицы и камни: их даёт сама фактура (окна, двери, балки остаются)
       if(lay&&!d.gl&&!d.text&&!d.dot&&!d.ring){const dl=lum(dc),small=d.poly?polyArea(d.poly)<0.25:(d.w||0)<=0.32;
         if(small&&Math.abs(dl-fl)<0.16)continue;}
-      if(d.poly){if(!n)continue;tg.poly(d.poly.map(q=>[q[0]+n[0]*L,q[1]+n[1]*L,q[2]+n[2]*L]),n,dc,dm);}
+      if(d.poly){if(!n)continue;const l0=tg.e[1];if(d.l)tg.e[1]=d.l;tg.poly(d.poly.map(q=>[q[0]+n[0]*L,q[1]+n[1]*L,q[2]+n[2]*L]),n,dc,dm);tg.e[1]=l0;}
       else if(d.text){if(o.texts&&n)o.texts.push({d,n,L});}
       else if(d.dot){if(!n)continue;const rr=Math.max(0.012,d.r*0.85),t1=v3n(Math.abs(n[1])>0.9?[1,0,0]:v3x([0,1,0],n)),t2=v3x(n,t1),P=[];for(let q=0;q<10;q++){const a=q/10*6.2832;P.push([d.dot[0]+(t1[0]*Math.cos(a)+t2[0]*Math.sin(a))*rr+n[0]*L*1.4,d.dot[1]+(t1[1]*Math.cos(a)+t2[1]*Math.sin(a))*rr+n[1]*L*1.4,d.dot[2]+(t1[2]*Math.cos(a)+t2[2]*Math.sin(a))*rr+n[2]*L*1.4]);}tg.poly(P,n,dc,dm);}
       else if(d.ring){if(!n)continue;const [x,y,z,rr]=d.ring,w=Math.max(0.01,d.w)/2,P=a=>d.ax==='z'?[x+Math.cos(a),y+Math.sin(a),z]:[x,y+Math.sin(a),z+Math.cos(a)];

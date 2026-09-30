@@ -21,15 +21,19 @@ function mHat(M,o,hy,s,late){const P=(x,y,z)=>[x*s,hy+y*s,z*s],hc=o.hatc||'#1e1a
       for(let k=0;k<4;k++){const a=-0.6+k*0.45;mLathe(M,P(Math.cos(a)*0.12,0.25,Math.sin(a)*0.12+0.02),'y',[[0,-0.03*s],[0.035*s,-0.01*s],[0.03*s,0.02*s],[0,0.03*s]],8,k%2?(o.flower||'#b8322a'):'#f1ece0','cloth');}}}
   else if(o.type==='woman'){mLathe(M,P(0,0,-0.01),'y',[[0.085*s,0.12*s],[0.09*s,0.2*s],[0.06*s,0.25*s],[0,0.26*s]],12,o.hair||'#4a2e1e','cloth');mLathe(M,P(0,0.18,-0.1),'y',[[0.04*s,0],[0.05*s,0.04*s],[0,0.07*s]],10,o.hair||'#4a2e1e','cloth');}}
 // Человек стоит в начале координат лицом к +z; frame 1 — машет рукой (шляпой, платком, флажком)
+// o.walk (0…1) — фаза шага: ноги и руки качаются (идущие рабочие на заводе); o.lod===0 — упрощённая модель (дальний план)
 function mPerson3(M,o,frame){const t=o.type,woman=t==='woman',child=t==='child',late=(o.y||1905)>=1919,s=child?0.68:woman?0.94:1,wave=o.wave&&frame===1||(t==='marsh'&&frame===1);
-  const MLOD0=MLOD;MLOD=1;const sg=14,coat=o.coat,L={skin:o.skin,hair:o.hair,stache:o.stache,beard:o.beard,goggleUp:true};
-  const Y=v=>v*s;
+  const lo=o.lod===0,MLOD0=MLOD;MLOD=lo?0:1;const sg=lo?8:14,coat=o.coat,L={skin:o.skin,hair:o.hair,stache:o.stache,beard:o.beard,goggleUp:true};
+  const Y=v=>v*s,wk=o.walk===undefined?null:o.walk*Math.PI*2;
+  // шаг: нога поворачивается в бедре (вперёд — +z), рука — в плече навстречу
+  const swing=sd=>wk===null?0:Math.sin(wk+(sd>0?0:Math.PI))*0.42,rotX=(p,c,a)=>{if(!a)return p;const dy=p[1]-c[1],dz=p[2]-c[2],ca=Math.cos(a),sa=Math.sin(a);return [p[0],c[1]+dy*ca+dz*sa,c[2]-dy*sa+dz*ca];};
   // ноги: брюки и ботинки; у дам — юбка до пят (в 1920-х — до середины икры, видны чулки)
   if(woman){const hem=late?0.36:0.05;mLathe(M,[0,0,0],'y',[[0,Y(hem)],[Y(0.31),Y(hem)],[Y(0.26),Y(0.45)],[Y(0.19),Y(0.8)],[Y(0.15),Y(0.97)]],sg,o.skirt||'#2b2f3a','cloth');
     if(late)[-1,1].forEach(sd=>mTube(M,[[sd*Y(0.07),Y(0.36),0],[sd*Y(0.065),Y(0.2),0],[sd*Y(0.06),Y(0.06),0.01]],[Y(0.045),Y(0.04),Y(0.032)],8,'#c8b098','cloth'));
     [-1,1].forEach(sd=>mRBox(M,sd*Y(0.075)-Y(0.04),0,Y(-0.03),sd*Y(0.075)+Y(0.04),Y(0.07),Y(0.13),0.02,o.shoe||'#2a1e16','leather'));}
-  else{const tr=o.trousers||shade(coat,-0.15);[-1,1].forEach(sd=>{mTube(M,[[sd*Y(0.095),Y(0.93),0],[sd*Y(0.095),Y(0.52),0.01],[sd*Y(0.09),Y(0.09),0]],[Y(0.075),Y(0.062),Y(0.058)],10,tr,'cloth');
-      mRBox(M,sd*Y(0.095)-Y(0.048),0,Y(-0.07),sd*Y(0.095)+Y(0.048),Y(0.085),Y(0.16),0.025,o.shoe||'#1c1612','leather');});
+  else{const tr=o.trousers||shade(coat,-0.15);[-1,1].forEach(sd=>{const a=swing(sd),hip=[0,Y(0.93),0],R=p=>rotX(p,hip,a),f=R([sd*Y(0.095),Y(0.0425),Y(0.045)]);
+      mTube(M,[R([sd*Y(0.095),Y(0.93),0]),R([sd*Y(0.095),Y(0.52),0.01+(a>0?Y(0.03):0)]),R([sd*Y(0.09),Y(0.09),0])],[Y(0.075),Y(0.062),Y(0.058)],lo?6:10,tr,'cloth');
+      mRBox(M,f[0]-Y(0.048),Math.max(0,f[1]-Y(0.0425)),f[2]-Y(0.115),f[0]+Y(0.048),Math.max(0,f[1]-Y(0.0425))+Y(0.085),f[2]+Y(0.115),0.025,o.shoe||'#1c1612','leather');});
     if(o.stripe)[-1,1].forEach(sd=>mTube(M,[[sd*Y(0.168),Y(0.9),0],[sd*Y(0.155),Y(0.1),0]],Y(0.012),4,o.stripe,'cloth'));}
   // корпус: пиджак (или пальто до колен), у дам — блузка; воротник и пуговицы
   const long=!woman&&!child&&o.frock,bot=woman?0.92:long?0.52:0.82;
@@ -46,7 +50,7 @@ function mPerson3(M,o,frame){const t=o.type,woman=t==='woman',child=t==='child',
   if(t==='marsh')mTube(M,[[Y(0.2),Y(1.22),-Y(0.08)],[Y(0.24),Y(1.22),0],[Y(0.2),Y(1.22),Y(0.08)]],Y(0.045),6,'#b8322a','cloth');
   // шея и голова
   const hy=Y(woman?1.46:1.52);mLathe(M,[0,Y(woman?1.37:1.43),0],'y',[[Y(0.048),0],[Y(0.045),Y(0.06)],[Y(0.047),Y(0.1)]],10,shade(o.skin,-0.05),'skin');
-  mHead(M,0,hy,Y(0.005),L,true,s*(child?1.25:1));
+  mHead(M,0,hy,Y(0.005),L,!lo,s*(child?1.25:1));
   mHat(M,o,hy,s*(child?1.25:1),late);
   // руки: вниз, за спиной, в карманах; машет — правая вверх (со шляпой, платком или флажком)
   const shY=Y(woman?1.32:1.4),shX=Y(woman?0.19:0.215),armC=woman?(o.coat||'#f1ece0'):coat,hand=[];
@@ -55,8 +59,8 @@ function mPerson3(M,o,frame){const t=o.type,woman=t==='woman',child=t==='child',
     else if(o.item==='umb'&&sd>0){el=[sd*Y(0.27),Y(1.1),Y(0.1)];h=[sd*Y(0.2),Y(1.18),Y(0.22)];}
     else if(o.hands==='back'&&!woman){el=[sd*Y(0.25),Y(1.12),-Y(0.08)];h=[sd*Y(0.1),Y(0.95),-Y(0.17)];}
     else if(o.hands==='pocket'&&!woman){el=[sd*Y(0.29),Y(1.12),-Y(0.02)];h=[sd*Y(0.2),Y(0.93),Y(0.06)];}
-    else{el=[sd*Y(0.27),Y(1.1),Y(0.02)];h=[sd*Y(0.26),Y(0.84),Y(0.05)];}
-    mTube(M,[[sd*shX,shY,0],el,h],[Y(0.058),Y(0.048),Y(0.042)],10,armC,'cloth');
+    else{const b=-swing(sd)*0.75,sh=[sd*shX,shY,0];el=rotX([sd*Y(0.27),Y(1.1),Y(0.02)],sh,b);h=rotX([sd*Y(0.26),Y(0.84),Y(0.05)+(wk!==null?Y(0.04):0)],sh,b);}
+    mTube(M,[[sd*shX,shY,0],el,h],[Y(0.058),Y(0.048),Y(0.042)],lo?6:10,armC,'cloth');
     if(!(o.hands==='pocket'&&!woman&&!up))mLathe(M,h,'y',[[0,-Y(0.045)],[Y(0.034),-Y(0.02)],[Y(0.036),Y(0.01)],[Y(0.024),Y(0.035)],[0,Y(0.04)]],8,t==='gend'?'#f1ece0':shade(o.skin,-0.06),'skin');
     hand[sd>0?1:0]=h;});
   // предметы: шляпа в поднятой руке, платок, флажок, зонтик

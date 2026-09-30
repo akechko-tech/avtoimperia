@@ -20,20 +20,21 @@ function pGable(M,x0,x1,z0,z1,H,rh,ov,col,wall){const xm=(x0+x1)/2,yR=H+rh,X0=x0
 function pSaw(M,x0,x1,z0,z1,H,col,wall){const n=Math.max(2,Math.round((x1-x0)/5)),w=(x1-x0)/n,th=2.4;
   for(let i=0;i<n;i++){const xa=x0+i*w,xb=xa+w,c=[(xa+xb)/2,H,(z0+z1)/2];const f=mFace(M,[[xa,H,z0-0.3],[xb,H+th,z0-0.3],[xb,H+th,z1+0.3],[xa,H,z1+0.3]],col,'roof',[c[0],H-1,c[2]]);
     f.deco=[{a:[(xa+xb)/2,H+th/2,z0-0.3],b:[(xa+xb)/2,H+th/2,z1+0.3],w:0.05,c:shade(col,-0.25)}];
-    const gl=mFace(M,[[xb,H,z0-0.3],[xb,H+th,z0-0.3],[xb,H+th,z1+0.3],[xb,H,z1+0.3]],'#8fb0c4','glass',[xa,H+th/2,c[2]]);gl.deco=[];for(let z=z0+1.2;z<z1;z+=1.6)gl.deco.push({a:[xb+0.02,H,z],b:[xb+0.02,H+th,z],w:0.05,c:'#4a4c50'});
+    const gl=mFace(M,[[xb,H,z0-0.3],[xb,H+th,z0-0.3],[xb,H+th,z1+0.3],[xb,H,z1+0.3]],'#7f9cb0','glass',[xa,H+th/2,c[2]]);gl.deco=[];for(let z=z0+0.5;z<z1;z+=1.0)gl.deco.push({a:[xb+0.02,H,z],b:[xb+0.02,H+th,z],w:0.06,c:'#3a3c40'});
+    [th*0.34,th*0.67].forEach(v=>gl.deco.push({a:[xb+0.02,H+v,z0-0.3],b:[xb+0.02,H+v,z1+0.3],w:0.06,c:'#3a3c40'}));
     mFace(M,[[xa,H,z0-0.3],[xb,H,z0-0.3],[xb,H+th,z0-0.3]],wall,'wall',[c[0],H,z1]);}}
 // Ряд окон на фасаде (P(u,v) — точка стены)
 function pWins(f,P,u0,u1,step,v,w,h,o){for(let u=u0;u<=u1+0.01;u+=step)wWin(f,P,u,v,w,h,o);}
 // Цех: кирпич (потом бетон), высокие арочные окна, ворота; фронтон на улицу
-function pHall(x0,x1,z0,z1,H,S,o){o=o||{};const M=new Mesh(),wall=S.era===2?'#b9b4aa':o.wall||'#9a4e3a',roof=S.sea==='w'?'#e6ecf0':S.era===2?'#6d737b':'#5d4a42',glass=o.glass||'#39495a';
+function pHall(x0,x1,z0,z1,H,S,o){o=o||{};const M=new Mesh(),wall=S.era===2?(o.cw||'#b9b4aa'):o.wall||'#9a4e3a',roof=S.sea==='w'?'#e6ecf0':o.roofc||(S.era===2?'#6d737b':'#5d4a42'),glass=o.glass||'#39495a';
   const W=mBox(M,x0,0,z0,x1,H,z1,wall,'wall',['d','t']),F=(u,v)=>[u,v,z0-0.012],Rt=(u,v)=>[x1+0.012,v,u];
   const bw=x1-x0,n=Math.max(1,Math.round(bw/2.6));pWins(W.b,F,x0+bw/(n+1),x1-bw/(n+1)+0.01,bw/(n+1),1.6,1.1,H-3.6,{arch:S.era<2,glass,frame:S.era===2?'#d8d6d0':'#e6dcc6'});
   pWins(W.r,Rt,z0+1.6,z1-1.4,2.3,1.6,1.1,H-3.6,{arch:S.era<2,glass,frame:S.era===2?'#d8d6d0':'#e6dcc6'});
-  wDoor(W.b,F,(x0+x1)/2,Math.min(3.4,bw*0.3),Math.min(3.8,H-1.5),S.era===2?'#4a5058':'#4a3a30');
+  wDoor(W.b,F,(x0+x1)/2,Math.min(3.4,bw*0.3),Math.min(3.8,H-1.5),o.door||(S.era===2?'#4a5058':'#4a3a30'));
   if(S.era<2){W.b.deco.push({a:F(x0,H-0.35),b:F(x1,H-0.35),w:0.22,c:shade(wall,-0.2)});W.r.deco.push({a:Rt(z0,H-0.35),b:Rt(z1,H-0.35),w:0.22,c:shade(wall,-0.2)});}
   if(o.saw)pSaw(M,x0,x1,z0,z1,H,roof,wall);else pGable(M,x0,x1,z0,z1,H,S.era===2?2.2:3.2,0.45,roof,wall);
-  if(o.sign){const sw=Math.min(bw*0.8,o.sign.length*1.0+1),sx=(x0+x1)/2,sy=H+0.1,sb=mBox(M,sx-sw/2,sy,z0-0.2,sx+sw/2,sy+1.3,z0-0.05,'#1f2a36','paint');
-    sb.b.deco=[{text:o.sign,at:[[sx-sw/2+0.1,sy+0.1,z0-0.215],[sx+sw/2-0.1,sy+0.1,z0-0.215],[sx-sw/2+0.1,sy+1.2,z0-0.215]],w:sw-0.2,h:1.1,c:'#e8c56a',font:'bold 0.8px Impact,sans-serif'}];}
+  if(o.sign){const sw=Math.min(bw*0.8,o.sign.length*1.0+1),sx=(x0+x1)/2,sy=o.saw?H-1.5:H+0.1,dz=o.saw?0.12:0,sb=mBox(M,sx-sw/2,sy,z0-0.2-dz,sx+sw/2,sy+1.3,z0-0.05-dz,'#1f2a36','paint');
+    sb.b.deco=[{text:o.sign,at:[[sx-sw/2+0.1,sy+0.1,z0-0.215-dz],[sx+sw/2-0.1,sy+0.1,z0-0.215-dz],[sx-sw/2+0.1,sy+1.2,z0-0.215-dz]],w:sw-0.2,h:1.1,c:'#e8c56a',font:'bold 0.8px Impact,sans-serif'}];}
   M.foot=[x0-0.6,x1+1.4,z0-0.6,z1+0.6];return M;}
 // Труба: кирпичная, с поясками и оголовком
 function pChimney(x,z,h,r,S){const M=new Mesh(),col=S.era===2?'#8a8580':'#8a3f2c';mBox(M,x-r,0,z-r,x+r,h*0.35,z+r,col,'wall',['d']);const t=mBox(M,x-r*0.8,h*0.35,z-r*0.8,x+r*0.8,h,z+r*0.8,col,'wall',['d']);
@@ -60,12 +61,13 @@ function pOffice(x0,z0,S){const M=new Mesh(),fl=[1,2,3,4][Math.max(0,S.sz)],L=10
   sb.b.deco=[{text:S.co.toUpperCase(),at:[[xm-sw/2+0.1,sy+0.08,z0-0.195],[xm+sw/2-0.1,sy+0.08,z0-0.195],[xm-sw/2+0.1,sy+0.92,z0-0.195]],w:sw-0.2,h:0.84,c:'#3a1c10',font:'bold 0.62px Georgia,serif'}];
   M.foot=[x0-0.6,x1+1.5,z0-0.6,z1+0.6];return {M,x1};}
 // Склад: ангар с полукруглой крышей
-function pDepot(x0,z0,S){const M=new Mesh(),L=10+S.wh*3.4,D=11,R=4.6+S.wh*0.35,x1=x0+L,z1=z0+D,wall=S.era===2?'#9aa0a6':'#7a6452',roof=S.sea==='w'?'#e8eef2':S.era===2?'#7d848c':'#6d5d4f',seg=9;
+function pDepot(x0,z0,S,o){o=o||{};const M=new Mesh(),L=10+S.wh*3.4,D=11,R=4.6+S.wh*0.35,x1=x0+L,z1=z0+D,wall=o.wall||(S.era===2?'#9aa0a6':'#7a6452'),roof=S.sea==='w'?'#e8eef2':o.roof||(S.era===2?'#7d848c':'#6d5d4f'),seg=9;
   const P=(k,z)=>{const a=Math.PI*k/seg;return [x0+L/2-Math.cos(a)*L/2,R*Math.sin(a)*0.9+1.2,z];};
   mBox(M,x0,0,z0,x1,1.2,z1,wall,'wall',['d','t']);
-  for(let k=0;k<seg;k++){const f=mFace(M,[P(k,z0),P(k+1,z0),P(k+1,z1),P(k,z1)],roof,'metal',[x0+L/2,0,(z0+z1)/2]);f.deco=[{a:P(k,z0),b:P(k,z1),w:0.05,c:shade(roof,-0.3)}];}
+  for(let k=0;k<seg;k++){const f=mFace(M,[P(k,z0),P(k+1,z0),P(k+1,z1),P(k,z1)],roof,o.roofMat||'metal',[x0+L/2,0,(z0+z1)/2]);f.deco=[{a:P(k,z0),b:P(k,z1),w:0.05,c:shade(roof,-0.3)}];}
   const front=[];for(let k=0;k<=seg;k++)front.push(P(k,z0));const fw=mFace(M,[[x0,1.2,z0],...front.slice(1,-1),[x1,1.2,z0]],wall,'wall',[x0+L/2,1,z1]);
-  const F=(u,v)=>[u,v,z0-0.012];wDoor(fw,F,x0+L/2,Math.min(5,L*0.4),Math.min(4.2,R+0.6),S.era===2?'#4a5058':'#3a2e26');
+  if(o.back){const bk=[];for(let k=0;k<=seg;k++)bk.push(P(k,z1));mFace(M,[[x0,1.2,z1],...bk.slice(1,-1),[x1,1.2,z1]],wall,'wall',[x0+L/2,1,z0]);}
+  const F=(u,v)=>[u,v,z0-0.012];wDoor(fw,F,x0+L/2,Math.min(5,L*0.4),Math.min(4.2,R+0.6),o.door||(S.era===2?'#4a5058':'#3a2e26'));
   fw.deco.push({text:'СКЛАД',at:[F(x0+L/2-2.2,R+1.9),F(x0+L/2+2.2,R+1.9),F(x0+L/2-2.2,R+2.9)],w:4.4,h:1.0,c:'#f1e6c8',font:'bold 0.8px Impact,sans-serif'});
   M.foot=[x0-0.6,x1+1.4,z0-0.6,z1+0.6];return {M,x1};}
 // КБ: от чертёжной в сарае до института с куполом
@@ -98,17 +100,24 @@ function pFence(x0,x1,z,gate,S){const M=new Mesh(),post=S.era===2?'#8a8f96':'#6a
   M.foot=[x0,x1,z-0.3,z+0.3];return M;}
 // Новая картинка рисуется в свободную минуту: пока — прежняя (без заминки на кнопке «Следующий месяц»)
 let PLANT_LAST=null,PLANT_BUSY=false;
-function plantHTML(s){try{const key=JSON.stringify(plantState(s));let v=PLANT3D.get(key);
-    if(!v&&PLANT_LAST&&!PLANT_BUSY){PLANT_BUSY=true;v=PLANT_LAST;setTimeout(()=>{try{const nv=plantImage(G);PLANT_LAST=nv;const im=document.querySelector('.plant3d>img');if(im)im.src=nv.url;}catch(_){}PLANT_BUSY=false;},60);}
-    else if(!v)v=PLANT_LAST&&PLANT_BUSY?PLANT_LAST:plantImage(s);
-    if(!v)return factorySVG(s);PLANT_LAST=PLANT_LAST||v;if(PLANT3D.get(key))PLANT_LAST=v;
-    const L=s.last,busy=L?clamp(L.made/Math.max(1,capEff(s)),0,1):0.3,sm=busy>0.05?v.smoke.map((p,i)=>[0,1,2].map(k=>`<i class="pl-smoke" style="left:${p[0].toFixed(1)}%;top:${p[1].toFixed(1)}%;animation-delay:-${(k*1.1+i*0.4).toFixed(2)}s;--s:${(0.8+busy*0.6).toFixed(2)}"></i>`).join('')).join(''):'';
-    const car=v.car&&L&&L.sold>0?`<img class="pl-car" src="${v.car}" alt="" data-r="${v.road.map(x=>x.toFixed(1)).join(',')}" style="left:${v.road[0].toFixed(1)}%;top:${v.road[1].toFixed(1)}%;width:${v.carW.toFixed(1)}%">`:'';
-    return `<div class="plant3d"><img src="${v.url}" alt="Завод компании">${sm}${car}</div>`;}catch(e){return factorySVG(s);}}
+// 0.18: раздел «Завод» — живая 3D-сцена (23c-plant-live.js); эта картинка — пока сцена готовится и без WebGL
+function plantHTML(s){if(typeof plgOK==='function'&&plgOK()){let inner='';if(!PLG.ready){try{inner=plantInner2d(s);}catch(e){inner='';}}
+    return `<div class="plant3d${PLG.ready?' live':''}" id="plantBox">${inner}</div>`;}
+  try{const inner=plantInner2d(s);return inner?`<div class="plant3d">${inner}</div>`:factorySVG(s);}catch(e){return factorySVG(s);}}
+function plantInner2d(s){const key=JSON.stringify(plantState(s));let v=PLANT3D.get(key);
+  if(!v&&PLANT_LAST&&!PLANT_BUSY){PLANT_BUSY=true;v=PLANT_LAST;setTimeout(()=>{try{const nv=plantImage2d(G);PLANT_LAST=nv;const im=document.querySelector('.plant3d>img');if(im)im.src=nv.url;}catch(_){}PLANT_BUSY=false;},60);}
+  else if(!v)v=PLANT_LAST&&PLANT_BUSY?PLANT_LAST:plantImage2d(s);
+  if(!v)return '';PLANT_LAST=PLANT_LAST||v;if(PLANT3D.get(key))PLANT_LAST=v;
+  const L=s.last,busy=L?clamp(L.made/Math.max(1,capEff(s)),0,1):0.3,sm=busy>0.05?v.smoke.map((p,i)=>[0,1,2].map(k=>`<i class="pl-smoke" style="left:${p[0].toFixed(1)}%;top:${p[1].toFixed(1)}%;animation-delay:-${(k*1.1+i*0.4).toFixed(2)}s;--s:${(0.8+busy*0.6).toFixed(2)}"></i>`).join('')).join(''):'';
+  const car=v.car&&L&&L.sold>0?`<img class="pl-car" src="${v.car}" alt="" data-r="${v.road.map(x=>x.toFixed(1)).join(',')}" style="left:${v.road[0].toFixed(1)}%;top:${v.road[1].toFixed(1)}%;width:${v.carW.toFixed(1)}%">`:'';
+  return `<img src="${v.url}" alt="Завод компании">${sm}${car}`;}
 // Машина едет по улице перед заводом: путь задан числами (анимация через Web Animations — без CSS-переменных в keyframes)
 function plantAnim(){document.querySelectorAll('.pl-car[data-r]').forEach(el=>{const r=el.dataset.r.split(',').map(Number);if(r.length<4||!el.animate)return;
-  try{el.animate([{left:r[0]+'%',top:r[1]+'%'},{left:r[2]+'%',top:r[3]+'%'}],{duration:14000,iterations:Infinity,delay:-(Date.now()%14000)});}catch(_){}});}
-function plantImage(s){const S=plantState(s),key=JSON.stringify(S);let v=PLANT3D.get(key);if(v)return v;
+  try{el.animate([{left:r[0]+'%',top:r[1]+'%'},{left:r[2]+'%',top:r[3]+'%'}],{duration:14000,iterations:Infinity,delay:-(Date.now()%14000)});}catch(_){}});
+  try{if(typeof plgMount==='function')plgMount();}catch(e){console.warn('plant live',e);}}
+// Картинка завода для кинохроники и газеты: кадр живой сцены, если она уже есть, иначе — рисованная
+function plantImage(s){try{const u=typeof plgStill==='function'?plgStill(s):null;if(u)return {url:u};}catch(e){}return plantImage2d(s);}
+function plantImage2d(s){const S=plantState(s),key=JSON.stringify(S);let v=PLANT3D.get(key);if(v)return v;
   const W=720,H=330,yaw=0.5,pitch=0.43,cv=mkCanvas(W,H),g=cv.getContext('2d'),cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
   const winter=S.sea==='w',autumn=S.sea==='a',rnd=mulberry32(hashStr(key));
   // здания и предметы: каждое — своя модель

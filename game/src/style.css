@@ -372,6 +372,11 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 @keyframes svcPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,138,92,.6)}50%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(255,138,92,0)}}
 .plant3d{position:relative;width:100%;aspect-ratio:720/330;overflow:hidden}
 .plant3d>img{display:block;width:100%;height:100%}
+.plant3d>canvas.pl-live{position:absolute;left:0;top:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .7s;touch-action:pan-y;cursor:grab}
+.plant3d.live>canvas.pl-live{opacity:1}
+.plant3d.live{background:#8fa7bd}
+.pl-hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);max-width:88%;width:max-content;text-align:center;background:rgba(20,18,16,.72);color:#f1e6c8;font-size:12px;line-height:1.3;padding:5px 10px;border-radius:12px;pointer-events:none;animation:plHint 5.2s ease forwards}
+@keyframes plHint{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
 .pl-smoke{position:absolute;width:5%;aspect-ratio:1;margin:-2.5% 0 0 -2.5%;border-radius:50%;background:radial-gradient(circle,rgba(226,230,234,.85) 0,rgba(226,230,234,.4) 45%,rgba(226,230,234,0) 70%);pointer-events:none;animation:plSmoke 3.3s linear infinite;opacity:0}
 @keyframes plSmoke{0%{transform:translate(0,0) scale(.5);opacity:0}12%{opacity:.85}100%{transform:translate(160%,-420%) scale(calc(2.6*var(--s,1)));opacity:0}}
 .plant3d>img.pl-car{position:absolute;height:auto;max-width:none;pointer-events:none;transform:translate(-50%,-80%)}
