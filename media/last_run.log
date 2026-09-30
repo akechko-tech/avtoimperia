@@ -1,3 +1,5 @@
 == job faces
+cv2 odd: /home/runner/.local/lib/python3.12/site-packages/cv2/__init__.py 5.0.0 ['ACCESS_FAST', 'ACCESS_MASK', 'ACCESS_READ', 'ACCESS_RW', 'ACCESS_WRITE', 'ADAPTIVE_THRESH_GAUSSIAN_C', 'ADAPTIVE_THRESH_MEAN_C', 'ALGO_HINT_ACCURATE', 'ALGO_HINT_APPROX', 'ALGO_HINT_DEFAULT', 'ALIKED', 'ALIKED_Params', 'ALIKED_create', 'ANNINDEX_DIST_ANGULAR', 'ANNINDEX_DIST_DOTPRODUCT', 'ANNINDEX_DIST_EUCLIDEAN', 'ANNINDEX_DIST_HAMMING', 'ANNINDEX_DIST_MANHATTAN', 'ANNIndex', 'ANNIndex_DIST_ANGULAR', 'ANNIndex_DIST_DOTPRODUCT', 'ANNIndex_DIST_EUCLIDEAN', 'ANNIndex_DIST_HAMMING', 'ANNIndex_DIST_MANHATTAN', 'ANNIndex_create', 'AffineFeature', 'AffineFeature_create', 'Algorithm', 'AlignExposures', 'AlignMTB']
+cv2 retry: /home/runner/.local/lib/python3.12/site-packages/cv2/__init__.py False
 job failed faces AttributeError("module 'cv2' has no attribute 'CascadeClassifier'")
 == job faces took 0 s
