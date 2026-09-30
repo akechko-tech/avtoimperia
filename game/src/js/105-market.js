@@ -96,8 +96,11 @@ function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
 function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
 function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer);}
-// Доля исторической марки игрока-первопроходца в классе: её место на рынке свободно
-function ghostShare(c,g,s){const cp=(COMPS[c]||[]).find(x=>x.pk===s.pioneer),S=segAnnual(c,g,s);let v=0;if(cp&&cp.mix&&cp.mix[g]&&S>0)v=compVol(cp,s)*cp.mix[g]/S;
+// Доля исторической марки игрока-первопроходца в классе: её место на рынке свободно.
+// 0.21: в Америке — лишь его часть (40%): место Ford в 1910-х заняли бы Buick, Willys, Chevrolet — играя за Форда, его ещё надо завоевать
+// (иначе сильный игрок за Форда к 1930 году вдвое больше настоящего Ford); в Европе первопроходец — национальная марка, место остаётся
+const GHOST_K={us:0.4};
+function ghostShare(c,g,s){const cp=(COMPS[c]||[]).find(x=>x.pk===s.pioneer),S=segAnnual(c,g,s);let v=0;if(cp&&cp.mix&&cp.mix[g]&&S>0)v=compVol(cp,s)*cp.mix[g]/S*(globalThis.GHOSTK??GHOST_K[c]??1);
   return Math.min(0.97,v+boughtShare(c,g,s));}
 // Сила конкурентов класса: подобрана по истории (CALIB), плюс сложность игры
 function kappa(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Object.keys(tb).length?tabAt(tb,yf(s)):-6;

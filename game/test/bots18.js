@@ -25,8 +25,8 @@ if(A[0]==='all'){
 const bot0=A[0]||'strong',noexp=bot0.endsWith('-noexp'),bot=bot0.replace('-noexp',''),country=A[1]||'us',seed=+(A[2]||7),diff=A[3]||'normal';
 require('./harness.js')(`
 Math.random=(()=>{let a=${seed}*7919%2147483647||1;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
-const BOT=${JSON.stringify(bot)},CC=${JSON.stringify(country)};if(process.env.USEDK)globalThis.USEDK=+process.env.USEDK;if(process.env.BSUS)globalThis.BSUS=+process.env.BSUS;
-newGame('custom',CC,'Бот','${diff}','Первая');
+const BOT=${JSON.stringify(bot)},CC=${JSON.stringify(country)};if(process.env.USEDK)globalThis.USEDK=+process.env.USEDK;if(process.env.BSUS)globalThis.BSUS=+process.env.BSUS;if(process.env.GHOSTK)globalThis.GHOSTK=+process.env.GHOSTK;
+newGame(${JSON.stringify(process.env.PION||'custom')},CC,'Бот','${diff}','Первая');${process.env.PB_OFF?`${JSON.stringify(process.env.PB_OFF.split(','))}.forEach(k=>{delete PIONEERS[G.pioneer].b[k];});`:''}
 const NOEXP=${noexp};if(BOT==='strong')G.helper={on:1,noExp:NOEXP?1:0};if(BOT==='debt')G.helper={on:1,keepLoan:1};
 let lastDesign=0,overY=0,peakV=0,peakY=0;
 const cls=()=>CC==='us'?(G.y>=1908?'people':'middle'):(G.y>=1920?'people':'middle');
