@@ -11,6 +11,8 @@ function planRoute(trk,rnd){
   // Монако: знаменитый тоннель у моря (с 1929 года)
   if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));planTunnel(trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно');}
   if(cfg.oval||rc.track==='board'||cfg.sprint||rc.track==='brooklands'||rc.track==='indy'||rc.track==='monaco')return;
+  // 0.21: настоящая местность — сценарий по карте, а не по жребию
+  if(trk.real){realPlan(trk);return;}
   const r=mulberry32(hashStr('route|'+rc.key)),hill=!!cfg.uphill,mount=hill||cfg.terr==='mount'||(!!set.mount&&cfg.hilly>=0.6),closed=cfg.closed;
   const s0=closed?0:trk.startIdx,f0=closed?n-1:trk.finishIdx,dry=!!set.dry||['it','es','ly','mc'].includes(cfg.host),wine=['fr','it','es','de','at'].includes(cfg.host);
   const put=(type,a,b,extra)=>{a=clamp(a,0,n-1);b=clamp(b,0,n-1);if(b<=a)return null;for(let i=a;i<=b;i++)S[i]=type;const o=Object.assign({type,i0:a,i1:b,i:Math.round((a+b)/2)},extra||{});list.push(o);return o;};

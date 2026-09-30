@@ -54,6 +54,8 @@ function adviceList(s){
   act.forEach(md=>{const uc=unitCost(md,s),net=md.price*(1-dMargin(s)),C=classCompare(md,s,home);
     if(net<uc*0.98&&(md.lastSold||0)>0){const np=Math.round(uc/(1-dMargin(s))*1.12/10)*10;add(85,'📉',`«${md.name}» продаётся в убыток: себестоимость ${money(uc)}, а вам с машины достаётся ${money(net)}.`,`Цена ${money(np)}`,()=>{md.price=np;},'models');}
     if(stockWarn(md)){const np=Math.max(20,Math.round(md.price*0.95/5)*5);add(70,'📦',`Машины «${md.name}» копятся на складе (${fmtN(md.stock)} шт.). Снизьте цену или выпуск.`,`Цена −5%`,()=>{md.price=np;},'models');}
+    // 0.21: подержанные своей марки — новая модель отвлечёт покупателей от перекупщиков
+    if(!dev.length&&usedPen(md,home,s)>0.25&&mi(s)-md.launched>=24)add(58,'🚙',`На дорогах много ваших машин прошлых лет, и перекупщики продают их дешевле новой «${md.name}». Новая модель — заметно другая — вернёт покупателей.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
   // КБ

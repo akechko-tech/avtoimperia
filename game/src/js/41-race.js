@@ -58,6 +58,11 @@ function trackCfg(rc){
   if(rc.track==='targa')Object.assign(c,{curvy:1,hilly:0.9,terr:'mount',host:'it'});
   if(rc.crowd)c.crowd=0.7;
   if(rc.terr){c.terr=rc.terr;if(c.stages)c.stages=[rc.terr,'mud',rc.terr];}
+  // 0.21: настоящая местность (40c-real.js). Круг в сотню километров в заезд не влезет — едем кусок круга по настоящим дорогам;
+  // овал Индианаполиса — целиком, в настоящую величину
+  const RD=typeof realData==='function'?realData(rc):null;
+  if(RD){c.real=1;if(RD.closed){c.len=RD.pts.length*RD.step;c.realLap=c.len;}else Object.assign(c,{closed:false,laps:1,pits:false,town:true});
+    if(RD.host==='it')c.host='it';if(RD.host==='ie')c.host='ie';}
   if(!SCEN_SETS[c.host])c.host='fr';
   // 0.19: зрители прямо на дороге (Париж — Мадрид, Кубок Вандербильта) — гуще и ближе к колее
   try{const S=scnFor(rc);if(S.crowdRoad){c.crowd=Math.max(c.crowd,0.75);c.crowdRoad=1;}}catch(_){}
@@ -66,9 +71,13 @@ function trackCfg(rc){
 /* ---------- track generation ---------- */
 function buildTrack(rc,vref){
   // длина под время заезда: 3–4 минуты игрового времени (подъём в гору и спринт — короче)
-  const cfg=trackCfg(rc);if(vref){const dur={road:205,circuit:215,endurance:245,hill:175,rally:220,oval:185,sprint:65}[rc.t]||200,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?800:700,cfg.closed?3800:9000);if(cfg.sprint)cfg.len=clamp(vref*62,700,2600);cfg.dur=dur;}
+  const cfg=trackCfg(rc);if(vref){const dur={road:205,circuit:215,endurance:245,hill:175,rally:220,oval:185,sprint:65}[rc.t]||200,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?800:700,cfg.closed?3800:9000);if(cfg.sprint)cfg.len=clamp(vref*62,700,2600);cfg.dur=dur;
+    // настоящий овал: круг своей длины, кругов — сколько влезет в заезд
+    if(cfg.realLap){cfg.len=cfg.realLap;cfg.laps=clamp(Math.round(total/cfg.realLap),1,3);}}
   const rnd=mulberry32(hashStr(rc.key)),STEP=4;let pts=[];
-  if(cfg.closed){
+  const RD=cfg.real&&typeof realData==='function'?realData(rc):null,RP=RD?realPoints(RD,cfg):null;
+  if(RP){pts=RP.pts;}
+  else if(cfg.closed){
     const fine=[];const M=3000;
     if(cfg.oval){const Rr=cfg.len*0.11,Ls=(cfg.len-2*Math.PI*Rr)/2;
       for(let i=0;i<M;i++){const u=i/M*cfg.len;let x,z;
@@ -120,6 +129,7 @@ function buildTrack(rc,vref){
   for(let i=0;i<n;i++){const a=T[closed?(i-1+n)%n:Math.max(0,i-1)],b=T[closed?(i+1)%n:Math.min(n-1,i+1)];const cr=a[0]*b[1]-a[1]*b[0],dt=a[0]*b[0]+a[1]*b[1];K.push(Math.atan2(cr,dt)/(2*STEP));}
   const W=cfg.width,terrAt=i=>cfg.stages?cfg.stages[Math.min(2,Math.floor(i/n*3))]:cfg.terr;
   const trk={pts,T,N,K,n,step:STEP,closed,len:n*STEP,W,cfg,terrAt,col:[],grid:{},rc,spr:[],bar:[]};
+  if(RP)trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy};
   trk.startIdx=closed?0:30;trk.finishIdx=closed?0:n-40;
   trk.raceLen=closed?cfg.laps*trk.len:(trk.finishIdx-trk.startIdx)*STEP;
   trk.cgrid={};for(let i=0;i<n;i+=2){const k=Math.floor(pts[i][0]/30)+','+Math.floor(pts[i][2]/30);(trk.cgrid[k]=trk.cgrid[k]||[]).push(i);}

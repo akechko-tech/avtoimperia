@@ -67,6 +67,8 @@ p{margin:0}
 .btn.block{width:100%;padding:12px}
 .btn.sm{padding:5px 9px;font-size:13px}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
+/* длинная кнопка («Сборка в Канаде (льгота для стран Империи) · $118 000») — в две строки, а не за край экрана */
+#view .btns>.btn,#sheet .btns>.btn{max-width:100%;white-space:normal}
 .step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:5px;overflow:hidden}
 .step button{background:var(--panel2);border:0;width:38px;height:36px;font-size:18px;cursor:pointer}
 .step span{min-width:84px;text-align:center;font-family:var(--mono);font-size:15px}
@@ -529,6 +531,8 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .rf-card{position:absolute;left:6%;right:6%;bottom:14%;z-index:2;text-align:left;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .8s ease;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9)}
 .r-film.loading .rf-card{top:34%;bottom:auto;text-align:center;opacity:1;transform:none}
 .rf-card.in{opacity:1;transform:none}
+.rf-mapw{max-width:min(460px,78vw);margin-bottom:8px;border-radius:4px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.6);filter:sepia(.18)}
+.rf-mapw svg{display:block;width:100%;height:auto}
 .rf-kick{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#e2c47a}
 .rf-big{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(26px,6.4vw,54px);line-height:1.02;margin-top:4px;color:#fbf4e2}
 .rf-mid{font-family:'Old Standard TT',Georgia,serif;font-size:clamp(19px,4.4vw,32px);line-height:1.15;margin-top:4px;color:#fbf4e2}
@@ -2263,11 +2267,12 @@ function worldMap(s){const home=s.country,xy=WORLD_XY,L=s.last;
 function worldRow(s,c){const home=s.country,A=accessOf(s,c),act=s.models.filter(m=>m.status==='prod'),md=act.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],L=s.last,mk=L&&L.mk&&L.mk[c],sold=mk?mk.sold||0:0;
   if(c===home)return `<tr><td><b>${COUNTRIES[c].name}</b> <small class="muted">дома</small></td><td>—</td><td class="n">${fmtN(sold)}</td><td class="n">${md?money(md.price*(1-dMargin(s))-unitCost(md,s)):'—'}</td></tr>`;
   const r=ruleNow(s,c);let perCar='—';if(md&&!A.k.startsWith('ban')){const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=impOf(s,c),net=licOn(s,c)?md.price*LIC_ROY:(md.price*(1-dMargin(s)-(IL&&IL.cut||0))-sh)*fxOf(s,c)-unitCost(md,s);perCar=money(net)+(tf>0?` <small class="muted">(пошлина ${Math.round(tf*100)}%${sh>0?`, доставка ${money(sh)}`:''})</small>`:sh>0?` <small class="muted">(доставка ${money(sh)})</small>`:'');}
-  return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':(s.bought&&s.bought[c])?'марка «'+s.bought[c].n+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(r.why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
+  const tp=md?tastePen(md,c,s):0,why=r.why+(tp>0.3?(r.why?'; ':'')+'вкус: берут свои машины':'');
+  return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':(s.bought&&s.bought[c])?'марка «'+s.bought[c].n+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
 function worldCard(s){const C=Object.keys(COUNTRIES);
   return `<section class="card worldc" id="sec-world"><div class="row"><h2>🌍 Мир</h2><span class="pill">${C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length} ${plural(C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length,'рынок','рынка','рынков')} за границей</span></div>
     ${worldMap(s)}
-    <p class="small muted" style="margin-top:4px">Цвет — доступ: <span style="color:#74d39a">●</span> свободно или свой завод, <span style="color:#f0c75e">●</span> пошлина, <span style="color:#f09a4e">●</span> высокая пошлина, <span style="color:#b48ae0">●</span> квота, <span style="color:#e0655a">●</span> ввоз запрещён. Машина, ввезённая целиком, платит пошлину и доставку; собранная из комплектов — пошлину только на детали; свой завод или купленная местная марка — как своя.</p>
+    <p class="small muted" style="margin-top:4px">Цвет — доступ: <span style="color:#74d39a">●</span> свободно или свой завод, <span style="color:#f0c75e">●</span> пошлина, <span style="color:#f09a4e">●</span> высокая пошлина, <span style="color:#b48ae0">●</span> квота, <span style="color:#e0655a">●</span> ввоз запрещён. Машина, ввезённая целиком, платит пошлину и доставку; собранная из комплектов — пошлину только на детали; свой завод или купленная местная марка — как своя. Вкус рынка: в Европе налог на мощность бьёт по большим моторам, а американцы берут свои машины — европейской там трудно даже со своим заводом.</p>
     <table class="pl world-t" style="margin-top:8px"><tr><th>Страна</th><th>Доступ</th><th class="n">Продано</th><th class="n">Вам с машины</th></tr>${C.map(c=>worldRow(s,c)).join('')}</table></section>`;}
 
 /* ================= CALIB: сила конкурентов по истории (генерируется test/calib.js) ================= */
@@ -2968,8 +2973,10 @@ function playerLegacy(s){
 }
 function histLegacy(h){return legacyParts({peak:h.peak,share:h.share,abroad:h.c==='us'?1:0,firsts:h.firsts,techs:8,wins:h.wins,minor:h.wins,titles:h.titles,val:h.val,rep:h.rep,legend:h.legend?40:0});}
 const LEG_NAMES={scale:'Масштаб',market:'Рынок',innov:'Инновации',sport:'Спорт',capital:'Капитал',brand:'Бренд'};
+// марка из истории, которую в этой партии основали вы (играя за Генри Форда, соревнуетесь и с «историческим Ford» — тем, что был на самом деле)
+const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT'};
 function legacyTable(s){
-  const me=playerLegacy(s);const rows=HIST_CO.map(h=>({n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
+  const me=playerLegacy(s),tw=LEG_TWIN[s.pioneer];const rows=HIST_CO.map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
   rows.push({n:s.company,c:s.country,you:1,p29:s.peak.year||0,val:companyValue(s),L:me});
   rows.sort((a,b)=>b.L.total-a.L.total);return {rows,me,place:rows.findIndex(r=>r.you)+1};
 }
@@ -3153,6 +3160,8 @@ function adviceList(s){
   act.forEach(md=>{const uc=unitCost(md,s),net=md.price*(1-dMargin(s)),C=classCompare(md,s,home);
     if(net<uc*0.98&&(md.lastSold||0)>0){const np=Math.round(uc/(1-dMargin(s))*1.12/10)*10;add(85,'📉',`«${md.name}» продаётся в убыток: себестоимость ${money(uc)}, а вам с машины достаётся ${money(net)}.`,`Цена ${money(np)}`,()=>{md.price=np;},'models');}
     if(stockWarn(md)){const np=Math.max(20,Math.round(md.price*0.95/5)*5);add(70,'📦',`Машины «${md.name}» копятся на складе (${fmtN(md.stock)} шт.). Снизьте цену или выпуск.`,`Цена −5%`,()=>{md.price=np;},'models');}
+    // 0.21: подержанные своей марки — новая модель отвлечёт покупателей от перекупщиков
+    if(!dev.length&&usedPen(md,home,s)>0.25&&mi(s)-md.launched>=24)add(58,'🚙',`На дорогах много ваших машин прошлых лет, и перекупщики продают их дешевле новой «${md.name}». Новая модель — заметно другая — вернёт покупателей.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
   // КБ
@@ -6741,8 +6750,10 @@ function vLog(){
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
 let shownCash=null,cashRaf=0,lastDate='';
-function setCash(v){const el=document.getElementById('cash');el.className=v<0?'neg':'';if(shownCash===null||REDUCE){shownCash=v;el.textContent=money(v);return;}
-  const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=money(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
+// касса в шапке: от $10 млн — коротко («$22,1 млн», «$1,25 млрд»), чтобы шапка помещалась на узком экране
+const moneyC=v=>{const a=Math.abs(v),sg=v<0?'−':'';return a>=1e9?sg+'$'+(a/1e9).toFixed(2).replace('.',',')+' млрд':a>=1e7?sg+'$'+(a/1e6).toFixed(a>=1e8?0:1).replace('.',',')+' млн':money(v);};
+function setCash(v){const el=document.getElementById('cash');el.className=v<0?'neg':'';el.title=money(v);if(shownCash===null||REDUCE){shownCash=v;el.textContent=moneyC(v);return;}
+  const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=moneyC(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
 // широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
 function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
 function render(){
@@ -7005,6 +7016,7 @@ function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button c
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
   <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons, общественное достояние.</p>
   <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p>
+  <p id="abReal">Трассы «Париж — Мадрид», «Тарга Флорио», Гран-при АКФ 1906 года, Кубок Гордона Беннетта в Ирландии и Индианаполис построены по настоящей местности, отмотанной к году гонки: рельеф — Copernicus DEM GLO-30 (© DLR e.V. 2010–2014 и © Airbus Defence and Space GmbH 2014–2018, предоставлено по программе Copernicus Европейским союзом и ЕКА); дороги, реки, леса, города и железные дороги — © участники OpenStreetMap (лицензия ODbL, openstreetmap.org/copyright); цвет земли — Sentinel-2 cloudless 2016 by EOX IT Services GmbH (CC BY 4.0; содержит изменённые данные Copernicus Sentinel 2016).</p>
   <p id="abMus">Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.</p>
   <p id="abSfx">Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.</p>
   <p id="abFace">Лица ${Object.keys(typeof FACES!=='undefined'?FACES:{}).length} гонщиков на трассе — по их историческим снимкам с Wikimedia Commons: ${aboutFaceCredits()}.</p><p class="muted">Версия ${GAME_VER}</p></div>`);
@@ -7237,7 +7249,7 @@ Object.assign(RACE_ACT,{
     s.cash-=tot.total;const n=RS.entries.length;
     addLog(`Заявка на «${rc.name}»: ${n} ${plural(n,'машина','машины','машин')}, расходы ${money(tot.total)}.`);
     const setup={rc,mode:RS.mode,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
-    RS=null;closeSheet();stopAuto();save();startRace(setup);}
+    RS=null;closeSheet();stopAuto();save();realLoad(setup.rc,()=>startRace(setup));}
 });
 
 // 0.19: как проходила гонка на самом деле — старт, час, погода
@@ -7260,6 +7272,8 @@ function planRoute(trk,rnd){
   // Монако: знаменитый тоннель у моря (с 1929 года)
   if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));planTunnel(trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно');}
   if(cfg.oval||rc.track==='board'||cfg.sprint||rc.track==='brooklands'||rc.track==='indy'||rc.track==='monaco')return;
+  // 0.21: настоящая местность — сценарий по карте, а не по жребию
+  if(trk.real){realPlan(trk);return;}
   const r=mulberry32(hashStr('route|'+rc.key)),hill=!!cfg.uphill,mount=hill||cfg.terr==='mount'||(!!set.mount&&cfg.hilly>=0.6),closed=cfg.closed;
   const s0=closed?0:trk.startIdx,f0=closed?n-1:trk.finishIdx,dry=!!set.dry||['it','es','ly','mc'].includes(cfg.host),wine=['fr','it','es','de','at'].includes(cfg.host);
   const put=(type,a,b,extra)=>{a=clamp(a,0,n-1);b=clamp(b,0,n-1);if(b<=a)return null;for(let i=a;i<=b;i++)S[i]=type;const o=Object.assign({type,i0:a,i1:b,i:Math.round((a+b)/2)},extra||{});list.push(o);return o;};
@@ -7332,6 +7346,90 @@ function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
       const ends=sstep(-12,14,Math.min(i-c.i0,c.i1-i)),w=sstep(16,70,d-trk.W/2)*ends,tg=p[1]+(sea-6-p[1])*w;if(w>0.02){F.H[q]=Math.min(F.H[q],tg);F.G[q]=Math.min(F.G[q],F.H[q]);carved=w>0.5;}}
     if(!carved&&F.H[q]<sea+0.8){F.H[q]=sea+0.8;F.G[q]=Math.max(F.G[q],F.H[q]-0.45);}}}
 
+/* ================= РЕАЛЬНЫЕ ТРАССЫ (ТЗ 0.18, раздел 2): рельеф, реки, леса, города — по открытым картам ================= */
+// Для гонок-эталонов трасса строится по настоящей местности: рельеф Copernicus DEM GLO-30, дороги, реки, леса, виноградники,
+// города и железные дороги OpenStreetMap, цвет земли — Sentinel-2 (EOX). Данные готовит задание terrain в ветке media
+// (tools/media/terrain.py): маршрут по старой схеме гонки — по дорогам, без автомагистралей; города ужаты к году гонки,
+// железные дороги — только построенные к нему, водохранилищ, аэродромов и заводов нет. tools/sync_media.py кладёт результат
+// в docs/terrain/<id>.js; перед гонкой файл подгружается скриптом (в APK со страницы file:// тоже работает).
+// Нет файла (или старый браузер) — прежний генератор сценариев.
+const REAL_RACES={pm1903:{},targa:{},gpacf:{years:[1906]},gb1903:{},indy:{}};
+window.REAL_TRACKS=window.REAL_TRACKS||{};
+function realIdOf(rc){if(!rc)return null;const R=REAL_RACES[rc.id];if(!R||(R.years&&!R.years.includes(rc.y)))return null;return rc.id;}
+function realData(rc){const id=realIdOf(rc);return id?window.REAL_TRACKS[id]||null:null;}
+// подгрузить данные трассы до постройки (не дольше 4 с)
+function realLoad(rc,cb){const id=realIdOf(rc);if(!id||window.REAL_TRACKS[id]||typeof document==='undefined'||!document.head||!document.head.appendChild){cb();return;}
+  let done=false;const fin=()=>{if(done)return;done=true;cb();};
+  try{const s=document.createElement('script');s.src='terrain/'+id+'.js';s.onload=fin;s.onerror=fin;document.head.appendChild(s);}catch(_){fin();return;}
+  setTimeout(fin,4000);}
+// сетка высот: по строкам — первое значение int16, дальше приращения int8 (метры)
+function realGridH(G){if(G.H)return G.H;const b=atob(G.h),H=new Float32Array(G.nx*G.nz);let o=0;
+  for(let j=0;j<G.nz;j++){let v=b.charCodeAt(o)|(b.charCodeAt(o+1)<<8);if(v>=32768)v-=65536;o+=2;H[j*G.nx]=v;
+    for(let k=1;k<G.nx;k++){let d=b.charCodeAt(o++);if(d>=128)d-=256;v+=d;H[j*G.nx+k]=v;}}
+  G.H=H;return H;}
+function realGridC(G){if(G.C)return G.C;const C=new Uint8Array(G.nx*G.nz);if(G.cover)G.cover.forEach((row,j)=>{let k=0;for(let a=0;a<row.length;a+=2){C.fill(row[a],j*G.nx+k,j*G.nx+k+row[a+1]);k+=row[a+1];}});G.C=C;return C;}
+// высота земли (метры над стартом трассы) в точке игры; вне сетки — край сетки
+function realGridAt(G,x,z,dx,dz,dy){const H=realGridH(G),fx=clamp((x+dx-G.x0)/G.S,0,G.nx-1.001),fz=clamp((z+dz-G.z0)/G.S,0,G.nz-1.001),k=Math.floor(fx),j=Math.floor(fz),u=fx-k,v=fz-j,q=j*G.nx+k;
+  return (H[q]*(1-u)+H[q+1]*u)*(1-v)+(H[q+G.nx]*(1-u)+H[q+G.nx+1]*u)*v-dy;}
+function realH(T,x,z){const R=T.real,D=R.d;return realGridAt(D.near,x,z,R.dx,R.dz,R.dy);}
+function realFarH(T,x,z){const R=T.real,D=R.d,G=D.far,X1=G.x0+(G.nx-1)*G.S-R.dx,Z1=G.z0+(G.nz-1)*G.S-R.dz;
+  if(x<G.x0-R.dx||z<G.z0-R.dz||x>X1||z>Z1)return null;return realGridAt(G,x,z,R.dx,R.dz,R.dy);}
+function realCover(T,x,z){const R=T.real,G=R.d.near,k=Math.round((x+R.dx-G.x0)/G.S),j=Math.round((z+R.dz-G.z0)/G.S);if(k<0||j<0||k>=G.nx||j>=G.nz)return 0;return realGridC(G)[j*G.nx+k];}
+// Кусок маршрута под длину заезда: там, где больше примет (мост, переезд, город, берег, подъём)
+const REAL_TY=['fields','town','village','forest','avenue','bridge','rail','serp','coast','vine'];
+function realWindow(D,len){const n8=D.pts.length,w=Math.min(n8,Math.round(len/D.step)+1);if(D.closed||w>=n8)return [0,n8];
+  // очки куска: мост, переезд, въезд в город — штучно; серпантин и берег — за каждый метр (самое красивое — ехать)
+  const sc=new Float32Array(n8);(D.bridges||[]).forEach(b=>sc[b.i]+=4);(D.rails||[]).forEach(r=>sc[r.i]+=2.5);(D.coast||[]).forEach(c=>{for(let k=c.i0;k<=c.i1;k++)sc[k]+=0.02;});
+  (D.seg||[]).forEach(s=>{if(s[0]===1)sc[s[1]]+=1.5;if(s[0]===7)for(let k=s[1];k<=s[2];k++)sc[k]+=0.03;if(s[0]===3)for(let k=s[1];k<=s[2];k++)sc[k]+=0.002;});(D.notes||[]).forEach(q=>{if(q.t==='climb'||q.t==='descent')sc[q.i]+=1;});
+  let best=0,bi=0;for(let a=0;a+w<=n8;a+=6){let s=0;for(let k=a+8;k<a+w-6;k++)s+=sc[k];s-=a*0.0004;if(s>best+1e-6){best=s;bi=a;}}return [bi,bi+w];}
+// Точки трассы игры (шаг 4 м) по реальному маршруту (шаг 8 м); начало куска — в нуле
+function realPoints(D,cfg){const n8=D.pts.length,len=D.closed?D.pts.length*D.step:cfg.len;const [a,b]=realWindow(D,len),P=D.pts,p0=P[a];
+  const out=[],dx=p0[0]/10,dz=p0[1]/10,dy=p0[2]/10;
+  for(let k=a;k<b;k++){const p=P[k],q=P[D.closed?(k+1)%n8:Math.min(n8-1,k+1)];const x=p[0]/10-dx,z=p[1]/10-dz,y=p[2]/10-dy;out.push([x,y,z]);
+    if(k<b-1||D.closed)out.push([(x+q[0]/10-dx)/2,(y+q[2]/10-dy)/2,(z+q[1]/10-dz)/2]);}
+  return {pts:out,a,b,dx:dx,dz:dz,dy:dy+D.y0};}
+// Сценарий по настоящей карте: города с именами, мосты через настоящие реки, переезды, берег, леса и виноградники
+function realPlan(trk){const R=trk.real,D=R.d,S=trk.segT,list=trk.seg,n=trk.n,a=R.a,rnd=mulberry32(hashStr('real|'+D.id));
+  const map=i8=>{const i=(i8-a)*2;return D.closed?((i%n)+n)%n:i;},inW=i=>i>=0&&i<n;
+  const TY={0:RSEG.fields,1:RSEG.town,2:RSEG.village,3:RSEG.forest,4:RSEG.avenue,5:RSEG.bridge,6:RSEG.rail,7:RSEG.serp,8:RSEG.coast,9:RSEG.vine};
+  const put=(type,i0,i1,extra)=>{i0=clamp(i0,0,n-1);i1=clamp(i1,0,n-1);if(i1<i0)return null;for(let i=i0;i<=i1;i++)S[i]=type;const o=Object.assign({type,i0,i1,i:Math.round((i0+i1)/2)},extra||{});list.push(o);return o;};
+  (D.seg||[]).forEach(e=>{const t=TY[e[0]];if(t===undefined||t===RSEG.bridge||t===RSEG.rail||t===RSEG.coast)return;const i0=map(e[1]),i1=map(e[2]);if(i1<0||i0>=n)return;
+    let cap;if(t===RSEG.town)cap=e[3]?`${e[3]}: узкая улица, мостовая, зрители у домов`:null;else if(t===RSEG.village)cap=e[3]?`${e[3]}: деревня у дороги`:undefined;
+    // во Франции старые национальные дороги — аллеи платанов: часть полей — аллеи
+    if(t===RSEG.fields&&trk.cfg.host==='fr'&&i1-i0>120){let i=i0;while(i<i1){const L=60+Math.floor(rnd()*90),use=rnd()<0.45;put(use?RSEG.avenue:RSEG.fields,i,Math.min(i1,i+L-1));i+=L;}return;}
+    put(t,Math.max(0,i0),Math.min(n-1,i1),cap===undefined?{}:{cap});});
+  (D.bridges||[]).forEach(b=>{const i=map(b.i);if(!inW(i)||i<6||i>n-6)return;const span=Math.max(9,Math.min(24,(b.i1-b.i0+2)));const nm=b.name&&b.name!=='—'?b.name:'';
+    put(RSEG.bridge,i-span,i+span,{cap:nm?`Мост через реку ${nm}`:'Мост через реку',alt:34,w:3});for(let q=i-span;q<=i+span;q++)if(inW(q))trk.bridge[q]=1;
+    trk.rivers.push({i,w:14+rnd()*10,d:4.5+rnd()*2,ph:rnd()*6.28,name:nm||'реку'});});
+  (D.rails||[]).forEach(r=>{const i=map(r.i);if(!inW(i)||i<8||i>n-8)return;put(RSEG.rail,i-6,i+6,{cap:r.name?`Переезд: ${r.name}`:'Железнодорожный переезд: смотрите на шлагбаум',alt:26,w:2});trk.rails.push({i,ang:clamp(r.ang||0,-0.6,0.6)});});
+  (D.coast||[]).forEach(c=>{const i0=map(c.i0),i1=map(c.i1);if(i1<0||i0>=n)return;put(RSEG.coast,Math.max(0,i0),Math.min(n-1,i1),{cap:'Дорога вдоль моря',alt:40,w:4,side:c.side});trk.coast.push({i0:Math.max(0,i0),i1:Math.min(n-1,i1),side:c.side,sea:-R.dy-1.2});});
+  // серпантин из данных (два крутых поворота и уклон) — горный, со скалой и обрывом, только среди гор (перепад рельефа вокруг ≥ 60 м, Мадоние);
+  // в мягких холмах (Сарта) это просто подъём или спуск с поворотами — без скал и тумб
+  list.forEach(o=>{if(o.type!==RSEG.serp)return;const m=trk.pts[o.i];let lo=1e9,hi=-1e9;for(let u=-4;u<=4;u++)for(let v=-4;v<=4;v++){const h=realH(trk,m[0]+u*50,m[2]+v*50);if(h<lo)lo=h;if(h>hi)hi=h;}
+    if(hi-lo>=60)return;o.type=RSEG.fields;for(let i=o.i0;i<=o.i1;i++)S[i]=RSEG.fields;o.cap=(trk.pts[o.i1][1]>=trk.pts[o.i0][1]?'Подъём':'Спуск')+' с поворотами: тормозите до поворота';});
+  // старт и финиш дорожной гонки — там, где они на карте (город, если он есть)
+  list.forEach(o=>{if(o.cap===undefined)o.cap=o.type===RSEG.serp?'Серпантин: скала с одной стороны, обрыв — с другой':o.type===RSEG.forest&&o.i1-o.i0>90?'Лесная дорога: тень и корни':o.type===RSEG.avenue?'Аллея платанов: деревья у самой дороги':o.type===RSEG.vine?'Виноградники по склонам':null;});}
+// Приметы для заставки: что впереди на этом куске настоящей карты
+function realNotes(trk){const R=trk.real,D=R.d,n=trk.n,out=[],map=i8=>(i8-R.a)*2;
+  (D.notes||[]).forEach(q=>{const i=map(q.i);if(i<0||i>=n)return;const km=Math.max(0,Math.round((i-trk.startIdx)*trk.step/100)/10);
+    const t=q.t==='town'?`${q.n} — город на пути`:q.t==='bridge'?`мост через реку ${q.n&&q.n!=='—'?q.n:''}`.trim():q.t==='rail'?'железнодорожный переезд':q.t==='coast'?'дорога вдоль моря':q.t==='climb'?`подъём на ${q.m} м`:q.t==='descent'?`спуск на ${q.m} м`:'';
+    if(t)out.push({km,t});});
+  return out.slice(0,5);}
+// Карта для заставки: стилизация под карту эпохи — сепия, штриховка рек, города кружками, маршрут гонки красным
+function realMapSVG(trk){const D=trk.real.d,M=D.map;if(!M||!M.route||M.route.length<2)return '';
+  const [s,w]=M.bbox[0],[nn,e]=M.bbox[1],W=300,Hh=Math.round(W*((nn-s)*110.5)/Math.max(0.1,((e-w)*111.3*Math.cos(s*Math.PI/180))));const H=clamp(Hh,150,300);
+  const X=lo=>((lo-w)/(e-w)*W).toFixed(1),Y=la=>((nn-la)/(nn-s)*H).toFixed(1),line=P=>P.map((p,i)=>(i?'L':'M')+X(p[1])+' '+Y(p[0])).join('');
+  // кусок гонки на этой карте — по точкам окна
+  const a=trk.real.a,b=trk.real.b,pr=D.pts,ll=p=>{const k=D.ll0;return [k[0]+p[1]/10/110540,k[1]+p[0]/10/(Math.cos(k[0]*Math.PI/180)*111320)];},seg=[];for(let k=a;k<b;k+=6)seg.push(ll(pr[k]));seg.push(ll(pr[b-1]));
+  const rv=(M.rivers||[]).map(r=>`<path d="${line(r.p)}" stroke="#5f7f9c" stroke-width="1.6" fill="none" opacity=".85"/>`).join('');
+  const rl=(M.rails||[]).map(r=>`<path d="${line(r)}" stroke="#3b3024" stroke-width="1.2" fill="none" stroke-dasharray="4 2"/>`).join('');
+  const cs=(M.coast||[]).map(r=>`<path d="${line(r)}" stroke="#4f6f8c" stroke-width="2" fill="none"/>`).join('');
+  const tw=(M.towns||[]).slice(0,12).map(t=>{const big=t.pl==='city'||t.pl==='town';return `<g><circle cx="${X(t.ll[1])}" cy="${Y(t.ll[0])}" r="${big?4:2.4}" fill="${big?'#7a2e1f':'#5a4a36'}"/><text x="${+X(t.ll[1])+5}" y="${+Y(t.ll[0])-4}" font-size="${big?10:8}" fill="#2e2418" font-family="Georgia,serif" font-style="${big?'normal':'italic'}">${esc(t.n)}</text></g>`;}).join('');
+  return `<svg class="rf-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Карта трассы"><rect width="${W}" height="${H}" fill="#e9dcc0"/><rect x="3" y="3" width="${W-6}" height="${H-6}" fill="none" stroke="#6b5a40" stroke-width="1"/>${cs}${rv}${rl}
+    <path d="${line(M.route)}" stroke="#8a6f4a" stroke-width="2" fill="none" opacity=".55"/><path d="${line(seg)}" stroke="#b3261e" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <circle cx="${X(seg[0][1])}" cy="${Y(seg[0][0])}" r="4" fill="#fff" stroke="#b3261e" stroke-width="2"/>${tw}
+    <text x="${W-8}" y="${H-8}" text-anchor="end" font-size="7" fill="#6b5a40" font-family="Georgia,serif">© OpenStreetMap · Copernicus DEM</text></svg>`;}
+
 /* ================= RACE ENGINE: track, vehicle physics, AI, lifecycle ================= */
 const GRAV=9.81;
 // Жёсткость шин (на рад угла увода) и «держалка» для машины игрока — подобраны так, чтобы машина ехала туда, куда смотрит нос
@@ -7392,6 +7490,11 @@ function trackCfg(rc){
   if(rc.track==='targa')Object.assign(c,{curvy:1,hilly:0.9,terr:'mount',host:'it'});
   if(rc.crowd)c.crowd=0.7;
   if(rc.terr){c.terr=rc.terr;if(c.stages)c.stages=[rc.terr,'mud',rc.terr];}
+  // 0.21: настоящая местность (40c-real.js). Круг в сотню километров в заезд не влезет — едем кусок круга по настоящим дорогам;
+  // овал Индианаполиса — целиком, в настоящую величину
+  const RD=typeof realData==='function'?realData(rc):null;
+  if(RD){c.real=1;if(RD.closed){c.len=RD.pts.length*RD.step;c.realLap=c.len;}else Object.assign(c,{closed:false,laps:1,pits:false,town:true});
+    if(RD.host==='it')c.host='it';if(RD.host==='ie')c.host='ie';}
   if(!SCEN_SETS[c.host])c.host='fr';
   // 0.19: зрители прямо на дороге (Париж — Мадрид, Кубок Вандербильта) — гуще и ближе к колее
   try{const S=scnFor(rc);if(S.crowdRoad){c.crowd=Math.max(c.crowd,0.75);c.crowdRoad=1;}}catch(_){}
@@ -7400,9 +7503,13 @@ function trackCfg(rc){
 /* ---------- track generation ---------- */
 function buildTrack(rc,vref){
   // длина под время заезда: 3–4 минуты игрового времени (подъём в гору и спринт — короче)
-  const cfg=trackCfg(rc);if(vref){const dur={road:205,circuit:215,endurance:245,hill:175,rally:220,oval:185,sprint:65}[rc.t]||200,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?800:700,cfg.closed?3800:9000);if(cfg.sprint)cfg.len=clamp(vref*62,700,2600);cfg.dur=dur;}
+  const cfg=trackCfg(rc);if(vref){const dur={road:205,circuit:215,endurance:245,hill:175,rally:220,oval:185,sprint:65}[rc.t]||200,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?800:700,cfg.closed?3800:9000);if(cfg.sprint)cfg.len=clamp(vref*62,700,2600);cfg.dur=dur;
+    // настоящий овал: круг своей длины, кругов — сколько влезет в заезд
+    if(cfg.realLap){cfg.len=cfg.realLap;cfg.laps=clamp(Math.round(total/cfg.realLap),1,3);}}
   const rnd=mulberry32(hashStr(rc.key)),STEP=4;let pts=[];
-  if(cfg.closed){
+  const RD=cfg.real&&typeof realData==='function'?realData(rc):null,RP=RD?realPoints(RD,cfg):null;
+  if(RP){pts=RP.pts;}
+  else if(cfg.closed){
     const fine=[];const M=3000;
     if(cfg.oval){const Rr=cfg.len*0.11,Ls=(cfg.len-2*Math.PI*Rr)/2;
       for(let i=0;i<M;i++){const u=i/M*cfg.len;let x,z;
@@ -7454,6 +7561,7 @@ function buildTrack(rc,vref){
   for(let i=0;i<n;i++){const a=T[closed?(i-1+n)%n:Math.max(0,i-1)],b=T[closed?(i+1)%n:Math.min(n-1,i+1)];const cr=a[0]*b[1]-a[1]*b[0],dt=a[0]*b[0]+a[1]*b[1];K.push(Math.atan2(cr,dt)/(2*STEP));}
   const W=cfg.width,terrAt=i=>cfg.stages?cfg.stages[Math.min(2,Math.floor(i/n*3))]:cfg.terr;
   const trk={pts,T,N,K,n,step:STEP,closed,len:n*STEP,W,cfg,terrAt,col:[],grid:{},rc,spr:[],bar:[]};
+  if(RP)trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy};
   trk.startIdx=closed?0:30;trk.finishIdx=closed?0:n-40;
   trk.raceLen=closed?cfg.laps*trk.len:(trk.finishIdx-trk.startIdx)*STEP;
   trk.cgrid={};for(let i=0;i<n;i+=2){const k=Math.floor(pts[i][0]/30)+','+Math.floor(pts[i][2]/30);(trk.cgrid[k]=trk.cgrid[k]||[]).push(i);}
@@ -9792,6 +9900,9 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   let n=0;try{n=+localStorage.getItem('avt-film')||0;}catch(_){}
   const T=R.trk,rc=R.rc,cfg=T.cfg,W=R.wx||{mood:'clear'},s0=T.startIdx,me=R.follow,poi=filmPOI(),shots=[];
   const sp=trkAt(s0,0),fw=[sp.t[0],0,sp.t[1]],side=[sp.n[0],0,sp.n[1]];
+  // 0) настоящая местность: карта куска маршрута (стилизация под карту эпохи) и приметы впереди — высоко над стартом
+  if(T.real){const svg=realMapSVG(T),notes=realNotes(T);if(svg)shots.push({d:5.2,cap:{kick:'По настоящей карте · '+rc.y,map:svg,list:notes.length?['Впереди:',...notes.map(q=>(q.km?q.km.toFixed(1).replace('.',',')+' км — ':'')+q.t)]:[]},
+    cam:u=>{const e=ease(u),a=trkSmooth(s0,-260+60*e,-60),look=trkSmooth(s0,160);return {eye:[a.p[0],a.p[1]+210-40*e,a.p[2]],look:[look.p[0],look.p[1],look.p[2]],fov:0.9};}});}
   // 1) над стартом: высоко сзади — плавно вниз к машинам
   const brief=typeof scnBrief==='function'?scnBrief():'',dIn=voiceDur(raceIntroText(rc),'aidar'),dB=brief?voiceDur(brief,'aidar'):0;
   shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}${R.scn?' · '+scnClockTxt():''}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
@@ -9825,7 +9936,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;
-  el.innerHTML=(c.kick?`<div class="rf-kick">${esc(c.kick)}</div>`:'')+(c.big?`<div class="rf-big">${esc(c.big)}</div>`:'')+(c.mid?`<div class="rf-mid">${esc(c.mid)}</div>`:'')+(c.sub?`<div class="rf-sub">${esc(c.sub)}</div>`:'')+(c.list&&c.list.length?`<div class="rf-list">${c.list.map((x,i)=>`<div${i?'':' class="h"'}>${esc(x)}</div>`).join('')}</div>`:'');
+  el.innerHTML=(c.map?`<div class="rf-mapw">${c.map}</div>`:'')+(c.kick?`<div class="rf-kick">${esc(c.kick)}</div>`:'')+(c.big?`<div class="rf-big">${esc(c.big)}</div>`:'')+(c.mid?`<div class="rf-mid">${esc(c.mid)}</div>`:'')+(c.sub?`<div class="rf-sub">${esc(c.sub)}</div>`:'')+(c.list&&c.list.length?`<div class="rf-list">${c.list.map((x,i)=>`<div${i?'':' class="h"'}>${esc(x)}</div>`).join('')}</div>`:'');
   el.classList.add('in');}
 function filmCam(dt,W,H){const F=R.film;if(!F){R3.camHook=null;return;}F.t+=Math.min(dt,1/30);let acc=0,i=0;for(;i<F.shots.length;i++){if(F.t<acc+F.shots[i].d)break;acc+=F.shots[i].d;}
   if(i>=F.shots.length){filmEnd();r3dCamera(dt,W,H);return;}
@@ -12090,7 +12201,10 @@ function r3dField(T){
   const mount=!!(set.mount||cfg.terr==='mount'||cfg.uphill),flat=!!(set.flat||cfg.oval||cfg.sprint||T.rc.track==='board'),beach=cfg.terr==='beach';
   // горы: Альпы, Сицилия, Пиренеи, Скалистые горы — высокие; холмы Англии и Германии — пониже
   const alp=mount&&(['it','at','ch','es','mc'].includes(cfg.host)||['targa','nurb'].includes(T.rc.track)||/pikes|ventoux|turbie|klausen|semmering/.test(T.rc.id)),amp=flat?2.4:alp?22:mount?11:5+9*(cfg.hilly||0.3);
+  const real=!!T.real;
   for(let q=0;q<N;q++){const k=q%nx,j=(q/nx)|0,x=x0+k*S,z=z0+j*S,d=D[q],w=sstep(W/2+9,W/2+110,d);
+    // настоящая местность: у дороги — её полотно, дальше — рельеф Copernicus (и чуть мелкой неровности)
+    if(real){H[q]=B[q]+(realH(T,x,z)-B[q])*w+(vnz(x/60,z/60,seed+3)-0.5)*1.4*w;continue;}
     let h=B[q]+(fbm2(x/240,z/240,seed,3)-0.47)*2*amp*w+(vnz(x/60,z/60,seed+3)-0.5)*amp*0.18*w;
     if(mount&&I[q]>=0){const side=Sg[q]*(vnz(I[q]/70,0.5,seed+7)>0.5?1:-1),e=Math.max(0,d-W/2-13);h+=side*e*(side>0?0.2:0.26)*(alp?1:0.45)*sstep(0,40,e);}
     // Альпы: гребни и кулуары (гребенчатый шум с искривлением), а не гладкие конусы
@@ -13023,7 +13137,11 @@ function r3dMaps(T,F,W){
   const [cT,gT]=mk('#808080'),[cA,gA]=mk('#ffffff'),[cAlt,gAlt]=mk('#000'),[cD,gD]=mk('#000'),[cF,gF]=mk('#000'),[cC,gC]=mk('#000');
   // 1) оттенок: пятна посуше и посочнее, у крутых склонов — к земле
   const b=mkCanvas(F.nx,F.nz),bg=b.getContext('2d'),id=bg.createImageData(F.nx,F.nz),dd=id.data,b2=mkCanvas(F.nx,F.nz),bg2=b2.getContext('2d'),id2=bg2.createImageData(F.nx,F.nz),d2=id2.data;
-  const base=lush?[122,132,120]:dry?[134,128,116]:[128,130,122];
+  let base=lush?[122,132,120]:dry?[134,128,116]:[128,130,122];
+  // настоящая местность: оттенок луга — по цвету земли региона (Sentinel-2): выжженная Сицилия, зелёная Ирландия
+  // (снимки темнее, чем кажется глазу: средняя «зелень» пяти эталонов ≈ 54,70,54; яркость смягчена сильнее оттенка)
+  const RD=T.real&&T.real.d,pal=RD&&RD.pal;if(pal&&pal.meadow){const ref=[54,70,54],r=pal.meadow.map((v,i)=>Math.max(0.2,v/ref[i])),L=Math.cbrt(r[0]*r[1]*r[2]);
+    base=base.map((v,i)=>Math.round(v*clamp(Math.pow(L,0.3)*Math.pow(r[i]/L,0.5),0.82,1.22)));}
   for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,o=q*4;
     const n1=fbm2(x/130,z/130,F.seed+5,3),n2=fbm2(x/420,z/420,F.seed+17,2),v=0.86+0.28*n1;
     const warm=sstep(0.45,0.8,n2)*(dry?0.35:0.18);
@@ -13038,7 +13156,7 @@ function r3dMaps(T,F,W){
   ch(0,0,gAlt);ch(0,1,gD);
   // 2) поля: пшеница (сухая трава, жёлтый), пашня (земля, борозды), луг (зеленее), виноградник (земля полосами)
   const nF=snowy||sandy?0:Math.round(wx*wz/8000);
-  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
+  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
     const w=40+rnd()*120,h=30+rnd()*95,a=rnd()*3.14,q=rnd(),type=q<0.3?'wheat':q<0.52?'plow':q<0.8?'meadow':dry?'vine':'fallow';
     const rect=(g,style,al)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.fillStyle=style;g.fillRect(-w*kx/2,-h*kz/2,w*kx,h*kz);g.restore();};
     const rows=(g,style,al,step,lw)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.strokeStyle=style;g.lineWidth=Math.max(1,lw*kx);for(let l=-w/2;l<w/2;l+=step){g.beginPath();g.moveTo(l*kx,-h*kz/2);g.lineTo(l*kx,h*kz/2);g.stroke();}g.restore();};
@@ -13056,7 +13174,13 @@ function r3dMaps(T,F,W){
   (T.seg||[]).forEach(sg=>{if(sg.type!==RSEG.forest&&sg.type!==RSEG.serp)return;for(let i=sg.i0;i<=sg.i1;i+=12){const p=T.pts[i],nn=T.N[i];[1,-1].forEach(sd=>{if(sg.type===RSEG.serp&&rnd()<0.5)return;const o=sd*(T.W/2+42+rnd()*25),x=p[0]+nn[0]*o,z=p[2]+nn[1]*o,r=30+rnd()*22;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.9)','rgba(255,255,255,0)');blob(gA,'rgba(130,130,130,.6)','rgba(130,130,130,0)');});}});
-  for(let f=0;f<nW;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz,d=fSample(F,F.D,x,z);if(d<45)continue;const r=25+rnd()*70;R3.forest.push([x,z,r]);
+  // настоящая местность: леса — там, где они на карте (клетки 50 м), не больше чем вдвое против обычного
+  const fcells=[];if(RD&&RD.near&&RD.near.cover){const G=RD.near,C=realGridC(G),R=T.real;for(let j=0;j<G.nz;j++)for(let k=0;k<G.nx;k++){if(C[j*G.nx+k]!==1)continue;const x=G.x0+k*G.S-R.dx,z=G.z0+j*G.S-R.dz;if(x<F.x0||z<F.z0||x>F.x0+wx||z>F.z0+wz)continue;fcells.push([x,z]);}}
+  const fstep=Math.max(1,Math.ceil(fcells.length/Math.max(1,nW*2)));
+  for(let f=0;f<fcells.length;f+=fstep){const [x0c,z0c]=fcells[f],x=x0c+(rnd()-0.5)*20,z=z0c+(rnd()-0.5)*20,d=fSample(F,F.D,x,z);if(d<45)continue;const r=26+rnd()*14+(fstep-1)*14;R3.forest.push([x,z,r]);
+    const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
+    blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
+  for(let f=0;f<(RD&&RD.near&&RD.near.cover?0:nW);f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz,d=fSample(F,F.D,x,z);if(d<45)continue;const r=25+rnd()*70;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
   // 4) коридор дороги: пыльная обочина — земля (в городе — брусчатка своим слоем)
@@ -13083,6 +13207,8 @@ function g3TexBytes(S,data,o){o=o||{};const gl=G3.gl,t=gl.createTexture();gl.bin
 function r3dFarH(F,x,z,amp,seed,hMin){const X1=F.x0+(F.nx-1)*F.S,Z1=F.z0+(F.nz-1)*F.S,ex=clamp(x,F.x0,X1),ez=clamp(z,F.z0,Z1),out=Math.hypot(x-ex,z-ez);
   if(F.seaDir&&out>=1){const cx=(F.x0+X1)/2,cz=(F.z0+Z1)/2,dx=x-cx,dz=z-cz,l=Math.hypot(dx,dz)||1;if((dx*F.seaDir[0]+dz*F.seaDir[1])/l>0.25)return F.sea-30;}
   if(out<1){let m=1e9;for(const dx of [-36,0,36])for(const dz of [-36,0,36])m=Math.min(m,fSample(F,F.H,clamp(x+dx,F.x0,X1),clamp(z+dz,F.z0,Z1)));return m-1.6;}
+  // настоящая местность: вдали — грубая сетка рельефа (250 м), от края подробной земли — плавно
+  if(R3.T&&R3.T.real){const v=realFarH(R3.T,x,z);if(v!=null){const h0=fSample(F,F.H,ex,ez);return h0-1.6+(v-2-h0)*sstep(0,400,out);}}
   const h0=fSample(F,F.H,ex,ez),rid=1-Math.abs(fbm2(x/2600,z/2600,seed,4)*2-1),hills=fbm2(x/900,z/900,seed+3,3);
   return h0-1.6+(hMin-8-h0)*sstep(0,500,out)*0.4+(Math.pow(rid,2.2)*0.8+hills*0.3)*amp*sstep(0,2800,out);}
 function r3dFarRing(T,F){if(T.coast&&T.coast.length){let sx=0,sz=0;T.coast.forEach(c=>{for(let i=c.i0;i<=c.i1;i+=5){sx+=T.N[i][0]*c.side;sz+=T.N[i][1]*c.side;}});const l=Math.hypot(sx,sz)||1;F.seaDir=[sx/l,sz/l];F.sea=T.coast[0].sea;}

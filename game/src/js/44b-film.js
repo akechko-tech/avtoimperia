@@ -48,6 +48,9 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   let n=0;try{n=+localStorage.getItem('avt-film')||0;}catch(_){}
   const T=R.trk,rc=R.rc,cfg=T.cfg,W=R.wx||{mood:'clear'},s0=T.startIdx,me=R.follow,poi=filmPOI(),shots=[];
   const sp=trkAt(s0,0),fw=[sp.t[0],0,sp.t[1]],side=[sp.n[0],0,sp.n[1]];
+  // 0) настоящая местность: карта куска маршрута (стилизация под карту эпохи) и приметы впереди — высоко над стартом
+  if(T.real){const svg=realMapSVG(T),notes=realNotes(T);if(svg)shots.push({d:5.2,cap:{kick:'По настоящей карте · '+rc.y,map:svg,list:notes.length?['Впереди:',...notes.map(q=>(q.km?q.km.toFixed(1).replace('.',',')+' км — ':'')+q.t)]:[]},
+    cam:u=>{const e=ease(u),a=trkSmooth(s0,-260+60*e,-60),look=trkSmooth(s0,160);return {eye:[a.p[0],a.p[1]+210-40*e,a.p[2]],look:[look.p[0],look.p[1],look.p[2]],fov:0.9};}});}
   // 1) над стартом: высоко сзади — плавно вниз к машинам
   const brief=typeof scnBrief==='function'?scnBrief():'',dIn=voiceDur(raceIntroText(rc),'aidar'),dB=brief?voiceDur(brief,'aidar'):0;
   shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}${R.scn?' · '+scnClockTxt():''}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
@@ -81,7 +84,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;
-  el.innerHTML=(c.kick?`<div class="rf-kick">${esc(c.kick)}</div>`:'')+(c.big?`<div class="rf-big">${esc(c.big)}</div>`:'')+(c.mid?`<div class="rf-mid">${esc(c.mid)}</div>`:'')+(c.sub?`<div class="rf-sub">${esc(c.sub)}</div>`:'')+(c.list&&c.list.length?`<div class="rf-list">${c.list.map((x,i)=>`<div${i?'':' class="h"'}>${esc(x)}</div>`).join('')}</div>`:'');
+  el.innerHTML=(c.map?`<div class="rf-mapw">${c.map}</div>`:'')+(c.kick?`<div class="rf-kick">${esc(c.kick)}</div>`:'')+(c.big?`<div class="rf-big">${esc(c.big)}</div>`:'')+(c.mid?`<div class="rf-mid">${esc(c.mid)}</div>`:'')+(c.sub?`<div class="rf-sub">${esc(c.sub)}</div>`:'')+(c.list&&c.list.length?`<div class="rf-list">${c.list.map((x,i)=>`<div${i?'':' class="h"'}>${esc(x)}</div>`).join('')}</div>`:'');
   el.classList.add('in');}
 function filmCam(dt,W,H){const F=R.film;if(!F){R3.camHook=null;return;}F.t+=Math.min(dt,1/30);let acc=0,i=0;for(;i<F.shots.length;i++){if(F.t<acc+F.shots[i].d)break;acc+=F.shots[i].d;}
   if(i>=F.shots.length){filmEnd();r3dCamera(dt,W,H);return;}

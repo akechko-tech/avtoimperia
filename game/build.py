@@ -88,7 +88,7 @@ def build():
 def media_links():
     """Живые инструменты, кинохроника и голос лежат в docs/ (их забирает tools/sync_media.py из ветки media).
     Для проверки из game/dist — ссылки на них; в APK их копирует сборка на GitHub."""
-    for d in ('samples', 'film', 'voice'):
+    for d in ('samples', 'film', 'voice', 'terrain'):
         src = os.path.join(ROOT, 'docs', d); dst = os.path.join(HERE, 'dist', d)
         if not os.path.isdir(src) or os.path.lexists(dst): continue
         try: os.symlink(src, dst)

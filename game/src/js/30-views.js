@@ -280,8 +280,10 @@ function vLog(){
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
 let shownCash=null,cashRaf=0,lastDate='';
-function setCash(v){const el=document.getElementById('cash');el.className=v<0?'neg':'';if(shownCash===null||REDUCE){shownCash=v;el.textContent=money(v);return;}
-  const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=money(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
+// касса в шапке: от $10 млн — коротко («$22,1 млн», «$1,25 млрд»), чтобы шапка помещалась на узком экране
+const moneyC=v=>{const a=Math.abs(v),sg=v<0?'−':'';return a>=1e9?sg+'$'+(a/1e9).toFixed(2).replace('.',',')+' млрд':a>=1e7?sg+'$'+(a/1e6).toFixed(a>=1e8?0:1).replace('.',',')+' млн':money(v);};
+function setCash(v){const el=document.getElementById('cash');el.className=v<0?'neg':'';el.title=money(v);if(shownCash===null||REDUCE){shownCash=v;el.textContent=moneyC(v);return;}
+  const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=moneyC(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
 // широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
 function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
 function render(){

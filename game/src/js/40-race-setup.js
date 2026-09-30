@@ -127,7 +127,7 @@ Object.assign(RACE_ACT,{
     s.cash-=tot.total;const n=RS.entries.length;
     addLog(`Заявка на «${rc.name}»: ${n} ${plural(n,'машина','машины','машин')}, расходы ${money(tot.total)}.`);
     const setup={rc,mode:RS.mode,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
-    RS=null;closeSheet();stopAuto();save();startRace(setup);}
+    RS=null;closeSheet();stopAuto();save();realLoad(setup.rc,()=>startRace(setup));}
 });
 
 // 0.19: как проходила гонка на самом деле — старт, час, погода

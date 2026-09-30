@@ -126,9 +126,23 @@ def faces():
     open(dst, 'w', encoding='utf-8').write(js)
     print('faces:', len(out), 'of', len(idx), 'approved; js', len(js))
 
+def terrain():
+    """Реальные трассы (ТЗ 0.18, раздел 2): media/terrain/<id>.json → docs/terrain/<id>.js (подгружается перед гонкой скриптом:
+    в APK со страницы file:// fetch не работает). Размер каждой — не больше 300 КБ."""
+    D = os.path.join(DOCS, 'terrain'); os.makedirs(D, exist_ok=True); n = 0; sizes = {}
+    for f in files('media/terrain'):
+        if not f.endswith('.json'): continue
+        rid = os.path.basename(f)[:-5]; data = json.loads(git('show', 'origin/media:' + f))
+        js = '/* Трасса по настоящей местности: рельеф Copernicus DEM GLO-30, карта © участники OpenStreetMap (ODbL), цвет земли Sentinel-2 cloudless 2016 (EOX, CC BY 4.0) */\n' + \
+             'window.REAL_TRACKS=window.REAL_TRACKS||{};window.REAL_TRACKS[' + json.dumps(rid) + ']=' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
+        p = os.path.join(D, rid + '.js'); sizes[rid] = round(len(js.encode('utf-8')) / 1024)
+        if not os.path.exists(p) or open(p, encoding='utf-8').read() != js:
+            open(p, 'w', encoding='utf-8').write(js); n += 1
+    print('terrain: updated', n, 'tracks', sizes)
+
 if __name__ == '__main__':
     git('fetch', '-q', 'origin', 'media')
     what = sys.argv[1:] or ['samples', 'film', 'voice', 'music', 'sfx']
     for w in what:
-        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx, 'faces': faces}[w]()
+        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx, 'faces': faces, 'terrain': terrain}[w]()
         except Exception as e: print(w, 'failed:', e)

@@ -46,7 +46,11 @@ function r3dMaps(T,F,W){
   const [cT,gT]=mk('#808080'),[cA,gA]=mk('#ffffff'),[cAlt,gAlt]=mk('#000'),[cD,gD]=mk('#000'),[cF,gF]=mk('#000'),[cC,gC]=mk('#000');
   // 1) оттенок: пятна посуше и посочнее, у крутых склонов — к земле
   const b=mkCanvas(F.nx,F.nz),bg=b.getContext('2d'),id=bg.createImageData(F.nx,F.nz),dd=id.data,b2=mkCanvas(F.nx,F.nz),bg2=b2.getContext('2d'),id2=bg2.createImageData(F.nx,F.nz),d2=id2.data;
-  const base=lush?[122,132,120]:dry?[134,128,116]:[128,130,122];
+  let base=lush?[122,132,120]:dry?[134,128,116]:[128,130,122];
+  // настоящая местность: оттенок луга — по цвету земли региона (Sentinel-2): выжженная Сицилия, зелёная Ирландия
+  // (снимки темнее, чем кажется глазу: средняя «зелень» пяти эталонов ≈ 54,70,54; яркость смягчена сильнее оттенка)
+  const RD=T.real&&T.real.d,pal=RD&&RD.pal;if(pal&&pal.meadow){const ref=[54,70,54],r=pal.meadow.map((v,i)=>Math.max(0.2,v/ref[i])),L=Math.cbrt(r[0]*r[1]*r[2]);
+    base=base.map((v,i)=>Math.round(v*clamp(Math.pow(L,0.3)*Math.pow(r[i]/L,0.5),0.82,1.22)));}
   for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,o=q*4;
     const n1=fbm2(x/130,z/130,F.seed+5,3),n2=fbm2(x/420,z/420,F.seed+17,2),v=0.86+0.28*n1;
     const warm=sstep(0.45,0.8,n2)*(dry?0.35:0.18);
@@ -61,7 +65,7 @@ function r3dMaps(T,F,W){
   ch(0,0,gAlt);ch(0,1,gD);
   // 2) поля: пшеница (сухая трава, жёлтый), пашня (земля, борозды), луг (зеленее), виноградник (земля полосами)
   const nF=snowy||sandy?0:Math.round(wx*wz/8000);
-  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
+  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
     const w=40+rnd()*120,h=30+rnd()*95,a=rnd()*3.14,q=rnd(),type=q<0.3?'wheat':q<0.52?'plow':q<0.8?'meadow':dry?'vine':'fallow';
     const rect=(g,style,al)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.fillStyle=style;g.fillRect(-w*kx/2,-h*kz/2,w*kx,h*kz);g.restore();};
     const rows=(g,style,al,step,lw)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.strokeStyle=style;g.lineWidth=Math.max(1,lw*kx);for(let l=-w/2;l<w/2;l+=step){g.beginPath();g.moveTo(l*kx,-h*kz/2);g.lineTo(l*kx,h*kz/2);g.stroke();}g.restore();};
@@ -79,7 +83,13 @@ function r3dMaps(T,F,W){
   (T.seg||[]).forEach(sg=>{if(sg.type!==RSEG.forest&&sg.type!==RSEG.serp)return;for(let i=sg.i0;i<=sg.i1;i+=12){const p=T.pts[i],nn=T.N[i];[1,-1].forEach(sd=>{if(sg.type===RSEG.serp&&rnd()<0.5)return;const o=sd*(T.W/2+42+rnd()*25),x=p[0]+nn[0]*o,z=p[2]+nn[1]*o,r=30+rnd()*22;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.9)','rgba(255,255,255,0)');blob(gA,'rgba(130,130,130,.6)','rgba(130,130,130,0)');});}});
-  for(let f=0;f<nW;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz,d=fSample(F,F.D,x,z);if(d<45)continue;const r=25+rnd()*70;R3.forest.push([x,z,r]);
+  // настоящая местность: леса — там, где они на карте (клетки 50 м), не больше чем вдвое против обычного
+  const fcells=[];if(RD&&RD.near&&RD.near.cover){const G=RD.near,C=realGridC(G),R=T.real;for(let j=0;j<G.nz;j++)for(let k=0;k<G.nx;k++){if(C[j*G.nx+k]!==1)continue;const x=G.x0+k*G.S-R.dx,z=G.z0+j*G.S-R.dz;if(x<F.x0||z<F.z0||x>F.x0+wx||z>F.z0+wz)continue;fcells.push([x,z]);}}
+  const fstep=Math.max(1,Math.ceil(fcells.length/Math.max(1,nW*2)));
+  for(let f=0;f<fcells.length;f+=fstep){const [x0c,z0c]=fcells[f],x=x0c+(rnd()-0.5)*20,z=z0c+(rnd()-0.5)*20,d=fSample(F,F.D,x,z);if(d<45)continue;const r=26+rnd()*14+(fstep-1)*14;R3.forest.push([x,z,r]);
+    const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
+    blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
+  for(let f=0;f<(RD&&RD.near&&RD.near.cover?0:nW);f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz,d=fSample(F,F.D,x,z);if(d<45)continue;const r=25+rnd()*70;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
   // 4) коридор дороги: пыльная обочина — земля (в городе — брусчатка своим слоем)
@@ -106,6 +116,8 @@ function g3TexBytes(S,data,o){o=o||{};const gl=G3.gl,t=gl.createTexture();gl.bin
 function r3dFarH(F,x,z,amp,seed,hMin){const X1=F.x0+(F.nx-1)*F.S,Z1=F.z0+(F.nz-1)*F.S,ex=clamp(x,F.x0,X1),ez=clamp(z,F.z0,Z1),out=Math.hypot(x-ex,z-ez);
   if(F.seaDir&&out>=1){const cx=(F.x0+X1)/2,cz=(F.z0+Z1)/2,dx=x-cx,dz=z-cz,l=Math.hypot(dx,dz)||1;if((dx*F.seaDir[0]+dz*F.seaDir[1])/l>0.25)return F.sea-30;}
   if(out<1){let m=1e9;for(const dx of [-36,0,36])for(const dz of [-36,0,36])m=Math.min(m,fSample(F,F.H,clamp(x+dx,F.x0,X1),clamp(z+dz,F.z0,Z1)));return m-1.6;}
+  // настоящая местность: вдали — грубая сетка рельефа (250 м), от края подробной земли — плавно
+  if(R3.T&&R3.T.real){const v=realFarH(R3.T,x,z);if(v!=null){const h0=fSample(F,F.H,ex,ez);return h0-1.6+(v-2-h0)*sstep(0,400,out);}}
   const h0=fSample(F,F.H,ex,ez),rid=1-Math.abs(fbm2(x/2600,z/2600,seed,4)*2-1),hills=fbm2(x/900,z/900,seed+3,3);
   return h0-1.6+(hMin-8-h0)*sstep(0,500,out)*0.4+(Math.pow(rid,2.2)*0.8+hills*0.3)*amp*sstep(0,2800,out);}
 function r3dFarRing(T,F){if(T.coast&&T.coast.length){let sx=0,sz=0;T.coast.forEach(c=>{for(let i=c.i0;i<=c.i1;i+=5){sx+=T.N[i][0]*c.side;sz+=T.N[i][1]*c.side;}});const l=Math.hypot(sx,sz)||1;F.seaDir=[sx/l,sz/l];F.sea=T.coast[0].sea;}

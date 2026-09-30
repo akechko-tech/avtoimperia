@@ -42,6 +42,7 @@ function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button c
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
   <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons, общественное достояние.</p>
   <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p>
+  <p id="abReal">Трассы «Париж — Мадрид», «Тарга Флорио», Гран-при АКФ 1906 года, Кубок Гордона Беннетта в Ирландии и Индианаполис построены по настоящей местности, отмотанной к году гонки: рельеф — Copernicus DEM GLO-30 (© DLR e.V. 2010–2014 и © Airbus Defence and Space GmbH 2014–2018, предоставлено по программе Copernicus Европейским союзом и ЕКА); дороги, реки, леса, города и железные дороги — © участники OpenStreetMap (лицензия ODbL, openstreetmap.org/copyright); цвет земли — Sentinel-2 cloudless 2016 by EOX IT Services GmbH (CC BY 4.0; содержит изменённые данные Copernicus Sentinel 2016).</p>
   <p id="abMus">Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.</p>
   <p id="abSfx">Звуки мира — Wikimedia Commons: ${aboutSfxCredits()}.</p>
   <p id="abFace">Лица ${Object.keys(typeof FACES!=='undefined'?FACES:{}).length} гонщиков на трассе — по их историческим снимкам с Wikimedia Commons: ${aboutFaceCredits()}.</p><p class="muted">Версия ${GAME_VER}</p></div>`);

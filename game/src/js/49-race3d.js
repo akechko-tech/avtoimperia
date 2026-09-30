@@ -45,7 +45,10 @@ function r3dField(T){
   const mount=!!(set.mount||cfg.terr==='mount'||cfg.uphill),flat=!!(set.flat||cfg.oval||cfg.sprint||T.rc.track==='board'),beach=cfg.terr==='beach';
   // горы: Альпы, Сицилия, Пиренеи, Скалистые горы — высокие; холмы Англии и Германии — пониже
   const alp=mount&&(['it','at','ch','es','mc'].includes(cfg.host)||['targa','nurb'].includes(T.rc.track)||/pikes|ventoux|turbie|klausen|semmering/.test(T.rc.id)),amp=flat?2.4:alp?22:mount?11:5+9*(cfg.hilly||0.3);
+  const real=!!T.real;
   for(let q=0;q<N;q++){const k=q%nx,j=(q/nx)|0,x=x0+k*S,z=z0+j*S,d=D[q],w=sstep(W/2+9,W/2+110,d);
+    // настоящая местность: у дороги — её полотно, дальше — рельеф Copernicus (и чуть мелкой неровности)
+    if(real){H[q]=B[q]+(realH(T,x,z)-B[q])*w+(vnz(x/60,z/60,seed+3)-0.5)*1.4*w;continue;}
     let h=B[q]+(fbm2(x/240,z/240,seed,3)-0.47)*2*amp*w+(vnz(x/60,z/60,seed+3)-0.5)*amp*0.18*w;
     if(mount&&I[q]>=0){const side=Sg[q]*(vnz(I[q]/70,0.5,seed+7)>0.5?1:-1),e=Math.max(0,d-W/2-13);h+=side*e*(side>0?0.2:0.26)*(alp?1:0.45)*sstep(0,40,e);}
     // Альпы: гребни и кулуары (гребенчатый шум с искривлением), а не гладкие конусы
