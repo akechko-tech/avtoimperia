@@ -28,6 +28,11 @@ jobs:
             python3 -m pip install --quiet --user --break-system-packages torch --index-url https://download.pytorch.org/whl/cpu || python3 -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
             python3 -m pip install --quiet --user --break-system-packages omegaconf || python3 -m pip install --quiet omegaconf
           fi
+      - name: Распознавание лиц и рельеф (только для заданий faces, terrain)
+        run: |
+          if grep -qxE 'faces|terrain' tools/media/jobs.txt; then
+            python3 -m pip install --quiet --user --break-system-packages opencv-python-headless || python3 -m pip install --quiet opencv-python-headless
+          fi
       - name: Задания
         run: python3 tools/media/run.py
       - name: Сохранить в ветку media

@@ -647,8 +647,117 @@ def sfx_cut():
         json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     if os.path.exists(tmp): os.remove(tmp)
 
+
+# ---------- 0.21: лица гонщиков по историческим фото ----------
+# Для каждого гонщика игры: страница в Википедии/Викиданных → фото (P18) → лицо (OpenCV) → серый снимок 24×32 для 3D-головы.
+WD = 'https://www.wikidata.org/w/api.php'
+FACE_OK = re.compile(r'racing|racer|driver|motor|automobile|auto |engineer|industrial|aviat|pilot|cyclist|sportsman|businessman|manufactur|founder|гонщик|автогон|инженер|промышлен|предприним|авиатор|лётчик|пилот|конструктор|основател|велогон|спортсмен', re.I)
+def wd_get(**p):
+    p.setdefault('format', 'json'); return jget(WD + '?' + urllib.parse.urlencode(p))
+def enwiki_qid(title):
+    try:
+        r = jget('https://en.wikipedia.org/w/api.php?' + urllib.parse.urlencode({'action': 'query', 'prop': 'pageprops', 'titles': title, 'format': 'json', 'redirects': 1}))
+        for pg in r.get('query', {}).get('pages', {}).values():
+            q = pg.get('pageprops', {}).get('wikibase_item')
+            if q: return q
+    except Exception as ex: log('enwiki', title, repr(ex)[:120])
+    return None
+def wd_claim_year(e, prop):
+    for c in e.get('claims', {}).get(prop, []):
+        v = c.get('mainsnak', {}).get('datavalue', {}).get('value', {})
+        m = re.match(r'[+-](\d{4})', v.get('time', '') if isinstance(v, dict) else '')
+        if m: return int(m.group(1))
+    return None
+def wd_images(e):
+    out = []
+    for c in e.get('claims', {}).get('P18', []):
+        v = c.get('mainsnak', {}).get('datavalue', {}).get('value')
+        if isinstance(v, str): out.append(v)
+    return out
+def wd_pick(d, ids):
+    if not ids: return None
+    r = wd_get(action='wbgetentities', ids='|'.join(ids[:12]), props='claims|descriptions|labels', languages='ru|en')
+    best = None
+    for q in ids:
+        e = r.get('entities', {}).get(q)
+        if not e or not wd_images(e): continue
+        b = wd_claim_year(e, 'P569'); desc = ' '.join(x.get('value', '') for x in e.get('descriptions', {}).values())
+        yok = b is not None and d['from'] - 62 <= b <= d['from'] - 14
+        if yok and (FACE_OK.search(desc) or best is None): best = e
+        if yok and FACE_OK.search(desc): break
+    return best
+def face_entity(d):
+    if d.get('wiki'):
+        q = enwiki_qid(d['wiki'])
+        if q:
+            r = wd_get(action='wbgetentities', ids=q, props='claims|descriptions|labels', languages='ru|en')
+            e = r.get('entities', {}).get(q)
+            if e and wd_images(e): return e
+    name = re.sub(r'[«»"()]', ' ', d['n']).strip()
+    for lang, qs in (('ru', name), ('ru', ' '.join(name.split()[-1:])), ('en', d['id'].split('_')[-1].replace('-', ' ').title())):
+        try:
+            r = wd_get(action='wbsearchentities', search=qs, language=lang, uselang=lang, type='item', limit=10)
+            e = wd_pick(d, [x['id'] for x in r.get('search', [])])
+            if e: return e
+        except Exception as ex: log('wd search', qs, repr(ex)[:120])
+    return None
+def faces():
+    import numpy as np, cv2
+    L = json.load(open(os.path.join(TOOLS, 'drivers.json'), encoding='utf-8'))
+    D = os.path.join(MEDIA, 'faces'); os.makedirs(D, exist_ok=True)
+    man_path = os.path.join(D, 'index.json'); man = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
+    cas = [cv2.CascadeClassifier(cv2.data.haarcascades + f) for f in ('haarcascade_frontalface_default.xml', 'haarcascade_frontalface_alt2.xml', 'haarcascade_profileface.xml')]
+    eye = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+    tmp = '/tmp/_face.bin'; n_new = 0
+    for d in L:
+        if d['id'] in man and (man[d['id']].get('g') or man[d['id']].get('tries', 0) >= 2): continue
+        rec = man.get(d['id'], {}); rec['tries'] = rec.get('tries', 0) + 1; man[d['id']] = rec
+        try: e = face_entity(d)
+        except Exception as ex: log('face entity', d['id'], repr(ex)[:160]); e = None
+        if not e: log('face: no entity', d['id'], d['n']); continue
+        rec['qid'] = e.get('id'); files = wd_images(e)
+        for fn in files[:3]:
+            try:
+                ii = capi(action='query', titles='File:' + fn, prop='imageinfo', iiprop='url|extmetadata|size', iiurlwidth=900)
+                pg = next(iter(ii.get('query', {}).get('pages', {}).values()))
+                v = pg.get('imageinfo', [{}])[0]; url = v.get('thumburl') or v.get('url')
+                if not url: continue
+                download(url, tmp, 30e6)
+                im = cv2.imdecode(np.fromfile(tmp, dtype=np.uint8), cv2.IMREAD_COLOR)
+                if im is None: continue
+                g = cv2.equalizeHist(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)); H, W = g.shape; best = None
+                for c in cas:
+                    for f in c.detectMultiScale(g, 1.07, 5, minSize=(28, 28)):
+                        x, y, w, h = [int(t) for t in f]
+                        ey = eye.detectMultiScale(g[y:y + int(h * 0.62), x:x + w], 1.08, 3, minSize=(max(6, w // 10), max(6, w // 10)))
+                        sc = w * h * (1.6 if len(ey) else 0.5)
+                        if best is None or sc > best[0]: best = (sc, x, y, w, h, len(ey))
+                if best is None or best[5] == 0 and best[3] < 60: log('face: none in', fn); continue
+                _, x, y, w, h, ne = best
+                # вырез: лоб чуть выше рамки, подбородок — ниже; 3:4
+                cx = x + w / 2; top = y - 0.12 * h; bot = y + 1.1 * h; hh = bot - top; ww = hh * 0.75
+                x0, x1, y0, y1 = int(max(0, cx - ww / 2)), int(min(W, cx + ww / 2)), int(max(0, top)), int(min(H, bot))
+                crop = cv2.cvtColor(im[y0:y1, x0:x1], cv2.COLOR_BGR2GRAY)
+                cl = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4)).apply(cv2.resize(crop, (96, 128), interpolation=cv2.INTER_AREA))
+                cv2.imwrite(os.path.join(D, d['id'] + '.jpg'), cl, [cv2.IMWRITE_JPEG_QUALITY, 88])
+                small = cv2.resize(cl, (24, 32), interpolation=cv2.INTER_AREA)
+                import base64
+                rec.update({'g': base64.b64encode(small.tobytes()).decode(), 'w': 24, 'h': 32, 'file': fn, 'page': v.get('descriptionurl'),
+                            'lic': meta_val(v, 'LicenseShortName'), 'by': meta_val(v, 'Artist')[:120], 'eyes': ne, 'box': [x, y, w, h], 'size': [W, H]})
+                n_new += 1; log('face', d['id'], fn, 'eyes', ne); break
+            except Exception as ex: log('face error', d['id'], fn, repr(ex)[:200])
+        json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
+    # лист для проверки глазами
+    got = [k for k in man if man[k].get('g')]; cols = 12; rows = max(1, (len(got) + cols - 1) // cols)
+    sheet = np.full((rows * 128, cols * 96), 255, np.uint8)
+    for i, k in enumerate(sorted(got)):
+        t = cv2.imread(os.path.join(D, k + '.jpg'), cv2.IMREAD_GRAYSCALE)
+        if t is not None: sheet[(i // cols) * 128:(i // cols + 1) * 128, (i % cols) * 96:(i % cols + 1) * 96] = t
+    cv2.imwrite(os.path.join(D, 'sheet.jpg'), sheet, [cv2.IMWRITE_JPEG_QUALITY, 85])
+    log('faces: new', n_new, 'total', len(got), 'of', len(L))
+
 JOBS = {'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut}
+        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
