@@ -132,7 +132,7 @@ function nearTrack(trk,x,z,rad,skip){const cx=Math.floor(x/30),cz=Math.floor(z/3
   return false;}
 // Твёрдые предметы: круг (r) или прямоугольник [вдоль дороги, поперёк, сдвиг вдоль, сдвиг к дороге] — как у 3D-моделей
 const SOLID={plane:{r:0.5},oak:{r:0.6},elm:{r:0.5},poplar:{r:0.32},cypress:{r:0.3},olive:{r:0.45},pine:{r:0.35},fir:{r:0.35},birch:{r:0.25},palm:{r:0.32},
-  bush:{r:1.0},rock:{r:1.6},hay:{r:1.8},dune:{r:3.4},cliff:{box:[6.5,2.2]},fence:{box:[5,0.12]},wall:{box:[5,0.35]},hedge:{box:[5.8,0.8]},vine:{box:[5.5,0.5]},
+  bush:{r:1.0},rock:{r:1.6},hay:{r:1.8},dune:{r:3.4},cliff:{box:[10.5,4.4]},fence:{box:[5,0.12]},wall:{box:[5,0.35]},hedge:{box:[5.8,0.8]},vine:{box:[5.5,0.5]},
   pole:{r:0.16},km:{r:0.3},sign:{r:0.14},gstone:{r:0.22},rgate:{r:0.2},rhut:{box:[2.2,1.8]},lamp:{r:0.16},cart:{box:[2.8,0.95,-0.35]},billboard:{box:[4,0.25]},verst:{r:0.2},well:{r:0.8},stog:{r:1.7},fence_ru:{box:[5,0.12]},cactus:{r:0.9},agave:{r:0.7},
   house_fr:{box:[4.5,3.5]},farm_fr:{box:[5.5,3.25]},house_it:{box:[4,3.5]},fachwerk:{box:[4,3.5]},cottage:{box:[4,3]},pub:{box:[4,3.1]},farm_us:{box:[5,4.5,0,1]},barn:{box:[6,4]},izba:{box:[3.9,4.05,0,0.75]},
   church_ru:{box:[12.4,4.6,-4,0.2]},mill_ru:{box:[2.2,2]},campanile:{box:[2.9,2.9]},church_us:{box:[9,4.4,-0.6]},church_uk:{box:[10.2,4.4,-0.8]},church_at:{box:[10.2,4.4,-0.8]},minaret:{box:[5.5,6.3,0,4.2]},house_ly:{box:[4.5,3.5]},cottage_ie:{box:[4.5,3.2]},windmill_us:{box:[2,3,0,-0.6]},
@@ -184,7 +184,10 @@ function placeScenery(trk,rnd){
   const forestT=(set.mount||cfg.terr==='mount'||cfg.uphill)?['fir','fir','pine','birch']:set.trees.filter(t=>t!=='palm'&&t!=='olive'&&t!=='cactus');
   let alley=0,church=0;
   for(let i=0;i<n;i++){
+    // тоннель: внутри — стены свода (ничего не ставим), у порталов — чисто
+    if(trk.tunAt&&trk.tunAt[i]){trk.bar[i]={L:W/2-0.25,R:W/2-0.25};continue;}
     const tr=trk.terrAt(i),town=townAt(i)||(trk.rc.track==='monaco');if(town)trk.town[i]=1;const sg=S[i];
+    if(trk.tunnels&&trk.tunnels.length&&tunNear(trk,i,5)){if(town)trk.bar[i]={L:W/2+2.2,R:W/2+2.2};continue;}
     if(cfg.oval){if(i%5===0&&(i%150)<75){add(i,'stand',-(W/2+10),0,'s',0);}if(i%7===3)add(i,'fence',W/2+2,0);if(i%9===0&&rnd()<0.6)add(i,rnd()<0.5?'elm':'oak',W/2+14+rnd()*10,0,'s',0.6);continue;}
     if(tr==='beach'){trk.bar[i]={L:W/2+11};if(i%3===0)add(i,'sea',W/2+14,0);if(i%9===0)add(i,'dune',-(W/2+12+rnd()*8));if(i%11===0&&rnd()<cfg.crowd)add(i,'crowd',-(W/2+4),Math.floor(rnd()*4),'p');continue;}
     if(town){
@@ -241,6 +244,10 @@ function placeScenery(trk,rnd){
       const m=Math.sin(s0/170+rv.ph)*22*sstep(20,120,Math.abs(s0))+Math.sin(s0/61+rv.ph*2)*6*sstep(20,120,Math.abs(s0)),e=m+sd*(rv.w/2+4+rnd()*6),x=L.p[0]+L.d[0]*s0+L.t[0]*e,z=L.p[2]+L.d[1]*s0+L.t[1]*e;
       let bi=rv.i,bd=1e18;for(let k=Math.max(0,rv.i-60);k<Math.min(n,rv.i+60);k++){const d=(pts[k][0]-x)**2+(pts[k][2]-z)**2;if(d<bd){bd=d;bi=k;}}if(Math.sqrt(bd)<W/2+6)return;
       spr[bi].push({t:rnd()<0.5?'poplar':set.trees.includes('birch')?'birch':'elm',off:0,v:Math.floor(rnd()*3),k:'W',wx:x,wz:z,rot:rnd()*6});});}});
+  // порталы тоннелей: скальная стена по сторонам от проёма — твёрдая
+  (trk.tunnels||[]).forEach(q=>{[[q.i0,1],[q.i1,-1]].forEach(([i,dir])=>{const p=pts[i],nn=N[i],tt=trk.T[i],hw=W/2+0.6;
+    [1,-1].forEach(sd=>{const hv=13,cx=p[0]+tt[0]*dir*1.6+nn[0]*sd*(hw+0.15+hv),cz=p[2]+tt[1]*dir*1.6+nn[1]*sd*(hw+0.15+hv);
+      addCollider(trk,cx,cz,Math.hypot(1.6,hv),'rock',i,{x:cx,z:cz,r:Math.hypot(1.6,hv),kind:'rock',box:{ux:tt[0],uz:tt[1],vx:nn[0],vz:nn[1],hu:1.6,hv}});});});});
   // старт, финиш, трибуны, боксы
   const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});[1,-1].forEach(sd=>{const p=pts[fi],nn=N[fi];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',fi);});
   if(!cfg.closed){const si=Math.min(n-1,trk.startIdx+1);[1,-1].forEach(sd=>{const p=pts[si],nn=N[si];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',si);});}
@@ -262,13 +269,14 @@ class RaceCar{constructor(e){
   this.heat=0;this.tyre=0;this.fuel=100;this.eng=0;this.dmg=0;this.punct=false;this.punctN=0;this.dnf=null;this.stopT=0;this.stopWhy='';this.pitT=0;this.order='norm';this.pitCall=false;
   this.slipR=0;this.slipF=0;this.gu=0;this.spinw=0;this.off=0;this.stuck=0;this.lastIdx=0;this.overheat=0;this.limp=false;this.fix=0;this.draft=0;this.hit=0;this.err=0;this.st2=0;this.parked=0;this.outT=0;
   this.tyreRate=0;this.punctRate=0;this.fuelRate=0;this.wheelChange=0;this.style='';this.wheel='';this.mech=false;this.spriteKey='';this.spec3=null;this.angI=0;this.angN=false;this.hold=0;this.punctSaid=0;this.skidSaid=0;this.fuelSaid=0;
-  this.svc=0;this.svcT=0;this.svcWhat='';this.offIdx=-1;this.offProg=0;this.offDist=0;this.offLap=0;this.grade=0;}}
+  this.svc=0;this.svcT=0;this.svcWhat='';this.offIdx=-1;this.offProg=0;this.offDist=0;this.offLap=0;this.grade=0;
+  this.crr0=0;this.surf='';this.surfIn=0;this.surfP=null;this.wetRoad=false;this.tun=0;this.muNow=0;this.flood=0;this.crash=null;this.inWater=0;this.wetT=0;this.waterY=0;this.rescueT=0;this.rescueIdx=0;this.trainHit=0;this.gateWait=0;}}
 function mkRaceCar(e,y,trk){
   const st=carStats(e.md,e.prep,y),terr=TERR[trk.cfg.terr]||TERR.dirt,c=new RaceCar(e);
   const m=st.kg,P=st.P*(e.pw||1),kd=st.kd,crr=st.crr*(terr.crr||1);
   let v=20;for(let i=0;i<30;i++){const f=kd*v*v*v+crr*m*GRAV*v-P,df=3*kd*v*v+crr*m*GRAV;v=Math.max(3,v-f/df);}
   const ng=y<1905?3:4,L=st.wb;
-  c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
+  c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.crr0=st.crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
   c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.25:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
   c.L=L;c.a=L*0.46;c.b=L*0.54;c.h=st.cg;c.Iz=m*(L*L+1.9)/12*1.4;
   return c;
@@ -310,12 +318,18 @@ function playerService(c,dt){
   if(c.svc===1){c.thr=0;c.brk=1;if(Math.abs(c.vx)<0.6){const S=svcPlan(c);c.svc=2;c.svcT=S.t;c.svcWhat=S.what.join(', ')||'осмотр';rMsg((S.pit?'БОКСЫ: ':'МЕХАНИК: ')+c.svcWhat,1.8);}}
   else if(c.svc===2){c.thr=0;c.brk=1;c.svcT-=dt;if(c.svcT<=0){svcDone(c);c.svc=0;rMsg('ГОТОВО! ПОЕХАЛИ',1.4);}}}
 function carStep(c,trk,dt){
-  const lat=trackLocal(trk,c),W=trk.W,tr=TERR[trk.terrAt(c.idx)]||TERR.dirt,bar=trk.bar[c.idx];
-  let mu=tr.mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(c.punct?0.72:1),crr=c.crr*(c.punct?3:1);
+  const lat=trackLocal(trk,c),W=trk.W,bar=trk.bar[c.idx],su=surfUnder(c,trk,lat),sp0=Math.abs(c.vx);
+  // покрытие под колёсами (0.18): асфальт, булыжник, грунт, трава, пашня, лужа, грязь; в дождь — мокрое
+  if(su.k!==c.surf){c.surfIn=su.k==='puddle'||su.k==='mudhole'?Math.min(1.5,sp0/14):0;c.surf=su.k;}c.surfP=su.P;c.wetRoad=su.wet;c.tun=trk.tunAt?trk.tunAt[c.idx]:0;
+  let mu=su.mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(c.punct?0.72:1),crr=(c.crr0||c.crr)*su.crr*(c.punct?3:1);
+  // лужа на скорости — аквапланирование: шина всплывает
+  if(su.k==='puddle'&&sp0>20)mu*=clamp(1-(sp0-20)/30,0.5,1);
+  c.muNow=mu;
   const al=Math.abs(lat);c.off=al>W/2+1.2?1:0;
-  if(al>W/2+1.2){mu*=0.6;crr=c.crr*4;}else if(al>W/2){mu*=0.85;crr=c.crr*1.6;}
-  const stopped=c.stopT>0||c.pitT>0||c.svc===2||c.dnf||(c.punct&&!c.player&&!c.flat);
-  const pw=c.P*(1-c.dmg/250)*(c.overheat>0?0.3:1)*(c.fuel<=0?0.1:1)*(c.draft?1.06:1)*(c.limp?0.65:1);
+  const stopped=c.stopT>0||c.pitT>0||c.svc===2||c.dnf||(c.punct&&!c.player&&!c.flat)||c.inWater===2;
+  // после воды мотор кашляет: пропуски зажигания
+  let fl=1;if(c.flood>0){c.flood-=dt;fl=1-0.6*Math.min(1,c.flood/10)*(Math.sin((R?R.time:0)*19+c.num*3)>0.1?1:0.25);}
+  const pw=c.P*(1-c.dmg/250)*(c.overheat>0?0.3:1)*(c.fuel<=0?0.1:1)*(c.draft?1.06:1)*(c.limp?0.65:1)*fl;
   const v=c.vx;
   let vg=c.gr[c.gear-1];c.rpm=Math.max(0.12,Math.abs(v)/vg);
   if(c.shift>0)c.shift-=dt;else{if(c.rpm>0.96&&c.gear<c.gr.length){c.gear++;c.shift=0.28;}else if(c.gear>1&&Math.abs(v)<c.gr[c.gear-2]*0.55){c.gear--;c.shift=0.2;}}
@@ -329,8 +343,14 @@ function carStep(c,trk,dt){
   const Fxmax=mu*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
   // уклон: в гору машина теряет скорость, под гору разгоняется; крутой склон шинам не одолеть
   const grade=gradeAt(c,trk,lat);c.grade=grade;
-  const drag=c.kd*v*Math.abs(v)+crr*c.m*GRAV*Math.sign(v)+c.m*GRAV*grade/Math.sqrt(1+grade*grade);
+  // вода в луже и жидкая грязь тормозят по квадрату скорости
+  const wd=su.k==='puddle'?0.0016:su.k==='mudhole'?0.005:0;
+  const drag=c.kd*v*Math.abs(v)+crr*c.m*GRAV*Math.sign(v)+c.m*GRAV*grade/Math.sqrt(1+grade*grade)+c.m*wd*v*Math.abs(v);
   const sp=Math.abs(v);
+  // кочки и ямы: неровное покрытие толкает машину вбок (трава, пашня, лес — сильно, булыжник — мелкой дрожью)
+  const bump=sp>5&&su.rough>0.95?(vnz(c.prog*0.45,c.num*3.7,7)-0.5)*2*1.7*(su.rough-0.9)*Math.min(1,sp/18):0;
+  // пятно под одной стороной машины тянет её в сторону
+  let pull=0;if(su.P&&sp>6){const dl=su.P.lat-lat;if(Math.abs(dl)>0.35)pull=-Math.sign(dl)*(su.k==='mudhole'?0.9:0.45)*Math.min(1,sp/20);}
   if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;c.gu*=0.9;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;}
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
@@ -338,14 +358,14 @@ function carStep(c,trk,dt){
     const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(mu*Fzr+1)),2)));
     const Fyf=sat(af,Fzf,1),Fyr=sat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)));
     const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
-    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz;
+    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull;
     c.vx+=dvx*dt;c.vy+=dvy*dt;c.r+=dr*dt;c.r*=0.9995;c.slipR=Math.abs(ar);c.slipF=Math.abs(af);
     // сколько сцепления шин уже занято (1 — предел): боковая сила по углу увода + тяга или торможение
     const gl=Math.tanh(PHY.tk*Math.max(c.slipF,c.slipR)),gx=Math.min(1.3,Math.abs(Fx)/(mu*c.m*GRAV+1));c.gu+=(Math.min(1.5,Math.hypot(gl,gx)+spin*0.5)-c.gu)*Math.min(1,dt*20);
   }
   c.spinw=spin;
   // за обочиной — кочки, камни и канавы: на скорости бьют подвеску
-  if(c.off&&sp>10)c.dmg=Math.min(100,c.dmg+(sp-10)*0.05*(tr.rough||1)*(al>W/2+6?1.5:1)*dt);
+  if(c.off&&sp>10)c.dmg=Math.min(100,c.dmg+(sp-10)*0.05*(su.rough||1)*(al>W/2+6?1.5:1)*dt);
   if(Math.abs(c.vx)<0.05&&c.thr<0.05&&c.brk<0.05){c.vx=0;c.vy*=0.5;}
   c.yaw+=c.r*dt;
   const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw);
@@ -370,10 +390,10 @@ function carStep(c,trk,dt){
   const L=trk.segCol&&trk.segCol[c.idx];
   // второй проход: удар разворачивает машину, и нос может задеть стену снова — выталкиваем ещё раз
   if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
-  if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1);}}
+  if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1,'wall');}}
   // крутой склон горы — как стена: выше дороги по круче машина не въезжает, мягко скатывается назад
   if(c.off&&typeof R3!=='undefined'&&R3.on&&R3.F&&R3.T===trk){const e=1.2,h0=fH(c.x,c.z),gx=(fH(c.x+e,c.z)-fH(c.x-e,c.z))/(2*e),gz=(fH(c.x,c.z+e)-fH(c.x,c.z-e))/(2*e),sl=Math.hypot(gx,gz);
-    if(sl>0.5&&h0>trk.pts[c.idx][1]+0.8){const ux=gx/sl,uz=gz/sl,k=Math.min(1,(sl-0.5)*2.5);c.x-=ux*0.04*k;c.z-=uz*0.04*k;wallHit(c,-ux,-uz,0.1,0.25);}}
+    if(sl>0.5&&h0>trk.pts[c.idx][1]+0.8){const ux=gx/sl,uz=gz/sl,k=Math.min(1,(sl-0.5)*2.5);c.x-=ux*0.04*k;c.z-=uz*0.04*k;wallHit(c,-ux,-uz,0.1,0.25,'slope');}}
 }
 // Машина — капсула вдоль курса (от заднего до переднего свеса), радиус — полширины
 const CAR_R=0.78;
@@ -385,15 +405,15 @@ function segSeg(S,Q){const d1x=S[2]-S[0],d1z=S[3]-S[1],d2x=Q[2]-Q[0],d2z=Q[3]-Q[
   return [S[0]+d1x*s,S[1]+d1z*s,Q[0]+d2x*t,Q[1]+d2z*t];}
 // Столкновение с препятствием: круг (дерево, столб) или прямоугольник (дом, забор, трибуна, толпа)
 function obstacleHit(c,o){const [ax,az,bx,bz]=carCapsule(c);
-  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R;if(d>=rr)return;const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3);return;}
+  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R;if(d>=rr)return;const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
   const b=o.box;let best=null;
   for(let k=0;k<=8;k++){const t=k/8,px=ax+(bx-ax)*t,pz=az+(bz-az)*t,lx=(px-o.x)*b.ux+(pz-o.z)*b.uz,lz=(px-o.x)*b.vx+(pz-o.z)*b.vz,cx=clamp(lx,-b.hu,b.hu),cz=clamp(lz,-b.hv,b.hv),dx=lx-cx,dz=lz-cz,d=Math.hypot(dx,dz);let pen,nl;
     if(d>1e-4){if(d>=CAR_R)continue;pen=CAR_R-d;nl=[dx/d,dz/d];}else{const ex=b.hu-Math.abs(lx),ez=b.hv-Math.abs(lz);if(ex<ez){nl=[Math.sign(lx)||1,0];pen=ex+CAR_R;}else{nl=[0,Math.sign(lz)||1];pen=ez+CAR_R;}}
     if(!best||pen>best.pen)best={pen,nl};}
-  if(!best)return;const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2);}
+  if(!best)return;const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
 // Удар о препятствие с нормалью (nx,nz), направленной к машине: поперечная скорость отражается с потерей,
 // продольная теряет лишь трение удара, а сам удар разворачивает машину вдоль стены — она скользит и уходит от неё, а не липнет
-function wallHit(c,nx,nz,e,dmgK){
+function wallHit(c,nx,nz,e,dmgK,kind,hx,hz){
   let fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw);
   const Vx=fx*c.vx+rx*c.vy,Vz=fz*c.vx+rz*c.vy,vn=Vx*nx+Vz*nz;if(vn>=0)return;
   const tx=-nz,tz=nx,vt=Vx*tx+Vz*tz,imp=-vn,vt2=Math.sign(vt)*Math.max(0,Math.abs(vt)-0.3*(1+e)*imp),vn2=imp*e;
@@ -403,7 +423,7 @@ function wallHit(c,nx,nz,e,dmgK){
   else c.r*=0.6;
   fx=Math.sin(c.yaw);fz=Math.cos(c.yaw);rx=Math.cos(c.yaw);rz=-Math.sin(c.yaw);
   c.vx=nVx*fx+nVz*fz;c.vy=nVx*rx+nVz*rz;
-  if(imp>2){c.dmg=Math.min(100,c.dmg+imp*dmgK);c.hit=Math.max(c.hit,imp);}
+  if(imp>2){c.dmg=Math.min(100,c.dmg+imp*dmgK);c.hit=Math.max(c.hit,imp);crashNote(c,imp,kind||'wall',hx,hz);}
 }
 function carFailure(c){
   // у своих машин механик почти всегда успевает починить на обочине; сход — только при тяжёлой поломке или после сильных ударов
@@ -434,9 +454,11 @@ function aiControl(c,trk,dt){
   const kap=2*lx/Math.max(16,lz*lz+lx*lx);let want=Math.atan(c.L*kap);if(v>5)want+=clamp((kap*v-c.r)*0.3,-0.2,0.2);
   const dmax=0.6/(1+v/20);c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-2.2*dt,2.2*dt);
   const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
-  const mu=(TERR[trk.terrAt(c.idx)]||TERR.dirt).mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(0.8+0.17*sk)*(c.punct?0.5:1)*ordK,muC=mu*0.9;
+  const mu=roadMuAt(trk,c.idx)*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(0.8+0.17*sk)*(c.punct?0.5:1)*ordK,muC=mu*0.9;
   const bdec=c.brakeK*mu*GRAV*0.85;let vt=c.vtop*1.05;
   for(let d=0;d<Math.min(170,40+v*4.5);d+=step*2){let j=c.idx+Math.round(d/step);if(closed)j%=n;else if(j>=n)break;const k=Math.abs(trk.K[j])+1e-4,vc=Math.sqrt(muC*GRAV/k),va=Math.sqrt(vc*vc+2*bdec*Math.max(0,d-3));if(va<vt)vt=va;}
+  // закрытый переезд: остановиться у шлагбаума
+  const gs=aiGateStop(c,trk);c.gateWait=gs<6?1:0;if(gs<150){const va=Math.sqrt(2*bdec*Math.max(0,gs-1));if(va<vt)vt=va;}
   if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
   const kN=trk.K[c.idx]||0,latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
   c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
@@ -448,6 +470,7 @@ function aiControl(c,trk,dt){
   // боксы: шины, топливо, повреждения или приказ команды
   const cfg=trk.cfg,rem=Math.max(0,trk.raceLen-c.prog);if(cfg.pits&&c.lap<cfg.laps-1&&(c.tyre+rem*c.tyreRate*1.5>97||(c.fuelRate&&c.fuel<rem*c.fuelRate+4)||c.dmg>55||c.pitCall)){const toLine=((n-c.idx)%n)*step;if(toLine<110){c.brk=v>13?0.8:0;c.thr=v<10?0.4:0;}}
   if(c.follow&&!c.punct){c.thr=0;if(c.vx>c.follow.vx+2)c.brk=Math.max(c.brk,0.35);}
+  if(gs<2.5){c.thr=0;c.brk=1;}
   // на спущенном колесе у самого финиша — доезжаем осторожно, иначе останавливаемся менять
   if(c.punct){if(c.flat){const vF=Math.max(6,c.vtop*0.45);c.thr=v<vF?Math.min(c.thr,0.55):0;if(v>vF+1.5)c.brk=Math.max(c.brk,0.3);}else{c.thr=0;c.brk=1;}}
   if(c.fuelRate&&c.fuel<=0&&!(c.pitT>0)&&!c.dnf){c.dnf='кончилось топливо';if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — кончилось топливо`,2.5);}
@@ -462,7 +485,10 @@ function aiTraffic(T){
     if(blk&&blk.vx<c.vx+1){const L=blk.lat+2.9,Rr=blk.lat-2.9,okL=L<=W2,okR=Rr>=-W2;
       c.laneT=okL&&(!okR||Math.abs(L-c.lat)<=Math.abs(Rr-c.lat))?L:okR?Rr:c.lat;
       if(blk.vx>2&&best<5+c.vx*0.25&&Math.abs(blk.lat-c.lat)<1.9&&c.vx>blk.vx){c.follow=blk;}else c.follow=null;}
-    else{c.laneT=undefined;c.follow=null;}
+    else{c.laneT=undefined;c.follow=null;
+      // яма с грязью впереди — объехать стороной, где хватает места (опытный пилот объезжает и лужи)
+      if(T.patchAt)for(let d=3;d<=12;d+=3){const j=T.closed?(c.idx+d)%T.n:Math.min(T.n-1,c.idx+d),k=T.patchAt[j];if(!k)continue;const P=T.patches[k-1];if(P.kind!=='mudhole'&&(c.sk||0.8)<0.85)break;
+        const L=P.lat+P.b+1.1,Rr=P.lat-P.b-1.1;if(L<=W2||Rr>=-W2)c.laneT=L<=W2&&(Rr<-W2||Math.abs(L-c.lat)<Math.abs(Rr-c.lat))?L:Rr;break;}}
   });
 }
 const rKeys={left:false,right:false,gas:false,brake:false};
@@ -473,7 +499,9 @@ function playerControl(c,dt){
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
-  if(PHY.hold){c.vy*=1-Math.min(0.3,dt*5*PHY.hold);c.r*=1-Math.min(0.2,dt*2.5*PHY.hold);}
+  // на скользком (мокрый булыжник, трава, грязь, лёд) шины держат слабее — машина плывёт по-настоящему
+  const gk=clamp(((c.muNow||c.grip)-0.25)/0.7,0.12,1);
+  if(PHY.hold){c.vy*=1-Math.min(0.3,dt*5*PHY.hold*gk);c.r*=1-Math.min(0.2,dt*2.5*PHY.hold*gk);}
   if(R.tilt&&R.tiltVal!==undefined)c.steer+=clamp(clamp(R.tiltVal/22,-1,1)-c.steer,-4*dt,4*dt);
   else if(RW.drag)c.steer+=clamp(RW.target-c.steer,-7*dt,7*dt);
   else{const dir=rKeys.left?-1:rKeys.right?1:0;
@@ -481,7 +509,7 @@ function playerControl(c,dt){
     if(dir){c.hold+=dt;const rate=0.7+2.1*Math.min(1,c.hold/0.6);c.steer=clamp(c.steer+dir*rate*(c.steer*dir<0?1.8:1)*dt,-1,1);}
     else{c.hold=0;c.steer-=clamp(c.steer,-back,back);}}
   // полный поворот — чуть за пределом сцепления на этой скорости: на прямой руль точный, в шпильке — полный угол колёс
-  const mu=(TERR[R.trk.terrAt(c.idx)]||TERR.dirt).mu*c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
+  const mu=c.muNow||c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
   let want=c.steer*dmax;
   // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
   if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*0.7,-0.12,0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
@@ -527,7 +555,7 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
     const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
   const me=cars.find(c=>c.player)||null,team=cars.filter(c=>c.you);
   // погода гонки: в дождь шины держат хуже
-  const wx=r3dWeather(trk);if(wx.rain)cars.forEach(c=>{c.grip*=0.87;});
+  const wx=r3dWeather(trk);planPatches(trk,!!wx.rain);
   R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
     hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
@@ -662,6 +690,7 @@ function raceTick(dt){
   aiTraffic(T);
   R.cars.forEach(c=>{
     if(c.fin!==null||c.dnf){if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
+    if(c.inWater===2){rescueTick(c,dt);return;}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
@@ -670,6 +699,8 @@ function raceTick(dt){
   });
   const sub=R.mode==='sim'?3:4,h=dt/sub;
   for(let k=0;k<sub;k++){R.cars.forEach(c=>{if(!c.dnf||c.vx>0.2)carStep(c,T,h);});for(let i=0;i<R.cars.length;i++)for(let j=i+1;j<R.cars.length;j++){const A=R.cars[i],B=R.cars[j];if(A.dnf&&B.dnf)continue;const imp=carsCollide(A,B);if(imp>1.5&&(A===R.follow||B===R.follow)){R.shake=Math.min(0.6,imp*0.05);auSfx('bump',Math.min(1,imp/10));}}}
+  // аварии, вода, поезд (0.18)
+  {const w3=R.gl&&typeof R3!=='undefined'&&R3.on;R.cars.forEach(c=>{if(c.crash)crashResolve(c);if(w3){waterCheck(c,T,dt);trainCheck(c,T);}});}
   R.cars.forEach(c=>{c.draft=0;if(c.dnf)return;R.cars.forEach(o=>{if(o===c||o.dnf)return;const gap=o.prog-c.prog;if(gap>4&&gap<25){const dx=o.x-c.x,dz=o.z-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),latd=Math.abs(dx*fz-dz*fx);if(latd<1.6)c.draft=1;}});});
   const me=R.me;
   if(me){if(me.hit){if(me.hit>6){R.shake=0.6;rMsg('УДАР!',0.9);auSfx('crash',Math.min(1,me.hit/15));}else auSfx('bump',0.5);me.hit=0;}
@@ -677,7 +708,7 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.flat?'ПРОКОЛ! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ':me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
-    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.stopT&&!me.pitT&&!me.svc&&!me.dnf&&me.fin===null?me.stuck+dt:0;}
+    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.stopT&&!me.pitT&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;
@@ -688,7 +719,7 @@ function raceTick(dt){
         else if(Math.abs(me.lat)>T.W/2+24){respawnAt(me,me.offIdx,me.offLap);rMsg('ВНЕ ТРАССЫ',1.6);}}
       else me.offIdx=-1;}}
   R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
-    if((!c.player)&&!c.dnf&&!(c.stopT>0)&&!(c.pitT>0)&&!c.punct&&c.fin===null&&R.t>4){const bad=Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5;
+    if((!c.player)&&!c.dnf&&!(c.stopT>0)&&!(c.pitT>0)&&!c.punct&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
     if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
   const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);

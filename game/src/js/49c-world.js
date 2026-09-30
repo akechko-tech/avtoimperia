@@ -140,6 +140,8 @@ function r3dChunkExtras(S,lit){const T=R3.T,W=T.W,st=T.step,e3=lit.e[3];
   for(let s=0;s<S.length-1;s++){const A=S[s],B=S[s+1];if(!T.segT||T.segT[A.i]!==RSEG.serp||T.segT[B.i]!==RSEG.serp)continue;
     const pa=T.pts[A.i],na=T.N[A.i],pb=T.pts[B.i],nb=T.N[B.i];
     [1,-1].forEach(sd=>{const off=W/2+2.2,ha=fH(pa[0]+na[0]*sd*(W/2+14),pa[2]+na[1]*sd*(W/2+14))-pa[1],hb=fH(pb[0]+nb[0]*sd*(W/2+14),pb[2]+nb[1]*sd*(W/2+14))-pb[1];if(ha<3||hb<3)return;
+      // скала не заходит на соседнюю петлю серпантина (иначе дорога «ныряет в гору»)
+      for(const [p,nv,ii] of [[pa,na,A.i],[pb,nb,B.i]])for(const o of [off,off+1.6])if(nearTrack(T,p[0]+nv[0]*sd*o,p[2]+nv[1]*sd*o,W/2+1.2,ii))return;
       lit.e[3]=txLay('rock',1,1);const rows=5,cA=[],cB=[];
       for(let k=0;k<=rows;k++){const t=k/rows,ja=vnz(A.i*0.37,k*1.7,11)-0.5,jb=vnz(B.i*0.37,k*1.7,11)-0.5,Ha=Math.min(ha+1.5,14)*t,Hb=Math.min(hb+1.5,14)*t;
         cA.push([pa[0]+na[0]*sd*(off+t*1.6+ja*0.9),roadY(A.i,sd*W/2)+0.1+Ha,pa[2]+na[1]*sd*(off+t*1.6+ja*0.9)]);cB.push([pb[0]+nb[0]*sd*(off+t*1.6+jb*0.9),roadY(B.i,sd*W/2)+0.1+Hb,pb[2]+nb[1]*sd*(off+t*1.6+jb*0.9)]);}
@@ -228,7 +230,8 @@ function r3dTrainDraw(E,bw,bh){const T=R3.T;if(!T.rails||!T.rails.length)return;
   // стрелы шлагбаумов
   if(R3.gates&&R3.gates.length){const C=G3.cache;if(!C.gateArm){const mb=new MB();for(let k=0;k<8;k++)pBox(mb,0,-0.06,0.35+k*0.55,0.05,0.12,0.275,k%2?'#b8322a':'#f2eee4',MID.paint);C.gateArm=g3Mesh(mb);}
     if(!P){P=r3dUse('lit',E,bw,bh);gl.uniform4f(P.u.u_lamp,0,0,0,0);}const M=R3.gateM||(R3.gateM=m4());
-    R3.gates.forEach(g=>{const rl=T.rails.reduce((b,q)=>Math.abs(q.i-g.i)<Math.abs((b||{i:1e9}).i-g.i)?q:b,null),k=rl?rl.gate||0:0,a=(1-k)*1.45;
-      // стрела поворачивается от вертикали к горизонтали над дорогой
-      const t=R3.T.T[g.i],fw=[t[0],0,t[1]],sd=g.side,across=[-R3.T.N[g.i][0]*sd,0,-R3.T.N[g.i][1]*sd],up=[0,1,0],dir=[across[0]*Math.cos(a)+up[0]*Math.sin(a),Math.sin(a),across[2]*Math.cos(a)],rt=v3n(v3x(up,dir)),u2=v3x(dir,rt);
+    R3.gates.forEach(g=>{const rl=T.rails.reduce((b,q)=>Math.abs(q.i-g.i)<Math.abs((b||{i:1e9}).i-g.i)?q:b,null),k=rl?rl.gate||0:0,a=(1-k)*1.45,bk=rl&&rl.broken&&rl.broken[g.i<rl.i?0:1];
+      // стрела поворачивается от вертикали к горизонтали над дорогой; сбитая — отброшена вдоль дороги и висит
+      const t=R3.T.T[g.i],fw=[t[0],0,t[1]],sd=g.side,across=[-R3.T.N[g.i][0]*sd,0,-R3.T.N[g.i][1]*sd],up=[0,1,0],sw=g.i<(rl?rl.i:0)?1:-1;
+      const dir=bk?v3n([across[0]*0.4+fw[0]*0.9*sw,-0.22,across[2]*0.4+fw[2]*0.9*sw]):[across[0]*Math.cos(a)+up[0]*Math.sin(a),Math.sin(a),across[2]*Math.cos(a)],rt=v3n(v3x(up,dir)),u2=v3x(dir,rt);
       m4basis(M,rt,u2,dir,[g.x,g.y+1.2,g.z]);gl.uniformMatrix4fv(P.u.u_model,false,M);g3Draw(C.gateArm);});}}

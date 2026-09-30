@@ -139,13 +139,14 @@ uniform sampler2D u_tex;
 #ifdef LEAF
 uniform sampler2D u_fol;
 #endif
-uniform highp sampler2DArray u_alb,u_dat;uniform vec4 u_lay[32],u_lavg[32],u_tq;
+uniform highp sampler2DArray u_alb,u_dat;uniform vec4 u_lay[40],u_lavg[40],u_tq;
 #ifdef TERRAIN
 uniform sampler2D u_cmap,u_smap;uniform vec4 u_cm,u_tl,u_tl2,u_tp;
 #endif
 #ifdef ROAD
-uniform vec4 u_rd,u_rd2;
+uniform vec4 u_rd,u_rd2;uniform vec4 u_pat[24];uniform float u_patN;
 #endif
+uniform float u_dark;
 uniform vec4 u_lamp;uniform vec3 u_hlP,u_hlD;uniform float u_hl;
 uniform highp sampler2DShadow u_sh;uniform vec3 u_shI;
 #ifdef CATCH
@@ -211,12 +212,22 @@ void main(){
     if(ve>.01){vec3 G=lA(u_rd2.x,ruv*u_lay[int(u_rd2.x)].x).rgb;c=mix(c,G,ve);}
     alpha=paved>.5?smoothstep(0.,.04,e):smoothstep(0.,.18+nb*.35,e);
     if(u_rd2.y>.5){float ln=(1.-smoothstep(.05,.075,abs(mm.x)))*step(.55,fract(mm.y/9.));c=mix(c,vec3(.72,.7,.64),ln*.85);}
-    float wet=u_rd2.z,pud=smoothstep(.6,.7,vn2(mm*vec2(.45,.22)+11.))*(kind==7.?1.:wet)*(.35+.65*min(rut,1.));
-    vec4 D=lD(L,ruv*sL);rough=mix(D.b,D.b*.72,rut*soft)*(1.-wet*.6);c*=1.-wet*.3;
+    float wet=u_rd2.z*(v_lamp>9.5?0.:1.),pud=smoothstep(.6,.7,vn2(mm*vec2(.45,.22)+11.))*(kind==7.?1.:wet)*(.35+.65*min(rut,1.));
+    // лужи и ямы с грязью (0.18): те же пятна, что чувствует машина
+    float pw=0.,mw=0.,pe=0.;
+    for(int i=0;i<12;i++){if(float(i)>=u_patN)break;vec4 PA=u_pat[i*2],PB=u_pat[i*2+1];vec2 pd=v_wp.xz-PA.xy;float pu=dot(pd,PA.zw),pv=pd.y*PA.z-pd.x*PA.w,an=atan(pv,pu);
+      float rr=length(vec2(pu/PB.x,pv/PB.y))*(1.+.1*sin(3.*an+PB.w)+.05*sin(7.*an+PB.w*2.))+(vn2(v_wp.xz*1.3)-.5)*.1;
+      float w=1.-smoothstep(.84,1.,rr);if(PB.z>.5)mw=max(mw,w);else{pw=max(pw,w);pe=max(pe,smoothstep(.7,.9,rr)*(1.-smoothstep(1.,1.3,rr)));}}
+    pud=max(pud,pw);
+    vec3 mud=vec3(0.);if(mw>.01){mud=vec3(.2,.13,.068)*(.75+.5*nz);float tr=exp(-pow(fract(mm.x/1.45+.5)-.5,2.)*60.);mud*=1.-tr*.5*smoothstep(.4,.9,mw);mud=mix(mud,mud*.55,smoothstep(.55,.9,mw)*(.5+.5*vn2(v_wp.xz*2.1)));}
+    vec4 D=lD(L,ruv*sL);rough=mix(D.b,D.b*.72,rut*soft)*(1.-wet*.35);c*=1.-wet*.3;rough=mix(rough,.16,mw);
+    // мокрая кромка лужи — темнее
+    c*=1.-pe*.45;
     if(u_tq.x>.5&&dist<60.){vec3 dp1=dFdx(v_wp),dp2=dFdy(v_wp);vec2 du1=dFdx(ruv),du2=dFdy(ruv);vec3 a1=cross(dp2,N),a2=cross(N,dp1);
-      vec3 T=a1*du1.x+a2*du2.x,B=a1*du1.y+a2*du2.y;float im=inversesqrt(max(max(dot(T,T),dot(B,B)),1e-12));N=nmap(N,T*im,-B*im,D,(1.-pud)*(1.-smoothstep(25.,60.,dist)));}
-    if(pud>.01){c=mix(c,c*.3,pud);rough=mix(rough,.03,pud);}
-    alb=c*alb;spec=1.;envK=1.;}
+      vec3 T=a1*du1.x+a2*du2.x,B=a1*du1.y+a2*du2.y;float im=inversesqrt(max(max(dot(T,T),dot(B,B)),1e-12));N=nmap(N,T*im,-B*im,D,(1.-pud)*(1.-mw*.5)*(1.-smoothstep(25.,60.,dist)));}
+    if(pud>.01){c=mix(c,c*.12,pud);rough=mix(rough,.02,pud);
+      if(wet>0.)N=normalize(N+vec3(sin(v_wp.x*11.+u_time*7.)+sin(v_wp.z*13.-u_time*5.3),0.,cos(v_wp.z*9.+u_time*6.)+sin(v_wp.x*7.-u_time*4.))*.02*pud);}
+    alb=mix(c*alb,mud,mw);spec=1.;envK=1.+pud*1.3;}
 #else
   if(v_lay>=0){float L=float(v_lay),sL=u_lay[v_lay].x;vec3 c;
     if(v_lmode==1){vec3 w=abs(N);w=w*w*w;w/=w.x+w.y+w.z;
@@ -242,8 +253,11 @@ void main(){
   vec3 col;
   if(m.w<-.5&&m.w>-1.5){float nl=dot(N,u_sun),dif=max((nl+.55)/1.55,0.)*.9+pow(max(dot(-V,u_sun),0.),3.)*.35;col=alb*(u_sunC*dif*sh+mix(u_gndC,u_skyC,N.y*.5+.5));}
   else col=shade(alb,N,V,rough,metal,spec,envK,sh,ao);
+  // тоннель: под сводом нет ни солнца, ни неба — только фары и редкие лампы
+  if(v_lamp>9.5)col*=1.-min(1.,(v_lamp-10.)/100.)*.95;
+  col*=1.-u_dark*.93;
   if(u_hl>0.){vec3 Lh=u_hlP-v_wp;float dh=length(Lh);Lh/=dh;float spot=smoothstep(.8,.95,dot(-Lh,u_hlD))*u_hl/(1.+dh*dh*.0025);col+=alb*vec3(1.,.85,.6)*spot*max(dot(N,Lh),0.)*4.;}
-  if(v_lamp>.5){if(v_lamp<1.5)col+=vec3(1.,.07,.03)*(u_lamp.x*4.+u_lamp.y*1.2);else if(v_lamp<2.5)col+=vec3(1.,.88,.6)*u_lamp.y*4.;else if(v_lamp>4.5)col+=vec3(1.,.78,.42)*u_lamp.z*3.;}
+  if(v_lamp>.5&&v_lamp<9.5){if(v_lamp<1.5)col+=vec3(1.,.07,.03)*(u_lamp.x*4.+u_lamp.y*1.2);else if(v_lamp<2.5)col+=vec3(1.,.88,.6)*u_lamp.y*4.;else if(v_lamp>4.5)col+=vec3(1.,.78,.42)*u_lamp.z*3.;}
   if(m.w<-3.5)col=alb*2.;
   col=fogIt(col,V,dist);
   o=vec4(tone(col),alpha);}`;

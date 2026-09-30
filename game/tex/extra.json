@@ -1,4 +1,118 @@
-{"mat": {
-  "meadow": {"id": "synth-meadow", "name": "Луг (сборка из фото-травинок Poly Haven)", "m": 1.7},
-  "meadow_dry": {"id": "synth-meadow-dry", "name": "Выгоревший луг (сборка из фото-травинок Poly Haven)", "m": 1.7}
-}}
+{
+ "mat": {
+  "meadow": {
+   "id": "synth-meadow",
+   "name": "Луг (сборка из фото-травинок Poly Haven)",
+   "m": 1.7
+  },
+  "meadow_dry": {
+   "id": "synth-meadow-dry",
+   "name": "Выгоревший луг (сборка из фото-травинок Poly Haven)",
+   "m": 1.7
+  },
+  "leather": {
+   "id": "brown_leather",
+   "name": "Brown Leather",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "m": 0.4,
+   "nor": true,
+   "arm": true
+  },
+  "fabric": {
+   "id": "poly_wool_herringbone",
+   "name": "Poly Wool Herringbone",
+   "authors": [
+    "colormass",
+    "Rico Cilliers"
+   ],
+   "m": 0.28,
+   "nor": true,
+   "arm": true
+  },
+  "fabric2": {
+   "id": "rough_linen",
+   "name": "Rough Linen",
+   "authors": [
+    "colormass",
+    "Rico Cilliers"
+   ],
+   "m": 0.27,
+   "nor": true,
+   "arm": true
+  },
+  "cliff": {
+   "id": "tiger_rock",
+   "name": "Tiger Rock",
+   "authors": [
+    "Dario Barresi"
+   ],
+   "m": 2.55,
+   "nor": true,
+   "arm": true
+  },
+  "cliff2": {
+   "id": "cliff_side",
+   "name": "Cliff Side",
+   "authors": [
+    "James Ray Cock",
+    "Jenelle van Heerden",
+    "Dario Barresi"
+   ],
+   "m": 1.83,
+   "nor": true,
+   "arm": true
+  },
+  "rock_moss": {
+   "id": "mossy_rock",
+   "name": "Mossy Rock",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "m": 3.0,
+   "nor": true,
+   "arm": true
+  },
+  "tunnel": {
+   "id": "castle_brick_01",
+   "name": "Castle Brick 01",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "m": 1.5,
+   "nor": true,
+   "arm": true
+  },
+  "wood_var": {
+   "id": "european_walnut_veneer_04",
+   "name": "European Walnut Veneer 04",
+   "authors": [
+    "Jenelle van Heerden"
+   ],
+   "m": 1.0,
+   "nor": true,
+   "arm": true
+  },
+  "factory": {
+   "id": "factory_brick",
+   "name": "Factory Brick",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "m": 1.5,
+   "nor": true,
+   "arm": true
+  },
+  "metal_old": {
+   "id": "green_metal_rust",
+   "name": "Green Metal Rust",
+   "authors": [
+    "Rob Tuytel"
+   ],
+   "m": 1.0,
+   "nor": true,
+   "arm": true
+  }
+ }
+}

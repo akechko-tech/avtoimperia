@@ -42,7 +42,7 @@ async function texUpload(){
     const D=TX.D,n=D.lay.length,S=gq().tex,lv=Math.floor(Math.log2(S))+1;texPS(gl);
     const mk=fmt=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D_ARRAY,t);gl.texStorage3D(gl.TEXTURE_2D_ARRAY,lv,fmt,S,S,n);return t;};
     gl.activeTexture(gl.TEXTURE3);const alb=mk(gl.SRGB8_ALPHA8);gl.activeTexture(gl.TEXTURE4);const dat=mk(gl.RGBA8);
-    const lay=new Float32Array(128),avg=new Float32Array(128);
+    const lay=new Float32Array(160),avg=new Float32Array(160);
     for(let i=0;i<n;i++){const l=D.lay[i];
       const [a,d]=await Promise.all([texDecode(D.img[l.k+'_a']),texDecode(D.img[l.k+'_d'])]);
       if(!G3.gl||G3.gl!==gl){texClose(a);texClose(d);throw new Error('контекст сменился');}

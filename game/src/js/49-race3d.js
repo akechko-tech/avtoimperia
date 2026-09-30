@@ -231,7 +231,7 @@ function windUp(mb,a,b,c){const f=mb.f,s=mb.st>>2,ax=f[a*s],az=f[a*s+2],ux=f[b*s
 function r3dVeg(i0,i1){const T=R3.T,cfg=T.cfg,A=R3.veg,n=T.n,W=T.W;if(!A||cfg.terr==='snow'||cfg.oval||T.rc.track==='board')return null;
   const L=A.list,by=k=>L.filter(q=>q.kind===k),gr=by('grass'),dry=by('dry'),fl=by('flower'),fe=by('fern');
   const sandy=cfg.terr==='sand'||cfg.terr==='beach',mnt=cfg.terr==='mount'||cfg.uphill,dryland=sandy||['it','es','ly','mc'].includes(cfg.host),per=Math.round((sandy?2:mnt?4:7)*gq().veg),out=[];
-  for(let ii=i0;ii<i1;ii++){const i=ii%n;if(R3.town[i])continue;const r=mulberry32(i*7919+13),p=T.pts[i],nn=T.N[i],t=T.T[i];
+  for(let ii=i0;ii<i1;ii++){const i=ii%n;if(R3.town[i]||tunNear(T,i,3))continue;const r=mulberry32(i*7919+13),p=T.pts[i],nn=T.N[i],t=T.T[i];
     for(const sd of [1,-1]){if(cfg.terr==='beach'&&sd>0)continue;
       for(let k=0;k<per;k++){const a=0.9+Math.pow(r(),1.8)*13,off=sd*(W/2+a),al=r()*T.step,x=p[0]+nn[0]*off+t[0]*al,z=p[2]+nn[1]*off+t[1]*al,y=groundAt(i,off)-0.04;
         const q=r(),L2=dryland?(q<0.6?dry:q<0.9?gr:fl):mnt?(q<0.35?dry:q<0.85?gr:fe):(q<0.1?fl:q<0.2?dry:q<0.27&&a>4?fe:gr),sp=L2[Math.floor(r()*L2.length)],k2=(0.75+r()*0.6)*(a<3?0.9:1.1);
@@ -261,12 +261,14 @@ function r3dChunk(k){
   const lerpA=(d,a)=>{const A=[0,1.5,4,8.5,14];for(let q=1;q<A.length;q++)if(a<=A[q]){const t=(a-A[q-1])/(A[q]-A[q-1]);return d[q-1]+(d[q]-d[q-1])*t;}return 0;};
   const verge=a=>lerpA(hard?[0.45,0.15,0.04,0,0]:[0.95,0.5,0.14,0.03,0],a),tramp=a=>lerpA(hard?[0.5,0.55,0.35,0.12,0]:[0.25,0.6,0.5,0.2,0],a);
   for(let s=0;s<S.length-1;s++){const A=S[s],B=S[s+1],rm=roadM(A.tex),mb=roads[A.tex]||(roads[A.tex]=new MB(true));const tc=(t)=>[clamp(255*rm.t[0]*t,0,255)|0,clamp(255*rm.t[1]*t,0,255)|0,clamp(255*rm.t[2]*t,0,255)|0];
+    const tk=tunCode(T,A.i);mb.e[1]=tk;gnd.e[1]=tk;lit.e[1]=tk;
     mbGrid(mb,[A.road,B.road],[A.uv,B.uv],null,MID.stone,[tc(A.tint*0.9),tc(B.tint*0.9)]);
     [0,1].forEach(sd=>{let a=A.sh[sd],b=B.sh[sd];if(!a||!b)return;let m=Math.min(a.length,b.length),aa=a.A;
       // город: ступень тротуара и плиты — фото-камень; земля — за тротуаром
       if(A.town&&aa[0]===0&&m>=3){const L=txLay(T.rc.y>=1920?'concrete':'cobble',0),Lc=txLay('stone_wall',0);lit.e[3]=Lc;mbGrid(lit,[a.slice(0,2),b.slice(0,2)],null,[176,170,160],MID.stone);lit.e[3]=L;mbGrid(lit,[a.slice(1,3),b.slice(1,3)],null,[200,196,186],MID.stone);lit.e[3]=0;
         a=a.slice(2);b=b.slice(2);aa=aa.slice(2);m=Math.min(a.length,b.length);if(m<2)return;}
-      mbGrid(gnd,[a.slice(0,m),b.slice(0,m)],null,(r,c)=>{const v=A.town?0:verge(aa[c]),w=A.town?0.3:tramp(aa[c]);return beach?[0,0,255,0]:[v*255|0,0,0,w*255|0];},MID.matte);});}
+      mbGrid(gnd,[a.slice(0,m),b.slice(0,m)],null,(r,c)=>{const v=A.town?0:verge(aa[c]),w=A.town?0.3:tramp(aa[c]);return beach?[0,0,255,0]:[v*255|0,0,0,w*255|0];},MID.matte);});
+    mb.e[1]=0;gnd.e[1]=0;lit.e[1]=0;}
   r3dChunkExtras(S,lit);
   const people=[];
   for(let i=i0;i<i1;i++){const j=i%n;for(const it of T.spr[j])r3dItem(it,j,lit,people);}
@@ -291,7 +293,9 @@ function r3dItem(it,i,mb,people){
     case 'hedge':{const P=fTree('hedge',0,1),X=X3(face,1,[x,y,z]);mb.add(P.w,X);if(R3.curLeaf)R3.curLeaf.add(P.l,X);return;}
     case 'rock':case 'hay':case 'cactus':case 'agave':case 'stog':
       mb.add(pTree(it.t,(it.v||0)%3),X3(rnd()*6.28,0.85+rnd()*0.3,[x,y-0.05,z]));return;
-    case 'dune':case 'cliff':mb.add(pTree(it.t,0),X3(face+(rnd()-0.5)*0.4,0.9+rnd()*0.2,[x,y-0.3,z]));return;
+    // скала — вдоль дороги (раньше стояла поперёк и заходила на полотно: машина «въезжала в гору»)
+    case 'cliff':mb.add(pTree(it.t,0),X3(face+Math.PI/2+(rnd()-0.5)*0.12,0.9+rnd()*0.2,[x,y-0.3,z]));return;
+    case 'dune':mb.add(pTree(it.t,0),X3(face+(rnd()-0.5)*0.4,0.9+rnd()*0.2,[x,y-0.3,z]));return;
     case 'fence':case 'wall':case 'vine':mb.add(pProp(it.t,0),X3(face,1,[x,y,z]));return;
     case 'gstone':case 'rhut':mb.add(pProp(it.t,0),X3(face,1,[x,y,z]));return;
     case 'rgate':{mb.add(pProp('rgate',0),X3(face,1,[x,y,z]));(R3.gates=R3.gates||[]).push({x,y,z,face,side,i});return;}
@@ -338,14 +342,15 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
   edges.forEach(e=>{const lo=e.map(q=>[q[0],q[1]-4,q[2]]);mbGrid(mb,[e,lo],null,[0,0,0],MID.matte);});
   // лес: деревья в пятнах рощ (породы — как у дорог этой страны)
   const set=SCEN_SETS[R3.T.cfg.host],kinds=set.trees.filter(t=>t!=='palm'&&t!=='olive'&&t!=='cypress'),trees=new MB(),leaf=new MB(true),x0=F.x0+k0*F.S,z0=F.z0+j0*F.S,x1=x0+TS*F.S,z1=z0+TS*F.S,r=mulberry32(tx*7919+tz*104729),dens=gq().trees;
-  const put=(t,x,y,z,sc)=>{const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
+  const tunT=R3.T.tunnels&&R3.T.tunnels.length,tunFree=(x,z)=>{if(!tunT)return true;const k=Math.round((x-F.x0)/F.S),j=Math.round((z-F.z0)/F.S);if(k<0||j<0||k>=F.nx||j>=F.nz)return true;const q=j*F.nx+k,i=F.I[q];return !(i>=0&&tunNear(R3.T,i,4)&&F.D[q]<R3.T.W/2+44);};
+  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
   R3.forest.forEach(([fx,fz,fr])=>{if(fx+fr<x0||fx-fr>x1||fz+fr<z0||fz-fr>z1)return;const cnt=Math.round(fr*fr/90*dens);
     for(let q=0;q<cnt;q++){const a=r()*6.283,d=Math.sqrt(r())*fr,x=fx+Math.cos(a)*d,z=fz+Math.sin(a)*d;if(x<x0||x>=x1||z<z0||z>=z1)continue;if(fSample(F,F.D,x,z)<40||lmNear(x,z))continue;
       put(kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,fSample(F,F.G,x,z)-0.2,z,0.8+r()*0.45);}});
   // склоны: в горах — ели, кусты и валуны; на холмах — редкие деревья
   if(dmin<380){const pr=(F.mount?0.16:0.035)*dens;for(let j=j0;j<Math.min(F.nz-1,j0+TS);j++)for(let k=k0;k<Math.min(F.nx-1,k0+TS);k++){const q=j*F.nx+k,d=F.D[q];if(d<24||d>420||r()>pr)continue;
     const sl=Math.hypot(F.H[q+1]-F.H[q],F.H[q+F.nx]-F.H[q])/F.S;if(sl<0.12)continue;const x=F.x0+(k+r())*F.S,z=F.z0+(j+r())*F.S,y=fSample(F,F.G,x,z);if(lmNear(x,z))continue;
-    if(sl>0.8&&F.mount&&r()<0.55)trees.add(pTree('rock',Math.floor(r()*3)),X3(r()*6.28,1+r()*1.6,[x,y-0.4,z]));else if(sl>0.8&&F.mount)put('bush',x,y-0.2,z,1.1+r()*0.7);else if(F.mount&&r()<0.35)put('bush',x,y-0.1,z,0.9+r()*0.6);else put(F.mount?'fir':kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,y-0.2,z,0.7+r()*0.5);}}
+    if(!tunFree(x,z))continue;if(sl>0.8&&F.mount&&r()<0.55)trees.add(pTree('rock',Math.floor(r()*3)),X3(r()*6.28,1+r()*1.6,[x,y-0.4,z]));else if(sl>0.8&&F.mount)put('bush',x,y-0.2,z,1.1+r()*0.7);else if(F.mount&&r()<0.35)put('bush',x,y-0.1,z,0.9+r()*0.6);else put(F.mount?'fir':kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,y-0.2,z,0.7+r()*0.5);}}
   return {g:g3Mesh(mb),t:g3Mesh(trees),l:g3Mesh(leaf),c:[(x0+x1)/2,0,(z0+z1)/2]};}
 /* ---------- машины: модель из 46-models.js, колёса крутятся, кузов кренится ---------- */
 function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.mech?1:0,spec.b,spec.y,spec.hp===undefined?'':spec.hp,spec.strip?1:0,spec.acc||'',spec.lux?1:0,spec.mq||'',spec.num||0].join('|')+(near?'|h':'|l');let m=R3.carM.get(key);if(m)return m;
@@ -373,6 +378,8 @@ function r3dSetup(){
   const C=G3.cache,era=R.rc.y<1906?0:R.rc.y<1919?1:2;
   if(!C['atlas'+era]){const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+era]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}R3.atlas=C['atlas'+era].a;R3.texPeople=C['atlas'+era].t;
   const M=r3dMaps(T,R3.F,R3.W);R3.texCM=g3TexBytes(M.SZ,M.A);R3.texSM=g3TexBytes(M.SZ,M.B);R3.cmU=M.u;R3.lays=r3dLayers(T,R3.F);
+  // карта земли для физики (поле, лес, песок) — уменьшенная копия
+  {const S=256,st=M.SZ/S,sm=new Uint8Array(S*S*4);for(let j=0;j<S;j++)for(let i=0;i<S;i++){const o=(Math.floor(j*st)*M.SZ+Math.floor(i*st))*4,q=(j*S+i)*4;sm[q]=M.B[o];sm[q+1]=M.B[o+1];sm[q+2]=M.B[o+2];sm[q+3]=M.B[o+3];}R3.smap=sm;R3.smapS=S;}
   R3.far=r3dFarRing(T,R3.F);
   R3.texFor=key=>{const k='road|'+key+'|'+T.W;return C[k]||(C[k]=g3Tex(r3dChecker()));};
   r3dLabelAtlas();R3.signs=new MB(true);R3.texLab=null;
@@ -385,7 +392,8 @@ function r3dSetup(){
   // море у пляжа и берега: большая гладь чуть ниже дороги (земля к воде опускается)
   {const wm=r3dWaters(T);if(wm&&!R3.F.beach)R3.water=g3Mesh(wm);}
   {const rm=r3dRails(T);if(rm)R3.rails=g3Mesh(rm);}
-  if(R3.F.beach){const F=R3.F,mb=new MB();let lo=1e9;T.pts.forEach(p=>{lo=Math.min(lo,p[1]);});const y=lo-1.1,x0=F.x0-6000,z0=F.z0-6000,x1=F.x0+(F.nx-1)*F.S+6000,z1=F.z0+(F.nz-1)*F.S+6000,c=hex2rgb('#1f5a78');
+  try{r3dTunnels();}catch(e){console.warn('tunnels',e);R3.tuns=[];}
+  if(R3.F.beach){const F=R3.F,mb=new MB();let lo=1e9;T.pts.forEach(p=>{lo=Math.min(lo,p[1]);});const y=lo-1.1;R3.beachY=y;const x0=F.x0-6000,z0=F.z0-6000,x1=F.x0+(F.nx-1)*F.S+6000,z1=F.z0+(F.nz-1)*F.S+6000,c=hex2rgb('#1f5a78');
     const N=10;for(let a=0;a<N;a++)for(let b=0;b<N;b++){const xa=x0+(x1-x0)*a/N,xb=x0+(x1-x0)*(a+1)/N,za=z0+(z1-z0)*b/N,zb=z0+(z1-z0)*(b+1)/N;mb.poly([[xa,y,za],[xb,y,za],[xb,y,zb],[xa,y,zb]],[0,1,0],c,MID.water);}
     R3.water=g3Mesh(mb);}
   // очередь постройки: куски трассы от старта вперёд, земля — от старта во все стороны
@@ -399,6 +407,11 @@ function r3dSetup(){
   const tS=performance.now();while(R3.next<order.length&&(R3.next<2||performance.now()-tS<110))r3dBuildStep();
   r3dTilesAround(R.follow.x,R.follow.z,200,60);
 }
+// Лужи и грязь для шейдера дороги: 12 ближайших к камере пятен (центр, направление, полуоси, вид, фаза края)
+function r3dPatUniforms(P){const gl=G3.gl,L=R3.T.patches||[],e=R3.eye;if(!R3.patU)R3.patU=new Float32Array(96);let n=0;
+  if(L.length){const cand=[];for(const Q of L){const d=(Q.x-e[0])**2+(Q.z-e[2])**2;if(d<230*230)cand.push([d,Q]);}cand.sort((a,b)=>a[0]-b[0]);
+    for(const [,Q] of cand){if(n>=12)break;R3.patU.set([Q.x,Q.z,Q.tx,Q.tz,Q.a,Q.b,Q.kind==='mudhole'?1:0,Q.ph],n*8);n++;}}
+  if(P.u.u_pat)gl.uniform4fv(P.u.u_pat,R3.patU);if(P.u.u_patN)gl.uniform1f(P.u.u_patN,n);}
 function r3dChecker(){const c=mkCanvas(64,16),g=c.getContext('2d');for(let i=0;i<16;i++)for(let j=0;j<4;j++){g.fillStyle=(i+j)%2?'#141414':'#f4f2ea';g.fillRect(i*4,j*4,4,4);}return c;}
 function r3dBannerStart(){const T=R3.T,i=Math.min(T.n-1,T.startIdx+1),mb=new MB();r3dBanner(i,mb,'СТАРТ');R3.startMesh=g3Mesh(mb);}
 function r3dPuff(){const S=64,c=mkCanvas(S,S),g=c.getContext('2d'),r=mulberry32(9);for(let i=0;i<14;i++){const x=S/2+(r()-0.5)*20,y=S/2+(r()-0.5)*20,rr=10+r()*14,gr=g.createRadialGradient(x,y,0,x,y,rr);gr.addColorStop(0,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,S,S);}
@@ -424,7 +437,7 @@ function r3dSkidAdd(a,b,w,col,al){const S=R3.skid,mb=S.mb,q=S.head;S.head=(S.hea
   const dx=b[0]-a[0],dz=b[2]-a[2],l=Math.hypot(dx,dz)||1,sx=-dz/l*w/2,sz=dx/l*w/2,st=mb.st,f=mb.f,u=mb.u,bb=mb.b;
   [[a[0]+sx,a[1],a[2]+sz],[b[0]+sx,b[1],b[2]+sz],[b[0]-sx,b[1],b[2]-sz],[a[0]-sx,a[1],a[2]-sz]].forEach((p,k)=>{const o=(q*4+k)*st,fo=o>>2;f[fo]=p[0];f[fo+1]=p[1]+0.025;f[fo+2]=p[2];bb[o+12]=0;bb[o+13]=127;bb[o+14]=0;u[o+16]=col[0];u[o+17]=col[1];u[o+18]=col[2];u[o+19]=Math.round(al*255);});
   S.dirty=true;}
-function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a});}
+function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a,gv:gv||0,floor:gv?y-0.45:-1e9});}
 /* ---------- камера ---------- */
 function r3dCamera(dt,W,H){
   const F=R.follow,v=R3.view,cm=R3.cam||(R3.cam={yaw:F.yaw,y:null,shake:0,pitch:0,fov:1});
@@ -433,7 +446,7 @@ function r3dCamera(dt,W,H){
   const fw=[Math.sin(cm.yaw),0,Math.cos(cm.yaw)],st=r3dCarState(F),cy=st.y!==null?st.y:F.y;
   cm.y=cm.y===null?cy:cm.y+(cy-cm.y)*Math.min(1,dt*6);
   const sp=Math.max(0,F.vx)/Math.max(10,F.vtop),tr=TERR[R3.T.terrAt(F.idx)]||TERR.dirt;
-  cm.shake=Math.max(R.shake||0,0)*0.5+sp*0.012*(tr.rough||1);
+  const SU=SURF[F.surf];cm.shake=Math.max(R.shake||0,0)*0.5+sp*0.012*(SU?SU.rough*(F.off?1.3:1):(tr.rough||1));
   const sh=[(Math.random()-0.5)*cm.shake,(Math.random()-0.5)*cm.shake];
   let eye,look,near=0.3;
   if(v===2){// из кабины: глаза пилота
@@ -479,7 +492,7 @@ function r3dRender(dt){
   const W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;
   const dpr=r3dScale(dt,W,H);
   const bw=Math.max(1,Math.round(W*dpr)),bh=Math.max(1,Math.round(H*dpr));if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;}
-  const E=r3dEnvNow();R3.E=E;
+  const E=r3dTunEnv(r3dEnvNow(),dt);R3.E=E;
   R.cars.forEach(c=>r3dCarUpdate(c,dt,E));
   if(R3.camHook)R3.camHook(dt,W,H);else r3dCamera(dt,W,H);
   r3dPartsUpdate(dt);
@@ -503,10 +516,11 @@ function r3dRender(dt){
   // декорации и стволы
   let P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.uniform4f(P.u.u_lamp,0,0,E.lamp,0);
   vis.forEach(([,ch])=>g3Draw(ch.lit));tiles.forEach(([,t])=>g3Draw(t.t));if(R3.startMesh)g3Draw(R3.startMesh);if(R3.rails)g3Draw(R3.rails);
+  (R3.tuns||[]).forEach(t=>{if(t.m&&inFrustum(R3.fr,t.m.c,t.m.r))g3Draw(t.m);});
   r3dTrainTick(dt);r3dTrainDraw(E,bw,bh);P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());
   // листва: карточки с прозрачностью (сглаженный край — «прозрачность в покрытие»)
   P=r3dUse('leaf',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
-  gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);vis.forEach(([,ch])=>g3Draw(ch.leaf));tiles.forEach(([,t])=>g3Draw(t.l));gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);
+  gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);vis.forEach(([,ch])=>g3Draw(ch.leaf));tiles.forEach(([,t])=>g3Draw(t.l));(R3.tuns||[]).forEach(t=>{if(t.l&&inFrustum(R3.fr,t.l.c,t.l.r))g3Draw(t.l);});gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);
   // земля: рядом — подробная, дальше — грубая сетка и горы до горизонта
   P=r3dUse('terr',E,bw,bh);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,R3.texCM);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,R3.texSM);gl.activeTexture(gl.TEXTURE0);
   gl.uniform4fv(P.u.u_cm,R3.cmU);gl.uniform4fv(P.u.u_tl,R3.lays.tl);gl.uniform4fv(P.u.u_tl2,R3.lays.tl2);gl.uniform4fv(P.u.u_tp,R3.lays.tp);
@@ -514,7 +528,7 @@ function r3dRender(dt){
   if(R3.water){P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());g3Draw(R3.water);}
   // дорога
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);
-  P=r3dUse('road',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());let lastKey='';
+  P=r3dUse('road',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());let lastKey='';r3dPatUniforms(P);
   const wet=R3.W&&R3.W.rain?1:0;
   vis.forEach(([,ch])=>ch.roads.forEach(r=>{if(!r.m||r.key==='__chk')return;if(r.key!==lastKey){const rm=roadM(r.key);lastKey=r.key;
     gl.uniform4f(P.u.u_rd,Math.max(0,texLi(rm.l)),T.W,R3.tile,rm.k);gl.uniform4f(P.u.u_rd2,Math.max(0,texLi(rm.v)),r.key==='asphalt'&&T.rc.y>=1920?1:0,wet,0);}g3Draw(r.m);}));
@@ -597,7 +611,7 @@ function r3dShadowPass(E,vis,tiles){const gl=G3.gl;R3.shOn=!!G3.shFB&&E.sun[1]>0
   const V=m4(),P=m4(),M=R3.SHM||(R3.SHM=m4());m4view(V,eye,rt,up,f);m4ortho(P,-S,S,-S,S,1,320);m4mul(M,P,V);
   const fr=frustumOf(M);gl.bindFramebuffer(gl.FRAMEBUFFER,G3.shFB);gl.viewport(0,0,G3.shS,G3.shS);gl.clear(gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.CULL_FACE);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(2.5,6);
   let Pp=G3.P.dLit;gl.useProgram(Pp.p);gl.uniformMatrix4fv(Pp.u.u_vp,false,M);gl.uniformMatrix4fv(Pp.u.u_model,false,m4());gl.uniform1f(Pp.u.u_time,R3.time);gl.uniform4fv(Pp.u.u_mat,MPAR);
-  vis.forEach(([,ch])=>{if(ch.lit&&inFrustum(fr,ch.lit.c,ch.lit.r))g3Draw(ch.lit);});(tiles||[]).forEach(([d,t])=>{if(d<260&&t.t&&inFrustum(fr,t.t.c,t.t.r))g3Draw(t.t);});
+  vis.forEach(([,ch])=>{if(ch.lit&&inFrustum(fr,ch.lit.c,ch.lit.r))g3Draw(ch.lit);});(tiles||[]).forEach(([d,t])=>{if(d<260&&t.t&&inFrustum(fr,t.t.c,t.t.r))g3Draw(t.t);});(R3.tuns||[]).forEach(t=>{if(t.m&&inFrustum(fr,t.m.c,t.m.r))g3Draw(t.m);});
   Pp=G3.P.dLeaf;gl.useProgram(Pp.p);gl.uniformMatrix4fv(Pp.u.u_vp,false,M);gl.uniformMatrix4fv(Pp.u.u_model,false,m4());gl.uniform1f(Pp.u.u_time,R3.time);gl.uniform4fv(Pp.u.u_mat,MPAR);
   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
   vis.forEach(([,ch])=>{if(ch.leaf&&inFrustum(fr,ch.leaf.c,ch.leaf.r))g3Draw(ch.leaf);});(tiles||[]).forEach(([d,t])=>{if(d<260&&t.l&&inFrustum(fr,t.l.c,t.l.r))g3Draw(t.l);});
@@ -614,7 +628,7 @@ function r3dCarUpdate(c,dt,E){
   st.mat=m4basis(st.mat||m4(),rt,up,fw,[c.x,yc,c.z]);
   // кузов на рессорах: крен от бокового ускорения, клевок от торможения, дрожь от неровностей
   const v=Math.max(0,c.vx),ax=(c.vx-st.vxp)/Math.max(dt,0.001);st.vxp=c.vx;st.ax+=(clamp(ax,-12,8)-st.ax)*Math.min(1,dt*8);
-  const aLat=v*c.r,tr=TERR[T.terrAt(c.idx)]||TERR.dirt,rough=(tr.rough||1)*(c.off?1.8:1);
+  const aLat=v*c.r,tr=TERR[T.terrAt(c.idx)]||TERR.dirt,SU=SURF[c.surf],rough=SU?SU.rough*(c.off?1.3:1):(tr.rough||1)*(c.off?1.8:1);
   const tRoll=clamp(-aLat/9.81,-1.1,1.1)*0.055,tPitch=clamp(-st.ax/9.81,-1,1)*0.035,tH=(vnz(st.spin*1.3,0.5,c.num)-0.5)*0.05*rough*Math.min(1,v/12);
   const spring=(x,vv,tg,k,d)=>{const a=(tg-x)*k-vv*d;vv+=a*dt;return [x+vv*dt,vv];};
   [st.roll,st.vr]=spring(st.roll,st.vr,tRoll,90,12);[st.pitch,st.vp]=spring(st.pitch,st.vp,tPitch,110,13);[st.heave,st.vh]=spring(st.heave,st.vh,tH,260,16);
@@ -623,7 +637,10 @@ function r3dCarUpdate(c,dt,E){
   if(R.t<0)return;
   // пыль из-под колёс (сухое покрытие), дым заноса, пар перегрева
   const me=c===R.follow;if(d>160)return;const bx=c.x-fw[0]*1.2,bz=c.z-fw[2]*1.2;
-  const dusty=(tr.dust||0)*(c.off?1.3:1)+(c.off&&tr!==TERR.asphalt?0.5:0);
+  // в дождь и в тоннеле пыли нет; в луже и грязи — брызги вместо пыли
+  const rain=!!(R3.W&&R3.W.rain)&&!c.tun,wetK=c.surf==='puddle'||c.surf==='mudhole'||c.surf==='mud'||c.surf==='snow'?0:1;
+  const dusty=rain?0:((tr.dust||0)*(c.off?1.3:1)+(c.off&&tr!==TERR.asphalt?0.5:0))*wetK;
+  r3dWetFx(c,st,yc,fw,rt,v,bx,bz,me,rain,dt);
   // своя пыль летит прямо в камеру: её меньше и она прозрачнее, иначе за машиной встаёт сплошная завеса
   if(dusty>0&&v>4){st.dust+=dt*v*dusty*(me?0.35:1.1);const dc=hex2rgb(c.off?TERR.dirt.road:tr.road),col=cMix(dc,[235,225,205],0.35);
     while(st.dust>1.2){st.dust-=1.2;const sd=Math.random()<0.5?-1:1,sp=me?1.6:0.6;r3dPart(bx-fw[0]*(me?0.5:0)+rt[0]*sd*sp,yc+0.2,bz-fw[2]*(me?0.5:0)+rt[2]*sd*sp,-fw[0]*v*0.1+rt[0]*sd*(me?1.8:0)+(Math.random()-0.5)*1.5,0.4+Math.random()*0.7,-fw[2]*v*0.1+rt[2]*sd*(me?1.8:0)+(Math.random()-0.5)*1.5,0.8,1.8+v*0.05,1.4+Math.random()*1.0,col,(me?0.16:0.26)*Math.min(1,dusty));}}
@@ -634,11 +651,38 @@ function r3dCarUpdate(c,dt,E){
   if(c.dnf||c.stopT>0||c.overheat>0){if(Math.random()<0.35)r3dPart(c.x+fw[0]*1.2,yc+1.1,c.z+fw[2]*1.2,(Math.random()-0.5)*0.6,1.4+Math.random(),(Math.random()-0.5)*0.6,0.4,1.6,2,c.overheat>0?[245,245,245]:[80,80,80],0.35);}
   if(c.thr>0.8&&R.rc.y<1914&&Math.random()<0.15)r3dPart(c.x-fw[0]*1.8,yc+0.4,c.z-fw[2]*1.8,-fw[0]*1.5,0.3,-fw[2]*1.5,0.15,0.9,0.6,[110,110,110],0.25);
 }
+// Вода и грязь из-под колёс: водяная пыль на мокрой дороге, веер брызг в луже, комья грязи; колея в грязи
+function r3dWetFx(c,st,yc,fw,rt,v,bx,bz,me,rain,dt){
+  if(c.surfIn>0){const k=c.surfIn,mud=c.surf==='mudhole';c.surfIn=0;r3dSplash(c,yc,fw,rt,v,k,mud);if(me)try{auSfx(mud?'mud':'splash',Math.min(1,0.35+k*0.5));}catch(_){}if(me&&k>0.6)R.shake=Math.max(R.shake,0.18+k*0.12);}
+  const pud=c.surf==='puddle'||c.surf==='mudhole';
+  if(pud&&v>3){st.spl=(st.spl||0)+dt*v*(me?0.9:1.4);while(st.spl>1){st.spl-=1;r3dSplash(c,yc,fw,rt,v,0.08,c.surf==='mudhole');}}
+  // мокрая дорога: из-под задних колёс — водяная пыль и капли, за машиной — шлейф
+  if(rain&&!c.off&&!pud&&v>7){const k=Math.min(1,(v-7)/18);st.spray=(st.spray||0)+dt*v*(me?0.5:1);
+    while(st.spray>1){st.spray-=1;const sd=Math.random()<0.5?-1:1;
+      r3dPart(bx+rt[0]*sd*0.62,yc+0.3,bz+rt[2]*sd*0.62,-fw[0]*v*0.22+rt[0]*sd*(0.5+Math.random()*0.8),0.4+Math.random()*1.1,-fw[2]*v*0.22+rt[2]*sd*(0.5+Math.random()*0.8),0.5,1.6+v*0.07,0.8+Math.random()*0.5,[208,214,220],(me?0.09:0.17)*(0.45+k),0.12);
+      if(Math.random()<0.35)r3dPart(bx+rt[0]*sd*0.62,yc+0.2,bz+rt[2]*sd*0.62,-fw[0]*v*0.15+rt[0]*sd*Math.random(),1+Math.random()*1.5,-fw[2]*v*0.15+rt[2]*sd*Math.random(),0.07,0.02,0.6,[220,226,232],0.7,1);}}
+  // комья грязи и дёрна: грязь, раскисший грунт в дождь, трава и пашня за обочиной
+  const soil=c.surf==='mud'||c.surf==='mudhole'||(c.off&&(c.surf==='field'||c.surf==='grass'||c.surf==='forest'||c.surf==='verge'))||(rain&&(c.surf==='dirt'||c.surf==='mount'));
+  if(soil&&v>5){st.clod=(st.clod||0)+dt*(v*0.3+(c.spinw||0)*25)*(me?0.6:1);const gr=c.surf==='grass'||c.surf==='forest'||c.surf==='verge';
+    while(st.clod>1){st.clod-=1;const sd=Math.random()<0.5?-1:1;r3dPart(bx+rt[0]*sd*0.62,yc+0.2,bz+rt[2]*sd*0.62,-fw[0]*(2+v*0.22)+rt[0]*sd*Math.random()*1.4,1.4+Math.random()*2.4+v*0.05,-fw[2]*(2+v*0.22)+rt[2]*sd*Math.random()*1.4,0.08+Math.random()*0.05,0.02,0.9,gr&&Math.random()<0.45?[64,92,40]:[82,64,44],0.95,1);}}
+  // колея: в грязи, на раскисшем грунте и на траве колёса оставляют след
+  if((soil||pud)&&v>2&&st.d<70){[-1,1].forEach((sd,k)=>{const p=[c.x-fw[0]*1.0+rt[0]*sd*0.62,yc,c.z-fw[2]*1.0+rt[2]*sd*0.62],key='rt'+k,pr=st[key];
+    if(pr&&Math.hypot(p[0]-pr[0],p[2]-pr[2])>0.5){r3dSkidAdd(pr,p,0.2,c.surf==='puddle'?[60,62,66]:c.off&&!c.surf.startsWith('mud')?[58,56,40]:[62,48,34],c.surf==='puddle'?0.25:0.45);st[key]=p;}else if(!pr)st[key]=p;});}
+  else{st.rt0=st.rt1=null;}
+  // в воде: волна у бортов
+  if(c.inWater&&Math.abs(c.vx)>0.8&&c.waterY&&Math.random()<0.6){const sd=Math.random()<0.5?-1:1;r3dPart(c.x+rt[0]*sd*1,c.waterY+0.05,c.z+rt[2]*sd*1,rt[0]*sd*1.5,1+Math.random()*1.5,rt[2]*sd*1.5,0.14,0.4,0.8,[225,232,238],0.6,1);}}
+function r3dSplash(c,yc,fw,rt,v,k,mud){const col=mud?[92,74,52]:[214,222,230],n=Math.round(4+26*k);
+  for(let q=0;q<n;q++){const sd=Math.random()<0.5?-1:1,al=(Math.random()-0.35)*1.8,ox=c.x+fw[0]*al+rt[0]*sd*0.75,oz=c.z+fw[2]*al+rt[2]*sd*0.75,out=1.2+v*(0.08+Math.random()*0.12);
+    r3dPart(ox,yc+0.15,oz,rt[0]*sd*out+fw[0]*v*0.3*Math.random(),1.2+v*0.1*Math.random()+Math.random()*2,rt[2]*sd*out+fw[2]*v*0.3*Math.random(),mud?0.11:0.09,mud?0.1:0.3,0.7+Math.random()*0.5,col,mud?0.95:0.6,1);}
+  if(!mud&&k>0.3)for(let q=0;q<Math.round(6*k);q++)r3dPart(c.x+(Math.random()-0.5)*2,yc+0.5,c.z+(Math.random()-0.5)*2,(Math.random()-0.5)*2+fw[0]*v*0.3,0.8+Math.random(),(Math.random()-0.5)*2+fw[2]*v*0.3,0.6,2.2,1.1,[235,240,244],0.25);}
 function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
 function r3dDrawCars(E,bw,bh,glass){const gl=G3.gl,P=r3dUse('car',E,bw,bh);
   R.cars.forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);
-    if(glass&&!m.gl)return;r3dCarUniforms(P,c,st,m);gl.uniform4f(P.u.u_lamp,c.brk>0.3&&c.vx>1?1:0,E.hl,0,0);g3Draw(glass?m.gl:m.op);});}
-function r3dPartsUpdate(dt){const P=R3.parts;for(let i=P.length-1;i>=0;i--){const p=P[i];p.life-=dt;if(p.life<=0){P.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vx*=1-dt*0.8;p.vz*=1-dt*0.8;p.vy*=1-dt*0.5;}}
+    if(glass&&!m.gl)return;r3dCarUniforms(P,c,st,m);gl.uniform4f(P.u.u_lamp,c.brk>0.3&&c.vx>1?1:0,E.hl,0,0);if(P.u.u_dark)gl.uniform1f(P.u.u_dark,tunDark(c));g3Draw(glass?m.gl:m.op);});
+  if(P.u.u_dark)gl.uniform1f(P.u.u_dark,0);}
+function r3dPartsUpdate(dt){const P=R3.parts;for(let i=P.length-1;i>=0;i--){const p=P[i];p.life-=dt;if(p.life<=0){P.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;
+  // капли и комья падают (gv — доля тяжести), пыль и пар висят
+  if(p.gv){p.vy-=9.8*p.gv*dt;p.vx*=1-dt*0.25;p.vz*=1-dt*0.25;if(p.y<p.floor){p.life=Math.min(p.life,0.05);}}else{p.vx*=1-dt*0.8;p.vz*=1-dt*0.8;p.vy*=1-dt*0.5;}}}
 function r3dDrawParts(E,bw,bh){const P=R3.parts;if(!P.length)return;const gl=G3.gl,I=R3.partI,e=R3.eye,L=P.map(p=>[(p.x-e[0])**2+(p.z-e[2])**2,p]).sort((a,b)=>b[0]-a[0]);
   const lum=E.night>0.5?0.2:1;let n=0;const d=I.data;for(const [,p] of L){if(n>=I.max)break;const k=1-p.life/p.max,o=n*8;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255*lum;d[o+5]=p.c[1]/255*lum;d[o+6]=p.c[2]/255*lum;d[o+7]=p.a*(1-k)*Math.min(1,k*5+0.25);n++;}
   const Pp=r3dUse('part',E,bw,bh);gl.uniform3fv(Pp.u.u_camR,R3.camR);gl.uniform3fv(Pp.u.u_camU,R3.camU);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,R3.texPuff);gl.uniform1i(Pp.u.u_tex,1);
@@ -649,6 +693,6 @@ function r3dPeopleUpload(){const P=R3.people,I=R3.pI,n=Math.min(P.length,I.max),
 // Отказ 3D (потерян контекст и т.п.): дальше гонка рисуется по-старому
 function r3dFail(why){R3.on=false;R.gl=false;const cv=document.getElementById('rgl');if(cv)cv.hidden=true;const c2=document.getElementById('rcv');if(c2)c2.hidden=false;try{setupRender2d();}catch(_){}}
 function r3dDispose(){if(!R3.on)return;const gl=G3.gl;R3.on=false;if(gl&&!gl.isContextLost()){(R3.chunks||[]).forEach(ch=>{if(!ch)return;g3Free(ch.gnd);g3Free(ch.lit);g3Free(ch.leaf);ch.roads.forEach(r=>g3Free(r.m));});
-  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
+  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);(R3.tuns||[]).forEach(t=>{g3Free(t.m);g3Free(t.l);});g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
   [R3.texCM,R3.texSM,R3.texLab].forEach(t=>t&&gl.deleteTexture(t));if(R3.onDispose)try{R3.onDispose();}catch(_){}}
   const keep=['on'];Object.keys(R3).forEach(k=>{if(!keep.includes(k))delete R3[k];});}

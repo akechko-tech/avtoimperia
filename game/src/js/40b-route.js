@@ -2,12 +2,14 @@
 // Раньше пейзаж повторялся по кругу (городок каждые 600 м). Теперь у каждой гонки свой «сценарий»: старт и финиш в городе,
 // между ними — поля и сёла, лес, аллеи, виноградники, мост через реку, железнодорожный переезд с поездом, в горах — серпантин
 // со скалой с одной стороны и обрывом с другой, у моря — дорога по берегу. Сценарий один и тот же для одной и той же гонки.
-const RSEG={fields:0,town:1,village:2,forest:3,avenue:4,bridge:5,rail:6,serp:7,coast:8,vine:9};
+const RSEG={fields:0,town:1,village:2,forest:3,avenue:4,bridge:5,rail:6,serp:7,coast:8,vine:9,tunnel:10};
 const RIVERS={fr:['Сену','Луару','Марну','Рону','Сону','Уазу'],it:['По','Тибр','Адидже','Арно'],de:['Рейн','Майн','Неккар','Мозель','Эльбу'],uk:['Темзу','Северн','Трент'],
   us:['Гудзон','Огайо','Делавэр','Миссисипи'],be:['Маас','Шельду'],at:['Дунай','Инн','Мур'],ch:['Рейн','Аре','Рону'],es:['Эбро','Тахо'],ru:['Волхов','Мсту','Тверцу','Волгу'],ie:['Шаннон','Лиффи'],ly:['вади'],mc:['Вар'],other:['реку']};
 const COASTS={mc:'Лазурный берег',it:'берег Тирренского моря',es:'берег Средиземного моря',fr:'берег Ла-Манша',uk:'берег Ла-Манша',ie:'берег Ирландского моря',us:'берег Атлантики',ly:'берег Средиземного моря'};
 function planRoute(trk,rnd){
-  const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);
+  const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);trk.tunnels=[];trk.tunAt=new Uint8Array(n);
+  // Монако: знаменитый тоннель у моря (с 1929 года)
+  if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));planTunnel(trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно');}
   if(cfg.oval||rc.track==='board'||cfg.sprint||rc.track==='brooklands'||rc.track==='indy'||rc.track==='monaco')return;
   const r=mulberry32(hashStr('route|'+rc.key)),hill=!!cfg.uphill,mount=hill||cfg.terr==='mount'||(!!set.mount&&cfg.hilly>=0.6),closed=cfg.closed;
   const s0=closed?0:trk.startIdx,f0=closed?n-1:trk.finishIdx,dry=!!set.dry||['it','es','ly','mc'].includes(cfg.host),wine=['fr','it','es','de','at'].includes(cfg.host);
@@ -45,8 +47,18 @@ function planRoute(trk,rnd){
       if(!ok||lo>yMin+9||hi-lo>14)continue;
       // море — с внешней стороны дуги (или где ниже)
       let kk=0;for(let a=j;a<j+len;a++)kk+=K[a];const side=kk>0?-1:1;put(RSEG.coast,j,j+len,{cap:COASTS[cfg.host]||'Дорога вдоль моря',alt:40,w:4,side});trk.coast.push({i0:j,i1:j+len,side});break;}}
+  // 6) тоннель сквозь скалу: в горах — на пологом участке (свод, темнота, эхо мотора)
+  if(mount&&n>300&&(!!set.mount||/turbie|klausen|semmering|alpen|pikes|targa/.test(rc.id))&&r()<0.8){const k=n>1100&&r()<0.5?2:1;for(let q=0;q<k;q++)planTunnel(trk,S,list,r,closed?s0+60:s0+90,closed?n-80:f0-120,26,44,'Тоннель сквозь скалу: темно, гулкое эхо мотора');}
   // подписи для заставки: самые приметные участки
   list.forEach(o=>{if(o.cap===undefined)o.cap=o.type===RSEG.serp?'Серпантин: скала с одной стороны, обрыв — с другой':o.type===RSEG.forest&&o.i1-o.i0>90?'Лесная дорога: тень и корни':o.type===RSEG.avenue?'Аллея: деревья у самой дороги':o.type===RSEG.vine?'Виноградники по обе стороны':null;});}
+// Тоннель: пологий участок нужной длины подальше от городов, мостов, переезда и берега; кривизна — сначала самая малая
+function planTunnel(trk,S,list,r,a0,a1,l0,l1,cap){const {n,K}=trk;if(a1-a0<l1+30)return null;
+  const curvy=(i,len)=>{let m=0;for(let k=i;k<Math.min(n,i+len);k++)m=Math.max(m,Math.abs(K[k]));return m;};
+  for(const kMax of [1/90,1/60,1/42])for(let t=0;t<50;t++){const len=l0+Math.floor(r()*(l1-l0+1)),j=a0+Math.floor(r()*Math.max(1,a1-a0-len));
+    if(j<8||j+len>n-8)continue;if(curvy(j-4,len+8)>kMax)continue;let ok=true;
+    for(let a=j-14;a<=j+len+14;a++){const b=trk.closed?((a%n)+n)%n:a;if(b<0||b>=n){ok=false;break;}const q=S[b];if(q===RSEG.town||q===RSEG.bridge||q===RSEG.rail||q===RSEG.coast||q===RSEG.tunnel){ok=false;break;}}
+    if(!ok)continue;for(let a=j;a<=j+len;a++){S[a]=RSEG.tunnel;trk.tunAt[a]=1;}const o={type:RSEG.tunnel,i0:j,i1:j+len,i:Math.round(j+len/2),cap,alt:18,w:3};list.push(o);trk.tunnels.push({i0:j,i1:j+len});return o;}
+  return null;}
 // Тип участка у точки трассы
 function segAt(trk,i){return trk.segT?trk.segT[((i%trk.n)+trk.n)%trk.n]:RSEG.fields;}
 /* ---------- река и берег в рельефе: русло с берегами под мостом, спуск к морю ---------- */

@@ -179,7 +179,7 @@ function svcHUD(){const b=document.getElementById('rSvc'),m=R.me,on=!!(m&&R.mode
   const sig=(on?1:0)+lab+hot;if(b.dataset.s===sig)return;b.dataset.s=sig;b.hidden=!on;b.classList.toggle('hot',hot);b.classList.toggle('busy',!!(m&&m.svc));b.lastChild.textContent=lab;}
 /* ---------- подсказки водителю: ближайший поворот и его скорость, сцепление шин ---------- */
 // Ближайший поворот впереди (до 200 м): сторона, скорость, с которой шины его удержат, расстояние, нужно ли тормозить
-function paceNote(F){const T=R.trk,n=T.n,st=T.step,tr=TERR[T.terrAt(F.idx)]||TERR.dirt,mu=tr.mu*F.grip*(1-0.3*Math.min(1,F.tyre/100))*(F.punct?0.72:1)*1.08;
+function paceNote(F){const T=R.trk,n=T.n,st=T.step,mu=roadMuAt(T,F.idx)*F.grip*(1-0.3*Math.min(1,F.tyre/100))*(F.punct?0.72:1)*1.08;
   let j0=-1,kmax=0,dir=0;for(let d=0;d<50;d++){let j=F.idx+d;if(T.closed)j%=n;else if(j>=n)break;const k=T.K[j];
     if(j0<0){if(Math.abs(k)>1/75){j0=d;dir=Math.sign(k);kmax=Math.abs(k);}}else{if(Math.sign(k)===dir&&Math.abs(k)>1/160)kmax=Math.max(kmax,Math.abs(k));else break;}}
   if(j0<0)return null;const vc=Math.sqrt(mu*GRAV/kmax);if(vc>F.vtop*0.97)return null;
@@ -192,7 +192,12 @@ function raceAssistHUD(){const me=R.me,note=document.getElementById('rNote'),gri
   if(note.dataset.s!==sig){note.dataset.s=sig;note.hidden=!pn;if(pn){note.className='r-note '+pn.lvl;note.firstChild.textContent=(pn.dir>0?'↰ ':'↱ ')+pn.kmh;
     note.lastChild.textContent=pn.lvl==='bad'?'ТОРМОЗИ!':pn.dist<6?(pn.hair?'шпилька · км/ч':'поворот · км/ч'):'через '+Math.round(pn.dist/10)*10+' м · км/ч';}}
   const g=on&&R.t>0?me.gu||0:-1,lv=g<0?-1:Math.min(5,Math.round(g*5)),cls=g<0?'':g>0.95||me.slipR>0.16?'g3':g>0.75?'g2':'g1',gs=lv+cls;
-  if(grip.dataset.s!==gs){grip.dataset.s=gs;grip.hidden=g<0;grip.className='r-grip '+cls;grip.querySelectorAll('i').forEach((el,k)=>el.classList.toggle('on',k<lv));}}
+  if(grip.dataset.s!==gs){grip.dataset.s=gs;grip.hidden=g<0;grip.className='r-grip '+cls;grip.querySelectorAll('i').forEach((el,k)=>el.classList.toggle('on',k<lv));}
+  // под колёсами: покрытие и погода (скользкое — жёлтым, очень скользкое — красным)
+  const sf=document.getElementById('rSurf');if(sf&&on){const k=me.surf||'',S=SURF[k],txt=!S?'':(me.tun?'тоннель · ':'')+(me.wetRoad&&WET_N[k]?WET_N[k]:S.n),q=S?me.muNow/Math.max(0.3,me.grip):1,cl=q<0.5?'bad':q<0.72?'slip':'';
+    if(sf.dataset.s!==txt+cl){sf.dataset.s=txt+cl;sf.textContent=txt;sf.className=cl;}}}
+const WET_N={asphalt:'мокрый асфальт',concrete:'мокрый бетон',brick:'мокрый клинкер',pave:'мокрый булыжник',board:'мокрые доски',macadam:'мокрый щебень',dirt:'раскисший грунт',mount:'мокрая горная дорога',
+  mud:'жидкая грязь',verge:'мокрая обочина',grass:'мокрая трава',field:'раскисшая пашня',forest:'мокрый лес',rock:'мокрые камни'};
 // Как ехать: коротко о физике гонки. Первые две гонки — перед стартом (гонка ждёт), потом — по кнопке «?» (пауза)
 const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса поворачивают сильнее; отпустили — сами встают прямо.'],
   ['↱ 45','справа вверху — впереди поворот, шины удержат машину до 45 км/ч. Жёлтая рамка — сбавьте, красная — тормозите сейчас.'],

@@ -275,6 +275,10 @@ function auSfx(type,v){
   if(type==='bump')vNoise(t,0.15,0.3*v,'lowpass',500,AU.fx);
   if(type==='cheer'){const s=AU.ctx.createBufferSource(),f=AU.ctx.createBiquadFilter(),g=AU.ctx.createGain();s.buffer=AU.noise;s.loop=true;f.type='bandpass';f.frequency.value=1100;f.Q.value=0.6;s.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.35,t+0.8);g.gain.exponentialRampToValueAtTime(0.0001,t+3.5);s.start(t);s.stop(t+3.6);}
   if(type==='paper')vNoise(t,0.25,0.12,'highpass',3000,AU.fx);
+  // лужа: всплеск и шелест брызг; грязь — вязкий шлепок; дерево — треск
+  if(type==='splash'){vNoise(t,0.55,0.55*v,'bandpass',950,AU.fx);vNoise(t,0.3,0.35*v,'lowpass',320,AU.fx);vNoise(t+0.05,0.7,0.18*v,'highpass',3200,AU.fx);}
+  if(type==='mud'){vNoise(t,0.35,0.6*v,'lowpass',260,AU.fx);vNoise(t+0.04,0.22,0.25*v,'bandpass',620,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(55,t+0.25);o.connect(g);g.connect(AU.fx);env(g,t,0.01,0.3*v,0.25);o.start(t);o.stop(t+0.35);}
+  if(type==='wood'){vNoise(t,0.09,0.5*v,'highpass',1800,AU.fx);vNoise(t+0.02,0.3,0.35*v,'bandpass',420,AU.fx);vNoise(t+0.12,0.5,0.12*v,'bandpass',2600,AU.fx);}
   // гудок паровоза: два тона с дрожанием, долгий и короткий
   if(type==='whistle'){[[0,1.4],[1.7,0.6]].forEach(([d,l])=>[[587,0.05],[740,0.04],[880,0.02]].forEach(([f,a])=>{const o=AU.ctx.createOscillator(),g=AU.ctx.createGain(),lf=AU.ctx.createOscillator(),lg=AU.ctx.createGain();
     o.type='triangle';o.frequency.value=f;lf.frequency.value=5.5;lg.gain.value=f*0.012;lf.connect(lg);lg.connect(o.frequency);o.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(a*v,t+d+0.08);g.gain.setValueAtTime(a*v,t+d+l-0.15);g.gain.exponentialRampToValueAtTime(0.0001,t+d+l);
@@ -290,7 +294,13 @@ function auRaceStart(rc){
   const noise=(type,fr,q)=>{const s=c.createBufferSource(),fl=c.createBiquadFilter(),gg=c.createGain();s.buffer=AU.noise;s.loop=true;fl.type=type;fl.frequency.value=fr;fl.Q.value=q;gg.gain.value=0;s.connect(fl);fl.connect(gg);gg.connect(AU.fx);return {s,fl,g:gg};};
   const tone=(type,fr,bp,q,vib,vd)=>{const o=c.createOscillator(),fl=c.createBiquadFilter(),gg=c.createGain(),v=c.createOscillator(),vg=c.createGain();o.type=type;o.frequency.value=fr;fl.type='bandpass';fl.frequency.value=bp;fl.Q.value=q;gg.gain.value=0;v.frequency.value=vib;vg.gain.value=vd;v.connect(vg);vg.connect(o.frequency);o.connect(fl);fl.connect(gg);gg.connect(AU.fx);return {o,v,fl,g:gg};};
   const sq=tone('sawtooth',950,1100,5,9,45),sn=noise('bandpass',1700,1.4),br=tone('sawtooth',2600,2700,9,5,70),bn=noise('bandpass',900,2),rb=noise('lowpass',260,0.7),wd=noise('bandpass',520,0.45);
-  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,early:rc.y<1906,drum:rc.y>=1912};
+  // 0.18: дождь (шорох и гул), шипение мокрых шин, хруст щебня, плеск в луже
+  const rn=noise('highpass',2800,0.3),rl=noise('lowpass',420,0.5),wh=noise('highpass',1700,0.5),gr=noise('bandpass',2300,0.9),sw=noise('bandpass',800,0.8);
+  // эхо тоннеля: свёртка с гулким откликом + короткие повторы
+  const ir=c.createBuffer(2,Math.round(c.sampleRate*1.7),c.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<d.length;i++){const q=i/c.sampleRate;d[i]=(Math.random()*2-1)*Math.exp(-q*3.1)*(q<0.01?q/0.01:1)*(1+0.6*Math.exp(-Math.pow((q-0.09)/0.01,2)));}}
+  const cv=c.createConvolver();cv.buffer=ir;const rv=c.createGain();rv.gain.value=0;const dl=c.createDelay(0.6);dl.delayTime.value=0.13;const fb=c.createGain();fb.gain.value=0.3;const dg=c.createGain();dg.gain.value=0;
+  g.connect(rv);rv.connect(cv);cv.connect(AU.fx);g.connect(dg);dg.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(AU.fx);
+  [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s,rn.s,rl.s,wh.s,gr.s,sw.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,rn,rl,wh,gr,sw,rv,dg,early:rc.y<1906,drum:rc.y>=1912};
 }
 function auRaceTick(){
   const a=AU.race;if(!a||!R||!(R.me||R.follow))return;const t=AU.ctx.currentTime,me=R.me||R.follow,vol=R.me?1:0.6,p=clamp(me.rpm||0,0,1.1),thr=me.thr||0,sp=Math.max(0,me.vx||0);
@@ -308,8 +318,20 @@ function auRaceTick(){
   // гул и камни на обочине
   a.rb.g.gain.setTargetAtTime((me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
   // ветер в открытой машине: на скорости свистит всё громче и выше
-  const w=clamp((sp-7)/38,0,1);a.wd.fl.frequency.setTargetAtTime(380+sp*14,t,0.2);a.wd.g.gain.setTargetAtTime(Math.pow(w,1.4)*0.11*vol*(R.t>0?1:0),t,0.25);
+  const inT=me.tun?1:0,w=clamp((sp-7)/38,0,1);a.wd.fl.frequency.setTargetAtTime(380+sp*14,t,0.2);a.wd.g.gain.setTargetAtTime(Math.pow(w,1.4)*0.11*vol*(R.t>0?1:0)*(inT?0.35:1),t,0.25);
+  // тоннель: гул и эхо мотора
+  if(a.rv){a.rv.gain.setTargetAtTime(inT?0.6:0,t,inT?0.12:0.3);a.dg.gain.setTargetAtTime(inT?0.4:0,t,inT?0.12:0.3);}
+  if(a.rn){const S=me.surf||'',rain=!!(R.wx&&R.wx.rain);
+    // дождь: шорох капель и гул; под сводом почти не слышен
+    a.rn.g.gain.setTargetAtTime(rain?(inT?0.008:0.075)*vol:0,t,0.5);a.rl.g.gain.setTargetAtTime(rain?(inT?0.004:0.05)*vol:0,t,0.5);
+    // мокрая дорога: шины шипят и разбрызгивают воду
+    a.wh.g.gain.setTargetAtTime((rain&&!inT&&!me.off&&S!=='puddle'?1:0)*Math.min(1,sp/25)*0.085*vol,t,0.1);
+    // щебень, грунт, булыжник, камни — хруст и дробь (прерывисто)
+    const cr=(S==='macadam'||S==='dirt'||S==='mount'||S==='verge'||S==='rock'||S==='pave'||S==='field')?Math.min(1,sp/14):0;a.gr.g.gain.setTargetAtTime(cr*(S==='pave'?0.05:0.08)*vol*(0.55+0.45*Math.random()),t,0.04);
+    // в луже и грязи — плеск
+    a.sw.g.gain.setTargetAtTime((S==='puddle'||S==='mudhole'?Math.min(1,sp/9):0)*0.2*vol,t,0.05);}
 }
 function auScreech(v){}
-function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd].forEach(x=>x.g.gain.setTargetAtTime(0,t,0.05));[a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s,a.wd.s].forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
+function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd,a.rn,a.rl,a.wh,a.gr,a.sw].forEach(x=>x&&x.g.gain.setTargetAtTime(0,t,0.05));if(a.rv){a.rv.gain.setTargetAtTime(0,t,0.05);a.dg.gain.setTargetAtTime(0,t,0.05);}
+  [a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s,a.wd.s].concat(a.rn?[a.rn.s,a.rl.s,a.wh.s,a.gr.s,a.sw.s]:[]).forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
 
