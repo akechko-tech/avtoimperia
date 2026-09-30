@@ -252,7 +252,10 @@ function ttsStop(){try{if(window.AndroidTTS)AndroidTTS.stop();}catch(e){}try{if(
 let REEL=null;
 function reelFill(t,s){return String(t||'').replace(/\{co\}/g,s.company).replace(/\{city\}/g,COUNTRIES[s.country].city).replace(/\{y\}/g,s.y);}
 // Кинохроника по метке: несколько настоящих фильмов на метку — у каждого ролика свой (films/index.js)
-function reelClip(tag,seed){const F=window.FILMS_INDEX,L=F&&F.tags&&F.tags[tag];if(!L||!L.length)return null;return L[((seed|0)%L.length+L.length)%L.length];}
+// Похожая хроника, если точной нет: горная гонка — гонка на дороге, трек — старт и заезд, джаз и крах — улица 1920-х
+const REEL_ALT={race_mountain:['race_run','country_road'],race_track:['race_run','race_start'],jazz_dance:['street1920'],road_build:['country_road','horse_cart'],crash1929:['street1920','street1910'],street_ru:['street1910']};
+function reelClip(tag,seed){const F=window.FILMS_INDEX;if(!F||!F.tags)return null;let L=F.tags[tag];if(!L||!L.length){for(const t of REEL_ALT[tag]||[]){L=F.tags[t];if(L&&L.length)break;}}
+  if(!L||!L.length)return null;return L[((seed|0)%L.length+L.length)%L.length];}
 function reelCar(c,s){if(c==='best'){const L=s.models.filter(m=>m.status==='prod');return L.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||s.models[0];}return c&&typeof c==='object'?c:null;}
 function reelShotHTML(sh,s,Q,k){
   if(sh.leader)return `<div class="rl-leader"><b>3</b></div>`;
@@ -274,9 +277,16 @@ function reelShotHTML(sh,s,Q,k){
 function reelSay(sh,s){return sh.say?reelFill(sh.say,s):'';}
 function reelShotDur(sh,s){if(sh.leader)return 2.4;const say=sh.say?String(sh.say):'',vd=say&&typeof voiceDur==='function'?voiceDur(say,'aidar'):0;
   if(vd)return vd+0.35;if(say)return Math.max(3.4,2+say.length/13);return sh.c!==undefined||sh.q!==undefined?3.2:sh.v?5:4;}
+// Указатель кинохроники (film/index.js): метки → ролики; грузится заранее, при первом ролике — дожидаемся
+const FILMS={p:null};
+function filmsLoad(){if(window.FILMS_INDEX)return Promise.resolve(window.FILMS_INDEX);if(FILMS.p)return FILMS.p;
+  FILMS.p=new Promise(res=>{try{const e=document.createElement('script');e.src='film/index.js';e.async=true;e.onload=()=>res(window.FILMS_INDEX||null);e.onerror=()=>res(null);document.head.appendChild(e);}catch(_){res(null);}});return FILMS.p;}
+setTimeout(()=>{try{filmsLoad();}catch(_){}},1200);
 function playReel(id){
-  const s=G,R0=s&&reelGet(id,s);if(!R0||REEL)return;reelUnlock(s,id);
+  const s=G,R0=s&&reelGet(id,s);if(!R0||REEL)return;
   try{voiceUnlock();}catch(e){}
+  if(!window.FILMS_INDEX&&!FILMS.waited){FILMS.waited=1;filmsLoad().then(()=>playReel(id));return;}
+  reelUnlock(s,id);
   // Safari разрешает голос синтезатора только после нажатия: «разогреваем» его тихой фразой прямо в обработчике нажатия
   try{if(reelVoiceOn()&&!window.AndroidTTS&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}
   const el=document.createElement('div');el.id='reel';el.className='reel';

@@ -2050,7 +2050,7 @@ function checkEvents(){
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country))return;s.seen['h'+i]=1;
     const rid=HIST_REEL[h.img];if(rid){reelUnlock(s,rid);pushEvent({...h,choices:(h.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника','reel:'+rid]])},true);}else pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
-  checkShows(s);checkTenders(s);
+  checkShows(s);checkTenders(s);try{histReelCheck(s);}catch(e){console.warn('hist reel',e);}
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
@@ -2702,7 +2702,8 @@ function checkShows(s){
 function showInvite(s,sh){const H=SHOW_HOST[sh.h],md=showModel(s),c1=standCost(sh,s,false),c2=standCost(sh,s,true),home=H.c===s.country,dl=dealerCount(s,H.c);
   s.shows[sh.id]={inv:1,md:md.id};s.showNow=sh.id;s.showAsk=s.showAsk||{};s.showAsk[sh.h]=mi(s);
   const proto=md.status==='dev';
-  pushEvent({kicker:'Приглашение на выставку',title:showName(sh),deck:`${sh.venue} · ${MONTHS_N[sh.m]} ${sh.y}`,carId:md.id,
+  const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
+  pushEvent({kicker:'Приглашение на выставку',title:showName(sh),deck:`${sh.venue} · ${MONTHS_N[sh.m]} ${sh.y}`,carId:md.id,reel:rid,
     text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}Устроители предлагают «${s.company}» место на выставке. Малый стенд — машина на подиуме, большой — ещё и мотор в разрезе, продавцы, буклеты и пробные поездки.\n`
       +`Повезём ${proto?'прототип':'модель'} «${md.name}». На выставке ${proto?'покупатели узнают о новинке заранее':'подписывают заказы'}, о марке пишут газеты${home?'':`, а местные торговцы ищут, чьи машины продавать${dl?'':` — так можно открыть первых дилеров: ${COUNTRIES[H.c].name}`}`}.${sh.ver?'\nУсловие устроителей: машина должна своим ходом доехать из Парижа в Версаль и обратно. Ненадёжная может сломаться в пути — тогда вернут половину платы.':''}${sh.medals?'\nНа Всемирной выставке жюри раздаёт медали: чем лучше машина против соперников, тем выше шанс на золото.':''}`,
     choices:[[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0']]},true);}
@@ -2731,7 +2732,8 @@ function showRun(s,sh,e){e.done=1;const H=SHOW_HOST[sh.h],c=H.c,home=c===s.count
   rep=Math.round(rep*10)/10;s.rep=clamp(s.rep+rep,0,100);s.showFx=s.showFx||{};const prev=showEffect(s,c);s.showFx[c]={u:Math.min(0.35,Math.max(prev,u)+0.3*Math.min(prev,u)),t:mi(s)};s.showsDone=(s.showsDone||0)+1;
   e.res={orders,dl,rep,medal};
   const rv=showRivals(s,c);
-  pushEvent({kicker:'Выставка',title:showName(sh),deck:`Стенд «${s.company}»: ${[orders?fmtN(orders)+' заказов':'',dl?'+'+dl+' дилеров':'',medal?{gold:'золото',silver:'серебро',bronze:'бронза'}[medal]:'','репутация +'+rep].filter(Boolean).join(' · ')}`,img:sh.img&&IMG[sh.img]?sh.img:'',imgCap:sh.img?`${sh.venue} — ${SHOW_HOST[sh.h].name}`:'',carId:md.id,
+  const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
+  pushEvent({kicker:'Выставка',reel:rid,title:showName(sh),deck:`Стенд «${s.company}»: ${[orders?fmtN(orders)+' заказов':'',dl?'+'+dl+' дилеров':'',medal?{gold:'золото',silver:'серебро',bronze:'бронза'}[medal]:'','репутация +'+rep].filter(Boolean).join(' · ')}`,img:sh.img&&IMG[sh.img]?sh.img:'',imgCap:sh.img?`${sh.venue} — ${SHOW_HOST[sh.h].name}`:'',carId:md.id,
     text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}${big?'Большой':'Малый'} стенд «${s.company}» — «${md.name}». ${out.join(' ')}\n${rv.length?`Рядом стенды ${rv.map(n=>'«'+n+'»').join(', ')}. `:''}Интерес покупателей к марке продержится несколько месяцев${home?'':' — и не только в этой стране'}.`},true);
   addLog(`${showName(sh)}: ${out.join(' ')}`,'good');}
 function showRivals(s,c){const L=(COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,3).map(cp=>compName(cp,s));return L;}
@@ -3444,7 +3446,10 @@ function ttsStop(){try{if(window.AndroidTTS)AndroidTTS.stop();}catch(e){}try{if(
 let REEL=null;
 function reelFill(t,s){return String(t||'').replace(/\{co\}/g,s.company).replace(/\{city\}/g,COUNTRIES[s.country].city).replace(/\{y\}/g,s.y);}
 // Кинохроника по метке: несколько настоящих фильмов на метку — у каждого ролика свой (films/index.js)
-function reelClip(tag,seed){const F=window.FILMS_INDEX,L=F&&F.tags&&F.tags[tag];if(!L||!L.length)return null;return L[((seed|0)%L.length+L.length)%L.length];}
+// Похожая хроника, если точной нет: горная гонка — гонка на дороге, трек — старт и заезд, джаз и крах — улица 1920-х
+const REEL_ALT={race_mountain:['race_run','country_road'],race_track:['race_run','race_start'],jazz_dance:['street1920'],road_build:['country_road','horse_cart'],crash1929:['street1920','street1910'],street_ru:['street1910']};
+function reelClip(tag,seed){const F=window.FILMS_INDEX;if(!F||!F.tags)return null;let L=F.tags[tag];if(!L||!L.length){for(const t of REEL_ALT[tag]||[]){L=F.tags[t];if(L&&L.length)break;}}
+  if(!L||!L.length)return null;return L[((seed|0)%L.length+L.length)%L.length];}
 function reelCar(c,s){if(c==='best'){const L=s.models.filter(m=>m.status==='prod');return L.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||s.models[0];}return c&&typeof c==='object'?c:null;}
 function reelShotHTML(sh,s,Q,k){
   if(sh.leader)return `<div class="rl-leader"><b>3</b></div>`;
@@ -3466,9 +3471,16 @@ function reelShotHTML(sh,s,Q,k){
 function reelSay(sh,s){return sh.say?reelFill(sh.say,s):'';}
 function reelShotDur(sh,s){if(sh.leader)return 2.4;const say=sh.say?String(sh.say):'',vd=say&&typeof voiceDur==='function'?voiceDur(say,'aidar'):0;
   if(vd)return vd+0.35;if(say)return Math.max(3.4,2+say.length/13);return sh.c!==undefined||sh.q!==undefined?3.2:sh.v?5:4;}
+// Указатель кинохроники (film/index.js): метки → ролики; грузится заранее, при первом ролике — дожидаемся
+const FILMS={p:null};
+function filmsLoad(){if(window.FILMS_INDEX)return Promise.resolve(window.FILMS_INDEX);if(FILMS.p)return FILMS.p;
+  FILMS.p=new Promise(res=>{try{const e=document.createElement('script');e.src='film/index.js';e.async=true;e.onload=()=>res(window.FILMS_INDEX||null);e.onerror=()=>res(null);document.head.appendChild(e);}catch(_){res(null);}});return FILMS.p;}
+setTimeout(()=>{try{filmsLoad();}catch(_){}},1200);
 function playReel(id){
-  const s=G,R0=s&&reelGet(id,s);if(!R0||REEL)return;reelUnlock(s,id);
+  const s=G,R0=s&&reelGet(id,s);if(!R0||REEL)return;
   try{voiceUnlock();}catch(e){}
+  if(!window.FILMS_INDEX&&!FILMS.waited){FILMS.waited=1;filmsLoad().then(()=>playReel(id));return;}
+  reelUnlock(s,id);
   // Safari разрешает голос синтезатора только после нажатия: «разогреваем» его тихой фразой прямо в обработчике нажатия
   try{if(reelVoiceOn()&&!window.AndroidTTS&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}
   const el=document.createElement('div');el.id='reel';el.className='reel';
@@ -6033,6 +6045,7 @@ function renderRaceSetup(keepScroll){
     <p class="small muted" style="margin-top:4px">${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · ${terrName(cfg)}${cfg.pits?' · боксы':''}${cfg.night?' · ночь':''} · приз ${money(racePrize(rc))}</p>
     ${champs.length||gb?`<div class="tags">${champs.map(c=>`<span class="pill warn">${esc(c)}</span>`).join('')}${gb?'<span class="pill good">Кубок наций: до 3 машин от страны</span>':''}</div>`:''}
     ${photoHTML(rc.img)}${rc.hist?`<div class="hist">${esc(rc.hist)}</div>`:''}
+    ${(()=>{const rid=raceReelId(rc);if(!rid)return '';try{reelUnlock(s,rid);}catch(_){}return `<div style="margin-top:8px">${paperReelHTML(rid,s)}</div>`;})()}
     <p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>
     ${s.chal&&s.chal.acc&&s.chal.type==='race'&&s.chal.rk===rc.key?`<p class="small warn" style="margin-top:6px">⚔️ Вызов принят: ваша лучшая машина должна финишировать выше лучшей машины ${esc(s.chal.mq)}. Пари — ${money(s.chal.stake)}.</p>`:''}
     <div class="label" style="margin-top:16px">Команда · ${n} из ${MAX_ENTRIES}</div>
