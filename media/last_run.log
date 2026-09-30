@@ -1,3 +1,88 @@
+== job voice
+voice 20 lines 12 s
+voice 40 lines 21 s
+voice 60 lines 30 s
+voice 80 lines 40 s
+voice 100 lines 48 s
+voice 120 lines 58 s
+voice 140 lines 67 s
+voice 160 lines 77 s
+voice 180 lines 85 s
+voice 200 lines 94 s
+voice 220 lines 102 s
+voice 240 lines 111 s
+voice 260 lines 120 s
+voice 280 lines 129 s
+voice 300 lines 138 s
+voice 320 lines 146 s
+voice 340 lines 154 s
+voice 360 lines 163 s
+voice 380 lines 172 s
+voice 400 lines 182 s
+voice 420 lines 191 s
+voice 440 lines 199 s
+voice 460 lines 209 s
+voice 480 lines 217 s
+voice 500 lines 226 s
+voice 520 lines 235 s
+voice 540 lines 244 s
+voice 560 lines 253 s
+voice 580 lines 262 s
+voice 600 lines 272 s
+voice 620 lines 281 s
+voice 640 lines 290 s
+voice 660 lines 298 s
+voice 680 lines 306 s
+voice 700 lines 311 s
+voice 720 lines 318 s
+voice 740 lines 324 s
+voice 760 lines 330 s
+voice 780 lines 336 s
+voice 800 lines 343 s
+voice 820 lines 349 s
+voice 840 lines 355 s
+voice 860 lines 361 s
+voice 880 lines 368 s
+voice 900 lines 374 s
+voice 920 lines 380 s
+voice 940 lines 386 s
+voice 960 lines 392 s
+voice 980 lines 398 s
+voice 1000 lines 405 s
+voice 1020 lines 411 s
+voice 1040 lines 417 s
+voice 1060 lines 423 s
+voice 1080 lines 430 s
+voice 1100 lines 435 s
+voice 1120 lines 441 s
+voice 1140 lines 447 s
+voice 1160 lines 453 s
+voice 1180 lines 460 s
+voice 1200 lines 466 s
+voice 1220 lines 471 s
+voice 1240 lines 477 s
+voice 1260 lines 483 s
+voice 1280 lines 488 s
+voice 1300 lines 495 s
+voice 1320 lines 501 s
+voice 1340 lines 507 s
+voice 1360 lines 513 s
+voice 1380 lines 519 s
+voice 1400 lines 525 s
+voice 1420 lines 530 s
+voice 1440 lines 536 s
+voice 1460 lines 542 s
+voice 1480 lines 548 s
+voice 1500 lines 554 s
+voice 1520 lines 560 s
+voice 1540 lines 567 s
+voice 1560 lines 573 s
+voice 1580 lines 579 s
+voice 1600 lines 585 s
+voice 1620 lines 591 s
+voice 1640 lines 597 s
+voice done 1645 new lines; total 1645
+== job voice took 605 s
 == job films_scan
 search LOC automobile -> 30
 search LOC auto race -> 10
@@ -80,158 +165,128 @@ search tractor 1910s -> 0
 search road construction 1920s -> 0
 search automobile accident 1900s film -> 0
 search car ferry 1920s -> 0
-candidates 373 with info 373
-film 1 File:Automobile parade.ogv 115.54876666666667 1899 Public domain
-film 2 File:A Trip Down Market Street (High Res).webm 689.923 1906 Public domain
-film 3 File:Tanks of WWI.ogv 123.35656666666667 1918 Public domain
-film 4 File:Caravanes afghanes - AI12973.webm 331.25600000000003 1914 CC0
-film 5 File:The Adventure of the Hasty Elopement 1914 Octavius Amateur Detective Thomas Edison.webm 906.696 1914 Public domain
-film 6 File:Panoramic view of the Place de l'Concord.ogv 99.16573333333334 1900 Public domain
-film 7 File:Shepard Calais 1906 FrenchGP.ogv 19.12 1906 Public domain
-film 8 File:Aldo weilschott 1906 gp startline.ogv 23.6 1906 Public domain
-film 9 File:Surreal Old Timey Film Of New York City In 1911.webm 433.399 1900 Public domain
-film 10 File:A Trip down market street (1906).webm 503.0 1906 Public domain
-film 11 File:(Vancouver and Victoria Street and Harbour Scenes 1907).webm 634.788 1907 Public domain
-film 12 File:Around the Corner (1937) 24fps selection.webm 460.879 1937 Public domain
-film 13 File:Two Men Get Into Car And Drive Away (1927).ogg 10.379319727891156 1927 Public domain
-film 14 File:Accident d’automobile - Film 1905.webm 61.791000000000004 1905 Public domain
-film 15 File:La Sortie de l'usine Lumière à Lyon, III.webm 38.976 1895 Public domain
-film 16 File:La sortie de l'usine Lumière à Lyon 2.webm 44.084 1896 Public domain
-film 17 File:La Sortie de l'usine Lumière à Lyon, II.webm 41.53 1895 Public domain
-download failed File:La sortie de l'usine Lumière à Lyon 3.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Embarquement d'une chaudière - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Partie d’écarté - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Charcuterie mécanique (1896).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:A Trip Through Paris, France, Late 1890s.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Départ de cyclistes - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Charcuterie mécanique - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Départ en voiture - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Concours de boules - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Partie de tric-trac - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Écriture à l’envers - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Carmaux, défournage du coke - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Pêche aux sardines - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Ateliers de La Ciotat - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Quai de l'Archevêché à Lyon - Film 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Danza egipcia (ghawazee) - Village Suisse Ginebra 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Enfants jouant aux billes - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Arrivée d'un train à Perrache - Court métrage 1896.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition d'un mur (1897).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition d'un mur (1897) reverse.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:A Visual Tour of France, 1895-1897.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Charcuterie mécanique.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Querelle enfantine.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Vue 109 - Course en sacs.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Jarabe tapatio.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Video of Britannia the British Tank crushing a limousine in Toronto Canada.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Arrival Of The Wife Of Viceroy Of India - Lady Irwin (1920-1929).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Ford assembly line (1947).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Ford assembly line(1930).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Ford Model T Assembly Line(1919).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Model T assembling circa 1924.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Henry Ford clips.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Polygoon opent de Zuiderzee afsluitdijk.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Bezoek auto-giro vliegtuig.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Demonstratie Michelin auto-trein.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Bezoek auto-giro vliegtuig-523218.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Demonstratie Michelin auto-trein-515297.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Kleinste auto van ons land-509193.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:De auto en het motorrijwiel voorheen en thans.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Veiling antieke auto's-520080.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Wedstrijd voor antieke auto's-517895.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Oude auto's Amsterdam-Parijs-518100.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Veiling antieke auto's door Christie's London-515012.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Autotentoonstelling RAI.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Autotentoonstelling in het rai gebouw-29098.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:40 jaar Veilig Verkeer Weeknummer 72-44 - Open Beelden - 54079.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Foule au 15ème Salon de l'automobile - AI111244.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:La foule au salon de l'automobile au Grand Palais - AI49553.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Visite du président Doumergue au vingtième salon de l'automobile dans le Grand-Palais - AI53404.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Automobieltentoonstelling Weeknummer 48-19 - Open Beelden - 54978.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:De 50ste Gouden Rai Weeknummer 65-09 - Open Beelden - 54582.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Panorama from the Moving Boardwalk.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Thomas Edison, Panorama of the Moving Boardwalk.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Eiffel Tower from the Trocadero Palace (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Le pétomane du Moulin Rouge (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Danse javanaise (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Palace of Electricity (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Esplanade des Invalides (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Circular panoramic view of the Champs de Mars.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Swiss village at Paris Exposition.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Eiffel Tower from Trocadero Palace.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Scene in the Swiss village at Paris Exposition.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Cyrano de Bergerac (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Scene from the elevator ascending Eiffel Tower.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Circular panoramic view of the Champs de Mars - Palace of Electricity.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Panoramic view of the Eiffel Tower taken from the outside.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Paris Exhibition viewed from the Seine 2.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Paris Exhibition viewed from the Seine 1.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition de la Grande roue - AI110414.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition de la Grande Roue - AI110446.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition de la Grande Roue - AI110404.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition de la Grande Roue - AI110442.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Construction du village Suisse et démolition de la Grande Roue - AI110408.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Démolition de la Grande Roue - AI110425.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Le Village Suisse de la Grande Roue et le quartier « Polak » de l'Hôtel de Ville - AI120213.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Panoramic View of the Champs Elysees (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Jeanne d'Arc (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Panorama of Place de L'Opera (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Le livre magique (1900).ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Mauvais lancement par un débardeur (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Danse du ventre par l'athlète americain Sheldon (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Saute d'un athlète (Sweeney) par dessus une barre (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Saut de haie par l'americain Alvin Kraenzlein (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Homme nu (Sheldon) lançant un disque en plomb (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Lancement du poids par l'athlète americain McCraken (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Saut en hauteur par un athlète américain (Schonfield) (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Lancement du disque par l'athlète americain McCraken (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Lancement de poids par jeune membre du racing club (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Lancement poids par membre du racing club (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Saut en hauteur par l'américain Sweeney au racing club (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Driving scene on the Champs Elysees.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Saut en longueur par Sweeney (champion americain) à la station physiologique (1900).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Circular panoramic view of the Place de l'Opera.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Breaking of the crowd at military review at Longchamps.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Le Repas fantastique.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Max prend un bain (1910).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:L'epee du spirite (1910).ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Crue de la Seine - AI48953.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:New York 1911.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:New York 1911 cut.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:A Trip Down Market Street (1906).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:(4k, 60 fps) San Francisco, a Trip down Market Street, April 14, 1906.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:San Francisco Earthquake aftermath, 1906.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Exploded gas tanks us mint.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Exploded gas tanks, U.S. Mint, Emporium and Spreckels Bld'g -.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:A Trip Down Market Street Before the Fire 1906 San Francisco Pre Earthquake.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Old London Street Scenes (1903).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Early English Traffic, Turn of the Century London (1896-1903).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Il ratto delle sabine (1910).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Moscow clad in snow - Moscou sur la neige - Москва в снежном убранстве - Москва в снегу (1908), noaudio.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Драма в таборе подмосковных цыган. (1908).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Glidden-Tour-1905.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:First flights in aviation history.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Bird's-eye view of San Francisco.ogv HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:A Farewell to Arms (1932) by Frank Borzage, Trailer.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Armistice Day 1918 - No sound.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:WAPENSTILSTANDSDAG-PGM4011597.webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Video Clips of Woodrow Wilson (1917-1921, Part 2).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Video Clips of Woodrow Wilson (1917-1921, Part 1).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Kinonedelja No. 31 (1919).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Steam Loco ΔΚ8.001 at Rack Railway's Festival, November 2016..webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-download failed File:Kinonedelja No. 1 (1918).webm HTTP Error 429: Your bot is making too many requests. Please reduce your request rate or contact bot-traffic@wikimedia.org (f263c81)
-scan done: new 17 total 18
-== job films_scan took 94 s
-== job tex
-tex leather -> brown_leather
-tex fabric -> poly_wool_herringbone
-tex fabric2 -> rough_linen
-tex cliff -> tiger_rock
-tex cliff2 -> cliff_side
-tex scree -> rocky_trail_02
-tex rock_moss -> mossy_rock
-tex tunnel -> castle_brick_01
-tex wood_var -> european_walnut_veneer_04
-tex factory -> factory_brick
-tex metal_old -> green_metal_rust
-== job tex took 14 s
+candidates 356 with info 356
+film 18 File:La sortie de l'usine Lumière à Lyon 3.webm 39.0 1896 Public domain
+film 19 File:Embarquement d'une chaudière - Court métrage 1896.webm 40.0 1896 Public domain
+film 20 File:Partie d’écarté - Film 1896.webm 48.437 1896 Public domain
+film 21 File:Charcuterie mécanique (1896).webm 47.708 1896 Public domain
+film 22 File:A Trip Through Paris, France, Late 1890s.webm 358.324 1896 Public domain
+film 23 File:Départ de cyclistes - Film 1896.webm 47.563 1896 CC0
+film 24 File:Charcuterie mécanique - Film 1896.webm 51.687 1896 Public domain
+film 25 File:Départ en voiture - Film 1896.webm 47.533 1896 Public domain
+film 26 File:Concours de boules - Court métrage 1896.webm 39.688 1896 Public domain
+film 27 File:Partie de tric-trac - Film 1896.webm 41.626 1896 Public domain
+film 28 File:Écriture à l’envers - Film 1896.webm 49.626 1896 Public domain
+film 29 File:Pêche aux sardines - Court métrage 1896.webm 47.733000000000004 1896 Public domain
+film 30 File:Carmaux, défournage du coke - Court métrage 1896.webm 41.133 1896 Public domain
+film 31 File:Ateliers de La Ciotat - Court métrage 1896.webm 44.1 1895 Public domain
+film 32 File:Quai de l'Archevêché à Lyon - Film 1896.webm 45.875 1896 Public domain
+film 33 File:Danza egipcia (ghawazee) - Village Suisse Ginebra 1896.webm 33.978 1896 Public domain
+film 34 File:Enfants jouant aux billes - Court métrage 1896.webm 41.625 1896 Public domain
+film 35 File:Arrivée d'un train à Perrache - Court métrage 1896.webm 42.861000000000004 1896 Public domain
+film 36 File:Démolition d'un mur (1897).webm 47.124 1897 Public domain
+film 37 File:Démolition d'un mur (1897) reverse.webm 46.999 1897 Public domain
+film 38 File:A Visual Tour of France, 1895-1897.webm 943.875 1895 Public domain
+film 39 File:Charcuterie mécanique.webm 52.828 1896 Public domain
+film 40 File:Querelle enfantine.webm 45.375 1896 Public domain
+film 41 File:Vue 109 - Course en sacs.webm 60.186 1896 Public domain
+film 42 File:Jarabe tapatio.ogv 48.84884884884885 1896 Public domain
+film 43 File:Video of Britannia the British Tank crushing a limousine in Toronto Canada.ogv 83.15065759637189 1917 Public domain
+film 44 File:Arrival Of The Wife Of Viceroy Of India - Lady Irwin (1920-1929).webm 81.0 1920 Public domain
+film 45 File:Ford assembly line (1947).webm 631.299 1930 Public domain
+film 46 File:Ford assembly line(1930).webm 78.424 1930 Public domain
+film 47 File:Ford Model T Assembly Line(1919).webm 394.461 1919 Public domain
+film 48 File:Model T assembling circa 1924.webm 242.904 1924 Public domain
+film 49 File:Henry Ford clips.webm 195.937 1916 Public domain
+film 50 File:Polygoon opent de Zuiderzee afsluitdijk.webm 34.577 1933 Public domain
+film 51 File:Bezoek auto-giro vliegtuig.webm 40.011 1932 Public domain
+film 52 File:Demonstratie Michelin auto-trein.webm 68.014 1932 Public domain
+film 53 File:Bezoek auto-giro vliegtuig-523218.ogv 37.12 1932 CC BY-SA 3.0 nl
+film 54 File:Demonstratie Michelin auto-trein-515297.ogv 68.67591836734694 1932 CC BY-SA 3.0 nl
+film 55 File:Kleinste auto van ons land-509193.ogv 80.66612244897959 1938 CC BY-SA 3.0 nl
+film 56 File:De auto en het motorrijwiel voorheen en thans.webm 121.37400000000001 1935 Public domain
+film 57 File:Veiling antieke auto's-520080.ogv 110.70693877551021 1920 CC BY-SA 3.0 nl
+film 58 File:Wedstrijd voor antieke auto's-517895.ogv 77.68816326530612 1899 CC BY-SA 3.0 nl
+film 59 File:Oude auto's Amsterdam-Parijs-518100.ogv 136.72489795918366 1901 CC BY-SA 3.0 nl
+film 60 File:Veiling antieke auto's door Christie's London-515012.ogv 120.68571428571428 1935 CC BY-SA 3.0 nl
+film 61 File:Autotentoonstelling RAI.webm 7.015000000000001 1931 Public domain
+film 62 File:Autotentoonstelling in het rai gebouw-29098.ogv 94.89995464852608 1923 CC BY-SA 3.0 nl
+film 63 File:40 jaar Veilig Verkeer Weeknummer 72-44 - Open Beelden - 54079.ogv 171.52 1920 CC BY-SA 3.0 nl
+film 64 File:Foule au 15ème Salon de l'automobile - AI111244.webm 47.648 1919 CC BY-SA 4.0
+film 65 File:La foule au salon de l'automobile au Grand Palais - AI49553.webm 142.304 1921 CC0
+film 66 File:Visite du président Doumergue au vingtième salon de l'automobile dans le Grand-Palais - AI53404.webm 78.608 1926 CC BY-SA 4.0
+film 67 File:Automobieltentoonstelling Weeknummer 48-19 - Open Beelden - 54978.ogv 110.32 1899 CC BY-SA 3.0 nl
+film 68 File:De 50ste Gouden Rai Weeknummer 65-09 - Open Beelden - 54582.ogv 146.28 1914 CC BY-SA 3.0 nl
+film 69 File:Panorama from the Moving Boardwalk.ogv 108.67523333333334 1900 Public domain
+film 70 File:Thomas Edison, Panorama of the Moving Boardwalk.ogv 92.65923333333333 1900 Public domain
+film 71 File:Eiffel Tower from the Trocadero Palace (1900).webm 74.307 1900 Public domain
+film 72 File:Le pétomane du Moulin Rouge (1900).webm 31.85 1900 Public domain
+film 73 File:Danse javanaise (1900).webm 197.52 1900 Public domain
+film 74 File:Palace of Electricity (1900).webm 60.093 1900 Public domain
+film 75 File:Esplanade des Invalides (1900).webm 124.257 1900 Public domain
+film 76 File:Circular panoramic view of the Champs de Mars.ogv 82.34893333333333 1900 Public domain
+film 77 File:Swiss village at Paris Exposition.ogv 72.6726 1900 Public domain
+film 78 File:Eiffel Tower from Trocadero Palace.ogv 74.24083333333334 1900 Public domain
+film 79 File:Scene in the Swiss village at Paris Exposition.ogv 102.06863333333334 1900 Public domain
+film 80 File:Cyrano de Bergerac (1900).webm 118.96900000000001 1900 Public domain
+film 81 File:Scene from the elevator ascending Eiffel Tower.ogv 122.0219 1900 Public domain
+film 82 File:Circular panoramic view of the Champs de Mars - Palace of Electricity.ogv 60.06 1900 Public domain
+film 83 File:Panoramic view of the Eiffel Tower taken from the outside.ogv 96.96353333333333 1900 Public domain
+film 84 File:Paris Exhibition viewed from the Seine 2.ogv 184.2841 1900 Public domain
+film 85 File:Paris Exhibition viewed from the Seine 1.ogv 192.8927 1900 Public domain
+film 86 File:Démolition de la Grande roue - AI110414.webm 15.224 1921 CC BY-SA 4.0
+film 87 File:Démolition de la Grande Roue - AI110446.webm 10.376 1922 CC BY-SA 4.0
+film 88 File:Démolition de la Grande Roue - AI110404.webm 18.824 1920 CC BY-SA 4.0
+film 89 File:Démolition de la Grande Roue - AI110442.webm 16.256 1922 CC BY-SA 4.0
+film 90 File:Construction du village Suisse et démolition de la Grande Roue - AI110408.webm 31.856 1920 CC BY-SA 4.0
+film 91 File:Démolition de la Grande Roue - AI110425.webm 29.024 1922 CC BY-SA 4.0
+film 92 File:Le Village Suisse de la Grande Roue et le quartier « Polak » de l'Hôtel de Ville - AI120213.webm 142.424 1921 CC BY-SA 4.0
+film 93 File:Panoramic View of the Champs Elysees (1900).webm 51.484 1900 Public domain
+film 94 File:Jeanne d'Arc (1900).webm 626.96 1900 Public domain
+film 95 File:Panorama of Place de L'Opera (1900).webm 77.51 1900 Public domain
+film 96 File:Le livre magique (1900).ogv 157.79166666666666 1900 Public domain
+film 97 File:Mauvais lancement par un débardeur (1900).webm 15.152000000000001 1900 Public domain
+film 98 File:Danse du ventre par l'athlète americain Sheldon (1900).webm 12.912 1900 Public domain
+film 99 File:Saute d'un athlète (Sweeney) par dessus une barre (1900).webm 11.986 1900 Public domain
+film 100 File:Saut de haie par l'americain Alvin Kraenzlein (1900).webm 9.273 1900 Public domain
+film 101 File:Homme nu (Sheldon) lançant un disque en plomb (1900).webm 10.828 1900 Public domain
+film 102 File:Lancement du poids par l'athlète americain McCraken (1900).webm 23.389 1900 Public domain
+film 103 File:Lancement du disque par l'athlète americain McCraken (1900).webm 15.188 1900 Public domain
+film 104 File:Saut en hauteur par un athlète américain (Schonfield) (1900).webm 9.712 1900 Public domain
+film 105 File:Lancement de poids par jeune membre du racing club (1900).webm 14.037 1900 Public domain
+film 106 File:Lancement poids par membre du racing club (1900).webm 8.755 1900 Public domain
+film 107 File:Saut en hauteur par l'américain Sweeney au racing club (1900).webm 12.873000000000001 1900 Public domain
+film 108 File:Driving scene on the Champs Elysees.ogv 81.54813333333334 1900 Public domain
+film 109 File:Saut en longueur par Sweeney (champion americain) à la station physiologique (1900).webm 10.507 1900 Public domain
+film 110 File:Circular panoramic view of the Place de l'Opera.ogv 77.44403333333334 1900 Public domain
+film 111 File:Breaking of the crowd at military review at Longchamps.ogv 43.61023333333333 1900 Public domain
+film 112 File:Le Repas fantastique.webm 85.944 1900 Public domain
+film 113 File:Max prend un bain (1910).webm 579.246 1910 Public domain
+film 114 File:L'epee du spirite (1910).ogv 366.13213151927437 1910 Public domain
+film 115 File:Crue de la Seine - AI48953.webm 509.624 1910 CC BY-SA 4.0
+film 116 File:New York 1911.webm 534.723 1911 Public domain
+film 117 File:New York 1911 cut.webm 529.278 1911 Public domain
+film 118 File:A Trip Down Market Street (1906).webm 685.749 1906 Public domain
+film 119 File:(4k, 60 fps) San Francisco, a Trip down Market Street, April 14, 1906.webm 862.261 1906 Public domain
+film 120 File:San Francisco Earthquake aftermath, 1906.ogv 100.03326666666666 1906 Public Domain
+film 121 File:Exploded gas tanks us mint.ogv 138.00453333333334 1906 Public domain
+film 122 File:Exploded gas tanks, U.S. Mint, Emporium and Spreckels Bld'g -.webm 177.736 1906 Public domain
+film 123 File:A Trip Down Market Street Before the Fire 1906 San Francisco Pre Earthquake.webm 683.807 1906 Public domain
+film 124 File:Old London Street Scenes (1903).webm 248.02100000000002 1903 Public domain
+film 125 File:Early English Traffic, Turn of the Century London (1896-1903).webm 647.121 1896 Public domain
+film 126 File:Il ratto delle sabine (1910).webm 1040.64 1910 Public domain
+film 127 File:Moscow clad in snow - Moscou sur la neige - Москва в снежном убранстве - Москва в снегу (1908), noaudio.ogv 449.1991991991992 1908 Public domain
+film 128 File:Драма в таборе подмосковных цыган. (1908).webm 131.72 1908 Public domain
+film 129 File:Glidden-Tour-1905.ogv 45.781333333333336 1905 Public domain
+film 130 File:First flights in aviation history.ogv 82.11536666666667 1903 Public domain
+film 131 File:Bird's-eye view of San Francisco.ogv 168.13463333333334 1902 Public domain
+film 132 File:A Farewell to Arms (1932) by Frank Borzage, Trailer.webm 119.401 1932 Public domain
+film 133 File:Armistice Day 1918 - No sound.webm 47.375 1918 Public domain
+film 134 File:WAPENSTILSTANDSDAG-PGM4011597.webm 62.047000000000004 1939 Public domain
+film 135 File:Video Clips of Woodrow Wilson (1917-1921, Part 2).webm 465.096 1917 Public domain
+film 136 File:Video Clips of Woodrow Wilson (1917-1921, Part 1).webm 623.688 1917 Public domain
+film 137 File:Kinonedelja No. 31 (1919).webm 620.5840000000001 1919 Public domain
+film 138 File:Steam Loco ΔΚ8.001 at Rack Railway's Festival, November 2016..webm 700.061 1889 CC BY 3.0
+film 139 File:Kinonedelja No. 1 (1918).webm 475.41700000000003 1918 Public domain
+scan done: new 122 total 140
+== job films_scan took 506 s
