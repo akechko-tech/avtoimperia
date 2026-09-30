@@ -75,13 +75,32 @@ def pick_derivative(v, prefer=('480p.vp9.webm', '480p.webm', '360p.vp9.webm', '3
         if by.get(k): return by[k]
     return v.get('url')
 
-def year_guess(v):
-    txt = ' '.join([meta_val(v, 'DateTimeOriginal'), meta_val(v, 'ObjectName'), meta_val(v, 'ImageDescription')[:400]])
-    ys = [int(y) for y in re.findall(r'\b(18[89]\d|19[0-4]\d)\b', txt)]
-    return min(ys) if ys else None
+def years_in(txt):
+    return [int(y) for y in re.findall(r'(?<!\d)(18[89]\d|19\d\d|20\d\d)(?!\d)', txt or '')]
+
+def year_guess(v, title=''):
+    """Год съёмки: по дате снимка, иначе по названию и описанию. Современное (1940+) — не берём."""
+    dto = years_in(meta_val(v, 'DateTimeOriginal'))
+    txt = ' '.join([title, meta_val(v, 'ObjectName'), meta_val(v, 'ImageDescription')[:600]])
+    ys = years_in(txt)
+    if dto and min(dto) < 1940: return min(dto)
+    old = [y for y in ys if y < 1940]
+    if ys and max(ys) >= 1940 and not old: return max(ys)
+    return min(old) if old else (min(dto) if dto else None)
+
+def download(url, path, limit=220e6):
+    req = urllib.request.Request(url, headers={'User-Agent': UA})
+    n = 0
+    with urllib.request.urlopen(req, timeout=120) as r, open(path, 'wb') as f:
+        while True:
+            b = r.read(1 << 20)
+            if not b: break
+            n += len(b); f.write(b)
+            if n > limit: raise RuntimeError('too big')
+    return n
 
 def frame_at(src, t, out, w=256):
-    sh(['ffmpeg', '-v', 'error', '-user_agent', UA, '-ss', '%.2f' % t, '-i', src, '-frames:v', '1', '-vf', 'scale=%d:-2' % w, '-y', out], check=True)
+    sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t, '-i', src, '-frames:v', '1', '-vf', 'scale=%d:-2' % w, '-y', out], check=True)
 
 def films_scan():
     from PIL import Image, ImageDraw
@@ -93,7 +112,7 @@ def films_scan():
     titles = []
     for q in qs:
         try:
-            r = capi(action='query', list='search', srsearch=q + ' filetype:video', srnamespace=6, srlimit=25)
+            r = capi(action='query', list='search', srsearch=q + ' filetype:video', srnamespace=6, srlimit=30)
             L = [x['title'] for x in r.get('query', {}).get('search', [])]
             log('search', q, '->', len(L))
             for t in L:
@@ -104,28 +123,31 @@ def films_scan():
     info = video_info(titles)
     log('candidates', len(titles), 'with info', len(info))
     out = list(old); n0 = len(old)
-    tmp = os.path.join(D, '_f.jpg')
+    tmp = os.path.join(D, '_f.jpg'); vid = os.path.join(D, '_v.bin')
     for t in titles:
         v = info.get(t)
         if not v: continue
         lic = meta_val(v, 'LicenseShortName')
         if not re.search(r'public domain|\bpd\b|cc0|cc[ -]by', lic, re.I): continue
         dur = duration_of(v)
-        if dur < 4 or dur > 3600: continue
-        y = year_guess(v)
-        if y and y > 1939: continue
-        src = pick_derivative(v)
-        n = len(out)
-        # шесть кадров равномерно по фильму
+        if dur < 4 or dur > 1500: continue
+        y = year_guess(v, t)
+        if not y or y >= 1940: continue
+        src = pick_derivative(v, ('360p.vp9.webm', '360p.webm', '240p.vp9.webm', '240p.webm', '480p.vp9.webm', '480p.webm'))
+        try:
+            size = download(src, vid)
+        except Exception as e:
+            log('download failed', t, e); continue
         ts = [dur * k for k in (0.08, 0.24, 0.4, 0.56, 0.72, 0.88)]
         ims = []
         for tt in ts:
             try:
-                frame_at(src, tt, tmp); ims.append(Image.open(tmp).convert('RGB').copy())
+                frame_at(vid, tt, tmp); ims.append(Image.open(tmp).convert('RGB').copy())
             except Exception as e:
-                ims.append(None)
+                ims.append(None); log('frame error', t, round(tt, 1), str(e)[-160:])
         if not any(ims):
             log('no frames', t); continue
+        n = len(out)
         w = 256; h = max(im.height for im in ims if im)
         sheet = Image.new('RGB', (w * 3, (h + 16) * 2), (16, 16, 16)); d = ImageDraw.Draw(sheet)
         for k, im in enumerate(ims):
@@ -135,10 +157,11 @@ def films_scan():
         sheet.save(os.path.join(D, '%03d.jpg' % n), 'JPEG', quality=78)
         out.append({'n': n, 'title': t, 'page': v.get('descriptionurl'), 'dur': round(dur, 1), 'w': v.get('width'), 'h': v.get('height'),
                     'lic': lic, 'year': y, 'artist': meta_val(v, 'Artist')[:120], 'desc': meta_val(v, 'ImageDescription')[:400],
-                    'date': meta_val(v, 'DateTimeOriginal')[:60], 'src': src, 'orig': v.get('url'), 'ts': [round(x, 1) for x in ts]})
+                    'date': meta_val(v, 'DateTimeOriginal')[:60], 'src': src, 'orig': v.get('url'), 'ts': [round(x, 1) for x in ts], 'size': size})
         log('film', n, t, dur, y, lic)
         json.dump(out, open(idx_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    if os.path.exists(tmp): os.remove(tmp)
+    for f in (tmp, vid):
+        if os.path.exists(f): os.remove(f)
     log('scan done: new', len(out) - n0, 'total', len(out))
 
 def films_cut():
@@ -160,7 +183,8 @@ def films_cut():
         vf += ['scale=640:-2:flags=lanczos', 'setsar=1', 'format=yuv420p']
         if e.get('speed'): vf.insert(0, 'setpts=PTS/%s' % e['speed'])
         try:
-            sh(['ffmpeg', '-v', 'error', '-user_agent', UA, '-ss', str(e['t']), '-i', src, '-t', str(e['d']), '-an', '-vf', ','.join(vf),
+            vid = os.path.join(D, '_src.bin'); download(src, vid, 400e6)
+            sh(['ffmpeg', '-v', 'error', '-ss', str(e['t']), '-i', vid, '-t', str(e['d']), '-an', '-vf', ','.join(vf),
                 '-c:v', 'libx264', '-profile:v', 'main', '-level', '3.1', '-preset', 'slow', '-crf', '26', '-movflags', '+faststart', '-r', '24', '-y', out])
             sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % min(1.0, e['d'] / 3), '-i', out, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', '-y', os.path.join(D, cid + '.jpg')])
             man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'artist': meta_val(v, 'Artist')[:120],
@@ -263,19 +287,17 @@ def samples():
 # ---------------------------------------------------------------- дополнительные фото-материалы Poly Haven (CC0)
 PH = 'https://api.polyhaven.com'
 TEX_SLOTS = [
-    ('leather',  dict(must=[['leather']], prefer=['brown', 'old', 'worn', 'dark'], no=['white', 'pattern', 'aerial'], m=0.5)),
-    ('fabric',   dict(must=[['fabric', 'cloth', 'wool', 'tweed', 'denim', 'linen', 'cotton', 'woven']], prefer=['wool', 'tweed', 'woven', 'rough', 'grey', 'brown'], no=['pattern', 'floral', 'carpet', 'leather', 'aerial', 'curtain', 'lace'], m=0.4)),
-    ('fabric2',  dict(must=[['fabric', 'cloth', 'wool', 'tweed', 'denim', 'linen', 'cotton', 'woven', 'jersey', 'knit']], prefer=['linen', 'cotton', 'white', 'beige', 'plain'], no=['pattern', 'floral', 'carpet', 'leather', 'aerial', 'curtain', 'lace'], m=0.4)),
-    ('rubber',   dict(must=[['rubber', 'tire', 'tyre']], prefer=['black', 'worn', 'tread'], no=['floor', 'mat', 'aerial'], m=0.5)),
-    ('paint',    dict(must=[['painted', 'paint']], prefer=['metal', 'car', 'worn', 'old', 'green', 'blue', 'scratched'], no=['wall', 'plaster', 'brick', 'wood', 'floor', 'concrete', 'aerial'], m=1.0)),
-    ('brass',    dict(must=[['brass', 'bronze', 'copper', 'gold']], prefer=['brushed', 'metal', 'old', 'worn'], no=['aerial', 'floor'], m=0.5)),
-    ('cliff',    dict(must=[['rock', 'cliff', 'stone']], prefer=['cliff', 'layered', 'mountain', 'face', 'sandstone', 'granite'], no=['floor', 'wall', 'tiles', 'brick', 'paving', 'pebbles', 'aerial', 'path', 'gravel', 'sand', 'cobble', 'moss'], m=6)),
-    ('scree',    dict(must=[['rocks', 'rocky', 'stones', 'boulders', 'scree', 'pebbles']], prefer=['ground', 'mountain', 'scree', 'rocky', 'dry'], no=['wall', 'tiles', 'paving', 'aerial', 'cobble', 'brick', 'river'], m=3)),
-    ('rock_moss', dict(must=[['rock', 'stone', 'boulder']], prefer=['moss', 'mossy', 'forest', 'green'], no=['wall', 'tiles', 'paving', 'aerial', 'brick', 'floor'], m=3)),
-    ('tunnel',   dict(must=[['stone', 'rock', 'brick', 'masonry']], prefer=['wall', 'tunnel', 'old', 'dark', 'damp', 'rough'], no=['floor', 'paving', 'tiles', 'aerial', 'red', 'painted'], m=3)),
-    ('wood_var', dict(must=[['wood', 'wooden']], prefer=['varnished', 'polished', 'fine', 'oak', 'walnut', 'mahogany', 'veneer'], no=['plank', 'planks', 'floor', 'bark', 'rough', 'weathered', 'painted', 'siding'], m=0.8)),
-    ('factory',  dict(must=[['brick', 'industrial', 'factory']], prefer=['old', 'industrial', 'dirty', 'red', 'wall'], no=['floor', 'paving', 'painted', 'white', 'aerial'], m=3)),
-    ('glass_roof', dict(must=[['glass', 'window']], prefer=['frosted', 'old', 'panel', 'industrial'], no=['aerial', 'floor'], m=2)),
+    ('leather',  dict(must=[['leather']], prefer=['brown', 'old', 'worn', 'dark'], no=['white', 'pattern', 'aerial'], ids=['brown_leather'], m=0.5)),
+    ('fabric',   dict(must=[['fabric', 'cloth', 'wool', 'tweed', 'woven']], prefer=['wool', 'tweed', 'woven'], no=['pattern', 'floral', 'carpet'], ids=['poly_wool_herringbone', 'wool_boucle'], m=0.4)),
+    ('fabric2',  dict(must=[['fabric', 'cloth', 'linen', 'cotton']], prefer=['linen', 'cotton'], no=['pattern', 'floral'], ids=['rough_linen', 'cotton_jersey'], m=0.4)),
+    ('cliff',    dict(must=[['rock', 'cliff']], prefer=['cliff'], no=['floor'], ids=['tiger_rock', 'cliff_side'], m=6)),
+    ('cliff2',   dict(must=[['rock', 'cliff']], prefer=['cliff'], no=['floor'], ids=['cliff_side', 'rock_face', 'worn_rock_natural_01'], m=6)),
+    ('scree',    dict(must=[['rocks', 'rocky']], prefer=['ground'], no=['wall'], ids=['rocky_trail_02', 'rocks_ground_05'], m=3)),
+    ('rock_moss', dict(must=[['rock']], prefer=['moss'], no=['wall'], ids=['mossy_rock', 'rock_pitted_mossy', 'lichen_rock'], m=3)),
+    ('tunnel',   dict(must=[['stone', 'brick']], prefer=['wall'], no=['floor'], ids=['castle_brick_01', 'medieval_blocks_03', 'rustic_stone_wall_02'], m=3)),
+    ('wood_var', dict(must=[['wood']], prefer=['veneer'], no=['plank'], ids=['european_walnut_veneer_04', 'silver_oak_veneer_02'], m=0.8)),
+    ('factory',  dict(must=[['brick']], prefer=['red'], no=['floor'], ids=['factory_brick', 'red_bricks_02', 'castle_brick_02_red'], m=3)),
+    ('metal_old', dict(must=[['metal']], prefer=['rust', 'painted'], no=['floor'], ids=['green_metal_rust', 'rusty_painted_metal'], m=1.5)),
 ]
 
 def text_of(i, a): return ' '.join([i.replace('_', ' '), a.get('name', ''), ' '.join(a.get('tags', [])), ' '.join(a.get('categories', []))]).lower()
@@ -299,7 +321,7 @@ def tex():
             s = 10 * sum(1 for w in spec.get('prefer', []) if re.search(r'\b' + re.escape(w), t)) + math.log10(1 + a.get('download_count', 0))
             L.append((s, i))
         L.sort(reverse=True); cands[slot] = [[i, round(s, 1)] for s, i in L[:10]]
-        aid = next((i for s, i in L if i not in used), None)
+        aid = next((i for i in spec.get('ids', []) if i in assets and i not in used), None) or next((i for s, i in L if i not in used), None)
         if not aid: log('tex', slot, 'nothing'); continue
         used.add(aid); a = assets[aid]
         try:

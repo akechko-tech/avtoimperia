@@ -1,0 +1,34 @@
+[
+ {
+  "img": "Daimler Motor-Lastwagen",
+  "reel": "h:truck"
+ },
+ {
+  "img": "Mercedes 35 hp",
+  "reel": "h:merc"
+ },
+ {
+  "img": "Ford Model T",
+  "reel": "h:modelT"
+ },
+ {
+  "img": "Prinz-Heinrich-Fahrt 1910",
+  "reel": "h:henry"
+ },
+ {
+  "img": "Charles F. Kettering",
+  "reel": "h:starter"
+ },
+ {
+  "img": "Highland Park Ford Plant",
+  "reel": "h:line"
+ },
+ {
+  "img": "Austin 7",
+  "reel": "h:small"
+ },
+ {
+  "img": "Ford Model A (1927–1931)",
+  "reel": "h:modelA"
+ }
+]
