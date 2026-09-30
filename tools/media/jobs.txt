@@ -1,1 +1,3 @@
-films_cut
+voice_probe
+music_scan
+sfx_scan

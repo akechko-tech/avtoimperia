@@ -24,7 +24,7 @@ jobs:
           python3 -m pip install --quiet --user --break-system-packages pillow numpy || python3 -m pip install --quiet pillow numpy
       - name: Нейросетевой голос (только для задания voice)
         run: |
-          if grep -qx 'voice' tools/media/jobs.txt; then
+          if grep -qxE 'voice|voice_probe|voice5' tools/media/jobs.txt; then
             python3 -m pip install --quiet --user --break-system-packages torch --index-url https://download.pytorch.org/whl/cpu || python3 -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
             python3 -m pip install --quiet --user --break-system-packages omegaconf || python3 -m pip install --quiet omegaconf
           fi

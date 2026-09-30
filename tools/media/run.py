@@ -408,7 +408,126 @@ def voice():
     json.dump(idx, open(idx_path, 'w'), indent=0)
     log('voice done', n, 'new lines; total', len(idx))
 
-JOBS = {'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice}
+
+# ---------------------------------------------------------------- поиск звуков и записей на Commons (0.19)
+def audio_titles(qs, per=50):
+    """Файлы-звуки по поисковым фразам и категориям (Category:… — файлы категории и её подкатегорий первого уровня)."""
+    found = {}
+    for q in qs:
+        try:
+            L = []
+            if q.startswith('Category:'):
+                cats = [q]
+                r = capi(action='query', list='categorymembers', cmtitle=q, cmtype='subcat', cmlimit=100)
+                cats += [x['title'] for x in r.get('query', {}).get('categorymembers', [])][:40]
+                for c in cats:
+                    cont = {}
+                    for _ in range(6):
+                        r = capi(action='query', list='categorymembers', cmtitle=c, cmtype='file', cmlimit=500, **cont)
+                        L += [x['title'] for x in r.get('query', {}).get('categorymembers', [])]
+                        if 'continue' not in r: break
+                        cont = {'cmcontinue': r['continue']['cmcontinue']}
+                    time.sleep(0.2)
+            else:
+                r = capi(action='query', list='search', srsearch=q + ' filetype:audio', srnamespace=6, srlimit=per)
+                L = [x['title'] for x in r.get('query', {}).get('search', [])]
+            L = [t for t in L if re.search(r'\.(ogg|oga|opus|mp3|flac|wav|webm)$', t, re.I)]
+            log('search', q, '->', len(L))
+            for t in L: found.setdefault(t, q)
+        except Exception as e:
+            log('search error', q, e)
+        time.sleep(0.25)
+    return found
+
+def audio_scan_to(name, qs, dmin, dmax, per=50):
+    D = os.path.join(MEDIA, name); os.makedirs(D, exist_ok=True)
+    found = audio_titles(qs, per)
+    info = video_info(sorted(found))
+    out = []
+    for t, q in found.items():
+        v = info.get(t)
+        if not v: continue
+        lic = meta_val(v, 'LicenseShortName'); dur = duration_of(v); size = v.get('size') or 0
+        if dur < dmin or dur > dmax: continue
+        if not re.search(r'public domain|\bpd\b|cc0|cc[ -]by(?![ -]nc)', lic, re.I): continue
+        ders = {d.get('transcodekey', ''): d.get('src') for d in (v.get('derivatives') or [])}
+        out.append({'title': t, 'q': q, 'dur': round(dur, 1), 'kbps': round(size * 8 / max(1, dur) / 1000), 'mime': v.get('mime'), 'lic': lic,
+                    'artist': meta_val(v, 'Artist')[:160], 'credit': meta_val(v, 'Credit')[:160], 'date': meta_val(v, 'DateTimeOriginal')[:60],
+                    'desc': meta_val(v, 'ImageDescription')[:300], 'page': v.get('descriptionurl'), 'url': v.get('url'), 'mp3': ders.get('mp3'), 'size': size})
+    out.sort(key=lambda e: (e['q'], -e['kbps']))
+    json.dump(out, open(os.path.join(D, 'scan.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
+    log(name, 'scan: candidates', len(found), 'kept', len(out))
+
+MUS_QS = ['"United States Marine Band"', '"Marine Band"', '"U.S. Marine Band"', '"United States Navy Band"', '"U.S. Navy Band"', '"Navy Band"',
+          '"United States Army Band"', '"U.S. Army Band"', '"Army Field Band"', '"Air Force Band"', '"Coast Guard Band"', '"Air Force Heritage"',
+          'Musopen', '"Musopen Symphony"', 'Sousa', '"Stars and Stripes Forever"', '"Washington Post march"', '"Semper Fidelis"', '"Liberty Bell march"',
+          '"The Thunderer"', '"El Capitan"', '"Manhattan Beach"', '"Hands Across the Sea"', '"King Cotton"', '"Invincible Eagle"',
+          'Strauss waltz', '"Blue Danube"', '"Emperor Waltz"', '"Vienna Woods"', '"Radetzky March"', 'Waldteufel', '"Skaters Waltz"', 'Lehár', '"Merry Widow"',
+          'Offenbach', '"Galop infernal"', '"Orpheus in the Underworld"', 'Suppé', '"Light Cavalry"', '"Poet and Peasant"', '"William Tell Overture"',
+          'Fučík', '"Entry of the Gladiators"', '"Florentiner"', 'Joplin rag', '"Maple Leaf Rag"', '"The Entertainer"', 'ragtime piano', 'cakewalk',
+          'tango orchestra', '"La Cumparsita"', '"El Choclo"', 'foxtrot', 'Charleston dance', '"Tiger Rag"', 'dixieland', 'polka', 'galop', 'mazurka',
+          'Glinka', 'Tchaikovsky', 'Rimsky-Korsakov', 'Mussorgsky', 'Borodin', 'Dvořák', 'Grieg', '"Peer Gynt"', 'Satie', 'Debussy', 'Elgar',
+          '"Pomp and Circumstance"', '"Rhapsody in Blue"', 'Gershwin', '"Hungarian Dance"', '"Hungarian Rhapsody"', 'Bizet Carmen', '"Ride of the Valkyries"',
+          '"silent film" music', 'photoplay music', 'overture orchestra', 'military march', 'brass band', 'waltz orchestra', 'march band',
+          'Category:United States Marine Band', 'Category:Musopen', 'Category:Audio files of the United States Marine Band']
+
+SFX_QS = ['crowd cheering', 'cheering crowd', 'applause', 'crowd applause', 'stadium crowd', 'crowd ambience', 'crowd murmur', 'hurrah', 'fans cheering',
+          'crowd noise', 'people talking crowd', 'steam locomotive whistle', 'steam whistle', 'train whistle', 'steam locomotive', 'steam train', 'locomotive',
+          'church bell', 'church bells', 'bells ringing', 'birdsong', 'bird song', 'dawn chorus', 'Turdus merula', 'Alauda arvensis', 'Fringilla coelebs',
+          'Erithacus rubecula', 'Passer domesticus', 'Hirundo rustica', 'Cuculus canorus', 'Parus major', 'Luscinia megarhynchos', 'cicada', 'crickets',
+          'dog barking', 'horse neigh', 'horse whinny', 'horse hooves', 'horse carriage', 'cow', 'rooster', 'goat bells', 'sheep',
+          'klaxon', 'car horn', 'bulb horn', 'vintage car', 'Ford Model T', 'antique car', 'veteran car', 'old car engine', 'car engine', 'motorcycle engine',
+          'bugle call', 'trumpet fanfare', 'fanfare', 'starting pistol', 'pistol shot', 'megaphone', 'wind', 'rain', 'thunder', 'sea waves', 'surf',
+          'river', 'stream water', 'brass band street', 'accordion street', 'market ambience', 'village ambience', 'street ambience', 'city ambience',
+          'forest ambience', 'countryside ambience', 'Category:Sounds of crowds', 'Category:Sounds of birds', 'Category:Sounds of trains', 'Category:Bells (sounds)']
+
+def music_scan(): audio_scan_to('music', MUS_QS, 50, 1200, 50)
+def sfx_scan(): audio_scan_to('sfx', SFX_QS, 1.5, 900, 40)
+
+# ---------------------------------------------------------------- пробы голоса: какие модели Silero есть и как звучат
+PROBE_LINES = ['Париж, июнь тысяча восемьсот девяносто пятого года. Двадцать два экипажа выстроились у Триумфальной арки, и толпа замерла в ожидании старта.',
+               'Внимание! Номер седьмой выходит вперёд! Какая скорость — шестьдесят километров в час по пыльной дороге!',
+               'Вы уверены, что завод выдержит такой заказ? Рабочие трудятся в две смены, а склад уже переполнен.']
+def voice_probe():
+    import torch, numpy as np, wave, glob
+    D = os.path.join(MEDIA, 'voice_probe'); os.makedirs(D, exist_ok=True)
+    torch.set_num_threads(max(1, os.cpu_count() or 2))
+    model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language='ru', speaker='v4_ru', trust_repo=True)
+    ymls = glob.glob(os.path.join(torch.hub.get_dir(), '*silero*', 'models.yml'))
+    ids = ['v4_ru']
+    if ymls:
+        txt = open(ymls[0], encoding='utf-8').read(); open(os.path.join(D, 'models.yml'), 'w', encoding='utf-8').write(txt)
+        m = re.search(r'\n\s*ru:\n(.*?)(\n\s{2,4}[a-z]{2}:\n|\Z)', txt[txt.find('tts_models'):], re.S)
+        ids = sorted(set(re.findall(r'\n\s+(v\d[\w]*_ru|ru_v\d\w*)\s*:', m.group(1) if m else txt)))
+        log('ru tts models', ids)
+    res = {}
+    for mid in ids:
+        if not re.match(r'v[45]', mid): continue
+        try:
+            mdl, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language='ru', speaker=mid, trust_repo=True)
+            spk = [x for x in getattr(mdl, 'speakers', []) if x != 'random']
+            log('model', mid, 'speakers', spk)
+            res[mid] = {'speakers': spk, 'rtf': {}}
+            for sp in spk:
+                t0 = time.time(); parts = []; SR = 48000
+                for L in PROBE_LINES:
+                    try: a = mdl.apply_tts(text=L, speaker=sp, sample_rate=SR, put_accent=True, put_yo=True)
+                    except TypeError: a = mdl.apply_tts(text=L, speaker=sp, sample_rate=SR)
+                    parts.append(a.numpy()); parts.append(np.zeros(int(SR * 0.5), np.float32))
+                a = np.concatenate(parts); el = time.time() - t0
+                res[mid]['rtf'][sp] = round(el / (len(a) / SR), 3)
+                tmp = os.path.join(D, '_t.wav')
+                with wave.open(tmp, 'wb') as w:
+                    w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((np.clip(a / (np.max(np.abs(a)) or 1) * 0.9, -1, 1) * 32767).astype(np.int16).tobytes())
+                sh(['ffmpeg', '-v', 'error', '-i', tmp, '-c:a', 'flac', '-y', os.path.join(D, '%s_%s.flac' % (mid, sp))])
+                os.remove(tmp)
+                log('probe', mid, sp, 'rtf', res[mid]['rtf'][sp])
+        except Exception as e:
+            log('probe error', mid, repr(e)[:300]); res[mid] = {'error': repr(e)[:300]}
+    json.dump(res, open(os.path.join(D, 'probe.json'), 'w'), indent=1)
+
+JOBS = {'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
+        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
