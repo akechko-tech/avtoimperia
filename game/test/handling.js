@@ -2,6 +2,7 @@
 // node test/handling.js [год] [скорость м/с]
 const Y=+(process.argv[2]||1906),V0=+(process.argv[3]||22);
 require('./harness.js')(`
+SCN_OFF=true;
 Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:${Y},key:'handling-test',terr:'macadam'});

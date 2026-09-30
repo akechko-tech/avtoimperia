@@ -10,7 +10,7 @@ function auInit(){
     const comp=c.createDynamicsCompressor();AU.mus.disconnect();AU.mus.connect(comp);comp.connect(AU.master);
     const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
     auApply();AU.next=c.currentTime+0.1;AU.timer=setInterval(auSched,30);}catch(e){}
-  musicLoad();try{insLoad();}catch(e){}
+  musicLoad();orchLoad();try{insLoad();}catch(e){}try{enLoad();}catch(e){}
 }
 function auApply(){try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}if(AU.ctx)musicPlay();if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.mus.gain.setTargetAtTime(AU.on.music?(R?0.07:0.16):0,t,0.3);AU.fx.gain.setTargetAtTime(AU.on.sfx?0.55:0,t,0.1);}
 document.addEventListener('pointerdown',auInit,{capture:true});
@@ -153,16 +153,26 @@ async function musicLoad(){
   }catch(e){}
   musBuild(true);
 }
-function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L;}
+/* ---------- 0.19: оркестровые записи (военные оркестры США, Musopen, пластинки 1920-х) — вместо оркестриона ---------- */
+const ORCH={idx:null,loadP:null};const ORCH_BASE=()=>(location.protocol==='file:'?VOICE_REMOTE:'');
+const ORCH_ST={march:'марш',galop:'галоп',waltz:'вальс',rag:'регтайм',cake:'кекуок',jazz:'джаз',fox:'фокстрот',tango:'танго',polka:'полька',classic:'классика',silent:'музыка немого кино'};
+function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)return ORCH.loadP;
+  ORCH.loadP=new Promise(res=>{if(window.MUSIC_INDEX){ORCH.idx=window.MUSIC_INDEX;res(ORCH.idx);return;}
+    try{const s=document.createElement('script');s.src=ORCH_BASE()+'music/index.js';s.async=true;s.onload=()=>{ORCH.idx=window.MUSIC_INDEX||{};res(ORCH.idx);AU.sig='';musBuild(false);};s.onerror=()=>{ORCH.idx={};res(ORCH.idx);};document.head.appendChild(s);}catch(e){ORCH.idx={};res(ORCH.idx);}});
+  return ORCH.loadP;}
+function orchTracks(){const I=ORCH.idx||{};return Object.keys(I).map(id=>{const m=I[id];return {orch:true,id,src:ORCH_BASE()+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
+// оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
+function orchPick(mood,y,seed){const L=orchTracks().filter(t=>t.y<=y+3);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
+function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
 function eraStyles(y){return y<1906?['cake','rag','waltz']:y<1912?['rag','waltz','march']:y<1919?['march','tango'].concat(y>=1914?['fox']:['rag']):y<1923?['jazz','fox','tango','waltz']:['jazz','charl','fox','tango'];}
 function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','march','jazz','waltz','cake','tango','fox','charl']:eraStyles(y),R2=['I','II','III'];
   const L=Object.keys(TUNES).filter(k=>all||TUNES[k].y<=y).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
   return L.concat((all?[0]:[0,1]).flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]}))));}
 function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
-  if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&t.y>=y-14);if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
-  // оркестрион и свои мелодии игры — всегда, между пластинками эпохи
-  {const S=musSynth(),nR=L.length;L=nR?L.concat(S.slice(0,Math.max(3,Math.ceil(nR/2)))):S;}
+  if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
+  // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
+  {const hasO=L.some(t=>t.orch),S=musSynth(),nR=L.length;L=hasO?L:nR?L.concat(S.slice(0,Math.max(3,Math.ceil(nR/2)))):S;}
   const rnd=mulberry32(hashStr(AU.on.mode+y));for(let i=L.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[L[i],L[j]]=[L[j],L[i]];}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
   if(sig===AU.sig&&!start)return;AU.sig=sig;AU.pl=L;
@@ -188,7 +198,7 @@ function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)r
 function musToggle(){if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
 function musMode(){AU.on.mode=AU.on.mode==='all'?'era':'all';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}AU.sig='';musBuild(true);toast(AU.on.mode==='all'?'Вся фонотека 1895–1929':'Музыка текущей эпохи');}
 function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
-  const txt=tr?(tr.synth?tr.title:tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):'Фонотека загружается…';
+  const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.y?' · '+tr.y:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):'Фонотека загружается…';
   document.querySelectorAll('.plTitle').forEach(e=>{e.textContent=txt;});
   document.querySelectorAll('.plPlay').forEach(e=>{e.textContent=on?'❚❚':'▶';});
   document.querySelectorAll('.plMode').forEach(e=>{e.textContent=AU.on.mode==='all'?'Все':'Эпоха';});
@@ -278,6 +288,10 @@ function auSfx(type,v){
   if(!AU.ctx||!AU.on.sfx||(R&&(R.mode==='sim'||R.ff)))return;const t=AU.ctx.currentTime;
   if(type==='crash'){vNoise(t,0.35,0.5*v,'lowpass',700,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(35,t+0.2);o.connect(g);g.connect(AU.fx);env(g,t,0.005,0.6*v,0.3);o.start(t);o.stop(t+0.4);}
   if(type==='bump')vNoise(t,0.15,0.3*v,'lowpass',500,AU.fx);
+  if(type==='cheer'&&typeof AMB!=='undefined'&&AMB.on&&AMB.buf.crowd_race){ambOnce('crowd_race',0.5*v,0);return;}
+  if(type==='tick'){vNoise(t,0.04,0.12*v,'bandpass',2200,AU.fx);return;}
+  if(type==='grind'){const c=AU.ctx,o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter(),lf=c.createOscillator(),lg=c.createGain();o.type='sawtooth';o.frequency.value=620;lf.frequency.value=47;lg.gain.value=0.5;lf.connect(lg);lg.connect(g.gain);f.type='bandpass';f.frequency.value=2300;f.Q.value=3;o.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.09*v,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);o.start(t);lf.start(t);o.stop(t+0.3);lf.stop(t+0.3);vNoise(t,0.25,0.1*v,'bandpass',3200,AU.fx);return;}
+  if(type==='shift'){vNoise(t,0.07,0.16*v,'bandpass',700,AU.fx);vNoise(t+0.03,0.05,0.08*v,'highpass',2500,AU.fx);return;}
   if(type==='cheer'){const s=AU.ctx.createBufferSource(),f=AU.ctx.createBiquadFilter(),g=AU.ctx.createGain();s.buffer=AU.noise;s.loop=true;f.type='bandpass';f.frequency.value=1100;f.Q.value=0.6;s.connect(f);f.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.35,t+0.8);g.gain.exponentialRampToValueAtTime(0.0001,t+3.5);s.start(t);s.stop(t+3.6);}
   if(type==='paper')vNoise(t,0.25,0.12,'highpass',3000,AU.fx);
   // лужа: всплеск и шелест брызг; грязь — вязкий шлепок; дерево — треск
@@ -285,6 +299,7 @@ function auSfx(type,v){
   if(type==='mud'){vNoise(t,0.35,0.6*v,'lowpass',260,AU.fx);vNoise(t+0.04,0.22,0.25*v,'bandpass',620,AU.fx);const o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(55,t+0.25);o.connect(g);g.connect(AU.fx);env(g,t,0.01,0.3*v,0.25);o.start(t);o.stop(t+0.35);}
   if(type==='wood'){vNoise(t,0.09,0.5*v,'highpass',1800,AU.fx);vNoise(t+0.02,0.3,0.35*v,'bandpass',420,AU.fx);vNoise(t+0.12,0.5,0.12*v,'bandpass',2600,AU.fx);}
   // гудок паровоза: два тона с дрожанием, долгий и короткий
+  if(type==='whistle'&&typeof AMB!=='undefined'&&AMB.on){const us=R&&R.trk&&R.trk.cfg.host==='us';if(ambOnce(us&&AMB.buf.steam_whistle_us?'steam_whistle_us':'steam_whistle',0.7*v,0.4))return;}
   if(type==='whistle'){[[0,1.4],[1.7,0.6]].forEach(([d,l])=>[[587,0.05],[740,0.04],[880,0.02]].forEach(([f,a])=>{const o=AU.ctx.createOscillator(),g=AU.ctx.createGain(),lf=AU.ctx.createOscillator(),lg=AU.ctx.createGain();
     o.type='triangle';o.frequency.value=f;lf.frequency.value=5.5;lg.gain.value=f*0.012;lf.connect(lg);lg.connect(o.frequency);o.connect(g);g.connect(AU.fx);g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(a*v,t+d+0.08);g.gain.setValueAtTime(a*v,t+d+l-0.15);g.gain.exponentialRampToValueAtTime(0.0001,t+d+l);
     o.start(t+d);lf.start(t+d);o.stop(t+d+l+0.05);lf.stop(t+d+l+0.05);}));vNoise(t,1.4,0.04*v,'bandpass',2400,AU.fx);}
@@ -306,37 +321,45 @@ function auRaceStart(rc){
   const cv=c.createConvolver();cv.buffer=ir;const rv=c.createGain();rv.gain.value=0;const dl=c.createDelay(0.6);dl.delayTime.value=0.13;const fb=c.createGain();fb.gain.value=0.3;const dg=c.createGain();dg.gain.value=0;
   g.connect(rv);rv.connect(cv);cv.connect(AU.fx);g.connect(dg);dg.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(AU.fx);
   [o1,o2,lfo,sq.o,sq.v,sn.s,br.o,br.v,bn.s,rb.s,wd.s,rn.s,rl.s,wh.s,gr.s,sw.s].forEach(n=>n.start(t));AU.race={o1,o2,lfo,f,g,sq,sn,br,bn,rb,wd,rn,rl,wh,gr,sw,rv,dg,early:rc.y<1906,drum:rc.y>=1912};
+  // 0.19: живые моторы и шины (AudioWorklet); старый синтезатор молчит
+  const wk=enStart(g);if(wk){AU.race.wk=wk;f.disconnect();g.gain.value=1;}
+  try{ambStart();}catch(e){console.warn('amb',e);}AU.race.lt=t;
 }
 function auRaceTick(){
   const a=AU.race;if(!a||!R||!(R.me||R.follow))return;const t=AU.ctx.currentTime,me=R.me||R.follow,vol=R.me?1:0.6,p=clamp(me.rpm||0,0,1.1),thr=me.thr||0,sp=Math.max(0,me.vx||0);
-  const base=(a.early?30:42)+p*(a.early?80:150)+(me.overheat>0?-15:0);
+  {const dtA=clamp(t-(a.lt||t),0,0.1);a.lt=t;try{ambTick(dtA);}catch(e){console.warn('amb',e);}}
+  // переключение передач: стук рычага; до синхронизаторов (1928) при сбросе иногда скрежет шестерён
+  if(R.me&&me===R.me){if(a.gear!==undefined&&me.gear!==a.gear&&sp>2){auSfx('shift',0.6);if(me.gear<a.gear&&R.rc.y<1928&&Math.random()<0.3)auSfx('grind',0.5);}a.gear=me.gear;}
+  if(a.wk){try{enTick(a,me,vol);}catch(e){console.warn(e);}}
+  else{  const base=(a.early?30:42)+p*(a.early?80:150)+(me.overheat>0?-15:0);
   a.o1.frequency.setTargetAtTime(base,t,0.05);a.o2.frequency.setTargetAtTime(base*0.5,t,0.05);a.lfo.frequency.setTargetAtTime(base/(a.early?2:4),t,0.05);
   a.f.frequency.setTargetAtTime(350+p*1200+thr*500,t,0.08);a.g.gain.setTargetAtTime((R.t<0?0.05:(0.05+p*0.08+thr*0.07)*(me.overheat>0?0.4:1)*(me.dnf?0.2:1))*vol,t,0.08);
+  }
   // занос: чем сильнее срыв, тем громче и выше визг; на грунте — больше шороха, на асфальте — чистый тон
   const tr=TERR[R.trk.terrAt(me.idx)]||TERR.dirt,soft=tr.dust||tr===TERR.mud||tr===TERR.snow||tr===TERR.sand||tr===TERR.beach?1:0;
   // шины начинают петь у предела сцепления (с 80% занятого), срываются — визжат во весь голос
   const skid=sp>3?clamp(Math.max((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5,((me.gu||0)-0.8)*3.5)+(me.spinw>0.3?0.25:0),0,1):0;
-  a.sq.o.frequency.setTargetAtTime(760+skid*420+sp*5,t,0.06);a.sq.g.gain.setTargetAtTime(skid*(soft?0.05:0.13)*vol,t,skid>0?0.04:0.08);a.sn.g.gain.setTargetAtTime(skid*(soft?0.2:0.11)*vol,t,0.05);
+  if(!a.wk){a.sq.o.frequency.setTargetAtTime(760+skid*420+sp*5,t,0.06);a.sq.g.gain.setTargetAtTime(skid*(soft?0.05:0.13)*vol,t,skid>0?0.04:0.08);a.sn.g.gain.setTargetAtTime(skid*(soft?0.2:0.11)*vol,t,0.05);}
   // тормоза скрипят при сильном нажатии на ходу, громче — если машину при этом несёт
   const brk=(me.brk||0)>0.3&&sp>3&&R.t>0?clamp((me.brk-0.3)*1.4*(0.35+0.65*Math.min(1,sp/18))*(1+skid*0.8),0,1):0;
   a.br.o.frequency.setTargetAtTime((a.drum?2500:1900)+brk*500+Math.sin(t*3)*60,t,0.05);a.br.g.gain.setTargetAtTime(brk*(a.drum?0.07:0.035)*vol,t,brk>0?0.03:0.1);a.bn.g.gain.setTargetAtTime(brk*(a.drum?0.03:0.1)*vol,t,0.05);
   // гул и камни на обочине
-  a.rb.g.gain.setTargetAtTime((me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
+  a.rb.g.gain.setTargetAtTime(a.wk?0:(me.off?Math.min(1,sp/12)*0.35:soft?Math.min(1,sp/25)*0.04:0)*vol,t,0.1);
   // ветер в открытой машине: на скорости свистит всё громче и выше
   const inT=me.tun?1:0,w=clamp((sp-7)/38,0,1);a.wd.fl.frequency.setTargetAtTime(380+sp*14,t,0.2);a.wd.g.gain.setTargetAtTime(Math.pow(w,1.4)*0.11*vol*(R.t>0?1:0)*(inT?0.35:1),t,0.25);
   // тоннель: гул и эхо мотора
   if(a.rv){a.rv.gain.setTargetAtTime(inT?0.6:0,t,inT?0.12:0.3);a.dg.gain.setTargetAtTime(inT?0.4:0,t,inT?0.12:0.3);}
   if(a.rn){const S=me.surf||'',rain=!!(R.wx&&R.wx.rain);
     // дождь: шорох капель и гул; под сводом почти не слышен
-    a.rn.g.gain.setTargetAtTime(rain?(inT?0.008:0.075)*vol:0,t,0.5);a.rl.g.gain.setTargetAtTime(rain?(inT?0.004:0.05)*vol:0,t,0.5);
+    const rk=(R.rainK!==undefined?R.rainK:rain?1:0)*(typeof AMB!=='undefined'&&AMB.buf.rain?0.35:1);a.rn.g.gain.setTargetAtTime(rk*(inT?0.008:0.075)*vol,t,0.5);a.rl.g.gain.setTargetAtTime(rk*(inT?0.004:0.05)*vol,t,0.5);
     // мокрая дорога: шины шипят и разбрызгивают воду
-    a.wh.g.gain.setTargetAtTime((rain&&!inT&&!me.off&&S!=='puddle'?1:0)*Math.min(1,sp/25)*0.085*vol,t,0.1);
+    a.wh.g.gain.setTargetAtTime(a.wk?0:(rain&&!inT&&!me.off&&S!=='puddle'?1:0)*Math.min(1,sp/25)*0.085*vol,t,0.1);
     // щебень, грунт, булыжник, камни — хруст и дробь (прерывисто)
-    const cr=(S==='macadam'||S==='dirt'||S==='mount'||S==='verge'||S==='rock'||S==='pave'||S==='field')?Math.min(1,sp/14):0;a.gr.g.gain.setTargetAtTime(cr*(S==='pave'?0.05:0.08)*vol*(0.55+0.45*Math.random()),t,0.04);
+    const cr=!a.wk&&(S==='macadam'||S==='dirt'||S==='mount'||S==='verge'||S==='rock'||S==='pave'||S==='field')?Math.min(1,sp/14):0;a.gr.g.gain.setTargetAtTime(cr*(S==='pave'?0.05:0.08)*vol*(0.55+0.45*Math.random()),t,0.04);
     // в луже и грязи — плеск
     a.sw.g.gain.setTargetAtTime((S==='puddle'||S==='mudhole'?Math.min(1,sp/9):0)*0.2*vol,t,0.05);}
 }
 function auScreech(v){}
-function auRaceStop(){const a=AU.race;if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd,a.rn,a.rl,a.wh,a.gr,a.sw].forEach(x=>x&&x.g.gain.setTargetAtTime(0,t,0.05));if(a.rv){a.rv.gain.setTargetAtTime(0,t,0.05);a.dg.gain.setTargetAtTime(0,t,0.05);}
+function auRaceStop(){try{ambStop();}catch(_){}const a=AU.race;if(a&&a.wk){const w=a.wk;a.g.gain.setTargetAtTime(0,AU.ctx.currentTime,0.12);setTimeout(()=>{if(EN.node===w)enStop();else try{w.disconnect();}catch(_){}},600);}if(a){const t=AU.ctx.currentTime;a.g.gain.setTargetAtTime(0,t,0.1);[a.sq,a.sn,a.br,a.bn,a.rb,a.wd,a.rn,a.rl,a.wh,a.gr,a.sw].forEach(x=>x&&x.g.gain.setTargetAtTime(0,t,0.05));if(a.rv){a.rv.gain.setTargetAtTime(0,t,0.05);a.dg.gain.setTargetAtTime(0,t,0.05);}
   [a.o1,a.o2,a.lfo,a.sq.o,a.sq.v,a.sn.s,a.br.o,a.br.v,a.bn.s,a.rb.s,a.wd.s].concat(a.rn?[a.rn.s,a.rl.s,a.wh.s,a.gr.s,a.sw.s]:[]).forEach(n=>{try{n.stop(t+0.5);}catch(e){}});AU.race=null;}setTimeout(auApply,50);}
 

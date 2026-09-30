@@ -49,11 +49,15 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   const T=R.trk,rc=R.rc,cfg=T.cfg,W=R.wx||{mood:'clear'},s0=T.startIdx,me=R.follow,poi=filmPOI(),shots=[];
   const sp=trkAt(s0,0),fw=[sp.t[0],0,sp.t[1]],side=[sp.n[0],0,sp.n[1]];
   // 1) над стартом: высоко сзади — плавно вниз к машинам
-  shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
+  const brief=typeof scnBrief==='function'?scnBrief():'',dIn=voiceDur(raceIntroText(rc),'aidar'),dB=brief?voiceDur(brief,'aidar'):0;
+  shots.push({d:4.6,cap:{kick:`${hostName(rc.c)} · ${MONTHS[rc.m]} ${rc.y}${R.scn?' · '+scnClockTxt():''}`,big:rc.name,sub:`${fmtN(rc.km)} км · ${terrName(cfg)} · ${WX_NAME[W.mood]||''}${W.rain?', дождь':''}`},
     cam:u=>{const e=ease(u),a=trkSmooth(s0,-150+70*e,-40+25*e),look=trkSmooth(s0,40+30*e);return {eye:[a.p[0],a.p[1]+95-60*e,a.p[2]],look:[look.p[0],look.p[1]+2,look.p[2]],fov:0.85};}});
   // 2) самое интересное впереди: пролёт вдоль дороги
   if(poi){const i=poi.i;shots.push({d:4.2,cap:{kick:poi.at,mid:poi.cap},poi:i,
     cam:u=>{const e=ease(u),a=trkSmooth(i,-90+80*e,18),b=trkSmooth(i,-40+80*e,0);return {eye:[a.p[0],a.p[1]+poi.alt*(1-0.35*e),a.p[2]],look:[b.p[0],b.p[1]+3,b.p[2]],fov:0.9};}});}
+  // 2б) как это было: старт по-историческому — высоко над стартом, медленный облёт
+  if(brief){const need=Math.max(5,(dIn+dB+1.2)-(shots.reduce((a,x)=>a+x.d,0))-7.8);shots.push({d:Math.min(16,need),cap:{kick:'Как это было',mid:brief},
+    cam:u=>{const e=ease(u),a=trkSmooth(s0,-60+30*e,32-20*e),look=trkSmooth(s0,20);return {eye:[a.p[0],a.p[1]+26-8*e,a.p[2]],look:[look.p[0],look.p[1]+1,look.p[2]],fov:0.8};}});}
   // 3) стартовая решётка: камера едет по обочине вдоль машин — по самой трассе (на изгибе тоже), с той стороны, где свободно
   const grid=R.cars.slice().sort((a,b)=>b.prog-a.prog),back=grid[grid.length-1],front=grid[0];
   const favs=filmFavorites(),iB=back.idx,dI=T.closed?((front.idx-iB)%T.n+T.n)%T.n:Math.max(0,front.idx-iB),gLen=dI*T.step+14,gs=filmSide(iB,dI,T.W/2+2.2);
@@ -73,7 +77,7 @@ function filmStart(){if(!R||!R.gl||R.mode==='sim'){driveTipsAtStart();return;}
   document.getElementById('raceScreen').classList.add('filming');document.getElementById('rfSkip').onclick=filmSkip;el.onclick=e=>{if(e.target===el)filmSkip();};
   auReelFanfare();
   // диктор: записанный голос — каждый раз; синтезатор устройства — только первые шесть гонок
-  {const say=raceIntroText(rc);if(reelVoiceOn()&&(voiceDur(say,'aidar')||n<6))setTimeout(()=>{if(R&&R.film)voiceSay(say,'aidar');},500);}
+  {const say=raceIntroText(rc);if(reelVoiceOn()&&(voiceDur(say,'aidar')||n<6))setTimeout(()=>{if(R&&R.film)voiceSay(say,'aidar',()=>{if(R&&R.film&&brief&&dB)setTimeout(()=>{if(R&&R.film)voiceSay(brief,'aidar');},250);});},500);}
   try{localStorage.setItem('avt-film',n+1);}catch(_){}}
 function filmCaption(c){const el=document.getElementById('rfCard');if(!el)return;
   el.classList.remove('in');void el.offsetWidth;

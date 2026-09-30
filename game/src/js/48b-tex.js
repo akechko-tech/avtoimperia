@@ -76,7 +76,7 @@ async function texSky(mood){
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.activeTexture(gl.TEXTURE0);
   texClose(im);const w=eco?1024:(im.width||2048);return tx.sky[mood]={t,lv:Math.floor(Math.log2(w))+1};}
 // Привязать всё к своим блокам перед кадром (могли перебить студия или обработка кадра)
-function texBind(sky){const gl=G3.gl,tx=G3.cache.tx;
+function texBind(sky,sky2){const gl=G3.gl,tx=G3.cache.tx;gl.activeTexture(gl.TEXTURE8);gl.bindTexture(gl.TEXTURE_2D,sky2&&sky2.t?sky2.t:G3.dum2);
   gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D_ARRAY,tx?tx.alb:G3.dumA);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D_ARRAY,tx?tx.dat:G3.dumA);
   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,sky&&sky.t?sky.t:G3.dum2);gl.activeTexture(gl.TEXTURE0);}
 // Сразу всё для гонки: слои, листва и небо; по готовности — cb(true), при ошибке — cb(false) (гонка пойдёт по-старому)

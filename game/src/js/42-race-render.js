@@ -23,7 +23,7 @@ function setupRender2d(full){
   const scl=Math.min((W-20)/(mxx-mnx||1),(H-20)/(mxz-mnz||1));R.map={g,W,H,f:(x,z)=>[10+(x-mnx)*scl+((W-20)-(mxx-mnx)*scl)/2,H-10-(z-mnz)*scl-((H-20)-(mxz-mnz)*scl)/2]};
   const off=document.createElement('canvas');off.width=W;off.height=H;const og=off.getContext('2d');og.strokeStyle='rgba(255,255,255,.85)';og.lineWidth=3;og.beginPath();T.pts.forEach((p,i)=>{const [x,y]=R.map.f(p[0],p[2]);i?og.lineTo(x,y):og.moveTo(x,y);});if(T.closed)og.closePath();og.stroke();R.map.bg=off;
   if(full===false)return;const set=SCEN_SETS[T.cfg.host];R.bg=mkBackdrop(set,T.cfg);
-  car3dQueue(R.cars.map(c=>c.spec3),F&&F.spec3);scenQueue(T);
+  car3dQueue(raceVisCars().map(c=>c.spec3),F&&F.spec3);scenQueue(T);
 }
 function renderRace(dt){
   if(R&&R.gl){try{r3dRender(dt);}catch(e){console.error(e);r3dFail('error');}if(R&&R.gl){raceMiniMap();updateRaceHUD();return;}}
@@ -88,7 +88,7 @@ function renderRace(dt){
   }
   // машины по сегментам
   const bySeg={};const lapLen=T.len;
-  R.cars.forEach(o=>{let s=(o.idx+o.segT)*step-camS;if(T.closed){s=((s%lapLen)+lapLen)%lapLen;if(s>lapLen-20)s-=lapLen;}const kk=Math.floor(s/step+frac);if(kk<0||kk>=segs.length-1)return;(bySeg[kk]=bySeg[kk]||[]).push({o,s});});
+  raceVisCars().forEach(o=>{let s=(o.idx+o.segT)*step-camS;if(T.closed){s=((s%lapLen)+lapLen)%lapLen;if(s>lapLen-20)s-=lapLen;}const kk=Math.floor(s/step+frac);if(kk<0||kk>=segs.length-1)return;(bySeg[kk]=bySeg[kk]||[]).push({o,s});});
   // декорации и машины: от дальних к ближним
   const phase=cam.phase;
   for(let k=segs.length-2;k>=0;k--){
@@ -156,7 +156,9 @@ function updateRaceHUD(){
   const F=R.follow,T=R.trk,order=raceOrder(),place=order.indexOf(F)+1;
   document.getElementById('hPos').textContent=place+'/'+R.cars.length;
   document.getElementById('hLap').textContent=T.cfg.laps>1?Math.min(T.cfg.laps,Math.max(1,F.lap+1))+'/'+T.cfg.laps:Math.round(clamp(F.prog/T.raceLen,0,1)*100)+'%';
-  const tm=Math.max(0,R.time);document.getElementById('hTime').textContent=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
+  // время гонщика (при раздельном старте — своё, от линии старта) и часы дня по-историческому
+  const tS=R.scn&&R.scn.timed&&F?(F.wait?0:F.fin!==null?scnElapsed(F,F.fin):scnElapsed(F,R.time)):R.time,tm=Math.max(0,tS);document.getElementById('hTime').textContent=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
+  {const ck=document.getElementById('rClock');if(ck&&R.scn){const v='🕓 '+scnClockTxt();if(ck.textContent!==v)ck.textContent=v;}}
   document.getElementById('hSpd').textContent=Math.round(Math.abs(F.vx)*3.6)+(F.draft?'⇶':'');document.getElementById('hGear').textContent=F.rev||F.vx<-0.2?'R':F.gear;
   const hb=document.getElementById('bHeat');hb.style.width=Math.min(100,Math.max(F.heat,F.eng||0))+'%';hb.style.background=F.heat>80?'var(--bad)':F.heat>55?'var(--warn)':'var(--good)';
   const tb=document.getElementById('bTyre'),tl=F.punct?0:100-Math.min(100,F.tyre);tb.style.width=tl+'%';tb.style.background=tl<25?'var(--bad)':tl<50?'var(--warn)':'var(--good)';
@@ -168,11 +170,11 @@ function updateRaceHUD(){
   {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();
-  const lead=order[0],board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
+  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard');if(bd.dataset.t!==String(Math.floor(R.time*2))){bd.dataset.t=String(Math.floor(R.time*2));bd.innerHTML=board;}
   raceAssistHUD();
   const m=document.getElementById('rMsg');
-  m.textContent=R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
+  m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
   m.classList.toggle('small',m.textContent.length>14);
 }
 // Кнопка 🔧: что нужно машине; горит, когда без механика дальше плохо
@@ -223,7 +225,7 @@ document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me){cons
 document.getElementById('rSvc').addEventListener('click',()=>{const m=R&&R.me;if(!m||R.mode!=='drive'||m.dnf||m.fin!==null||m.svc||m.pitT>0)return;m.svc=1;rMsg('ОСТАНАВЛИВАЕМСЯ',1);});
 document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
 function rMusUI(){const b=document.getElementById('rMus');if(b){b.textContent=AU.on.race?'♪ вкл':'♪ выкл';b.classList.toggle('off',!AU.on.race);}}
-document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%3;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ'][R3.view],1);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
+document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%4;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ','КИНОХРОНИКА'][R3.view],1);raceOldFilm(R3.view===3);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу
 const STEER_NAMES={wheel:'Колесо',keys:'Кнопки',tilt:'Наклон'};
 function steerMode(){const m=AU.on.steer||(AU.on.tilt?'tilt':'keys');return m==='wheel'?'keys':m;}
@@ -276,3 +278,12 @@ function drawWheelUI(){
 const KMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'gas',ArrowDown:'brake',Space:'gas'};
 document.addEventListener('keydown',e=>{if(R&&KMAP[e.code]){e.preventDefault();rKeys[KMAP[e.code]]=true;}});
 document.addEventListener('keyup',e=>{if(R&&KMAP[e.code]){rKeys[KMAP[e.code]]=false;}});
+
+// 0.19: «Кинохроника» — гонка как старая плёнка: сепия, зерно, царапины, мерцание и виньетка (вид сзади)
+function raceOldFilm(on){const rs=document.getElementById('raceScreen'),v=document.getElementById('rView');rs.classList.toggle('oldfilm',!!on);let el=document.getElementById('rOld');
+  if(on){if(!el){el=document.createElement('div');el.id='rOld';el.className='r-old';el.innerHTML='<canvas width="160" height="100"></canvas><i></i><i class="b"></i><b></b>';v.appendChild(el);}
+    const cv=el.querySelector('canvas'),g=cv.getContext('2d'),id=g.createImageData(160,100),sc=el.querySelectorAll('i'),fl=el.querySelector('b');let last=0;
+    const loop=now=>{if(!R||!rs.classList.contains('oldfilm')){return;}if(now-last>70){last=now;const d=id.data;for(let i=0;i<d.length;i+=4){const q=Math.random()*255;d[i]=d[i+1]=d[i+2]=q;d[i+3]=Math.random()<0.45?46:0;}g.putImageData(id,0,0);
+        sc.forEach(x=>{if(Math.random()<0.3){x.style.left=(Math.random()*100)+'%';x.style.opacity=(0.12+Math.random()*0.3).toFixed(2);}else if(Math.random()<0.3)x.style.opacity='0';});fl.style.opacity=(Math.random()*0.1).toFixed(3);}
+      requestAnimationFrame(loop);};requestAnimationFrame(loop);}
+  else if(el)el.remove();}

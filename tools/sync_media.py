@@ -49,35 +49,53 @@ def film():
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.FILMS_INDEX=' + json.dumps({'clips': clips, 'tags': tags}, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('film: updated', n, 'clips', len(clips), 'tags', {k: len(v) for k, v in tags.items()})
 
-def _enc(a):
-    src, dst = a
-    r = subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', src, '-ac', '1', '-ar', '24000', '-b:a', '32k', '-codec:a', 'libmp3lame', dst])
-    return r.returncode == 0
-
 def voice():
-    """Голос: 48 кбит/с из ветки media пережимается в 32 кбит/с (речь звучит так же, файлы на треть меньше)."""
-    import tempfile
-    from multiprocessing import Pool
+    """Голос (0.19): Silero v5, mp3 64 кбит/с — копируется как есть, без пережатия."""
     D = os.path.join(DOCS, 'voice'); os.makedirs(D, exist_ok=True); n = 0
     idx = json.loads(git('show', 'origin/media:media/voice/index.json'))
     have = {os.path.basename(f) for f in files('media/voice')}
-    tmp = tempfile.mkdtemp(); jobs = []
     for h in idx:
         if h + '.mp3' not in have: continue
-        dst = os.path.join(D, h + '.mp3')
-        if os.path.exists(dst): continue
-        src = os.path.join(tmp, h + '.mp3'); open(src, 'wb').write(git('show', 'origin/media:media/voice/%s.mp3' % h, binary=True)); jobs.append((src, dst))
-    with Pool(max(2, os.cpu_count() or 2)) as P: n = sum(P.map(_enc, jobs))
-    shutil.rmtree(tmp, ignore_errors=True)
+        n += pull('media/voice/%s.mp3' % h, os.path.join(D, h + '.mp3'))
     ok = {h: d for h, d in idx.items() if h + '.mp3' in have}
     for f in os.listdir(D):
         if f.endswith('.mp3') and f[:-4] not in ok: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w').write('window.VOICE_INDEX=' + json.dumps(ok, separators=(',', ':')) + ';\n')
-    print('voice: encoded', n, 'lines', len(ok))
+    print('voice: updated', n, 'lines', len(ok))
+
+def music():
+    """0.19: оркестровые записи (aac 72 кбит/с) → docs/music + index.js (window.MUSIC_INDEX)."""
+    D = os.path.join(DOCS, 'music'); os.makedirs(D, exist_ok=True); n = 0
+    man = json.loads(git('show', 'origin/media:media/music/clips/index.json'))
+    have = {os.path.basename(f) for f in files('media/music/clips')}
+    idx = {}
+    for cid, m in man.items():
+        if cid + '.m4a' not in have: continue
+        n += pull('media/music/clips/%s.m4a' % cid, os.path.join(D, cid + '.m4a'))
+        idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'by', 'lic', 'page')}
+    for f in os.listdir(D):
+        if f.endswith('.m4a') and f[:-4] not in idx: os.remove(os.path.join(D, f))
+    open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.MUSIC_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
+    print('music: updated', n, 'tracks', len(idx))
+
+def sfx():
+    """0.19: звуки мира (mp3 64 кбит/с) → docs/sfx + index.js (window.SFX_INDEX)."""
+    D = os.path.join(DOCS, 'sfx'); os.makedirs(D, exist_ok=True); n = 0
+    man = json.loads(git('show', 'origin/media:media/sfx/clips/index.json'))
+    have = {os.path.basename(f) for f in files('media/sfx/clips')}
+    idx = {}
+    for cid, m in man.items():
+        if m.get('ref') or cid + '.mp3' not in have: continue
+        n += pull('media/sfx/clips/%s.mp3' % cid, os.path.join(D, cid + '.mp3'))
+        idx[cid] = {k: m.get(k) for k in ('g', 'd', 'by', 'lic', 'page')}
+    for f in os.listdir(D):
+        if f.endswith('.mp3') and f[:-4] not in idx: os.remove(os.path.join(D, f))
+    open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.SFX_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
+    print('sfx: updated', n, 'sounds', len(idx))
 
 if __name__ == '__main__':
     git('fetch', '-q', 'origin', 'media')
-    what = sys.argv[1:] or ['samples', 'film', 'voice']
+    what = sys.argv[1:] or ['samples', 'film', 'voice', 'music', 'sfx']
     for w in what:
-        try: {'samples': samples, 'film': film, 'voice': voice}[w]()
+        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx}[w]()
         except Exception as e: print(w, 'failed:', e)

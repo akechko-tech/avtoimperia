@@ -20,15 +20,17 @@ const SURF={
 // Покрытие дороги в точке: в городах до 1920-х — булыжник вместо грунта и щебня; в тоннеле — щебень (грунт под сводом сухой и укатан)
 function roadSurfKey(trk,i){const t=trk.terrAt(i),town=trk.town&&trk.town[i];if(town&&trk.rc.y<1922&&(t==='dirt'||t==='macadam'||t==='mount'||t==='mud'))return 'pave';
   if(trk.tunAt&&trk.tunAt[i]&&(t==='dirt'||t==='mud'||t==='mount'))return 'macadam';return SURF[t]?t:'dirt';}
-function rainOn(trk,i){return !!(R&&R.wx&&R.wx.rain)&&!(trk.tunAt&&trk.tunAt[i]);}
+function rainOn(trk,i){return rainW(trk,i)>0.35;}
+// 0.19: насколько мокрая дорога (0 — сухо, 1 — залита): дождь мочит постепенно, без дождя — сохнет; в тоннеле сухо
+function rainW(trk,i){if(!R||!R.wx||(trk.tunAt&&trk.tunAt[i]))return 0;return R.wetK!==undefined?R.wetK:R.wx.rain?1:0;}
 // Сцепление дороги для ИИ (планирование скорости) — с погодой
-function roadMuAt(trk,i){const k=roadSurfKey(trk,i),S=SURF[k];return S.mu*(rainOn(trk,i)?(S.wet||1):1);}
+function roadMuAt(trk,i){const k=roadSurfKey(trk,i),S=SURF[k],w=rainW(trk,i);return S.mu*(1+((S.wet||1)-1)*w);}
 // Что под колёсами машины: покрытие, сцепление, сопротивление, тряска (+ пятно, если в луже или грязи)
 function surfUnder(c,trk,lat){const W=trk.W,al=Math.abs(lat),i=c.idx;let k,P=null;
   if(al<=W/2+0.2){k=roadSurfKey(trk,i);P=patchAt(trk,c.x,c.z,i);if(P)k=P.kind;}
   else if(al<=W/2+1.5)k=trk.town&&trk.town[i]?'pave':trk.tunAt&&trk.tunAt[i]?'macadam':'verge';
   else k=offSurfKey(trk,c,al);
-  const S=SURF[k],rain=rainOn(trk,i);return {k,mu:S.mu*(rain?(S.wet||1):1),crr:S.crr*(rain?(S.wc||1):1),rough:S.rough,P,wet:rain};}
+  const S=SURF[k],w=rainW(trk,i);return {k,mu:S.mu*(1+((S.wet||1)-1)*w),crr:S.crr*(1+((S.wc||1)-1)*w),rough:S.rough,P,wet:w>0.35};}
 // Вне дороги: по карте земли 3D-мира (поле, лес, песок) или по участку трассы
 function offSurfKey(trk,c,al){const cfg=trk.cfg;if(cfg.terr==='snow')return 'snow';if(cfg.terr==='sand')return 'dune';if(cfg.terr==='beach')return 'sand';
   const sg=segAt(trk,c.idx);
@@ -57,7 +59,7 @@ function planPatches(trk,rain){const n=trk.n,r=mulberry32(hashStr('patch|'+trk.r
     i+=Math.max(2,Math.round((gap*(0.6+r()*0.8))/trk.step));}}
 function patchIn(P,x,z){const dx=x-P.x,dz=z-P.z,u=dx*P.tx+dz*P.tz,v=-dx*P.tz+dz*P.tx,an=Math.atan2(v,u);
   return Math.hypot(u/P.a,v/P.b)*(1+0.1*Math.sin(3*an+P.ph)+0.05*Math.sin(7*an+P.ph*2));}
-function patchAt(trk,x,z,i){if(!trk.patchAt)return null;const k=trk.patchAt[i];if(!k)return null;const P=trk.patches[k-1];return patchIn(P,x,z)<1?P:null;}
+function patchAt(trk,x,z,i){if(!trk.patchAt)return null;const k=trk.patchAt[i];if(!k)return null;const P=trk.patches[k-1];if(P.rain&&(!R||(R.wetK||0)<0.45))return null;return patchIn(P,x,z)<1?P:null;}
 /* ---------- вода: реки под мостами, море у берега, океан у пляжа ---------- */
 function waterAt(trk,x,z){if(typeof R3==='undefined'||!R3.on||R3.T!==trk||!R3.F)return null;
   for(const rv of trk.rivers||[]){const dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)<1300&&Math.abs(dd.e)<rv.w/2+1){const L=riverLine(trk,rv),m=dd.s,mc=Math.sin(m/170+rv.ph)*22*sstep(20,120,Math.abs(m))+Math.sin(m/61+rv.ph*2)*6*sstep(20,120,Math.abs(m));

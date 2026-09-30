@@ -8,6 +8,9 @@ for(const k in REELS)REELS[k].sh.forEach(sh=>{if(sh.say)add(sh.say,'aidar');});
 for(const k in VGEN)add(VGEN[k],'aidar');
 for(const p in SAGA)SAGA[p].forEach(ch=>{ch.sc.forEach(sc=>{if(sc.who)add(sc.line,voiceOfWho(sc.who));else add(sc.say,SAGA_NARR);});add(ch.q,SAGA_NARR);(ch.o||[]).forEach(o=>add(o.res,SAGA_NARR));});
 RACES.forEach(rc=>add(raceIntroText(rc),'aidar'));
+// 0.19: исторические сценарии (рассказ перед стартом и титры с голосом) и диктор с трибуны
+for(const id in SCN){const S=SCN[id];if(S.b)add(S.b,'aidar');(S.ev||[]).forEach(e=>{if(e.v)add(scnSpeech(e.t),'aidar');});}
+annLines().forEach(t=>add(t,'eugene'));
 const by={};out.forEach(o=>{by[o.v]=(by[o.v]||0)+o.s.split(' ').length;});
 require('fs').writeFileSync(${JSON.stringify(path.join(__dirname,'media/voice_lines.json'))},JSON.stringify(out,null,0));
 console.log('lines',out.length,'words by voice',JSON.stringify(by));

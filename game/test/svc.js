@@ -1,6 +1,7 @@
 // Сервис (кнопка 🔧), бензин, уклоны и срезки: машина игрока останавливается и обслуживается, пустой бак не «ползёт»,
 // в гору и по полю медленнее, срезать через поле нельзя
 require('./harness.js')(`
+SCN_OFF=true;
 Math.random=(()=>{let a=7;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};auRaceTick=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const md=G.models[0];

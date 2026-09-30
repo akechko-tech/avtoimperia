@@ -309,7 +309,7 @@ function playReel(id){
   let sx=null,sy=0;el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;},{passive:true});
   el.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4){e.preventDefault();reelGo(dx<0?Q.i+1:Math.max(1,Q.i-1));Q.swiped=performance.now();}});
   el.addEventListener('click',e=>{if(Q.swiped&&performance.now()-Q.swiped<300){e.stopPropagation();e.preventDefault();}},true);
-  reelAudio(true,R0.mus);reelGo(0);reelFx();}
+  reelAudio(true,R0.mus,R0,id);reelGo(0);reelFx();}
 function reelPause(on){const Q=REEL;if(!Q)return;Q.paused=on;const b=Q.el.querySelector('[data-rl=pause]');if(b)b.textContent=on?'▶':'❚❚';Q.el.classList.toggle('paused',on);
   clearTimeout(Q.timer);Q.el.querySelectorAll('video').forEach(v=>{try{on?v.pause():v.play();}catch(_){}});
   if(on){voicePause(true);Q.left=Math.max(0.3,(Q.until||0)-performance.now()/1000);}
@@ -345,8 +345,17 @@ function reelFx(){const Q=REEL;if(!Q)return;const cv=Q.el.querySelector('.rl-gra
   Q.raf=requestAnimationFrame(loop);}
 function reelClose(){const Q=REEL;if(!Q)return;REEL=null;clearTimeout(Q.timer);cancelAnimationFrame(Q.raf);voiceStop();reelAudio(false);try{Q.el.querySelectorAll('video').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load();}catch(_){}});Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},350);}catch(_){}}
 // Звук: музыка эпохи тихо под диктора (свой танец у каждого ролика), трещит проектор; в начале — короткие фанфары
-function reelAudio(on,mus){try{
-  AU.reelSty=on&&mus&&STY[mus]?mus:null;
+// 0.19: музыка под кинохронику — настоящий оркестр по настроению ролика (гонка — галоп, завод — «деловая», итоги года — марш),
+// тише под голос диктора; без сети — прежний синтезатор
+function reelMood(id,R0){const t=((R0&&R0.t)||'')+' '+((R0&&R0.sh||[]).map(x=>x.say||'').join(' ').slice(0,600));
+  if(/^race:/.test(id))return 'race';if(/^(tech|part):/.test(id))return 'industry';if(/^model:/.test(id))return 'lively';if(/^(year|show):/.test(id)||id==='intro')return 'triumph';
+  if(/войн|погиб|гибел|катастроф|пожар|кризис|разорен|депресси|смерт|траур/i.test(t))return 'sad';if(/рекорд|побед|триумф|перв/i.test(t))return 'triumph';return R0&&R0.mus==='waltz'?'calm':'lively';}
+function reelAudio(on,mus,R0,id){try{
+  const tr=on&&AU.on.music&&typeof orchPick==='function'&&R0?orchPick(reelMood(id||'',R0),R0.y||(G?G.y:1900),id):null;
+  AU.reelSty=on&&!tr&&mus&&STY[mus]?mus:null;
+  {const a=AU.reelEl;clearInterval(AU.reelDuck);if(on&&tr){const e=a||(AU.reelEl=new Audio());e.loop=true;e.src=tr.src;e.volume=0;const p=e.play();if(p&&p.catch)p.catch(()=>{});
+      AU.reelDuck=setInterval(()=>{if(!REEL){e.volume=Math.max(0,e.volume-0.05);if(e.volume<=0.01){e.pause();clearInterval(AU.reelDuck);}return;}const want=REEL.paused?0:VOICE.cb?0.1:0.3;e.volume=clamp(e.volume+(want-e.volume)*0.25,0,1);if(REEL.paused&&!e.paused)e.pause();else if(!REEL.paused&&e.paused){const q=e.play();if(q&&q.catch)q.catch(()=>{});}},120);}
+    else if(a&&!on){AU.reelDuck=setInterval(()=>{a.volume=Math.max(0,a.volume-0.06);if(a.volume<=0.01){a.pause();clearInterval(AU.reelDuck);}},80);}}
   if(AU.el){if(on){AU.reelWas=!AU.el.paused;if(AU.reelWas)AU.el.pause();}else if(AU.reelWas){AU.reelWas=false;musicPlay();}}
   if(AU.ctx&&AU.mus){AU.mus.gain.setTargetAtTime(on?0.045:(AU.on.music?(R?0.07:0.16):0),AU.ctx.currentTime,0.3);}
   clearInterval(AU.proj);AU.proj=0;

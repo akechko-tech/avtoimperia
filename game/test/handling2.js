@@ -1,6 +1,7 @@
 // Сравнение управляемости: жёсткость шин и «держалка» игрока. Скорость, угол заноса кузова (β), боковое ускорение
 const Y=+(process.argv[2]||1906),V0=+(process.argv[3]||22),TK=+(process.argv[4]||11),HOLD=+(process.argv[5]||1),TERRK=process.argv[6]||'macadam';
 require('./harness.js')(`
+SCN_OFF=true;
 Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;PHY.tk=${TK};PHY.hold=${HOLD};
 const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:${Y},key:'handling-test',terr:'${TERRK}'});

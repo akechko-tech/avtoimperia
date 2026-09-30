@@ -1,5 +1,6 @@
 // Задний ход и кнопка «Вернуться на трассу»: node test/reverse.js
 require('./harness.js')(`
+SCN_OFF=true;
 Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:1906,key:'rev-test',terr:'macadam'});

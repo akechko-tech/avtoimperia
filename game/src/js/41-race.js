@@ -59,6 +59,8 @@ function trackCfg(rc){
   if(rc.crowd)c.crowd=0.7;
   if(rc.terr){c.terr=rc.terr;if(c.stages)c.stages=[rc.terr,'mud',rc.terr];}
   if(!SCEN_SETS[c.host])c.host='fr';
+  // 0.19: зрители прямо на дороге (Париж — Мадрид, Кубок Вандербильта) — гуще и ближе к колее
+  try{const S=scnFor(rc);if(S.crowdRoad){c.crowd=Math.max(c.crowd,0.75);c.crowdRoad=1;}}catch(_){}
   return c;
 }
 /* ---------- track generation ---------- */
@@ -196,7 +198,7 @@ function placeScenery(trk,rnd){
       if(i%150===34)add(i,set.church||'church',-(W/2+9),Math.floor(rnd()*3),'s',4);
       if(set.verst&&i%150===20)add(i,rnd()<0.5?'well':'stog',(rnd()<0.5?-1:1)*(W/2+11),0,'s');
       if(i%6===2)add(i,'lamp',(i%12===2?1:-1)*(W/2+1.8),0,'s',0.25);
-      if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+2.8),Math.floor(rnd()*4),'p');
+      if(rnd()<0.25+cfg.crowd*0.3)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+(cfg.crowdRoad?1.7:2.8)),Math.floor(rnd()*4),'p');
       if(i%37===0)add(i,'gend',(rnd()<0.5?-1:1)*(W/2+2.2),0,'p');
       if(i%53===7)add(i,'cart',(rnd()<0.5?-1:1)*(W/2+3.5),0,'s',1.2);
       continue;}
@@ -214,7 +216,7 @@ function placeScenery(trk,rnd){
       if(i%3===0&&(i%7)<5)add(i,fenceT,sd*(W/2+3.4),0,'s',0.4);
       if(i%29===9&&rnd()<0.6)add(i,rnd()<0.5?'cart':set.verst?'well':'bush',-sd*(W/2+4+rnd()*3),0,'s',1.2);
       if(!church&&S[i-20]===RSEG.village&&S[i+20]===RSEG.village&&rnd()<0.08){church=1;add(i,set.church||'church',-sd*(W/2+12),Math.floor(rnd()*3),'s',4);}
-      if(rnd()<0.08+cfg.crowd*0.2)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+3.2),Math.floor(rnd()*4),'p');}
+      if(rnd()<0.08+cfg.crowd*0.2)add(i,'crowd',(rnd()<0.5?-1:1)*(W/2+(cfg.crowdRoad?1.8:3.2)),Math.floor(rnd()*4),'p');}
     else if(sg===RSEG.vine){// виноградники: ряды вдоль дороги
       if(i%3===0)[1,-1].forEach(sd=>{for(let k=0;k<5;k++)add(i,'vine',sd*(W/2+5+k*2.6),0,'s',0);});if(i%40===11&&rnd()<0.6)tree((rnd()<0.5?-1:1)*(W/2+22),cfg.host==='it'||cfg.host==='es'?'cypress':'oak');}
     else if(sg===RSEG.serp){// серпантин: у обрыва — столбики-отбойники, у скалы — камни
@@ -395,7 +397,7 @@ function carStep(c,trk,dt){
   const load=c.thr*(0.35+0.65*Math.min(1,c.rpm)),cool=0.55+0.45*Math.min(1,sp/20),heatT=15+62*load*(1.3-0.5*c.rel)*(c.order==='push'?1.25:c.order==='save'?0.85:1)/cool;
   c.heat+=(heatT-c.heat)*Math.min(1,dt/(heatT>c.heat?7:11));
   if(c.heat>=100){c.overheat=4;c.heat=60;}if(c.overheat>0)c.overheat-=dt;
-  if(!c.dnf&&c.fin===null&&sp>3&&c.prog>trk.raceLen*0.08){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
+  if(!c.dnf&&c.fin===null&&sp>3&&c.prog>trk.raceLen*0.08&&!(R.scn&&R.scn.st==='rolling'&&R.scn.greenAt===null)){const stress=1+1.5*Math.max(0,(c.heat-75)/25)+(c.order==='push'?0.4:c.order==='save'?-0.35:0)+c.dmg/100;
     const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
@@ -475,6 +477,7 @@ function aiControl(c,trk,dt){
     for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
   // закрытый переезд: остановиться у шлагбаума
   const gs=aiGateStop(c,trk);c.gateWait=gs<6?1:0;if(gs<150){const va=Math.sqrt(2*bdec*Math.max(0,gs-1));if(va<vt)vt=va;}
+  if(c.vCap)vt=Math.min(vt,c.vCap);
   if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
   const kN=trk.K[c.idx]||0,latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
   c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
@@ -511,6 +514,7 @@ const rKeys={left:false,right:false,gas:false,brake:false};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
 const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
+  if(c.wait)return;
   const v=Math.max(0,c.vx),hist=G.diff==='hist';
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
@@ -538,6 +542,8 @@ function playerControl(c,dt){
   const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
   c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
+  // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
+  if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }
 /* ---------- гонка: старт, такт, финиш ---------- */
 let R=null,rRaf=0;
@@ -578,9 +584,11 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const me=cars.find(c=>c.player)||null,team=cars.filter(c=>c.you);
   // погода гонки: в дождь шины держат хуже
   const wx=r3dWeather(trk);planPatches(trk,!!wx.rain);
-  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-3,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
+  R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-5,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
     hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
+  if(typeof SCN_OFF==='undefined'||!SCN_OFF)try{scnSetup();const S=R.scn;if(S.wetEver&&!wx.rain){planPatches(trk,true);(trk.patches||[]).forEach(P=>{if(P.kind==='puddle')P.rain=1;});}}catch(e){console.warn('scenario',e);R.scn=null;}
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
+  try{raceOldFilm(false);}catch(_){}
   document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
   document.getElementById('fuelBox').style.visibility=trk.cfg.pits?'visible':'hidden';
   document.getElementById('hLapL').firstChild.textContent=trk.cfg.laps>1?'Круг':'Дистанция';
@@ -709,10 +717,12 @@ function privPerf(e,rc){const pr=aiPrep(rc),ref=rankOf(aiCarMd(rc.y),pr,rc.y);re
 function raceTick(dt){
   const T=R.trk,cfg=T.cfg;
   if(R.t<0){R.cars.forEach(c=>{c.thr=0;c.brk=1;});return;}
+  if(R.scn)scnTick(dt);
   aiTraffic(T);
   R.cars.forEach(c=>{
     if(c.fin!==null||c.dnf){if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
     if(c.inWater===2){rescueTick(c,dt);return;}
+    if(c.wait){scnWaitControl(c,dt);return;}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
@@ -730,7 +740,7 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.flat?'ПРОКОЛ! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ':me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
-    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
+    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.wait&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;
@@ -742,14 +752,14 @@ function raceTick(dt){
       else me.offIdx=-1;}}
   R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
     // проколотое колесо «до финиша на ободе» (flat) — тоже вытаскиваем на дорогу, если машина увязла в траве
-    if((!c.player)&&!c.dnf&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
+    if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
     // 0.18: машина соперника (или вашего пилота) минуту не двигается к финишу — сход «застрял» (гонка не тянется бесконечно)
-    if(!c.player&&!c.dnf&&c.fin===null&&R.t>4){if(c.pgP===undefined||c.prog>c.pgP+8){c.pgP=c.prog;c.pgT=0;}else if(!(c.pitT>0)&&!c.gateWait&&!(c.stopT>0)&&!(c.punct&&!c.flat)&&!c.inWater&&!c.svc){c.pgT=(c.pgT||0)+dt;if(c.pgT>60){c.dnf='застрял';c.thr=0;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: СХОД — машина застряла`,2.5);}}}
+    if(!c.player&&!c.dnf&&!c.wait&&c.fin===null&&R.t>4){if(c.pgP===undefined||c.prog>c.pgP+8){c.pgP=c.prog;c.pgT=0;}else if(!(c.pitT>0)&&!c.gateWait&&!(c.stopT>0)&&!(c.punct&&!c.flat)&&!c.inWater&&!c.svc){c.pgT=(c.pgT||0)+dt;if(c.pgT>60){c.dnf='застрял';c.thr=0;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: СХОД — машина застряла`,2.5);}}}
     if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
   const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);
   if(R.endT===undefined&&!R.demo){
-    if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);}}
+    if(me&&(me.fin!==null||me.dnf)){R.endT=me.dnf?2:2.5;if(me.fin!==null){rMsg('ФИНИШ!',3);auSfx('cheer',1);try{ambEvent('finish',{win:raceOrder()[0]===me});}catch(_){}}}
     else if(!me&&(!teamLive.length||!live.length)){R.endT=R.mode==='sim'?0:2;if(R.cars.some(c=>c.you&&c.fin!==null))auSfx('cheer',1);}
     else if(R.time>(T.cfg.dur||120)*4)R.endT=0;}
   if(R.endT!==undefined){R.endT-=dt;if(R.endT<=0){if(!R.replayed&&R.me&&R.me.fin!==null&&R.mode==='drive'&&!R.ff){R.replayed=1;if(replayStart())return;}finishRace(false);return;}}
@@ -769,11 +779,16 @@ function raceLoop(now){
   const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;
   if(R.loading){rRaf=requestAnimationFrame(raceLoop);return;}
   if(R.hold){renderRace(dt);rRaf=requestAnimationFrame(raceLoop);return;}
+  const tPrev=R.t;
   for(let k=0;k<(R.speed||1);k++){R.t+=dt;if(R.t>0){R.time+=dt;if(R.me)playerControl(R.me,dt);}raceTick(dt);if(!R||R.done)break;}
+  if(R&&!R.done&&R.mode!=='sim')raceCue(tPrev,R.t);
   if(R&&!R.done){if(R.gl)replayRec(dt*(R.speed||1));renderRace(dt);auRaceTick();}
   if(R&&!R.done)rRaf=requestAnimationFrame(raceLoop);
 }
-function raceOrder(){return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
+// звуковые вехи старта: диктор «Внимание!», отсчёт, «Марш!», гудки и гул трибун
+function raceCue(a,b){try{if(a<-4.9&&b>=-4.9)ambEvent('ready');if(a<-2.97&&b>=-2.97&&R.scn&&R.scn.st!=='lemans')ambEvent('countdown');if(a<0&&b>=0)ambEvent('start');}catch(_){}}
+function raceOrder(){if(R.scn&&R.scn.timed)return R.cars.slice().sort((a,b)=>{if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return scnOrderKey(a)-scnOrderKey(b);});
+  return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
 function finishRace(quit){
   const s=G;if(!R||R.done)return;R.done=true;cancelAnimationFrame(rRaf);if(R.mode!=='sim')auRaceStop();
   const T=R.trk;
@@ -782,7 +797,7 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0}));
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
   const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
   raceResults(rc,res,mode,info);

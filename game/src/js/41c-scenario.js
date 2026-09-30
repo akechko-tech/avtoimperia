@@ -1,0 +1,263 @@
+/* ================= 0.19: ИСТОРИЧЕСКИЕ СЦЕНАРИИ ГОНОК =================
+   Как стартовали на самом деле (по одному с интервалом, парами, с ходу за машиной-лидером, бегом к машинам в Ле-Мане,
+   поодиночке на подъёмах), в котором часу и при какой погоде, что случилось в пути. Часы гонки идут: солнце встаёт и садится,
+   набегают тучи, начинается и кончается дождь, дорога мокнет и сохнет. В пути — титры кинохроники и голос диктора с трибун.
+   Поля: st — старт (grid, interval, pairs, rolling, lemans, solo), gap — интервал (с игры), h0 — час старта, span — сколько часов
+   проходит за гонку, wx — погода по ходу гонки [[доля пути, небо, дождь 0..1, туман 0..1]], dust — пыль (×), crowdRoad — зрители
+   на дороге, b — рассказ перед стартом, ev — события [{p, t — титр, v — сказать голосом}], lat — широта (для солнца). */
+const SCN={
+  pbp:{st:'interval',gap:4,h0:12,span:48.8,lat:46,wx:[[0,'clear'],[0.5,'clear'],[0.62,'cloudy']],dust:1.6,
+    b:'Старт у Версаля в полдень. Машины уходят по одной с интервалом в две минуты. Впереди тысяча двести километров — туда и обратно, днём и ночью, при свете каретных фонарей.',
+    ev:[{p:0.03,t:'ВЕРСАЛЬ, ПОЛДЕНЬ. ПЕРВЫЕ МАШИНЫ УХОДЯТ К БОРДО',v:1},{p:0.2,t:'ВЕЧЕР: ЗАЖИГАЮТ ФОНАРИ СО СВЕЧАМИ'},{p:0.3,t:'РУФЕК, 3 ЧАСА НОЧИ. СМЕНЩИК ЛЕВАССОРА ЕЩЁ СПИТ — ОН ЕДЕТ ДАЛЬШЕ САМ',v:1},
+      {p:0.47,t:'БОРДО! РАЗВОРОТ — И ОБРАТНО В ПАРИЖ',v:1},{p:0.72,t:'ВТОРАЯ НОЧЬ В ПУТИ. ГЛАЗА СЛИПАЮТСЯ'},{p:0.93,t:'ПАРИЖ, ВОРОТА МАЙО: ТОЛПА ЖДЁТ ПОБЕДИТЕЛЯ',v:1}]},
+  chicago:{st:'interval',gap:5,h0:8.9,span:10.4,lat:41.8,wx:[[0,'overcast',0,0.3],[0.4,'overcast',0,0.2],[0.8,'evening']],
+    b:'День благодарения, двадцать восьмое ноября. Улицы Чикаго завалены снегом, из шести машин многие не доедут. Старт в Джексон-парке, финиш — затемно.',
+    ev:[{p:0.04,t:'ДЖЕКСОН-ПАРК. СНЕГ ПО СТУПИЦЫ',v:1},{p:0.35,t:'ДУРЬЕА ЧИНИТ РУЛЕВОЕ В КУЗНИЦЕ У ДОРОГИ'},{p:0.7,t:'СМЕРКАЕТСЯ. ФОНАРЩИКИ ЗАЖИГАЮТ ГАЗ'},{p:0.95,t:'ФИНИШ В ТЕМНОТЕ. ДО КОНЦА ДОБРАЛИСЬ ЛИШЬ ДВЕ МАШИНЫ',v:1}]},
+  pmp:{st:'interval',gap:4,h0:8,span:14,lat:45,wx:[[0,'cloudy'],[0.18,'overcast',0.6],[0.3,'overcast',1],[0.55,'overcast',0.7],[0.75,'cloudy']],dust:0.6,
+    b:'Десять этапов до Марселя и обратно. В первый же день на Францию налетела буря: деревья поперёк дороги, ливень и ветер.',
+    ev:[{p:0.2,t:'БУРЯ! ДЕРЕВЬЯ ПОПЕРЁК ДОРОГИ',v:1},{p:0.45,t:'ЛЕВАССОР ОБЪЕЗЖАЕТ СОБАКУ И ПЕРЕВОРАЧИВАЕТСЯ'},{p:0.8,t:'ДОЖДЬ СТИХАЕТ. ДОРОГА РАСКИСЛА'}]},
+  brighton:{st:'interval',gap:4,h0:10.5,span:6,lat:51.2,wx:[[0,'overcast',0.8],[0.6,'overcast',0.4],[0.85,'evening',0.3]],
+    b:'Англия отменила закон «о красном флаге»: больше никто не обязан идти перед машиной с флажком. Лорд Уинчелси рвёт красный флаг — и колонна трогается к морю под дождём.',
+    ev:[{p:0.03,t:'КРАСНЫЙ ФЛАГ РАЗОРВАН! ТЕПЕРЬ — ДО 14 МИЛЬ В ЧАС',v:1},{p:0.5,t:'ДОЖДЬ И ГРЯЗЬ НА ДОРОГЕ К БРАЙТОНУ'},{p:0.9,t:'БРАЙТОН. СТЕМНЕЛО — ПОСЛЕДНИЕ ДОБИРАЮТСЯ С ФОНАРЯМИ'}]},
+  pap:{st:'interval',gap:4,h0:7,span:14,lat:50,wx:[[0,'clear'],[0.6,'clear']],dust:2,
+    b:'Три страны за одну гонку: через Бельгию в Амстердам и обратно. Июльская жара и пыль столбом за каждой машиной.',
+    ev:[{p:0.25,t:'БЕЛЬГИЙСКАЯ ГРАНИЦА. ТАМОЖНЯ МАШЕТ: ПРОЕЗЖАЙТЕ'},{p:0.5,t:'АМСТЕРДАМ, ПЛОТИНЫ И КАНАЛЫ',v:1},{p:0.85,t:'ПЫЛЬ ТАКАЯ, ЧТО ЕДУТ ПО ТЕНИ ДЕРЕВЬЕВ'}]},
+  tdf:{st:'interval',gap:4,h0:6,span:14,lat:46,wx:[[0,'morning'],[0.25,'clear']],dust:2,
+    b:'Круг по всей Франции за неделю. Газеты печатают сводки каждый день — публика впервые следит за гонкой, как за романом с продолжением.',
+    ev:[{p:0.3,t:'ЖАРА. ВОДА В РАДИАТОРЕ КИПИТ'},{p:0.7,t:'ДЕРЕВНЯ ВЫСЫПАЛА НА ДОРОГУ'}]},
+  thousand:{st:'interval',gap:5,h0:8,span:10,lat:54,wx:[[0,'cloudy'],[0.35,'overcast',0.7],[0.7,'cloudy']],
+    b:'Не гонка, а экзамен: тысяча миль от Лондона до Эдинбурга и обратно. Средняя — не больше двенадцати миль в час, главное — доехать без поломок.',
+    ev:[{p:0.3,t:'ПЕРЕВАЛ ШАП-ФЕЛЛ. МОТОРЫ ЕДВА ТЯНУТ',v:1},{p:0.55,t:'ДОЖДЬ В ШОТЛАНДИИ'},{p:0.9,t:'ЛОНДОН ВСТРЕЧАЕТ ТЕХ, КТО ДОЕХАЛ'}]},
+  gb1900:{st:'interval',gap:6,h0:3.2,span:9,lat:46.5,wx:[[0,'morning',0,0.6],[0.35,'morning',0,0.2],[0.5,'clear']],dust:1.6,
+    b:'Первый Кубок Гордона Беннетта. Команды стран — по три машины. Старт в три часа утра, ещё в темноте.',
+    ev:[{p:0.02,t:'3:15 УТРА. СТАРТУЮТ ПРИ ФОНАРЯХ',v:1},{p:0.3,t:'У ШАРРОНА В РУЛЕВОМ ЗАСТРЯЛА СОБАКА — ОН ЕДЕТ ДАЛЬШЕ'},{p:0.9,t:'ЛИОН'}]},
+  pb1901:{st:'interval',gap:4,h0:6,span:16,lat:51,wx:[[0,'clear'],[0.5,'cloudy'],[0.8,'clear']],dust:1.8,
+    b:'Две столицы-соперницы: Париж и Берлин. Три этапа, толпы у дорог; германский кайзер ждёт победителя.',
+    ev:[{p:0.2,t:'РЕЙМС. ЗРИТЕЛИ ВЫБЕГАЮТ НА ДОРОГУ',v:1},{p:0.55,t:'ГЕРМАНИЯ. НА ОБОЧИНАХ — СОЛДАТЫ'},{p:0.93,t:'БЕРЛИН, ФИНИШ НА ИППОДРОМЕ'}]},
+  pv1902:{st:'interval',gap:4,h0:3.5,span:18,lat:47.5,wx:[[0,'morning'],[0.3,'clear'],[0.55,'cloudy',0,0.2],[0.75,'clear']],dust:1.5,neutral:[[0.4,0.5,'Швейцария запретила гонки: через страну — медленно, без счёта времени']],
+    b:'Париж — Вена через Альпы. По Швейцарии ехать разрешено только шагом, время там не считают. Главное испытание — перевал Арльберг.',
+    ev:[{p:0.4,t:'ШВЕЙЦАРИЯ: НЕЙТРАЛИЗАЦИЯ — ЕДЕМ МЕДЛЕННО, ЧАСЫ СТОЯТ',v:1},{p:0.58,t:'ПЕРЕВАЛ АРЛЬБЕРГ. ТОРМОЗА ДЫМЯТСЯ НА СПУСКЕ',v:1},{p:0.92,t:'ВЕНА! МАЛЕНЬКИЙ «РЕНО» ОБГОНЯЕТ ГИГАНТОВ'}]},
+  pm1903:{st:'interval',gap:3,h0:3.75,span:5.5,lat:46,wx:[[0,'morning',0,0.4],[0.3,'morning',0,0.2],[0.5,'clear']],dust:3,crowdRoad:1,
+    b:'Версаль, без четверти четыре утра. Сто тысяч зрителей ждали старта всю ночь. Двести машин уйдут по одной с интервалом в минуту — в облака пыли, которые не успевают оседать.',
+    ev:[{p:0.02,t:'3:45. СТАРТ ПРИ ФОНАРЯХ И ФАКЕЛАХ',v:1},{p:0.2,t:'ПЫЛЬ СТЕНОЙ: ЕДУТ ВСЛЕПУЮ, ПО ВЕРХУШКАМ ДЕРЕВЬЕВ',v:1},{p:0.45,t:'ЗРИТЕЛИ НА ДОРОГЕ! РАССТУПАЮТСЯ В ПОСЛЕДНИЙ МИГ'},
+      {p:0.62,t:'АВАРИИ ОДНА ЗА ДРУГОЙ. МАРСЕЛЬ РЕНО РАЗБИЛСЯ У КУЭ'},{p:0.9,t:'ПРАВИТЕЛЬСТВО ОСТАНАВЛИВАЕТ ГОНКУ В БОРДО',v:1}]},
+  ardennes:{st:'interval',gap:5,h0:7,span:6,lat:50,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.7,'cloudy']],dust:1.3,
+    b:'Первая гонка по замкнутому кругу: леса Арденн, круг за кругом мимо одних и тех же трибун.',ev:[{p:0.5,t:'КРУГ ЗА КРУГОМ МИМО ТРИБУН БАСТОНИ'}]},
+  gb1903:{st:'interval',gap:6,h0:7,span:7,lat:53,wx:[[0,'clear'],[0.6,'cloudy']],dust:1.2,
+    b:'Ирландия, графство Килдэр. В Англии гонки запрещены, поэтому Кубок везут сюда. Британские машины впервые выкрашены в зелёный — в честь Ирландии. Дорогу охраняют полиция и солдаты.',
+    ev:[{p:0.05,t:'БРИТАНСКИЙ ЗЕЛЁНЫЙ — В ЧЕСТЬ ИРЛАНДИИ',v:1},{p:0.4,t:'СОЛДАТЫ ДЕРЖАТ ЗРИТЕЛЕЙ ЗА ВЕРЁВКАМИ'},{p:0.85,t:'ЖЕНАТЦИ, «КРАСНЫЙ ДЬЯВОЛ», ВПЕРЕДИ'}]},
+  gb1904:{st:'interval',gap:6,h0:7,span:6,lat:50.2,wx:[[0,'morning',0,0.3],[0.35,'clear']],dust:1.2,
+    b:'Горы Таунус под Франкфуртом. На старте — сам кайзер Вильгельм Второй. Машины уходят по одной, каждые семь минут.',
+    ev:[{p:0.03,t:'КАЙЗЕР НА ТРИБУНЕ',v:1},{p:0.5,t:'ЛЕСНЫЕ ПОВОРОТЫ ТАУНУСА'},{p:0.9,t:'ФРАНЦУЗ ТЕРИ ВЕЗЁТ КУБОК ДОМОЙ'}]},
+  gb1905:{st:'interval',gap:6,h0:7,span:7,lat:45.7,wx:[[0,'clear']],dust:1.5,
+    b:'Овернь, круг среди потухших вулканов: подъёмы, спуски и сотни поворотов. Последний Кубок Гордона Беннетта.',
+    ev:[{p:0.3,t:'ВУЛКАНЫ ОВЕРНИ'},{p:0.9,t:'ПОСЛЕДНИЙ КУБОК: ДАЛЬШЕ — ГРАН-ПРИ',v:1}]},
+  vanderbilt:{st:'interval',gap:5,h0:6,span:6,lat:40.8,wx:[[0,'morning',0,0.8],[0.25,'morning',0,0.4],[0.45,'clear']],dust:1.4,crowdRoad:1,
+    b:'Лонг-Айленд, рассвет в тумане. Двести тысяч зрителей стоят прямо на дороге и расступаются перед самыми радиаторами. Кубок Вандербильта — самая опасная гонка Америки.',
+    ev:[{p:0.02,t:'6 УТРА. ТУМАН НАД ЛОНГ-АЙЛЕНДОМ',v:1},{p:0.3,t:'ТОЛПА НА ДОРОГЕ! СИГНАЛЬТЕ!',v:1},{p:0.6,t:'ТУМАН РАССЕЯЛСЯ'},{p:0.9,t:'ФИНИШ НА ВИДУ У ТРИБУНЫ ВАНДЕРБИЛЬТА'}]},
+  targa:{st:'interval',gap:5,h0:6,span:9,lat:37.9,wx:[[0,'morning'],[0.25,'clear']],dust:2,
+    b:'Сицилия, горы Мадоние. Старт в шесть утра у станции Черда. Сто сорок восемь километров серпантина на круг: козьи тропы, деревни на скалах, пыль и жара.',
+    ev:[{p:0.03,t:'ЧЕРДА, 6 УТРА. ВИНЧЕНЦО ФЛОРИО ДАЁТ СТАРТ',v:1},{p:0.3,t:'КАЛЬТАВУТУРО: ДЕРЕВНЯ НА СКАЛЕ'},{p:0.6,t:'ПОЛДЕНЬ. ЖАРА И ЦИКАДЫ'},{p:0.88,t:'ПОСЛЕДНИЙ СПУСК К МОРЮ',v:1}]},
+  gpacf:{st:'interval',gap:4,h0:6,span:7,lat:48,wx:[[0,'morning',0,0.3],[0.3,'clear']],dust:1.3,
+    b:'Первый Гран-при в истории. Круг в сто километров под Ле-Маном. Дорогу залили гудроном от пыли, но жара плавит его, и гонщики едут в брызгах смолы. У «Рено» — съёмные обода «Мишлен»: колесо меняют за минуты.',
+    ev:[{p:0.03,t:'6 УТРА. ПЕРВЫЙ ГРАН-ПРИ. МАШИНЫ УХОДЯТ КАЖДЫЕ 90 СЕКУНД',v:1},{p:0.4,t:'ЖАРА ПЛАВИТ ГУДРОН. ГЛАЗА ЖЖЁТ',v:1},{p:0.7,t:'СЪЁМНЫЙ ОБОД: КОЛЕСО — ЗА ЧЕТЫРЕ МИНУТЫ'}]},
+  lyon1914:{st:'pairs',gap:4,h0:8,span:7,lat:45.7,wx:[[0,'clear']],dust:1,
+    b:'Лион, четвёртое июля четырнадцатого года. До войны — месяц. Машины стартуют парами каждые полминуты; «Мерседесы» идут командой, как по плану генштаба.',
+    ev:[{p:0.05,t:'СТАРТ ПАРАМИ, КАЖДЫЕ 30 СЕКУНД',v:1},{p:0.5,t:'«МЕРСЕДЕСЫ» ИДУТ КОМАНДОЙ'},{p:0.9,t:'ТРИ «МЕРСЕДЕСА» ПОДРЯД. ФРАНЦИЯ МОЛЧИТ',v:1}]},
+  dieppe:{st:'interval',gap:4,h0:5.5,span:14,lat:49.9,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.6,'cloudy']],dust:1.2,
+    b:'Дьепп, два дня гонки. Гиганты с моторами по пятнадцать литров против лёгких машин нового поколения.',ev:[{p:0.5,t:'ВТОРОЙ ДЕНЬ ГОНКИ'}]},
+  peking:{st:'interval',gap:6,h0:5,span:14,lat:43,wx:[[0,'clear'],[0.3,'clear'],[0.55,'overcast',0.8],[0.8,'cloudy']],dust:2,
+    b:'Пекин — Париж: шестнадцать тысяч километров без дорог. Через пустыню Гоби, через Сибирь по грязи. Бензин везут на верблюдах, машины на руках переносят через горы.',
+    ev:[{p:0.1,t:'ПЕРЕВАЛ НАНКОУ: КУЛИ ТЯНУТ МАШИНЫ НА ВЕРЁВКАХ',v:1},{p:0.3,t:'ГОБИ. БЕНЗИН — НА ВЕРБЛЮДАХ'},{p:0.55,t:'СИБИРЬ. ДОЖДИ, ГРЯЗЬ ПО ОСИ',v:1},{p:0.75,t:'«ИТАЛА» ПРОВАЛИЛАСЬ СКВОЗЬ МОСТ'}]},
+  nyparis:{st:'interval',gap:6,h0:11.25,span:8,lat:42,wx:[[0,'overcast',0,0.2],[0.2,'overcast'],[0.6,'cloudy']],
+    b:'Таймс-сквер, двенадцатое февраля. Двести пятьдесят тысяч человек провожают шесть машин в путь вокруг света. Сразу за Нью-Йорком — снежные заносы.',
+    ev:[{p:0.02,t:'ТАЙМС-СКВЕР. ВЫСТРЕЛ СТАРТОВОГО ПИСТОЛЕТА',v:1},{p:0.3,t:'СНЕЖНЫЕ ЗАНОСЫ. ЛОПАТЫ В ДЕЛО'},{p:0.8,t:'«ТОМАС ФЛАЕР» ВПЕРЕДИ'}]},
+  kaiser:{st:'interval',gap:5,h0:6,span:6,lat:50.2,wx:[[0,'morning',0,0.3],[0.3,'clear']],
+    b:'Приз кайзера: только для туристических машин с мотором до восьми литров. Таунус, сто машин и сам Вильгельм на трибуне.',ev:[{p:0.9,t:'НАЦЦАРО НА «ФИАТЕ» — ПОБЕДИТЕЛЬ'}]},
+  x80901:{st:'interval',gap:5,h0:3,span:14,lat:57,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.7,'cloudy']],
+    b:'Белые ночи. Старт в три часа утра — а на дворе светло. Семьсот вёрст по Петербургскому шоссе, мимо почтовых станций и церквей.',
+    ev:[{p:0.03,t:'3 ЧАСА УТРА — А СВЕТЛО: БЕЛЫЕ НОЧИ',v:1},{p:0.4,t:'ВАЛДАЙ. КОЛОКОЛА НА ВЕСЬ ТРАКТ'},{p:0.9,t:'ПЕТЕРБУРГ',v:1}]},
+  x87575:{st:'interval',gap:5,h0:3,span:10,lat:57,wx:[[0,'morning',0,0.3],[0.3,'clear']],
+    b:'Белые ночи и Московское шоссе. Анри Эмери на «Бенце» идёт быстрее поезда.',ev:[{p:0.03,t:'БЕЛЫЕ НОЧИ: СТАРТ НА РАССВЕТЕ',v:1},{p:0.9,t:'МОСКВА'}]},
+  x17567:{st:'interval',gap:5,h0:6,span:8,lat:59,wx:[[0,'clear'],[0.6,'cloudy']],b:'Большой приз Санкт-Петербургского автоклуба.',ev:[{p:0.9,t:'ФИНИШ ПОД ПЕТЕРБУРГОМ'}]},
+  brooklands:{st:'grid',h0:14,span:3,lat:51.3,wx:[[0,'cloudy'],[0.6,'cloudy',0.3]],
+    b:'Бруклендс — первый в мире трек, бетонный овал с виражами. Здесь всё как на скачках: гонщики в шёлковых куртках цветов конюшен, букмекеры принимают ставки.',
+    ev:[{p:0.05,t:'СТАВКИ ПРИНЯТЫ! ГОНЩИКИ В ЦВЕТАХ КОНЮШЕН',v:1},{p:0.5,t:'БЕТОННЫЙ ВИРАЖ: МАШИНУ ПРИЖИМАЕТ К СТЕНЕ'},{p:0.85,t:'«ГОРБ» У МОСТА: МАШИНЫ ВЗЛЕТАЮТ'}]},
+  jcc200:{st:'grid',h0:13,span:3,lat:51.3,wx:[[0,'cloudy']],b:'Двести миль Клуба младших автомобилистов на бетонном овале Бруклендса.',ev:[]},
+  bgp1926:{st:'grid',h0:14,span:4,lat:51.3,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Первый Гран-при Великобритании — на бетоне Бруклендса, с искусственными шиканами из мешков с песком.',ev:[{p:0.3,t:'ШИКАНЫ ИЗ МЕШКОВ С ПЕСКОМ'}]},
+  indy:{st:'rolling',h0:10,span:6.7,lat:39.8,wx:[[0,'clear']],
+    b:'Индианаполис, День памяти. Восемьдесят тысяч зрителей, трасса вымощена тремя миллионами кирпичей. Карл Фишер ведёт колонну на «Стоддард-Дейтоне»: круг прогрева — и старт с ходу.',
+    ev:[{p:0.01,t:'МАШИНА-ЛИДЕР ВЕДЁТ КОЛОННУ',v:1},{p:0.3,t:'КИРПИЧ ДРОЖИТ ПОД КОЛЁСАМИ'},{p:0.6,t:'БОКСЫ: МЕХАНИКИ МЕНЯЮТ ШИНЫ'},{p:0.92,t:'ПОСЛЕДНИЕ КРУГИ. ТРИБУНЫ ВСТАЛИ',v:1}]},
+  x51007:{st:'interval',gap:5,h0:21,span:13,lat:44.5,wx:[[0,'overcast',0,0.3],[0.3,'overcast'],[0.7,'clear']],
+    b:'Ралли Монте-Карло: машины съезжаются в Монако из разных столиц Европы. Январь, ночь, заснеженные перевалы — а в конце солнце Лазурного берега.',
+    ev:[{p:0.03,t:'НОЧНОЙ СТАРТ. СНЕГ НА ФАРАХ',v:1},{p:0.45,t:'ПЕРЕВАЛ. ЦЕПИ НА КОЛЁСАХ'},{p:0.85,t:'РАССВЕТ НАД МОРЕМ. МОНАКО',v:1}]},
+  alpen:{st:'interval',gap:5,h0:6,span:11,lat:47,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.5,'overcast',0.6,0.3],[0.7,'cloudy']],
+    b:'Альпийское ралли: восемь перевалов за неделю. Моторы кипят на подъёмах, тормоза горят на спусках.',
+    ev:[{p:0.3,t:'КАЧБЕРГ: ПОДЪЁМ В ТРИДЦАТЬ ПРОЦЕНТОВ',v:1},{p:0.55,t:'ГРОЗА НА ПЕРЕВАЛЕ'},{p:0.85,t:'СПУСК К ВЕНЕ'}]},
+  glidden:{st:'interval',gap:5,h0:7,span:10,lat:42,wx:[[0,'clear'],[0.4,'overcast',0.6],[0.7,'cloudy']],
+    b:'Тур Глиддена: проверка надёжности по дорогам Америки. Штраф за каждую минуту опоздания на контрольный пункт.',
+    ev:[{p:0.45,t:'ЛИВЕНЬ. ГРЯЗЬ ПО ОСИ',v:1},{p:0.8,t:'КОНТРОЛЬНЫЙ ПУНКТ: СВЕРЯЮТ ЧАСЫ'}]},
+  henry:{st:'interval',gap:5,h0:7,span:10,lat:50,wx:[[0,'clear'],[0.6,'cloudy']],b:'Приз принца Генриха, брата кайзера: туристические машины через всю Германию.',ev:[{p:0.9,t:'ПОРШЕ НА «АУСТРО-ДАЙМЛЕРЕ» ВПЕРЕДИ'}]},
+  herkomer:{st:'interval',gap:5,h0:7,span:10,lat:48,wx:[[0,'clear'],[0.5,'cloudy']],b:'Приз Геркомера: туристические машины и строгие судьи. Художник Губерт фон Геркомер сам пишет портрет победителя.',ev:[]},
+  savannah:{st:'interval',gap:5,h0:9,span:6,lat:32,wx:[[0,'clear']],dust:1,b:'Саванна, Джорджия. Трассу охраняют солдаты национальной гвардии штата. Большой приз Америки собирает лучших гонщиков Европы.',ev:[{p:0.4,t:'СОЛДАТЫ НАЦГВАРДИИ ВДОЛЬ ТРАССЫ',v:1}]},
+  santamonica:{st:'interval',gap:5,h0:9,span:4,lat:34,wx:[[0,'clear']],b:'Санта-Моника: гонка по улицам и приморскому бульвару.',ev:[{p:0.5,t:'ОКЕАН СЛЕВА'}]},
+  elgin:{st:'interval',gap:5,h0:10,span:5,lat:42,wx:[[0,'clear'],[0.6,'cloudy']],b:'Элгин, Иллинойс: дорога среди кукурузных полей.',ev:[]},
+  turbie:{st:'solo',gap:10,h0:10,span:1,lat:43.7,wx:[[0,'clear']],b:'Неделя в Ницце: подъём на Ла-Тюрби над Монако. Заезжают поодиночке, на время.',ev:[{p:0.9,t:'ФИНИШ У РИМСКОГО ТРОФЕЯ'}]},
+  semmering:{st:'solo',gap:10,h0:9,span:1,lat:47.6,wx:[[0,'morning',0,0.3],[0.4,'clear']],b:'Земмеринг: десять километров в гору по перевалу. Каждый едет один, судьи с секундомерами.',ev:[{p:0.5,t:'ВИАДУК ЖЕЛЕЗНОЙ ДОРОГИ ВНИЗУ'}]},
+  ventoux:{st:'solo',gap:10,h0:9,span:1.5,lat:44.2,wx:[[0,'clear']],b:'Мон-Ванту: двадцать два километра к лысой белой вершине. Наверху дует мистраль.',ev:[{p:0.7,t:'ЛЫСЫЕ КАМНИ ВЕРШИНЫ. МИСТРАЛЬ'}]},
+  shelsley:{st:'solo',gap:10,h0:11,span:1,lat:52.2,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Шелсли-Уолш: короткий подъём через лес. Зрители сидят на склоне, как в амфитеатре.',ev:[]},
+  klausen:{st:'solo',gap:10,h0:9,span:1.5,lat:46.9,wx:[[0,'clear']],b:'Клаузен: двадцать один километр вверх по швейцарскому перевалу.',ev:[{p:0.7,t:'ЛЕДНИКИ НАД ДОРОГОЙ'}]},
+  pikes:{st:'solo',gap:10,h0:8,span:1.5,lat:38.8,wx:[[0,'clear'],[0.6,'cloudy']],b:'Пайкс-Пик: гонка к облакам, финиш на высоте четырёх тысяч трёхсот метров. Мотору не хватает воздуха.',ev:[{p:0.7,t:'ВЫСОТА: МОТОР ЗАДЫХАЕТСЯ',v:1}]},
+  ormond:{st:'solo',gap:10,h0:8,span:1,lat:29.3,wx:[[0,'clear']],b:'Ормонд-Бич: заезды на время по плотному песку, пока отлив. Слева прибой, справа дюны.',ev:[{p:0.5,t:'ОТЛИВ: ПЕСОК КАК БЕТОН'}]},
+  daytona1927:{st:'solo',gap:10,h0:9,span:1,lat:29.2,wx:[[0,'clear']],b:'Дейтона-Бич: попытка рекорда скорости на песке.',ev:[]},
+  tt:{st:'interval',gap:5,h0:9,span:6,lat:54.2,wx:[[0,'overcast',0.4],[0.4,'overcast',0.8],[0.75,'cloudy']],
+    b:'Остров Мэн, «Турист Трофи». Машины должны быть обычными туристическими, а бензина дают в обрез — побеждает не только быстрый, но и экономный.',
+    ev:[{p:0.4,t:'ДОЖДЬ НАД ОСТРОВОМ МЭН',v:1},{p:0.8,t:'БЕНЗИН НА ИСХОДЕ'}]},
+  lemans:{st:'lemans',h0:16,span:24,lat:48,wx:[[0,'clear'],[0.25,'cloudy'],[0.35,'overcast',0.7],[0.5,'overcast',0.4],[0.7,'cloudy'],[0.85,'clear']],
+    b:'Двадцать четыре часа Ле-Мана. В четыре часа дня гонщики бегут через дорогу к своим машинам. Впереди ночь при свете фар, дождь и рассвет над трассой Сарты.',
+    ev:[{p:0.01,t:'ГОНЩИКИ БЕГУТ К МАШИНАМ!',v:1},{p:0.22,t:'ЗАЖИГАЮТ ФАРЫ',v:1},{p:0.4,t:'ПОЛНОЧЬ. ДОЖДЬ НА МЮЛЬСАННСКОЙ ПРЯМОЙ'},{p:0.55,t:'РАССВЕТ. ТУМАН НАД ТРАССОЙ'},{p:0.93,t:'ЧЕТЫРЕ ЧАСА ДНЯ. ФЛАГ!',v:1}]},
+  spa24:{st:'lemans',h0:17,span:24,lat:50.4,wx:[[0,'cloudy'],[0.3,'overcast',0.8,0.2],[0.6,'overcast',0.5],[0.85,'cloudy']],
+    b:'Двадцать четыре часа Спа: Арденны, долгая ночь и дождь, который здесь идёт всегда.',ev:[{p:0.25,t:'НОЧЬ В АРДЕННАХ',v:1},{p:0.55,t:'ДОЖДЬ НА ОЛЬ-РУЖ'}]},
+  x79977:{st:'lemans',h0:8,span:12,lat:51.3,wx:[[0,'cloudy']],b:'«Двойная двенадцатка» в Бруклендсе: двенадцать часов днём, ночь машины стоят под замком, и ещё двенадцать утром.',ev:[]},
+  mille:{st:'interval',gap:4,h0:8,span:21,lat:44,wx:[[0,'clear'],[0.4,'cloudy'],[0.55,'overcast',0.6],[0.75,'cloudy']],dust:1.3,
+    b:'Милле Милья: тысяча миль по Италии — Брешиа, Рим и обратно. Старт каждую минуту, ночь в Апеннинах, города стоят вдоль дороги до утра.',
+    ev:[{p:0.2,t:'БОЛОНЬЯ, ПЕРЕВАЛ ФУТА'},{p:0.45,t:'РИМ. РАЗВОРОТ НА СЕВЕР',v:1},{p:0.6,t:'НОЧЬ В АПЕННИНАХ. ДОЖДЬ'},{p:0.93,t:'БРЕШИА. РАССВЕТ И ТОЛПЫ',v:1}]},
+  monaco:{st:'grid',h0:13.5,span:3.5,lat:43.7,wx:[[0,'clear']],b:'Первый Гран-при Монако: гонка по улицам княжества. Места на старте разыграли жребием.',ev:[{p:0.05,t:'МЕСТА НА СТАРТЕ — ПО ЖРЕБИЮ'},{p:0.4,t:'ТОННЕЛЬ И НАБЕРЕЖНАЯ',v:1}]},
+  nurb1927:{st:'grid',h0:11,span:5,lat:50.3,wx:[[0,'morning',0,0.5],[0.3,'cloudy'],[0.7,'overcast',0.3]],b:'Нюрбургринг, «Зелёный ад»: сто семьдесят поворотов в лесах Айфеля.',ev:[{p:0.1,t:'ТУМАН В АЙФЕЛЕ'}]},
+  degp:{st:'grid',h0:11,span:5,lat:50.3,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Гран-при Германии на Нюрбургринге.',ev:[]},
+  eifel:{st:'grid',h0:11,span:3,lat:50.3,wx:[[0,'morning',0,0.4],[0.4,'cloudy']],b:'Айфельреннен на Нюрбургринге.',ev:[]},
+  avus1926:{st:'grid',h0:14,span:3,lat:52.5,wx:[[0,'cloudy'],[0.4,'overcast',0.8]],b:'АФУС в Берлине: две прямые и два разворота. Дождь начинается прямо во время гонки.',ev:[{p:0.4,t:'ДОЖДЬ НА АФУСЕ',v:1}]},
+  itgp:{st:'grid',h0:10,span:5,lat:45.6,wx:[[0,'clear']],b:'Монца: королевский парк и скоростной трек.',ev:[]},
+  monza1922:{st:'grid',h0:10,span:5,lat:45.6,wx:[[0,'clear']],b:'Новая Монца: трек построили за сто десять дней.',ev:[{p:0.05,t:'ТРЕК ПОСТРОИЛИ ЗА 110 ДНЕЙ',v:1}]},
+  acerbo:{st:'interval',gap:5,h0:8,span:5,lat:42.5,wx:[[0,'clear']],dust:1.3,b:'Коппа Ачербо, Пескара: горы, море и длинные прямые вдоль берега Адриатики.',ev:[]},
+  acerbo1924:{st:'interval',gap:5,h0:8,span:5,lat:42.5,wx:[[0,'clear']],dust:1.3,b:'Первая Коппа Ачербо. Молодой Энцо Феррари ведёт «Альфа Ромео».',ev:[{p:0.9,t:'ЭНЦО ФЕРРАРИ ВПЕРЕДИ',v:1}]},
+  x38768:{st:'grid',h0:14,span:3,lat:32.9,wx:[[0,'clear']],b:'Триполи, Ливия: пальмы, песок и жара под сорок градусов.',ev:[{p:0.4,t:'ЖАРА. ПЕСОК НА ДОРОГЕ'}]},
+  europe1924:{st:'grid',h0:9,span:7,lat:45.7,wx:[[0,'clear']],b:'Гран-при Европы в Лионе: «Альфа Ромео Р2» и молодой Кампари.',ev:[]},
+  lm1921:{st:'interval',gap:4,h0:9,span:5,lat:48,wx:[[0,'clear']],dust:2.2,b:'Ле-Ман, двадцать первый год. «Дюзенберг» — первый американец, выигравший Гран-при. Трасса разбита, камни летят в лица.',ev:[{p:0.4,t:'КАМНИ ЛЕТЯТ ИЗ-ПОД КОЛЁС',v:1},{p:0.9,t:'«ДЮЗЕНБЕРГ» — ПЕРВЫЙ АМЕРИКАНЕЦ'}]},
+};
+// у одних серий по годам свой старт
+const SCN_Y={gpacf:[[1906,{}],[1907,{gap:3}],[1908,{gap:3}],[1913,{st:'interval',gap:3}],[1929,{st:'grid'}]],indy:[[1929,{}]],brooklands:[[1929,{}]],
+  vanderbilt:[[1906,{}],[1911,{st:'grid',crowdRoad:0}]],targa:[[1914,{}],[1929,{gap:4,dust:1.4}]],tt:[[1908,{}],[1929,{st:'lemans',wx:[[0,'cloudy'],[0.4,'overcast',0.6],[0.8,'cloudy']]}]]};
+// Широта по стране-хозяйке (для высоты солнца)
+const SCN_LAT={fr:47,uk:52,ie:53,de:50,it:43,us:40,ru:57,at:47.5,ch:46.5,be:50.5,mc:43.7,ly:32.9,es:40,other:50,intl:47};
+// Средняя скорость эпохи (км/ч) — сколько часов шла гонка
+const scnAvg=(y,t)=>(t==='oval'?1.4:t==='hill'||t==='sprint'?0.7:1)*(y<1897?22:y<1900?35:y<1903?55:y<1908?80:y<1915?95:y<1925?105:115);
+function scnGeneric(rc){const t=rc.t,y=rc.y,s={lat:SCN_LAT[rc.c]||47};
+  if(t==='hill'||t==='sprint')Object.assign(s,{st:'solo',gap:10,h0:t==='sprint'?8.5:10,span:t==='sprint'?0.5:1.2});
+  else if(t==='oval')Object.assign(s,{st:rc.track==='board'||rc.track==='indy'||y>=1915?'rolling':'grid',h0:13,span:Math.min(6,rc.km/scnAvg(y,t))});
+  else if(t==='endurance')Object.assign(s,{st:y>=1925?'lemans':'grid',h0:16,span:24});
+  else if(t==='rally')Object.assign(s,{st:'interval',gap:5,h0:7,span:10});
+  else if(t==='road')Object.assign(s,{st:y<1920?'interval':'grid',gap:4,h0:y<1905?4.5:6.5,span:clamp(rc.km/scnAvg(y,t),1,30)});
+  else Object.assign(s,{st:y<1908?'interval':y<1914?'interval':'grid',gap:4,h0:y<1914?7:13,span:clamp(rc.km/scnAvg(y,t),1,10)});
+  s.dust=y<1910&&t!=='oval'&&t!=='sprint'?1.3:y<1920?1:0.7;return s;}
+function scnFor(rc){const g=scnGeneric(rc),S=SCN[rc.id],o=Object.assign({},g,S||{});
+  (SCN_Y[rc.id]||[]).some(([yy,v])=>{if(rc.y<=yy){Object.assign(o,v);return true;}return false;});
+  o.named=!!S;o.id=rc.id;return o;}
+/* ---------- солнце по часам: высота и азимут (день года — по месяцу гонки, широта — по месту) ---------- */
+function scnSun(h,month,lat){const doy=month*30.4+15,dec=23.44*Math.sin(2*Math.PI*(284+doy)/365)*Math.PI/180,phi=lat*Math.PI/180,H=(h-12)*15*Math.PI/180;
+  const sel=Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.cos(H),el=Math.asin(clamp(sel,-1,1));
+  const az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(phi)-Math.tan(dec)*Math.cos(phi));return {el,az};}
+// часы гонки: от старта по мере хода гонки (для лидера — по доле ожидаемого времени)
+function scnHour(){const S=R&&R.scn;if(!S)return 12;const p=clamp(Math.max(0,R.time)/Math.max(30,R.trk.cfg.dur||200),0,1.3);return S.h0+p*S.span;}
+function scnClockTxt(){const h=((scnHour()%24)+24)%24,hh=Math.floor(h),mm=Math.floor((h-hh)*60);return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+/* ---------- погода по ходу гонки ---------- */
+// Сценарий погоды: [[доля пути, небо, дождь, туман]]. Без сценария — от погоды старта, иногда меняется в пути
+function scnWxPlan(){const S=R.scn,W=R.wx,r=mulberry32(hashStr('wxplan|'+R.rc.key));
+  if(S.wx&&S.named)return S.wx.map(x=>[x[0],x[1],x[2]||0,x[3]||0]);
+  const m=W.mood,rain=W.rain?1:0,fog=W.mist?W.mist*0.5:0,q=r(),dry=R.trk.cfg.oval||R.rc.track==='board'||R.trk.cfg.terr==='snow';
+  const L=[[0,m,rain*0.9,fog]];
+  if(!dry){
+    if(rain&&q<0.4)L.push([0.45+r()*0.25,'cloudy',0,0]);                              // дождь кончается
+    else if(m==='cloudy'&&q<0.32){const p=0.3+r()*0.35;L.push([p,'overcast',0.25,0.1],[p+0.08,'overcast',0.85,0.15]);if(r()<0.5)L.push([p+0.3,'cloudy',0,0]);}  // набежали тучи — ливень
+    else if(m==='clear'&&q<0.1){const p=0.4+r()*0.3;L.push([p,'cloudy',0,0],[p+0.12,'overcast',0.6,0]);}
+    else if(m==='morning'&&q<0.8)L.push([0.35+r()*0.2,'clear',0,0]);                 // утренняя дымка рассеивается
+  }
+  return L;}
+function scnWxInit(){const S=R.scn,W=R.wx,P=S.wxP=scnWxPlan();const f=P[0];
+  W.mood=f[1];R.rainK=f[2];R.wetK=f[2]>0.2?0.85:0;R.fogK=f[3]||0;S.wxI=0;S.moodA=f[1];S.moodB=f[1];S.moodK=1;W.rain=R.rainK>0.15;
+  S.wetEver=P.some(x=>x[2]>0.3);}
+function scnWxTick(dt,p){const S=R.scn,P=S.wxP,W=R.wx;if(!P)return;
+  let i=S.wxI;while(i+1<P.length&&p>=P[i+1][0])i++;
+  if(i!==S.wxI){S.wxI=i;const nm=P[i][1];if(nm!==S.moodB){S.moodA=S.moodK>0.5?S.moodB:S.moodA;S.moodB=nm;S.moodK=0;try{if(R.gl&&typeof r3dSkyWant==='function')r3dSkyWant(nm);}catch(_){}}
+    const was=R.rainK;if(P[i][2]>0.3&&was<0.2&&R.me&&!R.film)scnCap(P[i][1]==='overcast'?'НАЧИНАЕТСЯ ДОЖДЬ':'ДОЖДЬ');else if(P[i][2]<0.1&&was>0.4&&R.me)scnCap('ДОЖДЬ ПРЕКРАТИЛСЯ. ДОРОГА ПОДСЫХАЕТ');}
+  const tg=P[i];S.moodK=Math.min(1,S.moodK+dt/14);
+  R.rainK+=clamp(tg[2]-R.rainK,-dt/9,dt/9);R.fogK+=clamp((tg[3]||0)-R.fogK,-dt/25,dt/25);
+  // дорога мокнет под дождём и сохнет без него (быстрее — на солнце и ветру)
+  if(R.rainK>0.05)R.wetK=Math.min(1,R.wetK+dt*R.rainK/16);else R.wetK=Math.max(0,R.wetK-dt/(S.moodB==='clear'?45:80));
+  W.rain=R.rainK>0.15;W.mood=S.moodK<0.5?S.moodA:S.moodB;}
+/* ---------- титры кинохроники и голос в пути ---------- */
+function scnCap(t,dur){const el=document.getElementById('rCap');if(!el||!R||R.mode==='sim')return;el.textContent=t;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),(dur||5.5)*1000);}
+function scnEvTick(){const S=R.scn,F=R.follow;if(!S.ev||!F||R.mode==='sim')return;const p=clamp(F.prog/R.trk.raceLen,0,1);
+  while(S.evI<S.ev.length&&p>=S.ev[S.evI].p){const e=S.ev[S.evI++];if(p-e.p>0.08)continue;scnCap(e.t,6);if(e.v)try{annSay(e.t,'narr');}catch(_){}}}
+/* ---------- старт по-исторически ---------- */
+function scnPlace(c,back,lat){const T=R.trk,n=T.n;let idx=T.startIdx-Math.round(back/T.step);if(T.closed)idx=(idx%n+n)%n;else idx=Math.max(0,idx);
+  const p=T.pts[idx],nn=T.N[idx],t=T.T[idx];c.idx=idx;c.x=p[0]+nn[0]*lat;c.z=p[2]+nn[1]*lat;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);c.lap=T.closed&&idx>n/2?-1:0;c.vx=0;c.vy=0;c.r=0;trackLocal(T,c);}
+function scnSetup(){const S=R.scn=scnFor(R.rc),T=R.trk,cars=R.cars,st=S.st;S.evI=0;S.ev=(S.ev||[]).slice().sort((a,b)=>a.p-b.p);
+  scnWxInit();cars.forEach(c=>{c.t0=0;c.relT=0;c.wait=false;c.neuT=0;});S.timed=st==='interval'||st==='pairs'||st==='solo';
+  const me=cars.find(c=>c.player)||null,vRef=T.raceLen/Math.max(30,T.cfg.dur||200);S.vRef=vRef;
+  if(S.timed){
+    // по одному (или парами) с интервалом: игрок — третьим, есть кого догонять; остальные — по жребию
+    const rr=mulberry32(hashStr('draw|'+R.rc.key)),L=cars.slice();for(let i=L.length-1;i>0;i--){const j=Math.floor(rr()*(i+1));[L[i],L[j]]=[L[j],L[i]];}if(me){L.splice(L.indexOf(me),1);L.splice(Math.min(2,L.length),0,me);}
+    const gap=S.gap||4;S.queue=L;S.slots=st==='pairs'?Math.ceil(L.length/2):L.length;
+    L.forEach((c,k)=>{const slot=st==='pairs'?Math.floor(k/2):k;c.slot=slot;c.relT=slot*gap;c.wait=true;c.t0=null;
+      scnPlace(c,4+slot*8,st==='pairs'?(k%2?1:-1)*T.W*0.22:0);});
+  }else if(st==='lemans'){
+    // Ле-Ман: машины наискосок у края, гонщики на другой стороне бегут к ним по сигналу
+    const L=cars.slice().sort((a,b)=>b.prog-a.prog);L.forEach((c,k)=>{scnPlace(c,4+k*7,T.W/2-1.3);c.yaw+=0.35;c.relT=c.player?99:1.1+Math.random()*1.3+(1-(c.sk||0.8))*3;c.wait=true;});
+    if(me){me.relT=99;me.leRun=0;}
+  }else if(st==='rolling'){
+    // старт с ходу: колонна за машиной-лидером; флаг — когда лидер уходит в боксы
+    S.vPace=clamp(Math.min(...cars.map(c=>c.vtop))*0.55,10,26);S.greenAt=null;
+    try{R.pace=scnPaceCar();}catch(e){console.warn('pace',e);R.pace=null;}
+    cars.forEach(c=>{c.vCap=S.vPace;c.t0=null;});
+  }
+  if(me&&me.wait&&S.timed)scnCap(`ВАШ СТАРТ — ${me.slot+1}-${st==='pairs'?'Й ПАРОЙ':'М'}. МАШИНЫ УХОДЯТ КАЖДЫЕ ${Math.round((S.gap||4)*(st==='solo'?15:30))} СЕКУНД`,6);}
+// машина-лидер (Индианаполис): открытый туристический автомобиль в белом
+function scnPaceCar(){const y=R.rc.y,md=aiCarMd(y),e={you:false,name:'Машина-лидер',label:'Машина-лидер',drvName:y<=1912?'Карл Фишер':'Судья',md,prep:0,tyre:'hard',gear:0,color:'#ece6d6',pw:1,num:0,sk:0.9};
+  const c=mkRaceCar(e,y,R.trk);c.style=carStyle(md,0,y);if(/^gp/.test(c.style))c.style='tourer';c.wheel=wheelKind(md,y);const bid=parts(md).b.id;
+  c.spriteKey=c.style+c.color+'pace'+c.wheel+bid;c.spec3={key:c.spriteKey,style:c.style,color:c.color,y,wheel:c.wheel,mech:0,num:0,b:bid,mq:y<1914?'Stoddard-Dayton':'Packard',strip:1,hp:3};
+  c.pace=true;const lead=R.cars.slice().sort((a,b)=>b.prog-a.prog)[0];scnPlace(c,Math.max(0,-(lead?lead.prog:0))-26,0);c.vx=0;c.fin=null;c.dnf=null;return c;}
+function scnPaceTick(dt){const S=R.scn,c=R.pace,T=R.trk;if(!c)return;
+  const lead=R.cars.filter(x=>!x.dnf).sort((a,b)=>b.prog-a.prog)[0],gapL=lead?c.prog-lead.prog:30;
+  let vT=S.greenAt===null?Math.min(S.vPace,Math.max(0,S.vPace*(gapL<18?1.1:gapL>40?0.8:1))):Math.max(0,c.vx-dt*4);
+  if(S.greenAt===null&&R.t<0.4)vT=0;
+  c.vx+=clamp(vT-c.vx,-6*dt,3*dt);
+  // по осевой; после флага — к краю, в боксы
+  const lat=S.greenAt===null?0:-(T.W/2-1.1),i=c.idx,t=T.T[i],nn=T.N[i],p=T.pts[i];
+  c.x+=Math.sin(c.yaw)*c.vx*dt;c.z+=Math.cos(c.yaw)*c.vx*dt;const ex=(p[0]+nn[0]*lat)-c.x,ez=(p[2]+nn[1]*lat)-c.z;c.x+=ex*Math.min(1,dt*1.5);c.z+=ez*Math.min(1,dt*1.5);
+  trackLocal(T,c);c.yaw+=angWrap(Math.atan2(T.T[c.idx][0],T.T[c.idx][1])-c.yaw)*Math.min(1,dt*4);c.y=T.pts[c.idx][1];c.thr=vT>c.vx?0.6:0;c.brk=vT<c.vx-0.5?0.4:0;c.rpm=clamp(c.vx/c.gr[1],0.15,1);c.gear=2;
+  // флаг: колонна прошла полкруга (или 700 м) — лидер уходит, гонка началась
+  if(S.greenAt===null&&R.t>0&&(c.prog>Math.min(380,T.len*0.3)||R.t>18)){S.greenAt=R.time;R.cars.forEach(x=>{x.vCap=0;x.t0=R.time;});rMsg('ФЛАГ! СТАРТ С ХОДУ',2.2);try{auSfx('cheer',1);annCall('go');}catch(_){}}
+  if(S.greenAt!==null&&R.time-S.greenAt>12)R.pace=null;}
+// Такт сценария: выпуск со старта, подъезд к линии, отсчёт, нейтрализация, погода, титры
+function scnTick(dt){const S=R.scn;if(!S)return;const T=R.trk,me=R.me;
+  const pT=clamp(Math.max(0,R.time)/Math.max(30,T.cfg.dur||200),0,1.3);scnWxTick(dt,pT);
+  if(S.st==='rolling')scnPaceTick(dt);
+  if(S.timed||S.st==='lemans'){let rel=0;
+    R.cars.forEach(c=>{if(!c.wait){if(c.t0===null&&c.prog>=0)c.t0=R.time;return;}
+      if(S.st==='lemans'){if(c.player){c.leRun+=dt;if(c.leRun>1.6&&(rKeys.gas||c.leRun>5)){c.wait=false;rMsg('ПОЕХАЛИ!',1);}}else if(R.time>=c.relT)c.wait=false;return;}
+      if(R.time>=c.relT){c.wait=false;if(c.player){rMsg('ПОШЁЛ!',1.4);try{annCall('go');}catch(_){}}else if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: старт!`,1);return;}
+      rel++;});
+    S.relN=R.cars.filter(c=>!c.wait).length;}
+  // нейтрализация: через города (или страну) медленно, время не считается
+  if(S.neutral)R.cars.forEach(c=>{const p=c.prog/T.raceLen;let inN=null;for(const z of S.neutral)if(p>=z[0]&&p<z[1]){inN=z;break;}
+    c.vCap=inN?8.5:(S.st==='rolling'&&S.greenAt===null?S.vPace:0);if(inN&&c.fin===null&&!c.dnf){c.neuT+=dt;if(c.player&&!c.neuSaid){c.neuSaid=1;scnCap('НЕЙТРАЛИЗАЦИЯ: '+inN[2].toUpperCase(),6);}}else if(c.player)c.neuSaid=0;});
+  scnEvTick();
+  if(me&&me.wait&&S.timed&&R.mode==='drive'){const left=Math.ceil(me.relT-R.time);if(left!==S.lastLeft){S.lastLeft=left;if(left<=5&&left>0){rMsg(String(left),0.9);try{auSfx('tick',0.6);}catch(_){}}else if(left>5)R.msg='';}}
+  if(me&&me.wait&&S.st==='lemans'&&R.mode==='drive'&&R.t>0){rMsg(me.leRun<1.6?'БЕГИТЕ К МАШИНЕ!':'ЗАВОДИТЕ! ЖМИТЕ «ГАЗ»',0.3);}}
+// Машина ждёт своего старта: подъезжает к линии вслед за ушедшими и стоит
+function scnWaitControl(c,dt){const S=R.scn,T=R.trk;if(S.st==='lemans'){c.thr=0;c.brk=1;return;}
+  const done=S.queue?S.queue.filter(x=>!x.wait).length:0,slotDone=S.st==='pairs'?Math.ceil(done/2):done,dT=4+(c.slot-slotDone)*8,dist=-c.prog-dT;
+  const wantV=dist>0.8?Math.min(3,Math.sqrt(3*dist)):0;aiControl(c,T,dt);c.thr=c.vx<wantV?0.32:0;c.brk=c.vx>wantV+0.3||wantV===0?(wantV===0?1:0.5):0;}
+// Время гонщика: с интервальным стартом — от пересечения линии, без нейтрализации
+function scnElapsed(c,t){const t0=c.t0===null||c.t0===undefined?(c.relT||0):c.t0;return t-t0-(c.neuT||0);}
+// Порядок в гонке с раздельным стартом: по расчётному времени
+function scnOrderKey(c){const S=R.scn,T=R.trk;if(c.fin!==null)return scnElapsed(c,c.fin);const t0=c.t0===null||c.t0===undefined?(c.relT||0):c.t0;
+  return (Math.max(0,R.time-t0)-(c.neuT||0))+Math.max(0,T.raceLen-c.prog)/Math.max(1,S.vRef);}
+// Кого рисовать: гонщики и машина-лидер
+function raceVisCars(){return R&&R.pace?R.cars.concat([R.pace]):R.cars;}
+// Титр → фраза для диктора: обычный регистр (первая буква и после точки — заглавные)
+function scnSpeech(t){const s=String(t||'').toLowerCase().replace(/(^|[.!?]\s+)([а-яёa-z])/g,(m,a,b)=>a+b.toUpperCase());return /[.!?]$/.test(s)?s:s+'.';}
+// Рассказ перед стартом: как стартовали и в котором часу
+function scnBrief(){const S=R&&R.scn;return S&&S.b?S.b:'';}

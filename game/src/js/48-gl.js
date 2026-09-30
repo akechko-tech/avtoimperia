@@ -50,12 +50,14 @@ const MPAR=new Float32Array([.03,6,0,0, .6,70,0,.28, 1,36,1,.5, 1,110,0,.85, .1,
 // Фото-текстуры (48b-tex.js): байт a_ext.w — номер слоя+1 (биты 0–5; 0 — без текстуры), бит 6 — «с трёх сторон» (камень), бит 7 — окрасить цветом вершины
 const TXM={tri:64,tint:128};
 // Постоянные номера текстурных блоков: у сэмплеров разных типов — свои блоки
-const G3UNIT={u_sh:0,u_tex:1,u_cmap:1,u_fol:1,u_src:0,u_blm:1,u_det:2,u_smap:2,u_alb:3,u_dat:4,u_env:5,u_pan:6,u_cld:7};
+const G3UNIT={u_sh:0,u_tex:1,u_cmap:1,u_fol:1,u_src:0,u_blm:1,u_det:2,u_smap:2,u_alb:3,u_dat:4,u_env:5,u_pan:6,u_cld:7,u_env2:8};
 /* ---------- шейдеры ---------- */
 const G3LIB=`
 uniform vec3 u_sun,u_sunC,u_skyC,u_gndC,u_hzC,u_zeC,u_fogS,u_cam;uniform float u_fogD,u_exp,u_time,u_vig;uniform vec2 u_res;
-uniform sampler2D u_env;uniform vec4 u_envR;
+uniform sampler2D u_env,u_env2;uniform vec4 u_envR,u_envR2;
 vec2 envUV(vec3 d){return vec2(atan(d.x,d.z)*.159155+.5+u_envR.x,acos(clamp(d.y,-1.,1.))*.31831);}
+// 0.19: второе небо — смена погоды и сумерки (плавный переход между двумя фото)
+vec3 envTex(vec3 d,float lod){vec3 c=textureLod(u_env,envUV(d),lod).rgb*u_envR.y;if(u_envR2.w>.001){vec2 q=vec2(atan(d.x,d.z)*.159155+.5+u_envR2.x,acos(clamp(d.y,-1.,1.))*.31831);c=mix(c,textureLod(u_env2,q,min(lod,u_envR2.z)).rgb*u_envR2.y,u_envR2.w);}return c;}
 vec3 skyCol(vec3 d){float h=d.y;
 #ifdef STUDIO
   vec3 c=mix(u_gndC*.5,u_hzC,smoothstep(-.3,0.,h));c=mix(c,u_zeC*.3,smoothstep(0.,.5,h));
@@ -63,14 +65,14 @@ vec3 skyCol(vec3 d){float h=d.y;
   c+=vec3(1.05,1.04,1.)*smoothstep(.02,.06,h)*(1.-smoothstep(.12,.18,h));
   return c;
 #else
-  if(u_envR.w>.5){vec3 c=textureLod(u_env,envUV(d),2.).rgb*u_envR.y;return h<0.?mix(c,u_gndC*.9,clamp(-h*4.,0.,1.)):c;}
+  if(u_envR.w>.5){vec3 c=envTex(d,2.);return h<0.?mix(c,u_gndC*.9,clamp(-h*4.,0.,1.)):c;}
   return h<0.?mix(u_hzC,u_gndC*.9,clamp(-h*3.,0.,1.)):mix(u_hzC,u_zeC,pow(clamp(h,0.,1.),.4));
 #endif
 }
 // отражение неба: фото, размытое по шероховатости (мип-уровни)
 vec3 envCol(vec3 d,float r){
 #ifndef STUDIO
-  if(u_envR.w>.5){vec3 c=textureLod(u_env,envUV(d),clamp(r*u_envR.z,0.,u_envR.z)).rgb*u_envR.y;return d.y<0.?mix(c,u_gndC*.8,clamp(-d.y*5.,0.,1.)):c;}
+  if(u_envR.w>.5){vec3 c=envTex(d,clamp(r*u_envR.z,0.,u_envR.z));return d.y<0.?mix(c,u_gndC*.8,clamp(-d.y*5.,0.,1.)):c;}
 #endif
   return skyCol(d);}
 vec3 tone(vec3 c){c*=u_exp;c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.);c=pow(c,vec3(1./2.2));
@@ -304,7 +306,7 @@ ${G3LIB}
 float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 void main(){vec4 w=u_ivp*vec4(v_p,1.,1.);vec3 d=normalize(w.xyz/w.w-u_cam);
   float az=atan(d.x,d.z)*.159155+.5,el=asin(clamp(d.y,-1.,1.)),sd=max(dot(d,u_sun),0.);vec3 c;
-  if(u_envR.w>.5){c=textureLod(u_env,envUV(d),0.).rgb*u_envR.y;if(d.y<0.)c=mix(c,u_hzC,clamp(-d.y*8.,0.,1.));c*=1.-u_night*.96;
+  if(u_envR.w>.5){c=envTex(d,0.);if(d.y<0.)c=mix(c,u_hzC,clamp(-d.y*8.,0.,1.));c*=1.-u_night*.96;
     c+=u_sunC*(smoothstep(.99965,.99985,sd)*5.*(1.-u_night)+pow(sd,300.)*.4);}
   else{c=skyCol(d);c+=u_sunC*(smoothstep(.99965,.99985,sd)*9.*(1.-u_night*.7)+pow(sd,14.)*.22+pow(sd,300.)*.6);
     float cv=1.-(el-.015)/.5;if(cv>0.&&cv<1.){vec4 cl=texture(u_cld,vec2(az*2.,cv));vec3 cc=mix(u_hzC,u_zeC,.2)*.35+u_sunC*.28+u_skyC*.3;c=mix(c,pow(cl.rgb,vec3(2.2))*cc*2.2,cl.a*.9);}}

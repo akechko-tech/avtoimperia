@@ -1,5 +1,6 @@
 // Когда случаются проколы и как греется мотор: ранние гонки, машиной игрока правит ИИ
 require('./harness.js')(`
+SCN_OFF=true;
 Math.random=(()=>{let a=3;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const keys=RACES.filter(r=>r.y<=1912).slice(0,14).map(r=>r.key);

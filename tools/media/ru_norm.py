@@ -153,6 +153,8 @@ def norm(text):
         if ' ' in k or '-' in k: t = re.sub(r'(?<![A-Za-zÀ-ÿ])' + re.escape(k) + r'(?![A-Za-zÀ-ÿ])', LAT[k], t)
     t = re.sub(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*", lambda m: translit(m.group(0)), t)
     t = t.replace('№', ' номер ').replace('л. с.', 'л.с.')
+    # время на часах: 3:45 → «три сорок пять», 12:00 → «двенадцать ноль-ноль»
+    t = re.sub(r'(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])', lambda m: card(int(m.group(1))) + ' ' + ('ноль-ноль' if m.group(2) == '00' else ('ноль ' + card(int(m.group(2)[1])) if m.group(2)[0] == '0' else card(int(m.group(2))))), t)
     # 1 200 → 1200
     t = re.sub(r'(?<=\d)[  ](?=\d{3}(?!\d))', '', t)
     # годы с «год…»: «в 1906 году», «к 1910 году», «1896 года», «1920-х годах»

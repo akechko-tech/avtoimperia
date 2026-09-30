@@ -9,10 +9,10 @@ self.addEventListener('fetch',e=>{
   // голос диктора и ролики кинохроники: плеер просит их кусками (Range) — пусть грузит сам браузер
   if(e.request.headers.has('range')||e.request.destination==='audio'||e.request.destination==='video')return;
   const url=new URL(e.request.url),same=url.origin===location.origin;
-  if(same&&/\/(tex|samples)\//.test(url.pathname)){
+  if(same&&/\/(tex|samples|sfx)\//.test(url.pathname)){
     // фото-текстуры гонок и живые инструменты: один раз из сети, дальше — из кэша (новая версия игры — новый кэш)
     cacheFirst(e);
-  }else if(same&&/\/(film|voice)\/.+\.(jpg|js)$/.test(url.pathname)){
+  }else if(same&&/\/(film|voice|music|sfx)\/.+\.(jpg|js)$/.test(url.pathname)){
     // кадры-заставки роликов и списки: из кэша
     cacheFirst(e);
   }else if(same||url.hostname==='en.wikipedia.org'||url.hostname==='commons.wikimedia.org'){
