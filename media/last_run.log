@@ -1,5 +1,179 @@
 == job faces
-cv2 odd: /home/runner/.local/lib/python3.12/site-packages/cv2/__init__.py 5.0.0 ['ACCESS_FAST', 'ACCESS_MASK', 'ACCESS_READ', 'ACCESS_RW', 'ACCESS_WRITE', 'ADAPTIVE_THRESH_GAUSSIAN_C', 'ADAPTIVE_THRESH_MEAN_C', 'ALGO_HINT_ACCURATE', 'ALGO_HINT_APPROX', 'ALGO_HINT_DEFAULT', 'ALIKED', 'ALIKED_Params', 'ALIKED_create', 'ANNINDEX_DIST_ANGULAR', 'ANNINDEX_DIST_DOTPRODUCT', 'ANNINDEX_DIST_EUCLIDEAN', 'ANNINDEX_DIST_HAMMING', 'ANNINDEX_DIST_MANHATTAN', 'ANNIndex', 'ANNIndex_DIST_ANGULAR', 'ANNIndex_DIST_DOTPRODUCT', 'ANNIndex_DIST_EUCLIDEAN', 'ANNIndex_DIST_HAMMING', 'ANNIndex_DIST_MANHATTAN', 'ANNIndex_create', 'AffineFeature', 'AffineFeature_create', 'Algorithm', 'AlignExposures', 'AlignMTB']
-cv2 retry: /home/runner/.local/lib/python3.12/site-packages/cv2/__init__.py False
-job failed faces AttributeError("module 'cv2' has no attribute 'CascadeClassifier'")
-== job faces took 0 s
+face levassor Émile Levassor peu avant sa mort.jpg eyes 2
+face: no entity koechlin Поль Кёклен
+face: no entity doriot Огюст Дорьо
+face lemaitre Jules Lemaître 1913.jpg eyes 2
+face de_dion Jules-Albert de Dion en 1936.jpg eyes 3
+face: no entity vacheron Альфред Вашерон
+face a_michelin André Michelin 1920.jpg eyes 0
+face e_michelin André Michelin 1920.jpg eyes 0
+face: no entity a_bollee_pere Амеде Болле-отец
+face l_bollee Leon Bollee.jpg eyes 2
+face: no entity a_bollee_fils Амеде Болле-сын
+face: no entity mayade Эмиль Майад
+face f_duryea Hilsdorf, Jacob - Tilla Durieux (Zeno Fotografie).jpg eyes 1
+face c_duryea Hilsdorf, Jacob - Tilla Durieux (Zeno Fotografie).jpg eyes 1
+face: no entity riker Эндрю Райкер
+face delahaye Btv1b8433371x-p007.jpg eyes 0
+face: no entity hourgieres Жиль Ургьер
+face giraud Victor Giraud (peintre), dessin de Saro Cucinotta.jpg eyes 1
+face charron Fernand Charron at the 1914 French Grand Prix (cropped).jpg eyes 2
+face de_knyff René de Knyff 1912.jpg eyes 3
+face: no entity girardot Леонс Жирардо
+face chasseloup Gaston de Chasseloup-Laubat au Tour de France automobile 1899.jpg eyes 3
+face jenatzy Camille Jenatzy au GP de France 1908, sur Mors.jpg eyes 1
+face levegh Levegh sur Mors en 1899.jpg eyes 1
+face: no entity de_crawhez Пьер де Кроэ
+face winton Alexander Winton.png eyes 2
+face jellinek Emil jellinek businessman.jpg eyes 0
+face: none in Mr S. F. Edge and his 16HP Napier Car 6067362615.jpg
+face rolls Charles-Rolls.jpg eyes 2
+face fournier Henri Fournier at the 1914 French Grand Prix (3) (cropped).jpg eyes 2
+face thery Léon Théry in his Brasier at the 1908 French Grand Prix at Dieppe (6) (cropped).jpg eyes 4
+face l_renault Louis Renault, Washington, 1940.jpg eyes 1
+face m_renault Buste de Marcel Renault au 6e Salon de l'Automobile, Grand-Palais, 10- 25 décembre 1903 (cropped).jpg eyes 2
+face: no entity e_zborowski Граф Элиот Зборовски
+face: none in Academia Nacional de Ciencias (Córdoba) in 1876.jpg
+face: none in Academia Nacional de Ciencias (Córdoba) in 1876 (cropped).jpg
+face vanderbilt William K Vanderbilt IIb.jpg eyes 2
+face: no entity jarrott Чарльз Джаррот
+face m_farman MauriceFarman1909.jpg eyes 0
+face h_farman Henri Farman (1907) - Agence Rol btv1b53225152f.jpg eyes 2
+face lancia Vincenzo Lancia in his Fiat at the 1908 Targa Florio (5) (cropped).jpg eyes 2
+face nazzaro Felice Nazzaro at the 1922 French Grand Prix (4) (cropped).jpg eyes 0
+face: no entity cagno Алессандро Каньо
+face florio FANNY PURDY PALMER A woman of the century (page 565 crop).jpg eyes 0
+face: no entity w_werner Вильгельм Вернер
+face: no entity de_caters Барон Пьер де Катерс
+face h_ford Henry ford 1919.jpg eyes 2
+face: no entity du_gast Камилла дю Гаст
+face oldfield Barney Oldfield.jpg eyes 2
+face: no entity heath Джордж Хит
+face duray Les Six Tableau.jpg eyes 2
+face: no entity rougier Анри Руже
+face levitt Levitt Ellsworth Custer portrait.jpg eyes 2
+face poge Willy Pöge, vainqueur sur Mercedes de la Course de Westend à l'hippodrome de Berlin, en octobre 1903.jpg eyes 0
+face wagner Louis Wagner in his Alfa Romeo 1924 (cropped).jpg eyes 2
+face hemery Victor Hémery 1910.jpg eyes 2
+face: no entity clement Альбер Клеман
+face christie Walter Cornelius Christie (November 16, 1863 - June 2, 1941) circa 1900.png eyes 1
+face: no entity tracy Джо Трейси
+face: no entity raggio Джованни Баттиста Раджо
+face szisz Ferenc Szisz at the 1914 French Grand Prix (cropped).jpg eyes 2
+face robertson George Robertson 1908.jpg eyes 0
+face l_chevrolet 1919 Tacoma Speedway Louis Chevrolet Marvin D Boland Collection BOLANDB2009.jpg eyes 2
+face goux Jules Goux in his Ballot at the 1922 Targa Florio (3) (cropped).jpg eyes 2
+face lautenschlager Christian Lautenschlager at the 1914 French Grand Prix (2) (cropped).jpg eyes 2
+face: no entity salzer Отто Зальцер
+face hanriot Philippe Henriot 1934.jpg eyes 2
+face erle Fritz Erler - Selbstporträt 1908 (Jugend 1914).png eyes 1
+face: no entity minoia Фердинандо Минойя
+face: no entity trucco Винченцо Трукко
+face guyot Shooting trap 1900.jpg eyes 1
+face: no entity bablot Поль Бабло
+face: no entity sizaire Жорж Сизер
+face moore_brabazon First pig to fly, 1909. 01.jpg eyes 0
+face: none in Barzini - La metà del mondo vista da un'automobile, Milano, Hoepli, 1908 (page 18 crop).jpg
+face strang William Strang (1859-1921).jpg eyes 1
+face mulford Mulford Foster3.jpg eyes 0
+face schuster Arthur Schuster by William Orpen 1912.jpg eyes 2
+face g_boillot Georges Boillot at the 1914 Indianapolis 500 (2).jpg eyes 1
+face burman Behrman-1938.jpg eyes 0
+face: no entity bruce_brown Дэвид Брюс-Браун
+face depalma Ralph DePalma 1912.jpg eyes 2
+face resta Dario Resta at the 1914 French Grand Prix (4) (cropped).jpg eyes 0
+face: none in Harry Grant - Nov1911.jpg
+face: no entity bordino Пьетро Бордино
+face thomas René Thomas at 1914 Indy 500 (cropped).jpg eyes 0
+face: no entity rigal Виктор Ригаль
+face harroun RayHarroun1911.jpg eyes 1
+face aitken Maxwell Aitken (lord Beaverbrook) during the Second World War HU88386.jpg eyes 2
+face wilcox Ella Wheeler Wilcox cph.3b16503.jpg eyes 1
+face porsche Ferdinand Porsche.jpg eyes 1
+face w_opel Wilhelm von Opel (c. 1917).png eyes 0
+face: no entity dawson Джо Доусон
+face: no entity tetzlaff Тедди Тецлафф
+face bragg Wl-bragg.jpg eyes 2
+face: no entity hearne Эдди Херн
+face: no entity zuccarelli Паоло Дзуккарелли
+face: no entity friderich Эрнест Фридерик
+face nagel Bundesarchiv Bild 183-19000-2954, Otto Nagel.jpg eyes 0
+face: no entity cooper Эрл Купер
+face: no entity pullen Эдди Пуллен
+face: no entity wishart Спенсер Уишарт
+face rickenbacker Captain Edward Rickenbacker, America's premier Ace officially credited with 22 enemy planes and the proud wearer of th - NARA - 533720.jpg eyes 2
+face lambert Lambert-Hillyer-1922.jpg eyes 0
+face kl_guinness Kenelm Lee Guinness at the 1914 French Grand Prix (cropped).jpg eyes 2
+face: no entity ceirano Эрнесто Чейрано
+face: no entity chassagne Жан Шассань
+face: no entity a_boillot Андре Буайо
+face suvorin Суворин Алексей Алексеевич.jpg eyes 3
+face ivanov Brockhaus and Efron Encyclopedic Dictionary B82 31-6.jpg eyes 1
+face sailer Max Sailer at the 1914 French Grand Prix (cropped).jpg eyes 2
+face milton Tommy Milton in 1925 (cropped).jpg eyes 1
+face f_elliott 1921 Tacoma Speedway Frank Elliot Marvin D Boland Collection G521043.jpg eyes 3
+face d_lewis Lewis Stone Photoplay Feb 1923.jpg eyes 2
+face c_durant WilliamCDurant.jpg eyes 2
+face boyer Johan Bojer 1927.jpg eyes 2
+face g_chevrolet 1919 Tacoma Speedway Louis Chevrolet Marvin D Boland Collection BOLANDB2009.jpg eyes 2
+face: no entity sarles Роско Сарлз
+face: none in Antonio Ascari en 1925, sur Alfa Romeo P2.jpg
+face murphy JimmyMurphy08281920.jpg eyes 1
+face ferrari Enzo Ferrari - Wheel of a racing car.jpg eyes 1
+face g_masetti Умберто Мазетти.jpg eyes 1
+face: none in Alfa-Romeo-P1-GP-byMerosi.jpg
+face: none in Albert Divo at the 1924 French Grand Prix (cropped).jpg
+face campari Giuseppe Campari 1931 Italian Grand Prix (cropped).jpg eyes 1
+face: no entity b_hill Беннетт Хилл
+face a_maserati 1926 Alfieri Maserati.png eyes 0
+face christian_werner Bundesarchiv Bild183-R57262, Werner Heisenberg.jpg eyes 2
+face: none in Touche à tout 1910 André Maurel par Henri Manuel.jpg
+face campbell Malcolm Campbell rc10431.jpg eyes 0
+face: no entity kaye_don Кей Дон
+face: none in Henry Segrave at the 1921 French Grand Prix (cropped).jpg
+face salamano Nikolay N. Salamanov.jpeg eyes 0
+face benoist Robert Benoist Monza 1927 (cropped).jpg eyes 2
+face l_zborowski André Derain Portrait du marchand Léopold Zborowski ca 1923 1924.jpg eyes 1
+face brilli_peri Gastone Brilli-Peri en 1925.jpg eyes 0
+face clement_frank Clement Attlee.jpg eyes 1
+face: none in Archives of American Art - Stuart Davis - 2053 (cropped).jpg
+face nuvolari TazioNuvolari.jpg eyes 1
+face duff Capt. John F. Duff et Frank Clement, vainqueurs des deuxièmes 24 Heures du Mans 1924, sur Bentley.jpg eyes 0
+face parry_thomas Parry Thomas.jpg eyes 0
+face materassi Emilio Materasi en 1928.jpg eyes 0
+face l_duray Les Six Tableau.jpg eyes 2
+face depaolo Biraghin (film 1946) Paolo Stoppa (cropped).png eyes 2
+face: no entity l_corum Л. Л. Корум
+face junek Ella Junková.jpg eyes 1
+face: no entity hartz Гарри Харц
+face caracciola Rudolf Caracciola by Hugo Kühn 1928cr.jpg eyes 0
+face: no entity senechal Робер Сенешаль
+face costantini CardCostantini.jpg eyes 2
+face: no entity rosenberger Адольф Розенбергер
+face: no entity sabipa Луи Шаравель («Сабипа»)
+face: no entity merz Отто Мерц
+face: no entity vizcaya Пьер де Вискайя
+face barnato Woolf Barnato at the 1929 24 Hours of Le Mans (cropped).jpg eyes 1
+face benjafield Dudley Benjafield, vainqueur des 24 Heures du Mans 1927 sur Bentley.jpg eyes 0
+face stuck Bundesarchiv Bild 102-08188, Hans von Stuck.jpg eyes 2
+face ivanowski Boris Ivanowski en 1928 (après sa victoire à la Coupe Georges Boillot 1928, sur Alfa Romeo).jpg eyes 1
+face: no entity borzacchini Баконин Борцаккини
+face arcangeli Piloti Alfa Romeo 3.JPG eyes 1
+face: no entity devore Эрл Девор
+face: no entity batten Норман Баттен
+face: none in Frank Lockhart Indianapolis 1927.jpg
+face chiron Louis Chiron 1931.jpg eyes 2
+face: no entity williams Уильям Гровер-Уильямс («W. Williams»)
+face etancelin Philippe Étancelin at the 1933 Grand Prix de la Marne (cropped).jpg eyes 0
+face: none in Charles Herbert Woodbury00.jpg
+face birkin Birkin at the 1931 24 Hours of Le Mans.jpg eyes 0
+face: no entity kidston Глен Кидстон
+face: no entity rubin Бернард Рубин
+face: no entity souders Джордж Соудерс
+face: no entity meyer Луи Мейер
+face keech Ray Keech n041941.jpg eyes 0
+face shaw Wilbur Shaw (Estados Unidos). - El Gráfico 1092.jpg eyes 0
+face varzi Achille Varzi 1931.jpg eyes 1
+face: none in Hellé Nice in 1929 at Montlhéry (cropped).jpg
+faces: new 104 total 104 of 175
+== job faces took 593 s
