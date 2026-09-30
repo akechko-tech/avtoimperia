@@ -595,7 +595,7 @@ def music_cut():
     info = video_info(sorted({e['title'] for e in L}))
     man_path = os.path.join(D, 'index.json')
     man = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
-    tmp = os.path.join(D, '_src.bin')
+    tmp = '/tmp/_music_src.bin'
     for e in L:
         cid = e['id']; out = os.path.join(D, cid + '.m4a'); v = info.get(e['title'])
         if not v: log('music: no info', e['title']); continue
@@ -623,7 +623,7 @@ def sfx_cut():
     info = video_info(sorted({e['title'] for e in L}))
     man_path = os.path.join(D, 'index.json')
     man = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
-    tmp = os.path.join(D, '_src.bin')
+    tmp = '/tmp/_sfx_src.bin'
     for e in L:
         cid = e['id']; v = info.get(e['title'])
         if not v: log('sfx: no info', e['title']); continue

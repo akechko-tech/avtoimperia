@@ -36,4 +36,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add media
           git commit -m "Медиа: $(grep -v '^#' tools/media/jobs.txt | tr '\n' ' ')" || echo "без изменений"
-          for k in 1 2 3; do git pull --rebase origin media && git push origin HEAD:media && break; sleep 5; done
+          find media -size +90M -print -delete || true
+          git status --short | head -40
+          ok=0; for k in 1 2 3 4; do git pull --rebase origin media && git push origin HEAD:media && ok=1 && break; sleep 8; done
+          git log -1 --stat | tail -5
+          test $ok = 1
