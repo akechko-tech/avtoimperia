@@ -12,7 +12,10 @@ for(const c of Object.keys(COUNTRIES)){
     out.fleet[c][y]=Math.round(s.fleet[c]);if(y===1930)break;
     const ya={},yn={},ymax={};SEGK.forEach(g=>{ya[g]=0;yn[g]=0;ymax[g]=-99;});let conv=0,shop=0,sold=0,probe='';
     for(let m=0;m<12;m++){s.y=y;s.m=m;
-      const tgt={};SEGK.forEach(g=>tgt[g]=segAnnual(c,g,s)/12*SEASON[m]);
+      // годовой итог по месяцам — с сезоном и с событиями года (крах в октябре 1929-го, красный флаг, вступление в войну):
+      // иначе средняя за год сила конкурентов «съедает» провал последних месяцев и год выходит ниже истории
+      const sf=[...Array(12).keys()].reduce((a,mm)=>a+SEASON[mm]*econ(y,mm,c).f,0),fm=SEASON[m]*econ(y,m,c).f*12/sf;
+      const tgt={};SEGK.forEach(g=>tgt[g]=segAnnual(c,g,s)/12*fm);
       let R;for(let it=0;it<80;it++){R=mkCountry(c,s,[],null,kap);let err=0;
         for(const g of SEGK){const d=R.segs[g].inc,T=tgt[g];if(T<=1e-6){kap[g]=-14;continue;}const dl=Math.log(T/Math.max(1e-12,d));kap[g]=clamp(kap[g]+dl*0.9,-14,9);if(kap[g]<9)err=Math.max(err,Math.abs(dl));}
         if(err<2e-4)break;}

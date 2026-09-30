@@ -7,6 +7,9 @@ function step(){
   const r={rev:0,mat:0,wage:0,ovh:0,dlr:0,ad:s.ad,sto:0,int:0,mil:0,milN:0,made:0,sold:0,demand:0,homeSold:0,tool:0,war:0,hire:0,fin:0,lostCap:0,lostDlr:0,team:0,ord:0,ordN:0,dump:0,dumpN:0,fine:0,mk:{}};
   // разработка и запуск моделей
   s.models.forEach(md=>{if(md.status==='dev'){md.devLeft--;if(md.devLeft<=0){md.status='prod';md.launched=mi(s);md.fresh=1;md.ramp=techLv(s,'line')===2?2:1;md.plan=md.plan||'auto';
+    // 0.21: новая модель идёт на тот же завод — поставщики и рабочие уже есть: себестоимость считаем от половины выпуска прежних моделей
+    {const prev=s.models.filter(m=>m!==md&&m.status==='prod'&&(m.vol||0)>0),g=segOf(md),same=prev.filter(m=>segOf(m)===g),src=same.length?same:prev;
+      const v=src.reduce((a,m)=>Math.max(a,m.vol||0),0)*(same.length?0.6:0.35);if(v>(md.vol||0))md.vol=Math.round(v*10)/10;}
     const tc=toolingCost(md,s);s.cash-=tc;r.tool+=tc;addLog(`Модель «${md.name}» пошла в серию. Оснастка обошлась в ${money(tc)}.`,'good');checkFirstParts(md);launchPaper(s,md);}}});
   s.capBuild=(s.capBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.cap+=b.units;addLog(`Новый цех введён в строй: мощность ${fmtN(Math.round(capEff(s)))} машин в месяц.`,'good');return false;}return true;});
   s.whBuild=(s.whBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.wh=(s.wh||0)+b.units;addLog(`Новый склад готов: ${fmtN(s.wh)} мест для машин.`,'good');return false;}return true;});
@@ -113,6 +116,7 @@ function step(){
   // машины на дорогах: новые прибавились, старые ушли на свалку
   if(!s.fleet)s.fleet={};if(!s.mkY)s.mkY={};const life=tabAt(CAR_LIFE,yf(s));
   for(const c in COUNTRIES){const m=r.mk[c],cars=m.size-m.segs.truck.size,f0=fleetOf(s,c);s.fleet[c]=Math.max(0,f0+cars-f0/(12*life));s.mkY[c]=m.size*12/SEASON[s.m];}
+  pfleetMonth(s,life);
   tradeMonth(s);
   // ценовая война прежних версий понемногу уходит — теперь конкуренты отвечают снижением цен и новыми моделями (13b-economy.js)
   for(const c in (s.pw||{}))for(const g in s.pw[c])s.pw[c][g]=Math.min(1,(s.pw[c][g]||1)+0.006);
@@ -144,7 +148,8 @@ function step(){
   return true;
 }
 // Сколько можно задолжать до банкротства: запас по сложности плюс месяц отсрочки у поставщиков (детали и зарплата)
-function debtLimit(s){const L=s.last;return DIF().debt*cpi(s)+(L?(L.mat||0)+(L.wage||0):0);}
+// сколько долгов по счетам терпят поставщики и рабочие: месяц закупок и зарплаты; в кредитный кризис — втрое меньше (все хотят денег сразу)
+function debtLimit(s){const L=s.last,k=(typeof creditState==='function'&&['tight','crash'].includes(creditState(s).k))?0.3:1;return DIF().debt*cpi(s)+(L?((L.mat||0)+(L.wage||0))*k:0);}
 function endOfYear(s){
   s.m=0;s.y++;
   for(const c in s.comps)s.comps[c].forEach(o=>{o.prev2=o.prev||0;o.prev=o.yr||0;o.yr=0;o.ysPrev=o.ys||{};o.ys={};});s.homePrev2=s.homePrev||0;s.homePrev=s.homeY||0;s.homeY=0;

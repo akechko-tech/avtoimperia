@@ -41,6 +41,12 @@ function hpTax(md,c,s){if(c==='us'||isTruck(md))return 0;const hp=engineHp(parts
 // Местный патриотизм: первые годы чужую марку берут неохотно, потом привыкают
 function patriotK(s,c){const t0=s.impSince&&s.impSince[c];const yrs=t0!=null?(mi(s)-t0)/12:0;return clamp(1-0.05*yrs,0.5,1);}
 function foreignPen(s,c){if(c===s.country)return 0;if(s.bought&&s.bought[c])return 0;if(licOn(s,c))return 0.05;return (impOf(s,c)||IMP_LV[1]).pen*patriotK(s,c);}
+// Вкус рынка (0.21): американцы берут свои машины — большие, дешёвые, с запчастями и мастерской в каждом городке;
+// европейская машина в Америке — диковинка для богатых. Свой завод в США помогает, но не до конца: машину делали не для этих дорог.
+// (в Европе вкус — это налог на мощность и дорогой бензин: hpTax и weakHp)
+const TASTE_US={people:1.3,middle:1.0,truck:0.8,lux:0.3,sport:0.3};
+function tastePen(md,c,s){if(c!=='us'||s.country==='us'||(s.bought&&s.bought.us)||licOn(s,c))return 0;const g=isTruck(md)?'truck':segOf(md),lv=impLv(s,'us');
+  return (TASTE_US[g]??1)*(lv>=4?0.85:lv>=3?0.95:1)*clamp((yf(s)-1900)/8,0.3,1);}
 /* ---------- стройка за границей ---------- */
 function impMonths(s,c,lv){const L=IMP_LV[lv];if(!L.mo)return 0;const k=impK(s,c);return Array.isArray(L.mo)?Math.round(L.mo[0]+(L.mo[1]-L.mo[0])*clamp((k-1)/5,0,1)):L.mo;}
 function impBuilding(s,c){return s.impB&&s.impB[c];}

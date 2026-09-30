@@ -47,7 +47,8 @@ function wageBase(s,c){return tabAt(WAGE[c||s.country],yf(s));}
 const WAGE_POL={low:{name:'Ниже рынка',k:0.85,prod:0.9,strike:0.045,turn:'высокая'},market:{name:'По рынку',k:1,prod:1,strike:0.02,turn:'обычная'},good:{name:'Выше рынка',k:1.25,prod:1.07,strike:0.008,turn:'низкая'},five:{name:'«Пять долларов в день»',k:2.2,prod:1.28,strike:0.002,turn:'почти нет',y:1914}};
 function wageNow(s){return wageBase(s)*WAGE_POL[s.wagePol||'market'].k*(s.shifts>1?1.08:1);}
 // В США поставщики рано перешли на поток: с 1903 года детали там заметно дешевле
-function partCountry(s){const c=s.country;return c==='us'?(s.y<1903?1:s.y<1910?0.8:0.72):c==='uk'||c==='it'?1.05:1;}
+const PART_US={1895:0.95,1899:0.86,1903:0.8,1910:0.72};
+function partCountry(s){const c=s.country;return c==='us'?tabAt(PART_US,yf(s)):c==='uk'||c==='it'?1.05:1;}
 // деталь дешевеет с годами (поставщики учатся), но не больше чем вдвое; отсчёт — с появления детали или с 1895 года
 function partCost(x,s){return x.c*1.15*cpi(s)*Math.max(0.5,1-0.025*Math.max(0,yf(s)-Math.max(1895,x.y)))*partCountry(s);}
 // Детали модели. У старых сохранений и чужих машин коробки и тормозов может не быть — берём типичные для эпохи
@@ -176,7 +177,7 @@ function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.75:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
 function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1);}
 // станки, конвейер и электромоторы делают цех производительнее — но и дороже: место в цеху стоит больше
@@ -257,7 +258,8 @@ function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||(
   const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];
   const gain=lv===1?sold*P*IMP_LV[1].cut*1.3:sold*(P*du*((cu.tar??1)-(nx.tar??1))*0.6+shipCostTo(s,c)*((cu.ship??1)-(nx.ship??1)))+sold*P*0.05*((cu.pen||0)-(nx.pen||0));
   return gain>up?cost/(gain-up):Infinity;}
-function dealerUpkeep(s,c){return 22*cpi(s)*(c?dealerMult(s,c):1);}
+// первые агенты (до ~1905) — велосипедные мастерские и каретники: берут машины на комиссию и заводу почти ничего не стоят
+function dealerUpkeep(s,c){return 22*cpi(s)*(c?dealerMult(s,c):1)*clamp(0.4+0.06*(yf(s)-1895),0.4,1);}
 function dealerCount(s,c){return (s.dealers&&s.dealers[c])||0;}
 // пошлина страны для ваших машин (без учёта способа ввоза) и доставка — 105b-trade.js
 function tariffAt(c,s){const r=tradeRule(c,s.country,tNow(s));return r.ban?0:(r.duty||0);}
@@ -274,7 +276,10 @@ function dealersMonth(s,r){s.dcap=s.dcap||{};s.dsm=s.dsm||{};s.dAdd={};
 function stockValue(s){return s.models.reduce((a,m)=>a+m.stock*matCost(m,s),0);}
 function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+arTotal(s)+Math.max(0,avg*12*7);}
 // Кредит под залог завода и склада; в кризисы банки урезают лимит (13b-economy.js: creditState)
-function maxLoan(s){return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*creditState(s).lim/1000)*1000;}
+// 0.21: в послевоенный спад и в крах 1929 года банки прежде всего режут кредит тем, у кого долг велик по сравнению с прибылью
+function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;const pr=((s.hist&&s.hist.profit)||[]).slice(-12),py=Math.max(1,pr.reduce((a,b)=>a+b,0)),lev=s.loan/py;
+  return lev>1?clamp(1-0.25*(lev-1),0.35,1):1;}
+function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)/1000)*1000;}
 function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round((800+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}

@@ -10,19 +10,21 @@
 const LOAN_RATE={1895:0.055,1906:0.055,1908:0.05,1913:0.05,1914:0.06,1919:0.06,1920:0.075,1921:0.07,1922:0.055,1928:0.055,1929:0.06};
 function creditState(s,y,m){y=y??s.y;m=m??s.m;
   if((y===1907&&m>=9)||(y===1908&&m<=3))return {k:'panic',add:0.035,lim:0.55,closed:y===1907,t:'Паника 1907 года: банки не дают денег'};
-  if(y===1929&&m>=9)return {k:'crash',add:0.035,lim:0.5,closed:true,t:'Биржевой крах: кредит закрыт'};
-  if((y===1920&&m>=6)||(y===1921&&m<=8))return {k:'tight',add:0.02,lim:0.65,closed:false,t:'Послевоенный спад: банки урезают кредит'};
+  if(y===1929&&m>=9)return {k:'crash',add:0.035,lim:0.4,closed:true,t:'Биржевой крах: кредит закрыт'};
+  if((y===1920&&m>=6)||(y===1921&&m<=8))return {k:'tight',add:0.02,lim:0.55,closed:false,t:'Послевоенный спад: банки урезают кредит'};
   if(isWar(y,m,s.country))return {k:'war',add:0.01,lim:0.85,closed:false,t:'Война: деньги идут на военные займы'};
   return {k:'ok',add:0,lim:1,closed:false,t:''};}
 function loanRate(s){const cs=creditState(s);return clamp(tabAt(LOAN_RATE,yf(s))+cs.add+(s.rep>=80?-0.01:s.rep<35?0.015:0)+(DIF().rate||0),0.03,0.15);}
 function loanOpen(s){return !creditState(s).closed;}
 // Банк требует вернуть кредит сверх лимита: в кризис — за 3 месяца, в спокойное время — понемногу за год
-function loanRecall(s,r){const lim=maxLoan(s),ex=s.loan-lim;if(ex<=Math.max(500,s.loan*0.02)){s.recall=null;return;}
-  const cs=creditState(s),hard=cs.k!=='ok',k=(DIF().recall??1);if(!k||(s.noRecall||0)>mi(s))return;
-  if(!s.recall||s.recall.k!==cs.k){s.recall={k:cs.k,t:mi(s)};
-    if(hard&&!s.pending.length)pushEvent({kicker:'Банк',title:'Банк требует вернуть кредит',deck:`${cs.t} · ${money(ex)} за три месяца`,
-      text:`${cs.t}. Залог — завод и склад — подешевел, и банк урезал лимит «${s.company}» до ${money(lim)}. Сверх него — ${money(ex)}: их нужно вернуть за три месяца, деньги спишут со счёта сами.\nЧто можно сделать: продать излишки склада со скидкой, сократить выпуск и расходы, отложить стройку. Если касса уйдёт в минус больше допустимого — кредиторы закроют завод.`,choices:[['Понятно','ok']]},false);}
-  const pay=Math.min(ex,Math.max(hard?ex/3:ex/12,300)*k);s.loan-=pay;s.cash-=pay;r.recall=pay;}
+// (0.21: в кризис банк решает один раз — лимит на первый месяц кризиса держится до конца: долг по частям не «уменьшает» требование)
+function loanRecall(s,r){const cs=creditState(s),hard=cs.k!=='ok'&&cs.k!=='war',held=hard&&s.recall&&s.recall.k===cs.k&&s.recall.lim!=null;
+  const lim=held?Math.min(maxLoan(s),s.recall.lim):maxLoan(s),ex=s.loan-lim;if(ex<=Math.max(500,s.loan*0.02)){if(!held)s.recall=null;return;}
+  const k=(DIF().recall??1);if(!k||(s.noRecall||0)>mi(s))return;const mo=cs.k==='crash'?2:3;
+  if(!s.recall||s.recall.k!==cs.k){s.recall={k:cs.k,t:mi(s),lim:hard?lim:null};
+    if(hard&&!s.pending.length)pushEvent({kicker:'Банк',title:'Банк требует вернуть кредит',deck:`${cs.t} · ${money(ex)} за ${mo===2?'два месяца':'три месяца'}`,
+      text:`${cs.t}. Залог — завод и склад — подешевел, и банк урезал лимит «${s.company}» до ${money(lim)}${s.loan>0&&levCut(s,cs)<1?' — тем, у кого долг велик по сравнению с прибылью, банки режут кредит сильнее':''}. Сверх него — ${money(ex)}: их нужно вернуть за ${mo===2?'два месяца':'три месяца'}, деньги спишут со счёта сами.\nЧто можно сделать: продать излишки склада со скидкой, сократить выпуск и расходы, отложить стройку. Если касса уйдёт в минус больше допустимого — кредиторы закроют завод.`,choices:[['Понятно','ok']]},false);}
+  const left=hard?Math.max(1,mo-(mi(s)-s.recall.t)):12,pay=Math.min(ex,Math.max(ex/left,300)*k);s.loan-=pay;s.cash-=pay;r.recall=pay;}
 
 /* ---------- оборотные деньги ---------- */
 // Дилеры платят заводу не сразу: 55% выручки — через месяц, 45% — через два; с продажей в кредит — ещё дольше
@@ -78,8 +80,10 @@ function scandalEffect(md,s){return (md.scandalUntil||0)>mi(s)?Math.log(1-(md.sc
 // Если вы забираете больше четверти класса в стране (на «Норме»), лидер класса отвечает: снижает цены на 5–15%
 // или готовит модель-ответ (через 12–18 месяцев); долго доминируете — слабые марки объединяются против вас
 function respOf(s,c,g){s.resp=s.resp||{};const C=s.resp[c]=s.resp[c]||{};return C[g]=C[g]||{sh:0,over:0,cut:0,t:-99,ms:[],mg:0};}
-function respCut(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];return o?o.cut||0:0;}
-function respBoost(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return 0;const t=mi(s);let u=o.mg||0;for(const x of o.ms||[])if(x.at<=t)u+=x.k*Math.exp(-(t-x.at)/72);return u;}
+function respCut(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];return o?Math.min(o.cut||0,0.15*(DIF().cut??1)):0;}
+// ответ конкурентов не бесконечен: у лидера класса тоже есть предел — модели-ответы вместе дают не больше +0,6 (ТЗ: цена −5…15%, модель через 12–18 мес.)
+const RESP_CUT_MAX=0.15,RESP_BOOST_MAX=0.6;
+function respBoost(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return 0;const t=mi(s);let u=o.mg||0;for(const x of o.ms||[])if(x.at<=t)u+=x.k*Math.exp(-(t-x.at)/72);return Math.min(RESP_BOOST_MAX,u);}
 function classLeader(s,c,g){const L=(COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v);return L;}
 function rivalsRespond(s,r){const D=DIF(),T0=D.rshare||0.25,K=D.resp??1,cutK=D.cut??1,gap=D.rgap||12,t=mi(s);if(!K)return;
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;
@@ -88,7 +92,7 @@ function rivalsRespond(s,r){const D=DIF(),T0=D.rshare||0.25,K=D.resp??1,cutK=D.c
       if(o.over<3||t-o.t<gap)return;
       const L=classLeader(s,c,g);if(!L.length)return;const lead=compName(L[0].cp,s),ex=clamp((o.sh-T0)/T0,0,2),home=c===s.country;o.t=t;
       // цена или новая модель: сначала — цена (быстро), потом — модель-ответ; очень долгий перевес — слияние слабых марок
-      if(o.cut<0.3*cutK&&(o.ms.length>=o.cut/0.08||Math.random()<0.5)){const cut=clamp(0.05+0.05*ex,0.05,0.15)*cutK;o.cut=+Math.min(0.3*cutK,o.cut+cut).toFixed(3);
+      if(o.cut<RESP_CUT_MAX*cutK-0.001&&(o.ms.length>=o.cut/0.08||Math.random()<0.5)){const cut=Math.min(clamp(0.05+0.05*ex,0.05,0.15)*cutK,RESP_CUT_MAX*cutK-o.cut);o.cut=+Math.min(RESP_CUT_MAX*cutK,o.cut+cut).toFixed(3);
         const txt=`${lead} снижает цены в классе «${SEG[g].name}» на ${Math.round(cut*100)}%${home?'':' ('+COUNTRIES[c].name+')'}: слишком много покупателей ушло к «${s.company}».`;addLog(txt,'bad');
         if(home&&!s.pending.length)pushEvent({kicker:'Рынок',title:`${lead} снижает цены`,deck:`Класс «${SEG[g].name}» · −${Math.round(cut*100)}%`,text:`${txt}\nВаша доля класса — ${Math.round(o.sh*100)}%. Ответ простой: либо снижать цену вслед, либо предложить машину лучше. Дальше конкуренты могут выпустить модель-ответ.`},true);}
       else{const at=t+12+Math.floor(Math.random()*7),k=(0.3+0.2*Math.min(1,ex))*K;o.ms.push({at,k,by:lead,said:0});
@@ -134,10 +138,11 @@ function salesWhy(s){const t=mi(s);
     if(now.age>=6&&now.age>snap.age)W.push([0.05*(now.age-5),'модель устарела — покупатели ждут новинку']);
     if(now.dl<snap.dl*0.95)W.push([1-now.dl/snap.dl,'дилеров стало меньше']);
     if(now.q<snap.q*0.97)W.push([1-now.q/snap.q,'соперники выпустили машины лучше']);
+    if((now.used||0)>(snap.used||0)+0.02)W.push([now.used-(snap.used||0),'у перекупщиков много подержанных машин вашей марки — новая модель отвлечёт от них покупателей']);
     W.sort((a,b)=>b[0]-a[0]);addLog(`Продажи «${md.name}» за квартал упали на ${drop}%: ${W.length?W.slice(0,2).map(x=>x[1]).join('; '):'спрос просто колеблется'}.`,'bad');});}
 function whySnap(md,s){const c=s.country,g=segOf(md),ec=econ(s.y,s.m,c);let tar=0,n=0;for(const k in (md.soldBy||{}))if(k!==c){tar+=(typeof tariffOf==='function'?tariffOf(md,k,s):tariffAt(k,s)*impTar(s,k))*md.soldBy[k];n+=md.soldBy[k];}
   return {price:md.price,cut:respCut(s,c,g)+(1-pwOf(s,c,g)),boost:respBoost(s,c,g)+rivalBoost(s,c,g),f:ec.f,ev:ec.label==='Стабильно'?'':ec.label.toLowerCase()+' — покупателей меньше',tar:n?tar/n:0,
-    sc:scandalEffect(md,s),rep:s.rep,age:(mi(s)-(md.launched||0))/12,dl:dealerCount(s,c)||1,q:(()=>{try{return classScore(md,s);}catch(_){return 1;}})()};}
+    sc:scandalEffect(md,s),used:usedPen(md,c,s),rep:s.rep,age:(mi(s)-(md.launched||0))/12,dl:dealerCount(s,c)||1,q:(()=>{try{return classScore(md,s);}catch(_){return 1;}})()};}
 
 /* ---------- всё за месяц ---------- */
 function econMonth(s,r){try{turnover(s,r);}catch(e){console.warn(e);}try{rivalsRespond(s,r);}catch(e){console.warn(e);}try{poachMonth(s,r);}catch(e){console.warn(e);}

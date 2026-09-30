@@ -1,23 +1,33 @@
 /* ================= ADVISOR & HELPER: советы с кнопками и помощник управляющего ================= */
 // Лучшая цена модели для прибыли (считается раз в месяц на каждую цену)
 const BP_CACHE=new Map();
+// себестоимость при выпуске q машин в месяц: с потоком детали и часы дешевеют (не ниже нынешнего объёма)
+function ucAtVol(md,s,q){const v0=md.vol;md.vol=Math.max(modelVol(md),q||0);const u=unitCost(md,s);md.vol=v0;return u;}
 function bestPriceFor(md,s){const key=md.id+'|'+mi(s)+'|'+md.price+'|'+PART_KEYS.map(k=>md[k]).join('');if(BP_CACHE.has(key))return BP_CACHE.get(key);
   // не дешевле себестоимости с запасом: иначе каждая проданная машина — убыток
+  // (0.21: себестоимость — при том выпуске, который даст эта цена: у новой модели на малом потоке она высока, и цена «от неё»
+  //  запирает модель в ловушке — дорого, потому что мало, и мало, потому что дорого)
   // если машин и дилеров не хватает на всех покупателей, выгоднее поднять цену, чем держать очередь
   // (но не больше, чем завод может сделать этой модели: иначе цена растёт по кругу, а машин всё меньше)
   const act=(s.models||[]).filter(m=>m.status==='prod'),made=act.reduce((a,m)=>a+(m.lastMade||0),0),capM=capEff(s)*(made>0?(md.lastMade||0)/made:1/Math.max(1,act.length));
   const lim=(md.lostS||0)+(md.lostD||0)>0.5?Math.max(1,(md.lastSold||0)*1.15,capM*0.95):Infinity,top=Math.max(md.price,Math.round(refPrice(md,s)*1.45/10)*10);
-  // прибыль по странам: за границей из выручки вычитаем доставку
-  const uc=unitCost(md,s),ship=shipCost(s),ck=techLv(s,'credit')?1.15:1,oth=act.filter(m=>m.id!==md.id).map(m=>({m,uc:unitCost(m,s)}));
+  const ship=shipCost(s),ck=techLv(s,'credit')?1.15:1,oth=act.filter(m=>m.id!==md.id).map(m=>({m,uc:unitCost(m,s)})),dm=dMargin(s);
   // 0.18: прибыль всей марки — дешёвая модель забирает покупателей у ваших же моделей (каннибализация)
   // 0.21: за границей — своя доставка, доля импортёра, курс; по лицензии — только доля цены
-  const netOf=(pp,c,ucc)=>{if(c===s.country)return pp*(1-dMargin(s))-ucc;if(licOn(s,c))return pp*LIC_ROY;const IL=impOf(s,c);return (pp*(1-dMargin(s)-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c)-ucc;};
-  const prof=p=>{const A=demandAll(s,{id:md.id,price:p}).by,by=A[md.id]||{};let q=0,v=0;for(const c in by){const d=by[c]*ck;q+=d;v+=d*netOf(p,c,uc);}
-    let o=0;oth.forEach(x=>{const b2=A[x.m.id]||{};for(const c in b2)o+=b2[c]*ck*netOf(x.m.price,c,x.uc);});return (q>lim?v*lim/q:v)+o;};
-  const exp=(md.soldBy&&md.lastSold)?1-(md.soldBy[s.country]||0)/md.lastSold:0,floor=Math.round((uc+exp*ship)/(1-dMargin(s))*1.06/10)*10,p0=prof(md.price);let best={price:md.price,v:p0};
-  for(const k of [0.8,0.9,1.1,1.2,1.35,1.6]){const p=Math.max(20,floor,Math.min(top,Math.round(md.price*k/10)*10)),v=prof(p);if(v>best.v)best={price:p,v};}
-  if(md.price<floor&&best.price<floor)best={price:floor,v:prof(floor)};
-  const r={price:best.price,gain:best.price===md.price?0:(best.v-p0)/Math.max(Math.abs(p0),1),v:best.v};if(BP_CACHE.size>200)BP_CACHE.clear();BP_CACHE.set(key,r);return r;}
+  const netOf=(pp,c,ucc)=>{if(c===s.country)return pp*(1-dm)-ucc;if(licOn(s,c))return pp*LIC_ROY;const IL=impOf(s,c);return (pp*(1-dm-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c)-ucc;};
+  const exp=(md.soldBy&&md.lastSold)?1-(md.soldBy[s.country]||0)/md.lastSold:0;
+  const prof=p=>{const A=demandAll(s,{id:md.id,price:p}).by,by=A[md.id]||{};let q=0;for(const c in by)q+=by[c]*ck;
+    const uc=ucAtVol(md,s,Math.min(q,Math.max(1,capM*1.3),lim)),fl=(uc+exp*ship)/(1-dm)*1.04;let v=0;for(const c in by)v+=by[c]*ck*netOf(p,c,uc);
+    let o=0;oth.forEach(x=>{const b2=A[x.m.id]||{};for(const c in b2)o+=b2[c]*ck*netOf(x.m.price,c,x.uc);});return {v:(q>lim?v*lim/q:v)+o,ok:p>=fl,fl};};
+  const P0=prof(md.price),p0=P0.v;let best={price:md.price,v:P0.ok?p0:-Infinity};
+  // кроме шагов от нынешней цены — и цены вокруг рыночной: иначе завышенная цена без покупателей так и не опустится
+  const rp=refPrice(md,s),cand=[0.8,0.9,1.1,1.2,1.35,1.6].map(k=>md.price*k).concat([0.9,1,1.1].map(k=>rp*k));
+  for(const x of cand){const p=Math.max(20,Math.min(top,Math.round(x/10)*10)),R=prof(p);if(R.ok&&R.v>best.v+Math.max(1,Math.abs(best.v)*0.002))best={price:p,v:R.v};}
+  // ни одна цена не окупает машину — ставим минимальную, при которой она окупается на нынешнем потоке
+  if(best.v===-Infinity){const fl=Math.round(P0.fl/10)*10;best={price:Math.max(fl,Math.round(Math.min(md.price,top)/10)*10),v:prof(fl).v};}
+  // покупателей почти нет, а цена выше рыночной — возвращаемся к рыночной, если она окупается
+  if(best.price>rp*1.1&&(md.lastSold||0)<1&&mi(s)-(md.launched||0)>=6){const p=Math.round(rp/10)*10,R=prof(p);if(R.ok&&p<best.price)best={price:p,v:R.v};}
+  const r={price:best.price,gain:best.price===md.price?0:Math.max((best.v-p0)/Math.max(Math.abs(p0),1),best.price<md.price&&(md.lastSold||0)<1?0.1:0),v:best.v};if(BP_CACHE.size>200)BP_CACHE.clear();BP_CACHE.set(key,r);return r;}
 function helperOn(s){return !!(s.helper&&s.helper.on);}
 // 0.21: сколько дилеров открыть в новых городах: пока машины, которые продаст ещё один дилер, окупают его содержание
 function dealerGain(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length)return 0;const d=dealerCount(s,c),need=dealerNeed(c,s),room=dealerRoom(s,c);if(room<1||tradeBan(s,c))return 0;
@@ -91,11 +101,13 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   const credit=()=>calm&&loanOpen(s)?Math.max(0,maxLoan(s)-s.loan):0;
   const room=()=>s.cash-reserve+credit()*0.5;
   const pay=c=>{if(s.cash-c<reserve*0.5){const n=Math.min(credit(),Math.ceil((c+reserve*0.5-s.cash)/1000)*1000);if(n>0){s.loan+=n;s.cash+=n;msg.push('взял кредит '+money(n));}}return s.cash>=c;};
+  // средняя прибыль за полгода: пока продажи не окупают завод, помощник не расширяет КБ, не внедряет новинки и не идёт за границу без нужды
+  const pr=((s.hist&&s.hist.profit)||[]).slice(-12),pAvg=pr.length>=6?pr.reduce((a,b)=>a+b,0)/pr.length:0,lean=!(pAvg>0);
   // кредит, если касса в минусе; лишние деньги — в погашение
   if(s.cash<0&&loanOpen(s)){const n=Math.max(0,Math.min(maxLoan(s)-s.loan,Math.ceil((-s.cash+reserve*0.5)/1000)*1000));if(n>0){s.loan+=n;s.cash+=n;msg.push('взял кредит '+money(n));}}
-  else if(s.loan>0&&s.cash>reserve*2){const n=Math.min(s.loan,Math.round((s.cash-reserve*1.5)/1000)*1000);if(n>0){s.loan-=n;s.cash-=n;msg.push('погасил кредит '+money(n));}}
+  else if(s.loan>0&&s.cash>reserve*2&&!s.helper.keepLoan){const n=Math.min(s.loan,Math.round((s.cash-reserve*1.5)/1000)*1000);if(n>0){s.loan-=n;s.cash-=n;msg.push('погасил кредит '+money(n));}}
   // цены — раз в квартал
-  if(s.m%3===0)act.forEach(md=>{if(!(md.lastSold||md.lastDem))return;const bp=bestPriceFor(md,s);if(bp.gain>0.05&&bp.price!==md.price){md.price=bp.price;msg.push(`цена «${md.name}» ${money(bp.price)}`);}});
+  if(s.m%3===0)act.forEach(md=>{if(!(md.lastSold||md.lastDem)&&!(md.price>refPrice(md,s)*1.1&&mi(s)-(md.launched||0)>=6))return;const bp=bestPriceFor(md,s);if(bp.gain>0.05&&bp.price!==md.price){md.price=bp.price;msg.push(`цена «${md.name}» ${money(bp.price)}`);}});
   // цеха — по прогнозу спроса, заранее (стройка идёт полгода-год); в кризис и спад не строим
   if(L&&act.length&&calm&&econ(s.y,s.m,home).f>=0.9){const kC=techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap'),bld=(s.capBuild||[]).reduce((a,b)=>a+b.units,0)*kC;
     const need=act.reduce((a,m)=>a+((m.fc||0)*1.12+(m.backlog||0)*0.5)*complexity(m),0),have=capEff(s)+bld;
@@ -107,18 +119,19 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   // дилеры дома: новые города — только если дилеры не успевают или уже хорошо продают
   const mk=L&&L.mk[home],need=Math.round(dealerNeed(home,s)),have=dealerCount(s,home),dc=dealerCost(s),spd=have?((s.dsm&&s.dsm[home])||0)/have:0;
   let add=0;if(mk&&(mk.lostDlr||0)>0.5)add=dealersShort(s,home);else if(act.length&&s.m%2===0)add=dealerGain(s,home);
+  // дилеры окупаются быстрее всего: на них — касса сверх половины запаса и почти весь свободный кредит
   add=Math.min(add,dealerRoom(s,home),Math.floor(Math.max(0,room())/dc/2));if(add>0&&pay(add*dc)){s.cash-=add*dc;s.dealers[home]=have+add;msg.push(`+${add} ${plural(add,'дилер','дилера','дилеров')}`);}
   else if(dealerGrowSteps(s,home)>0&&room()>dealerGrowCost(s,home)*2&&dealerGrow(s,home))msg.push('салоны дилеров +25%');
   // экспорт — раз в полгода: импортёр, дилеры в больших городах, своё отделение и завод, когда окупятся
-  if(s.m%6===2&&act.length&&calm){Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const lv=impLv(s,c),d=dealerCount(s,c),pot=marketPotential(s,c);
-    if(!lv){if(pot>2&&room()>impCost(s,c,1)*2.5&&impUp(s,c))msg.push('импортёр: '+COUNTRIES[c].name);return;}
-    if(lv<3&&impPayback(s,c)<(lv===1?18:24)&&room()>impCost(s,c,lv+1)*2&&impUp(s,c)){msg.push((lv===1?'отделение: ':'сборочный завод: ')+COUNTRIES[c].name);return;}
+  if(s.m%6===2&&act.length&&calm&&!s.helper.noExp){Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const lv=impLv(s,c),d=dealerCount(s,c),pot=marketPotential(s,c);
+    if(!lv){if(pot>2&&(!lean||pot>3&&pot>2*marketPotential(s,home))&&room()>impCost(s,c,1)*2.5&&impUp(s,c))msg.push('импортёр: '+COUNTRIES[c].name);return;}
+    if(lv<4&&impPayback(s,c)<[0,18,24,30][lv]&&room()>impCost(s,c,lv+1)*2&&impUp(s,c)){msg.push((lv===1?'отделение: ':lv===2?'сборка из комплектов: ':'свой завод: ')+COUNTRIES[c].name);return;}
     const n=d?dealerGain(s,c):0;if(n>0&&room()>dc*n*2){s.cash-=n*dc;s.dealers[c]=d+n;}});}
   // КБ: проекты и рост
   while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;s.rd.projs.push({...pj,prog:0});msg.push('КБ: '+pj.name);}
-  if(s.rd.lvl<5&&room()>rdUpCost(s)*5){const c=rdUpCost(s);s.cash-=c;s.rd.lvl++;msg.push('КБ расширено');}
+  if(s.rd.lvl<5&&!lean&&pAvg>rdUpkeep(s)*2&&room()>rdUpCost(s)*5){const c=rdUpCost(s);s.cash-=c;s.rd.lvl++;msg.push('КБ расширено');}
   // технологии завода
-  if(!s.techBuild&&calm){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}
+  if(!s.techBuild&&calm&&!lean){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}
   // реклама — около 4% выручки (в кризис — вдвое меньше)
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*(calm?0.04:0.02)))/10)*10;
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}

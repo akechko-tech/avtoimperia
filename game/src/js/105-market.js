@@ -118,7 +118,8 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   // грузовиков у конкурентов ещё нет — первые фургоны берут самые смелые фирмы
   // 0.21: новая марка начинает как рядовой соперник (не больше ~12% класса на «Норме»), а не как лидер класса —
   // долю лидера нужно заработать машиной, ценой, дилерами и именем (у марки основателя — её историческая доля)
-  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),Math.min(1/(brandsN(c,g,s)+1),DIF().bshare||0.12)));
+  // в Америке рынок поделили гиганты с дилером в каждом городке — новой марке там вдвое труднее, чем в Европе
+  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),Math.min(1/(brandsN(c,g,s)+1),(DIF().bshare||0.12)*(c==='us'?(globalThis.BSUS??0.5):1))));
   if(g==='truck')b=Math.max(b,TRUCK_FLOOR[c]); // смелые фирмы найдутся всегда: лавки, пивоварни, почта
   return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
@@ -145,8 +146,20 @@ function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck||g==='sport')
   return u;}
 // Репутация: плохая сильно отпугивает, хорошая помогает умеренно — у сильных конкурентов тоже есть имя (0.21)
 function repEffect(s){const d=(s.rep-50)/50;return d<0?1.3*d:0.8*d;}
+// 0.21 (ТЗ 5.4): подержанные машины вашей же марки. Хозяева меняют машину раз в 3–4 года и продают старую перекупщику —
+// чем больше ваших машин на дорогах страны, тем больше у перекупщиков дешёвых «почти таких же». Сильнее всего — в народном классе
+// и в двадцатые годы; новая модель заметно отличается от прошлых, и подержанные ей мешают меньше.
+const USED_ERA={1912:0,1918:0.5,1923:1};
+// Перекупщиков много там, где машин много: в Америке двадцатых машина почти в каждой семье, в Европе — у одной из двадцати.
+function usedPen(md,c,s){const g=segOf(md);if(g==='truck'||isTruck(md))return 0;const era=tabAt(USED_ERA,yf(s));if(era<=0)return 0;
+  const pf=(s.pfleet&&s.pfleet[c])||0;if(pf<=0)return 0;const fl=Math.max(1,fleetOf(s,c)),sh=Math.min(0.6,pf/fl),age=(mi(s)-(md.launched||0))/12,mat=clamp(fl/households(c,s)/0.6,0.1,1);
+  return (globalThis.USEDK??5)*era*mat*(g==='people'?1:g==='middle'?0.55:0.15)*sh*clamp(0.35+0.22*age,0.35,1);}
+// ваши машины на дорогах страны (легковые): новые прибавились, старые ушли на свалку
+function pfleetMonth(s,life){if(!s.pfleet){s.pfleet={};const H=(s.hist&&s.hist.sales)||[],n=Math.round(12*life);let a=0;H.slice(-n).forEach(v=>a+=v||0);s.pfleet[s.country]=a*0.7;}
+  const add={};s.models.forEach(md=>{if(isTruck(md)||!md.soldBy)return;for(const c in md.soldBy)add[c]=(add[c]||0)+(md.soldBy[c]||0);});
+  for(const c in COUNTRIES){const pf=s.pfleet[c]||0,v=pf+(add[c]||0)-pf/(12*life);if(v>0.5)s.pfleet[c]=Math.round(v*10)/10;else delete s.pfleet[c];}}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
 function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffOf(md,c,s))+(home?0:shipCostTo(s,c)*shipK(s,c));}
 /* ---------- рынок страны ---------- */
