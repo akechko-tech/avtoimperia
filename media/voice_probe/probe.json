@@ -1,0 +1,86 @@
+{
+ "v4_ru": {
+  "speakers": [
+   "aidar",
+   "baya",
+   "kseniya",
+   "xenia",
+   "eugene"
+  ],
+  "rtf": {
+   "aidar": 0.137,
+   "baya": 0.026,
+   "kseniya": 0.026,
+   "xenia": 0.029,
+   "eugene": 0.027
+  }
+ },
+ "v5_1_ru": {
+  "error": "ModuleNotFoundError(\"No module named 'scipy'\")"
+ },
+ "v5_2_ru": {
+  "speakers": [
+   "aidar",
+   "baya",
+   "kseniya",
+   "eugene",
+   "xenia"
+  ],
+  "rtf": {
+   "aidar": 0.051,
+   "baya": 0.032,
+   "kseniya": 0.032,
+   "eugene": 0.032,
+   "xenia": 0.032
+  }
+ },
+ "v5_3_ru": {
+  "speakers": [
+   "aidar",
+   "baya",
+   "kseniya",
+   "eugene",
+   "xenia"
+  ],
+  "rtf": {
+   "aidar": 0.05,
+   "baya": 0.032,
+   "kseniya": 0.031,
+   "eugene": 0.031,
+   "xenia": 0.031
+  }
+ },
+ "v5_4_ru": {
+  "speakers": [
+   "aidar",
+   "baya",
+   "kseniya",
+   "xenia"
+  ],
+  "rtf": {
+   "aidar": 0.051,
+   "baya": 0.032,
+   "kseniya": 0.032,
+   "xenia": 0.032
+  }
+ },
+ "v5_5_ru": {
+  "speakers": [
+   "aidar",
+   "baya",
+   "kseniya",
+   "eugene",
+   "xenia"
+  ],
+  "rtf": {
+   "aidar": 0.049,
+   "baya": 0.031,
+   "kseniya": 0.031,
+   "eugene": 0.032,
+   "xenia": 0.031
+  }
+ },
+ "v5_ru": {
+  "error": "ModuleNotFoundError(\"No module named 'scipy'\")"
+ }
+}

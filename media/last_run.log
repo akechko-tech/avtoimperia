@@ -1,5 +1,205 @@
-== job films_cut
-cut glidden1905 File:Glidden-Tour-1905.ogv 18.5 10 256255
-cut glidden1905b File:Glidden-Tour-1905.ogv 32.5 9 277388
-cut flight1909 File:First flights in aviation history.ogv 44 10 608423
-== job films_cut took 15 s
+== job voice_probe
+ru tts models ['ru_v3', 'v3_1_ru', 'v4_ru', 'v5_1_ru', 'v5_2_ru', 'v5_3_ru', 'v5_4_ru', 'v5_5_ru', 'v5_ru']
+model v4_ru speakers ['aidar', 'baya', 'kseniya', 'xenia', 'eugene']
+probe v4_ru aidar rtf 0.137
+probe v4_ru baya rtf 0.026
+probe v4_ru kseniya rtf 0.026
+probe v4_ru xenia rtf 0.029
+probe v4_ru eugene rtf 0.027
+probe error v5_1_ru ModuleNotFoundError("No module named 'scipy'")
+model v5_2_ru speakers ['aidar', 'baya', 'kseniya', 'eugene', 'xenia']
+probe v5_2_ru aidar rtf 0.051
+probe v5_2_ru baya rtf 0.032
+probe v5_2_ru kseniya rtf 0.032
+probe v5_2_ru eugene rtf 0.032
+probe v5_2_ru xenia rtf 0.032
+model v5_3_ru speakers ['aidar', 'baya', 'kseniya', 'eugene', 'xenia']
+probe v5_3_ru aidar rtf 0.05
+probe v5_3_ru baya rtf 0.032
+probe v5_3_ru kseniya rtf 0.031
+probe v5_3_ru eugene rtf 0.031
+probe v5_3_ru xenia rtf 0.031
+model v5_4_ru speakers ['aidar', 'baya', 'kseniya', 'xenia']
+probe v5_4_ru aidar rtf 0.051
+probe v5_4_ru baya rtf 0.032
+probe v5_4_ru kseniya rtf 0.032
+probe v5_4_ru xenia rtf 0.032
+model v5_5_ru speakers ['aidar', 'baya', 'kseniya', 'eugene', 'xenia']
+probe v5_5_ru aidar rtf 0.049
+probe v5_5_ru baya rtf 0.031
+probe v5_5_ru kseniya rtf 0.031
+probe v5_5_ru eugene rtf 0.032
+probe v5_5_ru xenia rtf 0.031
+probe error v5_ru ModuleNotFoundError("No module named 'scipy'")
+== job voice_probe took 96 s
+== job music_scan
+search "United States Marine Band" -> 50
+search "Marine Band" -> 50
+search "U.S. Marine Band" -> 50
+search "United States Navy Band" -> 50
+search "U.S. Navy Band" -> 50
+search "Navy Band" -> 50
+search "United States Army Band" -> 50
+search "U.S. Army Band" -> 50
+search "Army Field Band" -> 15
+search "Air Force Band" -> 50
+search "Coast Guard Band" -> 34
+search "Air Force Heritage" -> 50
+search Musopen -> 50
+search "Musopen Symphony" -> 50
+search Sousa -> 49
+search "Stars and Stripes Forever" -> 43
+search "Washington Post march" -> 13
+search "Semper Fidelis" -> 20
+search "Liberty Bell march" -> 6
+search "The Thunderer" -> 8
+search "El Capitan" -> 11
+search "Manhattan Beach" -> 5
+search "Hands Across the Sea" -> 11
+search "King Cotton" -> 4
+search "Invincible Eagle" -> 5
+search Strauss waltz -> 39
+search "Blue Danube" -> 12
+search "Emperor Waltz" -> 1
+search "Vienna Woods" -> 6
+search "Radetzky March" -> 7
+search Waldteufel -> 6
+search "Skaters Waltz" -> 1
+search Lehár -> 1
+search "Merry Widow" -> 2
+search Offenbach -> 38
+search "Galop infernal" -> 1
+search "Orpheus in the Underworld" -> 4
+search Suppé -> 50
+search "Light Cavalry" -> 3
+search "Poet and Peasant" -> 3
+search "William Tell Overture" -> 3
+search Fučík -> 9
+search "Entry of the Gladiators" -> 5
+search "Florentiner" -> 6
+search Joplin rag -> 47
+search "Maple Leaf Rag" -> 18
+search "The Entertainer" -> 10
+search ragtime piano -> 50
+search cakewalk -> 45
+search tango orchestra -> 28
+search "La Cumparsita" -> 4
+search "El Choclo" -> 3
+search foxtrot -> 49
+search Charleston dance -> 1
+search "Tiger Rag" -> 4
+search dixieland -> 50
+search polka -> 47
+search galop -> 40
+search mazurka -> 50
+search Glinka -> 23
+search Tchaikovsky -> 49
+search Rimsky-Korsakov -> 41
+search Mussorgsky -> 48
+search Borodin -> 28
+search Dvořák -> 49
+search Grieg -> 37
+search "Peer Gynt" -> 21
+search Satie -> 44
+search Debussy -> 45
+search Elgar -> 38
+search "Pomp and Circumstance" -> 11
+search "Rhapsody in Blue" -> 13
+search Gershwin -> 30
+search "Hungarian Dance" -> 17
+search "Hungarian Rhapsody" -> 14
+search Bizet Carmen -> 47
+search "Ride of the Valkyries" -> 6
+search "silent film" music -> 50
+search photoplay music -> 0
+search overture orchestra -> 50
+search military march -> 49
+search brass band -> 50
+search waltz orchestra -> 35
+search march band -> 50
+search Category:United States Marine Band -> 96
+search Category:Musopen -> 1126
+search Category:Audio files of the United States Marine Band -> 0
+music scan: candidates 2784 kept 2273
+== job music_scan took 150 s
+== job sfx_scan
+search crowd cheering -> 17
+search cheering crowd -> 17
+search applause -> 36
+search crowd applause -> 5
+search stadium crowd -> 3
+search crowd ambience -> 4
+search crowd murmur -> 10
+search hurrah -> 16
+search fans cheering -> 0
+search crowd noise -> 13
+search people talking crowd -> 20
+search steam locomotive whistle -> 6
+search steam whistle -> 12
+search train whistle -> 9
+search steam locomotive -> 33
+search steam train -> 34
+search locomotive -> 40
+search church bell -> 40
+search church bells -> 40
+search bells ringing -> 40
+search birdsong -> 40
+search bird song -> 40
+search dawn chorus -> 37
+search Turdus merula -> 40
+search Alauda arvensis -> 17
+search Fringilla coelebs -> 40
+search Erithacus rubecula -> 40
+search Passer domesticus -> 40
+search Hirundo rustica -> 40
+search Cuculus canorus -> 39
+search Parus major -> 40
+search Luscinia megarhynchos -> 39
+search cicada -> 40
+search crickets -> 40
+search dog barking -> 40
+search horse neigh -> 20
+search horse whinny -> 12
+search horse hooves -> 23
+search horse carriage -> 33
+search cow -> 40
+search rooster -> 40
+search goat bells -> 1
+search sheep -> 39
+search klaxon -> 38
+search car horn -> 38
+search bulb horn -> 2
+search vintage car -> 0
+search Ford Model T -> 0
+search antique car -> 2
+search veteran car -> 7
+search old car engine -> 5
+search car engine -> 40
+search motorcycle engine -> 9
+search bugle call -> 36
+search trumpet fanfare -> 11
+search fanfare -> 40
+search starting pistol -> 0
+search pistol shot -> 0
+search megaphone -> 40
+search wind -> 40
+search rain -> 40
+search thunder -> 35
+search sea waves -> 40
+search surf -> 40
+search river -> 40
+search stream water -> 40
+search brass band street -> 40
+search accordion street -> 2
+search market ambience -> 2
+search village ambience -> 1
+search street ambience -> 10
+search city ambience -> 3
+search forest ambience -> 5
+search countryside ambience -> 2
+search Category:Sounds of crowds -> 0
+search Category:Sounds of birds -> 168
+search Category:Sounds of trains -> 10
+search Category:Bells (sounds) -> 0
+sfx scan: candidates 1683 kept 1356
+== job sfx_scan took 98 s
