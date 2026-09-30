@@ -703,6 +703,12 @@ def face_entity(d):
     return None
 def faces():
     import numpy as np, cv2
+    if not hasattr(cv2, 'CascadeClassifier'):
+        log('cv2 odd:', getattr(cv2, '__file__', '?'), getattr(cv2, '__version__', '?'), sorted(dir(cv2))[:30])
+        import importlib, sys as _s
+        for m in [k for k in list(_s.modules) if k == 'cv2' or k.startswith('cv2.')]: del _s.modules[m]
+        _s.path = [p for p in _s.path if 'dist-packages' not in p or 'local' in p] + [p for p in _s.path if 'dist-packages' in p and 'local' not in p]
+        cv2 = importlib.import_module('cv2'); log('cv2 retry:', getattr(cv2, '__file__', '?'), hasattr(cv2, 'CascadeClassifier'))
     L = json.load(open(os.path.join(TOOLS, 'drivers.json'), encoding='utf-8'))
     D = os.path.join(MEDIA, 'faces'); os.makedirs(D, exist_ok=True)
     man_path = os.path.join(D, 'index.json'); man = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
