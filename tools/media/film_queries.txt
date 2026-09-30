@@ -1,0 +1,80 @@
+# Поиск старой кинохроники на Wikimedia Commons (к каждому запросу добавляется filetype:video)
+automobile race 1905
+automobile race 1908
+car race 1910 film
+motor race 1903
+Vanderbilt Cup race
+Vanderbilt Cup 1905
+Gordon Bennett Cup automobile
+Grand Prix automobile 1912
+Grand Prix de l'ACF
+Targa Florio
+Indianapolis 500 1911
+Indianapolis 500 1913
+Indianapolis speedway 1910s
+Le Mans 1923
+Brooklands motor racing
+Ormond Beach automobile race
+automobile 1900 film
+automobile 1896 film
+Edison automobile film
+Biograph automobile
+Lumière automobile
+early automobile film
+horseless carriage film
+motor car 1900s film
+Ford assembly line
+Ford factory 1914
+Ford Model T film
+Highland Park Ford
+River Rouge plant film
+automobile factory 1920s
+car factory assembly 1920s
+Model T Ford 1915 film
+Henry Ford film
+Automobile show film
+motor show 1920s film
+Madison Square Garden automobile show
+Paris 1900 street film
+Paris 1910 street
+New York street 1911
+Market Street 1906
+London street 1903 film
+Berlin 1900 film
+Torino film 1910
+Milano 1910 film
+Rome 1910 film
+traffic 1920s street film
+taxi 1910s film
+fire engine 1910s film
+motor bus 1905 film
+New York to Paris race 1908
+Glidden tour
+hill climb automobile film
+motorcycle race 1910s film
+zeppelin film 1909
+Wright brothers flight film
+Blériot flight film
+World War I trucks film
+World War I ambulance film
+armistice 1918 film
+Charleston dance 1920s film
+Wall Street 1929 film
+Paris 1920s film
+steam locomotive 1900s film
+railway train 1896 film
+Barney Oldfield film
+Mercedes race 1914
+Bugatti 1920s film
+Fiat factory Lingotto
+Renault factory film
+Citroen 1920s film
+Daimler film 1900s
+Lanchester car film
+Rolls-Royce 1910s film
+Packard film 1920s
+Oldsmobile film
+Cadillac film 1910s
+tractor 1910s film
+road construction 1910s film
+paving road film 1920s
