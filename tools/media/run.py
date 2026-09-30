@@ -526,8 +526,63 @@ def voice_probe():
             log('probe error', mid, repr(e)[:300]); res[mid] = {'error': repr(e)[:300]}
     json.dump(res, open(os.path.join(D, 'probe.json'), 'w'), indent=1)
 
+
+# ---------------------------------------------------------------- голос 0.19: Silero v5_5_ru, 48 кГц, мастеринг, mp3 64 кбит/с (без пережатия при выкладке)
+def voice5():
+    import torch, numpy as np, wave
+    sys.path.insert(0, TOOLS)
+    from ru_norm import norm
+    L = json.load(open(os.path.join(TOOLS, 'voice_lines.json'), encoding='utf-8'))
+    D = os.path.join(MEDIA, 'voice'); os.makedirs(D, exist_ok=True)
+    idx_path = os.path.join(D, 'index.json'); done_path = os.path.join(D, 'v5.json')
+    idx = json.load(open(idx_path, encoding='utf-8')) if os.path.exists(idx_path) else {}
+    done = set(json.load(open(done_path))) if os.path.exists(done_path) else set()
+    torch.set_num_threads(max(1, os.cpu_count() or 2))
+    MID = 'v5_5_ru'
+    model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language='ru', speaker=MID, trust_repo=True)
+    SR = 48000; tmp = os.path.join(D, '_t.wav'); n = 0; t0 = time.time()
+    def tts(c, spk):
+        try: return model.apply_tts(text=c, speaker=spk, sample_rate=SR, put_accent=True, put_yo=True, put_stress_homo=True, put_yo_homo=True)
+        except TypeError: return model.apply_tts(text=c, speaker=spk, sample_rate=SR, put_accent=True, put_yo=True)
+    want = {e['h'] for e in L}
+    for e in L:
+        h, text, spk = e['h'], norm(e['s']), e.get('v', 'aidar')
+        out = os.path.join(D, h + '.mp3')
+        if h in done and h in idx and os.path.exists(out): continue
+        try:
+            parts = [p for p in re.split(r'(?<=[.!?…])\s+', text) if p.strip()]
+            wavs = []
+            for p in parts:
+                chunks = [p] if len(p) < 700 else [c for c in re.split(r'(?<=[,;:—])\s+', p) if c.strip()]
+                for c in chunks:
+                    a = tts(c, spk)
+                    wavs.append(a.numpy()); wavs.append(np.zeros(int(SR * (0.36 if c is chunks[-1] else 0.16)), np.float32))
+            a = np.concatenate(wavs[:-1]) if len(wavs) > 1 else wavs[0]
+            a = np.concatenate([np.zeros(int(SR * 0.05), np.float32), a, np.zeros(int(SR * 0.12), np.float32)])
+            pk = float(np.max(np.abs(a))) or 1.0; a = a / pk * 0.9
+            with wave.open(tmp, 'wb') as w:
+                w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((a * 32767).astype(np.int16).tobytes())
+            warm = 'equalizer=f=160:t=q:w=1.1:g=1.5,' if spk in ('aidar', 'eugene') else 'equalizer=f=240:t=q:w=1.2:g=1,'
+            sh(['ffmpeg', '-v', 'error', '-i', tmp, '-af', 'highpass=f=60,' + warm + 'deesser=i=0.35:m=0.5:f=0.5,acompressor=threshold=-20dB:ratio=2.2:attack=8:release=160,loudnorm=I=-16:TP=-1.5:LRA=8',
+                '-ac', '1', '-ar', '32000', '-c:a', 'libmp3lame', '-b:a', '64k', '-y', out])
+            idx[h] = round(len(a) / SR, 2); done.add(h); n += 1
+            if n % 25 == 0:
+                json.dump(idx, open(idx_path, 'w'), indent=0); json.dump(sorted(done), open(done_path, 'w'))
+                log('voice5', n, 'lines', round(time.time() - t0), 's')
+        except Exception as ex:
+            log('voice5 error', h, repr(ex)[:300])
+    if os.path.exists(tmp): os.remove(tmp)
+    # строки, которых больше нет в игре, — убрать
+    for h in list(idx):
+        if h not in want:
+            idx.pop(h, None); done.discard(h)
+            try: os.remove(os.path.join(D, h + '.mp3'))
+            except Exception: pass
+    json.dump(idx, open(idx_path, 'w'), indent=0); json.dump(sorted(done), open(done_path, 'w'))
+    log('voice5 done', n, 'new lines; total', len(idx), 'v5', len(done))
+
 JOBS = {'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe}
+        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]

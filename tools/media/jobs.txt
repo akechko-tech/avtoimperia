@@ -1,3 +1,1 @@
-voice_probe
-music_scan
-sfx_scan
+voice5
