@@ -344,10 +344,13 @@ function carStep(c,trk,dt){
   const grade=gradeAt(c,trk,lat);c.grade=grade;
   // на крутом подъёме первая передача «ползёт» (сцепление с проскальзыванием): слабые машины 1890-х не встают намертво
   const vLo=2.2+0.22*vg,vCr=c.gear===1&&grade>0.04?Math.max(1,vLo*(1-clamp((grade-0.04)/0.1,0,1)*0.6)):vLo;
+  if(c.rev&&!stopped){// задняя передача: медленно (до ~9 км/ч), торможение — «Газом»
+    const vr=-v;if(brk>0.05)Fx=vr>0.2?brk*c.brakeK*mu*c.m*GRAV:0;else if(thr>0.05)Fx=vr<2.4?-thr*Math.min(pw/2.2,c.m*2.4):-c.m*0.2;else Fx=vr>0.15?c.m*2.2:0;}
+  else{
   if(brk>0.05&&v>0.3)Fx=-brk*c.brakeK*mu*c.m*GRAV;
-  else if(brk>0.05&&v<=0.3&&!stopped){Fx=-brk*c.m*1.8;}
+  else if(brk>0.05&&v<=0.3&&!stopped){Fx=v>0.02?-brk*c.m*1.8:0;}
   else if(c.shift<=0&&v<vg*1.02){Fx=thr*pw/Math.max(v,vCr);}
-  if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);
+  if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);}
   const Fxmax=mu*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
   // вода в луже и жидкая грязь тормозят по квадрату скорости
   const wd=su.k==='puddle'?0.0016:su.k==='mudhole'?0.005:0;
@@ -357,7 +360,9 @@ function carStep(c,trk,dt){
   const bump=sp>5&&su.rough>0.95?(bumpNz(c.prog*0.45,c.num*7+3)-0.5)*2*1.7*(su.rough-0.9)*Math.min(1,sp/18):0;
   // пятно под одной стороной машины тянет её в сторону
   let pull=0;if(su.P&&sp>6){const dl=su.P.lat-lat;if(Math.abs(dl)>0.35)pull=-Math.sign(dl)*(su.k==='mudhole'?0.9:0.45)*Math.min(1,sp/20);}
-  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;c.gu*=0.9;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;}
+  if(sp<2.5){c.r=v*Math.tan(c.delta)/c.L;c.vy*=0.85;c.vx+=(Fx-drag)/c.m*dt;c.slipR=0;c.slipF=0;c.gu*=0.9;if(stopped&&Math.abs(c.vx)<0.4)c.vx=0;
+    // тормоз на месте держит машину (и на подъёме не катится назад)
+    if(brk>0.3&&Math.abs(c.vx)<0.35)c.vx=0;}
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
     const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(mu*Fzr+1)),2)));
@@ -525,7 +530,13 @@ function playerControl(c,dt){
   // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
   if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*0.7,-0.12,0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
-  c.thr+=clamp((rKeys.gas?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((rKeys.brake?1:0)-c.brk,-8*dt,6*dt);
+  // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
+  // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
+  const still=Math.abs(c.vx)<0.5;
+  if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
+  else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
+  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
+  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
 }
 /* ---------- гонка: старт, такт, финиш ---------- */
@@ -705,7 +716,7 @@ function raceTick(dt){
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
-    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0&&c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}
+    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if(c.punct&&!c.flat&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
   });
   const sub=R.mode==='sim'?3:4,h=dt/sub;
@@ -719,7 +730,7 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.flat?'ПРОКОЛ! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ':me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
-    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.stopT&&!me.pitT&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
+    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;
@@ -746,7 +757,7 @@ function raceTick(dt){
 }
 // Досчитать гонку мгновенно (режим руководителя): та же физика без отрисовки
 function raceFastForward(){if(!R||R.done)return;R.ff=true;if(R.t<0)R.t=0;const dt=1/20;let f=0;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);}
-function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);c.vx=0;c.vy=0;c.r=0;c.delta=0;c.stuck=0;}
+function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);c.vx=0;c.vy=0;c.r=0;c.delta=0;c.stuck=0;c.rev=false;c.revT=0;}
 // Ближайшая точка оси дороги по всей трассе (сетка 30 м): индекс и расстояние
 function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);let bi=-1,bd=1e18;
   for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;for(const i of L){const p=trk.pts[i],d=(p[0]-x)**2+(p[2]-z)**2;if(d<bd){bd=d;bi=i;}}}

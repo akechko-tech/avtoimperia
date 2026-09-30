@@ -157,13 +157,16 @@ function updateRaceHUD(){
   document.getElementById('hPos').textContent=place+'/'+R.cars.length;
   document.getElementById('hLap').textContent=T.cfg.laps>1?Math.min(T.cfg.laps,Math.max(1,F.lap+1))+'/'+T.cfg.laps:Math.round(clamp(F.prog/T.raceLen,0,1)*100)+'%';
   const tm=Math.max(0,R.time);document.getElementById('hTime').textContent=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
-  document.getElementById('hSpd').textContent=Math.round(Math.max(0,F.vx)*3.6)+(F.draft?'⇶':'');document.getElementById('hGear').textContent=F.vx<-0.2?'R':F.gear;
+  document.getElementById('hSpd').textContent=Math.round(Math.abs(F.vx)*3.6)+(F.draft?'⇶':'');document.getElementById('hGear').textContent=F.rev||F.vx<-0.2?'R':F.gear;
   const hb=document.getElementById('bHeat');hb.style.width=Math.min(100,Math.max(F.heat,F.eng||0))+'%';hb.style.background=F.heat>80?'var(--bad)':F.heat>55?'var(--warn)':'var(--good)';
   const tb=document.getElementById('bTyre'),tl=F.punct?0:100-Math.min(100,F.tyre);tb.style.width=tl+'%';tb.style.background=tl<25?'var(--bad)':tl<50?'var(--warn)':'var(--good)';
   const db=document.getElementById('bDmg'),dl=100-F.dmg;db.style.width=dl+'%';db.style.background=dl<40?'var(--bad)':dl<70?'var(--warn)':'var(--good)';
   {const fb=document.getElementById('bFuel'),need=fuelNeed(F,T),ok=F.fuel>=need;fb.style.width=F.fuel+'%';fb.style.background=F.fuel<12?'var(--bad)':ok?'var(--brass)':'#e8894a';
    const nk=document.getElementById('bFuelNeed');if(nk){nk.style.left=Math.min(100,need)+'%';nk.style.display=F.fuelRate&&F.fin===null&&need>1?'block':'none';}}
   document.getElementById('rReset').hidden=!(R.me&&R.me.stuck>1.2);
+  // педаль тормоза подсказывает задний ход: на месте — «держи — назад», включён — «НАЗАД ◀»
+  {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
+    if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();
   const lead=order[0],board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard');if(bd.dataset.t!==String(Math.floor(R.time*2))){bd.dataset.t=String(Math.floor(R.time*2));bd.innerHTML=board;}

@@ -215,7 +215,7 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .r-ctrl button{height:96px;border-radius:12px;border:2px solid var(--line);background:rgba(142,168,195,.08);font-family:var(--display);font-weight:800;font-size:22px;color:var(--text);touch-action:none;cursor:pointer}
 .r-ctrl button.down{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
 .r-ctrl .gas{border-color:var(--brass);color:var(--brass)}
-.r-ctrl .brk{border-color:#8a4a44;color:var(--bad)}
+.r-ctrl .brk{border-color:#8a4a44;color:var(--bad)}.r-ctrl .brk small{display:block;font-size:10px;font-weight:500;letter-spacing:0;opacity:.8;line-height:1.1;margin-top:2px}.r-ctrl .brk.rev{border-color:#c9a45c;color:#f3d38a;background:rgba(80,60,20,.55)}
 .r-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 0}
 .r-top .label{color:var(--brass);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .r-top .btns{flex-wrap:nowrap;flex:none}
