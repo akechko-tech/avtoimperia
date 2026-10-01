@@ -42,12 +42,23 @@ def wd_ru(q):
 # ---------- русские имена: name:ru → Викиданные → перевод и транскрипция (terrain_names) ----------
 import terrain_names as TN
 
+HOMO = str.maketrans({'a': 'а', 'c': 'с', 'e': 'е', 'o': 'о', 'p': 'р', 'x': 'х', 'y': 'у', 'A': 'А', 'B': 'В', 'C': 'С', 'E': 'Е', 'H': 'Н', 'K': 'К', 'M': 'М', 'O': 'О', 'P': 'Р', 'T': 'Т', 'X': 'Х'})
+def ru_ok(s):
+    """Русское имя из OSM или Викиданных годится, если оно по-русски: латинские «двойники» букв — в кириллицу, чужое имя (латиницей) — не годится."""
+    if not s: return ''
+    if re.search('[А-Яа-яЁё]', s) and re.search('[A-Za-z]', s):
+        t = s.translate(HOMO)
+        if not re.search('[A-Za-z]', re.sub(r'\b[IVXLC]+\b', '', t)): return t
+    if re.search('[A-Za-z]', re.sub(r'\b[IVXLC]+\b', '', s)): return ''
+    return s
 def ru_name(tags, host, kind=None):
     """Имя приметы: «Церковь св. Петра», «Замок Фарг», «Руины замка Кламм»."""
     if not tags: return ''
-    if tags.get('name:ru'): return TN.shorten_ru(tags['name:ru'])
+    nr = ru_ok(tags.get('name:ru') or '')
+    if nr: return TN.shorten_ru(nr)
     q = tags.get('wikidata')
-    if q and wd_ru(q): return TN.shorten_ru(wd_ru(q))
+    wr = ru_ok(wd_ru(q) or '') if q else ''
+    if wr: return TN.shorten_ru(wr)
     n = tags.get('name') or ''
     if host in ('cn', 'ly', 'ru') and not n: n = tags.get('name:en') or ''
     if host == 'ly' and n and not re.search('[A-Za-z]', n): n = tags.get('name:it') or tags.get('name:en') or tags.get('name:fr') or ''

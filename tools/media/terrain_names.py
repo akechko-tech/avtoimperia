@@ -455,7 +455,9 @@ KIND_RU = {'cathedral': ('собор', 'm'), 'church': ('церковь', 'f'), 
            'monument': ('памятник', 'm'), 'obelisk': ('обелиск', 'm'), 'statue': ('статуя', 'f'), 'column': ('колонна', 'f'), 'station': ('вокзал', 'm'),
            'mosque': ('мечеть', 'f'), 'pagoda': ('пагода', 'f'), 'aqueduct': ('акведук', 'm'), 'observatory': ('обсерватория', 'f'),
            'water_tower': ('водонапорная башня', 'f')}
-EXACT = {'pont saint-benezet': 'Авиньонский мост', 'pont d\'avignon': 'Авиньонский мост', 'mauseturm': 'Мышиная башня', 'palais des papes': 'Папский дворец',
+EXACT = {'musee des beaux-arts': 'Музей изящных искусств', 'musee des beaux arts': 'Музей изящных искусств', 'heilandskirche': 'Церковь Спасителя',
+         'heilandskirche am port von sacrow': 'Церковь Спасителя в Закрове', 'palais des beaux-arts': 'Дворец изящных искусств',
+         'pont saint-benezet': 'Авиньонский мост', 'pont d\'avignon': 'Авиньонский мост', 'mauseturm': 'Мышиная башня', 'palais des papes': 'Папский дворец',
          'royal pavilion': 'Королевский павильон', 'wellington monument': 'Памятник Веллингтону', 'scrabo tower': 'Башня Скрабо',
          'trophee d\'auguste': 'Трофей Августа', 'trophee des alpes': 'Трофей Августа', 'grosse point lighthouse': 'Маяк Гросс-Пойнт',
          'old dutch church': 'Старая голландская церковь', 'magazine fort': 'Пороховой форт', 'phoenix monument': 'Колонна Феникса',
@@ -542,7 +544,7 @@ def ru_label(name, host, kind=None, kind_ru=None):
     s = FORMER.sub('', s).strip() or s
     s = re.sub(r"(?i)(\w)['’]s\b", r'\1', s)  # St Peter's → St Peter
     s = re.sub(r"(?i)\bn[ée]o[- ]apostoli", 'Neoapostoli', s); s = re.sub(r"(?i)\bneu[- ]apostoli", 'Neuapostoli', s)
-    ex = EXACT.get(fold(s).strip())
+    ex = EXACT.get(fold(s).strip()) or EXACT.get(fold(re.sub(r"(?i)\s+(?:de|du|des|di|del|von|of|in)\s+[\w'’-]+$", '', s)).strip())
     if ex: return ex
     if kind_ru is None: kind_ru = KIND_RU.get(kind)
     toks = _tokens(s)
