@@ -1,10 +1,15 @@
-==== terrain amatol Атлантик-Сити: Аматол 1921
-  point None -> None fallback [39.605, -74.73]
-  osm nodes 9199 ways 263
-dem Copernicus_DSM_COG_10_N39_00_W075_00_DEM (687, 850) min -0.6409968137741089 max 55.57289505004883
-  elev 23.0 .. 38.0 smoothed 29.3 .. 29.3
-  places 1 forest 18 vine 0 water 3 rivers 1 coast 0 rails 5 removed {'reservoir': 0, 'aeroway': 0, 'industrial': 0, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 1 → 0 near + 0 far; cut by year {'late': 0, 'unknown': 0, 'former': 0, 'modern': 0, 'strict': 1, 'noname': 0, 'ruins': 0} []
-  cover {1: 0.832, 2: 0.002, 3: 0.003, 4: 0.0}
-  palette {'meadow': [23, 48, 43], 'dry': [26, 52, 47], 'soil': [33, 58, 51], 'n': 408}
-  -> amatol.json 34 KB, 302 points, 1 segments, bridges [] rails 0 coast 0
+==== terrain gueux Гран-при Марны: Реймс-Гё 1927
+  point None -> None fallback [49.2541, 3.9306]
+  point Gueux -> [49.2511954, 3.9102946] fallback [49.2512, 3.9103]
+  point None -> None fallback [49.26798, 3.92038]
+  point None -> None fallback [49.26028, 3.94962]
+  osm nodes 28440 ways 2620
+  route 176 nodes -> 1033 points, 8.26 km
+dem Copernicus_DSM_COG_10_N49_00_E003_00_DEM (720, 836) min nan max nan
+dem Copernicus_DSM_COG_10_N49_00_E004_00_DEM (720, 325) min nan max nan
+  elev 79.7 .. 109.7 smoothed 80.1 .. 108.3
+  places 10 forest 84 vine 27 water 55 rivers 4 coast 0 rails 18 removed {'reservoir': 49, 'aeroway': 2, 'industrial': 11, 'motorway': 0, 'rail_after_year': 13}
+  landmarks 28 → 9 near + 5 far; cut by year {'late': 0, 'unknown': 9, 'former': 0, 'modern': 2, 'strict': 0, 'noname': 1, 'ruins': 0} [('church', 'Церковь св. Лупа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Теодульфа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Симфориана'), ('church', 'Церковь св. Марии Магдалины'), ('church', 'Церковь св. Ремигия'), ('church', 'Церковь св. Ремигия'), ('church', 'Церковь св. Бриция'), ('castle', 'Замок Курселл'), ('cathedral', 'Реймсский собор'), ('monastery', 'Музей изящных искусств'), ('monastery', 'Монастырь св. Ремигия'), ('palace', 'Замок Краиер')]
+  cover {1: 0.173, 2: 0.027, 3: 0.024, 4: 0.041}
+  palette {'meadow': [33, 58, 46], 'dry': [64, 82, 61], 'soil': [91, 96, 74], 'n': 1384}
+  -> gueux.json 71 KB, 1033 points, 9 segments, bridges [] rails 0 coast 0
