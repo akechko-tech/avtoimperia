@@ -773,7 +773,17 @@ def anthem():
     import anthem as A
     A.run(MEDIA, log)
 
-JOBS = {'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
+def photos_scan():
+    sys.path.insert(0, TOOLS)
+    import photo_scan as P
+    P.run(MEDIA, TOOLS, log, jget, get)
+
+def photos():
+    sys.path.insert(0, TOOLS)
+    import photo_scan as P
+    P.fetch(MEDIA, TOOLS, log, jget, get)
+
+JOBS = {'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
         'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces}
 
 if __name__ == '__main__':

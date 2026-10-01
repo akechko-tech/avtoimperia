@@ -1,0 +1,1532 @@
+[
+{
+"k": "part:e2",
+"w": [
+"Daimler Phoenix",
+"Wilhelm Maybach",
+"Carburetor"
+],
+"q": [
+"Daimler Phönix 1897 car",
+"Maybach spray nozzle carburettor 1893",
+"Daimler Phoenix engine"
+],
+"pat": [
+"inventor=Maybach&before=priority:19050101"
+],
+"note": ""
+},
+{
+"k": "part:e10",
+"w": [
+"Cadillac Model A",
+"Henry M. Leland",
+"Dewar Trophy"
+],
+"q": [
+"Cadillac Model A 1903",
+"Cadillac single cylinder engine 1903"
+],
+"pat": [
+"inventor=Leland&before=priority:19100101"
+],
+"note": ""
+},
+{
+"k": "part:e3",
+"w": [
+"Aster (engine manufacturer)"
+],
+"q": [
+"Aster moteur 1903",
+"Aster engine automobile 1902"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:e9",
+"w": [
+"Ford Model T engine"
+],
+"q": [
+"Ford Model T engine block",
+"Ford Model T engine cylinder head"
+],
+"pat": [
+"q=engine&inventor=Henry+Ford&before=priority:19100101"
+],
+"note": ""
+},
+{
+"k": "part:e4",
+"w": [
+"Continental Motors Company"
+],
+"q": [
+"Continental Motors engine 1912",
+"Continental Red Seal engine"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:e5",
+"w": [
+"Knight engine",
+"Charles Yale Knight",
+"Willys-Knight"
+],
+"q": [
+"Knight sleeve valve engine",
+"Daimler Knight sleeve valve",
+"Willys-Knight 1915"
+],
+"pat": [
+"inventor=Charles+Y.+Knight&before=priority:19150101"
+],
+"note": ""
+},
+{
+"k": "part:e14",
+"w": [
+"Dodge Brothers",
+"Flathead engine"
+],
+"q": [
+"Dodge Brothers 1914 touring",
+"Dodge Brothers 1915 engine"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:e6",
+"w": [
+"Cadillac Type 51",
+"Cadillac V8 engine"
+],
+"q": [
+"Cadillac Type 51 1915",
+"Cadillac V8 1914 engine"
+],
+"pat": [
+"q=engine&assignee=Cadillac&before=priority:19170101"
+],
+"note": ""
+},
+{
+"k": "part:e11",
+"w": [
+"Austin 7",
+"Citroën 5CV",
+"Herbert Austin"
+],
+"q": [
+"Austin Seven 1923",
+"Citroën 5CV 1922 trefle"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:e7",
+"w": [
+"Overhead valve engine",
+"David Dunbar Buick"
+],
+"q": [
+"Buick valve-in-head engine",
+"Buick 1904 Model B"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:e8",
+"w": [
+"Duesenberg Model A",
+"Straight-eight engine",
+"Packard Eight"
+],
+"q": [
+"Duesenberg straight eight engine",
+"Packard Eight 1924",
+"Bugatti Type 35 engine"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:e12",
+"w": [
+"Chevrolet Series AC International",
+"Chevrolet Stovebolt engine"
+],
+"q": [
+"Chevrolet 1929 International six",
+"Chevrolet 1929 coach"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:g2",
+"w": [
+"Système Panhard",
+"Émile Levassor",
+"René Panhard"
+],
+"q": [
+"Panhard Levassor 1891",
+"Panhard et Levassor 1894"
+],
+"pat": [
+"inventor=Levassor&before=priority:19000101"
+],
+"note": ""
+},
+{
+"k": "part:g3",
+"w": [
+"Renault Voiturette",
+"Louis Renault (industrialist)",
+"Drive shaft"
+],
+"q": [
+"Renault Type A 1899",
+"Renault voiturette 1898",
+"Louis Renault 1899"
+],
+"pat": [
+"inventor=Louis+Renault&before=priority:19100101"
+],
+"note": ""
+},
+{
+"k": "part:g4",
+"w": [
+"Oldsmobile Curved Dash",
+"Epicyclic gearing"
+],
+"q": [
+"Ford Model T pedals",
+"Ford Model T planetary transmission",
+"Oldsmobile Curved Dash 1902"
+],
+"pat": [
+"q=transmission&inventor=Henry+Ford&before=priority:19120101"
+],
+"note": ""
+},
+{
+"k": "part:g5",
+"w": [
+"Rolls-Royce Silver Ghost",
+"Manual transmission"
+],
+"q": [
+"Silver Ghost 1907",
+"gearbox 1910 automobile"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:g6",
+"w": [
+"Chevrolet Series 490"
+],
+"q": [
+"Chevrolet 490 1916",
+"Dodge Brothers 1916 touring car"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:g7",
+"w": [
+"Synchromesh",
+"Cadillac Series 341"
+],
+"q": [
+"Cadillac 1928 341",
+"Cadillac 1929 sedan",
+"synchromesh gearbox"
+],
+"pat": [
+"q=synchronizing+transmission&before=priority:19290101"
+],
+"note": ""
+},
+{
+"k": "part:k2",
+"w": [
+"Drum brake"
+],
+"q": [
+"drum brake 1902",
+"internal expanding brake 1905"
+],
+"pat": [
+"q=brake&inventor=Renault&before=priority:19100101"
+],
+"note": ""
+},
+{
+"k": "part:k3",
+"w": [
+"Isotta Fraschini",
+"Arrol-Johnston"
+],
+"q": [
+"Isotta Fraschini 1910",
+"Isotta Fraschini four wheel brakes",
+"Isotta Fraschini KM 1911"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:k6",
+"w": [
+"Hispano-Suiza H6",
+"Marc Birkigt"
+],
+"q": [
+"Hispano-Suiza H6 1919",
+"Hispano-Suiza H6B",
+"Marc Birkigt"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:k4",
+"w": [
+"Malcolm Loughead",
+"Duesenberg Model A",
+"Hydraulic brake",
+"Chrysler Six"
+],
+"q": [
+"Lockheed hydraulic brakes 1920s advertisement",
+"Duesenberg Model A 1922",
+"Chrysler Six 1924"
+],
+"pat": [
+"inventor=Loughead&before=priority:19250101"
+],
+"note": ""
+},
+{
+"k": "part:k5",
+"w": [
+"Ford Model A (1927–1931)",
+"Vincent Bendix"
+],
+"q": [
+"Bendix brakes 1920s",
+"Ford Model A 1928 brakes"
+],
+"pat": [
+"q=brake&inventor=Bendix&before=priority:19290101"
+],
+"note": ""
+},
+{
+"k": "part:c3",
+"w": [
+"Mercedes 35 hp",
+"Emil Jellinek",
+"Mercedes-Simplex"
+],
+"q": [
+"Mercedes 35 PS 1901",
+"Mercedes Simplex 1902"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:c6",
+"w": [
+"Vanadium",
+"Childe Harold Wills"
+],
+"q": [
+"vanadium steel Ford Model T",
+"C. Harold Wills"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:c4",
+"w": [
+"A. O. Smith"
+],
+"q": [
+"A. O. Smith automobile frame",
+"pressed steel frame automobile 1910"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:c5",
+"w": [
+"Shock absorber"
+],
+"q": [
+"Houdaille shock absorber",
+"Hartford shock absorber 1910",
+"Truffault Hartford shock absorber"
+],
+"pat": [
+"q=shock+absorber&inventor=Houdaille&before=priority:19260101"
+],
+"note": ""
+},
+{
+"k": "part:c7",
+"w": [
+"Lancia Lambda",
+"Vincenzo Lancia"
+],
+"q": [
+"Lancia Lambda 1922",
+"Lancia Lambda sliding pillar suspension"
+],
+"pat": [
+"q=suspension&inventor=Lancia&before=priority:19260101"
+],
+"note": ""
+},
+{
+"k": "part:w2",
+"w": [
+"Michelin",
+"André Michelin",
+"Édouard Michelin",
+"Paris–Bordeaux–Paris"
+],
+"q": [
+"Michelin Eclair 1895",
+"Michelin brothers 1895",
+"Bibendum 1898 poster"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:w3",
+"w": [
+"Continental AG",
+"Tread"
+],
+"q": [
+"Continental Pneumatik 1904",
+"tire tread 1905 advertisement",
+"Dunlop tyre 1905"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:w4",
+"w": [
+"1906 French Grand Prix",
+"Ferenc Szisz"
+],
+"q": [
+"jante amovible Michelin",
+"Szisz 1906 Renault",
+"Michelin detachable rim"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:w5",
+"w": [
+"Rudge-Whitworth",
+"Centerlock wheel"
+],
+"q": [
+"Rudge-Whitworth wire wheel",
+"Rudge Whitworth detachable wheel advertisement"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:w6",
+"w": [
+"Goodyear Tire and Rubber Company",
+"Cord tire"
+],
+"q": [
+"Goodyear cord tire 1913",
+"Palmer cord tyre",
+"Silvertown cord"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:w7",
+"w": [
+"GKN Sankey",
+"Steel wheel"
+],
+"q": [
+"Sankey wheel",
+"Sankey steel wheels advertisement"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:w8",
+"w": [
+"Harvey S. Firestone",
+"Firestone Tire and Rubber Company",
+"Balloon tire"
+],
+"q": [
+"Firestone balloon tire 1923",
+"Harvey Firestone 1920s"
+],
+"pat": [
+"q=pneumatic+tire&inventor=Firestone&before=priority:19260101"
+],
+"note": ""
+},
+{
+"k": "part:b2",
+"w": [
+"Tonneau"
+],
+"q": [
+"rear entrance tonneau 1902",
+"tonneau 1901 automobile"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b3",
+"w": [
+"Touring car",
+"Phaeton (carriage)"
+],
+"q": [
+"side entrance touring car 1905",
+"touring car 1907"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b11",
+"w": [
+"Limousine"
+],
+"q": [
+"limousine 1908 automobile",
+"Rolls-Royce Silver Ghost limousine"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b10",
+"w": [
+"Roadster (automobile)",
+"Stutz Bearcat"
+],
+"q": [
+"Stutz Bearcat 1914",
+"roadster 1912"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b4",
+"w": [
+"Sedan (automobile)",
+"Fisher Body",
+"Cadillac Model Thirty"
+],
+"q": [
+"Cadillac 1910 closed body",
+"Fisher Body 1910",
+"Hudson 1913 sedan"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b9",
+"w": [
+"Essex (automobile)",
+"Hudson Motor Car Company"
+],
+"q": [
+"Essex Coach 1922",
+"Essex coach 1925"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b5",
+"w": [
+"Edward G. Budd",
+"Budd Company",
+"Citroën B10"
+],
+"q": [
+"Citroën B10 tout acier",
+"Budd all-steel body",
+"Dodge Brothers all steel 1923"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b6",
+"w": [
+"Daimler Motor-Lastwagen"
+],
+"q": [
+"Daimler 1896 truck",
+"delivery van 1902"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b7",
+"w": [
+"Ford Model TT",
+"White Motor Company"
+],
+"q": [
+"truck 1912",
+"Mack truck 1912"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:b8",
+"w": [
+"Mack AC",
+"Liberty truck"
+],
+"q": [
+"Mack AC Bulldog",
+"Liberty truck 1918"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "part:t3",
+"w": [
+"Austro-Daimler",
+"Mercer Raceabout"
+],
+"q": [
+"Austro-Daimler Prince Henry 1910",
+"Mercer Raceabout 1912"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:tools",
+"w": [
+"Machine tool",
+"Brown & Sharpe"
+],
+"q": [
+"machine shop 1910 automobile",
+"milling machine 1910",
+"automobile factory machine shop 1912"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:elec",
+"w": [
+"Line shaft"
+],
+"q": [
+"line shaft machine shop",
+"electric motor factory 1915"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:parts",
+"w": [
+"Interchangeable parts"
+],
+"q": [
+"Cadillac Dewar trophy 1908",
+"Cadillac 1908 Brooklands"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:line",
+"w": [
+"Highland Park Ford Plant",
+"Assembly line"
+],
+"q": [
+"Ford assembly line 1913",
+"Highland Park magneto assembly",
+"Ford chassis assembly line 1914"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:school",
+"w": [
+"Henry Ford Trade School"
+],
+"q": [
+"Ford trade school",
+"Ford English School"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:qc",
+"w": [
+"Gauge block",
+"Carl Edvard Johansson"
+],
+"q": [
+"Johansson gauge blocks",
+"inspection factory 1915 gauges"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:foundry",
+"w": [
+"Ford River Rouge complex"
+],
+"q": [
+"Rouge plant foundry 1920s",
+"foundry 1920s automobile"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:press",
+"w": [
+"Machine press"
+],
+"q": [
+"press shop 1920s automobile",
+"body stamping press 1920"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:paint",
+"w": [
+"Duco"
+],
+"q": [
+"Duco lacquer 1924",
+"spray painting automobile 1920s"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "tech:credit",
+"w": [
+"Ally Financial",
+"John J. Raskob"
+],
+"q": [
+"GMAC 1919",
+"installment buying 1920s automobile"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:quake",
+"w": [
+"1906 San Francisco earthquake"
+],
+"q": [
+"San Francisco 1906 earthquake automobile",
+"San Francisco 1906 Market Street fire"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:panic",
+"w": [
+"Panic of 1907",
+"J. P. Morgan",
+"Knickerbocker Trust Company"
+],
+"q": [
+"Knickerbocker Trust 1907 crowd"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:bleriot",
+"w": [
+"Louis Blériot",
+"Blériot XI"
+],
+"q": [
+"Bleriot Dover 1909",
+"Bleriot 1909 Calais"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:titanic",
+"w": [
+"Titanic"
+],
+"q": [
+"Titanic Southampton 1912",
+"Titanic 1912 departure"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:usawar",
+"w": [
+"Liberty truck",
+"American entry into World War I"
+],
+"q": [
+"Liberty truck 1918",
+"US Army trucks France 1918"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:armistice",
+"w": [
+"Armistice of 11 November 1918",
+"Spanish flu"
+],
+"q": [
+"Armistice day 1918 celebration",
+"1918 influenza ambulance"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:slump",
+"w": [
+"Depression of 1920–1921",
+"William C. Durant"
+],
+"q": [
+"1920 automobile price cut",
+"unsold cars 1921"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:inflation",
+"w": [
+"Hyperinflation in the Weimar Republic"
+],
+"q": [
+"German inflation 1923 banknotes",
+"Weimar inflation money basket"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "w:lindbergh",
+"w": [
+"Charles Lindbergh",
+"Spirit of St. Louis"
+],
+"q": [
+"Lindbergh Le Bourget 1927",
+"Lindbergh parade New York 1927"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:selden",
+"w": [
+"George B. Selden",
+"Selden patent"
+],
+"q": [
+"Selden patent automobile",
+"Selden car 1877"
+],
+"pat": [
+"q=road+engine&inventor=Selden&before=priority:18960101"
+],
+"note": ""
+},
+{
+"k": "l:five",
+"w": [
+"Ford's $5 day"
+],
+"q": [
+"Ford five dollar day 1914 crowd",
+"Highland Park 1914 workers"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:dodge",
+"w": [
+"Dodge v. Ford Motor Co.",
+"John Francis Dodge",
+"Horace Elgin Dodge"
+],
+"q": [
+"Dodge brothers 1915"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:mckenna",
+"w": [
+"McKenna duties",
+"Reginald McKenna"
+],
+"q": [
+"Ford Trafford Park 1911"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:redflag",
+"w": [
+"Locomotive Acts",
+"Emancipation Run"
+],
+"q": [
+"red flag act 1865",
+"Emancipation Run 1896"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:hptax",
+"w": [
+"Tax horsepower",
+"RAC rating"
+],
+"q": [
+"Austin Seven 1923 advertisement"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:dbmerge",
+"w": [
+"Daimler-Benz",
+"Mercedes-Benz"
+],
+"q": [
+"Mercedes-Benz 1926",
+"Daimler-Benz 1926"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:dawes",
+"w": [
+"Dawes Plan",
+"Rentenmark"
+],
+"q": [
+"Rentenmark 1923"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:jellinek",
+"w": [
+"Emil Jellinek",
+"Mercédès Jellinek"
+],
+"q": [
+"Mercedes Jellinek",
+"Emil Jellinek Nice 1901"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "l:agnelli",
+"w": [
+"Giovanni Agnelli",
+"Fiat"
+],
+"q": [
+"Fiat 1908",
+"Fiat Corso Dante 1906"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Benz Velo",
+"w": [
+"Benz Velo",
+"Bertha Benz"
+],
+"q": [
+"Benz Velo 1894"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Renault Voiturette",
+"w": [
+"Renault Voiturette",
+"Marcel Renault"
+],
+"q": [
+"Renault Type B 1900"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Oldsmobile Curved Dash",
+"w": [
+"Oldsmobile Curved Dash",
+"Ransom E. Olds"
+],
+"q": [
+"Oldsmobile Curved Dash 1903"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Cadillac Model A",
+"w": [
+"Cadillac Model A",
+"Henry M. Leland"
+],
+"q": [
+"Cadillac 1903"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Ford Model T",
+"w": [
+"Ford Model T",
+"Henry Ford"
+],
+"q": [
+"Ford Model T 1910 touring",
+"Ford Model T 1913"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Chevrolet Series 490",
+"w": [
+"Chevrolet Series 490",
+"Louis Chevrolet"
+],
+"q": [
+"Chevrolet 490 1917"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Citroën Type A",
+"w": [
+"Citroën Type A",
+"André Citroën"
+],
+"q": [
+"Citroën Type A 1919"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Ford Model A (1927–1931)",
+"w": [
+"Ford Model A (1927–1931)",
+"Edsel Ford"
+],
+"q": [
+"Ford Model A 1928 Tudor"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Peugeot Type 3",
+"w": [
+"Peugeot Type 3",
+"Armand Peugeot"
+],
+"q": [
+"Peugeot Type 3 1891"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Panhard et Levassor",
+"w": [
+"Panhard et Levassor",
+"René Panhard"
+],
+"q": [
+"Panhard Levassor 1895"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Ford Model A (1903–04)",
+"w": [
+"Ford Model A (1903–04)"
+],
+"q": [
+"Ford Model A 1903"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Buick Model 10",
+"w": [
+"Buick Model 10",
+"David Dunbar Buick"
+],
+"q": [
+"Buick Model 10 1908"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Cadillac Model Thirty",
+"w": [
+"Cadillac Model Thirty"
+],
+"q": [
+"Cadillac 1910 touring"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Dodge Brothers",
+"w": [
+"Dodge Brothers",
+"Horace Elgin Dodge"
+],
+"q": [
+"Dodge Brothers 1914"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Fiat 501",
+"w": [
+"Fiat 501",
+"Lingotto"
+],
+"q": [
+"Fiat 501 1919"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Chrysler",
+"w": [
+"Walter Chrysler",
+"Chrysler Six"
+],
+"q": [
+"Chrysler Six 1924",
+"Chrysler B-70"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Peugeot 201",
+"w": [
+"Peugeot 201"
+],
+"q": [
+"Peugeot 201 1929"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Daimler-Motoren-Gesellschaft",
+"w": [
+"Daimler-Motoren-Gesellschaft",
+"Gottlieb Daimler"
+],
+"q": [
+"Daimler Riemenwagen 1895",
+"Daimler 1898"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Mercedes 35 hp",
+"w": [
+"Mercedes 35 hp",
+"Mercédès Jellinek"
+],
+"q": [
+"Mercedes 35 PS 1901"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Rolls-Royce Silver Ghost",
+"w": [
+"Rolls-Royce Silver Ghost",
+"Henry Royce",
+"Claude Johnson"
+],
+"q": [
+"Silver Ghost AX201"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Packard Twin Six",
+"w": [
+"Packard Twin Six",
+"Jesse G. Vincent"
+],
+"q": [
+"Packard Twin Six 1916"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Hispano-Suiza H6",
+"w": [
+"Hispano-Suiza H6"
+],
+"q": [
+"Hispano-Suiza H6 1922"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Rolls-Royce Phantom I",
+"w": [
+"Rolls-Royce Phantom I"
+],
+"q": [
+"Rolls-Royce Phantom 1926"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Duesenberg Model J",
+"w": [
+"Duesenberg Model J",
+"Fred Duesenberg",
+"E. L. Cord"
+],
+"q": [
+"Duesenberg Model J 1929"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Daimler Motor-Lastwagen",
+"w": [
+"Daimler Motor-Lastwagen"
+],
+"q": [
+"Daimler Lastwagen 1896"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Peugeot Type 64",
+"w": [
+"Peugeot Type 64"
+],
+"q": [
+"Peugeot camion 1905"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Ford Model TT",
+"w": [
+"Ford Model TT"
+],
+"q": [
+"Ford Model TT 1920"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Austro-Daimler Prince Henry",
+"w": [
+"Ferdinand Porsche",
+"Prince Henry of Prussia"
+],
+"q": [
+"Austro-Daimler Prinz Heinrich 1910"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Mercer Raceabout",
+"w": [
+"Mercer Raceabout",
+"Finley Robertson Porter"
+],
+"q": [
+"Mercer Raceabout 1911"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Stutz Bearcat",
+"w": [
+"Stutz Bearcat",
+"Harry C. Stutz"
+],
+"q": [
+"Stutz Bearcat 1914"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Vauxhall 30-98",
+"w": [
+"Vauxhall 30-98",
+"Laurence Pomeroy"
+],
+"q": [
+"Vauxhall 30-98 1914"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Bentley 3 Litre",
+"w": [
+"Bentley 3 Litre",
+"W. O. Bentley",
+"Bentley Boys"
+],
+"q": [
+"Bentley 3 Litre 1924 Le Mans"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Alfa Romeo RL",
+"w": [
+"Alfa Romeo RL",
+"Giuseppe Merosi"
+],
+"q": [
+"Alfa Romeo RL Targa Florio 1923"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Bugatti Type 43",
+"w": [
+"Bugatti Type 43",
+"Ettore Bugatti"
+],
+"q": [
+"Bugatti Type 43 1927"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Mercedes-Benz SSK",
+"w": [
+"Mercedes-Benz SSK",
+"Rudolf Caracciola"
+],
+"q": [
+"Mercedes SSK 1928"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Berliet CBA",
+"w": [
+"Berliet CBA",
+"Marius Berliet",
+"Voie Sacrée"
+],
+"q": [
+"Berliet CBA 1915"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Liberty truck",
+"w": [
+"Liberty truck"
+],
+"q": [
+"Liberty truck 1918"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "car:Mack AC",
+"w": [
+"Mack Trucks"
+],
+"q": [
+"Mack AC 1916",
+"Mack Bulldog"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "inv:bonds",
+"w": [
+"Liberty bond",
+"War bond",
+"Rente (France)"
+],
+"q": [
+"Liberty Loan poster 1918",
+"Kriegsanleihe Plakat 1917",
+"War Loan poster 1917 British"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "inv:stocks",
+"w": [
+"New York Stock Exchange",
+"Dow Jones Industrial Average",
+"Ticker tape",
+"Paris Bourse"
+],
+"q": [
+"New York Stock Exchange 1920s floor",
+"ticker tape machine 1920s"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "inv:supply",
+"w": [
+"Fordlândia",
+"Ford River Rouge complex",
+"Detroit, Toledo and Ironton Railroad"
+],
+"q": [
+"Ford iron mine 1920s",
+"rubber plantation 1920s",
+"steel mill 1920s"
+],
+"pat": [],
+"note": ""
+},
+{
+"k": "promo",
+"w": [
+"Advertising",
+"Billboard"
+],
+"q": [
+"automobile advertisement 1912",
+"automobile dealer showroom 1920s",
+"automobile show window 1920s"
+],
+"pat": [],
+"note": ""
+}
+]

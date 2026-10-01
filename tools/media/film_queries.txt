@@ -80,3 +80,79 @@ tractor 1910s
 road construction 1920s
 automobile accident 1900s film
 car ferry 1920s
+# 0.25: кадры по темам технологий и событий
+tire factory 1920s
+rubber factory film
+Goodyear Akron 1920s
+Firestone film 1920s
+Michelin film
+Dunlop tyre film
+tire changing 1910s
+rubber plantation film 1920s
+steel mill 1910s film
+iron foundry film 1920s
+blast furnace film 1920s
+Ford River Rouge film
+Ford Rouge plant 1920s
+Ford Model T assembly film
+Ford factory 1920s workers
+Cadillac factory film
+Packard factory film
+Dodge Brothers film
+Chevrolet factory film
+Citroën usine film
+Renault usine Billancourt film
+Fiat Lingotto film
+Morris Cowley factory film
+Austin Longbridge film
+Opel Rüsselsheim film
+Daimler Untertürkheim film
+automobile body press film
+car body welding film 1920s
+spray painting car 1920s
+car testing film 1920s
+brake test film 1920s
+automobile hill test 1910s
+gasoline station 1920s film
+filling station 1920s
+garage mechanic 1920s film
+car repair 1910s film
+driving lesson film 1920s
+traffic policeman 1920s film
+traffic New York 1920s film
+Paris traffic 1920s film
+London traffic 1920s film
+Berlin Verkehr 1920er Film
+car dealer 1920s film
+used car lot 1920s
+automobile advertising film 1920s
+Croisière noire Citroën film
+Citroën half-track Sahara 1923
+automobile snow 1920s film
+automobile desert film 1920s
+Monte Carlo Rally film
+Le Mans 1923 film
+Le Mans 1928 film
+Bentley Le Mans film
+Mille Miglia 1927 film
+Targa Florio film
+Alpine trial automobile film
+Tour de France automobile film
+A Trip Down Market Street 1906
+San Francisco earthquake 1906 film
+San Francisco fire 1906 film
+Titanic 1912 film
+Olympic Titanic film
+Lindbergh 1927 film
+Lindbergh Paris film
+German inflation 1923 film
+Inflation 1923 Film
+Armistice 1918 Paris film
+influenza 1918 film
+Liberty truck film
+World War I motor convoy film
+Taxis de la Marne film
+Voie Sacrée film
+New York Stock Exchange 1920s film
+Wall Street 1920s film
+prohibition 1920s film
