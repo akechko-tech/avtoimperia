@@ -39,72 +39,34 @@ def wd_ru(q):
     if r: r = re.sub(r'\s*\(.*?\)\s*$', '', r)  # «Валдай (город)» → «Валдай»
     return r
 
-# ---------- транслитерация (запасной путь, когда русского имени нет) ----------
-FR = [('eaux', 'о'), ('eau', 'о'), ('aux', 'о'), ('ault', 'о'), ('ou', 'у'), ('oi', 'уа'), ('ai', 'е'), ('ei', 'е'), ('au', 'о'), ('ch', 'ш'), ('gn', 'нь'),
-      ('qu', 'к'), ('gue', 'г'), ('gui', 'ги'), ('ge', 'же'), ('gi', 'жи'), ('ph', 'ф'), ('th', 'т'), ('ill', 'й'), ('eu', 'ё'), ('œu', 'ё'), ('an', 'ан'), ('en', 'ан'),
-      ('in', 'ен'), ('ç', 'с'), ('é', 'е'), ('è', 'е'), ('ê', 'е'), ('ë', 'е'), ('à', 'а'), ('â', 'а'), ('î', 'и'), ('ï', 'и'), ('ô', 'о'), ('û', 'ю'), ('ù', 'ю'), ('ü', 'ю'),
-      ('ce', 'се'), ('ci', 'си'), ('cy', 'си'), ('u', 'ю'), ('y', 'и'), ('j', 'ж'), ('w', 'в'), ('x', 'кс'), ('h', '')]
-DE = [('tsch', 'ч'), ('sch', 'ш'), ('ch', 'х'), ('ck', 'к'), ('tz', 'ц'), ('ei', 'ай'), ('ai', 'ай'), ('ie', 'и'), ('eu', 'ой'), ('äu', 'ой'), ('au', 'ау'), ('ph', 'ф'),
-      ('qu', 'кв'), ('ä', 'е'), ('ö', 'ё'), ('ü', 'ю'), ('ß', 'сс'), ('z', 'ц'), ('w', 'в'), ('v', 'ф'), ('j', 'й'), ('y', 'и'), ('x', 'кс'), ('ah', 'а'), ('eh', 'е'),
-      ('oh', 'о'), ('uh', 'у'), ('ih', 'и'), ('h', 'х')]
-IT = [('gli', 'льи'), ('gn', 'нь'), ('sch', 'ск'), ('sci', 'ши'), ('sce', 'ше'), ('cia', 'ча'), ('cio', 'чо'), ('ciu', 'чу'), ('ci', 'чи'), ('ce', 'че'),
-      ('gia', 'джа'), ('gio', 'джо'), ('giu', 'джу'), ('gi', 'джи'), ('ge', 'дже'), ('chi', 'ки'), ('che', 'ке'), ('ghi', 'ги'), ('ghe', 'ге'), ('qu', 'кв'), ('zz', 'цц'),
-      ('z', 'ц'), ('h', ''), ('j', 'й'), ('y', 'и'), ('à', 'а'), ('è', 'е'), ('é', 'е'), ('ì', 'и'), ('ò', 'о'), ('ù', 'у')]
-EN = [('ough', 'о'), ('augh', 'о'), ('tch', 'ч'), ('sh', 'ш'), ('ch', 'ч'), ('th', 'т'), ('ph', 'ф'), ('wh', 'у'), ('ck', 'к'), ('ee', 'и'), ('ea', 'и'), ('oo', 'у'),
-      ('ou', 'ау'), ('ow', 'оу'), ('ay', 'ей'), ('ey', 'и'), ('oy', 'ой'), ('ai', 'ей'), ('qu', 'кв'), ('w', 'у'), ('y', 'и'), ('j', 'дж'), ('x', 'кс'), ('c', 'к'), ('h', 'х')]
-ES = [('ll', 'й'), ('ñ', 'нь'), ('ch', 'ч'), ('qu', 'к'), ('gue', 'ге'), ('gui', 'ги'), ('ge', 'хе'), ('gi', 'хи'), ('ce', 'се'), ('ci', 'си'), ('j', 'х'), ('z', 'с'), ('h', ''),
-      ('y', 'и'), ('á', 'а'), ('é', 'е'), ('í', 'и'), ('ó', 'о'), ('ú', 'у'), ('x', 'кс')]
-NL = [('sch', 'сх'), ('ij', 'ей'), ('ei', 'ей'), ('oe', 'у'), ('ui', 'ёй'), ('ou', 'ау'), ('au', 'ау'), ('ch', 'х'), ('aa', 'а'), ('ee', 'е'), ('oo', 'о'), ('uu', 'ю'),
-      ('g', 'х'), ('j', 'й'), ('w', 'в'), ('v', 'ф'), ('y', 'ей'), ('z', 'з'), ('u', 'ю'), ('x', 'кс')]
-BASE = {'a': 'а', 'b': 'б', 'c': 'к', 'd': 'д', 'e': 'е', 'f': 'ф', 'g': 'г', 'h': 'х', 'i': 'и', 'j': 'й', 'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о', 'p': 'п',
-        'q': 'к', 'r': 'р', 's': 'с', 't': 'т', 'u': 'у', 'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'и', 'z': 'з'}
-LANG = {'fr': FR, 'be': FR, 'mc': FR, 'ch': DE, 'de': DE, 'at': DE, 'it': IT, 'uk': EN, 'ie': EN, 'us': EN, 'es': ES, 'nl': NL}
-WORD = {'fr': {'saint': 'сен', 'sainte': 'сент', 'sur': 'сюр', 'sous': 'су', 'les': 'ле', 'le': 'ле', 'la': 'ла', 'de': 'де', 'des': 'де', 'du': 'дю', 'en': 'ан', 'et': 'э',
-               'église': 'церковь', 'eglise': 'церковь', 'château': 'замок', 'chateau': 'замок', 'cathédrale': 'собор', 'chapelle': 'часовня', 'abbaye': 'аббатство', 'pont': 'мост',
-               'moulin': 'мельница', 'phare': 'маяк', 'tour': 'башня', 'porte': 'ворота', 'notre-dame': 'нотр-дам', 'gare': 'вокзал'},
-        'de': {'sankt': 'санкт', 'st.': 'санкт', 'kirche': 'церковь', 'burg': 'замок', 'schloss': 'замок', 'dom': 'собор', 'kapelle': 'часовня', 'kloster': 'монастырь',
-               'mühle': 'мельница', 'turm': 'башня', 'tor': 'ворота', 'brücke': 'мост', 'bahnhof': 'вокзал', 'bad': 'бад', 'an': 'ан', 'der': 'дер', 'am': 'ам', 'im': 'им'},
-        'it': {'san': 'сан', 'santa': 'санта', 'santo': 'санто', 'chiesa': 'церковь', 'castello': 'замок', 'duomo': 'собор', 'cattedrale': 'собор', 'torre': 'башня',
-               'porta': 'ворота', 'ponte': 'мост', 'stazione': 'вокзал', 'di': 'ди', 'del': 'дель', 'della': 'делла', 'sul': 'суль', 'al': 'аль'},
-        'en': {'saint': 'сент', 'st': 'сент', 'church': 'церковь', 'castle': 'замок', 'cathedral': 'собор', 'chapel': 'часовня', 'abbey': 'аббатство', 'tower': 'башня',
-               'bridge': 'мост', 'mill': 'мельница', 'lighthouse': 'маяк', 'station': 'вокзал', 'hall': 'холл', 'house': 'хаус', 'the': '', 'of': '', 'and': 'и'},
-        'es': {'san': 'сан', 'santa': 'санта', 'iglesia': 'церковь', 'castillo': 'замок', 'catedral': 'собор', 'torre': 'башня', 'puente': 'мост', 'de': 'де', 'del': 'дель', 'la': 'ла'}}
-LW = {'fr': 'fr', 'be': 'fr', 'mc': 'fr', 'de': 'de', 'at': 'de', 'ch': 'de', 'it': 'it', 'uk': 'en', 'ie': 'en', 'us': 'en', 'es': 'es'}
-VOW = set('аеёиоуыэюя')
+# ---------- русские имена: name:ru → Викиданные → перевод и транскрипция (terrain_names) ----------
+import terrain_names as TN
 
-def translit(name, host):
-    if not name or re.search('[А-Яа-яЁё]', name): return name
-    rules = LANG.get(host, EN); wmap = WORD.get(LW.get(host, 'en'), {})
-    out = []
-    for word in re.split(r'(\s+|-)', name):
-        if not word or word.isspace() or word == '-': out.append(word); continue
-        lw = word.lower()
-        if lw in wmap: out.append(wmap[lw]); continue
-        s = lw
-        if host in ('fr', 'be', 'mc') and len(s) > 3 and s[-1] in 'stdxz' and not s.endswith('ez'): s = s[:-1]
-        if host in ('fr', 'be', 'mc') and len(s) > 3 and s.endswith('e') and not s.endswith('ée'): s = s[:-1]
-        if host in ('de', 'at', 'ch') and s.startswith('st'): s = 'шт' + s[2:]
-        if host in ('de', 'at', 'ch') and s.startswith('sp'): s = 'шп' + s[2:]
-        if host in ('de', 'at', 'ch') and len(s) > 1 and s[0] == 's' and s[1] in 'aeiouäöü': s = 'з' + s[1:]
-        res = ''; i = 0
-        while i < len(s):
-            for a, b in rules:
-                if s.startswith(a, i): res += b; i += len(a); break
-            else:
-                ch = s[i]; res += BASE.get(ch, ch if ch.isalpha() and ord(ch) > 0x400 else ''); i += 1
-        res = res.replace('йи', 'и').replace('кс', 'кс')
-        out.append(res[:1].upper() + res[1:] if res else res)
-    t = ''.join(out).strip()
-    return t or name
-
-def ru_name(tags, host):
+def ru_name(tags, host, kind=None):
+    """Имя приметы: «Церковь св. Петра», «Замок Фарг», «Руины замка Кламм»."""
     if not tags: return ''
-    for k in ('name:ru',):
-        if tags.get(k): return tags[k]
+    if tags.get('name:ru'): return TN.shorten_ru(tags['name:ru'])
+    q = tags.get('wikidata')
+    if q and wd_ru(q): return TN.shorten_ru(wd_ru(q))
+    n = tags.get('name') or ''
+    if host in ('cn', 'ly', 'ru') and not n: n = tags.get('name:en') or ''
+    if host == 'ly' and n and not re.search('[A-Za-z]', n): n = tags.get('name:it') or tags.get('name:en') or tags.get('name:fr') or ''
+    if not n: return ''
+    return TN.ru_label(n, host, kind) or ''
+
+def ru_place_name(tags, host, river=False):
+    """Имя города, деревни, реки: name:ru → Викиданные → транскрипция («Сен-Мартен-ан-Кампань»)."""
+    if not tags: return ''
+    if tags.get('name:ru'): return tags['name:ru']
     q = tags.get('wikidata')
     if q and wd_ru(q): return wd_ru(q)
     n = tags.get('name') or tags.get('name:en') or ''
-    return translit(n, host)
+    if host == 'ly' and n and not re.search('[A-Za-z]', n): n = tags.get('name:it') or tags.get('name:en') or ''
+    if TN.CJK.search(n or ''): return TN.cn_label(n) or ''
+    return TN.ru_place(n, host, river)
+
+def translit(name, host):  # совместимость
+    return TN.ru_place(name, host)
 
 # ---------- геометрия ----------
 def rect_of(P):
@@ -140,6 +102,7 @@ CHURCH_RE = re.compile(r'cath[ée]dral|kathedral|\bdom\b|duomo|cattedrale|catedr
 def classify(t):
     h, b, mm, am = t.get('historic', ''), t.get('building', ''), t.get('man_made', ''), t.get('amenity', '')
     nm = (t.get('name') or '') + ' ' + (t.get('name:ru') or '')
+    if mm in ('pier', 'breakwater', 'groyne', 'communications_tower', 'mast') or t.get('tower:type') in ('communication', 'radar', 'lighting'): return None
     if mm == 'lighthouse' or b == 'lighthouse': return 'lighthouse'
     if mm == 'windmill' or b == 'windmill' or h == 'windmill': return 'windmill'
     if mm == 'watermill' or h == 'watermill': return 'watermill'
@@ -170,7 +133,7 @@ def classify(t):
         if mt == 'column': return 'column'
         if mt in ('plaque', 'stone', 'stolperstein', 'blue_plaque', 'cross', 'war_grave', 'ghost_bike', 'bench', 'tree'): return None
         return 'monument'
-    if h == 'tower' or (mm == 'tower' and t.get('tower:type', '') in ('bell_tower', 'defensive', 'observation', 'watchtower', 'clock')): return 'tower'
+    if h == 'tower' or (mm == 'tower' and t.get('tower:type', '') in ('bell_tower', 'defensive', 'watchtower', 'clock')) or (mm == 'tower' and h): return 'tower'
     if mm == 'water_tower': return 'water_tower'
     if h == 'observatory' or b == 'observatory' or mm == 'observatory': return 'observatory'
     return None
@@ -183,9 +146,24 @@ DEF = {'cathedral': (60, 28, 55), 'church': (24, 12, 26), 'chapel': (9, 6, 9), '
        'monument': (5, 5, 8), 'obelisk': (3, 3, 14), 'statue': (3, 3, 6), 'column': (4, 4, 18), 'station': (40, 14, 11), 'mosque': (30, 30, 16), 'pagoda': (12, 12, 18),
        'aqueduct': (60, 4, 14), 'observatory': (14, 14, 12), 'water_tower': (8, 8, 22), 'wall': (40, 4, 7)}
 OLD_OK = {'cathedral', 'church', 'chapel', 'castle', 'palace', 'manor', 'fort', 'ruins', 'monastery', 'gate', 'wall', 'windmill', 'watermill', 'aqueduct', 'mosque', 'pagoda',
-          'lighthouse', 'tower', 'column', 'obelisk', 'station'}
+          'lighthouse', 'tower', 'station'}
+# там, где старых построек мало, а новых много (Россия, США, Китай, Ливия), без года — только объекты наследия или с Викиданными
+STRICT = ('ru', 'us', 'cn', 'ly')
+HERITAGE = ('heritage', 'heritage:operator', 'ref:okn', 'ref:nrhp', 'nrhp:inscription_date', 'listed_status', 'historic:civilization', 'ref:mhs', 'ref:mérimée',
+            'ref:merimee', 'heritage:ref', 'protection_title', 'denkmal', 'ref:denkmal', 'historic:period')
+CASTLEISH = re.compile(r'burg|schlo|ch[aâ]teau|castle|castel|castil|kasteel|fort|abb[ae]y|abbaye|abtei|kloster|priory|prieur|tower|tour\b|turm|torre|aqueduc|acquedott|'
+                       r'wall|mauer|rempart|mura\b|chapel|kapel|church|[ée]glise|kirche|chiesa|iglesia|monaster|монастыр|замок|крепост|башн|храм|собор|lazaret|'
+                       r'roman|r[öo]mi|romain|romano|celt|templ|ruine de l|keep|donjon|motte|长城|关|城', re.I)
+MODERN_RU = re.compile(r'новомученик|ксени[ия]\s+петербу|матрон|иоанна\s+кронштадт|луки\s+крымск|царственн|николая\s+ii|царицы\s+тамары|в\s+земле\s+российской|'
+                       r'на\s+земле\s+петербургской|всех\s+святых,?\s+в\s+земле|серафима\s+вырицк|киров|ленин|сталин|советск|октябр|красн(ой|ая)\s+арми|'
+                       r'победы|великой\s+отечествен|\bвов\b|воин|погибш|гагарин|комсомол|партизан|блокад|мемориал|братская\s+могила|дом\s+культуры|'
+                       r'культурн|национально-культурн|заброшен|руины\s+госпитал|баня', re.I)
+WAR_RX = re.compile(r'aux\s+morts|war\s+memorial|kriegerdenkmal|gefallen|caduti|ehrenmal|monumento\s+ai\s+caduti|памятник\s+погибш|résistance|resistance|'
+                    r'déporté|deporte|libération|liberation|fusillé|weltkrieg|world\s+war|grande\s+guerre|great\s+war', re.I)
+MODERN_ALL = re.compile(r'museum|musée|musee|museo|музей|memorial\s+park|visitor|information|infoblick|aussichtsplattform|platform|viewpoint|belvedere|'
+                        r'stolperstein|ghost\s+bike|replica|réplique|nachbau|copy\s+of', re.I)
 
-def landmarks(pr, bb_near, bb_far, route_xz, year, host, overpass):
+def landmarks(pr, bb_near, bb_far, route_xz, year, host, overpass, lang=None):
     """route_xz — точки дороги (x, z). Возвращает список примет для игры."""
     q = ('[out:json][timeout:180];(' +
          ''.join('%s["%s"~"%s"](%s);' % (t, k, v, bb_near) for t, k, v in (
@@ -224,12 +202,29 @@ def landmarks(pr, bb_near, bb_far, route_xz, year, host, overpass):
             d = (RX[i] - x) ** 2 + (RZ[i] - z) ** 2
             if d < best: best, bi = d, i
         return math.sqrt(best), bi
+    cut.update({'former': 0, 'modern': 0, 'strict': 0, 'noname': 0, 'ruins': 0})
     for k, t, P, ty in items:
+        n0 = t.get('name') or t.get('name:en') or t.get('name:ru') or ''
+        nall = ' '.join(x for x in (n0, t.get('name:ru') or '', (WD.get(t.get('wikidata') or '') or {}).get('ru') or '') if x)
         y = year_tag(t)
         if y is None and t.get('wikidata'): y = (WD.get(t['wikidata']) or {}).get('y')
         if y is not None and y > year: cut['late'] += 1; continue
+        if TN.is_former(n0) or re.search(r'\b(ehem|ehemalig|former|бывш)', n0, re.I): cut['former'] += 1; continue
+        if MODERN_ALL.search(n0) and k not in ('church', 'cathedral', 'chapel', 'castle', 'palace', 'monastery', 'manor'): cut['modern'] += 1; continue
+        if host == 'ru' and MODERN_RU.search(nall): cut['modern'] += 1; continue
+        if WAR_RX.search(nall) and (y is None or y > year) and year < 1946:
+            yy = [int(v) for v in re.findall(r'(1[89]\d\d|20\d\d)', nall)]
+            if not yy or max(yy) > year - 1 or year < 1919: cut['modern'] += 1; continue
+        heritage = any(t.get(h_) for h_ in HERITAGE) or bool(t.get('wikidata'))
         if y is None and k not in OLD_OK: cut['unknown'] += 1; continue
-        if k == 'station' and y is None and year < 1890: continue
+        if y is None and host in STRICT and not heritage and k not in ('wall', 'gate', 'castle', 'fort') : cut['strict'] += 1; continue
+        if not n0 and k in ('tower', 'ruins', 'monument', 'obelisk', 'statue', 'column', 'water_tower', 'observatory', 'station', 'manor', 'palace', 'gate'):
+            cut['noname'] += 1; continue
+        if k == 'ruins' and y is None and not (CASTLEISH.search(n0) or t.get('ruins') in ('castle', 'fortification', 'church', 'monastery', 'abbey')
+                                               or t.get('castle_type') or t.get('historic:civilization')):
+            cut['ruins'] += 1; continue
+        if k == 'ruins' and host in STRICT and not heritage: cut['ruins'] += 1; continue
+        if k == 'station' and (y is None and year < 1890 or t.get('station') in ('subway', 'light_rail', 'monorail', 'funicular') or t.get('railway') in ('halt', 'tram_stop')): continue
         if k in ('wall', 'aqueduct') or (ty == 'way' and P[0] != P[-1] and len(P) > 2 and k in ('wall', 'aqueduct')):
             line = P
             if len(line) < 2: continue
@@ -249,13 +244,15 @@ def landmarks(pr, bb_near, bb_far, route_xz, year, host, overpass):
             except Exception: h = None
         if h is None or h != h or h <= 0: h = dH * max(0.7, min(1.6, (L / max(dL, 1)) ** 0.5))
         d, bi = dist_route(cx, cz)
-        name = ru_name(t, host)
+        name = ru_name(t, lang or host, k)
+        if re.search(r'музей|museum', name or '', re.I) and k in ('church', 'chapel', 'cathedral'): name = TN.KIND_RU[k][0].capitalize()
         sc = IMP.get(k, 1) + (2 if t.get('wikidata') else 0) + (1 if name else 0) - d / 900.0
         far = d > 2600
         if far and not t.get('wikidata'): continue
         if d < 12 + W / 2: continue  # на самой дороге — не ставим
         o = {'k': k, 'n': name, 'x': round(cx, 1), 'z': round(cz, 1), 'l': round(L, 1), 'w': round(W, 1), 'r': round(ang, 3), 'h': round(min(h, 160), 1),
-             'y': y or 0, 'i': bi, 'd': round(d), 'sc': round(sc, 2)}
+             'y': y or 0, 'i': bi, 'd': round(d), 'sc': round(sc, 2), 'n0': n0[:60]}
+        if t.get('wikidata'): o['wd'] = t['wikidata']
         if far: o['far'] = 1
         if line: o['line'] = [[round(p[0], 1), round(p[1], 1)] for p in line[::max(1, len(line) // 60)]]
         out.append(o)

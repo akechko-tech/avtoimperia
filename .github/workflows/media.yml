@@ -4,7 +4,7 @@ name: Медиа
 on:
   push:
     branches: [media]
-    paths: ['tools/media/**', '.github/workflows/media.yml']
+    paths: ['tools/media/**', '!tools/media/terrain*', '.github/workflows/media.yml']
   workflow_dispatch:
 permissions:
   contents: write

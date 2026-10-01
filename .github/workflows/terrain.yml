@@ -1,0 +1,61 @@
+name: Рельеф
+# Настоящие трассы (tools/media/terrain.py): все места из tools/media/terrain_races.json параллельно в 8 заданиях,
+# затем общий коммит в media/terrain ветки media. Логи — media/terrain/_log_<k>.txt.
+on:
+  push:
+    branches: [media]
+    paths: ['tools/media/terrain*', '.github/workflows/terrain.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: terrain
+  cancel-in-progress: false
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Программы
+        run: |
+          python3 -m pip install --quiet --user --break-system-packages rasterio pillow numpy || python3 -m pip install --quiet rasterio pillow numpy
+          python3 -c "import rasterio;print('rasterio',rasterio.__version__)"
+      - name: Рельеф
+        env:
+          TERRAIN_SHARD: ${{ matrix.shard }}/8
+          TERRAIN_OUT: ${{ runner.temp }}/terrain
+        run: |
+          mkdir -p "$TERRAIN_OUT"
+          sleep $(( ${{ matrix.shard }} * 20 ))
+          python3 -u tools/media/terrain.py 2>&1 | tee "$TERRAIN_OUT/_log_${{ matrix.shard }}.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terrain-${{ matrix.shard }}
+          path: ${{ runner.temp }}/terrain/
+          retention-days: 3
+  save:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: terrain-*
+          path: media/terrain
+          merge-multiple: true
+      - name: Сохранить в ветку media
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ls media/terrain | wc -l
+          git add media/terrain
+          git commit -m "Рельеф: $(ls media/terrain/*.json | wc -l) мест" || echo "без изменений"
+          ok=0; for k in 1 2 3 4 5; do git pull --rebase -X theirs origin media && git push origin HEAD:media && ok=1 && break; git rebase --abort 2>/dev/null; sleep 10; done
+          git log -1 --stat | tail -5
+          test $ok = 1

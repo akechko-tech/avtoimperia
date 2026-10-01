@@ -1,2 +1,1 @@
-anthem
-terrain
+# задания media CI (по одному в строке); рельеф — отдельный workflow terrain.yml

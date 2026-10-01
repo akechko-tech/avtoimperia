@@ -74,7 +74,7 @@ def dem_sampler(lat0, lat1, lon0, lon1):
                     with rasterio.open('/vsicurl/' + url) as ds:
                         w = from_bounds(max(lon0, b) - 0.005, max(lat0, a) - 0.005, min(lon1, b + 1) + 0.005, min(lat1, a + 1) + 0.005, ds.transform)
                         w = w.round_offsets().round_lengths()
-                        arr = ds.read(1, window=w, boundless=True, fill_value=0).astype('float32')
+                        arr = ds.read(1, window=w, boundless=True, masked=True).astype('float32').filled(np.nan)
                         tiles[(a, b)] = (arr, ds.window_transform(w))
                         LOG('dem', name, arr.shape, 'min', float(arr.min()), 'max', float(arr.max()))
                 except Exception as e:
@@ -87,7 +87,16 @@ def dem_sampler(lat0, lat1, lon0, lon1):
             col = (lon[m] - tr.c) / tr.a - 0.5; row = (lat[m] - tr.f) / tr.e - 0.5
             c0 = np.clip(np.floor(col).astype(int), 0, arr.shape[1] - 2); r0 = np.clip(np.floor(row).astype(int), 0, arr.shape[0] - 2)
             fc = np.clip(col - c0, 0, 1); fr = np.clip(row - r0, 0, 1)
-            out[m] = (arr[r0, c0] * (1 - fc) + arr[r0, c0 + 1] * fc) * (1 - fr) + (arr[r0 + 1, c0] * (1 - fc) + arr[r0 + 1, c0 + 1] * fc) * fr
+            V = np.stack([arr[r0, c0], arr[r0, c0 + 1], arr[r0 + 1, c0], arr[r0 + 1, c0 + 1]])
+            Wt = np.stack([(1 - fc) * (1 - fr), fc * (1 - fr), (1 - fc) * fr, fc * fr])
+            ok = ~np.isnan(V); Wt = Wt * ok; den = Wt.sum(0); num = (np.nan_to_num(V) * Wt).sum(0)
+            out[m] = np.where(den > 1e-9, num / np.maximum(den, 1e-9), np.nan)
+        # дыры (за краем данных) — ближайшим живым значением вдоль массива
+        if np.isnan(out).any():
+            bad = np.isnan(out); good = np.where(~bad.ravel())[0]
+            if len(good):
+                flat = out.ravel(); idx = np.searchsorted(good, np.where(bad.ravel())[0]).clip(0, len(good) - 1); flat[bad.ravel()] = flat[good[idx]]; out = flat.reshape(out.shape)
+            else: out = np.zeros_like(out)
         return np.where(out < -50, 0, out)
     return sample, len(tiles)
 
@@ -155,11 +164,11 @@ def dp_simplify(P, eps):
 
 RU = {}
 HOST = 'fr'
-def name_of(tags):
+def name_of(tags, river=False):
     n = tags.get('name') or ''
     if RU.get(n): return RU[n]
     import terrain_lm as LMm
-    return LMm.ru_name(tags, HOST) or n
+    return LMm.ru_place_name(tags, HOST, river or bool(tags.get('waterway'))) or n
 
 def year_of(tags):
     for k in ('start_date', 'opening_date', 'construction:start_date'):
@@ -214,9 +223,74 @@ def pack_grid(H):
             d = int(np.clip(row[k] - prev, -127, 127)); buf += d.to_bytes(1, 'little', signed=True); prev += d
     return base64.b64encode(bytes(buf)).decode('ascii')
 
+def raceway_walk(R, ways, XY, pr, pts_ll):
+    """Круг по гоночной дороге OSM: от ближайшей к опорной точке — всё время «прямо» (наименьший поворот на развилках),
+    первая ветка — по направлению heading. Конец — когда вернулись к началу или прошли lapmax метров."""
+    adj = {}
+    for w in ways:
+        t = w['tags']
+        if w.get('rel') or t.get('highway') != 'raceway': continue
+        if R.get('raceway_name') and R['raceway_name'].lower() not in (t.get('name') or '').lower(): continue
+        for a, b in zip(w['nodes'], w['nodes'][1:]):
+            if a in XY and b in XY: adj.setdefault(a, set()).add(b); adj.setdefault(b, set()).add(a)
+    if not adj: return None
+    p0 = pr.xy(*pts_ll[0]); start = min(adj, key=lambda n: math.dist(XY[n], p0))
+    if math.dist(XY[start], p0) > 1500: return None
+    hd = math.radians(R.get('heading', 0)); want = (math.sin(hd), math.cos(hd))
+    def ang(a, b, c):
+        v1 = (XY[b][0] - XY[a][0], XY[b][1] - XY[a][1]); v2 = (XY[c][0] - XY[b][0], XY[c][1] - XY[b][1])
+        return abs(math.atan2(v1[0] * v2[1] - v1[1] * v2[0], v1[0] * v2[0] + v1[1] * v2[1]))
+    nb = sorted(adj[start], key=lambda v: -((XY[v][0] - XY[start][0]) * want[0] + (XY[v][1] - XY[start][1]) * want[1]) / (math.dist(XY[v], XY[start]) or 1))
+    path = [start, nb[0]]; L = math.dist(XY[start], XY[nb[0]]); seen = {(start, nb[0])}
+    lapmax = R.get('lapmax', 6500)
+    while L < lapmax:
+        a, b = path[-2], path[-1]
+        cands = [c for c in adj[b] if c != a]
+        if not cands: break
+        c = min(cands, key=lambda c_: ang(a, b, c_))
+        if (b, c) in seen: break
+        seen.add((b, c)); path.append(c); L += math.dist(XY[b], XY[c])
+        if c == start or (L > 400 and math.dist(XY[c], XY[start]) < 15): break
+    P = [XY[n] for n in path]
+    route, _ = resample(P, STEP)
+    return route if len(route) > 20 else None
+
+def beach_route(R, ways, XY, pr, pts_ll):
+    """Пляж: линия берега OSM (вода справа по ходу линии), сдвинутая на off метров к суше, между опорными точками."""
+    segs = [w for w in ways if not w.get('rel') and w['tags'].get('natural') == 'coastline' and len(w['nodes']) > 1]
+    if not segs: raise RuntimeError('нет линии берега')
+    nxt = {}
+    for w in segs: nxt[w['nodes'][0]] = w
+    # самая длинная цепочка, проходящая рядом с опорными точками
+    best = None
+    for w0 in segs:
+        chain = [n for n in w0['nodes'] if n in XY]; cur = w0; guard = 0
+        while cur['nodes'][-1] in nxt and guard < 400:
+            cur = nxt[cur['nodes'][-1]]; guard += 1
+            if cur is w0: break
+            chain += [n for n in cur['nodes'][1:] if n in XY]
+        P = [XY[n] for n in chain]
+        if len(P) < 2: continue
+        a = pr.xy(*pts_ll[0]); b = pr.xy(*pts_ll[-1])
+        da = min(range(len(P)), key=lambda i: math.dist(P[i], a)); db = min(range(len(P)), key=lambda i: math.dist(P[i], b))
+        sc = math.dist(P[da], a) + math.dist(P[db], b)
+        if best is None or sc < best[0]: best = (sc, P, da, db)
+    _, P, da, db = best
+    off = R.get('off', 18.0)
+    Q = []
+    for i in range(len(P)):
+        a_ = P[max(0, i - 1)]; b_ = P[min(len(P) - 1, i + 1)]; dx, dz = b_[0] - a_[0], b_[1] - a_[1]; L = math.hypot(dx, dz) or 1
+        Q.append((P[i][0] - dz / L * off, P[i][1] + dx / L * off))  # левее по ходу — суша
+    seg = Q[min(da, db):max(da, db) + 1]
+    if da > db: seg = seg[::-1]
+    for _ in range(3):  # сгладить изломы берега
+        seg = [seg[0]] + [((seg[i - 1][0] + 2 * seg[i][0] + seg[i + 1][0]) / 4, (seg[i - 1][1] + 2 * seg[i][1] + seg[i + 1][1]) / 4) for i in range(1, len(seg) - 1)] + [seg[-1]]
+    route, _ = resample(seg, STEP)
+    return route
+
 def build_race(R, out_dir):
     rid, year = R['id'], R['year']
-    global RU, HOST; RU = R.get('ru') or {}; HOST = R.get('host', 'fr')
+    global RU, HOST; RU = R.get('ru') or {}; HOST = R.get('lang') or R.get('host', 'fr')
     import terrain_lm as LMm
     LMm.HTTP = http; LMm.LOG = LOG
     LOG('==== terrain', rid, R['name'], year)
@@ -224,7 +298,7 @@ def build_race(R, out_dir):
     for p in R['pts']:
         g = geocode(p['q']) if p.get('q') else None
         LOG('  point', p.get('q'), '->', g, 'fallback', p.get('ll'))
-        if g and p.get('ll') and math.hypot((g[0] - p['ll'][0]) * 111, (g[1] - p['ll'][1]) * 111 * math.cos(math.radians(g[0]))) > 6: g = None
+        if g and p.get('ll') and math.hypot((g[0] - p['ll'][0]) * 111, (g[1] - p['ll'][1]) * 111 * math.cos(math.radians(g[0]))) > p.get('tol', 3): g = None
         pts_ll.append(g or p['ll'])
     lat0 = sum(p[0] for p in pts_ll) / len(pts_ll); lon0 = sum(p[1] for p in pts_ll) / len(pts_ll)
     pr = Proj(lat0, lon0)
@@ -278,20 +352,43 @@ def build_race(R, out_dir):
         route, _ = resample(P, STEP)
         if closed and math.dist(route[-1], route[0]) < STEP * 1.5: route = route[:-1]
         route_wid = [None] * len(route)
-    elif R['kind'] == 'oval':
-        o = R['oval']; c = pr.xy(*o['center']); Ls, Lc, Lt = o['straight'], o['chute'], o['turn']; rT = Lt / (math.pi / 2)
-        # прямоугольник со скруглёнными углами; прямые — с севера на юг, едем против часовой (главная прямая — западная, на юг)
-        hx, hz = Lc / 2, Ls / 2; P = []
-        def arc(cx, cz, a0, a1):
-            for k in range(0, 41): a = a0 + (a1 - a0) * k / 40; P.append((cx + rT * math.cos(a), cz + rT * math.sin(a)))
-        P.append((c[0] - hx - rT, c[1] + hz))
-        P.append((c[0] - hx - rT, c[1] - hz)); arc(c[0] - hx, c[1] - hz, math.pi, 1.5 * math.pi)
-        P.append((c[0] + hx, c[1] - hz - rT)); arc(c[0] + hx, c[1] - hz, 1.5 * math.pi, 2 * math.pi)
-        P.append((c[0] + hx + rT, c[1] + hz)); arc(c[0] + hx, c[1] + hz, 0, 0.5 * math.pi)
-        P.append((c[0] - hx, c[1] + hz + rT)); arc(c[0] - hx, c[1] + hz, 0.5 * math.pi, math.pi)
-        route, _ = resample(P, STEP)
-        if math.dist(route[-1], route[0]) < STEP * 0.6: route = route[:-1]
+    elif R['kind'] == 'oval' or (R.get('walk') and R.get('oval')):
+        route = None
+        if R.get('walk'):
+            route = raceway_walk(R, ways, XY, pr, pts_ll)
+            if route:
+                o = R['oval']; want = 2 * o['straight'] + 2 * o['chute'] + 4 * o['turn']; got = len(route) * STEP
+                ok = math.dist(route[0], route[-1]) < 40 and 0.6 * want < got < 1.5 * want
+                LOG('  raceway walk', len(route), 'points,', round(got / 1000, 2), 'km', 'ok' if ok else 'rejected (want %.2f km)' % (want / 1000))
+                if not ok: route = None
+                elif math.dist(route[-1], route[0]) < STEP * 1.5: route = route[:-1]
+        if route is None:
+            o = R['oval']; c = pr.xy(*o['center']); Ls, Lc, Lt = o['straight'], o['chute'], o['turn']; rT = Lt / (math.pi / 2)
+            # прямоугольник со скруглёнными углами; прямые — по направлению heading (0 — с севера на юг), едем против часовой
+            hx, hz = Lc / 2, Ls / 2; P = []
+            def arc(cx, cz, a0, a1):
+                for k in range(0, 41): a = a0 + (a1 - a0) * k / 40; P.append((cx + rT * math.cos(a), cz + rT * math.sin(a)))
+            P.append((c[0] - hx - rT, c[1] + hz))
+            P.append((c[0] - hx - rT, c[1] - hz)); arc(c[0] - hx, c[1] - hz, math.pi, 1.5 * math.pi)
+            P.append((c[0] + hx, c[1] - hz - rT)); arc(c[0] + hx, c[1] - hz, 1.5 * math.pi, 2 * math.pi)
+            P.append((c[0] + hx + rT, c[1] + hz)); arc(c[0] + hx, c[1] + hz, 0, 0.5 * math.pi)
+            P.append((c[0] - hx, c[1] + hz + rT)); arc(c[0] - hx, c[1] + hz, 0.5 * math.pi, math.pi)
+            hd = math.radians(o.get('heading', 0)); ch, sh = math.cos(hd), math.sin(hd)
+            P = [(c[0] + (x - c[0]) * ch + (z - c[1]) * sh, c[1] - (x - c[0]) * sh + (z - c[1]) * ch) for x, z in P]
+            route, _ = resample(P, STEP)
+            if math.dist(route[-1], route[0]) < STEP * 0.6: route = route[:-1]
         route_wid = [None] * len(route); closed = True
+    elif R.get('walk'):
+        route = raceway_walk(R, ways, XY, pr, pts_ll)
+        if not route: raise RuntimeError('нет гоночной дороги у опорной точки')
+        closed = math.dist(route[0], route[-1]) < 40 and len(route) * STEP < R.get('lapmax', 6500)
+        if closed and math.dist(route[-1], route[0]) < STEP * 1.5: route = route[:-1]
+        route_wid = [None] * len(route); path = []
+        LOG('  raceway walk', len(route), 'points,', round(len(route) * STEP / 1000, 2), 'km', 'closed' if closed else 'open')
+    elif R['kind'] == 'beach':
+        route = beach_route(R, ways, XY, pr, pts_ll)
+        route_wid = [None] * len(route); closed = False; path = []
+        LOG('  beach', len(route), 'points,', round(len(route) * STEP / 1000, 2), 'km')
     else:
         adj = {}; roadnodes = set()
         for w in ways:
@@ -301,20 +398,41 @@ def build_race(R, out_dir):
             if not R.get('motorway') and (t.get('motorroad') == 'yes' or t.get('expressway') == 'yes'): continue
             if t.get('access') in ('no', 'private') and hw != 'raceway' and not R.get('private'): continue
             k = ROAD_W.get(hw, 1.0) * (1.4 if (t.get('lanes') and t['lanes'].isdigit() and int(t['lanes']) >= 4) else 1.0) * (1.6 if 'rocade' in (t.get('name') or '').lower() or 'bypass' in (t.get('name') or '').lower() else 1.0)
-            ow = t.get('oneway') == 'yes'
+            if R.get('prefer') and any(q.lower() in (t.get('name') or '').lower() or q == t.get('ref') for q in R['prefer']): k *= 0.6
+            ow = t.get('oneway') in ('yes', '1', 'true') and not R.get('two_way')
             for a, b in zip(w['nodes'], w['nodes'][1:]):
                 if a not in XY or b not in XY: continue
                 L = math.dist(XY[a], XY[b]); adj.setdefault(a, []).append((b, L * k, w['id']))
                 if not ow: adj.setdefault(b, []).append((a, L * k, w['id']))
+                else: adj.setdefault(b, [])
                 roadnodes.add(a); roadnodes.add(b)
+        # компоненты связности (без учёта направления): опорные точки — только к той, где дороги нужного вида
+        und = {}
+        for a_, lst in adj.items():
+            for b_, _, _ in lst: und.setdefault(a_, set()).add(b_); und.setdefault(b_, set()).add(a_)
+        comp = {}; cid = 0
+        for n0 in roadnodes:
+            if n0 in comp: continue
+            cid += 1; st = [n0]; comp[n0] = cid
+            while st:
+                u = st.pop()
+                for v in und.get(u, ()):
+                    if v not in comp: comp[v] = cid; st.append(v)
         good = [n for n in roadnodes if any(wid_tags.get(e[2], {}).get('highway') in ('primary', 'secondary', 'tertiary', 'trunk') for e in adj.get(n, []))]
         racen = [n for n in roadnodes if any(wid_tags.get(e[2], {}).get('highway') == 'raceway' for e in adj.get(n, []))]
         motn = [n for n in roadnodes if any(wid_tags.get(e[2], {}).get('highway') == 'motorway' for e in adj.get(n, []))]
+        key = racen if (R.get('raceway') and racen) else (motn if (R.get('motorway') and motn) else (good or list(roadnodes)))
+        cnt = {}
+        for n in key: cnt[comp[n]] = cnt.get(comp[n], 0) + 1
+        sizes = {}
+        for n in roadnodes: sizes[comp[n]] = sizes.get(comp[n], 0) + 1
+        main = max(cnt, key=lambda c_: (cnt[c_], sizes.get(c_, 0))) if cnt else None
         def snap(ll):
             p = pr.xy(*ll); best = None
             pools = ((racen,) if R.get('raceway') else ()) + ((motn,) if R.get('motorway') else ()) + (good, list(roadnodes))
             for pool in pools:
                 for n in pool:
+                    if main is not None and comp.get(n) != main: continue
                     d = math.dist(XY[n], p)
                     if best is None or d < best[0]: best = (d, n)
                 if best and best[0] < 700: break
@@ -324,6 +442,12 @@ def build_race(R, out_dir):
         if R.get('loop'): snaps.append(snaps[0])
         for a, b in zip(snaps, snaps[1:]):
             r = dijkstra(adj, a, b)
+            if not r:  # против одностороннего движения — лишь бы проехать
+                adj2 = {}
+                for u, lst in adj.items():
+                    for v, wgt, wid in lst: adj2.setdefault(u, []).append((v, wgt, wid)); adj2.setdefault(v, []).append((u, wgt * 1.3, wid))
+                r = dijkstra(adj2, a, b)
+                if r: LOG('  leg against oneway')
             if not r: raise RuntimeError('нет дороги между опорными точками')
             p, wi = r
             if path: p = p[1:]
@@ -469,7 +593,7 @@ def build_race(R, out_dir):
             y = year_of(t)
             if (y and y > year) or t.get('bridge') not in (None, 'no') or t.get('tunnel') not in (None, 'no'): continue
             for nd in w['nodes']: rn.add(nd)
-        for nd in path:
+        for nd in (path if R['kind'] not in ('line', 'oval') else []):
             if nd in rn and nd in XY:
                 px, pz = XY[nd]; k = int(np.argmin((X - px) ** 2 + (Z - pz) ** 2))
                 if not br[k]: xings.append({'i': k, 'ang': 0.25, 'name': ''})
@@ -507,7 +631,7 @@ def build_race(R, out_dir):
     rb = [pr.ll(float(X.min()) - 2600, float(Z.min()) - 2600), pr.ll(float(X.max()) + 2600, float(Z.max()) + 2600)]
     rf = [pr.ll(float(X.min()) - 8000, float(Z.min()) - 8000), pr.ll(float(X.max()) + 8000, float(Z.max()) + 8000)]
     bbn = '%.5f,%.5f,%.5f,%.5f' % (rb[0][0], rb[0][1], rb[1][0], rb[1][1]); bbf = '%.5f,%.5f,%.5f,%.5f' % (rf[0][0], rf[0][1], rf[1][0], rf[1][1])
-    try: LM = LMm.landmarks(pr, bbn, bbf, list(zip(X.tolist(), Z.tolist())), year, R.get('host', 'fr'), overpass)
+    try: LM = LMm.landmarks(pr, bbn, bbf, list(zip(X.tolist(), Z.tolist())), year, R.get('host', 'fr'), overpass, R.get('lang'))
     except Exception as e: LM = []; LOG('  landmarks fail', repr(e)[:200])
     maxn = int(R.get('maxkm', 12) * 1000 / STEP)
     if not closed and n > maxn:
@@ -663,11 +787,15 @@ def preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY):
 def run(log=print):
     global LOG; LOG = log
     cfg = json.load(open(os.path.join(TOOLS, 'terrain_races.json'), encoding='utf-8'))
-    out_dir = os.path.join(MEDIA, 'terrain'); only = os.environ.get('TERRAIN_ONLY', '')
+    out_dir = os.environ.get('TERRAIN_OUT') or os.path.join(MEDIA, 'terrain'); only = os.environ.get('TERRAIN_ONLY', '')
     fo = os.path.join(TOOLS, 'terrain_only.txt')
     if not only and os.path.exists(fo): only = ','.join(l.strip() for l in open(fo, encoding='utf-8') if l.strip() and not l.startswith('#'))
-    for R in cfg['races']:
-        if only and R['id'] not in only.split(','): continue
+    shard = os.environ.get('TERRAIN_SHARD', '')  # «k/N» — для параллельных заданий в CI
+    k_, n_ = (int(shard.split('/')[0]), int(shard.split('/')[1])) if shard else (0, 1)
+    sel = [R for R in cfg['races'] if not (only and only != 'all' and R['id'] not in only.split(','))]
+    sel = sorted(sel, key=lambda R: R['id'])
+    for idx, R in enumerate(sel):
+        if idx % n_ != k_: continue
         try: build_race(R, out_dir)
         except Exception as e:
             import traceback; LOG('terrain fail', R['id'], repr(e)); LOG(traceback.format_exc()[-1500:])
