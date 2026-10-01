@@ -767,8 +767,14 @@ def terrain():
     import terrain as T
     T.run(log)
 
+def anthem():
+    """0.22: свои мелодии игры в оркестровке (FluidSynth + MuseScore General) → media/music/own."""
+    sys.path.insert(0, TOOLS)
+    import anthem as A
+    A.run(MEDIA, log)
+
 JOBS = {'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces}
+        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
