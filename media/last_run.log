@@ -1,21 +1,316 @@
-== job anthem
-anthem: download https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2
-anthem: soundfont /home/runner/work/_temp/anthem/MuseScore_General.sf2 MuseScore General (S. Christian Collins, MIT)
-anthem: avto march 162.9 s 2272 KB
-anthem: reel rag 129.4 s 1801 KB
-anthem: valse waltz 125.6 s 1742 KB
-anthem: tango tango 111.8 s 1536 KB
-anthem: jazz jazz 102.4 s 1427 KB
-anthem: cake cake 86.9 s 1211 KB
-anthem: fox fox 137.2 s 1901 KB
-anthem: charl charl 86.4 s 1206 KB
-anthem: cue fanfare 2.7 s 52 KB
-anthem: cue duel_proud_l 4.2 s 71 KB
-anthem: cue duel_proud_w 5.3 s 83 KB
-anthem: cue duel_biz_l 4.1 s 68 KB
-anthem: cue duel_biz_w 5.1 s 81 KB
-anthem: cue duel_aristo_l 4.6 s 75 KB
-anthem: cue duel_aristo_w 5.8 s 88 KB
-anthem: cue duel_sharp_l 4.1 s 69 KB
-anthem: cue duel_sharp_w 5.1 s 81 KB
-== job anthem took 100 s
+== job photos_scan
+photos part:e2 22
+photos part:e10 30
+nothing for part:e3
+photos part:e9 25
+photos part:e4 12
+photos part:e5 29
+photos part:e14 24
+photos part:e6 31
+photos part:e11 24
+photos part:e7 20
+photos part:e8 24
+photos part:e12 18
+patents error inventor=Levassor&before=priority:19000101 <HTTPError 503: 'Service Unavailable'>
+photos part:g2 24
+patents error inventor=Louis+Renault&before=priority:19100101 <HTTPError 503: 'Service Unavailable'>
+photos part:g3 23
+patents error q=transmission&inventor=Henry+Ford&before=priority:19120101 <HTTPError 503: 'Service Unavailable'>
+photos part:g4 23
+photos part:g5 23
+photos part:g6 7
+patents error q=synchronizing+transmission&before=priority:19290101 <HTTPError 503: 'Service Unavailable'>
+photos part:g7 23
+patents error q=brake&inventor=Renault&before=priority:19100101 <HTTPError 503: 'Service Unavailable'>
+photos part:k2 9
+photos part:k3 23
+photos part:k6 24
+patents error inventor=Loughead&before=priority:19250101 <HTTPError 503: 'Service Unavailable'>
+photos part:k4 22
+patents error q=brake&inventor=Bendix&before=priority:19290101 <HTTPError 503: 'Service Unavailable'>
+photos part:k5 18
+photos part:c3 20
+photos part:c6 19
+photos part:c4 2
+patents error q=shock+absorber&inventor=Houdaille&before=priority:19260101 <HTTPError 503: 'Service Unavailable'>
+photos part:c5 12
+patents error q=suspension&inventor=Lancia&before=priority:19260101 <HTTPError 503: 'Service Unavailable'>
+photos part:c7 18
+photos part:w2 22
+photos part:w3 9
+photos part:w4 18
+photos part:w5 16
+photos part:w6 12
+photos part:w7 14
+patents error q=pneumatic+tire&inventor=Firestone&before=priority:19260101 <HTTPError 503: 'Service Unavailable'>
+photos part:w8 21
+photos part:b2 24
+photos part:b3 24
+photos part:b11 24
+photos part:b10 24
+photos part:b4 24
+photos part:b9 24
+photos part:b5 14
+photos part:b6 13
+photos part:b7 24
+photos part:b8 24
+photos part:t3 24
+photos tech:tools 24
+photos tech:elec 14
+photos tech:parts 5
+photos tech:line 20
+photos tech:school 22
+photos tech:qc 16
+photos tech:foundry 17
+photos tech:press 10
+photos tech:paint 1
+photos tech:credit 3
+photos w:quake 22
+photos w:panic 21
+photos w:bleriot 24
+photos w:titanic 24
+photos w:usawar 24
+photos w:armistice 24
+photos w:slump 10
+photos w:inflation 18
+photos w:lindbergh 24
+patents error q=road+engine&inventor=Selden&before=priority:18960101 <HTTPError 503: 'Service Unavailable'>
+photos l:selden 9
+photos l:five 2
+photos l:dodge 15
+photos l:mckenna 8
+photos l:redflag 24
+photos l:hptax 2
+photos l:dbmerge 23
+photos l:dawes 21
+photos l:jellinek 11
+photos l:agnelli 18
+photos car:Benz Velo 19
+photos car:Renault Voiturette 14
+photos car:Oldsmobile Curved Dash 23
+photos car:Cadillac Model A 21
+photos car:Ford Model T 24
+photos car:Chevrolet Series 490 13
+photos car:Citroën Type A 17
+photos car:Ford Model A (1927–1931) 22
+photos car:Peugeot Type 3 11
+photos car:Panhard et Levassor 18
+photos car:Ford Model A (1903–04) 11
+photos car:Buick Model 10 15
+photos car:Cadillac Model Thirty 15
+photos car:Dodge Brothers 21
+photos car:Fiat 501 10
+photos car:Chrysler 22
+photos car:Peugeot 201 14
+photos car:Daimler-Motoren-Gesellschaft 24
+photos car:Mercedes 35 hp 7
+photos car:Rolls-Royce Silver Ghost 23
+photos car:Packard Twin Six 19
+photos car:Hispano-Suiza H6 16
+photos car:Rolls-Royce Phantom I 16
+photos car:Duesenberg Model J 24
+photos car:Daimler Motor-Lastwagen 7
+photos car:Peugeot Type 64 4
+photos car:Ford Model TT 17
+photos car:Austro-Daimler Prince Henry 10
+photos car:Mercer Raceabout 13
+photos car:Stutz Bearcat 17
+photos car:Vauxhall 30-98 11
+photos car:Bentley 3 Litre 24
+photos car:Alfa Romeo RL 16
+photos car:Bugatti Type 43 19
+photos car:Mercedes-Benz SSK 21
+photos car:Berliet CBA 8
+photos car:Liberty truck 15
+photos car:Mack AC 18
+photos inv:bonds 23
+photos inv:stocks 22
+photos inv:supply 24
+photos promo 24
+photos_scan done 117
+== job photos_scan took 1142 s
+== job films_scan
+search LOC automobile -> 30
+search LOC auto race -> 10
+search LOC motor car -> 30
+search Edison automobile -> 3
+search Biograph automobile -> 0
+search Vanderbilt Cup -> 1
+search automobile race 1905 -> 0
+search automobile race 1908 -> 0
+search automobile race 1910 -> 0
+search motor race 1903 -> 0
+search Gordon Bennett Cup automobile -> 0
+search Grand Prix 1906 -> 2
+search Grand Prix de l'ACF -> 5
+search Targa Florio 1920s -> 0
+search Indianapolis 1911 -> 30
+search Indianapolis Motor Speedway 1910s -> 0
+search Ormond Beach automobile -> 0
+search Brooklands 1920s -> 0
+search hill climb automobile 1900s -> 0
+search early automobile film -> 8
+search horseless carriage -> 30
+search automobile parade 1900 -> 1
+search motor car 1900s -> 0
+search Lumière automobile -> 30
+search Lumière Paris 1896 -> 28
+search Pathé automobile -> 2
+search Gaumont automobile -> 0
+search Ford assembly line -> 4
+search Ford Motor Company 1914 -> 0
+search Ford factory film -> 2
+search Model T Ford film -> 0
+search Highland Park Ford -> 0
+search automobile factory 1920s -> 0
+search automobile factory 1910s -> 0
+search car factory workers 1920s -> 0
+search Polygoon auto -> 30
+search Polygoon autotentoonstelling -> 4
+search autotentoonstelling -> 9
+search autoraces 1920s -> 0
+search Polygoon verkeer 1920 -> 1
+search Amsterdam verkeer 1920s -> 0
+search motor show 1920s -> 0
+search Salon de l'automobile -> 9
+search automobile exhibition -> 7
+search Madison Square Garden automobile show -> 1
+search Exposition universelle 1900 -> 26
+search Paris 1900 film -> 30
+search Paris 1910 film -> 6
+search Paris street 1900 -> 6
+search New York City 1911 -> 6
+search Market Street 1906 -> 30
+search London street 1903 -> 2
+search London 1920s street -> 1
+search Berlin 1900 film -> 1
+search Berlin 1920s street -> 0
+search Torino 1900 film -> 0
+search Milano 1920 film -> 0
+search Rome 1910 film -> 1
+search Moscow 1908 film -> 2
+search Saint Petersburg 1910 film -> 0
+search New York to Paris race 1908 -> 0
+search Glidden tour -> 1
+search motorcycle race 1910s -> 0
+search zeppelin 1909 film -> 0
+search Wright brothers flight -> 5
+search Blériot flight 1909 -> 0
+search World War I truck -> 8
+search World War I motor transport -> 0
+search World War I ambulance -> 3
+search armistice day 1918 -> 7
+search Charleston dance 1926 -> 0
+search Wall Street 1929 -> 0
+search steam locomotive 1900s film -> 0
+search railway 1896 film -> 3
+search fire engine 1910s -> 0
+search motor bus 1910 -> 0
+search taxicab 1910s -> 0
+search tractor 1910s -> 0
+search road construction 1920s -> 0
+search automobile accident 1900s film -> 0
+search car ferry 1920s -> 0
+search tire factory 1920s -> 0
+search rubber factory film -> 2
+search Goodyear Akron 1920s -> 0
+search Firestone film 1920s -> 0
+search Michelin film -> 3
+search Dunlop tyre film -> 0
+search tire changing 1910s -> 0
+search rubber plantation film 1920s -> 0
+search steel mill 1910s film -> 0
+search iron foundry film 1920s -> 0
+search blast furnace film 1920s -> 0
+search Ford River Rouge film -> 0
+search Ford Rouge plant 1920s -> 0
+search Ford Model T assembly film -> 0
+search Ford factory 1920s workers -> 0
+search Cadillac factory film -> 1
+search Packard factory film -> 0
+search Dodge Brothers film -> 0
+search Chevrolet factory film -> 2
+search Citroën usine film -> 1
+search Renault usine Billancourt film -> 1
+search Fiat Lingotto film -> 0
+search Morris Cowley factory film -> 0
+search Austin Longbridge film -> 0
+search Opel Rüsselsheim film -> 0
+search Daimler Untertürkheim film -> 0
+search automobile body press film -> 0
+search car body welding film 1920s -> 0
+search spray painting car 1920s -> 0
+search car testing film 1920s -> 0
+search brake test film 1920s -> 0
+search automobile hill test 1910s -> 0
+search gasoline station 1920s film -> 0
+search filling station 1920s -> 0
+search garage mechanic 1920s film -> 0
+search car repair 1910s film -> 0
+search driving lesson film 1920s -> 0
+search traffic policeman 1920s film -> 0
+search traffic New York 1920s film -> 0
+search Paris traffic 1920s film -> 1
+search London traffic 1920s film -> 1
+search Berlin Verkehr 1920er Film -> 0
+search car dealer 1920s film -> 0
+search used car lot 1920s -> 1
+search automobile advertising film 1920s -> 0
+search Croisière noire Citroën film -> 0
+search Citroën half-track Sahara 1923 -> 0
+search automobile snow 1920s film -> 1
+search automobile desert film 1920s -> 1
+search Monte Carlo Rally film -> 1
+search Le Mans 1923 film -> 2
+search Le Mans 1928 film -> 5
+search Bentley Le Mans film -> 0
+search Mille Miglia 1927 film -> 0
+search Targa Florio film -> 1
+search Alpine trial automobile film -> 0
+search Tour de France automobile film -> 2
+search A Trip Down Market Street 1906 -> 6
+search San Francisco earthquake 1906 film -> 10
+search San Francisco fire 1906 film -> 9
+search Titanic 1912 film -> 4
+search Olympic Titanic film -> 2
+search Lindbergh 1927 film -> 1
+search Lindbergh Paris film -> 3
+search German inflation 1923 film -> 0
+search Inflation 1923 Film -> 0
+search Armistice 1918 Paris film -> 2
+search influenza 1918 film -> 1
+search Liberty truck film -> 1
+search World War I motor convoy film -> 1
+search Taxis de la Marne film -> 0
+search Voie Sacrée film -> 0
+search New York Stock Exchange 1920s film -> 0
+search Wall Street 1920s film -> 0
+search prohibition 1920s film -> 0
+candidates 270 with info 270
+film 140 File:Box Car Blues.webm 392.168 1930 Public domain
+film 141 File:Panoramic view of the Champs Elysees.ogv 51.418033333333334 1900 Public domain
+film 142 File:Demonstratie met Michelin super ballon band-519021.ogv 93.49224489795918 1933 CC BY-SA 3.0 nl
+film 143 File:André Michelin et son secrétaire en compagnie d'Albert Kahn dans les jardins de sa propriété - AI88521.webm 9.008000000000001 1924 CC BY-SA 4.0
+film 144 File:Dépôt de matériel des bateaux parisiens à Auteuil - AI52257.webm 56.024 1919 CC BY-SA 4.0
+film 145 File:Incendie aux usines Renault - AI48962.webm 103.44800000000001 1926 CC BY-SA 4.0
+film 146 File:1927-1928 Home movies of Belle Isle, New Years Day snow, and New Mexico.webm 798.34 1928 Public domain
+film 147 File:Voetbalwedstrijd duitsland - holland-30257.ogv 460.91609977324265 1923 CC BY-SA 3.0 nl
+film 148 File:Fokker restanten (01-3097, niet luchtvaart gerelateerd).webm 551.105 1927 Public domain
+film 149 File:Yasuji Murata- The Blossom Man (1928).ogv 326.91201814058957 1928 Public domain
+film 150 File:Liberale staatspartij 'de Vrijheidsbond'.webm 652.019 1928 Public domain
+film 151 File:1932-05-08 Targa Florio pitstop Maserati 8C 2800 Ruggeri.webm 25.084 1932 Public domain
+film 152 File:Avenue des Champs-Élysées, place de la Concorde - AI53745.webm 38.173 1918 CC0
+film 153 File:Queue pour les dernières ascensions de la Grande Roue - AI108154.webm 63.944 1920 CC BY-SA 4.0
+film 154 File:San Francisco earthquake and fire, April 18, 1906.webm 756.716 1906 Public domain
+film 155 File:Army pack train bringing supplies.ogv 109.07563333333333 1906 Public domain
+film 156 File:Hotel vendome.ogv 50.31693333333333 1897 Public domain
+film 157 File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm 407.961 1911 Public domain
+film 158 File:Titanic Disaster - Genuine Footage (1911-1912).webm 401.41200000000003 1911 Public domain
+film 159 File:La hantise (1912).webm 1410.0 1912 Public domain
+film 160 File:TheLuckyHoldup-1912.webm 444.01 1912 Public domain
+film 161 File:La première traversée de l'Atlantique en avion - AI18692.webm 890.273 1927 CC BY-SA 4.0
+film 162 File:Raid aérien Paris-New-York par Costes et Bellonte - AI48059.webm 648.373 1930 CC BY-SA 4.0
+film 163 File:Paris manifeste sa joie le jour de l'Armistice - AI90875.webm 647.773 1918 CC0
+film 164 File:La journée de l'Armistice - AI90872.webm 444.416 1918 CC0
+scan done: new 25 total 165
+== job films_scan took 224 s
