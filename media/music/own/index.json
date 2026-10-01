@@ -38,5 +38,59 @@
   "lic": "CC0 — сочинено для игры",
   "page": "",
   "by": "Мелодия «Автоимперии», оркестр танго (тембры MuseScore General)"
+ },
+ "own_cue_fanfare": {
+  "cue": 1,
+  "d": 4.2,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_proud_l": {
+  "cue": 1,
+  "d": 5.8,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_proud_w": {
+  "cue": 1,
+  "d": 6.9,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_biz_l": {
+  "cue": 1,
+  "d": 5.7,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_biz_w": {
+  "cue": 1,
+  "d": 6.7,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_aristo_l": {
+  "cue": 1,
+  "d": 6.2,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_aristo_w": {
+  "cue": 1,
+  "d": 7.3,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_sharp_l": {
+  "cue": 1,
+  "d": 5.7,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
+ },
+ "own_cue_duel_sharp_w": {
+  "cue": 1,
+  "d": 6.7,
+  "lic": "CC0 — сочинено для игры",
+  "by": "Тема «Автоимперии», оркестр (тембры MuseScore General)"
  }
 }

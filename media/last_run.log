@@ -1,57 +1,17 @@
-== job music_cut
-music semper_fidelis 172 s 1554263
-music thunderer 169 s 1515302
-music manhattan_1923 203 s 1913565
-music king_cotton 170 s 1564401
-music invincible_eagle 211 s 1923059
-music national_emblem 182 s 1646299
-music gallant_seventh 197 s 1810594
-music grandioso 160 s 1475419
-music slavianka 173 s 1594082
-music yankee_navy 203 s 1877000
-music school_cadets 154 s 1422215
-music imperial_edward 152 s 1400601
-music american_patrol 240 s 2220080
-music notre_dame_1925 150 s 1394687
-music circus_bee 153 s 1411121
-music poet_peasant 230 s 2136837
-music vienna_day 200 s 1827726
-music tritsch 163 s 1484211
-music thunder_polka 190 s 1751974
-music rixdorf_1914 171 s 1583520
-music post_horn 142 s 1300842
-music blue_danube 215 s 1981756
-music kaiserwalzer 181 s 1664085
-music swan_waltz 220 s 2026022
-music flowers_waltz 203 s 1897662
-music cancan 107 s 983857
-music tell_finale 180 s 1658964
-music hungarian1 123 s 1134202
-music hd5_nikisch 175 s 1597206
-music czardas 201 s 1851057
-music mountain_king 154 s 1422990
-music steppes 225 s 2074790
-music danse_slave 220 s 2029003
-music princesses 220 s 2028672
-music jupiter 225 s 2076968
-music first_suite 185 s 1703549
-music warriors_dance 121 s 1114458
-music marionette_1903 220 s 2032318
-music humoresque 188 s 1730392
-music ruslan 99 s 910424
-music easy_winners 211 s 1873944
-music pine_apple 196 s 1716572
-music gladiolus_1914 177 s 1633599
-music original_rags 233 s 2143287
-music widow_rag 203 s 1777505
-music wall_street_1910 128 s 1179015
-music cakewalk_sky 220 s 2018048
-music reindeer 188 s 1743816
-music popcorn 212 s 1884394
-music margie 213 s 1960893
-music palesteena 179 s 1647662
-music somebody_loves 154 s 1417423
-music livery_1917 190 s 1740721
-music choclo_1916 184 s 1713199
-music sonambula 187 s 1726341
-== job music_cut took 571 s
+== job anthem
+anthem: download https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2
+anthem: soundfont /home/runner/work/_temp/anthem/MuseScore_General.sf2 MuseScore General (S. Christian Collins, MIT)
+anthem: avto march 162.9 s 2272 KB
+anthem: reel rag 129.4 s 1801 KB
+anthem: valse waltz 125.6 s 1742 KB
+anthem: tango tango 111.8 s 1536 KB
+anthem: cue fanfare 2.7 s 52 KB
+anthem: cue duel_proud_l 4.2 s 71 KB
+anthem: cue duel_proud_w 5.3 s 83 KB
+anthem: cue duel_biz_l 4.1 s 69 KB
+anthem: cue duel_biz_w 5.1 s 81 KB
+anthem: cue duel_aristo_l 4.6 s 75 KB
+anthem: cue duel_aristo_w 5.8 s 88 KB
+anthem: cue duel_sharp_l 4.1 s 69 KB
+anthem: cue duel_sharp_w 5.1 s 81 KB
+== job anthem took 54 s
