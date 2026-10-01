@@ -25,6 +25,14 @@ const ACT={
   tech:d=>{const k=d.k,c=techCost(G,k);if(!techOpen(G,k)||G.techBuild||G.cash<c)return;G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};addLog(`Начато внедрение: ${techNext(G,k).name} (${money(c)}).`);rerender();},
   loan:d=>{const n=+d.n;if(!loanOpen(G)){toast(creditState(G).t);return;}if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
   dpol:d=>{G.dpol=d.v;addLog(`Скидка дилерам: ${DPOL[d.v].n.toLowerCase()} (${Math.round(DPOL[d.v].m*100)}% цены).`);rerender();},
+  // 0.25: кредит покупателям, вложения, спецакции
+  finPol:d=>{if(!techLv(G,'credit'))return;G.finPol=d.v==='own'?'own':'bank';addLog(G.finPol==='own'?'Рассрочку покупателям теперь даёт своя кредитная компания: проценты — ваши, но деньги на рассрочку — тоже.':'Рассрочку покупателям снова дают банки — за комиссию.');rerender();},
+  invBuy:d=>{if(invBuy(G,d.k,+d.n))rerender();else toast(d.k==='st'&&!stocksOpen(G)?'Биржа закрыта':'Не хватает денег');},
+  invSell:d=>{if(invSell(G,d.k,+d.n))rerender();},
+  supBuy:d=>{if(supBuy(G,d.k)){flushToasts();rerender();}},
+  supSell:d=>{if(confirmOnce('sup'+d.k,'Нажмите ещё раз: продать за 60% стоимости'))if(supSell(G,d.k))rerender();},
+  promo:d=>{const inSheet=!sheet.hidden;if(promoStart(G,d.c,d.g,d.k)){flushToasts();save();render();if(inSheet)promoSheet(d.c);}else toast('Не хватает денег');},
+  promoSheet:d=>promoSheet(d.c),
   repay:d=>{const n=Math.min(+d.n,G.loan);if(n>0&&G.cash>=n){G.loan-=n;G.cash-=n;rerender();}},
   // модели
   price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);if(md.pPrevM!==mi(G)){md.pPrev=md.price;md.pPrevM=mi(G);}md.price=Math.max(20,md.price+st*(+d.d));rerender();},

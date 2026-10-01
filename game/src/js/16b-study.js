@@ -8,8 +8,10 @@ function studyKey(c){return c.name+'|'+c.y;}
 function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind,b=byId(BODIES,c.md.b);
   return Math.round(prefP(g,s.country,s)*(b&&b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1)*1.15/10)*10;}
 const STUDY_NEED=6;
+// 0.25: машину своей марки (какой она была в настоящей истории) не покупают и не разбирают — это ваша же машина
+function ownMarqueCar(name,s){const nm=String(name||'').toLowerCase();return !!s&&Object.values(COMPS).some(L=>L.some(b=>b.pk===s.pioneer&&((b.models||[]).some(x=>x[2]===name)||nm.startsWith(String(b.n).toLowerCase().split(/[ &(]/)[0]+' '))));}
 function studyList(s){const out=[];
-  STUDY_KINDS.forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;
+  STUDY_KINDS.forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;if(ownMarqueCar(c.name,s)){c.own=1;out.push(c);return;}
     c.done=((s.rd.studied)||[]).includes(studyKey(c));c.busy=rdActive(s).some(p=>p.kind==='study'&&p.name===c.name);c.price=studyPrice(c,s);out.push(c);});
   return out;}
 function studyPartsLine(md){const p=parts(md);return `${p.e.name}, ${p.g.name.toLowerCase()}, ${p.c.name.toLowerCase()}, тормоза: ${p.k.name.toLowerCase()}, ${p.w.name.toLowerCase()}`;}
@@ -19,7 +21,7 @@ function studyGain(c,s){const fut=[],ups=[];const rl=clamp(0.3*(s.y-c.y),0,2.5)+
   ['e','c','k','g','w','b'].forEach(k=>{const x=byId(PART_CATS.find(q=>q.k===k).arr(),c.md[k]);if(x&&ups.length<2&&upgL(x.id)<Math.floor(rl)&&upgL(x.id)<rdMaxUpg(s))ups.push(x);});
   return {fut,ups};}
 function studyStart(s,kind){const c=studyCar(kind,s.y);if(!c)return false;const L=studyList(s).find(o=>o.name===c.name);
-  if(!L||L.done||L.busy||rdActive(s).length>=rdSlots(s)||s.cash<L.price)return false;
+  if(!L||L.own||L.done||L.busy||rdActive(s).length>=rdSlots(s)||s.cash<L.price)return false;
   s.cash-=L.price;s.rd.projs.push({kind:'study',id:kind,y:c.y,name:c.name,cat:'Машина конкурента',need:STUDY_NEED,prog:0});
   addLog(`Куплен ${c.name} (${money(L.price)}): КБ разбирает машину конкурента.`,'good');return true;}
 function studyDone(s,pj){
@@ -35,7 +37,8 @@ function studyDone(s,pj){
   const cmp=best&&best.C.ref.name===c.name?`Сравнение с вашей «${best.m.name}» (100% — как у ${c.name}): `+CHAR_K.filter(k=>best.C.W[k]>0).map(k=>`${CHAR_NAMES[k].toLowerCase()} — ${Math.round(best.C.by[k]*100)}%`).join(', ')+'.':'';
   addLog(`КБ разобрало ${c.name}: ${[G0.fut.length?'новые детали — '+G0.fut.map(x=>x.name).join(', '):'',G0.ups.length?'доводка — '+G0.ups.map(x=>x.name+' ★'+upgL(x.id)).join(', '):''].filter(Boolean).join('; ')||'изучены все узлы'}.`,'good');
   pendingToasts.push('🔍 Изучен '+c.name);
-  pushEvent({own:1,kicker:'Конструкторское бюро',title:`КБ разобрало ${c.name}`,deck:`Машина соперников ${c.y} года — до последнего винтика`,img:IMG[c.name]?c.name:'',imgCap:`${c.name}, ${c.y}`,
+  const rid=typeof REELS!=='undefined'&&REELS['car:'+c.name]?'car:'+c.name:'';if(rid)reelUnlock(s,rid);
+  pushEvent({own:1,kicker:'Конструкторское бюро',title:`КБ разобрало ${c.name}`,choices:rid?[['Дальше','ok'],['▶ Кинохроника: история машины','reel:'+rid]]:undefined,deck:`Машина соперников ${c.y} года — до последнего винтика`,img:IMG[c.name]?c.name:'',imgCap:`${c.name}, ${c.y}`,
     text:`Инженеры «${s.company}» купили ${c.name} и разобрали его на верстаках: ${studyPartsLine(c.md)}.\n`+
       (G0.fut.length?`Главная находка — ${G0.fut.map(x=>x.name).join(', ')}: у поставщиков такого ещё нет, а теперь КБ умеет делать это само. Деталь уже в конструкторе.\n`:'')+
       (G0.ups.length?`Соперники годами доводили свою машину — эту доводку КБ переняло: ${G0.ups.map(x=>x.name+' ★'+upgL(x.id)).join(', ')}.\n`:'')+

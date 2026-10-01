@@ -24,8 +24,9 @@ ok(G.pending.some(e=>e.paper&&/Спорт и дела/.test(e.kicker)),'газе
 const win1=R1.L.best===1;ok(win1?R1.dc>0:R1.dc<0,'касса: '+(R1.dc>=0?'+':'')+Math.round(R1.dc)+(win1?' (выигрыш '+C1.stake+' + сбор '+C1.rc.purse+' − подготовка)':' (проигрыш '+C1.stake+' и подготовка)'));
 ok(!G.raceLog.some(r=>r.key===C1.rc.key)&&!champsOf(C1.rc.y).some(id=>(G.season[champKey(id,C1.rc.y)]||{races:[]}).races.includes(C1.rc.key)),'матч не идёт в зачёт сезона и в счёт побед в гонках');
 // реванш после победы
-if(win1&&sc1.choices.some(c=>c[1]==='chalRev')){G.pending=[sc1];resolve('chalRev');ok(G.chal&&G.chal.type==='match'&&G.chal.stake>C1.stake&&G.chal.acc,'реванш: новый матч со ставкой '+(G.chal&&G.chal.stake)+' > '+C1.stake);G.chal=null;}
-else console.log('   (матч проигран — реванш не предлагается)');
+// 0.25: реванш просит проигравший — выиграли вы: «Дать … отыграться»; проиграли: «Потребовать реванша»
+{const rb=sc1.choices.find(c=>c[1]==='chalRev');ok(!!rb&&(win1?/отыграться/.test(rb[0]):/Потребовать реванша/.test(rb[0])),'кнопка реванша по смыслу: «'+(rb&&rb[0])+'»');
+ if(rb){G.pending=[sc1];resolve('chalRev');ok(G.chal&&G.chal.type==='match'&&G.chal.stake>C1.stake&&G.chal.acc,'реванш: новый матч со ставкой '+(G.chal&&G.chal.stake)+' > '+C1.stake);G.chal=null;}}
 // ---------- 2. неявка на матч: пари проиграно ----------
 at(1902,1);G.chal=null;G.pending=[];const om2=chalOffers(G).find(o=>o.kind==='match');boardTake(G,'match');const C2=G.chal,c20=G.cash,T2=(C2.rc.y-1895)*12+C2.rc.m;
 while(mi(G)<=T2){G.pending=[];step();}

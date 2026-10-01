@@ -1,5 +1,5 @@
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.24';
+const GAME_VER='0.25';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -40,7 +40,7 @@ function hideMainMenu(){demoStop();MS.hidden=true;MS.innerHTML='';MS.classList.r
 function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
   <div class="stack small" style="margin-top:10px"><p>«Автоимперия» — современная версия классических экономических стратегий об автомобильной индустрии начала XX века в духе Motor City / Oldtimer (1994). Название, графика и код — оригинальные.</p>
   <p>Рынки опираются на реальную статистику выпуска машин в США, Франции, Великобритании, Германии и Италии 1895–1929 годов; конкуренты — реальные марки с их объёмами выпуска. Ранние европейские годы и деление по классам — оценки для игры.</p>
-  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons, общественное достояние.</p>
+  <p>Гонки, пилоты, машины, изобретения — по истории автоспорта и техники. Фотографии — Wikimedia Commons: общественное достояние и свободные лицензии CC BY и CC BY-SA (авторы — в настройках, раздел «Фотографии»).</p>
   <p>Фото-текстуры гоночных трасс, неба и листвы — Poly Haven (CC0).</p>
   <p id="abReal">Трассы «Париж — Мадрид», «Тарга Флорио», Гран-при АКФ 1906 года, Кубок Гордона Беннетта в Ирландии и Индианаполис построены по настоящей местности, отмотанной к году гонки: рельеф — Copernicus DEM GLO-30 (© DLR e.V. 2010–2014 и © Airbus Defence and Space GmbH 2014–2018, предоставлено по программе Copernicus Европейским союзом и ЕКА); дороги, реки, леса, города и железные дороги — © участники OpenStreetMap (лицензия ODbL, openstreetmap.org/copyright); цвет земли — Sentinel-2 cloudless 2016 by EOX IT Services GmbH (CC BY 4.0; содержит изменённые данные Copernicus Sentinel 2016).</p>
   <p id="abMus">Оркестр — Wikimedia Commons: ${aboutMusCredits()}. Голос диктора — нейросеть Silero.</p>

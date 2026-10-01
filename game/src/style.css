@@ -721,3 +721,5 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 /* 0.21: мировые события — «Что это значит для вас» под роликом в газете */
 .paper .p-mean{margin:14px 0 4px;padding:10px 12px;border:2px solid #221c14;background:rgba(34,28,20,.06);font-family:var(--serif);font-size:15px;line-height:1.35}
 .paper .p-mean b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+/* 0.25: живые чертежи в кинохронике */
+.rl-diag{position:absolute;left:0;top:0;width:100%;height:100%;display:block}

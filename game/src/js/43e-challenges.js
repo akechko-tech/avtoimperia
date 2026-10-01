@@ -266,7 +266,8 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
       <p class="small muted" style="margin-top:4px">Класс «${SEG[C.g].name}»${home?', продажи в стране':` · ${COUNTRIES[C.c].name}`} · ${esc(chalPerText(C))}${hc!==1?' · '+esc(hcText(hc)):''}</p>
       <div class="leg-row" style="margin-top:8px"><span>Вы</span><div class="bar"><i style="width:${you/mx*100}%;background:var(--brass)"></i></div><b class="num">${fmtN(you)}</b></div>
       <div class="leg-row"><span>${esc(C.mq.slice(0,12))}${hc!==1?' ×'+(hc<1?hc.toFixed(2).replace('.',','):hc):''}</span><div class="bar"><i style="width:${need/mx*100}%;background:var(--muted)"></i></div><b class="num">${fmtN(need)}</b></div>
-      <p class="small ${you>need?'good':'warn'}" style="margin-top:4px">${you>need?'Вы впереди':'Соперник впереди'}${C.n?` · прошло ${C.n} ${plural(C.n,'месяц','месяца','месяцев')}`:''}</p></section>`;}
+      <p class="small ${you>need?'good':'warn'}" style="margin-top:4px">${you>need?'Вы впереди':'Соперник впереди'}${C.n?` · прошло ${C.n} ${plural(C.n,'месяц','месяца','месяцев')}`:''}</p>
+      ${(()=>{const c=C.c||s.country,b=typeof promoButtons==='function'?promoButtons(s,c,C.g):'';return b?`<p class="small muted" style="margin-top:8px">Повлиять на продажи класса${home?'':' в этой стране'} — спецакцией, пока идёт пари:</p><div class="btns" style="margin-top:4px">${b}</div>`:(c!==s.country&&!dealerCount(s,c)?'<p class="small muted" style="margin-top:8px">Спецакции возможны там, где у вас есть дилеры.</p>':'');})()}</section>`;}
   return '';}
 Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||C.type!=='trial')return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`На пробег поедет «${m.name}»`);rerender();}});
 // название события для газеты и трофея

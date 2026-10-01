@@ -3,7 +3,7 @@
 require('./harness.js')(`
 Math.random=(()=>{let a=313;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
-{const nw=WORLD.filter(W=>!W.legal).length,nl=WORLD.filter(W=>W.legal).length;ok(nw>=12&&nw<=15&&nl>=20,'событий в партии: мировых '+nw+', судов, законов и налогов (0.22) '+nl);}
+{const nw=WORLD.filter(W=>!W.legal).length,nl=WORLD.filter(W=>W.legal).length;ok(nw>=12&&nw<=20&&nl>=20,'событий в партии: мировых '+nw+', судов, законов и налогов (0.22) '+nl);}
 WORLD.forEach(W=>{ok(!W.reel||!!reelGet(W.reel,G||{models:[]}),W.id+': ролик '+W.reel+' есть');});
 for(const home of ['fr','us']){console.log('== дом: '+home);
   newGame('custom',home,'Мир','normal');G.cash=5e6;const md=G.models[0];

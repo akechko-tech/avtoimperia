@@ -30,6 +30,7 @@ jobs:
           mkdir -p app/src/main/assets/samples app/src/main/assets/film app/src/main/assets/voice
           if [ -d docs/samples ]; then cp docs/samples/index.js docs/samples/pack.js app/src/main/assets/samples/ 2>/dev/null || true; fi
           if [ -d docs/film ]; then cp -r docs/film/. app/src/main/assets/film/; fi
+          if [ -f docs/img/extra.js ]; then mkdir -p app/src/main/assets/img/x && cp docs/img/extra.js app/src/main/assets/img/ && cp -r docs/img/x/. app/src/main/assets/img/x/; fi
           if [ -f docs/voice/index.js ]; then cp docs/voice/index.js app/src/main/assets/voice/; fi
           # реальные трассы (рельеф, карта) — скриптами, подгружаются перед гонкой
           if [ -d docs/terrain ]; then mkdir -p app/src/main/assets/terrain && cp docs/terrain/*.js app/src/main/assets/terrain/; fi

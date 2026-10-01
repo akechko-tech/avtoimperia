@@ -173,7 +173,11 @@ const CUE={};
 function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
-    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;if(fb)fb();});}catch(e){if(a)a.bad=1;if(fb)fb();}}
+    const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:5)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(5);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+// 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
+function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
+  try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
+  AU.duckT=setTimeout(()=>{AU.duckI=setInterval(()=>{const t=v0();let v=Math.min(t,(el.volume||0)+t*0.06);try{el.volume=v;}catch(_){v=t;}if(v>=t-1e-3){clearInterval(AU.duckI);AU.ducked=0;}},90);},Math.max(800,sec*1000+300));}
 // 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
 const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», военный оркестр'},
   own_reel:{cap:'«Кинохроника», регтайм (оркестр)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», оркестр регтайма'},
@@ -218,7 +222,7 @@ function musicPlay(force){
   if(!AU.el){AU.el=new Audio();AU.el.preload='auto';AU.el.addEventListener('ended',()=>musNext(1));
     AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
     AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
-  AU.el.volume=R?0.2:0.5;
+  if(!AU.ducked)AU.el.volume=R?0.2:0.5;
   if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;}
   if(AU.el.paused){const pr=AU.el.play();if(pr&&pr.catch)pr.catch(()=>{});}
   musUI();

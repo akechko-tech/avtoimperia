@@ -2,7 +2,8 @@
   docs/samples — живые инструменты (+ index.js: window.SAMPLES_INDEX)
   docs/film    — отобранная кинохроника (+ index.js: window.FILMS_INDEX — метки → ролики)
   docs/voice   — голос диктора (+ index.js: window.VOICE_INDEX — ключ строки → длительность)
-Запуск: python3 tools/sync_media.py [samples] [film] [voice]  (без аргументов — всё)"""
+  docs/img/x   — фото для роликов (+ ../extra.js: window.IMG_EXTRA — ключ «x:…» → файл)
+Запуск: python3 tools/sync_media.py [samples] [film] [voice] [photos]  (без аргументов — всё)"""
 import json, os, subprocess, sys, shutil, base64
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -150,9 +151,26 @@ def terrain():
             open(p, 'w', encoding='utf-8').write(js); n += 1
     print('terrain: updated', n, 'tracks', sizes)
 
+def photos():
+    """0.25: фото для роликов (ключи «x:…», файлы Викисклада) → docs/img/x + docs/img/extra.js (window.IMG_EXTRA)."""
+    D = os.path.join(DOCS, 'img', 'x'); os.makedirs(D, exist_ok=True); n = 0
+    idx = json.loads(git('show', 'origin/media:media/img/index.json'))
+    have = {os.path.basename(f) for f in files('media/img/x')}
+    out = {}
+    for k, v in sorted(idx.items()):
+        fn = os.path.basename(v.get('src', ''))
+        if not fn or fn not in have: continue
+        n += pull('media/img/x/' + fn, os.path.join(D, fn))
+        out[k] = {'src': 'img/x/' + fn, 'file': (v.get('file') or '').replace(' ', '_')}
+    keep = {os.path.basename(v['src']) for v in out.values()}
+    for f in os.listdir(D):
+        if f not in keep: os.remove(os.path.join(D, f))
+    open(os.path.join(DOCS, 'img', 'extra.js'), 'w', encoding='utf-8').write('window.IMG_EXTRA=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n')
+    print('photos: updated', n, 'keys', len(out))
+
 if __name__ == '__main__':
     git('fetch', '-q', 'origin', 'media')
-    what = sys.argv[1:] or ['samples', 'film', 'voice', 'music', 'sfx']
+    what = sys.argv[1:] or ['samples', 'film', 'voice', 'music', 'sfx', 'photos']
     for w in what:
-        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx, 'faces': faces, 'terrain': terrain}[w]()
+        try: {'samples': samples, 'film': film, 'voice': voice, 'music': music, 'sfx': sfx, 'faces': faces, 'terrain': terrain, 'photos': photos}[w]()
         except Exception as e: print(w, 'failed:', e)

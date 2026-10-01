@@ -26,7 +26,7 @@ const PHOTO_FILE={
   'Rover Company':'Rover 8 HP (1904).jpg','Daimler Motor Company':'1897 Daimler 4HP Wagonette Front.jpg','Bullnose Morris':'1921 Morris Oxford Bullnose.jpg',
   'De Dietrich':"De Dietrich Grand Duc (1898) in Musée National de l'Automobile (Mulhouse).jpg",'De Dion-Bouton':'Paris - Bonhams 2016 - De Dion-Bouton Vis-à-vis Type D - 1899 - 002.jpg',
   'Berliet':'Berliet voitures legeres 10 CV 16 CV (1902).png','Delage':'Delage F 1908.JPG','Citroën 5CV':'1923 Citroën Type C 5HP.jpg','Citroën AC4':'1928 Citroën AC4 (5127537228).jpg',
-  'Bugatti Type 13':'Bugatti Type 13, chassis 365.jpg','Horch':'Horch 10-12 PS.jpg','Opel':'Opel Motorwagen Werbung 1899.jpg',
+  'Bugatti Type 13':'Bugatti Type 13, chassis 365.jpg','Bugatti Type 43':'Rétromobile 2015 - Bugatti type 43 GranD Sport - 1927 - 001.jpg','Horch':'Horch 10-12 PS.jpg','Opel':'Opel Motorwagen Werbung 1899.jpg',
   'Winton Motor Carriage Company':'Winton auto ad car-1898.jpg','Willys-Overland':'1911 Overland Model 49 Tourer (43919928320).jpg',
   'Nash Motors':'1923 Nash Six Touring Car - Sugarloaf Mountain Region AACA Show 02of20.jpg','Stanley Motor Carriage Company':'Stanley Brothers in one of their steam cars.jpg',
   'Maxwell Motor Company':'Maxwell 1908-1910 A.JPG','Hudson Motor Car Company':'1910 Hudson (5755006199).jpg','Pierce-Arrow':'Pierce 1905 Great Arrow Suburban Ad (14783076205).jpg',

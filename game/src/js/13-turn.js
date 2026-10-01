@@ -66,19 +66,20 @@ function step(){
     // лицензия: машины делает местный завод — со склада не берём, вам — доля цены
     md.soldBy={};for(const c in req){if(!licOn(s,c))continue;const so=Math.floor(req[c]+(Math.random()<req[c]%1?1:0));reqT-=req[c];delete req[c];if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const v=so*md.price*LIC_ROY;mk.rev+=v;r.lic=(r.lic||0)+v;r.licN=(r.licN||0)+so;md.totalSold+=so;}
     const avail=md.stock,f=reqT>avail?avail/Math.max(1e-9,reqT):1;let sold=0;
-    for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;if(tradeQuota(s,c)>0){s.quotaY=s.quotaY||{};s.quotaY[c]=(s.quotaY[c]||0)+so;}const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const IL=impOf(s,c),net=(md.price*(1-dMargin(s)-(c===s.country?0:(IL&&IL.cut||0)))-(c===s.country?0:shipCostTo(s,c)*shipK(s,c)))*fxOf(s,c);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
+    for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;{const pd=promoDisc(s,c,segOf(md));if(pd)r.promo=(r.promo||0)+so*md.price*pd*fxOf(s,c);}if(tradeQuota(s,c)>0){s.quotaY=s.quotaY||{};s.quotaY[c]=(s.quotaY[c]||0)+so;}const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const IL=impOf(s,c),net=(md.price*(1-dMargin(s)-(c===s.country?0:(IL&&IL.cut||0)))-(c===s.country?0:shipCostTo(s,c)*shipK(s,c)))*fxOf(s,c);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
     sold=Math.min(sold,md.stock);md.stock-=sold;const unmet=Math.max(0,reqT-sold);md.backlog=Math.min(unmet*0.5,md.fc*0.8);r.lostCap+=unmet-md.backlog;
     // почему купили меньше, чем хотели: не хватило машин (часть ждёт в очереди) или дилеры не успели
     md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;r.sold+=sold;r.demand+=sumD;
     r.war+=sold*defectRate(s)*md.price*0.25;});
-  if(techLv(s,'credit'))r.fin=r.rev*0.03;
+  // 0.25: кредит покупателям — комиссия банкам или своя кредитная компания (13c-finance.js)
+  finMonth(s,r);
   // склад переполнен: лишнее забирают перекупщики за полцены
   {const tot=s.models.reduce((a,m)=>a+m.stock,0),cap2=whCap(s);if(tot>cap2){let over=tot-cap2;
     s.models.slice().sort((a,b)=>b.stock-a.stock).forEach(m=>{if(over<=0||!m.stock)return;const n=Math.min(m.stock,over);over-=n;m.stock-=n;const v=n*m.price*0.5;r.dump+=v;r.dumpN+=n;});
     if(mi(s)-(s.dumpSaid||-99)>=3){s.dumpSaid=mi(s);addLog(`Склад переполнен: ${fmtN(r.dumpN)} машин отдали перекупщикам за полцены. Расширьте склад на вкладке «Завод» или выпускайте меньше.`,'bad');pendingToasts.push('📦 Склад переполнен');}}}
-  // расходы
+  // расходы (0.25: спецакции оплачены при старте — в отчёт; доход от вложений — invMonth)
   try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
-  r.rdp=s.rdPaid||0;s.rdPaid=0;r.rd=rdUpkeep(s)+r.rdp;r.drv=driverPayroll(s);r.team=teamUpkeep(s);   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
+  r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp;r.drv=driverPayroll(s);r.team=teamUpkeep(s);   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
   // 0.21: чертежи соперника, выигранные в пари, — следующий проект КБ короче на 30%
   if(s.rd.bpStock>0){const pj=(s.rd.projs||[]).find(p=>!p.bp);if(pj){pj.bp=1;pj.need=Math.max((pj.prog||0)+1,Math.round(pj.need*0.7));s.rd.bpStock--;addLog(`КБ работает по чертежам соперника: «${pj.name}» — на 30% быстрее.`,'good');}}
@@ -86,7 +87,7 @@ function step(){
     if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;if(s.rd.know)delete s.rd.know[pj.id];addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
     else if(pj.kind==='study')studyDone(s,pj);
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);
-      if(PART_HIST[pj.id])reelOffer(s,'part:'+pj.id,'Прототип готов: '+pj.name,`На ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше рынка`,`В истории такую деталь первыми сделали ${PART_HIST[pj.id][1]} в ${PART_HIST[pj.id][0]} году. Поставьте её на новую модель — и «${s.company}» опередит историю.`);}
+      if(PART_HIST[pj.id]||REELS['part:'+pj.id]){const h=PART_HIST[pj.id];reelOffer(s,'part:'+pj.id,'Прототип готов: '+pj.name,`На ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше рынка`,h?`В истории такую деталь первыми сделали ${h[1]} в ${h[0]} году. Поставьте её на новую модель — и «${s.company}» опередит историю.`:`Поставщики предложат такую деталь только через ${pj.yrs} ${plural(pj.yrs,'год','года','лет')}. Поставьте её на новую модель — покупатели заметят разницу первыми.`);}}
     return false;});}
   r.wage=s.workers*wageNow(s);r.ovh=plantOverhead(s)*(s.shifts>1?1.1:1);
   // 0.23: за блокадой дилеры и отделение отрезаны — содержать их нечем и незачем (их расходы — на них самих)
@@ -94,11 +95,12 @@ function step(){
   r.sto=s.models.reduce((a,md)=>a+md.stock*matCost(md,s),0)*0.01;r.rate=loanRate(s);r.int=s.loan*r.rate/12;turnover(s,r);
   // 0.21: контора — управление, сбыт, бухгалтерия, юристы: около 3% выручки
   r.adm=0.03*(r.rev+r.ord);
-  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0);
-  r.tax=r.profit>0?r.profit*taxRate(s.y):0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
+  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
+  r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
-  s.cash+=r.profit+r.tool+r.hire+r.rdp-(r.rev+r.ord)+r.got;   // оснастка, найм и проекты КБ уже списаны выше
+  s.cash+=r.profit+r.tool+r.hire+r.rdp+r.prm-(r.rev+r.ord)+r.got+r.finIn-r.finOut;   // оснастка, найм, проекты КБ и спецакции уже списаны выше; рассрочка своей компании — деньги выданы и вернулись
+  invCover(s);
   loanRecall(s,r);
   s.plantVal*=0.995;
   // репутация: качество проданного, брак, очереди, недовольные дилеры
@@ -170,12 +172,19 @@ function endOfYear(s){
   s.segYPrev=s.segY||{};s.segY={};s.segYTPrev=s.segYT||{};s.segYT={};
   if((s.yearSold||0)>(s.peak.year||0))s.peak.year=s.yearSold;s.peakLast=s.yearSold||0;s.yearSold=0;
   const fresh=ALL_PARTS().filter(x=>x.y===s.y).map(x=>x.name);if(fresh.length)addLog('Поставщики предлагают новинки: '+fresh.join(', ')+'.','good');
+  // 0.25: новинка у поставщиков — газета с кинохроникой о ней: что это, кто придумал, что даёт покупателю (то, что КБ уже сделало само, — не повторяем)
+  try{partsNews(s);}catch(e){console.warn(e);}
   yearlyCompetitors(s);yearReview(s);
   s.drivers=s.drivers.filter(id=>{const d=DRIVERS.find(x=>x.id===id);if(!d||d.to<s.y){if(d)addLog(`${d.n} завершил гоночную карьеру и покинул команду.`);return false;}return true;});
   legacyYear(s);
 }
 // Склад: машин на хранении не больше вместимости; место под машину строится 1 месяц
 function whCap(s){return s.wh||12;}
+function partsNews(s){const early=(s.rd&&s.rd.early)||[],L=ALL_PARTS().filter(x=>x.y===s.y&&!early.includes(x.id)&&REELS['part:'+x.id]);if(!L.length)return;
+  L.forEach(x=>reelUnlock(s,'part:'+x.id));const cat=x=>{const c=PART_CATS.find(c=>c.arr().includes(x));return c?c.name.toLowerCase():'';};
+  pushEvent({own:1,kicker:'Поставщики · кинохроника',title:L.length>1?`Новинки ${s.y} года`:`Новинка ${s.y} года: ${L[0].name}`,deck:L.length>1?L.map(x=>x.name).join(' · '):cat(L[0]),
+    text:L.map(x=>`${x.name} (${cat(x)})${x.note?' — '+x.note:''}`).join('\n')+'\nТеперь это можно поставить на машины вашего завода. Кинохроника покажет, как это устроено и что меняет для покупателей.',
+    choices:[['Дальше','ok'],...L.slice(0,3).map(x=>['▶ '+x.name,'reel:part:'+x.id])]},true);}
 function whUnitCost(s){return Math.round(70*cpi(s)*(1+0.01*T(s)));}
 function whStock(s){return s.models.reduce((a,m)=>a+m.stock,0);}
 // Конкуренты отвечают на ваш успех: если вы забираете класс, они выпускают новинки, режут цены и открывают дилеров

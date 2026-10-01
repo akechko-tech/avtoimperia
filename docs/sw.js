@@ -1,4 +1,4 @@
-const CACHE='avtoimperia-v22';
+const CACHE='avtoimperia-v25';
 const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 // трассы по настоящей местности (0.22: все ~80 мест, ≈10 МБ): сразу — только первые гонки 1895–1897 годов, остальные — в кэш при первой гонке
 const TERRAIN=['chartres','evanston','avignon','brighton','turbie'].map(id=>'./terrain/'+id+'.js');
@@ -11,7 +11,10 @@ self.addEventListener('fetch',e=>{
   // голос диктора и ролики кинохроники: плеер просит их кусками (Range) — пусть грузит сам браузер
   if(e.request.headers.has('range')||e.request.destination==='audio'||e.request.destination==='video')return;
   const url=new URL(e.request.url),same=url.origin===location.origin;
-  if(same&&/\/(tex|samples|sfx)\//.test(url.pathname)){
+  if(same&&/\/(film|voice|music|sfx|samples)\/index\.js$/.test(url.pathname)){
+    // 0.25: указатели роликов, голоса и музыки меняются с каждой версией — сначала сеть, без сети — кэш
+    e.respondWith(fetch(e.request).then(r=>put(e.request,r)).catch(()=>caches.match(e.request)));
+  }else if(same&&/\/(tex|samples|sfx)\//.test(url.pathname)){
     // фото-текстуры гонок и живые инструменты: один раз из сети, дальше — из кэша (новая версия игры — новый кэш)
     cacheFirst(e);
   }else if(same&&/\/(film|voice|music|sfx|terrain)\/.+\.(jpg|js)$/.test(url.pathname)){

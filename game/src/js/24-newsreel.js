@@ -157,6 +157,8 @@ const VGEN={
   p1:'Конструкторское бюро закончило новую деталь. Её испытывали днём и ночью — на стенде и на дороге.',
   p2:'Такого в мире ещё не делал никто: ваше бюро опередило историю. Газеты всего света пишут о новинке.',
   p3:'Поставщики предложат такую деталь не скоро. Первыми разницу почувствуют ваши покупатели.',
+  p4:'Теперь такую деталь делают поставщики: её можно поставить на новую модель вашего завода.',
+  s1:'Инженеры вашего бюро разобрали эту машину до последнего винтика. Теперь её секреты работают на ваш завод.',
   y1:'Кинохроника подводит итоги года.',
   y2:'Вот сколько машин продала ваша марка за этот год.',
   y3:'А это главная машина года — её покупали больше всех.',
@@ -164,22 +166,81 @@ const VGEN={
   y5:'Пресса назвала лучших — и ваша марка среди них.',
   y6:'А вот ваше место в гонке за наследие эпохи.',
   y7:'Новый год — новые машины, новые гонки и новые рекорды.'};
+// 0.25: ролик о новой модели рассказывает о ней самой: мотор, коробка, рама, тормоза, колёса, кузов — у каждой детали свой голос и свой чертёж
+const PART_SAY={
+  e1:'Под капотом — одноцилиндровый мотор Де Дион-Бутон в три лошадиные силы: самый ходовой мотор эпохи.',
+  e2:'Под капотом — двухцилиндровый «Феникс» Даймлера с распылительным карбюратором Майбаха.',
+  e10:'Под капотом — одноцилиндровый мотор, как у «Кадиллака»: простой, тяговитый и почти не ломается.',
+  e3:'Под капотом — четырёхцилиндровый мотор Астер: так строят солидные французские машины.',
+  e9:'Под капотом — четыре цилиндра одним блоком со съёмной головкой: дёшево, легко и надёжно.',
+  e4:'Под капотом — четырёхцилиндровый мотор Континенталь, рабочая лошадка американских заводов.',
+  e5:'Под капотом — бесклапанный шестицилиндровый мотор Найта: гильзы вместо клапанов, и он почти не слышен.',
+  e14:'Под капотом — крепкий нижнеклапанный мотор в тридцать пять сил, как у братьев Додж.',
+  e6:'Под капотом — V-образная восьмёрка: восемь цилиндров тянут мягко и ровно.',
+  e11:'Под капотом — крошечный четырёхцилиндровый мотор: машина почти не просит бензина.',
+  e7:'Под капотом — верхнеклапанный мотор в пятьдесят сил: лёгкий и экономичный.',
+  e8:'Под капотом — рядная восьмёрка в девяносто сил: мотор самых дорогих машин.',
+  e12:'Под капотом — рядная шестёрка: плавно, как у дорогих машин, а стоит как четвёрка.',
+  g1:'Мотор крутит колёса через ремни — как в мастерской у токарного станка.',
+  g2:'Передачи — скользящие шестерни Панара, на задние колёса силу несут цепи.',
+  g3:'Коробка с прямой передачей Луи Рено и карданный вал вместо цепей: тихо и без потерь.',
+  g4:'Планетарная коробка: передачи включают педалями, водить научится каждый.',
+  g5:'Четыре передачи: машина уверенно берёт подъёмы и быстро идёт по шоссе.',
+  g6:'Три передачи на кулисе: просто, прочно и понятно любому шофёру.',
+  g7:'Коробка с синхронизатором: передачи включаются без скрежета.',
+  k1:'Тормоза — колодка по ободу и лента на трансмиссии, как у кареты.',
+  k2:'Тормоза — барабанные, на задних колёсах: колодки спрятаны от грязи и воды.',
+  k3:'Тормоза — на всех четырёх колёсах: тормозной путь почти вдвое короче.',
+  k6:'Тормоза — с усилителем, как у «Испано-Сюизы»: тяжёлая машина встаёт от лёгкого нажатия.',
+  k4:'Тормоза — гидравлические: жидкость давит на все колёса поровну.',
+  k5:'Тормоза — на четырёх колёсах, с простыми тягами: надёжно и недорого.',
+  c1:'Рама — из ясеня, на эллиптических рессорах, как у кареты.',
+  c2:'Стальная рама по схеме Панара: мотор впереди, привод на задние колёса.',
+  c3:'Длинная низкая рама из стального швеллера держит мощный мотор.',
+  c6:'Рама из ванадиевой стали: лёгкая, дешёвая и втрое прочнее обычной.',
+  c4:'Штампованная рама на полуэллиптических рессорах: прочно и быстро в производстве.',
+  c5:'Усиленная рама с гидравлическими амортизаторами: машину не раскачивает на ухабах.',
+  c7:'Независимая передняя подвеска: каждое колесо прыгает по кочкам само по себе.',
+  w1:'Колёса — деревянные, на сплошных шинах.',
+  w2:'Колёса — на пневматических шинах Мишлен: мягче и быстрее.',
+  w3:'Шины с протектором держат мокрую и пыльную дорогу.',
+  w4:'Съёмные обода: проколотое колесо меняют за минуты.',
+  w5:'Проволочные колёса на одной центральной гайке: легче деревянных.',
+  w6:'Кордовые шины служат в разы дольше прежних.',
+  w7:'Стальные дисковые колёса: прочно, дёшево и легко мыть.',
+  w8:'Баллонные шины низкого давления: машина плывёт по ухабам.',
+  b1:'Кузов — открытый, на два места.',b2:'Кузов — тонно на четыре места, с дверцей сзади.',b3:'Кузов — фаэтон: пять мест и двери по бокам.',
+  b11:'Кузов — лимузин: хозяева за стеклом, шофёр отдельно.',b10:'Кузов — родстер: лёгкий, двухместный, с откидным верхом.',b4:'Кузов — закрытый седан: тепло и сухо в любую погоду.',
+  b9:'Кузов — недорогой закрытый «коуч» с двумя дверями.',b5:'Кузов — цельнометаллический седан: прочный и тихий.',b6:'Кузов — фургон для лавок, почты и пивоварен.',
+  b7:'Кузов — грузовой, на полторы тонны.',b8:'Кузов — грузовой, на три тонны.',t3:'Отделка — спортивная: облегчённый кузов и ковшеобразные сиденья.'};
+// чертёж к детали (24h, 24i): мотор — по числу цилиндров и клапанам
+const ENG_DIAG={e1:{cyl:1,valve:'atm',slow:1},e2:{cyl:2,valve:'atm'},e10:{cyl:1,valve:'side',slow:1},e3:{cyl:4,valve:'t'},e9:{cyl:4,valve:'side',mono:1},e4:{cyl:4,valve:'side'},
+  e5:{cyl:6,valve:'sleeve'},e14:{cyl:4,valve:'side'},e6:{cyl:8,lay:'v'},e11:{cyl:4,valve:'side'},e7:{cyl:4,valve:'ohv'},e8:{cyl:8,valve:'side'},e12:{cyl:6,valve:'ohv'}};
+const PART_DIAG={g2:{d:'chain'},g3:{d:'direct'},g4:{d:'planet'},g5:{d:'gears',p:{n:4}},g6:{d:'gears',p:{n:3}},g7:{d:'synchro'},
+  k2:{d:'drum'},k3:{d:'brake4'},k6:{d:'servo'},k4:{d:'brake_hyd'},k5:{d:'cable'},
+  c1:{d:'frame',p:{kind:'wood'}},c2:{d:'layout'},c3:{d:'frame',p:{kind:'channel'}},c6:{d:'vanadium'},c4:{d:'frame',p:{kind:'pressed'}},c5:{d:'shock'},c7:{d:'ifs'},
+  w2:{d:'pneu'},w3:{d:'tread'},w4:{d:'rim'},w5:{d:'wire'},w6:{d:'cord'},w7:{d:'disc'},w8:{d:'tyre_balloon'}};
+function partDiag(x,md){if(!x)return null;if(ENG_DIAG[x.id])return {d:'eng',p:Object.assign({},ENG_DIAG[x.id],{hp:Math.round(md?engineHp(x,md):x.hp)})};return PART_DIAG[x.id]||null;}
 function reelModel(md,s){const p=parts(md),st=carStats(md,0,s.y),C=classCompare(md,s,s.country),g=KIND_NAME[rivalKind(md)];
+  const shot=(k,car)=>{const x=p[k];if(!x)return null;const say=PART_SAY[x.id]||'',D=!car&&partDiag(x,md);return D?{d:D.d,p:D.p||{},cap:x.name,say}:{car:md,yaw:car||0.62,pitch:0.22,cap:x.name,say};};
   return {t:`Новинка «${md.name}»`,y:s.y,mus:s.y<1912?'rag':s.y<1920?'fox':'jazz',sh:[
     {c:`«${md.name}»`,s:`${g} · завод «{co}», {y}`},
     {plant:1,say:VGEN.m1},
-    {car:md,yaw:0.62,cap:`«${md.name}» · ${p.e.name}`,say:VGEN.m2},
+    {car:md,yaw:0.62,cap:`«${md.name}»`,say:VGEN.m2},
+    shot('e'),shot('g',2.3),shot('c'),shot('k'),shot('w',0.15),shot('b',1.0),p.t&&PART_SAY[p.t.id]?shot('t',2.8):null,
     {c:`${Math.round(st.hp)} л.с. · до ${Math.round(st.vmax*3.6)} км/ч`,s:`${money(md.price)} · соперник — ${C.ref.name}: ${C.S>=1.08?'новинка лучше':C.S>=0.9?'не хуже':'пока уступает'} (${Math.round(C.S*100)}%)`,say:VGEN.m3},
     {v:'street'+(s.y<1906?'1900':s.y<1919?'1910':'1920'),car:md,yaw:1.35,pitch:0.18,cap:`«${md.name}» · ${money(md.price)}`,say:VGEN.m4},
-    {c:'Новая машина — новые покупатели',s:''}]};}
-function reelPart(id,s){const cat=PART_CATS.find(c=>byId(c.arr(),id)),x=cat&&byId(cat.arr(),id);if(!x)return null;const h=PART_HIST[id],first=s.firsts&&s.firsts['part:'+id];
-  const best=s.models.filter(m=>m.status!=='off'&&m[cat.k]===id)[0]||s.models.filter(m=>m.status==='prod')[0];
-  return {t:(first?'Первыми в мире: ':'Новая деталь: ')+x.name,y:s.y,mus:s.y<1912?'rag':'fox',sh:[
+    {c:'Новая машина — новые покупатели',s:''}].filter(Boolean).map(x=>{if(x.say==='')delete x.say;return x;})};}
+// деталь без своего ролика (запасной путь)
+function reelPart(id,s){const cat=PART_CATS.find(c=>byId(c.arr(),id)),x=cat&&byId(cat.arr(),id);if(!x)return null;const h=PART_HIST[id],D=partDiag(x);
+  return {t:'Новая деталь: '+x.name,y:s.y,mus:s.y<1912?'rag':'fox',sh:[
     {c:x.name,s:`${cat.name} · КБ «{co}», {y}`},
-    {v:'factory_work',plant:1,say:VGEN.p1},
+    D?{d:D.d,p:D.p||{},cap:x.name,say:PART_SAY[x.id]||VGEN.p1}:{v:'factory_work',plant:1,say:VGEN.p1},
     ...(x.note?[{c:cat.name,s:x.note}]:[]),
-    ...(best?[{car:best,yaw:0.62,cap:`«${best.name}»`,say:first?VGEN.p2:VGEN.p3}]:[]),
-    {c:first?'Первыми в мире':'Раньше рынка',s:h?`В истории — ${h[1]}, ${h[0]}`:''}]};}
+    ...reelPartTail(id,s)]};}
+// концовка ролика о детали: первыми в мире, прототип КБ раньше рынка или новинка у поставщиков
+function reelPartTail(id,s){const x=ALL_PARTS().find(q=>q.id===id);if(!x)return [];const first=s.firsts&&s.firsts['part:'+id],proto=((s.rd&&s.rd.early)||[]).includes(id)&&s.y<x.y,h=PART_HIST[id];
+  return [{plant:1,say:first?VGEN.p2:proto?VGEN.p3:VGEN.p4},{c:first?'Первыми в мире':proto?'Раньше рынка':x.name,s:first||proto?(h?`В истории — ${h[1]}, ${h[0]}`:`КБ «{co}»`):'теперь — в конструкторе «{co}»'}];}
 function yearRecord(s,y){const R=s.yrec=s.yrec||{};
   const log=(s.raceLog||[]).filter(r=>r.y===y),wins=log.filter(r=>r.place===1).map(r=>{const rc=RACES.find(x=>x.key===r.key);return {n:r.name,m:r.model||'',d:r.drv||'',maj:r.major?1:0,img:rc&&rc.img&&IMG[rc.img]?rc.img:''};});
   wins.sort((a,b)=>b.maj-a.maj||(b.img?1:0)-(a.img?1:0));
@@ -212,7 +273,10 @@ const RACE_REEL={pbp:'pbp',chicago:'chicago',pmp:'pmp',brighton:'brighton',tdf:'
   henry:'henry',kaiser:'kaiser',brooklands:'brooklands',jcc200:'brooklands',x59677:'brooklands',x79977:'brooklands',savannah:'usgp',x30184:'usgp',indy:'indy',board0:'board',board1:'board',x78542:'board',x49337:'board',x20757:'board',x60423:'board',
   dieppe:'dieppe',lyon1914:'lyon1914',lemans:'lemans',monza1922:'monza',itgp:'monza',x6663:'monza',brescia:'monza',mille:'mille',monaco:'monaco',pikes:'pikes',daytona1927:'daytona',semmering:'alpine',ventoux:'alpine',klausen:'alpine',shelsley:'alpine',alpen:'alpine'};
 function raceReelId(rc){const k=rc&&RACE_REEL[rc.id];return k&&REELS['race:'+k]?'race:'+k:'';}
-function reelGet(id,s){if(REELS[id])return REELS[id];
+function reelGet(id,s){if(id.startsWith('part:')&&REELS[id]){const R=REELS[id];return Object.assign({},R,{sh:R.sh.concat(reelPartTail(id.slice(5),s))});}
+  // 0.25: ролик о машине соперника (после разбора в КБ) — история машины и концовка о вашем КБ
+  if(id.startsWith('car:')&&REELS[id]){const R=REELS[id],st=((s.rd&&s.rd.studied)||[]).some(k=>k.split('|')[0]===id.slice(4));return st?Object.assign({},R,{sh:R.sh.concat([{plant:1,say:VGEN.s1}])}):R;}
+  if(REELS[id])return REELS[id];
   if(id.startsWith('model:')){const md=s.models.find(m=>m.id===+id.slice(6));return md?reelModel(md,s):null;}
   if(id.startsWith('part:'))return reelPart(id.slice(5),s);
   if(id.startsWith('year:'))return reelYear(+id.slice(5),s);
@@ -265,8 +329,10 @@ function reelShotHTML(sh,s,Q,k){
   if(sh.q!==undefined)return `<div class="rl-card q"><div class="rl-orn"><b>«${esc(String(sh.q).replace(/^[«"]|[»"]$/g,''))}»</b>${sh.who?`<i>— ${esc(sh.who)}</i>`:''}</div></div>`;
   const U=Q?Q.used:{},plantImg=()=>{try{const v=plantImage(s);return v&&v.url?`<img class="rl-img plant" src="${v.url}" alt="">`:'';}catch(e){return '';}};
   const carImg=md=>`<div class="rl-car">${carArt(md,{w:900,yaw:sh.yaw!==undefined?sh.yaw:0.62,pitch:sh.pitch!==undefined?sh.pitch:0.28})}</div>`;
-  let img='',cap=sh.cap;const clip=sh.v?reelClip(sh.v,hashStr((Q?Q.id:'')+'|'+k)):null;
-  if(clip)img=`<video class="rl-vid" src="film/${clip}.mp4" poster="film/${clip}.jpg" muted playsinline autoplay loop preload="auto"></video>`;
+  let img='',cap=sh.cap;const clip=sh.v&&!(sh.d&&typeof DIAG!=='undefined'&&DIAG[sh.d])?reelClip(sh.v,hashStr((Q?Q.id:'')+'|'+k)):null;
+  // 0.25: живой чертёж — как устроена новинка (24g-diagrams.js)
+  if(sh.d&&typeof DIAG!=='undefined'&&DIAG[sh.d])img=diagHTML(sh);
+  else if(clip)img=`<video class="rl-vid" src="film/${clip}.mp4" poster="film/${clip}.jpg" muted playsinline autoplay loop preload="auto"></video>`;
   else if(sh.i&&IMG[sh.i])img=`<img class="rl-img" src="${IMG[sh.i].src}" alt="" referrerpolicy="no-referrer">`;
   else if(sh.car){const md=reelCar(sh.car,s);if(md){img=carImg(md);if(sh.car==='best'&&!cap)cap=`«${md.name}» компании «${s.company}»`;}}
   else if(sh.plant){img=plantImg();U.plant=1;if(!sh.cap)cap='';}
@@ -338,7 +404,7 @@ function reelNext(){const Q=REEL;if(Q)reelGo(Q.i+1);}
 // Плёнка: зерно, царапины, мерцание
 function reelFx(){const Q=REEL;if(!Q)return;const cv=Q.el.querySelector('.rl-grain');if(!cv)return;const g=cv.getContext('2d'),sc=Q.el.querySelectorAll('.rl-scr'),fl=Q.el.querySelector('.rl-flick'),fr=Q.el.querySelector('.rl-frame');
   const id=g?g.createImageData(160,120):null;let last=0;
-  const loop=now=>{if(REEL!==Q)return;if(now-last>70&&!Q.paused){last=now;
+  const loop=now=>{if(REEL!==Q)return;try{if(typeof diagTick==='function')diagTick(Q,now);}catch(_){}if(now-last>70&&!Q.paused){last=now;
       if(id){const d=id.data;for(let i=0;i<d.length;i+=4){const v=Math.random()*255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=Math.random()<0.5?40:0;}g.putImageData(id,0,0);}
       sc.forEach(x=>{if(Math.random()<0.35){x.style.left=(Math.random()*100)+'%';x.style.opacity=(0.15+Math.random()*0.35).toFixed(2);}else if(Math.random()<0.3)x.style.opacity='0';});
       fl.style.opacity=(Math.random()*0.09).toFixed(3);fr.style.transform=Math.random()<0.15?`translateY(${(Math.random()-0.5)*1.6}px)`:'';}

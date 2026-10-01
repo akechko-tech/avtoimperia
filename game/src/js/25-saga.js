@@ -19,6 +19,22 @@ function sagaCond(s,w){const S=s.saga||{};
   if(w==='king')return (s.titles||[]).some(t=>/^king-/.test(t.id||''));
   const m=/^(y|sold|yearSold):(\d+)$/.exec(w);if(m){const v=+m[2];return m[1]==='y'?s.y>=v:m[1]==='sold'?totalSold(s)>=v:Math.max((s.peak||{}).year||0,s.yearSold||0)>=v;}
   return false;}
+/* ---------- 0.25: глава знает, что происходит в игре ----------
+   Фильм рассказывает настоящую историю, но не должен спорить с партией: богатой фирме не предлагают «искать денег на долг»,
+   а решение, уже принятое в газете (суд, заказ, раскол семьи), фильм не спрашивает второй раз.
+   v:[{if:s=>…, sc, q, o, t}] — вариант главы (первый подходящий); выбранный вариант запоминается, повтор показывает тот же.
+   fx.legal:'событие:решение' — выбор в фильме и есть решение по газетному событию (11c-legal.js): его деньги и последствия.
+   fx.cashK — доля кассы (выкуп акций у богатой фирмы стоит не «пару тысяч», а треть кассы). */
+function sagaMonthCost(s){const r=s.last||{};return Math.max(1,(r.mat||0)+(r.wage||0)+(r.ovh||0)+(r.dlr||0)+(r.ad||0)+(r.rd||0)+(r.int||0));}
+function sagaRich(s){return s.cash>Math.max(60000*cpi(s),sagaMonthCost(s)*6)&&(s.loan||0)<=Math.max(0,s.cash)*0.15;}
+function sagaPoor(s){return s.cash<4000*cpi(s)||((s.loan||0)>0&&s.loan>Math.max(0,s.cash)*0.5);}
+function sagaChose(s,id){const w=(s.wpick||{})[id];if(w)return w;
+  // сохранения до 0.25: решение по иску Доджей не записано — узнаём по дивидендам (2% выручки до 1920 года)
+  if(id==='dodgesuit'&&(s.wseen||{}).dodgesuit){const L=s.legal||{};return L.roy&&L.roy.k===0.02&&L.roy.until===miAt(1920,0)?'lDodgePay':'lDodgeBuy';}
+  return '';}
+function sagaChapter(s,ch,fix){if(!ch||!ch.v)return ch;const S=s.saga=s.saga||{seen:[],pick:{}};S.var=S.var||{};
+  let k=S.var[ch.id];if(k===undefined){k=ch.v.findIndex(v=>{try{return !!v.if(s);}catch(e){return false;}});if(fix)S.var[ch.id]=k;}
+  const v=k>=0?ch.v[k]:null;if(!v)return ch;const o={...ch,...v};delete o.v;delete o.if;return o;}
 function sagaReady(s,ch){const W=Array.isArray(ch.when)?ch.when:[ch.when];if(W.every(w=>sagaCond(s,w)))return true;
   // запасной путь: глава не «застревает», если игрок не гоняется или продаёт мало — через три года после её даты она всё равно придёт
   return !W.includes('start')&&!W.includes('finale')&&ch.y>0&&s.y>=ch.y+3;}
@@ -28,13 +44,29 @@ function sagaCheck(s){if(!s||s.over)return;const S=s.saga=s.saga||{seen:[],pick:
   const L=sagaList(s);for(let k=0;k<L.length;k++){const ch=L[k];if(S.seen.includes(ch.id))continue;if(!sagaReady(s,ch))continue;
     s.pending.push({saga:ch.id,title:'Фильм: '+ch.t,text:'',choices:[['Смотреть главу','saga']]});S.last=mi(s);return;}}
 // Без экрана (проверки, автоигра): глава засчитывается с первым вариантом выбора
-function sagaAuto(s,id){const ch=sagaList(s).find(c=>c.id===id),o=ch&&ch.o&&ch.o[0];if(o)sagaApply(s,o.fx);const S=s.saga=s.saga||{seen:[],pick:{}};if(!S.seen.includes(id))S.seen.push(id);S.pick=S.pick||{};if(o)S.pick[id]=0;
+function sagaAuto(s,id){const ch=sagaChapter(s,sagaList(s).find(c=>c.id===id),true),o=ch&&ch.o&&ch.o[0];if(o)sagaApply(s,o.fx);const S=s.saga=s.saga||{seen:[],pick:{}};if(!S.seen.includes(id))S.seen.push(id);S.pick=S.pick||{};if(o)S.pick[id]=0;
   const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);}
 /* ---------- что даёт выбор: деньги, репутация, временные бонусы, спрос, настроение пилотов ---------- */
 const SAGA_B={lineCap:['Выпуск',1],quality:['Качество',1],workerEff:['Выработка рабочих',1],devTime:['Разработка',-1],devCost:['Стоимость разработки',-1],adEff:['Отдача рекламы',1],matCost:['Детали',-1],race:['Скорость в гонках',1],raceRep:['Слава побед',1],drvFee:['Гонорары пилотов',-1]};
 function sagaMonths(n){return n>=24&&n%12===0?`${n/12} ${plural(n/12,'год','года','лет')}`:`${n} ${plural(n,'месяц','месяца','месяцев')}`;}
+// что значит решение по газетному событию, если его принимают в фильме
+const SAGA_LEGAL_TXT={'fivedollar:lFiveYes':'зарплата «пять долларов в день»: рабочие не уходят, спрос в США +6% на 2 года','fivedollar:lFiveNo':'зарплата — по рынку',
+  'oldsboard:lOldsYes':'дорогие машины +12%, народные −10% на 3 года','oldsboard:lOldsBuy':'выкуп доли Смитов — 30% кассы',
+  'benzboard:lBenzNew':'новые машины: спрос +8% на 2 года','benzboard:lBenzOld':'старомодные машины: спрос −6% на 2 года',
+  'jellinek:lJelYes':'аванс Еллинека; за границей спрос +15% на 3 года','jellinek:lJelNo':'',
+  'fiattrial:lFiatLaw':'кредит дороже на 2% до приговора, адвокаты — каждый месяц','fiattrial:lFiatBank':'банк вносит деньги за пакет акций, кредит дороже полгода','fiattrial:':'кредит дороже на 2% до приговора',
+  'peugsplit:lPeugOwn':'акционеры вносят деньги на свой завод','peugsplit:lPeugStay':'',
+  'lanchrcv:lLanInv':'новые акционеры вносят деньги','lanchrcv:lLanCut':'полгода выпуск меньше, банк не торопит с долгом',
+  'scuderia:lScudYes':'компаньоны вносят деньги','scuderia:lScudNo':''};
+function sagaLegal(s,key){const [id,ch]=String(key).split(':'),W=(typeof WORLD!=='undefined'?WORLD:[]).find(w=>w.id===id);if(!W)return '';
+  s.wseen=s.wseen||{};s.wseen[id]=1;(s.wpick=s.wpick||{})[id]=ch||'';try{W.fx&&W.fx(s);}catch(e){console.warn(e);}
+  let t='';try{t=ch&&W.res&&W.res[ch]?(W.res[ch](s)||''):'';}catch(e){console.warn(e);}return t.replace(/\{co\}/g,s.company);}
 function sagaFxText(fx,s){const L=[];if(!fx)return '';
   if(fx.cash)L.push(`${fx.cash>0?'+':'−'}${money(Math.abs(fx.cash)*cpi(s))}`);
+  if(fx.cashK)L.push(`${fx.cashK>0?'+':'−'}${Math.round(Math.abs(fx.cashK)*100)}% кассы (${money(Math.abs(fx.cashK)*Math.max(0,s.cash))})`);
+  if(fx.legal&&SAGA_LEGAL_TXT[fx.legal])L.push(SAGA_LEGAL_TXT[fx.legal]);
+  if(fx.roy)L.push(`дивиденды компаньонам — ${Math.round(fx.roy[0]*100)}% выручки (${sagaMonths(fx.roy[1])})`);
+  if(fx.sup&&typeof SUPPLY!=='undefined')L.push('свои '+fx.sup.map(k=>(SUPPLY.find(x=>x.k===k)||{n:k}).n.toLowerCase()).join(', ')+': детали дешевле');
   if(fx.rep)L.push(`репутация ${fx.rep>0?'+':'−'}${Math.abs(fx.rep)}`);
   Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const d=SAGA_B[k];if(!d)return;
     if(k==='race'){L.push(`скорость в гонках +${Math.round(v*100)}% на ${sagaMonths(mo)}`);return;}
@@ -43,8 +75,13 @@ function sagaFxText(fx,s){const L=[];if(!fx)return '';
   Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const pc=Math.round((v-1)*100);if(pc&&SEG[g])L.push(`спрос: ${SEG[g].name.toLowerCase()} класс ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
   if(fx.mood)L.push(`настроение пилотов ${fx.mood>0?'+':'−'}${Math.abs(fx.mood)}`);
   return L.join(' · ');}
-function sagaApply(s,fx){if(!fx)return;const now=mi(s);
+function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
   if(fx.cash)s.cash+=Math.round(fx.cash*cpi(s));
+  if(fx.cashK)s.cash+=Math.round(Math.max(0,s.cash)*fx.cashK);
+  if(fx.legal){const t=sagaLegal(s,fx.legal);if(t)addLog(t,'hist');}
+  if(fx.roy)legalOf(s).roy={k:fx.roy[0],until:now+fx.roy[1]};
+  // 0.25: купленные в фильме поставщики (рудники, леса, дорога) — настоящие, в «Финансах» на вкладке «Завод»
+  if(fx.sup&&typeof invOf==='function'){const I=invOf(s),M=matSpend(s);const paid=Math.max(0,c0-s.cash)/fx.sup.length;fx.sup.forEach(k=>{const S=SUPPLY.find(x=>x.k===k);if(S&&!I.sup[k])I.sup[k]={cover:M*2,val:paid>0?Math.min(supPrice(s,S),paid):supPrice(s,S),t:now,saga:1};});}
   if(fx.rep)s.rep=clamp(s.rep+fx.rep,0,100);
   const B=s.sagaB=s.sagaB||{};Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const o=B[k];if(o&&now<o.until){o.v=BN_ADD[k]?o.v+v:o.v*v;o.until=Math.max(o.until,now+mo);}else B[k]={v,until:now+mo};});
   const SG=s.sagaSeg=s.sagaSeg||{};Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const o=SG[g];if(o&&now<o.until){o.v*=v;o.until=Math.max(o.until,now+mo);}else SG[g]={v,until:now+mo};});
@@ -58,7 +95,7 @@ function sagaImg(key){const im=key&&IMG[key];return im&&im.src?im.src:'';}
 // Голоса фильма: рассказчица — baya, мужские роли — eugene, женские — xenia (записаны заранее; нет записи — синтезатор устройства)
 const SAGA_NARR='baya';
 function sagaVoiceOf(sc){return sc&&sc.who?voiceOfWho(sc.who):SAGA_NARR;}
-function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=L[k];if(!ch){if(!replay)sagaDone(id,-1);return;}
+function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=sagaChapter(s,L[k],!replay);if(!ch){if(!replay)sagaDone(id,-1);return;}
   sagaStop();const P=PIONEERS[s.pioneer]||PIONEERS.custom,el=document.createElement('div');el.className='sg';el.id='sagaScreen';
   el.innerHTML=`<div class="sg-bg"><img alt=""></div><div class="sg-shade"></div><div class="sg-bar top"></div><div class="sg-bar bot"></div>
     <div class="sg-body"></div><div class="sg-ctrl"><button class="sg-nav" data-sg="prev" aria-label="Назад">◀</button><button class="sg-nav" data-sg="next" aria-label="Дальше">▶</button><button class="sg-skip">К выбору ▸▸</button></div><div class="sg-dots"></div>`;
@@ -116,4 +153,4 @@ function sagaCard(s){const L=sagaList(s),S=s.saga||{seen:[]},seen=L.filter(c=>(S
   const P=PIONEERS[s.pioneer]||PIONEERS.custom;
   return `<section class="card sg-card" id="sec-saga"><div class="row"><h2>🎬 Фильм: ${esc(s.pioneer==='custom'?s.company:P.name)}</h2><span class="pill">${seen.length} из ${L.length}</span></div>
     <p class="small muted" style="margin-top:4px">Художественный фильм по настоящей истории: глава приходит, когда в игре наступает её момент. Выбор в конце главы влияет на компанию.</p>
-    <div class="sg-list">${L.map((c,i)=>{const got=(S.seen||[]).includes(c.id),pk=S.pick&&S.pick[c.id];return `<button class="sg-li ${got?'got':''}" ${got?`data-act="sagaReplay" data-k="${c.id}"`:'disabled'}><b>${i+1}. ${esc(got?sagaFill(c.t,s):'Ещё впереди')}</b><small>${got?(c.y?c.y+' · ':'')+(pk!==undefined&&c.o[pk]?'выбор: '+esc(sagaFill(c.o[pk].t,s)):'смотреть снова ▸'):c===next?'следующая глава':''}</small></button>`;}).join('')}</div></section>`;}
+    <div class="sg-list">${L.map((c0,i)=>{const c=sagaChapter(s,c0,false),got=(S.seen||[]).includes(c.id),pk=S.pick&&S.pick[c.id];return `<button class="sg-li ${got?'got':''}" ${got?`data-act="sagaReplay" data-k="${c.id}"`:'disabled'}><b>${i+1}. ${esc(got?sagaFill(c.t,s):'Ещё впереди')}</b><small>${got?(c.y?c.y+' · ':'')+(pk!==undefined&&c.o[pk]?'выбор: '+esc(sagaFill(c.o[pk].t,s)):'смотреть снова ▸'):c===next?'следующая глава':''}</small></button>`;}).join('')}</div></section>`;}

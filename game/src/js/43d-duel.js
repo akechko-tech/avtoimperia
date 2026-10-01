@@ -153,7 +153,12 @@ function duelOutcome(s,C,win,info){info=info||{};const H=rivalHero(C.mq,s),R=riv
   // сцена развязки — сразу; газета — следом
   pushEvent({kicker:'Пари',title:win?`Пари с ${C.mq} выиграно`:`Пари с ${C.mq} проиграно`,deck:ev,text:line,own:1,
     duel:{win,H,line,rev,score:`${R.w}:${R.l}`,st:R.st,stake:C.stake,x:C.x?C.x.k:'',extra,ev,mq:C.mq,sales:C.type==='sales'?{you:info.you||0,them:info.them||0,hc:C.hc||1,c:C.c&&C.c!==s.country?C.c:''}:null,trial:info.trial||null,match:info.match?Object.assign({kind:C.type},info.match):null,race:!!rc,forfeit:!!info.forfeit},
-    choices:win&&rev&&!s.over?[['Дальше','chalOk'],[`Реванш! Ставка ${money(Math.round(C.stake*1.5/50)*50)}`,'chalRev']]:[['Дальше','chalOk']]});
+    choices:(()=>{const st=money(Math.round(C.stake*1.5/50)*50);
+      // 0.25: реванш просит тот, кто проиграл. Выиграли вы — соперник просит отыграться, вы решаете, дать ли ему шанс;
+      // проиграли — отыграться можете вы (не после неявки)
+      if(s.over)return [['Дальше','chalOk']];
+      if(win)return rev?[['Дальше','chalOk'],[`Дать ${C.mq} отыграться · ставка ${st}`,'chalRev']]:[['Дальше','chalOk']];
+      return info.forfeit?[['Дальше','chalOk']]:[['Дальше','chalOk'],[`Потребовать реванша · ставка ${st}`,'chalRev']];})()});
   pushEvent({kicker:'Спорт и дела',own:1,carId:best?best.id:null,carOpt:rc&&best?{prep:info.prep||1,num:info.num||0,country:s.country,y:s.y}:null,caption:best?`«${best.name}» компании «${s.company}»`:'',
     title:ptitle,deck:`Пари: ${stakeText(C)}${ev?' · '+ev:''}`,
     text:(win?`Пари выиграно — ${money(C.stake)} переходят в кассу «${s.company}»${extra?', а ещё '+extra:''}. ${H.name} сказал репортёрам: «${line}»`
@@ -165,7 +170,7 @@ function duelOutcome(s,C,win,info){info=info||{};const H=rivalHero(C.mq,s),R=riv
   if(win&&R.st===3&&H.c&&COUNTRIES[H.c])pushEvent({kicker:'Дилеры',own:1,title:`Дилеры ${C.mq} хотят к вам`,deck:'После трёх побед подряд',
     text:`Трое дилеров ${C.mq} (${COUNTRIES[H.c].name}) пишут, что покупатели всё чаще спрашивают машины «${s.company}». Они готовы перейти к вам — без платы за вход.`,
     choices:[['Принять дилеров','chalDealers'],['Отказаться','chalDealersNo']],dc:H.c});
-  s.revOffer=win?{mq:C.mq,stake:Math.round(C.stake*1.5/50)*50,type:C.type,g:C.g,ci:C.ci,base:C.type==='match'||C.type==='record'||C.type==='trial'||C.mon?Object.assign({},C,{acc:0}):null}:null;
+  s.revOffer=(win?!!rev:!info.forfeit)?{mq:C.mq,stake:Math.round(C.stake*1.5/50)*50,type:C.type,g:C.g,ci:C.ci,mine:!win,base:C.type==='match'||C.type==='record'||C.type==='trial'||C.mon?Object.assign({},C,{acc:0}):null}:null;
   addLog(win?`⚔️ Счёт с ${C.mq}: ${R.w}:${R.l}${R.st>=2?` (серия ${R.st})`:''}.`:`Счёт с ${C.mq}: ${R.w}:${R.l}.`,win?'good':'bad');}
 // реванш: новое пари со ставкой в полтора раза выше — на ближайшую гонку или продажи этого (следующего) года
 function duelRevenge(s){const O=s.revOffer;s.revOffer=null;if(!O||s.chal)return false;
@@ -203,7 +208,8 @@ function duelHTML(D){if(D.goal)return goalHTML(D);const H=D.H,win=D.win;
     <div class="duel-score"><span>Счёт</span><b>Вы — ${esc(D.mq)} ${D.score}</b><i class="duel-stamp">${win?'Выиграно':'Проиграно'}</i>${D.st>=2?`<em>побед подряд: ${D.st}</em>`:D.st<=-2?`<em class="bad">поражений подряд: ${-D.st}</em>`:''}</div>
     <p class="${win?'good':'bad'}" style="margin-top:8px"><b>${win?'+':'−'}${money(D.stake)}</b> ${win?'— ставка ваша':'— ставка уходит сопернику'}${D.extra?` · ${esc(D.extra)}`:''}</p>
     <p class="small muted" style="margin-top:4px">${win?'📜 Грамота — в кабинете трофеев (Империя). Три месяца покупатели в стране соперника охотнее берут ваши машины.':'Три месяца покупатели в стране соперника будут прохладнее. Отыграться можно в новом пари — доска вызовов на вкладке «Империя».'}</p>
-    ${D.rev?`<p class="small warn" style="margin-top:6px">${esc(H.name)}: «${esc(D.rev)}»</p>`:''}</div>`;}
+    ${D.rev?`<p class="small warn" style="margin-top:6px">${esc(H.name)} просит реванша: «${esc(D.rev)}»</p><p class="small muted" style="margin-top:2px">Дать отыграться — новое пари со ставкой в полтора раза выше; «Дальше» — отказать: победа остаётся за вами.</p>`
+      :!win&&!D.forfeit&&!D.goal?`<p class="small muted" style="margin-top:6px">Можно потребовать реванша — новое пари со ставкой в полтора раза выше.</p>`:''}</div>`;}
 // 0.24: пробег — таблица этапов; матч и спор о скорости — скорость обоих
 function duelTrialHTML(T,mq){return `<p class="small" style="margin-top:6px">${esc(T.route)} · ${fmtN(T.km)} км: «${esc(T.md)}» против ${esc(T.rv)}</p>
   <table class="pl" style="margin-top:4px"><tr><th class="n">Этап</th><th>Вы</th><th>${esc(String(mq).slice(0,14))}</th></tr>${T.rows.map(r=>`<tr><td class="n">${r[0]}</td><td class="${r[1]?'bad':'good'}">${r[1]?'поломка: '+esc(r[1]):'✓'}</td><td class="${r[2]?'bad':'good'}">${r[2]?'поломка: '+esc(r[2]):'✓'}</td></tr>`).join('')}
@@ -213,7 +219,8 @@ function duelMatchHTML(M,mq){const sp=v=>v?v+' км/ч':'—';
 function duelShow(ev){openSheet(duelHTML(ev.duel)+`<div class="stack" style="margin-top:14px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
   if(!ev.thOn){ev.thOn=1;if(ev.duel.goal){if(!ev.duel.win&&ev.duel.mq)try{duelTheme(ev.duel.H.type,false,false);}catch(_){}}else try{duelTheme(ev.duel.H.type,ev.duel.win,ev.duel.race);}catch(_){}}}
 // тема соперника (4–5 с): гордый — фанфары, деловой — бойкое фортепиано, аристократ — струнный вальс, язвительный — кларнет с насмешкой.
-// Вы выиграли — тема звучит сникшей (минор, медленнее); проиграли — торжествует соперник
+// Проиграли — торжествует тема соперника. 0.25: выиграли — звучат ваши победные фанфары (раньше — «сникшая» тема соперника,
+// а она звучала грустно, будто проиграли вы); музыка игры на это время приглушается (auCue → musDuck)
 const DUEL_THEME={proud:[[72,0,.3],[72,.3,.15],[72,.45,.15],[76,.6,.45],[72,1.05,.3],[76,1.35,.3],[79,1.65,.9],[84,2.6,.35],[83,2.95,.35],[84,3.3,1.3],[60,0,.6],[55,1.05,.6],[60,1.65,.9],[48,3.3,1.3]],
   biz:[[60,0,.2],[64,.22,.2],[67,.44,.2],[72,.66,.4],[71,1.1,.2],[72,1.32,.2],[74,1.54,.2],[76,1.76,.5],[74,2.3,.2],[72,2.52,.2],[71,2.74,.2],[72,2.96,.2],[67,3.2,.2],[72,3.45,1],[48,0,.4],[55,.66,.4],[53,1.54,.4],[48,2.52,.4],[48,3.45,1]],
   aristo:[[67,0,.6],[71,.6,.3],[74,.9,.3],[79,1.2,.9],[78,2.1,.3],[76,2.4,.3],[74,2.7,.6],[72,3.3,.3],[71,3.6,.3],[67,3.9,1.1]],
@@ -227,7 +234,8 @@ function duelTheme(type,win,race){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,d
   // 0.24: без файла — живые семплы инструмента; нет и их — тишина (никакого «пиканья» генератором)
   const synth=()=>{const t0=c.currentTime+0.02,useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];if(!useIns)return;
     duelNotes(type,win).forEach(([n,d,l])=>{try{inst(ins,n,t0+d,l,0.5,dest);}catch(_){}});};
-  setTimeout(()=>{try{auCue('duel_'+(DUEL_THEME[type]?type:'biz')+'_'+(win?'w':'l'),0.75,synth);}catch(_){synth();}},race?100:950);
+  const fan=()=>{try{auCue('fanfare',0.8,()=>{});}catch(_){}};
+  setTimeout(()=>{try{if(win)auCue('win',0.8,fan);else auCue('duel_'+(DUEL_THEME[type]?type:'biz')+'_l',0.75,synth);}catch(_){if(!win)synth();}},race?100:950);
   // перед темой: телеграф «точка-тире» (на гонке вместо него — трибуны)
   if(race){try{auSfx('cheer',win?0.8:0.4);}catch(_){}return;}
   // 0.24: телеграф — не «пищалка», а щелчки клопфера (якорь стучит по упору и отскакивает), как на почтамте эпохи

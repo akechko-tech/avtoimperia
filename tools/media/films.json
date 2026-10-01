@@ -513,5 +513,161 @@
   ],
   "cap": "Отъезд экипажа, 1896",
   "y": 1896
+ },
+ {
+  "id": "sf1906a",
+  "title": "File:San Francisco earthquake and fire, April 18, 1906.webm",
+  "t": 178,
+  "d": 8,
+  "tags": [
+   "sf1906"
+  ],
+  "cap": "Сан-Франциско горит, апрель 1906",
+  "y": 1906
+ },
+ {
+  "id": "sf1906c",
+  "title": "File:San Francisco earthquake and fire, April 18, 1906.webm",
+  "t": 541,
+  "d": 8,
+  "tags": [
+   "sf1906"
+  ],
+  "cap": "Улицы после землетрясения, 1906",
+  "y": 1906
+ },
+ {
+  "id": "titanic1",
+  "title": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm",
+  "t": 30,
+  "d": 8,
+  "tags": [
+   "titanic"
+  ],
+  "cap": "Лайнер компании «Уайт Стар», 1911–1912",
+  "y": 1912
+ },
+ {
+  "id": "titanic2",
+  "title": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm",
+  "t": 95,
+  "d": 7,
+  "tags": [
+   "titanic"
+  ],
+  "cap": "Льды Северной Атлантики",
+  "y": 1912
+ },
+ {
+  "id": "titanic3",
+  "title": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm",
+  "t": 290,
+  "d": 8,
+  "tags": [
+   "titanic"
+  ],
+  "cap": "Толпа ждёт вестей, апрель 1912",
+  "y": 1912
+ },
+ {
+  "id": "lindy1",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "t": 68,
+  "d": 8,
+  "tags": [
+   "lindbergh",
+   "aviation"
+  ],
+  "cap": "«Дух Сент-Луиса», май 1927",
+  "y": 1927
+ },
+ {
+  "id": "lindy2",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "t": 210,
+  "d": 8,
+  "tags": [
+   "lindbergh"
+  ],
+  "cap": "Ночь в Ле-Бурже: Париж встречает Линдберга",
+  "y": 1927
+ },
+ {
+  "id": "lindy3",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "t": 352,
+  "d": 8,
+  "tags": [
+   "lindbergh"
+  ],
+  "cap": "Самолёт Линдберга в Ле-Бурже, 1927",
+  "y": 1927
+ },
+ {
+  "id": "lindy4",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "t": 636,
+  "d": 9,
+  "tags": [
+   "lindbergh",
+   "street1920"
+  ],
+  "cap": "Нью-Йорк встречает Линдберга, июнь 1927",
+  "y": 1927
+ },
+ {
+  "id": "michelin1924",
+  "title": "File:André Michelin et son secrétaire en compagnie d'Albert Kahn dans les jardins de sa propriété - AI88521.webm",
+  "t": 2.5,
+  "d": 8,
+  "tags": [
+   "michelin"
+  ],
+  "cap": "Андре Мишлен, 1924",
+  "y": 1924
+ },
+ {
+  "id": "balloon1",
+  "title": "File:Demonstratie met Michelin super ballon band-519021.ogv",
+  "t": 48,
+  "d": 8,
+  "tags": [
+   "balloon_tyre"
+  ],
+  "cap": "Баллонная шина на булыжной мостовой",
+  "y": 1933
+ },
+ {
+  "id": "balloon2",
+  "title": "File:Demonstratie met Michelin super ballon band-519021.ogv",
+  "t": 33,
+  "d": 8,
+  "tags": [
+   "balloon_tyre"
+  ],
+  "cap": "Машина на баллонных шинах",
+  "y": 1933
+ },
+ {
+  "id": "armistice_paris",
+  "title": "File:Paris manifeste sa joie le jour de l'Armistice - AI90875.webm",
+  "t": 150,
+  "d": 8,
+  "tags": [
+   "armistice"
+  ],
+  "cap": "Париж, 11 ноября 1918",
+  "y": 1918
+ },
+ {
+  "id": "quake1906b",
+  "title": "File:San Francisco earthquake and fire, April 18, 1906.webm",
+  "t": 420,
+  "d": 9,
+  "tags": [
+   "sf1906"
+  ],
+  "cap": "Жители увозят пожитки, Сан-Франциско, 1906",
+  "y": 1906
  }
 ]

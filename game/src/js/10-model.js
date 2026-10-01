@@ -96,7 +96,7 @@ function labRate(v){return clamp(1.15-0.075*Math.log10(1+Math.max(0,v)),0.85,1.1
 function modelVol(md){return md.vol||md.lastMade||1;}
 function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
   if(tc.foundry)c-=partCost(p.e,s)*0.18;if(tc.press&&!isTruck(md))c-=partCost(p.b,s)*0.15;
-  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s)*(md.legend?legendK(md,'cost'):1));}
+  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s)*(md.legend?legendK(md,'cost'):1)*(typeof supK==='function'?supK(s):1));}
 function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
@@ -293,7 +293,7 @@ function dealersMonth(s,r){s.dcap=s.dcap||{};s.dsm=s.dsm||{};s.dAdd={};
       if(mi(s)-(s.dlrSaid||-99)>=12){s.dlrSaid=mi(s);addLog(`Торговцы сами просятся в дилеры: ${fmtN(n)} ${plural(n,'новый город','новых города','новых городов')}${c!==s.country?' ('+COUNTRIES[c].name+')':''}. Марка, которая хорошо продаётся, нужна всем.`,'good');}}}}
 /* ---------- finance ---------- */
 function stockValue(s){return s.models.reduce((a,m)=>a+m.stock*matCost(m,s),0);}
-function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+arTotal(s)+Math.max(0,avg*12*7);}
+function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return s.cash-s.loan+s.plantVal+stockValue(s)+arTotal(s)+(typeof invValue==='function'?invValue(s)+finTotal(s):0)+Math.max(0,avg*12*7);}
 // Кредит под залог завода и склада; в кризисы банки урезают лимит (13b-economy.js: creditState)
 // 0.21: в послевоенный спад и в крах 1929 года банки прежде всего режут кредит тем, у кого долг велик по сравнению с прибылью
 function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;const pr=((s.hist&&s.hist.profit)||[]).slice(-12),py=Math.max(1,pr.reduce((a,b)=>a+b,0)),lev=s.loan/py;

@@ -6,7 +6,9 @@ const out=[],seen=new Set();
 const add=(t,v)=>{t=String(t||'').replace(/\\s+/g,' ').trim();if(!t||/[{}]/.test(t))return;const h=voiceHash(t,v);if(seen.has(h))return;seen.add(h);out.push({h,s:t,v});};
 for(const k in REELS)REELS[k].sh.forEach(sh=>{if(sh.say)add(sh.say,'aidar');});
 for(const k in VGEN)add(VGEN[k],'aidar');
-for(const p in SAGA)SAGA[p].forEach(ch=>{ch.sc.forEach(sc=>{if(sc.who)add(sc.line,voiceOfWho(sc.who));else add(sc.say,SAGA_NARR);});add(ch.q,SAGA_NARR);(ch.o||[]).forEach(o=>add(o.res,SAGA_NARR));});
+// 0.25: у главы бывают варианты (v) — по положению дел в игре; голос нужен всем
+const chv=ch=>{(ch.sc||[]).forEach(sc=>{if(sc.who)add(sc.line,voiceOfWho(sc.who));else add(sc.say,SAGA_NARR);});if(ch.q)add(ch.q,SAGA_NARR);(ch.o||[]).forEach(o=>add(o.res,SAGA_NARR));};
+for(const p in SAGA)SAGA[p].forEach(ch=>{chv(ch);(ch.v||[]).forEach(chv);});
 RACES.forEach(rc=>add(raceIntroText(rc),'aidar'));
 // 0.19: исторические сценарии (рассказ перед стартом и титры с голосом) и диктор с трибуны
 for(const id in SCN){const S=SCN[id];if(S.b)add(S.b,'aidar');(S.ev||[]).forEach(e=>{if(e.v)add(scnSpeech(e.t),'aidar');});}

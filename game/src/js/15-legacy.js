@@ -1,15 +1,20 @@
 /* ================= LEGACY: firsts, score, comparison with history ================= */
 // Первенства: игрок внедрил технологию или деталь раньше, чем это случилось в истории
-const PART_HIST={e2:[1898,'Daimler (мотор «Феникс»)'],e3:[1903,'Aster'],e4:[1908,'Continental'],e5:[1912,'Knight и Daimler'],e6:[1914,'Cadillac (первый массовый V8)'],e7:[1922,'верхнеклапанные моторы двадцатых'],e8:[1927,'рядные «восьмёрки» (Duesenberg, Packard)'],
-  c2:[1896,'Panhard et Levassor'],c3:[1902,'Mercedes и Bosch'],c4:[1910,'Rudge-Whitworth'],c5:[1921,'Duesenberg (гидравлические тормоза)'],
-  b4:[1911,'закрытые кузова Cadillac и Hudson'],b5:[1923,'Dodge и Citroën (цельностальной кузов)'],w3:[1905,'Michelin и Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1912,'кордовые шины Palmer и Goodyear'],w6:[1923,'Firestone (баллонные шины)']};
+// 0.25: кто и когда впервые поставил деталь на машины в настоящей истории (ключи — детали из 01-data.js; прежняя таблица съехала на добавленных деталях)
+const PART_HIST={e2:[1898,'Daimler (мотор «Феникс» Майбаха)'],e10:[1903,'Cadillac'],e3:[1903,'Aster'],e9:[1908,'Ford (Model T)'],e4:[1908,'Continental'],e5:[1909,'Daimler из Ковентри (мотор Найта)'],
+  e14:[1914,'Dodge Brothers'],e6:[1914,'Cadillac (первый массовый V8)'],e11:[1922,'Austin и Citroën'],e7:[1922,'верхнеклапанные моторы двадцатых'],e8:[1919,'Isotta Fraschini (Tipo 8)'],e12:[1929,'Chevrolet («шестёрка по цене четвёрки»)'],
+  g2:[1891,'Panhard et Levassor'],g3:[1899,'Луи Рено'],g4:[1901,'Oldsmobile'],g7:[1928,'Cadillac'],
+  k2:[1902,'Луи Рено'],k3:[1910,'Isotta Fraschini'],k6:[1919,'Hispano-Suiza'],k4:[1921,'Duesenberg'],k5:[1927,'Ford (Model A)'],
+  c2:[1891,'Panhard et Levassor'],c3:[1901,'Mercedes (Вильгельм Майбах)'],c6:[1908,'Ford (Model T)'],c5:[1906,'Морис Удай (гидравлический амортизатор)'],c7:[1922,'Lancia (Lambda)'],
+  w2:[1895,'Michelin'],w3:[1904,'Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1908,'Rudge-Whitworth'],w6:[1913,'Goodyear и Palmer'],w7:[1908,'Sankey'],w8:[1923,'Firestone'],
+  b4:[1910,'Cadillac (закрытый кузов Fisher)'],b9:[1922,'Essex (Coach)'],b5:[1922,'Dodge Brothers и Budd'],b6:[1896,'Daimler']};
 function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
   s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
   const rid=reelGet(key,s)?key:null;if(rid)reelUnlock(s,rid);
   try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только в ${histY} году.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}
   if(!G.pending.length)pushEvent({own:1,title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`,choices:rid?[['Читать дальше','ok'],['▶ Кинохроника','reel:'+rid]]:undefined},true);
   s.rep=clamp(s.rep+4,0,100);}
-function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p.e,p.c,p.b,p.w].forEach(x=>{const h=PART_HIST[x.id];if(h&&s.y<h[0]&&!cp[x.id])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
+function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p.e,p.g,p.c,p.k,p.b,p.w].forEach(x=>{const h=x&&PART_HIST[x.id];if(h&&s.y<h[0]&&!cp[x.id])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}
 function plural(n,a,b,c){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c;}
 function legacyYear(s){if(!s.lhist)s.lhist=[];s.lhist.push({y:s.y-1,sold:s.peakLast||0,val:Math.round(companyValue(s)),rep:Math.round(s.rep)});if(s.lhist.length>40)s.lhist.shift();}

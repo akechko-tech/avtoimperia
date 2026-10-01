@@ -6,7 +6,7 @@
 
 // Влияние: страна ('*' — все), класс ('*' — все), сдвиг привлекательности, на сколько месяцев; затухает к концу срока
 function wfxAdd(s,c,g,k,mo,why,delay){s.wfx=s.wfx||[];const t=mi(s)+(delay||0);s.wfx.push({c,g,k,from:t,until:t+mo,why});}
-function worldU(s,c,g){const L=s.wfx;if(!L||!L.length)return 0;const t=mi(s);let u=0;for(const f of L){if(t<f.from||t>=f.until)continue;if(f.c!=='*'&&f.c!==c)continue;if(f.g!=='*'&&f.g!==g)continue;u+=f.k*(1-(t-f.from)/Math.max(1,f.until-f.from));}return u;}
+function worldU(s,c,g){const L=s.wfx;if(!L||!L.length)return 0;const t=mi(s);let u=0;for(const f of L){if(t<f.from||t>=f.until)continue;if(f.c!=='*'&&f.c!==c)continue;if(f.g!=='*'&&f.g!==g)continue;u+=f.k*(f.flat?1:(1-(t-f.from)/Math.max(1,f.until-f.from)));}return u;}
 function wfxClean(s){if(s.wfx)s.wfx=s.wfx.filter(f=>f.until>mi(s));}
 const WORLD=[
   {id:'quake',y:1906,m:3,reel:'w:quake',img:'1906 San Francisco earthquake',sad:1,title:'Землетрясение в Сан-Франциско',deck:'18 апреля 1906 года: город разрушен, пожары три дня',
@@ -115,7 +115,9 @@ function warAlliesOrder(s){const md=tenderModel(s,'truck')||tenderModel(s,'van')
   const base=(s.last&&s.last.made)||10,n=clamp(Math.round(base*1.2/10)*10,20,12000),price=Math.round(refPrice(md,s)*1.12/10)*10;
   s.orders=s.orders||[];s.orders.push({id:mi(s)+'-allies',md:md.id,n,left:n,price,due:mi(s)+9,who:'Военные ведомства Британии и Франции',start:mi(s)});
   return `Военные ведомства Британии и Франции заказали у «{co}» ${fmtN(n)} машин «${md.name}» по ${money(price)}: ${isTruck(md)?'грузовики пойдут на фронт':'на шасси поставят кузова санитарных машин'}. Срок — 9 месяцев, машины идут в первую очередь.`;}
-function worldApplies(W,s){if(W.pk&&!W.pk.split(',').includes(s.pioneer))return false;if(W.req&&!W.req(s))return false;if(!W.cc)return true;const L=W.cc.replace('!','').split(',');return W.cc[0]==='!'?!L.includes(s.country):L.includes(s.country);}
+function worldApplies(W,s){if(W.pk&&!W.pk.split(',').includes(s.pioneer))return false;if(W.req&&!W.req(s))return false;
+  // 0.25: решение, которое принимают в фильме о герое (глава саги), газета второй раз не спрашивает
+  if(W.saga&&typeof sagaList==='function'&&sagaList(s).some(c=>c.id===W.saga))return false;if(!W.cc)return true;const L=W.cc.replace('!','').split(',');return W.cc[0]==='!'?!L.includes(s.country):L.includes(s.country);}
 // раз в месяц: пришло событие — газета с роликом и выбором
 function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(W.id==='war'&&s.country==='it'){y=1915;m=4;}
   // 0.23: событие, которое игра раньше не показывала (сохранение старой версии), — догоняющая первая полоса, пока оно ещё идёт
@@ -129,7 +131,7 @@ function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(
   // газета через месяц — чем обернулся выбор
   (s.wnext||[]).filter(x=>x.at<=mi(s)).forEach(x=>{if(x.text)pushEvent({kicker:'Мир · месяц спустя',own:1,title:x.title,deck:x.deck,text:x.text.replace(/\{co\}/g,s.company)},true);});
   s.wnext=(s.wnext||[]).filter(x=>x.at>mi(s));wfxClean(s);}
-function worldResolve(s,key){const [,id,ch]=key.split(':');const W=WORLD.find(w=>w.id===id);if(!W||!W.res[ch])return;let txt='';try{txt=W.res[ch](s)||'';}catch(e){console.warn(e);}
+function worldResolve(s,key){const [,id,ch]=key.split(':');const W=WORLD.find(w=>w.id===id);if(!W||!W.res[ch])return;(s.wpick=s.wpick||{})[id]=ch;let txt='';try{txt=W.res[ch](s)||'';}catch(e){console.warn(e);}
   const lab=(W.ch.find(c=>c[1]===ch)||[''])[0];addLog(`${W.title}: решение — ${lab.toLowerCase()}.`);
   (s.wnext=s.wnext||[]).push({at:mi(s)+1,title:`${W.title}: ${lab.toLowerCase()}`,deck:'Что вышло из решения',text:txt});}
 // эффекты выбора, которые работают внутри модели
