@@ -97,128 +97,153 @@ def shift(mel, at, tr=0): return [(b + at, d, p + tr) for b, d, p in mel]
 def tr_ch(ch, k): return ((ch[0] + k) % 12, ch[1])
 
 # ---------- марш: военный духовой оркестр ----------
+# 0.23: «пискляво» было от регистра: мелодия у корнетов доходила до ми третьей октавы, флейты играли октавой, пикколо — двумя выше.
+# Теперь марш в фа мажоре (на кварту ниже, как пишут марши для духовых): мелодия корнетов и кларнетов — в середине,
+# тенор-саксофон и эуфониум дают тёплый низ, флейты — только в повторе и тихо, пикколо — лишь узор в торжественном трио;
+# верх оркестра — не выше фа третьей октавы. Литавры — во вступлении и в финале.
+def fold(p, hi):
+    while p > hi: p -= 12
+    return p
+
 def march(T, seed=7):
     mel, chords, bars, beats = parse(T); bpm = T['bpm']; S = Score(bpm, seed); B = beats
-    PIC, FL, CL1, CL2, CRN, HRN, TBN, EUP, TUBA, DR, GLK = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-    S.setup(PIC, 72, 88, 52, 45); S.setup(FL, 73, 92, 50, 48); S.setup(CL1, 71, 104, 44, 50); S.setup(CL2, 71, 92, 40, 50)
-    S.setup(CRN, 56, 108, 70, 44, 6); S.setup(HRN, 60, 96, 86, 58); S.setup(TBN, 57, 102, 84, 52); S.setup(EUP, 58, 96, 74, 50)
-    S.setup(TUBA, 58, 112, 64, 40); S.setup(DR, 0, 112, 64, 42, 0); S.setup(GLK, 9, 72, 58, 55)
+    K = -7; mel = [(b, d, p + K) for b, d, p in mel]; chords = [tr_ch(c, K) for c in chords]
+    PIC, FL, CL1, CL2, CRN, HRN, TBN, EUP, TUBA, DR, GLK, TSX, ASX, TIMP = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+    S.setup(PIC, 72, 66, 52, 40); S.setup(FL, 73, 80, 50, 46); S.setup(CL1, 71, 98, 44, 48); S.setup(CL2, 71, 88, 40, 48)
+    S.setup(CRN, 56, 102, 70, 42, 4); S.setup(HRN, 60, 102, 86, 56); S.setup(TBN, 57, 108, 84, 50); S.setup(EUP, 58, 100, 74, 50)
+    S.setup(TUBA, 58, 118, 64, 40); S.setup(DR, 0, 100, 64, 40, 0); S.setup(GLK, 9, 50, 58, 50)
+    S.setup(TSX, 66, 94, 58, 46); S.setup(ASX, 65, 82, 52, 46); S.setup(TIMP, 47, 104, 64, 52)
+    CAP = {PIC: 91, FL: 88, CL1: 86, CL2: 81, CRN: 86, GLK: 96, ASX: 76, TSX: 76, HRN: 74}
     def harm_below(p, ch):
         c = [n for n in tones(ch, p - 9, p - 3)]; return max(c) if c else p - 4
     def drums(b0, nb, lvl, cym=True, snare=True, rolls=(7, 15)):
         for k in range(nb):
             t = b0 + k * B
-            S.note(DR, t, 0.4, 36, 70 * lvl); S.note(DR, t + 2, 0.4, 36, 62 * lvl)
-            if cym: S.note(DR, t, 0.6, 49, 34 * lvl); S.note(DR, t + 2, 0.6, 49, 30 * lvl)
+            S.note(DR, t, 0.4, 36, 72 * lvl); S.note(DR, t + 2, 0.4, 36, 64 * lvl)
+            if cym: S.note(DR, t, 0.6, 49, 24 * lvl); S.note(DR, t + 2, 0.6, 49, 20 * lvl)
             if snare:
-                S.note(DR, t + 1, 0.2, 38, 66 * lvl); S.note(DR, t + 3, 0.2, 38, 64 * lvl)
-                for e in (0.5, 1.5, 2.5, 3.5): S.note(DR, t + e, 0.1, 38, 34 * lvl)
+                S.note(DR, t + 1, 0.2, 38, 60 * lvl); S.note(DR, t + 3, 0.2, 38, 58 * lvl)
+                for e in (0.5, 1.5, 2.5, 3.5): S.note(DR, t + e, 0.1, 38, 28 * lvl)
             if k in rolls:  # дробь на последней доле фразы
-                for r in range(8): S.note(DR, t + 3 + r / 8, 0.08, 38, (36 + r * 5) * lvl)
+                for r in range(8): S.note(DR, t + 3 + r / 8, 0.08, 38, (32 + r * 4) * lvl)
     def bass_and_afterbeats(b0, chs, lvl, horns=True, walk=False):
-        prev = 48
         for k, ch in enumerate(chs):
             t = b0 + k * B; root = nearest(40, [n for n in range(33, 46) if (n - ch[0]) % 12 == 0]); fifth = root + 7 if root + 7 <= 47 else root - 5
-            S.note(TUBA, t, 0.85, root, 84 * lvl); S.note(TUBA, t + 2, 0.85, fifth, 76 * lvl)
+            S.note(TUBA, t, 0.85, root, 88 * lvl); S.note(TUBA, t + 2, 0.85, fifth, 80 * lvl)
             if walk and k + 1 < len(chs):  # проходящие к следующему аккорду
                 nr = nearest(root, [n for n in range(31, 48) if (n - chs[k + 1][0]) % 12 == 0]); st = 1 if nr > fifth else -1
-                S.note(TUBA, t + 3, 0.45, fifth + st * (2 if abs(nr - fifth) > 2 else 1), 70 * lvl); S.note(TUBA, t + 3.5, 0.45, nr - st, 66 * lvl)
+                S.note(TUBA, t + 3, 0.45, fifth + st * (2 if abs(nr - fifth) > 2 else 1), 72 * lvl); S.note(TUBA, t + 3.5, 0.45, nr - st, 68 * lvl)
             if horns:
-                v = sorted(set(nearest(p, tones(ch, 55, 76)) for p in (60, 64, 67)))
+                v = sorted(set(nearest(p, tones(ch, 53, 70)) for p in (57, 60, 64)))
                 for a in (1, 3):
-                    for p in v: S.note(HRN, t + a, 0.42, p, 56 * lvl)
-            pads = sorted(set(nearest(p, tones(ch, 46, 62)) for p in (50, 55)))
-            for p in pads: S.note(TBN, t, 1.8, p, 44 * lvl); S.note(TBN, t + 2, 1.8, p, 40 * lvl)
-    def counter(b0, chs, lvl, ch_=EUP, lo=50, hi=64):
-        prev = 55
+                    for p in v: S.note(HRN, t + a, 0.42, p, 58 * lvl)
+            pads = sorted(set(nearest(p, tones(ch, 45, 60)) for p in (48, 53)))
+            for p in pads: S.note(TBN, t, 1.8, p, 48 * lvl); S.note(TBN, t + 2, 1.8, p, 44 * lvl)
+    def counter(b0, chs, lvl, ch_=EUP, lo=48, hi=62):
+        prev = 53
         for k, ch in enumerate(chs):
-            t = b0 + k * B; c = tones(ch, lo, hi); a = nearest(prev, c); S.note(ch_, t, 1.9, a, 72 * lvl)
+            t = b0 + k * B; c = tones(ch, lo, hi); a = nearest(prev, c); S.note(ch_, t, 1.9, a, 74 * lvl)
             nxt = tones(chs[k + 1], lo, hi) if k + 1 < len(chs) else c
-            b = nearest(a + (2 if (k % 2 == 0) else -2), c); S.note(ch_, t + 2, 0.95, b, 68 * lvl)
+            b = nearest(a + (2 if (k % 2 == 0) else -2), c); S.note(ch_, t + 2, 0.95, b, 70 * lvl)
             g = nearest(b, nxt); pas = b + (1 if g > b else -1) * (1 if abs(g - b) <= 2 else 2)
-            S.note(ch_, t + 3, 0.95, pas if lo <= pas <= hi else b, 64 * lvl); prev = g
+            S.note(ch_, t + 3, 0.95, pas if lo <= pas <= hi else b, 66 * lvl); prev = g
     def melody(b0, M, chs, insts, tr=0):
         for b, d, p in M:
             bar = int(b // B); ch = chs[min(bar, len(chs) - 1)]
             for inst, dv, vel, mode in insts:
                 q = p + tr + dv
                 if mode == 'harm': q = harm_below(p + tr, ch) + dv
-                if inst == PIC and q > 98: q -= 12
+                if inst in CAP: q = fold(q, CAP[inst])
                 S.note(inst, b0 + b, d * 0.92, q, vel)
+    def timp(at, p, vel, roll=0.0):
+        if roll > 0:
+            n = int(roll * 8)
+            for r in range(n): S.note(TIMP, at - roll + r / 8, 0.1, p, 40 + r * 40 // max(1, n))
+        S.note(TIMP, at, 0.9, p, vel)
     t = 0.0
-    # вступление: фанфара медных, удар по доминанте, дробь и спуск басов
+    # вступление: фанфара медных, удар по доминанте (до-септаккорд), дробь литавр и спуск басов
     for (b, d, p) in [(0, 1, 55), (1, 0.5, 55), (1.5, 0.5, 55), (2, 1, 60), (3, 1, 64), (4, 3, 67), (7, 1, 67)]:
-        S.note(CRN, t + b, d * 0.9, p + 12, 100); S.note(TBN, t + b, d * 0.9, p - 12, 92); S.note(CL1, t + b, d * 0.9, p + 12, 84)
+        S.note(CRN, t + b, d * 0.9, p + K + 12, 98); S.note(TBN, t + b, d * 0.9, p + K, 90); S.note(CL1, t + b, d * 0.9, p + K + 12, 78); S.note(TSX, t + b, d * 0.9, p + K, 70)
     for b in (8, 10):
-        for p in (43, 55, 59, 62, 65, 67, 71, 74, 77): S.note(TBN if p < 60 else (HRN if p < 70 else CRN), t + b, 1.2, p, 96)
-        S.note(TUBA, t + b, 1.2, 31, 100); S.note(DR, t + b, 0.5, 36, 100); S.note(DR, t + b, 1.0, 49, 96)
-    for r in range(16): S.note(DR, t + 12 + r / 4, 0.12, 38, 40 + r * 4)
-    for k, p in enumerate((43, 41, 40, 38)): S.note(TUBA, t + 12 + k, 0.9, p, 90); S.note(TBN, t + 12 + k, 0.9, p + 12, 80)
+        for p in (36, 48, 55, 58, 64, 67, 70, 72):
+            S.note(TUBA if p < 44 else TBN if p < 56 else HRN if p < 66 else CRN, t + b, 1.2, p, 94)
+        S.note(TUBA, t + b, 1.2, 36, 100); S.note(DR, t + b, 0.5, 36, 96); S.note(DR, t + b, 1.0, 49, 70); timp(t + b, 36, 100)
+    for r in range(16): S.note(TIMP, t + 12 + r / 4, 0.12, 36, 44 + r * 3)
+    for k, p in enumerate((36, 34, 33, 31)): S.note(TUBA, t + 12 + k, 0.9, p, 92); S.note(TBN, t + 12 + k, 0.9, p + 12, 82)
     t += 4 * B
-    # первая часть
+    # первая часть: мелодия у корнетов и кларнетов, вторые кларнеты — терцией ниже
     A = chords[:bars]
-    melody(t, mel, A, [(CRN, 0, 90, ''), (CL1, 0, 78, ''), (CL2, 0, 66, 'harm')])
-    bass_and_afterbeats(t, A, 1.0); drums(t, bars, 1.0); S.note(DR, t, 1, 57, 92); S.note(DR, t + 8 * B, 1, 57, 74)
+    melody(t, mel, A, [(CRN, 0, 88, ''), (CL1, 0, 74, ''), (CL2, 0, 62, 'harm')])
+    bass_and_afterbeats(t, A, 1.0); drums(t, bars, 0.92); S.note(DR, t, 1, 57, 70); S.note(DR, t + 8 * B, 1, 57, 58)
     t += bars * B
-    # повтор: флейты и пикколо, эуфониум ведёт контрмелодию
-    melody(t, mel, A, [(CRN, 0, 96, ''), (CL1, 0, 82, ''), (CL2, 0, 70, 'harm'), (FL, 12, 74, ''), (PIC, 24, 64, '')])
-    bass_and_afterbeats(t, A, 1.08, walk=True); counter(t, A, 1.0); drums(t, bars, 1.12); S.note(DR, t, 1, 57, 100); S.note(DR, t + 8 * B, 1, 57, 86)
+    # повтор: тенор-саксофон октавой ниже, флейты — в унисон, тихо; эуфониум ведёт контрмелодию
+    melody(t, mel, A, [(CRN, 0, 94, ''), (CL1, 0, 80, ''), (CL2, 0, 66, 'harm'), (TSX, -12, 72, ''), (FL, 0, 58, '')])
+    bass_and_afterbeats(t, A, 1.08, walk=True); counter(t, A, 1.0); drums(t, bars, 1.05); S.note(DR, t, 1, 57, 78); S.note(DR, t + 8 * B, 1, 57, 66)
     t += bars * B
-    # трио в субдоминанте (фа мажор): тихо, мелодия у кларнетов и эуфониума
+    # трио в субдоминанте (си-бемоль мажор): тихо, мелодия у кларнетов, эуфониума и альт-саксофона
     F = [tr_ch(c, 5) for c in A]
-    melody(t, mel, F, [(CL1, -7, 80, ''), (EUP, -19, 66, ''), (CL2, -7, 60, 'harm')])
+    melody(t, mel, F, [(CL1, 5, 76, ''), (EUP, -7, 66, ''), (ASX, -7, 54, ''), (CL2, 5, 56, 'harm')])
     for k, ch in enumerate(F):
         tt = t + k * B; root = nearest(41, [n for n in range(33, 46) if (n - ch[0]) % 12 == 0])
-        S.note(TUBA, tt, 0.8, root, 62); S.note(TUBA, tt + 2, 0.8, root + 7 if root + 7 <= 47 else root - 5, 56)
-        for p in sorted(set(nearest(q, tones(ch, 55, 74)) for q in (60, 65, 69))):
-            S.note(HRN, tt + 1, 0.4, p, 42); S.note(HRN, tt + 3, 0.4, p, 40)
-        S.note(DR, tt, 0.3, 36, 44); S.note(DR, tt + 1, 0.1, 37, 34); S.note(DR, tt + 3, 0.1, 37, 32)
+        S.note(TUBA, tt, 0.8, root, 64); S.note(TUBA, tt + 2, 0.8, root + 7 if root + 7 <= 47 else root - 5, 58)
+        for p in sorted(set(nearest(q, tones(ch, 53, 70)) for q in (57, 62, 65))):
+            S.note(HRN, tt + 1, 0.4, p, 44); S.note(HRN, tt + 3, 0.4, p, 42)
+        S.note(DR, tt, 0.3, 36, 44); S.note(DR, tt + 1, 0.1, 37, 30); S.note(DR, tt + 3, 0.1, 37, 28)
     t += bars * B
-    # «перепалка»: хроматический спуск медных и ответ деревянных, тутти на доминанте фа мажора
+    # «перепалка»: хроматический спуск медных и ответ деревянных, тутти на доминанте си-бемоль мажора
     for k in range(8):
-        for inst, o, v in ((TBN, 0, 100), (EUP, 0, 92), (TUBA, -12, 100)): S.note(inst, t + k * 0.5, 0.45, 60 - k + o, v)
-    S.note(DR, t, 0.5, 36, 104); S.note(DR, t, 1.2, 57, 104)
+        for inst, o, v in ((TBN, 0, 100), (EUP, 0, 92), (TUBA, -12, 100)): S.note(inst, t + k * 0.5, 0.45, 53 - k + o, v)
+    S.note(DR, t, 0.5, 36, 100); S.note(DR, t, 1.2, 57, 84); timp(t, 41, 96)
     for k in range(8):
-        p = [72, 75, 78, 81][k % 4]
-        for inst, o, v in ((FL, 12, 84), (CL1, 0, 80), (PIC, 24, 70)): S.note(inst, t + B + k * 0.5, 0.42, p + o if p + o <= 100 else p + o - 12, v)
-    for r in range(16): S.note(DR, t + B + r / 4, 0.1, 38, 50 + r * 2)
+        p = [65, 68, 71, 74][k % 4]
+        for inst, o, v in ((FL, 12, 66), (CL1, 0, 80), (ASX, 0, 60)): S.note(inst, t + B + k * 0.5, 0.42, fold(p + o, CAP.get(inst, 96)), v)
+    for r in range(16): S.note(DR, t + B + r / 4, 0.1, 38, 46 + r * 2)
     for k in range(8):
-        for inst, o, v in ((TBN, 0, 104), (EUP, 0, 96), (TUBA, -12, 104)): S.note(inst, t + 2 * B + k * 0.5, 0.45, 58 - k + o, v)
-    S.note(DR, t + 2 * B, 0.5, 36, 108); S.note(DR, t + 2 * B, 1.2, 57, 108)
+        for inst, o, v in ((TBN, 0, 104), (EUP, 0, 96), (TUBA, -12, 104)): S.note(inst, t + 2 * B + k * 0.5, 0.45, 51 - k + o, v)
+    S.note(DR, t + 2 * B, 0.5, 36, 104); S.note(DR, t + 2 * B, 1.2, 57, 88); timp(t + 2 * B, 36, 100)
     for b in (0, 1, 2):
-        for p in (36, 48, 55, 58, 64, 67, 70, 76, 79, 82):
-            inst = TUBA if p < 40 else TBN if p < 56 else HRN if p < 66 else CRN if p < 80 else FL
-            S.note(inst, t + 3 * B + b, 0.6, p, 104)
-        S.note(DR, t + 3 * B + b, 0.4, 36, 104)
-    S.note(DR, t + 3 * B, 1.2, 49, 110)
-    for r in range(8): S.note(DR, t + 3 * B + 3 + r / 8, 0.08, 38, 60 + r * 7)
+        for p in (29, 41, 48, 51, 57, 60, 63, 69, 72, 75):
+            inst = TUBA if p < 40 else TBN if p < 54 else HRN if p < 64 else CRN
+            S.note(inst, t + 3 * B + b, 0.6, p, 102)
+        S.note(DR, t + 3 * B + b, 0.4, 36, 100); timp(t + 3 * B + b, 41, 92)
+    S.note(DR, t + 3 * B, 1.2, 49, 84)
+    for r in range(8): S.note(DR, t + 3 * B + 3 + r / 8, 0.08, 38, 54 + r * 6)
     t += 4 * B
-    # торжественное трио: мелодия у тромбонов и корнетов, пикколо пишет узоры, колокольчики
-    melody(t, mel, F, [(CRN, -7, 104, ''), (TBN, -19, 104, ''), (EUP, -19, 98, ''), (CL1, 5, 88, ''), (FL, 5, 86, ''), (CL2, -7, 80, 'harm'), (GLK, 17, 52, '')])
+    # торжественное трио: мелодия у тромбонов, эуфониума и тенор-саксофона, корнеты и флейты — в унисон выше,
+    # пикколо пишет тихий узор, колокольчики — на сильных долях
+    melody(t, mel, F, [(TBN, -7, 104, ''), (EUP, -7, 98, ''), (TSX, -7, 82, ''), (CRN, 5, 90, ''), (CL1, 5, 84, ''), (FL, 5, 68, ''), (CL2, 5, 70, 'harm')])
+    for b, d, p in mel:
+        if d >= 1 and abs(b % 2) < 1e-6: S.note(GLK, t + b, 0.8, fold(p + 5 + 12, CAP[GLK]), 30)
     for k, ch in enumerate(F):
-        tt = t + k * B; arp = tones(ch, 84, 98)
+        if k % 2: continue
+        tt = t + k * B; arp = tones(ch, 77, 91)
         if arp:
             seq = (arp + arp[::-1][1:-1]) * 4
-            for e in range(8): S.note(PIC, tt + e * 0.5, 0.42, seq[e % len(seq)], 66)
-    bass_and_afterbeats(t, F, 1.2, walk=True); drums(t, bars, 1.25); S.note(DR, t, 1.4, 57, 112); S.note(DR, t + 8 * B, 1.4, 57, 104)
+            for e in range(8): S.note(PIC, tt + e * 0.5, 0.42, seq[e % len(seq)], 46)
+    bass_and_afterbeats(t, F, 1.18, walk=True); drums(t, bars, 1.15); S.note(DR, t, 1.4, 57, 92); S.note(DR, t + 8 * B, 1.4, 57, 84)
     t += bars * B
-    # финал: аккорд — пауза — тихий «бом» — громкий «БОМ»
+    # финал: аккорд — пауза — тихий «бом» — громкий «БОМ» (си-бемоль мажор, верх — не выше фа)
     def tutti(at, dur, vel):
-        for p in (29, 41, 48, 53, 57, 60, 65, 69, 72, 77, 81, 84):
-            inst = TUBA if p < 40 else TBN if p < 54 else HRN if p < 62 else CRN if p < 74 else FL if p < 82 else PIC
+        for p in (34, 46, 53, 58, 62, 65, 70, 74, 77):
+            inst = TUBA if p < 44 else TBN if p < 56 else HRN if p < 64 else CRN
             S.note(inst, at, dur, p, vel)
-            if 60 <= p <= 84: S.note(CL1, at, dur, p, vel - 10)
-        S.note(DR, at, 0.5, 36, vel); S.note(DR, at, 1.5, 49, vel)
-    tutti(t, 1.6, 108); S.note(TUBA, t + B + 2, 0.4, 41, 64); S.note(TBN, t + B + 2, 0.4, 53, 60); tutti(t + B + 3, 0.7, 120)
+            if 58 <= p <= 77: S.note(CL1, at, dur, p, vel - 12)
+            if 46 <= p <= 65: S.note(TSX if p < 60 else ASX, at, dur, p, vel - 16)
+        S.note(DR, at, 0.5, 36, vel); S.note(DR, at, 1.5, 49, vel - 30); timp(at, 34, vel)
+    tutti(t, 1.6, 108); S.note(TUBA, t + B + 2, 0.4, 34, 64); S.note(TBN, t + B + 2, 0.4, 46, 60); timp(t + B + 2, 34, 60); tutti(t + B + 3, 0.7, 118)
     S.tempo_at(t + B, bpm * 0.97)
     return S
 
 # ---------- регтайм: фортепиано «страйд», банджо, кларнет, корнет с сурдиной, тромбон, туба ----------
 def rag(T, seed=11):
+    # 0.23: на кварту ниже (до мажор): мелодия кларнета и корнета — в середине, фортепиано октавой выше — не выше ми третьей,
+    # корнет открытый (сурдина в General MIDI гнусавит), банджо и коробочка тише
     mel, chords, bars, beats = parse(T); bpm = T['bpm']; S = Score(bpm, seed); B = beats
+    K = -5; mel = [(b, d, p + K) for b, d, p in mel]; chords = [tr_ch(c, K) for c in chords]
     PNO, CL, CRN, TBN, BJO, TUBA, DR = 0, 1, 2, 3, 4, 5, 9
-    S.setup(PNO, 0, 100, 60, 40); S.setup(CL, 71, 98, 46, 44); S.setup(CRN, 59, 100, 76, 40); S.setup(TBN, 57, 92, 86, 44)
-    S.setup(BJO, 105, 84, 30, 30); S.setup(TUBA, 58, 100, 64, 36); S.setup(DR, 0, 90, 64, 40)
+    S.setup(PNO, 0, 98, 60, 40); S.setup(CL, 71, 96, 46, 44); S.setup(CRN, 56, 90, 76, 40); S.setup(TBN, 57, 94, 86, 44)
+    S.setup(BJO, 105, 66, 30, 30); S.setup(TUBA, 58, 104, 64, 36); S.setup(DR, 0, 80, 64, 40)
+    CAP = {PNO: 88, CL: 84, CRN: 84, TBN: 66}
     def stride(b0, chs, lvl):
         for k, ch in enumerate(chs):
             t = b0 + k * B; root = nearest(43, [n for n in range(36, 48) if (n - ch[0]) % 12 == 0]); fifth = root + 7 if root + 7 <= 50 else root - 5
@@ -229,33 +254,33 @@ def rag(T, seed=11):
             for p in v: S.note(PNO, t + 1.5, 0.35, p, 56 * lvl)
             S.note(TUBA, t, 0.45, root - 12 if root - 12 >= 31 else root, 74 * lvl); S.note(TUBA, t + 1, 0.45, fifth - 12 if fifth - 12 >= 31 else fifth, 68 * lvl)
             for e in (0.5, 1.5):
-                for p in sorted(set(nearest(q, tones(ch, 60, 76)) for q in (64, 67, 71))): S.note(BJO, t + e, 0.2, p, 54 * lvl)
-            S.note(DR, t, 0.2, 36, 50 * lvl); S.note(DR, t + 0.5, 0.1, 38, 30 * lvl); S.note(DR, t + 1.5, 0.1, 38, 34 * lvl); S.note(DR, t + 1.25, 0.1, 76, 36 * lvl)
+                for p in sorted(set(nearest(q, tones(ch, 57, 72)) for q in (60, 64, 67))): S.note(BJO, t + e, 0.2, p, 44 * lvl)
+            S.note(DR, t, 0.2, 36, 50 * lvl); S.note(DR, t + 0.5, 0.1, 38, 26 * lvl); S.note(DR, t + 1.5, 0.1, 38, 30 * lvl); S.note(DR, t + 1.25, 0.1, 77, 22 * lvl)
     def counter(b0, chs, lvl):
         prev = 55
         for k, ch in enumerate(chs):
             t = b0 + k * B; c = tones(ch, 48, 62); a = nearest(prev - 1, c); S.note(TBN, t, 0.9, a, 64 * lvl); b = nearest(a + 3, c); S.note(TBN, t + 1, 0.9, b, 60 * lvl); prev = b
     def melody(b0, M, insts):
         for b, d, p in M:
-            for inst, dv, vel in insts: S.note(inst, b0 + b, d * 0.85, p + dv, vel)
+            for inst, dv, vel in insts: S.note(inst, b0 + b, d * 0.85, fold(p + dv, CAP.get(inst, 96)), vel)
     t = 0.0
-    I = [chord_of(c) for c in ('C7', 'C7', 'F', 'C7')]
+    I = [tr_ch(chord_of(c), K) for c in ('C7', 'C7', 'F', 'C7')]
     stride(t, I, 0.9); t += 4 * B
     A = chords[:bars]
-    melody(t, mel, [(CL, 0, 82), (PNO, 12, 60)]); stride(t, A, 1.0); t += bars * B
-    melody(t, mel, [(CRN, 0, 86), (CL, 12, 66), (PNO, 12, 62)]); stride(t, A, 1.05); counter(t, A, 1.0); t += bars * B
+    melody(t, mel, [(CL, 0, 80), (PNO, 12, 52)]); stride(t, A, 1.0); t += bars * B
+    melody(t, mel, [(CRN, 0, 84), (CL, -12, 60), (PNO, 12, 54)]); stride(t, A, 1.05); counter(t, A, 1.0); t += bars * B
     Bb = [tr_ch(c, 5) for c in A]  # вторая часть — в си-бемоль мажоре, «стоп-тайм» в каждом четвёртом такте
-    melody(t, mel, [(CL, -7, 78), (PNO, 5, 58)])
+    melody(t, mel, [(CL, -7, 78), (PNO, 5, 56)])
     for k, ch in enumerate(Bb):
         if k % 4 == 3:
             tt = t + k * B; root = nearest(43, [n for n in range(36, 48) if (n - ch[0]) % 12 == 0])
             S.note(PNO, tt, 0.3, root, 80); S.note(TUBA, tt, 0.3, root - 12 if root - 12 >= 31 else root, 80); S.note(DR, tt, 0.2, 38, 70)
         else: stride(t + k * B, [ch], 0.95)
     t += bars * B
-    melody(t, mel, [(CRN, 0, 90), (CL, 12, 72), (PNO, 12, 64)]); stride(t, A, 1.1); counter(t, A, 0.9); t += bars * B
-    melody(t, mel, [(CRN, -7, 84), (PNO, 5, 60)]); stride(t, Bb, 1.0); t += bars * B
-    melody(t, mel, [(CRN, 0, 94), (CL, 12, 76), (PNO, 12, 68), (TBN, -12, 72)]); stride(t, A, 1.15); t += bars * B
-    for p in (41, 53, 57, 60, 65, 69, 72, 77): S.note(PNO if p > 50 else TUBA, t + 0, 0.4, p, 96); S.note(CRN, t, 0.4, 77, 90); S.note(CL, t, 0.4, 81, 84)
+    melody(t, mel, [(CRN, 0, 88), (CL, -12, 62), (PNO, 12, 56)]); stride(t, A, 1.1); counter(t, A, 0.9); t += bars * B
+    melody(t, mel, [(CRN, -7, 84), (PNO, 5, 58)]); stride(t, Bb, 1.0); t += bars * B
+    melody(t, mel, [(CRN, 0, 92), (CL, 0, 74), (PNO, 12, 60), (TBN, -12, 72)]); stride(t, A, 1.15); t += bars * B
+    for p in (36, 48, 52, 55, 60, 64, 67, 72): S.note(PNO if p > 45 else TUBA, t + 0, 0.4, p, 96); S.note(CRN, t, 0.4, 72, 90); S.note(CL, t, 0.4, 76, 80)
     S.note(DR, t, 0.3, 36, 90); S.note(DR, t, 0.6, 49, 80)
     return S
 
@@ -277,28 +302,30 @@ def waltz(T, seed=13):
             for e, p in enumerate(arp[:6]): S.note(HARP, t + e * 0.25, 0.9, p, 46 * lvl)
     def melody(b0, M, insts):
         for b, d, p in M:
-            for inst, dv, vel in insts: S.note(inst, b0 + b, d * 0.95, p + dv, vel)
+            for inst, dv, vel in insts: S.note(inst, b0 + b, d * 0.95, fold(p + dv, 90 if inst == FL else 96), vel)
     t = 0.0
     I = [chord_of(c) for c in ('A7', 'A7', 'A7', 'A7')]
     accomp(t, I, 0.8); S.note(DR, t, 1, 81, 50); t += 4 * B
     A = chords[:bars]
     melody(t, mel, [(VLN, 0, 82)]); accomp(t, A, 1.0); S.note(DR, t, 1, 81, 56); t += bars * B
-    melody(t, mel, [(VLN, 0, 86), (FL, 12, 70), (CL, -12, 60)]); accomp(t, A, 1.08); S.note(DR, t, 1, 81, 60); S.note(DR, t + 8 * B, 1, 81, 56); t += bars * B
+    melody(t, mel, [(VLN, 0, 86), (FL, 12, 58), (CL, -12, 60)]); accomp(t, A, 1.08); S.note(DR, t, 1, 81, 60); S.note(DR, t + 8 * B, 1, 81, 56); t += bars * B
     G = [tr_ch(c, 5) for c in A]
     melody(t, mel, [(CL, 5 - 12, 78), (FL, 5, 64)]); accomp(t, G, 0.9); t += bars * B
-    melody(t, mel, [(VLN, 0, 88), (FL, 12, 74), (CL, -12, 62)]); accomp(t, A, 1.1); S.note(DR, t, 1, 81, 58); t += bars * B
+    melody(t, mel, [(VLN, 0, 88), (FL, 12, 60), (CL, -12, 62)]); accomp(t, A, 1.1); S.note(DR, t, 1, 81, 58); t += bars * B
     melody(t, mel, [(VLN, 5 - 12, 80), (CL, 5, 66)]); accomp(t, G, 0.95); t += bars * B
-    melody(t, mel, [(VLN, 0, 92), (FL, 12, 78), (CL, 0, 66), (HRN, -12, 60)]); accomp(t, A, 1.15)
+    melody(t, mel, [(VLN, 0, 92), (FL, 12, 62), (CL, 0, 66), (HRN, -12, 62)]); accomp(t, A, 1.15)
     for k in range(0, bars, 4): S.note(DR, t + k * B, 1, 81, 62)
     S.tempo_at(t + (bars - 3) * B, bpm * 0.94); S.tempo_at(t + (bars - 1) * B, bpm * 0.85); t += bars * B
     for p in (38, 50, 57, 62, 66, 69, 74, 78, 81):
         inst = VC if p < 52 else VLA if p < 64 else VLN; S.note(inst, t, 2.6, p, 84)
-    S.note(HARP, t, 2.5, 74, 70); S.note(FL, t, 2.5, 86, 66); S.note(DR, t, 2, 81, 60)
+    S.note(HARP, t, 2.5, 74, 70); S.note(FL, t, 2.5, 74, 60); S.note(DR, t, 2, 81, 50)
     return S
 
 # ---------- танго: бандонеон, скрипка, фортепиано, контрабас ----------
 def tango(T, seed=17):
+    # 0.23: на кварту ниже (ми минор): бандонеон и скрипка в середине, скрипка октавой выше — не выше ми третьей
     mel, chords, bars, beats = parse(T); bpm = T['bpm']; S = Score(bpm, seed); B = beats
+    K = -5; mel = [(b, d, p + K) for b, d, p in mel]; chords = [tr_ch(c, K) for c in chords]
     BAN, VLN, PNO, CB, STR = 0, 1, 2, 3, 4
     S.setup(BAN, 23, 108, 52, 40); S.setup(VLN, 40, 100, 76, 46); S.setup(PNO, 0, 92, 64, 36); S.setup(CB, 43, 104, 64, 32); S.setup(STR, 48, 70, 70, 50)
     def marcato(b0, chs, lvl, hab=True):
@@ -314,24 +341,102 @@ def tango(T, seed=17):
             for p in sorted(set(nearest(q, tones(ch, 52, 67)) for q in (55, 60))): S.note(STR, t, 1.9, p, 40 * lvl)
     def melody(b0, M, insts):
         for b, d, p in M:
-            for inst, dv, vel in insts: S.note(inst, b0 + b, d * 0.9, p + dv, vel)
+            for inst, dv, vel in insts: S.note(inst, b0 + b, d * 0.9, fold(p + dv, 88), vel)
     t = 0.0
-    I = [chord_of(c) for c in ('E7', 'E7', 'E7', 'E7')]
+    I = [tr_ch(chord_of(c), K) for c in ('E7', 'E7', 'E7', 'E7')]
     marcato(t, I, 0.9, hab=False); t += 4 * B
     A = chords[:bars]
     melody(t, mel, [(BAN, 0, 88)]); marcato(t, A, 1.0); t += bars * B
     melody(t, mel, [(VLN, 0, 86), (BAN, -12, 72)]); marcato(t, A, 1.05); t += bars * B
     D = [tr_ch(c, 5) for c in A]
     melody(t, mel, [(VLN, 5 - 12, 80), (BAN, 5 - 12, 64)]); marcato(t, D, 0.95, hab=False); t += bars * B
-    melody(t, mel, [(BAN, 0, 90), (VLN, 12, 78)]); marcato(t, A, 1.08); t += bars * B
+    melody(t, mel, [(BAN, 0, 90), (VLN, -12, 74)]); marcato(t, A, 1.08); t += bars * B
     melody(t, mel, [(VLN, 5, 84), (BAN, 5 - 12, 66)]); marcato(t, D, 1.0); t += bars * B
-    melody(t, mel, [(BAN, 0, 94), (VLN, 12, 84), (STR, -12, 60)]); marcato(t, A, 1.12); t += bars * B
+    melody(t, mel, [(BAN, 0, 94), (VLN, 12, 72), (STR, -12, 62)]); marcato(t, A, 1.12); t += bars * B
     # «чан-чан»: доминанта — тоника, коротко
-    for at, ch in ((t, chord_of('E7')), (t + 1, chord_of('Am'))):
+    for at, ch in ((t, tr_ch(chord_of('E7'), K)), (t + 1, tr_ch(chord_of('Am'), K))):
         root = nearest(40, [n for n in range(33, 46) if (n - ch[0]) % 12 == 0])
         for p in [root] + sorted(set(nearest(q, tones(ch, 55, 76)) for q in (57, 60, 64, 69, 72))):
             S.note(PNO if p > 50 else CB, at, 0.25, p, 100); S.note(BAN, at, 0.25, p + 12 if p < 60 else p, 96)
     return S
+
+# ---------- 0.23: короткие оркестровые темы для игры: фанфара кинохроники и праздника, темы соперников в пари ----------
+# Раньше они звучали одиночными семплами и синтезатором — теперь тот же оркестр, что и марш. Ноты — из игры (43d-duel.js):
+# [нота, начало (с), длина (с)]. «l» — соперник торжествует (вы проиграли), «w» — тема сникла (вы выиграли): на кварту ниже,
+# мажорная терция и секста — вниз на полтона, медленнее.
+CUE_DUEL = {
+    'proud': {'mel': [[72, 0, .3], [72, .3, .15], [72, .45, .15], [76, .6, .45], [72, 1.05, .3], [76, 1.35, .3], [79, 1.65, .9], [84, 2.6, .35], [83, 2.95, .35], [84, 3.3, 1.3]],
+              'bass': [[60, 0, .6], [55, 1.05, .6], [60, 1.65, .9], [48, 3.3, 1.3]]},
+    'biz': {'mel': [[60, 0, .2], [64, .22, .2], [67, .44, .2], [72, .66, .4], [71, 1.1, .2], [72, 1.32, .2], [74, 1.54, .2], [76, 1.76, .5], [74, 2.3, .2], [72, 2.52, .2], [71, 2.74, .2], [72, 2.96, .2], [67, 3.2, .2], [72, 3.45, 1]],
+            'bass': [[48, 0, .4], [55, .66, .4], [53, 1.54, .4], [48, 2.52, .4], [48, 3.45, 1]]},
+    'aristo': {'mel': [[67, 0, .6], [71, .6, .3], [74, .9, .3], [79, 1.2, .9], [78, 2.1, .3], [76, 2.4, .3], [74, 2.7, .6], [72, 3.3, .3], [71, 3.6, .3], [67, 3.9, 1.1]],
+               'bass': [[43, 0, .9], [43, .9, .9], [50, 1.8, .9], [50, 2.7, .9], [43, 3.6, 1.4]]},
+    'sharp': {'mel': [[76, 0, .12], [77, .12, .12], [76, .24, .12], [77, .36, .12], [74, .6, .3], [73, .95, .3], [72, 1.3, .3], [71, 1.65, .5], [79, 2.3, .12], [78, 2.42, .12], [77, 2.54, .12], [76, 2.66, .12], [75, 2.9, .25], [74, 3.2, .25], [67, 3.55, .9]],
+              'bass': [[43, .6, .25], [42, .95, .25], [41, 1.3, .25], [40, 1.65, .4], [43, 3.55, .9]]}}
+
+def deflate(N):
+    return [[n - 5 - (1 if n % 12 in (4, 9, 11) else 0), d * 1.15, l * 1.15] for n, d, l in N]
+
+def cue_duel(kind, win, seed=23):
+    D = CUE_DUEL[kind]; S = Score(60, seed); M = D['mel']; Bs = D['bass']
+    if win: M = deflate(M); Bs = deflate(Bs)
+    else: M = [[n, d * 0.92, l * 0.92] for n, d, l in M]; Bs = [[n, d * 0.92, l * 0.92] for n, d, l in Bs]
+    end = max(d + l for n, d, l in M + Bs)
+    if kind == 'proud':  # фанфара: трубы, валторны терцией ниже, тромбоны и туба, литавры; сникшая — труба с сурдиной и фагот
+        TR, HR, TB, TU, TI, DR = 0, 1, 2, 3, 4, 9; K = -5
+        S.setup(TR, 59 if win else 56, 96, 62, 40); S.setup(HR, 60, 90, 74, 46); S.setup(TB, 70 if win else 57, 96, 70, 40); S.setup(TU, 58, 100, 64, 36); S.setup(TI, 47, 96, 64, 46); S.setup(DR, 0, 80, 64, 44)
+        for n, d, l in M:
+            p = n + K; S.note(TR, d, l * 0.95, p, 70 if win else 98)
+            h = [q for q in range(p - 9, p - 2) if (q - (67 if not win else 62)) % 12 in (0, 4, 7)]
+            if not win: S.note(HR, d, l * 0.95, max(h) if h else p - 4, 76)
+        for n, d, l in Bs:
+            p = n + K; S.note(TB, d, l * 0.9, p, 62 if win else 88)
+            if not win: S.note(TU, d, l * 0.9, p - 12, 84); S.note(TI, d, 0.5, p - 12 if p - 12 >= 36 else p, 84)
+        if not win:
+            for r in range(6): S.note(TI, M[-1][1] - 0.36 + r * 0.06, 0.06, 43, 50 + r * 6)
+            S.note(DR, M[-1][1], 1.6, 49, 62)
+        else: S.note(TI, M[-1][1], 0.8, 38, 48)
+    elif kind == 'biz':  # бойкое фортепиано, контрабас щипком, щётки; сникшая — медленнее и тише
+        PN, CB, CL, DR = 0, 1, 2, 9
+        S.setup(PN, 0, 100, 60, 34); S.setup(CB, 32, 100, 64, 30); S.setup(CL, 71, 70, 70, 40); S.setup(DR, 0, 64, 64, 36)
+        for n, d, l in M: S.note(PN, d, l * 0.9, n, 64 if win else 84); S.note(CL, d, l * 0.9, n, 40 if win else 54)
+        for n, d, l in Bs: S.note(PN, d, l * 0.9, n, 60 if win else 74); S.note(CB, d, l * 0.9, n - 12 if n - 12 >= 28 else n, 70 if win else 88)
+        if not win:
+            for k in range(int(end / 0.22)): S.note(DR, k * 0.22, 0.1, 38 if k % 2 else 42, 20 if k % 2 else 26)
+    elif kind == 'aristo':  # струнный вальс: скрипки, альты щипком на 2-ю и 3-ю долю, виолончели, арфа; сникшая — альты и виолончели
+        VN, VA, VC, HP, SV = 0, 1, 2, 3, 4
+        S.setup(VN, 48, 100, 70, 56, 12); S.setup(VA, 45, 80, 76, 50); S.setup(VC, 42, 96, 66, 50); S.setup(HP, 46, 84, 60, 54); S.setup(SV, 40, 70, 64, 56)
+        for n, d, l in M:
+            S.note(VN, d, l * 0.98, n - (12 if win else 0), 72 if win else 84)
+            if not win: S.note(SV, d, l * 0.95, n, 52)
+        for n, d, l in Bs:
+            S.note(VC, d, l * 0.9, n, 68 if win else 82)
+            tri = [q for q in range(n + 7, n + 20) if (q - n) % 12 in ((0, 3, 7) if win else (0, 4, 7))]
+            for a in (0.3, 0.6):
+                for q in tri[:3]: S.note(VA, d + a * (1.15 if win else 0.92), 0.2, q, 46 if win else 56)
+        if not win:
+            for e, q in enumerate((55, 59, 62, 67, 71, 74)): S.note(HP, e * 0.06, 1.2, q, 50)
+    else:  # sharp: кларнет с насмешкой, фагот, струнные щипком, коробочка
+        CLR, BSN, PZ, DR = 0, 1, 2, 9
+        S.setup(CLR, 71, 100, 60, 42); S.setup(BSN, 70, 96, 70, 40); S.setup(PZ, 45, 80, 64, 42); S.setup(DR, 0, 60, 64, 36)
+        for n, d, l in M:
+            S.note(BSN if win else CLR, d, l * 0.95, n - (12 if win else 0), 76 if win else 88)
+            if l <= 0.13 and not win: S.note(DR, d, 0.05, 77, 30)
+        for n, d, l in Bs: S.note(BSN, d, l * 0.9, n + (0 if n >= 40 else 12), 70); S.note(PZ, d, 0.2, n + 12, 50)
+    return S, end
+
+def cue_fanfare(seed=29):
+    """Фанфара кинохроники и праздника: трубы, валторны, тромбоны, туба, литавры и тарелки — фа мажор, полторы секунды до аккорда."""
+    S = Score(60, seed); TR1, TR2, HR, TB, TU, TI, DR = 0, 1, 2, 3, 4, 5, 9
+    S.setup(TR1, 56, 100, 56, 40); S.setup(TR2, 56, 90, 72, 40); S.setup(HR, 60, 96, 80, 48); S.setup(TB, 57, 100, 70, 40); S.setup(TU, 58, 104, 64, 36); S.setup(TI, 47, 100, 64, 48); S.setup(DR, 0, 84, 64, 44)
+    M = [[60, 0, .18], [65, .2, .18], [69, .4, .18], [72, .6, .5], [69, 1.15, .16], [72, 1.35, 1.3]]
+    for n, d, l in M: S.note(TR1, d, l * 0.95, n, 100); S.note(TR2, d, l * 0.95, {60: 57, 65: 60, 69: 65, 72: 69}[n], 86)
+    for q in (57, 60, 65): S.note(HR, 0.6, 0.5, q, 80); S.note(HR, 1.35, 1.3, q, 88)
+    for q, at, l in ((41, 0.6, 0.5), (48, 0.6, 0.5), (41, 1.35, 1.3), (48, 1.35, 1.3)): S.note(TB, at, l, q, 92)
+    S.note(TU, 1.35, 1.3, 29, 96)
+    for r in range(7): S.note(TI, 0.85 + r * 0.07, 0.06, 41, 46 + r * 7)
+    S.note(TI, 1.35, 0.9, 41, 104); S.note(DR, 1.35, 1.6, 49, 66)
+    return S, 1.35 + 1.3
 
 STYLE = {'march': march, 'rag': rag, 'waltz': waltz, 'tango': tango}
 META = {'avto': ('march', 'triumph', 'военный оркестр'), 'reel': ('rag', 'lively', 'оркестр регтайма'), 'valse': ('waltz', 'calm', 'салонный оркестр'), 'tango': ('tango', 'drama', 'оркестр танго')}
@@ -369,16 +474,27 @@ def run(media, log=print):
         st, mood, band = META.get(tid, (T['sty'], 'lively', 'оркестр'))
         S = STYLE[st](T); mid = os.path.join(tmp, tid + '.mid'); wav = os.path.join(tmp, tid + '.wav'); out = os.path.join(D, 'own_' + tid + '.m4a')
         S.write(mid); open(os.path.join(D, 'own_' + tid + '.mid'), 'wb').write(open(mid, 'rb').read())
-        sh(['fluidsynth', '-ni', '-q', '-g', '0.55', '-r', '44100', '-R', '1', '-C', '1', '-o', 'synth.reverb.room-size=0.72', '-o', 'synth.reverb.level=0.62',
+        sh(['fluidsynth', '-ni', '-q', '-g', '0.55', '-r', '44100', '-R', '1', '-C', '1', '-o', 'synth.reverb.room-size=0.7', '-o', 'synth.reverb.level=0.52',
             '-o', 'synth.reverb.width=0.9', '-o', 'synth.reverb.damp=0.35', '-o', 'synth.polyphony=512', '-F', wav, sf2, mid])
         # ровная громкость (как у остальных записей) и мягкая «плёнка» зала; хвост реверберации не обрезать
         end = S.seconds(S.length())
-        sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 4.0), '-af', 'highpass=f=35,loudnorm=I=-18:TP=-1.5:LRA=11,afade=t=out:st=%.2f:d=3' % (end + 1.0),
+        sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 4.0), '-af', 'highpass=f=35,bass=g=1.5:f=160,treble=g=-4:f=5000,loudnorm=I=-18:TP=-1.5:LRA=11,afade=t=out:st=%.2f:d=3' % (end + 1.0),
             '-c:a', 'aac', '-b:a', '112k', '-ar', '44100', out])
         dur = float(sh(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', out]).strip() or 0)
         idx['own_' + tid] = {'cap': T['name'] + ' (оркестр)', 'st': st, 'y': T['y'], 'mood': mood, 'd': round(dur, 1), 'lic': 'CC0 — сочинено для игры',
                              'page': '', 'by': 'Мелодия «Автоимперии», ' + band + ' (тембры ' + sfname.split(' (')[0] + ')'}
         LOG('anthem:', tid, st, round(dur, 1), 's', round(os.path.getsize(out) / 1024), 'KB')
+    # короткие темы игры: фанфара и темы соперников (в плейлист не идут — пометка cue)
+    jobs = [('fanfare', cue_fanfare)] + [('duel_%s_%s' % (k, 'w' if w else 'l'), (lambda k=k, w=w: cue_duel(k, w))) for k in CUE_DUEL for w in (False, True)]
+    for cid, fn in jobs:
+        S, end = fn(); mid = os.path.join(tmp, 'cue_' + cid + '.mid'); wav = os.path.join(tmp, 'cue_' + cid + '.wav'); out = os.path.join(D, 'own_cue_' + cid + '.m4a')
+        S.write(mid)
+        sh(['fluidsynth', '-ni', '-q', '-g', '0.6', '-r', '44100', '-R', '1', '-C', '0', '-o', 'synth.reverb.room-size=0.6', '-o', 'synth.reverb.level=0.45',
+            '-o', 'synth.reverb.width=0.8', '-o', 'synth.polyphony=256', '-F', wav, sf2, mid])
+        sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 1.6), '-af', 'highpass=f=40,treble=g=-3:f=5000,loudnorm=I=-16:TP=-1.5:LRA=9,afade=t=out:st=%.2f:d=0.6' % (end + 1.0),
+            '-c:a', 'aac', '-b:a', '96k', '-ar', '44100', out])
+        idx['own_cue_' + cid] = {'cue': 1, 'd': round(end + 1.6, 1), 'lic': 'CC0 — сочинено для игры', 'by': 'Тема «Автоимперии», оркестр (тембры ' + sfname.split(' (')[0] + ')'}
+        LOG('anthem: cue', cid, round(end, 1), 's', round(os.path.getsize(out) / 1024), 'KB')
     json.dump(idx, open(os.path.join(D, 'index.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
 if __name__ == '__main__':
