@@ -734,6 +734,29 @@ def cue_fanfare(seed=29):
     S.note(TI, 1.35, 0.9, 41, 104); S.note(DR, 1.35, 1.6, 49, 66)
     return S, 1.35 + 1.3
 
+def cue_win(seed=31):
+    """0.25: победа в пари — свои фанфары, до мажор: взлёт труб по аккорду, «та-та-та-там» всем оркестром, дробь литавр и тарелки.
+    Раньше при победе звучала «сникшая» тема соперника — игроку казалось, что музыка грустная."""
+    S = Score(60, seed); TR1, TR2, HR, TB, TU, TI, DR, ST = 0, 1, 2, 3, 4, 5, 9, 6
+    S.setup(TR1, 56, 104, 54, 40); S.setup(TR2, 56, 92, 74, 40); S.setup(HR, 60, 96, 82, 48); S.setup(TB, 57, 100, 70, 40); S.setup(TU, 58, 104, 64, 36)
+    S.setup(TI, 47, 104, 64, 50); S.setup(DR, 0, 88, 64, 44); S.setup(ST, 48, 84, 64, 56, 12)
+    # взлёт: соль — до — ми — соль (триоли), удержать до
+    run = [[67, 0, .11], [72, .12, .11], [76, .24, .11], [79, .36, .3]]
+    for n, d, l in run: S.note(TR1, d, l, n, 96); S.note(TR2, d, l, n - (3 if n in (79, 72) else 4), 84)
+    for q in (55, 60, 64, 67): S.note(ST, 0, 0.66, q, 50)
+    # «та-та-та-там»
+    hits = [[79, .72, .14], [79, .9, .14], [79, 1.08, .14], [84, 1.26, 1.5]]
+    for n, d, l in hits:
+        S.note(TR1, d, l * 0.95, n, 104); S.note(TR2, d, l * 0.95, 76 if n == 79 else 79, 94)
+        for q in ((64, 67) if n == 79 else (64, 67, 72)): S.note(HR, d, l * 0.95, q, 86)
+        S.note(TB, d, l * 0.9, 48 if n == 79 else 43, 90); S.note(TB, d, l * 0.9, 55, 84)
+    S.note(TU, 1.26, 1.5, 36, 100); S.note(TU, 0.72, 0.14, 43, 80); S.note(TU, 0.9, 0.14, 43, 80); S.note(TU, 1.08, 0.14, 43, 84)
+    for q in (60, 64, 67, 72, 76): S.note(ST, 1.26, 1.5, q, 70)
+    for r in range(8): S.note(TI, 0.72 + r * 0.065, 0.06, 43, 50 + r * 6)
+    S.note(TI, 1.26, 1.1, 36, 106); S.note(DR, 1.26, 1.8, 49, 74); S.note(DR, 1.26, 0.3, 36, 90)
+    for r in range(6): S.note(DR, 0.72 + r * 0.09, 0.06, 38, 40 + r * 8)
+    return S, 1.26 + 1.5
+
 STYLE = {'march': march, 'rag': rag, 'waltz': waltz, 'tango': tango, 'jazz': jazz, 'cake': cake, 'fox': fox, 'charl': charl}
 META = {'avto': ('march', 'triumph', 'военный оркестр'), 'reel': ('rag', 'lively', 'оркестр регтайма'), 'valse': ('waltz', 'calm', 'салонный оркестр'), 'tango': ('tango', 'drama', 'оркестр танго'),
         'jazz': ('jazz', 'lively', 'джаз-бэнд'), 'cake': ('cake', 'lively', 'духовой оркестр с банджо'), 'fox': ('fox', 'calm', 'танцевальный оркестр'), 'charl': ('charl', 'lively', 'горячий джаз-оркестр')}
@@ -782,7 +805,7 @@ def run(media, log=print):
                              'page': '', 'by': 'Мелодия «Автоимперии», ' + band + ' (тембры ' + sfname.split(' (')[0] + ')'}
         LOG('anthem:', tid, st, round(dur, 1), 's', round(os.path.getsize(out) / 1024), 'KB')
     # короткие темы игры: фанфара и темы соперников (в плейлист не идут — пометка cue)
-    jobs = [('fanfare', cue_fanfare)] + [('duel_%s_%s' % (k, 'w' if w else 'l'), (lambda k=k, w=w: cue_duel(k, w))) for k in CUE_DUEL for w in (False, True)]
+    jobs = [('fanfare', cue_fanfare), ('win', cue_win)] + [('duel_%s_%s' % (k, 'w' if w else 'l'), (lambda k=k, w=w: cue_duel(k, w))) for k in CUE_DUEL for w in (False, True)]
     for cid, fn in jobs:
         S, end = fn(); mid = os.path.join(tmp, 'cue_' + cid + '.mid'); wav = os.path.join(tmp, 'cue_' + cid + '.wav'); out = os.path.join(D, 'own_cue_' + cid + '.m4a')
         S.write(mid)
