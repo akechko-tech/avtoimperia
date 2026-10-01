@@ -2733,7 +2733,8 @@
     }
    ],
    "loop": true,
-   "motorroad": true
+   "motorroad": true,
+   "two_way": true
   },
   {
    "id": "tripoli",
