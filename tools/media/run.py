@@ -7,7 +7,7 @@
   tex         — дополнительные фото-материалы Poly Haven (CC0): кожа, ткань, резина, скалы…: media/tex/
   voice       — голос диктора (Silero TTS, v4_ru) для строк tools/media/voice_lines.json: media/voice/
 Результаты коммитятся обратно в ветку media; сборка игры забирает их оттуда."""
-import json, os, re, sys, io, math, time, hashlib, subprocess, urllib.request, urllib.parse, urllib.error, shutil, html
+import tempfile, json, os, re, sys, io, math, time, hashlib, subprocess, urllib.request, urllib.parse, urllib.error, shutil, html
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MEDIA = os.path.join(ROOT, 'media')
@@ -194,7 +194,7 @@ def films_cut():
         vf += ['hqdn3d=2:1.5:3:3', 'scale=640:-2:flags=lanczos', 'setsar=1', 'format=yuv420p']
         if e.get('speed'): vf.insert(0, 'setpts=PTS/%s' % e['speed'])
         try:
-            vid = os.path.join(D, '_src.bin'); download(src, vid, 400e6)
+            vid = os.path.join(tempfile.gettempdir(), 'films_src.bin'); download(src, vid, 400e6)
             sh(['ffmpeg', '-v', 'error', '-ss', str(e['t']), '-i', vid, '-t', str(e['d']), '-an', '-vf', ','.join(vf),
                 '-c:v', 'libx264', '-profile:v', 'main', '-level', '3.1', '-preset', 'slow', '-crf', '27', '-movflags', '+faststart', '-r', '24', '-y', out])
             sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % min(1.0, e['d'] / 3), '-i', out, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', '-y', os.path.join(D, cid + '.jpg')])
@@ -204,6 +204,9 @@ def films_cut():
         except Exception as ex:
             log('cut error', cid, ex)
         json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    # исходник фильма — во временной папке, не в media (иначе попадёт в git)
+    try: os.remove(os.path.join(tempfile.gettempdir(), 'films_src.bin'))
+    except OSError: pass
 
 # ---------------------------------------------------------------- живые инструменты (FluidR3_GM, MIT)
 INSTR = [  # имя, программа GM (или -1 — ударные), нижняя, верхняя нота, шаг, сколько держать ноту, длина ячейки, громкость
