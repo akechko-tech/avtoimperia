@@ -354,7 +354,7 @@ def soundfont(tmp):
 def run(media, log=print):
     global LOG; LOG = log
     tunes = json.load(open(os.path.join(HERE, 'own_tunes.json'), encoding='utf-8'))
-    D = os.path.join(media, 'music', 'own'); tmp = os.path.join(media, '_anthem'); os.makedirs(D, exist_ok=True); os.makedirs(tmp, exist_ok=True)
+    D = os.path.join(media, 'music', 'own'); tmp = os.path.join(os.environ.get('RUNNER_TEMP') or '/tmp', 'anthem'); os.makedirs(D, exist_ok=True); os.makedirs(tmp, exist_ok=True)  # шрифт тембров и wav — не в коммит
     sf2, sfname = soundfont(tmp); LOG('anthem: soundfont', sf2, sfname)
     idx = {}
     for tid, T in tunes.items():
