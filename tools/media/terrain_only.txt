@@ -1,0 +1,6 @@
+# только эти места (пусто или нет файла — все)
+gueux
+elgin
+montlhery
+miramas
+terramar

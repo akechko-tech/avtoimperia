@@ -1782,22 +1782,22 @@
    "pts": [
     {
      "ll": [
-      48.618,
-      2.24
+      48.6255,
+      2.2435
      ]
     }
    ],
-   "walk": true,
-   "heading": 0,
+   "walk": false,
+   "heading": 84,
    "oval": {
     "center": [
-     48.618,
-     2.24
+     48.6255,
+     2.2435
     ],
     "straight": 488,
     "chute": 0,
     "turn": 393,
-    "heading": 0
+    "heading": 84
    }
   },
   {
@@ -1813,8 +1813,8 @@
    "pts": [
     {
      "ll": [
-      43.579,
-      5.006
+      43.5724,
+      4.97699
      ]
     }
    ],
@@ -1822,13 +1822,13 @@
    "heading": 0,
    "oval": {
     "center": [
-     43.579,
-     5.006
+     43.5722,
+     4.9648
     ],
     "straight": 1000,
     "chute": 0,
     "turn": 754,
-    "heading": 0
+    "heading": 90
    }
   },
   {
@@ -2189,8 +2189,8 @@
      "tol": 4
     }
    ],
-   "loop": true,
-   "rails": false
+   "rails": false,
+   "motorroad": true
   },
   {
    "id": "milwaukee",
@@ -2358,22 +2358,22 @@
    "pts": [
     {
      "ll": [
-      41.256,
-      1.778
+      41.24,
+      1.77574
      ]
     }
    ],
    "walk": true,
-   "heading": 40,
+   "heading": 18,
    "oval": {
     "center": [
-     41.256,
-     1.778
+     41.2389,
+     1.7806
     ],
     "straight": 529,
     "chute": 0,
     "turn": 236,
-    "heading": 40
+    "heading": 108
    }
   },
   {
@@ -2720,28 +2720,16 @@
      "tol": 1.2
     },
     {
-     "cross": [
-      "N 31|N31|RN 31|Route de Soissons|Route Nationale 31",
-      "D 26|D26|Garenne|Gueux"
-     ],
-     "on": "N 31|N31|RN 31|Route de Soissons|Route Nationale 31",
      "ll": [
-      49.2625,
-      3.901
-     ],
-     "tol": 2
+      49.26798,
+      3.92038
+     ]
     },
     {
-     "cross": [
-      "N 31|N31|RN 31|Route de Soissons|Route Nationale 31",
-      "D 27|D27|Thillois"
-     ],
-     "on": "N 31|N31|RN 31|Route de Soissons|Route Nationale 31",
      "ll": [
-      49.2605,
-      3.9505
-     ],
-     "tol": 1.5
+      49.26028,
+      3.94962
+     ]
     }
    ],
    "loop": true,
