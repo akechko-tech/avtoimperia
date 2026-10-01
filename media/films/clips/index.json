@@ -448,5 +448,145 @@
   "cap": "Отъезд экипажа, 1896",
   "d": 12,
   "size": 498479
+ },
+ "sf1906a": {
+  "key": "File:San Francisco earthquake and fire, April 18, 1906.webm|178|8|",
+  "title": "File:San Francisco earthquake and fire, April 18, 1906.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:San_Francisco_earthquake_and_fire,_April_18,_1906.webm",
+  "lic": "Public domain",
+  "artist": "Unknown author Unknown author",
+  "cap": "Сан-Франциско горит, апрель 1906",
+  "d": 8,
+  "size": 641336
+ },
+ "sf1906c": {
+  "key": "File:San Francisco earthquake and fire, April 18, 1906.webm|541|8|",
+  "title": "File:San Francisco earthquake and fire, April 18, 1906.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:San_Francisco_earthquake_and_fire,_April_18,_1906.webm",
+  "lic": "Public domain",
+  "artist": "Unknown author Unknown author",
+  "cap": "Улицы после землетрясения, 1906",
+  "d": 8,
+  "size": 602168
+ },
+ "titanic1": {
+  "key": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm|30|8|",
+  "title": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm",
+  "page": "https://commons.wikimedia.org/wiki/File:Titanic_Disaster_-_Genuine_Footage_(1911-1912)(enhanced).webm",
+  "lic": "Public domain",
+  "artist": "British Pathé",
+  "cap": "Лайнер компании «Уайт Стар», 1911–1912",
+  "d": 8,
+  "size": 267577
+ },
+ "titanic2": {
+  "key": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm|95|7|",
+  "title": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm",
+  "page": "https://commons.wikimedia.org/wiki/File:Titanic_Disaster_-_Genuine_Footage_(1911-1912)(enhanced).webm",
+  "lic": "Public domain",
+  "artist": "British Pathé",
+  "cap": "Льды Северной Атлантики",
+  "d": 7,
+  "size": 374172
+ },
+ "titanic3": {
+  "key": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm|290|8|",
+  "title": "File:Titanic Disaster - Genuine Footage (1911-1912)(enhanced).webm",
+  "page": "https://commons.wikimedia.org/wiki/File:Titanic_Disaster_-_Genuine_Footage_(1911-1912)(enhanced).webm",
+  "lic": "Public domain",
+  "artist": "British Pathé",
+  "cap": "Толпа ждёт вестей, апрель 1912",
+  "d": 8,
+  "size": 655075
+ },
+ "lindy1": {
+  "key": "File:La première traversée de l'Atlantique en avion - AI18692.webm|68|8|",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:La_premi%C3%A8re_travers%C3%A9e_de_l%27Atlantique_en_avion_-_AI18692.webm",
+  "lic": "CC BY-SA 4.0",
+  "artist": "Sauvageot Camille",
+  "cap": "«Дух Сент-Луиса», май 1927",
+  "d": 8,
+  "size": 269535
+ },
+ "lindy2": {
+  "key": "File:La première traversée de l'Atlantique en avion - AI18692.webm|210|8|",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:La_premi%C3%A8re_travers%C3%A9e_de_l%27Atlantique_en_avion_-_AI18692.webm",
+  "lic": "CC BY-SA 4.0",
+  "artist": "Sauvageot Camille",
+  "cap": "Ночь в Ле-Бурже: Париж встречает Линдберга",
+  "d": 8,
+  "size": 503357
+ },
+ "lindy3": {
+  "key": "File:La première traversée de l'Atlantique en avion - AI18692.webm|352|8|",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:La_premi%C3%A8re_travers%C3%A9e_de_l%27Atlantique_en_avion_-_AI18692.webm",
+  "lic": "CC BY-SA 4.0",
+  "artist": "Sauvageot Camille",
+  "cap": "Самолёт Линдберга в Ле-Бурже, 1927",
+  "d": 8,
+  "size": 301792
+ },
+ "lindy4": {
+  "key": "File:La première traversée de l'Atlantique en avion - AI18692.webm|636|9|",
+  "title": "File:La première traversée de l'Atlantique en avion - AI18692.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:La_premi%C3%A8re_travers%C3%A9e_de_l%27Atlantique_en_avion_-_AI18692.webm",
+  "lic": "CC BY-SA 4.0",
+  "artist": "Sauvageot Camille",
+  "cap": "Нью-Йорк встречает Линдберга, июнь 1927",
+  "d": 9,
+  "size": 891324
+ },
+ "michelin1924": {
+  "key": "File:André Michelin et son secrétaire en compagnie d'Albert Kahn dans les jardins de sa propriété - AI88521.webm|0.5|8|",
+  "title": "File:André Michelin et son secrétaire en compagnie d'Albert Kahn dans les jardins de sa propriété - AI88521.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:Andr%C3%A9_Michelin_et_son_secr%C3%A9taire_en_compagnie_d%27Albert_Kahn_dans_les_jardins_de_sa_propri%C3%A9t%C3%A9_-_AI88521.webm",
+  "lic": "CC BY-SA 4.0",
+  "artist": "Sauvageot Camille",
+  "cap": "Андре Мишлен, 1924",
+  "d": 8,
+  "size": 354547
+ },
+ "balloon1": {
+  "key": "File:Demonstratie met Michelin super ballon band-519021.ogv|48|8|",
+  "title": "File:Demonstratie met Michelin super ballon band-519021.ogv",
+  "page": "https://commons.wikimedia.org/wiki/File:Demonstratie_met_Michelin_super_ballon_band-519021.ogv",
+  "lic": "CC BY-SA 3.0 nl",
+  "artist": "Polygoon-Profilti (producent) / Nederlands Instituut voor Beeld en Geluid (beheerder)",
+  "cap": "Баллонная шина на булыжной мостовой",
+  "d": 8,
+  "size": 425226
+ },
+ "balloon2": {
+  "key": "File:Demonstratie met Michelin super ballon band-519021.ogv|33|8|",
+  "title": "File:Demonstratie met Michelin super ballon band-519021.ogv",
+  "page": "https://commons.wikimedia.org/wiki/File:Demonstratie_met_Michelin_super_ballon_band-519021.ogv",
+  "lic": "CC BY-SA 3.0 nl",
+  "artist": "Polygoon-Profilti (producent) / Nederlands Instituut voor Beeld en Geluid (beheerder)",
+  "cap": "Машина на баллонных шинах",
+  "d": 8,
+  "size": 382966
+ },
+ "armistice_paris": {
+  "key": "File:Paris manifeste sa joie le jour de l'Armistice - AI90875.webm|150|8|",
+  "title": "File:Paris manifeste sa joie le jour de l'Armistice - AI90875.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:Paris_manifeste_sa_joie_le_jour_de_l%27Armistice_-_AI90875.webm",
+  "lic": "CC0",
+  "artist": "Le Saint Lucien",
+  "cap": "Париж, 11 ноября 1918",
+  "d": 8,
+  "size": 888346
+ },
+ "quake1906b": {
+  "key": "File:San Francisco earthquake and fire, April 18, 1906.webm|420|9|",
+  "title": "File:San Francisco earthquake and fire, April 18, 1906.webm",
+  "page": "https://commons.wikimedia.org/wiki/File:San_Francisco_earthquake_and_fire,_April_18,_1906.webm",
+  "lic": "Public domain",
+  "artist": "Unknown author Unknown author",
+  "cap": "Жители увозят пожитки, Сан-Франциско, 1906",
+  "d": 9,
+  "size": 787039
  }
 }
