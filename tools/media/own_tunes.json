@@ -38,5 +38,45 @@
   "y": 1913,
   "mel": "E5 - - A5 - - C6 B5 | A5 - - - - . E5 - | G#5 - - B5 - - D6 C6 | B5 - - - - . E5 - | D6 - - B5 - - G#5 E5 | B5 - - - - . . . | C6 - - A5 - - E5 C5 | A5 - - - - . . . | F5 - - A5 - - D6 C6 | A5 - - - - . F5 - | E5 - - A5 - - C6 E6 | C6 - - - - . . . | B5 - - G#5 - - E5 D5 | E5 - - G#5 - - B5 D6 | C6 - - B5 - - A5 G#5 | A5 - - - - - . .",
   "ch": "Am Am E7 E7 E7 E7 Am Am Dm Dm Am Am E7 E7 Am Am"
+ },
+ "jazz": {
+  "name": "«Гаражный джаз»",
+  "bpm": 168,
+  "div": 2,
+  "beats": 4,
+  "sty": "jazz",
+  "y": 1917,
+  "mel": "C5 - A4 C5 - . F5 - | E5 F5 - C5 - . . . | F#5 - D5 - A4 C5 - D5 | C5 - A4 - F#4 - . . | G4 - B4 D5 - F5 - D5 | E5 - C5 - G4 Bb4 - G4 | A4 - C5 - F5 - - . | E5 D5 - C5 Bb4 - G4 . | C5 - A4 C5 - . F5 - | Eb5 - C5 - A4 - Eb5 - | D5 - Bb4 - F4 - Bb4 D5 | Db5 - Bb4 - F4 - G4 Ab4 | A4 - C5 - F5 - C5 A4 | F#5 - D5 - C5 A4 - F#4 | G4 Bb4 - C5 - E5 - G5 | F5 - - - . . . .",
+  "ch": "F F D7 D7 G7 C7 F C7 F F7 Bb Bbm F D7 C7 F"
+ },
+ "cake": {
+  "name": "«Кекуок клаксонов»",
+  "bpm": 100,
+  "div": 4,
+  "beats": 2,
+  "sty": "cake",
+  "y": 1898,
+  "mel": "D5 E5 - D5 B4 - G4 - | B4 - D5 - G5 - - . | F#5 G5 - F#5 E5 - D5 - | C5 - A4 - F#4 - . . | A4 B4 - A4 F#4 - D4 - | F#4 - A4 - C5 - B4 A4 | B4 - G4 - D5 - B4 - | G4 - - - . . . . | E5 F5 - E5 C5 - G4 - | C5 - E5 - G5 - E5 - | D5 E5 - D5 B4 - G4 B4 | G#4 - B4 - E5 - D5 - | C#5 D5 - C#5 A4 - E4 G4 | F#4 - A4 - C5 - A4 - | B4 D5 - G5 - D5 B4 - | G4 - - - . . . .",
+  "ch": "G G D7 D7 D7 D7 G G C C G E7 A7 D7 G G"
+ },
+ "fox": {
+  "name": "«Фокстрот на набережной»",
+  "bpm": 112,
+  "div": 2,
+  "beats": 4,
+  "sty": "fox",
+  "y": 1914,
+  "mel": "E5 - - - D5 - C5 - | A4 - - - C5 - E5 - | D5 - - - - - F5 - | E5 - D5 - B4 - G4 - | E5 - - - G5 - - - | A5 - G5 - E5 - C#5 - | D5 - - - F#5 - A5 - | G5 - - - - - . . | A5 - - - G5 - F5 - | Ab5 - - - G5 - F5 - | E5 - - - G5 - E5 - | C#5 - E5 - A5 - G5 - | F5 - - - E5 - D5 - | F5 - E5 - D5 - B4 - | C5 - - - E5 - D5 - | C5 - - - - - . .",
+  "ch": "C6 Am7 Dm7 G7 C6 A7 D7 G7 F6 Fm C6 A7 Dm7 G7 C6 C6"
+ },
+ "charl": {
+  "name": "Чарльстон «Полный газ»",
+  "bpm": 200,
+  "div": 2,
+  "beats": 4,
+  "sty": "charl",
+  "y": 1923,
+  "mel": "G#4 - - B4 - . E5 D5 | B4 - - G#4 - . . . | C#5 - - E5 - . A5 G5 | E5 - - C#5 - . . . | F#5 - - A5 - . F#5 D5 | F5 - - D5 - . B4 G4 | C5 - E5 - G5 - E5 - | C5 - - - . . . . | E5 - - D5 - . B4 G#4 | B4 - - G#4 - . E4 G#4 | A4 - - C#5 - . E5 G5 | G5 - - E5 - . . . | F#5 - - D5 - . A4 C5 | B4 - - D5 - . F5 D5 | E5 - G5 - E5 - C5 - | C5 - - - . . . .",
+  "ch": "E7 E7 A7 A7 D7 G7 C C E7 E7 A7 A7 D7 G7 C C"
  }
 }
