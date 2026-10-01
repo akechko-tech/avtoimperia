@@ -16,13 +16,13 @@ dem Copernicus_DSM_COG_10_N45_00_E002_00_DEM (779, 1307) min 675.8939819335938 m
   point Chartres -> [48.4438601, 1.4881434] fallback [48.4473, 1.4879]
   point Thivars -> [48.3797819, 1.450761] fallback [48.3805, 1.4495]
   point Bonneval, Eure-et-Loir -> [48.181527, 1.3853323] fallback [48.183, 1.388]
-  osm nodes 84166 ways 10207
+  osm nodes 84170 ways 10207
   route 549 nodes -> 3878 points, 31.02 km
 dem Copernicus_DSM_COG_10_N48_00_E001_00_DEM (1602, 1326) min 98.8176040649414 max 267.5177001953125
   elev 124.4 .. 163.6 smoothed 126.7 .. 161.5
   places 116 forest 550 vine 2 water 150 rivers 143 coast 0 rails 130 removed {'reservoir': 43, 'aeroway': 17, 'industrial': 45, 'motorway': 0, 'rail_after_year': 30}
-  landmarks 185 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 86, 'former': 1, 'modern': 1, 'strict': 0, 'noname': 6, 'ruins': 1} [('cathedral', 'Шартрский собор'), ('castle', 'Замок Булар'), ('church', 'Церковь св. Илария'), ('church', 'Церковь св. Ломер'), ('church', 'Церковь св. Веры'), ('church', 'Церковь св. Дионисия'), ('church', 'Храм'), ('church', 'Церковь св. Аньяна'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Клод'), ('church', 'Коллегиальная церковь св. Андрея'), ('church', 'Часовня Богоматери'), ('church', 'Церковь св. Пантелеймона')]
-  crop 3878 → 1500 points from 0 score 37.61
+  landmarks 185 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 86, 'former': 1, 'modern': 7, 'strict': 0, 'noname': 6, 'ruins': 1} [('cathedral', 'Шартрский собор'), ('castle', 'Замок Булар'), ('church', 'Церковь св. Илария'), ('church', 'Церковь св. Ломера'), ('church', 'Церковь св. Веры'), ('church', 'Церковь св. Дионисия'), ('church', 'Храм'), ('church', 'Церковь св. Аньяна'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Клода'), ('church', 'Коллегиальная церковь св. Андрея'), ('church', 'Часовня Богоматери'), ('church', 'Церковь св. Пантелеймона')]
+  crop 3878 → 1500 points from 0 score 36.36
   cover {1: 0.066, 2: 0.078, 3: 0.017, 4: 0.0}
   palette {'meadow': [42, 58, 48], 'dry': [72, 80, 66], 'soil': [102, 107, 86], 'n': 1995}
   -> chartres.json 136 KB, 1500 points, 12 segments, bridges ['Бертело', 'Эр'] rails 0 coast 0
@@ -50,7 +50,7 @@ dem Copernicus_DSM_COG_10_N44_00_E011_00_DEM (932, 1122) min 221.1945037841797 m
 dem Copernicus_DSM_COG_10_N54_00_W005_00_DEM (1137, 974) min -1.5920151472091675 max 618.3924560546875
   elev 4.8 .. 425.9 smoothed 5.6 .. 425.6
   places 14 forest 418 vine 1 water 79 rivers 491 coast 9 rails 15 removed {'reservoir': 7, 'aeroway': 1, 'industrial': 27, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 307 → 28 near + 6 far; cut by year {'late': 12, 'unknown': 9, 'former': 0, 'modern': 4, 'strict': 0, 'noname': 213, 'ruins': 10} [('church', 'Церковь св. Павла'), ('church', 'Церковь св. Моолд'), ('church', 'Церковь Баллюр'), ('lighthouse', 'Южный пирс Рамси Лайтхаус'), ('lighthouse', 'Северный пирс Рамси Лайтхаус'), ('church', 'Приходская церковь св. Олейв'), ('church', 'Церковь св. Петра'), ('station', 'Вокзал Рамси Трам'), ('church', 'Церковь св. Адамнан'), ('church', 'Церковь Бетел'), ('pagoda', 'Пагода Дримланг'), ('ruins', 'Часовня'), ('church', 'Адвентистская церковь'), ('manor', 'Усадьба Милнтаун Эстейт Гарденс')]
+  landmarks 307 → 28 near + 6 far; cut by year {'late': 12, 'unknown': 9, 'former': 0, 'modern': 4, 'strict': 0, 'noname': 213, 'ruins': 10} [('church', 'Церковь св. Павла'), ('church', 'Церковь св. Моолда'), ('church', 'Церковь Баллюр'), ('lighthouse', 'Южный пирс Рамси Лайтхаус'), ('lighthouse', 'Северный пирс Рамси Лайтхаус'), ('church', 'Приходская церковь св. Олейва'), ('church', 'Церковь св. Петра'), ('station', 'Вокзал Рамси Трам'), ('church', 'Церковь св. Адамнана'), ('church', 'Церковь Бетел'), ('pagoda', 'Пагода Дримланг'), ('ruins', 'Часовня'), ('church', 'Адвентистская церковь'), ('manor', 'Усадьба Милнтаун Эстейт Гарденс')]
   crop 2616 → 1500 points from 0 score 60.32
   cover {1: 0.101, 2: 0.016, 3: 0.009, 4: 0.0}
   palette {'meadow': [32, 54, 46], 'dry': [48, 66, 54], 'soil': [67, 79, 67], 'n': 1913}
@@ -83,27 +83,26 @@ dem Copernicus_DSM_COG_10_N50_00_E007_00_DEM (795, 319) min nan max nan
   -> nurb.json 93 KB, 1250 points, 24 segments, bridges ['Аденауер Бах'] rails 0 coast 0
 ==== terrain saalburg Кубок Гордона Беннетта: Таунус 1904
   point Bad Homburg vor der Höhe -> [50.2283803, 8.6130128] fallback [50.2268, 8.6182]
-  point Saalburg, Bad Homburg -> [50.269956, 8.5672872] fallback [50.2712, 8.5675]
+  point Saalburg, Bad Homburg -> [50.2685751, 8.567538] fallback [50.2712, 8.5675]
   point Wehrheim -> [50.3012792, 8.5837524] fallback [50.3006, 8.569]
-  osm nodes 60534 ways 10109
-  route 251 nodes -> 1334 points, 10.67 km
+overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+  osm nodes 59381 ways 9911
+  route 250 nodes -> 1334 points, 10.67 km
 dem Copernicus_DSM_COG_10_N50_00_E008_00_DEM (918, 760) min 95.4406967163086 max 884.6112670898438
   elev 180.2 .. 429.4 smoothed 181.0 .. 427.6
-  places 5 forest 149 vine 69 water 35 rivers 439 coast 0 rails 117 removed {'reservoir': 9, 'aeroway': 10, 'industrial': 42, 'motorway': 0, 'rail_after_year': 8}
+  places 5 forest 148 vine 65 water 35 rivers 438 coast 0 rails 117 removed {'reservoir': 9, 'aeroway': 10, 'industrial': 42, 'motorway': 0, 'rail_after_year': 8}
 overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
 overpass fail https://overpass.kumi.systems/api/interpreter <HTTPError 504: 'Gateway Timeout'>
-  landmarks 117 → 28 near + 6 far; cut by year {'late': 7, 'unknown': 31, 'former': 0, 'modern': 1, 'strict': 0, 'noname': 8, 'ruins': 1} [('castle', 'Римский форт Заальбург'), ('palace', 'Гомбургский дворец'), ('church', 'Евангелическая церковь Верхайм'), ('ruins', 'Руины Гикельсбург'), ('church', 'Церковь св. Михаила'), ('church', 'Церковь Вальдензер'), ('church', 'Церковь Сердца Иисуса'), ('church', 'Церковь Девы Марии'), ('church', 'Мемориальная церковь'), ('church', 'Церковь Христа'), ('wall', ''), ('church', 'Церковь св. Иоанна'), ('tower', 'Башня Ратаус'), ('church', 'Евангелическая церковь св. Николая')]
+  landmarks 117 → 28 near + 6 far; cut by year {'late': 7, 'unknown': 31, 'former': 0, 'modern': 2, 'strict': 0, 'noname': 8, 'ruins': 1} [('castle', 'Римский форт Заальбург'), ('palace', 'Гомбургский дворец'), ('church', 'Евангелическая церковь Верхайм'), ('ruins', 'Руины Гикельсбург'), ('church', 'Церковь св. Михаила'), ('church', 'Церковь Вальдензер'), ('church', 'Церковь Сердца Иисуса'), ('church', 'Церковь Девы Марии'), ('church', 'Мемориальная церковь'), ('church', 'Церковь Христа'), ('wall', ''), ('church', 'Церковь св. Иоанна'), ('tower', 'Башня Ратаус'), ('church', 'Евангелическая церковь св. Николая')]
   cover {1: 0.242, 2: 0.064, 3: 0.006, 4: 0.017}
   palette {'meadow': [25, 43, 40], 'dry': [56, 69, 58], 'soil': [89, 94, 82], 'n': 1403}
   -> saalburg.json 109 KB, 1334 points, 15 segments, bridges ['Кирдорфер Бах', 'Эрленбах'] rails 1 coast 0
 ==== terrain sharonville Цинциннати: Шаронвилл 1916
   point None -> None fallback [39.278, -84.4]
-overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
-  osm nodes 20217 ways 3304
+  osm nodes 20245 ways 3319
 dem Copernicus_DSM_COG_10_N39_00_W085_00_DEM (697, 853) min 144.86378479003906 max 304.3299560546875
   elev 186.6 .. 247.1 smoothed 208.5 .. 208.5
   places 3 forest 40 vine 0 water 25 rivers 48 coast 0 rails 59 removed {'reservoir': 3, 'aeroway': 0, 'industrial': 45, 'motorway': 0, 'rail_after_year': 0}
-overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
   landmarks 19 → 0 near + 0 far; cut by year {'late': 0, 'unknown': 2, 'former': 0, 'modern': 0, 'strict': 17, 'noname': 0, 'ruins': 0} []
   cover {1: 0.113, 2: 0.028, 3: 0.017, 4: 0.0}
   palette {'meadow': [28, 55, 46], 'dry': [70, 85, 72], 'soil': [143, 147, 129], 'n': 527}

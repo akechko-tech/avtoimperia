@@ -3,13 +3,15 @@
   point Voglans -> [45.6322094, 5.8971446] fallback [45.623, 5.888]
   point Viviers-du-Lac -> [45.6485, 5.90567] fallback [45.652, 5.9]
   point Aix-les-Bains -> [45.6886292, 5.9146362] fallback [45.6885, 5.9153]
+overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+overpass fail https://overpass.kumi.systems/api/interpreter <HTTPError 504: 'Gateway Timeout'>
   osm nodes 169388 ways 20785
   route 1014 nodes -> 2184 points, 17.47 km
 dem Copernicus_DSM_COG_10_N45_00_E005_00_DEM (1092, 863) min nan max nan
 dem Copernicus_DSM_COG_10_N45_00_E006_00_DEM (1092, 206) min nan max nan
   elev 233.1 .. 380.2 smoothed 234.3 .. 378.5
   places 99 forest 530 vine 24 water 75 rivers 446 coast 0 rails 204 removed {'reservoir': 45, 'aeroway': 97, 'industrial': 93, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 187 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 45, 'former': 2, 'modern': 3, 'strict': 0, 'noname': 6, 'ruins': 1} [('cathedral', 'Собор св. Франциска'), ('castle', 'Шато-Шамбери'), ('castle', 'Замок Сонна'), ('castle', 'Замок Карамань'), ('castle', 'Замок Буань'), ('palace', 'Замок Трессерв'), ('castle', 'Замок Лонжере'), ('castle', 'Замок Гран Кур'), ('castle', 'Замок Мартинель'), ('castle', 'Замок Сален'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Мартина'), ('church', 'Часовня Кармель'), ('palace', 'Замок Канди')]
+  landmarks 187 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 45, 'former': 2, 'modern': 7, 'strict': 0, 'noname': 6, 'ruins': 1} [('cathedral', 'Собор св. Франциска'), ('castle', 'Шато-Шамбери'), ('castle', 'Замок Сонна'), ('castle', 'Замок Карамань'), ('castle', 'Замок Буань'), ('palace', 'Замок Трессерв'), ('castle', 'Замок Лонжере'), ('castle', 'Замок Гран Кур'), ('castle', 'Замок Мартинель'), ('castle', 'Замок Сален'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Мартина'), ('church', 'Часовня Кармель'), ('palace', 'Замок Канди')]
   crop 2184 → 1500 points from 0 score 47.7
   cover {1: 0.196, 2: 0.133, 3: 0.025, 4: 0.014}
   palette {'meadow': [34, 54, 42], 'dry': [66, 77, 63], 'soil': [118, 120, 102], 'n': 1998}
@@ -22,15 +24,15 @@ dem Copernicus_DSM_COG_10_N45_00_E006_00_DEM (1092, 206) min nan max nan
   point None -> None fallback [52.429777, 13.199432]
   point None -> None fallback [52.430315, 13.199846]
   point None -> None fallback [52.46519, 13.238215]
-  osm nodes 193140 ways 27212
+  osm nodes 193138 ways 27212
 dem Copernicus_DSM_COG_10_N52_00_E013_00_DEM (904, 879) min 10.221602439880371 max 123.03623962402344
   elev 35.6 .. 79.1 smoothed 37.2 .. 77.3
   places 1 forest 462 vine 27 water 78 rivers 101 coast 0 rails 340 removed {'reservoir': 30, 'aeroway': 2, 'industrial': 324, 'motorway': 0, 'rail_after_year': 2}
   landmarks 285 → 28 near + 6 far; cut by year {'late': 46, 'unknown': 56, 'former': 3, 'modern': 1, 'strict': 0, 'noname': 57, 'ruins': 1} [('palace', 'Охотничий дворец Груневальд'), ('monastery', 'Монастырь св. Гавриила'), ('church', 'Евангелическая церковь Николассе'), ('church', 'Церковь св. Иоанна'), ('church', 'Церковь Груневальд'), ('ruins', 'Руины Зюдкере Дер Афус'), ('church', 'Церковь Мира'), ('church', 'Церковь Хохмайстер'), ('church', 'Православная церковь Румениш'), ('church', 'Церковь Святого Духа'), ('church', 'Церковь'), ('station', 'Вокзал св. Николассе'), ('church', 'Церковь Спасителя'), ('church', 'Церковь Даниль')]
-  crop 1750 → 1250 points from 0 score 31.14
-  cover {1: 0.09, 2: 0.01, 3: 0.107, 4: 0.002}
-  palette {'meadow': [30, 48, 48], 'dry': [52, 65, 62], 'soil': [88, 92, 86], 'n': 1155}
-  -> avus.json 125 KB, 1250 points, 13 segments, bridges [] rails 5 coast 0
+  crop 1750 → 1250 points from 110 score 19.01
+  cover {1: 0.092, 2: 0.011, 3: 0.114, 4: 0.001}
+  palette {'meadow': [29, 47, 47], 'dry': [46, 60, 58], 'soil': [72, 81, 78], 'n': 1107}
+  -> avus.json 113 KB, 1250 points, 5 segments, bridges [] rails 0 coast 0
 ==== terrain corniche Ралли Монте-Карло: Нижний карниз 1911
   point Beaulieu-sur-Mer -> [43.7088, 7.33375] fallback [43.707, 7.332]
   point Èze-sur-Mer -> [43.7222004, 7.3568809] fallback [43.7215, 7.359]
@@ -41,7 +43,7 @@ dem Copernicus_DSM_COG_10_N52_00_E013_00_DEM (904, 879) min 10.221602439880371 m
 dem Copernicus_DSM_COG_10_N43_00_E007_00_DEM (757, 1204) min -1.1140718460083008 max 1254.985595703125
   elev 4.2 .. 219.7 smoothed 5.3 .. 99.3
   places 11 forest 91 vine 21 water 30 rivers 51 coast 101 rails 110 removed {'reservoir': 14, 'aeroway': 18, 'industrial': 41, 'motorway': 0, 'rail_after_year': 22}
-  landmarks 126 → 28 near + 6 far; cut by year {'late': 12, 'unknown': 27, 'former': 1, 'modern': 4, 'strict': 0, 'noname': 9, 'ruins': 0} [('cathedral', 'собор Святого Николая в Монако'), ('palace', 'Княжеский дворец Монако'), ('castle', 'Цитадель св. Эльма'), ('ruins', 'Замок Эз'), ('fort', 'Форт Ревер'), ('church', 'Церковь Богоматери'), ('church', 'Часовня св. Девот'), ('church', 'Церковь св. Лаврентия'), ('church', 'Церковь Сакре-Кёр-де-Жезю'), ('fort', 'Форт Антуэн Ер'), ('church', 'Церковь св. Михаила'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Шарль'), ('fort', 'Форт Тет де Шьен')]
+  landmarks 126 → 28 near + 6 far; cut by year {'late': 12, 'unknown': 27, 'former': 1, 'modern': 4, 'strict': 0, 'noname': 9, 'ruins': 0} [('cathedral', 'собор Святого Николая в Монако'), ('palace', 'Княжеский дворец Монако'), ('castle', 'Цитадель св. Эльма'), ('ruins', 'Замок Эз'), ('fort', 'Форт Ревер'), ('church', 'Церковь Богоматери'), ('church', 'Часовня св. Девоты'), ('church', 'Церковь св. Лаврентия'), ('church', 'Церковь Сакре-Кёр-де-Жезю'), ('fort', 'Форт Антуэн Ер'), ('church', 'Церковь св. Михаила'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Карла'), ('fort', 'Форт Тет де Шьен')]
   cover {1: 0.155, 2: 0.084, 3: 0.007, 4: 0.009}
   palette {'meadow': [52, 60, 51], 'dry': [99, 94, 77], 'soil': [149, 133, 113], 'n': 1390}
   -> corniche.json 108 KB, 1299 points, 7 segments, bridges [] rails 0 coast 5
@@ -70,7 +72,7 @@ dem Copernicus_DSM_COG_10_N46_00_E013_00_DEM (577, 1067) min nan max nan
 dem Copernicus_DSM_COG_10_N47_00_E013_00_DEM (701, 1067) min nan max nan
   elev 877.2 .. 1645.9 smoothed 889.0 .. 1610.7
   places 57 forest 405 vine 3 water 18 rivers 229 coast 0 rails 0 removed {'reservoir': 15, 'aeroway': 2, 'industrial': 22, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 32 → 16 near + 6 far; cut by year {'late': 1, 'unknown': 1, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 0, 'ruins': 0} [('ruins', 'Руины Леобенегг'), ('church', 'Церковь св. Николая'), ('church', 'Приходская церковь св. Михаила'), ('church', 'Церковь св. Иоанна Непомуцкого'), ('church', 'Церковь св. Иоанна'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Георгия'), ('church', 'Церковь Христа'), ('church', 'Церковь св. Петра'), ('chapel', 'Часовня св. Вольфганга'), ('tower', 'Башня Константин-Хохофен'), ('chapel', 'Часовня св. Анны'), ('chapel', 'Часовня св. Эгидиус'), ('chapel', 'Часовня Хубертус')]
+  landmarks 32 → 16 near + 6 far; cut by year {'late': 1, 'unknown': 1, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 0, 'ruins': 0} [('ruins', 'Руины Леобенегг'), ('church', 'Церковь св. Николая'), ('church', 'Приходская церковь св. Михаила'), ('church', 'Церковь св. Иоанна Непомуцкого'), ('church', 'Церковь св. Иоанна'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Георгия'), ('church', 'Церковь Христа'), ('church', 'Церковь св. Петра'), ('chapel', 'Часовня св. Вольфганга'), ('tower', 'Башня Константин-Хохофен'), ('chapel', 'Часовня св. Анны'), ('chapel', 'Часовня св. Эгидиуса'), ('chapel', 'Часовня Хубертус')]
   crop 3219 → 1500 points from 400 score 55.15
   cover {1: 0.174, 2: 0.018, 3: 0.013, 4: 0.0}
   palette {'meadow': [30, 58, 41], 'dry': [16, 37, 30], 'soil': [46, 71, 53], 'n': 1852}
@@ -82,10 +84,10 @@ dem Copernicus_DSM_COG_10_N43_00_E004_00_DEM (719, 460) min nan max nan
 dem Copernicus_DSM_COG_10_N43_00_E005_00_DEM (719, 503) min nan max nan
   elev 42.5 .. 73.7 smoothed 54.1 .. 54.1
   places 5 forest 28 vine 8 water 42 rivers 192 coast 0 rails 130 removed {'reservoir': 37, 'aeroway': 1, 'industrial': 20, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 35 → 10 near + 4 far; cut by year {'late': 1, 'unknown': 12, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 7, 'ruins': 1} [('palace', 'Замок Кабас'), ('church', ''), ('church', 'Церковь Богоматери'), ('station', 'Вокзал Мирама'), ('church', 'Церковь Нео-Апостолик'), ('mosque', ''), ('ruins', 'Дом Директёр'), ('chapel', 'Часовня св. Юлиана'), ('chapel', 'Часовня св. Марии Магдалины'), ('chapel', 'Часовня'), ('church', 'Церковь св. Леодегария'), ('chapel', 'Часовня'), ('castle', 'Замок Ампери'), ('chapel', 'Часовня св. Петра')]
+  landmarks 35 → 9 near + 4 far; cut by year {'late': 1, 'unknown': 12, 'former': 0, 'modern': 1, 'strict': 0, 'noname': 7, 'ruins': 1} [('palace', 'Замок Кабас'), ('church', ''), ('church', 'Церковь Богоматери'), ('station', 'Вокзал Мирама'), ('church', 'Новоапостольская церковь'), ('ruins', 'Дом директора'), ('chapel', 'Часовня св. Юлиана'), ('chapel', 'Часовня св. Марии Магдалины'), ('chapel', 'Часовня'), ('church', 'Церковь св. Леодегария'), ('chapel', 'Часовня'), ('castle', 'Замок Ампери'), ('chapel', 'Часовня св. Петра')]
   cover {1: 0.074, 2: 0.076, 3: 0.048, 4: 0.033}
   palette {'meadow': [63, 66, 50], 'dry': [116, 101, 77], 'soil': [154, 129, 102], 'n': 839}
-  -> miramas.json 56 KB, 627 points, 11 segments, bridges [] rails 4 coast 0
+  -> miramas.json 55 KB, 627 points, 3 segments, bridges [] rails 0 coast 0
 ==== terrain phoenix Гран-при Ирландии: Феникс-парк 1929
   point None -> None fallback [53.3495, -6.2985]
   point Phoenix Monument, Dublin -> [53.4020992, -6.2454319] fallback [53.357, -6.324]
@@ -96,8 +98,7 @@ dem Copernicus_DSM_COG_10_N43_00_E005_00_DEM (719, 503) min nan max nan
 dem Copernicus_DSM_COG_10_N53_00_W007_00_DEM (736, 850) min -20.513402938842773 max 339.4538269042969
   elev 14.1 .. 65.0 smoothed 17.7 .. 64.1
   places 4 forest 523 vine 0 water 109 rivers 353 coast 0 rails 205 removed {'reservoir': 7, 'aeroway': 4, 'industrial': 475, 'motorway': 0, 'rail_after_year': 0}
-overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
-  landmarks 254 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 67, 'former': 2, 'modern': 0, 'strict': 0, 'noname': 28, 'ruins': 2} [('castle', 'Замок Аштаун'), ('castle', 'Пороховой форт'), ('cathedral', 'Церковь Крайст-черч'), ('cathedral', 'Собор Святого Патрика'), ('cathedral', 'Церковь Святой Марии'), ('palace', 'Дублинский замок'), ('wall', 'Стена Дублин Сити Уаллс'), ('ruins', 'Замок Кастлекнок'), ('gate', 'Ворота св. Одоен'), ('monastery', 'Доминиканский монастырь'), ('monastery', 'Францисканский монастырь Холл'), ('church', 'Церковь Святого Семейства'), ('church', 'Церковь св. Джеймс'), ('windmill', 'Башня св. Патрика')]
+  landmarks 256 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 66, 'former': 2, 'modern': 0, 'strict': 0, 'noname': 29, 'ruins': 2} [('castle', 'Замок Аштаун'), ('castle', 'Пороховой форт'), ('cathedral', 'Церковь Крайст-черч'), ('cathedral', 'Собор Святого Патрика'), ('cathedral', 'Церковь Святой Марии'), ('palace', 'Дублинский замок'), ('wall', 'Стена Дублин Сити Уаллс'), ('ruins', 'Замок Кастлекнок'), ('church', 'Церковь св. Бригитты'), ('gate', 'Ворота св. Одоена'), ('monastery', 'Доминиканский монастырь'), ('monastery', 'Францисканский монастырь Холл'), ('church', 'Церковь Святого Семейства'), ('church', 'Церковь св. Джеймса')]
   cover {1: 0.119, 2: 0.11, 3: 0.049, 4: 0.0}
   palette {'meadow': [38, 68, 55], 'dry': [58, 83, 69], 'soil': [92, 105, 95], 'n': 784}
   -> phoenix.json 76 KB, 585 points, 8 segments, bridges [] rails 0 coast 0
@@ -112,8 +113,8 @@ dem Copernicus_DSM_COG_10_N47_00_E000_00_DEM (734, 1083) min nan max nan
 dem Copernicus_DSM_COG_10_N48_00_E000_00_DEM (278, 1083) min nan max nan
   elev 41.7 .. 88.4 smoothed 42.0 .. 87.3
   places 18 forest 440 vine 4 water 165 rivers 111 coast 0 rails 461 removed {'reservoir': 24, 'aeroway': 56, 'industrial': 76, 'motorway': 0, 'rail_after_year': 6}
-  landmarks 96 → 25 near + 6 far; cut by year {'late': 3, 'unknown': 36, 'former': 0, 'modern': 1, 'strict': 0, 'noname': 8, 'ruins': 0} [('castle', 'Замок Юнодиер'), ('mosque', 'Мечеть Сальман Аль-Фарисси'), ('monastery', 'Эпо'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Эгидия'), ('church', 'Церковь св. Бернарда'), ('castle', ''), ('mosque', 'Мечеть'), ('church', 'Церковь св. Гервасия'), ('church', 'Церковь Сантр Эванжелик Протестан'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Жеан'), ('church', 'Часовня Люер'), ('mosque', 'Мечеть Масжи Ассюнна')]
-  crop 2021 → 1500 points from 0 score 32.95
+  landmarks 96 → 22 near + 6 far; cut by year {'late': 3, 'unknown': 36, 'former': 0, 'modern': 4, 'strict': 0, 'noname': 8, 'ruins': 0} [('castle', 'Замок Юнодиер'), ('monastery', 'Эпо'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Эгидия'), ('church', 'Церковь св. Бернарда'), ('castle', ''), ('church', 'Церковь св. Гервасия'), ('church', 'Церковь Сантр Эванжелик Протестан'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Жеаны'), ('church', 'Часовня Люер'), ('church', 'Церковь св. Бертрана'), ('church', 'Церковь Панорама'), ('church', 'Церковь св. Марии Магдалины')]
+  crop 2021 → 1500 points from 0 score 25.37
   cover {1: 0.264, 2: 0.029, 3: 0.036, 4: 0.001}
   palette {'meadow': [40, 57, 47], 'dry': [78, 81, 69], 'soil': [127, 120, 100], 'n': 1994}
   -> sarthe.json 116 KB, 1500 points, 28 segments, bridges [] rails 1 coast 0
@@ -125,7 +126,7 @@ dem Copernicus_DSM_COG_10_N48_00_E000_00_DEM (278, 1083) min nan max nan
 dem Copernicus_DSM_COG_10_N52_00_W003_00_DEM (692, 746) min 9.949552536010742 max 294.08978271484375
   elev 35.5 .. 163.2 smoothed 35.7 .. 159.3
   places 5 forest 78 vine 4 water 17 rivers 59 coast 0 rails 0 removed {'reservoir': 0, 'aeroway': 3, 'industrial': 5, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 6 → 3 near + 3 far; cut by year {'late': 0, 'unknown': 0, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 0, 'ruins': 0} [('church', 'Церковь св. Андрея'), ('church', 'Церковь Всех Святых'), ('church', 'Церковь св. Кенелм'), ('church', 'Церковь св. Марии'), ('church', 'Церковь св. Петра'), ('church', '')]
+  landmarks 6 → 3 near + 3 far; cut by year {'late': 0, 'unknown': 0, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 0, 'ruins': 0} [('church', 'Церковь св. Андрея'), ('church', 'Церковь Всех Святых'), ('church', 'Церковь св. Кенелма'), ('church', 'Церковь св. Марии'), ('church', 'Церковь св. Петра'), ('church', '')]
   crop 468 → 250 points from 70 score 7.3
   cover {1: 0.055, 2: 0.009, 3: 0.021, 4: 0.002}
   palette {'meadow': [42, 74, 56], 'dry': [25, 53, 46], 'soil': [73, 86, 69], 'n': 336}
@@ -139,7 +140,7 @@ dem Copernicus_DSM_COG_10_N52_00_W003_00_DEM (692, 746) min 9.949552536010742 ma
 dem Copernicus_DSM_COG_10_N47_00_E000_00_DEM (928, 1261) min 38.0 max 186.9569854736328
   elev 98.5 .. 140.6 smoothed 99.5 .. 138.8
   places 240 forest 636 vine 170 water 9 rivers 1083 coast 0 rails 28 removed {'reservoir': 255, 'aeroway': 125, 'industrial': 71, 'motorway': 0, 'rail_after_year': 14}
-  landmarks 128 → 22 near + 6 far; cut by year {'late': 2, 'unknown': 33, 'former': 1, 'modern': 2, 'strict': 0, 'noname': 7, 'ruins': 1} [('castle', 'Замок Белл Рюри'), ('palace', 'Замок Вофуэнар'), ('castle', 'Замок Мортье'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Мартина'), ('manor', 'Усадьба Бурдигаль'), ('manor', 'Усадьба Сапайе'), ('church', 'Церковь Христа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Симфориана'), ('church', 'Церковь св. Радегонд'), ('church', 'Церковь св. Пи'), ('church', 'Церковь Богоматери'), ('chapel', 'Часовня св. Мартина')]
+  landmarks 128 → 22 near + 6 far; cut by year {'late': 2, 'unknown': 33, 'former': 1, 'modern': 2, 'strict': 0, 'noname': 7, 'ruins': 1} [('castle', 'Замок Белл Рюри'), ('palace', 'Замок Вофуэнар'), ('castle', 'Замок Мортье'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Мартина'), ('manor', 'Усадьба Бурдигаль'), ('manor', 'Усадьба Сапайе'), ('church', 'Церковь Христа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Симфориана'), ('church', 'Церковь св. Радегунды'), ('church', 'Церковь св. Пи'), ('church', 'Церковь Богоматери'), ('chapel', 'Часовня св. Мартина')]
   crop 1729 → 1250 points from 0 score 14.2
   cover {1: 0.129, 2: 0.105, 3: 0.022, 4: 0.068}
   palette {'meadow': [52, 65, 54], 'dry': [81, 86, 70], 'soil': [123, 123, 101], 'n': 1670}
