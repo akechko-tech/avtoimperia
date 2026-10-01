@@ -1,68 +1,8 @@
-== job terrain
-==== terrain pm1903 Париж — Мадрид 1903
-  point Châtellerault, Vienne, France -> [46.8180047, 0.545812] fallback [46.8178, 0.546]
-  point Cenon-sur-Vienne, Vienne, France -> [46.7742953, 0.5357531] fallback [46.776, 0.532]
-  point Naintré, Vienne, France -> [46.7638945, 0.4823734] fallback [46.764, 0.487]
-  point Beaumont Saint-Cyr, Vienne, France -> [46.7253903, 0.4482796] fallback [46.724, 0.443]
-  osm nodes 80450 ways 7036
-  route 825 nodes -> 2321 points, 18.57 km
-dem Copernicus_DSM_COG_10_N46_00_E000_00_DEM (996, 1312) min 37.5 max 187.04637145996094
-  elev 49.9 .. 77.2 smoothed 52.5 .. 75.5
-  places 75 forest 158 vine 25 water 204 rivers 127 coast 0 rails 133 removed {'reservoir': 34, 'aeroway': 20, 'industrial': 24, 'motorway': 0, 'rail_after_year': 22}
-  cover {1: 0.245, 2: 0.054, 3: 0.047, 4: 0.002}
-  palette {'meadow': [40, 55, 45], 'dry': [82, 83, 67], 'soil': [130, 120, 98], 'n': 3081}
-  -> pm1903.json 204 KB, 2321 points, 26 segments, bridges ['Вьенна', 'Клен', 'Клен', 'Клен'] rails 0 coast 0
-==== terrain targa Тарга Флорио 1906
-  point Collesano, Palermo, Italy -> [37.9214774, 13.9374864] fallback [37.918, 13.99]
-  point Campofelice di Roccella, Palermo, Italy -> [37.9923573, 13.8861546] fallback [38.002, 13.878]
-  point Buonfornello, Termini Imerese, Italy -> [37.9731879, 13.8236638] fallback [37.972, 13.825]
-  point Stazione di Cerda, Sicily, Italy -> [37.9539372, 13.7846363] fallback [37.944, 13.811]
-  osm nodes 49050 ways 3177
-  route 705 nodes -> 2891 points, 23.13 km
-dem Copernicus_DSM_COG_10_N37_00_E013_00_DEM (637, 1198) min -3.004126787185669 max 1792.82080078125
-dem Copernicus_DSM_COG_10_N37_00_E014_00_DEM (637, 206) min 0.0 max 1975.0269775390625
-dem Copernicus_DSM_COG_10_N38_00_E013_00_DEM (319, 1198) min -0.5187292695045471 max 496.51312255859375
-dem Copernicus_DSM_COG_10_N38_00_E014_00_DEM (319, 206) min -1.1985142230987549 max 711.9691162109375
-  elev 3.9 .. 497.8 smoothed 4.2 .. 495.6
-  places 8 forest 6 vine 28 water 14 rivers 153 coast 5 rails 60 removed {'reservoir': 57, 'aeroway': 7, 'industrial': 17, 'motorway': 0, 'rail_after_year': 31}
-  cover {1: 0.027, 2: 0.011, 3: 0.01, 4: 0.003}
-  palette {'meadow': [84, 81, 64], 'dry': [115, 105, 83], 'soil': [163, 142, 115], 'n': 3852}
-  -> targa.json 219 KB, 2891 points, 22 segments, bridges ['—', 'Имера'] rails 0 coast 1
-==== terrain gpacf Гран-при АКФ 1906
-  point Saint-Calais, Sarthe, France -> [47.9201366, 0.7434396] fallback [47.921, 0.747]
-  point Semur-en-Vallon, Sarthe, France -> [48.0238002, 0.6544259] fallback [47.996, 0.702]
-  point Vibraye, Sarthe, France -> [48.0604122, 0.7341899] fallback [48.056, 0.741]
-  osm nodes 58621 ways 3870
-  route 462 nodes -> 3090 points, 24.72 km
-dem Copernicus_DSM_COG_10_N47_00_E000_00_DEM (633, 1297) min 0.0 max 206.71861267089844
-dem Copernicus_DSM_COG_10_N48_00_E000_00_DEM (561, 1297) min 0.0 max 276.18402099609375
-  elev 39.6 .. 205.9 smoothed 98.4 .. 205.1
-  places 46 forest 299 vine 1 water 243 rivers 151 coast 0 rails 43 removed {'reservoir': 21, 'aeroway': 1, 'industrial': 18, 'motorway': 0, 'rail_after_year': 25}
-  cover {1: 0.333, 2: 0.017, 3: 0.01, 4: 0.0}
-  palette {'meadow': [28, 48, 43], 'dry': [63, 73, 59], 'soil': [98, 97, 78], 'n': 4058}
-  -> gpacf.json 240 KB, 3090 points, 30 segments, bridges ['Аниль', '—'] rails 0 coast 0
-==== terrain gb1903 Кубок Гордона Беннетта: Ирландия 1903
-  point Athy, County Kildare, Ireland -> [52.9923938, -6.9835926] fallback [52.991, -6.986]
-  point Kilkea, County Kildare, Ireland -> [52.9482704, -6.895288] fallback [52.946, -6.906]
-  point Castledermot, County Kildare, Ireland -> [52.9119491, -6.8368376] fallback [52.911, -6.836]
-  osm nodes 36128 ways 4617
-  route 321 nodes -> 1857 points, 14.86 km
-dem Copernicus_DSM_COG_10_N52_00_W008_00_DEM (662, 324) min 0.0 max 336.95159912109375
-dem Copernicus_DSM_COG_10_N52_00_W007_00_DEM (662, 756) min 0.0 max 335.0333251953125
-dem Copernicus_DSM_COG_10_N53_00_W008_00_DEM (318, 324) min 0.0 max 221.6101837158203
-dem Copernicus_DSM_COG_10_N53_00_W007_00_DEM (318, 756) min 0.0 max 250.8843994140625
-  elev 56.0 .. 110.6 smoothed 56.9 .. 108.8
-  places 14 forest 148 vine 0 water 32 rivers 287 coast 0 rails 22 removed {'reservoir': 5, 'aeroway': 1, 'industrial': 78, 'motorway': 0, 'rail_after_year': 0}
-  cover {1: 0.031, 2: 0.017, 3: 0.015, 4: 0.0}
-  palette {'meadow': [47, 75, 60], 'dry': [80, 105, 85], 'soil': [127, 144, 120], 'n': 2446}
-  -> gb1903.json 177 KB, 1857 points, 10 segments, bridges ['Гриз'] rails 0 coast 0
-==== terrain indy Индианаполис 500 1911
-  point Indianapolis Motor Speedway, Indiana, USA -> [39.7962479, -86.234816] fallback [39.795, -86.2347]
-  osm nodes 27300 ways 3367
-dem Copernicus_DSM_COG_10_N39_00_W087_00_DEM (704, 866) min 126.09598541259766 max 295.47235107421875
-  elev 215.5 .. 227.0 smoothed 222.3 .. 222.3
-  places 1 forest 33 vine 0 water 17 rivers 51 coast 0 rails 29 removed {'reservoir': 0, 'aeroway': 1, 'industrial': 38, 'motorway': 0, 'rail_after_year': 0}
-  cover {1: 0.054, 2: 0.008, 3: 0.034, 4: 0.0}
-  palette {'meadow': [69, 90, 70], 'dry': [112, 125, 102], 'soil': [168, 171, 143], 'n': 639}
-  -> indy.json 42 KB, 503 points, 3 segments, bridges [] rails 0 coast 0
-== job terrain took 251 s
+== job anthem
+anthem: download https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2
+anthem: soundfont /home/runner/work/_temp/anthem/MuseScore_General.sf2 MuseScore General (S. Christian Collins, MIT)
+anthem: avto march 168.7 s 2269 KB
+anthem: reel rag 150.8 s 1817 KB
+anthem: valse waltz 131.6 s 1737 KB
+anthem: tango tango 113.1 s 1540 KB
+== job anthem took 49 s
