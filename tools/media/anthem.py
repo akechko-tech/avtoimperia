@@ -69,6 +69,14 @@ class Score:
         open(path, 'wb').write(data)
     def length(s):
         return max(t for e in s.ev.values() for t, _, _ in e)
+    def seconds(s, beat):
+        """Время в секундах до доли beat по карте темпа."""
+        T = sorted(s.tempo); sec = 0.0
+        for k, (b0, bpm) in enumerate(T):
+            b1 = T[k + 1][0] if k + 1 < len(T) else 1e18
+            if beat <= b0: break
+            sec += (min(beat, b1) - b0) * 60.0 / bpm
+        return sec
 
 def parse(T):
     toks = T['mel'].replace('|', ' ').split(); div, beats = T['div'], T['beats']; sub = 1.0 / div
@@ -364,7 +372,8 @@ def run(media, log=print):
         sh(['fluidsynth', '-ni', '-q', '-g', '0.55', '-r', '44100', '-R', '1', '-C', '1', '-o', 'synth.reverb.room-size=0.72', '-o', 'synth.reverb.level=0.62',
             '-o', 'synth.reverb.width=0.9', '-o', 'synth.reverb.damp=0.35', '-o', 'synth.polyphony=512', '-F', wav, sf2, mid])
         # ровная громкость (как у остальных записей) и мягкая «плёнка» зала; хвост реверберации не обрезать
-        sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-af', 'highpass=f=35,loudnorm=I=-18:TP=-1.5:LRA=11,afade=t=out:st=%.2f:d=2.5' % max(1.0, S.length() * 60 / T['bpm'] + 1.2),
+        end = S.seconds(S.length())
+        sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 4.0), '-af', 'highpass=f=35,loudnorm=I=-18:TP=-1.5:LRA=11,afade=t=out:st=%.2f:d=3' % (end + 1.0),
             '-c:a', 'aac', '-b:a', '112k', '-ar', '44100', out])
         dur = float(sh(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', out]).strip() or 0)
         idx['own_' + tid] = {'cap': T['name'] + ' (оркестр)', 'st': st, 'y': T['y'], 'mood': mood, 'd': round(dur, 1), 'lic': 'CC0 — сочинено для игры',

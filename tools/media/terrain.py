@@ -92,7 +92,7 @@ def dem_sampler(lat0, lat1, lon0, lon1):
     return sample, len(tiles)
 
 # ---------- OSM ----------
-ROAD_W = {'trunk': 1.35, 'primary': 1.0, 'secondary': 1.0, 'tertiary': 1.2, 'unclassified': 1.5, 'road': 1.6, 'residential': 1.5,
+ROAD_W = {'raceway': 0.9, 'trunk': 1.35, 'primary': 1.0, 'secondary': 1.0, 'tertiary': 1.2, 'unclassified': 1.5, 'road': 1.6, 'residential': 1.5,
           'living_street': 2.0, 'trunk_link': 2.5, 'primary_link': 2.0, 'secondary_link': 2.0, 'tertiary_link': 2.0, 'service': 3.5, 'track': 4.0}
 
 def osm_parse(js):
@@ -154,9 +154,12 @@ def dp_simplify(P, eps):
     return dp_simplify(P[:imax + 1], eps)[:-1] + dp_simplify(P[imax:], eps)
 
 RU = {}
+HOST = 'fr'
 def name_of(tags):
     n = tags.get('name') or ''
-    return RU.get(n) or RU.get(tags.get('name:ru') or '') or tags.get('name:ru') or n
+    if RU.get(n): return RU[n]
+    import terrain_lm as LMm
+    return LMm.ru_name(tags, HOST) or n
 
 def year_of(tags):
     for k in ('start_date', 'opening_date', 'construction:start_date'):
@@ -213,7 +216,9 @@ def pack_grid(H):
 
 def build_race(R, out_dir):
     rid, year = R['id'], R['year']
-    global RU; RU = R.get('ru') or {}
+    global RU, HOST; RU = R.get('ru') or {}; HOST = R.get('host', 'fr')
+    import terrain_lm as LMm
+    LMm.HTTP = http; LMm.LOG = LOG
     LOG('==== terrain', rid, R['name'], year)
     pts_ll = []
     for p in R['pts']:
@@ -228,7 +233,8 @@ def build_race(R, out_dir):
     lo0, lo1 = min(p[1] for p in pts_ll) - m_lon, max(p[1] for p in pts_ll) + m_lon
     bb = '%.5f,%.5f,%.5f,%.5f' % (la0, lo0, la1, lo1)
     feats = overpass('[out:json][timeout:240];(' +
-        'way["highway"]["highway"!~"motorway|motorway_link|construction|proposed|footway|path|cycleway|bridleway|steps|pedestrian|platform|corridor|bus_stop"](%s);' % bb +
+        ('way["highway"]["highway"!~"construction|proposed|footway|path|cycleway|bridleway|steps|pedestrian|platform|corridor|bus_stop"](%s);' % bb if R.get('motorway') else
+         'way["highway"]["highway"!~"motorway|motorway_link|construction|proposed|footway|path|cycleway|bridleway|steps|pedestrian|platform|corridor|bus_stop"](%s);' % bb) +
         'way["natural"~"^(water|wood|scrub|coastline|beach|heath|grassland)$"](%s);' % bb +
         'way["waterway"~"^(river|stream|canal)$"](%s);' % bb +
         'way["landuse"~"^(forest|farmland|meadow|vineyard|orchard|residential|industrial|commercial|retail|reservoir|quarry|basin)$"](%s);' % bb +
@@ -238,6 +244,8 @@ def build_race(R, out_dir):
         'way["natural"="tree_row"](%s);way["aeroway"](%s);' % (bb, bb) +
         ');out body;>;out skel qt;')
     nodes, ways = osm_parse(feats)
+    LMm.wd_fetch([n[2].get('wikidata') for n in nodes.values() if n[2].get('place') and n[2].get('wikidata') and not n[2].get('name:ru')] +
+                 [w['tags'].get('wikidata') for w in ways if w['tags'].get('waterway') and w['tags'].get('wikidata') and not w['tags'].get('name:ru')])
     LOG('  osm nodes', len(nodes), 'ways', len(ways))
     XY = {nid: pr.xy(n[0], n[1]) for nid, n in nodes.items()}
     wid_tags = {w['id']: w['tags'] for w in ways}
@@ -258,7 +266,19 @@ def build_race(R, out_dir):
     def lines(pred):
         return [(w['tags'], [XY[n] for n in w['nodes'] if n in XY]) for w in ways if not w.get('rel') and pred(w['tags'])]
     # ---------- маршрут ----------
-    if R['kind'] == 'oval':
+    if R['kind'] == 'line':
+        P = [pr.xy(*ll) for ll in pts_ll]; closed = bool(R.get('closed'))
+        if closed: P = P + [P[0]]
+        for _ in range(4):  # сгладить углы (Чайкин)
+            Q = [P[0]] if not closed else []
+            for a, b in zip(P, P[1:]): Q += [(a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25), (a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75)]
+            if not closed: Q.append(P[-1])
+            else: Q.append(Q[0])
+            P = Q
+        route, _ = resample(P, STEP)
+        if closed and math.dist(route[-1], route[0]) < STEP * 1.5: route = route[:-1]
+        route_wid = [None] * len(route)
+    elif R['kind'] == 'oval':
         o = R['oval']; c = pr.xy(*o['center']); Ls, Lc, Lt = o['straight'], o['chute'], o['turn']; rT = Lt / (math.pi / 2)
         # прямоугольник со скруглёнными углами; прямые — с севера на юг, едем против часовой (главная прямая — западная, на юг)
         hx, hz = Lc / 2, Ls / 2; P = []
@@ -276,9 +296,11 @@ def build_race(R, out_dir):
         adj = {}; roadnodes = set()
         for w in ways:
             t = w['tags']; hw = t.get('highway')
-            if w.get('rel') or not hw or hw not in ROAD_W: continue
-            if t.get('motorroad') == 'yes' or t.get('expressway') == 'yes' or t.get('access') in ('no', 'private'): continue
-            k = ROAD_W[hw] * (1.4 if (t.get('lanes') and t['lanes'].isdigit() and int(t['lanes']) >= 4) else 1.0) * (1.6 if 'rocade' in (t.get('name') or '').lower() or 'bypass' in (t.get('name') or '').lower() else 1.0)
+            if w.get('rel') or not hw: continue
+            if hw not in ROAD_W and not (R.get('motorway') and hw in ('motorway', 'motorway_link')): continue
+            if not R.get('motorway') and (t.get('motorroad') == 'yes' or t.get('expressway') == 'yes'): continue
+            if t.get('access') in ('no', 'private') and hw != 'raceway' and not R.get('private'): continue
+            k = ROAD_W.get(hw, 1.0) * (1.4 if (t.get('lanes') and t['lanes'].isdigit() and int(t['lanes']) >= 4) else 1.0) * (1.6 if 'rocade' in (t.get('name') or '').lower() or 'bypass' in (t.get('name') or '').lower() else 1.0)
             ow = t.get('oneway') == 'yes'
             for a, b in zip(w['nodes'], w['nodes'][1:]):
                 if a not in XY or b not in XY: continue
@@ -286,9 +308,12 @@ def build_race(R, out_dir):
                 if not ow: adj.setdefault(b, []).append((a, L * k, w['id']))
                 roadnodes.add(a); roadnodes.add(b)
         good = [n for n in roadnodes if any(wid_tags.get(e[2], {}).get('highway') in ('primary', 'secondary', 'tertiary', 'trunk') for e in adj.get(n, []))]
+        racen = [n for n in roadnodes if any(wid_tags.get(e[2], {}).get('highway') == 'raceway' for e in adj.get(n, []))]
+        motn = [n for n in roadnodes if any(wid_tags.get(e[2], {}).get('highway') == 'motorway' for e in adj.get(n, []))]
         def snap(ll):
             p = pr.xy(*ll); best = None
-            for pool in (good, list(roadnodes)):
+            pools = ((racen,) if R.get('raceway') else ()) + ((motn,) if R.get('motorway') else ()) + (good, list(roadnodes))
+            for pool in pools:
                 for n in pool:
                     d = math.dist(XY[n], p)
                     if best is None or d < best[0]: best = (d, n)
@@ -296,6 +321,7 @@ def build_race(R, out_dir):
             return best[1]
         path, pwids = [], []
         snaps = [snap(ll) for ll in pts_ll]
+        if R.get('loop'): snaps.append(snaps[0])
         for a, b in zip(snaps, snaps[1:]):
             r = dijkstra(adj, a, b)
             if not r: raise RuntimeError('нет дороги между опорными точками')
@@ -303,7 +329,8 @@ def build_race(R, out_dir):
             if path: p = p[1:]
             path += p; pwids += wi
         P = [XY[n] for n in path]
-        route, segidx = resample(P, STEP); route_wid = [pwids[min(len(pwids) - 1, s)] if pwids else None for s in segidx]; closed = False
+        route, segidx = resample(P, STEP); route_wid = [pwids[min(len(pwids) - 1, s)] if pwids else None for s in segidx]; closed = bool(R.get('loop'))
+        if closed and math.dist(route[-1], route[0]) < STEP * 1.5: route = route[:-1]; route_wid = route_wid[:-1]
         LOG('  route', len(path), 'nodes ->', len(route), 'points,', round(len(route) * STEP / 1000, 2), 'km')
     n = len(route); X = np.array([p[0] for p in route]); Z = np.array([p[1] for p in route])
     # ---------- рельеф ----------
@@ -476,6 +503,39 @@ def build_race(R, out_dir):
                         for q in range(k, j + 1): S[q] = TY['coast']
                     k = j + 1
                 else: k += 1
+    # ---------- приметы (соборы, замки, мельницы…) и лучший кусок длинного маршрута ----------
+    rb = [pr.ll(float(X.min()) - 2600, float(Z.min()) - 2600), pr.ll(float(X.max()) + 2600, float(Z.max()) + 2600)]
+    rf = [pr.ll(float(X.min()) - 8000, float(Z.min()) - 8000), pr.ll(float(X.max()) + 8000, float(Z.max()) + 8000)]
+    bbn = '%.5f,%.5f,%.5f,%.5f' % (rb[0][0], rb[0][1], rb[1][0], rb[1][1]); bbf = '%.5f,%.5f,%.5f,%.5f' % (rf[0][0], rf[0][1], rf[1][0], rf[1][1])
+    try: LM = LMm.landmarks(pr, bbn, bbf, list(zip(X.tolist(), Z.tolist())), year, R.get('host', 'fr'), overpass)
+    except Exception as e: LM = []; LOG('  landmarks fail', repr(e)[:200])
+    maxn = int(R.get('maxkm', 12) * 1000 / STEP)
+    if not closed and n > maxn:
+        sc = np.zeros(n)
+        for b in bridges: sc[b['i']] += 4
+        for x in xs: sc[x['i']] += 2.5
+        for c in coast_runs: sc[c['i0']:c['i1'] + 1] += 0.02
+        for k in range(1, n):
+            if S[k] == TY['town'] and S[k - 1] != TY['town']: sc[k] += 1.5
+            if S[k] == TY['serp']: sc[k] += 0.03
+        for o in LM:
+            if not o.get('far'): sc[min(n - 1, o['i'])] += 0.6 * LMm.IMP.get(o['k'], 1) / max(1.0, o['d'] / 400.0)
+        cs = np.concatenate([[0], np.cumsum(sc)]); best, a = -1, 0
+        for st in range(0, n - maxn + 1, 10):
+            v = cs[st + maxn - 8] - cs[st + 8] - st * 0.0002
+            if v > best: best, a = v, st
+        b = a + maxn
+        LOG('  crop', n, '→', maxn, 'points from', a, 'score', round(float(best), 2))
+        X, Z, Y = X[a:b], Z[a:b], Y[a:b]; raw = raw[a:b]; S = S[a:b]; town_at = town_at[a:b]; br = br[a:b]; route_wid = route_wid[a:b]; T = T[a:b]; N = N[a:b]; K = K[a:b]
+        bridges = [dict(q, i=q['i'] - a, i0=q['i0'] - a, i1=q['i1'] - a) for q in bridges if a <= q['i'] < b]
+        xs = [dict(q, i=q['i'] - a) for q in xs if a <= q['i'] < b]
+        coast_runs = [dict(c, i0=max(0, c['i0'] - a), i1=min(b - a - 1, c['i1'] - a)) for c in coast_runs if c['i1'] >= a and c['i0'] < b]
+        n = b - a
+    if LM:
+        RXc, RZc = X.tolist(), Z.tolist()
+        for o in LM:
+            d2 = [(RXc[i] - o['x']) ** 2 + (RZc[i] - o['z']) ** 2 for i in range(0, n, 2)]; j = int(np.argmin(d2)); o['i'] = j * 2; o['d'] = round(math.sqrt(d2[j]))
+        LM = [o for o in LM if o.get('far') or o['d'] < 2500]
     # короткие куски — к соседям (кроме мостов и переездов)
     def runs(S):
         out = []; k = 0
@@ -534,6 +594,7 @@ def build_race(R, out_dir):
     for b in bridges: notes.append({'i': b['i'], 't': 'bridge', 'n': b['name']})
     for x in xs: notes.append({'i': x['i'], 't': 'rail', 'n': x['name']})
     for c in coast_runs: notes.append({'i': c['i0'], 't': 'coast'})
+    for o in sorted([o for o in LM if not o.get('far') and o.get('n') and o['d'] < 900], key=lambda o: -o['sc'])[:3]: notes.append({'i': o['i'], 't': 'lm', 'n': o['n'], 'k': o['k']})
     w = int(1000 / STEP)
     if n > w:
         rise = [(Y[k + w] - Y[k], k) for k in range(0, n - w, 10)]
@@ -546,7 +607,7 @@ def build_race(R, out_dir):
     out = {'id': rid, 'name': R['name'], 'year': year, 'host': R['host'], 'kind': R['kind'], 'about': R.get('about', ''), 'closed': closed, 'step': STEP,
            'll0': [round(lat0, 6), round(lon0, 6)], 'y0': round(y0, 1),
            'pts': [[int(round(X[k] * 10)), int(round(Z[k] * 10)), int(round((Y[k] - y0) * 10))] for k in range(n)],
-           'seg': segs, 'bridges': bridges, 'rails': xs, 'coast': coast_runs,
+           'seg': segs, 'bridges': bridges, 'rails': xs, 'coast': coast_runs, 'lm': [{k: v for k, v in o.items() if k not in ('sc',)} for o in LM],
            'near': near, 'far': far, 'pal': pal, 'map': mp, 'notes': notes,
            'era': {'year': year, 'pop': popk, 'removed': removed, 'rails_kept': len(rails), 'rail_years': sorted({y for y in (year_of(t) for t, L in rails) if y})},
            'src': {'dem': 'Copernicus DEM GLO-30 (%d tiles)' % ntiles, 'osm': '© OpenStreetMap contributors (ODbL), Overpass API', 's2': 'Sentinel-2 cloudless 2016 by EOX IT Services GmbH (CC BY 4.0)' if pal else '',
@@ -603,6 +664,8 @@ def run(log=print):
     global LOG; LOG = log
     cfg = json.load(open(os.path.join(TOOLS, 'terrain_races.json'), encoding='utf-8'))
     out_dir = os.path.join(MEDIA, 'terrain'); only = os.environ.get('TERRAIN_ONLY', '')
+    fo = os.path.join(TOOLS, 'terrain_only.txt')
+    if not only and os.path.exists(fo): only = ','.join(l.strip() for l in open(fo, encoding='utf-8') if l.strip() and not l.startswith('#'))
     for R in cfg['races']:
         if only and R['id'] not in only.split(','): continue
         try: build_race(R, out_dir)
