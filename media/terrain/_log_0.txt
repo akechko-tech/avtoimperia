@@ -1,15 +1,21 @@
-==== terrain gueux Гран-при Марны: Реймс-Гё 1927
-  point None -> None fallback [49.2541, 3.9306]
-  point Gueux -> [49.2511954, 3.9102946] fallback [49.2512, 3.9103]
-  point None -> None fallback [49.26798, 3.92038]
-  point None -> None fallback [49.26028, 3.94962]
-  osm nodes 28440 ways 2620
-  route 176 nodes -> 1033 points, 8.26 km
-dem Copernicus_DSM_COG_10_N49_00_E003_00_DEM (720, 836) min nan max nan
-dem Copernicus_DSM_COG_10_N49_00_E004_00_DEM (720, 325) min nan max nan
-  elev 79.7 .. 109.7 smoothed 80.1 .. 108.3
-  places 10 forest 84 vine 27 water 55 rivers 4 coast 0 rails 18 removed {'reservoir': 49, 'aeroway': 2, 'industrial': 11, 'motorway': 0, 'rail_after_year': 13}
-  landmarks 28 → 9 near + 5 far; cut by year {'late': 0, 'unknown': 9, 'former': 0, 'modern': 2, 'strict': 0, 'noname': 1, 'ruins': 0} [('church', 'Церковь св. Лупа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Теодульфа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Симфориана'), ('church', 'Церковь св. Марии Магдалины'), ('church', 'Церковь св. Ремигия'), ('church', 'Церковь св. Ремигия'), ('church', 'Церковь св. Бриция'), ('castle', 'Замок Курселл'), ('cathedral', 'Реймсский собор'), ('monastery', 'Музей изящных искусств'), ('monastery', 'Монастырь св. Ремигия'), ('palace', 'Замок Краиер')]
-  cover {1: 0.173, 2: 0.027, 3: 0.024, 4: 0.041}
-  palette {'meadow': [33, 58, 46], 'dry': [64, 82, 61], 'soil': [91, 96, 74], 'n': 1384}
-  -> gueux.json 71 KB, 1033 points, 9 segments, bridges [] rails 0 coast 0
+==== terrain santamonica Санта-Моника 1909
+  point None -> None fallback [34.0262, -118.51]
+  point None -> None fallback [34.019, -118.501]
+  point None -> None fallback [34.057, -118.464]
+  point None -> None fallback [34.03, -118.515]
+  point None -> None fallback [34.0278, -118.512]
+  osm nodes 66074 ways 11469
+  point ['Ocean Avenue'] -> [34.02474, -118.51114] off 192 m
+  point ['Ocean Avenue', 'Wilshire'] -> [34.01681, -118.50122] off 243 m
+  point ['Wilshire', 'San Vicente'] -> [34.05088, -118.45916] off 810 m
+  point ['San Vicente', 'Ocean Avenue'] -> [34.02606, -118.51348] off 457 m
+  point ['Ocean Avenue'] -> [34.02619, -118.51363] off 233 m
+  route 476 nodes -> 1654 points, 13.23 km
+dem Copernicus_DSM_COG_10_N33_00_W119_00_DEM (285, 973) min nan max nan
+dem Copernicus_DSM_COG_10_N34_00_W119_00_DEM (539, 973) min nan max nan
+  elev 29.6 .. 111.8 smoothed 30.4 .. 110.8
+  places 2 forest 36 vine 1 water 20 rivers 97 coast 6 rails 0 removed {'reservoir': 10, 'aeroway': 123, 'industrial': 396, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 75 → 4 near + 0 far; cut by year {'late': 47, 'unknown': 8, 'former': 0, 'modern': 0, 'strict': 15, 'noname': 0, 'ruins': 0} [('church', 'Часовня Сотелл Ветеранс'), ('pagoda', 'Храм Анджелес Калифорниа'), ('church', 'Церковь св. Павла Апостола'), ('church', 'Объединённая методистская церковь')]
+  cover {1: 0.014, 2: 0.016, 3: 0.001, 4: 0.0}
+  palette {'meadow': [95, 96, 76], 'dry': [136, 129, 106], 'soil': [179, 170, 145], 'n': 2116}
+  -> santamonica.json 93 KB, 1654 points, 3 segments, bridges [] rails 0 coast 0
