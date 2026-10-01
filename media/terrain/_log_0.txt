@@ -1,24 +1,10 @@
-==== terrain elgin Элгин 1910
-  point None -> None fallback [42.03885, -88.3632]
-  point None -> None fallback [42.038, -88.335]
-  point None -> None fallback [42.043, -88.318]
-  point None -> None fallback [42.051, -88.318]
-  point None -> None fallback [42.055, -88.392]
-  point None -> None fallback [42.032, -88.392]
-  osm nodes 52516 ways 6223
-  point ['US 20|Galena|Grant Highway'] -> [42.03897, -88.36251] off 58 m
-  point ['Larkin', 'US 20|Galena|Grant Highway'] -> [42.03233, -88.32893] off 803 m
-  point ['Larkin', 'McLean'] -> [42.03514, -88.31188] off 1005 m
-  point ['McLean', 'Highland'] -> [42.03976, -88.31189] off 1341 m
-  point ['Highland', 'Coombs'] -> [42.05494, -88.37647] off 1284 m
-  point ['Coombs', 'US 20|Galena|Grant Highway'] -> [42.04341, -88.37627] off 1812 m
-  route 284 nodes -> 1670 points, 13.36 km
-dem Copernicus_DSM_COG_10_N41_00_W089_00_DEM (235, 1096) min nan max nan
-dem Copernicus_DSM_COG_10_N42_00_W089_00_DEM (554, 1096) min nan max nan
-  elev 244.8 .. 289.1 smoothed 247.0 .. 288.1
-  places 2 forest 45 vine 0 water 89 rivers 52 coast 0 rails 31 removed {'reservoir': 37, 'aeroway': 2, 'industrial': 49, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 44 → 0 near + 0 far; cut by year {'late': 2, 'unknown': 7, 'former': 0, 'modern': 1, 'strict': 34, 'noname': 0, 'ruins': 0} []
-  crop 1670 → 1500 points from 0 score 0.0
-  cover {1: 0.062, 2: 0.001, 3: 0.032, 4: 0.0}
-  palette {'meadow': [42, 62, 50], 'dry': [75, 87, 71], 'soil': [115, 123, 105], 'n': 1994}
-  -> elgin.json 91 KB, 1500 points, 1 segments, bridges [] rails 0 coast 0
+==== terrain amatol Атлантик-Сити: Аматол 1921
+  point None -> None fallback [39.605, -74.73]
+  osm nodes 9199 ways 263
+dem Copernicus_DSM_COG_10_N39_00_W075_00_DEM (687, 850) min -0.6409968137741089 max 55.57289505004883
+  elev 23.0 .. 38.0 smoothed 29.3 .. 29.3
+  places 1 forest 18 vine 0 water 3 rivers 1 coast 0 rails 5 removed {'reservoir': 0, 'aeroway': 0, 'industrial': 0, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 1 → 0 near + 0 far; cut by year {'late': 0, 'unknown': 0, 'former': 0, 'modern': 0, 'strict': 1, 'noname': 0, 'ruins': 0} []
+  cover {1: 0.832, 2: 0.002, 3: 0.003, 4: 0.0}
+  palette {'meadow': [23, 48, 43], 'dry': [26, 52, 47], 'soil': [33, 58, 51], 'n': 408}
+  -> amatol.json 34 KB, 302 points, 1 segments, bridges [] rails 0 coast 0

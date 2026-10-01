@@ -1,12 +1,14 @@
-==== terrain miramas Автодром Мирамас 1926
-  point None -> None fallback [43.5724, 4.97699]
-  osm nodes 23272 ways 2391
-  raceway walk 767 points, 6.14 km ok
-dem Copernicus_DSM_COG_10_N43_00_E004_00_DEM (723, 625) min nan max nan
-dem Copernicus_DSM_COG_10_N43_00_E005_00_DEM (723, 377) min nan max nan
-  elev 38.2 .. 45.0 smoothed 41.1 .. 41.1
-  places 1 forest 1 vine 3 water 7 rivers 59 coast 0 rails 122 removed {'reservoir': 12, 'aeroway': 3, 'industrial': 18, 'motorway': 0, 'rail_after_year': 0}
-  landmarks 21 → 5 near + 0 far; cut by year {'late': 1, 'unknown': 9, 'former': 0, 'modern': 2, 'strict': 0, 'noname': 3, 'ruins': 0} [('church', 'Церковь св. Павла'), ('church', ''), ('chapel', 'Часовня'), ('station', 'Вокзал Мирама'), ('chapel', 'Часовня св. Марии Магдалины')]
-  cover {1: 0.004, 2: 0.046, 3: 0.011, 4: 0.027}
-  palette {'meadow': [55, 69, 50], 'dry': [166, 137, 108], 'soil': [123, 99, 76], 'n': 1022}
-  -> miramas.json 55 KB, 766 points, 1 segments, bridges [] rails 0 coast 0
+==== terrain tours Гран-при Франции: Тур 1923
+  point None -> None fallback [47.425, 0.7005]
+  point Parçay-Meslay -> [47.4413885, 0.7456752] fallback [47.443, 0.747]
+  point Monnaie, Indre-et-Loire -> [47.4996611, 0.7856396] fallback [47.5005, 0.786]
+  osm nodes 150075 ways 14559
+  route 508 nodes -> 1729 points, 13.83 km
+dem Copernicus_DSM_COG_10_N47_00_E000_00_DEM (928, 1261) min 38.0 max 186.9569854736328
+  elev 98.5 .. 140.6 smoothed 99.5 .. 138.8
+  places 240 forest 636 vine 170 water 9 rivers 1083 coast 0 rails 28 removed {'reservoir': 255, 'aeroway': 125, 'industrial': 71, 'motorway': 0, 'rail_after_year': 14}
+  landmarks 128 → 22 near + 6 far; cut by year {'late': 2, 'unknown': 33, 'former': 1, 'modern': 2, 'strict': 0, 'noname': 7, 'ruins': 1} [('castle', 'Замок Белл Рюри'), ('palace', 'Замок Вофуэнар'), ('castle', 'Замок Мортье'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Мартина'), ('manor', 'Усадьба Бурдигаль'), ('manor', 'Усадьба Сапайе'), ('church', 'Церковь Христа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Симфориана'), ('church', 'Церковь св. Радегунды'), ('church', 'Церковь св. Пи'), ('church', 'Церковь Богоматери'), ('chapel', 'Часовня св. Мартина')]
+  crop 1729 → 1250 points from 0 score 14.2
+  cover {1: 0.129, 2: 0.105, 3: 0.022, 4: 0.068}
+  palette {'meadow': [52, 65, 54], 'dry': [81, 86, 70], 'soil': [123, 123, 101], 'n': 1670}
+  -> tours.json 110 KB, 1250 points, 12 segments, bridges [] rails 0 coast 0

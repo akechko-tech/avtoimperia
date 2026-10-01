@@ -1,15 +1,15 @@
-==== terrain gueux Гран-при Марны: Реймс-Гё 1927
-  point None -> None fallback [49.2541, 3.9306]
-  point Gueux -> [49.2511954, 3.9102946] fallback [49.2512, 3.9103]
-  point None -> None fallback [49.26798, 3.92038]
-  point None -> None fallback [49.26028, 3.94962]
-  osm nodes 28440 ways 2620
-  route 201 nodes -> 1220 points, 9.76 km
-dem Copernicus_DSM_COG_10_N49_00_E003_00_DEM (725, 841) min nan max nan
-dem Copernicus_DSM_COG_10_N49_00_E004_00_DEM (725, 325) min nan max nan
-  elev 79.7 .. 109.7 smoothed 80.1 .. 108.3
-  places 10 forest 84 vine 27 water 55 rivers 4 coast 0 rails 18 removed {'reservoir': 49, 'aeroway': 2, 'industrial': 11, 'motorway': 0, 'rail_after_year': 13}
-  landmarks 28 → 9 near + 5 far; cut by year {'late': 0, 'unknown': 9, 'former': 0, 'modern': 2, 'strict': 0, 'noname': 1, 'ruins': 0} [('church', 'Церковь св. Лупа'), ('church', 'Церковь св. Симфориана'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Теодульфа'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Марии Магдалины'), ('church', 'Церковь св. Ремигия'), ('church', 'Церковь св. Ремигия'), ('church', 'Церковь св. Бриция'), ('castle', 'Замок Курселл'), ('cathedral', 'Реймсский собор'), ('monastery', 'Музей изящных искусств'), ('monastery', 'Монастырь св. Ремигия'), ('palace', 'Замок Краиер')]
-  cover {1: 0.174, 2: 0.026, 3: 0.023, 4: 0.043}
-  palette {'meadow': [37, 61, 48], 'dry': [66, 82, 62], 'soil': [97, 98, 77], 'n': 1632}
-  -> gueux.json 75 KB, 1220 points, 11 segments, bridges [] rails 0 coast 0
+==== terrain potsdam Париж — Берлин: Потсдам 1901
+  point None -> None fallback [52.3995, 13.065]
+  point Glienicker Brücke -> [52.413462, 13.0902272] fallback [52.4133, 13.0905]
+  point None -> None fallback [52.421, 13.15]
+  point Nikolassee, Berlin -> [52.4262495, 13.1981446] fallback [52.433, 13.2]
+  osm nodes 104595 ways 15638
+  route 321 nodes -> 1334 points, 10.67 km
+dem Copernicus_DSM_COG_10_N52_00_E012_00_DEM (742, 201) min nan max nan
+dem Copernicus_DSM_COG_10_N52_00_E013_00_DEM (742, 845) min nan max nan
+  elev 30.3 .. 94.5 smoothed 31.3 .. 90.7
+  places 4 forest 481 vine 13 water 93 rivers 59 coast 0 rails 235 removed {'reservoir': 44, 'aeroway': 1, 'industrial': 226, 'motorway': 0, 'rail_after_year': 1}
+  landmarks 265 → 28 near + 6 far; cut by year {'late': 33, 'unknown': 74, 'former': 2, 'modern': 1, 'strict': 0, 'noname': 38, 'ruins': 4} [('castle', 'Замок Флатовтурм'), ('palace', 'Замок Глинике'), ('palace', 'Охотничий дворец Глинике'), ('palace', 'Малый замок'), ('palace', 'Замок Бабельсберг'), ('palace', 'Мраморный дворец в Потсдаме'), ('palace', 'Замок Закров'), ('palace', 'Замок Сан-Суси'), ('gate', 'Науэнские ворота'), ('church', 'Церковь'), ('gate', 'Охотничьи ворота'), ('wall', 'Городская стена'), ('wall', 'Городская стена'), ('wall', 'Городская стена')]
+  cover {1: 0.337, 2: 0.076, 3: 0.177, 4: 0.001}
+  palette {'meadow': [29, 48, 47], 'dry': [52, 65, 61], 'soil': [85, 89, 84], 'n': 1418}
+  -> potsdam.json 119 KB, 1334 points, 16 segments, bridges ['—', 'Принц-Фридрих-Леопольд-Каналь'] rails 0 coast 0
