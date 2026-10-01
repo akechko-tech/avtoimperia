@@ -58,7 +58,10 @@ def voice():
     for h in idx:
         if h + '.mp3' not in have: continue
         n += pull('media/voice/%s.mp3' % h, os.path.join(D, h + '.mp3'))
-    ok = {h: d for h, d in idx.items() if h + '.mp3' in have}
+    # 0.25: только строки, которые игра ещё произносит (tools/media/voice_lines.json) — старые тексты не храним
+    try: keep = {x.get('h') for x in json.load(open(os.path.join(ROOT, 'tools', 'media', 'voice_lines.json'), encoding='utf-8'))}
+    except Exception: keep = None
+    ok = {h: d for h, d in idx.items() if h + '.mp3' in have and (keep is None or h in keep)}
     for f in os.listdir(D):
         if f.endswith('.mp3') and f[:-4] not in ok: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w').write('window.VOICE_INDEX=' + json.dumps(ok, separators=(',', ':')) + ';\n')
