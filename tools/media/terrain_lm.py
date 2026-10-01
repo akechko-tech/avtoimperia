@@ -217,6 +217,7 @@ def landmarks(pr, bb_near, bb_far, route_xz, year, host, overpass, lang=None):
             if not yy or max(yy) > year - 1 or year < 1919: cut['modern'] += 1; continue
         heritage = any(t.get(h_) for h_ in HERITAGE) or bool(t.get('wikidata'))
         if y is None and k not in OLD_OK: cut['unknown'] += 1; continue
+        if k == 'mosque' and y is None and host not in ('ly', 'cn') and not t.get('heritage'): cut['modern'] += 1; continue  # мечети в Европе и Америке — почти все новые
         if y is None and host in STRICT and not heritage and k not in ('wall', 'gate', 'castle', 'fort') : cut['strict'] += 1; continue
         if not n0 and k in ('tower', 'ruins', 'monument', 'obelisk', 'statue', 'column', 'water_tower', 'observatory', 'station', 'manor', 'palace', 'gate'):
             cut['noname'] += 1; continue

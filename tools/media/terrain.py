@@ -164,9 +164,12 @@ def dp_simplify(P, eps):
 
 RU = {}
 HOST = 'fr'
-def name_of(tags, river=False):
+def name_of(tags, river=False, rail=False):
     n = tags.get('name') or ''
     if RU.get(n): return RU[n]
+    if rail:
+        import terrain_names as TN_
+        return tags.get('name:ru') or TN_.rail_label(n, HOST)
     import terrain_lm as LMm
     return LMm.ru_place_name(tags, HOST, river or bool(tags.get('waterway'))) or n
 
@@ -251,6 +254,15 @@ def raceway_walk(R, ways, XY, pr, pts_ll):
         if (b, c) in seen: break
         seen.add((b, c)); path.append(c); L += math.dist(XY[b], XY[c])
         if c == start or (L > 400 and math.dist(XY[c], XY[start]) < 15): break
+    # не вернулись точно к началу (развилка у боксов, шикана) — замкнуть круг в ближайшем к старту месте после 1,5 км
+    if path[-1] != start and math.dist(XY[path[-1]], XY[start]) > 15:
+        acc = 0.0; best = None
+        for q in range(1, len(path)):
+            acc += math.dist(XY[path[q - 1]], XY[path[q]])
+            if acc < 1500: continue
+            dd = math.dist(XY[path[q]], XY[start])
+            if dd < 150 and (best is None or dd < best[0]): best = (dd, q)
+        if best: path = path[:best[1] + 1] + [start]; LOG('  raceway walk closed at', round(best[0]), 'm from start')
     P = [XY[n] for n in path]
     route, _ = resample(P, STEP)
     return route if len(route) > 20 else None
@@ -322,6 +334,34 @@ def build_race(R, out_dir):
                  [w['tags'].get('wikidata') for w in ways if w['tags'].get('waterway') and w['tags'].get('wikidata') and not w['tags'].get('name:ru')])
     LOG('  osm nodes', len(nodes), 'ways', len(ways))
     XY = {nid: pr.xy(n[0], n[1]) for nid, n in nodes.items()}
+    # опорные точки по дорогам: «cross» — перекрёсток дорог с такими именами/номерами, «on» — ближайшая точка дороги
+    def road_match(t, pat):
+        if not t.get('highway'): return False
+        alts = [a.strip() for a in pat.split('|') if a.strip()]
+        nm = (t.get('name') or '') + ' ' + (t.get('old_name') or '') + ' ' + (t.get('alt_name') or '')
+        refs = [r.replace(' ', '').lower() for r in ((t.get('ref') or '') + ';' + (t.get('old_ref') or '')).split(';') if r]
+        for a_ in alts:
+            if a_.replace(' ', '').lower() in refs: return True
+            if len(a_) > 3 and a_.lower() in nm.lower(): return True
+        return False
+    for i_, p in enumerate(R['pts']):
+        tries = [x for x in (p.get('cross'), p.get('on')) if x]
+        for pats in tries:
+            if isinstance(pats, str): pats = [pats]
+            sets = []
+            for pat in pats:
+                ss = set()
+                for w in ways:
+                    if not w.get('rel') and road_match(w['tags'], pat): ss.update(w['nodes'])
+                sets.append(ss)
+            cand = set.intersection(*sets) if sets else set()
+            cand = [n_ for n_ in cand if n_ in XY]
+            q = pr.xy(*pts_ll[i_]); tol = p.get('tol', 3) * 1000
+            best = min(cand, key=lambda n_: math.dist(XY[n_], q), default=None)
+            if best is not None and math.dist(XY[best], q) <= tol:
+                LOG('  point', pats, '->', [round(v, 5) for v in pr.ll(*XY[best])], 'off', round(math.dist(XY[best], q)), 'm')
+                pts_ll[i_] = list(pr.ll(*XY[best])); break
+            LOG('  point', pats, 'not found:', len(cand), 'candidates, nearest', round(math.dist(XY[best], q)) if best is not None else None, 'm')
     wid_tags = {w['id']: w['tags'] for w in ways}
     # полигоны: замкнутые линии и внешние кольца отношений (кусками)
     def polys(pred):
@@ -395,7 +435,7 @@ def build_race(R, out_dir):
             t = w['tags']; hw = t.get('highway')
             if w.get('rel') or not hw: continue
             if hw not in ROAD_W and not (R.get('motorway') and hw in ('motorway', 'motorway_link')): continue
-            if not R.get('motorway') and (t.get('motorroad') == 'yes' or t.get('expressway') == 'yes'): continue
+            if not (R.get('motorway') or R.get('motorroad')) and (t.get('motorroad') == 'yes' or t.get('expressway') == 'yes'): continue
             if t.get('access') in ('no', 'private') and hw != 'raceway' and not R.get('private'): continue
             k = ROAD_W.get(hw, 1.0) * (1.4 if (t.get('lanes') and t['lanes'].isdigit() and int(t['lanes']) >= 4) else 1.0) * (1.6 if 'rocade' in (t.get('name') or '').lower() or 'bypass' in (t.get('name') or '').lower() else 1.0)
             if R.get('prefer') and any(q.lower() in (t.get('name') or '').lower() or q == t.get('ref') for q in R['prefer']): k *= 0.6
@@ -572,7 +612,8 @@ def build_race(R, out_dir):
         else: k += 1
     # железнодорожные переезды (линии, построенные к году гонки; мост или тоннель — не переезд)
     xings = []
-    for t, L in rails:
+    norail = R['kind'] != 'road' or R.get('walk') or R.get('rails') is False
+    for t, L in ([] if norail else rails):
         if t.get('bridge') not in (None, 'no') or t.get('tunnel') not in (None, 'no'): continue
         for c, d in zip(L, L[1:]):
             for k in range(n - 1):
@@ -581,22 +622,30 @@ def build_race(R, out_dir):
                 if tt is None or br[k] or br[k + 1]: continue
                 rx, rz = d[0] - c[0], d[1] - c[1]; rl = math.hypot(rx, rz) or 1
                 ang = math.asin(max(-1, min(1, (T[k][0] * rz - T[k][1] * rx) / rl)))
-                xings.append({'i': k, 'ang': round(math.pi / 2 - abs(ang), 3) * (1 if ang >= 0 else -1), 'name': name_of(t)})
-    if R['kind'] != 'oval':
+                if abs(ang) < 0.35: continue  # почти вдоль дороги — старое полотно рядом, не переезд
+                xings.append({'i': k, 'ang': round(math.pi / 2 - abs(ang), 3) * (1 if ang >= 0 else -1), 'name': name_of(t, rail=True)})
+    if not norail:
         railnode = {}
         for t, L in rails:
             pass
-        rn = set()
+        rn = {}
         for w in ways:
             t = w['tags']
             if w.get('rel') or t.get('railway') not in ('rail', 'abandoned', 'disused', 'narrow_gauge'): continue
             y = year_of(t)
             if (y and y > year) or t.get('bridge') not in (None, 'no') or t.get('tunnel') not in (None, 'no'): continue
-            for nd in w['nodes']: rn.add(nd)
-        for nd in (path if R['kind'] not in ('line', 'oval') else []):
+            if t.get('usage') in ('industrial', 'military', 'tourism') or t.get('service') in ('yard', 'siding', 'spur'): continue
+            for q_, nd in enumerate(w['nodes']):
+                a_ = w['nodes'][max(0, q_ - 1)]; b_ = w['nodes'][min(len(w['nodes']) - 1, q_ + 1)]
+                if a_ in XY and b_ in XY and a_ != b_: rn[nd] = (t, (XY[b_][0] - XY[a_][0], XY[b_][1] - XY[a_][1]))
+        for nd in path:
             if nd in rn and nd in XY:
                 px, pz = XY[nd]; k = int(np.argmin((X - px) ** 2 + (Z - pz) ** 2))
-                if not br[k]: xings.append({'i': k, 'ang': 0.25, 'name': ''})
+                if br[k]: continue
+                t, (rx, rz) = rn[nd]; rl = math.hypot(rx, rz) or 1
+                ang = math.asin(max(-1, min(1, (T[k][0] * rz - T[k][1] * rx) / rl)))
+                if abs(ang) < 0.35: continue
+                xings.append({'i': k, 'ang': round(math.pi / 2 - abs(ang), 3) * (1 if ang >= 0 else -1), 'name': name_of(t, rail=True)})
     xs = []
     for x in sorted(xings, key=lambda q: q['i']):
         if not xs or x['i'] - xs[-1]['i'] > 12: xs.append(x)
@@ -739,7 +788,8 @@ def build_race(R, out_dir):
     js = json.dumps(out, ensure_ascii=False, separators=(',', ':'))
     os.makedirs(out_dir, exist_ok=True); open(os.path.join(out_dir, rid + '.json'), 'w', encoding='utf-8').write(js)
     LOG('  ->', rid + '.json', round(len(js) / 1024), 'KB,', n, 'points,', len(segs), 'segments, bridges', [b['name'] for b in bridges], 'rails', len(xs), 'coast', len(coast_runs))
-    try: preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY)
+    try: preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY,
+                 roads=lines(lambda t: t.get('highway') in ('motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'raceway')), lm=LM)
     except Exception as e: LOG('  preview fail', repr(e)[:200])
 
 def cover_grid(G, forest, vine, water, rivers, places):
@@ -769,7 +819,7 @@ def cover_grid(G, forest, vine, water, rivers, places):
     LOG('  cover', frac)
     return rows
 
-def preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY):
+def preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY, roads=(), lm=()):
     from PIL import Image, ImageDraw
     nz, nx = Hn.shape; lo, hi = float(np.percentile(Hn, 1)), float(np.percentile(Hn, 99)) + 1e-3
     g = np.clip((Hn - lo) / (hi - lo) * 200 + 40, 0, 255).astype(np.uint8)[::-1]
@@ -778,10 +828,25 @@ def preview(out_dir, rid, X, Z, S, Hn, near, bridges, xs, places, rivers, TY):
     P = lambda x, z: ((x - x0) / S0 * sc, (nz - 1 - (z - z0) / S0) * sc)
     for t, L in rivers:
         if len(L) > 1: d.line([P(*p) for p in L], fill=(60, 110, 200), width=2)
+    labeled = set()
+    for t, L in roads:  # дороги вокруг — тонко, с номером: видно, куда можно перенести опорные точки
+        if len(L) < 2: continue
+        hw = t.get('highway'); c = {'motorway': (200, 120, 255), 'trunk': (255, 140, 200), 'primary': (230, 230, 230), 'raceway': (255, 80, 255)}.get(hw, (150, 150, 150))
+        d.line([P(*p) for p in L], fill=c, width=1)
+        lab = t.get('ref') or ''
+        if lab and lab not in labeled and len(L) > 3:
+            labeled.add(lab); m = L[len(L) // 2]; q = P(*m); d.text((q[0] + 2, q[1] + 2), lab[:10], fill=c)
     col = {0: (220, 200, 90), 1: (220, 60, 60), 2: (240, 140, 90), 3: (30, 120, 40), 4: (120, 200, 120), 5: (60, 160, 255), 6: (255, 255, 255), 7: (200, 90, 200), 8: (40, 220, 220), 9: (150, 60, 160)}
     for k in range(len(X) - 1): d.line([P(X[k], Z[k]), P(X[k + 1], Z[k + 1])], fill=col.get(S[k], (255, 255, 0)), width=4)
     for p in places:
         q = P(p['x'], p['z']); d.ellipse([q[0] - 3, q[1] - 3, q[0] + 3, q[1] + 3], outline=(255, 255, 255)); d.text((q[0] + 4, q[1] - 6), (p['name0'] or '')[:18], fill=(255, 255, 255))
+    for x in xs:
+        q = P(X[x['i']], Z[x['i']]); d.rectangle([q[0] - 4, q[1] - 4, q[0] + 4, q[1] + 4], outline=(255, 255, 255), width=2)
+    for o in lm or ():
+        try:
+            q = P(o['x'], o['z']); d.polygon([(q[0], q[1] - 5), (q[0] - 4, q[1] + 3), (q[0] + 4, q[1] + 3)], outline=(255, 220, 0))
+        except Exception: pass
+    if len(X): q = P(X[0], Z[0]); d.ellipse([q[0] - 6, q[1] - 6, q[0] + 6, q[1] + 6], outline=(0, 255, 0), width=3)
     im.save(os.path.join(out_dir, rid + '.png'))
 
 def run(log=print):

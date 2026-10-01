@@ -165,6 +165,15 @@ PLACE_WORDS = {'fr': {'aix': 'Экс', 'marseille': 'Марсель', 'paris': '
                'es': {'san': 'Сан', 'santa': 'Санта', 'santo': 'Санто', 'de': 'де', 'del': 'дель', 'la': 'ла', 'el': 'эль', 'los': 'лос', 'las': 'лас', 'y': 'и'},
                'nl': {'aan': 'ан', 'de': 'де', 'het': 'хет', 'van': 'ван', 'den': 'ден', 'der': 'дер', 'op': 'оп', "'s": 'с', 'sint': 'Синт'}}
 
+PLACE_WORDS['it'].update({'milano': 'Милан', 'torino': 'Турин', 'roma': 'Рим', 'napoli': 'Неаполь', 'firenze': 'Флоренция', 'venezia': 'Венеция', 'genova': 'Генуя',
+                          'bologna': 'Болонья', 'brescia': 'Брешиа', 'monza': 'Монца', 'mantova': 'Мантуя', 'padova': 'Падуя', 'palermo': 'Палермо'})
+PLACE_WORDS['en'].update({'pennsylvania': 'Пенсильвания', 'chicago': 'Чикаго', 'new': 'Нью', 'york': 'Йорк', 'london': 'Лондон', 'brighton': 'Брайтон',
+                          'boston': 'Бостон', 'baltimore': 'Балтимор', 'ohio': 'Огайо', 'illinois': 'Иллинойс', 'long': 'Лонг', 'island': 'Айленд',
+                          'dublin': 'Дублин', 'belfast': 'Белфаст', 'edinburgh': 'Эдинбург', 'glasgow': 'Глазго', 'manchester': 'Манчестер'})
+PLACE_WORDS['de'].update({'berlin': 'Берлин', 'wien': 'Вена', 'munchen': 'Мюнхен', 'köln': 'Кёльн', 'koln': 'Кёльн', 'frankfurt': 'Франкфурт'})
+PLACE_WORDS['es'].update({'madrid': 'Мадрид', 'barcelona': 'Барселона', 'sevilla': 'Севилья'})
+PLACE_WORDS['nl'].update({'utrecht': 'Утрехт', 'amsterdam': 'Амстердам', 'rotterdam': 'Роттердам', 'haarlem': 'Харлем', 'zandvoort': 'Зандворт'})
+
 def translit_word(w, host):
     if not w: return ''
     if CYR.search(w): return w
@@ -345,6 +354,15 @@ SAINTS = {
     'lufthildis': 'Луфтхильды', 'nepomuk': 'Иоанна Непомуцкого', 'esprit': 'Духа', 'gervasius': 'Гервасия', 'protasius': 'Протасия', 'aegidius': 'Эгидия',
     'konrad': 'Конрада', 'heinrich': 'Генриха', 'kunigunde': 'Кунигунды', 'wendelin': 'Венделина', 'pankratius': 'Панкратия', 'cyriakus': 'Кириака',
     'nazaire': 'Назария', 'celse': 'Цельса', 'bénézet': 'Бенезета', 'benezet': 'Бенезета', 'trophime': 'Трофима', 'pancrace': 'Панкратия', 'amand': 'Аманда',
+    'theodulphe': 'Теодульфа', 'theodulf': 'Теодульфа', 'brice': 'Бриция', 'corbinien': 'Корбиниана', 'corbinian': 'Корбиниана', 'merry': 'Медерика',
+    'gemma': 'Джеммы', 'anastasia': 'Анастасии', 'anastasie': 'Анастасии', 'genevieve': 'Женевьевы', 'christophe': 'Христофора', 'christoph': 'Христофора',
+    'christopher': 'Христофора', 'cristoforo': 'Христофора', 'cristobal': 'Христофора', 'quentin': 'Квентина', 'cyprien': 'Киприана', 'alexandre': 'Александра',
+    'alessandro': 'Александра', 'alexander': 'Александра', 'charles': 'Карла', 'carlo': 'Карла', 'karl': 'Карла', 'eusebio': 'Евсевия', 'eusebe': 'Евсевия',
+    'fedele': 'Фиделя', 'fidele': 'Фиделя', 'vittore': 'Виктора', 'victor': 'Виктора', 'viktor': 'Виктора', 'giuliano': 'Юлиана', 'cristina': 'Христины',
+    'christine': 'Христины', 'giustina': 'Иустины', 'materno': 'Матерна', 'siro': 'Сира', 'eustorgio': 'Евсторгия', 'nazaro': 'Назария', 'celso': 'Цельса',
+    'antonino': 'Антонина', 'bassiano': 'Бассиана', 'agnese': 'Агнессы', 'ilario': 'Илария', 'ouen': 'Уэна', 'medericus': 'Медерика', 'avit': 'Авита',
+    'leu': 'Лупа', 'front': 'Фронта', 'radegonde': 'Радегунды', 'radegund': 'Радегунды', 'walburga': 'Вальбурги', 'afra': 'Афры', 'emmeram': 'Эммерама',
+    'severinus': 'Северина', 'margherita': 'Маргариты', 'rufus': 'Руфа', 'lorenzo': 'Лаврентия', 'zaccaria': 'Захарии', 'zacharie': 'Захарии',
 }
 EPITHET = {'baptiste': 'Крестителя', 'baptist': 'Крестителя', 'battista': 'Крестителя', 'bautista': 'Крестителя', 'taufer': 'Крестителя', 'evangeliste': 'Евангелиста',
            'evangelist': 'Евангелиста', 'evangelista': 'Евангелиста', 'apostle': 'Апостола', 'apotre': 'Апостола', 'majeur': 'Старшего', 'mineur': 'Младшего',
@@ -374,12 +392,15 @@ ADJ = {  # женский род; другие формы — по правил�
     'fortified': 'укреплённая', 'fortifie': 'укреплённая', 'fortifiee': 'укреплённая', 'wehr': 'укреплённая', 'collegiate': 'коллегиальная', 'abbatial': 'аббатская',
     'north': 'северная', 'south': 'южная', 'east': 'восточная', 'west': 'западная', 'nord': 'северная', 'sud': 'южная', 'est': 'восточная', 'ouest': 'западная',
     'nuestra': '', 'notre': '', 'heilige': '', 'saint': '',
+    'neoapostolique': 'новоапостольская', 'neuapostolische': 'новоапостольская', 'adventiste': 'адвентистская', 'evangelische-freikirchliche': 'евангельская',
 }
 GENNOUN = {'prefecture': 'префектуры', 'justice': 'правосудия', 'papes': 'пап', 'ducs': 'герцогов', 'rois': 'королей', 'eveques': 'епископов', 'eveque': 'епископа',
            'comtes': 'графов', 'templiers': 'тамплиеров', 'gouverneur': 'губернатора', 'ville': 'города', 'archeveche': 'архиепископа', 'senat': 'сената',
            'templars': 'тамплиеров', 'kings': 'королей', 'bishops': 'епископов', 'duke': 'герцога', 'dukes': 'герцогов', 'governor': 'губернатора',
            'angels': 'ангелов', 'ange': 'ангела', 'anges': 'ангелов', 'engel': 'ангелов', 'apostles': 'апостолов', 'apotres': 'апостолов', 'martyrs': 'мучеников',
-           'innocents': 'Невинных младенцев', 'graces': 'Милостей', 'vierge': 'Девы', 'virgin': 'Девы', 'vergine': 'Девы', 'virgen': 'Девы'}
+           'innocents': 'Невинных младенцев', 'graces': 'Милостей', 'vierge': 'Девы', 'virgin': 'Девы', 'vergine': 'Девы', 'virgen': 'Девы',
+           'directeur': 'директора', 'garde': 'сторожа', 'cure': 'кюре', 'notaire': 'нотариуса', 'maire': 'мэра', 'consuls': 'консулов',
+           'chanoines': 'каноников', 'prieur': 'приора', 'abbe': 'аббата', 'seigneur': 'сеньора', 'seigneurs': 'сеньоров'}
 
 def adj_form(f, g):
     if not f: return ''
@@ -449,9 +470,68 @@ for _k, _v in {'dutch': 'голландская', 'french': 'французск�
                'polish': 'польская', 'armenian': 'армянская', 'first': 'первая', 'congregationalist': 'конгрегационалистская', 'moravian': 'моравская',
                'quaker': 'квакерская', 'romanesque': 'романская', 'gothic': 'готическая', 'gothique': 'готическая', 'byzantine': 'византийская'}.items():
     ADJ[_k] = _v
+DEDIC.update({'frati minori': 'францисканцев', 'freres mineurs': 'францисканцев', 're magi': 'волхвов', 'rois mages': 'волхвов',
+              'heiligen drei konige': 'волхвов', 'drei konige': 'волхвов', 'tre re': 'волхвов', 'reyes magos': 'волхвов'})
 DEDIC.update({'michael and all angels': 'св. Михаила и всех ангелов', 'st michael and all angels': 'св. Михаила и всех ангелов', 'all angels': 'всех ангелов',
               'our lady of': 'Богоматери', 'christ church': 'Христа', 'christchurch': 'Христа'})
 DE_SUF[:] = [x for x in DE_SUF if x not in ('burg',)]
+
+def gen_name(nom, fem=False):
+    """Родительный падеж переданного по-русски имени: «Брис» → «Бриса», «Джемма» → «Джеммы», «Анастасия» → «Анастасии»."""
+    w = nom or ''
+    if not w or not CYR.search(w[-1]): return w
+    if w.endswith('ий'): return w[:-2] + 'ия'
+    c = w[-1]
+    if c == 'й': return w[:-1] + 'я'
+    if c == 'ь': return w[:-1] + ('и' if fem else 'я')
+    if c == 'а': return w[:-1] + ('и' if w[-2:-1] in 'гкхжшчщ' else 'ы')
+    if c == 'я': return w[:-1] + 'и'
+    if c in 'оеёиуюэы': return w
+    return w + ('ы' if fem else 'а')
+
+RAIL_RU = {'京包线': 'Пекин-Калганская дорога', '京张铁路': 'Пекин-Калганская дорога', '京张': 'Пекин-Калганская дорога',
+           'brighton main line': 'Магистраль Лондон — Брайтон', 'taunusbahn': 'Таунусская дорога', 'semmeringbahn': 'Земмерингская дорога',
+           'west coast main line': 'Западная магистраль', 'east coast main line': 'Восточная магистраль', 'arlbergbahn': 'Арльбергская дорога',
+           'tauernbahn': 'Тауэрнская дорога', 'brennerbahn': 'Бреннерская дорога', 'gotthardbahn': 'Готтардская дорога', 'rheinstrecke': 'Рейнская дорога',
+           'linke rheinstrecke': 'Левобережная Рейнская дорога', 'rechte rheinstrecke': 'Правобережная Рейнская дорога'}
+def rail_label(name, host):
+    """Имя железной дороги для подписи «Переезд: …»: «Ligne de Paris-Lyon à Marseille-Saint-Charles» → «Линия Париж — Марсель»."""
+    if not name: return ''
+    if CYR.search(name): return shorten_ru(name)
+    for k, v in RAIL_RU.items():
+        if CJK.search(k) and k in name: return v
+    if CJK.search(name): return 'Железная дорога'
+    s = re.sub(r'\s*[\(\[].*?[\)\]]', '', name).strip(); f = fold(s).strip()
+    if f in RAIL_RU: return RAIL_RU[f]
+    s = re.split(r'(?i)\s+(?:via|über|ueber|par|per|por)\s+', s)[0].strip()
+    def strip_pre(x): return re.sub(r"(?i)^(?:de|du|des|d['’]|von|di|da|del|van|of|the)\s*", '', x.strip()).strip()
+    def pl(x): return ru_place(strip_pre(x), host)
+    def two(a, b):
+        a, b = strip_pre(a), strip_pre(b)
+        r = 'Линия ' + pl(a) + ' — ' + pl(b)
+        if len(r) > MAXLEN: r = 'Линия ' + pl(re.split(r'[-\s]', a)[0]) + ' — ' + pl(re.split(r'[-\s]', b)[0])
+        return r if len(r) <= MAXLEN + 6 else 'Железная дорога'
+    KW = r"(?:ligne|linea|línea|ferrovia|ferrocarril|bahnstrecke|strecke|spoorlijn|chemin de fer|line|railway|railroad)"
+    SEP = r"(?:\s+(?:à|a|au|nach|naar|to|y)\s+|\s*[–—]\s*|\s+-\s+)"
+    m = re.match(r"(?i)^" + KW + r"\s+(.+?)" + SEP + r"(.+)$", s)
+    if m: return two(m.group(1), m.group(2))
+    m = re.match(r"(?i)^(.+?)" + SEP + r"(.+?)(?:\s+(?:railway|railroad|line|bahn|lijn))?$", s)
+    if m and len(s.split()) <= 6: return two(m.group(1), m.group(2))
+    m = re.match(r"(?i)^(.+?)\s+main\s+line$", s)
+    if m: return 'Магистраль на ' + pl(m.group(1))
+    m = re.match(r"(?i)^(.+?)\s+(?:branch|branch line)$", s)
+    if m: return 'Ветка на ' + pl(m.group(1))
+    m = re.match(r"(?i)^(.+?)\s+(?:and|&)\s+.+?\s+(?:railway|railroad|rail road|line|railway line)$", s)
+    if m: return 'Железная дорога ' + pl(m.group(1))
+    m = re.match(r"(?i)^(.+?)\s+(?:railway|railroad|rail road|line|railway line)$", s)
+    if m: return 'Железная дорога ' + pl(m.group(1))
+    m = re.match(r"(?i)^(.+?)bahn$", s)
+    if m and ' ' not in s and host in COMPOUND: return 'Железная дорога ' + pl(m.group(1))
+    m = re.match(r"(?i)^" + KW + r"\s+(.+)$", s)
+    if m:
+        r = 'Линия ' + pl(m.group(1))
+        return r if len(r) <= MAXLEN else 'Железная дорога'
+    return 'Железная дорога'
 
 def ru_label(name, host, kind=None, kind_ru=None):
     """Имя приметы по-русски. kind — вид приметы (если в имени родового слова нет, берём по виду: «церковь», «замок»…)"""
@@ -461,6 +541,7 @@ def ru_label(name, host, kind=None, kind_ru=None):
     s = clean_name(name)
     s = FORMER.sub('', s).strip() or s
     s = re.sub(r"(?i)(\w)['’]s\b", r'\1', s)  # St Peter's → St Peter
+    s = re.sub(r"(?i)\bn[ée]o[- ]apostoli", 'Neoapostoli', s); s = re.sub(r"(?i)\bneu[- ]apostoli", 'Neuapostoli', s)
     ex = EXACT.get(fold(s).strip())
     if ex: return ex
     if kind_ru is None: kind_ru = KIND_RU.get(kind)
@@ -520,7 +601,7 @@ def ru_label(name, host, kind=None, kind_ru=None):
                 if g in ('der', 'le', 'la', 'il', 'the') and got and j + 1 < n_t and F[j + 1] in EPITHET: j += 1; continue
                 if g in SAINTS: got.append(SAINTS[g]); j += 1; continue
                 if not got and g not in GEN and g not in STOP:
-                    got.append(cap1(translit_word(toks[j][0], host))); j += 1; continue
+                    got.append(gen_name(cap1(translit_word(toks[j][0], host)), fem=f in ('sainte', 'saintes', 'santa', 'ste'))); j += 1; continue
                 break
             if got or dedic:
                 saints += got
