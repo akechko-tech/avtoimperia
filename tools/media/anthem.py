@@ -399,8 +399,8 @@ def cue_duel(kind, win, seed=23):
     elif kind == 'biz':  # бойкое фортепиано, контрабас щипком, щётки; сникшая — медленнее и тише
         PN, CB, CL, DR = 0, 1, 2, 9
         S.setup(PN, 0, 100, 60, 34); S.setup(CB, 32, 100, 64, 30); S.setup(CL, 71, 70, 70, 40); S.setup(DR, 0, 64, 64, 36)
-        for n, d, l in M: S.note(PN, d, l * 0.9, n, 64 if win else 84); S.note(CL, d, l * 0.9, n, 40 if win else 54)
-        for n, d, l in Bs: S.note(PN, d, l * 0.9, n, 60 if win else 74); S.note(CB, d, l * 0.9, n - 12 if n - 12 >= 28 else n, 70 if win else 88)
+        for n, d, l in M: S.note(PN, d, l * 0.9, n + 12, 66 if win else 86); S.note(CL, d, l * 0.9, n, 40 if win else 52)
+        for n, d, l in Bs: S.note(PN, d, l * 0.9, n + 12, 56 if win else 68); S.note(CB, d, l * 0.9, n - 12 if n - 12 >= 28 else n, 58 if win else 72)
         if not win:
             for k in range(int(end / 0.22)): S.note(DR, k * 0.22, 0.1, 38 if k % 2 else 42, 20 if k % 2 else 26)
     elif kind == 'aristo':  # струнный вальс: скрипки, альты щипком на 2-ю и 3-ю долю, виолончели, арфа; сникшая — альты и виолончели
