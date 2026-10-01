@@ -35,6 +35,7 @@ const ACT={
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
+  legPaint:d=>{if(!draft||!draft.legendDraft)return;draft.paint=d.v;document.querySelectorAll('[data-act=legPaint]').forEach(b=>b.classList.toggle('on',b.dataset.v===d.v));},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
     if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v))draft.t='t2';

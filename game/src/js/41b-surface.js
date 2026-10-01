@@ -64,6 +64,8 @@ function patchAt(trk,x,z,i){if(!trk.patchAt)return null;const k=trk.patchAt[i];i
 function waterAt(trk,x,z){if(typeof R3==='undefined'||!R3.on||R3.T!==trk||!R3.F)return null;
   for(const rv of trk.rivers||[]){const dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)<1300&&Math.abs(dd.e)<rv.w/2+1){const L=riverLine(trk,rv),m=dd.s,mc=Math.sin(m/170+rv.ph)*22*sstep(20,120,Math.abs(m))+Math.sin(m/61+rv.ph*2)*6*sstep(20,120,Math.abs(m));
       const cx=L.p[0]+L.d[0]*m+L.t[0]*mc,cz=L.p[2]+L.d[1]*m+L.t[1]*mc;return fH(cx,cz)+0.9;}}
+  // настоящая местность: вода — по карте моря (40c-real.js); пляжные гонки — своим морем ниже
+  if(trk.real&&trk.cfg.terr!=='beach'){const wm=trk.real.wm;if(wm&&realWet(trk,x,z)>=0.5&&fH(x,z)<wm.y)return wm.y;return null;}
   for(const cs of trk.coast||[])if(cs.sea!==undefined){const y=cs.sea+0.2;if(fH(x,z)<y)return y;}
   if(R3.beachY!==undefined&&fH(x,z)<R3.beachY)return R3.beachY;
   return null;}

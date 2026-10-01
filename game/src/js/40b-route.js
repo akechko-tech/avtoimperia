@@ -77,6 +77,16 @@ function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
   (trk.rivers||[]).forEach(rv=>{const y0=P[rv.i][1],bed=y0-rv.d,bank=rv.w/2+10,R=1300;
     for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)>R||Math.abs(dd.e)>bank+30)continue;
       const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const bedL=Math.min(bed,F.H[q]-rv.d*0.7),h=F.H[q]+(bedL-F.H[q])*sstep(0,1,prof*1.4);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
+  // 0.23: настоящая местность — море и бухты по рельефу и карте (40c-real.js), а не придуманный берег: дно — под гладью,
+  // у дороги берег вровень с полотном (набережная), дальше плавно уходит под воду. Земля на нуле вдали от моря — суша.
+  // Гладь — одна на всю карту (49c-world.js), поэтому суша у моря всегда чуть выше воды (низины и шум рельефа не «тонут»),
+  // а берег — там, где рельеф пересекает гладь: плавной линией, а не ступеньками клеток.
+  if(trk.real){const wm=trk.real.wm;(trk.coast||[]).forEach(c=>{c.sea=wm?wm.y-0.2:undefined;});if(!wm)return;const W=trk.W,land=wm.y+0.6;
+    for(let q=0;q<F.nx*F.nz;q++){const x=F.x0+(q%F.nx)*F.S,z=F.z0+Math.floor(q/F.nx)*F.S,w=realWet(trk,x,z),d=F.D[q];
+      if(w>=0.5){const k=sstep(0.5,0.9,w)*sstep(W/2+14,W/2+44,d);if(k<=0)continue;const tg=wm.y-0.35-2.4*k;
+        F.H[q]+=(Math.min(F.H[q],tg)-F.H[q])*sstep(0,0.35,k);F.G[q]=Math.min(F.G[q],F.H[q]);}
+      else if(F.H[q]<land){const k=sstep(W/2+12,W/2+30,d);if(k<=0)continue;F.H[q]+=(land-F.H[q])*k;F.G[q]=Math.max(F.G[q],F.H[q]-0.02);}}
+    return;}
   let yMin=1e9;P.forEach(p=>{yMin=Math.min(yMin,p[1]);});
   if(!(trk.coast||[]).length)return;
   // 0.18: берег без «игл». Каждой клетке — ближайшая точка дороги (волной от известных клеток); море — там, где ближайшая

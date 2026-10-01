@@ -48,6 +48,43 @@ function realH(T,x,z){const R=T.real,D=R.d;return realGridAt(D.near,x,z,R.dx,R.d
 function realFarH(T,x,z){const R=T.real,D=R.d,G=D.far,X1=G.x0+(G.nx-1)*G.S-R.dx,Z1=G.z0+(G.nz-1)*G.S-R.dz;
   if(x<G.x0-R.dx||z<G.z0-R.dz||x>X1||z>Z1)return null;return realGridAt(G,x,z,R.dx,R.dz,R.dy);}
 function realCover(T,x,z){const R=T.real,G=R.d.near,k=Math.round((x+R.dx-G.x0)/G.S),j=Math.round((z+R.dz-G.z0)/G.S);if(k<0||j<0||k>=G.nx||j>=G.nz)return 0;return realGridC(G)[j*G.nx+k];}
+// 0.23: настоящая вода. В рельефе Copernicus море, бухты и приливные устья — ровно 0 м, польдеры — ниже нуля, пляж и поля у моря — 1–3 м.
+// Вода — связные куски «нуля» с ядром (клетка и все соседи — ноль) у береговой линии OSM, или почти целиком под водой по карте
+// (реки и озёра на уровне моря). Поля на нуле вдали от берега (Равенна) — суша. Сетка 50 м у дороги, 250 м — до горизонта.
+function realWaterMask(D,G,far,nearM){const H=realGridH(G),nx=G.nx,nz=G.nz,N=nx*nz,S=G.S,zero=new Uint8Array(N);let any=0;
+  for(let q=0;q<N;q++)if(H[q]===0){zero[q]=1;any=1;}const M=new Uint8Array(N);if(!any)return M;
+  // клетки у береговой линии (линии карты — в широте и долготе)
+  const k0=D.ll0,KY=110540,KX=Math.cos(k0[0]*Math.PI/180)*111320,near=new Uint8Array(N),rc=Math.ceil((far?450:260)/S);
+  ((D.map&&D.map.coast)||[]).forEach(L=>{for(let a=0;a+1<L.length;a++){const p=L[a],b=L[a+1],x0=(p[1]-k0[1])*KX,z0=(p[0]-k0[0])*KY,x1=(b[1]-k0[1])*KX,z1=(b[0]-k0[0])*KY,m=Math.max(1,Math.ceil(Math.hypot(x1-x0,z1-z0)/(S*0.5)));
+    for(let t=0;t<=m;t++){const ck=Math.round((x0+(x1-x0)*t/m-G.x0)/S),cj=Math.round((z0+(z1-z0)*t/m-G.z0)/S);
+      for(let j=Math.max(0,cj-rc);j<=Math.min(nz-1,cj+rc);j++)for(let k=Math.max(0,ck-rc);k<=Math.min(nx-1,ck+rc);k++)if((k-ck)*(k-ck)+(j-cj)*(j-cj)<=rc*rc)near[j*nx+k]=1;}}});
+  const C=!far&&G.cover?realGridC(G):null,seen=new Uint8Array(N),Q=new Int32Array(N),NG=far&&nearM?D.near:null;
+  for(let s=0;s<N;s++){if(!zero[s]||seen[s])continue;let qh=0,qt=0,coast=0,w3=0,core=0,link=0;Q[qt++]=s;seen[s]=1;
+    while(qh<qt){const q=Q[qh++],k=q%nx,j=(q/nx)|0;if(near[q])coast=1;if(C&&C[q]===3)w3++;
+      if(!core&&k>0&&k<nx-1&&j>0&&j<nz-1&&zero[q-1]&&zero[q+1]&&zero[q-nx]&&zero[q+nx]&&zero[q-nx-1]&&zero[q-nx+1]&&zero[q+nx-1]&&zero[q+nx+1])core=1;
+      // дальняя сетка: кусок, который у дороги уже признан водой (устье реки за краем подробной карты)
+      if(NG&&!link){const kk=Math.round((G.x0+k*S-NG.x0)/NG.S),jj=Math.round((G.z0+j*S-NG.z0)/NG.S);if(kk>=0&&jj>=0&&kk<NG.nx&&jj<NG.nz&&nearM[jj*NG.nx+kk])link=1;}
+      if(k>0&&zero[q-1]&&!seen[q-1]){seen[q-1]=1;Q[qt++]=q-1;}if(k<nx-1&&zero[q+1]&&!seen[q+1]){seen[q+1]=1;Q[qt++]=q+1;}
+      if(j>0&&zero[q-nx]&&!seen[q-nx]){seen[q-nx]=1;Q[qt++]=q-nx;}if(j<nz-1&&zero[q+nx]&&!seen[q+nx]){seen[q+nx]=1;Q[qt++]=q+nx;}}
+    if(!core||qt<(far?3:24))continue;
+    if(coast||link){for(let a=0;a<qt;a++)M[Q[a]]=1;continue;}
+    // река или озеро у моря: вода — только по карте (и клетка вокруг)
+    if(C&&w3>=qt*0.25)for(let a=0;a<qt;a++){const q=Q[a],k=q%nx,j=(q/nx)|0;let w=0;
+      for(let dj=-1;dj<=1&&!w;dj++)for(let dk=-1;dk<=1;dk++){const kk=k+dk,jj=j+dj;if(kk>=0&&jj>=0&&kk<nx&&jj<nz&&C[jj*nx+kk]===3){w=1;break;}}if(w)M[q]=1;}}
+  return M;}
+// Вода трассы (один раз на постройку): маски 50 и 250 м и уровень глади в координатах игры. Пляжные гонки (Дейтона) — со своим морем
+function realWaterOf(trk){const R=trk.real;if(!R||trk.cfg.terr==='beach'||trk.cfg.sprint)return null;const D=R.d;if(!D.near||!D.far)return null;
+  const key='_wm';if(!D[key]){const Mn=realWaterMask(D,D.near,false,null),Mf=realWaterMask(D,D.far,true,Mn);let n=0;for(const v of Mn)n+=v;for(const v of Mf)n+=v;D[key]=n?{near:Mn,far:Mf}:{none:1};}
+  const W=D[key];if(W.none)return null;return {near:W.near,far:W.far,y:-R.dy+0.3};}
+// Доля воды в точке игры (0…1): у дороги — по сетке 50 м (плавно между клетками), дальше — 250 м
+function realWet(T,x,z){const R=T.real,W=R&&R.wm;if(!W)return 0;const D=R.d;
+  for(const [G,M] of [[D.near,W.near],[D.far,W.far]]){const fx=(x+R.dx-G.x0)/G.S,fz=(z+R.dz-G.z0)/G.S;if(fx<0||fz<0||fx>G.nx-1||fz>G.nz-1)continue;
+    const k=Math.min(G.nx-2,Math.floor(fx)),j=Math.min(G.nz-2,Math.floor(fz)),u=fx-k,v=fz-j,q=j*G.nx+k;
+    return (M[q]*(1-u)+M[q+1]*u)*(1-v)+(M[q+G.nx]*(1-u)+M[q+G.nx+1]*u)*v;}
+  return 0;}
+// Рельеф вдали: в пределах сетки 50 м — по ней (берег точнее), дальше — 250 м
+function realFarH2(T,x,z){const R=T.real,G=R.d.near,fx=(x+R.dx-G.x0)/G.S,fz=(z+R.dz-G.z0)/G.S;
+  if(fx>=0&&fz>=0&&fx<=G.nx-1&&fz<=G.nz-1)return realGridAt(G,x,z,R.dx,R.dz,R.dy);return realFarH(T,x,z);}
 // Кусок маршрута под длину заезда: там, где больше примет (мост, переезд, город, берег, подъём)
 const REAL_TY=['fields','town','village','forest','avenue','bridge','rail','serp','coast','vine'];
 function realWindow(D,len){const n8=D.pts.length,w=Math.min(n8,Math.round(len/D.step)+1);if(D.closed||w>=n8)return [0,n8];

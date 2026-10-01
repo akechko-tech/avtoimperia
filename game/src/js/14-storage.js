@@ -29,6 +29,8 @@ function migrate(x){
     for(const c in x.dealers){const d=x.dealers[c]||0;if(!d)continue;
       if(c!==x.country)x.imp[c]=d>tabAt(DEALER_NEED[c],t)*0.4?2:1;
       const mx=dealerMax(x,c);if(d>mx){x.dcap[c]=+(d/mx).toFixed(3);x.dealers[c]=mx;}}}
+  // 0.23: легенды — в историческом цвете («Модель T» с 1914 года — чёрная); раньше цвет выпадал по счёту моделей
+  if(!x.v23paint){x.v23paint=1;if(typeof legendPaint==='function')x.models.forEach(m=>{if(!m.legend||!LEGEND_BY[m.legend])return;const y=m.status==='dev'?x.y:1895+Math.floor((m.launched||0)/12),p=legendPaint(LEGEND_BY[m.legend],y);if(p)m.paint=p;});}
   return x;
 }
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}

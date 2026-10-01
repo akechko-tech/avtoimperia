@@ -65,7 +65,7 @@ function r3dMaps(T,F,W){
   ch(0,0,gAlt);ch(0,1,gD);
   // 2) поля: пшеница (сухая трава, жёлтый), пашня (земля, борозды), луг (зеленее), виноградник (земля полосами)
   const nF=snowy||sandy?0:Math.round(wx*wz/8000);
-  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
+  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;if(T.real.wm&&realWet(T,x,z)>0.05)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
     const w=40+rnd()*120,h=30+rnd()*95,a=rnd()*3.14,q=rnd(),type=q<0.3?'wheat':q<0.52?'plow':q<0.8?'meadow':dry?'vine':'fallow';
     const rect=(g,style,al)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.fillStyle=style;g.fillRect(-w*kx/2,-h*kz/2,w*kx,h*kz);g.restore();};
     const rows=(g,style,al,step,lw)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.strokeStyle=style;g.lineWidth=Math.max(1,lw*kx);for(let l=-w/2;l<w/2;l+=step){g.beginPath();g.moveTo(l*kx,-h*kz/2);g.lineTo(l*kx,h*kz/2);g.stroke();}g.restore();};
@@ -86,12 +86,19 @@ function r3dMaps(T,F,W){
   // настоящая местность: леса — там, где они на карте (клетки 50 м), не больше чем вдвое против обычного
   const fcells=[];if(RD&&RD.near&&RD.near.cover){const G=RD.near,C=realGridC(G),R=T.real;for(let j=0;j<G.nz;j++)for(let k=0;k<G.nx;k++){if(C[j*G.nx+k]!==1)continue;const x=G.x0+k*G.S-R.dx,z=G.z0+j*G.S-R.dz;if(x<F.x0||z<F.z0||x>F.x0+wx||z>F.z0+wz)continue;fcells.push([x,z]);}}
   const fstep=Math.max(1,Math.ceil(fcells.length/Math.max(1,nW*2)));
-  for(let f=0;f<fcells.length;f+=fstep){const [x0c,z0c]=fcells[f],x=x0c+(rnd()-0.5)*20,z=z0c+(rnd()-0.5)*20,d=fSample(F,F.D,x,z);if(d<45)continue;const r=26+rnd()*14+(fstep-1)*14;R3.forest.push([x,z,r]);
+  for(let f=0;f<fcells.length;f+=fstep){const [x0c,z0c]=fcells[f],x=x0c+(rnd()-0.5)*20,z=z0c+(rnd()-0.5)*20,d=fSample(F,F.D,x,z);if(d<45)continue;if(T.real.wm&&realWet(T,x,z)>0.05)continue;const r=26+rnd()*14+(fstep-1)*14;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
   for(let f=0;f<(RD&&RD.near&&RD.near.cover?0:nW);f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz,d=fSample(F,F.D,x,z);if(d<45)continue;const r=25+rnd()*70;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
+  // 0.23: берег настоящего моря — песок у самой воды (и под водой у берега): пятна по краю карты воды
+  if(RD&&T.real.wm){const G=RD.near,M=T.real.wm.near,R=T.real;
+    for(let j=0;j<G.nz;j++)for(let k=0;k<G.nx;k++){if(!M[j*G.nx+k])continue;let edge=false;
+      for(const [dk,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const kk=k+dk,jj=j+dj;if(kk>=0&&jj>=0&&kk<G.nx&&jj<G.nz&&!M[jj*G.nx+kk]){edge=true;break;}}if(!edge)continue;
+      const x=G.x0+k*G.S-R.dx,z=G.z0+j*G.S-R.dz;if(x<F.x0-90||z<F.z0-90||x>F.x0+wx+90||z>F.z0+wz+90)continue;const r=52;
+      const gr=gC.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(0.55,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');
+      gC.fillStyle=gr;gC.beginPath();gC.arc(X(x),Z(z),r*kx,0,7);gC.fill();}}
   // 4) коридор дороги: пыльная обочина — земля (в городе — брусчатка своим слоем)
   const path=(g,from,to)=>{g.beginPath();for(let i=from;i<=to;i++){const p=T.pts[i%T.n];i===from?g.moveTo(X(p[0]),Z(p[2])):g.lineTo(X(p[0]),Z(p[2]));}};
   const last=T.closed?T.n:T.n-1;[gD,gT,gAlt].forEach(g=>{g.lineJoin='round';g.lineCap='round';});
@@ -117,10 +124,12 @@ function r3dFarH(F,x,z,amp,seed,hMin){const X1=F.x0+(F.nx-1)*F.S,Z1=F.z0+(F.nz-1
   if(F.seaDir&&out>=1){const cx=(F.x0+X1)/2,cz=(F.z0+Z1)/2,dx=x-cx,dz=z-cz,l=Math.hypot(dx,dz)||1;if((dx*F.seaDir[0]+dz*F.seaDir[1])/l>0.25)return F.sea-30;}
   if(out<1){let m=1e9;for(const dx of [-36,0,36])for(const dz of [-36,0,36])m=Math.min(m,fSample(F,F.H,clamp(x+dx,F.x0,X1),clamp(z+dz,F.z0,Z1)));return m-1.6;}
   // настоящая местность: вдали — грубая сетка рельефа (250 м), от края подробной земли — плавно
-  if(R3.T&&R3.T.real){const v=realFarH(R3.T,x,z);if(v!=null){const h0=fSample(F,F.H,ex,ez);return h0-1.6+(v-2-h0)*sstep(0,400,out);}}
+  // 0.23: у берега — по сетке 50 м; море — дно под гладью, суша у воды — над ней (без «фантомной» земли на уровне моря)
+  if(R3.T&&R3.T.real){const T=R3.T,v=realFarH2(T,x,z);if(v!=null){const h0=fSample(F,F.H,ex,ez);let h=h0-1.6+(v-2*(1-sstep(400,1400,out))-h0)*sstep(0,400,out);
+    const wm=T.real.wm;if(wm&&T.cfg.terr!=='beach'){const w=realWet(T,x,z);if(w>=0.5)h=Math.min(h,wm.y-1.6-2*w);else h=Math.max(h,wm.y+0.6);}return h;}}
   const h0=fSample(F,F.H,ex,ez),rid=1-Math.abs(fbm2(x/2600,z/2600,seed,4)*2-1),hills=fbm2(x/900,z/900,seed+3,3);
   return h0-1.6+(hMin-8-h0)*sstep(0,500,out)*0.4+(Math.pow(rid,2.2)*0.8+hills*0.3)*amp*sstep(0,2800,out);}
-function r3dFarRing(T,F){if(T.coast&&T.coast.length){let sx=0,sz=0;T.coast.forEach(c=>{for(let i=c.i0;i<=c.i1;i+=5){sx+=T.N[i][0]*c.side;sz+=T.N[i][1]*c.side;}});const l=Math.hypot(sx,sz)||1;F.seaDir=[sx/l,sz/l];F.sea=T.coast[0].sea;}
+function r3dFarRing(T,F){if(T.coast&&T.coast.length&&!T.real){let sx=0,sz=0;T.coast.forEach(c=>{for(let i=c.i0;i<=c.i1;i+=5){sx+=T.N[i][0]*c.side;sz+=T.N[i][1]*c.side;}});const l=Math.hypot(sx,sz)||1;F.seaDir=[sx/l,sz/l];F.sea=T.coast[0].sea;}
   const cfg=T.cfg,set=SCEN_SETS[cfg.host],cx=F.x0+(F.nx-1)*F.S/2,cz=F.z0+(F.nz-1)*F.S/2,R0=Math.hypot((F.nx-1)*F.S,(F.nz-1)*F.S)/2+64,R1=9000,seed=F.seed+701;
   const amp=cfg.terr==='snow'?260:F.mount?1300:(set.mount||cfg.uphill||cfg.terr==='mount')?520:set.flat?35:130;
   let hMin=1e9;T.pts.forEach(p=>{hMin=Math.min(hMin,p[1]);});const H=(x,z)=>r3dFarH(F,x,z,amp,seed,hMin);
@@ -166,10 +175,17 @@ function r3dWaters(T){const mb=new MB(),c=hex2rgb('#1f5a78');let any=false;
   (T.rivers||[]).forEach(rv=>{const L=riverLine(T,rv),w=rv.w/2+1.5;let prev=null;
     for(let s=-1300;s<=1300;s+=12){const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s)),cx=L.p[0]+L.d[0]*s+L.t[0]*m,cz=L.p[2]+L.d[1]*s+L.t[1]*m;
       const y=fH(cx,cz)+0.9,a=[cx+L.t[0]*w,y,cz+L.t[1]*w],b=[cx-L.t[0]*w,y,cz-L.t[1]*w];if(prev)mb.poly([prev[0],prev[1],b,a],[0,1,0],c,MID.water);prev=[a,b];}any=true;});
+  // настоящая местность: море, бухты, устья — по карте воды (40c-real.js), гладь на уровне моря
+  if(T.real&&T.cfg.terr!=='beach'){if(r3dRealWater(T,mb,c))any=true;return any?mb:null;}
   // море: гладь начинается в ~300 м от берега и уходит к горизонту (ближе — земля срезана ниже воды)
   (T.coast||[]).forEach(cs=>{const y=(cs.sea===undefined?T.pts[cs.i0][1]-5:cs.sea)+0.2,mid=Math.round((cs.i0+cs.i1)/2),p=T.pts[mid],nn=T.N[mid],o=cs.side,D=[nn[0]*o,nn[1]*o],Tn=[-D[1],D[0]];
     const P=(u,v)=>[p[0]+D[0]*u+Tn[0]*v,y,p[2]+D[1]*u+Tn[1]*v];for(let a=0;a<6;a++)for(let b=-4;b<4;b++){const u0=40+a*1500,u1=u0+1500,v0=b*1500,v1=v0+1500;mb.poly([P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],[0,1,0],c,MID.water);}any=true;});
   return any?mb:null;}
+// Гладь настоящей воды: одна плоскость на уровне моря во всю дальнюю сетку рельефа (суша у воды поднята над ней — 40b-route.js),
+// берег — там, где земля уходит под гладь
+function r3dRealWater(T,mb,c){const R=T.real,W=R&&R.wm;if(!W)return false;const G=R.d.far,y=W.y,x0=G.x0-R.dx,z0=G.z0-R.dz,x1=x0+(G.nx-1)*G.S,z1=z0+(G.nz-1)*G.S,N=14;
+  for(let a=0;a<N;a++)for(let b=0;b<N;b++){const xa=x0+(x1-x0)*a/N,xb=x0+(x1-x0)*(a+1)/N,za=z0+(z1-z0)*b/N,zb=z0+(z1-z0)*(b+1)/N;mb.poly([[xa,y,za],[xb,y,za],[xb,y,zb],[xa,y,zb]],[0,1,0],c,MID.water);}
+  return true;}
 /* ---------- железная дорога: насыпь, шпалы, рельсы, столбы телеграфа; поезд с паровозом ---------- */
 function railLine(T,rl){const p=T.pts[rl.i],nn=T.N[rl.i],ca=Math.cos(rl.ang),sa=Math.sin(rl.ang),d=[nn[0]*ca-nn[1]*sa,nn[1]*ca+nn[0]*sa];return {p,d};}
 function railY(T,rl,s){const L=railLine(T,rl),x=L.p[0]+L.d[0]*s,z=L.p[2]+L.d[1]*s,near=Math.abs(s)<T.W/2+3;const g=fH(x,z);return near?L.p[1]+0.03:Math.max(g+0.35,L.p[1]+0.03-(Math.abs(s)-T.W/2-3)*0.02);}

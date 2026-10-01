@@ -81,15 +81,17 @@ def music():
     # 0.22: свои мелодии игры в оркестровке (задание anthem) — own_*.m4a; в APK они вшиты (играют и без сети)
     try: own = json.loads(git('show', 'origin/media:media/music/own/index.json'))
     except Exception: own = {}
-    have_own = {os.path.basename(f) for f in files('media/music/own')}
+    have_own = {os.path.basename(f) for f in files('media/music/own')}; cues = set()
     for cid, m in own.items():
         if cid + '.m4a' not in have_own: continue
         n += pull('media/music/own/%s.m4a' % cid, os.path.join(D, cid + '.m4a'))
+        # 0.23: короткие темы (фанфара, темы соперников) — файлы рядом с игрой, но не в плейлисте
+        if m.get('cue'): cues.add(cid); continue
         idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'lic', 'page', 'by')}; idx[cid]['own'] = 1
     for f in os.listdir(D):
-        if f.endswith('.m4a') and f[:-4] not in idx: os.remove(os.path.join(D, f))
+        if f.endswith('.m4a') and f[:-4] not in idx and f[:-4] not in cues: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.MUSIC_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
-    print('music: updated', n, 'tracks', len(idx), 'own', sorted(k for k in idx if idx[k].get('own')))
+    print('music: updated', n, 'tracks', len(idx), 'own', sorted(k for k in idx if idx[k].get('own')), 'cues', len(cues))
 
 # авторы, которых нет в метаданных Commons (страница записи — источник)
 SFX_BY = {'skylark': 'British Library (Wildlife Sounds)'}

@@ -96,7 +96,10 @@ function ambEmitters(T){const n=T.n,W=T.W,S=T.segT||new Uint8Array(n),cfg=T.cfg|
     for(let s=-240;s<=240;s+=12){const k=ss(20,120,Math.abs(s)),m=Math.sin(s/170+rv.ph)*22*k+Math.sin(s/61+rv.ph*2)*6*k;P.push([Lr.p[0]+Lr.d[0]*s+Lr.t[0]*m,Lr.p[2]+Lr.d[1]*s+Lr.t[1]*m]);}
     E.river.push({P,x:Lr.p[0],z:Lr.p[2],rad:260,r0:(rv.w||14)/2+2,id:id++});});
   // море: дорога вдоль берега и пляжи
-  (T.coast||[]).forEach(c=>{const P=[];for(let i=c.i0;i<=c.i1;i+=6)P.push(at(i,c.side*(W/2+24)));if(P.length)seaP=seaP.concat(P);});
+  const realSea=T.real&&T.real.wm&&typeof realWet==='function';
+  if(!realSea)(T.coast||[]).forEach(c=>{const P=[];for(let i=c.i0;i<=c.i1;i+=6)P.push(at(i,c.side*(W/2+24)));if(P.length)seaP=seaP.concat(P);});
+  // 0.23: настоящее море у дороги (Монако, Пескара, Санта-Моника) — прибой оттуда, где вода по карте
+  else for(let i=0;i<n;i+=6)for(const sd of [1,-1])for(const o of [40,90,160,240]){const p=at(i,sd*o);if(realWet(T,p[0],p[1])>0.5){seaP.push(p);break;}}
   if(seaP.length){for(let k=0;k<seaP.length;k+=40){const P=seaP.slice(k,k+40);let cx=0,cz=0;P.forEach(p=>{cx+=p[0];cz+=p[1];});cx/=P.length;cz/=P.length;
     const rad=Math.max(...P.map(p=>Math.hypot(p[0]-cx,p[1]-cz)));E.sea.push({P,x:cx,z:cz,rad,r0:6,id:id++});}}
   // старт, финиш: громкоговоритель (рупор), оркестр

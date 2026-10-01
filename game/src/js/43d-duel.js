@@ -211,10 +211,12 @@ const DUEL_INS={proud:'trumpet',biz:'piano',aristo:'violin',sharp:'clarinet'};
 function duelNotes(type,win){const N=DUEL_THEME[type]||DUEL_THEME.biz;if(!win)return N.map(([n,d,l])=>[n,d*0.92,l*0.92]);
   // сникшая тема: большая терция и секста — вниз на полтона, темп медленнее, на кварту ниже
   return N.map(([n,d,l])=>{const k=((n%12)+12)%12;return [n-5-(k===4||k===9||k===11?1:0),d*1.15,l*1.15];});}
-function duelTheme(type,win,race){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,dest=AU.fx||c.destination,t0=c.currentTime+(race?0.1:0.95),ins=DUEL_INS[type];
-  const useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];
-  duelNotes(type,win).forEach(([n,d,l])=>{try{if(useIns)inst(ins,n,t0+d,l,0.5,dest);else throw 0;}
-    catch(_){const o=c.createOscillator(),g=c.createGain();o.type=type==='proud'?'sawtooth':'triangle';o.frequency.value=mtof(n);o.connect(g);g.connect(dest);g.gain.setValueAtTime(0.0001,t0+d);g.gain.exponentialRampToValueAtTime(0.07,t0+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d+l);o.start(t0+d);o.stop(t0+d+l+0.05);}});
+function duelTheme(type,win,race){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,dest=AU.fx||c.destination,ins=DUEL_INS[type];
+  // 0.23: тема — оркестром (файл рядом с игрой, 50-audio.js auCue); нет файла — прежние семплы или синтезатор
+  const synth=()=>{const t0=c.currentTime+0.02,useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];
+    duelNotes(type,win).forEach(([n,d,l])=>{try{if(useIns)inst(ins,n,t0+d,l,0.5,dest);else throw 0;}
+      catch(_){const o=c.createOscillator(),g=c.createGain();o.type=type==='proud'?'sawtooth':'triangle';o.frequency.value=mtof(n);o.connect(g);g.connect(dest);g.gain.setValueAtTime(0.0001,t0+d);g.gain.exponentialRampToValueAtTime(0.07,t0+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d+l);o.start(t0+d);o.stop(t0+d+l+0.05);}});};
+  setTimeout(()=>{try{auCue('duel_'+(DUEL_THEME[type]?type:'biz')+'_'+(win?'w':'l'),0.75,synth);}catch(_){synth();}},race?100:950);
   // перед темой: телеграф «точка-тире» (на гонке вместо него — трибуны)
   if(race){try{auSfx('cheer',win?0.8:0.4);}catch(_){}return;}
   [0,.09,.18,.42,.51,.75,.84].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.value=880;o.connect(g);g.connect(dest);const tt=c.currentTime+0.02+d;

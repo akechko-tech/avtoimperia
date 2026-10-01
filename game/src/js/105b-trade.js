@@ -28,7 +28,12 @@ function tariffOf(md,c,s){if(c===s.country||localMade(s,c))return 0;const r=rule
   let d=r.dLux&&md&&md.price>=r.luxP*cpi(s)?r.dLux:r.duty;if(md&&isTruck(md)&&c==='uk'&&!r.trucks)d=0;
   if(c==='uk'&&r.pref&&hubOn(s,'ca'))d*=r.pref;
   const L=impOf(s,c);return d*(L&&L.tar!=null?L.tar:1);}
-function tradeBan(s,c){return c!==s.country&&!localMade(s,c)&&!!ruleNow(s,c).ban;}
+// 0.23: война рвёт связи. Блокада Германии (август 1914 — июль 1919) отрезает от неё всех иностранцев — даже свой завод
+// или купленную там марку: детали, сталь и деньги через блокаду не пройдут, машины туда не доплывут. Иностранная марка в Германии
+// работает сама по себе под надзором властей, выручки вам нет; когда ваша страна вступит в войну с Германией — её конфискуют.
+// Немецкой фирме блокада закрывает весь мир.
+function warCut(s,c){if(c===s.country)return false;const t=tNow(s);return (c==='de'||s.country==='de')&&t>=1914.58&&t<1919.5;}
+function tradeBan(s,c){return c!==s.country&&(warCut(s,c)||(!localMade(s,c)&&!!ruleNow(s,c).ban));}
 function tradeQuota(s,c){if(c===s.country||localMade(s,c))return 0;return ruleNow(s,c).quota||0;}
 // Доставка: через Атлантику дороже; в войну — страховка и потери от подводных лодок
 function transAtl(s,c){return (s.country==='us')!==(c==='us');}
@@ -50,7 +55,11 @@ function tastePen(md,c,s){if(c!=='us'||s.country==='us'||(s.bought&&s.bought.us)
 /* ---------- стройка за границей ---------- */
 function impMonths(s,c,lv){const L=IMP_LV[lv];if(!L.mo)return 0;const k=impK(s,c);return Array.isArray(L.mo)?Math.round(L.mo[0]+(L.mo[1]-L.mo[0])*clamp((k-1)/5,0,1)):L.mo;}
 function impBuilding(s,c){return s.impB&&s.impB[c];}
-function impTick(s){for(const c in (s.impB||{})){const B=s.impB[c];if(!B)continue;if(--B.left>0)continue;delete s.impB[c];impDone(s,c,B.lv);}
+function impTick(s){for(const c in (s.impB||{})){const B=s.impB[c];if(!B)continue;
+    // стройка в стране за блокадой замирает: ни станков, ни денег туда не провезти
+    if(warCut(s,c)){if(!B.frozen){B.frozen=1;addLog(`${COUNTRIES[c].name}: стройка «${s.company}» заморожена — блокада, ни станков, ни денег туда не провезти. Продолжится после войны.`,'bad');}continue;}
+    if(B.frozen){B.frozen=0;addLog(`${COUNTRIES[c].name}: блокада снята — стройка «${s.company}» продолжается.`,'good');}
+    if(--B.left>0)continue;delete s.impB[c];impDone(s,c,B.lv);}
   for(const c in (s.lic||{})){const L=s.lic[c];if(L&&L.at===mi(s)){addLog(`${COUNTRIES[c].name}: местный завод начал выпускать ваши машины по лицензии. Вам — ${Math.round(LIC_ROY*100)}% цены с каждой.`,'good');pendingToasts.push('📄 Лицензия: '+COUNTRIES[c].name);}}}
 function impDone(s,c,lv){s.imp=s.imp||{};s.imp[c]=lv;const C=COUNTRIES[c],cost=impCost(s,c,lv);
   if(lv===2){s.plantVal+=cost*0.3;addLog(`${C.name}: открыто своё отделение «${s.company}». Посредник больше не берёт свою долю, дилеров можно открыть по всей стране.`,'good');pendingToasts.push('🏢 Отделение: '+C.name);}
@@ -65,12 +74,12 @@ function licStart(s,c){if(c===s.country||impLv(s,c)>=2||(s.lic&&s.lic[c])||trade
   const g=(s.models.find(m=>m.status==='prod')&&segOf(s.models.find(m=>m.status==='prod')))||'middle',o=respOf(s,c,g);o.mg=(o.mg||0)+0.15;
   addLog(`${COUNTRIES[c].name}: лицензия продана местному заводу. Через полгода он начнёт выпускать ваши машины — без пошлины и доставки; вам — ${Math.round(LIC_ROY*100)}% цены. Чертежи увидят и конкуренты.`,'good');return true;}
 function licEnd(s,c){if(!s.lic||!s.lic[c])return;delete s.lic[c];addLog(`${COUNTRIES[c].name}: лицензия отозвана.`);}
-function tradeBanHard(s,c){const r=ruleNow(s,c);return !!r.ban&&(c==='de'||s.country==='de')&&s.y>=1914&&s.y<1919;}
+function tradeBanHard(s,c){return warCut(s,c);}
 // Слабая местная марка: не из двух крупнейших, продаёт меньше 15% рынка страны
 function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.cp.pk!==s.pioneer&&!x.cp.imp&&x.v>0&&!(s.bought&&Object.values(s.bought).some(b=>b.c===c&&b.i===x.i))).sort((a,b)=>b.v-a.v);
   const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15);}
 function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
-function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c]))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const cost=brandPrice(s,c,x);if(s.cash<cost)return false;
+function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c])||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const cost=brandPrice(s,c,x);if(s.cash<cost)return false;
   s.cash-=cost;s.plantVal+=cost*0.4;s.bought=s.bought||{};s.bought[c]={c,i,n:x.cp.n,y:s.y,t:mi(s)};s.imp=s.imp||{};s.imp[c]=Math.max(impLv(s,c),2);(s.impSince=s.impSince||{})[c]=mi(s)-120;
   const dl=Math.max(3,Math.round(x.v/12/Math.max(0.5,dealerTP(s))));s.dealers[c]=dealerCount(s,c)+dl;
   addLog(`${COUNTRIES[c].name}: куплена марка «${x.cp.n}» за ${money(cost)} — её заводы, ${fmtN(dl)} ${plural(dl,'дилер','дилера','дилеров')} и покупатели теперь ваши. Пошлины больше нет.`,'good');pendingToasts.push('🤝 Куплена марка: '+x.cp.n);return true;}
@@ -84,9 +93,10 @@ function hubStart(s){if(s.country==='uk'||(s.hub&&s.hub.ca)||s.y<1904)return fal
 /* ---------- национализация в войну ---------- */
 function atWar(a,b,y,m){if(a===b)return false;const t=y+m/12;if(!(a==='de'||b==='de'))return false;const o=a==='de'?b:a;
   return o==='us'?t>=1917.25&&t<1918.9:o==='it'?t>=1915.4&&t<1918.9:t>=1914.58&&t<1918.9;}
-function warSeize(s){for(const c in (s.imp||{})){if(impLv(s,c)<3&&!(s.bought&&s.bought[c]))continue;if(!atWar(s.country,c,s.y,s.m))continue;
-  const lv=impLv(s,c),loss=impCost(s,c,lv)*0.7;s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];s.plantVal=Math.max(0,s.plantVal-loss);
-  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: завод «${s.company}» конфискован`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление завод, склады и сеть «${s.company}» как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
+function warSeize(s){for(const c of Object.keys(COUNTRIES)){const bld=s.impB&&s.impB[c];if(impLv(s,c)<3&&!(s.bought&&s.bought[c])&&!(bld&&bld.lv>=3))continue;if(!atWar(s.country,c,s.y,s.m))continue;
+  const lv=impLv(s,c),B=s.bought&&s.bought[c],what=B?`марка «${B.n}»`:lv>=4||(bld&&bld.lv>=4)?`завод «${s.company}»`:`сборочный цех «${s.company}»`,loss=impCost(s,c,Math.max(lv,bld?bld.lv:0))*0.7;
+  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];s.plantVal=Math.max(0,s.plantVal-loss);
+  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${what} ${B?'конфискована':'конфискован'}`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление ${B?`марку «${B.n}» с её заводами, складами и дилерами`:`завод, склады и сеть «${s.company}»`} как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
   Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;const now=tradeRule(c,s.country,t);
@@ -104,7 +114,7 @@ function tradeMonth(s){try{impTick(s);}catch(e){console.warn(e);}try{warSeize(s)
   // квоты по стране: счётчик продаж за год
   if(s.m===0)s.quotaY={};}
 /* ---------- экран «Мир»: карта доступа, ставки, ваши продажи и прибыль с машины ---------- */
-function accessOf(s,c){if(c===s.country)return {k:'home',t:'дома',col:'#d9ab52'};const r=ruleNow(s,c);if(r.ban&&!localMade(s,c))return {k:'ban',t:'запрет',col:'#e0655a'};
+function accessOf(s,c){if(c===s.country)return {k:'home',t:'дома',col:'#d9ab52'};if(warCut(s,c))return {k:'ban',t:'блокада',col:'#e0655a'};const r=ruleNow(s,c);if(r.ban&&!localMade(s,c))return {k:'ban',t:'запрет',col:'#e0655a'};
   if(localMade(s,c))return {k:'local',t:'свой завод',col:'#74d39a'};const q=tradeQuota(s,c),d=r.duty||0;
   if(q)return {k:'quota',t:`квота ${fmtN(q)}/год`,col:'#b48ae0'};return d>=0.4?{k:'high',t:`пошлина ${Math.round(d*100)}%`,col:'#f09a4e'}:d>0.02?{k:'duty',t:`пошлина ${Math.round(d*100)}%`,col:'#f0c75e'}:{k:'open',t:'без пошлины',col:'#74d39a'};}
 const WORLD_XY={us:[70,92],uk:[268,58],fr:[284,98],de:[318,72],it:[318,122],ca:[78,40]};

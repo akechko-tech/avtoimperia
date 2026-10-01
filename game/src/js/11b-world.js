@@ -47,8 +47,18 @@ const WORLD=[
   {id:'war',y:1914,m:7,cc:'!us',reel:'h:war',img:'World War I',sad:1,title:'Война',deck:'Мобилизация объявлена по всей Европе',
     text:'Европа воюет. Гражданских покупателей почти не осталось: машины реквизируют, бензин по карточкам, заводы переходят на снаряды. Армии нужны грузовики.\nВоенное ведомство предлагает контракт: 40% мощностей — армии, по себестоимости плюс 35%. Экспорт во вражеские страны закрыт.',
     mean:'Гражданский спрос в Европе упал в разы на годы войны. Военный заказ даёт деньги, гражданская линейка — имя после войны.',
+    textF:s=>warMarkets(s),
     fx:s=>{},ch:[['Принять военный заказ','mil'],['Сохранить гражданскую линейку','wWarCiv']],
     res:{mil:s=>'Цеха «{co}» работают на армию: грузовики и санитарные машины уходят на фронт.',wWarCiv:s=>{wfxAdd(s,s.country,'*',0.12,36,'гражданская линейка в войну');return '«{co}» не бросила гражданских покупателей: машин мало, но её помнят.';}}},
+  // 0.23: и для Америки — первая полоса: в Европе война, Америка нейтральна; что это значит для ваших рынков за океаном
+  {id:'warus',y:1914,m:7,cc:'us',catchTo:[1918,10],late:'Война идёт с августа 1914 года',reel:'h:war',img:'World War I',sad:1,title:'Война в Европе',deck:'Август 1914 года: Германия и Австро-Венгрия против Франции, России и Британии. Америка объявила нейтралитет',
+    text:'Европа воюет. Мобилизованы миллионы, гражданских покупателей там почти не осталось: машины реквизируют для армии, бензин — по карточкам, заводы переходят на снаряды. Британский флот закрыл Германию блокадой: ни один корабль с товаром туда не пройдёт.\nАмерика объявила нейтралитет. Торговать можно с теми, до кого можно доплыть, — то есть с Антантой: армиям Британии и Франции нужны грузовики и санитарные машины. Через Атлантику — дороже: страховка и германские подводные лодки.',
+    textF:s=>warMarkets(s),
+    mean:'Германия закрыта блокадой до лета 1919 года: ни ввоза, ни связи с вашими заводами, марками и дилерами там. В Британии, Франции и Италии гражданских покупателей в разы меньше, доставка через океан дороже на 60%. Армии Антанты закупают американские грузовики.',
+    fx:s=>{},
+    ch:[['Грузовики и санитарные машины для Антанты','wAllies'],['Строгий нейтралитет: только мирные машины','wNeutral']],
+    res:{wAllies:s=>warAlliesOrder(s),
+      wNeutral:s=>{s.rep=clamp(s.rep+2,0,100);wfxAdd(s,'us','*',0.05,24,'нейтралитет марки');return '«{co}» не берёт военных заказов: газеты Среднего Запада хвалят марку за верность нейтралитету, покупатели дома это запомнили.';}}},
   {id:'usawar',y:1917,m:3,reel:'w:usawar',img:'Liberty truck',sad:1,title:'США вступают в войну',deck:'6 апреля 1917 года: Конгресс объявил войну Германии',
     text:'Америке нужны армия, корабли и моторы. Инженеры десятков заводов вместе начертили стандартный армейский грузовик «Либерти». Сталь теперь — для армии: гражданским заводам её не хватает.',
     mean:'В США — военные заказы и дефицит стали: детали дороже на 15% полгода, если не перейти на военный заказ.',
@@ -92,12 +102,29 @@ const WORLD=[
     res:{wCrashDebt:s=>{const n=Math.max(0,Math.min(s.loan,Math.round((s.cash-3000*cpi(s))/1000)*1000));s.loan-=n;s.cash-=n;s.ad=Math.round((s.ad||0)*0.5);s.noRecall=mi(s)+12;return n>0?`«{co}» вернула банку ${money(n)} и урезала рекламу вдвое. Банк больше не требует денег.`:'У «{co}» нет долгов — нечего сокращать. Реклама урезана вдвое на всякий случай.';},
       wCrashRisk:s=>{s.capSale=mi(s)+6;return '«{co}» скупает станки и цеха разорившихся заводов: полгода они на 30% дешевле.';}}}];
 function bestModel(s){return s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
+// 0.23: что война делает с вашими рынками за границей — по каждой стране, где вы есть
+function warMarkets(s){const home=s.country,L=[];
+  Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const own=(s.bought&&s.bought[c])?`ваша марка «${s.bought[c].n}»`:impLv(s,c)>=4?'ваш завод':impLv(s,c)>=3?'ваш цех сборки':'';
+    if(!(dealerCount(s,c)>0||impLv(s,c)>0||own||(s.impB&&s.impB[c])))return;const nm=COUNTRIES[c].name;
+    if(home==='de'||c==='de'){const seize=own&&atWar(home,c,s.y,s.m);
+      L.push(`${nm}: ${home==='de'?'британский флот закрыл моря — немецким машинам туда не пробиться':'блокада — ни машин, ни деталей, ни денег туда не провезти'}${own?seize?`; ${own} — собственность противника, власти её забирают`:`; ${own} отрезан${own.startsWith('ваша')?'а':''}: работает сам${own.startsWith('ваша')?'а':''} по себе, вам ни машин, ни выручки до конца войны`:''}${s.impB&&s.impB[c]?'; стройка там заморожена':''}.`);}
+    else L.push(`${nm}: война — гражданских покупателей в разы меньше, доставка ${home==='us'||c==='us'?'через океан на 60% дороже':'дороже'}${c==='uk'?'; с осени 1915 года — пошлина 33⅓%, с весны 1916-го ввоз только по лицензиям':''}.`);});
+  return L.length?'Ваши рынки за границей:\n'+L.map(x=>'— '+x).join('\n'):'';}
+// Заказ армий Антанты американской марке: грузовики (или легковые шасси под санитарные кузова), срок — 9 месяцев
+function warAlliesOrder(s){const md=tenderModel(s,'truck')||tenderModel(s,'van')||tenderModel(s,'car');if(!md)return 'Армиям Антанты «{co}» предложить нечего: в производстве нет подходящей модели.';
+  const base=(s.last&&s.last.made)||10,n=clamp(Math.round(base*1.2/10)*10,20,12000),price=Math.round(refPrice(md,s)*1.12/10)*10;
+  s.orders=s.orders||[];s.orders.push({id:mi(s)+'-allies',md:md.id,n,left:n,price,due:mi(s)+9,who:'Военные ведомства Британии и Франции',start:mi(s)});
+  return `Военные ведомства Британии и Франции заказали у «{co}» ${fmtN(n)} машин «${md.name}» по ${money(price)}: ${isTruck(md)?'грузовики пойдут на фронт':'на шасси поставят кузова санитарных машин'}. Срок — 9 месяцев, машины идут в первую очередь.`;}
 function worldApplies(W,s){if(W.pk&&!W.pk.split(',').includes(s.pioneer))return false;if(W.req&&!W.req(s))return false;if(!W.cc)return true;const L=W.cc.replace('!','').split(',');return W.cc[0]==='!'?!L.includes(s.country):L.includes(s.country);}
 // раз в месяц: пришло событие — газета с роликом и выбором
-function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(W.id==='war'&&s.country==='it'){y=1915;m=4;}if(s.y!==y||s.m!==m||s.wseen[W.id]||!worldApplies(W,s))return;
+function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(W.id==='war'&&s.country==='it'){y=1915;m=4;}
+  // 0.23: событие, которое игра раньше не показывала (сохранение старой версии), — догоняющая первая полоса, пока оно ещё идёт
+  const now=s.y*12+s.m,late=W.catchTo&&!s.wseen[W.id]&&now>y*12+m&&now<W.catchTo[0]*12+W.catchTo[1];
+  if((s.y!==y||s.m!==m)&&!late||s.wseen[W.id]||!worldApplies(W,s))return;
   s.wseen[W.id]=1;try{W.fx(s);}catch(e){console.warn(e);}const rid=W.reel&&reelGet(W.reel,s)?W.reel:'';if(rid)reelUnlock(s,rid);
   addLog(`${W.title}: ${W.mean}`,'hist');
-  pushEvent({kicker:W.sad?'Мир':'Мир · кинохроника',title:W.title,deck:W.deck,text:W.text,img:W.img&&IMG[W.img]?W.img:'',imgCap:W.deck,mean:W.mean,world:W.id,reel:rid,
+  let tx=W.text;if(W.textF)try{const t=W.textF(s);if(t)tx+='\n'+t;}catch(e){console.warn(e);}
+  pushEvent({kicker:W.sad?'Мир':'Мир · кинохроника',title:W.title,deck:late&&W.late?W.late:W.deck,text:tx,img:W.img&&IMG[W.img]?W.img:'',imgCap:W.deck,mean:W.mean,world:W.id,reel:rid,
     choices:W.ch.map(c=>[c[0],c[1]==='mil'?'mil':'w:'+W.id+':'+c[1]])},true);});
   // газета через месяц — чем обернулся выбор
   (s.wnext||[]).filter(x=>x.at<=mi(s)).forEach(x=>{if(x.text)pushEvent({kicker:'Мир · месяц спустя',own:1,title:x.title,deck:x.deck,text:x.text.replace(/\{co\}/g,s.company)},true);});

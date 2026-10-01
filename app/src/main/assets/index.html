@@ -1844,7 +1844,7 @@ function dealersShort(s,c){const mk=s.last&&s.last.mk[c],tpc=dealerTPc(s,c),lost
 // Салоны побольше: +25% продаж на каждого дилера (продавцы, гараж, запас машин в кредит) — когда городов уже не осталось
 function dealerGrowCost(s,c){return Math.round(dealerCount(s,c)*0.25*dealerCost(s)/10)*10;}
 function dealerGrowOk(s,c){return dealerCount(s,c)>0&&dealerMult(s,c)<DLR_MULT_MAX;}
-function dealerGrow(s,c){if(!dealerGrowOk(s,c))return false;const cost=dealerGrowCost(s,c);if(s.cash<cost)return false;s.cash-=cost;s.dcap=s.dcap||{};
+function dealerGrow(s,c){if(!dealerGrowOk(s,c)||warCut(s,c))return false;const cost=dealerGrowCost(s,c);if(s.cash<cost)return false;s.cash-=cost;s.dcap=s.dcap||{};
   const was=dealerCapOf(s,c);s.dcap[c]=+Math.min(DLR_MULT_MAX,dealerMult(s,c)+0.25).toFixed(3);s.dAdd=s.dAdd||{};s.dAdd[c]=(s.dAdd[c]||0)+(dealerCapOf(s,c)-was)/dealerTPc(s,c);
   (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*1.2);});
   const where=c!==s.country?' ('+COUNTRIES[c].name+')':'';addLog(`Дилеры${where} расширили салоны: сеть продаёт до ${fmtN(dealerCapOf(s,c))} машин в месяц (было ${fmtN(was)}).`,'good');
@@ -1853,7 +1853,7 @@ function dealerGrow(s,c){if(!dealerGrowOk(s,c))return false;const cost=dealerGro
 function dealerGrowSteps(s,c){const mk=s.last&&s.last.mk[c],d=dealerCount(s,c),lost=(mk&&mk.lostDlr||0)-((s.dAdd&&s.dAdd[c])||0)*dealerTPc(s,c);if(lost<=0.5||!d)return 0;
   return Math.min(Math.ceil((DLR_MULT_MAX-dealerMult(s,c))/0.25-1e-9),Math.ceil(lost/(d*0.25*dealerTP(s)*(c===s.country?1.3:1))));}
 // Открыть дилеров в новых городах: деньги, журнал и сразу поправка прогноза — завод сделает машины и для новых дилеров
-function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc),dealerRoom(s,c));if(n<1)return 0;
+function buyDealers(s,c,n){if(warCut(s,c))return 0;const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc),dealerRoom(s,c));if(n<1)return 0;
   const was=dealerCount(s,c),r0=reachOf(s,c),k=was>0?(was+n)/was:2;s.cash-=n*dc;s.dealers[c]=was+n;s.dAdd=s.dAdd||{};s.dAdd[c]=(s.dAdd[c]||0)+n;const r1=reachOf(s,c);
   (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*k);});
   const where=c!==s.country?' ('+COUNTRIES[c].name+')':'';
@@ -1862,7 +1862,7 @@ function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.
   return n;}
 // Представительство за границей: договор с импортёром → своё отделение → сборочный завод
 function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
-  if(s.cash<cost||(L.y&&s.y<L.y)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
+  if(s.cash<cost||(L.y&&s.y<L.y)||warCut(s,c)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
   // отделение, сборка и завод строятся месяцами (13b/105b): деньги сразу, уровень — когда достроят
   const mo=impMonths(s,c,lv+1);if(mo>0){s.cash-=cost;s.impB=s.impB||{};s.impB[c]={lv:lv+1,left:mo,t:mo};addLog(`${COUNTRIES[c].name}: ${lv+1===2?'открываем своё отделение':lv+1===3?'строим цех сборки из комплектов':'строим свой завод'} — ${money(cost)}, ${mo} мес.`,'good');return true;}
   s.cash-=cost;s.imp=s.imp||{};s.imp[c]=lv+1;const C=COUNTRIES[c];(s.impSince=s.impSince||{})[c]=s.impSince[c]??mi(s);
@@ -1872,7 +1872,7 @@ function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c
   return true;}
 // Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
 // сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
-function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
   const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
   const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
   const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];
@@ -2185,7 +2185,12 @@ function tariffOf(md,c,s){if(c===s.country||localMade(s,c))return 0;const r=rule
   let d=r.dLux&&md&&md.price>=r.luxP*cpi(s)?r.dLux:r.duty;if(md&&isTruck(md)&&c==='uk'&&!r.trucks)d=0;
   if(c==='uk'&&r.pref&&hubOn(s,'ca'))d*=r.pref;
   const L=impOf(s,c);return d*(L&&L.tar!=null?L.tar:1);}
-function tradeBan(s,c){return c!==s.country&&!localMade(s,c)&&!!ruleNow(s,c).ban;}
+// 0.23: война рвёт связи. Блокада Германии (август 1914 — июль 1919) отрезает от неё всех иностранцев — даже свой завод
+// или купленную там марку: детали, сталь и деньги через блокаду не пройдут, машины туда не доплывут. Иностранная марка в Германии
+// работает сама по себе под надзором властей, выручки вам нет; когда ваша страна вступит в войну с Германией — её конфискуют.
+// Немецкой фирме блокада закрывает весь мир.
+function warCut(s,c){if(c===s.country)return false;const t=tNow(s);return (c==='de'||s.country==='de')&&t>=1914.58&&t<1919.5;}
+function tradeBan(s,c){return c!==s.country&&(warCut(s,c)||(!localMade(s,c)&&!!ruleNow(s,c).ban));}
 function tradeQuota(s,c){if(c===s.country||localMade(s,c))return 0;return ruleNow(s,c).quota||0;}
 // Доставка: через Атлантику дороже; в войну — страховка и потери от подводных лодок
 function transAtl(s,c){return (s.country==='us')!==(c==='us');}
@@ -2207,7 +2212,11 @@ function tastePen(md,c,s){if(c!=='us'||s.country==='us'||(s.bought&&s.bought.us)
 /* ---------- стройка за границей ---------- */
 function impMonths(s,c,lv){const L=IMP_LV[lv];if(!L.mo)return 0;const k=impK(s,c);return Array.isArray(L.mo)?Math.round(L.mo[0]+(L.mo[1]-L.mo[0])*clamp((k-1)/5,0,1)):L.mo;}
 function impBuilding(s,c){return s.impB&&s.impB[c];}
-function impTick(s){for(const c in (s.impB||{})){const B=s.impB[c];if(!B)continue;if(--B.left>0)continue;delete s.impB[c];impDone(s,c,B.lv);}
+function impTick(s){for(const c in (s.impB||{})){const B=s.impB[c];if(!B)continue;
+    // стройка в стране за блокадой замирает: ни станков, ни денег туда не провезти
+    if(warCut(s,c)){if(!B.frozen){B.frozen=1;addLog(`${COUNTRIES[c].name}: стройка «${s.company}» заморожена — блокада, ни станков, ни денег туда не провезти. Продолжится после войны.`,'bad');}continue;}
+    if(B.frozen){B.frozen=0;addLog(`${COUNTRIES[c].name}: блокада снята — стройка «${s.company}» продолжается.`,'good');}
+    if(--B.left>0)continue;delete s.impB[c];impDone(s,c,B.lv);}
   for(const c in (s.lic||{})){const L=s.lic[c];if(L&&L.at===mi(s)){addLog(`${COUNTRIES[c].name}: местный завод начал выпускать ваши машины по лицензии. Вам — ${Math.round(LIC_ROY*100)}% цены с каждой.`,'good');pendingToasts.push('📄 Лицензия: '+COUNTRIES[c].name);}}}
 function impDone(s,c,lv){s.imp=s.imp||{};s.imp[c]=lv;const C=COUNTRIES[c],cost=impCost(s,c,lv);
   if(lv===2){s.plantVal+=cost*0.3;addLog(`${C.name}: открыто своё отделение «${s.company}». Посредник больше не берёт свою долю, дилеров можно открыть по всей стране.`,'good');pendingToasts.push('🏢 Отделение: '+C.name);}
@@ -2222,12 +2231,12 @@ function licStart(s,c){if(c===s.country||impLv(s,c)>=2||(s.lic&&s.lic[c])||trade
   const g=(s.models.find(m=>m.status==='prod')&&segOf(s.models.find(m=>m.status==='prod')))||'middle',o=respOf(s,c,g);o.mg=(o.mg||0)+0.15;
   addLog(`${COUNTRIES[c].name}: лицензия продана местному заводу. Через полгода он начнёт выпускать ваши машины — без пошлины и доставки; вам — ${Math.round(LIC_ROY*100)}% цены. Чертежи увидят и конкуренты.`,'good');return true;}
 function licEnd(s,c){if(!s.lic||!s.lic[c])return;delete s.lic[c];addLog(`${COUNTRIES[c].name}: лицензия отозвана.`);}
-function tradeBanHard(s,c){const r=ruleNow(s,c);return !!r.ban&&(c==='de'||s.country==='de')&&s.y>=1914&&s.y<1919;}
+function tradeBanHard(s,c){return warCut(s,c);}
 // Слабая местная марка: не из двух крупнейших, продаёт меньше 15% рынка страны
 function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.cp.pk!==s.pioneer&&!x.cp.imp&&x.v>0&&!(s.bought&&Object.values(s.bought).some(b=>b.c===c&&b.i===x.i))).sort((a,b)=>b.v-a.v);
   const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15);}
 function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
-function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c]))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const cost=brandPrice(s,c,x);if(s.cash<cost)return false;
+function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c])||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const cost=brandPrice(s,c,x);if(s.cash<cost)return false;
   s.cash-=cost;s.plantVal+=cost*0.4;s.bought=s.bought||{};s.bought[c]={c,i,n:x.cp.n,y:s.y,t:mi(s)};s.imp=s.imp||{};s.imp[c]=Math.max(impLv(s,c),2);(s.impSince=s.impSince||{})[c]=mi(s)-120;
   const dl=Math.max(3,Math.round(x.v/12/Math.max(0.5,dealerTP(s))));s.dealers[c]=dealerCount(s,c)+dl;
   addLog(`${COUNTRIES[c].name}: куплена марка «${x.cp.n}» за ${money(cost)} — её заводы, ${fmtN(dl)} ${plural(dl,'дилер','дилера','дилеров')} и покупатели теперь ваши. Пошлины больше нет.`,'good');pendingToasts.push('🤝 Куплена марка: '+x.cp.n);return true;}
@@ -2241,9 +2250,10 @@ function hubStart(s){if(s.country==='uk'||(s.hub&&s.hub.ca)||s.y<1904)return fal
 /* ---------- национализация в войну ---------- */
 function atWar(a,b,y,m){if(a===b)return false;const t=y+m/12;if(!(a==='de'||b==='de'))return false;const o=a==='de'?b:a;
   return o==='us'?t>=1917.25&&t<1918.9:o==='it'?t>=1915.4&&t<1918.9:t>=1914.58&&t<1918.9;}
-function warSeize(s){for(const c in (s.imp||{})){if(impLv(s,c)<3&&!(s.bought&&s.bought[c]))continue;if(!atWar(s.country,c,s.y,s.m))continue;
-  const lv=impLv(s,c),loss=impCost(s,c,lv)*0.7;s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];s.plantVal=Math.max(0,s.plantVal-loss);
-  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: завод «${s.company}» конфискован`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление завод, склады и сеть «${s.company}» как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
+function warSeize(s){for(const c of Object.keys(COUNTRIES)){const bld=s.impB&&s.impB[c];if(impLv(s,c)<3&&!(s.bought&&s.bought[c])&&!(bld&&bld.lv>=3))continue;if(!atWar(s.country,c,s.y,s.m))continue;
+  const lv=impLv(s,c),B=s.bought&&s.bought[c],what=B?`марка «${B.n}»`:lv>=4||(bld&&bld.lv>=4)?`завод «${s.company}»`:`сборочный цех «${s.company}»`,loss=impCost(s,c,Math.max(lv,bld?bld.lv:0))*0.7;
+  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];s.plantVal=Math.max(0,s.plantVal-loss);
+  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${what} ${B?'конфискована':'конфискован'}`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление ${B?`марку «${B.n}» с её заводами, складами и дилерами`:`завод, склады и сеть «${s.company}»`} как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
   Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;const now=tradeRule(c,s.country,t);
@@ -2261,7 +2271,7 @@ function tradeMonth(s){try{impTick(s);}catch(e){console.warn(e);}try{warSeize(s)
   // квоты по стране: счётчик продаж за год
   if(s.m===0)s.quotaY={};}
 /* ---------- экран «Мир»: карта доступа, ставки, ваши продажи и прибыль с машины ---------- */
-function accessOf(s,c){if(c===s.country)return {k:'home',t:'дома',col:'#d9ab52'};const r=ruleNow(s,c);if(r.ban&&!localMade(s,c))return {k:'ban',t:'запрет',col:'#e0655a'};
+function accessOf(s,c){if(c===s.country)return {k:'home',t:'дома',col:'#d9ab52'};if(warCut(s,c))return {k:'ban',t:'блокада',col:'#e0655a'};const r=ruleNow(s,c);if(r.ban&&!localMade(s,c))return {k:'ban',t:'запрет',col:'#e0655a'};
   if(localMade(s,c))return {k:'local',t:'свой завод',col:'#74d39a'};const q=tradeQuota(s,c),d=r.duty||0;
   if(q)return {k:'quota',t:`квота ${fmtN(q)}/год`,col:'#b48ae0'};return d>=0.4?{k:'high',t:`пошлина ${Math.round(d*100)}%`,col:'#f09a4e'}:d>0.02?{k:'duty',t:`пошлина ${Math.round(d*100)}%`,col:'#f0c75e'}:{k:'open',t:'без пошлины',col:'#74d39a'};}
 const WORLD_XY={us:[70,92],uk:[268,58],fr:[284,98],de:[318,72],it:[318,122],ca:[78,40]};
@@ -2377,6 +2387,17 @@ const LEGENDS_C={
       {id:'c_rl',name:'РЛ',y:1922,kind:'sport',d:{e:'e7',g:'g5',c:'c5',k:'k6',b:'b10',w:'w8'},rep:5,wiki:'Alfa Romeo RL',fx:{appeal:1.2,race:1.1,ch:{perf:1.15}},t:'По мотивам Alfa Romeo RL: Тарга Флорио 1923.'}]
 };
 const LEGEND_BY={};Object.values(LEGENDS).concat(Object.values(LEGENDS_C)).flat().forEach(L=>{L.d.t=L.d.t||KIND_TRIM[L.kind];LEGEND_BY[L.id]=L;});
+// 0.23: цвет легенды — как в истории. «Модель T»: тёмно-зелёная (1908–1910), синяя (1911–1913), с 1914 по 1925 — только чёрная
+// («любого цвета, если он чёрный»: чёрный японский лак сох быстрее всех — конвейер не ждал), с 1926 — снова цвета.
+// Кузов «Модели T» — открытый фаэтон: в 1910-х это 3/4 выпуска; закрытые седан и купе стали массовыми лишь в 1920-х.
+const PNT={black:'#1b1d22',green:'#1f4a36',red:'#9e2b25',blue:'#23427a',cream:'#e3d6b4',bord:'#5c1e2a',white:'#e8e6de',yellow:'#c9a227'};
+const LEGEND_PAINT={ford_t:[[0,'green'],[1911,'blue'],[1914,'black'],[1926,'green']],ford_tt:'black',ford_a:'blue',olds_cd:'black',olds_ltd:'bord',benz_velo:'green',benz_blitzen:'white',
+  daimler_lkw:'green',mercedes35:'white',zeppelin:'black',renault_a:'green',renault_ag:'red',renault_40cv:'bord',peugeot_bebe:'blue',peugeot_l76:'blue',peugeot_201:'black',
+  lanch_10:'green',lanch_40:'green',bug_13:'blue',bug_35:'blue',bug_41:'black',alfa_p2:'red',alfa_6c:'red',fiat_zero:'red',fiat_18bl:'green',fiat_501:'black',fiat_805:'red',
+  c_laub:'green',c_horch8:'black',c_typea:'green',c_d8:'black',c_seven:'blue',c_3litre:'green',c_490:'black',c_bearcat:'yellow',c_lambda:'blue',c_rl:'red'};
+const LEGEND_NOTE={ford_t:'В истории — чёрная: с 1914 по 1925 год «Модель T» красили только чёрным японским лаком, он сох быстрее всех и не задерживал конвейер («любого цвета, если он чёрный»). До 1914-го — тёмно-зелёная и синяя. Кузов — открытый фаэтон: так выглядели три из четырёх «Моделей T» 1910-х; закрытые седан и купе стали массовыми лишь в 1920-х.',
+  ford_tt:'Грузовик «Модели TT» — чёрный, как и вся «Модель T» тех лет.',c_laub:'«Лягушку» прозвали за зелёный цвет — его и оставили.',bug_35:'Синий — гоночный цвет Франции.',alfa_p2:'Красный — гоночный цвет Италии.',c_3litre:'Тёмно-зелёный — гоночный цвет Британии.',benz_blitzen:'Белый — гоночный цвет Германии.'};
+function legendPaint(L,y){let p=LEGEND_PAINT[L&&L.id];if(Array.isArray(p)){let c=p[0][1];p.forEach(([y0,k])=>{if(y>=y0)c=k;});p=c;}return PNT[p]||null;}
 function LEGEND_TITLES(){return Object.values(LEGEND_BY).map(L=>L.wiki).filter(Boolean);}
 function legendsOf(s){return s.pioneer==='custom'?(LEGENDS_C[s.country]||[]):(LEGENDS[s.pioneer]||[]);}
 function legendK(md,k){const L=md&&md.legend&&LEGEND_BY[md.legend];return L&&L.fx[k]||1;}
@@ -2408,7 +2429,7 @@ function legendCardHTML(s){const L=legendsOf(s);if(!L.length)return '';
     open.length?open.map(x=>x.name).join(', '):L.map(x=>x.name).join(', '));}
 function openLegend(id){const s=G,L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open')return;
   const md=legendModel(s,L),dc=legendDevCost(s,L),dm=legendDevMonths(L),st=carStats(md,0,s.y),im=L.wiki&&IMG[L.wiki];
-  draft={legendDraft:id,name:L.name,paint:PAINTS[s.models.length%PAINTS.length].id};
+  draft={legendDraft:id,name:L.name,paint:legendPaint(L,s.y)||PAINTS[s.models.length%PAINTS.length].id};
   openSheet(`<div class="row"><h2>★ ${esc(L.name)}</h2>${X}</div>
     ${im?`<figure class="photo" style="margin-top:8px"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
     <p style="margin-top:8px">${esc(L.t)}</p><p class="small good" style="margin-top:6px">${esc(legendFxText(L))}</p>
@@ -2416,12 +2437,14 @@ function openLegend(id){const s=G,L=LEGEND_BY[id];if(!L||legendState(s,L)!=='ope
     <div class="meta"><div>Скорость<b>${Math.round(st.vmax*3.6)} км/ч</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Класс<b>${esc(KIND_NAME[L.kind])}</b></div></div>
     ${compareHTML(md,s)}
     <label class="label" for="lname" style="display:block;margin-top:12px">Название</label><input type="text" id="lname" value="${esc(L.name)}" maxlength="24" style="margin-top:6px">
+    <div class="row" style="margin-top:10px;align-items:center"><span class="label">Цвет</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${draft.paint===c.id?'on':''}" style="background:${c.id}" data-act="legPaint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
+    <p class="small muted" style="margin-top:4px">${esc(LEGEND_NOTE[L.id]||'Цвет — как у исторической машины; можно выбрать свой.')}</p>
     <button class="btn primary block" style="margin-top:14px" data-act="legendStart" data-k="${L.id}" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
   const inp=document.getElementById('lname');if(inp)inp.addEventListener('input',e=>{draft.name=e.target.value;});}
 function legendStart(s,id){const L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open')return false;const dc=legendDevCost(s,L);if(s.cash<dc)return false;
   s.cash-=dc;s.legends=s.legends||{};s.legends[L.id]={y:s.y,m:s.m};
   const nm=((draft&&draft.legendDraft===id&&draft.name)||L.name).trim()||L.name;
-  const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.paint)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+  const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.legendDraft===id&&draft.paint)||legendPaint(L,s.y)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
   m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);addLog(`Начата разработка легенды «${nm}» (${money(dc)}, ${m.devLeft} мес.).`,'good');return true;}
 // выпуск легенды: газеты, репутация, очки наследия
 function legendLaunch(s,md){const L=LEGEND_BY[md.legend];if(!L)return;s.rep=clamp(s.rep+(L.rep||4),0,100);s.legBonus=(s.legBonus||0)+15;
@@ -2643,8 +2666,18 @@ const WORLD=[
   {id:'war',y:1914,m:7,cc:'!us',reel:'h:war',img:'World War I',sad:1,title:'Война',deck:'Мобилизация объявлена по всей Европе',
     text:'Европа воюет. Гражданских покупателей почти не осталось: машины реквизируют, бензин по карточкам, заводы переходят на снаряды. Армии нужны грузовики.\nВоенное ведомство предлагает контракт: 40% мощностей — армии, по себестоимости плюс 35%. Экспорт во вражеские страны закрыт.',
     mean:'Гражданский спрос в Европе упал в разы на годы войны. Военный заказ даёт деньги, гражданская линейка — имя после войны.',
+    textF:s=>warMarkets(s),
     fx:s=>{},ch:[['Принять военный заказ','mil'],['Сохранить гражданскую линейку','wWarCiv']],
     res:{mil:s=>'Цеха «{co}» работают на армию: грузовики и санитарные машины уходят на фронт.',wWarCiv:s=>{wfxAdd(s,s.country,'*',0.12,36,'гражданская линейка в войну');return '«{co}» не бросила гражданских покупателей: машин мало, но её помнят.';}}},
+  // 0.23: и для Америки — первая полоса: в Европе война, Америка нейтральна; что это значит для ваших рынков за океаном
+  {id:'warus',y:1914,m:7,cc:'us',catchTo:[1918,10],late:'Война идёт с августа 1914 года',reel:'h:war',img:'World War I',sad:1,title:'Война в Европе',deck:'Август 1914 года: Германия и Австро-Венгрия против Франции, России и Британии. Америка объявила нейтралитет',
+    text:'Европа воюет. Мобилизованы миллионы, гражданских покупателей там почти не осталось: машины реквизируют для армии, бензин — по карточкам, заводы переходят на снаряды. Британский флот закрыл Германию блокадой: ни один корабль с товаром туда не пройдёт.\nАмерика объявила нейтралитет. Торговать можно с теми, до кого можно доплыть, — то есть с Антантой: армиям Британии и Франции нужны грузовики и санитарные машины. Через Атлантику — дороже: страховка и германские подводные лодки.',
+    textF:s=>warMarkets(s),
+    mean:'Германия закрыта блокадой до лета 1919 года: ни ввоза, ни связи с вашими заводами, марками и дилерами там. В Британии, Франции и Италии гражданских покупателей в разы меньше, доставка через океан дороже на 60%. Армии Антанты закупают американские грузовики.',
+    fx:s=>{},
+    ch:[['Грузовики и санитарные машины для Антанты','wAllies'],['Строгий нейтралитет: только мирные машины','wNeutral']],
+    res:{wAllies:s=>warAlliesOrder(s),
+      wNeutral:s=>{s.rep=clamp(s.rep+2,0,100);wfxAdd(s,'us','*',0.05,24,'нейтралитет марки');return '«{co}» не берёт военных заказов: газеты Среднего Запада хвалят марку за верность нейтралитету, покупатели дома это запомнили.';}}},
   {id:'usawar',y:1917,m:3,reel:'w:usawar',img:'Liberty truck',sad:1,title:'США вступают в войну',deck:'6 апреля 1917 года: Конгресс объявил войну Германии',
     text:'Америке нужны армия, корабли и моторы. Инженеры десятков заводов вместе начертили стандартный армейский грузовик «Либерти». Сталь теперь — для армии: гражданским заводам её не хватает.',
     mean:'В США — военные заказы и дефицит стали: детали дороже на 15% полгода, если не перейти на военный заказ.',
@@ -2688,12 +2721,29 @@ const WORLD=[
     res:{wCrashDebt:s=>{const n=Math.max(0,Math.min(s.loan,Math.round((s.cash-3000*cpi(s))/1000)*1000));s.loan-=n;s.cash-=n;s.ad=Math.round((s.ad||0)*0.5);s.noRecall=mi(s)+12;return n>0?`«{co}» вернула банку ${money(n)} и урезала рекламу вдвое. Банк больше не требует денег.`:'У «{co}» нет долгов — нечего сокращать. Реклама урезана вдвое на всякий случай.';},
       wCrashRisk:s=>{s.capSale=mi(s)+6;return '«{co}» скупает станки и цеха разорившихся заводов: полгода они на 30% дешевле.';}}}];
 function bestModel(s){return s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
+// 0.23: что война делает с вашими рынками за границей — по каждой стране, где вы есть
+function warMarkets(s){const home=s.country,L=[];
+  Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const own=(s.bought&&s.bought[c])?`ваша марка «${s.bought[c].n}»`:impLv(s,c)>=4?'ваш завод':impLv(s,c)>=3?'ваш цех сборки':'';
+    if(!(dealerCount(s,c)>0||impLv(s,c)>0||own||(s.impB&&s.impB[c])))return;const nm=COUNTRIES[c].name;
+    if(home==='de'||c==='de'){const seize=own&&atWar(home,c,s.y,s.m);
+      L.push(`${nm}: ${home==='de'?'британский флот закрыл моря — немецким машинам туда не пробиться':'блокада — ни машин, ни деталей, ни денег туда не провезти'}${own?seize?`; ${own} — собственность противника, власти её забирают`:`; ${own} отрезан${own.startsWith('ваша')?'а':''}: работает сам${own.startsWith('ваша')?'а':''} по себе, вам ни машин, ни выручки до конца войны`:''}${s.impB&&s.impB[c]?'; стройка там заморожена':''}.`);}
+    else L.push(`${nm}: война — гражданских покупателей в разы меньше, доставка ${home==='us'||c==='us'?'через океан на 60% дороже':'дороже'}${c==='uk'?'; с осени 1915 года — пошлина 33⅓%, с весны 1916-го ввоз только по лицензиям':''}.`);});
+  return L.length?'Ваши рынки за границей:\n'+L.map(x=>'— '+x).join('\n'):'';}
+// Заказ армий Антанты американской марке: грузовики (или легковые шасси под санитарные кузова), срок — 9 месяцев
+function warAlliesOrder(s){const md=tenderModel(s,'truck')||tenderModel(s,'van')||tenderModel(s,'car');if(!md)return 'Армиям Антанты «{co}» предложить нечего: в производстве нет подходящей модели.';
+  const base=(s.last&&s.last.made)||10,n=clamp(Math.round(base*1.2/10)*10,20,12000),price=Math.round(refPrice(md,s)*1.12/10)*10;
+  s.orders=s.orders||[];s.orders.push({id:mi(s)+'-allies',md:md.id,n,left:n,price,due:mi(s)+9,who:'Военные ведомства Британии и Франции',start:mi(s)});
+  return `Военные ведомства Британии и Франции заказали у «{co}» ${fmtN(n)} машин «${md.name}» по ${money(price)}: ${isTruck(md)?'грузовики пойдут на фронт':'на шасси поставят кузова санитарных машин'}. Срок — 9 месяцев, машины идут в первую очередь.`;}
 function worldApplies(W,s){if(W.pk&&!W.pk.split(',').includes(s.pioneer))return false;if(W.req&&!W.req(s))return false;if(!W.cc)return true;const L=W.cc.replace('!','').split(',');return W.cc[0]==='!'?!L.includes(s.country):L.includes(s.country);}
 // раз в месяц: пришло событие — газета с роликом и выбором
-function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(W.id==='war'&&s.country==='it'){y=1915;m=4;}if(s.y!==y||s.m!==m||s.wseen[W.id]||!worldApplies(W,s))return;
+function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(W.id==='war'&&s.country==='it'){y=1915;m=4;}
+  // 0.23: событие, которое игра раньше не показывала (сохранение старой версии), — догоняющая первая полоса, пока оно ещё идёт
+  const now=s.y*12+s.m,late=W.catchTo&&!s.wseen[W.id]&&now>y*12+m&&now<W.catchTo[0]*12+W.catchTo[1];
+  if((s.y!==y||s.m!==m)&&!late||s.wseen[W.id]||!worldApplies(W,s))return;
   s.wseen[W.id]=1;try{W.fx(s);}catch(e){console.warn(e);}const rid=W.reel&&reelGet(W.reel,s)?W.reel:'';if(rid)reelUnlock(s,rid);
   addLog(`${W.title}: ${W.mean}`,'hist');
-  pushEvent({kicker:W.sad?'Мир':'Мир · кинохроника',title:W.title,deck:W.deck,text:W.text,img:W.img&&IMG[W.img]?W.img:'',imgCap:W.deck,mean:W.mean,world:W.id,reel:rid,
+  let tx=W.text;if(W.textF)try{const t=W.textF(s);if(t)tx+='\n'+t;}catch(e){console.warn(e);}
+  pushEvent({kicker:W.sad?'Мир':'Мир · кинохроника',title:W.title,deck:late&&W.late?W.late:W.deck,text:tx,img:W.img&&IMG[W.img]?W.img:'',imgCap:W.deck,mean:W.mean,world:W.id,reel:rid,
     choices:W.ch.map(c=>[c[0],c[1]==='mil'?'mil':'w:'+W.id+':'+c[1]])},true);});
   // газета через месяц — чем обернулся выбор
   (s.wnext||[]).filter(x=>x.at<=mi(s)).forEach(x=>{if(x.text)pushEvent({kicker:'Мир · месяц спустя',own:1,title:x.title,deck:x.deck,text:x.text.replace(/\{co\}/g,s.company)},true);});
@@ -3015,7 +3065,8 @@ function step(){
       if(PART_HIST[pj.id])reelOffer(s,'part:'+pj.id,'Прототип готов: '+pj.name,`На ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше рынка`,`В истории такую деталь первыми сделали ${PART_HIST[pj.id][1]} в ${PART_HIST[pj.id][0]} году. Поставьте её на новую модель — и «${s.company}» опередит историю.`);}
     return false;});}
   r.wage=s.workers*wageNow(s);r.ovh=plantOverhead(s)*(s.shifts>1?1.1:1);
-  r.dlr=Object.keys(s.dealers).reduce((a,c)=>a+dealerCount(s,c)*dealerUpkeep(s,c),0)+Object.keys(COUNTRIES).reduce((a,c)=>a+impUpkeep(s,c),0);
+  // 0.23: за блокадой дилеры и отделение отрезаны — содержать их нечем и незачем (их расходы — на них самих)
+  r.dlr=Object.keys(s.dealers).reduce((a,c)=>a+(warCut(s,c)?0:dealerCount(s,c)*dealerUpkeep(s,c)),0)+Object.keys(COUNTRIES).reduce((a,c)=>a+(warCut(s,c)?0:impUpkeep(s,c)),0);
   r.sto=s.models.reduce((a,md)=>a+md.stock*matCost(md,s),0)*0.01;r.rate=loanRate(s);r.int=s.loan*r.rate/12;turnover(s,r);
   // 0.21: контора — управление, сбыт, бухгалтерия, юристы: около 3% выручки
   r.adm=0.03*(r.rev+r.ord);
@@ -3284,6 +3335,8 @@ function migrate(x){
     for(const c in x.dealers){const d=x.dealers[c]||0;if(!d)continue;
       if(c!==x.country)x.imp[c]=d>tabAt(DEALER_NEED[c],t)*0.4?2:1;
       const mx=dealerMax(x,c);if(d>mx){x.dcap[c]=+(d/mx).toFixed(3);x.dealers[c]=mx;}}}
+  // 0.23: легенды — в историческом цвете («Модель T» с 1914 года — чёрная); раньше цвет выпадал по счёту моделей
+  if(!x.v23paint){x.v23paint=1;if(typeof legendPaint==='function')x.models.forEach(m=>{if(!m.legend||!LEGEND_BY[m.legend])return;const y=m.status==='dev'?x.y:1895+Math.floor((m.launched||0)/12),p=legendPaint(LEGEND_BY[m.legend],y);if(p)m.paint=p;});}
   return x;
 }
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}
@@ -4936,7 +4989,9 @@ function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
   if(AU.ctx&&AU.mus){AU.mus.gain.setTargetAtTime(on?0.045:(AU.on.music?(R?0.07:0.16):0),AU.ctx.currentTime,0.3);}
   clearInterval(AU.proj);AU.proj=0;
   if(on&&AU.ctx&&AU.on.sfx)AU.proj=setInterval(()=>{if(!REEL||!AU.ctx||REEL.paused)return;const t=AU.ctx.currentTime;for(let k=0;k<3;k++)vNoise(t+k/18,0.012,0.018,'bandpass',2600,AU.fx);},167);}catch(e){}}
-function auReelFanfare(){try{if(!AU.ctx||!AU.on.music)return;const t=AU.ctx.currentTime+0.05;[[67,0,0.18],[72,0.2,0.18],[76,0.4,0.18],[79,0.6,0.5],[76,1.15,0.16],[79,1.35,0.9]].forEach(([n,d,l])=>{inst('cornet',n,t+d,l,0.5);inst('trumpet',n-12,t+d,l,0.25);});}catch(e){}}
+// 0.23: фанфара — оркестром (трубы, валторны, тромбоны, литавры; файл рядом с игрой), без файла — семплы корнета
+function auReelFanfare(){try{if(!AU.ctx||!AU.on.music)return;const synth=()=>{const t=AU.ctx.currentTime+0.05;[[67,0,0.18],[72,0.2,0.18],[76,0.4,0.18],[79,0.6,0.5],[76,1.15,0.16],[79,1.35,0.9]].forEach(([n,d,l])=>{inst('cornet',n-7,t+d,l,0.5);inst('trumpet',n-19,t+d,l,0.25);});};
+  auCue('fanfare',0.7,synth);}catch(e){}}
 function auReelTick(){try{if(AU.ctx&&AU.on.sfx)vNoise(AU.ctx.currentTime,0.05,0.08,'bandpass',1500,AU.fx);}catch(e){}}
 /* ---------- кинохроника во вкладке «Империя»: все открытые ролики ---------- */
 function reelKind(id){return id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':id.startsWith('year:')?'итоги года':id.startsWith('race:')?'гонка':id.startsWith('show:')?'выставка':'история';}
@@ -7021,7 +7076,7 @@ function vModels(){
 }
 function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?'':'off'}"><span class="num">${x.y<=1895?'—':x.y}</span><span>${x.name}</span><span class="num">${extra(x)}</span></div>`).join('');}
 // Сколько продавали бы ваши модели в стране при полной сети дилеров
-function marketPotential(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length)return 0;const R=mkCountry(c,s,act,null,null,1);return act.reduce((a,m)=>a+(R.by[m.id]||0),0)*(techLv(s,'credit')?1.15:1);}
+function marketPotential(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length||(c!==s.country&&warCut(s,c)))return 0;const R=mkCountry(c,s,act,null,null,1);return act.reduce((a,m)=>a+(R.by[m.id]||0),0)*(techLv(s,'credit')?1.15:1);}
 function topIncome(inc,p){return inc.xT*Math.pow(p/INC_TOP,-1/inc.al);}
 // Грузовые машины: главный соперник — лошадь. Сколько фирм в месяц выбирают транспорт и что берут
 function horseSplit(s,c,M,R0){const TZ=M&&M.segs&&M.segs.truck,pool=(M&&M.tpool)||(R0||mkCountry(c,s,[])).segs.truck.pool||0;if(pool<=0)return null;
@@ -7049,26 +7104,29 @@ function vMarket(){
     // сколько городов охвачено; сколько машин в месяц продаёт сеть (дилеры растут вместе со спросом — нанимают продавцов)
     const room=dealerRoom(s,c),reach=reachOf(s,c),tp=dealerTPc(s,c),cap=d*tp,short=dealersShort(s,c),gs=room>0?0:dealerGrowSteps(s,c),gc=dealerGrowCost(s,c);
     const add=(n,lab,pri)=>{const k=Math.min(n,room);return k<1?'':`<button class="btn sm${pri?' primary':''}" data-act="dealers" data-c="${c}" data-n="${k}" ${s.cash<k*dc?'disabled':''}>+${fmtN(k)}${lab||''} · ${money(k*dc)}</button>`;};
-    const big=Math.max(5,Math.round(mx*0.1/5)*5),bld=c!==home&&impBuilding(s,c),lic=c!==home&&s.lic&&s.lic[c],nx=!lic&&!bld&&lv<4?IMP_LV[lv+1]:null,nxC=nx?impCost(s,c,lv+1):0,nxOk=nx&&(!nx.y||s.y>=nx.y)&&!(tradeBan(s,c)&&lv+1<3),mo=nx?impMonths(s,c,lv+1):0;
+    const cut=c!==home&&warCut(s,c);
+    const big=Math.max(5,Math.round(mx*0.1/5)*5),bld=c!==home&&impBuilding(s,c),lic=c!==home&&s.lic&&s.lic[c],nx=!lic&&!bld&&lv<4?IMP_LV[lv+1]:null,nxC=nx?impCost(s,c,lv+1):0,nxOk=nx&&(!nx.y||s.y>=nx.y)&&!cut&&!(tradeBan(s,c)&&lv+1<3),mo=nx?impMonths(s,c,lv+1):0;
     const upLab=['Договор с импортёром','Открыть своё отделение','Сборка из комплектов','Построить свой завод'][lv];
     const up=c===home||!nx?'':`<button class="btn sm${lv===0?' primary':''}" data-act="impUp" data-c="${c}" ${!nxOk||s.cash<nxC?'disabled':''}>${upLab} · ${money(nxC)}${mo?` · ${mo} мес.`:''}</button>`;
     const bc=c!==home&&lv>=1&&!(s.bought&&s.bought[c])&&!lic?brandCands(s,c)[0]:null,bp=bc?brandPrice(s,c,bc):0;
-    const extra=c===home?'':(bc&&s.y>=1905?`<button class="btn sm" data-act="brandBuy" data-c="${c}" data-i="${bc.i}" ${s.cash<bp?'disabled':''}>Купить марку «${esc(compName(bc.cp,s))}» · ${money(bp)}</button>`:'')
+    const extra=c===home||cut?'':(bc&&s.y>=1905?`<button class="btn sm" data-act="brandBuy" data-c="${c}" data-i="${bc.i}" ${s.cash<bp?'disabled':''}>Купить марку «${esc(compName(bc.cp,s))}» · ${money(bp)}</button>`:'')
       +(lv<2&&!lic&&!tradeBanHard(s,c)?`<button class="btn sm" data-act="licStart" data-c="${c}" ${s.cash<licCost(s,c)?'disabled':''}>Лицензия местному заводу · ${money(licCost(s,c))}</button>`:'')
       +(c==='uk'&&home!=='uk'&&s.y>=1904&&!(s.hub&&s.hub.ca)?`<button class="btn sm" data-act="hubStart" ${s.cash<hubCost(s)?'disabled':''}>Сборка в Канаде (льгота для стран Империи) · ${money(hubCost(s))}</button>`:'');
     const grow=d&&dealerGrowOk(s,c)&&(gs>0||room===0)?`<button class="btn sm${gs>0?' primary':''}" data-act="dealerGrow" data-c="${c}" ${s.cash<gc?'disabled':''}>Салоны дилеров +25% · ${money(gc)}</button>`:'';
-    const btns=(d?(short>0?add(short,' — продать всем',1)+(short>=8?add(Math.max(1,Math.round(short/4)),''):''):add(Math.max(1,Math.min(room,Math.round(mx*0.05))),room>1?' в новых городах':'')+(room>big*1.5?add(big):''))+grow:'')+up+extra;
-    const R=c===home?null:ruleNow(s,c),rtxt=R?`<p class="small ${R.ban&&!localMade(s,c)?'bad':R.quota?'warn':'muted'}" style="margin-top:4px">${R.ban&&!localMade(s,c)?'⛔ ':''}${esc(R.why)}${R.quota&&!localMade(s,c)?` · квота ${fmtN(R.quota)} машин в год${s.quotaY&&s.quotaY[c]?`, продано ${fmtN(s.quotaY[c])}`:''}`:''}${c==='uk'&&hubOn(s,'ca')&&R.pref?' · ваши машины идут из Канады по льготе Империи (2/3 ставки)':''}</p>`:'';
-    const lvTxt=c===home?'':(bld?`<p class="small warn" style="margin-top:4px">Строится: ${esc(IMP_LV[bld.lv].n.toLowerCase())} — ещё ${bld.left} мес.</p>`:'')+(lic?`<p class="small good" style="margin-top:4px">Лицензия: ${lic.at>mi(s)?`местный завод начнёт выпуск через ${lic.at-mi(s)} мес.`:`местный завод делает ваши машины — без пошлины и доставки, вам ${Math.round(LIC_ROY*100)}% цены с каждой`}.</p>`:'')
-      +(s.bought&&s.bought[c]?`<p class="small good" style="margin-top:4px">Ваша марка «${esc(s.bought[c].n)}»: местные заводы, дилеры и покупатели. Пошлины нет.</p>`:'')
-      +(lv===0?`<p class="small" style="margin-top:4px">Своих продавцов здесь нет. Первый шаг — <b>импортёр</b>: местная фирма берёт ${Math.round(IMP_LV[1].cut*100)}% цены и продаёт ваши машины через агентов в больших городах${pot>0?`. По прикидке ваши модели брали бы здесь ≈ <b class="num">${fmtD(pot*Math.pow(IMP_LV[1].cap,0.7))}</b> в месяц`:''}. Или — <b>лицензия</b> местному заводу: почти даром, без пошлины, но вам лишь ${Math.round(LIC_ROY*100)}% цены.</p>`
+    const btns=cut?'':(d?(short>0?add(short,' — продать всем',1)+(short>=8?add(Math.max(1,Math.round(short/4)),''):''):add(Math.max(1,Math.min(room,Math.round(mx*0.05))),room>1?' в новых городах':'')+(room>big*1.5?add(big):''))+grow:'')+up+extra;
+    const R=c===home?null:ruleNow(s,c),rtxt=R?`<p class="small ${tradeBan(s,c)?'bad':R.quota?'warn':'muted'}" style="margin-top:4px">${tradeBan(s,c)?'⛔ ':''}${esc(R.why)}${R.quota&&!localMade(s,c)?` · квота ${fmtN(R.quota)} машин в год${s.quotaY&&s.quotaY[c]?`, продано ${fmtN(s.quotaY[c])}`:''}`:''}${c==='uk'&&hubOn(s,'ca')&&R.pref?' · ваши машины идут из Канады по льготе Империи (2/3 ставки)':''}</p>`:'';
+    // 0.23: за блокадой — коротко и ясно, почему продаж нет и что будет дальше
+    const cutTxt=cut?`<p class="small bad" style="margin-top:4px">⛔ Блокада: ${home==='de'?'немецким машинам за границу не пробиться — морские пути закрыты британским флотом.':`ни машин, ни деталей, ни денег в Германию не провезти — британский флот закрыл её моря.`}${(s.bought&&s.bought[c])?` Ваша марка «${esc(s.bought[c].n)}» отрезана: её заводы работают сами по себе под надзором властей, вам — ни машин, ни выручки до конца войны.`:lv>=3?` Ваш ${lv>=4?'завод':'цех сборки'} отрезан: работает на нужды страны, вам — ни выручки, ни связи до конца войны.`:dealerCount(s,c)?' Дилеры остались без машин.':''}${home!=='de'&&home!=='uk'&&home!=='fr'&&home!=='it'?` Если ваша страна вступит в войну с Германией — всё, что там ваше, конфискуют.`:''} Торговля вернётся летом 1919 года.</p>`:'';
+    const lvTxt=c===home?'':cutTxt+(bld?`<p class="small warn" style="margin-top:4px">${cut||bld.frozen?`Стройка заморожена блокадой: ${esc(IMP_LV[bld.lv].n.toLowerCase())} — осталось ${bld.left} мес. после войны`:`Строится: ${esc(IMP_LV[bld.lv].n.toLowerCase())} — ещё ${bld.left} мес.`}</p>`:'')+(lic?`<p class="small good" style="margin-top:4px">Лицензия: ${lic.at>mi(s)?`местный завод начнёт выпуск через ${lic.at-mi(s)} мес.`:`местный завод делает ваши машины — без пошлины и доставки, вам ${Math.round(LIC_ROY*100)}% цены с каждой`}.</p>`:'')
+      +(s.bought&&s.bought[c]&&!cut?`<p class="small good" style="margin-top:4px">Ваша марка «${esc(s.bought[c].n)}»: местные заводы, дилеры и покупатели. Пошлины нет.</p>`:'')
+      +(cut?'':lv===0?`<p class="small" style="margin-top:4px">Своих продавцов здесь нет. Первый шаг — <b>импортёр</b>: местная фирма берёт ${Math.round(IMP_LV[1].cut*100)}% цены и продаёт ваши машины через агентов в больших городах${pot>0?`. По прикидке ваши модели брали бы здесь ≈ <b class="num">${fmtD(pot*Math.pow(IMP_LV[1].cap,0.7))}</b> в месяц`:''}. Или — <b>лицензия</b> местному заводу: почти даром, без пошлины, но вам лишь ${Math.round(LIC_ROY*100)}% цены.</p>`
       :lv===1?`<p class="small muted" style="margin-top:4px">Импортёр берёт ${Math.round(IL.cut*100)}% цены и торгует только в больших городах (до ${fmtN(mx)} агентов). <b>Своё отделение</b> — как Ford of Britain в 1909 году: без посредника, дилеры по всей стране, содержание ${money(impUpkeep({...s,imp:{...(s.imp||{}),[c]:2}},c))} в месяц.</p>`
       :lv===2?`<p class="small muted" style="margin-top:4px">Своё отделение «${esc(s.company)}». ${s.y>=IMP_LV[3].y?`<b>Сборка из комплектов</b> — как у Ford в Траффорд-парке (1911): пошлина только на детали (${Math.round(IMP_LV[3].tar*100)}% ставки), доставка вдвое дешевле, покупатели считают машины почти своими; содержание ${money(impUpkeep({...s,imp:{...(s.imp||{}),[c]:3}},c))} в месяц, нужен объём.`:'Сборка за границей появится с 1904 года.'}</p>`
       :lv===3?`<p class="small good" style="margin-top:4px">Сборка из комплектов: пошлина ${pct(tf,0)}, доставка вдвое дешевле. ${s.y>=IMP_LV[4].y?`<b>Свой завод</b> — пошлины и доставки нет совсем, машины для покупателей местные; но в войну завод противника конфискуют.`:''}</p>`
       :`<p class="small good" style="margin-top:4px">Свой завод «${esc(s.company)}»: без пошлины и доставки, для покупателей — местная марка.</p>`)+rtxt;
-    return `<div class="net-row"><div class="row"><div><h3>${COUNTRIES[c].name}${c===home?' · дома':''}${c!==home?` <span class="pill ${lv?'good':'muted'}">${esc(lic?'Лицензия':(s.bought&&s.bought[c])?'Своя марка':IMP_LV[lv].n)}</span>`:''}</h3><p class="small muted">Рынок ${fmtD(size)} в месяц · <span class="${ec.tone}">${ec.label}</span>${c!==home?` · пошлина ${Math.round(tf*100)}%`:''}</p></div><span class="num small ${mk&&mk.sold?'good':''}" style="white-space:nowrap">${mk?fmtN(mk.sold||0):0} шт.</span></div>
+    return `<div class="net-row"><div class="row"><div><h3>${COUNTRIES[c].name}${c===home?' · дома':''}${c!==home?` <span class="pill ${lv?'good':'muted'}">${esc(lic?'Лицензия':(s.bought&&s.bought[c])?'Своя марка':IMP_LV[lv].n)}</span>`:''}</h3><p class="small muted">Рынок ${fmtD(size)} в месяц · <span class="${ec.tone}">${ec.label}</span>${c!==home?(cut?' · <span class="bad">блокада</span>':tradeBan(s,c)?' · <span class="bad">ввоз закрыт</span>':` · пошлина ${Math.round(tf*100)}%`):''}</p></div><span class="num small ${mk&&mk.sold?'good':''}" style="white-space:nowrap">${mk?fmtN(mk.sold||0):0} шт.</span></div>
       ${lvTxt}
-      ${d?`${pot>0?`<p class="small" style="margin-top:4px">Будь ваши дилеры во всех городах, ваши модели брали бы ≈ <b class="num">${fmtD(pot)}</b> в месяц · сейчас их видят ${Math.round(reach*100)}% покупателей</p>`:''}
+      ${d&&!cut?`${pot>0?`<p class="small" style="margin-top:4px">Будь ваши дилеры во всех городах, ваши модели брали бы ≈ <b class="num">${fmtD(pot)}</b> в месяц · сейчас их видят ${Math.round(reach*100)}% покупателей</p>`:''}
       <div class="row small" style="margin-top:6px"><span class="muted">Дилеров <b class="num">${fmtN(d)}</b> из ${fmtN(mx)} ${plural(mx,'возможного','возможных','возможных')} · вся страна — ${fmtN(need)} ${plural(need,'город','города','городов')}</span><span class="num">${Math.round(reach*100)}%</span></div><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,reach*100)}%;background:var(--good)"></i></div>
       <p class="small muted" style="margin-top:4px">Сеть продаёт до ${fmtN(cap)} машин в месяц — по ${fmtD(tp)} на дилера${dealerMult(s,c)>1.01?` (салоны больше обычного в ${fmtD(dealerMult(s,c))} раза)`:''}.</p>
       ${lost>0.5?`<p class="small warn" style="margin-top:4px">Дилеры не успели обслужить ≈ ${fmtD(lost)} покупателей. ${short>0?`Откройте дилеров в новых городах — ещё ${fmtN(short)}.`:gs>0?`Все города уже охвачены: расширьте салоны — продавцы, гаражи, запас машин (${fmtN(gs)} ${plural(gs,'шаг','шага','шагов')} по +25%).`:'Сеть работает на пределе эпохи: больше машин здесь сейчас не продать.'}</p>`:''}`:''}
@@ -7342,7 +7400,7 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
     ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.22';
+const GAME_VER='0.23';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -7709,6 +7767,16 @@ function carveField(trk,F){if(!trk.rivers&&!trk.coast)return;const P=trk.pts;
   (trk.rivers||[]).forEach(rv=>{const y0=P[rv.i][1],bed=y0-rv.d,bank=rv.w/2+10,R=1300;
     for(let j=0;j<F.nz;j++)for(let k=0;k<F.nx;k++){const q=j*F.nx+k,x=F.x0+k*F.S,z=F.z0+j*F.S,dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)>R||Math.abs(dd.e)>bank+30)continue;
       const e=Math.abs(dd.e),prof=e<rv.w/2?1:1-sstep(rv.w/2,bank+26,e);if(prof<=0)continue;const bedL=Math.min(bed,F.H[q]-rv.d*0.7),h=F.H[q]+(bedL-F.H[q])*sstep(0,1,prof*1.4);F.H[q]=Math.min(F.H[q],h);F.G[q]=Math.min(F.G[q],F.H[q]);}});
+  // 0.23: настоящая местность — море и бухты по рельефу и карте (40c-real.js), а не придуманный берег: дно — под гладью,
+  // у дороги берег вровень с полотном (набережная), дальше плавно уходит под воду. Земля на нуле вдали от моря — суша.
+  // Гладь — одна на всю карту (49c-world.js), поэтому суша у моря всегда чуть выше воды (низины и шум рельефа не «тонут»),
+  // а берег — там, где рельеф пересекает гладь: плавной линией, а не ступеньками клеток.
+  if(trk.real){const wm=trk.real.wm;(trk.coast||[]).forEach(c=>{c.sea=wm?wm.y-0.2:undefined;});if(!wm)return;const W=trk.W,land=wm.y+0.6;
+    for(let q=0;q<F.nx*F.nz;q++){const x=F.x0+(q%F.nx)*F.S,z=F.z0+Math.floor(q/F.nx)*F.S,w=realWet(trk,x,z),d=F.D[q];
+      if(w>=0.5){const k=sstep(0.5,0.9,w)*sstep(W/2+14,W/2+44,d);if(k<=0)continue;const tg=wm.y-0.35-2.4*k;
+        F.H[q]+=(Math.min(F.H[q],tg)-F.H[q])*sstep(0,0.35,k);F.G[q]=Math.min(F.G[q],F.H[q]);}
+      else if(F.H[q]<land){const k=sstep(W/2+12,W/2+30,d);if(k<=0)continue;F.H[q]+=(land-F.H[q])*k;F.G[q]=Math.max(F.G[q],F.H[q]-0.02);}}
+    return;}
   let yMin=1e9;P.forEach(p=>{yMin=Math.min(yMin,p[1]);});
   if(!(trk.coast||[]).length)return;
   // 0.18: берег без «игл». Каждой клетке — ближайшая точка дороги (волной от известных клеток); море — там, где ближайшая
@@ -7771,6 +7839,43 @@ function realH(T,x,z){const R=T.real,D=R.d;return realGridAt(D.near,x,z,R.dx,R.d
 function realFarH(T,x,z){const R=T.real,D=R.d,G=D.far,X1=G.x0+(G.nx-1)*G.S-R.dx,Z1=G.z0+(G.nz-1)*G.S-R.dz;
   if(x<G.x0-R.dx||z<G.z0-R.dz||x>X1||z>Z1)return null;return realGridAt(G,x,z,R.dx,R.dz,R.dy);}
 function realCover(T,x,z){const R=T.real,G=R.d.near,k=Math.round((x+R.dx-G.x0)/G.S),j=Math.round((z+R.dz-G.z0)/G.S);if(k<0||j<0||k>=G.nx||j>=G.nz)return 0;return realGridC(G)[j*G.nx+k];}
+// 0.23: настоящая вода. В рельефе Copernicus море, бухты и приливные устья — ровно 0 м, польдеры — ниже нуля, пляж и поля у моря — 1–3 м.
+// Вода — связные куски «нуля» с ядром (клетка и все соседи — ноль) у береговой линии OSM, или почти целиком под водой по карте
+// (реки и озёра на уровне моря). Поля на нуле вдали от берега (Равенна) — суша. Сетка 50 м у дороги, 250 м — до горизонта.
+function realWaterMask(D,G,far,nearM){const H=realGridH(G),nx=G.nx,nz=G.nz,N=nx*nz,S=G.S,zero=new Uint8Array(N);let any=0;
+  for(let q=0;q<N;q++)if(H[q]===0){zero[q]=1;any=1;}const M=new Uint8Array(N);if(!any)return M;
+  // клетки у береговой линии (линии карты — в широте и долготе)
+  const k0=D.ll0,KY=110540,KX=Math.cos(k0[0]*Math.PI/180)*111320,near=new Uint8Array(N),rc=Math.ceil((far?450:260)/S);
+  ((D.map&&D.map.coast)||[]).forEach(L=>{for(let a=0;a+1<L.length;a++){const p=L[a],b=L[a+1],x0=(p[1]-k0[1])*KX,z0=(p[0]-k0[0])*KY,x1=(b[1]-k0[1])*KX,z1=(b[0]-k0[0])*KY,m=Math.max(1,Math.ceil(Math.hypot(x1-x0,z1-z0)/(S*0.5)));
+    for(let t=0;t<=m;t++){const ck=Math.round((x0+(x1-x0)*t/m-G.x0)/S),cj=Math.round((z0+(z1-z0)*t/m-G.z0)/S);
+      for(let j=Math.max(0,cj-rc);j<=Math.min(nz-1,cj+rc);j++)for(let k=Math.max(0,ck-rc);k<=Math.min(nx-1,ck+rc);k++)if((k-ck)*(k-ck)+(j-cj)*(j-cj)<=rc*rc)near[j*nx+k]=1;}}});
+  const C=!far&&G.cover?realGridC(G):null,seen=new Uint8Array(N),Q=new Int32Array(N),NG=far&&nearM?D.near:null;
+  for(let s=0;s<N;s++){if(!zero[s]||seen[s])continue;let qh=0,qt=0,coast=0,w3=0,core=0,link=0;Q[qt++]=s;seen[s]=1;
+    while(qh<qt){const q=Q[qh++],k=q%nx,j=(q/nx)|0;if(near[q])coast=1;if(C&&C[q]===3)w3++;
+      if(!core&&k>0&&k<nx-1&&j>0&&j<nz-1&&zero[q-1]&&zero[q+1]&&zero[q-nx]&&zero[q+nx]&&zero[q-nx-1]&&zero[q-nx+1]&&zero[q+nx-1]&&zero[q+nx+1])core=1;
+      // дальняя сетка: кусок, который у дороги уже признан водой (устье реки за краем подробной карты)
+      if(NG&&!link){const kk=Math.round((G.x0+k*S-NG.x0)/NG.S),jj=Math.round((G.z0+j*S-NG.z0)/NG.S);if(kk>=0&&jj>=0&&kk<NG.nx&&jj<NG.nz&&nearM[jj*NG.nx+kk])link=1;}
+      if(k>0&&zero[q-1]&&!seen[q-1]){seen[q-1]=1;Q[qt++]=q-1;}if(k<nx-1&&zero[q+1]&&!seen[q+1]){seen[q+1]=1;Q[qt++]=q+1;}
+      if(j>0&&zero[q-nx]&&!seen[q-nx]){seen[q-nx]=1;Q[qt++]=q-nx;}if(j<nz-1&&zero[q+nx]&&!seen[q+nx]){seen[q+nx]=1;Q[qt++]=q+nx;}}
+    if(!core||qt<(far?3:24))continue;
+    if(coast||link){for(let a=0;a<qt;a++)M[Q[a]]=1;continue;}
+    // река или озеро у моря: вода — только по карте (и клетка вокруг)
+    if(C&&w3>=qt*0.25)for(let a=0;a<qt;a++){const q=Q[a],k=q%nx,j=(q/nx)|0;let w=0;
+      for(let dj=-1;dj<=1&&!w;dj++)for(let dk=-1;dk<=1;dk++){const kk=k+dk,jj=j+dj;if(kk>=0&&jj>=0&&kk<nx&&jj<nz&&C[jj*nx+kk]===3){w=1;break;}}if(w)M[q]=1;}}
+  return M;}
+// Вода трассы (один раз на постройку): маски 50 и 250 м и уровень глади в координатах игры. Пляжные гонки (Дейтона) — со своим морем
+function realWaterOf(trk){const R=trk.real;if(!R||trk.cfg.terr==='beach'||trk.cfg.sprint)return null;const D=R.d;if(!D.near||!D.far)return null;
+  const key='_wm';if(!D[key]){const Mn=realWaterMask(D,D.near,false,null),Mf=realWaterMask(D,D.far,true,Mn);let n=0;for(const v of Mn)n+=v;for(const v of Mf)n+=v;D[key]=n?{near:Mn,far:Mf}:{none:1};}
+  const W=D[key];if(W.none)return null;return {near:W.near,far:W.far,y:-R.dy+0.3};}
+// Доля воды в точке игры (0…1): у дороги — по сетке 50 м (плавно между клетками), дальше — 250 м
+function realWet(T,x,z){const R=T.real,W=R&&R.wm;if(!W)return 0;const D=R.d;
+  for(const [G,M] of [[D.near,W.near],[D.far,W.far]]){const fx=(x+R.dx-G.x0)/G.S,fz=(z+R.dz-G.z0)/G.S;if(fx<0||fz<0||fx>G.nx-1||fz>G.nz-1)continue;
+    const k=Math.min(G.nx-2,Math.floor(fx)),j=Math.min(G.nz-2,Math.floor(fz)),u=fx-k,v=fz-j,q=j*G.nx+k;
+    return (M[q]*(1-u)+M[q+1]*u)*(1-v)+(M[q+G.nx]*(1-u)+M[q+G.nx+1]*u)*v;}
+  return 0;}
+// Рельеф вдали: в пределах сетки 50 м — по ней (берег точнее), дальше — 250 м
+function realFarH2(T,x,z){const R=T.real,G=R.d.near,fx=(x+R.dx-G.x0)/G.S,fz=(z+R.dz-G.z0)/G.S;
+  if(fx>=0&&fz>=0&&fx<=G.nx-1&&fz<=G.nz-1)return realGridAt(G,x,z,R.dx,R.dz,R.dy);return realFarH(T,x,z);}
 // Кусок маршрута под длину заезда: там, где больше примет (мост, переезд, город, берег, подъём)
 const REAL_TY=['fields','town','village','forest','avenue','bridge','rail','serp','coast','vine'];
 function realWindow(D,len){const n8=D.pts.length,w=Math.min(n8,Math.round(len/D.step)+1);if(D.closed||w>=n8)return [0,n8];
@@ -7979,7 +8084,7 @@ function buildTrack(rc,vref){
   for(let i=0;i<n;i++){const a=T[closed?(i-1+n)%n:Math.max(0,i-1)],b=T[closed?(i+1)%n:Math.min(n-1,i+1)];const cr=a[0]*b[1]-a[1]*b[0],dt=a[0]*b[0]+a[1]*b[1];K.push(Math.atan2(cr,dt)/(2*STEP));}
   const W=cfg.width,terrAt=i=>cfg.stages?cfg.stages[Math.min(2,Math.floor(i/n*3))]:cfg.terr;
   const trk={pts,T,N,K,n,step:STEP,closed,len:n*STEP,W,cfg,terrAt,col:[],grid:{},rc,spr:[],bar:[]};
-  if(RP)trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy};
+  if(RP){trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy};try{trk.real.wm=realWaterOf(trk);}catch(e){console.warn('water',e);trk.real.wm=null;}}
   trk.startIdx=closed?0:30;trk.finishIdx=closed?0:n-40;
   trk.raceLen=closed?cfg.laps*trk.len:(trk.finishIdx-trk.startIdx)*STEP;
   trk.cgrid={};for(let i=0;i<n;i+=2){const k=Math.floor(pts[i][0]/30)+','+Math.floor(pts[i][2]/30);(trk.cgrid[k]=trk.cgrid[k]||[]).push(i);}
@@ -8037,6 +8142,8 @@ function placeScenery(trk,rnd){
   const LMs=trk.lm=landmarksOf(trk);
   const add=(i,t,off,v,kind,colR)=>{i=((i%n)+n)%n;const p=pts[i],nn=N[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;
     if(LMs.length&&LMs.some(q=>Math.hypot(x-q.x,z-q.z)<q.r+2))return false;
+    // настоящая вода (0.23): в море и в бухте — ни домов, ни деревьев, ни зрителей
+    if(trk.real&&trk.real.wm&&Math.abs(off)>W/2+2&&realWet(trk,x,z)>0.2)return false;
     const o=solidAt(trk,t,i,off);if(o?!solidClear(trk,o):(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i)))return false;
     spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
@@ -8744,6 +8851,8 @@ function patchAt(trk,x,z,i){if(!trk.patchAt)return null;const k=trk.patchAt[i];i
 function waterAt(trk,x,z){if(typeof R3==='undefined'||!R3.on||R3.T!==trk||!R3.F)return null;
   for(const rv of trk.rivers||[]){const dd=riverDist(trk,rv,x,z);if(Math.abs(dd.s)<1300&&Math.abs(dd.e)<rv.w/2+1){const L=riverLine(trk,rv),m=dd.s,mc=Math.sin(m/170+rv.ph)*22*sstep(20,120,Math.abs(m))+Math.sin(m/61+rv.ph*2)*6*sstep(20,120,Math.abs(m));
       const cx=L.p[0]+L.d[0]*m+L.t[0]*mc,cz=L.p[2]+L.d[1]*m+L.t[1]*mc;return fH(cx,cz)+0.9;}}
+  // настоящая местность: вода — по карте моря (40c-real.js); пляжные гонки — своим морем ниже
+  if(trk.real&&trk.cfg.terr!=='beach'){const wm=trk.real.wm;if(wm&&realWet(trk,x,z)>=0.5&&fH(x,z)<wm.y)return wm.y;return null;}
   for(const cs of trk.coast||[])if(cs.sea!==undefined){const y=cs.sea+0.2;if(fH(x,z)<y)return y;}
   if(R3.beachY!==undefined&&fH(x,z)<R3.beachY)return R3.beachY;
   return null;}
@@ -10364,10 +10473,12 @@ const DUEL_INS={proud:'trumpet',biz:'piano',aristo:'violin',sharp:'clarinet'};
 function duelNotes(type,win){const N=DUEL_THEME[type]||DUEL_THEME.biz;if(!win)return N.map(([n,d,l])=>[n,d*0.92,l*0.92]);
   // сникшая тема: большая терция и секста — вниз на полтона, темп медленнее, на кварту ниже
   return N.map(([n,d,l])=>{const k=((n%12)+12)%12;return [n-5-(k===4||k===9||k===11?1:0),d*1.15,l*1.15];});}
-function duelTheme(type,win,race){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,dest=AU.fx||c.destination,t0=c.currentTime+(race?0.1:0.95),ins=DUEL_INS[type];
-  const useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];
-  duelNotes(type,win).forEach(([n,d,l])=>{try{if(useIns)inst(ins,n,t0+d,l,0.5,dest);else throw 0;}
-    catch(_){const o=c.createOscillator(),g=c.createGain();o.type=type==='proud'?'sawtooth':'triangle';o.frequency.value=mtof(n);o.connect(g);g.connect(dest);g.gain.setValueAtTime(0.0001,t0+d);g.gain.exponentialRampToValueAtTime(0.07,t0+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d+l);o.start(t0+d);o.stop(t0+d+l+0.05);}});
+function duelTheme(type,win,race){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,dest=AU.fx||c.destination,ins=DUEL_INS[type];
+  // 0.23: тема — оркестром (файл рядом с игрой, 50-audio.js auCue); нет файла — прежние семплы или синтезатор
+  const synth=()=>{const t0=c.currentTime+0.02,useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];
+    duelNotes(type,win).forEach(([n,d,l])=>{try{if(useIns)inst(ins,n,t0+d,l,0.5,dest);else throw 0;}
+      catch(_){const o=c.createOscillator(),g=c.createGain();o.type=type==='proud'?'sawtooth':'triangle';o.frequency.value=mtof(n);o.connect(g);g.connect(dest);g.gain.setValueAtTime(0.0001,t0+d);g.gain.exponentialRampToValueAtTime(0.07,t0+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d+l);o.start(t0+d);o.stop(t0+d+l+0.05);}});};
+  setTimeout(()=>{try{auCue('duel_'+(DUEL_THEME[type]?type:'biz')+'_'+(win?'w':'l'),0.75,synth);}catch(_){synth();}},race?100:950);
   // перед темой: телеграф «точка-тире» (на гонке вместо него — трибуны)
   if(race){try{auSfx('cheer',win?0.8:0.4);}catch(_){}return;}
   [0,.09,.18,.42,.51,.75,.84].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.value=880;o.connect(g);g.connect(dest);const tt=c.currentTime+0.02+d;
@@ -14023,14 +14134,15 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
   // лес: деревья в пятнах рощ (породы — как у дорог этой страны)
   const set=SCEN_SETS[R3.T.cfg.host],kinds=set.trees.filter(t=>t!=='palm'&&t!=='olive'&&t!=='cypress'),trees=new MB(),leaf=new MB(true),x0=F.x0+k0*F.S,z0=F.z0+j0*F.S,x1=x0+TS*F.S,z1=z0+TS*F.S,r=mulberry32(tx*7919+tz*104729),dens=gq().trees;
   const tunT=R3.T.tunnels&&R3.T.tunnels.length,tunFree=(x,z)=>{if(!tunT)return true;const k=Math.round((x-F.x0)/F.S),j=Math.round((z-F.z0)/F.S);if(k<0||j<0||k>=F.nx||j>=F.nz)return true;const q=j*F.nx+k,i=F.I[q];return !(i>=0&&tunNear(R3.T,i,4)&&F.D[q]<R3.T.W/2+44);};
-  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
+  const wet=R3.T.real&&R3.T.real.wm&&R3.T.cfg.terr!=='beach'?(x,z)=>realWet(R3.T,x,z)>0.08:()=>false;
+  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z)||wet(x,z))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
   R3.forest.forEach(([fx,fz,fr])=>{if(fx+fr<x0||fx-fr>x1||fz+fr<z0||fz-fr>z1)return;const cnt=Math.round(fr*fr/90*dens);
     for(let q=0;q<cnt;q++){const a=r()*6.283,d=Math.sqrt(r())*fr,x=fx+Math.cos(a)*d,z=fz+Math.sin(a)*d;if(x<x0||x>=x1||z<z0||z>=z1)continue;if(fSample(F,F.D,x,z)<40||lmNear(x,z))continue;
       put(kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,fSample(F,F.G,x,z)-0.2,z,0.8+r()*0.45);}});
   // склоны: в горах — ели, кусты и валуны; на холмах — редкие деревья
   if(dmin<380){const pr=(F.mount?0.16:0.035)*dens;for(let j=j0;j<Math.min(F.nz-1,j0+TS);j++)for(let k=k0;k<Math.min(F.nx-1,k0+TS);k++){const q=j*F.nx+k,d=F.D[q];if(d<24||d>420||r()>pr)continue;
     const sl=Math.hypot(F.H[q+1]-F.H[q],F.H[q+F.nx]-F.H[q])/F.S;if(sl<0.12)continue;const x=F.x0+(k+r())*F.S,z=F.z0+(j+r())*F.S,y=fSample(F,F.G,x,z);if(lmNear(x,z))continue;
-    if(!tunFree(x,z))continue;if(sl>0.8&&F.mount&&r()<0.55)trees.add(pTree('rock',Math.floor(r()*3)),X3(r()*6.28,1+r()*1.6,[x,y-0.4,z]));else if(sl>0.8&&F.mount)put('bush',x,y-0.2,z,1.1+r()*0.7);else if(F.mount&&r()<0.35)put('bush',x,y-0.1,z,0.9+r()*0.6);else put(F.mount?'fir':kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,y-0.2,z,0.7+r()*0.5);}}
+    if(!tunFree(x,z)||wet(x,z))continue;if(sl>0.8&&F.mount&&r()<0.55)trees.add(pTree('rock',Math.floor(r()*3)),X3(r()*6.28,1+r()*1.6,[x,y-0.4,z]));else if(sl>0.8&&F.mount)put('bush',x,y-0.2,z,1.1+r()*0.7);else if(F.mount&&r()<0.35)put('bush',x,y-0.1,z,0.9+r()*0.6);else put(F.mount?'fir':kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,y-0.2,z,0.7+r()*0.5);}}
   return {g:g3Mesh(mb),t:g3Mesh(trees),l:g3Mesh(leaf),c:[(x0+x1)/2,0,(z0+z1)/2]};}
 /* ---------- машины: модель из 46-models.js, колёса крутятся, кузов кренится ---------- */
 function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.mech?1:0,spec.b,spec.y,spec.hp===undefined?'':spec.hp,spec.strip?1:0,spec.acc||'',spec.lux?1:0,spec.mq||'',spec.num||0].join('|')+(near?'|h':'|l');let m=R3.carM.get(key);if(m)return m;
@@ -14658,7 +14770,7 @@ function r3dMaps(T,F,W){
   ch(0,0,gAlt);ch(0,1,gD);
   // 2) поля: пшеница (сухая трава, жёлтый), пашня (земля, борозды), луг (зеленее), виноградник (земля полосами)
   const nF=snowy||sandy?0:Math.round(wx*wz/8000);
-  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
+  for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;if(T.real.wm&&realWet(T,x,z)>0.05)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
     const w=40+rnd()*120,h=30+rnd()*95,a=rnd()*3.14,q=rnd(),type=q<0.3?'wheat':q<0.52?'plow':q<0.8?'meadow':dry?'vine':'fallow';
     const rect=(g,style,al)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.fillStyle=style;g.fillRect(-w*kx/2,-h*kz/2,w*kx,h*kz);g.restore();};
     const rows=(g,style,al,step,lw)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.strokeStyle=style;g.lineWidth=Math.max(1,lw*kx);for(let l=-w/2;l<w/2;l+=step){g.beginPath();g.moveTo(l*kx,-h*kz/2);g.lineTo(l*kx,h*kz/2);g.stroke();}g.restore();};
@@ -14679,12 +14791,19 @@ function r3dMaps(T,F,W){
   // настоящая местность: леса — там, где они на карте (клетки 50 м), не больше чем вдвое против обычного
   const fcells=[];if(RD&&RD.near&&RD.near.cover){const G=RD.near,C=realGridC(G),R=T.real;for(let j=0;j<G.nz;j++)for(let k=0;k<G.nx;k++){if(C[j*G.nx+k]!==1)continue;const x=G.x0+k*G.S-R.dx,z=G.z0+j*G.S-R.dz;if(x<F.x0||z<F.z0||x>F.x0+wx||z>F.z0+wz)continue;fcells.push([x,z]);}}
   const fstep=Math.max(1,Math.ceil(fcells.length/Math.max(1,nW*2)));
-  for(let f=0;f<fcells.length;f+=fstep){const [x0c,z0c]=fcells[f],x=x0c+(rnd()-0.5)*20,z=z0c+(rnd()-0.5)*20,d=fSample(F,F.D,x,z);if(d<45)continue;const r=26+rnd()*14+(fstep-1)*14;R3.forest.push([x,z,r]);
+  for(let f=0;f<fcells.length;f+=fstep){const [x0c,z0c]=fcells[f],x=x0c+(rnd()-0.5)*20,z=z0c+(rnd()-0.5)*20,d=fSample(F,F.D,x,z);if(d<45)continue;if(T.real.wm&&realWet(T,x,z)>0.05)continue;const r=26+rnd()*14+(fstep-1)*14;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
   for(let f=0;f<(RD&&RD.near&&RD.near.cover?0:nW);f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz,d=fSample(F,F.D,x,z);if(d<45)continue;const r=25+rnd()*70;R3.forest.push([x,z,r]);
     const blob=(g,c0,c1)=>{const gr=g.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx*1.1);gr.addColorStop(0,c0);gr.addColorStop(0.75,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(X(x),Z(z),r*kx*1.1,0,7);g.fill();};
     blob(gF,'rgba(255,255,255,.95)','rgba(255,255,255,0)');blob(gA,'rgba(120,120,120,.7)','rgba(120,120,120,0)');blob(gT,'rgba(104,112,92,.5)','rgba(104,112,92,0)');}
+  // 0.23: берег настоящего моря — песок у самой воды (и под водой у берега): пятна по краю карты воды
+  if(RD&&T.real.wm){const G=RD.near,M=T.real.wm.near,R=T.real;
+    for(let j=0;j<G.nz;j++)for(let k=0;k<G.nx;k++){if(!M[j*G.nx+k])continue;let edge=false;
+      for(const [dk,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const kk=k+dk,jj=j+dj;if(kk>=0&&jj>=0&&kk<G.nx&&jj<G.nz&&!M[jj*G.nx+kk]){edge=true;break;}}if(!edge)continue;
+      const x=G.x0+k*G.S-R.dx,z=G.z0+j*G.S-R.dz;if(x<F.x0-90||z<F.z0-90||x>F.x0+wx+90||z>F.z0+wz+90)continue;const r=52;
+      const gr=gC.createRadialGradient(X(x),Z(z),0,X(x),Z(z),r*kx);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(0.55,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');
+      gC.fillStyle=gr;gC.beginPath();gC.arc(X(x),Z(z),r*kx,0,7);gC.fill();}}
   // 4) коридор дороги: пыльная обочина — земля (в городе — брусчатка своим слоем)
   const path=(g,from,to)=>{g.beginPath();for(let i=from;i<=to;i++){const p=T.pts[i%T.n];i===from?g.moveTo(X(p[0]),Z(p[2])):g.lineTo(X(p[0]),Z(p[2]));}};
   const last=T.closed?T.n:T.n-1;[gD,gT,gAlt].forEach(g=>{g.lineJoin='round';g.lineCap='round';});
@@ -14710,10 +14829,12 @@ function r3dFarH(F,x,z,amp,seed,hMin){const X1=F.x0+(F.nx-1)*F.S,Z1=F.z0+(F.nz-1
   if(F.seaDir&&out>=1){const cx=(F.x0+X1)/2,cz=(F.z0+Z1)/2,dx=x-cx,dz=z-cz,l=Math.hypot(dx,dz)||1;if((dx*F.seaDir[0]+dz*F.seaDir[1])/l>0.25)return F.sea-30;}
   if(out<1){let m=1e9;for(const dx of [-36,0,36])for(const dz of [-36,0,36])m=Math.min(m,fSample(F,F.H,clamp(x+dx,F.x0,X1),clamp(z+dz,F.z0,Z1)));return m-1.6;}
   // настоящая местность: вдали — грубая сетка рельефа (250 м), от края подробной земли — плавно
-  if(R3.T&&R3.T.real){const v=realFarH(R3.T,x,z);if(v!=null){const h0=fSample(F,F.H,ex,ez);return h0-1.6+(v-2-h0)*sstep(0,400,out);}}
+  // 0.23: у берега — по сетке 50 м; море — дно под гладью, суша у воды — над ней (без «фантомной» земли на уровне моря)
+  if(R3.T&&R3.T.real){const T=R3.T,v=realFarH2(T,x,z);if(v!=null){const h0=fSample(F,F.H,ex,ez);let h=h0-1.6+(v-2*(1-sstep(400,1400,out))-h0)*sstep(0,400,out);
+    const wm=T.real.wm;if(wm&&T.cfg.terr!=='beach'){const w=realWet(T,x,z);if(w>=0.5)h=Math.min(h,wm.y-1.6-2*w);else h=Math.max(h,wm.y+0.6);}return h;}}
   const h0=fSample(F,F.H,ex,ez),rid=1-Math.abs(fbm2(x/2600,z/2600,seed,4)*2-1),hills=fbm2(x/900,z/900,seed+3,3);
   return h0-1.6+(hMin-8-h0)*sstep(0,500,out)*0.4+(Math.pow(rid,2.2)*0.8+hills*0.3)*amp*sstep(0,2800,out);}
-function r3dFarRing(T,F){if(T.coast&&T.coast.length){let sx=0,sz=0;T.coast.forEach(c=>{for(let i=c.i0;i<=c.i1;i+=5){sx+=T.N[i][0]*c.side;sz+=T.N[i][1]*c.side;}});const l=Math.hypot(sx,sz)||1;F.seaDir=[sx/l,sz/l];F.sea=T.coast[0].sea;}
+function r3dFarRing(T,F){if(T.coast&&T.coast.length&&!T.real){let sx=0,sz=0;T.coast.forEach(c=>{for(let i=c.i0;i<=c.i1;i+=5){sx+=T.N[i][0]*c.side;sz+=T.N[i][1]*c.side;}});const l=Math.hypot(sx,sz)||1;F.seaDir=[sx/l,sz/l];F.sea=T.coast[0].sea;}
   const cfg=T.cfg,set=SCEN_SETS[cfg.host],cx=F.x0+(F.nx-1)*F.S/2,cz=F.z0+(F.nz-1)*F.S/2,R0=Math.hypot((F.nx-1)*F.S,(F.nz-1)*F.S)/2+64,R1=9000,seed=F.seed+701;
   const amp=cfg.terr==='snow'?260:F.mount?1300:(set.mount||cfg.uphill||cfg.terr==='mount')?520:set.flat?35:130;
   let hMin=1e9;T.pts.forEach(p=>{hMin=Math.min(hMin,p[1]);});const H=(x,z)=>r3dFarH(F,x,z,amp,seed,hMin);
@@ -14759,10 +14880,17 @@ function r3dWaters(T){const mb=new MB(),c=hex2rgb('#1f5a78');let any=false;
   (T.rivers||[]).forEach(rv=>{const L=riverLine(T,rv),w=rv.w/2+1.5;let prev=null;
     for(let s=-1300;s<=1300;s+=12){const m=Math.sin(s/170+rv.ph)*22*sstep(20,120,Math.abs(s))+Math.sin(s/61+rv.ph*2)*6*sstep(20,120,Math.abs(s)),cx=L.p[0]+L.d[0]*s+L.t[0]*m,cz=L.p[2]+L.d[1]*s+L.t[1]*m;
       const y=fH(cx,cz)+0.9,a=[cx+L.t[0]*w,y,cz+L.t[1]*w],b=[cx-L.t[0]*w,y,cz-L.t[1]*w];if(prev)mb.poly([prev[0],prev[1],b,a],[0,1,0],c,MID.water);prev=[a,b];}any=true;});
+  // настоящая местность: море, бухты, устья — по карте воды (40c-real.js), гладь на уровне моря
+  if(T.real&&T.cfg.terr!=='beach'){if(r3dRealWater(T,mb,c))any=true;return any?mb:null;}
   // море: гладь начинается в ~300 м от берега и уходит к горизонту (ближе — земля срезана ниже воды)
   (T.coast||[]).forEach(cs=>{const y=(cs.sea===undefined?T.pts[cs.i0][1]-5:cs.sea)+0.2,mid=Math.round((cs.i0+cs.i1)/2),p=T.pts[mid],nn=T.N[mid],o=cs.side,D=[nn[0]*o,nn[1]*o],Tn=[-D[1],D[0]];
     const P=(u,v)=>[p[0]+D[0]*u+Tn[0]*v,y,p[2]+D[1]*u+Tn[1]*v];for(let a=0;a<6;a++)for(let b=-4;b<4;b++){const u0=40+a*1500,u1=u0+1500,v0=b*1500,v1=v0+1500;mb.poly([P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)],[0,1,0],c,MID.water);}any=true;});
   return any?mb:null;}
+// Гладь настоящей воды: одна плоскость на уровне моря во всю дальнюю сетку рельефа (суша у воды поднята над ней — 40b-route.js),
+// берег — там, где земля уходит под гладь
+function r3dRealWater(T,mb,c){const R=T.real,W=R&&R.wm;if(!W)return false;const G=R.d.far,y=W.y,x0=G.x0-R.dx,z0=G.z0-R.dz,x1=x0+(G.nx-1)*G.S,z1=z0+(G.nz-1)*G.S,N=14;
+  for(let a=0;a<N;a++)for(let b=0;b<N;b++){const xa=x0+(x1-x0)*a/N,xb=x0+(x1-x0)*(a+1)/N,za=z0+(z1-z0)*b/N,zb=z0+(z1-z0)*(b+1)/N;mb.poly([[xa,y,za],[xb,y,za],[xb,y,zb],[xa,y,zb]],[0,1,0],c,MID.water);}
+  return true;}
 /* ---------- железная дорога: насыпь, шпалы, рельсы, столбы телеграфа; поезд с паровозом ---------- */
 function railLine(T,rl){const p=T.pts[rl.i],nn=T.N[rl.i],ca=Math.cos(rl.ang),sa=Math.sin(rl.ang),d=[nn[0]*ca-nn[1]*sa,nn[1]*ca+nn[0]*sa];return {p,d};}
 function railY(T,rl,s){const L=railLine(T,rl),x=L.p[0]+L.d[0]*s,z=L.p[2]+L.d[1]*s,near=Math.abs(s)<T.W/2+3;const g=fH(x,z);return near?L.p[1]+0.03:Math.max(g+0.35,L.p[1]+0.03-(Math.abs(s)-T.W/2-3)*0.02);}
@@ -15147,6 +15275,13 @@ function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)r
     try{const s=document.createElement('script');s.src=ORCH_BASE()+'music/index.js';s.async=true;
       s.onload=()=>{ORCH.idx=window.MUSIC_INDEX||{};ORCH.failT=0;res(ORCH.idx);AU.sig='';musBuild(false);};s.onerror=()=>{s.remove();fail();};document.head.appendChild(s);}catch(e){fail();}});
   return ORCH.loadP;}
+// 0.23: короткие оркестровые темы (фанфара кинохроники и праздника, темы соперников в пари) — файлы рядом с игрой (в APK вшиты);
+// нет файла или звук не пустили — прежние семплы или синтезатор (fb)
+const CUE={};
+function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+  try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
+    a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
+    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;if(fb)fb();});}catch(e){if(a)a.bad=1;if(fb)fb();}}
 // 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
 const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», военный оркестр'},
   own_reel:{cap:'«Кинохроника», регтайм (оркестр)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», оркестр регтайма'},
@@ -15199,6 +15334,8 @@ function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
   const sb=document.getElementById('sndBtn');if(sb)sb.style.opacity=AU.on.music?1:0.4;}
 function styleFor(){const y=G?G.y:1895;return y<1912?'rag':y<1920?'march':'jazz';}
 // Мелодия новых танцев: ближайший к прошлой ноте звук аккорда — линия идёт плавно, изредка скачет
+// 0.23: мелодия оркестриона — не выше си второй октавы (без писка)
+const mcap=n=>n>83?n-12:n;
 function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
   for(let o=-24;o<=36;o+=12)tones.forEach(i=>{const n=root+o+i;if(n>=lo&&n<=hi)C.push(n);});
   if(!C.length)return prev;let best=C[0],bw=-1e9;C.forEach(n=>{const d=Math.abs(n-prev),w=(d===0?0.35:d<=4?1.6:d<=7?0.9:0.25)+rnd()*0.9;if(w>bw){bw=w;best=n;}});
@@ -15207,14 +15344,15 @@ function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
 function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth===SY)musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
 // Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы (живыми инструментами)
 function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats,A=ARR[T.sty]||ARR.rag;
-  if(!T._m){T._m=T.mel.replace(/\|/g,' ').trim().split(/\s+/);T._c=T.ch.trim().split(/\s+/).map(chordOf);}
-  const M=T._m,len=M.length,idx=AU.step%len,pass=Math.floor(AU.step/len),bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0],tones=CH[ch[1]];
+  // 0.23: как и в оркестре — ниже, без писка: марш в фа мажоре, регтайм и танго — на кварту ниже
+  if(!T._m){T._m=T.mel.replace(/\|/g,' ').trim().split(/\s+/);T._c=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;}
+  const M=T._m,len=M.length,idx=AU.step%len,pass=Math.floor(AU.step/len),bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
   if(play){
     if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
     else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.16));}
     else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
       if(T.sty==='march'){if(pos===0)drum('kick',t,0.5);if(pos===h)drum('crash',t,0.12);if(pos===spb-2||pos===spb-1)drum('snare',t,0.3);}}
-    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok),mi2=pass===1&&A.mel2?A.mel2:A.mel;
+    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;
       inst(mi2,n,t,sub*d*0.95,0.4);if(d>=2||pass===1)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
     if(AU.step>=len*3-1)musEnd(SY,t+sub);}
   return sub;}
@@ -15237,42 +15375,42 @@ function auSched(){
       if(st==='rag'){
         if(pos===0||pos===4)inst('piano',root-24+(pos===4?7:0),t,beat*0.9,0.45);
         if(pos===2||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,beat*0.35,0.16));
-        const pat=[1,0,1,1,0,1,0,1];if(pat[pos]&&rnd()<0.9){const deg=tones[Math.floor(rnd()*tones.length)]+(rnd()<0.3?2:0);inst(mel,root+12+deg,t,sub*1.3,0.34);}
+        const pat=[1,0,1,1,0,1,0,1];if(pat[pos]&&rnd()<0.9){const deg=tones[Math.floor(rnd()*tones.length)]+(rnd()<0.3?2:0);inst(mel,mcap(root+12+deg),t,sub*1.3,0.34);}
       }else if(st==='march'){
         if(pos===0||pos===4)inst('tuba',root-24+(pos===4?7:0),t,beat,0.55);
         if(pos===2||pos===6)tones.forEach(i=>inst('trombone',root-12+i,t,beat*0.4,0.16));
         if(pos===0)drum('kick',t,0.5);if(pos===4)drum('kick',t,0.35);if(pos===6||pos===7)drum('snare',t,0.28);if(pos===0&&bar%4===0)drum('crash',t,0.1);
-        if(pos%2===0||rnd()<0.3){const deg=tones[Math.floor(rnd()*tones.length)];inst(mel,root+12+deg,t,sub*(pos%2?1:1.8),0.36);}
+        if(pos%2===0||rnd()<0.3){const deg=tones[Math.floor(rnd()*tones.length)];inst(mel,mcap(root+12+deg),t,sub*(pos%2?1:1.8),0.36);}
       }else if(st==='waltz'){
         if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.16));
-        if(pos===0){const n=melPick(root,tones,rnd,67,86),long=rnd()<0.55;AU.wl=long;inst('violin',n,t,beat*(long?2.7:0.95),0.36);if(pass)inst('strings',n-12,t,beat*(long?2.7:0.95),0.14);}
-        else if(!AU.wl&&rnd()<0.8){const n=melPick(root,tones.concat([2,9]),rnd,67,86);inst('violin',n,t,beat*0.95,0.32);}
+        if(pos===0){const n=melPick(root,tones,rnd,62,81),long=rnd()<0.55;AU.wl=long;inst('violin',n,t,beat*(long?2.7:0.95),0.36);if(pass)inst('strings',n-12,t,beat*(long?2.7:0.95),0.14);}
+        else if(!AU.wl&&rnd()<0.8){const n=melPick(root,tones.concat([2,9]),rnd,62,81);inst('violin',n,t,beat*0.95,0.32);}
       }else if(st==='cake'){
         if(pos===0||pos===4)inst('tuba',root-24+(pos===4?7:0),t,beat*0.8,0.5);
         if(pos===2||pos===6)tones.forEach(i=>inst('banjo',root-12+i,t,beat*0.3,0.18));
         if(pos===2||pos===6)drum('rim',t,0.18);
-        const pat=[1,2,0,1,2,0,2,0];if(pat[pos]&&rnd()<0.92){const n=melPick(root,tones,rnd,69,86);inst('piano',n,t,sub*pat[pos]*1.05,0.36);}
+        const pat=[1,2,0,1,2,0,2,0];if(pat[pos]&&rnd()<0.92){const n=melPick(root,tones,rnd,64,81);inst('piano',n,t,sub*pat[pos]*1.05,0.36);}
       }else if(st==='tango'){
         const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);
         if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.15));
-        if(pos===0){const n=melPick(root,tones,rnd,64,84);inst(mel,n,t,sub*(rnd()<0.5?5.5:3),0.38);}
-        else if((pos===6&&rnd()<0.6)||(pos===7&&rnd()<0.45)){const n=melPick(root,tones.concat([2,5]),rnd,64,84);inst(mel,n,t,sub*1.2,0.33);}
+        if(pos===0){const n=melPick(root,tones,rnd,60,79);inst(mel,n,t,sub*(rnd()<0.5?5.5:3),0.38);}
+        else if((pos===6&&rnd()<0.6)||(pos===7&&rnd()<0.45)){const n=melPick(root,tones.concat([2,5]),rnd,60,79);inst(mel,n,t,sub*1.2,0.33);}
       }else if(st==='fox'){
         if(pos%2===0)inst('tuba',root-24+[0,7,0,7][pos/2],t,beat*0.9,0.5);
         if(pos===2||pos===6){tones.forEach(i=>inst('banjo',root-12+i,t,beat*0.45,0.15));drum('brush',t,0.25);}
         if(pos===0||pos===4)drum('hatp',t,0.2);
-        if(pos===0||pos===4){const n=melPick(root,tones,rnd,67,86);inst(mel,n,t,beat*(rnd()<0.5?1.9:0.95),0.36);}
-        else if(pos%2===0&&rnd()<0.55){const n=melPick(root,tones.concat([2]),rnd,67,86);inst(mel,n,t,beat*0.9,0.32);}
-        else if(pos%2===1&&rnd()<0.18){const n=melPick(root,tones,rnd,67,86);inst(mel,n,t,dur*0.9,0.28);}
+        if(pos===0||pos===4){const n=melPick(root,tones,rnd,62,81);inst(mel,n,t,beat*(rnd()<0.5?1.9:0.95),0.36);}
+        else if(pos%2===0&&rnd()<0.55){const n=melPick(root,tones.concat([2]),rnd,62,81);inst(mel,n,t,beat*0.9,0.32);}
+        else if(pos%2===1&&rnd()<0.18){const n=melPick(root,tones,rnd,62,81);inst(mel,n,t,dur*0.9,0.28);}
       }else if(st==='charl'){
         if(pos===0||pos===3){inst('tuba',root-24+(pos===3?7:0),t,beat*0.8,0.52);tones.forEach(i=>inst('banjo',root-12+i,t,beat*0.3,0.17));}
         if(pos===4||pos===6)drum('hat',t,0.22);if(pos===0)drum('kick',t,0.45);if(pos===3)drum('snare',t,0.22);
-        const pat=[1,0,1,1,0,1,1,0];if(pat[pos]&&rnd()<0.8){const n=melPick(root,tones.concat(rnd()<0.3?[3,10]:[]),rnd,67,86);inst(mel,n,t,dur*1.2,0.34);}
+        const pat=[1,0,1,1,0,1,1,0];if(pat[pos]&&rnd()<0.8){const n=melPick(root,tones.concat(rnd()<0.3?[3,10]:[]),rnd,62,81);inst(mel,n,t,dur*1.2,0.34);}
       }else{
         if(pos%2===0){const walk=[0,tones[1],tones[2],tones[tones.length-1]][pos/2];inst('bass',root-24+walk,t,beat*0.9,0.55);}
         if(pos===2||pos===6)tones.slice(1).concat([14]).forEach(i=>inst('piano',root-12+i,t,beat*0.3,0.14));
         drum(pos%2?'hat':'ride',t,pos%2?0.14:0.22);if(pos===0)drum('kick',t,0.4);if(pos===2||pos===6)drum('snare',t,0.16);
-        if(rnd()<(pos%2?0.45:0.6)){const bl=[0,3,5,6,7,10][Math.floor(rnd()*6)];inst(mel,root+12+bl,t,dur*1.5,0.32);}
+        if(rnd()<(pos%2?0.45:0.6)){const bl=[0,3,5,6,7,10][Math.floor(rnd()*6)];inst(mel,mcap(root+12+bl),t,dur*1.5,0.32);}
       }
     }
     AU.next+=dur;AU.step++;
@@ -15750,7 +15888,10 @@ function ambEmitters(T){const n=T.n,W=T.W,S=T.segT||new Uint8Array(n),cfg=T.cfg|
     for(let s=-240;s<=240;s+=12){const k=ss(20,120,Math.abs(s)),m=Math.sin(s/170+rv.ph)*22*k+Math.sin(s/61+rv.ph*2)*6*k;P.push([Lr.p[0]+Lr.d[0]*s+Lr.t[0]*m,Lr.p[2]+Lr.d[1]*s+Lr.t[1]*m]);}
     E.river.push({P,x:Lr.p[0],z:Lr.p[2],rad:260,r0:(rv.w||14)/2+2,id:id++});});
   // море: дорога вдоль берега и пляжи
-  (T.coast||[]).forEach(c=>{const P=[];for(let i=c.i0;i<=c.i1;i+=6)P.push(at(i,c.side*(W/2+24)));if(P.length)seaP=seaP.concat(P);});
+  const realSea=T.real&&T.real.wm&&typeof realWet==='function';
+  if(!realSea)(T.coast||[]).forEach(c=>{const P=[];for(let i=c.i0;i<=c.i1;i+=6)P.push(at(i,c.side*(W/2+24)));if(P.length)seaP=seaP.concat(P);});
+  // 0.23: настоящее море у дороги (Монако, Пескара, Санта-Моника) — прибой оттуда, где вода по карте
+  else for(let i=0;i<n;i+=6)for(const sd of [1,-1])for(const o of [40,90,160,240]){const p=at(i,sd*o);if(realWet(T,p[0],p[1])>0.5){seaP.push(p);break;}}
   if(seaP.length){for(let k=0;k<seaP.length;k+=40){const P=seaP.slice(k,k+40);let cx=0,cz=0;P.forEach(p=>{cx+=p[0];cz+=p[1];});cx/=P.length;cz/=P.length;
     const rad=Math.max(...P.map(p=>Math.hypot(p[0]-cx,p[1]-cz)));E.sea.push({P,x:cx,z:cz,rad,r0:6,id:id++});}}
   // старт, финиш: громкоговоритель (рупор), оркестр
@@ -16026,6 +16167,7 @@ const ACT={
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
+  legPaint:d=>{if(!draft||!draft.legendDraft)return;draft.paint=d.v;document.querySelectorAll('[data-act=legPaint]').forEach(b=>b.classList.toggle('on',b.dataset.v===d.v));},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
     if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v))draft.t='t2';

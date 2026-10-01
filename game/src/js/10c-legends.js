@@ -85,6 +85,17 @@ const LEGENDS_C={
       {id:'c_rl',name:'РЛ',y:1922,kind:'sport',d:{e:'e7',g:'g5',c:'c5',k:'k6',b:'b10',w:'w8'},rep:5,wiki:'Alfa Romeo RL',fx:{appeal:1.2,race:1.1,ch:{perf:1.15}},t:'По мотивам Alfa Romeo RL: Тарга Флорио 1923.'}]
 };
 const LEGEND_BY={};Object.values(LEGENDS).concat(Object.values(LEGENDS_C)).flat().forEach(L=>{L.d.t=L.d.t||KIND_TRIM[L.kind];LEGEND_BY[L.id]=L;});
+// 0.23: цвет легенды — как в истории. «Модель T»: тёмно-зелёная (1908–1910), синяя (1911–1913), с 1914 по 1925 — только чёрная
+// («любого цвета, если он чёрный»: чёрный японский лак сох быстрее всех — конвейер не ждал), с 1926 — снова цвета.
+// Кузов «Модели T» — открытый фаэтон: в 1910-х это 3/4 выпуска; закрытые седан и купе стали массовыми лишь в 1920-х.
+const PNT={black:'#1b1d22',green:'#1f4a36',red:'#9e2b25',blue:'#23427a',cream:'#e3d6b4',bord:'#5c1e2a',white:'#e8e6de',yellow:'#c9a227'};
+const LEGEND_PAINT={ford_t:[[0,'green'],[1911,'blue'],[1914,'black'],[1926,'green']],ford_tt:'black',ford_a:'blue',olds_cd:'black',olds_ltd:'bord',benz_velo:'green',benz_blitzen:'white',
+  daimler_lkw:'green',mercedes35:'white',zeppelin:'black',renault_a:'green',renault_ag:'red',renault_40cv:'bord',peugeot_bebe:'blue',peugeot_l76:'blue',peugeot_201:'black',
+  lanch_10:'green',lanch_40:'green',bug_13:'blue',bug_35:'blue',bug_41:'black',alfa_p2:'red',alfa_6c:'red',fiat_zero:'red',fiat_18bl:'green',fiat_501:'black',fiat_805:'red',
+  c_laub:'green',c_horch8:'black',c_typea:'green',c_d8:'black',c_seven:'blue',c_3litre:'green',c_490:'black',c_bearcat:'yellow',c_lambda:'blue',c_rl:'red'};
+const LEGEND_NOTE={ford_t:'В истории — чёрная: с 1914 по 1925 год «Модель T» красили только чёрным японским лаком, он сох быстрее всех и не задерживал конвейер («любого цвета, если он чёрный»). До 1914-го — тёмно-зелёная и синяя. Кузов — открытый фаэтон: так выглядели три из четырёх «Моделей T» 1910-х; закрытые седан и купе стали массовыми лишь в 1920-х.',
+  ford_tt:'Грузовик «Модели TT» — чёрный, как и вся «Модель T» тех лет.',c_laub:'«Лягушку» прозвали за зелёный цвет — его и оставили.',bug_35:'Синий — гоночный цвет Франции.',alfa_p2:'Красный — гоночный цвет Италии.',c_3litre:'Тёмно-зелёный — гоночный цвет Британии.',benz_blitzen:'Белый — гоночный цвет Германии.'};
+function legendPaint(L,y){let p=LEGEND_PAINT[L&&L.id];if(Array.isArray(p)){let c=p[0][1];p.forEach(([y0,k])=>{if(y>=y0)c=k;});p=c;}return PNT[p]||null;}
 function LEGEND_TITLES(){return Object.values(LEGEND_BY).map(L=>L.wiki).filter(Boolean);}
 function legendsOf(s){return s.pioneer==='custom'?(LEGENDS_C[s.country]||[]):(LEGENDS[s.pioneer]||[]);}
 function legendK(md,k){const L=md&&md.legend&&LEGEND_BY[md.legend];return L&&L.fx[k]||1;}
@@ -116,7 +127,7 @@ function legendCardHTML(s){const L=legendsOf(s);if(!L.length)return '';
     open.length?open.map(x=>x.name).join(', '):L.map(x=>x.name).join(', '));}
 function openLegend(id){const s=G,L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open')return;
   const md=legendModel(s,L),dc=legendDevCost(s,L),dm=legendDevMonths(L),st=carStats(md,0,s.y),im=L.wiki&&IMG[L.wiki];
-  draft={legendDraft:id,name:L.name,paint:PAINTS[s.models.length%PAINTS.length].id};
+  draft={legendDraft:id,name:L.name,paint:legendPaint(L,s.y)||PAINTS[s.models.length%PAINTS.length].id};
   openSheet(`<div class="row"><h2>★ ${esc(L.name)}</h2>${X}</div>
     ${im?`<figure class="photo" style="margin-top:8px"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
     <p style="margin-top:8px">${esc(L.t)}</p><p class="small good" style="margin-top:6px">${esc(legendFxText(L))}</p>
@@ -124,12 +135,14 @@ function openLegend(id){const s=G,L=LEGEND_BY[id];if(!L||legendState(s,L)!=='ope
     <div class="meta"><div>Скорость<b>${Math.round(st.vmax*3.6)} км/ч</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Класс<b>${esc(KIND_NAME[L.kind])}</b></div></div>
     ${compareHTML(md,s)}
     <label class="label" for="lname" style="display:block;margin-top:12px">Название</label><input type="text" id="lname" value="${esc(L.name)}" maxlength="24" style="margin-top:6px">
+    <div class="row" style="margin-top:10px;align-items:center"><span class="label">Цвет</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${draft.paint===c.id?'on':''}" style="background:${c.id}" data-act="legPaint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
+    <p class="small muted" style="margin-top:4px">${esc(LEGEND_NOTE[L.id]||'Цвет — как у исторической машины; можно выбрать свой.')}</p>
     <button class="btn primary block" style="margin-top:14px" data-act="legendStart" data-k="${L.id}" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
   const inp=document.getElementById('lname');if(inp)inp.addEventListener('input',e=>{draft.name=e.target.value;});}
 function legendStart(s,id){const L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open')return false;const dc=legendDevCost(s,L);if(s.cash<dc)return false;
   s.cash-=dc;s.legends=s.legends||{};s.legends[L.id]={y:s.y,m:s.m};
   const nm=((draft&&draft.legendDraft===id&&draft.name)||L.name).trim()||L.name;
-  const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.paint)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+  const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.legendDraft===id&&draft.paint)||legendPaint(L,s.y)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
   m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);addLog(`Начата разработка легенды «${nm}» (${money(dc)}, ${m.devLeft} мес.).`,'good');return true;}
 // выпуск легенды: газеты, репутация, очки наследия
 function legendLaunch(s,md){const L=LEGEND_BY[md.legend];if(!L)return;s.rep=clamp(s.rep+(L.rep||4),0,100);s.legBonus=(s.legBonus||0)+15;

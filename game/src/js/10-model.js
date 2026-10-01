@@ -237,7 +237,7 @@ function dealersShort(s,c){const mk=s.last&&s.last.mk[c],tpc=dealerTPc(s,c),lost
 // Салоны побольше: +25% продаж на каждого дилера (продавцы, гараж, запас машин в кредит) — когда городов уже не осталось
 function dealerGrowCost(s,c){return Math.round(dealerCount(s,c)*0.25*dealerCost(s)/10)*10;}
 function dealerGrowOk(s,c){return dealerCount(s,c)>0&&dealerMult(s,c)<DLR_MULT_MAX;}
-function dealerGrow(s,c){if(!dealerGrowOk(s,c))return false;const cost=dealerGrowCost(s,c);if(s.cash<cost)return false;s.cash-=cost;s.dcap=s.dcap||{};
+function dealerGrow(s,c){if(!dealerGrowOk(s,c)||warCut(s,c))return false;const cost=dealerGrowCost(s,c);if(s.cash<cost)return false;s.cash-=cost;s.dcap=s.dcap||{};
   const was=dealerCapOf(s,c);s.dcap[c]=+Math.min(DLR_MULT_MAX,dealerMult(s,c)+0.25).toFixed(3);s.dAdd=s.dAdd||{};s.dAdd[c]=(s.dAdd[c]||0)+(dealerCapOf(s,c)-was)/dealerTPc(s,c);
   (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*1.2);});
   const where=c!==s.country?' ('+COUNTRIES[c].name+')':'';addLog(`Дилеры${where} расширили салоны: сеть продаёт до ${fmtN(dealerCapOf(s,c))} машин в месяц (было ${fmtN(was)}).`,'good');
@@ -246,7 +246,7 @@ function dealerGrow(s,c){if(!dealerGrowOk(s,c))return false;const cost=dealerGro
 function dealerGrowSteps(s,c){const mk=s.last&&s.last.mk[c],d=dealerCount(s,c),lost=(mk&&mk.lostDlr||0)-((s.dAdd&&s.dAdd[c])||0)*dealerTPc(s,c);if(lost<=0.5||!d)return 0;
   return Math.min(Math.ceil((DLR_MULT_MAX-dealerMult(s,c))/0.25-1e-9),Math.ceil(lost/(d*0.25*dealerTP(s)*(c===s.country?1.3:1))));}
 // Открыть дилеров в новых городах: деньги, журнал и сразу поправка прогноза — завод сделает машины и для новых дилеров
-function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc),dealerRoom(s,c));if(n<1)return 0;
+function buyDealers(s,c,n){if(warCut(s,c))return 0;const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.floor(s.cash/dc),dealerRoom(s,c));if(n<1)return 0;
   const was=dealerCount(s,c),r0=reachOf(s,c),k=was>0?(was+n)/was:2;s.cash-=n*dc;s.dealers[c]=was+n;s.dAdd=s.dAdd||{};s.dAdd[c]=(s.dAdd[c]||0)+n;const r1=reachOf(s,c);
   (s.models||[]).forEach(m=>{if(m.status==='prod'&&(m.lostD||0)>0.2&&(m.dlrK??1)<1)m.dlrK=Math.min(1,m.dlrK*k);});
   const where=c!==s.country?' ('+COUNTRIES[c].name+')':'';
@@ -255,7 +255,7 @@ function buyDealers(s,c,n){const dc=dealerCost(s);n=Math.min(Math.floor(n),Math.
   return n;}
 // Представительство за границей: договор с импортёром → своё отделение → сборочный завод
 function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
-  if(s.cash<cost||(L.y&&s.y<L.y)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
+  if(s.cash<cost||(L.y&&s.y<L.y)||warCut(s,c)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
   // отделение, сборка и завод строятся месяцами (13b/105b): деньги сразу, уровень — когда достроят
   const mo=impMonths(s,c,lv+1);if(mo>0){s.cash-=cost;s.impB=s.impB||{};s.impB[c]={lv:lv+1,left:mo,t:mo};addLog(`${COUNTRIES[c].name}: ${lv+1===2?'открываем своё отделение':lv+1===3?'строим цех сборки из комплектов':'строим свой завод'} — ${money(cost)}, ${mo} мес.`,'good');return true;}
   s.cash-=cost;s.imp=s.imp||{};s.imp[c]=lv+1;const C=COUNTRIES[c];(s.impSince=s.impSince||{})[c]=s.impSince[c]??mi(s);
@@ -265,7 +265,7 @@ function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c
   return true;}
 // Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
 // сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
-function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
   const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
   const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
   const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];

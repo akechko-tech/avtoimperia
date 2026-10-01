@@ -361,7 +361,9 @@ function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
   if(AU.ctx&&AU.mus){AU.mus.gain.setTargetAtTime(on?0.045:(AU.on.music?(R?0.07:0.16):0),AU.ctx.currentTime,0.3);}
   clearInterval(AU.proj);AU.proj=0;
   if(on&&AU.ctx&&AU.on.sfx)AU.proj=setInterval(()=>{if(!REEL||!AU.ctx||REEL.paused)return;const t=AU.ctx.currentTime;for(let k=0;k<3;k++)vNoise(t+k/18,0.012,0.018,'bandpass',2600,AU.fx);},167);}catch(e){}}
-function auReelFanfare(){try{if(!AU.ctx||!AU.on.music)return;const t=AU.ctx.currentTime+0.05;[[67,0,0.18],[72,0.2,0.18],[76,0.4,0.18],[79,0.6,0.5],[76,1.15,0.16],[79,1.35,0.9]].forEach(([n,d,l])=>{inst('cornet',n,t+d,l,0.5);inst('trumpet',n-12,t+d,l,0.25);});}catch(e){}}
+// 0.23: фанфара — оркестром (трубы, валторны, тромбоны, литавры; файл рядом с игрой), без файла — семплы корнета
+function auReelFanfare(){try{if(!AU.ctx||!AU.on.music)return;const synth=()=>{const t=AU.ctx.currentTime+0.05;[[67,0,0.18],[72,0.2,0.18],[76,0.4,0.18],[79,0.6,0.5],[76,1.15,0.16],[79,1.35,0.9]].forEach(([n,d,l])=>{inst('cornet',n-7,t+d,l,0.5);inst('trumpet',n-19,t+d,l,0.25);});};
+  auCue('fanfare',0.7,synth);}catch(e){}}
 function auReelTick(){try{if(AU.ctx&&AU.on.sfx)vNoise(AU.ctx.currentTime,0.05,0.08,'bandpass',1500,AU.fx);}catch(e){}}
 /* ---------- кинохроника во вкладке «Империя»: все открытые ролики ---------- */
 function reelKind(id){return id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':id.startsWith('year:')?'итоги года':id.startsWith('race:')?'гонка':id.startsWith('show:')?'выставка':'история';}
