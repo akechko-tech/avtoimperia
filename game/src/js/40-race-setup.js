@@ -16,11 +16,11 @@ function drvObj(id){return id&&id!=='me'?DRIVERS.find(d=>d.id===id):null;}
 function entryCost(rc,e,s){const d=drvObj(e.drv),hire=d&&!(s.drivers||[]).includes(d.id)?driverRaceFee(d,s):0,fee=raceFee(rc),prep=prepCost(rc,e.prep,s);return {fee,prep,hire,total:fee+prep+hire};}
 function setupTotal(rc,s){return RS.entries.reduce((a,e)=>{const c=entryCost(rc,e,s);a.fee+=c.fee;a.prep+=c.prep;a.hire+=c.hire;a.total+=c.total;return a;},{fee:0,prep:0,hire:0,total:0});}
 // Оценка шанса доехать до финиша: та же модель отказов, что и в гонке
-function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
+function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t)*(rc.dnfK||1),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
 function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]||TERR.dirt;return Math.round(p.w.life*(tr.tyre||1)*(1+0.1*upgOf(md,p.w.id))/(e.tyre==='soft'?1.25:0.8));}
 function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'барабаны на задних колёсах':b<0.8?'на все четыре колеса':'гидравлика или сервоусилитель';}
 function openRaceSetup(key){
-  const s=G,rc=RACES.find(r=>r.key===key);if(!rc||R)return;
+  const s=G,rc=raceByKey(key);if(!rc||R)return;
   if(!raceCarsFor(s).length){toast('Нет машин в производстве');return;}
   // пока игрок выбирает машины и пилотов — фото-материалы гонки уже грузятся
   try{texPrefetch();}catch(_){}
@@ -28,13 +28,13 @@ function openRaceSetup(key){
   renderRaceSetup();
 }
 function renderRaceSetup(keepScroll){
-  const s=G,rc=RACES.find(r=>r.key===RS.key),cfg=trackCfg(rc),cars=raceCarsFor(s),n=RS.entries.length,top=keepScroll?sb.scrollTop:0;
+  const s=G,rc=raceByKey(RS.key),cfg=trackCfg(rc),cars=raceCarsFor(s),n=RS.entries.length,top=keepScroll?sb.scrollTop:0;
   RS.entries.forEach(e=>{if(!cars.some(m=>m.id===e.car))e.car=cars[0].id;if(!prepAllowed(e.prep,s,rc,cars.find(m=>m.id===e.car)))e.prep=1;});
   // хозяин в больнице: пилотов команды не трогаем, а «Еду сам» — ведёте машину №1 вместо её пилота
   RS.entries.forEach(e=>{if(e.drv&&drvOut(s,e.drv))e.drv=null;});
   const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||((meSick||!pioRacer(s))&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
   const tot=setupTotal(rc,s),missing=RS.entries.findIndex(e=>!e.drv),champs=raceChamps(rc).map(id=>CHAMPS[id].name(rc.y));
-  const gb=GBC_IDS.includes(rc.id);
+  const gb=GBC_IDS.includes(rc.id),maxE=rc.match?1:MAX_ENTRIES;
   const entryHTML=(e,i)=>{
     const md=cars.find(m=>m.id===e.car),st=carStats(md,e.prep,rc.y),d=drvObj(e.drv),c=entryCost(rc,e,s);
     const who=e.drv==='me'?'Вы — '+PIONEERS[s.pioneer].name:d?d.n:'пилот не выбран';
@@ -73,13 +73,13 @@ function renderRaceSetup(keepScroll){
     ${photoHTML(rc.img)}${rc.hist?`<div class="hist">${esc(rc.hist)}</div>`:''}
     ${scnSetupHTML(rc)}
     ${(()=>{const rid=raceReelId(rc);if(!rid)return '';try{reelUnlock(s,rid);}catch(_){}return `<div style="margin-top:8px">${paperReelHTML(rid,s)}</div>`;})()}
-    <p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>
+    ${rc.match?matchSetupHTML(rc,s):`<p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>`}
     ${s.chal&&s.chal.acc&&s.chal.type==='race'&&s.chal.rk===rc.key?`<p class="small warn" style="margin-top:6px">⚔️ Вызов принят: ваша лучшая машина должна финишировать выше лучшей машины ${esc(s.chal.mq)}. Пари — ${money(s.chal.stake)}.</p>`:''}
-    <div class="label" style="margin-top:16px">Команда · ${n} из ${MAX_ENTRIES}</div>
+    <div class="label" style="margin-top:16px">${rc.match?'Ваша машина и пилот':`Команда · ${n} из ${MAX_ENTRIES}`}</div>
     <div class="entries">${RS.entries.map(entryHTML).join('')}</div>
-    ${n<MAX_ENTRIES?`<button class="btn block" style="margin-top:8px" data-act="rAdd">+ Ещё машина в команду</button>`:''}
+    ${n<maxE?`<button class="btn block" style="margin-top:8px" data-act="rAdd">+ Ещё машина в команду</button>`:''}
     <div class="label" style="margin-top:16px">Как проведёте гонку</div><div class="chips">${modes.map(m=>`<button class="chip ${RS.mode===m[0]?'on':''}" data-act="rMode" data-v="${m[0]}" ${m[3]?'disabled':''}>${m[1]}<small>${m[3]?'нужен экипаж «Вы за рулём»':m[2]}</small></button>`).join('')}</div>
-    <p class="small muted" style="margin-top:10px">Взносы ${money(tot.fee)}${tot.prep?` · подготовка ${money(tot.prep)}`:''}${tot.hire?` · пилоты ${money(tot.hire)}`:''}. Призы: 1-е место — ${money(racePrize(rc))}, 2-е — ${money(racePrize(rc)*0.5)}, 3-е — ${money(racePrize(rc)*0.25)}.</p>
+    <p class="small muted" style="margin-top:10px">${rc.match?`${tot.prep?`Подготовка ${money(tot.prep)}`:'Подготовка бесплатно'}${tot.hire?` · пилот ${money(tot.hire)}`:''}. Победителю — ставка пари${rc.purse?` и сбор с трибун ${money(rc.purse)}`:''}.`:`Взносы ${money(tot.fee)}${tot.prep?` · подготовка ${money(tot.prep)}`:''}${tot.hire?` · пилоты ${money(tot.hire)}`:''}. Призы: 1-е место — ${money(racePrize(rc))}, 2-е — ${money(racePrize(rc)*0.5)}, 3-е — ${money(racePrize(rc)*0.25)}.`}</p>
     <button class="btn primary block" style="margin-top:12px" data-act="raceGo" ${missing>=0||s.cash<tot.total?'disabled':''}>${missing>=0?`Выберите пилота для экипажа №${missing+1}`:s.cash<tot.total?'Не хватает денег':(RS.mode==='drive'?'На старт':RS.mode==='manage'?'На старт: руковожу':'Провести гонку')+' · '+money(tot.total)}</button>`);
   sb.scrollTop=top;drawSetupSprites();
 }
@@ -108,7 +108,7 @@ function adviceHTML(rc,e,md,st,s,i){const a=raceAdvice(rc,e,md,st,s);if(!a.tips.
   return `<div class="advice"><div class="label">Совет главы команды</div><ul>${a.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>${a.same?'':`<button class="btn sm" data-act="rAdvice" data-i="${i}">Сделать как советует</button>`}</div>`;}
 function terrName(cfg){return {dirt:'грунт',macadam:'щебёнка',asphalt:'асфальт',brick:'кирпич',board:'доски',concrete:'бетон',snow:'снег',mud:'грязь',sand:'песок',mount:'горная дорога',beach:'пляж'}[cfg.terr]||'дорога';}
 function drawSetupSprites(){
-  const rc=RACES.find(r=>r.key===RS.key);
+  const rc=raceByKey(RS.key);
   document.querySelectorAll('#sheetBody .rs-car').forEach(cv=>{const i=+cv.dataset.i,e=RS.entries[i],md=G.models.find(m=>m.id===e.car);if(!md)return;
     const spec=modelSpec(md,e.prep,rc.y,{country:G.country,num:i+1});
     // портрет из студии (видеокарта); без неё — программная отрисовка
@@ -120,12 +120,12 @@ Object.assign(RACE_ACT,{
   raceSetup:d=>openRaceSetup(d.k),
   rEntry:d=>{RS.open=+d.i;renderRaceSetup(true);},
   rMore:()=>{RS.more=!RS.more;renderRaceSetup(true);},
-  rAdvice:d=>{const s=G,rc=RACES.find(r=>r.key===RS.key),e=RS.entries[+d.i];if(!e)return;const md=s.models.find(m=>m.id===e.car),a=raceAdvice(rc,e,md,carStats(md,e.prep,rc.y),s);Object.assign(e,a.rec);toast('Сделано по совету главы команды');renderRaceSetup(true);},
+  rAdvice:d=>{const s=G,rc=raceByKey(RS.key),e=RS.entries[+d.i];if(!e)return;const md=s.models.find(m=>m.id===e.car),a=raceAdvice(rc,e,md,carStats(md,e.prep,rc.y),s);Object.assign(e,a.rec);toast('Сделано по совету главы команды');renderRaceSetup(true);},
   rset:d=>{const e=RS.entries[+d.i];if(!e)return;const k=d.k;e[k]=k==='drv'?d.v:k==='tyre'?d.v:+d.v;if(k==='drv'&&d.v==='me')RS.mode='drive';renderRaceSetup(true);},
-  rAdd:()=>{const rc=RACES.find(r=>r.key===RS.key);if(RS.entries.length>=MAX_ENTRIES)return;const e=defaultEntry(G,rc,RS.entries.map(x=>x.drv));RS.entries.push(e);RS.open=RS.entries.length-1;renderRaceSetup(true);},
+  rAdd:()=>{const rc=raceByKey(RS.key);if(RS.entries.length>=(rc&&rc.match?1:MAX_ENTRIES))return;const e=defaultEntry(G,rc,RS.entries.map(x=>x.drv));RS.entries.push(e);RS.open=RS.entries.length-1;renderRaceSetup(true);},
   rDel:d=>{if(RS.entries.length<=1)return;RS.entries.splice(+d.i,1);RS.open=Math.min(RS.open,RS.entries.length-1);renderRaceSetup(true);},
   rMode:d=>{RS.mode=d.v;renderRaceSetup(true);},
-  raceGo:()=>{const s=G,rc=RACES.find(r=>r.key===RS.key);if(!rc||R)return;const tot=setupTotal(rc,s);if(s.cash<tot.total||RS.entries.some(e=>!e.drv))return;
+  raceGo:()=>{const s=G,rc=raceByKey(RS.key);if(!rc||R)return;const tot=setupTotal(rc,s);if(s.cash<tot.total||RS.entries.some(e=>!e.drv))return;
     s.cash-=tot.total;const n=RS.entries.length;
     addLog(`Заявка на «${rc.name}»: ${n} ${plural(n,'машина','машины','машин')}, расходы ${money(tot.total)}.`);
     const setup={rc,mode:RS.mode,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
@@ -137,4 +137,10 @@ const SCN_ST_NAME={grid:'все вместе, по флагу',interval:'по о
 function scnSetupHTML(rc){try{const S=scnFor(rc),hh=((S.h0%24)+24)%24,hm=String(Math.floor(hh)).padStart(2,'0')+':'+String(Math.round((hh%1)*60)).padStart(2,'0');
   const wx=S.named&&S.wx?S.wx.map(x=>(x[2]>0.3?'дождь':WX_NAME[x[1]]||x[1])).filter((v,i,a)=>a.indexOf(v)===i).join(' → '):'';
   const night=S.span>=8&&[...Array(9)].some((_,k)=>scnSun(((S.h0+S.span*k/8)%24+24)%24,(rc.m??5),S.lat||47).el<-0.05);
-  return `<div class="scn-card"><div class="label">Как это было</div><p class="small" style="margin-top:4px">Старт — ${SCN_ST_NAME[S.st]||S.st}, в ${hm}${night?' · гонка идёт и ночью':''}${S.span>=2?' · за гонку проходит ~'+Math.round(S.span)+' ч':''}${wx?' · погода: '+esc(wx):''}${S.dust>=2?' · пыль столбом':''}${S.crowdRoad?' · зрители прямо на дороге':''}${S.neutral?' · нейтрализация в пути':''}.</p>${S.b?`<p class="small muted" style="margin-top:4px">${esc(S.b)}</p>`:''}</div>`;}catch(e){return '';}}
+  return `<div class="scn-card"><div class="label">${rc.match?'Как пройдёт заезд':'Как это было'}</div><p class="small" style="margin-top:4px">Старт — ${SCN_ST_NAME[S.st]||S.st}, в ${hm}${night?' · гонка идёт и ночью':''}${S.span>=2?' · за гонку проходит ~'+Math.round(S.span)+' ч':''}${wx?' · погода: '+esc(wx):''}${S.dust>=2?' · пыль столбом':''}${S.crowdRoad?' · зрители прямо на дороге':''}${S.neutral?' · нейтрализация в пути':''}.</p>${S.b?`<p class="small muted" style="margin-top:4px">${esc(S.b)}</p>`:''}</div>`;}catch(e){return '';}}
+// 0.24: матч один на один — кто соперник и на чём едет
+function matchSetupHTML(rc,s){const C=s.chal,rs=matchRivalStats(rc),rec=rc.kind==='record';
+  return `<div class="advice" style="margin-top:8px"><div class="label">⚔️ ${esc(MATCH_ST[rc.kind]||'Матч')} с ${esc(rc.rv.n)}</div><ul>
+    <li>${rec?(rc.t==='sprint'?'Каждый едет один, на время: разгон и мерный участок. Чья скорость выше — тот и выиграл.':'Каждый проходит круг один, на время. Лучшее время — ваше пари.'):'Одна машина против одной: старт вместе, по флагу. Кто первым на финише — тот и прав.'}</li>
+    <li>У соперника — заводская гоночная машина ≈${rs.hp} л.с., до ${rs.kmh} км/ч${rc.rv.dn?`, за рулём ${esc(rc.rv.dn)}`:''}.</li>
+    ${C&&C.acc&&C.rk===rc.key?`<li>Пари — ${esc(stakeText(C))}. Не приедете — пари проиграно.</li>`:''}</ul></div>`;}

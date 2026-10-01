@@ -38,6 +38,12 @@ function rdProjects(s){
   });
   return list;
 }
+// 0.24: устаревшая деталь — её уже обогнала деталь новее (по своей главной мере), появившаяся хотя бы два года назад,
+// а сама она старше восьми лет и не стоит на ваших машинах: улучшать её почти незачем
+const PART_BETTER={e:(z,x)=>z.rel>=x.rel&&z.hp>=x.hp*0.9,g:(z,x)=>z.eff>=x.eff&&(z.relK||1)>=(x.relK||1),c:(z,x)=>z.max>=x.max&&z.ride>=x.ride,
+  w:(z,x)=>z.grip>=x.grip&&z.life>=x.life&&!z.solid&&(!x.pit||(z.pit&&z.pit<=x.pit)),k:(z,x)=>z.brk>=x.brk,b:(z,x)=>!!z.truck===!!x.truck&&!!z.closed===!!x.closed&&z.seats>=x.seats&&(z.comf||1)>=(x.comf||1)&&(z.pay||0)>=(x.pay||0)&&z.cd<=x.cd*1.1};
+function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETTER[ck];if(!cat||!f)return false;const arr=cat.arr(),x=byId(arr,id);if(!x||s.y-Math.max(1893,x.y||1895)<8)return false;
+  return arr.some(z=>z!==x&&(z.y||1895)>(x.y||1895)&&(z.y||1895)<=s.y-2&&f(z,x));}
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;
@@ -297,7 +303,7 @@ function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round((800+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
 function qLabel(r){return r<0.85?['Хуже соперников','bad']:r<1.08?['Как у соперников','warn']:['Лучше соперников','good'];}
-function totalSold(s){return s.models.reduce((a,m)=>a+m.totalSold,0);}
+function totalSold(s){return s.models.reduce((a,m)=>a+m.totalSold,0)+(s.milTotal||0);}   // 0.24: и машины для армии
 function addLog(text,kind=''){G.log.push({d:dstr(G),text,kind});if(G.log.length>400)G.log.shift();}
 function hostName(c){return c==='intl'?'Международная':(COUNTRIES[c]?COUNTRIES[c].name:({be:'Бельгия',es:'Испания',mc:'Монако',at:'Австрия',ch:'Швейцария'}[c]||c));}
 const fmtN=n=>{n=Math.round(n);return Math.abs(n)>=1e6?(n/1e6).toFixed(n>=1e7?1:2).replace('.',',')+' млн':Math.abs(n)>=1e4?Math.round(n/1000)+' тыс.':n.toLocaleString('ru-RU');};

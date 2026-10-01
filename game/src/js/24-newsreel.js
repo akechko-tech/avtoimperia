@@ -353,7 +353,7 @@ function reelMood(id,R0){const t=((R0&&R0.t)||'')+' '+((R0&&R0.sh||[]).map(x=>x.
   if(/войн|погиб|гибел|катастроф|пожар|кризис|разорен|депресси|смерт|траур/i.test(t))return 'sad';if(/рекорд|побед|триумф|перв/i.test(t))return 'triumph';return R0&&R0.mus==='waltz'?'calm':'lively';}
 function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
   const tr=on&&AU.on.music&&typeof orchPick==='function'&&R0?orchPick(reelMood(id||'',R0),R0.y||(G?G.y:1900),id):null;
-  AU.reelSty=on&&!tr&&mus&&STY[mus]?mus:null;
+  AU.reelSty=null;   // 0.24: под кинохронику — только оркестр; без записей — тишина, без синтезатора
   {const a=AU.reelEl;clearInterval(AU.reelDuck);if(on&&tr){const e=a||(AU.reelEl=new Audio());e.loop=true;e.src=tr.src;e.volume=0;const p=e.play();if(p&&p.catch)p.catch(()=>{});
       AU.reelDuck=setInterval(()=>{if(!REEL){e.volume=Math.max(0,e.volume-0.05);if(e.volume<=0.01){e.pause();clearInterval(AU.reelDuck);}return;}const want=REEL.paused?0:VOICE.cb?0.1:0.3;e.volume=clamp(e.volume+(want-e.volume)*0.25,0,1);if(REEL.paused&&!e.paused)e.pause();else if(!REEL.paused&&e.paused){const q=e.play();if(q&&q.catch)q.catch(()=>{});}},120);}
     else if(a&&!on){AU.reelDuck=setInterval(()=>{a.volume=Math.max(0,a.volume-0.06);if(a.volume<=0.01){a.pause();clearInterval(AU.reelDuck);}},80);}}

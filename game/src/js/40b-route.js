@@ -45,7 +45,7 @@ function planRoute(trk,rnd){
       if(j<2||j>n-30||curvy(j-15,30)>1/200)continue;let ok=true;for(let a=j-25;a<=j+25;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       put(RSEG.rail,j-6,j+6,{cap:'Железнодорожный переезд: смотрите на шлагбаум',alt:26,w:2});trk.rails.push({i:j,ang:(r()-0.5)*0.5});break;}}
   // 5) берег моря: дорога вдоль воды (Ривьера, Сицилия, Испания, Ла-Манш)
-  const sea=!!set.sea||['targa','mc','x22765'].includes(rc.track)||/turbie|monte|nice|riviera|sitges|coppa|florio|boulogne|dieppe|brighton/i.test(rc.id+' '+rc.name);
+  const sea=!!set.sea||['targa','mc','x22765'].includes(rc.track)||/turbie|monte|nice|riviera|sitges|coppa|florio|boulogne|dieppe|brighton|bexhill/i.test(rc.id+' '+rc.name);
   let yMin=1e9;trk.pts.forEach(p=>{yMin=Math.min(yMin,p[1]);});
   if(sea&&n>300&&!hill){for(let t=0;t<40;t++){const len=120+Math.floor(r()*90),j=(closed?60:s0+100)+Math.floor(r()*Math.max(1,(closed?n-len-120:f0-s0-len-160)));
       let ok=true,lo=1e9,hi=-1e9;for(let a=j;a<j+len;a++){if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail)ok=false;else{lo=Math.min(lo,trk.pts[a][1]);hi=Math.max(hi,trk.pts[a][1]);}}

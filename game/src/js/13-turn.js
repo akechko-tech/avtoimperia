@@ -43,7 +43,8 @@ function step(){
     if(d>0){r.hire=d*8*cpi(s);s.cash-=r.hire;}s.workers=Math.max(3,s.workers+d);}
   const kLab=needH>0?Math.min(1,s.workers*hpw/needH):1,k=Math.min(kCap,kLab);r.bneck={cap:kCap,lab:kLab,wh:!!r.whCut,load:cap>0?needCap/cap:0};
   act.forEach((md,i)=>{const made=Math.floor(want[i]*k+(Math.random()<(want[i]*k)%1?1:0));md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
-  if(milCap>0){const mc=act.reduce((a,m)=>a+matCost(m,s),0)/act.length,mu=Math.floor(milCap*k);r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=mu;r.made+=mu;}
+  // 0.24: из военного заказа машины — столько, сколько нужно армии; остальное — военная продукция (моторы, снаряды, каски): деньги те же, но это не проданные машины
+  if(milCap>0){const mc=act.reduce((a,m)=>a+matCost(m,s),0)/act.length,mu=Math.floor(milCap*k);r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=Math.min(mu,milNeed(s));r.milX=mu-r.milN;r.made+=mu;}
   // поставки по заказам — в первую очередь
   s.orders=(s.orders||[]).filter(o=>{const md=act.find(m=>m.id===o.md);const need=Math.ceil(o.left/Math.max(1,o.due-mi(s)));
     if(md){const n=Math.min(o.left,md.stock,need*2);if(n>0){md.stock-=n;o.left-=n;r.ord+=n*o.price;r.ordN+=n;md.totalSold+=n;md.ordSold=(md.ordSold||0)+n;}}
@@ -106,10 +107,12 @@ function step(){
     s.rep+=(target-s.rep)*0.035+(act.some(m=>overpower(m)&&m.lastSold>0)?-1.5:0);}else s.rep-=0.2;
   s.rep=clamp(s.rep,0,100);
   // конкуренты и рынки для экрана «Рынок»: сколько купили у реальных марок и у вас
-  for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>x.last=0);const MC=D.mk[c],sg={};let size=0;
-    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x)return;x.last+=o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}});});
+  for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>{x.last=0;x.lg={};});const MC=D.mk[c],sg={};let size=0;
+    // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
+    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x)return;x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
     const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(m&&m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
+  chalTallyYou(s,r);
   // продажи по классам дома за год — для «королей года» и пари по продажам
   {const hm=r.mk[s.country];if(hm&&hm.segs){const Y=s.segY=s.segY||{},YT=s.segYT=s.segYT||{};SEGK.forEach(g=>{Y[g]=(Y[g]||0)+(hm.segs[g].you||0);YT[g]=(YT[g]||0)+(hm.segs[g].size||0);});}}
   // продажи марок за год — для таблицы конкурентов
@@ -127,7 +130,8 @@ function step(){
   const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);s.last=r;
   const H=s.hist;H.cash.push(Math.round(s.cash));H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(Math.round(r.profit));H.share.push(+(r.share*100).toFixed(2));
   for(const k2 in H)if(H[k2].length>420)H[k2].shift();
-  s.yearSold=(s.yearSold||0)+r.sold;
+  // 0.24: армии и ведомствам машины тоже проданы — в итог года и в «Продано» (в долю рынка — только покупатели)
+  s.yearSold=(s.yearSold||0)+r.sold+(r.milN||0)+(r.ordN||0);s.milTotal=(s.milTotal||0)+(r.milN||0);
   for(const c in r.mk){const m=r.mk[c];if(m.size>0&&m.sold>0){const sh=m.sold/m.size;if(sh>(s.peak.share[c]||0))s.peak.share[c]=sh;}}
   if(s.strikeNow)addLog('Забастовка: выпуск упал вдвое.','bad');
   if(Math.random()<WAGE_POL[s.wagePol||'market'].strike*(s.workers>200?1.4:1)&&!s.pending.length&&s.workers>30)strikeThreat();
@@ -152,6 +156,12 @@ function step(){
 // Сколько можно задолжать до банкротства: запас по сложности плюс месяц отсрочки у поставщиков (детали и зарплата)
 // сколько долгов по счетам терпят поставщики и рабочие: месяц закупок и зарплаты; в кредитный кризис — втрое меньше (все хотят денег сразу)
 function debtLimit(s){const L=s.last,k=(typeof creditState==='function'&&['tight','crash'].includes(creditState(s).k))?0.3:1;return DIF().debt*cpi(s)+(L?((L.mat||0)+(L.wage||0))*k:0);}
+// 0.24: машин армии нужно не больше, чем ей нужно: нужда армии страны в месяц — грузовики, санитарные и штабные машины
+// (по истории: армия США к концу 1918 года — около 50 тысяч машин во Франции, британская — около 110 тысяч за войну,
+// французская — около 90 тысяч, германская — около 40 тысяч); вам — до 60% этого. Остальная мощность военного заказа —
+// военная продукция (моторы, снаряды, каски): её оплачивают так же, но в «Продано» она не входит
+const ARMY_NEED={us:6000,uk:2500,fr:2500,de:1000,it:800};
+function milNeed(s){return Math.round((ARMY_NEED[s.country]||1000)*0.6);}
 function endOfYear(s){
   s.m=0;s.y++;
   for(const c in s.comps)s.comps[c].forEach(o=>{o.prev2=o.prev||0;o.prev=o.yr||0;o.yr=0;o.ysPrev=o.ys||{};o.ys={};});s.homePrev2=s.homePrev||0;s.homePrev=s.homeY||0;s.homeY=0;

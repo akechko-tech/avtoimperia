@@ -39,8 +39,10 @@ function setup(home,y,m){newGame('custom',home,'Экспорт','normal');at(y,m
   G.imp.fr=2;delete G.impB;G.cash=1e9;impUp(G,'fr');ok(G.impB&&G.impB.fr&&G.impB.fr.left>=6&&G.impB.fr.left<=9,'сборку из комплектов строят '+(G.impB&&G.impB.fr&&G.impB.fr.left)+' мес.');
   G.imp.fr=3;delete G.impB;impUp(G,'fr');ok(G.impB&&G.impB.fr&&G.impB.fr.left>=12&&G.impB.fr.left<=24,'свой завод строят '+(G.impB&&G.impB.fr&&G.impB.fr.left)+' мес.');}
 // 9. Лицензия: без пошлины, со склада не берут, вам — доля цены
-{const md=setup('fr',1925,3);G.imp.it=0;G.dealers.it=0;ok(licStart(G,'it'),'лицензия в Италии продана');G.lic.it.at=mi(G);md.stock=0;G.pending=[];step();const L=G.last;
-  ok((L.lic||0)>0&&(L.mk.it&&L.mk.it.sold>0),'по лицензии продано '+(L.mk.it?L.mk.it.sold:0)+', доход $'+Math.round(L.lic||0)+' без машин со склада');}
+{const md=setup('fr',1925,3);G.imp.it=0;G.dealers.it=0;ok(licStart(G,'it'),'лицензия в Италии продана');G.lic.it.at=mi(G);md.stock=0;let L=null,n=0,lic=0;
+  // спрос по лицензии в Италии — пятая часть машины в месяц: ждём первой продажи (до двух лет)
+  for(let k=0;k<24&&!n;k++){md.stock=0;G.pending=[];step();L=G.last;n+=(L.mk.it&&L.mk.it.sold)||0;lic+=L.lic||0;}
+  ok(lic>0&&n>0,'по лицензии продано '+n+', доход $'+Math.round(lic)+' без машин со склада');}
 // 10. Покупка местной марки: её место на рынке — ваше
 {const md=setup('us',1925,3);const C=brandCands(G,'fr')[0];const g0=ghostShare('fr','people',G);G.cash=1e9;ok(brandBuy(G,'fr',C.i),'куплена марка «'+C.cp.n+'» за $'+brandPrice(G,'fr',C));
   ok(ghostShare('fr','people',G)>=g0&&tariffOf(md,'fr',G)===0&&foreignPen(G,'fr')===0,'её покупатели и заводы — ваши: без пошлины и без «чужой марки»');}

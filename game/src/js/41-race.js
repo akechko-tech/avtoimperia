@@ -76,7 +76,9 @@ function buildTrack(rc,vref){
   // длина под время заезда: 3–4 минуты игрового времени (подъём в гору и спринт — короче)
   const cfg=trackCfg(rc);if(vref){const dur={road:205,circuit:215,endurance:245,hill:175,rally:220,oval:185,sprint:65}[rc.t]||200,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?800:700,cfg.closed?3800:9000);if(cfg.sprint)cfg.len=clamp(vref*62,700,2600);cfg.dur=dur;
     // настоящий овал: круг своей длины, кругов — сколько влезет в заезд
-    if(cfg.realLap){cfg.len=cfg.realLap;cfg.laps=clamp(Math.round(total/cfg.realLap),1,3);}}
+    if(cfg.realLap){cfg.len=cfg.realLap;cfg.laps=clamp(Math.round(total/cfg.realLap),1,3);}
+    // 0.24: рекорд круга — ровно один круг
+    if(rc.laps&&cfg.closed){cfg.laps=rc.laps;if(!cfg.realLap)cfg.len=clamp(total,800,3800);}}
   const rnd=mulberry32(hashStr(rc.key)),STEP=4;let pts=[];
   const RD=cfg.real&&typeof realData==='function'?realData(rc):null,RP=RD?realPoints(RD,cfg):null;
   if(RP){pts=RP.pts;}
@@ -591,7 +593,8 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const teamCars=setup.entries.map((e,i)=>{const d=e.drv==='me'?null:DRIVERS.find(x=>x.id===e.drv),me=e.drv==='me';
     return {you:true,name:s.company,label:e.md.name,drvName:me?(setup.mode==='drive'?'Вы':pio.name):d.n,drvId:e.drv,sk:me?pioSk(s):Math.min(0.99,d.sk*moodK(s,d.id)),
     md:e.md,prep:e.prep,tyre:e.tyre,gear:e.gear,color:e.md.paint,num:i+1,player:setup.mode==='drive'&&(me||(noMe&&i===0)),pw:(1+bn('race',0))*(dl.pw||1)*(e.md.legend?legendK(e.md,'race'):1),relK:dl.rel||1,pitK:dl.pit||1};});
-  const ai=raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
+  // 0.24: матч один на один и спор о скорости — на трассе только машина соперника
+  const ai=rc.match?matchField(rc,s,setup.entries.map(e=>e.drv)):raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
   const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));
   const trk=buildTrack(rc,vref);
   const mechOut=typeof injOf==='function'&&injOf(s,'mech');
@@ -614,7 +617,7 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   // погода гонки: в дождь шины держат хуже
   const wx=r3dWeather(trk);planPatches(trk,!!wx.rain);try{planRough(trk);}catch(e){console.warn('rough',e);trk.rg=null;}
   R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-5,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
-    hz0:-Math.log(1-dnfTarget(rc.y,rc.t))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
+    hz0:-Math.log(1-dnfTarget(rc.y,rc.t)*(rc.dnfK||1))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
   if(typeof SCN_OFF==='undefined'||!SCN_OFF)try{scnSetup();const S=R.scn;if(S.wetEver&&!wx.rain){planPatches(trk,true);(trk.patches||[]).forEach(P=>{if(P.kind==='puddle')P.rain=1;});}}catch(e){console.warn('scenario',e);R.scn=null;}
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
   try{raceOldFilm(false);}catch(_){}

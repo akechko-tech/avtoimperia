@@ -92,14 +92,16 @@ function debtMonth(act){const L=G.last;
   if(G.rd.lvl<RD_MAX&&free()>rdUpCost(G)*2){G.cash-=rdUpCost(G);G.rd.lvl++;}
   if(!G.techBuild){const k=TECH_ORDER.find(k=>techOpen(G,k)&&free()>techCost(G,k));if(k){const c=techCost(G,k);G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};}}}
 // выбор в событиях: пассивный, средний и жадный жмут первый вариант; сильный и «в долг» — как помощник
-function pickChoice(ev){const K=ev.choices.map(c=>c[1]);if(BOT!=='strong'&&BOT!=='debt')return K[0];
+function pickChoice(ev){const K=ev.choices.map(c=>c[1]);
+  // 0.24: на гонку, матч и спор о скорости простые боты тоже не соглашаются — они не ездят, а неявка стоит ставки и репутации
+  if(BOT!=='strong'&&BOT!=='debt'){if(K.includes('chalNo')&&G.chal&&['race','match','record'].includes(G.chal.type))return 'chalNo';return K[0];}
   // заказ: только если цена покрывает себестоимость с запасом и есть деньги на выпуск
   if(K.includes('tskip')&&G.tenderNow){const o=G.tenderNow,md=G.models.find(m=>m.id===o.md),uc=md?unitCost(md,G):1e9,room=G.cash+Math.max(0,maxLoan(G)-G.loan)*0.5;
     if(o.bids[0]>=uc*1.12&&room>uc*o.n*0.6)return 'tbid0';if(o.bids[1]>=uc*1.12&&room>uc*o.n*0.6)return 'tbid1';return 'tskip';}
   // выставка: большой стенд — когда денег много, малый — когда хватает
   if(K.includes('show0')&&G.showNow){const sh=SHOWS.find(x=>x.id===G.showNow);if(!sh||NOEXP&&SHOW_HOST[sh.h].c!==G.country)return 'show0';const c2=standCost(sh,G,true),c1=standCost(sh,G,false);return G.cash>c2*12?'show2':G.cash>c1*8?'show1':'show0';}
-  // вызов на гонку бот не примет (он не ездит), на продажи — если идёт впереди
-  if(K.includes('chalNo')&&G.chal)return G.chal.type==='sales'?'chalYes':'chalNo';
+  // вызов на гонку, матч и спор о скорости бот не примет (он не ездит), на продажи и пробег — примет
+  if(K.includes('chalNo')&&G.chal)return G.chal.type==='sales'||G.chal.type==='trial'?'chalYes':'chalNo';
   // «в долг» верит в рост: в спад цены не снижает, в крах скупает подешевевшее
   if(BOT==='debt'){const r=K.find(k=>/wSlumpWait$|wCrashRisk$/.test(k));if(r)return r;}
   return K[0];}

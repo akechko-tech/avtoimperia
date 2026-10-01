@@ -41,7 +41,8 @@ function insLoad(){if(INS.loadP)return INS.loadP;
   return INS.loadP;}
 // Нота инструмента: n — MIDI, t — время, dur — длина, v — громкость (0…1), dest — куда (по умолчанию музыка)
 function inst(name,n,t,dur,v,dest){const I=INS.idx&&INS.idx.inst[name],B=INS.buf[name],c=AU.ctx;
-  if(!I||!B||!c){if(name==='bass'||name==='tuba'||name==='pizz')vBass(n,t,dur,v*0.9);else vPiano(n,t,dur,v*0.45);return;}
+  // 0.24: нет семпла — тишина, а не «пиканье» генератора
+  if(!I||!B||!c)return;
   const notes=I.notes,dead=INS.dead[name]||[];let k=-1,bd=1e9;for(let q=0;q<notes.length;q++){if(dead.includes(q))continue;const d=Math.abs(n-notes[q]);if(d<bd){bd=d;k=q;}}if(k<0)return;
   const src=c.createBufferSource(),g=c.createGain(),rate=Math.pow(2,(n-notes[k])/12);src.buffer=B;src.playbackRate.value=rate;src.connect(g);g.connect(dest||AU.mus);
   const hold=I.hold||1.2,end=Math.min(I.slot-0.06,Math.max(0.12,Math.min(dur,hold)+0.35)),rel=Math.min(0.25,0.06+dur*0.08);
@@ -132,6 +133,8 @@ const musKey=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,' ').split(' ').filter(w=>
 async function musicLoad(){
   if(window.MUSIC_MANIFEST){AU.tracks=window.MUSIC_MANIFEST;musBuild(true);return;}
   try{const c=JSON.parse(localStorage.getItem('avt-mus')||'null');if(c&&c.v===5&&Date.now()-c.t<20*864e5){AU.tracks=c.tr;musBuild(true);return;}}catch(e){}
+  // 0.24: пока ищем записи на Викискладе (это небыстро), уже играют свои записи оркестра — они рядом с игрой
+  if(!AU.pl.length)musBuild(true);
   try{
     const api='https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query';const au=document.createElement('audio');const ogg=!!au.canPlayType('audio/ogg; codecs=vorbis');
     const found=[];let qi=0;
@@ -175,11 +178,18 @@ function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
 const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», военный оркестр'},
   own_reel:{cap:'«Кинохроника», регтайм (оркестр)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», оркестр регтайма'},
   own_valse:{cap:'«Вальс гонщиков» (оркестр)',st:'waltz',y:1895,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
-  own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'}};
-function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
+  own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'},
+  // 0.24: вместо «оркестриона» — живые оркестры: диксиленд, кекуок, фокстрот в зале, чарльстон
+  own_cake:{cap:'«Кекуок клаксонов» (оркестр)',st:'cake',y:1898,mood:'lively',by:'Мелодия «Автоимперии», духовой оркестр с банджо'},
+  own_fox:{cap:'«Фокстрот на набережной» (оркестр)',st:'fox',y:1914,mood:'calm',by:'Мелодия «Автоимперии», танцевальный оркестр'},
+  own_jazz:{cap:'«Гаражный джаз» (джаз-бэнд)',st:'jazz',y:1917,mood:'lively',by:'Мелодия «Автоимперии», джаз-бэнд'},
+  own_charl:{cap:'Чарльстон «Полный газ» (оркестр)',st:'charl',y:1923,mood:'lively',by:'Мелодия «Автоимперии», горячий джаз-оркестр'}};
+// 0.24: сеть подводит (три чужие записи подряд не загрузились) — 10 минут играем только свои записи оркестра, вшитые в игру
+function remoteOk(){return !AU.remoteOff||Date.now()-AU.remoteOff>600000;}
+function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
-function orchPick(mood,y,seed){const L=orchTracks().filter(t=>t.y<=y+3);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
-function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
+function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
+function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
 function eraStyles(y){return y<1906?['cake','rag','waltz']:y<1912?['rag','waltz','march']:y<1919?['march','tango'].concat(y>=1914?['fox']:['rag']):y<1923?['jazz','fox','tango','waltz']:['jazz','charl','fox','tango'];}
 function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','march','jazz','waltz','cake','tango','fox','charl']:eraStyles(y),R2=['I','II','III'];
   const L=Object.keys(TUNES).filter(k=>all||TUNES[k].y<=y).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
@@ -188,7 +198,8 @@ function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
   if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
   // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
-  {const hasO=L.some(t=>t.orch),S=musSynth(),nR=L.length;L=hasO?L:nR?L.concat(S.slice(0,Math.max(3,Math.ceil(nR/2)))):S;}
+  // 0.24: синтезатора («оркестриона») в плейлисте больше нет совсем — свои записи оркестра вшиты в игру; не играет ничего — тишина
+  {const bad=AU.badSrc||{};L=L.filter(t=>!bad[t.src]);}
   const rnd=mulberry32(hashStr(AU.on.mode+y));for(let i=L.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[L[i],L[j]]=[L[j],L[i]];}
   // первой звучит своя мелодия игры — марш «Автоимперия» (оркестр)
   if(start){const k=L.findIndex(t=>t.id==='own_avto');if(k>0)L.unshift(L.splice(k,1)[0]);}
@@ -205,18 +216,25 @@ function musicPlay(force){
   if(tr.synth){if(AU.el&&!AU.el.paused)AU.el.pause();AU.real=false;if(force||!AU.synth||AU.synth.title!==tr.title){AU.synth=tr;AU.step=0;tr.end=0;AU.mel=0;}AU.nowPlaying=null;musUI();return;}
   AU.synth=null;AU.real=true;
   if(!AU.el){AU.el=new Audio();AU.el.preload='auto';AU.el.addEventListener('ended',()=>musNext(1));
-    AU.el.addEventListener('playing',()=>{AU.errs=0;});
-    AU.el.addEventListener('error',()=>{if(!AU.el.getAttribute('src'))return;AU.errs++;if(AU.errs<Math.min(6,AU.pl.length))musNext(1);else{AU.pl=AU.pl.filter(t=>t.synth).concat(musSynth());AU.idx=0;AU.errs=0;musicPlay(true);}});}
+    AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
+    AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
   AU.el.volume=R?0.2:0.5;
   if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;}
   if(AU.el.paused){const pr=AU.el.play();if(pr&&pr.catch)pr.catch(()=>{});}
   musUI();
 }
-function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)return;AU.idx=((AU.idx+d)%n+n)%n;AU.paused=false;if(!AU.on.music){AU.on.music=true;auApply();}musicPlay(true);}
+// 0.24: запись не загрузилась — пропускаем её; три чужие подряд — сеть подводит: играем свои записи оркестра (вшиты в игру).
+// Не играет совсем ничего — тишина (синтезатора больше нет)
+function musErr(){const tr=AU.nowPlaying;if(tr){AU.badSrc=AU.badSrc||{};AU.badSrc[tr.src]=1;if(!tr.own)AU.remoteErr=(AU.remoteErr||0)+1;}AU.errs=(AU.errs||0)+1;
+  const local=AU.pl.filter(t=>t.own&&!(AU.badSrc||{})[t.src]);
+  if((AU.remoteErr||0)>=3&&local.length){AU.remoteOff=Date.now();AU.remoteErr=0;AU.errs=0;AU.sig='';AU.pl=local;AU.idx=0;musicPlay(true);return;}
+  if(AU.errs<AU.pl.length){musNext(1);return;}
+  AU.pl=[];AU.idx=0;AU.errs=0;AU.noMusic=1;if(AU.el&&AU.el.pause)AU.el.pause();musUI();}
+function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)return;const bad=AU.badSrc||{};let k=0;do{AU.idx=((AU.idx+d)%n+n)%n;}while(++k<n&&AU.pl[AU.idx]&&bad[AU.pl[AU.idx].src]);AU.paused=false;if(!AU.on.music){AU.on.music=true;auApply();}musicPlay(true);}
 function musToggle(){if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
 function musMode(){AU.on.mode=AU.on.mode==='all'?'era':'all';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}AU.sig='';musBuild(true);toast(AU.on.mode==='all'?'Вся фонотека 1895–1929':'Музыка текущей эпохи');}
 function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
-  const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):'Фонотека загружается…';
+  const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):AU.noMusic?'Записи не загрузились — музыки нет':'Фонотека загружается…';
   document.querySelectorAll('.plTitle').forEach(e=>{e.textContent=txt;});
   document.querySelectorAll('.plPlay').forEach(e=>{e.textContent=on?'❚❚':'▶';});
   document.querySelectorAll('.plMode').forEach(e=>{e.textContent=AU.on.mode==='all'?'Все':'Эпоха';});

@@ -150,7 +150,7 @@ function scnGeneric(rc){const t=rc.t,y=rc.y,s={lat:SCN_LAT[rc.c]||47};
   else if(t==='road')Object.assign(s,{st:y<1920?'interval':'grid',gap:4,h0:y<1905?4.5:6.5,span:clamp(rc.km/scnAvg(y,t),1,30)});
   else Object.assign(s,{st:y<1908?'interval':y<1914?'interval':'grid',gap:4,h0:y<1914?7:13,span:clamp(rc.km/scnAvg(y,t),1,10)});
   s.dust=y<1910&&t!=='oval'&&t!=='sprint'?1.3:y<1920?1:0.7;return s;}
-function scnFor(rc){const g=scnGeneric(rc),S=SCN[rc.id],o=Object.assign({},g,S||{});
+function scnFor(rc){const g=scnGeneric(rc),S=rc.scn||SCN[rc.id],o=Object.assign({},g,S||{});   // 0.24: у матча свой сценарий (rc.scn)
   (SCN_Y[rc.id]||[]).some(([yy,v])=>{if(rc.y<=yy){Object.assign(o,v);return true;}return false;});
   o.named=!!S;o.id=rc.id;return o;}
 /* ---------- солнце по часам: высота и азимут (день года — по месяцу гонки, широта — по месту) ---------- */

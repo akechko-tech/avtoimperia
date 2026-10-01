@@ -40,7 +40,7 @@ function paperHTML(o,s){
     ${fig}${reel}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
-      <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${L.sold} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
+      <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${fmtN(L.sold+(L.milN||0)+(L.ordN||0))}${L.milN?` (армии — ${fmtN(L.milN)})`:''} · касса ${money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
     ${o.mean?`<div class="p-mean"><b>Что это значит для вас</b><span>${esc(o.mean)}</span></div>`:''}
     <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>

@@ -7,5 +7,7 @@ function availDrivers(s){const ex=PIONEERS[s.pioneer].drv;return DRIVERS.filter(
 function raceEligible(r,s){return r.c==='intl'||!COUNTRIES[r.c]||r.c===s.country||dealerCount(s,r.c)>0;}
 function raceWarBlocked(r,s){const c=COUNTRIES[r.c]?r.c:'fr';return r.c==='intl'?isWar(s.y,s.m,s.country)&&s.country!=='us':isWar(r.y,r.m,c);}
 function raceOpen(r,s){return r.y===s.y&&(s.m===r.m||s.m===r.m-1);}
-function racePrize(r){const mul={sprint:0.4,road:1.2,circuit:1,endurance:1.2,hill:0.5,rally:1.1,oval:1.1}[r.t]*(r.c==='intl'?1.3:1)*(r.major?1.6:1);return Math.round(3500*tabAt(CPI,r.y)*(1+(r.y-1895)*0.04)*mul/100)*100;}
-function raceFee(r){return Math.round(racePrize(r)*0.08/10)*10;}
+function racePrizeBase(r){const mul=({sprint:0.4,road:1.2,circuit:1,endurance:1.2,hill:0.5,rally:1.1,oval:1.1}[r.t]||1)*(r.c==='intl'?1.3:1)*(r.major?1.6:1);return Math.round(3500*tabAt(CPI,r.y)*(1+(r.y-1895)*0.04)*mul/100)*100;}
+// 0.24: у матча один на один приза нет — победителю сбор с трибун (purse), взноса тоже нет
+function racePrize(r){return r.purse!=null?r.purse:racePrizeBase(r);}
+function raceFee(r){return r.match?0:Math.round(racePrize(r)*0.08/10)*10;}

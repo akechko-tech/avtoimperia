@@ -100,7 +100,7 @@ function drvMonth(s){
   (s.drivers||[]).forEach(id=>{const o=moodOf(s,id);o.v+=(60-o.v)*0.05;if(s.cash<0)moodAdd(s,id,-2,'Задерживают жалованье');});
   injMonth(s);
   showcaseMonth(s);
-  if(s.over)return;poachCheck(s);duelRevTick(s);chalCheck(s);salesChalCheck(s);
+  if(s.over)return;try{chalMonth(s);}catch(e){console.warn('chal',e);}poachCheck(s);duelRevTick(s);chalCheck(s);
   if(s.m===0)yearAwards(s,s.y-1);
 }
 function poachCheck(s){
@@ -115,46 +115,17 @@ function poachCheck(s){
 }
 
 /* ---------- вызовы конкурентов ---------- */
-// На гонку: пари, чья машина финиширует выше. По продажам: кто продаст больше машин класса дома до конца года.
-function chalCheck(s){
-  if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<5||Math.random()>0.2)return;
-  const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+3&&!GBC_IDS.includes(rc.id)&&raceEligible(rc,s)&&!raceWarBlocked(rc,s)&&!s.cres[rc.key]&&s.raceDone[rc.key]===undefined);
-  if(!L.length||!raceCarsFor(s).length)return;
-  const rc=L.slice().sort((a,b)=>(b.major?1:0)-(a.major?1:0)||a.m-b.m)[0];
-  const T=fieldTeams(rc,s,3).filter(t=>t.mq&&t.mq.length);if(!T.length)return;
-  // вызывает сильная марка своей страны — или лидер эпохи
-  const t=T.find(t=>t.c===s.country&&t.str>=0.95)||T[0];
-  const stake=Math.max(100,Math.round(racePrize(rc)*0.6/50)*50);
-  const h=rivalHead(t.n,s.y);
-  const C=s.chal={type:'race',rk:rc.key,mq:t.n,stake,acc:0,x:stakeExtra(s,t.n,'c'),h};s.chalLast=mi(s);const sc=rivalryScore(s,t.n);
-  pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+t.n+')':t.n} бросает вызов «${s.company}»`,deck:`Пари на ${stakeText(C)}: чья машина будет выше в гонке «${rc.name}»${sc?` · счёт ${sc}`:''}`,
-    img:h&&h.wiki&&IMG[h.wiki]?h.wiki:'',imgCap:h?`${h.n} — ${h.role} ${t.n}`:'',
-    text:`${h?`${h.n}, ${h.role} ${t.n},`:`Глава марки ${t.n}`} заявил газетам: «Машины "${s.company}" хороши только на афишах. Пусть приедут на "${rc.name}" в ${MONTHS_G[rc.m].replace(/я$/,'е').replace(/а$/,'е')} — посмотрим, кто кого!» Он предлагает пари на ${money(stake)}: чья лучшая машина финиширует выше, тот и забирает деньги.${C.x?` А сверху — ${STAKE_X[C.x.k]}: ${C.x.k==='legacy'?'слава в историю марки':C.x.k==='bp'?'КБ быстрее закончит работу':C.x.k==='dealer'?'его дилеры перейдут к вам':'его гонщик перейдёт в вашу команду'}.`:''}\nПринять вызов — значит заявить команду на эту гонку и обогнать лучшую машину ${t.n}. Победа в пари — слава в газетах и радость гонщиков; проигрыш или неявка — удар по репутации. Отказ газеты тоже заметят.`,
-    choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);
-}
-function salesChalCheck(s){
-  if(s.pending.length||s.chal||s.m<1||s.m>6||mi(s)-(s.chalLast??-99)<5||Math.random()>0.1)return;
-  const L=s.last,home=s.country,mk=L&&L.mk&&L.mk[home];if(!mk||!mk.segs)return;
-  const g=SEGK.filter(g=>(mk.segs[g].you||0)>=3).sort((a,b)=>mk.segs[b].you-mk.segs[a].you)[0];if(!g)return;
-  const you=mk.segs[g].you,cps=(COMPS[home]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>x.cp.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v);
-  // соперник — марка, с которой вы идёте вровень: не больше чем втрое сильнее и не втрое слабее
-  const R=cps.find(x=>x.v<=you*12*3&&x.v>=you*12/3);if(!R)return;
-  const stake=Math.round(clamp((L.rev||0)*0.15,200*cpi(s),25000*cpi(s))/50)*50,nm=compName(R.cp,s),mdl=compModel(R.cp,s);
-  const h=rivalHead(R.cp.n,s.y)||rivalHead(nm,s.y);
-  const C=s.chal={type:'sales',g,mq:nm,ci:R.i,y:s.y,stake,acc:0,x:stakeExtra(s,nm,'c'),h};s.chalLast=mi(s);
-  const hImg=h&&h.wiki&&IMG[h.wiki]?h.wiki:'';
-  pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+nm+')':nm} бросает вызов «${s.company}»`,deck:`Кто продаст больше машин класса «${SEG[g].name}» до конца ${s.y} года · ставка ${stakeText(C)}`,img:hImg||(mdl&&mdl[2]&&IMG[mdl[2]]?mdl[2]:''),imgCap:hImg?`${h.n} — ${h.role} ${nm}`:mdl?`${nm} ${mdl[1]}`:'',
-    text:`${h?`${h.n}, ${h.role} ${nm},`:`Директор ${nm}`} заявил газетам: «К Рождеству наши машины класса "${SEG[g].name}" разойдутся лучше, чем у "${s.company}". Ставлю ${money(stake)}!»\nВ прошлом месяце ваших машин этого класса купили ${fmtN(you)}. Пари — на продажи в стране с этого дня и до конца года. Выиграете — деньги, слава и газетные заголовки; проиграете — заплатите и потеряете немного репутации.`,
-    choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);
-}
+// 0.24: какие вызовы бывают и как их предлагают газеты и доска — 43e-challenges.js (chalOffers, chalCheck)
 function chalRival(s,C){return ((s.comps[s.country]||[])[C.ci]||{});}
 function drvResolve(s,key){
   if(key==='chalYes'&&s.chal){const C=s.chal;C.acc=1;
-    if(C.type==='sales'){C.y0=(s.segY||{})[C.g]||0;C.r0=(chalRival(s,C).ys||{})[C.g]||0;addLog(`Вызов принят: кто продаст больше машин класса «${SEG[C.g].name}» до конца года — «${s.company}» или ${C.mq}. Пари ${money(C.stake)}.`,'good');}
+    if(typeof chalAccept==='function'&&chalAccept(s,C)){}
+    else if(C.type==='sales'){C.y0=(s.segY||{})[C.g]||0;C.r0=(chalRival(s,C).ys||{})[C.g]||0;addLog(`Вызов принят: кто продаст больше машин класса «${SEG[C.g].name}» до конца года — «${s.company}» или ${C.mq}. Пари ${money(C.stake)}.`,'good');}
     else{const rc=RACES.find(r=>r.key===C.rk);addLog(`Вызов принят: пари с ${C.mq} на ${money(C.stake)} — гонка «${rc?rc.name:''}». Заявите команду!`,'good');}
     pendingToasts.push('⚔️ Вызов принят');}
   if(key==='chalOk'||key==='chalRev'||key==='chalDealers'||key==='chalDealersNo'){duelResolve(s,key);return;}
-  if(key==='chalNo'&&s.chal){const C=s.chal;s.chal=null;s.rep=clamp(s.rep-1,0,100);addLog(`Вы отказались от пари с ${C.mq}. Газеты шутят, что «${s.company}» испугалась.`,'bad');}
+  // 0.24: вызовов стало больше — отказ стоит полбалла репутации (газеты пошутят и забудут)
+  if(key==='chalNo'&&s.chal){const C=s.chal;s.chal=null;s.rep=clamp(s.rep-0.5,0,100);addLog(`Вы отказались от пари с ${C.mq}. Газеты шутят, что «${s.company}» испугалась.`,'bad');}
   if(key==='poachKeep'&&s.poachNow){const P=s.poachNow,d=DRIVERS.find(x=>x.id===P.id);s.poachNow=null;
     if(s.cash>=P.cost){s.cash-=P.cost;moodAdd(s,P.id,40,'Прибавка к жалованью: остался в команде');addLog(`${d?d.n:'Пилот'} остаётся в команде: прибавка и премия ${money(P.cost)}.`,'good');}
     else{s.drivers=s.drivers.filter(x=>x!==P.id);addLog(`Денег на прибавку не нашлось — ${d?d.n:'пилот'} ушёл в команду ${P.team}.`,'bad');}}
@@ -185,7 +156,8 @@ function chalSales(s,y){const C=s.chal;if(!C||C.type!=='sales'||C.y!==y)return n
   try{duelOutcome(s,C,win,{you,them});}catch(e){console.warn('duel',e);}
   return {C,win,you,them};
 }
-function chalCard(s,where){const C=s.chal;if(!C||!C.acc||(where==='race')!==(C.type==='race'))return '';
+function chalCard(s,where){const C=s.chal;if(!C||!C.acc||chalWhere(C)!==where)return '';
+  if(C.type!=='race'&&!(C.type==='sales'&&!C.mon))return chalCardNew(s,C);
   if(C.type==='race'){const rc=RACES.find(r=>r.key===C.rk);if(!rc)return '';
     const h=C.h||rivalHead(C.mq,rc.y);
     return `<section class="card chal"><div class="row"><span class="label">⚔️ Вызов принят</span><span class="pill warn">${esc(stakeText(C))}</span></div>${h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)} ${esc(C.mq)}</small></div></div>`:''}<h3 style="margin-top:4px">Пари с ${esc(C.mq)}${rivalryScore(s,C.mq)?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:''}</h3><p class="small" style="margin-top:4px">Гонка «${esc(rc.name)}» · ${MONTHS[rc.m]} ${rc.y}. Ваша лучшая машина должна финишировать выше лучшей машины ${esc(C.mq)}. Не приедете — пари проиграно.</p></section>`;}

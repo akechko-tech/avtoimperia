@@ -120,10 +120,14 @@ function trophyCabinetCard(s){const T=(s.trophies||[]).slice();if(!T.length)retu
 /* ---------- ставка: деньги и иногда ещё что-то ощутимое ---------- */
 const STAKE_X={legacy:'30 очков наследия',bp:'чертежи соперника',drv:'гонщик соперника',dealer:'дилеры соперника',eng:'инженер соперника'};
 // одно и то же в течение месяца (доска вызовов перерисовывается — ставка не должна прыгать)
-function stakeExtra(s,mq,salt){const r=(hashStr('sx|'+mq+'|'+mi(s)+'|'+(salt||''))%1000)/1000;if(r<0.45)return null;return {k:r<0.58?'legacy':r<0.7?'bp':r<0.8?'dealer':r<0.9?'eng':'drv',mq};}
+// 0.24: в деловых пари (продажи, пробег — их стало много) гонщика соперника не бывает, а очки наследия — реже
+function stakeExtra(s,mq,salt,biz){const r=(hashStr('sx|'+mq+'|'+mi(s)+'|'+(salt||''))%1000)/1000;if(r<0.45)return null;
+  if(biz)return {k:r<0.5?'legacy':r<0.67?'bp':r<0.86?'dealer':'eng',mq};
+  return {k:r<0.58?'legacy':r<0.7?'bp':r<0.8?'dealer':r<0.9?'eng':'drv',mq};}
 function stakeText(C){return money(C.stake)+(C.x&&STAKE_X[C.x.k]?` + ${STAKE_X[C.x.k]}`:'');}
 function stakeApply(s,C,H){const X=C.x;if(!X)return '';
-  if(X.k==='legacy'){s.legBonus=(s.legBonus||0)+30;return '+30 очков наследия';}
+  // очков наследия из пари — не больше 90 за игру (три выигрыша); дальше — половина ставки деньгами
+  if(X.k==='legacy'){if((s.legBonus||0)>=90){s.cash+=Math.round(C.stake*0.5);return 'вместо очков наследия (их из пари уже 90) — ещё половина ставки деньгами';}s.legBonus=(s.legBonus||0)+30;return '+30 очков наследия';}
   if(X.k==='bp'){const L=rdActive(s);if(L.length){L.forEach(p=>{p.need=Math.max((p.prog||0)+1,Math.round(p.need*0.7));});return 'чертежи соперника: работа КБ короче на 30%';}s.rd.bpStock=(s.rd.bpStock||0)+1;return 'чертежи соперника: следующий проект КБ — на 30% быстрее';}
   if(X.k==='eng'){s.rd.engUntil=Math.max(s.rd.engUntil||0,mi(s))+12;return 'инженер соперника переходит в ваше КБ: +15% к работе КБ на год';}
   if(X.k==='dealer'){const c=H.c&&COUNTRIES[H.c]?H.c:s.country;s.dealers[c]=(s.dealers[c]||0)+2;return `2 дилера ${c===s.country?'соперника':'в стране соперника ('+COUNTRIES[c].name+')'} переходят к вам`;}
@@ -135,20 +139,20 @@ function stakeApply(s,C,H){const X=C.x;if(!X)return '';
 function duelEffect(s,c){const L=s.duelFx;if(!L||!L.length)return 0;const t=mi(s);let u=0;for(const f of L)if(f.until>t&&f.c===c)u+=f.k;return u;}
 /* ---------- развязка пари ---------- */
 // итог пари → сцена, газета, спрос, счёт, трофей, реванш, дилеры. info: {me,them,carId,prep,num} для гонки, {you,them} для продаж, {forfeit}
-function duelOutcome(s,C,win,info){info=info||{};const H=rivalHero(C.mq,s),R=rivalryOf(s,C.mq),rc=C.type==='race'?RACES.find(r=>r.key===C.rk):null,ev=rc?rc.name:C.type==='sales'?`продажи класса «${SEG[C.g].name}»`:'';
+function duelOutcome(s,C,win,info){info=info||{};const H=rivalHero(C.mq,s),R=rivalryOf(s,C.mq),rc=C.type==='race'?RACES.find(r=>r.key===C.rk):(C.type==='match'||C.type==='record')?C.rc:null,ev=typeof chalEvName==='function'?chalEvName(s,C,rc):rc?rc.name:C.type==='sales'?`продажи класса «${SEG[C.g].name}»`:'';
   if(win){R.w++;R.st=R.st>0?R.st+1:1;}else{R.l++;R.st=R.st<0?R.st-1:-1;}R.last=mi(s);
   s.duelFx=(s.duelFx||[]).filter(f=>f.until>mi(s));s.duelFx.push({c:H.c||s.country,k:win?0.04:-0.04,until:mi(s)+3});
   const extra=win?stakeApply(s,C,H):'';
   const hot=H.type==='proud'||H.type==='sharp',cat=win?(R.st>=3?(hot&&R.st%2?'rage':'respect'):(hot?'angry':'dign')):'mock';
   const line=heroLine(H,cat,s,ev),rev=win&&R.st<5?heroLine(H,'revenge',s,ev):'';
   const best=info.carId!=null?s.models.find(m=>m.id===info.carId):s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.totalSold||0)-(a.totalSold||0))[0];
-  const big=C.stake>=Math.max(2000,1500*cpi(s)),reel=rc&&typeof raceReelId==='function'?raceReelId(rc):'';
+  const big=C.stake>=Math.max(2000,1500*cpi(s)),reel=rc&&!rc.match&&typeof raceReelId==='function'?raceReelId(rc):'';
   const ptitle=win?`«${s.company}» обыгрывает ${C.mq}!`:info.forfeit?`«${s.company}» не явилась — ${C.mq} смеётся`:`${C.mq} посмеялась над «${s.company}»`;
   if(win)trophyAdd(s,{kind:'charter',title:`Пари с ${C.mq}`,sub:`${ev}${ev?' · ':''}счёт ${R.w}:${R.l}`,story:`${H.name}: «${line}» Ставка — ${stakeText(C)}${extra?'; '+extra:''}.`,key:'duel|'+C.mq+'|'+mi(s),
     carId:best?best.id:null,prep:rc?info.prep||1:0,num:info.num||0,pt:ptitle,reel:big&&reel?reel:'',rk:rc?rc.key:''});
   // сцена развязки — сразу; газета — следом
   pushEvent({kicker:'Пари',title:win?`Пари с ${C.mq} выиграно`:`Пари с ${C.mq} проиграно`,deck:ev,text:line,own:1,
-    duel:{win,H,line,rev,score:`${R.w}:${R.l}`,st:R.st,stake:C.stake,x:C.x?C.x.k:'',extra,ev,mq:C.mq,sales:C.type==='sales'?{you:info.you||0,them:info.them||0}:null,race:!!rc,forfeit:!!info.forfeit},
+    duel:{win,H,line,rev,score:`${R.w}:${R.l}`,st:R.st,stake:C.stake,x:C.x?C.x.k:'',extra,ev,mq:C.mq,sales:C.type==='sales'?{you:info.you||0,them:info.them||0,hc:C.hc||1,c:C.c&&C.c!==s.country?C.c:''}:null,trial:info.trial||null,match:info.match?Object.assign({kind:C.type},info.match):null,race:!!rc,forfeit:!!info.forfeit},
     choices:win&&rev&&!s.over?[['Дальше','chalOk'],[`Реванш! Ставка ${money(Math.round(C.stake*1.5/50)*50)}`,'chalRev']]:[['Дальше','chalOk']]});
   pushEvent({kicker:'Спорт и дела',own:1,carId:best?best.id:null,carOpt:rc&&best?{prep:info.prep||1,num:info.num||0,country:s.country,y:s.y}:null,caption:best?`«${best.name}» компании «${s.company}»`:'',
     title:ptitle,deck:`Пари: ${stakeText(C)}${ev?' · '+ev:''}`,
@@ -161,10 +165,11 @@ function duelOutcome(s,C,win,info){info=info||{};const H=rivalHero(C.mq,s),R=riv
   if(win&&R.st===3&&H.c&&COUNTRIES[H.c])pushEvent({kicker:'Дилеры',own:1,title:`Дилеры ${C.mq} хотят к вам`,deck:'После трёх побед подряд',
     text:`Трое дилеров ${C.mq} (${COUNTRIES[H.c].name}) пишут, что покупатели всё чаще спрашивают машины «${s.company}». Они готовы перейти к вам — без платы за вход.`,
     choices:[['Принять дилеров','chalDealers'],['Отказаться','chalDealersNo']],dc:H.c});
-  s.revOffer=win?{mq:C.mq,stake:Math.round(C.stake*1.5/50)*50,type:C.type,g:C.g,ci:C.ci}:null;
+  s.revOffer=win?{mq:C.mq,stake:Math.round(C.stake*1.5/50)*50,type:C.type,g:C.g,ci:C.ci,base:C.type==='match'||C.type==='record'||C.type==='trial'||C.mon?Object.assign({},C,{acc:0}):null}:null;
   addLog(win?`⚔️ Счёт с ${C.mq}: ${R.w}:${R.l}${R.st>=2?` (серия ${R.st})`:''}.`:`Счёт с ${C.mq}: ${R.w}:${R.l}.`,win?'good':'bad');}
 // реванш: новое пари со ставкой в полтора раза выше — на ближайшую гонку или продажи этого (следующего) года
 function duelRevenge(s){const O=s.revOffer;s.revOffer=null;if(!O||s.chal)return false;
+  if(O.base&&typeof chalRevenge==='function'){const r=chalRevenge(s,O);if(r!==null)return r;}
   if(O.type==='race'){const now=mi(s),L=RACES.filter(rc=>{const d=(rc.y-1895)*12+rc.m-now;return d>=1&&d<=5&&!GBC_IDS.includes(rc.id)&&raceEligible(rc,s)&&!raceWarBlocked(rc,s)&&!s.cres[rc.key]&&s.raceDone[rc.key]===undefined;});
     const rc=L.sort((a,b)=>(a.y-b.y)||(a.m-b.m))[0];if(!rc){addLog(`Реванш с ${O.mq} отложен: в ближайшие месяцы нет подходящей гонки.`);return false;}
     s.chal={type:'race',rk:rc.key,mq:O.mq,stake:O.stake,acc:1,x:stakeExtra(s,O.mq,'rev')};s.chalLast=mi(s);addLog(`⚔️ Реванш с ${O.mq}: «${rc.name}», ставка ${stakeText(s.chal)}. Заявите команду!`,'good');pendingToasts.push('⚔️ Реванш принят');return true;}
@@ -192,13 +197,19 @@ function goalHTML(D){const win=D.win;
 // сцена развязки: портрет, реплика, счёт, ставка; тема соперника и телеграф (на гонке — трибуны)
 function duelHTML(D){if(D.goal)return goalHTML(D);const H=D.H,win=D.win;
   return `<div class="duel ${win?'win':'lose'}"><span class="label">⚔️ Пари${D.ev?' · '+esc(D.ev):''}</span>
-    <div class="duel-top">${heroPortrait(H)}<div><h2>${win?'Пари выиграно!':'Пари проиграно'}</h2><p class="small muted">${esc(H.name)} · ${H.role?esc(H.role)+' ':''}«${esc(D.mq)}» · ${HERO_TYPE_N[H.type]||''}</p></div></div>
+    <div class="duel-top">${heroPortrait(H)}<div><h2>${D.match?(D.match.kind==='record'?(win?'Скорость ваша!':'Соперник быстрее'):(win?'Матч выигран!':'Матч проигран')):D.trial?(win?'Пробег выигран!':'Пробег проигран'):win?'Пари выиграно!':'Пари проиграно'}</h2><p class="small muted">${esc(H.name)} · ${H.role?esc(H.role)+' ':''}«${esc(D.mq)}» · ${HERO_TYPE_N[H.type]||''}</p></div></div>
     <blockquote class="duel-q">«${esc(D.line)}»</blockquote>
-    ${D.sales?`<p class="small" style="margin-top:6px">Продажи в стране: вы — ${fmtN(D.sales.you)}, ${esc(D.mq)} — ${fmtN(D.sales.them)}</p>`:''}${D.forfeit?'<p class="small bad" style="margin-top:6px">Команда не приехала на гонку — пари проиграно без борьбы.</p>':''}
+    ${D.sales?`<p class="small" style="margin-top:6px">Продажи ${D.sales.c&&COUNTRIES[D.sales.c]?'('+esc(COUNTRIES[D.sales.c].name)+')':'в стране'}: вы — ${fmtN(D.sales.you)}, ${esc(D.mq)} — ${fmtN(D.sales.them)}${D.sales.hc&&D.sales.hc!==1?` (с форой ×${String(Math.round(D.sales.hc*100)/100).replace('.',',')} — ${fmtN(Math.round(D.sales.them*D.sales.hc))})`:''}</p>`:''}${D.trial?duelTrialHTML(D.trial,D.mq):''}${D.match?duelMatchHTML(D.match,D.mq):''}${D.forfeit?'<p class="small bad" style="margin-top:6px">Команда не приехала на гонку — пари проиграно без борьбы.</p>':''}
     <div class="duel-score"><span>Счёт</span><b>Вы — ${esc(D.mq)} ${D.score}</b><i class="duel-stamp">${win?'Выиграно':'Проиграно'}</i>${D.st>=2?`<em>побед подряд: ${D.st}</em>`:D.st<=-2?`<em class="bad">поражений подряд: ${-D.st}</em>`:''}</div>
     <p class="${win?'good':'bad'}" style="margin-top:8px"><b>${win?'+':'−'}${money(D.stake)}</b> ${win?'— ставка ваша':'— ставка уходит сопернику'}${D.extra?` · ${esc(D.extra)}`:''}</p>
     <p class="small muted" style="margin-top:4px">${win?'📜 Грамота — в кабинете трофеев (Империя). Три месяца покупатели в стране соперника охотнее берут ваши машины.':'Три месяца покупатели в стране соперника будут прохладнее. Отыграться можно в новом пари — доска вызовов на вкладке «Империя».'}</p>
     ${D.rev?`<p class="small warn" style="margin-top:6px">${esc(H.name)}: «${esc(D.rev)}»</p>`:''}</div>`;}
+// 0.24: пробег — таблица этапов; матч и спор о скорости — скорость обоих
+function duelTrialHTML(T,mq){return `<p class="small" style="margin-top:6px">${esc(T.route)} · ${fmtN(T.km)} км: «${esc(T.md)}» против ${esc(T.rv)}</p>
+  <table class="pl" style="margin-top:4px"><tr><th class="n">Этап</th><th>Вы</th><th>${esc(String(mq).slice(0,14))}</th></tr>${T.rows.map(r=>`<tr><td class="n">${r[0]}</td><td class="${r[1]?'bad':'good'}">${r[1]?'поломка: '+esc(r[1]):'✓'}</td><td class="${r[2]?'bad':'good'}">${r[2]?'поломка: '+esc(r[2]):'✓'}</td></tr>`).join('')}
+  <tr><td class="n">Итог</td><td><b>${T.pM} ${plural(T.pM,'поломка','поломки','поломок')}</b> · ${T.kmhM} км/ч</td><td><b>${T.pT} ${plural(T.pT,'поломка','поломки','поломок')}</b> · ${T.kmhT} км/ч</td></tr></table>`;}
+function duelMatchHTML(M,mq){const sp=v=>v?v+' км/ч':'—';
+  return `<p class="small" style="margin-top:6px">${M.kind==='record'?'Скорость на заезде':'Средняя скорость'}: вы — <b>${M.dnfMe?'сход ('+esc(M.dnfMe)+')':sp(M.vMe)}</b>, ${esc(mq)}${M.drvTh?' ('+esc(M.drvTh)+')':''} — <b>${M.dnfTh?'сход ('+esc(M.dnfTh)+')':sp(M.vTh)}</b></p>${M.lsr?`<p class="small good" style="margin-top:4px">📈 Быстрее мирового рекорда (${M.lsr.old[1]} км/ч, ${esc(M.lsr.old[2])})!</p>`:''}`;}
 function duelShow(ev){openSheet(duelHTML(ev.duel)+`<div class="stack" style="margin-top:14px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
   if(!ev.thOn){ev.thOn=1;if(ev.duel.goal){if(!ev.duel.win&&ev.duel.mq)try{duelTheme(ev.duel.H.type,false,false);}catch(_){}}else try{duelTheme(ev.duel.H.type,ev.duel.win,ev.duel.race);}catch(_){}}}
 // тема соперника (4–5 с): гордый — фанфары, деловой — бойкое фортепиано, аристократ — струнный вальс, язвительный — кларнет с насмешкой.
@@ -213,14 +224,14 @@ function duelNotes(type,win){const N=DUEL_THEME[type]||DUEL_THEME.biz;if(!win)re
   return N.map(([n,d,l])=>{const k=((n%12)+12)%12;return [n-5-(k===4||k===9||k===11?1:0),d*1.15,l*1.15];});}
 function duelTheme(type,win,race){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,dest=AU.fx||c.destination,ins=DUEL_INS[type];
   // 0.23: тема — оркестром (файл рядом с игрой, 50-audio.js auCue); нет файла — прежние семплы или синтезатор
-  const synth=()=>{const t0=c.currentTime+0.02,useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];
-    duelNotes(type,win).forEach(([n,d,l])=>{try{if(useIns)inst(ins,n,t0+d,l,0.5,dest);else throw 0;}
-      catch(_){const o=c.createOscillator(),g=c.createGain();o.type=type==='proud'?'sawtooth':'triangle';o.frequency.value=mtof(n);o.connect(g);g.connect(dest);g.gain.setValueAtTime(0.0001,t0+d);g.gain.exponentialRampToValueAtTime(0.07,t0+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d+l);o.start(t0+d);o.stop(t0+d+l+0.05);}});};
+  // 0.24: без файла — живые семплы инструмента; нет и их — тишина (никакого «пиканья» генератором)
+  const synth=()=>{const t0=c.currentTime+0.02,useIns=typeof inst==='function'&&INS.idx&&INS.idx.inst&&INS.idx.inst[ins]&&INS.buf[ins];if(!useIns)return;
+    duelNotes(type,win).forEach(([n,d,l])=>{try{inst(ins,n,t0+d,l,0.5,dest);}catch(_){}});};
   setTimeout(()=>{try{auCue('duel_'+(DUEL_THEME[type]?type:'biz')+'_'+(win?'w':'l'),0.75,synth);}catch(_){synth();}},race?100:950);
   // перед темой: телеграф «точка-тире» (на гонке вместо него — трибуны)
   if(race){try{auSfx('cheer',win?0.8:0.4);}catch(_){}return;}
-  [0,.09,.18,.42,.51,.75,.84].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.value=880;o.connect(g);g.connect(dest);const tt=c.currentTime+0.02+d;
-    g.gain.setValueAtTime(0.0001,tt);g.gain.exponentialRampToValueAtTime(0.045,tt+0.005);g.gain.setValueAtTime(0.045,tt+0.05);g.gain.exponentialRampToValueAtTime(0.0001,tt+0.06);o.start(tt);o.stop(tt+0.08);});}
+  // 0.24: телеграф — не «пищалка», а щелчки клопфера (якорь стучит по упору и отскакивает), как на почтамте эпохи
+  if(!AU.noise)return;[0,.09,.18,.42,.51,.75,.84].forEach(d=>{const tt=c.currentTime+0.02+d;try{vNoise(tt,0.018,0.32,'bandpass',2300,dest);vNoise(tt+0.002,0.03,0.2,'bandpass',900,dest);vNoise(tt+0.055,0.014,0.12,'bandpass',1700,dest);}catch(_){}});}
 /* ---------- витрина «Империя» на главном экране (ТЗ, раздел 3) ---------- */
 const MONTHS_P=['январе','феврале','марте','апреле','мае','июне','июле','августе','сентябре','октябре','ноябре','декабре'];
 function whenTxt(rc,s){return rc.m===s.m&&rc.y===s.y?'в этом месяце':rc.y===s.y?'в '+MONTHS_P[rc.m]:`в ${MONTHS_P[rc.m]} ${rc.y}`;}
@@ -235,6 +246,7 @@ function nextGoal(s){const C=[];let t=null;try{t=legacyTable(s);}catch(_){}
 // что сделать дальше: гонка этого месяца, совет помощника или просто следующий месяц
 function nextStep(s){if(s.over)return {icon:'🏁',text:'Игра окончена — итоги во вкладке «Империя»',tab:'log'};
   if(!s.models.some(m=>m.status==='prod'||m.status==='dev'))return {icon:'✏️',text:'Придумайте первую машину: «Модели» → «Новая модель»',tab:'models'};
+  {const C=s.chal;if(C&&C.acc&&C.rc){const T=(C.rc.y-1895)*12+C.rc.m,t=mi(s);if(t>=T-1&&t<=T)return {icon:'⚔️',text:`${MATCH_ST[C.type]} с ${C.mq}: ${C.rc.venue} — выставьте машину${t===T?' (последний месяц!)':''}`,tab:'race'};}}
   const rc=RACES.filter(r=>raceOpen(r,s)&&raceEligible(r,s)&&!raceWarBlocked(r,s)&&!s.cres[r.key]&&s.raceDone[r.key]===undefined).sort((a,b)=>a.m-b.m)[0];
   if(rc&&raceCarsFor(s).length)return {icon:'🏁',text:`${rc.m===s.m?'Гонка в этом месяце':'Запись на гонку'}: «${rc.name}» — выставьте машину`,tab:'race'};
   if(!DIF().helper){try{const A=adviceList(s).slice().sort((a,b)=>b.p-a.p)[0];if(A&&A.p>=60)return {icon:A.icon||'💡',text:String(A.text).replace(/<[^>]+>/g,'').split(/(?<=[.!?])\s/)[0],tab:A.tab||'plant'};}catch(_){}}
@@ -247,7 +259,8 @@ function empireStrip(s){EC_FLASH=false;if(!s)return '';let t=null;try{t=legacyTa
   // цель достигнута (новое место в наследии или новый трофей) — карточка на миг вспыхивает золотом
   EC_FLASH=!!((s.ecPlace&&t&&t.place<s.ecPlace)||(s.ecTro!==undefined&&tro>s.ecTro));if(t)s.ecPlace=t.place;s.ecTro=tro;
   let chal='';if(C){const rc=C.type==='race'?RACES.find(r=>r.key===C.rk):null,sc=rivalryScore(s,C.mq);
-    chal=`<button class="ec-row chal" data-act="tab" data-t="log" data-sec="sec-board"><i>⚔️</i><span><b>${esc(C.mq)}</b>: ${rc?`«${esc(rc.name)}» ${whenTxt(rc,s)}`:`продажи до конца ${C.y}`} · ${stakeText(C)}${sc?` · счёт ${sc}`:''}</span></button>`;}
+    const what=rc?`«${esc(rc.name)}» ${whenTxt(rc,s)}`:C.rc?`${esc(MATCH_ST[C.type]||'')}: ${esc(C.rc.venue)} ${whenTxt(C.rc,s)}`:C.type==='trial'?`пробег ${esc(C.route)}`:C.mon?`продажи «${esc(SEG[C.g].name)}»${C.c!==s.country?' ('+esc(COUNTRIES[C.c].name)+')':''}, ${esc(chalPerText(C))}`:`продажи до конца ${C.y}`;
+    chal=`<button class="ec-row chal" data-act="tab" data-t="${C.rc?'race':'log'}" data-sec="${C.rc?'':'sec-board'}"><i>⚔️</i><span><b>${esc(C.mq)}</b>: ${what} · ${stakeText(C)}${sc?` · счёт ${sc}`:''}</span></button>`;}
   const ph=last&&last.carId!=null?(()=>{const md=s.models.find(m=>m.id===last.carId);return md?carArt(md,{w:140,cls:'ec-ph',prep:last.prep||0,num:last.num||0,y:last.y}):'';})():'';
   return `<div class="ec-top" data-act="tab" data-t="log" data-sec="sec-legacy" role="button" aria-label="Империя: наследие"><div class="ec-place"><b>${t?t.place:'—'}<small>-е</small></b><span>место в наследии</span></div>
       <div class="ec-pts"><b>${t?fmtN(Math.round(t.me.total)):0}</b> очков${dv?` <em class="${dv>0?'good':'bad'}">${dv>0?'▲':'▼'}${Math.abs(dv)}</em>`:''}</div></div>

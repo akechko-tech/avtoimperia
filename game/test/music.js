@@ -1,18 +1,32 @@
-// Оркестрион: новые танцы и свои мелодии игры — ноты звучат, у каждой пьесы есть конец, диапазон нот разумный
+// 0.24: вся музыка игры — записи оркестра; «оркестриона» (синтезатора) в плейлисте нет. Свои пьесы игры вшиты в игру
+// и играют без сети; три чужие записи подряд не загрузились — играют свои; не загрузилось ничего — тишина, а не «пиканье».
+// node game/test/music.js
 require('./harness.js')(`
-const notes=[];let now=0;
-const param=()=>({value:0,setValueAtTime(){},exponentialRampToValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){}});
-const node=()=>({connect(){},disconnect(){},start(){},stop(){},frequency:param(),detune:param(),gain:param(),Q:param(),type:'',buffer:null,loop:false});
-const ctx={get currentTime(){return now;},createOscillator(){const o=node();const st=o.start;o.start=t=>{notes.push({t,f:o.frequency.value});};return o;},createGain:node,createBiquadFilter:node,createBufferSource:node,createDynamicsCompressor:node,createBuffer:()=>({getChannelData:()=>new Float32Array(10)}),destination:{},sampleRate:44100};
-AU.ctx=ctx;AU.mus=node();AU.fx=node();AU.master=node();AU.noise={};AU.on.music=true;AU.paused=false;
-let nextCalled=0;const _mn=musNext;musNext=function(d){nextCalled++;};
-global.setTimeout=(f,ms)=>{pend.push({f,at:now+ms/1000});return 1;};const pend=[];
-newGame('custom','fr','T','normal');
-const tracks=[...Object.keys(TUNES).map(k=>({synth:true,st:'tune',tune:k,title:'tune '+k})),...['rag','march','jazz','waltz','cake','tango','fox','charl'].map(st=>({synth:true,st,v:0,title:'st '+st}))];
-tracks.forEach(tr=>{notes.length=0;nextCalled=0;pend.length=0;now=0;AU.next=0.1;AU.step=0;AU.synth=tr;tr.end=0;AU.mel=0;
-  let t=0;while(t<600&&!nextCalled){now=t;auSched();pend.filter(p=>p.at<=now).forEach(p=>{p.f();p.done=1;});pend.splice(0,pend.length,...pend.filter(p=>!p.done));t+=0.05;}
-  const mel=notes.filter(n=>n.f>300).map(n=>Math.round(69+12*Math.log2(n.f/440)));
-  console.log(tr.title.padEnd(12),'длится',t.toFixed(0)+' с','нот',notes.length,'мелодия',mel.length?Math.min(...mel)+'–'+Math.max(...mel):'-','конец',nextCalled?'да':'НЕТ');});
-console.log('плейлист эпохи 1900:',(G.y=1900,musSynth().map(x=>x.title).join(' | ')));
-console.log('плейлист эпохи 1925:',(G.y=1925,musSynth().map(x=>x.title).join(' | ')));
+global.location={protocol:'https:'};let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
+AU.on.music=true;AU.paused=false;AU.on.mode='era';
+// чужие записи (фонотека из сети): по 2 на эпоху
+ORCH.idx={rec_march:{cap:'Марш (запись)',st:'march',y:1900,mood:'triumph'},rec_rag:{cap:'Регтайм (запись)',st:'rag',y:1905,mood:'lively'},rec_jazz:{cap:'Джаз (запись)',st:'jazz',y:1921,mood:'lively'},rec_fox:{cap:'Фокстрот (запись)',st:'fox',y:1916,mood:'calm'}};
+newGame('custom','us','T','normal');
+for(const y of [1896,1905,1914,1918,1925]){G.y=y;AU.sig='';AU.pl=[];AU.badSrc={};AU.remoteOff=0;AU.noMusic=0;musBuild(true);
+  const L=AU.pl,own=L.filter(t=>t.own).map(t=>t.id);
+  ok(L.length>0&&!L.some(t=>t.synth),y+': в плейлисте '+L.length+' записей, синтезатора нет; свои: '+own.join(', '));
+  ok(L[0].id==='own_avto','первой звучит «Автоимперия» (оркестр)');}
+// новые свои пьесы 0.24 — в своё время
+G.y=1918;AU.sig='';musBuild(true);const ids=AU.pl.map(t=>t.id);
+ok(['own_jazz','own_fox','own_cake'].every(k=>ids.includes(k)),'1918: «Гаражный джаз», «Фокстрот на набережной», «Кекуок клаксонов» — в плейлисте');
+G.y=1925;AU.sig='';musBuild(true);ok(AU.pl.some(t=>t.id==='own_charl'),'1925: чарльстон «Полный газ» — в плейлисте');
+ok(Object.keys(OWN_MUSIC).every(k=>/оркестр|бэнд/.test(OWN_MUSIC[k].cap+OWN_MUSIC[k].by)),'все свои пьесы — в оркестровке ('+Object.keys(OWN_MUSIC).length+')');
+// сеть подводит: три чужие записи подряд не загрузились — играют только свои
+G.y=1918;AU.sig='';AU.badSrc={};AU.remoteErr=0;musBuild(true);let k=0;
+AU.pl=AU.pl.filter(t=>!t.own).concat(AU.pl.filter(t=>t.own));AU.idx=0;
+for(let i=0;i<3;i++){AU.nowPlaying=AU.pl[AU.idx];musErr();k++;}
+ok(AU.pl.length>0&&AU.pl.every(t=>t.own)&&!remoteOk(),'три чужие записи не загрузились — играют свои ('+AU.pl.length+'), чужие отложены на 10 минут');
+AU.sig='';musBuild(false);ok(AU.pl.every(t=>t.own),'пока сеть подводит, чужих записей в плейлисте нет');
+// не загрузилось вообще ничего — тишина
+for(let i=0;i<20&&AU.pl.length;i++){AU.nowPlaying=AU.pl[AU.idx];musErr();}
+ok(AU.pl.length===0&&AU.noMusic&&!AU.pl.some(t=>t.synth),'ни одна запись не загрузилась — тишина, синтезатор не включается');
+// семплов нет — инструменты молчат, а не пищат генератором
+{let osc=0;const c0=AU.ctx;AU.ctx={currentTime:0,createOscillator(){osc++;return {connect(){},start(){},stop(){},frequency:{value:0}};},createGain(){return {connect(){},gain:{setValueAtTime(){},setTargetAtTime(){},value:0}};}};
+  INS.idx=null;inst('cornet',72,0,0.5,0.5);inst('bass',40,0,0.5,0.5);AU.ctx=c0;ok(osc===0,'без семплов инструмент молчит (генераторов: '+osc+')');}
+console.log(fails?'ОШИБОК: '+fails:'всё в порядке');
 `);
