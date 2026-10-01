@@ -1,1 +1,1 @@
-# задания media CI (по одному в строке); рельеф — отдельный workflow terrain.yml
+music_cut
