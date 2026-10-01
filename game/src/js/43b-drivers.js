@@ -8,6 +8,29 @@ function dchOf(s,y){s.dch=s.dch||{};return s.dch[y]=s.dch[y]||{rows:{},races:[],
 // «Фернан Шарон (Panhard et Levassor)», «Луи Вагнер и Робер Сенешаль (Delage)» → первый пилот экипажа
 function histDrv(w){return String(w||'').split(' (')[0].split(/,|\s\/\s|\sи\s/)[0].trim();}
 function drvByName(n){return n?DRIVERS.find(d=>d.n===n)||null:null;}
+/* ---------- 0.22: основатели за рулём — по истории ---------- */
+// Кто гонялся всерьёз (Луи Рено, Энцо Феррари), тот и в игре быстр; кто сам не гонялся (Бенц, Майбах, Пежо, Аньелли),
+// тот за рулём слаб: в заявку по умолчанию ставим пилота команды, а вы ведёте его машину. Генри Форд гонялся один раз (1901).
+const PIO_RACE={ford:{sk:0.52,drv:'h_ford',note:'Гонялся один раз — в октябре 1901 года в Гросс-Пойнте обогнал Александра Уинтона. Потом за руль своих гоночных машин сажал Барни Олдфилда.'},
+  olds:{sk:0.54,note:'Сам выводил свою «Пиратку» на пляж Ормонд в 1903 году, но гонщиком не был.'},
+  benz:{sk:0.38,note:'Сам не гонялся: за его машины в гонках ездили наёмные пилоты — Эмиль Роже, Фриц Эрле, Виктор Эмери.'},
+  maybach:{sk:0.42,note:'Конструктор, а не гонщик: «Мерседесы» в Ницце водили Вильгельм Вернер и другие.'},
+  renault:{drv:'l_renault',note:'Настоящий гонщик: в 1899–1903 годах побеждал в классах больших гонок, 2-й в Париж — Мадрид 1903.'},
+  peugeot:{sk:0.4,note:'Промышленник: за Peugeot в гонках ездили Кёклен, Дорьо, Леметр.'},
+  lanchester:{sk:0.52,note:'Водил свои машины в испытаниях (золотая медаль «Тысячи миль» 1900), но в гонках не выступал.'},
+  bugatti:{sk:0.66,note:'В юности выигрывал гонки на трициклах Prinetti & Stucchi; позже за руль Bugatti сажал Фридерика и других.'},
+  ferrari:{drv:'ferrari',note:'Гонщик Alfa Romeo: Коппа Ачербо 1924 и другие победы.'},
+  agnelli:{sk:0.4,note:'Промышленник: за FIAT гонялись Лянча, Надзаро, Каньо.'},
+  custom:{sk:0.72,note:''}};
+for(const k in PIO_RACE)if(PIO_RACE[k].drv&&PIONEERS[k]&&!PIONEERS[k].drv)PIONEERS[k].drv=PIO_RACE[k].drv;
+function pioSk(s){const P=PIO_RACE[s.pioneer]||{},d=P.drv&&DRIVERS.find(x=>x.id===P.drv);return P.sk!=null?P.sk:d?d.sk:0.6;}
+function pioRacer(s){return pioSk(s)>=0.58;}
+// Гонщики-основатели и любители: в чужих заявках — только там, где ездили на самом деле ([] — нигде);
+// основателей чужих марок нанять нельзя
+const DRV_ONLY={h_ford:[],jellinek:['turbie'],porsche:['henry','alpen'],a_michelin:['pbp'],e_michelin:['pbp']};
+const DRV_OWN={h_ford:'ford',l_renault:'renault',m_renault:'renault',ferrari:'ferrari',de_dion:'',winton:'',jellinek:''};
+function drvAllowed(d,rc){const o=DRV_ONLY[d.id];return !o||(!!rc&&o.includes(rc.id));}
+function drvHireable(d,s){return !(d.id in DRV_OWN)||DRV_OWN[d.id]===s.pioneer;}
 function meKey(s){return PIONEERS[s.pioneer].drv||'me';}
 function meName(s){const P=PIONEERS[s.pioneer];return P.name==='Свой персонаж'?`Вы, хозяин «${s.company}»`:P.name;}
 // order — экипажи в порядке финиша (сошедшие в конце): {n — пилот, id, mq — марка, dnf, mine — за вашу команду}
@@ -102,9 +125,11 @@ function chalCheck(s){
   // вызывает сильная марка своей страны — или лидер эпохи
   const t=T.find(t=>t.c===s.country&&t.str>=0.95)||T[0];
   const stake=Math.max(100,Math.round(racePrize(rc)*0.6/50)*50);
-  const C=s.chal={type:'race',rk:rc.key,mq:t.n,stake,acc:0,x:stakeExtra(s,t.n,'c')};s.chalLast=mi(s);const sc=rivalryScore(s,t.n);
-  pushEvent({kicker:'Вызов',title:`${t.n} бросает вызов «${s.company}»`,deck:`Пари на ${stakeText(C)}: чья машина будет выше в гонке «${rc.name}»${sc?` · счёт ${sc}`:''}`,
-    text:`Глава марки ${t.n} заявил газетам: «Машины "${s.company}" хороши только на афишах. Пусть приедут на "${rc.name}" в ${MONTHS_G[rc.m].replace(/я$/,'е').replace(/а$/,'е')} — посмотрим, кто кого!» Он предлагает пари на ${money(stake)}: чья лучшая машина финиширует выше, тот и забирает деньги.${C.x?` А сверху — ${STAKE_X[C.x.k]}: ${C.x.k==='legacy'?'слава в историю марки':C.x.k==='bp'?'КБ быстрее закончит работу':C.x.k==='dealer'?'его дилеры перейдут к вам':'его гонщик перейдёт в вашу команду'}.`:''}\nПринять вызов — значит заявить команду на эту гонку и обогнать лучшую машину ${t.n}. Победа в пари — слава в газетах и радость гонщиков; проигрыш или неявка — удар по репутации. Отказ газеты тоже заметят.`,
+  const h=rivalHead(t.n,s.y);
+  const C=s.chal={type:'race',rk:rc.key,mq:t.n,stake,acc:0,x:stakeExtra(s,t.n,'c'),h};s.chalLast=mi(s);const sc=rivalryScore(s,t.n);
+  pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+t.n+')':t.n} бросает вызов «${s.company}»`,deck:`Пари на ${stakeText(C)}: чья машина будет выше в гонке «${rc.name}»${sc?` · счёт ${sc}`:''}`,
+    img:h&&h.wiki&&IMG[h.wiki]?h.wiki:'',imgCap:h?`${h.n} — ${h.role} ${t.n}`:'',
+    text:`${h?`${h.n}, ${h.role} ${t.n},`:`Глава марки ${t.n}`} заявил газетам: «Машины "${s.company}" хороши только на афишах. Пусть приедут на "${rc.name}" в ${MONTHS_G[rc.m].replace(/я$/,'е').replace(/а$/,'е')} — посмотрим, кто кого!» Он предлагает пари на ${money(stake)}: чья лучшая машина финиширует выше, тот и забирает деньги.${C.x?` А сверху — ${STAKE_X[C.x.k]}: ${C.x.k==='legacy'?'слава в историю марки':C.x.k==='bp'?'КБ быстрее закончит работу':C.x.k==='dealer'?'его дилеры перейдут к вам':'его гонщик перейдёт в вашу команду'}.`:''}\nПринять вызов — значит заявить команду на эту гонку и обогнать лучшую машину ${t.n}. Победа в пари — слава в газетах и радость гонщиков; проигрыш или неявка — удар по репутации. Отказ газеты тоже заметят.`,
     choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);
 }
 function salesChalCheck(s){
@@ -115,9 +140,11 @@ function salesChalCheck(s){
   // соперник — марка, с которой вы идёте вровень: не больше чем втрое сильнее и не втрое слабее
   const R=cps.find(x=>x.v<=you*12*3&&x.v>=you*12/3);if(!R)return;
   const stake=Math.round(clamp((L.rev||0)*0.15,200*cpi(s),25000*cpi(s))/50)*50,nm=compName(R.cp,s),mdl=compModel(R.cp,s);
-  const C=s.chal={type:'sales',g,mq:nm,ci:R.i,y:s.y,stake,acc:0,x:stakeExtra(s,nm,'c')};s.chalLast=mi(s);
-  pushEvent({kicker:'Вызов',title:`${nm} бросает вызов «${s.company}»`,deck:`Кто продаст больше машин класса «${SEG[g].name}» до конца ${s.y} года · ставка ${stakeText(C)}`,img:mdl&&mdl[2]&&IMG[mdl[2]]?mdl[2]:'',imgCap:mdl?`${nm} ${mdl[1]}`:'',
-    text:`Директор ${nm} заявил газетам: «К Рождеству наши машины класса "${SEG[g].name}" разойдутся лучше, чем у "${s.company}". Ставлю ${money(stake)}!»\nВ прошлом месяце ваших машин этого класса купили ${fmtN(you)}. Пари — на продажи в стране с этого дня и до конца года. Выиграете — деньги, слава и газетные заголовки; проиграете — заплатите и потеряете немного репутации.`,
+  const h=rivalHead(R.cp.n,s.y)||rivalHead(nm,s.y);
+  const C=s.chal={type:'sales',g,mq:nm,ci:R.i,y:s.y,stake,acc:0,x:stakeExtra(s,nm,'c'),h};s.chalLast=mi(s);
+  const hImg=h&&h.wiki&&IMG[h.wiki]?h.wiki:'';
+  pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+nm+')':nm} бросает вызов «${s.company}»`,deck:`Кто продаст больше машин класса «${SEG[g].name}» до конца ${s.y} года · ставка ${stakeText(C)}`,img:hImg||(mdl&&mdl[2]&&IMG[mdl[2]]?mdl[2]:''),imgCap:hImg?`${h.n} — ${h.role} ${nm}`:mdl?`${nm} ${mdl[1]}`:'',
+    text:`${h?`${h.n}, ${h.role} ${nm},`:`Директор ${nm}`} заявил газетам: «К Рождеству наши машины класса "${SEG[g].name}" разойдутся лучше, чем у "${s.company}". Ставлю ${money(stake)}!»\nВ прошлом месяце ваших машин этого класса купили ${fmtN(you)}. Пари — на продажи в стране с этого дня и до конца года. Выиграете — деньги, слава и газетные заголовки; проиграете — заплатите и потеряете немного репутации.`,
     choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);
 }
 function chalRival(s,C){return ((s.comps[s.country]||[])[C.ci]||{});}
@@ -160,9 +187,11 @@ function chalSales(s,y){const C=s.chal;if(!C||C.type!=='sales'||C.y!==y)return n
 }
 function chalCard(s,where){const C=s.chal;if(!C||!C.acc||(where==='race')!==(C.type==='race'))return '';
   if(C.type==='race'){const rc=RACES.find(r=>r.key===C.rk);if(!rc)return '';
-    return `<section class="card chal"><div class="row"><span class="label">⚔️ Вызов принят</span><span class="pill warn">${esc(stakeText(C))}</span></div><h3 style="margin-top:4px">Пари с ${esc(C.mq)}${rivalryScore(s,C.mq)?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:''}</h3><p class="small" style="margin-top:4px">Гонка «${esc(rc.name)}» · ${MONTHS[rc.m]} ${rc.y}. Ваша лучшая машина должна финишировать выше лучшей машины ${esc(C.mq)}. Не приедете — пари проиграно.</p></section>`;}
+    const h=C.h||rivalHead(C.mq,rc.y);
+    return `<section class="card chal"><div class="row"><span class="label">⚔️ Вызов принят</span><span class="pill warn">${esc(stakeText(C))}</span></div>${h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)} ${esc(C.mq)}</small></div></div>`:''}<h3 style="margin-top:4px">Пари с ${esc(C.mq)}${rivalryScore(s,C.mq)?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:''}</h3><p class="small" style="margin-top:4px">Гонка «${esc(rc.name)}» · ${MONTHS[rc.m]} ${rc.y}. Ваша лучшая машина должна финишировать выше лучшей машины ${esc(C.mq)}. Не приедете — пари проиграно.</p></section>`;}
   const you=Math.round(((s.segY||{})[C.g]||0)-(C.y0||0)),them=Math.round(((chalRival(s,C).ys||{})[C.g]||0)-(C.r0||0)),mx=Math.max(1,you,them);
-  return `<section class="card chal"><div class="row"><span class="label">⚔️ Вызов по продажам</span><span class="pill warn">${esc(stakeText(C))}</span></div><h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${rivalryScore(s,C.mq)?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:''}</h3>
+  const h=C.h||rivalHead(C.mq,C.y||s.y);
+  return `<section class="card chal"><div class="row"><span class="label">⚔️ Вызов по продажам</span><span class="pill warn">${esc(stakeText(C))}</span></div>${h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)} ${esc(C.mq)}</small></div></div>`:''}<h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${rivalryScore(s,C.mq)?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:''}</h3>
     <p class="small muted" style="margin-top:4px">Класс «${SEG[C.g].name}», продажи в стране до конца ${C.y} года.</p>
     <div class="leg-row" style="margin-top:8px"><span>Вы</span><div class="bar"><i style="width:${you/mx*100}%;background:var(--brass)"></i></div><b class="num">${fmtN(you)}</b></div>
     <div class="leg-row"><span>${esc(C.mq)}</span><div class="bar"><i style="width:${them/mx*100}%;background:var(--muted)"></i></div><b class="num">${fmtN(them)}</b></div></section>`;}

@@ -6,9 +6,10 @@ function raceCarsFor(s){return s.models.filter(m=>m.status==='prod');}
 function raceRank(md,rc){const st=carStats(md,2,rc.y);return st.vmax*(0.55+0.45*st.rel)/(1+st.acc/60);}
 function prepAllowed(p,s,rc,md){return p<2||((s.rdept||0)>=1&&!(md&&isTruck(md)));}
 function defaultEntry(s,rc,taken){
-  const cars=raceCarsFor(s).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc)),free=['me',...(s.drivers||[])].filter(d=>!taken.includes(d)&&!drvOut(s,d)),cfg=trackCfg(rc);
+  const racer=pioRacer(s),cars=raceCarsFor(s).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc)),free=(racer?['me',...(s.drivers||[])]:[...(s.drivers||[]),'me']).filter(d=>!taken.includes(d)&&!drvOut(s,d)),cfg=trackCfg(rc);
   // свободных своих пилотов нет — предложить лучшего свободного гонщика на одну гонку
-  if(!free.length){const d=availDrivers(s).filter(x=>!taken.includes(x.id)).sort((a,b)=>b.sk-a.sk)[0];if(d)free.push(d.id);}
+  // 0.22: хозяин сам не гонщик (Бенц, Пежо, Форд) — сначала пилот команды или приглашённый, «сам» — в последнюю очередь
+  {const d=availDrivers(s).filter(x=>!taken.includes(x.id)).sort((a,b)=>b.sk-a.sk)[0];if(d&&(!free.length||!racer&&free[0]==='me'&&d.sk>pioSk(s)+0.1&&s.cash>driverRaceFee(d,s)*4))free.unshift(d.id);}
   return {drv:free[0]||null,car:cars[0]?cars[0].id:null,prep:(s.rdept||0)>=1&&!['rally','endurance'].includes(rc.t)?2:1,tyre:rc.km>600&&!cfg.pits?'hard':'soft',gear:['oval','sprint'].includes(rc.t)?1:rc.t==='hill'?-1:0};
 }
 function drvObj(id){return id&&id!=='me'?DRIVERS.find(d=>d.id===id):null;}
@@ -31,7 +32,7 @@ function renderRaceSetup(keepScroll){
   RS.entries.forEach(e=>{if(!cars.some(m=>m.id===e.car))e.car=cars[0].id;if(!prepAllowed(e.prep,s,rc,cars.find(m=>m.id===e.car)))e.prep=1;});
   // хозяин в больнице: пилотов команды не трогаем, а «Еду сам» — ведёте машину №1 вместо её пилота
   RS.entries.forEach(e=>{if(e.drv&&drvOut(s,e.drv))e.drv=null;});
-  const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||(meSick&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
+  const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||((meSick||!pioRacer(s))&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
   const tot=setupTotal(rc,s),missing=RS.entries.findIndex(e=>!e.drv),champs=raceChamps(rc).map(id=>CHAMPS[id].name(rc.y));
   const gb=GBC_IDS.includes(rc.id);
   const entryHTML=(e,i)=>{
@@ -51,13 +52,14 @@ function renderRaceSetup(keepScroll){
       ${st.mech?'<p class="small muted" style="margin-top:6px">В машине едет механик: он чинит поломки и меняет колёса прямо на трассе.</p>':''}
       ${adviceHTML(rc,e,md,st,s,i)}
       <div class="label" style="margin-top:10px">Пилот</div><div class="chips">
-        ${!taken.includes('me')?(meOut(s)?`<button class="chip" disabled>Вы за рулём<small>${esc(injNote(s,'me'))}</small></button>`:chip('me','Вы за рулём',PIONEERS[s.pioneer].name)):''}
+        ${!taken.includes('me')?(meOut(s)?`<button class="chip" disabled>Вы за рулём<small>${esc(injNote(s,'me'))}</small></button>`:chip('me','Вы за рулём',PIONEERS[s.pioneer].name+' · мастерство '+Math.round(pioSk(s)*100))):''}
         ${own.map(x=>{if(drvOut(s,x.id))return `<button class="chip" disabled>${esc(x.n)}<small>${esc(injNote(s,x.id))}</small></button>`;const v=moodOf(s,x.id).v;return chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · по контракту · ${moodFace(v)} ${moodWord(v)}`);}).join('')}
         ${d&&!own.includes(d)&&!RS.more?chip(d.id,d.n,`мастерство ${Math.round(d.sk*100)} · на гонку ${money(driverRaceFee(d,s))}`):''}
         ${RS.more?pool.map(x=>chip(x.id,x.n,`мастерство ${Math.round(x.sk*100)} · на гонку ${money(driverRaceFee(x,s))}`)).join(''):''}
         ${pool.length?`<button class="chip" data-act="rMore">${RS.more?'Свернуть список':'Пригласить пилота на гонку ▾'}<small>${RS.more?'оставить выбранного':`свободных в ${rc.y}: ${pool.length}`}</small></button>`:''}
       </div>
       ${d&&d.id?`<div class="row" style="margin-top:6px;gap:10px;justify-content:flex-start">${drvPhoto(d)}<p class="small muted" style="flex:1">${esc(d.note||'')} <button class="linkbtn" data-act="drvBio" data-k="${d.id}">История ▸</button></p></div>`:''}
+      ${e.drv==='me'&&(PIO_RACE[s.pioneer]||{}).note?`<p class="small muted" style="margin-top:6px">${esc(PIONEERS[s.pioneer].name)} за рулём: ${esc(PIO_RACE[s.pioneer].note)}${pioRacer(s)?'':' Опытный пилот проедет быстрее — а в режиме «за рулём» его машину ведёте вы.'}</p>`:''}
       <div class="label" style="margin-top:10px">Машина</div><div class="chips">${cars.map(m=>{const x=carStats(m,e.prep,rc.y);return `<button class="chip ${m.id===md.id?'on':''}" data-act="rset" data-i="${i}" data-k="car" data-v="${m.id}">${esc(m.name)}<small>${Math.round(x.hp)} л.с. · ${Math.round(x.vmax*3.6)} км/ч</small></button>`;}).join('')}</div>
       <div class="label" style="margin-top:10px">Подготовка</div><div class="chips">${PREP.map(p=>{const ok=prepAllowed(p.id,s,rc,md);return `<button class="chip ${e.prep===p.id?'on':''}" data-act="rset" data-i="${i}" data-k="prep" data-v="${p.id}" ${ok?'':'disabled'}>${p.name}<small>${ok?(p.cost?money(prepCost(rc,p.id,s)):'бесплатно'):isTruck(md)&&p.id===2?'грузовику гоночный кузов не поставить':'нужна гоночная мастерская'} · ${p.desc}</small></button>`;}).join('')}</div>
       <div class="label" style="margin-top:10px">Шины</div><div class="chips"><button class="chip ${e.tyre==='soft'?'on':''}" data-act="rset" data-i="${i}" data-k="tyre" data-v="soft">Мягкие<small>цепко держат, быстро стираются</small></button><button class="chip ${e.tyre==='hard'?'on':''}" data-act="rset" data-i="${i}" data-k="tyre" data-v="hard">Жёсткие<small>живут дольше, чаще скользят</small></button></div>
@@ -97,7 +99,7 @@ function raceAdvice(rc,e,md,st,s){
   const fc=finishChance(carStats(md,rec.prep,rc.y),rc,s);if(fc<0.55)tips.push(`Шанс доехать ≈${Math.round(fc*100)}%. В гонке отдавайте приказ «Беречь» или ставьте мотор понадёжнее.`);
   const best=raceCarsFor(s).filter(m=>m.id!==md.id).map(m=>({m,r:raceRank(m,rc)})).sort((a,b)=>b.r-a.r)[0];
   if(best&&best.r>raceRank(md,rc)*1.06)tips.push(`Машина: «${best.m.name}» для этой гонки лучше — ${Math.round(carStats(best.m,rec.prep,rc.y).vmax*3.6)} км/ч.`);
-  const pilot=e.drv==='me'?(PIONEERS[s.pioneer].drv&&DRIVERS.find(d=>d.id===PIONEERS[s.pioneer].drv)||{sk:0.72}):drvObj(e.drv),cand=availDrivers(s).concat((s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean)).sort((a,b)=>b.sk-a.sk)[0];
+  const pilot=e.drv==='me'?{sk:pioSk(s)}:drvObj(e.drv),cand=availDrivers(s).concat((s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean)).sort((a,b)=>b.sk-a.sk)[0];
   if(pilot&&cand&&cand.sk-pilot.sk>=0.08&&e.drv!==cand.id)tips.push(`Пилот: ${cand.n} опытнее (мастерство ${Math.round(cand.sk*100)})${(s.drivers||[]).includes(cand.id)?' и уже в команде':` — на гонку ${money(driverRaceFee(cand,s))}`}.`);
   if(cfg.night)tips.push('Ночью часть трассы в темноте — не рискуйте на обгонах в поворотах.');
   return {tips,rec,same:rec.tyre===e.tyre&&rec.gear===e.gear&&rec.prep===e.prep};

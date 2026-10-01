@@ -10,7 +10,7 @@ function step(){
     // 0.21: новая модель идёт на тот же завод — поставщики и рабочие уже есть: себестоимость считаем от половины выпуска прежних моделей
     {const prev=s.models.filter(m=>m!==md&&m.status==='prod'&&(m.vol||0)>0),g=segOf(md),same=prev.filter(m=>segOf(m)===g),src=same.length?same:prev;
       const v=src.reduce((a,m)=>Math.max(a,m.vol||0),0)*(same.length?0.6:0.35);if(v>(md.vol||0))md.vol=Math.round(v*10)/10;}
-    const tc=toolingCost(md,s);s.cash-=tc;r.tool+=tc;addLog(`Модель «${md.name}» пошла в серию. Оснастка обошлась в ${money(tc)}.`,'good');checkFirstParts(md);launchPaper(s,md);}}});
+    const tc=toolingCost(md,s);s.cash-=tc;r.tool+=tc;addLog(`Модель «${md.name}» пошла в серию. Оснастка обошлась в ${money(tc)}.`,'good');checkFirstParts(md);if(md.legend)try{legendLaunch(s,md);}catch(e){console.warn(e);}else launchPaper(s,md);}}});
   s.capBuild=(s.capBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.cap+=b.units;addLog(`Новый цех введён в строй: мощность ${fmtN(Math.round(capEff(s)))} машин в месяц.`,'good');return false;}return true;});
   s.whBuild=(s.whBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.wh=(s.wh||0)+b.units;addLog(`Новый склад готов: ${fmtN(s.wh)} мест для машин.`,'good');return false;}return true;});
   if(s.techBuild){s.techBuild.left--;if(s.techBuild.left<=0){const k=s.techBuild.k;s.tech[k]=(s.tech[k]||0)+1;const lv=TECH[k].lv[s.tech[k]-1];addLog(`Внедрено: ${lv.name}.`,'good');
@@ -76,7 +76,8 @@ function step(){
     s.models.slice().sort((a,b)=>b.stock-a.stock).forEach(m=>{if(over<=0||!m.stock)return;const n=Math.min(m.stock,over);over-=n;m.stock-=n;const v=n*m.price*0.5;r.dump+=v;r.dumpN+=n;});
     if(mi(s)-(s.dumpSaid||-99)>=3){s.dumpSaid=mi(s);addLog(`Склад переполнен: ${fmtN(r.dumpN)} машин отдали перекупщикам за полцены. Расширьте склад на вкладке «Завод» или выпускайте меньше.`,'bad');pendingToasts.push('📦 Склад переполнен');}}}
   // расходы
-  r.rd=rdUpkeep(s);r.drv=driverPayroll(s);r.team=teamUpkeep(s);
+  try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
+  r.rdp=s.rdPaid||0;s.rdPaid=0;r.rd=rdUpkeep(s)+r.rdp;r.drv=driverPayroll(s);r.team=teamUpkeep(s);   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
   // 0.21: чертежи соперника, выигранные в пари, — следующий проект КБ короче на 30%
   if(s.rd.bpStock>0){const pj=(s.rd.projs||[]).find(p=>!p.bp);if(pj){pj.bp=1;pj.need=Math.max((pj.prog||0)+1,Math.round(pj.need*0.7));s.rd.bpStock--;addLog(`КБ работает по чертежам соперника: «${pj.name}» — на 30% быстрее.`,'good');}}
@@ -91,11 +92,11 @@ function step(){
   r.sto=s.models.reduce((a,md)=>a+md.stock*matCost(md,s),0)*0.01;r.rate=loanRate(s);r.int=s.loan*r.rate/12;turnover(s,r);
   // 0.21: контора — управление, сбыт, бухгалтерия, юристы: около 3% выручки
   r.adm=0.03*(r.rev+r.ord);
-  r.lic=r.lic||0;r.profit=r.rev+r.lic+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.turn||0);
+  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0);
   r.tax=r.profit>0?r.profit*taxRate(s.y):0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
-  s.cash+=r.profit+r.tool+r.hire-(r.rev+r.ord)+r.got;   // оснастка и найм уже списаны выше
+  s.cash+=r.profit+r.tool+r.hire+r.rdp-(r.rev+r.ord)+r.got;   // оснастка, найм и проекты КБ уже списаны выше
   loanRecall(s,r);
   s.plantVal*=0.995;
   // репутация: качество проданного, брак, очереди, недовольные дилеры

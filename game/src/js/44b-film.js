@@ -47,7 +47,7 @@ function raceIntroText(rc){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];
   (T.seg||[]).forEach(sg=>{if(sg.cap&&sg.i>s0+30&&sg.i<lim)out.push({i:sg.i,cap:sg.cap,w:sg.w||2,alt:sg.alt||30});});
-  (T.lm||[]).forEach(q=>{const nm=LM_NAME[q.t];if(nm&&q.i>s0+20)out.push({i:q.i,cap:nm,w:3,alt:45});});
+  (T.lm||[]).forEach(q=>{const nm=q.t==='rlm'?(q.far?'':q.name):LM_NAME[q.t];if(nm&&q.i>s0+20)out.push({i:q.i,cap:nm,w:3,alt:q.t==='rlm'?Math.max(30,Math.min(70,(q.lm.h||20)*1.4)):45});});
   if(!out.length&&T.town){for(let i=s0+40;i<lim;i++)if(T.town[i]){out.push({i:i+8,cap:'Городок на пути: мостовая, зрители, узкие улицы',w:1,alt:22});break;}}
   if(!out.length){let bi=-1,bk=0;for(let i=s0+60;i<Math.min(lim,s0+900);i++){const k=Math.abs(T.K[i]||0);if(k>bk){bk=k;bi=i;}}if(bi>0)out.push({i:bi,cap:bk>1/25?'Крутой поворот — здесь многие вылетали':'Длинная дуга: держите скорость',w:1,alt:28});}
   out.sort((a,b)=>b.w-a.w||a.i-b.i);const first=out[0];if(!first)return null;

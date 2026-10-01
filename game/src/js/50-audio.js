@@ -164,7 +164,12 @@ function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)r
     try{const s=document.createElement('script');s.src=ORCH_BASE()+'music/index.js';s.async=true;
       s.onload=()=>{ORCH.idx=window.MUSIC_INDEX||{};ORCH.failT=0;res(ORCH.idx);AU.sig='';musBuild(false);};s.onerror=()=>{s.remove();fail();};document.head.appendChild(s);}catch(e){fail();}});
   return ORCH.loadP;}
-function orchTracks(){const I=ORCH.idx||{};return Object.keys(I).map(id=>{const m=I[id];return {orch:true,id,src:ORCH_BASE()+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
+// 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
+const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», военный оркестр'},
+  own_reel:{cap:'«Кинохроника», регтайм (оркестр)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», оркестр регтайма'},
+  own_valse:{cap:'«Вальс гонщиков» (оркестр)',st:'waltz',y:1895,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
+  own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'}};
+function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const L=orchTracks().filter(t=>t.y<=y+3);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
 function musAll(){const L=[];for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
@@ -178,6 +183,8 @@ function musBuild(start){
   // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
   {const hasO=L.some(t=>t.orch),S=musSynth(),nR=L.length;L=hasO?L:nR?L.concat(S.slice(0,Math.max(3,Math.ceil(nR/2)))):S;}
   const rnd=mulberry32(hashStr(AU.on.mode+y));for(let i=L.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[L[i],L[j]]=[L[j],L[i]];}
+  // первой звучит своя мелодия игры — марш «Автоимперия» (оркестр)
+  if(start){const k=L.findIndex(t=>t.id==='own_avto');if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
   if(sig===AU.sig&&!start)return;AU.sig=sig;AU.pl=L;
   const k=cur?L.findIndex(t=>t.title===cur.title):-1;
@@ -335,6 +342,7 @@ function auRaceTick(){
   // переключение передач: стук рычага; до синхронизаторов (1928) при сбросе иногда скрежет шестерён
   if(R.me&&me===R.me){if(a.gear!==undefined&&me.gear!==a.gear&&sp>2){auSfx('shift',0.6);if(me.gear<a.gear&&R.rc.y<1928&&Math.random()<0.3)auSfx('grind',0.5);}a.gear=me.gear;}
   if(a.wk){try{enTick(a,me,vol);}catch(e){console.warn(e);}}
+  else if(me.potN!==a.potN){if(a.potN!==undefined&&me.potN>a.potN)auSfx('bump',0.9);a.potN=me.potN;}
   else{  const base=(a.early?30:42)+p*(a.early?80:150)+(me.overheat>0?-15:0);
   a.o1.frequency.setTargetAtTime(base,t,0.05);a.o2.frequency.setTargetAtTime(base*0.5,t,0.05);a.lfo.frequency.setTargetAtTime(base/(a.early?2:4),t,0.05);
   a.f.frequency.setTargetAtTime(350+p*1200+thr*500,t,0.08);a.g.gain.setTargetAtTime((R.t<0?0.05:(0.05+p*0.08+thr*0.07)*(me.overheat>0?0.4:1)*(me.dnf?0.2:1))*vol,t,0.08);

@@ -3,7 +3,7 @@
 require('./harness.js')(`
 Math.random=(()=>{let a=313;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
-ok(WORLD.length>=12&&WORLD.length<=15,'событий в партии: '+WORLD.length);
+{const nw=WORLD.filter(W=>!W.legal).length,nl=WORLD.filter(W=>W.legal).length;ok(nw>=12&&nw<=15&&nl>=20,'событий в партии: мировых '+nw+', судов, законов и налогов (0.22) '+nl);}
 WORLD.forEach(W=>{ok(!W.reel||!!reelGet(W.reel,G||{models:[]}),W.id+': ролик '+W.reel+' есть');});
 for(const home of ['fr','us']){console.log('== дом: '+home);
   newGame('custom',home,'Мир','normal');G.cash=5e6;const md=G.models[0];
@@ -11,15 +11,16 @@ for(const home of ['fr','us']){console.log('== дом: '+home);
   for(const W of WORLD){if(!worldApplies(W,G))continue;const y=W.id==='war'&&home==='it'?1915:W.y,m=W.id==='war'&&home==='it'?4:W.m;
     G.y=y;G.m=m;G.pending=[];G.wseen={};const u0={};['us','fr','de'].forEach(c=>u0[c]=worldU(G,c,'lux')+worldU(G,c,'middle')+worldU(G,c,'truck')+worldU(G,c,'sport'));
     const L0=G.log.length;worldCheck(G);const ev=G.pending.find(e=>e.world===W.id);
-    ok(!!ev&&ev.paper&&!!ev.mean&&ev.choices.length>=2,W.id+' ('+y+'): газета «'+(ev?ev.title:'—')+'», «что это значит»: '+(ev?ev.mean.slice(0,60)+'…':'нет'));
+    ok(!!ev&&ev.paper&&!!ev.mean&&ev.choices.length>=(W.legal?1:2),W.id+' ('+y+'): газета «'+(ev?ev.title:'—')+'», «что это значит»: '+(ev?ev.mean.slice(0,60)+'…':'нет'));
     ok(G.log.slice(L0).some(l=>l.text.includes(W.title)),W.id+': влияние записано в журнал');
     // ролик — кадром плёнки в газете
     if(ev){const h=paperHTML({...ev,act:'choose'},G);ok(!W.reel||/p-reel/.test(h),W.id+': кадр кинохроники в газете');ok(/p-mean/.test(h),W.id+': карточка «Что это значит для вас»');}
     // выбор
-    const ch=ev.choices[pick[W.id]][1],cash0=G.cash,rep0=G.rep,st0=JSON.stringify({m:G.military,imp:G.imp,cut:G.cutUntil,cap:G.capSale,steel:G.steelUntil,ad:G.adFx,rel:G.relFx,rd:G.rd.bpStock,wfx:(G.wfx||[]).length,loan:G.loan,prices:G.models.map(x=>x.price)});
+    if(pick[W.id]>=ev.choices.length)pick[W.id]=ev.choices.length-1;
+    const ch=ev.choices[pick[W.id]][1],cash0=G.cash,rep0=G.rep,st0=JSON.stringify({m:G.military,imp:G.imp,cut:G.cutUntil,cap:G.capSale,steel:G.steelUntil,ad:G.adFx,rel:G.relFx,rd:G.rd.bpStock,wfx:(G.wfx||[]).length,loan:G.loan,prices:G.models.map(x=>x.price),wp:G.wagePol,wk:G.workers,lg:JSON.stringify(G.legal||{})});
     G.pending=[ev];resolve(ch);
-    const st1=JSON.stringify({m:G.military,imp:G.imp,cut:G.cutUntil,cap:G.capSale,steel:G.steelUntil,ad:G.adFx,rel:G.relFx,rd:G.rd.bpStock,wfx:(G.wfx||[]).length,loan:G.loan,prices:G.models.map(x=>x.price)});
-    const changed=st0!==st1||G.cash!==cash0||G.rep!==rep0,noop=/No$|Skip$|Wait$/.test(ch);
+    const st1=JSON.stringify({m:G.military,imp:G.imp,cut:G.cutUntil,cap:G.capSale,steel:G.steelUntil,ad:G.adFx,rel:G.relFx,rd:G.rd.bpStock,wfx:(G.wfx||[]).length,loan:G.loan,prices:G.models.map(x=>x.price),wp:G.wagePol,wk:G.workers,lg:JSON.stringify(G.legal||{})});
+    const changed=st0!==st1||G.cash!==cash0||G.rep!==rep0,noop=/No$|Skip$|Wait$|Ok$|Keep$|Stay$/.test(ch);
     ok(changed||noop,W.id+': выбор «'+ev.choices[pick[W.id]][0]+'» '+(changed?'меняет игру':'— ничего не делать'));
     // через месяц — газета о выборе
     G.m++;if(G.m>11){G.m=0;G.y++;}G.pending=[];worldCheck(G);const f=G.pending.find(e=>/месяц спустя/.test(e.kicker));

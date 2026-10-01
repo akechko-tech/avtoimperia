@@ -59,7 +59,7 @@ function month(){const act=G.models.filter(m=>m.status==='prod'),dev=G.models.fi
   // жадный первые десять лет ведёт дела как средний: жадность приходит, когда марка уже известна
   if(BOT==='middle'||BOT==='greedy'&&G.y<1906){if(!dev.length&&(mi(G)-lastDesign>=72||stale()))newModel(cls());retireOld();
     if(G.m%6===0)act.forEach(m=>{if(!(m.lastSold||m.lastDem))return;const bp=bestPriceFor(m,G);if(bp.price)m.price=bp.price;});
-    grow(0.25);dealersHome(0.5);if(!rdActive(G).length){const pj=suggestProject(G);if(pj)G.rd.projs.push({...pj,prog:0});}
+    grow(0.25);dealersHome(0.5);if(!rdActive(G).length){const pj=suggestProject(G);if(pj&&G.cash>rdCost(pj,G)*3)rdBegin(G,pj);}
     if(!G.techBuild)for(const k of TECH_ORDER){if(k==='credit')continue;const nx=techNext(G,k);if(nx&&nx.y<=G.y-2&&techOpen(G,k)){const c=techCost(G,k);if(G.cash>c*3){G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};break;}}}
     if(G.last)G.ad=Math.round(Math.min(adRef(G)*0.5,(G.last.rev||0)*0.03));
     if(G.cash<0&&G.loan+2000*cpi(G)<=maxLoan(G)){const n=Math.round(2000*cpi(G));G.loan+=n;G.cash+=n;}

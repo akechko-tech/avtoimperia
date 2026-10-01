@@ -91,16 +91,40 @@ function avtEngineWorklet(){
     rock:{f:1200,a:0.32,po:7,rf:1500,rq:3,ra:0.5},puddle:{f:1500,a:0.75,wet:1}};
   function mkRoad(){return {v:0,vT:0,g:0,gT:0,s:SURF_S.asphalt,sk:'asphalt',wet:0,wT:0,sq:0,sqT:0,sc:0,scT:0,ro:0,ty:1,
     nbp:bpSet(bq(),900,0.7),rbp:bpSet(bq(),230,3),sq1:bpSet(bq(),1000,18),sq2:bpSet(bq(),1520,14),scb:bpSet(bq(),1300,1.4),hs:bpSet(bq(),5200,0.8),rat:bpSet(bq(),780,6),thp:bpSet(bq(),85,2.5),
-    ph:0,nxt:1,dj:0,j2:-1,ri:0,ti:0,rti:0,drift:0,pk:0,sl:0};}
+    ph:0,nxt:1,dj:0,j2:-1,ri:0,ti:0,rti:0,drift:0,pk:0,sl:0,
+    // 0.22: подвеска на кочках, ямы, пестрота покрытия, «гребёнка», оборот колеса (спущенное — «шлёп-шлёп»), вой протектора, камешки по крыльям
+    bz:0,bzT:0,tex:0.5,texT:0.5,wash:0,cob:0,flat:0,lr:0,pn:-1,potI:0,potP:0,sus:bpSet(bq(),75,1.1),body:bpSet(bq(),145,2.2),pth:bpSet(bq(),68,1.6),spr:0,sprF:0,sprA:0,
+    rev:0,wph:0,whi:0,pg:[bpSet(bq(),2900,26),bpSet(bq(),4100,30),bpSet(bq(),5300,28)],pgE:[0,0,0],pgP:[0,0,0]};}
   function roadBlock(r,oL,oR,N){
     const k=1-Math.exp(-N/(SR*0.05));r.v+=(r.vT-r.v)*k;r.g+=(r.gT-r.g)*k;r.wet+=(r.wT-r.wet)*k*0.4;r.sq+=(r.sqT-r.sq)*(r.sqT>r.sq?k*2:k);r.sc+=(r.scT-r.sc)*k;
-    const S=r.s,v=r.v,vf=Math.min(1.4,Math.pow(v/25,1.35)),ty=r.ty;
-    bpSet(r.nbp,S.f*(0.85+0.3*Math.min(1,v/30)),0.75);if(S.rf)bpSet(r.rbp,S.rf,S.rq||2);
+    r.bz+=(r.bzT-r.bz)*Math.min(1,k*3);r.tex+=(r.texT-r.tex)*k*0.6;
+    const S=r.s,v=r.v,vf=Math.min(1.4,Math.pow(v/25,1.35)),ty=r.ty,tx=r.tex;
+    // пестрота покрытия: укатанное — глуше и тише, свежая подсыпка и заплаты — выше и громче
+    bpSet(r.nbp,S.f*(0.85+0.3*Math.min(1,v/30))*(0.8+0.45*tx),0.75);if(S.rf)bpSet(r.rbp,S.rf*(0.9+0.2*tx),S.rq||2);
+    bpSet(r.sus,62+40*tx,1.1);
     r.drift+=nz()*0.06;r.drift*=0.97;const f1=Math.max(600,880+r.sq*300+v*4+r.drift*120);bpSet(r.sq1,f1,16);bpSet(r.sq2,f1*1.53,12);
-    const na=S.a*vf*(ty===0?0.75:1),impK=ty===0?1.5:ty===1?1.15:0.9,dstep=v/SR,rough=r.ro,ratR=(rough*0.6+0.15)*v/SR*(ty===0?1.6:1),wet=r.wet*Math.min(1,Math.pow(v/18,1.3));
+    const na=S.a*vf*(ty===0?0.75:1)*(0.78+0.5*tx),impK=ty===0?1.5:ty===1?1.15:0.9,dstep=v/SR,rough=r.ro,ratR=(rough*0.6+0.15+r.bz*0.5)*v/SR*(ty===0?1.6:1),wet=r.wet*Math.min(1,Math.pow(v/18,1.3));
     const sqA=r.sq*0.5,scA=r.sc*0.4*Math.min(1,v/10),thD=Math.exp(-1/(SR*0.004)),slurp=S.slurp?1:0;
+    // подвеска: глухие удары на кочках (сила — по скорости подскока колёс), «гребёнка» — дробь с шагом 0,8 м
+    const susA=Math.min(1.2,r.bz)*0.55*(ty===0?1.3:1),wsA=Math.min(1.5,(r.wash+r.cob*0.5)/0.012)*Math.min(1,v/12),wsF=v/0.8/SR;
+    // оборот колеса (r≈0,42 м): спущенное колесо шлёпает, целое — чуть «дышит»; вой протектора пневматики на скорости
+    const rvF=v/2.64/SR,rvD=r.flat?0.85:0.06,whF=v/0.034/SR,whA=ty>=1&&v>9?0.006*Math.min(1,(v-9)/20)*(0.6+0.8*tx):0;
+    // камешки из-под колёс бьют по крыльям и днищу: на щебне, грунте, в горах — чем быстрее, тем чаще
+    const pgR=(S.po?Math.min(3,S.po/5):0)*Math.max(0,v-5)*0.35*(0.5+tx)/SR,pdD=Math.exp(-1/(SR*0.012)),sprD=Math.exp(-1/(SR*0.09));
     for(let i=0;i<N;i++){
-      let o=run(r.nbp,nz())*na;
+      let o=run(r.nbp,nz())*na,oS=0;
+      r.rev+=rvF;if(r.rev>=1){r.rev-=1;if(r.flat&&v>1)r.ti+=0.5*Math.min(1,v/15);}
+      o*=1+rvD*Math.sin(TAU*r.rev);
+      let si=0;if(wsA>0.01){r.wph+=wsF;if(r.wph>=1)r.wph-=1;const w=Math.sin(TAU*r.wph);o*=1+0.45*wsA*w;si+=(nz()*0.25+w*0.6)*wsA*0.25;}
+      if(susA>0.003)si+=nz()*susA;
+      if(si!==0||Math.abs(r.sus.y1)>1e-6)oS+=run(r.sus,si);
+      // яма: удар в подвеску, лязг кузова и пружинный «бум»
+      if(r.potI>0.001){oS+=run(r.body,nz()*r.potI*2.2)+run(r.pth,r.potI*1.6);r.rti+=r.potI*0.05;r.potI*=0.9985;}
+      else if(Math.abs(r.pth.y1)>1e-6)oS+=run(r.pth,0);
+      if(r.sprA>1e-4){r.spr+=r.sprF/SR;r.sprF*=0.99993;oS+=Math.sin(TAU*r.spr)*r.sprA;r.sprA*=sprD;}
+      if(whA>0){r.whi+=whF*(1+0.004*Math.sin(r.rev*TAU*3));if(r.whi>1)r.whi-=1;o+=Math.sin(TAU*r.whi)*whA+Math.sin(TAU*r.whi*2)*whA*0.35;}
+      if(pgR>0&&rnd()<pgR){const q=Math.floor(rnd()*3);r.pgE[q]+=0.05+0.12*rnd();r.pgP[q]=rnd()*2-1;}
+      let pl=0,pr=0;for(let q=0;q<3;q++)if(r.pgE[q]>1e-4){const x=run(r.pg[q],nz()*r.pgE[q]);r.pgE[q]*=pdD;const a=r.pgP[q];pl+=x*(1-a)*0.5;pr+=x*(1+a)*0.5;}
       if(slurp){r.sl+=0.00004;o*=0.6+0.4*Math.sin(r.sl*TAU*(2+v*0.2));}
       // шаг покрытия: кирпич, брусчатка, доски — ровная дробь с разбросом; щебень, грунт — случайные удары
       if(S.sp&&v>0.5){r.ph+=dstep;if(r.ph>=r.nxt){r.ph=0;r.nxt=S.sp*(0.8+0.4*rnd());r.ri+=S.ra*impK*Math.min(1.2,v/14)*(S.rr?(1-S.rr)+S.rr*rnd():0.7+0.3*rnd());}}
@@ -115,14 +139,16 @@ function avtEngineWorklet(){
       if(sqA>0.002){const x=nz();o+=(run(r.sq1,x)*1.0+run(r.sq2,x)*0.55)*sqA;}
       if(scA>0.002)o+=run(r.scb,nz())*scA;
       if(wet>0.002)o+=run(r.hs,nz())*wet*0.32;
-      o*=r.g;oL[i]+=o;oR[i]+=o;}
+      o+=oS;const lr=r.lr*0.25;o*=r.g;pl*=r.g;pr*=r.g;oL[i]+=o*(1-lr)+pl;oR[i]+=o*(1+lr)+pr;}
   }
   class AvtEngine extends AudioWorkletProcessor{
     constructor(){super();this.v=new Map();this.road=null;this.alive=true;this.port.onmessage=e=>this.msg(e.data);}
     msg(d){if(d.t==='mk'){const old=this.v.get(d.id);if(old&&!old.dead)return;this.v.set(d.id,mkVoice(d.p));}
       else if(d.t==='rm'){const v=this.v.get(d.id);if(v)v.dead=true;}
       else if(d.t==='set'){for(const s of d.v){const v=this.v.get(s.id);if(!v)continue;v.rT=s.rpm;v.lT=s.ld;v.gT=s.g;v.pT=s.pan;v.lpT=s.lp;v.spd=s.spd;}
-        if(d.r){if(!this.road)this.road=mkRoad();const r=this.road,q=d.r;r.vT=q.v;r.gT=q.g;r.wT=q.wet;r.sqT=q.sq;r.scT=q.sc;r.ro=q.ro;r.ty=q.ty;if(q.s!==r.sk&&SURF_S[q.s]){r.sk=q.s;r.s=SURF_S[q.s];}}}
+        if(d.r){if(!this.road)this.road=mkRoad();const r=this.road,q=d.r;r.vT=q.v;r.gT=q.g;r.wT=q.wet;r.sqT=q.sq;r.scT=q.sc;r.ro=q.ro;r.ty=q.ty;if(q.s!==r.sk&&SURF_S[q.s]){r.sk=q.s;r.s=SURF_S[q.s];}
+          r.bzT=q.bz||0;r.texT=q.tex===undefined?0.5:q.tex;r.wash=q.wash||0;r.cob=q.cob||0;r.flat=q.flat||0;r.lr=q.lr||0;
+          if(q.pn!==undefined){if(r.pn>=0&&q.pn>r.pn){const e=Math.min(1.4,0.45+(q.pj||0.5));r.potI+=e;r.sprA=0.05*e;r.sprF=150+60*rnd();r.spr=0;}r.pn=q.pn;}}}
       else if(d.t==='stop'){this.alive=false;}}
     process(ins,outs){const o=outs[0],L=o[0],R=o[1]||o[0],N=L.length;
       for(const [id,v] of this.v){voiceBlock(v,L,R,N);if(v.dead&&v.fade<0.002)this.v.delete(id);}
@@ -256,6 +282,9 @@ function enTick(a,me,vol){if(!EN.node||!R)return;const cars=R.cars,T=R.trk,msgs=
   if(R.me||R.follow){const S=me.surf||'asphalt',sp=Math.abs(me.vx||0),soft=/^(dirt|mud|mudhole|sand|beach|snow|grass|field|verge|forest)$/.test(S);
     const skid=sp>3?clamp(Math.max((Math.max(me.slipR||0,(me.slipF||0)*0.8)-0.08)*5,((me.gu||0)-0.8)*3.5)+(me.spinw>0.3?0.25:0),0,1):0;
     const wet=R.wx&&(R.wx.rain||R.wetK)?(me.tun?0:Math.max(R.wetK||0,R.wx.rain?1:0)):0;
-    road={v:sp,g:(R.t<0?0:1)*vol*(me.off?1.2:1)*0.5,s:S==='puddle'?'puddle':S,wet:S==='puddle'?1:wet,sq:soft?0:skid,sc:soft?skid:0,ro:me.off?1:0.3,ty:EN_SURF_TY(R.rc.y)};}
+    road={v:sp,g:(R.t<0?0:1)*vol*(me.off?1.2:1)*0.5,s:S==='puddle'?'puddle':S,wet:S==='puddle'?1:wet,sq:soft?0:skid,sc:soft?skid:0,ro:me.off?1:0.3,ty:EN_SURF_TY(R.rc.y)};
+    // 0.22: кочки, ямы, пестрота покрытия, «гребёнка», спущенное колесо — звук меняется на ходу, а не гудит ровно
+    const G=T.rg,st=me.v3;if(G&&!me.off){const i=me.idx;road.wash=G.wash[i];road.cob=G.cob[i];road.tex=roughTex(T,rgS(T,me));}else road.tex=0.5;
+    road.bz=clamp((st&&st.bz)||0,0,3)*(me.off?1.5:1);road.pn=me.potN||0;road.pj=clamp((st&&st.bz)||0.5,0,1);road.flat=me.punct?1:0;road.lr=clamp(me.joltSide||0,-1,1)*(me.potN?1:0);}
   msgs.push({t:'set',v:set,r:road});
   for(const m of msgs)EN.node.port.postMessage(m);}

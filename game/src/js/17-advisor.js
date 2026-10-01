@@ -63,7 +63,7 @@ function adviceList(s){
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
   // КБ
   const free=rdSlots(s)-rdActive(s).length,pj=free>0&&suggestProject(s);
-  if(pj)add(60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.`,'Начать',()=>{G.rd.projs.push({...pj,prog:0});addLog(`КБ начало проект: ${pj.name}.`);},'models');
+  if(pj)add(60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
   // мощности и склад
   if(L&&act.length){const util=L.made/Math.max(1,capEff(s)),lost=act.reduce((a,m)=>a+(m.lostS||0),0),busy=(s.capBuild||[]).length;
     if(util>0.93&&lost>Math.max(1,L.sold*0.06)&&!busy){const n=Math.max(2,Math.round(s.cap*0.25)),c=n*capUnitCost(s);if(s.cash>c*1.2)add(75,'🏭',`Завод работает на пределе, а покупателям не хватило ${fmtD(lost)} машин. Постройте цех.`,`+25% · ${money(c)}`,()=>ACT.capAdd({n}),'plant');}
@@ -133,7 +133,8 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
     if(lv<4&&impPayback(s,c)<[0,18,24,30][lv]&&room()>impCost(s,c,lv+1)*2&&impUp(s,c)){msg.push((lv===1?'отделение: ':lv===2?'сборка из комплектов: ':'свой завод: ')+COUNTRIES[c].name);return;}
     const n=d?dealerGain(s,c):0;if(n>0&&room()>dc*n*2){s.cash-=n*dc;s.dealers[c]=d+n;}});}
   // КБ: проекты и рост
-  while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;s.rd.projs.push({...pj,prog:0});msg.push('КБ: '+pj.name);}
+  // 0.22: проекты КБ — только из своих денег, без кредита, и когда касса в несколько раз больше цены проекта
+  while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;const c=rdCost(pj,s);if(s.cash-c<reserve*(lean?1:0.5)||!rdBegin(s,pj))break;msg.push('КБ: '+pj.name);}
   if(s.rd.lvl<5&&!lean&&pAvg>rdUpkeep(s)*2&&room()>rdUpCost(s)*5){const c=rdUpCost(s);s.cash-=c;s.rd.lvl++;msg.push('КБ расширено');}
   // технологии завода
   if(!s.techBuild&&calm&&!lean){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}

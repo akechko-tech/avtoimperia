@@ -14,7 +14,7 @@ function creditState(s,y,m){y=y??s.y;m=m??s.m;
   if((y===1920&&m>=6)||(y===1921&&m<=8))return {k:'tight',add:0.02,lim:0.55,closed:false,t:'Послевоенный спад: банки урезают кредит'};
   if(isWar(y,m,s.country))return {k:'war',add:0.01,lim:0.85,closed:false,t:'Война: деньги идут на военные займы'};
   return {k:'ok',add:0,lim:1,closed:false,t:''};}
-function loanRate(s){const cs=creditState(s);return clamp(tabAt(LOAN_RATE,yf(s))+cs.add+(s.rep>=80?-0.01:s.rep<35?0.015:0)+(DIF().rate||0),0.03,0.15);}
+function loanRate(s){const cs=creditState(s);return clamp(tabAt(LOAN_RATE,yf(s))+cs.add+(s.rep>=80?-0.01:s.rep<35?0.015:0)+(DIF().rate||0)+(typeof legalRateAdd==='function'?legalRateAdd(s):0),0.03,0.17);}
 function loanOpen(s){return !creditState(s).closed;}
 // Банк требует вернуть кредит сверх лимита: в кризис — за 3 месяца, в спокойное время — понемногу за год
 // (0.21: в кризис банк решает один раз — лимит на первый месяц кризиса держится до конца: долг по частям не «уменьшает» требование)

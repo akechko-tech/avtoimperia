@@ -33,6 +33,8 @@ jobs:
           if [ -f docs/voice/index.js ]; then cp docs/voice/index.js app/src/main/assets/voice/; fi
           # реальные трассы (рельеф, карта) — скриптами, подгружаются перед гонкой
           if [ -d docs/terrain ]; then mkdir -p app/src/main/assets/terrain && cp docs/terrain/*.js app/src/main/assets/terrain/; fi
+          # свои мелодии игры в оркестровке (марш «Автоимперия» и др.) — вшиты, играют и без сети
+          mkdir -p app/src/main/assets/music && cp docs/music/own_*.m4a app/src/main/assets/music/ 2>/dev/null || true
       - name: Собрать APK
         run: gradle assembleRelease --no-daemon
       - name: Переименовать

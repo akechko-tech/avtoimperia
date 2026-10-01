@@ -81,7 +81,9 @@ const HERO_HEADS={'Panhard':'Рене Панар','Darracq':'Александр 
 function heroHead(mq){const n=String(mq||'').toLowerCase();for(const k in HERO_HEADS)if(n.startsWith(k.toLowerCase()))return HERO_HEADS[k];return '';}
 function rivalHero(mq,s){const pk=rivalPk(mq),P=pk&&PIONEERS[pk];const h=hashStr('rv|'+mq);
   const type=HERO_TYPE[pk]||['biz','proud','aristo','sharp'][h%4];
-  return {pk,mq,type,name:P?P.name:heroHead(mq)||`глава марки ${mq}`,wiki:P?P.wiki:'',c:P?P.c:rivalCountry(mq,s)};}
+  // 0.22: глава марки в этот год — живой человек с портретом (RIVAL_HEADS), а не просто имя
+  const hd=typeof rivalHead==='function'?rivalHead(mq,s?s.y:1900):null,useP=P&&(!hd||hd.n===P.name);
+  return {pk,mq,type,name:useP?P.name:hd?hd.n:heroHead(mq)||`глава марки ${mq}`,role:hd?hd.role:'',wiki:useP?P.wiki:hd?hd.wiki:'',c:P?P.c:rivalCountry(mq,s)};}
 function rivalCountry(mq,s){for(const t of RACE_TEAMS)if(t.n===mq)return t.c;for(const c in COMPS)if(COMPS[c].some(cp=>cp.n===mq||compName(cp,s)===mq))return c;return s?s.country:'fr';}
 function heroPortrait(H){const im=H.wiki&&IMG[H.wiki];if(im)return `<div class="ph-oval duel-ph"><img src="${im.src}" alt="${esc(H.name)}" referrerpolicy="no-referrer"></div>`;
   const ini=String(H.mq).replace(/[^A-Za-zА-Яа-яЁё ]/g,'').split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();return `<div class="ph-oval duel-ph duel-ini">${esc(ini||'?')}</div>`;}
@@ -190,7 +192,7 @@ function goalHTML(D){const win=D.win;
 // сцена развязки: портрет, реплика, счёт, ставка; тема соперника и телеграф (на гонке — трибуны)
 function duelHTML(D){if(D.goal)return goalHTML(D);const H=D.H,win=D.win;
   return `<div class="duel ${win?'win':'lose'}"><span class="label">⚔️ Пари${D.ev?' · '+esc(D.ev):''}</span>
-    <div class="duel-top">${heroPortrait(H)}<div><h2>${win?'Пари выиграно!':'Пари проиграно'}</h2><p class="small muted">${esc(H.name)}${H.pk?` · «${esc(D.mq)}»`:''} · ${HERO_TYPE_N[H.type]||''}</p></div></div>
+    <div class="duel-top">${heroPortrait(H)}<div><h2>${win?'Пари выиграно!':'Пари проиграно'}</h2><p class="small muted">${esc(H.name)} · ${H.role?esc(H.role)+' ':''}«${esc(D.mq)}» · ${HERO_TYPE_N[H.type]||''}</p></div></div>
     <blockquote class="duel-q">«${esc(D.line)}»</blockquote>
     ${D.sales?`<p class="small" style="margin-top:6px">Продажи в стране: вы — ${fmtN(D.sales.you)}, ${esc(D.mq)} — ${fmtN(D.sales.them)}</p>`:''}${D.forfeit?'<p class="small bad" style="margin-top:6px">Команда не приехала на гонку — пари проиграно без борьбы.</p>':''}
     <div class="duel-score"><span>Счёт</span><b>Вы — ${esc(D.mq)} ${D.score}</b><i class="duel-stamp">${win?'Выиграно':'Проиграно'}</i>${D.st>=2?`<em>побед подряд: ${D.st}</em>`:D.st<=-2?`<em class="bad">поражений подряд: ${-D.st}</em>`:''}</div>

@@ -5,9 +5,30 @@
 // железные дороги — только построенные к нему, водохранилищ, аэродромов и заводов нет. tools/sync_media.py кладёт результат
 // в docs/terrain/<id>.js; перед гонкой файл подгружается скриптом (в APK со страницы file:// тоже работает).
 // Нет файла (или старый браузер) — прежний генератор сценариев.
-const REAL_RACES={pm1903:{},targa:{},gpacf:{years:[1906]},gb1903:{},indy:{}};
+// 0.22: гонка → файл данных трассы (terrain/<id>.js): d — один на все годы, v — по годам (Гран-при Франции переезжал из города в город)
+const REAL_RACES={pm1903:{},targa:{},gb1903:{},indy:{},
+  gpacf:{v:{1906:'gpacf',1907:'dieppe',1908:'dieppe',1913:'amiens',1922:'strasbourg',1923:'tours',1925:'montlhery',1926:'miramas',1927:'montlhery',1928:'comminges',1929:'sarthe'}},
+  x80901:{d:'spb_tver'},x87575:{d:'spb_valdai'},pmp:{d:'avignon'},pbp:{d:'chartres'},brighton:{d:'brighton'},turbie:{d:'turbie'},semmering:{d:'semmering'},
+  ventoux:{d:'ventoux'},x2844:{d:'tsarskoe'},x17567:{d:'krasnoe'},peking:{d:'nankou'},henry:{d:'rhine'},spa24:{d:'spa'},x80394:{d:'spa'},
+  eifel:{d:'nurb'},nurb1927:{d:'nurb'},degp:{d:'nurb'},avus1926:{d:'avus'},
+  // 0.22: все остальные гонки — по своим настоящим местам
+  chicago:{d:'evanston'},pap:{d:'amstel'},tdf:{d:'aix'},thousand:{d:'shap'},gb1900:{d:'tarare'},pb1901:{d:'potsdam'},pv1902:{d:'arlberg'},ardennes:{d:'bastogne'},
+  ormond:{d:'daytona'},daytona1927:{d:'daytona'},gb1904:{d:'saalburg'},kaiser:{d:'saalburg'},vanderbilt:{d:'jericho'},herkomer:{d:'kesselberg'},shelsley:{d:'shelsley'},
+  gb1905:{d:'auvergne'},glidden:{d:'crawford'},tt:{v:{1905:'iom',1906:'iom',1907:'iom',1908:'iom',1914:'iom',1922:'iom',1928:'ards',1929:'ards'}},
+  dieppe:{d:'dieppe'},x38020:{d:'sarthe'},x13597:{d:'sarthe'},lm1921:{d:'sarthe'},lemans:{d:'sarthe'},lyon1914:{d:'lyon'},europe1924:{d:'lyon'},
+  brooklands:{d:'brooklands'},jcc200:{d:'brooklands'},x59677:{d:'brooklands'},bgp1926:{d:'brooklands'},x30443:{d:'brooklands'},x79977:{d:'brooklands'},
+  x24910:{v:{1907:'montichiari',1908:'bologna',1914:'targa',1922:'targa',1927:'targa'}},x69903:{d:'montichiari'},brescia:{d:'montichiari'},x15626:{d:'montichiari'},
+  nyparis:{d:'hudson'},savannah:{d:'savannah'},santamonica:{d:'santamonica'},alpen:{d:'katschberg'},elgin:{d:'elgin'},
+  x30184:{v:{1910:'savannah',1911:'savannah',1912:'milwaukee',1914:'santamonica',1915:'sf1915',1916:'santamonica'}},x51007:{d:'corniche'},
+  x87929:{v:{1913:'guadarrama',1923:'terramar',1926:'lasarte',1927:'lasarte',1929:'lasarte'}},x79680:{d:'lasarte'},x81442:{d:'lasarte'},
+  x49337:{d:'maywood'},x73534:{d:'maywood'},x20757:{d:'sheepshead'},x60423:{d:'sheepshead'},x55729:{d:'sharonville'},x57075:{d:'uniontown'},
+  x78542:{d:'beverly'},board1:{d:'beverly'},board0:{d:'amatol'},pikes:{d:'pikes'},x44688:{d:'giogo'},mille:{d:'futa'},klausen:{d:'klausen'},
+  monza1922:{d:'monza'},itgp:{d:'monza'},x6663:{d:'monza'},x95919:{d:'savio'},acerbo1924:{d:'pescara'},acerbo:{d:'pescara'},x42022:{d:'roma'},
+  x18018:{d:'gueux'},x38768:{d:'tripoli'},monaco:{d:'monaco'},x22765:{d:'phoenix'}};
+// 0.22: природа и постройки — по стране места (Тверь — Россия, Наньков — Китай, Амстел — Нидерланды)
+const REAL_SCEN={ru:'ru',cn:'cn',nl:'nl',us:'us',uk:'uk',ie:'ie',it:'it',de:'de',at:'at',ch:'ch',es:'es',be:'be',mc:'mc',ly:'ly',fr:'fr'};
 window.REAL_TRACKS=window.REAL_TRACKS||{};
-function realIdOf(rc){if(!rc)return null;const R=REAL_RACES[rc.id];if(!R||(R.years&&!R.years.includes(rc.y)))return null;return rc.id;}
+function realIdOf(rc){if(!rc)return null;const R=REAL_RACES[rc.id];if(!R)return null;if(R.v)return R.v[rc.y]||null;if(R.years&&!R.years.includes(rc.y))return null;return R.d||rc.id;}
 function realData(rc){const id=realIdOf(rc);return id?window.REAL_TRACKS[id]||null:null;}
 // подгрузить данные трассы до постройки (не дольше 4 с)
 function realLoad(rc,cb){const id=realIdOf(rc);if(!id||window.REAL_TRACKS[id]||typeof document==='undefined'||!document.head||!document.head.appendChild){cb();return;}
@@ -62,9 +83,28 @@ function realPlan(trk){const R=trk.real,D=R.d,S=trk.segT,list=trk.seg,n=trk.n,a=
   // старт и финиш дорожной гонки — там, где они на карте (город, если он есть)
   list.forEach(o=>{if(o.cap===undefined)o.cap=o.type===RSEG.serp?'Серпантин: скала с одной стороны, обрыв — с другой':o.type===RSEG.forest&&o.i1-o.i0>90?'Лесная дорога: тень и корни':o.type===RSEG.avenue?'Аллея платанов: деревья у самой дороги':o.type===RSEG.vine?'Виноградники по склонам':null;});}
 // Приметы для заставки: что впереди на этом куске настоящей карты
+// 0.22: приметы настоящей карты (соборы, замки, дворцы, мельницы, маяки, стены…) — в координатах игры, с поворотом модели.
+// Стены и акведуки, которые пересекают дорогу, режутся у полотна (дорога идёт сквозь ворота).
+function realMarks(trk){const R=trk.real,D=R.d,P=trk.pts,n=trk.n,W=trk.W,host=trk.cfg.host,out=[];
+  const near=(x,z)=>{let bi=0,bd=1e18;for(let k=0;k<n;k++){const d=(P[k][0]-x)**2+(P[k][2]-z)**2;if(d<bd){bd=d;bi=k;}}return [bi,Math.sqrt(bd)];};
+  const add=(o,x,z)=>{const [i,d]=near(x,z);if(!o.line&&d>4200)return;const nn=trk.N[i],off=(x-P[i][0])*nn[0]+(z-P[i][2])*nn[1];
+    let a=0;if(!o.line){const ux=Math.cos(o.r||0),uz=Math.sin(o.r||0);a=Math.atan2(ux,uz);
+      // церковь — фасадом (башнями) на запад; дворец, вокзал, усадьба — фасадом к дороге
+      if(['cathedral','church','chapel','monastery'].includes(o.k)){if(ux<0)a+=Math.PI;}
+      else if(['palace','station','manor','castle','watermill','monument','statue'].includes(o.k)){const fx=Math.cos(a),fz=-Math.sin(a);if(fx*(P[i][0]-x)+fz*(P[i][2]-z)<0)a+=Math.PI;}}
+    out.push({t:'rlm',lm:o,x,z,i,off,rot:a,r:Math.max(o.l||8,o.w||8)/2+2,world:1,name:lmName(o,host),far:d>2600});};
+  (D.lm||[]).forEach(o0=>{const x0=o0.x-R.dx,z0=o0.z-R.dz;
+    if(o0.line&&o0.line.length>1){// стену режем у дороги: куски дальше W/2+5 м от полотна
+      const L=o0.line.map(p=>[p[0]-R.dx,p[1]-R.dz]),runs=[];let cur=[];
+      for(let k=0;k<L.length;k++){const [x,z]=L[k];const nearRoad=typeof nearTrack==='function'&&nearTrack(trk,x,z,W/2+5);if(nearRoad){if(cur.length>1)runs.push(cur);cur=[];}else cur.push([x,z]);
+        if(k+1<L.length){const [x2,z2]=L[k+1],seg=Math.hypot(x2-x,z2-z);if(seg>12){const m=Math.ceil(seg/10);for(let q=1;q<m;q++){const xx=x+(x2-x)*q/m,zz=z+(z2-z)*q/m;if(typeof nearTrack==='function'&&nearTrack(trk,xx,zz,W/2+5)){if(cur.length>1)runs.push(cur);cur=[];}else cur.push([xx,zz]);}}}}
+      if(cur.length>1)runs.push(cur);
+      runs.forEach(rn=>{const cx=rn.reduce((a,p)=>a+p[0],0)/rn.length,cz=rn.reduce((a,p)=>a+p[1],0)/rn.length;add(Object.assign({},o0,{line:rn.map(p=>[p[0]-cx,p[1]-cz])}),cx,cz);});return;}
+    add(o0,x0,z0);});
+  return out;}
 function realNotes(trk){const R=trk.real,D=R.d,n=trk.n,out=[],map=i8=>(i8-R.a)*2;
   (D.notes||[]).forEach(q=>{const i=map(q.i);if(i<0||i>=n)return;const km=Math.max(0,Math.round((i-trk.startIdx)*trk.step/100)/10);
-    const t=q.t==='town'?`${q.n} — город на пути`:q.t==='bridge'?`мост через реку ${q.n&&q.n!=='—'?q.n:''}`.trim():q.t==='rail'?'железнодорожный переезд':q.t==='coast'?'дорога вдоль моря':q.t==='climb'?`подъём на ${q.m} м`:q.t==='descent'?`спуск на ${q.m} м`:'';
+    const t=q.t==='town'?`${q.n} — город на пути`:q.t==='bridge'?`мост через реку ${q.n&&q.n!=='—'?q.n:''}`.trim():q.t==='rail'?'железнодорожный переезд':q.t==='coast'?'дорога вдоль моря':q.t==='climb'?`подъём на ${q.m} м`:q.t==='descent'?`спуск на ${q.m} м`:q.t==='lm'&&q.n?q.n:'';
     if(t)out.push({km,t});});
   return out.slice(0,5);}
 // Карта для заставки: стилизация под карту эпохи — сепия, штриховка рек, города кружками, маршрут гонки красным

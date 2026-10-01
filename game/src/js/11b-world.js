@@ -92,7 +92,7 @@ const WORLD=[
     res:{wCrashDebt:s=>{const n=Math.max(0,Math.min(s.loan,Math.round((s.cash-3000*cpi(s))/1000)*1000));s.loan-=n;s.cash-=n;s.ad=Math.round((s.ad||0)*0.5);s.noRecall=mi(s)+12;return n>0?`«{co}» вернула банку ${money(n)} и урезала рекламу вдвое. Банк больше не требует денег.`:'У «{co}» нет долгов — нечего сокращать. Реклама урезана вдвое на всякий случай.';},
       wCrashRisk:s=>{s.capSale=mi(s)+6;return '«{co}» скупает станки и цеха разорившихся заводов: полгода они на 30% дешевле.';}}}];
 function bestModel(s){return s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
-function worldApplies(W,s){if(!W.cc)return true;const L=W.cc.replace('!','').split(',');return W.cc[0]==='!'?!L.includes(s.country):L.includes(s.country);}
+function worldApplies(W,s){if(W.pk&&!W.pk.split(',').includes(s.pioneer))return false;if(W.req&&!W.req(s))return false;if(!W.cc)return true;const L=W.cc.replace('!','').split(',');return W.cc[0]==='!'?!L.includes(s.country):L.includes(s.country);}
 // раз в месяц: пришло событие — газета с роликом и выбором
 function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(W.id==='war'&&s.country==='it'){y=1915;m=4;}if(s.y!==y||s.m!==m||s.wseen[W.id]||!worldApplies(W,s))return;
   s.wseen[W.id]=1;try{W.fx(s);}catch(e){console.warn(e);}const rid=W.reel&&reelGet(W.reel,s)?W.reel:'';if(rid)reelUnlock(s,rid);

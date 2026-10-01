@@ -38,10 +38,10 @@ const PHOTO_FILE={
 // Старый набор фото (собран до уточнений): чужие снимки убираем — лучше без фото, чем с ошибочным
 function fixPhotos(){const nf=f=>String(f||'').replace(/ /g,'_');for(const t in PHOTO_FILE){const f=PHOTO_FILE[t];if(IMG[t]&&(f===null||nf(IMG[t].file)!==nf(f)))delete IMG[t];}}
 function allTitles(){const t=new Set();Object.values(DRIVER_WIKI).forEach(x=>t.add(x));Object.values(PIONEERS).forEach(p=>p.wiki&&t.add(p.wiki));Object.values(COMPS).flat().forEach(c=>c.models.forEach(m=>m[2]&&t.add(m[2])));
-  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));(typeof SHOWS!=='undefined'?SHOWS:[]).forEach(x=>x.img&&t.add(x.img));FLAVOR.forEach(f=>f[3]&&t.add(f[3]));t.add('Mercedes-Benz');return [...t];}
+  HIST.forEach(h=>h.img&&t.add(h.img));RACES.forEach(r=>r.img&&t.add(r.img));Object.values(RIVAL_CAR).flat().forEach(x=>t.add(x[1]));(typeof HIST_PHOTOS!=='undefined'?HIST_PHOTOS:[]).forEach(x=>t.add(x));(typeof SHOWS!=='undefined'?SHOWS:[]).forEach(x=>x.img&&t.add(x.img));FLAVOR.forEach(f=>f[3]&&t.add(f[3]));t.add('Mercedes-Benz');if(typeof headTitles==='function')headTitles().forEach(x=>t.add(x));if(typeof WORLD!=='undefined')WORLD.forEach(w=>w.img&&t.add(w.img));if(typeof LEGEND_TITLES!=='undefined')LEGEND_TITLES().forEach(x=>t.add(x));return [...t];}
 async function loadImages(){
   if(imgTried)return;imgTried=true;
-  try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===3&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}
+  try{const c=JSON.parse(localStorage.getItem('avt-img')||'null');if(c&&c.v===4&&Date.now()-c.t<7*864e5){Object.assign(IMG,c.map);return;}}catch(e){}
   try{
     const titles=allTitles(),map={};
     for(let i=0;i<titles.length;i+=40){
@@ -65,7 +65,7 @@ async function loadImages(){
       Object.values(q.pages||{}).forEach(pg=>{const ii=pg.imageinfo&&pg.imageinfo[0];if(!ii||!ii.thumburl)return;const ts=byFile[norm[pg.title]||pg.title]||byFile[pg.title]||[];ts.forEach(t=>map[t]={src:ii.thumburl,file:pg.title.replace(/^File:/,'')});});}
     for(const t in PHOTO_FILE)if(PHOTO_FILE[t]===null)delete map[t];
     Object.assign(IMG,map);
-    try{localStorage.setItem('avt-img',JSON.stringify({v:3,t:Date.now(),map}));}catch(e){}
+    try{localStorage.setItem('avt-img',JSON.stringify({v:4,t:Date.now(),map}));}catch(e){}
     if(G)render();
   }catch(e){}
 }

@@ -51,7 +51,9 @@ const ACT={
     m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
   rdPick:()=>openRD(),
-  rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj&&rdActive(G).length<rdSlots(G)){G.rd.projs.push({...pj,prog:0});addLog(`КБ начало проект: ${pj.name}.`);}closeSheet();save();render();},
+  legendOpen:d=>{openLegend(d.k);},
+  legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
+  rdStart:d=>{const [kind,id]=d.k.split(':');const pj=rdProjects(G).find(x=>x.kind===kind&&x.id===id);if(pj&&!rdBegin(G,pj)&&G.cash<rdCost(pj,G))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));closeSheet();save();render();},
   rdW:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;pj.w=clamp((pj.w||1)+(+d.d)*0.5,0.5,4);rerender();},
   reel:d=>{auInit();playReel(d.k);},
   rdStudy:d=>{if(studyStart(G,d.k)){closeSheet();checkAch();save();render();flushToasts();}},

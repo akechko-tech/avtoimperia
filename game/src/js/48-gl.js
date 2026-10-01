@@ -102,6 +102,9 @@ uniform mat4 u_vp,u_model,u_shm;uniform float u_time;uniform vec4 u_mat[18];
 uniform vec4 u_wc[6];uniform vec4 u_wr;uniform vec4 u_body;out vec3 v_op;out vec3 v_on;
 #endif
 out vec3 v_wp;out vec3 v_n;out vec4 v_col;flat out vec4 v_m;out vec4 v_sp;flat out float v_lamp;flat out int v_lay;flat out int v_lmode;flat out float v_tk;
+#ifdef ROAD
+out float v_rl;
+#endif
 void main(){
   vec3 p=a_pos,n=a_nrm.xyz;
 #ifdef CAR
@@ -120,6 +123,9 @@ void main(){
   vec4 wp=u_model*vec4(p,1.);
   if(a_ext.z>0.){float s=a_ext.z/255.;wp.x+=s*.12*sin(u_time*1.7+wp.x*.31+wp.z*.23);wp.z+=s*.09*sin(u_time*1.3+wp.z*.27+wp.x*.11);}
   v_n=normalize(mat3(u_model)*n);v_wp=wp.xyz;v_col=a_col;v_lamp=a_ext.y;
+#ifdef ROAD
+  v_rl=a_nrm.w*4.;
+#endif
 #if defined(DECAL)||defined(TERRAIN)||defined(LEAF)
   v_m=u_mat[0];
 #else
@@ -150,7 +156,7 @@ in vec3 v_op;in vec3 v_on;uniform vec4 u_dirt;
 uniform sampler2D u_cmap,u_smap;uniform vec4 u_cm,u_tl,u_tl2,u_tp;
 #endif
 #ifdef ROAD
-uniform vec4 u_rd,u_rd2;uniform vec4 u_pat[24];uniform float u_patN;
+uniform vec4 u_rd,u_rd2;uniform vec4 u_pat[24];uniform float u_patN;uniform vec4 u_pot[32];uniform float u_potN;uniform vec4 u_rg;in float v_rl;
 #endif
 uniform float u_dark;
 uniform vec4 u_lamp;uniform vec3 u_hlP,u_hlD;uniform float u_hl;
@@ -214,8 +220,9 @@ void main(){
     vec4 A=lA(L,ruv*sL),A2=lA(L,ruv*sL*.37+vec2(.21,.63));
     float nz=vn2(mm*vec2(.35,.06)),nb=vn2(mm*.9+3.);
     vec3 c=mix(A.rgb,A2.rgb,.15+.3*nz);
-    float rut=0.;for(int i=0;i<4;i++){float lx=(vec4(.2,.36,.64,.8)[i]-.5)*W;rut+=exp(-(mm.x-lx)*(mm.x-lx)*9.);}
-    rut*=.55+.45*vn2(vec2(mm.y*.07,ax*4.));
+    // колея (0.22): там же, где её чувствуют колёса (v_rl — метры от середины пары колей); вторая пара — бледнее, у края
+    float r1=abs(v_rl)-.72,r2=abs(v_rl)-2.05,rut=exp(-r1*r1*26.)+.4*exp(-r2*r2*16.);
+    rut*=(.55+.45*vn2(vec2(mm.y*.07,v_rl*.6)))*u_rg.x;
     float paved=(kind==2.||kind==3.||kind==4.||kind==5.||kind==9.)?1.:0.,soft=1.-paved*.6;
     c*=1.-rut*.17*soft;
     float e=min(ax,1.-ax)*W,ve=(1.-paved)*(1.-smoothstep(.1,.55+nb*.9,e));
@@ -229,12 +236,31 @@ void main(){
       float rr=length(vec2(pu/PB.x,pv/PB.y))*(1.+.1*sin(3.*an+PB.w)+.05*sin(7.*an+PB.w*2.))+(vn2(v_wp.xz*1.3)-.5)*.1;
       float w=1.-smoothstep(.84,1.,rr);if(PB.z>.5)mw=max(mw,w);else{pw=max(pw,w);pe=max(pe,smoothstep(.7,.9,rr)*(1.-smoothstep(1.,1.3,rr)));}}
     pud=max(pud,pw);
+    // ямы (0.22): чаша с бортиком; на дне — тень и мелкие камни, в дождь — вода; наклон стенок — в свет
+    // взгляд сверху вниз в яму: дно видно со сдвигом от камеры (ближний край заслоняет, дальняя стенка видна) — так яма глубокая, а не пятно
+    float pot=0.,pbot=0.,prim=0.;vec2 pdir=vec2(0.),vsh=-V.xz/max(V.y,.12);
+    for(int i=0;i<16;i++){if(float(i)>=u_potN)break;vec4 PA=u_pot[i*2],PB=u_pot[i*2+1];vec2 d=v_wp.xz-PA.xy;float pu=dot(d,PA.zw),pv=d.y*PA.z-d.x*PA.w;
+      if(abs(pu)>PB.x*1.5||abs(pv)>PB.y*1.5)continue;float an=atan(pv,pu),wob=1.+.12*sin(3.*an+PB.w)+.06*sin(5.*an+PB.w*2.),q=length(vec2(pu/PB.x,pv/PB.y))*wob;
+      vec2 db=d+vsh*PB.z*.9;float bu=dot(db,PA.zw),bv=db.y*PA.z-db.x*PA.w,qb=length(vec2(bu/PB.x,bv/PB.y))*wob;
+      if(q<1.){float w=1.-smoothstep(.85,1.,q);if(w>pot){pot=w;pdir=-normalize(d+vec2(1e-4))*clamp(PB.z/PB.y*2.2*q,0.,1.1);}
+        pbot=max(pbot,(1.-smoothstep(.55,.95,qb))*w);}
+      else if(q<1.3)prim=max(prim,(1.-abs(q-1.12)/.18)*.7);}
+    if(pot>.01){float wf=smoothstep(.3,.6,wet)*smoothstep(.1,.5,pbot);pud=max(pud,wf);
+      // стенки — светлее (сухой срез грунта), дно — в тени, с камешками и сырой землёй
+      c*=mix(1.,1.08,pot*(1.-pbot));c*=mix(1.,.5+.25*vn2(v_wp.xz*9.),pbot);c=mix(c,c*vec3(.9,.85,.8),pbot*.6);
+      N=normalize(N+vec3(pdir.x,0.,pdir.y)*(1.-wf)*(1.-pbot*.6));}
+    c*=1.+prim*.14;
     vec3 mud=vec3(0.);if(mw>.01){mud=vec3(.2,.13,.068)*(.75+.5*nz);float tr=exp(-pow(fract(mm.x/1.45+.5)-.5,2.)*60.);mud*=1.-tr*.5*smoothstep(.4,.9,mw);mud=mix(mud,mud*.55,smoothstep(.55,.9,mw)*(.5+.5*vn2(v_wp.xz*2.1)));}
     vec4 D=lD(L,ruv*sL);rough=mix(D.b,D.b*.72,rut*soft)*(1.-wet*.35);c*=1.-wet*.3;rough=mix(rough,.16,mw);
     // мокрая кромка лужи — темнее
     c*=1.-pe*.45;
     if(u_tq.x>.5&&dist<60.){vec3 dp1=dFdx(v_wp),dp2=dFdy(v_wp);vec2 du1=dFdx(ruv),du2=dFdy(ruv);vec3 a1=cross(dp2,N),a2=cross(N,dp1);
-      vec3 T=a1*du1.x+a2*du2.x,B=a1*du1.y+a2*du2.y;float im=inversesqrt(max(max(dot(T,T),dot(B,B)),1e-12));N=nmap(N,T*im,-B*im,D,(1.-pud)*(1.-mw*.5)*(1.-smoothstep(25.,60.,dist)));}
+      vec3 T=a1*du1.x+a2*du2.x,B=a1*du1.y+a2*du2.y;float im=inversesqrt(max(max(dot(T,T),dot(B,B)),1e-12));N=nmap(N,T*im,-B*im,D,(1.-pud)*(1.-mw*.5)*(1.-smoothstep(25.,60.,dist)));
+      // мелкие кочки и «гребёнка» (0.22): то, что не поместилось в сетку дороги, — в свет и тень
+      if(u_rg.y>0.){vec2 q=mm*vec2(1.3,.8),e=vec2(.07,0.);float h0=vn2(q)+.5*vn2(q*2.3+9.),hx=vn2(q+e.xy)+.5*vn2((q+e.xy)*2.3+9.)-h0,hy=vn2(q+e.yx)+.5*vn2((q+e.yx)*2.3+9.)-h0;
+        float wb=u_rg.z*sin(mm.y*7.9+vn2(vec2(mm.y*.05,3.))*6.)*(.5+.5*vn2(vec2(mm.y*.11,7.)));
+        vec2 g=vec2(hx,hy)/.07*u_rg.y+vec2(0.,wb*7.9);g*=(1.-pud)*(1.-smoothstep(20.,55.,dist));
+        vec3 Tn=T*im,Bn=-B*im;N=normalize(N-Tn*g.x*.9-Bn*g.y*.9);}}
     if(pud>.01){c=mix(c,c*.12,pud);rough=mix(rough,.02,pud);
       if(wet>0.)N=normalize(N+vec3(sin(v_wp.x*11.+u_time*7.)+sin(v_wp.z*13.-u_time*5.3),0.,cos(v_wp.z*9.+u_time*6.)+sin(v_wp.x*7.-u_time*4.))*.02*pud);}
     alb=mix(c*alb,mud,mw);spec=1.;envK=1.+pud*1.3;}

@@ -38,6 +38,17 @@ function rdProjects(s){
   });
   return list;
 }
+// 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
+// Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
+function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;
+  const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
+  const k=pj.kind==='early'?3+0.4*(pj.yrs||1):0.8*Math.pow(1.25,(pj.lvl||1)-1);
+  // в 1890-х опыты — дело мастерской: дёшево; к 1905 году — настоящие опытные цеха и стенды
+  const era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));
+  return Math.max(50,Math.round(((80+25*(pj.need||10))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+pc*k)*era/50)*50);}
+// начать проект: деньги сразу (в отчёте месяца — строка КБ)
+function rdBegin(s,pj){const c=rdCost(pj,s);if(!pj||s.cash<c||rdActive(s).length>=rdSlots(s))return false;
+  s.cash-=c;s.rdPaid=(s.rdPaid||0)+c;s.rd.projs.push({...pj,prog:0,cost:c});addLog(`КБ начало проект: ${pj.name} (${money(c)} на опыты и образцы).`);return true;}
 function PB(){return (G&&PIONEERS[G.pioneer]||PIONEERS.custom).b;}
 function bn(k,d=1){const b=PB();return sagaBn(k,b[k]!==undefined?b[k]:d);}
 function segBonus(g){const b=PB();return (b.seg&&b.seg[g]||1)*sagaSegK(g);}
@@ -79,7 +90,7 @@ function labRate(v){return clamp(1.15-0.075*Math.log10(1+Math.max(0,v)),0.85,1.1
 function modelVol(md){return md.vol||md.lastMade||1;}
 function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
   if(tc.foundry)c-=partCost(p.e,s)*0.18;if(tc.press&&!isTruck(md))c-=partCost(p.b,s)*0.15;
-  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s));}
+  return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s)*(md.legend?legendK(md,'cost'):1));}
 function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
@@ -112,9 +123,11 @@ function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
 function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y);return {name:r[1],y:r[0],kind,md:{...r[2],t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
-function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={};let lnS=0;
+function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={};let lnS=0;
+  // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
+  const LC=md.legend?legendCh(md):null,A=LC?Object.assign({},A0):A0;if(LC)for(const k in LC)if(A[k])A[k]*=LC[k];
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4);by[k]=r;if(W[k])lnS+=W[k]*Math.log(r);});
-  return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1),by,W,ref,A,R};}
+  return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,W,ref,A,R};}
 function classScore(md,s,c){return classCompare(md,s,c).S;}
 // Качество для рынка: доля лучшей машины эпохи (у соперников класса — QG)
 function mq(md,s,c){return Math.max(0.05,QG[segOf(md)]*classScore(md,s,c));}
