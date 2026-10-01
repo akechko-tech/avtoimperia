@@ -1,0 +1,128 @@
+==== terrain auvergne Кубок Гордона Беннетта: Овернь 1905
+  point Laqueuille -> [45.6507196, 2.7331968] fallback [45.6475, 2.733]
+  point Rochefort-Montagne -> [45.6838904, 2.8050875] fallback [45.6865, 2.805]
+  point Orcival -> [45.6829639, 2.8423207] fallback [45.6838, 2.842]
+  osm nodes 39711 ways 2124
+  route 309 nodes -> 1512 points, 12.1 km
+dem Copernicus_DSM_COG_10_N45_00_E002_00_DEM (779, 1307) min 675.8939819335938 max 1732.8333740234375
+  elev 856.1 .. 1028.2 smoothed 858.2 .. 1027.4
+  places 54 forest 173 vine 0 water 26 rivers 182 coast 0 rails 16 removed {'reservoir': 0, 'aeroway': 0, 'industrial': 9, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 14 → 8 near + 3 far; cut by year {'late': 0, 'unknown': 1, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 0, 'ruins': 0} [('church', 'Церковь св. Иоанна'), ('church', 'Церковь св. Марии Магдалины'), ('ruins', 'Руины Рошефор-Монтань'), ('church', 'Церковь св. Мартина'), ('church', 'Часовня св. Мартина'), ('chapel', 'Часовня Богоматери'), ('manor', 'Замок Корде'), ('station', 'Вокзал Лакёй'), ('church', 'Церковь св. Бонне'), ('castle', 'Замок Бансон'), ('castle', 'Замок Алланьа')]
+  crop 1512 → 1500 points from 10 score 14.0
+  cover {1: 0.188, 2: 0.029, 3: 0.008, 4: 0.0}
+  palette {'meadow': [20, 43, 31], 'dry': [32, 57, 40], 'soil': [42, 65, 48], 'n': 1998}
+  -> auvergne.json 124 KB, 1500 points, 13 segments, bridges [] rails 0 coast 0
+==== terrain chartres Париж — Бордо — Париж: Шартр 1895
+  point Chartres -> [48.4438601, 1.4881434] fallback [48.4473, 1.4879]
+  point Thivars -> [48.3797819, 1.450761] fallback [48.3805, 1.4495]
+  point Bonneval, Eure-et-Loir -> [48.181527, 1.3853323] fallback [48.183, 1.388]
+  osm nodes 84166 ways 10207
+  route 549 nodes -> 3878 points, 31.02 km
+dem Copernicus_DSM_COG_10_N48_00_E001_00_DEM (1602, 1326) min 98.8176040649414 max 267.5177001953125
+  elev 124.4 .. 163.6 smoothed 126.7 .. 161.5
+  places 116 forest 550 vine 2 water 150 rivers 143 coast 0 rails 130 removed {'reservoir': 43, 'aeroway': 17, 'industrial': 45, 'motorway': 0, 'rail_after_year': 30}
+  landmarks 185 → 28 near + 6 far; cut by year {'late': 8, 'unknown': 86, 'former': 1, 'modern': 1, 'strict': 0, 'noname': 6, 'ruins': 1} [('cathedral', 'Шартрский собор'), ('castle', 'Замок Булар'), ('church', 'Церковь св. Илария'), ('church', 'Церковь св. Ломер'), ('church', 'Церковь св. Веры'), ('church', 'Церковь св. Дионисия'), ('church', 'Храм'), ('church', 'Церковь св. Аньяна'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Клод'), ('church', 'Коллегиальная церковь св. Андрея'), ('church', 'Часовня Богоматери'), ('church', 'Церковь св. Пантелеймона')]
+  crop 3878 → 1500 points from 0 score 37.61
+  cover {1: 0.066, 2: 0.078, 3: 0.017, 4: 0.0}
+  palette {'meadow': [42, 58, 48], 'dry': [72, 80, 66], 'soil': [102, 107, 86], 'n': 1995}
+  -> chartres.json 136 KB, 1500 points, 12 segments, bridges ['Бертело', 'Эр'] rails 0 coast 0
+==== terrain futa Милле Милья: перевалы Ратикоза и Фута 1927
+  point Passo della Raticosa -> [44.1729133, 11.3384155] fallback [44.1645, 11.3215]
+  point Covigliaio -> [44.1363671, 11.3079718] fallback [44.1195, 11.301]
+  point Passo della Futa -> [44.0961444, 11.2753089] fallback [44.0925, 11.2785]
+  osm nodes 89095 ways 4554
+  route 584 nodes -> 1630 points, 13.04 km
+dem Copernicus_DSM_COG_10_N44_00_E011_00_DEM (932, 1122) min 221.1945037841797 max 1288.4935302734375
+  elev 828.6 .. 968.0 smoothed 829.8 .. 967.4
+  places 66 forest 57 vine 0 water 50 rivers 1538 coast 0 rails 0 removed {'reservoir': 17, 'aeroway': 0, 'industrial': 9, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 40 → 8 near + 6 far; cut by year {'late': 0, 'unknown': 5, 'former': 1, 'modern': 0, 'strict': 0, 'noname': 9, 'ruins': 7} [('church', 'Церковь св. Матфея'), ('church', 'Приходская церковь св. Лаврентия'), ('church', 'Церковь св. Йакопо'), ('church', 'Церковь св. Бертоломео'), ('church', 'Церковь св. Михаила'), ('ruins', 'Крепость Кавренно'), ('tower', 'Башня Кампана ди Ветта Делла Вия'), ('church', 'Церковь св. Иакова'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Иоанна'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Власия'), ('church', 'Старая церковь'), ('church', 'Церковь Пиян ди Балестра')]
+  crop 1630 → 1500 points from 100 score 36.3
+  cover {1: 0.057, 2: 0.027, 3: 0.008, 4: 0.0}
+  palette {'meadow': [24, 42, 32], 'dry': [49, 63, 47], 'soil': [84, 89, 70], 'n': 1998}
+  -> futa.json 124 KB, 1500 points, 25 segments, bridges ['Борро Диятерна', 'Фоссо дель Джессо', 'Торренте Римагджо', '—', 'Фиуме Сантерно'] rails 0 coast 0
+==== terrain iom Турист Трофи: остров Мэн 1905
+  point Ramsey, Isle of Man -> [54.3216912, -4.38252] fallback [54.3225, -4.3825]
+  point None -> None fallback [54.298, -4.399]
+  point None -> None fallback [54.251, -4.459]
+  point Creg-ny-Baa -> [54.20715, -4.4673739] fallback [54.188, -4.443]
+  osm nodes 94521 ways 8338
+  route 827 nodes -> 2616 points, 20.93 km
+dem Copernicus_DSM_COG_10_N54_00_W005_00_DEM (1137, 974) min -1.5920151472091675 max 618.3924560546875
+  elev 4.8 .. 425.9 smoothed 5.6 .. 425.6
+  places 14 forest 418 vine 1 water 79 rivers 491 coast 9 rails 15 removed {'reservoir': 7, 'aeroway': 1, 'industrial': 27, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 307 → 28 near + 6 far; cut by year {'late': 12, 'unknown': 9, 'former': 0, 'modern': 4, 'strict': 0, 'noname': 213, 'ruins': 10} [('church', 'Церковь св. Павла'), ('church', 'Церковь св. Моолд'), ('church', 'Церковь Баллюр'), ('lighthouse', 'Южный пирс Рамси Лайтхаус'), ('lighthouse', 'Северный пирс Рамси Лайтхаус'), ('church', 'Приходская церковь св. Олейв'), ('church', 'Церковь св. Петра'), ('station', 'Вокзал Рамси Трам'), ('church', 'Церковь св. Адамнан'), ('church', 'Церковь Бетел'), ('pagoda', 'Пагода Дримланг'), ('ruins', 'Часовня'), ('church', 'Адвентистская церковь'), ('manor', 'Усадьба Милнтаун Эстейт Гарденс')]
+  crop 2616 → 1500 points from 0 score 60.32
+  cover {1: 0.101, 2: 0.016, 3: 0.009, 4: 0.0}
+  palette {'meadow': [32, 54, 46], 'dry': [48, 66, 54], 'soil': [67, 79, 67], 'n': 1913}
+  -> iom.json 142 KB, 1500 points, 22 segments, bridges ['—', '—', '—', '—', '—', 'Глен Олдин Ривер', '—'] rails 0 coast 0
+==== terrain maywood Спидвей-парк, Мэйвуд 1915
+  point None -> None fallback [41.8605, -87.835]
+  osm nodes 41640 ways 5061
+dem Copernicus_DSM_COG_10_N41_00_W088_00_DEM (697, 885) min 120.59278106689453 max 240.5165557861328
+  elev 187.9 .. 199.3 smoothed 190.7 .. 190.7
+  places 4 forest 40 vine 0 water 11 rivers 12 coast 0 rails 91 removed {'reservoir': 4, 'aeroway': 2, 'industrial': 110, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 94 → 2 near + 2 far; cut by year {'late': 1, 'unknown': 33, 'former': 0, 'modern': 0, 'strict': 56, 'noname': 0, 'ruins': 0} [('monument', 'Памятник Хеймаркет Мартирс'), ('station', 'Вокзал Мейвуд Метра'), ('station', 'Вокзал Оак Парк Метра'), ('station', 'Вокзал Харлем Авеню Метра')]
+  cover {1: 0.056, 2: 0.06, 3: 0.021, 4: 0.0}
+  palette {'meadow': [61, 73, 64], 'dry': [113, 114, 96], 'soil': [173, 167, 144], 'n': 531}
+  -> maywood.json 42 KB, 402 points, 1 segments, bridges [] rails 0 coast 0
+==== terrain nurb Нюрбургринг: Северная петля 1927
+  point None -> None fallback [50.372, 6.962]
+  point None -> None fallback [50.3545, 6.942]
+  point None -> None fallback [50.361, 6.923]
+  point None -> None fallback [50.372, 6.93]
+  osm nodes 50876 ways 3215
+  route 715 nodes -> 1978 points, 15.82 km
+dem Copernicus_DSM_COG_10_N50_00_E006_00_DEM (795, 537) min nan max nan
+dem Copernicus_DSM_COG_10_N50_00_E007_00_DEM (795, 319) min nan max nan
+  elev 328.7 .. 585.6 smoothed 330.4 .. 584.4
+  places 13 forest 100 vine 0 water 2 rivers 156 coast 0 rails 4 removed {'reservoir': 9, 'aeroway': 5, 'industrial': 11, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 57 → 18 near + 6 far; cut by year {'late': 1, 'unknown': 4, 'former': 2, 'modern': 0, 'strict': 0, 'noname': 13, 'ruins': 1} [('ruins', 'Замок Нюрбург'), ('church', 'Церковь св. Губерта'), ('church', 'Церковь св. Симона и Иуды'), ('church', 'Церковь св. Иоанна Крестителя'), ('church', 'Евангелическая церковь Спасителя'), ('church', 'Церковь св. Николая'), ('church', 'Часовня Девы Марии'), ('church', 'Церковь св. Антония'), ('church', 'Церковь св. Луфтхильды'), ('chapel', 'Часовня св. Роха и Себастьяна'), ('church', ''), ('chapel', 'Часовня св. Михаила Буттермаркт'), ('chapel', 'Часовня Пеффершёффс'), ('chapel', 'Часовня Фатима')]
+  crop 1978 → 1250 points from 100 score 19.57
+  cover {1: 0.58, 2: 0.022, 3: 0.0, 4: 0.0}
+  palette {'meadow': [19, 39, 36], 'dry': [39, 61, 50], 'soil': [65, 78, 68], 'n': 1138}
+  -> nurb.json 93 KB, 1250 points, 24 segments, bridges ['Аденауер Бах'] rails 0 coast 0
+==== terrain saalburg Кубок Гордона Беннетта: Таунус 1904
+  point Bad Homburg vor der Höhe -> [50.2283803, 8.6130128] fallback [50.2268, 8.6182]
+  point Saalburg, Bad Homburg -> [50.269956, 8.5672872] fallback [50.2712, 8.5675]
+  point Wehrheim -> [50.3012792, 8.5837524] fallback [50.3006, 8.569]
+  osm nodes 60534 ways 10109
+  route 251 nodes -> 1334 points, 10.67 km
+dem Copernicus_DSM_COG_10_N50_00_E008_00_DEM (918, 760) min 95.4406967163086 max 884.6112670898438
+  elev 180.2 .. 429.4 smoothed 181.0 .. 427.6
+  places 5 forest 149 vine 69 water 35 rivers 439 coast 0 rails 117 removed {'reservoir': 9, 'aeroway': 10, 'industrial': 42, 'motorway': 0, 'rail_after_year': 8}
+overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+overpass fail https://overpass.kumi.systems/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+  landmarks 117 → 28 near + 6 far; cut by year {'late': 7, 'unknown': 31, 'former': 0, 'modern': 1, 'strict': 0, 'noname': 8, 'ruins': 1} [('castle', 'Римский форт Заальбург'), ('palace', 'Гомбургский дворец'), ('church', 'Евангелическая церковь Верхайм'), ('ruins', 'Руины Гикельсбург'), ('church', 'Церковь св. Михаила'), ('church', 'Церковь Вальдензер'), ('church', 'Церковь Сердца Иисуса'), ('church', 'Церковь Девы Марии'), ('church', 'Мемориальная церковь'), ('church', 'Церковь Христа'), ('wall', ''), ('church', 'Церковь св. Иоанна'), ('tower', 'Башня Ратаус'), ('church', 'Евангелическая церковь св. Николая')]
+  cover {1: 0.242, 2: 0.064, 3: 0.006, 4: 0.017}
+  palette {'meadow': [25, 43, 40], 'dry': [56, 69, 58], 'soil': [89, 94, 82], 'n': 1403}
+  -> saalburg.json 109 KB, 1334 points, 15 segments, bridges ['Кирдорфер Бах', 'Эрленбах'] rails 1 coast 0
+==== terrain sharonville Цинциннати: Шаронвилл 1916
+  point None -> None fallback [39.278, -84.4]
+overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+  osm nodes 20217 ways 3304
+dem Copernicus_DSM_COG_10_N39_00_W085_00_DEM (697, 853) min 144.86378479003906 max 304.3299560546875
+  elev 186.6 .. 247.1 smoothed 208.5 .. 208.5
+  places 3 forest 40 vine 0 water 25 rivers 48 coast 0 rails 59 removed {'reservoir': 3, 'aeroway': 0, 'industrial': 45, 'motorway': 0, 'rail_after_year': 0}
+overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+  landmarks 19 → 0 near + 0 far; cut by year {'late': 0, 'unknown': 2, 'former': 0, 'modern': 0, 'strict': 17, 'noname': 0, 'ruins': 0} []
+  cover {1: 0.113, 2: 0.028, 3: 0.017, 4: 0.0}
+  palette {'meadow': [28, 55, 46], 'dry': [70, 85, 72], 'soil': [143, 147, 129], 'n': 527}
+  -> sharonville.json 38 KB, 402 points, 6 segments, bridges [] rails 0 coast 0
+==== terrain targa Тарга Флорио 1906
+  point Collesano, Palermo, Italy -> [37.9214774, 13.9374864] fallback [37.918, 13.99]
+  point Campofelice di Roccella, Palermo, Italy -> [37.9923573, 13.8861546] fallback [38.002, 13.878]
+  point Buonfornello, Termini Imerese, Italy -> [37.9731879, 13.8236638] fallback [37.972, 13.825]
+  point Stazione di Cerda, Sicily, Italy -> [37.9539372, 13.7846363] fallback [37.944, 13.811]
+  osm nodes 64267 ways 3860
+  route 1231 nodes -> 4258 points, 34.06 km
+dem Copernicus_DSM_COG_10_N37_00_E013_00_DEM (690, 1198) min nan max nan
+dem Copernicus_DSM_COG_10_N37_00_E014_00_DEM (690, 395) min nan max nan
+dem Copernicus_DSM_COG_10_N38_00_E013_00_DEM (319, 1198) min nan max nan
+dem Copernicus_DSM_COG_10_N38_00_E014_00_DEM (319, 395) min nan max nan
+  elev 3.9 .. 865.9 smoothed 4.2 .. 861.7
+  places 12 forest 9 vine 28 water 14 rivers 212 coast 5 rails 60 removed {'reservoir': 70, 'aeroway': 7, 'industrial': 20, 'motorway': 0, 'rail_after_year': 31}
+  landmarks 65 → 17 near + 6 far; cut by year {'late': 2, 'unknown': 3, 'former': 1, 'modern': 3, 'strict': 0, 'noname': 4, 'ruins': 3} [('cathedral', 'Базилика св. Петра'), ('castle', 'Замок Роччелла'), ('pagoda', 'Храм Виттория'), ('castle', 'Башня Гарбоногара'), ('palace', 'Дворец'), ('church', 'Церковь св. Доминика'), ('church', 'Церковь Мадре'), ('church', 'Церковь св. Иакова'), ('church', 'Церковь св. Марии'), ('church', 'Церковь св. Себастьяна'), ('church', 'Церковь св. Марии'), ('church', ''), ('church', 'Церковь св. Павла'), ('station', 'Вокзал Черда')]
+  crop 4258 → 1500 points from 40 score 63.4
+  cover {1: 0.319, 2: 0.01, 3: 0.0, 4: 0.0}
+  palette {'meadow': [35, 49, 42], 'dry': [72, 72, 59], 'soil': [122, 105, 84], 'n': 1998}
+  -> targa.json 91 KB, 1500 points, 37 segments, bridges ['Валлоне Мадонье', '—', '—', '—', '—'] rails 0 coast 0

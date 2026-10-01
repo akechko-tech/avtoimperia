@@ -1,0 +1,150 @@
+==== terrain amiens Гран-при Франции: Пикардия 1913
+  point Boves, Somme -> [49.8463524, 2.3932912] fallback [49.846, 2.3925]
+  point Moreuil -> [49.7705466, 2.486822] fallback [49.7745, 2.4835]
+  point Ailly-sur-Noye -> [49.7580993, 2.3645669] fallback [49.757, 2.367]
+  osm nodes 48012 ways 4653
+  route 435 nodes -> 2670 points, 21.36 km
+dem Copernicus_DSM_COG_10_N49_00_E002_00_DEM (980, 1443) min 12.587148666381836 max 184.25448608398438
+  elev 28.1 .. 122.0 smoothed 29.0 .. 121.5
+  places 29 forest 284 vine 8 water 228 rivers 51 coast 0 rails 112 removed {'reservoir': 83, 'aeroway': 23, 'industrial': 28, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 94 → 25 near + 6 far; cut by year {'late': 3, 'unknown': 40, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 10, 'ruins': 0} [('castle', ''), ('church', 'Церковь св. Ведаста'), ('church', 'Церковь св. Мартина'), ('ruins', 'Замок Бов'), ('church', 'Церковь св. Кантен'), ('church', 'Церковь св. Кантен'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Кантен'), ('church', 'Церковь св. Мартина'), ('church', 'Церковь св. Петра'), ('church', 'Церковь св. Ведаста'), ('church', 'Церковь Богоматери'), ('church', 'Церковь св. Фюссьен')]
+  crop 2670 → 1500 points from 1170 score 27.31
+  cover {1: 0.18, 2: 0.018, 3: 0.028, 4: 0.0}
+  palette {'meadow': [48, 61, 50], 'dry': [70, 83, 66], 'soil': [109, 111, 81], 'n': 1993}
+  -> amiens.json 131 KB, 1500 points, 9 segments, bridges ['Авр'] rails 1 coast 0
+==== terrain beverly Беверли-Хиллз 1920
+  point None -> None fallback [34.0645, -118.399]
+  osm nodes 22011 ways 4144
+dem Copernicus_DSM_COG_10_N33_00_W119_00_DEM (126, 791) min nan max nan
+dem Copernicus_DSM_COG_10_N34_00_W119_00_DEM (591, 791) min nan max nan
+  elev 63.5 .. 87.3 smoothed 69.8 .. 69.8
+  places 1 forest 1 vine 0 water 9 rivers 5 coast 0 rails 0 removed {'reservoir': 2, 'aeroway': 29, 'industrial': 48, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 21 → 0 near + 0 far; cut by year {'late': 16, 'unknown': 1, 'former': 0, 'modern': 0, 'strict': 3, 'noname': 1, 'ruins': 0} []
+  cover {1: 0.001, 2: 0.041, 3: 0.003, 4: 0.0}
+  palette {'meadow': [118, 109, 89], 'dry': [144, 135, 112], 'soil': [182, 171, 146], 'n': 329}
+  -> beverly.json 30 KB, 251 points, 3 segments, bridges [] rails 0 coast 0
+==== terrain daytona Пляж Ормонд — Дейтона 1903
+  point None -> None fallback [29.2945, -81.0445]
+  point None -> None fallback [29.2276, -81.0055]
+  osm nodes 76096 ways 9703
+  beach 1036 points, 8.29 km
+dem Copernicus_DSM_COG_10_N29_00_W082_00_DEM (902, 535) min nan max nan
+dem Copernicus_DSM_COG_10_N29_00_W081_00_DEM (902, 364) min nan max nan
+  elev 0.0 .. 7.2 smoothed 0.0 .. 3.7
+  places 5 forest 123 vine 0 water 21 rivers 25 coast 1 rails 8 removed {'reservoir': 57, 'aeroway': 0, 'industrial': 533, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 46 → 1 near + 0 far; cut by year {'late': 1, 'unknown': 12, 'former': 0, 'modern': 0, 'strict': 32, 'noname': 0, 'ruins': 0} [('church', 'Объединённая церковь Христа')]
+  crop 1036 → 1000 points from 0 score 22.6
+  cover {1: 0.009, 2: 0.015, 3: 0.009, 4: 0.0}
+  palette {'meadow': [70, 103, 88], 'dry': [130, 135, 108], 'soil': [183, 180, 150], 'n': 1260}
+  -> daytona.json 91 KB, 1000 points, 1 segments, bridges [] rails 0 coast 1
+==== terrain guadarrama Гран-при Испании: Гвадаррама 1913
+  point Guadarrama, Madrid -> [40.6724354, -4.0890384] fallback [40.672, -4.089]
+  point Alto del León -> [7.1623016, -76.077925] fallback [40.7055, -4.1385]
+  point San Rafael, Segovia -> [40.7149436, -4.181401] fallback [40.7115, -4.169]
+  osm nodes 49306 ways 3841
+  route 643 nodes -> 1765 points, 14.12 km
+dem Copernicus_DSM_COG_10_N40_00_W005_00_DEM (807, 1107) min nan max nan
+dem Copernicus_DSM_COG_10_N40_00_W004_00_DEM (807, 120) min nan max nan
+  elev 961.7 .. 1509.6 smoothed 962.5 .. 1507.6
+  places 8 forest 75 vine 3 water 20 rivers 321 coast 0 rails 13 removed {'reservoir': 5, 'aeroway': 1, 'industrial': 17, 'motorway': 0, 'rail_after_year': 21}
+  landmarks 37 → 8 near + 1 far; cut by year {'late': 0, 'unknown': 5, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 14, 'ruins': 1} [('church', 'Церковь св. Михаила'), ('church', 'Часовня Богоматери'), ('station', 'Вокзал св. Рафаэль'), ('station', 'Вокзал Гудийос'), ('church', 'Часовня'), ('church', 'Церковь св. Рафаэль'), ('church', 'Часовня Девы Хароса'), ('chapel', 'Часовня Девы Эспино'), ('church', 'Приходская церковь')]
+  crop 1765 → 1500 points from 250 score 26.34
+  cover {1: 0.43, 2: 0.022, 3: 0.009, 4: 0.0}
+  palette {'meadow': [38, 45, 37], 'dry': [71, 71, 55], 'soil': [112, 102, 80], 'n': 1993}
+  -> guadarrama.json 110 KB, 1500 points, 29 segments, bridges ['Арройо дель Техо', 'Арройо де ла Гаска', 'Арройо Майор', 'Рио Гудийос'] rails 0 coast 0
+==== terrain klausen Клаузен 1922
+  point Linthal -> [47.9480886, 7.1287943] fallback [46.9235, 9.001]
+  point None -> None fallback [46.913, 8.965]
+  point Urnerboden -> [46.8894938, 8.9017644] fallback [46.8885, 8.9015]
+  point Klausenpass -> [46.868191, 8.8554418] fallback [46.8685, 8.8555]
+  osm nodes 98300 ways 4117
+  route 2104 nodes -> 2845 points, 22.76 km
+dem Copernicus_DSM_COG_10_N46_00_E008_00_DEM (822, 1006) min nan max nan
+dem Copernicus_DSM_COG_10_N46_00_E009_00_DEM (822, 492) min nan max nan
+dem Copernicus_DSM_COG_10_N47_00_E008_00_DEM (69, 1006) min nan max nan
+dem Copernicus_DSM_COG_10_N47_00_E009_00_DEM (69, 492) min nan max nan
+  elev 653.0 .. 1951.4 smoothed 654.0 .. 1949.8
+  places 19 forest 519 vine 0 water 103 rivers 982 coast 0 rails 17 removed {'reservoir': 13, 'aeroway': 1, 'industrial': 8, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 25 → 8 near + 2 far; cut by year {'late': 0, 'unknown': 2, 'former': 0, 'modern': 0, 'strict': 0, 'noname': 10, 'ruins': 0} [('church', 'Католическая церковь'), ('church', 'Реформатская церковь'), ('church', 'Реформатская церковь'), ('church', 'Часовня св. Эрхард'), ('church', ''), ('tower', 'Башня Шпильхоф'), ('chapel', 'Часовня Брудер-Клаус'), ('chapel', 'Часовня Брудер Клаус'), ('church', ''), ('church', 'Церковь Сердца Иисуса')]
+  crop 2845 → 1500 points from 1260 score 35.2
+  cover {1: 0.161, 2: 0.004, 3: 0.011, 4: 0.0}
+  palette {'meadow': [23, 47, 31], 'dry': [41, 69, 44], 'soil': [66, 89, 57], 'n': 1780}
+  -> klausen.json 109 KB, 1500 points, 34 segments, bridges ['—', '—', 'Залибах', '—', 'Зивбоденбах'] rails 0 coast 0
+==== terrain montichiari Круг Брешии: Монтикьяри 1907
+  point Montichiari -> [45.415181, 10.390675] fallback [45.414, 10.392]
+  point Ghedi -> [45.4013599, 10.2770637] fallback [45.404, 10.278]
+  point Castenedolo -> [45.4715763, 10.29831] fallback [45.4705, 10.2985]
+  osm nodes 50491 ways 7596
+  route 600 nodes -> 2628 points, 21.02 km
+dem Copernicus_DSM_COG_10_N45_00_E010_00_DEM (915, 1331) min 42.0 max 877.8134765625
+  elev 82.6 .. 153.1 smoothed 83.8 .. 152.1
+  places 32 forest 44 vine 5 water 13 rivers 21 coast 0 rails 27 removed {'reservoir': 15, 'aeroway': 185, 'industrial': 169, 'motorway': 0, 'rail_after_year': 2}
+  landmarks 123 → 28 near + 6 far; cut by year {'late': 2, 'unknown': 13, 'former': 0, 'modern': 2, 'strict': 0, 'noname': 29, 'ruins': 3} [('palace', 'Замок Бонорис'), ('palace', 'Дворец Монти Делла Пьеве'), ('church', 'Приходская церковь св. Панкрацио'), ('wall', ''), ('wall', ''), ('church', 'Приходская церковь св. Марии'), ('wall', ''), ('church', 'Церковь Мадонны'), ('wall', ''), ('church', 'Святилище св. Роха'), ('church', ''), ('church', ''), ('church', ''), ('church', '')]
+  crop 2628 → 1500 points from 0 score 57.87
+  cover {1: 0.009, 2: 0.047, 3: 0.01, 4: 0.0}
+  palette {'meadow': [53, 72, 58], 'dry': [102, 99, 84], 'soil': [151, 143, 124], 'n': 1993}
+  -> montichiari.json 106 KB, 1500 points, 5 segments, bridges ['Кьезе'] rails 0 coast 0
+==== terrain pm1903 Париж — Мадрид 1903
+  point Châtellerault, Vienne, France -> [46.8180047, 0.545812] fallback [46.8178, 0.546]
+  point Cenon-sur-Vienne, Vienne, France -> [46.7742953, 0.5357531] fallback [46.776, 0.532]
+  point Naintré, Vienne, France -> [46.7638945, 0.4823734] fallback [46.764, 0.487]
+  point Beaumont Saint-Cyr, Vienne, France -> [46.7253903, 0.4482796] fallback [46.724, 0.443]
+  osm nodes 80450 ways 7036
+  route 825 nodes -> 2321 points, 18.57 km
+dem Copernicus_DSM_COG_10_N46_00_E000_00_DEM (996, 1312) min 37.5 max 187.04637145996094
+  elev 49.9 .. 77.2 smoothed 52.5 .. 75.5
+  places 75 forest 158 vine 25 water 204 rivers 127 coast 0 rails 133 removed {'reservoir': 34, 'aeroway': 20, 'industrial': 24, 'motorway': 0, 'rail_after_year': 22}
+  landmarks 73 → 22 near + 6 far; cut by year {'late': 2, 'unknown': 15, 'former': 0, 'modern': 5, 'strict': 0, 'noname': 4, 'ruins': 0} [('castle', 'Замок Тур-де-Нентре'), ('castle', 'Командорство Озон'), ('castle', 'Замок Бодиман'), ('church', 'Церковь св. Викентия'), ('church', 'Церковь св. Иоанна Крестителя'), ('church', 'Церковь св. Иакова'), ('church', 'Церковь св. Ромен'), ('castle', ''), ('church', 'Церковь св. Кирика'), ('church', 'Церковь св. Иоанна'), ('mosque', 'Мечеть Эссалам'), ('church', 'Церковь Богоматери'), ('castle', ''), ('ruins', 'Башня Бомон')]
+  crop 2321 → 1500 points from 10 score 52.99
+  cover {1: 0.167, 2: 0.062, 3: 0.05, 4: 0.001}
+  palette {'meadow': [39, 53, 43], 'dry': [80, 82, 67], 'soil': [129, 123, 103], 'n': 1985}
+  -> pm1903.json 128 KB, 1500 points, 19 segments, bridges ['Вьенна', 'Клен', 'Клен'] rails 0 coast 0
+==== terrain savio Круг Савио 1923
+  point Classe, Ravenna -> [44.3808671, 12.2370915] fallback [44.3795, 12.2335]
+  point Savio, Ravenna -> [44.2946807, 12.3067551] fallback [44.3225, 12.2645]
+  point Castiglione di Ravenna -> [44.261107, 12.2549839] fallback [44.266, 12.225]
+  osm nodes 18852 ways 2226
+  route 292 nodes -> 2302 points, 18.42 km
+dem Copernicus_DSM_COG_10_N44_00_E012_00_DEM (1080, 1095) min -8.452288627624512 max 57.07861328125
+  elev -1.6 .. 12.6 smoothed -1.5 .. 11.8
+  places 10 forest 34 vine 50 water 54 rivers 10 coast 0 rails 31 removed {'reservoir': 8, 'aeroway': 9, 'industrial': 12, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 26 → 14 near + 4 far; cut by year {'late': 0, 'unknown': 1, 'former': 0, 'modern': 1, 'strict': 0, 'noname': 3, 'ruins': 0} [('cathedral', 'Сант-Аполлинаре-ин-Классе'), ('palace', 'Дворец Гросси'), ('church', 'Церковь св. Северо'), ('church', 'Приходская церковь св. Стефана'), ('church', ''), ('church', ''), ('church', ''), ('church', ''), ('church', ''), ('church', ''), ('church', ''), ('church', ''), ('church', ''), ('church', '')]
+  crop 2302 → 1500 points from 800 score 18.49
+  cover {1: 0.072, 2: 0.005, 3: 0.053, 4: 0.015}
+  palette {'meadow': [50, 71, 55], 'dry': [87, 94, 73], 'soil': [132, 129, 102], 'n': 1949}
+  -> savio.json 110 KB, 1500 points, 6 segments, bridges ['Бевано'] rails 0 coast 0
+==== terrain spb_tver Москва — Петербург: Тверь 1907
+  point Тверь, Московское шоссе -> [56.8225301, 35.9756665] fallback [56.8335, 35.9605]
+  point None -> None fallback [56.852, 35.9255]
+  point Путевой дворец, Тверь -> [56.862219, 35.9003447] fallback [56.8613, 35.9021]
+  point Староволжский мост, Тверь -> None fallback [56.8655, 35.899]
+  point None -> None fallback [56.884, 35.856]
+  point None -> None fallback [56.901, 35.818]
+overpass fail https://overpass-api.de/api/interpreter <HTTPError 504: 'Gateway Timeout'>
+  osm nodes 129885 ways 18709
+  route 521 nodes -> 2050 points, 16.4 km
+dem Copernicus_DSM_COG_10_N56_00_E035_00_DEM (942, 831) min nan max nan
+dem Copernicus_DSM_COG_10_N56_00_E036_00_DEM (942, 341) min nan max nan
+  elev 129.3 .. 144.5 smoothed 129.9 .. 142.7
+  places 24 forest 831 vine 0 water 194 rivers 230 coast 0 rails 44 removed {'reservoir': 26, 'aeroway': 16, 'industrial': 489, 'motorway': 0, 'rail_after_year': 11}
+  landmarks 165 → 7 near + 0 far; cut by year {'late': 2, 'unknown': 102, 'former': 0, 'modern': 14, 'strict': 40, 'noname': 0, 'ruins': 0} [('cathedral', 'Вознесенский собор'), ('palace', 'Тверской императорский путевой'), ('cathedral', 'Собор Рождества Христова'), ('church', 'Церковь Бориса и Глеба'), ('church', 'Церковь Покрова Пресвятой'), ('church', 'Церковь Николая Чудотворца'), ('church', 'Церковь Троицы Живоначальной')]
+  crop 2050 → 1375 points from 0 score 26.52
+  cover {1: 0.177, 2: 0.046, 3: 0.046, 4: 0.0}
+  palette {'meadow': [44, 59, 55], 'dry': [72, 80, 74], 'soil': [112, 112, 100], 'n': 1462}
+  -> spb_tver.json 135 KB, 1375 points, 10 segments, bridges ['Перемерка', 'Волга'] rails 0 coast 0
+==== terrain tsarskoe Гран-при России: Царское Село 1914
+  point None -> None fallback [59.7745, 30.32]
+  point None -> None fallback [59.75, 30.358]
+  point None -> None fallback [59.7272, 30.3995]
+  point Екатерининский дворец, Пушкин -> [59.7160451, 30.3954583] fallback [59.716, 30.3955]
+  point Павловск, Санкт-Петербург -> [59.6935464, 30.4327713] fallback [59.686, 30.432]
+  osm nodes 166095 ways 23581
+  route 540 nodes -> 2473 points, 19.78 km
+dem Copernicus_DSM_COG_10_N59_00_E030_00_DEM (953, 1164) min -11.249960899353027 max 179.47659301757812
+  elev 30.2 .. 69.7 smoothed 31.8 .. 67.6
+  places 4 forest 859 vine 3 water 145 rivers 491 coast 0 rails 94 removed {'reservoir': 24, 'aeroway': 155, 'industrial': 154, 'motorway': 0, 'rail_after_year': 0}
+  landmarks 196 → 28 near + 2 far; cut by year {'late': 13, 'unknown': 74, 'former': 0, 'modern': 19, 'strict': 48, 'noname': 1, 'ruins': 1} [('cathedral', 'Собор святой великомученицы'), ('cathedral', 'Феодоровский собор в Царском Селе'), ('cathedral', 'Софийский собор'), ('cathedral', 'Собор Николая Чудотворца'), ('palace', 'Дворец княгини Палей'), ('palace', 'Большой Екатерининский дворец'), ('palace', 'Павловский дворец'), ('palace', 'Крепость Бип'), ('ruins', 'Китайский театр'), ('church', 'Церковь Иоанна Крестителя'), ('church', 'Кирха Воскресения Христова'), ('church', 'Благовещенская часовня на месте'), ('church', 'Знаменская церковь'), ('observatory', 'Пулковская астрономическая')]
+  crop 2473 → 1375 points from 1070 score 59.61
+  cover {1: 0.078, 2: 0.063, 3: 0.029, 4: 0.001}
+  palette {'meadow': [37, 64, 55], 'dry': [58, 82, 68], 'soil': [96, 109, 98], 'n': 1760}
+  -> tsarskoe.json 121 KB, 1375 points, 11 segments, bridges ['Кузьминка', 'Тярлевский ручей'] rails 0 coast 0
