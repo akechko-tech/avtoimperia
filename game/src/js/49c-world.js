@@ -145,16 +145,18 @@ function r3dChunkExtras(S,lit){const T=R3.T,W=T.W,st=T.step,e3=lit.e[3];
   for(let s=0;s<S.length-1;s++){const A=S[s],B=S[s+1];
     // мост: парапеты, лицевые стены с арками до воды, свод
     if(A.bridge&&B.bridge){const rv=(T.rivers||[]).reduce((b,q)=>Math.abs(q.i-A.i)<Math.abs((b||{i:1e9}).i-A.i)?q:b,null);if(!rv)continue;
-      const i0=(()=>{let k=rv.i;while(k>0&&T.bridge[k-1])k--;return k;})(),i1=(()=>{let k=rv.i;while(k<T.n-1&&T.bridge[k+1])k++;return k;})(),L=(i1-i0)*st,ya=A.road[2][1],yb=B.road[2][1],bed=T.pts[rv.i][1]-rv.d;
+      // 0.26: поперечник дороги — 15 точек (колея, «гребёнка»); края — первая и последняя, середина — 7-я
+      const RL=A.road.length-1,RC=RL>>1;
+      const i0=(()=>{let k=rv.i;while(k>0&&T.bridge[k-1])k--;return k;})(),i1=(()=>{let k=rv.i;while(k<T.n-1&&T.bridge[k+1])k++;return k;})(),L=(i1-i0)*st,ya=A.road[RC][1],yb=B.road[RC][1],bed=T.pts[rv.i][1]-rv.d;
       const nA=Math.max(1,Math.round(L/34)),yBot=u=>{const w=L/nA,k=Math.min(nA-1,Math.floor(u/w)),m=(k+0.5)*w,h=(u-m)/(w*0.5*0.86);const top=Math.min(ya,yb)-1.3;return Math.abs(h)>=1?bed:bed+0.4+(top-bed-0.4)*Math.sqrt(1-h*h);};
       const uA=(A.i-i0)*st,uB=(B.i-i0)*st;lit.e[3]=txLay('stone_wall',1);const col=[196,188,172];
-      [0,4].forEach(ix=>{const sd=ix===0?1:-1,pa=A.road[ix],pb=B.road[ix],na=T.N[A.i],nb=T.N[B.i],o=0.55;
+      [0,RL].forEach(ix=>{const sd=ix===0?1:-1,pa=A.road[ix],pb=B.road[ix],na=T.N[A.i],nb=T.N[B.i],o=0.55;
         const qa=[pa[0]+na[0]*sd*o,pa[1],pa[2]+na[1]*sd*o],qb=[pb[0]+nb[0]*sd*o,pb[1],pb[2]+nb[1]*sd*o],up=0.95,nOut=[na[0]*sd,0,na[1]*sd];
         lit.poly([[pa[0],pa[1],pa[2]],[pb[0],pb[1],pb[2]],[pb[0],pb[1]+up,pb[2]],[pa[0],pa[1]+up,pa[2]]],[-nOut[0],0,-nOut[2]],col,MID.stone);
         lit.poly([[pa[0],pa[1]+up,pa[2]],[pb[0],pb[1]+up,pb[2]],[qb[0],qb[1]+up,qb[2]],[qa[0],qa[1]+up,qa[2]]],[0,1,0],cMul(col,1.05),MID.stone);
         lit.poly([[qa[0],yBot(uA),qa[2]],[qb[0],yBot(uB),qb[2]],[qb[0],qb[1]+up,qb[2]],[qa[0],qa[1]+up,qa[2]]],nOut,col,MID.stone);});
       // свод арки снизу (между лицевыми стенами)
-      const a0=A.road[0],a4=A.road[4],b0=B.road[0],b4=B.road[4],na=T.N[A.i],nb=T.N[B.i],o=0.55,P=(p,n,sd,y)=>[p[0]+n[0]*sd*o,y,p[2]+n[1]*sd*o];
+      const a0=A.road[0],a4=A.road[RL],b0=B.road[0],b4=B.road[RL],na=T.N[A.i],nb=T.N[B.i],o=0.55,P=(p,n,sd,y)=>[p[0]+n[0]*sd*o,y,p[2]+n[1]*sd*o];
       lit.poly([P(a0,na,1,yBot(uA)),P(a4,na,-1,yBot(uA)),P(b4,nb,-1,yBot(uB)),P(b0,nb,1,yBot(uB))],[0,-1,0],cMul(col,0.8),MID.stone);
       lit.e[3]=e3;continue;}}
   // серпантин: скала со стороны горы (фото-камень, неровный срез)

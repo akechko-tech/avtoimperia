@@ -14,7 +14,7 @@ function bestPriceFor(md,s){const key=md.id+'|'+mi(s)+'|'+md.price+'|'+PART_KEYS
   const ship=shipCost(s),ck=techLv(s,'credit')?1.15:1,oth=act.filter(m=>m.id!==md.id).map(m=>({m,uc:unitCost(m,s)})),dm=dMargin(s);
   // 0.18: прибыль всей марки — дешёвая модель забирает покупателей у ваших же моделей (каннибализация)
   // 0.21: за границей — своя доставка, доля импортёра, курс; по лицензии — только доля цены
-  const netOf=(pp,c,ucc)=>{if(c===s.country)return pp*(1-dm)-ucc;if(licOn(s,c))return pp*LIC_ROY;const IL=impOf(s,c);return (pp*(1-dm-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c)-ucc;};
+  const netOf=(pp,c,ucc)=>{pp*=pmkOf(s,c);if(c===s.country)return pp*(1-dm)-ucc;if(licOn(s,c))return pp*LIC_ROY;const IL=impOf(s,c);return (pp*(1-dm-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c)-ucc;};
   const exp=(md.soldBy&&md.lastSold)?1-(md.soldBy[s.country]||0)/md.lastSold:0;
   const prof=p=>{const A=demandAll(s,{id:md.id,price:p}).by,by=A[md.id]||{};let q=0;for(const c in by)q+=by[c]*ck;
     const uc=ucAtVol(md,s,Math.min(q,Math.max(1,capM*1.3),lim)),fl=(uc+exp*ship)/(1-dm)*1.04;let v=0;for(const c in by)v+=by[c]*ck*netOf(p,c,uc);
@@ -32,7 +32,7 @@ function helperOn(s){return !!(s.helper&&s.helper.on);}
 // 0.21: сколько дилеров открыть в новых городах: пока машины, которые продаст ещё один дилер, окупают его содержание
 function dealerGain(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length)return 0;const d=dealerCount(s,c),need=dealerNeed(c,s),room=dealerRoom(s,c);if(room<1||tradeBan(s,c))return 0;
   const pot=marketPotential(s,c);if(pot<=0)return 0;const md=act.slice().sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],IL=impOf(s,c);
-  const m=(md.price*(1-dMargin(s)-(c===s.country?0:(IL&&IL.cut||0)))-(c===s.country?0:shipCostTo(s,c)*shipK(s,c)))*fxOf(s,c)-unitCost(md,s);if(m<=0)return 0;
+  const m=netPer(md,c,s)-unitCost(md,s);if(m<=0)return 0;
   const u=dealerUpkeep(s,c)+dealerCost(s)/24;let n=0,dd=Math.max(1,d);const lim=Math.min(room,Math.max(3,Math.round(d*0.25)));
   while(n<lim){const g=pot*(Math.pow(Math.min(1,(dd+1)/need),0.7)-Math.pow(Math.min(1,dd/need),0.7))*m;if(g<u*1.3)break;n++;dd++;}return n;}
 function homeDemand(s){return s.models.filter(m=>m.status==='prod').reduce((a,m)=>a+(m.fc||0),0);}
@@ -61,6 +61,14 @@ function adviceList(s){
     if(!dev.length&&usedPen(md,home,s)>0.25&&mi(s)-md.launched>=24)add(58,'🚙',`На дорогах много ваших машин прошлых лет, и перекупщики продают их дешевле новой «${md.name}». Новая модель — заметно другая — вернёт покупателей.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
+  // 0.26: рынок крошечный — почему спрос такой маленький и что с этим делать
+  if(L&&act.length&&s.y<1908){const mk=L.mk[home],size=mk&&mk.size||0,dem=act.reduce((a,m)=>a+(m.lastDem||0),0);
+    if(dem<2&&size<40){let bc=null,bm=0;Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const R=L.mk[c];const z=R&&R.size||0;if(z>bm){bm=z;bc=c;}});
+      const rcN=RACES.find(r=>raceOpen(r,s)&&!s.raceDone[r.key]),parts=[];
+      if(bc&&bm>size*2)parts.push(`в стране «${COUNTRIES[bc].name}» покупают ${fmtD(bm)} в месяц — найдите там импортёра`);
+      if(rcN)parts.push(`победа в гонке «${rcN.name}» — в эти годы о машинах узнают из гонок, и покупателей станет в 2–3 раза больше`);
+      parts.push('выставка и газеты делают то же');parts.push('цена ниже на 30% — спрос почти втрое');
+      add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':null,rcN?()=>{tab='race';window.scrollTo(0,0);}:null,'market');}}
   // КБ
   const free=rdSlots(s)-rdActive(s).length,pj=free>0&&suggestProject(s);
   if(pj)add(60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');

@@ -31,8 +31,8 @@ const CAR_LIFE={1895:6,1910:7,1920:8,1929:9},HOLD={1895:3,1910:3.5,1920:4,1929:4
 // Насколько машина вообще нужна семье: надёжность, дороги, бензин, мастерские
 const APPEAL={1895:-2.2,1900:-0.6,1905:0.6,1910:1.2,1913:1.4,1916:1.4,1920:1.2,1925:1.4,1929:2};
 // Грузовики и фургоны покупает бизнес: лавки, пивоварни, почта, стройки. Каждый месяц часть фирм обновляет
-// свой транспорт — это доля ВВП; каждая фирма выбирает между лошадью с телегой и мотором.
-// Сколько из них возьмут мотор, решают цена, надёжность и дороги эпохи (сила марок подобрана по истории).
+// свой транспорт — это доля ВВП; сначала фирма выбирает между лошадью с телегой и мотором, а мотор — под свои перевозки
+// (0.26: по району, по городу, между городами — см. truckMarket). Сила марок подобрана по истории.
 const TRUCK_POOL={1895:0.0025,1905:0.0028,1913:0.003,1917:0.0045,1920:0.005,1925:0.0055,1929:0.0065};
 const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=1.5,LAM=0.25,AQT=2.6,BT=4;
 // Качество машин конкурентов в классе — доля лучшей машины эпохи
@@ -122,7 +122,9 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   // 0.21: новая марка начинает как рядовой соперник (не больше ~12% класса на «Норме»), а не как лидер класса —
   // долю лидера нужно заработать машиной, ценой, дилерами и именем (у марки основателя — её историческая доля)
   // в Америке рынок поделили гиганты с дилером в каждом городке — новой марке там вдвое труднее, чем в Европе
-  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),Math.min(1/(brandsN(c,g,s)+1),(DIF().bshare||0.12)*(c==='us'?(globalThis.BSUS??0.5):1))));
+  // 0.26: на молодом рынке (до ~1906) марок единицы, у новичка шанс больше — до 2,5 раза к обычной доле
+  const young=1+1.5*clamp((1906-yf(s))/10,0,1);
+  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),Math.min(1/(brandsN(c,g,s)+1),(DIF().bshare||0.12)*young*(c==='us'?(globalThis.BSUS??0.5):1))));
   if(g==='truck')b=Math.max(b,TRUCK_FLOOR[c]); // смелые фирмы найдутся всегда: лавки, пивоварни, почта
   return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
@@ -135,7 +137,9 @@ function reachOf(s,c){const d=dealerCount(s,c);return d?Math.pow(Math.min(1,d/de
 function adRef(s,c){c=c||s.country;const y=(s.mkY&&s.mkY[c])||1000;return 100*cpi(s)*Math.pow(1+y/1000,0.75);}
 function adEffect(s,c){const IL=impOf(s,c||s.country),a=(s.ad||0)*(IL?IL.ad||0.35:1)*bn('adEff')*worldAdK(s);return 0.55*(1-Math.exp(-a/adRef(s,c)));}
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
-function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0)+kingEffect(md,s);}
+// 0.26: в эпоху пионеров (до ~1906) о машинах узнают только из гонок, выставок и газет — слава весит втрое больше
+function pioneerK(s){return 1+2*clamp((1906-yf(s))/8,0,1);}
+function raceEffect(md,s){return (((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0))*pioneerK(s)+kingEffect(md,s);}
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
@@ -143,8 +147,12 @@ function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,
 // и тормоза на все четыре колеса; открытая машина с тормозами «как у кареты» в 1929 году почти не продаётся
 const CLOSED_SH={us:{1912:0,1915:0.02,1919:0.1,1922:0.3,1924:0.43,1926:0.72,1927:0.85,1929:0.9},eu:{1915:0,1919:0.05,1922:0.15,1925:0.35,1927:0.55,1929:0.7}};
 const FWB_SH={us:{1921:0,1924:0.1,1926:0.5,1928:0.9},eu:{1919:0,1922:0.2,1925:0.6,1927:0.9}};
-function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck||g==='sport')return 0;const t=yf(s),k=c==='us'?'us':'eu';let u=0;
-  if(!p.b.closed){const sh=tabAt(CLOSED_SH[k],t);if(sh>0)u+=-Math.log(1-0.9*sh);}
+// 0.26: закрытый кузов ценят сильнее: он защищает в аварии, от дождя и пыли, в нём ездят круглый год. Люкс — лимузины с 1906 года,
+// средний класс — с конца 1910-х, народный — когда закрытая машина подешевела (Essex Coach, 1922); спортивная — открытая
+const CLOSED_V={lux:{1903:0,1906:0.5,1912:0.8,1920:1.1,1926:1.3},middle:{1910:0,1915:0.2,1919:0.45,1923:0.75,1926:1.0},people:{1915:0,1920:0.15,1923:0.35,1926:0.6,1929:0.75}};
+function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck)return 0;const t=yf(s),k=c==='us'?'us':'eu';let u=0;
+  if(g==='sport')return p.b.closed?0.25:0;
+  if(!p.b.closed){const sh=tabAt(CLOSED_SH[k],t);if(sh>0)u+=-Math.log(1-0.9*sh);const cv=CLOSED_V[g];if(cv)u+=tabAt(cv,t-(k==='eu'?2:0));}
   if(p.k.id==='k1'||p.k.id==='k2'){const sh=tabAt(FWB_SH[k],t);if(sh>0)u+=-Math.log(1-0.6*sh);}
   return u;}
 // Репутация: плохая сильно отпугивает, хорошая помогает умеренно — у сильных конкурентов тоже есть имя (0.21)
@@ -161,10 +169,20 @@ function usedPen(md,c,s){const g=segOf(md);if(g==='truck'||isTruck(md))return 0;
 function pfleetMonth(s,life){if(!s.pfleet){s.pfleet={};const H=(s.hist&&s.hist.sales)||[],n=Math.round(12*life);let a=0;H.slice(-n).forEach(v=>a+=v||0);s.pfleet[s.country]=a*0.7;}
   const add={};s.models.forEach(md=>{if(isTruck(md)||!md.soldBy)return;for(const c in md.soldBy)add[c]=(add[c]||0)+(md.soldBy[c]||0);});
   for(const c in COUNTRIES){const pf=s.pfleet[c]||0,v=pf+(add[c]||0)-pf/(12*life);if(v>0.5)s.pfleet[c]=Math.round(v*10)/10;else delete s.pfleet[c];}}
+// 0.26: вид. Спортивную машину покупают глазами — яркий цвет (красный, жёлтый, белый) лучше тёмного. С 1924 года (быстросохнущая
+// нитроэмаль Duco) цветные машины в моде у всех: «любой цвет, если он чёрный» стоил Ford покупателей Chevrolet
+function paintBright(hex){const c=hex2rgb(hex||'#222'),mx=Math.max(...c)/255,mn=Math.min(...c)/255,sat=mx>0?(mx-mn)/mx:0;return clamp(sat*0.7+mx*0.5,0,1);}
+function lookU(md,g,s){const b=paintBright(md.paint),t=yf(s);if(g==='sport')return 0.6*(b-0.45);if(g==='truck'||isTruck(md))return 0;const f=clamp((t-1923)/3,0,1);return f*(g==='lux'?0.1:0.25)*(b-0.3);}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return lookU(md,g,s)-3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+// 0.26: своя цена в каждой стране — наценка или скидка к домашней (за границей рынок, налоги и доходы другие)
+const PMK=[[0.9,'−10%'],[1,'как дома'],[1.1,'+10%'],[1.25,'+25%']];
+function pmkOf(s,c){return c===s.country?1:((s.pmk&&s.pmk[c])||1);}
+function priceIn(md,c,s,price){return (price??md.price)*pmkOf(s,c);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
-function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffOf(md,c,s))+(home?0:shipCostTo(s,c)*shipK(s,c));}
+function offerPrice(md,c,s,price){const home=c===s.country,P=priceIn(md,c,s,price);return P*(home?1:1+tariffOf(md,c,s))+(home?0:shipCostTo(s,c)*shipK(s,c));}
+// Сколько вам остаётся с машины в стране: минус скидка дилеру и импортёру, доставка; по лицензии — доля цены
+function netPer(md,c,s,price){const P=priceIn(md,c,s,price);if(c===s.country)return P*(1-dMargin(s));if(licOn(s,c))return P*LIC_ROY;const IL=impOf(s,c);return (P*(1-dMargin(s)-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c);}
 /* ---------- рынок страны ---------- */
 // Чем большую часть бюджета съедает машина, тем меньше хочется её брать; дороже бюджета — почти никто
 function budget(x){return x<=0.9?Math.log(1-Math.max(0,x)):Math.log(0.1)-10*(x-0.9);}
@@ -197,18 +215,52 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   SEGK.forEach(g=>{const z=R.segs[g];z.size=z.inc+z.you;});
   return R;
 }
-// Грузовики: покупает бизнес — фирмы выбирают между лошадью и мотором; фургон сравнивают с грузовиком по цене за тонну груза
-// в Америке грузовиков на доллар ВВП втрое больше: фермы, большие расстояния, дешёвые Ford TT
+// Грузовики: покупает бизнес. Каждый месяц часть фирм обновляет транспорт (доля ВВП); в Америке грузовиков на доллар ВВП
+// втрое больше: фермы, большие расстояния, дешёвые Ford TT. В войну грузовики берёт армия.
 function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*tabAt(INC[c],t)/0.72*tabAt(TRUCK_POOL,t)*(c==='us'?3:1)/prefP('truck',c,s)/12*SEASON[s.m]*(ec.war?2.5:ec.f);}
+// 0.26: три разных перевозки — три разных машины. Лавке, которая развозит хлеб по району, нужен фургон; мебель по городу
+// возят на полуторатонке; большие партии между городами — на трёхтонке. Одна машина другую не заменяет: фирма считает,
+// во что ей обойдётся тонно-километр — машина за годы службы и проценты, ремонт и простои (надёжность), бензин, шофёр —
+// и сколько машина успеет перевезти за день (грузоподъёмность против размера партии, скорость против расстояния).
+// d — км в день, s — типичная партия, т; h — часов за рулём (у фургона много остановок); lf — доля пути с грузом
+const TRUCK_USE={van:{n:'По району',who:'лавки, булочные, молочники, почта',d:45,s:0.3,h:4,lf:0.7,bp:3},
+  city:{n:'По городу',who:'мебель, уголь, стройматериалы',d:70,s:1.4,h:6,lf:0.55,bp:2.4},
+  haul:{n:'Между городами',who:'большие партии на сотни километров',d:160,s:2.6,h:9,lf:0.5,bp:1.8}};
+const TUSE=['van','city','haul'];
+// какая доля фирм возит как: сначала почти одна развозка, с дорогами двадцатых растут перевозки между городами
+const TUSE_SH={1895:[0.85,0.15,0],1905:[0.78,0.2,0.02],1912:[0.62,0.32,0.06],1918:[0.5,0.38,0.12],1922:[0.45,0.37,0.18],1929:[0.4,0.35,0.25]};
+// бензин, $ за литр (в Европе — с налогами и доставкой); годы службы грузовика
+const FUEL_P={us:{1895:0.04,1915:0.05,1920:0.075,1925:0.055,1929:0.05},eu:{1895:0.08,1915:0.09,1920:0.14,1925:0.11,1929:0.1}};
+const TRUCK_LIFE={1895:5,1910:6,1920:7,1929:8};
+const BTC=7,TQ=2.6;
+function truckUseSh(c,s){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
+  const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}return {van:v[0],city:v[1],haul:v[2]};}
+// Эталон соперников для каждой перевозки: фургон, полуторатонка, трёхтонка (до 1920 года — полуторатонка)
+function truckRef(u,y){if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:0};const r=rivalCar('truck',y)[2];return {...r,b:u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:0};}
+// Во что фирме обходится тонно-километр на этой машине при цене P (в $ того времени)
+function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf);
+  const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1;
+  const kmDay=Math.min(U.d,(ch.vT||15)*U.h),down=clamp(0.4/mt,0.01,0.3),days=300*(1-down),km=kmDay*days;
+  const own=P*(1/life+0.06),rep=P*0.08*(1+3/mt),fuel=km*9*ch.fuel/100*fp,tot=own+rep+fuel+drv;
+  const tkm=km*Math.min(pay,U.s)*U.lf;return {cpk:tot/Math.max(1,tkm),tot,tkm,kmDay,own,rep,fuel,drv};}
+// Остальное, что ценит шофёр и хозяин: простота вождения, тормоза, кабина — немного
+function truckSoft(md,ref,y){const A=charOf(md,y),R=charOf(ref,y);return 0.1*Math.log(clamp(A.ease/R.ease,0.25,4))+0.08*Math.log(clamp(A.safe/R.safe,0.25,4))+0.04*Math.log(clamp(A.comf/R.comf,0.25,4));}
 function truckMarket(R,c,s,ms,pr,K,u0){
-  // в войну грузовики берёт армия
-  const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;if(pool<=0)return;
-  const U=(q,P,fair)=>u0-0.5+AQT*Math.log(q/QG.truck)-BT*Math.log(P/fair);
-  const ei=Math.exp(U(QG.truck,PT*pwOf(s,c,'truck'),PT)+K('truck'));let m=-1e9;
-  const bk=brandK(c,'truck',s),L=ms.map(md=>{const v=(md.probe?U(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e:U(mq(md,s,c),pr(md),PT*payK(md))+modelExtras(md,c,s))/LAM+bk/LAM;if(v>m)m=v;return {md,v};});
-  let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
-  const dr=1+ei+A,du=1+ei;z.inc+=pool*ei*(R.rho/dr+(1-R.rho)/du);R.shop+=pool;
-  L.forEach(x=>{const d=pool*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;});
+  const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;z.uses={};if(pool<=0)return;
+  const sh=truckUseSh(c,s),bk=brandK(c,'truck',s),kR=K('truck'),pwT=pwOf(s,c,'truck');
+  // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
+  const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
+  const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s);});R.byU=R.byU||{};
+  for(const u of TUSE){const pu=pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
+    const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
+    const ei=Math.exp(u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR);let m=-1e9;
+    const L=ms.map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
+      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk;v=u0-0.5-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y)+ex[md.id];}
+      v=(v+bk)/LAM;if(v>m)m=v;return {md,v};});
+    let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
+    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);z.inc+=ri;Z.riv=ri;
+    L.forEach(x=>{const d=pu*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
+  R.shop+=pool;
 }
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
 // Спрос на все модели во всех странах на текущий месяц

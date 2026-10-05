@@ -53,7 +53,7 @@ function standCost(sh,s,big){return Math.round(260*tabAt(CPI,sh.y)*(1+(sh.y-1895
 // Что везти: лучшая машина в продаже; если продаж ещё нет — прототип из разработки
 function showModel(s){const act=s.models.filter(m=>m.status==='prod').sort((a,b)=>classScore(b,s)-classScore(a,s));return act[0]||s.models.find(m=>m.status==='dev')||null;}
 // Интерес покупателей после выставки: полезность марки в стране, затухает за полгода-год
-function showEffect(s,c){const f=s.showFx&&s.showFx[c];if(!f)return 0;const age=mi(s)-f.t;return age<0?0:f.u*Math.exp(-age/7);}
+function showEffect(s,c){const f=s.showFx&&s.showFx[c];if(!f)return 0;const age=mi(s)-f.t;return age<0?0:f.u*Math.exp(-age/7)*pioneerK(s);}
 function checkShows(s){
   if(s.over)return;s.shows=s.shows||{};
   // выставка этого месяца, на которую сняли стенд

@@ -64,11 +64,13 @@ function step(){
       const qt=tradeQuota(s,c);if(qt>0){s.quotaY=s.quotaY||{};const left=Math.max(0,qt/12*(s.m+1)-(s.quotaY[c]||0));if(q>left){r.lostQuota=(r.lostQuota||0)+q-left;q=left;}}
       req[c]=q;reqT+=q;}
     // лицензия: машины делает местный завод — со склада не берём, вам — доля цены
-    md.soldBy={};for(const c in req){if(!licOn(s,c))continue;const so=Math.floor(req[c]+(Math.random()<req[c]%1?1:0));reqT-=req[c];delete req[c];if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const v=so*md.price*LIC_ROY;mk.rev+=v;r.lic=(r.lic||0)+v;r.licN=(r.licN||0)+so;md.totalSold+=so;}
+    md.soldBy={};for(const c in req){if(!licOn(s,c))continue;const so=Math.floor(req[c]+(Math.random()<req[c]%1?1:0));reqT-=req[c];delete req[c];if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const v=so*priceIn(md,c,s)*LIC_ROY;mk.rev+=v;r.lic=(r.lic||0)+v;r.licN=(r.licN||0)+so;md.totalSold+=so;}
     const avail=md.stock,f=reqT>avail?avail/Math.max(1e-9,reqT):1;let sold=0;
-    for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;{const pd=promoDisc(s,c,segOf(md));if(pd)r.promo=(r.promo||0)+so*md.price*pd*fxOf(s,c);}if(tradeQuota(s,c)>0){s.quotaY=s.quotaY||{};s.quotaY[c]=(s.quotaY[c]||0)+so;}const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const IL=impOf(s,c),net=(md.price*(1-dMargin(s)-(c===s.country?0:(IL&&IL.cut||0)))-(c===s.country?0:shipCostTo(s,c)*shipK(s,c)))*fxOf(s,c);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
+    for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;{const pd=promoDisc(s,c,segOf(md));if(pd)r.promo=(r.promo||0)+so*priceIn(md,c,s)*pd*fxOf(s,c);}if(tradeQuota(s,c)>0){s.quotaY=s.quotaY||{};s.quotaY[c]=(s.quotaY[c]||0)+so;}const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const net=netPer(md,c,s);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
     sold=Math.min(sold,md.stock);md.stock-=sold;const unmet=Math.max(0,reqT-sold);md.backlog=Math.min(unmet*0.5,md.fc*0.8);r.lostCap+=unmet-md.backlog;
     // почему купили меньше, чем хотели: не хватило машин (часть ждёт в очереди) или дилеры не успели
+    // 0.26: грузовик — кто его взял: развозка по району, по городу, между городами (для подсказки на вкладке «Модели»)
+    if(isTruck(md)){const U={};for(const c in D.mk){const b=D.mk[c].byU&&D.mk[c].byU[md.id];if(b)for(const u in b)U[u]=(U[u]||0)+b[u]*creditK;}md.useD=U;}
     md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;r.sold+=sold;r.demand+=sumD;
     r.war+=sold*defectRate(s)*md.price*0.25;});
   // 0.25: кредит покупателям — комиссия банкам или своя кредитная компания (13c-finance.js)
@@ -112,7 +114,7 @@ function step(){
   for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>{x.last=0;x.lg={};});const MC=D.mk[c],sg={};let size=0;
     // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
     SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x)return;x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.lostDlr=lostC[c]||0;}
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(m&&m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   chalTallyYou(s,r);
   // продажи по классам дома за год — для «королей года» и пари по продажам
@@ -123,7 +125,7 @@ function step(){
   // машины на дорогах: новые прибавились, старые ушли на свалку
   if(!s.fleet)s.fleet={};if(!s.mkY)s.mkY={};const life=tabAt(CAR_LIFE,yf(s));
   for(const c in COUNTRIES){const m=r.mk[c],cars=m.size-m.segs.truck.size,f0=fleetOf(s,c);s.fleet[c]=Math.max(0,f0+cars-f0/(12*life));s.mkY[c]=m.size*12/SEASON[s.m];}
-  pfleetMonth(s,life);
+  pfleetMonth(s,life);pflMonth(s,r);
   tradeMonth(s);
   // ценовая война прежних версий понемногу уходит — теперь конкуренты отвечают снижением цен и новыми моделями (13b-economy.js)
   for(const c in (s.pw||{}))for(const g in s.pw[c])s.pw[c][g]=Math.min(1,(s.pw[c][g]||1)+0.006);

@@ -100,6 +100,10 @@ input[type=text]{width:100%;box-sizing:border-box;background:var(--panel2);borde
 .sheet{position:fixed;inset:0;z-index:10;background:rgba(4,12,22,.75);display:flex;align-items:flex-end;justify-content:center}
 .sheet .panel{background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;width:100%;max-width:560px;max-height:90vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips.sm{margin-top:0;gap:4px;justify-content:flex-end}.chips.sm .chip{padding:4px 8px;font-size:12px}
+/* 0.26: цена по странам — подпись над кнопками; таблица «По странам» — числа не слипаются и не переносятся */
+.pmk-row{margin-top:6px}.pmk-row .chips.sm{justify-content:flex-start;margin-top:4px}
+table.pl.ctab td.n{white-space:nowrap;padding-left:8px}table.pl.ctab th.n{padding-left:8px}table.pl.ctab td:first-child{padding-right:4px}
 .chip{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:7px 10px;font-size:13px;cursor:pointer;text-align:left}
 .chip small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .chip.on{border-color:var(--brass);background:rgba(217,171,82,.14)}
@@ -653,21 +657,28 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 #raceScreen.demo .r-top,#raceScreen.demo .r-hud,#raceScreen.demo .r-bars,#raceScreen.demo .r-ctrl,#raceScreen.demo #rMap,#raceScreen.demo .r-board,#raceScreen.demo .r-msg,#raceScreen.demo .r-note,#raceScreen.demo .r-grip,#raceScreen.demo #rSvc,#raceScreen.demo #rReset,#raceScreen.demo .r-mgr,#raceScreen.demo .r-tips,#raceScreen.demo .r-film{display:none!important}
 #raceScreen.demo #rView{position:absolute!important;inset:0}
 #menuScreen{z-index:9}
-#menuScreen.live{background:transparent}
-#menuScreen.live.ready{background:linear-gradient(180deg,rgba(3,6,10,.72) 0%,rgba(3,6,10,.15) 26%,rgba(3,6,10,0) 50%,rgba(3,6,10,.55) 72%,rgba(3,6,10,.88) 100%)}
-#menuScreen.live.ready .menu-hero{display:none}
+/* 0.26: «кинозал» — с первого кадра тёмный экран с заголовком; живая гонка проявляется из темноты (без смены картинки) */
+#menuScreen.live{background:linear-gradient(180deg,rgba(3,6,10,.72) 0%,rgba(3,6,10,.15) 26%,rgba(3,6,10,0) 50%,rgba(3,6,10,.55) 72%,rgba(3,6,10,.88) 100%)}
+#menuScreen.live::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:1;transition:none;
+  background:radial-gradient(70% 38% at 50% 104%,rgba(214,128,72,.34) 0%,rgba(214,128,72,.1) 45%,rgba(214,128,72,0) 75%),radial-gradient(120% 75% at 50% 0%,#1c385a 0%,#0c1b2d 52%,#05090f 100%)}
+#menuScreen.live.ready::before{opacity:0;transition:opacity 1.6s ease .1s}
+#menuScreen.live .menu-hero{display:none}
+.menu-title{opacity:0;transition:opacity .45s ease}
+.fonts-ok .menu-title{opacity:1}
+.menu-load{display:inline-block;animation:mload 1.6s ease-in-out infinite alternate}
+@keyframes mload{from{opacity:.35}to{opacity:.95}}
 .menu-in{display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
 .menu-gap{flex:1;min-height:12px}
 .menu-titlebox{text-align:center;margin-top:10px}
 .menu-kick{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:#e2c47a;text-shadow:0 1px 8px rgba(0,0,0,.8)}
-.menu-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(30px,10.4vw,76px);letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;
+.menu-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(28px,10.2vw,56px);white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;
   background:linear-gradient(180deg,#fff3cf 0%,#e2c47a 45%,#a8782e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 10px rgba(0,0,0,.75))}
 .menu-sub{text-align:center;color:#e9dfc8;margin:4px 0 0;font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:15px;letter-spacing:.02em;text-shadow:0 1px 8px rgba(0,0,0,.9)}
 .menu-cap{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e2c47a;opacity:.9;margin:0 0 10px;text-shadow:0 1px 8px rgba(0,0,0,.9)}
 .menu-cap b{color:#f4ecd8;font-weight:500}
-#menuScreen.live.ready .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-#menuScreen.live.ready .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
-#menuScreen.live.ready .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+#menuScreen.live .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#menuScreen.live .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
+#menuScreen.live .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
 /* праздник: победа, титул, рекорд */
 .cel{position:fixed;inset:0;z-index:96;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;transition:opacity .5s;background:radial-gradient(ellipse at 50% 32%,rgba(8,6,3,.35),rgba(8,6,3,.62));animation:celBg .4s ease}
 @keyframes celBg{0%{opacity:0}}
@@ -723,3 +734,16 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .paper .p-mean b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
 /* 0.25: живые чертежи в кинохронике */
 .rl-diag{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+
+/* 0.26: наследие в людях */
+.hum{display:grid;gap:6px;margin-top:6px}.hum-row{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}.hum-row>span{color:var(--muted);font-size:12px}.hum-row b{font-size:14px;font-weight:600}.hum-row small{grid-column:2;font-size:12px}
+
+/* 0.26: карточка «Шанс» */
+.cc-card{background:linear-gradient(180deg,#f3e2b4,#e9d39b);color:#2a2116;border:3px solid #b98a2c;border-radius:12px;padding:14px 16px 16px;box-shadow:inset 0 0 0 2px #f7ecd0,0 6px 18px rgba(0,0,0,.35)}
+.cc-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#7a5a1e;letter-spacing:.08em}
+.cc-top b{font-size:22px;letter-spacing:.3em;color:#9b2c1e;font-family:Georgia,'Times New Roman',serif}
+.cc-card h2{margin-top:8px;color:#2a2116;font-family:Georgia,'Times New Roman',serif;font-size:22px}
+.cc-card p{margin-top:8px;line-height:1.45}.cc-card .cc-hist{font-style:italic;color:#5b4a30;font-size:14px}
+.cc-pic{margin:8px auto 0;max-width:260px;background:#e2c98a;border-radius:8px;padding:4px}.cc-pic svg,.cc-pic img{width:100%;height:auto;display:block}
+.cc-mean{margin-top:12px;border-top:1px dashed #b98a2c;padding-top:8px;display:grid;gap:2px}.cc-mean b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7a5a1e}
+.cc-card .btn{color:#2a2116;border-color:#b98a2c;background:#f7ecd0}.cc-card .btn.primary{background:#9b2c1e;color:#fff;border-color:#9b2c1e}

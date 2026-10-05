@@ -24,6 +24,8 @@ const ACT={
     if(d.v==='five'&&was!=='five'){addLog('Объявлена зарплата «пять долларов в день» — вдвое выше рынка. У ворот завода очередь из желающих.','good');if(G.y<1914)recordFirst(G,'wage:five','Зарплата «пять долларов в день»',1914,'Ford');G.rep=clamp(G.rep+4,0,100);flushToasts();}rerender();},
   tech:d=>{const k=d.k,c=techCost(G,k);if(!techOpen(G,k)||G.techBuild||G.cash<c)return;G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};addLog(`Начато внедрение: ${techNext(G,k).name} (${money(c)}).`);rerender();},
   loan:d=>{const n=+d.n;if(!loanOpen(G)){toast(creditState(G).t);return;}if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
+  // 0.26: своя цена в стране — наценка или скидка к домашней
+  pmk:d=>{const k=+d.v;G.pmk=G.pmk||{};if(Math.abs(k-1)<1e-6)delete G.pmk[d.c];else G.pmk[d.c]=k;addLog(`Цена в стране «${COUNTRIES[d.c].name}»: ${k===1?'как дома':(k>1?'+':'−')+Math.round(Math.abs(k-1)*100)+'% к домашней'}.`);rerender();},
   dpol:d=>{G.dpol=d.v;addLog(`Скидка дилерам: ${DPOL[d.v].n.toLowerCase()} (${Math.round(DPOL[d.v].m*100)}% цены).`);rerender();},
   // 0.25: кредит покупателям, вложения, спецакции
   finPol:d=>{if(!techLv(G,'credit'))return;G.finPol=d.v==='own'?'own':'bank';addLog(G.finPol==='own'?'Рассрочку покупателям теперь даёт своя кредитная компания: проценты — ваши, но деньги на рассрочку — тоже.':'Рассрочку покупателям снова дают банки — за комиссию.');rerender();},

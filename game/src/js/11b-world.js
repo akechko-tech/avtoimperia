@@ -135,7 +135,7 @@ function worldResolve(s,key){const [,id,ch]=key.split(':');const W=WORLD.find(w=
   const lab=(W.ch.find(c=>c[1]===ch)||[''])[0];addLog(`${W.title}: решение — ${lab.toLowerCase()}.`);
   (s.wnext=s.wnext||[]).push({at:mi(s)+1,title:`${W.title}: ${lab.toLowerCase()}`,deck:'Что вышло из решения',text:txt});}
 // эффекты выбора, которые работают внутри модели
-function worldMat(s){return (s.steelUntil||0)>mi(s)&&!s.military?1.15:1;}
+function worldMat(s){return ((s.steelUntil||0)>mi(s)&&!s.military?1.15:1)*((s.steelCut||0)>mi(s)?0.95:1);}
 function worldCapK(s){return (s.capSale||0)>mi(s)?0.7:1;}
 function worldPlanK(s){return (s.cutUntil||0)>mi(s)?0.8:1;}
 function worldAdK(s){return (s.adFx||0)>mi(s)?1.33:1;}

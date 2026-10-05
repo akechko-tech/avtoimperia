@@ -1,5 +1,5 @@
-const CACHE='avtoimperia-v25';
-const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
+const CACHE='avtoimperia-v26';
+const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 // трассы по настоящей местности (0.22: все ~80 мест, ≈10 МБ): сразу — только первые гонки 1895–1897 годов, остальные — в кэш при первой гонке
 const TERRAIN=['chartres','evanston','avignon','brighton','turbie'].map(id=>'./terrain/'+id+'.js');
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE).then(()=>{c.addAll(TERRAIN).catch(()=>{});})).then(()=>self.skipWaiting()));});

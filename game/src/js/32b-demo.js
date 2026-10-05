@@ -1,19 +1,19 @@
 /* ================= ТИТУЛЬНЫЙ ЭКРАН: живая 3D-гонка эпохи за меню (как заставка в кино) ================= */
 // Пока открыто главное меню, за ним идёт настоящая гонка знаменитого года: машины едут сами, камера — как в кино
-// (сзади, у обочины, сверху). Первый раз фото-материалы грузятся секунду-другую — до этого виден рисунок заставки.
+// (сзади, у обочины, сверху). Пока грузятся фото-материалы — тёмный «кинозал» с заголовком, гонка проявляется из темноты.
 const DEMO={on:false,key:null,cut:0,cutT:0,t:0,raf:0};
 const DEMO_RACES=['gpacf-1906','targa-1906','x87575-1908','pbp-1895','lemans-1923','gpacf-1914','targa-1924','kaiser-1907','pv1902-1902','monaco-1929','x22765-1924','gb1903-1903'];
 function demoWanted(){return !R&&typeof r3dWanted==='function'&&r3dWanted()&&!(AU.on&&AU.on.demo===false)&&!MS.hidden;}
-function demoStart(){if(DEMO.on||!demoWanted())return;
-  const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);if(!L.length)return;
+function demoStart(){if(DEMO.on)return;if(!demoWanted()){if(!R&&MS.classList.contains('live')&&!MS.classList.contains('ready')){MS.classList.remove('live');const cap=document.getElementById('menuCap');if(cap)cap.textContent='';}return;}
+  const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);if(!L.length){demoStop(true);return;}
   const rc=L[(DEMO.n=(DEMO.n===undefined?Math.floor(Math.random()*L.length):DEMO.n+1))%L.length];
   const s={pioneer:'custom',country:COUNTRIES[rc.c]?rc.c:'fr',company:'',drivers:[],models:[],y:rc.y,m:rc.m,cres:{},raceDone:{},titles:[],rep:50,rdept:0};
   let cars,trk;
-  try{const ai=raceField(rc,s,0,[]);if(!ai.length)return;const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref);
+  try{const ai=raceField(rc,s,0,[]);if(!ai.length){demoStop(true);return;}const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref);
     cars=ai.map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:i+2}),rc.y,trk);c.mech=c.st.mech;c.style=carStyle(c.md,c.prep,rc.y);
       c.wheel=wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name;
       c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip:0,hp:3};wearSetup(c,trk,rc);return c;});}
-  catch(e){console.warn('demo',e);return;}
+  catch(e){console.warn('demo',e);demoStop(true);return;}
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
   cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
     const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
@@ -53,4 +53,4 @@ function demoCam(dt,W,H){const D=DEMO;D.cutT-=dt;
 function demoStop(fail){if(DEMO.raf)cancelAnimationFrame(DEMO.raf);DEMO.raf=0;const was=DEMO.on;DEMO.on=false;
   if(R&&R.demo){R.done=true;try{if(R.gl)r3dDispose();}catch(_){}R=null;}
   const scr=document.getElementById('raceScreen');if(scr&&was){scr.hidden=true;scr.classList.remove('demo');}
-  MS.classList.remove('ready');if(fail)MS.classList.remove('live');}
+  MS.classList.remove('ready');if(fail){MS.classList.remove('live');const cap=document.getElementById('menuCap');if(cap)cap.textContent='';}}

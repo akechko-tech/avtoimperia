@@ -113,6 +113,10 @@ input[type=text]{width:100%;box-sizing:border-box;background:var(--panel2);borde
 .sheet{position:fixed;inset:0;z-index:10;background:rgba(4,12,22,.75);display:flex;align-items:flex-end;justify-content:center}
 .sheet .panel{background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;width:100%;max-width:560px;max-height:90vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips.sm{margin-top:0;gap:4px;justify-content:flex-end}.chips.sm .chip{padding:4px 8px;font-size:12px}
+/* 0.26: цена по странам — подпись над кнопками; таблица «По странам» — числа не слипаются и не переносятся */
+.pmk-row{margin-top:6px}.pmk-row .chips.sm{justify-content:flex-start;margin-top:4px}
+table.pl.ctab td.n{white-space:nowrap;padding-left:8px}table.pl.ctab th.n{padding-left:8px}table.pl.ctab td:first-child{padding-right:4px}
 .chip{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:7px 10px;font-size:13px;cursor:pointer;text-align:left}
 .chip small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .chip.on{border-color:var(--brass);background:rgba(217,171,82,.14)}
@@ -666,21 +670,28 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 #raceScreen.demo .r-top,#raceScreen.demo .r-hud,#raceScreen.demo .r-bars,#raceScreen.demo .r-ctrl,#raceScreen.demo #rMap,#raceScreen.demo .r-board,#raceScreen.demo .r-msg,#raceScreen.demo .r-note,#raceScreen.demo .r-grip,#raceScreen.demo #rSvc,#raceScreen.demo #rReset,#raceScreen.demo .r-mgr,#raceScreen.demo .r-tips,#raceScreen.demo .r-film{display:none!important}
 #raceScreen.demo #rView{position:absolute!important;inset:0}
 #menuScreen{z-index:9}
-#menuScreen.live{background:transparent}
-#menuScreen.live.ready{background:linear-gradient(180deg,rgba(3,6,10,.72) 0%,rgba(3,6,10,.15) 26%,rgba(3,6,10,0) 50%,rgba(3,6,10,.55) 72%,rgba(3,6,10,.88) 100%)}
-#menuScreen.live.ready .menu-hero{display:none}
+/* 0.26: «кинозал» — с первого кадра тёмный экран с заголовком; живая гонка проявляется из темноты (без смены картинки) */
+#menuScreen.live{background:linear-gradient(180deg,rgba(3,6,10,.72) 0%,rgba(3,6,10,.15) 26%,rgba(3,6,10,0) 50%,rgba(3,6,10,.55) 72%,rgba(3,6,10,.88) 100%)}
+#menuScreen.live::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:1;transition:none;
+  background:radial-gradient(70% 38% at 50% 104%,rgba(214,128,72,.34) 0%,rgba(214,128,72,.1) 45%,rgba(214,128,72,0) 75%),radial-gradient(120% 75% at 50% 0%,#1c385a 0%,#0c1b2d 52%,#05090f 100%)}
+#menuScreen.live.ready::before{opacity:0;transition:opacity 1.6s ease .1s}
+#menuScreen.live .menu-hero{display:none}
+.menu-title{opacity:0;transition:opacity .45s ease}
+.fonts-ok .menu-title{opacity:1}
+.menu-load{display:inline-block;animation:mload 1.6s ease-in-out infinite alternate}
+@keyframes mload{from{opacity:.35}to{opacity:.95}}
 .menu-in{display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
 .menu-gap{flex:1;min-height:12px}
 .menu-titlebox{text-align:center;margin-top:10px}
 .menu-kick{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:#e2c47a;text-shadow:0 1px 8px rgba(0,0,0,.8)}
-.menu-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(30px,10.4vw,76px);letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;
+.menu-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(28px,10.2vw,56px);white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;
   background:linear-gradient(180deg,#fff3cf 0%,#e2c47a 45%,#a8782e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 10px rgba(0,0,0,.75))}
 .menu-sub{text-align:center;color:#e9dfc8;margin:4px 0 0;font-family:'Old Standard TT',Georgia,serif;font-style:italic;font-size:15px;letter-spacing:.02em;text-shadow:0 1px 8px rgba(0,0,0,.9)}
 .menu-cap{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e2c47a;opacity:.9;margin:0 0 10px;text-shadow:0 1px 8px rgba(0,0,0,.9)}
 .menu-cap b{color:#f4ecd8;font-weight:500}
-#menuScreen.live.ready .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-#menuScreen.live.ready .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
-#menuScreen.live.ready .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+#menuScreen.live .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#menuScreen.live .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
+#menuScreen.live .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
 /* праздник: победа, титул, рекорд */
 .cel{position:fixed;inset:0;z-index:96;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;transition:opacity .5s;background:radial-gradient(ellipse at 50% 32%,rgba(8,6,3,.35),rgba(8,6,3,.62));animation:celBg .4s ease}
 @keyframes celBg{0%{opacity:0}}
@@ -736,9 +747,22 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .paper .p-mean b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
 /* 0.25: живые чертежи в кинохронике */
 .rl-diag{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+
+/* 0.26: наследие в людях */
+.hum{display:grid;gap:6px;margin-top:6px}.hum-row{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}.hum-row>span{color:var(--muted);font-size:12px}.hum-row b{font-size:14px;font-weight:600}.hum-row small{grid-column:2;font-size:12px}
+
+/* 0.26: карточка «Шанс» */
+.cc-card{background:linear-gradient(180deg,#f3e2b4,#e9d39b);color:#2a2116;border:3px solid #b98a2c;border-radius:12px;padding:14px 16px 16px;box-shadow:inset 0 0 0 2px #f7ecd0,0 6px 18px rgba(0,0,0,.35)}
+.cc-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#7a5a1e;letter-spacing:.08em}
+.cc-top b{font-size:22px;letter-spacing:.3em;color:#9b2c1e;font-family:Georgia,'Times New Roman',serif}
+.cc-card h2{margin-top:8px;color:#2a2116;font-family:Georgia,'Times New Roman',serif;font-size:22px}
+.cc-card p{margin-top:8px;line-height:1.45}.cc-card .cc-hist{font-style:italic;color:#5b4a30;font-size:14px}
+.cc-pic{margin:8px auto 0;max-width:260px;background:#e2c98a;border-radius:8px;padding:4px}.cc-pic svg,.cc-pic img{width:100%;height:auto;display:block}
+.cc-mean{margin-top:12px;border-top:1px dashed #b98a2c;padding-top:8px;display:grid;gap:2px}.cc-mean b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7a5a1e}
+.cc-card .btn{color:#2a2116;border-color:#b98a2c;background:#f7ecd0}.cc-card .btn.primary{background:#9b2c1e;color:#fff;border-color:#9b2c1e}
 </style>
 
-<div class="wrap">
+<div class="wrap" hidden>
   <header class="top">
     <div><div class="co" id="co"></div><div class="date" id="date"></div></div>
     <div class="row" style="align-items:flex-end">
@@ -750,8 +774,9 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
   <main id="view" class="stack"></main>
 </div>
 <div class="toast" id="toast" hidden></div>
-<div id="menuScreen" hidden></div>
-<nav class="bar-nav">
+<div id="menuScreen" class="live"><div class="menu-in"><div class="menu-titlebox"><div class="menu-kick">1895 — 1929</div><h1 class="menu-title">Автоимперия</h1><p class="menu-sub">экономическая стратегия и гонки на заре автомобиля</p></div></div></div>
+<script>(function(){var d=document.documentElement,ok=function(){d.classList.add('fonts-ok');};try{document.fonts.load('900 40px "Playfair Display"','АВТОИМПЕРИЯ').then(ok,ok);}catch(e){ok();}setTimeout(ok,2500);})();</script>
+<nav class="bar-nav" hidden>
   <div class="in">
     <div class="player"><button class="plb" data-act="plMode"><span class="plMode">Эпоха</span></button><button class="plb" data-act="plPrev" aria-label="Предыдущая">⏮</button><button class="plb plPlay" data-act="plPlay" aria-label="Пауза">▶</button><button class="plb" data-act="plNext" aria-label="Следующая">⏭</button><span class="plTitle">Фонотека загружается…</span></div>
     <div class="next">
@@ -1710,14 +1735,17 @@ function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
 function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
-const CHAR_NAMES={perf:'Мощность',rel:'Надёжность',comf:'Комфорт',ease:'Простота вождения',safe:'Тормоза',econ:'Экономичность',cap:'Вместимость'};
-const CHAR_HINT={perf:'лошадиных сил на тонну',rel:'реже ломается',comf:'рессоры, шины, кузов, плавность мотора',ease:'коробка, педали, вес',safe:'тормоза и сцепление шин',econ:'бензин, шины, ремонт',cap:'места или груз'};
+const CHAR_NAMES={perf:'Мощность',rel:'Надёжность',comf:'Комфорт',ease:'Простота вождения',safe:'Тормоза и безопасность',econ:'Экономичность',cap:'Вместимость'};
+const CHAR_HINT={perf:'лошадиных сил на тонну',rel:'реже ломается',comf:'рессоры, шины, кузов, плавность мотора',ease:'коробка, педали, вес',safe:'тормоза, сцепление шин, закрытый кузов',econ:'бензин, шины, ремонт',cap:'места или груз'};
 // Что ценят покупатели каждого класса (сумма весов — 1)
-const CHAR_W={people:{perf:0.12,rel:0.25,comf:0.07,ease:0.15,safe:0.05,econ:0.28,cap:0.08},
-  middle:{perf:0.21,rel:0.18,comf:0.21,ease:0.1,safe:0.08,econ:0.08,cap:0.14},
-  lux:{perf:0.25,rel:0.14,comf:0.36,ease:0.1,safe:0.1,econ:0,cap:0.05},
+// 0.26 (по работам о спросе на машины — Court 1939, Griliches 1961, Raff и Trajtenberg 1996, Berry, Levinsohn и Pakes 1995):
+// народный класс считает, во что обходится километр на человека — бензин, ремонт, места в салоне; средний класс платит за комфорт;
+// люкс ждёт лучшего во всём, кроме экономии; спортивный — скорости, тормозов и яркой машины
+const CHAR_W={people:{perf:0.08,rel:0.22,comf:0.06,ease:0.12,safe:0.05,econ:0.32,cap:0.15},
+  middle:{perf:0.17,rel:0.16,comf:0.32,ease:0.1,safe:0.1,econ:0.05,cap:0.1},
+  lux:{perf:0.22,rel:0.16,comf:0.3,ease:0.1,safe:0.12,econ:0,cap:0.1},
   // спортивные: скорость и разгон, тормоза и сцепление, лёгкость управления; комфорт почти не важен
-  sport:{perf:0.42,rel:0.12,comf:0.04,ease:0.14,safe:0.22,econ:0,cap:0.06},
+  sport:{perf:0.5,rel:0.1,comf:0.03,ease:0.12,safe:0.2,econ:0,cap:0.05},
   truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0}};
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
@@ -1729,9 +1757,12 @@ function carChar(md,y){
   return {perf:st.hp*eff/mass*1000,rel:Math.sqrt(mtbf),
     comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6,t3:0.95}[p.t.id]||1),
     ease:p.g.ease*(1+0.04*U(p.g.id))*(0.6+0.4*p.k.ease)*(p.w.solid?0.85:1)*Math.pow(1000/Math.max(500,mass),0.2),
-    safe:st.brk*st.grip,econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
-    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel};
+    safe:st.brk*st.grip*(p.b.closed?1.12:1),econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
+    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel,fuel,mtbf,vT:truck?truckSpeed(st,pay):0};
 }
+// 0.26: средняя скорость гружёного грузовика в пути, км/ч: полный кузов, подъём 2%, дороги эпохи (≈55% предельной)
+function truckSpeed(st,pay){const m=st.kg+pay*1000,g=9.81,A=st.kd,B=(st.crr+0.02)*m*g;let v=10;for(let i=0;i<30;i++){const f=A*v*v*v+B*v-st.P,df=3*A*v*v+B;v=Math.max(2,v-f/df);}
+  return clamp(v*3.6*0.55,6,45);}
 const CH_CACHE=new Map();
 function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer:'')+PART_KEYS.map(k=>upgL(md[k])).join('')].join('|');
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
@@ -1743,6 +1774,8 @@ function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=char
   // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
   const LC=md.legend?legendCh(md):null,A=LC?Object.assign({},A0):A0;if(LC)for(const k in LC)if(A[k])A[k]*=LC[k];
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4);by[k]=r;if(W[k])lnS+=W[k]*Math.log(r);});
+  // 0.26: люкс — машина без слабых мест: худшая черта (кроме экономичности) тянет вниз всю оценку
+  if(g==='lux'){let lo=0;CHAR_K.forEach(k=>{if(W[k]>0.05)lo=Math.min(lo,Math.log(by[k]));});lnS+=0.35*lo;}
   return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,W,ref,A,R};}
 function classScore(md,s,c){return classCompare(md,s,c).S;}
 // Качество для рынка: доля лучшей машины эпохи (у соперников класса — QG)
@@ -1806,7 +1839,7 @@ function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1));}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
 function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1);}
 // станки, конвейер и электромоторы делают цех производительнее — но и дороже: место в цеху стоит больше
@@ -1973,8 +2006,8 @@ const CAR_LIFE={1895:6,1910:7,1920:8,1929:9},HOLD={1895:3,1910:3.5,1920:4,1929:4
 // Насколько машина вообще нужна семье: надёжность, дороги, бензин, мастерские
 const APPEAL={1895:-2.2,1900:-0.6,1905:0.6,1910:1.2,1913:1.4,1916:1.4,1920:1.2,1925:1.4,1929:2};
 // Грузовики и фургоны покупает бизнес: лавки, пивоварни, почта, стройки. Каждый месяц часть фирм обновляет
-// свой транспорт — это доля ВВП; каждая фирма выбирает между лошадью с телегой и мотором.
-// Сколько из них возьмут мотор, решают цена, надёжность и дороги эпохи (сила марок подобрана по истории).
+// свой транспорт — это доля ВВП; сначала фирма выбирает между лошадью с телегой и мотором, а мотор — под свои перевозки
+// (0.26: по району, по городу, между городами — см. truckMarket). Сила марок подобрана по истории.
 const TRUCK_POOL={1895:0.0025,1905:0.0028,1913:0.003,1917:0.0045,1920:0.005,1925:0.0055,1929:0.0065};
 const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=1.5,LAM=0.25,AQT=2.6,BT=4;
 // Качество машин конкурентов в классе — доля лучшей машины эпохи
@@ -2064,7 +2097,9 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   // 0.21: новая марка начинает как рядовой соперник (не больше ~12% класса на «Норме»), а не как лидер класса —
   // долю лидера нужно заработать машиной, ценой, дилерами и именем (у марки основателя — её историческая доля)
   // в Америке рынок поделили гиганты с дилером в каждом городке — новой марке там вдвое труднее, чем в Европе
-  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),Math.min(1/(brandsN(c,g,s)+1),(DIF().bshare||0.12)*(c==='us'?(globalThis.BSUS??0.5):1))));
+  // 0.26: на молодом рынке (до ~1906) марок единицы, у новичка шанс больше — до 2,5 раза к обычной доле
+  const young=1+1.5*clamp((1906-yf(s))/10,0,1);
+  let b=g==='truck'&&k<-10?-99:k+Math.log(Math.max(ghostShare(c,g,s),Math.min(1/(brandsN(c,g,s)+1),(DIF().bshare||0.12)*young*(c==='us'?(globalThis.BSUS??0.5):1))));
   if(g==='truck')b=Math.max(b,TRUCK_FLOOR[c]); // смелые фирмы найдутся всегда: лавки, пивоварни, почта
   return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
@@ -2077,7 +2112,9 @@ function reachOf(s,c){const d=dealerCount(s,c);return d?Math.pow(Math.min(1,d/de
 function adRef(s,c){c=c||s.country;const y=(s.mkY&&s.mkY[c])||1000;return 100*cpi(s)*Math.pow(1+y/1000,0.75);}
 function adEffect(s,c){const IL=impOf(s,c||s.country),a=(s.ad||0)*(IL?IL.ad||0.35:1)*bn('adEff')*worldAdK(s);return 0.55*(1-Math.exp(-a/adRef(s,c)));}
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
-function raceEffect(md,s){return ((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0)+kingEffect(md,s);}
+// 0.26: в эпоху пионеров (до ~1906) о машинах узнают только из гонок, выставок и газет — слава весит втрое больше
+function pioneerK(s){return 1+2*clamp((1906-yf(s))/8,0,1);}
+function raceEffect(md,s){return (((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0))*pioneerK(s)+kingEffect(md,s);}
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
@@ -2085,8 +2122,12 @@ function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,
 // и тормоза на все четыре колеса; открытая машина с тормозами «как у кареты» в 1929 году почти не продаётся
 const CLOSED_SH={us:{1912:0,1915:0.02,1919:0.1,1922:0.3,1924:0.43,1926:0.72,1927:0.85,1929:0.9},eu:{1915:0,1919:0.05,1922:0.15,1925:0.35,1927:0.55,1929:0.7}};
 const FWB_SH={us:{1921:0,1924:0.1,1926:0.5,1928:0.9},eu:{1919:0,1922:0.2,1925:0.6,1927:0.9}};
-function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck||g==='sport')return 0;const t=yf(s),k=c==='us'?'us':'eu';let u=0;
-  if(!p.b.closed){const sh=tabAt(CLOSED_SH[k],t);if(sh>0)u+=-Math.log(1-0.9*sh);}
+// 0.26: закрытый кузов ценят сильнее: он защищает в аварии, от дождя и пыли, в нём ездят круглый год. Люкс — лимузины с 1906 года,
+// средний класс — с конца 1910-х, народный — когда закрытая машина подешевела (Essex Coach, 1922); спортивная — открытая
+const CLOSED_V={lux:{1903:0,1906:0.5,1912:0.8,1920:1.1,1926:1.3},middle:{1910:0,1915:0.2,1919:0.45,1923:0.75,1926:1.0},people:{1915:0,1920:0.15,1923:0.35,1926:0.6,1929:0.75}};
+function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck)return 0;const t=yf(s),k=c==='us'?'us':'eu';let u=0;
+  if(g==='sport')return p.b.closed?0.25:0;
+  if(!p.b.closed){const sh=tabAt(CLOSED_SH[k],t);if(sh>0)u+=-Math.log(1-0.9*sh);const cv=CLOSED_V[g];if(cv)u+=tabAt(cv,t-(k==='eu'?2:0));}
   if(p.k.id==='k1'||p.k.id==='k2'){const sh=tabAt(FWB_SH[k],t);if(sh>0)u+=-Math.log(1-0.6*sh);}
   return u;}
 // Репутация: плохая сильно отпугивает, хорошая помогает умеренно — у сильных конкурентов тоже есть имя (0.21)
@@ -2103,10 +2144,20 @@ function usedPen(md,c,s){const g=segOf(md);if(g==='truck'||isTruck(md))return 0;
 function pfleetMonth(s,life){if(!s.pfleet){s.pfleet={};const H=(s.hist&&s.hist.sales)||[],n=Math.round(12*life);let a=0;H.slice(-n).forEach(v=>a+=v||0);s.pfleet[s.country]=a*0.7;}
   const add={};s.models.forEach(md=>{if(isTruck(md)||!md.soldBy)return;for(const c in md.soldBy)add[c]=(add[c]||0)+(md.soldBy[c]||0);});
   for(const c in COUNTRIES){const pf=s.pfleet[c]||0,v=pf+(add[c]||0)-pf/(12*life);if(v>0.5)s.pfleet[c]=Math.round(v*10)/10;else delete s.pfleet[c];}}
+// 0.26: вид. Спортивную машину покупают глазами — яркий цвет (красный, жёлтый, белый) лучше тёмного. С 1924 года (быстросохнущая
+// нитроэмаль Duco) цветные машины в моде у всех: «любой цвет, если он чёрный» стоил Ford покупателей Chevrolet
+function paintBright(hex){const c=hex2rgb(hex||'#222'),mx=Math.max(...c)/255,mn=Math.min(...c)/255,sat=mx>0?(mx-mn)/mx:0;return clamp(sat*0.7+mx*0.5,0,1);}
+function lookU(md,g,s){const b=paintBright(md.paint),t=yf(s);if(g==='sport')return 0.6*(b-0.45);if(g==='truck'||isTruck(md))return 0;const f=clamp((t-1923)/3,0,1);return f*(g==='lux'?0.1:0.25)*(b-0.3);}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return -3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return lookU(md,g,s)-3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+// 0.26: своя цена в каждой стране — наценка или скидка к домашней (за границей рынок, налоги и доходы другие)
+const PMK=[[0.9,'−10%'],[1,'как дома'],[1.1,'+10%'],[1.25,'+25%']];
+function pmkOf(s,c){return c===s.country?1:((s.pmk&&s.pmk[c])||1);}
+function priceIn(md,c,s,price){return (price??md.price)*pmkOf(s,c);}
 // Цена для покупателя: за границей — с пошлиной и доставкой
-function offerPrice(md,c,s,price){const home=c===s.country;return (price??md.price)*(home?1:1+tariffOf(md,c,s))+(home?0:shipCostTo(s,c)*shipK(s,c));}
+function offerPrice(md,c,s,price){const home=c===s.country,P=priceIn(md,c,s,price);return P*(home?1:1+tariffOf(md,c,s))+(home?0:shipCostTo(s,c)*shipK(s,c));}
+// Сколько вам остаётся с машины в стране: минус скидка дилеру и импортёру, доставка; по лицензии — доля цены
+function netPer(md,c,s,price){const P=priceIn(md,c,s,price);if(c===s.country)return P*(1-dMargin(s));if(licOn(s,c))return P*LIC_ROY;const IL=impOf(s,c);return (P*(1-dMargin(s)-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c);}
 /* ---------- рынок страны ---------- */
 // Чем большую часть бюджета съедает машина, тем меньше хочется её брать; дороже бюджета — почти никто
 function budget(x){return x<=0.9?Math.log(1-Math.max(0,x)):Math.log(0.1)-10*(x-0.9);}
@@ -2139,18 +2190,52 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   SEGK.forEach(g=>{const z=R.segs[g];z.size=z.inc+z.you;});
   return R;
 }
-// Грузовики: покупает бизнес — фирмы выбирают между лошадью и мотором; фургон сравнивают с грузовиком по цене за тонну груза
-// в Америке грузовиков на доллар ВВП втрое больше: фермы, большие расстояния, дешёвые Ford TT
+// Грузовики: покупает бизнес. Каждый месяц часть фирм обновляет транспорт (доля ВВП); в Америке грузовиков на доллар ВВП
+// втрое больше: фермы, большие расстояния, дешёвые Ford TT. В войну грузовики берёт армия.
 function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*tabAt(INC[c],t)/0.72*tabAt(TRUCK_POOL,t)*(c==='us'?3:1)/prefP('truck',c,s)/12*SEASON[s.m]*(ec.war?2.5:ec.f);}
+// 0.26: три разных перевозки — три разных машины. Лавке, которая развозит хлеб по району, нужен фургон; мебель по городу
+// возят на полуторатонке; большие партии между городами — на трёхтонке. Одна машина другую не заменяет: фирма считает,
+// во что ей обойдётся тонно-километр — машина за годы службы и проценты, ремонт и простои (надёжность), бензин, шофёр —
+// и сколько машина успеет перевезти за день (грузоподъёмность против размера партии, скорость против расстояния).
+// d — км в день, s — типичная партия, т; h — часов за рулём (у фургона много остановок); lf — доля пути с грузом
+const TRUCK_USE={van:{n:'По району',who:'лавки, булочные, молочники, почта',d:45,s:0.3,h:4,lf:0.7,bp:3},
+  city:{n:'По городу',who:'мебель, уголь, стройматериалы',d:70,s:1.4,h:6,lf:0.55,bp:2.4},
+  haul:{n:'Между городами',who:'большие партии на сотни километров',d:160,s:2.6,h:9,lf:0.5,bp:1.8}};
+const TUSE=['van','city','haul'];
+// какая доля фирм возит как: сначала почти одна развозка, с дорогами двадцатых растут перевозки между городами
+const TUSE_SH={1895:[0.85,0.15,0],1905:[0.78,0.2,0.02],1912:[0.62,0.32,0.06],1918:[0.5,0.38,0.12],1922:[0.45,0.37,0.18],1929:[0.4,0.35,0.25]};
+// бензин, $ за литр (в Европе — с налогами и доставкой); годы службы грузовика
+const FUEL_P={us:{1895:0.04,1915:0.05,1920:0.075,1925:0.055,1929:0.05},eu:{1895:0.08,1915:0.09,1920:0.14,1925:0.11,1929:0.1}};
+const TRUCK_LIFE={1895:5,1910:6,1920:7,1929:8};
+const BTC=7,TQ=2.6;
+function truckUseSh(c,s){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
+  const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}return {van:v[0],city:v[1],haul:v[2]};}
+// Эталон соперников для каждой перевозки: фургон, полуторатонка, трёхтонка (до 1920 года — полуторатонка)
+function truckRef(u,y){if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:0};const r=rivalCar('truck',y)[2];return {...r,b:u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:0};}
+// Во что фирме обходится тонно-километр на этой машине при цене P (в $ того времени)
+function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf);
+  const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1;
+  const kmDay=Math.min(U.d,(ch.vT||15)*U.h),down=clamp(0.4/mt,0.01,0.3),days=300*(1-down),km=kmDay*days;
+  const own=P*(1/life+0.06),rep=P*0.08*(1+3/mt),fuel=km*9*ch.fuel/100*fp,tot=own+rep+fuel+drv;
+  const tkm=km*Math.min(pay,U.s)*U.lf;return {cpk:tot/Math.max(1,tkm),tot,tkm,kmDay,own,rep,fuel,drv};}
+// Остальное, что ценит шофёр и хозяин: простота вождения, тормоза, кабина — немного
+function truckSoft(md,ref,y){const A=charOf(md,y),R=charOf(ref,y);return 0.1*Math.log(clamp(A.ease/R.ease,0.25,4))+0.08*Math.log(clamp(A.safe/R.safe,0.25,4))+0.04*Math.log(clamp(A.comf/R.comf,0.25,4));}
 function truckMarket(R,c,s,ms,pr,K,u0){
-  // в войну грузовики берёт армия
-  const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;if(pool<=0)return;
-  const U=(q,P,fair)=>u0-0.5+AQT*Math.log(q/QG.truck)-BT*Math.log(P/fair);
-  const ei=Math.exp(U(QG.truck,PT*pwOf(s,c,'truck'),PT)+K('truck'));let m=-1e9;
-  const bk=brandK(c,'truck',s),L=ms.map(md=>{const v=(md.probe?U(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e:U(mq(md,s,c),pr(md),PT*payK(md))+modelExtras(md,c,s))/LAM+bk/LAM;if(v>m)m=v;return {md,v};});
-  let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
-  const dr=1+ei+A,du=1+ei;z.inc+=pool*ei*(R.rho/dr+(1-R.rho)/du);R.shop+=pool;
-  L.forEach(x=>{const d=pool*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;});
+  const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;z.uses={};if(pool<=0)return;
+  const sh=truckUseSh(c,s),bk=brandK(c,'truck',s),kR=K('truck'),pwT=pwOf(s,c,'truck');
+  // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
+  const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
+  const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s);});R.byU=R.byU||{};
+  for(const u of TUSE){const pu=pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
+    const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
+    const ei=Math.exp(u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR);let m=-1e9;
+    const L=ms.map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
+      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk;v=u0-0.5-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y)+ex[md.id];}
+      v=(v+bk)/LAM;if(v>m)m=v;return {md,v};});
+    let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
+    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);z.inc+=ri;Z.riv=ri;
+    L.forEach(x=>{const d=pu*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
+  R.shop+=pool;
 }
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
 // Спрос на все модели во всех странах на текущий месяц
@@ -2294,7 +2379,7 @@ function worldMap(s){const home=s.country,xy=WORLD_XY,L=s.last;
   return `<svg class="world" viewBox="0 0 370 160" role="img" aria-label="Карта доступа на рынки">${land}<text x="185" y="96" text-anchor="middle" font-size="9" fill="#8ea8c3" font-style="italic">Атлантика</text>${routes}${ca}${dots}</svg>`;}
 function worldRow(s,c){const home=s.country,A=accessOf(s,c),act=s.models.filter(m=>m.status==='prod'),md=act.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],L=s.last,mk=L&&L.mk&&L.mk[c],sold=mk?mk.sold||0:0;
   if(c===home)return `<tr><td><b>${COUNTRIES[c].name}</b> <small class="muted">дома</small></td><td>—</td><td class="n">${fmtN(sold)}</td><td class="n">${md?money(md.price*(1-dMargin(s))-unitCost(md,s)):'—'}</td></tr>`;
-  const r=ruleNow(s,c);let perCar='—';if(md&&!A.k.startsWith('ban')){const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=impOf(s,c),net=licOn(s,c)?md.price*LIC_ROY:(md.price*(1-dMargin(s)-(IL&&IL.cut||0))-sh)*fxOf(s,c)-unitCost(md,s);perCar=money(net)+(tf>0?` <small class="muted">(пошлина ${Math.round(tf*100)}%${sh>0?`, доставка ${money(sh)}`:''})</small>`:sh>0?` <small class="muted">(доставка ${money(sh)})</small>`:'');}
+  const r=ruleNow(s,c);let perCar='—';if(md&&!A.k.startsWith('ban')){const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=impOf(s,c),net=netPer(md,c,s)-unitCost(md,s);perCar=money(net)+(tf>0?` <small class="muted">(пошлина ${Math.round(tf*100)}%${sh>0?`, доставка ${money(sh)}`:''})</small>`:sh>0?` <small class="muted">(доставка ${money(sh)})</small>`:'');}
   const tp=md?tastePen(md,c,s):0,why=r.why+(tp>0.3?(r.why?'; ':'')+'вкус: берут свои машины':'');
   return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':(s.bought&&s.bought[c])?'марка «'+s.bought[c].n+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
 function worldCard(s){const C=Object.keys(COUNTRIES);
@@ -2516,6 +2601,8 @@ function checkEvents(){
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
   checkShows(s);checkTenders(s);try{histReelCheck(s);}catch(e){console.warn('hist reel',e);}
   try{warTaxNews(s);}catch(e){console.warn('war tax news',e);}
+  try{dxCheck(s);}catch(e){console.warn('duel x',e);}
+  try{chanceCheck(s);}catch(e){console.warn('chance',e);}
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
@@ -2587,6 +2674,8 @@ function resolve(key){
   if(key==='wait')s.strikeNext=true;
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');const ev=s.pending[0];if(ev&&ev.world==='war')worldResolve(s,'w:war:mil');}
   if(/^w:/.test(key))worldResolve(s,key);
+  if(/^cc:/.test(key))chanceResolve(s,key);
+  if(key==='dxYes'||key==='dxNo')dxAnswer(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
@@ -2764,7 +2853,7 @@ function worldResolve(s,key){const [,id,ch]=key.split(':');const W=WORLD.find(w=
   const lab=(W.ch.find(c=>c[1]===ch)||[''])[0];addLog(`${W.title}: решение — ${lab.toLowerCase()}.`);
   (s.wnext=s.wnext||[]).push({at:mi(s)+1,title:`${W.title}: ${lab.toLowerCase()}`,deck:'Что вышло из решения',text:txt});}
 // эффекты выбора, которые работают внутри модели
-function worldMat(s){return (s.steelUntil||0)>mi(s)&&!s.military?1.15:1;}
+function worldMat(s){return ((s.steelUntil||0)>mi(s)&&!s.military?1.15:1)*((s.steelCut||0)>mi(s)?0.95:1);}
 function worldCapK(s){return (s.capSale||0)>mi(s)?0.7:1;}
 function worldPlanK(s){return (s.cutUntil||0)>mi(s)?0.8:1;}
 function worldAdK(s){return (s.adFx||0)>mi(s)?1.33:1;}
@@ -2976,6 +3065,112 @@ const LEGAL=[
 ];
 LEGAL.forEach(W=>{W.legal=1;if(!W.reel)W.reel='';WORLD.push(W);});
 
+/* ================= 0.26: КАРТОЧКИ «ШАНС» — как в «Монополии», только из настоящей истории =================
+   Раз в несколько месяцев вытягивается карточка: случай из жизни эпохи — чаще радостный, — который меняет игру.
+   Каждая карточка — по мотивам настоящей истории (доктора на моторах, Шеклтон с машиной в Антарктиде, «Кистоунские копы»
+   с «Фордами», махараджи с сотнями «Роллс-Ройсов»), но случается с вашей маркой. Одна и та же карточка за игру выпадает один раз. */
+const CH_C={fr:'Франции',de:'Германии',uk:'Британии',us:'Америки',it:'Италии'};
+// подходящая модель: класс или грузовая
+function chModel(s,g){const L=s.models.filter(m=>m.status==='prod'&&(g==='truck'?isTruck(m):g==='van'?m.b==='b6':g?segOf(m)===g&&!isTruck(m):!isTruck(m)));return L.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
+function chOrder(s,md,n,k,who,mo){const price=Math.round(md.price*k/10)*10;s.orders=s.orders||[];s.orders.push({id:'cc-'+mi(s)+'-'+md.id,md:md.id,n,left:n,price,due:mi(s)+(mo||6),who,start:mi(s)});return price;}
+const CHANCE=[
+  {id:'doctor',y0:1898,y1:1915,w:1.2,req:s=>!!chModel(s),title:'Доктор на моторе',
+    text:s=>`Сельский врач написал в автомобильный журнал: на вызов за десять миль он теперь успевает за час, а не за полдня, и лошадь не надо кормить зимой. Письмо перепечатали газеты — врачи по всей ${CH_C[s.country]} пишут дилерам «${s.company}».\nТак и было: в 1900-х врачи одними из первых пересели на машины — журнал Horseless Age печатал целые выпуски их писем.`,
+    mean:'Полгода средний и народный классы дома охотнее берут ваши машины. Можно дать врачам скидку — эффект сильнее и дольше.',
+    ch:[['Скидка врачам 10%','disc'],['Спасибо, без скидок','no']],
+    res:{disc:s=>{const md=chModel(s),v=Math.round((md?md.price:500)*0.1*12);s.cash-=v;wfxAdd(s,s.country,'middle',0.3,12,'врачи на моторах');wfxAdd(s,s.country,'people',0.25,12,'врачи на моторах');return `Скидка врачам обошлась в ${money(v)}: за год ваши машины купили сотни докторов — и рассказали соседям.`;},
+      no:s=>{wfxAdd(s,s.country,'middle',0.15,6,'врачи на моторах');wfxAdd(s,s.country,'people',0.12,6,'врачи на моторах');return 'Письмо врача и без скидок принесло покупателей.';}}},
+  {id:'royal',y0:1900,y1:1914,w:1,cc:'uk,de,it,fr',req:s=>!!(chModel(s,'lux')||chModel(s,'middle')),title:'Машина для двора',
+    text:s=>`Двор заказывает у «${s.company}» две машины для загородных поездок. Газеты пишут об этом на первых полосах, и знать спешит сделать то же.\nТак и было: принц Уэльский, будущий король Эдуард VII, в 1900 году прокатился на «Даймлере» и сделал моторы модой британской аристократии.`,
+    mean:'+4 к репутации, год люкс и средний класс дома охотнее берут ваши машины; две машины оплачены втрое.',
+    fx:s=>{const md=chModel(s,'lux')||chModel(s,'middle');const v=Math.round(md.price*2*3);s.cash+=v;s.rep=clamp(s.rep+4,0,100);wfxAdd(s,s.country,'lux',0.4,12,'заказ двора');wfxAdd(s,s.country,'middle',0.15,12,'заказ двора');return v;}},
+  {id:'taft',y0:1909,y1:1916,w:1,cc:'us',req:s=>!!(chModel(s,'lux')||chModel(s,'middle')),title:'Машина для Белого дома',
+    text:s=>`Президент заказал для Белого дома машину «${s.company}». Фотографы снимают её у колоннады, газеты пишут, что конюшню при резиденции переделывают в гараж.\nТак и было: Уильям Тафт в 1909 году первым из президентов США завёл гараж — паровой White и машины Pierce-Arrow.`,
+    mean:'+5 к репутации, год ваши дорогие машины в Америке берут охотнее.',
+    fx:s=>{s.rep=clamp(s.rep+5,0,100);wfxAdd(s,'us','lux',0.35,12,'Белый дом');wfxAdd(s,'us','middle',0.12,12,'Белый дом');}},
+  {id:'antarctic',y0:1907,y1:1916,w:0.8,req:s=>!!chModel(s),title:'Машина на краю земли',
+    text:s=>`Полярный исследователь просит машину «${s.company}» для экспедиции к Южному полюсу: проверить, пройдёт ли мотор там, где падают лошади.\nТак и было: Эрнест Шеклтон взял в экспедицию «Нимрод» (1907) автомобиль Arrol-Johnston — первую машину в Антарктиде.`,
+    mean:'Дать машину — +6 к репутации и год слава надёжной марки; отказаться — ничего не случится.',
+    ch:[['Дать машину бесплатно','give'],['Отказаться','no']],
+    res:{give:s=>{const md=chModel(s);if(md&&md.stock>0)md.stock--;else s.cash-=Math.round(md?unitCost(md,s):500);s.rep=clamp(s.rep+6,0,100);s.relFx=mi(s)+12;wfxAdd(s,'*','*',0.1,12,'машина в Антарктиде');
+      return `Машина «${s.company}» завелась на морозе в сорок градусов — фото обошли все газеты мира. Покупатели год охотнее выбирают надёжные машины, а ваша — среди них.`;},
+      no:()=>'Экспедиция ушла на чужой машине. Газеты о «'+G.company+'» промолчали.'}},
+  {id:'keystone',y0:1912,y1:1926,w:1.1,req:s=>!!chModel(s,'people'),title:'Погоня в кино',
+    text:s=>`В комедиях про незадачливых полицейских машины «${s.company}» разваливаются на ходу, взлетают на трамплинах и всё равно едут дальше. Зал хохочет — и запоминает марку.\nТак и было: «Кистоунские копы» Мака Сеннета гоняли на «Фордах Т», и это была лучшая реклама дешёвой машины.`,
+    mean:'Полгода народный класс во всех странах охотнее берёт ваши машины.',
+    fx:s=>{wfxAdd(s,'*','people',0.3,8,'погоня в кино');}},
+  {id:'record',y0:1900,y1:1929,w:1,req:s=>!!chModel(s),title:'Тысячи миль без поломки',
+    text:s=>`Владелец машины «${s.company}» проехал на ней тысячи миль под присмотром судей автоклуба — и ни разу не поднял капот. Отчёт напечатали все журналы.\nТак и было: в 1907 году Rolls-Royce Silver Ghost прошёл 15 000 миль под надзором Королевского автоклуба — и получил славу «лучшей машины в мире».`,
+    mean:'Год покупатели особенно ценят надёжность ваших машин, +3 к репутации.',
+    fx:s=>{s.relFx=mi(s)+12;s.rep=clamp(s.rep+3,0,100);wfxAdd(s,'*','*',0.08,12,'рекорд пробега');}},
+  {id:'refund',y0:1896,y1:1929,w:0.9,title:'Казначейство ошиблось в вашу пользу',
+    text:s=>`Налоговое ведомство пересчитало прошлогодние сборы и вернуло «${s.company}» переплату. Бухгалтер не верит глазам.\nКак в «Монополии»: «Банковская ошибка в вашу пользу».`,
+    mean:'Деньги в кассу.',fx:s=>{const v=Math.max(500,Math.round(Math.abs((s.last&&s.last.rev)||2000)*0.25/100)*100);s.cash+=v;return v;}},
+  {id:'steel',y0:1901,y1:1929,w:0.9,title:'Сталь подешевела',
+    text:s=>`Новые мартеновские печи заработали в полную силу, и сталелитейные компании снизили цены. Детали для машин «${s.company}» на полгода дешевле.\nТак и было: в 1901 году появилась U.S. Steel, первая компания-миллиардер; сталь стала дешевле и доступнее.`,
+    mean:'Полгода детали дешевле на 5%.',fx:s=>{s.steelCut=mi(s)+6;}},
+  {id:'suggest',y0:1905,y1:1929,w:1,req:s=>(s.workers||0)>=30,title:'Рабочий придумал приспособление',
+    text:s=>`Сборщик из цеха «${s.company}» опустил ящик с болтами пониже и поставил деталь на подставку — операция стала короче на треть. Мастер передал идею инженерам.\nТак и было: на заводе Ford в 1913 году движущуюся линию сначала попробовали на сборке магнето — по подсказкам самих рабочих.`,
+    mean:'Наградить — на 3% меньше часов на каждую машину навсегда, рабочие охотнее предлагают новое.',
+    ch:[['Наградить премией','pay'],['Похвалить на собрании','praise']],
+    res:{pay:s=>{const v=Math.round(50*cpi(s)/10)*10*10;s.cash-=v;s.hrsK=Math.max(0.8,(s.hrsK||1)*0.97);return `Премия ${money(v)} — и в ящике для предложений за месяц ещё сорок записок. Работа на каждую машину стала короче на 3%.`;},
+      praise:s=>{s.hrsK=Math.max(0.8,(s.hrsK||1)*0.985);return 'Похвала на собрании — и приспособление разошлось по цехам. Работа стала короче на 1,5%.';}}},
+  {id:'wedding',y0:1903,y1:1929,w:0.8,req:s=>!!(chModel(s,'lux')||chModel(s,'middle')),title:'Свадьба на моторе',
+    text:s=>`Самая громкая свадьба сезона: молодые уехали из церкви не в карете, а в машине «${s.company}», украшенной цветами. Светская хроника в восторге.\nТак и было: к 1910-м свадебный автомобиль стал модой — сначала у богатых, потом у всех.`,
+    mean:'Полгода люкс и средний класс дома охотнее берут ваши машины.',fx:s=>{wfxAdd(s,s.country,'lux',0.25,6,'свадьба на моторе');wfxAdd(s,s.country,'middle',0.15,6,'свадьба на моторе');}},
+  {id:'maharaja',y0:1908,y1:1929,w:0.8,req:s=>!!chModel(s,'lux'),title:'Заказ махараджи',
+    text:s=>`Индийский махараджа прислал своего секретаря: ему нужны машины для охоты на тигров и для парадных выездов — с серебряной отделкой и фарами для ночной охоты.\nТак и было: махараджи Патиалы, Майсура и Хайдарабада покупали «Роллс-Ройсы» десятками.`,
+    mean:'Заказ на дорогие машины по двойной цене (если успеете сделать).',fx:s=>{const md=chModel(s,'lux'),n=6+Math.floor(Math.random()*7),p=chOrder(s,md,n,2,'Махараджа',8);return `${n} машин «${md.name}» по ${money(p)}`;}},
+  {id:'press',y0:1896,y1:1929,w:1.1,title:'Восторженная статья',
+    text:s=>`Редактор главного автомобильного журнала месяц ездил на машине «${s.company}» и написал, что ничего лучше за эти деньги не найти. Номер разошёлся за два дня.\nТак и было: журналы The Autocar (с 1895), L'Auto и Motor Age решали судьбу моделей — им верили больше, чем рекламе.`,
+    mean:'+3 к репутации, полгода реклама работает на треть сильнее.',fx:s=>{s.rep=clamp(s.rep+3,0,100);s.adFx=mi(s)+6;}},
+  {id:'loan',y0:1906,y1:1929,w:0.8,title:'Банк предлагает льготный кредит',
+    text:s=>`Управляющий банком приехал на завод «${s.company}» сам: дела идут хорошо, и банк готов год давать деньги под меньший процент.\nТак и было: в 1910-х банки, которые раньше не давали автомобилистам ни цента, стали за ними охотиться.`,
+    mean:'Год кредит дешевле на 1,5% годовых.',fx:s=>{s.rateCut=mi(s)+12;}},
+  {id:'freeshow',y0:1899,y1:1914,w:0.9,title:'Бесплатный стенд',
+    text:s=>`Организаторы выставки в большом городе приглашают «${s.company}» без платы за место: о ваших машинах спрашивают посетители.\nТак и было: на первых автомобильных выставках организаторы сами зазывали марки, о которых говорили в газетах.`,
+    mean:'Полгода покупатели дома помнят ваши машины — как после выставки.',fx:s=>{s.showFx=s.showFx||{};s.showFx[s.country]={t:mi(s),u:0.3};}},
+  {id:'hollywood',y0:1920,y1:1929,w:1,req:s=>!!(chModel(s,'lux')||chModel(s,'sport')),title:'Кинозвезда выбрала вашу машину',
+    text:s=>{const md=chModel(s,'sport')||chModel(s,'lux');return `Звезда немого кино купила «${md.name}» и снимается в ней для журналов: шофёр в ливрее, собака на сиденье, вспышки фотографов.\nТак и было: Рудольфо Валентино ездил на Isotta Fraschini и Voisin, Глория Свенсон — на Lancia: звёзды сами делали моду на марки.`;},
+    mean:'Восемь месяцев ваши спортивные и дорогие машины во всех странах берут охотнее.',fx:s=>{wfxAdd(s,'*','sport',0.35,8,'кинозвезда');wfxAdd(s,'*','lux',0.3,8,'кинозвезда');}},
+  {id:'aviator',y0:1909,y1:1914,w:0.7,title:'Авиатор хвалит ваш мотор',
+    text:s=>`Знаменитый авиатор сказал газетчикам, что в небе он доверяет только моторам вроде тех, что ставит «${s.company}».\nТак и было: в 1909 году Луи Блерио перелетел Ла-Манш на моноплане с мотором Anzani, и моторы стали главной темой газет.`,
+    mean:'+2 к репутации, полгода спортивные машины и средний класс охотнее берут ваши машины.',fx:s=>{s.rep=clamp(s.rep+2,0,100);wfxAdd(s,'*','sport',0.25,6,'авиатор');wfxAdd(s,s.country,'middle',0.1,6,'авиатор');}},
+  {id:'firemen',y0:1906,y1:1925,w:0.9,req:s=>!!chModel(s,'truck'),title:'Пожарные на моторе',
+    text:s=>`Пожарная машина на шасси «${s.company}» приехала на вызов раньше конной упряжки соседней части — и город решил перевести на моторы все команды.\nТак и было: в 1906 году в Спрингфилде (Массачусетс) появилась одна из первых моторных пожарных команд — на машинах Knox.`,
+    mean:'Заказ на грузовые машины от города и полгода фирмы охотнее берут ваши грузовики.',fx:s=>{const md=chModel(s,'truck'),n=4+Math.floor(Math.random()*6),p=chOrder(s,md,n,1.25,'Пожарная команда',6);wfxAdd(s,s.country,'truck',0.25,6,'пожарные на моторе');return `${n} машин «${md.name}» по ${money(p)}`;}},
+  {id:'farmer',y0:1910,y1:1929,w:1,cc:'us,fr,it',req:s=>!!(chModel(s,'people')||chModel(s,'truck')),title:'Фермеры полюбили вашу машину',
+    text:s=>`Фермеры приспособили машины «${s.company}»: снимают колесо — и мотор крутит пилу, насос, маслобойку. В деревнях её зовут «рабочей лошадкой».\nТак и было: фермеры Америки превращали «Форд Т» в трактор и привод для машин; для этого даже продавали особые наборы.`,
+    mean:'Восемь месяцев народный класс и фирмы охотнее берут ваши машины.',fx:s=>{wfxAdd(s,s.country,'people',0.2,8,'фермеры');wfxAdd(s,s.country,'truck',0.15,8,'фермеры');}},
+  {id:'speedtrap',y0:1903,y1:1914,w:0.8,req:s=>!!chModel(s),title:'Ловушка констебля',
+    text:s=>`Констебль с секундомером остановил вашего испытателя: на загородной дороге он ехал быстрее разрешённого. Штраф невелик, а заметка «Машина, которую не догнать» — бесплатная реклама.\nТак и было: в Англии полицейские прятались в кустах с секундомерами, а в 1905 году автомобилисты основали Автомобильную ассоциацию, чтобы предупреждать друг друга о засадах.`,
+    mean:'Маленький штраф, зато полгода спортивные и средние машины берут охотнее.',fx:s=>{s.cash-=Math.round(10*cpi(s));wfxAdd(s,s.country,'sport',0.2,6,'ловушка констебля');wfxAdd(s,s.country,'middle',0.08,6,'ловушка констебля');}},
+  {id:'expo',y0:1900,y1:1929,w:0.8,req:s=>!!chModel(s),title:'Золотая медаль Всемирной выставки',
+    text:s=>`Жюри Всемирной выставки наградило «${s.company}» золотой медалью — её будут чеканить на радиаторе и печатать в рекламе.\nТак и было: медали выставок 1900 года в Париже, 1904-го в Сент-Луисе и 1915-го в Сан-Франциско марки годами носили на эмблемах.`,
+    mean:'+4 к репутации, год все покупатели немного охотнее берут ваши машины.',fx:s=>{s.rep=clamp(s.rep+4,0,100);wfxAdd(s,'*','*',0.1,12,'золотая медаль');}},
+  {id:'dealer',y0:1905,y1:1929,w:0.8,req:s=>dealerCount(s,s.country)>2,title:'Дилер-энтузиаст',
+    text:s=>`Торговец велосипедами из провинции так поверил в машины «${s.company}», что сам открыл три салона в соседних городах — без денег завода.\nТак и было: первые дилеры Ford и Buick часто были бывшими продавцами велосипедов и швейных машинок.`,
+    mean:'+3 дилера дома бесплатно.',fx:s=>{s.dealers[s.country]=(s.dealers[s.country]||0)+3;}},
+  {id:'garage',y0:1900,y1:1912,w:0.7,title:'Первая заправка в городе',
+    text:s=>`Аптекарь на главной площади повесил вывеску «Бензин» и поставил насос — теперь владельцам машин не надо возить канистры. Рядом открыл мастерскую механик, обученный на заводе «${s.company}».\nТак и было: до первых заправок бензин продавали в аптеках и скобяных лавках; первая «настоящая» заправка открылась в Сент-Луисе в 1905 году.`,
+    mean:'Год покупатели дома чуть охотнее берут машины — и ваши тоже.',fx:s=>{wfxAdd(s,s.country,'*',0.12,12,'бензин в каждом городе');}}
+];
+// раз в месяц: с небольшим шансом — карточка (в среднем раз в год, не чаще раза в 4 месяца), каждая — однажды
+function chanceCheck(s){if(s.over||s.pending.length||mi(s)<6||mi(s)-(s.ccLast||-99)<4||Math.random()>0.14)return;s.ccSeen=s.ccSeen||{};
+  const L=CHANCE.filter(c=>!s.ccSeen[c.id]&&s.y>=c.y0&&s.y<=c.y1&&(!c.cc||c.cc.split(',').includes(s.country))&&(!c.req||c.req(s)));if(!L.length)return;
+  const tot=L.reduce((a,c)=>a+c.w,0);let x=Math.random()*tot,C=L[0];for(const c of L){x-=c.w;if(x<=0){C=c;break;}}
+  s.ccSeen[C.id]=s.y;s.ccLast=mi(s);let got='';if(C.fx)try{const v=C.fx(s);if(typeof v==='number')got=`В кассу: ${money(v)}.`;else if(typeof v==='string')got=`Заказ: ${v}.`;}catch(e){console.warn('chance',e);}
+  const text=typeof C.text==='function'?C.text(s):C.text,md=chModel(s);addLog(`🃏 Шанс: ${C.title}. ${C.mean}`,'good');
+  s.pending.push({title:C.title,deck:'',text,chance:C.id,mean:C.mean+(got?' '+got:''),carId:md?md.id:null,choices:C.ch?C.ch.map(c=>[c[0],'cc:'+C.id+':'+c[1]]):[['Отлично!','ok']]});}
+function chanceResolve(s,key){const [,id,ch]=key.split(':'),C=CHANCE.find(c=>c.id===id);if(!C||!C.res||!C.res[ch])return;let t='';try{t=C.res[ch](s)||'';}catch(e){console.warn(e);}
+  if(t){addLog(`🃏 ${C.title}: ${t}`,'good');pendingToasts.push('🃏 '+C.title);}}
+// Карточка — как в «Монополии»: рамка, «ШАНС», картинка, история и что это даёт
+function chanceHTML(ev){const md=ev.carId&&G.models.find(m=>m.id===ev.carId);
+  return `<div class="cc-card"><div class="cc-top"><span>🃏</span><b>ШАНС</b><span>${dstr(G)}</span></div><h2>${esc(ev.title)}</h2>${md?`<div class="cc-pic">${carArt(md,{thumb:0})}</div>`:''}
+    ${ev.text.split('\n').filter(Boolean).map((t,i)=>`<p class="${i?'cc-hist':''}">${esc(t)}</p>`).join('')}
+    <div class="cc-mean"><b>Что это даёт</b><span>${esc(ev.mean||'')}</span></div>
+    <div class="stack" style="margin-top:14px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div></div>`;}
+
 /* ================= RACE CALENDAR, DRIVERS ================= */
 function driverFee(d,s){return Math.round(600*cpi(s)*(1+T(s)*0.08)*(0.4+d.sk*d.sk*1.8)*bn('drvFee')/50)*50;}
 function driverSalary(d,s){return Math.round(45*cpi(s)*(1+T(s)*0.05)*(0.4+d.sk*1.4)*bn('drvFee')/5)*5;}
@@ -3056,11 +3251,13 @@ function step(){
       const qt=tradeQuota(s,c);if(qt>0){s.quotaY=s.quotaY||{};const left=Math.max(0,qt/12*(s.m+1)-(s.quotaY[c]||0));if(q>left){r.lostQuota=(r.lostQuota||0)+q-left;q=left;}}
       req[c]=q;reqT+=q;}
     // лицензия: машины делает местный завод — со склада не берём, вам — доля цены
-    md.soldBy={};for(const c in req){if(!licOn(s,c))continue;const so=Math.floor(req[c]+(Math.random()<req[c]%1?1:0));reqT-=req[c];delete req[c];if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const v=so*md.price*LIC_ROY;mk.rev+=v;r.lic=(r.lic||0)+v;r.licN=(r.licN||0)+so;md.totalSold+=so;}
+    md.soldBy={};for(const c in req){if(!licOn(s,c))continue;const so=Math.floor(req[c]+(Math.random()<req[c]%1?1:0));reqT-=req[c];delete req[c];if(!so)continue;md.soldBy[c]=so;const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const v=so*priceIn(md,c,s)*LIC_ROY;mk.rev+=v;r.lic=(r.lic||0)+v;r.licN=(r.licN||0)+so;md.totalSold+=so;}
     const avail=md.stock,f=reqT>avail?avail/Math.max(1e-9,reqT):1;let sold=0;
-    for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;{const pd=promoDisc(s,c,segOf(md));if(pd)r.promo=(r.promo||0)+so*md.price*pd*fxOf(s,c);}if(tradeQuota(s,c)>0){s.quotaY=s.quotaY||{};s.quotaY[c]=(s.quotaY[c]||0)+so;}const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const IL=impOf(s,c),net=(md.price*(1-dMargin(s)-(c===s.country?0:(IL&&IL.cut||0)))-(c===s.country?0:shipCostTo(s,c)*shipK(s,c)))*fxOf(s,c);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
+    for(const c in req){const so=Math.floor(req[c]*f+(Math.random()<(req[c]*f)%1?1:0));if(!so)continue;md.soldBy[c]=so;{const pd=promoDisc(s,c,segOf(md));if(pd)r.promo=(r.promo||0)+so*priceIn(md,c,s)*pd*fxOf(s,c);}if(tradeQuota(s,c)>0){s.quotaY=s.quotaY||{};s.quotaY[c]=(s.quotaY[c]||0)+so;}const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.sold+=so;const net=netPer(md,c,s);mk.rev+=so*net;r.rev+=so*net;sold+=so;if(c===s.country)r.homeSold+=so;}
     sold=Math.min(sold,md.stock);md.stock-=sold;const unmet=Math.max(0,reqT-sold);md.backlog=Math.min(unmet*0.5,md.fc*0.8);r.lostCap+=unmet-md.backlog;
     // почему купили меньше, чем хотели: не хватило машин (часть ждёт в очереди) или дилеры не успели
+    // 0.26: грузовик — кто его взял: развозка по району, по городу, между городами (для подсказки на вкладке «Модели»)
+    if(isTruck(md)){const U={};for(const c in D.mk){const b=D.mk[c].byU&&D.mk[c].byU[md.id];if(b)for(const u in b)U[u]=(U[u]||0)+b[u]*creditK;}md.useD=U;}
     md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;r.sold+=sold;r.demand+=sumD;
     r.war+=sold*defectRate(s)*md.price*0.25;});
   // 0.25: кредит покупателям — комиссия банкам или своя кредитная компания (13c-finance.js)
@@ -3104,7 +3301,7 @@ function step(){
   for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>{x.last=0;x.lg={};});const MC=D.mk[c],sg={};let size=0;
     // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
     SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x)return;x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.lostDlr=lostC[c]||0;}
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(m&&m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   chalTallyYou(s,r);
   // продажи по классам дома за год — для «королей года» и пари по продажам
@@ -3115,7 +3312,7 @@ function step(){
   // машины на дорогах: новые прибавились, старые ушли на свалку
   if(!s.fleet)s.fleet={};if(!s.mkY)s.mkY={};const life=tabAt(CAR_LIFE,yf(s));
   for(const c in COUNTRIES){const m=r.mk[c],cars=m.size-m.segs.truck.size,f0=fleetOf(s,c);s.fleet[c]=Math.max(0,f0+cars-f0/(12*life));s.mkY[c]=m.size*12/SEASON[s.m];}
-  pfleetMonth(s,life);
+  pfleetMonth(s,life);pflMonth(s,r);
   tradeMonth(s);
   // ценовая война прежних версий понемногу уходит — теперь конкуренты отвечают снижением цен и новыми моделями (13b-economy.js)
   for(const c in (s.pw||{}))for(const g in s.pw[c])s.pw[c][g]=Math.min(1,(s.pw[c][g]||1)+0.006);
@@ -3204,7 +3401,7 @@ function creditState(s,y,m){y=y??s.y;m=m??s.m;
   if((y===1920&&m>=6)||(y===1921&&m<=8))return {k:'tight',add:0.02,lim:0.55,closed:false,t:'Послевоенный спад: банки урезают кредит'};
   if(isWar(y,m,s.country))return {k:'war',add:0.01,lim:0.85,closed:false,t:'Война: деньги идут на военные займы'};
   return {k:'ok',add:0,lim:1,closed:false,t:''};}
-function loanRate(s){const cs=creditState(s);return clamp(tabAt(LOAN_RATE,yf(s))+cs.add+(s.rep>=80?-0.01:s.rep<35?0.015:0)+(DIF().rate||0)+(typeof legalRateAdd==='function'?legalRateAdd(s):0),0.03,0.17);}
+function loanRate(s){const cs=creditState(s);return clamp(tabAt(LOAN_RATE,yf(s))+cs.add+(s.rep>=80?-0.01:s.rep<35?0.015:0)+(DIF().rate||0)+(typeof legalRateAdd==='function'?legalRateAdd(s):0)-((s.rateCut||0)>mi(s)?0.015:0),0.03,0.17);}
 function loanOpen(s){return !creditState(s).closed;}
 // Банк требует вернуть кредит сверх лимита: в кризис — за 3 месяца, в спокойное время — понемногу за год
 // (0.21: в кризис банк решает один раз — лимит на первый месяц кризиса держится до конца: долг по частям не «уменьшает» требование)
@@ -3626,6 +3823,37 @@ function finalResults(s,show){
   if(show){openFinal();return;}
   s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает 1930 год`,text,paper:true,choices:[['Сравнить с историей','final']]});
 }
+/* ---------- 0.26: наследие в людях — каждая N-я семья, фирма, лимузин, спортивная машина ---------- */
+// Ваши машины на дорогах по классам (все страны игры): прибавились проданные, ушли старые
+function pflMonth(s,r){const life=tabAt(CAR_LIFE,yf(s)),tl=tabAt(TRUCK_LIFE,yf(s));
+  if(!s.pfl){s.pfl={people:0,middle:0,lux:0,sport:0,truck:0};let pf=0;for(const c in (s.pfleet||{}))pf+=s.pfleet[c]||0;const act=s.models.filter(m=>m.status==='prod'&&!isTruck(m));
+    const tot=act.reduce((a,m)=>a+(m.totalSold||0),0)||1;act.forEach(m=>{s.pfl[segOf(m)]+=pf*(m.totalSold||0)/tot;});if(!act.length)s.pfl.people+=pf;
+    s.models.filter(m=>isTruck(m)).forEach(m=>{s.pfl.truck+=(m.totalSold||0)*0.6;});}
+  const add={};s.models.forEach(md=>{if(!md.soldBy)return;const g=isTruck(md)?'truck':segOf(md);for(const c in md.soldBy)add[g]=(add[g]||0)+(md.soldBy[c]||0);});
+  for(const g in s.pfl)s.pfl[g]=Math.max(0,s.pfl[g]*(1-1/(12*(g==='truck'?tl:life)))+(add[g]||0));}
+// Сколько машин класса на дорогах всех стран и у каждой марки: продажи за годы службы машины (история рынка)
+function worldFleet(s){const t=yf(s),life=Math.round(tabAt(CAR_LIFE,t)),tl=Math.round(tabAt(TRUCK_LIFE,t)),out={tot:{},br:{}};
+  for(const c in COUNTRIES)for(const g of SEGK){const L=g==='truck'?tl:life;for(let k=0;k<L;k++){const ss={y:Math.floor(t-k),m:6};if(ss.y<1895)break;const w=1-k/(L+1);
+    out.tot[g]=(out.tot[g]||0)+segAnnual(c,g,ss)*w;
+    (COMPS[c]||[]).forEach(cp=>{if(cp.pk===s.pioneer)return;const v=compVol(cp,ss)*((cp.mix&&cp.mix[g])||0)*w;if(v>0){const n=compName(cp,s),B=out.br[n]=out.br[n]||{};B[g]=(B[g]||0)+v;}});}}
+  return out;}
+// «каждая 12-я» — до тысячи; дальше «одна из 16 000»
+function oneIn(n,w){const r=Math.round(n);return r<=1?'каждая'+(w?' '+w:''):r<1000?`каждая ${r}-я${w?' '+w:''}`:r<=5e6?`одна${w?' '+w:''} из ${r.toLocaleString('ru-RU')}`:`одна${w?' '+w:''} из миллионов`;}
+function humanLegacy(s){const pf=s.pfl||{},W=worldFleet(s),H=Object.keys(COUNTRIES).reduce((a,c)=>a+households(c,s),0);
+  const cars=g=>g==='car'?['people','middle','lux','sport'].reduce((a,k)=>a+(pf[k]||0),0):(pf[g]||0),tot=g=>g==='car'?['people','middle','lux','sport'].reduce((a,k)=>a+(W.tot[k]||0),0):(W.tot[g]||0);
+  const me={fam:cars('car')>0.5?H/cars('car'):0,car:cars('car')>0.5?tot('car')/cars('car'):0,truck:(pf.truck||0)>0.5?tot('truck')/pf.truck:0,lux:(pf.lux||0)>0.5?tot('lux')/pf.lux:0,sport:(pf.sport||0)>0.5?tot('sport')/pf.sport:0};
+  const brs=Object.entries(W.br).map(([n,B])=>({n,car:['people','middle','lux','sport'].reduce((a,k)=>a+(B[k]||0),0),truck:B.truck||0,lux:B.lux||0,sport:B.sport||0}));
+  const top=k=>brs.filter(b=>b[k]>0.5).sort((a,b)=>b[k]-a[k]).slice(0,3).map(b=>({n:b.n,v:tot(k==='car'?'car':k)/b[k],fam:k==='car'?H/b[k]:0}));
+  return {me,H,top:{car:top('car'),truck:top('truck'),lux:top('lux'),sport:top('sport')}};}
+function humanLegacyHTML(s){if(!s.pfl)return '';const L=humanLegacy(s),m=L.me,row=(t,v,rv)=>`<div class="hum-row"><span>${t}</span><b class="num">${v}</b>${rv?`<small class="muted">${rv}</small>`:''}</div>`;
+  const cmp=(arr,f)=>arr.length?arr.map(b=>`${esc(b.n)} — ${f(b)}`).join(' · '):'';
+  const lines=[];
+  lines.push(row('Семьи',m.fam?`${oneIn(m.fam,'семья')} ездит на «${esc(s.company)}»`:'ваших машин на дорогах ещё нет',cmp(L.top.car,b=>oneIn(b.fam,'семья'))));
+  if(m.car)lines.push(row('Машины на дорогах',`${oneIn(m.car,'машина')} — ваша`,cmp(L.top.car,b=>oneIn(b.v,'машина'))));
+  if(m.truck||L.top.truck.length)lines.push(row('Фирмы',m.truck?`${oneIn(m.truck,'фирма')} с грузовиком возит грузы на вашем`:'ваших грузовиков у фирм пока нет',cmp(L.top.truck,b=>oneIn(b.v))));
+  if(m.lux||(L.top.lux.length&&s.y>=1900))lines.push(row('Люкс',m.lux?`${oneIn(m.lux)} дорогая машина — ваша`:'ваших дорогих машин пока нет',cmp(L.top.lux,b=>oneIn(b.v))));
+  if((m.sport||L.top.sport.length)&&s.y>=1910)lines.push(row('Спорт',m.sport?`${oneIn(m.sport)} спортивная машина — ваша`:'ваших спортивных машин пока нет',cmp(L.top.sport,b=>oneIn(b.v))));
+  return `<div class="label" style="margin-top:12px">Наследие в людях</div><div class="hum">${lines.join('')}</div><p class="small muted" style="margin-top:4px">Все пять стран игры: семьи, машины и грузовики на дорогах (машина служит ${Math.round(tabAt(CAR_LIFE,yf(s)))} лет). Серым — самые большие марки для сравнения.</p>`;}
 
 /* ================= CAR STATS: physics from components ================= */
 // Подготовка к гонке: серийная машина, облегчённая (без тента, крыльев и задних сидений), заводской гоночный кузов
@@ -3748,7 +3976,7 @@ function bestPriceFor(md,s){const key=md.id+'|'+mi(s)+'|'+md.price+'|'+PART_KEYS
   const ship=shipCost(s),ck=techLv(s,'credit')?1.15:1,oth=act.filter(m=>m.id!==md.id).map(m=>({m,uc:unitCost(m,s)})),dm=dMargin(s);
   // 0.18: прибыль всей марки — дешёвая модель забирает покупателей у ваших же моделей (каннибализация)
   // 0.21: за границей — своя доставка, доля импортёра, курс; по лицензии — только доля цены
-  const netOf=(pp,c,ucc)=>{if(c===s.country)return pp*(1-dm)-ucc;if(licOn(s,c))return pp*LIC_ROY;const IL=impOf(s,c);return (pp*(1-dm-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c)-ucc;};
+  const netOf=(pp,c,ucc)=>{pp*=pmkOf(s,c);if(c===s.country)return pp*(1-dm)-ucc;if(licOn(s,c))return pp*LIC_ROY;const IL=impOf(s,c);return (pp*(1-dm-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c))*fxOf(s,c)-ucc;};
   const exp=(md.soldBy&&md.lastSold)?1-(md.soldBy[s.country]||0)/md.lastSold:0;
   const prof=p=>{const A=demandAll(s,{id:md.id,price:p}).by,by=A[md.id]||{};let q=0;for(const c in by)q+=by[c]*ck;
     const uc=ucAtVol(md,s,Math.min(q,Math.max(1,capM*1.3),lim)),fl=(uc+exp*ship)/(1-dm)*1.04;let v=0;for(const c in by)v+=by[c]*ck*netOf(p,c,uc);
@@ -3766,7 +3994,7 @@ function helperOn(s){return !!(s.helper&&s.helper.on);}
 // 0.21: сколько дилеров открыть в новых городах: пока машины, которые продаст ещё один дилер, окупают его содержание
 function dealerGain(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length)return 0;const d=dealerCount(s,c),need=dealerNeed(c,s),room=dealerRoom(s,c);if(room<1||tradeBan(s,c))return 0;
   const pot=marketPotential(s,c);if(pot<=0)return 0;const md=act.slice().sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],IL=impOf(s,c);
-  const m=(md.price*(1-dMargin(s)-(c===s.country?0:(IL&&IL.cut||0)))-(c===s.country?0:shipCostTo(s,c)*shipK(s,c)))*fxOf(s,c)-unitCost(md,s);if(m<=0)return 0;
+  const m=netPer(md,c,s)-unitCost(md,s);if(m<=0)return 0;
   const u=dealerUpkeep(s,c)+dealerCost(s)/24;let n=0,dd=Math.max(1,d);const lim=Math.min(room,Math.max(3,Math.round(d*0.25)));
   while(n<lim){const g=pot*(Math.pow(Math.min(1,(dd+1)/need),0.7)-Math.pow(Math.min(1,dd/need),0.7))*m;if(g<u*1.3)break;n++;dd++;}return n;}
 function homeDemand(s){return s.models.filter(m=>m.status==='prod').reduce((a,m)=>a+(m.fc||0),0);}
@@ -3795,6 +4023,14 @@ function adviceList(s){
     if(!dev.length&&usedPen(md,home,s)>0.25&&mi(s)-md.launched>=24)add(58,'🚙',`На дорогах много ваших машин прошлых лет, и перекупщики продают их дешевле новой «${md.name}». Новая модель — заметно другая — вернёт покупателей.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
+  // 0.26: рынок крошечный — почему спрос такой маленький и что с этим делать
+  if(L&&act.length&&s.y<1908){const mk=L.mk[home],size=mk&&mk.size||0,dem=act.reduce((a,m)=>a+(m.lastDem||0),0);
+    if(dem<2&&size<40){let bc=null,bm=0;Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const R=L.mk[c];const z=R&&R.size||0;if(z>bm){bm=z;bc=c;}});
+      const rcN=RACES.find(r=>raceOpen(r,s)&&!s.raceDone[r.key]),parts=[];
+      if(bc&&bm>size*2)parts.push(`в стране «${COUNTRIES[bc].name}» покупают ${fmtD(bm)} в месяц — найдите там импортёра`);
+      if(rcN)parts.push(`победа в гонке «${rcN.name}» — в эти годы о машинах узнают из гонок, и покупателей станет в 2–3 раза больше`);
+      parts.push('выставка и газеты делают то же');parts.push('цена ниже на 30% — спрос почти втрое');
+      add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':null,rcN?()=>{tab='race';window.scrollTo(0,0);}:null,'market');}}
   // КБ
   const free=rdSlots(s)-rdActive(s).length,pj=free>0&&suggestProject(s);
   if(pj)add(60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
@@ -3931,7 +4167,7 @@ function standCost(sh,s,big){return Math.round(260*tabAt(CPI,sh.y)*(1+(sh.y-1895
 // Что везти: лучшая машина в продаже; если продаж ещё нет — прототип из разработки
 function showModel(s){const act=s.models.filter(m=>m.status==='prod').sort((a,b)=>classScore(b,s)-classScore(a,s));return act[0]||s.models.find(m=>m.status==='dev')||null;}
 // Интерес покупателей после выставки: полезность марки в стране, затухает за полгода-год
-function showEffect(s,c){const f=s.showFx&&s.showFx[c];if(!f)return 0;const age=mi(s)-f.t;return age<0?0:f.u*Math.exp(-age/7);}
+function showEffect(s,c){const f=s.showFx&&s.showFx[c];if(!f)return 0;const age=mi(s)-f.t;return age<0?0:f.u*Math.exp(-age/7)*pioneerK(s);}
 function checkShows(s){
   if(s.over)return;s.shows=s.shows||{};
   // выставка этого месяца, на которую сняли стенд
@@ -8952,9 +9188,13 @@ function planStep(md,sm){const auto=md.plan==='auto'||md.plan===undefined,n=auto
 // Себестоимость и экономия масштаба: из чего она складывается и сколько стоила бы машина при большем выпуске
 function costHTML(md,s){if(md.status!=='prod')return '';const v=Math.max(1,modelVol(md)),mat=matCost(md,s),lab=hoursPerCar(md,s)/hoursPerWorker(s)*wageNow(s),at=k=>unitCost({...md,vol:v*k},s),l=1-labLearn(md);
   return `<p class="small muted" style="margin-top:6px">Себестоимость ${money(mat+lab)} = детали ${money(mat)} + работа ${money(lab)} при выпуске ≈ ${fmtD(v)} в месяц. <span class="good">Больше выпуск — дешевле машина:</span> при ${fmtN(v*3)} в месяц — ${money(at(3))}, при ${fmtN(v*10)} — ${money(at(10))}${l>0.02?`. Опыт рабочих: ${fmtN(md.made||0)} машин уже собрано — работы на ${Math.round(l*100)}% меньше`:''}.</p>`;}
-// Грузовик: сколько фирм всё ещё берут лошадь
-function truckHint(md,s){if(md.status!=='prod'||!isTruck(md))return '';const h=horseSplit(s,s.country,s.last&&s.last.mk[s.country]);if(!h)return '';
-  return `<p class="small muted" style="margin-top:6px">🐴 Из ≈ ${fmtD(h.pool)} фирм, которые в месяц покупают транспорт, лошадь всё ещё берут ${pct(h.horse/h.pool)}. Чем надёжнее, экономичнее и дешевле ваша машина, тем больше их пересядет на мотор.</p>`;}
+// 0.26: грузовик — для каких перевозок он годится: цена тонно-километра против эталона соперников и кто его взял
+function cpkTxt(x){if(!isFinite(x)||x<=0)return '—';if(x<0.1)return (Math.round(x*1000)/10).toString().replace('.',',')+'¢';if(x<1)return Math.round(x*100)+'¢';return '$'+x.toFixed(2).replace('.',',');}
+function truckHint(md,s){if(!isTruck(md)||md.status==='off')return '';const c=s.country,PT=prefP('truck',c,s),U=md.useD||{},tot=TUSE.reduce((a,u)=>a+(U[u]||0),0),sh=truckUseSh(c,s);
+  const rows=TUSE.filter(u=>sh[u]>0.005).map(u=>{const ref=truckRef(u,s.y),cR=truckCost(ref,u,c,s,PT*payK(ref)).cpk,cM=truckCost(md,u,c,s,md.price).cpk,r=cR/cM,tone=r>=1.05?'good':r<0.9?'bad':'muted';
+    return `<tr><td>${TRUCK_USE[u].n}<small class="muted"> · ${esc(TRUCK_USE[u].who)}</small></td><td class="n ${tone}">${cpkTxt(cM)}</td><td class="n muted">${cpkTxt(cR)}</td><td class="n">${md.status==='prod'&&tot>0?pct((U[u]||0)/tot,0):'—'}</td></tr>`;}).join('');
+  return `<div class="label" style="margin-top:10px">Тонно-километр: во что обходится перевозка</div><table class="pl ptab ctab" style="margin-top:4px"><tr><th>Перевозки</th><th class="n">Ваша</th><th class="n">Соперники</th><th class="n">Берут</th></tr>${rows}</table>
+    <p class="small muted" style="margin-top:4px">Фирма считает всё: машину за годы службы, ремонт и простои, бензин, шофёра — и сколько тонн машина перевезёт за день. Фургон хорош для развозки по району, полуторатонка — по городу, трёхтонка — между городами: одна машина другую не заменяет. «Берут» — кто купил вашу машину в прошлом месяце.</p>`;}
 function stockWarn(md){return md.status==='prod'&&md.stock>Math.max(3,(md.fc||0)*3);}
 // Сворачиваемые разделы: длинные списки открываются, когда нужны
 const UIF={};
@@ -9015,17 +9255,20 @@ function priceLine(md,s){if(md.status!=='prod')return '';const a=priceFc(md,s,md
   const dl=(x,y)=>{if(!b||Math.abs(y)<1e-6)return '';const r=(x-y)/Math.abs(y);if(Math.abs(r)<0.005)return '';return ` <small class="${r>0?'good':'bad'}">${r>0?'▲':'▼'}${Math.round(Math.abs(r)*100)}%</small>`;};
   const many=s.models.filter(m=>m.status==='prod'||m.status==='sale').length>1,dO=b&&many?a.oth-b.oth:0;
   return `<div class="pfc"><div>Продажи в мес.<b>${fmtD(a.d)}${dl(a.d,b&&b.d)}</b></div><div>Маржа<b class="${a.m<0?'bad':''}">${money(a.m)}${dl(a.m,b&&b.m)}</b></div><div>${many?'Прибыль марки':'Прибыль в мес.'}<b class="${a.brand<0?'bad':''}">${money(a.brand)}${dl(a.brand,b&&b.brand)}</b></div></div>
-    ${a.lim?`<p class="small warn" style="margin-top:2px">Хотят купить ${fmtD(a.want)} в мес., но ${a.lim==='plant'?'завод не успеет выпустить больше':'дилеры не успеют продать больше'} — прогноз считает только то, что правда продастся.</p>`:''}
+    ${a.lim&&a.want>a.d*1.02+0.3?`<p class="small warn" style="margin-top:2px">Хотят купить ${fmtD(a.want)} в мес., но ${a.lim==='plant'?'завод не успеет выпустить больше':'дилеры не успеют продать больше'} — прогноз считает только то, что правда продастся.</p>`:''}
     ${b?`<p class="small muted" style="margin-top:2px">Сравнение — с ценой в начале месяца (${money(md.pPrev)}).${Math.abs(dO)>=1?` Другие ваши модели: ${dO<0?'−':'+'}${fmtD(Math.abs(dO))} машин в мес. — ${dO<0?'часть покупателей ушла к этой модели':'часть покупателей вернулась к ним'}.`:''}</p>`:''}`;}
 function priceTable(md,s){const P=md.price,many=s.models.filter(m=>m.status==='prod'||m.status==='sale').length>1,rows=[[0.9,'−10%'],[1,'сейчас'],[1.1,'+10%']].map(([k,lab])=>{const p=Math.round(P*k/10)*10,f=brandFc(md,s,p);return {p,lab,d:f.d,uc:f.uc,pr:f.brand,oth:f.oth,now:k===1};});
   const best=rows.reduce((a,b)=>b.pr>a.pr?b:a,rows[0]),o0=rows[1].oth;
   return `<table class="pl ptab" style="margin-top:8px"><tr><th>Цена</th><th class="n">Продажи</th><th class="n">Себест.</th><th class="n">${many?'Прибыль марки':'Прибыль'}</th></tr>${rows.map(r=>`<tr class="${r.now?'you':''}"><td>${money(r.p)} <small>${r.lab}</small></td><td class="n">${fmtD(r.d)}${many&&!r.now&&Math.abs(r.oth-o0)>=1?`<small class="muted">другие ${r.oth<o0?'−':'+'}${fmtD(Math.abs(r.oth-o0))}</small>`:''}</td><td class="n">${money(r.uc)}</td><td class="n ${r.pr<0?'bad':r===best?'good':''}">${money(r.pr)}</td></tr>`).join('')}</table>
     <p class="small muted" style="margin-top:4px">В месяц. ${many?'Прибыль — всей марки: подешевела эта модель — часть покупателей уходит к ней с других ваших моделей («другие −…»). ':''}Продажи — не больше, чем успеют завод и дилеры. Себестоимость — при таком выпуске: больше продаёте — дешевле каждая машина.</p>${dutyLines(md,s)}`;}
-// 0.21: за границей к цене добавляются пошлина и доставка — сколько заплатит покупатель и сколько останется вам
-function dutyLines(md,s){const L=Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0);if(!L.length)return '';
-  const rows=L.map(c=>{if(tradeBan(s,c))return `<tr><td>${COUNTRIES[c].name}</td><td class="n bad" colspan="3">ввоз запрещён</td></tr>`;const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),buyer=offerPrice(md,c,s),IL=impOf(s,c),net=licOn(s,c)?md.price*LIC_ROY:(md.price*(1-dMargin(s)-(IL&&IL.cut||0))-sh)*fxOf(s,c);
-    return `<tr><td>${COUNTRIES[c].name}</td><td class="n">${tf>0?pct(tf,0)+' · '+money(md.price*tf):'—'}</td><td class="n">${sh>0?money(sh):'—'}</td><td class="n">${money(buyer)} <small class="muted">вам ${money(net)}</small></td></tr>`;}).join('');
-  return `<div class="label" style="margin-top:10px">Пошлина и доставка</div><table class="pl ptab" style="margin-top:4px"><tr><th>Страна</th><th class="n">Пошлина</th><th class="n">Доставка</th><th class="n">Цена для покупателя</th></tr>${rows}</table>`;}
+// 0.21: за границей к цене добавляются пошлина и доставка; 0.26: своя цена в каждой стране и маржа с машины
+function dutyLines(md,s){const L=Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0);if(!L.length)return '';const uc=unitCost(md,s);
+  const rows=[s.country,...L].map(c=>{if(c!==s.country&&tradeBan(s,c))return `<tr><td>${COUNTRIES[c].name}</td><td class="n bad" colspan="3">ввоз запрещён</td></tr>`;
+    const buyer=offerPrice(md,c,s),net=netPer(md,c,s),m=net-uc,k=pmkOf(s,c),tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=c===s.country?null:impOf(s,c);
+    const why=[c===s.country?'дома':'',k!==1?`цена ${k>1?'+':'−'}${Math.round(Math.abs(k-1)*100)}%`:'',tf>0?`пошлина ${pct(tf,0)}`:'',sh>0?`доставка ${money(sh)}`:'',IL&&IL.cut?`импортёру ${pct(IL.cut,0)}`:'',licOn(s,c)?'лицензия':''].filter(Boolean).join(', ');
+    return `<tr><td>${COUNTRIES[c].name}${why?`<small class="muted">${why}</small>`:''}</td><td class="n">${money(buyer)}</td><td class="n">${money(net)}</td><td class="n ${m<0?'bad':'good'}">${money(m)}</td></tr>`;}).join('');
+  return `<div class="label" style="margin-top:10px">По странам: цена и маржа с машины</div><table class="pl ptab ctab" style="margin-top:4px"><tr><th>Страна</th><th class="n">Покупатель</th><th class="n">Вам</th><th class="n">Маржа</th></tr>${rows}</table>
+    <p class="small muted" style="margin-top:4px">«Вам» — после скидки дилеру${L.some(c=>impOf(s,c)&&impOf(s,c).cut)?' и импортёру':''} и доставки; маржа — минус себестоимость. Цену для каждой страны можно поднять или снизить на вкладке «Рынок».</p>`;}
 function vModels(){
   const s=G,ord={prod:0,sale:1,dev:2,off:3},many=s.models.filter(m=>m.status!=='off').length>1;
   const card=md=>{
@@ -9062,14 +9305,18 @@ function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?''
 // Сколько продавали бы ваши модели в стране при полной сети дилеров
 function marketPotential(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act.length||(c!==s.country&&warCut(s,c)))return 0;const R=mkCountry(c,s,act,null,null,1);return act.reduce((a,m)=>a+(R.by[m.id]||0),0)*(techLv(s,'credit')?1.15:1);}
 function topIncome(inc,p){return inc.xT*Math.pow(p/INC_TOP,-1/inc.al);}
-// Грузовые машины: главный соперник — лошадь. Сколько фирм в месяц выбирают транспорт и что берут
+// 0.26: грузовые перевозки: три рынка — по району, по городу, между городами; лошадь — только пока её ещё берут
 function horseSplit(s,c,M,R0){const TZ=M&&M.segs&&M.segs.truck,pool=(M&&M.tpool)||(R0||mkCountry(c,s,[])).segs.truck.pool||0;if(pool<=0)return null;
   const you=TZ?TZ.you:0,riv=TZ?Math.max(0,TZ.size-TZ.you):(R0||mkCountry(c,s,[])).segs.truck.inc;return {pool,you,riv,horse:Math.max(0,pool-riv-you)};}
-function horseHTML(s,c,M,R0){if(s.y<1896)return '';const h=horseSplit(s,c,M,R0);if(!h)return '';const w=x=>Math.max(0,Math.min(100,x/h.pool*100)),pp=x=>pct(x/h.pool,x/h.pool<0.1?1:0);
-  return `<div style="margin-top:14px"><div class="row small"><span class="label">🐴 Лошадь или мотор</span><span class="muted">фирм в месяц ≈ ${fmtD(h.pool)}</span></div>
-    <div class="hbar" style="margin-top:6px"><i style="width:${w(h.horse)}%;background:#9a7448"></i><i style="width:${w(h.riv)}%;background:#6f8aa6"></i><i style="width:${w(h.you)}%;background:var(--brass)"></i></div>
-    <div class="hleg small"><span><i style="background:#9a7448"></i>лошадь ${pp(h.horse)}</span><span><i style="background:#6f8aa6"></i>моторы конкурентов ${pp(h.riv)}</span><span><i style="background:var(--brass)"></i>ваши ${pp(h.you)}</span></div>
-    <p class="small muted" style="margin-top:6px">Лавки, пивоварни, почта и стройки каждый месяц покупают транспорт. Мотор берут, когда он выгоднее лошади: надёжный, экономичный и недорогой за тонну груза. Хороший дешёвый фургон или грузовик уводит покупателей не только у конкурентов, но и у лошадей.</p></div>`;}
+function horseHTML(s,c,M,R0){if(s.y<1896)return '';const Rx=R0||mkCountry(c,s,[]),uses=(M&&M.tuse)||Rx.segs.truck.uses;if(!uses)return '';
+  let pool=0,riv=0,you=0;TUSE.forEach(u=>{const z=uses[u];if(z){pool+=z.pool;riv+=z.riv;you+=z.you;}});if(pool<=0)return '';
+  const horse=Math.max(0,pool-riv-you),pp=x=>pct(x,x<0.1?1:0);
+  const rows=TUSE.filter(u=>uses[u]&&uses[u].pool>0.05).map(u=>{const z=uses[u],h=Math.max(0,z.pool-z.riv-z.you),w=x=>Math.max(0,Math.min(100,x/z.pool*100));
+    return `<div style="margin-top:8px"><div class="row small"><span><b>${TRUCK_USE[u].n}</b> <span class="muted">· ${esc(TRUCK_USE[u].who)}</span></span><span class="muted">${fmtD(z.pool)} фирм</span></div>
+      <div class="hbar" style="margin-top:4px">${h/z.pool>0.02?`<i style="width:${w(h)}%;background:#9a7448"></i>`:''}<i style="width:${w(z.riv)}%;background:#6f8aa6"></i><i style="width:${w(z.you)}%;background:var(--brass)"></i></div></div>`;}).join('');
+  return `<div style="margin-top:14px"><div class="row small"><span class="label">🚚 Кто покупает грузовые машины</span><span class="muted">фирм в месяц ≈ ${fmtD(pool)}</span></div>${rows}
+    <div class="hleg small">${horse/pool>0.02?`<span><i style="background:#9a7448"></i>лошадь ${pp(horse/pool)}</span>`:''}<span><i style="background:#6f8aa6"></i>конкуренты ${pp(riv/pool)}</span><span><i style="background:var(--brass)"></i>ваши ${pp(you/pool)}</span></div>
+    <p class="small muted" style="margin-top:6px">Каждой перевозке — своя машина: лавке, которая развозит хлеб, нужен фургон, мебель по городу возят на полуторатонке, большие партии между городами — на трёхтонке. Фирма выбирает по цене тонно-километра: машина за годы службы, ремонт и простои, бензин, шофёр.${horse/pool>0.02?' Пока мотор не выгоднее, часть фирм берёт лошадь.':' Лошадей фирмы уже почти не покупают.'}</p></div>`;}
 function vMarket(){
   const s=G,home=s.country,e=econ(s.y,s.m,home),L=s.last,M=L&&L.mk[home],R0=mkCountry(home,s,[]),H=R0.H,inc=R0.inc,fleet=fleetOf(s,home),K=affordK(home,s);
   const segRows=SEGK.filter(g=>g!=='sport'||s.y>=1910).map(g=>{const z=M&&M.segs?M.segs[g].size:R0.segs[g].inc,you=M&&M.segs?M.segs[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${fmtD(z)}</td><td class="n">${M?fmtD(you):'—'}</td><td class="n">${M&&z>0?pct(you/z,1):'—'}</td><td class="n">${money(prefP(g,home,s))}</td></tr>`;}).join('');
@@ -9108,8 +9355,13 @@ function vMarket(){
       :lv===2?`<p class="small muted" style="margin-top:4px">Своё отделение «${esc(s.company)}». ${s.y>=IMP_LV[3].y?`<b>Сборка из комплектов</b> — как у Ford в Траффорд-парке (1911): пошлина только на детали (${Math.round(IMP_LV[3].tar*100)}% ставки), доставка вдвое дешевле, покупатели считают машины почти своими; содержание ${money(impUpkeep({...s,imp:{...(s.imp||{}),[c]:3}},c))} в месяц, нужен объём.`:'Сборка за границей появится с 1904 года.'}</p>`
       :lv===3?`<p class="small good" style="margin-top:4px">Сборка из комплектов: пошлина ${pct(tf,0)}, доставка вдвое дешевле. ${s.y>=IMP_LV[4].y?`<b>Свой завод</b> — пошлины и доставки нет совсем, машины для покупателей местные; но в войну завод противника конфискуют.`:''}</p>`
       :`<p class="small good" style="margin-top:4px">Свой завод «${esc(s.company)}»: без пошлины и доставки, для покупателей — местная марка.</p>`)+rtxt;
+    // 0.26: доля в стране по классам; цена здесь (наценка к домашней) и что остаётся с машины
+    const shTxt=mk&&mk.size>0?(()=>{const g=SEGK.filter(g=>mk.segs&&mk.segs[g]&&mk.segs[g].you>0.4).map(g=>`${SEG[g].name.toLowerCase()} ${pct(mk.segs[g].you/Math.max(1e-9,mk.segs[g].size),mk.segs[g].you/mk.segs[g].size<0.1?1:0)}`);return `<p class="small" style="margin-top:4px">Доля рынка: <b class="num">${pct((mk.sold||0)/Math.max(1,mk.size),(mk.sold||0)/mk.size<0.1?1:0)}</b>${g.length?` <span class="muted">· ${g.join(' · ')}</span>`:''}</p>`;})():'';
+    const top3=c===home||!d||cut?[]:s.models.filter(m=>m.status==='prod'||m.status==='sale').sort((a,b)=>((b.soldBy&&b.soldBy[c])||0)-((a.soldBy&&a.soldBy[c])||0)).slice(0,3);
+    const pmTxt=c===home||!d||cut||tradeBan(s,c)?'':`<div class="small pmk-row"><span class="muted">Цена здесь — к цене дома:</span><div class="chips sm">${PMK.map(([k,lab])=>`<button class="chip ${Math.abs(pmkOf(s,c)-k)<1e-6?'on':''}" data-act="pmk" data-c="${c}" data-v="${k}">${lab}</button>`).join('')}</div></div>`
+      +(top3.length?`<p class="small muted" style="margin-top:4px">${top3.map(m=>{const n=netPer(m,c,s),mg=n-unitCost(m,s);return `«${esc(m.name)}»: покупатель ${money(offerPrice(m,c,s))}, вам ${money(n)}, маржа <b class="${mg<0?'bad':'good'}">${money(mg)}</b>`;}).join(' · ')}</p>`:'');
     return `<div class="net-row"><div class="row"><div><h3>${COUNTRIES[c].name}${c===home?' · дома':''}${c!==home?` <span class="pill ${lv?'good':'muted'}">${esc(lic?'Лицензия':(s.bought&&s.bought[c])?'Своя марка':IMP_LV[lv].n)}</span>`:''}</h3><p class="small muted">Рынок ${fmtD(size)} в месяц · <span class="${ec.tone}">${ec.label}</span>${c!==home?(cut?' · <span class="bad">блокада</span>':tradeBan(s,c)?' · <span class="bad">ввоз закрыт</span>':` · пошлина ${Math.round(tf*100)}%`):''}</p></div><span class="num small ${mk&&mk.sold?'good':''}" style="white-space:nowrap">${mk?fmtN(mk.sold||0):0} шт.</span></div>
-      ${lvTxt}
+      ${lvTxt}${c===home?'':shTxt}${pmTxt}
       ${d&&!cut?`${pot>0?`<p class="small" style="margin-top:4px">Будь ваши дилеры во всех городах, ваши модели брали бы ≈ <b class="num">${fmtD(pot)}</b> в месяц · сейчас их видят ${Math.round(reach*100)}% покупателей</p>`:''}
       <div class="row small" style="margin-top:6px"><span class="muted">Дилеров <b class="num">${fmtN(d)}</b> из ${fmtN(mx)} ${plural(mx,'возможного','возможных','возможных')} · вся страна — ${fmtN(need)} ${plural(need,'город','города','городов')}</span><span class="num">${Math.round(reach*100)}%</span></div><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,reach*100)}%;background:var(--good)"></i></div>
       <p class="small muted" style="margin-top:4px">Сеть продаёт до ${fmtN(cap)} машин в месяц — по ${fmtD(tp)} на дилера${dealerMult(s,c)>1.01?` (салоны больше обычного в ${fmtD(dealerMult(s,c))} раза)`:''}.</p>
@@ -9120,7 +9372,7 @@ function vMarket(){
   return `${advisorCard(s,'market')}${chalCard(s,'market')}<section class="card"><div class="row"><h2>${COUNTRIES[home].name}</h2><span class="pill ${e.tone}">${e.label}</span></div>
     <div class="meta"><div>Рынок/мес<b>${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))}</b></div><div>Ваши<b>${L?fmtN(L.homeSold):'—'}</b></div><div>Доля<b>${L?pct(L.share,1):'—'}</b></div><div>Цены к 1913<b>${Math.round(cpi(s)*100)}%</b></div></div>${home==='us'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Америке много, но дороги плохи, и машины пока берут неохотно. Во Франции машины уже в моде: откройте там дилеров ниже, пошлина невелика.</p>':''}${home==='it'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Италии мало, свой рынок крошечный. Продавайте и за границей: во Франции покупателей в разы больше, пошлина — 12%.</p>':''}<div class="hr"></div>
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
-    <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: они сравнивают фургоны и грузовики по цене за тонну груза и надёжности, а лошадь с телегой — их главный соперник.</p>${horseHTML(s,home,M,R0)}</section>
+    <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: для своих перевозок они выбирают машину, на которой дешевле тонно-километр.</p>${horseHTML(s,home,M,R0)}</section>
   ${foldCard('buyers',false,'<h2>Покупатели</h2>',`
     <div class="meta"><div>Семей<b>${fmtN(H)}</b></div><div>Доход семьи<b>${money(inc.med)}</b></div><div>Машин на дорогах<b>${fmtN(fleet)}</b></div><div>С машиной<b>${pct(Math.min(1,fleet/H),fleet/H<0.01?2:1)}</b></div></div>
     <p class="small muted" style="margin-top:6px">Доход — у средней семьи за год: половина семей беднее. Богатейшие 1% получают от ${money(topIncome(inc,0.01))} в год.</p>
@@ -9147,6 +9399,7 @@ function legacyCard(){
     <p class="small muted" style="margin-top:4px">Цель игры — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными: Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce и другими — по масштабу, доле рынка, изобретениям, победам, капиталу и имени.</p>
     <div style="margin-top:10px">${bars}</div><div class="row small" style="margin-top:6px"><span class="muted">Всего очков</span><b class="num">${Math.round(me.total)}</b></div>
     <table class="pl" style="margin-top:10px">${near}</table>
+    ${humanLegacyHTML(s)}
     ${firsts?`<div class="label" style="margin-top:12px">Первенства</div><ul class="log">${firsts}</ul>`:'<p class="small muted" style="margin-top:10px">Первенств пока нет. Внедрите технологию или деталь раньше, чем это случилось в истории, — прокачайте КБ.</p>'}
     <button class="btn block" style="margin-top:10px" data-act="legacyInfo">Как считаются очки</button></section>`;
 }
@@ -9227,6 +9480,7 @@ function showEvent(){
   if(ev.cel&&!ev.celOn){ev.celOn=1;try{celebrate(ev.cel[0],ev.cel[1],ev.cel[2]);}catch(_){}}
   if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
   if(ev.duel){duelShow(ev);return;}
+  if(ev.chance){openSheet(chanceHTML(ev));return;}
   if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск'),mean:ev.mean,reel:ev.reel});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
@@ -9355,7 +9609,7 @@ function openHelp(){
   <div class="stack small" style="margin-top:12px">
     <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук, графика и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
     <p><b>Модели.</b> Машина собирается из деталей: двигатель, коробка передач, рама с подвеской, колёса и шины, тормоза, кузов, оснащение. Покупатели сравнивают её с типичной машиной соперников своего класса — по мощности, надёжности, комфорту, простоте вождения, тормозам, экономичности и вместимости. Народному классу важнее экономичность и надёжность, люксу — комфорт и мощность. Дешёвые решения вроде планетарной коробки и ванадиевой рамы Ford T часто выгоднее самых дорогих деталей. Кнопка «Подобрать детали повыгоднее» предложит конструкцию сама.</p>
-    <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства: их соперник — лошадь с телегой. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
+    <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства — каждая для своих перевозок: фургон развозит товар по району, полуторатонка возит по городу, трёхтонка — между городами. Фирма выбирает машину, на которой дешевле тонно-километр: цена, ремонт и простои, бензин, шофёр. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
     <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
     <p><b>Производство.</b> План «авто» делает столько, сколько купят, и не больше, чем поместится на складе. Всё лишнее уходит перекупщикам за полцены. Мощность — цеха и смены; выработку поднимают станки, электрификация, взаимозаменяемые детали, конвейер и зарплата.</p>
     <p><b>Выставки.</b> Настоящие автосалоны эпохи: Париж (с 1898 года, первым был сад Тюильри), Берлин (1897), Лондон (1896), Нью-Йорк (1900), Турин (1900) и другие, а в 1900 году — Всемирная выставка с медалями. За месяц приходит приглашение: стенд стоит денег, зато приносит заказы, интерес покупателей и газет, а за границей — первых дилеров. Список ближайших — на вкладке «Рынок».</p>
@@ -9415,7 +9669,7 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
     ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.25';
+const GAME_VER='0.26';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -9449,6 +9703,10 @@ function showMainMenu(){
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
     <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка, звуки и фото — Wikimedia Commons.</p></div>`;
   MS.hidden=false;
+  // 0.26: если за меню пойдёт живая 3D-гонка — сразу тёмный «кинозал» с заголовком (без старого рисунка),
+  // а гонка проявляется из темноты, когда готова. Рисунок заставки — только без 3D.
+  const live=demoWanted();MS.classList.remove('ready');MS.classList.toggle('live',live);
+  if(live){const cap=document.getElementById('menuCap');if(cap)cap.innerHTML='<span class="menu-load">заводим моторы…</span>';}
   // живая гонка за меню — чуть позже, чтобы меню появилось сразу
   setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
 }
@@ -9479,20 +9737,20 @@ function aboutSfxCredits(){const I=(typeof AMB!=='undefined'&&AMB.idx)||window.S
 
 /* ================= ТИТУЛЬНЫЙ ЭКРАН: живая 3D-гонка эпохи за меню (как заставка в кино) ================= */
 // Пока открыто главное меню, за ним идёт настоящая гонка знаменитого года: машины едут сами, камера — как в кино
-// (сзади, у обочины, сверху). Первый раз фото-материалы грузятся секунду-другую — до этого виден рисунок заставки.
+// (сзади, у обочины, сверху). Пока грузятся фото-материалы — тёмный «кинозал» с заголовком, гонка проявляется из темноты.
 const DEMO={on:false,key:null,cut:0,cutT:0,t:0,raf:0};
 const DEMO_RACES=['gpacf-1906','targa-1906','x87575-1908','pbp-1895','lemans-1923','gpacf-1914','targa-1924','kaiser-1907','pv1902-1902','monaco-1929','x22765-1924','gb1903-1903'];
 function demoWanted(){return !R&&typeof r3dWanted==='function'&&r3dWanted()&&!(AU.on&&AU.on.demo===false)&&!MS.hidden;}
-function demoStart(){if(DEMO.on||!demoWanted())return;
-  const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);if(!L.length)return;
+function demoStart(){if(DEMO.on)return;if(!demoWanted()){if(!R&&MS.classList.contains('live')&&!MS.classList.contains('ready')){MS.classList.remove('live');const cap=document.getElementById('menuCap');if(cap)cap.textContent='';}return;}
+  const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);if(!L.length){demoStop(true);return;}
   const rc=L[(DEMO.n=(DEMO.n===undefined?Math.floor(Math.random()*L.length):DEMO.n+1))%L.length];
   const s={pioneer:'custom',country:COUNTRIES[rc.c]?rc.c:'fr',company:'',drivers:[],models:[],y:rc.y,m:rc.m,cres:{},raceDone:{},titles:[],rep:50,rdept:0};
   let cars,trk;
-  try{const ai=raceField(rc,s,0,[]);if(!ai.length)return;const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref);
+  try{const ai=raceField(rc,s,0,[]);if(!ai.length){demoStop(true);return;}const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref);
     cars=ai.map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:i+2}),rc.y,trk);c.mech=c.st.mech;c.style=carStyle(c.md,c.prep,rc.y);
       c.wheel=wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name;
       c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip:0,hp:3};wearSetup(c,trk,rc);return c;});}
-  catch(e){console.warn('demo',e);return;}
+  catch(e){console.warn('demo',e);demoStop(true);return;}
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
   cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
     const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
@@ -9532,7 +9790,7 @@ function demoCam(dt,W,H){const D=DEMO;D.cutT-=dt;
 function demoStop(fail){if(DEMO.raf)cancelAnimationFrame(DEMO.raf);DEMO.raf=0;const was=DEMO.on;DEMO.on=false;
   if(R&&R.demo){R.done=true;try{if(R.gl)r3dDispose();}catch(_){}R=null;}
   const scr=document.getElementById('raceScreen');if(scr&&was){scr.hidden=true;scr.classList.remove('demo');}
-  MS.classList.remove('ready');if(fail)MS.classList.remove('live');}
+  MS.classList.remove('ready');if(fail){MS.classList.remove('live');const cap=document.getElementById('menuCap');if(cap)cap.textContent='';}}
 
 /* ================= ПРАЗДНИК: победа, титул, рекорд — золотое конфетти, фанфары и крики толпы ================= */
 // Большие успехи должны ощущаться: на пару секунд поверх экрана — надпись, конфетти цветов эпохи (золото, латунь, сукно, бумага), фанфары.
@@ -10109,6 +10367,11 @@ function buildTrack(rc,vref){
   const trk={pts,T,N,K,n,step:STEP,closed,len:n*STEP,W,cfg,terrAt,col:[],grid:{},rc,spr:[],bar:[]};
   if(RP){trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy};try{trk.real.wm=realWaterOf(trk);}catch(e){console.warn('water',e);trk.real.wm=null;}}
   trk.startIdx=closed?0:30;trk.finishIdx=closed?0:n-40;
+  // 0.26: решётка — на прямой. Настоящая дорога может начинаться у шпильки или на мосту: старт сдвигаем вперёд,
+  // пока у решётки (±56 м) нет поворота круче R 45 м, а под передними рядами — моста
+  if(!closed&&RP){const brg=new Set();(RD.bridges||[]).forEach(b=>{const i=(b.i-RP.a)*2,sp=Math.max(9,Math.min(24,(b.i1-b.i0+2)))+2;for(let q=i-sp;q<=i+sp;q++)brg.add(q);});
+    const ok=st=>{for(let d=-14;d<=14;d++){const i=st+d;if(i<0||i>=n)return false;if(Math.abs(K[i])>1/45)return false;if(d<=4&&brg.has(i))return false;}return true;};
+    for(let sh=0;sh<=120;sh+=2){const st=30+sh;if(st>n-260)break;if(ok(st)){trk.startIdx=st;break;}}}
   trk.raceLen=closed?cfg.laps*trk.len:(trk.finishIdx-trk.startIdx)*STEP;
   trk.cgrid={};for(let i=0;i<n;i+=2){const k=Math.floor(pts[i][0]/30)+','+Math.floor(pts[i][2]/30);(trk.cgrid[k]=trk.cgrid[k]||[]).push(i);}
   placeScenery(trk,rnd);
@@ -10194,7 +10457,8 @@ function placeScenery(trk,rnd){
       if(i%53===7)add(i,'cart',(rnd()<0.5?-1:1)*(W/2+3.5),0,'s',1.2);
       continue;}
     const tree=(off,kind,v)=>add(i,kind||set.trees[Math.floor(rnd()*set.trees.length)],off,v===undefined?Math.floor(rnd()*3)+(tr==='snow'?1:0):v,'s',Math.abs(off)<W/2+10?0.55:0);
-    if(sg===RSEG.bridge){trk.bar[i]={L:W/2+0.55,R:W/2+0.55};continue;}
+    // мост: парапет — каменная стенка 0,55 м по краю полотна (как в 3D); машина не заходит в неё ни с дороги, ни снаружи
+    if(sg===RSEG.bridge){trk.bar[i]={L:W/2,R:W/2,par:0.55};continue;}
     if(sg===RSEG.rail){const rl=trk.rails.find(q=>Math.abs(q.i-i)<2);if(rl&&rl.i===i){[1,-1].forEach(sd=>{add(i-2*sd,'rgate',sd*(W/2+1.2),sd>0?0:1,'s',0.2);});add(i+3,'rhut',W/2+9,0,'s',2.5);}continue;}
     // аллеи: ровные ряды деревьев вдоль дороги
     if(sg===RSEG.avenue){if(i%4===0){add(i,set.alley,W/2+2.6,Math.floor(rnd()*3),'s',0.55);add(i,set.alley,-(W/2+2.6),Math.floor(rnd()*3),'s',0.55);}}
@@ -10236,7 +10500,8 @@ function placeScenery(trk,rnd){
   (trk.rivers||[]).forEach(rv=>{const L=riverLine(trk,rv);for(let q=-26;q<=26;q++){if(Math.abs(q)<3)continue;const s0=q*9+(rnd()-0.5)*5;[1,-1].forEach(sd=>{if(rnd()<0.45)return;
       const m=Math.sin(s0/170+rv.ph)*22*sstep(20,120,Math.abs(s0))+Math.sin(s0/61+rv.ph*2)*6*sstep(20,120,Math.abs(s0)),e=m+sd*(rv.w/2+4+rnd()*6),x=L.p[0]+L.d[0]*s0+L.t[0]*e,z=L.p[2]+L.d[1]*s0+L.t[1]*e;
       let bi=rv.i,bd=1e18;for(let k=Math.max(0,rv.i-60);k<Math.min(n,rv.i+60);k++){const d=(pts[k][0]-x)**2+(pts[k][2]-z)**2;if(d<bd){bd=d;bi=k;}}if(Math.sqrt(bd)<W/2+6)return;
-      spr[bi].push({t:rnd()<0.5?'poplar':set.trees.includes('birch')?'birch':'elm',off:0,v:Math.floor(rnd()*3),k:'W',wx:x,wz:z,rot:rnd()*6});});}});
+      const tt=rnd()<0.5?'poplar':set.trees.includes('birch')?'birch':'elm';spr[bi].push({t:tt,off:0,v:Math.floor(rnd()*3),k:'W',wx:x,wz:z,rot:rnd()*6});
+      addCollider(trk,x,z,SOLID[tt].r,tt,bi);});}});// 0.26: и эти деревья твёрдые
   // порталы тоннелей: скальная стена по сторонам от проёма — твёрдая
   (trk.tunnels||[]).forEach(q=>{[[q.i0,1],[q.i1,-1]].forEach(([i,dir])=>{const p=pts[i],nn=N[i],tt=trk.T[i],hw=W/2+0.6;
     [1,-1].forEach(sd=>{const hv=13,cx=p[0]+tt[0]*dir*1.6+nn[0]*sd*(hw+0.15+hv),cz=p[2]+tt[1]*dir*1.6+nn[1]*sd*(hw+0.15+hv);
@@ -10244,12 +10509,17 @@ function placeScenery(trk,rnd){
   // старт, финиш, трибуны, боксы
   const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});[1,-1].forEach(sd=>{const p=pts[fi],nn=N[fi];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',fi);});
   if(!cfg.closed){const si=Math.min(n-1,trk.startIdx+1);[1,-1].forEach(sd=>{const p=pts[si],nn=N[si];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',si);});}
-  if(cfg.closed||cfg.crowd>0.3){[-9,-4,1].forEach(k=>{const i=((fi+k)%n+n)%n;spr[i].push({t:'stand',off:-(W/2+9),v:0,k:'s'});});for(let k=-8;k<=4;k+=2){const i=((fi+k)%n+n)%n;spr[i].push({t:'crowd',off:W/2+3.5,v:Math.abs(k)%4,k:'p'});}}
-  if(cfg.pits){const pi=(n-18)%n;spr[pi].push({t:'pits',off:W/2+8,v:0,k:'s'});}
+  // 0.26: трибуны, зрители у финиша и боксы — твёрдые (раньше сквозь них проезжали); на чужой участок трассы не ставим
+  const solidPut=(i,t,off,v,kind)=>{const o=solidAt(trk,t,i,off);if(o&&!solidClear(trk,o))return;spr[i].push({t,off,v,k:kind});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);};
+  if(cfg.closed||cfg.crowd>0.3){[-9,-4,1].forEach(k=>solidPut(((fi+k)%n+n)%n,'stand',-(W/2+9),0,'s'));for(let k=-8;k<=4;k+=2)solidPut(((fi+k)%n+n)%n,'crowd',W/2+3.5,Math.abs(k)%4,'p');}
+  if(cfg.pits)solidPut((n-18)%n,'pits',W/2+8,0,'s');
   // приметы места: большие — вдали, без столкновений; ворота поперёк дороги — колонны твёрдые
   LMs.forEach(q=>{if(q.t==='rlm'){spr[q.i].push({t:'rlm',k:'R',lm:q.lm,off:q.off,v:0,wx:q.x,wz:q.z,rot:q.rot,far:q.far});
       // здание у дороги твёрдое (по меньшей стороне, не заходя на полотно)
-      if(!q.far&&!q.lm.line&&Math.abs(q.off)<90){const rr=Math.min(Math.min(q.lm.l||8,q.lm.w||8)*0.42,Math.abs(q.off)-W/2-1.5);if(rr>0.8)addCollider(trk,q.x,q.z,rr,'rlm',q.i);}return;}
+      // 0.26: по всему следу постройки (повёрнутый прямоугольник), не заходя на полотно; не влезает — круг посередине
+      if(!q.far&&!q.lm.line&&Math.abs(q.off)<120){const L=(q.lm.l||8)/2,Wd=(q.lm.w||8)/2,ux=Math.sin(q.rot||0),uz=Math.cos(q.rot||0);let done=false;
+        for(const k of [1,0.85,0.7,0.55,0.4]){const o={x:q.x,z:q.z,r:Math.hypot(L*k,Wd*k),kind:'rlm',box:{ux,uz,vx:uz,vz:-ux,hu:L*k,hv:Wd*k}};if(solidClear(trk,o)){addCollider(trk,q.x,q.z,o.r,'rlm',q.i,o);done=true;break;}}
+        if(!done){const rr=Math.min(Math.min(q.lm.l||8,q.lm.w||8)*0.42,Math.abs(q.off)-W/2-1.5);if(rr>0.8)addCollider(trk,q.x,q.z,rr,'rlm',q.i);}}return;}
     spr[q.i].push(q.world?{t:q.t,off:q.off,v:0,k:'L',wx:q.x,wz:q.z,rot:q.rot}:{t:q.t,off:q.off,v:0,k:'L'});const p=pts[q.i],nn=N[q.i],tt=trk.T[q.i];
     if(q.t==='gate_spb')[6.6,11,15.4].forEach(x=>[-1,1].forEach(sx=>[-2.3,2.3].forEach(zz=>addCollider(trk,p[0]+nn[0]*sx*x+tt[0]*zz,p[2]+nn[1]*sx*x+tt[1]*zz,1.05,'gate',q.i))));
     else if(Math.abs(q.off)<70)addCollider(trk,q.x,q.z,Math.min(q.r*0.55,Math.abs(q.off)-W/2-1.5),q.t,q.i);});
@@ -10259,7 +10529,7 @@ function placeScenery(trk,rnd){
 class RaceCar{constructor(e){
   this.you=!!e.you;this.player=!!e.player;this.name=e.name||'';this.label=e.label||'';this.drvName=e.drvName||'';this.drvId=e.drvId||null;this.sk=e.sk||0.8;
   this.md=e.md;this.prep=e.prep||0;this.tyreType=e.tyre||'hard';this.gearSet=e.gear||0;this.color=e.color||'#333';this.num=e.num||0;this.pw=e.pw||1;this.relK=e.relK||1;this.pitK=e.pitK||1;this.tc=e.tc||'';this.priv=!!e.priv;this.pmy=e.pmy||0;this.spec=!!e.spec;
-  this.st=null;this.m=0;this.P=0;this.kd=0;this.crr=0;this.vtop=0;this.gr=null;this.brakeK=0;this.grip=1;this.wearK=1;this.rel=0.8;this.L=2.5;this.a=0;this.b=0;this.h=0.7;this.Iz=1;
+  this.st=null;this.parIn=true;this.ghostT=0;this.pushN=0;this.wantPit=false;this.m=0;this.P=0;this.kd=0;this.crr=0;this.vtop=0;this.gr=null;this.brakeK=0;this.grip=1;this.wearK=1;this.rel=0.8;this.L=2.5;this.a=0;this.b=0;this.h=0.7;this.Iz=1;
   this.x=0;this.z=0;this.y=0;this.gy=0;this.yaw=0;this.vx=0;this.vy=0;this.r=0;this.delta=0;this.gear=1;this.rpm=0;this.shift=0;this.thr=0;this.brk=0;this.steer=0;
   this.idx=0;this.lat=0;this.segT=0;this.lap=0;this.prog=0;this.fin=null;this.lapSeen=-9;this.q=0;this.lane=0;this.laneT=undefined;this.follow=null;
   this.heat=0;this.tyre=0;this.fuel=100;this.eng=0;this.dmg=0;this.punct=false;this.punctN=0;this.dnf=null;this.stopT=0;this.stopWhy='';this.pitT=0;this.order='norm';this.pitCall=false;
@@ -10318,6 +10588,7 @@ function tyreSat(a,Fz,capK,mu){const x=PHY.tk*a,ax=x<0?-x:x,e=ax>1.6?(ax-1.6)/3:
 // Кочки: одномерный шум (два значения вместо четырёх и без замыканий — физика гонки считается тысячи раз в секунду)
 function bumpNz(x,s){const i=Math.floor(x),f=x-i,u=f*f*(3-2*f),H=q=>{let t=(Math.imul(q,374761393)+Math.imul(s,668265263))|0;t=Math.imul(t^(t>>>13),1274126177);return ((t^(t>>>16))>>>0)/4294967296;};const a=H(i);return a+(H(i+1)-a)*u;}
 function carStep(c,trk,dt){
+  if(c.ghostT>0)c.ghostT-=dt;
   const lat=trackLocal(trk,c),W=trk.W,bar=trk.bar[c.idx],su=surfUnder(c,trk,lat),sp0=Math.abs(c.vx);
   // покрытие под колёсами (0.18): асфальт, булыжник, грунт, трава, пашня, лужа, грязь; в дождь — мокрое
   if(su.k!==c.surf){c.surfIn=su.k==='puddle'||su.k==='mudhole'?Math.min(1.5,sp0/14):0;c.surf=su.k;}c.surfP=su.P;c.wetRoad=su.wet;c.tun=trk.tunAt?trk.tunAt[c.idx]:0;
@@ -10400,7 +10671,13 @@ function carStep(c,trk,dt){
   const L=trk.segCol&&trk.segCol[c.idx];
   // второй проход: удар разворачивает машину, и нос может задеть стену снова — выталкиваем ещё раз
   if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
-  if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1,'wall');}}
+  if(bar&&bar.par){// 0.26: парапет моста с двух сторон: изнутри — бортом к стенке, снаружи — не перелезть на полотно
+    const al=Math.abs(lat),sg=Math.sign(lat)||1,face=lat>0?bar.L:bar.R,inn=face-CAR_R,out=face+bar.par+CAR_R;
+    let al2=al;if(al>inn&&al<out){const nn=trk.N[c.idx],inside=c.parIn!==false,to=inside?inn:out,ex=al-to;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;al2=to;
+      if(inside)wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1,'wall');else wallHit(c,sg*nn[0],sg*nn[1],0.2,1.1,'wall');}
+    c.parIn=al2<=face+0.3;}
+  else{c.parIn=Math.abs(lat)<=W/2+0.3;
+    if(bar){const lim=lat>0?bar.L:bar.R;if(lim&&Math.abs(lat)>lim){const nn=trk.N[c.idx],sg=Math.sign(lat),ex=Math.abs(lat)-lim;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;wallHit(c,-sg*nn[0],-sg*nn[1],0.2,1.1,'wall');}}}
   // крутой склон горы — как стена: выше дороги по круче машина не въезжает, мягко скатывается назад
   if(c.off&&typeof R3!=='undefined'&&R3.on&&R3.F&&R3.T===trk){const e=1.2,h0=fH(c.x,c.z),gx=(fH(c.x+e,c.z)-fH(c.x-e,c.z))/(2*e),gz=(fH(c.x,c.z+e)-fH(c.x,c.z-e))/(2*e),sl=Math.hypot(gx,gz);
     if(sl>0.5&&h0>trk.pts[c.idx][1]+0.8){const ux=gx/sl,uz=gz/sl,k=Math.min(1,(sl-0.5)*2.5);c.x-=ux*0.04*k;c.z-=uz*0.04*k;wallHit(c,-ux,-uz,0.1,0.25,'slope');}}
@@ -10450,7 +10727,7 @@ function carFailure(c){
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 // Машины — капсулы: сталкиваются корпусами (нос в корму тоже), удар в угол разворачивает
-function carsCollide(A,B){const dx0=A.x-B.x,dz0=A.z-B.z;if(dx0*dx0+dz0*dz0>26)return 0;
+function carsCollide(A,B){if(A.ghostT>0||B.ghostT>0)return 0;const dx0=A.x-B.x,dz0=A.z-B.z;if(dx0*dx0+dz0*dz0>26)return 0;
   const S=carCapsule(A),Q=carCapsule(B),[px,pz,qx,qz]=segSeg(S,Q),ddx=px-qx,ddz=pz-qz,d=Math.hypot(ddx,ddz),rr=CAR_R*2;if(d>=rr)return 0;
   const l0=Math.hypot(dx0,dz0)||1,nx=d>1e-4?ddx/d:dx0/l0,nz=d>1e-4?ddz/d:dz0/l0,push=(rr-d)/2;A.x+=nx*push;A.z+=nz*push;B.x-=nx*push;B.z-=nz*push;
   const V=c=>[Math.sin(c.yaw)*c.vx+Math.cos(c.yaw)*c.vy,Math.cos(c.yaw)*c.vx-Math.sin(c.yaw)*c.vy];
@@ -10486,7 +10763,11 @@ function aiControl(c,trk,dt){
   if(c.slipR>0.14&&c.thr>0.5)c.thr=0.5;
   if(c.off&&v>8){c.thr=Math.min(c.thr,0.3);c.brk=Math.max(c.brk,0.2);}
   // боксы: шины, топливо, повреждения или приказ команды
-  const cfg=trk.cfg,rem=Math.max(0,trk.raceLen-c.prog);if(cfg.pits&&c.lap<cfg.laps-1&&(c.tyre+rem*c.tyreRate*1.5>97||(c.fuelRate&&c.fuel<rem*c.fuelRate+4)||c.dmg>55||c.pitCall)){const toLine=((n-c.idx)%n)*step;if(toLine<110){c.brk=v>13?0.8:0;c.thr=v<10?0.4:0;}}
+  // 0.26: тормозим к боксам загодя (быстрые машины на овале не успевали — и оставались без бензина); заезд засчитан и на скорости
+  const cfg=trk.cfg,rem=Math.max(0,trk.raceLen-c.prog);c.wantPit=!!(cfg.pits&&c.lap<cfg.laps-1&&(c.tyre+rem*c.tyreRate*1.5>97||(c.fuelRate&&c.fuel<rem*c.fuelRate+4)||c.dmg>55||c.pitCall));
+  if(c.wantPit){const toLine=((n-c.idx)%n)*step,need=Math.max(0,(v*v-144)/(2*Math.max(1.5,bdec*0.9)))+25;if(toLine<Math.max(110,need)){c.brk=v>13?0.8:0;c.thr=v<10?0.4:0;}}
+  // без боксов (дорожная гонка): бензина до финиша не хватит — остановка у обочины, механик заливает бак
+  else if(!cfg.pits&&c.fuelRate&&c.fuel<rem*c.fuelRate+3&&c.fuel<30&&!(c.stopT>0)){c.stopT=18;c.stopWhy='заправка';c.fuel=100;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: заправка у обочины`,1.4);}
   if(c.follow&&!c.punct){c.thr=0;if(c.vx>c.follow.vx+2)c.brk=Math.max(c.brk,0.35);}
   if(gs<2.5){c.thr=0;c.brk=1;}
   // на спущенном колесе у самого финиша — доезжаем осторожно, иначе останавливаемся менять
@@ -10726,12 +11007,12 @@ function raceTick(dt){
   if(R.scn)scnTick(dt);
   aiTraffic(T);
   R.cars.forEach(c=>{
-    if(c.fin!==null||c.dnf){if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
+    if(c.fin!==null||c.dnf){if(!c.player&&!c.dnf){c.ghostT=Math.max(c.ghostT||0,1);c.laneT=-(T.W/2-1.3);if(T.closed){aiControl(c,T,dt);const vC=Math.max(9,(c.vtop||20)*0.45);if(c.vx>vC){c.thr=0;c.brk=0.3;}else{c.thr=Math.min(c.thr,0.35);c.brk=0;}return;}if(c.vx>0.5)aiControl(c,T,dt);c.thr=0;c.brk=0.4;return;}if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
     if(c.inWater===2){rescueTick(c,dt);return;}
     if(c.wait){scnWaitControl(c,dt);return;}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
-      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if(c.vx<15&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
+      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if((c.vx<15||(c.wantPit&&!c.player))&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
     if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if(c.punct&&!c.flat&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
   });
@@ -10761,7 +11042,10 @@ function raceTick(dt){
     if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
       c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
     // 0.18: машина соперника (или вашего пилота) минуту не двигается к финишу — сход «застрял» (гонка не тянется бесконечно)
-    if(!c.player&&!c.dnf&&!c.wait&&c.fin===null&&R.t>4){if(c.pgP===undefined||c.prog>c.pgP+8){c.pgP=c.prog;c.pgT=0;}else if(!(c.pitT>0)&&!c.gateWait&&!(c.stopT>0)&&!(c.punct&&!c.flat)&&!c.inWater&&!c.svc){c.pgT=(c.pgT||0)+dt;if(c.pgT>60){c.dnf='застрял';c.thr=0;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: СХОД — машина застряла`,2.5);}}}
+    // 0.26: застрял (машина поперёк, упёрся в препятствие или в чужую машину) — через 15 с маршалы выталкивают его на дорогу дальше;
+    // время потеряно, но гонка продолжается. Сход — если и после пяти раз дальше не едет
+    if(!c.player&&!c.dnf&&!c.wait&&c.fin===null&&R.t>4){if(c.pgP===undefined||c.prog>c.pgP+8){c.pgP=c.prog;c.pgT=0;}else if(!(c.pitT>0)&&!c.gateWait&&!(c.stopT>0)&&!(c.punct&&!c.flat)&&!c.inWater&&!c.svc){c.pgT=(c.pgT||0)+dt;
+      if(c.pgT>15){c.pgT=0;c.pushN=(c.pushN||0)+1;if(c.pushN>5){c.dnf='застрял';c.thr=0;if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: СХОД — машина застряла`,2.5);}else{unstick(c,T);if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: маршалы вытолкнули машину`,1.6);}}}}
     if(c.fin===null&&!c.dnf&&c.prog>=T.raceLen){c.fin=R.time;if(c.you&&!c.player&&R.mode!=='sim')rMsgT(`${c.drvName||c.label} финишировал!`,1.6);}});
   const live=R.cars.filter(c=>c.fin===null&&!c.dnf),teamLive=R.cars.filter(c=>c.you&&c.fin===null&&!c.dnf);
   if(R.endT===undefined&&!R.demo){
@@ -10773,6 +11057,9 @@ function raceTick(dt){
 }
 // Досчитать гонку мгновенно (режим руководителя): та же физика без отрисовки
 function raceFastForward(){if(!R||R.done)return;R.ff=true;if(R.t<0)R.t=0;const dt=1/20;let f=0;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);}
+function unstick(c,T){const n=T.n;let i=c.idx+5;if(T.closed)i%=n;else i=Math.min(n-1,i);
+  const busy=o=>R.cars.some(q=>q!==c&&!q.parked&&Math.abs(q.idx-i)<5&&Math.abs(q.lat-o)<2.4);const lanes=[0,-T.W/4,T.W/4];const o=lanes.find(x=>!busy(x));
+  c.idx=i;respawn(c);if(o){const nn=T.N[i];c.x+=nn[0]*o;c.z+=nn[1]*o;}c.ghostT=2.5;c.st2=0;trackLocal(T,c);c.pgP=c.prog;}
 function respawn(c){const T=R.trk,p=T.pts[c.idx],t=T.T[c.idx];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);c.vx=0;c.vy=0;c.r=0;c.delta=0;c.stuck=0;c.rev=false;c.revT=0;}
 // Ближайшая точка оси дороги по всей трассе (сетка 30 м): индекс и расстояние
 function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);let bi=-1,bd=1e18;
@@ -11515,7 +11802,7 @@ function updateRaceHUD(){
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();
   const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
-  const bd=document.getElementById('rBoard');if(bd.dataset.t!==String(Math.floor(R.time*2))){bd.dataset.t=String(Math.floor(R.time*2));bd.innerHTML=board;}
+  const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();
   const m=document.getElementById('rMsg');
   m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
@@ -12154,9 +12441,11 @@ function goalsResolve(s,y,mine,KW){const L=(s.goals||[]).filter(q=>q.y===y);if(!
     try{goalScene(s,q,ok,KW[q.k]&&KW[q.k]!==s.company?KW[q.k]:'');}catch(e){console.warn('goal scene',e);}});}
 function boardCard(s){const O=boardOffers(s),A=[],C=s.chal&&s.chal.acc?s.chal:null,GL=(s.goals||[]).filter(q=>q.y===s.y);
   if(C)A.push(chalCard(s,chalWhere(C)));
+  // 0.26: дуэль — машина против рысака, аэроплана или экспресса
+  if(s.dx&&s.dx.acc){const o=s.dx,d=DX_KIND[o.k],md=s.models.find(m=>m.id===o.md),n=Math.max(0,o.at-mi(s));A.push(`<section class="card chal"><div class="row"><span class="label">⚔️ Дуэль</span><span class="pill good">${money(o.stake)}</span></div><h3 style="margin-top:4px">${esc(d.title)}: ${esc(o.opp)}</h3><p class="small" style="margin-top:4px">${esc(o.venue)}${o.k==='train'?' · '+fmtN(o.km)+' км':''} · ${n?'через '+n+' '+plural(n,'месяц','месяца','месяцев'):'в этом месяце'} · едет «${esc(md?md.name:'')}» — самая быстрая из ваших</p></section>`);}
   GL.forEach(q=>{const r=titlesRace(s).find(x=>x.k===q.k);A.push(`<section class="card chal"><div class="row"><span class="label">🎯 Цель года</span><span class="pill good">${money(q.reward)}</span></div><h3 style="margin-top:4px">${esc(q.name)}</h3>${r?`<p class="small" style="margin-top:4px">Сейчас: ${esc(r.unit(r.you))}${r.themN?` · впереди: ${esc(r.themN)} (${r.pct?r.them+'%':fmtN(r.them)})`:''}</p>`:''}</section>`);});
-  return `<section class="card board" id="sec-board"><div class="row"><h2>⚔️ Доска вызовов</h2><span class="pill">${(C?1:0)+GL.length} ${plural((C?1:0)+GL.length,'активный','активных','активных')}</span></div>
-    <p class="small muted" style="margin-top:4px">Пари с соперниками и цели года: берите сами. Пари бывают на гонку, матч один на один, спор о скорости, продажи класса — дома и на экспорт — и пробег на надёжность. Выигрыш — деньги и заголовки газет, проигрыш — ставка и насмешки прессы.</p>
+  return `<section class="card board" id="sec-board"><div class="row"><h2>⚔️ Доска вызовов</h2><span class="pill">${(C?1:0)+GL.length+(s.dx&&s.dx.acc?1:0)} ${plural((C?1:0)+GL.length+(s.dx&&s.dx.acc?1:0),'активный','активных','активных')}</span></div>
+    <p class="small muted" style="margin-top:4px">Пари с соперниками и цели года: берите сами. Пари бывают на гонку, матч один на один, спор о скорости, продажи класса — дома и на экспорт — и пробег на надёжность. Изредка газеты зовут на дуэль: машина против рысака, аэроплана или экспресса. Выигрыш — деньги и заголовки газет, проигрыш — ставка и насмешки прессы.</p>
     ${A.join('')}
     ${O.length?`<div class="stack" style="margin-top:8px">${O.map(o=>`<button class="btn block board-o" data-act="boardTake" data-k="${o.id}"><b>${esc(o.title)}</b><small>${esc(o.sub)} · ${o.stake?'ставка '+esc(stakeText({stake:o.stake,x:o.C.x})):'награда '+money(o.reward)}${o.C&&rivalryScore(s,o.C.mq)?' · счёт '+rivalryScore(s,o.C.mq):''}</small></button>`).join('')}</div>`:`<p class="small muted" style="margin-top:8px">${C?'Одно пари за раз: сначала завершите текущее.':'Новых вызовов пока нет — появятся с новыми гонками и продажами.'}</p>`}</section>`;}
 
@@ -12816,6 +13105,72 @@ function chalRevenge(s,O){const B=O.base;if(!B)return false;
   if(B.type==='trial'){const o=offerTrial(s);if(!o){addLog(`Реванш с ${O.mq} отложен.`);return false;}s.chal=Object.assign({},o.C,{mq:O.mq,ci:B.ci,g:B.g,stake:O.stake,acc:1,x:stakeExtra(s,O.mq,'rev',1)});s.chalLast=mi(s);chalAccept(s,s.chal);pendingToasts.push('⚔️ Реванш принят');return true;}
   if(B.type==='sales'&&B.mon){const per=3;s.chal=Object.assign({},B,{stake:O.stake,acc:1,per,end:mi(s)+per,y:s.y,you:0,them:0,n:0,x:stakeExtra(s,O.mq,'rev',1)});s.chalLast=mi(s);chalAccept(s,s.chal);pendingToasts.push('⚔️ Реванш принят');return true;}
   return null;}
+
+/* ================= 0.26: ДУЭЛИ — машина против рысака, аэроплана и экспресса =================
+   В истории машины меряли не только друг с другом. На ярмарках 1890-х машина выходила против лучшего рысака округи —
+   и до 1900 года лошадь часто выигрывала. В 1914 году Барни Олдфилд на «Фиате» и авиатор Линкольн Бичи на биплане
+   объехали 35 городов Америки с «Чемпионатом Вселенной». А в 1930 году Rover, Alvis и Bentley Вулфа Барнато
+   обгоняли «Голубой поезд» с Ривьеры до Кале. Дуэль приходит газетой; принять — значит выставить лучшую серийную машину.
+   Исход решают скорость и надёжность машины (и дороги эпохи); выигрыш — ставка, слава и грамота в шкаф. */
+const DX_KIND={
+  horse:{y0:1896,y1:1906,n:'рысак',title:'Машина против рысака',who:'хозяин рысака',
+    venue:{us:'Ипподром Наррагансетт-парк',fr:'Ипподром Венсен',uk:'Ипподром Кристал-Пэлас',de:'Ипподром Хоппегартен',it:'Ипподром Сан-Сиро'},
+    horse:{us:'Дэн Патч',fr:'Фюшия',uk:'Вест-Энд',de:'Ла Белле',it:'Варенне'},km:3.2,
+    opp:y=>46+0.2*(y-1896),hist:'На ярмарках и ипподромах 1890-х машина выходила против лучшего рысака округи. Публика ставила на лошадь — и до 1900 года часто выигрывала: моторы глохли, цепи слетали, а рысак пробегал милю за две минуты.'},
+  plane:{y0:1911,y1:1916,cc:'us,fr,uk',n:'аэроплан',title:'Машина против аэроплана',who:'импресарио авиашоу',
+    venue:{us:'Ярмарочный ипподром в Огайо',fr:'Аэродром Реймса',uk:'Брукландс'},pilot:{us:'Линкольн Бичи',fr:'Ролан Гаррос',uk:'Клод Грэм-Уайт'},km:8,
+    opp:y=>88+2*(y-1911),hist:'В 1914 году автогонщик Барни Олдфилд на 100-сильном «Фиате» и авиатор Линкольн Бичи на биплане Кёртисса объехали 35 городов Америки с «Чемпионатом Вселенной». Публика валом валила посмотреть, кто быстрее, а дуэлянты заработали больше 250 000 долларов.'},
+  train:{y0:1905,y1:1929,n:'экспресс',title:'Машина против экспресса',who:'железнодорожная компания',
+    route:{uk:['Канны — Кале','«Средиземноморский экспресс»',1180,58],fr:['Ницца — Кале','«Средиземноморский экспресс»',1210,58],us:['Лос-Анджелес — Сан-Франциско','ночной «Жаворонок»',760,56],de:['Берлин — Мюнхен','скорый «Д-цуг»',660,62],it:['Милан — Рим','скорый поезд',630,55]},
+    opp:(y,r)=>r[3]*(1+0.004*(y-1905)),hist:'В январе 1930 года Rover Light Six обогнал «Голубой поезд» от Сен-Рафаэля до Кале, а в марте Вулф Барнато на Bentley Speed Six успел из Канн в лондонский клуб раньше, чем поезд пришёл в Кале. Обогнать экспресс на дорогах эпохи — значит ехать быстро и ни разу не сломаться.'}};
+// лучшая машина для дуэли: самая быстрая серийная (не грузовик)
+function dxCar(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)).map(m=>({m,st:carStats(m,0,s.y)})).sort((a,b)=>b.st.vmax-a.st.vmax)[0]||null;}
+function dxTrainOk(s,v){const d=DX_KIND.train,r=d.route[s.country]||d.route.fr,road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),va=Math.min(v*road,95);return r[2]/va+r[2]/600<=0.98*r[2]/d.opp(s.y,r);}
+function dxOffer(s){const P=dxCar(s);if(!P)return null;const K=Object.entries(DX_KIND).filter(([k,d])=>s.y>=d.y0&&s.y<=d.y1&&(!d.cc||d.cc.split(',').includes(s.country))&&(k!=='train'||dxTrainOk(s,P.st.vmax*3.6))&&!(s.dxSeen&&s.dxSeen[k]&&mi(s)-s.dxSeen[k]<36));
+  if(!K.length||isWar(s.y,s.m,s.country))return null;const [k,d]=K[Math.floor(Math.random()*K.length)],c=s.country,L=s.last;
+  const stake=Math.round(clamp(((L&&L.rev)||0)*0.08,150*cpi(s),12000*cpi(s))/50)*50;
+  const o={k,at:mi(s)+1+Math.floor(Math.random()*2),stake,md:P.m.id,c};
+  if(k==='horse'){o.venue=d.venue[c]||d.venue.fr;o.opp=d.horse[c]||'рысак';o.km=d.km;}
+  else if(k==='plane'){o.venue=d.venue[c];o.opp=d.pilot[c];o.km=d.km;o.gate=Math.round(stake*0.6/50)*50;}
+  else{const r=d.route[c]||d.route.fr;o.venue=r[0];o.opp=(c==='fr'||c==='uk')&&s.y>=1922?'«Голубой поезд»':r[1];o.km=r[2];o.trainV=d.opp(s.y,r);}
+  return o;}
+function dxNewsText(s,o){const d=DX_KIND[o.k],md=s.models.find(m=>m.id===o.md),st=carStats(md,0,s.y),v=Math.round(st.vmax*3.6);
+  if(o.k==='horse')return `Хозяин рысака ${o.opp} заявил газетам: «Ваши самодвижущиеся экипажи — дым и шум. Мой ${o.opp} обгонит любой из них». Дуэль — две мили на ${o.venue}, ставка ${money(o.stake)}.\nОт «${s.company}» поедет «${md.name}» (до ${v} км/ч). Рысак бежит милю за две минуты с небольшим — около ${Math.round(d.opp(s.y))} км/ч.\n${d.hist}`;
+  if(o.k==='plane')return `Импресарио предлагает «${s.company}» турне: авиатор ${o.opp} на биплане против вашей машины — пять миль по кругу ипподрома, на трибунах тысячи зрителей. Сборы делят пополам (${money(o.gate)} вам в любом случае), победителю — ещё ${money(o.stake)}.\nОт «${s.company}» — «${md.name}» (до ${v} км/ч). Биплан летит около ${Math.round(d.opp(s.y))} км/ч.\n${d.hist}`;
+  return `Железнодорожная компания хвастает, что ${o.opp} довезёт пассажиров ${o.venue} быстрее любой машины. «${s.company}» вызывают на дуэль: ${fmtN(o.km)} км по дорогам против расписания поезда (в среднем ${Math.round(o.trainV)} км/ч со всеми остановками). Ставка — ${money(o.stake)}.\nОт «${s.company}» — «${md.name}» (до ${v} км/ч), два шофёра посменно. Ехать придётся день и ночь — и ни разу не сломаться.\n${d.hist}`;}
+// раз в месяц: предложение дуэли (редко) и развязка принятой
+function dxCheck(s){if(s.over)return;
+  if(s.dx&&s.dx.acc&&mi(s)>=s.dx.at){dxResolve(s);return;}
+  if(s.dx||s.pending.length||mi(s)<10||mi(s)-(s.dxLast||-99)<14||Math.random()>0.04)return;
+  const o=dxOffer(s);if(!o)return;s.dx=o;s.dxLast=mi(s);(s.dxSeen=s.dxSeen||{})[o.k]=mi(s);const d=DX_KIND[o.k],T=(o.at-mi(s));
+  pushEvent({kicker:'Дуэль',title:`${d.title}: ${o.opp}`,deck:`${o.venue} · через ${T} ${plural(T,'месяц','месяца','месяцев')} · ставка ${money(o.stake)}`,text:dxNewsText(s,o),carId:o.md,own:1,
+    choices:[['Принять дуэль','dxYes'],['Отказаться','dxNo']]},true);}
+function dxAnswer(s,key){const o=s.dx;if(!o)return;if(key==='dxNo'){s.dx=null;addLog(`Вы отказались от дуэли «${DX_KIND[o.k].title.toLowerCase()}».`);return;}
+  o.acc=1;addLog(`⚔️ Дуэль принята: ${DX_KIND[o.k].title.toLowerCase()} (${o.opp}) — ${o.venue}, через ${o.at-mi(s)} мес. Ставка ${money(o.stake)}.`,'good');}
+// Исход: короткие дуэли решает скорость (и заглохший мотор), дальняя — средняя скорость с остановками и поломками
+function dxSim(s,o){const md=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m;if(!md)return null;const st=carStats(md,0,s.y),v=st.vmax*3.6,rel=st.rel,d=DX_KIND[o.k],r=Math.random;
+  if(o.k!=='train'){const vv=v*(o.k==='horse'?0.82:0.9)*(0.95+0.1*r()),stall=r()<(1-rel)*(o.k==='horse'?1.6:0.8),opp=d.opp(s.y)*(0.97+0.06*r());
+    const tMe=stall?null:o.km/vv*60,tOp=o.km/opp*60;return {md,win:!stall&&vv>opp,tMe,tOp,stall,v:Math.round(vv),opp:Math.round(opp)};}
+  // экспресс: дороги эпохи, ночь, заправки; поломки по пути (час-два ремонта) и редкая — фатальная
+  const road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),vAvg=Math.min(v*road,95),hours=o.km/vAvg,n=Math.max(3,Math.round(o.km/150));let lost=0,brk=0,fatal=false;
+  for(let i=0;i<n;i++){if(r()<(1-rel)*0.9){brk++;lost+=0.6+r()*1.6;if(r()<0.12)fatal=true;}}
+  const tMe=fatal?null:(hours+lost+o.km/600)*60,tOp=o.km/o.trainV*60;return {md,win:!fatal&&tMe<tOp,tMe,tOp,brk,fatal,v:Math.round(vAvg),opp:Math.round(o.trainV)};}
+function dxResolve(s){const o=s.dx;s.dx=null;if(!o)return;const R=dxSim(s,o),d=DX_KIND[o.k];if(!R){addLog('Дуэль не состоялась: нет машины.','bad');return;}
+  const hm=t=>t>=90?`${Math.floor(t/60)} ч ${String(Math.round(t%60)).padStart(2,'0')} мин`:`${Math.floor(t)} мин ${String(Math.round(t%1*60)).padStart(2,'0')} с`;
+  let money_=0;if(o.gate){s.cash+=o.gate;money_+=o.gate;}
+  if(R.win){s.cash+=o.stake;money_+=o.stake;s.rep=clamp(s.rep+(o.k==='train'?5:3),0,100);wfxAdd(s,'*',segOf(R.md),o.k==='train'?0.25:0.15,8,'дуэль: '+d.n);if(o.k==='train')s.relFx=mi(s)+8;}
+  else{s.cash-=o.stake;s.rep=clamp(s.rep-1,0,100);}
+  const tx=o.k==='train'?(R.win?`«${R.md.name}» прошла ${o.venue} за ${hm(R.tMe)} — ${o.opp} был в пути ${hm(R.tOp)}. ${R.brk?`По дороге ${R.brk} ${plural(R.brk,'поломка','поломки','поломок')}, механики справились. `:'Ни одной поломки за всю дорогу. '}Средняя скорость — ${R.v} км/ч, днём и ночью.`
+      :R.fatal?`На полпути у «${R.md.name}» не выдержала ${['рессора','коробка','полуось','шестерня'][Math.floor(Math.random()*4)]} — машину увезли на платформе того самого поезда.`:`«${R.md.name}» отстала: ${hm(R.tMe)} против ${hm(R.tOp)} у поезда. ${R.brk?`${R.brk} ${plural(R.brk,'поломка','поломки','поломок')} съели часы.`:'Дороги оказались хуже рельсов.'}`)
+    :R.stall?`Мотор «${R.md.name}» заглох на старте под свист трибун — ${o.opp} прошёл дистанцию в одиночку.`
+    :R.win?`«${R.md.name}» прошла ${o.km<5?'две мили':'пять миль'} за ${hm(R.tMe)} — ${o.opp} отстал (${hm(R.tOp)}). Скорость — ${R.v} км/ч против ${R.opp}.`:`${o.opp} оказался быстрее: ${hm(R.tOp)} против ${hm(R.tMe)} у «${R.md.name}» (${R.opp} км/ч против ${R.v}).`;
+  const pay=o.gate?`Сборы — ${money(o.gate)}${R.win?`, выигрыш — ${money(o.stake)}`:`, проигрыш — ${money(o.stake)}`}.`:R.win?`Выигрыш — ${money(o.stake)}.`:`Ставка ${money(o.stake)} проиграна.`;
+  addLog(`⚔️ ${d.title} (${o.opp}): ${R.win?'победа':'поражение'}. ${pay}`,R.win?'good':'bad');
+  if(R.win)try{trophyAdd(s,{kind:'charter',title:`${d.title}: ${o.opp}`,sub:`${o.venue}${o.k==='train'?' · '+fmtN(o.km)+' км':''}`,story:tx,key:'dx|'+o.k+'|'+mi(s),carId:R.md.id,pt:`«${s.company}» обогнала ${o.k==='train'?'экспресс':o.k==='plane'?'аэроплан':'рысака'}!`});}catch(_){}
+  pushEvent({kicker:'Дуэль',own:1,carId:R.md.id,title:R.win?`«${s.company}» обогнала ${o.k==='train'?'экспресс':o.k==='plane'?'аэроплан':'рысака'}!`:`${o.opp} обогнал «${s.company}»`,deck:`${d.title} · ${o.venue}`,
+    text:tx+'\n'+pay+(R.win?' Газеты пишут о машине, которая быстрее '+(o.k==='train'?'поезда':o.k==='plane'?'аэроплана':'лошади')+', — полгода её охотнее покупают.':' Газеты посмеиваются, но и запоминают имя марки.'),
+    mean:R.win?'Репутация растёт, полгода ваши машины этого класса берут охотнее.':'',choices:[['Читать дальше','ok']]},true);
+  if(R.win)pendingToasts.push('⚔️ '+d.title+': победа!');}
 
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
@@ -16538,6 +16893,16 @@ function r3dSkidAdd(a,b,w,col,al){const S=R3.skid,mb=S.mb,q=S.head;S.head=(S.hea
   S.dirty=true;}
 function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a,gv:gv||0,floor:gv?y-0.45:-1e9});}
 /* ---------- камера ---------- */
+// Первое препятствие на луче от машины назад (к камере): расстояние, м (или D — если чисто). Круги — стволы, столбы; прямоугольники — дома, трибуны
+function camBlock(F,fw,D){const T=R3.T,L=T.segCol;if(!L)return D;const n=T.n,dx=-fw[0],dz=-fw[2];let best=D;
+  for(let k=-7;k<=2;k++){let j=F.idx+k;if(T.closed)j=(j%n+n)%n;else if(j<0||j>=n)continue;const A=L[j];if(!A)continue;
+    for(const o of A){const ox=o.x-F.x,oz=o.z-F.z;if(ox*ox+oz*oz>(D+o.r+1)*(D+o.r+1))continue;let t=null;
+      if(o.box){const b=o.box,e=0.3,px=-(ox*b.ux+oz*b.uz),pz=-(ox*b.vx+oz*b.vz),ux=dx*b.ux+dz*b.uz,uz=dx*b.vx+dz*b.vz;let t0=0,t1=D;
+        for(const [p,u,h] of [[px,ux,b.hu+e],[pz,uz,b.hv+e]]){if(Math.abs(u)<1e-6){if(p<-h||p>h){t0=1;t1=0;}continue;}let a=(-h-p)/u,c=(h-p)/u;if(a>c){const q=a;a=c;c=q;}t0=Math.max(t0,a);t1=Math.min(t1,c);}
+        if(t0<=t1&&t0>0.9)t=t0;}
+      else{const r=o.r+0.35,pr=ox*dx+oz*dz,d2=ox*ox+oz*oz-pr*pr;if(pr>0&&d2<r*r){const tt=pr-Math.sqrt(r*r-d2);if(tt>0.9)t=tt;}}
+      if(t!==null&&t<best)best=t;}}
+  return best;}
 function r3dCamera(dt,W,H){
   const F=R.follow,v=R3.view,cm=R3.cam||(R3.cam={yaw:F.yaw,y:null,shake:0,pitch:0,fov:1});
   // курс камеры: догоняет курс машины быстро, но не отстаёт больше чем на ~7° — машина всегда видна сзади
@@ -16560,7 +16925,9 @@ function r3dCamera(dt,W,H){
     // камера не уходит в склон: над землёй по пути от машины к камере; круча между ними — подъезжаем ближе и выше
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}
       if(need<=0.02)break;if(need>2.5&&Dd>3.4)Dd*=0.8;else{ey+=need;break;}}
-    cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*6);
+    // 0.26: между машиной и камерой — ствол дерева, стена дома, трибуна: камера подъезжает ближе, а не влезает внутрь
+    const blk=camBlock(F,fw,Dd+0.6);if(blk<Dd+0.6)Dd=Math.max(2.1,blk-0.6);
+    cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*(Dd<cm.dd?22:6));
     // на подъёме смотрим на дорогу впереди, а не в землю
     const T3=R3.T,ia=T3.closed?(F.idx+Math.round(A/T3.step))%T3.n:Math.min(T3.n-1,F.idx+Math.round(A/T3.step)),rise=clamp(T3.pts[ia][1]-cm.y,-3,6);cm.rise=cm.rise===undefined?rise:cm.rise+(rise-cm.rise)*Math.min(1,dt*3);
     eye=[F.x-fw[0]*cm.dd+sh[0],Math.max(cm.ey,ey-0.6)+sh[1]+Math.max(0,cm.rise)*0.25,F.z-fw[2]*cm.dd];look=[F.x+fw[0]*A,cm.y+LH+cm.rise*0.85,F.z+fw[2]*A];}
@@ -17147,16 +17514,18 @@ function r3dChunkExtras(S,lit){const T=R3.T,W=T.W,st=T.step,e3=lit.e[3];
   for(let s=0;s<S.length-1;s++){const A=S[s],B=S[s+1];
     // мост: парапеты, лицевые стены с арками до воды, свод
     if(A.bridge&&B.bridge){const rv=(T.rivers||[]).reduce((b,q)=>Math.abs(q.i-A.i)<Math.abs((b||{i:1e9}).i-A.i)?q:b,null);if(!rv)continue;
-      const i0=(()=>{let k=rv.i;while(k>0&&T.bridge[k-1])k--;return k;})(),i1=(()=>{let k=rv.i;while(k<T.n-1&&T.bridge[k+1])k++;return k;})(),L=(i1-i0)*st,ya=A.road[2][1],yb=B.road[2][1],bed=T.pts[rv.i][1]-rv.d;
+      // 0.26: поперечник дороги — 15 точек (колея, «гребёнка»); края — первая и последняя, середина — 7-я
+      const RL=A.road.length-1,RC=RL>>1;
+      const i0=(()=>{let k=rv.i;while(k>0&&T.bridge[k-1])k--;return k;})(),i1=(()=>{let k=rv.i;while(k<T.n-1&&T.bridge[k+1])k++;return k;})(),L=(i1-i0)*st,ya=A.road[RC][1],yb=B.road[RC][1],bed=T.pts[rv.i][1]-rv.d;
       const nA=Math.max(1,Math.round(L/34)),yBot=u=>{const w=L/nA,k=Math.min(nA-1,Math.floor(u/w)),m=(k+0.5)*w,h=(u-m)/(w*0.5*0.86);const top=Math.min(ya,yb)-1.3;return Math.abs(h)>=1?bed:bed+0.4+(top-bed-0.4)*Math.sqrt(1-h*h);};
       const uA=(A.i-i0)*st,uB=(B.i-i0)*st;lit.e[3]=txLay('stone_wall',1);const col=[196,188,172];
-      [0,4].forEach(ix=>{const sd=ix===0?1:-1,pa=A.road[ix],pb=B.road[ix],na=T.N[A.i],nb=T.N[B.i],o=0.55;
+      [0,RL].forEach(ix=>{const sd=ix===0?1:-1,pa=A.road[ix],pb=B.road[ix],na=T.N[A.i],nb=T.N[B.i],o=0.55;
         const qa=[pa[0]+na[0]*sd*o,pa[1],pa[2]+na[1]*sd*o],qb=[pb[0]+nb[0]*sd*o,pb[1],pb[2]+nb[1]*sd*o],up=0.95,nOut=[na[0]*sd,0,na[1]*sd];
         lit.poly([[pa[0],pa[1],pa[2]],[pb[0],pb[1],pb[2]],[pb[0],pb[1]+up,pb[2]],[pa[0],pa[1]+up,pa[2]]],[-nOut[0],0,-nOut[2]],col,MID.stone);
         lit.poly([[pa[0],pa[1]+up,pa[2]],[pb[0],pb[1]+up,pb[2]],[qb[0],qb[1]+up,qb[2]],[qa[0],qa[1]+up,qa[2]]],[0,1,0],cMul(col,1.05),MID.stone);
         lit.poly([[qa[0],yBot(uA),qa[2]],[qb[0],yBot(uB),qb[2]],[qb[0],qb[1]+up,qb[2]],[qa[0],qa[1]+up,qa[2]]],nOut,col,MID.stone);});
       // свод арки снизу (между лицевыми стенами)
-      const a0=A.road[0],a4=A.road[4],b0=B.road[0],b4=B.road[4],na=T.N[A.i],nb=T.N[B.i],o=0.55,P=(p,n,sd,y)=>[p[0]+n[0]*sd*o,y,p[2]+n[1]*sd*o];
+      const a0=A.road[0],a4=A.road[RL],b0=B.road[0],b4=B.road[RL],na=T.N[A.i],nb=T.N[B.i],o=0.55,P=(p,n,sd,y)=>[p[0]+n[0]*sd*o,y,p[2]+n[1]*sd*o];
       lit.poly([P(a0,na,1,yBot(uA)),P(a4,na,-1,yBot(uA)),P(b4,nb,-1,yBot(uB)),P(b0,nb,1,yBot(uB))],[0,-1,0],cMul(col,0.8),MID.stone);
       lit.e[3]=e3;continue;}}
   // серпантин: скала со стороны горы (фото-камень, неровный срез)
@@ -18475,6 +18844,8 @@ const ACT={
     if(d.v==='five'&&was!=='five'){addLog('Объявлена зарплата «пять долларов в день» — вдвое выше рынка. У ворот завода очередь из желающих.','good');if(G.y<1914)recordFirst(G,'wage:five','Зарплата «пять долларов в день»',1914,'Ford');G.rep=clamp(G.rep+4,0,100);flushToasts();}rerender();},
   tech:d=>{const k=d.k,c=techCost(G,k);if(!techOpen(G,k)||G.techBuild||G.cash<c)return;G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};addLog(`Начато внедрение: ${techNext(G,k).name} (${money(c)}).`);rerender();},
   loan:d=>{const n=+d.n;if(!loanOpen(G)){toast(creditState(G).t);return;}if(G.loan+n<=maxLoan(G)){G.loan+=n;G.cash+=n;rerender();}},
+  // 0.26: своя цена в стране — наценка или скидка к домашней
+  pmk:d=>{const k=+d.v;G.pmk=G.pmk||{};if(Math.abs(k-1)<1e-6)delete G.pmk[d.c];else G.pmk[d.c]=k;addLog(`Цена в стране «${COUNTRIES[d.c].name}»: ${k===1?'как дома':(k>1?'+':'−')+Math.round(Math.abs(k-1)*100)+'% к домашней'}.`);rerender();},
   dpol:d=>{G.dpol=d.v;addLog(`Скидка дилерам: ${DPOL[d.v].n.toLowerCase()} (${Math.round(DPOL[d.v].m*100)}% цены).`);rerender();},
   // 0.25: кредит покупателям, вложения, спецакции
   finPol:d=>{if(!techLv(G,'credit'))return;G.finPol=d.v==='own'?'own':'bank';addLog(G.finPol==='own'?'Рассрочку покупателям теперь даёт своя кредитная компания: проценты — ваши, но деньги на рассрочку — тоже.':'Рассрочку покупателям снова дают банки — за комиссию.');rerender();},

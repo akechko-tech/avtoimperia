@@ -100,14 +100,17 @@ function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
 function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
-const CHAR_NAMES={perf:'Мощность',rel:'Надёжность',comf:'Комфорт',ease:'Простота вождения',safe:'Тормоза',econ:'Экономичность',cap:'Вместимость'};
-const CHAR_HINT={perf:'лошадиных сил на тонну',rel:'реже ломается',comf:'рессоры, шины, кузов, плавность мотора',ease:'коробка, педали, вес',safe:'тормоза и сцепление шин',econ:'бензин, шины, ремонт',cap:'места или груз'};
+const CHAR_NAMES={perf:'Мощность',rel:'Надёжность',comf:'Комфорт',ease:'Простота вождения',safe:'Тормоза и безопасность',econ:'Экономичность',cap:'Вместимость'};
+const CHAR_HINT={perf:'лошадиных сил на тонну',rel:'реже ломается',comf:'рессоры, шины, кузов, плавность мотора',ease:'коробка, педали, вес',safe:'тормоза, сцепление шин, закрытый кузов',econ:'бензин, шины, ремонт',cap:'места или груз'};
 // Что ценят покупатели каждого класса (сумма весов — 1)
-const CHAR_W={people:{perf:0.12,rel:0.25,comf:0.07,ease:0.15,safe:0.05,econ:0.28,cap:0.08},
-  middle:{perf:0.21,rel:0.18,comf:0.21,ease:0.1,safe:0.08,econ:0.08,cap:0.14},
-  lux:{perf:0.25,rel:0.14,comf:0.36,ease:0.1,safe:0.1,econ:0,cap:0.05},
+// 0.26 (по работам о спросе на машины — Court 1939, Griliches 1961, Raff и Trajtenberg 1996, Berry, Levinsohn и Pakes 1995):
+// народный класс считает, во что обходится километр на человека — бензин, ремонт, места в салоне; средний класс платит за комфорт;
+// люкс ждёт лучшего во всём, кроме экономии; спортивный — скорости, тормозов и яркой машины
+const CHAR_W={people:{perf:0.08,rel:0.22,comf:0.06,ease:0.12,safe:0.05,econ:0.32,cap:0.15},
+  middle:{perf:0.17,rel:0.16,comf:0.32,ease:0.1,safe:0.1,econ:0.05,cap:0.1},
+  lux:{perf:0.22,rel:0.16,comf:0.3,ease:0.1,safe:0.12,econ:0,cap:0.1},
   // спортивные: скорость и разгон, тормоза и сцепление, лёгкость управления; комфорт почти не важен
-  sport:{perf:0.42,rel:0.12,comf:0.04,ease:0.14,safe:0.22,econ:0,cap:0.06},
+  sport:{perf:0.5,rel:0.1,comf:0.03,ease:0.12,safe:0.2,econ:0,cap:0.05},
   truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0}};
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
@@ -119,9 +122,12 @@ function carChar(md,y){
   return {perf:st.hp*eff/mass*1000,rel:Math.sqrt(mtbf),
     comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6,t3:0.95}[p.t.id]||1),
     ease:p.g.ease*(1+0.04*U(p.g.id))*(0.6+0.4*p.k.ease)*(p.w.solid?0.85:1)*Math.pow(1000/Math.max(500,mass),0.2),
-    safe:st.brk*st.grip,econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
-    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel};
+    safe:st.brk*st.grip*(p.b.closed?1.12:1),econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
+    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel,fuel,mtbf,vT:truck?truckSpeed(st,pay):0};
 }
+// 0.26: средняя скорость гружёного грузовика в пути, км/ч: полный кузов, подъём 2%, дороги эпохи (≈55% предельной)
+function truckSpeed(st,pay){const m=st.kg+pay*1000,g=9.81,A=st.kd,B=(st.crr+0.02)*m*g;let v=10;for(let i=0;i<30;i++){const f=A*v*v*v+B*v-st.P,df=3*A*v*v+B;v=Math.max(2,v-f/df);}
+  return clamp(v*3.6*0.55,6,45);}
 const CH_CACHE=new Map();
 function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer:'')+PART_KEYS.map(k=>upgL(md[k])).join('')].join('|');
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
@@ -133,6 +139,8 @@ function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=char
   // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
   const LC=md.legend?legendCh(md):null,A=LC?Object.assign({},A0):A0;if(LC)for(const k in LC)if(A[k])A[k]*=LC[k];
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4);by[k]=r;if(W[k])lnS+=W[k]*Math.log(r);});
+  // 0.26: люкс — машина без слабых мест: худшая черта (кроме экономичности) тянет вниз всю оценку
+  if(g==='lux'){let lo=0;CHAR_K.forEach(k=>{if(W[k]>0.05)lo=Math.min(lo,Math.log(by[k]));});lnS+=0.35*lo;}
   return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,W,ref,A,R};}
 function classScore(md,s,c){return classCompare(md,s,c).S;}
 // Качество для рынка: доля лучшей машины эпохи (у соперников класса — QG)
@@ -196,7 +204,7 @@ function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1));}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1));}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
 function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1);}
 // станки, конвейер и электромоторы делают цех производительнее — но и дороже: место в цеху стоит больше

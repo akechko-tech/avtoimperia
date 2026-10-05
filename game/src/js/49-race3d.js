@@ -517,6 +517,16 @@ function r3dSkidAdd(a,b,w,col,al){const S=R3.skid,mb=S.mb,q=S.head;S.head=(S.hea
   S.dirty=true;}
 function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a,gv:gv||0,floor:gv?y-0.45:-1e9});}
 /* ---------- камера ---------- */
+// Первое препятствие на луче от машины назад (к камере): расстояние, м (или D — если чисто). Круги — стволы, столбы; прямоугольники — дома, трибуны
+function camBlock(F,fw,D){const T=R3.T,L=T.segCol;if(!L)return D;const n=T.n,dx=-fw[0],dz=-fw[2];let best=D;
+  for(let k=-7;k<=2;k++){let j=F.idx+k;if(T.closed)j=(j%n+n)%n;else if(j<0||j>=n)continue;const A=L[j];if(!A)continue;
+    for(const o of A){const ox=o.x-F.x,oz=o.z-F.z;if(ox*ox+oz*oz>(D+o.r+1)*(D+o.r+1))continue;let t=null;
+      if(o.box){const b=o.box,e=0.3,px=-(ox*b.ux+oz*b.uz),pz=-(ox*b.vx+oz*b.vz),ux=dx*b.ux+dz*b.uz,uz=dx*b.vx+dz*b.vz;let t0=0,t1=D;
+        for(const [p,u,h] of [[px,ux,b.hu+e],[pz,uz,b.hv+e]]){if(Math.abs(u)<1e-6){if(p<-h||p>h){t0=1;t1=0;}continue;}let a=(-h-p)/u,c=(h-p)/u;if(a>c){const q=a;a=c;c=q;}t0=Math.max(t0,a);t1=Math.min(t1,c);}
+        if(t0<=t1&&t0>0.9)t=t0;}
+      else{const r=o.r+0.35,pr=ox*dx+oz*dz,d2=ox*ox+oz*oz-pr*pr;if(pr>0&&d2<r*r){const tt=pr-Math.sqrt(r*r-d2);if(tt>0.9)t=tt;}}
+      if(t!==null&&t<best)best=t;}}
+  return best;}
 function r3dCamera(dt,W,H){
   const F=R.follow,v=R3.view,cm=R3.cam||(R3.cam={yaw:F.yaw,y:null,shake:0,pitch:0,fov:1});
   // курс камеры: догоняет курс машины быстро, но не отстаёт больше чем на ~7° — машина всегда видна сзади
@@ -539,7 +549,9 @@ function r3dCamera(dt,W,H){
     // камера не уходит в склон: над землёй по пути от машины к камере; круча между ними — подъезжаем ближе и выше
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}
       if(need<=0.02)break;if(need>2.5&&Dd>3.4)Dd*=0.8;else{ey+=need;break;}}
-    cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*6);
+    // 0.26: между машиной и камерой — ствол дерева, стена дома, трибуна: камера подъезжает ближе, а не влезает внутрь
+    const blk=camBlock(F,fw,Dd+0.6);if(blk<Dd+0.6)Dd=Math.max(2.1,blk-0.6);
+    cm.ey=cm.ey===undefined?ey:cm.ey+(ey-cm.ey)*Math.min(1,dt*(ey>cm.ey?14:4));cm.dd=cm.dd===undefined?Dd:cm.dd+(Dd-cm.dd)*Math.min(1,dt*(Dd<cm.dd?22:6));
     // на подъёме смотрим на дорогу впереди, а не в землю
     const T3=R3.T,ia=T3.closed?(F.idx+Math.round(A/T3.step))%T3.n:Math.min(T3.n-1,F.idx+Math.round(A/T3.step)),rise=clamp(T3.pts[ia][1]-cm.y,-3,6);cm.rise=cm.rise===undefined?rise:cm.rise+(rise-cm.rise)*Math.min(1,dt*3);
     eye=[F.x-fw[0]*cm.dd+sh[0],Math.max(cm.ey,ey-0.6)+sh[1]+Math.max(0,cm.rise)*0.25,F.z-fw[2]*cm.dd];look=[F.x+fw[0]*A,cm.y+LH+cm.rise*0.85,F.z+fw[2]*A];}

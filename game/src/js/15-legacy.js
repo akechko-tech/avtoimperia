@@ -69,3 +69,34 @@ function finalResults(s,show){
   if(show){openFinal();return;}
   s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает 1930 год`,text,paper:true,choices:[['Сравнить с историей','final']]});
 }
+/* ---------- 0.26: наследие в людях — каждая N-я семья, фирма, лимузин, спортивная машина ---------- */
+// Ваши машины на дорогах по классам (все страны игры): прибавились проданные, ушли старые
+function pflMonth(s,r){const life=tabAt(CAR_LIFE,yf(s)),tl=tabAt(TRUCK_LIFE,yf(s));
+  if(!s.pfl){s.pfl={people:0,middle:0,lux:0,sport:0,truck:0};let pf=0;for(const c in (s.pfleet||{}))pf+=s.pfleet[c]||0;const act=s.models.filter(m=>m.status==='prod'&&!isTruck(m));
+    const tot=act.reduce((a,m)=>a+(m.totalSold||0),0)||1;act.forEach(m=>{s.pfl[segOf(m)]+=pf*(m.totalSold||0)/tot;});if(!act.length)s.pfl.people+=pf;
+    s.models.filter(m=>isTruck(m)).forEach(m=>{s.pfl.truck+=(m.totalSold||0)*0.6;});}
+  const add={};s.models.forEach(md=>{if(!md.soldBy)return;const g=isTruck(md)?'truck':segOf(md);for(const c in md.soldBy)add[g]=(add[g]||0)+(md.soldBy[c]||0);});
+  for(const g in s.pfl)s.pfl[g]=Math.max(0,s.pfl[g]*(1-1/(12*(g==='truck'?tl:life)))+(add[g]||0));}
+// Сколько машин класса на дорогах всех стран и у каждой марки: продажи за годы службы машины (история рынка)
+function worldFleet(s){const t=yf(s),life=Math.round(tabAt(CAR_LIFE,t)),tl=Math.round(tabAt(TRUCK_LIFE,t)),out={tot:{},br:{}};
+  for(const c in COUNTRIES)for(const g of SEGK){const L=g==='truck'?tl:life;for(let k=0;k<L;k++){const ss={y:Math.floor(t-k),m:6};if(ss.y<1895)break;const w=1-k/(L+1);
+    out.tot[g]=(out.tot[g]||0)+segAnnual(c,g,ss)*w;
+    (COMPS[c]||[]).forEach(cp=>{if(cp.pk===s.pioneer)return;const v=compVol(cp,ss)*((cp.mix&&cp.mix[g])||0)*w;if(v>0){const n=compName(cp,s),B=out.br[n]=out.br[n]||{};B[g]=(B[g]||0)+v;}});}}
+  return out;}
+// «каждая 12-я» — до тысячи; дальше «одна из 16 000»
+function oneIn(n,w){const r=Math.round(n);return r<=1?'каждая'+(w?' '+w:''):r<1000?`каждая ${r}-я${w?' '+w:''}`:r<=5e6?`одна${w?' '+w:''} из ${r.toLocaleString('ru-RU')}`:`одна${w?' '+w:''} из миллионов`;}
+function humanLegacy(s){const pf=s.pfl||{},W=worldFleet(s),H=Object.keys(COUNTRIES).reduce((a,c)=>a+households(c,s),0);
+  const cars=g=>g==='car'?['people','middle','lux','sport'].reduce((a,k)=>a+(pf[k]||0),0):(pf[g]||0),tot=g=>g==='car'?['people','middle','lux','sport'].reduce((a,k)=>a+(W.tot[k]||0),0):(W.tot[g]||0);
+  const me={fam:cars('car')>0.5?H/cars('car'):0,car:cars('car')>0.5?tot('car')/cars('car'):0,truck:(pf.truck||0)>0.5?tot('truck')/pf.truck:0,lux:(pf.lux||0)>0.5?tot('lux')/pf.lux:0,sport:(pf.sport||0)>0.5?tot('sport')/pf.sport:0};
+  const brs=Object.entries(W.br).map(([n,B])=>({n,car:['people','middle','lux','sport'].reduce((a,k)=>a+(B[k]||0),0),truck:B.truck||0,lux:B.lux||0,sport:B.sport||0}));
+  const top=k=>brs.filter(b=>b[k]>0.5).sort((a,b)=>b[k]-a[k]).slice(0,3).map(b=>({n:b.n,v:tot(k==='car'?'car':k)/b[k],fam:k==='car'?H/b[k]:0}));
+  return {me,H,top:{car:top('car'),truck:top('truck'),lux:top('lux'),sport:top('sport')}};}
+function humanLegacyHTML(s){if(!s.pfl)return '';const L=humanLegacy(s),m=L.me,row=(t,v,rv)=>`<div class="hum-row"><span>${t}</span><b class="num">${v}</b>${rv?`<small class="muted">${rv}</small>`:''}</div>`;
+  const cmp=(arr,f)=>arr.length?arr.map(b=>`${esc(b.n)} — ${f(b)}`).join(' · '):'';
+  const lines=[];
+  lines.push(row('Семьи',m.fam?`${oneIn(m.fam,'семья')} ездит на «${esc(s.company)}»`:'ваших машин на дорогах ещё нет',cmp(L.top.car,b=>oneIn(b.fam,'семья'))));
+  if(m.car)lines.push(row('Машины на дорогах',`${oneIn(m.car,'машина')} — ваша`,cmp(L.top.car,b=>oneIn(b.v,'машина'))));
+  if(m.truck||L.top.truck.length)lines.push(row('Фирмы',m.truck?`${oneIn(m.truck,'фирма')} с грузовиком возит грузы на вашем`:'ваших грузовиков у фирм пока нет',cmp(L.top.truck,b=>oneIn(b.v))));
+  if(m.lux||(L.top.lux.length&&s.y>=1900))lines.push(row('Люкс',m.lux?`${oneIn(m.lux)} дорогая машина — ваша`:'ваших дорогих машин пока нет',cmp(L.top.lux,b=>oneIn(b.v))));
+  if((m.sport||L.top.sport.length)&&s.y>=1910)lines.push(row('Спорт',m.sport?`${oneIn(m.sport)} спортивная машина — ваша`:'ваших спортивных машин пока нет',cmp(L.top.sport,b=>oneIn(b.v))));
+  return `<div class="label" style="margin-top:12px">Наследие в людях</div><div class="hum">${lines.join('')}</div><p class="small muted" style="margin-top:4px">Все пять стран игры: семьи, машины и грузовики на дорогах (машина служит ${Math.round(tabAt(CAR_LIFE,yf(s)))} лет). Серым — самые большие марки для сравнения.</p>`;}
