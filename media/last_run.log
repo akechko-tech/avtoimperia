@@ -1,55 +1,213 @@
-== job films_cut
-cut michelin1924 File:André Michelin et son secrétaire en compagnie d'Albert Kahn dans les jardins de sa propriété - AI88521.webm 2.5 8 265918
-== job films_cut took 6 s
-== job voice
-voice 20 lines 20 s
-voice 40 lines 36 s
-voice 60 lines 53 s
-voice 80 lines 70 s
-voice 100 lines 85 s
-voice 120 lines 100 s
-voice 140 lines 116 s
-voice 160 lines 131 s
-voice 180 lines 146 s
-voice 200 lines 162 s
-voice 220 lines 179 s
-voice 240 lines 197 s
-voice 260 lines 214 s
-voice 280 lines 230 s
-voice 300 lines 246 s
-voice 320 lines 261 s
-voice 340 lines 280 s
-voice 360 lines 298 s
-voice 380 lines 316 s
-voice 400 lines 335 s
-voice 420 lines 351 s
-voice 440 lines 367 s
-voice 460 lines 384 s
-voice 480 lines 401 s
-voice 500 lines 418 s
-voice 520 lines 435 s
-voice 540 lines 452 s
-voice 560 lines 469 s
-voice 580 lines 486 s
-voice 600 lines 503 s
-voice 620 lines 519 s
-voice 640 lines 536 s
-voice 660 lines 552 s
-voice 680 lines 567 s
-voice 700 lines 582 s
-voice 720 lines 597 s
-voice 740 lines 613 s
-voice 760 lines 629 s
-voice 780 lines 642 s
-voice 800 lines 657 s
-voice 820 lines 672 s
-voice 840 lines 686 s
-voice 860 lines 702 s
-voice 880 lines 715 s
-voice 900 lines 729 s
-voice 920 lines 747 s
-voice 940 lines 762 s
-voice 960 lines 774 s
-voice 980 lines 786 s
-voice done 991 new lines; total 2903
-== job voice took 799 s
+== job hits_scan
+search "In My Merry Oldsmobile" -> 1
+search "Take Me Out to the Ball Game" -> 4
+search "Shine On, Harvest Moon" -> 2
+search "By the Light of the Silvery Moon" -> 1
+search "Let Me Call You Sweetheart" -> 1
+search "Alexander's Ragtime Band" -> 5
+search "Over There" -> 16
+search "Long Way to Tipperary" -> 7
+search "Pack Up Your Troubles" -> 1
+search "Keep the Home Fires Burning" -> 4
+search "Hello! Ma Baby" -> 1
+search "Give My Regards to Broadway" -> 1
+search "Yankee Doodle Boy" -> 1
+search "Grand Old Flag" -> 6
+search "Meet Me in St. Louis" -> 0
+search "In the Good Old Summer Time" -> 0
+search "Bill Bailey" -> 2
+search "Down by the Old Mill Stream" -> 1
+search "Some of These Days" -> 2
+search "St. Louis Blues" -> 9
+search "Memphis Blues" -> 10
+search "Darktown Strutters" -> 0
+search "Swanee" -> 7
+search "Dardanella" -> 1
+search "Whispering" -> 37
+search "Ain't We Got Fun" -> 1
+search "Yes! We Have No Bananas" -> 3
+search "Tea for Two" -> 2
+search "The Charleston" -> 1
+search "Bye Bye Blackbird" -> 0
+search "Ain't She Sweet" -> 5
+search "Five Foot Two" -> 0
+search "Sweet Georgia Brown" -> 3
+search "Happy Days Are Here Again" -> 2
+search "Ja-Da" -> 23
+search "Japanese Sandman" -> 17
+search "Avalon" -> 6
+search "April Showers" -> 4
+search "My Blue Heaven" -> 3
+search "Tiger Rag" -> 4
+search "Livery Stable Blues" -> 3
+search "Dixie Jass Band" -> 1
+search "Original Dixieland" -> 14
+search "Dippermouth Blues" -> 1
+search "Black Bottom Stomp" -> 1
+search "King Porter Stomp" -> 0
+search "Wolverine Blues" -> 0
+search "Royal Garden Blues" -> 2
+search "Twelfth Street Rag" -> 3
+search "Kitten on the Keys" -> 8
+search "Nola" -> 26
+search "Maple Leaf Rag" -> 18
+search "The Entertainer" -> 10
+search "Elite Syncopations" -> 3
+search "The Easy Winners" -> 2
+search "Solace" -> 13
+search "Pineapple Rag" -> 2
+search "Weeping Willow" -> 5
+search "Bethena" -> 3
+search "Peacherine" -> 2
+search "Swipesy" -> 2
+search "Sunflower Slow Drag" -> 4
+search "Gladiolus Rag" -> 2
+search "Euphonic Sounds" -> 3
+search "Magnetic Rag" -> 3
+search "Wall Street Rag" -> 4
+search "Original Rags" -> 4
+search "Ragtime Dance" -> 4
+search "Cascades" -> 6
+search "Chrysanthemum" -> 7
+search "American Beauty Rag" -> 3
+search "Grace and Beauty" -> 3
+search "Frog Legs Rag" -> 5
+search "Black and White Rag" -> 4
+search "Dill Pickles" -> 2
+search "Temptation Rag" -> 2
+search "Russian Rag" -> 2
+search "Glow-Worm" -> 1
+search "Glühwürmchen" -> 1
+search "Berliner Luft" -> 4
+search "Poor Butterfly" -> 0
+search "Sheik of Araby" -> 0
+search "Margie" -> 8
+search "Toot, Toot, Tootsie" -> 2
+search "California, Here I Come" -> 1
+search "Valencia" -> 50
+search "La Paloma" -> 23
+search "La Cumparsita" -> 4
+search "El Choclo" -> 3
+search "Jalousie" -> 20
+search "Frou-Frou" -> 3
+search "Petite Tonkinoise" -> 0
+search "Le Temps des cerises" -> 0
+search "O sole mio" -> 3
+search "Torna a Surriento" -> 2
+search "Santa Lucia" -> 20
+search "Funiculì" -> 4
+search "Mattinata" -> 5
+search "Dark Eyes" -> 1
+search "Ochi chornye" -> 0
+search "Korobeiniki" -> 9
+search "Vienna, City of My Dreams" -> 0
+search "Gold and Silver" -> 5
+search "Vilia" -> 2
+search "Ballin' the Jack" -> 3
+search "Waiting for the Robert E. Lee" -> 1
+search "Smiles" -> 38
+search "K-K-K-Katy" -> 1
+search "Till We Meet Again" -> 3
+search "How Ya Gonna Keep" -> 3
+search "After the Ball" -> 4
+search "Daisy Bell" -> 5
+search "Sidewalks of New York" -> 0
+search "Ta-ra-ra Boom-de-ay" -> 1
+search "Hiawatha" -> 25
+search "Under the Bamboo Tree" -> 0
+search "Bedelia" -> 1
+search "Wait Till the Sun Shines" -> 1
+search "School Days" -> 2
+search "Cuddle Up a Little Closer" -> 0
+search "Put on Your Old Grey Bonnet" -> 3
+search "Ida! Sweet as Apple Cider" -> 0
+search "Moonlight Bay" -> 2
+search "When Irish Eyes" -> 1
+search "Peg o' My Heart" -> 0
+search "Too-Ra-Loo-Ral" -> 0
+search "Missouri Waltz" -> 2
+search "Beautiful Ohio" -> 1
+search "I'm Forever Blowing Bubbles" -> 2
+search "Look for the Silver Lining" -> 1
+search Billy Murray -> 33
+search Ada Jones -> 18
+search Arthur Collins -> 28
+search Henry Burr -> 21
+search Al Jolson -> 10
+search Paul Whiteman -> 29
+search Vernon Dalhart -> 6
+search Marion Harris -> 7
+search Nora Bayes -> 9
+search Original Dixieland Jazz Band -> 15
+search King Oliver -> 5
+search Louis Armstrong Hot Five -> 0
+search Bessie Smith -> 50
+search Jelly Roll Morton -> 11
+search Ted Lewis -> 9
+search Ben Selvin -> 2
+search Isham Jones -> 14
+search Fletcher Henderson -> 50
+search Sophie Tucker -> 50
+search Harry Lauder -> 0
+search Fred Van Eps -> 5
+search Vess Ossman -> 2
+search Sousa's Band -> 50
+search Prince's Band -> 29
+search Arthur Pryor -> 27
+search James Reese Europe -> 50
+search Eubie Blake -> 8
+search Zez Confrey -> 12
+search Joseph Lamb -> 24
+search James Scott rag -> 42
+search Scott Joplin -> 50
+search Enrico Caruso -> 50
+search Edison cylinder -> 50
+search Edison Blue Amberol -> 26
+search Victor Talking Machine -> 50
+search Columbia Graphophone -> 14
+search phonograph 1910s -> 0
+search 78 rpm 1920s -> 0
+search gramophone record 1900s -> 2
+search ragtime band -> 50
+search ragtime orchestra -> 50
+search jazz band 1920s -> 34
+search dance orchestra 1920s -> 15
+search foxtrot 1920s -> 1
+search one-step -> 41
+search two-step -> 46
+search turkey trot -> 5
+search tango 1910s -> 0
+search Charleston 1920s -> 0
+search shimmy -> 50
+search music hall song -> 49
+search vaudeville song -> 18
+search barbershop quartet -> 29
+search Tin Pan Alley -> 13
+search café-concert -> 13
+search chanson 1900 -> 0
+search Category:Ragtime -> 2349
+search Category:Scott Joplin -> 0
+search Category:Original Dixieland Jass Band -> 24
+search Category:Jazz recordings -> 0
+search Category:Audio files of jazz -> 0
+search Category:Audio files of ragtime -> 0
+search Category:Ragtime music -> 1
+search Category:Songs of World War I -> 22
+search Category:Edison Records -> 204
+search Category:Victor Records -> 149
+search Category:Columbia Records -> 156
+search Category:Cylinder recordings -> 0
+search Category:78 rpm records -> 0
+search Category:National Jukebox -> 0
+search Category:Tango music -> 0
+search Category:Barbershop music -> 11
+search Category:Music of the 1900s -> 0
+search Category:Music of the 1910s -> 0
+search Category:Music of the 1920s -> 0
+search Category:1900s songs -> 0
+search Category:1910s songs -> 0
+search Category:1920s songs -> 0
+search Category:Audio files of popular music -> 74
+search Category:Audio files of songs -> 374
+music_hits scan: candidates 3571 kept 2994
+== job hits_scan took 309 s
