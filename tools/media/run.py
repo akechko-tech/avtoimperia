@@ -639,18 +639,22 @@ def music_cut():
     for e in L:
         cid = e['id']; out = os.path.join(D, cid + '.m4a'); v = info.get(e['title'])
         if not v: log('music: no info', e['title']); continue
-        key = '%s|%s|%s|%s|v2' % (e['title'], e.get('from'), e['d'], e.get('t', 0))
+        key = '%s|%s|%s|%s|v2' % (e['title'], e.get('from'), e['d'], e.get('t', 0)) + ('|h%s|k%s' % (e.get('hist', 0), e.get('kb', 72)) if e.get('kb') else '')
         if os.path.exists(out) and man.get(cid, {}).get('key') == key: continue
         try:
             download(_src_for(v), tmp, 400e6)
             dur = duration_of(v) or e.get('dur') or e['d']; d = min(e['d'], dur)
             t0 = max(0, dur - d - 1.5) if e.get('from') == 'end' else e.get('t', 0)
             fo = 3.5 if (t0 + d) < dur - 1 else 1.0
-            sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t0, '-i', tmp, '-t', '%.2f' % d, '-vn',
-                '-af', 'afade=t=in:st=0:d=%.2f,afade=t=out:st=%.2f:d=%.2f,loudnorm=I=-16:TP=-1.2:LRA=12' % (0.25 if t0 > 0 else 0.02, max(0, d - fo), fo),
-                '-ac', '2', '-ar', '44100', '-c:a', 'aac', '-b:a', '72k', '-movflags', '+faststart', '-y', out])
+            # 0.27: записи тех лет (78 об/мин, валики) — бережная реставрация: без гула и шипения, без щелчков; моно 64 кбит/с.
+            # Современные исполнения — стерео 112 кбит/с (было 72)
+            fade = 'afade=t=in:st=0:d=%.2f,afade=t=out:st=%.2f:d=%.2f' % (0.25 if t0 > 0 else 0.02, max(0, d - fo), fo)
+            if e.get('hist'): af, ac = 'highpass=f=55,lowpass=f=9500,adeclick=w=55:o=75,afftdn=nr=10:nf=-42:tn=1,' + fade + ',loudnorm=I=-16:TP=-1.5:LRA=11', '1'
+            else: af, ac = fade + ',loudnorm=I=-16:TP=-1.2:LRA=12', '2'
+            sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t0, '-i', tmp, '-t', '%.2f' % d, '-vn', '-af', af,
+                '-ac', ac, '-ar', '44100', '-c:a', 'aac', '-b:a', '%dk' % int(e.get('kb') or 72), '-movflags', '+faststart', '-y', out])
             man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'by': meta_val(v, 'Artist')[:160],
-                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out)}
+                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out), 'perf': e.get('perf', '')}
             log('music', cid, round(d), 's', os.path.getsize(out))
         except Exception as ex:
             log('music error', cid, repr(ex)[:300])
