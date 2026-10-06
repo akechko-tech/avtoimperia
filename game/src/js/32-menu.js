@@ -1,5 +1,5 @@
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.26';
+const GAME_VER='0.27';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -59,7 +59,7 @@ function openAbout(){openSheet(`<div class="row"><h2>Об игре</h2><button c
 function aboutByLic(I){const M=new Map();Object.values(I||{}).forEach(x=>{if(!/CC BY/i.test(x.lic||''))return;const a=x.by||'Wikimedia Commons';if(!M.has(a))M.set(a,new Set());M.get(a).add(x.lic);});
   return [...M].map(([a,L])=>`${a} (${[...L].join(', ')})`).join(', ');}
 function aboutMusCredits(){const I=(typeof ORCH!=='undefined'&&ORCH.idx)||window.MUSIC_INDEX||null,L=aboutByLic(I);
-  return 'записи военных оркестров США (общественное достояние), Musopen (CC0), пластинки 1917–1924 годов'+(L?'; '+L:'; музыка в духе немого кино — Kevin MacLeod (incompetech.com), CC BY 3.0/4.0');}
+  return 'записи военных оркестров США (общественное достояние), Musopen (CC0), пластинки и валики 1893–1925 годов (общественное достояние, звук отреставрирован)'+(L?'; '+L:'; музыка в духе немого кино — Kevin MacLeod (incompetech.com), CC BY 3.0/4.0');}
 function aboutFaceCredits(){const C=typeof FACE_CREDITS!=='undefined'?FACE_CREDITS:{},L=aboutByLic(C),pd=Object.values(C).filter(x=>!/CC BY/i.test(x.lic||'')).length;
   return `${pd} — общественное достояние${L?'; '+L:''}`;}
 function aboutSfxCredits(){const I=(typeof AMB!=='undefined'&&AMB.idx)||window.SFX_INDEX||null,L=aboutByLic(I);

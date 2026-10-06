@@ -56,7 +56,8 @@ const RIVAL_CAR={
   van:[[1895,'Daimler Motor-Lastwagen',{e:'e1',g:'g2',c:'c1',k:'k1',b:'b6',w:'w1'}],[1898,'Daimler Motor-Lastwagen',{e:'e2',g:'g2',c:'c2',k:'k1',b:'b6',w:'w1'}],
     [1903,'Peugeot Type 64',{e:'e3',g:'g2',c:'c3',k:'k2',b:'b6',w:'w1'}],[1910,'Ford Model T',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b6',w:'w3'}],
     [1920,'Ford Model TT',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b6',w:'w7'}],[1927,'Ford Model A (1927–1931)',{e:'e14',g:'g6',c:'c5',k:'k5',b:'b6',w:'w8'}]],
-  sport:[[1910,'Austro-Daimler Prince Henry',{e:'e4',g:'g5',c:'c4',k:'k3',b:'b10',w:'w5'}],[1911,'Mercer Raceabout',{e:'e4',g:'g5',c:'c4',k:'k3',b:'b10',w:'w5'}],
+  sport:[[1901,'Mercedes 35 HP',{e:'e2',g:'g3',c:'c2',k:'k1',b:'b1',w:'w2'}],[1903,'Mercedes Simplex 60 HP',{e:'e3',g:'g3',c:'c3',k:'k2',b:'b1',w:'w2'}],[1906,'Itala Grand Prix',{e:'e3',g:'g5',c:'c3',k:'k2',b:'b1',w:'w4'}],[1908,'Benz Prinz-Heinrich',{e:'e4',g:'g5',c:'c6',k:'k2',b:'b1',w:'w5'}],
+    [1910,'Austro-Daimler Prince Henry',{e:'e4',g:'g5',c:'c4',k:'k3',b:'b10',w:'w5'}],[1911,'Mercer Raceabout',{e:'e4',g:'g5',c:'c4',k:'k3',b:'b10',w:'w5'}],
     [1912,'Stutz Bearcat',{e:'e5',g:'g5',c:'c4',k:'k3',b:'b10',w:'w5'}],[1914,'Vauxhall 30-98',{e:'e5',g:'g5',c:'c4',k:'k3',b:'b10',w:'w6'}],
     [1917,'Stutz Bearcat',{e:'e6',g:'g5',c:'c4',k:'k3',b:'b10',w:'w6'}],[1921,'Bentley 3 Litre',{e:'e7',g:'g5',c:'c5',k:'k3',b:'b3',w:'w6'}],
     [1925,'Alfa Romeo RL',{e:'e7',g:'g5',c:'c5',k:'k6',b:'b10',w:'w8'}],[1927,'Bugatti Type 43',{e:'e8',g:'g5',c:'c5',k:'k5',b:'b10',w:'w8'}],
@@ -140,7 +141,7 @@ const TYRES=[
   {id:'w8',name:'Баллонные шины Firestone',y:1923,q:18,c:100,grip:1.2,wear:0.75,life:1400,punct:0.25,kg:34,ride:1.2,note:'Низкое давление: мягкий ход и лучшее сцепление'}
 ];
 const TRIMS=[{id:'t0',name:'Базовая',y:1885,q:0,c:0,cx:1},{id:'t1',name:'Комфорт: фонари, тент',y:1885,q:6,c:90,cx:1.1},{id:'t2',name:'Люкс: кожа, латунь, фары',y:1885,q:12,c:380,cx:1.35},
-  {id:'t3',name:'Спорт: облегчённый кузов, ковшеобразные сиденья, настроенный мотор',y:1910,q:10,c:260,cx:1.25,open:1,note:'Как Austro-Daimler «Принц Генрих» (1910) и Mercer Raceabout (1911): машина для тех, кто любит скорость. Только открытые кузова'}];
+  {id:'t3',name:'Спорт: облегчённый кузов, ковшеобразные сиденья, настроенный мотор',y:1901,q:10,c:260,cx:1.25,open:1,note:'Как Mercedes 35 HP (1901) — первая машина для гонщиков-любителей: низкая рама, мощный мотор, лёгкий кузов. Машина для тех, кто любит скорость. Только открытые кузова'}];
 // Разделы конструктора: какие детали из чего выбирать
 const PART_CATS=[{k:'e',arr:()=>ENGINES,name:'Двигатель',rd:'Двигатель'},{k:'g',arr:()=>GEARBOX,name:'Коробка передач',rd:'Коробка'},{k:'c',arr:()=>CHASSIS,name:'Рама и подвеска',rd:'Рама'},{k:'w',arr:()=>TYRES,name:'Колёса и шины',rd:'Колёса'},{k:'k',arr:()=>BRAKES,name:'Тормоза',rd:'Тормоза'},{k:'b',arr:()=>BODIES,name:'Кузов',rd:'Кузов'}];
 const ALL_PARTS=()=>[...ENGINES,...GEARBOX,...CHASSIS,...TYRES,...BRAKES,...BODIES];
@@ -148,7 +149,7 @@ const ALL_PARTS=()=>[...ENGINES,...GEARBOX,...CHASSIS,...TYRES,...BRAKES,...BODI
 function trimName(t,s){const y=s?s.y:1895;if(t.id==='t2')return y<1900?'Люкс: кожа, латунь, каретные фонари':y<1912?'Люкс: кожа, латунь, ацетиленовые фары':'Люкс: кожа, электросвет, стартер Delco';return t.name;}
 const PAINTS=[{id:'#1b1d22',name:'Чёрный'},{id:'#1f4a36',name:'Зелёный'},{id:'#9e2b25',name:'Красный'},{id:'#23427a',name:'Синий'},{id:'#e3d6b4',name:'Сливочный'},{id:'#5c1e2a',name:'Бордо'},{id:'#e8e6de',name:'Белый'},{id:'#c9a227',name:'Жёлтый'}];
 const SEGK=['people','middle','lux','sport','truck'];
-// легковые классы (у спортивного — свои покупатели с 1910 года: «Принц Генрих», Mercer Raceabout, Stutz Bearcat)
+// легковые классы (у спортивного — свои покупатели: с 1901 года в Германии и Франции (Mercedes 35 HP), с 1904-го в Италии, с 1905-го в Британии, с 1910-го в США — Mercer Raceabout, Stutz Bearcat)
 const CARSEG=['people','middle','lux','sport'];
 const SEG={people:{name:'Народный'},middle:{name:'Средний'},lux:{name:'Люкс'},sport:{name:'Спортивный'},truck:{name:'Грузовой'}};
 const MAST={de:['Motor-Rundschau','10 Pfennig',1],fr:['Le Moteur Illustré','10 centimes',0],uk:['The Motoring Gazette','One Penny',0],us:['The Detroit Chronicle','Two Cents',0],it:['Corriere dei Motori','10 centesimi',0]};

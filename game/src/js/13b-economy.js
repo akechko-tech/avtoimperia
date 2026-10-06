@@ -16,6 +16,10 @@ function creditState(s,y,m){y=y??s.y;m=m??s.m;
   return {k:'ok',add:0,lim:1,closed:false,t:''};}
 function loanRate(s){const cs=creditState(s);return clamp(tabAt(LOAN_RATE,yf(s))+cs.add+(s.rep>=80?-0.01:s.rep<35?0.015:0)+(DIF().rate||0)+(typeof legalRateAdd==='function'?legalRateAdd(s):0)-((s.rateCut||0)>mi(s)?0.015:0),0.03,0.17);}
 function loanOpen(s){return !creditState(s).closed;}
+// 0.27: касса ушла в минус (траты в течение месяца, гонка, событие) — банк сразу покрывает его кредитом, пока есть лимит;
+// когда лимит исчерпан, минус — это долг поставщикам и рабочим (отсрочка), до предела банкротства
+function autoCredit(s){if(!s||s.over||!(s.cash<0)||!loanOpen(s))return 0;const room=Math.max(0,maxLoan(s)-(s.loan||0)),n=Math.min(room,Math.ceil(-s.cash/1000)*1000);if(n<=0)return 0;
+  s.loan=(s.loan||0)+n;s.cash+=n;if(mi(s)-(s.odSaid??-99)>=3){s.odSaid=mi(s);addLog(`Касса ушла в минус — банк покрыл перерасход кредитом ${money(n)} (${pct(loanRate(s),1)} годовых).`,'bad');}return n;}
 // Банк требует вернуть кредит сверх лимита: в кризис — за 3 месяца, в спокойное время — понемногу за год
 // (0.21: в кризис банк решает один раз — лимит на первый месяц кризиса держится до конца: долг по частям не «уменьшает» требование)
 function loanRecall(s,r){const cs=creditState(s),hard=cs.k!=='ok'&&cs.k!=='war',held=hard&&s.recall&&s.recall.k===cs.k&&s.recall.lim!=null;

@@ -35,7 +35,7 @@ const ACT={
   supSell:d=>{if(confirmOnce('sup'+d.k,'Нажмите ещё раз: продать за 60% стоимости'))if(supSell(G,d.k))rerender();},
   promo:d=>{const inSheet=!sheet.hidden;if(promoStart(G,d.c,d.g,d.k)){flushToasts();save();render();if(inSheet)promoSheet(d.c);}else toast('Не хватает денег');},
   promoSheet:d=>promoSheet(d.c),
-  repay:d=>{const n=Math.min(+d.n,G.loan);if(n>0&&G.cash>=n){G.loan-=n;G.cash-=n;rerender();}},
+  repay:d=>{const n=Math.min(G.loan,Math.floor(Math.max(0,G.cash)));if(n>0){G.loan=Math.round((G.loan-n)*100)/100;if(G.loan<1)G.loan=0;G.cash-=n;addLog(G.loan?`Погашено ${money(n)} кредита, осталось ${money(G.loan)}.`:`Кредит погашен полностью (${money(n)}).`,'good');rerender();}},
   // модели
   price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);if(md.pPrevM!==mi(G)){md.pPrev=md.price;md.pPrevM=mi(G);}md.price=Math.max(20,md.price+st*(+d.d));rerender();},
   planManual:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.plan==='auto'||md.plan===undefined)md.plan=autoPlan(md);rerender();},
@@ -74,6 +74,7 @@ const ACT={
   // рынок
   dealers:d=>{const n=Math.min(+d.n,dealerRoom(G,d.c));if(n<1||G.cash<n*dealerCost(G))return;buyDealers(G,d.c,n);checkAch();rerender();flushToasts();},
   impUp:d=>{if(impUp(G,d.c)){checkAch();save();rerender();flushToasts();}},
+  licEnd:d=>{if(!confirmOnce('lic'+d.c,'Нажмите ещё раз: отозвать лицензию — местный завод перестанет делать ваши машины'))return;licEnd(G,d.c);rerender();},
   brandBuy:d=>{if(!confirmOnce('brand'+d.c,'Нажмите ещё раз: покупка марки — большие деньги'))return;if(brandBuy(G,d.c,+d.i)){checkAch();save();rerender();flushToasts();}},
   licStart:d=>{if(licStart(G,d.c)){save();rerender();flushToasts();}},
   hubStart:d=>{if(hubStart(G)){save();rerender();}},

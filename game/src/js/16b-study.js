@@ -2,7 +2,7 @@
 // Купить машину-эталон класса (с ней покупатели сравнивают ваши машины) и разобрать её в КБ:
 // детали, которых ещё нет у поставщиков, — прототипом; доводку соперников — улучшениями; опыт — дешёвой разработкой.
 const STUDY_KINDS=['people','middle','lux','sport','van','truck'];
-function studyCar(kind,y){if(kind==='sport'&&y<1910)return null;if(kind==='truck'&&y<1910)return null;if(kind==='van'&&y<1896)return null;
+function studyCar(kind,y){if(kind==='sport'&&y<1901)return null;if(kind==='truck'&&y<1910)return null;if(kind==='van'&&y<1896)return null;
   const r=rivalCar(kind,y);return r?{kind,y:r[0],name:r[1],md:{...r[2],t:KIND_TRIM[kind]||'t0'}}:null;}
 function studyKey(c){return c.name+'|'+c.y;}
 function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind,b=byId(BODIES,c.md.b);

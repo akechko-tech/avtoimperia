@@ -518,8 +518,9 @@ function r3dSkidAdd(a,b,w,col,al){const S=R3.skid,mb=S.mb,q=S.head;S.head=(S.hea
 function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a,gv:gv||0,floor:gv?y-0.45:-1e9});}
 /* ---------- камера ---------- */
 // Первое препятствие на луче от машины назад (к камере): расстояние, м (или D — если чисто). Круги — стволы, столбы; прямоугольники — дома, трибуны
-function camBlock(F,fw,D){const T=R3.T,L=T.segCol;if(!L)return D;const n=T.n,dx=-fw[0],dz=-fw[2];let best=D;
-  for(let k=-7;k<=2;k++){let j=F.idx+k;if(T.closed)j=(j%n+n)%n;else if(j<0||j>=n)continue;const A=L[j];if(!A)continue;
+function camBlock(F,fw,D){const T=R3.T;if(!T.colG)return D;const dx=-fw[0],dz=-fw[2];let best=D;
+  // 0.27: препятствия — по сетке вокруг отрезка «машина — камера», а не у точек трассы
+  {const A=colNear(T,F.x+dx*D/2,F.z+dz*D/2,D/2+1);
     for(const o of A){const ox=o.x-F.x,oz=o.z-F.z;if(ox*ox+oz*oz>(D+o.r+1)*(D+o.r+1))continue;let t=null;
       if(o.box){const b=o.box,e=0.3,px=-(ox*b.ux+oz*b.uz),pz=-(ox*b.vx+oz*b.vz),ux=dx*b.ux+dz*b.uz,uz=dx*b.vx+dz*b.vz;let t0=0,t1=D;
         for(const [p,u,h] of [[px,ux,b.hu+e],[pz,uz,b.hv+e]]){if(Math.abs(u)<1e-6){if(p<-h||p>h){t0=1;t1=0;}continue;}let a=(-h-p)/u,c=(h-p)/u;if(a>c){const q=a;a=c;c=q;}t0=Math.max(t0,a);t1=Math.min(t1,c);}

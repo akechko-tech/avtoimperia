@@ -238,6 +238,9 @@ function impUpkeep(s,c){const L=impOf(s,c);return L&&L.up?L.up*cpi(s)*impK(s,c):
 // Сколько дилеров может быть в стране: дома — все города; у импортёра — только большие города
 function dealerMax(s,c){const n=dealerNeed(c,s);if(c===s.country)return Math.ceil(n*1.3);const lv=impLv(s,c);return lv?Math.max(3,Math.ceil(n*IMP_LV[lv].cap)):0;}
 function dealerRoom(s,c){return Math.max(0,dealerMax(s,c)-dealerCount(s,c));}
+// 0.27: дилеров не больше, чем позволяет способ торговли (импортёр — только большие города): лишние из наград, выставок и «шансов»
+// не пропадают — салоны становятся больше (та же сеть продаёт больше машин). Раньше бывало «13 из 12 возможных».
+function dealerFit(s){if(!s||!s.dealers)return;s.dcap=s.dcap||{};for(const c in s.dealers){const d=dealerCount(s,c);if(!d)continue;const mx=dealerMax(s,c);if(mx>0&&d>mx){const k=dealerMult(s,c);s.dcap[c]=+Math.max(k,Math.min(DLR_MULT_MAX,k*d/mx)).toFixed(3);s.dealers[c]=mx;}}}
 // Новый дилер: демонстрационная машина со скидкой, вывеска, запас запчастей, выучка механика
 function dealerCost(s){return Math.round(560*cpi(s)*(1+T(s)*0.02));}
 // Сколько машин в месяц продаёт один дилер: новичок — dealerTP; большой салон с продавцами, гаражом и запасом машин — больше
@@ -279,7 +282,7 @@ function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c
   return true;}
 // Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
 // сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
-function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(s.lic&&s.lic[c])||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
   const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
   const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
   const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];

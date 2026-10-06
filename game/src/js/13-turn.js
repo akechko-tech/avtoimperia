@@ -145,8 +145,8 @@ function step(){
   seasonTick(s);
   checkAch();checkMilestones(s);
   // 0.21: перерасход покрывает банк — в пределах кредитного лимита (в кризис лимит урезан, а в панику кредит закрыт)
-  if(s.cash<0&&loanOpen(s)){const n=Math.min(Math.max(0,maxLoan(s)-s.loan),Math.ceil(-s.cash/1000)*1000);if(n>0){s.loan+=n;s.cash+=n;if(mi(s)-(s.odSaid||-99)>=6){s.odSaid=mi(s);addLog(`Касса ушла в минус — банк покрыл перерасход кредитом ${money(n)} (${pct(loanRate(s),1)} годовых).`,'bad');}}}
-  if(s.cash<0&&s.cash>=-debtLimit(s))addLog('Касса в минусе. Возьмите кредит или сократите расходы.','bad');
+  autoCredit(s);try{dealerFit(s);}catch(_){}
+  if(s.cash<0&&s.cash>=-debtLimit(s))addLog(`Касса в минусе на ${money(-s.cash)}: ${loanOpen(s)?'кредитный лимит банка исчерпан':creditState(s).t.toLowerCase()} — это долг поставщикам и рабочим (до банкротства ${money(debtLimit(s)+s.cash)}). Сократите расходы и выпуск.`,'bad');
   // склад растёт — подсказка раз в полгода
   act.forEach(md=>{if(stockWarn(md)&&mi(s)-(md.stockSaid||-99)>=6){md.stockSaid=mi(s);addLog(`На складе «${md.name}» — ${fmtN(md.stock)} машин без покупателей. Снизьте выпуск или цену.`,'bad');pendingToasts.push('📦 Склад растёт: «'+md.name+'»');}});
   // до банкротства рукой подать — предупреждаем газетой один раз в год

@@ -67,8 +67,11 @@ def voice():
     open(os.path.join(D, 'index.js'), 'w').write('window.VOICE_INDEX=' + json.dumps(ok, separators=(',', ':')) + ';\n')
     print('voice: updated', n, 'lines', len(ok))
 
+# подписи, где исполнитель уже указан отдельно (автор записи со свободной лицензией — в «by»)
+MUSIC_CAP = {'man_i_love': 'Гершвин. «Человек, которого я люблю», 1924'}
+
 def music():
-    """0.19: оркестровые записи (aac 72 кбит/с) → docs/music + index.js (window.MUSIC_INDEX)."""
+    """0.19: оркестровые записи (aac 72 кбит/с; с 0.27 — хиты эпохи: записи тех лет моно 64, современные 112) → docs/music + index.js (window.MUSIC_INDEX)."""
     D = os.path.join(DOCS, 'music'); os.makedirs(D, exist_ok=True); n = 0
     man = json.loads(git('show', 'origin/media:media/music/clips/index.json'))
     have = {os.path.basename(f) for f in files('media/music/clips')}
@@ -81,7 +84,13 @@ def music():
                 'Оркестр армии США' if 'Army' in t else 'Оркестр береговой охраны США' if 'Coast Guard' in t else 'Кевин Маклауд' if 'MacLeod' in t or 'ISRC USUAN' in t else
                 'Оркестр Пола Уайтмена, 1924' if 'Whiteman' in t else 'Оркестр Марека Вебера' if 'Marek Weber' in t else 'Берлинская опера' if 'Staatsoper' in t else
                 'Эдуардо Ароляс, 1917' if 'Arolas' in t else 'Оркестр ВВС США' if 'Holst' in t else 'Майкл Лаук' if 'Laucke' in t else 'Ольга Гуревич' if 'Gurevich' in t else 'Оркестр Гессенского радио' if 'Dvořák Symphony' in t or 'hr-Sinfonie' in (m.get('by') or '') else 'Пианист Эль Дуэнде Суарес' if 'Golliwog' in t else 'Musopen' if 'Musopen' in t or 'Peer Gynt Suite' in t or 'Brahms, Symphony' in t else m.get('by') or '')
+        p, cap = m.get('perf') or '', m.get('cap') or ''
+        if p:  # 0.27: исполнитель по-русски из music.json (у записей со свободной лицензией CC BY — автор как на Commons)
+            if '»' in p and '» — ' in cap: p = cap.rsplit('» — ', 1)[1]  # «Ты — славный старый флаг» — Билли Мюррей
+            if p.startswith('запись ') and p[7:].isdigit(): p = 'запись тех лет'
+            if 'CC BY' not in (m.get('lic') or ''): perf = p
         idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'lic', 'page')}; idx[cid]['by'] = perf
+        if cid in MUSIC_CAP: idx[cid]['cap'] = MUSIC_CAP[cid]
     # 0.22: свои мелодии игры в оркестровке (задание anthem) — own_*.m4a; в APK они вшиты (играют и без сети)
     try: own = json.loads(git('show', 'origin/media:media/music/own/index.json'))
     except Exception: own = {}

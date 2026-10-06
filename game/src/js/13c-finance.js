@@ -132,7 +132,7 @@ function promoClean(s){if(s.promo)s.promo=s.promo.filter(p=>p.until>mi(s)-1);}
 // кнопки спецакций для страны и класса (рынок, карточка пари)
 function promoButtons(s,c,g,small){if(!promoOk(s,c))return '';return Object.keys(PROMO).map(k=>{const P=PROMO[k],on=promoActive(s,c,g,k),cost=promoCost(s,c,g,k);
   return on?`<span class="pill good">${P.ic} ${esc(P.n)} · ещё ${on.until-mi(s)} мес.</span>`:`<button class="btn sm" data-act="promo" data-c="${c}" data-g="${g}" data-k="${k}" ${s.cash<cost?'disabled':''} title="${esc(P.d)}">${P.ic} ${esc(P.n)}${cost?' · '+money(cost):' · −7% цены'}</button>`;}).join('');}
-function promoSheet(c){const s=G;if(!s)return;const segs=SEGK.filter(g=>g!=='sport'||s.y>=1910),mk=s.last&&s.last.mk&&s.last.mk[c];
+function promoSheet(c){const s=G;if(!s)return;const segs=SEGK.filter(g=>g!=='sport'||sportOpen(s,c)),mk=s.last&&s.last.mk&&s.last.mk[c];
   openSheet(`<div class="row"><h2>Спецакции · ${esc(COUNTRIES[c].name)}</h2>${X}</div>
     <p class="small muted" style="margin-top:6px">Акция поднимает спрос на ваши машины одного класса в одной стране, пока длится. ${Object.values(PROMO).map(P=>`<b>${P.ic} ${esc(P.n)}</b> — ${esc(P.d)}.`).join(' ')}</p>
     ${segs.map(g=>{const z=mk&&mk.segs&&mk.segs[g],you=z?z.you:0,size=z?z.size:0;return `<div class="race-item"><div class="row"><h3>${esc(SEG[g].name)}</h3><span class="small muted num">${fmtD(size)} машин в месяц · ваши ${fmtD(you)}</span></div><div class="btns" style="margin-top:6px">${promoButtons(s,c,g)}</div></div>`;}).join('')}

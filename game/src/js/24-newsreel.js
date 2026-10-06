@@ -263,7 +263,7 @@ function reelYear(y,s){const r=(s.yrec||{})[y];if(!r)return null;const md=r.top!
   else if(r.pod)sh.push({c:`${r.pod} ${plural(r.pod,'подиум','подиума','подиумов')} в гонках`,s:'первая победа — впереди'});
   if(r.titles.length)sh.push({c:'👑 '+r.titles.map(capF).join(' · '),s:'титулы года по версии прессы',say:VGEN.y5});
   (r.flv||[]).slice(0,1).forEach(t=>{const f=flvByTitle(t);if(f)sh.push({i:f[3],cap:t});});
-  if(r.place)sh.push({c:`Наследие: ${r.place}-е место`,s:r.ahead?`впереди — ${r.ahead}`:'«{co}» — первая среди великих марок',say:VGEN.y6});
+  if(r.place)sh.push({c:`Наследие: ${r.place}-е место`,s:r.place===1?'«{co}» — первая среди великих марок':r.ahead?`впереди — ${r.ahead}`:'',say:VGEN.y6});
   sh.push({c:String(y+1),s:'Новый год — новые машины, гонки и рекорды',say:VGEN.y7});
   sh.forEach(x=>{if(x.say==='')delete x.say;});
   return {t:`Итоги ${y} года`,y,mus:y<1912?'march':y<1920?'fox':'charl',sh};}
@@ -340,7 +340,9 @@ function reelShotHTML(sh,s,Q,k){
     if(!U.plant){img=plantImg();U.plant=1;cap=sh.cap||'';}
     else if(best&&!U.car){img=carImg(best);U.car=1;cap=`«${best.name}» компании «${s.company}»`;}
     else img=card(sh.cap||'Кинохроника','кадры не сохранились');}
-  return img+(cap&&!/rl-card/.test(img)?`<div class="rl-cap">${esc(reelFill(cap,s))}</div>`:'');}
+  return img+(cap&&!/rl-card/.test(img)?`<div class="rl-cap">${reelCapHTML(reelFill(cap,s))}</div>`:'');}
+// 0.27: в подписи кадра числа («311 машин», «1-е место», «1 234 км») — крупнее и прямым шрифтом
+function reelCapHTML(t){return esc(t).split(/(«[^»]*»)/).map((p,k)=>k%2?p:p.replace(/(\d+(?:[\u00a0 ]\d{3})*(?:[.,]\d+)?(?:-[ея])?(?:[\u00a0 ](?:машин[аы]?|место|км\/ч|км|побед[аы]?|подиум[аов]*|лет|год[а]?)(?![а-яё]))?)/g,'<span class="rl-num">$1</span>')).join('');}
 function reelSay(sh,s){return sh.say?reelFill(sh.say,s):'';}
 function reelShotDur(sh,s){if(sh.leader)return 2.4;const say=sh.say?String(sh.say):'',vd=say&&typeof voiceDur==='function'?voiceDur(say,'aidar'):0;
   if(vd)return vd+0.35;if(say)return Math.max(3.4,2+say.length/13);return sh.c!==undefined||sh.q!==undefined?3.2:sh.v?5:4;}

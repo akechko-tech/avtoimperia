@@ -63,7 +63,7 @@ const BRAND_PAINT={'Ford':'#141414','Ford (Манчестер)':'#141414','Им�
 const BRAND_PAINTS=['#1b1d22','#23427a','#5a1a1a','#2a3a2a','#3a2a1a','#e8dcb0','#6a4a2a','#1f3f5f','#4a4a4e','#7a1c1c','#2f4f3f','#5a4a3a'];
 // Облик типичной машины марки: кузов по главному классу, год — нынешний
 function compSpec(cp,s){const y=s.y,mx=cp.mix||{},g=Object.keys(mx).sort((a,b)=>mx[b]-mx[a])[0]||'middle';let style,b='b3';
-  if(g==='truck'){style='van';b='b6';}else if(g==='sport'&&y>=1910){style='sport';b='b10';}else if(y<1901){style='carriage';b='b1';}
+  if(g==='truck'){style='van';b='b6';}else if(g==='sport'&&y>=1901){style='sport';b=y>=1910?'b10':'b1';}else if(y<1901){style='carriage';b='b1';}
   else if(g==='people'){style=y<1908?'runabout':y<1922?'tourer':'sedan';b=y<1908?'b1':y<1922?'b3':'b4';}
   else if(g==='lux'){style=y<1905?'tonneau':y<1914?'tourer':'sedan';b=y<1905?'b2':'b11';}
   else{style=y<1904?'tonneau':y<1920?'tourer':'sedan';b=y<1904?'b2':y<1920?'b3':'b4';}

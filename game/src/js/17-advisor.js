@@ -51,7 +51,9 @@ function adviceList(s){
   if(s.over)return T;
   // деньги
   if(s.cash<0){const room=loanOpen(s)?maxLoan(s)-s.loan:0,n=Math.max(0,Math.min(room,Math.ceil((-s.cash+3000*cpi(s))/1000)*1000));
-    add(s.cash<-lim*0.5?100:90,'💰',`Касса в минусе на ${money(-s.cash)}${s.cash<-lim*0.5?`: при долге больше ${money(lim)} завод закроют`:''}. ${loanOpen(s)?'Возьмите кредит и сократите лишние расходы.':creditState(s).t+' — сократите выпуск и расходы, продайте излишки склада.'}`,n>0?`Кредит ${money(n)}`:null,n>0?()=>{G.loan+=n;G.cash+=n;addLog(`Взят кредит ${money(n)}.`);}:null,'plant');}
+    // 0.27: минус в кассе — это долг поставщикам и рабочим, когда банк больше не даёт; объясняем, откуда он и сколько ещё в пути
+    const ar=typeof arTotal==='function'?arTotal(s):0;
+    add(s.cash<-lim*0.5?100:90,'💰',`Касса в минусе на ${money(-s.cash)}: ${n>0?'банк готов покрыть его кредитом.':loanOpen(s)?`кредит банка исчерпан (${money(s.loan)} из ${money(maxLoan(s))}) — это долг поставщикам и рабочим.`:creditState(s).t+' — это долг поставщикам и рабочим.'} При долге больше ${money(lim)} завод закроют.${ar>1?` От дилеров ещё придут ${money(ar)} — минус может уйти сам.`:''} Сократите рекламу, лишних дилеров и выпуск, продайте склад со скидкой.`,n>0?`Кредит ${money(n)}`:null,n>0?()=>{G.loan+=n;G.cash+=n;addLog(`Взят кредит ${money(n)}.`);}:null,'plant');}
   if(!act.length&&!dev.length)add(95,'🛠','Сейчас нечего продавать. Придумайте машину: в конструкторе есть кнопка «Подобрать детали повыгоднее».','Конструктор',()=>openDesigner(),'models');
   // модели и цены
   act.forEach(md=>{const uc=unitCost(md,s),net=md.price*(1-dMargin(s)),C=classCompare(md,s,home);

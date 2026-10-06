@@ -74,12 +74,28 @@ function licStart(s,c){if(c===s.country||impLv(s,c)>=2||(s.lic&&s.lic[c])||trade
   const g=(s.models.find(m=>m.status==='prod')&&segOf(s.models.find(m=>m.status==='prod')))||'middle',o=respOf(s,c,g);o.mg=(o.mg||0)+0.15;
   addLog(`${COUNTRIES[c].name}: лицензия продана местному заводу. Через полгода он начнёт выпускать ваши машины — без пошлины и доставки; вам — ${Math.round(LIC_ROY*100)}% цены. Чертежи увидят и конкуренты.`,'good');return true;}
 function licEnd(s,c){if(!s.lic||!s.lic[c])return;delete s.lic[c];addLog(`${COUNTRIES[c].name}: лицензия отозвана.`);}
+// 0.27: слабая местная марка продаётся не всегда — газета пишет о сделке раз в год-два (в кризис — чаще и дешевле);
+// это другой путь на рынок: вместо импортёра и отделения — сразу заводы, дилеры и покупатели марки, без пошлины
+function brandOfferCheck(s){if(s.over||s.y<1902||(s.brandOffer&&s.brandOffer.until>mi(s))||s.pending.length||mi(s)-(s.brandOfferT??-99)<10)return;
+  const cs=typeof creditState==='function'?creditState(s).k:'ok',crisis=cs==='panic'||cs==='tight'||cs==='crash'||Object.keys(COUNTRIES).some(c=>c!==s.country&&econ(s.y,s.m,c).f<0.88);
+  if(Math.random()>(crisis?0.07:0.03))return;
+  const L=Object.keys(COUNTRIES).filter(c=>c!==s.country&&!(s.bought&&s.bought[c])&&!warCut(s,c)&&!tradeBanHard(s,c)&&impLv(s,c)<4).map(c=>({c,x:brandCands(s,c)[0]})).filter(o=>o.x);if(!L.length)return;
+  const o=L[Math.floor(Math.random()*L.length)],disc=crisis?0.7:0.85,price=Math.round(brandPrice(s,o.c,o.x)*disc/1000)*1000;if(price<=0||s.cash<price*0.4)return;
+  const n=compName(o.x.cp,s);s.brandOfferT=mi(s);s.brandOffer={c:o.c,i:o.x.i,n,until:mi(s)+6,disc,price};
+  pushEvent({kicker:'Сделка',title:`Марка «${n}» ищет покупателя`,deck:`${COUNTRIES[o.c].name} · ${money(price)}${disc<1?` (на ${Math.round((1-disc)*100)}% ниже обычного)`:''} · предложение — полгода`,
+    text:`${crisis?'Кризис ударил по слабым маркам: ':''}владельцы «${n}» готовы продать дело — заводы, дилеров и имя, которому верят покупатели страны «${COUNTRIES[o.c].name}». Для «${s.company}» это другой путь на этот рынок: без импортёра, своего отделения и пошлин — машины станут местными.\nТак и было: в 1900–1920-е годы марки переходили из рук в руки — Darracq купили британцы, Clément-Talbot — английский граф Шрусбери, а американцы скупали европейских производителей.\nКнопка покупки — на вкладке «Рынок», в строке страны.`,
+    choices:[['На «Рынок»','brandGo'],['Позже','ok']]},true);}
 function tradeBanHard(s,c){return warCut(s,c);}
 // Слабая местная марка: не из двух крупнейших, продаёт меньше 15% рынка страны
+// 0.27: марки в составе больших концернов не продаются: английский завод Ford, MG (гаражи Морриса), отделения General Motors
+// (Buick и Oldsmobile — с 1908 года, Cadillac — с 1909-го, Chevrolet — с 1918-го, Vauxhall — с 1925-го, Opel — с 1929-го)
+const BRAND_GROUP={'Ford (Манчестер)':0,'MG':0,'Buick':1908,'Oldsmobile':1908,'Cadillac':1909,'Chevrolet':1918,'Vauxhall':1925,'Opel':1929};
 function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.cp.pk!==s.pioneer&&!x.cp.imp&&x.v>0&&!(s.bought&&Object.values(s.bought).some(b=>b.c===c&&b.i===x.i))).sort((a,b)=>b.v-a.v);
-  const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15);}
+  const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15&&!(BRAND_GROUP[x.cp.n]!=null&&s.y>=BRAND_GROUP[x.cp.n]));}
 function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
-function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c])||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const cost=brandPrice(s,c,x);if(s.cash<cost)return false;
+function brandOfferOf(s,c){const O=s.brandOffer;return O&&O.c===c&&O.until>mi(s)?O:null;}
+function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c])||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const O=brandOfferOf(s,c),cost=O&&O.i===i?O.price:brandPrice(s,c,x);if(s.cash<cost)return false;
+  if(s.lic&&s.lic[c])licEnd(s,c);s.brandOffer=null;
   s.cash-=cost;s.plantVal+=cost*0.4;s.bought=s.bought||{};s.bought[c]={c,i,n:x.cp.n,y:s.y,t:mi(s)};s.imp=s.imp||{};s.imp[c]=Math.max(impLv(s,c),2);(s.impSince=s.impSince||{})[c]=mi(s)-120;
   const dl=Math.max(3,Math.round(x.v/12/Math.max(0.5,dealerTP(s))));s.dealers[c]=dealerCount(s,c)+dl;
   addLog(`${COUNTRIES[c].name}: куплена марка «${x.cp.n}» за ${money(cost)} — её заводы, ${fmtN(dl)} ${plural(dl,'дилер','дилера','дилеров')} и покупатели теперь ваши. Пошлины больше нет.`,'good');pendingToasts.push('🤝 Куплена марка: '+x.cp.n);return true;}

@@ -36,11 +36,11 @@ function camFree(a,i,d){const T=R.trk,n=T.n,S=T.spr;if(!S)return true;const st=M
       if(Math.hypot(x-a.p[0],z-a.p[2])<R0+1)return false;
       for(const g of tg){const dx=g[0]-a.p[0],dz=g[1]-a.p[2],l2=dx*dx+dz*dz||1,u=clamp(((x-a.p[0])*dx+(z-a.p[2])*dz)/l2,0,1),ex=a.p[0]+dx*u-x,ez=a.p[2]+dz*u-z;if(u>0.05&&u<0.95&&ex*ex+ez*ez<R0*R0*0.5)return false;}}}
   return true;}
-function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;if(!camFree(a,i,d))continue;return a;}
+function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,13])for(const s2 of [sd,-sd]){const a=trkAt(i,d,s2*(T.W/2+o)),L=colNear(T,a.p[0],a.p[2],3);if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.6))continue;if(!camFree(a,i,d))continue;return a;}
   // всюду деревья (лесная дорога, аллея) — свободной обочины нет: пусть снимает камера у машины
   const a=trkAt(i,d,sd*(T.W/2+1.6));a.blocked=1;return a;}
 // Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
-function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=(T.segCol&&T.segCol[a.j])||[];if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
+function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=colNear(T,a.p[0],a.p[2],3);if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
 // Слова диктора перед стартом: название, год и первая фраза истории гонки (их записал диктор заранее)
 function raceIntroText(rc){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?]/);return `${rc.name}. ${rc.y} год.${h1?' '+h1[0]:''}`;}
 /* ---------- заставка перед стартом ---------- */

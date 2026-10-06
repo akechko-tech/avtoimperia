@@ -165,6 +165,10 @@ function r3dChunkExtras(S,lit){const T=R3.T,W=T.W,st=T.step,e3=lit.e[3];
     [1,-1].forEach(sd=>{const off=W/2+2.2,ha=fH(pa[0]+na[0]*sd*(W/2+14),pa[2]+na[1]*sd*(W/2+14))-pa[1],hb=fH(pb[0]+nb[0]*sd*(W/2+14),pb[2]+nb[1]*sd*(W/2+14))-pb[1];if(ha<3||hb<3)return;
       // скала не заходит на соседнюю петлю серпантина (иначе дорога «ныряет в гору»)
       for(const [p,nv,ii] of [[pa,na,A.i],[pb,nb,B.i]])for(const o of [off,off+1.6])if(nearTrack(T,p[0]+nv[0]*sd*o,p[2]+nv[1]*sd*o,W/2+1.2,ii))return;
+      // 0.27: скала твёрдая — у её подножия прямоугольник (раньше машина въезжала в нарисованную стену, пока склон не остановит)
+      {const key=A.i*2+(sd>0?1:0);T.rockCol=T.rockCol||new Set();if(!T.rockCol.has(key)&&typeof addCollider==='function'){T.rockCol.add(key);
+        const ax=pa[0]+na[0]*sd*(off+0.6),az=pa[2]+na[1]*sd*(off+0.6),bx=pb[0]+nb[0]*sd*(off+0.6),bz=pb[2]+nb[1]*sd*(off+0.6),dl=Math.hypot(bx-ax,bz-az);
+        if(dl>0.3){const ux=(bx-ax)/dl,uz=(bz-az)/dl,o={x:(ax+bx)/2,z:(az+bz)/2,r:Math.hypot(dl/2+0.3,0.9),kind:'rock',box:{ux,uz,vx:uz,vz:-ux,hu:dl/2+0.3,hv:0.9}};addCollider(T,o.x,o.z,o.r,'rock',A.i,o);}}}
       lit.e[3]=txLay('rock',1,1);const rows=5,cA=[],cB=[];
       for(let k=0;k<=rows;k++){const t=k/rows,ja=vnz(A.i*0.37,k*1.7,11)-0.5,jb=vnz(B.i*0.37,k*1.7,11)-0.5,Ha=Math.min(ha+1.5,14)*t,Hb=Math.min(hb+1.5,14)*t;
         cA.push([pa[0]+na[0]*sd*(off+t*1.6+ja*0.9),roadY(A.i,sd*W/2)+0.1+Ha,pa[2]+na[1]*sd*(off+t*1.6+ja*0.9)]);cB.push([pb[0]+nb[0]*sd*(off+t*1.6+jb*0.9),roadY(B.i,sd*W/2)+0.1+Hb,pb[2]+nb[1]*sd*(off+t*1.6+jb*0.9)]);}

@@ -238,7 +238,7 @@ function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)r
 function musToggle(){if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
 function musMode(){AU.on.mode=AU.on.mode==='all'?'era':'all';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}AU.sig='';musBuild(true);toast(AU.on.mode==='all'?'Вся фонотека 1895–1929':'Музыка текущей эпохи');}
 function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
-  const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):AU.noMusic?'Записи не загрузились — музыки нет':'Фонотека загружается…';
+  const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by&&!tr.title.includes(tr.by)?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):AU.noMusic?'Записи не загрузились — музыки нет':'Фонотека загружается…';
   document.querySelectorAll('.plTitle').forEach(e=>{e.textContent=txt;});
   document.querySelectorAll('.plPlay').forEach(e=>{e.textContent=on?'❚❚':'▶';});
   document.querySelectorAll('.plMode').forEach(e=>{e.textContent=AU.on.mode==='all'?'Все':'Эпоха';});

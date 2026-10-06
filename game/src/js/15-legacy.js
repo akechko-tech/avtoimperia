@@ -98,5 +98,5 @@ function humanLegacyHTML(s){if(!s.pfl)return '';const L=humanLegacy(s),m=L.me,ro
   if(m.car)lines.push(row('Машины на дорогах',`${oneIn(m.car,'машина')} — ваша`,cmp(L.top.car,b=>oneIn(b.v,'машина'))));
   if(m.truck||L.top.truck.length)lines.push(row('Фирмы',m.truck?`${oneIn(m.truck,'фирма')} с грузовиком возит грузы на вашем`:'ваших грузовиков у фирм пока нет',cmp(L.top.truck,b=>oneIn(b.v))));
   if(m.lux||(L.top.lux.length&&s.y>=1900))lines.push(row('Люкс',m.lux?`${oneIn(m.lux)} дорогая машина — ваша`:'ваших дорогих машин пока нет',cmp(L.top.lux,b=>oneIn(b.v))));
-  if((m.sport||L.top.sport.length)&&s.y>=1910)lines.push(row('Спорт',m.sport?`${oneIn(m.sport)} спортивная машина — ваша`:'ваших спортивных машин пока нет',cmp(L.top.sport,b=>oneIn(b.v))));
+  if((m.sport||L.top.sport.length)&&sportAny(s))lines.push(row('Спорт',m.sport?`${oneIn(m.sport)} спортивная машина — ваша`:'ваших спортивных машин пока нет',cmp(L.top.sport,b=>oneIn(b.v))));
   return `<div class="label" style="margin-top:12px">Наследие в людях</div><div class="hum">${lines.join('')}</div><p class="small muted" style="margin-top:4px">Все пять стран игры: семьи, машины и грузовики на дорогах (машина служит ${Math.round(tabAt(CAR_LIFE,yf(s)))} лет). Серым — самые большие марки для сравнения.</p>`;}

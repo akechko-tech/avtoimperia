@@ -166,7 +166,14 @@ function solidAt(trk,t,i,off){const S=SOLID[t];if(!S)return null;const p=trk.pts
 // Не мешает ли предмет дороге: центр и углы дальше края дороги (с запасом)
 function solidClear(trk,o){const W=trk.W,m=W/2+0.6;if(!o.box)return !nearTrack(trk,o.x,o.z,m+o.r);const b=o.box;
   for(const [a,c] of [[1,1],[1,-1],[-1,1],[-1,-1],[0,0],[1,0],[-1,0]]){const x=o.x+b.ux*b.hu*a+b.vx*b.hv*c,z=o.z+b.uz*b.hu*a+b.vz*b.hv*c;if(nearTrack(trk,x,z,m))return false;}return true;}
-function addCollider(trk,x,z,r,kind,i,o){o=o||{x,z,r,kind};trk.col.push(o);if(!trk.segCol)trk.segCol=[];const n=trk.n,sp=Math.ceil((o.r||r)/trk.step)+2;for(let k=-sp;k<=sp;k++){const j=trk.closed?((i+k)%n+n)%n:i+k;if(j<0||j>=n)continue;(trk.segCol[j]=trk.segCol[j]||[]).push(o);}}
+// 0.27: сетка тел по месту (клетки 12 м): машина ищет препятствия вокруг себя, а не у «своей» точки трассы —
+// у шпильки и петли дом или стена другой ветки дороги раньше не находились, и сквозь них можно было проехать
+const CGS=12;let colStamp=0;const COL_NONE=[];
+function colGridAdd(trk,o){const G=trk.colG||(trk.colG=new Map()),r=(o.r||0)+0.5,a0=Math.floor((o.x-r)/CGS),a1=Math.floor((o.x+r)/CGS),b0=Math.floor((o.z-r)/CGS),b1=Math.floor((o.z+r)/CGS);
+  for(let a=a0;a<=a1;a++)for(let b=b0;b<=b1;b++){const k=a*100003+b;let L=G.get(k);if(!L)G.set(k,L=[]);L.push(o);}}
+function colNear(trk,x,z,rad){const G=trk.colG;if(!G)return COL_NONE;const a0=Math.floor((x-rad)/CGS),a1=Math.floor((x+rad)/CGS),b0=Math.floor((z-rad)/CGS),b1=Math.floor((z+rad)/CGS),st=++colStamp,out=[];
+  for(let a=a0;a<=a1;a++)for(let b=b0;b<=b1;b++){const L=G.get(a*100003+b);if(L)for(const o of L){if(o._cs===st)continue;o._cs=st;out.push(o);}}return out;}
+function addCollider(trk,x,z,r,kind,i,o){o=o||{x,z,r,kind};trk.col.push(o);colGridAdd(trk,o);if(!trk.segCol)trk.segCol=[];const n=trk.n,sp=Math.ceil((o.r||r)/trk.step)+2;for(let k=-sp;k<=sp;k++){const j=trk.closed?((i+k)%n+n)%n:i+k;if(j<0||j>=n)continue;(trk.segCol[j]=trk.segCol[j]||[]).push(o);}}
 // Приметы знаменитых мест: модель, привязка (start, finish или доля трассы), вперёд по трассе (м), вбок от края дороги (м, + влево; 0 — поперёк дороги), с какого года
 const LANDMARKS={
   pbp:[['eiffel','start',760,-95]],pmp:[['eiffel','start',740,90]],pap:[['eiffel','start',780,-100]],tdf:[['eiffel','start',740,95]],gb1900:[['eiffel','start',760,-90]],pb1901:[['eiffel','start',740,95]],pv1902:[['eiffel','start',770,-95]],
@@ -269,6 +276,8 @@ function placeScenery(trk,rnd){
   (trk.rivers||[]).forEach(rv=>{const L=riverLine(trk,rv);for(let q=-26;q<=26;q++){if(Math.abs(q)<3)continue;const s0=q*9+(rnd()-0.5)*5;[1,-1].forEach(sd=>{if(rnd()<0.45)return;
       const m=Math.sin(s0/170+rv.ph)*22*sstep(20,120,Math.abs(s0))+Math.sin(s0/61+rv.ph*2)*6*sstep(20,120,Math.abs(s0)),e=m+sd*(rv.w/2+4+rnd()*6),x=L.p[0]+L.d[0]*s0+L.t[0]*e,z=L.p[2]+L.d[1]*s0+L.t[1]*e;
       let bi=rv.i,bd=1e18;for(let k=Math.max(0,rv.i-60);k<Math.min(n,rv.i+60);k++){const d=(pts[k][0]-x)**2+(pts[k][2]-z)**2;if(d<bd){bd=d;bi=k;}}if(Math.sqrt(bd)<W/2+6)return;
+      // 0.27: и не на другой ветке дороги (у серпантина река проходит под несколькими петлями — раньше тополь вставал посреди дороги)
+      if(nearTrack(trk,x,z,W/2+6))return;
       const tt=rnd()<0.5?'poplar':set.trees.includes('birch')?'birch':'elm';spr[bi].push({t:tt,off:0,v:Math.floor(rnd()*3),k:'W',wx:x,wz:z,rot:rnd()*6});
       addCollider(trk,x,z,SOLID[tt].r,tt,bi);});}});// 0.26: и эти деревья твёрдые
   // порталы тоннелей: скальная стена по сторонам от проёма — твёрдая
@@ -286,7 +295,10 @@ function placeScenery(trk,rnd){
   LMs.forEach(q=>{if(q.t==='rlm'){spr[q.i].push({t:'rlm',k:'R',lm:q.lm,off:q.off,v:0,wx:q.x,wz:q.z,rot:q.rot,far:q.far});
       // здание у дороги твёрдое (по меньшей стороне, не заходя на полотно)
       // 0.26: по всему следу постройки (повёрнутый прямоугольник), не заходя на полотно; не влезает — круг посередине
-      if(!q.far&&!q.lm.line&&Math.abs(q.off)<120){const L=(q.lm.l||8)/2,Wd=(q.lm.w||8)/2,ux=Math.sin(q.rot||0),uz=Math.cos(q.rot||0);let done=false;
+      // 0.27: крепостная стена с карты — твёрдая по всей длине (прямоугольник на каждый кусок ломаной)
+      if(!q.far&&q.lm.line&&q.lm.line.length>1){const Lp=q.lm.line;for(let k=0;k+1<Lp.length;k++){const ax=q.x+Lp[k][0],az=q.z+Lp[k][1],bx=q.x+Lp[k+1][0],bz=q.z+Lp[k+1][1],dl=Math.hypot(bx-ax,bz-az);if(dl<0.5)continue;
+          const ux=(bx-ax)/dl,uz=(bz-az)/dl,o={x:(ax+bx)/2,z:(az+bz)/2,r:Math.hypot(dl/2,1.6),kind:'rlm',box:{ux,uz,vx:uz,vz:-ux,hu:dl/2,hv:1.6}};if(solidClear(trk,o))addCollider(trk,o.x,o.z,o.r,'rlm',q.i,o);}}
+      if(!q.far&&!q.lm.line){const L=(q.lm.l||8)/2,Wd=(q.lm.w||8)/2,ux=Math.sin(q.rot||0),uz=Math.cos(q.rot||0);let done=false;
         for(const k of [1,0.85,0.7,0.55,0.4]){const o={x:q.x,z:q.z,r:Math.hypot(L*k,Wd*k),kind:'rlm',box:{ux,uz,vx:uz,vz:-ux,hu:L*k,hv:Wd*k}};if(solidClear(trk,o)){addCollider(trk,q.x,q.z,o.r,'rlm',q.i,o);done=true;break;}}
         if(!done){const rr=Math.min(Math.min(q.lm.l||8,q.lm.w||8)*0.42,Math.abs(q.off)-W/2-1.5);if(rr>0.8)addCollider(trk,q.x,q.z,rr,'rlm',q.i);}}return;}
     spr[q.i].push(q.world?{t:q.t,off:q.off,v:0,k:'L',wx:q.x,wz:q.z,rot:q.rot}:{t:q.t,off:q.off,v:0,k:'L'});const p=pts[q.i],nn=N[q.i],tt=trk.T[q.i];
@@ -437,7 +449,7 @@ function carStep(c,trk,dt){
     const h=R.hz0*Math.pow((1-c.rel)/R.relRef,1.6)*stress;
     if(Math.random()<h*dt)carFailure(c);}
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
-  const L=trk.segCol&&trk.segCol[c.idx];
+  const L=colNear(trk,c.x,c.z,2.8);
   // второй проход: удар разворачивает машину, и нос может задеть стену снова — выталкиваем ещё раз
   if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
   if(bar&&bar.par){// 0.26: парапет моста с двух сторон: изнутри — бортом к стенке, снаружи — не перелезть на полотно

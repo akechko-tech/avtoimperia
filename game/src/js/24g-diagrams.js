@@ -23,7 +23,7 @@ const DG={
   gearSide(g,x,y,h,w,col,fill){DG.rect(g,x-w/2,y-h/2,w,h,fill||'#3a3122',col||DGC.ink,2);for(let k=-h/2+6;k<h/2-4;k+=10)DG.ln(g,[[x-w/2,y+k],[x+w/2,y+k]],DGC.dim,1);},
   font(g,size,it,b){g.font=`${it?'italic ':''}${b?'700 ':''}${size}px Georgia,'Times New Roman',serif`;},
   // подпись: не вылезает за кадр (уменьшается, а длинная — в две строки); lead — куда тянуть выноску
-  lab(g,txt,x,y,o){o=o||{};let size=o.size||26;const al=o.al||'left';DG.font(g,size,o.it!==false,o.b);
+  lab(g,txt,x,y,o){o=o||{};let size=o.size||28;const al=o.al||'left';DG.font(g,size,o.it!==false,o.b);
     const room=Math.min(o.w||1e9,al==='left'?952-x:al==='right'?x-8:Math.min(x,960-x)*2-16);let L=[txt];
     if(g.measureText(txt).width>room){const w=txt.split(' ');if(w.length>1){let best=null;for(let i=1;i<w.length;i++){const a=w.slice(0,i).join(' '),b=w.slice(i).join(' '),m=Math.max(g.measureText(a).width,g.measureText(b).width);if(!best||m<best[0])best=[m,[a,b]];}L=best[1];}
       while(size>15&&Math.max(...L.map(s=>g.measureText(s).width))>room){size-=1;DG.font(g,size,o.it!==false,o.b);}}
