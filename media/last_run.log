@@ -1,213 +1,106 @@
-== job hits_scan
-search "In My Merry Oldsmobile" -> 1
-search "Take Me Out to the Ball Game" -> 4
-search "Shine On, Harvest Moon" -> 2
-search "By the Light of the Silvery Moon" -> 1
-search "Let Me Call You Sweetheart" -> 1
-search "Alexander's Ragtime Band" -> 5
-search "Over There" -> 16
-search "Long Way to Tipperary" -> 7
-search "Pack Up Your Troubles" -> 1
-search "Keep the Home Fires Burning" -> 4
-search "Hello! Ma Baby" -> 1
-search "Give My Regards to Broadway" -> 1
-search "Yankee Doodle Boy" -> 1
-search "Grand Old Flag" -> 6
-search "Meet Me in St. Louis" -> 0
-search "In the Good Old Summer Time" -> 0
-search "Bill Bailey" -> 2
-search "Down by the Old Mill Stream" -> 1
-search "Some of These Days" -> 2
-search "St. Louis Blues" -> 9
-search "Memphis Blues" -> 10
-search "Darktown Strutters" -> 0
-search "Swanee" -> 7
-search "Dardanella" -> 1
-search "Whispering" -> 37
-search "Ain't We Got Fun" -> 1
-search "Yes! We Have No Bananas" -> 3
-search "Tea for Two" -> 2
-search "The Charleston" -> 1
-search "Bye Bye Blackbird" -> 0
-search "Ain't She Sweet" -> 5
-search "Five Foot Two" -> 0
-search "Sweet Georgia Brown" -> 3
-search "Happy Days Are Here Again" -> 2
-search "Ja-Da" -> 23
-search "Japanese Sandman" -> 17
-search "Avalon" -> 6
-search "April Showers" -> 4
-search "My Blue Heaven" -> 3
-search "Tiger Rag" -> 4
-search "Livery Stable Blues" -> 3
-search "Dixie Jass Band" -> 1
-search "Original Dixieland" -> 14
-search "Dippermouth Blues" -> 1
-search "Black Bottom Stomp" -> 1
-search "King Porter Stomp" -> 0
-search "Wolverine Blues" -> 0
-search "Royal Garden Blues" -> 2
-search "Twelfth Street Rag" -> 3
-search "Kitten on the Keys" -> 8
-search "Nola" -> 26
-search "Maple Leaf Rag" -> 18
-search "The Entertainer" -> 10
-search "Elite Syncopations" -> 3
-search "The Easy Winners" -> 2
-search "Solace" -> 13
-search "Pineapple Rag" -> 2
-search "Weeping Willow" -> 5
-search "Bethena" -> 3
-search "Peacherine" -> 2
-search "Swipesy" -> 2
-search "Sunflower Slow Drag" -> 4
-search "Gladiolus Rag" -> 2
-search "Euphonic Sounds" -> 3
-search "Magnetic Rag" -> 3
-search "Wall Street Rag" -> 4
-search "Original Rags" -> 4
-search "Ragtime Dance" -> 4
-search "Cascades" -> 6
-search "Chrysanthemum" -> 7
-search "American Beauty Rag" -> 3
-search "Grace and Beauty" -> 3
-search "Frog Legs Rag" -> 5
-search "Black and White Rag" -> 4
-search "Dill Pickles" -> 2
-search "Temptation Rag" -> 2
-search "Russian Rag" -> 2
-search "Glow-Worm" -> 1
-search "Glühwürmchen" -> 1
-search "Berliner Luft" -> 4
-search "Poor Butterfly" -> 0
-search "Sheik of Araby" -> 0
-search "Margie" -> 8
-search "Toot, Toot, Tootsie" -> 2
-search "California, Here I Come" -> 1
-search "Valencia" -> 50
-search "La Paloma" -> 23
-search "La Cumparsita" -> 4
-search "El Choclo" -> 3
-search "Jalousie" -> 20
-search "Frou-Frou" -> 3
-search "Petite Tonkinoise" -> 0
-search "Le Temps des cerises" -> 0
-search "O sole mio" -> 3
-search "Torna a Surriento" -> 2
-search "Santa Lucia" -> 20
-search "Funiculì" -> 4
-search "Mattinata" -> 5
-search "Dark Eyes" -> 1
-search "Ochi chornye" -> 0
-search "Korobeiniki" -> 9
-search "Vienna, City of My Dreams" -> 0
-search "Gold and Silver" -> 5
-search "Vilia" -> 2
-search "Ballin' the Jack" -> 3
-search "Waiting for the Robert E. Lee" -> 1
-search "Smiles" -> 38
-search "K-K-K-Katy" -> 1
-search "Till We Meet Again" -> 3
-search "How Ya Gonna Keep" -> 3
-search "After the Ball" -> 4
-search "Daisy Bell" -> 5
-search "Sidewalks of New York" -> 0
-search "Ta-ra-ra Boom-de-ay" -> 1
-search "Hiawatha" -> 25
-search "Under the Bamboo Tree" -> 0
-search "Bedelia" -> 1
-search "Wait Till the Sun Shines" -> 1
-search "School Days" -> 2
-search "Cuddle Up a Little Closer" -> 0
-search "Put on Your Old Grey Bonnet" -> 3
-search "Ida! Sweet as Apple Cider" -> 0
-search "Moonlight Bay" -> 2
-search "When Irish Eyes" -> 1
-search "Peg o' My Heart" -> 0
-search "Too-Ra-Loo-Ral" -> 0
-search "Missouri Waltz" -> 2
-search "Beautiful Ohio" -> 1
-search "I'm Forever Blowing Bubbles" -> 2
-search "Look for the Silver Lining" -> 1
-search Billy Murray -> 33
-search Ada Jones -> 18
-search Arthur Collins -> 28
-search Henry Burr -> 21
-search Al Jolson -> 10
-search Paul Whiteman -> 29
-search Vernon Dalhart -> 6
-search Marion Harris -> 7
-search Nora Bayes -> 9
-search Original Dixieland Jazz Band -> 15
-search King Oliver -> 5
-search Louis Armstrong Hot Five -> 0
-search Bessie Smith -> 50
-search Jelly Roll Morton -> 11
-search Ted Lewis -> 9
-search Ben Selvin -> 2
-search Isham Jones -> 14
-search Fletcher Henderson -> 50
-search Sophie Tucker -> 50
-search Harry Lauder -> 0
-search Fred Van Eps -> 5
-search Vess Ossman -> 2
-search Sousa's Band -> 50
-search Prince's Band -> 29
-search Arthur Pryor -> 27
-search James Reese Europe -> 50
-search Eubie Blake -> 8
-search Zez Confrey -> 12
-search Joseph Lamb -> 24
-search James Scott rag -> 42
-search Scott Joplin -> 50
-search Enrico Caruso -> 50
-search Edison cylinder -> 50
-search Edison Blue Amberol -> 26
-search Victor Talking Machine -> 50
-search Columbia Graphophone -> 14
-search phonograph 1910s -> 0
-search 78 rpm 1920s -> 0
-search gramophone record 1900s -> 2
-search ragtime band -> 50
-search ragtime orchestra -> 50
-search jazz band 1920s -> 34
-search dance orchestra 1920s -> 15
-search foxtrot 1920s -> 1
-search one-step -> 41
-search two-step -> 46
-search turkey trot -> 5
-search tango 1910s -> 0
-search Charleston 1920s -> 0
-search shimmy -> 50
-search music hall song -> 49
-search vaudeville song -> 18
-search barbershop quartet -> 29
-search Tin Pan Alley -> 13
-search café-concert -> 13
-search chanson 1900 -> 0
-search Category:Ragtime -> 2349
-search Category:Scott Joplin -> 0
-search Category:Original Dixieland Jass Band -> 24
-search Category:Jazz recordings -> 0
-search Category:Audio files of jazz -> 0
-search Category:Audio files of ragtime -> 0
-search Category:Ragtime music -> 1
-search Category:Songs of World War I -> 22
-search Category:Edison Records -> 204
-search Category:Victor Records -> 149
-search Category:Columbia Records -> 156
-search Category:Cylinder recordings -> 0
-search Category:78 rpm records -> 0
-search Category:National Jukebox -> 0
-search Category:Tango music -> 0
-search Category:Barbershop music -> 11
-search Category:Music of the 1900s -> 0
-search Category:Music of the 1910s -> 0
-search Category:Music of the 1920s -> 0
-search Category:1900s songs -> 0
-search Category:1910s songs -> 0
-search Category:1920s songs -> 0
-search Category:Audio files of popular music -> 74
-search Category:Audio files of songs -> 374
-music_hits scan: candidates 3571 kept 2994
-== job hits_scan took 309 s
+== job music_cut
+music carolina_morning 188 s 1551577
+music california_here 174 s 1433454
+music steamboat_bill 173 s 1429081
+music aint_nobody 206 s 1696919
+music whos_sorry 204 s 1693752
+music swingin_lane 191 s 1586058
+music bubbles 217 s 1791468
+music bananas 192 s 1604723
+music had_to_be 199 s 1638105
+music dippermouth 144 s 1182996
+music wooden_soldiers 196 s 1618196
+music old_gang 192 s 1587511
+music oo_long 194 s 1599586
+music infanta 270 s 2222467
+music sandman 178 s 1459734
+music whispering 196 s 1617926
+music avalon 176 s 1455857
+music ballgame_1908 156 s 1280847
+music green_river 175 s 1442423
+music my_buddy 170 s 1400370
+music high_society 170 s 1403677
+music leave_world 164 s 1348672
+music sammy_1905 105 s 864006
+music st_louis_1925 190 s 1559021
+music memphis_1923 181 s 1487187
+music afghanistan 194 s 1594415
+music back_porch 184 s 1510274
+music prisoners_song 180 s 1479936
+music wreck_97 221 s 1826157
+music tin_roof 182 s 1496012
+music big_bad_bill 180 s 1480318
+music twelfth_street 243 s 1995947
+music mill_stream 168 s 1401757
+music silver_lining 202 s 1658244
+music moonlight_bay 179 s 1471898
+music school_days 194 s 1600556
+music billy_dream 193 s 1591480
+music hot_time 191 s 1572747
+music rainbows 206 s 1706447
+music louisville_lou 182 s 1520617
+music sheltering_palms 164 s 1351918
+music devil_town 172 s 1425845
+music runnin_wild 174 s 1443217
+music sophie_1922 169 s 1402036
+music charleston_1925 248 s 2040701
+music georgia_brown 176 s 1452057
+music moaning_sax 132 s 1088626
+music downhearted 205 s 1683263
+music rainy_blues 215 s 1776898
+music russian_rag 175 s 1439979
+music hesitation 184 s 1509568
+music maple_1906 115 s 945364
+music joplin_1916 130 s 1072453
+music tiger_1918 185 s 1522207
+music royal_garden 128 s 1048611
+music morocha 188 s 1543378
+music gaucha_manuela 207 s 1633126
+music kalinka 124 s 1019886
+music ukhnem 181 s 1491427
+music kurgan 181 s 1490890
+music mondnacht 270 s 2219021
+music faded_picture 270 s 2221536
+music any_old_time 140 s 1153225
+music tipperary 230 s 1891135
+music over_there 209 s 1725015
+music katy 219 s 1753289
+music farm_paree 148 s 1214821
+music alexanders 127 s 1042496
+music these_days 264 s 2174176
+music harvest_moon 125 s 1030789
+music hello_baby 151 s 1230191
+music grand_old_flag 121 s 996309
+music sweetheart 154 s 1275460
+music nellie 164 s 1344486
+music beautiful_ohio 181 s 1484345
+music got_fun 219 s 1799935
+music april_showers 198 s 1626667
+music tea_for_two 176 s 1448714
+music daisy_bell 134 s 1110864
+music after_ball 146 s 1202954
+music bill_bailey 132 s 1090047
+music swanee 158 s 1284765
+music one_i_love 216 s 1773665
+music manhattan_1925 186 s 1534062
+music venice_1924 172 s 1417599
+music italian_street 175 s 1454772
+music love_california 237 s 1947885
+music colonel_bogey 230 s 3295386
+music field_artillery 133 s 1901244
+music jack_tar 157 s 2234786
+music diplomat 201 s 2863195
+music sabre_spurs 198 s 2783476
+music jersey_shore 162 s 2265810
+music miss_trombone 140 s 1997420
+music pathfinder 208 s 2974394
+music st_louis_march 249 s 3129659
+music ny_hippodrome 244 s 3469029
+music navy_blue 172 s 2405573
+music man_i_love 153 s 2173764
+music core_ngrato 216 s 3048039
+music clair_de_lune 270 s 3841744
+music heliotrope 266 s 3809475
+music fig_leaf 220 s 3077655
+music paragon 260 s 3704606
+== job music_cut took 1244 s
