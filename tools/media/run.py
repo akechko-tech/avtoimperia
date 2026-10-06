@@ -485,6 +485,43 @@ SFX_QS = ['crowd cheering', 'cheering crowd', 'applause', 'crowd applause', 'sta
           'forest ambience', 'countryside ambience', 'Category:Sounds of crowds', 'Category:Sounds of birds', 'Category:Sounds of trains', 'Category:Bells (sounds)']
 
 def music_scan(): audio_scan_to('music', MUS_QS, 50, 1200, 50)
+
+# 0.27: хиты эпохи 1895–1929 — песни, регтайм, ранний джаз, танго, кафешантан; и современные исполнения, и записи тех лет
+HIT_QS = ['"In My Merry Oldsmobile"', '"Take Me Out to the Ball Game"', '"Shine On, Harvest Moon"', '"By the Light of the Silvery Moon"',
+          '"Let Me Call You Sweetheart"', '"Alexander\'s Ragtime Band"', '"Over There"', '"Long Way to Tipperary"', '"Pack Up Your Troubles"',
+          '"Keep the Home Fires Burning"', '"Hello! Ma Baby"', '"Give My Regards to Broadway"', '"Yankee Doodle Boy"', '"Grand Old Flag"',
+          '"Meet Me in St. Louis"', '"In the Good Old Summer Time"', '"Bill Bailey"', '"Down by the Old Mill Stream"', '"Some of These Days"',
+          '"St. Louis Blues"', '"Memphis Blues"', '"Darktown Strutters"', '"Swanee"', '"Dardanella"', '"Whispering"', '"Ain\'t We Got Fun"',
+          '"Yes! We Have No Bananas"', '"Tea for Two"', '"The Charleston"', '"Bye Bye Blackbird"', '"Ain\'t She Sweet"', '"Five Foot Two"',
+          '"Sweet Georgia Brown"', '"Happy Days Are Here Again"', '"Ja-Da"', '"Japanese Sandman"', '"Avalon"', '"April Showers"', '"My Blue Heaven"',
+          '"Tiger Rag"', '"Livery Stable Blues"', '"Dixie Jass Band"', '"Original Dixieland"', '"Dippermouth Blues"', '"Black Bottom Stomp"',
+          '"King Porter Stomp"', '"Wolverine Blues"', '"Royal Garden Blues"', '"Twelfth Street Rag"', '"Kitten on the Keys"', '"Nola"',
+          '"Maple Leaf Rag"', '"The Entertainer"', '"Elite Syncopations"', '"The Easy Winners"', '"Solace"', '"Pineapple Rag"', '"Weeping Willow"',
+          '"Bethena"', '"Peacherine"', '"Swipesy"', '"Sunflower Slow Drag"', '"Gladiolus Rag"', '"Euphonic Sounds"', '"Magnetic Rag"',
+          '"Wall Street Rag"', '"Original Rags"', '"Ragtime Dance"', '"Cascades"', '"Chrysanthemum"', '"American Beauty Rag"', '"Grace and Beauty"',
+          '"Frog Legs Rag"', '"Black and White Rag"', '"Dill Pickles"', '"Temptation Rag"', '"Russian Rag"', '"Glow-Worm"', '"Glühwürmchen"',
+          '"Berliner Luft"', '"Poor Butterfly"', '"Sheik of Araby"', '"Margie"', '"Toot, Toot, Tootsie"', '"California, Here I Come"',
+          '"Valencia"', '"La Paloma"', '"La Cumparsita"', '"El Choclo"', '"Jalousie"', '"Frou-Frou"', '"Petite Tonkinoise"', '"Le Temps des cerises"',
+          '"O sole mio"', '"Torna a Surriento"', '"Santa Lucia"', '"Funiculì"', '"Mattinata"', '"Dark Eyes"', '"Ochi chornye"', '"Korobeiniki"',
+          '"Vienna, City of My Dreams"', '"Gold and Silver"', '"Vilia"', '"Ballin\' the Jack"', '"Waiting for the Robert E. Lee"', '"Smiles"',
+          '"K-K-K-Katy"', '"Till We Meet Again"', '"How Ya Gonna Keep"', '"After the Ball"', '"Daisy Bell"', '"Sidewalks of New York"',
+          '"Ta-ra-ra Boom-de-ay"', '"Hiawatha"', '"Under the Bamboo Tree"', '"Bedelia"', '"Wait Till the Sun Shines"', '"School Days"',
+          '"Cuddle Up a Little Closer"', '"Put on Your Old Grey Bonnet"', '"Ida! Sweet as Apple Cider"', '"Moonlight Bay"', '"When Irish Eyes"',
+          '"Peg o\' My Heart"', '"Too-Ra-Loo-Ral"', '"Missouri Waltz"', '"Beautiful Ohio"', '"I\'m Forever Blowing Bubbles"', '"Look for the Silver Lining"',
+          'Billy Murray', 'Ada Jones', 'Arthur Collins', 'Henry Burr', 'Al Jolson', 'Paul Whiteman', 'Vernon Dalhart', 'Marion Harris', 'Nora Bayes',
+          'Original Dixieland Jazz Band', 'King Oliver', 'Louis Armstrong Hot Five', 'Bessie Smith', 'Jelly Roll Morton', 'Ted Lewis', 'Ben Selvin',
+          'Isham Jones', 'Fletcher Henderson', 'Sophie Tucker', 'Harry Lauder', 'Fred Van Eps', 'Vess Ossman', 'Sousa\'s Band', 'Prince\'s Band',
+          'Arthur Pryor', 'James Reese Europe', 'Eubie Blake', 'Zez Confrey', 'Joseph Lamb', 'James Scott rag', 'Scott Joplin', 'Enrico Caruso',
+          'Edison cylinder', 'Edison Blue Amberol', 'Victor Talking Machine', 'Columbia Graphophone', 'phonograph 1910s', '78 rpm 1920s', 'gramophone record 1900s',
+          'ragtime band', 'ragtime orchestra', 'jazz band 1920s', 'dance orchestra 1920s', 'foxtrot 1920s', 'one-step', 'two-step', 'turkey trot', 'tango 1910s',
+          'Charleston 1920s', 'shimmy', 'music hall song', 'vaudeville song', 'barbershop quartet', 'Tin Pan Alley', 'café-concert', 'chanson 1900',
+          'Category:Ragtime', 'Category:Scott Joplin', 'Category:Original Dixieland Jass Band', 'Category:Jazz recordings', 'Category:Audio files of jazz',
+          'Category:Audio files of ragtime', 'Category:Ragtime music', 'Category:Songs of World War I', 'Category:Edison Records', 'Category:Victor Records',
+          'Category:Columbia Records', 'Category:Cylinder recordings', 'Category:78 rpm records', 'Category:National Jukebox', 'Category:Tango music',
+          'Category:Barbershop music', 'Category:Music of the 1900s', 'Category:Music of the 1910s', 'Category:Music of the 1920s',
+          'Category:1900s songs', 'Category:1910s songs', 'Category:1920s songs', 'Category:Audio files of popular music', 'Category:Audio files of songs']
+def hits_scan(): audio_scan_to('music_hits', HIT_QS, 50, 600, 50)
+
 def sfx_scan(): audio_scan_to('sfx', SFX_QS, 1.5, 900, 40)
 
 # ---------------------------------------------------------------- пробы голоса: какие модели Silero есть и как звучат
@@ -787,7 +824,7 @@ def photos():
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
 JOBS = {'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces}
+        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
