@@ -13,6 +13,8 @@ for(let k=0;k<35*12;k++){
       // старые модели снимаем через год после запуска новой
     }}
   G.models.filter(m=>m.status==='prod').forEach(m=>{const newer=G.models.some(x=>x.status==='prod'&&x.id>m.id&&mi(G)-x.launched>=6);if(newer&&G.models.filter(x=>x.status==='prod').length>2){m.status='off';G.cash+=m.stock*m.price*0.6;m.stock=0;}});
+  // 0.28: помощник «Юного магната» сам проекты КБ не ставит — ребёнок раз в квартал жмёт кнопку советника «Начать» (если не KB=0)
+  if(process.env.KB!=='0'&&G.m%3===0&&rdActive(G).length<rdSlots(G)){const pj=suggestProject(G);if(pj&&G.cash>rdCost(pj,G)*3)rdBegin(G,pj);}
   step();if(G.over){console.log('КОНЕЦ',dstr(G),money(G.cash));break;}
   if(G.m===0&&(G.y-1)%3===0){const L=G.last;console.log((G.y-1)+': продано '+fmtN(G.peakLast||0)+' · касса '+money(G.cash)+' · кредит '+money(G.loan)+' · доля '+(L.share*100).toFixed(1)+'% · дилеры '+Object.entries(G.dealers).map(([c,n])=>c+n).join(',')+' · цех '+Math.round(capEff(G))+' · склад '+G.wh+' · КБ '+G.rd.lvl+' · реп '+Math.round(G.rep)+' · моделей '+G.models.filter(m=>m.status==='prod').length);}
 }

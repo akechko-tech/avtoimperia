@@ -37,9 +37,12 @@ function dealerGain(s,c){const act=s.models.filter(m=>m.status==='prod');if(!act
   while(n<lim){const g=pot*(Math.pow(Math.min(1,(dd+1)/need),0.7)-Math.pow(Math.min(1,dd/need),0.7))*m;if(g<u*1.3)break;n++;dd++;}return n;}
 function homeDemand(s){return s.models.filter(m=>m.status==='prod').reduce((a,m)=>a+(m.fc||0),0);}
 // Лучший проект для КБ: детали самой продаваемой модели, потом прототипы
-function suggestProject(s){const P=rdProjects(s);if(!P.length)return null;const top=s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
-  const w={e:5,g:3,c:3,w:2,k:2,b:3};
-  const mine=P.filter(p=>p.kind==='upg'&&top&&top[p.ck]===p.id).sort((a,b)=>(w[b.ck]||1)/b.need-(w[a.ck]||1)/a.need);
+function suggestProject(s){const P=rdProjects(s);if(!P.length)return null;const act=s.models.filter(m=>m.status==='prod'),top=act.slice().sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
+  const w={e:5,g:3,c:3,w:2,k:2,b:3},by=md=>md?P.filter(p=>p.kind==='upg'&&md[p.ck]===p.id).sort((a,b)=>(w[b.ck]||1)/b.need-(w[a.ck]||1)/a.need):[];
+  // 0.28: сначала — детали самой новой машины (в разработке или последней запущенной): Петя сделал новый крутой мотор,
+  // а помощник качал первый мотор старой модели только потому, что та пока продаётся лучше
+  const newest=s.models.filter(m=>m.status==='dev').concat(act.slice().sort((a,b)=>(b.launched||0)-(a.launched||0)))[0];
+  const mine=by(newest).concat(by(top).filter(p=>!(newest&&newest[p.ck]&&newest[p.ck]!==p.id&&newest!==top)));
   // иначе — детали своих машин, ранний прототип; а если и их нет — самая новая массовая деталь эпохи, а не старьё
   // (в 1917 году не улучшать одноцилиндровый De Dion 1895 года только потому, что он первый в списке)
   const fresh=P.filter(p=>p.kind==='upg'&&p.py>=s.y-10).sort((a,b)=>((b.mass?1:0)-(a.mass?1:0))||(b.py-a.py)||(a.need-b.need));
@@ -73,7 +76,7 @@ function adviceList(s){
       add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':null,rcN?()=>{tab='race';window.scrollTo(0,0);}:null,'market');}}
   // КБ
   const free=rdSlots(s)-rdActive(s).length,pj=free>0&&suggestProject(s);
-  if(pj)add(60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
+  if(pj)add(DIF().simple?72:60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.${DIF().simple?' Или выберите деталь сами: «Модели» → «Конструкторское бюро» → «+ Проект».':''}`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
   // мощности и склад
   if(L&&act.length){const util=L.made/Math.max(1,capEff(s)),lost=act.reduce((a,m)=>a+(m.lostS||0),0),busy=(s.capBuild||[]).length;
     if(util>0.93&&lost>Math.max(1,L.sold*0.06)&&!busy){const n=Math.max(2,Math.round(s.cap*0.25)),c=n*capUnitCost(s);if(s.cash>c*1.2)add(75,'🏭',`Завод работает на пределе, а покупателям не хватило ${fmtD(lost)} машин. Постройте цех.`,`+25% · ${money(c)}`,()=>ACT.capAdd({n}),'plant');}
@@ -144,7 +147,8 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
     const n=d?dealerGain(s,c):0;if(n>0&&room()>dc*n*2){s.cash-=n*dc;s.dealers[c]=d+n;}});}
   // КБ: проекты и рост
   // 0.22: проекты КБ — только из своих денег, без кредита, и когда касса в несколько раз больше цены проекта
-  while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;const c=rdCost(pj,s);if(s.cash-c<reserve*(lean?1:0.5)||!rdBegin(s,pj))break;msg.push('КБ: '+pj.name);}
+  // 0.28: в «Юном магнате» проекты КБ выбирает сам игрок (советник подскажет кнопкой) — помощник их не ставит
+  if(!DIF().simple)while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;const c=rdCost(pj,s);if(s.cash-c<reserve*(lean?1:0.5)||!rdBegin(s,pj))break;msg.push('КБ: '+pj.name);}
   if(s.rd.lvl<5&&!lean&&pAvg>rdUpkeep(s)*2&&room()>rdUpCost(s)*5){const c=rdUpCost(s);s.cash-=c;s.rd.lvl++;msg.push('КБ расширено');}
   // технологии завода
   if(!s.techBuild&&calm&&!lean){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}
