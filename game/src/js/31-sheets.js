@@ -89,10 +89,15 @@ function openRD(){
 }
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
-  draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1'};
-  const list=Object.entries(PIONEERS).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
+  draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
+    path:prev&&prev.path||'company',racer:prev&&prev.racer||'custom',rname:prev&&prev.rname||'',rc:prev&&prev.rc||'fr',ry:prev&&prev.ry||1900};
+  // 0.28: два пути — основать марку в 1895 году или начать гонщиком (19-racer.js)
+  const pathChips=`<div class="chips" style="margin-top:10px"><button class="chip ${draft.path==='company'?'on':''}" data-act="ngPath" data-v="company">🏭 Основать марку<small>январь 1895 года: завод, модели, рынок</small></button><button class="chip ${draft.path==='racer'?'on':''}" data-act="ngPath" data-v="racer">🏁 Начать гонщиком<small>призы, команды и слава — потом своя марка</small></button></div>`;
+  if(draft.path==='racer'){openRacerNew(pathChips);return;}
+  const list=Object.entries(PIONEERS).filter(([k,P])=>!P.racer).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
   openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
     <p class="small muted" style="margin-top:6px">Январь 1895 года. Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
+    ${pathChips}
     <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
     <label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(draft.company)}" maxlength="28" style="margin-top:6px">
     <label class="label" for="fname" style="display:block;margin-top:12px">Как назовёте первую машину?</label><input type="text" id="fname" value="${esc(draft.first||'Тип 1')}" maxlength="24" style="margin-top:6px" placeholder="Тип 1">
@@ -104,6 +109,20 @@ function openNewGame(){
   document.getElementById('cname').addEventListener('input',e=>{draft.company=e.target.value;});
   document.getElementById('fname').addEventListener('input',e=>{draft.first=e.target.value;});
 }
+const RX_ERA={1895:'первые гонки городов',1900:'Кубок Гордона Беннетта',1905:'Гран-при и Вандербильт',1910:'Индианаполис и Тарга',1919:'после войны',1924:'наддув и Монца'};
+function openRacerNew(pathChips){const cust=draft.racer==='custom';
+  const list=Object.entries(RACERS).map(([k,P])=>{const d=DRIVERS.find(x=>x.id===k);return `<button class="pion ${draft.racer===k?'on':''}" data-act="rpick" data-v="${k}">${(()=>{const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>';})()}<div><h3>${esc(P.n)}</h3><div class="yrs">${P.y?`дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}`:'любая страна и год дебюта'}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}).join('');
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
+    <p class="small muted" style="margin-top:6px">Путь гонщика: купите первую машину, выигрывайте призы, подписывайте контракты со спонсорами и заводскими командами, сравнивайте себя с лучшими гонщиками эпохи. Накопите капитал — и основайте свою марку, как Лянча в 1906 году или Шевроле в 1911-м: дальше игра пойдёт в режиме магната.</p>
+    ${pathChips}
+    <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
+    ${cust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(draft.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
+      <div class="label" style="margin-top:14px">Страна</div><div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.rc===k?'on':''}" data-act="rcountry" data-v="${k}">${c.name}<small>${c.city} · гоночный цвет — ${c.raceName}</small></button>`).join('')}</div>
+      <div class="label" style="margin-top:14px">Год дебюта</div><div class="chips" style="margin-top:6px">${Object.keys(RX_ERA).map(y=>`<button class="chip ${+draft.ry===+y?'on':''}" data-act="ryear" data-v="${y}">${y}<small>${RX_ERA[y]}</small></button>`).join('')}</div>`:''}
+    <div class="label" style="margin-top:14px">Сложность</div>
+    <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,d])=>`<button class="chip ${draft.diff===k?'on':''}" data-act="diff" data-v="${k}">${d.name}<small>${k==='kids'?'Соперники слабее, аварии мягче':d.desc}</small></button>`).join('')}</div>
+    <button class="btn primary block" style="margin-top:16px" data-act="startracer">Выйти на старт</button>`);
+  const rn=document.getElementById('rname');if(rn)rn.addEventListener('input',e=>{draft.rname=e.target.value;});}
 function openMenuSheet(){
   openSheet(`<div class="row"><h2>Меню</h2>${X}</div>
     <p class="small muted" style="margin-top:4px">«${esc(G.company)}» · ${dstr(G)} · игра сохраняется сама каждый месяц.</p>
@@ -146,10 +165,14 @@ function openHelp(){
     <p><b>Дилеры.</b> Продают машины за ${Math.round(dMargin(G)*100)}% цены. Где нет вашего дилера, там о вас не знают. На карточке модели видно, почему продали меньше, чем хотели купить: не хватило машин или дилеры не успели.</p>
     <p><b>КБ.</b> Восемь уровней: чем больше бюро, тем больше проектов одновременно. Улучшает детали (★) и строит прототипы будущих деталей; с 3-го уровня открывает технологии завода раньше истории — это «первенства». Проекты разложены по трём папкам: улучшения (детали ваших машин и современные), новые (прототипы и машины конкурентов на изучение) и устаревшие.</p>
     <p><b>Гонки.</b> Сезоны и чемпионаты своего времени. Команда до трёх машин: одну можно вести самому — в объёмной 3D-графике (на слабых телефонах можно включить простую). Характеристики машины считаются из деталей: вес, мощность, коробка, тормоза, шины. В гонке справа вверху видно ближайший поворот и скорость, на которой его можно пройти, слева внизу — сколько сцепления шин уже занято; «?» — как ехать. Гоночный отдел (шесть уровней) даёт заводской кузов, надёжность, мощность и быстрые пит-стопы.</p>
+    <p><b>Путь гонщика.</b> «Новая игра» → «Начать гонщиком»: исторический пилот (Лянча, Шевроле, Рикенбакер, Мазерати, Феррари) или свой — страна и год дебюта. Купите подержанную гоночную машину, устройтесь испытателем на завод, выигрывайте призы и славу: заводы позовут в команду (жалованье, доля призов, премии), шинные фирмы платят за победы. «Рейтинг» сравнивает вас с лучшими гонщиками 1895–1929 годов. Накопив капитал, основайте марку — с нуля, с партнёром или купив слабую марку, — и игра продолжится партией магната.</p>
     <p><b>Вызовы.</b> Соперники бросают вызов в газетах, а на доске вызовов («Империя») их можно брать самим: пари на гонку, матч-гонка один на один (ипподромы, Бруклендс, Индианаполис, дощатые треки), спор о скорости на мерной миле или круге, продажи класса за квартал, полгода или год — дома и на экспорт (если силы неравны — с форой), пробег на надёжность серийных машин. Выигрыш — ставка, слава и грамота, проигрыш или неявка — ставка и насмешки прессы.</p>
     <p><b>Цель.</b> Величайшая автоимперия эпохи: в 1930 году компанию сравнят с реальными по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
 }
 function openLegacyInfo(){
+  if(isRacer(G)){const X0=G.racer,tb=dcarTable(G),pl=tb.findIndex(r=>r.me)+1;openSheet(`<div class="row"><h2>Цель гонщика</h2>${X}</div>
+    <p class="small" style="margin-top:8px">Войти в двадцатку лучших гонщиков эпохи и, если захотите, основать свою марку. Очки — как в личном зачёте прессы: первые шесть мест получают 8, 6, 4, 3, 2 и 1 очко, в малых гонках — вдвое меньше. Сейчас вы ${pl?pl+'-й':'вне рейтинга'} из ${tb.length}.</p>
+    <table class="pl ctab" style="margin-top:10px">${tb.slice(0,10).map((r,i)=>`<tr class="${r.me?'you':''}"><td class="n">${i+1}</td><td style="padding-left:6px">${esc(r.me?X0.name:r.n)}</td><td class="n">${r.w}</td><td class="n">${fmtPts('gp',r.pts)}</td></tr>`).join('')}</table>`);return;}
   const t=legacyTable(G);
   openSheet(`<div class="row"><h2>Цель и наследие</h2>${X}</div>
     <p class="small" style="margin-top:8px">В 1930 году «${esc(G.company)}» встанет в один ряд с реальными компаниями эпохи. Очки наследия:</p>

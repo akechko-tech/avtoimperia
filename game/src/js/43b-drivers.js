@@ -23,7 +23,7 @@ const PIO_RACE={ford:{sk:0.52,drv:'h_ford',note:'Гонялся один раз 
   agnelli:{sk:0.4,note:'Промышленник: за FIAT гонялись Лянча, Надзаро, Каньо.'},
   custom:{sk:0.72,note:''}};
 for(const k in PIO_RACE)if(PIO_RACE[k].drv&&PIONEERS[k]&&!PIONEERS[k].drv)PIONEERS[k].drv=PIO_RACE[k].drv;
-function pioSk(s){const P=PIO_RACE[s.pioneer]||{},d=P.drv&&DRIVERS.find(x=>x.id===P.drv);return P.sk!=null?P.sk:d?d.sk:0.6;}
+function pioSk(s){if(s&&s.racer)return s.racer.sk;const P=PIO_RACE[s.pioneer]||{},d=P.drv&&DRIVERS.find(x=>x.id===P.drv);return P.sk!=null?P.sk:d?d.sk:0.6;}
 function pioRacer(s){return pioSk(s)>=0.58;}
 // Гонщики-основатели и любители: в чужих заявках — только там, где ездили на самом деле ([] — нигде);
 // основателей чужих марок нанять нельзя
@@ -31,8 +31,8 @@ const DRV_ONLY={h_ford:[],jellinek:['turbie'],porsche:['henry','alpen'],a_michel
 const DRV_OWN={h_ford:'ford',l_renault:'renault',m_renault:'renault',ferrari:'ferrari',de_dion:'',winton:'',jellinek:''};
 function drvAllowed(d,rc){const o=DRV_ONLY[d.id];return !o||(!!rc&&o.includes(rc.id));}
 function drvHireable(d,s){return !(d.id in DRV_OWN)||DRV_OWN[d.id]===s.pioneer;}
-function meKey(s){return PIONEERS[s.pioneer].drv||'me';}
-function meName(s){const P=PIONEERS[s.pioneer];return P.name==='Свой персонаж'?`Вы, хозяин «${s.company}»`:P.name;}
+function meKey(s){if(s&&s.racer)return racerKey(s);return PIONEERS[s.pioneer].drv||'me';}
+function meName(s){if(s&&s.racer)return s.racer.name;const P=PIONEERS[s.pioneer];return P.name==='Свой персонаж'?`Вы, хозяин «${s.company}»`:P.name;}
 // order — экипажи в порядке финиша (сошедшие в конце): {n — пилот, id, mq — марка, dnf, mine — за вашу команду}
 function dchRecord(s,rc,order){
   const D=dchOf(s,rc.y);if(D.races.includes(rc.key))return;D.races.push(rc.key);
@@ -42,6 +42,7 @@ function dchRecord(s,rc,order){
     r.st++;if(o.mq)r.mq=o.mq;const p=i+1,pts=o.dnf?0:dchPts(rc,p);
     r.pts+=pts;if(!o.dnf&&p===1)r.w++;if(!o.dnf&&p<=3)r.pod++;
     if(o.mine){r.mine=1;r.pm=(r.pm||0)+pts;}});
+  if(s.dcar)dcarAdd(s,rc,order);
 }
 function dchTable(s,y){const D=s.dch&&s.dch[y];if(!D)return [];
   return Object.keys(D.rows).map(k=>({k,...D.rows[k]})).filter(r=>r.pts>0||r.mine).sort((a,b)=>b.pts-a.pts||b.w-a.w||b.pod-a.pod||a.st-b.st);}
@@ -66,9 +67,9 @@ function dchBlock(s,y){const tb=dchTable(s,y),D=s.dch&&s.dch[y],fin=D&&D.done;
 function dchMini(s,y){const tb=dchTable(s,y);if(!tb.length)return '';const show=tb.slice(0,4).concat(tb.filter((r,i)=>i>=4&&r.mine).slice(0,2));
   return `<div class="label" style="margin-top:14px">Личный зачёт гонщиков ${y}</div><table class="pl" style="margin-top:4px">${show.map(r=>`<tr class="${r.mine?'you':''}"><td class="n">${tb.indexOf(r)+1}</td><td>${esc(r.n)}<small>${esc(r.mq||'')}</small></td><td class="n">${fmtPts('gp',r.pts)}</td></tr>`).join('')}</table>`;}
 // Кто вёл машины в гонке без вас: у исторического победителя — настоящий пилот, у остальных — лучший гонщик марки
-function simDrivers(rows,rc,hw){const used=new Set();
+function simDrivers(rows,rc,hw){const used=new Set();if(G&&G.racer&&G.racer.id&&G.racer.id!=='custom')used.add(G.racer.id);
   rows.forEach(r=>{if(!r.priv)return;const d=drvByName(r.drv);r.dn=r.drv||'';r.did=d?d.id:'';if(d)used.add(d.id);});
-  rows.forEach((r,i)=>{if(r.priv||i>0||r.t!==hw||!rc.win||/^(Победител|Пробег без)/.test(rc.win))return;const n=histDrv(rc.win),d=drvByName(n);r.dn=n;r.did=d?d.id:'';if(d)used.add(d.id);});
+  rows.forEach((r,i)=>{if(r.priv||i>0||r.t!==hw||!rc.win||/^(Победител|Пробег без)/.test(rc.win))return;const n=histDrv(rc.win),d=drvByName(n);if(d&&used.has(d.id))return;r.dn=n;r.did=d?d.id:'';if(d)used.add(d.id);});
   rows.forEach(r=>{if(r.priv||r.dn||!r.t)return;const d=teamDrivers(r.t,rc.y,used).sort((a,b)=>b.sk-a.sk)[0];if(d){used.add(d.id);r.dn=d.n;r.did=d.id;}});
 }
 

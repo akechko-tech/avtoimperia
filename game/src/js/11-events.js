@@ -132,6 +132,7 @@ function resolve(key){
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
+  if(/^rx:/.test(key)&&racerResolve(s,key))return;
   if(key==='restart'){s.pending=[];openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();

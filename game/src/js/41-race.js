@@ -309,7 +309,7 @@ function placeScenery(trk,rnd){
 // Машина в гонке. Все поля заданы сразу в одном порядке: у всех машин одна «форма» объекта — расчёт быстрее
 class RaceCar{constructor(e){
   this.you=!!e.you;this.player=!!e.player;this.name=e.name||'';this.label=e.label||'';this.drvName=e.drvName||'';this.drvId=e.drvId||null;this.sk=e.sk||0.8;
-  this.md=e.md;this.prep=e.prep||0;this.tyreType=e.tyre||'hard';this.gearSet=e.gear||0;this.color=e.color||'#333';this.num=e.num||0;this.pw=e.pw||1;this.relK=e.relK||1;this.pitK=e.pitK||1;this.tc=e.tc||'';this.priv=!!e.priv;this.pmy=e.pmy||0;this.spec=!!e.spec;
+  this.md=e.md;this.prep=e.prep||0;this.tyreType=e.tyre||'hard';this.gearSet=e.gear||0;this.color=e.color||'#333';this.num=e.num||0;this.pw=e.pw||1;this.relK=e.relK||1;this.pitK=e.pitK||1;this.tc=e.tc||'';this.priv=!!e.priv;this.pmy=e.pmy||0;this.spec=!!e.spec;this.works=e.works||'';
   this.st=null;this.parIn=true;this.ghostT=0;this.pushN=0;this.wantPit=false;this.m=0;this.P=0;this.kd=0;this.crr=0;this.vtop=0;this.gr=null;this.brakeK=0;this.grip=1;this.wearK=1;this.rel=0.8;this.L=2.5;this.a=0;this.b=0;this.h=0.7;this.Iz=1;
   this.x=0;this.z=0;this.y=0;this.gy=0;this.yaw=0;this.vx=0;this.vy=0;this.r=0;this.delta=0;this.gear=1;this.rpm=0;this.shift=0;this.thr=0;this.brk=0;this.steer=0;
   this.idx=0;this.lat=0;this.segT=0;this.lap=0;this.prog=0;this.fin=null;this.lapSeen=-9;this.q=0;this.lane=0;this.laneT=undefined;this.follow=null;
@@ -625,7 +625,8 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
   // хозяин в больнице — в режиме «за рулём» вы ведёте первую машину команды вместо её пилота
   const noMe=!setup.entries.some(e=>e.drv==='me');
-  const teamCars=setup.entries.map((e,i)=>{const d=e.drv==='me'?null:DRIVERS.find(x=>x.id===e.drv),me=e.drv==='me';
+  // 0.28: путь гонщика — одна машина: заводская (сила команды) или своя (по классу и состоянию)
+  const teamCars=s.mode==='racer'?[racerEntryCar(s,setup)]:setup.entries.map((e,i)=>{const d=e.drv==='me'?null:DRIVERS.find(x=>x.id===e.drv),me=e.drv==='me';
     return {you:true,name:s.company,label:e.md.name,drvName:me?(setup.mode==='drive'?'Вы':pio.name):d.n,drvId:e.drv,sk:me?pioSk(s):Math.min(0.99,d.sk*moodK(s,d.id)),
     md:e.md,prep:e.prep,tyre:e.tyre,gear:e.gear,color:e.md.paint,num:i+1,player:setup.mode==='drive'&&(me||(noMe&&i===0)),pw:(1+bn('race',0))*(dl.pw||1)*(e.md.legend?legendK(e.md,'race'):1),relK:dl.rel||1,pitK:dl.pit||1};});
   // 0.24: матч один на один и спор о скорости — на трассе только машина соперника
@@ -635,8 +636,8 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const mechOut=typeof injOf==='function'&&injOf(s,'mech');
   const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);if(c.you&&mechOut&&c.st.mech)c.st.mech=false;c.mech=c.st.mech;
     // ваша машина — такая же, как в конструкторе: её цвет и кузов; соперники — гоночные машины в цветах своих стран
-    const fdrv=c.drvId==='me'?(pio.drv||''):c.drvId;
-    if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you?s.country:c.tc,num:c.num,mech:c.mech,drv:fdrv});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
+    const fdrv=c.drvId==='me'?(s.racer&&s.racer.id&&s.racer.id!=='custom'?s.racer.id:(pio.drv||'')):c.drvId;
+    if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you&&!c.works?s.country:c.tc,num:c.num,mech:c.mech,drv:fdrv});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
     else{c.style=carStyle(c.md,c.prep,rc.y);let strip=0;
       // облик по марке: «рейсэбауты» Мерсера и Стаца — как с завода; в 24-часовых гонках 1920-х — спортивные машины с крыльями и фарами (Бентли — туринг)
       if(/^gp/.test(c.style)){if(['Mercer','Stutz'].includes(c.name)&&rc.y>=1911&&rc.y<1920){c.style='sport';strip=1;}else if(rc.t==='endurance'&&rc.y>=1920)c.style=c.name==='Bentley'?'tourer':'sport';}
@@ -686,7 +687,7 @@ function raceField(rc,s,nTeam,taken){
   const y=rc.y,pickT=fieldTeams(rc,s,nTeam),host=COUNTRIES[rc.c]?rc.c:null,PR=privRule(rc);
   const nPriv=Math.min(PR.n+(rc.major&&PR.n>=3?1:0),Math.max(0,14-nTeam-pickT.length));
   while(pickT.length+nPriv<3)pickT.push({n:'Частная машина',c:host||'fr',str:0.85,mq:[]});
-  const pio=PIONEERS[s.pioneer],used=new Set([...(s.drivers||[]),...(taken||[]),pio.drv].filter(Boolean)),out=[];
+  const pio=PIONEERS[s.pioneer],used=new Set([...(s.drivers||[]),...(taken||[]),pio.drv,s.racer&&s.racer.id].filter(Boolean)),out=[];
   DRIVERS.forEach(d=>{if(aiOut(s,d.id)||!drvAllowed(d,rc))used.add(d.id);});   // 0.22: Генри Форд в чужих заявках не появляется
   pickT.forEach((t,i)=>{
     const pool=teamDrivers(t,y,used),any=DRIVERS.filter(d=>d.from<=y&&d.to>=y&&!used.has(d.id)),L=pool.length?pool:any;
@@ -871,7 +872,7 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||''}));
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
   const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
   raceResults(rc,res,mode,info);

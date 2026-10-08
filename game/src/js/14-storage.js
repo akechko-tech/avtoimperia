@@ -5,7 +5,7 @@ function save(){if(!G)return;try{localStorage.setItem(slotKey('auto'),JSON.strin
 function saveTo(k){if(!G)return false;try{G.savedAt=Date.now();localStorage.setItem(slotKey(k),JSON.stringify(G));localStorage.setItem(SAVE_PREFIX+'last',k);return true;}catch(e){return false;}}
 function slotRaw(k){try{const x=JSON.parse(localStorage.getItem(slotKey(k))||'null');if(x&&x.v===8)return x;}catch(e){}return null;}
 function slotInfo(k){const x=slotRaw(k);return x?{company:x.company,y:x.y,m:x.m,cash:x.cash,pioneer:x.pioneer,country:x.country,over:x.over,at:x.savedAt}:null;}
-function loadSlot(k){const x=slotRaw(k);if(!x)return false;G=migrate(x);return true;}
+function loadSlot(k){const x=slotRaw(k);if(!x)return false;G=migrate(x);try{racerBrandLink();}catch(_){}return true;}
 function deleteSlot(k){try{localStorage.removeItem(slotKey(k));}catch(e){}}
 function migrate(x){
   x.tech=x.tech||{};x.dealers=x.dealers||{[x.country]:1};x.capBuild=x.capBuild||[];x.peak=x.peak||{year:0,share:{}};x.firsts=x.firsts||{};x.titles=x.titles||[];

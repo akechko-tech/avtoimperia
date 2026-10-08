@@ -1,7 +1,8 @@
 /* ================= TURN ================= */
 const DEALER_MARGIN=0.16;
 function step(){
-  const s=G;if(!s||s.over||s.pending.length)return false;
+  const s=G;if(s&&s.mode==='racer')return racerStep(s);   // 0.28: путь гонщика — свой месяц (19-racer.js)
+  if(!s||s.over||s.pending.length)return false;
   helperMonth(s);
   const eHome=econ(s.y,s.m,s.country);
   const r={rev:0,mat:0,wage:0,ovh:0,dlr:0,ad:s.ad,sto:0,int:0,mil:0,milN:0,made:0,sold:0,demand:0,homeSold:0,tool:0,war:0,hire:0,fin:0,lostCap:0,lostDlr:0,team:0,ord:0,ordN:0,dump:0,dumpN:0,fine:0,mk:{}};
@@ -99,6 +100,8 @@ function step(){
   r.adm=0.03*(r.rev+r.ord);
   r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
+  // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
+  if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
   s.cash+=r.profit+r.tool+r.hire+r.rdp+r.prm-(r.rev+r.ord)+r.got+r.finIn-r.finOut;   // оснастка, найм, проекты КБ и спецакции уже списаны выше; рассрочка своей компании — деньги выданы и вернулись

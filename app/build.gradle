@@ -7,7 +7,7 @@ android {
         minSdk 24
         targetSdk 34
         versionCode (System.getenv("GITHUB_RUN_NUMBER") ? (100 + System.getenv("GITHUB_RUN_NUMBER").toInteger()) : 5)
-        versionName "0.27"
+        versionName "0.28"
     }
     signingConfigs {
         // Постоянный ключ: новые версии ставятся поверх старых без удаления.

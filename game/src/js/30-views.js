@@ -319,7 +319,7 @@ function setCash(v){const el=document.getElementById('cash');el.className=v<0?'n
 // широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
 function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
 function render(){
-  const s=G;if(!s)return;try{autoCredit(s);dealerFit(s);}catch(_){}
+  const s=G;if(!s)return;if(s.mode==='racer'){racerRender(s);return;}racerNav();try{autoCredit(s);dealerFit(s);}catch(_){}
   document.getElementById('co').textContent=`${s.company} · ${COUNTRIES[s.country].city}`;
   const d=document.getElementById('date'),ds=dstr(s);d.innerHTML=`${MONTHS[s.m]} <span>${s.y}</span>`;
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}

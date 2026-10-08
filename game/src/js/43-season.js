@@ -131,6 +131,7 @@ function fmtRaceTime(sec){sec=Math.max(0,sec);const h=Math.floor(sec/3600),m=Mat
 function fmtGap(sec){return '+'+fmtRaceTime(sec);}
 let lastRace=null;
 function raceResults(rc,res,mode,info){
+  if(G&&G.mode==='racer'){racerResults(rc,res,mode,info);return;}   // 0.28: путь гонщика
   if(rc.match){matchResults(rc,res,mode,info);return;}   // 0.24: матч один на один и спор о скорости — свои итоги (43e-challenges.js)
   const s=G;if(!s)return;info=info||{};
   const k=rc.km*1000/Math.max(1,info.len||rc.km*1000);   // секунды модели → реальное время на полной дистанции
@@ -191,7 +192,8 @@ function openRaceResult(){
     <p class="small muted" style="margin-top:4px">${rc.match?esc(MATCH_ST[rc.kind]||'')+' · '+esc(rc.venue):RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · у победителя — время ${rc.kind==='record'?'заезда':'всей гонки'}, у остальных — отставание от него; ниже — средняя скорость</p>
     ${L.cup?`<p class="good" style="margin-top:8px"><b>🏆 ${esc(L.cup)}</b></p>`:''}
     <table class="pl res" style="margin-top:10px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время / отставание</th></tr>${rows}</table>
-    <p style="margin-top:10px">${rc.match?(L.best===1?`<b>${rc.kind==='record'?'Ваше время лучше!':'Вы первым на финише!'}</b>`:L.best?(rc.kind==='record'?'Соперник оказался быстрее.':'Соперник первым на финише.'):'Ваша машина не доехала до финиша.'):L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` Призовые: <b class="good">${money(won)}</b>.`:''}</p>
+    <p style="margin-top:10px">${rc.match?(L.best===1?`<b>${rc.kind==='record'?'Ваше время лучше!':'Вы первым на финише!'}</b>`:L.best?(rc.kind==='record'?'Соперник оказался быстрее.':'Соперник первым на финише.'):'Ваша машина не доехала до финиша.'):L.rx?(L.best?`Ваше место — <b>${L.best}-е</b>.`:'Вы не доехали до финиша.'):L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` ${L.rx?'Заработано':'Призовые'}: <b class="good">${money(won)}</b>.`:''}</p>
+    ${L.rx&&L.rx.lines.length?`<div class="label" style="margin-top:12px">Для гонщика</div>${L.rx.lines.map(t=>`<p class="small" style="margin-top:4px">${esc(t)}</p>`).join('')}`:''}
     ${nPv&&!rc.match?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ ${L.chal.match?esc(MATCH_ST[L.chal.C.type]||'Пари')+' с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграна':'проиграна'):'Пари с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграно':'проиграно')}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${!L.chal.match&&L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}
     ${L.rc.match&&(L.vMe||L.vTh)?`<p class="small" style="margin-top:4px">${L.rc.kind==='record'?'Скорость на заезде':'Средняя скорость'}: вы — <b>${L.vMe?L.vMe+' км/ч':'—'}</b>, ${esc(L.rc.rv.n)} — <b>${L.vTh?L.vTh+' км/ч':'—'}</b>${L.rc.purse&&L.best===1?` · сбор с трибун ${money(L.rc.purse)}`:''}</p>`:''}${L.lsr?`<p class="good" style="margin-top:6px"><b>📈 Быстрее мирового рекорда: ${L.lsr.v} км/ч</b> <span class="small muted">(рекорд — ${L.lsr.old[1]} км/ч, ${esc(L.lsr.old[2])})</span></p>`:''}

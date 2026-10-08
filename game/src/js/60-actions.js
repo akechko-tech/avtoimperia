@@ -1,5 +1,6 @@
 /* ================= ACTIONS ================= */
 function stopAuto(){if(auto){clearInterval(auto);auto=null;const ab=document.getElementById('autoBtn');if(ab){ab.textContent='▶';ab.classList.remove('on');}}}
+function ngKeep(){const g=id=>document.getElementById(id);if(!draft)return;if(g('cname'))draft.company=g('cname').value;if(g('fname'))draft.first=g('fname').value;if(g('rname'))draft.rname=g('rname').value;}
 function doStep(){if(step()){save();render();afterStep();return true;}return false;}
 function flushToasts(){pendingToasts.forEach(toast);pendingToasts=[];}
 function rerender(){const top=window.scrollY;save();render();window.scrollTo(0,top);}
@@ -106,8 +107,20 @@ const ACT={
   continue:()=>{if(loadSlot('auto')){hideMainMenu();tab='plant';shownCash=null;lastDate='';render();if(G.over&&G.final)openFinal();}},
   newgame:()=>{draft=null;stopAuto();openNewGame();},
   pion:d=>{const top=sb.scrollTop,f=document.getElementById('fname');if(f)draft.first=f.value;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
-  country:d=>{const top=sb.scrollTop;draft.country=d.v;draft.company=document.getElementById('cname').value;draft.first=document.getElementById('fname').value;openNewGame();sb.scrollTop=top;},
-  diff:d=>{const top=sb.scrollTop;draft.diff=d.v;draft.company=document.getElementById('cname').value;draft.first=document.getElementById('fname').value;openNewGame();sb.scrollTop=top;},
+  country:d=>{const top=sb.scrollTop;draft.country=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
+  diff:d=>{const top=sb.scrollTop;draft.diff=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
+  // 0.28: путь гонщика
+  ngPath:d=>{const top=sb.scrollTop;ngKeep();draft.path=d.v;openNewGame();sb.scrollTop=top;},
+  rpick:d=>{const top=sb.scrollTop;ngKeep();draft.racer=d.v;openNewGame();sb.scrollTop=top;},
+  rcountry:d=>{const top=sb.scrollTop;ngKeep();draft.rc=d.v;openNewGame();sb.scrollTop=top;},
+  ryear:d=>{const top=sb.scrollTop;ngKeep();draft.ry=+d.v;openNewGame();sb.scrollTop=top;},
+  startracer:()=>{ngKeep();racerNew(draft.racer,draft.rc,draft.ry,draft.racer==='custom'?draft.rname:'',draft.diff);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';racerIntro(G);save();render();AU.lastY=null;},
+  rxRace:d=>racerOpenRace(d.k),
+  rxSet:d=>{if(!RRS)return;const k=d.k;RRS[k]=k==='works'||k==='tyre'||k==='mode'?d.v:+d.v;if(k==='works'){const rc=raceByKey(RRS.key);RRS.prep=d.v?aiPrep(rc):(G.racer.car&&G.racer.car.prod?1:2);}racerRaceSheet();},
+  rxGo:()=>racerGo(),
+  rxBuy:d=>racerBuy(d.k),rxRepair:()=>racerRepair(),rxSell:()=>racerSell(),rxMech:()=>racerMech(),rxQuit:()=>racerQuit(),rxJobQuit:()=>racerJobQuit(),
+  rxFound:d=>racerFoundAsk(d.k),
+  rxFoundGo:d=>{if(racerFound(d.k,d.n,+d.v)){closeSheet();tab='plant';shownCash=null;lastDate='';save();render();}},
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
