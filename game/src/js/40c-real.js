@@ -93,14 +93,34 @@ function realWindow(D,len){const n8=D.pts.length,w=Math.min(n8,Math.round(len/D.
   (D.seg||[]).forEach(s=>{if(s[0]===1)sc[s[1]]+=1.5;if(s[0]===7)for(let k=s[1];k<=s[2];k++)sc[k]+=0.03;if(s[0]===3)for(let k=s[1];k<=s[2];k++)sc[k]+=0.002;});(D.notes||[]).forEach(q=>{if(q.t==='climb'||q.t==='descent')sc[q.i]+=1;});
   let best=0,bi=0;for(let a=0;a+w<=n8;a+=6){let s=0;for(let k=a+8;k<a+w-6;k++)s+=sc[k];s-=a*0.0004;if(s>best+1e-6){best=s;bi=a;}}return [bi,bi+w];}
 // Точки трассы игры (шаг 4 м) по реальному маршруту (шаг 8 м); начало куска — в нуле
+// 0.28: точки — ровно через 4 м по длине пути. В тугих шпильках (Ла-Тюрби, Мон-Ванту, Монако) соседние точки данных
+// стоят ближе 8 м (после скругления поворотов), а подъём между ними прежний — выходила «стена» в 90–117%: машина
+// упиралась, камера уходила в склон. Теперь шаг ровный, а продольный уклон не круче 15% (ступень растекается по соседям).
 function realPoints(D,cfg){const n8=D.pts.length,len=D.closed?D.pts.length*D.step:cfg.len;const [a,b]=realWindow(D,len),P=D.pts,p0=P[a];
-  const out=[],dx=p0[0]/10,dz=p0[1]/10,dy=p0[2]/10;
-  for(let k=a;k<b;k++){const p=P[k],q=P[D.closed?(k+1)%n8:Math.min(n8-1,k+1)];const x=p[0]/10-dx,z=p[1]/10-dz,y=p[2]/10-dy;out.push([x,y,z]);
-    if(k<b-1||D.closed)out.push([(x+q[0]/10-dx)/2,(y+q[2]/10-dy)/2,(z+q[1]/10-dz)/2]);}
-  return {pts:out,a,b,dx:dx,dz:dz,dy:dy+D.y0};}
+  const dx=p0[0]/10,dz=p0[1]/10,dy=p0[2]/10,src=[],ST=4;
+  for(let k=a;k<b;k++){const p=P[k];src.push([p[0]/10-dx,p[2]/10-dy,p[1]/10-dz]);}
+  if(D.closed){const p=P[b%n8];src.push([p[0]/10-dx,p[2]/10-dy,p[1]/10-dz]);}
+  const cum=[0];for(let k=1;k<src.length;k++)cum.push(cum[k-1]+Math.hypot(src[k][0]-src[k-1][0],src[k][2]-src[k-1][2]));
+  const L=cum[cum.length-1]||ST,n=D.closed?Math.max(8,Math.round(L/ST)):Math.max(2,Math.floor(L/ST)+1),ds=D.closed?L/n:ST,out=[];
+  let j=0;for(let i=0;i<n;i++){const sd=i*ds;while(j<src.length-2&&cum[j+1]<sd)j++;const A=src[j],B=src[Math.min(src.length-1,j+1)],t=clamp((sd-cum[j])/((cum[j+1]-cum[j])||1),0,1);
+    out.push([A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t]);}
+  // номер точки игры для каждой точки данных: мосты, сёла, переезды и подсказки привязаны к номерам данных
+  const map=new Int32Array(b-a);for(let k=0;k<b-a;k++)map[k]=Math.min(n-1,Math.round(cum[k]/ds));
+  realGrade(out,!!D.closed,ds);
+  return {pts:out,a,b,dx:dx,dz:dz,dy:dy+D.y0,map,ds};}
+// Продольный уклон не круче 15% (Шелсли-Уолш — 1 к 6): ступень в профиле растекается по соседним точкам, общий подъём тот же
+function realGrade(P,closed,ds){const n=P.length,lim=0.15*ds;if(n<3)return;
+  const relax=()=>{for(let it=0;it<800;it++){let ch=0;const m=closed?n:n-1;
+    for(let i=0;i<m;i++){const k=(i+1)%n,d=P[k][1]-P[i][1];if(Math.abs(d)>lim+1e-4){const e=(Math.abs(d)-lim)*0.5*Math.sign(d);P[i][1]+=e;P[k][1]-=e;ch++;}}
+    if(!ch)break;}};
+  relax();const y=P.map(p=>p[1]);for(let r=0;r<2;r++){for(let i=0;i<n;i++){const u=closed?y[(i-1+n)%n]:y[Math.max(0,i-1)],w=closed?y[(i+1)%n]:y[Math.min(n-1,i+1)];P[i][1]=(u+2*y[i]+w)/4;}for(let i=0;i<n;i++)y[i]=P[i][1];}
+  relax();}
+// Номер точки игры по номеру точки данных (за краем куска — по 2 точки на точку данных, как раньше)
+function realIdx(R,i8,n){const M=R.map,a=R.a;if(!M){const i=(i8-a)*2;return R.d&&R.d.closed&&n?((i%n)+n)%n:i;}
+  const k=i8-a;let i=k<0?k*2:k>=M.length?M[M.length-1]+(k-M.length+1)*2:M[k];if(R.d&&R.d.closed&&n)i=((i%n)+n)%n;return i;}
 // Сценарий по настоящей карте: города с именами, мосты через настоящие реки, переезды, берег, леса и виноградники
 function realPlan(trk){const R=trk.real,D=R.d,S=trk.segT,list=trk.seg,n=trk.n,a=R.a,rnd=mulberry32(hashStr('real|'+D.id));
-  const map=i8=>{const i=(i8-a)*2;return D.closed?((i%n)+n)%n:i;},inW=i=>i>=0&&i<n;
+  const map=i8=>realIdx(R,i8,n),inW=i=>i>=0&&i<n;
   const TY={0:RSEG.fields,1:RSEG.town,2:RSEG.village,3:RSEG.forest,4:RSEG.avenue,5:RSEG.bridge,6:RSEG.rail,7:RSEG.serp,8:RSEG.coast,9:RSEG.vine};
   const put=(type,i0,i1,extra)=>{i0=clamp(i0,0,n-1);i1=clamp(i1,0,n-1);if(i1<i0)return null;for(let i=i0;i<=i1;i++)S[i]=type;const o=Object.assign({type,i0,i1,i:Math.round((i0+i1)/2)},extra||{});list.push(o);return o;};
   (D.seg||[]).forEach(e=>{const t=TY[e[0]];if(t===undefined||t===RSEG.bridge||t===RSEG.rail||t===RSEG.coast)return;const i0=map(e[1]),i1=map(e[2]);if(i1<0||i0>=n)return;
@@ -139,7 +159,7 @@ function realMarks(trk){const R=trk.real,D=R.d,P=trk.pts,n=trk.n,W=trk.W,host=tr
       runs.forEach(rn=>{const cx=rn.reduce((a,p)=>a+p[0],0)/rn.length,cz=rn.reduce((a,p)=>a+p[1],0)/rn.length;add(Object.assign({},o0,{line:rn.map(p=>[p[0]-cx,p[1]-cz])}),cx,cz);});return;}
     add(o0,x0,z0);});
   return out;}
-function realNotes(trk){const R=trk.real,D=R.d,n=trk.n,out=[],map=i8=>(i8-R.a)*2;
+function realNotes(trk){const R=trk.real,D=R.d,n=trk.n,out=[],map=i8=>realIdx(R,i8,0);
   (D.notes||[]).forEach(q=>{const i=map(q.i);if(i<0||i>=n)return;const km=Math.max(0,Math.round((i-trk.startIdx)*trk.step/100)/10);
     const t=q.t==='town'?`${q.n} — город на пути`:q.t==='bridge'?`мост через реку ${q.n&&q.n!=='—'?q.n:''}`.trim():q.t==='rail'?'железнодорожный переезд':q.t==='coast'?'дорога вдоль моря':q.t==='climb'?`подъём на ${q.m} м`:q.t==='descent'?`спуск на ${q.m} м`:q.t==='lm'&&q.n?q.n:'';
     if(t)out.push({km,t});});

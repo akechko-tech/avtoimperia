@@ -134,11 +134,11 @@ function buildTrack(rc,vref){
   for(let i=0;i<n;i++){const a=T[closed?(i-1+n)%n:Math.max(0,i-1)],b=T[closed?(i+1)%n:Math.min(n-1,i+1)];const cr=a[0]*b[1]-a[1]*b[0],dt=a[0]*b[0]+a[1]*b[1];K.push(Math.atan2(cr,dt)/(2*STEP));}
   const W=cfg.width,terrAt=i=>cfg.stages?cfg.stages[Math.min(2,Math.floor(i/n*3))]:cfg.terr;
   const trk={pts,T,N,K,n,step:STEP,closed,len:n*STEP,W,cfg,terrAt,col:[],grid:{},rc,spr:[],bar:[]};
-  if(RP){trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy};try{trk.real.wm=realWaterOf(trk);}catch(e){console.warn('water',e);trk.real.wm=null;}}
+  if(RP){trk.real={d:RD,a:RP.a,b:RP.b,dx:RP.dx,dz:RP.dz,dy:RP.dy,map:RP.map};try{trk.real.wm=realWaterOf(trk);}catch(e){console.warn('water',e);trk.real.wm=null;}}
   trk.startIdx=closed?0:30;trk.finishIdx=closed?0:n-40;
   // 0.26: решётка — на прямой. Настоящая дорога может начинаться у шпильки или на мосту: старт сдвигаем вперёд,
   // пока у решётки (±56 м) нет поворота круче R 45 м, а под передними рядами — моста
-  if(!closed&&RP){const brg=new Set();(RD.bridges||[]).forEach(b=>{const i=(b.i-RP.a)*2,sp=Math.max(9,Math.min(24,(b.i1-b.i0+2)))+2;for(let q=i-sp;q<=i+sp;q++)brg.add(q);});
+  if(!closed&&RP){const brg=new Set();(RD.bridges||[]).forEach(b=>{const i=realIdx(trk.real,b.i,0),sp=Math.max(9,Math.min(24,(b.i1-b.i0+2)))+2;for(let q=i-sp;q<=i+sp;q++)brg.add(q);});
     const ok=st=>{for(let d=-14;d<=14;d++){const i=st+d;if(i<0||i>=n)return false;if(Math.abs(K[i])>1/45)return false;if(d<=4&&brg.has(i))return false;}return true;};
     for(let sh=0;sh<=120;sh+=2){const st=30+sh;if(st>n-260)break;if(ok(st)){trk.startIdx=st;break;}}}
   trk.raceLen=closed?cfg.laps*trk.len:(trk.finishIdx-trk.startIdx)*STEP;
