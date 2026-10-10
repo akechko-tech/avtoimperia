@@ -772,3 +772,11 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .deal-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}
 .deal-row:last-child{border-bottom:0}
 .deal-row small{display:block;margin-top:2px}
+/* 0.30: переговоры — реплики сторон */
+.neg-log{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:10px;background:rgba(0,0,0,.12)}
+.neg-say{font-size:13px;line-height:1.35}
+.neg-say.me{color:var(--muted)}
+.neg-say.yes{color:var(--good)}
+.neg-say.counter{color:var(--brass)}
+.neg-say.low,.neg-say.no{color:var(--bad)}
+.deal-row .btns{display:flex;flex-wrap:wrap;gap:6px}

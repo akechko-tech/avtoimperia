@@ -92,10 +92,10 @@ function offerMatch(s,kind){const r=chalRnd(s,kind);if(!raceCarsFor(s).some(m=>!
 /* ---------- продажи класса: дома и на экспортном рынке, за квартал, полгода или до конца года ---------- */
 const HC_STEPS=[1/4,1/3,1/2,1,2,3,4,5,8,10];
 function hcText(hc){return hc===1?'':hc>1?`фора: нужно продать больше, чем у соперника ×${hc}`:`фора вам: хватит больше ${hc===0.5?'половины':hc===1/3?'трети':'четверти'} продаж соперника`;}
-function offerSales(s,foreign){const L=s.last;if(!L||!L.mk)return null;const r=chalRnd(s,foreign?'exp':'sales'),B=s.bought||{};
+function offerSales(s,foreign){const L=s.last;if(!L||!L.mk)return null;const r=chalRnd(s,foreign?'exp':'sales');
   const mkts=foreign?Object.keys(L.mk).filter(c=>c!==s.country&&COUNTRIES[c]&&(L.mk[c].sold||0)>=5&&dealerCount(s,c)>0&&!warCut(s,c)):[s.country];
   const cand=[];mkts.forEach(c=>{const mk=L.mk[c];if(!mk||!mk.segs)return;SEGK.forEach(g=>{const you=(mk.segs[g]&&mk.segs[g].you)||0;if(you<3)return;
-    (COMPS[c]||[]).forEach((cp,i)=>{if(ownComp(cp,s)||(B[c]&&B[c].i===i)||!compAlive(cp,s))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v<=0)return;
+    (COMPS[c]||[]).forEach((cp,i)=>{if(ownComp(cp,s)||holdOf(s,c,i)||!compAlive(cp,s))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v<=0)return;
       // сколько соперник продал в этом классе за прошлый месяц (13-turn.js); нет данных — по годовому объёму марки
       const lg=((s.comps[c]||[])[i]||{}).lg,v1=lg&&lg[g]>0?lg[g]:v/12;if(v1<0.5)return;
       const ratio=you/v1;cand.push({c,g,cp,i,you,v:v1,ratio,d:Math.abs(Math.log(ratio))});});});});

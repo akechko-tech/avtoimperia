@@ -104,7 +104,7 @@ const WORLD=[
 function bestModel(s){return s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
 // 0.23: что война делает с вашими рынками за границей — по каждой стране, где вы есть
 function warMarkets(s){const home=s.country,L=[];
-  Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const own=(s.bought&&s.bought[c])?`ваша марка «${s.bought[c].n}»`:impLv(s,c)>=4?'ваш завод':impLv(s,c)>=3?'ваш цех сборки':'';
+  Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const own=intIn(s,c)?`ваша марка «${acqIn(s,c)[0].nm||acqIn(s,c)[0].n}»`:impLv(s,c)>=4?'ваш завод':impLv(s,c)>=3?'ваш цех сборки':'';
     if(!(dealerCount(s,c)>0||impLv(s,c)>0||own||(s.impB&&s.impB[c])))return;const nm=COUNTRIES[c].name;
     if(home==='de'||c==='de'){const seize=own&&atWar(home,c,s.y,s.m);
       L.push(`${nm}: ${home==='de'?'британский флот закрыл моря — немецким машинам туда не пробиться':'блокада — ни машин, ни деталей, ни денег туда не провезти'}${own?seize?`; ${own} — собственность противника, власти её забирают`:`; ${own} отрезан${own.startsWith('ваша')?'а':''}: работает сам${own.startsWith('ваша')?'а':''} по себе, вам ни машин, ни выручки до конца войны`:''}${s.impB&&s.impB[c]?'; стройка там заморожена':''}.`);}

@@ -99,7 +99,9 @@ function prefP(g,c,s){return tabAt(PREF[g],yf(s))*PREF_C[c][g];}
 const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,sport:3,truck:2.6};
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),ALPHA_Q[g]/ALPHA_P[g]);}
 /* ---------- конкуренты ---------- */
-function compVol(cp,s){const t=yf(s);if(t<cp.since||(cp.until&&t>=cp.until))return 0;return tabAt(cp.v,t,true);}
+// 0.30: марка разорилась в вашей партии (s.dead) — её больше нет; досталась новому хозяину — слабее (s.compK); возрождённая вами — живёт и после своей даты (s.rev)
+function compVol(cp,s){const t=yf(s);if(s&&s.dead&&s.dead[cp.n]!=null&&mi(s)>=s.dead[cp.n])return 0;if(t<cp.since)return 0;
+  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[cp.n])||1);}
 function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
 function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
@@ -137,7 +139,7 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
-  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer||acqHas(s,c,i))return;const v=compVol(cp,s)*mx;if(v>0){out.push({cp,i,v});sum+=v;}});
+  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer||acqHas(s,c,i))return;const v=compVol(cp,s)*mx*maSubW(s,c,i,g);if(v>0){out.push({cp,i,v});sum+=v;}});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах
@@ -165,6 +167,20 @@ function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck)return 0;cons
   return u;}
 // Репутация: плохая сильно отпугивает, хорошая помогает умеренно — у сильных конкурентов тоже есть имя (0.21)
 function repEffect(s){const d=(s.rep-50)/50;return d<0?1.3*d:0.8*d;}
+// 0.30: УЗНАВАЕМОСТЬ МАРКИ в стране (0…1). Новую марку не знают: её машин нет на дорогах, о ней не пишут. Знают — когда ваших машин
+// на дорогах страны заметная доля (3% парка — две трети узнаваемости), когда есть дилеры и реклама. Растёт за год-два, забывается медленно.
+// Без этого новичок с хорошей машиной за три-четыре года забирал треть рынков Европы — у настоящих марок на это уходили десятилетия.
+const AW0=0.12,AWK=0.55;
+function awOf(s,c){return s.aw&&s.aw[c]!=null?s.aw[c]:(c===s.country?0.6:0.3);}
+function awU(s,c){return AWK*Math.log(AW0+(1-AW0)*clamp(awOf(s,c),0,1));}
+function awTarget(s,c){const pf=(s.pfleet&&s.pfleet[c])||0,fl=Math.max(50,fleetOf(s,c)),base=1-Math.exp(-pf/(0.03*fl)),r=reachOf(s,c),ad=clamp(adEffect(s,c)/0.55,0,1);
+  return clamp(Math.max(base,0.3*r)+0.12*ad*r+(c===s.country?0.1:0),0,1);}
+function awInit(s,fresh){s.aw={};for(const c in COUNTRIES){if(fresh){const pio=PIONEERS[s.pioneer]||{},known=s.racer?clamp(0.12+(s.racer.fame||0)/250,0.12,0.5):pio.name&&pio.name!=='Свой персонаж'?0.4:0.25;s.aw[c]=c===s.country?known:s.racer?clamp((s.racer.fame||0)/600,0,0.15):0;}else s.aw[c]=+awTarget(s,c).toFixed(4);}}
+function awMonth(s){if(!s.aw)awInit(s,!(s.hist&&s.hist.sales&&s.hist.sales.length>2));for(const c in COUNTRIES){const a=awOf(s,c),T=awTarget(s,c);s.aw[c]=+clamp(a+(T-a)*(T>a?0.06:0.015),0,1).toFixed(4);}}
+// 0.30: СЛАВА НЕ СКЛАДЫВАЕТСЯ БЕЗ ПРЕДЕЛА: репутация, реклама, выставки, гонки и пари вместе дают не больше ≈ +1,3 к привлекательности
+// (раньше всё сразу давало до +2,5 — лучшая машина эпохи забирала почти весь класс)
+const FAME_CAP=1.3;
+function fameCap(x){return x>0?FAME_CAP*Math.tanh(x/FAME_CAP):x;}
 // 0.21 (ТЗ 5.4): подержанные машины вашей же марки. Хозяева меняют машину раз в 3–4 года и продают старую перекупщику —
 // чем больше ваших машин на дорогах страны, тем больше у перекупщиков дешёвых «почти таких же». Сильнее всего — в народном классе
 // и в двадцатые годы; новая модель заметно отличается от прошлых, и подержанные ей мешают меньше.
@@ -182,7 +198,7 @@ function pfleetMonth(s,life){if(!s.pfleet){s.pfleet={};const H=(s.hist&&s.hist.s
 function paintBright(hex){const c=hex2rgb(hex||'#222'),mx=Math.max(...c)/255,mn=Math.min(...c)/255,sat=mx>0?(mx-mn)/mx:0;return clamp(sat*0.7+mx*0.5,0,1);}
 function lookU(md,g,s){const b=paintBright(md.paint),t=yf(s);if(g==='sport')return 0.6*(b-0.45);if(g==='truck'||isTruck(md))return 0;const f=clamp((t-1923)/3,0,1);return f*(g==='lux'?0.1:0.25)*(b-0.3);}
 function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
-  return lookU(md,g,s)-3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+repEffect(s)+adEffect(s,c)+showEffect(s,c)+novelty(md,s)+raceEffect(md,s)+duelEffect(s,c)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+  return lookU(md,g,s)-3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+fameCap(repEffect(s)+adEffect(s,c)+showEffect(s,c)+raceEffect(md,s)+duelEffect(s,c))+awU(s,c)+novelty(md,s)+scandalEffect(md,s)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
 // 0.26: своя цена в каждой стране — наценка или скидка к домашней (за границей рынок, налоги и доходы другие)
 const PMK=[[0.9,'−10%'],[1,'как дома'],[1.1,'+10%'],[1.25,'+25%']];
 function pmkOf(s,c){return c===s.country?1:((s.pmk&&s.pmk[c])||1);}

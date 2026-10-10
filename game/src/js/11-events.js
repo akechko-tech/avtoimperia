@@ -53,7 +53,7 @@ function checkEvents(){
   checkShows(s);checkTenders(s);try{histReelCheck(s);}catch(e){console.warn('hist reel',e);}
   try{warTaxNews(s);}catch(e){console.warn('war tax news',e);}
   try{dxCheck(s);}catch(e){console.warn('duel x',e);}
-  try{brandOfferCheck(s);}catch(e){console.warn('brand offer',e);}try{chanceCheck(s);}catch(e){console.warn('chance',e);}
+  try{maInbound(s);}catch(e){console.warn('ma inbound',e);}try{chanceCheck(s);}catch(e){console.warn('chance',e);}
   if(mi(s)>6&&!s.pending.length&&Math.random()<0.055){const pool=RANDOM.filter(r=>!r.cond||r.cond(s)),wt=r=>r.w*(r.good?1:DIF().bad),tot=pool.reduce((a,r)=>a+wt(r),0);let x=Math.random()*tot;for(const r of pool){x-=wt(r);if(x<=0){pushEvent(r,false);break;}}}
 }
 /* ---------- конкуренты отвечают ---------- */
@@ -126,6 +126,7 @@ function resolve(key){
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');const ev=s.pending[0];if(ev&&ev.world==='war')worldResolve(s,'w:war:mil');}
   if(/^w:/.test(key))worldResolve(s,key);
   if(/^cc:/.test(key))chanceResolve(s,key);if(key==='brandGo'){try{tab='market';}catch(_){}}
+  if(/^ma:/.test(key)&&maResolve(s,key))return;
   if(key==='dxYes'||key==='dxNo')dxAnswer(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);

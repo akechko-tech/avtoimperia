@@ -43,7 +43,7 @@ function newModel(kind,cheap){let md=autoDesign(kind,G);
   if(process.env.DD)console.log('   DESIGN',dstr(G),kind,PART_KEYS.map(k=>m[k]).join(','),'ref $'+Math.round(refPrice(m,G)),'uc@1k',Math.round(ucAtVol(m,G,1000)),'uc@10k',Math.round(ucAtVol(m,G,10000)),'uc@50k',Math.round(ucAtVol(m,G,50000)),'fc',Math.round(forecastDemand(m,G)),'q',classScore(m,G).toFixed(2),'era',eraPen(m,G.country,G).toFixed(2),'cx',complexity(m).toFixed(2),'old:',G.models.filter(x=>x.status==='prod').map(x=>PART_KEYS.map(k=>x[k]).join(',')+' uc'+Math.round(unitCost(x,G))+' $'+x.price+' era'+eraPen(x,G.country,G).toFixed(2)).join('; '));
   return m;}
 // 0.29: модель купленной марки (x.acq) — не замена своей: её продают только в её стране
-function retireOld(){G.models.filter(m=>m.status==='prod'&&!m.acq).forEach(m=>{const newer=G.models.some(x=>x.status==='prod'&&!x.acq&&x.id>m.id&&mi(G)-x.launched>=4);if(newer){m.status='off';G.cash+=m.stock*m.price*0.6;m.stock=0;}});}
+function retireOld(){G.models.filter(m=>m.status==="prod"&&!m.from).forEach(m=>{const newer=G.models.some(x=>x.status==="prod"&&!x.from&&x.id>m.id&&mi(G)-x.launched>=4);if(newer){m.status='off';G.cash+=m.stock*m.price*0.6;m.stock=0;}});}
 function grow(k){const L=G.last,act=G.models.filter(m=>m.status==='prod');if(!L||!act.length||(G.capBuild||[]).length)return;const util=L.made/Math.max(1,capEff(G)),lost=act.reduce((a,m)=>a+(m.lostS||0),0);
   if(util>0.9&&lost>L.sold*0.05){const n=Math.max(2,Math.round(G.cap*k)),c=n*capUnitCost(G);if(G.cash>c*(BOT==='debt'?1.05:2))capOrder(G,n,true);}
   if((L.dumpN>0||whStock(G)>whCap(G)*0.85)&&!(G.whBuild||[]).length){const n=Math.max(5,Math.round(whCap(G)*0.5)),c=n*whUnitCost(G);if(G.cash>c*1.5)whOrder(G,n,true);}}
@@ -94,6 +94,8 @@ function debtMonth(act){const L=G.last;
   if(!G.techBuild){const k=TECH_ORDER.find(k=>techOpen(G,k)&&free()>techCost(G,k));if(k){const c=techCost(G,k);G.cash-=c;G.plantVal+=c*0.7;G.techBuild={k,left:techMonths(G,k)};}}}
 // выбор в событиях: пассивный, средний и жадный жмут первый вариант; сильный и «в долг» — как помощник
 function pickChoice(ev){const K=ev.choices.map(c=>c[1]);
+  // 0.30: сделки и предложения (продать компанию, долю, переговоры, торги) боты не принимают — для сравнения с прошлыми версиями
+  if(K.some(k=>/^ma:/.test(k)))return K.find(k=>/^ma:\w+:N|^ma:aucSkip|^ok$/.test(k))||K[K.length-1];
   // 0.24: на гонку, матч и спор о скорости простые боты тоже не соглашаются — они не ездят, а неявка стоит ставки и репутации
   if(BOT!=='strong'&&BOT!=='debt'){if(K.includes('chalNo')&&G.chal&&['race','match','record'].includes(G.chal.type))return 'chalNo';return K[0];}
   // заказ: только если цена покрывает себестоимость с запасом и есть деньги на выпуск

@@ -14,7 +14,7 @@ for(let k=0;k<12*(${Y1}-1906)+2&&!s.over;k++){
   const act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev');
   if(!dev.length&&(mi(s)-lastNew>=30||!act.length)){let best=null,bv=-1e18;for(const g of ['middle','sport','lux']){if(g==='sport'&&!sportOpen(s))continue;const md=autoDesign(g,s);const v=designValue(md,s);if(v>bv){bv=v;best=md;}}
     const dc=devCost(best,s);if(s.cash>dc*1.3){s.cash-=dc;const m={...best,id:s.nextId++,name:'Эксп '+s.nextId,paint:'#8a1c1c',plan:'auto',status:'dev',devLeft:devMonths(best),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);lastNew=mi(s);}}
-  s.models.filter(m=>m.status==='prod').forEach(m=>{const nw=s.models.some(x=>x.status==='prod'&&x.id>m.id&&mi(s)-x.launched>=4);if(nw){m.status='off';}});
+  s.models.filter(m=>m.status==='prod').forEach(m=>{const nw=!m.from&&s.models.some(x=>x.status==='prod'&&!x.from&&x.id>m.id&&mi(s)-x.launched>=4);if(nw){m.status='off';}});
   // экспорт, дилеры, реклама, цены и цеха — помощник (как у сильного бота)
   // гонки: победы весь год (слава модели) и титул сезона
   s.models.filter(m=>m.status==='prod').forEach(m=>{m.raceBoost=mi(s)+3;});if(s.y>=1908)s.titleBoost=mi(s)+3;

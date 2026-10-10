@@ -18,20 +18,25 @@ function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}
 function plural(n,a,b,c){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c;}
 function legacyYear(s){if(!s.lhist)s.lhist=[];s.lhist.push({y:s.y-1,sold:s.peakLast||0,val:Math.round(companyValue(s)),rep:Math.round(s.rep),sh:+(s.shLast||0).toFixed(4)});if(s.lhist.length>40)s.lhist.shift();}
-const RACE_W={major:15,normal:5};
-// 0.29: наследие копится годами, как счёт в «Цивилизации»: рекорд эпохи нельзя набрать в первые годы.
-// Масштаб — лучший год и всё, что выпущено за эпоху; рынок — доля, удержанная годами (15 «долевых лет» — максимум);
-// инновации — первенства, которые пошли в серию (а не только на бумаге); бренд — репутация, которой нужно лет двадцать;
-// спорт — победы и титулы самой марки (гонки её основателя за чужие заводы — его личная слава, не марки)
+const RACE_W={major:6,normal:2};
+// 0.30: НАСЛЕДИЕ — ЭТО ИМПЕРИЯ, А НЕ РАННИЕ ПОБЕДЫ. В 0.29 спорт давал до 400 очков, а изобретения — до 240: молодая марка
+// с гонками и парой первенств к 1911 году обходила Ford и General Motors с их миллионами машин. Теперь главное — масштаб
+// (до 450: лучший год и всё выпущенное за эпоху) и рынок (до 250: доля, удержанная годами); спорт (до 150) копится по сезонам —
+// не больше 30 очков за год; инновации — до 150 (первенство — 25, если новинка пошла в серию); капитал — до 200; бренд — до 160.
+const LEG_MAX={scale:450,market:250,innov:150,sport:150,capital:200,brand:160};
 function legacyParts(o){
-  const scale=0.6*400*Math.log10(1+(o.peak||0)/1000)/Math.log10(1+2000)+0.4*400*Math.log10(1+(o.cum||0)/10000)/Math.log10(1+2100);
-  const market=150*Math.min(1,(o.shareYrs||0)/15)+10*(o.abroad||0);
-  const innov=30*(o.firsts||0)+(o.techs||0)*4+Math.min(60,10*(o.kingTech||0));
-  const sport=Math.min(400,(o.wins||0)*RACE_W.major+(o.minor||0)*RACE_W.normal+(o.titles||0)*60);
-  const capital=250*Math.log10(1+Math.max(0,o.val||0)/1e6)/Math.log10(1+4000);
-  const mat=clamp((o.age||0)/20,0.1,1),brand=(o.rep||0)*mat+(o.legend||0)+Math.min(40,4*(o.kingClass||0));
+  const scale=0.5*450*Math.log10(1+(o.peak||0)/1000)/Math.log10(1+2000)+0.5*450*Math.log10(1+(o.cum||0)/10000)/Math.log10(1+2100);
+  const market=230*Math.min(1,(o.shareYrs||0)/12)+5*Math.min(4,o.abroad||0);
+  const innov=Math.min(150,25*Math.min(5,o.firsts||0)+Math.min(24,3*(o.techs||0))+Math.min(30,6*(o.kingTech||0)));
+  const sport=Math.min(150,o.sportPts!=null?o.sportPts:(o.wins||0)*RACE_W.major+(o.minor||0)*RACE_W.normal+(o.titles||0)*25);
+  const capital=200*Math.log10(1+Math.max(0,o.val||0)/1e6)/Math.log10(1+4000);
+  const mat=clamp((o.age||0)/20,0.1,1),brand=Math.min(100,(o.rep||0)*mat)+Math.min(40,o.legend||0)+Math.min(20,4*(o.kingClass||0));
   return {scale,market,innov,sport,capital,brand,total:scale+market+innov+sport+capital+brand,mat};
 }
+// спорт по сезонам: победы (большая гонка — 6, обычная — 2) и титулы (25) — не больше 30 очков за год
+function sportPts(s){const Y={};ownRaces(s).forEach(r=>{if(r.place!==1||r.y==null)return;Y[r.y]=(Y[r.y]||0)+(r.major?RACE_W.major:RACE_W.normal);});
+  ownTitles(s).filter(t=>!/^king-/.test(t.id||'')||t.id==='king-race').forEach(t=>{if(t.y!=null)Y[t.y]=(Y[t.y]||0)+25*(t.w||1);});
+  return Object.values(Y).reduce((a,v)=>a+Math.min(30,v),0);}
 function coFoundedY(s){return s.racer&&s.racer.founded?s.racer.founded.y:(s.startY||1895);}
 // гонки и титулы самой марки: без личной карьеры гонщика-основателя до основания
 function ownRaces(s){return (s.raceLog||[]).filter(r=>!('works' in r)&&!r.rx);}
@@ -48,7 +53,7 @@ function playerLegacy(s){
   const LH=(s.lhist||[]).filter(h=>h.sh!=null),age=Math.max(0,s.y-coFoundedY(s));
   const shareYrs=LH.length?LH.reduce((a,h)=>a+h.sh,0):(s.peak.shY!=null?s.peak.shY:((s.peak.share||{})[s.country]||0))*Math.min(age,15)*0.6;
   const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0),cum:typeof totalSold==='function'?totalSold(s):0,shareYrs,abroad,firsts:firstsLive(s),techs,kingTech:kings.filter(t=>t.id==='king-tech').length,
-    kingClass:kings.filter(t=>t.id!=='king-tech'&&t.id!=='king-race').length,wins:major,minor,titles:sportT.reduce((a,t)=>a+(t.w||1),0),val:companyValue(s),rep:s.rep,age,
+    kingClass:kings.filter(t=>t.id!=='king-tech'&&t.id!=='king-race').length,sportPts:sportPts(s),val:companyValue(s),rep:s.rep,age,
     legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
   // 0.21: очки наследия, выигранные в пари, — к имени марки
   if(s.legBonus){L.brand+=s.legBonus;L.total+=s.legBonus;}
@@ -64,11 +69,11 @@ function legacyTable(s){
   rows.sort((a,b)=>b.L.total-a.L.total);return {rows,me,place:rows.findIndex(r=>r.you)+1};
 }
 function legacyTitle(t){
-  const me=t.me,cats=['scale','market','innov','sport','capital','brand'],norm={scale:400,market:200,innov:200,sport:300,capital:250,brand:160};
+  const me=t.me,cats=['scale','market','innov','sport','capital','brand'],norm=LEG_MAX;
   const top=cats.slice().sort((a,b)=>me[b]/norm[b]-me[a]/norm[a])[0];
   if(t.place===1)return ['Величайшая автоимперия эпохи','Ни одна реальная компания 1929 года не оставила такого следа.'];
-  if(top==='scale'&&me.scale>=330)return ['Новый Форд','Ваши машины ездят по всему миру — автомобиль стал вещью для всех.'];
-  if(top==='sport'&&me.sport>=200)return ['Бугатти своего времени','Имя компании знают по победам на трассах.'];
+  if(top==='scale'&&me.scale>=360)return ['Новый Форд','Ваши машины ездят по всему миру — автомобиль стал вещью для всех.'];
+  if(top==='sport'&&me.sport>=120)return ['Бугатти своего времени','Имя компании знают по победам на трассах.'];
   if(top==='brand'&&me.brand>=110)return ['Роллс-Ройс эпохи','Ваша марка — синоним надёжности и роскоши.'];
   if(top==='innov'&&me.innov>=120)return ['Изобретатели эпохи','Вы придумали то, чем потом пользовались все.'];
   if(top==='capital'&&me.capital>=160)return ['Финансовая империя','Как General Motors: сила компании — в деньгах и управлении.'];

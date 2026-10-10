@@ -319,14 +319,14 @@ function racerFound(opt,name,loan){const s=G,X=s.racer;if(!X||!isRacer(s))return
   const keep={titles:s.titles,trophies:s.trophies,papers:s.papers,raceLog:s.raceLog,dch:s.dch,dcar:s.dcar,cres:s.cres,season:s.season,seen:s.seen,raceDone:s.raceDone,ach:s.ach,ui:s.ui,reels:s.reels,log:s.log,dchWon:s.dchWon};
   const y=s.y,m=s.m,c=X.nat,R0=RACERS[X.id]||RACERS.custom,pio=R0.pio&&PIONEERS[R0.pio]?R0.pio:'r_custom',capital=s.cash+loan+inv-need,nm=(name||'').trim()||racerFoundName(s),fame=X.fame;
   newGame(pio,c,nm,s.diff,'');const g=G;
-  Object.assign(g,keep);g.mode='company';g.y=y;g.m=m;g.racer=Object.assign(X,{founded:{y,m,opt,name:nm,loan,inv,cost:need}});
+  Object.assign(g,keep);g.mode='company';g.y=y;g.m=m;g.racer=Object.assign(X,{founded:{y,m,opt,name:nm,loan,inv,cost:need}});try{awInit(g,true);}catch(_){}
   // историческая марка этого гонщика (Lancia, Chevrolet) — это вы: из соперников она уходит
   {const cp=Object.keys(COMPS).map(cc=>(COMPS[cc]||[]).map((b,i)=>({b,i,c:cc}))).flat().find(o=>o.b.n===nm&&!o.b.imp);if(cp){X.brandCp={c:cp.c,i:cp.i,n:cp.b.n};racerBrandLink();}}
   g.fleet={};g.mkY={};for(const cc in COUNTRIES){g.fleet[cc]=fleetHist(cc,y+m/12);}
   for(const cc in COUNTRIES){const R2=mkCountry(cc,g,[]);g.mkY[cc]=SEGK.reduce((a,gg)=>a+R2.segs[gg].inc,0)*12/SEASON[m];}
   g.cash=Math.round(capital);g.loan=loan;g.rep=clamp(25+fame*0.4,20,70);g.racer.capital0=g.cash;
   if(opt==='buy'&&B){const v=compVol(B.x.cp,g);g.cap=Math.max(4,Math.round(v/12*1.25));g.dealers={[c]:Math.max(2,Math.round(v/12/Math.max(0.5,dealerTP(g))))};g.rep=clamp(g.rep+8,20,75);
-    g.bought=g.bought||{};g.bought[c]={c,i:B.x.i,n:B.x.cp.n,y,t:mi(g),home:1};addLog(`Куплена марка «${B.n}» за ${money(B.price)}: её завод, ${fmtN(g.dealers[c])} ${plural(g.dealers[c],'дилер','дилера','дилеров')} и покупатели теперь ваши.`,'good');}
+    holdList(g).push({c,i:B.x.i,n:B.x.cp.n,nm:compName(B.x.cp,g),mode:'int',st:1,t:mi(g),paid:B.price,pay:'cash',home:1,sh0:maShares0(g,c,B.x.i)});g.maV=30;if(g.aw)g.aw[c]=Math.max(g.aw[c]||0,0.6);addLog(`Куплена марка «${B.n}» за ${money(B.price)}: её завод, ${fmtN(g.dealers[c])} ${plural(g.dealers[c],'дилер','дилера','дилеров')} и покупатели теперь ваши.`,'good');}
   else{g.cap=opt==='partner'?6:3;g.dealers={[c]:opt==='partner'?clamp(Math.round(dealerNeed(c,g)/5),2,8):clamp(Math.round(dealerNeed(c,g)/8),1,4)};}
   // мастерская оснащена по своему времени: станки, электромоторы, контроль — то, что у мастерских было уже лет шесть;
   // конвейер, литейка, пресс и кредитная компания — дело большого завода, их строят самому

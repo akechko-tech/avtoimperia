@@ -21,7 +21,7 @@ function tradeRule(c,o,t){let r={duty:0,why:'свободная торговля
 function tNow(s){return s.y+s.m/12+0.01;}
 function ruleNow(s,c){return tradeRule(c,s.country,tNow(s));}
 // Способ выхода на рынок: 1 — импортёр, 2 — своё отделение, 3 — сборка из комплектов, 4 — свой завод; купленная марка и лицензия — отдельно
-function localMade(s,c){return impLv(s,c)>=4||!!(s.bought&&s.bought[c])||licOn(s,c);}
+function localMade(s,c){return impLv(s,c)>=4||intIn(s,c)||licOn(s,c);}
 function licOn(s,c){const L=s.lic&&s.lic[c];return !!(L&&L.at<=mi(s));}
 // Пошлина на эту машину в этой стране (доля цены): по режиму, способу ввоза, Канаде для стран Империи
 function tariffOf(md,c,s){if(c===s.country||localMade(s,c))return 0;const r=ruleNow(s,c);if(r.ban)return 0;
@@ -45,12 +45,12 @@ function fxOf(s,c){if(c===s.country||localMade(s,c))return 1;if(c==='de'&&s.y===
 function hpTax(md,c,s){if(c==='us'||isTruck(md))return 0;const hp=engineHp(parts(md).e,md),h0=c==='uk'&&s.y>=1921?12:s.y>=1910?18:24;return hp>h0?0.3*Math.log(hp/h0):0;}
 // Местный патриотизм: первые годы чужую марку берут неохотно, потом привыкают
 function patriotK(s,c){const t0=s.impSince&&s.impSince[c];const yrs=t0!=null?(mi(s)-t0)/12:0;return clamp(1-0.05*yrs,0.5,1);}
-function foreignPen(s,c){if(c===s.country)return 0;if(s.bought&&s.bought[c])return 0;if(licOn(s,c))return 0.05;return (impOf(s,c)||IMP_LV[1]).pen*patriotK(s,c);}
+function foreignPen(s,c){if(c===s.country)return 0;if(intIn(s,c))return 0;if(licOn(s,c))return 0.05;return (impOf(s,c)||IMP_LV[1]).pen*patriotK(s,c);}
 // Вкус рынка (0.21): американцы берут свои машины — большие, дешёвые, с запчастями и мастерской в каждом городке;
 // европейская машина в Америке — диковинка для богатых. Свой завод в США помогает, но не до конца: машину делали не для этих дорог.
 // (в Европе вкус — это налог на мощность и дорогой бензин: hpTax и weakHp)
 const TASTE_US={people:1.3,middle:1.0,truck:0.8,lux:0.3,sport:0.3};
-function tastePen(md,c,s){if(c!=='us'||s.country==='us'||(s.bought&&s.bought.us)||licOn(s,c))return 0;const g=isTruck(md)?'truck':segOf(md),lv=impLv(s,'us');
+function tastePen(md,c,s){if(c!=='us'||s.country==='us'||intIn(s,'us')||licOn(s,c))return 0;const g=isTruck(md)?'truck':segOf(md),lv=impLv(s,'us');
   return (TASTE_US[g]??1)*(lv>=4?0.85:lv>=3?0.95:1)*clamp((yf(s)-1900)/8,0.3,1);}
 /* ---------- стройка за границей ---------- */
 function impMonths(s,c,lv){const L=IMP_LV[lv];if(!L.mo)return 0;const k=impK(s,c);return Array.isArray(L.mo)?Math.round(L.mo[0]+(L.mo[1]-L.mo[0])*clamp((k-1)/5,0,1)):L.mo;}
@@ -74,17 +74,8 @@ function licStart(s,c){if(c===s.country||impLv(s,c)>=2||(s.lic&&s.lic[c])||trade
   const g=(s.models.find(m=>m.status==='prod')&&segOf(s.models.find(m=>m.status==='prod')))||'middle',o=respOf(s,c,g);o.mg=(o.mg||0)+0.15;
   addLog(`${COUNTRIES[c].name}: лицензия продана местному заводу. Через полгода он начнёт выпускать ваши машины — без пошлины и доставки; вам — ${Math.round(LIC_ROY*100)}% цены. Чертежи увидят и конкуренты.`,'good');return true;}
 function licEnd(s,c){if(!s.lic||!s.lic[c])return;delete s.lic[c];addLog(`${COUNTRIES[c].name}: лицензия отозвана.`);}
-// 0.27: слабая местная марка продаётся не всегда — газета пишет о сделке раз в год-два (в кризис — чаще и дешевле);
-// это другой путь на рынок: вместо импортёра и отделения — сразу заводы, дилеры и покупатели марки, без пошлины
-function brandOfferCheck(s){if(s.over||s.y<1902||(s.brandOffer&&s.brandOffer.until>mi(s))||s.pending.length||mi(s)-(s.brandOfferT??-99)<10)return;
-  const cs=typeof creditState==='function'?creditState(s).k:'ok',crisis=cs==='panic'||cs==='tight'||cs==='crash'||Object.keys(COUNTRIES).some(c=>c!==s.country&&econ(s.y,s.m,c).f<0.88);
-  if(Math.random()>(crisis?0.09:0.05))return;
-  const L=Object.keys(COUNTRIES).filter(c=>c!==s.country&&!(s.bought&&s.bought[c])&&!warCut(s,c)&&!tradeBanHard(s,c)&&impLv(s,c)<4).map(c=>({c,x:brandCands(s,c)[0]})).filter(o=>o.x);if(!L.length)return;
-  const o=L[Math.floor(Math.random()*L.length)],disc=crisis?0.7:0.85,price=Math.round(brandPrice(s,o.c,o.x)*disc/1000)*1000;if(price<=0||s.cash<price*0.4)return;
-  const n=compName(o.x.cp,s);s.brandOfferT=mi(s);s.brandOffer={c:o.c,i:o.x.i,n,until:mi(s)+6,disc,price};
-  pushEvent({kicker:'Сделка',title:`Марка «${n}» ищет покупателя`,deck:`${COUNTRIES[o.c].name} · ${money(price)}${disc<1?` (на ${Math.round((1-disc)*100)}% ниже обычного)`:''} · предложение — полгода`,
-    text:`${crisis?'Кризис ударил по слабым маркам: ':''}владельцы «${n}» готовы продать дело — заводы, дилеров и имя, которому верят покупатели страны «${COUNTRIES[o.c].name}». Для «${s.company}» это другой путь на этот рынок: без импортёра, своего отделения и пошлин — машины станут местными.\nТак и было: в 1900–1920-е годы марки переходили из рук в руки — Darracq купили британцы, Clément-Talbot — английский граф Шрусбери, а американцы скупали европейских производителей.\nКнопка покупки — на вкладке «Рынок», в строке страны.`,
-    choices:[['На «Рынок»','brandGo'],['Позже','ok']]},true);}
+// 0.30: газетные предложения о продаже марок, доли в вас, слияния и торги — 105c-deals.js (maInbound)
+function brandOfferCheck(s){}
 function tradeBanHard(s,c){return warCut(s,c);}
 // Слабая местная марка: не из двух крупнейших, продаёт меньше 15% рынка страны
 // 0.27: марки в составе больших концернов не продаются: английский завод Ford, MG (гаражи Морриса), отделения General Motors
@@ -94,16 +85,9 @@ function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,
   const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15&&!(BRAND_GROUP[x.cp.n]!=null&&s.y>=BRAND_GROUP[x.cp.n]));}
 function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
 function brandOfferOf(s,c){const O=s.brandOffer;return O&&O.c===c&&O.until>mi(s)?O:null;}
-function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c])||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const O=brandOfferOf(s,c),cost=O&&O.i===i?O.price:brandPrice(s,c,x);if(s.cash<cost)return false;
-  if(s.lic&&s.lic[c])licEnd(s,c);s.brandOffer=null;
-  s.cash-=cost;s.plantVal+=cost*0.4;s.bought=s.bought||{};s.bought[c]={c,i,n:x.cp.n,y:s.y,t:mi(s)};s.imp=s.imp||{};s.imp[c]=Math.max(impLv(s,c),2);(s.impSince=s.impSince||{})[c]=mi(s)-120;
-  const dl=Math.max(3,Math.round(x.v/12/Math.max(0.5,dealerTP(s))));s.dealers[c]=dealerCount(s,c)+dl;
-  // 0.29: её модель и завод — ваши (как при сделке по своей инициативе)
-  if(typeof dealTakeModel==='function')dealTakeModel(s,c,x.cp,x.v);s.cap+=Math.max(2,Math.round(x.v/12*1.1));
-  addLog(`${COUNTRIES[c].name}: куплена марка «${x.cp.n}» за ${money(cost)} — её заводы, ${fmtN(dl)} ${plural(dl,'дилер','дилера','дилеров')} и покупатели теперь ваши. Пошлины больше нет.`,'good');pendingToasts.push('🤝 Куплена марка: '+x.cp.n);return true;}
-// доля купленной марки в классе — её место на рынке переходит к вам (как у исторической марки основателя)
-// 0.29: все купленные и слитые марки страны (105c-deals.js)
-function boughtShare(c,g,s){const L=acqIn(s,c);if(!L.length)return 0;const S=segAnnual(c,g,s);if(S<=0)return 0;let v=0;L.forEach(B=>{const cp=(COMPS[c]||[])[B.i];if(cp&&cp.mix&&cp.mix[g])v+=compVol(cp,s)*cp.mix[g];});return Math.min(0.9,v/S);}
+function brandBuy(s,c,i){if(c===s.country||intIn(s,c)||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const O=brandOfferOf(s,c),cost=O&&O.i===i?O.price:brandPrice(s,c,x);if(s.cash<cost)return false;
+  s.brandOffer=null;const h=maClose(s,c,i,{st:1,mode:'int',pay:'cash'},cost,'offer');return !!h;}
+// 0.30: доля поглощённой марки (уходит со временем) — boughtShare в 105c-deals.js
 /* ---------- Канада: сборка для стран Империи ---------- */
 function hubOn(s,h){const H=s.hub&&s.hub[h];return !!(H&&H.at<=mi(s));}
 function hubCost(s){return Math.round(120000*cpi(s)/1000)*1000;}
@@ -112,10 +96,10 @@ function hubStart(s){if(s.country==='uk'||(s.hub&&s.hub.ca)||s.y<1904)return fal
 /* ---------- национализация в войну ---------- */
 function atWar(a,b,y,m){if(a===b)return false;const t=y+m/12;if(!(a==='de'||b==='de'))return false;const o=a==='de'?b:a;
   return o==='us'?t>=1917.25&&t<1918.9:o==='it'?t>=1915.4&&t<1918.9:t>=1914.58&&t<1918.9;}
-function warSeize(s){for(const c of Object.keys(COUNTRIES)){const bld=s.impB&&s.impB[c];if(impLv(s,c)<3&&!(s.bought&&s.bought[c])&&!(bld&&bld.lv>=3))continue;if(!atWar(s.country,c,s.y,s.m))continue;
-  const lv=impLv(s,c),B=s.bought&&s.bought[c],what=B?`марка «${B.n}»`:lv>=4||(bld&&bld.lv>=4)?`завод «${s.company}»`:`сборочный цех «${s.company}»`,loss=impCost(s,c,Math.max(lv,bld?bld.lv:0))*0.7;
-  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];if(s.acq)s.acq=s.acq.filter(a=>a.c!==c);s.plantVal=Math.max(0,s.plantVal-loss);
-  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${what} ${B?'конфискована':'конфискован'}`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление ${B?`марку «${B.n}» с её заводами, складами и дилерами`:`завод, склады и сеть «${s.company}»`} как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
+function warSeize(s){for(const c of Object.keys(COUNTRIES)){const bld=s.impB&&s.impB[c],H=(s.hold||[]).filter(h=>h.c===c);if(impLv(s,c)<3&&!H.length&&!(bld&&bld.lv>=3))continue;if(!atWar(s.country,c,s.y,s.m))continue;
+  const lv=impLv(s,c),B=H[0],what=B?`марка «${B.nm||B.n}»`:lv>=4||(bld&&bld.lv>=4)?`завод «${s.company}»`:`сборочный цех «${s.company}»`,loss=impCost(s,c,Math.max(lv,bld?bld.lv:0))*0.7;
+  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;s.hold=(s.hold||[]).filter(h=>h.c!==c);s.plantVal=Math.max(0,s.plantVal-loss);
+  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${what} ${B?'конфискована':'конфискован'}`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление ${B?`${H.map(h=>'«'+(h.nm||h.n)+'»').join(', ')} с заводами, складами и дилерами`:`завод, склады и сеть «${s.company}»`} как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
   Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;const now=tradeRule(c,s.country,t);
@@ -149,7 +133,7 @@ function worldRow(s,c){const home=s.country,A=accessOf(s,c),act=s.models.filter(
   if(c===home)return `<tr><td><b>${COUNTRIES[c].name}</b> <small class="muted">дома</small></td><td>—</td><td class="n">${fmtN(sold)}</td><td class="n">${md?money(md.price*(1-dMargin(s))-unitCost(md,s)):'—'}</td></tr>`;
   const r=ruleNow(s,c);let perCar='—';if(md&&!A.k.startsWith('ban')){const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=impOf(s,c),net=netPer(md,c,s)-unitCost(md,s);perCar=money(net)+(tf>0?` <small class="muted">(пошлина ${Math.round(tf*100)}%${sh>0?`, доставка ${money(sh)}`:''})</small>`:sh>0?` <small class="muted">(доставка ${money(sh)})</small>`:'');}
   const tp=md?tastePen(md,c,s):0,why=r.why+(tp>0.3?(r.why?'; ':'')+'вкус: берут свои машины':'');
-  return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':(s.bought&&s.bought[c])?'марка «'+s.bought[c].n+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
+  return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':intIn(s,c)?'марка «'+(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
 function worldCard(s){const C=Object.keys(COUNTRIES),nA=C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length;
   // 0.29: и эта карточка сворачивается
   if(!isOpen('world',true))return foldCard('world',true,`<h2>🌍 Мир</h2><span class="pill">${nA} ${plural(nA,'рынок','рынка','рынков')} за границей</span>`,'','карта доступа: пошлины, квоты, запреты, свои заводы','worldc');
