@@ -29,7 +29,7 @@ function setup(y,m){newGame('ford','us','Форд Мотор','normal');at(y,m);
   ok(G.impB.de&&G.impB.de.left===4&&!G.impB.de.frozen,'август 1919: блокада снята — стройка пошла (осталось '+(G.impB.de&&G.impB.de.left)+' мес.)');}
 // 4. Апрель 1917: Америка вступила в войну — немецкую марку конфискуют
 {setup(1913,3);const C=brandCands(G,'de')[0];brandBuy(G,'de',C.i);at(1917,3);G.pending=[];warSeize(G);const ev=G.pending.find(e=>/конфискован/.test(e.title));
-  ok(!!ev&&!G.bought.de,'апрель 1917: «'+(ev&&ev.title)+'»');}
+  ok(!!ev&&!intIn(G,'de'),'апрель 1917: «'+(ev&&ev.title)+'»');}
 // 5. Старое сохранение (ноябрь 1915, первой полосы не было) — она приходит сейчас, с пометкой
 {setup(1915,10);G.wseen={};G.pending=[];worldCheck(G);const ev=G.pending.find(e=>e.world==='warus');ok(!!ev&&/с августа 1914/.test(ev.deck),'сохранение 1915 года без новости о войне: «'+(ev&&ev.title)+'» — '+(ev&&ev.deck));
   G.pending=[];worldCheck(G);ok(!G.pending.some(e=>e.world==='warus'),'второй раз — не повторяется');

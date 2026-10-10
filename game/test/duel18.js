@@ -59,9 +59,9 @@ ok(Object.keys(extras).length>=2,'ставки бывают не только д
 // спрос в стране соперника: +4% на 3 месяца
 G.duelFx=[];G.y=1910;G.m=3;const H=rivalHero('Fiat',G),c=H.c,u0=modelExtras(md,c,G);
 duelOutcome(G,{type:'race',rk:rcs[0].key,mq:'Fiat',stake:800},true,{});const u1=modelExtras(md,c,G);
-ok(Math.abs(u1-u0-0.04)<1e-9,'после победы спрос в стране соперника ('+c+') +4% ('+(u1-u0).toFixed(3)+')');
+ok(u1-u0>0.03&&u1-u0<=0.04+1e-9,'после победы спрос в стране соперника ('+c+') +4% (с потолком славы 0.30 — '+(u1-u0).toFixed(3)+')');
 G.m+=2;ok(duelEffect(G,c)>0.039,'через 2 месяца ещё действует');G.m+=1;ok(duelEffect(G,c)===0,'через 3 месяца эффект прошёл');G.m=3;G.duelFx=[];
-duelOutcome(G,{type:'race',rk:rcs[0].key,mq:'Fiat',stake:800},false,{});ok(modelExtras(md,c,G)-u0<-0.039,'после поражения — минус');
+duelOutcome(G,{type:'race',rk:rcs[0].key,mq:'Fiat',stake:800},false,{});ok(modelExtras(md,c,G)-u0<-0.03,'после поражения — минус');
 // добавки к ставке работают
 G.duelFx=[];const L0=playerLegacy(G).total;stakeApply(G,{stake:1000,x:{k:'legacy'}},H);ok(Math.abs(playerLegacy(G).total-L0-30)<1e-6,'очки наследия из пари: +30');
 G.rd.projs=[{kind:'upg',id:'e1',name:'Проект',need:20,prog:2}];stakeApply(G,{stake:1000,x:{k:'bp'}},H);ok(G.rd.projs[0].need===14,'чертежи соперника: КБ на 30% быстрее ('+G.rd.projs[0].need+')');

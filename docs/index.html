@@ -10883,7 +10883,7 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
     ${P.wiki?`<a class="credit" style="margin-top:10px;display:inline-block" href="https://en.wikipedia.org/wiki/${encodeURIComponent(P.wiki)}" target="_blank" rel="noopener">Подробнее в Википедии</a>`:''}`);}
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.29';
+const GAME_VER='0.30';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -14948,7 +14948,9 @@ function matchDriver(s,t,y,used){used=used||new Set([...(s.drivers||[]),PIONEERS
 function racePrizeOf(t,c,y){return racePrizeBase({t,c,y,major:0});}
 // предложение: матч-гонка (kind='match') или спор о скорости (kind='record')
 function offerMatch(s,kind){const r=chalRnd(s,kind);if(!raceCarsFor(s).some(m=>!isTruck(m)))return null;
-  const V=MATCH_VENUES.filter(v=>(v.k===kind||v.k==='both')&&s.y>=v.y0-1&&s.y<=v.y1&&(v.c===s.country||dealerCount(s,v.c)>0)&&!warCut(s,v.c));
+  // 0.30: в гору зовут, только если ваша лучшая машина тянет подъём (от ~14 л.с. на тонну): трёхсильную повозку на Гайон не позовут
+  const climb=raceCarsFor(s).filter(m=>!isTruck(m)).reduce((a,m)=>{const st=carBase(m,1,s.y);return Math.max(a,st.hp/Math.max(0.3,st.kg/1000));},0);
+  const V=MATCH_VENUES.filter(v=>(v.k===kind||v.k==='both')&&s.y>=v.y0-1&&s.y<=v.y1&&(v.c===s.country||dealerCount(s,v.c)>0)&&!warCut(s,v.c)&&(v.t!=='hill'||climb>=14));
   if(!V.length)return null;const VH=V.filter(x=>x.c===s.country),VF=V.filter(x=>x.c!==s.country),v=VH.length&&(r()<0.55||!VF.length)?VH[Math.floor(r()*VH.length)]:VF.length?VF[Math.floor(r()*VF.length)]:V[0],w=matchWhen(s,v,r);if(!w)return null;
   const T=matchTeams(s,v.c,w.y);if(!T.length)return null;const t=T[Math.floor(r()*Math.min(3,T.length))],d=matchDriver(s,t,w.y);
   const rec=kind==='record',sprint=v.t==='sprint',hill=v.t==='hill',key=(rec?'rec-':'match-')+v.id+'-'+w.T;

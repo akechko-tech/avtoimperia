@@ -35,7 +35,7 @@ ok(!G.chal&&G.pending.some(e=>e.duel&&e.duel.forfeit),'не приехали н�
 at(1903,1);G.chal=null;G.pending=[];boardTake(G,'match');const sv=JSON.parse(JSON.stringify(G));G=sv;ok(raceByKey(G.chal.rc.key)&&raceByKey(G.chal.rc.key).match,'после сохранения матч находится по ключу');G.chal=null;
 // ---------- 4. Рено, 1899: спор о скорости в парке Ашер ----------
 newGame('renault','fr','Рено','normal');at(1899,1);G.cash=1e5;const mr=G.models[0];mr.status='prod';mr.totalSold=50;
-const orc=chalOffers(G).find(o=>o.kind==='record');ok(!!orc&&/Ашер/.test(orc.title),'Рено, 1899: спор о скорости — «'+(orc&&orc.title)+'»');
+const orc=chalOffers(G).find(o=>o.kind==='record');ok(!!orc&&/Ашер/.test(orc.title)&&!/Гайон/.test(orc.title),'Рено, 1899: спор о скорости — «'+(orc&&orc.title)+'» (трёхсильную машину в гору не зовут)');
 boardTake(G,'record');const C4=G.chal,T4=(C4.rc.y-1895)*12+C4.rc.m;while(mi(G)<T4-1){G.pending=[];step();}
 G.pending=[];const R4=runMatch();ok(R4&&R4.L.rc.kind==='record'&&R4.L.res.length===2,'заезд на время проведён: '+R4.L.res.map(r=>(r.you?'вы':r.name)+' '+(r.dnf?'сход':Math.round(C4.rc.km/(r.fin*R4.L.k/3600))+' км/ч')).join(', '));
 ok(R4.L.vMe>20&&R4.L.vMe<200,'скорость на заезде правдоподобна: '+R4.L.vMe+' км/ч');
