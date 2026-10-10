@@ -1,76 +1,42 @@
-== job world2_scan
-search IA 78 valse -> 0
-search IA 78 chanson -> 1
-search IA 78 polka -> 0
-search IA 78 Walzer -> 0
-search IA 78 Marsch -> 0
-search IA 78 Lied -> 0
-search IA 78 German -> 0
-search IA 78 French -> 0
-search IA 78 Italian -> 0
-search IA 78 Neapolitan -> 0
-search IA 78 Russian -> 3
-search IA 78 balalaika -> 0
-search Odeon Record -> 50
-search Parlophon -> 33
-search Beka Record -> 46
-search Homokord -> 10
-search Lindström -> 50
-search Favorite Record -> 32
-search Gramophone Concert Record -> 50
-search Pathé Frères -> 50
-search Zonophone Record -> 35
-search Edison Amberol -> 46
-search Edison Blue Amberol German -> 1
-search Columbia German -> 50
-search Victor German -> 32
-search Victor French -> 50
-search Victor Italian -> 42
-search Garde Républicaine -> 10
-search Musique de la Garde Républicaine -> 4
-search Marche Lorraine -> 2
-search Le Père la Victoire -> 0
-search Valse brune -> 0
-search Fascination valse -> 0
-search La Paimpolaise -> 1
-search Viens poupoule -> 0
-search Polin chanson -> 0
-search Dranem -> 0
-search Mayol -> 1
-search Fragson Harry -> 2
-search Vincent Scotto -> 2
-search Sous les toits de Paris -> 1
-search La Marseillaise 1907 -> 2
-search Quand l'amour meurt -> 0
-search Alte Kameraden -> 23
-search Preußens Gloria -> 1
-search Hoch- und Deutschmeister -> 1
-search Wien, Wien, nur du allein -> 0
-search Heut geh ich ins Maxim -> 0
-search Lustige Witwe -> 1
-search Lippen schweigen -> 0
-search Frau Luna -> 1
-search Schlösser, die im Monde liegen -> 0
-search Das ist die Berliner Luft -> 5
-search Puppchen du bist mein Augenstern -> 0
-search Filmzauber -> 0
-search Rixdorfer -> 5
-search Kollo Walter -> 4
-search Militärmarsch -> 47
-search Wiener Schrammeln -> 0
-search Johann Strauss Kapelle -> 1
-search Kapelle des Infanterie -> 0
-search Infanterie-Regiment -> 3
-search Garde-Regiment -> 6
-search Blasorchester 1910 -> 0
-search Funiculì funiculà 1903 -> 3
-search Santa Lucia 1910 -> 0
-search Napoli 1910 -> 10
-search Piedigrotta -> 5
-search Roberto Murolo -> 0
-search Vesuvio -> 0
-search Marcia Reale -> 3
-search Italian Military Band -> 7
-music_world2 scan: candidates 675 kept 488
-world2_scan kept after ban 401
-== job world2_scan took 69 s
+== job fanfare_scan
+search fanfare Marine Band -> 0
+search fanfare Army Band -> 1
+search fanfare Air Force Band -> 7
+search fanfare Navy Band -> 15
+search fanfare Coast Guard Band -> 1
+search fanfare brass -> 40
+search trumpet fanfare -> 11
+search Fanfare -> 40
+search Category:Fanfares -> 15
+search bugle call -> 36
+search Call to the Post -> 40
+search To the Colors bugle -> 5
+search Charge bugle -> 40
+search Assembly bugle -> 39
+search Reveille bugle -> 39
+search Category:Bugle calls -> 180
+search La Péri fanfare -> 0
+search Dukas fanfare -> 0
+search Trumpet Voluntary -> 5
+search Prince of Denmark -> 18
+search Mouret Rondeau -> 0
+search Aida Triumphal March -> 2
+search Aida Grand March -> 2
+search Triumphal March -> 3
+search Also sprach Zarathustra -> 10
+search Lohengrin Act 3 -> 0
+search Lohengrin prelude act III -> 1
+search Coronation march -> 2
+search Royal fanfare -> 1
+search Herald trumpets -> 6
+search Hail to the Chief -> 13
+search Ruffles and Flourishes -> 40
+search Festive Overture -> 1
+search Overture 1812 finale -> 0
+search Marche Militaire -> 37
+search Entry of the Gods into Valhalla -> 0
+search Ride of the Valkyries -> 6
+search Olympic hymn 1896 -> 0
+search Fanfare for a Festival -> 0
+fanfare scan: candidates 515 kept 374
+== job fanfare_scan took 59 s
