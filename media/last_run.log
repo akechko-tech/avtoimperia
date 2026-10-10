@@ -5,7 +5,7 @@ search Chaliapine -> 26
 search Schaljapin -> 24
 search Feodor Chaliapin -> 24
 search Fyodor Chaliapin -> 2
-search Плевицкая -> 3
+search Плевицкая -> 4
 search Plevitskaya -> 4
 search Вяльцева -> 3
 search Vyaltseva -> 3
@@ -103,7 +103,7 @@ search Come le rose -> 30
 search Balocchi e profumi -> 0
 search Tango delle capinere -> 0
 search Spazzacamino -> 12
-search banda italiana -> 41
+search banda italiana -> 1
 search Italian song -> 40
 search Mistinguett -> 1
 search Maurice Chevalier -> 2
@@ -185,14 +185,10 @@ search Category:Songs in French -> 0
 search Category:Songs in German -> 0
 search Category:Songs in Russian -> 0
 search Category:Songs in Italian -> 0
-search Category:Audio files in Russian -> 3702
-search Category:Audio files in Italian -> 1351
-search Category:Audio files in French -> 4686
-search Category:Audio files in German -> 7887
-search Category:Great 78 Project -> 0
 search Category:Mistinguett -> 2
 search Category:Maurice Chevalier -> 3
 search Category:Comedian Harmonists -> 0
 search Category:Richard Tauber -> 0
-job failed world_scan <HTTPError 414: 'URI Too Long'>
-== job world_scan took 757 s
+music_world scan: candidates 1661 kept 839
+world_scan kept after ban 709
+== job world_scan took 234 s
