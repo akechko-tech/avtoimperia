@@ -729,7 +729,7 @@ def music_cut():
             sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t0, '-i', tmp, '-t', '%.2f' % d, '-vn', '-af', af,
                 '-ac', ac, '-ar', '44100', '-c:a', 'aac', '-b:a', '%dk' % int(e.get('kb') or 72), '-movflags', '+faststart', '-y', out])
             man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'by': meta_val(v, 'Artist')[:160],
-                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out), 'perf': e.get('perf', ''), 'c': e.get('c', '')}
+                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out), 'perf': e.get('perf', ''), 'c': e.get('c', ''), 'cue': e.get('cue', 0)}
             log('music', cid, round(d), 's', os.path.getsize(out))
         except Exception as ex:
             log('music error', cid, repr(ex)[:300])
