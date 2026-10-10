@@ -664,23 +664,29 @@ def voice5():
         h, text, spk = e['h'], norm(e['s']), e.get('v', 'aidar')
         out = os.path.join(D, h + '.mp3')
         if h in done and h in idx and os.path.exists(out): continue
+        # 0.30: nav — механик в открытой гоночной машине: голос eugene, короткие паузы, обработка «крик»
+        nav = spk == 'nav'; tspk = 'eugene' if nav else spk
         try:
             parts = [p for p in re.split(r'(?<=[.!?…])\s+', text) if p.strip()]
             wavs = []
             for p in parts:
                 chunks = [p] if len(p) < 700 else [c for c in re.split(r'(?<=[,;:—])\s+', p) if c.strip()]
                 for c in chunks:
-                    a = tts(c, spk)
-                    wavs.append(a.numpy()); wavs.append(np.zeros(int(SR * (0.36 if c is chunks[-1] else 0.16)), np.float32))
+                    a = tts(c, tspk)
+                    wavs.append(a.numpy()); wavs.append(np.zeros(int(SR * ((0.12 if nav else 0.36) if c is chunks[-1] else (0.06 if nav else 0.16))), np.float32))
             a = np.concatenate(wavs[:-1]) if len(wavs) > 1 else wavs[0]
             a = np.concatenate([np.zeros(int(SR * 0.05), np.float32), a, np.zeros(int(SR * 0.12), np.float32)])
             pk = float(np.max(np.abs(a))) or 1.0; a = a / pk * 0.9
             with wave.open(tmp, 'wb') as w:
                 w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((a * 32767).astype(np.int16).tobytes())
             warm = 'equalizer=f=160:t=q:w=1.1:g=1.5,' if spk in ('aidar', 'eugene') else 'equalizer=f=240:t=q:w=1.2:g=1,'
-            sh(['ffmpeg', '-v', 'error', '-i', tmp, '-af', 'highpass=f=60,' + warm + 'deesser=i=0.35:m=0.5:f=0.5,acompressor=threshold=-20dB:ratio=2.2:attack=8:release=160,loudnorm=I=-16:TP=-1.5:LRA=8',
+            # крик сквозь ветер: на полтона выше и быстрее, без «бочки», с напором на 2–3 кГц, плотный компрессор
+            af = ('asetrate=%d,aresample=%d,atempo=1.07,highpass=f=170,equalizer=f=2400:t=q:w=1.0:g=5,equalizer=f=320:t=q:w=1.2:g=-3,'
+                  'acompressor=threshold=-26dB:ratio=4:attack=3:release=80,alimiter=limit=0.92,loudnorm=I=-14:TP=-1:LRA=5') % (int(SR * 1.06), SR) if nav else \
+                 'highpass=f=60,' + warm + 'deesser=i=0.35:m=0.5:f=0.5,acompressor=threshold=-20dB:ratio=2.2:attack=8:release=160,loudnorm=I=-16:TP=-1.5:LRA=8'
+            sh(['ffmpeg', '-v', 'error', '-i', tmp, '-af', af,
                 '-ac', '1', '-ar', '32000', '-c:a', 'libmp3lame', '-b:a', '64k', '-y', out])
-            idx[h] = round(len(a) / SR, 2); done.add(h); n += 1
+            idx[h] = round(len(a) / SR / (1.06 * 1.07 if nav else 1), 2); done.add(h); n += 1
             if n % 25 == 0:
                 json.dump(idx, open(idx_path, 'w'), indent=0); json.dump(sorted(done), open(done_path, 'w'))
                 log('voice5', n, 'lines', round(time.time() - t0), 's')
