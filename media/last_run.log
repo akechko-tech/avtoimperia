@@ -1,106 +1,80 @@
-== job music_cut
-music carolina_morning 188 s 1551577
-music california_here 174 s 1433454
-music steamboat_bill 173 s 1429081
-music aint_nobody 206 s 1696919
-music whos_sorry 204 s 1693752
-music swingin_lane 191 s 1586058
-music bubbles 217 s 1791468
-music bananas 192 s 1604723
-music had_to_be 199 s 1638105
-music dippermouth 144 s 1182996
-music wooden_soldiers 196 s 1618196
-music old_gang 192 s 1587511
-music oo_long 194 s 1599586
-music infanta 270 s 2222467
-music sandman 178 s 1459734
-music whispering 196 s 1617926
-music avalon 176 s 1455857
-music ballgame_1908 156 s 1280847
-music green_river 175 s 1442423
-music my_buddy 170 s 1400370
-music high_society 170 s 1403677
-music leave_world 164 s 1348672
-music sammy_1905 105 s 864006
-music st_louis_1925 190 s 1559021
-music memphis_1923 181 s 1487187
-music afghanistan 194 s 1594415
-music back_porch 184 s 1510274
-music prisoners_song 180 s 1479936
-music wreck_97 221 s 1826157
-music tin_roof 182 s 1496012
-music big_bad_bill 180 s 1480318
-music twelfth_street 243 s 1995947
-music mill_stream 168 s 1401757
-music silver_lining 202 s 1658244
-music moonlight_bay 179 s 1471898
-music school_days 194 s 1600556
-music billy_dream 193 s 1591480
-music hot_time 191 s 1572747
-music rainbows 206 s 1706447
-music louisville_lou 182 s 1520617
-music sheltering_palms 164 s 1351918
-music devil_town 172 s 1425845
-music runnin_wild 174 s 1443217
-music sophie_1922 169 s 1402036
-music charleston_1925 248 s 2040701
-music georgia_brown 176 s 1452057
-music moaning_sax 132 s 1088626
-music downhearted 205 s 1683263
-music rainy_blues 215 s 1776898
-music russian_rag 175 s 1439979
-music hesitation 184 s 1509568
-music maple_1906 115 s 945364
-music joplin_1916 130 s 1072453
-music tiger_1918 185 s 1522207
-music royal_garden 128 s 1048611
-music morocha 188 s 1543378
-music gaucha_manuela 207 s 1633126
-music kalinka 124 s 1019886
-music ukhnem 181 s 1491427
-music kurgan 181 s 1490890
-music mondnacht 270 s 2219021
-music faded_picture 270 s 2221536
-music any_old_time 140 s 1153225
-music tipperary 230 s 1891135
-music over_there 209 s 1725015
-music katy 219 s 1753289
-music farm_paree 148 s 1214821
-music alexanders 127 s 1042496
-music these_days 264 s 2174176
-music harvest_moon 125 s 1030789
-music hello_baby 151 s 1230191
-music grand_old_flag 121 s 996309
-music sweetheart 154 s 1275460
-music nellie 164 s 1344486
-music beautiful_ohio 181 s 1484345
-music got_fun 219 s 1799935
-music april_showers 198 s 1626667
-music tea_for_two 176 s 1448714
-music daisy_bell 134 s 1110864
-music after_ball 146 s 1202954
-music bill_bailey 132 s 1090047
-music swanee 158 s 1284765
-music one_i_love 216 s 1773665
-music manhattan_1925 186 s 1534062
-music venice_1924 172 s 1417599
-music italian_street 175 s 1454772
-music love_california 237 s 1947885
-music colonel_bogey 230 s 3295386
-music field_artillery 133 s 1901244
-music jack_tar 157 s 2234786
-music diplomat 201 s 2863195
-music sabre_spurs 198 s 2783476
-music jersey_shore 162 s 2265810
-music miss_trombone 140 s 1997420
-music pathfinder 208 s 2974394
-music st_louis_march 249 s 3129659
-music ny_hippodrome 244 s 3469029
-music navy_blue 172 s 2405573
-music man_i_love 153 s 2173764
-music core_ngrato 216 s 3048039
-music clair_de_lune 270 s 3841744
-music heliotrope 266 s 3809475
-music fig_leaf 220 s 3077655
-music paragon 260 s 3704606
-== job music_cut took 1244 s
+== job voice5
+voice5 redo 553
+voice5 25 lines 15 s
+voice5 50 lines 29 s
+voice5 75 lines 43 s
+voice5 100 lines 58 s
+voice5 125 lines 73 s
+voice5 150 lines 89 s
+voice5 175 lines 104 s
+voice5 200 lines 117 s
+voice5 225 lines 132 s
+voice5 250 lines 146 s
+voice5 275 lines 161 s
+voice5 300 lines 177 s
+voice5 325 lines 194 s
+voice5 350 lines 210 s
+voice5 375 lines 224 s
+voice5 400 lines 239 s
+voice5 425 lines 257 s
+voice5 450 lines 274 s
+voice5 475 lines 291 s
+voice5 500 lines 307 s
+voice5 525 lines 323 s
+voice5 550 lines 340 s
+voice5 575 lines 356 s
+voice5 600 lines 372 s
+voice5 625 lines 389 s
+voice5 650 lines 405 s
+voice5 675 lines 420 s
+voice5 700 lines 437 s
+voice5 725 lines 452 s
+voice5 750 lines 468 s
+voice5 775 lines 481 s
+voice5 800 lines 496 s
+voice5 825 lines 511 s
+voice5 850 lines 524 s
+voice5 875 lines 538 s
+voice5 900 lines 551 s
+voice5 925 lines 565 s
+voice5 950 lines 579 s
+voice5 975 lines 593 s
+voice5 1000 lines 608 s
+voice5 1025 lines 623 s
+voice5 1050 lines 634 s
+voice5 1075 lines 647 s
+voice5 1100 lines 659 s
+voice5 1125 lines 670 s
+voice5 1150 lines 681 s
+voice5 1175 lines 691 s
+voice5 1200 lines 702 s
+voice5 1225 lines 713 s
+voice5 1250 lines 723 s
+voice5 1275 lines 729 s
+voice5 1300 lines 732 s
+voice5 1325 lines 735 s
+voice5 1350 lines 739 s
+voice5 done 1350 new lines; total 2852 v5 2852
+== job voice5 took 750 s
+== job anthem
+anthem: download https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2
+anthem: soundfont /home/runner/work/_temp/anthem/MuseScore_General.sf2 MuseScore General (S. Christian Collins, MIT)
+anthem: avto march 171.7 s 2383 KB
+anthem: reel rag 94.7 s 1309 KB
+anthem: valse waltz 125.6 s 1743 KB
+anthem: tango tango 111.8 s 1554 KB
+anthem: jazz jazz 102.4 s 1423 KB
+anthem: cake cake 90.9 s 1256 KB
+anthem: fox fox 137.2 s 1906 KB
+anthem: charl charl 86.4 s 1203 KB
+anthem: cue fanfare 2.7 s 52 KB
+anthem: cue win 2.8 s 53 KB
+anthem: cue duel_proud_l 4.2 s 71 KB
+anthem: cue duel_proud_w 5.3 s 83 KB
+anthem: cue duel_biz_l 4.1 s 68 KB
+anthem: cue duel_biz_w 5.1 s 81 KB
+anthem: cue duel_aristo_l 4.6 s 75 KB
+anthem: cue duel_aristo_w 5.8 s 88 KB
+anthem: cue duel_sharp_l 4.1 s 69 KB
+anthem: cue duel_sharp_w 5.1 s 81 KB
+== job anthem took 55 s
