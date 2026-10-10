@@ -1,42 +1,41 @@
-== job fanfare_scan
-search fanfare Marine Band -> 0
-search fanfare Army Band -> 1
-search fanfare Air Force Band -> 7
-search fanfare Navy Band -> 15
-search fanfare Coast Guard Band -> 1
-search fanfare brass -> 40
-search trumpet fanfare -> 11
-search Fanfare -> 40
-search Category:Fanfares -> 15
-search bugle call -> 36
-search Call to the Post -> 40
-search To the Colors bugle -> 5
-search Charge bugle -> 40
-search Assembly bugle -> 39
-search Reveille bugle -> 39
-search Category:Bugle calls -> 180
-search La Péri fanfare -> 0
-search Dukas fanfare -> 0
-search Trumpet Voluntary -> 5
-search Prince of Denmark -> 18
-search Mouret Rondeau -> 0
-search Aida Triumphal March -> 2
-search Aida Grand March -> 2
-search Triumphal March -> 3
-search Also sprach Zarathustra -> 10
-search Lohengrin Act 3 -> 0
-search Lohengrin prelude act III -> 1
-search Coronation march -> 2
-search Royal fanfare -> 1
-search Herald trumpets -> 6
-search Hail to the Chief -> 13
-search Ruffles and Flourishes -> 40
-search Festive Overture -> 1
-search Overture 1812 finale -> 0
-search Marche Militaire -> 37
-search Entry of the Gods into Valhalla -> 0
-search Ride of the Valkyries -> 6
-search Olympic hymn 1896 -> 0
-search Fanfare for a Festival -> 0
-fanfare scan: candidates 515 kept 374
-== job fanfare_scan took 59 s
+== job music_cut
+music vyaltseva_troika 170 s 1382105
+music vyaltseva_pytaesh 183 s 1497018
+music vyaltseva_leti 175 s 1437656
+music panina_molody 119 s 967145
+music plevitskaya_hazbulat 166 s 1392187
+music medov_nikolaev 170 s 1399973
+music manchuria_1909 186 s 1531778
+music raisova_zhdu 154 s 1276956
+music chaliapin_ukhnem 196 s 1608937
+music chaliapin_dubinushka 204 s 1686730
+music dni_zhizni 155 s 1294282
+music funiculi_1903 173 s 1418192
+music mattinata_1904 148 s 1218733
+music carmela_1909 191 s 1464267
+music mamma_mia_1911 190 s 1520826
+music caruso_donna 130 s 1066421
+music caruso_questa_1902 138 s 1133567
+music caruso_giubba 194 s 1598736
+music donnarumma_sole 180 s 1479151
+music aida_marina_1906 191 s 1568776
+music bruant_nini 170 s 1407663
+music fragson_amis 108 s 902475
+music sambre_meuse 171 s 1408654
+music marche_lorraine 159 s 1308963
+music pistonette_1902 120 s 986202
+music mon_homme 172 s 1431656
+music alte_kameraden 205 s 1681492
+music kleine_gasse 133 s 1096751
+music jaeger_abschied 137 s 1128243
+music tauber_1923 188 s 1483493
+music fan_win 12 s 147953
+music fan_cup 22 s 265440
+music fan_title 22 s 269077
+music fan_record 14 s 134578
+music fan_first 18 s 216274
+music fan_medal 16 s 138291
+music fan_deal 13 s 159410
+music fan_legacy 26 s 272214
+music fan_duel 11 s 133247
+== job music_cut took 840 s
