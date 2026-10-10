@@ -78,7 +78,7 @@ function licEnd(s,c){if(!s.lic||!s.lic[c])return;delete s.lic[c];addLog(`${COUNT
 // это другой путь на рынок: вместо импортёра и отделения — сразу заводы, дилеры и покупатели марки, без пошлины
 function brandOfferCheck(s){if(s.over||s.y<1902||(s.brandOffer&&s.brandOffer.until>mi(s))||s.pending.length||mi(s)-(s.brandOfferT??-99)<10)return;
   const cs=typeof creditState==='function'?creditState(s).k:'ok',crisis=cs==='panic'||cs==='tight'||cs==='crash'||Object.keys(COUNTRIES).some(c=>c!==s.country&&econ(s.y,s.m,c).f<0.88);
-  if(Math.random()>(crisis?0.07:0.03))return;
+  if(Math.random()>(crisis?0.09:0.05))return;
   const L=Object.keys(COUNTRIES).filter(c=>c!==s.country&&!(s.bought&&s.bought[c])&&!warCut(s,c)&&!tradeBanHard(s,c)&&impLv(s,c)<4).map(c=>({c,x:brandCands(s,c)[0]})).filter(o=>o.x);if(!L.length)return;
   const o=L[Math.floor(Math.random()*L.length)],disc=crisis?0.7:0.85,price=Math.round(brandPrice(s,o.c,o.x)*disc/1000)*1000;if(price<=0||s.cash<price*0.4)return;
   const n=compName(o.x.cp,s);s.brandOfferT=mi(s);s.brandOffer={c:o.c,i:o.x.i,n,until:mi(s)+6,disc,price};
@@ -90,7 +90,7 @@ function tradeBanHard(s,c){return warCut(s,c);}
 // 0.27: марки в составе больших концернов не продаются: английский завод Ford, MG (гаражи Морриса), отделения General Motors
 // (Buick и Oldsmobile — с 1908 года, Cadillac — с 1909-го, Chevrolet — с 1918-го, Vauxhall — с 1925-го, Opel — с 1929-го)
 const BRAND_GROUP={'Ford (Манчестер)':0,'MG':0,'Buick':1908,'Oldsmobile':1908,'Cadillac':1909,'Chevrolet':1918,'Vauxhall':1925,'Opel':1929};
-function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.cp.pk!==s.pioneer&&!x.cp.imp&&x.v>0&&!(s.bought&&Object.values(s.bought).some(b=>b.c===c&&b.i===x.i))).sort((a,b)=>b.v-a.v);
+function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.cp.pk!==s.pioneer&&!x.cp.imp&&x.v>0&&!acqHas(s,c,x.i)).sort((a,b)=>b.v-a.v);
   const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15&&!(BRAND_GROUP[x.cp.n]!=null&&s.y>=BRAND_GROUP[x.cp.n]));}
 function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
 function brandOfferOf(s,c){const O=s.brandOffer;return O&&O.c===c&&O.until>mi(s)?O:null;}
@@ -98,9 +98,12 @@ function brandBuy(s,c,i){if(c===s.country||(s.bought&&s.bought[c])||warCut(s,c))
   if(s.lic&&s.lic[c])licEnd(s,c);s.brandOffer=null;
   s.cash-=cost;s.plantVal+=cost*0.4;s.bought=s.bought||{};s.bought[c]={c,i,n:x.cp.n,y:s.y,t:mi(s)};s.imp=s.imp||{};s.imp[c]=Math.max(impLv(s,c),2);(s.impSince=s.impSince||{})[c]=mi(s)-120;
   const dl=Math.max(3,Math.round(x.v/12/Math.max(0.5,dealerTP(s))));s.dealers[c]=dealerCount(s,c)+dl;
+  // 0.29: её модель и завод — ваши (как при сделке по своей инициативе)
+  if(typeof dealTakeModel==='function')dealTakeModel(s,c,x.cp,x.v);s.cap+=Math.max(2,Math.round(x.v/12*1.1));
   addLog(`${COUNTRIES[c].name}: куплена марка «${x.cp.n}» за ${money(cost)} — её заводы, ${fmtN(dl)} ${plural(dl,'дилер','дилера','дилеров')} и покупатели теперь ваши. Пошлины больше нет.`,'good');pendingToasts.push('🤝 Куплена марка: '+x.cp.n);return true;}
 // доля купленной марки в классе — её место на рынке переходит к вам (как у исторической марки основателя)
-function boughtShare(c,g,s){const B=s.bought&&s.bought[c];if(!B)return 0;const cp=(COMPS[c]||[])[B.i];if(!cp||!(cp.mix&&cp.mix[g]))return 0;const S=segAnnual(c,g,s);return S>0?Math.min(0.9,compVol(cp,s)*cp.mix[g]/S):0;}
+// 0.29: все купленные и слитые марки страны (105c-deals.js)
+function boughtShare(c,g,s){const L=acqIn(s,c);if(!L.length)return 0;const S=segAnnual(c,g,s);if(S<=0)return 0;let v=0;L.forEach(B=>{const cp=(COMPS[c]||[])[B.i];if(cp&&cp.mix&&cp.mix[g])v+=compVol(cp,s)*cp.mix[g];});return Math.min(0.9,v/S);}
 /* ---------- Канада: сборка для стран Империи ---------- */
 function hubOn(s,h){const H=s.hub&&s.hub[h];return !!(H&&H.at<=mi(s));}
 function hubCost(s){return Math.round(120000*cpi(s)/1000)*1000;}
@@ -111,7 +114,7 @@ function atWar(a,b,y,m){if(a===b)return false;const t=y+m/12;if(!(a==='de'||b===
   return o==='us'?t>=1917.25&&t<1918.9:o==='it'?t>=1915.4&&t<1918.9:t>=1914.58&&t<1918.9;}
 function warSeize(s){for(const c of Object.keys(COUNTRIES)){const bld=s.impB&&s.impB[c];if(impLv(s,c)<3&&!(s.bought&&s.bought[c])&&!(bld&&bld.lv>=3))continue;if(!atWar(s.country,c,s.y,s.m))continue;
   const lv=impLv(s,c),B=s.bought&&s.bought[c],what=B?`марка «${B.n}»`:lv>=4||(bld&&bld.lv>=4)?`завод «${s.company}»`:`сборочный цех «${s.company}»`,loss=impCost(s,c,Math.max(lv,bld?bld.lv:0))*0.7;
-  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];s.plantVal=Math.max(0,s.plantVal-loss);
+  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;if(s.bought)delete s.bought[c];if(s.acq)s.acq=s.acq.filter(a=>a.c!==c);s.plantVal=Math.max(0,s.plantVal-loss);
   pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${what} ${B?'конфискована':'конфискован'}`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление ${B?`марку «${B.n}» с её заводами, складами и дилерами`:`завод, склады и сеть «${s.company}»`} как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
@@ -147,8 +150,10 @@ function worldRow(s,c){const home=s.country,A=accessOf(s,c),act=s.models.filter(
   const r=ruleNow(s,c);let perCar='—';if(md&&!A.k.startsWith('ban')){const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=impOf(s,c),net=netPer(md,c,s)-unitCost(md,s);perCar=money(net)+(tf>0?` <small class="muted">(пошлина ${Math.round(tf*100)}%${sh>0?`, доставка ${money(sh)}`:''})</small>`:sh>0?` <small class="muted">(доставка ${money(sh)})</small>`:'');}
   const tp=md?tastePen(md,c,s):0,why=r.why+(tp>0.3?(r.why?'; ':'')+'вкус: берут свои машины':'');
   return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':(s.bought&&s.bought[c])?'марка «'+s.bought[c].n+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
-function worldCard(s){const C=Object.keys(COUNTRIES);
-  return `<section class="card worldc" id="sec-world"><div class="row"><h2>🌍 Мир</h2><span class="pill">${C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length} ${plural(C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length,'рынок','рынка','рынков')} за границей</span></div>
+function worldCard(s){const C=Object.keys(COUNTRIES),nA=C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length;
+  // 0.29: и эта карточка сворачивается
+  if(!isOpen('world',true))return foldCard('world',true,`<h2>🌍 Мир</h2><span class="pill">${nA} ${plural(nA,'рынок','рынка','рынков')} за границей</span>`,'','карта доступа: пошлины, квоты, запреты, свои заводы','worldc');
+  return `<section class="card worldc" id="sec-world"><button class="card-h" data-act="fold" data-k="world" data-def="1" aria-expanded="true"><span class="ch"><h2>🌍 Мир</h2><span class="pill">${nA} ${plural(nA,'рынок','рынка','рынков')} за границей</span></span><i>▴</i></button>
     ${worldMap(s)}
     <p class="small muted" style="margin-top:4px">Цвет — доступ: <span style="color:#74d39a">●</span> свободно или свой завод, <span style="color:#f0c75e">●</span> пошлина, <span style="color:#f09a4e">●</span> высокая пошлина, <span style="color:#b48ae0">●</span> квота, <span style="color:#e0655a">●</span> ввоз запрещён. Машина, ввезённая целиком, платит пошлину и доставку; собранная из комплектов — пошлину только на детали; свой завод или купленная местная марка — как своя. Вкус рынка: в Европе налог на мощность бьёт по большим моторам, а американцы берут свои машины — европейской там трудно даже со своим заводом.</p>
     <table class="pl world-t" style="margin-top:8px"><tr><th>Страна</th><th>Доступ</th><th class="n">Продано</th><th class="n">Вам с машины</th></tr>${C.map(c=>worldRow(s,c)).join('')}</table></section>`;}

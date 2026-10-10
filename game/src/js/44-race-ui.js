@@ -28,7 +28,7 @@ function raceItem(rc,s){
   return `<div class="race-item"><div class="row"><div><span class="mo">${MONTHS[rc.m]} · ${hostName(rc.c)} · ${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км</span><h3 style="margin-top:2px">${esc(rc.name)}${rc.major?' <span class="star" title="Большая гонка">★</span>':''}</h3></div><span class="pill ${tone}">${st}</span></div>
     ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
     ${r&&r.w&&!r.x?`<p class="small ${r.w===s.company?'good':'muted'}" style="margin-top:4px">Победа: ${esc(r.w)}${r.d?` (${esc(r.d)})`:''}${r.pv?' · частник':''}</p>`:`<p class="small muted" style="margin-top:4px">Приз ${money(racePrize(rc))} · взнос ${money(raceFee(rc))} с машины</p>`}
-    ${open?`<button class="btn primary block" style="margin-top:8px" data-act="raceSetup" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Заявить команду</button>`:''}</div>`;
+    ${open?`<div class="btns" style="margin-top:8px"><button class="btn primary" data-act="raceSetup" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Заявить команду</button><button class="btn" data-act="raceQuick" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Участвовать<small>менеджер команды, итог сразу</small></button></div>`:''}</div>`;
 }
 let TEAM_FREE=false;
 function teamCard(s){
@@ -36,6 +36,8 @@ function teamCard(s){
   const free=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,6);
   return `<section class="card"><div class="row"><span class="label">Команда</span><span class="pill warn">${lv}/${RDEPT.length-1}</span></div><h2 style="margin-top:2px">${esc(D.name)}</h2>
     <p class="small muted" style="margin-top:4px">${D.desc}${lv?` Содержание ${money(teamUpkeep(s))} в месяц.`:''}</p>
+    ${(()=>{const B=rbudOf(s),net=B.won-B.spent,P=TM_POL[tmPol(s)];return `<div class="meta" style="margin-top:8px"><div>Гонки ${s.y}: расходы<b>${money(B.spent)}</b></div><div>Призовые<b class="${B.won>0?'good':''}">${money(B.won)}</b></div><div>Итог<b class="${net>=0?'good':'bad'}">${net>=0?'+':'−'}${money(Math.abs(net))}</b></div></div>
+      <p class="small muted" style="margin-top:4px">Менеджер команды (кнопка «Участвовать» у гонки): бюджет «${P.n}» — ${P.d}, на гонку до ${Math.round(P.cash*100)}% кассы.</p>`;})()}
     ${N?`<div class="tech-row"><div><h3>${esc(N.name)}</h3><p class="small muted">${N.desc} Содержание ${money(Math.round(N.up*cpi(s)))} в месяц.</p></div><button class="btn sm" data-act="rdeptUp" ${s.cash<c?'disabled':''}>${money(c)}</button></div>`:''}
     <div class="label" style="margin-top:14px">Пилоты по контракту · ${own.length} из 3</div>
     ${own.length?own.map(d=>{const o=moodOf(s,d.id),v=Math.round(o.v),bc=bonusCost(d,s),can=mi(s)-(o.bm??-99)>=3;

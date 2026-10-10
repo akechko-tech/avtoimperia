@@ -132,7 +132,7 @@ function trialRival(s,C){const cp=(COMPS[s.country]||[])[C.ci],mdl=cp?compModel(
 function offerTrial(s){const r=chalRnd(s,'trial');if(isWar(s.y,s.m,s.country)||isWar(s.y,Math.min(11,s.m+2),s.country))return null;
   const L=s.last,mk=L&&L.mk&&L.mk[s.country];if(!mk||!mk.segs)return null;
   const gs=SEGK.filter(g=>g!=='sport'&&trialCars(s,g).length&&((mk.segs[g]&&mk.segs[g].you)||0)>=1);if(!gs.length)return null;const g=gs[Math.floor(r()*gs.length)];
-  const cps=(COMPS[s.country]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>!ownComp(x.cp,s)&&!(s.bought&&s.bought[s.country]&&s.bought[s.country].i===x.i)&&x.v>0&&compAlive(x.cp,s)).sort((a,b)=>b.v-a.v).slice(0,4);if(!cps.length)return null;
+  const cps=(COMPS[s.country]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>!ownComp(x.cp,s)&&!acqHas(s,s.country,x.i)&&x.v>0&&compAlive(x.cp,s)).sort((a,b)=>b.v-a.v).slice(0,4);if(!cps.length)return null;
   const R=cps[Math.floor(r()*cps.length)],nm=compName(R.cp,s),rt=trialRoute(s.country,s.y),P=trialPick(s,g);if(!P)return null;
   const stake=Math.round(clamp((L.rev||0)*0.1,150*cpi(s),15000*cpi(s))/50)*50,end=mi(s)+(rt[2]>3000?2:1);
   const C={type:'trial',g,ci:R.i,mq:nm,route:rt[1],km:rt[2],rh:rt[3],md:P.m.id,end,x:stakeExtra(s,nm,'bt',1)};

@@ -90,7 +90,8 @@ function ambEmitters(T){const n=T.n,W=T.W,S=T.segT||new Uint8Array(n),cfg=T.cfg|
   // кучка зрителей: 5 человек на фигуру; гул и крики — от числа людей
   E.crowd.forEach(g=>{const k=10*Math.log10(g.n*5);g.L=AMB_L.crowd+k;g.Lc=AMB_L.crowdCheer+k;g.r0=3+Math.min(8,g.n);delete g.sx;delete g.sz;});
   // церкви-приметы (кремль, русская церковь)
-  (T.lm||[]).forEach(q=>{if(/church|kremlin|cathedral/.test(q.t))E.church.push({x:q.x,z:q.z,i:q.i,id:id++,city:q.t==='kremlin'});});
+  // 0.29: и настоящие с карты — соборы, церкви, часовни, монастыри (Валдай: «колокола на весь тракт»)
+  (T.lm||[]).forEach(q=>{const k=q.t==='rlm'&&q.lm?q.lm.k:q.t;if(q.far)return;if(/church|kremlin|cathedral|chapel|monastery/.test(k||''))E.church.push({x:q.x,z:q.z,i:q.i,id:id++,city:q.t==='kremlin'||(T.town&&T.town[q.i])});});
   // река у моста: русло петляет, как на картинке
   (T.rivers||[]).forEach(rv=>{if(typeof riverLine!=='function')return;const Lr=riverLine(T,rv),P=[];const ss=(a,b,x)=>{const q=clamp((x-a)/(b-a),0,1);return q*q*(3-2*q);};
     for(let s=-240;s<=240;s+=12){const k=ss(20,120,Math.abs(s)),m=Math.sin(s/170+rv.ph)*22*k+Math.sin(s/61+rv.ph*2)*6*k;P.push([Lr.p[0]+Lr.d[0]*s+Lr.t[0]*m,Lr.p[2]+Lr.d[1]*s+Lr.t[1]*m]);}

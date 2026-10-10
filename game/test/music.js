@@ -10,12 +10,16 @@ newGame('custom','us','T','normal');
 for(const y of [1896,1905,1914,1918,1925]){G.y=y;AU.sig='';AU.pl=[];AU.badSrc={};AU.remoteOff=0;AU.noMusic=0;musBuild(true);
   const L=AU.pl,own=L.filter(t=>t.own).map(t=>t.id);
   ok(L.length>0&&!L.some(t=>t.synth),y+': в плейлисте '+L.length+' записей, синтезатора нет; свои: '+own.join(', '));
-  ok(L[0].id==='own_avto','первой звучит «Автоимперия» (оркестр)');}
+  ok(!L[0].own||L.every(t=>t.own),'первой звучит запись эпохи, а не своя мелодия ('+L[0].id+')');}
 // новые свои пьесы 0.24 — в своё время
 G.y=1918;AU.sig='';musBuild(true);const ids=AU.pl.map(t=>t.id);
 ok(['own_jazz','own_fox','own_cake'].every(k=>ids.includes(k)),'1918: «Гаражный джаз», «Фокстрот на набережной», «Кекуок клаксонов» — в плейлисте');
 G.y=1925;AU.sig='';musBuild(true);ok(AU.pl.some(t=>t.id==='own_charl'),'1925: чарльстон «Полный газ» — в плейлисте');
-ok(Object.keys(OWN_MUSIC).every(k=>/оркестр|бэнд/.test(OWN_MUSIC[k].cap+OWN_MUSIC[k].by)),'все свои пьесы — в оркестровке ('+Object.keys(OWN_MUSIC).length+')');
+ok(Object.keys(OWN_MUSIC).every(k=>/оркестр|бэнд|фортепиано/.test(OWN_MUSIC[k].cap+OWN_MUSIC[k].by)),'все свои пьесы — живые составы: оркестр, джаз-бэнд, фортепиано ('+Object.keys(OWN_MUSIC).length+')');
+// 0.29: записей эпохи хватает — своих мелодий в плейлисте «Эпоха» нет (в «Все» — есть)
+{const sv=ORCH.idx;ORCH.idx=Object.assign({},sv);for(let i=0;i<8;i++)ORCH.idx['rec_x'+i]={cap:'Запись '+i,st:'march',y:1910,mood:'calm'};
+ G.y=1914;AU.on.mode='era';AU.sig='';AU.badSrc={};AU.remoteErr=0;AU.remoteOff=0;musBuild(true);ok(AU.pl.length>=6&&!AU.pl.some(t=>t.own),'«Эпоха»: только записи эпохи ('+AU.pl.length+')');
+ AU.on.mode='all';AU.sig='';musBuild(true);ok(AU.pl.some(t=>t.own),'«Все»: свои мелодии тоже есть');AU.on.mode='era';ORCH.idx=sv;}
 // сеть подводит: три чужие записи подряд не загрузились — играют только свои
 G.y=1918;AU.sig='';AU.badSrc={};AU.remoteErr=0;musBuild(true);let k=0;
 AU.pl=AU.pl.filter(t=>!t.own).concat(AU.pl.filter(t=>t.own));AU.idx=0;

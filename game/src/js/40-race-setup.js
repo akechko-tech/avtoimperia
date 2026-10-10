@@ -126,12 +126,61 @@ Object.assign(RACE_ACT,{
   rDel:d=>{if(RS.entries.length<=1)return;RS.entries.splice(+d.i,1);RS.open=Math.min(RS.open,RS.entries.length-1);renderRaceSetup(true);},
   rMode:d=>{RS.mode=d.v;renderRaceSetup(true);},
   raceGo:()=>{const s=G,rc=raceByKey(RS.key);if(!rc||R)return;const tot=setupTotal(rc,s);if(s.cash<tot.total||RS.entries.some(e=>!e.drv))return;
-    s.cash-=tot.total;const n=RS.entries.length;
+    s.cash-=tot.total;const n=RS.entries.length;rbudAdd(s,tot.total,0);
     addLog(`Заявка на «${rc.name}»: ${n} ${plural(n,'машина','машины','машин')}, расходы ${money(tot.total)}.`);
     const setup={rc,mode:RS.mode,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
     RS=null;closeSheet();stopAuto();save();realLoad(setup.rc,()=>startRace(setup));}
 });
 
+/* ---------- 0.29: менеджер команды — «Участвовать»: сам назначает пилотов и машины в пределах бюджета, итог — сразу ---------- */
+// Политика бюджета: сколько машин, можно ли приглашать пилотов на гонку, какая доля кассы на одну гонку
+const TM_POL={eco:{n:'Экономно',d:'одна машина, свои пилоты, без гоночной подготовки',cars:1,hire:0,prep2:0,cash:0.05},
+  std:{n:'Обычно',d:'до двух машин, лучший свободный пилот, подготовка по совету',cars:2,hire:1,prep2:1,cash:0.12},
+  max:{n:'Не жалеть',d:'три машины, лучшие пилоты эпохи, гоночная подготовка',cars:3,hire:3,prep2:1,cash:0.3}};
+function tmPol(s){return TM_POL[(s.tm&&s.tm.pol)||'std']?(s.tm&&s.tm.pol)||'std':'std';}
+// бюджет гонок за год: потрачено (взносы, подготовка, приглашённые пилоты) и выиграно (призы)
+function rbudOf(s,y){const B=s.rbud=s.rbud||{};const k=String(y||s.y);return B[k]=B[k]||{spent:0,won:0,n:0};}
+function rbudAdd(s,spent,won){const b=rbudOf(s);b.spent+=spent||0;b.won+=won||0;if(spent)b.n++;}
+function managerLineup(s,rc,pol){const P=TM_POL[pol||tmPol(s)],maxE=rc.match?1:MAX_ENTRIES,cars=raceCarsFor(s).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc));if(!cars.length)return null;
+  const budget=Math.max(0,Math.round(Math.max(0,s.cash)*P.cash/10)*10);
+  // кто может ехать: свои пилоты по контракту, хозяин (если гонщик), приглашённые на гонку — по мастерству
+  const pool=(s.drivers||[]).filter(id=>!drvOut(s,id)).map(id=>DRIVERS.find(d=>d.id===id)).filter(Boolean).map(d=>({id:d.id,sk:d.sk,fee:0,own:1}));
+  if(pioRacer(s)&&!meOut(s))pool.push({id:'me',sk:pioSk(s),fee:0,own:1});
+  const hired=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,6).map(d=>({id:d.id,sk:d.sk,fee:driverRaceFee(d,s),own:0}));
+  const out=[];let total=0,nh=0;const used=new Set();
+  for(let k=0;k<Math.min(maxE,P.cars);k++){
+    const ownBest=pool.filter(p=>!used.has(p.id)).sort((a,b)=>b.sk-a.sk)[0],hireBest=hired.filter(p=>!used.has(p.id)).sort((a,b)=>b.sk-a.sk)[0];
+    // приглашённый — если своих нет или он заметно сильнее (и политика позволяет)
+    let p=ownBest;if(hireBest&&nh<P.hire&&(!ownBest||hireBest.sk-ownBest.sk>=0.08))p=hireBest;if(!p&&hireBest&&k===0)p=hireBest;if(!p)break;
+    const md=cars[Math.min(k,cars.length-1)],e={drv:p.id,car:md.id,prep:1,tyre:'soft',gear:0},a=raceAdvice(rc,e,md,carStats(md,1,rc.y),s);Object.assign(e,a.rec);
+    if(!P.prep2&&e.prep>1)e.prep=1;if(!prepAllowed(e.prep,s,rc,md))e.prep=1;
+    const c=entryCost(rc,e,s).total;
+    // первая машина — если хватает денег; следующие — только в пределах бюджета политики
+    if(k===0?s.cash<c:total+c>budget)break;
+    out.push(e);used.add(p.id);total+=c;if(!p.own)nh++;}
+  return {entries:out,total,budget,pol:pol||tmPol(s)};}
+function openRaceQuick(key){const s=G,rc=raceByKey(key);if(!rc||R)return;if(!raceCarsFor(s).length){toast('Нет машин в производстве');return;}
+  const pol=tmPol(s),M=managerLineup(s,rc,pol),B=rbudOf(s),cars=raceCarsFor(s);
+  const rows=M&&M.entries.length?M.entries.map((e,i)=>{const md=cars.find(m=>m.id===e.car),d=drvObj(e.drv),st=carStats(md,e.prep,rc.y),c=entryCost(rc,e,s),fc=finishChance(st,rc,s);
+    return `<div class="race-item"><div class="row"><div style="flex:1"><span class="mo">Экипаж №${i+1} · ${esc(PREP[e.prep].name.toLowerCase())} · ${e.tyre==='soft'?'мягкие':'жёсткие'} шины</span><h3>${e.drv==='me'?'Вы — '+esc(PIONEERS[s.pioneer].name):esc(d?d.n:'—')} · «${esc(md.name)}»</h3>
+      <p class="small muted">${d?'мастерство '+Math.round(d.sk*100)+((s.drivers||[]).includes(d.id)?' · по контракту':' · приглашён на гонку'):'мастерство '+Math.round(pioSk(s)*100)} · ${Math.round(st.vmax*3.6)} км/ч · финиш ≈${Math.round(fc*100)}%</p></div><b class="num">${money(c.total)}</b></div></div>`;}).join(''):'';
+  const chips=Object.entries(TM_POL).map(([k,p])=>`<button class="chip ${pol===k?'on':''}" data-act="tmPol" data-v="${k}" data-k="${esc(key)}">${p.n}<small>${p.d}</small></button>`).join('');
+  const net=B.won-B.spent;
+  openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)} · менеджер команды</span><h2 style="margin-top:2px">${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
+    <p class="small muted" style="margin-top:4px">Менеджер команды сам выбирает машины, пилотов, подготовку и шины по совету главы команды — в пределах бюджета. Гонка проходит без вас: итог — сразу.</p>
+    <div class="label" style="margin-top:12px">Бюджет</div><div class="chips">${chips}</div>
+    <div class="meta" style="margin-top:8px"><div>Касса<b>${money(s.cash)}</b></div><div>На эту гонку<b>до ${money(M?M.budget:0)}</b></div><div>Гонки ${s.y}: расходы<b>${money(B.spent)}</b></div><div>Призовые<b class="${B.won>0?'good':''}">${money(B.won)}</b></div></div>
+    <p class="small ${net>=0?'good':'warn'}" style="margin-top:4px">Итог года по гонкам: ${net>=0?'+':'−'}${money(Math.abs(net))}${B.n?` · заявок: ${B.n}`:''}. Победы окупаются не только призами: спрос на машину-победительницу растёт, репутация марки тоже.</p>
+    <div class="label" style="margin-top:12px">Заявка менеджера</div>${rows||'<p class="small warn" style="margin-top:6px">Денег не хватает даже на одну машину.</p>'}
+    ${M&&M.entries.length?`<p class="small muted" style="margin-top:6px">Взносы, подготовка и приглашённые пилоты — ${money(M.total)}. Призы: 1-е место — ${money(racePrize(rc))}, 2-е — ${money(racePrize(rc)*0.5)}, 3-е — ${money(racePrize(rc)*0.25)}.</p>
+    <button class="btn primary block" style="margin-top:12px" data-act="raceQuickGo" data-k="${esc(key)}" ${s.cash<M.total||s.pending.length?'disabled':''}>Пусть едут · ${money(M.total)}</button>
+    <button class="btn block" style="margin-top:8px" data-act="raceQuickEdit" data-k="${esc(key)}">Изменить заявку вручную</button>`:''}`);}
+Object.assign(RACE_ACT,{
+  raceQuick:d=>openRaceQuick(d.k),
+  tmPol:d=>{const s=G;s.tm=s.tm||{};s.tm.pol=d.v;openRaceQuick(d.k);},
+  raceQuickGo:d=>{const s=G,rc=raceByKey(d.k);if(!rc||R)return;const M=managerLineup(s,rc);if(!M||!M.entries.length)return;RS={key:d.k,entries:M.entries,open:0,mode:'sim',more:false};RACE_ACT.raceGo();},
+  raceQuickEdit:d=>{const s=G,rc=raceByKey(d.k);if(!rc)return;const M=managerLineup(s,rc);RS={key:d.k,entries:M&&M.entries.length?M.entries:[defaultEntry(s,rc,[])],open:0,mode:'sim',more:false};renderRaceSetup();}
+});
 // 0.19: как проходила гонка на самом деле — старт, час, погода
 const SCN_ST_NAME={grid:'все вместе, по флагу',interval:'по одному, с интервалом',pairs:'парами, с интервалом',rolling:'с ходу, за машиной-лидером',lemans:'бегом к машинам (старт Ле-Мана)',solo:'поодиночке, на время'};
 function scnSetupHTML(rc){try{const S=scnFor(rc),hh=((S.h0%24)+24)%24,hm=String(Math.floor(hh)).padStart(2,'0')+':'+String(Math.round((hh%1)*60)).padStart(2,'0');

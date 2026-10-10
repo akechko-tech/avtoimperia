@@ -308,10 +308,14 @@ function racerFirstModel(g,md){const segs=['lux','middle','people'].concat(sport
   segs.forEach(k=>{try{const d=autoDesign(k,g),m={...md};['e','g','c','k','b','t','w'].forEach(k2=>{if(d[k2])m[k2]=d[k2];});m.price=Math.round(refPrice(m,g)/10)*10;
     const q=Math.min(capEff(g),forecastDemand(m,g)),v=q*(m.price*0.84-unitCost(m,g))*(k==='sport'?1.25:1);if(!best||v>best.v)best={k,m,v};}catch(e){}});
   if(best)['e','g','c','k','b','t','w'].forEach(k2=>{md[k2]=best.m[k2];});return best?best.k:'middle';}
-function racerModelName(X,nm,c){const L={it:'Tipo 1',fr:'Type A',de:'Typ 1',uk:'Model A',us:'Model A'};return `${nm} ${X.id==='lancia'?'Alfa':L[c]||'Model A'}`.slice(0,24);}
+// 0.29: первая машина марки — как в истории: Lancia — «Тип 51» (будущая «Альфа»), Chevrolet — «Серия C», Maserati — «Тип 26»
+const RACER_FIRST={lancia:'Тип 51',l_chevrolet:'Серия C',rickenbacker:'Модель A',a_maserati:'Тип 26'};
+function racerModelName(X,nm,c){if(RACER_FIRST[X.id])return RACER_FIRST[X.id];const L={it:'Tipo 1',fr:'Type A',de:'Typ 1',uk:'Model A',us:'Model A'};return `${nm} ${L[c]||'Model A'}`.slice(0,24);}
 function racerFound(opt,name,loan){const s=G,X=s.racer;if(!X||!isRacer(s))return false;
   const inv=opt==='partner'?racerInvestor(s):0,B=opt==='buy'?racerBrandOffer(s):null,need=racerFoundPrice(s,opt);
   loan=clamp(Math.round(+loan||0),0,racerLoanMax(s));if(s.cash+loan+inv<need+racerFoundWork(s)){toast('Не хватает денег');return false;}
+  // гонки и титулы гонщика до основания — его личная слава: в наследие марки не идут (трофеи остаются на витрине)
+  (s.raceLog||[]).forEach(r=>{r.rx=1;});(s.titles||[]).forEach(t=>{t.rx=1;});
   const keep={titles:s.titles,trophies:s.trophies,papers:s.papers,raceLog:s.raceLog,dch:s.dch,dcar:s.dcar,cres:s.cres,season:s.season,seen:s.seen,raceDone:s.raceDone,ach:s.ach,ui:s.ui,reels:s.reels,log:s.log,dchWon:s.dchWon};
   const y=s.y,m=s.m,c=X.nat,R0=RACERS[X.id]||RACERS.custom,pio=R0.pio&&PIONEERS[R0.pio]?R0.pio:'r_custom',capital=s.cash+loan+inv-need,nm=(name||'').trim()||racerFoundName(s),fame=X.fame;
   newGame(pio,c,nm,s.diff,'');const g=G;

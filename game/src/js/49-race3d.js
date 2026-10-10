@@ -107,6 +107,11 @@ function pTrunk(mb,x0,y0,z0,x1,y1,z1,r0,r1,col,sides,mat){sides=sides||6;const c
   for(let k=0;k<sides;k++){const a0=k/sides*6.2832,a1=(k+1)/sides*6.2832,am=(a0+a1)/2,P=(a,r,x,y,z)=>[x+Math.cos(a)*r,y,z+Math.sin(a)*r];
     mb.poly([P(a0,r0,x0,y0,z0),P(a1,r0,x0,y0,z0),P(a1,r1,x1,y1,z1),P(a0,r1,x1,y1,z1)],[Math.cos(am),(r0-r1)/Math.max(0.1,y1-y0),Math.sin(am)],cMul(c,0.9+0.2*Math.cos(am-2.4)),M);}
   if(r1>0.02)mb.poly(Array.from({length:sides},(_,k)=>{const a=k/sides*6.2832;return [x1+Math.cos(a)*r1,y1,z1+Math.sin(a)*r1];}),[0,1,0],c,M);}
+// 0.29: бревно между двумя точками (поваленное дерево, ветки): кольца поперёк оси
+function pLog(mb,A,B,r0,r1,col,sides,mat){sides=sides||7;const c=hex2rgb(col),M=mat===undefined?MID.bark:mat,d=v3n([B[0]-A[0],B[1]-A[1],B[2]-A[2]]),u=v3n(Math.abs(d[1])<0.9?v3x(d,[0,1,0]):v3x(d,[1,0,0])),w=v3x(d,u);
+  const Q=(P,r,a)=>{const ca=Math.cos(a),sa=Math.sin(a);return [P[0]+(u[0]*ca+w[0]*sa)*r,P[1]+(u[1]*ca+w[1]*sa)*r,P[2]+(u[2]*ca+w[2]*sa)*r];};
+  for(let k=0;k<sides;k++){const a0=k/sides*6.2832,a1=(k+1)/sides*6.2832,am=(a0+a1)/2,ca=Math.cos(am),sa=Math.sin(am),nm=[u[0]*ca+w[0]*sa,u[1]*ca+w[1]*sa,u[2]*ca+w[2]*sa];
+    mb.poly([Q(A,r0,a0),Q(B,r1,a0),Q(B,r1,a1),Q(A,r0,a1)],nm,cMul(c,0.82+0.28*Math.max(0,nm[1])),M);}}
 // Конус (ель, крыша башенки): кольцо у основания с неровным краем
 function pCone(mb,cx,y0,cz,r,h,col,sides,r2,mat,sway){sides=sides||9;const c=hex2rgb(col),M=mat===undefined?MID.leaf:mat,e=mb.e,ez=e[2];
   for(let k=0;k<sides;k++){const a0=k/sides*6.2832,a1=(k+1)/sides*6.2832,j0=1+((k*37)%7-3)*0.05,j1=1+(((k+1)%sides*37)%7-3)*0.05,top=[cx,y0+h,cz];
@@ -155,14 +160,34 @@ function pTree(t,v){return proto('tree|'+t+'|'+v,(mb,r)=>{
     mb.e[3]=0;pTrunk(mb,0,4.2,0,0.05,5.4,0,0.06,0.04,'#6a5440',5,MID.wood);[-1,1].forEach(s2=>pTrunk(mb,0,3.9,0,s2*0.9,4.9,0.2,0.04,0.03,'#6a5440',4,MID.wood));}
   else if(t==='cliff'){mb.e[3]=txLay(texLi('cliff')>=0?'cliff':'rock',1,1);for(let i=0;i<5;i++)pBlob(mb,(i-2)*2.8+(r()-0.5),2.5+r()*3,(r()-0.5)*1.5,2.2+r()*1.2,3.5+r()*2.5,1.8+r()*0.8,['#8a8680','#7e7a74','#716d68'][i%3],r,1,MID.stone);mb.e[3]=0;pBlob(mb,-3,8,0,1.6,0.5,1,'#6f7d4e',r,0,undefined,0.3);}
   });}
+// 0.29: траверсы [высота, полуширина] и верх изоляторов [x, y] — к ним крепятся провода до соседнего столба
+const POLE_INS=[{arms:[[7.4,1.25],[6.75,0.9]],pts:[[-1.05,7.72],[-0.4,7.72],[0.4,7.72],[1.05,7.72],[-0.7,7.02],[0.7,7.02]]},
+  {arms:[[8.35,1.15],[7.65,1.15]],pts:[[-1,8.66],[-0.6,8.66],[-0.25,8.66],[0.25,8.66],[0.6,8.66],[1,8.66],[-1,7.96],[-0.4,7.96],[0.4,7.96],[1,7.96]]},
+  {arms:[[8.95,0.95]],pts:[[-0.82,9.4],[0.82,9.4],[0,9.95]]}];
+// провод: провисает посередине (на 50-метровом пролёте — около полуметра)
+function r3dWire(mb,a,b,col){const L=Math.hypot(b[0]-a[0],b[2]-a[2]),sg=0.011*L,m=[(a[0]+b[0])/2,(a[1]+b[1])/2-sg,(a[2]+b[2])/2],q1=[(a[0]+m[0])/2,(a[1]+m[1])/2-sg*0.18,(a[2]+m[2])/2],q2=[(m[0]+b[0])/2,(m[1]+b[1])/2-sg*0.18,(m[2]+b[2])/2];
+  mb.rod(a,q1,0.028,col,MID.metal);mb.rod(q1,m,0.028,col,MID.metal);mb.rod(m,q2,0.028,col,MID.metal);mb.rod(q2,b,0.028,col,MID.metal);}
 // Мелочи у дороги (собираются в осях предмета: +x — к дороге, z — вдоль неё)
 function pProp(t,v){return proto('prop|'+t+'|'+v,(mb,r)=>{
   if(t==='fence'){mb.e[3]=txLay('wood_wall',1);for(let z=-5;z<=5.01;z+=1.25)pBox(mb,0,0,z,0.07,1.4,0.07,'#9a8a78');[0.45,0.95].forEach(y=>pBox(mb,0,y,0,0.04,0.12,5,'#a89684'));mb.e[3]=0;}
   else if(t==='wall'){mb.e[3]=txLay('stone_wall',1);for(let z=-5;z<5;z+=1.25){const h=1.05+r()*0.2;pBox(mb,0,0,z+0.62,0.32,h,0.62,['#b3aa96','#a39a88','#c2b9a5'][Math.floor(r()*3)],MID.stone);}pBox(mb,0,1.1,0,0.36,0.14,5,'#cbc3b0',MID.stone);mb.e[3]=0;}
   else if(t==='hedge'){for(let z=-5.5;z<=5.5;z+=1.1)pBlob(mb,0,0.85,z,0.75,0.9,0.75,['#46703a','#3f6834'][Math.abs(Math.round(z))%2],r,0,undefined,0.15);}
   else if(t==='vine'){for(let z=-5;z<=5;z+=2.2){pBox(mb,0,0,z,0.04,1.4,0.04,'#6b5236');pBlob(mb,0,0.9,z,0.5,0.45,0.9,'#5e8a3a',r,0,undefined,0.3);}pBox(mb,0,1.1,0,0.015,0.02,5.5,'#5a4a3a',MID.metal);}
-  else if(t==='pole'){pTrunk(mb,0,0,0,0,8,0,0.13,0.1,'#6a5440',6,MID.wood);pBox(mb,0,7.4,0,1.25,0.16,0.07,'#5a4632');pBox(mb,0,6.75,0,0.9,0.13,0.07,'#5a4632');
-    [-1.05,-0.4,0.4,1.05].forEach(x=>pTrunk(mb,x,7.56,0,x,7.72,0,0.05,0.04,'#e6eef2',5,MID.glass));[-0.7,0.7].forEach(x=>pTrunk(mb,x,6.88,0,x,7.02,0,0.045,0.035,'#e6eef2',5,MID.glass));}
+  // 0.29: столб линии — телеграф (v0), американский телефон (v1), электропередача 1920-х (v2); изоляторы — по POLE_INS
+  else if(t==='pole'){const H=[8,9,9.6][v]||8;pTrunk(mb,0,0,0,0,H,0,v===2?0.16:0.13,v===2?0.11:0.1,v===2?'#5c4a38':'#6a5440',6,MID.wood);
+    POLE_INS[v].arms.forEach(([y0,hw])=>pBox(mb,0,y0,0,hw,0.15,0.07,'#5a4632'));
+    POLE_INS[v].pts.forEach(([x,y1])=>pTrunk(mb,x,y1-(v===2?0.3:0.16),0,x,y1,0,v===2?0.09:0.05,v===2?0.06:0.04,v===2?'#7a5a44':'#e6eef2',5,MID.glass));}
+  // 0.29: табличка с названием места (на двух столбах), поваленное бурей дерево, стенка из мешков с песком
+  else if(t==='tsign'){[-1,1].forEach(s2=>pTrunk(mb,-0.04,0,s2*1.0,-0.04,2.78,s2*1.0,0.06,0.05,'#4a3a2a',6,MID.wood));pBox(mb,-0.05,1.86,0,0.04,0.84,1.18,'#23262c',MID.paint);}
+  // v2 — дерево с бульвара: в городе легло вдоль тротуара, крона — на мостовую
+  else if(t==='ftree'&&v===2){pLog(mb,[-0.6,0.36,-5.5],[-0.2,0.32,-0.6],0.26,0.15,'#5d4a36',7);pBlob(mb,-0.7,0.8,-5.8,0.9,0.95,0.3,'#5a4a3a',r,1,MID.stone);
+    for(let k=0;k<4;k++)pLog(mb,[-0.3,0.4,-1.2-k*1.0],[0.4+(r()-0.5)*0.8,0.8+r()*0.6,-0.4-k*0.9],0.07,0.03,'#5a4632',5);
+    for(let k=0;k<5;k++)pBlob(mb,0.2+r()*1.2,0.6+r()*0.6,-0.2-r()*2.6,0.9+r()*0.4,0.6+r()*0.3,0.9+r()*0.4,['#48692f','#4e7034','#43642c'][k%3],r,1,undefined,0.3);}
+  else if(t==='ftree'){const L=8+v*1.5;
+    pLog(mb,[-L,0.42,0.3],[-1.2,0.35,-0.2],0.3,0.16,'#5d4a36',7);pBlob(mb,-L-0.3,0.85,0.3,0.32,1.05,1.15,'#5a4a3a',r,1,MID.stone);
+    for(let k=0;k<5;k++)pLog(mb,[-1.6-k*1.15,0.42,(r()-0.5)*0.3],[-0.7-k*0.9+(r()-0.5)*0.6,0.95+r()*0.8,(r()-0.5)*3],0.08,0.035,'#5a4632',5);
+    for(let k=0;k<6;k++)pBlob(mb,-0.5-r()*2.8,0.75+r()*0.7,(r()-0.5)*3.4,1.0+r()*0.5,0.7+r()*0.4,1.0+r()*0.5,['#48692f','#4e7034','#43642c'][k%3],r,1,undefined,0.3);}
+  else if(t==='sbag'){const C=['#b8a47a','#a99670','#c2ae84'];for(let l=0;l<3;l++){const y0=0.16+l*0.29,o=l%2?0.28:0;for(let z=-2.55+o;z<=2.56;z+=0.56)[-0.2,0.2].forEach(xx=>{if(l===2&&xx<0)return;pBlob(mb,xx,y0,z,0.22,0.15,0.27,C[Math.floor(r()*3)],r,0,MID.cloth);});}}
   else if(t==='km'){pBox(mb,0,0,0,0.15,0.75,0.3,'#f0eee6',MID.stone);pTrunk(mb,0,0.75,0,0,0.9,0,0.3,0.12,'#c8473a',8,MID.stone);}
   else if(t==='sign'){pBox(mb,0,0,0,0.06,2.9,0.06,'#5a4a38');pBox(mb,0.08,1.95,0,0.03,1.05,0.88,'#2a2622');pBox(mb,0.1,2,0,0.03,0.95,0.82,'#f2c534',MID.paint);
     const e=mb.e;for(let k=0;k<3;k++){const z=-0.45+k*0.45,d=v?1:-1;mb.strip([0.135,2.72,z-0.13*d],[0.135,2.47,z+0.13*d],0.12,[1,0,0],[26,26,26],MID.paint,0.003);mb.strip([0.135,2.47,z+0.13*d],[0.135,2.22,z-0.13*d],0.12,[1,0,0],[26,26,26],MID.paint,0.003);}}
@@ -351,7 +376,13 @@ function r3dItem(it,i,mb,people){
   if(it.k==='p'){r3dCrowd(it,i,x,y,z,ry,side,rnd,people);return;}
   if(it.k==='R'){r3dRealMark(it,x,z,mb);return;}
   switch(it.t){
-    case 'sea':case 'banner':return it.t==='banner'?r3dBanner(i,mb,'ФИНИШ'):undefined;
+    case 'sea':case 'banner':return it.t==='banner'?r3dBanner(i,mb,it.txt||'ФИНИШ'):undefined;
+    // 0.29: табличка с названием — лицом к едущим, чуть развёрнута к дороге
+    case 'tsign':{const a=ry+Math.PI/2+(side<0?0.35:-0.35),X=X3(a,1,[x,y,z]);mb.add(pProp('tsign',0),X);const nm=String(it.nm||'');
+      const s=r3dLabel('ts|'+nm,448,152,(g,w,h)=>{g.fillStyle='#f1ede0';g.fillRect(0,0,w,h);g.strokeStyle='#1d2a4a';g.lineWidth=h*0.075;g.strokeRect(h*0.07,h*0.07,w-h*0.14,h-h*0.14);
+        g.fillStyle='#14161a';let fs=Math.round(h*0.46);const F=()=>{g.font=`bold ${fs}px Georgia,"Times New Roman",serif`;};F();while(g.measureText(nm).width>w*0.84&&fs>12){fs-=2;F();}g.textAlign='center';g.textBaseline='middle';g.fillText(nm,w/2,h*0.54);});
+      if(s){const q=(a2,b,c)=>r3dXf(X,[a2,b,c]),nw=r3dXf({r:X.r,s:1,t:[0,0,0]},[1,0,0]);r3dSignQuad(s,q(0.004,1.9,1.12),q(0.004,1.9,-1.12),q(0.004,2.66,1.12),nw);}return;}
+    case 'ftree':case 'sbag':mb.add(pProp(it.t,it.v||0),X3(face,1,[x,y,z]));return;
     case 'plane':case 'poplar':case 'cypress':case 'olive':case 'pine':case 'fir':case 'oak':case 'elm':case 'birch':case 'palm':case 'bush':
       {const P=fTree(it.t,(it.v||0)%3,1),X=X3(rnd()*6.28,0.85+rnd()*0.3,[x,y-0.05,z]);mb.add(P.w,X);if(R3.curLeaf)R3.curLeaf.add(P.l,X);return;}
     case 'hedge':{const P=fTree('hedge',0,1),X=X3(face,1,[x,y,z]);mb.add(P.w,X);if(R3.curLeaf)R3.curLeaf.add(P.l,X);return;}
@@ -364,7 +395,11 @@ function r3dItem(it,i,mb,people){
     case 'gstone':case 'rhut':mb.add(pProp(it.t,0),X3(face,1,[x,y,z]));return;
     case 'rgate':{mb.add(pProp('rgate',0),X3(face,1,[x,y,z]));(R3.gates=R3.gates||[]).push({x,y,z,face,side,i});return;}
     case 'verst':case 'well':case 'fence_ru':
-    case 'pole':case 'km':case 'sign':case 'lamp':case 'cart':case 'billboard':mb.add(pProp(it.t,it.v||0),X3(face,1,[x,y,z]));if(it.t==='billboard')r3dAd(it.v||0,x,y,z,face);return;
+    case 'pole':{const v=it.v||0,X=X3(face,1,[x,y,z]);mb.add(pProp('pole',v),X);
+      // провода до следующего столба линии
+      if(it.nx!==undefined){const j=it.nx,p2=T.pts[j],n2=T.N[j],t2=T.T[j],o2=it.noff,x2=p2[0]+n2[0]*o2,z2=p2[2]+n2[1]*o2,f2=o2>0?Math.atan2(t2[0],t2[1]):Math.atan2(t2[0],t2[1])+Math.PI,X2=X3(f2,1,[x2,groundAt(j,o2),z2]);
+        const c=hex2rgb('#2b2724');POLE_INS[v].pts.forEach(q=>r3dWire(mb,r3dXf(X,[q[0],q[1]-0.03,0]),r3dXf(X2,[q[0],q[1]-0.03,0]),c));}return;}
+    case 'km':case 'sign':case 'lamp':case 'cart':case 'billboard':mb.add(pProp(it.t,it.v||0),X3(face,1,[x,y,z]));if(it.t==='billboard')r3dAd(it.v||0,x,y,z,face);return;
     case 'stand':{const P=pStand(),X=X3(face,1,[x,y,z]);mb.add(P,X);const rr=mulberry32(h+5);P.people.forEach(q=>{const w=r3dXf(X,q);people.push([w[0],w[1]+0.05,w[2],R3.atlas.crowd[Math.floor(rr()*R3.atlas.crowd.length)],0.95+rr()*0.1,rr()<0.25,faceRoad(i,w[0],w[2],rr)]);});return;}
     default:if(BLD[it.t]){const P=pBld(it.t,(it.v||0)%3),X=X3(face,1,[x,y,z]);mb.add(P,X);if(P.texts&&P.texts.length)r3dTexts(P.texts,X);}
   }
@@ -456,6 +491,7 @@ function r3dSetup(){
   R3.texPuff=C.puff||(C.puff=g3Tex(r3dPuff(),{cs:true,ct:true}));
   R3.env=r3dEnvBase(T);try{r3dSkyPreload();}catch(_){}
   R3.pI=g3Inst(9000,3,G3.quad);R3.partI=g3Inst(700,2,G3.quadC);
+  try{evcAttach();}catch(e){console.warn('evc',e);R3.evcN=0;}// 0.29: толпа на дороге — первыми в списке людей
   R3.veg={list:folVegList()};R3.vI=g3Inst(Math.round(2600*gq().veg)+300,3,G3.quad);R3.vegK=-99;R3.vN=0;
   r3dSkidInit();
   if(!cfg.closed)r3dBannerStart();
@@ -589,6 +625,7 @@ function r3dRender(dt){
   raceVisCars().forEach(c=>{if(c.pace&&!c.v3){r3dCarMesh(c.spec3,true);r3dCarMesh(c.spec3,false);}r3dCarUpdate(c,dt,E);});
   if(R3.camHook)R3.camHook(dt,W,H);else r3dCamera(dt,W,H);
   r3dPartsUpdate(dt);
+  try{evcTick(dt);}catch(e){console.warn('evc',e);R3.evcN=0;}
   if(R3.peopleDirty)r3dPeopleUpload();
   {const kc=Math.floor(F.idx/R3CH);if(kc!==R3.vegK||R3.vegDirty)r3dVegUpload(kc);}
   if(R3.signsDirty){g3Free(R3.signM);R3.signM=g3Mesh(R3.signs);R3.signsDirty=false;}
@@ -804,6 +841,10 @@ function r3dDrawParts(E,bw,bh){const P=R3.parts;if(!P.length)return;const gl=G3.
 function r3dPeopleUpload(){const P=R3.people,I=R3.pI,n=Math.min(P.length,I.max),d=I.data;
   for(let i=0;i<n;i++){const [x,y,z,s,k,anim]=P[i],o=i*12;d[o]=x;d[o+1]=y;d[o+2]=z;d[o+3]=s.w*k;d[o+4]=s.h*k;d[o+5]=s.u;d[o+6]=s.v;d[o+7]=s.du;d[o+8]=s.dv;d[o+9]=anim?1:0;d[o+10]=0.88+((i*37)%13)/60;d[o+11]=0;}
   const gl=G3.gl;gl.bindBuffer(gl.ARRAY_BUFFER,I.b);gl.bufferSubData(gl.ARRAY_BUFFER,0,d,0,n*12);R3.pN=n;R3.peopleDirty=false;}
+// 0.29: обновить в буфере только первых n людей (толпа на дороге, 41e-events.js) — без перезаливки тысяч зрителей
+function r3dPeoplePatch(n){const P=R3.people,I=R3.pI;n=Math.min(n,P.length,I.max);if(n<=0)return;const d=I.data;
+  for(let i=0;i<n;i++){const [x,y,z,s,k,anim]=P[i],o=i*12;d[o]=x;d[o+1]=y;d[o+2]=z;d[o+3]=s.w*k;d[o+4]=s.h*k;d[o+5]=s.u;d[o+6]=s.v;d[o+7]=s.du;d[o+8]=s.dv;d[o+9]=anim?1:0;d[o+10]=0.88+((i*37)%13)/60;d[o+11]=0;}
+  const gl=G3.gl;gl.bindBuffer(gl.ARRAY_BUFFER,I.b);gl.bufferSubData(gl.ARRAY_BUFFER,0,d,0,n*12);}
 // Отказ 3D (потерян контекст и т.п.): дальше гонка рисуется по-старому
 function r3dFail(why){R3.on=false;R.gl=false;const cv=document.getElementById('rgl');if(cv)cv.hidden=true;const c2=document.getElementById('rcv');if(c2)c2.hidden=false;try{setupRender2d();}catch(_){}}
 function r3dDispose(){if(!R3.on)return;const gl=G3.gl;R3.on=false;if(gl&&!gl.isContextLost()){(R3.chunks||[]).forEach(ch=>{if(!ch)return;g3Free(ch.gnd);g3Free(ch.lit);g3Free(ch.leaf);ch.roads.forEach(r=>g3Free(r.m));});

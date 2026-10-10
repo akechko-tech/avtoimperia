@@ -34,8 +34,8 @@ for(const id of ids){const D=window.REAL_TRACKS[id];if(!D)continue;
   ok(D.closed?T.closed:!T.closed,D.closed?'настоящий овал: круг '+Math.round(T.len)+' м':'кусок настоящей дороги (не выдуманное кольцо)');
   const tw=(T.seg||[]).filter(s=>s.type===RSEG.town&&s.cap).map(s=>s.cap.split(':')[0]);const br=(T.seg||[]).filter(s=>s.type===RSEG.bridge).map(s=>s.cap);
   if(!D.closed&&!(T.cfg.oval||T.cfg.sprint||['board','brooklands','indy','monaco'].includes(rc.track)))ok((T.seg||[]).length>0,'сценарий по карте: '+T.seg.length+' участков'+(tw.length?', города: '+tw.join(', '):'')+(br.length?', '+br.join(', '):''));
-  // уклон дороги — не круче 10% (эпоха), высоты — из рельефа
-  let gmax=0;for(let i=1;i<T.n;i++)gmax=Math.max(gmax,Math.abs(T.pts[i][1]-T.pts[i-1][1])/T.step);ok(gmax<=0.105,'уклон дороги не круче 10% (макс. '+Math.round(gmax*1000)/10+'%)');
+  // уклон дороги — не круче 15% (горные подъёмы и настоящий рельеф; было 10% до точек через 4 м), высоты — из рельефа
+  let gmax=0;for(let i=1;i<T.n;i++)gmax=Math.max(gmax,Math.abs(T.pts[i][1]-T.pts[i-1][1])/T.step);ok(gmax<=0.155,'уклон дороги не круче 15% (макс. '+Math.round(gmax*1000)/10+'%)');
   const H=realGridH(D.near);let hmin=1e9,hmax=-1e9;for(const v of H){if(v<hmin)hmin=v;if(v>hmax)hmax=v;}ok(hmax>hmin,'рельеф вокруг: '+Math.round(hmin)+'…'+Math.round(hmax)+' м');
   ok(!D.pal||(D.pal.meadow&&D.pal.meadow.length===3),'цвет земли региона: '+(D.pal?JSON.stringify(D.pal.meadow):'—'));
   ok(/Copernicus/.test(D.src.dem)&&/OpenStreetMap/.test(D.src.osm),'источники записаны: '+D.src.dem+'; '+D.src.osm);

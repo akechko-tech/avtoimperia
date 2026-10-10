@@ -118,7 +118,7 @@ function pwOf(s,c,g){return ((s.pw&&s.pw[c]&&s.pw[c][g])||1)*(1-respCut(s,c,g));
 function rivalBoost(s,c,g){return ((s.rv&&s.rv[c]&&s.rv[c][g])||0)+respBoost(s,c,g);}
 // Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
 function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
-  const B=s.bought&&s.bought[c];(COMPS[c]||[]).forEach((cp,i)=>{if(cp.pk===s.pioneer||(B&&B.i===i))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
+  (COMPS[c]||[]).forEach((cp,i)=>{if(cp.pk===s.pioneer||acqHas(s,c,i))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
   const rest=Math.max(0,1-sum),nr=clamp(3+(yf(s)-1895)*0.8,3,15);return clamp(1/Math.max(1e-6,sq+rest*rest/nr),1,40);}
 // Ваша марка — одна из марок своего рынка: те же условия эпохи (дороги, надёжность, мода — поправка класса κ),
 // а исходная доля — как у средней новой марки или как у исторической марки основателя, если она была больше.
@@ -136,8 +136,8 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   if(g==='truck')b=Math.max(b,TRUCK_FLOOR[c]); // смелые фирмы найдутся всегда: лавки, пивоварни, почта
   return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
-function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;const B=s.bought&&s.bought[c];
-  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer||(B&&B.i===i))return;const v=compVol(cp,s)*mx;if(v>0){out.push({cp,i,v});sum+=v;}});
+function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
+  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer||acqHas(s,c,i))return;const v=compVol(cp,s)*mx;if(v>0){out.push({cp,i,v});sum+=v;}});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах
@@ -274,10 +274,11 @@ function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dea
 // Спрос на все модели во всех странах на текущий месяц
 function demandAll(s,ov){
   const act=s.models.filter(m=>m.status==='prod'||m.status==='sale');const res={by:{},mk:{}};act.forEach(m=>res.by[m.id]={});
-  Object.keys(COUNTRIES).forEach(c=>{const open=(c===s.country||dealerCount(s,c)>0)&&!tradeBan(s,c),R=mkCountry(c,s,open?act:[],ov);res.mk[c]=R;if(open)act.forEach(m=>res.by[m.id][c]=R.by[m.id]||0);});
+  // 0.29: модель купленной марки (md.only) продаётся только в своей стране — через её дилеров, как в истории
+  Object.keys(COUNTRIES).forEach(c=>{const open=(c===s.country||dealerCount(s,c)>0)&&!tradeBan(s,c),here=act.filter(m=>!m.only||m.only===c),R=mkCountry(c,s,open?here:[],ov);res.mk[c]=R;if(open)here.forEach(m=>res.by[m.id][c]=R.by[m.id]||0);});
   return res;
 }
 // Спрос на модель при другой цене (подсказка игроку)
 function demandAt(md,s,price){const r=demandAll(s,{id:md.id,price});return Object.values(r.by[md.id]||{}).reduce((a,b)=>a+b,0)*(techLv(s,'credit')?1.15:1);}
 // Прогноз для новой модели: сколько возьмут дома рядом с вашими нынешними моделями
-function forecastDemand(md,s){const o={...md,id:-1},R=mkCountry(s.country,s,[...s.models.filter(m=>m.status==='prod'),o]);return (R.by[-1]||0)*(techLv(s,'credit')?1.15:1);}
+function forecastDemand(md,s){const o={...md,id:-1},R=mkCountry(s.country,s,[...s.models.filter(m=>m.status==='prod'&&(!m.only||m.only===s.country)),o]);return (R.by[-1]||0)*(techLv(s,'credit')?1.15:1);}

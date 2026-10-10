@@ -42,7 +42,12 @@ function camSpot(i,d,sd,offs){const T=R.trk;for(const o of offs||[3.4,5,7.5,10,1
 // Какая обочина свободнее вдоль участка (меньше деревьев, столбов и домов): +1 или −1
 function filmSide(i0,dI,off){const T=R.trk,sc=[0,0];for(let d=0;d<=dI*T.step+14;d+=3)[1,-1].forEach((sd,k)=>{const a=trkAt(i0,d,sd*off),L=colNear(T,a.p[0],a.p[2],3);if(L.some(q=>Math.hypot(q.x-a.p[0],q.z-a.p[2])<(q.r||1)+1.3))sc[k]++;});return sc[0]<=sc[1]?1:-1;}
 // Слова диктора перед стартом: название, год и первая фраза истории гонки (их записал диктор заранее)
-function raceIntroText(rc){const h1=rc.hist&&String(rc.hist).match(/^[^.!?]*[.!?]/);return `${rc.name}. ${rc.y} год.${h1?' '+h1[0]:''}`;}
+// первое предложение описания: не обрывать на сокращениях («по ст. ст.», «г.», «им.»)
+function firstSentence(t){t=String(t||'');const re=/[.!?]/g;let m;while((m=re.exec(t))){const i=m.index,rest=t.slice(i+1),prev=t.slice(Math.max(0,i-4),i);
+    if(m[0]==='.'&&/(?:^|[\s(])(?:ст|г|гг|т|им|св|ок|см|вв|н\.\s?э)$/i.test(prev))continue;
+    if(!rest.trim()||/^[)»"]*\s*([А-ЯЁA-Z«(\d—]|$)/.test(rest))return t.slice(0,i+1)+((rest.match(/^[)»"]*/)||[''])[0]);}
+  return t;}
+function raceIntroText(rc){const h1=rc.hist?firstSentence(rc.hist):'';return `${rc.name}. ${rc.y} год.${h1?' '+h1:''}`;}
 /* ---------- заставка перед стартом ---------- */
 // Самое интересное впереди: примета, мост, переезд, город, серпантин — или первый крутой поворот
 function filmPOI(){const T=R.trk,n=T.n,s0=T.startIdx,lim=T.closed?n:Math.min(n-1,T.finishIdx),out=[];

@@ -69,7 +69,32 @@ const LEGENDS={
     {id:'fiat_501',name:'501',y:1919,kind:'middle',d:{e:'e14',g:'g6',c:'c4',k:'k2',b:'b4',w:'w6'},rep:5,wiki:'Fiat 501',
       fx:{appeal:1.22,cost:0.92,ch:{rel:1.1}},t:'Самая популярная итальянская машина 1920-х: почти 70 тысяч штук с Линготто.'},
     {id:'fiat_805',name:'805',y:1923,kind:'sport',d:{e:'e7',g:'g5',c:'c5',k:'k3',b:'b1',w:'w8'},rep:8,wiki:'Fiat 805',
-      fx:{appeal:1.12,race:1.16,ch:{perf:1.3}},t:'Первая победа машины с нагнетателем в Гран-при (Монца, 1923).'}]
+      fx:{appeal:1.12,race:1.16,ch:{perf:1.3}},t:'Первая победа машины с нагнетателем в Гран-при (Монца, 1923).'}],
+  // 0.29: марки, которые основали гонщики («Путь гонщика»): их знаменитые модели — те же, что в истории
+  r_lancia:[
+    {id:'lancia_alfa',name:'Альфа',y:1908,kind:'middle',d:{e:'e4',g:'g5',c:'c3',k:'k2',b:'b3',w:'w5'},rep:5,wiki:'Lancia Alfa',
+      fx:{appeal:1.15,race:1.1,ch:{perf:1.2,ease:1.08}},t:'Первая Lancia (Турин, 1908): лёгкая и быстрая — 2,5 литра, 28 л.с., до 90 км/ч, когда соседи по классу едва делали 70. Лянча строил машины так же, как гонялся: без лишнего веса.'},
+    {id:'lancia_theta',name:'Тета',y:1913,kind:'lux',d:{e:'e4',g:'g5',c:'c4',k:'k3',b:'b11',w:'w6'},rep:6,wiki:'Lancia Theta',
+      fx:{appeal:1.2,ch:{comf:1.15,ease:1.15}},t:'Theta (1913) — первая европейская машина с полным электрооборудованием в стандарте: электростартер и электрические фары. Заводить рукояткой больше не нужно.'},
+    {id:'lancia_lambda',name:'Лямбда',y:1922,kind:'middle',d:{e:'e7',g:'g5',c:'c7',k:'k3',b:'b3',w:'w6'},rep:8,wiki:'Lancia Lambda',
+      fx:{appeal:1.25,ch:{comf:1.15,safe:1.12,perf:1.1}},t:'Lambda (1922): несущий кузов вместо рамы и независимая передняя подвеска — низкая, лёгкая и устойчивая. Её изучали конструкторы всех марок мира.'},
+    {id:'lancia_dilambda',name:'Дилямбда',y:1929,kind:'lux',d:{e:'e8',g:'g5',c:'c7',k:'k6',b:'b4',w:'w8'},rep:5,wiki:'Lancia Dilambda',
+      fx:{appeal:1.18,ch:{comf:1.15,perf:1.1}},t:'Dilambda (1929): V8 на четыре литра для богатых покупателей Европы и Америки — тихая, быстрая, с той же независимой подвеской.'}],
+  r_chevrolet:[
+    {id:'chev_six',name:'Классик Сикс',y:1912,kind:'lux',d:{e:'e4',g:'g5',c:'c4',k:'k2',b:'b3',w:'w5'},rep:5,wiki:'Chevrolet Series C Classic Six',
+      fx:{appeal:1.15,race:1.05,ch:{perf:1.15,comf:1.08}},t:'Первая Chevrolet (1912): большой шестицилиндровый фаэтон Луи Шевроле — 65 миль в час и цена 2150 долларов.'},
+    {id:'chev_490',name:'490',y:1915,kind:'people',d:{e:'e9',g:'g6',c:'c4',k:'k2',b:'b3',w:'w6'},rep:5,wiki:'Chevrolet Series 490',
+      fx:{appeal:1.22,cost:0.92,ch:{ease:1.08}},t:'Модель «490» (1915): цена — 490 долларов, ровно как у «Модели T», но с электрическими фарами и стартером. Прямой вызов Форду.'},
+    {id:'chev_six29',name:'Интернэшнл Сикс',y:1929,kind:'people',d:{e:'e12',g:'g6',c:'c5',k:'k5',b:'b9',w:'w8'},rep:5,wiki:'Chevrolet International',
+      fx:{appeal:1.2,cost:0.94,ch:{comf:1.1,perf:1.08}},t:'«Шестёрка по цене четвёрки» (1929): шестицилиндровый мотор в народной машине — Chevrolet обходит Ford.'}],
+  r_rickenbacker:[
+    {id:'rick_six',name:'Шестёрка',y:1922,kind:'middle',d:{e:'e14',g:'g6',c:'c5',k:'k3',b:'b4',w:'w7'},rep:5,wiki:'Rickenbacker (automobile)',
+      fx:{appeal:1.15,ch:{safe:1.2,comf:1.05}},t:'Rickenbacker (1922): одна из первых американских машин с тормозами на все четыре колеса — «машина, достойная своего имени».'},
+    {id:'rick_eight',name:'Вертикальная восьмёрка',y:1925,kind:'lux',d:{e:'e8',g:'g5',c:'c5',k:'k3',b:'b4',w:'w8'},rep:4,wiki:'Rickenbacker (automobile)',
+      fx:{appeal:1.15,ch:{perf:1.12,comf:1.1}},t:'Vertical Eight Super Sport (1925): рядная «восьмёрка» с маховиками на обоих концах вала — мягкая и быстрая.'}],
+  r_maserati:[
+    {id:'mas_v4',name:'V4',y:1929,kind:'sport',d:{e:'e8',g:'g5',c:'c5',k:'k3',b:'b1',w:'w8'},rep:9,wiki:'Maserati V4',
+      fx:{appeal:1.12,race:1.2,ch:{perf:1.4}},t:'V4 (1929): два «восьмёрочных» мотора рядом — шестнадцать цилиндров. Бачонин Борцаккини проехал на ней 10 км со скоростью 246 км/ч — мировой рекорд.'}]
 };
 // «Свой персонаж»: легенды по мотивам машин своей страны
 const LEGENDS_C={
@@ -97,7 +122,18 @@ const LEGEND_NOTE={ford_t:'В истории — чёрная: с 1914 по 1925
   ford_tt:'Грузовик «Модели TT» — чёрный, как и вся «Модель T» тех лет.',c_laub:'«Лягушку» прозвали за зелёный цвет — его и оставили.',bug_35:'Синий — гоночный цвет Франции.',alfa_p2:'Красный — гоночный цвет Италии.',c_3litre:'Тёмно-зелёный — гоночный цвет Британии.',benz_blitzen:'Белый — гоночный цвет Германии.'};
 function legendPaint(L,y){let p=LEGEND_PAINT[L&&L.id];if(Array.isArray(p)){let c=p[0][1];p.forEach(([y0,k])=>{if(y>=y0)c=k;});p=c;}return PNT[p]||null;}
 function LEGEND_TITLES(){return Object.values(LEGEND_BY).map(L=>L.wiki).filter(Boolean);}
-function legendsOf(s){return s.pioneer==='custom'?(LEGENDS_C[s.country]||[]):(LEGENDS[s.pioneer]||[]);}
+function legendsOf(s){return s.pioneer==='custom'||s.pioneer==='r_custom'?(LEGENDS_C[s.country]||[]):(LEGENDS[s.pioneer]||[]);}
+// 0.29: имена новых моделей — как у марки в истории (Lancia — буквы греческого алфавита по порядку, Maserati — «Тип 26»…);
+// имя берём первое ещё не занятое, чей год уже настал; имена легенд — только для легенд
+const BRAND_NAMES={
+  r_lancia:[[1907,'Альфа'],[1908,'Диальфа'],[1909,'Бета'],[1910,'Гамма'],[1911,'Дельта'],[1912,'Ди-Дельта'],[1912,'Эпсилон'],[1913,'Зета'],[1914,'Эта'],[1915,'Йота'],[1919,'Каппа'],[1921,'Дикаппа'],[1922,'Трикаппа'],[1931,'Артена'],[1931,'Астура']],
+  r_chevrolet:[[1911,'Литл Сикс'],[1913,'Ройял Мейл'],[1914,'Беби Грэнд'],[1917,'Серия D'],[1918,'Серия FA'],[1923,'Супериор'],[1927,'Кэпитол'],[1928,'Нэшнл']],
+  r_maserati:[[1926,'Тип 26B'],[1927,'Тип 26R'],[1928,'Тип 8C'],[1929,'Тип 26M'],[1930,'Тип 8C 2500']],
+  r_rickenbacker:[[1924,'Модель B'],[1925,'Суперспорт'],[1927,'Модель D']],
+  ford:[[1903,'Модель A'],[1904,'Модель C'],[1905,'Модель F'],[1906,'Модель K'],[1906,'Модель N'],[1907,'Модель R'],[1907,'Модель S']],
+  renault:[[1899,'Тип A'],[1900,'Тип C'],[1901,'Тип D'],[1902,'Тип G'],[1903,'Тип N'],[1905,'Тип X'],[1906,'Тип AI'],[1908,'Тип AX'],[1910,'Тип BZ'],[1913,'Тип EF'],[1922,'Тип KJ'],[1923,'Тип NN']]};
+function brandNextName(s){const L=BRAND_NAMES[s&&s.pioneer];if(!L)return null;const used=new Set((s.models||[]).map(m=>String(m.name||'').trim()));legendsOf(s).forEach(x=>used.add(x.name));
+  const free=L.filter(([y,n])=>!used.has(n));const now=free.filter(([y])=>y<=s.y);return (now[0]||free[0]||[])[1]||null;}
 function legendK(md,k){const L=md&&md.legend&&LEGEND_BY[md.legend];return L&&L.fx[k]||1;}
 function legendCh(md){const L=md&&md.legend&&LEGEND_BY[md.legend];return L&&L.fx.ch||null;}
 // чего не хватает: детали (с годом появления) и технологии

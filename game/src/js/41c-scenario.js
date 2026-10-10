@@ -76,9 +76,9 @@ const SCN={
     b:'Приз кайзера: только для туристических машин с мотором до восьми литров. Таунус, сто машин и сам Вильгельм на трибуне.',ev:[{p:0.9,t:'НАЦЦАРО НА «ФИАТЕ» — ПОБЕДИТЕЛЬ'}]},
   x80901:{gt:'машины уходят каждые две минуты',st:'interval',gap:5,h0:3,span:14,lat:57,wx:[[0,'morning',0,0.3],[0.3,'clear'],[0.7,'cloudy']],
     b:'Белые ночи. Старт в три часа утра — а на дворе светло. Семьсот вёрст по Петербургскому шоссе, мимо почтовых станций и церквей.',
-    ev:[{p:0.03,t:'3 ЧАСА УТРА — А СВЕТЛО: БЕЛЫЕ НОЧИ',v:1},{p:0.4,t:'ВАЛДАЙ. КОЛОКОЛА НА ВЕСЬ ТРАКТ'},{p:0.9,t:'ПЕТЕРБУРГ',v:1}]},
+    ev:[{p:0.03,t:'3 ЧАСА УТРА — А СВЕТЛО: БЕЛЫЕ НОЧИ',v:1},{p:0.3,t:'ТВЕРЬ. МИЛЛИОННАЯ УЛИЦА, ЗРИТЕЛИ У ДОМОВ',v:1},{p:0.6,t:'НОВЫЙ ЖЕЛЕЗНЫЙ МОСТ ЧЕРЕЗ ВОЛГУ'},{p:0.9,t:'ПЕТЕРБУРГ',v:1}]},
   x87575:{gt:'машины уходят каждые две минуты',st:'interval',gap:5,h0:3,span:10,lat:57,wx:[[0,'morning',0,0.3],[0.3,'clear']],
-    b:'Белые ночи и Московское шоссе. Анри Эмери на «Бенце» идёт быстрее поезда.',ev:[{p:0.03,t:'БЕЛЫЕ НОЧИ: СТАРТ НА РАССВЕТЕ',v:1},{p:0.9,t:'МОСКВА'}]},
+    b:'Белые ночи и Московское шоссе. Анри Эмери на «Бенце» идёт быстрее поезда.',ev:[{p:0.03,t:'БЕЛЫЕ НОЧИ: СТАРТ НА РАССВЕТЕ',v:1},{p:0.3,t:'ВАЛДАЙ. КОЛОКОЛА НА ВЕСЬ ТРАКТ',v:1},{p:0.9,t:'МОСКВА',v:1}]},
   x17567:{st:'interval',gap:5,h0:6,span:8,lat:59,wx:[[0,'clear'],[0.6,'cloudy']],b:'Большой приз Санкт-Петербургского автоклуба.',ev:[{p:0.9,t:'ФИНИШ ПОД ПЕТЕРБУРГОМ'}]},
   brooklands:{st:'grid',h0:14,span:3,lat:51.3,wx:[[0,'cloudy'],[0.6,'cloudy',0.3]],
     b:'Бруклендс — первый в мире трек, бетонный овал с виражами. Здесь всё как на скачках: гонщики в шёлковых куртках цветов конюшен, букмекеры принимают ставки.',
@@ -103,7 +103,7 @@ const SCN={
   santamonica:{st:'interval',gap:5,h0:9,span:4,lat:34,wx:[[0,'clear']],b:'Санта-Моника: гонка по улицам и приморскому бульвару.',ev:[{p:0.5,t:'ОКЕАН СЛЕВА'}]},
   elgin:{st:'interval',gap:5,h0:10,span:5,lat:42,wx:[[0,'clear'],[0.6,'cloudy']],b:'Элгин, Иллинойс: дорога среди кукурузных полей.',ev:[]},
   turbie:{st:'solo',gap:10,h0:10,span:1,lat:43.7,wx:[[0,'clear']],b:'Неделя в Ницце: подъём на Ла-Тюрби над Монако. Заезжают поодиночке, на время.',ev:[{p:0.9,t:'ФИНИШ У РИМСКОГО ТРОФЕЯ'}]},
-  semmering:{st:'solo',gap:10,h0:9,span:1,lat:47.6,wx:[[0,'morning',0,0.3],[0.4,'clear']],b:'Земмеринг: десять километров в гору по перевалу. Каждый едет один, судьи с секундомерами.',ev:[{p:0.5,t:'ВИАДУК ЖЕЛЕЗНОЙ ДОРОГИ ВНИЗУ'}]},
+  semmering:{st:'solo',gap:10,h0:9,span:1,lat:47.6,wx:[[0,'morning',0,0.3],[0.4,'clear']],b:'Земмеринг: десять километров в гору по перевалу. Каждый едет один, судьи с секундомерами.',ev:[{p:0.35,t:'ВИАДУК ЖЕЛЕЗНОЙ ДОРОГИ ВНИЗУ',k:'lm',re:'виадук'},{p:0.6,t:'МАРИЯ-ШУЦ: ПАЛОМНИЧЕСКАЯ ЦЕРКОВЬ НАД ДОРОГОЙ'}]},
   ventoux:{st:'solo',gap:10,h0:9,span:1.5,lat:44.2,wx:[[0,'clear']],b:'Мон-Ванту: двадцать два километра к лысой белой вершине. Наверху дует мистраль.',ev:[{p:0.7,t:'ЛЫСЫЕ КАМНИ ВЕРШИНЫ. МИСТРАЛЬ'}]},
   shelsley:{st:'solo',gap:10,h0:11,span:1,lat:52.2,wx:[[0,'cloudy'],[0.5,'overcast',0.4]],b:'Шелсли-Уолш: короткий подъём через лес. Зрители сидят на склоне, как в амфитеатре.',ev:[]},
   klausen:{st:'solo',gap:10,h0:9,span:1.5,lat:46.9,wx:[[0,'clear']],b:'Клаузен: двадцать один километр вверх по швейцарскому перевалу.',ev:[{p:0.7,t:'ЛЕДНИКИ НАД ДОРОГОЙ'}]},
@@ -132,7 +132,7 @@ const SCN={
   acerbo:{st:'interval',gap:5,h0:8,span:5,lat:42.5,wx:[[0,'clear']],dust:1.3,b:'Коппа Ачербо, Пескара: горы, море и длинные прямые вдоль берега Адриатики.',ev:[]},
   acerbo1924:{st:'interval',gap:5,h0:8,span:5,lat:42.5,wx:[[0,'clear']],dust:1.3,b:'Первая Коппа Ачербо. Молодой Энцо Феррари ведёт «Альфа Ромео».',ev:[{p:0.9,t:'ЭНЦО ФЕРРАРИ ВПЕРЕДИ',v:1}]},
   x38768:{st:'grid',h0:14,span:3,lat:32.9,wx:[[0,'clear']],b:'Триполи, Ливия: пальмы, песок и жара под сорок градусов.',ev:[{p:0.4,t:'ЖАРА. ПЕСОК НА ДОРОГЕ'}]},
-  europe1924:{st:'grid',h0:9,span:7,lat:45.7,wx:[[0,'clear']],b:'Гран-при Европы в Лионе: «Альфа Ромео Р2» и молодой Кампари.',ev:[]},
+  europe1924:{st:'grid',h0:9,span:7,lat:45.7,wx:[[0,'clear']],b:'Гран-при Европы в Лионе: «Альфа Ромео P2» и молодой Кампари.',ev:[]},
   lm1921:{gt:'машины уходят каждые полминуты',st:'interval',gap:4,h0:9,span:5,lat:48,wx:[[0,'clear']],dust:2.2,b:'Ле-Ман, двадцать первый год. «Дюзенберг» — первый американец, выигравший Гран-при. Трасса разбита, камни летят в лица.',ev:[{p:0.4,t:'КАМНИ ЛЕТЯТ ИЗ-ПОД КОЛЁС',v:1},{p:0.9,t:'«ДЮЗЕНБЕРГ» — ПЕРВЫЙ АМЕРИКАНЕЦ'}]},
 };
 // у одних серий по годам свой старт
@@ -186,14 +186,20 @@ function scnWxTick(dt,p){const S=R.scn,P=S.wxP,W=R.wx;if(!P)return;
   if(R.rainK>0.05)R.wetK=Math.min(1,R.wetK+dt*R.rainK/16);else R.wetK=Math.max(0,R.wetK-dt/(S.moodB==='clear'?45:80));
   W.rain=R.rainK>0.15;W.mood=S.moodK<0.5?S.moodA:S.moodB;}
 /* ---------- титры кинохроники и голос в пути ---------- */
-function scnCap(t,dur){const el=document.getElementById('rCap');if(!el||!R||R.mode==='sim')return;el.textContent=t;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
-  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),(dur||5.5)*1000);}
-function scnEvTick(){const S=R.scn,F=R.follow;if(!S.ev||!F||R.mode==='sim')return;const p=clamp(F.prog/R.trk.raceLen,0,1);
-  while(S.evI<S.ev.length&&p>=S.ev[S.evI].p){const e=S.ev[S.evI++];if(p-e.p>0.08)continue;scnCap(e.t,6);if(e.v)try{annSay(e.t,'narr');}catch(_){}}}
+// 0.29: lbl — строка над титром («ИЗ ХРОНИКИ 1903 ГОДА», «СПРАВА»); sm — подпись места по пути (мельче)
+function scnCap(t,dur,lbl,sm){const el=document.getElementById('rCap');if(!el||!R||R.mode==='sim')return;
+  el.innerHTML=(lbl?'<small>'+esc(lbl)+'</small>':'')+esc(t);el.classList.toggle('sm',!!sm);el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),(dur||5.5)*1000);if(R.scn)R.scn.capT=R.time;}
+// 0.29: титр — когда до места, о котором он, осталось lead метров (41e-events.js); хроника — с пометкой
+function scnEvTick(){const S=R.scn,F=R.follow;if(!S.ev||!F||R.mode==='sim')return;const pr=F.prog,RL=R.trk.raceLen;
+  while(S.evI<S.ev.length&&pr>=S.ev[S.evI].at){const e=S.ev[S.evI++];if(pr-e.at>Math.max(0.08*RL,420))continue;
+    scnCap(e.t,6,e.lbl||(e.k==='chron'?'ИЗ ХРОНИКИ '+R.rc.y+' ГОДА':''));if(e.v)try{annSay(e.t,'narr');}catch(_){}if(/КОЛОКОЛ/.test(e.t))evBells();}
+  try{scnLmTick();}catch(_){}}
 /* ---------- старт по-исторически ---------- */
 function scnPlace(c,back,lat){const T=R.trk,n=T.n;let idx=T.startIdx-Math.round(back/T.step);if(T.closed)idx=(idx%n+n)%n;else idx=Math.max(0,idx);
   const p=T.pts[idx],nn=T.N[idx],t=T.T[idx];c.idx=idx;c.x=p[0]+nn[0]*lat;c.z=p[2]+nn[1]*lat;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);c.lap=T.closed&&idx>n/2?-1:0;c.vx=0;c.vy=0;c.r=0;trackLocal(T,c);}
-function scnSetup(){const S=R.scn=scnFor(R.rc),T=R.trk,cars=R.cars,st=S.st;S.evI=0;S.ev=(S.ev||[]).slice().sort((a,b)=>a.p-b.p);
+function scnSetup(){const S=R.scn=scnFor(R.rc),T=R.trk,cars=R.cars,st=S.st;S.evI=0;S.capT=-99;S.lmL=null;
+  S.ev=(T.evx&&T.evx.length?T.evx.map(e=>Object.assign({},e)):(S.ev||[]).map(e=>Object.assign(scnEvKind(e),{at:(e.p||0)*T.raceLen}))).sort((a,b)=>a.at-b.at);
   scnWxInit();cars.forEach(c=>{c.t0=0;c.relT=0;c.wait=false;c.neuT=0;});S.timed=st==='interval'||st==='pairs'||st==='solo';
   const me=cars.find(c=>c.player)||null,vRef=T.raceLen/Math.max(30,T.cfg.dur||200);S.vRef=vRef;
   if(S.timed){

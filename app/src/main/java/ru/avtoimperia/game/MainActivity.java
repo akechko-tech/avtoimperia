@@ -1,11 +1,14 @@
 package ru.avtoimperia.game;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -40,7 +43,12 @@ public class MainActivity extends Activity {
         s.setCacheMode(WebSettings.LOAD_DEFAULT); // фото кэшируются и работают офлайн
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setTextZoom(100);                    // системный размер шрифта не ломает вёрстку
-        web.setWebViewClient(new WebViewClient());
+        // Ссылки наружу (Википедия, Wikimedia Commons, авторы записей) — во внешнем браузере: игра остаётся на месте
+        web.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) { return openOutside(req.getUrl()); }
+            @SuppressWarnings("deprecation")
+            @Override public boolean shouldOverrideUrlLoading(WebView v, String url) { return openOutside(Uri.parse(url)); }
+        });
         try {
             tts = new TextToSpeech(this, status -> {
                 if (status == TextToSpeech.SUCCESS && tts != null) {
@@ -55,6 +63,18 @@ public class MainActivity extends Activity {
         if (state != null) web.restoreState(state);
         else web.loadUrl("file:///android_asset/index.html");
         setContentView(web);
+    }
+
+    /** Всё, что не сама игра, открывается во внешнем браузере (или в приложении Википедии). */
+    private boolean openOutside(Uri u) {
+        String sc = u == null ? "" : String.valueOf(u.getScheme());
+        if (sc.equals("file") || sc.equals("about") || sc.equals("data") || sc.equals("blob") || sc.equals("javascript")) return false;
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW, u);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Exception e) { /* нет браузера — просто остаёмся в игре */ }
+        return true;
     }
 
     @Override
@@ -77,6 +97,9 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        // Если WebView всё же ушёл со страницы игры (старые сохранённые ссылки) — «Назад» возвращает в игру
+        String cur = web.getUrl();
+        if (cur != null && !cur.startsWith("file:///android_asset/") && web.canGoBack()) { web.goBack(); return; }
         // Игра сама закрывает окна и газеты; если закрывать нечего — выходим
         web.evaluateJavascript("(window.androidBack&&window.androidBack())?'1':'0'", v -> {
             if (!"\"1\"".equals(v)) MainActivity.super.onBackPressed();

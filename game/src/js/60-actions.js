@@ -58,7 +58,7 @@ const ACT={
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dauto:()=>{const k=designKind(draft),base={};PART_KEYS.forEach(x=>base[x]=draft[x]);const md=autoDesign(k,G,base);PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;toast('Подобраны детали для наибольшей прибыли');},
-  startdev:()=>{const md={...draft},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||('Тип '+G.nextId);
+  startdev:()=>{const md={...draft},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||(typeof brandNextName==='function'&&brandNextName(G))||('Тип '+G.nextId);
     const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
     m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
@@ -71,6 +71,7 @@ const ACT={
   rdStudy:d=>{if(studyStart(G,d.k)){closeSheet();checkAch();save();render();flushToasts();}},
   rdStop:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;if(!confirmOnce('rdStop'+(+d.k),'Нажмите ещё раз: сделанное по проекту пропадёт'))return;G.rd.projs.splice(+d.k,1);addLog(`КБ остановило проект: ${pj.name}.`);rerender();},
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<RD_MAX&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро выросло: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень.`,'good');checkAch();rerender();flushToasts();}},
+  mkC:d=>{G.ui=G.ui||{};G.ui.mkC=d.v;rerender();},
   fold:d=>{setOpen(d.k,!isOpen(d.k,d.def==='1'));if(!sheet.hidden&&draft===null&&sb.querySelector('[data-k="'+d.k+'"]')){const top=sb.scrollTop;openRD();sb.scrollTop=top;return;}rerender();},
   // рынок
   dealers:d=>{const n=Math.min(+d.n,dealerRoom(G,d.c));if(n<1||G.cash<n*dealerCost(G))return;buyDealers(G,d.c,n);checkAch();rerender();flushToasts();},
@@ -138,6 +139,7 @@ const ACT={
   plantLive:()=>{AU.on.plantImg=!AU.on.plantImg;auApply();openSettings();if(AU.on.plantImg&&typeof PLG!=='undefined'&&PLG.cv){PLG.cv.remove();PLG.ready=false;}render();toast(AU.on.plantImg?'Завод — картинкой':'Завод — вживую, в 3D');}
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
+if(typeof DEAL_ACT!=='undefined')Object.assign(ACT,DEAL_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 // Кнопка «Назад» на Android: закрываем окна по очереди
 window.androidBack=function(){

@@ -17,7 +17,7 @@ function showEvent(){
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
 function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
 function openDesigner(kind){kind=kind||(G.y>=1908?'people':'middle');
-  draft={name:'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};renderDesigner();}
+  draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};renderDesigner();}
 // Важность черты для покупателей класса: ●●● главное, ●● важно, ● немного
 function wDots(w){return w>=0.24?'●●●':w>=0.12?'●●○':w>0?'●○○':'○○○';}
 function compareHTML(md,s){const C=classCompare(md,s,s.country),ph=C.ref.name&&IMG[C.ref.name];
@@ -177,12 +177,13 @@ function openLegacyInfo(){
   openSheet(`<div class="row"><h2>Цель и наследие</h2>${X}</div>
     <p class="small" style="margin-top:8px">В 1930 году «${esc(G.company)}» встанет в один ряд с реальными компаниями эпохи. Очки наследия:</p>
     <div class="stack small" style="margin-top:8px">
-      <p><b>Масштаб</b> — лучший год по выпуску. Ford в 1923 году — 2 млн машин.</p>
-      <p><b>Рынок</b> — лучшая доля дома и заметные доли за границей. FIAT держал около 80% Италии.</p>
-      <p><b>Инновации</b> — первенства (раньше, чем в истории) и внедрённые технологии.</p>
-      <p><b>Спорт</b> — победы в больших гонках и титулы. Bugatti Type 35 выиграла сотни гонок.</p>
+      <p><b>Масштаб</b> — лучший год по выпуску и всё, что выпущено за эпоху. Ford в 1923 году — 2 млн машин, за эпоху — 21 млн.</p>
+      <p><b>Рынок</b> — доля дома, удержанная годами (15 лет с долей 100% — максимум), и заметные доли за границей. FIAT держал около 80% Италии.</p>
+      <p><b>Инновации</b> — первенства (раньше, чем в истории; деталь — когда машин с ней продано хотя бы 300), внедрённые технологии и «Король технологий».</p>
+      <p><b>Спорт</b> — победы в гонках и титулы самой марки. Bugatti Type 35 выиграла сотни гонок. Личные победы основателя-гонщика за чужие заводы — его слава, не марки.</p>
       <p><b>Капитал</b> — стоимость компании. General Motors в 1929 году — около $4 млрд.</p>
-      <p><b>Бренд</b> — репутация и легендарные модели (миллион проданных или десять лет на конвейере).</p></div>
+      <p><b>Бренд</b> — репутация, которой нужно лет двадцать (молодая марка получает часть), легендарные модели (миллион проданных или десять лет на конвейере) и «короли» классов.</p></div>
+    <p class="small muted" style="margin-top:8px">Как счёт в «Цивилизации»: очки копятся всю эпоху, и рекорд реальных компаний 1929 года в первые годы недостижим.</p>
     <table class="pl" style="margin-top:12px"><tr><th></th><th>Компания</th><th class="n">Очки</th></tr>${t.rows.map((r,i)=>`<tr class="${r.you?'you':''}"><td>${i+1}.</td><td>${esc(r.n)}${r.you?' — вы':''}</td><td class="n">${Math.round(r.L.total)}</td></tr>`).join('')}</table>
     <p class="small muted" style="margin-top:8px">Выпуск реальных компаний — по отраслевым сводкам 1929 года; накопленный выпуск и стоимость — оценки.</p>`);
 }

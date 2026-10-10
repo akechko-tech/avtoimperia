@@ -90,8 +90,18 @@ const REAL_TY=['fields','town','village','forest','avenue','bridge','rail','serp
 function realWindow(D,len){const n8=D.pts.length,w=Math.min(n8,Math.round(len/D.step)+1);if(D.closed||w>=n8)return [0,n8];
   // очки куска: мост, переезд, въезд в город — штучно; серпантин и берег — за каждый метр (самое красивое — ехать)
   const sc=new Float32Array(n8);(D.bridges||[]).forEach(b=>sc[b.i]+=4);(D.rails||[]).forEach(r=>sc[r.i]+=2.5);(D.coast||[]).forEach(c=>{for(let k=c.i0;k<=c.i1;k++)sc[k]+=0.02;});
-  (D.seg||[]).forEach(s=>{if(s[0]===1)sc[s[1]]+=1.5;if(s[0]===7)for(let k=s[1];k<=s[2];k++)sc[k]+=0.03;if(s[0]===3)for(let k=s[1];k<=s[2];k++)sc[k]+=0.002;});(D.notes||[]).forEach(q=>{if(q.t==='climb'||q.t==='descent')sc[q.i]+=1;});
+  (D.seg||[]).forEach(s=>{if(s[0]===1)sc[s[1]]+=1.5;if(s[0]===7)for(let k=s[1];k<=s[2];k++)sc[k]+=0.03;if(s[0]===3)for(let k=s[1];k<=s[2];k++)sc[k]+=0.002;
+    // 0.29: улицы города — тоже то, ради чего едут (зрители, мостовая, приметы)
+    if(s[0]===1)for(let k=s[1];k<=Math.min(n8-1,s[2]);k++)sc[k]+=0.004;});(D.notes||[]).forEach(q=>{if(q.t==='climb'||q.t==='descent')sc[q.i]+=1;});
+  // 0.29: приметы (соборы, дворцы, замки) — кусок берём там, где их видно с дороги. Раньше их не считали: у Твери и Валдая
+  // окно уходило к мостам за город, и собор, Путевой дворец, монастырь оставались за кадром
+  realLmIdx(D).forEach(q=>{if(q.d<650)sc[q.k]+=(q.named?3:1.2)*(q.d<260?1:0.55);});
   let best=0,bi=0;for(let a=0;a+w<=n8;a+=6){let s=0;for(let k=a+8;k<a+w-6;k++)s+=sc[k];s-=a*0.0004;if(s>best+1e-6){best=s;bi=a;}}return [bi,bi+w];}
+// Ближайшая к каждой примете точка данных и расстояние до дороги (м); стены (линии) не в счёт
+function realLmIdx(D){if(D._lmK)return D._lmK;const P=D.pts,out=[];
+  (D.lm||[]).forEach(o=>{if(o.line)return;let bk=0,bd=1e18;for(let k=0;k<P.length;k+=2){const dx=P[k][0]/10-o.x,dz=P[k][1]/10-o.z,d=dx*dx+dz*dz;if(d<bd){bd=d;bk=k;}}
+    out.push({k:bk,d:Math.sqrt(bd),named:!!(o.n&&o.n.length>8)});});
+  return D._lmK=out;}
 // Точки трассы игры (шаг 4 м) по реальному маршруту (шаг 8 м); начало куска — в нуле
 // 0.28: точки — ровно через 4 м по длине пути. В тугих шпильках (Ла-Тюрби, Мон-Ванту, Монако) соседние точки данных
 // стоят ближе 8 м (после скругления поворотов), а подъём между ними прежний — выходила «стена» в 90–117%: машина

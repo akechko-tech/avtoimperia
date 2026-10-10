@@ -179,12 +179,12 @@ function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
   AU.duckT=setTimeout(()=>{AU.duckI=setInterval(()=>{const t=v0();let v=Math.min(t,(el.volume||0)+t*0.06);try{el.volume=v;}catch(_){v=t;}if(v>=t-1e-3){clearInterval(AU.duckI);AU.ducked=0;}},90);},Math.max(800,sec*1000+300));}
 // 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
-const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», военный оркестр'},
-  own_reel:{cap:'«Кинохроника», регтайм (оркестр)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», оркестр регтайма'},
+const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (салонный оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», салонный оркестр'},
+  own_reel:{cap:'«Кинохроника», регтайм (фортепиано)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», фортепиано'},
   own_valse:{cap:'«Вальс гонщиков» (оркестр)',st:'waltz',y:1895,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
   own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'},
   // 0.24: вместо «оркестриона» — живые оркестры: диксиленд, кекуок, фокстрот в зале, чарльстон
-  own_cake:{cap:'«Кекуок клаксонов» (оркестр)',st:'cake',y:1898,mood:'lively',by:'Мелодия «Автоимперии», духовой оркестр с банджо'},
+  own_cake:{cap:'«Кекуок клаксонов» (фортепиано и банджо)',st:'cake',y:1898,mood:'lively',by:'Мелодия «Автоимперии», фортепиано и банджо'},
   own_fox:{cap:'«Фокстрот на набережной» (оркестр)',st:'fox',y:1914,mood:'calm',by:'Мелодия «Автоимперии», танцевальный оркестр'},
   own_jazz:{cap:'«Гаражный джаз» (джаз-бэнд)',st:'jazz',y:1917,mood:'lively',by:'Мелодия «Автоимперии», джаз-бэнд'},
   own_charl:{cap:'Чарльстон «Полный газ» (оркестр)',st:'charl',y:1923,mood:'lively',by:'Мелодия «Автоимперии», горячий джаз-оркестр'}};
@@ -204,9 +204,11 @@ function musBuild(start){
   // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
   // 0.24: синтезатора («оркестриона») в плейлисте больше нет совсем — свои записи оркестра вшиты в игру; не играет ничего — тишина
   {const bad=AU.badSrc||{};L=L.filter(t=>!bad[t.src]);}
+  // 0.29: свои мелодии игры — только когда записей эпохи мало (без сети) или в режиме «Все»: долго их не послушаешь
+  if(AU.on.mode!=='all'){const real=L.filter(t=>!t.own);if(real.length>=6)L=real;}
   const rnd=mulberry32(hashStr(AU.on.mode+y));for(let i=L.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[L[i],L[j]]=[L[j],L[i]];}
-  // первой звучит своя мелодия игры — марш «Автоимперия» (оркестр)
-  if(start){const k=L.findIndex(t=>t.id==='own_avto');if(k>0)L.unshift(L.splice(k,1)[0]);}
+  // 0.29: первой звучит запись эпохи, а не своя мелодия игры
+  if(start){const k=L.findIndex(t=>!t.own);if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
   if(sig===AU.sig&&!start)return;AU.sig=sig;AU.pl=L;
   const k=cur?L.findIndex(t=>t.title===cur.title):-1;

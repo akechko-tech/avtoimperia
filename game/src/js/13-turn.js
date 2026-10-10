@@ -102,6 +102,8 @@ function step(){
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
+  // 0.29: совладельцы по слияниям марок — их доля прибыли
+  if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k);r.invSh=(r.invSh||0)+v;r.profit-=v;}
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
   s.cash+=r.profit+r.tool+r.hire+r.rdp+r.prm-(r.rev+r.ord)+r.got+r.finIn-r.finOut;   // оснастка, найм, проекты КБ и спецакции уже списаны выше; рассрочка своей компании — деньги выданы и вернулись
@@ -124,6 +126,8 @@ function step(){
   {const hm=r.mk[s.country];if(hm&&hm.segs){const Y=s.segY=s.segY||{},YT=s.segYT=s.segYT||{};SEGK.forEach(g=>{Y[g]=(Y[g]||0)+(hm.segs[g].you||0);YT[g]=(YT[g]||0)+(hm.segs[g].size||0);});}}
   // продажи марок за год — для таблицы конкурентов
   for(const c in s.comps)s.comps[c].forEach(o=>{o.yr=(o.yr||0)+(o.last||0);});s.homeY=(s.homeY||0)+r.homeSold;
+  // 0.29: за год по странам — ваши продажи и весь рынок (для таблицы «Доли рынка»: дома, за границей и в мире)
+  {const cY=s.cY=s.cY||{},mY=s.mY=s.mY||{};for(const c in r.mk){cY[c]=(cY[c]||0)+(r.mk[c].sold||0);mY[c]=(mY[c]||0)+(r.mk[c].size||0);}}
   rivalsReact(s,r);dealersMonth(s,r);
   // машины на дорогах: новые прибавились, старые ушли на свалку
   if(!s.fleet)s.fleet={};if(!s.mkY)s.mkY={};const life=tabAt(CAR_LIFE,yf(s));
@@ -172,8 +176,9 @@ function milNeed(s){return Math.round((ARMY_NEED[s.country]||1000)*0.6);}
 function endOfYear(s){
   s.m=0;s.y++;
   for(const c in s.comps)s.comps[c].forEach(o=>{o.prev2=o.prev||0;o.prev=o.yr||0;o.yr=0;o.ysPrev=o.ys||{};o.ys={};});s.homePrev2=s.homePrev||0;s.homePrev=s.homeY||0;s.homeY=0;
+  s.cPrev2=s.cPrev||{};s.cPrev=s.cY||{};s.cY={};s.mPrev=s.mY||{};s.mY={};
   // 0.21: доля рынка для наследия — за целый год (месячные всплески не в счёт)
-  {const tot=Object.values(s.segYT||{}).reduce((a,b)=>a+b,0);if(tot>0){const sh=(s.homePrev||0)/tot;s.peak.shY=Math.max(s.peak.shY||0,sh);}}
+  {const tot=Object.values(s.segYT||{}).reduce((a,b)=>a+b,0);s.shLast=0;if(tot>0){const sh=(s.homePrev||0)/tot;s.shLast=sh;s.peak.shY=Math.max(s.peak.shY||0,sh);}}
   s.segYPrev=s.segY||{};s.segY={};s.segYTPrev=s.segYT||{};s.segYT={};
   if((s.yearSold||0)>(s.peak.year||0))s.peak.year=s.yearSold;s.peakLast=s.yearSold||0;s.yearSold=0;
   const fresh=ALL_PARTS().filter(x=>x.y===s.y).map(x=>x.name);if(fresh.length)addLog('Поставщики предлагают новинки: '+fresh.join(', ')+'.','good');

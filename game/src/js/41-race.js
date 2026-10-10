@@ -24,7 +24,7 @@ const SCEN_SETS={
   it:{trees:['cypress','olive','pine','cypress'],alley:'cypress',houses:['house_it'],town:['house_it','house_it','house_it'],church:'campanile',extra:['wall','olive','rock','cart','vine','cactus','agave'],sky:['#4f8ccf','#f1e2c0'],hills:'#9c9a78',mount:1,bd:'campanile'},
   de:{trees:['fir','oak','birch','fir'],alley:'oak',houses:['fachwerk'],town:['fachwerk','fachwerk'],church:'church',extra:['bush','hay','fence'],sky:['#6b94bd','#dfe3e2'],hills:'#5f7f55',bd:'spire'},
   uk:{trees:['oak','elm','oak'],alley:'oak',houses:['cottage','pub'],town:['cottage','pub','cottage'],church:'church_uk',extra:['hedge','wall','bush'],sky:['#7898b4','#dfe2e0'],hills:'#6f8d5c',bd:'square'},
-  us:{trees:['elm','oak'],alley:'elm',houses:['farm_us','barn','windmill_us'],town:['farm_us','billboard','farm_us'],church:'church_us',extra:['fence','billboard','hay','pole','windmill_us'],sky:['#5f95c8','#e6ecef'],hills:'#8a9a6a',flat:1,bd:'barn'},
+  us:{trees:['elm','oak'],alley:'elm',houses:['farm_us','barn','windmill_us'],town:['farm_us','billboard','farm_us'],church:'church_us',extra:['fence','billboard','hay','windmill_us'],sky:['#5f95c8','#e6ecef'],hills:'#8a9a6a',flat:1,bd:'barn'},
   be:{trees:['fir','birch','oak'],alley:'poplar',houses:['house_fr','fachwerk'],town:['house_fr','cafe'],church:'church',extra:['bush','fence'],sky:['#6f92b4','#dde2e0'],hills:'#5f7f55',bd:'spire'},
   mc:{trees:['palm','pine'],alley:'palm',houses:['villa'],town:['villa','villa','cafe'],church:'campanile',extra:['lamp','bush','agave'],sky:['#4f98d6','#f3ead8'],hills:'#8a8a6a',sea:1,mount:1,bd:'campanile'},
   at:{trees:['fir','fir','birch'],alley:'fir',houses:['fachwerk'],town:['fachwerk'],church:'church_at',extra:['rock','fence'],sky:['#4f86c4','#e8ecef'],hills:'#6a7f60',mount:1,snow:1,bd:'onion_at'},
@@ -158,7 +158,7 @@ const SOLID={plane:{r:0.5},oak:{r:0.6},elm:{r:0.5},poplar:{r:0.32},cypress:{r:0.
   pole:{r:0.16},km:{r:0.3},sign:{r:0.14},gstone:{r:0.22},rgate:{r:0.2},rhut:{box:[2.2,1.8]},lamp:{r:0.16},cart:{box:[2.8,0.95,-0.35]},billboard:{box:[4,0.25]},verst:{r:0.2},well:{r:0.8},stog:{r:1.7},fence_ru:{box:[5,0.12]},cactus:{r:0.9},agave:{r:0.7},
   house_fr:{box:[4.5,3.5]},farm_fr:{box:[5.5,3.25]},house_it:{box:[4,3.5]},fachwerk:{box:[4,3.5]},cottage:{box:[4,3]},pub:{box:[4,3.1]},farm_us:{box:[5,4.5,0,1]},barn:{box:[6,4]},izba:{box:[3.9,4.05,0,0.75]},
   church_ru:{box:[12.4,4.6,-4,0.2]},mill_ru:{box:[2.2,2]},campanile:{box:[2.9,2.9]},church_us:{box:[9,4.4,-0.6]},church_uk:{box:[10.2,4.4,-0.8]},church_at:{box:[10.2,4.4,-0.8]},minaret:{box:[5.5,6.3,0,4.2]},house_ly:{box:[4.5,3.5]},cottage_ie:{box:[4.5,3.2]},windmill_us:{box:[2,3,0,-0.6]},
-  villa:{box:[6,4]},cafe:{box:[4.5,4.45,0,0.95]},church:{box:[9.4,4,-1.7]},pits:{box:[7.5,2.5]},stand:{box:[8,3.4]},crowd:{box:[2.8,0.6,0,-0.45]},marsh:{r:0.3},gend:{r:0.3},photo:{r:0.6}};
+  villa:{box:[6,4]},cafe:{box:[4.5,4.45,0,0.95]},church:{box:[9.4,4,-1.7]},pits:{box:[7.5,2.5]},stand:{box:[8,3.4]},crowd:{box:[2.8,0.6,0,-0.45]},marsh:{r:0.3},gend:{r:0.3},photo:{r:0.6},sbag:{box:[2.7,0.42]}};
 // Препятствие у дороги: форма по типу, оси прямоугольника — вдоль дороги и к ней (как повёрнута 3D-модель)
 function solidAt(trk,t,i,off){const S=SOLID[t];if(!S)return null;const p=trk.pts[i],nn=trk.N[i],tt=trk.T[i],x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;
   if(S.r)return {x,z,r:S.r,kind:t};const sd=off>0?1:-1,ux=tt[0]*sd,uz=tt[1]*sd,vx=-nn[0]*sd,vz=-nn[1]*sd,[hu,hv,du,dv]=[S.box[0],S.box[1],S.box[2]||0,S.box[3]||0];
@@ -178,17 +178,19 @@ function addCollider(trk,x,z,r,kind,i,o){o=o||{x,z,r,kind};trk.col.push(o);colGr
 const LANDMARKS={
   pbp:[['eiffel','start',760,-95]],pmp:[['eiffel','start',740,90]],pap:[['eiffel','start',780,-100]],tdf:[['eiffel','start',740,95]],gb1900:[['eiffel','start',760,-90]],pb1901:[['eiffel','start',740,95]],pv1902:[['eiffel','start',770,-95]],
   brighton:[['bigben','start',300,-38]],thousand:[['bigben','start',310,40]],
-  x87575:[['gate_spb','start',60,0],['kremlin','finish',110,-60]],x80901:[['kremlin','start',200,-60],['gate_spb','finish',-50,0]],
+  x87575:[['gate_spb','start',60,0,0,1],['kremlin','finish',110,-60,0,1]],x80901:[['kremlin','start',200,-60,0,1],['gate_spb','finish',-50,0,0,1]],
   x17567:[['church_ru',0.35,0,-60],['mill_ru',0.6,0,35]],x2844:[['church_ru',0.3,0,60]],peking:[['church_ru',0.5,0,-70]],
-  turbie:[['trophy','finish',60,-45]],ventoux:[['observatory','finish',40,-24]],semmering:[['viaduct',0.4,0,-150]],
+  turbie:[['trophy','finish',60,-45,0,1]],ventoux:[['observatory','finish',40,-24,0,1]],semmering:[['viaduct',0.4,0,-150,0,1]],
   gb1904:[['castle',0.3,0,-170]],kaiser:[['castle',0.45,0,180]],herkomer:[['castle',0.6,0,-190]],henry:[['castle',0.35,0,200]],nurb1927:[['castle',0.2,0,-160]],eifel:[['castle',0.2,0,-160]],degp:[['castle',0.2,0,-160]],
   indy:[['pagoda','start',40,24,1913]],avus1926:[['funkturm','start',560,-90]],monaco:[['casino','finish',70,16]],
   x22765:[['obelisk',0.35,0,-110]],gb1903:[['round_tower',0.4,0,-80],['round_tower',0.8,0,95]],x38768:[['minaret','start',130,-24]]};
 // Размер пятна примет (м): тут не ставятся деревья и дома
 const LM_R={eiffel:72,bigben:12,gate_spb:20,kremlin:40,church_ru:16,mill_ru:7,trophy:16,observatory:14,viaduct:72,castle:22,pagoda:11,funkturm:13,obelisk:15,round_tower:5,minaret:12,casino:24};
 // Место приметы: поперёк дороги — в точке трассы; остальные — от привязки по прямой вперёд и вбок (видны со старта), фасадом к дороге
-function landmarksOf(trk){if(trk.real&&trk.real.d&&trk.real.d.lm&&typeof realMarks==='function')return realMarks(trk);// 0.22: настоящие приметы с карты
-  const L=LANDMARKS[trk.rc.id]||[],n=trk.n,P=trk.pts,out=[];
+// 0.22: на настоящей трассе — приметы с карты; 0.29: и знаменитые, которых на карте нет (6-е поле = 1): ворота Петербурга и Кремль
+// у финиша гонки Петербург — Москва, римский трофей на Ла-Тюрби, обсерватория Ванту, виадук Земмеринга
+function landmarksOf(trk){const real=!!(trk.real&&trk.real.d&&trk.real.d.lm&&typeof realMarks==='function');
+  const L=(LANDMARKS[trk.rc.id]||[]).filter(q=>!real||q[5]),n=trk.n,P=trk.pts,out=real?realMarks(trk):[];
   L.forEach(([t,at,fw,off,y0])=>{if(y0&&trk.rc.y<y0)return;const a0=at==='start'?trk.startIdx:at==='finish'?trk.finishIdx:Math.round(at*(n-1)),wrap=i=>trk.closed?((i%n)+n)%n:clamp(i,2,n-3);
     if(!off){const i=wrap(a0+Math.round(fw/trk.step)),p=P[i];out.push({t,i,off:0,x:p[0],z:p[2],r:LM_R[t]||12});return;}
     const a=wrap(a0),p=P[a],tt=trk.T[a],nn=trk.N[a],R=LM_R[t]||12,need=R+trk.W/2+6;
@@ -196,8 +198,24 @@ function landmarksOf(trk){if(trk.real&&trk.real.d&&trk.real.d.lm&&typeof realMar
     for(const [kf,ko] of [[1,1],[1,-1],[1,1.5],[1,-1.5],[0.7,1],[1.3,1],[0.7,-1],[1.3,-1],[1,2],[1,-2],[0.5,2.5],[0.5,-2.5]]){
       const o=Math.sign(off)*ko*(trk.W/2+Math.abs(off)),x=p[0]+tt[0]*fw*kf+nn[0]*o,z=p[2]+tt[1]*fw*kf+nn[1]*o;
       let bi=0,bd=1e18;for(let k=0;k<n;k++){const d=(P[k][0]-x)**2+(P[k][2]-z)**2;if(d<bd){bd=d;bi=k;}}
-      if(Math.sqrt(bd)<need)continue;const dx=P[bi][0]-x,dz=P[bi][2]-z;out.push({t,i:bi,off:Math.sqrt(bd)*Math.sign(o),x,z,rot:Math.atan2(-dz,dx),r:R,world:1});break;}});
+      if(Math.sqrt(bd)<need)continue;if(real&&out.some(q=>Math.hypot(q.x-x,q.z-z)<(q.r||8)+R))continue;const dx=P[bi][0]-x,dz=P[bi][2]-z;out.push({t,i:bi,off:Math.sqrt(bd)*Math.sign(o),x,z,rot:Math.atan2(-dz,dx),r:R,world:1});break;}});
   return out;}
+// 0.29: столбы и провода по эпохе. Вдоль больших дорог шёл телеграф (с 1850-х — вдоль железных дорог и почтовых трактов),
+// в США с 1900-х — ещё и телефон, даже к фермам. Электричество в деревню пришло позже: в Германии, Франции, Швейцарии — в 1920-е,
+// в США к 1930 году — лишь к каждой десятой ферме, в России — после плана ГОЭЛРО. Так что в 1907 году столбы у дороги — телеграф,
+// и не везде: линия идёт кусками по 1–3 км и держится одной стороны; на серпантинах, в городах (провода на домах), на пляже — без них.
+// v: 0 — телеграф (две траверсы, 6 изоляторов), 1 — американский телефон (много проводов), 2 — линия электропередачи (3 провода, 1920-е)
+function poleLine(trk,rnd){const {n,cfg,rc}=trk,y=rc.y,h=cfg.host,S=trk.segT||new Uint8Array(n);
+  if(cfg.oval||cfg.sprint||rc.track==='board'||cfg.terr==='beach'||cfg.terr==='sand')return null;
+  let p=y<1900?0.32:y<1910?0.42:y<1920?0.52:0.62;
+  if(h==='us')p=Math.min(0.85,p+0.25);else if(['ru','other','cn','ly'].includes(h))p*=0.5;else if(['it','es'].includes(h))p*=0.8;
+  if(cfg.uphill||cfg.terr==='mount')p*=0.45;
+  const pw=['de','fr','ch','at','be','nl','uk','it'].includes(h)&&y>=1922?0.35:h==='us'&&y>=1925?0.15:0;
+  const on=new Uint8Array(n),side=new Int8Array(n),kind=new Uint8Array(n),CH=100,runOn=5,runOff=Math.max(1,runOn*(1-p)/Math.max(0.05,p));
+  const kindNow=()=>rnd()<pw?2:h==='us'?1:0;let st=rnd()<p,sd=rnd()<0.5?1:-1,kd=kindNow();
+  for(let c=0;c*CH<n;c++){if(c){if(st&&rnd()<1/runOn)st=false;else if(!st&&rnd()<1/runOff){st=true;sd=rnd()<0.5?1:-1;kd=kindNow();}}
+    for(let i=c*CH;i<Math.min(n,(c+1)*CH);i++){const sg=S[i];on[i]=st&&sg!==RSEG.serp&&sg!==RSEG.town&&sg!==RSEG.tunnel&&sg!==RSEG.coast?1:0;side[i]=sd;kind[i]=kd;}}
+  return {on,side,kind,ph:Math.floor(rnd()*12)};}
 // Декорации вдоль трассы: t — тип спрайта, off — смещение от оси (м, + влево), v — вариант
 function placeScenery(trk,rnd){
   const {n,W,cfg,pts,N}=trk,set=SCEN_SETS[cfg.host],spr=trk.spr;trk.town=new Uint8Array(n);for(let i=0;i<n;i++){spr.push([]);trk.bar.push(null);}
@@ -210,11 +228,13 @@ function placeScenery(trk,rnd){
     spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
   planRoute(trk,rnd);const S=trk.segT;
+  // 0.29: события гонки — где что будет (на выдуманной трассе город под титр ставит маршрут, до декораций)
+  trk._add=add;try{scnPlan(trk);}catch(e){console.warn('scnPlan',e);trk.evx=[];trk.evc=[];}
   const townAt=i=>cfg.town&&!cfg.oval&&S[i]===RSEG.town;
   // ограды у сёл и полей — как принято в стране
   const fenceT={uk:'hedge',ie:'wall',fr:'wall',it:'wall',es:'wall',mc:'wall',ly:'wall',ru:'fence_ru',other:'fence_ru'}[cfg.host]||'fence';
   const forestT=(set.mount||cfg.terr==='mount'||cfg.uphill)?['fir','fir','pine','birch']:set.trees.filter(t=>t!=='palm'&&t!=='olive'&&t!=='cactus');
-  let alley=0,church=0;
+  let alley=0,church=0,lastPole=null;const PL=poleLine(trk,mulberry32(hashStr('poles|'+trk.rc.key)));
   for(let i=0;i<n;i++){
     // тоннель: внутри — стены свода (ничего не ставим), у порталов — чисто
     if(trk.tunAt&&trk.tunAt[i]){trk.bar[i]={L:W/2-0.25,R:W/2-0.25};continue;}
@@ -264,7 +284,9 @@ function placeScenery(trk,rnd){
     if(i%31===5&&rnd()<0.5&&sg!==RSEG.forest&&sg!==RSEG.serp){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
     if(i%50===0&&set.extra.includes('km'))add(i,'km',-(W/2+1.3),0,'s',0.25);
     if(set.verst&&i%60===7)add(i,'verst',-(W/2+1.5),0,'s');
-    if(i%12===0&&tr!=='sand'&&!cfg.sprint)add(i,'pole',W/2+3,0,'s',0.3);
+    // 0.29: столбы — только там, где по эпохе шла линия (телеграф, телефон, позже электричество), с проводами до соседнего столба
+    if(PL&&PL.on[i]&&i%12===PL.ph){const off=PL.side[i]*(W/2+3);if(add(i,'pole',off,PL.kind[i],'s',0.3)){const it=spr[i][spr[i].length-1];
+      if(lastPole&&i-lastPole.i<=26&&lastPole.it.v===it.v&&Math.sign(lastPole.it.off)===Math.sign(off)){lastPole.it.nx=i;lastPole.it.noff=off;}lastPole={i,it};}}
     if((tr==='mount'||cfg.uphill)&&i%10===0&&set.mount&&sg!==RSEG.serp)add(i,'cliff',(i%20===0?1:-1)*(W/2+9),0,'s',0);
     // зрители, маршалы, фотографы — у поворотов и на старте
     if(sharp(i)&&rnd()<cfg.crowd*0.9){const sd=trk.K[i]>0?-1:1;add(i,'crowd',sd*(W/2+4+rnd()*2),Math.floor(rnd()*4),'p');if(rnd()<0.25)add(i,'marsh',sd*(W/2+2.2),Math.floor(rnd()*2),'p');if(rnd()<0.08)add(i,'photo',sd*(W/2+3),0,'p');}
@@ -304,6 +326,8 @@ function placeScenery(trk,rnd){
     spr[q.i].push(q.world?{t:q.t,off:q.off,v:0,k:'L',wx:q.x,wz:q.z,rot:q.rot}:{t:q.t,off:q.off,v:0,k:'L'});const p=pts[q.i],nn=N[q.i],tt=trk.T[q.i];
     if(q.t==='gate_spb')[6.6,11,15.4].forEach(x=>[-1,1].forEach(sx=>[-2.3,2.3].forEach(zz=>addCollider(trk,p[0]+nn[0]*sx*x+tt[0]*zz,p[2]+nn[1]*sx*x+tt[1]*zz,1.05,'gate',q.i))));
     else if(Math.abs(q.off)<70)addCollider(trk,q.x,q.z,Math.min(q.r*0.55,Math.abs(q.off)-W/2-1.5),q.t,q.i);});
+  // 0.29: то, о чём говорят титры: толпа, солдаты, пост, табличка с названием города, поваленные деревья
+  try{scnStage(trk);}catch(e){console.warn('scnStage',e);}
 }
 /* ---------- машина в гонке ---------- */
 // Машина в гонке. Все поля заданы сразу в одном порядке: у всех машин одна «форма» объекта — расчёт быстрее
@@ -315,8 +339,8 @@ class RaceCar{constructor(e){
   this.idx=0;this.lat=0;this.segT=0;this.lap=0;this.prog=0;this.fin=null;this.lapSeen=-9;this.q=0;this.lane=0;this.laneT=undefined;this.follow=null;
   this.heat=0;this.tyre=0;this.fuel=100;this.eng=0;this.dmg=0;this.punct=false;this.punctN=0;this.dnf=null;this.stopT=0;this.stopWhy='';this.pitT=0;this.order='norm';this.pitCall=false;
   this.slipR=0;this.slipF=0;this.gu=0;this.spinw=0;this.off=0;this.stuck=0;this.lastIdx=0;this.overheat=0;this.limp=false;this.fix=0;this.draft=0;this.hit=0;this.err=0;this.st2=0;this.parked=0;this.outT=0;
-  this.tyreRate=0;this.punctRate=0;this.fuelRate=0;this.wheelChange=0;this.style='';this.wheel='';this.mech=false;this.spriteKey='';this.spec3=null;this.angI=0;this.angN=false;this.hold=0;this.punctSaid=0;this.skidSaid=0;this.fuelSaid=0;
-  this.inj=null;this.mInj=null;this.fallen=0;this.rescueWhy='';this.svc=0;this.svcT=0;this.svcWhat='';this.offIdx=-1;this.offProg=0;this.offDist=0;this.offLap=0;this.grade=0;
+  this.tyreRate=0;this.tyreSurf0=1;this.tyreSwap=false;this.tyrePh=0;this.punctRate=0;this.fuelRate=0;this.wheelChange=0;this.style='';this.wheel='';this.mech=false;this.spriteKey='';this.spec3=null;this.angI=0;this.angN=false;this.hold=0;this.punctSaid=0;this.skidSaid=0;this.fuelSaid=0;
+  this.inj=null;this.mInj=null;this.fallen=0;this.rescueWhy='';this.svc=0;this.svcT=0;this.svcWhat='';this.svc1T=0;this.svcNo=0;this.goodProg=-1e9;this.goodIdx=-1;this.goodLap=0;this.npP=-1e9;this.npT=0;this.offIdx=-1;this.offProg=0;this.offDist=0;this.offLap=0;this.grade=0;
   this.crr0=0;this.surf='';this.surfIn=0;this.surfP=null;this.wetRoad=false;this.tun=0;this.muNow=0;this.flood=0;this.crash=null;this.inWater=0;this.wetT=0;this.waterY=0;this.rescueT=0;this.rescueIdx=0;this.trainHit=0;this.gateWait=0;}}
 function mkRaceCar(e,y,trk){
   const st=carStats(e.md,e.prep,y),terr=TERR[trk.cfg.terr]||TERR.dirt,c=new RaceCar(e);
@@ -349,6 +373,18 @@ function gradeAt(c,trk,lat){const n=trk.n,i=c.idx,P=trk.pts,a=P[trk.closed?(i-1+
 // Прокол у самого финиша: доехать на спущенном колесе быстрее, чем остановиться и менять
 function flatRun(c,T){const rem=Math.max(0,T.raceLen-c.prog),vF=Math.max(6,c.vtop*0.45),vN=Math.max(8,c.vtop*0.75);return rem/vF-rem/vN<(c.wheelChange||8)+8;}
 // Сколько бензина нужно до финиша (в процентах бака, при обычном газе)
+// 0.29: шина по фазам износа. Зелёная (до 50%) — протектор цел, сцепление полное; жёлтая (50–80%) — протектор стёрт, держит хуже;
+// красная (80–100%) — до корда близко, сцепление «обрывается» и шина вот-вот лопнет. Переходы плавные, чтобы машина не дёргалась.
+function tyreGripK(w){w=w<0?0:w;
+  if(w<0.45)return 1-0.03*w/0.45;
+  if(w<0.55)return 0.97-0.05*(w-0.45)/0.1;
+  if(w<0.75)return 0.92-0.04*(w-0.55)/0.2;
+  if(w<0.85)return 0.88-0.1*(w-0.75)/0.1;
+  return Math.max(0.68,0.78-0.1*(w-0.85)/0.15);}
+function tyrePhase(w){return w<0.5?0:w<0.8?1:2;}
+// Как покрытие под колёсами ест протектор (относительно своей дороги трассы): булыжник, щебень и камни — быстрее, трава и грязь — мягче
+const TYRE_SURF={asphalt:0.85,concrete:0.9,brick:1,pave:1.3,board:0.8,macadam:1.1,dirt:0.9,mount:1.15,mud:0.7,sand:0.85,beach:0.8,snow:0.6,
+  verge:1.2,grass:0.6,field:0.7,forest:1.1,rock:1.9,dune:0.7,puddle:0.7,mudhole:0.7,water:0.5};
 function fuelNeed(c,T){return c.fuelRate?Math.max(0,T.raceLen-c.prog)*c.fuelRate*0.85:0;}
 function svcNeed(c){return {tyre:c.punct||c.tyre>20,fuel:!!c.fuelRate&&c.fuel<92,dmg:c.dmg>15||!!c.limp};}
 function svcPlan(c){const T=R.trk,need=svcNeed(c),what=[];let t=2.5;
@@ -361,9 +397,16 @@ function svcPlan(c){const T=R.trk,need=svcNeed(c),what=[];let t=2.5;
 function svcDone(c){const need=svcNeed(c);if(need.tyre){c.tyre=0;c.punct=false;}if(need.fuel)c.fuel=100;if(need.dmg){c.dmg=Math.round(c.dmg*0.35);c.limp=false;}c.heat=Math.min(c.heat,45);c.overheat=0;c.fix=0;}
 function playerService(c,dt){
   if(c.fuelRate&&c.fuel<=0&&!c.svc&&!(c.pitT>0)){c.svc=1;rMsg('БЕНЗИН КОНЧИЛСЯ — ДОЛЬЁМ ИЗ КАНИСТРЫ',2.6);}
-  if(c.punct&&c.vx<1.2&&!c.svc&&!(c.pitT>0)&&!c.flat)c.svc=1;
-  if(c.svc===1){c.thr=0;c.brk=1;if(Math.abs(c.vx)<0.6){const S=svcPlan(c);c.svc=2;c.svcT=S.t;c.svcWhat=S.what.join(', ')||'осмотр';rMsg((S.pit?'БОКСЫ: ':'МЕХАНИК: ')+c.svcWhat,1.8);}}
-  else if(c.svc===2){c.thr=0;c.brk=1;c.svcT-=dt;if(c.svcT<=0){svcDone(c);c.svc=0;rMsg('ГОТОВО! ПОЕХАЛИ',1.4);}}}
+  // 0.29: после отмены сервиса (газ) машина не встаёт снова на ремонт сразу — даём уехать
+  if(c.punct&&c.vx<1.2&&c.vx>-0.3&&!c.svc&&!(c.pitT>0)&&!c.flat&&!((c.svcNo||0)>R.time))c.svc=1;
+  if(c.svc===1){if(!c.svc1T)c.svcRel=false;c.svc1T=(c.svc1T||0)+dt;if(!rKeys.gas)c.svcRel=true;
+    // передумали: отпустили «Газ» и нажали снова — едем дальше (кроме пустого бака); газ, зажатый с самого начала, остановку не отменяет
+    if(rKeys.gas&&c.svcRel&&c.svc1T>0.4&&!(c.fuelRate&&c.fuel<=0)){c.svc=0;c.svc1T=0;c.svcNo=R.time+5;rMsg('ЕДЕМ ДАЛЬШЕ',1);return;}
+    c.thr=0;c.brk=1;
+    // 0.29: на склоне или в грязи машина сползает и не может «встать» — механик подкладывает башмаки под колёса
+    if(c.svc1T>2.5){c.vx=0;c.vy=0;c.r=0;}
+    if(Math.abs(c.vx)<0.6){c.svc1T=0;const S=svcPlan(c);c.svc=2;c.svcT=S.t;c.svcWhat=S.what.join(', ')||'осмотр';rMsg((S.pit?'БОКСЫ: ':'МЕХАНИК: ')+c.svcWhat,1.8);}}
+  else if(c.svc===2){c.thr=0;c.brk=1;c.vx=0;c.vy=0;c.r=0;c.svcT-=dt;if(c.svcT<=0){svcDone(c);c.svc=0;c.svcNo=R.time+3;rMsg('ГОТОВО! ПОЕХАЛИ',1.4);}}}
 // Боковая сила шины по углу увода (насыщение, за пиком — лёгкий спад)
 function tyreSat(a,Fz,capK,mu){const x=PHY.tk*a,ax=x<0?-x:x,e=ax>1.6?(ax-1.6)/3:0,f=Math.tanh(x)*(1-0.12*(e<1?e:1));return -mu*Fz*capK*f;}
 // Кочки: одномерный шум (два значения вместо четырёх и без замыканий — физика гонки считается тысячи раз в секунду)
@@ -373,7 +416,7 @@ function carStep(c,trk,dt){
   const lat=trackLocal(trk,c),W=trk.W,bar=trk.bar[c.idx],su=surfUnder(c,trk,lat),sp0=Math.abs(c.vx);
   // покрытие под колёсами (0.18): асфальт, булыжник, грунт, трава, пашня, лужа, грязь; в дождь — мокрое
   if(su.k!==c.surf){c.surfIn=su.k==='puddle'||su.k==='mudhole'?Math.min(1.5,sp0/14):0;c.surf=su.k;}c.surfP=su.P;c.wetRoad=su.wet;c.tun=trk.tunAt?trk.tunAt[c.idx]:0;
-  let mu=su.mu*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(c.punct?0.72:1),crr=(c.crr0||c.crr)*su.crr*(c.punct?2.2:1);
+  let mu=su.mu*c.grip*tyreGripK(c.tyre/100)*(c.punct?0.72:1),crr=(c.crr0||c.crr)*su.crr*(c.punct?2.2:1);
   // 0.22: разбитая дорога — колея держит и бросает, ямы бьют, «гребёнка» и булыжник отнимают сцепление
   const rgh=trk.rg?roughStep(c,trk,lat,sp0,dt):ROUGH_OUT;mu*=rgh.mu;
   // лужа на скорости — аквапланирование: шина всплывает
@@ -433,7 +476,9 @@ function carStep(c,trk,dt){
   c.y+=((c.gy||0)-(c.y||0))*Math.min(1,dt*12);
   // износ: шины, топливо, мотор — по реальной дистанции гонки
   const dist=sp*dt,ord=c.order==='push'?1.25:c.order==='save'?0.8:1;
-  c.tyre+=dist*c.tyreRate*(1+1.5*(c.slipR+c.slipF)+spin*0.8)*c.wearK*ord*(c.off?1.6:1);
+  // 0.29: протектор съедают нагрузка на шину (поворот на пределе, резкое торможение, разгон), пробуксовка, юз с заблокированными колёсами и покрытие
+  {const use=c.gu||0,lock=brk>0.6&&use>0.95&&sp>5?1:0,drive=(0.6+use*use+2.5*(use>0.95?use-0.95:0)+spin*1.2+lock*1.5)*(0.75+0.25*Math.min(2,sp/25))*1.45,surfW=(TYRE_SURF[su.k]||1)/(c.tyreSurf0||1);
+    c.tyre+=dist*c.tyreRate*drive*surfW*c.wearK*ord;}
   // прокол: свежая шина держит, стёртая лопается чаще; на первых километрах у города дорога хорошая
   const pr=c.punctRate*dist*(c.off?2:1)*(0.25+1.5*Math.min(1,c.tyre/100))*(c.prog<trk.raceLen*0.06?0:1);
   if(!c.punct&&(c.tyre>=100||Math.random()<pr)){c.punct=true;c.punctN=(c.punctN||0)+1;c.flat=flatRun(c,trk);}
@@ -528,7 +573,7 @@ function aiControl(c,trk,dt){
   const kap=2*lx/Math.max(16,lz*lz+lx*lx);let want=Math.atan(c.L*kap);if(v>5)want+=clamp((kap*v-c.r)*0.3,-0.2,0.2);
   const dmax=0.6/(1+v/20);c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-2.2*dt,2.2*dt);
   const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
-  const mu=roadMuAt(trk,c.idx)*c.grip*(1-0.3*Math.min(1,c.tyre/100))*(0.8+0.17*sk)*(c.punct?0.5:1)*ordK,muC=mu*0.9;
+  const mu=roadMuAt(trk,c.idx)*c.grip*tyreGripK(c.tyre/100)*(0.8+0.17*sk)*(c.punct?0.5:1)*ordK,muC=mu*0.9;
   const bdec=c.brakeK*mu*GRAV*0.85;let vt=c.vtop*1.05;
   {const K=trk.K,mg=muC*GRAV,b2=2*bdec,lim=Math.min(170,40+v*4.5);let vt2=vt*vt;
     for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
@@ -615,7 +660,7 @@ function dnfTarget(y,t){const base=y<1900?0.5:y<1906?0.45:y<1912?0.38:y<1920?0.3
 function wearSetup(c,trk,rc){
   const tr=TERR[trk.cfg.terr]||TERR.dirt,p=parts(c.md),km=Math.max(20,rc.km);
   const life=p.w.life*(tr.tyre||1)*(1+0.1*upgOf(c.md,p.w.id));
-  const lifeFrac=clamp(life/km,0.7,3);c.tyreRate=100/(lifeFrac*trk.raceLen);
+  const lifeFrac=clamp(life/km,0.7,3);c.tyreRate=100/(lifeFrac*trk.raceLen);c.tyreSurf0=TYRE_SURF[trk.cfg.terr]||1;
   const expP=clamp(km*p.w.punct*(tr.rough||1)/1100,0,1.4);c.punctRate=expP/trk.raceLen;
   // бака почти хватает на всю гонку — механики заливают с запасом, чтобы доехать без заправки; иначе нужна остановка
   if(trk.cfg.pits){const range=280/(p.e.fuel||1),f0=range/km,frac=f0>=0.9?clamp(Math.max(f0,1.15),1.15,1.6):clamp(f0,0.55,0.9);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
@@ -792,11 +837,13 @@ function raceTick(dt){
     if(c.fin!==null||c.dnf){if(!c.player&&!c.dnf){c.ghostT=Math.max(c.ghostT||0,1);c.laneT=-(T.W/2-1.3);if(T.closed){aiControl(c,T,dt);const vC=Math.max(9,(c.vtop||20)*0.45);if(c.vx>vC){c.thr=0;c.brk=0.3;}else{c.thr=Math.min(c.thr,0.35);c.brk=0;}return;}if(c.vx>0.5)aiControl(c,T,dt);c.thr=0;c.brk=0.4;return;}if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
     if(c.inWater===2){rescueTick(c,dt);return;}
     if(c.wait){scnWaitControl(c,dt);return;}
+    // 0.29: шины в красной фазе, до финиша далеко, боксов нет — пилот сам встаёт на обочине и ставит запасные (в машине их возили по 2–4)
+    if(!c.player&&!cfg.pits&&!c.punct&&!c.dnf&&c.fin===null&&c.tyre>88&&T.raceLen-c.prog>T.raceLen*0.12){c.punct=true;c.flat=false;c.tyreSwap=true;c.punctN=(c.punctN||0);}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){c.tyre=0;c.punct=false;c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if((c.vx<15||(c.wantPit&&!c.player))&&c.lap>0){c.pitT=(4+(c.fuel<60?2:0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
     if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
-    else if(c.punct&&!c.flat&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange){c.punct=false;c.tyre=Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ЗАМЕНЕНО',1.2);}}
+    else if(c.punct&&!c.flat&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;if(c.fix>c.wheelChange*(c.tyreSwap?1.8:1)){c.punct=false;c.tyre=c.tyreSwap?0:Math.min(c.tyre,30);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+(c.tyreSwap?'НОВЫЕ ШИНЫ':'КОЛЕСО ЗАМЕНЕНО'),1.2);c.tyreSwap=false;}}
   });
   const sub=R.mode==='sim'?3:4,h=dt/sub;
   for(let k=0;k<sub;k++){R.cars.forEach(c=>{if(!c.dnf||c.vx>0.2)carStep(c,T,h);});for(let i=0;i<R.cars.length;i++)for(let j=i+1;j<R.cars.length;j++){const A=R.cars[i],B=R.cars[j];if(A.dnf&&B.dnf)continue;const imp=carsCollide(A,B);if(imp>1.5&&(A===R.follow||B===R.follow)){R.shake=Math.min(0.6,imp*0.05);auSfx('bump',Math.min(1,imp/10));}}}
@@ -806,10 +853,18 @@ function raceTick(dt){
   const me=R.me;
   if(me){if(me.hit){if(me.hit>6){R.shake=0.6;rMsg('УДАР!',0.9);auSfx('crash',Math.min(1,me.hit/15));}else auSfx('bump',0.5);me.hit=0;}
     if(me.overheat>3.9)rMsg('ПЕРЕГРЕВ!',2);
+    {const ph=tyrePhase(me.tyre/100);if(ph>me.tyrePh&&!me.punct){rMsg(ph===1?'ШИНЫ СТЁРТЫ НАПОЛОВИНУ — СЦЕПЛЕНИЕ НИЖЕ':'ШИНЫ НА ПРЕДЕЛЕ — ДЕРЖАТ ПЛОХО, ЖМИТЕ 🔧',2.2);}me.tyrePh=ph;}
     if(me.punct&&!me.punctSaid){me.punctSaid=1;rMsg(me.flat?'ПРОКОЛ! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ':me.tyre>=100?'ШИНЫ СТЁРТЫ! ЖМИТЕ 🔧':'ПРОКОЛ! ЖМИТЕ 🔧',2.2);}if(!me.punct)me.punctSaid=0;
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
-    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.wait&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;}
+    {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.wait&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;
+      // 0.29: последняя точка, где машина шла по дороге вперёд, — сюда и возвращаем
+      if(Math.abs(me.lat)<T.W/2+0.5&&!wr&&me.prog>me.goodProg){me.goodProg=me.prog;me.goodIdx=me.idx;me.goodLap=me.lap;}
+      // 0.29: застрял, даже если колёса крутятся (склон между ветками серпантина, упёрся в насыпь): нет продвижения к финишу
+      const busy=me.wait||me.stopT>0||me.pitT>0||me.svc===2||me.dnf||me.fin!==null||me.inWater===2||R.t<=2;
+      if(busy||me.prog>me.npP+6){me.npP=me.prog;me.npT=0;}else me.npT+=dt;
+      // через 20 с без продвижения маршалы сами выталкивают машину на дорогу (время потеряно, но гонка не встаёт)
+      if(me.npT>20){racerBackOnTrack(me,true);}}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;
@@ -849,6 +904,10 @@ function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);l
   return bi<0?null:{i:bi,d:Math.sqrt(bd)};}
 // Вернуть машину на дорогу в точку i (там, где она съехала), с тем же кругом
 function respawnAt(c,i,lap){const T=R.trk;c.idx=clamp(i,0,T.n-1);if(lap!==undefined)c.lap=lap;respawn(c);c.offIdx=-1;trackLocal(T,c);}
+// 0.29: «Вернуться на трассу» — туда, где машина съехала, или в последнюю точку, где она шла по дороге; отменяет зависший сервис
+function racerBackOnTrack(m,auto){const T=R.trk;if(m.svc===1){m.svc=0;m.svc1T=0;m.svcNo=R.time+4;}
+  if(m.offIdx>=0)respawnAt(m,m.offIdx,m.offLap);else if(m.goodIdx>=0)respawnAt(m,m.goodIdx,m.goodLap);else respawn(m);
+  m.npT=0;m.npP=m.prog;m.stuck=0;m.ghostT=Math.max(m.ghostT||0,2);rMsg(auto?'МАРШАЛЫ ВЫТОЛКНУЛИ МАШИНУ НА ДОРОГУ':'НА ТРАССЕ',auto?2.2:1);}
 function raceLoop(now){
   if(!R||R.done)return;
   const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;

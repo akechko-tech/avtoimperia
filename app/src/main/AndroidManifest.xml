@@ -6,6 +6,11 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
+        <!-- ссылки на Википедию и Wikimedia Commons открываются во внешнем браузере -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
     </queries>
     <application android:label="Автоимперия" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:theme="@style/AppTheme">
         <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="portrait"

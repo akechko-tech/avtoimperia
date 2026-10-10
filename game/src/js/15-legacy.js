@@ -17,29 +17,44 @@ function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[
 function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p.e,p.g,p.c,p.k,p.b,p.w].forEach(x=>{const h=x&&PART_HIST[x.id];if(h&&s.y<h[0]&&!cp[x.id])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}
 function plural(n,a,b,c){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c;}
-function legacyYear(s){if(!s.lhist)s.lhist=[];s.lhist.push({y:s.y-1,sold:s.peakLast||0,val:Math.round(companyValue(s)),rep:Math.round(s.rep)});if(s.lhist.length>40)s.lhist.shift();}
+function legacyYear(s){if(!s.lhist)s.lhist=[];s.lhist.push({y:s.y-1,sold:s.peakLast||0,val:Math.round(companyValue(s)),rep:Math.round(s.rep),sh:+(s.shLast||0).toFixed(4)});if(s.lhist.length>40)s.lhist.shift();}
 const RACE_W={major:15,normal:5};
+// 0.29: наследие копится годами, как счёт в «Цивилизации»: рекорд эпохи нельзя набрать в первые годы.
+// Масштаб — лучший год и всё, что выпущено за эпоху; рынок — доля, удержанная годами (15 «долевых лет» — максимум);
+// инновации — первенства, которые пошли в серию (а не только на бумаге); бренд — репутация, которой нужно лет двадцать;
+// спорт — победы и титулы самой марки (гонки её основателя за чужие заводы — его личная слава, не марки)
 function legacyParts(o){
-  const scale=400*Math.log10(1+(o.peak||0)/1000)/Math.log10(1+2000);
-  const market=150*Math.min(1,o.share||0)+10*(o.abroad||0);
-  const innov=40*(o.firsts||0)+(o.techs||0)*4;
+  const scale=0.6*400*Math.log10(1+(o.peak||0)/1000)/Math.log10(1+2000)+0.4*400*Math.log10(1+(o.cum||0)/10000)/Math.log10(1+2100);
+  const market=150*Math.min(1,(o.shareYrs||0)/15)+10*(o.abroad||0);
+  const innov=30*(o.firsts||0)+(o.techs||0)*4+Math.min(60,10*(o.kingTech||0));
   const sport=Math.min(400,(o.wins||0)*RACE_W.major+(o.minor||0)*RACE_W.normal+(o.titles||0)*60);
   const capital=250*Math.log10(1+Math.max(0,o.val||0)/1e6)/Math.log10(1+4000);
-  const brand=(o.rep||0)+(o.legend||0);
-  return {scale,market,innov,sport,capital,brand,total:scale+market+innov+sport+capital+brand};
+  const mat=clamp((o.age||0)/20,0.1,1),brand=(o.rep||0)*mat+(o.legend||0)+Math.min(40,4*(o.kingClass||0));
+  return {scale,market,innov,sport,capital,brand,total:scale+market+innov+sport+capital+brand,mat};
 }
+function coFoundedY(s){return s.racer&&s.racer.founded?s.racer.founded.y:(s.startY||1895);}
+// гонки и титулы самой марки: без личной карьеры гонщика-основателя до основания
+function ownRaces(s){return (s.raceLog||[]).filter(r=>!('works' in r)&&!r.rx);}
+function ownTitles(s){const fy=s.racer&&s.racer.founded?s.racer.founded.y:0;return (s.titles||[]).filter(t=>!t.rx&&!(fy&&t.y<fy));}
+// первенство по детали засчитывается, когда машин с этой деталью продано хотя бы 300 (новинка пошла в серию)
+function firstsLive(s){return Object.keys(s.firsts||{}).filter(k=>{if(!/^part:/.test(k))return true;const id=k.slice(5);return s.models.some(m=>PART_KEYS.some(q=>m[q]===id)&&(m.totalSold||0)>=300);}).length;}
 function playerLegacy(s){
-  const wins=s.raceLog.filter(r=>r.place===1),major=wins.filter(r=>r.major).length,minor=wins.length-major;
+  const wins=ownRaces(s).filter(r=>r.place===1),major=wins.filter(r=>r.major).length,minor=wins.length-major;
   const bestModel=Math.max(0,...s.models.map(m=>m.totalSold));const longModel=s.models.some(m=>m.launched!==undefined&&m.status!=='dev'&&(mi(s)-m.launched)>=120&&m.totalSold>1000);
   const abroad=Object.keys(s.peak.share||{}).filter(c=>c!==s.country&&s.peak.share[c]>=0.05).length;
   const techs=Math.min(8,Object.values(s.tech||{}).reduce((a,b)=>a+b,0));
-  // доля — лучшая годовая (старые сохранения: месячная); технологии эпохи — как у исторических марок (не больше 8), первенства — отдельно
-  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0),share:s.peak.shY!=null?s.peak.shY:((s.peak.share||{})[s.country]||0),abroad,firsts:Object.keys(s.firsts||{}).length,techs,wins:major,minor,titles:(s.titles||[]).reduce((a,t)=>a+(t.w||1),0),val:companyValue(s),rep:s.rep,legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
+  const T=ownTitles(s),kings=T.filter(t=>/^king-/.test(t.id||'')),sportT=T.filter(t=>!/^king-/.test(t.id||'')||t.id==='king-race');
+  // доля, удержанная годами: сумма годовых долей дома (старые сохранения — лучшая доля × прожитые годы)
+  const LH=(s.lhist||[]).filter(h=>h.sh!=null),age=Math.max(0,s.y-coFoundedY(s));
+  const shareYrs=LH.length?LH.reduce((a,h)=>a+h.sh,0):(s.peak.shY!=null?s.peak.shY:((s.peak.share||{})[s.country]||0))*Math.min(age,15)*0.6;
+  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0),cum:typeof totalSold==='function'?totalSold(s):0,shareYrs,abroad,firsts:firstsLive(s),techs,kingTech:kings.filter(t=>t.id==='king-tech').length,
+    kingClass:kings.filter(t=>t.id!=='king-tech'&&t.id!=='king-race').length,wins:major,minor,titles:sportT.reduce((a,t)=>a+(t.w||1),0),val:companyValue(s),rep:s.rep,age,
+    legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
   // 0.21: очки наследия, выигранные в пари, — к имени марки
   if(s.legBonus){L.brand+=s.legBonus;L.total+=s.legBonus;}
   return L;
 }
-function histLegacy(h){return legacyParts({peak:h.peak,share:h.share,abroad:h.c==='us'?1:0,firsts:h.firsts,techs:8,wins:h.wins,minor:h.wins,titles:h.titles,val:h.val,rep:h.rep,legend:h.legend?40:0});}
+function histLegacy(h){const age=1929-h.f;return legacyParts({peak:h.peak,cum:h.cum,shareYrs:h.share*Math.min(15,age),abroad:h.c==='us'?1:0,firsts:h.firsts,techs:8,wins:h.wins,minor:h.wins,titles:h.titles,val:h.val,rep:h.rep,age,legend:h.legend?40:0});}
 const LEG_NAMES={scale:'Масштаб',market:'Рынок',innov:'Инновации',sport:'Спорт',capital:'Капитал',brand:'Бренд'};
 // марка из истории, которую в этой партии основали вы (играя за Генри Форда, соревнуетесь и с «историческим Ford» — тем, что был на самом деле)
 const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT'};

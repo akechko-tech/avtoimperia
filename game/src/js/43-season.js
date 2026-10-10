@@ -138,7 +138,7 @@ function raceResults(rc,res,mode,info){
   const team=res.filter(r=>r.you),fin=team.filter(r=>!r.dnf),best=fin.length?Math.min(...fin.map(r=>r.pos)):0;
   const prize=racePrize(rc);let won=0;
   team.forEach(r=>{if(!r.dnf&&r.pos<=3){r.prize=Math.round(prize*[1,0.5,0.25][r.pos-1]/10)*10;won+=r.prize;}});
-  s.cash+=won;
+  s.cash+=won;try{rbudAdd(s,0,won);}catch(_){}
   const major=!!rc.major,rk=bn('raceRep');
   if(best===1)s.rep+=(major?9:5)*rk;else if(best&&best<=3)s.rep+=(major?3:1.5)*rk;else if(best)s.rep+=0.5;else s.rep-=major?2:1;
   s.rep=clamp(s.rep,0,100);

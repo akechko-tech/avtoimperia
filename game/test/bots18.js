@@ -42,7 +42,8 @@ function newModel(kind,cheap){let md=autoDesign(kind,G);
   m.price=Math.round(refPrice(m,G)*(cheap?1.25:1)/10)*10;G.models.push(m);lastDesign=mi(G);
   if(process.env.DD)console.log('   DESIGN',dstr(G),kind,PART_KEYS.map(k=>m[k]).join(','),'ref $'+Math.round(refPrice(m,G)),'uc@1k',Math.round(ucAtVol(m,G,1000)),'uc@10k',Math.round(ucAtVol(m,G,10000)),'uc@50k',Math.round(ucAtVol(m,G,50000)),'fc',Math.round(forecastDemand(m,G)),'q',classScore(m,G).toFixed(2),'era',eraPen(m,G.country,G).toFixed(2),'cx',complexity(m).toFixed(2),'old:',G.models.filter(x=>x.status==='prod').map(x=>PART_KEYS.map(k=>x[k]).join(',')+' uc'+Math.round(unitCost(x,G))+' $'+x.price+' era'+eraPen(x,G.country,G).toFixed(2)).join('; '));
   return m;}
-function retireOld(){G.models.filter(m=>m.status==='prod').forEach(m=>{const newer=G.models.some(x=>x.status==='prod'&&x.id>m.id&&mi(G)-x.launched>=4);if(newer){m.status='off';G.cash+=m.stock*m.price*0.6;m.stock=0;}});}
+// 0.29: модель купленной марки (x.acq) — не замена своей: её продают только в её стране
+function retireOld(){G.models.filter(m=>m.status==='prod'&&!m.acq).forEach(m=>{const newer=G.models.some(x=>x.status==='prod'&&!x.acq&&x.id>m.id&&mi(G)-x.launched>=4);if(newer){m.status='off';G.cash+=m.stock*m.price*0.6;m.stock=0;}});}
 function grow(k){const L=G.last,act=G.models.filter(m=>m.status==='prod');if(!L||!act.length||(G.capBuild||[]).length)return;const util=L.made/Math.max(1,capEff(G)),lost=act.reduce((a,m)=>a+(m.lostS||0),0);
   if(util>0.9&&lost>L.sold*0.05){const n=Math.max(2,Math.round(G.cap*k)),c=n*capUnitCost(G);if(G.cash>c*(BOT==='debt'?1.05:2))capOrder(G,n,true);}
   if((L.dumpN>0||whStock(G)>whCap(G)*0.85)&&!(G.whBuild||[]).length){const n=Math.max(5,Math.round(whCap(G)*0.5)),c=n*whUnitCost(G);if(G.cash>c*1.5)whOrder(G,n,true);}}
