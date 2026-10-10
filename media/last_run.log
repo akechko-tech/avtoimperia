@@ -1,26 +1,4 @@
 == job voice5
-voice5 redo 553
-voice5 25 lines 19 s
-voice5 50 lines 38 s
-voice5 75 lines 56 s
-voice5 100 lines 79 s
-voice5 125 lines 99 s
-voice5 150 lines 122 s
-voice5 175 lines 144 s
-voice5 200 lines 166 s
-voice5 225 lines 186 s
-voice5 250 lines 207 s
-voice5 275 lines 228 s
-voice5 300 lines 246 s
-voice5 325 lines 262 s
-voice5 350 lines 276 s
-voice5 375 lines 288 s
-voice5 400 lines 303 s
-voice5 425 lines 316 s
-voice5 450 lines 329 s
-voice5 475 lines 338 s
-voice5 500 lines 341 s
-voice5 525 lines 345 s
-voice5 550 lines 349 s
-voice5 done 554 new lines; total 2920 v5 2920
-== job voice5 took 362 s
+voice5 redo 0
+voice5 done 0 new lines; total 2920 v5 2920
+== job voice5 took 12 s
