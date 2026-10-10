@@ -561,6 +561,24 @@ WORLD_QS = ['Шаляпин', 'Chaliapin', 'Chaliapine', 'Schaljapin', 'Feodor C
             'Category:Neapolitan songs', 'Category:Chansons', 'Category:Songs in French', 'Category:Songs in German', 'Category:Songs in Russian', 'Category:Songs in Italian',
             'Category:Mistinguett', 'Category:Maurice Chevalier', 'Category:Comedian Harmonists', 'Category:Richard Tauber']
 WORLD_BAN = re.compile(r'horst|hitler|nazi|nsdap|\bss\b|\bsa[- ]|heil|reichspartei|erwache|fahne hoch|wehrmacht|luftwaffe|giovinezza|faccetta|fascis|duce|1933|1934|1935|1936|1937|1938|1939|194\d', re.I)
+# 0.30: второй проход — французские и немецкие записи 1900–1925 (лейблы, жанры, известные песни)
+WORLD2_QS = ['IA 78 valse', 'IA 78 chanson', 'IA 78 polka', 'IA 78 Walzer', 'IA 78 Marsch', 'IA 78 Lied', 'IA 78 German', 'IA 78 French', 'IA 78 Italian', 'IA 78 Neapolitan',
+             'IA 78 Russian', 'IA 78 balalaika', 'Odeon Record', 'Parlophon', 'Beka Record', 'Homokord', 'Lindström', 'Favorite Record', 'Gramophone Concert Record',
+             'Pathé Frères', 'Zonophone Record', 'Edison Amberol', 'Edison Blue Amberol German', 'Columbia German', 'Victor German', 'Victor French', 'Victor Italian',
+             'Garde Républicaine', 'Musique de la Garde Républicaine', 'Marche Lorraine', 'Le Père la Victoire', 'Valse brune', 'Fascination valse', 'La Paimpolaise',
+             'Viens poupoule', 'Polin chanson', 'Dranem', 'Mayol', 'Fragson Harry', 'Vincent Scotto', 'Sous les toits de Paris', 'La Marseillaise 1907', 'Quand l\'amour meurt',
+             'Alte Kameraden', 'Preußens Gloria', 'Hoch- und Deutschmeister', 'Wien, Wien, nur du allein', 'Heut geh ich ins Maxim', 'Lustige Witwe', 'Lippen schweigen',
+             'Frau Luna', 'Schlösser, die im Monde liegen', 'Das ist die Berliner Luft', 'Puppchen du bist mein Augenstern', 'Filmzauber', 'Rixdorfer', 'Kollo Walter',
+             'Militärmarsch', 'Wiener Schrammeln', 'Johann Strauss Kapelle', 'Kapelle des Infanterie', 'Infanterie-Regiment', 'Garde-Regiment', 'Blasorchester 1910',
+             'Funiculì funiculà 1903', 'Santa Lucia 1910', 'Napoli 1910', 'Piedigrotta', 'Roberto Murolo', 'Vesuvio', 'Marcia Reale', 'Italian Military Band']
+def world2_scan():
+    audio_scan_to('music_world2', WORLD2_QS, 50, 600, 50)
+    P = os.path.join(MEDIA, 'music_world2', 'scan.json')
+    try:
+        L = json.load(open(P, encoding='utf-8'))
+        L = [e for e in L if not WORLD_BAN.search(' '.join([e.get('title', ''), e.get('desc', ''), e.get('artist', '')]))]
+        json.dump(L, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=0); log('world2_scan kept after ban', len(L))
+    except Exception as ex: log('world2_scan filter', ex)
 def world_scan():
     audio_scan_to('music_world', WORLD_QS, 50, 600, 50)
     P = os.path.join(MEDIA, 'music_world', 'scan.json')
@@ -878,7 +896,7 @@ def photos():
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
 JOBS = {'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan}
+        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan, 'world2_scan': world2_scan}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
