@@ -42,7 +42,7 @@ function coFoundedY(s){return s.racer&&s.racer.founded?s.racer.founded.y:(s.star
 function ownRaces(s){return (s.raceLog||[]).filter(r=>!('works' in r)&&!r.rx);}
 function ownTitles(s){const fy=s.racer&&s.racer.founded?s.racer.founded.y:0;return (s.titles||[]).filter(t=>!t.rx&&!(fy&&t.y<fy));}
 // первенство по детали засчитывается, когда машин с этой деталью продано хотя бы 300 (новинка пошла в серию)
-function firstsLive(s){return Object.keys(s.firsts||{}).filter(k=>{if(!/^part:/.test(k))return true;const id=k.slice(5);return s.models.some(m=>PART_KEYS.some(q=>m[q]===id)&&(m.totalSold||0)>=300);}).length;}
+function firstsLive(s){return Object.keys(s.firsts||{}).filter(k=>{if(/^eq:/.test(k)){const id=k.slice(3);return s.models.some(m=>eqHas(m,id)&&(m.totalSold||0)>=300);}if(!/^part:/.test(k))return true;const id=k.slice(5);return s.models.some(m=>PART_KEYS.some(q=>m[q]===id)&&(m.totalSold||0)>=300);}).length;}
 function playerLegacy(s){
   const wins=ownRaces(s).filter(r=>r.place===1),major=wins.filter(r=>r.major).length,minor=wins.length-major;
   const bestModel=Math.max(0,...s.models.map(m=>m.totalSold));const longModel=s.models.some(m=>m.launched!==undefined&&m.status!=='dev'&&(mi(s)-m.launched)>=120&&m.totalSold>1000);

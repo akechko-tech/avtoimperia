@@ -2,12 +2,14 @@
 // Большие успехи должны ощущаться: на пару секунд поверх экрана — надпись, конфетти цветов эпохи (золото, латунь, сукно, бумага), фанфары.
 // Не мешает нажатиям (сквозь него можно листать газету), при «уменьшить движение» — только надпись.
 let CEL=null;
-function celebrate(big,sub,icon){
+// 0.30: у каждого достижения — свои фанфары: победа, кубок, титул, рекорд, первенство, медаль, сделка
+const CEL_KIND={'🏁':'win','🏆':'cup','👑':'title','🚗':'record','🌟':'first','🥇':'medal','🤝':'deal','⚔️':'duel','🏅':'medal','🏛':'legacy'};
+function celebrate(big,sub,icon,kind){
   try{if(CEL){CEL.el.remove();cancelAnimationFrame(CEL.raf);}}catch(_){}
   const el=document.createElement('div');el.className='cel';
   el.innerHTML=`<canvas></canvas><div class="cel-t"><i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`;
   document.body.appendChild(el);
-  try{if(AU.ctx&&AU.on.music)auReelFanfare();auSfx('cheer',1);}catch(_){}
+  try{if(AU.ctx&&AU.on.music)auFanfare(kind||CEL_KIND[icon]||'cup');auSfx('cheer',1);}catch(_){}
   try{navigator.vibrate&&navigator.vibrate([40,60,40]);}catch(_){}
   const Q=CEL={el,t0:performance.now(),raf:0,P:[]};
   const cv=el.querySelector('canvas'),dpr=Math.min(1.5,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;

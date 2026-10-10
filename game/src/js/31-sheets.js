@@ -7,7 +7,7 @@ let evHold=0;
 sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&(!G.pending.length||evHold)&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
 function showEvent(){
   const ev=G.pending[0];
-  if(ev.cel&&!ev.celOn){ev.celOn=1;try{celebrate(ev.cel[0],ev.cel[1],ev.cel[2]);}catch(_){}}
+  if(ev.cel&&!ev.celOn){ev.celOn=1;try{celebrate(ev.cel[0],ev.cel[1],ev.cel[2],ev.cel[3]);}catch(_){}}
   if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
   if(ev.duel){duelShow(ev);return;}
   if(ev.chance){openSheet(chanceHTML(ev));return;}
@@ -17,7 +17,16 @@ function showEvent(){
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
 function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
 function openDesigner(kind){kind=kind||(G.y>=1908?'people':'middle');
-  draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};renderDesigner();}
+  draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};
+  try{draft.eq=eqAuto(draft,kindIsTruck(kind)?'truck':kind,G);}catch(_){draft.eq=[];}renderDesigner();}
+// 0.30: новинки оснащения в конструкторе — стартер, электросвет, ветровое стекло… (свои — из КБ, остальные — у поставщиков)
+function eqDesignHTML(d,s,kind){const g=kindIsTruck(kind)?'truck':kind;if(g==='truck')return '';const y=yf(s),L=eqOf(d);
+  const items=EQUIP.filter(e=>e.y<=s.y+3&&(eqAvail(s,e.id)||rdActive(s).some(p=>p.kind==='eq'&&p.id===e.id)));if(!items.length)return '';
+  const chip=e=>{const on=L.includes(e.id),ok=eqAvail(s,e.id)&&(!e.req||eqAvail(s,e.req)),w=eqWait(e,g,y),u=e.u[g]||0;
+    const tag=!ok?'в КБ':w>0.25?'ждут покупатели':u>=0.15?'покупатели доплатят':u>0?'приятная мелочь':'не нужно классу';
+    return `<button class="chip ${on?'on':''}" data-act="eqToggle" data-v="${e.id}" ${ok?'':'disabled'}>${esc(e.name)}${eqDev(s,e.id)&&s.y<e.hist[0]+1?' 🔬':''}<small>${tag} · ${money(e.c*cpi(s))}</small></button>`;};
+  const miss=eqExpected(g,y).filter(e=>!L.includes(e.id)&&!L.some(id=>EQ_BY[id].sup===e.id)&&eqAvail(s,e.id));
+  return `<div class="label" style="margin-top:14px">Новинки оснащения</div><div class="chips">${items.map(chip).join('')}</div>${miss.length?`<p class="small warn" style="margin-top:6px">Покупатели класса уже ждут: ${miss.map(e=>e.name.toLowerCase()).join(', ')} — без этого машину берут хуже.</p>`:''}<p class="small muted" style="margin-top:4px">${esc((EQUIP.find(e=>L.includes(e.id)&&e.note)||items.find(e=>e.note)||{note:''}).note)}</p>`;}
 // Важность черты для покупателей класса: ●●● главное, ●● важно, ● немного
 function wDots(w){return w>=0.24?'●●●':w>=0.12?'●●○':w>0?'●○○':'○○○';}
 function compareHTML(md,s){const C=classCompare(md,s,s.country),ph=C.ref.name&&IMG[C.ref.name];
@@ -54,7 +63,7 @@ function renderDesigner(){
     ${compareHTML(md,s)}
     <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button></div>
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
-    <div class="dsecs">${PART_CATS.map(sec).join('')}${sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>
+    <div class="dsecs">${PART_CATS.map(sec).join('')}${sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
     <div class="card" style="margin-top:14px;background:var(--panel2)">
       <div class="row small"><span class="muted">Нагрузка на раму</span><span class="num ${overpower(md)?'bad':''}">${Math.round(p.e.hp)} / ${Math.round(mx)} л.с.</span></div>
       <div class="bar" style="margin-top:6px"><i style="width:${Math.min(100,p.e.hp/mx*100)}%;background:var(--${overpower(md)?'bad':p.e.hp/mx>0.8?'warn':'good'})"></i></div>
@@ -69,14 +78,14 @@ function renderDesigner(){
 function kindIsTruck(k){return k==='van'||k==='truck';}
 function openRD(){
   const s=G,L=rdProjects(s),pts=rdTotal(s)/(rdActive(s).length+1),free=rdSlots(s)-rdActive(s).length;
-  const item=pj=>{const c=rdCost(pj,s);return `<div class="race-item"><div class="row"><div><span class="mo">${pj.cat} · ${pj.kind==='upg'?'улучшение ★'+pj.lvl:'прототип на '+pj.yrs+' г. раньше'}</span><h3 style="margin-top:2px">${esc(pj.name)}</h3></div><button class="btn sm" data-act="rdStart" data-k="${pj.kind}:${pj.id}" ${free<=0||s.cash<c?'disabled':''}>~${Math.ceil(pj.need/pts)} мес. · ${money(c)}</button></div>
-    <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?UPG_TXT[pj.ck]:'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}${pj.know?' · <span class="good">изучено на машине конкурента: на 40% быстрее</span>':''}${pj.mass?' · <span class="good">массовая деталь: на 20% быстрее</span>':''}</p></div>`;};
+  const item=pj=>{const c=rdCost(pj,s);return `<div class="race-item"><div class="row"><div><span class="mo">${pj.cat} · ${pj.kind==='upg'?'улучшение ★'+pj.lvl:pj.kind==='eq'?'новинка на '+pj.yrs+' г. раньше поставщиков':'прототип на '+pj.yrs+' г. раньше'}</span><h3 style="margin-top:2px">${esc(pj.name)}</h3></div><button class="btn sm" data-act="rdStart" data-k="${pj.kind}:${pj.id}" ${free<=0||s.cash<c?'disabled':''}>~${Math.ceil(pj.need/pts)} мес. · ${money(c)}</button></div>
+    <p class="small muted" style="margin-top:4px">${pj.kind==='upg'?UPG_TXT[pj.ck]:pj.kind==='eq'?esc((EQ_BY[pj.id]||{}).note||'')+' Поставьте на новую модель раньше истории — первенство в зачёт наследия.':'Деталь станет доступна только вам. Запустите её в серию раньше истории — это первенство в зачёт наследия'}${pj.know?' · <span class="good">изучено на машине конкурента: на 40% быстрее</span>':''}${pj.mass?' · <span class="good">массовая деталь: на 20% быстрее</span>':''}</p></div>`;};
   const SL=studyList(s),sItem=c=>{if(c.own)return `<div class="race-item off"><span class="mo">${esc(KIND_NAME[c.kind])} · эталон класса ${c.y} года</span><h3 style="margin-top:2px">${esc(c.name)}</h3><p class="small muted" style="margin-top:4px">Это ваша марка — в настоящей истории. Свою машину не покупают и не разбирают: эталон класса здесь — вы сами.</p></div>`;
     const g=studyGain(c,s),dis=c.done||c.busy||free<=0||s.cash<c.price;
     return `<div class="race-item"><div class="row"><div><span class="mo">${esc(KIND_NAME[c.kind])} · эталон класса ${c.y} года</span><h3 style="margin-top:2px">${esc(c.name)}</h3></div><button class="btn sm" data-act="rdStudy" data-k="${c.kind}" ${dis?'disabled':''}>${c.done?'Изучен':c.busy?'В работе':'Купить · '+money(c.price)}</button></div>
       <p class="small muted" style="margin-top:4px">~${Math.ceil(STUDY_NEED/pts)} мес. в КБ. ${g.fut.length?`<span class="good">Внутри — то, чего нет у поставщиков: ${esc(g.fut.map(x=>x.name).join(', '))}.</span> `:''}${g.ups.length?`<span class="good">Доводка соперников: ${esc(g.ups.map(x=>x.name).join(', '))}.</span> `:''}Улучшать изученные детали станет быстрее, новая модель этого класса — дешевле.</p></div>`;};
   // 0.24: три раскрывающиеся группы — улучшения (детали ваших машин и современные), новые (прототипы и машины конкурентов), устаревшие
-  const upg=L.filter(p=>p.kind==='upg'),old=upg.filter(p=>!p.mine&&partObsolete(p.ck,p.id,s)),cur=upg.filter(p=>!old.includes(p)).sort((a,b)=>(b.mine?1:0)-(a.mine?1:0)||(b.py||0)-(a.py||0)),early=L.filter(p=>p.kind==='early');
+  const upg=L.filter(p=>p.kind==='upg'),old=upg.filter(p=>!p.mine&&partObsolete(p.ck,p.id,s)),cur=upg.filter(p=>!old.includes(p)).sort((a,b)=>(b.mine?1:0)-(a.mine?1:0)||(b.py||0)-(a.py||0)),early=L.filter(p=>p.kind==='early'||p.kind==='eq');
   const mineN=cur.filter(p=>p.mine).length,SLn=SL.filter(c=>!c.done&&!c.own).length,item2=pj=>pj.mine?item(pj).replace('<span class="mo">','<span class="mo"><b class="good">● в ваших машинах</b> · '):item(pj);
   openSheet(`<div class="row"><h2>Проекты КБ</h2>${X}</div>
     <p class="small muted" style="margin-top:6px">${RD_LV[s.rd.lvl]}: силы бюро поровну делятся между проектами (потом можно перераспределить), свободных мест — ${Math.max(0,free)}. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.</p>

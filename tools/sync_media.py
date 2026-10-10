@@ -90,6 +90,8 @@ def music():
             if p.startswith('запись ') and p[7:].isdigit(): p = 'запись тех лет'
             if 'CC BY' not in (m.get('lic') or ''): perf = p
         idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'lic', 'page')}; idx[cid]['by'] = perf
+        if m.get('c'): idx[cid]['c'] = m['c']  # 0.30: страна записи
+        if m.get('cue'): idx[cid]['cue'] = 1  # 0.30: фанфары — не в плейлист
         if cid in MUSIC_CAP: idx[cid]['cap'] = MUSIC_CAP[cid]
     # 0.22: свои мелодии игры в оркестровке (задание anthem) — own_*.m4a; в APK они вшиты (играют и без сети)
     try: own = json.loads(git('show', 'origin/media:media/music/own/index.json'))

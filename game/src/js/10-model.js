@@ -36,6 +36,8 @@ function rdProjects(s){
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
     if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cat.rd,ck:cat.k,name:nx.name,need:10+6*(nx.y-s.y),yrs:nx.y-s.y});
   });
+  // 0.30: новинки оснащения (стартер, электросвет…) — раньше поставщиков
+  if(typeof eqProjects==='function')eqProjects(s).forEach(pj=>list.push(pj));
   return list;
 }
 // 0.24: устаревшая деталь — её уже обогнала деталь новее (по своей главной мере), появившаяся хотя бы два года назад,
@@ -46,7 +48,7 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
   return arr.some(z=>z!==x&&(z.y||1895)>(x.y||1895)&&(z.y||1895)<=s.y-2&&f(z,x));}
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
-function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;
+function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
   const k=pj.kind==='early'?3+0.4*(pj.yrs||1):0.8*Math.pow(1.25,(pj.lvl||1)-1);
   // в 1890-х опыты — дело мастерской: дёшево; к 1905 году — настоящие опытные цеха и стенды
@@ -82,7 +84,7 @@ function engineHp(e,md){return e.hp*(1+0.08*upgOf(md,e.id));}
 function overpower(md){const p=parts(md);return p.e.hp>chassisMax(p.c,md);}
 // Сложность деталей для конструкторов: от неё бюджет и срок разработки
 function designEffort(md){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+p[k].q*(1+0.12*upgOf(md,p[k].id)),0)+p.t.q;}
-function baseCost(md,s){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+partCost(p[k],s),0)+p.t.c*cpi(s);}
+function baseCost(md,s){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+partCost(p[k],s),0)+p.t.c*cpi(s)+(typeof eqCost==='function'?eqCost(md,s):0);}
 function learn(md){return Math.max(0.85,Math.pow(1+(md.made||0)/200,-0.045));}
 // Экономия масштаба. Скидка поставщиков за объём: 5 машин в месяц — детали на четверть дороже обычного,
 // сотни — по обычной цене, тысячи и десятки тысяч — на 10–40% дешевле. До массового производства
@@ -97,7 +99,7 @@ function modelVol(md){return md.vol||md.lastMade||1;}
 function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
   if(tc.foundry)c-=partCost(p.e,s)*0.18;if(tc.press&&!isTruck(md))c-=partCost(p.b,s)*0.15;
   return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s)*(md.legend?legendK(md,'cost'):1)*(typeof supK==='function'?supK(s):1));}
-function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx;}
+function complexity(md){const p=parts(md);return p.e.cx*p.g.cx*p.c.cx*p.k.cx*p.b.cx*p.t.cx*(typeof eqCx==='function'?eqCx(md):1);}
 /* ---------- характеристики машины глазами покупателя ---------- */
 const CHAR_K=['perf','rel','comf','ease','safe','econ','cap'];
 const CHAR_NAMES={perf:'Мощность',rel:'Надёжность',comf:'Комфорт',ease:'Простота вождения',safe:'Тормоза и безопасность',econ:'Экономичность',cap:'Вместимость'};
@@ -175,6 +177,8 @@ function autoDesign(kind,s,base){
   for(let pass=0;pass<2;pass++)for(const k of PART_KEYS){const arr=PART_CATS.find(c=>c.k===k).arr();let bx=null;
     for(const x of unlockedP(arr,s)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
     if(bx)md=bx;}
+  // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
+  try{md.eq=eqAuto(md,kind==='van'||kind==='truck'?'truck':kind,s);}catch(_){md.eq=[];}
   designValue(md,s);return md;}
 /* ---------- factory ---------- */
 const TECH={

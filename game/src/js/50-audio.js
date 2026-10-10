@@ -174,6 +174,19 @@ function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
     const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:5)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(5);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+// 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи военных оркестров и классики (файлы рядом с игрой: music/fan_*.m4a),
+// без сети или без файла — свои оркестровые темы игры. Победа в гонке — горн и труба, кубок и титул — торжественный марш,
+// рекорд и первенство — «восход» трубами, медаль выставки — изящная фанфара, сделка — величавые валторны.
+const FANF={win:['fan_win','own_cue_win'],cup:['fan_cup','own_cue_fanfare'],title:['fan_title','fan_cup','own_cue_fanfare'],record:['fan_record','own_cue_fanfare'],
+  first:['fan_first','fan_record','own_cue_fanfare'],medal:['fan_medal','own_cue_fanfare'],deal:['fan_deal','own_cue_fanfare'],legacy:['fan_legacy','fan_title','own_cue_fanfare'],duel:['own_cue_win']};
+function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}catch(_){}const L=FANF[kind]||FANF.cup,I=(ORCH&&ORCH.idx)||{};
+  const id=L.find(x=>/^own_/.test(x)||(I[x]&&remoteOk()))||'own_cue_fanfare';
+  if(/^own_cue_/.test(id)){auCue(id.slice(8),0.8,()=>{try{auReelFanfare();}catch(_){}});return;}
+  auCueSrc(id,ORCH_BASE()+'music/'+id+'.m4a',0.85,()=>auCue('fanfare',0.8,()=>{}));}
+function auCueSrc(id,src,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+  try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
+    a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
+    const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:6)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(6);}catch(e){if(a)a.bad=1;if(fb)fb();}}
 // 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
 function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
@@ -190,7 +203,15 @@ const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (салон
   own_charl:{cap:'Чарльстон «Полный газ» (оркестр)',st:'charl',y:1923,mood:'lively',by:'Мелодия «Автоимперии», горячий джаз-оркестр'}};
 // 0.24: сеть подводит (три чужие записи подряд не загрузились) — 10 минут играем только свои записи оркестра, вшитые в игру
 function remoteOk(){return !AU.remoteOff||Date.now()-AU.remoteOff>600000;}
-function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||''};});}
+// 0.30: страна записи (для плейлиста «Эпоха»: свои песни — чаще)
+const MUS_C=(()=>{const o={},put=(c,ids)=>ids.split(' ').forEach(k=>o[k]=c);
+  put('ru','kalinka ukhnem kurgan slavianka ruslan bumblebee swan_waltz flowers_waltz czardas steppes russian_rag');
+  put('de','radetzky gypsy_baron marek_weber vienna_woods tritsch thunder_polka blue_danube kaiserwalzer rixdorf_1914 post_horn poet_peasant vienna_day light_cavalry mondnacht gladiators florentiner hungarian1 hungarian4 hd5_nikisch brahms3');
+  put('fr','cancan genevieve princesses danse_slave clair_de_lune golliwog gymnopedie marionette_1903');
+  put('it','core_ngrato tell_finale');
+  put('uk','tipperary colonel_bogey pomp mogul warriors_dance jupiter mercury first_suite faded_picture any_old_time');
+  return o;})();
+function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
 function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
@@ -206,7 +227,9 @@ function musBuild(start){
   {const bad=AU.badSrc||{};L=L.filter(t=>!bad[t.src]);}
   // 0.29: свои мелодии игры — только когда записей эпохи мало (без сети) или в режиме «Все»: долго их не послушаешь
   if(AU.on.mode!=='all'){const real=L.filter(t=>!t.own);if(real.length>=6)L=real;}
-  const rnd=mulberry32(hashStr(AU.on.mode+y));for(let i=L.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[L[i],L[j]]=[L[j],L[i]];}
+  // 0.30: песни своей страны звучат чаще (втрое), стран, где у вас дилеры, — в полтора раза: Шаляпин в России, Карузо в Италии, Брюан во Франции
+  const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')));const home=G&&G.country,wt=t=>!t.c||!G?1:t.c===home?3:(G.dealers&&(G.dealers[t.c]||0)>0)?1.6:1;
+  L=L.map(t=>({t,k:Math.pow(rnd(),1/wt(t))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
   // 0.29: первой звучит запись эпохи, а не своя мелодия игры
   if(start){const k=L.findIndex(t=>!t.own);if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');

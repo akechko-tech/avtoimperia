@@ -146,7 +146,7 @@ const TRIMS=[{id:'t0',name:'Базовая',y:1885,q:0,c:0,cx:1},{id:'t1',name:'
 const PART_CATS=[{k:'e',arr:()=>ENGINES,name:'Двигатель',rd:'Двигатель'},{k:'g',arr:()=>GEARBOX,name:'Коробка передач',rd:'Коробка'},{k:'c',arr:()=>CHASSIS,name:'Рама и подвеска',rd:'Рама'},{k:'w',arr:()=>TYRES,name:'Колёса и шины',rd:'Колёса'},{k:'k',arr:()=>BRAKES,name:'Тормоза',rd:'Тормоза'},{k:'b',arr:()=>BODIES,name:'Кузов',rd:'Кузов'}];
 const ALL_PARTS=()=>[...ENGINES,...GEARBOX,...CHASSIS,...TYRES,...BRAKES,...BODIES];
 // Оснащение по годам: электрический стартер Delco появился у Cadillac в 1912 году
-function trimName(t,s){const y=s?s.y:1895;if(t.id==='t2')return y<1900?'Люкс: кожа, латунь, каретные фонари':y<1912?'Люкс: кожа, латунь, ацетиленовые фары':'Люкс: кожа, электросвет, стартер Delco';return t.name;}
+function trimName(t,s){const y=s?s.y:1895;if(t.id==='t2')return y<1912?'Люкс: кожа, латунь, отделка':'Люкс: кожа, ковры, отделка салона';if(t.id==='t1')return y<1905?'Комфорт: фонари, тент':'Комфорт: тент, мягкие сиденья';return t.name;}
 const PAINTS=[{id:'#1b1d22',name:'Чёрный'},{id:'#1f4a36',name:'Зелёный'},{id:'#9e2b25',name:'Красный'},{id:'#23427a',name:'Синий'},{id:'#e3d6b4',name:'Сливочный'},{id:'#5c1e2a',name:'Бордо'},{id:'#e8e6de',name:'Белый'},{id:'#c9a227',name:'Жёлтый'}];
 const SEGK=['people','middle','lux','sport','truck'];
 // легковые классы (у спортивного — свои покупатели: с 1901 года в Германии и Франции (Mercedes 35 HP), с 1904-го в Италии, с 1905-го в Британии, с 1910-го в США — Mercer Raceabout, Stutz Bearcat)

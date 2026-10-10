@@ -98,7 +98,7 @@ function adviceList(s){
   // реклама
   if(act.length&&(s.ad||0)<adRef(s)*0.25&&s.cash>adRef(s)*15){const a=Math.round(adRef(s)*0.6/10)*10;add(30,'📰','Реклама почти не работает: о ваших машинах мало кто слышал.',`Реклама ${money(a)}/мес`,()=>{G.ad=a;},'market');}
   // гонки
-  const rc=RACES.find(r=>raceOpen(r,s)&&!s.raceDone[r.key]);if(rc&&act.length)add(35,'🏁',`Открыта запись на гонку «${rc.name}». Победа — слава марке и покупатели.`,'К гонкам',()=>{tab='race';window.scrollTo(0,0);},'race');
+  const rc=RACES.find(r=>raceOpen(r,s)&&!s.raceDone[r.key]);if(rc&&act.length)add(35,'🏁',`Открыта запись на гонку «${rc.name}». Победа — слава марке и покупатели.`,'К гонке',()=>{tab='race';window.scrollTo(0,0);try{render();openRaceSetup(rc.key);}catch(e){console.warn('advisor race',e);}},'race');
   // фургоны для бизнеса
   if(s.y>=1896&&act.length&&!s.models.some(m=>isTruck(m)&&m.status!=='off')&&s.cash>devCost({...rivalDesign('van',s.y)},s)*2)add(22,'🚚','Лавки, пивоварни и почта покупают фургоны, а ведомства объявляют заказы. Сделайте фургон.','Фургон',()=>openDesigner('van'),'models');
   // КБ растёт
