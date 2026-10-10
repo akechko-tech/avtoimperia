@@ -524,6 +524,41 @@ def hits_scan(): audio_scan_to('music_hits', HIT_QS, 50, 600, 50)
 
 def sfx_scan(): audio_scan_to('sfx', SFX_QS, 1.5, 900, 40)
 
+# 0.30: хиты эпохи других стран — русские песни и романсы (и Шаляпин), итальянские, французские, немецкие (без нацистских маршей)
+WORLD_QS = ['Шаляпин', 'Chaliapin', 'Chaliapine', 'Schaljapin', 'Feodor Chaliapin', 'Fyodor Chaliapin', 'Плевицкая', 'Plevitskaya', 'Вяльцева', 'Vyaltseva',
+            'Варя Панина', 'Panina', 'Собинов', 'Sobinov', 'Морфесси', 'Morfessi', 'Янпольский', 'Janpolski', 'Yanpolsky', 'балалайка', 'balalaika',
+            'Andreyev balalaika', 'Great Russian Orchestra', 'Russian Balalaika Orchestra', 'Russian folk song', 'Russian song', 'русская народная песня',
+            'русская песня', 'романс', 'цыганский романс', 'Russian gypsy', 'gypsy romance', 'Очи чёрные', 'Очи черные', 'Dark Eyes', 'Ochi chornye',
+            'Эй, ухнем', 'Volga Boatmen', 'Дубинушка', 'Dubinushka', 'Коробейники', 'Korobushka', 'Стенька Разин', 'Stenka Razin', 'Ямщик', 'Тройка',
+            'Troika', 'Калинка', 'Камаринская', 'Kamarinskaya', 'Барыня', 'Прощание славянки', 'На сопках Маньчжурии', 'Amur Waves', 'Амурские волны',
+            'Дунайские волны', 'Waves of the Danube', 'Кирпичики', 'Бублички', 'Bublitchki', 'Хризантемы', 'Пара гнедых', 'Шумел камыш', 'Вдоль по Питерской',
+            'Степь да степь', 'Из-за острова', 'Вниз по матушке', 'Ноченька', 'Соловей', 'Русская', 'IA 78 russian', 'Victor Russian',
+            'Enrico Caruso', 'Caruso Neapolitan', "O sole mio", 'Santa Lucia', 'Funiculì', 'Torna a Surriento', 'Mattinata', "Core 'ngrato", 'Marechiaro',
+            'Addio a Napoli', 'Vieni sul mar', 'Ciribiribin', "A vucchella", 'Canzone napoletana', 'Neapolitan song', 'canzone', 'mandolino', 'mandolin orchestra',
+            'Mandolinata', 'Beniamino Gigli', 'Tito Schipa', 'Titta Ruffo', 'Fernando De Lucia', 'Gennaro Pasquariello', 'Elvira Donnarumma', 'Gilda Mignonette',
+            'Leggenda del Piave', 'Vipera', 'Come le rose', 'Balocchi e profumi', 'Tango delle capinere', 'Spazzacamino', 'banda italiana', 'Italian song',
+            'Mistinguett', 'Maurice Chevalier', 'Félix Mayol', 'Mayol', 'Polin', 'Dranem', 'Fragson', 'Yvette Guilbert', 'Aristide Bruant', 'Fréhel', 'Damia',
+            'Georgius', 'Charlus', 'Bérard', 'Ouvrard', 'Esther Lekain', 'La Madelon', 'Quand Madelon', 'Viens Poupoule', 'Frou-frou', 'Petite Tonkinoise',
+            'Le Temps des cerises', 'Valentine Chevalier', "Ça c'est Paris", 'Mon homme', 'La Java', 'Le Fiacre', "Nini peau d'chien", 'Chant du départ',
+            'Sambre et Meuse', 'Sous les ponts de Paris', 'chanson française', 'café-concert', 'musette', 'valse musette', 'accordéon', 'Émile Vacher', 'Disque Pathé',
+            'Claire Waldoff', 'Otto Reutter', 'Paul Lincke', 'Walter Kollo', 'Jean Gilbert', 'Leo Fall', 'Comedian Harmonists', 'Richard Tauber', 'Marek Weber',
+            'Dajos Béla', 'Barnabás von Géczy', 'Paul Godwin', 'Efim Schachmeister', 'Weintraub Syncopators', 'Wiener Lied', 'Schrammel', 'Alexander Girardi',
+            'Berliner Luft', 'Glühwürmchen', 'Puppchen', 'Untern Linden', 'Es war in Schöneberg', 'Ich küsse Ihre Hand, Madame', 'Gern hab ich die Frauen',
+            'Ausgerechnet Bananen', 'Schlager', 'Tanzorchester', 'Foxtrott', 'deutsches Lied 1910', 'Odeon Orchester', 'Grammophon',
+            'Category:Feodor Chaliapin', 'Category:Enrico Caruso', 'Category:Audio files of Enrico Caruso', 'Category:Russian folk songs', 'Category:Russian romances',
+            'Category:Neapolitan songs', 'Category:Chansons', 'Category:Songs in French', 'Category:Songs in German', 'Category:Songs in Russian', 'Category:Songs in Italian',
+            'Category:Audio files in Russian', 'Category:Audio files in Italian', 'Category:Audio files in French', 'Category:Audio files in German',
+            'Category:Great 78 Project', 'Category:Mistinguett', 'Category:Maurice Chevalier', 'Category:Comedian Harmonists', 'Category:Richard Tauber']
+WORLD_BAN = re.compile(r'horst|hitler|nazi|nsdap|\bss\b|\bsa[- ]|heil|reichspartei|erwache|fahne hoch|wehrmacht|luftwaffe|giovinezza|faccetta|fascis|duce|1933|1934|1935|1936|1937|1938|1939|194\d', re.I)
+def world_scan():
+    audio_scan_to('music_world', WORLD_QS, 50, 600, 50)
+    P = os.path.join(MEDIA, 'music_world', 'scan.json')
+    try:
+        L = json.load(open(P, encoding='utf-8'))
+        L = [e for e in L if not WORLD_BAN.search(' '.join([e.get('title', ''), e.get('desc', ''), e.get('artist', '')]))]
+        json.dump(L, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=0); log('world_scan kept after ban', len(L))
+    except Exception as ex: log('world_scan filter', ex)
+
 # ---------------------------------------------------------------- пробы голоса: какие модели Silero есть и как звучат
 PROBE_LINES = ['Париж, июнь тысяча восемьсот девяносто пятого года. Двадцать два экипажа выстроились у Триумфальной арки, и толпа замерла в ожидании старта.',
                'Внимание! Номер седьмой выходит вперёд! Какая скорость — шестьдесят километров в час по пыльной дороге!',
@@ -832,7 +867,7 @@ def photos():
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
 JOBS = {'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan}
+        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
