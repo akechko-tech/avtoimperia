@@ -17,23 +17,31 @@ const DX_KIND={
     opp:(y,r)=>r[3]*(1+0.004*(y-1905)),hist:'В январе 1930 года Rover Light Six обогнал «Голубой поезд» от Сен-Рафаэля до Кале, а в марте Вулф Барнато на Bentley Speed Six успел из Канн в лондонский клуб раньше, чем поезд пришёл в Кале. Обогнать экспресс на дорогах эпохи — значит ехать быстро и ни разу не сломаться.'}};
 // лучшая машина для дуэли: самая быстрая серийная (не грузовик)
 function dxCar(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)).map(m=>({m,st:carStats(m,0,s.y)})).sort((a,b)=>b.st.vmax-a.st.vmax)[0]||null;}
-function dxTrainOk(s,v){const d=DX_KIND.train,r=d.route[s.country]||d.route.fr,road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),va=Math.min(v*road,95);return r[2]/va+r[2]/600<=0.98*r[2]/d.opp(s.y,r);}
-function dxOffer(s){const P=dxCar(s);if(!P)return null;const K=Object.entries(DX_KIND).filter(([k,d])=>s.y>=d.y0&&s.y<=d.y1&&(!d.cc||d.cc.split(',').includes(s.country))&&(k!=='train'||dxTrainOk(s,P.st.vmax*3.6))&&!(s.dxSeen&&s.dxSeen[k]&&mi(s)-s.dxSeen[k]<36));
-  if(!K.length||isWar(s.y,s.m,s.country))return null;const [k,d]=K[Math.floor(Math.random()*K.length)],c=s.country,L=s.last;
+function dxTrainOk(s,v,c){const d=DX_KIND.train,r=d.route[c||s.country]||d.route.fr,road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),va=Math.min(v*road,95);return r[2]/va+r[2]/600<=0.98*r[2]/d.opp(s.y,r);}
+// 0.30: вызов может прийти и из страны, где у вас дилеры (газеты Франции зовут вашу машину против «Голубого поезда»)
+function dxOffer(s){const P=dxCar(s);if(!P)return null;const C=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!(typeof warCut==='function'&&warCut(s,c))));
+  const c=Math.random()<0.55||C.length<2?s.country:C[1+Math.floor(Math.random()*(C.length-1))];
+  const K=Object.entries(DX_KIND).filter(([k,d])=>s.y>=d.y0&&s.y<=d.y1&&(!d.cc||d.cc.split(',').includes(c))&&(k!=='train'||dxTrainOk(s,P.st.vmax*3.6,c))&&!(s.dxSeen&&s.dxSeen[k]&&mi(s)-s.dxSeen[k]<24));
+  if(!K.length||isWar(s.y,s.m,c)||isWar(s.y,s.m,s.country))return null;const [k,d]=K[Math.floor(Math.random()*K.length)],L=s.last;
   const stake=Math.round(clamp(((L&&L.rev)||0)*0.08,150*cpi(s),12000*cpi(s))/50)*50;
   const o={k,at:mi(s)+1+Math.floor(Math.random()*2),stake,md:P.m.id,c};
   if(k==='horse'){o.venue=d.venue[c]||d.venue.fr;o.opp=d.horse[c]||'рысак';o.km=d.km;}
   else if(k==='plane'){o.venue=d.venue[c];o.opp=d.pilot[c];o.km=d.km;o.gate=Math.round(stake*0.6/50)*50;}
   else{const r=d.route[c]||d.route.fr;o.venue=r[0];o.opp=(c==='fr'||c==='uk')&&s.y>=1922?'«Голубой поезд»':r[1];o.km=r[2];o.trainV=d.opp(s.y,r);}
   return o;}
-function dxNewsText(s,o){const d=DX_KIND[o.k],md=s.models.find(m=>m.id===o.md),st=carStats(md,0,s.y),v=Math.round(st.vmax*3.6);
+function dxNewsText(s,o){const t=dxNewsText0(s,o);return o.c&&o.c!==s.country&&COUNTRIES[o.c]?`Вызов из-за границы — ${COUNTRIES[o.c].name}: там продают ваши машины, и местные газеты хотят посмотреть, на что они способны.\n`+t:t;}
+function dxNewsText0(s,o){const d=DX_KIND[o.k],md=s.models.find(m=>m.id===o.md),st=carStats(md,0,s.y),v=Math.round(st.vmax*3.6);
   if(o.k==='horse')return `Хозяин рысака ${o.opp} заявил газетам: «Ваши самодвижущиеся экипажи — дым и шум. Мой ${o.opp} обгонит любой из них». Дуэль — две мили на ${o.venue}, ставка ${money(o.stake)}.\nОт «${s.company}» поедет «${md.name}» (до ${v} км/ч). Рысак бежит милю за две минуты с небольшим — около ${Math.round(d.opp(s.y))} км/ч.\n${d.hist}`;
   if(o.k==='plane')return `Импресарио предлагает «${s.company}» турне: авиатор ${o.opp} на биплане против вашей машины — пять миль по кругу ипподрома, на трибунах тысячи зрителей. Сборы делят пополам (${money(o.gate)} вам в любом случае), победителю — ещё ${money(o.stake)}.\nОт «${s.company}» — «${md.name}» (до ${v} км/ч). Биплан летит около ${Math.round(d.opp(s.y))} км/ч.\n${d.hist}`;
   return `Железнодорожная компания хвастает, что ${o.opp} довезёт пассажиров ${o.venue} быстрее любой машины. «${s.company}» вызывают на дуэль: ${fmtN(o.km)} км по дорогам против расписания поезда (в среднем ${Math.round(o.trainV)} км/ч со всеми остановками). Ставка — ${money(o.stake)}.\nОт «${s.company}» — «${md.name}» (до ${v} км/ч), два шофёра посменно. Ехать придётся день и ночь — и ни разу не сломаться.\n${d.hist}`;}
 // раз в месяц: предложение дуэли (редко) и развязка принятой
 function dxCheck(s){if(s.over)return;
-  if(s.dx&&s.dx.acc&&mi(s)>=s.dx.at){dxResolve(s);return;}
-  if(s.dx||s.pending.length||mi(s)<10||mi(s)-(s.dxLast||-99)<14||Math.random()>0.04)return;
+  // 0.30: день дуэли — сесть за руль самому или доверить шофёру (быстрый итог); пропустили день — шофёр
+  if(s.dx&&s.dx.acc&&mi(s)>=s.dx.at){const o=s.dx,d=DX_KIND[o.k];if(o.today&&mi(s)>o.at){dxResolve(s);return;}if(o.today)return;o.today=1;
+    pushEvent({kicker:'Дуэль сегодня',own:1,carId:o.md,title:`${d.title}: ${o.opp}`,deck:`${o.venue}${o.k==='train'?' · '+fmtN(o.km)+' км':''} · ставка ${money(o.stake)}`,
+      text:`Всё готово: ${o.k==='train'?'на вокзале пыхтит паровоз, у перрона — ваша машина':o.k==='plane'?'биплан выкатили на поле, трибуны полны':'рысак в качалке бьёт копытом, трибуны полны'}. Поедете сами — или доверите шофёру (итог сразу)?`,
+      choices:[['Сесть за руль','dxDrive'],['Пусть едет шофёр','dxSim']]},true);return;}
+  if(s.dx||s.pending.length||mi(s)<10||mi(s)-(s.dxLast||-99)<10||Math.random()>0.08)return;
   const o=dxOffer(s);if(!o)return;s.dx=o;s.dxLast=mi(s);(s.dxSeen=s.dxSeen||{})[o.k]=mi(s);const d=DX_KIND[o.k],T=(o.at-mi(s));
   pushEvent({kicker:'Дуэль',title:`${d.title}: ${o.opp}`,deck:`${o.venue} · через ${T} ${plural(T,'месяц','месяца','месяцев')} · ставка ${money(o.stake)}`,text:dxNewsText(s,o),carId:o.md,own:1,
     choices:[['Принять дуэль','dxYes'],['Отказаться','dxNo']]},true);}
@@ -47,13 +55,14 @@ function dxSim(s,o){const md=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m;if(
   const road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),vAvg=Math.min(v*road,95),hours=o.km/vAvg,n=Math.max(3,Math.round(o.km/150));let lost=0,brk=0,fatal=false;
   for(let i=0;i<n;i++){if(r()<(1-rel)*0.9){brk++;lost+=0.6+r()*1.6;if(r()<0.12)fatal=true;}}
   const tMe=fatal?null:(hours+lost+o.km/600)*60,tOp=o.km/o.trainV*60;return {md,win:!fatal&&tMe<tOp,tMe,tOp,brk,fatal,v:Math.round(vAvg),opp:Math.round(o.trainV)};}
-function dxResolve(s){const o=s.dx;s.dx=null;if(!o)return;const R=dxSim(s,o),d=DX_KIND[o.k];if(!R){addLog('Дуэль не состоялась: нет машины.','bad');return;}
+function dxResolve(s,given){const o=s.dx;s.dx=null;if(!o)return;const md0=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m,R=given?(md0?Object.assign({md:md0},given):null):dxSim(s,o),d=DX_KIND[o.k];if(!R){addLog('Дуэль не состоялась: нет машины.','bad');return;}
   const hm=t=>t>=90?`${Math.floor(t/60)} ч ${String(Math.round(t%60)).padStart(2,'0')} мин`:`${Math.floor(t)} мин ${String(Math.round(t%1*60)).padStart(2,'0')} с`;
   let money_=0;if(o.gate){s.cash+=o.gate;money_+=o.gate;}
   if(R.win){s.cash+=o.stake;money_+=o.stake;s.rep=clamp(s.rep+(o.k==='train'?5:3),0,100);wfxAdd(s,'*',segOf(R.md),o.k==='train'?0.25:0.15,8,'дуэль: '+d.n);if(o.k==='train')s.relFx=mi(s)+8;}
   else{s.cash-=o.stake;s.rep=clamp(s.rep-1,0,100);}
   const tx=o.k==='train'?(R.win?`«${R.md.name}» прошла ${o.venue} за ${hm(R.tMe)} — ${o.opp} был в пути ${hm(R.tOp)}. ${R.brk?`По дороге ${R.brk} ${plural(R.brk,'поломка','поломки','поломок')}, механики справились. `:'Ни одной поломки за всю дорогу. '}Средняя скорость — ${R.v} км/ч, днём и ночью.`
       :R.fatal?`На полпути у «${R.md.name}» не выдержала ${['рессора','коробка','полуось','шестерня'][Math.floor(Math.random()*4)]} — машину увезли на платформе того самого поезда.`:`«${R.md.name}» отстала: ${hm(R.tMe)} против ${hm(R.tOp)} у поезда. ${R.brk?`${R.brk} ${plural(R.brk,'поломка','поломки','поломок')} съели часы.`:'Дороги оказались хуже рельсов.'}`)
+    :R.played&&R.fatal?`«${R.md.name}» не дошла до финиша — ${o.opp} прошёл дистанцию в одиночку под свист трибун.`
     :R.stall?`Мотор «${R.md.name}» заглох на старте под свист трибун — ${o.opp} прошёл дистанцию в одиночку.`
     :R.win?`«${R.md.name}» прошла ${o.km<5?'две мили':'пять миль'} за ${hm(R.tMe)} — ${o.opp} отстал (${hm(R.tOp)}). Скорость — ${R.v} км/ч против ${R.opp}.`:`${o.opp} оказался быстрее: ${hm(R.tOp)} против ${hm(R.tMe)} у «${R.md.name}» (${R.opp} км/ч против ${R.v}).`;
   const pay=o.gate?`Сборы — ${money(o.gate)}${R.win?`, выигрыш — ${money(o.stake)}`:`, проигрыш — ${money(o.stake)}`}.`:R.win?`Выигрыш — ${money(o.stake)}.`:`Ставка ${money(o.stake)} проиграна.`;
@@ -63,3 +72,8 @@ function dxResolve(s){const o=s.dx;s.dx=null;if(!o)return;const R=dxSim(s,o),d=D
     text:tx+'\n'+pay+(R.win?' Газеты пишут о машине, которая быстрее '+(o.k==='train'?'поезда':o.k==='plane'?'аэроплана':'лошади')+', — полгода её охотнее покупают.':' Газеты посмеиваются, но и запоминают имя марки.'),
     mean:R.win?'Репутация растёт, полгода ваши машины этого класса берут охотнее.':'',choices:[['Читать дальше','ok']]},true);
   if(R.win)pendingToasts.push('⚔️ '+d.title+': победа!');}
+
+// 0.30: сесть за руль — гонка с соперником в 3D (41g-dx.js); итог — dxAfterRace → dxResolve
+function dxToday(s,key){const o=s.dx;if(!o)return;if(key==='dxSim'||(typeof process!=='undefined'&&process.versions&&process.versions.node)){dxResolve(s);return;}
+  const md=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m;if(!md){dxResolve(s);return;}o.md=md.id;
+  try{startRace({rc:dxRc(s,o),mode:'drive',entries:[{drv:'me',md,prep:0,tyre:'hard',gear:0}]});}catch(e){console.warn('dxDrive',e);dxResolve(s);}}

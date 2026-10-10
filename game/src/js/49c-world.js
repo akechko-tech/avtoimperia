@@ -195,8 +195,8 @@ function r3dRealWater(T,mb,c){const R=T.real,W=R&&R.wm;if(!W)return false;const 
 /* ---------- железная дорога: насыпь, шпалы, рельсы, столбы телеграфа; поезд с паровозом ---------- */
 function railLine(T,rl){const p=T.pts[rl.i],nn=T.N[rl.i],ca=Math.cos(rl.ang),sa=Math.sin(rl.ang),d=[nn[0]*ca-nn[1]*sa,nn[1]*ca+nn[0]*sa];return {p,d};}
 function railY(T,rl,s){const L=railLine(T,rl),x=L.p[0]+L.d[0]*s,z=L.p[2]+L.d[1]*s,near=Math.abs(s)<T.W/2+3;const g=fH(x,z);return near?L.p[1]+0.03:Math.max(g+0.35,L.p[1]+0.03-(Math.abs(s)-T.W/2-3)*0.02);}
-function r3dRails(T){if(!T.rails||!T.rails.length)return null;const mb=new MB();
-  T.rails.forEach(rl=>{const L=railLine(T,rl),dx=L.d[0],dz=L.d[1],sx=-dz,sz=dx,P=(s,o,dy)=>[L.p[0]+dx*s+sx*o,railY(T,rl,s)+(dy||0),L.p[2]+dz*s+sz*o];
+function r3dRails(T){if(!T.rails||!T.rails.some(q=>!q.duel))return null;const mb=new MB();
+  T.rails.forEach(rl=>{if(rl.duel)return;const L=railLine(T,rl),dx=L.d[0],dz=L.d[1],sx=-dz,sz=dx,P=(s,o,dy)=>[L.p[0]+dx*s+sx*o,railY(T,rl,s)+(dy||0),L.p[2]+dz*s+sz*o];
     for(let s=-420;s<420;s+=6){const s1=s+6,road=Math.abs(s)<T.W/2+2&&Math.abs(s1)<T.W/2+2;
       if(!road){mb.e[3]=txLay('gravel',1);[[-2.3,-1.6],[-1.6,1.6],[1.6,2.3]].forEach(([o0,o1],k)=>{const h0=k===1?0:-0.35,h1=k===1?0:-0.35,a=k===0?-0.35:0,b=k===2?-0.35:0;mb.poly([P(s,o0,a),P(s1,o0,a),P(s1,o1,b),P(s,o1,b)],[0,1,0],[170,166,158],MID.stone);});mb.e[3]=0;
         mb.e[3]=txLay('planks',1);for(let q=s;q<s1;q+=0.72){const y=railY(T,rl,q)+0.02;const A=[L.p[0]+dx*q,y,L.p[2]+dz*q];pBox(mb,A[0],y,A[2],1.3,0.12,0.12,'#6a5a48',MID.wood,Math.atan2(dx,dz));}mb.e[3]=0;}
@@ -247,7 +247,7 @@ function r3dTrainMesh(y){const C=G3.cache,key='train'+(y<1905?0:1);if(C[key])ret
   return C[key]={cars:cars.map(c=>({m:g3Mesh(c.mb),len:c.len}))};}
 // Когда поезд идёт: машина подъезжает к переезду — поезд успевает пройти перед ней (шлагбаумы опускаются)
 function r3dTrainTick(dt){const T=R3.T;if(!T.rails||!T.rails.length)return;const F=R.follow;
-  T.rails.forEach(rl=>{const st=rl.st||(rl.st={state:0,s:0,v:17});
+  T.rails.forEach(rl=>{if(rl.duel)return;const st=rl.st||(rl.st={state:0,s:0,v:17});
     const dist=(rl.i-F.idx)*T.step*(T.closed?1:1);
     if(st.state===0&&R.t>0&&dist>180&&dist<420){const vc=Math.max(14,F.vx),tc=dist/vc,Lt=48;if(tc>7){st.state=1;st.dir=Math.random()<0.5?1:-1;st.s=-st.dir*(T.W+Lt+st.v*(tc-3.5)-Lt);st.whistle=0;}}
     if(st.state===1){st.s+=st.dir*st.v*dt;const head=st.s*st.dir;if(!st.whistle&&head>-160){st.whistle=1;try{if(!(typeof ambTrainWhistle==='function'&&ambTrainWhistle(rl)))auSfx('whistle',1);}catch(_){}}

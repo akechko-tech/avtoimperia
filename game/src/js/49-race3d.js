@@ -60,6 +60,10 @@ function r3dField(T){
   // площадки под приметами (замок, башни): земля ровная вокруг, дальше плавно переходит в склон
   (T.lm||[]).forEach(lm=>{if(!lm.off)return;const k0=Math.round((lm.x-x0)/S),j0=Math.round((lm.z-z0)/S);if(k0<0||j0<0||k0>=nx||j0>=nz)return;const h0=H[j0*nx+k0],R0=lm.r*0.9,R1=lm.r*1.5,rc2=Math.ceil(R1/S);
     for(let j=Math.max(0,j0-rc2);j<=Math.min(nz-1,j0+rc2);j++)for(let k=Math.max(0,k0-rc2);k<=Math.min(nx-1,k0+rc2);k++){const q=j*nx+k,dd=Math.hypot(x0+k*S-lm.x,z0+j*S-lm.z),w=1-sstep(R0,R1,dd);if(w>0)H[q]+=(h0-H[q])*w;}});
+  // 0.30: дуэль с экспрессом — земля под насыпью ровная: по высоте рельсов, дальше плавно к склону
+  if(T.dxRail){const RP=T.dxRail.P,rr=Math.ceil(10/S);for(let k=0;k<RP.length-1;k++){const A=RP[k],B=RP[k+1],dx=B[0]-A[0],dz=B[2]-A[2],l2=dx*dx+dz*dz||1,ck=Math.round((A[0]-x0)/S),cj=Math.round((A[2]-z0)/S);
+    for(let j=Math.max(0,cj-rr);j<=Math.min(nz-1,cj+rr);j++)for(let kk=Math.max(0,ck-rr);kk<=Math.min(nx-1,ck+rr);kk++){const q=j*nx+kk,x=x0+kk*S,z=z0+j*S;let t=((x-A[0])*dx+(z-A[2])*dz)/l2;t=t<0?0:t>1?1:t;
+      const d=Math.hypot(A[0]+dx*t-x,A[2]+dz*t-z);if(d>10||D[q]<W/2+3)continue;const y=A[1]+(B[1]-A[1])*t-0.55,w=1-sstep(3.4,10,d);if(w>0)H[q]+=(y-H[q])*w;}}}
   for(let q=0;q<N;q++){let h=H[q];if(h>Cap[q])h=Cap[q];H[q]=h;G[q]=h-0.45*(1-sstep(W/2+13,W/2+20,D[q]));}
   const Fo={x0,z0,S,nx,nz,D,I,L,Sg,H,G,mount:alp,flat,beach,seed};carveField(T,Fo);
   return Fo;
@@ -446,7 +450,7 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
   const set=SCEN_SETS[R3.T.cfg.host],kinds=set.trees.filter(t=>t!=='palm'&&t!=='olive'&&t!=='cypress'),trees=new MB(),leaf=new MB(true),x0=F.x0+k0*F.S,z0=F.z0+j0*F.S,x1=x0+TS*F.S,z1=z0+TS*F.S,r=mulberry32(tx*7919+tz*104729),dens=gq().trees;
   const tunT=R3.T.tunnels&&R3.T.tunnels.length,tunFree=(x,z)=>{if(!tunT)return true;const k=Math.round((x-F.x0)/F.S),j=Math.round((z-F.z0)/F.S);if(k<0||j<0||k>=F.nx||j>=F.nz)return true;const q=j*F.nx+k,i=F.I[q];return !(i>=0&&tunNear(R3.T,i,4)&&F.D[q]<R3.T.W/2+44);};
   const wet=R3.T.real&&R3.T.real.wm&&R3.T.cfg.terr!=='beach'?(x,z)=>realWet(R3.T,x,z)>0.08:()=>false;
-  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z)||wet(x,z))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
+  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z)||wet(x,z))return;if(R3.T.dxRail&&dxRailNear(R3.T,x,z,5))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
   R3.forest.forEach(([fx,fz,fr])=>{if(fx+fr<x0||fx-fr>x1||fz+fr<z0||fz-fr>z1)return;const cnt=Math.round(fr*fr/90*dens);
     for(let q=0;q<cnt;q++){const a=r()*6.283,d=Math.sqrt(r())*fr,x=fx+Math.cos(a)*d,z=fz+Math.sin(a)*d;if(x<x0||x>=x1||z<z0||z>=z1)continue;if(fSample(F,F.D,x,z)<40||lmNear(x,z))continue;
       put(kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,fSample(F,F.G,x,z)-0.2,z,0.8+r()*0.45);}});
@@ -500,6 +504,8 @@ function r3dSetup(){
   // море у пляжа и берега: большая гладь чуть ниже дороги (земля к воде опускается)
   {const wm=r3dWaters(T);if(wm&&!R3.F.beach)R3.water=g3Mesh(wm);}
   {const rm=r3dRails(T);if(rm)R3.rails=g3Mesh(rm);}
+  // 0.30: дуэль с экспрессом — железная дорога вдоль всего шоссе (кусками: рисуем ближние)
+  if(T.dxRail)try{R3.dxRail=r3dDxRail(T);}catch(e){console.warn('dxRail3d',e);R3.dxRail=null;}
   try{r3dTunnels();}catch(e){console.warn('tunnels',e);R3.tuns=[];}
   if(R3.F.beach){const F=R3.F,mb=new MB();let lo=1e9;T.pts.forEach(p=>{lo=Math.min(lo,p[1]);});const y=lo-1.1;R3.beachY=y;const x0=F.x0-6000,z0=F.z0-6000,x1=F.x0+(F.nx-1)*F.S+6000,z1=F.z0+(F.nz-1)*F.S+6000,c=hex2rgb('#1f5a78');
     const N=10;for(let a=0;a<N;a++)for(let b=0;b<N;b++){const xa=x0+(x1-x0)*a/N,xb=x0+(x1-x0)*(a+1)/N,za=z0+(z1-z0)*b/N,zb=z0+(z1-z0)*(b+1)/N;mb.poly([[xa,y,za],[xb,y,za],[xb,y,zb],[xa,y,zb]],[0,1,0],c,MID.water);}
@@ -649,7 +655,7 @@ function r3dRender(dt){
   let P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.uniform4f(P.u.u_lamp,0,0,E.lamp,0);
   vis.forEach(([,ch])=>g3Draw(ch.lit));tiles.forEach(([,t])=>g3Draw(t.t));if(R3.startMesh)g3Draw(R3.startMesh);if(R3.rails)g3Draw(R3.rails);
   (R3.tuns||[]).forEach(t=>{if(t.m&&inFrustum(R3.fr,t.m.c,t.m.r))g3Draw(t.m);});
-  r3dTrainTick(dt);r3dTrainDraw(E,bw,bh);P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());
+  r3dTrainTick(dt);r3dTrainDraw(E,bw,bh);if(R.dx)try{r3dDxDraw(E,bw,bh,dt);}catch(e){console.warn('dx3d',e);}P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());
   // листва: карточки с прозрачностью (сглаженный край — «прозрачность в покрытие»)
   P=r3dUse('leaf',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
   gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);vis.forEach(([,ch])=>g3Draw(ch.leaf));tiles.forEach(([,t])=>g3Draw(t.l));(R3.tuns||[]).forEach(t=>{if(t.l&&inFrustum(R3.fr,t.l.c,t.l.r))g3Draw(t.l);});gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);
@@ -855,6 +861,6 @@ function r3dPeoplePatch(n){const P=R3.people,I=R3.pI;n=Math.min(n,P.length,I.max
 // Отказ 3D (потерян контекст и т.п.): дальше гонка рисуется по-старому
 function r3dFail(why){R3.on=false;R.gl=false;const cv=document.getElementById('rgl');if(cv)cv.hidden=true;const c2=document.getElementById('rcv');if(c2)c2.hidden=false;try{setupRender2d();}catch(_){}}
 function r3dDispose(){if(!R3.on)return;const gl=G3.gl;R3.on=false;if(gl&&!gl.isContextLost()){(R3.chunks||[]).forEach(ch=>{if(!ch)return;g3Free(ch.gnd);g3Free(ch.lit);g3Free(ch.leaf);ch.roads.forEach(r=>g3Free(r.m));});
-  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);(R3.tuns||[]).forEach(t=>{g3Free(t.m);g3Free(t.l);});g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
+  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);(R3.dxRail||[]).forEach(o=>g3Free(o.m));g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);(R3.tuns||[]).forEach(t=>{g3Free(t.m);g3Free(t.l);});g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
   [R3.texCM,R3.texSM,R3.texLab].forEach(t=>t&&gl.deleteTexture(t));if(R3.onDispose)try{R3.onDispose();}catch(_){}}
   const keep=['on'];Object.keys(R3).forEach(k=>{if(!keep.includes(k))delete R3[k];});}

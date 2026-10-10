@@ -165,7 +165,10 @@ const VGEN={
   y4:'Гоночные победы года: лучшая реклама, какую только можно купить.',
   y5:'Пресса назвала лучших — и ваша марка среди них.',
   y6:'А вот ваше место в гонке за наследие эпохи.',
-  y7:'Новый год — новые машины, новые гонки и новые рекорды.'};
+  y7:'Новый год — новые машины, новые гонки и новые рекорды.',
+  y8:'Пресса чествует чемпионов года: лучшую марку и лучшего гонщика.',
+  y9:'Чемпион года — ваша марка! Кубок едет домой, на завод.',
+  y10:'Гонщик года — ваш! Его имя повторяет вся страна.'};
 // 0.25: ролик о новой модели рассказывает о ней самой: мотор, коробка, рама, тормоза, колёса, кузов — у каждой детали свой голос и свой чертёж
 const PART_SAY={
   e1:'Под капотом — одноцилиндровый мотор Де Дион-Бутон в три лошадиные силы: самый ходовой мотор эпохи.',
@@ -250,7 +253,10 @@ function yearRecord(s,y){const R=s.yrec=s.yrec||{};
   const sold=had?sum:(s.peakLast||0);if(!had)bv=Math.min(bv,sold);
   let place=0,ahead='';try{const t=legacyTable(s);place=t.place;const a=t.rows[t.place-2];ahead=a?a.n:'';}catch(e){}
   const flv=FLAVOR.filter(f=>f[0]===y&&f[3]&&IMG[f[3]]).slice(-2).map(f=>f[2]);
-  R[y]={sold,rank:s.lastRank&&s.lastRank<99?s.lastRank:0,wins:wins.slice(0,4),nw:wins.length,pod,top:best?best.id:null,topN:bv,
+  // 0.30: чемпионы года — марка (зачёт прессы, чемпионат мира, AAA) и гонщик года
+  const champ=[];Object.keys(s.season||{}).forEach(k=>{const ch=s.season[k];if(!ch||!ch.done||!ch.win)return;const id=Object.keys(CHAMPS).find(q=>k===champKey(q,y));if(!id)return;champ.push({name:CHAMPS[id].name(y),win:ch.win,you:ch.win===s.company?1:0});});
+  const D=s.dch&&s.dch[y],dch=D&&D.done&&D.win?{n:D.win,mq:D.wmq||'',id:D.wid||'',mine:D.mine?1:0,w:((dchTable(s,y)[0])||{}).w||0}:null;
+  R[y]={sold,rank:s.lastRank&&s.lastRank<99?s.lastRank:0,wins:wins.slice(0,4),nw:wins.length,pod,top:best?best.id:null,topN:bv,champ:champ.slice(0,2),dch,
     titles:(s.kings&&s.kings.y===y?s.kings.mine:[]).slice(),place,ahead,flv};
   Object.keys(R).forEach(k=>{if(+k<y-40)delete R[k];});}
 const capF=t=>t.charAt(0).toUpperCase()+t.slice(1);
@@ -262,6 +268,11 @@ function reelYear(y,s){const r=(s.yrec||{})[y];if(!r)return null;const md=r.top!
     if(r.nw>2)sh.push({c:`Всего ${r.nw} ${plural(r.nw,'победа','победы','побед')} за год`,s:'гоночная слава продаёт машины'});}
   else if(r.pod)sh.push({c:`${r.pod} ${plural(r.pod,'подиум','подиума','подиумов')} в гонках`,s:'первая победа — впереди'});
   if(r.titles.length)sh.push({c:'👑 '+r.titles.map(capF).join(' · '),s:'титулы года по версии прессы',say:VGEN.y5});
+  // 0.30: чествуем чемпионов года: марку и гонщика (ваших — с машиной и фанфарами в титре)
+  if((r.champ&&r.champ.length)||r.dch){const mine=(r.champ||[]).some(c=>c.you),dm=r.dch&&r.dch.mine;let said=0;
+    (r.champ||[]).forEach(c=>{sh.push(c.you&&md?{car:md,yaw:0.4,cap:`🏆 Чемпион года — «${s.company}»! · ${c.name}`,say:VGEN.y9}:{v:'race_run',cap:`🏆 Чемпион года: ${c.win} · ${c.name}`,say:said++?'':VGEN.y8});});
+    if(r.dch){const d=DRIVERS.find(x=>x.id===r.dch.id),w=d&&DRIVER_WIKI[d.id]&&IMG[DRIVER_WIKI[d.id]]?DRIVER_WIKI[d.id]:'',cap=`🏁 Гонщик года: ${r.dch.n}${r.dch.mq?' · '+r.dch.mq:''}${r.dch.w?` · ${r.dch.w} ${plural(r.dch.w,'победа','победы','побед')}`:''}`;
+      sh.push(w?{i:w,cap,say:dm?VGEN.y10:(!mine&&!said?VGEN.y8:'')}:{c:cap,s:dm?'ваш гонщик — лучший за рулём':'лучший гонщик сезона по версии прессы',say:dm?VGEN.y10:''});}}
   (r.flv||[]).slice(0,1).forEach(t=>{const f=flvByTitle(t);if(f)sh.push({i:f[3],cap:t});});
   if(r.place)sh.push({c:`Наследие: ${r.place}-е место`,s:r.place===1?'«{co}» — первая среди великих марок':r.ahead?`впереди — ${r.ahead}`:'',say:VGEN.y6});
   sh.push({c:String(y+1),s:'Новый год — новые машины, гонки и рекорды',say:VGEN.y7});

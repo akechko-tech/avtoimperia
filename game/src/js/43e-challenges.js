@@ -46,6 +46,13 @@ const MATCH_VENUES=[
     hist:'В Брешии с начала века устраивают «автомобильные недели»: на прямых дорогах Ломбардии меряются скоростью и спорят на деньги.'},
   {id:'m_monza',c:'it',k:'both',y0:1922,y1:1929,t:'circuit',track:'monza',real:'monza',km:10,lap:10,name:'Монца',where:'под Миланом',
     hist:'Автодром в королевском парке под Миланом: дорожное кольцо и скоростной овал с виражами.'}];
+// 0.30: споры о подъёме в гору — рекорд горы (каждый едет один, на время); в каждой стране — своя знаменитая гора
+MATCH_VENUES.push(
+  {id:'h_gaillon',c:'fr',k:'record',y0:1899,y1:1912,t:'hill',terr:'macadam',km:1,name:'Подъём Гайон',where:'Нормандия',hist:'Прямой километровый подъём у Гайона, над долиной Сены: с 1899 года сюда ездят ставить рекорды скорости в гору — и заводы, и богатые любители.'},
+  {id:'h_shelsley',c:'uk',k:'record',y0:1905,y1:1929,t:'hill',real:'shelsley',km:0.914,name:'Шелсли-Уолш',where:'Вустершир',hist:'Короткий крутой подъём в Вустершире — старейшая в мире трасса гонок в гору: с 1905 года здесь каждый год спорят, чья машина сильнее.'},
+  {id:'h_kessel',c:'de',k:'record',y0:1905,y1:1929,t:'hill',real:'kesselberg',km:5,name:'Кессельберг',where:'Бавария',hist:'Серпантин над озером Кохельзе в Баварских Альпах: с 1905 года — гонки в гору и споры о рекорде.'},
+  {id:'h_susa',c:'it',k:'record',y0:1902,y1:1929,t:'hill',terr:'mount',km:22,name:'Суза — Мон-Сени',where:'Пьемонт',hist:'Подъём от Сузы к перевалу Мон-Сени — одна из первых горных гонок Италии, с 1902 года.'},
+  {id:'h_washington',c:'us',k:'record',y0:1904,y1:1929,t:'hill',terr:'mount',km:12,name:'Гора Вашингтон',where:'Нью-Гэмпшир',hist:'«Восхождение к облакам»: гонка по горной дороге на вершину горы Вашингтон, впервые — в июле 1904 года.'});
 // настоящая местность для матчей — те же файлы, что у гонок календаря
 MATCH_VENUES.forEach(v=>{if(v.real&&typeof REAL_RACES!=='undefined')REAL_RACES[v.id]={d:v.real};});
 // мировой рекорд скорости (км/ч) — с какого времени [год+месяц/12, км/ч, кто]
@@ -78,17 +85,17 @@ function racePrizeOf(t,c,y){return racePrizeBase({t,c,y,major:0});}
 // предложение: матч-гонка (kind='match') или спор о скорости (kind='record')
 function offerMatch(s,kind){const r=chalRnd(s,kind);if(!raceCarsFor(s).some(m=>!isTruck(m)))return null;
   const V=MATCH_VENUES.filter(v=>(v.k===kind||v.k==='both')&&s.y>=v.y0-1&&s.y<=v.y1&&(v.c===s.country||dealerCount(s,v.c)>0)&&!warCut(s,v.c));
-  if(!V.length)return null;const v=V.find(x=>x.c===s.country&&r()<0.75)||V[Math.floor(r()*V.length)],w=matchWhen(s,v,r);if(!w)return null;
+  if(!V.length)return null;const VH=V.filter(x=>x.c===s.country),VF=V.filter(x=>x.c!==s.country),v=VH.length&&(r()<0.55||!VF.length)?VH[Math.floor(r()*VH.length)]:VF.length?VF[Math.floor(r()*VF.length)]:V[0],w=matchWhen(s,v,r);if(!w)return null;
   const T=matchTeams(s,v.c,w.y);if(!T.length)return null;const t=T[Math.floor(r()*Math.min(3,T.length))],d=matchDriver(s,t,w.y);
-  const rec=kind==='record',sprint=v.t==='sprint',key=(rec?'rec-':'match-')+v.id+'-'+w.T;
+  const rec=kind==='record',sprint=v.t==='sprint',hill=v.t==='hill',key=(rec?'rec-':'match-')+v.id+'-'+w.T;
   const stake=Math.max(100,Math.round(racePrizeOf(v.t==='sprint'?'oval':v.t,v.c,w.y)*(rec?0.5:0.7)/50)*50);
-  const name=rec?(sprint?`${v.km<1.5?'Километр':'Миля'} с хода: ${v.name}`:`Рекорд круга: ${v.name}`):`Матч-гонка: ${v.name}`;
-  const rc={id:v.id,key,y:w.y,m:w.m,c:v.c,host:v.host||v.c,t:v.t,track:v.track,terr:v.terr,km:rec&&!sprint?(v.lap||v.km):v.km,laps:rec&&!sprint?1:0,name,hist:v.hist,img:'',match:1,kind,
+  const name=rec?(sprint?`${v.km<1.5?'Километр':'Миля'} с хода: ${v.name}`:hill?`Рекорд горы: ${v.name}`:`Рекорд круга: ${v.name}`):`Матч-гонка: ${v.name}`;
+  const rc={id:v.id,key,y:w.y,m:w.m,c:v.c,host:v.host||v.c,t:v.t,track:v.track,terr:v.terr,km:rec&&!sprint&&!hill?(v.lap||v.km):v.km,laps:rec&&!sprint?1:0,name,hist:v.hist,img:'',match:1,kind,
     purse:Math.round(stake*0.25/10)*10,dnfK:rec?0.3:0.45,venue:v.name,where:v.where,
     scn:rec?{st:'solo',gap:sprint?10:14,h0:sprint?9:11,span:0.4,gt:sprint?'каждый едет один, на время: разгон и мерный участок':'каждый едет один, на время',b:sprint?'Мерный участок размечен флажками, у его концов — хронометристы с секундомерами. Соперник уходит первым.':'Хронометристы засекают круг от линии до линии. Соперник уходит первым.'}:{st:'grid',h0:15,span:0.6,b:v.t==='road'?'Две машины рядом на шоссе, судья с флагом. Зрители стоят вдоль обочин до самого финиша.':'Две машины рядом на старте, судья с флагом, полные трибуны.'},
     rv:{n:t.n,c:t.c,str:t.str||0.95,mq:t.mq||[t.n],drv:d?d.id:'',dn:d?d.n:''}};
   const C={type:kind,rk:key,rc,mq:t.n,x:stakeExtra(s,t.n,'b'+kind)};
-  return {id:kind,kind,title:`${MATCH_ST[kind]} с ${t.n}: ${v.name}`,sub:`${MONTHS[w.m]} ${w.y} · ${rec?(sprint?'каждый едет один, на время':'лучшее время круга'):'одна машина против одной'}${d?' · у соперника — '+d.n:''}`,stake,C};}
+  return {id:kind,kind,title:`${MATCH_ST[kind]} с ${t.n}: ${v.name}`,sub:`${MONTHS[w.m]} ${w.y} · ${rec?(sprint?'каждый едет один, на время':hill?'лучшее время подъёма':'лучшее время круга'):'одна машина против одной'}${d?' · у соперника — '+d.n:''}`,stake,C};}
 /* ---------- продажи класса: дома и на экспортном рынке, за квартал, полгода или до конца года ---------- */
 const HC_STEPS=[1/4,1/3,1/2,1,2,3,4,5,8,10];
 function hcText(hc){return hc===1?'':hc>1?`фора: нужно продать больше, чем у соперника ×${hc}`:`фора вам: хватит больше ${hc===0.5?'половины':hc===1/3?'трети':'четверти'} продаж соперника`;}
@@ -144,10 +151,10 @@ function offerRace(s){const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+4
   return {id:'race',kind:'race',title:`Пари с ${t.n}: «${rc.name}»`,sub:`${MONTHS[rc.m]} ${rc.y} · ваша лучшая машина должна финишировать выше лучшей ${t.n}`,stake:Math.max(100,Math.round(racePrize(rc)*0.6/50)*50),C:{type:'race',rk:rc.key,mq:t.n,x:stakeExtra(s,t.n,'b')}};}
 // все вызовы, что можно взять (доска) или получить из газет
 function chalOffers(s){const out=[];if(!s||s.over||s.chal)return out;
-  [()=>offerRace(s),()=>offerMatch(s,'match'),()=>offerMatch(s,'record'),()=>offerSales(s,false),()=>offerSales(s,true),()=>offerTrial(s)].forEach(f=>{try{const o=f();if(o)out.push(o);}catch(e){console.warn('offer',e);}});
+  [()=>offerRace(s),()=>offerMatch(s,'match'),()=>offerMatch(s,'record'),()=>offerSales(s,false),()=>offerSales(s,true),()=>offerTrial(s),()=>offerEleg(s),()=>offerExped(s)].forEach(f=>{try{const o=f();if(o)out.push(o);}catch(e){console.warn('offer',e);}});
   return out;}
 /* ---------- вызов из газеты: соперник сам предлагает пари ---------- */
-const CHAL_W={race:1,match:1.3,record:0.9,sales:1.1,export:0.8,trial:0.9};
+const CHAL_W={race:1,match:1.3,record:0.9,sales:1.1,export:0.8,trial:0.9,eleg:0.8,exped:0.6};
 function chalCheck(s){
   if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<4||Math.random()>0.25)return;
   const O=chalOffers(s);if(!O.length)return;const last=s.chalKind||'';
@@ -163,7 +170,7 @@ function chalNewsText(s,C,who,xs){const st=stakeText(C);
     return {verb:'бросает вызов',deck:`Пари на ${st}: чья машина будет выше в гонке «${rc.name}»`,
       text:`${who} заявил газетам: «Машины "${s.company}" хороши только на афишах. Пусть приедут на "${rc.name}" в ${MONTHS_P[rc.m]} — посмотрим, кто кого!» Он предлагает пари на ${money(C.stake)}: чья лучшая машина финиширует выше, тот и забирает деньги.${xs}\nПринять вызов — значит заявить команду на эту гонку и обогнать лучшую машину ${C.mq}. Победа в пари — слава в газетах и радость гонщиков; проигрыш или неявка — удар по репутации. Отказ газеты тоже заметят.`};}
   if(C.type==='match'||C.type==='record'){const rc=C.rc,rec=C.type==='record',sprint=rc.t==='sprint',dn=rc.rv&&rc.rv.dn;
-    return {verb:rec?'спорит о скорости с':'вызывает на матч',deck:`${rc.venue}, ${MONTHS_N[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок, каждый один':'рекорд круга'):'один на один'} · ставка ${st}`,
+    return {verb:rec?'спорит о скорости с':'вызывает на матч',deck:`${rc.venue}, ${MONTHS_N[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок, каждый один':rc.t==='hill'?'рекорд горы':'рекорд круга'):'один на один'} · ставка ${st}`,
       text:`${who} заявил газетам: ${rec?`«Говорят, машины "${s.company}" быстры. Проверим: ${rc.venue}, каждый едет один, на время. Чья скорость выше — тот и прав».`:`«Хватит прятаться в общей толпе. Одна моя машина против одной вашей — ${rc.venue}, ${fmtN(rc.km)} км. Кто первым на финише — тот и прав».`}${dn?` За руль у них сядет ${dn}.`:''} Ставка — ${money(C.stake)}${rc.purse?`, победителю — ещё и сбор с трибун (${money(rc.purse)})`:''}.${xs}\n${rc.hist}\nПринять вызов — выставить одну машину и пилота (можно сесть за руль самому) в ${MONTHS_P[rc.m]}${rc.y!==s.y?' '+rc.y+' года':''}: вкладка «Гонки». Не приедете — пари проиграно.`};}
   if(C.type==='sales'){const home=C.c===s.country,mk=s.last&&s.last.mk&&s.last.mk[C.c],you=(mk&&mk.segs&&mk.segs[C.g]&&mk.segs[C.g].you)||0,per=C.per==='year'?`до Рождества`:`за ${C.per} ${plural(C.per,'месяц','месяца','месяцев')}`;
     return {verb:'бросает вызов',deck:`Кто продаст больше машин класса «${SEG[C.g].name}»${home?'':' — '+COUNTRIES[C.c].name} ${C.per==='year'?'до конца '+C.y+' года':per} · ставка ${st}`,
@@ -171,18 +178,21 @@ function chalNewsText(s,C,who,xs){const st=stakeText(C);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md),rv=trialRival(s,C);
     return {verb:'бросает вызов',deck:`Пробег ${C.route}: ${fmtN(C.km)} км · ставка ${st}`,
       text:`${who} заявил газетам: «Наши машины прочнее. Пусть "${s.company}" выставит свою серийную машину — пройдём ${C.route}, и судьи сосчитают поломки». От «${s.company}» поедет «${md?md.name:'—'}», от ${C.mq} — ${rv.name}. Кто меньше ломался, тот и выиграл, при равенстве — кто быстрее.${xs}\n${C.rh?C.rh+'\n':''}Старт — в ${MONTHS_P[s.m]}, итоги — через ${C.end-mi(s)===1?'месяц':'два месяца'}. Машину для пробега можно сменить на вкладке «Рынок».`};}
+  if(C.type==='eleg'||C.type==='exped')return chalNewsText30(s,C,who,xs,st);
   return {verb:'бросает вызов',deck:'',text:''};}
 // принять вызов (drvResolve → chalYes): у новых видов — свой учёт
 function chalAccept(s,C){
   if(C.type==='sales'&&C.mon){C.start=mi(s);C.end=Math.max(C.end,mi(s)+1);C.you=0;C.them=0;C.n=0;
     addLog(`Вызов принят: кто продаст больше машин класса «${SEG[C.g].name}»${C.c===s.country?'':' ('+COUNTRIES[C.c].name+')'} ${chalPerText(C)} — «${s.company}» или ${C.mq}${C.hc!==1?` (${hcText(C.hc)})`:''}. Пари ${money(C.stake)}.`,'good');return true;}
   if(C.type==='match'||C.type==='record'){const rc=C.rc;addLog(`Вызов принят: ${MATCH_ST[C.type].toLowerCase()} с ${C.mq} — ${rc.venue}, ${MONTHS[rc.m]} ${rc.y}. Пари ${money(C.stake)}. Выставьте машину на вкладке «Гонки».`,'good');return true;}
+  if(C.type==='eleg'||C.type==='exped')return chalAccept30(s,C);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md);addLog(`Вызов принят: пробег ${C.route} (${fmtN(C.km)} км) — «${md?md.name:''}» против ${C.mq}. Пари ${money(C.stake)}.`,'good');return true;}
   return false;}
 /* ---------- месячный учёт: открытие матча, неявка, итоги продаж и пробега ---------- */
 function chalMonth(s){const C=s.chal;if(!C||!C.acc)return;const t=mi(s);
   if(C.type==='sales'&&C.mon){if(t>=C.end)chalSalesMon(s);return;}
   if(C.type==='trial'){if(t>=C.end)trialResolve(s);return;}
+  if(C.type==='eleg'){if(t>=C.end)elegResolve(s);return;}if(C.type==='exped'){if(t>=C.end)expedResolve(s);return;}
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m;
     if(t>T){matchForfeit(s);return;}
     if(t>=T-1&&C.said!==t){C.said=t;addLog(`⚔️ ${MATCH_ST[C.type]} с ${C.mq}: ${rc.venue}, ${MONTHS[rc.m]} — выставьте машину на вкладке «Гонки».`,'good');pendingToasts.push(`⚔️ ${MATCH_ST[C.type]}: вкладка «Гонки»`);}}}
@@ -248,11 +258,12 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m,t=mi(s),open=t>=T-1&&t<=T,rs=matchRivalStats(rc),rec=C.type==='record',sprint=rc.t==='sprint';
     return `<section class="card chal"><div class="row"><span class="label">⚔️ ${MATCH_ST[C.type]}</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
       <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
-      <p class="small" style="margin-top:4px">${esc(rc.venue)} (${esc(rc.where)}) · ${MONTHS[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок: каждый едет один, на время':'рекорд круга: каждый едет один, на время'):`один на один, ${fmtN(rc.km)} км`}${rc.purse?` · победителю — ещё сбор с трибун ${money(rc.purse)}`:''}</p>
+      <p class="small" style="margin-top:4px">${esc(rc.venue)} (${esc(rc.where)}) · ${MONTHS[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок: каждый едет один, на время':rc.t==='hill'?'рекорд горы: каждый едет один, на время, от подножия до вершины':'рекорд круга: каждый едет один, на время'):`один на один, ${fmtN(rc.km)} км`}${rc.purse?` · победителю — ещё сбор с трибун ${money(rc.purse)}`:''}</p>
       <p class="small muted" style="margin-top:4px">У соперника: заводская гоночная машина ≈${rs.hp} л.с., до ${rs.kmh} км/ч${rc.rv.dn?` · за рулём ${esc(rc.rv.dn)}`:''}.</p>
       <p class="small muted" style="margin-top:4px">${esc(rc.hist)}</p>
       ${open?`<button class="btn primary block" style="margin-top:8px" data-act="raceSetup" data-k="${esc(rc.key)}" ${s.pending.length?'disabled':''}>Выставить машину</button><p class="small warn" style="margin-top:4px">${t===T?'Последний месяц: не приедете — пари проиграно.':'Запись открыта — заезд можно провести в этом месяце или в следующем.'}</p>`
         :`<p class="small" style="margin-top:6px">Запись откроется в ${MONTHS_P[(T-1+1200)%12]}.</p>`}</section>`;}
+  if(C.type==='eleg'||C.type==='exped')return chalCard30(s,C,scT);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md),rv=trialRival(s,C),cars=trialCars(s,C.g),rel=m=>Math.round(carBase(m,0,s.y).rel*100),rr=Math.round(carBase(rv.md,0,s.y).rel*100);
     return `<section class="card chal"><div class="row"><span class="label">⚔️ Пробег на надёжность</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
       <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
@@ -272,7 +283,7 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
 Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||C.type!=='trial')return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`На пробег поедет «${m.name}»`);rerender();}});
 // название события для газеты и трофея
 function chalEvName(s,C,rc){if(C.type==='race')return rc?rc.name:'';if(C.type==='match')return `матч-гонка: ${C.rc.venue}`;if(C.type==='record')return `спор о скорости: ${C.rc.venue}`;
-  if(C.type==='trial')return `пробег ${C.route}`;if(C.type==='sales')return `продажи класса «${SEG[C.g].name}»${C.c&&C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''}`;return '';}
+  if(C.type==='trial')return `пробег ${C.route}`;if(C.type==='eleg')return `конкурс элегантности: ${C.venue}`;if(C.type==='exped')return `экспедиция ${C.route}`;if(C.type==='sales')return `продажи класса «${SEG[C.g].name}»${C.c&&C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''}`;return '';}
 // реванш: тот же вид вызова, ставка в полтора раза выше
 function chalRevenge(s,O){const B=O.base;if(!B)return false;
   if(B.type==='match'||B.type==='record'){const o=offerMatch(s,B.type);if(!o){addLog(`Реванш с ${O.mq} отложен: в ближайшие месяцы негде выйти один на один.`);return false;}

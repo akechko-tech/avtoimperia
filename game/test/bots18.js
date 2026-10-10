@@ -98,6 +98,8 @@ function debtMonth(act){const L=G.last;
 function pickChoice(ev){const K=ev.choices.map(c=>c[1]);
   // 0.30: сделки и предложения (продать компанию, долю, переговоры, торги) боты не принимают — для сравнения с прошлыми версиями
   if(K.some(k=>/^ma:/.test(k)))return K.find(k=>/^ma:\w+:N|^ma:aucSkip|^ok$/.test(k))||K[K.length-1];
+  // 0.30: дуэль вживую — боты не ездят сами, едет шофёр (быстрый итог)
+  if(K.includes('dxSim'))return 'dxSim';
   // 0.24: на гонку, матч и спор о скорости простые боты тоже не соглашаются — они не ездят, а неявка стоит ставки и репутации
   if(BOT!=='strong'&&BOT!=='debt'){if(K.includes('chalNo')&&G.chal&&['race','match','record'].includes(G.chal.type))return 'chalNo';return K[0];}
   // заказ: только если цена покрывает себестоимость с запасом и есть деньги на выпуск

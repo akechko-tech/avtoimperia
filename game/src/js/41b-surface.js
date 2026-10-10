@@ -146,8 +146,8 @@ function dropUnder(c,trk,lat){const W=trk.W;if(Math.abs(lat)<W/2+1.5)return 0;
 /* ---------- поезд и шлагбаум ---------- */
 // Состав: паровоз, тендер и четыре вагона — около 56 м
 function trainSpan(rl){const st=rl.st;if(!st||st.state!==1)return null;const len=56;return {a:Math.min(st.s,st.s-st.dir*len),b:Math.max(st.s,st.s-st.dir*len)};}
-function trainCheck(c,trk){if(!trk.rails||!trk.rails.length||c.dnf||c.fin!==null)return;
-  for(const rl of trk.rails){let di=rl.i-c.idx;if(trk.closed)di=((di%trk.n)+trk.n*1.5)%trk.n-trk.n/2;if(Math.abs(di)*trk.step>60)continue;
+function trainCheck(c,trk){if(!trk.rails||!trk.rails.length||c.dnf||c.fin!==null)return;if(trk.rails.every(q=>q.duel))return;
+  for(const rl of trk.rails){if(rl.duel)continue;let di=rl.i-c.idx;if(trk.closed)di=((di%trk.n)+trk.n*1.5)%trk.n-trk.n/2;if(Math.abs(di)*trk.step>60)continue;
     const L=railLine(trk,rl),dx=c.x-L.p[0],dz=c.z-L.p[2],s=dx*L.d[0]+dz*L.d[1],e=dx*L.d[1]-dz*L.d[0],ae=Math.abs(e),sp=trainSpan(rl);
     // сам поезд: вагоны шириной ~3 м — пройти сквозь нельзя; удар отбрасывает машину от путей
     if(sp&&ae<2.7&&s>sp.a-1.2&&s<sp.b+1.2){if(!c.trainHit){c.trainHit=1;crashNote(c,Math.max(Math.hypot(c.vx,c.vy),rl.st.v*0.6,9),'train');}

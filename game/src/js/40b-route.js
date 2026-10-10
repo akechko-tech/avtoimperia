@@ -35,19 +35,22 @@ function planRoute(trk,rnd){
     else put(RSEG.village,n-40,n-1);
     const step=420+Math.floor(r()*180);for(let j=(closed?s0+160:s0+step);j<(closed?n-120:f0-160);j+=step+Math.floor(r()*120)){if(mount&&S[j]===RSEG.serp)continue;put(RSEG.town,j,j+50+Math.floor(r()*30),{cap:'Городок: узкая улица, мостовая, зрители у домов'});}}
   // 3) мост через реку: прямой участок в полях или лесу, не у старта
-  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=placeWater(rc,cfg.host).rv;
+  const dxT=rc.dx==='train',riverN=dxT?0:mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=placeWater(rc,cfg.host).rv;
   for(let k=0;k<riverN;k++){for(let t=0;t<40;t++){const j=(closed?s0+100:s0+80)+Math.floor(r()*((closed?n-200:f0-s0-200)));
       if(j<2||j>n-40||curvy(j-20,40)>1/120)continue;let ok=true;for(let a=j-30;a<=j+30;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       const span=9+Math.floor(r()*4),nm=rn[Math.floor(r()*rn.length)];put(RSEG.bridge,j-span,j+span,{cap:`Мост через ${nm}`,alt:34,w:3});for(let a=j-span;a<=j+span;a++)trk.bridge[a]=1;
       trk.rivers.push({i:j,w:14+r()*10,d:4.5+r()*2,ph:r()*6.28,name:nm});break;}}
   // 4) железнодорожный переезд: поезд может пройти перед самым носом
-  if(rc.y>=1880&&!hill&&n>380){for(let t=0;t<40;t++){const j=(closed?s0+60:s0+60)+Math.floor(r()*((closed?n-120:f0-s0-120)));
+  // 0.30: дуэль с экспрессом — рельсы пересекают шоссе на двух третях пути (переезд со шлагбаумом)
+  if(dxT){const j0=s0+Math.round((f0-s0)*0.66),span=Math.round((f0-s0)*0.12);let jb=j0;for(let d=0;d<span;d++){let hit=false;for(const sg of [1,-1]){const j=j0+sg*d;if(j<s0+60||j>f0-60||curvy(j-15,30)>1/200)continue;let ok=true;for(let a=j-25;a<=j+25;a++)if(S[a]===RSEG.town||S[a]===RSEG.bridge)ok=false;if(ok){jb=j;hit=true;break;}}if(hit)break;}
+    put(RSEG.rail,jb-6,jb+6,{cap:'Переезд: рельсы пересекают шоссе — кто первым, паровоз или вы?',alt:26,w:2});trk.rails.push({i:jb,ang:0,duel:1});}
+  else if(rc.y>=1880&&!hill&&n>380){for(let t=0;t<40;t++){const j=(closed?s0+60:s0+60)+Math.floor(r()*((closed?n-120:f0-s0-120)));
       if(j<2||j>n-30||curvy(j-15,30)>1/200)continue;let ok=true;for(let a=j-25;a<=j+25;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       put(RSEG.rail,j-6,j+6,{cap:'Железнодорожный переезд: смотрите на шлагбаум',alt:26,w:2});trk.rails.push({i:j,ang:(r()-0.5)*0.5});break;}}
   // 5) берег моря: дорога вдоль воды (Ривьера, Сицилия, Испания, Ла-Манш)
   const sea=!!set.sea||['targa','mc','x22765'].includes(rc.track)||/turbie|monte|nice|riviera|sitges|coppa|florio|boulogne|dieppe|brighton|bexhill/i.test(rc.id+' '+rc.name);
   let yMin=1e9;trk.pts.forEach(p=>{yMin=Math.min(yMin,p[1]);});
-  if(sea&&n>300&&!hill){for(let t=0;t<40;t++){const len=120+Math.floor(r()*90),j=(closed?60:s0+100)+Math.floor(r()*Math.max(1,(closed?n-len-120:f0-s0-len-160)));
+  if(sea&&n>300&&!hill&&!dxT){for(let t=0;t<40;t++){const len=120+Math.floor(r()*90),j=(closed?60:s0+100)+Math.floor(r()*Math.max(1,(closed?n-len-120:f0-s0-len-160)));
       let ok=true,lo=1e9,hi=-1e9;for(let a=j;a<j+len;a++){if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail)ok=false;else{lo=Math.min(lo,trk.pts[a][1]);hi=Math.max(hi,trk.pts[a][1]);}}
       // у моря дорога идёт низко и ровно: вода — ниже всей трассы
       if(!ok||lo>yMin+9||hi-lo>14)continue;

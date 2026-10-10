@@ -796,6 +796,12 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .neg-say.counter{color:var(--brass)}
 .neg-say.low,.neg-say.no{color:var(--bad)}
 .deal-row .btns{display:flex;flex-wrap:wrap;gap:6px}
+
+/* 0.30: дуэль — кто впереди */
+.r-dx{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:6;min-width:230px;max-width:86vw;padding:6px 10px 8px;border-radius:9px;background:rgba(5,12,22,.55);color:#f3e9d2;font-size:13px;text-align:center;pointer-events:none}
+.r-dx b{display:block;font-weight:600;letter-spacing:.02em}.r-dx .dxbar{position:relative;height:6px;margin:7px 6px 2px;border-radius:3px;background:rgba(255,255,255,.18)}
+.r-dx .dxbar i{position:absolute;top:-9px;transform:translateX(-50%);font-style:normal;font-size:14px;line-height:1;transition:left .4s linear}.r-dx .dxbar i.me{top:-8px}
+#raceScreen.filming .r-dx,#raceScreen.demo .r-dx{display:none}
 </style>
 
 <div class="wrap" hidden>
@@ -3202,6 +3208,7 @@ function resolve(key){
   if(/^cc:/.test(key))chanceResolve(s,key);if(key==='brandGo'){try{tab='market';}catch(_){}}
   if(/^ma:/.test(key)&&maResolve(s,key))return;
   if(key==='dxYes'||key==='dxNo')dxAnswer(s,key);
+  if(key==='dxDrive'){s.pending.shift();save();render();dxToday(s,key);return;}if(key==='dxSim')dxToday(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
@@ -6291,7 +6298,10 @@ const VGEN={
   y4:'Гоночные победы года: лучшая реклама, какую только можно купить.',
   y5:'Пресса назвала лучших — и ваша марка среди них.',
   y6:'А вот ваше место в гонке за наследие эпохи.',
-  y7:'Новый год — новые машины, новые гонки и новые рекорды.'};
+  y7:'Новый год — новые машины, новые гонки и новые рекорды.',
+  y8:'Пресса чествует чемпионов года: лучшую марку и лучшего гонщика.',
+  y9:'Чемпион года — ваша марка! Кубок едет домой, на завод.',
+  y10:'Гонщик года — ваш! Его имя повторяет вся страна.'};
 // 0.25: ролик о новой модели рассказывает о ней самой: мотор, коробка, рама, тормоза, колёса, кузов — у каждой детали свой голос и свой чертёж
 const PART_SAY={
   e1:'Под капотом — одноцилиндровый мотор Де Дион-Бутон в три лошадиные силы: самый ходовой мотор эпохи.',
@@ -6376,7 +6386,10 @@ function yearRecord(s,y){const R=s.yrec=s.yrec||{};
   const sold=had?sum:(s.peakLast||0);if(!had)bv=Math.min(bv,sold);
   let place=0,ahead='';try{const t=legacyTable(s);place=t.place;const a=t.rows[t.place-2];ahead=a?a.n:'';}catch(e){}
   const flv=FLAVOR.filter(f=>f[0]===y&&f[3]&&IMG[f[3]]).slice(-2).map(f=>f[2]);
-  R[y]={sold,rank:s.lastRank&&s.lastRank<99?s.lastRank:0,wins:wins.slice(0,4),nw:wins.length,pod,top:best?best.id:null,topN:bv,
+  // 0.30: чемпионы года — марка (зачёт прессы, чемпионат мира, AAA) и гонщик года
+  const champ=[];Object.keys(s.season||{}).forEach(k=>{const ch=s.season[k];if(!ch||!ch.done||!ch.win)return;const id=Object.keys(CHAMPS).find(q=>k===champKey(q,y));if(!id)return;champ.push({name:CHAMPS[id].name(y),win:ch.win,you:ch.win===s.company?1:0});});
+  const D=s.dch&&s.dch[y],dch=D&&D.done&&D.win?{n:D.win,mq:D.wmq||'',id:D.wid||'',mine:D.mine?1:0,w:((dchTable(s,y)[0])||{}).w||0}:null;
+  R[y]={sold,rank:s.lastRank&&s.lastRank<99?s.lastRank:0,wins:wins.slice(0,4),nw:wins.length,pod,top:best?best.id:null,topN:bv,champ:champ.slice(0,2),dch,
     titles:(s.kings&&s.kings.y===y?s.kings.mine:[]).slice(),place,ahead,flv};
   Object.keys(R).forEach(k=>{if(+k<y-40)delete R[k];});}
 const capF=t=>t.charAt(0).toUpperCase()+t.slice(1);
@@ -6388,6 +6401,11 @@ function reelYear(y,s){const r=(s.yrec||{})[y];if(!r)return null;const md=r.top!
     if(r.nw>2)sh.push({c:`Всего ${r.nw} ${plural(r.nw,'победа','победы','побед')} за год`,s:'гоночная слава продаёт машины'});}
   else if(r.pod)sh.push({c:`${r.pod} ${plural(r.pod,'подиум','подиума','подиумов')} в гонках`,s:'первая победа — впереди'});
   if(r.titles.length)sh.push({c:'👑 '+r.titles.map(capF).join(' · '),s:'титулы года по версии прессы',say:VGEN.y5});
+  // 0.30: чествуем чемпионов года: марку и гонщика (ваших — с машиной и фанфарами в титре)
+  if((r.champ&&r.champ.length)||r.dch){const mine=(r.champ||[]).some(c=>c.you),dm=r.dch&&r.dch.mine;let said=0;
+    (r.champ||[]).forEach(c=>{sh.push(c.you&&md?{car:md,yaw:0.4,cap:`🏆 Чемпион года — «${s.company}»! · ${c.name}`,say:VGEN.y9}:{v:'race_run',cap:`🏆 Чемпион года: ${c.win} · ${c.name}`,say:said++?'':VGEN.y8});});
+    if(r.dch){const d=DRIVERS.find(x=>x.id===r.dch.id),w=d&&DRIVER_WIKI[d.id]&&IMG[DRIVER_WIKI[d.id]]?DRIVER_WIKI[d.id]:'',cap=`🏁 Гонщик года: ${r.dch.n}${r.dch.mq?' · '+r.dch.mq:''}${r.dch.w?` · ${r.dch.w} ${plural(r.dch.w,'победа','победы','побед')}`:''}`;
+      sh.push(w?{i:w,cap,say:dm?VGEN.y10:(!mine&&!said?VGEN.y8:'')}:{c:cap,s:dm?'ваш гонщик — лучший за рулём':'лучший гонщик сезона по версии прессы',say:dm?VGEN.y10:''});}}
   (r.flv||[]).slice(0,1).forEach(t=>{const f=flvByTitle(t);if(f)sh.push({i:f[3],cap:t});});
   if(r.place)sh.push({c:`Наследие: ${r.place}-е место`,s:r.place===1?'«{co}» — первая среди великих марок':r.ahead?`впереди — ${r.ahead}`:'',say:VGEN.y6});
   sh.push({c:String(y+1),s:'Новый год — новые машины, гонки и рекорды',say:VGEN.y7});
@@ -11176,19 +11194,22 @@ function planRoute(trk,rnd){
     else put(RSEG.village,n-40,n-1);
     const step=420+Math.floor(r()*180);for(let j=(closed?s0+160:s0+step);j<(closed?n-120:f0-160);j+=step+Math.floor(r()*120)){if(mount&&S[j]===RSEG.serp)continue;put(RSEG.town,j,j+50+Math.floor(r()*30),{cap:'Городок: узкая улица, мостовая, зрители у домов'});}}
   // 3) мост через реку: прямой участок в полях или лесу, не у старта
-  const riverN=mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=placeWater(rc,cfg.host).rv;
+  const dxT=rc.dx==='train',riverN=dxT?0:mount?(r()<0.5?1:0):n>900?2:n>420?1:0,rn=placeWater(rc,cfg.host).rv;
   for(let k=0;k<riverN;k++){for(let t=0;t<40;t++){const j=(closed?s0+100:s0+80)+Math.floor(r()*((closed?n-200:f0-s0-200)));
       if(j<2||j>n-40||curvy(j-20,40)>1/120)continue;let ok=true;for(let a=j-30;a<=j+30;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       const span=9+Math.floor(r()*4),nm=rn[Math.floor(r()*rn.length)];put(RSEG.bridge,j-span,j+span,{cap:`Мост через ${nm}`,alt:34,w:3});for(let a=j-span;a<=j+span;a++)trk.bridge[a]=1;
       trk.rivers.push({i:j,w:14+r()*10,d:4.5+r()*2,ph:r()*6.28,name:nm});break;}}
   // 4) железнодорожный переезд: поезд может пройти перед самым носом
-  if(rc.y>=1880&&!hill&&n>380){for(let t=0;t<40;t++){const j=(closed?s0+60:s0+60)+Math.floor(r()*((closed?n-120:f0-s0-120)));
+  // 0.30: дуэль с экспрессом — рельсы пересекают шоссе на двух третях пути (переезд со шлагбаумом)
+  if(dxT){const j0=s0+Math.round((f0-s0)*0.66),span=Math.round((f0-s0)*0.12);let jb=j0;for(let d=0;d<span;d++){let hit=false;for(const sg of [1,-1]){const j=j0+sg*d;if(j<s0+60||j>f0-60||curvy(j-15,30)>1/200)continue;let ok=true;for(let a=j-25;a<=j+25;a++)if(S[a]===RSEG.town||S[a]===RSEG.bridge)ok=false;if(ok){jb=j;hit=true;break;}}if(hit)break;}
+    put(RSEG.rail,jb-6,jb+6,{cap:'Переезд: рельсы пересекают шоссе — кто первым, паровоз или вы?',alt:26,w:2});trk.rails.push({i:jb,ang:0,duel:1});}
+  else if(rc.y>=1880&&!hill&&n>380){for(let t=0;t<40;t++){const j=(closed?s0+60:s0+60)+Math.floor(r()*((closed?n-120:f0-s0-120)));
       if(j<2||j>n-30||curvy(j-15,30)>1/200)continue;let ok=true;for(let a=j-25;a<=j+25;a++)if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.serp)ok=false;if(!ok)continue;
       put(RSEG.rail,j-6,j+6,{cap:'Железнодорожный переезд: смотрите на шлагбаум',alt:26,w:2});trk.rails.push({i:j,ang:(r()-0.5)*0.5});break;}}
   // 5) берег моря: дорога вдоль воды (Ривьера, Сицилия, Испания, Ла-Манш)
   const sea=!!set.sea||['targa','mc','x22765'].includes(rc.track)||/turbie|monte|nice|riviera|sitges|coppa|florio|boulogne|dieppe|brighton|bexhill/i.test(rc.id+' '+rc.name);
   let yMin=1e9;trk.pts.forEach(p=>{yMin=Math.min(yMin,p[1]);});
-  if(sea&&n>300&&!hill){for(let t=0;t<40;t++){const len=120+Math.floor(r()*90),j=(closed?60:s0+100)+Math.floor(r()*Math.max(1,(closed?n-len-120:f0-s0-len-160)));
+  if(sea&&n>300&&!hill&&!dxT){for(let t=0;t<40;t++){const len=120+Math.floor(r()*90),j=(closed?60:s0+100)+Math.floor(r()*Math.max(1,(closed?n-len-120:f0-s0-len-160)));
       let ok=true,lo=1e9,hi=-1e9;for(let a=j;a<j+len;a++){if(a<0||a>=n||S[a]===RSEG.town||S[a]===RSEG.bridge||S[a]===RSEG.rail)ok=false;else{lo=Math.min(lo,trk.pts[a][1]);hi=Math.max(hi,trk.pts[a][1]);}}
       // у моря дорога идёт низко и ровно: вода — ниже всей трассы
       if(!ok||lo>yMin+9||hi-lo>14)continue;
@@ -11492,6 +11513,8 @@ function trackCfg(rc){
   if(rc.track==='monaco')Object.assign(c,{curvy:1,hilly:0.25,town:true,crowd:0.7,len:1100,width:8,terr:'asphalt',host:'mc'});
   if(rc.track==='lemans')Object.assign(c,{curvy:0.35,len:1700});
   if(rc.track==='targa')Object.assign(c,{curvy:1,hilly:0.9,terr:'mount',host:'it'});
+  // 0.30: дуэль с экспрессом — шоссе вдоль железной дороги: равнина, плавные повороты, сёла
+  if(rc.dx==='train')Object.assign(c,{curvy:0.28,hilly:0.2,crowd:0.15,town:true});
   if(rc.crowd)c.crowd=0.7;
   if(rc.terr){c.terr=rc.terr;if(c.stages)c.stages=[rc.terr,'mud',rc.terr];}
   // 0.21: настоящая местность (40c-real.js). Круг в сотню километров в заезд не влезет — едем кусок круга по настоящим дорогам;
@@ -11657,10 +11680,13 @@ function placeScenery(trk,rnd){
     if(LMs.length&&LMs.some(q=>Math.hypot(x-q.x,z-q.z)<q.r+2))return false;
     // настоящая вода (0.23): в море и в бухте — ни домов, ни деревьев, ни зрителей
     if(trk.real&&trk.real.wm&&Math.abs(off)>W/2+2&&realWet(trk,x,z)>0.2)return false;
+    if(trk.dxRail&&Math.abs(off)>W/2+2&&dxRailNear(trk,x,z,6))return false;
     const o=solidAt(trk,t,i,off);if(o?!solidClear(trk,o):(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i)))return false;
     spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
   planRoute(trk,rnd);const S=trk.segT;
+  // 0.30: дуэль с экспрессом — железная дорога вдоль шоссе (на ней ни домов, ни деревьев)
+  if(trk.rc.dx==='train')try{dxRailBuild(trk);const o=trk.rc.dxO||{};[[trk.startIdx+4,o.from],[trk.finishIdx-6,o.to]].forEach(([i,nm])=>{if(nm&&i>=0&&i<n)spr[i].push({t:'tsign',off:W/2+2.6,v:0,k:'s',nm:nm});});}catch(e){console.warn('dxRail',e);trk.dxRail=null;}
   // 0.29: события гонки — где что будет (на выдуманной трассе город под титр ставит маршрут, до декораций)
   trk._add=add;try{scnPlan(trk);}catch(e){console.warn('scnPlan',e);trk.evx=[];trk.evc=[];}
   const townAt=i=>cfg.town&&!cfg.oval&&S[i]===RSEG.town;
@@ -11988,7 +12014,7 @@ function carFailure(c){
   const early=R.rc.y<1906,terminal=Math.random()<(c.you?0.12+Math.min(0.5,c.dmg/200):0.6);
   const what=pick(['мотор','зажигание','цепь привода','подшипник','рессора','карбюратор','радиатор',early?'цепь':'клапан']);
   if(terminal){c.dnf=what;c.thr=0;if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — ${what}`,2.5);}
-  else{c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
+  else{c.stopN=(c.stopN||0)+1;c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 // Машины — капсулы: сталкиваются корпусами (нос в корму тоже), удар в угол разворачивает
@@ -12118,7 +12144,7 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
     return {you:true,name:s.company,label:e.md.name,drvName:me?(setup.mode==='drive'?'Вы':pio.name):d.n,drvId:e.drv,sk:me?pioSk(s):Math.min(0.99,d.sk*moodK(s,d.id)),
     md:e.md,prep:e.prep,tyre:e.tyre,gear:e.gear,color:e.md.paint,num:i+1,player:setup.mode==='drive'&&(me||(noMe&&i===0)),pw:(1+bn('race',0))*(dl.pw||1)*(e.md.legend?legendK(e.md,'race'):1),relK:dl.rel||1,pitK:dl.pit||1};});
   // 0.24: матч один на один и спор о скорости — на трассе только машина соперника
-  const ai=rc.match?matchField(rc,s,setup.entries.map(e=>e.drv)):raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
+  const ai=rc.dx?[]:rc.match?matchField(rc,s,setup.entries.map(e=>e.drv)):raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv));
   const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));
   const trk=buildTrack(rc,vref);
   const mechOut=typeof injOf==='function'&&injOf(s,'mech');
@@ -12143,6 +12169,8 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   R={rc,trk,cars,all:cars,me,team,follow:me||team[0],mode:setup.mode,t:setup.mode==='sim'?0:-5,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],tilt:(AU.on.steer||(AU.on.tilt?'tilt':'wheel'))==='tilt',speed:1,setup,wx,
     hz0:-Math.log(1-dnfTarget(rc.y,rc.t)*(rc.dnfK||1))/(0.66*Math.max(40,trk.cfg.dur||120)),relRef:(()=>{const fac=cars.filter(c=>!c.you&&!c.priv);return fac.length?Math.max(0.05,1-fac.reduce((a,c)=>a+c.rel,0)/fac.length):fieldRelRef(rc,s);})()};
   if(typeof SCN_OFF==='undefined'||!SCN_OFF)try{scnSetup();const S=R.scn;if(S.wetEver&&!wx.rain){planPatches(trk,true);(trk.patches||[]).forEach(P=>{if(P.kind==='puddle')P.rain=1;});}}catch(e){console.warn('scenario',e);R.scn=null;}
+  // 0.30: дуэль — соперник (поезд, аэроплан, рысак) и его темп по пробному заезду вашей машины
+  if(rc.dx)try{dxRaceStart();}catch(e){console.warn('dx',e);R.dx=null;}
   if(setup.mode==='sim'){let f=0;const dt=1/20;while(R&&!R.done&&f<20*900){f++;R.time+=dt;R.t+=dt;raceTick(dt);}if(R&&!R.done)finishRace(false);return;}
   try{raceOldFilm(false);}catch(_){}
   document.getElementById('raceScreen').hidden=false;document.getElementById('rName').textContent=`${rc.name} · ${rc.y}`;
@@ -12275,6 +12303,7 @@ function raceTick(dt){
   const T=R.trk,cfg=T.cfg;
   if(R.t<0){R.cars.forEach(c=>{c.thr=0;c.brk=1;});return;}
   if(R.scn)scnTick(dt);
+  if(R.dx)dxTick(dt);
   aiTraffic(T);
   R.cars.forEach(c=>{
     if(c.fin!==null||c.dnf){if(!c.player&&!c.dnf){c.ghostT=Math.max(c.ghostT||0,1);c.laneT=-(T.W/2-1.3);if(T.closed){aiControl(c,T,dt);const vC=Math.max(9,(c.vtop||20)*0.45);if(c.vx>vC){c.thr=0;c.brk=0.3;}else{c.thr=Math.min(c.thr,0.35);c.brk=0;}return;}if(c.vx>0.5)aiControl(c,T,dt);c.thr=0;c.brk=0.4;return;}if(c.dnf&&!c.player){if(c.vx>0.5){c.laneT=-(T.W/2+1.5);aiControl(c,T,dt);}else if(!c.parked){c.parked=1;const p=T.pts[c.idx],nn=T.N[c.idx],o=-(T.W/2+2.4);c.x=p[0]+nn[0]*o;c.z=p[2]+nn[1]*o;c.lat=o;c.vx=c.vy=c.r=0;}}c.thr=0;c.brk=c.dnf?0.6:0.4;if(c.dnf&&!c.outT){c.outT=R.time;}return;}
@@ -12293,7 +12322,7 @@ function raceTick(dt){
   const sub=R.mode==='sim'?3:4,h=dt/sub;
   for(let k=0;k<sub;k++){R.cars.forEach(c=>{if(!c.dnf||c.vx>0.2)carStep(c,T,h);});for(let i=0;i<R.cars.length;i++)for(let j=i+1;j<R.cars.length;j++){const A=R.cars[i],B=R.cars[j];if(A.dnf&&B.dnf)continue;const imp=carsCollide(A,B);if(imp>1.5&&(A===R.follow||B===R.follow)){R.shake=Math.min(0.6,imp*0.05);auSfx('bump',Math.min(1,imp/10));}}}
   // аварии, вода, поезд (0.18)
-  {const w3=R.gl&&typeof R3!=='undefined'&&R3.on;R.cars.forEach(c=>{if(c.crash)crashResolve(c);if(w3){waterCheck(c,T,dt);trainCheck(c,T);}});}
+  {const w3=R.gl&&typeof R3!=='undefined'&&R3.on;R.cars.forEach(c=>{if(c.crash)crashResolve(c);if(w3){waterCheck(c,T,dt);trainCheck(c,T);}if(R.dx&&R.dx.k==='train')dxTrainCheck(c,T);});}
   R.cars.forEach(c=>{c.draft=0;if(c.dnf)return;R.cars.forEach(o=>{if(o===c||o.dnf)return;const gap=o.prog-c.prog;if(gap>4&&gap<25){const dx=o.x-c.x,dz=o.z-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),latd=Math.abs(dx*fz-dz*fx);if(latd<1.6)c.draft=1;}});});
   const me=R.me;
   if(me){if(me.hit){if(me.hit>6){R.shake=0.6;rMsg('УДАР!',0.9);auSfx('crash',Math.min(1,me.hit/15));}else auSfx('bump',0.5);me.hit=0;}
@@ -12370,7 +12399,7 @@ function raceCue(a,b){try{if(a<-4.9&&b>=-4.9)ambEvent('ready');if(a<-2.97&&b>=-2
 function raceOrder(){if(R.scn&&R.scn.timed)return R.cars.slice().sort((a,b)=>{if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return scnOrderKey(a)-scnOrderKey(b);});
   return R.cars.slice().sort((a,b)=>{const fa=a.fin!==null?a.fin:null,fb=b.fin!==null?b.fin:null;if(fa!==null&&fb!==null)return fa-fb;if(fa!==null)return -1;if(fb!==null)return 1;if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;return b.prog-a.prog;});}
 function finishRace(quit){
-  const s=G;if(!R||R.done)return;R.done=true;cancelAnimationFrame(rRaf);if(R.mode!=='sim')auRaceStop();
+  const s=G;if(!R||R.done)return;R.done=true;cancelAnimationFrame(rRaf);if(R.mode!=='sim')auRaceStop();try{dxSndStop();}catch(_){}
   const T=R.trk;
   R.cars.forEach(o=>{if(o.fin!==null)o.dnf=null;});
   // незавершённые: игрок, покинувший гонку, сходит; остальных досчитываем — с шансом поломки на оставшейся дистанции
@@ -12379,7 +12408,8 @@ function finishRace(quit){
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
   const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||''}));
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
-  const mode=R.mode,info={len:T.raceLen,quit:!!quit};R=null;
+  const mode=R.mode,info={len:T.raceLen,quit:!!quit},dxo=R.dx?dxOutcome():null;R=null;
+  if(rc.dx){dxAfterRace(rc,dxo,quit);return;}
   raceResults(rc,res,mode,info);
 }
 
@@ -12531,8 +12561,8 @@ function dropUnder(c,trk,lat){const W=trk.W;if(Math.abs(lat)<W/2+1.5)return 0;
 /* ---------- поезд и шлагбаум ---------- */
 // Состав: паровоз, тендер и четыре вагона — около 56 м
 function trainSpan(rl){const st=rl.st;if(!st||st.state!==1)return null;const len=56;return {a:Math.min(st.s,st.s-st.dir*len),b:Math.max(st.s,st.s-st.dir*len)};}
-function trainCheck(c,trk){if(!trk.rails||!trk.rails.length||c.dnf||c.fin!==null)return;
-  for(const rl of trk.rails){let di=rl.i-c.idx;if(trk.closed)di=((di%trk.n)+trk.n*1.5)%trk.n-trk.n/2;if(Math.abs(di)*trk.step>60)continue;
+function trainCheck(c,trk){if(!trk.rails||!trk.rails.length||c.dnf||c.fin!==null)return;if(trk.rails.every(q=>q.duel))return;
+  for(const rl of trk.rails){if(rl.duel)continue;let di=rl.i-c.idx;if(trk.closed)di=((di%trk.n)+trk.n*1.5)%trk.n-trk.n/2;if(Math.abs(di)*trk.step>60)continue;
     const L=railLine(trk,rl),dx=c.x-L.p[0],dz=c.z-L.p[2],s=dx*L.d[0]+dz*L.d[1],e=dx*L.d[1]-dz*L.d[0],ae=Math.abs(e),sp=trainSpan(rl);
     // сам поезд: вагоны шириной ~3 м — пройти сквозь нельзя; удар отбрасывает машину от путей
     if(sp&&ae<2.7&&s>sp.a-1.2&&s<sp.b+1.2){if(!c.trainHit){c.trainHit=1;crashNote(c,Math.max(Math.hypot(c.vx,c.vy),rl.st.v*0.6,9),'train');}
@@ -13225,6 +13255,152 @@ function twWhat(L){return L.length>=4?'все шины':L.length===1?'колес
 // подпись для игрока: какое колесо пробито
 function twPunctTxt(c){const L=[];for(let k=0;k<4;k++)if(c.tp[k])L.push(TW_NM[k]);return L.join(' и ');}
 
+/* ================= 0.30: ДУЭЛИ ВЖИВУЮ — ГОНКА С ЭКСПРЕССОМ, АЭРОПЛАНОМ И РЫСАКОМ =================
+   Раньше дуэль приходила газетой: «машина обогнала экспресс» — и всё. Теперь в неё можно сесть за руль:
+   • экспресс — дорога идёт рядом с железной дорогой; поезд трогается со станции вместе с вами, по пути стоит у полустанка,
+     а перед финишем рельсы пересекают шоссе: подоспеете к переезду позже паровоза — шлагбаум закрыт, ждите;
+   • аэроплан — над овалом ипподрома или аэродрома кружит биплан: взлёт, круги на высоте, вираж с креном;
+   • рысак — на беговой дорожке ипподрома, у бровки, рядом с вами бежит рысак в качалке; к концу он устаёт.
+   Как и гонки, дуэль «сжата»: тысяча километров до Кале — несколько минут за рулём. Соперник идёт с той же сжатой скоростью:
+   её считаем по пробному заезду вашей же машины (хороший шофёр) и по истории — насколько поезд, биплан или рысак эпохи
+   были быстрее или медленнее машины. Победил — ставка, слава, грамота в шкаф; проиграл — газеты посмеются. */
+
+/* ---------- заезд: настройки гонки для дуэли ---------- */
+const DX_TOWN={train:{fr:['НИЦЦА','КАЛЕ'],uk:['КАННЫ','КАЛЕ'],us:['ЛОС-АНДЖЕЛЕС','САН-ФРАНЦИСКО'],de:['БЕРЛИН','МЮНХЕН'],it:['МИЛАН','РИМ']}};
+function dxRc(s,o){const d=DX_KIND[o.k],c=o.c||s.country,y=s.y,train=o.k==='train';
+  const terr=train?(y<1908?'dirt':y<1920?'macadam':'asphalt'):o.k==='plane'?'dirt':'dirt';
+  const span=train?clamp(o.km/Math.max(30,o.trainV||60),2,26):0.4,tw=DX_TOWN.train[c]||DX_TOWN.train.fr;
+  const ev=train?[{p:0.02,k:'atmo',t:`${o.opp}: ПАРОВОЗ ДАЁТ ГУДОК — ТРОНУЛИСЬ!`},{p:0.3,k:'atmo',t:'ПОЕЗД ВСТАЁТ У ПОЛУСТАНКА: БЕРЁТ ВОДУ'},{p:0.55,k:'atmo',t:'НОЧЬ. ФАРЫ И ОГОНЬ ПАРОВОЗНОЙ ТОПКИ'},{p:0.6,k:'atmo',t:'ВПЕРЕДИ ПЕРЕЕЗД: КТО УСПЕЕТ?'}]
+    :o.k==='plane'?[{p:0.01,k:'atmo',t:`${o.opp} ЗАПУСКАЕТ МОТОР «ГНОМ»`},{p:0.5,k:'atmo',t:'ТРИБУНЫ ВСТАЛИ: ВИРАЖ НАД ПОВОРОТОМ'}]
+    :[{p:0.01,k:'atmo',t:`${o.opp} В КАЧАЛКЕ: ЗВОНОК — ПОШЛИ!`},{p:0.7,k:'atmo',t:'РЫСАК ВЫДЫХАЕТСЯ? ПОСЛЕДНЯЯ ПРЯМАЯ'}];
+  const rc={id:'dx-'+o.k,key:'dx-'+o.k+'-'+c+'-'+mi(s),y,m:s.m,c,host:c,t:train?'road':'oval',terr,km:o.km,name:d.title+': '+o.opp,venue:o.venue,
+    dx:o.k,dxO:{opp:o.opp,venue:o.venue,km:o.km,trainV:o.trainV||0,c,from:tw[0],to:tw[1]},dnfK:train?0.85:0.4,purse:0,crowd:o.k!=='train'?1:0,
+    hist:d.hist,img:'',scn:{st:'grid',h0:train?7.5:14,span,ev,b:train?`Старт у вокзала: экспресс и машина трогаются вместе. Рельсы идут вдоль шоссе; ${o.opp} делает остановку у полустанка, а у самого финиша дорога пересекает пути — к переезду лучше успеть раньше паровоза.`:o.k==='plane'?'Биплан взлетает с поля внутри овала и идёт над дорожкой на высоте трибун. Кто первым пройдёт финишную черту — аэроплан или машина?':'Рысак бежит у бровки, ваша машина — по внешней. Две мили — несколько кругов по ипподрому; к концу рысак устаёт.'}};
+  return rc;}
+
+/* ---------- железная дорога вдоль шоссе (выдуманная трасса, 40b-route.js кладёт переезд) ---------- */
+function dxRailBuild(trk){const n=trk.n,P=trk.pts,N=trk.N,W=trk.W,O=W/2+24,rl=(trk.rails||[]).find(q=>q.duel),jc=rl?rl.i:-1,K=Math.max(8,Math.round(70/trk.step)),side0=1;
+  const i0=Math.max(0,trk.startIdx-30),i1=Math.min(n-1,trk.finishIdx+30),Q=[];
+  const ySm=i=>{let a=0,c=0;for(let k=-8;k<=8;k++){const j=clamp(i+k,0,n-1);a+=P[j][1];c++;}return a/c;};
+  for(let i=i0;i<=i1;i++){const u=jc<0?0:sstep(jc-K,jc+K,i),off=O*side0*(1-2*u),nearRoad=Math.abs(off)<W/2+3,y=nearRoad?P[i][1]+0.02:ySm(i)+0.32;
+    Q.push([P[i][0]+N[i][0]*off,y,P[i][2]+N[i][1]*off,0,i,off]);}
+  // переход с насыпи на переезд — плавно
+  for(let k=1;k<Q.length-1;k++){const a=Q[k-1],b=Q[k],c=Q[k+1];if(Math.abs(b[5])<W/2+14&&Math.abs(b[5])>=W/2+3)b[1]=(a[1]+b[1]+c[1])/3;}
+  let cum=0;for(let k=0;k<Q.length;k++){if(k)cum+=Math.hypot(Q[k][0]-Q[k-1][0],Q[k][2]-Q[k-1][2]);Q[k][3]=cum;}
+  const sAt=i=>{const k=clamp(i-i0,0,Q.length-1);return Q[k][3];};
+  trk.dxRail={P:Q,L:cum,i0,i1,jc,O,side0,sStart:sAt(trk.startIdx),sFin:sAt(trk.finishIdx),sCross:jc<0?-1:sAt(jc),
+    grid:(()=>{const g={};Q.forEach((q,k)=>{const key=Math.floor(q[0]/30)+','+Math.floor(q[2]/30);(g[key]=g[key]||[]).push(k);});return g;})()};
+  if(rl)rl.dxS=trk.dxRail.sCross;}
+// точка пути на расстоянии s: позиция, направление
+function dxPathAt(D,s){const P=D.P;s=clamp(s,0,D.L);let lo=0,hi=P.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(P[m][3]<=s)lo=m;else hi=m;}
+  const a=P[lo],b=P[hi],L=b[3]-a[3]||1,t=clamp((s-a[3])/L,0,1),dx=b[0]-a[0],dz=b[2]-a[2],l=Math.hypot(dx,dz)||1;
+  return {x:a[0]+dx*t,y:a[1]+(b[1]-a[1])*t,z:a[2]+dz*t,tx:dx/l,tz:dz/l,k:lo};}
+// рядом ли точка с рельсами (для декораций: дома, деревья, столбы не ставим на пути)
+function dxRailNear(trk,x,z,r){const D=trk&&trk.dxRail;if(!D)return false;const cx=Math.floor(x/30),cz=Math.floor(z/30),P=D.P;
+  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=D.grid[(cx+a)+','+(cz+b)];if(!L)continue;for(const k of L){const j=Math.min(P.length-1,k+1),A=P[k],B=P[j],dx=B[0]-A[0],dz=B[2]-A[2],l2=dx*dx+dz*dz||1;
+    let t=((x-A[0])*dx+(z-A[2])*dz)/l2;t=t<0?0:t>1?1:t;const qx=A[0]+dx*t-x,qz=A[2]+dz*t-z;if(qx*qx+qz*qz<r*r)return true;}}return false;}
+// путь над овалом / у бровки: точки трассы со сдвигом внутрь (знак кривизны), полный круг; s по кругу
+function dxOvalPath(trk,off,y0){const n=trk.n,P=trk.pts,N=trk.N;let kS=0;for(let i=0;i<n;i++)kS+=trk.K[i];const inn=kS>=0?1:-1,Q=[];
+  for(let i=0;i<=n;i++){const j=i%n,p=P[j],nn=N[j];Q.push([p[0]+nn[0]*off*inn,p[1]+y0,p[2]+nn[1]*off*inn,0,j,off*inn]);}
+  let cum=0;for(let k=0;k<Q.length;k++){if(k)cum+=Math.hypot(Q[k][0]-Q[k-1][0],Q[k][2]-Q[k-1][2]);Q[k][3]=cum;}return {P:Q,L:cum,lap:cum,inn};}
+
+/* ---------- темп соперника: пробный заезд вашей машины (хороший шофёр) и история ---------- */
+function dxCalib(trk,me){const c=mkRaceCar({you:false,player:false,name:'',label:'',drvName:'',sk:0.86,md:me.md,prep:me.prep,tyre:me.tyreType,gear:me.gearSet,color:'#333',pw:me.pw,relK:1},R.rc.y,trk);
+  wearSetup(c,trk,R.rc);c.punctRate=0;c.rel=0.999;c.fuelRate=0;const st=trk.startIdx;c.idx=st;const p=trk.pts[st],t=trk.T[st];c.x=p[0];c.z=p[2];c.yaw=Math.atan2(t[0],t[1]);trackLocal(trk,c);
+  const dt=1/15,lim=(trk.cfg.dur||200)*4;let tm=0,lap=c.lap;const hz=R.hz0;R.hz0=0;
+  // пробный заезд — без невезения: проколы и износ не в счёт (их у соперника тоже нет)
+  try{while(tm<lim){aiControl(c,trk,dt);for(let k=0;k<2;k++)carStep(c,trk,dt/2);if(c.punct||c.tyre>60){c.tp=[0,0,0,0];c.tw=[0,0,0,0];twSync(c);c.flat=false;}c.tyreSwap=false;c.stopT=0;c.dmg=0;tm+=dt;if(c.prog>=trk.raceLen)break;if(c.vx<0.5&&tm>20&&c.prog<5)break;}}catch(e){console.warn('dxCalib',e);}
+  R.hz0=hz;return c.prog>=trk.raceLen?tm:Math.max(tm,trk.raceLen/Math.max(5,c.vtop*0.6));}
+// во сколько раз соперник медленнее хорошего шофёра на этой машине (1 — вровень): по истории эпохи
+function dxPace(R0,o,me){const st=me.st||{},v=(st.vmax||me.vtop||20)*3.6,y=R0.rc.y;
+  if(o.k==='train'){const road=clamp(0.42+0.009*(y-1905),0.42,0.62),q=clamp((o.trainV||60)/Math.max(20,Math.min(v*road,95)),0.5,1.1);return clamp(1+(1-q)*0.35,0.99,1.12);}
+  const vo=DX_KIND[o.k].opp(y),q=clamp(vo/Math.max(15,v*(o.k==='plane'?0.85:0.8)),0.5,1.3);return clamp(1+(1-q)*0.35,0.96,1.12);}
+// профиль скорости: разгон a, крейсерская vc, остановка у полустанка (поезд), усталость (рысак), подход к станции
+function dxSpeed(D,s){const k=D.k,a=D.acc;if(D.stopAt>0&&s>D.stopAt-D.vc*D.vc/(2*a)&&s<D.stopAt&&!D.stopDone)return Math.max(1.5,Math.sqrt(Math.max(0,2*a*(D.stopAt-s))));
+  let v=D.vc;if(k==='horse'&&s>D.L*0.72)v=D.vc*(1-0.12*clamp((s-D.L*0.72)/(D.L*0.2),0,1));
+  if(k==='train'){const left=D.L-s;if(left<D.vc*D.vc/(2*a*0.7))v=Math.min(v,Math.max(3,Math.sqrt(2*a*0.7*left)));}
+  return v;}
+function dxTimeFor(D,vc){const save=D.vc;D.vc=vc;let s=0,v=0,t=0,stopped=false;const dt=0.25;D.stopDone=false;
+  while(s<D.L&&t<3600){const tv=dxSpeed(D,s);v=v<tv?Math.min(tv,v+D.acc*dt):Math.max(tv,v-D.acc*1.6*dt);
+    if(D.stopAt>0&&!D.stopDone&&s>=D.stopAt-0.5&&v<2){t+=D.stopT;D.stopDone=true;stopped=true;}s+=Math.max(0.5,v)*dt;t+=dt;}
+  D.vc=save;D.stopDone=false;return t;}
+function dxSolve(D,T){let lo=2,hi=200;for(let it=0;it<40;it++){const m=(lo+hi)/2;if(dxTimeFor(D,m)>T)lo=m;else hi=m;}return (lo+hi)/2;}
+
+/* ---------- старт дуэли ---------- */
+function dxRaceStart(){const rc=R.rc,o=Object.assign({k:rc.dx},rc.dxO||{}),trk=R.trk,me=R.me||R.team[0];if(!me)return;
+  const D={k:rc.dx,short:o.k==='train'?'Экспресс':o.k==='plane'?'Биплан':'Рысак',name:o.k==='train'?o.opp:o.k==='plane'?'Биплан: '+o.opp:'Рысак '+o.opp,opp:o.opp,s:0,v:0,t:0,fin:null,acc:0.3,stopAt:-1,stopT:0,stopDone:false,pos:[0,0,0],tan:[0,1],lap:0,flash:0,saidAhead:0,said:{}};
+  if(D.k==='train'){const RD=trk.dxRail;if(!RD){R.dx=null;return;}D.P=RD;D.L=RD.sFin-RD.sStart;D.s0=RD.sStart;D.acc=0.16;D.stopAt=D.L*0.3;D.stopT=12;D.cross=RD.sCross-RD.sStart;}
+  else{const laps=trk.cfg.laps||3,path=dxOvalPath(trk,D.k==='plane'?trk.W/2+16:trk.W/2-1.6,D.k==='plane'?0:0);D.P=path;D.lapL=path.L;D.L=path.L*laps;D.s0=0;
+    // старт: у линии старта (точка пути с её индексом)
+    let k0=0;for(let k=0;k<path.P.length;k++)if(path.P[k][4]===trk.startIdx){k0=k;break;}D.s0=path.P[k0][3];D.acc=D.k==='plane'?1.4:2.2;D.alt=0;}
+  // темп: пробный заезд вашей машины, поправка эпохи
+  const tAI=dxCalib(trk,me),f=dxPace(R,o,me);D.T=tAI*f;D.tAI=tAI;D.f=f;
+  // гонка «сжата» — и разгон сжат: поезд выходит на ход секунд за 12 (на самом деле — за пару минут), рысак — за 4, биплан разбегается секунд 10
+  const tAcc=D.k==='train'?12:D.k==='plane'?10:4;let vc=D.L/Math.max(10,D.T)*1.15;for(let it=0;it<3;it++){D.acc=Math.max(0.15,vc/tAcc);vc=dxSolve(D,D.T);}D.vc=vc;D.acc=Math.max(0.15,vc/tAcc);
+  R.dx=D;dxPlace(D);}
+// где соперник: точка пути (круги — по модулю круга), для поезда — от станции
+function dxPlace(D){const sp=D.s0+D.s,s=D.lapL?((sp%D.lapL)+D.lapL)%D.lapL:sp,q=dxPathAt(D.P,s);
+  let y=q.y;if(D.k==='plane'){y+=D.alt;}D.pos=[q.x,y,q.z];D.tan=[q.tx,q.tz];D.k0=q.k;}
+// прогресс соперника по трассе (для табло): точка пути знает индекс трассы
+function dxProg(D){const T=R.trk,P=D.P.P,i=P[clamp(D.k0||0,0,P.length-1)][4];if(D.lapL){const lap=Math.floor((D.s0+D.s)/D.lapL);return lap*T.len+i*T.step;}return (i-T.startIdx)*T.step;}
+
+/* ---------- ход соперника (каждый шаг гонки) ---------- */
+function dxTick(dt){const D=R&&R.dx;if(!D||R.t<=0)return;if(D.fin!==null){D.v=Math.max(0,D.v-dt*2);if(D.k!=='train'){D.s+=D.v*dt;dxPlace(D);}return;}
+  D.t+=dt;const tv=dxSpeed(D,D.s);D.v=D.v<tv?Math.min(tv,D.v+D.acc*dt):Math.max(tv,D.v-D.acc*1.6*dt);
+  if(D.stopAt>0&&!D.stopDone&&D.s>=D.stopAt-0.5&&D.v<2){D.stopLeft=(D.stopLeft===undefined?D.stopT:D.stopLeft)-dt;D.v=0;if(D.stopLeft<=0){D.stopDone=true;if(R.mode!=='sim')rMsgT(`${D.name} ТРОГАЕТСЯ ОТ ПОЛУСТАНКА`,1.6);try{dxWhistle(D);}catch(_){}}}
+  else D.s+=D.v*dt;
+  // аэроплан: разбег по полю, отрыв, набор высоты; на кругах — 26–34 м
+  if(D.k==='plane'){const tk=D.v/Math.max(1,D.vc);D.alt+=((tk>0.75?28+4*Math.sin(D.t*0.3):0)-D.alt)*Math.min(1,dt*(tk>0.75?0.35:2));}
+  if(D.s>=D.L){D.fin=R.time;D.s=D.L;if(R.mode!=='sim'){const me=R.me;if(!me||me.fin===null){rMsg(D.k==='train'?'ЭКСПРЕСС ПРИБЫЛ НА СТАНЦИЮ!':D.k==='plane'?'АЭРОПЛАН ПРОШЁЛ ФИНИШ!':'РЫСАК НА ФИНИШЕ!',2.6);try{auSfx('cheer',0.6);}catch(_){}}}}
+  dxPlace(D);if(D.k==='plane'&&R.mode!=='sim')try{dxPlaneSnd(D);}catch(_){}
+  // поезд у переезда: шлагбаум закрыт, пока паровоз и вагоны рядом
+  if(D.k==='train'){const rl=(R.trk.rails||[]).find(q=>q.duel);if(rl){const head=D.s,tail=D.s-DX_TRAIN_LEN,c=D.cross;const near=head>c-260&&tail<c+12;rl.gate=clamp((rl.gate||0)+(near?1:-1)*dt*0.9,0,1);
+      rl.dxBlock=head>c-6&&tail<c+6;}
+    // гудок перед переездом и у станции
+    if(!D.said.cross&&D.s>D.cross-300){D.said.cross=1;try{dxWhistle(D);}catch(_){}}}
+  // кто впереди — подсказка игроку (раз в несколько секунд при смене лидера)
+  const me=R.me;if(me&&R.mode!=='sim'&&me.fin===null&&!me.dnf){const ahead=dxProg(D)>me.prog;if(ahead!==D.wasAhead&&R.time>4){D.wasAhead=ahead;if(R.time-(D.aheadT||-99)>6){D.aheadT=R.time;rMsgT(ahead?`${D.name} ВПЕРЕДИ!`:'ВЫ ВПЕРЕДИ!',1.4);}}}}
+const DX_TRAIN_LEN=9.8+5.4+4*10+5*0.6;
+// поезд на переезде: машина, въехавшая под паровоз или вагоны, — авария (как у обычного поезда)
+function dxTrainCheck(c,trk){const rl=(trk.rails||[]).find(q=>q.duel);if(!rl||!rl.dxBlock||c.dnf||c.fin!==null)return;let di=c.idx-rl.i;const d=Math.abs((di+(c.segT||0))*trk.step);
+  if(d<4.5&&Math.abs(c.lat)<trk.W/2+0.5){if(!c.trainHit){c.trainHit=1;crashNote(c,Math.max(Math.hypot(c.vx,c.vy),12),'train');}}else c.trainHit=0;}
+function dxWhistle(D){if(typeof AMB==='undefined'||!AMB.on||!AU.ctx)return;const id=R.trk.cfg.host==='us'&&AMB.buf.steam_whistle_us?'steam_whistle_us':'steam_whistle';
+  if(AMB.buf[id])ambShot(id,()=>[D.pos[0],D.pos[2]],AMB_L.whistle,{dur:4,fade:0.2,force:1,r0:3});else{ambBuf(id);try{auSfx('whistle',0.5);}catch(_){}}}
+
+/* ---------- итог: время по-историческому (часы пути), газета и ставка — 43f-duelx.js ---------- */
+function dxOutcome(){const D=R&&R.dx,me=R.me||R.team[0];if(!D||!me)return null;const o=R.rc.dxO||{},dnf=!!me.dnf||me.fin===null;
+  // время соперника — по истории: поезд идёт со своей средней, биплан и рысак — со своей; ваше — в той же пропорции, что в заезде
+  const tOpR=D.fin!==null?D.fin:D.t+(D.L-D.s)/Math.max(1,D.vc),k=R.rc.dx,hist=k==='train'?o.km/Math.max(20,o.trainV)*60:o.km/Math.max(10,DX_KIND[k].opp(R.rc.y))*60;
+  const tMe=dnf?null:hist*me.fin/Math.max(1,tOpR),win=!dnf&&(D.fin===null||me.fin<D.fin);
+  return {played:1,win,tMe,tOp:hist,brk:me.stopN||0,fatal:dnf,stall:dnf,v:tMe?Math.round(o.km/(tMe/60)):0,opp:Math.round(o.km/(hist/60)),gapS:D.fin!==null&&me.fin!==null?me.fin-D.fin:null};}
+
+/* ---------- приборная доска дуэли: кто впереди и на сколько ---------- */
+function dxHUD(F){const D=R&&R.dx;let el=document.getElementById('rDx');if(!D||!F){if(el)el.hidden=true;return;}
+  if(!el){el=document.createElement('div');el.id='rDx';el.className='r-dx';document.getElementById('raceScreen').appendChild(el);}el.hidden=false;
+  const T=R.trk,me=F,pO=dxProg(D),pM=me.prog,L=T.raceLen,ico=D.k==='train'?'🚂':D.k==='plane'?'✈️':'🐎',gap=pO-pM,v=Math.max(4,me.vx||0);
+  const txt=D.fin!==null&&me.fin===null?`${D.short} уже на финише`:me.fin!==null?(D.fin===null||me.fin<D.fin?'Вы первыми на финише!':'Соперник был первым'):
+    Math.abs(gap)<15?'Голова в голову!':gap>0?`${D.short} впереди на ${fmtN(Math.round(gap))} м`:`Вы впереди на ${fmtN(Math.round(-gap))} м (≈${Math.round(-gap/v)} с)`;
+  const pa=clamp(pO/L,0,1)*100,pb=clamp(pM/L,0,1)*100,sig=Math.round(pa)+'|'+Math.round(pb)+'|'+txt;if(el.dataset.s===sig)return;el.dataset.s=sig;
+  el.innerHTML=`<b>${ico} ${esc(txt)}</b><div class="dxbar"><i class="op" style="left:${pa}%">${ico}</i><i class="me" style="left:${pb}%">🚗</i></div>`;}
+/* ---------- после дуэли: газета, ставка, грамота (43f-duelx.js) ---------- */
+function dxAfterRace(rc,o,quit){const s=G;if(!s)return;try{closeSheet();}catch(_){}
+  if(!o){addLog('Дуэль не состоялась.','bad');render();return;}
+  if(quit&&!o.win){o.fatal=true;o.stall=true;}
+  dxResolve(s,o);try{if(o.win)celebrate(rc.dx==='train'?'Быстрее экспресса!':rc.dx==='plane'?'Быстрее аэроплана!':'Быстрее рысака!',rc.dxO?rc.dxO.venue:'','⚔️','duel');}catch(_){}
+  save();render();}
+
+/* ---------- звук биплана: ротативный «Гном» — гул с дребезгом; громкость по расстоянию до слушателя ---------- */
+let DXS=null;
+function dxPlaneSnd(D){if(!AU.ctx||!AU.on.sfx)return;const c=AU.ctx,t=c.currentTime;
+  if(!DXS){const o1=c.createOscillator(),o2=c.createOscillator(),lf=c.createOscillator(),lg=c.createGain(),f=c.createBiquadFilter(),g=c.createGain(),pn=c.createStereoPanner?c.createStereoPanner():null;
+    o1.type='sawtooth';o2.type='square';lf.type='sine';lf.frequency.value=11;lg.gain.value=0.35;f.type='lowpass';f.frequency.value=900;g.gain.value=0;
+    o1.connect(f);o2.connect(f);const am=c.createGain();am.gain.value=0.7;f.connect(am);lf.connect(lg);lg.connect(am.gain);am.connect(g);if(pn){g.connect(pn);pn.connect(AU.fx);}else g.connect(AU.fx);
+    o1.start();o2.start();lf.start();DXS={o1,o2,lf,g,pn,f};}
+  const L=typeof AMB!=='undefined'&&AMB.lis?AMB.lis:{x:R3.eye[0],z:R3.eye[2]},dx=D.pos[0]-L.x,dz=D.pos[2]-L.z,d=Math.hypot(dx,dz,(D.alt||0)*0.8)+1,k=Math.min(1,(D.v||0)/Math.max(1,D.vc));
+  const base=48+40*k,vol=clamp(60/d,0,1)*0.28*(0.25+0.75*k);DXS.o1.frequency.setTargetAtTime(base,t,0.2);DXS.o2.frequency.setTargetAtTime(base*2.02,t,0.2);DXS.lf.frequency.setTargetAtTime(7+9*k,t,0.3);
+  DXS.f.frequency.setTargetAtTime(400+1400*clamp(60/d,0,1),t,0.2);DXS.g.gain.setTargetAtTime(vol,t,0.15);if(DXS.pn&&typeof AMB!=='undefined'&&AMB.lis&&AMB.lis.fx!==undefined){const fx=AMB.lis.fx,fz=AMB.lis.fz,rx=fz,rz=-fx;DXS.pn.pan.setTargetAtTime(clamp((dx*rx+dz*rz)/d,-1,1)*0.8,t,0.15);}}
+function dxSndStop(){if(!DXS)return;const t=AU.ctx?AU.ctx.currentTime:0;try{DXS.g.gain.setTargetAtTime(0,t,0.1);}catch(_){}const S=DXS;DXS=null;setTimeout(()=>{try{S.o1.stop();S.o2.stop();S.lf.stop();S.g.disconnect();}catch(_){}},600);}
+
 /* ================= RACE RENDER: pseudo-3D road over real physics, sprites, HUD ================= */
 const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
@@ -13400,7 +13576,7 @@ function updateRaceHUD(){
   // педаль тормоза подсказывает задний ход: на месте — «держи — назад», включён — «НАЗАД ◀»
   {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
-  svcHUD();
+  svcHUD();try{dxHUD(F);}catch(_){}
   const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();
@@ -14473,6 +14649,13 @@ const MATCH_VENUES=[
     hist:'В Брешии с начала века устраивают «автомобильные недели»: на прямых дорогах Ломбардии меряются скоростью и спорят на деньги.'},
   {id:'m_monza',c:'it',k:'both',y0:1922,y1:1929,t:'circuit',track:'monza',real:'monza',km:10,lap:10,name:'Монца',where:'под Миланом',
     hist:'Автодром в королевском парке под Миланом: дорожное кольцо и скоростной овал с виражами.'}];
+// 0.30: споры о подъёме в гору — рекорд горы (каждый едет один, на время); в каждой стране — своя знаменитая гора
+MATCH_VENUES.push(
+  {id:'h_gaillon',c:'fr',k:'record',y0:1899,y1:1912,t:'hill',terr:'macadam',km:1,name:'Подъём Гайон',where:'Нормандия',hist:'Прямой километровый подъём у Гайона, над долиной Сены: с 1899 года сюда ездят ставить рекорды скорости в гору — и заводы, и богатые любители.'},
+  {id:'h_shelsley',c:'uk',k:'record',y0:1905,y1:1929,t:'hill',real:'shelsley',km:0.914,name:'Шелсли-Уолш',where:'Вустершир',hist:'Короткий крутой подъём в Вустершире — старейшая в мире трасса гонок в гору: с 1905 года здесь каждый год спорят, чья машина сильнее.'},
+  {id:'h_kessel',c:'de',k:'record',y0:1905,y1:1929,t:'hill',real:'kesselberg',km:5,name:'Кессельберг',where:'Бавария',hist:'Серпантин над озером Кохельзе в Баварских Альпах: с 1905 года — гонки в гору и споры о рекорде.'},
+  {id:'h_susa',c:'it',k:'record',y0:1902,y1:1929,t:'hill',terr:'mount',km:22,name:'Суза — Мон-Сени',where:'Пьемонт',hist:'Подъём от Сузы к перевалу Мон-Сени — одна из первых горных гонок Италии, с 1902 года.'},
+  {id:'h_washington',c:'us',k:'record',y0:1904,y1:1929,t:'hill',terr:'mount',km:12,name:'Гора Вашингтон',where:'Нью-Гэмпшир',hist:'«Восхождение к облакам»: гонка по горной дороге на вершину горы Вашингтон, впервые — в июле 1904 года.'});
 // настоящая местность для матчей — те же файлы, что у гонок календаря
 MATCH_VENUES.forEach(v=>{if(v.real&&typeof REAL_RACES!=='undefined')REAL_RACES[v.id]={d:v.real};});
 // мировой рекорд скорости (км/ч) — с какого времени [год+месяц/12, км/ч, кто]
@@ -14505,17 +14688,17 @@ function racePrizeOf(t,c,y){return racePrizeBase({t,c,y,major:0});}
 // предложение: матч-гонка (kind='match') или спор о скорости (kind='record')
 function offerMatch(s,kind){const r=chalRnd(s,kind);if(!raceCarsFor(s).some(m=>!isTruck(m)))return null;
   const V=MATCH_VENUES.filter(v=>(v.k===kind||v.k==='both')&&s.y>=v.y0-1&&s.y<=v.y1&&(v.c===s.country||dealerCount(s,v.c)>0)&&!warCut(s,v.c));
-  if(!V.length)return null;const v=V.find(x=>x.c===s.country&&r()<0.75)||V[Math.floor(r()*V.length)],w=matchWhen(s,v,r);if(!w)return null;
+  if(!V.length)return null;const VH=V.filter(x=>x.c===s.country),VF=V.filter(x=>x.c!==s.country),v=VH.length&&(r()<0.55||!VF.length)?VH[Math.floor(r()*VH.length)]:VF.length?VF[Math.floor(r()*VF.length)]:V[0],w=matchWhen(s,v,r);if(!w)return null;
   const T=matchTeams(s,v.c,w.y);if(!T.length)return null;const t=T[Math.floor(r()*Math.min(3,T.length))],d=matchDriver(s,t,w.y);
-  const rec=kind==='record',sprint=v.t==='sprint',key=(rec?'rec-':'match-')+v.id+'-'+w.T;
+  const rec=kind==='record',sprint=v.t==='sprint',hill=v.t==='hill',key=(rec?'rec-':'match-')+v.id+'-'+w.T;
   const stake=Math.max(100,Math.round(racePrizeOf(v.t==='sprint'?'oval':v.t,v.c,w.y)*(rec?0.5:0.7)/50)*50);
-  const name=rec?(sprint?`${v.km<1.5?'Километр':'Миля'} с хода: ${v.name}`:`Рекорд круга: ${v.name}`):`Матч-гонка: ${v.name}`;
-  const rc={id:v.id,key,y:w.y,m:w.m,c:v.c,host:v.host||v.c,t:v.t,track:v.track,terr:v.terr,km:rec&&!sprint?(v.lap||v.km):v.km,laps:rec&&!sprint?1:0,name,hist:v.hist,img:'',match:1,kind,
+  const name=rec?(sprint?`${v.km<1.5?'Километр':'Миля'} с хода: ${v.name}`:hill?`Рекорд горы: ${v.name}`:`Рекорд круга: ${v.name}`):`Матч-гонка: ${v.name}`;
+  const rc={id:v.id,key,y:w.y,m:w.m,c:v.c,host:v.host||v.c,t:v.t,track:v.track,terr:v.terr,km:rec&&!sprint&&!hill?(v.lap||v.km):v.km,laps:rec&&!sprint?1:0,name,hist:v.hist,img:'',match:1,kind,
     purse:Math.round(stake*0.25/10)*10,dnfK:rec?0.3:0.45,venue:v.name,where:v.where,
     scn:rec?{st:'solo',gap:sprint?10:14,h0:sprint?9:11,span:0.4,gt:sprint?'каждый едет один, на время: разгон и мерный участок':'каждый едет один, на время',b:sprint?'Мерный участок размечен флажками, у его концов — хронометристы с секундомерами. Соперник уходит первым.':'Хронометристы засекают круг от линии до линии. Соперник уходит первым.'}:{st:'grid',h0:15,span:0.6,b:v.t==='road'?'Две машины рядом на шоссе, судья с флагом. Зрители стоят вдоль обочин до самого финиша.':'Две машины рядом на старте, судья с флагом, полные трибуны.'},
     rv:{n:t.n,c:t.c,str:t.str||0.95,mq:t.mq||[t.n],drv:d?d.id:'',dn:d?d.n:''}};
   const C={type:kind,rk:key,rc,mq:t.n,x:stakeExtra(s,t.n,'b'+kind)};
-  return {id:kind,kind,title:`${MATCH_ST[kind]} с ${t.n}: ${v.name}`,sub:`${MONTHS[w.m]} ${w.y} · ${rec?(sprint?'каждый едет один, на время':'лучшее время круга'):'одна машина против одной'}${d?' · у соперника — '+d.n:''}`,stake,C};}
+  return {id:kind,kind,title:`${MATCH_ST[kind]} с ${t.n}: ${v.name}`,sub:`${MONTHS[w.m]} ${w.y} · ${rec?(sprint?'каждый едет один, на время':hill?'лучшее время подъёма':'лучшее время круга'):'одна машина против одной'}${d?' · у соперника — '+d.n:''}`,stake,C};}
 /* ---------- продажи класса: дома и на экспортном рынке, за квартал, полгода или до конца года ---------- */
 const HC_STEPS=[1/4,1/3,1/2,1,2,3,4,5,8,10];
 function hcText(hc){return hc===1?'':hc>1?`фора: нужно продать больше, чем у соперника ×${hc}`:`фора вам: хватит больше ${hc===0.5?'половины':hc===1/3?'трети':'четверти'} продаж соперника`;}
@@ -14571,10 +14754,10 @@ function offerRace(s){const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+4
   return {id:'race',kind:'race',title:`Пари с ${t.n}: «${rc.name}»`,sub:`${MONTHS[rc.m]} ${rc.y} · ваша лучшая машина должна финишировать выше лучшей ${t.n}`,stake:Math.max(100,Math.round(racePrize(rc)*0.6/50)*50),C:{type:'race',rk:rc.key,mq:t.n,x:stakeExtra(s,t.n,'b')}};}
 // все вызовы, что можно взять (доска) или получить из газет
 function chalOffers(s){const out=[];if(!s||s.over||s.chal)return out;
-  [()=>offerRace(s),()=>offerMatch(s,'match'),()=>offerMatch(s,'record'),()=>offerSales(s,false),()=>offerSales(s,true),()=>offerTrial(s)].forEach(f=>{try{const o=f();if(o)out.push(o);}catch(e){console.warn('offer',e);}});
+  [()=>offerRace(s),()=>offerMatch(s,'match'),()=>offerMatch(s,'record'),()=>offerSales(s,false),()=>offerSales(s,true),()=>offerTrial(s),()=>offerEleg(s),()=>offerExped(s)].forEach(f=>{try{const o=f();if(o)out.push(o);}catch(e){console.warn('offer',e);}});
   return out;}
 /* ---------- вызов из газеты: соперник сам предлагает пари ---------- */
-const CHAL_W={race:1,match:1.3,record:0.9,sales:1.1,export:0.8,trial:0.9};
+const CHAL_W={race:1,match:1.3,record:0.9,sales:1.1,export:0.8,trial:0.9,eleg:0.8,exped:0.6};
 function chalCheck(s){
   if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<4||Math.random()>0.25)return;
   const O=chalOffers(s);if(!O.length)return;const last=s.chalKind||'';
@@ -14590,7 +14773,7 @@ function chalNewsText(s,C,who,xs){const st=stakeText(C);
     return {verb:'бросает вызов',deck:`Пари на ${st}: чья машина будет выше в гонке «${rc.name}»`,
       text:`${who} заявил газетам: «Машины "${s.company}" хороши только на афишах. Пусть приедут на "${rc.name}" в ${MONTHS_P[rc.m]} — посмотрим, кто кого!» Он предлагает пари на ${money(C.stake)}: чья лучшая машина финиширует выше, тот и забирает деньги.${xs}\nПринять вызов — значит заявить команду на эту гонку и обогнать лучшую машину ${C.mq}. Победа в пари — слава в газетах и радость гонщиков; проигрыш или неявка — удар по репутации. Отказ газеты тоже заметят.`};}
   if(C.type==='match'||C.type==='record'){const rc=C.rc,rec=C.type==='record',sprint=rc.t==='sprint',dn=rc.rv&&rc.rv.dn;
-    return {verb:rec?'спорит о скорости с':'вызывает на матч',deck:`${rc.venue}, ${MONTHS_N[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок, каждый один':'рекорд круга'):'один на один'} · ставка ${st}`,
+    return {verb:rec?'спорит о скорости с':'вызывает на матч',deck:`${rc.venue}, ${MONTHS_N[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок, каждый один':rc.t==='hill'?'рекорд горы':'рекорд круга'):'один на один'} · ставка ${st}`,
       text:`${who} заявил газетам: ${rec?`«Говорят, машины "${s.company}" быстры. Проверим: ${rc.venue}, каждый едет один, на время. Чья скорость выше — тот и прав».`:`«Хватит прятаться в общей толпе. Одна моя машина против одной вашей — ${rc.venue}, ${fmtN(rc.km)} км. Кто первым на финише — тот и прав».`}${dn?` За руль у них сядет ${dn}.`:''} Ставка — ${money(C.stake)}${rc.purse?`, победителю — ещё и сбор с трибун (${money(rc.purse)})`:''}.${xs}\n${rc.hist}\nПринять вызов — выставить одну машину и пилота (можно сесть за руль самому) в ${MONTHS_P[rc.m]}${rc.y!==s.y?' '+rc.y+' года':''}: вкладка «Гонки». Не приедете — пари проиграно.`};}
   if(C.type==='sales'){const home=C.c===s.country,mk=s.last&&s.last.mk&&s.last.mk[C.c],you=(mk&&mk.segs&&mk.segs[C.g]&&mk.segs[C.g].you)||0,per=C.per==='year'?`до Рождества`:`за ${C.per} ${plural(C.per,'месяц','месяца','месяцев')}`;
     return {verb:'бросает вызов',deck:`Кто продаст больше машин класса «${SEG[C.g].name}»${home?'':' — '+COUNTRIES[C.c].name} ${C.per==='year'?'до конца '+C.y+' года':per} · ставка ${st}`,
@@ -14598,18 +14781,21 @@ function chalNewsText(s,C,who,xs){const st=stakeText(C);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md),rv=trialRival(s,C);
     return {verb:'бросает вызов',deck:`Пробег ${C.route}: ${fmtN(C.km)} км · ставка ${st}`,
       text:`${who} заявил газетам: «Наши машины прочнее. Пусть "${s.company}" выставит свою серийную машину — пройдём ${C.route}, и судьи сосчитают поломки». От «${s.company}» поедет «${md?md.name:'—'}», от ${C.mq} — ${rv.name}. Кто меньше ломался, тот и выиграл, при равенстве — кто быстрее.${xs}\n${C.rh?C.rh+'\n':''}Старт — в ${MONTHS_P[s.m]}, итоги — через ${C.end-mi(s)===1?'месяц':'два месяца'}. Машину для пробега можно сменить на вкладке «Рынок».`};}
+  if(C.type==='eleg'||C.type==='exped')return chalNewsText30(s,C,who,xs,st);
   return {verb:'бросает вызов',deck:'',text:''};}
 // принять вызов (drvResolve → chalYes): у новых видов — свой учёт
 function chalAccept(s,C){
   if(C.type==='sales'&&C.mon){C.start=mi(s);C.end=Math.max(C.end,mi(s)+1);C.you=0;C.them=0;C.n=0;
     addLog(`Вызов принят: кто продаст больше машин класса «${SEG[C.g].name}»${C.c===s.country?'':' ('+COUNTRIES[C.c].name+')'} ${chalPerText(C)} — «${s.company}» или ${C.mq}${C.hc!==1?` (${hcText(C.hc)})`:''}. Пари ${money(C.stake)}.`,'good');return true;}
   if(C.type==='match'||C.type==='record'){const rc=C.rc;addLog(`Вызов принят: ${MATCH_ST[C.type].toLowerCase()} с ${C.mq} — ${rc.venue}, ${MONTHS[rc.m]} ${rc.y}. Пари ${money(C.stake)}. Выставьте машину на вкладке «Гонки».`,'good');return true;}
+  if(C.type==='eleg'||C.type==='exped')return chalAccept30(s,C);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md);addLog(`Вызов принят: пробег ${C.route} (${fmtN(C.km)} км) — «${md?md.name:''}» против ${C.mq}. Пари ${money(C.stake)}.`,'good');return true;}
   return false;}
 /* ---------- месячный учёт: открытие матча, неявка, итоги продаж и пробега ---------- */
 function chalMonth(s){const C=s.chal;if(!C||!C.acc)return;const t=mi(s);
   if(C.type==='sales'&&C.mon){if(t>=C.end)chalSalesMon(s);return;}
   if(C.type==='trial'){if(t>=C.end)trialResolve(s);return;}
+  if(C.type==='eleg'){if(t>=C.end)elegResolve(s);return;}if(C.type==='exped'){if(t>=C.end)expedResolve(s);return;}
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m;
     if(t>T){matchForfeit(s);return;}
     if(t>=T-1&&C.said!==t){C.said=t;addLog(`⚔️ ${MATCH_ST[C.type]} с ${C.mq}: ${rc.venue}, ${MONTHS[rc.m]} — выставьте машину на вкладке «Гонки».`,'good');pendingToasts.push(`⚔️ ${MATCH_ST[C.type]}: вкладка «Гонки»`);}}}
@@ -14675,11 +14861,12 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m,t=mi(s),open=t>=T-1&&t<=T,rs=matchRivalStats(rc),rec=C.type==='record',sprint=rc.t==='sprint';
     return `<section class="card chal"><div class="row"><span class="label">⚔️ ${MATCH_ST[C.type]}</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
       <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
-      <p class="small" style="margin-top:4px">${esc(rc.venue)} (${esc(rc.where)}) · ${MONTHS[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок: каждый едет один, на время':'рекорд круга: каждый едет один, на время'):`один на один, ${fmtN(rc.km)} км`}${rc.purse?` · победителю — ещё сбор с трибун ${money(rc.purse)}`:''}</p>
+      <p class="small" style="margin-top:4px">${esc(rc.venue)} (${esc(rc.where)}) · ${MONTHS[rc.m]} ${rc.y} · ${rec?(sprint?'мерный участок: каждый едет один, на время':rc.t==='hill'?'рекорд горы: каждый едет один, на время, от подножия до вершины':'рекорд круга: каждый едет один, на время'):`один на один, ${fmtN(rc.km)} км`}${rc.purse?` · победителю — ещё сбор с трибун ${money(rc.purse)}`:''}</p>
       <p class="small muted" style="margin-top:4px">У соперника: заводская гоночная машина ≈${rs.hp} л.с., до ${rs.kmh} км/ч${rc.rv.dn?` · за рулём ${esc(rc.rv.dn)}`:''}.</p>
       <p class="small muted" style="margin-top:4px">${esc(rc.hist)}</p>
       ${open?`<button class="btn primary block" style="margin-top:8px" data-act="raceSetup" data-k="${esc(rc.key)}" ${s.pending.length?'disabled':''}>Выставить машину</button><p class="small warn" style="margin-top:4px">${t===T?'Последний месяц: не приедете — пари проиграно.':'Запись открыта — заезд можно провести в этом месяце или в следующем.'}</p>`
         :`<p class="small" style="margin-top:6px">Запись откроется в ${MONTHS_P[(T-1+1200)%12]}.</p>`}</section>`;}
+  if(C.type==='eleg'||C.type==='exped')return chalCard30(s,C,scT);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md),rv=trialRival(s,C),cars=trialCars(s,C.g),rel=m=>Math.round(carBase(m,0,s.y).rel*100),rr=Math.round(carBase(rv.md,0,s.y).rel*100);
     return `<section class="card chal"><div class="row"><span class="label">⚔️ Пробег на надёжность</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
       <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
@@ -14699,7 +14886,7 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
 Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||C.type!=='trial')return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`На пробег поедет «${m.name}»`);rerender();}});
 // название события для газеты и трофея
 function chalEvName(s,C,rc){if(C.type==='race')return rc?rc.name:'';if(C.type==='match')return `матч-гонка: ${C.rc.venue}`;if(C.type==='record')return `спор о скорости: ${C.rc.venue}`;
-  if(C.type==='trial')return `пробег ${C.route}`;if(C.type==='sales')return `продажи класса «${SEG[C.g].name}»${C.c&&C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''}`;return '';}
+  if(C.type==='trial')return `пробег ${C.route}`;if(C.type==='eleg')return `конкурс элегантности: ${C.venue}`;if(C.type==='exped')return `экспедиция ${C.route}`;if(C.type==='sales')return `продажи класса «${SEG[C.g].name}»${C.c&&C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''}`;return '';}
 // реванш: тот же вид вызова, ставка в полтора раза выше
 function chalRevenge(s,O){const B=O.base;if(!B)return false;
   if(B.type==='match'||B.type==='record'){const o=offerMatch(s,B.type);if(!o){addLog(`Реванш с ${O.mq} отложен: в ближайшие месяцы негде выйти один на один.`);return false;}
@@ -14729,23 +14916,31 @@ const DX_KIND={
     opp:(y,r)=>r[3]*(1+0.004*(y-1905)),hist:'В январе 1930 года Rover Light Six обогнал «Голубой поезд» от Сен-Рафаэля до Кале, а в марте Вулф Барнато на Bentley Speed Six успел из Канн в лондонский клуб раньше, чем поезд пришёл в Кале. Обогнать экспресс на дорогах эпохи — значит ехать быстро и ни разу не сломаться.'}};
 // лучшая машина для дуэли: самая быстрая серийная (не грузовик)
 function dxCar(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)).map(m=>({m,st:carStats(m,0,s.y)})).sort((a,b)=>b.st.vmax-a.st.vmax)[0]||null;}
-function dxTrainOk(s,v){const d=DX_KIND.train,r=d.route[s.country]||d.route.fr,road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),va=Math.min(v*road,95);return r[2]/va+r[2]/600<=0.98*r[2]/d.opp(s.y,r);}
-function dxOffer(s){const P=dxCar(s);if(!P)return null;const K=Object.entries(DX_KIND).filter(([k,d])=>s.y>=d.y0&&s.y<=d.y1&&(!d.cc||d.cc.split(',').includes(s.country))&&(k!=='train'||dxTrainOk(s,P.st.vmax*3.6))&&!(s.dxSeen&&s.dxSeen[k]&&mi(s)-s.dxSeen[k]<36));
-  if(!K.length||isWar(s.y,s.m,s.country))return null;const [k,d]=K[Math.floor(Math.random()*K.length)],c=s.country,L=s.last;
+function dxTrainOk(s,v,c){const d=DX_KIND.train,r=d.route[c||s.country]||d.route.fr,road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),va=Math.min(v*road,95);return r[2]/va+r[2]/600<=0.98*r[2]/d.opp(s.y,r);}
+// 0.30: вызов может прийти и из страны, где у вас дилеры (газеты Франции зовут вашу машину против «Голубого поезда»)
+function dxOffer(s){const P=dxCar(s);if(!P)return null;const C=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!(typeof warCut==='function'&&warCut(s,c))));
+  const c=Math.random()<0.55||C.length<2?s.country:C[1+Math.floor(Math.random()*(C.length-1))];
+  const K=Object.entries(DX_KIND).filter(([k,d])=>s.y>=d.y0&&s.y<=d.y1&&(!d.cc||d.cc.split(',').includes(c))&&(k!=='train'||dxTrainOk(s,P.st.vmax*3.6,c))&&!(s.dxSeen&&s.dxSeen[k]&&mi(s)-s.dxSeen[k]<24));
+  if(!K.length||isWar(s.y,s.m,c)||isWar(s.y,s.m,s.country))return null;const [k,d]=K[Math.floor(Math.random()*K.length)],L=s.last;
   const stake=Math.round(clamp(((L&&L.rev)||0)*0.08,150*cpi(s),12000*cpi(s))/50)*50;
   const o={k,at:mi(s)+1+Math.floor(Math.random()*2),stake,md:P.m.id,c};
   if(k==='horse'){o.venue=d.venue[c]||d.venue.fr;o.opp=d.horse[c]||'рысак';o.km=d.km;}
   else if(k==='plane'){o.venue=d.venue[c];o.opp=d.pilot[c];o.km=d.km;o.gate=Math.round(stake*0.6/50)*50;}
   else{const r=d.route[c]||d.route.fr;o.venue=r[0];o.opp=(c==='fr'||c==='uk')&&s.y>=1922?'«Голубой поезд»':r[1];o.km=r[2];o.trainV=d.opp(s.y,r);}
   return o;}
-function dxNewsText(s,o){const d=DX_KIND[o.k],md=s.models.find(m=>m.id===o.md),st=carStats(md,0,s.y),v=Math.round(st.vmax*3.6);
+function dxNewsText(s,o){const t=dxNewsText0(s,o);return o.c&&o.c!==s.country&&COUNTRIES[o.c]?`Вызов из-за границы — ${COUNTRIES[o.c].name}: там продают ваши машины, и местные газеты хотят посмотреть, на что они способны.\n`+t:t;}
+function dxNewsText0(s,o){const d=DX_KIND[o.k],md=s.models.find(m=>m.id===o.md),st=carStats(md,0,s.y),v=Math.round(st.vmax*3.6);
   if(o.k==='horse')return `Хозяин рысака ${o.opp} заявил газетам: «Ваши самодвижущиеся экипажи — дым и шум. Мой ${o.opp} обгонит любой из них». Дуэль — две мили на ${o.venue}, ставка ${money(o.stake)}.\nОт «${s.company}» поедет «${md.name}» (до ${v} км/ч). Рысак бежит милю за две минуты с небольшим — около ${Math.round(d.opp(s.y))} км/ч.\n${d.hist}`;
   if(o.k==='plane')return `Импресарио предлагает «${s.company}» турне: авиатор ${o.opp} на биплане против вашей машины — пять миль по кругу ипподрома, на трибунах тысячи зрителей. Сборы делят пополам (${money(o.gate)} вам в любом случае), победителю — ещё ${money(o.stake)}.\nОт «${s.company}» — «${md.name}» (до ${v} км/ч). Биплан летит около ${Math.round(d.opp(s.y))} км/ч.\n${d.hist}`;
   return `Железнодорожная компания хвастает, что ${o.opp} довезёт пассажиров ${o.venue} быстрее любой машины. «${s.company}» вызывают на дуэль: ${fmtN(o.km)} км по дорогам против расписания поезда (в среднем ${Math.round(o.trainV)} км/ч со всеми остановками). Ставка — ${money(o.stake)}.\nОт «${s.company}» — «${md.name}» (до ${v} км/ч), два шофёра посменно. Ехать придётся день и ночь — и ни разу не сломаться.\n${d.hist}`;}
 // раз в месяц: предложение дуэли (редко) и развязка принятой
 function dxCheck(s){if(s.over)return;
-  if(s.dx&&s.dx.acc&&mi(s)>=s.dx.at){dxResolve(s);return;}
-  if(s.dx||s.pending.length||mi(s)<10||mi(s)-(s.dxLast||-99)<14||Math.random()>0.04)return;
+  // 0.30: день дуэли — сесть за руль самому или доверить шофёру (быстрый итог); пропустили день — шофёр
+  if(s.dx&&s.dx.acc&&mi(s)>=s.dx.at){const o=s.dx,d=DX_KIND[o.k];if(o.today&&mi(s)>o.at){dxResolve(s);return;}if(o.today)return;o.today=1;
+    pushEvent({kicker:'Дуэль сегодня',own:1,carId:o.md,title:`${d.title}: ${o.opp}`,deck:`${o.venue}${o.k==='train'?' · '+fmtN(o.km)+' км':''} · ставка ${money(o.stake)}`,
+      text:`Всё готово: ${o.k==='train'?'на вокзале пыхтит паровоз, у перрона — ваша машина':o.k==='plane'?'биплан выкатили на поле, трибуны полны':'рысак в качалке бьёт копытом, трибуны полны'}. Поедете сами — или доверите шофёру (итог сразу)?`,
+      choices:[['Сесть за руль','dxDrive'],['Пусть едет шофёр','dxSim']]},true);return;}
+  if(s.dx||s.pending.length||mi(s)<10||mi(s)-(s.dxLast||-99)<10||Math.random()>0.08)return;
   const o=dxOffer(s);if(!o)return;s.dx=o;s.dxLast=mi(s);(s.dxSeen=s.dxSeen||{})[o.k]=mi(s);const d=DX_KIND[o.k],T=(o.at-mi(s));
   pushEvent({kicker:'Дуэль',title:`${d.title}: ${o.opp}`,deck:`${o.venue} · через ${T} ${plural(T,'месяц','месяца','месяцев')} · ставка ${money(o.stake)}`,text:dxNewsText(s,o),carId:o.md,own:1,
     choices:[['Принять дуэль','dxYes'],['Отказаться','dxNo']]},true);}
@@ -14759,13 +14954,14 @@ function dxSim(s,o){const md=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m;if(
   const road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),vAvg=Math.min(v*road,95),hours=o.km/vAvg,n=Math.max(3,Math.round(o.km/150));let lost=0,brk=0,fatal=false;
   for(let i=0;i<n;i++){if(r()<(1-rel)*0.9){brk++;lost+=0.6+r()*1.6;if(r()<0.12)fatal=true;}}
   const tMe=fatal?null:(hours+lost+o.km/600)*60,tOp=o.km/o.trainV*60;return {md,win:!fatal&&tMe<tOp,tMe,tOp,brk,fatal,v:Math.round(vAvg),opp:Math.round(o.trainV)};}
-function dxResolve(s){const o=s.dx;s.dx=null;if(!o)return;const R=dxSim(s,o),d=DX_KIND[o.k];if(!R){addLog('Дуэль не состоялась: нет машины.','bad');return;}
+function dxResolve(s,given){const o=s.dx;s.dx=null;if(!o)return;const md0=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m,R=given?(md0?Object.assign({md:md0},given):null):dxSim(s,o),d=DX_KIND[o.k];if(!R){addLog('Дуэль не состоялась: нет машины.','bad');return;}
   const hm=t=>t>=90?`${Math.floor(t/60)} ч ${String(Math.round(t%60)).padStart(2,'0')} мин`:`${Math.floor(t)} мин ${String(Math.round(t%1*60)).padStart(2,'0')} с`;
   let money_=0;if(o.gate){s.cash+=o.gate;money_+=o.gate;}
   if(R.win){s.cash+=o.stake;money_+=o.stake;s.rep=clamp(s.rep+(o.k==='train'?5:3),0,100);wfxAdd(s,'*',segOf(R.md),o.k==='train'?0.25:0.15,8,'дуэль: '+d.n);if(o.k==='train')s.relFx=mi(s)+8;}
   else{s.cash-=o.stake;s.rep=clamp(s.rep-1,0,100);}
   const tx=o.k==='train'?(R.win?`«${R.md.name}» прошла ${o.venue} за ${hm(R.tMe)} — ${o.opp} был в пути ${hm(R.tOp)}. ${R.brk?`По дороге ${R.brk} ${plural(R.brk,'поломка','поломки','поломок')}, механики справились. `:'Ни одной поломки за всю дорогу. '}Средняя скорость — ${R.v} км/ч, днём и ночью.`
       :R.fatal?`На полпути у «${R.md.name}» не выдержала ${['рессора','коробка','полуось','шестерня'][Math.floor(Math.random()*4)]} — машину увезли на платформе того самого поезда.`:`«${R.md.name}» отстала: ${hm(R.tMe)} против ${hm(R.tOp)} у поезда. ${R.brk?`${R.brk} ${plural(R.brk,'поломка','поломки','поломок')} съели часы.`:'Дороги оказались хуже рельсов.'}`)
+    :R.played&&R.fatal?`«${R.md.name}» не дошла до финиша — ${o.opp} прошёл дистанцию в одиночку под свист трибун.`
     :R.stall?`Мотор «${R.md.name}» заглох на старте под свист трибун — ${o.opp} прошёл дистанцию в одиночку.`
     :R.win?`«${R.md.name}» прошла ${o.km<5?'две мили':'пять миль'} за ${hm(R.tMe)} — ${o.opp} отстал (${hm(R.tOp)}). Скорость — ${R.v} км/ч против ${R.opp}.`:`${o.opp} оказался быстрее: ${hm(R.tOp)} против ${hm(R.tMe)} у «${R.md.name}» (${R.opp} км/ч против ${R.v}).`;
   const pay=o.gate?`Сборы — ${money(o.gate)}${R.win?`, выигрыш — ${money(o.stake)}`:`, проигрыш — ${money(o.stake)}`}.`:R.win?`Выигрыш — ${money(o.stake)}.`:`Ставка ${money(o.stake)} проиграна.`;
@@ -14775,6 +14971,85 @@ function dxResolve(s){const o=s.dx;s.dx=null;if(!o)return;const R=dxSim(s,o),d=D
     text:tx+'\n'+pay+(R.win?' Газеты пишут о машине, которая быстрее '+(o.k==='train'?'поезда':o.k==='plane'?'аэроплана':'лошади')+', — полгода её охотнее покупают.':' Газеты посмеиваются, но и запоминают имя марки.'),
     mean:R.win?'Репутация растёт, полгода ваши машины этого класса берут охотнее.':'',choices:[['Читать дальше','ok']]},true);
   if(R.win)pendingToasts.push('⚔️ '+d.title+': победа!');}
+
+// 0.30: сесть за руль — гонка с соперником в 3D (41g-dx.js); итог — dxAfterRace → dxResolve
+function dxToday(s,key){const o=s.dx;if(!o)return;if(key==='dxSim'||(typeof process!=='undefined'&&process.versions&&process.versions.node)){dxResolve(s);return;}
+  const md=s.models.find(m=>m.id===o.md)||(dxCar(s)||{}).m;if(!md){dxResolve(s);return;}o.md=md.id;
+  try{startRace({rc:dxRc(s,o),mode:'drive',entries:[{drv:'me',md,prep:0,tyre:'hard',gear:0}]});}catch(e){console.warn('dxDrive',e);dxResolve(s);}}
+
+/* ================= 0.30: НОВЫЕ ВЫЗОВЫ — ПРЕСТИЖ И СЛАВА =================
+   • Конкурс элегантности (престиж): лучшую вашу машину выставляют на смотр рядом с машиной соперника — судьи (графини,
+     художники, кутюрье) оценивают кузов, отделку, новинки оснащения; в Булонском лесу, Сан-Ремо, Херлингеме, Баден-Бадене,
+     Ньюпорте. Победа — газеты светской хроники, богатые покупатели полгода охотнее берут ваш люкс.
+   • Рекламная экспедиция (слава): через континент — Пекин — Париж (1907), Нью-Йорк — Париж (1908), через Сахару (1922),
+     «Чёрный рейд» по Африке (1924). Машина соперника идёт тем же путём. Победа — о марке узнают во всех странах
+     (узнаваемость за границей растёт), поражение — газеты пишут, чья машина застряла в песках.
+   Вызовы приходят и из стран, где у вас дилеры: там и смотр, и газеты. */
+const ELEG_VENUE={fr:['Булонский лес, Париж','графиня де Ноай и Поль Пуаре'],it:['Сан-Ремо','графиня ди Сан-Мартино'],uk:['Херлингем-клуб, Лондон','леди Говард де Уолден'],
+  de:['Баден-Баден','великая герцогиня Баденская'],us:['Ньюпорт, Род-Айленд','миссис Вандербильт']};
+const EXPED_ROUTES=[[1907,'Пекин — Париж',16000,'В 1907 году «Итала» князя Боргезе прошла от Пекина до Парижа за два месяца: Гоби, Байкал, Сибирь — а дорог почти нигде не было.'],
+  [1908,'Нью-Йорк — Париж через Аляску и Сибирь',35000,'В 1908 году «Томас Флаер» обошёл полмира — из Нью-Йорка через Сибирь в Париж — и выиграл «Великую гонку».'],
+  [1922,'Через Сахару: Туггурт — Тимбукту',3200,'Зимой 1922–1923 годов полугусеничные «Ситроены» впервые пересекли Сахару — двадцать дней по пескам.'],
+  [1924,'«Чёрный рейд»: Алжир — Мадагаскар',20000,'В 1924–1925 годах экспедиция «Ситроена» прошла всю Африку с севера на юг; фильм о ней смотрела вся Европа.']];
+function expedRoute(y){let r=null;EXPED_ROUTES.forEach(x=>{if(x[0]<=y)r=x;});return r;}
+// лучшая машина на смотр: люкс (или средний класс) с самой высокой оценкой; закрытый кузов и новинки оснащения — в плюс
+function elegScore(md,s,c){let k=1;try{k=classScore(md,s,c);}catch(_){}const b=parts(md).b,eq=typeof eqOf==='function'?eqOf(md).length:0,g=segOf(md);
+  return k*(g==='lux'?1.12:g==='sport'?1.04:0.92)*(b.closed?1.08:1)*(1+0.035*eq)*(md.t==='t2'?1.06:1);}
+function elegPick(s,c){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&['lux','middle','sport'].includes(segOf(m))).map(m=>({m,v:elegScore(m,s,c)})).sort((a,b)=>b.v-a.v)[0]||null;}
+function offerEleg(s){if(s.y<1908)return null;const r=chalRnd(s,'eleg');const C0=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!warCut(s,c)));
+  const c=r()<0.5||C0.length<2?s.country:C0[1+Math.floor(r()*(C0.length-1))],v=ELEG_VENUE[c];if(!v||isWar(s.y,s.m,c))return null;const P=elegPick(s,c);if(!P)return null;
+  const cps=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*(((cp.mix&&cp.mix.lux)||0)+0.3*((cp.mix&&cp.mix.middle)||0))})).filter(x=>!ownComp(x.cp,s)&&!holdOf(s,c,x.i)&&x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);if(!cps.length)return null;
+  const R=cps[Math.floor(r()*cps.length)],nm=compName(R.cp,s),L=s.last,stake=Math.round(clamp(((L&&L.rev)||0)*0.05,120*cpi(s),9000*cpi(s))/50)*50;
+  const C={type:'eleg',c,ci:R.i,mq:nm,venue:v[0],judge:v[1],md:P.m.id,end:mi(s)+2,x:stakeExtra(s,nm,'be',1)};
+  return {id:'eleg',kind:'eleg',title:`Конкурс элегантности с ${nm}: ${v[0]}`,sub:`${c===s.country?'':COUNTRIES[c].name+' · '}судьи — ${v[1]} · кузов, отделка, новинки`,stake,C};}
+function offerExped(s){const rt=expedRoute(s.y);if(!rt||s.y>rt[0]+3)return null;const r=chalRnd(s,'exped');if(isWar(s.y,s.m,s.country))return null;
+  const cars=s.models.filter(m=>m.status==='prod'||m.status==='sale');if(!cars.length)return null;const P=cars.map(m=>({m,v:carBase(m,0,s.y).rel*(isTruck(m)?1.08:1)})).sort((a,b)=>b.v-a.v)[0];
+  // соперник — сильная марка другой страны (так и было: «Итала», «Томас», «Де Дион», «Спайкер»)
+  const L=[];Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;(COMPS[c]||[]).forEach((cp,i)=>{if(!ownComp(cp,s)&&!holdOf(s,c,i)&&compAlive(cp,s))L.push({c,i,cp,v:compVol(cp,s)});});});
+  if(!L.length)return null;L.sort((a,b)=>b.v-a.v);const R=L[Math.floor(r()*Math.min(5,L.length))],nm=compName(R.cp,s),Ls=s.last;
+  const stake=Math.round(clamp(((Ls&&Ls.rev)||0)*0.1,200*cpi(s),20000*cpi(s))/50)*50;
+  const C={type:'exped',c:R.c,ci:R.i,mq:nm,route:rt[1],km:rt[2],rh:rt[3],md:P.m.id,g:segOf(P.m),end:mi(s)+3,x:stakeExtra(s,nm,'bx',1)};
+  return {id:'exped',kind:'exped',title:`Экспедиция ${rt[1]}: «${s.company}» против ${nm}`,sub:`${fmtN(rt[2])} км без дорог · кто первым и без поломок · слава во всех странах`,stake,C};}
+function chalNewsText30(s,C,who,xs,st){const md=s.models.find(m=>m.id===C.md);
+  if(C.type==='eleg')return {verb:'зовёт на смотр',deck:`Конкурс элегантности: ${C.venue}${C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''} · ставка ${st}`,
+    text:`${who} заявил светской хронике: «Машины "${s.company}" ездят, но красивы ли они? На конкурсе элегантности — ${C.venue} — пусть судит ${C.judge}». Пари на ${money(C.stake)}.${xs}\nОт «${s.company}» поедет «${md?md.name:'—'}»: судьи смотрят на кузов, отделку, новинки оснащения (электрический свет, стартер), на то, как машина подходит к платьям дам. Победа — полгода богатые покупатели охотнее берут ваши дорогие машины.`};
+  return {verb:'вызывает в экспедицию',deck:`${C.route} · ${fmtN(C.km)} км · ставка ${st}`,
+    text:`${who} предлагает газетам пари: «Наша машина пройдёт ${C.route} быстрее и без поломок, чем машина "${s.company}"». ${fmtN(C.km)} км без дорог: пески, броды, перевалы, бензин везут вперёд на верблюдах и поездах.${xs}\nОт «${s.company}» пойдёт «${md?md.name:'—'}». Победителя будут знать во всех странах — газеты Европы и Америки печатают сводки каждый день.\n${C.rh}`};}
+function chalAccept30(s,C){const md=s.models.find(m=>m.id===C.md);
+  if(C.type==='eleg')addLog(`Вызов принят: конкурс элегантности (${C.venue}) — «${md?md.name:''}» против ${C.mq}. Пари ${money(C.stake)}.`,'good');
+  else addLog(`Вызов принят: экспедиция ${C.route} — «${md?md.name:''}» против ${C.mq}. Итоги — через три месяца. Пари ${money(C.stake)}.`,'good');return true;}
+function elegResolve(s){const C=s.chal;s.chal=null;let md=s.models.find(m=>m.id===C.md&&(m.status==='prod'||m.status==='sale'));if(!md){const P=elegPick(s,C.c);md=P&&P.m;}
+  if(!md){s.cash-=C.stake;addLog(`Конкурс элегантности: «${s.company}» не выставила машину — пари проиграно.`,'bad');try{duelOutcome(s,C,false,{forfeit:1});}catch(_){}return;}
+  const me=elegScore(md,s,C.c)*(0.88+Math.random()*0.24),rv=(1.02+0.1*Math.random())*(s.y>=1920?1.05:1),win=me>rv;
+  if(win){s.cash+=C.stake;s.rep=clamp(s.rep+2,0,100);wfxAdd(s,C.c,'lux',0.22,6,'конкурс элегантности');addLog(`⚔️ Конкурс элегантности (${C.venue}): гран-при у «${md.name}»! +${money(C.stake)}.`,'good');
+    try{trophyAdd(s,{kind:'medal',title:`Гран-при элегантности: ${C.venue}`,sub:`«${md.name}» · против ${C.mq}`,story:`На конкурсе элегантности (${C.venue}) судьи — ${C.judge} — отдали гран-при «${md.name}».`,key:'eleg|'+mi(s),carId:md.id,pt:'Гран-при элегантности'});}catch(_){}}
+  else{s.cash-=C.stake;s.rep=clamp(s.rep-0.5,0,100);addLog(`Конкурс элегантности (${C.venue}): судьи предпочли машину ${C.mq}. −${money(C.stake)}.`,'bad');}
+  try{duelOutcome(s,C,win,{carId:md.id});}catch(e){console.warn('duel',e);}}
+function expedResolve(s){const C=s.chal;s.chal=null;let md=s.models.find(m=>m.id===C.md&&(m.status==='prod'||m.status==='sale'));if(!md)md=s.models.find(m=>m.status==='prod');
+  if(!md){s.cash-=C.stake;addLog(`Экспедиция ${C.route}: машины нет — пари проиграно.`,'bad');try{duelOutcome(s,C,false,{forfeit:1});}catch(_){}return;}
+  const cp=(COMPS[C.c]||[])[C.ci],rv=rivalCar(RIVAL_CAR[segOf(md)]?segOf(md):'middle',s.y),rmd={...rv[2],t:'t1',paint:'#333',name:rv[1],made:0,ai:1};
+  // путь без дорог: поломки вдвое чаще, чем в пробеге; четыре поломки — машину бросают в пути
+  const R=trialSim(s,{km:C.km},md,rmd,()=>Math.random()*0.62),lostMe=R.pM>=5,lostTh=R.pT>=5,win=!lostMe&&(lostTh||R.win);
+  if(win){s.cash+=C.stake;s.rep=clamp(s.rep+4,0,100);wfxAdd(s,'*',segOf(md),0.18,8,'экспедиция');if(s.aw)for(const c in COUNTRIES)if(c!==s.country)s.aw[c]=clamp((s.aw[c]||0)+0.08,0,1);
+    addLog(`⚔️ Экспедиция ${C.route}: «${md.name}» пришла первой (поломок ${R.pM}, у ${C.mq} — ${R.pT}${lostTh?', их машину бросили в пути':''}). О марке пишут во всех странах. +${money(C.stake)}.`,'good');
+    try{trophyAdd(s,{kind:'charter',title:`Экспедиция: ${C.route}`,sub:`«${md.name}» · ${fmtN(C.km)} км`,story:`«${md.name}» прошла ${C.route} (${fmtN(C.km)} км) раньше машины ${C.mq}.`,key:'exped|'+mi(s),carId:md.id,pt:'Экспедиция пройдена первой'});}catch(_){}}
+  else{s.cash-=C.stake;s.rep=clamp(s.rep-1,0,100);addLog(`Экспедиция ${C.route}: ${lostMe?`«${md.name}» бросили в пути после ${R.pM} поломок`:`${C.mq} пришёл первым (поломок у вас ${R.pM}, у них ${R.pT})`}. −${money(C.stake)}.`,'bad');}
+  try{duelOutcome(s,C,win,{carId:md.id,trial:{rows:R.rows,pM:R.pM,pT:R.pT,kmhM:R.kmhM,kmhT:R.kmhT,md:md.name,rv:C.mq,route:C.route,km:C.km}});}catch(e){console.warn('duel',e);}}
+function chalCard30(s,C,scT){const md=s.models.find(m=>m.id===C.md);
+  if(C.type==='eleg'){const cars=s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&['lux','middle','sport'].includes(segOf(m)));
+    return `<section class="card chal"><div class="row"><span class="label">⚔️ Конкурс элегантности</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
+      <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
+      <p class="small" style="margin-top:4px">${esc(C.venue)}${C.c!==s.country?' · '+esc(COUNTRIES[C.c].name):''} · судьи — ${esc(C.judge)} · смотр — в ${MONTHS_P[C.end%12]}</p>
+      <p class="small" style="margin-top:4px">На смотр: <b>«${esc(md?md.name:'—')}»</b>${md?` · оценка ${Math.round(elegScore(md,s,C.c)*100)}`:''}</p>
+      ${cars.length>1?`<div class="chips" style="margin-top:6px">${cars.map(m=>`<button class="chip ${md&&m.id===md.id?'on':''}" data-act="chalCar" data-k="${m.id}">${esc(m.name)}<small>оценка ${Math.round(elegScore(m,s,C.c)*100)}</small></button>`).join('')}</div>`:''}
+      <p class="small muted" style="margin-top:6px">Судьи ценят дорогой класс, закрытый кузов, богатую отделку и новинки оснащения.</p></section>`;}
+  return `<section class="card chal"><div class="row"><span class="label">⚔️ Экспедиция</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
+    <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
+    <p class="small" style="margin-top:4px">${esc(C.route)} · ${fmtN(C.km)} км · итоги — в ${MONTHS_P[C.end%12]}</p>
+    <p class="small" style="margin-top:4px">Пойдёт: <b>«${esc(md?md.name:'—')}»</b>${md?` (надёжность ${Math.round(carBase(md,0,s.y).rel*100)}%)`:''}</p>
+    <p class="small muted" style="margin-top:6px">${esc(C.rh||'')}</p></section>`;}
+// выбор машины для смотра: та же кнопка, что у пробега
+Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||!['trial','eleg','exped'].includes(C.type))return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`${C.type==='eleg'?'На смотр':C.type==='exped'?'В экспедицию':'На пробег'} — «${m.name}»`);rerender();}});
 
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
@@ -18062,6 +18337,10 @@ function r3dField(T){
   // площадки под приметами (замок, башни): земля ровная вокруг, дальше плавно переходит в склон
   (T.lm||[]).forEach(lm=>{if(!lm.off)return;const k0=Math.round((lm.x-x0)/S),j0=Math.round((lm.z-z0)/S);if(k0<0||j0<0||k0>=nx||j0>=nz)return;const h0=H[j0*nx+k0],R0=lm.r*0.9,R1=lm.r*1.5,rc2=Math.ceil(R1/S);
     for(let j=Math.max(0,j0-rc2);j<=Math.min(nz-1,j0+rc2);j++)for(let k=Math.max(0,k0-rc2);k<=Math.min(nx-1,k0+rc2);k++){const q=j*nx+k,dd=Math.hypot(x0+k*S-lm.x,z0+j*S-lm.z),w=1-sstep(R0,R1,dd);if(w>0)H[q]+=(h0-H[q])*w;}});
+  // 0.30: дуэль с экспрессом — земля под насыпью ровная: по высоте рельсов, дальше плавно к склону
+  if(T.dxRail){const RP=T.dxRail.P,rr=Math.ceil(10/S);for(let k=0;k<RP.length-1;k++){const A=RP[k],B=RP[k+1],dx=B[0]-A[0],dz=B[2]-A[2],l2=dx*dx+dz*dz||1,ck=Math.round((A[0]-x0)/S),cj=Math.round((A[2]-z0)/S);
+    for(let j=Math.max(0,cj-rr);j<=Math.min(nz-1,cj+rr);j++)for(let kk=Math.max(0,ck-rr);kk<=Math.min(nx-1,ck+rr);kk++){const q=j*nx+kk,x=x0+kk*S,z=z0+j*S;let t=((x-A[0])*dx+(z-A[2])*dz)/l2;t=t<0?0:t>1?1:t;
+      const d=Math.hypot(A[0]+dx*t-x,A[2]+dz*t-z);if(d>10||D[q]<W/2+3)continue;const y=A[1]+(B[1]-A[1])*t-0.55,w=1-sstep(3.4,10,d);if(w>0)H[q]+=(y-H[q])*w;}}}
   for(let q=0;q<N;q++){let h=H[q];if(h>Cap[q])h=Cap[q];H[q]=h;G[q]=h-0.45*(1-sstep(W/2+13,W/2+20,D[q]));}
   const Fo={x0,z0,S,nx,nz,D,I,L,Sg,H,G,mount:alp,flat,beach,seed};carveField(T,Fo);
   return Fo;
@@ -18448,7 +18727,7 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
   const set=SCEN_SETS[R3.T.cfg.host],kinds=set.trees.filter(t=>t!=='palm'&&t!=='olive'&&t!=='cypress'),trees=new MB(),leaf=new MB(true),x0=F.x0+k0*F.S,z0=F.z0+j0*F.S,x1=x0+TS*F.S,z1=z0+TS*F.S,r=mulberry32(tx*7919+tz*104729),dens=gq().trees;
   const tunT=R3.T.tunnels&&R3.T.tunnels.length,tunFree=(x,z)=>{if(!tunT)return true;const k=Math.round((x-F.x0)/F.S),j=Math.round((z-F.z0)/F.S);if(k<0||j<0||k>=F.nx||j>=F.nz)return true;const q=j*F.nx+k,i=F.I[q];return !(i>=0&&tunNear(R3.T,i,4)&&F.D[q]<R3.T.W/2+44);};
   const wet=R3.T.real&&R3.T.real.wm&&R3.T.cfg.terr!=='beach'?(x,z)=>realWet(R3.T,x,z)>0.08:()=>false;
-  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z)||wet(x,z))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
+  const put=(t,x,y,z,sc)=>{if(!tunFree(x,z)||wet(x,z))return;if(R3.T.dxRail&&dxRailNear(R3.T,x,z,5))return;const P=fTree(t,Math.floor(r()*3),0),X=X3(r()*6.28,sc,[x,y,z]);trees.add(P.w,X);leaf.add(P.l,X);};
   R3.forest.forEach(([fx,fz,fr])=>{if(fx+fr<x0||fx-fr>x1||fz+fr<z0||fz-fr>z1)return;const cnt=Math.round(fr*fr/90*dens);
     for(let q=0;q<cnt;q++){const a=r()*6.283,d=Math.sqrt(r())*fr,x=fx+Math.cos(a)*d,z=fz+Math.sin(a)*d;if(x<x0||x>=x1||z<z0||z>=z1)continue;if(fSample(F,F.D,x,z)<40||lmNear(x,z))continue;
       put(kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,fSample(F,F.G,x,z)-0.2,z,0.8+r()*0.45);}});
@@ -18502,6 +18781,8 @@ function r3dSetup(){
   // море у пляжа и берега: большая гладь чуть ниже дороги (земля к воде опускается)
   {const wm=r3dWaters(T);if(wm&&!R3.F.beach)R3.water=g3Mesh(wm);}
   {const rm=r3dRails(T);if(rm)R3.rails=g3Mesh(rm);}
+  // 0.30: дуэль с экспрессом — железная дорога вдоль всего шоссе (кусками: рисуем ближние)
+  if(T.dxRail)try{R3.dxRail=r3dDxRail(T);}catch(e){console.warn('dxRail3d',e);R3.dxRail=null;}
   try{r3dTunnels();}catch(e){console.warn('tunnels',e);R3.tuns=[];}
   if(R3.F.beach){const F=R3.F,mb=new MB();let lo=1e9;T.pts.forEach(p=>{lo=Math.min(lo,p[1]);});const y=lo-1.1;R3.beachY=y;const x0=F.x0-6000,z0=F.z0-6000,x1=F.x0+(F.nx-1)*F.S+6000,z1=F.z0+(F.nz-1)*F.S+6000,c=hex2rgb('#1f5a78');
     const N=10;for(let a=0;a<N;a++)for(let b=0;b<N;b++){const xa=x0+(x1-x0)*a/N,xb=x0+(x1-x0)*(a+1)/N,za=z0+(z1-z0)*b/N,zb=z0+(z1-z0)*(b+1)/N;mb.poly([[xa,y,za],[xb,y,za],[xb,y,zb],[xa,y,zb]],[0,1,0],c,MID.water);}
@@ -18651,7 +18932,7 @@ function r3dRender(dt){
   let P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.uniform4f(P.u.u_lamp,0,0,E.lamp,0);
   vis.forEach(([,ch])=>g3Draw(ch.lit));tiles.forEach(([,t])=>g3Draw(t.t));if(R3.startMesh)g3Draw(R3.startMesh);if(R3.rails)g3Draw(R3.rails);
   (R3.tuns||[]).forEach(t=>{if(t.m&&inFrustum(R3.fr,t.m.c,t.m.r))g3Draw(t.m);});
-  r3dTrainTick(dt);r3dTrainDraw(E,bw,bh);P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());
+  r3dTrainTick(dt);r3dTrainDraw(E,bw,bh);if(R.dx)try{r3dDxDraw(E,bw,bh,dt);}catch(e){console.warn('dx3d',e);}P=r3dUse('lit',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());
   // листва: карточки с прозрачностью (сглаженный край — «прозрачность в покрытие»)
   P=r3dUse('leaf',E,bw,bh);gl.uniformMatrix4fv(P.u.u_model,false,m4());gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.tx.fol);gl.activeTexture(gl.TEXTURE0);
   gl.disable(gl.CULL_FACE);gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);vis.forEach(([,ch])=>g3Draw(ch.leaf));tiles.forEach(([,t])=>g3Draw(t.l));(R3.tuns||[]).forEach(t=>{if(t.l&&inFrustum(R3.fr,t.l.c,t.l.r))g3Draw(t.l);});gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.enable(gl.CULL_FACE);
@@ -18857,7 +19138,7 @@ function r3dPeoplePatch(n){const P=R3.people,I=R3.pI;n=Math.min(n,P.length,I.max
 // Отказ 3D (потерян контекст и т.п.): дальше гонка рисуется по-старому
 function r3dFail(why){R3.on=false;R.gl=false;const cv=document.getElementById('rgl');if(cv)cv.hidden=true;const c2=document.getElementById('rcv');if(c2)c2.hidden=false;try{setupRender2d();}catch(_){}}
 function r3dDispose(){if(!R3.on)return;const gl=G3.gl;R3.on=false;if(gl&&!gl.isContextLost()){(R3.chunks||[]).forEach(ch=>{if(!ch)return;g3Free(ch.gnd);g3Free(ch.lit);g3Free(ch.leaf);ch.roads.forEach(r=>g3Free(r.m));});
-  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);(R3.tuns||[]).forEach(t=>{g3Free(t.m);g3Free(t.l);});g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
+  Object.values(R3.tiles||{}).forEach(t=>{if(t&&!t.skip){g3Free(t.g);g3Free(t.t);g3Free(t.l);}});if(R3.carM)R3.carM.forEach(m=>{g3Free(m.op);g3Free(m.gl);});g3Free(R3.signM);g3Free(R3.startMesh);(R3.dxRail||[]).forEach(o=>g3Free(o.m));g3Free(R3.water);g3Free(R3.far);g3Free(R3.rails);(R3.tuns||[]).forEach(t=>{g3Free(t.m);g3Free(t.l);});g3InstFree(R3.pI);g3InstFree(R3.vI);g3InstFree(R3.partI);if(R3.skid)g3Free(R3.skid.mesh);
   [R3.texCM,R3.texSM,R3.texLab].forEach(t=>t&&gl.deleteTexture(t));if(R3.onDispose)try{R3.onDispose();}catch(_){}}
   const keep=['on'];Object.keys(R3).forEach(k=>{if(!keep.includes(k))delete R3[k];});}
 
@@ -19239,8 +19520,8 @@ function r3dRealWater(T,mb,c){const R=T.real,W=R&&R.wm;if(!W)return false;const 
 /* ---------- железная дорога: насыпь, шпалы, рельсы, столбы телеграфа; поезд с паровозом ---------- */
 function railLine(T,rl){const p=T.pts[rl.i],nn=T.N[rl.i],ca=Math.cos(rl.ang),sa=Math.sin(rl.ang),d=[nn[0]*ca-nn[1]*sa,nn[1]*ca+nn[0]*sa];return {p,d};}
 function railY(T,rl,s){const L=railLine(T,rl),x=L.p[0]+L.d[0]*s,z=L.p[2]+L.d[1]*s,near=Math.abs(s)<T.W/2+3;const g=fH(x,z);return near?L.p[1]+0.03:Math.max(g+0.35,L.p[1]+0.03-(Math.abs(s)-T.W/2-3)*0.02);}
-function r3dRails(T){if(!T.rails||!T.rails.length)return null;const mb=new MB();
-  T.rails.forEach(rl=>{const L=railLine(T,rl),dx=L.d[0],dz=L.d[1],sx=-dz,sz=dx,P=(s,o,dy)=>[L.p[0]+dx*s+sx*o,railY(T,rl,s)+(dy||0),L.p[2]+dz*s+sz*o];
+function r3dRails(T){if(!T.rails||!T.rails.some(q=>!q.duel))return null;const mb=new MB();
+  T.rails.forEach(rl=>{if(rl.duel)return;const L=railLine(T,rl),dx=L.d[0],dz=L.d[1],sx=-dz,sz=dx,P=(s,o,dy)=>[L.p[0]+dx*s+sx*o,railY(T,rl,s)+(dy||0),L.p[2]+dz*s+sz*o];
     for(let s=-420;s<420;s+=6){const s1=s+6,road=Math.abs(s)<T.W/2+2&&Math.abs(s1)<T.W/2+2;
       if(!road){mb.e[3]=txLay('gravel',1);[[-2.3,-1.6],[-1.6,1.6],[1.6,2.3]].forEach(([o0,o1],k)=>{const h0=k===1?0:-0.35,h1=k===1?0:-0.35,a=k===0?-0.35:0,b=k===2?-0.35:0;mb.poly([P(s,o0,a),P(s1,o0,a),P(s1,o1,b),P(s,o1,b)],[0,1,0],[170,166,158],MID.stone);});mb.e[3]=0;
         mb.e[3]=txLay('planks',1);for(let q=s;q<s1;q+=0.72){const y=railY(T,rl,q)+0.02;const A=[L.p[0]+dx*q,y,L.p[2]+dz*q];pBox(mb,A[0],y,A[2],1.3,0.12,0.12,'#6a5a48',MID.wood,Math.atan2(dx,dz));}mb.e[3]=0;}
@@ -19291,7 +19572,7 @@ function r3dTrainMesh(y){const C=G3.cache,key='train'+(y<1905?0:1);if(C[key])ret
   return C[key]={cars:cars.map(c=>({m:g3Mesh(c.mb),len:c.len}))};}
 // Когда поезд идёт: машина подъезжает к переезду — поезд успевает пройти перед ней (шлагбаумы опускаются)
 function r3dTrainTick(dt){const T=R3.T;if(!T.rails||!T.rails.length)return;const F=R.follow;
-  T.rails.forEach(rl=>{const st=rl.st||(rl.st={state:0,s:0,v:17});
+  T.rails.forEach(rl=>{if(rl.duel)return;const st=rl.st||(rl.st={state:0,s:0,v:17});
     const dist=(rl.i-F.idx)*T.step*(T.closed?1:1);
     if(st.state===0&&R.t>0&&dist>180&&dist<420){const vc=Math.max(14,F.vx),tc=dist/vc,Lt=48;if(tc>7){st.state=1;st.dir=Math.random()<0.5?1:-1;st.s=-st.dir*(T.W+Lt+st.v*(tc-3.5)-Lt);st.whistle=0;}}
     if(st.state===1){st.s+=st.dir*st.v*dt;const head=st.s*st.dir;if(!st.whistle&&head>-160){st.whistle=1;try{if(!(typeof ambTrainWhistle==='function'&&ambTrainWhistle(rl)))auSfx('whistle',1);}catch(_){}}
@@ -19485,6 +19766,118 @@ function r3dWheelFx(c,st,fw,rt,v,dt,me,rain){if(R.mode==='sim'||v<2)return;const
     if(v>(tp===2?4:9)&&Math.random()<dt*(tp===2?9:5)*Math.min(1,v/20))r3dPart(p[0],p[1]+0.25,p[2],(Math.random()-0.5)*0.8-fw[0]*v*0.08,0.5+Math.random()*0.6,(Math.random()-0.5)*0.8-fw[2]*v*0.08,0.3,1.6,1.1,tp===2?[150,150,152]:[205,205,205],tp===2?0.32:0.22);}
   // скрежет обода по камню — короткие звуки (своя машина)
   if(me&&twRimN(c)&&v>3&&(SPARK_SURF[sk]||0)>0.4&&typeof ambCool==='function'&&ambCool('rimScr',0.45))try{auSfx('grind',Math.min(0.9,0.3+v/35));}catch(_){}}
+
+/* ================= 0.30: ДУЭЛЬ В 3D — железная дорога вдоль шоссе, поезд, биплан, рысак в качалке ================= */
+/* ---------- железная дорога: насыпь со щебнем, шпалы, рельсы, телеграф; станции у старта и финиша ---------- */
+function r3dDxRail(T){const D=T.dxRail;if(!D)return [];const out=[],P=D.P,W=T.W,CH=300;let mb=null,c0=0,cx=0,cz=0,cn=0;
+  const flush=()=>{if(mb&&mb.n){const m=g3Mesh(mb);if(m)out.push({m,c:[cx/cn,0,cz/cn]});}mb=new MB();cx=cz=cn=0;};flush();
+  for(let k=0;k<P.length-1;k++){const a=P[k],b=P[k+1],dx=b[0]-a[0],dz=b[2]-a[2],l=Math.hypot(dx,dz)||1,tx=dx/l,tz=dz/l,sx=tz,sz=-tx,road=Math.abs(a[5])<W/2+2.5&&Math.abs(b[5])<W/2+2.5;
+    if(a[3]-c0>CH){flush();c0=a[3];}cx+=a[0];cz+=a[2];cn++;
+    const Q=(p,o,dy)=>[p[0]+sx*o,p[1]+(dy||0),p[2]+sz*o];
+    if(!road){// насыпь: щебень сверху и откосы до земли
+      mb.e[3]=txLay('gravel',1);mb.poly([Q(a,-1.8,0),Q(b,-1.8,0),Q(b,1.8,0),Q(a,1.8,0)],[0,1,0],[150,146,138],MID.stone);
+      [-1,1].forEach(sd=>{const A0=Q(a,sd*1.8,0),B0=Q(b,sd*1.8,0),A1=Q(a,sd*3.2,-0.75),B1=Q(b,sd*3.2,-0.75);mb.poly(sd>0?[A0,B0,B1,A1]:[A0,A1,B1,B0],[sx*sd*0.5,0.85,sz*sd*0.5],[128,124,116],MID.stone);});mb.e[3]=0;
+      // шпалы
+      mb.e[3]=txLay('planks',1);for(let q=0;q<l;q+=0.8){const p=[a[0]+tx*q,a[1]+(b[1]-a[1])*q/l+0.02,a[2]+tz*q];pBox(mb,p[0],p[1],p[2],1.3,0.12,0.11,'#5e5042',MID.wood,Math.atan2(sx,sz));}mb.e[3]=0;}
+    // рельсы: головка (сверху светлая, натёртая колёсами) и бок
+    [-0.72,0.72].forEach(o=>{const h=road?0.005:0.14,A=Q(a,o,h),B=Q(b,o,h);mb.poly([[A[0]-sx*0.035,A[1]+0.06,A[2]-sz*0.035],[B[0]-sx*0.035,B[1]+0.06,B[2]-sz*0.035],[B[0]+sx*0.035,B[1]+0.06,B[2]+sz*0.035],[A[0]+sx*0.035,A[1]+0.06,A[2]+sz*0.035]],[0,1,0],[168,164,158],MID.metal);
+      mb.poly([[A[0]+sx*0.035,A[1],A[2]+sz*0.035],[B[0]+sx*0.035,B[1],B[2]+sz*0.035],[B[0]+sx*0.035,B[1]+0.06,B[2]+sz*0.035],[A[0]+sx*0.035,A[1]+0.06,A[2]+sz*0.035]],[sx,0,sz],[70,62,56],MID.metal);});
+    // телеграф вдоль дороги: столбы с перекладиной через 48 м, с внешней стороны
+    if(!road&&Math.floor(a[3]/48)!==Math.floor(b[3]/48)){const sd=Math.sign(a[5])||1,p=Q(a,sd*4.2,-0.3);pTrunk(mb,p[0],p[1],p[2],p[0],p[1]+6.4,p[2],0.1,0.08,'#6a5440',6,MID.wood);pBox(mb,p[0],p[1]+5.9,p[2],0.9,0.1,0.06,'#5a4632',MID.wood,Math.atan2(sx,sz));}}
+  flush();
+  // станции: вокзал у старта и у финиша (кирпичный дом с черепицей, платформа, фонари)
+  {const mb2=new MB();[[D.sStart,'s'],[D.sFin,'f']].forEach(([s,kk])=>{const q=dxPathAt(D,s),fw=[q.tx,q.tz],sd=Math.sign(dxSideAt(D,s))||1,nx=fw[1]*sd,nz=-fw[0]*sd,a=Math.atan2(nx,nz);
+      const pc=[q.x+nx*4.4,q.y-0.1,q.z+nz*4.4];mb2.e[3]=txLay('gravel',1);pBox(mb2,pc[0],pc[1]-0.3,pc[2],1.6,0.6,26,'#b9b1a2',MID.stone,a+Math.PI/2);mb2.e[3]=0;
+      const hc=[q.x+nx*10,q.y-0.3,q.z+nz*10];mb2.e[3]=txLay('brick_wall',1);pBox(mb2,hc[0],hc[1],hc[2],7,4.2,3.4,'#9a5a44',MID.wall,a+Math.PI/2);mb2.e[3]=0;
+      mb2.e[3]=txLay('roof_tiles',1);pBox(mb2,hc[0],hc[1]+4.2,hc[2],7.6,0.9,4.0,'#8a4636',MID.roof,a+Math.PI/2);mb2.e[3]=0;
+      for(let z=-20;z<=20;z+=10){const L=[pc[0]+fw[0]*z+nx*0.9,pc[1],pc[2]+fw[1]*z+nz*0.9];pTrunk(mb2,L[0],L[1],L[2],L[0],L[1]+3.6,L[2],0.06,0.05,'#2b2c30',6,MID.metal);mb2.e[1]=4;pBox(mb2,L[0],L[1]+3.55,L[2],0.14,0.26,0.14,'#fff0c0',MID.glass);mb2.e[1]=0;}});
+    const m=g3Mesh(mb2);if(m)out.push({m,c:null});}
+  return out;}
+function dxSideAt(D,s){const P=D.P;let k=0;while(k<P.length-1&&P[k][3]<s)k++;return P[k][5];}
+/* ---------- аэроплан: биплан эпохи (крылья из полотна, стойки и расчалки, ротативный мотор, деревянный винт) ---------- */
+function dxPlaneMesh(y){const C=G3.cache;if(C.dxPlane)return C.dxPlane;const mb=new MB(),pr=new MB(),can='#d9cfb2',wd='#a07a4c',dk='#3a3430';
+  // фюзеляж: клин от мотора к хвосту
+  mb.e[3]=txLay('wood_wall',1);for(let k=0;k<6;k++){const z0=1.0-k*0.95,z1=z0-0.95,w0=0.42*(1-k*0.13),w1=0.42*(1-(k+1)*0.13),h0=0.55*(1-k*0.11),h1=0.55*(1-(k+1)*0.11),y0=1.9;
+    const P=(w,h,z,sx,sy)=>[sx*w,y0+sy*h,z];
+    mb.poly([P(w1,h1,z1,-1,1),P(w1,h1,z1,1,1),P(w0,h0,z0,1,1),P(w0,h0,z0,-1,1)],[0,1,0],hex2rgb(can),MID.cloth);
+    mb.poly([P(w1,h1,z1,1,-1),P(w1,h1,z1,-1,-1),P(w0,h0,z0,-1,-1),P(w0,h0,z0,1,-1)],[0,-1,0],hex2rgb(can),MID.cloth);
+    mb.poly([P(w1,h1,z1,1,1),P(w1,h1,z1,1,-1),P(w0,h0,z0,1,-1),P(w0,h0,z0,1,1)],[1,0,0],hex2rgb(can),MID.cloth);
+    mb.poly([P(w1,h1,z1,-1,-1),P(w1,h1,z1,-1,1),P(w0,h0,z0,-1,1),P(w0,h0,z0,-1,-1)],[-1,0,0],hex2rgb(can),MID.cloth);}mb.e[3]=0;
+  // капот мотора (круглый, металлический) и кабина с головой пилота в кожаном шлеме
+  pCyl(mb,[0,1.9,1.0],[0,1.9,1.75],0.48,0.46,'#8a8c90',16,MID.metal);pCyl(mb,[0,1.9,1.75],[0,1.9,1.82],0.46,0.2,'#5a5c60',16,MID.metal);
+  pCyl(mb,[0,2.42,-0.15],[0,2.62,-0.15],0.17,0.16,'#4a3424',10,MID.leather);pBlob(mb,0,2.72,-0.15,0.13,0.15,0.14,'#5a3e2a',DXJ,0,MID.leather);
+  pBox(mb,0,2.45,0.25,0.3,0.12,0.02,'#d6e4ea',MID.glass);
+  // крылья: верхнее 9,6 м, нижнее 8,4 м; полотно на нервюрах (полосы чуть темнее)
+  const wing=(y,span,ch,z)=>{mb.e[3]=0;mb.poly([[-span/2,y,z+ch/2],[span/2,y,z+ch/2],[span/2,y,z-ch/2],[-span/2,y,z-ch/2]],[0,1,0],hex2rgb(can),MID.cloth);
+    mb.poly([[-span/2,y-0.04,z-ch/2],[span/2,y-0.04,z-ch/2],[span/2,y-0.04,z+ch/2],[-span/2,y-0.04,z+ch/2]],[0,-1,0],cMul(hex2rgb(can),0.85),MID.cloth);mb.e[3]=0;
+    pBox(mb,0,y-0.04,z+ch/2,span/2,0.04,0.03,wd,MID.wood);
+    for(let x=-span/2;x<=span/2+0.01;x+=0.8)pBox(mb,x,y,z,0.012,0.012,ch/2,'#b8ae92',MID.cloth);};
+  wing(3.25,9.6,1.55,0.35);wing(1.45,8.4,1.45,0.3);
+  // стойки между крыльями и расчалки
+  [-3.6,-1.6,1.6,3.6].forEach(x=>[0.85,-0.2].forEach(z=>pTrunk(mb,x,1.45,z,x,3.22,z,0.03,0.03,wd,4,MID.wood)));
+  [-3.6,3.6].forEach(x=>{pTrunk(mb,x,1.45,0.85,x*0.45,3.22,-0.2,0.008,0.008,'#9a9ca0',3,MID.metal);pTrunk(mb,x,3.22,0.85,x*0.45,1.45,-0.2,0.008,0.008,'#9a9ca0',3,MID.metal);});
+  // хвост: стабилизатор, киль и руль поворота
+  mb.e[3]=0;mb.poly([[-1.6,2.05,-4.5],[1.6,2.05,-4.5],[1.1,2.05,-5.4],[-1.1,2.05,-5.4]],[0,1,0],hex2rgb(can),MID.cloth);
+  mb.poly([[-1.1,2.0,-5.4],[1.1,2.0,-5.4],[1.6,2.0,-4.5],[-1.6,2.0,-4.5]],[0,-1,0],cMul(hex2rgb(can),0.85),MID.cloth);
+  [1,-1].forEach(sd=>mb.poly(sd>0?[[0,2.05,-4.6],[0,3.1,-5.3],[0,3.0,-5.75],[0,2.05,-5.75]]:[[0,2.05,-4.6],[0,2.05,-5.75],[0,3.0,-5.75],[0,3.1,-5.3]],[sd,0,0],hex2rgb(can),MID.cloth));mb.e[3]=0;
+  // шасси: V-стойки и два колеса
+  [-1,1].forEach(sd=>{pTrunk(mb,sd*0.35,1.45,0.9,sd*0.85,0.42,0.6,0.025,0.025,wd,4,MID.wood);pTrunk(mb,sd*0.35,1.45,0.2,sd*0.85,0.42,0.6,0.025,0.025,wd,4,MID.wood);
+    pCyl(mb,[sd*0.8,0.42,0.6],[sd*0.95,0.42,0.6],0.42,0.42,'#1d1d1f',14,MID.matte);});pTrunk(mb,-0.85,0.42,0.6,0.85,0.42,0.6,0.02,0.02,'#5a5c60',4,MID.metal);
+  pTrunk(mb,0,1.6,-5.2,0,1.1,-5.5,0.02,0.02,wd,4,MID.wood);// костыль
+  // винт: две лопасти (отдельная модель — крутится)
+  pr.e[3]=txLay('planks',1);[1,-1].forEach(sd=>pr.poly([[0,0.05,0],[sd*1.25,0.12,0.02],[sd*1.3,-0.02,0.02],[0,-0.05,0]],[0,0,1],hex2rgb('#8a5a32'),MID.wood));pr.e[3]=0;
+  [1,-1].forEach(sd=>pr.poly([[0,0.05,0],[0,-0.05,0],[sd*1.3,-0.02,0.02],[sd*1.25,0.12,0.02]],[0,0,-1],hex2rgb('#7a4a28'),MID.wood));
+  pCyl(pr,[0,0,-0.05],[0,0,0.12],0.08,0.05,'#6a6c70',8,MID.metal);
+  return C.dxPlane={m:g3Mesh(mb),p:g3Mesh(pr),pz:1.86,py:1.9};}
+/* ---------- рысак в качалке: корпус, шея и голова, хвост; четыре ноги (каждая — своя модель, качается), качалка с ездоком ---------- */
+function dxHorseMesh(y){const C=G3.cache;if(C.dxHorse)return C.dxHorse;const body=new MB(),leg=new MB(),sulk=new MB(),wh=new MB(),bay='#5c3a22',blk='#1e1814';
+  // корпус — вытянутый эллипсоид, грудь, круп; шея вверх-вперёд, голова, уши, грива
+  pBlob(body,0,1.32,0,0.36,0.38,0.95,bay,DXJ,0,MID.skin);pBlob(body,0,1.36,0.62,0.33,0.36,0.32,bay,DXJ,0,MID.skin);pBlob(body,0,1.36,-0.62,0.36,0.37,0.34,bay,DXJ,0,MID.skin);
+  pTrunk(body,0,1.5,0.8,0,2.05,1.25,0.2,0.13,bay,10,MID.skin);pBlob(body,0,2.1,1.38,0.12,0.13,0.3,bay,DXJ,0,MID.skin);pBlob(body,0,2.02,1.6,0.09,0.09,0.12,'#3a2618',DXJ,0,MID.skin);
+  [-1,1].forEach(sd=>pCone(body,sd*0.07,2.2,1.28,0.035,0.14,blk,6,0,MID.skin));pBox(body,0,1.85,1.0,0.03,0.42,0.28,blk,MID.cloth,0);
+  pTrunk(body,0,1.45,-0.95,0,0.8,-1.25,0.08,0.04,blk,6,MID.cloth);
+  // упряжь: хомут и седёлка (кожа)
+  pTrunk(body,-0.3,1.62,0.55,0.3,1.62,0.55,0.05,0.05,'#2a1e16',6,MID.leather);pBox(body,0,1.68,-0.1,0.34,0.06,0.16,'#2a1e16',MID.leather);
+  // нога: бедро и голень с копытом; ось вращения — верх (0,0,0), вниз по -y
+  pTrunk(leg,0,0,0,0,-0.55,0.02,0.09,0.06,bay,8,MID.skin);pTrunk(leg,0,-0.55,0.02,0,-1.02,0,0.05,0.045,blk,8,MID.skin);pCyl(leg,[0,-1.02,0],[0,-1.1,0.02],0.065,0.07,'#141210',8,MID.matte);
+  // качалка: оглобли вдоль боков, сиденье, ездок в шёлке
+  [-1,1].forEach(sd=>pTrunk(sulk,sd*0.5,1.2,1.0,sd*0.55,1.05,-2.1,0.025,0.025,'#6a4a2a',5,MID.wood));pTrunk(sulk,-0.6,1.0,-2.1,0.6,1.0,-2.1,0.025,0.025,'#4a4c50',5,MID.metal);
+  pBox(sulk,0,1.05,-2.35,0.22,0.08,0.2,'#3a2a1c',MID.leather);
+  {const M=new Mesh();MLOD=1;mCrew3(M,0,1.0,-2.45,{coat:'#b8322a',hat:'#f2eee4',cap:'cap'},false,{num:3,mq:'horse',y},[0,1.55,-1.7]);MLOD=1;mbFromMesh(sulk,M,{lift:0.004});}
+  // колесо качалки (спицы), отдельно — крутится
+  pCyl(wh,[0,0,0],[0.05,0,0],0.7,0.7,'#202022',20,MID.matte,false);pCyl(wh,[0.05,0,0],[0,0,0],0.66,0.66,'#2a2a2c',20,MID.matte,false);pCyl(wh,[-0.04,0,0],[0.09,0,0],0.07,0.07,'#6a6c70',8,MID.metal);for(let k=0;k<12;k++){const a=k/12*Math.PI*2;pTrunk(wh,0.025,0,0,0.025,Math.sin(a)*0.66,Math.cos(a)*0.66,0.008,0.008,'#9a9ca0',3,MID.metal);}
+  return C.dxHorse={b:g3Mesh(body),l:g3Mesh(leg),s:g3Mesh(sulk),w:g3Mesh(wh)};}
+/* ---------- кадр: рисуем соперника ---------- */
+const DXJ=()=>0.5;
+const DXM=new Float32Array(16),DXM2=new Float32Array(16),DXR=new Float32Array(16);
+function r3dDxDraw(E,bw,bh,dt){const D=R.dx;if(!D)return;const gl=G3.gl,T=R3.T;let P=null;const use=()=>{if(!P){P=r3dUse('lit',E,bw,bh);gl.uniform4f(P.u.u_lamp,0,0,E.lamp,0);}return P;};
+  // рельсы — кусками, только рядом с камерой
+  if(R3.dxRail&&R3.dxRail.length){use();gl.uniformMatrix4fv(P.u.u_model,false,m4());R3.dxRail.forEach(o=>{if(o.c&&Math.hypot(o.c[0]-R3.eye[0],o.c[2]-R3.eye[2])>900)return;g3Draw(o.m);});}
+  const dEye=Math.hypot(D.pos[0]-R3.eye[0],D.pos[2]-R3.eye[2]);if(dEye>1100)return;
+  if(D.k==='train'){const TM=r3dTrainMesh(R.rc.y);use();let off=0;const sp=D.s0+D.s;
+    TM.cars.forEach((c,k)=>{const s=sp-(off+c.len/2);off+=c.len+0.6;const q=dxPathAt(D.P,s);const fw=[q.tx,0,q.tz],rt=[fw[2],0,-fw[0]];m4basis(DXM,rt,[0,1,0],fw,[q.x,q.y+0.14,q.z]);gl.uniformMatrix4fv(P.u.u_model,false,DXM);g3Draw(c.m);});
+    // дым из трубы: на ходу — тёмный шлейф, у полустанка — белый пар
+    D.smk=(D.smk||0)+dt*(D.v>1?6:2.5);while(D.smk>1){D.smk-=1;const q=dxPathAt(D.P,sp-4.6+2.85),moving=D.v>1;r3dPart(q.x,q.y+4.2,q.z,(Math.random()-0.5)*0.6-q.tx*D.v*0.5,1.6+Math.random()*1.2,(Math.random()-0.5)*0.6-q.tz*D.v*0.5,1.1,moving?4.5:3,moving?3.2:2.2,moving?[64,64,66]:[232,232,232],moving?0.42:0.35);}
+    return;}
+  if(D.k==='plane'){const PM=dxPlaneMesh(R.rc.y);use();const q=dxPathAt(D.P,((D.s0+D.s)%D.lapL+D.lapL)%D.lapL),q2=dxPathAt(D.P,((D.s0+D.s+6)%D.lapL+D.lapL)%D.lapL);
+    const fw=v3n([q.tx,(D.altV||0)*0.08,q.tz]),cross=q.tx*q2.tz-q.tz*q2.tx,bank=clamp(-cross/6*D.v*D.v/9.81*0.9,-0.7,0.7)*(D.alt>8?1:0);D.bank=(D.bank||0)+(bank-(D.bank||0))*Math.min(1,dt*2);
+    const up0=[0,1,0],rt0=v3n(v3x(up0,fw)),cb=Math.cos(D.bank),sb=Math.sin(D.bank),rt=[rt0[0]*cb+up0[0]*sb,rt0[1]*cb+up0[1]*sb,rt0[2]*cb+up0[2]*sb],up=v3x(fw,rt);
+    const gy=D.alt>0.5?q.y+D.alt:q.y;m4basis(DXM,rt,up,fw,[q.x,gy,q.z]);gl.uniformMatrix4fv(P.u.u_model,false,DXM);g3Draw(PM.m);
+    // винт крутится: поворот вокруг продольной оси в носу
+    D.prop=(D.prop||0)+dt*(D.v>0.5?62:8);const c=Math.cos(D.prop),s=Math.sin(D.prop);DXR.set([c,s,0,0,-s,c,0,0,0,0,1,0,0,PM.py,PM.pz,1]);m4mul(DXM2,DXM,DXR);gl.uniformMatrix4fv(P.u.u_model,false,DXM2);g3Draw(PM.p);
+    // выхлоп ротативного мотора — касторовое масло, сизый дымок
+    if(D.v>2&&Math.random()<dt*8){const ex=[q.x+fw[0]*1.4,gy+1.6,q.z+fw[2]*1.4];r3dPart(ex[0],ex[1],ex[2],-fw[0]*3,0.2,-fw[2]*3,0.25,1.2,1.2,[150,150,160],0.18);}
+    return;}
+  if(D.k==='horse'){const HM=dxHorseMesh(R.rc.y);use();const q=dxPathAt(D.P,((D.s0+D.s)%D.lapL+D.lapL)%D.lapL),fw=[q.tx,0,q.tz],rt=[fw[2],0,-fw[0]];
+    m4basis(DXM,rt,[0,1,0],fw,[q.x,q.y,q.z]);
+    // рысь: диагональные пары ног вместе; шаг ~2,7 м на цикл; корпус чуть подпрыгивает
+    D.ph=(D.ph||0)+D.v*dt/2.7*Math.PI*2;const bob=Math.abs(Math.sin(D.ph))*0.05*Math.min(1,D.v/6);DXM[13]+=bob;
+    gl.uniformMatrix4fv(P.u.u_model,false,DXM);g3Draw(HM.b);g3Draw(HM.s);
+    const legs=[[0.17,1.12,0.62,0],[-0.17,1.12,0.62,Math.PI],[0.17,1.12,-0.62,Math.PI],[-0.17,1.12,-0.62,0]];
+    legs.forEach(([x,yy,z,ph0])=>{const a=Math.sin(D.ph+ph0)*0.42*Math.min(1,D.v/5),c=Math.cos(a),s=Math.sin(a);DXR.set([1,0,0,0,0,c,s,0,0,-s,c,0,x,yy,z,1]);m4mul(DXM2,DXM,DXR);gl.uniformMatrix4fv(P.u.u_model,false,DXM2);g3Draw(HM.l);});
+    D.wh=(D.wh||0)+D.v*dt/0.7;[-1,1].forEach(sd=>{const c=Math.cos(D.wh),s=Math.sin(D.wh);DXR.set([1,0,0,0,0,c,s,0,0,-s,c,0,sd*0.62-(sd>0?0:0.05),0.7,-2.1,1]);m4mul(DXM2,DXM,DXR);gl.uniformMatrix4fv(P.u.u_model,false,DXM2);g3Draw(HM.w);});
+    // пыль из-под копыт
+    if(D.v>3&&Math.random()<dt*10)r3dPart(q.x-fw[0]*0.4,q.y+0.1,q.z-fw[2]*0.4,-fw[0]*1.5+(Math.random()-0.5),0.4,-fw[2]*1.5+(Math.random()-0.5),0.5,1.6,1.1,[176,150,112],0.22);}}
 
 /* ================= AUDIO: music of the era + race sounds ================= */
 const AU={ctx:null,on:{music:true,sfx:true},next:0,step:0,timer:0,style:'',race:null};
@@ -20477,10 +20870,11 @@ function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow||R
   /* источники с местом: трибуны, зрители, повозки, река, море, поезд */
   {const a=ambAgg(E.stand,AMB_L.stand,8,600);ambBed('crowd_big',a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.crowd,g=>g.L,3,150);ambBed('crowd_murmur',a.g,dt,a.pan,a.lp);}
-  {const a=ambAgg(E.cart,AMB_L.horse,2,120);ambBed('horse_carriage',night?0:a.g,dt,a.pan,a.lp);}
+  {let a=ambAgg(E.cart,AMB_L.horse,2,120);if(R.dx&&R.dx.k==='horse'){const h=ambHear(AMB_L.horse+8,R.dx.pos[0],R.dx.pos[2],2);if(h.g>a.g)a=h;}ambBed('horse_carriage',night&&!(R.dx&&R.dx.k==='horse')?0:a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.river,AMB_L.stream,6,400);ambBed('stream',a.g,dt,a.pan,a.lp);}
   if(E.sea.length){const a=ambAgg(E.sea,AMB_L.surf,6,900);ambBed('surf',a.g,dt,a.pan,a.lp);}
   {let best=null;if(T.rails&&typeof railLine==='function')T.rails.forEach(rl=>{const st=rl.st;if(!st||st.state!==1)return;const Ln=railLine(T,rl),s=st.s-st.dir*5,h=ambHear(AMB_L.train,Ln.p[0]+Ln.d[0]*s,Ln.p[2]+Ln.d[1]*s,3);if(!best||h.g>best.g)best=h;});
+    if(R.dx&&R.dx.k==='train'){const h=ambHear(AMB_L.train,R.dx.pos[0],R.dx.pos[2],3);h.g*=0.35+0.65*Math.min(1,(R.dx.v||0)/8);if(!best||h.g>best.g)best=h;}
     ambBed('steam_train',best?best.g:0,dt,best?best.pan:0,best?best.lp:16000);}
   /* события вокруг: кто проезжает мимо — тому кричат, лают, свистят */
   const near=[];for(const c of R.cars){if(c.dnf||c.wait)continue;if(Math.hypot(c.x-Ls.x,c.z-Ls.z)<240)near.push(c);}

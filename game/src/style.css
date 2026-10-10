@@ -783,3 +783,9 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .neg-say.counter{color:var(--brass)}
 .neg-say.low,.neg-say.no{color:var(--bad)}
 .deal-row .btns{display:flex;flex-wrap:wrap;gap:6px}
+
+/* 0.30: дуэль — кто впереди */
+.r-dx{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:6;min-width:230px;max-width:86vw;padding:6px 10px 8px;border-radius:9px;background:rgba(5,12,22,.55);color:#f3e9d2;font-size:13px;text-align:center;pointer-events:none}
+.r-dx b{display:block;font-weight:600;letter-spacing:.02em}.r-dx .dxbar{position:relative;height:6px;margin:7px 6px 2px;border-radius:3px;background:rgba(255,255,255,.18)}
+.r-dx .dxbar i{position:absolute;top:-9px;transform:translateX(-50%);font-style:normal;font-size:14px;line-height:1;transition:left .4s linear}.r-dx .dxbar i.me{top:-8px}
+#raceScreen.filming .r-dx,#raceScreen.demo .r-dx{display:none}

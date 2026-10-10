@@ -259,10 +259,11 @@ function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow||R
   /* источники с местом: трибуны, зрители, повозки, река, море, поезд */
   {const a=ambAgg(E.stand,AMB_L.stand,8,600);ambBed('crowd_big',a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.crowd,g=>g.L,3,150);ambBed('crowd_murmur',a.g,dt,a.pan,a.lp);}
-  {const a=ambAgg(E.cart,AMB_L.horse,2,120);ambBed('horse_carriage',night?0:a.g,dt,a.pan,a.lp);}
+  {let a=ambAgg(E.cart,AMB_L.horse,2,120);if(R.dx&&R.dx.k==='horse'){const h=ambHear(AMB_L.horse+8,R.dx.pos[0],R.dx.pos[2],2);if(h.g>a.g)a=h;}ambBed('horse_carriage',night&&!(R.dx&&R.dx.k==='horse')?0:a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.river,AMB_L.stream,6,400);ambBed('stream',a.g,dt,a.pan,a.lp);}
   if(E.sea.length){const a=ambAgg(E.sea,AMB_L.surf,6,900);ambBed('surf',a.g,dt,a.pan,a.lp);}
   {let best=null;if(T.rails&&typeof railLine==='function')T.rails.forEach(rl=>{const st=rl.st;if(!st||st.state!==1)return;const Ln=railLine(T,rl),s=st.s-st.dir*5,h=ambHear(AMB_L.train,Ln.p[0]+Ln.d[0]*s,Ln.p[2]+Ln.d[1]*s,3);if(!best||h.g>best.g)best=h;});
+    if(R.dx&&R.dx.k==='train'){const h=ambHear(AMB_L.train,R.dx.pos[0],R.dx.pos[2],3);h.g*=0.35+0.65*Math.min(1,(R.dx.v||0)/8);if(!best||h.g>best.g)best=h;}
     ambBed('steam_train',best?best.g:0,dt,best?best.pan:0,best?best.lp:16000);}
   /* события вокруг: кто проезжает мимо — тому кричат, лают, свистят */
   const near=[];for(const c of R.cars){if(c.dnf||c.wait)continue;if(Math.hypot(c.x-Ls.x,c.z-Ls.z)<240)near.push(c);}
