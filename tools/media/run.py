@@ -577,6 +577,10 @@ def voice5():
     idx_path = os.path.join(D, 'index.json'); done_path = os.path.join(D, 'v5.json')
     idx = json.load(open(idx_path, encoding='utf-8')) if os.path.exists(idx_path) else {}
     done = set(json.load(open(done_path))) if os.path.exists(done_path) else set()
+    # 0.29: строки, у которых изменилось чтение (ударения, падежи после предлогов, дроби), — записать заново
+    redo_path = os.path.join(TOOLS, 'voice_redo.json')
+    if os.path.exists(redo_path):
+        redo = set(json.load(open(redo_path))); done -= redo; log('voice5 redo', len(redo))
     torch.set_num_threads(max(1, os.cpu_count() or 2))
     MID = 'v5_5_ru'
     model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language='ru', speaker=MID, trust_repo=True)

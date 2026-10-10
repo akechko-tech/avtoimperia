@@ -35,7 +35,7 @@ def card(n, g='m'):
     if n >= 1_000_000:
         m = n // 1_000_000; w += card3(m, 'm') + [plural(m, 'миллион', 'миллиона', 'миллионов')]; n %= 1_000_000
     if n >= 1000:
-        t = n // 1000; w += card3(t, 'f') + [plural(t, 'тысяча', 'тысячи', 'тысяч')]; n %= 1000
+        t = n // 1000; w += (['тысяча'] if t == 1 else card3(t, 'f') + [plural(t, 'тысяча', 'тысячи', 'тысяч')]); n %= 1000
     if n: w += card3(n, g)
     return ' '.join(w)
 
@@ -143,6 +143,43 @@ def translit(word):
         else: out += low[i]; i += 1
     return out.capitalize() if word[:1].isupper() else out
 
+# 0.29: ударения, которые синтезатор ставит неверно («вто́рый» вместо «второ́й»): «+» перед ударной гласной (разметка Silero)
+STRESS = {}
+for stem in ('втор', 'шест', 'седьм', 'восьм', 'сороков'):
+    for end in ('ой', 'ого', 'ому', 'ым', 'ом', 'ая', 'ую', 'ые', 'ых', 'ыми', 'ое'):
+        if end in ('ой', 'ого', 'ому', 'ом', 'ая', 'ую', 'ое'): STRESS[stem + end] = stem + '+' + end
+        else: STRESS[stem + end] = stem + '+' + end
+STRESS.update({'двое': 'дв+ое', 'трое': 'тр+ое', 'номер': 'н+омер', 'номера': 'н+омера', 'номером': 'н+омером'})
+def put_stress(t):
+    def rep(m):
+        w = m.group(0); low = w.lower()
+        if low in STRESS:
+            r = STRESS[low]
+            return r[0].upper() + r[1:] if w[:1].isupper() else r
+        return w
+    return re.sub(r'(?<![\w+])[А-Яа-яЁё]+(?![\w+])', rep, t)
+
+LETTER = {'А': 'А', 'Б': 'Бэ', 'В': 'Вэ', 'Г': 'Гэ', 'Д': 'Дэ', 'Е': 'Е', 'Ж': 'Жэ', 'З': 'Зэ', 'И': 'И', 'К': 'Ка', 'Л': 'Эль', 'М': 'Эм', 'Н': 'Эн', 'О': 'О', 'П': 'Пэ',
+          'Р': 'Эр', 'С': 'Эс', 'Т': 'Тэ', 'У': 'У', 'Ф': 'Эф', 'Х': 'Ха', 'Ц': 'Цэ', 'Ч': 'Че', 'Ш': 'Ша', 'Э': 'Э', 'Ю': 'Ю', 'Я': 'Я'}
+UNIT = {'км/ч': ('километр', 'километра', 'километров', ' в час'), 'км': ('километр', 'километра', 'километров', ''), '%': ('процент', 'процента', 'процентов', ''),
+        'л.с.': ('лошадиная сила', 'лошадиные силы', 'лошадиных сил', ''), 'миль': ('миля', 'мили', 'миль', ''), 'мили': ('миля', 'мили', 'миль', '')}
+UNIT_GEN = {'км/ч': ('километра', 'километров'), 'км': ('километра', 'километров'), '%': ('процента', 'процентов'), 'л.с.': ('лошадиной силы', 'лошадиных сил'),
+            'миль': ('мили', 'миль'), 'мили': ('мили', 'миль')}
+def unit_words(prep, n, frac, u):
+    """Число с единицей; после «до», «около», «более»… — родительный падеж: «до двухсот пяти километров в час»."""
+    one, few, many, tail = UNIT[u]; g = 'f' if u in ('л.с.', 'миль', 'мили') else 'm'
+    gen = prep.strip().lower() in PREP_GEN
+    if frac == '5':
+        num = (card_gen(n, g) if gen else card(n, g)) + ' с половиной'; noun = (UNIT_GEN[u][1] if gen else plural(n, one, few, many))
+    elif frac:
+        num = card(n, 'f') + ' ' + plural(n, 'целая', 'целых', 'целых') + ' ' + card(int(frac), 'f') + ' ' + plural(int(frac), 'десятая', 'десятых', 'десятых'); noun = UNIT_GEN[u][0]
+    elif gen:
+        last = n % 10 if n % 100 not in range(11, 20) else 0
+        num = card_gen(n, g); noun = UNIT_GEN[u][0] if last == 1 else UNIT_GEN[u][1]
+    else:
+        num = card(n, g); noun = plural(n, one, few, many)
+    return prep + num + ' ' + noun + tail
+
 def norm(text):
     t = ' ' + text + ' '
     t = t.replace(' ', ' ')
@@ -153,6 +190,11 @@ def norm(text):
         if ' ' in k or '-' in k: t = re.sub(r'(?<![A-Za-zÀ-ÿ])' + re.escape(k) + r'(?![A-Za-zÀ-ÿ])', LAT[k], t)
     t = re.sub(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*", lambda m: translit(m.group(0)), t)
     t = t.replace('№', ' номер ').replace('л. с.', 'л.с.')
+    # 0.29: «~685 км» — около; «(30,5 км × 7)» — круги; «по ст. ст.» — по старому стилю; «П2» — «Пэ-два»
+    t = re.sub(r'~\s*(?=\d)', 'около ', t)
+    t = re.sub(r'(км|мили|миль)\s*×\s*(\d+)', lambda m: m.group(1) + ', ' + card(int(m.group(2))) + ' ' + plural(int(m.group(2)), 'круг', 'круга', 'кругов'), t)
+    t = re.sub(r'\bпо ст\.\s*ст\.', 'по старому стилю', t); t = re.sub(r'\bн\.\s*ст\.', 'по новому стилю', t)
+    t = re.sub(r'(?<![А-Яа-яЁё])([А-ЯЁ])(\d{1,3})\b', lambda m: LETTER.get(m.group(1), m.group(1)) + '-' + card(int(m.group(2))), t)
     # время на часах: 3:45 → «три сорок пять», 12:00 → «двенадцать ноль-ноль»
     t = re.sub(r'(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])', lambda m: card(int(m.group(1))) + ' ' + ('ноль-ноль' if m.group(2) == '00' else ('ноль ' + card(int(m.group(2)[1])) if m.group(2)[0] == '0' else card(int(m.group(2))))), t)
     # 1 200 → 1200
@@ -176,12 +218,15 @@ def norm(text):
     # диапазоны лет «1906–1908» → «тысяча девятьсот шестой — тысяча девятьсот восьмой»
     t = re.sub(r'\b(1[6-9]\d\d)\s*[–—-]\s*(1[6-9]\d\d)\b', lambda m: ord_nom(int(m.group(1))) + ' — ' + ord_nom(int(m.group(2))), t)
     # проценты, доллары, скорость, мощность, километры
+    # 0.29: числа с единицами — с дробями и падежом после предлога
+    t = re.sub(r'(\b(?:' + '|'.join(sorted(PREP_GEN, key=len, reverse=True)) + r')\s)?(\d+)(?:,(\d))?\s*(км/ч|км\b|%|л\.с\.|мили\b|миль\b)', lambda m: unit_words(m.group(1) or '', int(m.group(2)), m.group(3), m.group(4).rstrip()), t)
     t = re.sub(r'(\d+)\s*%', lambda m: card(int(m.group(1))) + ' ' + plural(int(m.group(1)), 'процент', 'процента', 'процентов'), t)
     t = re.sub(r'\$\s*(\d+)', lambda m: card(int(m.group(1))) + ' ' + plural(int(m.group(1)), 'доллар', 'доллара', 'долларов'), t)
     t = re.sub(r'(\d+)\s*км/ч', lambda m: card(int(m.group(1))) + ' ' + plural(int(m.group(1)), 'километр', 'километра', 'километров') + ' в час', t)
     t = re.sub(r'(\d+)\s*л\.с\.', lambda m: card(int(m.group(1)), 'f') + ' ' + plural(int(m.group(1)), 'лошадиная сила', 'лошадиные силы', 'лошадиных сил'), t)
     t = re.sub(r'(\d+)\s*км\b', lambda m: card(int(m.group(1))) + ' ' + plural(int(m.group(1)), 'километр', 'километра', 'километров'), t)
-    # дроби «4,5»
+    # дроби «4,5»: «четыре с половиной», остальное — «целых, десятых»
+    t = re.sub(r'(\d+),5\b', lambda m: card(int(m.group(1))) + ' с половиной', t)
     t = re.sub(r'(\d+),(\d)\b', lambda m: card(int(m.group(1)), 'f') + ' ' + plural(int(m.group(1)), 'целая', 'целых', 'целых') + ' ' + card(int(m.group(2)), 'f') + ' ' + plural(int(m.group(2)), 'десятая', 'десятых', 'десятых'), t)
     # «XX век», римские
     t = re.sub(r'\bXX\b', 'двадцатый', t); t = re.sub(r'\bXIX\b', 'девятнадцатый', t)
@@ -199,7 +244,7 @@ def norm(text):
     t = re.sub(r'(\b[А-Яа-яё]+\s)?(?<![\d,])(\d+)(\s*)([а-яёА-ЯЁ]+)?', num2, t)
     t = t.replace('«', '').replace('»', '').replace('„', '').replace('“', '').replace('"', '')
     t = re.sub(r'\s+', ' ', t).strip()
-    return t
+    return put_stress(t)
 
 if __name__ == '__main__':
     for s in ['Детройт, 1896 год. В сарае за домом пятьдесят восемь.', 'В 1903 году дюжина компаньонов вложила 28 тысяч долларов.', 'К 1910 году.', 'Осенью 1913 года на заводе.',
