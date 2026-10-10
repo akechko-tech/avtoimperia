@@ -579,6 +579,13 @@ def world2_scan():
         L = [e for e in L if not WORLD_BAN.search(' '.join([e.get('title', ''), e.get('desc', ''), e.get('artist', '')]))]
         json.dump(L, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=0); log('world2_scan kept after ban', len(L))
     except Exception as ex: log('world2_scan filter', ex)
+# 0.30: фанфары — настоящие записи (военные оркестры США — общественное достояние; классика до 1925 года)
+FANF_QS = ['fanfare Marine Band', 'fanfare Army Band', 'fanfare Air Force Band', 'fanfare Navy Band', 'fanfare Coast Guard Band', 'fanfare brass', 'trumpet fanfare', 'Fanfare',
+           'Category:Fanfares', 'bugle call', 'Call to the Post', 'To the Colors bugle', 'Charge bugle', 'Assembly bugle', 'Reveille bugle', 'Category:Bugle calls',
+           'La Péri fanfare', 'Dukas fanfare', 'Trumpet Voluntary', 'Prince of Denmark', 'Mouret Rondeau', 'Aida Triumphal March', 'Aida Grand March', 'Triumphal March',
+           'Also sprach Zarathustra', 'Lohengrin Act 3', 'Lohengrin prelude act III', 'Coronation march', 'Royal fanfare', 'Herald trumpets', 'Hail to the Chief', 'Ruffles and Flourishes',
+           'Festive Overture', 'Overture 1812 finale', 'Marche Militaire', 'Entry of the Gods into Valhalla', 'Ride of the Valkyries', 'Olympic hymn 1896', 'Fanfare for a Festival']
+def fanfare_scan(): audio_scan_to('fanfare', FANF_QS, 3, 480, 40)
 def world_scan():
     audio_scan_to('music_world', WORLD_QS, 50, 600, 50)
     P = os.path.join(MEDIA, 'music_world', 'scan.json')
@@ -722,11 +729,15 @@ def music_cut():
             sh(['ffmpeg', '-v', 'error', '-ss', '%.2f' % t0, '-i', tmp, '-t', '%.2f' % d, '-vn', '-af', af,
                 '-ac', ac, '-ar', '44100', '-c:a', 'aac', '-b:a', '%dk' % int(e.get('kb') or 72), '-movflags', '+faststart', '-y', out])
             man[cid] = {'key': key, 'title': e['title'], 'page': v.get('descriptionurl'), 'lic': meta_val(v, 'LicenseShortName'), 'by': meta_val(v, 'Artist')[:160],
-                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out), 'perf': e.get('perf', '')}
+                        'cap': e.get('cap', ''), 'st': e.get('st'), 'y': e.get('y'), 'mood': e.get('mood'), 'd': round(d, 1), 'size': os.path.getsize(out), 'perf': e.get('perf', ''), 'c': e.get('c', '')}
             log('music', cid, round(d), 's', os.path.getsize(out))
         except Exception as ex:
             log('music error', cid, repr(ex)[:300])
         json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    # 0.30: страна записи — и у старых клипов (без перенарезки)
+    for e in L:
+        if e.get('c') and e['id'] in man: man[e['id']]['c'] = e['c']
+    json.dump(man, open(man_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     if os.path.exists(tmp): os.remove(tmp)
 
 def sfx_cut():
@@ -896,7 +907,7 @@ def photos():
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
 JOBS = {'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
-        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan, 'world2_scan': world2_scan}
+        'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan, 'world2_scan': world2_scan, 'fanfare_scan': fanfare_scan}
 
 if __name__ == '__main__':
     jobs = [l.strip() for l in open(os.path.join(TOOLS, 'jobs.txt'), encoding='utf-8') if l.strip() and not l.startswith('#')]
