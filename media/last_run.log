@@ -1,41 +1,28 @@
-== job music_cut
-music vyaltseva_troika 170 s 1382105
-music vyaltseva_pytaesh 183 s 1497018
-music vyaltseva_leti 175 s 1437656
-music panina_molody 119 s 967145
-music plevitskaya_hazbulat 166 s 1392187
-music medov_nikolaev 170 s 1399973
-music manchuria_1909 186 s 1531778
-music raisova_zhdu 154 s 1276956
-music chaliapin_ukhnem 196 s 1608937
-music chaliapin_dubinushka 204 s 1686730
-music dni_zhizni 155 s 1294282
-music funiculi_1903 173 s 1418192
-music mattinata_1904 148 s 1218733
-music carmela_1909 191 s 1464267
-music mamma_mia_1911 190 s 1520826
-music caruso_donna 130 s 1066421
-music caruso_questa_1902 138 s 1133567
-music caruso_giubba 194 s 1598736
-music donnarumma_sole 180 s 1479151
-music aida_marina_1906 191 s 1568776
-music bruant_nini 170 s 1407663
-music fragson_amis 108 s 902475
-music sambre_meuse 171 s 1408654
-music marche_lorraine 159 s 1308963
-music pistonette_1902 120 s 986202
-music mon_homme 172 s 1431656
-music alte_kameraden 205 s 1681492
-music kleine_gasse 133 s 1096751
-music jaeger_abschied 137 s 1128243
-music tauber_1923 188 s 1483493
-music fan_win 12 s 147953
-music fan_cup 22 s 265440
-music fan_title 22 s 269077
-music fan_record 14 s 134578
-music fan_first 18 s 216274
-music fan_medal 16 s 138291
-music fan_deal 13 s 159410
-music fan_legacy 26 s 272214
-music fan_duel 11 s 133247
-== job music_cut took 840 s
+== job voice5
+voice5 redo 553
+voice5 25 lines 21 s
+voice5 50 lines 42 s
+voice5 75 lines 63 s
+voice5 100 lines 89 s
+voice5 125 lines 113 s
+voice5 150 lines 139 s
+voice5 175 lines 164 s
+voice5 200 lines 188 s
+voice5 225 lines 211 s
+voice5 250 lines 235 s
+voice5 275 lines 259 s
+voice5 300 lines 278 s
+voice5 325 lines 296 s
+voice5 350 lines 312 s
+voice5 375 lines 326 s
+voice5 400 lines 343 s
+voice5 425 lines 359 s
+voice5 450 lines 374 s
+voice5 475 lines 384 s
+voice5 500 lines 388 s
+voice5 525 lines 393 s
+voice5 550 lines 397 s
+voice5 575 lines 401 s
+voice5 600 lines 405 s
+voice5 done 620 new lines; total 2919 v5 2919
+== job voice5 took 418 s
