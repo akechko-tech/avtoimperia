@@ -50,11 +50,23 @@ def strip_html(s):
     return re.sub(r'\s+', ' ', s).strip()
 
 def video_info(titles):
-    out = {}
-    for i in range(0, len(titles), 40):
-        r = capi(action='query', titles='|'.join(titles[i:i + 40]), prop='videoinfo', viprop='url|size|mime|mediatype|extmetadata|derivatives|metadata')
-        for pg in (r.get('query', {}).get('pages', {}) or {}).values():
-            if pg.get('videoinfo'): out[pg['title']] = pg['videoinfo'][0]
+    """0.30: пачки по длине адреса (кириллица в адресе раздувается вшестеро — длинные пачки получали 414 URI Too Long)."""
+    out = {}; batch = []; blen = 0
+    def flush(b):
+        if not b: return
+        try:
+            r = capi(action='query', titles='|'.join(b), prop='videoinfo', viprop='url|size|mime|mediatype|extmetadata|derivatives|metadata')
+            for pg in (r.get('query', {}).get('pages', {}) or {}).values():
+                if pg.get('videoinfo'): out[pg['title']] = pg['videoinfo'][0]
+        except Exception as ex:
+            log('video_info error', len(b), repr(ex)[:120])
+            if len(b) > 1:
+                h = len(b) // 2; flush(b[:h]); flush(b[h:])
+    for t in titles:
+        L = len(urllib.parse.quote(t)) + 3
+        if batch and (len(batch) >= 40 or blen + L > 5500): flush(batch); batch = []; blen = 0
+        batch.append(t); blen += L
+    flush(batch)
     return out
 
 def meta_val(v, k):
@@ -547,8 +559,7 @@ WORLD_QS = ['Шаляпин', 'Chaliapin', 'Chaliapine', 'Schaljapin', 'Feodor C
             'Ausgerechnet Bananen', 'Schlager', 'Tanzorchester', 'Foxtrott', 'deutsches Lied 1910', 'Odeon Orchester', 'Grammophon',
             'Category:Feodor Chaliapin', 'Category:Enrico Caruso', 'Category:Audio files of Enrico Caruso', 'Category:Russian folk songs', 'Category:Russian romances',
             'Category:Neapolitan songs', 'Category:Chansons', 'Category:Songs in French', 'Category:Songs in German', 'Category:Songs in Russian', 'Category:Songs in Italian',
-            'Category:Audio files in Russian', 'Category:Audio files in Italian', 'Category:Audio files in French', 'Category:Audio files in German',
-            'Category:Great 78 Project', 'Category:Mistinguett', 'Category:Maurice Chevalier', 'Category:Comedian Harmonists', 'Category:Richard Tauber']
+            'Category:Mistinguett', 'Category:Maurice Chevalier', 'Category:Comedian Harmonists', 'Category:Richard Tauber']
 WORLD_BAN = re.compile(r'horst|hitler|nazi|nsdap|\bss\b|\bsa[- ]|heil|reichspartei|erwache|fahne hoch|wehrmacht|luftwaffe|giovinezza|faccetta|fascis|duce|1933|1934|1935|1936|1937|1938|1939|194\d', re.I)
 def world_scan():
     audio_scan_to('music_world', WORLD_QS, 50, 600, 50)
