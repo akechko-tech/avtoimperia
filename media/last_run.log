@@ -1,80 +1,198 @@
-== job voice5
-voice5 redo 553
-voice5 25 lines 15 s
-voice5 50 lines 29 s
-voice5 75 lines 43 s
-voice5 100 lines 58 s
-voice5 125 lines 73 s
-voice5 150 lines 89 s
-voice5 175 lines 104 s
-voice5 200 lines 117 s
-voice5 225 lines 132 s
-voice5 250 lines 146 s
-voice5 275 lines 161 s
-voice5 300 lines 177 s
-voice5 325 lines 194 s
-voice5 350 lines 210 s
-voice5 375 lines 224 s
-voice5 400 lines 239 s
-voice5 425 lines 257 s
-voice5 450 lines 274 s
-voice5 475 lines 291 s
-voice5 500 lines 307 s
-voice5 525 lines 323 s
-voice5 550 lines 340 s
-voice5 575 lines 356 s
-voice5 600 lines 372 s
-voice5 625 lines 389 s
-voice5 650 lines 405 s
-voice5 675 lines 420 s
-voice5 700 lines 437 s
-voice5 725 lines 452 s
-voice5 750 lines 468 s
-voice5 775 lines 481 s
-voice5 800 lines 496 s
-voice5 825 lines 511 s
-voice5 850 lines 524 s
-voice5 875 lines 538 s
-voice5 900 lines 551 s
-voice5 925 lines 565 s
-voice5 950 lines 579 s
-voice5 975 lines 593 s
-voice5 1000 lines 608 s
-voice5 1025 lines 623 s
-voice5 1050 lines 634 s
-voice5 1075 lines 647 s
-voice5 1100 lines 659 s
-voice5 1125 lines 670 s
-voice5 1150 lines 681 s
-voice5 1175 lines 691 s
-voice5 1200 lines 702 s
-voice5 1225 lines 713 s
-voice5 1250 lines 723 s
-voice5 1275 lines 729 s
-voice5 1300 lines 732 s
-voice5 1325 lines 735 s
-voice5 1350 lines 739 s
-voice5 done 1350 new lines; total 2852 v5 2852
-== job voice5 took 750 s
-== job anthem
-anthem: download https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2
-anthem: soundfont /home/runner/work/_temp/anthem/MuseScore_General.sf2 MuseScore General (S. Christian Collins, MIT)
-anthem: avto march 171.7 s 2383 KB
-anthem: reel rag 94.7 s 1309 KB
-anthem: valse waltz 125.6 s 1743 KB
-anthem: tango tango 111.8 s 1554 KB
-anthem: jazz jazz 102.4 s 1423 KB
-anthem: cake cake 90.9 s 1256 KB
-anthem: fox fox 137.2 s 1906 KB
-anthem: charl charl 86.4 s 1203 KB
-anthem: cue fanfare 2.7 s 52 KB
-anthem: cue win 2.8 s 53 KB
-anthem: cue duel_proud_l 4.2 s 71 KB
-anthem: cue duel_proud_w 5.3 s 83 KB
-anthem: cue duel_biz_l 4.1 s 68 KB
-anthem: cue duel_biz_w 5.1 s 81 KB
-anthem: cue duel_aristo_l 4.6 s 75 KB
-anthem: cue duel_aristo_w 5.8 s 88 KB
-anthem: cue duel_sharp_l 4.1 s 69 KB
-anthem: cue duel_sharp_w 5.1 s 81 KB
-== job anthem took 55 s
+== job world_scan
+search Шаляпин -> 24
+search Chaliapin -> 24
+search Chaliapine -> 26
+search Schaljapin -> 24
+search Feodor Chaliapin -> 24
+search Fyodor Chaliapin -> 2
+search Плевицкая -> 3
+search Plevitskaya -> 4
+search Вяльцева -> 3
+search Vyaltseva -> 3
+search Варя Панина -> 2
+search Panina -> 3
+search Собинов -> 2
+search Sobinov -> 2
+search Морфесси -> 2
+search Morfessi -> 2
+search Янпольский -> 3
+search Janpolski -> 4
+search Yanpolsky -> 4
+search балалайка -> 16
+search balalaika -> 14
+search Andreyev balalaika -> 0
+search Great Russian Orchestra -> 6
+search Russian Balalaika Orchestra -> 0
+search Russian folk song -> 42
+search Russian song -> 50
+search русская народная песня -> 8
+search русская песня -> 6
+search романс -> 48
+search цыганский романс -> 4
+search Russian gypsy -> 1
+search gypsy romance -> 0
+search Очи чёрные -> 4
+search Очи черные -> 4
+search Dark Eyes -> 47
+search Ochi chornye -> 0
+search Эй, ухнем -> 10
+search Volga Boatmen -> 10
+search Дубинушка -> 2
+search Dubinushka -> 11
+search Коробейники -> 2
+search Korobushka -> 9
+search Стенька Разин -> 2
+search Stenka Razin -> 4
+search Ямщик -> 1
+search Тройка -> 48
+search Troika -> 11
+search Калинка -> 50
+search Камаринская -> 0
+search Kamarinskaya -> 0
+search Барыня -> 15
+search Прощание славянки -> 7
+search На сопках Маньчжурии -> 5
+search Amur Waves -> 0
+search Амурские волны -> 0
+search Дунайские волны -> 8
+search Waves of the Danube -> 7
+search Кирпичики -> 0
+search Бублички -> 2
+search Bublitchki -> 3
+search Хризантемы -> 0
+search Пара гнедых -> 0
+search Шумел камыш -> 0
+search Вдоль по Питерской -> 0
+search Степь да степь -> 0
+search Из-за острова -> 3
+search Вниз по матушке -> 0
+search Ноченька -> 3
+search Соловей -> 50
+search Русская -> 50
+search IA 78 russian -> 3
+search Victor Russian -> 50
+search Enrico Caruso -> 50
+search Caruso Neapolitan -> 4
+search O sole mio -> 3
+search Santa Lucia -> 23
+search Funiculì -> 5
+search Torna a Surriento -> 2
+search Mattinata -> 5
+search Core 'ngrato -> 2
+search Marechiaro -> 50
+search Addio a Napoli -> 1
+search Vieni sul mar -> 0
+search Ciribiribin -> 2
+search A vucchella -> 1
+search Canzone napoletana -> 7
+search Neapolitan song -> 27
+search canzone -> 48
+search mandolino -> 4
+search mandolin orchestra -> 14
+search Mandolinata -> 0
+search Beniamino Gigli -> 42
+search Tito Schipa -> 4
+search Titta Ruffo -> 2
+search Fernando De Lucia -> 6
+search Gennaro Pasquariello -> 0
+search Elvira Donnarumma -> 3
+search Gilda Mignonette -> 4
+search Leggenda del Piave -> 1
+search Vipera -> 5
+search Come le rose -> 30
+search Balocchi e profumi -> 0
+search Tango delle capinere -> 0
+search Spazzacamino -> 12
+search banda italiana -> 41
+search Italian song -> 40
+search Mistinguett -> 1
+search Maurice Chevalier -> 2
+search Félix Mayol -> 1
+search Mayol -> 1
+search Polin -> 50
+search Dranem -> 0
+search Fragson -> 2
+search Yvette Guilbert -> 1
+search Aristide Bruant -> 1
+search Fréhel -> 6
+search Damia -> 6
+search Georgius -> 50
+search Charlus -> 1
+search Bérard -> 4
+search Ouvrard -> 0
+search Esther Lekain -> 0
+search La Madelon -> 3
+search Quand Madelon -> 0
+search Viens Poupoule -> 0
+search Frou-frou -> 50
+search Petite Tonkinoise -> 0
+search Le Temps des cerises -> 2
+search Valentine Chevalier -> 45
+search Ça c'est Paris -> 0
+search Mon homme -> 6
+search La Java -> 50
+search Le Fiacre -> 14
+search Nini peau d'chien -> 1
+search Chant du départ -> 5
+search Sambre et Meuse -> 3
+search Sous les ponts de Paris -> 0
+search chanson française -> 49
+search café-concert -> 13
+search musette -> 48
+search valse musette -> 1
+search accordéon -> 50
+search Émile Vacher -> 0
+search Disque Pathé -> 50
+search Claire Waldoff -> 1
+search Otto Reutter -> 0
+search Paul Lincke -> 5
+search Walter Kollo -> 4
+search Jean Gilbert -> 4
+search Leo Fall -> 0
+search Comedian Harmonists -> 2
+search Richard Tauber -> 1
+search Marek Weber -> 9
+search Dajos Béla -> 6
+search Barnabás von Géczy -> 0
+search Paul Godwin -> 0
+search Efim Schachmeister -> 0
+search Weintraub Syncopators -> 0
+search Wiener Lied -> 50
+search Schrammel -> 2
+search Alexander Girardi -> 0
+search Berliner Luft -> 5
+search Glühwürmchen -> 21
+search Puppchen -> 2
+search Untern Linden -> 0
+search Es war in Schöneberg -> 0
+search Ich küsse Ihre Hand, Madame -> 1
+search Gern hab ich die Frauen -> 0
+search Ausgerechnet Bananen -> 0
+search Schlager -> 20
+search Tanzorchester -> 28
+search Foxtrott -> 16
+search deutsches Lied 1910 -> 0
+search Odeon Orchester -> 3
+search Grammophon -> 50
+search Category:Feodor Chaliapin -> 24
+search Category:Enrico Caruso -> 74
+search Category:Audio files of Enrico Caruso -> 0
+search Category:Russian folk songs -> 10
+search Category:Russian romances -> 0
+search Category:Neapolitan songs -> 0
+search Category:Chansons -> 0
+search Category:Songs in French -> 0
+search Category:Songs in German -> 0
+search Category:Songs in Russian -> 0
+search Category:Songs in Italian -> 0
+search Category:Audio files in Russian -> 3702
+search Category:Audio files in Italian -> 1351
+search Category:Audio files in French -> 4686
+search Category:Audio files in German -> 7887
+search Category:Great 78 Project -> 0
+search Category:Mistinguett -> 2
+search Category:Maurice Chevalier -> 3
+search Category:Comedian Harmonists -> 0
+search Category:Richard Tauber -> 0
+job failed world_scan <HTTPError 414: 'URI Too Long'>
+== job world_scan took 757 s
