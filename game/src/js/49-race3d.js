@@ -459,7 +459,9 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
 function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.mech?1:0,spec.b,spec.y,spec.hp===undefined?'':spec.hp,spec.strip?1:0,spec.acc||'',spec.lux?1:0,spec.mq||'',spec.num||0].join('|')+(near?'|h':'|l');let m=R3.carM.get(key);if(m)return m;
   const M=carModel(Object.assign({},spec,{lod:near?'hi':'lo'})),op=new MB(),gl=new MB();mbFromMesh(op,M,{lift:0.004,step:0.0016,glass:gl,car:true});
   const wc=new Float32Array(24);(M.wheels||[]).slice(0,6).forEach((w,k)=>wc.set(w,k*4));
-  m={op:g3Mesh(op),gl:g3Mesh(gl),wc,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42)};R3.carM.set(key,m);return m;}
+  // 0.30: колёса по углам (переднее левое, переднее правое, заднее левое, заднее правое) — для осевшей шины, искр и комьев из-под колёс
+  const cw=[0,1,2,3].map(k=>{const w=(M.wheels||[]).find(q=>(q[2]>0)===(k<2)&&(q[0]<0)===((k&1)===0));return w?[w[0],w[1],w[2],Math.abs(w[3])]:null;});
+  m={op:g3Mesh(op),gl:g3Mesh(gl),wc,cw,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42)};R3.carM.set(key,m);return m;}
 function r3dCarState(c){if(!c.v3)c.v3={roll:0,pitch:0,heave:0,vr:0,vp:0,vh:0,spin:0,vxp:c.vx,ax:0,mk:[null,null],dust:0,y:null};return c.v3;}
 /* ---------- установка сцены (фото-текстуры уже в видеокарте: texPrepare) ---------- */
 // Слои земли гонки: основа (трава или сухая трава, песок, снег), вторая трава, земля, камень; покров, лесная подстилка; высота снега, крутизна камня
@@ -551,7 +553,7 @@ function r3dSkidAdd(a,b,w,col,al){const S=R3.skid,mb=S.mb,q=S.head;S.head=(S.hea
   const dx=b[0]-a[0],dz=b[2]-a[2],l=Math.hypot(dx,dz)||1,sx=-dz/l*w/2,sz=dx/l*w/2,st=mb.st,f=mb.f,u=mb.u,bb=mb.b;
   [[a[0]+sx,a[1],a[2]+sz],[b[0]+sx,b[1],b[2]+sz],[b[0]-sx,b[1],b[2]-sz],[a[0]-sx,a[1],a[2]-sz]].forEach((p,k)=>{const o=(q*4+k)*st,fo=o>>2;f[fo]=p[0];f[fo+1]=p[1]+0.025;f[fo+2]=p[2];bb[o+12]=0;bb[o+13]=127;bb[o+14]=0;u[o+16]=col[0];u[o+17]=col[1];u[o+18]=col[2];u[o+19]=Math.round(al*255);});
   S.dirty=true;}
-function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a,gv:gv||0,floor:gv?y-0.45:-1e9});}
+function r3dPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv,em,fo){const P=R3.parts;if(P.length>650)P.shift();P.push({x,y,z,vx,vy,vz,s:size,g:grow,life,max:life,c:col,a,gv:gv||0,floor:gv?y-(fo===undefined?0.45:fo):-1e9,em:em||0});}
 /* ---------- камера ---------- */
 // Первое препятствие на луче от машины назад (к камере): расстояние, м (или D — если чисто). Круги — стволы, столбы; прямоугольники — дома, трибуны
 function camBlock(F,fw,D){const T=R3.T;if(!T.colG)return D;const dx=-fw[0],dz=-fw[2];let best=D;
@@ -772,8 +774,12 @@ function r3dCarUpdate(c,dt,E){
     st.bz=(st.bz||0)+(Math.min(3,Math.abs(dh/dt)+Math.abs(dp/dt)*1.3+Math.abs(dr/dt)*0.7)-(st.bz||0))*Math.min(1,dt*12);}
   st.hm=hm;st.pm=pm;st.rm=rm;
   if(c.jolt){st.vh-=c.jolt*0.8;st.vr+=(c.joltSide||0)*c.jolt*0.35;st.vp+=c.jolt*0.25;st.bz=(st.bz||0)+c.jolt;c.jolt=0;}
-  [st.roll,st.vr]=spring(st.roll,st.vr,tRoll,90,12);[st.pitch,st.vp]=spring(st.pitch,st.vp,tPitch,110,13);[st.heave,st.vh]=spring(st.heave,st.vh,tH,260,16);
-  st.roll=clamp(st.roll,-0.09,0.09);st.pitch=clamp(st.pitch,-0.07,0.07);st.heave=clamp(st.heave,-0.09,0.07);
+  // 0.30: шины по отдельности — спущенное колесо оседает (кузов кренится на этот угол), на ободе — ещё ниже
+  if(c.tp){const tf=st.tf||(st.tf=[0,0,0,0]);let any=0;for(let k=0;k<4;k++){const tg=c.tp[k]===2?1:c.tp[k]===1?0.85:0;tf[k]+=(tg-tf[k])*Math.min(1,dt*(tg>tf[k]?1.6:4));if(tf[k]>0.01)any=1;}
+    st.tyR=st.tyP=st.tyH=0;if(any){const cw=r3dCarMesh(c.spec3,false).cw;if(cw&&cw[0]&&cw[1]&&cw[2]&&cw[3]){const dr=k=>(tf[k]>0.95?0.19:0.19*tf[k])*cw[k][3],tw=Math.abs(cw[1][0]-cw[0][0])||1.3,wb=Math.abs(cw[0][2]-cw[2][2])||2.5;
+      const dL=(dr(0)+dr(2))/2,dR=(dr(1)+dr(3))/2,dF=(dr(0)+dr(1))/2,dB=(dr(2)+dr(3))/2;st.tyR=(dR-dL)/tw;st.tyP=(dF-dB)/wb;st.tyH=-(dL+dR)/2;}}}
+  [st.roll,st.vr]=spring(st.roll,st.vr,tRoll+(st.tyR||0),90,12);[st.pitch,st.vp]=spring(st.pitch,st.vp,tPitch+(st.tyP||0),110,13);[st.heave,st.vh]=spring(st.heave,st.vh,tH+(st.tyH||0),260,16);
+  st.roll=clamp(st.roll,-0.13,0.13);st.pitch=clamp(st.pitch,-0.08,0.08);st.heave=clamp(st.heave,-0.13,0.07);
   st.spin+=c.vx*dt;
   const d=Math.hypot(c.x-R3.eye[0],c.z-R3.eye[2]);st.near=d<45;st.d=d;
   if(R.t<0)return;
@@ -792,12 +798,13 @@ function r3dCarUpdate(c,dt,E){
   else st.mk[0]=st.mk[1]=null;
   if(c.dnf||c.stopT>0||c.overheat>0){if(Math.random()<0.35)r3dPart(c.x+fw[0]*1.2,yc+1.1,c.z+fw[2]*1.2,(Math.random()-0.5)*0.6,1.4+Math.random(),(Math.random()-0.5)*0.6,0.4,1.6,2,c.overheat>0?[245,245,245]:[80,80,80],0.35);}
   if(c.thr>0.8&&R.rc.y<1914&&Math.random()<0.15)r3dPart(c.x-fw[0]*1.8,yc+0.4,c.z-fw[2]*1.8,-fw[0]*1.5,0.3,-fw[2]*1.5,0.15,0.9,0.6,[110,110,110],0.25);
+  if(d<85&&!c.tun)r3dWheelFx(c,st,fw,rt,v,dt,me,rain);
 }
 // Вода и грязь из-под колёс: водяная пыль на мокрой дороге, веер брызг в луже, комья грязи; колея в грязи
 function r3dWetFx(c,st,yc,fw,rt,v,bx,bz,me,rain,dt){
   // машина пачкается: пыль сухого грунта (светлая), брызги луж и грязь (тёмная, быстро)
   {const s=c.surf||'',dry=!rain&&(s==='dirt'||s==='mount'||s==='macadam'||s==='sand'||s==='dune'||s==='beach'),mud=s==='mudhole'||s==='mud'||(rain&&(s==='dirt'||s==='mount'||s==='field'||s==='grass'||s==='verge'))||(c.off&&(s==='field'||s==='forest'));
-    const k=Math.min(1,v/14)*dt*(s==='mudhole'?0.09:mud?0.012:s==='puddle'?0.02:dry?0.0035:0),tgt=mud||s==='puddle'?[0.075,0.058,0.04]:[0.36,0.3,0.22];
+    const k=Math.min(1,v/14)*dt*(s==='mudhole'?0.1:mud?0.02:s==='puddle'?0.024:dry?0.006:0),tgt=mud||s==='puddle'?[0.075,0.058,0.04]:[0.36,0.3,0.22];
     if(k>0){st.dirt=Math.min(0.95,(st.dirt||0)+k);const d=st.dirtC||(st.dirtC=tgt.slice()),w=Math.min(1,k*6);for(let q=0;q<3;q++)d[q]+=(tgt[q]-d[q])*w;}
     else if(rain&&st.dirt>0.35&&!c.tun)st.dirt-=dt*0.002;}
   if(c.surfIn>0){const k=c.surfIn,mud=c.surf==='mudhole';c.surfIn=0;r3dSplash(c,yc,fw,rt,v,k,mud);if(me)try{auSfx(mud?'mud':'splash',Math.min(1,0.35+k*0.5));}catch(_){}if(me&&k>0.6)R.shake=Math.max(R.shake,0.18+k*0.12);}
@@ -826,7 +833,7 @@ function r3dSplash(c,yc,fw,rt,v,k,mud){const col=mud?[92,74,52]:[214,222,230],n=
   for(let q=0;q<n;q++){const sd=Math.random()<0.5?-1:1,al=(Math.random()-0.35)*1.8,ox=c.x+fw[0]*al+rt[0]*sd*0.75,oz=c.z+fw[2]*al+rt[2]*sd*0.75,out=1.2+v*(0.08+Math.random()*0.12);
     r3dPart(ox,yc+0.15,oz,rt[0]*sd*out+fw[0]*v*0.3*Math.random(),1.2+v*0.1*Math.random()+Math.random()*2,rt[2]*sd*out+fw[2]*v*0.3*Math.random(),mud?0.11:0.09,mud?0.1:0.3,0.7+Math.random()*0.5,col,mud?0.95:0.6,1);}
   if(!mud&&k>0.3)for(let q=0;q<Math.round(6*k);q++)r3dPart(c.x+(Math.random()-0.5)*2,yc+0.5,c.z+(Math.random()-0.5)*2,(Math.random()-0.5)*2+fw[0]*v*0.3,0.8+Math.random(),(Math.random()-0.5)*2+fw[2]*v*0.3,0.6,2.2,1.1,[235,240,244],0.25);}
-function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);if(P.u.u_dirt){const d=st.dirtC||[0.3,0.25,0.18];gl.uniform4f(P.u.u_dirt,d[0],d[1],d[2],st.dirt||0);}gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
+function r3dCarUniforms(P,c,st,m){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,st.mat);if(P.u.u_tf){const f=st.tf;if(f)gl.uniform4f(P.u.u_tf,f[0],f[1],f[2],f[3]);else gl.uniform4f(P.u.u_tf,0,0,0,0);}if(P.u.u_dirt){const d=st.dirtC||[0.3,0.25,0.18];gl.uniform4f(P.u.u_dirt,d[0],d[1],d[2],st.dirt||0);}gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,st.spin,c.delta||0,R3.view===2&&c===R.follow?1:0,0);gl.uniform4f(P.u.u_body,st.roll,st.pitch,st.heave,m.pivot);}
 function r3dDrawCars(E,bw,bh,glass){const gl=G3.gl,P=r3dUse('car',E,bw,bh);
   raceVisCars().forEach(c=>{const st=c.v3;if(!st||!st.mat)return;if(st.d>700)return;if(!inFrustum(R3.fr,[c.x,st.y,c.z],3))return;const m=r3dCarMesh(c.spec3,c===R.follow||st.d<24);
     if(glass&&!m.gl)return;r3dCarUniforms(P,c,st,m);gl.uniform4f(P.u.u_lamp,c.brk>0.3&&c.vx>1?1:0,E.hl,0,0);if(P.u.u_dark)gl.uniform1f(P.u.u_dark,tunDark(c));g3Draw(glass?m.gl:m.op);});
@@ -835,7 +842,7 @@ function r3dPartsUpdate(dt){const P=R3.parts;for(let i=P.length-1;i>=0;i--){cons
   // капли и комья падают (gv — доля тяжести), пыль и пар висят
   if(p.gv){p.vy-=9.8*p.gv*dt;p.vx*=1-dt*0.25;p.vz*=1-dt*0.25;if(p.y<p.floor){p.life=Math.min(p.life,0.05);}}else{p.vx*=1-dt*0.8;p.vz*=1-dt*0.8;p.vy*=1-dt*0.5;}}}
 function r3dDrawParts(E,bw,bh){const P=R3.parts;if(!P.length)return;const gl=G3.gl,I=R3.partI,e=R3.eye,L=P.map(p=>[(p.x-e[0])**2+(p.z-e[2])**2,p]).sort((a,b)=>b[0]-a[0]);
-  const lum=E.night>0.5?0.2:1;let n=0;const d=I.data;for(const [,p] of L){if(n>=I.max)break;const k=1-p.life/p.max,o=n*8;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255*lum;d[o+5]=p.c[1]/255*lum;d[o+6]=p.c[2]/255*lum;d[o+7]=p.a*(1-k)*Math.min(1,k*5+0.25);n++;}
+  const lum=E.night>0.5?0.2:1;let n=0;const d=I.data;for(const [,p] of L){if(n>=I.max)break;const k=1-p.life/p.max,o=n*8,lm=p.em?1:lum;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255*lm;d[o+5]=p.c[1]/255*lm;d[o+6]=p.c[2]/255*lm;{const al=p.em===2?p.a*Math.min(1,(1-k)*4):p.a*(1-k)*Math.min(1,k*5+0.25);d[o+7]=p.em===1?-Math.max(0.005,al):p.em===2?1+Math.max(0.005,al)*0.999:al;}n++;}
   const Pp=r3dUse('part',E,bw,bh);gl.uniform3fv(Pp.u.u_camR,R3.camR);gl.uniform3fv(Pp.u.u_camU,R3.camU);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,R3.texPuff);gl.uniform1i(Pp.u.u_tex,1);
   gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.disable(gl.CULL_FACE);g3InstDraw(I,n);gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}
 function r3dPeopleUpload(){const P=R3.people,I=R3.pI,n=Math.min(P.length,I.max),d=I.data;

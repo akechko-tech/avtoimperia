@@ -174,15 +174,17 @@ function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
     const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:5)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(5);}catch(e){if(a)a.bad=1;if(fb)fb();}}
-// 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи военных оркестров и классики (файлы рядом с игрой: music/fan_*.m4a),
-// без сети или без файла — свои оркестровые темы игры. Победа в гонке — горн и труба, кубок и титул — торжественный марш,
-// рекорд и первенство — «восход» трубами, медаль выставки — изящная фанфара, сделка — величавые валторны.
+// 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи оркестров (файлы рядом с игрой, в APK вшиты: music/fan_*.m4a);
+// без файла — свои оркестровые темы игры. Победа — «Первый сигнал» горна (его трубят на ипподромах), кубок — дробь и «Грандиозо»,
+// титул — трубы «Аиды», рекорд — «Сигнал адъютанта», первенство — «К знамени», медаль — туш, сделка — «Сбор», наследие —
+// «Труба добровольца» Кларка, дуэль — «В атаку!»
 const FANF={win:['fan_win','own_cue_win'],cup:['fan_cup','own_cue_fanfare'],title:['fan_title','fan_cup','own_cue_fanfare'],record:['fan_record','own_cue_fanfare'],
-  first:['fan_first','fan_record','own_cue_fanfare'],medal:['fan_medal','own_cue_fanfare'],deal:['fan_deal','own_cue_fanfare'],legacy:['fan_legacy','fan_title','own_cue_fanfare'],duel:['own_cue_win']};
-function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}catch(_){}const L=FANF[kind]||FANF.cup,I=(ORCH&&ORCH.idx)||{};
-  const id=L.find(x=>/^own_/.test(x)||(I[x]&&remoteOk()))||'own_cue_fanfare';
-  if(/^own_cue_/.test(id)){auCue(id.slice(8),0.8,()=>{try{auReelFanfare();}catch(_){}});return;}
-  auCueSrc(id,ORCH_BASE()+'music/'+id+'.m4a',0.85,()=>auCue('fanfare',0.8,()=>{}));}
+  first:['fan_first','fan_record','own_cue_fanfare'],medal:['fan_medal','own_cue_fanfare'],deal:['fan_deal','own_cue_fanfare'],legacy:['fan_legacy','fan_title','own_cue_fanfare'],duel:['fan_duel','own_cue_win']};
+function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}catch(_){}const L=FANF[kind]||FANF.cup,I=(ORCH&&ORCH.idx)||{},loc=location.protocol==='file:';
+  const own=(L.find(x=>/^own_/.test(x))||'own_cue_fanfare').slice(8),cue=()=>auCue(own,0.8,()=>{try{auReelFanfare();}catch(_){}});
+  const id=L.find(x=>/^fan_/.test(x)&&!(CUE[x]&&CUE[x].bad)&&(loc||(I[x]&&remoteOk())));
+  if(!id){cue();return;}
+  auCueSrc(id,'music/'+id+'.m4a',0.85,cue);}
 function auCueSrc(id,src,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}

@@ -83,8 +83,8 @@ function potImpact(c,trk,p,dep,side,sp){const ai=!(c.player&&R.mode==='drive');i
   const k=dep/0.1,e=k*Math.min(1.6,sp/18),kids=DIF().simple,me=c===R.follow,sg=side||(Math.random()<0.5?-1:1);
   c.vx*=1-Math.min(0.12,0.04*e);c.vy+=sg*(0.25+Math.random()*0.45)*e*(ai?0.5:1)*(kids?0.5:1);c.r+=(side||0)*0.05*e*(ai?0.5:1)*(kids?0.5:1);
   c.dmg=Math.min(100,c.dmg+0.22*e*e*(ai?0.5:1)*(kids?0.3:1));
-  if(sp>16&&k>0.8&&!c.punct&&!kids&&Math.random()<0.0022*(sp-14)*k*(ai?0.5:1)){c.punct=true;c.punctN=(c.punctN||0)+1;c.flat=flatRun(c,trk);
-    if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ПРОБИТО В ЯМЕ!',1.8);}
+  if(sp>16&&k>0.8&&!kids&&Math.random()<0.0022*(sp-14)*k*(ai?0.5:1)){const wk=(sg>0?0:1)+(Math.random()<0.65?0:2);
+    if(!c.tp[wk]){twPunct(c,wk,trk,'hole');if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'КОЛЕСО ПРОБИТО В ЯМЕ: '+TW_NM[wk].toUpperCase()+'!',1.8);}}
   c.jolt=Math.min(1.6,(c.jolt||0)+0.3+0.35*e);c.joltSide=sg;c.potN=(c.potN||0)+1;
   if(me){R.shake=Math.max(R.shake||0,Math.min(0.9,0.1+0.22*e));try{if(c.player&&navigator.vibrate&&e>0.5)navigator.vibrate(Math.min(90,18*e));}catch(_){}}}
 /* ---------- звук и тряска: что сейчас под колёсами ---------- */

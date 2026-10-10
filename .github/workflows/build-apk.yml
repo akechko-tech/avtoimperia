@@ -35,7 +35,7 @@ jobs:
           # реальные трассы (рельеф, карта) — скриптами, подгружаются перед гонкой
           if [ -d docs/terrain ]; then mkdir -p app/src/main/assets/terrain && cp docs/terrain/*.js app/src/main/assets/terrain/; fi
           # свои мелодии игры в оркестровке (марш «Автоимперия» и др.) — вшиты, играют и без сети
-          mkdir -p app/src/main/assets/music && cp docs/music/own_*.m4a app/src/main/assets/music/ 2>/dev/null || true
+          mkdir -p app/src/main/assets/music && cp docs/music/own_*.m4a docs/music/fan_*.m4a app/src/main/assets/music/ 2>/dev/null || cp docs/music/own_*.m4a app/src/main/assets/music/ 2>/dev/null || true
       - name: Собрать APK
         run: gradle assembleRelease --no-daemon
       - name: Переименовать

@@ -297,7 +297,7 @@ function plgUse(name,W,H){const gl=G3.gl,P=G3.P[name],u=P.u,E=PLG.E;gl.useProgra
   if(u.u_lay){const tx=G3.cache.tx;if(tx){gl.uniform4fv(u.u_lay,tx.lay);gl.uniform4fv(u.u_lavg,tx.avg);}}
   if(u.u_tq)gl.uniform4f(u.u_tq,gq().nrm?1:0,0,1,1);
   return P;}
-function plgCarU(P,c,m,M){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,M);gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,c?c.spin:0,0,0,0);gl.uniform4f(P.u.u_body,0,0,c&&c.v>0.3?(vnz(c.spin*0.9,0.5,3)-0.5)*0.02:0,m.pivot);if(P.u.u_dirt)gl.uniform4f(P.u.u_dirt,0,0,0,0);}
+function plgCarU(P,c,m,M){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,M);gl.uniform4fv(P.u.u_wc,m.wc);gl.uniform4f(P.u.u_wr,c?c.spin:0,0,0,0);gl.uniform4f(P.u.u_body,0,0,c&&c.v>0.3?(vnz(c.spin*0.9,0.5,3)-0.5)*0.02:0,m.pivot);if(P.u.u_dirt)gl.uniform4f(P.u.u_dirt,0,0,0,0);if(P.u.u_tf)gl.uniform4f(P.u.u_tf,0,0,0,0);}
 // Все, что рисуется: [сетка, матрица] для машин, людей, поезда (тень и кадр — одним списком)
 function plgDyn(sc){const cars=[],ppl=[],lits=[],M=()=>new Float32Array(16),bas=(x,y,z,fx,fz)=>{const m=M(),fw=[fx,0,fz],rt=[fz,0,-fx];m4basis(m,rt,[0,1,0],fw,[x,y,z]);return m;};
   sc.park.forEach(p=>cars.push({m:p.m,M:bas(p.x,0.025,p.z,Math.sin(p.yaw),Math.cos(p.yaw)),c:null}));

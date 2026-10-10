@@ -29,13 +29,13 @@ function step(me,k,T){const dt=1/60;for(let f=0;f<T*60;f++){rKeys.left=false;rKe
 // 4) после пит-стопа (pitT уходил в минус) кнопка тоже работает
 {const me=setup(0);me.pitT=-0.02;step(me,{},1.6);ok(me.stuck>1.2,'pitT<0 не блокирует кнопку');finishRace(true);closeSheet();closePaper();G.pending=[];}
 // 5) 0.29: стёртые шины, машина сползает по склону — сервис «стоп…» не зависает: через 2,5 с механик ставит её, ремонт идёт
-{const me=setup(0);me.punct=true;me.flat=false;me.tyre=100;me.svc=1;let slid=0;
+{const me=setup(0);me.tw=[100,100,100,100];twSync(me);twPunct(me,0,R.trk,'wear');me.flat=false;me.svc=1;let slid=0;
  for(let f=0;f<5*60;f++){const dt=1/60;rKeys.gas=false;rKeys.brake=false;R.t+=dt;R.time+=dt;playerControl(me,dt);if(me.svc===1){me.vx=-1.2;slid++;}raceTick(dt);}
  ok(me.svc===2||me.svc===0,'сползающая машина встала на ремонт (svc '+me.svc+', сползала '+(slid/60).toFixed(1)+' с)');
  ok(slid/60<3,'механик подложил башмаки через '+(slid/60).toFixed(1)+' с');
  step(me,{},20);ok(me.svc===0&&!me.punct,'ремонт закончен, колесо новое');finishRace(true);closeSheet();closePaper();G.pending=[];}
 // 6) 0.29: «Газ» отменяет остановку на ремонт, пока машина не встала
-{const me=setup(0);me.punct=true;me.flat=false;me.svc=1;
+{const me=setup(0);twPunct(me,0,R.trk,'nail');me.flat=false;me.svc=1;
  for(let f=0;f<90;f++){const dt=1/60;rKeys.gas=f>40;rKeys.brake=false;R.t+=dt;R.time+=dt;playerControl(me,dt);if(me.svc===1)me.vx=-1.2;raceTick(dt);}
  ok(me.svc===0,'«Газ» — едем дальше без ремонта (svc '+me.svc+')');
  step(me,{},0.5);ok(me.svc===0,'сразу снова на ремонт не встаёт');finishRace(true);closeSheet();closePaper();G.pending=[];}

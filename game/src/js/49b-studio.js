@@ -76,7 +76,7 @@ function stuRender(spec,o){
   const cv=mkCanvas(W,H),c=cv.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';c.drawImage(big,0,0,W,H);
   return cv;}
 // Колёса и кузов в студии: стоят ровно, передние чуть повёрнуты к зрителю — как на рекламном снимке
-function stuCarU(gl,P,wc,pivot,o){gl.uniform4fv(P.u.u_wc,wc);gl.uniform4f(P.u.u_wr,0.35,o.steer===undefined?-0.22:o.steer,0,0);gl.uniform4f(P.u.u_body,0,0,0,pivot);}
+function stuCarU(gl,P,wc,pivot,o){gl.uniform4fv(P.u.u_wc,wc);gl.uniform4f(P.u.u_wr,0.35,o.steer===undefined?-0.22:o.steer,0,0);gl.uniform4f(P.u.u_body,0,0,0,pivot);if(P.u.u_tf)gl.uniform4f(P.u.u_tf,0,0,0,0);}
 // Картинка машины для интерфейса: данные-URL (кэш по облику и размеру)
 function stuKey(spec,o){return spec.key+'|'+(o.w||560)+'|'+(o.crew?1:0)+'|'+(o.yaw===undefined?'':o.yaw)+'|'+(o.pitch===undefined?'':o.pitch);}
 function stuImage(spec,o){o=o||{};const key=stuKey(spec,o);let url=STU.cache.get(key);if(url)return url;

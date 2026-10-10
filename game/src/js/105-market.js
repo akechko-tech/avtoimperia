@@ -172,10 +172,12 @@ function repEffect(s){const d=(s.rep-50)/50;return d<0?1.3*d:0.8*d;}
 // Без этого новичок с хорошей машиной за три-четыре года забирал треть рынков Европы — у настоящих марок на это уходили десятилетия.
 const AW0=0.12,AWK=0.55;
 function awOf(s,c){return s.aw&&s.aw[c]!=null?s.aw[c]:(c===s.country?0.6:0.3);}
-function awU(s,c){return AWK*Math.log(AW0+(1-AW0)*clamp(awOf(s,c),0,1));}
+// 0.30: в первые годы (до 1900-го) дома марку не знает никто — ни вашу, ни соперников: штраф дома вдвое мягче, к 1904 году — полный
+function awU(s,c){const u=AWK*Math.log(AW0+(1-AW0)*clamp(awOf(s,c),0,1));return c===s.country?u*clamp(0.5+0.5*(yf(s)-1898)/6,0.5,1):u;}
 function awTarget(s,c){const pf=(s.pfleet&&s.pfleet[c])||0,fl=Math.max(50,fleetOf(s,c)),base=1-Math.exp(-pf/(0.03*fl)),r=reachOf(s,c),ad=clamp(adEffect(s,c)/0.55,0,1);
-  return clamp(Math.max(base,0.3*r)+0.12*ad*r+(c===s.country?0.1:0),0,1);}
-function awInit(s,fresh){s.aw={};for(const c in COUNTRIES){if(fresh){const pio=PIONEERS[s.pioneer]||{},known=s.racer?clamp(0.12+(s.racer.fame||0)/250,0.12,0.5):pio.name&&pio.name!=='Свой персонаж'?0.4:0.25;s.aw[c]=c===s.country?known:s.racer?clamp((s.racer.fame||0)/600,0,0.15):0;}else s.aw[c]=+awTarget(s,c).toFixed(4);}}
+  // дома марку знают хотя бы в своём городе и в округе — не меньше трети
+  return clamp(Math.max(base,0.3*r,c===s.country?0.25:0)+0.12*ad*r+(c===s.country?0.1:0),0,1);}
+function awInit(s,fresh){s.aw={};for(const c in COUNTRIES){if(fresh){const pio=PIONEERS[s.pioneer]||{},known=s.racer?clamp(0.2+(s.racer.fame||0)/250,0.2,0.55):pio.name&&pio.name!=='Свой персонаж'?0.5:0.35;s.aw[c]=c===s.country?known:s.racer?clamp((s.racer.fame||0)/600,0,0.15):0;}else s.aw[c]=+awTarget(s,c).toFixed(4);}}
 function awMonth(s){if(!s.aw)awInit(s,!(s.hist&&s.hist.sales&&s.hist.sales.length>2));for(const c in COUNTRIES){const a=awOf(s,c),T=awTarget(s,c);s.aw[c]=+clamp(a+(T-a)*(T>a?0.06:0.015),0,1).toFixed(4);}}
 // 0.30: СЛАВА НЕ СКЛАДЫВАЕТСЯ БЕЗ ПРЕДЕЛА: репутация, реклама, выставки, гонки и пари вместе дают не больше ≈ +1,3 к привлекательности
 // (раньше всё сразу давало до +2,5 — лучшая машина эпохи забирала почти весь класс)

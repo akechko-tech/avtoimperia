@@ -19,7 +19,7 @@ function r3dPeopleNear(){const P=R3.people,e=R3.eye,R2=P3D.R*P3D.R,L=P3D.list;L.
   for(let i=0;i<P.length;i++){const q=P[i],dx=q[0]-e[0],dz=q[2]-e[2],d2=dx*dx+dz*dz;if(d2>R2||!q[3].m3||!q[3].m3.length)continue;if(!inFrustum(R3.fr,[q[0],q[1]+0.9,q[2]],1.2))continue;L.push([d2,q,i]);}
   L.sort((a,b)=>a[0]-b[0]);if(L.length>P3D.max)L.length=P3D.max;return L;}
 function r3dDrawPeople3d(E,bw,bh){if(!R3.p3dOn)return;const L=r3dPeopleNear();if(!L.length)return;const gl=G3.gl,P=r3dUse('car',E,bw,bh),M=R3.p3dM||(R3.p3dM=m4()),t=R3.time;
-  if(P.u.u_dirt)gl.uniform4f(P.u.u_dirt,0,0,0,0);if(P.u.u_wc)gl.uniform4f(P.u.u_wc,0,-9,0,1);if(P.u.u_wr)gl.uniform4f(P.u.u_wr,0,0,0,0);if(P.u.u_body)gl.uniform4f(P.u.u_body,0,0,0,0);
+  if(P.u.u_dirt)gl.uniform4f(P.u.u_dirt,0,0,0,0);if(P.u.u_tf)gl.uniform4f(P.u.u_tf,0,0,0,0);if(P.u.u_wc)gl.uniform4f(P.u.u_wc,0,-9,0,1);if(P.u.u_wr)gl.uniform4f(P.u.u_wr,0,0,0,0);if(P.u.u_body)gl.uniform4f(P.u.u_body,0,0,0,0);
   gl.uniform4f(P.u.u_lamp,0,E.hl,0,0);if(P.u.u_dark)gl.uniform1f(P.u.u_dark,0);gl.disable(gl.CULL_FACE);
   const N2=P3D.near*P3D.near;
   for(const [d2,q] of L){const s=q[3],k=q[4],ph=q[0]*0.37+q[2]*0.29,fr=s.anim&&q[5]?Math.floor(((t*2.6+ph)%2+2)%2):0,Ms=d2<N2||!s.m3l||!s.m3l.length?s.m3:s.m3l,m=Ms[Math.min(fr,Ms.length-1)];if(!m)continue;

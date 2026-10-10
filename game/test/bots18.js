@@ -13,8 +13,10 @@ if(A[0]==='all'){
       if(jobs.length)next();else if(!run)report(out);});};
   for(let i=0;i<par;i++)next();
   function fmt(v){return Math.abs(v)>=1e9?(v/1e9).toFixed(2)+' млрд':Math.abs(v)>=1e6?(v/1e6).toFixed(1)+' млн':Math.round(v/1e3)+' тыс';}
-  function report(L){const ok={passive:r=>(r.over&&r.overY<1915)||(r.value<5e6&&r.place>10),middle:r=>!r.over&&r.value>=50e6&&r.value<=200e6&&r.place>=5&&r.place<=10,
-      strong:r=>!r.over&&r.value>=0.6e9&&r.value<=1.5e9&&r.place<=3,greedy:r=>(r.over&&r.overY>=1912)||(!r.over&&r.place>10&&r.fell),debt:r=>r.over&&((r.overY>=1920&&r.overY<=1921)||r.overY>=1929)};
+  function report(L){const ok={passive:r=>(r.over&&r.overY<1915)||(r.value<5e6&&r.place>10),// 0.30: узнаваемость марки и потолок славы — сильный игрок к 1930 году на уровне лучших марок своей страны (Европа: $0,1–0,8 млрд,
+      // США: $0,25–1,5 млрд), средний — крепкая марка (Европа $30–200 млн, США $50–300 млн), место в наследии 3–10
+      middle:r=>!r.over&&r.value>=(r.c==='us'?50e6:30e6)&&r.value<=(r.c==='us'?300e6:200e6)&&r.place>=3&&r.place<=10,
+      strong:r=>!r.over&&r.value>=(r.c==='us'?0.25e9:0.1e9)&&r.value<=(r.c==='us'?1.5e9:0.8e9)&&r.place<=3,greedy:r=>(r.over&&r.overY>=1912)||(!r.over&&r.place>10&&r.fell),debt:r=>r.over&&((r.overY>=1920&&r.overY<=1921)||r.overY>=1929)};
     let fails=0;console.log('\nбот       страна  стоимость      касса        место  итог');
     bots.forEach(b=>{const R=L.filter(r=>r.bot===b);R.forEach(r=>{if(r.err){console.log(b.padEnd(9),r.c,'ОШИБКА',r.err);fails++;return;}
       console.log(b.padEnd(9),r.c.padEnd(7),('$'+fmt(r.value)).padEnd(14),('$'+fmt(r.cash)).padEnd(12),String(r.place).padEnd(6),r.over?'банкрот '+r.overY:'1930'+(r.fell?' (упал после '+r.fell+')':''),ok[b]&&ok[b](r)?'':'  ← вне коридора');});

@@ -359,6 +359,9 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .r-grip[hidden]{display:none}
 .r-grip span{margin-right:3px}
 #hTyreL.warn{color:#e9b949}#hTyreL.bad{color:#e25c4a}
+/* 0.30: четыре шины на приборной доске */
+.tyre4{display:grid;grid-template-columns:1fr 1fr;gap:2px 5px;margin-top:2px}.tyre4 i{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}.tyre4 i b{display:block;height:100%;transition:width .5s ease}
+.tyre4 i.pn{animation:twbl .7s infinite alternate}.tyre4 i.rim{background:#1c1c1e;box-shadow:inset 0 0 0 1px #e25c4a}@keyframes twbl{from{background:#5a1a14}to{background:#e25c4a}}
 .r-grip i{width:10px;height:15px;border-radius:2px;background:rgba(255,255,255,.14)}
 .r-grip.g1 i.on{background:#6cc47a}.r-grip.g2 i.on{background:#e9b949}.r-grip.g3 i.on{background:#e25c4a}
 .r-grip em{font-style:normal;margin-left:7px;color:#efe8d6;letter-spacing:.02em;white-space:nowrap}.r-grip em:empty{display:none}.r-grip em.slip{color:#e9b949}.r-grip em.bad{color:#ff7a66;font-weight:700}

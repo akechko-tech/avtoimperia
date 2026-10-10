@@ -161,8 +161,11 @@ function updateRaceHUD(){
   {const ck=document.getElementById('rClock');if(ck&&R.scn){const v='🕓 '+scnClockTxt();if(ck.textContent!==v)ck.textContent=v;}}
   document.getElementById('hSpd').textContent=Math.round(Math.abs(F.vx)*3.6)+(F.draft?'⇶':'');document.getElementById('hGear').textContent=F.rev||F.vx<-0.2?'R':F.gear;
   const hb=document.getElementById('bHeat');hb.style.width=Math.min(100,Math.max(F.heat,F.eng||0))+'%';hb.style.background=F.heat>80?'var(--bad)':F.heat>55?'var(--warn)':'var(--good)';
-  const tb=document.getElementById('bTyre'),tl=F.punct?0:100-Math.min(100,F.tyre),tph=F.punct?2:tyrePhase(F.tyre/100);tb.style.width=tl+'%';tb.style.background=tph===2?'var(--bad)':tph===1?'var(--warn)':'var(--good)';
-  {const tlab=document.getElementById('hTyreL'),tv='ШИНЫ · '+(F.punct?'прокол':Math.round(tl)+'%');if(tlab&&tlab.textContent!==tv){tlab.textContent=tv;tlab.className=tph===2?'bad':tph===1?'warn':'';}}
+  // 0.30: четыре шины — сверху передние, снизу задние; спущенная мигает, на ободе — тёмная с красной рамкой
+  const tl=F.punct?0:100-Math.min(100,F.tyre),tph=F.punct?2:tyrePhase(F.tyre/100);
+  {const box=document.getElementById('bTyre4');if(box)for(let k=0;k<4;k++){const w=F.tw?F.tw[k]:F.tyre,p=F.tp?F.tp[k]:0,el=box.children[k],cls=p===2?'rim':p===1?'pn':'',ph=tyrePhase(w/100);
+      if(el.className!==cls)el.className=cls;const b=el.firstChild;b.style.width=(p?0:100-Math.min(100,w))+'%';b.style.background=ph===2?'var(--bad)':ph===1?'var(--warn)':'var(--good)';}}
+  {const tlab=document.getElementById('hTyreL'),tv='ШИНЫ · '+(F.punct?(twRimN(F)?'обод':'прокол'):Math.round(tl)+'%');if(tlab&&tlab.textContent!==tv){tlab.textContent=tv;tlab.className=tph===2?'bad':tph===1?'warn':'';}}
   const db=document.getElementById('bDmg'),dl=100-F.dmg;db.style.width=dl+'%';db.style.background=dl<40?'var(--bad)':dl<70?'var(--warn)':'var(--good)';
   {const fb=document.getElementById('bFuel'),need=fuelNeed(F,T),ok=F.fuel>=need;fb.style.width=F.fuel+'%';fb.style.background=F.fuel<12?'var(--bad)':ok?'var(--brass)':'#e8894a';
    const nk=document.getElementById('bFuelNeed');if(nk){nk.style.left=Math.min(100,need)+'%';nk.style.display=F.fuelRate&&F.fin===null&&need>1?'block':'none';}}
@@ -185,7 +188,7 @@ function svcHUD(){const b=document.getElementById('rSvc'),m=R.me,on=!!(m&&R.mode
   const sig=(on?1:0)+lab+hot;if(b.dataset.s===sig)return;b.dataset.s=sig;b.hidden=!on;b.classList.toggle('hot',hot);b.classList.toggle('busy',!!(m&&m.svc));b.lastChild.textContent=lab;}
 /* ---------- подсказки водителю: ближайший поворот и его скорость, сцепление шин ---------- */
 // Ближайший поворот впереди (до 200 м): сторона, скорость, с которой шины его удержат, расстояние, нужно ли тормозить
-function paceNote(F){const T=R.trk,n=T.n,st=T.step,mu=roadMuAt(T,F.idx)*F.grip*tyreGripK(F.tyre/100)*(F.punct?0.72:1)*1.08;
+function paceNote(F){const T=R.trk,n=T.n,st=T.step,mu=roadMuAt(T,F.idx)*F.grip*twAll(F)*1.08;
   let j0=-1,kmax=0,dir=0;for(let d=0;d<50;d++){let j=F.idx+d;if(T.closed)j%=n;else if(j>=n)break;const k=T.K[j];
     if(j0<0){if(Math.abs(k)>1/75){j0=d;dir=Math.sign(k);kmax=Math.abs(k);}}else{if(Math.sign(k)===dir&&Math.abs(k)>1/160)kmax=Math.max(kmax,Math.abs(k));else break;}}
   if(j0<0)return null;const vc=Math.sqrt(mu*GRAV/kmax);if(vc>F.vtop*0.97)return null;

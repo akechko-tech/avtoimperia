@@ -12,7 +12,7 @@ function drive(sec,keys,every){const me=R.me,dt=1/60;let out=[];for(let f=0;f<se
 let bad=0;const ok=(c,msg)=>{console.log((c?'OK  ':'FAIL')+' '+msg);if(!c)bad++;};
 // 1) прокол → кнопка → остановка → шины
 let rc=start(r=>r.t==='circuit'&&r.y>=1906&&r.y<1914);let me=R.me;drive(6);
-me.punct=true;me.tyre=70;const v0=me.vx;me.svc=1;let t=0;while(me.svc&&t<30){drive(0.1);t+=0.1;}
+respawn(me);me.vx=10;trackLocal(R.trk,me);me.tw=[70,70,70,70];twSync(me);twPunct(me,3,R.trk,'nail');me.flat=false;const v0=me.vx;me.svc=1;let t=0;while(me.svc&&t<30){drive(0.1);t+=0.1;}
 ok(!me.punct&&me.tyre<1&&t<30,'прокол: сервис за '+t.toFixed(1)+' с (скорость была '+Math.round(v0*3.6)+' км/ч), шины '+me.tyre);
 drive(4);ok(me.vx>4,'после сервиса едет: '+Math.round(me.vx*3.6)+' км/ч');
 // 2) бензин кончился → сам останавливается и доливает
@@ -47,7 +47,7 @@ R3.on=false;finishRace(true);closeSheet();closePaper();G.pending=[];
   const ai=R.cars.find(c=>c.you&&!c.player),T6=R.trk;ai.punctRate=0;R.cars.forEach(c=>{c.punctRate=0;});
   // ставим его почти на финиш, на ходу, и прокалываем
   ai.lap=T6.cfg.laps-1;ai.idx=T6.closed?Math.max(0,T6.n-Math.round(60/T6.step)):T6.n-Math.round(60/T6.step);const P6=T6.pts[ai.idx],TT6=T6.T[ai.idx];ai.x=P6[0];ai.z=P6[2];ai.yaw=Math.atan2(TT6[0],TT6[1]);ai.vx=25;trackLocal(T6,ai);
-  ai.prog=T6.raceLen-60;ai.punct=true;ai.flat=flatRun(ai,T6);let stopped=0;for(let f=0;f<60*20&&ai.fin===null;f++){R.t+=1/60;R.time+=1/60;raceTick(1/60);if(ai.vx<0.5)stopped++;}
+  ai.prog=T6.raceLen-60;twPunct(ai,0,T6,'nail');let stopped=0;for(let f=0;f<60*20&&ai.fin===null;f++){R.t+=1/60;R.time+=1/60;raceTick(1/60);if(ai.vx<0.5)stopped++;}
   ok(ai.flat&&ai.fin!==null&&stopped<30,'прокол за 60 м до финиша: ехать дальше — '+ai.flat+', финишировал: '+(ai.fin!==null)+', стоял кадров: '+stopped);
   // а в начале гонки — меняет колесо
   const far=flatRun({...ai,prog:T6.raceLen*0.3},T6);ok(!far,'прокол в начале гонки: менять колесо — '+(!far));

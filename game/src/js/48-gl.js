@@ -99,7 +99,7 @@ in vec2 a_uv;out vec2 v_uv;
 #endif
 uniform mat4 u_vp,u_model,u_shm;uniform float u_time;uniform vec4 u_mat[18];
 #ifdef CAR
-uniform vec4 u_wc[6];uniform vec4 u_wr;uniform vec4 u_body;out vec3 v_op;out vec3 v_on;
+uniform vec4 u_wc[6];uniform vec4 u_wr;uniform vec4 u_body;uniform vec4 u_tf;out vec3 v_op;out vec3 v_on;
 #endif
 out vec3 v_wp;out vec3 v_n;out vec4 v_col;flat out vec4 v_m;out vec4 v_sp;flat out float v_lamp;flat out int v_lay;flat out int v_lmode;flat out float v_tk;
 #ifdef ROAD
@@ -109,10 +109,16 @@ void main(){
   vec3 p=a_pos,n=a_nrm.xyz;
 #ifdef CAR
   int w=int(a_ext.x+.5);
-  if(w>0){vec4 c=u_wc[w-1];vec3 q=p-c.xyz;float an=u_wr.x/abs(c.w),cs=cos(an),sn=sin(an);
+  if(w>0){vec4 c=u_wc[w-1];vec3 q=p-c.xyz;float an=u_wr.x/abs(c.w),cs=cos(an),sn=sin(an),R=abs(c.w);
+    // 0.30: шина этого колеса (угол машины: перед/зад, лево/право): 0 — цела, до 0,85 — спущена, 1 — на ободе (покрышки нет)
+    int ci=(c.z>0.?0:2)+(c.x<0.?0:1);float df=ci==0?u_tf.x:ci==1?u_tf.y:ci==2?u_tf.z:u_tf.w;bool ty=int(a_col.w*255.+.5)==14;
+    if(df>.95&&ty){float l=length(q.yz);if(l>.001)q.yz*=R*.8/l;q.x*=.55;}
     q=vec3(q.x,q.y*cs-q.z*sn,q.y*sn+q.z*cs);n=vec3(n.x,n.y*cs-n.z*sn,n.y*sn+n.z*cs);
     if(c.w<0.){float cd=cos(u_wr.y),sd=sin(u_wr.y);q=vec3(q.x*cd+q.z*sd,q.y,q.z*cd-q.x*sd);n=vec3(n.x*cd+n.z*sd,n.y,n.z*cd-n.x*sd);}
-    p=q+c.xyz;}
+    // спущенная шина: низ сплющен о дорогу, бока раздуты; колесо опускается — пятно на земле
+    float dr=df>.95?.19*R:.19*R*df;
+    if(df>0.&&df<=.95&&ty){float lim=-(R-dr);if(q.y<lim){float e=(lim-q.y)/R;q.y=lim;q.x*=1.+e*5.;}}
+    p=q+c.xyz;p.y-=dr;}
   else{p.y-=u_body.w;float cp=cos(u_body.y),sp=sin(u_body.y),cr=cos(u_body.x),sr=sin(u_body.x);
     p=vec3(p.x,p.y*cp-p.z*sp,p.z*cp+p.y*sp);n=vec3(n.x,n.y*cp-n.z*sp,n.z*cp+n.y*sp);
     p=vec3(p.x*cr+p.y*sr,p.y*cr-p.x*sr,p.z);n=vec3(n.x*cr+n.y*sr,n.y*cr-n.x*sr,n.z);
@@ -150,7 +156,7 @@ uniform sampler2D u_fol;
 #endif
 uniform highp sampler2DArray u_alb,u_dat;uniform vec4 u_lay[40],u_lavg[40],u_tq;
 #ifdef CAR
-in vec3 v_op;in vec3 v_on;uniform vec4 u_dirt;
+in vec3 v_op;in vec3 v_on;uniform vec4 u_dirt;uniform vec4 u_wc[6];
 #endif
 #ifdef TERRAIN
 uniform sampler2D u_cmap,u_smap;uniform vec4 u_cm,u_tl,u_tl2,u_tp;
@@ -283,7 +289,12 @@ void main(){
     alb=v_tk>.5?tintBy(c,alb,u_lavg[v_lay].rgb):c;spec=1.;envK=max(envK,.3);}
 #ifdef CAR
   // пыль и грязь: снизу вверх по кузову, пятнами; брызги грязи — выше
-  if(u_dirt.w>.01){float h=v_op.y+(vn2(v_op.xz*6.)-.5)*.35,dm=u_dirt.w*(1.-smoothstep(.2,1.15,h))*(.45+.55*vn2(v_op.zy*8.+v_op.x*4.));dm=clamp(dm,0.,.9);
+  if(u_dirt.w>.01){float h=v_op.y+(vn2(v_op.xz*6.)-.5)*.35,dm=u_dirt.w*(1.-smoothstep(.2,1.15,h))*(.45+.55*vn2(v_op.zy*8.+v_op.x*4.));
+    // 0.30: колёса бросают грязь веером назад и вверх — на крылья, подножки, задний борт: там она копится первой, полосами по ходу
+    float fan=0.;for(int i=0;i<6;i++){vec4 c=u_wc[i];float R=abs(c.w);if(R<.05)continue;vec2 d=v_op.yz-c.yz;float r=length(d)/R,sx=1.-smoothstep(R*.6,R*1.6,abs(v_op.x-c.x));
+      float f=(1.-smoothstep(.95,2.1,r))*sx*(d.y<.1*R?1.:.55)*(d.x>-.2*R?1.:.7);fan=max(fan,f);}
+    float stk=vn2(vec2(v_op.z*2.5+v_op.x*3.,v_op.y*22.))*.6+vn2(v_op.xz*11.+v_op.y*5.)*.4;
+    dm=max(dm,clamp(u_dirt.w*1.7,0.,1.)*fan*smoothstep(.25,.75,stk));dm=clamp(dm,0.,.9);
     alb=mix(alb,u_dirt.rgb,dm);rough=mix(rough,.92,dm);envK*=1.-dm*.85;metal*=1.-dm;}
 #endif
 #endif
@@ -367,7 +378,11 @@ void main(){vec3 wp=i_a.xyz+(u_camR*a_pos.x+u_camU*a_pos.y)*i_a.w;v_q=a_pos.xy+.
 const G3FS_PART=`in vec2 v_q;in vec4 v_c;in vec3 v_wp;in vec4 v_sp;uniform sampler2D u_tex;uniform highp sampler2DShadow u_sh;uniform vec3 u_shI;out vec4 o;
 ${G3LIB}
 ${G3SHP}
-void main(){vec3 V=u_cam-v_wp;float d=length(V);float a=texture(u_tex,v_q).a*v_c.a*smoothstep(1.5,9.,d);if(a<.004)discard;
+// 0.30: вид частицы — в альфе: 0…1 — клуб пыли (тает у камеры), 1…2 — твёрдая (щебень, комья: резкий край, видна вблизи),
+// меньше 0 — светящаяся (искры обода: не освещается солнцем, горит и ночью)
+void main(){vec3 V=u_cam-v_wp;float d=length(V),A=v_c.a,tx=texture(u_tex,v_q).a,a;
+  if(A<0.){a=tx*(-A)*smoothstep(.2,.8,d);if(a<.004)discard;vec3 e=pow(v_c.rgb,vec3(2.2))*2.6;o=vec4(tone(e)*a,a*.35);return;}
+  if(A>1.){a=smoothstep(.22,.55,tx)*(A-1.)*smoothstep(.25,.9,d);}else a=tx*A*smoothstep(1.5,9.,d);if(a<.004)discard;
   float sh=shadowP(v_sp);vec3 alb=pow(v_c.rgb,vec3(2.2));vec3 c=tone(fogIt(alb*(u_sunC*(.12+.5*sh)+u_skyC*.95),V/d,d));o=vec4(c*a,a);}`;
 /* ---------- кино-обработка кадра (гонка): свечение ярких мест, цвет плёнки, виньетка, зерно, смаз на скорости ---------- */
 // яркие места кадра → в четверть размера
