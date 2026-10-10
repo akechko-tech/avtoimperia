@@ -1,194 +1,76 @@
-== job world_scan
-search Шаляпин -> 24
-search Chaliapin -> 24
-search Chaliapine -> 26
-search Schaljapin -> 24
-search Feodor Chaliapin -> 24
-search Fyodor Chaliapin -> 2
-search Плевицкая -> 4
-search Plevitskaya -> 4
-search Вяльцева -> 3
-search Vyaltseva -> 3
-search Варя Панина -> 2
-search Panina -> 3
-search Собинов -> 2
-search Sobinov -> 2
-search Морфесси -> 2
-search Morfessi -> 2
-search Янпольский -> 3
-search Janpolski -> 4
-search Yanpolsky -> 4
-search балалайка -> 16
-search balalaika -> 14
-search Andreyev balalaika -> 0
-search Great Russian Orchestra -> 6
-search Russian Balalaika Orchestra -> 0
-search Russian folk song -> 42
-search Russian song -> 50
-search русская народная песня -> 8
-search русская песня -> 6
-search романс -> 48
-search цыганский романс -> 4
-search Russian gypsy -> 1
-search gypsy romance -> 0
-search Очи чёрные -> 4
-search Очи черные -> 4
-search Dark Eyes -> 47
-search Ochi chornye -> 0
-search Эй, ухнем -> 10
-search Volga Boatmen -> 10
-search Дубинушка -> 2
-search Dubinushka -> 11
-search Коробейники -> 2
-search Korobushka -> 9
-search Стенька Разин -> 2
-search Stenka Razin -> 4
-search Ямщик -> 1
-search Тройка -> 48
-search Troika -> 11
-search Калинка -> 50
-search Камаринская -> 0
-search Kamarinskaya -> 0
-search Барыня -> 15
-search Прощание славянки -> 7
-search На сопках Маньчжурии -> 5
-search Amur Waves -> 0
-search Амурские волны -> 0
-search Дунайские волны -> 8
-search Waves of the Danube -> 7
-search Кирпичики -> 0
-search Бублички -> 2
-search Bublitchki -> 3
-search Хризантемы -> 0
-search Пара гнедых -> 0
-search Шумел камыш -> 0
-search Вдоль по Питерской -> 0
-search Степь да степь -> 0
-search Из-за острова -> 3
-search Вниз по матушке -> 0
-search Ноченька -> 3
-search Соловей -> 50
-search Русская -> 50
-search IA 78 russian -> 3
-search Victor Russian -> 50
-search Enrico Caruso -> 50
-search Caruso Neapolitan -> 4
-search O sole mio -> 3
-search Santa Lucia -> 23
-search Funiculì -> 5
-search Torna a Surriento -> 2
-search Mattinata -> 5
-search Core 'ngrato -> 2
-search Marechiaro -> 50
-search Addio a Napoli -> 1
-search Vieni sul mar -> 0
-search Ciribiribin -> 2
-search A vucchella -> 1
-search Canzone napoletana -> 7
-search Neapolitan song -> 27
-search canzone -> 48
-search mandolino -> 4
-search mandolin orchestra -> 14
-search Mandolinata -> 0
-search Beniamino Gigli -> 42
-search Tito Schipa -> 4
-search Titta Ruffo -> 2
-search Fernando De Lucia -> 6
-search Gennaro Pasquariello -> 0
-search Elvira Donnarumma -> 3
-search Gilda Mignonette -> 4
-search Leggenda del Piave -> 1
-search Vipera -> 5
-search Come le rose -> 30
-search Balocchi e profumi -> 0
-search Tango delle capinere -> 0
-search Spazzacamino -> 12
-search banda italiana -> 1
-search Italian song -> 40
-search Mistinguett -> 1
-search Maurice Chevalier -> 2
-search Félix Mayol -> 1
-search Mayol -> 1
-search Polin -> 50
+== job world2_scan
+search IA 78 valse -> 0
+search IA 78 chanson -> 1
+search IA 78 polka -> 0
+search IA 78 Walzer -> 0
+search IA 78 Marsch -> 0
+search IA 78 Lied -> 0
+search IA 78 German -> 0
+search IA 78 French -> 0
+search IA 78 Italian -> 0
+search IA 78 Neapolitan -> 0
+search IA 78 Russian -> 3
+search IA 78 balalaika -> 0
+search Odeon Record -> 50
+search Parlophon -> 33
+search Beka Record -> 46
+search Homokord -> 10
+search Lindström -> 50
+search Favorite Record -> 32
+search Gramophone Concert Record -> 50
+search Pathé Frères -> 50
+search Zonophone Record -> 35
+search Edison Amberol -> 46
+search Edison Blue Amberol German -> 1
+search Columbia German -> 50
+search Victor German -> 32
+search Victor French -> 50
+search Victor Italian -> 42
+search Garde Républicaine -> 10
+search Musique de la Garde Républicaine -> 4
+search Marche Lorraine -> 2
+search Le Père la Victoire -> 0
+search Valse brune -> 0
+search Fascination valse -> 0
+search La Paimpolaise -> 1
+search Viens poupoule -> 0
+search Polin chanson -> 0
 search Dranem -> 0
-search Fragson -> 2
-search Yvette Guilbert -> 1
-search Aristide Bruant -> 1
-search Fréhel -> 6
-search Damia -> 6
-search Georgius -> 50
-search Charlus -> 1
-search Bérard -> 4
-search Ouvrard -> 0
-search Esther Lekain -> 0
-search La Madelon -> 3
-search Quand Madelon -> 0
-search Viens Poupoule -> 0
-search Frou-frou -> 50
-search Petite Tonkinoise -> 0
-search Le Temps des cerises -> 2
-search Valentine Chevalier -> 45
-search Ça c'est Paris -> 0
-search Mon homme -> 6
-search La Java -> 50
-search Le Fiacre -> 14
-search Nini peau d'chien -> 1
-search Chant du départ -> 5
-search Sambre et Meuse -> 3
-search Sous les ponts de Paris -> 0
-search chanson française -> 49
-search café-concert -> 13
-search musette -> 48
-search valse musette -> 1
-search accordéon -> 50
-search Émile Vacher -> 0
-search Disque Pathé -> 50
-search Claire Waldoff -> 1
-search Otto Reutter -> 0
-search Paul Lincke -> 5
-search Walter Kollo -> 4
-search Jean Gilbert -> 4
-search Leo Fall -> 0
-search Comedian Harmonists -> 2
-search Richard Tauber -> 1
-search Marek Weber -> 9
-search Dajos Béla -> 6
-search Barnabás von Géczy -> 0
-search Paul Godwin -> 0
-search Efim Schachmeister -> 0
-search Weintraub Syncopators -> 0
-search Wiener Lied -> 50
-search Schrammel -> 2
-search Alexander Girardi -> 0
-search Berliner Luft -> 5
-search Glühwürmchen -> 21
-search Puppchen -> 2
-search Untern Linden -> 0
-search Es war in Schöneberg -> 0
-search Ich küsse Ihre Hand, Madame -> 1
-search Gern hab ich die Frauen -> 0
-search Ausgerechnet Bananen -> 0
-search Schlager -> 20
-search Tanzorchester -> 28
-search Foxtrott -> 16
-search deutsches Lied 1910 -> 0
-search Odeon Orchester -> 3
-search Grammophon -> 50
-search Category:Feodor Chaliapin -> 24
-search Category:Enrico Caruso -> 74
-search Category:Audio files of Enrico Caruso -> 0
-search Category:Russian folk songs -> 10
-search Category:Russian romances -> 0
-search Category:Neapolitan songs -> 0
-search Category:Chansons -> 0
-search Category:Songs in French -> 0
-search Category:Songs in German -> 0
-search Category:Songs in Russian -> 0
-search Category:Songs in Italian -> 0
-search Category:Mistinguett -> 2
-search Category:Maurice Chevalier -> 3
-search Category:Comedian Harmonists -> 0
-search Category:Richard Tauber -> 0
-music_world scan: candidates 1661 kept 839
-world_scan kept after ban 709
-== job world_scan took 234 s
+search Mayol -> 1
+search Fragson Harry -> 2
+search Vincent Scotto -> 2
+search Sous les toits de Paris -> 1
+search La Marseillaise 1907 -> 2
+search Quand l'amour meurt -> 0
+search Alte Kameraden -> 23
+search Preußens Gloria -> 1
+search Hoch- und Deutschmeister -> 1
+search Wien, Wien, nur du allein -> 0
+search Heut geh ich ins Maxim -> 0
+search Lustige Witwe -> 1
+search Lippen schweigen -> 0
+search Frau Luna -> 1
+search Schlösser, die im Monde liegen -> 0
+search Das ist die Berliner Luft -> 5
+search Puppchen du bist mein Augenstern -> 0
+search Filmzauber -> 0
+search Rixdorfer -> 5
+search Kollo Walter -> 4
+search Militärmarsch -> 47
+search Wiener Schrammeln -> 0
+search Johann Strauss Kapelle -> 1
+search Kapelle des Infanterie -> 0
+search Infanterie-Regiment -> 3
+search Garde-Regiment -> 6
+search Blasorchester 1910 -> 0
+search Funiculì funiculà 1903 -> 3
+search Santa Lucia 1910 -> 0
+search Napoli 1910 -> 10
+search Piedigrotta -> 5
+search Roberto Murolo -> 0
+search Vesuvio -> 0
+search Marcia Reale -> 3
+search Italian Military Band -> 7
+music_world2 scan: candidates 675 kept 488
+world2_scan kept after ban 401
+== job world2_scan took 69 s
