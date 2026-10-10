@@ -16,7 +16,7 @@ function drvObj(id){return id&&id!=='me'?DRIVERS.find(d=>d.id===id):null;}
 function entryCost(rc,e,s){const d=drvObj(e.drv),hire=d&&!(s.drivers||[]).includes(d.id)?driverRaceFee(d,s):0,fee=raceFee(rc),prep=prepCost(rc,e.prep,s);return {fee,prep,hire,total:fee+prep+hire};}
 function setupTotal(rc,s){return RS.entries.reduce((a,e)=>{const c=entryCost(rc,e,s);a.fee+=c.fee;a.prep+=c.prep;a.hire+=c.hire;a.total+=c.total;return a;},{fee:0,prep:0,hire:0,total:0});}
 // Оценка шанса доехать до финиша: та же модель отказов, что и в гонке
-function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t)*(rc.dnfK||1),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
+function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t)*(rc.dnfK||1),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1)*kitK(s,'trel'),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
 function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]||TERR.dirt;return Math.round(p.w.life*(tr.tyre||1)*(1+0.1*upgOf(md,p.w.id))/(e.tyre==='soft'?1.25:0.8));}
 function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'барабаны на задних колёсах':b<0.8?'на все четыре колеса':'гидравлика или сервоусилитель';}
 function openRaceSetup(key){
@@ -164,7 +164,7 @@ function managerLineup(s,rc,pol){const P=TM_POL[pol||tmPol(s)],maxE=rc.match?1:M
 // не тратит лишнего, если вторая машина почти не прибавляет шансов, и не экономит, если без неё победы не видать.
 // Шансы — быстрая прикидка по силе заводских команд эпохи, частников, ваших машин и пилотов (как «итог без вас»).
 function mgrDrv(s,id){return id==='me'?{sk:pioSk(s)}:(drvObj(id)||{sk:0.6});}
-function mgrPerf(s,rc,e,md){const ref=rankOf(aiCarMd(rc.y),aiPrep(rc),rc.y),sk=mgrDrv(s,e.drv).sk;return Math.pow(rankOf(md,e.prep,rc.y)/ref,1.6)*(0.8+0.4*(sk-0.5))*(globalThis.MGRK??0.94);}
+function mgrPerf(s,rc,e,md){const ref=rankOf(aiCarMd(rc.y),aiPrep(rc),rc.y),sk=mgrDrv(s,e.drv).sk+kitAdd(s,'sk');return Math.pow(rankOf(md,e.prep,rc.y)*kitK(s,'pw')/ref,1.6)*(0.8+0.4*(sk-0.5))*(globalThis.MGRK??0.94);}
 function mgrOdds(s,rc,entries,N){const cars=raceCarsFor(s),rnd=mulberry32(hashStr(rc.key+'|'+mi(s)+'|'+entries.map(e=>e.drv+e.car+e.prep).join())),dnf=dnfTarget(rc.y,rc.t)*(['road','rally','endurance'].includes(rc.t)?2:0.9);
   const teams=fieldTeams(rc,s,entries.length),hw=histWinnerTeam(rc,teams),pr=privField(rc,s,new Set());
   const mine=entries.map(e=>{const md=cars.find(m=>m.id===e.car)||cars[0],st=carStats(md,e.prep,rc.y);return {p:mgrPerf(s,rc,e,md),fin:finishChance(st,rc,s)};});
@@ -175,7 +175,7 @@ function mgrOdds(s,rc,entries,N){const cars=raceCarsFor(s),rnd=mulberry32(hashSt
     if(best<0){P[3]++;continue;}const ahead=R.filter(v=>v>best).length;P[Math.min(3,ahead)]++;}
   return {win:P[0]/N,p2:P[1]/N,p3:P[2]/N};}
 function mgrFame(s){const pr=((s.hist&&s.hist.profit)||[]).slice(-12),avg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;return Math.max(0,avg);}
-function managerPlan(s,rc){const key=rc.key+'|'+mi(s)+'|'+Math.round(Math.log2(Math.max(1,s.cash)))+'|'+(s.drivers||[]).join()+'|'+raceCarsFor(s).map(m=>m.id).join();
+function managerPlan(s,rc){const key=rc.key+'|'+mi(s)+'|'+Math.round(Math.log2(Math.max(1,s.cash)))+'|'+(s.drivers||[]).join()+'|'+raceCarsFor(s).map(m=>m.id).join()+'|'+kitSig(s);
   const C=managerPlan.c||(managerPlan.c=new Map());if(C.has(key))return C.get(key);if(C.size>40)C.clear();
   const cars=raceCarsFor(s).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc));if(!cars.length){C.set(key,null);return null;}
   const maxE=rc.match?1:MAX_ENTRIES,cap=Math.max(0,s.cash*0.3),pz=racePrize(rc),fame=mgrFame(s)*(rc.major?1.5:0.6)+pz*0.5;

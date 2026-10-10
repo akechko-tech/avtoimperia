@@ -39,6 +39,7 @@ function teamCard(s){
     ${(()=>{const B=rbudOf(s),net=B.won-B.spent,P=TM_POL[tmPol(s)];return `<div class="meta" style="margin-top:8px"><div>Гонки ${s.y}: расходы<b>${money(B.spent)}</b></div><div>Призовые<b class="${B.won>0?'good':''}">${money(B.won)}</b></div><div>Итог<b class="${net>=0?'good':'bad'}">${net>=0?'+':'−'}${money(Math.abs(net))}</b></div></div>
       <p class="small muted" style="margin-top:4px">«Участвовать» у гонки: менеджер сам подбирает машины, пилотов и подготовку под лучший итог при разумных деньгах — на кнопке цена, шанс победы и приз.</p>`;})()}
     ${N?`<div class="tech-row"><div><h3>${esc(N.name)}</h3><p class="small muted">${N.desc} Содержание ${money(Math.round(N.up*cpi(s)))} в месяц.</p></div><button class="btn sm" data-act="rdeptUp" ${s.cash<c?'disabled':''}>${money(c)}</button></div>`:''}
+    ${kitHTML(s,'team')}
     <div class="label" style="margin-top:14px">Пилоты по контракту · ${own.length} из 3</div>
     ${own.length?own.map(d=>{const o=moodOf(s,d.id),v=Math.round(o.v),bc=bonusCost(d,s),can=mi(s)-(o.bm??-99)>=3;
       return `<div class="race-item"><div class="row">${drvPhoto(d)}<div style="flex:1"><span class="mo">${esc(d.nat)} · мастерство ${Math.round(d.sk*100)} · до ${d.to}</span><h3>${esc(d.n)}</h3></div><button class="btn sm" data-act="fire" data-k="${d.id}">Уволить</button></div>

@@ -26,7 +26,7 @@ function rdActive(s){return s.rd.projs||[];}
 // Все инженеры бюро делят силы между проектами по долям: один проект получает всё
 function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15:1)*((s.rd.engOut||0)>mi(s)?0.7:1);}
 function rdShare(s,pj){const L=rdActive(s),sw=L.reduce((a,p)=>a+(p.w||1),0);return sw?(pj.w||1)/sw:1;}
-function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj);}
+function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj)*kitRdK(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};
 function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
@@ -131,7 +131,7 @@ function carChar(md,y){
 function truckSpeed(st,pay){const m=st.kg+pay*1000,g=9.81,A=st.kd,B=(st.crr+0.02)*m*g;let v=10;for(let i=0;i<30;i++){const f=A*v*v*v+B*v-st.P,df=3*A*v*v+B;v=Math.max(2,v-f/df);}
   return clamp(v*3.6*0.55,6,45);}
 const CH_CACHE=new Map();
-function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer:'')+PART_KEYS.map(k=>upgL(md[k])).join('')].join('|');
+function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer+kitCarSig(G):'')+PART_KEYS.map(k=>upgL(md[k])).join('')].join('|');
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
 // С кем сравнивают: фургон — с фургонами, грузовик — с грузовиками, легковую — с машинами своего класса
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
@@ -315,7 +315,7 @@ function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;co
   return lev>1?clamp(1-0.25*(lev-1),0.35,1):1;}
 function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)/1000)*1000;}
 function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
-function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime'))-(studyIns(md)?1:0));}
+function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime')*kitK(G,'dev'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round((800+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
 function qLabel(r){return r<0.85?['Хуже соперников','bad']:r<1.08?['Как у соперников','warn']:['Лучше соперников','good'];}
 function totalSold(s){return s.models.reduce((a,m)=>a+m.totalSold,0)+(s.milTotal||0);}   // 0.24: и машины для армии

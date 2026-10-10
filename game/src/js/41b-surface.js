@@ -74,7 +74,7 @@ function crashKindOf(o){const t=o&&(o.kind||'');
   if(/^(plane|oak|elm|poplar|cypress|olive|pine|fir|birch|palm|tree)$/.test(t))return 'tree';
   if(/^(rock|cliff|boulder)$/.test(t))return 'rock';if(t==='gstone')return 'curb';
   if(/^(dune|hay|stog|bush|vine|hedge|agave|cactus)$/.test(t))return 'soft';
-  if(/^(fence|fence_ru|rgate|sign|km|verst|marsh|gend|photo|post)$/.test(t))return 'fence';
+  if(/^(fence|fence_ru|rgate|sign|km|verst|marsh|gend|photo|post|cboard|flagp|swheel)$/.test(t))return 'fence';if(t==='anvil'||t==='cans')return 'cart';
   if(t==='pole'||t==='lamp')return 'pole';if(t==='crowd')return 'crowd';if(t==='wall'||t==='gate'||t==='sbag')return 'wall';if(t==='stand'||t==='pits')return 'stand';if(t==='cart')return 'cart';
   return 'house';}
 // Итог удара (зовёт wallHit): imp — скорость в препятствие, м/с; за шаг физики остаётся самый сильный удар

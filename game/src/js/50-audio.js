@@ -184,11 +184,15 @@ function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}ca
   const own=(L.find(x=>/^own_/.test(x))||'own_cue_fanfare').slice(8),cue=()=>auCue(own,0.8,()=>{try{auReelFanfare();}catch(_){}});
   const id=L.find(x=>/^fan_/.test(x)&&!(CUE[x]&&CUE[x].bad)&&(loc||(I[x]&&remoteOk())));
   if(!id){cue();return;}
-  auCueSrc(id,'music/'+id+'.m4a',0.85,cue);}
-function auCueSrc(id,src,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+  auCueSrc(id,'music/'+id+'.m4a',0.85,cue,FANF_SEC[kind]||9);}
+const FANF_SEC={win:8,cup:10,title:12,record:8,first:10,medal:8,deal:8,legacy:14,duel:8};
+function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
-    a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
-    const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:6)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(6);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+    clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
+    // 0.30: длинную запись (фанфары) после maxSec плавно уводим — праздник короче оркестровой пьесы
+    const dur=()=>Math.min(isFinite(a.duration)&&a.duration>0?a.duration:6,maxSec?maxSec+1.8:99);
+    if(maxSec){clearTimeout(a.capT);a.capT=setTimeout(()=>{if(a.paused)return;const t0=performance.now();a.fadeI=setInterval(()=>{const k=1-(performance.now()-t0)/1800;if(k<=0){clearInterval(a.fadeI);try{a.pause();}catch(_){}return;}try{a.volume=v0*k;}catch(_){}},60);},maxSec*1000);}
+    const p=a.play();if(p&&p.then)p.then(()=>musDuck(dur())).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(6);}catch(e){if(a)a.bad=1;if(fb)fb();}}
 // 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
 function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;

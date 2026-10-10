@@ -102,6 +102,9 @@ function adviceList(s){
   // фургоны для бизнеса
   if(s.y>=1896&&act.length&&!s.models.some(m=>isTruck(m)&&m.status!=='off')&&s.cash>devCost({...rivalDesign('van',s.y)},s)*2)add(22,'🚚','Лавки, пивоварни и почта покупают фургоны, а ведомства объявляют заказы. Сделайте фургон.','Фургон',()=>openDesigner('van'),'models');
   // КБ растёт
+  // 0.30: оснащение эпохи для бюро и команды
+  {const k=[...KIT.kb,...KIT.team].find(k=>!kitHas(s,k.id)&&k.y<=s.y&&!kitNeed(s,k)&&(k.g==='kb'||(s.rdept||0)>0)&&s.cash>kitCost(s,k)*8);
+    if(k&&act.length)add(18,'🔧',`${k.y>=s.y-1?'Новинка эпохи':'Можно купить'} для ${k.g==='kb'?'бюро':'гоночной команды'}: «${k.name}». ${k.txt}.`,`Купить · ${money(kitCost(s,k))}`,()=>ACT.kitBuy({k:k.id}),k.g==='kb'?'models':'race');}
   if(s.rd.lvl<RD_MAX&&s.cash>rdUpCost(s)*6&&act.length)add(25,'🎓',`Денег хватает, чтобы расширить конструкторское бюро: «${RD_LV[s.rd.lvl+1]}».`,`Расширить · ${money(rdUpCost(s))}`,()=>ACT.rdUp(),'models');
   return T.sort((a,b)=>b.p-a.p);
 }
@@ -150,6 +153,8 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   // 0.28: в «Юном магнате» проекты КБ выбирает сам игрок (советник подскажет кнопкой) — помощник их не ставит
   if(!DIF().simple)while(rdActive(s).length<rdSlots(s)){const pj=suggestProject(s);if(!pj)break;const c=rdCost(pj,s);if(s.cash-c<reserve*(lean?1:0.5)||!rdBegin(s,pj))break;msg.push('КБ: '+pj.name);}
   if(s.rd.lvl<5&&!lean&&pAvg>rdUpkeep(s)*2&&room()>rdUpCost(s)*5){const c=rdUpCost(s);s.cash-=c;s.rd.lvl++;msg.push('КБ расширено');}
+  // 0.30: оснащение бюро по эпохе — когда денег в несколько раз больше цены, а прибыль покрывает содержание
+  if(!lean&&calm){const k=KIT.kb.find(k=>!kitHas(s,k.id)&&k.y<=s.y&&!kitNeed(s,k)&&room()>kitCost(s,k)*6&&pAvg>kitUp(s,k)*5);if(k&&kitBuy(s,k.id))msg.push('КБ: '+k.name.charAt(0).toLowerCase()+k.name.slice(1));}
   // технологии завода
   if(!s.techBuild&&calm&&!lean){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}
   // реклама — около 4% выручки (в кризис — вдвое меньше)

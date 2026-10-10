@@ -10,7 +10,7 @@ const RDEPT=[
   {name:'Экспериментальный гоночный цех',cost:150000,up:4200,rel:1.14,pit:0.5,prep:0.42,pw:1.1,desc:'Гоночные моторы с наддувом и лучшие механики эпохи: надёжность +14%, мощность +10%, пит-стопы вдвое быстрее.'}];
 function teamUpkeep(s){return Math.round(RDEPT[s.rdept||0].up*cpi(s));}
 function rdeptCost(s){const n=RDEPT[(s.rdept||0)+1];return n?Math.round(n.cost*cpi(s)/50)*50:0;}
-function prepCost(rc,prep,s){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)/10)*10;}
+function prepCost(rc,prep,s){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)*kitK(s,'prep')/10)*10;}
 
 // Чемпионаты эпохи. Официальные — там, где они были в истории; до них очки считает пресса.
 const AIACR_RACES={1925:['indy-1925','x80394-1925','gpacf-1925','itgp-1925'],1926:['indy-1926','gpacf-1926','x81442-1926','bgp1926-1926','itgp-1926'],1927:['indy-1927','gpacf-1927','x87929-1927','itgp-1927','x30443-1927']};

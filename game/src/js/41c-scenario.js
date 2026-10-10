@@ -193,7 +193,7 @@ function scnCap(t,dur,lbl,sm){const el=document.getElementById('rCap');if(!el||!
 // 0.29: титр — когда до места, о котором он, осталось lead метров (41e-events.js); хроника — с пометкой
 function scnEvTick(){const S=R.scn,F=R.follow;if(!S.ev||!F||R.mode==='sim')return;const pr=F.prog,RL=R.trk.raceLen;
   while(S.evI<S.ev.length&&pr>=S.ev[S.evI].at){const e=S.ev[S.evI++];if(pr-e.at>Math.max(0.08*RL,420))continue;
-    scnCap(e.t,6,e.lbl||(e.k==='chron'?'ИЗ ХРОНИКИ '+R.rc.y+' ГОДА':''));if(e.v)try{annSay(e.t,'narr');}catch(_){}if(/КОЛОКОЛ/.test(e.t))evBells();}
+    scnCap(e.t,6,e.lbl||(e.k==='chron'?'ИЗ ХРОНИКИ '+R.rc.y+' ГОДА':''));try{navEv(e);}catch(_){}if(e.v)try{annSay(e.t,'narr');}catch(_){}if(/КОЛОКОЛ/.test(e.t))evBells();}
   try{scnLmTick();}catch(_){}}
 /* ---------- старт по-исторически ---------- */
 function scnPlace(c,back,lat){const T=R.trk,n=T.n;let idx=T.startIdx-Math.round(back/T.step);if(T.closed)idx=(idx%n+n)%n;else idx=Math.max(0,idx);

@@ -243,6 +243,12 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .tech-row{padding:10px 0;border-bottom:1px solid var(--line-soft)}
 .tech-row:last-child{border-bottom:0}
 .tech-row h3{font-size:15px}
+.kit-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.kit-row>div{flex:1;min-width:0}
+.kit-row h3{font-size:14px}
+.kit-row .btn{flex:none;margin-top:2px}
+.kit-own{font-size:13px;margin-top:4px;line-height:1.45}
+.kit-own b{color:var(--good)}
 .net-row{padding:10px 0;border-bottom:1px solid var(--line-soft)}
 .net-row:last-child{border-bottom:0}
 .leg-row{display:grid;grid-template-columns:92px 1fr 44px;gap:8px;align-items:center;font-size:13px;margin-top:6px}
@@ -354,6 +360,11 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .r-note[hidden]{display:none}
 .r-note b{font-family:var(--display);font-size:28px;font-weight:800;line-height:1;white-space:nowrap}
 .r-note span{font-family:var(--mono);font-size:10px;color:#c9c2b0;white-space:nowrap}
+.r-nav{position:absolute;right:8px;top:172px;max-width:min(46%,260px);pointer-events:none;background:rgba(244,236,214,.93);color:#20180e;border-radius:12px 4px 12px 12px;padding:4px 11px 6px;box-shadow:0 3px 10px rgba(0,0,0,.35);opacity:0;transform:translateY(-4px) scale(.96);transition:opacity .18s,transform .18s}
+.r-nav[hidden]{display:none}.r-nav.on{opacity:1;transform:none}
+.r-nav small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:#7a6440}
+.r-nav b{display:block;font-family:var(--display);font-size:17px;font-weight:800;line-height:1.15}
+#raceScreen.filming .r-nav,#raceScreen.demo .r-nav{display:none}
 .r-note.ok{border-color:rgba(112,196,120,.85)}.r-note.warn{border-color:#e9b949}.r-note.bad{border-color:#e25c4a;background:rgba(120,24,18,.8)}.r-note.bad span{color:#ffd9d0;font-weight:700}
 .r-grip{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:3px;background:rgba(5,12,22,.6);padding:5px 8px;border-radius:7px;pointer-events:none;font-family:var(--mono);font-size:10px;color:#c9c2b0;letter-spacing:.06em}
 .r-grip[hidden]{display:none}

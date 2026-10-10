@@ -13,6 +13,8 @@ RACES.forEach(rc=>add(raceIntroText(rc),'aidar'));
 // 0.19: исторические сценарии (рассказ перед стартом и титры с голосом) и диктор с трибуны
 for(const id in SCN){const S=SCN[id];if(S.b)add(S.b,'aidar');(S.ev||[]).forEach(e=>{if(e.v)add(scnSpeech(e.t),'aidar');});}
 annLines().forEach(t=>add(t,'eugene'));
+// 0.30: механик рядом с гонщиком — крик в открытой машине (голос eugene, своя обработка: nav)
+navLines().forEach(t=>add(t,'nav'));
 const by={};out.forEach(o=>{by[o.v]=(by[o.v]||0)+o.s.split(' ').length;});
 require('fs').writeFileSync(${JSON.stringify(path.join(__dirname,'media/voice_lines.json'))},JSON.stringify(out,null,0));
 console.log('lines',out.length,'words by voice',JSON.stringify(by));

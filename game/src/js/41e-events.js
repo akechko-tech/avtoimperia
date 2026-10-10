@@ -102,8 +102,15 @@ function scnEvKind(e){const x=e.k?{}:SCN_EVX[e.t];if(e.k||x)return Object.assign
   else if(/ТОННЕЛ/.test(t))k='tunnel';else if(/ТРИБУН/.test(t))k='stand';else if(/ТОЛП/.test(t))k='line';else if(/^ФИНИШ/.test(t))k='finish';
   else if(/«[^»]+»|ВПЕРЕДИ|ПОБЕДИТЕЛ/.test(t))k='chron';else if((e.p||0)<=0.05)k='start';
   return Object.assign({},e,{k});}
+// 0.30: хроника — не только надпись: что можно, ставим у дороги (собака, разбитая машина в канаве, кузница, верблюды с бензином,
+// замена колеса, красный флаг, букмекеры, зелёные флаги); остальное — на грифельной доске у дороги, как вывешивали телеграммы с трассы
+function chronStage(t){t=String(t||'');
+  if(/СОБАК/.test(t))return 'dog';if(/КУЗНИЦ/.test(t))return 'forge';if(/ПРОВАЛИЛ[А-Я]* СКВОЗЬ МОСТ/.test(t))return 'bridgewreck';
+  if(/РАЗБИЛ|АВАРИ|ПЕРЕВОРАЧ/.test(t))return 'wreck';if(/КРАСНЫЙ ФЛАГ/.test(t))return 'flag';if(/ВЕРБЛЮД/.test(t))return 'camel';
+  if(/СЪЁМНЫЙ ОБОД|КОЛЕСО —/.test(t))return 'wheel';if(/СТАВКИ/.test(t))return 'bet';if(/ЗЕЛЁН/.test(t))return 'green';if(/ОСТАНАВЛИВА/.test(t))return 'stop';
+  return 'board';}
 // сколько метров до места показывать титр
-const SCN_LEAD={road:170,line:130,guard:130,post:150,town:110,pass:140,summit:50,climb:30,desc:0,sea:0,tunnel:160,bridge:120,forest:0,straight:0,turn:70,stand:150,pits:150,finish:280,lm:220,storm:130,sbag:110};
+const SCN_LEAD={chron:150,road:170,line:130,guard:130,post:150,town:110,pass:140,summit:50,climb:30,desc:0,sea:0,tunnel:160,bridge:120,forest:0,straight:0,turn:70,stand:150,pits:150,finish:280,lm:220,storm:130,sbag:110};
 
 /* ---------- 1. где что будет: до расстановки декораций (города на выдуманной трассе ставит маршрут) ---------- */
 function scnPlan(trk){trk.evx=[];trk.evc=[];const rc=trk.rc;if(!rc||typeof scnFor!=='function')return;let S;try{S=scnFor(rc);}catch(_){return;}
@@ -156,6 +163,9 @@ function scnPlan(trk){trk.evx=[];trk.evc=[];const rc=trk.rc;if(!rc||typeof scnFo
       case 'stand':if(!cl&&(e.p||0)<0.3){a=clamp(si+10,lo,hi);x.st0=1;}else a=wrap(fi-22);break;
       case 'pits':a=trk.cfg.pits?wrap(n-18):wrap(fi-22);break;
       case 'sbag':a=cl?wrap(fi-34):clamp(fi-34,lo,hi);break;
+      case 'chron':{const st=chronStage(e.t);x.st=st;
+        if(st==='bridgewreck'){const s=nearSeg(i0,[RSEG.bridge],n);if(s&&okR(wrap(s.i0-3))){a=wrap(s.i0-3);break;}x.st='wreck';}
+        a=flatNear(i0,22,['forge','camel','dog','wreck','wheel','flag'].includes(x.st)?1:0);break;}
       case 'lm':{if(e.re){const re=new RegExp(e.re,'i'),q=(trk.lm||[]).find(o=>re.test(o.name||(o.lm&&o.lm.n)||(typeof LM_NAME!=='undefined'&&LM_NAME[o.t])||''));if(q)a=wrap(q.i);}break;}
     }
     if(k==='finish'){x.at=Math.max(0,RL-SCN_LEAD.finish);}
@@ -206,6 +216,7 @@ function scnStage(trk){const L=trk.evx;if(!L||!L.length)return;
       case 'sbag':for(let q=0;q<10;q+=2)[1,-1].forEach(sd=>add(wrap(a+q),'sbag',sd*(W/2+1.15),0,'s'));break;
       case 'pass':case 'climb':case 'summit':if(e.nm)sign(a-2,e.nm);if(e.k==='pass'&&!dark)crowd(a-3,10,4,3.2,0.5);break;
       case 'stand':if(e.st0){[0,5].forEach(q=>add(wrap(a+q),'stand',-(W/2+9),0,'s'));crowd(a-2,14,3,2.8,0.9);}break;
+      case 'chron':try{chronStageAt(trk,e,a,gi,rnd,add,crowd,dark);}catch(err){console.warn('chron stage',err);}break;
     }});
   trk.evx.forEach(e=>{delete e.zone;});}
 
@@ -247,3 +258,36 @@ function scnLmTick(){const T=R.trk,F=R.follow,S=R.scn;if(!F||!S||R.film||R.mode=
 // титр о колоколах (Валдай): звонят ближайшие церкви — сразу, а не по жребию
 function evBells(){try{if(typeof AMB==='undefined'||!AMB.E||!AMB.lis||!AU.ctx)return;const Ls=AMB.lis,L=AMB.E.church.map(c=>[Math.hypot(c.x-Ls.x,c.z-Ls.z),c]).filter(q=>q[0]<1500).sort((a,b)=>a[0]-b[0]).slice(0,2);
   L.forEach(([,c],k)=>ambShot(c.city?'bells_city':'bells_village',[c.x,c.z],AMB_L.bells+4,{off:Math.random()*20,dur:18,fade:2,force:1,r0:6,delay:k*1.4}));}catch(_){}}
+/* ---------- 5. 0.30: сцены из хроники у дороги ---------- */
+// trk.chron — для 3D (49i-chron3d.js): стоящие машины, собака, верблюды, дым кузницы; люди и предметы — как остальные декорации
+function chronStageAt(trk,e,a,gi,rnd,add,crowd,dark){const st=e.st;if(!st||a<0)return;const n=trk.n,W=trk.W,P=trk.pts,N=trk.N,cl=trk.closed,spr=trk.spr;
+  const wrap=i=>cl?((i%n)+n)%n:clamp(i,0,n-1),sd=gi%2?1:-1,L=trk.chron||(trk.chron=[]);
+  const at=(i,lat)=>{const j=wrap(i),p=P[j],nn=N[j];return [p[0]+nn[0]*lat,p[2]+nn[1]*lat];};
+  const car=(i,lat,o)=>{const j=wrap(i),q=at(j,lat);L.push(Object.assign({kind:'car',i:j,lat,yaw:0,roll:0,pitch:0,tf:[0,0,0,0],dirt:0.5,col:['#5a1d18','#20304a','#2c3a24','#3a2a1c'][gi%4]},o||{}));addCollider(trk,q[0],q[1],1.7,'cart',j);};
+  const ppl=(i,lat,t,v)=>add(wrap(i),t,lat,v===undefined?Math.floor(rnd()*4):v,'p');
+  const side=(i0,len,step,off,p)=>{for(let q=0;q<len;q+=step)if(rnd()<p)ppl(i0+q,sd*(W/2+off+rnd()*1.2),'crowd');};
+  const board=(i,txt,lat)=>{const j=wrap(i);if(add(j,'cboard',lat,0,'s')){const L2=spr[j];L2[L2.length-1].txt=txt;}};
+  const txt=String(e.t||'').replace(/\s+/g,' ').trim();
+  switch(st){
+    case 'dog':L.push({kind:'dog',i:wrap(a),side:sd});
+      // Левассор: объехал собаку — и машина в канаве вверх колёсами; у Шаррона — только собака
+      if(/ПЕРЕВОРАЧ/.test(txt)){car(a+9,-sd*(W/2+4.6),{yaw:0.9,roll:2.6,tf:[1,1,1,1],dirt:0.8,smoke:0.3});ppl(a+7,-sd*(W/2+2.4),'marsh',0);ppl(a+11,-sd*(W/2+3.4),'crowd');}
+      side(a-6,12,4,2.4,0.6);break;
+    case 'wreck':case 'bridgewreck':{const br=st==='bridgewreck';
+      if(br)car(a+2,sd*(W/2+1.2),{yaw:0.35*sd,pitch:-0.5,roll:0.25*sd,y:-1.1,tf:[1,0,0,0],dirt:0.7});
+      else car(a,sd*(W/2+3.4),{yaw:-0.8*sd,roll:1.45*sd,tf:[1,0,1,0],dirt:0.8,smoke:1});
+      ppl(a-2,sd*(W/2+2.0),'gend',0);ppl(a+3,sd*(W/2+2.6),'marsh',0);side(a-8,18,3,3.0,0.7);if(!br&&!dark)ppl(a+6,sd*(W/2+5.5),'photo',0);break;}
+    case 'forge':{add(wrap(a+1),'rhut',sd*(W/2+8.2),0,'s');
+      add(wrap(a-1),'anvil',sd*(W/2+4.6),0,'s');L.push({kind:'smoke',i:wrap(a+1),lat:sd*(W/2+8.2),h:3.6,rate:3});
+      car(a-4,sd*(W/2+3.2),{yaw:0.15*sd,tf:[0,1,0,0],dirt:0.6});ppl(a-2,sd*(W/2+4.4),'marsh',0);ppl(a,sd*(W/2+5.2),'crowd',1);ppl(a-5,sd*(W/2+1.9),'crowd');break;}
+    case 'camel':{L.push({kind:'camel',i:wrap(a),lat:sd*(W/2+5.2),n:4});add(wrap(a-3),'cans',sd*(W/2+3.0),0,'s');add(wrap(a+5),'cans',sd*(W/2+3.2),1,'s');
+      ppl(a-2,sd*(W/2+3.8),'crowd',2);ppl(a+4,sd*(W/2+4.0),'marsh',0);break;}
+    case 'wheel':{car(a,sd*(W/2+1.3),{yaw:0.06*sd,tf:sd>0?[0,0,1,0]:[0,0,0,1],dirt:0.6});add(wrap(a-1),'swheel',sd*(W/2+3.0),0,'s');
+      ppl(a+1,sd*(W/2+2.5),'marsh',0);ppl(a-2,sd*(W/2+2.2),'marsh',1);side(a-10,8,4,3.0,0.6);break;}
+    case 'flag':{add(wrap(a),'flagp',sd*(W/2+1.9),0,'s');ppl(a+1,sd*(W/2+2.4),'marsh',0);crowd(a-8,26,3,2.6,0.8);break;}
+    case 'green':{for(let q=-20;q<=24;q+=6)[1,-1].forEach(s2=>add(wrap(a+q),'flagp',s2*(W/2+1.8),1,'s'));crowd(a-4,20,4,3.2,0.6);break;}
+    case 'bet':{add(wrap(a+2),'rhut',sd*(W/2+7.8),0,'s');
+      board(a-1,'СТАВКИ · BETTING',sd*(W/2+4.2));crowd(a-6,20,2,3.0,0.85);break;}
+    case 'stop':{board(a,txt,sd*(W/2+3.2));for(let q=0;q<8;q+=2)[1,-1].forEach(s2=>ppl(a+4+q,s2*(W/2+1.6),'gend',0));crowd(a-6,18,3,3.2,0.7);break;}
+    default:{board(a,txt,sd*(W/2+3.0));side(a-3,8,2,2.2,0.8);ppl(a+2,sd*(W/2+4.6),'crowd');}
+  }}

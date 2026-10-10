@@ -111,7 +111,10 @@ function renderRace(dt){
   raceMiniMap();updateRaceHUD();drawWheelUI();
 }
 // мини-карта
-function raceMiniMap(){const m=R.map,F=R.follow;if(m){m.g.clearRect(0,0,m.W,m.H);m.g.drawImage(m.bg,0,0);R.cars.forEach(o=>{const [x,y]=m.f(o.x,o.z);m.g.fillStyle=o===F?'#ffd66b':o.you?'#f0c75e':o.dnf?'#555':'#fff';m.g.beginPath();m.g.arc(x,y,o===F?5:3.2,0,7);m.g.fill();});}}
+function raceMiniMap(){const m=R.map,F=R.follow;if(m){m.g.clearRect(0,0,m.W,m.H);m.g.drawImage(m.bg,0,0);R.cars.forEach(o=>{const [x,y]=m.f(o.x,o.z);m.g.fillStyle=o===F?'#ffd66b':o.you?'#f0c75e':o.dnf?'#555':'#fff';m.g.beginPath();m.g.arc(x,y,o===F?5:3.2,0,7);m.g.fill();
+    // 0.30: что с машиной вашей команды — видно на карте: ремонт, колесо, бензин (ключ), сход (крест)
+    if(o.you&&o!==F){const why=typeof crewWhy==='function'?crewWhy(o):'';if(why||o.dnf){m.g.font='bold 12px sans-serif';m.g.textAlign='center';m.g.textBaseline='middle';m.g.lineWidth=3;m.g.strokeStyle='rgba(0,0,0,.75)';
+      const ic=o.dnf?'✕':why==='fuel'?'⛽':'🔧';m.g.strokeText(ic,x+8,y-8);m.g.fillStyle=o.dnf?'#ff8a7a':'#ffe08a';m.g.fillText(ic,x+8,y-8);}}});}}
 // Ночная копия спрайта: затемнение только по нарисованным пикселям (без тёмных прямоугольников)
 function nightOf(sp){if(sp.night)return sp.night;const cv=mkCanvas(sp.img.width,sp.img.height),g=cv.getContext('2d');g.drawImage(sp.img,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='rgba(6,9,20,.62)';g.fillRect(0,0,cv.width,cv.height);sp.night={img:cv,wM:sp.wM,hM:sp.hM,ax:sp.ax,ay:sp.ay};return sp.night;}
 function drawRaceCar(c,o,s,segs,k,half,cam,phase,W,H,night,clip,camS){
@@ -176,7 +179,7 @@ function updateRaceHUD(){
   svcHUD();try{dxHUD(F);}catch(_){}
   const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
-  raceAssistHUD();
+  raceAssistHUD();try{navTick();}catch(e){console.warn('nav',e);}
   const m=document.getElementById('rMsg');
   m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
   m.classList.toggle('small',m.textContent.length>14);
@@ -214,7 +217,8 @@ const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса пово
   ['Тормоз','— на прямой, до поворота. В повороте ровный газ, на выходе — полный. Резкий тормоз в повороте может развернуть.'],
   ['Дорога','асфальт и кирпич держат лучше всего, гравий хуже, грязь, песок и снег — плохо: тормозите раньше.'],
   ['Твёрдое','деревья, дома, заборы и зрители не пропускают. Удар — повреждение; поломку механик чинит на обочине.'],
-  ['Шины','полоса вверху: зелёная — протектор цел, держит полностью; жёлтая (стёрто больше половины) — держит хуже; красная (больше 80%) — сцепление обрывается, шина вот-вот лопнет. Протектор едят торможения, повороты на пределе, пробуксовка, юз и камни, булыжник, щебень; ровная езда бережёт шины.'],
+  ['Шины','вверху слева — четыре колеса, как на машине (сверху передние): зелёное — протектор цел; жёлтое (стёрто больше половины) — держит хуже; красное — вот-вот лопнет; мигает — прокол. Задние стираются на газу и при пробуксовке, передние — в поворотах и на торможении. На спущенном колесо тянет машину в свою сторону, а когда покрышка разлетится — едете на ободе: искры, дым, удары. Механик меняет только пробитые и стёртые колёса.'],
+  ['Механик','рядом с вами (до 1925 года) кричит, что впереди: поворот, яма, переезд, город; кто догоняет сзади; какое колесо спустило. С «разведкой трассы» (оснащение команды) — раньше и точнее.'],
   ['🔧','— сервис: машина остановится, механик сменит шины, дольёт бензин, подтянет поломки. Кнопка горит, когда пора. Передумали — отпустите и снова нажмите «Газ».'],
   ['Обочина','трава, камни и склоны тормозят и бьют подвеску; в гору на поле не заехать. Срезать нельзя — вернут туда, где съехали.'],
   ['Назад','стоя держите «Тормоз» полсекунды — включится задний ход (на приборе R). «Газ» — снова вперёд. Застряли — кнопка «Вернуться на трассу».'],

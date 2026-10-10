@@ -82,7 +82,7 @@ function step(){
     if(mi(s)-(s.dumpSaid||-99)>=3){s.dumpSaid=mi(s);addLog(`Склад переполнен: ${fmtN(r.dumpN)} машин отдали перекупщикам за полцены. Расширьте склад на вкладке «Завод» или выпускайте меньше.`,'bad');pendingToasts.push('📦 Склад переполнен');}}}
   // расходы (0.25: спецакции оплачены при старте — в отчёт; доход от вложений — invMonth)
   try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
-  r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp;r.drv=driverPayroll(s);r.team=teamUpkeep(s);   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
+  r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp+kitUpkeep(s,'kb');r.drv=driverPayroll(s);r.team=teamUpkeep(s)+kitUpkeep(s,'team');   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
   // 0.21: чертежи соперника, выигранные в пари, — следующий проект КБ короче на 30%
   if(s.rd.bpStock>0){const pj=(s.rd.projs||[]).find(p=>!p.bp);if(pj){pj.bp=1;pj.need=Math.max((pj.prog||0)+1,Math.round(pj.need*0.7));s.rd.bpStock--;addLog(`КБ работает по чертежам соперника: «${pj.name}» — на 30% быстрее.`,'good');}}
