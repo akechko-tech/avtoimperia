@@ -7,7 +7,8 @@ newGame('renault','fr','T','normal');G.cash=1e6;
 // играем до 1912 года с помощником, чтобы были модели, дилеры за границей и продажи
 G.helper={on:1};for(let k=0;k<12*17&&!G.over;k++){G.pending=[];step();}
 ok(!G.over,'партия идёт: '+G.y+', моделей '+G.models.filter(m=>m.status==='prod').length+', дилеры за границей: '+Object.keys(G.dealers||{}).filter(c=>c!==G.country&&G.dealers[c]>0).join(','));
-// рекорд горы
+// рекорд горы — зовут только машину, которая тянет подъём (с 0.30): ставим модели мотор и шасси эпохи
+{const md=raceCarsFor(G).find(m=>!isTruck(m))||G.models[0],a=aiCarMd(G.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}
 let hill=null;for(let t=0;t<60&&!hill;t++){G.m=(G.m+1)%12;const o=offerMatch(G,'record');if(o&&o.C.rc.t==='hill')hill=o;}
 ok(!!hill,'рекорд горы: '+(hill?hill.title+' · '+hill.sub:'нет'));
 // конкурс элегантности и экспедиция

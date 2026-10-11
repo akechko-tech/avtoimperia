@@ -60,7 +60,7 @@ function checkEvents(){
 // Сила ответа словами (внутри — прибавка к привлекательности в логарифмах)
 function rvWord(v){return v<0.35?'слегка':v<0.8?'заметно':v<1.4?'сильно':'намного';}
 function rvBar(v){const n=v<0.15?0:v<0.35?1:v<0.8?2:v<1.4?3:4;return '▮'.repeat(n)+'▯'.repeat(4-n);}
-function topRivals(c,g,s,n){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v).slice(0,n||2).map(o=>o.cp);}
+function topRivals(c,g,s,n){return (COMPS[c]||[]).filter(cp=>!pkIs(cp,s)&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v).slice(0,n||2).map(o=>o.cp);}
 // Что именно сделали конкуренты: прибавку их привлекательности раскладываем на цену, новинку и дилеров с рекламой
 function rivalNews(s,c,g,nv,cur){
   if(s.pending.length||mi(s)-(s.rvSaid||-99)<10)return;const L=topRivals(c,g,s,3);if(!L.length)return;s.rvSaid=mi(s);
@@ -110,7 +110,7 @@ function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key===
   else{const L=topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
 function yearlyCompetitors(s){
   for(const c in COMPS)COMPS[c].forEach((cp,i)=>{
-    if(cp.pk===s.pioneer)return;const home=c===s.country||dealerCount(s,c)>0;if(!home)return;
+    if(pkIs(cp,s))return;const home=c===s.country||dealerCount(s,c)>0;if(!home)return;
     if(Math.floor(cp.since)===s.y&&s.y>1895)addLog(`На рынок страны «${COUNTRIES[c].name}» вышла новая марка — «${compName(cp,s)}».`,'bad');
     if(cp.until&&cp.until===s.y)addLog(`Марка «${cp.n}» прекратила выпуск автомобилей.`,'good');
     const nm=(cp.models||[]).find(x=>x[0]===s.y);if(nm&&s.y>1895&&compVol(cp,s)>0)addLog(`«${compName(cp,s)}» представила ${nm[1]}.`,'bad');

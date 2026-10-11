@@ -203,7 +203,8 @@ function openFinal(){
     <div class="kpis" style="margin-top:10px"><div class="kpi"><span class="label">Место</span><b>${t.place}/${t.rows.length}</b></div><div class="kpi"><span class="label">Наследие</span><b>${Math.round(t.me.total)}</b></div><div class="kpi"><span class="label">Продано</span><b>${fmtN(totalSold(s))}</b></div></div>
     <div style="margin-top:10px">${Object.keys(LEG_NAMES).map(k=>`<div class="leg-row"><span>${LEG_NAMES[k]}</span><div class="bar"><i style="width:${Math.min(100,t.me[k]/LEG_MAX[k]*100)}%;background:var(--brass)"></i></div><b class="num">${Math.round(t.me[k])}</b></div>`).join('')}</div>
     <table class="pl final" style="margin-top:12px"><tr><th></th><th>Компания</th><th class="n">Лучший год</th><th class="n">Очки</th></tr>${rows}</table>
-    <div class="stack" style="margin-top:14px"><button class="btn primary block" data-act="newgame">Новая игра</button><button class="btn block" data-act="fame">Зал славы</button><button class="btn block" data-act="toMenu">Главное меню</button></div>`);
+    ${s.pastCos&&s.pastCos.length?`<p class="small muted" style="margin-top:8px">Прежние компании: ${s.pastCos.map(p=>`«${esc(p.n)}» (${p.y0}–${p.y1}, продана за ${money(p.price)}, ${fmtN(p.leg)} очков)`).join(', ')} — половина их очков в зачёте (+${fmtN(rbLegacy(s))}).</p>`:''}
+    <div class="stack" style="margin-top:14px">${s.soldTo&&s.over&&s.y<1930?`<button class="btn primary block" data-act="rbOpen">Купить другую марку на ${money(s.soldTo.mine)}</button>`:''}<button class="btn ${s.soldTo&&s.over?'':'primary '}block" data-act="newgame">Новая игра</button><button class="btn block" data-act="fame">Зал славы</button><button class="btn block" data-act="toMenu">Главное меню</button></div>`);
 }
 function openFame(){
   const L=fameList();

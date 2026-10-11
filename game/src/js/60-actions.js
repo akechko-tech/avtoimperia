@@ -8,6 +8,12 @@ function rerender(){const top=window.scrollY;save();render();window.scrollTo(0,t
 let confirmKey='',confirmT=0;
 function confirmOnce(k,msg){const now=Date.now();if(confirmKey===k&&now-confirmT<4000){confirmKey='';return true;}confirmKey=k;confirmT=now;toast(msg);return false;}
 const ACT={
+  // 0.31: «Дальше: гонка…» и вызов наверху — сразу в эту гонку (запись открыта), иначе — к её карточке в календаре
+  raceTo:d=>{const s=G,rc=raceByKey(d.k);tab='race';render();window.scrollTo(0,0);if(!rc)return;
+    const T=(rc.y-1895)*12+rc.m,t=mi(s),open=rc.match?(t>=T-1&&t<=T):raceOpen(rc,s);
+    if(open&&!s.pending.length&&!s.raceDone[rc.key]&&raceCarsFor(s).length){openRaceSetup(rc.key);return;}
+    const e=document.getElementById('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
+    if(!open)toast(`«${rc.name}»: запись откроется за месяц до старта`);},
   tab:d=>{tab=d.t;render();const e=d.sec&&document.getElementById(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
   next:()=>doStep(),
   quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
@@ -142,6 +148,7 @@ const ACT={
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 if(typeof DEAL_ACT!=='undefined')Object.assign(ACT,DEAL_ACT);
+if(typeof RB_ACT!=='undefined')Object.assign(ACT,RB_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 // Кнопка «Назад» на Android: закрываем окна по очереди
 window.androidBack=function(){

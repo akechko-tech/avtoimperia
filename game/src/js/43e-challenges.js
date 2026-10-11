@@ -64,7 +64,7 @@ const LSR=[[1898.96,63.15,'граф Шасслу-Лоба (Jeantaud)'],[1899.32,
 function lsrAt(y,m){const t=y+m/12;let r=null;LSR.forEach(x=>{if(x[0]<=t)r=x;});return r;}
 const MATCH_ST={match:'Матч-гонка',record:'Спор о скорости'};
 // своя марка под другим именем (Ford (Манчестер) у Форда) — не соперник
-function ownComp(cp,s){return cp.pk===s.pioneer||Object.values(COMPS).some(L=>L.some(b=>b.pk===s.pioneer&&cp.n!==b.n&&cp.n.startsWith(b.n+' (')));}
+function ownComp(cp,s){return pkIs(cp,s)||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&cp.n!==b.n&&cp.n.startsWith(b.n+' (')));}
 // детерминированный «жребий»: доска вызовов перерисовывается — предложения в течение месяца не должны прыгать
 function chalRnd(s,salt){return mulberry32(hashStr('ch|'+mi(s)+'|'+s.company+'|'+(salt||'')));}
 function raceByKey(key){return RACES.find(r=>r.key===key)||(typeof G!=='undefined'&&G&&G.chal&&G.chal.rc&&G.chal.rc.key===key?G.chal.rc:null);}
@@ -73,7 +73,7 @@ function chalWhere(C){return C&&['race','match','record'].includes(C.type)?'race
 function matchWhen(s,v,r){const sea=v.sea||[3,4,5,6,7,8,9];for(let k=2;k<=5;k++){const T=mi(s)+k,y=1895+Math.floor(T/12),m=T%12;if(y>v.y1||y<v.y0)continue;
   if(sea.includes(m)&&!isWar(y,m,v.c)&&!isWar(s.y,s.m,v.c)&&r()<0.85)return {T,y,m};}return null;}
 // соперник: заводская команда страны площадки (или гостья), в этот год гоняется; ваш основатель — не соперник
-function matchTeams(s,c,y){const ok=t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&t.pk!==s.pioneer&&!playerMarque(t.n,s);
+function matchTeams(s,c,y){const ok=t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&!pkIs(t,s)&&!playerMarque(t.n,s);
   const L=RACE_TEAMS.filter(t=>ok(t)&&t.c===c).sort((a,b)=>b.str-a.str);if(L.length)return L;
   // своих гоночных марок в стране ещё нет (Америка 1896) — местная марка с конструктором-любителем
   return (COMPS[c]||[]).filter(cp=>!ownComp(cp,s)&&cp.since<=y&&(!cp.until||cp.until>=y)&&compVol(cp,s)>0).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,2).map(cp=>({n:compName(cp,s),c,str:0.85,mq:[cp.n]}));}

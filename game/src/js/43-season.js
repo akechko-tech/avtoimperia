@@ -173,7 +173,7 @@ function racePaper(rc,res,row,k,cup){
   const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0;
   const drv=row.player?(PIONEERS[s.pioneer].name+' лично'):(row.drv||'Пилот компании');
   const real=rc.win&&!/^Победителей/.test(rc.win)?rc.win:'',ht=real&&RACE_TEAMS.find(t=>t.from<=rc.y&&t.to>=rc.y&&t.mq.some(m=>real.toLowerCase().includes(m.toLowerCase())));
-  const hist=!real?'':ht&&ht.pk===s.pioneer?`Так было и в настоящей истории: в ${rc.y} году здесь победил ${real}.`:`В настоящей истории эту гонку выиграл ${real}. В этот раз история пошла иначе.`;
+  const hist=!real?'':ht&&pkIs(ht,s)?`Так было и в настоящей истории: в ${rc.y} году здесь победил ${real}.`:`В настоящей истории эту гонку выиграл ${real}. В этот раз история пошла иначе.`;
   return {kicker:cup?'Кубок Гордона Беннетта':'Спорт',title:cup?`Кубок Гордона Беннетта — у «${s.company}»!`:`«${s.company}» выигрывает ${rc.name}!`,
     deck:`${drv} на «${row.label}» — первым на финише${row.fin!=null?` за ${fmtRaceTime(row.fin*k)}`:''}`,
     text:`Гонка «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) завершилась победой машины «${s.company}». ${second?`Второе место — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\n${hist}\nПобеда в гонке — лучшая реклама: покупатели ${rc.major?'по всей стране':'в округе'} только о ней и говорят. Спрос на «${row.label}» вырастет на ближайшие месяцы.`,

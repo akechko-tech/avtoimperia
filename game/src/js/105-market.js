@@ -105,12 +105,12 @@ function compVol(cp,s){const t=yf(s);if(s&&s.dead&&s.dead[cp.n]!=null&&mi(s)>=s.
 function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
 function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
-function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer);}
+function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>!pkIs(cp,s));}
 // Доля исторической марки игрока-первопроходца в классе: её место на рынке свободно.
 // 0.21: в Америке — лишь его часть (40%): место Ford в 1910-х заняли бы Buick, Willys, Chevrolet — играя за Форда, его ещё надо завоевать
 // (иначе сильный игрок за Форда к 1930 году вдвое больше настоящего Ford); в Европе первопроходец — национальная марка, место остаётся
 const GHOST_K={us:0.4};
-function ghostShare(c,g,s){const cp=(COMPS[c]||[]).find(x=>x.pk===s.pioneer),S=segAnnual(c,g,s);let v=0;if(cp&&cp.mix&&cp.mix[g]&&S>0)v=compVol(cp,s)*cp.mix[g]/S*(globalThis.GHOSTK??GHOST_K[c]??1);
+function ghostShare(c,g,s){const cp=(COMPS[c]||[]).find(x=>pkIs(x,s)),S=segAnnual(c,g,s);let v=0;if(cp&&cp.mix&&cp.mix[g]&&S>0)v=compVol(cp,s)*cp.mix[g]/S*(globalThis.GHOSTK??GHOST_K[c]??1);
   return Math.min(0.97,v+boughtShare(c,g,s));}
 // Сила конкурентов класса: подобрана по истории (CALIB), плюс сложность игры
 function kappa(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Object.keys(tb).length?tabAt(tb,yf(s)):-6;
@@ -120,7 +120,7 @@ function pwOf(s,c,g){return ((s.pw&&s.pw[c]&&s.pw[c][g])||1)*(1-respCut(s,c,g));
 function rivalBoost(s,c,g){return ((s.rv&&s.rv[c]&&s.rv[c][g])||0)+respBoost(s,c,g);}
 // Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
 function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
-  (COMPS[c]||[]).forEach((cp,i)=>{if(cp.pk===s.pioneer||acqHas(s,c,i))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
+  (COMPS[c]||[]).forEach((cp,i)=>{if(pkIs(cp,s)||acqHas(s,c,i))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
   const rest=Math.max(0,1-sum),nr=clamp(3+(yf(s)-1895)*0.8,3,15);return clamp(1/Math.max(1e-6,sq+rest*rest/nr),1,40);}
 // Ваша марка — одна из марок своего рынка: те же условия эпохи (дороги, надёжность, мода — поправка класса κ),
 // а исходная доля — как у средней новой марки или как у исторической марки основателя, если она была больше.
@@ -139,7 +139,7 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   return b-Math.log(DIF().comp||1);}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
-  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||cp.pk===s.pioneer||acqHas(s,c,i))return;const v=compVol(cp,s)*mx*maSubW(s,c,i,g);if(v>0){out.push({cp,i,v});sum+=v;}});
+  (COMPS[c]||[]).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||acqHas(s,c,i))return;const v=compVol(cp,s)*mx*maSubW(s,c,i,g);if(v>0){out.push({cp,i,v});sum+=v;}});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах

@@ -122,7 +122,7 @@ const LEGEND_NOTE={ford_t:'В истории — чёрная: с 1914 по 1925
   ford_tt:'Грузовик «Модели TT» — чёрный, как и вся «Модель T» тех лет.',c_laub:'«Лягушку» прозвали за зелёный цвет — его и оставили.',bug_35:'Синий — гоночный цвет Франции.',alfa_p2:'Красный — гоночный цвет Италии.',c_3litre:'Тёмно-зелёный — гоночный цвет Британии.',benz_blitzen:'Белый — гоночный цвет Германии.'};
 function legendPaint(L,y){let p=LEGEND_PAINT[L&&L.id];if(Array.isArray(p)){let c=p[0][1];p.forEach(([y0,k])=>{if(y>=y0)c=k;});p=c;}return PNT[p]||null;}
 function LEGEND_TITLES(){return Object.values(LEGEND_BY).map(L=>L.wiki).filter(Boolean);}
-function legendsOf(s){return s.pioneer==='custom'||s.pioneer==='r_custom'?(LEGENDS_C[s.country]||[]):(LEGENDS[s.pioneer]||[]);}
+function legendsOf(s){if(s.brandRef){const pk=s.brandRef.pk;return pk&&LEGENDS[pk]?LEGENDS[pk]:(LEGENDS_C[s.country]||[]);}return s.pioneer==='custom'||s.pioneer==='r_custom'?(LEGENDS_C[s.country]||[]):(LEGENDS[s.pioneer]||[]);}
 // 0.29: имена новых моделей — как у марки в истории (Lancia — буквы греческого алфавита по порядку, Maserati — «Тип 26»…);
 // имя берём первое ещё не занятое, чей год уже настал; имена легенд — только для легенд
 const BRAND_NAMES={
@@ -132,7 +132,7 @@ const BRAND_NAMES={
   r_rickenbacker:[[1924,'Модель B'],[1925,'Суперспорт'],[1927,'Модель D']],
   ford:[[1903,'Модель A'],[1904,'Модель C'],[1905,'Модель F'],[1906,'Модель K'],[1906,'Модель N'],[1907,'Модель R'],[1907,'Модель S']],
   renault:[[1899,'Тип A'],[1900,'Тип C'],[1901,'Тип D'],[1902,'Тип G'],[1903,'Тип N'],[1905,'Тип X'],[1906,'Тип AI'],[1908,'Тип AX'],[1910,'Тип BZ'],[1913,'Тип EF'],[1922,'Тип KJ'],[1923,'Тип NN']]};
-function brandNextName(s){const L=BRAND_NAMES[s&&s.pioneer];if(!L)return null;const used=new Set((s.models||[]).map(m=>String(m.name||'').trim()));legendsOf(s).forEach(x=>used.add(x.name));
+function brandNextName(s){const L=BRAND_NAMES[s&&(s.brandRef?s.brandRef.pk:s.pioneer)];if(!L)return null;const used=new Set((s.models||[]).map(m=>String(m.name||'').trim()));legendsOf(s).forEach(x=>used.add(x.name));
   const free=L.filter(([y,n])=>!used.has(n));const now=free.filter(([y])=>y<=s.y);return (now[0]||free[0]||[])[1]||null;}
 function legendK(md,k){const L=md&&md.legend&&LEGEND_BY[md.legend];return L&&L.fx[k]||1;}
 function legendCh(md){const L=md&&md.legend&&LEGEND_BY[md.legend];return L&&L.fx.ch||null;}

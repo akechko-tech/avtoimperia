@@ -33,6 +33,8 @@ function migrate(x){
   if(!x.v23paint){x.v23paint=1;if(typeof legendPaint==='function')x.models.forEach(m=>{if(!m.legend||!LEGEND_BY[m.legend])return;const y=m.status==='dev'?x.y:1895+Math.floor((m.launched||0)/12),p=legendPaint(LEGEND_BY[m.legend],y);if(p)m.paint=p;});}
   // 0.30: сделки — дочерние компании и поглощения (вместо s.bought и s.acq); узнаваемость марки по странам
   try{eqMigrate(x);}catch(e){console.warn('eq migrate',e);}try{maMigrate(x);}catch(e){console.warn('ma migrate',e);}try{if(!x.aw)awInit(x,false);}catch(e){console.warn('aw init',e);}
+  // 0.31: продажа компании из сохранений 0.30 — деньги и архив для покупки другой марки
+  try{rbMigrate(x);}catch(e){console.warn('rb migrate',e);}
   return x;
 }
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}

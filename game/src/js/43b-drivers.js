@@ -108,7 +108,7 @@ function poachCheck(s){
   if(DIF().simple||s.pending.length||s.poachNow)return;
   const L=(s.drivers||[]).filter(id=>moodOf(s,id).v<25&&mi(s)-(moodOf(s,id).pm??-99)>=6);if(!L.length||Math.random()>0.45)return;
   const id=L[0],d=DRIVERS.find(x=>x.id===id);if(!d)return;const o=moodOf(s,id);o.pm=mi(s);
-  const T=RACE_TEAMS.filter(t=>t.from<=s.y&&t.to>=s.y&&t.pk!==s.pioneer).sort((a,b)=>b.str-a.str).slice(0,4),t=T.length?pick(T):{n:'соперники'};
+  const T=RACE_TEAMS.filter(t=>t.from<=s.y&&t.to>=s.y&&!pkIs(t,s)).sort((a,b)=>b.str-a.str).slice(0,4),t=T.length?pick(T):{n:'соперники'};
   const cost=Math.round(driverSalary(d,s)*6/10)*10;s.poachNow={id,team:t.n,cost};
   pushEvent({kicker:'Команда',title:`${d.n} собирается уйти`,deck:`${t.n} зовёт его к себе`,img:IMG[DRIVER_WIKI[d.id]]?DRIVER_WIKI[d.id]:'',imgCap:d.n,
     text:`${d.n} недоволен: ${o.why.charAt(0).toLowerCase()+o.why.slice(1)}. Команда ${t.n} узнала об этом и предлагает ему контракт.\nУдержать гонщика можно прибавкой и премией — ${money(cost)} сразу. Тогда он останется и снова поверит в команду. Иначе он уйдёт к соперникам.`,
@@ -204,7 +204,7 @@ function yearAwards(s,y){
   else if(tk){lines.push(`Король технологий — ${tk[0]}: ${tk[1]}.`);KW.tech=tk[0];}
   // короли классов: больше всех машин класса, проданных в стране за год
   SEGK.forEach(g=>{if(g==='sport'&&y<1910)return;const you=(s.segYPrev||{})[g]||0;
-    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:(((s.comps[home]||[])[i]||{}).ysPrev||{})[g]||0,pk:cp.pk})).filter(x=>x.pk!==s.pioneer&&x.v>0);
+    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:(((s.comps[home]||[])[i]||{}).ysPrev||{})[g]||0,pk:cp.pk,bn:cp.n})).filter(x=>!pkIs(x,s)&&x.v>0);
     L.push({n:s.company,v:you,you:1});L.sort((a,b)=>b.v-a.v);const top=L[0];if(!top||top.v<(g==='sport'?12:30))return;
     const why=`${carsN(top.v)} за год${L[1]&&L[1].v>0?`, у ${L[1].you?'«'+s.company+'»':L[1].n} — ${fmtN(Math.round(L[1].v))}`:''}`;
     lines.push(`${KING_SEG[g]} — ${top.you?'«'+s.company+'»':top.n}: ${why.replace(/\.$/,'')}.`);KW[g]=top.you?s.company:top.n;if(top.you)give(g,KING_SEG[g],why);});

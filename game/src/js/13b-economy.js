@@ -88,7 +88,7 @@ function respCut(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];return o?Math.mi
 // ответ конкурентов не бесконечен: у лидера класса тоже есть предел — модели-ответы вместе дают не больше +0,6 (ТЗ: цена −5…15%, модель через 12–18 мес.)
 const RESP_CUT_MAX=0.15,RESP_BOOST_MAX=0.6;
 function respBoost(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return 0;const t=mi(s);let u=o.mg||0;for(const x of o.ms||[])if(x.at<=t)u+=x.k*Math.exp(-(t-x.at)/72);return Math.min(RESP_BOOST_MAX,u);}
-function classLeader(s,c,g){const L=(COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v);return L;}
+function classLeader(s,c,g){const L=(COMPS[c]||[]).filter(cp=>!pkIs(cp,s)&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v);return L;}
 function rivalsRespond(s,r){const D=DIF(),T0=D.rshare||0.25,K=D.resp??1,cutK=D.cut??1,gap=D.rgap||12,t=mi(s);if(!K)return;
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;
     SEGK.forEach(g=>{const z=mk.segs[g],o=respOf(s,c,g);const sh=z&&z.size>=3?z.you/z.size:0;o.sh=o.sh*0.8+sh*0.2;

@@ -14,7 +14,7 @@ function titlesRace(s){const y=s.y,home=s.country,rows=[];
     unit:v=>fr.length?'первенство года':`«${best?best.m.name:'—'}»: +${Math.max(0,pc)}% к соперникам`,hint:fr.length?'Первенство в мире — титул почти наверняка ваш':`Нужна машина на 20% лучше соперников своего класса или первенство раньше истории${TK&&!playerMarque(TK[0],s)?` (в истории — ${TK[0]}: ${TK[1]})`:''}`});
   // короли классов: больше всех машин класса, проданных в стране за год
   SEGK.forEach(g=>{if(g==='sport'&&y<1910)return;const you=Math.round((s.segY||{})[g]||0);
-    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:Math.round((((s.comps[home]||[])[i]||{}).ys||{})[g]||0),pk:cp.pk})).filter(x=>x.pk!==s.pioneer&&x.v>0).sort((a,b)=>b.v-a.v);
+    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:Math.round((((s.comps[home]||[])[i]||{}).ys||{})[g]||0),pk:cp.pk,bn:cp.n})).filter(x=>!pkIs(x,s)&&x.v>0).sort((a,b)=>b.v-a.v);
     if(!you&&!L.length)return;const top=L[0],mn=g==='sport'?12:30;
     rows.push({k:g,icon:'👑',t:KING_SEG[g],you,them:top?top.v:0,themN:top?top.n:'',min:mn,unit:v=>carsN(v),hint:you>(top?top.v:0)&&you>=mn?'Вы впереди всех в стране':top?`Лидер — ${top.n}: ${carsN(top.v)} с января. Продажи в стране, класс «${SEG[g].name}»`:''});});
   // гонщик года

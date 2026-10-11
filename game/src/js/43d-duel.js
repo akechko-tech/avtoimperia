@@ -252,11 +252,11 @@ function nextGoal(s){const C=[];let t=null;try{t=legacyTable(s);}catch(_){}
     C.push({k:'g'+q.k,icon:'🎯',sec:'sec-board',text:`Цель года: ${q.name}${r?` — ${r.unit(r.you)}`:''}`,pct:r?clamp(r.you/Math.max(1,Math.max(r.min,r.them+1)),0,0.99)+0.05:0.5,tab:'log'});});
   return C.sort((a,b)=>b.pct-a.pct)[0]||null;}
 // что сделать дальше: гонка этого месяца, совет помощника или просто следующий месяц
-function nextStep(s){if(s.over)return {icon:'🏁',text:'Игра окончена — итоги во вкладке «Империя»',tab:'log'};
+function nextStep(s){if(s.over)return s.soldTo&&s.y<1930?{icon:'🏭',text:'Компания продана — купите другую марку («Империя»)',tab:'log'}:{icon:'🏁',text:'Игра окончена — итоги во вкладке «Империя»',tab:'log'};
   if(!s.models.some(m=>m.status==='prod'||m.status==='dev'))return {icon:'✏️',text:'Придумайте первую машину: «Модели» → «Новая модель»',tab:'models'};
-  {const C=s.chal;if(C&&C.acc&&C.rc){const T=(C.rc.y-1895)*12+C.rc.m,t=mi(s);if(t>=T-1&&t<=T)return {icon:'⚔️',text:`${MATCH_ST[C.type]} с ${C.mq}: ${C.rc.venue} — выставьте машину${t===T?' (последний месяц!)':''}`,tab:'race'};}}
+  {const C=s.chal;if(C&&C.acc&&C.rc){const T=(C.rc.y-1895)*12+C.rc.m,t=mi(s);if(t>=T-1&&t<=T)return {icon:'⚔️',text:`${MATCH_ST[C.type]} с ${C.mq}: ${C.rc.venue} — выставьте машину${t===T?' (последний месяц!)':''}`,tab:'race',rk:C.rc.key};}}
   const rc=RACES.filter(r=>raceOpen(r,s)&&raceEligible(r,s)&&!raceWarBlocked(r,s)&&!s.cres[r.key]&&s.raceDone[r.key]===undefined).sort((a,b)=>a.m-b.m)[0];
-  if(rc&&raceCarsFor(s).length)return {icon:'🏁',text:`${rc.m===s.m?'Гонка в этом месяце':'Запись на гонку'}: «${rc.name}» — выставьте машину`,tab:'race'};
+  if(rc&&raceCarsFor(s).length)return {icon:'🏁',text:`${rc.m===s.m?'Гонка в этом месяце':'Запись на гонку'}: «${rc.name}» — выставьте машину`,tab:'race',rk:rc.key};
   if(!DIF().helper){try{const A=adviceList(s).slice().sort((a,b)=>b.p-a.p)[0];if(A&&A.p>=60)return {icon:A.icon||'💡',text:String(A.text).replace(/<[^>]+>/g,'').split(/(?<=[.!?])\s/)[0],tab:A.tab||'plant'};}catch(_){}}
   return {icon:'▶',text:'Жмите «Следующий месяц» — время идёт, машины продаются',tab:null};}
 function showcaseMonth(s){try{const t=legacyTable(s);s.legPrev=s.legNow===undefined?t.me.total:s.legNow;s.legNow=t.me.total;}catch(_){}}
@@ -268,7 +268,7 @@ function empireStrip(s){EC_FLASH=false;if(!s)return '';let t=null;try{t=legacyTa
   EC_FLASH=!!((s.ecPlace&&t&&t.place<s.ecPlace)||(s.ecTro!==undefined&&tro>s.ecTro));if(t)s.ecPlace=t.place;s.ecTro=tro;
   let chal='';if(C){const rc=C.type==='race'?RACES.find(r=>r.key===C.rk):null,sc=rivalryScore(s,C.mq);
     const what=rc?`«${esc(rc.name)}» ${whenTxt(rc,s)}`:C.rc?`${esc(MATCH_ST[C.type]||'')}: ${esc(C.rc.venue)} ${whenTxt(C.rc,s)}`:C.type==='trial'?`пробег ${esc(C.route)}`:C.mon?`продажи «${esc(SEG[C.g].name)}»${C.c!==s.country?' ('+esc(COUNTRIES[C.c].name)+')':''}, ${esc(chalPerText(C))}`:`продажи до конца ${C.y}`;
-    chal=`<button class="ec-row chal" data-act="tab" data-t="${C.rc?'race':'log'}" data-sec="${C.rc?'':'sec-board'}"><i>⚔️</i><span><b>${esc(C.mq)}</b>: ${what} · ${stakeText(C)}${sc?` · счёт ${sc}`:''}</span></button>`;}
+    const ck=C.rc?C.rc.key:rc?rc.key:'';chal=`<button class="ec-row chal" ${ck?`data-act="raceTo" data-k="${esc(ck)}"`:`data-act="tab" data-t="log" data-sec="sec-board"`}><i>⚔️</i><span><b>${esc(C.mq)}</b>: ${what} · ${stakeText(C)}${sc?` · счёт ${sc}`:''}</span></button>`;}
   const ph=last&&last.carId!=null?(()=>{const md=s.models.find(m=>m.id===last.carId);return md?carArt(md,{w:140,cls:'ec-ph',prep:last.prep||0,num:last.num||0,y:last.y}):'';})():'';
   return `<div class="ec-top" data-act="tab" data-t="log" data-sec="sec-legacy" role="button" aria-label="Империя: наследие"><div class="ec-place"><b>${t?t.place:'—'}<small>-е</small></b><span>место в наследии</span></div>
       <div class="ec-pts"><b>${t?fmtN(Math.round(t.me.total)):0}</b> очков${dv?` <em class="${dv>0?'good':'bad'}">${dv>0?'▲':'▼'}${Math.abs(dv)}</em>`:''}</div></div>
@@ -276,5 +276,5 @@ function empireStrip(s){EC_FLASH=false;if(!s)return '';let t=null;try{t=legacyTa
     ${last?`<button class="ec-row tri" data-act="trophy" data-k="${s.trophies.length-1}">${ph||`<i>${TROPHY_ICON[last.kind]||'🏆'}</i>`}<span>${esc(last.title)}${last.sub?' · '+esc(last.sub):''} <small>${MONTHS[last.m]} ${last.y}</small></span></button>`
       :'<button class="ec-row tri first" data-act="tab" data-t="race"><i>🏁</i><span><b>Первая цель:</b> выиграйте гонку или пари — триумф появится здесь</span></button>'}
     ${chal}
-    <button class="ec-row next" ${NS.tab?`data-act="tab" data-t="${NS.tab}"`:'data-act="next"'}><i>${NS.icon}</i><span><b>Дальше:</b> ${esc(NS.text)}</span></button>
+    <button class="ec-row next" ${NS.rk?`data-act="raceTo" data-k="${esc(NS.rk)}"`:NS.tab?`data-act="tab" data-t="${NS.tab}"`:'data-act="next"'}><i>${NS.icon}</i><span><b>Дальше:</b> ${esc(NS.text)}</span></button>
  <div class="ec-badges" data-act="tab" data-t="log" data-sec="sec-trophies" role="button" aria-label="Титулы, пари, фильм, трофеи"><span title="Титулы">👑 ${tit}</span><span title="Выигранные пари">⚔️ ${won}</span><span title="Главы фильма">🎬 ${seen}/${L.length}</span><span title="Трофеи">🏆 ${tro}</span></div>`;}

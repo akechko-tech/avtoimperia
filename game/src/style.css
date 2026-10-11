@@ -227,6 +227,10 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .r-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 0}
 .r-top .label{color:var(--brass);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .r-top .btns{flex-wrap:nowrap;flex:none}
+/* 0.31: кнопок наверху гонки стало шесть — на узком экране плотнее, часы прячем, чтобы «Выход» не уезжал за край */
+.r-top .btn.off{opacity:.62}
+@media (max-width:440px){#raceScreen .r-top .btns{gap:5px}#raceScreen .r-top .btn.sm{padding:4px 7px}}
+@media (max-width:380px){#raceScreen .r-top .r-clock{display:none}#raceScreen .r-top .btns{gap:4px}#raceScreen .r-top .btn.sm{padding:4px 6px}}
 @media (prefers-reduced-motion:no-preference){.sheet .panel{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 .r-hud b{font-size:15px}
 @media (prefers-reduced-motion:reduce){.cloud,.car .spin,.smoke,.roadcar,.roadcar .w,.car.anim .body,.date.flip,.carbox.enter svg,.paper.spin{animation:none!important}}
@@ -360,11 +364,6 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .r-note[hidden]{display:none}
 .r-note b{font-family:var(--display);font-size:28px;font-weight:800;line-height:1;white-space:nowrap}
 .r-note span{font-family:var(--mono);font-size:10px;color:#c9c2b0;white-space:nowrap}
-.r-nav{position:absolute;right:8px;top:172px;max-width:min(46%,260px);pointer-events:none;background:rgba(244,236,214,.93);color:#20180e;border-radius:12px 4px 12px 12px;padding:4px 11px 6px;box-shadow:0 3px 10px rgba(0,0,0,.35);opacity:0;transform:translateY(-4px) scale(.96);transition:opacity .18s,transform .18s}
-.r-nav[hidden]{display:none}.r-nav.on{opacity:1;transform:none}
-.r-nav small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:#7a6440}
-.r-nav b{display:block;font-family:var(--display);font-size:17px;font-weight:800;line-height:1.15}
-#raceScreen.filming .r-nav,#raceScreen.demo .r-nav{display:none}
 .r-note.ok{border-color:rgba(112,196,120,.85)}.r-note.warn{border-color:#e9b949}.r-note.bad{border-color:#e25c4a;background:rgba(120,24,18,.8)}.r-note.bad span{color:#ffd9d0;font-weight:700}
 .r-grip{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:3px;background:rgba(5,12,22,.6);padding:5px 8px;border-radius:7px;pointer-events:none;font-family:var(--mono);font-size:10px;color:#c9c2b0;letter-spacing:.06em}
 .r-grip[hidden]{display:none}
@@ -800,3 +799,6 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .r-dx b{display:block;font-weight:600;letter-spacing:.02em}.r-dx .dxbar{position:relative;height:6px;margin:7px 6px 2px;border-radius:3px;background:rgba(255,255,255,.18)}
 .r-dx .dxbar i{position:absolute;top:-9px;transform:translateX(-50%);font-style:normal;font-size:14px;line-height:1;transition:left .4s linear}.r-dx .dxbar i.me{top:-8px}
 #raceScreen.filming .r-dx,#raceScreen.demo .r-dx{display:none}
+/* 0.31: карточка гонки, к которой пришли из «Дальше» — вспыхивает */
+.race-item.hl{animation:rcHl 1.6s ease}
+@keyframes rcHl{0%,40%{box-shadow:0 0 0 2px var(--brass);background:rgba(232,195,90,.12)}100%{box-shadow:none}}

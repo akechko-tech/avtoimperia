@@ -9,7 +9,7 @@ function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind
   return Math.round(prefP(g,s.country,s)*(b&&b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1)*1.15/10)*10;}
 const STUDY_NEED=6;
 // 0.25: машину своей марки (какой она была в настоящей истории) не покупают и не разбирают — это ваша же машина
-function ownMarqueCar(name,s){const nm=String(name||'').toLowerCase();return !!s&&Object.values(COMPS).some(L=>L.some(b=>b.pk===s.pioneer&&((b.models||[]).some(x=>x[2]===name)||nm.startsWith(String(b.n).toLowerCase().split(/[ &(]/)[0]+' '))));}
+function ownMarqueCar(name,s){const nm=String(name||'').toLowerCase();return !!s&&Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&((b.models||[]).some(x=>x[2]===name)||nm.startsWith(String(b.n).toLowerCase().split(/[ &(]/)[0]+' '))));}
 function studyList(s){const out=[];
   STUDY_KINDS.forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;if(ownMarqueCar(c.name,s)){c.own=1;out.push(c);return;}
     c.done=((s.rd.studied)||[]).includes(studyKey(c));c.busy=rdActive(s).some(p=>p.kind==='study'&&p.name===c.name);c.price=studyPrice(c,s);out.push(c);});

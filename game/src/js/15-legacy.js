@@ -57,6 +57,8 @@ function playerLegacy(s){
     legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
   // 0.21: очки наследия, выигранные в пари, — к имени марки
   if(s.legBonus){L.brand+=s.legBonus;L.total+=s.legBonus;}
+  // 0.31: прежние компании основателя (проданные) — половина их очков
+  if(s.pastCos&&s.pastCos.length&&typeof rbLegacy==='function'){L.prev=rbLegacy(s);L.total+=L.prev;}
   return L;
 }
 function histLegacy(h){const age=1929-h.f;return legacyParts({peak:h.peak,cum:h.cum,shareYrs:h.share*Math.min(15,age),abroad:h.c==='us'?1:0,firsts:h.firsts,techs:8,wins:h.wins,minor:h.wins,titles:h.titles,val:h.val,rep:h.rep,age,legend:h.legend?40:0});}
@@ -64,7 +66,7 @@ const LEG_NAMES={scale:'Масштаб',market:'Рынок',innov:'Иннова�
 // марка из истории, которую в этой партии основали вы (играя за Генри Форда, соревнуетесь и с «историческим Ford» — тем, что был на самом деле)
 const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT'};
 function legacyTable(s){
-  const me=playerLegacy(s),tw=LEG_TWIN[s.pioneer];const rows=HIST_CO.map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
+  const me=playerLegacy(s),tw=s.brandRef?s.brandRef.n:LEG_TWIN[s.pioneer];const rows=HIST_CO.map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
   rows.push({n:s.company,c:s.country,you:1,p29:s.peak.year||0,val:companyValue(s),L:me});
   rows.sort((a,b)=>b.L.total-a.L.total);return {rows,me,place:rows.findIndex(r=>r.you)+1};
 }
@@ -101,7 +103,7 @@ function pflMonth(s,r){const life=tabAt(CAR_LIFE,yf(s)),tl=tabAt(TRUCK_LIFE,yf(s
 function worldFleet(s){const t=yf(s),life=Math.round(tabAt(CAR_LIFE,t)),tl=Math.round(tabAt(TRUCK_LIFE,t)),out={tot:{},br:{}};
   for(const c in COUNTRIES)for(const g of SEGK){const L=g==='truck'?tl:life;for(let k=0;k<L;k++){const ss={y:Math.floor(t-k),m:6};if(ss.y<1895)break;const w=1-k/(L+1);
     out.tot[g]=(out.tot[g]||0)+segAnnual(c,g,ss)*w;
-    (COMPS[c]||[]).forEach(cp=>{if(cp.pk===s.pioneer)return;const v=compVol(cp,ss)*((cp.mix&&cp.mix[g])||0)*w;if(v>0){const n=compName(cp,s),B=out.br[n]=out.br[n]||{};B[g]=(B[g]||0)+v;}});}}
+    (COMPS[c]||[]).forEach(cp=>{if(pkIs(cp,s))return;const v=compVol(cp,ss)*((cp.mix&&cp.mix[g])||0)*w;if(v>0){const n=compName(cp,s),B=out.br[n]=out.br[n]||{};B[g]=(B[g]||0)+v;}});}}
   return out;}
 // «каждая 12-я» — до тысячи; дальше «одна из 16 000»
 function oneIn(n,w){const r=Math.round(n);return r<=1?'каждая'+(w?' '+w:''):r<1000?`каждая ${r}-я${w?' '+w:''}`:r<=5e6?`одна${w?' '+w:''} из ${r.toLocaleString('ru-RU')}`:`одна${w?' '+w:''} из миллионов`;}

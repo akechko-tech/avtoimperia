@@ -55,7 +55,7 @@ function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}
 // стоимость ваших долей в дочерних компаниях (входит в стоимость компании)
 function maHoldValue(s){return subList(s).reduce((a,h)=>{const M=maStat(s,h.c,h.i);return a+(M&&compAlive(M.cp,s)?M.V*h.st:0);},0);}
 // можно ли вести переговоры
-function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||cp.pk===s.pioneer)return 'нельзя';const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s))return 'нельзя';const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n])return 'в концерне';if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';
   const t=(s.dealNo||{})[c+i];if(t&&t>mi(s))return 'пауза';return '';}
 // главный класс марки (не грузовики; спорт — где он уже есть)
@@ -179,8 +179,8 @@ function maInbound(s){if(s.over||s.pending.length||s.y<1902)return;const now=mi(
   // 4) банкиры хотят купить всю компанию (как Dillon, Read & Co. купили Dodge Brothers в 1925 году за $146 млн)
   if(s.y>=1912&&me>8e6*cpi(s)&&now-(s.maSellT??-99)>=120&&Math.random()<0.006){s.maSellT=now;const P=Math.round(me*(1.2+0.2*maRnd('sell'+now))/1e4)*1e4,who=maWho(s.country,'buy'+now);
     pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} предлагает купить «${s.company}» целиком`,deck:`${money(P)} — на ${Math.round((P/me-1)*100)}% больше стоимости компании`,
-      text:`${capF(who)} предлагает выкупить «${s.company}» целиком: ${money(P)} наличными — вам и совладельцам. Если согласитесь, ваша история в автомобильном деле закончится: компанией будут управлять новые хозяева.\nТак в 1925 году вдовы братьев Додж продали Dodge Brothers банкирам Dillon, Read & Co. за 146 миллионов долларов — крупнейшая сделка своего времени.`,
-      choices:[[`Продать за ${money(P)} — партия закончится`,'ma:sell:Y:'+P],['Отказаться','ma:sell:N']]},true);return;}}
+      text:`${capF(who)} предлагает выкупить «${s.company}» целиком: ${money(P)} наличными — вам и совладельцам. Если согласитесь, компанией будут управлять новые хозяева, а вы получите свою часть денег — и сможете купить другую марку в любой стране или подвести итог.\nТак в 1925 году вдовы братьев Додж продали Dodge Brothers банкирам Dillon, Read & Co. за 146 миллионов долларов — крупнейшая сделка своего времени.`,
+      choices:[[`Продать за ${money(P)}${partnersShare(s)>0?` (вам — ${money(Math.round(P*(1-partnersShare(s))))})`:''}`,'ma:sell:Y:'+P],['Отказаться','ma:sell:N']]},true);return;}}
 
 /* ---------- банкротства и торги ---------- */
 // Исторические развязки марок (кто купил, когда, продолжилась ли марка). Если вы там торгуете — можно перебить покупателя.
@@ -210,14 +210,14 @@ const BRAND_FATE=[
 function maFateFind(c,n){return (COMPS[c]||[]).findIndex(cp=>cp.n===n);}
 function maPresent(s,c){return c===s.country||dealerCount(s,c)>0||(s.hold||[]).some(h=>h.c===c);}
 function maFates(s){const now=mi(s);for(const f of BRAND_FATE){if(f.y!==s.y||f.m!==s.m)continue;const i=maFateFind(f.c,f.n),key='fate|'+f.n+'|'+f.y;if(i<0||(s.seen&&s.seen[key]))continue;(s.seen=s.seen||{})[key]=1;
-    const cp=COMPS[f.c][i],h=holdOf(s,f.c,i);if(h||!compAlive(cp,s)||cp.pk===s.pioneer)continue;
+    const cp=COMPS[f.c][i],h=holdOf(s,f.c,i);if(h||!compAlive(cp,s)||pkIs(cp,s))continue;
     if(!maPresent(s,f.c)){addLog(`${COUNTRIES[f.c].name}: ${f.txt} Покупатель — ${f.who}.`,'hist');continue;}
     aucStart(s,f.c,i,{who:f.who,kind:f.kind,cont:f.cont,txt:f.txt,hist:1});return true;}
   return false;}
 // рынок раздавлен: если ваша доля в стране выдавила марку (её доля — меньше 40% исторической два года подряд), она разоряется
 function maSqueeze(s){if(s.m!==2)return false;for(const c of Object.keys(COUNTRIES)){const mk=(s.mPrev||{})[c]||0;if(!mk||!maPresent(s,c))continue;
     const histTot=(COMPS[c]||[]).reduce((a,cp)=>a+compVol(cp,s),0)||1;
-    for(let i=0;i<(COMPS[c]||[]).length;i++){const cp=COMPS[c][i];if(cp.imp||cp.pk===s.pioneer||holdOf(s,c,i)||!compAlive(cp,s)||(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n]))continue;
+    for(let i=0;i<(COMPS[c]||[]).length;i++){const cp=COMPS[c][i];if(cp.imp||pkIs(cp,s)||holdOf(s,c,i)||!compAlive(cp,s)||(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n]))continue;
       const st=(s.comps[c]||[])[i]||{},hs=compVol(cp,s)/histTot,a1=(st.prev||0)/mk,a2=(st.prev2||0)/Math.max(1,(s.mPrev2||{})[c]||mk);
       if(hs>0.02&&a1<0.4*hs&&a2<0.5*hs&&(st.prev2||0)>0&&!(s.seen&&s.seen['sq|'+cp.n])){(s.seen=s.seen||{})['sq|'+cp.n]=1;
         aucStart(s,c,i,{who:c==='us'?'группа банкиров из Детройта':c==='uk'?'промышленники из Ковентри':c==='fr'?'парижские банкиры':c==='de'?'рейнские промышленники':'миланские банкиры',kind:'bankrupt',cont:maRnd(cp.n+s.y)<0.5?1:0,
@@ -250,7 +250,7 @@ function holdingsHTML(s){const L=s.hold||[];if(!L.length)return '';
       <div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maInv" data-k="${k}" data-v="${inv}" ${s.cash<inv?'disabled':''}>Вложить ${money(inv)}</button>${h.st<1?`<button class="btn sm" data-act="dealOpen" data-c="${h.c}" data-i="${h.i}" data-st="${h.st<0.5?0.51:1}">Докупить до ${h.st<0.5?'51':'100'}%</button>`:`<button class="btn sm" data-act="maMerge" data-k="${k}" ${s.cash<icost?'disabled':''}>Под ваш бренд · ${money(icost)}</button>`}<button class="btn sm" data-act="maSell" data-k="${k}" data-v="${sell}">Продать долю · ${money(sell)}</button></div></div></div>`;}).join('');
   return `<div class="label" style="margin-top:12px">Ваши компании</div>${rows}`;}
 function dealsCard(s){maMigrate(s);const sel=(s.ui&&s.ui.dealC)||s.country,cs=Object.keys(COUNTRIES);
-  const L=(COMPS[sel]||[]).map((cp,i)=>({cp,i})).filter(o=>!o.cp.imp&&o.cp.pk!==s.pioneer&&compAlive(o.cp,s)).map(o=>{const M=maStat(s,sel,o.i),b=dealBlock(s,sel,o.i),h=holdOf(s,sel,o.i);return {...o,M,b,h};}).sort((a,b)=>b.M.v-a.M.v);
+  const L=(COMPS[sel]||[]).map((cp,i)=>({cp,i})).filter(o=>!o.cp.imp&&!pkIs(o.cp,s)&&compAlive(o.cp,s)).map(o=>{const M=maStat(s,sel,o.i),b=dealBlock(s,sel,o.i),h=holdOf(s,sel,o.i);return {...o,M,b,h};}).sort((a,b)=>b.M.v-a.M.v);
   const rows=L.map(o=>{const M=o.M,nm=M.nm,tag=o.h&&o.h.mode==='int'?'<span class="pill good">под вашим брендом</span>':o.h?`<span class="pill">ваши ${Math.round(o.h.st*100)}%</span>`:o.b==='в концерне'?'<span class="pill muted">в концерне</span>':o.b==='пауза'?'<span class="pill warn">пауза</span>':o.b?`<span class="pill muted">${esc(o.b)}</span>`:'';
     return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> ${tag}<small class="muted">${fmtN(Math.round(M.v))} машин в год · доля ${pct(M.sh,M.sh<0.1?1:0)}${M.tr?` · <span class="${M.tr>0?'good':'bad'}">${M.tr>0?'▲':'▼'}${Math.round(Math.abs(M.tr)*100)}%</span>`:''} · оценка ${money(M.V)}</small></div>${o.b?'':`<button class="btn sm" data-act="dealOpen" data-c="${sel}" data-i="${o.i}">Переговоры</button>`}</div>`;}).join('');
   const own=s.hold||[],auc=s.auc;
@@ -259,8 +259,8 @@ function dealsCard(s){maMigrate(s);const sel=(s.ui&&s.ui.dealC)||s.country,cs=Ob
     ${holdingsHTML(s)}
     <div class="chips sm" style="margin-top:10px">${cs.map(c=>`<button class="chip ${sel===c?'on':''}" data-act="dealC" data-v="${c}">${COUNTRIES[c].name}</button>`).join('')}</div>
     <div style="margin-top:6px">${rows||'<p class="small muted">Здесь пока нет марок.</p>'}</div>
-    ${partnersShare(s)?`<p class="small muted" style="margin-top:8px">Совладельцам — ${Math.round(partnersShare(s)*100)}% вашей прибыли: ${(s.partners||[]).map(p=>esc(p.n)).join(', ')}.</p>`:''}`;
-  return foldCard('deals',false,`<h2>Сделки</h2><span class="label">доли, поглощения, торги</span>`,body,own.length?`ваши компании: ${own.map(h=>esc(h.nm||h.n)+(h.mode==='sub'?` ${Math.round(h.st*100)}%`:'')).join(', ')}`:'купить долю, поглотить конкурента, торги после банкротств');}
+    ${typeof bbHTML==='function'?bbHTML(s):''}`;
+  return foldCard('deals',false,`<h2>Сделки</h2><span class="label">доли, поглощения, торги</span>`,body,(own.length?`ваши компании: ${own.map(h=>esc(h.nm||h.n)+(h.mode==='sub'?` ${Math.round(h.st*100)}%`:'')).join(', ')}`:'купить долю, поглотить конкурента, торги после банкротств')+(typeof bbShare==='function'&&bbShare(s)>0?` · совладельцы ${Math.round(bbShare(s)*100)}% — можно выкупить`:''));}
 
 /* ---------- лист переговоров ---------- */
 let NEG=null;
@@ -325,8 +325,9 @@ function maResolve(s,key){const p=key.split(':');const k2=p[2]==='Y'||p[2]==='N'
   if(p[1]==='auc'){s.pending.shift();save();render();openAuction();return true;}
   if(p[1]==='aucSkip'){aucFinish(s,false);return false;}
   if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новые совладельцы получают 20% прибыли.`,'good');}return false;}
-  if(p[1]==='sell'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;s.soldTo={price:P,y:s.y,m:s.m};s.over=true;s.pending.shift();
-      s.pending.push({title:'Компания продана',deck:`«${s.company}» — новым хозяевам за ${money(P)}`,text:`Вы продали «${s.company}» за ${money(P)}. Новые хозяева уже меняют вывески в конторе. Ваша история в автомобильном деле окончена — посмотрим, какой след она оставила.`,paper:true,own:1,choices:[['Сравнить с историей','final']]});save();render();return true;}return false;}
+  if(p[1]==='sell'){if(p[2]==='Y'){const P=+p[3],mine=Math.round(P*(1-partnersShare(s)));rbArchive(s,P,mine);s.soldTo={price:P,mine,y:s.y,m:s.m,co:s.company};s.over=true;s.pending.shift();
+      s.pending.push({title:'Компания продана',deck:`«${s.company}» — новым хозяевам за ${money(P)}`,text:`Вы продали «${s.company}» за ${money(P)}${mine<P?` — вам ${money(mine)}, остальное совладельцам`:''}. Новые хозяева уже меняют вывески в конторе.\nНа эти деньги можно начать снова: купить действующую марку любой страны — с заводами, дилерами и машинами — и вести её до 1930 года. Или подвести итог: посмотреть, какой след остался.`,paper:true,own:1,choices:[['Купить другую марку','ma:rebuy'],['Сравнить с историей','final']]});save();render();return true;}return false;}
+  if(p[1]==='rebuy'){s.pending.shift();save();render();openRebuy();return true;}
   const h=maByKey(s,k2);if(!h)return false;const M=maStat(s,h.c,h.i);
   if(p[1]==='inv'){if(p[2]==='Y'){const amt=+p[4];if(s.cash>=amt&&M){s.cash-=amt;h.inv=(h.inv||0)+amt;h.boost=(h.boost||0)+amt/M.V*0.9;h.mood=clamp((h.mood??60)+10,0,100);addLog(`Вложено ${money(amt)} в «${h.nm||h.n}»: новый цех, директора довольны.`,'good');}else{h.mood-=10;addLog('Денег на вложение не хватило — директора недовольны.','bad');}}
     else{h.mood=clamp((h.mood??60)-15,0,100);addLog(`Вы отказали директорам «${h.nm||h.n}» в деньгах.`,'bad');}return false;}

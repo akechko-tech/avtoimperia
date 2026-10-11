@@ -728,7 +728,7 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
 // Соперники: заводские команды своего года (те же, что и в зачёте сезона), с реальными пилотами
 function fieldTeams(rc,s,nTeam){
   const y=rc.y,intl=rc.c==='intl'||rc.major,host=COUNTRIES[rc.c]?rc.c:null;
-  let teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&t.pk!==s.pioneer&&(intl||t.c===host||(!host)));
+  let teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&!pkIs(t,s)&&(intl||t.c===host||(!host)));
   if(rc.id==='indy'||rc.track==='board')teams=teams.filter(t=>t.c==='us'||t.str>=1.05);
   if(rc.t==='endurance'||rc.t==='rally'||rc.id==='mille')teams=teams.filter(t=>!['Miller','Duesenberg','Frontenac','Durant'].includes(t.n));
   teams.sort((a,b)=>b.str-a.str);
@@ -794,7 +794,7 @@ const PRIV_DRV={chasseloup:'De Dion-Bouton',jellinek:'Mercedes',e_zborowski:'Mer
 const NAT_C={'Франция':'fr','Бельгия':'fr','Монако':'fr','Испания':'fr','США':'us','Канада':'us','Великобритания':'uk','Австралия':'uk','Германия':'de','Австро-Венгрия':'de','Чехословакия':'de','Швейцария':'de','Венгрия':'de','Россия':'de','Италия':'it'};
 const AMATEUR={fr:['Месье','Бертен','Дюбуа','Лефевр','Моро','Жирар','Ренье','Фавр','Лакомб'],uk:['Мистер','Эшворт','Кларк','Хардинг','Беннет','Филдинг','Прайс','Лоуренс'],de:['Герр','Шмидт','Вебер','Краус','Хоффман','Беккер','Ланге','Фогель'],
   us:['Мистер','Келлер','Бёрнс','Мейсон','Прескотт','Картер','Холлоуэй','Рид'],it:['Синьор','Галли','Риччи','Бьянки','Конти','Марини','Фаббри','Серра']};
-function playerMarque(m,s){return RACE_TEAMS.some(t=>t.pk===s.pioneer&&(t.n===m||t.mq.includes(m)))||Object.values(COMPS).some(L=>L.some(b=>b.pk===s.pioneer&&(b.n.includes(m)||(b.models||[]).some(x=>x[1].includes(m)))));}
+function playerMarque(m,s){return RACE_TEAMS.some(t=>pkIs(t,s)&&(t.n===m||t.mq.includes(m)))||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&(b.n.includes(m)||(b.models||[]).some(x=>x[1].includes(m)))));}
 function privMarque(id,y){const v=PRIV_DRV[id];if(typeof v==='string')return v;const x=v.find(a=>y<=a[0]);return x?x[1]:v[v.length-1][1];}
 function wpick(a,wf){const w=a.map(wf),t=w.reduce((x,y)=>x+y,0);let r=Math.random()*t;for(let i=0;i<a.length;i++){r-=w[i];if(r<=0)return a[i];}return a[a.length-1];}
 const TRIM_OF={people:'t0',middle:'t1',lux:'t2',sport:'t3'};
@@ -826,7 +826,7 @@ function privField(rc,s,used,n){
     let p=clamp(0.2+sh*3+Math.min(0.3,sold/4000),0,0.85)*(here?1:0.35);
     for(let k=0;k<2&&out.length<n;k++){if(Math.random()>=p)break;p*=0.4;addMy(Math.random()<0.3&&gent()||amateur(host));}}
   // 2) «джентльмены» эпохи и безымянные любители: на купленных гоночных машинах или на серийных
-  const teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&t.pk!==s.pioneer&&COUNTRIES[t.c]);
+  const teams=RACE_TEAMS.filter(t=>t.from<=y&&t.to>=y&&!pkIs(t,s)&&COUNTRIES[t.c]);
   while(out.length<n){const d=who();
     // джентльмен гонялся на марке, которой в этой истории управляете вы: теперь он на вашей машине
     if(d.m&&playerMarque(d.m,s)){if(my.length){addMy(d);continue;}d.m=null;}
@@ -834,7 +834,7 @@ function privField(rc,s,used,n){
       const t=d.m?(teams.find(t=>t.n===d.m||t.mq.includes(d.m))||{n:d.m,c:d.c,str:0.95}):wpick(teams,t=>t.c===host?3:1);
       out.push({you:false,priv:1,name:t.n,label:t.n,drvName:d.n,drvId:d.id||null,sk:d.sk,md:aiCarMd(Math.max(1894,y-1),t.n),prep:2,tyre:Math.random()<0.5?'soft':'hard',gear:0,color:col(d.c),pw:Math.pow(t.str||0.95,1.6)*0.9*dr,relK:0.95,tc:t.c||d.c});
     }else{
-      const pool=[].concat(...Object.keys(COMPS).map(c=>COMPS[c].filter(b=>b.since<=y&&(!b.until||b.until>=y)&&!b.imp&&b.pk!==s.pioneer&&segs.some(g=>b.mix[g])).map(b=>({b,c}))));
+      const pool=[].concat(...Object.keys(COMPS).map(c=>COMPS[c].filter(b=>b.since<=y&&(!b.until||b.until>=y)&&!b.imp&&!pkIs(b,s)&&segs.some(g=>b.mix[g])).map(b=>({b,c}))));
       let bc=null;if(d.m)bc=pool.find(x=>x.b.n.includes(d.m)||(x.b.models||[]).some(m=>m[1].includes(d.m)));
       if(!bc&&!d.m&&pool.length)bc=wpick(pool,x=>(x.c===host?3:intl?0.5:0.05)*Math.pow(tabAt(x.b.v,y)||1,0.35));
       const md=privProdCar(y,bc&&bc.b,segs),mm0=bc?(bc.b.models||[]).filter(m=>m[0]<=y&&y-m[0]<=8).pop():null,mm=mm0&&[mm0[0],mm0[1].replace(/\s*«.*?»/g,'')],bnm=bc?brandShort(bc.b.n):d.m||'Серийная машина';

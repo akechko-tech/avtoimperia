@@ -121,7 +121,7 @@ function showAwards(s,sh,md,big,S,hadMedal){const H=SHOW_HOST[sh.h],y=sh.y,p=par
   // надёжность (проверочные поездки и испытания)
   {const pr=clamp((st.rel-0.86)*4,0,0.5)*(sh.ver?1.4:1);if(R()<pr)add('rel','Диплом за надёжность',`«${md.name}» прошла испытательный пробег без единой поломки.`,1.5,0.03);}
   return out;}
-function showRivals(s,c){const L=(COMPS[c]||[]).filter(cp=>cp.pk!==s.pioneer&&compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,3).map(cp=>compName(cp,s));return L;}
+function showRivals(s,c){const L=(COMPS[c]||[]).filter(cp=>!pkIs(cp,s)&&compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,3).map(cp=>compName(cp,s));return L;}
 // Карточка на «Рынке»: ближайшие выставки и прошлые стенды
 function showsCard(s){const now=mi(s),up=SHOWS.filter(sh=>showMi(sh)>=now&&showMi(sh)<=now+13&&showRelevant(sh,s)).slice(0,5),past=SHOWS.filter(sh=>s.shows&&s.shows[sh.id]&&s.shows[sh.id].done).slice(-3).reverse();
   if(!up.length&&!past.length)return '';

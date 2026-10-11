@@ -2,7 +2,7 @@
 const RV={CAMH:2.7,BACK:5.6,CAMD:1.15,DRAW:190,HOR:0.36};
 const angWrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
 // 3D (WebGL2), если телефон умеет; иначе — прежняя псевдо-3D картинка
-function setupRender(){try{rMusUI();}catch(_){}
+function setupRender(){try{rMusUI();rNavUI();}catch(_){}
   R.gl=false;setupRender2d(false);
   if(r3dWanted()){let ok=false;try{ok=g3Init(document.getElementById('rgl'));}catch(e){ok=false;}
     if(ok){
@@ -234,6 +234,10 @@ document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me)racer
 // Кнопка сервиса: машина остановится, механик сменит шины, дольёт бензин и подтянет поломки
 document.getElementById('rSvc').addEventListener('click',()=>{const m=R&&R.me;if(!m||R.mode!=='drive'||m.dnf||m.fin!==null||m.svc||m.pitT>0)return;m.svc=1;rMsg('ОСТАНАВЛИВАЕМСЯ',1);});
 document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
+// 0.31: механик — читает всю легенду, только опасное или молчит
+document.getElementById('rNavB').addEventListener('click',()=>{const m=legMode(),nx=m==='full'?'danger':m==='danger'?'off':'full';AU.on.nav=nx;try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}
+  rNavUI();toast(nx==='full'?'🗣 Механик читает всю легенду трассы':nx==='danger'?'🗣 Механик — только опасные повороты':'🗣 Механик молчит');if(nx==='off')try{navStopVoice();}catch(_){}});
+function rNavUI(){const b=document.getElementById('rNavB');if(!b)return;const m=legMode();b.textContent=m==='full'?'🗣':m==='danger'?'🗣!':'🗣✕';b.title=b.ariaLabel=m==='full'?'Механик читает всю легенду':m==='danger'?'Механик: только опасное':'Механик молчит';b.classList.toggle('off',m==='off');b.hidden=!(R&&R.me&&R.me.mech&&R.mode==='drive');}
 function rMusUI(){const b=document.getElementById('rMus');if(b){b.textContent=AU.on.race?'♪ вкл':'♪ выкл';b.classList.toggle('off',!AU.on.race);}}
 document.getElementById('rCam').addEventListener('click',()=>{if(!R)return;if(R.mode==='drive'){if(R.gl){R3.view=((R3.view||0)+1)%4;rMsg(['ВИД СЗАДИ','ВИД СВЕРХУ','ИЗ КАБИНЫ','КИНОХРОНИКА'][R3.view],1);raceOldFilm(R3.view===3);return;}const far=RV.BACK>3;RV.BACK=far?2.4:3.4;RV.CAMH=far?1.45:1.9;return;}if(R.gl)R3.cam=null;const t=R.team.filter(c=>!c.dnf);const i=t.indexOf(R.follow);R.follow=t[(i+1)%t.length]||R.follow;renderMgr();});
 // Способ руления: колесо (вести пальцем), кнопки (половинки руля), наклон телефона — по кругу
