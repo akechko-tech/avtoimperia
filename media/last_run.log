@@ -1,4 +1,5 @@
 == job voice5
 voice5 redo 0
-voice5 done 0 new lines; total 2920 v5 2920
-== job voice5 took 12 s
+voice5 25 lines 3 s
+voice5 done 41 new lines; total 2944 v5 2944
+== job voice5 took 17 s
