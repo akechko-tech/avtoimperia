@@ -19,7 +19,7 @@ newGame('renault','fr','T','normal');G.cash=1e6;let fails=0;const ok=(c,m)=>{con
 const keys=${JSON.stringify(process.argv.slice(2))};
 const RUN=keys.length?keys:['pm1903-1903','monaco-1929','indy-1911','x87575-1908','semmering-1905','lemans-1925','targa-1906','brighton-1896'];
 RUN.forEach(key=>{const rc=RACES.find(r=>r.key===key);if(!rc){console.log('нет гонки',key);return;}G.y=rc.y;
-  const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+  const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});const me=R.me;me.player=false;R.follow=me;
   AMB.buf={};IDS.forEach(id=>AMB.buf[id]={duration:id==='rooster'?4:id==='bugle'?8:id==='dog_bark'?14:30,length:1,sampleRate:44100,numberOfChannels:1});
   NOW=0;SH=[];ANNS=[];HORN=[];WH=[];ambStart();const E=AMB.E,T=R.trk;

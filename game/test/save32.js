@@ -14,17 +14,19 @@ sv.models.forEach(m=>{delete m.dv;});if(sv.rd){delete sv.rd.flaw;delete sv.rd.xt
 G=migrate(sv)||sv;ok(G.lines&&G.lines.car&&!G.lines.moto&&G.mcomps&&G.mcomps.fr&&G.mcomps.fr.length===MCOMPS.fr.length,'сохранение '+dstr(G)+' открыто: линейка — автомобили, мотомарки дописаны');
 ok(views(),'все вкладки рисуются после загрузки');
 play(36,'old');ok(errs===0,'три года после загрузки — без ошибок ('+dstr(G)+')');
-ok(!motoVis(G)&&!G.models.some(isMoto),'мотоциклы скрыты, пока мотоцех не построен');
+ok(!motoVis(G)&&!G.models.some(isMoto),'мотоциклов нет, пока нет оборудования для них');
 // 2) та же марка строит мотоцех и делает мотоцикл
-G.cash+=50000;ok(mshopStart(G),'мотоцех заложен');play(4,'mshop');ok(lineOn(G,'moto')&&G.mcap>0,'мотоцех готов: '+Math.round(mcapUnits(G))+' мотоциклов в месяц');
-G.ui.line='moto';ok(views(),'вкладки с фильтром «Мото» рисуются');
-openDesigner();ok(draft&&isMoto(draft),'конструктор открылся с мотоциклом');const md={...draft,eq:[]};
+G.cash+=50000;const cap0=G.cap;ok(mshopStart(G),'оборудование для мотоциклов заказано');play(4,'mshop');ok(lineOn(G,'moto')&&G.mcap===undefined&&G.cap>=cap0,'оборудование стоит, завод один: '+Math.round(mcapUnits(G))+' мотоциклов в месяц, если делать только их');
+G.ui.line='moto';ok(views(),'вкладки с мотоциклами рядом с машинами рисуются');
+openDesigner('moto');ok(draft&&isMoto(draft),'конструктор: класс «Мотоцикл» рядом с машинами');const md={...draft,eq:[]};
 G.models.push({...md,id:G.nextId++,name:'Мото-1',price:Math.round(refPrice(md,G)/10)*10,plan:'auto',status:'prod',devLeft:0,launched:mi(G),stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0});closeSheet();
 play(12,'moto');const L=G.last;ok(errs===0&&(motoSold(G)>0),'мотоцикл продаётся: за год '+fmtN(motoSold(G))+' шт., машины — '+fmtN(L.sold)+' в месяц');
 ok(totalSold(G)>0&&totalSold(G)===G.models.reduce((a,m)=>a+(isMoto(m)?0:m.totalSold),0)+(G.milTotal||0),'«продано машин» — без мотоциклов');
 // 3) мотомастерская: сохранить — загрузить
 newMotoGame('custom','uk','Мото','normal','М1');play(18,'ms');const js=JSON.stringify(G);G=migrate(JSON.parse(js));
-ok(G.motoStart&&lineOn(G,'moto')&&!lineOn(G,'car'),'мотомастерская '+dstr(G)+' сохранена и загружена: автомобильного цеха нет');
+ok(G.motoStart&&lineOn(G,'moto')&&!lineOn(G,'car')&&G.cap>0,'мотомастерская '+dstr(G)+' сохранена и загружена: оборудования для автомобилей нет, мест в цехах '+G.cap.toFixed(1));
+// 0.33: сохранение 0.32 с отдельным мотоцехом — его места переходят в общий завод
+{const o=JSON.parse(js);o.mcap=2.5;o.cap=0;o.mcapBuild=[{units:0.5,left:2,t:3}];const g2=migrate(o)||o;ok(g2.mcap===undefined&&Math.abs(g2.cap-2.5)<1e-9&&(g2.capBuild||[]).some(b=>b.units>=1),'сохранение 0.32: мотоцех (2,5 места) → общий завод '+g2.cap+', его стройка → общая');}
 G.ui.line='car';ok(views(),'вкладки «Авто» у мастерской без автомобиля рисуются');play(12,'ms2');ok(errs===0,'год после загрузки — без ошибок');
 console.log(fails||errs?'ОШИБОК: '+(fails+errs):'всё в порядке');if(fails||errs)process.exitCode=1;
 `);

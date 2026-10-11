@@ -294,6 +294,7 @@ function carModel(S){
     else [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>P.push([c[0]+(u[0]*a*w+v[0]*b*h)/2,c[1]+(u[1]*a*w+v[1]*b*h)/2,c[2]+(u[2]*a*w+v[2]*b*h)/2]));
     const f=mFace(M,P,'#f2efe6','paint',[c[0]-nrm[0],c[1]-nrm[1],c[2]-nrm[2]]);f.deco=numDeco(S.num,c,u,v,h*0.62);};
   // ================= облики =================
+  if(st==='moto'){wt='wire';motoModel3(M,S,K,{WH,tube,plate,headlamp,crew,hi});return M;}   // 0.33: мотоцикл — 46d-moto3d.js
   const hk=S.hp===undefined?0:([-0.1,-0.05,0,0.1,0.22,0.36][S.hp]||0),strip=!!S.strip,lux=K.lux;
   const r0=y<1901?0.46:y<1906?0.44:y<1914?0.42:y<1922?0.39:0.355,tw0=y<1906?0.08:y<1914?0.095:y<1922?0.11:0.14;
   let len=[-1.6,1.6],track=1.38;

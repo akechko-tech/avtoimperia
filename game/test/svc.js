@@ -5,7 +5,7 @@ SCN_OFF=true;
 Math.random=(()=>{let a=7;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};auRaceTick=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const md=G.models[0];
-function start(pred){const rc=RACES.find(pred);{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+function start(pred){const rc=RACES.find(pred);{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});R.cars=[R.me];R.t=0.01;R.hz0=0;R.me.punctRate=0;return rc;}
 function drive(sec,keys,every){const me=R.me,dt=1/60;let out=[];for(let f=0;f<sec*60&&R&&!R.done;f++){const k=keys?keys(f*dt):{};rKeys.gas=k.gas!==undefined?k.gas:true;rKeys.brake=!!k.b;rKeys.left=!!k.l;rKeys.right=!!k.r;
   R.t+=dt;R.time+=dt;playerControl(me,dt);raceTick(dt);if(every&&f%Math.round(every*60)===0)out.push(Math.round(me.vx*3.6));}return out;}

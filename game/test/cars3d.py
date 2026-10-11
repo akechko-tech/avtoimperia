@@ -10,7 +10,7 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
     pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     for key in keys:
-        pg.evaluate("""([k,prep,body])=>{localStorage.setItem('avt-tips3d','9');const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=body||lastOf(BODIES,rc.y,x=>!x.truck).id;md.paint='#b8322a';
+        pg.evaluate("""([k,prep,body])=>{localStorage.setItem('avt-tips3d','9');const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=body||lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;md.paint='#b8322a';
           startRace({rc,mode:'drive',entries:[{drv:'me',md,prep,tyre:'soft',gear:0}]});R.me.player=false;R.t=0.01;R3.view=3;window.__frz=1;const o=raceTick;window.raceTick=function(dt){if(window.__frz)return;o(dt);};}""",[key,prep,body])
         for i,a in enumerate(angs):
             pg.evaluate(f"R3.orbA={a};R3.cam=null;");pg.wait_for_timeout(1300)

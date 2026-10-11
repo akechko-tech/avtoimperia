@@ -26,7 +26,7 @@ for(let i=0;i<14*12&&!s.over;i++){let g=0;while(s.pending.length&&g++<50){const 
   if(prof&&s.rd.lvl<CARSHOP.kb&&s.cash>rdUpCost(s)*2.5){s.cash-=rdUpCost(s);s.rd.lvl++;}
   if(carShopCan(s)){carShopStart(s);shopY=s.y;}
   {const lost=act.reduce((a,m)=>a+(isMoto(m)?m.lostS||0:0),0),sold=act.reduce((a,m)=>a+(isMoto(m)?m.lastSold||0:0),0);s._lc=lost>Math.max(1,sold*0.1)?(s._lc||0)+1:0;
-    if(prof&&s._lc>=2&&lineOn(s,'moto')&&!(s.mcapBuild||[]).length){const n=Math.max(0.5,(s.mcap||1)*0.5);if(s.cash>n*capUnitCost(s)*3){mcapOrder(s,n,true);s._lc=0;}}}
+    if(prof&&s._lc>=2&&!(s.capBuild||[]).length){const n=Math.max(1,Math.round((s.cap||1)*0.5));if(s.cash>n*capUnitCost(s)*3){capOrder(s,n,true);s._lc=0;}}}
   if(L&&!(s.whBuild||[]).length&&whStock(s)>whCap(s)*0.8&&s.cash>whUnitCost(s)*10)whOrder(s,Math.max(5,Math.round(whCap(s)*0.5)),true);
   {const lost=L&&(L.mk[s.country]||{}).lostDlr||0;if(lost>0.5){const n=dealersShort(s,s.country);if(n>0&&s.cash>n*dealerCost(s)*3)buyDealers(s,s.country,n);}}
   // дома мотоциклов совсем мало — импортёр во Франции, главном рынке мотоциклов

@@ -5,7 +5,7 @@ setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};newGame('r
 // 0.18: удар о дом может закончиться сходом — здесь проверяем только, что корпус не заходит в препятствие
 crashResolve=c=>{c.crash=null;};
 function trial(key,kinds,ang,v0){
-  const rc=RACES.find(r=>r.key===key);const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+  const rc=RACES.find(r=>r.key===key);const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});const T=R.trk,me=R.me;R.cars=[me];R.t=0.01;me.relK=1;R.hz0=0;me.punctRate=0;
   const obs=T.col.filter(o=>kinds.includes(o.kind));if(!obs.length)return console.log(key,kinds.join('/'),'нет таких препятствий');
   let worst=0,hits=0,tested=0;

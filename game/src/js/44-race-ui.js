@@ -1,7 +1,9 @@
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
   const r=s.cres&&s.cres[rc.key],mine=s.raceDone[rc.key];
-  if(mine>0)return [`${mine}-е место`,mine===1?'good':mine<=3?'warn':'muted',false];
+  // 0.33: ехали только мотоциклы — место в классе мотоциклов
+  const ml=mine!==undefined&&(s.raceLog||[]).some(x=>x.key===rc.key&&x.cls==='moto')&&!(s.raceLog||[]).some(x=>x.key===rc.key&&!x.cls);
+  if(mine>0)return [`${ml?'🏍 ':''}${mine}-е место${ml?' в классе':''}`,mine===1?'good':mine<=3?'warn':'muted',false];
   if(mine===-1)return ['Сход','bad',false];
   if(r&&r.x)return ['Отменена: война','bad',false];
   if(r)return ['Прошла без вас','muted',false];
@@ -24,11 +26,12 @@ function champBlock(s,id,y){
 }
 function shortRace(r){return r.name.replace(/^(Гран-при|Кубок|Гонка)\s+/,'').split(/[(:—]/)[0].trim().slice(0,22);}
 function raceItem(rc,s){
-  const [st,tone,open]=raceStatus(rc,s),r=s.cres&&s.cres[rc.key],C=s.chal,tags=raceChamps(rc).map(id=>CHAMPS[id].short).concat(GBC_IDS.includes(rc.id)?['Кубок наций']:[],C&&C.acc&&C.type==='race'&&C.rk===rc.key?['⚔️ Вызов: '+C.mq]:[]);
+  const [st,tone,open]=raceStatus(rc,s),r=s.cres&&s.cres[rc.key],C=s.chal,tags=raceChamps(rc).map(id=>CHAMPS[id].short).concat(GBC_IDS.includes(rc.id)?['Кубок наций']:[],C&&C.acc&&C.type==='race'&&C.rk===rc.key?['⚔️ Вызов: '+C.mq]:[],raceMoto(rc)?['🏍 и мотоциклы — свой зачёт']:[]);
   return `<div class="race-item" id="rc-${esc(rc.key)}"><div class="row"><div><span class="mo">${MONTHS[rc.m]} · ${hostName(rc.c)} · ${RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км</span><h3 style="margin-top:2px">${esc(rc.name)}${rc.major?' <span class="star" title="Большая гонка">★</span>':''}</h3></div><span class="pill ${tone}">${st}</span></div>
     ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
     ${r&&r.w&&!r.x?`<p class="small ${r.w===s.company?'good':'muted'}" style="margin-top:4px">Победа: ${esc(r.w)}${r.d?` (${esc(r.d)})`:''}${r.pv?' · частник':''}</p>`:`<p class="small muted" style="margin-top:4px">Приз ${money(racePrize(rc))} · взнос ${money(raceFee(rc))} с машины</p>`}
-    ${open?`<div class="btns" style="margin-top:8px"><button class="btn primary" data-act="raceSetup" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Заявить команду</button>${(()=>{let M=null;try{M=managerPlan(s,rc);}catch(e){console.warn('mgr',e);}return M?`<button class="btn" data-act="raceQuick" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Участвовать · ${money(M.cost)}<small>${M.entries.length} ${plural(M.entries.length,'машина','машины','машин')} · шанс победы ≈${Math.max(1,Math.round(M.O.win*100))}% · приз ${money(racePrize(rc))}</small></button>`:`<button class="btn" disabled>Участвовать<small>${raceCarsFor(s).length?'не хватает денег':'нет машин'}</small></button>`;})()}</div>`:''}</div>`;
+    ${open?`<div class="btns" style="margin-top:8px"><button class="btn primary" data-act="raceSetup" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Заявить команду</button>${(()=>{let M=null;try{M=managerPlan(s,rc);}catch(e){console.warn('mgr',e);}const mo=M&&M.entries.length&&M.entries.every(e=>{const m=s.models.find(x=>x.id===e.car);return m&&isMoto(m);}),n=M?M.entries.length:0;
+      return M?`<button class="btn" data-act="raceQuick" data-k="${rc.key}" ${s.pending.length?'disabled':''}>Участвовать · ${money(M.cost)}<small>${n} ${mo?plural(n,'мотоцикл','мотоцикла','мотоциклов'):plural(n,'машина','машины','машин')} · шанс победы${mo?' в классе':''} ≈${Math.max(1,Math.round(M.O.win*100))}% · приз ${money(Math.round(racePrize(rc)*(mo?0.3:1)/10)*10)}</small></button>`:`<button class="btn" disabled>Участвовать<small>${raceCarsFor(s,rc).length?'не хватает денег':s.models.some(m=>m.status==='prod')?'мотоциклы здесь не едут':'нет машин'}</small></button>`;})()}</div>`:''}</div>`;
 }
 let TEAM_FREE=false;
 function teamCard(s){

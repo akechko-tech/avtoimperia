@@ -11,7 +11,7 @@ ok(tyreGripK(0.9)<0.8,'красная: сцепление обрывается (
 ok(tyrePhase(0.3)===0&&tyrePhase(0.6)===1&&tyrePhase(0.85)===2,'фазы: зелёная до 50%, жёлтая до 80%, красная дальше');
 // 2) стиль езды: ровно против «тормоз-газ» на той же прямой
 const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:1906,key:'tyre-test',terr:'macadam'});
-const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
 function setup(){startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});const me=R.me;R.cars=[me];R.t=3;me.vx=0;me.gear=1;me.lat=0;
   const p=R.trk.pts[20],t=R.trk.T[20];me.idx=20;me.x=p[0];me.z=p[2];me.yaw=Math.atan2(t[0],t[1]);me.punctRate=0;me.tyre=0;R.hz0=0;return me;}
 function drive(me,fn,T){const dt=1/60;let d0=me.prog;for(let f=0;f<T*60;f++){const k=fn(f*dt,me);rKeys.left=!!k.left;rKeys.right=!!k.right;rKeys.gas=!!k.gas;rKeys.brake=!!k.brake;R.t+=dt;R.time+=dt;playerControl(me,dt);raceTick(dt);if(!R)break;}return me.prog-d0;}

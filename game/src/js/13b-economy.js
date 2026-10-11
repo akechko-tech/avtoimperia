@@ -64,12 +64,12 @@ function dTP(s,c){return (DPOL[s&&s.dpol]||DPOL.std).tp;}
 /* ---------- качество и скандалы ---------- */
 // Дешёвые детали, мотор мощнее рамы, нет контроля качества, низкая зарплата — машины ломаются, пишут газеты
 function qualityRisk(md,s){const C=classCompare(md,s),rel=C.by.rel||1;let b=0;
-  if(rel<0.9)b+=(0.9-rel)*6;if(overpower(md))b+=1.2;if(!techLv(s,'qc'))b+=s.y>=1905?0.5:0.2;if(s.wagePol==='low')b+=0.35;if(s.y>=1920&&techLv(s,'qc')<2)b+=0.2;b+=4*(1-teethK(md,s.y)*dvRel(md));return b;}
+  if(rel<0.9)b+=(0.9-rel)*6;if(overpower(md))b+=1.2;if(!techLv(s,'qc'))b+=s.y>=1905?0.5:0.2;if(s.wagePol==='low')b+=0.35;if(s.y>=1920&&techLv(s,'qc')<2)b+=0.2;b+=1.2*(dvFail(md)-1);return b;}
 function qualityMonth(s){if(DIF().simple)return;const k=DIF().scandal??1;if(!k||s.pending.length)return;
   s.models.filter(m=>m.status==='prod'&&(m.lastSold||0)>=5).forEach(md=>{if(s.pending.length)return;const b=qualityRisk(md,s);if(b<=0.4)return;
     if((md.scandalAt??-99)>mi(s)-24)return;const p=0.0035*b*k*Math.min(3,Math.log10(1+md.lastSold));if(Math.random()>p)return;
     md.scandalAt=mi(s);const sold=Math.round((md.lastSold||0)*12),cost=Math.round(sold*0.04*md.price*0.5/100)*100,why=[];
-    const C=classCompare(md,s);if((C.by.rel||1)<0.9)why.push('дешёвые детали ломаются');if(overpower(md))why.push('рама не держит мотор');if(!techLv(s,'qc'))why.push('на заводе нет контроля качества');if(s.wagePol==='low')why.push('рабочие меняются каждый месяц');if(teethK(md,s.y)*dvRel(md)<0.93)why.push('новинки в машине ещё не обкатаны');
+    const C=classCompare(md,s);if((C.by.rel||1)<0.9)why.push('дешёвые детали ломаются');if(overpower(md))why.push('рама не держит мотор');if(!techLv(s,'qc'))why.push('на заводе нет контроля качества');if(s.wagePol==='low')why.push('рабочие меняются каждый месяц');if(dvFail(md)>1.3)why.push('новинки вышли не по ТЗ и ещё не доведены');
     s.scandalMd=md.id;
     pushEvent({kicker:'Скандал',title:`Покупатели жалуются на «${md.name}»`,deck:why.join(', ')||'Поломки одна за другой',
       text:`Газеты печатают письма владельцев «${md.name}»: ${why.join(', ')||'машины ломаются'}. Клубы автомобилистов советуют не покупать.\nМожно отозвать машины и починить за свой счёт — около ${money(cost)}: репутация пострадает меньше, покупатели вернутся быстрее. Можно отрицать — дешевле сейчас, но газеты не забудут, и спрос упадёт надолго.`,

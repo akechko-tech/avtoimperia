@@ -4,7 +4,7 @@ SCN_OFF=true;
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 const PK=[...RACES.filter(r=>r.y<=1912).slice(0,6),...RACES.filter(r=>r.y>1919).slice(0,4)];
 for(const rough of [true,false])for(const rc of PK){let seed=7;Math.random=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
-  G.pending=[];G.y=rc.y;G.m=rc.m;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+  G.pending=[];G.y=rc.y;G.m=rc.m;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});const me=R.me;me.player=false;R.t=0;if(!rough)R.trk.rg=null;
   const G2=R.trk.rg,RR=R,TR=R.trk;const dt=1/60;let f=0;while(R&&!R.done&&f<60*400){f++;R.time+=dt;R.t+=dt;raceTick(dt);}
   const cars=RR.cars,hits=cars.reduce((a,c)=>a+(c.potN||0),0);

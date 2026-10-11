@@ -71,6 +71,11 @@ const RACE_IMG={pbp:'Paris–Bordeaux–Paris',chicago:'Chicago Times-Herald rac
   acerbo1924:'Coppa Acerbo',bgp1926:'1926 British Grand Prix',daytona1927:'Sunbeam 1000 hp',brighton:'London to Brighton Veteran Car Run',turbie:'La Turbie hillclimb',ventoux:'Mont Ventoux Hill Climb',semmering:'Semmering',shelsley:'Shelsley Walsh Speed Hill Climb',ardennes:'Circuit des Ardennes',ormond:'Ormond Beach, Florida',santamonica:'Santa Monica Road Race',elgin:'Elgin National Road Races',alpen:'Austrian Alpine Trial',acerbo:'Coppa Acerbo',spa24:'Spa 24 Hours',jcc200:'JCC 200 Mile Race',eifel:'Eifelrennen',klausen:'Klausen Pass',
   gpacf:'1906 French Grand Prix',vanderbilt:'Vanderbilt Cup',tt:'RAC Tourist Trophy',herkomer:'Herkomer Trophy',henry:'Prince Henry Tour',glidden:'Glidden Tour',targa:'Targa Florio',brooklands:'Brooklands',indy:'1911 Indianapolis 500',itgp:'Italian Grand Prix',lemans:'1923 24 Hours of Le Mans',degp:'Nürburgring',mille:'Mille Miglia'};
 const RACES=[];
+// 0.33: гонки, где по истории вместе с машинами ехали мотоциклы и трициклы — со своим зачётом: городские гонки 1896–1903 годов
+// (Париж — Марсель, Париж — Амстердам, Тур де Франс, Париж — Берлин, Париж — Вена, Париж — Мадрид), «Пробег эмансипации»,
+// подъёмы в гору (Ла-Тюрби, Мон-Ванту, Земмеринг, Клаузен) и скоростная неделя на пляже Ормонд-Бич
+const MOTO_RACE={pmp:1,brighton:1,pap:1,tdf:1,pb1901:1,pv1902:1,pm1903:1,turbie:1,ventoux:1,semmering:1,ormond:1,klausen:1};
+function raceMoto(rc){return !!(rc&&!rc.match&&!rc.dx&&MOTO_RACE[rc.id]);}
 [...RACE_DEFS,...RACE_MORE].forEach(r=>RACES.push({...r,key:r.id+'-'+r.y}));
 RACE_REC.forEach(r=>r.years.forEach((y,i)=>RACES.push({id:r.id,key:r.id+'-'+y,y,m:(r.mo&&r.mo[y]!==undefined)?r.mo[y]:r.m,c:r.c,t:r.t,km:r.km,track:r.track,crowd:r.crowd,name:r.name+(i?'':' '),win:i===0?r.win1:null,hist:i===0?r.hist1:r.hist,first:i===0})));
 RACES.forEach(r=>{r.name=r.name.trim();r.img=RACE_IMG[r.id]||'';if(!r.first&&RACE_REC.some(x=>x.id===r.id))r.img={gpacf:'French Grand Prix',indy:'Indianapolis 500',lemans:'24 Hours of Le Mans'}[r.id]||r.img;});

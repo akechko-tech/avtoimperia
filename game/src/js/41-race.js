@@ -358,6 +358,9 @@ function mkRaceCar(e,y,trk){
   c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.crr0=st.crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
   c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.25:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
   c.L=L;c.a=L*0.46;c.b=L*0.54;c.h=st.cg;c.Iz=m*(L*L+1.9)/12*1.4;
+  // 0.33: мотоцикл — свой зачёт и узкий корпус (обгоняет по краю дороги, в столкновении — меньше места)
+  c.cls=isMoto(e.md)?'moto':'car';c.rad=CAR_R;
+  if(c.cls==='moto'){const pb=parts(e.md);c.rad=(pb.b.seats||1)>1?0.62:pb.c.id==='mf1'&&y<1902?0.5:0.42;c.Iz=m*(L*L+0.3)/12*1.2;}   // коляска и трицикл — шире одиночки
   return c;
 }
 function trackLocal(trk,c){
@@ -566,7 +569,7 @@ function carFailure(c){
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 // Машины — капсулы: сталкиваются корпусами (нос в корму тоже), удар в угол разворачивает
 function carsCollide(A,B){if(A.ghostT>0||B.ghostT>0)return 0;const dx0=A.x-B.x,dz0=A.z-B.z;if(dx0*dx0+dz0*dz0>26)return 0;
-  const S=carCapsule(A),Q=carCapsule(B),[px,pz,qx,qz]=segSeg(S,Q),ddx=px-qx,ddz=pz-qz,d=Math.hypot(ddx,ddz),rr=CAR_R*2;if(d>=rr)return 0;
+  const S=carCapsule(A),Q=carCapsule(B),[px,pz,qx,qz]=segSeg(S,Q),ddx=px-qx,ddz=pz-qz,d=Math.hypot(ddx,ddz),rr=(A.rad||CAR_R)+(B.rad||CAR_R);if(d>=rr)return 0;
   const l0=Math.hypot(dx0,dz0)||1,nx=d>1e-4?ddx/d:dx0/l0,nz=d>1e-4?ddz/d:dz0/l0,push=(rr-d)/2;A.x+=nx*push;A.z+=nz*push;B.x-=nx*push;B.z-=nz*push;
   const V=c=>[Math.sin(c.yaw)*c.vx+Math.cos(c.yaw)*c.vy,Math.cos(c.yaw)*c.vx-Math.sin(c.yaw)*c.vy];
   const va=V(A),vb=V(B),rel=(va[0]-vb[0])*nx+(va[1]-vb[1])*nz;if(rel>=0)return 0;
@@ -764,8 +767,19 @@ function raceField(rc,s,nTeam,taken){
     const boost=teamBoost(t,rc)*DIF().race;
     out.push({you:false,name:t.n,label:t.n,drvName:d.n,drvId:d.id||null,sk:d.sk||0.75,md,prep:aiPrep(rc),tyre:Math.random()<0.5?'soft':'hard',gear:0,color:y>=1903?(t.c==='intl'||!COUNTRIES[t.c]?'#F28C00':COUNTRIES[t.c].race):['#2b2320','#3a2a1c','#1f2b3a','#4a1f1a'][i%4],pw:Math.pow(t.str,1.6)*boost,relK:Math.pow(t.str,0.6),tc:t.c});
   });
-  return out.concat(privField(rc,s,used,nPriv));
+  return out.concat(privField(rc,s,used,nPriv)).concat(motoField(rc,s));
 }
+// 0.33: мотоциклы в гонках с их зачётом: заводские мотоциклы марок эпохи (страна гонки, затем Франция и другие) —
+// самый сильный мотор, который выдержит рама, лучшие передача, тормоз и шины своего года; гонщики — местные любители
+function aiMotoMd(y){const E=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp-a.hp),C=CHASSIS.filter(x=>x.moto&&x.y<=y);
+  const eng=E.find(x=>C.some(c=>c.max>=x.hp))||E[E.length-1],c=C.filter(x=>x.max>=eng.hp).sort((a,b)=>a.kg-b.kg)[0]||C[C.length-1];
+  const g=GEARBOX.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.eff-a.eff)[0],k=BRAKES.filter(x=>x.moto&&x.y<=y).pop(),w=TYRES.filter(x=>x.moto&&x.y<=y).pop();
+  return {e:eng.id,g:g.id,c:c.id,k:k.id,b:'mb0',w:w.id,t:'t0',paint:'#333',made:0,ai:1};}
+function motoField(rc,s){if(!raceMoto(rc)||!ENGINES.some(x=>x.moto&&x.y<=rc.y))return [];const y=rc.y,host=COUNTRIES[rc.c]?rc.c:'fr',ss={y,m:6},L=[];
+  [host,'fr','uk','de','us','it'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(compVol(cp,ss)>0&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
+  const n=Math.min(L.length,['hill','sprint'].includes(rc.t)?3:4),names=AMATEUR[host]||AMATEUR.fr,md=aiMotoMd(y);
+  return L.slice(0,n).map((o,i)=>{const nm=compName(o.cp,ss),col=['#3a2a1c','#1f2b3a','#7a1f1a','#2b3a24'][i%4];return {you:false,spec:1,cls:'moto',name:nm,label:nm+(y<1902?' · трицикл':' · мотоцикл'),drvName:names[0]+' '+names[1+((i*3+y)%(names.length-1))],drvId:null,sk:0.72+0.05*((i+y)%3),md:{...md,name:nm,paint:col},prep:2,tyre:'soft',gear:0,
+    color:col,pw:DIF().race,relK:1,tc:o.c};});}
 /* ---------- частники: любители на купленных машинах ---------- */
 // Регламент эпохи: Кубок Гордона Беннетта — только сборные стран, Гран-при до 1925 года — только заводы.
 // В открытых гонках по дорогам, в горах, марафонах, на выносливость и в клубных гонках едут и любители — в том числе на ваших машинах.
@@ -958,7 +972,9 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||''}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,cls:c.cls||'car',name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||''}));
+  // 0.33: совместная гонка — у автомобилей и мотоциклов свои зачёты: места считаются внутри класса
+  {const pc={};res.forEach(r=>{pc[r.cls]=(pc[r.cls]||0)+1;r.pos=pc[r.cls];});}
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
   const mode=R.mode,info={len:T.raceLen,quit:!!quit},dxo=R.dx?dxOutcome():null;R=null;
   if(rc.dx){dxAfterRace(rc,dxo,quit);return;}

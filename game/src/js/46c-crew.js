@@ -91,7 +91,7 @@ function mCrew3(M,x,seatY,z,kit,mech,S,hand){
   else{mHelmet(M,x,hy-0.02,hz,kit.hat,hi,1);mGoggles(M,x,hy-0.02,hz,L.goggleUp,hi,1);}
   // руки: плечо — локоть — кисть в краге (у пилота — на руле, у механика — одна на борту, другая на поручне)
   const sy=y0+0.55,sz=z-0.05;[-1,1].forEach(sd=>{const sx=x+sd*0.2;
-    const h=mech?(sd>0?[x+sd*0.3,seatY+0.3,z+0.1]:[x+sd*0.24,seatY+0.58,z+0.18]):[x+sd*0.14,hand[1],hand[2]];
+    const h=mech?(sd>0?[x+sd*0.3,seatY+0.3,z+0.1]:[x+sd*0.24,seatY+0.58,z+0.18]):[x+sd*(hand[3]||0.14),hand[1],hand[2]];
     const el=[(sx+h[0])/2+sd*0.07,(sy+h[1])/2-0.13,(sz+h[2])/2-0.04],wr=[h[0]+(el[0]-h[0])*0.22,h[1]+(el[1]-h[1])*0.22,h[2]+(el[2]-h[2])*0.22];
     mTube(M,[[sx,sy+0.02,sz],[sx+(el[0]-sx)*0.5,sy+(el[1]-sy)*0.5,sz+(el[2]-sz)*0.5],el,wr],[0.056,0.05,0.045,0.043],hi?8:3,coat,'cloth');
     // крага и кисть

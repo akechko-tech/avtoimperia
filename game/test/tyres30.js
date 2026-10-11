@@ -4,13 +4,14 @@ SCN_OFF=true;Math.random=(()=>{let a=11;return()=>{a=(a*16807)%2147483647;return
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};newGame('renault','fr','T','normal');G.cash=1e6;
 let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
 const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:1908,key:'tyre30',terr:'macadam'});
-const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
 function setup(){startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});const me=R.me;R.cars=[me];R.t=3;me.vx=0;me.gear=1;me.lat=0;
   const p=R.trk.pts[20],t=R.trk.T[20];me.idx=20;me.x=p[0];me.z=p[2];me.yaw=Math.atan2(t[0],t[1]);me.punctRate=0;R.hz0=0;return me;}
 function drive(me,fn,T){const dt=1/60;let d0=me.prog;for(let f=0;f<T*60;f++){const k=fn(f*dt,me);rKeys.left=!!k.left;rKeys.right=!!k.right;rKeys.gas=!!k.gas;rKeys.brake=!!k.brake;R.t+=dt;R.time+=dt;playerControl(me,dt);raceTick(dt);if(!R)break;}return me.prog-d0;}
 const end=()=>{finishRace(true);closeSheet();closePaper();G.pending=[];};
 // 1) у каждой шины свой износ: на газу с пробуксовкой задние стираются быстрее передних
 {const me=setup();ok(Array.isArray(me.tw)&&me.tw.length===4&&me.tq.every(q=>q>0.85&&q<1.13),'четыре шины, у каждой своя стойкость: '+me.tq.map(q=>q.toFixed(2)).join(' '));
+ me.tq=[1,1,1,1];   // 0.33: стойкость шин случайна (±13%) — для сравнения осей уравниваем (иначе тест зависит от очереди случайных чисел)
  drive(me,()=>({gas:1}),12);const f=(me.tw[0]+me.tw[1])/2,r=(me.tw[2]+me.tw[3])/2;ok(r>f,'разгон: задние (ведущие) '+r.toFixed(2)+'% > передние '+f.toFixed(2)+'%');
  ok(me.tyre===Math.max(...me.tw),'«шина» машины — самая стёртая из четырёх');end();}
 // 2) змейка вправо-влево неравномерна: в правом повороте нагружены левые — проверим одной стороной

@@ -9,7 +9,7 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
     pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     # гонка, и сразу — машина за 36 м до сцены (мир строится вокруг неё)
-    info=pg.evaluate("""([rid,st,drive,yaw])=>{const rc0=RACES.find(r=>r.id===rid||r.key===rid);const rc=Object.assign({},rc0,{key:rc0.key||rc0.id});G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+    info=pg.evaluate("""([rid,st,drive,yaw])=>{const rc0=RACES.find(r=>r.id===rid||r.key===rid);const rc=Object.assign({},rc0,{key:rc0.key||rc0.id});G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
       startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});R.me.player=false;R.follow=R.me;
       const T=R.trk,e=(T.evx||[]).find(x=>x.k==='chron'&&x.st===st);if(!e)return {none:1,list:(T.evx||[]).filter(x=>x.k==='chron').map(x=>x.st)};
       const me=R.me,n=T.n,back=drive?13:9;let j=e.a-back;if(T.closed)j=((j%n)+n)%n;const pt=T.pts[j],t=T.T[j];me.idx=j;me.x=pt[0];me.z=pt[2];me.y=pt[1];me.yaw=Math.atan2(t[0],t[1]);me.lat=0;me.vy=0;me.r=0;trackLocal(T,me);

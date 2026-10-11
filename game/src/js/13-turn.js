@@ -15,7 +15,7 @@ function step(){
     // 0.32: незрелые детали могли выйти не по ТЗ
     try{const dv=devRoll(s,md);if(dv.length)devNews(s,md,dv);}catch(e){console.warn('dev',e);}}}});
   s.capBuild=(s.capBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.cap+=b.units;addLog(`Новый цех введён в строй: мощность ${fmtN(Math.round(capEff(s)))} машин в месяц.`,'good');return false;}return true;});
-  try{motoTick(s);}catch(e){console.warn('moto',e);}   // 0.32: мотоцех, его расширение, автомобильный цех «Мотомастерской»
+  try{motoTick(s);}catch(e){console.warn('moto',e);}   // 0.32–0.33: оборудование для мотоциклов и (у «Мотомастерской») для автомобилей
   s.whBuild=(s.whBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.wh=(s.wh||0)+b.units;addLog(`Новый склад готов: ${fmtN(s.wh)} мест для машин.`,'good');return false;}return true;});
   if(s.techBuild){s.techBuild.left--;if(s.techBuild.left<=0&&techCheck(s))s.techBuild.left=Math.max(1,s.techBuild.left);if(s.techBuild.left<=0){const k=s.techBuild.k;s.tech[k]=(s.tech[k]||0)+1;const lv=TECH[k].lv[s.tech[k]-1];addLog(`Внедрено: ${lv.name}.`,'good');
     if(k==='line'&&s.tech[k]===2)s.models.forEach(m=>{if(m.status==='prod')m.ramp=Math.max(m.ramp||0,3);});
@@ -41,17 +41,18 @@ function step(){
   {const stock0=act.reduce((a,m)=>a+m.stock*whW(m),0),exp=act.reduce((a,m,i)=>a+(want[i]-(m.fc||0)-(ordNeed[m.id]||0))*whW(m),0),over=stock0+exp-whCap(s);
     if(over>0){const autoW=act.reduce((a,m,i)=>a+(m.plan==='auto'?Math.max(0,want[i]-(ordNeed[m.id]||0))*whW(m):0),0);if(autoW>0){const kk=Math.max(0,1-over/autoW);r.whCut=kk<0.97;act.forEach((m,i)=>{if(m.plan==='auto'){const o=ordNeed[m.id]||0;want[i]=o+Math.round((want[i]-o)*kk);}});}}}
   const cx=act.map(complexity),hrs=act.map(md=>hoursPerCar(md,s)),hpw=hoursPerWorker(s),mo=act.map(isMoto);
-  // 0.32: два цеха — автомобильный (s.cap) и мотоциклетный (s.mcap); рабочие общие
-  const mcap=mcapEff(s),carHrs=act.filter((m,i)=>!mo[i]).map((m,i)=>hrs[act.indexOf(m)]);
-  const needCap=want.reduce((a,w,i)=>a+(mo[i]?0:w*cx[i]),0)+milCap,needM=want.reduce((a,w,i)=>a+(mo[i]?w*cx[i]:0),0);
-  const kCap=needCap>0?Math.min(1,cap/needCap):1,kCapM=needM>0?Math.min(1,mcap/needM):1;
-  const needH=want.reduce((a,w,i)=>a+w*hrs[i]*(mo[i]?kCapM:kCap),0)+milCap*kCap*(carHrs.length?carHrs.reduce((a,b)=>a+b,0)/carHrs.length:800);
+  // 0.33: завод один — машины и мотоциклы делят одни цеха (мотоцикл занимает место по своей трудоёмкости, на потоке мотоциклов —
+  // на пятую часть меньше); рабочие общие. В 0.32 был отдельный мотоцех со своей мощностью.
+  const cxU=act.map((m,i)=>mo[i]&&motoLv(s)>=2?cx[i]*MSHOP2.cx:cx[i]),carHrs=act.filter((m,i)=>!mo[i]).map(m=>hrs[act.indexOf(m)]);
+  const needCap=want.reduce((a,w,i)=>a+w*cxU[i],0)+milCap;
+  const kCap=needCap>0?Math.min(1,cap/needCap):1,kCapM=kCap;
+  const needH=want.reduce((a,w,i)=>a+w*hrs[i]*kCap,0)+milCap*kCap*(carHrs.length?carHrs.reduce((a,b)=>a+b,0)/carHrs.length:800);
   if(s.staffAuto){const target=Math.ceil(needH/hpw*1.02);let d=target-s.workers;if(d>0)d=Math.min(d,Math.max(20,Math.round(s.workers*0.5)));else if(d<0)d=Math.max(d,-Math.round(s.workers*0.3));
     if(d>0){r.hire=d*8*cpi(s);s.cash-=r.hire;}s.workers=Math.max(3,s.workers+d);}
-  const kLab=needH>0?Math.min(1,s.workers*hpw/needH):1,k=kCap*kLab,kM=kCapM*kLab;r.bneck={cap:kCap,lab:kLab,wh:!!r.whCut,load:cap>0?needCap/cap:0,mcap:kCapM,mload:mcap>0?needM/mcap:0};
-  act.forEach((md,i)=>{const kk=mo[i]?kM:k,made=Math.floor(want[i]*kk+(Math.random()<(want[i]*kk)%1?1:0));md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
+  const kLab=needH>0?Math.min(1,s.workers*hpw/needH):1,k=kCap*kLab,kM=k;r.bneck={cap:kCap,lab:kLab,wh:!!r.whCut,load:cap>0?needCap/cap:0,mcap:kCap,mload:cap>0?needCap/cap:0};
+  r.capUsed=0;act.forEach((md,i)=>{const kk=mo[i]?kM:k,made=Math.floor(want[i]*kk+(Math.random()<(want[i]*kk)%1?1:0));md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.capUsed+=made*cxU[i];if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
   // 0.24: из военного заказа машины — столько, сколько нужно армии; остальное — военная продукция (моторы, снаряды, каски): деньги те же, но это не проданные машины
-  if(milCap>0){const cars=act.filter((m,i)=>!mo[i]),mc=cars.length?cars.reduce((a,m)=>a+matCost(m,s),0)/cars.length:0,mu=Math.floor(milCap*k);if(mc>0){r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=Math.min(mu,milNeed(s));r.milX=mu-r.milN;r.made+=mu;}}
+  if(milCap>0){const cars=act.filter((m,i)=>!mo[i]),mc=cars.length?cars.reduce((a,m)=>a+matCost(m,s),0)/cars.length:0,mu=Math.floor(milCap*k);if(mc>0){r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=Math.min(mu,milNeed(s));r.milX=mu-r.milN;r.made+=mu;r.capUsed+=mu;}}
   // поставки по заказам — в первую очередь
   s.orders=(s.orders||[]).filter(o=>{const md=act.find(m=>m.id===o.md);const need=Math.ceil(o.left/Math.max(1,o.due-mi(s)));
     if(md){const n=Math.min(o.left,md.stock,need*2);if(n>0){md.stock-=n;o.left-=n;r.ord+=n*o.price;if(isMoto(md))r.mordN=(r.mordN||0)+n;else r.ordN+=n;md.totalSold+=n;md.ordSold=(md.ordSold||0)+n;}}
@@ -81,7 +82,7 @@ function step(){
     // 0.26: грузовик — кто его взял: развозка по району, по городу, между городами (для подсказки на вкладке «Модели»)
     if(isTruck(md)){const U={};for(const c in D.mk){const b=D.mk[c].byU&&D.mk[c].byU[md.id];if(b)for(const u in b)U[u]=(U[u]||0)+b[u]*creditK;}md.useD=U;}
     md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;if(mo){r.msold=(r.msold||0)+sold;r.mdemand=(r.mdemand||0)+sumD;}else{r.sold+=sold;r.demand+=sumD;}
-    r.war+=sold*defectRate(s)*md.price*0.25*(1+3*(1-teethK(md,s.y)*dvRel(md)));});
+    r.war+=sold*defectRate(s)*md.price*0.25*dvFail(md);});
   // 0.25: кредит покупателям — комиссия банкам или своя кредитная компания (13c-finance.js)
   finMonth(s,r);
   // склад переполнен: лишнее забирают перекупщики за полцены

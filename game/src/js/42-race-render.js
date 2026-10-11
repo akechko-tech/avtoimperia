@@ -156,8 +156,9 @@ function renderMgr(){const mg=document.getElementById('rMgr');if(!R||R.mode==='d
    <div class="mgr-btns">${[['push','Атака'],['norm','Темп'],['save','Беречь']].map(([k,l])=>`<button class="${F.order===k?'on':''}" data-ord="${k}">${l}</button>`).join('')}<button class="${F.pitCall?'on':''}" data-ord="pit">В боксы</button></div>
    <div class="mgr-btns">${[1,2,4].map(v=>`<button class="${R.speed===v?'on':''}" data-spd="${v}">×${v}</button>`).join('')}<button data-ord="fin">Досчитать</button></div>`;}
 function updateRaceHUD(){
-  const F=R.follow,T=R.trk,order=raceOrder(),place=order.indexOf(F)+1;
-  document.getElementById('hPos').textContent=place+'/'+R.cars.length;
+  // 0.33: место — в своём зачёте (автомобили и мотоциклы считаются отдельно)
+  const F=R.follow,T=R.trk,cl=F.cls||'car',order=raceOrder().filter(c=>(c.cls||'car')===cl),place=order.indexOf(F)+1;
+  document.getElementById('hPos').textContent=place+'/'+order.length+(cl==='moto'?' 🏍':'');
   document.getElementById('hLap').textContent=T.cfg.laps>1?Math.min(T.cfg.laps,Math.max(1,F.lap+1))+'/'+T.cfg.laps:Math.round(clamp(F.prog/T.raceLen,0,1)*100)+'%';
   // время гонщика (при раздельном старте — своё, от линии старта) и часы дня по-историческому
   const tS=R.scn&&R.scn.timed&&F?(F.wait?0:F.fin!==null?scnElapsed(F,F.fin):scnElapsed(F,R.time)):R.time,tm=Math.max(0,tS);document.getElementById('hTime').textContent=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
@@ -166,7 +167,9 @@ function updateRaceHUD(){
   const hb=document.getElementById('bHeat');hb.style.width=Math.min(100,Math.max(F.heat,F.eng||0))+'%';hb.style.background=F.heat>80?'var(--bad)':F.heat>55?'var(--warn)':'var(--good)';
   // 0.30: четыре шины — сверху передние, снизу задние; спущенная мигает, на ободе — тёмная с красной рамкой
   const tl=F.punct?0:100-Math.min(100,F.tyre),tph=F.punct?2:tyrePhase(F.tyre/100);
-  {const box=document.getElementById('bTyre4');if(box)for(let k=0;k<4;k++){const w=F.tw?F.tw[k]:F.tyre,p=F.tp?F.tp[k]:0,el=box.children[k],cls=p===2?'rim':p===1?'pn':'',ph=tyrePhase(w/100);
+  // 0.33: у мотоцикла две шины — передняя и задняя (полосы справа; левые скрыты)
+  {const box=document.getElementById('bTyre4'),mo=F.cls==='moto';if(box)for(let k=0;k<4;k++){const el=box.children[k],hide=mo&&k%2===0;if(el.style.display!==(hide?'none':''))el.style.display=hide?'none':'';if(hide)continue;
+      const w=F.tw?(mo?(F.tw[k-1]+F.tw[k])/2:F.tw[k]):F.tyre,p=F.tp?(mo?Math.max(F.tp[k-1],F.tp[k]):F.tp[k]):0,cls=p===2?'rim':p===1?'pn':'',ph=tyrePhase(w/100);
       if(el.className!==cls)el.className=cls;const b=el.firstChild;b.style.width=(p?0:100-Math.min(100,w))+'%';b.style.background=ph===2?'var(--bad)':ph===1?'var(--warn)':'var(--good)';}}
   {const tlab=document.getElementById('hTyreL'),tv='ШИНЫ · '+(F.punct?(twRimN(F)?'обод':'прокол'):Math.round(tl)+'%');if(tlab&&tlab.textContent!==tv){tlab.textContent=tv;tlab.className=tph===2?'bad':tph===1?'warn':'';}}
   const db=document.getElementById('bDmg'),dl=100-F.dmg;db.style.width=dl+'%';db.style.background=dl<40?'var(--bad)':dl<70?'var(--warn)':'var(--good)';

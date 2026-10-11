@@ -1,46 +1,50 @@
-/* ================= 0.32: МОТОЛИНЕЙКА — МОТОЦЕХ, «МОТОМАСТЕРСКАЯ», ПУТЬ К АВТОМОБИЛЮ =================
-   Мотоцикл — вторая линейка любой марки: свой цех (мотоцикл проще машины вдесятеро — места и станки другие), свои модели
-   и свои покупатели; поставщики, рабочие, дилеры, КБ и технологии завода — общие.
+/* ================= 0.32–0.33: МОТОЦИКЛЫ НА ЗАВОДЕ — ОБОРУДОВАНИЕ, «МОТОМАСТЕРСКАЯ», ПУТЬ К АВТОМОБИЛЮ =================
+   0.33 (отзыв: «не нужно два цеха — пусть это будет одна сущность»): завод один. Мотоцикл — такая же техника марки, как машина:
+   делается в тех же цехах (места занимает в 7–10 раз меньше машины), теми же рабочими, у тех же поставщиков, продаётся теми же
+   дилерами, проектируется тем же КБ. Чтобы делать мотоциклы, завод докупает оборудование: «Мотоциклетный участок» (стенды
+   для моторов, рам и колёс), позже — «Поток мотоциклов» (как у Indian в Спрингфилде в 1912 году).
    «Мотомастерская» — другой старт: январь 1899 года, малый капитал, один мотоцикл. Автомобиль — когда наберётесь опыта
-   (пять лет работы и 3000 мотоциклов), КБ станет мастерской опытных образцов и хватит денег на автомобильный цех.
+   (пять лет работы и 3000 мотоциклов), КБ станет мастерской опытных образцов и хватит денег на оборудование для автомобилей.
    Так шли Laurin & Klement (велосипеды 1895, мотоциклы 1899, первый автомобиль 1905), NSU (мотоциклы 1901, автомобиль 1906),
    Peugeot и позже BMW. */
-const MSHOP={y:1896,c:2500,mo:3,cap:1};
+// оборудование для мотоциклов: 1 — мотоциклетный участок (можно делать мотоциклы), 2 — поток мотоциклов (часов и места меньше)
+const MSHOP={y:1896,c:2500,mo:3,cap:1},MSHOP2={y:1911,c:9000,mo:4,hrs:0.7,cx:0.8,hist:[1912,'Indian (Спрингфилд)']};
+function motoLv(s){return (s&&s.lines&&+s.lines.moto)||0;}
 function motoMade(s){return (s.models||[]).reduce((a,m)=>a+(isMoto(m)?m.made||0:0),0);}
 function motoModels(s,st){return (s.models||[]).filter(m=>isMoto(m)&&(!st||m.status===st));}
 function carModels(s,st){return (s.models||[]).filter(m=>!isMoto(m)&&(!st||m.status===st));}
-// мотоцех: место сборки, стенды для моторов и рам, склад колёс
-function mshopCost(s){return Math.round(MSHOP.c*cpi(s)/100)*100;}
-function mshopCan(s){return s.y>=MSHOP.y&&!lineOn(s,'moto')&&!s.mshopB;}
-function mshopStart(s){if(!mshopCan(s))return false;const c=mshopCost(s);if(s.cash<c)return false;s.cash-=c;s.plantVal+=c*0.7;
-  const mo=Math.max(1,Math.round(MSHOP.mo*(DIF().build??1)));s.mshopB={left:mo,t:mo};
-  addLog(`Заложен мотоцех: ${money(c)}, ${mo} мес. Мотоциклы пойдут к тем же дилерам и в велосипедные лавки.`,'good');return true;}
-// расширение мотоцеха: то же место, что и для машин, — в тех же единицах трудоёмкости (одно место ≈ 15 мотоциклов в месяц)
-function mcapMonths(s,n){return Math.max(1,Math.round(clamp(3+4*n/Math.max(1,s.mcap||1),3,8)*(DIF().build??1)));}
-function mcapOrder(s,n,quiet){n=Math.max(0.5,Math.round(n*2)/2);const c=Math.round(n*capUnitCost(s));if(s.cash<c)return false;s.cash-=c;s.plantVal+=c;const left=mcapMonths(s,n);
-  (s.mcapBuild=s.mcapBuild||[]).push({units:n,left,t:left});if(!quiet)addLog(`Расширяем мотоцех: ${money(c)}, ${left} мес.`);return true;}
+// покупка оборудования: участок или поток (одна стройка за раз)
+function mshopNext(s){const lv=motoLv(s);return lv>=2?0:lv===1?(s.y>=MSHOP2.y-techEarly(s)?2:0):(s.y>=MSHOP.y?1:0);}
+function mshopCost(s,lv){lv=lv||mshopNext(s)||1;return Math.round((lv===2?MSHOP2.c:MSHOP.c)*cpi(s)/100)*100;}
+function mshopCan(s){return !s.mshopB&&mshopNext(s)>0;}
+function mshopStart(s){if(!mshopCan(s))return false;const lv=mshopNext(s),c=mshopCost(s,lv);if(s.cash<c)return false;s.cash-=c;s.plantVal+=c*0.7;
+  const mo=Math.max(1,Math.round((lv===2?MSHOP2.mo:MSHOP.mo)*(DIF().build??1)));s.mshopB={left:mo,t:mo,lv};
+  addLog(lv===2?`Ставим поток мотоциклов: ${money(c)}, ${mo} мес. — часов на мотоцикл станет на треть меньше.`:`Ставим мотоциклетный участок: ${money(c)}, ${mo} мес. Мотоциклы пойдут в тех же цехах и к тем же дилерам (и в велосипедные лавки).`,'good');return true;}
+// 0.33: мощность одна — расширять отдельно мотоциклетный цех не нужно (старые вызовы — на общий цех)
+function mcapMonths(s,n){return capMonths(s,n);}
+function mcapOrder(s,n,quiet){return capOrder(s,Math.max(1,Math.round(n)),quiet);}
 // типичная трудоёмкость мотоцикла сейчас — чтобы показать мощность цеха в мотоциклах
 function motoCx(s){const L=motoModels(s,'prod');if(L.length)return L.reduce((a,m)=>a+complexity(m),0)/L.length;return complexity({...rivalDesign('moto',s.y),t:'t0'});}
-function mcapUnits(s){return mcapEff(s)/Math.max(0.01,motoCx(s));}
-// автомобильный цех у «Мотомастерской»: опыт, КБ и деньги
+// сколько мотоциклов вышло бы, если бы весь завод делал только их (для подписи на «Заводе»)
+function mcapUnits(s){return capEff(s)/Math.max(0.01,motoCx(s));}
+// оборудование для автомобилей у «Мотомастерской» (и места в цехах под машины): опыт, КБ и деньги
 const CARSHOP={made:3000,yrs:5,kb:2,c:10000,mo:6,cap:3};
 function carShopCost(s){return Math.round((CARSHOP.c*cpi(s)+CARSHOP.cap*capUnitCost(s))/100)*100;}
 function carShopNeed(s){const L=[];const mm=motoMade(s),yrs=s.motoStart?yf(s)-s.motoStart:99;if(mm<CARSHOP.made)L.push(`выпустить ещё ${fmtN(CARSHOP.made-mm)} мотоциклов — рабочие учатся моторам, рамам и сборке`);
   if(yrs<CARSHOP.yrs){const left=Math.ceil((CARSHOP.yrs-yrs)*12);L.push(`мастерам — ещё ${left>=12?Math.ceil(left/12)+' '+plural(Math.ceil(left/12),'год','года','лет'):left+' мес.'} опыта (автомобиль — не мотоцикл: рама, коробка, подвеска)`);}
-  if((s.rd&&s.rd.lvl||1)<CARSHOP.kb)L.push(`КБ — «${RD_LV[CARSHOP.kb]}» (сейчас «${RD_LV[s.rd.lvl||1]}»)`);if(s.cash<carShopCost(s))L.push(`${money(carShopCost(s))} на цех`);return L;}
+  if((s.rd&&s.rd.lvl||1)<CARSHOP.kb)L.push(`КБ — «${RD_LV[CARSHOP.kb]}» (сейчас «${RD_LV[s.rd.lvl||1]}»)`);if(s.cash<carShopCost(s))L.push(`${money(carShopCost(s))} на оборудование`);return L;}
 function carShopCan(s){return !lineOn(s,'car')&&!s.carShopB&&!carShopNeed(s).length;}
 function carShopStart(s){if(!carShopCan(s))return false;const c=carShopCost(s);s.cash-=c;s.plantVal+=c*0.8;const mo=Math.max(2,Math.round(CARSHOP.mo*(DIF().build??1)));s.carShopB={left:mo,t:mo};
-  addLog(`Заложен автомобильный цех: ${money(c)}, ${mo} мес. Можно уже чертить первую машину.`,'good');pendingToasts.push('🏭 Строим автомобильный цех');return true;}
+  addLog(`Ставим оборудование для автомобилей: ${money(c)}, ${mo} мес. Можно уже чертить первую машину.`,'good');pendingToasts.push('🏭 Оборудование для автомобилей');return true;}
 // стройки цехов — каждый месяц (из step)
 function motoTick(s){
-  if(s.mshopB){s.mshopB.left--;if(s.mshopB.left<=0){s.mshopB=null;s.lines=s.lines||{car:1};s.lines.moto=1;s.mcap=Math.max(s.mcap||0,MSHOP.cap);
-    addLog(`Мотоцех готов: около ${fmtN(Math.round(mcapUnits(s)))} мотоциклов в месяц. Начертите первый мотоцикл — вкладка «Модели», переключатель «Мото».`,'good');pendingToasts.push('🏍 Мотоцех готов');
-    if(s.ui)s.ui.line='moto';}}
-  s.mcapBuild=(s.mcapBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.mcap=(s.mcap||0)+b.units;addLog(`Мотоцех расширен: около ${fmtN(Math.round(mcapUnits(s)))} мотоциклов в месяц.`,'good');return false;}return true;});
-  if(s.carShopB){s.carShopB.left--;if(s.carShopB.left<=0){s.carShopB=null;s.lines=s.lines||{};s.lines.car=1;s.cap=Math.max(s.cap||0,CARSHOP.cap);s.carY=s.y;
-    addLog(`Автомобильный цех готов: ${fmtN(Math.round(capEff(s)))} машин в месяц. Мастерская, которая начинала с мотоциклов, становится автомобильным заводом.`,'good');
-    pushEvent({own:1,kicker:'Завод',title:`«${s.company}»: свой автомобильный цех`,deck:`${fmtN(motoMade(s))} мотоциклов — и первый автомобиль`,
-      text:`Мастерская, которая ${s.y-(s.motoStart||1899)} ${plural(s.y-(s.motoStart||1899),'год','года','лет')} назад собирала первые мотоциклы, построила автомобильный цех. Рабочие умеют точить моторы и варить рамы, дилеры знают марку, у КБ есть опыт.\nТеперь — первый автомобиль: вкладка «Модели», переключатель «Авто», «Новая модель». Мотоциклы остаются: их делает свой цех.`,
+  if(s.mshopB){s.mshopB.left--;if(s.mshopB.left<=0){const lv=s.mshopB.lv||1;s.mshopB=null;s.lines=s.lines||{car:1};s.lines.moto=Math.max(motoLv(s),lv);
+    if(lv===2){addLog(`Поток мотоциклов готов: часов на мотоцикл на треть меньше, места в цехе — на пятую часть.`,'good');pendingToasts.push('🏍 Поток мотоциклов');}
+    else{addLog(`Мотоциклетный участок готов: мотоциклы делаются в тех же цехах, что и машины (место — на ${fmtN(Math.round(1/Math.max(0.02,motoCx(s))))} мотоциклов вместо одной машины). Начертите мотоцикл: «Модели» → «Новая модель» → класс «Мотоцикл».`,'good');pendingToasts.push('🏍 Можно делать мотоциклы');}}}
+  if(s.carShopB){s.carShopB.left--;if(s.carShopB.left<=0){s.carShopB=null;s.lines=s.lines||{};s.lines.car=1;s.cap=(s.cap||0)+CARSHOP.cap;s.carY=s.y;
+    addLog(`Оборудование для автомобилей готово: в цехах прибавилось места, завод может делать и машины. Мастерская, которая начинала с мотоциклов, становится автомобильным заводом.`,'good');
+    pushEvent({own:1,kicker:'Завод',title:`«${s.company}»: можно делать автомобили`,deck:`${fmtN(motoMade(s))} мотоциклов — и первый автомобиль`,
+      text:`Мастерская, которая ${s.y-(s.motoStart||1899)} ${plural(s.y-(s.motoStart||1899),'год','года','лет')} назад собирала первые мотоциклы, поставила оборудование для автомобилей: стапели для рам, стенды для коробок и мостов. Рабочие умеют точить моторы и варить рамы, дилеры знают марку, у КБ есть опыт.\nТеперь — первый автомобиль: «Модели» → «Новая модель». Мотоциклы остаются: их делают в тех же цехах.`,
       choices:[['Начертить автомобиль','carDesign'],['Позже','ok']]},true);}}}
 /* ---------- старт «Мотомастерская» ---------- */
 // год старта — когда в стране есть кому продавать: во Франции — бум трициклов де Диона (1899), в Британии — 1902 (Triumph), в Германии и Америке — 1903
@@ -61,7 +65,7 @@ const MSTART_TIP={fr:['легко','Франция — родина мотоци
   it:['очень трудно','Италия: покупателей дома — единицы, без импортёра во Франции мастерская не выживет.']};
 function newMotoGame(pioneer,country,company,diff,firstName){
   newGame(pioneer||'custom',country,company||'Мотомастерская',diff,'');const g=G,y=motoStartY(country);
-  g.y=y;g.m=0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=0;g.capBuild=[];g.mcap=1.2;g.workers=6;g.ui=g.ui||{};g.ui.line='moto';
+  g.y=y;g.m=0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=1.2;g.capBuild=[];g.workers=6;g.ui=g.ui||{};
   g.fleet={};g.mkY={};for(const cc in COUNTRIES)g.fleet[cc]=fleetHist(cc,y);
   for(const cc in COUNTRIES){const R2=mkCountry(cc,g,[]);g.mkY[cc]=SEGK.reduce((a,gg)=>a+R2.segs[gg].inc,0)*12/SEASON[0];}
   // малый капитал: мастерская, а не завод (около трети автомобильного старта)
@@ -69,7 +73,8 @@ function newMotoGame(pioneer,country,company,diff,firstName){
   const nm=(firstName||'').trim()||'Мото 1',d=rivalDesign('moto',y);
   g.models=[{id:1,name:nm,e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:'t0',w:d.w,paint:'#1b1d22',price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(g),stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}];
   g.models[0].price=Math.round(refPrice(g.models[0],g)/10)*10;
-  g.dealers={[country]:1};   // мотоциклы продают велосипедные лавки: своих агентов — одинg.plantVal=g.mcap*capUnitCost(g);g.wh=10;g.ad=10;
+  g.dealers={[country]:1};   // мотоциклы продают велосипедные лавки: своих агентов — один
+  g.plantVal=g.cap*capUnitCost(g);g.wh=10;g.ad=10;
   try{awInit(g,true);}catch(_){}
   g.log=[];addLog(`${PIONEERS[g.pioneer]&&PIONEERS[g.pioneer].name!=='Свой персонаж'?PIONEERS[g.pioneer].name+' открыл':'Вы открыли'} мотомастерскую «${g.company}», ${COUNTRIES[country].city}. ${g.workers} рабочих, первый мотоцикл — «${nm}». Его продают ${g.dealers[country]} ${plural(g.dealers[country],'агент','агента','агентов')} и велосипедные лавки.`,'hist');
   return g;}
@@ -77,7 +82,7 @@ function motoIntroPapers(s){const md=s.models[0],p=parts(md),C=COUNTRIES[s.count
   pushEvent({kicker:'Январь '+s.y,title:'Мотор на велосипеде',deck:'Трициклы де Диона и «мотоциклетка» Вернеров',img:'De Dion-Bouton tricycle',imgCap:'Трицикл De Dion-Bouton',choices:[['Читать дальше','ok']],
     text:'По Парижу трещат трициклы де Диона: лёгкий быстроходный мотор, три колеса, никакой лошади. Братья Вернер поставили моторчик на велосипед и назвали машину «мотоциклеткой». Мотоцикл стоит в пять-шесть раз дешевле автомобиля: его берут врачи, почтальоны, коммивояжёры и молодые смельчаки.\nНастоящий автомобиль пока по карману немногим. Но мастерская, которая научится делать моторы и рамы, однажды сможет построить и его.'},true);
   pushEvent({own:1,kicker:C.city,title:`«${s.company}» открывает мотомастерскую`,deck:'Сначала мотоциклы — потом автомобиль',
-    text:`В мастерской ${s.workers} рабочих, в кассе ${money(s.cash)}. Первый мотоцикл — «${md.name}»: ${p.e.name.toLowerCase()}, ${p.c.name.toLowerCase()}. Его продают велосипедные лавки и ${s.dealers[s.country]} ${plural(s.dealers[s.country],'агент','агента','агентов')}.\nАвтомобиль — когда наберётесь опыта: не меньше пяти лет работы и 3000 мотоциклов, КБ — мастерская опытных образцов и деньги на автомобильный цех (вкладка «Завод»). В истории на это уходило пять–восемь лет.\nОдин ход — один месяц.`},true);}
+    text:`В мастерской ${s.workers} рабочих, в кассе ${money(s.cash)}. Первый мотоцикл — «${md.name}»: ${p.e.name.toLowerCase()}, ${p.c.name.toLowerCase()}. Его продают велосипедные лавки и ${s.dealers[s.country]} ${plural(s.dealers[s.country],'агент','агента','агентов')}.\nАвтомобиль — когда наберётесь опыта: не меньше пяти лет работы и 3000 мотоциклов, КБ — мастерская опытных образцов и деньги на оборудование для автомобилей (вкладка «Завод»). В истории на это уходило пять–восемь лет.\nОдин ход — один месяц.`},true);}
 /* ---------- армия, почта, рекорды ---------- */
 // мотоцикл в армии: связные, санитары, пулемётные расчёты в коляске (Douglas поставил британской армии ~25 000 машин)
 function motoForTender(s,kind){const L=motoModels(s,'prod');if(!L.length)return null;const sd=L.filter(m=>segOf(m)==='moside'),src=kind==='moside'&&sd.length?sd:L;return src.sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}

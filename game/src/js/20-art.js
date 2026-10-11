@@ -43,7 +43,7 @@ function factorySVG(s){
   const L=s.last,e=econ(s.y,s.m,s.country),winter=s.m===11||s.m<=1,war=e.war,crash=e.tone==='bad'&&!war;
   const sky=war?['#4c5561','#8e959d']:crash?['#58606c','#a0a7b0']:winter?['#6f8fb0','#cfdce8']:['#3f78b3','#aacbe6'];
   const ground=winter?'#dce5ec':'#56703f',late=s.y>=1920,brick=late?'#9aa0a6':'#8a4b3a',roofC=late?'#5d636b':'#4a3a33';
-  const W=360,gy=126,capE=capEff(s),halls=clamp(Math.round(1+Math.log10(Math.max(1,capE))*1.3),1,6),extra=0,busy=L?clamp(L.made/Math.max(1,capE),0,1):0.3,conv=techLv(s,'line')>=2;
+  const W=360,gy=126,capE=capEff(s),halls=clamp(Math.round(1+Math.log10(Math.max(1,capE))*1.3),1,6),extra=0,busy=L?clamp(capUtil(s),0,1):0.3,conv=techLv(s,'line')>=2;
   let o=`<svg viewBox="0 0 ${W} 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Завод компании"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs><rect width="${W}" height="160" fill="url(#sk)"/>`;
   if(!war)for(let i=0;i<3;i++)o+=`<g class="cloud" style="animation-delay:-${i*14}s"><ellipse cx="${60+i*110}" cy="${22+i*9}" rx="26" ry="7" fill="#fff" opacity=".7"/><ellipse cx="${74+i*110}" cy="${17+i*9}" rx="16" ry="7" fill="#fff" opacity=".7"/></g>`;
   o+=`<circle cx="300" cy="${winter?36:28}" r="12" fill="${war?'#c7c9c9':'#f6e7b0'}" opacity="${war?.35:.9}"/>`;

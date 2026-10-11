@@ -131,36 +131,42 @@ function fmtRaceTime(sec){sec=Math.max(0,sec);const h=Math.floor(sec/3600),m=Mat
 function fmtGap(sec){return '+'+fmtRaceTime(sec);}
 let lastRace=null;
 function raceResults(rc,res,mode,info){
+  // 0.33: мотоциклы едут своим зачётом — в автомобильные итоги (очки сезона, пари, гонщики, история) идут только машины
+  const mres=res.filter(r=>r.cls==='moto');if(mres.length)res=res.filter(r=>r.cls!=='moto');
   if(G&&G.mode==='racer'){racerResults(rc,res,mode,info);return;}   // 0.28: путь гонщика
   if(rc.match){matchResults(rc,res,mode,info);return;}   // 0.24: матч один на один и спор о скорости — свои итоги (43e-challenges.js)
   const s=G;if(!s)return;info=info||{};
   const k=rc.km*1000/Math.max(1,info.len||rc.km*1000);   // секунды модели → реальное время на полной дистанции
-  const team=res.filter(r=>r.you),fin=team.filter(r=>!r.dnf),best=fin.length?Math.min(...fin.map(r=>r.pos)):0;
+  const team=res.filter(r=>r.you),fin=team.filter(r=>!r.dnf),best=fin.length?Math.min(...fin.map(r=>r.pos)):0,carIn=team.length>0;
   const prize=racePrize(rc);let won=0;
   team.forEach(r=>{if(!r.dnf&&r.pos<=3){r.prize=Math.round(prize*[1,0.5,0.25][r.pos-1]/10)*10;won+=r.prize;}});
   s.cash+=won;try{rbudAdd(s,0,won);}catch(_){}
   const major=!!rc.major,rk=bn('raceRep');
-  if(best===1)s.rep+=(major?9:5)*rk;else if(best&&best<=3)s.rep+=(major?3:1.5)*rk;else if(best)s.rep+=0.5;else s.rep-=major?2:1;
+  if(carIn){if(best===1)s.rep+=(major?9:5)*rk;else if(best&&best<=3)s.rep+=(major?3:1.5)*rk;else if(best)s.rep+=0.5;else s.rep-=major?2:1;}
   s.rep=clamp(s.rep,0,100);
   const bestRow=best?team.find(r=>r.pos===best):team[0],md=bestRow&&bestRow.md&&s.models.find(m=>m.id===bestRow.md.id);
   if(best===1&&md)md.raceBoost=mi(s)+(major?9:6);
-  s.raceDone[rc.key]=best||-1;
-  s.raceLog.push({y:rc.y,key:rc.key,name:rc.name,model:bestRow?bestRow.label:'',place:best,drv:bestRow?bestRow.drv:'',major,team:team.map(r=>r.dnf?0:r.pos)});
+  if(carIn){s.raceDone[rc.key]=best||-1;
+    s.raceLog.push({y:rc.y,key:rc.key,name:rc.name,model:bestRow?bestRow.label:'',place:best,drv:bestRow?bestRow.drv:'',major,team:team.map(r=>r.dnf?0:r.pos)});}
+  // 0.33: зачёт мотоциклов — свои призы (меньше автомобильных), слава среди мотоциклистов и спрос на мотоцикл
+  const M=mres.length?motoClassResult(s,rc,mres,prize):null;if(M){won+=M.won;if(!carIn)s.raceDone[rc.key]=M.best||-1;}
   if(s.raceLog.length>300)s.raceLog.shift();
-  const w=res[0];
-  s.cres[rc.key]={w:w.you?s.company:w.name,d:w.drv||'',me:best||-1,c:w.you?s.country:(w.tc||''),pv:w.priv?1:0};
+  const w=res[0]||mres[0];   // машин в гонке нет (одни мотоциклы) — победитель записи — лучший мотоцикл
+  s.cres[rc.key]=w?{w:w.you?s.company:w.name,d:w.drv||'',me:best||(M&&M.best)||-1,c:w.you?s.country:(w.tc||''),pv:w.priv?1:0}:{w:'',d:'',me:-1,c:'',pv:0};
   champRecord(s,rc,res.map(r=>({name:r.you?s.company:r.name,dnf:!!r.dnf,priv:r.priv})));
   dchRecord(s,rc,res.map(r=>{const me=r.you&&r.drvId==='me';return {n:me?meName(s):r.drv,id:me?meKey(s):(r.drvId||''),mq:r.you||r.pmy?s.company:r.name,dnf:!!r.dnf,mine:r.you?1:0};}));
-  s.raceMi=mi(s);drvAfterRace(s,rc,res);const chal=chalRace(s,rc,res);let inj=[];try{inj=injApply(s,rc,res);}catch(e){console.warn(e);}
+  const all=mres.length?res.concat(mres):res;   // гонщики и травмы — и на мотоциклах тоже
+  s.raceMi=mi(s);drvAfterRace(s,rc,all);const chal=chalRace(s,rc,res);let inj=[];try{inj=injApply(s,rc,all);}catch(e){console.warn(e);}
   // Кубок Гордона Беннетта: трофей уходит стране победителя
   let cupTitle='';
   if(GBC_IDS.includes(rc.id)){if(best===1){cupTitle=`Кубок Гордона Беннетта ${rc.y}`;s.titles.push({y:rc.y,id:'gbc',name:cupTitle,w:0.5});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+5*rk,0,100);}
     else addLog(`Кубок Гордона Беннетта ${rc.y} увозит команда страны: ${hostName(s.cres[rc.key].c||'fr')}.`,'hist');}
   raceChamps(rc).forEach(id=>champFinish(s,id,rc.y));
-  const dnfN=team.filter(r=>r.dnf).length;
-  addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${won?`, призовые ${money(won)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
-  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj};
+  const dnfN=team.filter(r=>r.dnf).length,cw=won-(M?M.won:0);
+  if(carIn)addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${cw?`, призовые ${money(cw)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
+  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn};
   evHold=1;openRaceResult();
+  if(M&&M.best===1&&best!==1){try{celebrate('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍');}catch(_){}showPaper(motoRacePaper(rc,mres,M.row,k),true);}
   if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle);showPaper(P,true);
     try{trophyAdd(s,{kind:'cup',title:cupTitle||`Победа: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+(bestRow.player?'вы за рулём':bestRow.drv):''}`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,
       carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,pt:P.title,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){console.warn('trophy',e);}}
@@ -169,6 +175,29 @@ function raceResults(rc,res,mode,info){
   checkAch();save();render();flushToasts();
 }
 function L_hist(rc){return rc.win&&!/^Победителей/.test(rc.win)?` В настоящей истории здесь победил ${rc.win}.`:'';}
+/* ---------- 0.33: зачёт мотоциклов в совместной гонке ----------
+   В больших гонках 1890-х — 1900-х (Париж — Марсель — Париж, Париж — Вена, Париж — Мадрид) и на горных подъёмах трициклы
+   и мотоциклы стартовали вместе с автомобилями, но места и призы считали по классам. Приз класса — около трети автомобильного. */
+function motoClassResult(s,rc,mres,prize){
+  const team=mres.filter(r=>r.you);if(!team.length)return {won:0,best:0,row:null,team};
+  const fin=team.filter(r=>!r.dnf),best=fin.length?Math.min(...fin.map(r=>r.pos)):0,mp=prize*0.3,major=!!rc.major,rk=bn('raceRep');let won=0;
+  team.forEach(r=>{if(!r.dnf&&r.pos<=3){r.prize=Math.round(mp*[1,0.5,0.25][r.pos-1]/10)*10;won+=r.prize;}});
+  s.cash+=won;try{rbudAdd(s,0,won);}catch(_){}
+  if(best===1)s.rep+=(major?2:1)*rk;else if(best&&best<=3)s.rep+=0.5*rk;
+  s.rep=clamp(s.rep,0,100);
+  const row=best?team.find(r=>r.pos===best):team[0],md=row&&row.md&&s.models.find(m=>m.id===row.md.id);
+  if(md&&best===1)md.raceBoost=Math.max(md.raceBoost||0,mi(s)+(major?6:4));else if(md&&best&&best<=3)md.raceBoost=Math.max(md.raceBoost||0,mi(s)+2);
+  s.raceLog.push({y:rc.y,key:rc.key,name:rc.name+' · мотоциклы',model:row?row.label:'',place:best,drv:row?row.drv:'',major:false,team:team.map(r=>r.dnf?0:r.pos),cls:'moto'});
+  addLog(`«${rc.name}», класс мотоциклов: ${best?`${best}-е место (${row.drv||'гонщик'}, «${row.label}»)`:'мотоциклы сошли'}${won?`, призовые ${money(won)}`:''}.`,best===1?'good':best?'':'bad');
+  const tr={sub:`«${row.label}»${row.drv?' · '+(row.player?'вы за рулём':row.drv):''}`,key:'race|'+rc.key+'|moto',carId:row.md?row.md.id:null,prep:row.prep||1,num:row.num||0,rk:rc.key};
+  if(best===1)try{trophyAdd(s,Object.assign({kind:'cup',title:`Класс мотоциклов: ${rc.name}`,story:`Первое место среди мотоциклов в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).${L_hist(rc)}`},tr));}catch(e){console.warn('trophy',e);}
+  else if(best&&best<=3)try{trophyAdd(s,Object.assign({kind:'medal',title:`${best}-е место среди мотоциклов: ${rc.name}`,story:`Подиум класса мотоциклов в гонке «${rc.name}».`},tr));}catch(e){}
+  return {won,best,row,team};}
+function motoRacePaper(rc,mres,row,k){const s=G,second=mres.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0,drv=row.player?(PIONEERS[s.pioneer].name+' лично'):(row.drv||'Гонщик компании');
+  return {kicker:'Спорт',own:1,title:`Мотоцикл «${s.company}» — первый в своём классе!`,deck:`${drv} на «${row.label}» — лучший среди мотоциклов в гонке «${rc.name}»${row.fin!=null?` (${fmtRaceTime(row.fin*k)})`:''}`,
+    text:`В гонке «${rc.name}» мотоциклы шли вместе с автомобилями, но свой зачёт выиграл мотоцикл «${s.company}». ${second?`Второе место среди мотоциклов — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\nМотоциклисты читают спортивные новости внимательнее всех: спрос на «${row.label}» вырастет на ближайшие месяцы.`,
+    carId:row.md?row.md.id:null,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${row.label}» компании «${s.company}» — первый среди мотоциклов в гонке «${rc.name}»`,
+    hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};}
 function racePaper(rc,res,row,k,cup){
   const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0;
   const drv=row.player?(PIONEERS[s.pioneer].name+' лично'):(row.drv||'Пилот компании');
@@ -182,17 +211,22 @@ function racePaper(rc,res,row,k,cup){
 }
 function openRaceResult(){
   const L=lastRace;if(!L)return;const s=G,{rc,res,k,won}=L,lead=res[0];
-  const rows=res.filter((r,i)=>i<10||r.you||r.pmy).map(r=>{const sec=r.fin!=null?r.fin*k:0,avg=sec>0?Math.round(rc.km/(sec/3600)):0,t=r.dnf?`<span class="bad">сход${r.dnf&&r.dnf!=='сошёл'?': '+esc(r.dnf):''}</span>`:(r.pos===1?`<b>${fmtRaceTime(sec)}</b>`:fmtGap((r.fin-lead.fin)*k))+(avg?`<small class="muted">${avg} км/ч</small>`:'');
-    const car=r.you?r.label:r.pmy?`«${r.label}» · частник на вашей машине`:r.priv?`${r.label} · частник`:r.name;
-    return `<tr class="${r.you?'you':r.pmy?'mine':''}"><td class="n">${r.dnf?'—':r.pos}</td><td>${esc(r.drv||'—')}<small>${esc(car)}</small></td><td class="n">${t}${r.prize?`<small class="good">${money(r.prize)}</small>`:''}</td></tr>`;}).join('');
+  const rowH=(r,lead)=>{const sec=r.fin!=null?r.fin*k:0,avg=sec>0?Math.round(rc.km/(sec/3600)):0,t=r.dnf?`<span class="bad">сход${r.dnf&&r.dnf!=='сошёл'?': '+esc(r.dnf):''}</span>`:(r.pos===1||!lead?`<b>${fmtRaceTime(sec)}</b>`:fmtGap((r.fin-lead.fin)*k))+(avg?`<small class="muted">${avg} км/ч</small>`:'');
+    const car=r.you?r.label:r.pmy?`«${r.label}» · частник на вашей машине`:r.priv?`${r.label} · частник`:r.cls==='moto'?r.label:r.name;
+    return `<tr class="${r.you?'you':r.pmy?'mine':''}"><td class="n">${r.dnf?'—':r.pos}</td><td>${esc(r.drv||'—')}<small>${esc(car)}</small></td><td class="n">${t}${r.prize?`<small class="good">${money(r.prize)}</small>`:''}</td></tr>`;};
+  const rows=res.filter((r,i)=>i<10||r.you||r.pmy).map(r=>rowH(r,lead)).join('');
+  // 0.33: мотоциклы — свой зачёт, своя таблица
+  const MR=L.mres||[],ML=L.M,mrows=MR.length?`<div class="label" style="margin-top:14px">🏍 Мотоциклы — свой зачёт</div><table class="pl res" style="margin-top:4px">${MR.map(r=>rowH(r,MR[0])).join('')}</table>
+    ${ML&&ML.team.length?`<p class="small" style="margin-top:6px">${ML.best?`Ваш лучший мотоцикл — <b>${ML.best}-е место</b> в классе.`:'Ваши мотоциклы не доехали до финиша.'}${ML.won?` Призовые класса: <b class="good">${money(ML.won)}</b>.`:''}</p>`:''}`:'';
   const nPv=res.filter(r=>r.priv).length,pr=privRule(rc);
   const champs=raceChamps(rc).map(id=>{const tb=champTable(s,id,rc.y),me=tb.findIndex(r=>r.you),C=CHAMPS[id];
     return `<div class="label" style="margin-top:14px">${C.name(rc.y)} ${rc.y}</div><table class="pl" style="margin-top:4px">${tb.slice(0,4).concat(me>=4?[tb[me]]:[]).map(r=>`<tr class="${r.you?'you':''}"><td class="n">${tb.indexOf(r)+1}</td><td>${esc(r.n)}</td><td class="n">${r.el?'':'['}${fmtPts(id,r.pts)}${r.el?'':']'}</td></tr>`).join('')}</table>`;}).join('');
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">Итоги: ${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
     <p class="small muted" style="margin-top:4px">${rc.match?esc(MATCH_ST[rc.kind]||'')+' · '+esc(rc.venue):RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · у победителя — время ${rc.kind==='record'?'заезда':'всей гонки'}, у остальных — отставание от него; ниже — средняя скорость</p>
     ${L.cup?`<p class="good" style="margin-top:8px"><b>🏆 ${esc(L.cup)}</b></p>`:''}
-    <table class="pl res" style="margin-top:10px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время / отставание</th></tr>${rows}</table>
-    <p style="margin-top:10px">${rc.match?(L.best===1?`<b>${rc.kind==='record'?'Ваше время лучше!':'Вы первым на финише!'}</b>`:L.best?(rc.kind==='record'?'Соперник оказался быстрее.':'Соперник первым на финише.'):'Ваша машина не доехала до финиша.'):L.rx?(L.best?`Ваше место — <b>${L.best}-е</b>.`:'Вы не доехали до финиша.'):L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won?` ${L.rx?'Заработано':'Призовые'}: <b class="good">${money(won)}</b>.`:''}</p>
+    ${MR.length?'<div class="label" style="margin-top:12px">Автомобили</div>':''}<table class="pl res" style="margin-top:${MR.length?4:10}px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время / отставание</th></tr>${rows}</table>
+    ${L.carIn===false?'':`<p style="margin-top:10px">${rc.match?(L.best===1?`<b>${rc.kind==='record'?'Ваше время лучше!':'Вы первым на финише!'}</b>`:L.best?(rc.kind==='record'?'Соперник оказался быстрее.':'Соперник первым на финише.'):'Ваша машина не доехала до финиша.'):L.rx?(L.best?`Ваше место — <b>${L.best}-е</b>.`:'Вы не доехали до финиша.'):L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won-(ML?ML.won:0)?` ${L.rx?'Заработано':'Призовые'}: <b class="good">${money(won-(ML?ML.won:0))}</b>.`:''}</p>`}
+    ${mrows}
     ${L.rx&&L.rx.lines.length?`<div class="label" style="margin-top:12px">Для гонщика</div>${L.rx.lines.map(t=>`<p class="small" style="margin-top:4px">${esc(t)}</p>`).join('')}`:''}
     ${nPv&&!rc.match?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ ${L.chal.match?esc(MATCH_ST[L.chal.C.type]||'Пари')+' с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграна':'проиграна'):'Пари с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграно':'проиграно')}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${!L.chal.match&&L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}

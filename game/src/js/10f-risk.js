@@ -20,11 +20,17 @@ function partMat(x,Y){if(!x)return 1;return clamp((Y-(x.y||1895)+1)/5,0,1);}
 function partRisk(x,Y){const m=partMat(x,Y);return 0.55*Math.pow(1-m,1.6);}
 // риск модели: что хотя бы одна деталь выйдет не по ТЗ
 function modelRisk(md,Y){if(!md||md.ref||md.ai)return 0;const p=parts(md);let ok=1;RISK_PK.forEach(k=>{ok*=1-partRisk(p[k],Y);});return 1-ok;}
-// детские болезни: каждая незрелая деталь — до −10% надёжности (у эталона и соперников — нет: их машины обкатаны)
-function teethK(md,Y){if(!md||md.ref||md.ai)return 1;const p=parts(md);let k=1;RISK_PK.forEach(q=>{k*=1-0.1*Math.pow(1-partMat(p[q],Y),1.5);});return k;}
+// 0.33: «детские болезни» — не приговор новинке, а риск. Покупатели и конструктор видят машину по ТЗ; хуже она станет,
+// только если при запуске деталь выйдет не по ТЗ (devRoll) — тогда и ломается чаще, пока доводка не исправит.
+// (В 0.32 незрелая деталь сразу снимала до 10% надёжности, а надёжность считается через частоту поломок: −19% вероятности
+// превращались в поломки в 5–7 раз чаще — новинка в конструкторе выходила «вся в красном».)
+function teethK(md,Y){return 1;}
 // отклонение детали от ТЗ сейчас: тает с доводкой в серии (половина — за ~1,7 года)
 function dvNow(md,k){const d=md&&md.dv&&md.dv[k];if(!d)return 1;const s=G,t=s?mi(s)-(d.t||0):0;return 1-(1-d.k)*Math.exp(-Math.max(0,t)/30);}
-function dvRel(md){if(!md||!md.dv)return 1;let r=1;for(const k in md.dv){const d=md.dv[k],now=1-dvNow(md,k),sev=d.sev||0.5;r*=1-0.12*sev*(now/Math.max(0.01,1-d.k));}return r;}
+function dvRel(md){return 1;}
+// 0.33: деталь не по ТЗ ломается чаще: поломок до 2,5 раза больше (по тяжести отклонения), отклонение тает с доводкой в серии
+const DV_FAIL=1.5;
+function dvFail(md){if(!md||!md.dv)return 1;let f=1;for(const k in md.dv){const d=md.dv[k],left=(1-dvNow(md,k))/Math.max(0.01,1-d.k),sev=d.sev||0.5;f*=1+DV_FAIL*sev*clamp(left,0,1);}return f;}
 // что дала серия: отклонения по деталям (при запуске модели)
 const DEV_K={e:0.25,g:0.06,c:0.15,k:0.2,w:0.25};
 const DEV_TXT={e:(x,k)=>`мотор даёт ${Math.round(engineHp(x)*k)} л.с. вместо ${Math.round(engineHp(x))}`,g:(x,k)=>`коробка теряет больше: КПД ${Math.round(x.eff*k*100)}% вместо ${Math.round(x.eff*100)}%`,
@@ -38,7 +44,7 @@ function devNews(s,md,out){const txt=out.map(o=>DEV_TXT[o.k](o.x,o.kk)).join('; 
   const fc=fixCost(s,md),fm=fixMonths(md);
   addLog(`«${md.name}»: испытания серии — ${txt}. Причина — незрелые детали (${young}).`,'bad');
   pushEvent({kicker:'КБ · испытания',own:1,title:`«${md.name}»: не всё по ТЗ`,deck:txt,carId:md.id,
-    text:`Первые машины серии прошли испытания. ${capF(txt)}; ресурс ниже расчётного. Так бывает с новинками: ${young} ещё не обкатаны ни у поставщиков, ни у вас.\nОтклонение будет таять само — рабочие и поставщики научатся (года за два-три). Или КБ займётся доводкой: ${fm} мес., ${money(fc)}.`,
+    text:`Первые машины серии прошли испытания. ${capF(txt)}; ломается чаще расчётного. Так бывает с новинками: ${young} ещё не обкатаны ни у поставщиков, ни у вас.\nОтклонение будет таять само — рабочие и поставщики научатся (года за два-три). Или КБ займётся доводкой: ${fm} мес., ${money(fc)}.`,
     choices:[[`Доводка в КБ · ${money(fc)}`,'rdfix:'+md.id],['Пусть доводят в серии','ok']]},true);}
 function fixCost(s,md){const n=md.dv?Object.keys(md.dv).length:1;return Math.round((1500+1200*n)*cpi(s)/100)*100;}
 function fixMonths(md){const n=md.dv?Object.keys(md.dv).length:1;return 3+n;}
@@ -65,10 +71,10 @@ function techCheck(s){const B=s.techBuild;if(!B||B.rk)return false;B.rk=1;const 
   B.left+=add;s.cash-=over;s.techTrouble={until:mi(s)+add+4,k:0.82};
   addLog(`«${lv.name}»: наладка затянулась на ${add} мес. — технология на ${e} ${plural(e,'год','года','лет')} раньше, чем её освоили в истории. Перерасход ${money(over)}, выпуск полгода ниже.`,'bad');
   pendingToasts.push('🏭 Наладка затянулась');return true;}
-// подпись риска для конструктора
+// подпись риска для конструктора: что может выйти не по ТЗ и с какой вероятностью (сравнение выше — по ТЗ, как машину увидят покупатели)
 function riskHTML(md,s){const p=parts(md),L=RISK_PK.map(k=>({k,x:p[k],r:partRisk(p[k],s.y),m:partMat(p[k],s.y)})).filter(o=>o.r>0.01);
   if(!L.length)return `<p class="small good" style="margin-top:6px">Все детали обкатаны: машина выйдет такой, как в расчёте.</p>`;
-  const R=modelRisk(md,s.y),tk=teethK(md,s.y);
-  return `<div class="row small" style="margin-top:10px"><span class="muted">Риск: не по ТЗ</span><span class="num ${R>0.4?'bad':R>0.15?'warn':''}">${Math.round(R*100)}%</span></div>
+  const R=modelRisk(md,s.y),worst=L.reduce((a,o)=>Math.max(a,DEV_K[o.k]),0);
+  return `<div class="row small" style="margin-top:10px"><span class="muted">Риск: не по ТЗ</span><span class="num ${R>0.5?'warn':''}">${Math.round(R*100)}%</span></div>
     <p class="small muted" style="margin-top:4px">${L.map(o=>`${RISK_NAME[o.k]} — ${o.x.y>s.y?`прототип, на ${o.x.y-s.y} ${plural(o.x.y-s.y,'год','года','лет')} раньше истории`:o.x.y===s.y?'новинка этого года':`в деле ${s.y-o.x.y} ${plural(s.y-o.x.y,'год','года','лет')}`} (${Math.round(o.r*100)}%)`).join(' · ')}.
-    Детские болезни: надёжность ${tk<0.995?'−'+Math.round((1-tk)*100)+'%':'как у обкатанной'}, пока новинки не обкатаются.</p>`;}
+    Сравнение выше — по ТЗ: так машину увидят покупатели. Если при запуске не повезёт, деталь выйдет хуже расчёта (до −${Math.round(worst*100)}%) и будет ломаться чаще — пока рабочие не доведут её в серии (2–3 года) или КБ не сделает «Доводку». Обкатанные детали выходят точно по ТЗ.</p>`;}

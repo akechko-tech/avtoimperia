@@ -3,7 +3,7 @@ require('./harness.js')(`
 Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};
 let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
-function game(y,c){newGame('renault',c||'fr','T','normal');G.cash=1e6;G.y=y;G.m=5;const md=G.models[0];{const a=aiCarMd(y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,y,x=>!x.truck).id;md.status='prod';return md;}
+function game(y,c){newGame('renault',c||'fr','T','normal');G.cash=1e6;G.y=y;G.m=5;const md=G.models[0];{const a=aiCarMd(y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,y,x=>!x.truck&&!x.moto).id;md.status='prod';return md;}
 for(const [k,y] of [['train',1912],['plane',1913],['horse',1900]]){
   const md=game(y,k==='plane'?'us':'fr');G.dx=null;let o=null;for(let t=0;t<300&&(!o||o.k!==k);t++)o=dxOffer(G);
   if(!o||o.k!==k){const d=DX_KIND[k];o={k,at:mi(G),stake:500,md:md.id,c:G.country};if(k==='train'){const r=d.route[G.country]||d.route.fr;o.venue=r[0];o.opp=r[1];o.km=r[2];o.trainV=d.opp(y,r);}else{o.venue=d.venue[G.country]||'Ипподром';o.opp=k==='plane'?d.pilot[G.country]||'Бичи':d.horse[G.country]||'рысак';o.km=d.km;}}

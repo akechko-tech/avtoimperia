@@ -88,7 +88,7 @@ with sync_playwright() as p:
     # 5) гонка: кнопка 🗣, подписи механика на экране нет
     js(clean)
     r=js("""(()=>{const rc0=RACES.find(r=>r.t==='road'&&r.y>=1903&&r.y<=1908);const rc=Object.assign({},rc0,{key:rc0.key||rc0.id});G.over=false;G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;
-      const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+      const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
       startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'hard',gear:0}]});return rc.name+' '+rc.y;})()""")
     for i in range(60):
         if js("!!(R&&R.film)"): js("(()=>{filmSkip();})()");break

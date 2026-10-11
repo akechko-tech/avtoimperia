@@ -26,7 +26,10 @@ function migrate(x){
   x.comps=x.comps||{};for(const k in COMPS){const L=x.comps[k]=x.comps[k]||[];while(L.length<COMPS[k].length){const i=L.length;L.push({name:COMPS[k][i].n,color:COMP_COLORS[i%COMP_COLORS.length],last:0,yr:0,prev:0});}}
   // 0.32: мотомарки (s.mcomps) и линейки марки; у старых сохранений — только автомобили
   x.mcomps=x.mcomps||{};for(const k in MCOMPS){const L=x.mcomps[k]=x.mcomps[k]||[];while(L.length<MCOMPS[k].length){const i=L.length;L.push({name:MCOMPS[k][i].n,color:COMP_COLORS[(i+3)%COMP_COLORS.length],last:0,yr:0,prev:0});}}
-  if(!x.lines)x.lines={car:1};if(x.mcap==null)x.mcap=0;
+  if(!x.lines)x.lines={car:1};if(!x.mhold)x.mhold=[];
+  // 0.33: завод один — места мотоцеха 0.32 становятся местами общих цехов, его стройки — общими стройками
+  if(x.mcap>0){x.cap=(x.cap||0)+x.mcap;}delete x.mcap;if(x.mcapBuild&&x.mcapBuild.length){x.capBuild=(x.capBuild||[]).concat(x.mcapBuild.map(b=>({...b,units:Math.max(1,Math.round(b.units))})));}delete x.mcapBuild;
+  if(x.mshopB&&!x.mshopB.lv)x.mshopB.lv=1;if(x.ui)delete x.ui.line;
   // 0.13: дилеров не больше, чем городов; за границей — импортёр или своё отделение. Сколько машин сеть уже умела продавать — сохраняем
   if(!x.imp){x.imp={};x.dcap={};const t=x.y+x.m/12;
     for(const c in x.dealers){const d=x.dealers[c]||0;if(!d)continue;

@@ -52,7 +52,7 @@ function month(){const act=s.models.filter(m=>m.status==='prod'),dev=s.models.fi
     m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);break;}
   // 0.32: мотостратегия (MOTO=1): мотоцех, когда мотоциклов дома покупают много, и мотоциклы в линейке
   if(MOTO){const mk=L&&L.mk[s.country];if(!lineOn(s,'moto')&&mshopCan(s)&&mk&&(mk.msize||0)>Math.max(60,(mk.size||0)*0.15)&&s.cash>mshopCost(s)*5)mshopStart(s);
-    if(L&&lineOn(s,'moto')&&!(s.mcapBuild||[]).length&&L.bneck&&L.bneck.mcap<0.97){const n=Math.max(0.5,(s.mcap||1)*0.5);if(s.cash>n*capUnitCost(s)*3)mcapOrder(s,n,true);}
+    // 0.33: завод один — мотоциклы расширяют общие цеха (правило ниже)
     if(L&&s.m===11){s._mrev=(s._mrev||0);}}
   // убыточная модель полгода — снять (себестоимость выше того, что остаётся с машины)
   act.forEach(m=>{const n=netPer(m,s.country,s),u=unitCost(m,s);m._neg=(n<u*1.02&&(m.lastSold||0)>0)||((m.lastSold||0)<1&&mi(s)-(m.launched||0)>=8)?(m._neg||0)+1:0;if(m._neg>=6&&act.length>1){m.status='sale';}});
@@ -75,9 +75,9 @@ function month(){const act=s.models.filter(m=>m.status==='prod'),dev=s.models.fi
   // цеха: спрос не помещается — +35%
   // разумный хозяин не строит цеха в пустоту: только если покупателям не хватило машин два месяца подряд и есть прибыль;
   // полгода загрузка ниже 45% — продаёт пятую часть цехов (иначе содержание огромного завода съедает кассу в спад)
-  if(L&&act.length){const util=L.made/Math.max(1,capEff(s));s._lowU=util<0.45?(s._lowU||0)+1:0;
+  if(L&&act.length){const util=capUtil(s);s._lowU=util<0.45?(s._lowU||0)+1:0;
     if(s._lowU>=6&&s.cap>10&&!(s.capBuild||[]).length){const n=Math.max(1,Math.round(s.cap*0.2)),v=Math.round(s.plantVal*n/s.cap*0.4);s.cap-=n;s.plantVal-=s.plantVal*n/(s.cap+n);s.cash+=v;s._lowU=0;}}
-  if(L&&act.length&&!(s.capBuild||[]).length){const lost=act.reduce((a,m)=>a+(isMoto(m)?0:m.lostS||0),0),util=L.made/Math.max(1,capEff(s));s._lostC=lost>Math.max(2,L.sold*0.04)?(s._lostC||0)+1:0;
+  if(L&&act.length&&!(s.capBuild||[]).length){const lost=act.reduce((a,m)=>a+(m.lostS||0)*(isMoto(m)?0.15:1),0),util=capUtil(s);s._lostC=lost>Math.max(2,L.sold*0.04)?(s._lostC||0)+1:0;
     if((s._lostC>=2||util>0.95)&&s.hist.profit.slice(-3).reduce((a,b)=>a+b,0)>0){const n=Math.max(2,Math.round(s.cap*0.35)),c=n*capUnitCost(s);
       // в долг — не больше половины лимита банка и не в кризис (осторожный хозяин)
       if(s.cash<c*1.3&&loanOpen(s)&&creditState(s).k==='ok'){const room=maxLoan(s)*0.5-s.loan,need=Math.ceil((c*1.3-s.cash)/1000)*1000;if(room>=need){s.loan+=need;s.cash+=need;}}

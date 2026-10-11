@@ -256,7 +256,7 @@ function nextStep(s){if(s.over)return s.soldTo&&s.y<1930?{icon:'🏭',text:'Ко
   if(!s.models.some(m=>m.status==='prod'||m.status==='dev'))return {icon:'✏️',text:'Придумайте первую машину: «Модели» → «Новая модель»',tab:'models'};
   {const C=s.chal;if(C&&C.acc&&C.rc){const T=(C.rc.y-1895)*12+C.rc.m,t=mi(s);if(t>=T-1&&t<=T)return {icon:'⚔️',text:`${MATCH_ST[C.type]} с ${C.mq}: ${C.rc.venue} — выставьте машину${t===T?' (последний месяц!)':''}`,tab:'race',rk:C.rc.key};}}
   const rc=RACES.filter(r=>raceOpen(r,s)&&raceEligible(r,s)&&!raceWarBlocked(r,s)&&!s.cres[r.key]&&s.raceDone[r.key]===undefined).sort((a,b)=>a.m-b.m)[0];
-  if(rc&&raceCarsFor(s).length)return {icon:'🏁',text:`${rc.m===s.m?'Гонка в этом месяце':'Запись на гонку'}: «${rc.name}» — выставьте машину`,tab:'race',rk:rc.key};
+  if(rc&&raceCarsFor(s,rc).length)return {icon:'🏁',text:`${rc.m===s.m?'Гонка в этом месяце':'Запись на гонку'}: «${rc.name}» — выставьте машину`,tab:'race',rk:rc.key};
   if(!DIF().helper){try{const A=adviceList(s).slice().sort((a,b)=>b.p-a.p)[0];if(A&&A.p>=60)return {icon:A.icon||'💡',text:String(A.text).replace(/<[^>]+>/g,'').split(/(?<=[.!?])\s/)[0],tab:A.tab||'plant'};}catch(_){}}
   return {icon:'▶',text:'Жмите «Следующий месяц» — время идёт, машины продаются',tab:null};}
 function showcaseMonth(s){try{const t=legacyTable(s);s.legPrev=s.legNow===undefined?t.me.total:s.legNow;s.legNow=t.me.total;}catch(_){}}

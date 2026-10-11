@@ -9,7 +9,7 @@ with sync_playwright() as p:
     print(len(keys),'трасс')
     bad=[]
     for k in keys:
-        r=pg.evaluate("""k=>{localStorage.setItem('avt-tips3d','9');const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+        r=pg.evaluate("""k=>{localStorage.setItem('avt-tips3d','9');const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
           try{startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});}catch(e){return {err:String(e)};}
           if(!R.gl)return {gl:false};while(R3.next<R3.order.length)r3dBuildStep();R.t=0.5;r3dRender(1/30);r3dRender(1/30);
           const o={n:R3.nCh,tri:G3.tri,dc:G3.dc,ppl:R3.pN,col:R.trk.col.length};finishRace(true);closeSheet();closePaper();G.pending=[];return o;}""",k)

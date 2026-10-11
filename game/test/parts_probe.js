@@ -11,7 +11,7 @@ for(const y of yrs){G.y=y;G.m=5;
   for(const g of ['people','middle','lux','van','truck']){if(seg!=='all'&&seg!==g)continue;
     const t=g==='lux'?'t2':g==='middle'?'t1':'t0',rc=rivalCar(g,y),refMd=mk(rc[2],t);
     const lines=[y+' '+g+' — '+rc[1]+' ('+rc[0]+')',row('эталон',refMd)];
-    const truck=g==='van'||g==='truck',bodyF=truck?(x=>x.truck&&(g==='van'?x.id==='b6':x.id!=='b6')):(x=>!x.truck);
+    const truck=g==='van'||g==='truck',bodyF=truck?(x=>x.truck&&(g==='van'?x.id==='b6':x.id!=='b6')):(x=>!x.truck&&!x.moto);
     if(!best(BODIES,y,'comf',bodyF))continue;const c=best(CHASSIS,y,'max'),e=best(ENGINES,y,'hp',x=>x.hp<=c.max);
     const top=mk({e:e.id,g:best(GEARBOX,y,'eff').id,c:c.id,k:best(BRAKES,y,'brk').id,b:best(BODIES,y,'comf',bodyF).id,w:best(TYRES,y,'grip').id},t);
     lines.push(row('лучшее',top));

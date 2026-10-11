@@ -24,8 +24,10 @@ function carBase(md,prep,y){
   const grip=(p.w.grip||1)*(1+0.06*U(p.w.id))*(md.dv?dvNow(md,'w'):1),brk=p.k.brk*(1+0.05*U(p.k.id))*(md.dv?dvNow(md,'k'):1);
   // надёжность: мотор, коробка, запас прочности рамы, проколы
   const load=p.e.hp/Math.max(1,chassisMax(p.c,md)),durK=1.02-0.06*clamp(load-0.5,0,0.5);
-  const rel=clamp(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1)*teethK(md,y)*dvRel(md),0.3,0.99);
-  return {hp,kg:Math.round(m),P,kd,crr,cd,cg,brk,grip,rel,wb:p.c.wb+(p.e.hp>40?0.3:0),wire:!!p.w.wire,mech:mechanicEra(y),hpKg:hp/m*1000};
+  // 0.33: деталь, вышедшая не по ТЗ, ломается чаще — через частоту поломок (10f-risk.js, dvFail), а не через «процент надёжности»
+  const rel0=clamp(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1),0.3,0.99);
+  const rel=md.dv?clamp(1-(1-rel0)*dvFail(md),0.3,0.99):rel0;
+  return {hp,kg:Math.round(m),P,kd,crr,cd,cg,brk,grip,rel,wb:p.c.wb+(p.e.hp>40?0.3:0),wire:!!p.w.wire,mech:!mo&&mechanicEra(y),hpKg:hp/m*1000};
 }
 function carStats(md,prep,y){
   y=y||(G?G.y:1895);const st=carBase(md,prep,y),{P,kd,crr}=st,m=st.kg,p=parts(md),g=9.81;

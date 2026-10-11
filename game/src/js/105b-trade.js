@@ -24,7 +24,7 @@ function ruleNow(s,c){return tradeRule(c,s.country,tNow(s));}
 function localMade(s,c){return impLv(s,c)>=4||intIn(s,c)||licOn(s,c);}
 function licOn(s,c){const L=s.lic&&s.lic[c];return !!(L&&L.at<=mi(s));}
 // Пошлина на эту машину в этой стране (доля цены): по режиму, способу ввоза, Канаде для стран Империи
-function tariffOf(md,c,s){if(c===s.country||localMade(s,c))return 0;const r=ruleNow(s,c);if(r.ban)return 0;
+function tariffOf(md,c,s){if(c===s.country||localMade(s,c))return 0;if(md&&isMoto(md)&&mholdIn(s,c).length)return 0;const r=ruleNow(s,c);if(r.ban)return 0;
   let d=r.dLux&&md&&md.price>=r.luxP*cpi(s)?r.dLux:r.duty;if(md&&isTruck(md)&&c==='uk'&&!r.trucks)d=0;
   if(c==='uk'&&r.pref&&hubOn(s,'ca'))d*=r.pref;
   const L=impOf(s,c);return d*(L&&L.tar!=null?L.tar:1);}
@@ -96,10 +96,23 @@ function hubStart(s){if(s.country==='uk'||(s.hub&&s.hub.ca)||s.y<1904)return fal
 /* ---------- национализация в войну ---------- */
 function atWar(a,b,y,m){if(a===b)return false;const t=y+m/12;if(!(a==='de'||b==='de'))return false;const o=a==='de'?b:a;
   return o==='us'?t>=1917.25&&t<1918.9:o==='it'?t>=1915.4&&t<1918.9:t>=1914.58&&t<1918.9;}
-function warSeize(s){for(const c of Object.keys(COUNTRIES)){const bld=s.impB&&s.impB[c],H=(s.hold||[]).filter(h=>h.c===c);if(impLv(s,c)<3&&!H.length&&!(bld&&bld.lv>=3))continue;if(!atWar(s.country,c,s.y,s.m))continue;
-  const lv=impLv(s,c),B=H[0],what=B?`марка «${B.nm||B.n}»`:lv>=4||(bld&&bld.lv>=4)?`завод «${s.company}»`:`сборочный цех «${s.company}»`,loss=impCost(s,c,Math.max(lv,bld?bld.lv:0))*0.7;
-  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;s.hold=(s.hold||[]).filter(h=>h.c!==c);s.plantVal=Math.max(0,s.plantVal-loss);
-  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${what} ${B?'конфискована':'конфискован'}`,deck:'Собственность противника переходит государству',text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление ${B?`${H.map(h=>'«'+(h.nm||h.n)+'»').join(', ')} с заводами, складами и дилерами`:`завод, склады и сеть «${s.company}»`} как собственность противника. Всё, что было вложено, потеряно; после войны рынок придётся открывать заново.`},true);}}
+// 0.33: в войну страна-противник забирает ВСЁ, что у вас в ней было: отделение, сборку и завод, купленные марки и доли,
+// лицензию местному заводу; договор с импортёром разорван (торговля с противником запрещена), дилеры — не ваши. Так в 1917–1918
+// годах американский Хранитель вражеской собственности продал американскую Bosch, а британцы — немецкие торговые дома.
+// Раньше забирали только заводы и марки, а импортёр с дилерами оставался «вашим» — и после войны было непонятно, что осталось.
+// Что потеряно — записано в s.seized[c]: «Рынок» показывает это до тех пор, пока вы не вернётесь в страну.
+function warAssets(s,c){const L=[],lv=impLv(s,c),bld=s.impB&&s.impB[c],H=(s.hold||[]).filter(h=>h.c===c),d=dealerCount(s,c);
+  if(H.length)L.push(H.map(h=>`марка «${h.nm||h.n}»${h.mode==='int'?'':` (доля ${Math.round((h.st||0)*100)}%)`}`).join(', '));
+  if(lv>=4||(bld&&bld.lv>=4))L.push('свой завод');else if(lv>=3||(bld&&bld.lv>=3))L.push('сборочный цех');else if(lv>=2||(bld&&bld.lv>=2))L.push('своё отделение');
+  if(s.lic&&s.lic[c])L.push('лицензия местному заводу');if(lv===1)L.push('договор с импортёром');if(d>0)L.push(`${fmtN(d)} ${plural(d,'дилер','дилера','дилеров')}`);
+  if(c==='uk'&&s.hub&&s.hub.ca)L.push('сборка в Канаде');return L;}
+function warSeize(s){for(const c of Object.keys(COUNTRIES)){if(c===s.country||!atWar(s.country,c,s.y,s.m))continue;const W=warAssets(s,c);if(!W.length)continue;
+  const lv=impLv(s,c),bld=s.impB&&s.impB[c],B=(s.hold||[]).filter(h=>h.c===c),top=Math.max(lv,bld?bld.lv:0),loss=top>=2?impCost(s,c,top)*0.7:0;
+  if(bld)delete s.impB[c];s.imp=s.imp||{};s.imp[c]=0;s.dealers[c]=0;if(s.dcap)delete s.dcap[c];s.hold=(s.hold||[]).filter(h=>h.c!==c);if(s.lic)delete s.lic[c];if(c==='uk'&&s.hub)delete s.hub.ca;
+  s.plantVal=Math.max(0,s.plantVal-loss);s.seized=s.seized||{};s.seized[c]={y:s.y,m:s.m,what:W};
+  const big=B.length||top>=2;
+  pushEvent({kicker:'Война',title:`${COUNTRIES[c].name}: ${big?'имущество «'+s.company+'» конфисковано':'торговля закрыта, договоры разорваны'}`,deck:'Собственность и договоры противника — государству',
+    text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление всё, что было у «${s.company}»: ${W.join(', ')}. ${big?'Вложенное потеряно. ':''}Продаж там больше нет — и после войны их не будет, пока вы не откроете рынок заново: с импортёра или покупкой местной марки.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
   Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;const now=tradeRule(c,s.country,t);

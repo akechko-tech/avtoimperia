@@ -4,7 +4,7 @@ Math.random=(()=>{let a=7;return()=>{a=(a*16807)%2147483647;return a/2147483647;
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};raceResults=(rc,res,mode,info)=>{LAST={rc,res,mode,info};};
 newGame('renault','fr','T','normal');G.cash=1e6;let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
 function run(key,drive){const rc=RACES.find(r=>r.key===key);if(!rc){console.log('нет гонки',key);return;}G.y=rc.y;
-  const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+  const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   LAST=null;const ent=[{drv:'me',md,prep:2,tyre:'soft',gear:0}];
   if(!drive){startRace({rc,mode:'sim',entries:ent});}
   else{startRace({rc,mode:'drive',entries:ent});const S=R.scn;console.log('== '+key+' старт: '+S.st+' часы '+scnClockTxt()+' погода '+S.wxP.map(x=>x[0]+':'+x[1]+(x[2]?'/дождь':'')).join(' '));

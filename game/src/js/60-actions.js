@@ -11,7 +11,7 @@ const ACT={
   // 0.31: «Дальше: гонка…» и вызов наверху — сразу в эту гонку (запись открыта), иначе — к её карточке в календаре
   raceTo:d=>{const s=G,rc=raceByKey(d.k);tab='race';render();window.scrollTo(0,0);if(!rc)return;
     const T=(rc.y-1895)*12+rc.m,t=mi(s),open=rc.match?(t>=T-1&&t<=T):raceOpen(rc,s);
-    if(open&&!s.pending.length&&!s.raceDone[rc.key]&&raceCarsFor(s).length){openRaceSetup(rc.key);return;}
+    if(open&&!s.pending.length&&!s.raceDone[rc.key]&&raceCarsFor(s,rc).length){openRaceSetup(rc.key);return;}
     const e=document.getElementById('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
     if(!open)toast(`«${rc.name}»: запись откроется за месяц до старта`);},
   tab:d=>{tab=d.t;render();const e=d.sec&&document.getElementById(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
@@ -44,7 +44,8 @@ const ACT={
   promoSheet:d=>promoSheet(d.c),
   repay:d=>{const n=Math.min(G.loan,Math.floor(Math.max(0,G.cash)));if(n>0){G.loan=Math.round((G.loan-n)*100)/100;if(G.loan<1)G.loan=0;G.cash-=n;addLog(G.loan?`Погашено ${money(n)} кредита, осталось ${money(G.loan)}.`:`Кредит погашен полностью (${money(n)}).`,'good');rerender();}},
   // модели
-  price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);if(md.pPrevM!==mi(G)){md.pPrev=md.price;md.pPrevM=mi(G);}md.price=Math.max(20,md.price+st*(+d.d));rerender();},
+  // 0.33: ниже половины себестоимости цену не опустить — это уже раздача машин (и дилеры такую не возьмут)
+  price:d=>{const md=G.models.find(m=>m.id===+d.id),st=Math.max(5,Math.round(md.price*0.05/5)*5);if(md.pPrevM!==mi(G)){md.pPrev=md.price;md.pPrevM=mi(G);}const lo=priceFloor(md,G),np=md.price+st*(+d.d);if(+d.d<0&&np<lo&&md.price<=lo){toast('Дешевле — уже раздача машин: не ниже половины себестоимости ('+money(lo)+')');return;}md.price=Math.max(lo,np);rerender();},
   planManual:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.plan==='auto'||md.plan===undefined)md.plan=autoPlan(md);rerender();},
   planAuto:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan='auto';rerender();},
   plan:d=>{const md=G.models.find(m=>m.id===+d.id),base=md.plan==='auto'||md.plan===undefined?autoPlan(md):+md.plan;md.plan=Math.max(0,base+(+d.d));rerender();},
@@ -52,9 +53,9 @@ const ACT={
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
-  // 0.32: мотоциклы — фильтр линейки, мотоцех, автомобильный цех «Мотомастерской», мотомарки
+  // 0.32–0.33: мотоциклы — оборудование для мотоциклов, оборудование для автомобилей у «Мотомастерской», мотомарки
   line:d=>{G.ui=G.ui||{};G.ui.line=d.v==='moto'?'moto':'car';rerender();},
-  mshop:()=>{if(mshopStart(G)){save();rerender();}else toast('Не хватает денег на мотоцех');},
+  mshop:()=>{if(mshopStart(G)){save();rerender();}else toast('Не хватает денег на оборудование');},
   mcapAdd:d=>{if(mcapOrder(G,+d.n)){save();rerender();}else toast('Не хватает денег');},
   carShop:()=>{if(carShopStart(G)){save();rerender();}},
   mbrand:d=>{const h=mbrandHTML(d.c,+d.i,G);if(h)openSheet(h);},
@@ -67,6 +68,8 @@ const ACT={
   dsec:d=>{draft.open=draft.open===d.k?null:d.k;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dclass:d=>{const was=designKind(draft),k=d.v;
     // 0.32: мотоцикл — одиночка или с коляской: меняется только «кузов», остальное остаётся
+    // 0.33: машина ↔ мотоцикл в одном конструкторе — новая основа (детали мотоцикла и машины разные)
+    if(isMotoSeg(k)!==isMoto(draft)){const nm=draft.name,pt=draft.paint;Object.assign(draft,rivalDesign(k,G.y),{name:nm,paint:pt,open:null});try{draft.eq=isMotoSeg(k)?[]:eqAuto(draft,kindIsTruck(k)?'truck':k,G);}catch(_){draft.eq=[];}if(!isMotoSeg(k)){draft.t=KIND_TRIM[k]||'t0';}const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;return;}
     if(isMotoSeg(k)){const b=unlockedP(BODIES,G,1).filter(x=>kindBodyOk(k,x)),keep=b.find(x=>x.id===draft.b);draft.b=(keep||b[b.length-1]||{id:k==='moto'?'mb0':'mb1'}).id;draft.t='t0';const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;return;}
     if(kindIsTruck(k)!==kindIsTruck(was)||(kindIsTruck(k)&&k!==was))Object.assign(draft,rivalDesign(k,G.y));else draft.t=KIND_TRIM[k];
     if(k==='sport'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
@@ -159,6 +162,7 @@ const ACT={
 };
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 if(typeof DEAL_ACT!=='undefined')Object.assign(ACT,DEAL_ACT);
+if(typeof MDEAL_ACT!=='undefined')Object.assign(ACT,MDEAL_ACT);
 if(typeof RB_ACT!=='undefined')Object.assign(ACT,RB_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 // Кнопка «Назад» на Android: закрываем окна по очереди

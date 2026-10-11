@@ -1,5 +1,6 @@
 # 0.32: дымовой прогон в браузере — «Мотомастерская» (новая игра, мотоцикл, путь к автомобилю), мотоцех у автомобильной
-# марки, фильтр «Авто / Мото» в «Моделях», «КБ», «Продажах», переносы технологий, рисунок мотоцикла, риск «не по ТЗ».
+# марки, переносы технологий, рисунок мотоцикла, риск «не по ТЗ». 0.33: переключателя «Авто / Мото» больше нет (один список),
+# мотоцех — оборудование в «Технологиях завода»; новое 0.33 — в ui33.py.
 # python3 game/test/ui32.py
 from playwright.sync_api import sync_playwright
 import os
@@ -32,11 +33,7 @@ with sync_playwright() as p:
     ok(js("G.motoStart===1899&&G.y===1899&&lineOn(G,'moto')&&!lineOn(G,'car')")==True,'мотомастерская открыта: '+js("dstr(G)")+', касса '+str(js("Math.round(G.cash)")))
     pg.screenshot(path=out+'2_intro_paper.png');js(clean)
     js("(()=>{tab='models';render();window.scrollTo(0,0);})()");pg.wait_for_timeout(250);pg.screenshot(path=out+'3_models_moto.png')
-    ok(pg.query_selector('.lineseg') is not None and pg.query_selector('svg.car.moto') is not None,'«Модели»: фильтр «Авто / Мото» и рисунок мотоцикла')
-    # фильтр «Авто» у мастерской без автомобиля — путь к машине
-    pg.click('.lineseg [data-v=car]');pg.wait_for_timeout(250);pg.screenshot(path=out+'4_models_car_locked.png')
-    ok('Автомобиля пока нет' in pg.inner_text('#main') if pg.query_selector('#main') else 'Автомобиля пока нет' in pg.content(),'«Авто»: автомобиля пока нет — что для него нужно')
-    pg.click('.lineseg [data-v=moto]');pg.wait_for_timeout(200)
+    ok(pg.query_selector('.lineseg') is None and pg.query_selector('svg.car.moto') is not None,'«Модели»: один список (0.33) и рисунок мотоцикла')
     # конструктор мотоцикла
     js("(()=>{tab='models';render();})()");pg.click('[data-act=design]');pg.wait_for_timeout(350);pg.screenshot(path=out+'5_designer_moto.png')
     ok(js("!!(draft&&isMoto(draft))")==True and 'новый мотоцикл' in pg.inner_text('#sheetBody').lower(),'конструктор мотоцикла открыт')
@@ -48,8 +45,6 @@ with sync_playwright() as p:
     js("(()=>{G.y=1903;tab='plant';render();window.scrollTo(0,0);})()");pg.wait_for_timeout(300)
     el=pg.query_selector('[data-k=carshop]');ok(el is not None,'«Завод»: карточка «Путь к автомобилю»')
     if el: el.scroll_into_view_if_needed();pg.screenshot(path=out+'7_plant_carshop.png')
-    el=pg.query_selector('[data-k=mshop]');
-    if el: el.scroll_into_view_if_needed();pg.screenshot(path=out+'8_plant_mshop.png')
     # выполнили условия — строим автомобильный цех
     js("(()=>{G.y=1905;G.models[0].made=4000;G.rd.lvl=2;G.cash=9e4;render();})()");pg.wait_for_timeout(200)
     bt=pg.query_selector('[data-act=carShop]');ok(bt is not None and bt.is_enabled(),'кнопка «Построить автомобильный цех» доступна')
@@ -57,24 +52,23 @@ with sync_playwright() as p:
     for i in range(7): js("(()=>{G.pending=[];doStep();closeSheet();closePaper();G.pending=[];})()")
     ok(js("lineOn(G,'car')")==True,'автомобильный цех построен: '+js("dstr(G)"))
     # «Продажи»: рынок мотоциклов
-    js(clean);js("(()=>{G.ui.line='moto';tab='market';render();window.scrollTo(0,0);})()");pg.wait_for_timeout(300);pg.screenshot(path=out+'9_market_moto.png')
-    ok('Мотомарки' in pg.content(),'«Продажи» в режиме «Мото»: рынок и мотомарки')
+    js(clean);js("(()=>{tab='market';render();window.scrollTo(0,0);})()");pg.wait_for_timeout(300);pg.screenshot(path=out+'9_market_moto.png')
+    ok('Мотомарки' in pg.content(),'«Продажи»: рынок мотоциклов и мотомарки в общем разделе')
     bb=pg.query_selector('[data-act=mbrand]')
     if bb:
         bb.click();pg.wait_for_timeout(300);pg.screenshot(path=out+'10_mbrand.png');ok('Мотомарка' in pg.inner_text('#sheetBody'),'карточка мотомарки');js(clean)
     # КБ: проекты мотоциклов и переносы
-    js("(()=>{G.y=1904;G.rd.lvl=4;G.cash=5e5;G.rd.early.push('e3');G.ui.line='moto';openRD();})()");pg.wait_for_timeout(300);pg.screenshot(path=out+'11_kb_moto.png')
+    js("(()=>{G.y=1904;G.rd.lvl=4;G.cash=5e5;G.rd.early.push('e3');openRD();})()");pg.wait_for_timeout(300);pg.screenshot(path=out+'11_kb_moto.png')
     ok('Перенос' in pg.inner_text('#sheetBody'),'КБ: переносы между линейками')
     js(clean)
     # 2) автомобильная марка: мотоцех, мотоцикл, риск «не по ТЗ» в конструкторе
-    js("(()=>{newGame('peugeot','fr','Пежо','normal');G.y=1910;G.cash=3e5;G.pending=[];tab='plant';render();})()");pg.wait_for_timeout(300)
-    el=pg.query_selector('[data-k=mshop]');ok(el is not None and pg.query_selector('.lineseg:visible') is None,'у автомобильной марки мотоциклы скрыты: одна свёрнутая карточка')
-    if el:
-        el.click();pg.wait_for_timeout(200);el=pg.query_selector('[data-k=mshop]');el.scroll_into_view_if_needed();pg.screenshot(path=out+'12_car_mshop.png')
-        bt=pg.query_selector('[data-act=mshop]');bt and bt.click();pg.wait_for_timeout(200)
+    js("(()=>{newGame('peugeot','fr','Пежо','normal');G.y=1910;G.cash=3e5;G.pending=[];tab='plant';setOpen('techc',true);render();})()");pg.wait_for_timeout(300)
+    bt=pg.query_selector('[data-act=mshop]');ok(bt is not None and pg.query_selector('.lineseg') is None,'у автомобильной марки: оборудование для мотоциклов — в технологиях завода')
+    if bt:
+        bt.scroll_into_view_if_needed();pg.screenshot(path=out+'12_car_mshop.png');bt.click();pg.wait_for_timeout(200)
         for i in range(4): js("(()=>{G.pending=[];doStep();closeSheet();closePaper();G.pending=[];})()")
-        ok(js("lineOn(G,'moto')")==True,'мотоцех построен — появился фильтр')
-    js("(()=>{G.ui.line='car';G.rd.early.push('e6');tab='models';render();openDesigner('lux');draft.e='e6';renderDesigner();})()");pg.wait_for_timeout(300)
+        ok(js("lineOn(G,'moto')")==True,'оборудование для мотоциклов поставлено')
+    js("(()=>{G.rd.early.push('e6');tab='models';render();openDesigner('lux');draft.e='e6';renderDesigner();})()");pg.wait_for_timeout(300)
     ok('Риск: не по ТЗ' in pg.inner_text('#sheetBody'),'конструктор: риск «не по ТЗ» у прототипа')
     pg.screenshot(path=out+'13_designer_risk.png');js(clean)
     js("(()=>{tab='log';render();window.scrollTo(0,0);})()");pg.wait_for_timeout(250)

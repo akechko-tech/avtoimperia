@@ -117,7 +117,7 @@ function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>!pkIs(cp,s));}
 // (иначе сильный игрок за Форда к 1930 году вдвое больше настоящего Ford); в Европе первопроходец — национальная марка, место остаётся
 const GHOST_K={us:0.4};
 function ghostShare(c,g,s){const cp=compList(c,g).find(x=>pkIs(x,s)),S=segAnnual(c,g,s);let v=0;if(cp&&cp.mix&&cp.mix[g]&&S>0)v=compVol(cp,s)*cp.mix[g]/S*(globalThis.GHOSTK??GHOST_K[c]??1);
-  return Math.min(0.97,v+boughtShare(c,g,s));}
+  return Math.min(0.97,v+(isMotoSeg(g)?mBoughtShare(c,g,s):boughtShare(c,g,s)));}
 // Сила конкурентов класса: подобрана по истории (CALIB), плюс сложность игры
 // 0.32: сила соперников по сложности входит в силу не сразу: на молодом рынке (до 1900 года) все марки — мастерские,
 // «Магнат» и «Историк» давят в полную силу с 1906 года (иначе старт в Америке, где рынок просыпается к 1899–1900 годам, — верное
@@ -160,7 +160,7 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   return b-Math.log(difComp(s));}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
-  const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g));if(v>0){out.push({cp,i,v});sum+=v;}});
+  const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g));if(v>0){out.push({cp,i,v});sum+=v;}});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах

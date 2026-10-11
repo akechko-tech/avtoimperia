@@ -30,7 +30,7 @@ function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15
 function rdShare(s,pj){const L=rdActive(s),sw=L.reduce((a,p)=>a+(p.w||1),0);return sw?(pj.w||1)/sw:1;}
 function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj)*kitRdK(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};
-// 0.32: проекты КБ по линейкам: автомобиль (если есть автомобильный цех) и мотоцикл (если есть мотоцех)
+// 0.32–0.33: проекты КБ — для той техники, которую завод умеет делать: автомобили и (с оборудованием для мотоциклов) мотоциклы
 const MOTO_CAT={e:'Мотор мотоцикла',g:'Передача мотоцикла',c:'Рама мотоцикла',w:'Шины мотоцикла',k:'Тормоз мотоцикла',b:'Коляска'};
 // мотоциклетная деталь проще автомобильной — проект короче; опыт автомобильных моторов (прототипы и ★) удешевляет мотор мотоцикла
 function engExp(s,mo){let n=0;ENGINES.forEach(x=>{if(!!x.moto!==!!mo)return;if(s.rd.early.includes(x.id))n++;n+=upgL(x.id)/3;});return n;}
@@ -55,7 +55,7 @@ function rdProjects(s){
 const PART_BETTER={e:(z,x)=>z.rel>=x.rel&&z.hp>=x.hp*0.9,g:(z,x)=>z.eff>=x.eff&&(z.relK||1)>=(x.relK||1),c:(z,x)=>z.max>=x.max&&z.ride>=x.ride,
   w:(z,x)=>z.grip>=x.grip&&z.life>=x.life&&!z.solid&&(!x.pit||(z.pit&&z.pit<=x.pit)),k:(z,x)=>z.brk>=x.brk,b:(z,x)=>!!z.truck===!!x.truck&&!!z.closed===!!x.closed&&z.seats>=x.seats&&(z.comf||1)>=(x.comf||1)&&(z.pay||0)>=(x.pay||0)&&z.cd<=x.cd*1.1};
 function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETTER[ck];if(!cat||!f)return false;const arr=cat.arr(),x=byId(arr,id);if(!x||s.y-Math.max(1893,x.y||1895)<8)return false;
-  return arr.some(z=>z!==x&&(z.y||1895)>(x.y||1895)&&(z.y||1895)<=s.y-2&&f(z,x));}
+  return arr.some(z=>z!==x&&!!z.moto===!!x.moto&&(z.y||1895)>(x.y||1895)&&(z.y||1895)<=s.y-2&&f(z,x));}   // 0.33: мотоциклетную деталь сравниваем только с мотоциклетными
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
@@ -114,6 +114,8 @@ function labLearn(md){return Math.max(0.45,Math.pow(1+(md.made||0)/150,-0.14));}
 // Разделение труда: большой поток — у каждого рабочего своя операция; штучная сборка — мастера делают всё
 function labRate(v){return clamp(1.15-0.075*Math.log10(1+Math.max(0,v)),0.85,1.15);}
 function modelVol(md){return md.vol||md.lastMade||1;}
+// 0.33: нижняя граница цены — половина себестоимости (кнопка «−» дальше не опускает)
+function priceFloor(md,s){try{return Math.max(20,Math.round(unitCost(md,s)*0.5/5)*5);}catch(_){return 20;}}
 function matCost(md,s){const p=parts(md),tc=s.tech||{};let c=baseCost(md,s);
   if(tc.foundry)c-=partCost(p.e,s)*0.18;if(tc.press&&!isTruck(md))c-=partCost(p.b,s)*0.15;
   return Math.max(10,c*volFactor(modelVol(md),s)*learn(md)*bn('matCost')*(s.supplyNow||1)*worldMat(s)*(md.legend?legendK(md,'cost'):1)*(typeof supK==='function'?supK(s):1));}
@@ -151,11 +153,16 @@ function carChar(md,y){
 function truckSpeed(st,pay){const m=st.kg+pay*1000,g=9.81,A=st.kd,B=(st.crr+0.02)*m*g;let v=10;for(let i=0;i<30;i++){const f=A*v*v*v+B*v-st.P,df=3*A*v*v+B;v=Math.max(2,v-f/df);}
   return clamp(v*3.6*0.55,6,45);}
 const CH_CACHE=new Map();
-function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer+kitCarSig(G):'')+PART_KEYS.map(k=>upgL(md[k])).join('')].join('|');
+// 0.33: в ключе — и отклонения от ТЗ (они тают по месяцам): иначе модель «не по ТЗ» и новый проект с теми же деталями делили бы один расчёт
+function dvSig(md){return md&&md.dv?Object.keys(md.dv).map(k=>k+dvNow(md,k).toFixed(3)).join(','):'';}
+function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer+kitCarSig(G):'')+PART_KEYS.map(k=>upgL(md[k])).join('')+dvSig(md)].join('|');
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
 // С кем сравнивают: фургон — с фургонами, грузовик — с грузовиками, легковую — с машинами своего класса
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
-function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y);return {name:r[1],y:r[0],kind,md:{...r[2],t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
+// 0.33: грузовик сравнивают с грузовиком своей грузоподъёмности: трёхтонку — с трёхтонкой соперников (её мотор, рама, коробка),
+// а не с полуторатонкой (раньше 3-тонный грузовик выглядел «прожорливым и слабым» — на вдвое больший груз)
+function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y),b=byId(BODIES,md.b),tb=kind==='truck'&&b&&b.truck&&md.b!=='b6'&&(b.y||1895)<=y?md.b:null;
+  return {name:r[1],y:r[0],kind,md:{...r[2],...(tb?{b:tb}:{}),t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
 function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={};let lnS=0;
   // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
@@ -228,13 +235,15 @@ function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+te
 function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)/100)*100;}
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
-function hoursPerCar(md,s){const conv=techLv(s,'line')===2,mo=isMoto(md),act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)===mo).length;
+function hoursPerCar(md,s){const conv=techLv(s,'line')===2,mo=isMoto(md),act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)===mo).length,mk=mo&&typeof motoLv==='function'&&motoLv(s)>=2?MSHOP2.hrs:1;
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1));}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1)*mk);}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
 function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1)*techTroubleK(s);}
-// 0.32: мотоцех — своя мощность (в тех же единицах трудоёмкости: мотоцикл в 8–15 раз проще машины); станки и электромоторы завода — общие
-function mcapEff(s){return (s.mcap||0)*techMul(s,'cap')*(s.shifts>1?1.85:1)*techTroubleK(s);}
+// 0.33: завод один — мотоциклы делают в тех же цехах (места мотоцикл занимает в 7–10 раз меньше машины)
+function mcapEff(s){return capEff(s);}
+// загрузка завода в прошлом месяце: занятые места (машины и мотоциклы — по трудоёмкости, военная продукция) к мощности
+function capUtil(s){const L=s&&s.last;if(!L)return 0;return Math.min(1,(L.capUsed!=null?L.capUsed:L.made||0)/Math.max(1,capEff(s)));}
 // станки, конвейер и электромоторы делают цех производительнее — но и дороже: место в цеху стоит больше
 function capUnitCost(s){return Math.round(1500*cpi(s)*(1+0.12*techLv(s,'tools')+0.08*techLv(s,'elec'))*Math.pow(techMul(s,'cap'),0.6)*bn('lineCost')*worldCapK(s));}
 function plantOverhead(s){return s.plantVal*0.009+30*cpi(s)*(1+s.workers/150);}
@@ -355,7 +364,7 @@ function newGame(pioneer,country,company,diff,firstName){
   const mname=(firstName||'').trim()||'Тип 1';
   G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
      cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},imp:{},dcap:{},ad:30,rep:30,wh:12,whBuild:[],
-     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,mcomps,lines:{car:1},mcap:0,pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
+     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,mcomps,lines:{car:1},pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};

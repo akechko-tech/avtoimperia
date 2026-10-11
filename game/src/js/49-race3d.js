@@ -485,12 +485,12 @@ function r3dTile(tx,tz){const F=R3.F,TS=16,k0=tx*TS,j0=tz*TS;if(k0>=F.nx-1||j0>=
     if(!tunFree(x,z)||wet(x,z))continue;if(sl>0.8&&F.mount&&r()<0.55)trees.add(pTree('rock',Math.floor(r()*3)),X3(r()*6.28,1+r()*1.6,[x,y-0.4,z]));else if(sl>0.8&&F.mount)put('bush',x,y-0.2,z,1.1+r()*0.7);else if(F.mount&&r()<0.35)put('bush',x,y-0.1,z,0.9+r()*0.6);else put(F.mount?'fir':kinds.length?kinds[Math.floor(r()*kinds.length)]:'oak',x,y-0.2,z,0.7+r()*0.5);}}
   return {g:g3Mesh(mb),t:g3Mesh(trees),l:g3Mesh(leaf),c:[(x0+x1)/2,0,(z0+z1)/2]};}
 /* ---------- машины: модель из 46-models.js, колёса крутятся, кузов кренится ---------- */
-function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.mech?1:0,spec.b,spec.y,spec.hp===undefined?'':spec.hp,spec.strip?1:0,spec.acc||'',spec.lux?1:0,spec.mq||'',spec.num||0].join('|')+(near?'|h':'|l');let m=R3.carM.get(key);if(m)return m;
+function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.mech?1:0,spec.b,spec.y,spec.hp===undefined?'':spec.hp,spec.strip?1:0,spec.acc||'',spec.lux?1:0,spec.mq||'',spec.num||0].join('|')+(spec.style==='moto'?'|'+[spec.me,spec.mf,spec.mt,spec.mw,spec.sd].join(','):'')+(near?'|h':'|l');let m=R3.carM.get(key);if(m)return m;
   const M=carModel(Object.assign({},spec,{lod:near?'hi':'lo'})),op=new MB(),gl=new MB();mbFromMesh(op,M,{lift:0.004,step:0.0016,glass:gl,car:true});
   const wc=new Float32Array(24);(M.wheels||[]).slice(0,6).forEach((w,k)=>wc.set(w,k*4));
   // 0.30: колёса по углам (переднее левое, переднее правое, заднее левое, заднее правое) — для осевшей шины, искр и комьев из-под колёс
   const cw=[0,1,2,3].map(k=>{const w=(M.wheels||[]).find(q=>(q[2]>0)===(k<2)&&(q[0]<0)===((k&1)===0));return w?[w[0],w[1],w[2],Math.abs(w[3])]:null;});
-  m={op:g3Mesh(op),gl:g3Mesh(gl),wc,cw,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42)};R3.carM.set(key,m);return m;}
+  m={op:g3Mesh(op),gl:g3Mesh(gl),wc,cw,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42),lean:!!M.lean};R3.carM.set(key,m);return m;}
 function r3dCarState(c){if(!c.v3)c.v3={roll:0,pitch:0,heave:0,vr:0,vp:0,vh:0,spin:0,vxp:c.vx,ax:0,mk:[null,null],dust:0,y:null};return c.v3;}
 /* ---------- установка сцены (фото-текстуры уже в видеокарте: texPrepare) ---------- */
 // Слои земли гонки: основа (трава или сухая трава, песок, снег), вторая трава, земля, камень; покров, лесная подстилка; высота снега, крутизна камня
@@ -796,12 +796,16 @@ function r3dCarUpdate(c,dt,E){
   // наклон по дороге (подъём и вираж)
   const t=T.T[c.idx],nn=T.N[c.idx],i2=T.closed?(c.idx+1)%n:Math.min(n-1,c.idx+1),i1=T.closed?(c.idx-1+n)%n:Math.max(0,c.idx-1);
   const sl=(T.pts[i2][1]-T.pts[i1][1])/(2*T.step)+pm,ls=(y(c.lat+0.7)-y(c.lat-0.7))/1.4+rm;
-  let up=v3n([-sl*t[0]-ls*nn[0],1,-sl*t[1]-ls*nn[1]]);const fw0=[Math.sin(c.yaw),0,Math.cos(c.yaw)],rt=v3n(v3x(up,fw0)),fw=v3x(rt,up);
+  let up=v3n([-sl*t[0]-ls*nn[0],1,-sl*t[1]-ls*nn[1]]);const fw0=[Math.sin(c.yaw),0,Math.cos(c.yaw)];let rt=v3n(v3x(up,fw0)),fw=v3x(rt,up);
+  // 0.33: одиночный мотоцикл в повороте ложится внутрь — весь, с колёсами и гонщиком, вокруг пятна шины (трицикл и коляска — нет)
+  const moto=c.cls==='moto',ml=moto&&r3dCarMesh(c.spec3,false).lean;
+  if(ml){const tg=clamp(Math.atan(Math.max(0,c.vx)*(c.r||0)/9.81),-0.8,0.8);st.ln=(st.ln||0)+(tg-(st.ln||0))*Math.min(1,dt*6);
+    const cl=Math.cos(st.ln),sl2=Math.sin(st.ln);up=v3n([up[0]*cl+rt[0]*sl2,up[1]*cl+rt[1]*sl2,up[2]*cl+rt[2]*sl2]);rt=v3n(v3x(up,fw0));fw=v3x(rt,up);}
   st.mat=m4basis(st.mat||m4(),rt,up,fw,[c.x,yc,c.z]);
   // кузов на рессорах: крен от бокового ускорения, клевок от торможения, дрожь от неровностей
   const v=Math.max(0,c.vx),ax=(c.vx-st.vxp)/Math.max(dt,0.001);st.vxp=c.vx;st.ax+=(clamp(ax,-12,8)-st.ax)*Math.min(1,dt*8);
   const aLat=v*c.r,tr=TERR[T.terrAt(c.idx)]||TERR.dirt,SU=SURF[c.surf],rough=SU?SU.rough*(c.off?1.3:1):(tr.rough||1)*(c.off?1.8:1);
-  const tRoll=clamp(-aLat/9.81,-1.1,1.1)*0.055,tPitch=clamp(-st.ax/9.81,-1,1)*0.035,tH=(vnz(st.spin*1.3,0.5,c.num)-0.5)*0.05*rough*Math.min(1,v/12);
+  const tRoll=ml?0:clamp(-aLat/9.81,-1.1,1.1)*(moto?0.03:0.055),tPitch=clamp(-st.ax/9.81,-1,1)*0.035,tH=(vnz(st.spin*1.3,0.5,c.num)-0.5)*0.05*rough*Math.min(1,v/12);
   const spring=(x,vv,tg,k,d)=>{const a=(tg-x)*k-vv*d;vv+=a*dt;return [x+vv*dt,vv];};
   // кузов на рессорах отстаёт от колёс: резкий подскок дороги — толчок кузову, потом он качается и успокаивается
   if(dt>0&&st.hm!==undefined){const dh=hm-st.hm,dp=pm-st.pm,dr=rm-st.rm;st.vh-=clamp(dh/dt,-3,3)*0.55;st.vp+=clamp(dp/dt,-2,2)*0.45;st.vr+=clamp(dr/dt,-2,2)*0.45;
@@ -828,7 +832,7 @@ function r3dCarUpdate(c,dt,E){
     while(st.dust>1.2){st.dust-=1.2;const sd=Math.random()<0.5?-1:1,sp=me?1.6:0.6;r3dPart(bx-fw[0]*(me?0.5:0)+rt[0]*sd*sp,yc+0.2,bz-fw[2]*(me?0.5:0)+rt[2]*sd*sp,-fw[0]*v*0.1+rt[0]*sd*(me?1.8:0)+(Math.random()-0.5)*1.5,0.4+Math.random()*0.7,-fw[2]*v*0.1+rt[2]*sd*(me?1.8:0)+(Math.random()-0.5)*1.5,0.8,1.8+v*0.05,1.4+Math.random()*1.0,col,(me?0.16:0.26)*Math.min(1,dusty));}}
   if((c.slipR>0.15||c.spinw>0.4||(c.brk>0.8&&v>8))&&v>4){if(Math.random()<0.6)r3dPart(bx,yc+0.2,bz,(Math.random()-0.5)*2,0.6,(Math.random()-0.5)*2,0.6,2.2,1.1,[236,236,236],tr.dust?0.18:0.3);
     // следы шин
-    [-1,1].forEach((sd,k)=>{const p=[c.x-fw[0]*1.0+rt[0]*sd*0.62,yc,c.z-fw[2]*1.0+rt[2]*sd*0.62],pr=st.mk[k];if(pr&&Math.hypot(p[0]-pr[0],p[2]-pr[2])>0.35){r3dSkidAdd(pr,p,0.16,tr.dust?[90,72,50]:[30,30,32],tr.dust?0.28:0.42);st.mk[k]=p;}else if(!pr)st.mk[k]=p;});}
+    const tk=ml?0.02:0.62;[-1,1].forEach((sd,k)=>{const p=[c.x-fw[0]*1.0+rt[0]*sd*tk,yc,c.z-fw[2]*1.0+rt[2]*sd*tk],pr=st.mk[k];if(pr&&Math.hypot(p[0]-pr[0],p[2]-pr[2])>0.35){r3dSkidAdd(pr,p,0.16,tr.dust?[90,72,50]:[30,30,32],tr.dust?0.28:0.42);st.mk[k]=p;}else if(!pr)st.mk[k]=p;});}
   else st.mk[0]=st.mk[1]=null;
   if(c.dnf||c.stopT>0||c.overheat>0){if(Math.random()<0.35)r3dPart(c.x+fw[0]*1.2,yc+1.1,c.z+fw[2]*1.2,(Math.random()-0.5)*0.6,1.4+Math.random(),(Math.random()-0.5)*0.6,0.4,1.6,2,c.overheat>0?[245,245,245]:[80,80,80],0.35);}
   if(c.thr>0.8&&R.rc.y<1914&&Math.random()<0.15)r3dPart(c.x-fw[0]*1.8,yc+0.4,c.z-fw[2]*1.8,-fw[0]*1.5,0.3,-fw[2]*1.5,0.15,0.9,0.6,[110,110,110],0.25);

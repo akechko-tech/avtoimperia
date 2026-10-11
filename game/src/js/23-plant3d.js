@@ -108,7 +108,7 @@ function plantInner2d(s){const key=JSON.stringify(plantState(s));let v=PLANT3D.g
   if(!v&&PLANT_LAST&&!PLANT_BUSY){PLANT_BUSY=true;v=PLANT_LAST;setTimeout(()=>{try{const nv=plantImage2d(G);PLANT_LAST=nv;const im=document.querySelector('.plant3d>img');if(im)im.src=nv.url;}catch(_){}PLANT_BUSY=false;},60);}
   else if(!v)v=PLANT_LAST&&PLANT_BUSY?PLANT_LAST:plantImage2d(s);
   if(!v)return '';PLANT_LAST=PLANT_LAST||v;if(PLANT3D.get(key))PLANT_LAST=v;
-  const L=s.last,busy=L?clamp(L.made/Math.max(1,capEff(s)),0,1):0.3,sm=busy>0.05?v.smoke.map((p,i)=>[0,1,2].map(k=>`<i class="pl-smoke" style="left:${p[0].toFixed(1)}%;top:${p[1].toFixed(1)}%;animation-delay:-${(k*1.1+i*0.4).toFixed(2)}s;--s:${(0.8+busy*0.6).toFixed(2)}"></i>`).join('')).join(''):'';
+  const L=s.last,busy=L?clamp(capUtil(s),0,1):0.3,sm=busy>0.05?v.smoke.map((p,i)=>[0,1,2].map(k=>`<i class="pl-smoke" style="left:${p[0].toFixed(1)}%;top:${p[1].toFixed(1)}%;animation-delay:-${(k*1.1+i*0.4).toFixed(2)}s;--s:${(0.8+busy*0.6).toFixed(2)}"></i>`).join('')).join(''):'';
   const car=v.car&&L&&L.sold>0?`<img class="pl-car" src="${v.car}" alt="" data-r="${v.road.map(x=>x.toFixed(1)).join(',')}" style="left:${v.road[0].toFixed(1)}%;top:${v.road[1].toFixed(1)}%;width:${v.carW.toFixed(1)}%">`:'';
   return `<img src="${v.url}" alt="Завод компании">${sm}${car}`;}
 // Машина едет по улице перед заводом: путь задан числами (анимация через Web Animations — без CSS-переменных в keyframes)

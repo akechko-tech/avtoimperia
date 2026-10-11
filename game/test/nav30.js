@@ -5,7 +5,7 @@ setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};
 let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
 newGame('renault','fr','T','normal');G.cash=1e6;
 const said=[];navBubble=(t)=>said.push([R.time.toFixed(1),t]);
-function run(rc,T){const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+function run(rc,T){const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   said.length=0;startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'hard',gear:0}]});const me=R.me;me.player=false;   // ведёт ИИ, механик говорит
   const TR=R.trk,dt=1/30;for(let f=0;f<T*30&&R&&!R.done;f++){R.t+=dt;R.time+=dt;raceTick(dt);if(!R)break;navTick();}
   const n={};said.forEach(x=>{n[x[1]]=(n[x[1]]||0)+1;});return {me,n,mech:me.mech,TR};}

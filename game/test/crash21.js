@@ -3,7 +3,7 @@ require('./harness.js')(`
 Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};raceResults=()=>{};
 newGame('renault','fr','T','normal');G.cash=1e6;let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++;};
-const rc=RACES.find(r=>r.key==='gpacf-1906');G.y=rc.y;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+const rc=RACES.find(r=>r.key==='gpacf-1906');G.y=rc.y;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
 startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});R.t=5;
 const me=R.me;const base=JSON.stringify({x:me.x,z:me.z});
 function trial(kmh,kind,n){const o={stop:0,dnf:0,inj:0,t:0,limp:0};for(let k=0;k<n;k++){Object.assign(me,{dnf:null,stopT:0,inj:null,mInj:null,limp:false,dmg:0,vx:kmh/3.6,crash:null,fin:null,inWater:0});

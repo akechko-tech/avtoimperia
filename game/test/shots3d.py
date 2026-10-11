@@ -13,7 +13,7 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
     pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     for key in keys:
-        pg.evaluate("""([k,view])=>{const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;G.rdept=2;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck).id;
+        pg.evaluate("""([k,view])=>{const rc=RACES.find(r=>r.key===k);G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;G.rdept=2;const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
           const t0=performance.now();startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0},{drv:DRIVERS.find(d=>d.from<=rc.y&&d.to>=rc.y).id,md,prep:2,tyre:'hard',gear:0}]});window.__st=performance.now()-t0;R.me.player=false;document.getElementById('rTips').hidden=true;R.hold=false;if(R.gl)R3.view=view;}""",[key,view])
         if skip>0:pg.evaluate("s=>{R.t=Math.max(R.t,0);const dt=1/30;for(let i=0;i<s*30&&R&&!R.done;i++){R.t+=dt;R.time+=dt;raceTick(dt);}}",skip)
         if skip<0:pg.evaluate("s=>{R.t=Math.max(R.t,0);const dt=1/30;for(let i=0;i<40000&&R&&!R.done&&R.follow.prog<-s*R.trk.raceLen;i++){R.t+=dt;R.time+=dt;raceTick(dt);}}",skip)

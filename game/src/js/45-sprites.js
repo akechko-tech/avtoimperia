@@ -12,6 +12,7 @@ function poly(c,pts,fill){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1])
 // own — машина игрока: облегчённая остаётся своим кузовом (без крыльев, фонарей и тента), а не превращается в гоночную
 function carStyle(md,prep,y,own){
   const p=parts(md),b=p.b.id;
+  if(p.b.moto)return 'moto';   // 0.33: мотоцикл в 3D (трицикл, одиночка, с коляской — по деталям)
   if(p.b.truck)return b==='b6'?'van':'truck';
   // своя спортивная модель и в заводской подготовке остаётся спортивной (без фар, с номерами)
   const sport=b==='b10'||(b==='b1'&&md.t==='t3'&&y>=1910);
@@ -24,8 +25,10 @@ function carStyle(md,prep,y,own){
 // заводской гоночный кузов — узкий гоночный, но в цвете модели с полосой национального гоночного цвета
 function modelSpec(md,prep,y,o){o=o||{};const p=parts(md),bid=p.b.id,style=carStyle(md,prep,y,true),hp=engineHp(p.e,md),hpB=hp<=4?0:hp<=10?1:hp<=20?2:hp<=35?3:hp<=60?4:5;
   const color=md.paint||'#23427a',acc=prep===2&&y>=1903&&o.country&&COUNTRIES[o.country]?COUNTRIES[o.country].race:null;
-  const wheel=o.wheel||wheelKind(md,y),mech=o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=(prep===1||(prep===2&&style==='sport'))&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
+  const wheel=style==='moto'?'wire':o.wheel||wheelKind(md,y),mech=style==='moto'?false:o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=(prep===1||(prep===2&&style==='sport'))&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
   // 0.21: у пилота с историческим фото — его лицо на голове
   const drv=o.drv&&typeof faceOf==='function'&&faceOf(o.drv)?o.drv:'';
-  const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv].join('|');
-  return {key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv};}
+  // 0.33: мотоцикл — облик по деталям: мотор, рама, передача, шины; коляска справа (в Британии — слева)
+  const mo=style==='moto'?{me:p.e.id,mf:p.c.id,mt:p.g.id,mw:p.w.id,sd:o.country==='uk'?-1:1}:null;
+  const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv].join('|')+(mo?'|'+[mo.me,mo.mf,mo.mt,mo.mw,mo.sd].join(','):'');
+  return Object.assign({key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv},mo||{});}
