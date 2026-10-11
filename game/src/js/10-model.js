@@ -6,20 +6,22 @@ const yf=s=>s.y+s.m/12;
 const dstr=s=>MONTHS[s.m]+' '+s.y;
 const unlocked=(arr,s)=>arr.filter(x=>x.y<=s.y);
 const isTruck=md=>!!byId(BODIES,md.b).truck;
-const segOf=md=>isTruck(md)?'truck':md.t==='t0'?'people':md.t==='t1'?'middle':md.t==='t3'?'sport':'lux';
+const segOf=md=>isTruck(md)?'truck':isMoto(md)?motoSegOf(md):md.t==='t0'?'people':md.t==='t1'?'middle':md.t==='t3'?'sport':'lux';
 // Спортивное оснащение — только на открытом кузове
 const OPEN_B=['b1','b2','b3','b10'];
 const bodyOpen=id=>OPEN_B.includes(id);
 function DIF(){return DIFFS[(G&&G.diff)||'normal'];}
 const upgL=id=>(G&&G.rd&&G.rd.upg[id])||0;
-function unlockedP(arr,s){return arr.filter(x=>x.y<=s.y||(s.rd&&s.rd.early.includes(x.id)));}
+// 0.32: детали мотоциклов — в тех же каталогах с пометкой moto: автомобилю их не предлагаем, мотоциклу — только их
+function unlockedP(arr,s,moto){return arr.filter(x=>!!x.moto===!!moto&&(x.y<=s.y||(s.rd&&s.rd.early.includes(x.id))));}
 // Конструкторское бюро: 8 уровней. Чем больше бюро, тем больше проектов оно ведёт одновременно
 const RD_LV=['','Чертёжная комната','Мастерская опытных образцов','Конструкторское бюро','Испытательная станция','Экспериментальный цех','Исследовательский отдел','Научный центр','Институт автомобиля'];
 const RD_MAX=8;
 function rdSlots(s){return 1+Math.floor((s.rd.lvl-1)/2);}
 function rdPoints(s){return (2+s.rd.lvl)/3*bn('rd');}          // очков в месяц на один проект
 function rdUpCost(s){return Math.round(4000*s.rd.lvl*Math.pow(1.12,Math.max(0,s.rd.lvl-4))*cpi(s)*(1+0.05*T(s))/100)*100;}
-function rdUpkeep(s){return Math.round(60*Math.pow(s.rd.lvl,1.35)*cpi(s)*(1+0.03*T(s)));}
+// 0.32: КБ мотомастерской (пока нет автомобиля) — вдвое дешевле: чертёжник и пара механиков
+function rdUpkeep(s){return Math.round(60*Math.pow(s.rd.lvl,1.35)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
 function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
 function rdHorizon(s){return [0,2,3,4,4,5,6,7,7][s.rd.lvl]||2;}
 function rdActive(s){return s.rd.projs||[];}
@@ -28,14 +30,22 @@ function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15
 function rdShare(s,pj){const L=rdActive(s),sw=L.reduce((a,p)=>a+(p.w||1),0);return sw?(pj.w||1)/sw:1;}
 function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj)*kitRdK(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};
+// 0.32: проекты КБ по линейкам: автомобиль (если есть автомобильный цех) и мотоцикл (если есть мотоцех)
+const MOTO_CAT={e:'Мотор мотоцикла',g:'Передача мотоцикла',c:'Рама мотоцикла',w:'Шины мотоцикла',k:'Тормоз мотоцикла',b:'Коляска'};
+// мотоциклетная деталь проще автомобильной — проект короче; опыт автомобильных моторов (прототипы и ★) удешевляет мотор мотоцикла
+function engExp(s,mo){let n=0;ENGINES.forEach(x=>{if(!!x.moto!==!!mo)return;if(s.rd.early.includes(x.id))n++;n+=upgL(x.id)/3;});return n;}
+function motoRdK(s,ck){return 0.6*(ck==='e'&&engExp(s,0)>=1?0.7:1);}
+function rdLines(s){const L=[];if(lineOn(s,'car')||s.carShopB||!lineOn(s,'moto'))L.push(0);if(lineOn(s,'moto')||s.mshopB)L.push(1);return L;}
 function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
   const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s),MU=massParts(s.y);
-  PART_CATS.forEach(cat=>{const arr=cat.arr();
-    unlockedP(arr,s).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cat.rd,ck:cat.k,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)))});});
+  rdLines(s).forEach(mo=>PART_CATS.forEach(cat=>{const arr=cat.arr().filter(x=>!!x.moto===!!mo),cn=mo?MOTO_CAT[cat.k]:cat.rd,rk=mo?motoRdK(s,cat.k):1;
+    unlockedP(arr,s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
-    if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cat.rd,ck:cat.k,name:nx.name,need:10+6*(nx.y-s.y),yrs:nx.y-s.y});
-  });
+    if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round((10+6*(nx.y-s.y))*rk)),yrs:nx.y-s.y});
+  }));
+  // 0.32: «Перенос» — технология, которую марка освоила в одной линейке, в другую (105e-moto.js)
+  try{xferProjects(s).forEach(pj=>list.push(pj));}catch(e){console.warn('xfer',e);}
   // 0.30: новинки оснащения (стартер, электросвет…) — раньше поставщиков
   if(typeof eqProjects==='function')eqProjects(s).forEach(pj=>list.push(pj));
   return list;
@@ -49,11 +59,16 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
+  if(pj.kind==='xfer')return xferCost(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
   const k=pj.kind==='early'?3+0.4*(pj.yrs||1):0.8*Math.pow(1.25,(pj.lvl||1)-1);
   // в 1890-х опыты — дело мастерской: дёшево; к 1905 году — настоящие опытные цеха и стенды
   const era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));
-  return Math.max(50,Math.round(((80+25*(pj.need||10))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+pc*k)*era/50)*50);}
+  return Math.max(50,Math.round(((80+25*(pj.need||10))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+pc*k)*era*rdShareK(pj,s)/50)*50);}
+// 0.32 (ТЗ «Мото и технологии»): опыт у марки общий — звёзды КБ на моторах и шинах одной линейки удешевляют проекты
+// моторов и шин другой: −6% за звезду, до −30% (моторист, доводивший автомобильный мотор, знает и мотоциклетный)
+function rdShareK(pj,s){if(!pj||(pj.ck!=='e'&&pj.ck!=='w')||!s||!s.rd||!s.rd.upg)return 1;const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null;if(!x)return 1;
+  const st=cat.arr().reduce((a,z)=>a+(!!z.moto!==!!x.moto?Math.min(3,s.rd.upg[z.id]||0):0),0);return 1-Math.min(0.3,0.06*st);}
 // начать проект: деньги сразу (в отчёте месяца — строка КБ)
 function rdBegin(s,pj){const c=rdCost(pj,s);if(!pj||s.cash<c||rdActive(s).length>=rdSlots(s))return false;
   s.cash-=c;s.rdPaid=(s.rdPaid||0)+c;s.rd.projs.push({...pj,prog:0,cost:c});addLog(`КБ начало проект: ${pj.name} (${money(c)} на опыты и образцы).`);return true;}
@@ -69,7 +84,9 @@ function wageNow(s){return wageBase(s)*WAGE_POL[s.wagePol||'market'].k*(s.shifts
 const PART_US={1895:0.95,1899:0.86,1903:0.8,1910:0.72};
 function partCountry(s){const c=s.country;return c==='us'?tabAt(PART_US,yf(s)):c==='uk'||c==='it'?1.05:1;}
 // деталь дешевеет с годами (поставщики учатся), но не больше чем вдвое; отсчёт — с появления детали или с 1895 года
-function partCost(x,s){return x.c*1.15*cpi(s)*Math.max(0.5,1-0.025*Math.max(0,yf(s)-Math.max(1895,x.y)))*partCountry(s);}
+function partCost(x,s){return x.c*1.15*cpi(s)*Math.max(0.5,1-0.025*Math.max(0,yf(s)-Math.max(1895,x.y)))*partCountry(s)*flawK(x,s,'c');}
+// 0.32: неудачный перенос технологии — своя деталь тяжелее или дороже, пока поставщики не начнут делать её как следует (105e-moto.js)
+function flawK(x,s,k){const F=s&&s.rd&&s.rd.flaw&&x&&s.rd.flaw[x.id];return F&&F[k]&&s.y<(x.y||1895)?F[k]:1;}
 // Детали модели. У старых сохранений и чужих машин коробки и тормозов может не быть — берём типичные для эпохи
 function defGear(y){return y>=1914?'g6':y>=1906?'g5':y>=1899?'g3':'g2';}
 function defBrake(y){return y>=1920?'k3':y>=1902?'k2':'k1';}
@@ -79,12 +96,13 @@ const PART_KEYS=['e','g','c','w','k','b'];
 // После ★3 каждое улучшение даёт вдвое меньше: старую конструкцию бесконечно не улучшишь
 // Соперники тоже дорабатывают свои машины: эталон класса с каждым годом после выхода лучше (как улучшения КБ, до ★2,5)
 function upgOf(md,id){if(md&&md.ref)return md.rl||0;if(md&&md.ai)return 0;const l=upgL(id);return l<=3?l:3+0.5*(l-3);}
-function chassisMax(c,md){return c.max*(md&&(md.ai||md.ref)?1:bn('chassisTol'))*(1+0.12*upgOf(md,c.id));}
-function engineHp(e,md){return e.hp*(1+0.08*upgOf(md,e.id));}
+function chassisMax(c,md){return c.max*(md&&(md.ai||md.ref)?1:bn('chassisTol'))*(1+0.12*upgOf(md,c.id))*(md&&md.dv&&md.dv.c&&md.c===c.id?dvNow(md,'c'):1);}
+function engineHp(e,md){return e.hp*(1+0.08*upgOf(md,e.id))*(md&&md.dv&&md.dv.e&&md.e===e.id?dvNow(md,'e'):1);}
 function overpower(md){const p=parts(md);return p.e.hp>chassisMax(p.c,md);}
 // Сложность деталей для конструкторов: от неё бюджет и срок разработки
 function designEffort(md){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+p[k].q*(1+0.12*upgOf(md,p[k].id)),0)+p.t.q;}
-function baseCost(md,s){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+partCost(p[k],s),0)+p.t.c*cpi(s)+(typeof eqCost==='function'?eqCost(md,s):0);}
+// 0.32: улучшенная в КБ деталь дороже в деле — точнее обработка, лучше металл, больше операций: +3% за звезду
+function baseCost(md,s){const p=parts(md);return PART_KEYS.reduce((a,k)=>a+partCost(p[k],s)*(1+0.03*upgOf(md,p[k].id)),0)+p.t.c*cpi(s)+(typeof eqCost==='function'?eqCost(md,s):0);}
 function learn(md){return Math.max(0.85,Math.pow(1+(md.made||0)/200,-0.045));}
 // Экономия масштаба. Скидка поставщиков за объём: 5 машин в месяц — детали на четверть дороже обычного,
 // сотни — по обычной цене, тысячи и десятки тысяч — на 10–40% дешевле. До массового производства
@@ -113,7 +131,9 @@ const CHAR_W={people:{perf:0.08,rel:0.22,comf:0.06,ease:0.12,safe:0.05,econ:0.32
   lux:{perf:0.22,rel:0.16,comf:0.3,ease:0.1,safe:0.12,econ:0,cap:0.1},
   // спортивные: скорость и разгон, тормоза и сцепление, лёгкость управления; комфорт почти не важен
   sport:{perf:0.5,rel:0.1,comf:0.03,ease:0.12,safe:0.2,econ:0,cap:0.05},
-  truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0}};
+  truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0},
+  // 0.32: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места, работа в непогоду
+  moto:CHAR_W_MOTO.moto,moside:CHAR_W_MOTO.moside};
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
 function carChar(md,y){
@@ -150,9 +170,10 @@ function mq(md,s,c){return Math.max(0.05,QG[segOf(md)]*classScore(md,s,c));}
 function modelR(md,s){return classScore(md,s);}
 // Грузоподъёмность: фургон стоит дешевле грузовика, трёхтонка — дороже
 function payK(md){const b=byId(BODIES,md.b);return b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1;}
-const KIND_TRIM={people:'t0',middle:'t1',lux:'t2',sport:'t3',van:'t0',truck:'t0'};
-const KIND_NAME={people:'Народная',middle:'Средний класс',lux:'Люкс',sport:'Спортивная',van:'Фургон',truck:'Грузовик'};
-function kindBodyOk(kind,b){return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&b.id!=='b6':kind==='sport'?bodyOpen(b.id):!b.truck;}
+const KIND_TRIM={people:'t0',middle:'t1',lux:'t2',sport:'t3',van:'t0',truck:'t0',moto:'t0',moside:'t0'};
+const KIND_NAME={people:'Народная',middle:'Средний класс',lux:'Люкс',sport:'Спортивная',van:'Фургон',truck:'Грузовик',moto:'Мотоцикл',moside:'Мотоцикл с коляской'};
+function kindBodyOk(kind,b){if(kind==='moto')return !!b.moto&&(b.seats||1)<=1;if(kind==='moside')return !!b.moto&&(b.seats||1)>1;if(b.moto)return false;
+  return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&b.id!=='b6':kind==='sport'?bodyOpen(b.id):!b.truck;}
 // Конструкция соперника класса — отправная точка для новой модели
 function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRIM[kind]};}
 // Подбор конструкции: по очереди меняем каждую деталь на лучшую для прибыли при подходящей цене
@@ -162,20 +183,21 @@ function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRI
 function designValue(md,s){const ref=refPrice(md,s),V=Math.max(5,md.vol||20);let best=-1e18,bp=ref;
   const uc0=unitCost({...md,vol:V},s),cands=[0.85,1,1.15,1.3].map(k=>ref*k).concat([1.1,1.25].map(k=>uc0/(1-dMargin(s))*k));
   for(const P of cands){md.price=Math.round(P);const d=forecastDemand(md,s),m=md.price*(1-dMargin(s))-unitCost({...md,vol:Math.max(5,d)},s),v=m>0?d*m:m*Math.max(d,V);if(v>best){best=v;bp=md.price;}}
-  md.price=bp;return best;}
+  md.price=bp;return best>0?best*(1-0.3*modelRisk(md,s.y)):best;}
 function autoDesign(kind,s,base){
   const vol=Math.max(20,(s.last&&s.last.made)||20);
   let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol,launched:mi(s),status:'prod',price:0};
-  const ok=(k,x)=>k!=='b'||kindBodyOk(kind,x),avail=(k,id)=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s).some(x=>x.id===id);
+  const mo=kind==='moto'||kind==='moside';
+  const ok=(k,x)=>k!=='b'||kindBodyOk(kind,x),avail=(k,id)=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s,mo).some(x=>x.id===id);
   // кузов должен подходить классу и уже продаваться (грузовик до 1910 года — только прототип КБ)
-  if(!ok('b',byId(BODIES,md.b))||!avail('b',md.b)){const b=unlockedP(BODIES,s).find(x=>kindBodyOk(kind,x));if(b)md.b=b.id;else if(kind==='truck'){kind='van';md.b='b6';}}
-  PART_KEYS.forEach(k=>{if(k!=='b'&&!avail(k,md[k])){const L=unlockedP(PART_CATS.find(c=>c.k===k).arr(),s);if(L.length)md[k]=L[L.length-1].id;}});
+  if(!ok('b',byId(BODIES,md.b))||!avail('b',md.b)){const b=unlockedP(BODIES,s,mo).find(x=>kindBodyOk(kind,x));if(b)md.b=b.id;else if(kind==='truck'){kind='van';md.b='b6';}}
+  PART_KEYS.forEach(k=>{if(k!=='b'&&!avail(k,md[k])){const L=unlockedP(PART_CATS.find(c=>c.k===k).arr(),s,mo);if(L.length)md[k]=L[L.length-1].id;}});
   // мотор мощнее рамы — подбираем к нему самую дешёвую раму, которая его выдержит
-  const fit=t=>{if(!overpower(t))return t;const cs=unlockedP(CHASSIS,s).filter(c=>!overpower({...t,c:c.id})).sort((a,b)=>partCost(a,s)-partCost(b,s));return cs.length?{...t,c:cs[0].id}:null;};
+  const fit=t=>{if(!overpower(t))return t;const cs=unlockedP(CHASSIS,s,mo).filter(c=>!overpower({...t,c:c.id})).sort((a,b)=>partCost(a,s)-partCost(b,s));return cs.length?{...t,c:cs[0].id}:null;};
   if(overpower(md))md=fit(md)||md;
   let bestV=designValue(md,s);
   for(let pass=0;pass<2;pass++)for(const k of PART_KEYS){const arr=PART_CATS.find(c=>c.k===k).arr();let bx=null;
-    for(const x of unlockedP(arr,s)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
+    for(const x of unlockedP(arr,s,mo)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
     if(bx)md=bx;}
   // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
   try{md.eq=eqAuto(md,kind==='van'||kind==='truck'?'truck':kind,s);}catch(_){md.eq=[];}
@@ -206,11 +228,13 @@ function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+te
 function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)/100)*100;}
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
-function hoursPerCar(md,s){const conv=techLv(s,'line')===2,act=(s.models||[]).filter(m=>m.status==='prod').length;
+function hoursPerCar(md,s){const conv=techLv(s,'line')===2,mo=isMoto(md),act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)===mo).length;
   // в Америке станков на рабочего больше: машина требует меньше часов
   return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1));}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
-function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1);}
+function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1)*techTroubleK(s);}
+// 0.32: мотоцех — своя мощность (в тех же единицах трудоёмкости: мотоцикл в 8–15 раз проще машины); станки и электромоторы завода — общие
+function mcapEff(s){return (s.mcap||0)*techMul(s,'cap')*(s.shifts>1?1.85:1)*techTroubleK(s);}
 // станки, конвейер и электромоторы делают цех производительнее — но и дороже: место в цеху стоит больше
 function capUnitCost(s){return Math.round(1500*cpi(s)*(1+0.12*techLv(s,'tools')+0.08*techLv(s,'elec'))*Math.pow(techMul(s,'cap'),0.6)*bn('lineCost')*worldCapK(s));}
 function plantOverhead(s){return s.plantVal*0.009+30*cpi(s)*(1+s.workers/150);}
@@ -314,11 +338,12 @@ function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?p
 function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;const pr=((s.hist&&s.hist.profit)||[]).slice(-12),py=Math.max(1,pr.reduce((a,b)=>a+b,0)),lev=s.loan/py;
   return lev>1?clamp(1-0.25*(lev-1),0.35,1):1;}
 function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)/1000)*1000;}
-function devCost(md,s){s=s||G;return Math.round((1500+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
+function devCost(md,s){s=s||G;return Math.round(((isMoto(md)?400:1500)+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime')*kitK(G,'dev'))-(studyIns(md)?1:0));}
-function toolingCost(md,s){return Math.round((800+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
+function toolingCost(md,s){return Math.round(((isMoto(md)?250:800)+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
 function qLabel(r){return r<0.85?['Хуже соперников','bad']:r<1.08?['Как у соперников','warn']:['Лучше соперников','good'];}
-function totalSold(s){return s.models.reduce((a,m)=>a+m.totalSold,0)+(s.milTotal||0);}   // 0.24: и машины для армии
+function totalSold(s){return s.models.reduce((a,m)=>a+(isMoto(m)?0:m.totalSold),0)+(s.milTotal||0);}   // 0.24: и машины для армии (0.32: мотоциклы — отдельно)
+function motoSold(s){return s.models.reduce((a,m)=>a+(isMoto(m)?m.totalSold||0:0),0)+(s.mmilTotal||0);}
 function addLog(text,kind=''){G.log.push({d:dstr(G),text,kind});if(G.log.length>400)G.log.shift();}
 function hostName(c){return c==='intl'?'Международная':(COUNTRIES[c]?COUNTRIES[c].name:({be:'Бельгия',es:'Испания',mc:'Монако',at:'Австрия',ch:'Швейцария'}[c]||c));}
 const fmtN=n=>{n=Math.round(n);return Math.abs(n)>=1e6?(n/1e6).toFixed(n>=1e7?1:2).replace('.',',')+' млн':Math.abs(n)>=1e4?Math.round(n/1000)+' тыс.':n.toLocaleString('ru-RU');};
@@ -326,10 +351,11 @@ function lastOf(arr,y,f){const a=arr.filter(x=>x.y<=y&&(!f||f(x)));return a[a.le
 function newGame(pioneer,country,company,diff,firstName){
   const C=COUNTRIES[country];
   const comps={};for(const k in COMPS)comps[k]=COMPS[k].map((a,i)=>({name:a.n,color:COMP_COLORS[i%COMP_COLORS.length],last:0,yr:0,prev:0}));
+  const mcomps={};for(const k in MCOMPS)mcomps[k]=MCOMPS[k].map((a,i)=>({name:a.n,color:COMP_COLORS[(i+3)%COMP_COLORS.length],last:0,yr:0,prev:0}));
   const mname=(firstName||'').trim()||'Тип 1';
   G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
      cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},imp:{},dcap:{},ad:30,rep:30,wh:12,whBuild:[],
-     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
+     military:false,strikeNext:false,supplyNext:1,nextId:2,comps,mcomps,lines:{car:1},mcap:0,pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};

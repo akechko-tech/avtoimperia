@@ -24,7 +24,7 @@ function offerEleg(s){if(s.y<1908)return null;const r=chalRnd(s,'eleg');const C0
   const C={type:'eleg',c,ci:R.i,mq:nm,venue:v[0],judge:v[1],md:P.m.id,end:mi(s)+2,x:stakeExtra(s,nm,'be',1)};
   return {id:'eleg',kind:'eleg',title:`Конкурс элегантности с ${nm}: ${v[0]}`,sub:`${c===s.country?'':COUNTRIES[c].name+' · '}судьи — ${v[1]} · кузов, отделка, новинки`,stake,C};}
 function offerExped(s){const rt=expedRoute(s.y);if(!rt||s.y>rt[0]+3)return null;const r=chalRnd(s,'exped');if(isWar(s.y,s.m,s.country))return null;
-  const cars=s.models.filter(m=>m.status==='prod'||m.status==='sale');if(!cars.length)return null;const P=cars.map(m=>({m,v:carBase(m,0,s.y).rel*(isTruck(m)?1.08:1)})).sort((a,b)=>b.v-a.v)[0];
+  const cars=s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isMoto(m));if(!cars.length)return null;const P=cars.map(m=>({m,v:carBase(m,0,s.y).rel*(isTruck(m)?1.08:1)})).sort((a,b)=>b.v-a.v)[0];
   // соперник — сильная марка другой страны (так и было: «Итала», «Томас», «Де Дион», «Спайкер»)
   const L=[];Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;(COMPS[c]||[]).forEach((cp,i)=>{if(!ownComp(cp,s)&&!holdOf(s,c,i)&&compAlive(cp,s))L.push({c,i,cp,v:compVol(cp,s)});});});
   if(!L.length)return null;L.sort((a,b)=>b.v-a.v);const R=L[Math.floor(r()*Math.min(5,L.length))],nm=compName(R.cp,s),Ls=s.last;
@@ -70,4 +70,4 @@ function chalCard30(s,C,scT){const md=s.models.find(m=>m.id===C.md);
     <p class="small" style="margin-top:4px">Пойдёт: <b>«${esc(md?md.name:'—')}»</b>${md?` (надёжность ${Math.round(carBase(md,0,s.y).rel*100)}%)`:''}</p>
     <p class="small muted" style="margin-top:6px">${esc(C.rh||'')}</p></section>`;}
 // выбор машины для смотра: та же кнопка, что у пробега
-Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||!['trial','eleg','exped'].includes(C.type))return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`${C.type==='eleg'?'На смотр':C.type==='exped'?'В экспедицию':'На пробег'} — «${m.name}»`);rerender();}});
+Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||!['trial','eleg','exped','mrec'].includes(C.type))return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`${C.type==='eleg'?'На смотр':C.type==='exped'?'В экспедицию':'На пробег'} — «${m.name}»`);rerender();}});

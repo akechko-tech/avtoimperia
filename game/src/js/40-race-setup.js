@@ -2,7 +2,8 @@
 const RACE_ACT={};
 let RS=null;   // заявка на гонку: {key, entries:[{drv,car,prep,tyre,gear}], open, mode, more}
 const MAX_ENTRIES=3;
-function raceCarsFor(s){return s.models.filter(m=>m.status==='prod');}
+// 0.32: мотоциклы в автомобильных гонках не участвуют (мотогонки — в 0.33)
+function raceCarsFor(s){return s.models.filter(m=>m.status==='prod'&&!isMoto(m));}
 function raceRank(md,rc){const st=carStats(md,2,rc.y);return st.vmax*(0.55+0.45*st.rel)/(1+st.acc/60);}
 function prepAllowed(p,s,rc,md){return p<2||((s.rdept||0)>=1&&!(md&&isTruck(md)));}
 function defaultEntry(s,rc,taken){

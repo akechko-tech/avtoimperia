@@ -43,12 +43,14 @@ const DEAL_PROUD={'Rolls-Royce':1,'Bugatti':1,'Renault':1,'Ford':1,'Peugeot':0.6
 function dealMarket(s,c){const m=(s.mPrev&&s.mPrev[c])||0;if(m>0)return m;try{return SEGK.reduce((a,g)=>a+mkCountry(c,s,[]).segs[g].inc,0)*12;}catch(_){return 1;}}
 // продажи за прошлый год, рост, доля; выручка × маржа эпохи → прибыль; прибыль × P/E (растущие дороже) + заводы и дилеры
 function maStat(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp)return null;const st=(s.comps[c]||[])[i]||{},full=(st.prev||0)>0;
-  const v=Math.max(1,full?st.prev:Math.max(st.yr||0,compVol(cp,s)*0.9)),tr=full&&(st.prev2||0)>0?clamp(st.prev/st.prev2-1,-0.6,1.5):0;
+  // 0.32: марку оценивают не по худшему году, а по её заводам, дилерам и имени: в войну или под вашим натиском продажи падают,
+  // но заводы и дилеры остаются — не дешевле 70% её обычного выпуска (история марки); иначе FIAT в 1916 году стоил $212 тысяч
+  const v0=Math.max(1,full?st.prev:Math.max(st.yr||0,compVol(cp,s)*0.9)),v=Math.max(v0,compVol(cp,s)*0.7),tr=full&&(st.prev2||0)>0?clamp(st.prev/st.prev2-1,-0.6,1.5):0;
   let P=0,w=0;for(const g in (cp.mix||{})){const k=cp.mix[g]||0;P+=k*prefP(g,c,s);w+=k;}P=w?P/w:prefP('middle',c,s);
   const sh=v/Math.max(1,dealMarket(s,c)),rev=v*P,ec=econ(s.y,s.m,c).f,h=holdOf(s,c,i);
   const m=(s.y<1910?0.1:s.y<1920?0.085:0.07)+clamp(tr,-0.3,0.3)*0.12+(sh>0.15?0.02:0)-(ec<0.9?0.04:0)+(h&&h.mode==='sub'?Math.min(0.03,(h.boost||0)*0.05):0);
   const profit=rev*m,capU=Math.max(1,v/12*1.1),dl=Math.max(1,Math.round(v/12/Math.max(0.5,dealerTP(s)))),A=capU*capUnitCost(s)*0.55+dl*dealerCost(s)*0.5;
-  const PE=clamp(8+tr*8,5,12),V=Math.max(5000,Math.round(Math.max(A*0.8,profit*PE+A*0.25)/1000)*1000);
+  const PE=clamp(8+tr*8,5,12),V=Math.max(5000,Math.round(Math.max(A*0.8,profit*PE+A*0.25)*(DIF().maK??1)/1000)*1000);
   return {cp,nm:compName(cp,s),v,tr,sh,P,rev,m,profit,capU,dl,A,PE,V,loss:m<0};}
 function dealStat(s,c,i){const M=maStat(s,c,i);return M?{v:M.v,tr:M.tr}:{v:0,tr:0};}
 function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}

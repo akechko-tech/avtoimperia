@@ -31,7 +31,11 @@ function eqDev(s,id){return !!(s&&s.rd&&s.rd.eq&&s.rd.eq[id]);}
 function eqAvail(s,id){const e=EQ_BY[id];return !!e&&(eqDev(s,id)||s.y>=e.hist[0]+1);}
 function eqOf(md){return Array.isArray(md&&md.eq)?md.eq.filter(id=>EQ_BY[id]):[];}
 function eqHas(md,id){return eqOf(md).includes(id);}
-function eqCost(md,s){return eqOf(md).reduce((a,id)=>a+EQ_BY[id].c,0)*cpi(s);}
+// 0.32: новинка дешевеет с годами — поставщики делают её миллионами (стартер Delco в 1912-м — роскошь, к 1925-му — копейки
+// у Ford и Chevrolet): −4% в год с первой машины в истории, не дешевле 40% (своя разработка раньше истории — по полной цене)
+function eqAge(e,s){return Math.max(0.4,1-0.04*Math.max(0,yf(s)-e.hist[0]));}
+function eqUnitC(e,s){return e.c*cpi(s)*eqAge(e,s);}
+function eqCost(md,s){return eqOf(md).reduce((a,id)=>a+eqUnitC(EQ_BY[id],s),0);}
 function eqCx(md){return eqOf(md).reduce((a,id)=>a*(1+EQ_BY[id].cx),1);}
 // покупатели: пока новинка редкость — прибавка; через 4 года после «ждут» прибавки нет, а без неё машину не берут
 function eqWait(e,g,y){const n=e.need&&e.need[g];return n?clamp((y-n)/4,0,1):0;}
@@ -44,7 +48,7 @@ function eqExpected(g,y){return EQUIP.filter(e=>eqWait(e,g,y)>0.25);}
 // разумный набор для машины класса (помощник и боты): всё, что ждут, и то, что окупается (прибавка больше цены)
 function eqAuto(md,g,s){if(g==='truck'||isTruck(md))return [];const y=yf(s),P=prefP(g,s.country,s),out=[];
   EQUIP.forEach(e=>{if(!eqAvail(s,e.id))return;if(e.req&&!eqAvail(s,e.req))return;const u=e.u[g]||0;if(!u)return;
-    const want=eqWait(e,g,y)>0||u*P*0.6>e.c*cpi(s)*1.4;if(want)out.push(e.id);});
+    const want=eqWait(e,g,y)>0||u*P*0.6>eqUnitC(e,s)*1.4;if(want)out.push(e.id);});
   EQUIP.forEach(e=>{if(e.req&&out.includes(e.id)&&!out.includes(e.req))out.push(e.req);if(e.sup&&out.includes(e.id)){const k=out.indexOf(e.sup);if(k>=0)out.splice(k,1);}});
   return out;}
 // проекты КБ: новинку можно сделать раньше поставщиков (за 2–3 года до истории)

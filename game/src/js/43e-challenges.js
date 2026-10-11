@@ -153,10 +153,10 @@ function offerRace(s){const L=RACES.filter(rc=>rc.y===s.y&&rc.m>s.m&&rc.m<=s.m+4
   return {id:'race',kind:'race',title:`Пари с ${t.n}: «${rc.name}»`,sub:`${MONTHS[rc.m]} ${rc.y} · ваша лучшая машина должна финишировать выше лучшей ${t.n}`,stake:Math.max(100,Math.round(racePrize(rc)*0.6/50)*50),C:{type:'race',rk:rc.key,mq:t.n,x:stakeExtra(s,t.n,'b')}};}
 // все вызовы, что можно взять (доска) или получить из газет
 function chalOffers(s){const out=[];if(!s||s.over||s.chal)return out;
-  [()=>offerRace(s),()=>offerMatch(s,'match'),()=>offerMatch(s,'record'),()=>offerSales(s,false),()=>offerSales(s,true),()=>offerTrial(s),()=>offerEleg(s),()=>offerExped(s)].forEach(f=>{try{const o=f();if(o)out.push(o);}catch(e){console.warn('offer',e);}});
+  [()=>offerRace(s),()=>offerMatch(s,'match'),()=>offerMatch(s,'record'),()=>offerSales(s,false),()=>offerSales(s,true),()=>offerTrial(s),()=>offerEleg(s),()=>offerExped(s),()=>offerMrec(s)].forEach(f=>{try{const o=f();if(o)out.push(o);}catch(e){console.warn('offer',e);}});
   return out;}
 /* ---------- вызов из газеты: соперник сам предлагает пари ---------- */
-const CHAL_W={race:1,match:1.3,record:0.9,sales:1.1,export:0.8,trial:0.9,eleg:0.8,exped:0.6};
+const CHAL_W={race:1,match:1.3,record:0.9,sales:1.1,export:0.8,trial:0.9,eleg:0.8,exped:0.6,mrec:0.7};
 function chalCheck(s){
   if(s.pending.length||s.chal||mi(s)-(s.chalLast??-99)<4||Math.random()>0.25)return;
   const O=chalOffers(s);if(!O.length)return;const last=s.chalKind||'';
@@ -181,6 +181,7 @@ function chalNewsText(s,C,who,xs){const st=stakeText(C);
     return {verb:'бросает вызов',deck:`Пробег ${C.route}: ${fmtN(C.km)} км · ставка ${st}`,
       text:`${who} заявил газетам: «Наши машины прочнее. Пусть "${s.company}" выставит свою серийную машину — пройдём ${C.route}, и судьи сосчитают поломки». От «${s.company}» поедет «${md?md.name:'—'}», от ${C.mq} — ${rv.name}. Кто меньше ломался, тот и выиграл, при равенстве — кто быстрее.${xs}\n${C.rh?C.rh+'\n':''}Старт — в ${MONTHS_P[s.m]}, итоги — через ${C.end-mi(s)===1?'месяц':'два месяца'}. Машину для пробега можно сменить на вкладке «Рынок».`};}
   if(C.type==='eleg'||C.type==='exped')return chalNewsText30(s,C,who,xs,st);
+  if(C.type==='mrec')return mrecNewsText(s,C,who,xs,st);
   return {verb:'бросает вызов',deck:'',text:''};}
 // принять вызов (drvResolve → chalYes): у новых видов — свой учёт
 function chalAccept(s,C){
@@ -188,13 +189,14 @@ function chalAccept(s,C){
     addLog(`Вызов принят: кто продаст больше машин класса «${SEG[C.g].name}»${C.c===s.country?'':' ('+COUNTRIES[C.c].name+')'} ${chalPerText(C)} — «${s.company}» или ${C.mq}${C.hc!==1?` (${hcText(C.hc)})`:''}. Пари ${money(C.stake)}.`,'good');return true;}
   if(C.type==='match'||C.type==='record'){const rc=C.rc;addLog(`Вызов принят: ${MATCH_ST[C.type].toLowerCase()} с ${C.mq} — ${rc.venue}, ${MONTHS[rc.m]} ${rc.y}. Пари ${money(C.stake)}. Выставьте машину на вкладке «Гонки».`,'good');return true;}
   if(C.type==='eleg'||C.type==='exped')return chalAccept30(s,C);
+  if(C.type==='mrec')return mrecAccept(s,C);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md);addLog(`Вызов принят: пробег ${C.route} (${fmtN(C.km)} км) — «${md?md.name:''}» против ${C.mq}. Пари ${money(C.stake)}.`,'good');return true;}
   return false;}
 /* ---------- месячный учёт: открытие матча, неявка, итоги продаж и пробега ---------- */
 function chalMonth(s){const C=s.chal;if(!C||!C.acc)return;const t=mi(s);
   if(C.type==='sales'&&C.mon){if(t>=C.end)chalSalesMon(s);return;}
   if(C.type==='trial'){if(t>=C.end)trialResolve(s);return;}
-  if(C.type==='eleg'){if(t>=C.end)elegResolve(s);return;}if(C.type==='exped'){if(t>=C.end)expedResolve(s);return;}
+  if(C.type==='eleg'){if(t>=C.end)elegResolve(s);return;}if(C.type==='exped'){if(t>=C.end)expedResolve(s);return;}if(C.type==='mrec'){if(t>=C.end)mrecResolve(s);return;}
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m;
     if(t>T){matchForfeit(s);return;}
     if(t>=T-1&&C.said!==t){C.said=t;addLog(`⚔️ ${MATCH_ST[C.type]} с ${C.mq}: ${rc.venue}, ${MONTHS[rc.m]} — выставьте машину на вкладке «Гонки».`,'good');pendingToasts.push(`⚔️ ${MATCH_ST[C.type]}: вкладка «Гонки»`);}}}
@@ -266,6 +268,7 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
       ${open?`<button class="btn primary block" style="margin-top:8px" data-act="raceSetup" data-k="${esc(rc.key)}" ${s.pending.length?'disabled':''}>Выставить машину</button><p class="small warn" style="margin-top:4px">${t===T?'Последний месяц: не приедете — пари проиграно.':'Запись открыта — заезд можно провести в этом месяце или в следующем.'}</p>`
         :`<p class="small" style="margin-top:6px">Запись откроется в ${MONTHS_P[(T-1+1200)%12]}.</p>`}</section>`;}
   if(C.type==='eleg'||C.type==='exped')return chalCard30(s,C,scT);
+  if(C.type==='mrec')return mrecCard(s,C,scT);
   if(C.type==='trial'){const md=s.models.find(m=>m.id===C.md),rv=trialRival(s,C),cars=trialCars(s,C.g),rel=m=>Math.round(carBase(m,0,s.y).rel*100),rr=Math.round(carBase(rv.md,0,s.y).rel*100);
     return `<section class="card chal"><div class="row"><span class="label">⚔️ Пробег на надёжность</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
       <h3 style="margin-top:4px">«${esc(s.company)}» против ${esc(C.mq)}${scT}</h3>
@@ -285,7 +288,7 @@ function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="m
 Object.assign(RACE_ACT,{chalCar:d=>{const s=G,C=s.chal;if(!C||C.type!=='trial')return;const m=s.models.find(x=>x.id===+d.k||String(x.id)===String(d.k));if(!m)return;C.md=m.id;toast(`На пробег поедет «${m.name}»`);rerender();}});
 // название события для газеты и трофея
 function chalEvName(s,C,rc){if(C.type==='race')return rc?rc.name:'';if(C.type==='match')return `матч-гонка: ${C.rc.venue}`;if(C.type==='record')return `спор о скорости: ${C.rc.venue}`;
-  if(C.type==='trial')return `пробег ${C.route}`;if(C.type==='eleg')return `конкурс элегантности: ${C.venue}`;if(C.type==='exped')return `экспедиция ${C.route}`;if(C.type==='sales')return `продажи класса «${SEG[C.g].name}»${C.c&&C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''}`;return '';}
+  if(C.type==='trial')return `пробег ${C.route}`;if(C.type==='eleg')return `конкурс элегантности: ${C.venue}`;if(C.type==='exped')return `экспедиция ${C.route}`;if(C.type==='mrec')return `мерная миля: ${C.venue}`;if(C.type==='sales')return `продажи класса «${SEG[C.g].name}»${C.c&&C.c!==s.country?' ('+COUNTRIES[C.c].name+')':''}`;return '';}
 // реванш: тот же вид вызова, ставка в полтора раза выше
 function chalRevenge(s,O){const B=O.base;if(!B)return false;
   if(B.type==='match'||B.type==='record'){const o=offerMatch(s,B.type);if(!o){addLog(`Реванш с ${O.mq} отложен: в ближайшие месяцы негде выйти один на один.`);return false;}

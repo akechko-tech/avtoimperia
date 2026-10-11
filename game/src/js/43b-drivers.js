@@ -197,7 +197,7 @@ function yearAwards(s,y){
   const wl=Object.values(W).sort((a,b)=>b.w-a.w||b.maj-a.maj);
   if(wl[0]&&wl[0].w>=2&&!(wl[1]&&wl[1].w===wl[0].w&&wl[1].maj===wl[0].maj)){const k=wl[0],why=`${k.w} ${plural(k.w,'победа','победы','побед')} в гонках за год`;lines.push(`Король гонок — ${k.n===s.company?'«'+s.company+'»':k.n}: ${why}.`);KW.race=k.n;if(k.n===s.company)give('race','Король гонок',why);}
   // король технологий: первенства раньше истории или машина намного лучше соперников класса
-  const fr=Object.values(s.firsts||{}).filter(f=>f.y===y),act=s.models.filter(m=>m.status==='prod'||m.status==='sale');
+  const fr=Object.values(s.firsts||{}).filter(f=>f.y===y),act=s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isMoto(m));
   const best=act.map(m=>({m,S:classScore(m,s)})).sort((a,b)=>b.S-a.S)[0],TK=TECH_KING[y],tk=TK&&!playerMarque(TK[0],s)?TK:null;
   if(fr.length||(best&&best.S>=(tk?1.3:1.2))){const why=fr.length?`первыми в мире: ${fr.map(f=>f.name).join(', ')}`:`«${best.m.name}» на ${Math.round((best.S-1)*100)}% лучше соперников своего класса`;
     lines.push(`Король технологий — «${s.company}»: ${why}${tk?` (${tk[0]} — ${tk[1]} — на втором месте)`:''}.`);give('tech','Король технологий',why);}

@@ -52,6 +52,12 @@ const ACT={
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
+  // 0.32: мотоциклы — фильтр линейки, мотоцех, автомобильный цех «Мотомастерской», мотомарки
+  line:d=>{G.ui=G.ui||{};G.ui.line=d.v==='moto'?'moto':'car';rerender();},
+  mshop:()=>{if(mshopStart(G)){save();rerender();}else toast('Не хватает денег на мотоцех');},
+  mcapAdd:d=>{if(mcapOrder(G,+d.n)){save();rerender();}else toast('Не хватает денег');},
+  carShop:()=>{if(carShopStart(G)){save();rerender();}},
+  mbrand:d=>{const h=mbrandHTML(d.c,+d.i,G);if(h)openSheet(h);},
   legPaint:d=>{if(!draft||!draft.legendDraft)return;draft.paint=d.v;document.querySelectorAll('[data-act=legPaint]').forEach(b=>b.classList.toggle('on',b.dataset.v===d.v));},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
@@ -59,7 +65,10 @@ const ACT={
     if(d.k==='t'&&d.v==='t3'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dsec:d=>{draft.open=draft.open===d.k?null:d.k;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
-  dclass:d=>{const was=designKind(draft),k=d.v;if(kindIsTruck(k)!==kindIsTruck(was)||(kindIsTruck(k)&&k!==was))Object.assign(draft,rivalDesign(k,G.y));else draft.t=KIND_TRIM[k];
+  dclass:d=>{const was=designKind(draft),k=d.v;
+    // 0.32: мотоцикл — одиночка или с коляской: меняется только «кузов», остальное остаётся
+    if(isMotoSeg(k)){const b=unlockedP(BODIES,G,1).filter(x=>kindBodyOk(k,x)),keep=b.find(x=>x.id===draft.b);draft.b=(keep||b[b.length-1]||{id:k==='moto'?'mb0':'mb1'}).id;draft.t='t0';const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;return;}
+    if(kindIsTruck(k)!==kindIsTruck(was)||(kindIsTruck(k)&&k!==was))Object.assign(draft,rivalDesign(k,G.y));else draft.t=KIND_TRIM[k];
     if(k==='sport'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   eqToggle:d=>{const L=eqOf(draft),e=EQ_BY[d.v];if(!e)return;let out=L.includes(e.id)?L.filter(x=>x!==e.id&&!(EQ_BY[x].req===e.id)):L.concat([e.id]);if(!L.includes(e.id)){if(e.req&&!out.includes(e.req))out.push(e.req);if(e.sup)out=out.filter(x=>x!==e.sup);}draft.eq=out;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
@@ -130,7 +139,9 @@ const ACT={
   rxBuy:d=>racerBuy(d.k),rxRepair:()=>racerRepair(),rxSell:()=>racerSell(),rxMech:()=>racerMech(),rxQuit:()=>racerQuit(),rxJobQuit:()=>racerJobQuit(),
   rxFound:d=>racerFoundAsk(d.k),
   rxFoundGo:d=>{if(racerFound(d.k,d.n,+d.v)){closeSheet();tab='plant';shownCash=null;lastDate='';save();render();}},
-  startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
+  startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
+    if(draft.path==='moto'){newMotoGame('custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
+    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},

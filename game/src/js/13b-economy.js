@@ -64,12 +64,12 @@ function dTP(s,c){return (DPOL[s&&s.dpol]||DPOL.std).tp;}
 /* ---------- качество и скандалы ---------- */
 // Дешёвые детали, мотор мощнее рамы, нет контроля качества, низкая зарплата — машины ломаются, пишут газеты
 function qualityRisk(md,s){const C=classCompare(md,s),rel=C.by.rel||1;let b=0;
-  if(rel<0.9)b+=(0.9-rel)*6;if(overpower(md))b+=1.2;if(!techLv(s,'qc'))b+=s.y>=1905?0.5:0.2;if(s.wagePol==='low')b+=0.35;if(s.y>=1920&&techLv(s,'qc')<2)b+=0.2;return b;}
+  if(rel<0.9)b+=(0.9-rel)*6;if(overpower(md))b+=1.2;if(!techLv(s,'qc'))b+=s.y>=1905?0.5:0.2;if(s.wagePol==='low')b+=0.35;if(s.y>=1920&&techLv(s,'qc')<2)b+=0.2;b+=4*(1-teethK(md,s.y)*dvRel(md));return b;}
 function qualityMonth(s){if(DIF().simple)return;const k=DIF().scandal??1;if(!k||s.pending.length)return;
   s.models.filter(m=>m.status==='prod'&&(m.lastSold||0)>=5).forEach(md=>{if(s.pending.length)return;const b=qualityRisk(md,s);if(b<=0.4)return;
     if((md.scandalAt??-99)>mi(s)-24)return;const p=0.0035*b*k*Math.min(3,Math.log10(1+md.lastSold));if(Math.random()>p)return;
     md.scandalAt=mi(s);const sold=Math.round((md.lastSold||0)*12),cost=Math.round(sold*0.04*md.price*0.5/100)*100,why=[];
-    const C=classCompare(md,s);if((C.by.rel||1)<0.9)why.push('дешёвые детали ломаются');if(overpower(md))why.push('рама не держит мотор');if(!techLv(s,'qc'))why.push('на заводе нет контроля качества');if(s.wagePol==='low')why.push('рабочие меняются каждый месяц');
+    const C=classCompare(md,s);if((C.by.rel||1)<0.9)why.push('дешёвые детали ломаются');if(overpower(md))why.push('рама не держит мотор');if(!techLv(s,'qc'))why.push('на заводе нет контроля качества');if(s.wagePol==='low')why.push('рабочие меняются каждый месяц');if(teethK(md,s.y)*dvRel(md)<0.93)why.push('новинки в машине ещё не обкатаны');
     s.scandalMd=md.id;
     pushEvent({kicker:'Скандал',title:`Покупатели жалуются на «${md.name}»`,deck:why.join(', ')||'Поломки одна за другой',
       text:`Газеты печатают письма владельцев «${md.name}»: ${why.join(', ')||'машины ломаются'}. Клубы автомобилистов советуют не покупать.\nМожно отозвать машины и починить за свой счёт — около ${money(cost)}: репутация пострадает меньше, покупатели вернутся быстрее. Можно отрицать — дешевле сейчас, но газеты не забудут, и спрос упадёт надолго.`,
@@ -84,19 +84,22 @@ function scandalEffect(md,s){return (md.scandalUntil||0)>mi(s)?Math.log(1-(md.sc
 // Если вы забираете больше четверти класса в стране (на «Норме»), лидер класса отвечает: снижает цены на 5–15%
 // или готовит модель-ответ (через 12–18 месяцев); долго доминируете — слабые марки объединяются против вас
 function respOf(s,c,g){s.resp=s.resp||{};const C=s.resp[c]=s.resp[c]||{};return C[g]=C[g]||{sh:0,over:0,cut:0,t:-99,ms:[],mg:0};}
-function respCut(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];return o?Math.min(o.cut||0,0.15*(DIF().cut??1)):0;}
+function respCut(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];return o?Math.min(o.cut||0,cutMax()):0;}
+// 0.32: насколько соперники готовы снизить цены — по уровню сложности (у них тоже есть себестоимость: на «Историке» — до 40%)
+function cutMax(){const D=DIF();return D.cutMax??RESP_CUT_MAX*(D.cut??1);}
 // ответ конкурентов не бесконечен: у лидера класса тоже есть предел — модели-ответы вместе дают не больше +0,6 (ТЗ: цена −5…15%, модель через 12–18 мес.)
 const RESP_CUT_MAX=0.15,RESP_BOOST_MAX=0.6;
-function respBoost(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return 0;const t=mi(s);let u=o.mg||0;for(const x of o.ms||[])if(x.at<=t)u+=x.k*Math.exp(-(t-x.at)/72);return Math.min(RESP_BOOST_MAX,u);}
-function classLeader(s,c,g){const L=(COMPS[c]||[]).filter(cp=>!pkIs(cp,s)&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v);return L;}
+function respBoost(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return 0;const t=mi(s);let u=o.mg||0;for(const x of o.ms||[])if(x.at<=t)u+=x.k*Math.exp(-(t-x.at)/72);return Math.min(DIF().rboost??RESP_BOOST_MAX,u);}
+function classLeader(s,c,g){const L=compList(c,g).filter(cp=>!pkIs(cp,s)&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v);return L;}
 function rivalsRespond(s,r){const D=DIF(),T0=D.rshare||0.25,K=D.resp??1,cutK=D.cut??1,gap=D.rgap||12,t=mi(s);if(!K)return;
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;
-    SEGK.forEach(g=>{const z=mk.segs[g],o=respOf(s,c,g);const sh=z&&z.size>=3?z.you/z.size:0;o.sh=o.sh*0.8+sh*0.2;
-      if(o.sh>T0)o.over++;else{o.over=Math.max(0,o.over-1);if(o.sh<T0*0.7&&t-o.t>=12&&o.cut>0)o.cut=Math.max(0,+(o.cut-0.005).toFixed(3));}
-      if(o.over<3||t-o.t<gap)return;
+    ALLSEG.forEach(g=>{const mo=isMotoSeg(g),z=mo?mk.msegs&&mk.msegs[g]:mk.segs[g];if(mo&&!(z&&z.you>0)&&!(s.resp&&s.resp[c]&&s.resp[c][g]))return;const o=respOf(s,c,g);const sh=z&&z.size>=RESP_MIN*(mo?2:1)?z.you/z.size:0;o.sh=o.sh*0.8+sh*0.2;
+      // 0.32: доля ниже порога — скидки соперников уходят быстрее (по 1% в месяц, а не по 0,5% при доле ниже 70% порога)
+      if(o.sh>T0)o.over++;else{o.over=Math.max(0,o.over-1);if(t-o.t>=6&&o.cut>0)o.cut=Math.max(0,+(o.cut-(o.sh<T0*0.7?0.012:0.006)).toFixed(3));}
+      if(o.over<3||t-o.t<gap||isWar(s.y,s.m,c))return;
       const L=classLeader(s,c,g);if(!L.length)return;const lead=compName(L[0].cp,s),ex=clamp((o.sh-T0)/T0,0,2),home=c===s.country;o.t=t;
       // цена или новая модель: сначала — цена (быстро), потом — модель-ответ; очень долгий перевес — слияние слабых марок
-      if(o.cut<RESP_CUT_MAX*cutK-0.001&&(o.ms.length>=o.cut/0.08||Math.random()<0.5)){const cut=Math.min(clamp(0.05+0.05*ex,0.05,0.15)*cutK,RESP_CUT_MAX*cutK-o.cut);o.cut=+Math.min(RESP_CUT_MAX*cutK,o.cut+cut).toFixed(3);
+      if(o.cut<cutMax()-0.001&&(o.ms.length>=o.cut/0.08||Math.random()<0.5)){const cut=Math.min(clamp(0.05+0.05*ex,0.05,0.15)*cutK,cutMax()-o.cut);o.cut=+Math.min(cutMax(),o.cut+cut).toFixed(3);
         const txt=`${lead} снижает цены в классе «${SEG[g].name}» на ${Math.round(cut*100)}%${home?'':' ('+COUNTRIES[c].name+')'}: слишком много покупателей ушло к «${s.company}».`;addLog(txt,'bad');
         if(home&&!s.pending.length)pushEvent({kicker:'Рынок',title:`${lead} снижает цены`,deck:`Класс «${SEG[g].name}» · −${Math.round(cut*100)}%`,text:`${txt}\nВаша доля класса — ${Math.round(o.sh*100)}%. Ответ простой: либо снижать цену вслед, либо предложить машину лучше. Дальше конкуренты могут выпустить модель-ответ.`},true);}
       else{const at=t+12+Math.floor(Math.random()*7),k=(0.3+0.2*Math.min(1,ex))*K;o.ms.push({at,k,by:lead,said:0});
@@ -105,7 +108,7 @@ function rivalsRespond(s,r){const D=DIF(),T0=D.rshare||0.25,K=D.resp??1,cutK=D.c
         const txt=`${names.slice(0,-1).join(', ')} и ${names[names.length-1]} объединились в концерн, чтобы выстоять против «${s.company}».`;addLog(txt,'bad');
         if(home&&!s.pending.length)pushEvent({kicker:'Рынок',title:'Конкуренты объединились',deck:`Класс «${SEG[g].name}»`,text:`${txt}\nЧто это значит: вы слишком долго забирали больше четверти покупателей класса «${SEG[g].name}», и слабые марки объединились — у них теперь общие деньги, заводы и дилеры, их машины в этом классе стали заметно привлекательнее. Так в 1908 году Уильям Дюрант собрал General Motors из Buick, Oldsmobile, а затем Cadillac и Oakland.\nОтвет — лучшая машина и цена. Или своя сделка: на вкладке «Рынок» → «Сделки» можно купить марку-конкурента или предложить ей слияние.`},true);}}});
     // модели-ответы выходят — газета
-    SEGK.forEach(g=>{const o=s.resp[c]&&s.resp[c][g];if(!o)return;(o.ms||[]).forEach(x=>{if(x.at<=t&&!x.said){x.said=1;const txt=`${x.by} выпустил модель-ответ в классе «${SEG[g].name}»${c===s.country?'':' ('+COUNTRIES[c].name+')'}: покупатели снова смотрят на соперников.`;addLog(txt,'bad');
+    ALLSEG.forEach(g=>{const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return;(o.ms||[]).forEach(x=>{if(x.at<=t&&!x.said){x.said=1;const txt=`${x.by} выпустил модель-ответ в классе «${SEG[g].name}»${c===s.country?'':' ('+COUNTRIES[c].name+')'}: покупатели снова смотрят на соперников.`;addLog(txt,'bad');
       if(c===s.country&&!s.pending.length)pushEvent({kicker:'Рынок',title:`${x.by}: ответ «${s.company}»`,deck:`Новая модель в классе «${SEG[g].name}»`,text:`${txt}\nНовинку готовили больше года — после того как «${s.company}» забрала слишком много покупателей класса. Её преимущество будет таять несколько лет.`},true);}});
       o.ms=(o.ms||[]).filter(x=>x.at>t-240);});}}
 
@@ -189,3 +192,19 @@ function whySnap(md,s){const c=s.country,g=segOf(md),ec=econ(s.y,s.m,c);let tar=
 /* ---------- всё за месяц ---------- */
 function econMonth(s,r){try{turnover(s,r);}catch(e){console.warn(e);}try{promoClean(s);}catch(e){console.warn(e);}try{rivalsRespond(s,r);}catch(e){console.warn(e);}try{poachMonth(s,r);}catch(e){console.warn(e);}
   try{qualityMonth(s);}catch(e){console.warn(e);}try{salesWhy(s);}catch(e){console.warn(e);}}
+/* ---------- 0.32: спасение банкирами ----------
+   Компания стоит много, а касса провалилась ниже предела (банк требует кредит назад в спад, крах): синдикат банкиров
+   предлагает деньги за долю прибыли — как Du Pont и J. P. Morgan в 1920 году спасли General Motors (Дюрант потерял компанию).
+   Раз в десять лет; доля — по уровню сложности (на «Историке» — половина). Долю потом можно выкупить («Совладельцы»). */
+const RESCUE_SH={kids:0.15,easy:0.2,normal:0.3,hard:0.4,hist:0.5};
+function rescueNeed(s){return Math.round((-s.cash+3*(((s.last&&s.last.mat)||0)+((s.last&&s.last.wage)||0)))/1000)*1000;}
+function rescueCan(s){if(s.over||s.pending.some(e=>e.rescue))return false;if(s.rescueY&&s.y-s.rescueY<10)return false;const sh=RESCUE_SH[s.diff||'normal']??0.3;
+  return partnersShare(s)+sh<=0.75&&companyValue(s)>Math.max(200000*cpi(s),rescueNeed(s)*2.5);}
+function rescueOffer(s){const sh=RESCUE_SH[s.diff||'normal']??0.3,need=rescueNeed(s),who=s.country==='us'?'Du Pont и J. P. Morgan':s.country==='fr'?'Banque de Paris et des Pays-Bas':s.country==='de'?'Deutsche Bank':s.country==='uk'?'Barclays и Lloyds':'Banca Commerciale Italiana';
+  s.pending.push({rescue:{sh,need},kicker:'Банк',title:'Банкиры предлагают спасение',deck:`${who} · ${money(need)} за ${Math.round(sh*100)}% прибыли`,
+    text:`Касса «${s.company}» ушла в минус на ${money(-s.cash)} — больше, чем терпят поставщики и рабочие. Но компания стоит ${money(companyValue(s))}, и синдикат банкиров (${who}) готов закрыть долги и дать денег на три месяца работы: ${money(need)}. Взамен — ${Math.round(sh*100)}% прибыли навсегда (долю можно будет выкупить).\nТак в 1920 году Du Pont и Morgan спасли General Motors — а Уильям Дюрант потерял свою компанию.`,
+    choices:[[`Принять: ${money(need)} за ${Math.round(sh*100)}% прибыли`,'rescueYes'],['Отказаться — банкротство','rescueNo']]});}
+function rescueResolve(s,key){const ev=s.pending[0],R=ev&&ev.rescue;if(!R)return;
+  if(key==='rescueYes'){s.cash+=R.need;(s.partners=s.partners||[]).push({n:'Синдикат банкиров',sh:R.sh,t:mi(s)});s.rescueY=s.y;s.noRecall=mi(s)+12;s.rep=clamp(s.rep-5,0,100);
+    addLog(`Банкиры спасли «${s.company}»: ${money(R.need)} в кассу, синдикат получает ${Math.round(R.sh*100)}% прибыли. Банк год не требует кредит назад.`,'bad');}
+  else{s.over=true;s.pending.push({title:'Банкротство',deck:`Компания «${s.company}» закрыта`,text:`Вы отказались от помощи банкиров. Кредиторы описали завод в ${dstr(s)}.`,paper:true,choices:[['Итоги','final']]});}}

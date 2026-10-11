@@ -418,7 +418,7 @@ function scenQueue(T){SCQ.length=0;const seen=new Set(),start=T.startIdx||0;cons
 
 /* ---------- галерея модели: сбоку, сзади, сверху, с водителем ---------- */
 const CAR_VIEWS=[{k:'f',n:'Спереди',yaw:0.72,pitch:0.2},{k:'s',n:'Сбоку',yaw:1.5708,pitch:0.1},{k:'r',n:'Сзади',yaw:2.45,pitch:0.22},{k:'t',n:'Сверху',yaw:0.9,pitch:0.62},{k:'d',n:'За рулём',yaw:0.55,pitch:0.14,crew:1}];
-function carGallery(md){return `<div class="cgal">${CAR_VIEWS.slice(1).map(v=>`<button class="cgal-b" data-act="carGal" data-id="${md.id}" data-k="${v.k}" aria-label="${v.n}">${carArt(md,{w:220,yaw:v.yaw,pitch:v.pitch,crew:v.crew,cls:'cgal-i'})}<small>${v.n}</small></button>`).join('')}</div>`;}
+function carGallery(md){if(isMoto(md))return '';return `<div class="cgal">${CAR_VIEWS.slice(1).map(v=>`<button class="cgal-b" data-act="carGal" data-id="${md.id}" data-k="${v.k}" aria-label="${v.n}">${carArt(md,{w:220,yaw:v.yaw,pitch:v.pitch,crew:v.crew,cls:'cgal-i'})}<small>${v.n}</small></button>`).join('')}</div>`;}
 function carGalHTML(md,k){const v=CAR_VIEWS.find(x=>x.k===k)||CAR_VIEWS[0];
   return `<div class="kicker">Фотоальбом модели</div><h2>${esc(md.name)}</h2><div class="carbox">${carArt(md,{w:640,yaw:v.yaw,pitch:v.pitch,crew:v.crew})}</div>
     <div class="cgal">${CAR_VIEWS.map(x=>`<button class="cgal-b ${x.k===v.k?'on':''}" data-act="carGal" data-id="${md.id}" data-k="${x.k}" aria-label="${x.n}">${carArt(md,{w:220,yaw:x.yaw,pitch:x.pitch,crew:x.crew,cls:'cgal-i'})}<small>${x.n}</small></button>`).join('')}</div>
@@ -426,6 +426,7 @@ function carGalHTML(md,k){const v=CAR_VIEWS.find(x=>x.k===k)||CAR_VIEWS[0];
 /* ---------- машина в карточке модели: та же 3D-модель, что и в гонке, в три четверти спереди ---------- */
 const CARD3D=new Map();
 function carArt(md,opt={}){
+  if(isMoto(md))return motoSVG(md,opt);   // 0.32: мотоцикл — рисунок сбоку (3D — в 0.33)
   try{const y=opt.y||(md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895));
     // тот же облик, что в гонке: кузов, цвет, колёса, капот по мотору; для газеты о гонке — в гоночной подготовке, с номером и экипажем
     const prep=opt.prep||0,crew=prep>0||!!opt.crew,S=modelSpec(md,prep,y,{mech:prep>0&&mechanicEra(y),num:prep>0?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:opt.w||600,crew};if(opt.yaw!==undefined){o.yaw=opt.yaw;o.pitch=opt.pitch;}

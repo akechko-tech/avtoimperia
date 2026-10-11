@@ -15,14 +15,16 @@ function carBase(md,prep,y){
   if(prep===1){bodyKg*=p.b.truck?0.9:0.72;cd*=0.88;hpK*=1.05;relK*=0.98;cg-=0.03;}
   if(prep===2){bodyKg=50+0.4*p.b.kg+(y<1905?40:0);cd=Math.min(cd,racingCd(y)*(0.9+0.12*Math.min(5,p.b.seats||2)/5));cg=0.6+0.04*(Math.min(5,p.b.seats||2)-2)/3;hpK=1.25;relK=0.93;}
   if(kc)cd*=kc.cd;   // 0.30: аэродинамическая труба
-  const hp=engineHp(p.e,md)*hpK,crew=75+(mechanicEra(y)?70:0);
-  const m=p.e.kg+p.g.kg+p.k.kg+p.c.kg*(1-0.04*U(p.c.id))*(kc?kc.cKg:1)+bodyKg+p.w.kg+crew+40;
+  const mo=!!p.b.moto,hp=engineHp(p.e,md)*hpK,crew=mo?75:75+(mechanicEra(y)?70:0),fw=x=>(x.kg||0)*flawK(x,G,'kg');
+  // 0.32: мотоцикл — гонщик без механика, бензина и инструмента меньше
+  const m=fw(p.e)+fw(p.g)+fw(p.k)+fw(p.c)*(1-0.04*U(p.c.id))*(kc?kc.cKg:1)+bodyKg*flawK(p.b,G,'kg')+fw(p.w)+crew+(mo?10:40);
   // передача: КПД коробки (прямая передача и кардан теряют меньше, чем ремни и цепи)
-  const eff=p.g.eff*(1+0.01*U(p.g.id)),P=hp*745.7*0.82*eff/0.9,kd=0.5*1.2*cd,crr=p.w.solid?0.03:0.016;
-  const grip=(p.w.grip||1)*(1+0.06*U(p.w.id)),brk=p.k.brk*(1+0.05*U(p.k.id));
+  const eff=p.g.eff*(1+0.01*U(p.g.id))*(md.dv?dvNow(md,'g'):1),P=hp*745.7*0.82*eff/0.9,kd=0.5*1.2*cd,crr=p.w.solid?0.03:0.016;
+  // 0.32: шины и тормоза могли выйти не по ТЗ (10f-risk.js)
+  const grip=(p.w.grip||1)*(1+0.06*U(p.w.id))*(md.dv?dvNow(md,'w'):1),brk=p.k.brk*(1+0.05*U(p.k.id))*(md.dv?dvNow(md,'k'):1);
   // надёжность: мотор, коробка, запас прочности рамы, проколы
   const load=p.e.hp/Math.max(1,chassisMax(p.c,md)),durK=1.02-0.06*clamp(load-0.5,0,0.5);
-  const rel=clamp(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1),0.3,0.99);
+  const rel=clamp(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1)*teethK(md,y)*dvRel(md),0.3,0.99);
   return {hp,kg:Math.round(m),P,kd,crr,cd,cg,brk,grip,rel,wb:p.c.wb+(p.e.hp>40?0.3:0),wire:!!p.w.wire,mech:mechanicEra(y),hpKg:hp/m*1000};
 }
 function carStats(md,prep,y){

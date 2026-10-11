@@ -7,7 +7,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)fails++
 const at=(y,m)=>{G.y=y;G.m=m;};
 // ---------- 1. кредит покупателям ----------
 newGame('ford','us','Форд Мотор','normal');G.cash+=40000;
-for(let i=0;i<12*24;i++){G.pending=[];botMonth('grow');G.chal=null;step();}
+// 0.32: экономика строже — простой бот «рост» за Форда к 1918 году бывает в долгах; тест — про кредит, а не про выживание: касса подпитывается
+for(let i=0;i<12*24;i++){G.pending=[];botMonth('grow');G.chal=null;if(G.cash<-3000)G.cash+=30000;step();}
 G.tech.credit=1;G.cash=Math.max(G.cash,5e6);G.pending=[];botMonth('grow');step();
 let L=G.last;ok(L.fin>0&&L.finCr>0,dstr(G)+': рассрочка через банки — комиссия '+money(L.fin)+' с '+money(L.finCr)+' продаж в рассрочку ('+pct(L.fin/Math.max(1,L.rev),1)+' выручки)');
 setOpen('pl',true);setOpen('finc',true);let h=vPlant();ok(/комиссия банкам/.test(h)&&/около 6% суммы/.test(h),'в отчёте — что это за строка и почему она в минусе');

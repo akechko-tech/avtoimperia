@@ -16,7 +16,7 @@ const DX_KIND={
     route:{uk:['Канны — Кале','«Средиземноморский экспресс»',1180,58],fr:['Ницца — Кале','«Средиземноморский экспресс»',1210,58],us:['Лос-Анджелес — Сан-Франциско','ночной «Жаворонок»',760,56],de:['Берлин — Мюнхен','скорый «Д-цуг»',660,62],it:['Милан — Рим','скорый поезд',630,55]},
     opp:(y,r)=>r[3]*(1+0.004*(y-1905)),hist:'В январе 1930 года Rover Light Six обогнал «Голубой поезд» от Сен-Рафаэля до Кале, а в марте Вулф Барнато на Bentley Speed Six успел из Канн в лондонский клуб раньше, чем поезд пришёл в Кале. Обогнать экспресс на дорогах эпохи — значит ехать быстро и ни разу не сломаться.'}};
 // лучшая машина для дуэли: самая быстрая серийная (не грузовик)
-function dxCar(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)).map(m=>({m,st:carStats(m,0,s.y)})).sort((a,b)=>b.st.vmax-a.st.vmax)[0]||null;}
+function dxCar(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&!isMoto(m)).map(m=>({m,st:carStats(m,0,s.y)})).sort((a,b)=>b.st.vmax-a.st.vmax)[0]||null;}
 function dxTrainOk(s,v,c){const d=DX_KIND.train,r=d.route[c||s.country]||d.route.fr,road=clamp(0.42+0.009*(s.y-1905),0.42,0.62),va=Math.min(v*road,95);return r[2]/va+r[2]/600<=0.98*r[2]/d.opp(s.y,r);}
 // 0.30: вызов может прийти и из страны, где у вас дилеры (газеты Франции зовут вашу машину против «Голубого поезда»)
 function dxOffer(s){const P=dxCar(s);if(!P)return null;const C=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!(typeof warCut==='function'&&warCut(s,c))));

@@ -1,7 +1,8 @@
 /* ================= LEGACY: firsts, score, comparison with history ================= */
 // Первенства: игрок внедрил технологию или деталь раньше, чем это случилось в истории
 // 0.25: кто и когда впервые поставил деталь на машины в настоящей истории (ключи — детали из 01-data.js; прежняя таблица съехала на добавленных деталях)
-const PART_HIST={e2:[1898,'Daimler (мотор «Феникс» Майбаха)'],e10:[1903,'Cadillac'],e3:[1903,'Aster'],e9:[1908,'Ford (Model T)'],e4:[1908,'Continental'],e5:[1909,'Daimler из Ковентри (мотор Найта)'],
+// 0.32: и мотоциклы: кто первым сделал деталь в истории (первенство раньше них — в зачёт наследия)
+const PART_HIST={me4:[1905,'FN (Four)'],me5:[1907,'Indian и Harley-Davidson'],me7:[1913,'Scott'],me8:[1923,'BMW (R 32)'],me9:[1924,'Norton и Sunbeam'],me11:[1928,'DKW (E 206)'],mt4:[1914,'Indian и Harley-Davidson'],mt5:[1923,'BMW (R 32)'],mb1:[1903,'Graham Brothers (первая коляска)'],mw3:[1923,'Dunlop'],e2:[1898,'Daimler (мотор «Феникс» Майбаха)'],e10:[1903,'Cadillac'],e3:[1903,'Aster'],e9:[1908,'Ford (Model T)'],e4:[1908,'Continental'],e5:[1909,'Daimler из Ковентри (мотор Найта)'],
   e14:[1914,'Dodge Brothers'],e6:[1914,'Cadillac (первый массовый V8)'],e11:[1922,'Austin и Citroën'],e7:[1922,'верхнеклапанные моторы двадцатых'],e8:[1919,'Isotta Fraschini (Tipo 8)'],e12:[1929,'Chevrolet («шестёрка по цене четвёрки»)'],
   g2:[1891,'Panhard et Levassor'],g3:[1899,'Луи Рено'],g4:[1901,'Oldsmobile'],g7:[1928,'Cadillac'],
   k2:[1902,'Луи Рено'],k3:[1910,'Isotta Fraschini'],k6:[1919,'Hispano-Suiza'],k4:[1921,'Duesenberg'],k5:[1927,'Ford (Model A)'],
@@ -22,7 +23,7 @@ const RACE_W={major:6,normal:2};
 // 0.30: НАСЛЕДИЕ — ЭТО ИМПЕРИЯ, А НЕ РАННИЕ ПОБЕДЫ. В 0.29 спорт давал до 400 очков, а изобретения — до 240: молодая марка
 // с гонками и парой первенств к 1911 году обходила Ford и General Motors с их миллионами машин. Теперь главное — масштаб
 // (до 450: лучший год и всё выпущенное за эпоху) и рынок (до 250: доля, удержанная годами); спорт (до 150) копится по сезонам —
-// не больше 30 очков за год; инновации — до 150 (первенство — 25, если новинка пошла в серию); капитал — до 200; бренд — до 160.
+// не больше 30 очков за год (0.32: 20); инновации — до 150 (первенство — 25, если новинка пошла в серию); капитал — до 200; бренд — до 160.
 const LEG_MAX={scale:450,market:250,innov:150,sport:150,capital:200,brand:160};
 function legacyParts(o){
   const scale=0.5*450*Math.log10(1+(o.peak||0)/1000)/Math.log10(1+2000)+0.5*450*Math.log10(1+(o.cum||0)/10000)/Math.log10(1+2100);
@@ -34,9 +35,11 @@ function legacyParts(o){
   return {scale,market,innov,sport,capital,brand,total:scale+market+innov+sport+capital+brand,mat};
 }
 // спорт по сезонам: победы (большая гонка — 6, обычная — 2) и титулы (25) — не больше 30 очков за год
+// 0.32: не больше 20 очков за сезон — максимум спорта (150) за восемь сезонов побед, а не за пять: имя на трассах строят годами
+const SPORT_SEASON=20;
 function sportPts(s){const Y={};ownRaces(s).forEach(r=>{if(r.place!==1||r.y==null)return;Y[r.y]=(Y[r.y]||0)+(r.major?RACE_W.major:RACE_W.normal);});
   ownTitles(s).filter(t=>!/^king-/.test(t.id||'')||t.id==='king-race').forEach(t=>{if(t.y!=null)Y[t.y]=(Y[t.y]||0)+25*(t.w||1);});
-  return Object.values(Y).reduce((a,v)=>a+Math.min(30,v),0);}
+  return Object.values(Y).reduce((a,v)=>a+Math.min(SPORT_SEASON,v),0);}
 function coFoundedY(s){return s.racer&&s.racer.founded?s.racer.founded.y:(s.startY||1895);}
 // гонки и титулы самой марки: без личной карьеры гонщика-основателя до основания
 function ownRaces(s){return (s.raceLog||[]).filter(r=>!('works' in r)&&!r.rx);}
@@ -45,18 +48,19 @@ function ownTitles(s){const fy=s.racer&&s.racer.founded?s.racer.founded.y:0;retu
 function firstsLive(s){return Object.keys(s.firsts||{}).filter(k=>{if(/^eq:/.test(k)){const id=k.slice(3);return s.models.some(m=>eqHas(m,id)&&(m.totalSold||0)>=300);}if(!/^part:/.test(k))return true;const id=k.slice(5);return s.models.some(m=>PART_KEYS.some(q=>m[q]===id)&&(m.totalSold||0)>=300);}).length;}
 function playerLegacy(s){
   const wins=ownRaces(s).filter(r=>r.place===1),major=wins.filter(r=>r.major).length,minor=wins.length-major;
-  const bestModel=Math.max(0,...s.models.map(m=>m.totalSold));const longModel=s.models.some(m=>m.launched!==undefined&&m.status!=='dev'&&(mi(s)-m.launched)>=120&&m.totalSold>1000);
+  const bestModel=Math.max(0,...s.models.filter(m=>!isMoto(m)).map(m=>m.totalSold));const longModel=s.models.some(m=>m.launched!==undefined&&m.status!=='dev'&&(mi(s)-m.launched)>=120&&m.totalSold>1000);
   const abroad=Object.keys(s.peak.share||{}).filter(c=>c!==s.country&&s.peak.share[c]>=0.05).length;
   const techs=Math.min(8,Object.values(s.tech||{}).reduce((a,b)=>a+b,0));
   const T=ownTitles(s),kings=T.filter(t=>/^king-/.test(t.id||'')),sportT=T.filter(t=>!/^king-/.test(t.id||'')||t.id==='king-race');
   // доля, удержанная годами: сумма годовых долей дома (старые сохранения — лучшая доля × прожитые годы)
   const LH=(s.lhist||[]).filter(h=>h.sh!=null),age=Math.max(0,s.y-coFoundedY(s));
   const shareYrs=LH.length?LH.reduce((a,h)=>a+h.sh,0):(s.peak.shY!=null?s.peak.shY:((s.peak.share||{})[s.country]||0))*Math.min(age,15)*0.6;
-  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0),cum:typeof totalSold==='function'?totalSold(s):0,shareYrs,abroad,firsts:firstsLive(s),techs,kingTech:kings.filter(t=>t.id==='king-tech').length,
+  // 0.32: мотоциклы — за четверть машины (масштаб и выпуск, а не имя автомобильной марки)
+  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0)+0.25*Math.max(s.peak.myear||0,s.myearSold||0),cum:(typeof totalSold==='function'?totalSold(s):0)+0.25*motoSold(s),shareYrs,abroad,firsts:firstsLive(s),techs,kingTech:kings.filter(t=>t.id==='king-tech').length,
     kingClass:kings.filter(t=>t.id!=='king-tech'&&t.id!=='king-race').length,sportPts:sportPts(s),val:companyValue(s),rep:s.rep,age,
     legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
-  // 0.21: очки наследия, выигранные в пари, — к имени марки
-  if(s.legBonus){L.brand+=s.legBonus;L.total+=s.legBonus;}
+  // 0.21: очки наследия, выигранные в пари, — к имени марки (0.32: в пределах шкалы бренда — 160)
+  if(s.legBonus){const b=Math.min(LEG_MAX.brand,L.brand+s.legBonus)-L.brand;if(b>0){L.brand+=b;L.total+=b;}}
   // 0.31: прежние компании основателя (проданные) — половина их очков
   if(s.pastCos&&s.pastCos.length&&typeof rbLegacy==='function'){L.prev=rbLegacy(s);L.total+=L.prev;}
   return L;

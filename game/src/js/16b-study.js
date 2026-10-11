@@ -56,11 +56,12 @@ function techCatch(s,k){const nx=techNext(s,k);if(!nx)return 1;const hy=Math.max
 function techMonths(s,k){return techCatch(s,k)<=0.86?2:3;}
 // Соперники тоже разбирают ваши машины: если ваша модель намного лучше и хорошо продаётся, её устройство копируют
 function copyExtra(kind){const C=G&&G.copy;return (C&&C[kind])||0;}
-function rivalsCopy(s){s.copy=s.copy||{};s.copySaid=s.copySaid||{};const Y=s.segYPrev||{},YT=s.segYTPrev||{},D=DIF(),mx=Math.min(1,0.55*(D.rvMax||1.3)),step=0.2*(D.rvRate||1);
+// 0.32: насколько и как быстро копируют — по уровню сложности (на «Историке» — до двух звёзд, по 0,4 в год, как ИИ «Цивилизации» на «Божестве»)
+function rivalsCopy(s){s.copy=s.copy||{};s.copySaid=s.copySaid||{};const Y=s.segYPrev||{},YT=s.segYTPrev||{},D=DIF(),mx=D.copyMax??1,step=D.copyRate??0.2;
   STUDY_KINDS.forEach(kind=>{const g=kind==='van'||kind==='truck'?'truck':kind,cur=s.copy[kind]||0;
     const best=s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&designKind(m)===kind).map(m=>({m,S:classScore(m,s)})).sort((a,b)=>b.S-a.S)[0];
     const sh=(YT[g]||0)>0?(Y[g]||0)/YT[g]:0;
-    if(best&&best.S>=1.15&&sh>=0.15){s.copy[kind]=Math.min(mx,cur+step);
+    if(best&&best.S>=1.1&&sh>=0.12){s.copy[kind]=Math.min(mx,+(cur+step).toFixed(2));
       if(cur===0&&mi(s)-(s.copySaid[kind]??-99)>=48&&!s.pending.length){s.copySaid[kind]=mi(s);
         pushEvent({kicker:'Рынок',title:`Конкуренты разбирают «${best.m.name}»`,deck:'Лучшую машину класса копируют',carId:best.m.id,
           text:`«${best.m.name}» — ${Math.round((best.S-1)*100)}% впереди соперников класса, и её покупает каждый ${Math.max(2,Math.round(1/Math.max(0.01,sh)))}-й покупатель. Конкуренты купили несколько машин, разобрали и перенимают устройство: их новые машины станут лучше, преимущество начнёт таять.\nТак было всегда: то, что стало массовым, быстро осваивают все. Держитесь впереди — улучшения КБ, прототипы и новые модели.`},true);}}

@@ -88,18 +88,25 @@ const TENDERS={
   army:{y:1908,to:1914,kind:'truck',n:[10,40],lim:1.2,mo:8,cs:['de','fr','uk'],who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Пруссии',uk:'Военное министерство Британии'}[c]),
     text:(o)=>`${o.who} платит за грузовики, которые в войну можно будет призвать в армию. Заказ — ${o.n} машин с поставкой за ${o.mo} месяцев.`},
   city:{y:1912,kind:'truck',n:[5,25],lim:1.1,mo:7,who:c=>'Городская управа '+({fr:'Лиона',de:'Мюнхена',uk:'Манчестера',us:'Чикаго',it:'Рима'}[c]),
-    text:(o)=>`${o.who} закупает ${o.n} грузовиков для уборки улиц и стройки.`}
+    text:(o)=>`${o.who} закупает ${o.n} грузовиков для уборки улиц и стройки.`},
+  // 0.32: мотоциклы — сельская почта и армия (связные, санитары, пулемётные расчёты в коляске)
+  mpost:{y:1903,to:1926,kind:'moto',n:[8,40],lim:1.05,mo:5,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии'}[c]),
+    text:(o)=>`${o.who} сажает сельских почтальонов на мотоциклы: заказ на ${o.n} машин. Главное — чтобы мотоцикл заводился в любую погоду и не просил ремонта.`},
+  marmy:{y:1914,to:1919,war:1,gap:7,kind:'moside',n:[80,500],lim:1.15,mo:6,who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Германии',uk:'Военное министерство Британии',us:'Военное министерство США',it:'Военное министерство Италии'}[c]),
+    text:(o)=>`Армии нужны мотоциклы: связные возят приказы между штабами, санитары — раненых, в коляске ставят пулемёт. ${o.who} заказывает ${o.n} мотоциклов с поставкой за ${o.mo} месяцев. Заказ займёт мотоцех, зато платят сразу и щедро.`}
 };
-function tenderModel(s,kind){return s.models.filter(m=>m.status==='prod'&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
+const MOTO_TENDER={moto:1,moside:1};
+function tenderModel(s,kind){if(MOTO_TENDER[kind])return motoForTender(s,kind);return s.models.filter(m=>m.status==='prod'&&!isMoto(m)&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
 function checkTenders(s){
   if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
-  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=18&&tenderModel(s,t.kind));if(!L.length)return;
+  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&(!t.war||isWar(s.y,s.m,s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=(t.gap||18)&&tenderModel(s,t.kind));if(!L.length)return;
   const [k,t]=L[Math.floor(Math.random()*L.length)],md=tenderModel(s,t.kind),scale=(1+T(s)/10)*(s.country==='us'?1.8:1);
   const n=Math.max(2,Math.round((t.n[0]+Math.random()*(t.n[1]-t.n[0]))*scale)),lim=Math.round(refPrice(md,s)*t.lim/10)*10;
   s.tenderSaid=s.tenderSaid||{};s.tenderSaid[k]=mi(s);
   const o={k,who:t.who(s.country),n,mo:t.mo,md:md.id,lim,bids:[Math.round(lim*0.88/10)*10,lim]};s.tenderNow=o;
   const S=classScore(md,s),cost=unitCost(md,s);
-  pushEvent({carId:md.id,title:'Заказ: '+o.who,kicker:'Деловой заказ',deck:`${n} машин · до ${money(lim)} за штуку · поставка за ${t.mo} мес.`,
+  const unit=isMoto(md)?plural(n,'мотоцикл','мотоцикла','мотоциклов'):'машин';
+  pushEvent({carId:md.id,title:'Заказ: '+o.who,kicker:'Деловой заказ',deck:`${n} ${unit} · до ${money(lim)} за штуку · поставка за ${t.mo} мес.`,
     text:t.text(o)+`\nВаша модель для заказа — «${md.name}»: против соперников ${Math.round(S*100)}%, себестоимость около ${money(cost)}. Чем дешевле предложение и лучше машина, тем больше шансов. Машины для заказа завод сделает сверх плана, а не поставить в срок — неустойка и удар по репутации.`,
     choices:[[`Предложить ${money(o.bids[0])} — шансы выше`,'tbid0'],[`Предложить ${money(o.bids[1])}`,'tbid1'],['Не участвовать','tskip']]},false);}
 function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key==='tskip'){if(o)addLog(`Вы не стали участвовать в заказе: ${o.who}.`);return;}
@@ -107,7 +114,7 @@ function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key===
   const p=clamp(0.35+0.8*(S-1)+2.2*(1-bid/o.lim)+(s.rep-50)/250,0.05,0.95);
   if(Math.random()<p){s.orders.push({id:mi(s)+'-'+o.k,md:md.id,n:o.n,left:o.n,price:bid,due:mi(s)+o.mo,who:o.who,start:mi(s)});
     addLog(`Заказ выигран: ${o.who} — ${fmtN(o.n)} машин «${md.name}» по ${money(bid)}. Срок — ${o.mo} мес.`,'good');pendingToasts.push('📜 Заказ ваш: '+o.who);}
-  else{const L=topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
+  else{const mo=isMoto(md),L=mo?compList(s.country,'moto').filter(cp=>compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)):topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
 function yearlyCompetitors(s){
   for(const c in COMPS)COMPS[c].forEach((cp,i)=>{
     if(pkIs(cp,s))return;const home=c===s.country||dealerCount(s,c)>0;if(!home)return;
@@ -133,6 +140,9 @@ function resolve(key){
   if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
+  if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
+  if(key==='rescueYes'||key==='rescueNo'){rescueResolve(s,key);}
+  if(key==='carDesign'){s.pending.shift();s.ui=s.ui||{};s.ui.line='car';tab='models';save();render();openDesigner();return;}
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
   if(/^rx:/.test(key)&&racerResolve(s,key))return;
   if(key==='restart'){s.pending=[];openNewGame();return;}
@@ -147,6 +157,9 @@ const ACH=[
   {id:'s1m',name:'Миллионер',desc:'Продан миллион машин',test:s=>totalSold(s)>=1000000},
   {id:'models',name:'Главный конструктор',desc:'Разработано 5 моделей',test:s=>s.models.length>=5},
   {id:'truck',name:'Грузоперевозки',desc:'Грузовик в продаже',test:s=>s.models.some(m=>m.status==='prod'&&isTruck(m))},
+  {id:'moto',name:'Два колеса',desc:'Мотоцикл в продаже',test:s=>s.models.some(m=>m.status==='prod'&&isMoto(m))},
+  {id:'moto10k',name:'Мотоимперия',desc:'Продано 10 000 мотоциклов',test:s=>motoSold(s)>=10000},
+  {id:'motocar',name:'От мотоцикла к автомобилю',desc:'Мотомастерская выпустила автомобиль',test:s=>!!s.motoStart&&s.models.some(m=>!isMoto(m)&&m.status==='prod'&&(m.made||0)>0)},
   {id:'export',name:'На экспорт',desc:'Дилеры за границей',test:s=>Object.keys(s.dealers).some(c=>c!==s.country&&s.dealers[c]>0)},
   {id:'dealers',name:'Сеть по всей стране',desc:'Дилеры покрывают всю страну',test:s=>dealerCount(s,s.country)>=dealerNeed(s.country,s)},
   {id:'conv',name:'Конвейер',desc:'Движущийся конвейер',test:s=>techLv(s,'line')>=2},

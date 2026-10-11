@@ -29,6 +29,8 @@ function demoStart(){if(DEMO.on)return;if(!demoWanted()){if(!R&&MS.classList.con
     document.getElementById('raceScreen').hidden=false;MS.classList.add('live','ready');DEMO.raf=requestAnimationFrame(demoLoop);});}
 function demoLoop(now){if(!R||!R.demo||R.done){DEMO.raf=0;return;}
   const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;
+  // 0.32: поверх меню открыт лист (новая игра, настройки, зал славы) — заставка на паузе: не тратит батарею и не тормозит лист
+  if(typeof sheet!=='undefined'&&sheet&&!sheet.hidden){DEMO.raf=requestAnimationFrame(demoLoop);return;}
   if(!R.loading){R.t+=dt;if(R.t>0)R.time+=dt;
     // гонка только для картинки: физика и соперники как обычно, без поломок и итогов
     try{raceTick(dt);}catch(e){console.warn(e);}

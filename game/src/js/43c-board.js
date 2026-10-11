@@ -8,7 +8,7 @@ function titlesRace(s){const y=s.y,home=s.country,rows=[];
   rows.push({k:'race',icon:'🏁',t:'Король гонок',you:me,them:lead?lead.w:0,themN:lead?lead.n:'',min:2,unit:v=>`${v} ${plural(v,'победа','победы','побед')}`,
     hint:me>=2&&me>(lead?lead.w:0)?'Титул ваш, если никто не обгонит до конца года':`Нужно не меньше 2 побед и больше, чем у других. Гонок до конца года: ${left}`});
   // король технологий: первенство года или машина на 20% лучше соперников класса
-  const fr=Object.values(s.firsts||{}).filter(f=>f.y===y),act=s.models.filter(m=>m.status==='prod'||m.status==='sale'),best=act.map(m=>({m,S:classScore(m,s)})).sort((a,b)=>b.S-a.S)[0];
+  const fr=Object.values(s.firsts||{}).filter(f=>f.y===y),act=s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isMoto(m)),best=act.map(m=>({m,S:classScore(m,s)})).sort((a,b)=>b.S-a.S)[0];
   const pc=best?Math.round((best.S-1)*100):0,TK=TECH_KING[y];
   rows.push({k:'tech',icon:'⚙️',t:'Король технологий',you:fr.length?100:Math.max(0,pc),them:20,themN:TK&&!playerMarque(TK[0],s)?TK[0]:'',min:20,pct:1,
     unit:v=>fr.length?'первенство года':`«${best?best.m.name:'—'}»: +${Math.max(0,pc)}% к соперникам`,hint:fr.length?'Первенство в мире — титул почти наверняка ваш':`Нужна машина на 20% лучше соперников своего класса или первенство раньше истории${TK&&!playerMarque(TK[0],s)?` (в истории — ${TK[0]}: ${TK[1]})`:''}`});

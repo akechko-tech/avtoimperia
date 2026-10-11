@@ -24,6 +24,9 @@ function migrate(x){
   for(const c in x.comps||{})x.comps[c].forEach(o=>{if(o.yr===undefined){o.yr=0;o.prev=0;}});
   // 0.13: новые марки (Stutz, Mercer, Vauxhall, MG, Amilcar) — дописываем в таблицы конкурентов
   x.comps=x.comps||{};for(const k in COMPS){const L=x.comps[k]=x.comps[k]||[];while(L.length<COMPS[k].length){const i=L.length;L.push({name:COMPS[k][i].n,color:COMP_COLORS[i%COMP_COLORS.length],last:0,yr:0,prev:0});}}
+  // 0.32: мотомарки (s.mcomps) и линейки марки; у старых сохранений — только автомобили
+  x.mcomps=x.mcomps||{};for(const k in MCOMPS){const L=x.mcomps[k]=x.mcomps[k]||[];while(L.length<MCOMPS[k].length){const i=L.length;L.push({name:MCOMPS[k][i].n,color:COMP_COLORS[(i+3)%COMP_COLORS.length],last:0,yr:0,prev:0});}}
+  if(!x.lines)x.lines={car:1};if(x.mcap==null)x.mcap=0;
   // 0.13: дилеров не больше, чем городов; за границей — импортёр или своё отделение. Сколько машин сеть уже умела продавать — сохраняем
   if(!x.imp){x.imp={};x.dcap={};const t=x.y+x.m/12;
     for(const c in x.dealers){const d=x.dealers[c]||0;if(!d)continue;

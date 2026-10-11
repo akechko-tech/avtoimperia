@@ -145,7 +145,7 @@ function duelOutcome(s,C,win,info){info=info||{};const H=rivalHero(C.mq,s),R=riv
   const extra=win?stakeApply(s,C,H):'';
   const hot=H.type==='proud'||H.type==='sharp',cat=win?(R.st>=3?(hot&&R.st%2?'rage':'respect'):(hot?'angry':'dign')):'mock';
   const line=heroLine(H,cat,s,ev),rev=win&&R.st<5?heroLine(H,'revenge',s,ev):'';
-  const best=info.carId!=null?s.models.find(m=>m.id===info.carId):s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.totalSold||0)-(a.totalSold||0))[0];
+  const best=info.carId!=null?s.models.find(m=>m.id===info.carId):s.models.filter(m=>m.status==='prod'&&!isMoto(m)).sort((a,b)=>(b.totalSold||0)-(a.totalSold||0))[0];
   const big=C.stake>=Math.max(2000,1500*cpi(s)),reel=rc&&!rc.match&&typeof raceReelId==='function'?raceReelId(rc):'';
   const ptitle=win?`«${s.company}» обыгрывает ${C.mq}!`:info.forfeit?`«${s.company}» не явилась — ${C.mq} смеётся`:`${C.mq} посмеялась над «${s.company}»`;
   if(win)trophyAdd(s,{kind:'charter',title:`Пари с ${C.mq}`,sub:`${ev}${ev?' · ':''}счёт ${R.w}:${R.l}`,story:`${H.name}: «${line}» Ставка — ${stakeText(C)}${extra?'; '+extra:''}.`,key:'duel|'+C.mq+'|'+mi(s),

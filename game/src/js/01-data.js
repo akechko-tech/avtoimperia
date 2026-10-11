@@ -22,18 +22,21 @@ const PIONEERS={
   agnelli:{wiki:'Giovanni Agnelli',name:'Джованни Аньелли',yrs:'1866–1945',c:'it',co:'ФИАТ',beard:0,bio:'Один из основателей FIAT (1899). Построил завод Линготто с испытательным треком на крыше.',plus:['Капитал +15%','Мощности +8%','Грузовики +10%'],minus:['Качество −3%'],b:{cash:1.15,lineCap:1.08,seg:{truck:1.1},quality:0.97}},
   custom:{name:'Свой персонаж',yrs:'',c:'de',co:'Моторные мастерские',beard:0,bio:'Никаких бонусов и слабостей. Только вы и эпоха.',plus:[],minus:[],b:{}}
 };
-// share — какую долю класса конкуренты терпят без ответа; rvRate и rvMax — как быстро и как сильно они отвечают
+// share — какую долю класса конкуренты терпят без ответа; rvRate и rvMax — как быстро и как сильно они отвечают (0.32: rvMax — штраф к вашим машинам в классе,
+// а не прибавка соперникам: ответ отбирает покупателей у вас, а не раздувает рынок); rboost — предел моделей-ответов; org — издержки размера компании
+// (контора, сбыт, управление — растут с выпуском и числом рынков, как содержание городов в «Цивилизации»); copyMax и copyRate — насколько и как быстро
+// соперники перенимают устройство ваших лучших машин (★ к эталону класса); drv — мастерство пилотов соперников
 const DIFFS={
-  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2,comp:0.7,race:0.9,bad:0.3,debt:80000,share:0.45,rvRate:0.5,rvMax:0.6,pwMin:0.85,helper:1,simple:1,
-    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3},
-  easy:{name:'Лёгкая',desc:'Как раньше: больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.5,comp:0.8,race:0.93,bad:0.6,debt:25000,share:0.3,rvRate:0.8,rvMax:1.1,pwMin:0.8,
-    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25},
-  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1,comp:1,race:1,bad:1,debt:15000,share:0.2,rvRate:1.2,rvMax:1.8,pwMin:0.7,
-    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12},
-  hard:{name:'Магнат',desc:'Конкуренты агрессивнее, кредит дороже, кризисы и события сильнее',cash:0.75,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:2.4,pwMin:0.65,
-    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1},
-  hist:{name:'Историк',desc:'Для тех, кто помнит оригинал: каждая ошибка стоит дорого',cash:0.6,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:2.8,pwMin:0.6,
-    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08}
+  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2,comp:0.7,race:0.9,bad:0.3,debt:80000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
+    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.88},
+  easy:{name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.5,comp:0.8,race:0.93,bad:0.6,debt:25000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
+    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.94},
+  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1,comp:1,race:1,bad:1,debt:15000,share:0.2,rvRate:1.2,rvMax:1.3,pwMin:0.7,
+    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:1},
+  hard:{name:'Магнат',desc:'Конкуренты агрессивнее и быстрее перенимают ваши новинки, большая компания дороже в управлении, кредит дороже, кризисы сильнее',cash:0.85,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:1.7,pwMin:0.65,
+    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04},
+  hist:{name:'Историк',desc:'Как «Божество» в «Цивилизации»: соперники сильны и мгновенно отвечают, большая компания дорога в управлении — первое место в наследии здесь исключительное достижение',cash:0.75,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:1.9,pwMin:0.6,
+    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08}
 };
 // Типичная машина соперников в каждом классе: с ней покупатель сравнивает вашу (год, прототип, детали)
 const RIVAL_CAR={
@@ -124,8 +127,8 @@ const BODIES=[
   {id:'b3',name:'Фаэтон',y:1904,q:16,c:220,kg:300,cd:1.2,cg:0.72,cx:1.0,seats:5,comf:1.12},{id:'b11',name:'Лимузин с шофёрским местом',y:1906,q:30,c:950,kg:560,cd:1.6,cg:0.9,cx:1.5,seats:7,closed:1,comf:1.9,note:'Салон для хозяев за стеклом, шофёр — отдельно: машина для министров и банкиров'},
   {id:'b10',name:'Родстер',y:1910,q:12,c:150,kg:170,cd:0.95,cg:0.64,cx:0.9,seats:2,comf:1.02,note:'Лёгкий двухместный кузов с откидным верхом: для тех, кто водит сам'},
   {id:'b4',name:'Закрытый седан',y:1911,q:24,c:520,kg:450,cd:1.5,cg:0.86,cx:1.4,seats:5,closed:1,comf:1.55},
-  {id:'b9',name:'Дешёвый закрытый «коуч»',y:1922,q:22,c:250,kg:380,cd:1.45,cg:0.84,cx:1.1,seats:5,closed:1,comf:1.42,note:'Essex Coach (1922): две двери и простая коробка — закрытая машина почти по цене открытой'},
-  {id:'b5',name:'Цельнометаллический седан',y:1923,q:32,c:330,kg:380,cd:1.35,cg:0.8,cx:1.15,seats:5,closed:1,comf:1.62},
+  {id:'b9',name:'Дешёвый закрытый «коуч»',y:1922,q:22,c:140,kg:380,cd:1.45,cg:0.84,cx:1.1,seats:5,closed:1,comf:1.42,note:'Essex Coach (1922): две двери и простая коробка — закрытая машина почти по цене открытой'},
+  {id:'b5',name:'Цельнометаллический седан',y:1923,q:32,c:210,kg:380,cd:1.35,cg:0.8,cx:1.15,seats:5,closed:1,comf:1.62},
   {id:'b6',name:'Фургон',y:1896,q:8,c:180,kg:450,cd:1.8,cg:0.9,cx:1.0,truck:true,seats:2,pay:0.8,comf:1,note:'Как первый грузовик Daimler (1896): для лавок, пивоварен и почты'},
   {id:'b7',name:'Грузовик 1,5 т',y:1910,q:18,c:260,kg:900,cd:2.0,cg:0.95,cx:1.2,truck:true,seats:2,pay:1.5,comf:1},{id:'b8',name:'Грузовик 3 т',y:1920,q:28,c:400,kg:1500,cd:2.3,cg:1.0,cx:1.4,truck:true,seats:2,pay:3,comf:1}
 ];
@@ -151,7 +154,7 @@ const PAINTS=[{id:'#1b1d22',name:'Чёрный'},{id:'#1f4a36',name:'Зелён�
 const SEGK=['people','middle','lux','sport','truck'];
 // легковые классы (у спортивного — свои покупатели: с 1901 года в Германии и Франции (Mercedes 35 HP), с 1904-го в Италии, с 1905-го в Британии, с 1910-го в США — Mercer Raceabout, Stutz Bearcat)
 const CARSEG=['people','middle','lux','sport'];
-const SEG={people:{name:'Народный'},middle:{name:'Средний'},lux:{name:'Люкс'},sport:{name:'Спортивный'},truck:{name:'Грузовой'}};
+const SEG={people:{name:'Народный'},middle:{name:'Средний'},lux:{name:'Люкс'},sport:{name:'Спортивный'},truck:{name:'Грузовой'},moto:{name:'Мотоцикл'},moside:{name:'С коляской'}};
 const MAST={de:['Motor-Rundschau','10 Pfennig',1],fr:['Le Moteur Illustré','10 centimes',0],uk:['The Motoring Gazette','One Penny',0],us:['The Detroit Chronicle','Two Cents',0],it:['Corriere dei Motori','10 centesimi',0]};
 // «Также в номере»: события эпохи [год, месяц (0 — январь), текст, фото (статья Википедии), сколько месяцев о нём пишут]
 const FLAVOR=[

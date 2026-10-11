@@ -16,8 +16,12 @@ if(A[0]==='all'){
   function report(L){const ok={passive:r=>(r.over&&r.overY<1915)||(r.value<5e6&&r.place>10),// 0.30: узнаваемость марки и потолок славы — сильный игрок к 1930 году на уровне лучших марок своей страны (Европа: $0,1–0,8 млрд,
       // США: $0,25–1,5 млрд), средний — крепкая марка (Европа $30–200 млн, США $50–300 млн), место в наследии 3–10
       // 0.30: Германия и Италия — рынки меньше: та же игра даёт ту же стоимость, но в мировом наследии место ниже (FIAT в 1929 году — первый в Италии, но не в мире)
-      middle:r=>!r.over&&r.value>=(r.c==='us'?50e6:30e6)&&r.value<=(r.c==='us'?300e6:200e6)&&r.place>=3&&r.place<=(r.c==='de'||r.c==='it'?13:10),
-      strong:r=>!r.over&&r.value>=(r.c==='us'?0.25e9:0.1e9)&&r.value<=(r.c==='us'?1.5e9:0.8e9)&&r.place<=(r.c==='it'?4:3),greedy:r=>(r.over&&r.overY>=1912)||(!r.over&&r.place>10&&r.fell),debt:r=>r.over&&((r.overY>=1920&&r.overY<=1921)||r.overY>=1929||(r.c==='it'&&r.overY>=1915&&r.overY<=1918))};   // в Италии долги добивает война 1915 года
+      // 0.32: экономика строже (цена важнее, ответ конкурентов отбирает покупателей, контора дорожает с размером): средний — $15–200 млн
+      // (США $30–300 млн), 3–16-е место; сильный — $40–800 млн (США $0,1–1,5 млрд), не ниже 5-го места
+      middle:r=>!r.over&&r.value>=(r.c==='us'?30e6:15e6)&&r.value<=(r.c==='us'?300e6:200e6)&&r.place>=3&&r.place<=16,
+      strong:r=>!r.over&&r.value>=(r.c==='us'?0.1e9:0.04e9)&&r.value<=(r.c==='us'?1.5e9:0.8e9)&&r.place<=5,greedy:r=>(r.over&&r.overY>=1912)||(!r.over&&r.place>10&&r.fell),// 0.32: банкиры спасают компанию от разорения за долю прибыли (раз в 10 лет) — экспансию в долг наказывает кризис:
+      // спасение банкирами в 1919–1921 или с 1929 года либо разорение (после спасения — в следующий спад)
+      debt:r=>(r.over&&((r.overY>=1919)||(r.c==='it'&&r.overY>=1915)))||(r.rescueY>=1919&&r.rescueY<=1921)||r.rescueY>=1929};   // в Италии долги добивает война 1915 года
     let fails=0;console.log('\nбот       страна  стоимость      касса        место  итог');
     bots.forEach(b=>{const R=L.filter(r=>r.bot===b);R.forEach(r=>{if(r.err){console.log(b.padEnd(9),r.c,'ОШИБКА',r.err);fails++;return;}
       console.log(b.padEnd(9),r.c.padEnd(7),('$'+fmt(r.value)).padEnd(14),('$'+fmt(r.cash)).padEnd(12),String(r.place).padEnd(6),r.over?'банкрот '+r.overY:'1930'+(r.fell?' (упал после '+r.fell+')':''),ok[b]&&ok[b](r)?'':'  ← вне коридора');});
@@ -135,5 +139,5 @@ for(let k=0;k<35*12;k++){
 let guard=0;while(G.pending.length&&guard++<50){const ev=G.pending[0];if(ev.choices[0][1]==='final'||ev.choices[0][1]==='restart')break;resolve(ev.choices[0][1]);}
 const bankrupt=!!G.over&&G.cash<-debtLimit(G)*0.999||(G.over&&G.y<1930);
 const t=legacyTable(G);
-console.log(JSON.stringify({bot:BOT,c:CC,seed:${seed},value:Math.round(companyValue(G)),cash:Math.round(G.cash),loan:G.loan,place:t.place,legacy:Math.round(t.me.total),over:bankrupt,overY:bankrupt?overY:0,peakV:Math.round(peakV),peakY,fell:fellY,sold:totalSold(G),best:G.peak.year||0,y:G.y,L:Object.fromEntries(['scale','market','innov','sport','capital','brand'].map(k=>[k,Math.round(t.me[k])])),firsts:Object.keys(G.firsts||{}).length,sb:globalThis.SB?Object.fromEntries(Object.entries(SB).map(([c,v])=>[c,Math.round(v/2)])):null,rev:Math.round((globalThis.REV||0)/2e6),prf:Math.round((globalThis.PRF||0)/2e6),above:t.rows.slice(Math.max(0,t.place-3),t.place+2).map(r=>r.n+' '+Math.round(r.L.total)).join('; ')}));
+console.log(JSON.stringify({bot:BOT,c:CC,seed:${seed},rescueY:G.rescueY||0,value:Math.round(companyValue(G)),cash:Math.round(G.cash),loan:G.loan,place:t.place,legacy:Math.round(t.me.total),over:bankrupt,overY:bankrupt?overY:0,peakV:Math.round(peakV),peakY,fell:fellY,sold:totalSold(G),best:G.peak.year||0,y:G.y,L:Object.fromEntries(['scale','market','innov','sport','capital','brand'].map(k=>[k,Math.round(t.me[k])])),firsts:Object.keys(G.firsts||{}).length,sb:globalThis.SB?Object.fromEntries(Object.entries(SB).map(([c,v])=>[c,Math.round(v/2)])):null,rev:Math.round((globalThis.REV||0)/2e6),prf:Math.round((globalThis.PRF||0)/2e6),above:t.rows.slice(Math.max(0,t.place-3),t.place+2).map(r=>r.n+' '+Math.round(r.L.total)).join('; ')}));
 `);

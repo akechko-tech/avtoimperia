@@ -577,26 +577,30 @@ function carsCollide(A,B){if(A.ghostT>0||B.ghostT>0)return 0;const dx0=A.x-B.x,d
   const imp=-rel,dk=(A.you||B.you)?0.6:0.25;if(imp>1.5){A.dmg=Math.min(100,A.dmg+imp*dk);B.dmg=Math.min(100,B.dmg+imp*dk);}return imp;}
 /* ---------- пилоты: ИИ и игрок ---------- */
 function aiControl(c,trk,dt){
-  const {pts,n,closed,step}=trk,sk=c.sk||0.8,v=Math.max(0,c.vx);
+  // 0.32: гоночная линия (41j-line.js): точность — по мастерству пилота и уровню сложности
+  const {pts,n,closed,step}=trk,sk=aiSkill(c),v=Math.max(0,c.vx),LN=lineOf(trk),pr=linePrec(c),LL=LN.lat;
   const look=6+v*0.75,ai=Math.round(look/step);let ti=c.idx+ai;if(closed)ti%=n;else ti=Math.min(n-1,ti);
-  const tp=pts[ti],tn=trk.N[ti],off=c.laneT!==undefined?c.laneT:(c.lane||0);const tx=tp[0]+tn[0]*off,tz=tp[2]+tn[1]*off;
+  const tp=pts[ti],tn=trk.N[ti],off=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[ti]*pr;const tx=tp[0]+tn[0]*off,tz=tp[2]+tn[1]*off;
   const dx=tx-c.x,dz=tz-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);const lz=dx*fx+dz*fz,lx=dx*Math.cos(c.yaw)-dz*Math.sin(c.yaw);
   // руль: кривизна дуги до точки впереди + поправка по скорости вращения (шинам нужен угол увода)
   const kap=2*lx/Math.max(16,lz*lz+lx*lx);let want=Math.atan(c.L*kap);if(v>5)want+=clamp((kap*v-c.r)*0.3,-0.2,0.2);
   const dmax=0.6/(1+v/20);c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-2.2*dt,2.2*dt);
   const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
   const mu=roadMuAt(trk,c.idx)*c.grip*twAll(c)*(0.8+0.17*sk)*(c.punct?0.85:1)*ordK,muC=mu*0.9;
-  const bdec=c.brakeK*mu*GRAV*0.85;let vt=c.vtop*1.05;
-  {const K=trk.K,mg=muC*GRAV,b2=2*bdec,lim=Math.min(170,40+v*4.5);let vt2=vt*vt;
-    for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
+  // тормозит тем позже, чем опытнее: новичок — с запасом
+  const bdec=c.brakeK*mu*GRAV*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05;
+  // скорость — по кривизне той дуги, которой пилот едет (ось дороги + доля гоночной линии)
+  {const K=trk.K,KL=LN.K,mg=muC*GRAV,b2=2*bdec,lim=Math.min(170,40+v*4.5),onL=c.laneT===undefined;let vt2=vt*vt;
+    for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=onL?K[j]+pr*(KL[j]-K[j]):K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
   // закрытый переезд: остановиться у шлагбаума
   const gs=aiGateStop(c,trk);c.gateWait=gs<6?1:0;if(gs<150){const va=Math.sqrt(2*bdec*Math.max(0,gs-1));if(va<vt)vt=va;}
   if(c.vCap)vt=Math.min(vt,c.vCap);
   if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
-  const kN=trk.K[c.idx]||0,latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
+  const onL=c.laneT===undefined,kN=onL?(trk.K[c.idx]||0)+pr*((LN.K[c.idx]||0)-(trk.K[c.idx]||0)):(trk.K[c.idx]||0),latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
   c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
-  // выносит наружу поворота — сбросить газ и подтормозить
-  const wide=-Math.sign(kN)*c.lat-(trk.W/2-1.5);if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,0.2);c.brk=Math.max(c.brk,Math.min(0.5,wide*0.15));}
+  // выносит наружу поворота дальше своей линии (или к самой бровке) — сбросить газ и подтормозить
+  {const tl=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[c.idx]*pr,out=-Math.sign(kN)*(c.lat-tl)-0.9,edge=-Math.sign(kN)*c.lat-(trk.W/2-0.7),wide=Math.max(out,edge);
+    if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,0.2);c.brk=Math.max(c.brk,Math.min(0.5,wide*0.15));}}
   if(c.heat>82&&c.rpm>0.85)c.thr=Math.min(c.thr,c.order==='push'?0.7:0.5);
   if(c.slipR>0.14&&c.thr>0.5)c.thr=0.5;
   if(c.off&&v>8){c.thr=Math.min(c.thr,0.3);c.brk=Math.max(c.brk,0.2);}
@@ -739,9 +743,10 @@ function fieldTeams(rc,s,nTeam){
 // Гоночная машина соперников: самая прочная рама, самый мощный мотор, который она выдержит, лучшие коробка, тормоза и шины своего года
 // Подготовка заводских машин: на выносливость, в марафонах и в «Милле Милья» — серийный кузов, иначе гоночный
 function aiPrep(rc){return rc.t==='endurance'||rc.t==='rally'||rc.id==='mille'?1:2;}
-function bestPart(arr,y,key,f){return arr.filter(x=>x.y<=y&&(!f||f(x))).reduce((a,x)=>!a||x[key]>a[key]?x:a,null);}
+// 0.32: детали мотоциклов в автомобильную гоночную машину не ставим
+function bestPart(arr,y,key,f){return arr.filter(x=>x.y<=y&&!x.moto&&(!f||f(x))).reduce((a,x)=>!a||x[key]>a[key]?x:a,null);}
 function aiCarMd(y,name){const c=bestPart(CHASSIS,y,'max'),e=bestPart(ENGINES,y,'hp',x=>x.hp<=c.max)||ENGINES[0];
-  return {e:e.id,g:bestPart(GEARBOX,y,'eff').id,c:c.id,k:bestPart(BRAKES,y,'brk').id,b:'b1',w:TYRES.filter(x=>x.y<=y&&(!x.solid||y<1895)).reduce((a,x)=>!a||x.grip+(x.pit?0.004:0)>a.grip+(a.pit?0.004:0)?x:a,null).id,t:'t0',paint:'#333',name:name||'',made:0,ai:1};}
+  return {e:e.id,g:bestPart(GEARBOX,y,'eff').id,c:c.id,k:bestPart(BRAKES,y,'brk').id,b:'b1',w:TYRES.filter(x=>x.y<=y&&!x.moto&&(!x.solid||y<1895)).reduce((a,x)=>!a||x.grip+(x.pit?0.004:0)>a.grip+(a.pit?0.004:0)?x:a,null).id,t:'t0',paint:'#333',name:name||'',made:0,ai:1};}
 // Типичная ненадёжность соперников: от неё считается частота поломок в гонке
 function fieldRelRef(rc,s){const T=fieldTeams(rc,s,1);if(!T.length)return 0.2;const prep=aiPrep(rc),st=carStats(aiCarMd(rc.y),prep,rc.y);return Math.max(0.05,1-T.reduce((a,t)=>a+clamp(st.rel*Math.pow(t.str,0.6),0.3,0.995),0)/T.length);}
 function teamBoost(t,rc){return (t.boost&&Object.keys(t.boost).some(k=>rc.y>=+k)?1.06:1)*(rc.t==='endurance'&&t.endur?t.endur:1);}
@@ -801,7 +806,7 @@ const TRIM_OF={people:'t0',middle:'t1',lux:'t2',sport:'t3'};
 const brandShort=n=>n.replace(/ & Cie\.| \(.*\)| \/ .*$/g,'');
 // Какие ваши машины частники покупают для этой гонки: сколько-то уже продано, не грузовики
 function privMyModels(rc,s,PR){if(!PR.my)return [];
-  return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&(m.totalSold||0)>=10&&(PR.my==='all'||['sport','lux'].includes(segOf(m))));}
+  return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&!isMoto(m)&&(m.totalSold||0)>=10&&(PR.my==='all'||['sport','lux'].includes(segOf(m))));}
 // Серийная машина частника: типичная для класса машина эпохи, в цвете владельца
 function privProdCar(y,brand,segs){
   let seg=null;if(brand&&brand.mix){const L=segs.filter(g=>brand.mix[g]);if(L.length)seg=wpick(L,g=>brand.mix[g]);}

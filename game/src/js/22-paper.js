@@ -76,9 +76,10 @@ function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms
   pushEvent({own:1,cel:[m[1]+'!',`«${s.company}» · продано ${fmtN(m[0])} машин`,'🚗'],carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);
   try{trophyAdd(s,{kind:'record',title:m[1],sub:`продано ${fmtN(m[0])} машин`,story:m[2],key:'ms|'+m[0],carId:top?top.id:null,pt:`${m[1]} «${s.company}»!`});}catch(_){}}
 function launchPaper(s,md){if(s.pending.length>1)return;const C=classCompare(md,s,s.country),ks=CHAR_K.filter(k=>C.W[k]>0),best=ks.slice().sort((a,b)=>C.by[b]-C.by[a])[0],worst=ks.slice().sort((a,b)=>C.by[a]-C.by[b])[0],ref=refPrice(md,s),pr=md.price/ref-1;
-  const verdict=C.S>=1.08?'машина лучше соперников':C.S>=0.9?'машина не хуже соперников':'машина уступает соперникам';
-  reelUnlock(s,'model:'+md.id);
-  pushEvent({carId:md.id,kicker:'Автомобильное обозрение',title:`Новинка: «${md.name}»`,choices:[['Читать дальше','ok'],['▶ Кинохроника','reel:model:'+md.id]],deck:`${KIND_NAME[rivalKind(md)]} от «${s.company}» · ${money(md.price)}`,
+  const mo=isMoto(md),w=mo?'мотоцикл':'машина',verdict=C.S>=1.08?w+' лучше соперников':C.S>=0.9?w+' не хуже соперников':w+(mo?' уступает':' уступает')+' соперникам';
+  if(!mo)reelUnlock(s,'model:'+md.id);
+  // 0.32: о мотоцикле — мотоциклетное обозрение (кинохроника о мотоциклах — в 0.33, вместе с 3D-мотоциклами)
+  pushEvent({carId:md.id,kicker:mo?'Мотоциклетное обозрение':'Автомобильное обозрение',title:`Новинка: «${md.name}»`,choices:mo?[['Читать дальше','ok']]:[['Читать дальше','ok'],['▶ Кинохроника','reel:model:'+md.id]],deck:`${KIND_NAME[rivalKind(md)]} от «${s.company}» · ${money(md.price)}`,
     text:`Обозреватель «${MAST[s.country][0]}» сравнил «${md.name}» с ${C.ref.name}. ${CHAR_NAMES[best]} — ${Math.round(C.by[best]*100)}% от соперника${C.by[best]>1.05?': здесь новинка впереди':''}. ${C.by[worst]<0.95?`Слабое место — ${CHAR_NAMES[worst].toLowerCase()}: ${Math.round(C.by[worst]*100)}%.`:'Слабых мест обозреватель не нашёл.'}\nИтог: ${verdict} (${Math.round(C.S*100)}%). Цена ${money(md.price)} — ${Math.abs(pr)<0.04?'как у похожих машин':pr<0?`на ${Math.round(-pr*100)}% ниже, чем у похожих машин: покупатели заметят`:`на ${Math.round(pr*100)}% выше, чем у похожих машин`}.`},true);}
 // Итоги года: место среди марок страны; газета — когда место поменялось, при лидерстве и раз в пять лет
 function yearReview(s){const home=s.country;if(!(s.homePrev>0))return;
