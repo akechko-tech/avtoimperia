@@ -1,7 +1,7 @@
 /* ================= SHEETS ================= */
 const sheet=document.getElementById('sheet'),sb=document.getElementById('sheetBody');
-function openSheet(html){sb.innerHTML=html;sheet.hidden=false;sb.scrollTop=0;}
-function closeSheet(){sheet.hidden=true;draft=null;if(evHold){evHold=0;setTimeout(()=>{if(G&&G.pending.length&&!R&&sheet.hidden)render();},80);}}
+function openSheet(html){if(typeof xpopClose==='function')xpopClose();sb.innerHTML=html;sheet.hidden=false;sb.scrollTop=0;}
+function closeSheet(){if(typeof xpopClose==='function')xpopClose();sheet.hidden=true;draft=null;if(evHold){evHold=0;setTimeout(()=>{if(G&&G.pending.length&&!R&&sheet.hidden)render();},80);}}
 // 0.21: пока открыты итоги гонки, новости (травмы, пари, титулы) ждут — покажутся, когда итоги закроют
 let evHold=0;
 sheet.addEventListener('click',e=>{if(e.target===sheet&&G&&(!G.pending.length||evHold)&&!(draft&&draft.ng&&G.over)&&!(draft&&draft.lock))closeSheet();});
@@ -29,11 +29,15 @@ function eqDesignHTML(d,s,kind){const g=kindIsTruck(kind)?'truck':kind;if(g==='t
   return `<div class="label" style="margin-top:14px">Новинки оснащения</div><div class="chips">${items.map(chip).join('')}</div>${miss.length?`<p class="small warn" style="margin-top:6px">Покупатели класса уже ждут: ${miss.map(e=>e.name.toLowerCase()).join(', ')} — без этого машину берут хуже.</p>`:''}<p class="small muted" style="margin-top:4px">${esc((EQUIP.find(e=>L.includes(e.id)&&e.note)||items.find(e=>e.note)||{note:''}).note)}</p>`;}
 // Важность черты для покупателей класса: ●●● главное, ●● важно, ● немного
 function wDots(w){return w>=0.24?'●●●':w>=0.12?'●●○':w>0?'●○○':'○○○';}
-function compareHTML(md,s){const C=classCompare(md,s,s.country),ph=C.ref.name&&refIMG(C.ref.name);
-  const rows=CHAR_K.filter(k=>C.W[k]>0||C.by[k]!==1).map(k=>{const r=C.by[k],tone=r>=1.05?'good':r<0.95?'bad':'muted',w=Math.min(100,r/2*100);
-    return `<div class="cmp-row"><span>${CHAR_NAMES[k]}<small>${wDots(C.W[k])}</small></span><div class="cmp-bar"><i style="width:${w}%;background:var(--${tone==='muted'?'line':tone})"></i><b></b></div><span class="num ${tone}">${Math.round(r*100)}%</span></div>`;}).join('');
-  return `<div class="card cmp" style="margin-top:12px;background:var(--panel2)"><div class="row" style="align-items:flex-start">${ph?`<img class="cmp-ph" src="${ph.src}" alt="" referrerpolicy="no-referrer">`:''}<div style="flex:1"><span class="label">Соперник в классе «${esc(KIND_NAME[C.ref.kind])}»</span><h3 style="margin-top:2px">${esc(C.ref.name)} <span class="muted small">${C.ref.y}</span></h3><p class="small muted">Покупатели сравнивают ${isMoto(md)?'ваш мотоцикл с этим':'вашу машину с этой'}. 100% — так же, как у соперника; ●●● — что для них главное.</p></div></div>
-    <div style="margin-top:8px">${rows}</div>${qbar(C.S,'Итог против соперника')}${studyBtn(C.ref,s)}</div>`;}
+// 0.34: xid — какую машину объяснять во всплывающем окне «как посчитано» ('d' — проект в конструкторе, 'L:…' — легенда, номер модели)
+function cmpRowHTML(k,C,xid){const r=C.by[k],tone=r>=1.05?'good':r<0.95?'bad':'muted',w=Math.min(100,r/2*100),tag=xid!=null?'button':'div';
+  return `<${tag} class="cmp-row${xid!=null?' cmp-x':''}"${xid!=null?` data-act="chx" data-k="${k}" data-id="${xid}" aria-label="${CHAR_NAMES[k]}: как посчитано"`:''}><span>${CHAR_NAMES[k]}${xid!=null?'<i class="xi">i</i>':''}<small>${wDots(C.W[k])}</small></span><div class="cmp-bar"><i style="width:${w}%;background:var(--${tone==='muted'?'line':tone})"></i><b></b></div><span class="num ${tone}">${Math.round(r*100)}%</span></${tag}>`;}
+function compareHTML(md,s,xid){const C=classCompare(md,s,s.country),ph=C.ref.name&&refIMG(C.ref.name);
+  const rows=CHAR_K.filter(k=>C.W[k]>0||C.by[k]!==1).map(k=>cmpRowHTML(k,C,xid)).join('');
+  return `<div class="card cmp" style="margin-top:12px;background:var(--panel2)"><div class="row" style="align-items:flex-start">${ph?`<img class="cmp-ph" src="${ph.src}" alt="" referrerpolicy="no-referrer">`:''}<div style="flex:1"><span class="label">Соперник в классе «${esc(KIND_NAME[C.ref.kind])}»</span><h3 style="margin-top:2px">${esc(C.ref.name)} <span class="muted small">${C.ref.y}</span></h3><p class="small muted">Покупатели сравнивают ${isMoto(md)?'ваш мотоцикл с этим':'вашу машину с этой'}. 100% — так же, как у соперника; ●●● — что для них главное.${xid!=null?' Нажмите на строку — как посчитано.':''}</p></div></div>
+    <div style="margin-top:8px">${rows}</div>${qbar(C.S,'Итог против соперника',xid)}${studyBtn(C.ref,s)}</div>`;}
+// проект в конструкторе — как его видит рынок (цена — типичная, выпуск — сколько купят), как в renderDesigner
+function designMd(s,d){const md={...d,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0};md.price=Math.round(refPrice(md,s)/10)*10;md.vol=Math.max(3,forecastDemand(md,s));return md;}
 function studyBtn(ref,s){const c=studyList(s).find(o=>o.name===ref.name&&o.y===ref.y);if(!c)return '';
   if(c.own)return `<p class="small muted" style="margin-top:8px">Это машина вашей марки — какой она была в настоящей истории. Покупать и разбирать её незачем: покупатели сравнивают вашу машину с тем, какой её сделали тогда.</p>`;
   if(c.done)return `<p class="small good" style="margin-top:8px">🔍 КБ уже разобрало ${esc(c.name)}.</p>`;if(c.busy)return `<p class="small muted" style="margin-top:8px">🔍 КБ разбирает ${esc(c.name)}.</p>`;
@@ -66,7 +70,7 @@ function renderDesigner(){
     <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
-    ${compareHTML(md,s)}
+    ${compareHTML(md,s,'d')}
     <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button></div>
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
     <div class="dsecs">${PART_CATS.map(sec).join('')}${mo?'':sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
@@ -76,7 +80,7 @@ function renderDesigner(){
       ${overpower(md)?'<p class="small bad" style="margin-top:6px">Рама не выдержит мотор: машины будут ломаться, покупатели и репутация пострадают.</p>':''}
       <div class="row small" style="margin-top:10px"><span class="muted">На ходу</span><span class="num">${statsLine(st)}</span></div>
       ${riskHTML(md,s)}
-      <div class="meta"><div>Себест.<b>${money(uc)}</b></div><div>Цена ≈<b>${money(ref)}</b></div><div>Маржа<b class="${net-uc<0?'bad':''}">${money(net-uc)}</b></div><div>Спрос ≈<b>${fmtD(dem)}/мес</b></div></div>
+      <div class="meta"><button class="mx" data-act="chx" data-k="cost" data-id="d" aria-label="Себестоимость: как посчитано">Себест.<i class="xi">i</i><b>${money(uc)}</b></button><div>Цена ≈<b>${money(ref)}</b></div><div>Маржа<b class="${net-uc<0?'bad':''}">${money(net-uc)}</b></div><div>Спрос ≈<b>${fmtD(dem)}/мес</b></div></div>
       <div class="meta"><div>Часов<b>${fmtN(Math.round(hrs))}</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Оснастка<b>${money(tc)}</b></div></div>
       <p class="small muted" style="margin-top:8px">Себестоимость — детали и работа при выпуске ≈ ${fmtD(md.vol)} в месяц (столько купят по этой цене). <span class="good">Экономия масштаба:</span> при ${fmtN(md.vol*3)} в месяц — ${money(ucAt(3))}, при ${fmtN(md.vol*10)} — ${money(ucAt(10))}; с опытом рабочих — ещё дешевле. Оснастку оплатите при запуске в серию${techLv(s,'line')===2?': конвейер под новую модель перестраивать дорого':''}.</p></div>
     <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);

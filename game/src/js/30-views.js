@@ -6,7 +6,9 @@ function spark(data,color='var(--brass)'){
   const zero=min<0?`<line class="zero" x1="0" x2="${w}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>`:'';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polygon points="0,${y(min)} ${pts} ${w},${y(min)}" fill="${color}" fill-opacity=".14"/>${zero}<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
 }
-function qbar(r,label){const [l,tone]=qLabel(r);return `<div class="row small" style="margin-top:10px"><span class="muted">${esc(label||'Против соперников класса')}</span><span class="${tone}">${l} · <span class="num">${Math.round(r*100)}%</span></span></div><div class="bar qb" style="margin-top:6px"><i style="width:${Math.min(100,r/1.5*100)}%;background:var(--${tone})"></i><b></b></div>`;}
+function qbar(r,label,xid){const [l,tone]=qLabel(r),h=`<div class="row small" style="margin-top:10px"><span class="muted">${esc(label||'Против соперников класса')}${xid!=null?'<i class="xi">i</i>':''}</span><span class="${tone}">${l} · <span class="num">${Math.round(r*100)}%</span></span></div><div class="bar qb" style="margin-top:6px"><i style="width:${Math.min(100,r/1.5*100)}%;background:var(--${tone})"></i><b></b></div>`;
+  // 0.34: тап по итогу — окно «как посчитано» (вклад каждой черты)
+  return xid!=null?`<button class="qbx" data-act="chx" data-k="S" data-id="${xid}" aria-label="Итог против соперника: как посчитано">${h}</button>`:h;}
 const pct=(x,d=0)=>(x*100).toFixed(d).replace('.',',')+'%';
 function techEffects(lv){const e=[];if(lv.hrs)e.push(`−${Math.round((1-lv.hrs)*100)}% часов на машину`);if(lv.cap)e.push(`+${Math.round((lv.cap-1)*100)}% мощности`);if(lv.mat)e.push(`деталь дешевле на ${Math.round((1-lv.mat)*100)}%`);if(lv.def)e.push(`брак ${pct(lv.def,1)}`);if(lv.dem)e.push(`спрос +${Math.round(lv.dem*100)}%`);return e.join(' · ');}
 function unitCost(md,s){s=s||G;return matCost(md,s)+hoursPerCar(md,s)/hoursPerWorker(s)*wageNow(s);}
@@ -177,17 +179,17 @@ function vModels(){
     const margin=net-uc,enter=md.fresh?' enter':'';md.fresh=0;const key='md'+md.id,open=isOpen(key,!many||md.status==='dev');
     let el='';if(md.status==='prod'&&open)el=priceTable(md,s);
     const ctl=md.status!=='off'&&md.status!=='dev'?`<div class="row ctl" style="margin-top:10px"><div><span class="label">Цена</span><p class="small muted">типичная для такой машины ≈ <span class="num">${money(ref)}</span></p></div><div class="step"><button data-act="price" data-id="${md.id}" data-d="-1" aria-label="Снизить цену">−</button><span>${money(md.price)}</span><button data-act="price" data-id="${md.id}" data-d="1" aria-label="Поднять цену">+</button></div></div>${priceLine(md,s)}${el}`:'';
-    const cmpRows=CHAR_K.filter(k=>C.W[k]>0).map(k=>{const r=C.by[k],tone=r>=1.05?'good':r<0.95?'bad':'muted';return `<div class="cmp-row"><span>${CHAR_NAMES[k]}<small>${wDots(C.W[k])}</small></span><div class="cmp-bar"><i style="width:${Math.min(100,r/2*100)}%;background:var(--${tone==='muted'?'line':tone})"></i><b></b></div><span class="num ${tone}">${Math.round(r*100)}%</span></div>`;}).join('');
+    const cmpRows=CHAR_K.filter(k=>C.W[k]>0).map(k=>cmpRowHTML(k,C,md.id)).join('');
     // заголовок: картинка, название (цвет — как машина против соперников), класс, итог месяца
     const sub=md.status==='prod'?`спрос ${fmtD(md.lastDem||0)} · продано ${fmtN(md.lastSold||0)} · маржа ${money(margin)}`:md.status==='dev'?`в разработке ещё ${md.devLeft} мес.`:md.status==='sale'?`на складе ${fmtN(md.stock)}`:`всего продано ${fmtN(md.totalSold)}`;
     const head=`<span class="mh"><span class="mthumb">${carArt(md,{thumb:1})}</span><span class="mt"><b class="${TT.tone}">${md.legend?'★ ':''}${esc(md.name)}</b><small>${esc(KIND_NAME[rivalKind(md)])} · ${Math.round(TT.r*100)}% соперника</small><small>${sub}</small></span></span>${pill}`;
     const body=open?`
       ${ctl}
-      <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><div>Себест.<b>${money(uc)}</b></div><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b></div></div>
+      <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><button class="mx" data-act="chx" data-k="cost" data-id="${md.id}" aria-label="Себестоимость: как посчитано">Себест.<i class="xi">i</i><b>${money(uc)}</b></button><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b></div></div>
       ${lostLine(md)}${truckHint(md,s)}${costHTML(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}
       <div class="carbox${enter}">${carArt(md,{anim:md.status==='prod'})}</div>${carGallery(md)}
-      ${qbar(C.S,'Против соперника: '+C.ref.name)}
-      ${fold('cmp'+md.id,'Что ценят покупатели',`<div>${cmpRows}</div><p class="small muted" style="margin-top:6px">●●● — главное для покупателей класса. 100% — как у соперника. Улучшения в КБ поднимают эти цифры у всех ваших машин.</p>`,false)}
+      ${qbar(C.S,'Против соперника: '+C.ref.name,md.id)}
+      ${fold('cmp'+md.id,'Что ценят покупатели',`<div>${cmpRows}</div><p class="small muted" style="margin-top:6px">●●● — главное для покупателей класса. 100% — как у соперника. Нажмите на строку — как посчитано. Улучшения в КБ поднимают эти цифры у всех ваших машин.</p>`,false)}
       <p class="spec">${specLine(md,s)}</p>
       ${(md.raceBoost||0)>mi(s)?'<p class="small good" style="margin-top:6px">Слава гоночной победы: покупатели выбирают вас охотнее</p>':''}
       ${md.legend&&LEGEND_BY[md.legend]?`<p class="small good" style="margin-top:6px">★ Легенда марки: ${esc(legendFxText(LEGEND_BY[md.legend]))}</p>`:''}${md.from?`<p class="small muted" style="margin-top:6px">🤝 Конструкция поглощённой марки «${esc(md.from)}»: права на модель и технологии — ваши, машина выходит под маркой «${esc(s.company)}».</p>`:''}

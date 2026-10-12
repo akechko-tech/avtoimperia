@@ -173,7 +173,7 @@ function openLegend(id){const s=G,L=LEGEND_BY[id];if(!L||legendState(s,L)!=='ope
     <p style="margin-top:8px">${esc(L.t)}</p><p class="small good" style="margin-top:6px">${esc(legendFxText(L))}</p>
     <p class="spec" style="margin-top:8px">${specLine(md,s)}</p>
     <div class="meta"><div>Скорость<b>${Math.round(st.vmax*3.6)} км/ч</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Класс<b>${esc(KIND_NAME[L.kind])}</b></div></div>
-    ${compareHTML(md,s)}
+    ${compareHTML(md,s,'L:'+L.id)}
     <label class="label" for="lname" style="display:block;margin-top:12px">Название</label><input type="text" id="lname" value="${esc(L.name)}" maxlength="24" style="margin-top:6px">
     <div class="row" style="margin-top:10px;align-items:center"><span class="label">Цвет</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${draft.paint===c.id?'on':''}" style="background:${c.id}" data-act="legPaint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <p class="small muted" style="margin-top:4px">${esc(LEGEND_NOTE[L.id]||'Цвет — как у исторической машины; можно выбрать свой.')}</p>

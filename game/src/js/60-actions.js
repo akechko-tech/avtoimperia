@@ -163,6 +163,7 @@ const ACT={
 if(typeof RACE_ACT!=='undefined')Object.assign(ACT,RACE_ACT);
 if(typeof DEAL_ACT!=='undefined')Object.assign(ACT,DEAL_ACT);
 if(typeof MDEAL_ACT!=='undefined')Object.assign(ACT,MDEAL_ACT);
+if(typeof XP_ACT!=='undefined')Object.assign(ACT,XP_ACT);
 if(typeof RB_ACT!=='undefined')Object.assign(ACT,RB_ACT);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset,b);});
 // Кнопка «Назад» на Android: закрываем окна по очереди
