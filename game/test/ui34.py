@@ -31,12 +31,26 @@ with sync_playwright() as p:
     ok('Детали по прайсу' in t and 'Работа' in t,'себестоимость: детали, работа, итог');js("xpopClose()")
     # «Передовая модель»: класс тот же, итог не ниже, детали — не устаревшие
     js("(()=>{openDesigner('middle');})()");pg.wait_for_timeout(300)
+    bb=[pg.query_selector('#sheetBody [data-act='+a+']').bounding_box() for a in ('dcopy','dfront','dauto')]
+    ok(abs(bb[0]['y']-bb[1]['y'])<2 and bb[2]['y']>bb[0]['y']+bb[0]['height'] and bb[2]['width']>bb[0]['width']*1.8,'кнопки: «Как у соперника» и «Передовая модель» рядом, «Подобрать…» — во всю ширину ниже')
     s0=js("classScore({...draft},G,G.country)");b0=js("draft.b")
-    pg.click('#sheetBody [data-act=dfront]');pg.wait_for_timeout(400);pg.screenshot(path=out+'2_front.png')
+    pg.click('#sheetBody [data-act=dfront]');pg.wait_for_timeout(400)
     s1=js("classScore({...draft},G,G.country)");ok(js("draft.b")==b0 and js("segOf(draft)")=='middle','«Передовая модель»: кузов и класс — те же')
     ok(js("FRONT_KEYS.every(k=>!partObsolete(k,draft[k],G))")==True,'«Передовая модель»: ни одной устаревшей детали ('+js("FRONT_KEYS.map(k=>draft[k]).join(' ')")+')')
     ok(s1>=s0*0.95,'итог против соперника: '+str(round(s0*100))+'% → '+str(round(s1*100))+'%')
-    ok('Передовая модель' in (pg.inner_text('.toast') if pg.query_selector('.toast') else pg.content()),'подсказка о передовой модели')
+    n=pg.query_selector('#sheetBody .dnote');t=n.inner_text() if n else ''
+    ok('Передовая модель' in t and str(round(s1*100))+'%' in t and 'себестоимость' in t,'строка под кнопками: '+t.replace('\n',' / '))
+    pg.evaluate("document.querySelector('#sheetBody .dbtns').scrollIntoView({block:'center'})");pg.wait_for_timeout(150);pg.screenshot(path=out+'2_front.png')
+    pg.click('#sheetBody [data-act=dsec][data-k=e]');pg.wait_for_timeout(200)
+    pg.query_selector_all('#sheetBody .chip[data-act=pick][data-k=e]:not(.on)')[0].click();pg.wait_for_timeout(300)
+    ok(pg.query_selector('#sheetBody .dnote') is None,'сменили деталь — строка ушла')
+    pg.click('#sheetBody [data-act=dauto]');pg.wait_for_timeout(400);t=pg.inner_text('#sheetBody .dnote') if pg.query_selector('#sheetBody .dnote') else ''
+    ok('наибольшей прибыли' in t,'«Подобрать детали повыгоднее» — тоже строкой: '+t.replace('\n',' / '))
+    js("(()=>{openDesigner('truck');})()");pg.wait_for_timeout(300)
+    ok(pg.query_selector('#sheetBody .dnote') is None,'новый проект — без строки')
+    pg.click('#sheetBody [data-act=dfront]');pg.wait_for_timeout(400);t=pg.inner_text('#sheetBody .dnote') if pg.query_selector('#sheetBody .dnote') else ''
+    ok('спрос фирм при той же цене' in t,'грузовик: строка про спрос фирм — '+t.replace('\n',' / '))
+    pg.evaluate("document.querySelector('#sheetBody .dbtns').scrollIntoView({block:'center'})");pg.wait_for_timeout(150);pg.screenshot(path=out+'3_truck.png')
     js("closeSheet()")
     # карточка модели
     js("(()=>{tab='models';setOpen('cmp'+G.models[0].id,true);setOpen('md'+G.models[0].id,true);render();})()");pg.wait_for_timeout(400)

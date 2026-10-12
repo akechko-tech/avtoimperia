@@ -16,7 +16,25 @@ function showEvent(){
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
 function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
-function openDesigner(kind){kind=kind||(!lineOn(G,'car')&&!G.carShopB?'moto':(G.y>=1908?'people':'middle'));
+// 0.34: что сделала кнопка-помощник («Передовая модель», «Подобрать детали повыгоднее») — строкой под кнопками,
+// пока проект не меняли (тост под листом конструктора не виден)
+let dNote=null;
+const dSig=d=>PART_KEYS.map(k=>d[k]).join(',')+'|'+d.t+'|'+(d.eq||[]).join(',');
+function dNoteHTML(d){return dNote&&dNote.sig===dSig(d)?`<p class="small dnote">${dNote.txt}</p>`:'';}
+function dApply(md,label){const s=G,sig0=dSig(draft),b0=designMd(s,draft),tr=isTruck(b0),S0=classScore(b0,s,s.country),U0=unitCost(b0,s);
+  PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();
+  const b1=designMd(s,draft),S1=classScore(b1,s,s.country),U1=unitCost(b1,s),pr=PART_KEYS.map(x=>byId(PART_CATS.find(c=>c.k===x).arr(),draft[x])).filter(x=>x&&x.y>s.y);
+  let main=`итог против соперника <b class="num">${Math.round(S0*100)}% → ${Math.round(S1*100)}%</b>`;
+  // грузовик фирмы выбирают по цене тонно-километра и удобству шофёру — показываем, как изменится их спрос при той же цене машины
+  if(tr){const T=xTruckCmp(b0,b1,s,b0.price),pc=f=>Math.round(Math.abs(f-1)*100),why=[];
+    const c1=pc(T.cpk)>=1,c2=pc(T.soft)>=3;if(c1)why.push(`тонно-километр ${T.cpk<1?'дешевле':'дороже'} на ${pc(T.cpk)}%`);
+    if(c2)why.push(`${!c1?'':(T.cpk<1)===(T.soft>1)?'и ':T.soft>1?'зато ':'но '}шофёру ${T.soft>1?'удобнее':'неудобнее'}`);
+    const dm=T.dem>=2?`≈ в ${xTimes(T.dem)} больше`:T.dem<=0.5?`≈ в ${xTimes(1/T.dem)} меньше`:pc(T.dem)<1?'тот же':'≈ '+(T.dem>1?'+':'−')+pc(T.dem)+'%';
+    main=`спрос фирм при той же цене <b class="num ${T.dem>=1.005?'good':T.dem<=0.995?'bad':''}">${dm}</b>${why.length?` (${why.join(c1&&c2&&(T.cpk<1)===(T.soft>1)?' ':', ')})`:''}`;}
+  const same=dSig(draft)===sig0;
+  dNote={txt:same?`${label}: менять нечего — проект уже такой.`:`${label}: ${main}, себестоимость <b class="num">${money(U0)} → ${money(U1)}</b>.${pr.length?`<br><span class="warn">🔬 Прототипы КБ: ${pr.map(x=>esc(x.name)).join(', ')} — риск «не по ТЗ».</span>`:''}`,sig:dSig(draft)};
+  const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;}
+function openDesigner(kind){kind=kind||(!lineOn(G,'car')&&!G.carShopB?'moto':(G.y>=1908?'people':'middle'));dNote=null;
   draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};
   try{draft.eq=eqAuto(draft,kindIsTruck(kind)?'truck':kind,G);}catch(_){draft.eq=[];}renderDesigner();}
 // 0.30: новинки оснащения в конструкторе — стартер, электросвет, ветровое стекло… (свои — из КБ, остальные — у поставщиков)
@@ -71,7 +89,7 @@ function renderDesigner(){
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
     ${compareHTML(md,s,'d')}
-    <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button><button class="btn sm" data-act="dfront">Передовая модель</button></div>
+    <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Подобрать детали повыгоднее</button></div>${dNoteHTML(d)}
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
     <div class="dsecs">${PART_CATS.map(sec).join('')}${mo?'':sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
     <div class="card" style="margin-top:14px;background:var(--panel2)">

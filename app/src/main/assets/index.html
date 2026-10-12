@@ -853,6 +853,12 @@ button.qbx:active{opacity:.8}
 .xp-dots{color:var(--brass);letter-spacing:1px;font-size:9px}
 .xp-t tr.xp-has td{border-bottom:0}
 .xp-t tr.xp-sub td{border-top:0;padding:0 4px 4px;text-align:left;font-family:inherit;font-size:9.5px;line-height:1.25;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 0.34: три помощника конструктора — «Как у соперника» и «Передовая модель» рядом, «Подобрать детали повыгоднее» во всю ширину */
+.dbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dbtns>.btn{width:100%;text-align:center;white-space:normal}
+.dbtns>.wide{grid-column:1/-1}
+.dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
+.dnote b{white-space:nowrap}
 </style>
 
 <div class="wrap" hidden>
@@ -11650,7 +11656,25 @@ function showEvent(){
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
 function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
-function openDesigner(kind){kind=kind||(!lineOn(G,'car')&&!G.carShopB?'moto':(G.y>=1908?'people':'middle'));
+// 0.34: что сделала кнопка-помощник («Передовая модель», «Подобрать детали повыгоднее») — строкой под кнопками,
+// пока проект не меняли (тост под листом конструктора не виден)
+let dNote=null;
+const dSig=d=>PART_KEYS.map(k=>d[k]).join(',')+'|'+d.t+'|'+(d.eq||[]).join(',');
+function dNoteHTML(d){return dNote&&dNote.sig===dSig(d)?`<p class="small dnote">${dNote.txt}</p>`:'';}
+function dApply(md,label){const s=G,sig0=dSig(draft),b0=designMd(s,draft),tr=isTruck(b0),S0=classScore(b0,s,s.country),U0=unitCost(b0,s);
+  PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();
+  const b1=designMd(s,draft),S1=classScore(b1,s,s.country),U1=unitCost(b1,s),pr=PART_KEYS.map(x=>byId(PART_CATS.find(c=>c.k===x).arr(),draft[x])).filter(x=>x&&x.y>s.y);
+  let main=`итог против соперника <b class="num">${Math.round(S0*100)}% → ${Math.round(S1*100)}%</b>`;
+  // грузовик фирмы выбирают по цене тонно-километра и удобству шофёру — показываем, как изменится их спрос при той же цене машины
+  if(tr){const T=xTruckCmp(b0,b1,s,b0.price),pc=f=>Math.round(Math.abs(f-1)*100),why=[];
+    const c1=pc(T.cpk)>=1,c2=pc(T.soft)>=3;if(c1)why.push(`тонно-километр ${T.cpk<1?'дешевле':'дороже'} на ${pc(T.cpk)}%`);
+    if(c2)why.push(`${!c1?'':(T.cpk<1)===(T.soft>1)?'и ':T.soft>1?'зато ':'но '}шофёру ${T.soft>1?'удобнее':'неудобнее'}`);
+    const dm=T.dem>=2?`≈ в ${xTimes(T.dem)} больше`:T.dem<=0.5?`≈ в ${xTimes(1/T.dem)} меньше`:pc(T.dem)<1?'тот же':'≈ '+(T.dem>1?'+':'−')+pc(T.dem)+'%';
+    main=`спрос фирм при той же цене <b class="num ${T.dem>=1.005?'good':T.dem<=0.995?'bad':''}">${dm}</b>${why.length?` (${why.join(c1&&c2&&(T.cpk<1)===(T.soft>1)?' ':', ')})`:''}`;}
+  const same=dSig(draft)===sig0;
+  dNote={txt:same?`${label}: менять нечего — проект уже такой.`:`${label}: ${main}, себестоимость <b class="num">${money(U0)} → ${money(U1)}</b>.${pr.length?`<br><span class="warn">🔬 Прототипы КБ: ${pr.map(x=>esc(x.name)).join(', ')} — риск «не по ТЗ».</span>`:''}`,sig:dSig(draft)};
+  const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;}
+function openDesigner(kind){kind=kind||(!lineOn(G,'car')&&!G.carShopB?'moto':(G.y>=1908?'people':'middle'));dNote=null;
   draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};
   try{draft.eq=eqAuto(draft,kindIsTruck(kind)?'truck':kind,G);}catch(_){draft.eq=[];}renderDesigner();}
 // 0.30: новинки оснащения в конструкторе — стартер, электросвет, ветровое стекло… (свои — из КБ, остальные — у поставщиков)
@@ -11705,7 +11729,7 @@ function renderDesigner(){
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
     ${compareHTML(md,s,'d')}
-    <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button><button class="btn sm" data-act="dfront">Передовая модель</button></div>
+    <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Подобрать детали повыгоднее</button></div>${dNoteHTML(d)}
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
     <div class="dsecs">${PART_CATS.map(sec).join('')}${mo?'':sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
     <div class="card" style="margin-top:14px;background:var(--panel2)">
@@ -11890,6 +11914,8 @@ function openFounder(){const P=PIONEERS[G.pioneer],L=FOUNDER_STORY[G.pioneer]||[
    формулу в 16-carstats.js / 10-model.js поменяют, а разбор здесь нет, разница уйдёт в строку «прочее»
    (test/explain34.js проверяет, что её нет). */
 const xn=(x,d)=>(isFinite(x)?x:0).toFixed(d).replace('.',',');
+// «в 2 раза», «в 4,6 раза», «в 5 раз»
+const xTimes=f=>{const t=xn(f,1).replace(/,0$/,'');return t+' '+(t.includes(',')?'раза':plural(+t,'раз','раза','раз'));};
 const xk=f=>'×'+xn(f,2);
 const xpc=f=>Math.round(f*100)+'%';
 function xStar(S,id){const u=S.U(id);return u>0.04?' ★'+xn(u,Math.abs(u-Math.round(u))<0.05?0:1):'';}
@@ -12014,10 +12040,20 @@ function xpopScore(md,s,tip){const D=xScoreData(md,s),tone=f=>f>1.005?'good':f<0
     <table class="xp-t"><tr><th></th><th>Вес</th><th>Черта</th><th>→</th></tr>${D.L.map(r=>`<tr><td>${esc(r.l)}</td><td>${r.sa.replace(/^(\S+) /,'<span class="xp-dots">$1</span> ')}</td><td class="${r.f>1.005?'good':r.f<0.995?'bad':''}">${r.ta}</td><td class="${tone(r.f)}">${xk(r.f)}</td></tr>`).join('')}
     ${D.X.map(r=>`<tr${r.rest?' class="muted"':''}><td>${esc(r.l)}</td><td colspan="2">${r.sa?`<small>${esc(r.sa)}</small>`:''}</td><td class="${tone(r.f)}">${xk(r.f)}</td></tr>`).join('')}
     <tr class="xp-tot"><td>Итого</td><td colspan="2"></td><td class="${qt}">${xpc(D.S)}</td></tr></table>${isTruck(md)?xTruckHTML(md,s):''}${tip?xTipHTML(md,s,'S',isMoto(md)):''}`;}
+// проект грузовика md1 против md0 при одной цене машины P (для строки под кнопками конструктора): спрос фирм (отношение
+// привлекательности, как в выборе фирм), тонно-километр по долям перевозок в стране и удобство шофёру (лёгкость, тормоза, комфорт)
+// (тонно-километр и удобство усреднены с весом перевозок, где фирмы и выбирают — как в xTruckU, — чтобы объяснение сходилось со спросом)
+function xTruckCmp(md0,md1,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s),R=[];let U0=0,U1=0;
+  TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,bp=TRUCK_USE[u].bp,
+    c0=truckCost(md0,u,c,s,P).cpk,c1=truckCost(md1,u,c,s,P).cpk,f0=truckSoft(md0,ref,s.y),f1=truckSoft(md1,ref,s.y),
+    V=(cp,f)=>sh[u]*Math.exp(-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*f),u0=V(c0,f0),u1=V(c1,f1);
+    U0+=u0;U1+=u1;R.push({u0,u1,lc:Math.log(c1/c0),lf:f1-f0});});
+  let lc=0,lf=0;if(U0>0&&U1>0)R.forEach(r=>{const w=(r.u0/U0+r.u1/U1)/2;lc+=w*r.lc;lf+=w*r.lf;});
+  const ok=x=>isFinite(x)&&x>0?x:1;return {dem:ok(U0>0?U1/U0:1),cpk:ok(Math.exp(lc)),soft:ok(Math.exp(TQ*lf))};}
 function xTruckHTML(md,s){const c=s.country,P=md.price||refPrice(md,s),PT=prefP('truck',c,s),sh=truckUseSh(c,s),tone=f=>f>1.005?'good':f<0.995?'bad':'muted';
   const rows=TUSE.filter(u=>sh[u]>0.005).map(u=>{const ref=truckRef(u,s.y),cR=truckCost(ref,u,c,s,PT*payK(ref)).cpk,cM=truckCost(md,u,c,s,P).cpk,f=cR/cM;
     return `<tr><td>${esc(TRUCK_USE[u].n)}</td><td>${cpkTxt(cM)}</td><td>${cpkTxt(cR)}</td><td class="${tone(f)}">${xk(f)}</td></tr>`;}).join('');
-  return `<p class="xp-w" style="margin-top:8px">Грузовик фирмы покупают по цене тонно-километра — машина за годы службы, ремонт, бензин, шофёр; этот итог задаёт лишь «типичную цену».</p><table class="xp-t"><tr><th>Тонно-км</th><th>Вы</th><th>Соперники</th><th>→</th></tr>${rows}</table>`;}
+  return `<p class="xp-w" style="margin-top:8px">Грузовик фирмы выбирают по цене тонно-километра — машина за годы службы, ремонт, бензин, шофёр, — и ещё по тому, легко ли его вести, как тормозит и удобно ли шофёру; этот итог задаёт лишь «типичную цену».</p><table class="xp-t"><tr><th>Тонно-км</th><th>Вы</th><th>Соперники</th><th>→</th></tr>${rows}</table>`;}
 /* ---------- себестоимость: детали по прайсу, скидки, объём и опыт, работа ---------- */
 function xCostData(md,s){const p=parts(md),tc=s.tech||{},mo=isMoto(md),L=[];let base=0;
   PART_KEYS.forEach(k=>{const x=p[k],c=partCost(x,s)*(1+0.03*upgOf(md,x.id));base+=c;L.push({l:xPartName(mo,k),s:x.name+(upgL(x.id)?' ★'+upgL(x.id):''),v:c});});
@@ -23053,13 +23089,11 @@ const ACT={
     if(k==='sport'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   eqToggle:d=>{const L=eqOf(draft),e=EQ_BY[d.v];if(!e)return;let out=L.includes(e.id)?L.filter(x=>x!==e.id&&!(EQ_BY[x].req===e.id)):L.concat([e.id]);if(!L.includes(e.id)){if(e.req&&!out.includes(e.req))out.push(e.req);if(e.sup)out=out.filter(x=>x!==e.sup);}draft.eq=out;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
-  dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
-  // 0.34: «Передовая модель» — лучшие современные детали и прототипы КБ для покупателей класса, себестоимость — потом
-  dfront:()=>{const k=designKind(draft),base={};PART_KEYS.forEach(x=>base[x]=draft[x]);const S0=classScore({...draft},G,G.country),md=frontDesign(k,G,base);
-    PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();const S1=classScore({...draft},G,G.country),pr=PART_KEYS.map(x=>byId(PART_CATS.find(c=>c.k===x).arr(),draft[x])).filter(x=>x&&x.y>G.y);
-    const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;
-    toast(`Передовая модель: итог против соперника ${Math.round(S0*100)}% → ${Math.round(S1*100)}%${pr.length?` · прототипы КБ: ${pr.map(x=>x.name).join(', ')} — риск «не по ТЗ»`:''}`);},
-  dauto:()=>{const k=designKind(draft),base={};PART_KEYS.forEach(x=>base[x]=draft[x]);const md=autoDesign(k,G,base);PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;toast('Подобраны детали для наибольшей прибыли');},
+  dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));dNote=null;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  // 0.34: «Передовая модель» — лучшие современные детали и прототипы КБ для покупателей класса, себестоимость — потом;
+  // что изменилось (итог, себестоимость, прототипы) — строкой под кнопками
+  dfront:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(frontDesign(designKind(draft),G,base),'Передовая модель');},
+  dauto:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(autoDesign(designKind(draft),G,base),'Детали для наибольшей прибыли');},
   startdev:()=>{const md={...draft,eq:eqOf(draft).slice()},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||(typeof brandNextName==='function'&&brandNextName(G))||('Тип '+G.nextId);
     const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
     m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);

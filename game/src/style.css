@@ -840,3 +840,9 @@ button.qbx:active{opacity:.8}
 .xp-dots{color:var(--brass);letter-spacing:1px;font-size:9px}
 .xp-t tr.xp-has td{border-bottom:0}
 .xp-t tr.xp-sub td{border-top:0;padding:0 4px 4px;text-align:left;font-family:inherit;font-size:9.5px;line-height:1.25;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 0.34: три помощника конструктора — «Как у соперника» и «Передовая модель» рядом, «Подобрать детали повыгоднее» во всю ширину */
+.dbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dbtns>.btn{width:100%;text-align:center;white-space:normal}
+.dbtns>.wide{grid-column:1/-1}
+.dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
+.dnote b{white-space:nowrap}
