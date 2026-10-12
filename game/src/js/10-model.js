@@ -209,6 +209,30 @@ function autoDesign(kind,s,base){
   // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
   try{md.eq=eqAuto(md,kind==='van'||kind==='truck'?'truck':kind,s);}catch(_){md.eq=[];}
   designValue(md,s);return md;}
+// 0.34: «Передовая модель» — современные детали (и прототипы КБ), которые больше всего поднимают итог против соперника
+// у покупателей класса, без оглядки на себестоимость (в «Подобрать детали повыгоднее» решает прибыль). Устаревшие детали
+// (их уже обогнали новые) меняются на лучшие современные — даже если старый мотор экономичнее: передовая машина не ездит
+// на моторе 1895 года. Меняется механика — мотор, коробка, рама, шины, тормоза; кузов остаётся: он задаёт тип машины
+// (народный фаэтон не превращается в лимузин, полуторатонка — в трёхтонку). Раму подбираем под мотор.
+// Грузовик — лучший для фирм при той же цене (тонно-километр). Оснащение — все новинки, которые ценят покупатели класса.
+const FRONT_KEYS=['e','g','c','w','k'];
+function frontDesign(kind,s,base){
+  let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0};
+  const mo=kind==='moto'||kind==='moside',tr=kind==='truck'||kind==='van';
+  const P0=tr?refPrice(md,s):0,val=t=>tr&&typeof xTruckU==='function'?xTruckU(t,s,P0):classScore(t,s,s.country);
+  const cand=k=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s,mo).filter(x=>!partObsolete(k,x.id,s));
+  const frames=cand('c'),fit=t=>{if(!overpower(t))return t;let best=null,bv=-1e18;frames.forEach(c=>{const u={...t,c:c.id};if(overpower(u))return;const v=val(u);if(v>bv){bv=v;best=u;}});return best;};
+  // устаревшие детали — сразу на лучшие современные
+  FRONT_KEYS.forEach(k=>{if(!partObsolete(k,md[k],s))return;let bx=null,bv=-1e18;cand(k).forEach(x=>{const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)return;const v=val(t);if(v>bv){bv=v;bx=t;}});if(bx)md=bx;});
+  if(overpower(md))md=fit(md)||md;
+  let bestV=val(md);
+  for(let pass=0;pass<3;pass++){let moved=false;
+    for(const k of FRONT_KEYS){let bx=null;
+      for(const x of cand(k)){if(x.id===md[k])continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=val(t);if(v>bestV*1.0005){bestV=v;bx=t;}}
+      if(bx){md=bx;moved=true;}}
+    if(!moved)break;}
+  try{md.eq=tr||mo?[]:eqFront(md,kind,s);}catch(_){md.eq=[];}
+  return md;}
 /* ---------- factory ---------- */
 const TECH={
   tools:{name:'Станочный парк',max:4,lv:[{y:1897,name:'Токарные и фрезерные станки',hrs:0.8,F:800,v:160},{y:1904,name:'Специальные станки под деталь',hrs:0.62,F:3000,v:320},{y:1911,name:'Многошпиндельные автоматы',hrs:0.5,F:9000,v:520},{y:1920,name:'Автоматические линии обработки',hrs:0.42,F:25000,v:700}],

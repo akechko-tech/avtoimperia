@@ -2120,6 +2120,30 @@ function autoDesign(kind,s,base){
   // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
   try{md.eq=eqAuto(md,kind==='van'||kind==='truck'?'truck':kind,s);}catch(_){md.eq=[];}
   designValue(md,s);return md;}
+// 0.34: «Передовая модель» — современные детали (и прототипы КБ), которые больше всего поднимают итог против соперника
+// у покупателей класса, без оглядки на себестоимость (в «Подобрать детали повыгоднее» решает прибыль). Устаревшие детали
+// (их уже обогнали новые) меняются на лучшие современные — даже если старый мотор экономичнее: передовая машина не ездит
+// на моторе 1895 года. Меняется механика — мотор, коробка, рама, шины, тормоза; кузов остаётся: он задаёт тип машины
+// (народный фаэтон не превращается в лимузин, полуторатонка — в трёхтонку). Раму подбираем под мотор.
+// Грузовик — лучший для фирм при той же цене (тонно-километр). Оснащение — все новинки, которые ценят покупатели класса.
+const FRONT_KEYS=['e','g','c','w','k'];
+function frontDesign(kind,s,base){
+  let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0};
+  const mo=kind==='moto'||kind==='moside',tr=kind==='truck'||kind==='van';
+  const P0=tr?refPrice(md,s):0,val=t=>tr&&typeof xTruckU==='function'?xTruckU(t,s,P0):classScore(t,s,s.country);
+  const cand=k=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s,mo).filter(x=>!partObsolete(k,x.id,s));
+  const frames=cand('c'),fit=t=>{if(!overpower(t))return t;let best=null,bv=-1e18;frames.forEach(c=>{const u={...t,c:c.id};if(overpower(u))return;const v=val(u);if(v>bv){bv=v;best=u;}});return best;};
+  // устаревшие детали — сразу на лучшие современные
+  FRONT_KEYS.forEach(k=>{if(!partObsolete(k,md[k],s))return;let bx=null,bv=-1e18;cand(k).forEach(x=>{const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)return;const v=val(t);if(v>bv){bv=v;bx=t;}});if(bx)md=bx;});
+  if(overpower(md))md=fit(md)||md;
+  let bestV=val(md);
+  for(let pass=0;pass<3;pass++){let moved=false;
+    for(const k of FRONT_KEYS){let bx=null;
+      for(const x of cand(k)){if(x.id===md[k])continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=val(t);if(v>bestV*1.0005){bestV=v;bx=t;}}
+      if(bx){md=bx;moved=true;}}
+    if(!moved)break;}
+  try{md.eq=tr||mo?[]:eqFront(md,kind,s);}catch(_){md.eq=[];}
+  return md;}
 /* ---------- factory ---------- */
 const TECH={
   tools:{name:'Станочный парк',max:4,lv:[{y:1897,name:'Токарные и фрезерные станки',hrs:0.8,F:800,v:160},{y:1904,name:'Специальные станки под деталь',hrs:0.62,F:3000,v:320},{y:1911,name:'Многошпиндельные автоматы',hrs:0.5,F:9000,v:520},{y:1920,name:'Автоматические линии обработки',hrs:0.42,F:25000,v:700}],
@@ -3667,6 +3691,11 @@ function eqExpected(g,y){return EQUIP.filter(e=>eqWait(e,g,y)>0.25);}
 function eqAuto(md,g,s){if(g==='truck'||isTruck(md))return [];const y=yf(s),P=prefP(g,s.country,s),out=[];
   EQUIP.forEach(e=>{if(!eqAvail(s,e.id))return;if(e.req&&!eqAvail(s,e.req))return;const u=e.u[g]||0;if(!u)return;
     const want=eqWait(e,g,y)>0||u*P*0.6>eqUnitC(e,s)*1.4;if(want)out.push(e.id);});
+  EQUIP.forEach(e=>{if(e.req&&out.includes(e.id)&&!out.includes(e.req))out.push(e.req);if(e.sup&&out.includes(e.id)){const k=out.indexOf(e.sup);if(k>=0)out.splice(k,1);}});
+  return out;}
+// 0.34: «Передовая модель» — все новинки, которые ценят покупатели класса (а не только ожидаемые и окупаемые)
+function eqFront(md,g,s){if(g==='truck'||g==='van'||isTruck(md))return [];const out=[];
+  EQUIP.forEach(e=>{if(!eqAvail(s,e.id))return;if(e.req&&!eqAvail(s,e.req))return;if((e.u[g]||0)>0)out.push(e.id);});
   EQUIP.forEach(e=>{if(e.req&&out.includes(e.id)&&!out.includes(e.req))out.push(e.req);if(e.sup&&out.includes(e.id)){const k=out.indexOf(e.sup);if(k>=0)out.splice(k,1);}});
   return out;}
 // проекты КБ: новинку можно сделать раньше поставщиков (за 2–3 года до истории)
@@ -11683,7 +11712,7 @@ function renderDesigner(){
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
     ${compareHTML(md,s,'d')}
-    <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button></div>
+    <div class="btns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm primary" data-act="dauto">Подобрать детали повыгоднее</button><button class="btn sm" data-act="dfront">Передовая модель</button></div>
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
     <div class="dsecs">${PART_CATS.map(sec).join('')}${mo?'':sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
     <div class="card" style="margin-top:14px;background:var(--panel2)">
@@ -12021,7 +12050,7 @@ function xpopCost(md,s){const D=xCostData(md,s),mo=isMoto(md),row=(l,sub,v,cls)=
     ${row('Итого','',money(D.uc),'xp-tot')}</table>`;}
 /* ---------- окно: рядом со строкой, в пределах экрана; закрывается тапом мимо, ×, прокруткой ---------- */
 let XPOP_SC=null;   // прокрутка при открытии: окно закрывается, когда лист или страницу заметно прокрутили
-function xpopClose(){const a=document.getElementById('xpop'),b=document.getElementById('xpopBg');if(a)a.remove();if(b)b.remove();XPOP_SC=null;}
+function xpopClose(){const a=document.getElementById('xpop'),b=document.getElementById('xpopBg');if(a&&a.remove)a.remove();if(b&&b.remove)b.remove();XPOP_SC=null;}
 function xpopScroll(){if(!XPOP_SC)return;const t=(typeof sb!=='undefined'&&sb?sb.scrollTop:0),w=window.scrollY||0;if(Math.abs(t-XPOP_SC[0])>24||Math.abs(w-XPOP_SC[1])>24)xpopClose();}
 function xpopShow(html,anchor){xpopClose();const bg=document.createElement('div');bg.id='xpopBg';bg.className='xpop-bg';bg.addEventListener('click',e=>{e.stopPropagation();xpopClose();});
   const el=document.createElement('div');el.id='xpop';el.className='xpop';el.setAttribute('role','dialog');el.innerHTML=html;document.body.appendChild(bg);document.body.appendChild(el);
@@ -23032,6 +23061,11 @@ const ACT={
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   eqToggle:d=>{const L=eqOf(draft),e=EQ_BY[d.v];if(!e)return;let out=L.includes(e.id)?L.filter(x=>x!==e.id&&!(EQ_BY[x].req===e.id)):L.concat([e.id]);if(!L.includes(e.id)){if(e.req&&!out.includes(e.req))out.push(e.req);if(e.sup)out=out.filter(x=>x!==e.sup);}draft.eq=out;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  // 0.34: «Передовая модель» — лучшие современные детали и прототипы КБ для покупателей класса, себестоимость — потом
+  dfront:()=>{const k=designKind(draft),base={};PART_KEYS.forEach(x=>base[x]=draft[x]);const S0=classScore({...draft},G,G.country),md=frontDesign(k,G,base);
+    PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();const S1=classScore({...draft},G,G.country),pr=PART_KEYS.map(x=>byId(PART_CATS.find(c=>c.k===x).arr(),draft[x])).filter(x=>x&&x.y>G.y);
+    const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;
+    toast(`Передовая модель: итог против соперника ${Math.round(S0*100)}% → ${Math.round(S1*100)}%${pr.length?` · прототипы КБ: ${pr.map(x=>x.name).join(', ')} — риск «не по ТЗ»`:''}`);},
   dauto:()=>{const k=designKind(draft),base={};PART_KEYS.forEach(x=>base[x]=draft[x]);const md=autoDesign(k,G,base);PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;toast('Подобраны детали для наибольшей прибыли');},
   startdev:()=>{const md={...draft,eq:eqOf(draft).slice()},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||(typeof brandNextName==='function'&&brandNextName(G))||('Тип '+G.nextId);
     const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};

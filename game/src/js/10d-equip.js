@@ -51,6 +51,11 @@ function eqAuto(md,g,s){if(g==='truck'||isTruck(md))return [];const y=yf(s),P=pr
     const want=eqWait(e,g,y)>0||u*P*0.6>eqUnitC(e,s)*1.4;if(want)out.push(e.id);});
   EQUIP.forEach(e=>{if(e.req&&out.includes(e.id)&&!out.includes(e.req))out.push(e.req);if(e.sup&&out.includes(e.id)){const k=out.indexOf(e.sup);if(k>=0)out.splice(k,1);}});
   return out;}
+// 0.34: «Передовая модель» — все новинки, которые ценят покупатели класса (а не только ожидаемые и окупаемые)
+function eqFront(md,g,s){if(g==='truck'||g==='van'||isTruck(md))return [];const out=[];
+  EQUIP.forEach(e=>{if(!eqAvail(s,e.id))return;if(e.req&&!eqAvail(s,e.req))return;if((e.u[g]||0)>0)out.push(e.id);});
+  EQUIP.forEach(e=>{if(e.req&&out.includes(e.id)&&!out.includes(e.req))out.push(e.req);if(e.sup&&out.includes(e.id)){const k=out.indexOf(e.sup);if(k>=0)out.splice(k,1);}});
+  return out;}
 // проекты КБ: новинку можно сделать раньше поставщиков (за 2–3 года до истории)
 function eqProjects(s){const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),out=[];
   EQUIP.forEach(e=>{if(eqDev(s,e.id)||s.y>=e.hist[0]+1||s.y<e.y-1||busy.has('eq:'+e.id))return;if(e.req&&!eqAvail(s,e.req)&&!busy.has('eq:'+e.req)&&!(e.req==='el'&&e.id==='st'))return;
