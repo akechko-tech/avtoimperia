@@ -825,6 +825,8 @@ svg.car.moto{width:100%;height:auto}
 /* 0.34: «как посчитано» — строки с ⓘ и маленькое всплывающее окно-таблица (31c-explain.js) */
 button.cmp-row{width:100%;background:none;border:0;padding:3px 0;margin:0;color:inherit;font:inherit;font-size:13px;text-align:left;cursor:pointer;border-radius:6px}
 button.cmp-row:active{background:rgba(255,255,255,.06)}
+/* 0.34: строка отчёта с «как посчитано» (контора) */
+.linkbtn.xrow{color:inherit;text-decoration:underline dotted;text-underline-offset:3px;text-align:left}
 .xi{display:inline-grid;place-items:center;width:13px;height:13px;margin-left:5px;border:1px solid var(--muted);border-radius:50%;font:italic 600 9px/1 Georgia,'Times New Roman',serif;color:var(--muted);vertical-align:1px;box-sizing:border-box}
 button.qbx{display:block;width:100%;background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
 button.qbx:active{opacity:.8}
@@ -848,6 +850,7 @@ button.qbx:active{opacity:.8}
 .xp-t tr.xp-tot td small{white-space:normal;font-weight:400}
 .xp-t td.good{color:var(--good)}.xp-t td.bad{color:var(--bad)}.xp-t td.muted,.xp-t tr.muted td{color:var(--muted)}
 .xp-t.xp-c td:first-child{width:64%}
+.xp-t.xp-a td small{-webkit-line-clamp:4}
 .xp-t.xp-c td:last-child{width:auto}
 .xp-tip{margin-top:8px;font-size:11.5px;line-height:1.35}
 .xp-dots{color:var(--brass);letter-spacing:1px;font-size:9px}
@@ -859,6 +862,10 @@ button.qbx:active{opacity:.8}
 .dbtns>.wide{grid-column:1/-1}
 .dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
 .dnote b{white-space:nowrap}
+/* 0.34: «Газ» с дозировкой — заливка кнопки по уровню газа, ниже — процент */
+.r-ctrl .gas.down{background:linear-gradient(to top,var(--brass) 0,var(--brass) calc(var(--lv,1)*100%),rgba(233,196,106,.22) calc(var(--lv,1)*100%))}
+.r-ctrl .gas small{display:block;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;margin-top:2px;min-height:13px}
+.dvbox{margin-top:8px;padding:8px 10px;border:1px solid rgba(233,196,106,.35);border-radius:6px;background:rgba(233,196,106,.06)}
 </style>
 
 <div class="wrap" hidden>
@@ -930,6 +937,12 @@ const PIONEERS={
   bugatti:{wiki:'Ettore Bugatti',name:'Этторе Бугатти',yrs:'1881–1947',c:'fr',co:'Бугатти',beard:0,bio:'Художник среди инженеров. Type 35 — одна из самых побеждающих гоночных машин 1920-х.',plus:['Люкс +15%','Гонки +8%'],minus:['Детали дороже на 5%','Мощности −10%'],b:{seg:{lux:1.15},race:0.08,matCost:1.05,lineCap:0.9}},
   ferrari:{wiki:'Enzo Ferrari',drv:'ferrari',name:'Энцо Феррари',yrs:'1898–1988',c:'it',co:'Скудерия Феррари',beard:0,bio:'Гонщик Alfa Romeo, в 1929 году основал Scuderia Ferrari. В игре — альтернативная история.',plus:['Гонки +10%','Слава побед ×1,5','Гонщики дешевле на 20%'],minus:['Выработка рабочих −10%','Народный сегмент −10%'],b:{race:0.1,raceRep:1.5,drvFee:0.8,workerEff:0.9,seg:{people:0.9}}},
   agnelli:{wiki:'Giovanni Agnelli',name:'Джованни Аньелли',yrs:'1866–1945',c:'it',co:'ФИАТ',beard:0,bio:'Один из основателей FIAT (1899). Построил завод Линготто с испытательным треком на крыше.',plus:['Капитал +15%','Мощности +8%','Грузовики +10%'],minus:['Качество −3%'],b:{cash:1.15,lineCap:1.08,seg:{truck:1.1},quality:0.97}},
+  // 0.34: мотоциклисты — герои «Мотомастерской» (отзыв: «начать можно и только с мотоциклов, на усмотрение игрока, — это будет
+  // другой персонаж, потом можно докупить оборудование для автомобилей»): путь от велосипеда и мотоцикла к автомобилю, как в истории
+  dedion:{wiki:'Jules-Albert de Dion',moto:1,name:'Альбер де Дион',yrs:'1856–1946',c:'fr',co:'Де Дион-Бутон',beard:1,bio:'Граф-авантюрист и механик Жорж Бутон: лёгкий быстроходный мотор (1895) и трицикл — самая массовая моторная машина рубежа веков; моторы де Диона покупали сотни марок. С 1899 года — и автомобили.',plus:['КБ работает на 15% быстрее','Гонки +5%'],minus:['Детали дороже на 5%'],b:{rd:1.15,race:0.05,matCost:1.05}},
+  morris:{wiki:'William Morris, 1st Viscount Nuffield',moto:1,name:'Уильям Моррис',yrs:'1877–1963',c:'uk',co:'Моррис Гараж',beard:0,bio:'В 16 лет открыл в Оксфорде велосипедную мастерскую, в 1902 году собрал свой мотоцикл, в 1913-м — автомобиль Morris Oxford из покупных деталей. К 1925 году его завод — крупнейший в Британии.',plus:['Детали у поставщиков дешевле на 8%','Цеха дешевле на 10%'],minus:['КБ работает на 10% медленнее'],b:{matCost:0.92,lineCost:0.9,rd:0.9}},
+  wanderer:{wiki:'Wanderer (company)',moto:1,name:'Иоганн Винкльхофер',yrs:'1862–1949',c:'de',co:'Вандерер',beard:1,bio:'С Рихардом Енике чинил и делал велосипеды в Хемнице (1885), в 1902 году — мотоцикл «Вандерер», в 1913-м — маленький автомобиль «Пупхен» («Куколка»).',plus:['Качество +4%','Выработка рабочих +5%'],minus:['Цеха дороже на 10%'],b:{quality:1.04,workerEff:1.05,lineCost:1.1}},
+  bianchi:{wiki:'Edoardo Bianchi',moto:1,name:'Эдоардо Бьянки',yrs:'1865–1946',c:'it',co:'Бьянки',beard:1,bio:'Велосипедная мастерская в Милане (1885), мотоцикл (1897), автомобили — с 1900-х. Велосипеды Bianchi возили берсальеров и чемпионов «Джиро д’Италия».',plus:['Выработка рабочих +10%','Реклама +10%'],minus:['Капитал −10%'],b:{workerEff:1.1,adEff:1.1,cash:0.9}},
   custom:{name:'Свой персонаж',yrs:'',c:'de',co:'Моторные мастерские',beard:0,bio:'Никаких бонусов и слабостей. Только вы и эпоха.',plus:[],minus:[],b:{}}
 };
 // share — какую долю класса конкуренты терпят без ответа; rvRate и rvMax — как быстро и как сильно они отвечают (0.32: rvMax — штраф к вашим машинам в классе,
@@ -1574,7 +1587,7 @@ const COMPS={
       {n:'Импорт из США',since:1924,imp:1,mix:{people:.7,middle:.25,truck:.05},pm:1.1,v:{1924:3000,1925:8000,1927:20000,1928:30000,1929:25000},models:[[1924,'Ford T и Chevrolet','Ford Model T']]}],
   fr:[{n:'Panhard et Levassor',since:1895,mix:{middle:.47,lux:.47,sport:.06},pm:1.15,v:{1895:100,1898:300,1900:600,1903:1000,1905:1500,1910:1700,1913:2000,1919:1000,1920:2500,1925:3000,1929:3500},models:[[1895,'Panhard et Levassor','Panhard']]},
       {n:'Peugeot',since:1895,pk:'peugeot',mix:{people:.4,middle:.6},v:{1895:70,1898:200,1900:500,1903:600,1905:1500,1908:2000,1910:5000,1913:9300,1919:4000,1920:10000,1925:20000,1928:23000,1929:30000},models:[[1895,'Type 3','Peugeot Type 3'],[1913,'Bébé','Peugeot Bébé'],[1929,'201','Peugeot 201']]},
-      {n:'De Dion-Bouton',since:1895,mix:{people:.6,middle:.4},pm:0.95,v:{1895:50,1899:1500,1900:1500,1903:2000,1905:2500,1910:3000,1913:3000,1919:1500,1920:2000,1925:800,1929:400},models:[[1899,'Vis-à-vis','De Dion-Bouton']]},
+      {n:'De Dion-Bouton',since:1895,pk:'dedion',mix:{people:.6,middle:.4},pm:0.95,v:{1895:50,1899:1500,1900:1500,1903:2000,1905:2500,1910:3000,1913:3000,1919:1500,1920:2000,1925:800,1929:400},models:[[1899,'Vis-à-vis','De Dion-Bouton']]},
       {n:'Mors',since:1895,until:1926,mix:{middle:.45,lux:.45,sport:.1},pm:1.1,v:{1895:20,1898:200,1900:800,1903:1200,1905:1200,1908:600,1910:500,1913:400,1919:300,1925:100},models:[[1899,'Mors','Mors (automobile)']]},
       {n:'Renault',since:1899,pk:'renault',mix:{people:.3,middle:.5,truck:.2},v:{1899:70,1900:180,1903:950,1905:1600,1907:3000,1910:4600,1913:10000,1919:8000,1920:12000,1923:20000,1925:35000,1929:45000},models:[[1899,'Voiturette','Renault Voiturette'],[1905,'AG «такси Марны»','Renault AG'],[1923,'KJ 6CV','Renault KJ']]},
       {n:'De Dietrich',since:1897,mix:{middle:.36,lux:.54,sport:.1},pm:1.15,v:{1897:50,1900:200,1905:800,1910:1000,1920:1500,1925:2000,1929:1000},models:[[1897,'De Dietrich','De Dietrich']]},
@@ -1592,7 +1605,7 @@ const COMPS={
       {n:'Rolls-Royce',since:1906,mix:{lux:1},pm:1.35,v:{1906:50,1907:100,1910:500,1913:700,1920:500,1925:1200,1929:1000},models:[[1907,'Silver Ghost','Rolls-Royce Silver Ghost'],[1925,'Phantom','Rolls-Royce Phantom I']]},
       {n:'Austin',since:1906,mix:{people:.6,middle:.35,truck:.05},v:{1906:30,1908:300,1910:700,1913:2000,1919:3000,1920:4000,1921:2000,1922:2500,1923:6000,1925:16000,1927:35000,1929:45000},models:[[1906,'Austin','Austin Motor Company'],[1922,'Seven','Austin 7']]},
       {n:'Ford (Манчестер)',since:1911,mix:{people:.9,truck:.1},pm:0.95,v:{1911:3000,1913:6000,1914:8000,1915:4000,1919:10000,1920:20000,1921:15000,1923:20000,1925:25000,1927:15000,1928:8000,1929:20000},models:[[1911,'Model T','Ford Model T']]},
-      {n:'Morris',since:1913,mix:{people:.7,middle:.3},pm:0.9,v:{1913:400,1914:900,1915:500,1919:400,1920:1900,1921:2927,1922:5156,1923:17286,1924:27551,1925:48717,1926:56000,1927:60000,1928:60000,1929:63500},models:[[1913,'Oxford «Bullnose»','Bullnose Morris'],[1928,'Minor','Morris Minor (1928)']]},
+      {n:'Morris',since:1913,pk:'morris',mix:{people:.7,middle:.3},pm:0.9,v:{1913:400,1914:900,1915:500,1919:400,1920:1900,1921:2927,1922:5156,1923:17286,1924:27551,1925:48717,1926:56000,1927:60000,1928:60000,1929:63500},models:[[1913,'Oxford «Bullnose»','Bullnose Morris'],[1928,'Minor','Morris Minor (1928)']]},
       {n:'Bentley',since:1921,mix:{lux:.5,sport:.5},pm:1.3,v:{1921:10,1922:150,1925:400,1928:400,1929:400},models:[[1921,'3 Litre','Bentley 3 Litre']]},
       {n:'Vauxhall',since:1904,mix:{middle:.6,lux:.25,sport:.15},pm:1.1,v:{1904:50,1908:150,1910:250,1913:500,1920:1000,1925:1500,1929:1800},models:[[1911,'Prince Henry','Vauxhall Prince Henry'],[1913,'30-98','Vauxhall 30-98']]},
       {n:'MG',since:1924,mix:{middle:.3,sport:.7},pm:1.05,v:{1924:100,1925:400,1927:800,1929:2000},models:[[1924,'14/28','MG 14/28'],[1929,'M-type Midget','MG M-type Midget']]}],
@@ -1616,7 +1629,7 @@ const COMPS={
       {n:'Stutz',since:1911,mix:{middle:.2,lux:.3,sport:.5},pm:1.2,v:{1911:300,1913:800,1916:1500,1920:2000,1925:1500,1929:1000},models:[[1912,'Bearcat','Stutz Bearcat']]},
       {n:'Mercer',since:1910,until:1926,mix:{lux:.3,sport:.7},pm:1.2,v:{1910:100,1913:500,1916:600,1920:500,1924:200},models:[[1911,'Raceabout','Mercer Raceabout']]}],
   it:[{n:'FIAT',since:1899,pk:'agnelli',mix:{people:.55,middle:.3,truck:.15},pm:0.95,v:{1899:20,1900:50,1902:100,1904:268,1906:1100,1908:1300,1910:1700,1913:3300,1914:4600,1915:3000,1918:3000,1919:10000,1920:12000,1921:8000,1922:12000,1923:22000,1924:30000,1925:40000,1926:45000,1927:33000,1928:34000,1929:38000},models:[[1899,'4 HP','Fiat 4 HP'],[1912,'Zero','Fiat Zero'],[1919,'501','Fiat 501'],[1925,'509','Fiat 509']]},
-      {n:'Bianchi',since:1900,mix:{people:.5,middle:.5},v:{1900:50,1905:300,1910:1000,1913:1500,1920:2000,1925:3000,1929:3000},models:[[1900,'Bianchi','Bianchi']]},
+      {n:'Bianchi',since:1900,pk:'bianchi',mix:{people:.5,middle:.5},v:{1900:50,1905:300,1910:1000,1913:1500,1920:2000,1925:3000,1929:3000},models:[[1900,'Bianchi','Bianchi']]},
       {n:'Isotta Fraschini',since:1900,mix:{lux:1},pm:1.35,v:{1900:10,1905:100,1910:300,1913:400,1920:400,1925:500,1929:300},models:[[1900,'Isotta Fraschini','Isotta Fraschini'],[1919,'Tipo 8','Isotta Fraschini Tipo 8']]},
       {n:'Itala',since:1904,mix:{middle:.5,lux:.4,sport:.1},pm:1.15,v:{1904:50,1906:250,1910:500,1913:500,1920:300,1925:300,1929:200},models:[[1907,'35/45 HP','Itala 35/45 HP']]},
       {n:'Lancia',since:1907,mix:{middle:.65,lux:.25,sport:.1},v:{1907:10,1908:150,1910:300,1913:700,1920:1000,1923:2000,1925:2500,1929:3000},models:[[1908,'Alpha','Lancia Alpha'],[1922,'Lambda','Lancia Lambda']]},
@@ -1766,8 +1779,11 @@ const PREF_MOTO={moto:{1896:330,1900:260,1905:220,1910:220,1913:230,1916:250,191
 const PREF_MOTO_C={us:1,uk:1,fr:1,de:0.92,it:1.1};
 // качество типичного мотоцикла — доля лучшей машины эпохи (у автомобилей: народный 0,62, средний 0,8)
 const QG_MOTO={moto:0.34,moside:0.4};
-// что ценят покупатели: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места, работа в непогоду
-const CHAR_W_MOTO={moto:{perf:0.3,rel:0.25,comf:0.08,ease:0.1,safe:0.05,econ:0.22,cap:0},moside:{perf:0.1,rel:0.3,comf:0.15,ease:0.08,safe:0.12,econ:0.15,cap:0.1}};
+// что ценят покупатели: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места и тяга
+// 0.34 (отзыв: «почему у мотоцикла с коляской низкий вес мощности и вместимости?»): коляска — машина семьи, которой не по карману
+// автомобиль: важно, сколько человек она везёт, и хватит ли мотору сил тянуть коляску с пассажирами в гору (для колясок брали
+// самые сильные «твины» — 7–9 л.с.); надёжность по-прежнему главное. Было: мощность 0,1, места 0,1, надёжность 0,3
+const CHAR_W_MOTO={moto:{perf:0.3,rel:0.25,comf:0.08,ease:0.1,safe:0.05,econ:0.22,cap:0},moside:{perf:0.18,rel:0.25,comf:0.12,ease:0.06,safe:0.1,econ:0.14,cap:0.15}};
 /* ---------- мотомарки по странам (выпуск, шт. в год; доля колясок) ---------- */
 const MCOMPS={
   us:[{n:'Indian',since:1901,mix:{moto:.85,moside:.15},v:{1901:150,1903:376,1905:1200,1907:2200,1909:4700,1911:9000,1913:32000,1914:25000,1916:22000,1918:20000,1920:12000,1923:9000,1925:8000,1929:8000},models:[[1901,'Diamond Framed'],[1911,'Hedstrom Twin'],[1916,'Powerplus','Indian Powerplus'],[1920,'Scout','Indian Scout (motorcycle)'],[1922,'Chief','Indian Chief (motorcycle)']],wiki:'Indian Motorcycle'},
@@ -1778,18 +1794,18 @@ const MCOMPS={
       {n:'Douglas',since:1907,mix:{moto:.75,moside:.25},v:{1907:200,1913:2000,1915:6000,1918:8000,1920:6000,1925:6000,1929:5000},models:[[1907,'Douglas 2¾'],[1914,'Model V']],wiki:'Douglas (motorcycles)'},
       {n:'Norton',since:1902,mix:{moto:.85,moside:.15},v:{1902:50,1908:200,1913:500,1920:1500,1925:3000,1929:4000},models:[[1908,'Big Four'],[1922,'Model 18'],[1927,'CS1']],wiki:'Norton Motorcycle Company'},
       {n:'Brough Superior',since:1919,mix:{moto:.8,moside:.2},v:{1919:50,1922:200,1925:300,1929:350},models:[[1919,'Mark I'],[1925,'SS100','Brough Superior SS100']],wiki:'Brough Superior'}],
-  fr:[{n:'De Dion-Bouton',since:1896,until:1909,mix:{moto:1},v:{1896:300,1897:1000,1898:2500,1899:3500,1900:3000,1902:1500,1905:300,1908:50},models:[[1896,'Трицикл De Dion-Bouton','De Dion-Bouton tricycle']],wiki:'De Dion-Bouton tricycle'},
+  fr:[{n:'De Dion-Bouton',since:1896,pk:'dedion',until:1909,mix:{moto:1},v:{1896:300,1897:1000,1898:2500,1899:3500,1900:3000,1902:1500,1905:300,1908:50},models:[[1896,'Трицикл De Dion-Bouton','De Dion-Bouton tricycle']],wiki:'De Dion-Bouton tricycle'},
       {n:'Werner',since:1897,until:1909,mix:{moto:1},v:{1897:200,1899:800,1901:1500,1903:1200,1905:500,1908:50},models:[[1897,'Motocyclette'],[1901,'Новый Вернер']],wiki:'Werner (motorcycles)'},
       {n:'Peugeot',since:1898,mix:{moto:.9,moside:.1},v:{1898:300,1900:1500,1903:2000,1905:1500,1910:2000,1913:3000,1920:5000,1925:12000,1929:15000},models:[[1901,'Motocyclette Peugeot'],[1913,'Peugeot 500 M']],wiki:'Peugeot Motocycles'},
       {n:'René Gillet',since:1898,mix:{moto:.6,moside:.4},v:{1898:50,1905:300,1910:600,1913:1000,1920:2000,1925:3000,1929:3000},models:[[1898,'René Gillet'],[1920,'Type G']],wiki:'René Gillet'},
       {n:'Terrot',since:1902,mix:{moto:.85,moside:.15},v:{1902:100,1910:800,1913:1500,1920:3000,1925:8000,1929:12000},models:[[1902,'Terrot'],[1927,'Terrot HSS']],wiki:'Terrot'},
       {n:'Motobécane',since:1923,mix:{moto:.95,moside:.05},v:{1923:1000,1924:6000,1925:15000,1927:25000,1929:30000},models:[[1924,'MB1 «Ля Мото Бленд»']],wiki:'Motobécane'}],
   de:[{n:'NSU',since:1901,mix:{moto:.85,moside:.15},v:{1901:100,1903:600,1905:1500,1910:2000,1913:3000,1920:5000,1924:8000,1925:12000,1928:30000,1929:35000},models:[[1901,'NSU Motorrad'],[1928,'NSU 501 T']],wiki:'NSU Motorenwerke'},
-      {n:'Wanderer',since:1902,until:1930,mix:{moto:.85,moside:.15},v:{1902:100,1905:500,1910:1000,1913:2000,1920:3000,1925:8000,1928:10000,1929:5000},models:[[1902,'Wanderer Motorrad'],[1928,'Wanderer K 500']],wiki:'Wanderer (company)'},
+      {n:'Wanderer',since:1902,pk:'wanderer',until:1930,mix:{moto:.85,moside:.15},v:{1902:100,1905:500,1910:1000,1913:2000,1920:3000,1925:8000,1928:10000,1929:5000},models:[[1902,'Wanderer Motorrad'],[1928,'Wanderer K 500']],wiki:'Wanderer (company)'},
       {n:'DKW',since:1919,mix:{moto:.95,moside:.05},v:{1919:500,1921:2000,1922:5000,1924:10000,1925:15000,1926:22000,1927:30000,1928:60000,1929:65000},models:[[1919,'«Мечта мальчишки» — моторчик к велосипеду'],[1922,'Reichsfahrtmodell'],[1928,'E 206']],wiki:'DKW'},
       {n:'BMW',since:1923,mix:{moto:.8,moside:.2},v:{1923:1500,1924:2000,1925:3000,1927:4000,1929:5000},models:[[1923,'R 32','BMW R32'],[1928,'R 62']],wiki:'BMW R32'}],
   it:[{n:'Frera',since:1906,mix:{moto:.85,moside:.15},v:{1906:200,1910:800,1913:1500,1918:3000,1920:2000,1925:2000,1929:1000},models:[[1906,'Frera'],[1913,'Frera 4½ HP']],wiki:'Frera'},
-      {n:'Bianchi',since:1905,mix:{moto:.9,moside:.1},v:{1905:200,1910:500,1913:1000,1920:2000,1925:3000,1929:4000},models:[[1905,'Bianchi Motocicletta']],wiki:'Bianchi (bicycle manufacturer)'},
+      {n:'Bianchi',since:1905,pk:'bianchi',mix:{moto:.9,moside:.1},v:{1905:200,1910:500,1913:1000,1920:2000,1925:3000,1929:4000},models:[[1905,'Bianchi Motocicletta']],wiki:'Bianchi (bicycle manufacturer)'},
       {n:'Gilera',since:1909,mix:{moto:.9,moside:.1},v:{1909:50,1913:300,1920:800,1925:1500,1929:2500},models:[[1909,'Gilera VT 317']],wiki:'Gilera'},
       {n:'Moto Guzzi',since:1921,mix:{moto:.9,moside:.1},v:{1921:17,1922:300,1923:600,1925:1500,1927:2500,1929:3000},models:[[1921,'Normale','Moto Guzzi Normale'],[1928,'GT «Norge»']],wiki:'Moto Guzzi'}]};
 /* ---------- детали мотоцикла: в общих каталогах деталей, с пометкой moto (конструктор показывает их только для мотоцикла) ---------- */
@@ -2835,6 +2851,7 @@ function subList(s){return (s.hold||[]).filter(h=>h.mode==='sub');}
 function subOf(s,c,i){const h=holdOf(s,c,i);return h&&h.mode==='sub'?h:null;}
 function intIn(s,c){return acqIn(s,c).length>0;}
 function maKey(c,i){return c+'|'+i;}
+function maModelCost(s,h){return Math.round(2500*cpi(s)/100)*100;}
 function maByKey(s,k){const [c,i]=String(k).split('|');return holdOf(s,c,+i);}
 function maRnd(k){return (hashStr(String(k))%100000)/100000;}
 // доли марки по классам в её стране (для поглощения: сколько покупателей может перейти)
@@ -2914,7 +2931,7 @@ function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;cons
   if(intNow){s.cash-=icost;maIntegrate(s,h,M);}
   s.rep=clamp(s.rep+1,0,100);
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
-  const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}, права на модели и технологии — ваши`
+  const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
   addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
@@ -2928,8 +2945,12 @@ function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.
   try{const g=maMainClass(cp,s,c),sc=studyCar(g,s.y);if(sc&&!((s.rd.studied||[]).includes(studyKey(sc))))studyDone(s,{id:sc.kind,y:sc.y,name:sc.name});}catch(e){console.warn('ma tech',e);}
   h.capAdd=capAdd;h.dlAdd=M.dl;h.model=md?md.id:null;return h;}
 // её машина — теперь ваша модель (права на конструкцию): в её главном классе, на деталях своего года; продаётся под вашей маркой везде
+// 0.34: имя — с маркой («Mercer Raceabout», «Itala 35/45 HP»), чтобы в «Моделях» было видно, откуда машина (отзыв: «купил марки,
+// но их моделей не вижу и не понимаю, произошло ли слияние»)
+function maModelName(nm,cm){let b=String(cm?cm[1]:nm).replace(/\s*«.*?»/g,'').trim();const brand=String(nm).replace(/\s*&\s*Cie\.?|\s*\(.*?\)/g,'').trim(),w=brand.split(/[\s/-]/)[0].toLowerCase();
+  if(w&&!b.toLowerCase().includes(w)&&!/^(Mercedes)/.test(b))b=brand+' '+b;return b.slice(0,28);}
 function maTakeModel(s,c,cp,v){try{const nm=compName(cp,s),g=maMainClass(cp,s,c),d=autoDesign(g,s),cm=compModel(cp,s);
-    const m={id:s.nextId++,name:String(cm?cm[1]:nm).replace(/\s*«.*?»/g,'').slice(0,28),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
+    const m={id:s.nextId++,name:maModelName(nm,cm),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
       stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:Math.round(v/12),vol:Math.round(v/12*10)/10,from:nm};m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);return m;}catch(e){console.warn('ma model',e);return null;}}
 // совладельцы (оплата акциями, инвесторы) получают свою долю прибыли
 function partnersShare(s){return Math.min(0.75,(s.partners||[]).reduce((a,p)=>a+(p.sh||0),0));}
@@ -3059,7 +3080,11 @@ function aucTick(s){if(s.auc&&mi(s)>=s.auc.until)aucFinish(s,false);}
 function moodTxt(m){return m>=70?'довольны':m>=45?'спокойны':m>=30?'ворчат':'недовольны';}
 function holdingsHTML(s){const L=s.hold||[];if(!L.length)return '';
   const rows=L.map(h=>{const M=maStat(s,h.c,h.i),k=maKey(h.c,h.i),nm=h.nm||(M&&M.nm)||h.n,where=COUNTRIES[h.c].name;
-    if(h.mode==='int')return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · с ${1895+Math.floor((h.t||0)/12)} года${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small></div></div>`;
+    // 0.34: что стало с маркой — её модели в вашей линейке (или кнопка выпустить её модель, если их нет: старые сохранения, сняли)
+    if(h.mode==='int'){const ms=s.models.filter(m=>m.from===nm&&m.status!=='off'),cost=maModelCost(s,h);
+      return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · поглощена в ${1895+Math.floor((h.t||0)/12)} году${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small>
+        <small>${ms.length?`🤝 Её модели — у вас в «Моделях»: ${ms.map(m=>`«${esc(m.name)}»`).join(', ')}`:'Своей марки больше нет: её заводы, дилеры и права на модели — ваши.'}</small>
+        ${ms.length?'':`<div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maModel" data-k="${k}" ${s.cash<cost?'disabled':''}>Выпустить её модель под вашей маркой · ${money(cost)}</button></div>`}</div></div>`;}
     if(!M)return '';const sell=Math.round(M.V*h.st*0.9/1000)*1000,inv=Math.max(2000,Math.round(M.V*0.12/1000)*1000),icost=maIntCost(s,M);
     return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill">${Math.round(h.st*100)}%</span><small class="muted">${where} · ${fmtN(Math.round(M.v))} машин в год · прибыль ≈${money(Math.max(0,h.p12||M.profit))} в год · вам дивиденды ≈${money(Math.max(0,(h.p12||M.profit)*h.st*0.6))} · директора ${moodTxt(h.mood??60)}${(h.veto||0)>mi(s)?' · запрет на ваш класс':''}</small>
       <div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maInv" data-k="${k}" data-v="${inv}" ${s.cash<inv?'disabled':''}>Вложить ${money(inv)}</button>${h.st<1?`<button class="btn sm" data-act="dealOpen" data-c="${h.c}" data-i="${h.i}" data-st="${h.st<0.5?0.51:1}">Докупить до ${h.st<0.5?'51':'100'}%</button>`:`<button class="btn sm" data-act="maMerge" data-k="${k}" ${s.cash<icost?'disabled':''}>Под ваш бренд · ${money(icost)}</button>`}<button class="btn sm" data-act="maSell" data-k="${k}" data-v="${sell}">Продать долю · ${money(sell)}</button></div></div></div>`;}).join('');
@@ -3158,6 +3183,10 @@ const DEAL_ACT={
   aucOpen:()=>openAuction(),aucBid:d=>aucBid(+d.v),aucMode:d=>{G.ui=G.ui||{};G.ui.aucMode=d.v;openAuction();},
   maInv:d=>{const s=G,h=maByKey(s,d.k),amt=+d.v,M=h&&maStat(s,h.c,h.i);if(!h||!M||s.cash<amt)return;s.cash-=amt;h.inv=(h.inv||0)+amt;h.boost=(h.boost||0)+amt/M.V*0.9;h.mood=clamp((h.mood??60)+6,0,100);addLog(`Вложено ${money(amt)} в «${h.nm||h.n}».`,'good');rerender();},
   maSell:d=>{const s=G,h=maByKey(s,d.k);if(!h)return;if(!confirmOnce('maSell'+d.k,'Нажмите ещё раз: продать долю'))return;s.cash+=+d.v;s.hold=s.hold.filter(x=>x!==h);addLog(`Доля в «${h.nm||h.n}» продана за ${money(+d.v)}.`,'good');rerender();},
+  // 0.34: поглощённая марка без своей модели в линейке — выпустить её модель (оснастка цеха под конструкцию)
+  maModel:d=>{const s=G,h=maByKey(s,d.k);if(!h||h.mode!=='int')return;const cp=(COMPS[h.c]||[])[h.i];if(!cp)return;const cost=maModelCost(s,h);if(s.cash<cost){toast('Не хватает денег');return;}
+    const M=maStat(s,h.c,h.i),md=maTakeModel(s,h.c,cp,M?M.v*0.5:100);if(!md)return;s.cash-=cost;md.from=h.nm||compName(cp,s);h.model=md.id;
+    addLog(`«${md.name}» — модель поглощённой марки «${md.from}» — пошла в производство под маркой «${s.company}» (оснастка ${money(cost)}).`,'good');toast(`🤝 «${md.name}» — в «Моделях»`);save();rerender();},
   maMerge:d=>{const s=G,h=maByKey(s,d.k),M=h&&maStat(s,h.c,h.i);if(!h||!M||h.st<1)return;const ic=maIntCost(s,M);if(s.cash<ic)return;if(!confirmOnce('maMerge'+d.k,'Нажмите ещё раз: марка исчезнет, всё — под ваш бренд'))return;s.cash-=ic;maIntegrate(s,h,M);addLog(`«${h.nm||h.n}» поглощена: заводы, дилеры, права на модели и технологии — под маркой «${s.company}».`,'good');try{auFanfare('deal');}catch(_){}rerender();}};
 
 /* ================= 0.31: ПРОДАЛИ КОМПАНИЮ — КУПИТЕ ДРУГУЮ МАРКУ; ВЫКУП ДОЛЕЙ СОВЛАДЕЛЬЦЕВ =================
@@ -3403,15 +3432,20 @@ function mMarket(s,c){return Math.max(1,MOTOSEG.reduce((a,g)=>a+segAnnual(c,g,s)
 function mStat(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return null;const st=((s.mcomps||{})[c]||[])[i]||{},full=(st.prev||0)>0,cv=compVol(cp,s);
   const v=Math.max(1,full?st.prev:Math.max(st.yr||0,cv*0.9),cv*0.7);
   let P=0,w=0;MOTOSEG.forEach(g=>{const k=(cp.mix&&cp.mix[g])||0;P+=k*prefP(g,c,s);w+=k;});P=w?P/w:prefP('moto',c,s);
-  const sh=v/mMarket(s,c),profit=v*P*(s.y<1920?0.09:0.075),capU=Math.max(0.5,Math.round(v/12*0.085*1.1*10)/10),dl=Math.max(1,Math.round(v/12/Math.max(1,dealerTP(s)*MOTO_DLR)));
+  // 0.34: доля — по настоящим продажам марки за прошлый год (раньше — по её «обычному» выпуску из истории, и у купленных
+  // и ослабленных вами марок доли в сумме выходили больше 100%); оценка — по заводам и выпуску, как прежде
+  const va=full?Math.max(0,st.prev):v,sh=Math.min(0.95,va/mMarket(s,c)),profit=v*P*(s.y<1920?0.09:0.075),capU=Math.max(0.5,Math.round(v/12*0.085*1.1*10)/10),dl=Math.max(1,Math.round(v/12/Math.max(1,dealerTP(s)*MOTO_DLR)));
   const A=capU*capUnitCost(s)*0.55+dl*dealerCost(s)*0.5,V=Math.max(3000,Math.round(Math.max(A*0.8,profit*9+A*0.25)*(DIF().maK??1)/1000)*1000);
-  return {cp,nm:compName(cp,s),v,sh,P,profit,capU,dl,V};}
+  return {cp,nm:compName(cp,s),v,va,sh,P,profit,capU,dl,V};}
 function mdealBlock(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return 'нельзя';if(mholdOf(s,c,i))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';return '';}
-function mdealPrice(s,c,i){const M=mStat(s,c,i);return M?Math.round(M.V*1.2/1000)*1000:0;}
+// цена — оценка и премия владельцам: 20%, а за лидера рынка — больше (до +50% при половине рынка: владельцы знают себе цену)
+function mdealPrem(M){return 0.2+0.6*clamp(M.sh,0,0.5);}
+function mdealPrice(s,c,i){const M=mStat(s,c,i);return M?Math.round(M.V*(1+mdealPrem(M))/1000)*1000:0;}
 function mdealDo(s,c,i){if(mdealBlock(s,c,i))return null;const M=mStat(s,c,i),price=mdealPrice(s,c,i);if(!M||s.cash<price)return {ok:false};
   s.cash-=price;s.plantVal+=M.capU*capUnitCost(s)*0.6;const home=c===s.country;
-  mholdList(s).push({c,i,n:M.cp.n,nm:M.nm,t:mi(s),sh0:mShares0(s,c,i),home:home?1:0,paid:price});
+  const mcap=Math.round(M.capU/Math.max(0.02,motoCx(s))),add0=Math.min(M.dl,dealerRoom(s,c));
+  mholdList(s).push({c,i,n:M.cp.n,nm:M.nm,t:mi(s),sh0:mShares0(s,c,i),home:home?1:0,paid:price,capM:mcap,dlAdd:Math.max(0,add0)});
   s.lines=s.lines||{car:1};const hadEq=motoLv(s)>0;if(!hadEq)s.lines.moto=1;
   s.cap=(s.cap||0)+M.capU;
   if(!home){s.imp=s.imp||{};if(impLv(s,c)<2)s.imp[c]=2;}
@@ -3426,15 +3460,18 @@ function mBoughtShare(c,g,s){let v=0;mholdIn(s,c).forEach(h=>{const x=(h.sh0&&h.
 // строки мотомарок в «Сделках»
 function mdealsHTML(s,sel){const L=(MCOMPS[sel]||[]).map((cp,i)=>({cp,i})).filter(o=>compAlive(o.cp,s)||mholdOf(s,sel,o.i)).map(o=>({...o,M:mStat(s,sel,o.i),b:mdealBlock(s,sel,o.i)})).filter(o=>o.M).sort((a,b)=>b.M.v-a.M.v);
   if(!L.length)return '';
-  return `<div class="label" style="margin-top:12px">🏍 Мотомарки</div>`+L.map(o=>{const M=o.M,P=mdealPrice(s,sel,o.i);
-    return `<div class="deal-row"><div style="flex:1"><b>${esc(M.nm)}</b> ${o.b==='ваша'?'<span class="pill good">ваша</span>':o.b?`<span class="pill muted">${esc(o.b)}</span>`:''}<small class="muted">${fmtN(Math.round(M.v))} мотоциклов в год · доля ${pct(M.sh,M.sh<0.1?1:0)} · оценка ${money(M.V)}</small></div>${o.b?'':`<button class="btn sm" data-act="mdealOpen" data-c="${sel}" data-i="${o.i}" ${s.cash<P?'disabled':''}>Купить · ${money(P)}</button>`}</div>`;}).join('');}
+  return `<div class="label" style="margin-top:12px">🏍 Мотомарки</div>`+L.map(o=>{const M=o.M,P=mdealPrice(s,sel,o.i),h=o.b==='ваша'?mholdOf(s,sel,o.i):null;
+    // купленная мотомарка — что досталось (как у купленных автомобильных марок), а не её прежний выпуск и доля
+    if(h)return `<div class="deal-row"><div style="flex:1"><b>${esc(M.nm)}</b> <span class="pill good">ваша</span><small class="muted">куплена в ${miDate(h.t||0)}${h.paid?` за ${money(h.paid)}`:''}${h.capM?` · цеха +${fmtN(h.capM)} мотоциклов в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${Math.round(maLoy(s,h)*100)}% былой доли</small></div></div>`;
+    return `<div class="deal-row"><div style="flex:1"><b>${esc(M.nm)}</b> ${o.b?`<span class="pill muted">${esc(o.b)}</span>`:''}<small class="muted">${fmtN(Math.round(M.va))} мотоциклов в год · доля ${pct(M.sh,M.sh<0.1?1:0)} · оценка ${money(M.V)}</small></div>${o.b?'':`<button class="btn sm" data-act="mdealOpen" data-c="${sel}" data-i="${o.i}" ${s.cash<P?'disabled':''}>Купить · ${money(P)}</button>`}</div>`;}).join('');}
 function openMdeal(c,i){const s=G,M=mStat(s,c,i);if(!M)return;const b=mdealBlock(s,c,i);if(b){toast('Нельзя: '+b);return;}const P=mdealPrice(s,c,i),hadEq=motoLv(s)>0,H=MBRAND_HIST[M.cp.n]||{};
   openSheet(`<div class="row"><h2>Купить «${esc(M.nm)}»</h2>${X}</div>
-    <p class="small muted" style="margin-top:4px">Мотомарка · ${esc(COUNTRIES[c].name)}${H.city?' · '+esc(H.city):''} · ${fmtN(Math.round(M.v))} мотоциклов в год · доля ${pct(M.sh,1)}</p>
+    <p class="small muted" style="margin-top:4px">Мотомарка · ${esc(COUNTRIES[c].name)}${H.city?' · '+esc(H.city):''} · ${fmtN(Math.round(M.va))} мотоциклов в год · доля ${pct(M.sh,1)}</p>
     ${H.t?`<p style="margin-top:8px">${esc(H.t)}</p>`:''}
     <div class="label" style="margin-top:12px">Что вы получите</div>
     <p class="small" style="margin-top:4px">• Её цеха — места в вашем заводе: ещё ≈ ${fmtN(Math.round(M.capU/Math.max(0.02,motoCx(s))))} мотоциклов в месяц${hadEq?'':'<br>• Оборудование для мотоциклов — сразу'}<br>• ${c===s.country?`Её дилеров (до ${fmtN(M.dl)})`:`Её дилеров в стране «${esc(COUNTRIES[c].name)}» — ваше отделение там; ваши мотоциклы там — без пошлины`}<br>• Часть её покупателей — несколько лет, если ваши мотоциклы не хуже</p>
-    <div class="row" style="margin-top:12px"><span class="muted">Цена (оценка ${money(M.V)} + 20% владельцам)</span><b class="num">${money(P)}</b></div>
+    <div class="row" style="margin-top:12px"><span class="muted">Цена (оценка ${money(M.V)} + ${Math.round(mdealPrem(M)*100)}% владельцам${M.sh>0.05?' — лидер рынка знает себе цену':''})</span><b class="num">${money(P)}</b></div>
+    <p class="small muted" style="margin-top:4px">Оценка — около девяти годовых прибылей и цеха с дилерами. Мотоцикл стоит ${money(M.P)} — в 5–15 раз дешевле автомобиля, поэтому и марка с тысячами мотоциклов в год стоит как небольшой автозавод.</p>
     <div class="btns" style="margin-top:12px"><button class="btn primary" data-act="mdealBuy" data-c="${c}" data-i="${i}" ${s.cash<P?'disabled':''}>Купить · ${money(P)}</button><button class="btn" data-act="close">Отмена</button></div>`);}
 const MDEAL_ACT={
   mdealOpen:d=>openMdeal(d.c,+d.i),
@@ -3825,8 +3862,15 @@ function devNews(s,md,out){const txt=out.map(o=>DEV_TXT[o.k](o.x,o.kk)).join('; 
   const fc=fixCost(s,md),fm=fixMonths(md);
   addLog(`«${md.name}»: испытания серии — ${txt}. Причина — незрелые детали (${young}).`,'bad');
   pushEvent({kicker:'КБ · испытания',own:1,title:`«${md.name}»: не всё по ТЗ`,deck:txt,carId:md.id,
-    text:`Первые машины серии прошли испытания. ${capF(txt)}; ломается чаще расчётного. Так бывает с новинками: ${young} ещё не обкатаны ни у поставщиков, ни у вас.\nОтклонение будет таять само — рабочие и поставщики научатся (года за два-три). Или КБ займётся доводкой: ${fm} мес., ${money(fc)}.`,
+    text:`Первые машины серии прошли испытания. ${capF(txt)}; ломается чаще расчётного. Так бывает с новинками: ${young} ещё не обкатаны ни у поставщиков, ни у вас.\nОтклонение будет таять само — рабочие и поставщики научатся (года за два-три; гонки ускоряют: каждая — как несколько месяцев доводки). Или КБ займётся доводкой: ${fm} мес., ${money(fc)}.`,
     choices:[[`Доводка в КБ · ${money(fc)}`,'rdfix:'+md.id],['Пусть доводят в серии','ok']]},true);}
+// 0.34: доводку можно начать в любой момент — из карточки модели (отзыв: «не доработал модель после выхода на рынок —
+// потом эта опция недоступна»; раньше кнопка была только в новости о запуске)
+function dvCardHTML(md,s){if(!md||!md.dv)return '';const ks=Object.keys(md.dv);if(!ks.length)return '';
+  const busy=rdActive(s).some(pj=>pj.kind==='fix'&&pj.md===md.id),fc=fixCost(s,md),f=dvFail(md);
+  const L=ks.map(k=>`${RISK_NAME[k]} ${Math.round((dvNow(md,k)-1)*100)}%`).join(' · ');
+  return `<div class="dvbox"><p class="small warn">⚙️ Не по ТЗ: ${L} — ломается чаще расчётного${f>1.05?` (×${(Math.round(f*10)/10).toString().replace('.',',')})`:''}. Отклонение тает само в серии; гонки ускоряют.</p>
+    ${busy?'<p class="small muted" style="margin-top:4px">КБ ведёт доводку.</p>':`<button class="btn sm" style="margin-top:6px" data-act="rdfixM" data-id="${md.id}" ${s.cash<fc?'disabled':''}>🔧 Доводка в КБ · ${money(fc)} · ${fixMonths(md)} мес.</button>`}</div>`;}
 function fixCost(s,md){const n=md.dv?Object.keys(md.dv).length:1;return Math.round((1500+1200*n)*cpi(s)/100)*100;}
 function fixMonths(md){const n=md.dv?Object.keys(md.dv).length:1;return 3+n;}
 // проект «Доводка»: КБ берёт модель с отклонениями и доводит до ТЗ
@@ -3858,7 +3902,7 @@ function riskHTML(md,s){const p=parts(md),L=RISK_PK.map(k=>({k,x:p[k],r:partRisk
   const R=modelRisk(md,s.y),worst=L.reduce((a,o)=>Math.max(a,DEV_K[o.k]),0);
   return `<div class="row small" style="margin-top:10px"><span class="muted">Риск: не по ТЗ</span><span class="num ${R>0.5?'warn':''}">${Math.round(R*100)}%</span></div>
     <p class="small muted" style="margin-top:4px">${L.map(o=>`${RISK_NAME[o.k]} — ${o.x.y>s.y?`прототип, на ${o.x.y-s.y} ${plural(o.x.y-s.y,'год','года','лет')} раньше истории`:o.x.y===s.y?'новинка этого года':`в деле ${s.y-o.x.y} ${plural(s.y-o.x.y,'год','года','лет')}`} (${Math.round(o.r*100)}%)`).join(' · ')}.
-    Сравнение выше — по ТЗ: так машину увидят покупатели. Если при запуске не повезёт, деталь выйдет хуже расчёта (до −${Math.round(worst*100)}%) и будет ломаться чаще — пока рабочие не доведут её в серии (2–3 года) или КБ не сделает «Доводку». Обкатанные детали выходят точно по ТЗ.</p>`;}
+    Сравнение выше — по ТЗ: так машину увидят покупатели. Если при запуске не повезёт, деталь выйдет хуже расчёта (до −${Math.round(worst*100)}%) и будет ломаться чаще — пока рабочие не доведут её в серии (2–3 года; гонки ускоряют доводку) или КБ не сделает «Доводку». Обкатанные детали выходят точно по ТЗ.</p>`;}
 
 /* ================= EVENTS ================= */
 const HIST=[
@@ -4641,7 +4685,7 @@ function step(){
   // 0.21: контора — управление, сбыт, бухгалтерия, юристы: около 3% выручки
   // 0.32: и растёт с размером компании — как содержание городов в «Цивилизации»: больше выпуск, больше стран, больше моделей —
   // больше управляющих, бумаг и согласований (на «Историке» — заметнее)
-  r.admK=admRate(s,r);r.adm=r.admK*(r.rev+r.ord);
+  {const AP=admParts(s,r);r.admK=AP.total;r.adm=r.admK*(r.rev+r.ord);r.admP={made:AP.made,fmL:AP.fmL,nmC:AP.nmC,nmM:AP.nmM,nm:AP.nm,k:AP.k,base:AP.base,out:AP.out,cty:AP.cty,mdl:AP.mdl,total:AP.total};}
   // 0.30: дивиденды дочерних компаний (их прибыль — по продажам прошлого месяца)
   try{maMonth(s,r);}catch(e){console.warn('ma month',e);r.div=0;}
   r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
@@ -4759,10 +4803,16 @@ function whStock(s){return s.models.reduce((a,m)=>a+m.stock*whW(m),0);}
 // Конкуренты отвечают на ваш успех: если вы забираете класс, они выпускают новинки, режут цены и открывают дилеров
 const RESP_MIN=50;
 // доля выручки на контору: 3% + рост с выпуском (удвоение выпуска сверх ~400 машин в месяц — +1,1%), с каждой страной сбыта за границей (+0,5%)
-// и с каждой моделью сверх трёх (+0,4%) — умноженный на уровень сложности (org); не больше 25%
-function admRate(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fm=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0).length,
-  nm=(s.models||[]).filter(m=>m.status==='prod').length,k=DIF().org??1;
-  return Math.min(0.25,0.03+k*(0.011*Math.log2(1+made/400)+0.005*fm+0.004*Math.max(0,nm-3)));}
+// и с числом моделей — умноженный на уровень сложности (org); не больше 25%.
+// 0.34: отзыв «не понимаю, почему контора так дорого стоит». У империи из купленных марок каждая модель сверх трёх добавляла 0,4% ВСЕЙ
+// выручки (каждая поглощённая марка ставит в производство свою модель): 25 моделей — +8,8%, будто модель на 20 машин в месяц держит
+// отдел размером с концерн. Теперь модели дорожают медленнее: каждое удвоение их числа сверх трёх — +1,2% (до шести — как раньше:
+// 4 → +0,5%, 6 → +1,2%; 12 → +2,4%; 25 → +3,7%); мотоцикл — полмодели. Разбор — «как посчитано» у строки «Контора» в финансах.
+function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
+  P=(s.models||[]).filter(m=>m.status==='prod'),nmM=P.filter(m=>isMoto(m)).length,nmC=P.length-nmM,nm=nmC+nmM*0.5,k=DIF().org??1;
+  const out=0.011*Math.log2(1+made/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
+  return {made,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
+function admRate(s,r){return admParts(s,r).total;}
 function rivalsReact(s,r){const D=DIF(),T0=D.share||0.2,rate=D.rvRate||1,mx=D.rvMax||1.3;if(!s.rv)s.rv={};
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;const rv=s.rv[c]=s.rv[c]||{};
     // 0.32: в эпоху пионеров рынок класса — десятки машин: на новичка с полусотней машин в год соперники не ополчаются (от ~50 машин класса в месяц)
@@ -5244,7 +5294,7 @@ function playerLegacy(s){
 function histLegacy(h){const age=1929-h.f;return legacyParts({peak:h.peak,cum:h.cum,shareYrs:h.share*Math.min(15,age),abroad:h.c==='us'?1:0,firsts:h.firsts,techs:8,wins:h.wins,minor:h.wins,titles:h.titles,val:h.val,rep:h.rep,age,legend:h.legend?40:0});}
 const LEG_NAMES={scale:'Масштаб',market:'Рынок',innov:'Инновации',sport:'Спорт',capital:'Капитал',brand:'Бренд'};
 // марка из истории, которую в этой партии основали вы (играя за Генри Форда, соревнуетесь и с «историческим Ford» — тем, что был на самом деле)
-const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT'};
+const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT',morris:'Morris'};
 function legacyTable(s){
   const me=playerLegacy(s),tw=s.brandRef?s.brandRef.n:LEG_TWIN[s.pioneer];const rows=HIST_CO.map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
   rows.push({n:s.company,c:s.country,you:1,p29:s.peak.year||0,val:companyValue(s),L:me});
@@ -5306,6 +5356,10 @@ function humanLegacyHTML(s){if(!s.pfl)return '';const L=humanLegacy(s),m=L.me,ro
 /* ================= CAR STATS: physics from components ================= */
 // Подготовка к гонке: серийная машина, облегчённая (без тента, крыльев и задних сидений), заводской гоночный кузов
 const PREP=[{id:0,name:'Серийная',desc:'как в продаже',cost:0},{id:1,name:'Облегчённая',desc:'без тента, крыльев и фонарей',cost:0.2},{id:2,name:'Заводской гоночный кузов',desc:'узкий кузов, форсированный мотор',cost:0.55}];
+// 0.34: подготовка мотоцикла — своя (отзыв: «нет возможности дать мотоциклу заводское оснащение»): облегчённый — без фары,
+// крыльев и багажника; заводской гоночный — форсированный мотор, гоночные бак, руль и седло (как у Indian и Norton в TT)
+const PREP_MOTO=[{id:0,name:'Серийный',desc:'как в продаже'},{id:1,name:'Облегчённый',desc:'без фары, крыльев и багажника'},{id:2,name:'Заводской гоночный',desc:'форсированный мотор, гоночные бак, руль и седло'}];
+function prepOf(md,id){return (md&&isMoto(md)?PREP_MOTO:PREP)[id]||PREP[id];}
 function mechanicEra(y){return y<1925;}
 function racingCd(y){return y<1906?0.85:y<1914?0.75:y<1922?0.65:0.55;}
 // Вес, мощность, тормоза, сцепление и надёжность — без расчёта разгона (быстро, для рынка)
@@ -5317,12 +5371,17 @@ function carBase(md,prep,y){
   if(p.t.id==='t3'){bodyKg*=0.85;hpK=1.08;relK=0.98;}
   // гоночный кузов легче серийного, но класс остаётся: четырёхместная база тяжелее двухместной; грузовику гоночный кузов не поставить
   if(prep===2&&p.b.truck)prep=1;
+  // мотоцикл: без фары, крыльев и багажника — минус 8 кг; заводской гоночный — форсированный мотор, гоночный бак и руль
+  // (гонщик лежит на баке — меньше сопротивление воздуха), облегчённые детали — минус 14 кг; коляска остаётся коляской
+  let motoKg=0;
+  if(p.b.moto){if(prep===1){motoKg=-8;cd*=0.95;hpK*=1.04;relK*=0.99;}else if(prep===2){motoKg=-14;cd*=0.88;cg-=0.02;hpK*=1.22;relK*=0.93;}}
+  else{
   if(prep===1){bodyKg*=p.b.truck?0.9:0.72;cd*=0.88;hpK*=1.05;relK*=0.98;cg-=0.03;}
-  if(prep===2){bodyKg=50+0.4*p.b.kg+(y<1905?40:0);cd=Math.min(cd,racingCd(y)*(0.9+0.12*Math.min(5,p.b.seats||2)/5));cg=0.6+0.04*(Math.min(5,p.b.seats||2)-2)/3;hpK=1.25;relK=0.93;}
+  if(prep===2){bodyKg=50+0.4*p.b.kg+(y<1905?40:0);cd=Math.min(cd,racingCd(y)*(0.9+0.12*Math.min(5,p.b.seats||2)/5));cg=0.6+0.04*(Math.min(5,p.b.seats||2)-2)/3;hpK=1.25;relK=0.93;}}
   if(kc)cd*=kc.cd;   // 0.30: аэродинамическая труба
   const mo=!!p.b.moto,hp=engineHp(p.e,md)*hpK,crew=mo?75:75+(mechanicEra(y)?70:0),fw=x=>(x.kg||0)*flawK(x,G,'kg');
   // 0.32: мотоцикл — гонщик без механика, бензина и инструмента меньше
-  const m=fw(p.e)+fw(p.g)+fw(p.k)+fw(p.c)*(1-0.04*U(p.c.id))*(kc?kc.cKg:1)+bodyKg*flawK(p.b,G,'kg')+fw(p.w)+crew+(mo?10:40);
+  const m=fw(p.e)+fw(p.g)+fw(p.k)+fw(p.c)*(1-0.04*U(p.c.id))*(kc?kc.cKg:1)+bodyKg*flawK(p.b,G,'kg')+fw(p.w)+crew+(mo?10:40)+motoKg;
   // передача: КПД коробки (прямая передача и кардан теряют меньше, чем ремни и цепи)
   const eff=p.g.eff*(1+0.01*U(p.g.id))*(md.dv?dvNow(md,'g'):1),P=hp*745.7*0.82*eff/0.9,kd=0.5*1.2*cd,crr=p.w.solid?0.03:0.016;
   // 0.32: шины и тормоза могли выйти не по ТЗ (10f-risk.js)
@@ -5352,13 +5411,15 @@ const STUDY_KINDS=['people','middle','lux','sport','van','truck'];
 function studyCar(kind,y){if(kind==='sport'&&y<1901)return null;if(kind==='truck'&&y<1910)return null;if(kind==='van'&&y<1896)return null;
   const r=rivalCar(kind,y);return r?{kind,y:r[0],name:r[1],md:{...r[2],t:KIND_TRIM[kind]||'t0'}}:null;}
 function studyKey(c){return c.name+'|'+c.y;}
-function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind,b=byId(BODIES,c.md.b);
+function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind,b=byId(BODIES,c.md.b);if(isMotoSeg(c.kind))return Math.round(prefP(c.kind,s.country,s)*1.3/10)*10;
   return Math.round(prefP(g,s.country,s)*(b&&b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1)*1.15/10)*10;}
 const STUDY_NEED=6;
 // 0.25: машину своей марки (какой она была в настоящей истории) не покупают и не разбирают — это ваша же машина
 function ownMarqueCar(name,s){const nm=String(name||'').toLowerCase();return !!s&&Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&((b.models||[]).some(x=>x[2]===name)||nm.startsWith(String(b.n).toLowerCase().split(/[ &(]/)[0]+' '))));}
+// 0.34: и мотоциклы соперников (отзыв: «хочется разбирать чужие мотоциклы в КБ») — когда у марки есть мотоциклетная линейка
+function studyKinds(s){return STUDY_KINDS.concat(s&&(lineOn(s,'moto')||s.mshopB)&&s.y>=1896?MOTOSEG:[]);}
 function studyList(s){const out=[];
-  STUDY_KINDS.forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;if(ownMarqueCar(c.name,s)){c.own=1;out.push(c);return;}
+  studyKinds(s).forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;if(ownMarqueCar(c.name,s)){c.own=1;out.push(c);return;}
     c.done=((s.rd.studied)||[]).includes(studyKey(c));c.busy=rdActive(s).some(p=>p.kind==='study'&&p.name===c.name);c.price=studyPrice(c,s);out.push(c);});
   return out;}
 function studyPartsLine(md){const p=parts(md);return `${p.e.name}, ${p.g.name.toLowerCase()}, ${p.c.name.toLowerCase()}, тормоза: ${p.k.name.toLowerCase()}, ${p.w.name.toLowerCase()}`;}
@@ -5385,11 +5446,11 @@ function studyDone(s,pj){
   addLog(`КБ разобрало ${c.name}: ${[G0.fut.length?'новые детали — '+G0.fut.map(x=>x.name).join(', '):'',G0.ups.length?'доводка — '+G0.ups.map(x=>x.name+' ★'+upgL(x.id)).join(', '):''].filter(Boolean).join('; ')||'изучены все узлы'}.`,'good');
   pendingToasts.push('🔍 Изучен '+c.name);
   const rid=typeof REELS!=='undefined'&&REELS['car:'+c.name]?'car:'+c.name:'';if(rid)reelUnlock(s,rid);
-  pushEvent({own:1,kicker:'Конструкторское бюро',title:`КБ разобрало ${c.name}`,choices:rid?[['Дальше','ok'],['▶ Кинохроника: история машины','reel:'+rid]]:undefined,deck:`Машина соперников ${c.y} года — до последнего винтика`,img:IMG[c.name]?c.name:'',imgCap:`${c.name}, ${c.y}`,
+  pushEvent({own:1,kicker:'Конструкторское бюро',title:`КБ разобрало ${c.name}`,choices:rid?[['Дальше','ok'],['▶ Кинохроника: история машины','reel:'+rid]]:undefined,deck:`${isMotoSeg(c.kind)?'Мотоцикл':'Машина'} соперников ${c.y} года — до последнего винтика`,img:IMG[c.name]?c.name:'',imgCap:`${c.name}, ${c.y}`,
     text:`Инженеры «${s.company}» купили ${c.name} и разобрали его на верстаках: ${studyPartsLine(c.md)}.\n`+
       (G0.fut.length?`Главная находка — ${G0.fut.map(x=>x.name).join(', ')}: у поставщиков такого ещё нет, а теперь КБ умеет делать это само. Деталь уже в конструкторе.\n`:'')+
       (G0.ups.length?`Соперники годами доводили свою машину — эту доводку КБ переняло: ${G0.ups.map(x=>x.name+' ★'+upgL(x.id)).join(', ')}.\n`:'')+
-      `Улучшать изученные детали теперь на 40% быстрее. Новую машину класса «${KIND_NAME[c.kind]}» три года можно разрабатывать на 20% дешевле и на месяц быстрее.`+(cmp?'\n'+cmp:'')},true);
+      `Улучшать изученные детали теперь на 40% быстрее. ${isMotoSeg(c.kind)?'Новый мотоцикл':'Новую машину'} класса «${KIND_NAME[c.kind]}» три года можно разрабатывать на 20% дешевле и на месяц быстрее.`+(cmp?'\n'+cmp:'')},true);
 }
 // Новая модель в изученном классе: разработка дешевле и быстрее
 function studyIns(md,s){s=s||G;const I=s&&s.rd&&s.rd.ins;if(!I)return false;const k=designKind(md);return (I[k]||0)>mi(s);}
@@ -11147,8 +11208,8 @@ function vPlant(){
   const addQ=Math.max(2,Math.round(s.cap*0.25)),addH=Math.max(4,s.cap),ml=maxLoan(s),step=Math.max(1000,Math.round(ml/10/1000)*1000);
   const pl=L?`<table class="pl"><tr><td>Продажи (без скидки дилерам ${Math.round(dMargin(s)*100)}%)</td><td class="n">${money(L.rev)}</td></tr>${L.mil?`<tr><td>Военный заказ (${L.milX?`машин армии — ${fmtN(L.milN)}, военной продукции — ${fmtN(L.milX)} шт.`:`${fmtN(L.milN)} шт.`})</td><td class="n">${money(L.mil)}</td></tr>`:''}
     ${L.ord?`<tr><td>Заказы ведомств и фирм (${fmtN(L.ordN)} шт.)</td><td class="n">${money(L.ord)}</td></tr>`:''}${L.dump?`<tr><td>Распродажа излишков склада (${fmtN(L.dumpN)} шт.)</td><td class="n">${money(L.dump)}</td></tr>`:''}
-    ${L.div>1?`<tr><td>Дивиденды дочерних компаний <span class="small muted">(${subList(s).map(h=>esc(h.nm||h.n)+' '+Math.round(h.st*100)+'%').join(', ')})</span></td><td class="n">${money(L.div)}</td></tr>`:''}<tr><td>Детали и материалы</td><td class="n">−${money(L.mat)}</td></tr>${L.adm>1?`<tr><td>Контора: управление и сбыт${L.admK?` <span class="small muted">(${pct(L.admK,1)} выручки: чем больше выпуск, стран и моделей, тем дороже управление)</span>`:''}</td><td class="n">−${money(L.adm)}</td></tr>`:''}<tr><td>Зарплата</td><td class="n">−${money(L.wage)}</td></tr><tr><td>Содержание завода</td><td class="n">−${money(L.ovh)}</td></tr>
-    ${L.dlr?`<tr><td>Дилерская сеть</td><td class="n">−${money(L.dlr)}</td></tr>`:''}<tr><td>Реклама</td><td class="n">−${money(L.ad)}</td></tr>${L.rd?`<tr><td>Конструкторское бюро${L.rdp?`<br><span class="small muted">из них проекты: ${money(L.rdp)}</span>`:''}</td><td class="n">−${money(L.rd)}</td></tr>`:''}${L.drv?`<tr><td>Гонщики</td><td class="n">−${money(L.drv)}</td></tr>`:''}${L.team?`<tr><td>Гоночная команда</td><td class="n">−${money(L.team)}</td></tr>`:''}
+    ${L.div>1?`<tr><td>Дивиденды дочерних компаний <span class="small muted">(${subList(s).map(h=>esc(h.nm||h.n)+' '+Math.round(h.st*100)+'%').join(', ')})</span></td><td class="n">${money(L.div)}</td></tr>`:''}<tr><td>Детали и материалы</td><td class="n">−${money(L.mat)}</td></tr>${L.adm>1?`<tr><td><button class="linkbtn xrow" data-act="xadm" aria-label="Контора: как посчитано">Контора: управление и сбыт<i class="xi">i</i></button>${L.admK?` <span class="small muted">(${pct(L.admK,1)} выручки: чем больше выпуск, стран и моделей, тем дороже управление)</span>`:''}</td><td class="n">−${money(L.adm)}</td></tr>`:''}<tr><td>Зарплата</td><td class="n">−${money(L.wage)}</td></tr><tr><td>Содержание завода</td><td class="n">−${money(L.ovh)}</td></tr>
+    ${L.dlr?`<tr><td><button class="linkbtn xrow" data-act="xdlr" aria-label="Дилерская сеть: как посчитано">Дилерская сеть<i class="xi">i</i></button></td><td class="n">−${money(L.dlr)}</td></tr>`:''}<tr><td>Реклама</td><td class="n">−${money(L.ad)}</td></tr>${L.rd?`<tr><td>Конструкторское бюро${L.rdp?`<br><span class="small muted">из них проекты: ${money(L.rdp)}</span>`:''}</td><td class="n">−${money(L.rd)}</td></tr>`:''}${L.drv?`<tr><td>Гонщики</td><td class="n">−${money(L.drv)}</td></tr>`:''}${L.team?`<tr><td>Гоночная команда</td><td class="n">−${money(L.team)}</td></tr>`:''}
     ${L.sto>1?`<tr><td>Склад</td><td class="n">−${money(L.sto)}</td></tr>`:''}${L.war>1?`<tr><td>Гарантийный ремонт</td><td class="n">−${money(L.war)}</td></tr>`:''}${L.fin?`<tr><td>Кредит покупателям: комиссия банкам<br><span class="small muted">в рассрочку куплено машин на ${money(L.finCr||0)}: деньги покупателям дают банки и финансовые дома — за это они берут около 6% суммы. Можно кредитовать покупателей самим — «Кредит покупателям» ниже.</span></td><td class="n">−${money(L.fin)}</td></tr>`:''}${L.finInc>1?`<tr><td>Своя кредитная компания: проценты с покупателей</td><td class="n good">+${money(L.finInc)}</td></tr>`:''}${L.finBad>1?`<tr><td>Невозвраты по рассрочке</td><td class="n">−${money(L.finBad)}</td></tr>`:''}${L.invInc>1?`<tr><td>Доход от вложений<br><span class="small muted">${[L.invB>1?'купоны облигаций '+money(L.invB):'',L.invD>1?'дивиденды по акциям '+money(L.invD):''].filter(Boolean).join(' · ')}</span></td><td class="n good">+${money(L.invInc)}</td></tr>`:''}${L.prm>1?`<tr><td>Спецакции: реклама и пробеги</td><td class="n">−${money(L.prm)}</td></tr>`:''}${L.promo>1?`<tr><td>Спецакции: скидки покупателям</td><td class="n">−${money(L.promo)}</td></tr>`:''}${L.tool?`<tr><td>Оснастка новых моделей</td><td class="n">−${money(L.tool)}</td></tr>`:''}${L.hire>1?`<tr><td>Найм и обучение</td><td class="n">−${money(L.hire)}</td></tr>`:''}${L.turn>1?`<tr><td>Текучесть: замена ушедших (${fmtN(s.quitN||0)} чел.)</td><td class="n">−${money(L.turn)}</td></tr>`:''}${L.fine?`<tr><td>Неустойка по заказам</td><td class="n">−${money(L.fine)}</td></tr>`:''}${L.legal?`<tr><td>Патенты и суды</td><td class="n">−${money(L.legal)}</td></tr>`:''}${L.licIn?`<tr><td>Отчисления вам за патенты</td><td class="n good">+${money(L.licIn)}</td></tr>`:''}
     ${L.tax-(L.wtax||0)>1?`<tr><td>Налог на прибыль${L.trate?` (${Math.round(L.trate*100)}%)`:''}</td><td class="n">−${money(L.tax-(L.wtax||0))}</td></tr>`:''}${L.invSh>1||(typeof bbShare==='function'&&bbShare(s)>0)?`<tr><td>Доля партнёров и совладельцев${(s.partners||[]).length?` <span class="small muted">(${(s.partners||[]).map(p=>esc(p.n)+' '+Math.round(p.sh*100)+'%').join(', ')})</span>`:''}${typeof bbShare==='function'&&bbShare(s)>0?' <button class="btn sm" data-act="bbOpen">Выкупить</button>':''}</td><td class="n">${L.invSh>1?'−'+money(L.invSh):'—'}</td></tr>`:''}${L.wtax>1||L.wtaxAcc>1?(()=>{const W=warTaxOf(s);return `<tr><td>Военный ${W?W.name.replace(/^военный /,''):'налог на сверхприбыль'}${L.wtaxBack>1?` <span class="small">(с долгом задним числом ${money(L.wtaxBack)})</span>`:''}<br><span class="small muted">${L.wtaxAcc>1&&!(L.wtax>1)?`Закон ещё не принят, но налог считают с начала войны — в этом месяце набежало ${money(L.wtaxAcc)}, всего ${money(s.wtaxDue||0)}. `:''}${W?esc(W.why):''}</span></td><td class="n">${L.wtax>1?'−'+money(L.wtax):'—'}</td></tr>`;})():''}${L.int?`<tr><td>Проценты по кредиту</td><td class="n">−${money(L.int)}</td></tr>`:''}<tr class="tot"><td>Итог за ${L.label}</td><td class="n ${L.profit>=0?'good':'bad'}">${money(L.profit)}</td></tr>
     ${L.got!==undefined?`<tr><td class="muted">Пришло денег от дилеров и ведомств</td><td class="n muted">${money(L.got)}</td></tr><tr><td class="muted">Ещё в пути (придут через 1–2 месяца)</td><td class="n muted">${money(arTotal(s))}</td></tr>`:''}${L.finOut>1||L.finIn>1?`<tr><td class="muted">Своя кредитная компания: выдано покупателям в рассрочку</td><td class="n muted">−${money(L.finOut||0)}</td></tr><tr><td class="muted">Вернули покупатели (без процентов)</td><td class="n muted">+${money(L.finIn||0)}</td></tr>`:''}${L.recall?`<tr><td class="bad">Банк списал в погашение кредита</td><td class="n bad">−${money(L.recall)}</td></tr>`:''}</table>
@@ -11321,6 +11382,7 @@ function vModels(){
       ${(md.raceBoost||0)>mi(s)?'<p class="small good" style="margin-top:6px">Слава гоночной победы: покупатели выбирают вас охотнее</p>':''}
       ${md.legend&&LEGEND_BY[md.legend]?`<p class="small good" style="margin-top:6px">★ Легенда марки: ${esc(legendFxText(LEGEND_BY[md.legend]))}</p>`:''}${md.from?`<p class="small muted" style="margin-top:6px">🤝 Конструкция поглощённой марки «${esc(md.from)}»: права на модель и технологии — ваши, машина выходит под маркой «${esc(s.company)}».</p>`:''}
       ${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
+      ${md.dv&&md.status!=='off'&&md.status!=='dev'&&typeof dvCardHTML==='function'?dvCardHTML(md,s):''}
       <div class="row small muted" style="margin-top:10px"><span>Всего продано</span><span class="num">${md.totalSold.toLocaleString('ru-RU')}</span></div>
       ${md.status==='prod'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="retire" data-id="${md.id}">Снять с производства</button></div>`:''}
       ${md.status==='sale'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="saleNow" data-id="${md.id}">Отдать остаток перекупщикам (−50%)</button></div>`:''}
@@ -11774,8 +11836,10 @@ function openNewGame(){
   // 0.28: два пути — основать марку в 1895 году или начать гонщиком (19-racer.js)
   const pathChips=`<div class="chips" style="margin-top:10px"><button class="chip ${draft.path==='company'?'on':''}" data-act="ngPath" data-v="company">🏭 Основать марку<small>январь 1895 года: завод, модели, рынок</small></button><button class="chip ${draft.path==='moto'?'on':''}" data-act="ngPath" data-v="moto">🏍 Мотомастерская<small>январь 1899 года: мало денег, мотоциклы — потом автомобиль</small></button><button class="chip ${draft.path==='racer'?'on':''}" data-act="ngPath" data-v="racer">🏁 Начать гонщиком<small>призы, команды и слава — потом своя марка</small></button></div>`;
   if(draft.path==='racer'){openRacerNew(pathChips);return;}
-  const moto=draft.path==='moto';if(moto){if(draft.company===PIONEERS[draft.pioneer].co)draft.company='Мотомастерская';draft.pioneer='custom';}
-  const list=Object.entries(PIONEERS).filter(([k,P])=>!P.racer&&(!moto||k==='custom')).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
+  // 0.34: у «Мотомастерской» — свои герои (мотоциклисты, что потом строили автомобили) и «Свой персонаж»; у марки — автомобилисты
+  const moto=draft.path==='moto';if(moto&&!PIONEERS[draft.pioneer].moto&&draft.pioneer!=='custom'){if(draft.company===PIONEERS[draft.pioneer].co)draft.company='Мотомастерская';draft.pioneer='custom';}
+  if(!moto&&PIONEERS[draft.pioneer].moto){if(draft.company===PIONEERS[draft.pioneer].co)draft.company=PIONEERS.ford.co;draft.pioneer='ford';draft.country='us';}
+  const list=Object.entries(PIONEERS).filter(([k,P])=>!P.racer&&(moto?(P.moto||k==='custom'):!P.moto)).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
   openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
     <p class="small muted" style="margin-top:6px">${moto?`Январь ${motoStartY(draft.country)} года. Мастерская с горсткой рабочих и одним мотоциклом. Наберитесь опыта, постройте автомобильный цех и выпустите первую машину — как Laurin & Klement, NSU и Peugeot. ${(()=>{const t=MSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:`Январь 1895 года. ${(()=>{const t=CSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`} Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
     ${pathChips}
@@ -12077,6 +12141,34 @@ function xpopCost(md,s){const D=xCostData(md,s),mo=isMoto(md),row=(l,sub,v,cls)=
     ${row('Работа',`${fmtN(D.h)} ч — ${xn(D.h/D.hw,1)} мес. рабочего × ${money(D.wg)} в месяц`,money(D.lab))}
     ${Math.abs(D.rest)>=1?row('Прочее','',money(D.rest),'muted'):''}
     ${row('Итого','',money(D.uc),'xp-tot')}</table>`;}
+// 0.34: «Контора» в финансах — из чего складывается доля выручки (отзыв «не понимаю, почему контора так дорого стоит»)
+function xpopAdm(s){const L=s.last||{},P=L.admP||admParts(s,L),rev=(L.rev||0)+(L.ord||0),k=P.k||1,dn=(DIFFS[s.diff]||{}).name||'',pp=f=>xn(f*100,1)+'%',
+  row=(l,sub,v,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${esc(l)}${sub?`<small>${esc(sub)}</small>`:''}</td><td>${v}</td></tr>`;
+  const nmTxt=`${P.nmC} ${plural(P.nmC,'автомобиль','автомобиля','автомобилей')}${P.nmM?` и ${P.nmM} ${plural(P.nmM,'мотоцикл','мотоцикла','мотоциклов')} (мотоцикл — полмодели)`:''}`;
+  // сколько сбережёт одна модель меньше
+  const lessF=n=>0.012*Math.log2(1+Math.max(0,n-3)/3),less=P.nm>3?(lessF(P.nm)-lessF(P.nm-1))*k*rev:0;
+  return `<div class="xp-h"><b>Контора · ${money(L.adm||0)} в месяц</b><button class="iconbtn xp-x" data-act="xpopClose" aria-label="Закрыть">×</button></div>
+    <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${k!==1?` На уровне «${esc(dn)}» рост с размером ×${xn(k,1)} — уже в строках ниже.`:''}</p>
+    <table class="xp-t xp-c xp-a">
+    ${row('Основа','правление, бухгалтерия, юристы',pp(P.base))}
+    ${row('Выпуск',`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
+    ${row('Страны сбыта за границей',P.fmL&&P.fmL.length?P.fmL.map(c=>(COUNTRIES[c]||{}).name||c).join(', ')+' — по 0,5%':'нет',(P.cty?'+':'')+pp(P.cty*k))}
+    ${row('Модели в производстве',nmTxt+'; снятые — не в счёт. Три — в основе, каждое удвоение сверх них +1,2%',(P.mdl?'+':'')+pp(P.mdl*k))}
+    ${row('Итого',`${pp(L.admK||P.total)} выручки ${money(rev)}`,money(L.adm||0),'xp-tot')}</table>
+    ${less>=1?`<p class="xp-w">Модель, что продаёт мало, можно снять с производства — контора станет дешевле на ≈${money(less)} в месяц.</p>`:''}`;}
+// 0.34: «Дилерская сеть» в финансах — по странам: дилеры, салоны, содержание, представительство и загрузка сети
+// (у империи из купленных марок сети поглощённых складываются с вашей — видно, где дилеров больше, чем покупателей)
+function xpopDlr(s){const L=s.last||{},home=s.country,row=(l,sub,v,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${esc(l)}${sub?`<small>${esc(sub)}</small>`:''}</td><td>${v}</td></tr>`;
+  const cs=Object.keys(COUNTRIES).filter(c=>dealerCount(s,c)>0||(c!==home&&impUpkeep(s,c)>0));let tot=0;const low=[];
+  const rows=cs.map(c=>{if(warCut(s,c))return row(COUNTRIES[c].name,'блокада — сеть не работает',money(0));
+    const d=dealerCount(s,c),up=dealerUpkeep(s,c),k=dealerMult(s,c),mk=L.mk&&L.mk[c],sold=Math.round((mk&&mk.sold)||0),cap=Math.round(dealerCapOf(s,c)),ld=cap>0?sold/cap:0,dc=d*up,im=c===home?0:impUpkeep(s,c);tot+=dc+im;
+    if(d>=10&&cap>0&&ld<0.6)low.push({t:COUNTRIES[c].name+' — '+Math.round(ld*100)+'%',acq:typeof acqIn==='function'&&acqIn(s,c).length>0});
+    return row(`${COUNTRIES[c].name}: ${fmtN(d)} ${plural(d,'дилер','дилера','дилеров')}`,`по ${money(up)} в месяц${k>1.01?` (салоны больше обычного ×${xn(k,2).replace(/,?0+$/,'')})`:''} · продали ${fmtN(sold)} из ${fmtN(cap)} возможных — загрузка ${Math.round(ld*100)}%`,money(dc))
+      +(im>0?row(`${COUNTRIES[c].name}: ${IMP_LV[impLv(s,c)].n.toLowerCase()}`,'содержание представительства',money(im)):'');}).join('');
+  return `<div class="xp-h"><b>Дилерская сеть · ${money(L.dlr||tot)} в месяц</b><button class="iconbtn xp-x" data-act="xpopClose" aria-label="Закрыть">×</button></div>
+    <p class="xp-w">Завод платит дилерам за агентов, вывеску, демонстрационную машину и выучку механика; салон побольше — дороже и продаёт больше. За границей — ещё отделение, сборка или свой завод.</p>
+    <table class="xp-t xp-c xp-a">${rows}${row('Итого','по нынешней сети',money(tot),'xp-tot')}</table>
+    ${low.length?`<p class="xp-w">Дилеров больше, чем покупателей: ${esc(low.map(x=>x.t).join(', '))}${low.some(x=>x.acq)?' — сети купленных марок сложились с вашей':''}. Лишних можно закрыть: «Рынок» → страна → «Закрыть 20%».</p>`:''}`;}
 /* ---------- окно: рядом со строкой, в пределах экрана; закрывается тапом мимо, ×, прокруткой ---------- */
 let XPOP_SC=null;   // прокрутка при открытии: окно закрывается, когда лист или страницу заметно прокрутили
 function xpopClose(){const a=document.getElementById('xpop'),b=document.getElementById('xpopBg');if(a&&a.remove)a.remove();if(b&&b.remove)b.remove();XPOP_SC=null;}
@@ -12092,6 +12184,8 @@ function xMdOf(id){const s=G;if(!s)return null;if(id==='d')return draft&&!draft.
   if(String(id).startsWith('L:')){const L=LEGEND_BY[String(id).slice(2)];return L?legendModel(s,L):null;}return s.models.find(m=>m.id===+id)||null;}
 const XP_ACT={
   chx:(d,el)=>{const md=xMdOf(d.id);if(!md)return;const tip=d.id==='d';let h='';try{h=d.k==='S'?xpopScore(md,G,tip):d.k==='cost'?xpopCost(md,G):xpopChar(md,G,d.k,tip);}catch(e){console.warn('explain',e);return;}xpopShow(h,el);},
+  xdlr:(d,el)=>{if(!G||!G.last)return;let h='';try{h=xpopDlr(G);}catch(e){console.warn('explain dlr',e);return;}xpopShow(h,el);},
+  xadm:(d,el)=>{if(!G||!G.last)return;let h='';try{h=xpopAdm(G);}catch(e){console.warn('explain adm',e);return;}xpopShow(h,el);},
   xpopClose:()=>xpopClose()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')xpopClose();});
 if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:true});window.addEventListener('scroll',xpopScroll,{passive:true});
@@ -12253,25 +12347,55 @@ function celebrate(big,sub,icon,kind){
     Q.raf=requestAnimationFrame(loop);}
   setTimeout(()=>{if(CEL===Q){el.classList.add('out');setTimeout(()=>{try{el.remove();}catch(_){}if(CEL===Q)CEL=null;},500);}},REDUCE?1800:3300);}
 
-/* ================= RACE SETUP: team of up to 3 cars, drivers, preparation, mode ================= */
+/* ================= RACE SETUP: team (cars and motorcycles within the race rules), drivers, preparation, mode ================= */
 const RACE_ACT={};
 let RS=null;   // заявка на гонку: {key, entries:[{drv,car,prep,tyre,gear}], open, mode, more}
 const MAX_ENTRIES=3;
+/* ---------- 0.34: сколько машин и мотоциклов от марки пускали на гонку — по настоящим регламентам ----------
+   Отзыв: «сейчас максимум три машины и мотоцикла на гонку вместе — посмотри реальные регламенты». Кубок Гордона Беннетта —
+   до трёх машин от национального клуба (правило V); Гран-при АКФ 1906 года — «каждый завод вправе заявить три машины»,
+   в 1914-м — до пяти (Mercedes выставил пять); в 1920-х заводы привозили три-четыре машины (Ballot и Duesenberg в 1921-м — по
+   четыре). В гонках городов ограничений не было: на Париж — Мадрид (1903) Panhard заявил 16 машин, Mors — 14, De Dietrich — 10,
+   и там же шли десятки мотоциклов. Горные подъёмы и «Тарга Флорио» — открытые: заводы ставили по четыре-пять машин. */
+const GP_IDS=['gpacf','dieppe','lyon1914','lm1921','x38020','x13597','europe1924','x80394','x81442','itgp','brescia','monza1922','x87929','x79680','x2844','x17567','degp','nurb1927','avus1926','bgp1926','x30443','x18018','x42022','x38768','monaco','x22765','x6663','eifel','kaiser','ardennes','x44688','x15626','x95919'];
+const CITY_IDS=['pbp','chicago','pmp','pap','tdf','pb1901','pv1902','pm1903','x80901','x87575'];
+function raceRule(rc){if(!rc)return {cars:MAX_ENTRIES,motos:0,txt:''};const mo=raceMoto(rc)?1:0,y=rc.y,id=rc.id;
+  if(rc.match||rc.dx)return {cars:1,motos:0,txt:'Один на один: одна машина.'};
+  if(GBC_IDS.includes(id))return {cars:3,motos:0,txt:'Кубок наций: до трёх машин от страны (правило V Кубка Гордона Беннетта).'};
+  if(CITY_IDS.includes(id))return {cars:6,motos:mo?4:0,txt:'Гонка городов: ограничений по маркам не было — на Париж — Мадрид Panhard заявил 16 машин, Mors — 14. В игре — до шести машин'+(mo?' и четырёх мотоциклов.':'.')};
+  if(id==='lyon1914')return {cars:5,motos:0,txt:'Гран-при 1914 года: до пяти машин от марки — Mercedes выставил пять.'};
+  if(GP_IDS.includes(id))return y<1914?{cars:3,motos:0,txt:'Гран-при: «каждый завод вправе заявить три машины» (регламент 1906 года).'}:{cars:4,motos:0,txt:'Гран-при 1920-х: заводы привозили три-четыре машины (Ballot и Duesenberg в 1921 году — по четыре).'};
+  if(id==='vanderbilt'||id==='savannah'||id==='x30184')return {cars:3,motos:0,txt:'Американские кубки: сборные стран по пять машин, от марки — до трёх.'};
+  if(id==='tt'||id==='jcc200'||id==='x59677'||id==='brooklands'||id==='bgp1926')return {cars:3,motos:0,txt:'Британский регламент: команды по три машины (командный приз).'};
+  if(id==='targa'||id==='x24910'||id==='x69903')return {cars:5,motos:0,txt:'«Тарга» — открытая гонка: заводы выставляли по четыре-пять машин, рядом — частники.'};
+  if(id==='mille')return {cars:6,motos:0,txt:'«Милле Милья» — открытая гонка: заводы выставляли по полдюжины машин.'};
+  if(rc.t==='hill')return {cars:4,motos:mo?4:0,txt:'Горный подъём — открытое состязание: каждый едет сам за себя, марки выставляли по нескольку машин'+(mo?' и мотоциклов.':'.')};
+  if(rc.t==='oval'||rc.t==='sprint')return {cars:4,motos:mo?3:0,txt:'Трек: от завода — до четырёх машин (Duesenberg и Miller в Индианаполисе).'};
+  if(rc.t==='endurance')return {cars:4,motos:0,txt:'Гонка на выносливость: от марки — до четырёх машин.'};
+  if(rc.t==='rally')return {cars:4,motos:mo?4:0,txt:'Пробег: от марки — до четырёх машин'+(mo?' и мотоциклов.':'.')};
+  return {cars:4,motos:mo?3:0,txt:'От марки — до четырёх машин'+(mo?' и трёх мотоциклов.':'.')};}
+function raceRuleMax(rc){const R=raceRule(rc);return R.cars+R.motos;}
+function entryIsMoto(s,e){const md=(s.models||[]).find(m=>m.id===e.car);return !!(md&&isMoto(md));}
+// менеджер выставляет либо машины, либо (у мотомастерской без машин) мотоциклы — предел по регламенту для своего вида
+function mgrMaxE(rc,cars){const R=raceRule(rc),mo=cars.length&&cars.every(m=>isMoto(m));return Math.max(1,mo?R.motos:R.cars);}
+function teamCount(s,entries){let c=0,m=0;(entries||[]).forEach(e=>{if(entryIsMoto(s,e))m++;else c++;});return {c,m};}
 // 0.33: мотоциклы — в гонках, где по истории у них был свой зачёт (02-races.js, MOTO_RACE); в остальных — только машины
 function raceCarsFor(s,rc){const mo=raceMoto(rc);return s.models.filter(m=>m.status==='prod'&&(!isMoto(m)||mo));}
 // 0.33: менеджер команды выставляет машины; мотоциклы — когда машин нет (у мотомастерской), и тогда шансы и призы — по классу мотоциклов
 function mgrCarsFor(s,rc){const L=raceCarsFor(s,rc),c=L.filter(m=>!isMoto(m));return c.length?c:L;}
 function raceRank(md,rc){const st=carStats(md,2,rc.y);return st.vmax*(0.55+0.45*st.rel)/(1+st.acc/60);}
 function prepAllowed(p,s,rc,md){return p<2||((s.rdept||0)>=1&&!(md&&isTruck(md)));}
-function defaultEntry(s,rc,taken){
-  const racer=pioRacer(s),cars=raceCarsFor(s,rc).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc)),free=(racer?['me',...(s.drivers||[])]:[...(s.drivers||[]),'me']).filter(d=>!taken.includes(d)&&!drvOut(s,d)),cfg=trackCfg(rc);
+function defaultEntry(s,rc,taken,kind){
+  // 0.34: первый экипаж — автомобиль, если он есть (главный зачёт и призы — у машин); мотоцикл — кнопкой «Ещё мотоцикл»
+  if(!kind)kind=raceCarsFor(s,rc).some(m=>!isMoto(m))?'car':'moto';
+  const racer=pioRacer(s),cars=raceCarsFor(s,rc).filter(m=>!kind||(kind==='moto')===isMoto(m)).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc)),free=(racer?['me',...(s.drivers||[])]:[...(s.drivers||[]),'me']).filter(d=>!taken.includes(d)&&!drvOut(s,d)),cfg=trackCfg(rc);
   // свободных своих пилотов нет — предложить лучшего свободного гонщика на одну гонку
   // 0.22: хозяин сам не гонщик (Бенц, Пежо, Форд) — сначала пилот команды или приглашённый, «сам» — в последнюю очередь
   {const d=availDrivers(s).filter(x=>!taken.includes(x.id)).sort((a,b)=>b.sk-a.sk)[0];if(d&&(!free.length||!racer&&free[0]==='me'&&d.sk>pioSk(s)+0.1&&s.cash>driverRaceFee(d,s)*4))free.unshift(d.id);}
   return {drv:free[0]||null,car:cars[0]?cars[0].id:null,prep:(s.rdept||0)>=1&&!['rally','endurance'].includes(rc.t)?2:1,tyre:rc.km>600&&!cfg.pits?'hard':'soft',gear:['oval','sprint'].includes(rc.t)?1:rc.t==='hill'?-1:0};
 }
 function drvObj(id){return id&&id!=='me'?DRIVERS.find(d=>d.id===id):null;}
-function entryCost(rc,e,s){const d=drvObj(e.drv),hire=d&&!(s.drivers||[]).includes(d.id)?driverRaceFee(d,s):0,fee=raceFee(rc),prep=prepCost(rc,e.prep,s);return {fee,prep,hire,total:fee+prep+hire};}
+function entryCost(rc,e,s){const d=drvObj(e.drv),hire=d&&!(s.drivers||[]).includes(d.id)?driverRaceFee(d,s):0,fee=raceFee(rc),md=(s.models||[]).find(m=>m.id===e.car),prep=prepCost(rc,e.prep,s,md);return {fee,prep,hire,total:fee+prep+hire};}
 function setupTotal(rc,s){return RS.entries.reduce((a,e)=>{const c=entryCost(rc,e,s);a.fee+=c.fee;a.prep+=c.prep;a.hire+=c.hire;a.total+=c.total;return a;},{fee:0,prep:0,hire:0,total:0});}
 // Оценка шанса доехать до финиша: та же модель отказов, что и в гонке
 function finishChance(st,rc,s){const dnf=dnfTarget(rc.y,rc.t)*(rc.dnfK||1),rel=clamp(st.rel*(RDEPT[s.rdept||0].rel||1)*kitK(s,'trel'),0.3,0.995);return clamp(Math.pow(1-dnf,Math.pow((1-rel)/fieldRelRef(rc,s),1.6)*1.1),0.05,0.99);}
@@ -12286,17 +12410,20 @@ function openRaceSetup(key){
   renderRaceSetup();
 }
 function renderRaceSetup(keepScroll){
-  const s=G,rc=raceByKey(RS.key),cfg=trackCfg(rc),cars=raceCarsFor(s,rc),n=RS.entries.length,top=keepScroll?sb.scrollTop:0;
+  const s=G,rc=raceByKey(RS.key),cfg=trackCfg(rc),cars=raceCarsFor(s,rc),top=keepScroll?sb.scrollTop:0;
   RS.entries.forEach(e=>{if(!cars.some(m=>m.id===e.car))e.car=cars[0].id;if(!prepAllowed(e.prep,s,rc,cars.find(m=>m.id===e.car)))e.prep=1;});
+  // 0.34: регламент — лишние машины или мотоциклы сверх предела гонки снимаются с заявки
+  {const R0=raceRule(rc);let c=0,m=0;RS.entries=RS.entries.filter(e=>entryIsMoto(s,e)?++m<=R0.motos:++c<=R0.cars);if(!RS.entries.length)RS.entries=[defaultEntry(s,rc,[])];RS.open=Math.min(RS.open,RS.entries.length-1);}
   // хозяин в больнице: пилотов команды не трогаем, а «Еду сам» — ведёте машину №1 вместо её пилота
   RS.entries.forEach(e=>{if(e.drv&&drvOut(s,e.drv))e.drv=null;});
   const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||((meSick||!pioRacer(s))&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
   const tot=setupTotal(rc,s),missing=RS.entries.findIndex(e=>!e.drv),champs=raceChamps(rc).map(id=>CHAMPS[id].name(rc.y));
-  const gb=GBC_IDS.includes(rc.id),maxE=rc.match?1:MAX_ENTRIES;
+  const n=RS.entries.length,gb=GBC_IDS.includes(rc.id),RR=raceRule(rc),TC=teamCount(s,RS.entries),canMoto=RR.motos>0&&cars.some(m=>isMoto(m)),canCar=cars.some(m=>!isMoto(m));
+  const teamHd=[canCar||TC.c?`машин ${TC.c} из ${RR.cars}`:'',RR.motos&&(canMoto||TC.m)?`мотоциклов ${TC.m} из ${RR.motos}`:''].filter(Boolean).join(' · ');
   const entryHTML=(e,i)=>{
     const md=cars.find(m=>m.id===e.car),st=carStats(md,e.prep,rc.y),d=drvObj(e.drv),c=entryCost(rc,e,s);
     const who=e.drv==='me'?'Вы — '+PIONEERS[s.pioneer].name:d?d.n:'пилот не выбран';
-    if(RS.open!==i)return `<div class="entry"><canvas class="rs-car" data-i="${i}" width="132" height="116"></canvas><div class="grow"><b>№${i+1} · ${esc(who)}</b><small>«${esc(md.name)}» · ${PREP[e.prep].name.toLowerCase()} · ${e.tyre==='soft'?'мягкие':'жёсткие'} шины</small><small>${statsLine(st)}</small></div><div class="col"><button class="btn sm" data-act="rEntry" data-i="${i}">Изменить</button>${n>1?`<button class="btn sm" data-act="rDel" data-i="${i}">Убрать</button>`:''}</div></div>`;
+    if(RS.open!==i)return `<div class="entry"><canvas class="rs-car" data-i="${i}" width="132" height="116"></canvas><div class="grow"><b>№${i+1} · ${esc(who)}</b><small>«${esc(md.name)}» · ${prepOf(md,e.prep).name.toLowerCase()} · ${e.tyre==='soft'?'мягкие':'жёсткие'} шины</small><small>${statsLine(st)}</small></div><div class="col"><button class="btn sm" data-act="rEntry" data-i="${i}">Изменить</button>${n>1?`<button class="btn sm" data-act="rDel" data-i="${i}">Убрать</button>`:''}</div></div>`;
     const taken=RS.entries.filter((x,j)=>j!==i).map(x=>x.drv),life=tyreLife(md,rc,e),fc=finishChance(st,rc,s);
     const own=(s.drivers||[]).filter(id=>!taken.includes(id)).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean);
     const pool=availDrivers(s).filter(x=>!taken.includes(x.id)).sort((a,b)=>b.sk-a.sk);
@@ -12307,7 +12434,7 @@ function renderRaceSetup(keepScroll){
         <div class="stat-grid"><div><span>Скорость</span><b>${Math.round(st.vmax*3.6)} км/ч</b></div><div><span>Разгон</span><b>${accText(st)}</b></div>
         <div><span>Мощность</span><b>${Math.round(st.hp)} л.с. · ${st.kg} кг</b></div><div><span>Тормоза</span><b>${brakeName(st.brk)}</b></div>
         <div><span>Надёжность</span><b>${Math.round(st.rel*100)}% · финиш ≈${Math.round(fc*100)}%</b></div><div><span>Ресурс шин</span><b class="${life<rc.km?'warn':''}">≈${fmtN(life)} км из ${fmtN(rc.km)}</b></div></div></div>
-      ${st.mech?'<p class="small muted" style="margin-top:6px">В машине едет механик: он чинит поломки и меняет колёса прямо на трассе.</p>':''}
+      ${st.mech?(typeof injOf==='function'&&injOf(s,'mech')?`<p class="small warn" style="margin-top:6px">Механик команды в больнице до ${miDate(injOf(s,'mech').until)} — едет запасной: читает легенду, но чинит медленнее.</p>`:'<p class="small muted" style="margin-top:6px">В машине едет механик: он читает легенду трассы, чинит поломки и меняет колёса прямо на трассе.</p>'):''}
       ${adviceHTML(rc,e,md,st,s,i)}
       <div class="label" style="margin-top:10px">Пилот</div><div class="chips">
         ${!taken.includes('me')?(meOut(s)?`<button class="chip" disabled>Вы за рулём<small>${esc(injNote(s,'me'))}</small></button>`:chip('me','Вы за рулём',PIONEERS[s.pioneer].name+' · мастерство '+Math.round(pioSk(s)*100))):''}
@@ -12318,8 +12445,8 @@ function renderRaceSetup(keepScroll){
       </div>
       ${d&&d.id?`<div class="row" style="margin-top:6px;gap:10px;justify-content:flex-start">${drvPhoto(d)}<p class="small muted" style="flex:1">${esc(d.note||'')} <button class="linkbtn" data-act="drvBio" data-k="${d.id}">История ▸</button></p></div>`:''}
       ${e.drv==='me'&&(PIO_RACE[s.pioneer]||{}).note?`<p class="small muted" style="margin-top:6px">${esc(PIONEERS[s.pioneer].name)} за рулём: ${esc(PIO_RACE[s.pioneer].note)}${pioRacer(s)?'':' Опытный пилот проедет быстрее — а в режиме «за рулём» его машину ведёте вы.'}</p>`:''}
-      <div class="label" style="margin-top:10px">Машина</div><div class="chips">${cars.map(m=>{const x=carStats(m,e.prep,rc.y);return `<button class="chip ${m.id===md.id?'on':''}" data-act="rset" data-i="${i}" data-k="car" data-v="${m.id}">${esc(m.name)}<small>${Math.round(x.hp)} л.с. · ${Math.round(x.vmax*3.6)} км/ч</small></button>`;}).join('')}</div>
-      <div class="label" style="margin-top:10px">Подготовка</div><div class="chips">${PREP.map(p=>{const ok=prepAllowed(p.id,s,rc,md);return `<button class="chip ${e.prep===p.id?'on':''}" data-act="rset" data-i="${i}" data-k="prep" data-v="${p.id}" ${ok?'':'disabled'}>${p.name}<small>${ok?(p.cost?money(prepCost(rc,p.id,s)):'бесплатно'):isTruck(md)&&p.id===2?'грузовику гоночный кузов не поставить':'нужна гоночная мастерская'} · ${p.desc}</small></button>`;}).join('')}</div>
+      <div class="label" style="margin-top:10px">${canMoto&&canCar?'Машина или мотоцикл':isMoto(md)?'Мотоцикл':'Машина'}</div><div class="chips">${cars.map(m=>{const x=carStats(m,e.prep,rc.y);return `<button class="chip ${m.id===md.id?'on':''}" data-act="rset" data-i="${i}" data-k="car" data-v="${m.id}">${esc(m.name)}<small>${Math.round(x.hp)} л.с. · ${Math.round(x.vmax*3.6)} км/ч</small></button>`;}).join('')}</div>
+      <div class="label" style="margin-top:10px">Подготовка</div><div class="chips">${PREP.map(p=>{const ok=prepAllowed(p.id,s,rc,md),q=prepOf(md,p.id);return `<button class="chip ${e.prep===p.id?'on':''}" data-act="rset" data-i="${i}" data-k="prep" data-v="${p.id}" ${ok?'':'disabled'}>${q.name}<small>${ok?(p.cost?money(prepCost(rc,p.id,s,md)):'бесплатно'):isTruck(md)&&p.id===2?'грузовику гоночный кузов не поставить':'нужна гоночная мастерская'} · ${q.desc}</small></button>`;}).join('')}</div>
       <div class="label" style="margin-top:10px">Шины</div><div class="chips"><button class="chip ${e.tyre==='soft'?'on':''}" data-act="rset" data-i="${i}" data-k="tyre" data-v="soft">Мягкие<small>цепко держат, быстро стираются</small></button><button class="chip ${e.tyre==='hard'?'on':''}" data-act="rset" data-i="${i}" data-k="tyre" data-v="hard">Жёсткие<small>живут дольше, чаще скользят</small></button></div>
       <div class="label" style="margin-top:10px">Передачи</div><div class="chips">${[[-1,'Короткие','разгон, повороты и горы'],[0,'Средние','на всё'],[1,'Длинные','прямые, овалы, спринт']].map(g=>`<button class="chip ${e.gear===g[0]?'on':''}" data-act="rset" data-i="${i}" data-k="gear" data-v="${g[0]}">${g[1]}<small>${g[2]}</small></button>`).join('')}</div>
       <p class="small muted" style="margin-top:8px">Экипаж: взнос ${money(c.fee)}${c.prep?` · подготовка ${money(c.prep)}`:''}${c.hire?` · пилот ${money(c.hire)}`:''}</p>
@@ -12333,9 +12460,11 @@ function renderRaceSetup(keepScroll){
     ${(()=>{const rid=raceReelId(rc);if(!rid)return '';try{reelUnlock(s,rid);}catch(_){}return `<div style="margin-top:8px">${paperReelHTML(rid,s)}</div>`;})()}
     ${rc.match?matchSetupHTML(rc,s):`<p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>`}
     ${s.chal&&s.chal.acc&&s.chal.type==='race'&&s.chal.rk===rc.key?`<p class="small warn" style="margin-top:6px">⚔️ Вызов принят: ваша лучшая машина должна финишировать выше лучшей машины ${esc(s.chal.mq)}. Пари — ${money(s.chal.stake)}.</p>`:''}
-    <div class="label" style="margin-top:16px">${rc.match?'Ваша машина и пилот':`Команда · ${n} из ${MAX_ENTRIES}`}</div>
+    <div class="label" style="margin-top:16px">${rc.match?'Ваша машина и пилот':'Команда · '+teamHd}</div>
+    ${rc.match?'':`<p class="small muted" style="margin-top:4px">📜 ${esc(RR.txt)}</p>`}
     <div class="entries">${RS.entries.map(entryHTML).join('')}</div>
-    ${n<maxE?`<button class="btn block" style="margin-top:8px" data-act="rAdd">+ Ещё машина в команду</button>`:''}
+    ${!rc.match&&canCar&&TC.c<RR.cars?`<button class="btn block" style="margin-top:8px" data-act="rAdd" data-k="car">+ Ещё машина в команду</button>`:''}
+    ${!rc.match&&canMoto&&TC.m<RR.motos?`<button class="btn block" style="margin-top:8px" data-act="rAdd" data-k="moto">+ Ещё мотоцикл в команду</button>`:''}
     <div class="label" style="margin-top:16px">Как проведёте гонку</div><div class="chips">${modes.map(m=>`<button class="chip ${RS.mode===m[0]?'on':''}" data-act="rMode" data-v="${m[0]}" ${m[3]?'disabled':''}>${m[1]}<small>${m[3]?'нужен экипаж «Вы за рулём»':m[2]}</small></button>`).join('')}</div>
     <p class="small muted" style="margin-top:10px">${rc.match?`${tot.prep?`Подготовка ${money(tot.prep)}`:'Подготовка бесплатно'}${tot.hire?` · пилот ${money(tot.hire)}`:''}. Победителю — ставка пари${rc.purse?` и сбор с трибун ${money(rc.purse)}`:''}.`:`Взносы ${money(tot.fee)}${tot.prep?` · подготовка ${money(tot.prep)}`:''}${tot.hire?` · пилоты ${money(tot.hire)}`:''}. Призы: 1-е место — ${money(racePrize(rc))}, 2-е — ${money(racePrize(rc)*0.5)}, 3-е — ${money(racePrize(rc)*0.25)}.`}</p>
     <button class="btn primary block" style="margin-top:12px" data-act="raceGo" ${missing>=0||s.cash<tot.total?'disabled':''}>${missing>=0?`Выберите пилота для экипажа №${missing+1}`:s.cash<tot.total?'Не хватает денег':(RS.mode==='drive'?'На старт':RS.mode==='manage'?'На старт: руковожу':'Провести гонку')+' · '+money(tot.total)}</button>`);
@@ -12352,11 +12481,13 @@ function raceAdvice(rc,e,md,st,s){
   if(e.gear!==g)tips.push(g===1?'Передачи: здесь длинные прямые — длинные передачи дадут максимальную скорость.':g===-1?'Передачи: крутые повороты и подъёмы — короткие передачи помогут разгоняться из каждого поворота.':'Передачи: трасса смешанная — средние передачи.');
   const long=['endurance','rally'].includes(rc.t)||km>=1000,ok2=prepAllowed(2,s,rc,md);
   if(long&&e.prep===2){rec.prep=1;tips.push('Гонка долгая: форсированный мотор чаще ломается. Облегчённая подготовка надёжнее, а скорость почти та же.');}
-  else if(!long&&ok2&&e.prep<2){rec.prep=2;const v2=carStats(md,2,rc.y).vmax;tips.push(`Гоночный кузов и форсированный мотор: ${Math.round(v2*3.6)} км/ч вместо ${Math.round(st.vmax*3.6)} за ${money(prepCost(rc,2,s))}.`);}
-  else if(e.prep===0){rec.prep=1;const v1=carStats(md,1,rc.y).vmax;tips.push(`Снимите тент и крылья (облегчённая): ${Math.round(v1*3.6)} км/ч вместо ${Math.round(st.vmax*3.6)}.`);}
+  else if(!long&&ok2&&e.prep<2){rec.prep=2;const v2=carStats(md,2,rc.y).vmax;tips.push(`${isMoto(md)?'Заводская гоночная подготовка: форсированный мотор, гоночный бак и руль':'Гоночный кузов и форсированный мотор'}: ${Math.round(v2*3.6)} км/ч вместо ${Math.round(st.vmax*3.6)} за ${money(prepCost(rc,2,s,md))}.`);}
+  else if(e.prep===0){rec.prep=1;const v1=carStats(md,1,rc.y).vmax;tips.push(isMoto(md)?`Снимите фару, крылья и багажник (облегчённый): ${Math.round(v1*3.6)} км/ч вместо ${Math.round(st.vmax*3.6)}.`:`Снимите тент и крылья (облегчённая): ${Math.round(v1*3.6)} км/ч вместо ${Math.round(st.vmax*3.6)}.`);}
+  else if(!ok2&&e.prep<2&&!isTruck(md)&&(s.rdept||0)<1)tips.push(`Заводская гоночная подготовка (форсированный мотор${isMoto(md)?', гоночный бак и руль':', гоночный кузов'}) — после «Гоночной мастерской» в разделе «Гонки».`);
   const fc=finishChance(carStats(md,rec.prep,rc.y),rc,s);if(fc<0.55)tips.push(`Шанс доехать ≈${Math.round(fc*100)}%. В гонке отдавайте приказ «Беречь» или ставьте мотор понадёжнее.`);
-  const best=raceCarsFor(s,rc).filter(m=>m.id!==md.id).map(m=>({m,r:raceRank(m,rc)})).sort((a,b)=>b.r-a.r)[0];
-  if(best&&best.r>raceRank(md,rc)*1.06)tips.push(`Машина: «${best.m.name}» для этой гонки лучше — ${Math.round(carStats(best.m,rec.prep,rc.y).vmax*3.6)} км/ч.`);
+  // 0.34: мотоцикл сравниваем с мотоциклами (у них свой зачёт), машину — с машинами
+  const best=raceCarsFor(s,rc).filter(m=>m.id!==md.id&&isMoto(m)===isMoto(md)).map(m=>({m,r:raceRank(m,rc)})).sort((a,b)=>b.r-a.r)[0];
+  if(best&&best.r>raceRank(md,rc)*1.06)tips.push(`${isMoto(md)?'Мотоцикл':'Машина'}: «${best.m.name}» для этой гонки лучше — ${Math.round(carStats(best.m,rec.prep,rc.y).vmax*3.6)} км/ч.`);
   const pilot=e.drv==='me'?{sk:pioSk(s)}:drvObj(e.drv),cand=availDrivers(s).concat((s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean)).sort((a,b)=>b.sk-a.sk)[0];
   if(pilot&&cand&&cand.sk-pilot.sk>=0.08&&e.drv!==cand.id)tips.push(`Пилот: ${cand.n} опытнее (мастерство ${Math.round(cand.sk*100)})${(s.drivers||[]).includes(cand.id)?' и уже в команде':` — на гонку ${money(driverRaceFee(cand,s))}`}.`);
   if(cfg.night)tips.push('Ночью часть трассы в темноте — не рискуйте на обгонах в поворотах.');
@@ -12379,8 +12510,13 @@ Object.assign(RACE_ACT,{
   rEntry:d=>{RS.open=+d.i;renderRaceSetup(true);},
   rMore:()=>{RS.more=!RS.more;renderRaceSetup(true);},
   rAdvice:d=>{const s=G,rc=raceByKey(RS.key),e=RS.entries[+d.i];if(!e)return;const md=s.models.find(m=>m.id===e.car),a=raceAdvice(rc,e,md,carStats(md,e.prep,rc.y),s);Object.assign(e,a.rec);toast('Сделано по совету главы команды');renderRaceSetup(true);},
-  rset:d=>{const e=RS.entries[+d.i];if(!e)return;const k=d.k;e[k]=k==='drv'?d.v:k==='tyre'?d.v:+d.v;if(k==='drv'&&d.v==='me')RS.mode='drive';renderRaceSetup(true);},
-  rAdd:()=>{const rc=raceByKey(RS.key);if(RS.entries.length>=(rc&&rc.match?1:MAX_ENTRIES))return;const e=defaultEntry(G,rc,RS.entries.map(x=>x.drv));RS.entries.push(e);RS.open=RS.entries.length-1;renderRaceSetup(true);},
+  rset:d=>{const e=RS.entries[+d.i];if(!e)return;const k=d.k;
+    // 0.34: машину на мотоцикл (и наоборот) — только если регламент пускает ещё одну машину такого вида
+    if(k==='car'){const rc=raceByKey(RS.key),R=raceRule(rc),md=G.models.find(m=>m.id===+d.v),was=entryIsMoto(G,e),now=!!(md&&isMoto(md));
+      if(md&&was!==now){const TC=teamCount(G,RS.entries);if(now&&TC.m>=R.motos){toast(R.motos?`Мотоциклов от марки — не больше ${R.motos}`:'В этой гонке мотоциклов нет');return;}if(!now&&TC.c>=R.cars){toast(`Машин от марки — не больше ${R.cars}`);return;}}}
+    e[k]=k==='drv'?d.v:k==='tyre'?d.v:+d.v;if(k==='drv'&&d.v==='me')RS.mode='drive';renderRaceSetup(true);},
+  rAdd:d=>{const rc=raceByKey(RS.key);if(!rc||rc.match)return;const R=raceRule(rc),TC=teamCount(G,RS.entries),kind=d&&d.k==='moto'?'moto':'car';
+    if(kind==='moto'?TC.m>=R.motos:TC.c>=R.cars)return;const e=defaultEntry(G,rc,RS.entries.map(x=>x.drv),kind);if(!e.car)return;RS.entries.push(e);RS.open=RS.entries.length-1;renderRaceSetup(true);},
   rDel:d=>{if(RS.entries.length<=1)return;RS.entries.splice(+d.i,1);RS.open=Math.min(RS.open,RS.entries.length-1);renderRaceSetup(true);},
   rMode:d=>{RS.mode=d.v;renderRaceSetup(true);},
   raceGo:()=>{const s=G,rc=raceByKey(RS.key);if(!rc||R)return;const tot=setupTotal(rc,s);if(s.cash<tot.total||RS.entries.some(e=>!e.drv))return;
@@ -12399,7 +12535,7 @@ function tmPol(s){return TM_POL[(s.tm&&s.tm.pol)||'std']?(s.tm&&s.tm.pol)||'std'
 // бюджет гонок за год: потрачено (взносы, подготовка, приглашённые пилоты) и выиграно (призы)
 function rbudOf(s,y){const B=s.rbud=s.rbud||{};const k=String(y||s.y);return B[k]=B[k]||{spent:0,won:0,n:0};}
 function rbudAdd(s,spent,won){const b=rbudOf(s);b.spent+=spent||0;b.won+=won||0;if(spent)b.n++;}
-function managerLineup(s,rc,pol){const P=TM_POL[pol||tmPol(s)],maxE=rc.match?1:MAX_ENTRIES,cars=mgrCarsFor(s,rc).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc));if(!cars.length)return null;
+function managerLineup(s,rc,pol){const P=TM_POL[pol||tmPol(s)],cars=mgrCarsFor(s,rc).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc));if(!cars.length)return null;const maxE=mgrMaxE(rc,cars);
   const budget=Math.max(0,Math.round(Math.max(0,s.cash)*P.cash/10)*10);
   // кто может ехать: свои пилоты по контракту, хозяин (если гонщик), приглашённые на гонку — по мастерству
   const pool=(s.drivers||[]).filter(id=>!drvOut(s,id)).map(id=>DRIVERS.find(d=>d.id===id)).filter(Boolean).map(d=>({id:d.id,sk:d.sk,fee:0,own:1}));
@@ -12440,12 +12576,12 @@ function managerPlan(s,rc){const key=rc.key+'|'+mi(s)+'|'+Math.round(Math.log2(M
   const C=managerPlan.c||(managerPlan.c=new Map());if(C.has(key))return C.get(key);if(C.size>40)C.clear();
   const cars=mgrCarsFor(s,rc).sort((a,b)=>raceRank(b,rc)-raceRank(a,rc));if(!cars.length){C.set(key,null);return null;}
   const mk=cars.every(m=>isMoto(m))?0.3:1;   // класс мотоциклов: приз и слава — около трети автомобильных
-  const maxE=rc.match?1:MAX_ENTRIES,cap=Math.max(0,s.cash*0.3),pz=racePrize(rc)*mk,fame=mgrFame(s)*(rc.major?1.5:0.6)*mk+pz*0.5;
+  const maxE=mgrMaxE(rc,cars),cap=Math.max(0,s.cash*0.3),pz=racePrize(rc)*mk,fame=mgrFame(s)*(rc.major?1.5:0.6)*mk+pz*0.5;
   const own=(s.drivers||[]).filter(id=>!drvOut(s,id)).map(id=>DRIVERS.find(d=>d.id===id)).filter(Boolean).map(d=>({id:d.id,sk:d.sk,own:1}));
   if(pioRacer(s)&&!meOut(s))own.push({id:'me',sk:pioSk(s),own:1});
   const hired=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,5).map(d=>({id:d.id,sk:d.sk,own:0}));
   const pools=[own.slice().sort((a,b)=>b.sk-a.sk),own.concat(hired).sort((a,b)=>b.sk-a.sk)];let best=null;
-  for(const pool of pools)for(let k=1;k<=Math.min(maxE,3);k++){const ds=pool.slice(0,k);if(ds.length<k)continue;
+  for(const pool of pools)for(let k=1;k<=Math.min(maxE,4);k++){const ds=pool.slice(0,k);if(ds.length<k)continue;
     for(const lean of [0,1]){const entries=ds.map((p,j)=>{const md=cars[Math.min(j,cars.length-1)],e={drv:p.id,car:md.id,prep:1,tyre:'soft',gear:0},a=raceAdvice(rc,e,md,carStats(md,1,rc.y),s);Object.assign(e,a.rec);if(lean&&e.prep>1)e.prep=1;if(!prepAllowed(e.prep,s,rc,md))e.prep=1;return e;});
       const cost=entries.reduce((a,e)=>a+entryCost(rc,e,s).total,0);if(cost>s.cash||(k>1&&cost>cap))continue;
       const O=mgrOdds(s,rc,entries,260),ev=O.win*(pz+fame)+O.p2*(pz*0.5+fame*0.3)+O.p3*(pz*0.25+fame*0.12)-cost;
@@ -13124,6 +13260,10 @@ function mkRaceCar(e,y,trk){
   c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.crr0=st.crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
   c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.25:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
   c.L=L;c.a=L*0.46;c.b=L*0.54;c.h=st.cg;c.Iz=m*(L*L+1.9)/12*1.4;
+  // 0.34: какие колёса тормозят: ленточный и барабаны на задних (k1, k2) — только задние; тормоза на четыре колеса — спереди
+  // больше половины. Раньше в расчёте весь тормоз ложился на заднюю ось — и машина с четырьмя тормозами вела себя при
+  // торможении так же неустойчиво, как с одними задними
+  {const kid=parts(e.md).k.id,FB={k1:0,k2:0,k3:0.55,k5:0.55,k4:0.6,k6:0.6,mk1:0.3,mk2:0,mk3:0.55};c.fb=FB[kid]!==undefined?FB[kid]:0.5;}
   // 0.33: мотоцикл — свой зачёт и узкий корпус (обгоняет по краю дороги, в столкновении — меньше места)
   c.cls=isMoto(e.md)?'moto':'car';c.rad=CAR_R;
   if(c.cls==='moto'){const pb=parts(e.md);c.rad=(pb.b.seats||1)>1?0.62:pb.c.id==='mf1'&&y<1902?0.5:0.42;c.Iz=m*(L*L+0.3)/12*1.2;}   // коляска и трицикл — шире одиночки
@@ -13181,7 +13321,7 @@ function playerService(c,dt){
   if(c.svc===1){if(!c.svc1T)c.svcRel=false;c.svc1T=(c.svc1T||0)+dt;if(!rKeys.gas)c.svcRel=true;
     // передумали: отпустили «Газ» и нажали снова — едем дальше (кроме пустого бака); газ, зажатый с самого начала, остановку не отменяет
     if(rKeys.gas&&c.svcRel&&c.svc1T>0.4&&!(c.fuelRate&&c.fuel<=0)){c.svc=0;c.svc1T=0;c.svcNo=R.time+5;rMsg('ЕДЕМ ДАЛЬШЕ',1);return;}
-    c.thr=0;c.brk=1;
+    c.thr=0;c.brk=Math.abs(c.vx)>4?0.35:1;
     // 0.29: на склоне или в грязи машина сползает и не может «встать» — механик подкладывает башмаки под колёса
     if(c.svc1T>2.5){c.vx=0;c.vy=0;c.r=0;}
     if(Math.abs(c.vx)<0.6){c.svc1T=0;const S=svcPlan(c);c.svc=2;c.svcT=S.t;c.svcWhat=S.what.join(', ')||'осмотр';rMsg((S.pit?'БОКСЫ: ':'МЕХАНИК: ')+c.svcWhat,1.8);}}
@@ -13213,7 +13353,9 @@ function carStep(c,trk,dt){
   if(c.shift>0)c.shift-=dt;else{if(c.rpm>0.96&&c.gear<c.gr.length){c.gear++;c.shift=0.28;}else if(c.gear>1&&Math.abs(v)<c.gr[c.gear-2]*0.55){c.gear--;c.shift=0.2;}}
   vg=c.gr[c.gear-1];
   const Fzf=c.m*GRAV*c.b/c.L,Fzr=c.m*GRAV*c.a/c.L;
-  let Fx=0;const thr=stopped?0:c.thr,brk=stopped?1:c.brk;
+  // 0.34: машина «встаёт» (поломка, бак пуст, сервис, сход) — на скорости тормозит плавно, а не намертво: раньше полный тормоз
+  // на ходу блокировал задние колёса, и машину разворачивало (отзыв: «кончился бензин — машину заносит и разворачивает»)
+  let Fx=0;const thr=stopped?0:c.thr,brk=stopped?(Math.abs(c.vx)>4?Math.max(Math.min(c.brk,0.6),0.3):1):c.brk;
   // уклон: в гору машина теряет скорость, под гору разгоняется; крутой склон шинам не одолеть
   const grade=gradeAt(c,trk,lat);c.grade=grade;
   // на крутом подъёме первая передача «ползёт» (сцепление с проскальзыванием): слабые машины 1890-х не встают намертво
@@ -13239,10 +13381,12 @@ function carStep(c,trk,dt){
     if(brk>0.3&&Math.abs(c.vx)<0.35)c.vx=0;}
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
-    const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(muR*Fzr+1)),2)));
-    const Fyf=tyreSat(af,Fzf,1,muF),Fyr=tyreSat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
+    // сколько продольной силы у каждой оси: тяга — только задние колёса, тормоз — по осям (c.fb — доля передних)
+    const brkF=brk>0.05&&!c.rev&&Fx<0?-Fx:0,fb=c.fb||0,FxR=brkF?brkF*(1-fb):Math.abs(Fx),FxF=brkF*fb;
+    const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxR/(muR*Fzr+1)),2))),frontCap=FxF?Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxF/(muF*Fzf+1)),2))):1;
+    const Fyf=tyreSat(af,Fzf,frontCap,muF),Fyr=tyreSat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
     const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
-    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump+rgh.ay,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull+rgh.dr+(c.punct?twPull(c)*0.6*Math.min(1,sp/15):0);
+    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump+rgh.ay,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull+rgh.dr+(c.punct?twPull(c)*(c.punctWhy==='wear'?0.3:0.6)*Math.min(1,sp/15):0);
     c.vx+=dvx*dt;c.vy+=dvy*dt;c.r+=dr*dt;c.r*=0.9995;c.slipR=Math.abs(ar);c.slipF=Math.abs(af);
     // сколько сцепления шин уже занято (1 — предел): боковая сила по углу увода + тяга или торможение
     const gl=Math.tanh(PHY.tk*Math.max(c.slipF,c.slipR)),gx=Math.min(1.3,Math.abs(Fx)/(mu*c.m*GRAV+1));c.gu+=(Math.min(1.5,Math.hypot(gl,gx)+spin*0.5)-c.gu)*Math.min(1,dt*20);
@@ -13329,8 +13473,9 @@ function carFailure(c){
   // у своих машин механик почти всегда успевает починить на обочине; сход — только при тяжёлой поломке или после сильных ударов
   const early=R.rc.y<1906,terminal=Math.random()<(c.you?0.12+Math.min(0.5,c.dmg/200):0.6);
   const what=pick(['мотор','зажигание','цепь привода','подшипник','рессора','карбюратор','радиатор',early?'цепь':'клапан']);
+  if(c.you)(c.stopLog||(c.stopLog=[])).push(what);   // 0.34: что ломалось — КБ узнаёт слабое место (43-season.js, raceDevLearn)
   if(terminal){c.dnf=what;c.thr=0;if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — ${what}`,2.5);}
-  else{c.stopN=(c.stopN||0)+1;c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1)*(c.fixK||1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
+  else{c.stopN=(c.stopN||0)+1;c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?(c.subMech?0.8:0.6):1)*(c.fixK||1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 // Машины — капсулы: сталкиваются корпусами (нос в корму тоже), удар в угол разворачивает
@@ -13348,31 +13493,65 @@ function carsCollide(A,B){if(A.ghostT>0||B.ghostT>0)return 0;const dx0=A.x-B.x,d
 function aiControl(c,trk,dt){
   // 0.32: гоночная линия (41j-line.js): точность — по мастерству пилота и уровню сложности
   const {pts,n,closed,step}=trk,sk=aiSkill(c),v=Math.max(0,c.vx),LN=lineOf(trk),pr=linePrec(c),LL=LN.lat;
-  const look=6+v*0.75,ai=Math.round(look/step);let ti=c.idx+ai;if(closed)ti%=n;else ti=Math.min(n-1,ti);
+  const look=(6+v*0.75)*(c.wide>0.6?0.75:1),ai=Math.round(look/step);let ti=c.idx+ai;if(closed)ti%=n;else ti=Math.min(n-1,ti);
   const tp=pts[ti],tn=trk.N[ti],off=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[ti]*pr;const tx=tp[0]+tn[0]*off,tz=tp[2]+tn[1]*off;
   const dx=tx-c.x,dz=tz-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);const lz=dx*fx+dz*fz,lx=dx*Math.cos(c.yaw)-dz*Math.sin(c.yaw);
   // руль: кривизна дуги до точки впереди + поправка по скорости вращения (шинам нужен угол увода)
   const kap=2*lx/Math.max(16,lz*lz+lx*lx);let want=Math.atan(c.L*kap);if(v>5)want+=clamp((kap*v-c.r)*0.3,-0.2,0.2);
-  const dmax=0.6/(1+v/20);c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-2.2*dt,2.2*dt);
+  // 0.34: зад пошёл в занос — руль по ходу заноса (контрруль), как ловит машину живой гонщик (раньше ИИ крутил дальше в поворот)
+  // (у шины предел — около 0,15 рад угла увода: до него это обычный быстрый поворот, дальше — занос)
+  if(v>4&&c.slipR>0.17){const cs=Math.atan2(c.vy+c.a*c.r,Math.max(1,v)),kc=clamp((c.slipR-0.17)/0.25,0,0.85);want=want*(1-kc)+cs*kc;}
+  // 0.34: на большой скорости руль — малыми углами и плавно (раньше на 150 км/ч ИИ мог дёрнуть руль на 0,2 рад — машину бросало)
+  const dmax=Math.min(0.6/(1+v/20),1.5*c.L*(c.muNow||c.grip||1)*GRAV/Math.max(1,v*v)+0.09),dr=2.2/(1+v/25)*dt;c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-dr,dr);
+  // 0.34: машину развернуло поперёк или назад — разворот, как у живого гонщика: остановиться, сдать назад с обратным рулём,
+  // вперёд с полным рулём (раньше через 1,5–3 с машину ставили на дорогу «телепортом» — отзыв: «вылетают и сразу возвращаются»)
+  if(aiRecover(c,trk,dt,v))return;
   const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
-  const mu=roadMuAt(trk,c.idx)*c.grip*twAll(c)*(0.8+0.17*sk)*(c.punct?0.85:1)*ordK,muC=mu*0.9;
+  const mu0=roadMuAt(trk,c.idx)*c.grip*twAll(c)*(c.punct?0.85:1),mu=mu0*(0.8+0.17*sk)*ordK,muC=mu*0.9;
   // тормозит тем позже, чем опытнее: новичок — с запасом
-  const bdec=c.brakeK*mu*GRAV*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05;
-  // скорость — по кривизне той дуги, которой пилот едет (ось дороги + доля гоночной линии)
-  {const K=trk.K,KL=LN.K,mg=muC*GRAV,b2=2*bdec,lim=Math.min(170,40+v*4.5),onL=c.laneT===undefined;let vt2=vt*vt;
-    for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=onL?K[j]+pr*(KL[j]-K[j]):K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
+  const bdec=c.brakeK*mu*GRAV*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05,aNeed=0;
+  // скорость — по кривизне той дуги, которой пилот едет (ось дороги + доля гоночной линии);
+  // 0.34: и какое замедление нужно, чтобы войти в поворот с этой скоростью — тормозить заранее и по прямой, а не в самом повороте
+  // профиль скорости впереди «с конца» (как у гоночных симуляторов): в каждой точке — не больше, чем держат шины в повороте,
+  // и не больше, чем успеть затормозить к следующей; тормозить в повороте можно лишь тем, что осталось от сцепления (круг трения),
+  // поэтому перед плавным входом в поворот машина сбрасывает скорость ещё на прямой
+  {const K=trk.K,KL=LN.K,mg=muC*GRAV,bp=bdec*0.85,onL=c.laneT===undefined,ds=step*2,m=Math.max(2,Math.min(120,Math.ceil(Math.min(200,40+v*5.5)/ds))),v2=v*v;
+    const KS=c._KS||(c._KS=new Float32Array(122)),VL=c._VL||(c._VL=new Float32Array(122));
+    for(let it=0;it<=m;it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)j=n-1;const kk=onL?K[j]+pr*(KL[j]-K[j]):K[j];KS[it]=(kk<0?-kk:kk)+1e-4;}
+    // тормозят задние колёса (в модели тормоз нагружает заднюю ось): в повороте им остаётся лишь доля сцепления задней оси —
+    // поэтому тормозить надо до поворота, по прямой
+    const rf=clamp((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0))),0.3,1);
+    let vn=Math.min(vt,Math.sqrt(mg/KS[m]));VL[m]=vn;
+    for(let it=m-1;it>=0;it--){const k=KS[it],vc=Math.sqrt(mg/k),u=Math.min(1,vn*vn*k/mg),a=bp*Math.sqrt(Math.max(0.04,1-u*u))*(1-(1-rf)*Math.min(1,u/0.3));vn=Math.min(vc,Math.sqrt(vn*vn+2*a*ds));VL[it]=vn;}
+    vt=Math.min(vt,VL[0]);
+    for(let it=1;it<=m;it++){const dd=it*ds-1.5;if(dd<=0)continue;const w2=VL[it]*VL[it];if(v2>w2){const a=(v2-w2)/(2*dd);if(a>aNeed)aNeed=a;}}}
   // закрытый переезд: остановиться у шлагбаума
   const gs=aiGateStop(c,trk);c.gateWait=gs<6?1:0;if(gs<150){const va=Math.sqrt(2*bdec*Math.max(0,gs-1));if(va<vt)vt=va;}
   if(c.vCap)vt=Math.min(vt,c.vCap);
-  if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
-  const onL=c.laneT===undefined,kN=onL?(trk.K[c.idx]||0)+pr*((LN.K[c.idx]||0)-(trk.K[c.idx]||0)):(trk.K[c.idx]||0),latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
-  c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
-  // выносит наружу поворота дальше своей линии (или к самой бровке) — сбросить газ и подтормозить
-  {const tl=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[c.idx]*pr,out=-Math.sign(kN)*(c.lat-tl)-0.9,edge=-Math.sign(kN)*c.lat-(trk.W/2-0.7),wide=Math.max(out,edge);
-    if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,0.2);c.brk=Math.max(c.brk,Math.min(0.5,wide*0.15));}}
+  // ошибка пилота: чуть быстрее, чем можно (новичок ошибается чаще)
+  if(c.err>0){c.err-=dt;vt*=1.05;aNeed*=0.85;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
+  const onL=c.laneT===undefined,kN=onL?(trk.K[c.idx]||0)+pr*((LN.K[c.idx]||0)-(trk.K[c.idx]||0)):(trk.K[c.idx]||0),latDem=Math.max(v*v*Math.abs(kN),Math.abs(v*c.r))/(mu*GRAV+0.01);
+  c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;
+  // 0.34: тормоз — по профилю скорости: выше профиля — тормозить с нужным замедлением (заранее и твёрдо, без «качелей»
+  // газ-тормоз), а не «чуть-чуть, когда уже быстро»: так машина входила в поворот быстрее, чем можно, и тормозила в самом
+  // повороте — у машин с тормозами на задних колёсах это занос и разворот
+  {const full=c.brakeK*mu0*GRAV+0.01;c.brk=v>vt?clamp((Math.max(aNeed,0.5)/full)*1.1+(v-vt)*0.15,0.12,1):0;
+    // в повороте тормоз — только в пределах сцепления, что осталось от поворота (круг трения)
+    if(latDem>0.15)c.brk=Math.min(c.brk,clamp(1.1*Math.sqrt(Math.max(0,1-latDem*latDem))*((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0)))+0.15),0.06,1));
+    // и по прямой — не до блокировки задних колёс (заблокированные колёса не держат вбок — разворот)
+    c.brk=Math.min(c.brk,clamp(0.95*(c.a/c.L)/Math.max(0.2,c.brakeK*(1-(c.fb||0))),0.35,1));}
+  // выносит наружу поворота дальше своей линии (или к самой бровке) — сбросить газ; тормоз — только почти по прямой
+  {const tl=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[c.idx]*pr,out=-Math.sign(kN)*(c.lat-tl)-0.9,edge=-Math.sign(kN)*c.lat-(trk.W/2-0.7),wide=Math.max(out,edge);c.wide=Math.abs(kN)>1/400?wide:0;
+    if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,wide>0.6?0:0.2);if(latDem<0.35)c.brk=Math.max(c.brk,Math.min(0.3,wide*0.1));}}
   if(c.heat>82&&c.rpm>0.85)c.thr=Math.min(c.thr,c.order==='push'?0.7:0.5);
-  if(c.slipR>0.14&&c.thr>0.5)c.thr=0.5;
-  if(c.off&&v>8){c.thr=Math.min(c.thr,0.3);c.brk=Math.max(c.brk,0.2);}
+  // 0.34: газ — по сцеплению задних колёс (опытный гонщик не срывает колёса в пробуксовку): тяга не больше того, что держат шины
+  // с учётом поворота; колёса всё-таки буксуют — газ меньше
+  {const vg=c.gr[c.gear-1]||10,vCr=2.2+0.22*vg,Fzr=c.m*GRAV*c.a/c.L,pw=Math.max(1,c.P*(1-c.dmg/250)),avail=(c.muNow||mu0)*Fzr*Math.sqrt(Math.max(0.05,1-Math.min(1,latDem)**2));
+    c.thr=Math.min(c.thr,clamp(0.95*avail*Math.max(v,vCr)/pw,0.12,1));if(c.spinw>0.03)c.thr*=0.7;}
+  // зад скользит — отпустить тормоз и держать газ чуть-чуть: машина выравнивается
+  if(c.slipR>0.19&&v>4){c.brk=Math.min(c.brk,0.08);c.thr=Math.min(c.thr,0.22);}
+  // за обочиной: газ меньше, тормоз — только если быстро и почти по прямой
+  if(c.off&&v>8){c.thr=Math.min(c.thr,0.35);if(v>15&&latDem<0.35)c.brk=Math.max(c.brk,0.25);}
   // боксы: шины, топливо, повреждения или приказ команды
   // 0.26: тормозим к боксам загодя (быстрые машины на овале не успевали — и оставались без бензина); заезд засчитан и на скорости
   // 0.30: бензин — и на последнем круге: если до финиша не хватит, заезжаем (раньше на последний круг в боксы не заезжали — и сходили «без топлива»)
@@ -13388,6 +13567,25 @@ function aiControl(c,trk,dt){
   if(c.fuelRate&&c.fuel<=0&&!(c.pitT>0)&&!(c.stopT>0)&&!c.dnf){c.canN=(c.canN||0)+1;if(c.canN>3){c.dnf='кончилось топливо';if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — кончилось топливо`,2.5);}
     else{c.stopT=(R.rc&&R.rc.y>=1925&&R.rc.t!=='rally'&&R.rc.t!=='endurance'?40:24)*(c.fuelK||1);c.stopWhy='канистра';c.fuel=Math.min(100,22+rem*c.fuelRate*0.5);if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: бензин кончился — доливают из канистры`,1.6);}}
 }
+// 0.34: разворот после заноса — как у живого гонщика: остановиться; если стоит задом наперёд — сдать назад с обратным рулём;
+// вперёд с полным рулём, пока нос не смотрит вдоль дороги. Не выходит за три попытки — маршалы (aiStuckCheck)
+function aiRecover(c,T,dt,v){
+  if(c.player||c.dnf||c.fin!==null||c.stopT>0||c.pitT>0||c.wait||c.inWater)return false;
+  const tdir=Math.atan2(T.T[c.idx][0],T.T[c.idx][1]),ang=angWrap(c.yaw-tdir),aa=Math.abs(ang),sg=ang<0?-1:1;
+  // упёрся (в стену, скалу, чужую машину): газ есть, а машина стоит — сдать назад
+  c.blkT=c.thr>0.4&&c.brk<0.1&&Math.abs(c.vx)<0.3&&!c.rec?(c.blkT||0)+dt:0;
+  if(!c.rec){if(aa>1.2&&Math.abs(c.vx)<5&&R.t>3)c.rec={ph:'stop',t:0,n:0,tt:0};
+    else if(c.blkT>1.2&&R.t>3){c.rec={ph:'back',t:0,n:0,tt:0,blk:1};c.blkT=0;}else return false;}
+  const Q=c.rec;Q.t+=dt;Q.tt+=dt;
+  const steerTo=(x)=>{c.delta+=clamp(x-c.delta,-2*dt,2*dt);};
+  if(Q.ph==='stop'){c.rev=false;c.thr=0;c.brk=1;steerTo(0);if(Math.abs(c.vx)<0.4||Q.t>3){Q.ph=aa>1.9?'back':'fwd';Q.t=0;}}
+  else if(Q.ph==='back'){c.rev=true;c.brk=0;c.thr=0.55;steerTo(Q.blk&&aa<0.6?-Math.sign(c.delta||sg)*0.35:sg*0.5);if((aa<1.0&&!Q.blk)||Q.t>(Q.blk?1.6:2.4)){Q.ph='halt';Q.t=0;}}
+  else if(Q.ph==='halt'){c.rev=false;c.thr=0;c.brk=1;if(Math.abs(c.vx)<0.4||Q.t>1.5){Q.ph='fwd';Q.t=0;}}
+  else if(Q.ph==='fwd'){c.rev=false;c.brk=0;c.thr=0.42;steerTo(-sg*Math.min(0.5,aa+0.1));
+    if(aa<0.45||(Q.blk&&Q.t>1.2&&Math.abs(c.vx)>2)){c.rec=null;return false;}
+    if(Q.t>3.5){Q.n++;Q.ph='stop';Q.t=0;}}
+  if(Q.n>2||Q.tt>16){c.rec=null;c.rev=false;c.recFail=1;return false;}
+  return true;}
 // Движение в потоке: обгон медленной машины впереди, съезд к обочине для ремонта
 function aiTraffic(T){
   const W2=T.W/2-1.3;
@@ -13404,12 +13602,14 @@ function aiTraffic(T){
         const L=P.lat+P.b+1.1,Rr=P.lat-P.b-1.1;if(L<=W2||Rr>=-W2)c.laneT=L<=W2&&(Rr<-W2||Math.abs(L-c.lat)<Math.abs(Rr-c.lat))?L:Rr;break;}}
   });
 }
-const rKeys={left:false,right:false,gas:false,brake:false};
+// gasLv — 0.34: «Газ» с дозировкой (выше по кнопке — больше газа, ниже — меньше); с клавиатуры — полный
+const rKeys={left:false,right:false,gas:false,brake:false,gasLv:1};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
 const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
   if(c.wait)return;
-  const v=Math.max(0,c.vx),hist=G.diff==='hist';
+  // 0.34: на мотоцикле помощь «вшитая» на всех уровнях (и на «Историке»): руль, контрруль, газ в заносе — как на обычном
+  const v=Math.max(0,c.vx),hist=G.diff==='hist'&&c.cls!=='moto';
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
@@ -13433,9 +13633,18 @@ function playerControl(c,dt){
   const still=Math.abs(c.vx)<0.5;
   if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
   else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
-  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
-  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
+  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake,gLv=c.rev?1:clamp(rKeys.gasLv??1,0.1,1);
+  c.thr+=clamp((gIn?gLv:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
+  // 0.34: мотоцикл — помощь гонщику, «вшитая»: газ не срывает заднее колесо в пробуксовку (сколько держит шина с учётом наклона
+  // в повороте), тормоз не блокирует колёса (как ABS) — на мощном мотоцикле и вне асфальта иначе не проехать
+  // (отзыв: «45 л.с. — с газом не повернёшь, сразу разворачивает»; «на мото точно нужно ставить вшитую АБС»). Помощь — на всех
+  // уровнях, и на «Историке»: живой мотоциклист дозирует газ ручкой и чувствует колесо, а кнопка на экране этого не передаёт
+  if(c.cls==='moto'&&v>0.5){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
+    const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.08,1);if(c.thr>tMax)c.thr=tMax;
+    if(c.slipR>0.14)c.thr=Math.min(c.thr,0.25);
+    if(!c.rev&&c.brk>0){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
+      c.brk=Math.min(c.brk,Math.max(0.1,Math.min(capR,capF)));}}
   // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
   if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }
@@ -13453,7 +13662,7 @@ function wearSetup(c,trk,rc){
   // бака почти хватает на всю гонку — механики заливают с запасом, чтобы доехать без заправки; иначе нужна остановка
   if(trk.cfg.pits){const range=280/(p.e.fuel||1),f0=range/km,frac=f0>=0.9?clamp(Math.max(f0,1.15),1.15,1.6):clamp(f0,0.55,0.9);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
   twInit(c,rc.y);
-  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);
+  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?(c.subMech?1.15:1):1.4)*(c.pitK||1);
 }
 function startRace(setup){try{voiceUnlock();}catch(_){}
   const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
@@ -13468,7 +13677,7 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));
   const trk=buildTrack(rc,vref);
   const mechOut=typeof injOf==='function'&&injOf(s,'mech');
-  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);if(c.you&&mechOut&&c.st.mech)c.st.mech=false;c.mech=c.st.mech;
+  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);if(c.you&&mechOut&&c.st.mech)c.subMech=true;c.mech=c.st.mech;
     // ваша машина — такая же, как в конструкторе: её цвет и кузов; соперники — гоночные машины в цветах своих стран
     const fdrv=c.drvId==='me'?(s.racer&&s.racer.id&&s.racer.id!=='custom'?s.racer.id:(pio.drv||'')):c.drvId;
     if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you&&!c.works?s.country:c.tc,num:c.num,mech:c.mech,drv:fdrv});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
@@ -13646,7 +13855,7 @@ function raceTick(dt){
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){twFix(c,twPlan(c,true),true);c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if((c.vx<15||(c.wantPit&&!c.player))&&c.lap>0){c.pitT=(4+(c.fuel<60?2*(c.pfuelK||1):0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
-    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
+    if(c.stopT>0){c.stopT-=dt*(Math.abs(c.vx)<1.5?1:0.3);c.thr=0;c.brk=Math.abs(c.vx)>4?0.35:1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if((c.punct&&!c.flat||c.tyreSwap)&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;
       // 0.30: меняют только нужные колёса: пробитые (и совсем стёртые); износ всех — все четыре
       const L=c.tyreSwap?[0,1,2,3]:twPlan(c,false,true);if(c.fix>twTime(c,L,false)){twFix(c,L,false);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+(c.tyreSwap?'НОВЫЕ ШИНЫ':L.length>1?'КОЛЁСА ЗАМЕНЕНЫ':'КОЛЕСО ЗАМЕНЕНО'),1.2);c.tyreSwap=false;}}
@@ -13683,8 +13892,11 @@ function raceTick(dt){
       else me.offIdx=-1;}}
   R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
     // проколотое колесо «до финиша на ободе» (flat) — тоже вытаскиваем на дорогу, если машина увязла в траве
-    if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&!c.tyreSwap&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
-      c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
+    // 0.34: на дорогу ставим только того, кто сам не выбрался: далеко в поле, разворот не вышел или машина встала;
+    // на глазах у гонщика — не раньше чем через 12 с (раньше — через 1,5–3 с после любого заноса: «вылетают и сразу возвращаются»)
+    if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&!c.tyreSwap&&c.fin===null&&R.t>4){const far=Math.abs(c.lat)>T.W/2+14,bad=(far||c.recFail||(c.vx<0.5&&!c.rec))&&!c.gateWait&&c.inWater!==2;
+      c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);const me2=R.me,seen=R.mode==='drive'&&me2&&me2!==c&&!me2.dnf&&Math.hypot(me2.x-c.x,me2.z-c.z)<160;
+      if(c.st2>(c.recFail&&!seen?1.5:seen?12:6)){respawn(c);c.st2=0;c.recFail=0;c.rec=null;}}
     // 0.18: машина соперника (или вашего пилота) минуту не двигается к финишу — сход «застрял» (гонка не тянется бесконечно)
     // 0.26: застрял (машина поперёк, упёрся в препятствие или в чужую машину) — через 15 с маршалы выталкивают его на дорогу дальше;
     // время потеряно, но гонка продолжается. Сход — если и после пяти раз дальше не едет
@@ -13738,7 +13950,7 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,cls:c.cls||'car',name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||''}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,cls:c.cls||'car',name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||'',stops:c.you?(c.stopLog||[]).slice(0,6):[]}));
   // 0.33: совместная гонка — у автомобилей и мотоциклов свои зачёты: места считаются внутри класса
   {const pc={};res.forEach(r=>{pc[r.cls]=(pc[r.cls]||0)+1;r.pos=pc[r.cls];});}
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}
@@ -14801,15 +15013,29 @@ function navLines(){return Object.values(NAV_L).concat(typeof legLines==='functi
 const NAV={buf:{},pend:{},q:[],until:0,cd:{},said:{},R:null};
 // голос механика есть только там, где он сидит в машине: до 1925 года (и пока он не в больнице)
 function navActive(){const me=R&&R.me;return !!(me&&R.mode==='drive'&&me.mech&&!R.film&&!R.demo&&R.trk&&(typeof legMode!=='function'||legMode()!=='off'));}
+// 0.34: голос механика — одним файлом voice/nav.js (base64 всех слов): в приложении вшит и работает без сети, на сайте — один
+// запрос вместо сотни. Отзыв «иногда не слышу штурмана»: слова грузились с сайта по одному, и при медленной сети фраза
+// пропадала, а неудачная загрузка запоминалась до конца игры; голос ещё и выключался вместе с голосом диктора в кинохронике
+const NAVPACK={p:null};
+function navPackLoad(){if(NAVPACK.p)return NAVPACK.p;
+  NAVPACK.p=new Promise(res=>{if(window.NAV_VOICE){res(window.NAV_VOICE);return;}
+    try{const sc=document.createElement('script');sc.src='voice/nav.js';sc.async=true;sc.onload=()=>res(window.NAV_VOICE||null);sc.onerror=()=>{NAVPACK.p=null;res(null);};document.head.appendChild(sc);}catch(e){NAVPACK.p=null;res(null);}});
+  return NAVPACK.p;}
+function navB64(b){const t=atob(b),n=t.length,u=new Uint8Array(n);for(let i=0;i<n;i++)u[i]=t.charCodeAt(i);return u.buffer;}
+// голос механика слышен, когда включены звуки игры (кнопка 🗣 в гонке — читает всё, только опасное или молчит)
+function navVoiceOn(){return !!(AU.ctx&&AU.on.sfx);}
 function navReset(){NAV.R=R;NAV.lt=undefined;NAV.legI=0;NAV.legK=undefined;NAV.legSaid=0;NAV.brkC=null;NAV.srcs=[];NAV.q=[];NAV.until=0;NAV.cd={};NAV.said={};NAV.curve=null;NAV.rank=0;NAV.rankT=0;NAV.tp=null;NAV.dmg=0;NAV.prog=0;NAV.oilT=60+Math.random()*60;NAV.wet=0;NAV.start=0;NAV.fin=0;NAV.dustT=0;
   NAV.pan=R.rc.c==='us'&&R.rc.y>=1910?0.32:-0.32;   // руль справа (Европа, ранние американцы) — механик слева; у американцев с 1910-х — наоборот
-  if(AU.ctx&&AU.on.sfx&&reelVoiceOn())voiceLoad().then(()=>{if(NAV.R===R)navLines().forEach(t=>navBuf(t));}).catch(()=>{});}
+  if(navVoiceOn())navLines().forEach(t=>navBuf(t));}
+// запись слова: из вшитого файла, иначе — с сайта; неудачу не запоминаем (в следующий раз попробуем снова)
 function navBuf(text){const h=voiceHash(text,'nav');if(NAV.buf[h])return Promise.resolve(NAV.buf[h]);if(NAV.pend[h])return NAV.pend[h];if(!AU.ctx)return Promise.resolve(null);
-  NAV.pend[h]=voiceLoad().then(()=>{if(!voiceDur(text,'nav'))return null;return fetch(voiceUrl(text,'nav')).then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab?new Promise((ok,no)=>AU.ctx.decodeAudioData(ab,ok,no)):null);})
-    .then(b=>{if(b)NAV.buf[h]=b;return b;}).catch(()=>null);return NAV.pend[h];}
+  const dec=ab=>new Promise((ok,no)=>AU.ctx.decodeAudioData(ab,ok,no));
+  NAV.pend[h]=navPackLoad().then(P=>{if(P&&P[h])return dec(navB64(P[h]));
+      return voiceLoad().then(()=>{if(!voiceDur(text,'nav'))return null;return fetch(voiceUrl(text,'nav')).then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab?dec(ab):null);});})
+    .then(b=>{if(b)NAV.buf[h]=b;else delete NAV.pend[h];return b;}).catch(()=>{delete NAV.pend[h];return null;});return NAV.pend[h];}
 // крик в открытой машине: без эха, чуть «в лоб», со стороны пассажира; громче, когда мотор ревёт.
 // 0.31: фраза — из нескольких слов подряд (легенда: «Правый сорок пять», «сто», «Левый девяносто»): тишину по краям записи срезаем
-function navPlaySeq(list){if(!AU.ctx||!AU.on.sfx||!reelVoiceOn())return 0;const c=AU.ctx;let t=c.currentTime+0.03;const t0=t;
+function navPlaySeq(list){if(!navVoiceOn())return 0;const c=AU.ctx;let t=c.currentTime+0.03;const t0=t;
   const hp=c.createBiquadFilter(),pk=c.createBiquadFilter(),g=c.createGain();hp.type='highpass';hp.frequency.value=150;pk.type='peaking';pk.frequency.value=2200;pk.Q.value=0.9;pk.gain.value=3;
   const me=R&&R.me,loud=me?clamp(0.95+0.35*clamp(me.rpm||0,0,1.1)+0.25*clamp((me.vx||0)/30,0,1),0.9,1.5):1;g.gain.value=1.25*loud;
   hp.connect(pk);pk.connect(g);let out=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=NAV.pan||0;g.connect(p);out=p;}out.connect(AU.fx);
@@ -14819,8 +15045,11 @@ function navPlaySeq(list){if(!AU.ctx||!AU.on.sfx||!reelVoiceOn())return 0;const 
 function navPlay(text){return navPlaySeq([text]);}
 function navStopVoice(){(NAV.srcs||[]).forEach(s=>{try{s.stop();}catch(_){}});NAV.srcs=[];}
 // сказать: слова (голос) и подпись; длительность — по записи, без записи — по числу букв
+// записи слова ещё нет (нет сети и вшитого файла) — фразу читает голос телефона, чтобы гонщик не остался без легенды
 function navSpeak(texts,subT,pri){const now=R.time;let d=0;texts.forEach((t,k)=>{d+=Math.max(0.25,(voiceDur(t,'nav')||t.length/13)-(k?0.14:0.05));});
-  const real=navPlaySeq(texts);if(real)d=real;NAV.until=now+d+0.2;navBubble(subT||texts.join(' '),d);}
+  const real=navPlaySeq(texts);if(real)d=real;
+  else if(navVoiceOn()&&typeof ttsSay==='function'){const ph=texts.join(', ');if(ttsSay(ph)){d=Math.max(d,ph.length/13);NAV.tts=(NAV.tts||0)+1;}}
+  NAV.until=now+d+0.2;navBubble(subT||texts.join(' '),d);}
 // в очередь: важное (тормози, шлагбаум, прокол) вперёд; устаревшее (поворот уже проехали) — выбросить
 function navSay(key,pri,ttl,cd){if(!NAV_L[key])return;const now=R.time;if(cd&&(NAV.cd[key]||-99)>now-cd)return;NAV.cd[key]=now;
   NAV.q=NAV.q.filter(x=>x.key!==key);NAV.q.push({key,pri:pri||3,t:now,ttl:ttl||3});
@@ -14899,10 +15128,10 @@ const LEG_W={R15:'Правый пятнадцать',L15:'Левый пятна�
   R60:'Правый шестьдесят',L60:'Левый шестьдесят',R90:'Правый девяносто',L90:'Левый девяносто',R120:'Правый сто двадцать',L120:'Левый сто двадцать',
   R150:'Правый сто пятьдесят',L150:'Левый сто пятьдесят',RH:'Правая шпилька',LH:'Левая шпилька',
   tight:'крутой',long:'длинный',tighten:'затягивается',open:'открывается',nocut:'не режь',care:'осторожно',
-  now:'сразу',d50:'пятьдесят',d100:'сто',d150:'сто пятьдесят',d200:'двести',d300:'триста',d400:'четыреста',d500:'пятьсот',dlong:'длинная прямая',
+  cut:'режь прямо',now:'сразу',d50:'пятьдесят',d100:'сто',d150:'сто пятьдесят',d200:'двести',d300:'триста',d400:'четыреста',d500:'пятьсот',dlong:'длинная прямая',
   crest:'гребень',jump:'трамплин',bridge:'мост',rail:'переезд',vill:'деревня',town:'город',tunnel:'тоннель',serp:'серпантин',mud:'грязь',finish:'финиш'};
 // как это видно в подписи
-const LEG_SUB={RH:'Правая шпилька',LH:'Левая шпилька',tight:'крутой',long:'длинный',tighten:'затягивается',open:'открывается',nocut:'не режь',care:'осторожно',
+const LEG_SUB={RH:'Правая шпилька',LH:'Левая шпилька',cut:'режь прямо',tight:'крутой',long:'длинный',tighten:'затягивается',open:'открывается',nocut:'не режь',care:'осторожно',
   now:'сразу',d50:'50',d100:'100',d150:'150',d200:'200',d300:'300',d400:'400',d500:'500',dlong:'длинная прямая',crest:'гребень',jump:'трамплин',bridge:'мост',rail:'переезд',
   vill:'деревня',town:'город',tunnel:'тоннель',serp:'серпантин',mud:'грязь',finish:'финиш'};
 const LEG_ANG=[15,30,45,60,90,120,150];
@@ -14928,13 +15157,25 @@ function legBuild(T){const n=T.n,st=T.step,K=T.K,cl=!!T.closed,W=T.W,P=T.pts;if(
     const deg=ang*180/Math.PI,R=1/Math.max(1e-6,kmax);
     if(deg>=10||R<80)L.push({t:'c',k0:k,k1,ka,dir,deg:Math.max(deg,12),R,len:m*st,a1:a1/Math.max(1,Math.ceil(m/3)),a2:a2/Math.max(1,Math.ceil(m/3))});
     k=k1+1;}
+  // 0.34: насколько крут поворот на самом деле — по гоночной траектории (вход снаружи, апекс, выход), а не по оси дороги:
+  // отзыв «штурман страхуется и просит тормозить, а связку левый-правый часто можно пройти прямо по апексам»
+  let LK=null;try{const LN=typeof lineOf==='function'?lineOf(T):null;if(LN&&LN.K&&LN.K.length===n)LK=LN.K;}catch(_){}
+  const kLine=(a,b)=>{if(!LK)return 0;let m=0;for(let q=a;q<=b;q++){if(q<0||q>=span)continue;const v=Math.abs(LK[ix(q)]);if(v>m)m=v;}return m;};
+  for(const c of L){const kl=kLine(c.k0-2,c.k1+2);c.Rl=LK?Math.max(c.R,1/Math.max(1e-6,kl)):c.R;}
   // характер поворота
   const colAt=(k,lat,r)=>{const j=ix(k),p=P[j],nn=T.N[j],x=p[0]+nn[0]*lat,z=p[2]+nn[1]*lat;return (typeof colNear==='function'?colNear(T,x,z,r):[]).some(o=>Math.hypot(o.x-x,o.z-z)<(o.r||0.3)+r*0.6&&!/crowd|marsh|gend|photo/.test(o.kind||''));};
-  for(const c of L){c.hair=c.deg>=140&&c.R<30;c.call=Math.min(legAng(c.deg),legAngR(c.R));c.w=c.hair?(c.dir<0?'RH':'LH'):(c.dir<0?'R':'L')+c.call;
-    c.tight=!c.hair&&c.R<36&&c.deg>=40;c.long=!c.hair&&(c.deg>=c.call*1.6&&c.deg>=40||c.len>=90&&c.deg>=40);
+  for(const c of L){c.hair=c.deg>=140&&c.R<30;c.call=Math.min(legAng(c.deg),legAngR(c.Rl));c.w=c.hair?(c.dir<0?'RH':'LH'):(c.dir<0?'R':'L')+c.call;
+    c.tight=!c.hair&&c.Rl<36&&c.deg>=40;c.long=!c.hair&&(c.deg>=c.call*1.6&&c.deg>=40||c.len>=90&&c.deg>=40);
     c.tighten=!c.hair&&c.deg>=40&&c.a2>c.a1*1.6;c.open=!c.hair&&c.deg>=40&&!c.tighten&&c.a1>c.a2*1.6;
     // внутренняя бровка — со стороны поворота (поворот налево: кривизна > 0, бровка слева, lat > 0)
     const inS=c.dir>0?1:-1;c.nocut=c.deg>=30&&(colAt(c.ka,inS*(W/2+1.3),1.6)||colAt(Math.round((c.k0+c.ka)/2),inS*(W/2+1.3),1.6));}
+  // связка в разные стороны, которую гоночная траектория проходит почти прямо, — «режь прямо» (если внутри не стоит дерево или стена)
+  // «почти прямо» — дуга, которую машина эпохи проходит на полной скорости (у 1910-х — радиус от ~150 м, у 1920-х — от ~220 м)
+  {const y=(T.rc&&T.rc.y)||1910,top=clamp(25+0.7*(y-1895),25,48),flatR=top*top/(0.85*GRAV);
+    for(let q=0;q+1<L.length;q++){const a=L[q],b=L[q+1];if(a.dir===b.dir||(b.k0-a.k1)*st>=60||a.hair||b.hair||a.nocut||b.nocut)continue;
+      if(LK&&kLine(a.k0,b.k1)<1/flatR){a.cut=0;b.cut=1;a.flat=b.flat=1;}}
+    // в связке «режь прямо» каждый поворот — пологий («пятнадцать»), «режь прямо» — в конце цепочки
+    for(const c of L)if(c.flat&&!c.hair){c.call=15;c.w=(c.dir<0?'R':'L')+15;c.tight=c.long=false;}}
   // 2) опасности по пути: гребень и трамплин (по уклону), мост, тоннель, переезд, деревня и город, серпантин, грязь, финиш
   const H=[],add=(k,w,x)=>{if(k<0||k>=span)return;if(H.some(h=>h.w===w&&Math.abs(h.k0-k)*st<60))return;H.push(Object.assign({t:'h',k0:k,k1:k,w},x||{}));};
   const y=k=>P[ix(clamp(k,0,span-1))][1],gr=k=>(y(k+1)-y(k-1))/(2*st);
@@ -14951,15 +15192,15 @@ function legBuild(T){const n=T.n,st=T.step,K=T.K,cl=!!T.closed,W=T.W,P=T.pts;if(
   // опасность внутри поворота — к самому повороту не пристраиваем, читаем перед ним
   const all=L.concat(H).sort((a,b)=>a.k0-b.k0||(a.t==='h'?-1:1));
   // «осторожно»: крутой поворот после длинной прямой или сразу за гребнем
-  for(let q=0;q<all.length;q++){const c=all[q];if(c.t!=='c')continue;const prev=all[q-1];const straight=prev?(c.k0-prev.k1)*st:c.k0*st,sharp=c.hair||c.R<45;
+  for(let q=0;q<all.length;q++){const c=all[q];if(c.t!=='c')continue;const prev=all[q-1];const straight=prev?(c.k0-prev.k1)*st:c.k0*st,sharp=c.hair||c.Rl<45;
     c.care=sharp&&(straight>=260||(prev&&prev.t==='h'&&(prev.w==='crest'||prev.w==='jump')&&(c.k0-prev.k0)*st<45));}
   return {L:all,b0,i0,span,cl,n};}
 // слова одной записи легенды: поворот и характер; опасность — одно слово
-function legWords(c,full){if(c.t==='h')return [c.w];const w=[c.w];if(c.care)w.unshift('care');if(c.tight)w.push('tight');if(c.long)w.push('long');
-  if(full){if(c.tighten)w.push('tighten');else if(c.open)w.push('open');if(c.nocut)w.push('nocut');}return w;}
+function legWords(c,full){if(c.t==='h')return [c.w];const w=[c.w];if(c.care&&!c.flat)w.unshift('care');if(c.tight&&!c.flat)w.push('tight');if(c.long)w.push('long');
+  if(full&&!c.flat){if(c.tighten)w.push('tighten');else if(c.open)w.push('open');if(c.nocut)w.push('nocut');}if(c.cut)w.push('cut');return w;}
 function legDist(d){return d<30?'now':d<75?'d50':d<125?'d100':d<175?'d150':d<250?'d200':d<350?'d300':d<450?'d400':d<700?'d500':d<1200?'dlong':null;}
 // опасное (режим «только опасное»): крутые, длинные и «осторожно», шпильки; гребни, трамплины, мосты, переезды, финиш
-function legDanger(c){return c.t==='h'?['crest','jump','bridge','rail','finish','mud'].includes(c.w):(c.hair||c.tight||c.care||c.deg>=85||c.nocut);}
+function legDanger(c){return c.t==='h'?['crest','jump','bridge','rail','finish','mud'].includes(c.w):!c.flat&&(c.hair||c.tight||c.care||(c.deg>=85&&c.Rl<120)||c.nocut);}
 /* ---------- чтение по ходу ---------- */
 function legMode(){const m=AU.on&&AU.on.nav;return m==='danger'||m==='off'?m:'full';}
 function legPos(T,me){const G2=T.leg;if(!G2)return 0;return G2.cl?((me.idx-G2.b0)%G2.n+G2.n)%G2.n:me.idx-G2.i0;}
@@ -14992,7 +15233,7 @@ function legTick(me,T,recon){if(!T.leg)T.leg=legBuild(T);const LG=T.leg,L=LG.L;i
 // «Тормози!» — следующий поворот близко, а скорость для него велика и гонщик не тормозит
 function legBrake(me,T){const LG=T.leg;if(!LG||!LG.L.length)return;const kc=legPos(T,me),st=T.step;
   const c=LG.L.find(x=>x.t==='c'&&x.k0>kc&&(x.k0-kc)*st<80);if(!c||NAV.brkC===c)return;
-  const v=Math.max(0,me.vx),mu=roadMuAt(T,me.idx)*me.grip*twAll(me)*1.08,vc=Math.sqrt(mu*GRAV*c.R),bdec=(me.brakeK||0.8)*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0,d=(c.k0-kc)*st;
+  const v=Math.max(0,me.vx),mu=roadMuAt(T,me.idx)*me.grip*twAll(me)*1.08,vc=Math.sqrt(mu*GRAV*(c.Rl||c.R)),bdec=(me.brakeK||0.8)*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0,d=(c.k0-kc)*st;
   if(need>d*0.95&&!(me.brk>0.5)){NAV.brkC=c;navSay('brk',10,0.9);}}
 
 /* ================= 0.32: ГОНОЧНАЯ ТРАЕКТОРИЯ — КАК В КАРТИНГЕ И «ФОРМУЛЕ-1» =================
@@ -15258,7 +15499,8 @@ function updateRaceHUD(){
   {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();try{dxHUD(F);}catch(_){}
-  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
+  raceFrontRec();
+  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+raceGapSec(o)+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();try{navTick();}catch(e){console.warn('nav',e);}
   const m=document.getElementById('rMsg');
@@ -15334,9 +15576,15 @@ document.getElementById('rMgr').addEventListener('click',e=>{const b=e.target.cl
   renderMgr();});
 window.addEventListener('deviceorientation',e=>{if(!R)return;const land=Math.abs(window.orientation||0)===90;R.tiltVal=land?(e.beta||0)*(window.orientation>0?1:-1):(e.gamma||0);});
 const rCtrl=document.getElementById('rCtrl');
+// 0.34: «Газ» с дозировкой: верхняя половина кнопки — полный газ, ниже — меньше (у нижнего края — пятая часть); палец можно
+// вести вверх и вниз, не отпуская (отзыв: «газ — либо всё, либо ничего; на мотоцикле это сказывается»)
+function gasLvAt(b,e){const r=b.getBoundingClientRect(),f=r.height>0?(e.clientY-r.top)/r.height:0;return f<=0.5?1:clamp(1-(f-0.5)/0.5*0.8,0.15,1);}
+function gasLvUI(b,lv){b.style.setProperty('--lv',lv.toFixed(2));const sm=b.querySelector('small');if(sm)sm.textContent=lv<0.98?Math.round(lv*100)+'%':'';}
 rCtrl.querySelectorAll('button').forEach(b=>{const k=b.dataset.k;
-  const on=e=>{e.preventDefault();rKeys[k]=true;b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
-  const off=()=>{rKeys[k]=false;b.classList.remove('down');};
+  if(k==='gas'&&!b.querySelector('small'))b.insertAdjacentHTML('beforeend','<small></small>');
+  const on=e=>{e.preventDefault();rKeys[k]=true;if(k==='gas'){rKeys.gasLv=gasLvAt(b,e);gasLvUI(b,rKeys.gasLv);}b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
+  const off=()=>{rKeys[k]=false;if(k==='gas'){rKeys.gasLv=1;gasLvUI(b,1);}b.classList.remove('down');};
+  if(k==='gas')b.addEventListener('pointermove',e=>{if(!rKeys.gas)return;rKeys.gasLv=gasLvAt(b,e);gasLvUI(b,rKeys.gasLv);});
   b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));b.addEventListener('contextmenu',e=>e.preventDefault());});
 // Руль на экране: палец ведёт колесо (угол следует за пальцем, отпустил — руль сам медленно выпрямляется);
 // в режиме «кнопки» левая и правая половины крутят руль, пока их держат
@@ -15385,11 +15633,19 @@ function raceOldFilm(on){const rs=document.getElementById('raceScreen'),v=docume
       requestAnimationFrame(loop);};requestAnimationFrame(loop);}
   else if(el)el.remove();}
 
+// 0.34: отставание в таблице — по времени: когда лидер проходил то место, где машина сейчас (раньше — расстояние, делённое на
+// её нынешнюю скорость: у стоящей на ремонте выходило +155 с, у быстрой и далёкой — +55 с, и порядок отставаний скакал)
+function raceFrontRec(){if(!R)return;const F=R.fh||(R.fh=[]);let fp=0;R.cars.forEach(c=>{if(!c.dnf&&c.prog>fp)fp=c.prog;});
+  const L=F[F.length-1];if(!L||R.time-L[0]>=0.25){if(!L||fp>=L[1])F.push([R.time,fp]);}}
+function raceGapSec(o){const F=R&&R.fh;if(!F||!F.length)return 0;const p=o.prog;if(p>=F[F.length-1][1])return 0;
+  let a=0,b=F.length-1;while(a<b){const m=(a+b)>>1;if(F[m][1]>=p)b=m;else a=m+1;}
+  const t=a>0&&F[a][1]>F[a-1][1]?F[a-1][0]+(F[a][0]-F[a-1][0])*(p-F[a-1][1])/(F[a][1]-F[a-1][1]):F[a][0];return Math.max(0,Math.round(R.time-t));}
+
 /* ================= SEASONS: historical championships, standings, AI results, race outcome ================= */
 // Гоночный отдел завода: без него можно выставить только серийную или облегчённую машину
 const RDEPT=[
   {name:'Нет гоночного отдела',cost:0,up:0,desc:'Можно выставить серийную или облегчённую машину.'},
-  {name:'Гоночная мастерская',cost:2500,up:120,desc:'Свои механики, заводской гоночный кузов.'},
+  {name:'Гоночная мастерская',cost:2500,up:120,desc:'Свои механики, заводская гоночная подготовка: машине — гоночный кузов, мотоциклу — гоночные бак и руль; мотор форсирован.'},
   {name:'Заводская команда',cost:7000,up:320,rel:1.04,pit:0.85,prep:0.8,desc:'Надёжность +4%, пит-стопы и смена колёс на 15% быстрее, подготовка на 20% дешевле.'},
   {name:'Гоночный отдел',cost:18000,up:750,rel:1.08,pit:0.7,prep:0.65,pw:1.03,desc:'Надёжность +8%, мощность +3%, пит-стопы на 30% быстрее, подготовка на 35% дешевле.'},
   {name:'Спортивный департамент',cost:40000,up:1500,rel:1.1,pit:0.62,prep:0.55,pw:1.05,desc:'Свой испытательный трек: надёжность +10%, мощность +5%, пит-стопы на 38% быстрее, подготовка вдвое дешевле.'},
@@ -15397,7 +15653,8 @@ const RDEPT=[
   {name:'Экспериментальный гоночный цех',cost:150000,up:4200,rel:1.14,pit:0.5,prep:0.42,pw:1.1,desc:'Гоночные моторы с наддувом и лучшие механики эпохи: надёжность +14%, мощность +10%, пит-стопы вдвое быстрее.'}];
 function teamUpkeep(s){return Math.round(RDEPT[s.rdept||0].up*cpi(s));}
 function rdeptCost(s){const n=RDEPT[(s.rdept||0)+1];return n?Math.round(n.cost*cpi(s)/50)*50:0;}
-function prepCost(rc,prep,s){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)*kitK(s,'prep')/10)*10;}
+// 0.34: подготовка мотоцикла — около трети цены машинной (приз и слава класса мотоциклов — около трети)
+function prepCost(rc,prep,s,md){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)*kitK(s,'prep')*(md&&isMoto(md)?0.35:1)/10)*10;}
 
 // Чемпионаты эпохи. Официальные — там, где они были в истории; до них очки считает пресса.
 const AIACR_RACES={1925:['indy-1925','x80394-1925','gpacf-1925','itgp-1925'],1926:['indy-1926','gpacf-1926','x81442-1926','bgp1926-1926','itgp-1926'],1927:['indy-1927','gpacf-1927','x87929-1927','itgp-1927','x30443-1927']};
@@ -15544,6 +15801,7 @@ function raceResults(rc,res,mode,info){
   dchRecord(s,rc,res.map(r=>{const me=r.you&&r.drvId==='me';return {n:me?meName(s):r.drv,id:me?meKey(s):(r.drvId||''),mq:r.you||r.pmy?s.company:r.name,dnf:!!r.dnf,mine:r.you?1:0};}));
   const all=mres.length?res.concat(mres):res;   // гонщики и травмы — и на мотоциклах тоже
   s.raceMi=mi(s);drvAfterRace(s,rc,all);const chal=chalRace(s,rc,res);let inj=[];try{inj=injApply(s,rc,all);}catch(e){console.warn(e);}
+  let dev=[];try{dev=raceDevLearn(s,rc,all);}catch(e){console.warn('dev',e);}
   // Кубок Гордона Беннетта: трофей уходит стране победителя
   let cupTitle='';
   if(GBC_IDS.includes(rc.id)){if(best===1){cupTitle=`Кубок Гордона Беннетта ${rc.y}`;s.titles.push({y:rc.y,id:'gbc',name:cupTitle,w:0.5});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+5*rk,0,100);}
@@ -15551,7 +15809,7 @@ function raceResults(rc,res,mode,info){
   raceChamps(rc).forEach(id=>champFinish(s,id,rc.y));
   const dnfN=team.filter(r=>r.dnf).length,cw=won-(M?M.won:0);
   if(carIn)addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${cw?`, призовые ${money(cw)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
-  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn};
+  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn,dev};
   evHold=1;openRaceResult();
   if(M&&M.best===1&&best!==1){try{celebrate('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍');}catch(_){}showPaper(motoRacePaper(rc,mres,M.row,k),true);}
   if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle);showPaper(P,true);
@@ -15561,6 +15819,28 @@ function raceResults(rc,res,mode,info){
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
+/* ---------- 0.34: гонка — испытательный стенд ----------
+   Отзыв: «новые модели ломче, но участие в гонках должно давать прогресс в доводке и надёжности». Так и было: заводы
+   выставляли новинки в гонки, чтобы найти слабые места (Peugeot, Fiat, Mercedes). Гонка — как несколько месяцев доводки
+   в серии: отклонения «не по ТЗ» тают быстрее (долгая гонка — сильнее, сломавшаяся деталь — ещё сильнее); поломка в гонке
+   показывает КБ слабое место — следующее улучшение этой детали дешевле (как после разбора чужой машины). */
+const RACE_FAIL_PART={'мотор':'e','зажигание':'e','карбюратор':'e','радиатор':'e','клапан':'e','подшипник':'e','цепь привода':'g','цепь':'g','рессора':'c'};
+// «−10% → −9,5%»: после короткой гонки сдвиг меньше процента — с десятыми, чтобы было видно
+function dvPair(c){const d=Math.abs(c.a-c.b)*100<1.5?1:0,f=v=>((v-1)*100).toFixed(d).replace('.',',').replace(/^-/,'−');return f(c.b)+'% → '+f(c.a)+'%';}
+function raceDevLearn(s,rc,all){const out=[],byMd={};
+  all.filter(r=>r.you&&r.md).forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(!md)return;
+    const fails=(r.stops||[]).concat(r.dnf&&RACE_FAIL_PART[r.dnf]&&!(r.stops||[]).includes(r.dnf)?[r.dnf]:[]),fk=new Set(fails.map(w=>RACE_FAIL_PART[w]).filter(Boolean));
+    const o=byMd[md.id]||(byMd[md.id]={md,ch:{},know:[]});
+    // сколько месяцев доводки в серии стоит гонка: 1,5–5 (по длине), сошли рано — меньше; сломавшаяся деталь — ещё 3
+    const base=clamp((rc.km||100)/150,1.5,5)*(r.dnf?0.6:1);
+    if(md.dv)for(const k in md.dv){const d=md.dv[k],b=dvNow(md,k),add=base+(fk.has(k)?3:0);d.t=(d.t||mi(s))-add;const a=dvNow(md,k);
+      if(a>b+0.002){o.ch[k]={b:o.ch[k]?o.ch[k].b:b,a};o.mo=Math.max(o.mo||0,add);}if(a>0.995)delete md.dv[k];}
+    if(md.dv&&!Object.keys(md.dv).length)delete md.dv;
+    fk.forEach(k=>{const id=md[k];if(!id)return;s.rd.know=s.rd.know||{};if(!s.rd.know[id]&&upgL(id)<rdMaxUpg(s)){s.rd.know[id]=1;o.know.push(k);}});});
+  Object.values(byMd).forEach(o=>{const ks=Object.keys(o.ch);if(!ks.length&&!o.know.length)return;out.push(o);const p=parts(o.md);
+    const t=ks.map(k=>`${RISK_NAME[k]} ближе к ТЗ: ${dvPair(o.ch[k])}`).concat(o.know.map(k=>`КБ увидело слабое место: ${p[k].name.toLowerCase()} — улучшение дешевле`));
+    addLog(`«${o.md.name}» после гонки «${rc.name}»: ${t.join('; ')}.`,'good');});
+  return out;}
 function L_hist(rc){return rc.win&&!/^Победителей/.test(rc.win)?` В настоящей истории здесь победил ${rc.win}.`:'';}
 /* ---------- 0.33: зачёт мотоциклов в совместной гонке ----------
    В больших гонках 1890-х — 1900-х (Париж — Марсель — Париж, Париж — Вена, Париж — Мадрид) и на горных подъёмах трициклы
@@ -15618,6 +15898,7 @@ function openRaceResult(){
     ${nPv&&!rc.match?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ ${L.chal.match?esc(MATCH_ST[L.chal.C.type]||'Пари')+' с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграна':'проиграна'):'Пари с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграно':'проиграно')}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${!L.chal.match&&L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}
     ${L.rc.match&&(L.vMe||L.vTh)?`<p class="small" style="margin-top:4px">${L.rc.kind==='record'?'Скорость на заезде':'Средняя скорость'}: вы — <b>${L.vMe?L.vMe+' км/ч':'—'}</b>, ${esc(L.rc.rv.n)} — <b>${L.vTh?L.vTh+' км/ч':'—'}</b>${L.rc.purse&&L.best===1?` · сбор с трибун ${money(L.rc.purse)}`:''}</p>`:''}${L.lsr?`<p class="good" style="margin-top:6px"><b>📈 Быстрее мирового рекорда: ${L.lsr.v} км/ч</b> <span class="small muted">(рекорд — ${L.lsr.old[1]} км/ч, ${esc(L.lsr.old[2])})</span></p>`:''}
+    ${(L.dev||[]).length?`<div class="label" style="margin-top:14px">Гонка — испытание</div>${L.dev.map(o=>{const p=parts(o.md);return `<p class="small good" style="margin-top:4px">🔧 <b>«${esc(o.md.name)}»</b>: ${Object.keys(o.ch).map(k=>`${RISK_NAME[k]} ближе к ТЗ (${dvPair(o.ch[k])})`).concat(o.know.map(k=>`слабое место — ${esc(p[k].name.toLowerCase())}: улучшение в КБ дешевле`)).join('; ')}${o.mo?` — как ${String(Math.round(o.mo*10)/10).replace('.',',')} мес. доводки в серии`:''}.</p>`;}).join('')}`:''}
     ${(L.inj||[]).length?`<div class="label" style="margin-top:14px">Травмы</div>${L.inj.map(o=>`<p class="small ${o.mine?'bad':'muted'}" style="margin-top:4px">🏥 <b>${esc(o.nm)}</b> (${esc(o.car)}): ${esc(o.txt)} — ${o.retire?'уходит из гонок':'вернётся в '+miDate(o.until)}</p>`).join('')}`:''}
     ${champs}${rc.match?'':dchMini(s,rc.y)}
     <button class="btn primary block" style="margin-top:16px" data-act="close">Дальше</button>`);
@@ -15875,7 +16156,7 @@ function injApply(s,rc,res){s.inj=s.inj||{};s.injAI=s.injAI||{};s.retired=s.reti
     const who=o.id==='me'?'Вы':o.nm,back=`вернётся в ${miDate(o.until)}`;
     const text=o.retire?`${o.txt}. Врачи запретили гонки — ${o.id==='me'?'за руль больше не сесть; гоняют пилоты по контракту':'он уходит из команды'}.`
       :o.id==='me'?`${o.txt}. До ${miDate(o.until)} за руль нельзя — на гонки едут пилоты по контракту или приглашённые.`
-      :o.id==='mech'?`${o.txt}. Пока он в больнице, машины едут без механика — поломки чинить дольше.`:`${o.txt}. Пилот пропустит гонки и ${back}.`;
+      :o.id==='mech'?`${o.txt}. Пока он в больнице, в машине едет запасной механик: легенду читает, а поломки чинит дольше.`:`${o.txt}. Пилот пропустит гонки и ${back}.`;
     pushEvent({kicker:'Команда',own:1,title:o.retire?`${who} ${o.id==='me'?'уходите':'уходит'} из гонок`:`${who} в больнице`,deck:`Авария в гонке «${rc.name}»`,text,img,imgCap:img?o.nm:''});});
   out.filter(o=>!o.mine).forEach(o=>addLog(`${o.nm} (${o.car}) после аварии в «${rc.name}»: ${o.txt}${o.retire?' — уходит из гонок':', пропустит гонки до '+miDate(o.until)}.`,'hist'));
   return out;}
@@ -16311,12 +16592,15 @@ function empireStrip(s){EC_FLASH=false;if(!s)return '';let t=null;try{t=legacyTa
   let chal='';if(C){const rc=C.type==='race'?RACES.find(r=>r.key===C.rk):null,sc=rivalryScore(s,C.mq);
     const what=rc?`«${esc(rc.name)}» ${whenTxt(rc,s)}`:C.rc?`${esc(MATCH_ST[C.type]||'')}: ${esc(C.rc.venue)} ${whenTxt(C.rc,s)}`:C.type==='trial'?`пробег ${esc(C.route)}`:C.mon?`продажи «${esc(SEG[C.g].name)}»${C.c!==s.country?' ('+esc(COUNTRIES[C.c].name)+')':''}, ${esc(chalPerText(C))}`:`продажи до конца ${C.y}`;
     const ck=C.rc?C.rc.key:rc?rc.key:'';chal=`<button class="ec-row chal" ${ck?`data-act="raceTo" data-k="${esc(ck)}"`:`data-act="tab" data-t="log" data-sec="sec-board"`}><i>⚔️</i><span><b>${esc(C.mq)}</b>: ${what} · ${stakeText(C)}${sc?` · счёт ${sc}`:''}</span></button>`;}
-  const ph=last&&last.carId!=null?(()=>{const md=s.models.find(m=>m.id===last.carId);return md?carArt(md,{w:140,cls:'ec-ph',prep:last.prep||0,num:last.num||0,y:last.y}):'';})():'';
+  // 0.34: последний триумф — на виду несколько месяцев (класс мотоциклов — три), потом строка уходит (отзыв: «выиграли гонку
+  // на мотоцикле — новость висит наверху и не исчезает»); все трофеи — в «Империи»
+  const lastAge=last?mi(s)-((last.y-1895)*12+(last.m||0)):0,lastOn=!!last&&lastAge<=(/\|moto$/.test(last.key||'')?3:6);
+  const ph=lastOn&&last.carId!=null?(()=>{const md=s.models.find(m=>m.id===last.carId);return md?carArt(md,{w:140,cls:'ec-ph',prep:last.prep||0,num:last.num||0,y:last.y}):'';})():'';
   return `<div class="ec-top" data-act="tab" data-t="log" data-sec="sec-legacy" role="button" aria-label="Империя: наследие"><div class="ec-place"><b>${t?t.place:'—'}<small>-е</small></b><span>место в наследии</span></div>
       <div class="ec-pts"><b>${t?fmtN(Math.round(t.me.total)):0}</b> очков${dv?` <em class="${dv>0?'good':'bad'}">${dv>0?'▲':'▼'}${Math.abs(dv)}</em>`:''}</div></div>
     ${G2?`<button class="ec-row goal" data-act="tab" data-t="${G2.tab}" data-sec="${G2.sec||''}"><i>${G2.icon}</i><span>${esc(G2.text)}<em class="ec-bar"><b style="width:${Math.round(G2.pct*100)}%"></b></em></span></button>`:''}
-    ${last?`<button class="ec-row tri" data-act="trophy" data-k="${s.trophies.length-1}">${ph||`<i>${TROPHY_ICON[last.kind]||'🏆'}</i>`}<span>${esc(last.title)}${last.sub?' · '+esc(last.sub):''} <small>${MONTHS[last.m]} ${last.y}</small></span></button>`
-      :'<button class="ec-row tri first" data-act="tab" data-t="race"><i>🏁</i><span><b>Первая цель:</b> выиграйте гонку или пари — триумф появится здесь</span></button>'}
+    ${lastOn?`<button class="ec-row tri" data-act="trophy" data-k="${s.trophies.length-1}">${ph||`<i>${TROPHY_ICON[last.kind]||'🏆'}</i>`}<span>${esc(last.title)}${last.sub?' · '+esc(last.sub):''} <small>${MONTHS[last.m]} ${last.y}</small></span></button>`
+      :last?'':'<button class="ec-row tri first" data-act="tab" data-t="race"><i>🏁</i><span><b>Первая цель:</b> выиграйте гонку или пари — триумф появится здесь</span></button>'}
     ${chal}
     <button class="ec-row next" ${NS.rk?`data-act="raceTo" data-k="${esc(NS.rk)}"`:NS.tab?`data-act="tab" data-t="${NS.tab}"`:'data-act="next"'}><i>${NS.icon}</i><span><b>Дальше:</b> ${esc(NS.text)}</span></button>
  <div class="ec-badges" data-act="tab" data-t="log" data-sec="sec-trophies" role="button" aria-label="Титулы, пари, фильм, трофеи"><span title="Титулы">👑 ${tit}</span><span title="Выигранные пари">⚔️ ${won}</span><span title="Главы фильма">🎬 ${seen}/${L.length}</span><span title="Трофеи">🏆 ${tro}</span></div>`;}
@@ -23089,6 +23373,7 @@ const ACT={
     if(k==='sport'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   eqToggle:d=>{const L=eqOf(draft),e=EQ_BY[d.v];if(!e)return;let out=L.includes(e.id)?L.filter(x=>x!==e.id&&!(EQ_BY[x].req===e.id)):L.concat([e.id]);if(!L.includes(e.id)){if(e.req&&!out.includes(e.req))out.push(e.req);if(e.sup)out=out.filter(x=>x!==e.sup);}draft.eq=out;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  rdfixM:d=>{if(fixStart(G,d.id)){toast('КБ начало доводку');save();}render();},
   dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));dNote=null;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   // 0.34: «Передовая модель» — лучшие современные детали и прототипы КБ для покупателей класса, себестоимость — потом;
   // что изменилось (итог, себестоимость, прототипы) — строкой под кнопками
@@ -23160,7 +23445,7 @@ const ACT={
   rxFound:d=>racerFoundAsk(d.k),
   rxFoundGo:d=>{if(racerFound(d.k,d.n,+d.v)){closeSheet();tab='plant';shownCash=null;lastDate='';save();render();}},
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
-    if(draft.path==='moto'){newMotoGame('custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
+    if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
     else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},

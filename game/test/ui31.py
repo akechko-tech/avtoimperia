@@ -100,7 +100,7 @@ with sync_playwright() as p:
     print('race',r,json.dumps(st,ensure_ascii=False))
     ok(not st['nav'],'на экране нет подписи механика')
     ok(st['btn'] and not st['btn']['hidden'],'кнопка 🗣 в гонке: '+str(st['btn']))
-    pg.screenshot(path=out+'12_race.png')
+    pg.screenshot(path=out+'12_race.png',timeout=120000)   # 3D на программной видеокарте — кадр за 4–5 с
     tap="(()=>{document.getElementById('rNavB').click();return AU.on.nav;})()"
     m1=js(tap);m2=js(tap);m3=js(tap)
     ok([m1,m2,m3]==['danger','off','full'],'🗣 переключает: '+str([m1,m2,m3]))

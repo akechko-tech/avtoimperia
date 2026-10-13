@@ -66,6 +66,9 @@ def voice():
         if f.endswith('.mp3') and f[:-4] not in ok: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w').write('window.VOICE_INDEX=' + json.dumps(ok, separators=(',', ':')) + ';\n')
     print('voice: updated', n, 'lines', len(ok))
+    # 0.34: голос механика одним файлом (voice/nav.js) — вшивается в приложение, читает легенду без сети
+    try: subprocess.run(['node', os.path.join(ROOT, 'tools', 'nav_voice_pack.js')], check=False)
+    except Exception as e: print('nav voice pack:', e)
 
 # подписи, где исполнитель уже указан отдельно (автор записи со свободной лицензией — в «by»)
 MUSIC_CAP = {'man_i_love': 'Гершвин. «Человек, которого я люблю», 1924'}

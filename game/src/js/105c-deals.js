@@ -22,6 +22,7 @@ function subList(s){return (s.hold||[]).filter(h=>h.mode==='sub');}
 function subOf(s,c,i){const h=holdOf(s,c,i);return h&&h.mode==='sub'?h:null;}
 function intIn(s,c){return acqIn(s,c).length>0;}
 function maKey(c,i){return c+'|'+i;}
+function maModelCost(s,h){return Math.round(2500*cpi(s)/100)*100;}
 function maByKey(s,k){const [c,i]=String(k).split('|');return holdOf(s,c,+i);}
 function maRnd(k){return (hashStr(String(k))%100000)/100000;}
 // доли марки по классам в её стране (для поглощения: сколько покупателей может перейти)
@@ -101,7 +102,7 @@ function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;cons
   if(intNow){s.cash-=icost;maIntegrate(s,h,M);}
   s.rep=clamp(s.rep+1,0,100);
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
-  const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}, права на модели и технологии — ваши`
+  const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
   addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
@@ -115,8 +116,12 @@ function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.
   try{const g=maMainClass(cp,s,c),sc=studyCar(g,s.y);if(sc&&!((s.rd.studied||[]).includes(studyKey(sc))))studyDone(s,{id:sc.kind,y:sc.y,name:sc.name});}catch(e){console.warn('ma tech',e);}
   h.capAdd=capAdd;h.dlAdd=M.dl;h.model=md?md.id:null;return h;}
 // её машина — теперь ваша модель (права на конструкцию): в её главном классе, на деталях своего года; продаётся под вашей маркой везде
+// 0.34: имя — с маркой («Mercer Raceabout», «Itala 35/45 HP»), чтобы в «Моделях» было видно, откуда машина (отзыв: «купил марки,
+// но их моделей не вижу и не понимаю, произошло ли слияние»)
+function maModelName(nm,cm){let b=String(cm?cm[1]:nm).replace(/\s*«.*?»/g,'').trim();const brand=String(nm).replace(/\s*&\s*Cie\.?|\s*\(.*?\)/g,'').trim(),w=brand.split(/[\s/-]/)[0].toLowerCase();
+  if(w&&!b.toLowerCase().includes(w)&&!/^(Mercedes)/.test(b))b=brand+' '+b;return b.slice(0,28);}
 function maTakeModel(s,c,cp,v){try{const nm=compName(cp,s),g=maMainClass(cp,s,c),d=autoDesign(g,s),cm=compModel(cp,s);
-    const m={id:s.nextId++,name:String(cm?cm[1]:nm).replace(/\s*«.*?»/g,'').slice(0,28),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
+    const m={id:s.nextId++,name:maModelName(nm,cm),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
       stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:Math.round(v/12),vol:Math.round(v/12*10)/10,from:nm};m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);return m;}catch(e){console.warn('ma model',e);return null;}}
 // совладельцы (оплата акциями, инвесторы) получают свою долю прибыли
 function partnersShare(s){return Math.min(0.75,(s.partners||[]).reduce((a,p)=>a+(p.sh||0),0));}
@@ -246,7 +251,11 @@ function aucTick(s){if(s.auc&&mi(s)>=s.auc.until)aucFinish(s,false);}
 function moodTxt(m){return m>=70?'довольны':m>=45?'спокойны':m>=30?'ворчат':'недовольны';}
 function holdingsHTML(s){const L=s.hold||[];if(!L.length)return '';
   const rows=L.map(h=>{const M=maStat(s,h.c,h.i),k=maKey(h.c,h.i),nm=h.nm||(M&&M.nm)||h.n,where=COUNTRIES[h.c].name;
-    if(h.mode==='int')return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · с ${1895+Math.floor((h.t||0)/12)} года${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small></div></div>`;
+    // 0.34: что стало с маркой — её модели в вашей линейке (или кнопка выпустить её модель, если их нет: старые сохранения, сняли)
+    if(h.mode==='int'){const ms=s.models.filter(m=>m.from===nm&&m.status!=='off'),cost=maModelCost(s,h);
+      return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · поглощена в ${1895+Math.floor((h.t||0)/12)} году${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small>
+        <small>${ms.length?`🤝 Её модели — у вас в «Моделях»: ${ms.map(m=>`«${esc(m.name)}»`).join(', ')}`:'Своей марки больше нет: её заводы, дилеры и права на модели — ваши.'}</small>
+        ${ms.length?'':`<div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maModel" data-k="${k}" ${s.cash<cost?'disabled':''}>Выпустить её модель под вашей маркой · ${money(cost)}</button></div>`}</div></div>`;}
     if(!M)return '';const sell=Math.round(M.V*h.st*0.9/1000)*1000,inv=Math.max(2000,Math.round(M.V*0.12/1000)*1000),icost=maIntCost(s,M);
     return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill">${Math.round(h.st*100)}%</span><small class="muted">${where} · ${fmtN(Math.round(M.v))} машин в год · прибыль ≈${money(Math.max(0,h.p12||M.profit))} в год · вам дивиденды ≈${money(Math.max(0,(h.p12||M.profit)*h.st*0.6))} · директора ${moodTxt(h.mood??60)}${(h.veto||0)>mi(s)?' · запрет на ваш класс':''}</small>
       <div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maInv" data-k="${k}" data-v="${inv}" ${s.cash<inv?'disabled':''}>Вложить ${money(inv)}</button>${h.st<1?`<button class="btn sm" data-act="dealOpen" data-c="${h.c}" data-i="${h.i}" data-st="${h.st<0.5?0.51:1}">Докупить до ${h.st<0.5?'51':'100'}%</button>`:`<button class="btn sm" data-act="maMerge" data-k="${k}" ${s.cash<icost?'disabled':''}>Под ваш бренд · ${money(icost)}</button>`}<button class="btn sm" data-act="maSell" data-k="${k}" data-v="${sell}">Продать долю · ${money(sell)}</button></div></div></div>`;}).join('');
@@ -345,4 +354,8 @@ const DEAL_ACT={
   aucOpen:()=>openAuction(),aucBid:d=>aucBid(+d.v),aucMode:d=>{G.ui=G.ui||{};G.ui.aucMode=d.v;openAuction();},
   maInv:d=>{const s=G,h=maByKey(s,d.k),amt=+d.v,M=h&&maStat(s,h.c,h.i);if(!h||!M||s.cash<amt)return;s.cash-=amt;h.inv=(h.inv||0)+amt;h.boost=(h.boost||0)+amt/M.V*0.9;h.mood=clamp((h.mood??60)+6,0,100);addLog(`Вложено ${money(amt)} в «${h.nm||h.n}».`,'good');rerender();},
   maSell:d=>{const s=G,h=maByKey(s,d.k);if(!h)return;if(!confirmOnce('maSell'+d.k,'Нажмите ещё раз: продать долю'))return;s.cash+=+d.v;s.hold=s.hold.filter(x=>x!==h);addLog(`Доля в «${h.nm||h.n}» продана за ${money(+d.v)}.`,'good');rerender();},
+  // 0.34: поглощённая марка без своей модели в линейке — выпустить её модель (оснастка цеха под конструкцию)
+  maModel:d=>{const s=G,h=maByKey(s,d.k);if(!h||h.mode!=='int')return;const cp=(COMPS[h.c]||[])[h.i];if(!cp)return;const cost=maModelCost(s,h);if(s.cash<cost){toast('Не хватает денег');return;}
+    const M=maStat(s,h.c,h.i),md=maTakeModel(s,h.c,cp,M?M.v*0.5:100);if(!md)return;s.cash-=cost;md.from=h.nm||compName(cp,s);h.model=md.id;
+    addLog(`«${md.name}» — модель поглощённой марки «${md.from}» — пошла в производство под маркой «${s.company}» (оснастка ${money(cost)}).`,'good');toast(`🤝 «${md.name}» — в «Моделях»`);save();rerender();},
   maMerge:d=>{const s=G,h=maByKey(s,d.k),M=h&&maStat(s,h.c,h.i);if(!h||!M||h.st<1)return;const ic=maIntCost(s,M);if(s.cash<ic)return;if(!confirmOnce('maMerge'+d.k,'Нажмите ещё раз: марка исчезнет, всё — под ваш бренд'))return;s.cash-=ic;maIntegrate(s,h,M);addLog(`«${h.nm||h.n}» поглощена: заводы, дилеры, права на модели и технологии — под маркой «${s.company}».`,'good');try{auFanfare('deal');}catch(_){}rerender();}};

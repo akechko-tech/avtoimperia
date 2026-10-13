@@ -75,6 +75,7 @@ const ACT={
     if(k==='sport'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   eqToggle:d=>{const L=eqOf(draft),e=EQ_BY[d.v];if(!e)return;let out=L.includes(e.id)?L.filter(x=>x!==e.id&&!(EQ_BY[x].req===e.id)):L.concat([e.id]);if(!L.includes(e.id)){if(e.req&&!out.includes(e.req))out.push(e.req);if(e.sup)out=out.filter(x=>x!==e.sup);}draft.eq=out;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  rdfixM:d=>{if(fixStart(G,d.id)){toast('КБ начало доводку');save();}render();},
   dcopy:()=>{Object.assign(draft,rivalDesign(designKind(draft),G.y));dNote=null;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   // 0.34: «Передовая модель» — лучшие современные детали и прототипы КБ для покупателей класса, себестоимость — потом;
   // что изменилось (итог, себестоимость, прототипы) — строкой под кнопками
@@ -146,7 +147,7 @@ const ACT={
   rxFound:d=>racerFoundAsk(d.k),
   rxFoundGo:d=>{if(racerFound(d.k,d.n,+d.v)){closeSheet();tab='plant';shownCash=null;lastDate='';save();render();}},
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
-    if(draft.path==='moto'){newMotoGame('custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
+    if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
     else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},

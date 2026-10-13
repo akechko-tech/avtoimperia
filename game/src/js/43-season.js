@@ -2,7 +2,7 @@
 // Гоночный отдел завода: без него можно выставить только серийную или облегчённую машину
 const RDEPT=[
   {name:'Нет гоночного отдела',cost:0,up:0,desc:'Можно выставить серийную или облегчённую машину.'},
-  {name:'Гоночная мастерская',cost:2500,up:120,desc:'Свои механики, заводской гоночный кузов.'},
+  {name:'Гоночная мастерская',cost:2500,up:120,desc:'Свои механики, заводская гоночная подготовка: машине — гоночный кузов, мотоциклу — гоночные бак и руль; мотор форсирован.'},
   {name:'Заводская команда',cost:7000,up:320,rel:1.04,pit:0.85,prep:0.8,desc:'Надёжность +4%, пит-стопы и смена колёс на 15% быстрее, подготовка на 20% дешевле.'},
   {name:'Гоночный отдел',cost:18000,up:750,rel:1.08,pit:0.7,prep:0.65,pw:1.03,desc:'Надёжность +8%, мощность +3%, пит-стопы на 30% быстрее, подготовка на 35% дешевле.'},
   {name:'Спортивный департамент',cost:40000,up:1500,rel:1.1,pit:0.62,prep:0.55,pw:1.05,desc:'Свой испытательный трек: надёжность +10%, мощность +5%, пит-стопы на 38% быстрее, подготовка вдвое дешевле.'},
@@ -10,7 +10,8 @@ const RDEPT=[
   {name:'Экспериментальный гоночный цех',cost:150000,up:4200,rel:1.14,pit:0.5,prep:0.42,pw:1.1,desc:'Гоночные моторы с наддувом и лучшие механики эпохи: надёжность +14%, мощность +10%, пит-стопы вдвое быстрее.'}];
 function teamUpkeep(s){return Math.round(RDEPT[s.rdept||0].up*cpi(s));}
 function rdeptCost(s){const n=RDEPT[(s.rdept||0)+1];return n?Math.round(n.cost*cpi(s)/50)*50:0;}
-function prepCost(rc,prep,s){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)*kitK(s,'prep')/10)*10;}
+// 0.34: подготовка мотоцикла — около трети цены машинной (приз и слава класса мотоциклов — около трети)
+function prepCost(rc,prep,s,md){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)*kitK(s,'prep')*(md&&isMoto(md)?0.35:1)/10)*10;}
 
 // Чемпионаты эпохи. Официальные — там, где они были в истории; до них очки считает пресса.
 const AIACR_RACES={1925:['indy-1925','x80394-1925','gpacf-1925','itgp-1925'],1926:['indy-1926','gpacf-1926','x81442-1926','bgp1926-1926','itgp-1926'],1927:['indy-1927','gpacf-1927','x87929-1927','itgp-1927','x30443-1927']};
@@ -157,6 +158,7 @@ function raceResults(rc,res,mode,info){
   dchRecord(s,rc,res.map(r=>{const me=r.you&&r.drvId==='me';return {n:me?meName(s):r.drv,id:me?meKey(s):(r.drvId||''),mq:r.you||r.pmy?s.company:r.name,dnf:!!r.dnf,mine:r.you?1:0};}));
   const all=mres.length?res.concat(mres):res;   // гонщики и травмы — и на мотоциклах тоже
   s.raceMi=mi(s);drvAfterRace(s,rc,all);const chal=chalRace(s,rc,res);let inj=[];try{inj=injApply(s,rc,all);}catch(e){console.warn(e);}
+  let dev=[];try{dev=raceDevLearn(s,rc,all);}catch(e){console.warn('dev',e);}
   // Кубок Гордона Беннетта: трофей уходит стране победителя
   let cupTitle='';
   if(GBC_IDS.includes(rc.id)){if(best===1){cupTitle=`Кубок Гордона Беннетта ${rc.y}`;s.titles.push({y:rc.y,id:'gbc',name:cupTitle,w:0.5});s.titleBoost=mi(s)+12;s.rep=clamp(s.rep+5*rk,0,100);}
@@ -164,7 +166,7 @@ function raceResults(rc,res,mode,info){
   raceChamps(rc).forEach(id=>champFinish(s,id,rc.y));
   const dnfN=team.filter(r=>r.dnf).length,cw=won-(M?M.won:0);
   if(carIn)addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${cw?`, призовые ${money(cw)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
-  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn};
+  lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn,dev};
   evHold=1;openRaceResult();
   if(M&&M.best===1&&best!==1){try{celebrate('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍');}catch(_){}showPaper(motoRacePaper(rc,mres,M.row,k),true);}
   if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle);showPaper(P,true);
@@ -174,6 +176,28 @@ function raceResults(rc,res,mode,info){
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
+/* ---------- 0.34: гонка — испытательный стенд ----------
+   Отзыв: «новые модели ломче, но участие в гонках должно давать прогресс в доводке и надёжности». Так и было: заводы
+   выставляли новинки в гонки, чтобы найти слабые места (Peugeot, Fiat, Mercedes). Гонка — как несколько месяцев доводки
+   в серии: отклонения «не по ТЗ» тают быстрее (долгая гонка — сильнее, сломавшаяся деталь — ещё сильнее); поломка в гонке
+   показывает КБ слабое место — следующее улучшение этой детали дешевле (как после разбора чужой машины). */
+const RACE_FAIL_PART={'мотор':'e','зажигание':'e','карбюратор':'e','радиатор':'e','клапан':'e','подшипник':'e','цепь привода':'g','цепь':'g','рессора':'c'};
+// «−10% → −9,5%»: после короткой гонки сдвиг меньше процента — с десятыми, чтобы было видно
+function dvPair(c){const d=Math.abs(c.a-c.b)*100<1.5?1:0,f=v=>((v-1)*100).toFixed(d).replace('.',',').replace(/^-/,'−');return f(c.b)+'% → '+f(c.a)+'%';}
+function raceDevLearn(s,rc,all){const out=[],byMd={};
+  all.filter(r=>r.you&&r.md).forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(!md)return;
+    const fails=(r.stops||[]).concat(r.dnf&&RACE_FAIL_PART[r.dnf]&&!(r.stops||[]).includes(r.dnf)?[r.dnf]:[]),fk=new Set(fails.map(w=>RACE_FAIL_PART[w]).filter(Boolean));
+    const o=byMd[md.id]||(byMd[md.id]={md,ch:{},know:[]});
+    // сколько месяцев доводки в серии стоит гонка: 1,5–5 (по длине), сошли рано — меньше; сломавшаяся деталь — ещё 3
+    const base=clamp((rc.km||100)/150,1.5,5)*(r.dnf?0.6:1);
+    if(md.dv)for(const k in md.dv){const d=md.dv[k],b=dvNow(md,k),add=base+(fk.has(k)?3:0);d.t=(d.t||mi(s))-add;const a=dvNow(md,k);
+      if(a>b+0.002){o.ch[k]={b:o.ch[k]?o.ch[k].b:b,a};o.mo=Math.max(o.mo||0,add);}if(a>0.995)delete md.dv[k];}
+    if(md.dv&&!Object.keys(md.dv).length)delete md.dv;
+    fk.forEach(k=>{const id=md[k];if(!id)return;s.rd.know=s.rd.know||{};if(!s.rd.know[id]&&upgL(id)<rdMaxUpg(s)){s.rd.know[id]=1;o.know.push(k);}});});
+  Object.values(byMd).forEach(o=>{const ks=Object.keys(o.ch);if(!ks.length&&!o.know.length)return;out.push(o);const p=parts(o.md);
+    const t=ks.map(k=>`${RISK_NAME[k]} ближе к ТЗ: ${dvPair(o.ch[k])}`).concat(o.know.map(k=>`КБ увидело слабое место: ${p[k].name.toLowerCase()} — улучшение дешевле`));
+    addLog(`«${o.md.name}» после гонки «${rc.name}»: ${t.join('; ')}.`,'good');});
+  return out;}
 function L_hist(rc){return rc.win&&!/^Победителей/.test(rc.win)?` В настоящей истории здесь победил ${rc.win}.`:'';}
 /* ---------- 0.33: зачёт мотоциклов в совместной гонке ----------
    В больших гонках 1890-х — 1900-х (Париж — Марсель — Париж, Париж — Вена, Париж — Мадрид) и на горных подъёмах трициклы
@@ -231,6 +255,7 @@ function openRaceResult(){
     ${nPv&&!rc.match?`<p class="small muted" style="margin-top:6px">Частников на старте: ${nPv}. ${esc(pr.txt)}</p>`:''}
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ ${L.chal.match?esc(MATCH_ST[L.chal.C.type]||'Пари')+' с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграна':'проиграна'):'Пари с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграно':'проиграно')}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${!L.chal.match&&L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}
     ${L.rc.match&&(L.vMe||L.vTh)?`<p class="small" style="margin-top:4px">${L.rc.kind==='record'?'Скорость на заезде':'Средняя скорость'}: вы — <b>${L.vMe?L.vMe+' км/ч':'—'}</b>, ${esc(L.rc.rv.n)} — <b>${L.vTh?L.vTh+' км/ч':'—'}</b>${L.rc.purse&&L.best===1?` · сбор с трибун ${money(L.rc.purse)}`:''}</p>`:''}${L.lsr?`<p class="good" style="margin-top:6px"><b>📈 Быстрее мирового рекорда: ${L.lsr.v} км/ч</b> <span class="small muted">(рекорд — ${L.lsr.old[1]} км/ч, ${esc(L.lsr.old[2])})</span></p>`:''}
+    ${(L.dev||[]).length?`<div class="label" style="margin-top:14px">Гонка — испытание</div>${L.dev.map(o=>{const p=parts(o.md);return `<p class="small good" style="margin-top:4px">🔧 <b>«${esc(o.md.name)}»</b>: ${Object.keys(o.ch).map(k=>`${RISK_NAME[k]} ближе к ТЗ (${dvPair(o.ch[k])})`).concat(o.know.map(k=>`слабое место — ${esc(p[k].name.toLowerCase())}: улучшение в КБ дешевле`)).join('; ')}${o.mo?` — как ${String(Math.round(o.mo*10)/10).replace('.',',')} мес. доводки в серии`:''}.</p>`;}).join('')}`:''}
     ${(L.inj||[]).length?`<div class="label" style="margin-top:14px">Травмы</div>${L.inj.map(o=>`<p class="small ${o.mine?'bad':'muted'}" style="margin-top:4px">🏥 <b>${esc(o.nm)}</b> (${esc(o.car)}): ${esc(o.txt)} — ${o.retire?'уходит из гонок':'вернётся в '+miDate(o.until)}</p>`).join('')}`:''}
     ${champs}${rc.match?'':dchMini(s,rc.y)}
     <button class="btn primary block" style="margin-top:16px" data-act="close">Дальше</button>`);

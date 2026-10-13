@@ -180,7 +180,8 @@ function updateRaceHUD(){
   {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();try{dxHUD(F);}catch(_){}
-  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+Math.max(0,Math.round((lead.prog-o.prog)/Math.max(8,o.vx||8)))+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
+  raceFrontRec();
+  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+raceGapSec(o)+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();try{navTick();}catch(e){console.warn('nav',e);}
   const m=document.getElementById('rMsg');
@@ -256,9 +257,15 @@ document.getElementById('rMgr').addEventListener('click',e=>{const b=e.target.cl
   renderMgr();});
 window.addEventListener('deviceorientation',e=>{if(!R)return;const land=Math.abs(window.orientation||0)===90;R.tiltVal=land?(e.beta||0)*(window.orientation>0?1:-1):(e.gamma||0);});
 const rCtrl=document.getElementById('rCtrl');
+// 0.34: «Газ» с дозировкой: верхняя половина кнопки — полный газ, ниже — меньше (у нижнего края — пятая часть); палец можно
+// вести вверх и вниз, не отпуская (отзыв: «газ — либо всё, либо ничего; на мотоцикле это сказывается»)
+function gasLvAt(b,e){const r=b.getBoundingClientRect(),f=r.height>0?(e.clientY-r.top)/r.height:0;return f<=0.5?1:clamp(1-(f-0.5)/0.5*0.8,0.15,1);}
+function gasLvUI(b,lv){b.style.setProperty('--lv',lv.toFixed(2));const sm=b.querySelector('small');if(sm)sm.textContent=lv<0.98?Math.round(lv*100)+'%':'';}
 rCtrl.querySelectorAll('button').forEach(b=>{const k=b.dataset.k;
-  const on=e=>{e.preventDefault();rKeys[k]=true;b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
-  const off=()=>{rKeys[k]=false;b.classList.remove('down');};
+  if(k==='gas'&&!b.querySelector('small'))b.insertAdjacentHTML('beforeend','<small></small>');
+  const on=e=>{e.preventDefault();rKeys[k]=true;if(k==='gas'){rKeys.gasLv=gasLvAt(b,e);gasLvUI(b,rKeys.gasLv);}b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
+  const off=()=>{rKeys[k]=false;if(k==='gas'){rKeys.gasLv=1;gasLvUI(b,1);}b.classList.remove('down');};
+  if(k==='gas')b.addEventListener('pointermove',e=>{if(!rKeys.gas)return;rKeys.gasLv=gasLvAt(b,e);gasLvUI(b,rKeys.gasLv);});
   b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));b.addEventListener('contextmenu',e=>e.preventDefault());});
 // Руль на экране: палец ведёт колесо (угол следует за пальцем, отпустил — руль сам медленно выпрямляется);
 // в режиме «кнопки» левая и правая половины крутят руль, пока их держат
@@ -306,3 +313,11 @@ function raceOldFilm(on){const rs=document.getElementById('raceScreen'),v=docume
         sc.forEach(x=>{if(Math.random()<0.3){x.style.left=(Math.random()*100)+'%';x.style.opacity=(0.12+Math.random()*0.3).toFixed(2);}else if(Math.random()<0.3)x.style.opacity='0';});fl.style.opacity=(Math.random()*0.1).toFixed(3);}
       requestAnimationFrame(loop);};requestAnimationFrame(loop);}
   else if(el)el.remove();}
+
+// 0.34: отставание в таблице — по времени: когда лидер проходил то место, где машина сейчас (раньше — расстояние, делённое на
+// её нынешнюю скорость: у стоящей на ремонте выходило +155 с, у быстрой и далёкой — +55 с, и порядок отставаний скакал)
+function raceFrontRec(){if(!R)return;const F=R.fh||(R.fh=[]);let fp=0;R.cars.forEach(c=>{if(!c.dnf&&c.prog>fp)fp=c.prog;});
+  const L=F[F.length-1];if(!L||R.time-L[0]>=0.25){if(!L||fp>=L[1])F.push([R.time,fp]);}}
+function raceGapSec(o){const F=R&&R.fh;if(!F||!F.length)return 0;const p=o.prog;if(p>=F[F.length-1][1])return 0;
+  let a=0,b=F.length-1;while(a<b){const m=(a+b)>>1;if(F[m][1]>=p)b=m;else a=m+1;}
+  const t=a>0&&F[a][1]>F[a-1][1]?F[a-1][0]+(F[a][0]-F[a-1][0])*(p-F[a-1][1])/(F[a][1]-F[a-1][1]):F[a][0];return Math.max(0,Math.round(R.time-t));}

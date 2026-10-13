@@ -20,15 +20,29 @@ function navLines(){return Object.values(NAV_L).concat(typeof legLines==='functi
 const NAV={buf:{},pend:{},q:[],until:0,cd:{},said:{},R:null};
 // голос механика есть только там, где он сидит в машине: до 1925 года (и пока он не в больнице)
 function navActive(){const me=R&&R.me;return !!(me&&R.mode==='drive'&&me.mech&&!R.film&&!R.demo&&R.trk&&(typeof legMode!=='function'||legMode()!=='off'));}
+// 0.34: голос механика — одним файлом voice/nav.js (base64 всех слов): в приложении вшит и работает без сети, на сайте — один
+// запрос вместо сотни. Отзыв «иногда не слышу штурмана»: слова грузились с сайта по одному, и при медленной сети фраза
+// пропадала, а неудачная загрузка запоминалась до конца игры; голос ещё и выключался вместе с голосом диктора в кинохронике
+const NAVPACK={p:null};
+function navPackLoad(){if(NAVPACK.p)return NAVPACK.p;
+  NAVPACK.p=new Promise(res=>{if(window.NAV_VOICE){res(window.NAV_VOICE);return;}
+    try{const sc=document.createElement('script');sc.src='voice/nav.js';sc.async=true;sc.onload=()=>res(window.NAV_VOICE||null);sc.onerror=()=>{NAVPACK.p=null;res(null);};document.head.appendChild(sc);}catch(e){NAVPACK.p=null;res(null);}});
+  return NAVPACK.p;}
+function navB64(b){const t=atob(b),n=t.length,u=new Uint8Array(n);for(let i=0;i<n;i++)u[i]=t.charCodeAt(i);return u.buffer;}
+// голос механика слышен, когда включены звуки игры (кнопка 🗣 в гонке — читает всё, только опасное или молчит)
+function navVoiceOn(){return !!(AU.ctx&&AU.on.sfx);}
 function navReset(){NAV.R=R;NAV.lt=undefined;NAV.legI=0;NAV.legK=undefined;NAV.legSaid=0;NAV.brkC=null;NAV.srcs=[];NAV.q=[];NAV.until=0;NAV.cd={};NAV.said={};NAV.curve=null;NAV.rank=0;NAV.rankT=0;NAV.tp=null;NAV.dmg=0;NAV.prog=0;NAV.oilT=60+Math.random()*60;NAV.wet=0;NAV.start=0;NAV.fin=0;NAV.dustT=0;
   NAV.pan=R.rc.c==='us'&&R.rc.y>=1910?0.32:-0.32;   // руль справа (Европа, ранние американцы) — механик слева; у американцев с 1910-х — наоборот
-  if(AU.ctx&&AU.on.sfx&&reelVoiceOn())voiceLoad().then(()=>{if(NAV.R===R)navLines().forEach(t=>navBuf(t));}).catch(()=>{});}
+  if(navVoiceOn())navLines().forEach(t=>navBuf(t));}
+// запись слова: из вшитого файла, иначе — с сайта; неудачу не запоминаем (в следующий раз попробуем снова)
 function navBuf(text){const h=voiceHash(text,'nav');if(NAV.buf[h])return Promise.resolve(NAV.buf[h]);if(NAV.pend[h])return NAV.pend[h];if(!AU.ctx)return Promise.resolve(null);
-  NAV.pend[h]=voiceLoad().then(()=>{if(!voiceDur(text,'nav'))return null;return fetch(voiceUrl(text,'nav')).then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab?new Promise((ok,no)=>AU.ctx.decodeAudioData(ab,ok,no)):null);})
-    .then(b=>{if(b)NAV.buf[h]=b;return b;}).catch(()=>null);return NAV.pend[h];}
+  const dec=ab=>new Promise((ok,no)=>AU.ctx.decodeAudioData(ab,ok,no));
+  NAV.pend[h]=navPackLoad().then(P=>{if(P&&P[h])return dec(navB64(P[h]));
+      return voiceLoad().then(()=>{if(!voiceDur(text,'nav'))return null;return fetch(voiceUrl(text,'nav')).then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab?dec(ab):null);});})
+    .then(b=>{if(b)NAV.buf[h]=b;else delete NAV.pend[h];return b;}).catch(()=>{delete NAV.pend[h];return null;});return NAV.pend[h];}
 // крик в открытой машине: без эха, чуть «в лоб», со стороны пассажира; громче, когда мотор ревёт.
 // 0.31: фраза — из нескольких слов подряд (легенда: «Правый сорок пять», «сто», «Левый девяносто»): тишину по краям записи срезаем
-function navPlaySeq(list){if(!AU.ctx||!AU.on.sfx||!reelVoiceOn())return 0;const c=AU.ctx;let t=c.currentTime+0.03;const t0=t;
+function navPlaySeq(list){if(!navVoiceOn())return 0;const c=AU.ctx;let t=c.currentTime+0.03;const t0=t;
   const hp=c.createBiquadFilter(),pk=c.createBiquadFilter(),g=c.createGain();hp.type='highpass';hp.frequency.value=150;pk.type='peaking';pk.frequency.value=2200;pk.Q.value=0.9;pk.gain.value=3;
   const me=R&&R.me,loud=me?clamp(0.95+0.35*clamp(me.rpm||0,0,1.1)+0.25*clamp((me.vx||0)/30,0,1),0.9,1.5):1;g.gain.value=1.25*loud;
   hp.connect(pk);pk.connect(g);let out=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=NAV.pan||0;g.connect(p);out=p;}out.connect(AU.fx);
@@ -38,8 +52,11 @@ function navPlaySeq(list){if(!AU.ctx||!AU.on.sfx||!reelVoiceOn())return 0;const 
 function navPlay(text){return navPlaySeq([text]);}
 function navStopVoice(){(NAV.srcs||[]).forEach(s=>{try{s.stop();}catch(_){}});NAV.srcs=[];}
 // сказать: слова (голос) и подпись; длительность — по записи, без записи — по числу букв
+// записи слова ещё нет (нет сети и вшитого файла) — фразу читает голос телефона, чтобы гонщик не остался без легенды
 function navSpeak(texts,subT,pri){const now=R.time;let d=0;texts.forEach((t,k)=>{d+=Math.max(0.25,(voiceDur(t,'nav')||t.length/13)-(k?0.14:0.05));});
-  const real=navPlaySeq(texts);if(real)d=real;NAV.until=now+d+0.2;navBubble(subT||texts.join(' '),d);}
+  const real=navPlaySeq(texts);if(real)d=real;
+  else if(navVoiceOn()&&typeof ttsSay==='function'){const ph=texts.join(', ');if(ttsSay(ph)){d=Math.max(d,ph.length/13);NAV.tts=(NAV.tts||0)+1;}}
+  NAV.until=now+d+0.2;navBubble(subT||texts.join(' '),d);}
 // в очередь: важное (тормози, шлагбаум, прокол) вперёд; устаревшее (поворот уже проехали) — выбросить
 function navSay(key,pri,ttl,cd){if(!NAV_L[key])return;const now=R.time;if(cd&&(NAV.cd[key]||-99)>now-cd)return;NAV.cd[key]=now;
   NAV.q=NAV.q.filter(x=>x.key!==key);NAV.q.push({key,pri:pri||3,t:now,ttl:ttl||3});

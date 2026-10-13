@@ -32,6 +32,8 @@ jobs:
           if [ -d docs/film ]; then cp -r docs/film/. app/src/main/assets/film/; fi
           if [ -f docs/img/extra.js ]; then mkdir -p app/src/main/assets/img/x && cp docs/img/extra.js app/src/main/assets/img/ && cp -r docs/img/x/. app/src/main/assets/img/x/; fi
           if [ -f docs/voice/index.js ]; then cp docs/voice/index.js app/src/main/assets/voice/; fi
+          # 0.34: голос механика (легенда трассы, крики) — вшит одним файлом, работает без сети
+          if [ -f docs/voice/nav.js ]; then cp docs/voice/nav.js app/src/main/assets/voice/; fi
           # реальные трассы (рельеф, карта) — скриптами, подгружаются перед гонкой
           if [ -d docs/terrain ]; then mkdir -p app/src/main/assets/terrain && cp docs/terrain/*.js app/src/main/assets/terrain/; fi
           # свои мелодии игры в оркестровке (марш «Автоимперия» и др.) — вшиты, играют и без сети

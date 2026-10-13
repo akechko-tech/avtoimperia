@@ -12,10 +12,10 @@ const LEG_W={R15:'Правый пятнадцать',L15:'Левый пятна�
   R60:'Правый шестьдесят',L60:'Левый шестьдесят',R90:'Правый девяносто',L90:'Левый девяносто',R120:'Правый сто двадцать',L120:'Левый сто двадцать',
   R150:'Правый сто пятьдесят',L150:'Левый сто пятьдесят',RH:'Правая шпилька',LH:'Левая шпилька',
   tight:'крутой',long:'длинный',tighten:'затягивается',open:'открывается',nocut:'не режь',care:'осторожно',
-  now:'сразу',d50:'пятьдесят',d100:'сто',d150:'сто пятьдесят',d200:'двести',d300:'триста',d400:'четыреста',d500:'пятьсот',dlong:'длинная прямая',
+  cut:'режь прямо',now:'сразу',d50:'пятьдесят',d100:'сто',d150:'сто пятьдесят',d200:'двести',d300:'триста',d400:'четыреста',d500:'пятьсот',dlong:'длинная прямая',
   crest:'гребень',jump:'трамплин',bridge:'мост',rail:'переезд',vill:'деревня',town:'город',tunnel:'тоннель',serp:'серпантин',mud:'грязь',finish:'финиш'};
 // как это видно в подписи
-const LEG_SUB={RH:'Правая шпилька',LH:'Левая шпилька',tight:'крутой',long:'длинный',tighten:'затягивается',open:'открывается',nocut:'не режь',care:'осторожно',
+const LEG_SUB={RH:'Правая шпилька',LH:'Левая шпилька',cut:'режь прямо',tight:'крутой',long:'длинный',tighten:'затягивается',open:'открывается',nocut:'не режь',care:'осторожно',
   now:'сразу',d50:'50',d100:'100',d150:'150',d200:'200',d300:'300',d400:'400',d500:'500',dlong:'длинная прямая',crest:'гребень',jump:'трамплин',bridge:'мост',rail:'переезд',
   vill:'деревня',town:'город',tunnel:'тоннель',serp:'серпантин',mud:'грязь',finish:'финиш'};
 const LEG_ANG=[15,30,45,60,90,120,150];
@@ -41,13 +41,25 @@ function legBuild(T){const n=T.n,st=T.step,K=T.K,cl=!!T.closed,W=T.W,P=T.pts;if(
     const deg=ang*180/Math.PI,R=1/Math.max(1e-6,kmax);
     if(deg>=10||R<80)L.push({t:'c',k0:k,k1,ka,dir,deg:Math.max(deg,12),R,len:m*st,a1:a1/Math.max(1,Math.ceil(m/3)),a2:a2/Math.max(1,Math.ceil(m/3))});
     k=k1+1;}
+  // 0.34: насколько крут поворот на самом деле — по гоночной траектории (вход снаружи, апекс, выход), а не по оси дороги:
+  // отзыв «штурман страхуется и просит тормозить, а связку левый-правый часто можно пройти прямо по апексам»
+  let LK=null;try{const LN=typeof lineOf==='function'?lineOf(T):null;if(LN&&LN.K&&LN.K.length===n)LK=LN.K;}catch(_){}
+  const kLine=(a,b)=>{if(!LK)return 0;let m=0;for(let q=a;q<=b;q++){if(q<0||q>=span)continue;const v=Math.abs(LK[ix(q)]);if(v>m)m=v;}return m;};
+  for(const c of L){const kl=kLine(c.k0-2,c.k1+2);c.Rl=LK?Math.max(c.R,1/Math.max(1e-6,kl)):c.R;}
   // характер поворота
   const colAt=(k,lat,r)=>{const j=ix(k),p=P[j],nn=T.N[j],x=p[0]+nn[0]*lat,z=p[2]+nn[1]*lat;return (typeof colNear==='function'?colNear(T,x,z,r):[]).some(o=>Math.hypot(o.x-x,o.z-z)<(o.r||0.3)+r*0.6&&!/crowd|marsh|gend|photo/.test(o.kind||''));};
-  for(const c of L){c.hair=c.deg>=140&&c.R<30;c.call=Math.min(legAng(c.deg),legAngR(c.R));c.w=c.hair?(c.dir<0?'RH':'LH'):(c.dir<0?'R':'L')+c.call;
-    c.tight=!c.hair&&c.R<36&&c.deg>=40;c.long=!c.hair&&(c.deg>=c.call*1.6&&c.deg>=40||c.len>=90&&c.deg>=40);
+  for(const c of L){c.hair=c.deg>=140&&c.R<30;c.call=Math.min(legAng(c.deg),legAngR(c.Rl));c.w=c.hair?(c.dir<0?'RH':'LH'):(c.dir<0?'R':'L')+c.call;
+    c.tight=!c.hair&&c.Rl<36&&c.deg>=40;c.long=!c.hair&&(c.deg>=c.call*1.6&&c.deg>=40||c.len>=90&&c.deg>=40);
     c.tighten=!c.hair&&c.deg>=40&&c.a2>c.a1*1.6;c.open=!c.hair&&c.deg>=40&&!c.tighten&&c.a1>c.a2*1.6;
     // внутренняя бровка — со стороны поворота (поворот налево: кривизна > 0, бровка слева, lat > 0)
     const inS=c.dir>0?1:-1;c.nocut=c.deg>=30&&(colAt(c.ka,inS*(W/2+1.3),1.6)||colAt(Math.round((c.k0+c.ka)/2),inS*(W/2+1.3),1.6));}
+  // связка в разные стороны, которую гоночная траектория проходит почти прямо, — «режь прямо» (если внутри не стоит дерево или стена)
+  // «почти прямо» — дуга, которую машина эпохи проходит на полной скорости (у 1910-х — радиус от ~150 м, у 1920-х — от ~220 м)
+  {const y=(T.rc&&T.rc.y)||1910,top=clamp(25+0.7*(y-1895),25,48),flatR=top*top/(0.85*GRAV);
+    for(let q=0;q+1<L.length;q++){const a=L[q],b=L[q+1];if(a.dir===b.dir||(b.k0-a.k1)*st>=60||a.hair||b.hair||a.nocut||b.nocut)continue;
+      if(LK&&kLine(a.k0,b.k1)<1/flatR){a.cut=0;b.cut=1;a.flat=b.flat=1;}}
+    // в связке «режь прямо» каждый поворот — пологий («пятнадцать»), «режь прямо» — в конце цепочки
+    for(const c of L)if(c.flat&&!c.hair){c.call=15;c.w=(c.dir<0?'R':'L')+15;c.tight=c.long=false;}}
   // 2) опасности по пути: гребень и трамплин (по уклону), мост, тоннель, переезд, деревня и город, серпантин, грязь, финиш
   const H=[],add=(k,w,x)=>{if(k<0||k>=span)return;if(H.some(h=>h.w===w&&Math.abs(h.k0-k)*st<60))return;H.push(Object.assign({t:'h',k0:k,k1:k,w},x||{}));};
   const y=k=>P[ix(clamp(k,0,span-1))][1],gr=k=>(y(k+1)-y(k-1))/(2*st);
@@ -64,15 +76,15 @@ function legBuild(T){const n=T.n,st=T.step,K=T.K,cl=!!T.closed,W=T.W,P=T.pts;if(
   // опасность внутри поворота — к самому повороту не пристраиваем, читаем перед ним
   const all=L.concat(H).sort((a,b)=>a.k0-b.k0||(a.t==='h'?-1:1));
   // «осторожно»: крутой поворот после длинной прямой или сразу за гребнем
-  for(let q=0;q<all.length;q++){const c=all[q];if(c.t!=='c')continue;const prev=all[q-1];const straight=prev?(c.k0-prev.k1)*st:c.k0*st,sharp=c.hair||c.R<45;
+  for(let q=0;q<all.length;q++){const c=all[q];if(c.t!=='c')continue;const prev=all[q-1];const straight=prev?(c.k0-prev.k1)*st:c.k0*st,sharp=c.hair||c.Rl<45;
     c.care=sharp&&(straight>=260||(prev&&prev.t==='h'&&(prev.w==='crest'||prev.w==='jump')&&(c.k0-prev.k0)*st<45));}
   return {L:all,b0,i0,span,cl,n};}
 // слова одной записи легенды: поворот и характер; опасность — одно слово
-function legWords(c,full){if(c.t==='h')return [c.w];const w=[c.w];if(c.care)w.unshift('care');if(c.tight)w.push('tight');if(c.long)w.push('long');
-  if(full){if(c.tighten)w.push('tighten');else if(c.open)w.push('open');if(c.nocut)w.push('nocut');}return w;}
+function legWords(c,full){if(c.t==='h')return [c.w];const w=[c.w];if(c.care&&!c.flat)w.unshift('care');if(c.tight&&!c.flat)w.push('tight');if(c.long)w.push('long');
+  if(full&&!c.flat){if(c.tighten)w.push('tighten');else if(c.open)w.push('open');if(c.nocut)w.push('nocut');}if(c.cut)w.push('cut');return w;}
 function legDist(d){return d<30?'now':d<75?'d50':d<125?'d100':d<175?'d150':d<250?'d200':d<350?'d300':d<450?'d400':d<700?'d500':d<1200?'dlong':null;}
 // опасное (режим «только опасное»): крутые, длинные и «осторожно», шпильки; гребни, трамплины, мосты, переезды, финиш
-function legDanger(c){return c.t==='h'?['crest','jump','bridge','rail','finish','mud'].includes(c.w):(c.hair||c.tight||c.care||c.deg>=85||c.nocut);}
+function legDanger(c){return c.t==='h'?['crest','jump','bridge','rail','finish','mud'].includes(c.w):!c.flat&&(c.hair||c.tight||c.care||(c.deg>=85&&c.Rl<120)||c.nocut);}
 /* ---------- чтение по ходу ---------- */
 function legMode(){const m=AU.on&&AU.on.nav;return m==='danger'||m==='off'?m:'full';}
 function legPos(T,me){const G2=T.leg;if(!G2)return 0;return G2.cl?((me.idx-G2.b0)%G2.n+G2.n)%G2.n:me.idx-G2.i0;}
@@ -105,5 +117,5 @@ function legTick(me,T,recon){if(!T.leg)T.leg=legBuild(T);const LG=T.leg,L=LG.L;i
 // «Тормози!» — следующий поворот близко, а скорость для него велика и гонщик не тормозит
 function legBrake(me,T){const LG=T.leg;if(!LG||!LG.L.length)return;const kc=legPos(T,me),st=T.step;
   const c=LG.L.find(x=>x.t==='c'&&x.k0>kc&&(x.k0-kc)*st<80);if(!c||NAV.brkC===c)return;
-  const v=Math.max(0,me.vx),mu=roadMuAt(T,me.idx)*me.grip*twAll(me)*1.08,vc=Math.sqrt(mu*GRAV*c.R),bdec=(me.brakeK||0.8)*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0,d=(c.k0-kc)*st;
+  const v=Math.max(0,me.vx),mu=roadMuAt(T,me.idx)*me.grip*twAll(me)*1.08,vc=Math.sqrt(mu*GRAV*(c.Rl||c.R)),bdec=(me.brakeK||0.8)*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0,d=(c.k0-kc)*st;
   if(need>d*0.95&&!(me.brk>0.5)){NAV.brkC=c;navSay('brk',10,0.9);}}

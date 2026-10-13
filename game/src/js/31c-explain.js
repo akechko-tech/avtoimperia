@@ -169,6 +169,34 @@ function xpopCost(md,s){const D=xCostData(md,s),mo=isMoto(md),row=(l,sub,v,cls)=
     ${row('Работа',`${fmtN(D.h)} ч — ${xn(D.h/D.hw,1)} мес. рабочего × ${money(D.wg)} в месяц`,money(D.lab))}
     ${Math.abs(D.rest)>=1?row('Прочее','',money(D.rest),'muted'):''}
     ${row('Итого','',money(D.uc),'xp-tot')}</table>`;}
+// 0.34: «Контора» в финансах — из чего складывается доля выручки (отзыв «не понимаю, почему контора так дорого стоит»)
+function xpopAdm(s){const L=s.last||{},P=L.admP||admParts(s,L),rev=(L.rev||0)+(L.ord||0),k=P.k||1,dn=(DIFFS[s.diff]||{}).name||'',pp=f=>xn(f*100,1)+'%',
+  row=(l,sub,v,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${esc(l)}${sub?`<small>${esc(sub)}</small>`:''}</td><td>${v}</td></tr>`;
+  const nmTxt=`${P.nmC} ${plural(P.nmC,'автомобиль','автомобиля','автомобилей')}${P.nmM?` и ${P.nmM} ${plural(P.nmM,'мотоцикл','мотоцикла','мотоциклов')} (мотоцикл — полмодели)`:''}`;
+  // сколько сбережёт одна модель меньше
+  const lessF=n=>0.012*Math.log2(1+Math.max(0,n-3)/3),less=P.nm>3?(lessF(P.nm)-lessF(P.nm-1))*k*rev:0;
+  return `<div class="xp-h"><b>Контора · ${money(L.adm||0)} в месяц</b><button class="iconbtn xp-x" data-act="xpopClose" aria-label="Закрыть">×</button></div>
+    <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${k!==1?` На уровне «${esc(dn)}» рост с размером ×${xn(k,1)} — уже в строках ниже.`:''}</p>
+    <table class="xp-t xp-c xp-a">
+    ${row('Основа','правление, бухгалтерия, юристы',pp(P.base))}
+    ${row('Выпуск',`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
+    ${row('Страны сбыта за границей',P.fmL&&P.fmL.length?P.fmL.map(c=>(COUNTRIES[c]||{}).name||c).join(', ')+' — по 0,5%':'нет',(P.cty?'+':'')+pp(P.cty*k))}
+    ${row('Модели в производстве',nmTxt+'; снятые — не в счёт. Три — в основе, каждое удвоение сверх них +1,2%',(P.mdl?'+':'')+pp(P.mdl*k))}
+    ${row('Итого',`${pp(L.admK||P.total)} выручки ${money(rev)}`,money(L.adm||0),'xp-tot')}</table>
+    ${less>=1?`<p class="xp-w">Модель, что продаёт мало, можно снять с производства — контора станет дешевле на ≈${money(less)} в месяц.</p>`:''}`;}
+// 0.34: «Дилерская сеть» в финансах — по странам: дилеры, салоны, содержание, представительство и загрузка сети
+// (у империи из купленных марок сети поглощённых складываются с вашей — видно, где дилеров больше, чем покупателей)
+function xpopDlr(s){const L=s.last||{},home=s.country,row=(l,sub,v,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${esc(l)}${sub?`<small>${esc(sub)}</small>`:''}</td><td>${v}</td></tr>`;
+  const cs=Object.keys(COUNTRIES).filter(c=>dealerCount(s,c)>0||(c!==home&&impUpkeep(s,c)>0));let tot=0;const low=[];
+  const rows=cs.map(c=>{if(warCut(s,c))return row(COUNTRIES[c].name,'блокада — сеть не работает',money(0));
+    const d=dealerCount(s,c),up=dealerUpkeep(s,c),k=dealerMult(s,c),mk=L.mk&&L.mk[c],sold=Math.round((mk&&mk.sold)||0),cap=Math.round(dealerCapOf(s,c)),ld=cap>0?sold/cap:0,dc=d*up,im=c===home?0:impUpkeep(s,c);tot+=dc+im;
+    if(d>=10&&cap>0&&ld<0.6)low.push({t:COUNTRIES[c].name+' — '+Math.round(ld*100)+'%',acq:typeof acqIn==='function'&&acqIn(s,c).length>0});
+    return row(`${COUNTRIES[c].name}: ${fmtN(d)} ${plural(d,'дилер','дилера','дилеров')}`,`по ${money(up)} в месяц${k>1.01?` (салоны больше обычного ×${xn(k,2).replace(/,?0+$/,'')})`:''} · продали ${fmtN(sold)} из ${fmtN(cap)} возможных — загрузка ${Math.round(ld*100)}%`,money(dc))
+      +(im>0?row(`${COUNTRIES[c].name}: ${IMP_LV[impLv(s,c)].n.toLowerCase()}`,'содержание представительства',money(im)):'');}).join('');
+  return `<div class="xp-h"><b>Дилерская сеть · ${money(L.dlr||tot)} в месяц</b><button class="iconbtn xp-x" data-act="xpopClose" aria-label="Закрыть">×</button></div>
+    <p class="xp-w">Завод платит дилерам за агентов, вывеску, демонстрационную машину и выучку механика; салон побольше — дороже и продаёт больше. За границей — ещё отделение, сборка или свой завод.</p>
+    <table class="xp-t xp-c xp-a">${rows}${row('Итого','по нынешней сети',money(tot),'xp-tot')}</table>
+    ${low.length?`<p class="xp-w">Дилеров больше, чем покупателей: ${esc(low.map(x=>x.t).join(', '))}${low.some(x=>x.acq)?' — сети купленных марок сложились с вашей':''}. Лишних можно закрыть: «Рынок» → страна → «Закрыть 20%».</p>`:''}`;}
 /* ---------- окно: рядом со строкой, в пределах экрана; закрывается тапом мимо, ×, прокруткой ---------- */
 let XPOP_SC=null;   // прокрутка при открытии: окно закрывается, когда лист или страницу заметно прокрутили
 function xpopClose(){const a=document.getElementById('xpop'),b=document.getElementById('xpopBg');if(a&&a.remove)a.remove();if(b&&b.remove)b.remove();XPOP_SC=null;}
@@ -184,6 +212,8 @@ function xMdOf(id){const s=G;if(!s)return null;if(id==='d')return draft&&!draft.
   if(String(id).startsWith('L:')){const L=LEGEND_BY[String(id).slice(2)];return L?legendModel(s,L):null;}return s.models.find(m=>m.id===+id)||null;}
 const XP_ACT={
   chx:(d,el)=>{const md=xMdOf(d.id);if(!md)return;const tip=d.id==='d';let h='';try{h=d.k==='S'?xpopScore(md,G,tip):d.k==='cost'?xpopCost(md,G):xpopChar(md,G,d.k,tip);}catch(e){console.warn('explain',e);return;}xpopShow(h,el);},
+  xdlr:(d,el)=>{if(!G||!G.last)return;let h='';try{h=xpopDlr(G);}catch(e){console.warn('explain dlr',e);return;}xpopShow(h,el);},
+  xadm:(d,el)=>{if(!G||!G.last)return;let h='';try{h=xpopAdm(G);}catch(e){console.warn('explain adm',e);return;}xpopShow(h,el);},
   xpopClose:()=>xpopClose()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')xpopClose();});
 if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:true});window.addEventListener('scroll',xpopScroll,{passive:true});

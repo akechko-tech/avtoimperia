@@ -358,6 +358,10 @@ function mkRaceCar(e,y,trk){
   c.st=st;c.m=m;c.P=P;c.kd=kd;c.crr=crr;c.crr0=st.crr;c.vtop=v;c.gr=(ng===3?[0.42,0.7,1.02]:[0.3,0.52,0.76,1.02]).map(g=>g*v*(1+(e.gear||0)*0.06));
   c.brakeK=st.brk;c.grip=st.grip*(e.tyre==='soft'?1.07:0.96);c.wearK=e.tyre==='soft'?1.25:0.8;c.rel=clamp(st.rel*(e.relK||1),0.3,0.995);
   c.L=L;c.a=L*0.46;c.b=L*0.54;c.h=st.cg;c.Iz=m*(L*L+1.9)/12*1.4;
+  // 0.34: какие колёса тормозят: ленточный и барабаны на задних (k1, k2) — только задние; тормоза на четыре колеса — спереди
+  // больше половины. Раньше в расчёте весь тормоз ложился на заднюю ось — и машина с четырьмя тормозами вела себя при
+  // торможении так же неустойчиво, как с одними задними
+  {const kid=parts(e.md).k.id,FB={k1:0,k2:0,k3:0.55,k5:0.55,k4:0.6,k6:0.6,mk1:0.3,mk2:0,mk3:0.55};c.fb=FB[kid]!==undefined?FB[kid]:0.5;}
   // 0.33: мотоцикл — свой зачёт и узкий корпус (обгоняет по краю дороги, в столкновении — меньше места)
   c.cls=isMoto(e.md)?'moto':'car';c.rad=CAR_R;
   if(c.cls==='moto'){const pb=parts(e.md);c.rad=(pb.b.seats||1)>1?0.62:pb.c.id==='mf1'&&y<1902?0.5:0.42;c.Iz=m*(L*L+0.3)/12*1.2;}   // коляска и трицикл — шире одиночки
@@ -415,7 +419,7 @@ function playerService(c,dt){
   if(c.svc===1){if(!c.svc1T)c.svcRel=false;c.svc1T=(c.svc1T||0)+dt;if(!rKeys.gas)c.svcRel=true;
     // передумали: отпустили «Газ» и нажали снова — едем дальше (кроме пустого бака); газ, зажатый с самого начала, остановку не отменяет
     if(rKeys.gas&&c.svcRel&&c.svc1T>0.4&&!(c.fuelRate&&c.fuel<=0)){c.svc=0;c.svc1T=0;c.svcNo=R.time+5;rMsg('ЕДЕМ ДАЛЬШЕ',1);return;}
-    c.thr=0;c.brk=1;
+    c.thr=0;c.brk=Math.abs(c.vx)>4?0.35:1;
     // 0.29: на склоне или в грязи машина сползает и не может «встать» — механик подкладывает башмаки под колёса
     if(c.svc1T>2.5){c.vx=0;c.vy=0;c.r=0;}
     if(Math.abs(c.vx)<0.6){c.svc1T=0;const S=svcPlan(c);c.svc=2;c.svcT=S.t;c.svcWhat=S.what.join(', ')||'осмотр';rMsg((S.pit?'БОКСЫ: ':'МЕХАНИК: ')+c.svcWhat,1.8);}}
@@ -447,7 +451,9 @@ function carStep(c,trk,dt){
   if(c.shift>0)c.shift-=dt;else{if(c.rpm>0.96&&c.gear<c.gr.length){c.gear++;c.shift=0.28;}else if(c.gear>1&&Math.abs(v)<c.gr[c.gear-2]*0.55){c.gear--;c.shift=0.2;}}
   vg=c.gr[c.gear-1];
   const Fzf=c.m*GRAV*c.b/c.L,Fzr=c.m*GRAV*c.a/c.L;
-  let Fx=0;const thr=stopped?0:c.thr,brk=stopped?1:c.brk;
+  // 0.34: машина «встаёт» (поломка, бак пуст, сервис, сход) — на скорости тормозит плавно, а не намертво: раньше полный тормоз
+  // на ходу блокировал задние колёса, и машину разворачивало (отзыв: «кончился бензин — машину заносит и разворачивает»)
+  let Fx=0;const thr=stopped?0:c.thr,brk=stopped?(Math.abs(c.vx)>4?Math.max(Math.min(c.brk,0.6),0.3):1):c.brk;
   // уклон: в гору машина теряет скорость, под гору разгоняется; крутой склон шинам не одолеть
   const grade=gradeAt(c,trk,lat);c.grade=grade;
   // на крутом подъёме первая передача «ползёт» (сцепление с проскальзыванием): слабые машины 1890-х не встают намертво
@@ -473,10 +479,12 @@ function carStep(c,trk,dt){
     if(brk>0.3&&Math.abs(c.vx)<0.35)c.vx=0;}
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
-    const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,Math.abs(Fx)/(muR*Fzr+1)),2)));
-    const Fyf=tyreSat(af,Fzf,1,muF),Fyr=tyreSat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
+    // сколько продольной силы у каждой оси: тяга — только задние колёса, тормоз — по осям (c.fb — доля передних)
+    const brkF=brk>0.05&&!c.rev&&Fx<0?-Fx:0,fb=c.fb||0,FxR=brkF?brkF*(1-fb):Math.abs(Fx),FxF=brkF*fb;
+    const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxR/(muR*Fzr+1)),2))),frontCap=FxF?Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxF/(muF*Fzf+1)),2))):1;
+    const Fyf=tyreSat(af,Fzf,frontCap,muF),Fyr=tyreSat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
     const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
-    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump+rgh.ay,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull+rgh.dr+(c.punct?twPull(c)*0.6*Math.min(1,sp/15):0);
+    const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump+rgh.ay,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull+rgh.dr+(c.punct?twPull(c)*(c.punctWhy==='wear'?0.3:0.6)*Math.min(1,sp/15):0);
     c.vx+=dvx*dt;c.vy+=dvy*dt;c.r+=dr*dt;c.r*=0.9995;c.slipR=Math.abs(ar);c.slipF=Math.abs(af);
     // сколько сцепления шин уже занято (1 — предел): боковая сила по углу увода + тяга или торможение
     const gl=Math.tanh(PHY.tk*Math.max(c.slipF,c.slipR)),gx=Math.min(1.3,Math.abs(Fx)/(mu*c.m*GRAV+1));c.gu+=(Math.min(1.5,Math.hypot(gl,gx)+spin*0.5)-c.gu)*Math.min(1,dt*20);
@@ -563,8 +571,9 @@ function carFailure(c){
   // у своих машин механик почти всегда успевает починить на обочине; сход — только при тяжёлой поломке или после сильных ударов
   const early=R.rc.y<1906,terminal=Math.random()<(c.you?0.12+Math.min(0.5,c.dmg/200):0.6);
   const what=pick(['мотор','зажигание','цепь привода','подшипник','рессора','карбюратор','радиатор',early?'цепь':'клапан']);
+  if(c.you)(c.stopLog||(c.stopLog=[])).push(what);   // 0.34: что ломалось — КБ узнаёт слабое место (43-season.js, raceDevLearn)
   if(terminal){c.dnf=what;c.thr=0;if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — ${what}`,2.5);}
-  else{c.stopN=(c.stopN||0)+1;c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?0.6:1)*(c.fixK||1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
+  else{c.stopN=(c.stopN||0)+1;c.stopT=(R.trk.cfg.dur||110)*(0.05+Math.random()*0.07)*(c.st.mech?(c.subMech?0.8:0.6):1)*(c.fixK||1);c.stopWhy=what;c.limp=Math.random()<0.3;if(c.you)rMsgT(`${c.drvName||c.label}: ${c.st.mech?'механик чинит':'ремонт на обочине'} — ${what}, ~${Math.round(c.stopT)} с`,2.5);}
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 // Машины — капсулы: сталкиваются корпусами (нос в корму тоже), удар в угол разворачивает
@@ -582,31 +591,65 @@ function carsCollide(A,B){if(A.ghostT>0||B.ghostT>0)return 0;const dx0=A.x-B.x,d
 function aiControl(c,trk,dt){
   // 0.32: гоночная линия (41j-line.js): точность — по мастерству пилота и уровню сложности
   const {pts,n,closed,step}=trk,sk=aiSkill(c),v=Math.max(0,c.vx),LN=lineOf(trk),pr=linePrec(c),LL=LN.lat;
-  const look=6+v*0.75,ai=Math.round(look/step);let ti=c.idx+ai;if(closed)ti%=n;else ti=Math.min(n-1,ti);
+  const look=(6+v*0.75)*(c.wide>0.6?0.75:1),ai=Math.round(look/step);let ti=c.idx+ai;if(closed)ti%=n;else ti=Math.min(n-1,ti);
   const tp=pts[ti],tn=trk.N[ti],off=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[ti]*pr;const tx=tp[0]+tn[0]*off,tz=tp[2]+tn[1]*off;
   const dx=tx-c.x,dz=tz-c.z,fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);const lz=dx*fx+dz*fz,lx=dx*Math.cos(c.yaw)-dz*Math.sin(c.yaw);
   // руль: кривизна дуги до точки впереди + поправка по скорости вращения (шинам нужен угол увода)
   const kap=2*lx/Math.max(16,lz*lz+lx*lx);let want=Math.atan(c.L*kap);if(v>5)want+=clamp((kap*v-c.r)*0.3,-0.2,0.2);
-  const dmax=0.6/(1+v/20);c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-2.2*dt,2.2*dt);
+  // 0.34: зад пошёл в занос — руль по ходу заноса (контрруль), как ловит машину живой гонщик (раньше ИИ крутил дальше в поворот)
+  // (у шины предел — около 0,15 рад угла увода: до него это обычный быстрый поворот, дальше — занос)
+  if(v>4&&c.slipR>0.17){const cs=Math.atan2(c.vy+c.a*c.r,Math.max(1,v)),kc=clamp((c.slipR-0.17)/0.25,0,0.85);want=want*(1-kc)+cs*kc;}
+  // 0.34: на большой скорости руль — малыми углами и плавно (раньше на 150 км/ч ИИ мог дёрнуть руль на 0,2 рад — машину бросало)
+  const dmax=Math.min(0.6/(1+v/20),1.5*c.L*(c.muNow||c.grip||1)*GRAV/Math.max(1,v*v)+0.09),dr=2.2/(1+v/25)*dt;c.delta+=clamp(clamp(want,-dmax,dmax)-c.delta,-dr,dr);
+  // 0.34: машину развернуло поперёк или назад — разворот, как у живого гонщика: остановиться, сдать назад с обратным рулём,
+  // вперёд с полным рулём (раньше через 1,5–3 с машину ставили на дорогу «телепортом» — отзыв: «вылетают и сразу возвращаются»)
+  if(aiRecover(c,trk,dt,v))return;
   const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
-  const mu=roadMuAt(trk,c.idx)*c.grip*twAll(c)*(0.8+0.17*sk)*(c.punct?0.85:1)*ordK,muC=mu*0.9;
+  const mu0=roadMuAt(trk,c.idx)*c.grip*twAll(c)*(c.punct?0.85:1),mu=mu0*(0.8+0.17*sk)*ordK,muC=mu*0.9;
   // тормозит тем позже, чем опытнее: новичок — с запасом
-  const bdec=c.brakeK*mu*GRAV*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05;
-  // скорость — по кривизне той дуги, которой пилот едет (ось дороги + доля гоночной линии)
-  {const K=trk.K,KL=LN.K,mg=muC*GRAV,b2=2*bdec,lim=Math.min(170,40+v*4.5),onL=c.laneT===undefined;let vt2=vt*vt;
-    for(let d=0,it=0;d<lim;d+=step*2,it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)break;const kk=onL?K[j]+pr*(KL[j]-K[j]):K[j],k=(kk<0?-kk:kk)+1e-4,va2=mg/k+b2*(d>3?d-3:0);if(va2<vt2)vt2=va2;}vt=Math.sqrt(vt2);}
+  const bdec=c.brakeK*mu*GRAV*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05,aNeed=0;
+  // скорость — по кривизне той дуги, которой пилот едет (ось дороги + доля гоночной линии);
+  // 0.34: и какое замедление нужно, чтобы войти в поворот с этой скоростью — тормозить заранее и по прямой, а не в самом повороте
+  // профиль скорости впереди «с конца» (как у гоночных симуляторов): в каждой точке — не больше, чем держат шины в повороте,
+  // и не больше, чем успеть затормозить к следующей; тормозить в повороте можно лишь тем, что осталось от сцепления (круг трения),
+  // поэтому перед плавным входом в поворот машина сбрасывает скорость ещё на прямой
+  {const K=trk.K,KL=LN.K,mg=muC*GRAV,bp=bdec*0.85,onL=c.laneT===undefined,ds=step*2,m=Math.max(2,Math.min(120,Math.ceil(Math.min(200,40+v*5.5)/ds))),v2=v*v;
+    const KS=c._KS||(c._KS=new Float32Array(122)),VL=c._VL||(c._VL=new Float32Array(122));
+    for(let it=0;it<=m;it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)j=n-1;const kk=onL?K[j]+pr*(KL[j]-K[j]):K[j];KS[it]=(kk<0?-kk:kk)+1e-4;}
+    // тормозят задние колёса (в модели тормоз нагружает заднюю ось): в повороте им остаётся лишь доля сцепления задней оси —
+    // поэтому тормозить надо до поворота, по прямой
+    const rf=clamp((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0))),0.3,1);
+    let vn=Math.min(vt,Math.sqrt(mg/KS[m]));VL[m]=vn;
+    for(let it=m-1;it>=0;it--){const k=KS[it],vc=Math.sqrt(mg/k),u=Math.min(1,vn*vn*k/mg),a=bp*Math.sqrt(Math.max(0.04,1-u*u))*(1-(1-rf)*Math.min(1,u/0.3));vn=Math.min(vc,Math.sqrt(vn*vn+2*a*ds));VL[it]=vn;}
+    vt=Math.min(vt,VL[0]);
+    for(let it=1;it<=m;it++){const dd=it*ds-1.5;if(dd<=0)continue;const w2=VL[it]*VL[it];if(v2>w2){const a=(v2-w2)/(2*dd);if(a>aNeed)aNeed=a;}}}
   // закрытый переезд: остановиться у шлагбаума
   const gs=aiGateStop(c,trk);c.gateWait=gs<6?1:0;if(gs<150){const va=Math.sqrt(2*bdec*Math.max(0,gs-1));if(va<vt)vt=va;}
   if(c.vCap)vt=Math.min(vt,c.vCap);
-  if(c.err>0){c.err-=dt;vt*=1.1;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
-  const onL=c.laneT===undefined,kN=onL?(trk.K[c.idx]||0)+pr*((LN.K[c.idx]||0)-(trk.K[c.idx]||0)):(trk.K[c.idx]||0),latDem=v*v*Math.abs(kN)/(mu*GRAV+0.01);
-  c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;c.brk=v>vt*1.03?Math.min(1,(v-vt)/4):0;
-  // выносит наружу поворота дальше своей линии (или к самой бровке) — сбросить газ и подтормозить
-  {const tl=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[c.idx]*pr,out=-Math.sign(kN)*(c.lat-tl)-0.9,edge=-Math.sign(kN)*c.lat-(trk.W/2-0.7),wide=Math.max(out,edge);
-    if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,0.2);c.brk=Math.max(c.brk,Math.min(0.5,wide*0.15));}}
+  // ошибка пилота: чуть быстрее, чем можно (новичок ошибается чаще)
+  if(c.err>0){c.err-=dt;vt*=1.05;aNeed*=0.85;}else if(Math.random()<(1-sk)*0.03*dt)c.err=1.2;
+  const onL=c.laneT===undefined,kN=onL?(trk.K[c.idx]||0)+pr*((LN.K[c.idx]||0)-(trk.K[c.idx]||0)):(trk.K[c.idx]||0),latDem=Math.max(v*v*Math.abs(kN),Math.abs(v*c.r))/(mu*GRAV+0.01);
+  c.thr=v<vt*0.97?(latDem>0.8?0.45:1):v<vt?0.35:0;
+  // 0.34: тормоз — по профилю скорости: выше профиля — тормозить с нужным замедлением (заранее и твёрдо, без «качелей»
+  // газ-тормоз), а не «чуть-чуть, когда уже быстро»: так машина входила в поворот быстрее, чем можно, и тормозила в самом
+  // повороте — у машин с тормозами на задних колёсах это занос и разворот
+  {const full=c.brakeK*mu0*GRAV+0.01;c.brk=v>vt?clamp((Math.max(aNeed,0.5)/full)*1.1+(v-vt)*0.15,0.12,1):0;
+    // в повороте тормоз — только в пределах сцепления, что осталось от поворота (круг трения)
+    if(latDem>0.15)c.brk=Math.min(c.brk,clamp(1.1*Math.sqrt(Math.max(0,1-latDem*latDem))*((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0)))+0.15),0.06,1));
+    // и по прямой — не до блокировки задних колёс (заблокированные колёса не держат вбок — разворот)
+    c.brk=Math.min(c.brk,clamp(0.95*(c.a/c.L)/Math.max(0.2,c.brakeK*(1-(c.fb||0))),0.35,1));}
+  // выносит наружу поворота дальше своей линии (или к самой бровке) — сбросить газ; тормоз — только почти по прямой
+  {const tl=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[c.idx]*pr,out=-Math.sign(kN)*(c.lat-tl)-0.9,edge=-Math.sign(kN)*c.lat-(trk.W/2-0.7),wide=Math.max(out,edge);c.wide=Math.abs(kN)>1/400?wide:0;
+    if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,wide>0.6?0:0.2);if(latDem<0.35)c.brk=Math.max(c.brk,Math.min(0.3,wide*0.1));}}
   if(c.heat>82&&c.rpm>0.85)c.thr=Math.min(c.thr,c.order==='push'?0.7:0.5);
-  if(c.slipR>0.14&&c.thr>0.5)c.thr=0.5;
-  if(c.off&&v>8){c.thr=Math.min(c.thr,0.3);c.brk=Math.max(c.brk,0.2);}
+  // 0.34: газ — по сцеплению задних колёс (опытный гонщик не срывает колёса в пробуксовку): тяга не больше того, что держат шины
+  // с учётом поворота; колёса всё-таки буксуют — газ меньше
+  {const vg=c.gr[c.gear-1]||10,vCr=2.2+0.22*vg,Fzr=c.m*GRAV*c.a/c.L,pw=Math.max(1,c.P*(1-c.dmg/250)),avail=(c.muNow||mu0)*Fzr*Math.sqrt(Math.max(0.05,1-Math.min(1,latDem)**2));
+    c.thr=Math.min(c.thr,clamp(0.95*avail*Math.max(v,vCr)/pw,0.12,1));if(c.spinw>0.03)c.thr*=0.7;}
+  // зад скользит — отпустить тормоз и держать газ чуть-чуть: машина выравнивается
+  if(c.slipR>0.19&&v>4){c.brk=Math.min(c.brk,0.08);c.thr=Math.min(c.thr,0.22);}
+  // за обочиной: газ меньше, тормоз — только если быстро и почти по прямой
+  if(c.off&&v>8){c.thr=Math.min(c.thr,0.35);if(v>15&&latDem<0.35)c.brk=Math.max(c.brk,0.25);}
   // боксы: шины, топливо, повреждения или приказ команды
   // 0.26: тормозим к боксам загодя (быстрые машины на овале не успевали — и оставались без бензина); заезд засчитан и на скорости
   // 0.30: бензин — и на последнем круге: если до финиша не хватит, заезжаем (раньше на последний круг в боксы не заезжали — и сходили «без топлива»)
@@ -622,6 +665,25 @@ function aiControl(c,trk,dt){
   if(c.fuelRate&&c.fuel<=0&&!(c.pitT>0)&&!(c.stopT>0)&&!c.dnf){c.canN=(c.canN||0)+1;if(c.canN>3){c.dnf='кончилось топливо';if(c.you)rMsgT(`${c.drvName||c.label}: СХОД — кончилось топливо`,2.5);}
     else{c.stopT=(R.rc&&R.rc.y>=1925&&R.rc.t!=='rally'&&R.rc.t!=='endurance'?40:24)*(c.fuelK||1);c.stopWhy='канистра';c.fuel=Math.min(100,22+rem*c.fuelRate*0.5);if(c.you&&R.mode!=='sim')rMsgT(`${c.drvName||c.label}: бензин кончился — доливают из канистры`,1.6);}}
 }
+// 0.34: разворот после заноса — как у живого гонщика: остановиться; если стоит задом наперёд — сдать назад с обратным рулём;
+// вперёд с полным рулём, пока нос не смотрит вдоль дороги. Не выходит за три попытки — маршалы (aiStuckCheck)
+function aiRecover(c,T,dt,v){
+  if(c.player||c.dnf||c.fin!==null||c.stopT>0||c.pitT>0||c.wait||c.inWater)return false;
+  const tdir=Math.atan2(T.T[c.idx][0],T.T[c.idx][1]),ang=angWrap(c.yaw-tdir),aa=Math.abs(ang),sg=ang<0?-1:1;
+  // упёрся (в стену, скалу, чужую машину): газ есть, а машина стоит — сдать назад
+  c.blkT=c.thr>0.4&&c.brk<0.1&&Math.abs(c.vx)<0.3&&!c.rec?(c.blkT||0)+dt:0;
+  if(!c.rec){if(aa>1.2&&Math.abs(c.vx)<5&&R.t>3)c.rec={ph:'stop',t:0,n:0,tt:0};
+    else if(c.blkT>1.2&&R.t>3){c.rec={ph:'back',t:0,n:0,tt:0,blk:1};c.blkT=0;}else return false;}
+  const Q=c.rec;Q.t+=dt;Q.tt+=dt;
+  const steerTo=(x)=>{c.delta+=clamp(x-c.delta,-2*dt,2*dt);};
+  if(Q.ph==='stop'){c.rev=false;c.thr=0;c.brk=1;steerTo(0);if(Math.abs(c.vx)<0.4||Q.t>3){Q.ph=aa>1.9?'back':'fwd';Q.t=0;}}
+  else if(Q.ph==='back'){c.rev=true;c.brk=0;c.thr=0.55;steerTo(Q.blk&&aa<0.6?-Math.sign(c.delta||sg)*0.35:sg*0.5);if((aa<1.0&&!Q.blk)||Q.t>(Q.blk?1.6:2.4)){Q.ph='halt';Q.t=0;}}
+  else if(Q.ph==='halt'){c.rev=false;c.thr=0;c.brk=1;if(Math.abs(c.vx)<0.4||Q.t>1.5){Q.ph='fwd';Q.t=0;}}
+  else if(Q.ph==='fwd'){c.rev=false;c.brk=0;c.thr=0.42;steerTo(-sg*Math.min(0.5,aa+0.1));
+    if(aa<0.45||(Q.blk&&Q.t>1.2&&Math.abs(c.vx)>2)){c.rec=null;return false;}
+    if(Q.t>3.5){Q.n++;Q.ph='stop';Q.t=0;}}
+  if(Q.n>2||Q.tt>16){c.rec=null;c.rev=false;c.recFail=1;return false;}
+  return true;}
 // Движение в потоке: обгон медленной машины впереди, съезд к обочине для ремонта
 function aiTraffic(T){
   const W2=T.W/2-1.3;
@@ -638,12 +700,14 @@ function aiTraffic(T){
         const L=P.lat+P.b+1.1,Rr=P.lat-P.b-1.1;if(L<=W2||Rr>=-W2)c.laneT=L<=W2&&(Rr<-W2||Math.abs(L-c.lat)<Math.abs(Rr-c.lat))?L:Rr;break;}}
   });
 }
-const rKeys={left:false,right:false,gas:false,brake:false};
+// gasLv — 0.34: «Газ» с дозировкой (выше по кнопке — больше газа, ниже — меньше); с клавиатуры — полный
+const rKeys={left:false,right:false,gas:false,brake:false,gasLv:1};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
 const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
   if(c.wait)return;
-  const v=Math.max(0,c.vx),hist=G.diff==='hist';
+  // 0.34: на мотоцикле помощь «вшитая» на всех уровнях (и на «Историке»): руль, контрруль, газ в заносе — как на обычном
+  const v=Math.max(0,c.vx),hist=G.diff==='hist'&&c.cls!=='moto';
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
@@ -667,9 +731,18 @@ function playerControl(c,dt){
   const still=Math.abs(c.vx)<0.5;
   if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
   else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
-  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
-  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
+  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake,gLv=c.rev?1:clamp(rKeys.gasLv??1,0.1,1);
+  c.thr+=clamp((gIn?gLv:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
+  // 0.34: мотоцикл — помощь гонщику, «вшитая»: газ не срывает заднее колесо в пробуксовку (сколько держит шина с учётом наклона
+  // в повороте), тормоз не блокирует колёса (как ABS) — на мощном мотоцикле и вне асфальта иначе не проехать
+  // (отзыв: «45 л.с. — с газом не повернёшь, сразу разворачивает»; «на мото точно нужно ставить вшитую АБС»). Помощь — на всех
+  // уровнях, и на «Историке»: живой мотоциклист дозирует газ ручкой и чувствует колесо, а кнопка на экране этого не передаёт
+  if(c.cls==='moto'&&v>0.5){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
+    const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.08,1);if(c.thr>tMax)c.thr=tMax;
+    if(c.slipR>0.14)c.thr=Math.min(c.thr,0.25);
+    if(!c.rev&&c.brk>0){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
+      c.brk=Math.min(c.brk,Math.max(0.1,Math.min(capR,capF)));}}
   // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
   if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }
@@ -687,7 +760,7 @@ function wearSetup(c,trk,rc){
   // бака почти хватает на всю гонку — механики заливают с запасом, чтобы доехать без заправки; иначе нужна остановка
   if(trk.cfg.pits){const range=280/(p.e.fuel||1),f0=range/km,frac=f0>=0.9?clamp(Math.max(f0,1.15),1.15,1.6):clamp(f0,0.55,0.9);c.fuelRate=100/(frac*trk.raceLen);}else c.fuelRate=0;
   twInit(c,rc.y);
-  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?1:1.4)*(c.pitK||1);
+  c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?(c.subMech?1.15:1):1.4)*(c.pitK||1);
 }
 function startRace(setup){try{voiceUnlock();}catch(_){}
   const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
@@ -702,7 +775,7 @@ function startRace(setup){try{voiceUnlock();}catch(_){}
   const vref=Math.max(...teamCars.concat(ai).map(e=>carStats(e.md,e.prep,rc.y).vmax));
   const trk=buildTrack(rc,vref);
   const mechOut=typeof injOf==='function'&&injOf(s,'mech');
-  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);if(c.you&&mechOut&&c.st.mech)c.st.mech=false;c.mech=c.st.mech;
+  const cars=[...ai,...teamCars].map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:e.num||i+10}),rc.y,trk);if(c.you&&mechOut&&c.st.mech)c.subMech=true;c.mech=c.st.mech;
     // ваша машина — такая же, как в конструкторе: её цвет и кузов; соперники — гоночные машины в цветах своих стран
     const fdrv=c.drvId==='me'?(s.racer&&s.racer.id&&s.racer.id!=='custom'?s.racer.id:(pio.drv||'')):c.drvId;
     if(c.you||c.spec){const sp=modelSpec(c.md,c.prep,rc.y,{country:c.you&&!c.works?s.country:c.tc,num:c.num,mech:c.mech,drv:fdrv});c.style=sp.style;c.wheel=sp.wheel;c.spriteKey=sp.key;c.spec3=sp;}
@@ -880,7 +953,7 @@ function raceTick(dt){
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){twFix(c,twPlan(c,true),true);c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
       else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if((c.vx<15||(c.wantPit&&!c.player))&&c.lap>0){c.pitT=(4+(c.fuel<60?2*(c.pfuelK||1):0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
-    if(c.stopT>0){c.stopT-=dt;c.thr=0;c.brk=1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
+    if(c.stopT>0){c.stopT-=dt*(Math.abs(c.vx)<1.5?1:0.3);c.thr=0;c.brk=Math.abs(c.vx)>4?0.35:1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if((c.punct&&!c.flat||c.tyreSwap)&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;
       // 0.30: меняют только нужные колёса: пробитые (и совсем стёртые); износ всех — все четыре
       const L=c.tyreSwap?[0,1,2,3]:twPlan(c,false,true);if(c.fix>twTime(c,L,false)){twFix(c,L,false);c.fix=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+(c.tyreSwap?'НОВЫЕ ШИНЫ':L.length>1?'КОЛЁСА ЗАМЕНЕНЫ':'КОЛЕСО ЗАМЕНЕНО'),1.2);c.tyreSwap=false;}}
@@ -917,8 +990,11 @@ function raceTick(dt){
       else me.offIdx=-1;}}
   R.cars.forEach(c=>{const wrong=Math.abs(angWrap(c.yaw-Math.atan2(T.T[c.idx][0],T.T[c.idx][1])))>1.1;
     // проколотое колесо «до финиша на ободе» (flat) — тоже вытаскиваем на дорогу, если машина увязла в траве
-    if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&!c.tyreSwap&&c.fin===null&&R.t>4){const bad=(Math.abs(c.lat)>T.W/2+1.5||wrong||c.vx<0.5)&&!c.gateWait&&c.inWater!==2;
-      c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);if(c.st2>(wrong&&c.vx<6?1.5:3)){respawn(c);c.st2=0;}}
+    // 0.34: на дорогу ставим только того, кто сам не выбрался: далеко в поле, разворот не вышел или машина встала;
+    // на глазах у гонщика — не раньше чем через 12 с (раньше — через 1,5–3 с после любого заноса: «вылетают и сразу возвращаются»)
+    if((!c.player)&&!c.dnf&&!c.wait&&!(c.stopT>0)&&!(c.pitT>0)&&(!c.punct||c.flat)&&!c.tyreSwap&&c.fin===null&&R.t>4){const far=Math.abs(c.lat)>T.W/2+14,bad=(far||c.recFail||(c.vx<0.5&&!c.rec))&&!c.gateWait&&c.inWater!==2;
+      c.st2=bad?(c.st2||0)+dt:Math.max(0,(c.st2||0)-dt*0.5);const me2=R.me,seen=R.mode==='drive'&&me2&&me2!==c&&!me2.dnf&&Math.hypot(me2.x-c.x,me2.z-c.z)<160;
+      if(c.st2>(c.recFail&&!seen?1.5:seen?12:6)){respawn(c);c.st2=0;c.recFail=0;c.rec=null;}}
     // 0.18: машина соперника (или вашего пилота) минуту не двигается к финишу — сход «застрял» (гонка не тянется бесконечно)
     // 0.26: застрял (машина поперёк, упёрся в препятствие или в чужую машину) — через 15 с маршалы выталкивают его на дорогу дальше;
     // время потеряно, но гонка продолжается. Сход — если и после пяти раз дальше не едет
@@ -972,7 +1048,7 @@ function finishRace(quit){
   R.cars.forEach(o=>{if(o.fin!==null||o.dnf)return;if(quit&&o.player){o.dnf='сошёл';return;}
     const left=Math.max(0,T.raceLen-o.prog)/Math.max(o.vtop*0.6,1),h=R.hz0*Math.pow((1-o.rel)/R.relRef,1.6)*1.1*0.6;
     if(Math.random()<1-Math.exp(-h*left))o.dnf=pick(['мотор','зажигание','подшипник','рессора','радиатор']);else o.fin=R.time+left;});
-  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,cls:c.cls||'car',name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||''}));
+  const order=raceOrder(),rc=R.rc,res=order.map((c,i)=>({pos:i+1,cls:c.cls||'car',name:c.name,drv:c.drvName,you:!!c.you,player:!!c.player,label:c.label,fin:c.fin!==null&&R.scn?scnElapsed(c,c.fin):c.fin,dnf:c.dnf,md:c.you?c.md:null,drvId:c.drvId,tc:c.tc,num:c.num,prep:c.prep,punct:c.punctN||0,priv:c.priv?1:0,pmy:c.pmy||0,inj:c.inj||null,mInj:c.mInj||null,dmg:c.you?c.dmg||0:0,works:c.works||'',stops:c.you?(c.stopLog||[]).slice(0,6):[]}));
   // 0.33: совместная гонка — у автомобилей и мотоциклов свои зачёты: места считаются внутри класса
   {const pc={};res.forEach(r=>{pc[r.cls]=(pc[r.cls]||0)+1;r.pos=pc[r.cls];});}
   document.getElementById('raceScreen').hidden=true;if(R.gl)try{r3dDispose();}catch(_){}

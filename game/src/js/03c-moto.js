@@ -23,8 +23,11 @@ const PREF_MOTO={moto:{1896:330,1900:260,1905:220,1910:220,1913:230,1916:250,191
 const PREF_MOTO_C={us:1,uk:1,fr:1,de:0.92,it:1.1};
 // качество типичного мотоцикла — доля лучшей машины эпохи (у автомобилей: народный 0,62, средний 0,8)
 const QG_MOTO={moto:0.34,moside:0.4};
-// что ценят покупатели: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места, работа в непогоду
-const CHAR_W_MOTO={moto:{perf:0.3,rel:0.25,comf:0.08,ease:0.1,safe:0.05,econ:0.22,cap:0},moside:{perf:0.1,rel:0.3,comf:0.15,ease:0.08,safe:0.12,econ:0.15,cap:0.1}};
+// что ценят покупатели: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места и тяга
+// 0.34 (отзыв: «почему у мотоцикла с коляской низкий вес мощности и вместимости?»): коляска — машина семьи, которой не по карману
+// автомобиль: важно, сколько человек она везёт, и хватит ли мотору сил тянуть коляску с пассажирами в гору (для колясок брали
+// самые сильные «твины» — 7–9 л.с.); надёжность по-прежнему главное. Было: мощность 0,1, места 0,1, надёжность 0,3
+const CHAR_W_MOTO={moto:{perf:0.3,rel:0.25,comf:0.08,ease:0.1,safe:0.05,econ:0.22,cap:0},moside:{perf:0.18,rel:0.25,comf:0.12,ease:0.06,safe:0.1,econ:0.14,cap:0.15}};
 /* ---------- мотомарки по странам (выпуск, шт. в год; доля колясок) ---------- */
 const MCOMPS={
   us:[{n:'Indian',since:1901,mix:{moto:.85,moside:.15},v:{1901:150,1903:376,1905:1200,1907:2200,1909:4700,1911:9000,1913:32000,1914:25000,1916:22000,1918:20000,1920:12000,1923:9000,1925:8000,1929:8000},models:[[1901,'Diamond Framed'],[1911,'Hedstrom Twin'],[1916,'Powerplus','Indian Powerplus'],[1920,'Scout','Indian Scout (motorcycle)'],[1922,'Chief','Indian Chief (motorcycle)']],wiki:'Indian Motorcycle'},
@@ -35,18 +38,18 @@ const MCOMPS={
       {n:'Douglas',since:1907,mix:{moto:.75,moside:.25},v:{1907:200,1913:2000,1915:6000,1918:8000,1920:6000,1925:6000,1929:5000},models:[[1907,'Douglas 2¾'],[1914,'Model V']],wiki:'Douglas (motorcycles)'},
       {n:'Norton',since:1902,mix:{moto:.85,moside:.15},v:{1902:50,1908:200,1913:500,1920:1500,1925:3000,1929:4000},models:[[1908,'Big Four'],[1922,'Model 18'],[1927,'CS1']],wiki:'Norton Motorcycle Company'},
       {n:'Brough Superior',since:1919,mix:{moto:.8,moside:.2},v:{1919:50,1922:200,1925:300,1929:350},models:[[1919,'Mark I'],[1925,'SS100','Brough Superior SS100']],wiki:'Brough Superior'}],
-  fr:[{n:'De Dion-Bouton',since:1896,until:1909,mix:{moto:1},v:{1896:300,1897:1000,1898:2500,1899:3500,1900:3000,1902:1500,1905:300,1908:50},models:[[1896,'Трицикл De Dion-Bouton','De Dion-Bouton tricycle']],wiki:'De Dion-Bouton tricycle'},
+  fr:[{n:'De Dion-Bouton',since:1896,pk:'dedion',until:1909,mix:{moto:1},v:{1896:300,1897:1000,1898:2500,1899:3500,1900:3000,1902:1500,1905:300,1908:50},models:[[1896,'Трицикл De Dion-Bouton','De Dion-Bouton tricycle']],wiki:'De Dion-Bouton tricycle'},
       {n:'Werner',since:1897,until:1909,mix:{moto:1},v:{1897:200,1899:800,1901:1500,1903:1200,1905:500,1908:50},models:[[1897,'Motocyclette'],[1901,'Новый Вернер']],wiki:'Werner (motorcycles)'},
       {n:'Peugeot',since:1898,mix:{moto:.9,moside:.1},v:{1898:300,1900:1500,1903:2000,1905:1500,1910:2000,1913:3000,1920:5000,1925:12000,1929:15000},models:[[1901,'Motocyclette Peugeot'],[1913,'Peugeot 500 M']],wiki:'Peugeot Motocycles'},
       {n:'René Gillet',since:1898,mix:{moto:.6,moside:.4},v:{1898:50,1905:300,1910:600,1913:1000,1920:2000,1925:3000,1929:3000},models:[[1898,'René Gillet'],[1920,'Type G']],wiki:'René Gillet'},
       {n:'Terrot',since:1902,mix:{moto:.85,moside:.15},v:{1902:100,1910:800,1913:1500,1920:3000,1925:8000,1929:12000},models:[[1902,'Terrot'],[1927,'Terrot HSS']],wiki:'Terrot'},
       {n:'Motobécane',since:1923,mix:{moto:.95,moside:.05},v:{1923:1000,1924:6000,1925:15000,1927:25000,1929:30000},models:[[1924,'MB1 «Ля Мото Бленд»']],wiki:'Motobécane'}],
   de:[{n:'NSU',since:1901,mix:{moto:.85,moside:.15},v:{1901:100,1903:600,1905:1500,1910:2000,1913:3000,1920:5000,1924:8000,1925:12000,1928:30000,1929:35000},models:[[1901,'NSU Motorrad'],[1928,'NSU 501 T']],wiki:'NSU Motorenwerke'},
-      {n:'Wanderer',since:1902,until:1930,mix:{moto:.85,moside:.15},v:{1902:100,1905:500,1910:1000,1913:2000,1920:3000,1925:8000,1928:10000,1929:5000},models:[[1902,'Wanderer Motorrad'],[1928,'Wanderer K 500']],wiki:'Wanderer (company)'},
+      {n:'Wanderer',since:1902,pk:'wanderer',until:1930,mix:{moto:.85,moside:.15},v:{1902:100,1905:500,1910:1000,1913:2000,1920:3000,1925:8000,1928:10000,1929:5000},models:[[1902,'Wanderer Motorrad'],[1928,'Wanderer K 500']],wiki:'Wanderer (company)'},
       {n:'DKW',since:1919,mix:{moto:.95,moside:.05},v:{1919:500,1921:2000,1922:5000,1924:10000,1925:15000,1926:22000,1927:30000,1928:60000,1929:65000},models:[[1919,'«Мечта мальчишки» — моторчик к велосипеду'],[1922,'Reichsfahrtmodell'],[1928,'E 206']],wiki:'DKW'},
       {n:'BMW',since:1923,mix:{moto:.8,moside:.2},v:{1923:1500,1924:2000,1925:3000,1927:4000,1929:5000},models:[[1923,'R 32','BMW R32'],[1928,'R 62']],wiki:'BMW R32'}],
   it:[{n:'Frera',since:1906,mix:{moto:.85,moside:.15},v:{1906:200,1910:800,1913:1500,1918:3000,1920:2000,1925:2000,1929:1000},models:[[1906,'Frera'],[1913,'Frera 4½ HP']],wiki:'Frera'},
-      {n:'Bianchi',since:1905,mix:{moto:.9,moside:.1},v:{1905:200,1910:500,1913:1000,1920:2000,1925:3000,1929:4000},models:[[1905,'Bianchi Motocicletta']],wiki:'Bianchi (bicycle manufacturer)'},
+      {n:'Bianchi',since:1905,pk:'bianchi',mix:{moto:.9,moside:.1},v:{1905:200,1910:500,1913:1000,1920:2000,1925:3000,1929:4000},models:[[1905,'Bianchi Motocicletta']],wiki:'Bianchi (bicycle manufacturer)'},
       {n:'Gilera',since:1909,mix:{moto:.9,moside:.1},v:{1909:50,1913:300,1920:800,1925:1500,1929:2500},models:[[1909,'Gilera VT 317']],wiki:'Gilera'},
       {n:'Moto Guzzi',since:1921,mix:{moto:.9,moside:.1},v:{1921:17,1922:300,1923:600,1925:1500,1927:2500,1929:3000},models:[[1921,'Normale','Moto Guzzi Normale'],[1928,'GT «Norge»']],wiki:'Moto Guzzi'}]};
 /* ---------- детали мотоцикла: в общих каталогах деталей, с пометкой moto (конструктор показывает их только для мотоцикла) ---------- */

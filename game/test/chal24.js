@@ -48,7 +48,8 @@ boardTake(G,'sales');const C5=G.chal,e5=C5.end;ok(C5&&C5.mon&&C5.start===mi(G),'
 let res5=null;for(let k=0;k<14&&G.chal;k++){G.pending=[];botMonth('grow');const c=G.chal;step();if(!G.chal){res5=G.pending.find(e=>e.duel);break;}if(k===0)ok(c.you>0&&c.them>0,'счёт идёт каждый месяц: вы '+Math.round(c.you)+', '+c.mq+' '+Math.round(c.them));}
 ok(!!res5&&res5.duel.sales&&mi(G)===e5,'итог пари в срок ('+dstr(G)+'): '+(res5&&res5.title)+' — '+(res5&&('вы '+res5.duel.sales.you+', они '+res5.duel.sales.them+(res5.duel.sales.hc!==1?' ×'+res5.duel.sales.hc:''))));
 // ---------- 6. экспорт: продажи на чужом рынке ----------
-G.chal=null;G.pending=[];const oe=chalOffers(G).find(o=>o.kind==='export');ok(!!oe&&oe.C.c!==G.country,'экспортный вызов: «'+(oe&&oe.title)+'» · '+(oe&&oe.sub));
+// (0.34: экспортный вызов зависит от продаж за границей в прошлом месяце — ищем его в ближайшие полгода, а не только в этом месяце)
+let oe=null;for(let k=0;k<6&&!oe;k++){G.chal=null;G.pending=[];oe=chalOffers(G).find(o=>o.kind==='export');if(!oe){botMonth('grow');G.pending=[];step();}}G.chal=null;G.pending=[];ok(!!oe&&oe.C.c!==G.country,'экспортный вызов: «'+(oe&&oe.title)+'» · '+(oe&&oe.sub));
 if(oe){boardTake(G,'export');const C6=G.chal;let r6=null;for(let k=0;k<14&&G.chal;k++){G.pending=[];botMonth('grow');step();if(!G.chal){r6=G.pending.find(e=>e.duel);break;}}
   ok(!!r6&&r6.duel.sales&&r6.duel.sales.c===C6.c&&new RegExp(COUNTRIES[C6.c].name).test(duelHTML(r6.duel)),'итог экспортного пари — в сцене страна: '+(r6&&r6.title));}
 // ---------- 7. пробег на надёжность ----------

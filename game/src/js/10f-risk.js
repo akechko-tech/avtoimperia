@@ -44,8 +44,15 @@ function devNews(s,md,out){const txt=out.map(o=>DEV_TXT[o.k](o.x,o.kk)).join('; 
   const fc=fixCost(s,md),fm=fixMonths(md);
   addLog(`«${md.name}»: испытания серии — ${txt}. Причина — незрелые детали (${young}).`,'bad');
   pushEvent({kicker:'КБ · испытания',own:1,title:`«${md.name}»: не всё по ТЗ`,deck:txt,carId:md.id,
-    text:`Первые машины серии прошли испытания. ${capF(txt)}; ломается чаще расчётного. Так бывает с новинками: ${young} ещё не обкатаны ни у поставщиков, ни у вас.\nОтклонение будет таять само — рабочие и поставщики научатся (года за два-три). Или КБ займётся доводкой: ${fm} мес., ${money(fc)}.`,
+    text:`Первые машины серии прошли испытания. ${capF(txt)}; ломается чаще расчётного. Так бывает с новинками: ${young} ещё не обкатаны ни у поставщиков, ни у вас.\nОтклонение будет таять само — рабочие и поставщики научатся (года за два-три; гонки ускоряют: каждая — как несколько месяцев доводки). Или КБ займётся доводкой: ${fm} мес., ${money(fc)}.`,
     choices:[[`Доводка в КБ · ${money(fc)}`,'rdfix:'+md.id],['Пусть доводят в серии','ok']]},true);}
+// 0.34: доводку можно начать в любой момент — из карточки модели (отзыв: «не доработал модель после выхода на рынок —
+// потом эта опция недоступна»; раньше кнопка была только в новости о запуске)
+function dvCardHTML(md,s){if(!md||!md.dv)return '';const ks=Object.keys(md.dv);if(!ks.length)return '';
+  const busy=rdActive(s).some(pj=>pj.kind==='fix'&&pj.md===md.id),fc=fixCost(s,md),f=dvFail(md);
+  const L=ks.map(k=>`${RISK_NAME[k]} ${Math.round((dvNow(md,k)-1)*100)}%`).join(' · ');
+  return `<div class="dvbox"><p class="small warn">⚙️ Не по ТЗ: ${L} — ломается чаще расчётного${f>1.05?` (×${(Math.round(f*10)/10).toString().replace('.',',')})`:''}. Отклонение тает само в серии; гонки ускоряют.</p>
+    ${busy?'<p class="small muted" style="margin-top:4px">КБ ведёт доводку.</p>':`<button class="btn sm" style="margin-top:6px" data-act="rdfixM" data-id="${md.id}" ${s.cash<fc?'disabled':''}>🔧 Доводка в КБ · ${money(fc)} · ${fixMonths(md)} мес.</button>`}</div>`;}
 function fixCost(s,md){const n=md.dv?Object.keys(md.dv).length:1;return Math.round((1500+1200*n)*cpi(s)/100)*100;}
 function fixMonths(md){const n=md.dv?Object.keys(md.dv).length:1;return 3+n;}
 // проект «Доводка»: КБ берёт модель с отклонениями и доводит до ТЗ
@@ -77,4 +84,4 @@ function riskHTML(md,s){const p=parts(md),L=RISK_PK.map(k=>({k,x:p[k],r:partRisk
   const R=modelRisk(md,s.y),worst=L.reduce((a,o)=>Math.max(a,DEV_K[o.k]),0);
   return `<div class="row small" style="margin-top:10px"><span class="muted">Риск: не по ТЗ</span><span class="num ${R>0.5?'warn':''}">${Math.round(R*100)}%</span></div>
     <p class="small muted" style="margin-top:4px">${L.map(o=>`${RISK_NAME[o.k]} — ${o.x.y>s.y?`прототип, на ${o.x.y-s.y} ${plural(o.x.y-s.y,'год','года','лет')} раньше истории`:o.x.y===s.y?'новинка этого года':`в деле ${s.y-o.x.y} ${plural(s.y-o.x.y,'год','года','лет')}`} (${Math.round(o.r*100)}%)`).join(' · ')}.
-    Сравнение выше — по ТЗ: так машину увидят покупатели. Если при запуске не повезёт, деталь выйдет хуже расчёта (до −${Math.round(worst*100)}%) и будет ломаться чаще — пока рабочие не доведут её в серии (2–3 года) или КБ не сделает «Доводку». Обкатанные детали выходят точно по ТЗ.</p>`;}
+    Сравнение выше — по ТЗ: так машину увидят покупатели. Если при запуске не повезёт, деталь выйдет хуже расчёта (до −${Math.round(worst*100)}%) и будет ломаться чаще — пока рабочие не доведут её в серии (2–3 года; гонки ускоряют доводку) или КБ не сделает «Доводку». Обкатанные детали выходят точно по ТЗ.</p>`;}

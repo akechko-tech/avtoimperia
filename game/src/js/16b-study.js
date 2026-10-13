@@ -5,13 +5,15 @@ const STUDY_KINDS=['people','middle','lux','sport','van','truck'];
 function studyCar(kind,y){if(kind==='sport'&&y<1901)return null;if(kind==='truck'&&y<1910)return null;if(kind==='van'&&y<1896)return null;
   const r=rivalCar(kind,y);return r?{kind,y:r[0],name:r[1],md:{...r[2],t:KIND_TRIM[kind]||'t0'}}:null;}
 function studyKey(c){return c.name+'|'+c.y;}
-function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind,b=byId(BODIES,c.md.b);
+function studyPrice(c,s){const g=c.kind==='van'||c.kind==='truck'?'truck':c.kind,b=byId(BODIES,c.md.b);if(isMotoSeg(c.kind))return Math.round(prefP(c.kind,s.country,s)*1.3/10)*10;
   return Math.round(prefP(g,s.country,s)*(b&&b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1)*1.15/10)*10;}
 const STUDY_NEED=6;
 // 0.25: машину своей марки (какой она была в настоящей истории) не покупают и не разбирают — это ваша же машина
 function ownMarqueCar(name,s){const nm=String(name||'').toLowerCase();return !!s&&Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&((b.models||[]).some(x=>x[2]===name)||nm.startsWith(String(b.n).toLowerCase().split(/[ &(]/)[0]+' '))));}
+// 0.34: и мотоциклы соперников (отзыв: «хочется разбирать чужие мотоциклы в КБ») — когда у марки есть мотоциклетная линейка
+function studyKinds(s){return STUDY_KINDS.concat(s&&(lineOn(s,'moto')||s.mshopB)&&s.y>=1896?MOTOSEG:[]);}
 function studyList(s){const out=[];
-  STUDY_KINDS.forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;if(ownMarqueCar(c.name,s)){c.own=1;out.push(c);return;}
+  studyKinds(s).forEach(kind=>{const c=studyCar(kind,s.y);if(!c||out.some(o=>o.name===c.name))return;if(ownMarqueCar(c.name,s)){c.own=1;out.push(c);return;}
     c.done=((s.rd.studied)||[]).includes(studyKey(c));c.busy=rdActive(s).some(p=>p.kind==='study'&&p.name===c.name);c.price=studyPrice(c,s);out.push(c);});
   return out;}
 function studyPartsLine(md){const p=parts(md);return `${p.e.name}, ${p.g.name.toLowerCase()}, ${p.c.name.toLowerCase()}, тормоза: ${p.k.name.toLowerCase()}, ${p.w.name.toLowerCase()}`;}
@@ -38,11 +40,11 @@ function studyDone(s,pj){
   addLog(`КБ разобрало ${c.name}: ${[G0.fut.length?'новые детали — '+G0.fut.map(x=>x.name).join(', '):'',G0.ups.length?'доводка — '+G0.ups.map(x=>x.name+' ★'+upgL(x.id)).join(', '):''].filter(Boolean).join('; ')||'изучены все узлы'}.`,'good');
   pendingToasts.push('🔍 Изучен '+c.name);
   const rid=typeof REELS!=='undefined'&&REELS['car:'+c.name]?'car:'+c.name:'';if(rid)reelUnlock(s,rid);
-  pushEvent({own:1,kicker:'Конструкторское бюро',title:`КБ разобрало ${c.name}`,choices:rid?[['Дальше','ok'],['▶ Кинохроника: история машины','reel:'+rid]]:undefined,deck:`Машина соперников ${c.y} года — до последнего винтика`,img:IMG[c.name]?c.name:'',imgCap:`${c.name}, ${c.y}`,
+  pushEvent({own:1,kicker:'Конструкторское бюро',title:`КБ разобрало ${c.name}`,choices:rid?[['Дальше','ok'],['▶ Кинохроника: история машины','reel:'+rid]]:undefined,deck:`${isMotoSeg(c.kind)?'Мотоцикл':'Машина'} соперников ${c.y} года — до последнего винтика`,img:IMG[c.name]?c.name:'',imgCap:`${c.name}, ${c.y}`,
     text:`Инженеры «${s.company}» купили ${c.name} и разобрали его на верстаках: ${studyPartsLine(c.md)}.\n`+
       (G0.fut.length?`Главная находка — ${G0.fut.map(x=>x.name).join(', ')}: у поставщиков такого ещё нет, а теперь КБ умеет делать это само. Деталь уже в конструкторе.\n`:'')+
       (G0.ups.length?`Соперники годами доводили свою машину — эту доводку КБ переняло: ${G0.ups.map(x=>x.name+' ★'+upgL(x.id)).join(', ')}.\n`:'')+
-      `Улучшать изученные детали теперь на 40% быстрее. Новую машину класса «${KIND_NAME[c.kind]}» три года можно разрабатывать на 20% дешевле и на месяц быстрее.`+(cmp?'\n'+cmp:'')},true);
+      `Улучшать изученные детали теперь на 40% быстрее. ${isMotoSeg(c.kind)?'Новый мотоцикл':'Новую машину'} класса «${KIND_NAME[c.kind]}» три года можно разрабатывать на 20% дешевле и на месяц быстрее.`+(cmp?'\n'+cmp:'')},true);
 }
 // Новая модель в изученном классе: разработка дешевле и быстрее
 function studyIns(md,s){s=s||G;const I=s&&s.rd&&s.rd.ins;if(!I)return false;const k=designKind(md);return (I[k]||0)>mi(s);}

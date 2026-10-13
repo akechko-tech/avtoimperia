@@ -14,15 +14,20 @@ function mMarket(s,c){return Math.max(1,MOTOSEG.reduce((a,g)=>a+segAnnual(c,g,s)
 function mStat(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return null;const st=((s.mcomps||{})[c]||[])[i]||{},full=(st.prev||0)>0,cv=compVol(cp,s);
   const v=Math.max(1,full?st.prev:Math.max(st.yr||0,cv*0.9),cv*0.7);
   let P=0,w=0;MOTOSEG.forEach(g=>{const k=(cp.mix&&cp.mix[g])||0;P+=k*prefP(g,c,s);w+=k;});P=w?P/w:prefP('moto',c,s);
-  const sh=v/mMarket(s,c),profit=v*P*(s.y<1920?0.09:0.075),capU=Math.max(0.5,Math.round(v/12*0.085*1.1*10)/10),dl=Math.max(1,Math.round(v/12/Math.max(1,dealerTP(s)*MOTO_DLR)));
+  // 0.34: доля — по настоящим продажам марки за прошлый год (раньше — по её «обычному» выпуску из истории, и у купленных
+  // и ослабленных вами марок доли в сумме выходили больше 100%); оценка — по заводам и выпуску, как прежде
+  const va=full?Math.max(0,st.prev):v,sh=Math.min(0.95,va/mMarket(s,c)),profit=v*P*(s.y<1920?0.09:0.075),capU=Math.max(0.5,Math.round(v/12*0.085*1.1*10)/10),dl=Math.max(1,Math.round(v/12/Math.max(1,dealerTP(s)*MOTO_DLR)));
   const A=capU*capUnitCost(s)*0.55+dl*dealerCost(s)*0.5,V=Math.max(3000,Math.round(Math.max(A*0.8,profit*9+A*0.25)*(DIF().maK??1)/1000)*1000);
-  return {cp,nm:compName(cp,s),v,sh,P,profit,capU,dl,V};}
+  return {cp,nm:compName(cp,s),v,va,sh,P,profit,capU,dl,V};}
 function mdealBlock(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return 'нельзя';if(mholdOf(s,c,i))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';return '';}
-function mdealPrice(s,c,i){const M=mStat(s,c,i);return M?Math.round(M.V*1.2/1000)*1000:0;}
+// цена — оценка и премия владельцам: 20%, а за лидера рынка — больше (до +50% при половине рынка: владельцы знают себе цену)
+function mdealPrem(M){return 0.2+0.6*clamp(M.sh,0,0.5);}
+function mdealPrice(s,c,i){const M=mStat(s,c,i);return M?Math.round(M.V*(1+mdealPrem(M))/1000)*1000:0;}
 function mdealDo(s,c,i){if(mdealBlock(s,c,i))return null;const M=mStat(s,c,i),price=mdealPrice(s,c,i);if(!M||s.cash<price)return {ok:false};
   s.cash-=price;s.plantVal+=M.capU*capUnitCost(s)*0.6;const home=c===s.country;
-  mholdList(s).push({c,i,n:M.cp.n,nm:M.nm,t:mi(s),sh0:mShares0(s,c,i),home:home?1:0,paid:price});
+  const mcap=Math.round(M.capU/Math.max(0.02,motoCx(s))),add0=Math.min(M.dl,dealerRoom(s,c));
+  mholdList(s).push({c,i,n:M.cp.n,nm:M.nm,t:mi(s),sh0:mShares0(s,c,i),home:home?1:0,paid:price,capM:mcap,dlAdd:Math.max(0,add0)});
   s.lines=s.lines||{car:1};const hadEq=motoLv(s)>0;if(!hadEq)s.lines.moto=1;
   s.cap=(s.cap||0)+M.capU;
   if(!home){s.imp=s.imp||{};if(impLv(s,c)<2)s.imp[c]=2;}
@@ -37,15 +42,18 @@ function mBoughtShare(c,g,s){let v=0;mholdIn(s,c).forEach(h=>{const x=(h.sh0&&h.
 // строки мотомарок в «Сделках»
 function mdealsHTML(s,sel){const L=(MCOMPS[sel]||[]).map((cp,i)=>({cp,i})).filter(o=>compAlive(o.cp,s)||mholdOf(s,sel,o.i)).map(o=>({...o,M:mStat(s,sel,o.i),b:mdealBlock(s,sel,o.i)})).filter(o=>o.M).sort((a,b)=>b.M.v-a.M.v);
   if(!L.length)return '';
-  return `<div class="label" style="margin-top:12px">🏍 Мотомарки</div>`+L.map(o=>{const M=o.M,P=mdealPrice(s,sel,o.i);
-    return `<div class="deal-row"><div style="flex:1"><b>${esc(M.nm)}</b> ${o.b==='ваша'?'<span class="pill good">ваша</span>':o.b?`<span class="pill muted">${esc(o.b)}</span>`:''}<small class="muted">${fmtN(Math.round(M.v))} мотоциклов в год · доля ${pct(M.sh,M.sh<0.1?1:0)} · оценка ${money(M.V)}</small></div>${o.b?'':`<button class="btn sm" data-act="mdealOpen" data-c="${sel}" data-i="${o.i}" ${s.cash<P?'disabled':''}>Купить · ${money(P)}</button>`}</div>`;}).join('');}
+  return `<div class="label" style="margin-top:12px">🏍 Мотомарки</div>`+L.map(o=>{const M=o.M,P=mdealPrice(s,sel,o.i),h=o.b==='ваша'?mholdOf(s,sel,o.i):null;
+    // купленная мотомарка — что досталось (как у купленных автомобильных марок), а не её прежний выпуск и доля
+    if(h)return `<div class="deal-row"><div style="flex:1"><b>${esc(M.nm)}</b> <span class="pill good">ваша</span><small class="muted">куплена в ${miDate(h.t||0)}${h.paid?` за ${money(h.paid)}`:''}${h.capM?` · цеха +${fmtN(h.capM)} мотоциклов в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${Math.round(maLoy(s,h)*100)}% былой доли</small></div></div>`;
+    return `<div class="deal-row"><div style="flex:1"><b>${esc(M.nm)}</b> ${o.b?`<span class="pill muted">${esc(o.b)}</span>`:''}<small class="muted">${fmtN(Math.round(M.va))} мотоциклов в год · доля ${pct(M.sh,M.sh<0.1?1:0)} · оценка ${money(M.V)}</small></div>${o.b?'':`<button class="btn sm" data-act="mdealOpen" data-c="${sel}" data-i="${o.i}" ${s.cash<P?'disabled':''}>Купить · ${money(P)}</button>`}</div>`;}).join('');}
 function openMdeal(c,i){const s=G,M=mStat(s,c,i);if(!M)return;const b=mdealBlock(s,c,i);if(b){toast('Нельзя: '+b);return;}const P=mdealPrice(s,c,i),hadEq=motoLv(s)>0,H=MBRAND_HIST[M.cp.n]||{};
   openSheet(`<div class="row"><h2>Купить «${esc(M.nm)}»</h2>${X}</div>
-    <p class="small muted" style="margin-top:4px">Мотомарка · ${esc(COUNTRIES[c].name)}${H.city?' · '+esc(H.city):''} · ${fmtN(Math.round(M.v))} мотоциклов в год · доля ${pct(M.sh,1)}</p>
+    <p class="small muted" style="margin-top:4px">Мотомарка · ${esc(COUNTRIES[c].name)}${H.city?' · '+esc(H.city):''} · ${fmtN(Math.round(M.va))} мотоциклов в год · доля ${pct(M.sh,1)}</p>
     ${H.t?`<p style="margin-top:8px">${esc(H.t)}</p>`:''}
     <div class="label" style="margin-top:12px">Что вы получите</div>
     <p class="small" style="margin-top:4px">• Её цеха — места в вашем заводе: ещё ≈ ${fmtN(Math.round(M.capU/Math.max(0.02,motoCx(s))))} мотоциклов в месяц${hadEq?'':'<br>• Оборудование для мотоциклов — сразу'}<br>• ${c===s.country?`Её дилеров (до ${fmtN(M.dl)})`:`Её дилеров в стране «${esc(COUNTRIES[c].name)}» — ваше отделение там; ваши мотоциклы там — без пошлины`}<br>• Часть её покупателей — несколько лет, если ваши мотоциклы не хуже</p>
-    <div class="row" style="margin-top:12px"><span class="muted">Цена (оценка ${money(M.V)} + 20% владельцам)</span><b class="num">${money(P)}</b></div>
+    <div class="row" style="margin-top:12px"><span class="muted">Цена (оценка ${money(M.V)} + ${Math.round(mdealPrem(M)*100)}% владельцам${M.sh>0.05?' — лидер рынка знает себе цену':''})</span><b class="num">${money(P)}</b></div>
+    <p class="small muted" style="margin-top:4px">Оценка — около девяти годовых прибылей и цеха с дилерами. Мотоцикл стоит ${money(M.P)} — в 5–15 раз дешевле автомобиля, поэтому и марка с тысячами мотоциклов в год стоит как небольшой автозавод.</p>
     <div class="btns" style="margin-top:12px"><button class="btn primary" data-act="mdealBuy" data-c="${c}" data-i="${i}" ${s.cash<P?'disabled':''}>Купить · ${money(P)}</button><button class="btn" data-act="close">Отмена</button></div>`);}
 const MDEAL_ACT={
   mdealOpen:d=>openMdeal(d.c,+d.i),

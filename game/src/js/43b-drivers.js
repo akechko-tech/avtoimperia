@@ -250,7 +250,7 @@ function injApply(s,rc,res){s.inj=s.inj||{};s.injAI=s.injAI||{};s.retired=s.reti
     const who=o.id==='me'?'Вы':o.nm,back=`вернётся в ${miDate(o.until)}`;
     const text=o.retire?`${o.txt}. Врачи запретили гонки — ${o.id==='me'?'за руль больше не сесть; гоняют пилоты по контракту':'он уходит из команды'}.`
       :o.id==='me'?`${o.txt}. До ${miDate(o.until)} за руль нельзя — на гонки едут пилоты по контракту или приглашённые.`
-      :o.id==='mech'?`${o.txt}. Пока он в больнице, машины едут без механика — поломки чинить дольше.`:`${o.txt}. Пилот пропустит гонки и ${back}.`;
+      :o.id==='mech'?`${o.txt}. Пока он в больнице, в машине едет запасной механик: легенду читает, а поломки чинит дольше.`:`${o.txt}. Пилот пропустит гонки и ${back}.`;
     pushEvent({kicker:'Команда',own:1,title:o.retire?`${who} ${o.id==='me'?'уходите':'уходит'} из гонок`:`${who} в больнице`,deck:`Авария в гонке «${rc.name}»`,text,img,imgCap:img?o.nm:''});});
   out.filter(o=>!o.mine).forEach(o=>addLog(`${o.nm} (${o.car}) после аварии в «${rc.name}»: ${o.txt}${o.retire?' — уходит из гонок':', пропустит гонки до '+miDate(o.until)}.`,'hist'));
   return out;}

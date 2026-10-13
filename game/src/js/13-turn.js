@@ -112,7 +112,7 @@ function step(){
   // 0.21: контора — управление, сбыт, бухгалтерия, юристы: около 3% выручки
   // 0.32: и растёт с размером компании — как содержание городов в «Цивилизации»: больше выпуск, больше стран, больше моделей —
   // больше управляющих, бумаг и согласований (на «Историке» — заметнее)
-  r.admK=admRate(s,r);r.adm=r.admK*(r.rev+r.ord);
+  {const AP=admParts(s,r);r.admK=AP.total;r.adm=r.admK*(r.rev+r.ord);r.admP={made:AP.made,fmL:AP.fmL,nmC:AP.nmC,nmM:AP.nmM,nm:AP.nm,k:AP.k,base:AP.base,out:AP.out,cty:AP.cty,mdl:AP.mdl,total:AP.total};}
   // 0.30: дивиденды дочерних компаний (их прибыль — по продажам прошлого месяца)
   try{maMonth(s,r);}catch(e){console.warn('ma month',e);r.div=0;}
   r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
@@ -230,10 +230,16 @@ function whStock(s){return s.models.reduce((a,m)=>a+m.stock*whW(m),0);}
 // Конкуренты отвечают на ваш успех: если вы забираете класс, они выпускают новинки, режут цены и открывают дилеров
 const RESP_MIN=50;
 // доля выручки на контору: 3% + рост с выпуском (удвоение выпуска сверх ~400 машин в месяц — +1,1%), с каждой страной сбыта за границей (+0,5%)
-// и с каждой моделью сверх трёх (+0,4%) — умноженный на уровень сложности (org); не больше 25%
-function admRate(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fm=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0).length,
-  nm=(s.models||[]).filter(m=>m.status==='prod').length,k=DIF().org??1;
-  return Math.min(0.25,0.03+k*(0.011*Math.log2(1+made/400)+0.005*fm+0.004*Math.max(0,nm-3)));}
+// и с числом моделей — умноженный на уровень сложности (org); не больше 25%.
+// 0.34: отзыв «не понимаю, почему контора так дорого стоит». У империи из купленных марок каждая модель сверх трёх добавляла 0,4% ВСЕЙ
+// выручки (каждая поглощённая марка ставит в производство свою модель): 25 моделей — +8,8%, будто модель на 20 машин в месяц держит
+// отдел размером с концерн. Теперь модели дорожают медленнее: каждое удвоение их числа сверх трёх — +1,2% (до шести — как раньше:
+// 4 → +0,5%, 6 → +1,2%; 12 → +2,4%; 25 → +3,7%); мотоцикл — полмодели. Разбор — «как посчитано» у строки «Контора» в финансах.
+function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
+  P=(s.models||[]).filter(m=>m.status==='prod'),nmM=P.filter(m=>isMoto(m)).length,nmC=P.length-nmM,nm=nmC+nmM*0.5,k=DIF().org??1;
+  const out=0.011*Math.log2(1+made/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
+  return {made,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
+function admRate(s,r){return admParts(s,r).total;}
 function rivalsReact(s,r){const D=DIF(),T0=D.share||0.2,rate=D.rvRate||1,mx=D.rvMax||1.3;if(!s.rv)s.rv={};
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;const rv=s.rv[c]=s.rv[c]||{};
     // 0.32: в эпоху пионеров рынок класса — десятки машин: на новичка с полусотней машин в год соперники не ополчаются (от ~50 машин класса в месяц)
