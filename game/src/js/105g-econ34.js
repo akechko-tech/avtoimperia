@@ -146,12 +146,20 @@ function maDealerSplit(s,c,M){const lv=c===s.country?9:Math.max(impLv(s,c),2),n=
 function reachInfo(s,c){const d=dealerCount(s,c),need=Math.round(dealerNeed(c,s)),mx=dealerMax(s,c),r=reachOf(s,c),pot=marketPotential(s,c),miss=Math.max(0,Math.min(need,mx)-d);
   return {d,need,mx,r,pot,miss,cost:miss*dealerCost(s),capLim:mx<need};}
 // карточка страны: загрузка сети (меньше пятой части — совет), лишний свой завод при купленной марке, охват за границей, ответ соперников
-function econNetHTML(s,c){const d=dealerCount(s,c);if(!d||warCut(s,c))return '';const NL=netLoad(s,c),up=d*dealerUpkeep(s,c);
-  return NL.cap>0&&d>=10&&NL.k<0.2&&s.last?`<p class="small warn" style="margin-top:4px">Сеть продаёт меньше пятой части того, что может: ${fmtN(Math.round(NL.sold))} из ${fmtN(Math.round(NL.cap))} в месяц, а содержание — ${money(up)}. ${dealerMult(s,c)>1.01?'Салоны поменьше или закройте часть дилеров':'Закройте часть дилеров'} — сеть станет дешевле, продажи не упадут.</p>`:'';}
+// что урезать в недогруженной сети, не теряя покупателей: салоны больше обычного — «Салоны поменьше»; дилеров больше, чем городов
+// (охват уже полный, лишние его не добавляют) — закрыть лишних; иначе сеть ни при чём — машины мало берут сами (охват, цена, качество): совета нет
+function netCut(s,c){const d=dealerCount(s,c);if(!s.last||d<10||warCut(s,c))return null;const NL=netLoad(s,c);if(NL.cap<=0||NL.k>=0.2)return null;
+  const k=dealerMult(s,c),need=Math.round(dealerNeed(c,s)),extra=Math.max(0,d-need);
+  if(k>1.01)return {how:'salon',NL,k,need,extra};return extra>=Math.max(2,d*0.05)?{how:'extra',NL,k,need,extra}:null;}
+function econNetHTML(s,c){const d=dealerCount(s,c);if(!d)return '';const X=netCut(s,c);if(!X)return '';const up=d*dealerUpkeep(s,c);
+  return `<p class="small warn" style="margin-top:4px">Сеть продаёт меньше пятой части того, что может: ${fmtN(Math.round(X.NL.sold))} из ${fmtN(Math.round(X.NL.cap))} в месяц, а содержание — ${money(up)}. ${X.how==='salon'?'Салоны поменьше':`Дилеров больше, чем городов (~${fmtN(X.need)}): закройте ${fmtN(X.extra)} лишних`} — сеть станет дешевле, продажи не упадут.</p>`;}
 function plantRedundantHTML(s,c){const lv=impLv(s,c);if(lv<3||!intIn(s,c)||impBuilding(s,c))return '';const A=acqIn(s,c)[0],up=impUpkeep(s,c)-IMP_LV[2].up*cpi(s)*impK(s,c);
   return `<p class="small warn" style="margin-top:4px">🏭 ${lv>=4?'Свой завод':'Сборка'} здесь не ${lv>=4?'нужен':'нужна'}: заводы «${esc((A&&(A.nm||A.n))||'купленной марки')}» уже делают ваши машины без пошлины и «чужой марки». Содержание — ${money(up)} в месяц.</p>`;}
-function reachHTML(s,c){const I=reachInfo(s,c);if(I.r>=0.3||!I.d)return '';const nm=COUNTRIES[c].name;
-  return `<p class="small warn" style="margin-top:4px">В стране «${esc(nm)}» ваши машины видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
+// «Во Франции…»: где — для строк про страну
+const IN_C={de:'В Германии',fr:'Во Франции',uk:'В Британии',us:'В США',it:'В Италии'};
+function inC(c){return IN_C[c]||`В стране «${esc((COUNTRIES[c]||{}).name||c)}»`;}
+function reachHTML(s,c){const I=reachInfo(s,c);if(I.r>=0.3||!I.d)return '';
+  return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши машины видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
 function contestHTML(s,c){const mk=s.last&&s.last.mk&&s.last.mk[c];if(!mk)return '';const L=ALLSEG.map(g=>{const P=contestParts(s,c,g);if(P.tot<0.02&&P.sh<P.thrP*0.8)return '';
   return `<p class="small ${P.tot>0.2?'warn':'muted'}" style="margin-top:3px">⚔️ ${esc(SEG[g].name)}: доля ${pct(P.sh,0)} · порог ${pct(P.thrP,0)}${P.thrR!==P.thrP?`/${pct(P.thrR,0)}`:''} · спрос ×${xk2(P.mul)}${P.tot>0.02?` (${contestTxt(P)})`:''}${P.pend?` · готовится ответ: ${P.pend}`:''}</p>`;}).filter(Boolean);
   return L.length?`<div style="margin-top:4px">${L.join('')}<p class="small muted" style="margin-top:2px">Порог — на «${esc((DIFFS[s.diff]||{}).name||'')}»: выше первой доли соперники давят, выше второй — снижают цены и готовят модели-ответы.</p></div>`:'';}

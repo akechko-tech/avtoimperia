@@ -60,7 +60,13 @@ function stuttgart(){seed(13);newGame('custom','de','Моторные масте
   G.imp.de=0;G.hold=G.hold.filter(h=>h.c!=='it');const lv=impLv(G,'it');ok(lv===4&&impDownTo(G,'it')===3,'Италия без купленной марки: завод → сборка (на ступень ниже)');
   ok(leaveOk(G,'it')&&leaveCountry(G,'it')&&dealerCount(G,'it')===0&&impLv(G,'it')===0,'«Уйти из страны»: дилеры закрыты, отделение и заводы проданы');
   const P=admParts(G,G.last);ok(!P.fmL.includes('it'),'контора — без Италии');
-  const k0=dealerMult(G,'us'),u0=dealerUpkeep(G,'us');dealerShrink(G,'us');ok(Math.abs(dealerMult(G,'us')-(k0-0.25))<1e-6&&dealerUpkeep(G,'us')<u0,'«Салоны поменьше»: ×'+k0+' → ×'+dealerMult(G,'us')+', содержание дилера '+money(u0)+' → '+money(dealerUpkeep(G,'us')));}
+  const k0=dealerMult(G,'us'),u0=dealerUpkeep(G,'us');dealerShrink(G,'us');ok(Math.abs(dealerMult(G,'us')-(k0-0.25))<1e-6&&dealerUpkeep(G,'us')<u0,'«Салоны поменьше»: ×'+k0+' → ×'+dealerMult(G,'us')+', содержание дилера '+money(u0)+' → '+money(dealerUpkeep(G,'us')));
+  // совет урезать сеть — только когда покупателей не потеряете: салоны больше обычного или дилеров больше, чем городов
+  {const X=netCut(G,'us');ok(X&&X.how==='salon'&&/Салоны поменьше/.test(econNetHTML(G,'us')),'США: сеть продаёт '+pct(netLoad(G,'us').k,1)+' возможного при салонах ×'+dealerMult(G,'us')+' — совет «Салоны поменьше»');
+   G.dealers.uk=300;G.dcap.uk=1;G.imp.uk=1;G.hold=G.hold.filter(h=>h.c!=='uk');
+   ok(netLoad(G,'uk').k<0.2&&netCut(G,'uk')===null&&econNetHTML(G,'uk')==='','Британия: 300 дилеров на ~'+fmtN(Math.round(dealerNeed('uk',G)))+' городов, салоны обычные (загрузка '+pct(netLoad(G,'uk').k,0)+') — закрывать нечего, совета нет: охват упал бы');
+   G.dealers.de=Math.round(dealerNeed('de',G)*1.25);G.dcap.de=1;const Y=netCut(G,'de'),NL=netLoad(G,'de');
+   ok(NL.k>=0.2||(Y&&Y.how==='extra'&&Y.extra===dealerCount(G,'de')-Math.round(dealerNeed('de',G))&&/закройте [0-9  ]+ лишних/.test(econNetHTML(G,'de'))),'Германия: дилеров больше, чем городов, салоны обычные (загрузка '+pct(NL.k,1)+') — «закройте '+(Y?fmtN(Y.extra):'?')+' лишних»');}}
 // ---------- 5. покупка марки: салоны не растут выше нужного ----------
 {seed(21);newGame('renault','fr','Рено','normal');G.pending=[];G.y=1921;G.m=3;G.cash=6e7;G.dealers.fr=Math.ceil(dealerNeed('fr',G)*1.3);const k0=dealerMult(G,'fr'),d0=dealerCount(G,'fr'),c0=G.cash;
   const L=(COMPS.fr||[]).map((cp,i)=>({cp,i})).filter(o=>!dealBlock(G,'fr',o.i)&&maStat(G,'fr',o.i)).sort((a,b)=>maStat(G,'fr',b.i).dl-maStat(G,'fr',a.i).dl);let h=null;
