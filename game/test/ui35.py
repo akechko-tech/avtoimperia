@@ -1,5 +1,5 @@
 # 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры;
-# финансисты Дюрант и Роллс; мотоцикл — газ «всё или ничего», помощь видна на кнопках («ПБС» на «Газе», «АБС» на «Тормозе»)
+# финансисты Дюрант и Роллс; мотоцикл — газ сплошной, «всё или ничего»; помощь (противобуксовка, АБС) работает молча — без надписей на кнопках
 from playwright.sync_api import sync_playwright
 import os
 out='/tmp/claude-0/-home-claude/78ad6e73-468f-5068-9de0-30834cd44849/scratchpad/ui35/'
@@ -45,7 +45,7 @@ with sync_playwright() as p:
       return {p:s.pioneer,c:s.country,L:L1/L0,a:a1/a0,b:b0?b1/b0:0,buick:pkIs(COMPS.us.find(c=>c.n==='Buick'),s)};})()""")
     ok(r['p']=='durant' and r['c']=='us' and abs(r['L']-1.3)<0.04 and abs(r['a']-1.15)<0.01 and abs(r['b']-0.8)<0.03 and r['buick'],'Дюрант в игре: кредит ×%.2f, контора ×%.2f, марки ×%.2f, Buick — его марка'%(r['L'],r['a'],r['b']))
     clean()
-    # 3) мотоцикл 40 л.с. на «Клаузене»: газ — у нижнего края кнопки тоже полный; помощник придерживает газ — «ПБС», тормоз — «АБС»
+    # 3) мотоцикл 40 л.с. на «Клаузене»: газ — у нижнего края кнопки тоже полный; помощник придерживает газ и тормоз молча (отзыв: «зачем надпись АБС на тормоз?»)
     js("""(()=>{newGame('custom','de','Тест','normal');for(let i=0;i<8;i++)try{closePaper();}catch(_){};closeSheet();G.pending=[];
       const rc=RACES.find(r=>r.key==='klausen-1925');G.y=rc.y;G.m=Math.max(0,rc.m-1);G.cash=5e5;G.rdept=1;G.lines={car:1,moto:1};
       const d=rivalDesign('moto',rc.y);G.models.push(Object.assign({},G.models[0],{id:77,name:'Мото 25',e:'me10',g:d.g,c:d.c,k:d.k,b:d.b,w:d.w,t:'t0',dv:undefined}));
@@ -63,27 +63,28 @@ with sync_playwright() as p:
     js("(()=>{if(R)R.speed=1;})()")
     ok(js("!!(R&&R.me&&R.me.cls==='moto')"),'в гонке — мотоцикл игрока: '+str(js("R&&R.me?Math.round(R.me.P/745.7)+' л.с.':'—'")))
     g=pg.query_selector('#raceScreen .r-ctrl .gas');bk=pg.query_selector('#raceScreen .r-ctrl .brk')
-    tc=False;full=True;shot=False
+    tc=False;full=True;shot=False;plain=True
     if g:
         bb=g.bounding_box();pg.mouse.move(bb['x']+bb['width']/2,bb['y']+bb['height']*0.92);pg.mouse.down()
         for i in range(30):
-            pg.wait_for_timeout(100);lab=g.inner_text();full=full and js("rKeys.gas===true&&rKeys.gasLv===undefined")
-            if 'ПБС' in lab:
+            pg.wait_for_timeout(100);plain=plain and g.inner_text().strip()=='ГАЗ';full=full and js("rKeys.gas===true&&rKeys.gasLv===undefined")
+            if js("!!(R&&R.me&&R.me.asTC>R.time&&R.me.thr<0.9)"):
                 tc=True
                 if not shot: pg.screenshot(path=out+'3_tc.png');shot=True
         pg.mouse.up()
     ok(full,'газ «всё или ничего»: палец у нижнего края кнопки — газ полный')
-    ok(tc,'мотоцикл на старте: «ПБС» на кнопке газа — помощник придерживает газ, заднее колесо не срывается')
+    ok(tc and plain,'мотоцикл на старте: помощник придерживает газ (заднее колесо не срывается), на кнопке — только «ГАЗ»')
     # тормоза мотоциклов 1920-х на прямой колесо не блокируют (тормоз слабее сцепления) — АБС нужна в повороте: тормоз «в пол» с рулём до упора
     v=js("(()=>{rKeys.right=true;return R&&R.me?R.me.vx*3.6:0;})()");abs_on=False
+    plain=True
     if bk:
         bb=bk.bounding_box();pg.mouse.move(bb['x']+bb['width']/2,bb['y']+bb['height']/2);pg.mouse.down()
         for i in range(15):
-            pg.wait_for_timeout(80);lab=bk.inner_text()
-            if 'АБС' in lab:
+            pg.wait_for_timeout(80);plain=plain and 'АБС' not in bk.inner_text()
+            if js("!!(R&&R.me&&R.me.asABS>R.time)"):
                 abs_on=True;pg.screenshot(path=out+'4_abs.png');break
         pg.mouse.up()
-    js("rKeys.right=false");ok(abs_on,'тормоз «в пол» в повороте на %d км/ч: «АБС» на кнопке тормоза'%round(v))
+    js("rKeys.right=false");ok(abs_on and plain,'тормоз «в пол» в повороте на %d км/ч: колёса не блокируются (АБС), надписи на кнопке нет'%round(v))
     js("(()=>{try{if(R)finishRace(true);}catch(e){console.warn(e)};R=null;try{closeSheet();}catch(_){};G.pending=[];})()");pg.wait_for_timeout(300)
     ok(len(errs)==0,'без ошибок в консоли: '+'; '.join(errs[:3]))
     b.close()

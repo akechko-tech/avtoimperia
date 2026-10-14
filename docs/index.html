@@ -874,9 +874,6 @@ button.qbx:active{opacity:.8}
 .dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
 .dnote b{white-space:nowrap}
 /* 0.34: «Газ» с дозировкой — заливка кнопки по уровню газа, ниже — процент */
-.r-ctrl .gas small{display:block;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;margin-top:2px;min-height:13px}
-/* 0.35: помощь мотоциклу на кнопках — «ПБС» и «АБС» горят, пока придерживают газ или тормоз */
-.r-ctrl .gas.assist small,.r-ctrl .brk.assist small{display:block;width:fit-content;margin:3px auto 0;background:#0e2233;color:#8fdcff;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:800;letter-spacing:.06em;opacity:1}
 .dvbox{margin-top:8px;padding:8px 10px;border:1px solid rgba(233,196,106,.35);border-radius:6px;background:rgba(233,196,106,.06)}
 
 /* 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры */
@@ -892,6 +889,7 @@ button.qbx:active{opacity:.8}
 .ng-face{width:30px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--brass);box-sizing:border-box;background:#5a5048;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 .ng-face img{width:100%;height:100%;object-fit:cover;filter:sepia(.35) contrast(1.05)}
 .ng-ini{font-family:var(--display);font-size:11px;font-weight:800;color:#f2e6cf}
+.ng-svg svg{width:100%;height:100%;display:block}
 .ng-back{align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-start}
 </style>
 
@@ -12112,7 +12110,7 @@ function ngPathOf(d){return d.path==='racer'?'racer':d.path==='moto'?'moto':(d.r
 // герои пути: гонщики — из RACERS, мотоциклисты — PIONEERS с moto, фабриканты, финансисты и техники — PIONEERS с role
 function ngHeroes(k){if(k==='racer')return Object.keys(RACERS).filter(x=>x!=='custom');return Object.keys(PIONEERS).filter(x=>x!=='custom'&&(k==='moto'?PIONEERS[x].moto:PIONEERS[x].role===k));}
 function ngFace(k,racer){const P=racer?RACERS[k]:PIONEERS[k],d=racer&&DRIVERS.find(x=>x.id===k),im=racer?d&&IMG[DRIVER_WIKI[d.id]]:P.wiki&&IMG[P.wiki],nm=racer?P.n:P.name;
-  return im?`<span class="ng-face"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></span>`:`<span class="ng-face ng-ini">${esc(String(nm).split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;}
+  return im?`<span class="ng-face"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></span>`:!racer&&typeof portraitSVG==='function'?`<span class="ng-face ng-svg">${portraitSVG(k)}</span>`:`<span class="ng-face ng-ini">${esc(String(nm).split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;}
 function openPathPick(){
   const card=p=>{const H=ngHeroes(p.k),racer=p.k==='racer',names=H.map(k=>{const n=racer?RACERS[k].n:PIONEERS[k].name;return n.split(' ').slice(-1)[0];}).join(', ');
     return `<button class="ng-path" data-act="ngPath" data-v="${p.k}"><span class="ng-ico">${p.ico}</span><span class="ng-b"><b>${p.t}</b><small class="ng-when">${p.when}</small><span class="ng-d">${p.d}</span><span class="ng-faces">${H.slice(0,5).map(k=>ngFace(k,racer)).join('')}<small>${esc(names)}${H.length?' или свой персонаж':''}</small></span></span></button>`;};
@@ -13935,7 +13933,8 @@ function playerControl(c,dt){
   // уровнях, и на «Историке»: живой мотоциклист дозирует газ ручкой и чувствует колесо, а кнопка на экране этого не передаёт
   // 0.35: и с места — колесо не срывается, пока мотоцикл не тронулся (раньше помощь включалась с 2 км/ч, и на старте заднее колесо
   // успевало уйти в пробуксовку); заднее колесо пошло вбок — газ прочь, снос и вращение гасятся, как у ESP: мотоцикл не разворачивает.
-  // На кнопках горит, когда помощь работает: «ПБС» на «Газе» (противобуксовочная), «АБС» на «Тормозе» (42-race-render.js)
+  // Помощь — молча, без надписей на кнопках (отзыв: «зачем надпись АБС на тормоз? газ сплошной, не регулируемый»);
+  // c.asTC и c.asABS — до какого времени гонки помощь придерживала газ и тормоз (для тестов)
   if(moto&&!c.rev){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
     const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.04,1);let tc=false;
     if(c.thr>tMax){c.thr=tMax;tc=true;}
@@ -15795,10 +15794,8 @@ function updateRaceHUD(){
    const nk=document.getElementById('bFuelNeed');if(nk){nk.style.left=Math.min(100,need)+'%';nk.style.display=F.fuelRate&&F.fin===null&&need>1?'block':'none';}}
   document.getElementById('rReset').hidden=!(R.me&&(R.me.stuck>1.2||(R.me.npT||0)>4||(R.me.svc===1&&(R.me.svc1T||0)>2)));
   // педаль тормоза подсказывает задний ход: на месте — «держи — назад», включён — «НАЗАД ◀»
-  // 0.35: мотоцикл — помощь видна на кнопках: «АБС» на «Тормозе», пока тормоз придерживают, «ПБС» на «Газе», пока придерживают газ
-  {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const mo=m.cls==='moto'&&R.mode==='drive',st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:mo&&m.asABS>R.time?3:0;
-    if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.classList.toggle('assist',st===3);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':st===3?'ТОРМОЗ<small>АБС</small>':'ТОРМОЗ';}
-    const g=document.querySelector('#rCtrl .gas small');if(g){const t=mo&&m.asTC>R.time?'ПБС':'';if(g.textContent!==t){g.textContent=t;g.parentNode.classList.toggle('assist',!!t);}}}}
+  {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
+    if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();try{dxHUD(F);}catch(_){}
   raceFrontRec();
   const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+raceGapSec(o)+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
@@ -15848,8 +15845,8 @@ const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса пово
   ['Назад','стоя держите «Тормоз» полсекунды — включится задний ход (на приборе R). «Газ» — снова вперёд. Застряли — кнопка «Вернуться на трассу».'],
   ['Вид','— кнопка вверху: сзади, сверху, из кабины и «Кинохроника» (старая плёнка). «?» — эта подсказка и пауза.']];
 function showDriveTips(pause){const el=document.getElementById('rTips');if(!R)return;R.hold=true;
-  // 0.35: на мотоцикле — что значат «ПБС» и «АБС» на кнопках
-  const TIPS=R.me&&R.me.cls==='moto'?[['ПБС · АБС','— на мотоцикле газ и тормоз придерживает помощник: заднее колесо не срывается в пробуксовку и не уходит вбок, колёса не блокируются в повороте. Пока он работает, на «Газе» горит «ПБС», на «Тормозе» — «АБС». Жмите газ смело.'],...DRIVE_TIPS]:DRIVE_TIPS;
+  // 0.35: на мотоцикле — строка о помощнике (молча придерживает газ и тормоз; надписей на кнопках нет)
+  const TIPS=R.me&&R.me.cls==='moto'?[['Мотоцикл','— газ и тормоз придерживает помощник: заднее колесо не срывается в пробуксовку и не уходит вбок, колёса не блокируются. Жмите газ смело — мотоцикл не развернёт.'],...DRIVE_TIPS]:DRIVE_TIPS;
   el.innerHTML=`<h3>Как ехать</h3><ul>${TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
   document.getElementById('rTipsGo').onclick=()=>{el.hidden=true;if(R){R.hold=false;R.lastT=performance.now();}};}
 function driveTipsAtStart(){if(!R||R.mode!=='drive')return;let n=0;try{n=+localStorage.getItem('avt-tips3d')||0;}catch(_){}
@@ -15879,9 +15876,8 @@ document.getElementById('rMgr').addEventListener('click',e=>{const b=e.target.cl
   renderMgr();});
 window.addEventListener('deviceorientation',e=>{if(!R)return;const land=Math.abs(window.orientation||0)===90;R.tiltVal=land?(e.beta||0)*(window.orientation>0?1:-1):(e.gamma||0);});
 const rCtrl=document.getElementById('rCtrl');
-// 0.35: «Газ» — снова «всё или ничего» (дозировку по высоте кнопки убрали); строка под «ГАЗ» — для «ПБС» мотоцикла (кадр гонки)
+// 0.35: «Газ» — сплошной, «всё или ничего» (дозировку по высоте кнопки убрали; отзыв: «газ сплошной, не регулируемый»)
 rCtrl.querySelectorAll('button').forEach(b=>{const k=b.dataset.k;
-  if(k==='gas'&&!b.querySelector('small'))b.insertAdjacentHTML('beforeend','<small></small>');
   const on=e=>{e.preventDefault();rKeys[k]=true;b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
   const off=()=>{rKeys[k]=false;b.classList.remove('down');};
   b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));b.addEventListener('contextmenu',e=>e.preventDefault());});

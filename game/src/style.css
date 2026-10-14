@@ -854,9 +854,6 @@ button.qbx:active{opacity:.8}
 .dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
 .dnote b{white-space:nowrap}
 /* 0.34: «Газ» с дозировкой — заливка кнопки по уровню газа, ниже — процент */
-.r-ctrl .gas small{display:block;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;margin-top:2px;min-height:13px}
-/* 0.35: помощь мотоциклу на кнопках — «ПБС» и «АБС» горят, пока придерживают газ или тормоз */
-.r-ctrl .gas.assist small,.r-ctrl .brk.assist small{display:block;width:fit-content;margin:3px auto 0;background:#0e2233;color:#8fdcff;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:800;letter-spacing:.06em;opacity:1}
 .dvbox{margin-top:8px;padding:8px 10px;border:1px solid rgba(233,196,106,.35);border-radius:6px;background:rgba(233,196,106,.06)}
 
 /* 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры */
@@ -872,4 +869,5 @@ button.qbx:active{opacity:.8}
 .ng-face{width:30px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--brass);box-sizing:border-box;background:#5a5048;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 .ng-face img{width:100%;height:100%;object-fit:cover;filter:sepia(.35) contrast(1.05)}
 .ng-ini{font-family:var(--display);font-size:11px;font-weight:800;color:#f2e6cf}
+.ng-svg svg{width:100%;height:100%;display:block}
 .ng-back{align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-start}
