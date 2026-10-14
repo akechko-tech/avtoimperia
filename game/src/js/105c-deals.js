@@ -102,19 +102,23 @@ function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;cons
   if(intNow){s.cash-=icost;maIntegrate(s,h,M);}
   s.rep=clamp(s.rep+1,0,100);
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
-  const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
+  const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}${h.dlSold?` (ещё ${fmtN(h.dlSold)} — в городах, где ваши дилеры уже есть: салоны проданы за ${money(h.dlSoldV||0)})`:''}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
   addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
   return h;}
 // поглощение: заводы, дилеры, местное производство, права на модели и технологии, часть покупателей
 function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.sh0=maShares0(s,c,h.i);
-  const capAdd=Math.max(2,Math.round(M.capU));s.cap+=capAdd;s.plantVal+=capAdd*capUnitCost(s)*0.5;s.dealers[c]=dealerCount(s,c)+M.dl;
+  const capAdd=Math.max(2,Math.round(M.capU));s.cap+=capAdd;s.plantVal+=capAdd*capUnitCost(s)*0.5;
+  // 0.34: её дилеры — только в свободных городах; салоны там, где ваши дилеры уже есть, продаются — деньгами при сделке
+  // (раньше лишние дилеры раздували салоны ×3,5 через dealerFit — и содержание сети вместе с ними)
+  const DS=maDealerSplit(s,c,M);
   if(c!==s.country){if(s.lic&&s.lic[c])licEnd(s,c);s.imp=s.imp||{};s.imp[c]=Math.max(impLv(s,c),2);(s.impSince=s.impSince||{})[c]=Math.min(s.impSince[c]??mi(s),mi(s)-120);}
+  s.dealers[c]=dealerCount(s,c)+DS.add;if(DS.extra>0){s.cash+=DS.v;h.dlSold=DS.extra;h.dlSoldV=DS.v;}
   s.pfleet=s.pfleet||{};s.pfleet[c]=(s.pfleet[c]||0)+M.v*2;if(s.aw)s.aw[c]=Math.max(s.aw[c]||0,0.55);
   const md=maTakeModel(s,c,cp,M.v);
   try{const g=maMainClass(cp,s,c),sc=studyCar(g,s.y);if(sc&&!((s.rd.studied||[]).includes(studyKey(sc))))studyDone(s,{id:sc.kind,y:sc.y,name:sc.name});}catch(e){console.warn('ma tech',e);}
-  h.capAdd=capAdd;h.dlAdd=M.dl;h.model=md?md.id:null;return h;}
+  h.capAdd=capAdd;h.dlAdd=DS.add;h.model=md?md.id:null;return h;}
 // её машина — теперь ваша модель (права на конструкцию): в её главном классе, на деталях своего года; продаётся под вашей маркой везде
 // 0.34: имя — с маркой («Mercer Raceabout», «Itala 35/45 HP»), чтобы в «Моделях» было видно, откуда машина (отзыв: «купил марки,
 // но их моделей не вижу и не понимаю, произошло ли слияние»)
@@ -283,7 +287,8 @@ function renderDeal(){const s=G;if(!NEG)return;const {c,i,d}=NEG,M=maStat(s,c,i)
   if(d.mode==='int'&&d.st<1)d.mode='sub';const P=negPrice(s),icost=d.mode==='int'?maIntCost(s,M):0,Q=maAsk(s,c,i,d),add=Math.max(0,Math.min(1,d.st)-have);
   const chip=(k,v,lab,on,dis)=>`<button class="chip ${on?'on':''}" data-act="negSet" data-k="${k}" data-v="${v}" ${dis?'disabled':''}>${lab}</button>`;
   const stakes=[0.25,0.51,1].filter(x=>x>have+0.001).map(x=>chip('st',x,Math.round(x*100)+'%',Math.abs(d.st-x)<0.001)).join('');
-  const why=d.mode==='int'?`<b>Под ваш бренд:</b> марки «${esc(nm)}» больше не будет. Её заводы (+${fmtN(Math.round(M.capU))} машин в месяц), ${fmtN(M.dl)} ${plural(M.dl,'дилер','дилера','дилеров')} — в одну вашу сеть${c===s.country?'':`, машины в стране «${COUNTRIES[c].name}» станут местными, без пошлины`}; права на её модель и технологии — ваши. Её покупатели сначала пойдут к вам, но за 3–4 года разойдутся по тем, чьи машины лучше. Переоформление дилеров и заводов — ${money(icost)}.`
+  const DS=d.mode==='int'?maDealerSplit(s,c,M):null;
+  const why=d.mode==='int'?`<b>Под ваш бренд:</b> марки «${esc(nm)}» больше не будет. Её заводы (+${fmtN(Math.round(M.capU))} машин в месяц), ${fmtN(DS.add)} ${plural(DS.add,'дилер','дилера','дилеров')} — в одну вашу сеть${DS.extra?` (ещё ${fmtN(DS.extra)} — в городах, где ваши уже есть: их салоны продадут, вам ${money(DS.v)})`:''}${c===s.country?'':`, машины в стране «${COUNTRIES[c].name}» станут местными, без пошлины`}; права на её модель и технологии — ваши. Её покупатели сначала пойдут к вам, но за 3–4 года разойдутся по тем, чьи машины лучше. Переоформление дилеров и заводов — ${money(icost)}.`
     :`<b>Дочерняя компания:</b> «${esc(nm)}» остаётся отдельной маркой со своими директорами и заводами — её продажи не ваши. Вам — ${Math.round(Math.min(1,d.st)*100)}% её прибыли дивидендами (≈${money(Math.max(0,M.profit*Math.min(1,d.st)*0.6))} в год сейчас)${d.st>=0.5?', право запретить ей выходить в ваш класс':''}; можно вкладывать деньги, докупить или продать долю, позже — поглотить. Директора независимы: будут просить денег и могут предложить выкупить вашу долю.`;
   const ks=[[0.8,'−20%'],[0.9,'−10%'],[1,'оценка'],[1.1,'+10%'],[1.2,'+20%'],[1.4,'+40%']].map(([k,lab])=>`<button class="chip ${Math.abs(NEG.k-k)<0.001?'on':''}" data-act="negK" data-v="${k}">${lab}</button>`).join('');
   const log=NEG.log.map(x=>`<div class="neg-say ${x.k}"><b>${x.who}:</b> ${esc(x.t)}</div>`).join('');

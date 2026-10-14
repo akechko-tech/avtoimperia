@@ -109,6 +109,10 @@ const ACT={
   brand:d=>{const h=brandHTML(d.c,+d.i,G);if(h)openSheet(h);},
   drvBio:d=>{const dr=DRIVERS.find(x=>x.id===d.k);if(dr)openSheet(drvBioHTML(dr,G));},
   dealersCut:d=>{const was=dealerCount(G,d.c),n=Math.max(1,Math.round(was*0.2));G.dealers[d.c]=Math.max(d.c===G.country?1:0,was-n);rerender();},
+  // 0.34: салоны поменьше, продать завод или сборку на ступень ниже, уйти из страны
+  dealerShrink:d=>{if(dealerShrink(G,d.c)){save();rerender();}},
+  impSell:d=>{if(!confirmOnce('impSell'+d.c,'Нажмите ещё раз: продать '+(impLv(G,d.c)>=4?'завод':'сборку')+' за '+money(impSellValue(G,d.c))))return;if(impSell(G,d.c)){save();rerender();}},
+  leaveCountry:d=>{if(!confirmOnce('leave'+d.c,'Нажмите ещё раз: уйти из страны — все дилеры закрыты, отделение и заводы проданы'))return;if(leaveCountry(G,d.c)){save();rerender();}},
   // окна
   close:()=>closeSheet(),
   choose:d=>{closeSheet();closePaper();resolve(d.k);},

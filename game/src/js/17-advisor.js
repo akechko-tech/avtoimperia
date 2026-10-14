@@ -105,6 +105,27 @@ function adviceList(s){
   // своё отделение и сборочный завод — когда окупятся
   {let bc=null,bp=1e9;Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const pb=impPayback(s,c);if(pb<bp){bp=pb;bc=c;}});
     if(bc&&bp<36){const lv=impLv(s,bc),c2=impCost(s,bc,lv+1);if(s.cash>c2*1.5)add(42,lv===1?'🏢':'🏭',lv===1?`В стране «${COUNTRIES[bc].name}» импортёр забирает ${Math.round(IMP_LV[1].cut*100)}% цены. Своё отделение окупится за ≈ ${Math.max(1,Math.round(bp))} мес. и откроет дилеров по всей стране.`:`В стране «${COUNTRIES[bc].name}» пошлина ${Math.round(tariffAt(bc,s)*100)}% и дорогая доставка. Сборочный завод окупится за ≈ ${Math.max(1,Math.round(bp))} мес.`,`${lv===1?'Отделение':'Завод'} · ${money(c2)}`,()=>{impUp(G,bc);},'market');}}
+  // 0.34 (ТЗ «экономика, которую видно»): лишние расходы и то, что мешает продажам
+  try{
+    // свой завод или сборка там, где уже есть поглощённая марка
+    {const PL=Object.keys(COUNTRIES).filter(c=>c!==home&&impLv(s,c)>=3&&intIn(s,c)&&!impBuilding(s,c)&&!warCut(s,c)).map(c=>({c,up:impUpkeep(s,c)-IMP_LV[2].up*cpi(s)*impK(s,c)})).sort((a,b)=>b.up-a.up);
+      if(PL.length){const c=PL[0].c,A=acqIn(s,c)[0],v=impSellValue(s,c),all=PL.reduce((a,x)=>a+x.up,0);
+        add(58,'🏭',`${COUNTRIES[c].name}: свой ${impLv(s,c)>=4?'завод':'сборочный цех'} здесь не нужен — заводы «${(A&&(A.nm||A.n))||'купленной марки'}» уже делают ваши машины без пошлины. Содержание — ${money(PL[0].up)} в месяц.${PL.length>1?` То же — ${PL.slice(1).map(x=>COUNTRIES[x.c].name).join(', ')}: всего ${money(all)} в месяц.`:''}`,`Продать · ${money(v)}`,()=>{impSell(G,c);},'market');}}
+    // сеть продаёт меньше пятой части того, что может
+    {const NW=Object.keys(COUNTRIES).filter(c=>dealerCount(s,c)>=10&&!warCut(s,c)&&L).map(c=>({c,NL:netLoad(s,c),up:dealerCount(s,c)*dealerUpkeep(s,c)})).filter(x=>x.NL.cap>0&&x.NL.k<0.2).sort((a,b)=>b.up-a.up);
+      if(NW.length){const {c,NL,up}=NW[0],k=dealerMult(s,c);
+        add(54,'🏪',`${COUNTRIES[c].name}: сеть продаёт ${fmtN(Math.round(NL.sold))} машин в месяц из ${fmtN(Math.round(NL.cap))} возможных — содержание ${money(up)} в месяц. ${k>1.01?'Салоны поменьше':'Закройте часть дилеров'}: сеть станет дешевле, продажи не упадут.${NW.length>1?` Так же недогружены: ${NW.slice(1).map(x=>COUNTRIES[x.c].name).join(', ')}.`:''}`,k>1.01?`Салоны поменьше · −${money(up*0.25/k)}`:'Закрыть 20%',()=>{if(k>1.01)dealerShrink(G,c);else{const was=dealerCount(G,c);G.dealers[c]=Math.max(c===G.country?1:0,was-Math.max(1,Math.round(was*0.2)));}},'market');}}
+    // за границей машины видят меньше 30% покупателей
+    if(act.length){let bc=null,bI=null;Object.keys(COUNTRIES).forEach(c=>{if(c===home||!dealerCount(s,c)||warCut(s,c)||tradeBan(s,c))return;const I=reachInfo(s,c);if(I.r<0.3&&I.pot>(bI?bI.pot:0)&&I.miss>0){bc=c;bI=I;}});
+      if(bc){const n=Math.max(1,Math.min(bI.miss,Math.floor(Math.max(0,s.cash-3000*cpi(s))/dealerCost(s)),Math.round(bI.need*0.1)));
+        add(44,'🌍',`В стране «${COUNTRIES[bc].name}» ваши машины видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:null,n>=1?()=>{buyDealers(G,bc,n);}:null,'market');}}
+    // соперники отвечают на вашу долю — скидка не поможет
+    {let worst=null;act.forEach(md=>{if(isTruck(md))return;const P=contestParts(s,home,segOf(md));if(P.tot>0.2&&(!worst||P.tot>worst.P.tot))worst={md,P};});
+      if(worst)add(50,'⚔️',`Соперники отвечают на вашу долю в классе «${SEG[segOf(worst.md)].name}»: спрос ×${xk2(worst.P.mul)} (${contestTxt(worst.P)}). Скидку съест новый ответ — выгоднее поднять цену «${worst.md.name}».`,'К модели',()=>{tab='models';setOpen('md'+worst.md.id,true);},'models');}
+    // модель приносит меньше, чем стоит конторе
+    {let w=null;act.forEach(md=>{if(act.length<2)return;let O=null;try{O=modelOffice(md,s,priceFc(md,s,md.price));}catch(_){}if(O&&O.cost>Math.max(1,O.contrib)&&(!w||O.cost-O.contrib>w.O.cost-w.O.contrib))w={md,O};});
+      if(w)add(46,'🏢',`«${w.md.name}» приносит ${money(Math.max(0,w.O.contrib))} в месяц, а держать её в линейке стоит конторе ${money(w.O.cost)}. Снимите с производства или поднимите цену.`,'К модели',()=>{tab='models';setOpen('md'+w.md.id,true);},'models');}
+  }catch(e){console.warn('advice 0.34',e);}
   // технологии завода
   if(!s.techBuild){const k=TECH_ORDER.find(k=>techOpen(s,k)&&s.cash>techCost(s,k)*1.8);if(k){const nx=techNext(s,k),c=techCost(s,k);add(40,'⚙️',`Можно внедрить «${nx.name}»: ${techEffects(nx)}.`,`Внедрить · ${money(c)}`,()=>ACT.tech({k}),'plant');}}
   // реклама

@@ -59,6 +59,48 @@ with sync_playwright() as p:
         el.scroll_into_view_if_needed();pg.wait_for_timeout(200);el.click();pg.wait_for_timeout(300);t=pg.inner_text('#xpop') if pg.query_selector('#xpop') else ''
         ok('Комфорт' in t and 'Итого' in t and 'Больше всего' not in t,'карточка модели: окно «Комфорт» (без советов — модель уже в серии)');js("xpopClose()")
     else: ok(False,'в карточке модели нет строк с ⓘ')
+    # ---------- 0.34, ТЗ «экономика, которую видно»: пп. 1–11 на экране (партия вроде штутгартской: «Историк», с июля 1928 года 14 месяцев, 8 моделей, 4 страны, дешёвый мотоцикл) ----------
+    js("""(()=>{xpopClose();closeSheet();G.diff='hist';G.pending=[];G.y=1928;G.m=6;G.cash=2e8;G.lines={car:1,moto:1};G.rep=70;G.ad=20000;
+      G.models=[];['people','middle','lux','sport','truck','van','moto','moside'].forEach((k,i)=>{const d=autoDesign(k,G);const m={...d,id:100+i,name:{people:'Народная',middle:'Средняя',lux:'Люкс',sport:'Спорт',truck:'Трёхтонка',van:'Фургон',moto:'Мото',moside:'Коляска'}[k],paint:'#8a1c1c',plan:'auto',status:'prod',launched:mi(G)-30,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:40000,fc:0,vol:1500};m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);});
+      const ob=unlockedP(BODIES,G).find(b=>!b.truck&&!b.moto&&!b.closed&&(b.seats||2)>=4);if(ob)G.models[0].b=ob.id;
+      G.cap=16000;G.plantVal=16000*capUnitCost(G)*0.6;G.staffAuto=true;G.workers=20000;G.dealers={de:2600,fr:700,uk:40,us:900,it:250};G.dcap={de:3.5,fr:3.5,uk:1,us:3.5,it:3.5};G.imp={fr:4,uk:1,us:4,it:4};
+      const nm={fr:'Mors',us:'Mercer',it:'Itala'};G.hold=Object.keys(nm).map(c=>{const i=(COMPS[c]||[]).findIndex(cp=>cp.n===nm[c]);return {c,i,n:nm[c],nm:nm[c],mode:'int',st:1,t:mi(G)-60,sh0:{},paid:1,pay:'cash',mood:65};}).filter(h=>h.i>=0);
+      for(let k=0;k<14;k++){G.pending=[];if(k===1||k===4)G.models.forEach(m=>{const bp=bestPriceFor(m,G);if(bp&&bp.price)m.price=bp.price;});if(k>=1)G.models[6].price=Math.round(prefP('moto','de',G)*0.6/10)*10;step();}G.pending=[];for(let i=0;i<8;i++)try{closePaper();}catch(_){};
+      tab='models';G.models.forEach(m=>setOpen('md'+m.id,true));render();})()""");pg.wait_for_timeout(600)
+    t=pg.inner_text('#app') if pg.query_selector('#app') else pg.inner_text('body')
+    ok('как у соперников ≈' in t,'п. 1: в карточке модели — «как у соперников ≈ $…»')
+    ok('Для покупателей ≈' in t and 'Открытый кузов' in t,'п. 2: скрытые штрафы и «для покупателей ≈ N% соперника» (открытая народная 1929 года)')
+    ok('т·км на' in t,'п. 3: у грузовиков — тонно-километр против соперника')
+    ok('после всех расходов' in t.lower() and 'после конторы' in t,'п. 4: прибыль до конторы и после всех расходов, маржа после конторы')
+    ok('На линии' in t,'п. 11: сколько мест на линии занимает машина')
+    el=pg.query_selector('text=Для покупателей ≈');
+    if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'5_hidden.png')
+    el=pg.query_selector('text=В месяц после всех расходов')
+    if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'6_after.png')
+    el=pg.query_selector('text=т·км на')
+    if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'7_truck.png')
+    js("(()=>{tab='market';['net_fr','net_us','net_de','exp'].forEach(k=>setOpen(k,true));render();})()");pg.wait_for_timeout(500)
+    t=pg.inner_text('#app') if pg.query_selector('#app') else pg.inner_text('body')
+    ok('Свой завод здесь не нужен' in t and pg.query_selector('[data-act=impSell]') is not None,'п. 5: «Свой завод здесь не нужен» и кнопка «Продать завод»')
+    ok('Сеть продаёт меньше пятой части' in t and pg.query_selector('[data-act=dealerShrink]') is not None,'п. 6: совет о недогруженной сети и «Салоны поменьше»')
+    ok(pg.query_selector('[data-act=leaveCountry]') is not None,'п. 7: «Уйти из страны»')
+    ok('⚔️ Мотоцикл: доля' in t and '· порог 10%/14%' in t and 'натиск' in t,'п. 9: ответ соперников по классам в карточке страны (дешёвый мотоцикл дома: доля выше порога «Историка», натиск)')
+    ok('ваши машины видят' in t and 'Для всей страны нужно' in t,'п. 8: охват за границей ниже 30% — сколько нужно дилеров и что они дадут')
+    el=pg.query_selector('text=Свой завод здесь не нужен')
+    if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'8_country.png')
+    js("(()=>{tab='plant';setOpen('cap',true);setOpen('fin',true);setOpen('pl',true);render();})()");pg.wait_for_timeout(500)
+    t=pg.inner_text('#app') if pg.query_selector('#app') else pg.inner_text('body')
+    ok('Места в прошлом месяце' in t and 'В нынешней смеси' in t,'п. 11: места на линии по видам и мощность в нынешней смеси')
+    ok(pg.query_selector('[data-act=xadm]') is not None,'п. 10: «Контора» — как посчитано')
+    el=pg.query_selector('text=Места в прошлом месяце')
+    if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'9_places.png')
+    # конструктор: строки штрафов и цена равного спроса
+    js("(()=>{openDesigner('people');const ob=unlockedP(BODIES,G).find(b=>!b.truck&&!b.moto&&!b.closed&&(b.seats||2)>=4);if(ob){draft.b=ob.id;renderDesigner();}})()");pg.wait_for_timeout(500)
+    t=pg.inner_text('#sheetBody')
+    ok('Продастся как у соперников' in t and 'Открытый кузов' in t,'п. 1–2 в конструкторе: цена равного спроса и предупреждение о штрафе')
+    el=pg.query_selector('#sheetBody .hid')
+    if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'10_designer.png')
+    js("closeSheet()")
     ok(len(errs)==0,'без ошибок в консоли: '+'; '.join(errs[:3]))
     b.close()
 print('ОШИБОК: '+str(fails) if fails else 'всё в порядке')

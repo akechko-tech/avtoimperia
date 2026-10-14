@@ -88,7 +88,8 @@ function renderDesigner(){
     <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
     <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
-    ${compareHTML(md,s,'d')}
+    ${kindIsTruck(kind)?(()=>{const TH=truckHead({...md,price:Math.round(ref/10)*10},s,Math.round(ref/10)*10);return TH?`<p class="small ${TH.tone}" style="margin-top:12px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)} — фирмы выбирают по тонно-километру; «% соперника» — ниже</span></p>`:'';})():''}
+    ${compareHTML(md,s,'d')}${hiddenHTML({...md,price:Math.round(ref/10)*10},s,true)}
     <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Подобрать детали повыгоднее</button></div>${dNoteHTML(d)}
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
     <div class="dsecs">${PART_CATS.map(sec).join('')}${mo?'':sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
@@ -99,6 +100,7 @@ function renderDesigner(){
       <div class="row small" style="margin-top:10px"><span class="muted">На ходу</span><span class="num">${statsLine(st)}</span></div>
       ${riskHTML(md,s)}
       <div class="meta"><button class="mx" data-act="chx" data-k="cost" data-id="d" aria-label="Себестоимость: как посчитано">Себест.<i class="xi">i</i><b>${money(uc)}</b></button><div>Цена ≈<b>${money(ref)}</b></div><div>Маржа<b class="${net-uc<0?'bad':''}">${money(net-uc)}</b></div><div>Спрос ≈<b>${fmtD(dem)}/мес</b></div></div>
+      <div style="margin-top:6px">${eqPriceLine({...md,id:-11,launched:mi(s)},s)}</div>
       <div class="meta"><div>Часов<b>${fmtN(Math.round(hrs))}</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Оснастка<b>${money(tc)}</b></div></div>
       <p class="small muted" style="margin-top:8px">Себестоимость — детали и работа при выпуске ≈ ${fmtD(md.vol)} в месяц (столько купят по этой цене). <span class="good">Экономия масштаба:</span> при ${fmtN(md.vol*3)} в месяц — ${money(ucAt(3))}, при ${fmtN(md.vol*10)} — ${money(ucAt(10))}; с опытом рабочих — ещё дешевле. Оснастку оплатите при запуске в серию${techLv(s,'line')===2?': конвейер под новую модель перестраивать дорого':''}.</p></div>
     <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);

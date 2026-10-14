@@ -50,9 +50,9 @@ function step(){
   if(s.staffAuto){const target=Math.ceil(needH/hpw*1.02);let d=target-s.workers;if(d>0)d=Math.min(d,Math.max(20,Math.round(s.workers*0.5)));else if(d<0)d=Math.max(d,-Math.round(s.workers*0.3));
     if(d>0){r.hire=d*8*cpi(s);s.cash-=r.hire;}s.workers=Math.max(3,s.workers+d);}
   const kLab=needH>0?Math.min(1,s.workers*hpw/needH):1,k=kCap*kLab,kM=k;r.bneck={cap:kCap,lab:kLab,wh:!!r.whCut,load:cap>0?needCap/cap:0,mcap:kCap,mload:cap>0?needCap/cap:0};
-  r.capUsed=0;act.forEach((md,i)=>{const kk=mo[i]?kM:k,made=Math.floor(want[i]*kk+(Math.random()<(want[i]*kk)%1?1:0));md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.capUsed+=made*cxU[i];if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
+  r.capUsed=0;act.forEach((md,i)=>{md._cp={s0:md.stock,o0:md.ordSold||0,cx:cxU[i]};const kk=mo[i]?kM:k,made=Math.floor(want[i]*kk+(Math.random()<(want[i]*kk)%1?1:0));md._cp.m=made;md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.capUsed+=made*cxU[i];if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
   // 0.24: из военного заказа машины — столько, сколько нужно армии; остальное — военная продукция (моторы, снаряды, каски): деньги те же, но это не проданные машины
-  if(milCap>0){const cars=act.filter((m,i)=>!mo[i]),mc=cars.length?cars.reduce((a,m)=>a+matCost(m,s),0)/cars.length:0,mu=Math.floor(milCap*k);if(mc>0){r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=Math.min(mu,milNeed(s));r.milX=mu-r.milN;r.made+=mu;r.capUsed+=mu;}}
+  if(milCap>0){const cars=act.filter((m,i)=>!mo[i]),mc=cars.length?cars.reduce((a,m)=>a+matCost(m,s),0)/cars.length:0,mu=Math.floor(milCap*k);if(mc>0){r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=Math.min(mu,milNeed(s));r.milX=mu-r.milN;r.made+=mu;r.capUsed+=mu;r.milCap=mu;}}
   // поставки по заказам — в первую очередь
   s.orders=(s.orders||[]).filter(o=>{const md=act.find(m=>m.id===o.md);const need=Math.ceil(o.left/Math.max(1,o.due-mi(s)));
     if(md){const n=Math.min(o.left,md.stock,need*2);if(n>0){md.stock-=n;o.left-=n;r.ord+=n*o.price;if(isMoto(md))r.mordN=(r.mordN||0)+n;else r.ordN+=n;md.totalSold+=n;md.ordSold=(md.ordSold||0)+n;}}
@@ -105,6 +105,10 @@ function step(){
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);
       if(PART_HIST[pj.id]||REELS['part:'+pj.id]){const h=PART_HIST[pj.id];reelOffer(s,'part:'+pj.id,'Прототип готов: '+pj.name,`На ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше рынка`,h?`В истории такую деталь первыми сделали ${h[1]} в ${h[0]} году. Поставьте её на новую модель — и «${s.company}» опередит историю.`:`Поставщики предложат такую деталь только через ${pj.yrs} ${plural(pj.yrs,'год','года','лет')}. Поставьте её на новую модель — покупатели заметят разницу первыми.`);}}
     return false;});}
+  // 0.34: куда ушли места на линии в этом месяце — проданные машины, мотоциклы, на склад, заказы, армия (карточка «Мощности»)
+  {const B={car:0,moto:0,stock:0,ord:0,mil:r.milCap||0};act.forEach(md=>{const P=md._cp;if(!P)return;delete md._cp;const m=P.m||0;if(!m)return;
+    const st=Math.min(m,Math.max(0,md.stock-P.s0)),od=Math.min(m-st,Math.max(0,(md.ordSold||0)-P.o0)),rest=m-st-od;
+    B.stock+=st*P.cx;B.ord+=od*P.cx;if(isMoto(md))B.moto+=rest*P.cx;else B.car+=rest*P.cx;});r.capBy=B;}
   r.wage=s.workers*wageNow(s);r.ovh=plantOverhead(s)*(s.shifts>1?1.1:1);
   // 0.23: за блокадой дилеры и отделение отрезаны — содержать их нечем и незачем (их расходы — на них самих)
   r.dlr=Object.keys(s.dealers).reduce((a,c)=>a+(warCut(s,c)?0:dealerCount(s,c)*dealerUpkeep(s,c)),0)+Object.keys(COUNTRIES).reduce((a,c)=>a+(warCut(s,c)?0:impUpkeep(s,c)),0);
@@ -126,6 +130,9 @@ function step(){
   s.cash+=r.profit+r.tool+r.hire+r.rdp+r.prm-(r.rev+r.ord)+r.got+r.finIn-r.finOut;   // оснастка, найм, проекты КБ и спецакции уже списаны выше; рассрочка своей компании — деньги выданы и вернулись
   invCover(s);
   loanRecall(s,r);
+  // 0.34: требование банка списывает деньги после казначея — облигации и акции покрывают и его, до проверки банкротства
+  // (раньше касса уходила за предел банкротства даже при $85 млн вложений)
+  invCover(s);
   s.plantVal*=0.995;
   // репутация: качество проданного, брак, очереди, недовольные дилеры
   // 0.32: репутацию делают автомобили; пока их нет (мотомастерская) — мотоциклы

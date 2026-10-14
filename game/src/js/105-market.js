@@ -181,11 +181,13 @@ const FWB_SH={us:{1921:0,1924:0.1,1926:0.5,1928:0.9},eu:{1919:0,1922:0.2,1925:0.
 // 0.26: закрытый кузов ценят сильнее: он защищает в аварии, от дождя и пыли, в нём ездят круглый год. Люкс — лимузины с 1906 года,
 // средний класс — с конца 1910-х, народный — когда закрытая машина подешевела (Essex Coach, 1922); спортивная — открытая
 const CLOSED_V={lux:{1903:0,1906:0.5,1912:0.8,1920:1.1,1926:1.3},middle:{1910:0,1915:0.2,1919:0.45,1923:0.75,1926:1.0},people:{1915:0,1920:0.15,1923:0.35,1926:0.6,1929:0.75}};
-function eraPen(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck||p.b.moto)return 0;const t=yf(s),k=c==='us'?'us':'eu';let u=0;
-  if(g==='sport')return p.b.closed?0.25:0;
-  if(!p.b.closed){const sh=tabAt(CLOSED_SH[k],t);if(sh>0)u+=-Math.log(1-0.9*sh);const cv=CLOSED_V[g];if(cv)u+=tabAt(cv,t-(k==='eu'?2:0));}
-  if(p.k.id==='k1'||p.k.id==='k2'){const sh=tabAt(FWB_SH[k],t);if(sh>0)u+=-Math.log(1-0.6*sh);}
-  return u;}
+// 0.34: по частям — кузов и тормоза (для строк «скрытых штрафов» в карточке модели и конструкторе); сумма — как прежде
+function eraParts(md,c,s){const p=parts(md),g=segOf(md);if(p.b.truck||p.b.moto)return {body:0,brakes:0};const t=yf(s),k=c==='us'?'us':'eu';let body=0,brakes=0;
+  if(g==='sport')return {body:p.b.closed?0.25:0,brakes:0};
+  if(!p.b.closed){const sh=tabAt(CLOSED_SH[k],t);if(sh>0)body+=-Math.log(1-0.9*sh);const cv=CLOSED_V[g];if(cv)body+=tabAt(cv,t-(k==='eu'?2:0));}
+  if(p.k.id==='k1'||p.k.id==='k2'){const sh=tabAt(FWB_SH[k],t);if(sh>0)brakes+=-Math.log(1-0.6*sh);}
+  return {body,brakes};}
+function eraPen(md,c,s){const E=eraParts(md,c,s);return E.body+E.brakes;}
 // Репутация: плохая сильно отпугивает, хорошая помогает умеренно — у сильных конкурентов тоже есть имя (0.21)
 function repEffect(s){const d=(s.rep-50)/50;return d<0?1.3*d:0.8*d;}
 // 0.30: УЗНАВАЕМОСТЬ МАРКИ в стране (0…1). Новую марку не знают: её машин нет на дорогах, о ней не пишут. Знают — когда ваших машин
@@ -298,7 +300,8 @@ const BTC=7,TQ=2.6;
 function truckUseSh(c,s){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
   const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}return {van:v[0],city:v[1],haul:v[2]};}
 // Эталон соперников для каждой перевозки: фургон, полуторатонка, трёхтонка (до 1920 года — полуторатонка)
-function truckRef(u,y){if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:0};const r=rivalCar('truck',y)[2];return {...r,b:u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:0};}
+// 0.34: соперники копируют и грузовик — их эталон перевозки получает те же ★ копирования (тонно-километр дешевле); без копирования — как прежде
+function truckRef(u,y){const cp=typeof copyExtra==='function'?Math.round(copyExtra(u==='van'?'van':'truck')*10)/10:0;if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:cp};const r=rivalCar('truck',y)[2];return {...r,b:u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:cp};}
 // Во что фирме обходится тонно-километр на этой машине при цене P (в $ того времени)
 function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf);
   const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1;
