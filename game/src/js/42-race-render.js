@@ -27,7 +27,7 @@ function setupRender2d(full){
 }
 function renderRace(dt){
   if(R&&R.gl){try{r3dRender(dt);}catch(e){console.error(e);r3dFail('error');}if(R&&R.gl){raceMiniMap();updateRaceHUD();return;}}
-  const cv=document.getElementById('rcv');if(!cv||!R)return;if(!R.bg)setupRender2d(true);
+  const cv=document.getElementById('rcv');if(!cv||!R)return;if(!R.bg)setupRender2d(true);R.fdt=Math.min(0.1,dt||0.016);
   // чёткость подстраивается под телефон: если кадры тянутся дольше ~27 мс, рисуем чуть крупнее пиксель
   R.ftAvg=(R.ftAvg||0.016)*0.95+Math.min(0.1,dt||0.016)*0.05;if(R.t>1.5&&R.ftAvg>0.027&&(R.dprK||1)>0.6){R.dprK=(R.dprK||1)-0.125;R.ftAvg=0.018;}
   const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1)*(R.dprK||1)),W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;
@@ -138,7 +138,8 @@ function drawRaceCar(c,o,s,segs,k,half,cam,phase,W,H,night,clip,camS){
   const tr=TERR[T.terrAt(o.idx)]||TERR.dirt,me=o===R.follow,spd=Math.min(1,Math.max(0,o.vx)/25),kk=scale/40;
   if(tr.dust&&o.vx>5&&Math.random()<0.7*tr.dust){const sd=Math.random()<0.5?-1:1;R.parts.push({x:sx+sd*0.72*scale,y:sy-0.04*scale,vx:sd*(16+Math.random()*44)*spd*kk,vy:(8+Math.random()*26)*spd*kk,r:0.26*scale,gr:1.4*scale,life:1.0,max:1.0,col:'206,188,146',a:me?0.11:0.22});}
   if((o.slipR>0.18||o.spinw>0.4)&&o.vx>4&&Math.random()<0.7){const sd=Math.random()<0.5?-1:1;R.parts.push({x:sx+sd*0.6*scale,y:sy-0.08*scale,vx:sd*(10+Math.random()*30)*kk,vy:(5+Math.random()*20)*kk,r:0.2*scale,gr:1.0*scale,life:0.8,max:0.8,col:'236,236,236',a:0.34});}
-  if(o.thr>0.8&&R.rc.y<1914&&Math.random()<0.12)R.parts.push({x:sx+0.3*scale,y:sy-0.3*scale,vx:6*kk,vy:-4*kk,r:0.08*scale,gr:0.4*scale,life:0.5,max:0.5,col:'110,110,110',a:0.3});
+  // 0.35: дым из выхлопной трубы — по мотору (41k-exhaust.js)
+  if(z<60)exh2d(o,sx,sy+bounce,scale,me);
   if(o.dnf||o.stopT>0||o.overheat>0){if(Math.random()<0.4)R.parts.push({x:sx+(Math.random()-0.5)*0.5*scale,y:sy-(o.overheat>0?1.0:0.9)*scale,vx:(Math.random()-0.5)*10*kk,vy:-(18+Math.random()*14)*kk,r:0.2*scale,gr:0.8*scale,life:1.3,max:1.3,col:o.overheat>0?'245,245,245':'90,90,90',a:0.4});}
 }
 // Мягкий клуб: заранее нарисованное пятно с размытыми краями — дешевле градиента на каждую частицу

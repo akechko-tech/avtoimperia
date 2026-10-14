@@ -1,5 +1,6 @@
 # 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры;
-# финансисты Дюрант и Роллс; мотоцикл — газ сплошной, «всё или ничего»; помощь (противобуксовка, АБС) работает молча — без надписей на кнопках
+# финансисты Дюрант и Роллс; мотоцикл — газ сплошной, «всё или ничего»; помощь (противобуксовка, АБС) работает молча — без надписей на кнопках;
+# лошадь впереди повозки на заводской улице; дым из выхлопной трубы по мотору; свой фильм у мотомастерской; деньги выбора в фильме — по масштабу
 from playwright.sync_api import sync_playwright
 import os
 out='/tmp/claude-0/-home-claude/78ad6e73-468f-5068-9de0-30834cd44849/scratchpad/ui35/'
@@ -45,6 +46,38 @@ with sync_playwright() as p:
       return {p:s.pioneer,c:s.country,L:L1/L0,a:a1/a0,b:b0?b1/b0:0,buick:pkIs(COMPS.us.find(c=>c.n==='Buick'),s)};})()""")
     ok(r['p']=='durant' and r['c']=='us' and abs(r['L']-1.3)<0.04 and abs(r['a']-1.15)<0.01 and abs(r['b']-0.8)<0.03 and r['buick'],'Дюрант в игре: кредит ×%.2f, контора ×%.2f, марки ×%.2f, Buick — его марка'%(r['L'],r['a'],r['b']))
     clean()
+    # 2б) «Завод вживую»: лошадь впереди повозки (отзыв: «лошади толкают повозку, смотря назад»)
+    js("(()=>{G.y=1906;G.m=5;G.pending=[];try{sagaStop();}catch(_){};tab='plant';render();})()")
+    cart=None
+    for i in range(120):
+        cart=js("(()=>{const sc=typeof PLG!=='undefined'&&PLG.ready&&PLG.sc;if(!sc)return null;const c=sc.cars.find(c=>c.cart);if(!c)return null;const a=plgAt(c.pa,c.s,c.loop),L=plgDyn(sc).lits.find(l=>l.g===plgCart());return L?{dot:L.M[8]*a[2]+L.M[10]*a[3]}:null;})()")
+        if cart: break
+        pg.wait_for_timeout(250)
+    ok(cart is not None and cart['dot']<-0.99,'«Завод вживую»: повозка едет лошадью вперёд (нос модели — против хода, лошадь в модели сзади): '+str(cart))
+    smoke=None
+    for i in range(80):
+        smoke=js("(()=>{const sc=PLG.sc;if(!sc)return null;const c=sc.cars.find(c=>!c.cart&&c.ex&&(c.ex.acc>0||c.ex.ph>0));return c?{k:exhProfile(c).k,n:sc.parts.length}:null;})()")
+        if smoke: break
+        pg.wait_for_timeout(250)
+    ok(smoke is not None,'машины на заводской улице дымят по мотору: '+str(smoke))
+    js("(()=>{tab='home';render();})()")
+    # 2в) мотомастерская, свой персонаж: свой фильм — «Мотор на велосипеде», без «доктора»; деньги выбора — по масштабу
+    js("(()=>{newMotoGame('custom','fr','Мото','normal','М1');for(let i=0;i<8;i++)try{closePaper();}catch(_){};G.pending=[];G.saga=null;sagaCheck(G);})()")
+    r=js("({L:sagaList(G)===SAGA.moto,p:(G.pending.find(p=>p.saga)||{}).title})")
+    ok(r['L'] and 'Мотор на велосипеде' in (r['p'] or ''),'мотомастерская: первая глава фильма — '+str(r['p']))
+    js("(()=>{G.pending=[];sagaPlay('moto1');sagaQuestion();})()");pg.wait_for_timeout(700)
+    t=pg.inner_text('#sagaScreen');n=len(pg.query_selector_all('#sagaScreen .sg-o'))
+    ok(n==3 and 'доктор' not in t and 'Чей мотор' in t,'глава «Мотор на велосипеде»: вопрос «Чей мотор…», выборов '+str(n))
+    pg.screenshot(path=out+'5_moto_saga.png')
+    js("(()=>{sagaStop();G.pending=[];})()");pg.wait_for_timeout(500)
+    # большая фирма: «+$700» становится суммой по её масштабу — и на кнопке, и в кассе
+    js("(()=>{newGame('custom','fr','Т','normal');for(let i=0;i<8;i++)try{closePaper();}catch(_){};G.pending=[];G.y=1911;const ci=cpi(G);G.cash=2e7*ci;G.last={mat:2.2e5*ci,wage:1.1e5*ci,ovh:4e4*ci,dlr:1e4*ci,ad:5e3*ci,rd:5e3*ci,int:0};G.saga={seen:[],pick:{},last:-9};sagaPlay('custom4');sagaQuestion();})()");pg.wait_for_timeout(700)
+    r=js("(()=>{const o=SAGA.custom.find(c=>c.id==='custom4').o[0],b=document.querySelector('#sagaScreen .sg-o small');return {want:money(sagaCash(G,o.fx)),btn:b?b.textContent:'',k:Math.round(sagaScale(G))};})()")
+    ok(r['want'] in r['btn'] and r['k']>100,'большая фирма (×%d): на кнопке «%s»'%(r['k'],r['btn']))
+    pg.screenshot(path=out+'6_scaled.png')
+    c0=js("G.cash");pg.click('#sagaScreen .sg-o[data-k="0"]');pg.wait_for_timeout(400);c1=js("G.cash")
+    ok(abs((c1-c0)-js("sagaCash(G,SAGA.custom.find(c=>c.id==='custom4').o[0].fx)"))<1,'в кассу пришло столько же: %+d'%(c1-c0))
+    js("(()=>{sagaStop();G.pending=[];})()");pg.wait_for_timeout(500)
     # 3) мотоцикл 40 л.с. на «Клаузене»: газ — у нижнего края кнопки тоже полный; помощник придерживает газ и тормоз молча (отзыв: «зачем надпись АБС на тормоз?»)
     js("""(()=>{newGame('custom','de','Тест','normal');for(let i=0;i<8;i++)try{closePaper();}catch(_){};closeSheet();G.pending=[];
       const rc=RACES.find(r=>r.key==='klausen-1925');G.y=rc.y;G.m=Math.max(0,rc.m-1);G.cash=5e5;G.rdept=1;G.lines={car:1,moto:1};
@@ -73,6 +106,8 @@ with sync_playwright() as p:
                 if not shot: pg.screenshot(path=out+'3_tc.png');shot=True
         pg.mouse.up()
     ok(full,'газ «всё или ничего»: палец у нижнего края кнопки — газ полный')
+    ex=js("(()=>{const m=R&&R.me;if(!m)return null;const P=exhProfile(m),c2=P.col.map(x=>Math.round(x*0.5+100)).join(',');return {k:P.k,n:R.parts.filter(p=>p.col===c2||p.col==='58,58,64').length};})()")
+    ok(ex is not None and ex['n']>0,'из выхлопной трубы мотоцикла идёт дым по мотору: '+str(ex))
     ok(tc and plain,'мотоцикл на старте: помощник придерживает газ (заднее колесо не срывается), на кнопке — только «ГАЗ»')
     # тормоза мотоциклов 1920-х на прямой колесо не блокируют (тормоз слабее сцепления) — АБС нужна в повороте: тормоз «в пол» с рулём до упора
     v=js("(()=>{rKeys.right=true;return R&&R.me?R.me.vx*3.6:0;})()");abs_on=False

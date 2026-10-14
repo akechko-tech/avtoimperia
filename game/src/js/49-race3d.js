@@ -490,7 +490,7 @@ function r3dCarMesh(spec,near){const key=[spec.style,spec.color,spec.wheel,spec.
   const wc=new Float32Array(24);(M.wheels||[]).slice(0,6).forEach((w,k)=>wc.set(w,k*4));
   // 0.30: колёса по углам (переднее левое, переднее правое, заднее левое, заднее правое) — для осевшей шины, искр и комьев из-под колёс
   const cw=[0,1,2,3].map(k=>{const w=(M.wheels||[]).find(q=>(q[2]>0)===(k<2)&&(q[0]<0)===((k&1)===0));return w?[w[0],w[1],w[2],Math.abs(w[3])]:null;});
-  m={op:g3Mesh(op),gl:g3Mesh(gl),wc,cw,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42),lean:!!M.lean};R3.carM.set(key,m);return m;}
+  m={op:g3Mesh(op),gl:g3Mesh(gl),wc,cw,len:M.len||[-1.6,1.6],eye:M.eye||[0.25,1.7,-0.2],pivot:(M.wheels&&M.wheels[0]?Math.abs(M.wheels[0][3]):0.42),lean:!!M.lean,exh:M.exh&&M.exh.length?M.exh:[[0.4,0.3,(M.len||[-1.6])[0]+0.12]]};R3.carM.set(key,m);return m;}
 function r3dCarState(c){if(!c.v3)c.v3={roll:0,pitch:0,heave:0,vr:0,vp:0,vh:0,spin:0,vxp:c.vx,ax:0,mk:[null,null],dust:0,y:null};return c.v3;}
 /* ---------- установка сцены (фото-текстуры уже в видеокарте: texPrepare) ---------- */
 // Слои земли гонки: основа (трава или сухая трава, песок, снег), вторая трава, земля, камень; покров, лесная подстилка; высота снега, крутизна камня
@@ -820,9 +820,12 @@ function r3dCarUpdate(c,dt,E){
   st.roll=clamp(st.roll,-0.13,0.13);st.pitch=clamp(st.pitch,-0.08,0.08);st.heave=clamp(st.heave,-0.13,0.07);
   st.spin+=c.vx*dt;
   const d=Math.hypot(c.x-R3.eye[0],c.z-R3.eye[2]);st.near=d<45;st.d=d;
+  const me=c===R.follow;
+  // 0.35: мотор дымит и на старте, пока машины ждут отмашки
+  if(!c.dnf&&!c.tun&&(me||d<60))r3dExhaust(c,st,fw,Math.max(0,c.vx),dt,me);
   if(R.t<0)return;
   // пыль из-под колёс (сухое покрытие), дым заноса, пар перегрева
-  const me=c===R.follow;if(d>160)return;const bx=c.x-fw[0]*1.2,bz=c.z-fw[2]*1.2;
+  if(d>160)return;const bx=c.x-fw[0]*1.2,bz=c.z-fw[2]*1.2;
   // в дождь и в тоннеле пыли нет; в луже и грязи — брызги вместо пыли
   const rain=!!(R3.W&&R3.W.rain)&&!c.tun,wetK=c.surf==='puddle'||c.surf==='mudhole'||c.surf==='mud'||c.surf==='snow'?0:1;
   const dusty=rain?0:((tr.dust||0)*(c.off?1.3:1)+(c.off&&tr!==TERR.asphalt?0.5:0))*wetK*(R.scn&&R.scn.dust||1)*(1-clamp((R.wetK||0)*2.2,0,1));
@@ -835,9 +838,20 @@ function r3dCarUpdate(c,dt,E){
     const tk=ml?0.02:0.62;[-1,1].forEach((sd,k)=>{const p=[c.x-fw[0]*1.0+rt[0]*sd*tk,yc,c.z-fw[2]*1.0+rt[2]*sd*tk],pr=st.mk[k];if(pr&&Math.hypot(p[0]-pr[0],p[2]-pr[2])>0.35){r3dSkidAdd(pr,p,0.16,tr.dust?[90,72,50]:[30,30,32],tr.dust?0.28:0.42);st.mk[k]=p;}else if(!pr)st.mk[k]=p;});}
   else st.mk[0]=st.mk[1]=null;
   if(c.dnf||c.stopT>0||c.overheat>0){if(Math.random()<0.35)r3dPart(c.x+fw[0]*1.2,yc+1.1,c.z+fw[2]*1.2,(Math.random()-0.5)*0.6,1.4+Math.random(),(Math.random()-0.5)*0.6,0.4,1.6,2,c.overheat>0?[245,245,245]:[80,80,80],0.35);}
-  if(c.thr>0.8&&R.rc.y<1914&&Math.random()<0.15)r3dPart(c.x-fw[0]*1.8,yc+0.4,c.z-fw[2]*1.8,-fw[0]*1.5,0.3,-fw[2]*1.5,0.15,0.9,0.6,[110,110,110],0.25);
   if(d<85&&!c.tun)r3dWheelFx(c,st,fw,rt,v,dt,me,rain);
 }
+// 0.35: дым из выхлопной трубы — по мотору (exhProfile, 41k-exhaust.js): чем больше газ и обороты, тем гуще; дым остаётся висеть
+// в воздухе позади (вылетает из трубы назад и почти сразу останавливается); большой гоночный мотор под полным газом — тёмные клубы,
+// на сбросе газа на высоких оборотах — короткая вспышка в трубе
+function r3dExhaust(c,st,fw,v,dt,me){const P=exhProfile(c),M=st.mat;if(!M||!P.rate)return;const E=r3dCarMesh(c.spec3,false).exh;if(!E||!E.length)return;
+  const thr=Math.max(0,c.thr||0),rpm=clamp(c.rpm||0.3,0.15,1.1),dmg=clamp((c.dmg||0)/100,0,1);
+  const h=st.ex||(st.ex={}),cnt=exhEmit(P,h,dt,thr,rpm,dmg,me?1:0.6);
+  const W=e=>[M[0]*e[0]+M[4]*e[1]+M[8]*e[2]+M[12],M[1]*e[0]+M[5]*e[1]+M[9]*e[2]+M[13],M[2]*e[0]+M[6]*e[1]+M[10]*e[2]+M[14]];
+  for(let q=0;q<cnt;q++){h.k=((h.k||0)+1)%E.length;const p=W(E[h.k]),dark=P.puff&&thr>0.85&&rpm>0.55&&Math.random()<0.3,
+      col=dark?[58,58,64]:dmg>0.45?[140,156,196]:P.col,a=(dark?0.42:P.a+dmg*0.12)*(me?0.85:1),fv=v*0.25-1.2;
+    r3dPart(p[0],p[1],p[2],fw[0]*fv+(Math.random()-0.5)*0.3,0.12+Math.random()*0.25,fw[2]*fv+(Math.random()-0.5)*0.3,P.size*(P.pulse?1.25:1),P.grow*(0.8+Math.random()*0.4)*(dark?1.3:1),P.life*(0.75+Math.random()*0.5),col,a,0,3);}
+  if(P.flame&&(h.thrP||0)>0.8&&thr<0.25&&rpm>0.8&&Math.random()<0.35){const p=W(E[0]);r3dPart(p[0],p[1],p[2],-fw[0]*2,0.05,-fw[2]*2,0.09,0.22,0.11,[255,176,72],0.95,0,1);}
+  h.thrP=thr;}
 // Вода и грязь из-под колёс: водяная пыль на мокрой дороге, веер брызг в луже, комья грязи; колея в грязи
 function r3dWetFx(c,st,yc,fw,rt,v,bx,bz,me,rain,dt){
   // машина пачкается: пыль сухого грунта (светлая), брызги луж и грязь (тёмная, быстро)
@@ -880,7 +894,7 @@ function r3dPartsUpdate(dt){const P=R3.parts;for(let i=P.length-1;i>=0;i--){cons
   // капли и комья падают (gv — доля тяжести), пыль и пар висят
   if(p.gv){p.vy-=9.8*p.gv*dt;p.vx*=1-dt*0.25;p.vz*=1-dt*0.25;if(p.y<p.floor){p.life=Math.min(p.life,0.05);}}else{p.vx*=1-dt*0.8;p.vz*=1-dt*0.8;p.vy*=1-dt*0.5;}}}
 function r3dDrawParts(E,bw,bh){const P=R3.parts;if(!P.length)return;const gl=G3.gl,I=R3.partI,e=R3.eye,L=P.map(p=>[(p.x-e[0])**2+(p.z-e[2])**2,p]).sort((a,b)=>b[0]-a[0]);
-  const lum=E.night>0.5?0.2:1;let n=0;const d=I.data;for(const [,p] of L){if(n>=I.max)break;const k=1-p.life/p.max,o=n*8,lm=p.em?1:lum;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255*lm;d[o+5]=p.c[1]/255*lm;d[o+6]=p.c[2]/255*lm;{const al=p.em===2?p.a*Math.min(1,(1-k)*4):p.a*(1-k)*Math.min(1,k*5+0.25);d[o+7]=p.em===1?-Math.max(0.005,al):p.em===2?1+Math.max(0.005,al)*0.999:al;}n++;}
+  const lum=E.night>0.5?0.2:1;let n=0;const d=I.data;for(const [,p] of L){if(n>=I.max)break;const k=1-p.life/p.max,o=n*8,lm=p.em&&p.em!==3?1:lum;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255*lm;d[o+5]=p.c[1]/255*lm;d[o+6]=p.c[2]/255*lm;{const al=p.em===2?p.a*Math.min(1,(1-k)*4):p.a*(1-k)*Math.min(1,k*5+0.25);d[o+7]=p.em===1?-Math.max(0.005,al):p.em===2?1+Math.max(0.005,al)*0.999:p.em===3?2+Math.max(0.005,al)*0.999:al;}n++;}
   const Pp=r3dUse('part',E,bw,bh);gl.uniform3fv(Pp.u.u_camR,R3.camR);gl.uniform3fv(Pp.u.u_camU,R3.camU);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,R3.texPuff);gl.uniform1i(Pp.u.u_tex,1);
   gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.disable(gl.CULL_FACE);g3InstDraw(I,n);gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}
 function r3dPeopleUpload(){const P=R3.people,I=R3.pI,n=Math.min(P.length,I.max),d=I.data;

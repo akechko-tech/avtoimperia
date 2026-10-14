@@ -379,10 +379,10 @@ const G3FS_PART=`in vec2 v_q;in vec4 v_c;in vec3 v_wp;in vec4 v_sp;uniform sampl
 ${G3LIB}
 ${G3SHP}
 // 0.30: вид частицы — в альфе: 0…1 — клуб пыли (тает у камеры), 1…2 — твёрдая (щебень, комья: резкий край, видна вблизи),
-// меньше 0 — светящаяся (искры обода: не освещается солнцем, горит и ночью)
+// меньше 0 — светящаяся (искры обода: не освещается солнцем, горит и ночью); 0.35: 2…3 — дым из выхлопной трубы (мягкий, как пыль, но тает только у самой камеры)
 void main(){vec3 V=u_cam-v_wp;float d=length(V),A=v_c.a,tx=texture(u_tex,v_q).a,a;
   if(A<0.){a=tx*(-A)*smoothstep(.2,.8,d);if(a<.004)discard;vec3 e=pow(v_c.rgb,vec3(2.2))*2.6;o=vec4(tone(e)*a,a*.35);return;}
-  if(A>1.){a=smoothstep(.22,.55,tx)*(A-1.)*smoothstep(.25,.9,d);}else a=tx*A*smoothstep(1.5,9.,d);if(a<.004)discard;
+  if(A>2.){a=tx*(A-2.)*smoothstep(.5,3.,d);}else if(A>1.){a=smoothstep(.22,.55,tx)*(A-1.)*smoothstep(.25,.9,d);}else a=tx*A*smoothstep(1.5,9.,d);if(a<.004)discard;
   float sh=shadowP(v_sp);vec3 alb=pow(v_c.rgb,vec3(2.2));vec3 c=tone(fogIt(alb*(u_sunC*(.12+.5*sh)+u_skyC*.95),V/d,d));o=vec4(c*a,a);}`;
 /* ---------- кино-обработка кадра (гонка): свечение ярких мест, цвет плёнки, виньетка, зерно, смаз на скорости ---------- */
 // яркие места кадра → в четверть размера

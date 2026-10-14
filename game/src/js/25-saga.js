@@ -3,7 +3,8 @@
 // Глава приходит, когда в игре наступил её момент (год, продажи, первая гонка…). Смотреть можно заново — во вкладке «Империя».
 const SAGA={};
 const BN_ADD={race:1,convEarly:1};
-function sagaList(s){return SAGA[s.pioneer]||SAGA.custom||[];}
+// 0.35: у пути «Мотомастерская» — свой фильм (25d-saga-moto.js): свой персонаж-мотоциклист не смотрит историю автомобильной мастерской
+function sagaList(s){return (s.pioneer!=='custom'&&SAGA[s.pioneer])||(s.motoStart&&SAGA.moto)||SAGA.custom||[];}
 function sagaFill(t,s){const P=PIONEERS[s.pioneer]||PIONEERS.custom;return String(t||'').replace(/\{name\}/g,s.pioneer==='custom'?(s.hero||'Основатель'):P.name).replace(/\{co\}/g,s.company).replace(/\{city\}/g,(COUNTRIES[s.country]||{}).city||'').replace(/\{y\}/g,s.y);}
 // Момент главы: год, первая машина, гонка, победа, продажи, война, кризис, 1929…
 function sagaCond(s,w){const S=s.saga||{};
@@ -26,6 +27,14 @@ function sagaCond(s,w){const S=s.saga||{};
    fx.legal:'событие:решение' — выбор в фильме и есть решение по газетному событию (11c-legal.js): его деньги и последствия.
    fx.cashK — доля кассы (выкуп акций у богатой фирмы стоит не «пару тысяч», а треть кассы). */
 function sagaMonthCost(s){const r=s.last||{};return Math.max(1,(r.mat||0)+(r.wage||0)+(r.ovh||0)+(r.dlr||0)+(r.ad||0)+(r.rd||0)+(r.int||0));}
+// 0.35: деньги в выборе — по масштабу компании (отзыв: «денег не берут — сумма должна быть сообразна масштабу моего бизнеса»).
+// Суммы глав задуманы для мастерской — около $1000 расходов в месяц в ценах 1895 года; у фирмы покрупнее они во столько раз больше,
+// во сколько больше её расходы за месяц: «+$700 за первую машину» у мастерской — это и «+3 месяца расходов» у концерна
+function sagaScale(s){const k=sagaMonthCost(s)/(1000*cpi(s));return k>1?k:1;}
+// Но не больше десятой части свободных денег (и не меньше суммы, задуманной для мастерской): у фирмы с большим оборотом и пустой кассой
+// выбор в фильме не должен её разорить, мастерская платит и получает, как прежде, а один выбор не меняет кассу больше чем на десятую часть.
+function sagaCash(s,fx){if(!fx||!fx.cash)return 0;const base=fx.cash*cpi(s),lim=Math.max(Math.abs(base),0.1*Math.max(0,s.cash));
+  return Math.round(clamp(base*sagaScale(s),-lim,lim)/10)*10;}
 function sagaRich(s){return s.cash>Math.max(60000*cpi(s),sagaMonthCost(s)*6)&&(s.loan||0)<=Math.max(0,s.cash)*0.15;}
 function sagaPoor(s){return s.cash<4000*cpi(s)||((s.loan||0)>0&&s.loan>Math.max(0,s.cash)*0.5);}
 function sagaChose(s,id){const w=(s.wpick||{})[id];if(w)return w;
@@ -62,7 +71,7 @@ function sagaLegal(s,key){const [id,ch]=String(key).split(':'),W=(typeof WORLD!=
   s.wseen=s.wseen||{};s.wseen[id]=1;(s.wpick=s.wpick||{})[id]=ch||'';try{W.fx&&W.fx(s);}catch(e){console.warn(e);}
   let t='';try{t=ch&&W.res&&W.res[ch]?(W.res[ch](s)||''):'';}catch(e){console.warn(e);}return t.replace(/\{co\}/g,s.company);}
 function sagaFxText(fx,s){const L=[];if(!fx)return '';
-  if(fx.cash)L.push(`${fx.cash>0?'+':'−'}${money(Math.abs(fx.cash)*cpi(s))}`);
+  if(fx.cash)L.push(`${fx.cash>0?'+':'−'}${money(Math.abs(sagaCash(s,fx)))}`);
   if(fx.cashK)L.push(`${fx.cashK>0?'+':'−'}${Math.round(Math.abs(fx.cashK)*100)}% кассы (${money(Math.abs(fx.cashK)*Math.max(0,s.cash))})`);
   if(fx.legal&&SAGA_LEGAL_TXT[fx.legal])L.push(SAGA_LEGAL_TXT[fx.legal]);
   if(fx.roy)L.push(`дивиденды компаньонам — ${Math.round(fx.roy[0]*100)}% выручки (${sagaMonths(fx.roy[1])})`);
@@ -72,11 +81,11 @@ function sagaFxText(fx,s){const L=[];if(!fx)return '';
     if(k==='race'){L.push(`скорость в гонках +${Math.round(v*100)}% на ${sagaMonths(mo)}`);return;}
     const pc=Math.round((v-1)*100);if(!pc)return;const good=pc*d[1]>0;
     L.push(k==='devTime'?`разработка ${pc<0?'быстрее':'медленнее'} на ${Math.abs(pc)}% (${sagaMonths(mo)})`:`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
-  Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const pc=Math.round((v-1)*100);if(pc&&SEG[g])L.push(`спрос: ${SEG[g].name.toLowerCase()} класс ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
+  Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const pc=Math.round((v-1)*100);if(pc&&SEG[g])L.push(`${g==='moto'?'спрос на мотоциклы':g==='moside'?'спрос на мотоциклы с коляской':'спрос: '+SEG[g].name.toLowerCase()+' класс'} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
   if(fx.mood)L.push(`настроение пилотов ${fx.mood>0?'+':'−'}${Math.abs(fx.mood)}`);
   return L.join(' · ');}
 function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
-  if(fx.cash)s.cash+=Math.round(fx.cash*cpi(s));
+  if(fx.cash)s.cash+=sagaCash(s,fx);
   if(fx.cashK)s.cash+=Math.round(Math.max(0,s.cash)*fx.cashK);
   if(fx.legal){const t=sagaLegal(s,fx.legal);if(t)addLog(t,'hist');}
   if(fx.roy)legalOf(s).roy={k:fx.roy[0],until:now+fx.roy[1]};

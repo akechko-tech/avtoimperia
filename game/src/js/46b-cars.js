@@ -329,7 +329,7 @@ function carModel(S){
     // цепная передача: звёздочки и цепи к задним колёсам
     if((!late||V.chain)&&hi)[-1,1].forEach(sd=>{const x=sd*0.52;mLathe(M,[x,r,-wb/2],'x',[[0.13,-0.01],[0.13,0.01]],12,'#3a3a3e','metal');tube([[x,r+0.13,-wb/2],[x,yf-0.02,-0.25],[x,yf-0.18,-0.25],[x,r-0.13,-wb/2]],0.012,'#2a2a2e','metal',3);});
     steer(0.24,yt+0.1,0.02,0.19,0.8);drvF(0.24,yf+0.3,zs,0.0,yt+0.1);if(S.mech&&!V.solo)mechF(-0.24,yf+0.3,zs);eyeAt(0.24,yf+0.3,zs);
-    const ex=V.exh;mTube(M,[[ex*0.52,yf-0.05,0.3],[ex*0.55,yf-0.1,-0.5],[ex*0.56,yf-0.15,-1.3]],0.035,hi?6:4,'#4a4a4e','metal');tailLamp(-ex*0.36,yf+0.1,-1.3);len=[Math.min(late?-1.6:-1.55,sz0-nSp*0.12-0.1),zr+0.12];track=t;
+    const ex=V.exh;mTube(M,[[ex*0.52,yf-0.05,0.3],[ex*0.55,yf-0.1,-0.5],[ex*0.56,yf-0.15,-1.3]],0.035,hi?6:4,'#4a4a4e','metal');M.exh=[[ex*0.56,yf-0.15,-1.34]];tailLamp(-ex*0.36,yf+0.1,-1.3);len=[Math.min(late?-1.6:-1.55,sz0-nSp*0.12-0.1),zr+0.12];track=t;
     if(S.acc){tube([[0,yt+0.012,zd],[0,(rk==='dash'?yf+0.3:yt)+0.012,zr-0.05]],0.04,S.acc,'paint',4);}}
   else if(st==='gp1912'||st==='gp1925'){
     const V=mqLook(S),late=st==='gp1925',wb=late?2.4:2.65,t=late?1.25:1.35,r=late?0.36:0.41,yf=r+(late?0.0:0.06),tw=late?0.13:0.11;chassis(wb,t,r,r,tw,{yf,fw:0.3,zEng0:0.2,zEng1:wb/2});
@@ -352,7 +352,7 @@ function carModel(S){
     // обтекатель-«горб» за головой пилота
     if(V.hump)mLoft2(M,[{z:zc1,dx:sx,p:rsec(0.13,0.1,top-0.04,top+0.22,0.02,0.1,n,'n')},{z:zc1-0.35,dx:sx,p:rsec(0.1,0.07,top-0.06,top+0.12,0.02,0.07,n,'n')},{z:zc1-0.7,dx:sx,p:rsec(0.04,0.03,top-0.08,top-0.02,0.01,0.02,n,'n')}],col,'paint');
     steer(sx,top+0.13,0.1,0.19,0.95);drvF(sx,yb+0.28,-0.22,0.08,top+0.13);if(!solo)mechF(-sx,yb+0.28,-0.22);eyeAt(sx,yb+0.28,-0.22);
-    const ex=V.exh;mTube(M,[[ex*(w+0.1),yb+0.12,0.6],[ex*(w+0.16),yb+0.1,-0.2],[ex*(w+0.17),yb+0.08,-1.1]],0.04,hi?6:4,'#9ea3aa','chrome');
+    const ex=V.exh;mTube(M,[[ex*(w+0.1),yb+0.12,0.6],[ex*(w+0.16),yb+0.1,-0.2],[ex*(w+0.17),yb+0.08,-1.1]],0.04,hi?6:4,'#9ea3aa','chrome');M.exh=[[ex*(w+0.17),yb+0.08,-1.14]];
     // запаски: в нише острого хвоста — одна; за округлым хвостом — две стопкой с номером
     let lz=Math.max(zt+0.06,-1.52),lx=-ex*0.12,ly=yb+0.2;
     if(!late&&tl==='round'){for(let k=0;k<2;k++)spare(0,yb+r+0.02,zt-0.1-k*0.12,r,0.1,'z');plate([0,yb+r+0.02,zt-0.1-0.12-0.058],[0,0,-1],[1,0,0],0.3,0.3,true);lx=-ex*0.22;ly=yb+0.02;lz=zt-0.02;zt-=0.4;}
@@ -466,5 +466,7 @@ function carModel(S){
     drvF(sx,yf+0.36,seats1,seats1+0.25,sy+0.1);if(S.mech&&!(sedan&&!limo))mechF(-sx,yf+0.36,seats1);eyeAt(sx,yf+0.36,seats1);
     if(S.acc&&S.num)tube([[0,yh+0.012,zd],[0,yh+0.012,zr-0.05]],0.03,S.acc,'paint',4);
     len=[zr0-0.15,zr+0.3];track=t;}
+  // 0.35: где кончается выхлопная труба — оттуда идёт дым (49-race3d.js: r3dExhaust); у кузовов без видимой трубы — под задком справа
+  if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];
   M.len=len;M.track=track;return M;
 }

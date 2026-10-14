@@ -9,7 +9,7 @@
 const PLG={cv:null,g:null,key:'',sc:null,raf:0,t:0,last:0,fail:0,ms:16,yaw:0,pit:0,zoom:0,ptr:new Map(),onScr:true,ready:false,busy:false,scale:1,slow:0,io:null,stills:new Map(),frames:0,carM:new Map(),want:'',mood:''};
 function plgOK(){return typeof g3Can==='function'&&g3Can()&&gfxMode()!=='2d'&&!(AU.on&&AU.on.plantImg)&&PLG.fail<3&&!G3.lost;}
 // Облик выпускаемых моделей (как в гонке и на карточках): по нему катятся машины из цеха и стоят на площадке
-function plgSpecs(s){return s.models.filter(x=>x.status==='prod'||x.status==='sale').slice(0,4).map(m=>{try{return Object.assign(modelSpec(m,0,s.y,{mech:false,num:0,country:s.country}),{truck:isTruck(m)});}catch(e){return null;}}).filter(Boolean);}
+function plgSpecs(s){return s.models.filter(x=>x.status==='prod'||x.status==='sale').slice(0,4).map(m=>{try{return Object.assign(modelSpec(m,0,s.y,{mech:false,num:0,country:s.country}),{truck:isTruck(m),e:m.e});}catch(e){return null;}}).filter(Boolean);}
 function plgKey(s){return JSON.stringify([plantState(s),plgSpecs(s).map(x=>x.key)]);}
 /* ---------- постройки: те же модели, что у прежней картинки, плюс водонапорная башня, рампа, штабеля ---------- */
 function pWaterTower(x,z,S,name){const M=new Mesh(),H=S.era===2?21:18,tank=S.era===2?'#6d737b':'#5d5048';
@@ -225,14 +225,14 @@ function plgSpawn(sc,kind){const L=sc.L,r=Math.random,S=sc.S,yard=-1.3;
     let pts,gateS=-1,dir=0,lz=0;if(toDep)pts=[[g[0],11],[g[0],yard],[dx,yard],[dx,12]];
     else{dir=r()<0.5?-1:1;lz=plgLaneZ(dir);pts=[[g[0],11],[g[0],yard],[L.gx,yard],[L.gx,lz],[dir*420,lz]];}
     const pa=plgPath(pts,3.6);if(!toDep){let best=1e9;for(let s2=0;s2<pa.len;s2+=0.5){const p=plgPos(pa,s2);if(Math.abs(p[0]-L.gx)<0.6&&Math.abs(p[1]+6)<best){best=Math.abs(p[1]+6);gateS=s2;}}}
-    sc.cars.push({m:plgCar(sp,true),pa,s:0,v:0,vmax:toDep?3.2:4,street:toDep?0:1,gateS,spin:0,tdir:dir,tlz:lz});return;}
+    sc.cars.push({m:plgCar(sp,true),pa,s:0,v:0,vmax:toDep?3.2:4,street:toDep?0:1,gateS,spin:0,tdir:dir,tlz:lz,e:sp.e,exhY:S.y});return;}
   if(kind==='street'){const dir=r()<0.5?-1:1,key=dir>0?'e':'w';if(sc.t<(sc.lane[key]||0))return;
     // повозки — у обочины (машины их обгоняют), машины — по своей полосе
     const cart=S.y<1920&&r()<(S.era===0?0.4:0.18),v=cart?3.2:S.era===0?7:S.era===1?9:11,lz=plgLaneZ(dir)+(cart?(plgLaneZ(dir)<-10?-1.5:1.1):0);sc.lane[key]=sc.t+(cart?1.5:4.5);
-    const x0=cart?-dir*230:-dir*420,pa=plgPath([[x0,lz],[-x0,lz]],0);sc.cars.push(cart?{cart:1,pa,s:0,v,vmax:v,spin:0,dir,lz,cl:1}:{m:plgCar(plgStreetSpec(S.y,r),true),pa,s:0,v,vmax:v,spin:0,dir,lz});return;}
+    const x0=cart?-dir*230:-dir*420,pa=plgPath([[x0,lz],[-x0,lz]],0);sc.cars.push(cart?{cart:1,pa,s:0,v,vmax:v,spin:0,dir,lz,cl:1}:{m:plgCar(plgStreetSpec(S.y,r),true),pa,s:0,v,vmax:v,spin:0,dir,lz,exhY:S.y});return;}
   if(kind==='truck'){// грузовик: привозит детали к цеху или увозит машины
     const g=L.gates[Math.floor(r()*L.gates.length)],dir=r()<0.5?-1:1,lz=plgLaneZ(-dir),sp=plgStreetSpec(Math.max(1909,S.y),()=>0.01);sp.style='truck';sp.b='b7';sp.key+='|t';
-    const pa=plgPath([[dir*420,lz],[L.gx,lz],[L.gx,yard-1.2],[g[0]+1.2,yard-1.2],[g[0]+1.2,11]],3.6);sc.cars.push({m:plgCar(sp,true),pa,s:0,v:8,vmax:8,slowAt:pa.len-60,spin:0});return;}
+    const pa=plgPath([[dir*420,lz],[L.gx,lz],[L.gx,yard-1.2],[g[0]+1.2,yard-1.2],[g[0]+1.2,11]],3.6);sc.cars.push({m:plgCar(sp,true),pa,s:0,v:8,vmax:8,slowAt:pa.len-60,spin:0,exhY:Math.max(1909,S.y)});return;}
   if(kind==='walk'){const D=L.doors.concat(L.gates.map(g=>[g[0]-1,g[1]])),a=D[Math.floor(r()*D.length)],gate=r()<0.3;let b=D[Math.floor(r()*D.length)];if(b===a&&!gate)return;
     const zl=-3.6+r()*2.4,pts=[[a[0],a[1]+1.4],[a[0],zl]];
     if(gate){const dir=r()<0.5?-1:1;pts.push([L.gx+0.8,zl],[L.gx+0.8,-6.3],[dir*260,-6.3]);}else pts.push([b[0]+(r()-0.5),zl],[b[0]+(r()-0.5)*0.6,b[1]+1.4]);
@@ -252,7 +252,10 @@ function plgUpdate(sc,dt){const S=sc.S,L=sc.L,G0=G;sc.t+=dt;
     if(c.gateS>0&&c.s>c.gateS+6){tv=S.era===0?7:S.era===1?9:11;if(c.lz===undefined&&c.s>c.gateS+9){c.lz=c.tlz;c.dir=c.tdir;}}
     // не наезжать на впереди идущую по той же полосе
     if(c.lz!==undefined){const p=plgPos(c.pa,c.s)[0];sc.cars.forEach(o=>{if(o===c||o.lz!==c.lz||o.dir!==c.dir)return;const q=plgPos(o.pa,o.s)[0],d=(q-p)*c.dir;if(d>0&&d<9)tv=Math.min(tv,o.v*0.9);});}
-    c.v+=clamp(tv-c.v,-4*dt,2.2*dt);c.s+=c.v*dt;c.spin+=c.v*dt;
+    const acc=tv>c.v+0.2;c.v+=clamp(tv-c.v,-4*dt,2.2*dt);c.s+=c.v*dt;c.spin+=c.v*dt;
+    // 0.35: дым из выхлопной трубы — по мотору, как в гонке (41k-exhaust.js): у своих машин — по их мотору, у чужих — по году; у повозок дыма нет
+    if(!c.cart&&typeof exhProfile==='function'&&c.s<c.pa.len){const P=exhProfile(c),n=exhEmit(P,c.ex||(c.ex={}),dt,acc?1:0.25,clamp(c.v/11,0.2,1),0,0.5);
+      if(n){const a=plgAt(c.pa,c.s,c.loop);for(let q=0;q<n;q++)plgPart(sc,a[0]-a[2]*2.1+a[3]*0.4,0.3,a[1]-a[3]*2.1-a[2]*0.4,-a[2]*0.4,0.2+Math.random()*0.25,-a[3]*0.4,P.size*3,P.grow*3.2,P.life*1.4,P.col,Math.min(0.6,P.a*1.5));}}
     if(c.loop){if(c.s>c.pa.len)c.s-=c.pa.len;}else if(c.s>=c.pa.len)sc.cars.splice(i,1);}
   for(let i=sc.walk.length-1;i>=0;i--){const w=sc.walk[i];w.s+=w.v*dt;if(w.s>=w.pa.len)sc.walk.splice(i,1);}
   // поезд: маневры туда-обратно с остановками
@@ -301,7 +304,8 @@ function plgCarU(P,c,m,M){const gl=G3.gl;gl.uniformMatrix4fv(P.u.u_model,false,M
 // Все, что рисуется: [сетка, матрица] для машин, людей, поезда (тень и кадр — одним списком)
 function plgDyn(sc){const cars=[],ppl=[],lits=[],M=()=>new Float32Array(16),bas=(x,y,z,fx,fz)=>{const m=M(),fw=[fx,0,fz],rt=[fz,0,-fx];m4basis(m,rt,[0,1,0],fw,[x,y,z]);return m;};
   sc.park.forEach(p=>cars.push({m:p.m,M:bas(p.x,0.025,p.z,Math.sin(p.yaw),Math.cos(p.yaw)),c:null}));
-  sc.cars.forEach(c=>{const a=plgAt(c.pa,c.s,c.loop),y=c.loop?0.04:0.03;if(c.cart){lits.push({g:plgCart(),M:bas(a[0],y,a[1],a[2],a[3])});return;}cars.push({m:c.m,M:bas(a[0],y,a[1],a[2],a[3]),c});});
+  // 0.35: у повозки лошадь впереди (в модели — сзади, по −z): разворачиваем по ходу (отзыв: «лошади толкают повозку, смотря назад»)
+  sc.cars.forEach(c=>{const a=plgAt(c.pa,c.s,c.loop),y=c.loop?0.04:0.03;if(c.cart){lits.push({g:plgCart(),M:bas(a[0],y,a[1],-a[2],-a[3])});return;}cars.push({m:c.m,M:bas(a[0],y,a[1],a[2],a[3]),c});});
   sc.walk.forEach(w=>{const a=plgAt(w.pa,w.s),fr=Math.floor(((w.s/1.5+w.ph)%1)*4);ppl.push({g:sc.people[w.look%sc.people.length][fr],M:bas(a[0],0.03,a[1],a[2],a[3])});});
   sc.stand.forEach(p=>ppl.push({g:sc.people[p.look%sc.people.length][4],M:bas(p.x,0.03,p.z,Math.sin(p.yaw),Math.cos(p.yaw))}));
   if(sc.train){const T=sc.train,x=sc.L.railX;let z=(T.z||6)+40;[...T.wag,{m:T.tender.m,len:5.4},{m:T.loco.m,len:9.2,loco:1}].forEach(c=>{const zc=z-c.len/2;lits.push({g:c.m,M:bas(x,0.36,zc,0,-1)});if(c.loco)T.ch=[x,4.4,zc-2.85];z-=c.len+0.6;});}

@@ -76,9 +76,11 @@ function month(){const act=s.models.filter(m=>m.status==='prod'),dev=s.models.fi
   // разумный хозяин не строит цеха в пустоту: только если покупателям не хватило машин два месяца подряд и есть прибыль;
   // полгода загрузка ниже 45% — продаёт пятую часть цехов (иначе содержание огромного завода съедает кассу в спад)
   if(L&&act.length){const util=capUtil(s);s._lowU=util<0.45?(s._lowU||0)+1:0;
-    if(s._lowU>=6&&s.cap>10&&!(s.capBuild||[]).length){const n=Math.max(1,Math.round(s.cap*0.2)),v=Math.round(s.plantVal*n/s.cap*0.4);s.cap-=n;s.plantVal-=s.plantVal*n/(s.cap+n);s.cash+=v;s._lowU=0;}}
+    if(s._lowU>=6&&s.cap>10&&!(s.capBuild||[]).length){const n=Math.max(1,Math.round(s.cap*0.2)),v=Math.round(s.plantVal*n/s.cap*0.4);s.cap-=n;s.plantVal-=s.plantVal*n/(s.cap+n);s.cash+=v;s._lowU=0;s._capSold=mi(s);}}
+  // 0.35: продал цеха — два года новых не строит (иначе в кризис 1920-х бот с деньгами строил весной и продавал за 40% осенью)
+  const capCool=s._capSold!==undefined&&mi(s)-s._capSold<24;
   if(L&&act.length&&!(s.capBuild||[]).length){const lost=act.reduce((a,m)=>a+(m.lostS||0)*(isMoto(m)?0.15:1),0),util=capUtil(s);s._lostC=lost>Math.max(2,L.sold*0.04)?(s._lostC||0)+1:0;
-    if((s._lostC>=2||util>0.95)&&s.hist.profit.slice(-3).reduce((a,b)=>a+b,0)>0){const n=Math.max(2,Math.round(s.cap*0.35)),c=n*capUnitCost(s);
+    if((s._lostC>=2||util>0.95)&&!capCool&&s.hist.profit.slice(-3).reduce((a,b)=>a+b,0)>0){const n=Math.max(2,Math.round(s.cap*0.35)),c=n*capUnitCost(s);
       // в долг — не больше половины лимита банка и не в кризис (осторожный хозяин)
       if(s.cash<c*1.3&&loanOpen(s)&&creditState(s).k==='ok'){const room=maxLoan(s)*0.5-s.loan,need=Math.ceil((c*1.3-s.cash)/1000)*1000;if(room>=need){s.loan+=need;s.cash+=need;}}
       if(s.cash>c*1.2)capOrder(s,n,true);}}
