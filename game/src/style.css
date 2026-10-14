@@ -854,6 +854,22 @@ button.qbx:active{opacity:.8}
 .dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
 .dnote b{white-space:nowrap}
 /* 0.34: «Газ» с дозировкой — заливка кнопки по уровню газа, ниже — процент */
-.r-ctrl .gas.down{background:linear-gradient(to top,var(--brass) 0,var(--brass) calc(var(--lv,1)*100%),rgba(233,196,106,.22) calc(var(--lv,1)*100%))}
 .r-ctrl .gas small{display:block;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;margin-top:2px;min-height:13px}
+/* 0.35: помощь мотоциклу на кнопках — «ПБС» и «АБС» горят, пока придерживают газ или тормоз */
+.r-ctrl .gas.assist small,.r-ctrl .brk.assist small{display:block;width:fit-content;margin:3px auto 0;background:#0e2233;color:#8fdcff;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:800;letter-spacing:.06em;opacity:1}
 .dvbox{margin-top:8px;padding:8px 10px;border:1px solid rgba(233,196,106,.35);border-radius:6px;background:rgba(233,196,106,.06)}
+
+/* 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры */
+.ng-path{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start;text-align:left;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 12px 10px;cursor:pointer;color:var(--text)}
+.ng-path:hover,.ng-path:focus-visible{border-color:var(--brass)}
+.ng-ico{font-size:28px;line-height:1;margin-top:2px;text-align:center}
+.ng-b{display:block;min-width:0}
+.ng-b b{display:block;font-family:var(--display);font-size:18px}
+.ng-when{display:block;font-family:var(--mono);font-size:11px;color:var(--brass);margin-top:2px}
+.ng-d{display:block;font-size:13px;color:var(--muted);margin-top:4px;line-height:1.35}
+.ng-faces{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:8px}
+.ng-faces small{flex-basis:100%;font-size:11px;color:var(--muted);margin-top:2px}
+.ng-face{width:30px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--brass);box-sizing:border-box;background:#5a5048;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ng-face img{width:100%;height:100%;object-fit:cover;filter:sepia(.35) contrast(1.05)}
+.ng-ini{font-family:var(--display);font-size:11px;font-weight:800;color:#f2e6cf}
+.ng-back{align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-start}

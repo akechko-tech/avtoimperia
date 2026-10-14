@@ -867,9 +867,25 @@ button.qbx:active{opacity:.8}
 .dnote{margin-top:8px;background:var(--panel2);border-left:3px solid var(--brass);border-radius:4px;padding:6px 9px;line-height:1.45}
 .dnote b{white-space:nowrap}
 /* 0.34: «Газ» с дозировкой — заливка кнопки по уровню газа, ниже — процент */
-.r-ctrl .gas.down{background:linear-gradient(to top,var(--brass) 0,var(--brass) calc(var(--lv,1)*100%),rgba(233,196,106,.22) calc(var(--lv,1)*100%))}
 .r-ctrl .gas small{display:block;font-size:12px;font-weight:600;letter-spacing:0;line-height:1.1;margin-top:2px;min-height:13px}
+/* 0.35: помощь мотоциклу на кнопках — «ПБС» и «АБС» горят, пока придерживают газ или тормоз */
+.r-ctrl .gas.assist small,.r-ctrl .brk.assist small{display:block;width:fit-content;margin:3px auto 0;background:#0e2233;color:#8fdcff;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:800;letter-spacing:.06em;opacity:1}
 .dvbox{margin-top:8px;padding:8px 10px;border:1px solid rgba(233,196,106,.35);border-radius:6px;background:rgba(233,196,106,.06)}
+
+/* 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры */
+.ng-path{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start;text-align:left;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 12px 10px;cursor:pointer;color:var(--text)}
+.ng-path:hover,.ng-path:focus-visible{border-color:var(--brass)}
+.ng-ico{font-size:28px;line-height:1;margin-top:2px;text-align:center}
+.ng-b{display:block;min-width:0}
+.ng-b b{display:block;font-family:var(--display);font-size:18px}
+.ng-when{display:block;font-family:var(--mono);font-size:11px;color:var(--brass);margin-top:2px}
+.ng-d{display:block;font-size:13px;color:var(--muted);margin-top:4px;line-height:1.35}
+.ng-faces{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:8px}
+.ng-faces small{flex-basis:100%;font-size:11px;color:var(--muted);margin-top:2px}
+.ng-face{width:30px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--brass);box-sizing:border-box;background:#5a5048;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ng-face img{width:100%;height:100%;object-fit:cover;filter:sepia(.35) contrast(1.05)}
+.ng-ini{font-family:var(--display);font-size:11px;font-weight:800;color:#f2e6cf}
+.ng-back{align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-start}
 </style>
 
 <div class="wrap" hidden>
@@ -931,16 +947,19 @@ const COUNTRIES={
   it:{name:'Италия',city:'Турин',cash:18000,race:'#C0141C',raceName:'красный',note:'Богатых семей мало — продавайте и за границу. Великие гонки, дешёвый труд'}
 };
 const PIONEERS={
-  ford:{wiki:'Henry Ford',name:'Генри Форд',yrs:'1863–1947',c:'us',co:'Форд Мотор',beard:0,bio:'Сделал автомобиль массовым: Model T (1908) и движущийся конвейер (1913).',plus:['Мощности +15%','Технологии завода на год раньше','Народный сегмент +8%'],minus:['Люкс −15%','Новые модели дороже на 10%'],b:{lineCap:1.15,convEarly:12,seg:{people:1.08,lux:0.85},devCost:1.1}},
-  olds:{wiki:'Ransom E. Olds',name:'Рэнсом Олдс',yrs:'1864–1950',c:'us',co:'Олдс Мотор Воркс',beard:0,bio:'Curved Dash 1901 года собирали на поточной линии — задолго до конвейера Форда.',plus:['Выработка рабочих +12%','Цеха дешевле на 15%'],minus:['Качество −4%'],b:{workerEff:1.12,lineCost:0.85,quality:0.96}},
-  benz:{wiki:'Carl Benz',name:'Карл Бенц',yrs:'1844–1929',c:'de',co:'Бенц и Ко',beard:1,bio:'Патент 1886 года на «моторваген» — первый настоящий автомобиль.',plus:['Разработка на 20% быстрее','Качество +4%'],minus:['Мощности −10%'],b:{devTime:0.8,quality:1.04,lineCap:0.9}},
-  maybach:{wiki:'Wilhelm Maybach',name:'Вильгельм Майбах',yrs:'1846–1929',c:'de',co:'Майбах Моторенбау',beard:1,bio:'Создатель поплавкового карбюратора и первого «Мерседеса» 1901 года.',plus:['КБ работает на 25% быстрее','Качество +5%'],minus:['Разработка дороже на 15%'],b:{rd:1.25,quality:1.05,devCost:1.15}},
-  renault:{wiki:'Louis Renault (industrialist)',name:'Луи Рено',yrs:'1877–1944',c:'fr',co:'Рено Фрер',beard:0,bio:'Изобрёл прямую передачу (1899). Его гонщик Шиз выиграл первое Гран-при в 1906 году.',plus:['Гонки +6%','Разработка дешевле на 15%'],minus:['Реклама −10%'],b:{race:0.06,devCost:0.85,adEff:0.9}},
-  peugeot:{wiki:'Armand Peugeot',name:'Арман Пежо',yrs:'1849–1915',c:'fr',co:'Пежо',beard:1,bio:'Наследник промышленной династии. «Пежо» участвовал в первой гонке Париж — Бордо — Париж.',plus:['Капитал +25%','Реклама +15%'],minus:['Разработка на 10% дольше'],b:{cash:1.25,adEff:1.15,devTime:1.1}},
-  lanchester:{wiki:'Frederick W. Lanchester',name:'Фредерик Ланчестер',yrs:'1868–1946',c:'uk',co:'Ланчестер Энджин',beard:1,bio:'Построил один из первых британских бензиновых автомобилей (1895). Инженер-теоретик.',plus:['Качество +7%','Рамы держат на 20% больше л.с.'],minus:['Детали дороже на 4%'],b:{quality:1.07,chassisTol:1.2,matCost:1.04}},
-  bugatti:{wiki:'Ettore Bugatti',name:'Этторе Бугатти',yrs:'1881–1947',c:'fr',co:'Бугатти',beard:0,bio:'Художник среди инженеров. Type 35 — одна из самых побеждающих гоночных машин 1920-х.',plus:['Люкс +15%','Гонки +8%'],minus:['Детали дороже на 5%','Мощности −10%'],b:{seg:{lux:1.15},race:0.08,matCost:1.05,lineCap:0.9}},
+  ford:{role:'maker',wiki:'Henry Ford',name:'Генри Форд',yrs:'1863–1947',c:'us',co:'Форд Мотор',beard:0,bio:'Сделал автомобиль массовым: Model T (1908) и движущийся конвейер (1913).',plus:['Мощности +15%','Технологии завода на год раньше','Народный сегмент +8%'],minus:['Люкс −15%','Новые модели дороже на 10%'],b:{lineCap:1.15,convEarly:12,seg:{people:1.08,lux:0.85},devCost:1.1}},
+  olds:{role:'maker',wiki:'Ransom E. Olds',name:'Рэнсом Олдс',yrs:'1864–1950',c:'us',co:'Олдс Мотор Воркс',beard:0,bio:'Curved Dash 1901 года собирали на поточной линии — задолго до конвейера Форда.',plus:['Выработка рабочих +12%','Цеха дешевле на 15%'],minus:['Качество −4%'],b:{workerEff:1.12,lineCost:0.85,quality:0.96}},
+  benz:{role:'tech',wiki:'Carl Benz',name:'Карл Бенц',yrs:'1844–1929',c:'de',co:'Бенц и Ко',beard:1,bio:'Патент 1886 года на «моторваген» — первый настоящий автомобиль.',plus:['Разработка на 20% быстрее','Качество +4%'],minus:['Мощности −10%'],b:{devTime:0.8,quality:1.04,lineCap:0.9}},
+  maybach:{role:'tech',wiki:'Wilhelm Maybach',name:'Вильгельм Майбах',yrs:'1846–1929',c:'de',co:'Майбах Моторенбау',beard:1,bio:'Создатель поплавкового карбюратора и первого «Мерседеса» 1901 года.',plus:['КБ работает на 25% быстрее','Качество +5%'],minus:['Разработка дороже на 15%'],b:{rd:1.25,quality:1.05,devCost:1.15}},
+  renault:{role:'maker',wiki:'Louis Renault (industrialist)',name:'Луи Рено',yrs:'1877–1944',c:'fr',co:'Рено Фрер',beard:0,bio:'Изобрёл прямую передачу (1899). Его гонщик Шиз выиграл первое Гран-при в 1906 году.',plus:['Гонки +6%','Разработка дешевле на 15%'],minus:['Реклама −10%'],b:{race:0.06,devCost:0.85,adEff:0.9}},
+  peugeot:{role:'money',wiki:'Armand Peugeot',name:'Арман Пежо',yrs:'1849–1915',c:'fr',co:'Пежо',beard:1,bio:'Наследник промышленной династии. «Пежо» участвовал в первой гонке Париж — Бордо — Париж.',plus:['Капитал +25%','Реклама +15%'],minus:['Разработка на 10% дольше'],b:{cash:1.25,adEff:1.15,devTime:1.1}},
+  lanchester:{role:'tech',wiki:'Frederick W. Lanchester',name:'Фредерик Ланчестер',yrs:'1868–1946',c:'uk',co:'Ланчестер Энджин',beard:1,bio:'Построил один из первых британских бензиновых автомобилей (1895). Инженер-теоретик.',plus:['Качество +7%','Рамы держат на 20% больше л.с.'],minus:['Детали дороже на 4%'],b:{quality:1.07,chassisTol:1.2,matCost:1.04}},
+  bugatti:{role:'tech',wiki:'Ettore Bugatti',name:'Этторе Бугатти',yrs:'1881–1947',c:'fr',co:'Бугатти',beard:0,bio:'Художник среди инженеров. Type 35 — одна из самых побеждающих гоночных машин 1920-х.',plus:['Люкс +15%','Гонки +8%'],minus:['Детали дороже на 5%','Мощности −10%'],b:{seg:{lux:1.15},race:0.08,matCost:1.05,lineCap:0.9}},
   ferrari:{wiki:'Enzo Ferrari',drv:'ferrari',name:'Энцо Феррари',yrs:'1898–1988',c:'it',co:'Скудерия Феррари',beard:0,bio:'Гонщик Alfa Romeo, в 1929 году основал Scuderia Ferrari. В игре — альтернативная история.',plus:['Гонки +10%','Слава побед ×1,5','Гонщики дешевле на 20%'],minus:['Выработка рабочих −10%','Народный сегмент −10%'],b:{race:0.1,raceRep:1.5,drvFee:0.8,workerEff:0.9,seg:{people:0.9}}},
-  agnelli:{wiki:'Giovanni Agnelli',name:'Джованни Аньелли',yrs:'1866–1945',c:'it',co:'ФИАТ',beard:0,bio:'Один из основателей FIAT (1899). Построил завод Линготто с испытательным треком на крыше.',plus:['Капитал +15%','Мощности +8%','Грузовики +10%'],minus:['Качество −3%'],b:{cash:1.15,lineCap:1.08,seg:{truck:1.1},quality:0.97}},
+  agnelli:{role:'maker',wiki:'Giovanni Agnelli',name:'Джованни Аньелли',yrs:'1866–1945',c:'it',co:'ФИАТ',beard:0,bio:'Один из основателей FIAT (1899). Построил завод Линготто с испытательным треком на крыше.',plus:['Капитал +15%','Мощности +8%','Грузовики +10%'],minus:['Качество −3%'],b:{cash:1.15,lineCap:1.08,seg:{truck:1.1},quality:0.97}},
+  // 0.35: финансисты — путь «Финансист» (капитал, кредит и сделки); в истории — торговцы и собиратели марок, а не инженеры
+  durant:{role:'money',wiki:'William C. Durant',name:'Уильям Дюрант',yrs:'1861–1947',c:'us',co:'Дюрант-Дорт',beard:0,bio:'Король повозок из Флинта: в 1904 году взял в руки Buick, в 1908-м собрал из марок General Motors, в 1911-м с Луи Шевроле основал Chevrolet. Дважды строил империю в долг — и дважды её терял.',plus:['Марки дешевле на 20%','Кредит больше на 30%'],minus:['Контора дороже на 15%'],b:{deal:0.8,loan:1.3,org:1.15}},
+  rolls:{role:'money',wiki:'Charles Rolls',name:'Чарльз Роллс',yrs:'1877–1910',c:'uk',co:'Ч. С. Роллс и Ко',beard:0,bio:'Сын лорда, гонщик и воздухоплаватель. С 1902 года торговал машинами в Лондоне, в 1904-м взялся продавать все машины инженера Генри Ройса — так родился Rolls-Royce, «лучшая машина в мире».',plus:['Капитал +15%','Люкс +12%','Реклама +15%'],minus:['Народный сегмент −15%'],b:{cash:1.15,seg:{lux:1.12,people:0.85},adEff:1.15}},
   // 0.34: мотоциклисты — герои «Мотомастерской» (отзыв: «начать можно и только с мотоциклов, на усмотрение игрока, — это будет
   // другой персонаж, потом можно докупить оборудование для автомобилей»): путь от велосипеда и мотоцикла к автомобилю, как в истории
   dedion:{wiki:'Jules-Albert de Dion',moto:1,name:'Альбер де Дион',yrs:'1856–1946',c:'fr',co:'Де Дион-Бутон',beard:1,bio:'Граф-авантюрист и механик Жорж Бутон: лёгкий быстроходный мотор (1895) и трицикл — самая массовая моторная машина рубежа веков; моторы де Диона покупали сотни марок. С 1899 года — и автомобили.',plus:['КБ работает на 15% быстрее','Гонки +5%'],minus:['Детали дороже на 5%'],b:{rd:1.15,race:0.05,matCost:1.05}},
@@ -1606,7 +1625,7 @@ const COMPS={
       {n:'Lanchester',since:1899,pk:'lanchester',mix:{lux:1},pm:1.2,v:{1899:10,1901:50,1905:200,1913:300,1920:300,1929:300},models:[[1901,'Lanchester','Lanchester Motor Company']]},
       {n:'Rover',since:1904,mix:{middle:1},v:{1904:200,1905:400,1910:2000,1913:3000,1920:3000,1925:5000,1929:4000},models:[[1904,'Rover 8','Rover Company']]},
       {n:'Singer',since:1905,mix:{people:.6,middle:.4},v:{1905:100,1910:1000,1913:2000,1920:4000,1925:10000,1928:26000,1929:28000},models:[[1905,'Singer','Singer Motor Company']]},
-      {n:'Rolls-Royce',since:1906,mix:{lux:1},pm:1.35,v:{1906:50,1907:100,1910:500,1913:700,1920:500,1925:1200,1929:1000},models:[[1907,'Silver Ghost','Rolls-Royce Silver Ghost'],[1925,'Phantom','Rolls-Royce Phantom I']]},
+      {n:'Rolls-Royce',since:1906,pk:'rolls',mix:{lux:1},pm:1.35,v:{1906:50,1907:100,1910:500,1913:700,1920:500,1925:1200,1929:1000},models:[[1907,'Silver Ghost','Rolls-Royce Silver Ghost'],[1925,'Phantom','Rolls-Royce Phantom I']]},
       {n:'Austin',since:1906,mix:{people:.6,middle:.35,truck:.05},v:{1906:30,1908:300,1910:700,1913:2000,1919:3000,1920:4000,1921:2000,1922:2500,1923:6000,1925:16000,1927:35000,1929:45000},models:[[1906,'Austin','Austin Motor Company'],[1922,'Seven','Austin 7']]},
       {n:'Ford (Манчестер)',since:1911,mix:{people:.9,truck:.1},pm:0.95,v:{1911:3000,1913:6000,1914:8000,1915:4000,1919:10000,1920:20000,1921:15000,1923:20000,1925:25000,1927:15000,1928:8000,1929:20000},models:[[1911,'Model T','Ford Model T']]},
       {n:'Morris',since:1913,pk:'morris',mix:{people:.7,middle:.3},pm:0.9,v:{1913:400,1914:900,1915:500,1919:400,1920:1900,1921:2927,1922:5156,1923:17286,1924:27551,1925:48717,1926:56000,1927:60000,1928:60000,1929:63500},models:[[1913,'Oxford «Bullnose»','Bullnose Morris'],[1928,'Minor','Morris Minor (1928)']]},
@@ -1620,7 +1639,7 @@ const COMPS={
       {n:'Stanley',since:1902,until:1925,mix:{middle:1},v:{1902:200,1905:500,1910:600,1917:500,1924:100},models:[[1902,'Steamer','Stanley Motor Carriage Company']]},
       {n:'Cadillac',since:1902,mix:{middle:.4,lux:.6},pm:1.15,v:{1902:10,1903:2500,1905:4000,1906:3600,1908:2400,1910:10000,1913:15000,1916:18000,1920:19600,1925:22500,1927:34000,1929:36600},models:[[1903,'Model A','Cadillac Model A'],[1915,'Type 51 V8','Cadillac Type 51']]},
       {n:'Ford',since:1903,pk:'ford',mix:{people:.92,truck:.08},pm:0.9,v:{1903:1700,1905:1600,1906:8700,1907:14900,1908:10200,1909:17800,1910:32000,1911:69800,1912:170000,1913:202700,1914:308200,1915:501500,1916:734800,1917:622400,1918:435900,1919:820400,1920:1074000,1921:971600,1922:1301000,1923:2011000,1924:1923000,1925:1707000,1926:1550000,1927:400000,1928:800000,1929:1507000},models:[[1903,'Model A','Ford Model A (1903–04)'],[1908,'Model T','Ford Model T'],[1927,'Model A','Ford Model A (1927–1931)']]},
-      {n:'Buick',since:1904,mix:{middle:1},v:{1904:37,1905:750,1906:1400,1907:4600,1908:8800,1910:30500,1913:26700,1916:124800,1920:115000,1923:201600,1926:266800,1929:196100},models:[[1908,'Model 10','Buick Model 10']]},
+      {n:'Buick',since:1904,pk:'durant',mix:{middle:1},v:{1904:37,1905:750,1906:1400,1907:4600,1908:8800,1910:30500,1913:26700,1916:124800,1920:115000,1923:201600,1926:266800,1929:196100},models:[[1908,'Model 10','Buick Model 10']]},
       {n:'Maxwell / Chrysler',since:1904,mix:{people:.4,middle:.5,lux:.1},v:{1904:500,1905:2000,1908:9000,1910:20000,1913:17000,1916:69000,1920:34000,1923:67000,1924:79000,1925:132000,1927:192000,1928:360000,1929:450000},models:[[1904,'Maxwell','Maxwell Motor Company'],[1924,'Chrysler Six','Chrysler Six'],[1928,'Plymouth','Plymouth Model Q']]},
       {n:'Nash',since:1902,mix:{middle:1},v:{1902:1500,1905:3800,1910:3000,1915:10000,1917:8000,1920:35000,1925:96000,1928:138000,1929:116600},models:[[1902,'Rambler','Rambler (1900–1914)'],[1917,'Nash','Nash Motors']]},
       {n:'Studebaker',since:1902,mix:{middle:1},v:{1902:20,1904:150,1908:2000,1910:22500,1913:35000,1915:46800,1920:51500,1925:107000,1929:84500},models:[[1902,'Studebaker','Studebaker']]},
@@ -2300,7 +2319,7 @@ function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?p
 // 0.21: в послевоенный спад и в крах 1929 года банки прежде всего режут кредит тем, у кого долг велик по сравнению с прибылью
 function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;const pr=((s.hist&&s.hist.profit)||[]).slice(-12),py=Math.max(1,pr.reduce((a,b)=>a+b,0)),lev=s.loan/py;
   return lev>1?clamp(1-0.25*(lev-1),0.35,1):1;}
-function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)/1000)*1000;}
+function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)*bn('loan')/1000)*1000;}   // bn('loan') — 0.35: финансисту банки дают больше
 function devCost(md,s){s=s||G;return Math.round(((isMoto(md)?400:1500)+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime')*kitK(G,'dev'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round(((isMoto(md)?250:800)+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
@@ -2762,7 +2781,7 @@ function tradeBanHard(s,c){return warCut(s,c);}
 const BRAND_GROUP={'Ford (Манчестер)':0,'MG':0,'Buick':1908,'Oldsmobile':1908,'Cadillac':1909,'Chevrolet':1918,'Vauxhall':1925,'Opel':1929};
 function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>!pkIs(x.cp,s)&&!x.cp.imp&&x.v>0&&!acqHas(s,c,x.i)).sort((a,b)=>b.v-a.v);
   const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15&&!(BRAND_GROUP[x.cp.n]!=null&&s.y>=BRAND_GROUP[x.cp.n]));}
-function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
+function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9*bn('deal')/1000)*1000;}
 function brandOfferOf(s,c){const O=s.brandOffer;return O&&O.c===c&&O.until>mi(s)?O:null;}
 function brandBuy(s,c,i){if(c===s.country||intIn(s,c)||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const O=brandOfferOf(s,c),cost=O&&O.i===i?O.price:brandPrice(s,c,x);if(s.cash<cost)return false;
   s.brandOffer=null;const h=maClose(s,c,i,{st:1,mode:'int',pay:'cash'},cost,'offer');return !!h;}
@@ -2915,7 +2934,7 @@ function maAsk(s,c,i,d){const M=maStat(s,c,i);if(!M)return null;const nm=M.nm,cp
   if(d.pay==='swap'){const me=Math.max(1,companyValue(s));if(me<M.V*0.6)return {M,refuse:'small',st};prem+=me<M.V?0.3:me<M.V*2?0.08:-0.03;}
   prem+=proud*0.3+(maRnd(nm+'|'+s.y)-0.5)*0.2;
   const O=s.maOffer&&s.maOffer.c===c&&s.maOffer.i===i&&s.maOffer.until>mi(s)?s.maOffer:null;if(O)prem=Math.min(prem,O.prem);
-  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)/1000)*1000),st,prem};}
+  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)*bn('deal')/1000)*1000),st,prem};}   // 0.35: bn('deal') — финансист (Дюрант) покупает дешевле
 function maAnswer(s,c,i,d,price){const Q=maAsk(s,c,i,d);if(!Q)return {k:'no',why:'нельзя'};if(Q.refuse)return {k:'no',why:Q.refuse,Q};
   if(price>=Q.R)return {k:'yes',Q};if(price>=Q.R*0.85)return {k:'counter',ask:Math.round(Q.R*1.03/1000)*1000,Q};return {k:'low',Q,far:price<Q.R*0.6};}
 // реплики владельцев
@@ -3741,6 +3760,17 @@ const LEGENDS={
     {id:'fiat_805',name:'805',y:1923,kind:'sport',d:{e:'e7',g:'g5',c:'c5',k:'k3',b:'b1',w:'w8'},rep:8,wiki:'Fiat 805',
       fx:{appeal:1.12,race:1.16,ch:{perf:1.3}},t:'Первая победа машины с нагнетателем в Гран-при (Монца, 1923).'}],
   // 0.29: марки, которые основали гонщики («Путь гонщика»): их знаменитые модели — те же, что в истории
+  // 0.35: финансисты — Дюрант (Buick и Chevrolet) и Роллс (машины Генри Ройса)
+  durant:[
+    {id:'dur_10',name:'Модель 10',y:1908,kind:'middle',d:{e:'e4',g:'g4',c:'c3',k:'k2',b:'b3',w:'w4'},rep:5,wiki:'Buick Model 10',
+      fx:{appeal:1.22,cost:0.9,ch:{rel:1.08,perf:1.06}},t:'Лёгкий быстрый «Бьюик» с верхними клапанами: в 1908 году Buick — первая марка Америки по продажам, и на её деньги Дюрант собрал General Motors.'},
+    {id:'dur_490',name:'Модель 490',y:1915,kind:'people',d:{e:'e9',g:'g6',c:'c4',k:'k2',b:'b3',w:'w6'},rep:4,wiki:'Chevrolet Series 490',
+      fx:{appeal:1.25,cost:0.88,ch:{comf:1.06}},t:'«Шевроле» по цене «Модели T»: на прибыль Chevrolet Дюрант скупил акции и в 1916 году вернул себе General Motors.'}],
+  rolls:[
+    {id:'rr_ghost',name:'Серебряный призрак',y:1907,kind:'lux',d:{e:'e3',g:'g5',c:'c3',k:'k2',b:'b11',w:'w4'},rep:7,wiki:'Rolls-Royce Silver Ghost',
+      fx:{appeal:1.3,ch:{comf:1.15,rel:1.15}},t:'40/50 л.с. Генри Ройса: в 1907 году прошёл 15 тысяч миль почти без остановок — «лучшая машина в мире».'},
+    {id:'rr_phantom',name:'Фантом',y:1925,kind:'lux',d:{e:'e6',g:'g5',c:'c5',k:'k6',b:'b11',w:'w8'},rep:5,wiki:'Rolls-Royce Phantom I',
+      fx:{appeal:1.22,ch:{comf:1.12,perf:1.08}},t:'Наследник «Призрака»: верхние клапаны и тормоза на все четыре колеса — машина королей и махараджей.'}],
   r_lancia:[
     {id:'lancia_alfa',name:'Альфа',y:1908,kind:'middle',d:{e:'e4',g:'g5',c:'c3',k:'k2',b:'b3',w:'w5'},rep:5,wiki:'Lancia Alfa',
       fx:{appeal:1.15,race:1.1,ch:{perf:1.2,ease:1.08}},t:'Первая Lancia (Турин, 1908): лёгкая и быстрая — 2,5 литра, 28 л.с., до 90 км/ч, когда соседи по классу едва делали 70. Лянча строил машины так же, как гонялся: без лишнего веса.'},
@@ -4236,7 +4266,7 @@ function resolve(key){
   if(key==='carDesign'){s.pending.shift();s.ui=s.ui||{};s.ui.line='car';tab='models';save();render();openDesigner();return;}
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
   if(/^rx:/.test(key)&&racerResolve(s,key))return;
-  if(key==='restart'){s.pending=[];openNewGame();return;}
+  if(key==='restart'){s.pending=[];draft=null;openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();
 }
@@ -5001,7 +5031,7 @@ const RESP_MIN=50;
 // отдел размером с концерн. Теперь модели дорожают медленнее: каждое удвоение их числа сверх трёх — +1,2% (до шести — как раньше:
 // 4 → +0,5%, 6 → +1,2%; 12 → +2,4%; 25 → +3,7%); мотоцикл — полмодели. Разбор — «как посчитано» у строки «Контора» в финансах.
 function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
-  P=(s.models||[]).filter(m=>m.status==='prod'),nmM=P.filter(m=>isMoto(m)).length,nmC=P.length-nmM,nm=nmC+nmM*0.5,k=DIF().org??1;
+  P=(s.models||[]).filter(m=>m.status==='prod'),nmM=P.filter(m=>isMoto(m)).length,nmC=P.length-nmM,nm=nmC+nmM*0.5,k=(DIF().org??1)*bn('org');
   const out=0.011*Math.log2(1+made/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
   return {made,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
 function admRate(s,r){return admParts(s,r).total;}
@@ -5486,7 +5516,7 @@ function playerLegacy(s){
 function histLegacy(h){const age=1929-h.f;return legacyParts({peak:h.peak,cum:h.cum,shareYrs:h.share*Math.min(15,age),abroad:h.c==='us'?1:0,firsts:h.firsts,techs:8,wins:h.wins,minor:h.wins,titles:h.titles,val:h.val,rep:h.rep,age,legend:h.legend?40:0});}
 const LEG_NAMES={scale:'Масштаб',market:'Рынок',innov:'Инновации',sport:'Спорт',capital:'Капитал',brand:'Бренд'};
 // марка из истории, которую в этой партии основали вы (играя за Генри Форда, соревнуетесь и с «историческим Ford» — тем, что был на самом деле)
-const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT',morris:'Morris'};
+const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT',morris:'Morris',durant:'General Motors',rolls:'Rolls-Royce'};
 function legacyTable(s){
   const me=playerLegacy(s),tw=s.brandRef?s.brandRef.n:LEG_TWIN[s.pioneer];const rows=HIST_CO.map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
   rows.push({n:s.company,c:s.country,you:1,p29:s.peak.year||0,val:companyValue(s),L:me});
@@ -12063,20 +12093,43 @@ function openRD(){
     ${XF.length?`<div style="margin-top:8px">${fold('rdX','🔁 Переносы между линейками',`<p class="small muted" style="margin-top:4px">Изобретение принадлежит марке: что освоено в автомобиле, можно перенести в мотоцикл, и наоборот. Перенос дешевле нового исследования и вдвое быстрее, но может не удаться — тогда деталь выходит тяжелее или дороже, а вторая попытка дешевле и вероятнее.</p>${XF.map(item).join('')}`,true,`${XF.length} ${plural(XF.length,'перенос','переноса','переносов')} · лучший шанс ${Math.round(Math.max(...XF.map(p=>p.chance))*100)}%`)}</div>`:''}
     ${!L.length?'<p class="small muted" style="margin-top:10px">Все доступные детали улучшены до предела.</p>':''}`);
 }
+// 0.35: новая игра — сначала путь, потом его исторические фигуры (отзыв: «сначала выбор пути, появляются персонажи для выбора: гонщик —
+// одни исторические фигуры, мото — другие, либо фабрикант, финансист, техник»). Фабрикант, финансист и техник — своя марка с января 1895 года
+const NG_PATHS=[
+  {k:'racer',ico:'🏁',t:'Гонщик',when:'дебют — с 1895 по 1924 год',d:'Призы, заводские команды и слава — потом своя марка, как у Лянчи и Шевроле.'},
+  {k:'moto',ico:'🏍',t:'Мотомастерская',when:'с 1899 по 1905 год — по стране',d:'Мало денег и мотоциклы — потом автомобильный цех, как у NSU, Laurin & Klement и Peugeot.'},
+  {k:'maker',ico:'🏭',t:'Фабрикант',when:'январь 1895 года',d:'Поток и мощности: машина дешевле, чем у всех, — и её покупает каждый.'},
+  {k:'money',ico:'💼',t:'Финансист',when:'январь 1895 года',d:'Капитал, кредит и сделки: покупайте марки и собирайте из них империю.'},
+  {k:'tech',ico:'🔧',t:'Техник',when:'январь 1895 года',d:'Лучшие машины эпохи: КБ, качество и изобретения раньше других.'}];
+function ngPathOf(d){return d.path==='racer'?'racer':d.path==='moto'?'moto':(d.role||'maker');}
+// герои пути: гонщики — из RACERS, мотоциклисты — PIONEERS с moto, фабриканты, финансисты и техники — PIONEERS с role
+function ngHeroes(k){if(k==='racer')return Object.keys(RACERS).filter(x=>x!=='custom');return Object.keys(PIONEERS).filter(x=>x!=='custom'&&(k==='moto'?PIONEERS[x].moto:PIONEERS[x].role===k));}
+function ngFace(k,racer){const P=racer?RACERS[k]:PIONEERS[k],d=racer&&DRIVERS.find(x=>x.id===k),im=racer?d&&IMG[DRIVER_WIKI[d.id]]:P.wiki&&IMG[P.wiki],nm=racer?P.n:P.name;
+  return im?`<span class="ng-face"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></span>`:`<span class="ng-face ng-ini">${esc(String(nm).split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;}
+function openPathPick(){
+  const card=p=>{const H=ngHeroes(p.k),racer=p.k==='racer',names=H.map(k=>{const n=racer?RACERS[k].n:PIONEERS[k].name;return n.split(' ').slice(-1)[0];}).join(', ');
+    return `<button class="ng-path" data-act="ngPath" data-v="${p.k}"><span class="ng-ico">${p.ico}</span><span class="ng-b"><b>${p.t}</b><small class="ng-when">${p.when}</small><span class="ng-d">${p.d}</span><span class="ng-faces">${H.slice(0,5).map(k=>ngFace(k,racer)).join('')}<small>${esc(names)}${H.length?' или свой персонаж':''}</small></span></span></button>`;};
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
+    <p class="small muted" style="margin-top:6px">Кем вы начнёте? Путь решает, когда и с чего начнётся игра и за кого из исторических фигур можно играть. Цель одна — к 1930 году создать величайшую автоимперию эпохи.</p>
+    <div class="stack" style="margin-top:12px;gap:8px">${NG_PATHS.slice(0,2).map(card).join('')}</div>
+    <div class="label" style="margin-top:16px">Своя марка с января 1895 года</div>
+    <div class="stack" style="margin-top:8px;gap:8px">${NG_PATHS.slice(2).map(card).join('')}</div>`);}
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
   draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
-    path:prev&&prev.path||'company',racer:prev&&prev.racer||'custom',rname:prev&&prev.rname||'',rc:prev&&prev.rc||'fr',ry:prev&&prev.ry||1900};
-  // 0.28: два пути — основать марку в 1895 году или начать гонщиком (19-racer.js)
-  const pathChips=`<div class="chips" style="margin-top:10px"><button class="chip ${draft.path==='company'?'on':''}" data-act="ngPath" data-v="company">🏭 Основать марку<small>январь 1895 года: завод, модели, рынок</small></button><button class="chip ${draft.path==='moto'?'on':''}" data-act="ngPath" data-v="moto">🏍 Мотомастерская<small>январь 1899 года: мало денег, мотоциклы — потом автомобиль</small></button><button class="chip ${draft.path==='racer'?'on':''}" data-act="ngPath" data-v="racer">🏁 Начать гонщиком<small>призы, команды и слава — потом своя марка</small></button></div>`;
+    path:prev&&prev.path||'company',role:prev&&prev.role||null,step:prev&&prev.step||'path',racer:prev&&prev.racer||'custom',rname:prev&&prev.rname||'',rc:prev&&prev.rc||'fr',ry:prev&&prev.ry||1900};
+  if(draft.step==='path'){openPathPick();return;}
+  const PT=NG_PATHS.find(p=>p.k===ngPathOf(draft))||NG_PATHS[2];
+  const pathChips=`<div class="row ng-back" style="margin-top:10px"><button class="linkbtn" data-act="ngBack">← Другой путь</button><span class="small muted">${PT.ico} ${PT.t} · ${PT.when}</span></div>`;
   if(draft.path==='racer'){openRacerNew(pathChips);return;}
   // 0.34: у «Мотомастерской» — свои герои (мотоциклисты, что потом строили автомобили) и «Свой персонаж»; у марки — автомобилисты
-  const moto=draft.path==='moto';if(moto&&!PIONEERS[draft.pioneer].moto&&draft.pioneer!=='custom'){if(draft.company===PIONEERS[draft.pioneer].co)draft.company='Мотомастерская';draft.pioneer='custom';}
-  if(!moto&&PIONEERS[draft.pioneer].moto){if(draft.company===PIONEERS[draft.pioneer].co)draft.company=PIONEERS.ford.co;draft.pioneer='ford';draft.country='us';}
-  const list=Object.entries(PIONEERS).filter(([k,P])=>!P.racer&&(moto?(P.moto||k==='custom'):!P.moto)).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
-    <p class="small muted" style="margin-top:6px">${moto?`Январь ${motoStartY(draft.country)} года. Мастерская с горсткой рабочих и одним мотоциклом. Наберитесь опыта, постройте автомобильный цех и выпустите первую машину — как Laurin & Klement, NSU и Peugeot. ${(()=>{const t=MSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:`Январь 1895 года. ${(()=>{const t=CSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`} Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
-    ${pathChips}
+  // 0.35: у фабриканта, финансиста и техника — свои (role), Энцо Феррари — у гонщиков
+  const moto=draft.path==='moto',role=moto?null:(draft.role||'maker');if(!moto)draft.role=role;
+  const fits=k=>{const P=PIONEERS[k];return !!P&&!P.racer&&(k==='custom'||(moto?!!P.moto:(!P.moto&&P.role===role)));};
+  if(!fits(draft.pioneer)){const was=PIONEERS[draft.pioneer],nk=moto?'custom':(ngHeroes(role)[0]||'custom');if(!was||draft.company===was.co)draft.company=nk==='custom'?(moto?'Мотомастерская':PIONEERS.custom.co):PIONEERS[nk].co;draft.pioneer=nk;if(nk!=='custom')draft.country=PIONEERS[nk].c;}
+  const list=Object.keys(PIONEERS).filter(fits).sort((a,b)=>(a==='custom')-(b==='custom')).map(k=>[k,PIONEERS[k]]).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>${pathChips}
+    <p class="small muted" style="margin-top:8px">${moto?`Январь ${motoStartY(draft.country)} года. Мастерская с горсткой рабочих и одним мотоциклом. Наберитесь опыта, постройте автомобильный цех и выпустите первую машину — как Laurin & Klement, NSU и Peugeot. ${(()=>{const t=MSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:`Январь 1895 года. ${(()=>{const t=CSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`} Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
     <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
     <label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(draft.company)}" maxlength="28" style="margin-top:6px">
     <label class="label" for="fname" style="display:block;margin-top:12px">Как назовёте ${moto?'первый мотоцикл':'первую машину'}?</label><input type="text" id="fname" value="${esc(draft.first||'Тип 1')}" maxlength="24" style="margin-top:6px" placeholder="Тип 1">
@@ -12091,9 +12144,8 @@ function openNewGame(){
 const RX_ERA={1895:'первые гонки городов',1900:'Кубок Гордона Беннетта',1905:'Гран-при и Вандербильт',1910:'Индианаполис и Тарга',1919:'после войны',1924:'наддув и Монца'};
 function openRacerNew(pathChips){const cust=draft.racer==='custom';
   const list=Object.entries(RACERS).map(([k,P])=>{const d=DRIVERS.find(x=>x.id===k);return `<button class="pion ${draft.racer===k?'on':''}" data-act="rpick" data-v="${k}">${(()=>{const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>';})()}<div><h3>${esc(P.n)}</h3><div class="yrs">${P.y?`дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}`:'любая страна и год дебюта'}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}).join('');
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
-    <p class="small muted" style="margin-top:6px">Путь гонщика: купите первую машину, выигрывайте призы, подписывайте контракты со спонсорами и заводскими командами, сравнивайте себя с лучшими гонщиками эпохи. Накопите капитал — и основайте свою марку, как Лянча в 1906 году или Шевроле в 1911-м: дальше игра пойдёт в режиме магната.</p>
-    ${pathChips}
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>${pathChips}
+    <p class="small muted" style="margin-top:8px">Путь гонщика: купите первую машину, выигрывайте призы, подписывайте контракты со спонсорами и заводскими командами, сравнивайте себя с лучшими гонщиками эпохи. Накопите капитал — и основайте свою марку, как Лянча в 1906 году или Шевроле в 1911-м: дальше игра пойдёт в режиме магната.</p>
     <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
     ${cust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(draft.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
       <div class="label" style="margin-top:14px">Страна</div><div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.rc===k?'on':''}" data-act="rcountry" data-v="${k}">${c.name}<small>${c.city} · гоночный цвет — ${c.raceName}</small></button>`).join('')}</div>
@@ -12382,7 +12434,7 @@ function xpopAdm(s){const L=s.last||{},P=L.admP||admParts(s,L),rev=(L.rev||0)+(L
   // сколько сбережёт одна модель меньше
   const lessF=n=>0.012*Math.log2(1+Math.max(0,n-3)/3),less=P.nm>3?(lessF(P.nm)-lessF(P.nm-1))*k*rev:0;
   return `<div class="xp-h"><b>Контора · ${money(L.adm||0)} в месяц</b><button class="iconbtn xp-x" data-act="xpopClose" aria-label="Закрыть">×</button></div>
-    <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${k!==1?` На уровне «${esc(dn)}» рост с размером ×${xn(k,1)} — уже в строках ниже.`:''}</p>
+    <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${(()=>{const kd=DIFFS[s.diff]&&DIFFS[s.diff].org!=null?DIFFS[s.diff].org:1,kp=k/(kd||1),P0=PIONEERS[s.pioneer];return Math.abs(k-1)>0.001?` ${Math.abs(kd-1)>0.001?`На уровне «${esc(dn)}» рост с размером ×${xn(kd,1)}`:''}${Math.abs(kp-1)>0.004?`${Math.abs(kd-1)>0.001?', у ':'У '}${esc(P0?P0.name:'')} — ещё ×${xn(kp,2)}`:''} — уже в строках ниже.`:'';})()}</p>
     <table class="xp-t xp-c xp-a">
     ${row('Основа','правление, бухгалтерия, юристы',pp(P.base))}
     ${row('Выпуск',`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
@@ -13836,14 +13888,14 @@ function aiTraffic(T){
         const L=P.lat+P.b+1.1,Rr=P.lat-P.b-1.1;if(L<=W2||Rr>=-W2)c.laneT=L<=W2&&(Rr<-W2||Math.abs(L-c.lat)<Math.abs(Rr-c.lat))?L:Rr;break;}}
   });
 }
-// gasLv — 0.34: «Газ» с дозировкой (выше по кнопке — больше газа, ниже — меньше); с клавиатуры — полный
-const rKeys={left:false,right:false,gas:false,brake:false,gasLv:1};
+// 0.35: «Газ» — снова «всё или ничего» (дозировку кнопки убрали: на мотоцикле газ придерживает помощник — ПБС, см. playerControl)
+const rKeys={left:false,right:false,gas:false,brake:false};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
 const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
   if(c.wait)return;
   // 0.34: на мотоцикле помощь «вшитая» на всех уровнях (и на «Историке»): руль, контрруль, газ в заносе — как на обычном
-  const v=Math.max(0,c.vx),hist=G.diff==='hist'&&c.cls!=='moto';
+  const v=Math.max(0,c.vx),moto=c.cls==='moto',hist=G.diff==='hist'&&!moto;
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
@@ -13860,25 +13912,31 @@ function playerControl(c,dt){
   const mu=c.muNow||c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
   let want=c.steer*dmax;
   // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
-  if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*0.7,-0.12,0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
+  if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
   // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
   // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
   const still=Math.abs(c.vx)<0.5;
   if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
   else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
-  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake,gLv=c.rev?1:clamp(rKeys.gasLv??1,0.1,1);
-  c.thr+=clamp((gIn?gLv:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
+  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
+  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
   // 0.34: мотоцикл — помощь гонщику, «вшитая»: газ не срывает заднее колесо в пробуксовку (сколько держит шина с учётом наклона
   // в повороте), тормоз не блокирует колёса (как ABS) — на мощном мотоцикле и вне асфальта иначе не проехать
   // (отзыв: «45 л.с. — с газом не повернёшь, сразу разворачивает»; «на мото точно нужно ставить вшитую АБС»). Помощь — на всех
   // уровнях, и на «Историке»: живой мотоциклист дозирует газ ручкой и чувствует колесо, а кнопка на экране этого не передаёт
-  if(c.cls==='moto'&&v>0.5){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
-    const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.08,1);if(c.thr>tMax)c.thr=tMax;
-    if(c.slipR>0.14)c.thr=Math.min(c.thr,0.25);
-    if(!c.rev&&c.brk>0){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
-      c.brk=Math.min(c.brk,Math.max(0.1,Math.min(capR,capF)));}}
+  // 0.35: и с места — колесо не срывается, пока мотоцикл не тронулся (раньше помощь включалась с 2 км/ч, и на старте заднее колесо
+  // успевало уйти в пробуксовку); заднее колесо пошло вбок — газ прочь, снос и вращение гасятся, как у ESP: мотоцикл не разворачивает.
+  // На кнопках горит, когда помощь работает: «ПБС» на «Газе» (противобуксовочная), «АБС» на «Тормозе» (42-race-render.js)
+  if(moto&&!c.rev){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
+    const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.04,1);let tc=false;
+    if(c.thr>tMax){c.thr=tMax;tc=true;}
+    const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}c.r*=1-Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
+    if(tc&&gIn&&R)c.asTC=R.time+0.35;
+    if(c.brk>0&&v>0.5){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
+      const cap=Math.max(0.1,Math.min(capR,capF));if(c.brk>cap){c.brk=cap;esc=true;}}
+    if(esc&&bIn&&R)c.asABS=R.time+0.35;}
   // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
   if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }
@@ -15730,8 +15788,10 @@ function updateRaceHUD(){
    const nk=document.getElementById('bFuelNeed');if(nk){nk.style.left=Math.min(100,need)+'%';nk.style.display=F.fuelRate&&F.fin===null&&need>1?'block':'none';}}
   document.getElementById('rReset').hidden=!(R.me&&(R.me.stuck>1.2||(R.me.npT||0)>4||(R.me.svc===1&&(R.me.svc1T||0)>2)));
   // педаль тормоза подсказывает задний ход: на месте — «держи — назад», включён — «НАЗАД ◀»
-  {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
-    if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
+  // 0.35: мотоцикл — помощь видна на кнопках: «АБС» на «Тормозе», пока тормоз придерживают, «ПБС» на «Газе», пока придерживают газ
+  {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const mo=m.cls==='moto'&&R.mode==='drive',st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:mo&&m.asABS>R.time?3:0;
+    if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.classList.toggle('assist',st===3);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':st===3?'ТОРМОЗ<small>АБС</small>':'ТОРМОЗ';}
+    const g=document.querySelector('#rCtrl .gas small');if(g){const t=mo&&m.asTC>R.time?'ПБС':'';if(g.textContent!==t){g.textContent=t;g.parentNode.classList.toggle('assist',!!t);}}}}
   svcHUD();try{dxHUD(F);}catch(_){}
   raceFrontRec();
   const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+raceGapSec(o)+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
@@ -15781,7 +15841,9 @@ const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса пово
   ['Назад','стоя держите «Тормоз» полсекунды — включится задний ход (на приборе R). «Газ» — снова вперёд. Застряли — кнопка «Вернуться на трассу».'],
   ['Вид','— кнопка вверху: сзади, сверху, из кабины и «Кинохроника» (старая плёнка). «?» — эта подсказка и пауза.']];
 function showDriveTips(pause){const el=document.getElementById('rTips');if(!R)return;R.hold=true;
-  el.innerHTML=`<h3>Как ехать</h3><ul>${DRIVE_TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
+  // 0.35: на мотоцикле — что значат «ПБС» и «АБС» на кнопках
+  const TIPS=R.me&&R.me.cls==='moto'?[['ПБС · АБС','— на мотоцикле газ и тормоз придерживает помощник: заднее колесо не срывается в пробуксовку и не уходит вбок, колёса не блокируются в повороте. Пока он работает, на «Газе» горит «ПБС», на «Тормозе» — «АБС». Жмите газ смело.'],...DRIVE_TIPS]:DRIVE_TIPS;
+  el.innerHTML=`<h3>Как ехать</h3><ul>${TIPS.map(([a,b])=>`<li><b>${a}</b> ${b}</li>`).join('')}</ul><button class="btn primary block" id="rTipsGo">${pause?'Продолжить':'Поехали!'}</button>`;el.hidden=false;
   document.getElementById('rTipsGo').onclick=()=>{el.hidden=true;if(R){R.hold=false;R.lastT=performance.now();}};}
 function driveTipsAtStart(){if(!R||R.mode!=='drive')return;let n=0;try{n=+localStorage.getItem('avt-tips3d')||0;}catch(_){}
   if(n<2){try{localStorage.setItem('avt-tips3d',n+1);}catch(_){}showDriveTips(false);}}
@@ -15810,15 +15872,11 @@ document.getElementById('rMgr').addEventListener('click',e=>{const b=e.target.cl
   renderMgr();});
 window.addEventListener('deviceorientation',e=>{if(!R)return;const land=Math.abs(window.orientation||0)===90;R.tiltVal=land?(e.beta||0)*(window.orientation>0?1:-1):(e.gamma||0);});
 const rCtrl=document.getElementById('rCtrl');
-// 0.34: «Газ» с дозировкой: верхняя половина кнопки — полный газ, ниже — меньше (у нижнего края — пятая часть); палец можно
-// вести вверх и вниз, не отпуская (отзыв: «газ — либо всё, либо ничего; на мотоцикле это сказывается»)
-function gasLvAt(b,e){const r=b.getBoundingClientRect(),f=r.height>0?(e.clientY-r.top)/r.height:0;return f<=0.5?1:clamp(1-(f-0.5)/0.5*0.8,0.15,1);}
-function gasLvUI(b,lv){b.style.setProperty('--lv',lv.toFixed(2));const sm=b.querySelector('small');if(sm)sm.textContent=lv<0.98?Math.round(lv*100)+'%':'';}
+// 0.35: «Газ» — снова «всё или ничего» (дозировку по высоте кнопки убрали); строка под «ГАЗ» — для «ПБС» мотоцикла (кадр гонки)
 rCtrl.querySelectorAll('button').forEach(b=>{const k=b.dataset.k;
   if(k==='gas'&&!b.querySelector('small'))b.insertAdjacentHTML('beforeend','<small></small>');
-  const on=e=>{e.preventDefault();rKeys[k]=true;if(k==='gas'){rKeys.gasLv=gasLvAt(b,e);gasLvUI(b,rKeys.gasLv);}b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
-  const off=()=>{rKeys[k]=false;if(k==='gas'){rKeys.gasLv=1;gasLvUI(b,1);}b.classList.remove('down');};
-  if(k==='gas')b.addEventListener('pointermove',e=>{if(!rKeys.gas)return;rKeys.gasLv=gasLvAt(b,e);gasLvUI(b,rKeys.gasLv);});
+  const on=e=>{e.preventDefault();rKeys[k]=true;b.classList.add('down');if(b.setPointerCapture&&e.pointerId!==undefined)try{b.setPointerCapture(e.pointerId);}catch(_){}};
+  const off=()=>{rKeys[k]=false;b.classList.remove('down');};
   b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));b.addEventListener('contextmenu',e=>e.preventDefault());});
 // Руль на экране: палец ведёт колесо (угол следует за пальцем, отпустил — руль сам медленно выпрямляется);
 // в режиме «кнопки» левая и правая половины крутят руль, пока их держат
@@ -23670,8 +23728,10 @@ const ACT={
   pion:d=>{const top=sb.scrollTop,f=document.getElementById('fname');if(f)draft.first=f.value;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
   country:d=>{const top=sb.scrollTop;draft.country=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
   diff:d=>{const top=sb.scrollTop;draft.diff=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
-  // 0.28: путь гонщика
-  ngPath:d=>{const top=sb.scrollTop;ngKeep();draft.path=d.v;openNewGame();sb.scrollTop=top;},
+  // 0.28: путь гонщика; 0.35: путь выбирают первым — гонщик, мотомастерская или своя марка (фабрикант, финансист, техник)
+  ngPath:d=>{ngKeep();const v=d.v;if(v==='maker'||v==='money'||v==='tech'){draft.path='company';draft.role=v;}else if(v==='company'){draft.path='company';draft.role=draft.role||'maker';}else draft.path=v;
+    draft.step='who';openNewGame();sb.scrollTop=0;},
+  ngBack:()=>{ngKeep();draft.step='path';openNewGame();sb.scrollTop=0;},
   rpick:d=>{const top=sb.scrollTop;ngKeep();draft.racer=d.v;openNewGame();sb.scrollTop=top;},
   rcountry:d=>{const top=sb.scrollTop;ngKeep();draft.rc=d.v;openNewGame();sb.scrollTop=top;},
   ryear:d=>{const top=sb.scrollTop;ngKeep();draft.ry=+d.v;openNewGame();sb.scrollTop=top;},

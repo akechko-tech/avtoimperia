@@ -176,7 +176,7 @@ function xpopAdm(s){const L=s.last||{},P=L.admP||admParts(s,L),rev=(L.rev||0)+(L
   // сколько сбережёт одна модель меньше
   const lessF=n=>0.012*Math.log2(1+Math.max(0,n-3)/3),less=P.nm>3?(lessF(P.nm)-lessF(P.nm-1))*k*rev:0;
   return `<div class="xp-h"><b>Контора · ${money(L.adm||0)} в месяц</b><button class="iconbtn xp-x" data-act="xpopClose" aria-label="Закрыть">×</button></div>
-    <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${k!==1?` На уровне «${esc(dn)}» рост с размером ×${xn(k,1)} — уже в строках ниже.`:''}</p>
+    <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${(()=>{const kd=DIFFS[s.diff]&&DIFFS[s.diff].org!=null?DIFFS[s.diff].org:1,kp=k/(kd||1),P0=PIONEERS[s.pioneer];return Math.abs(k-1)>0.001?` ${Math.abs(kd-1)>0.001?`На уровне «${esc(dn)}» рост с размером ×${xn(kd,1)}`:''}${Math.abs(kp-1)>0.004?`${Math.abs(kd-1)>0.001?', у ':'У '}${esc(P0?P0.name:'')} — ещё ×${xn(kp,2)}`:''} — уже в строках ниже.`:'';})()}</p>
     <table class="xp-t xp-c xp-a">
     ${row('Основа','правление, бухгалтерия, юристы',pp(P.base))}
     ${row('Выпуск',`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}

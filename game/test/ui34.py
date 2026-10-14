@@ -15,7 +15,7 @@ with sync_playwright() as p:
     pg.route(lambda u:not u.startswith('file:'),lambda r:r.abort())
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     js=lambda s:pg.evaluate(s)
-    pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=custom]');pg.click('[data-act=country][data-v=de]');pg.click('[data-act=startgame]');pg.wait_for_timeout(400)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=custom]');pg.click('[data-act=country][data-v=de]');pg.click('[data-act=startgame]');pg.wait_for_timeout(400)
     js("(()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}G.pending=[];G.y=1920;G.m=4;G.cash=5e5;G.rd.lvl=3;render();})()")
     js("(()=>{openDesigner('truck');})()");pg.wait_for_timeout(400)
     rows=pg.query_selector_all('#sheetBody .cmp-x')

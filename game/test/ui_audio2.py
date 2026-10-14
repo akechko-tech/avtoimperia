@@ -10,7 +10,7 @@ with sync_playwright() as p:
     pg.goto('http://localhost:8765/');pg.wait_for_timeout(800)
     js=lambda s:pg.evaluate(s)
     pg.mouse.click(10,10);pg.wait_for_timeout(300)
-    pg.click('[data-act=newgame]');pg.wait_for_timeout(200);pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150);pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(200);pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150);pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     js("()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}}")
     pg.wait_for_timeout(1500)
     print('orch',js("ORCH.idx?Object.keys(ORCH.idx).length:null"),'playlist',js("AU.pl.length+' orch '+AU.pl.filter(t=>t.orch).length+' synth '+AU.pl.filter(t=>t.synth).length"),'cur',js("musCur()&&musCur().title"))

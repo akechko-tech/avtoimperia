@@ -700,14 +700,14 @@ function aiTraffic(T){
         const L=P.lat+P.b+1.1,Rr=P.lat-P.b-1.1;if(L<=W2||Rr>=-W2)c.laneT=L<=W2&&(Rr<-W2||Math.abs(L-c.lat)<Math.abs(Rr-c.lat))?L:Rr;break;}}
   });
 }
-// gasLv — 0.34: «Газ» с дозировкой (выше по кнопке — больше газа, ниже — меньше); с клавиатуры — полный
-const rKeys={left:false,right:false,gas:false,brake:false,gasLv:1};
+// 0.35: «Газ» — снова «всё или ничего» (дозировку кнопки убрали: на мотоцикле газ придерживает помощник — ПБС, см. playerControl)
+const rKeys={left:false,right:false,gas:false,brake:false};
 // Руль на экране: режим управления (колесо — вести пальцем, кнопки — половинки руля, наклон — датчик), перетаскивание и цель
 const RW={mode:'keys',drag:null,target:0};
 function playerControl(c,dt){
   if(c.wait)return;
   // 0.34: на мотоцикле помощь «вшитая» на всех уровнях (и на «Историке»): руль, контрруль, газ в заносе — как на обычном
-  const v=Math.max(0,c.vx),hist=G.diff==='hist'&&c.cls!=='moto';
+  const v=Math.max(0,c.vx),moto=c.cls==='moto',hist=G.diff==='hist'&&!moto;
   // руль сам медленно возвращается прямо (как от наклона шкворней): на скорости быстрее, на месте почти стоит
   const back=(1.6+1.4*Math.min(1,v/20))*dt;
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
@@ -724,25 +724,31 @@ function playerControl(c,dt){
   const mu=c.muNow||c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
   let want=c.steer*dmax;
   // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
-  if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*0.7,-0.12,0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
+  if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
   // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
   // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
   const still=Math.abs(c.vx)<0.5;
   if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
   else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
-  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake,gLv=c.rev?1:clamp(rKeys.gasLv??1,0.1,1);
-  c.thr+=clamp((gIn?gLv:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
+  const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
+  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
   // 0.34: мотоцикл — помощь гонщику, «вшитая»: газ не срывает заднее колесо в пробуксовку (сколько держит шина с учётом наклона
   // в повороте), тормоз не блокирует колёса (как ABS) — на мощном мотоцикле и вне асфальта иначе не проехать
   // (отзыв: «45 л.с. — с газом не повернёшь, сразу разворачивает»; «на мото точно нужно ставить вшитую АБС»). Помощь — на всех
   // уровнях, и на «Историке»: живой мотоциклист дозирует газ ручкой и чувствует колесо, а кнопка на экране этого не передаёт
-  if(c.cls==='moto'&&v>0.5){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
-    const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.08,1);if(c.thr>tMax)c.thr=tMax;
-    if(c.slipR>0.14)c.thr=Math.min(c.thr,0.25);
-    if(!c.rev&&c.brk>0){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
-      c.brk=Math.min(c.brk,Math.max(0.1,Math.min(capR,capF)));}}
+  // 0.35: и с места — колесо не срывается, пока мотоцикл не тронулся (раньше помощь включалась с 2 км/ч, и на старте заднее колесо
+  // успевало уйти в пробуксовку); заднее колесо пошло вбок — газ прочь, снос и вращение гасятся, как у ESP: мотоцикл не разворачивает.
+  // На кнопках горит, когда помощь работает: «ПБС» на «Газе» (противобуксовочная), «АБС» на «Тормозе» (42-race-render.js)
+  if(moto&&!c.rev){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
+    const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.04,1);let tc=false;
+    if(c.thr>tMax){c.thr=tMax;tc=true;}
+    const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}c.r*=1-Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
+    if(tc&&gIn&&R)c.asTC=R.time+0.35;
+    if(c.brk>0&&v>0.5){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
+      const cap=Math.max(0.1,Math.min(capR,capF));if(c.brk>cap){c.brk=cap;esc=true;}}
+    if(esc&&bIn&&R)c.asABS=R.time+0.35;}
   // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
   if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }

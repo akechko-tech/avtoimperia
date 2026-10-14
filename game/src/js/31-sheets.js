@@ -129,20 +129,43 @@ function openRD(){
     ${XF.length?`<div style="margin-top:8px">${fold('rdX','🔁 Переносы между линейками',`<p class="small muted" style="margin-top:4px">Изобретение принадлежит марке: что освоено в автомобиле, можно перенести в мотоцикл, и наоборот. Перенос дешевле нового исследования и вдвое быстрее, но может не удаться — тогда деталь выходит тяжелее или дороже, а вторая попытка дешевле и вероятнее.</p>${XF.map(item).join('')}`,true,`${XF.length} ${plural(XF.length,'перенос','переноса','переносов')} · лучший шанс ${Math.round(Math.max(...XF.map(p=>p.chance))*100)}%`)}</div>`:''}
     ${!L.length?'<p class="small muted" style="margin-top:10px">Все доступные детали улучшены до предела.</p>':''}`);
 }
+// 0.35: новая игра — сначала путь, потом его исторические фигуры (отзыв: «сначала выбор пути, появляются персонажи для выбора: гонщик —
+// одни исторические фигуры, мото — другие, либо фабрикант, финансист, техник»). Фабрикант, финансист и техник — своя марка с января 1895 года
+const NG_PATHS=[
+  {k:'racer',ico:'🏁',t:'Гонщик',when:'дебют — с 1895 по 1924 год',d:'Призы, заводские команды и слава — потом своя марка, как у Лянчи и Шевроле.'},
+  {k:'moto',ico:'🏍',t:'Мотомастерская',when:'с 1899 по 1905 год — по стране',d:'Мало денег и мотоциклы — потом автомобильный цех, как у NSU, Laurin & Klement и Peugeot.'},
+  {k:'maker',ico:'🏭',t:'Фабрикант',when:'январь 1895 года',d:'Поток и мощности: машина дешевле, чем у всех, — и её покупает каждый.'},
+  {k:'money',ico:'💼',t:'Финансист',when:'январь 1895 года',d:'Капитал, кредит и сделки: покупайте марки и собирайте из них империю.'},
+  {k:'tech',ico:'🔧',t:'Техник',when:'январь 1895 года',d:'Лучшие машины эпохи: КБ, качество и изобретения раньше других.'}];
+function ngPathOf(d){return d.path==='racer'?'racer':d.path==='moto'?'moto':(d.role||'maker');}
+// герои пути: гонщики — из RACERS, мотоциклисты — PIONEERS с moto, фабриканты, финансисты и техники — PIONEERS с role
+function ngHeroes(k){if(k==='racer')return Object.keys(RACERS).filter(x=>x!=='custom');return Object.keys(PIONEERS).filter(x=>x!=='custom'&&(k==='moto'?PIONEERS[x].moto:PIONEERS[x].role===k));}
+function ngFace(k,racer){const P=racer?RACERS[k]:PIONEERS[k],d=racer&&DRIVERS.find(x=>x.id===k),im=racer?d&&IMG[DRIVER_WIKI[d.id]]:P.wiki&&IMG[P.wiki],nm=racer?P.n:P.name;
+  return im?`<span class="ng-face"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></span>`:`<span class="ng-face ng-ini">${esc(String(nm).split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;}
+function openPathPick(){
+  const card=p=>{const H=ngHeroes(p.k),racer=p.k==='racer',names=H.map(k=>{const n=racer?RACERS[k].n:PIONEERS[k].name;return n.split(' ').slice(-1)[0];}).join(', ');
+    return `<button class="ng-path" data-act="ngPath" data-v="${p.k}"><span class="ng-ico">${p.ico}</span><span class="ng-b"><b>${p.t}</b><small class="ng-when">${p.when}</small><span class="ng-d">${p.d}</span><span class="ng-faces">${H.slice(0,5).map(k=>ngFace(k,racer)).join('')}<small>${esc(names)}${H.length?' или свой персонаж':''}</small></span></span></button>`;};
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
+    <p class="small muted" style="margin-top:6px">Кем вы начнёте? Путь решает, когда и с чего начнётся игра и за кого из исторических фигур можно играть. Цель одна — к 1930 году создать величайшую автоимперию эпохи.</p>
+    <div class="stack" style="margin-top:12px;gap:8px">${NG_PATHS.slice(0,2).map(card).join('')}</div>
+    <div class="label" style="margin-top:16px">Своя марка с января 1895 года</div>
+    <div class="stack" style="margin-top:8px;gap:8px">${NG_PATHS.slice(2).map(card).join('')}</div>`);}
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
   draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
-    path:prev&&prev.path||'company',racer:prev&&prev.racer||'custom',rname:prev&&prev.rname||'',rc:prev&&prev.rc||'fr',ry:prev&&prev.ry||1900};
-  // 0.28: два пути — основать марку в 1895 году или начать гонщиком (19-racer.js)
-  const pathChips=`<div class="chips" style="margin-top:10px"><button class="chip ${draft.path==='company'?'on':''}" data-act="ngPath" data-v="company">🏭 Основать марку<small>январь 1895 года: завод, модели, рынок</small></button><button class="chip ${draft.path==='moto'?'on':''}" data-act="ngPath" data-v="moto">🏍 Мотомастерская<small>январь 1899 года: мало денег, мотоциклы — потом автомобиль</small></button><button class="chip ${draft.path==='racer'?'on':''}" data-act="ngPath" data-v="racer">🏁 Начать гонщиком<small>призы, команды и слава — потом своя марка</small></button></div>`;
+    path:prev&&prev.path||'company',role:prev&&prev.role||null,step:prev&&prev.step||'path',racer:prev&&prev.racer||'custom',rname:prev&&prev.rname||'',rc:prev&&prev.rc||'fr',ry:prev&&prev.ry||1900};
+  if(draft.step==='path'){openPathPick();return;}
+  const PT=NG_PATHS.find(p=>p.k===ngPathOf(draft))||NG_PATHS[2];
+  const pathChips=`<div class="row ng-back" style="margin-top:10px"><button class="linkbtn" data-act="ngBack">← Другой путь</button><span class="small muted">${PT.ico} ${PT.t} · ${PT.when}</span></div>`;
   if(draft.path==='racer'){openRacerNew(pathChips);return;}
   // 0.34: у «Мотомастерской» — свои герои (мотоциклисты, что потом строили автомобили) и «Свой персонаж»; у марки — автомобилисты
-  const moto=draft.path==='moto';if(moto&&!PIONEERS[draft.pioneer].moto&&draft.pioneer!=='custom'){if(draft.company===PIONEERS[draft.pioneer].co)draft.company='Мотомастерская';draft.pioneer='custom';}
-  if(!moto&&PIONEERS[draft.pioneer].moto){if(draft.company===PIONEERS[draft.pioneer].co)draft.company=PIONEERS.ford.co;draft.pioneer='ford';draft.country='us';}
-  const list=Object.entries(PIONEERS).filter(([k,P])=>!P.racer&&(moto?(P.moto||k==='custom'):!P.moto)).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
-    <p class="small muted" style="margin-top:6px">${moto?`Январь ${motoStartY(draft.country)} года. Мастерская с горсткой рабочих и одним мотоциклом. Наберитесь опыта, постройте автомобильный цех и выпустите первую машину — как Laurin & Klement, NSU и Peugeot. ${(()=>{const t=MSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:`Январь 1895 года. ${(()=>{const t=CSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`} Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
-    ${pathChips}
+  // 0.35: у фабриканта, финансиста и техника — свои (role), Энцо Феррари — у гонщиков
+  const moto=draft.path==='moto',role=moto?null:(draft.role||'maker');if(!moto)draft.role=role;
+  const fits=k=>{const P=PIONEERS[k];return !!P&&!P.racer&&(k==='custom'||(moto?!!P.moto:(!P.moto&&P.role===role)));};
+  if(!fits(draft.pioneer)){const was=PIONEERS[draft.pioneer],nk=moto?'custom':(ngHeroes(role)[0]||'custom');if(!was||draft.company===was.co)draft.company=nk==='custom'?(moto?'Мотомастерская':PIONEERS.custom.co):PIONEERS[nk].co;draft.pioneer=nk;if(nk!=='custom')draft.country=PIONEERS[nk].c;}
+  const list=Object.keys(PIONEERS).filter(fits).sort((a,b)=>(a==='custom')-(b==='custom')).map(k=>[k,PIONEERS[k]]).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>${pathChips}
+    <p class="small muted" style="margin-top:8px">${moto?`Январь ${motoStartY(draft.country)} года. Мастерская с горсткой рабочих и одним мотоциклом. Наберитесь опыта, постройте автомобильный цех и выпустите первую машину — как Laurin & Klement, NSU и Peugeot. ${(()=>{const t=MSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:`Январь 1895 года. ${(()=>{const t=CSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`} Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.</p>
     <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
     <label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(draft.company)}" maxlength="28" style="margin-top:6px">
     <label class="label" for="fname" style="display:block;margin-top:12px">Как назовёте ${moto?'первый мотоцикл':'первую машину'}?</label><input type="text" id="fname" value="${esc(draft.first||'Тип 1')}" maxlength="24" style="margin-top:6px" placeholder="Тип 1">
@@ -157,9 +180,8 @@ function openNewGame(){
 const RX_ERA={1895:'первые гонки городов',1900:'Кубок Гордона Беннетта',1905:'Гран-при и Вандербильт',1910:'Индианаполис и Тарга',1919:'после войны',1924:'наддув и Монца'};
 function openRacerNew(pathChips){const cust=draft.racer==='custom';
   const list=Object.entries(RACERS).map(([k,P])=>{const d=DRIVERS.find(x=>x.id===k);return `<button class="pion ${draft.racer===k?'on':''}" data-act="rpick" data-v="${k}">${(()=>{const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>';})()}<div><h3>${esc(P.n)}</h3><div class="yrs">${P.y?`дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}`:'любая страна и год дебюта'}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}).join('');
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
-    <p class="small muted" style="margin-top:6px">Путь гонщика: купите первую машину, выигрывайте призы, подписывайте контракты со спонсорами и заводскими командами, сравнивайте себя с лучшими гонщиками эпохи. Накопите капитал — и основайте свою марку, как Лянча в 1906 году или Шевроле в 1911-м: дальше игра пойдёт в режиме магната.</p>
-    ${pathChips}
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>${pathChips}
+    <p class="small muted" style="margin-top:8px">Путь гонщика: купите первую машину, выигрывайте призы, подписывайте контракты со спонсорами и заводскими командами, сравнивайте себя с лучшими гонщиками эпохи. Накопите капитал — и основайте свою марку, как Лянча в 1906 году или Шевроле в 1911-м: дальше игра пойдёт в режиме магната.</p>
     <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
     ${cust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(draft.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
       <div class="label" style="margin-top:14px">Страна</div><div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.rc===k?'on':''}" data-act="rcountry" data-v="${k}">${c.name}<small>${c.city} · гоночный цвет — ${c.raceName}</small></button>`).join('')}</div>

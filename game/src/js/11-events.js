@@ -145,7 +145,7 @@ function resolve(key){
   if(key==='carDesign'){s.pending.shift();s.ui=s.ui||{};s.ui.line='car';tab='models';save();render();openDesigner();return;}
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
   if(/^rx:/.test(key)&&racerResolve(s,key))return;
-  if(key==='restart'){s.pending=[];openNewGame();return;}
+  if(key==='restart'){s.pending=[];draft=null;openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
   s.pending.shift();save();render();
 }

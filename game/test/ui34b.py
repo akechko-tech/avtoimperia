@@ -54,12 +54,11 @@ with sync_playwright() as p:
     g=pg.query_selector('#raceScreen .r-ctrl .gas') or pg.query_selector('.r-ctrl .gas')
     ok(g is not None,'кнопка газа на экране')
     if g:
-        bb=g.bounding_box();pg.mouse.move(bb['x']+bb['width']/2,bb['y']+bb['height']*0.2);pg.mouse.down();pg.wait_for_timeout(150)
-        v1=js("rKeys.gasLv");pg.mouse.move(bb['x']+bb['width']/2,bb['y']+bb['height']*0.9,steps=4);pg.wait_for_timeout(200)
-        v2=js("rKeys.gasLv");lab=g.inner_text();pg.screenshot(path=out+'4_gas.png')
-        pg.mouse.up();pg.wait_for_timeout(150);v3=js("rKeys.gasLv")
-        ok(v1==1 and 0.3<v2<0.45 and v3==1,'газ: верх %.2f, низ %.2f, отпустили %.2f'%(v1,v2,v3))
-        ok('%' in lab,'на кнопке — сила газа: '+lab.replace('\n',' '))
+        # 0.35: газ снова «всё или ничего» — дозировку по высоте кнопки убрали (отзыв: «не нужен всё-таки разный уровень газа»)
+        bb=g.bounding_box();pg.mouse.move(bb['x']+bb['width']/2,bb['y']+bb['height']*0.9);pg.mouse.down();pg.wait_for_timeout(400)
+        st=js("({g:rKeys.gas,lv:rKeys.gasLv===undefined})");lab=g.inner_text();pg.screenshot(path=out+'4_gas.png')
+        pg.mouse.up();pg.wait_for_timeout(150)
+        ok(st['g'] and st['lv'] and '%' not in lab,'газ — «всё или ничего»: нажали у нижнего края — газ полный, процентов на кнопке нет')
     js("(()=>{try{if(R)finishRace(true);}catch(e){console.warn(e)};R=null;try{closeSheet();}catch(_){};G.pending=[];})()");pg.wait_for_timeout(400)
     # 4) «Доводка в КБ» — в карточке модели в любой момент
     js("(()=>{const md=G.models[0];md.status='prod';md.dv={e:{k:0.9,t:mi(G),sev:0.4}};tab='models';setOpen('md'+md.id,true);render();})()");pg.wait_for_timeout(400)

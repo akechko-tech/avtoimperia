@@ -83,7 +83,7 @@ function tradeBanHard(s,c){return warCut(s,c);}
 const BRAND_GROUP={'Ford (Манчестер)':0,'MG':0,'Buick':1908,'Oldsmobile':1908,'Cadillac':1909,'Chevrolet':1918,'Vauxhall':1925,'Opel':1929};
 function brandCands(s,c){const R=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>!pkIs(x.cp,s)&&!x.cp.imp&&x.v>0&&!acqHas(s,c,x.i)).sort((a,b)=>b.v-a.v);
   const tot=R.reduce((a,x)=>a+x.v,0)||1;return R.slice(2).filter(x=>x.v/tot<0.15&&!(BRAND_GROUP[x.cp.n]!=null&&s.y>=BRAND_GROUP[x.cp.n]));}
-function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9/1000)*1000;}
+function brandPrice(s,c,x){const P=prefP('middle',c,s);return Math.round(x.v*P*0.9*bn('deal')/1000)*1000;}
 function brandOfferOf(s,c){const O=s.brandOffer;return O&&O.c===c&&O.until>mi(s)?O:null;}
 function brandBuy(s,c,i){if(c===s.country||intIn(s,c)||warCut(s,c))return false;const x=brandCands(s,c).find(y=>y.i===i);if(!x)return false;const O=brandOfferOf(s,c),cost=O&&O.i===i?O.price:brandPrice(s,c,x);if(s.cash<cost)return false;
   s.brandOffer=null;const h=maClose(s,c,i,{st:1,mode:'int',pay:'cash'},cost,'offer');return !!h;}

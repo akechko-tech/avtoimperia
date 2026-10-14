@@ -138,8 +138,10 @@ const ACT={
   pion:d=>{const top=sb.scrollTop,f=document.getElementById('fname');if(f)draft.first=f.value;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
   country:d=>{const top=sb.scrollTop;draft.country=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
   diff:d=>{const top=sb.scrollTop;draft.diff=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
-  // 0.28: путь гонщика
-  ngPath:d=>{const top=sb.scrollTop;ngKeep();draft.path=d.v;openNewGame();sb.scrollTop=top;},
+  // 0.28: путь гонщика; 0.35: путь выбирают первым — гонщик, мотомастерская или своя марка (фабрикант, финансист, техник)
+  ngPath:d=>{ngKeep();const v=d.v;if(v==='maker'||v==='money'||v==='tech'){draft.path='company';draft.role=v;}else if(v==='company'){draft.path='company';draft.role=draft.role||'maker';}else draft.path=v;
+    draft.step='who';openNewGame();sb.scrollTop=0;},
+  ngBack:()=>{ngKeep();draft.step='path';openNewGame();sb.scrollTop=0;},
   rpick:d=>{const top=sb.scrollTop;ngKeep();draft.racer=d.v;openNewGame();sb.scrollTop=top;},
   rcountry:d=>{const top=sb.scrollTop;ngKeep();draft.rc=d.v;openNewGame();sb.scrollTop=top;},
   ryear:d=>{const top=sb.scrollTop;ngKeep();draft.ry=+d.v;openNewGame();sb.scrollTop=top;},

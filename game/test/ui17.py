@@ -9,7 +9,7 @@ with sync_playwright() as p:
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('console: '+m.text) if m.type=='error' and 'TUNNEL' not in m.text else None)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     pg.screenshot(path=out+'u17_menu.png')
-    pg.click('[data-act=newgame]');pg.click(f'[data-act=pion][data-v={pion}]');pg.click('[data-act=startgame]');pg.wait_for_timeout(500)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v='+{'benz':'tech','maybach':'tech','lanchester':'tech','bugatti':'tech','peugeot':'money','durant':'money','rolls':'money'}.get(pion,'maker')+']');pg.click(f'[data-act=pion][data-v={pion}]');pg.click('[data-act=startgame]');pg.wait_for_timeout(500)
     # газеты вступления — закрываем, пока не пойдёт фильм
     for i in range(8):
         if pg.evaluate("!!document.getElementById('sagaScreen')"):break

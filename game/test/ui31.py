@@ -17,7 +17,7 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     js=lambda s:pg.evaluate(s)
     clean="(()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}G.pending=[];})()"
-    pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300);js(clean)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300);js(clean)
     # 1) месяц, когда открыта запись на гонку: «Дальше» наверху — прямо в запись
     rk=None
     for i in range(60):

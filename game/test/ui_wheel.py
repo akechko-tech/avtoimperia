@@ -5,7 +5,7 @@ with sync_playwright() as p:
     b=p.chromium.launch();ctx=b.new_context(viewport={'width':400,'height':820},device_scale_factor=2,has_touch=True);pg=ctx.new_page()
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
-    pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("""()=>{closeSheet();closePaper();G.pending=[];const rc=RACES.find(r=>r.key==='gpacf-1906');G.y=rc.y;G.m=rc.m;AU.on.steer='wheel';startRace({rc,mode:'drive',entries:[{drv:'me',md:G.models[0],prep:1,tyre:'soft',gear:0}]});}""")
     pg.wait_for_timeout(3500)
     box=pg.locator('#rWheel').bounding_box();cx=box['x']+box['width']/2;cy=box['y']+box['height']/2

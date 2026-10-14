@@ -79,7 +79,7 @@ function maAsk(s,c,i,d){const M=maStat(s,c,i);if(!M)return null;const nm=M.nm,cp
   if(d.pay==='swap'){const me=Math.max(1,companyValue(s));if(me<M.V*0.6)return {M,refuse:'small',st};prem+=me<M.V?0.3:me<M.V*2?0.08:-0.03;}
   prem+=proud*0.3+(maRnd(nm+'|'+s.y)-0.5)*0.2;
   const O=s.maOffer&&s.maOffer.c===c&&s.maOffer.i===i&&s.maOffer.until>mi(s)?s.maOffer:null;if(O)prem=Math.min(prem,O.prem);
-  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)/1000)*1000),st,prem};}
+  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)*bn('deal')/1000)*1000),st,prem};}   // 0.35: bn('deal') — финансист (Дюрант) покупает дешевле
 function maAnswer(s,c,i,d,price){const Q=maAsk(s,c,i,d);if(!Q)return {k:'no',why:'нельзя'};if(Q.refuse)return {k:'no',why:Q.refuse,Q};
   if(price>=Q.R)return {k:'yes',Q};if(price>=Q.R*0.85)return {k:'counter',ask:Math.round(Q.R*1.03/1000)*1000,Q};return {k:'low',Q,far:price<Q.R*0.6};}
 // реплики владельцев

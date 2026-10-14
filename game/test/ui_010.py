@@ -8,7 +8,7 @@ with sync_playwright() as p:
     pg=b.new_page(viewport={'width':400,'height':860},device_scale_factor=2)
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
-    pg.click('[data-act=newgame]');pg.wait_for_timeout(200)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(200)
     pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150)
     pg.click(f'[data-act=diff][data-v={diff}]');pg.wait_for_timeout(150)
     pg.fill('#fname','Ласточка');pg.wait_for_timeout(100)

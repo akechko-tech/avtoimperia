@@ -7,7 +7,7 @@ with sync_playwright() as p:
     b=p.chromium.launch(args=['--enable-unsafe-swiftshader','--ignore-gpu-blocklist']);pg=b.new_page(viewport={'width':820,'height':520},device_scale_factor=1)
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('C:'+m.text) if m.type in('error','warning') and 'Failed to load' not in m.text else None)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
-    pg.click('[data-act=newgame]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("""([k,y,cc])=>{G.pending=[];G.y=y;G.m=5;G.country=cc;G.cash=1e6;const md=G.models[0];{const a=aiCarMd(y);['e','g','c','k','w'].forEach(q=>md[q]=a[q]);}md.b=lastOf(BODIES,y,x=>!x.truck&&!x.moto).id;md.status='prod';
       const d=DX_KIND[k];let o={k,at:mi(G),stake:500,md:md.id,c:cc};if(k==='train'){const r=d.route[cc]||d.route.fr;o.venue=r[0];o.opp=r[1];o.km=r[2];o.trainV=d.opp(y,r);}else{o.venue=d.venue[cc]||'Ипподром';o.opp=k==='plane'?d.pilot[cc]||'Бичи':d.horse[cc]||'рысак';o.km=d.km;}
       o.acc=1;G.dx=o;startRace({rc:dxRc(G,o),mode:'drive',entries:[{drv:'me',md,prep:0,tyre:'hard',gear:0}]});R.me.player=false;R.follow=R.me;}""",[k,y,cc])

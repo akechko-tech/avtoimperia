@@ -370,7 +370,7 @@ function companyValue(s){const pr=(s.hist.profit||[]).slice(-12),avg=pr.length?p
 // 0.21: в послевоенный спад и в крах 1929 года банки прежде всего режут кредит тем, у кого долг велик по сравнению с прибылью
 function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;const pr=((s.hist&&s.hist.profit)||[]).slice(-12),py=Math.max(1,pr.reduce((a,b)=>a+b,0)),lev=s.loan/py;
   return lev>1?clamp(1-0.25*(lev-1),0.35,1):1;}
-function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)/1000)*1000;}
+function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)*bn('loan')/1000)*1000;}   // bn('loan') — 0.35: финансисту банки дают больше
 function devCost(md,s){s=s||G;return Math.round(((isMoto(md)?400:1500)+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime')*kitK(G,'dev'))-(studyIns(md)?1:0));}
 function toolingCost(md,s){return Math.round(((isMoto(md)?250:800)+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}

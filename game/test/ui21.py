@@ -23,7 +23,7 @@ with sync_playwright() as p:
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html'); pg.wait_for_timeout(500)
     pg.screenshot(path=os.path.join(OUT, '01_menu.png'))
-    pg.click('[data-act=newgame]'); pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]'); pg.wait_for_timeout(300)
     pg.evaluate("document.querySelector('[data-act=diff]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200)
     pg.screenshot(path=os.path.join(OUT, '02_diff.png'))
     pg.click('[data-act=pion][data-v=ford]'); pg.click('[data-act=startgame]'); pg.wait_for_timeout(700)
