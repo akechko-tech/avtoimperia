@@ -1984,5 +1984,65 @@
 "file": "Самолет \"Илья Муромец\".jpg",
 "lic": "Public domain",
 "artist": "Unknown author Unknown author"
+},
+"x:ru-frese": {
+"src": "img/x/d45f6ccf3ba6.jpg",
+"file": "Frese P A.jpg",
+"lic": "Public domain",
+"artist": "Unknown author Unknown author"
+},
+"x:ru-nizhny-1896": {
+"src": "img/x/f34f459017f6.jpg",
+"file": "Main Fair building 1896.jpg",
+"lic": "Public domain",
+"artist": "Maxim Petrovich Dmitriev"
+},
+"x:ru-nesterov": {
+"src": "img/x/32663ee70612.jpg",
+"file": "Pyotr N. Nesterov.jpeg",
+"lic": "Public domain",
+"artist": "Unknown author Unknown author"
+},
+"x:ru-utochkin-1910": {
+"src": "img/x/8cffdfcdba55.jpg",
+"file": "Utochkin 001.jpg",
+"lic": "Public domain",
+"artist": "Unknown author Unknown author"
+},
+"x:ru-race-1907": {
+"src": "img/x/4a3032e6efd4.jpg",
+"file": "Arthur Duray en 1907, dans sa Lorraine-Dietrich victorieuse du Moscou-Saint-Pétersbourg.jpg",
+"lic": "Public domain",
+"artist": "Le Sport universel illustré."
+},
+"x:ru-road-1908": {
+"src": "img/x/16dad69d123a.jpg",
+"file": "Gorskii 20202u.jpg",
+"lic": "Public domain",
+"artist": "Sergei Prokudin-Gorskii"
+},
+"x:ru-manege-1910": {
+"src": "img/x/9b340ecf7f74.jpg",
+"file": "Autoexpo Petersburg 1910-5-28.jpg",
+"lic": "Public domain",
+"artist": "\"Stolitsa i Usadba\" Magazine"
+},
+"x:ru-palace-square": {
+"src": "img/x/639f3da776ca.jpg",
+"file": "SPB Palace square and Alexander's column 1890-1900.jpg",
+"lic": "Public domain",
+"artist": "В стиле Пётр Петрович Павлов"
+},
+"x:saga-sidecar-wicker": {
+"src": "img/x/48c678a3177b.jpg",
+"file": "6 hp 1913 Royal Enfield motorcycle with sidecar.JPG",
+"lic": "CC BY-SA 3.0",
+"artist": ""
+},
+"x:saga-sidecar-1913": {
+"src": "img/x/ed27d8186724.jpg",
+"file": "5-4-13, Paris-Nice (course motocycliste), A. Colliver sur Indian (side-cars) - btv1b69245078.jpg",
+"lic": "Public domain",
+"artist": "Agence Rol. Agence photographique (commanditaire)"
 }
 }
