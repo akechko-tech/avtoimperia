@@ -204,7 +204,7 @@ function yearAwards(s,y){
   else if(tk){lines.push(`Король технологий — ${tk[0]}: ${tk[1]}.`);KW.tech=tk[0];}
   // короли классов: больше всех машин класса, проданных в стране за год
   SEGK.forEach(g=>{if(g==='sport'&&y<1910)return;const you=(s.segYPrev||{})[g]||0;
-    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:(((s.comps[home]||[])[i]||{}).ysPrev||{})[g]||0,pk:cp.pk,bn:cp.n})).filter(x=>!pkIs(x,s)&&x.v>0);
+    const L=(COMPS[home]||[]).map((cp,i)=>({n:compName(cp,s),v:(((s.comps[home]||[])[i]||{}).ysPrev||{})[g]||0,pk:cp.pk,bn:cp.n,imp:cp.imp})).filter(x=>!x.imp&&!pkIs(x,s)&&x.v>0);
     L.push({n:s.company,v:you,you:1});L.sort((a,b)=>b.v-a.v);const top=L[0];if(!top||top.v<(g==='sport'?12:30))return;
     const why=`${carsN(top.v)} за год${L[1]&&L[1].v>0?`, у ${L[1].you?'«'+s.company+'»':L[1].n} — ${fmtN(Math.round(L[1].v))}`:''}`;
     lines.push(`${KING_SEG[g]} — ${top.you?'«'+s.company+'»':top.n}: ${why.replace(/\.$/,'')}.`);KW[g]=top.you?s.company:top.n;if(top.you)give(g,KING_SEG[g],why);});

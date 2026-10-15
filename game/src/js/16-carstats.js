@@ -24,7 +24,7 @@ function carBase(md,prep,y){
   if(prep===1){bodyKg*=p.b.truck?0.9:0.72;cd*=0.88;hpK*=1.05;relK*=0.98;cg-=0.03;}
   if(prep===2){bodyKg=50+0.4*p.b.kg+(y<1905?40:0);cd=Math.min(cd,racingCd(y)*(0.9+0.12*Math.min(5,p.b.seats||2)/5));cg=0.6+0.04*(Math.min(5,p.b.seats||2)-2)/3;hpK=1.25;relK=0.93;}}
   if(kc)cd*=kc.cd;   // 0.30: аэродинамическая труба
-  const mo=!!p.b.moto,hp=engineHp(p.e,md)*hpK,crew=mo?75:75+(mechanicEra(y)?70:0),fw=x=>(x.kg||0)*flawK(x,G,'kg');
+  const mo=!!p.b.moto,hp=engineHp(p.e,md)*hpK*(1+Math.min(RP_MAX,md.rp||0)),crew=mo?75:75+(mechanicEra(y)?70:0),fw=x=>(x.kg||0)*flawK(x,G,'kg');
   // 0.32: мотоцикл — гонщик без механика, бензина и инструмента меньше
   const m=fw(p.e)+fw(p.g)+fw(p.k)+fw(p.c)*(1-0.04*U(p.c.id))*(kc?kc.cKg:1)+bodyKg*flawK(p.b,G,'kg')+fw(p.w)+crew+(mo?10:40)+motoKg;
   // передача: КПД коробки (прямая передача и кардан теряют меньше, чем ремни и цепи)
@@ -35,7 +35,8 @@ function carBase(md,prep,y){
   const load=p.e.hp/Math.max(1,chassisMax(p.c,md)),durK=1.02-0.06*clamp(load-0.5,0,0.5);
   // 0.33: деталь, вышедшая не по ТЗ, ломается чаще — через частоту поломок (10f-risk.js, dvFail), а не через «процент надёжности»
   const rel0=clamp(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1),0.3,0.99);
-  const rel=md.dv?clamp(1-(1-rel0)*dvFail(md),0.3,0.99):rel0;
+  // 0.36: модель, доведённая гонками (гоночная команда находит и устраняет слабые места), ломается реже — до трети поломок меньше
+  const rel1=md.dv?clamp(1-(1-rel0)*dvFail(md),0.3,0.99):rel0,rel=md.rr?clamp(1-(1-rel1)*(1-Math.min(RR_MAX,md.rr)),0.3,0.995):rel1;
   return {hp,kg:Math.round(m),P,kd,crr,cd,cg,brk,grip,rel,wb:p.c.wb+(p.e.hp>40?0.3:0),wire:!!p.w.wire,mech:!mo&&mechanicEra(y),hpKg:hp/m*1000};
 }
 function carStats(md,prep,y){

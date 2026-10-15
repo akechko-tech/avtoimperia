@@ -21,22 +21,22 @@ function showMainMenu(){
   const cont=slotInfo('auto'),old=hasOldSave()&&!cont;
   MS.innerHTML=`<div class="menu-in"><div class="menu-hero">${menuArt()}</div>
     <div class="menu-titlebox"><div class="menu-kick">1895 — 1929</div><h1 class="menu-title">Автоимперия</h1><p class="menu-sub">экономическая стратегия и гонки на заре автомобиля</p></div>
-    <div class="menu-gap"></div>
+    <div class="menu-gap"><div class="menu-leader" aria-hidden="true"><i></i><b>8</b></div></div>
     <p class="menu-cap" id="menuCap"></p>
     <div class="stack menu-btns">
       ${cont?`<button class="btn primary block" data-act="continue"><b>Продолжить</b><small>${esc(cont.company)} · ${MONTHS[cont.m]} ${cont.y}${cont.over?' · итоги':''}</small></button>`:''}
       <button class="btn ${cont?'':'primary'} block" data-act="newgame">Новая игра</button>
-      <button class="btn block" data-act="loadOpen">Загрузить</button>
+      <div class="menu-sec"><button class="btn block" data-act="loadOpen">Загрузить</button>
       <button class="btn block" data-act="fame">Зал славы</button>
-      <button class="btn block" data-act="settings">Звук, графика и управление</button>
-      <button class="btn block" data-act="about">Об игре</button></div>
+      <button class="btn block" data-act="settings">Звук и графика</button>
+      <button class="btn block" data-act="about">Об игре</button></div></div>
     ${old?'<p class="small muted" style="margin-top:12px;text-align:center">Сохранение версии 0.7 не подходит к новой экономике — начните новую партию.</p>':''}
     <p class="small muted menu-foot">Версия ${GAME_VER} · вдохновлено Motor City / Oldtimer (1994). Музыка, звуки и фото — Wikimedia Commons.</p></div>`;
   MS.hidden=false;
   // 0.26: если за меню пойдёт живая 3D-гонка — сразу тёмный «кинозал» с заголовком (без старого рисунка),
   // а гонка проявляется из темноты, когда готова. Рисунок заставки — только без 3D.
   const live=demoWanted();MS.classList.remove('ready');MS.classList.toggle('live',live);
-  if(live){const cap=document.getElementById('menuCap');if(cap)cap.innerHTML='<span class="menu-load">заводим моторы…</span>';}
+  if(live){const cap=document.getElementById('menuCap');if(cap)cap.innerHTML='<span class="menu-load">заводим моторы…</span>';try{demoLeader();}catch(_){}}
   // живая гонка за меню — чуть позже, чтобы меню появилось сразу
   setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},350);
 }

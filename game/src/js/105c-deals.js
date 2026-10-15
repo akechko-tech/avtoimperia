@@ -58,7 +58,7 @@ function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}
 // стоимость ваших долей в дочерних компаниях (входит в стоимость компании)
 function maHoldValue(s){return subList(s).reduce((a,h)=>{const M=maStat(s,h.c,h.i);return a+(M&&compAlive(M.cp,s)?M.V*h.st:0);},0);}
 // можно ли вести переговоры
-function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s))return 'нельзя';const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n])return 'в концерне';if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';
   const t=(s.dealNo||{})[c+i];if(t&&t>mi(s))return 'пауза';return '';}
 // главный класс марки (не грузовики; спорт — где он уже есть)
@@ -163,7 +163,7 @@ function maSubEvents(s){if(s.pending.length)return false;const now=mi(s);
 
 /* ---------- предложения к вам ---------- */
 const MA_INVESTORS={us:['Пьер Дюпон','банкирский дом J. P. Morgan & Co.','Dillon, Read & Co.'],fr:['Банк Парижа и Нидерландов','дом Ротшильдов','Лионский кредит'],
-  uk:['Barclays','лорд Нафилд и компаньоны','Bank of England (через посредников)'],de:['Дойче банк','Дрезднер банк','дом Варбургов'],it:['Коммерческий банк Италии','Кредитный банк Италии','семья Перроне']};
+  uk:['Barclays','лорд Нафилд и компаньоны','Bank of England (через посредников)'],de:['Дойче банк','Дрезднер банк','дом Варбургов'],it:['Коммерческий банк Италии','Кредитный банк Италии','семья Перроне'],ru:['Азовско-Донской банк','Русско-Азиатский банк','братья Рябушинские']};
 function maWho(c,k){const L=MA_INVESTORS[c]||MA_INVESTORS.fr;return L[Math.floor(maRnd(k)*L.length)];}
 function maInbound(s){if(s.over||s.pending.length||s.y<1902)return;const now=mi(s);
   if(maFates(s))return;if(maSubEvents(s))return;if(maSqueeze(s))return;

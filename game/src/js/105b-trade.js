@@ -15,6 +15,12 @@ function tradeRule(c,o,t){let r={duty:0,why:'свободная торговля
   else if(c==='de'){r=t<1913?{duty:0.12,why:'пошлина 12%'}:t<1920?{duty:0.15,why:'пошлина 15%'}:t<1925.75?{ban:1,duty:0,why:'запрет ввоза (1920 — октябрь 1925): только свои заводы'}
       :t<1928?{duty:0.4,why:'запрет снят: пошлина 40%'}:{duty:0.25,why:'торговые договоры: пошлина 25%'};}
   else if(c==='it'){r=t<1913?{duty:0.12,why:'пошлина 12%'}:t<1921?{duty:0.15,why:'пошлина 15%'}:{duty:0.6,why:'тариф 1921 года: 60%'};}
+  // 0.36: Россия — высокий тариф (1891, 1903), с весны 1918 года — монополия внешней торговли и блокада, с 1921-го ввоз только через
+  // государство (Внешторг): пошлина и квота
+  else if(c==='ru'){r=t<1903?{duty:0.3,why:'тариф 1891 года: 30%'}:t<1918.25?{duty:0.35,why:'тариф 1903 года: 35%'}:t<1921.25?{ban:1,duty:0,why:'монополия внешней торговли и блокада: ввоз закрыт'}
+      :{duty:0.5,quota:t<1925?300:800,why:'ввоз только через государство (Внешторг): пошлина 50%, по лицензиям'};}
+  // гражданская война: из Советской России не вывезти ничего (блокада Антанты, 1918 — начало 1921)
+  if(o==='ru'&&c!=='ru'&&t>=1918.25&&t<1921.25)r={ban:1,duty:0,why:'блокада Советской России: вывоза нет'};
   // война: торговли с противником нет (блокада Германии — с августа 1914 до лета 1919)
   if(c!==o&&(c==='de'||o==='de')&&t>=1914.58&&t<1919.5)r={ban:1,duty:0,why:c==='de'?'война и блокада: ввоз в Германию закрыт':'война: торговли с Германией нет'};
   return r;}
@@ -133,7 +139,7 @@ function tradeMonth(s){try{impTick(s);}catch(e){console.warn(e);}try{warSeize(s)
 function accessOf(s,c){if(c===s.country)return {k:'home',t:'дома',col:'#d9ab52'};if(warCut(s,c))return {k:'ban',t:'блокада',col:'#e0655a'};const r=ruleNow(s,c);if(r.ban&&!localMade(s,c))return {k:'ban',t:'запрет',col:'#e0655a'};
   if(localMade(s,c))return {k:'local',t:'свой завод',col:'#74d39a'};const q=tradeQuota(s,c),d=r.duty||0;
   if(q)return {k:'quota',t:`квота ${fmtN(q)}/год`,col:'#b48ae0'};return d>=0.4?{k:'high',t:`пошлина ${Math.round(d*100)}%`,col:'#f09a4e'}:d>0.02?{k:'duty',t:`пошлина ${Math.round(d*100)}%`,col:'#f0c75e'}:{k:'open',t:'без пошлины',col:'#74d39a'};}
-const WORLD_XY={us:[70,92],uk:[268,58],fr:[284,98],de:[318,72],it:[318,122],ca:[78,40]};
+const WORLD_XY={us:[70,92],uk:[268,58],fr:[284,98],de:[318,72],it:[318,122],ru:[346,52],ca:[78,40]};
 function worldMap(s){const home=s.country,xy=WORLD_XY,L=s.last;
   const land=`<path d="M20 60 Q40 20 110 26 Q150 30 150 70 Q140 120 110 138 Q70 150 40 128 Q14 104 20 60Z" fill="#1d3d5e"/><path d="M240 40 Q262 22 290 34 Q330 30 345 60 Q352 100 336 136 Q316 150 292 138 Q262 128 258 104 Q246 84 240 40Z" fill="#1d3d5e"/>`;
   const routes=Object.keys(COUNTRIES).filter(c=>c!==home&&dealerCount(s,c)>0).map(c=>{const a=xy[home],b=xy[c];return `<path d="M${a[0]} ${a[1]} Q${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-26} ${b[0]} ${b[1]}" stroke="#8ea8c3" stroke-width="1.2" stroke-dasharray="3 3" fill="none" opacity=".7"/>`;}).join('');

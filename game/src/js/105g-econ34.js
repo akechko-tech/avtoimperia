@@ -156,7 +156,7 @@ function econNetHTML(s,c){const d=dealerCount(s,c);if(!d)return '';const X=netCu
 function plantRedundantHTML(s,c){const lv=impLv(s,c);if(lv<3||!intIn(s,c)||impBuilding(s,c))return '';const A=acqIn(s,c)[0],up=impUpkeep(s,c)-IMP_LV[2].up*cpi(s)*impK(s,c);
   return `<p class="small warn" style="margin-top:4px">🏭 ${lv>=4?'Свой завод':'Сборка'} здесь не ${lv>=4?'нужен':'нужна'}: заводы «${esc((A&&(A.nm||A.n))||'купленной марки')}» уже делают ваши машины без пошлины и «чужой марки». Содержание — ${money(up)} в месяц.</p>`;}
 // «Во Франции…»: где — для строк про страну
-const IN_C={de:'В Германии',fr:'Во Франции',uk:'В Британии',us:'В США',it:'В Италии'};
+const IN_C={de:'В Германии',fr:'Во Франции',uk:'В Британии',us:'В США',it:'В Италии',ru:'В России'};
 function inC(c){return IN_C[c]||`В стране «${esc((COUNTRIES[c]||{}).name||c)}»`;}
 function reachHTML(s,c){const I=reachInfo(s,c);if(I.r>=0.3||!I.d)return '';
   return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши машины видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}

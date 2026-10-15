@@ -64,7 +64,8 @@ function r3dMaps(T,F,W){
   const ch=(src,ci,g)=>{const t=bg2.getImageData(0,0,F.nx,F.nz),o=spg.createImageData(F.nx,F.nz);for(let i=0;i<t.data.length;i+=4){const v=t.data[i+ci];o.data[i]=o.data[i+1]=o.data[i+2]=v;o.data[i+3]=255;}spg.putImageData(o,0,0);g.imageSmoothingEnabled=true;g.drawImage(sp,0,0,SZ,SZ);};
   ch(0,0,gAlt);ch(0,1,gD);
   // 2) поля: пшеница (сухая трава, жёлтый), пашня (земля, борозды), луг (зеленее), виноградник (земля полосами)
-  const nF=snowy||sandy?0:Math.round(wx*wz/8000);
+  // 0.36: в заставке меню полей втрое меньше — мир строится быстрее (издалека разницы не видно)
+  const nF=snowy||sandy?0:Math.round(wx*wz/8000*(typeof R!=='undefined'&&R&&R.demo?0.35:1));
   for(let f=0;f<nF;f++){const x=F.x0+rnd()*wx,z=F.z0+rnd()*wz;const d=fSample(F,F.D,x,z);if(d<26)continue;if(RD){const cv=realCover(T,x,z);if(cv===1||cv===2||cv===3)continue;if(T.real.wm&&realWet(T,x,z)>0.05)continue;}const hx=fSample(F,F.H,x+8,z)-fSample(F,F.H,x-8,z),hz=fSample(F,F.H,x,z+8)-fSample(F,F.H,x,z-8);if(Math.hypot(hx,hz)/16>0.3)continue;
     const w=40+rnd()*120,h=30+rnd()*95,a=rnd()*3.14,q=rnd(),type=q<0.3?'wheat':q<0.52?'plow':q<0.8?'meadow':dry?'vine':'fallow';
     const rect=(g,style,al)=>{g.save();g.translate(X(x),Z(z));g.rotate(a);g.globalAlpha=al;g.fillStyle=style;g.fillRect(-w*kx/2,-h*kz/2,w*kx,h*kz);g.restore();};

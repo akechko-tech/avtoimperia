@@ -39,7 +39,7 @@ function rbBuy(s,c,i){rbMigrate(s);const cp=(COMPS[c]||[])[i],M=cp&&maStat(s,c,i
   s.pfleet={[c]:Math.round(v*Math.min(5,Math.max(1,s.y-(cp.since||s.y)))*0.8)};s.pfl=null;
   // история компании — заново (прежняя — в архиве); мир, газеты, трофеи, хроника — те же
   s.hist={cash:[],sales:[],market:[],profit:[],share:[]};s.peak={year:0,share:{}};s.yearSold=0;s.last=null;s.lhist=[];s.cY={};s.cPrev={};s.cPrev2={};
-  s.raceLog=[];s.titles=[];s.firsts={};s.medals=[];s.showFx={};s.kings=null;s.kingFx=null;s.legends={};s.legBonus=0;s.legPrev=undefined;s.legNow=undefined;
+  s.raceLog=[];s.titles=[];s.firsts={};s.medals=[];s.showFx={};s.kings=null;s.kingFx=null;s.legends={};s.legBonus=0;s.legBet=0;s.legPrev=undefined;s.legNow=undefined;
   s.chal=null;s.duelFx=[];s.scandalMd=null;s.recall=null;s.copy={};s.helperMsg=null;
   // машины марки — теперь ваши модели: главный класс и (если марка делала и его) второй
   s.models=[];const cm=compModel(cp,s),mix=Object.entries(cp.mix||{middle:1}).sort((a,b)=>b[1]-a[1]).filter(([g,k],j)=>j===0||k>=0.25).slice(0,2);

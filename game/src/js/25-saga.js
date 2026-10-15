@@ -110,6 +110,7 @@ function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id)
     <div class="sg-body"></div><div class="sg-ctrl"><button class="sg-nav" data-sg="prev" aria-label="Назад">◀</button><button class="sg-nav" data-sg="next" aria-label="Дальше">▶</button><button class="sg-skip">К выбору ▸▸</button></div><div class="sg-dots"></div>`;
   if(!el.querySelector||!el.querySelector('.sg-skip')){if(!replay)sagaAuto(s,id);return;}// без экрана (проверки)
   document.body.appendChild(el);SAGAP={id,ch,k,el,i:-1,replay:!!replay,timer:0,portrait:sagaImg(P.wiki)};
+  try{AU.sagaHold=true;musicPlay();}catch(_){}
   try{voiceUnlock();}catch(_){}
   const Q=SAGAP;
   el.querySelector('.sg-skip').onclick=e=>{e.stopPropagation();sagaQuestion();};
@@ -156,7 +157,7 @@ function sagaPick(k){const Q=SAGAP;if(!Q)return;const s=G,ch=Q.ch,o=ch.o&&ch.o[k
   voiceSay(sagaFill(o.res,s),SAGA_NARR);}
 function sagaDone(id,k){const s=G,S=s.saga=s.saga||{seen:[],pick:{},last:mi(s)};if(!S.seen.includes(id))S.seen.push(id);if(k>=0){S.pick=S.pick||{};S.pick[id]=k;}
   sagaStop();const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);save();render();}
-function sagaStop(){const Q=SAGAP;SAGAP=null;voiceStop();if(!Q)return;clearTimeout(Q.timer);Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},400);}
+function sagaStop(){const Q=SAGAP;SAGAP=null;voiceStop();if(!Q)return;clearTimeout(Q.timer);try{if(AU.sagaHold){AU.sagaHold=false;musicPlay();}}catch(_){}Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},400);}
 // Карточка «Фильм о вас»: просмотренные главы и следующая
 function sagaCard(s){const L=sagaList(s),S=s.saga||{seen:[]},seen=L.filter(c=>(S.seen||[]).includes(c.id)),next=L.find(c=>!(S.seen||[]).includes(c.id));
   const P=PIONEERS[s.pioneer]||PIONEERS.custom;

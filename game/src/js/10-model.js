@@ -26,7 +26,9 @@ function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
 function rdHorizon(s){return [0,2,3,4,4,5,6,7,7][s.rd.lvl]||2;}
 function rdActive(s){return s.rd.projs||[];}
 // Все инженеры бюро делят силы между проектами по долям: один проект получает всё
-function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15:1)*((s.rd.engOut||0)>mi(s)?0.7:1);}
+// 0.36: гоночный опыт — после гонки с гоночной командой КБ несколько месяцев работает быстрее (43-season.js, raceDevLearn)
+function rdRaceK(s){return s.rd&&(s.rd.raceUntil||0)>mi(s)?1+(s.rd.raceK||0):1;}
+function rdTotal(s){return rdPoints(s)*rdSlots(s)*((s.rd.engUntil||0)>mi(s)?1.15:1)*((s.rd.engOut||0)>mi(s)?0.7:1)*rdRaceK(s);}
 function rdShare(s,pj){const L=rdActive(s),sw=L.reduce((a,p)=>a+(p.w||1),0);return sw?(pj.w||1)/sw:1;}
 function rdPtsOf(s,pj){return rdTotal(s)*rdShare(s,pj)*kitRdK(s,pj);}
 const UPG_TXT={e:'+8% мощности, +2% надёжности',g:'+1% КПД, машину легче водить',c:'+12% допустимой мощности, рама легче и мягче',w:'+6% сцепления, шины живут на 10% дольше',k:'+5% силы тормозов',b:'кузов удобнее и легче, у грузовых +5% груза'};

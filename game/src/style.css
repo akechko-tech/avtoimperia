@@ -265,7 +265,11 @@ table.pl td small{display:block;color:var(--muted);font-size:11px;font-weight:40
 
 /* v0.8: гоночный штаб, табло, заявка на гонку, сезоны */
 .r-board{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:2px;pointer-events:none;font-family:var(--mono);font-size:11px;max-width:52%}
-.r-board div{display:grid;grid-template-columns:16px auto 1fr auto;gap:5px;align-items:baseline;background:rgba(5,12,22,.62);padding:3px 7px;border-radius:4px;color:#e8e2d2;white-space:nowrap}
+.r-board div{display:grid;grid-template-columns:16px 4px auto 1fr auto;gap:5px;align-items:baseline;background:rgba(5,12,22,.62);padding:3px 7px;border-radius:4px;color:#e8e2d2;white-space:nowrap}
+.r-board div>i{display:block;width:4px;height:11px;border-radius:1px;align-self:center;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.r-board div.sep{display:block;background:none;padding:0 7px;line-height:8px;color:var(--muted)}
+.r-board div.foot{display:block;background:rgba(5,12,22,.45);font-size:10px;color:var(--muted)}
+.r-board div.out{opacity:.55}
 .r-board div span{color:var(--muted)}
 .r-board div small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .r-board div em{font-style:normal;color:var(--muted)}
@@ -686,6 +690,15 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
   background:radial-gradient(70% 38% at 50% 104%,rgba(214,128,72,.34) 0%,rgba(214,128,72,.1) 45%,rgba(214,128,72,0) 75%),radial-gradient(120% 75% at 50% 0%,#1c385a 0%,#0c1b2d 52%,#05090f 100%)}
 #menuScreen.live.ready::before{opacity:0;transition:opacity 1.6s ease .1s}
 #menuScreen.live .menu-hero{display:none}
+/* 0.36: пока готовится живая заставка — отсчёт киноплёнки; гонка проявилась — отсчёт гаснет */
+.menu-gap{display:flex;align-items:center;justify-content:center}
+.menu-leader{display:none;position:relative;width:min(46vw,190px);aspect-ratio:1;border-radius:50%;border:2px solid rgba(232,214,170,.55);box-shadow:0 0 0 7px rgba(232,214,170,.12),inset 0 0 40px rgba(0,0,0,.6);overflow:hidden;opacity:.85;
+  background:linear-gradient(rgba(232,214,170,.35),rgba(232,214,170,.35)) center/100% 1px no-repeat,linear-gradient(90deg,rgba(232,214,170,.35),rgba(232,214,170,.35)) center/1px 100% no-repeat,radial-gradient(circle,rgba(40,34,24,.5) 0 62%,rgba(10,8,6,.7) 63%)}
+#menuScreen.live:not(.ready) .menu-leader{display:block;animation:mlFlick .18s steps(2) infinite}
+.menu-leader i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(232,214,170,.42) 0deg,rgba(232,214,170,.08) 300deg,rgba(232,214,170,0) 360deg);animation:mlSweep 1s linear infinite}
+.menu-leader b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:min(26vw,104px);color:#f1e3bd;text-shadow:0 2px 14px rgba(0,0,0,.8)}
+@keyframes mlSweep{to{transform:rotate(360deg)}}
+@keyframes mlFlick{50%{opacity:.78}}
 .menu-title{opacity:0;transition:opacity .45s ease}
 .fonts-ok .menu-title{opacity:1}
 .menu-load{display:inline-block;animation:mload 1.6s ease-in-out infinite alternate}
@@ -701,6 +714,12 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .menu-cap b{color:#f4ecd8;font-weight:500}
 #menuScreen.live .menu-btns{background:rgba(6,12,20,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #menuScreen.live .menu-btns .btn:not(.primary){background:rgba(12,22,34,.55)}
+/* 0.36: живая заставка видна целиком — второстепенные кнопки меню в две колонки и пониже */
+.menu-sec{display:flex;flex-direction:column;gap:inherit}
+#menuScreen.live .menu-sec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#menuScreen.live .menu-sec .btn{padding:9px 8px;font-size:13px;min-height:0}
+#menuScreen.live .menu-btns{background:rgba(6,12,20,.38)}
+#menuScreen.live.ready .menu-foot{opacity:.7;font-size:11px}
 #menuScreen.live .menu-foot{color:#cfc6b2;text-shadow:0 1px 6px rgba(0,0,0,.9)}
 /* праздник: победа, титул, рекорд */
 .cel{position:fixed;inset:0;z-index:96;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;transition:opacity .5s;background:radial-gradient(ellipse at 50% 32%,rgba(8,6,3,.35),rgba(8,6,3,.62));animation:celBg .4s ease}
@@ -804,7 +823,10 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .r-dx .dxbar i{position:absolute;top:-9px;transform:translateX(-50%);font-style:normal;font-size:14px;line-height:1;transition:left .4s linear}.r-dx .dxbar i.me{top:-8px}
 #raceScreen.filming .r-dx,#raceScreen.demo .r-dx{display:none}
 /* 0.31: карточка гонки, к которой пришли из «Дальше» — вспыхивает */
-.race-item.hl{animation:rcHl 1.6s ease}
+.race-item.hl,.card.hl{animation:rcHl 1.6s ease}
+/* 0.36: страны в разделе «Дилеры» — переключатель в одну строку с прокруткой */
+.cc-chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.cc-chips .chip{flex:0 0 auto;white-space:nowrap}
 @keyframes rcHl{0%,40%{box-shadow:0 0 0 2px var(--brass);background:rgba(232,195,90,.12)}100%{box-shadow:none}}
 /* 0.32: фильтр «Авто / Мото» и мотоциклы на картинках */
 .lineseg{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel2)}
@@ -871,3 +893,23 @@ button.qbx:active{opacity:.8}
 .ng-ini{font-family:var(--display);font-size:11px;font-weight:800;color:#f2e6cf}
 .ng-svg svg{width:100%;height:100%;display:block}
 .ng-back{align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-start}
+
+/* ===== 0.36: антураж страны — палитра интерфейса и флаг эпохи ===== */
+body[data-cc=uk]{--bg:#0e2620;--panel:#15362c;--panel2:#112f26;--line:#2d5a49;--line-soft:#1e4436;--muted:#93b5a6}
+body[data-cc=de]{--bg:#15191f;--panel:#1f252d;--panel2:#1a1f26;--line:#3b4652;--line-soft:#2a323c;--muted:#9eabb9}
+body[data-cc=it]{--bg:#26141a;--panel:#371d24;--panel2:#2f181f;--line:#5f3440;--line-soft:#47262f;--muted:#c3a1a8}
+body[data-cc=us]{--bg:#0b1a2d;--panel:#122843;--panel2:#0f223a;--line:#2b4f7a;--line-soft:#1b3858;--muted:#8fa9c6}
+body[data-cc=ru]{--bg:#1d1912;--panel:#2a2419;--panel2:#241f15;--line:#51472f;--line-soft:#3a3324;--muted:#bba98a}
+body[data-cc] .top{background:linear-gradient(var(--bg) 82%,transparent)}
+body[data-cc] .wrap .top::after{content:'';position:absolute;left:16px;right:16px;bottom:6px;height:3px;border-radius:2px;opacity:.85;background:var(--flagbar,transparent)}
+body[data-cc] .top{position:sticky}
+.cflag{display:inline-block;width:16px;height:11px;margin-right:6px;vertical-align:-1px;border-radius:1px;box-shadow:0 0 0 1px rgba(255,255,255,.25);background:var(--flag,transparent)}
+body[data-fl=fr]{--flag:linear-gradient(90deg,#2b4f9a 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#2b4f9a 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%)}
+body[data-fl=it]{--flag:radial-gradient(circle at 50% 50%,#c8322a 0 2px,transparent 2.5px),linear-gradient(90deg,#2f7a45 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#2f7a45 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%)}
+body[data-fl=de1]{--flag:linear-gradient(#1c1c1c 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#1c1c1c 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%)}
+body[data-fl=de2]{--flag:linear-gradient(#1c1c1c 33.3%,#c8322a 33.3% 66.6%,#e8c24a 66.6%);--flagbar:linear-gradient(90deg,#1c1c1c 33.3%,#c8322a 33.3% 66.6%,#e8c24a 66.6%)}
+body[data-fl=ru1]{--flag:linear-gradient(#f4f2ec 33.3%,#2b4f9a 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#f4f2ec 33.3%,#2b4f9a 33.3% 66.6%,#c8322a 66.6%)}
+body[data-fl=ru2]{--flag:#c8322a;--flagbar:linear-gradient(90deg,#c8322a,#e8c24a 50%,#c8322a)}
+body[data-fl=uk]{--flag:linear-gradient(#c8322a,#c8322a) center/100% 2px no-repeat,linear-gradient(90deg,#c8322a,#c8322a) center/2px 100% no-repeat,linear-gradient(#f4f2ec,#f4f2ec) center/100% 4px no-repeat,linear-gradient(90deg,#f4f2ec,#f4f2ec) center/4px 100% no-repeat,linear-gradient(33deg,transparent 44%,#f4f2ec 44% 56%,transparent 56%),linear-gradient(-33deg,transparent 44%,#f4f2ec 44% 56%,transparent 56%),#22336b;--flagbar:linear-gradient(90deg,#22336b 30%,#f4f2ec 30% 36%,#c8322a 36% 64%,#f4f2ec 64% 70%,#22336b 70%)}
+body[data-fl=us]{--flag:linear-gradient(#22336b,#22336b) 0 0/45% 54% no-repeat,repeating-linear-gradient(#c8322a 0 0.846px,#f4f2ec 0.846px 1.692px);--flagbar:linear-gradient(90deg,#22336b 30%,#c8322a 30% 40%,#f4f2ec 40% 50%,#c8322a 50% 60%,#f4f2ec 60% 70%,#c8322a 70% 80%,#f4f2ec 80% 90%,#c8322a 90%)}
+body[data-cc] .bar-nav{background:var(--bg)}

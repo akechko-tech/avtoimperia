@@ -16,7 +16,7 @@ function mrecRival(y){const e=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp
 function mrecBest(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&isMoto(m)&&segOf(m)==='moto').map(m=>({m,v:mrecSpeed(m,s.y)})).sort((a,b)=>b.v-a.v)[0]||null;}
 function offerMrec(s){if(s.y<1903||!lineOn(s,'moto'))return null;const P=mrecBest(s);if(!P)return null;const r=chalRnd(s,'mrec');
   const C0=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!warCut(s,c))),c=r()<0.6||C0.length<2?s.country:C0[1+Math.floor(r()*(C0.length-1))];
-  if(isWar(s.y,s.m,c))return null;const L=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);if(!L.length)return null;
+  if(isWar(s.y,s.m,c))return null;const L=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.v>0&&!x.cp.imp).sort((a,b)=>b.v-a.v).slice(0,3);if(!L.length)return null;
   const R=L[Math.floor(r()*L.length)],nm=compName(R.cp,s),Ls=s.last,stake=Math.round(clamp(((Ls&&Ls.rev)||0)*0.03,80*cpi(s),6000*cpi(s))/50)*50;
   const C={type:'mrec',c,ci:R.i,mq:nm,venue:MREC_VENUE[c],md:P.m.id,end:mi(s)+2,x:stakeExtra(s,nm,'mr',1)};
   return {id:'mrec',kind:'mrec',title:`Мерная миля: «${s.company}» против ${nm}`,sub:`${MREC_VENUE[c]} · чей мотоцикл быстрее · мировой рекорд ${Math.round(mrecWR(s.y))} км/ч`,stake,C};}

@@ -1,6 +1,8 @@
 /* ================= AUDIO: music of the era + race sounds ================= */
 const AU={ctx:null,on:{music:true,sfx:true},next:0,step:0,timer:0,style:'',race:null};
 try{const a=JSON.parse(localStorage.getItem('avt-audio')||'null');if(a)AU.on=a;}catch(e){}
+// 0.36: живая 3D-заставка снова включена у всех один раз (отзыв: «снова примитивная заставка, сделай 3D»); выключить можно в настройках
+try{if(AU.on&&AU.on.demoV!==36){AU.on.demoV=36;if(AU.on.demo===false)delete AU.on.demo;localStorage.setItem('avt-audio',JSON.stringify(AU.on));}}catch(e){}
 const mtof=n=>440*Math.pow(2,(n-69)/12);
 function auInit(){
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return;}
@@ -246,7 +248,8 @@ function musBuild(start){
 }
 function musCur(){return AU.pl[AU.idx]||null;}
 function musicPlay(force){
-  const tr=musCur(),want=AU.on.music&&!AU.paused&&(!R||AU.on.race)&&tr;
+  // 0.36: пока идёт фильм о герое (рассказ голосом), музыка на паузе — потом продолжается с того же места
+  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&(!R||AU.on.race)&&tr;
   if(!want){if(AU.el&&!AU.el.paused)AU.el.pause();AU.synth=null;AU.real=false;musUI();return;}
   if(tr.synth){if(AU.el&&!AU.el.paused)AU.el.pause();AU.real=false;if(force||!AU.synth||AU.synth.title!==tr.title){AU.synth=tr;AU.step=0;tr.end=0;AU.mel=0;}AU.nowPlaying=null;musUI();return;}
   AU.synth=null;AU.real=true;

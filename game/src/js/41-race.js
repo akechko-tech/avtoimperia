@@ -74,15 +74,20 @@ function trackCfg(rc){
   return c;
 }
 /* ---------- track generation ---------- */
-function buildTrack(rc,vref){
+function buildTrack(rc,vref,opt){
   // длина под время заезда: 3–4 минуты игрового времени (подъём в гору и спринт — короче)
   const cfg=trackCfg(rc);if(vref){const dur={road:205,circuit:215,endurance:245,hill:175,rally:220,oval:185,sprint:65}[rc.t]||200,total=dur*vref*0.62;cfg.len=clamp(cfg.closed?total/cfg.laps:total+200,cfg.closed?800:700,cfg.closed?3800:9000);if(cfg.sprint)cfg.len=clamp(vref*62,700,2600);cfg.dur=dur;
     // настоящий овал: круг своей длины, кругов — сколько влезет в заезд
     if(cfg.realLap){cfg.len=cfg.realLap;cfg.laps=clamp(Math.round(total/cfg.realLap),1,3);}
     // 0.24: рекорд круга — ровно один круг
     if(rc.laps&&cfg.closed){cfg.laps=rc.laps;if(!cfg.realLap)cfg.len=clamp(total,800,3800);}}
+  // 0.36: заставка меню — короткий кусок трассы: мир строится в разы быстрее, а за минуту машины дальше не уедут
+  if(opt&&opt.maxLen&&!cfg.realLap&&cfg.len>opt.maxLen){cfg.len=opt.maxLen;if(cfg.closed)cfg.laps=1;}
   const rnd=mulberry32(hashStr(rc.key)),STEP=4;let pts=[];
-  const RD=cfg.real&&typeof realData==='function'?realData(rc):null,RP=RD?realPoints(RD,cfg):null;
+  let RD=cfg.real&&typeof realData==='function'?realData(rc):null;
+  // заставка: настоящий круг длиннее 6 км (Ле-Ман, Тарга) строится долго — берём обычную трассу той же местности
+  if(RD&&opt&&opt.maxLen&&RD.closed&&RD.pts.length*RD.step>opt.maxLen*2.5){RD=null;cfg.real=0;delete cfg.realLap;cfg.len=opt.maxLen;cfg.laps=1;}
+  const RP=RD?realPoints(RD,cfg):null;
   if(RP){pts=RP.pts;}
   else if(cfg.closed){
     const fine=[];const M=3000;
@@ -856,7 +861,7 @@ function aiMotoMd(y){const E=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp-
   const g=GEARBOX.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.eff-a.eff)[0],k=BRAKES.filter(x=>x.moto&&x.y<=y).pop(),w=TYRES.filter(x=>x.moto&&x.y<=y).pop();
   return {e:eng.id,g:g.id,c:c.id,k:k.id,b:'mb0',w:w.id,t:'t0',paint:'#333',made:0,ai:1};}
 function motoField(rc,s){if(!raceMoto(rc)||!ENGINES.some(x=>x.moto&&x.y<=rc.y))return [];const y=rc.y,host=COUNTRIES[rc.c]?rc.c:'fr',ss={y,m:6},L=[];
-  [host,'fr','uk','de','us','it'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(compVol(cp,ss)>0&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
+  [host,'fr','uk','de','us','it','ru'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(!cp.imp&&compVol(cp,ss)>0&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
   const n=Math.min(L.length,['hill','sprint'].includes(rc.t)?3:4),names=AMATEUR[host]||AMATEUR.fr,md=aiMotoMd(y);
   return L.slice(0,n).map((o,i)=>{const nm=compName(o.cp,ss),col=['#3a2a1c','#1f2b3a','#7a1f1a','#2b3a24'][i%4];return {you:false,spec:1,cls:'moto',name:nm,label:nm+(y<1902?' · трицикл':' · мотоцикл'),drvName:names[0]+' '+names[1+((i*3+y)%(names.length-1))],drvId:null,sk:0.72+0.05*((i+y)%3),md:{...md,name:nm,paint:col},prep:2,tyre:'soft',gear:0,
     color:col,pw:DIF().race,relK:1,tc:o.c};});}

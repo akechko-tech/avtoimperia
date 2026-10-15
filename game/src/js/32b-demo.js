@@ -4,16 +4,20 @@
 const DEMO={on:false,key:null,cut:0,cutT:0,t:0,raf:0};
 const DEMO_RACES=['gpacf-1906','targa-1906','x87575-1908','pbp-1895','lemans-1923','gpacf-1914','targa-1924','kaiser-1907','pv1902-1902','monaco-1929','x22765-1924','gb1903-1903'];
 function demoWanted(){return !R&&typeof r3dWanted==='function'&&r3dWanted()&&!(AU.on&&AU.on.demo===false)&&!MS.hidden;}
+// 0.36: гонка заставки — из мира сохранённой игры: та же страна и те же годы (погружение в свою эпоху); первый раз — знаменитая
+function demoPick(){const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);DEMO.n=DEMO.n===undefined?Math.floor(Math.random()*997):DEMO.n+1;
+  const sv=slotInfo('auto');if(sv&&sv.country&&sv.y&&DEMO.n%3!==2){const T=RACES.filter(r=>(r.c===sv.country||r.host===sv.country)&&Math.abs(r.y-sv.y)<=3&&r.t!=='sprint'&&!r.match);
+    if(T.length)return T[DEMO.n%T.length];}
+  return L.length?L[DEMO.n%L.length]:null;}
 function demoStart(){if(DEMO.on)return;if(!demoWanted()){if(!R&&MS.classList.contains('live')&&!MS.classList.contains('ready')){MS.classList.remove('live');const cap=document.getElementById('menuCap');if(cap)cap.textContent='';}return;}
-  const L=DEMO_RACES.map(k=>RACES.find(r=>r.key===k)).filter(Boolean);if(!L.length){demoStop(true);return;}
-  const rc=L[(DEMO.n=(DEMO.n===undefined?Math.floor(Math.random()*L.length):DEMO.n+1))%L.length];
+  const rc=demoPick();if(!rc){demoStop(true);return;}
   const s={pioneer:'custom',country:COUNTRIES[rc.c]?rc.c:'fr',company:'',drivers:[],models:[],y:rc.y,m:rc.m,cres:{},raceDone:{},titles:[],rep:50,rdept:0};
   let cars,trk;
-  try{const ai=raceField(rc,s,0,[]);if(!ai.length){demoStop(true);return;}const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref);
+  try{const ai=raceField(rc,s,0,[]);if(!ai.length){demoRetry();return;}const vref=Math.max(...ai.map(e=>carStats(e.md,e.prep,rc.y).vmax));trk=buildTrack(rc,vref,{maxLen:2400});
     cars=ai.map((e,i)=>{const c=mkRaceCar(Object.assign(e,{num:i+2}),rc.y,trk);c.mech=c.st.mech;c.style=carStyle(c.md,c.prep,rc.y);
       c.wheel=wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name;
       c.spec3={key:c.spriteKey,style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip:0,hp:3};wearSetup(c,trk,rc);return c;});}
-  catch(e){console.warn('demo',e);demoStop(true);return;}
+  catch(e){console.warn('demo',e);demoRetry();return;}
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
   cars.forEach((c,i)=>{const row=Math.floor(i/2),col=i%2?1:-1,back=(row+1)*9;let idx=trk.startIdx-Math.round(back/trk.step);if(trk.closed)idx=(idx+trk.n)%trk.n;else idx=Math.max(0,idx);
     const p=trk.pts[idx],nn=trk.N[idx],t=trk.T[idx];c.idx=idx;c.x=p[0]+nn[0]*col*trk.W*0.22;c.z=p[2]+nn[1]*col*trk.W*0.22;c.y=p[1];c.yaw=Math.atan2(t[0],t[1]);if(trk.closed)c.lap=idx>trk.n/2?-1:0;c.lane=[-1.2,1.2,0,-2,2][i%5]*trk.W/9;trackLocal(trk,c);});
@@ -22,11 +26,24 @@ function demoStart(){if(DEMO.on)return;if(!demoWanted()){if(!R&&MS.classList.con
   R={rc,trk,cars,all:cars,me:null,team:[],follow:cars[0],mode:'demo',t:-1.5,time:0,done:false,lastT:performance.now(),msgT:0,msg:'',shake:0,parts:[],speed:1,setup:{},wx,hz0:0,relRef:0.2,demo:1};
   DEMO.on=true;DEMO.key=rc.key;DEMO.t=0;DEMO.cut=-1;DEMO.cutT=0;
   const scr=document.getElementById('raceScreen');scr.classList.add('demo');
-  if(!g3Init(document.getElementById('rgl'))){demoStop();return;}
-  R.loading=true;texPrepare(R.wx.mood,ok=>{if(!R||!R.demo)return;if(!ok){demoStop(true);return;}
-    try{r3dSetup();R.gl=true;}catch(e){console.warn('demo 3d',e);demoStop(true);return;}
+  if(!g3Init(document.getElementById('rgl'))){demoStop(true);return;}
+  demoStage(TX.st===2&&G3.cache.tx?'build':'tex');
+  R.loading=true;texPrepare(R.wx.mood,ok=>{if(!R||!R.demo)return;if(!ok){demoRetry(1);return;}demoStage('build');
+    // мир строится в следующем кадре — надпись «строим трассу» успевает показаться
+    setTimeout(()=>{if(!R||!R.demo)return;
+    try{r3dSetup();R.gl=true;}catch(e){console.warn('demo 3d',e);try{r3dDispose();}catch(_){}demoRetry();return;}
     R.loading=false;R3.camHook=demoCam;R.lastT=performance.now();const cap=document.getElementById('menuCap');if(cap)cap.innerHTML=`<b>${esc(rc.name)}</b> · ${rc.y}`;
-    document.getElementById('raceScreen').hidden=false;MS.classList.add('live','ready');DEMO.raf=requestAnimationFrame(demoLoop);});}
+    document.getElementById('raceScreen').hidden=false;MS.classList.add('live','ready');DEMO.fails=0;DEMO.raf=requestAnimationFrame(demoLoop);},30);});}
+// 0.36: не вышло (нет фото-материалов, ошибка мира) — пробуем другую гонку, а не возвращаем плоский рисунок; после трёх неудач —
+// «кинозал» с отсчётом плёнки остаётся, через полминуты ещё попытка (сеть могла появиться)
+function demoRetry(texFail){DEMO.fails=(DEMO.fails||0)+1;demoStop();if(MS.hidden)return;
+  if(DEMO.fails<3&&!texFail){setTimeout(()=>{if(!MS.hidden&&!R)demoStart();},200);return;}
+  demoStage('wait');setTimeout(()=>{if(!MS.hidden&&!R){DEMO.fails=0;try{if(TX.st===-1)TX.st=0;texPrefetch();}catch(_){}demoStart();}},texFail?20000:30000);}
+// пока готовится заставка — отсчёт старой киноплёнки (8…3) в круге с бегущим сектором, как перед сеансом
+function demoLeader(){clearInterval(DEMO.lt);let n=8;const tick=()=>{const L=document.querySelector('#menuScreen .menu-leader b');if(!L||MS.hidden||MS.classList.contains('ready')){clearInterval(DEMO.lt);return;}L.textContent=n;n=n<=3?8:n-1;};tick();DEMO.lt=setInterval(tick,1000);}
+// подпись под заголовком, пока готовится заставка
+function demoStage(k){const cap=document.getElementById('menuCap');if(!cap||MS.classList.contains('ready'))return;
+  cap.innerHTML=`<span class="menu-load">${{tex:'заряжаем плёнку…',build:'выводим машины на старт…',wait:'киномеханик меняет плёнку…'}[k]||'заводим моторы…'}</span>`;}
 function demoLoop(now){if(!R||!R.demo||R.done){DEMO.raf=0;return;}
   const dt=clamp((now-R.lastT)/1000,0,0.05);R.lastT=now;
   // 0.32: поверх меню открыт лист (новая игра, настройки, зал славы) — заставка на паузе: не тратит батарею и не тормозит лист

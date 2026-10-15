@@ -22,9 +22,9 @@ function pWaterTower(x,z,S,name){const M=new Mesh(),H=S.era===2?21:18,tank=S.era
     b.b.deco=[{text:name.toUpperCase(),at:[[x-w/2+0.1,H+1.8,z-3.94],[x+w/2-0.1,H+1.8,z-3.94],[x-w/2+0.1,H+3.2,z-3.94]],w:w-0.2,h:1.4,c:'#e8c56a',font:'bold 1px Impact,sans-serif'}];}
   M.foot=[x-4,x+4,z-4,z+4];return M;}
 // Арка над воротами с названием компании (на улицу)
-function pGateArch(gx,z,S){const M=new Mesh(),col=S.era===2?'#6a6f78':'#2a2c30',w=7.6,sw=Math.min(w-0.4,S.co.length*0.52+1.6);
+function pGateArch(gx,z,S){const M=new Mesh(),col=S.era===2?'#6a6f78':'#2a2c30',gt=gateText(S),w=7.6,sw=Math.min(w-0.4,gt.length*0.48+1.6);
   mBox(M,gx-w/2,3.55,z-0.12,gx+w/2,3.75,z+0.12,col,'metal');const b=mBox(M,gx-sw/2,3.75,z-0.1,gx+sw/2,4.75,z+0.05,'#f1e6c8','paint',['d']);
-  b.b.deco=[{text:S.co.toUpperCase(),at:[[gx-sw/2+0.1,3.8,z-0.115],[gx+sw/2-0.1,3.8,z-0.115],[gx-sw/2+0.1,4.7,z-0.115]],w:sw-0.2,h:0.9,c:'#3a1c10',font:'bold 0.7px Georgia,serif'}];
+  b.b.deco=[{text:gt,at:[[gx-sw/2+0.1,3.8,z-0.115],[gx+sw/2-0.1,3.8,z-0.115],[gx-sw/2+0.1,4.7,z-0.115]],w:sw-0.2,h:0.9,c:'#3a1c10',font:'bold 0.7px Georgia,serif'}];
   M.foot=[gx-4,gx+4,z-1,z+1];return M;}
 // Будка сторожа у ворот
 function pGuard(x,z,S){const M=new Mesh(),wall=S.era===2?'#c9c2b4':'#8a6a44',W=mBox(M,x-1.1,0,z-1,x+1.1,2.5,z+1,wall,S.era===2?'wall':'wood',['d','t']);
@@ -35,15 +35,15 @@ function plgLayout(S){
   const off=pOffice(-46,2,S);add(off.M,'office');L.off={x0:-46,x1:off.x1,z0:2,z1:11};L.doors.push([(-46+off.x1)/2,2]);
   const gx=off.x1+4.5,hx0=off.x1+9,hw=12,hd=18,hH=S.era===2?10:8,n=S.cv?Math.max(2,S.h):S.h;L.gx=gx;L.hx0=hx0;
   let hz1=6+hd;
-  const cw='#aaa498',roofc='#56524e';if(S.cv){const x1=hx0+n*hw-1.2;hz1=6+hd+4;add(pHall(hx0,x1,6,hz1,hH+1,S,{saw:1,sign:'КОНВЕЙЕР',door:open,cw,roofc}),'hall');L.gates.push([(hx0+x1)/2,6]);}
-  else for(let i=0;i<n;i++){const a=hx0+i*hw,b=a+hw-1.2;add(pHall(a,b,6,hz1,hH,S,{sign:i===0?'СБОРКА':null,door:open,cw,roofc}),'hall');L.gates.push([(a+b)/2,6]);}
+  const cw=ppal(S,'hall'),roofc=ppal(S,'roof');if(S.cv){const x1=hx0+n*hw-1.2;hz1=6+hd+4;add(pHall(hx0,x1,6,hz1,hH+1,S,{saw:1,sign:psign(S,'line'),door:open,cw,roofc}),'hall');L.gates.push([(hx0+x1)/2,6]);}
+  else for(let i=0;i<n;i++){const a=hx0+i*hw,b=a+hw-1.2;add(pHall(a,b,6,hz1,hH,S,{sign:i===0?psign(S,'asm'):null,door:open,cw,roofc}),'hall');L.gates.push([(a+b)/2,6]);}
   const xh=hx0+n*hw;L.xh=xh;L.hz1=hz1;
   // трубы котельных — за цехами
   for(let i=0;i<Math.max(1,Math.ceil(n/2));i++){const c=pChimney(hx0+i*hw*2+hw*0.8,hz1+3,S.era===2?32:27,1.05,S);add(c.M,'chim');L.chim.push({p:c.top,k:1});}
   const zb=hz1+7;
-  if(S.fo){add(pHall(hx0,hx0+14,zb,zb+14,8,S,{glass:'#e8913a',sign:'ЛИТЕЙКА',wall:'#7a4636',cw:'#8a8074'}),'hall');const c=pChimney(hx0+17,zb+8,36,1.35,S);add(c.M,'chim');L.chim.push({p:c.top,k:2});}
-  if(S.pr)add(pHall(hx0+(S.fo?20:0),hx0+(S.fo?36:16),zb,zb+14,10,S,{sign:'ПРЕСС',cw}),'hall');
-  const dep=pDepot(xh+4,5,S,{door:open,back:1,wall:S.era===2?'#a8a49a':'#9a4e3a',roof:S.era===0?'#7a6f66':'#9aa0a6',roofMat:'roof'});add(dep.M,'depot');L.dep={x0:xh+4,x1:dep.x1,z0:5,z1:16};L.doors.push([(xh+4+dep.x1)/2,5]);
+  if(S.fo){add(pHall(hx0,hx0+14,zb,zb+14,8,S,{glass:'#e8913a',sign:psign(S,'fo'),wall:'#7a4636'}),'hall');const c=pChimney(hx0+17,zb+8,36,1.35,S);add(c.M,'chim');L.chim.push({p:c.top,k:2});}
+  if(S.pr)add(pHall(hx0+(S.fo?20:0),hx0+(S.fo?36:16),zb,zb+14,10,S,{sign:psign(S,'pr'),cw}),'hall');
+  const dep=pDepot(xh+4,5,S,{door:open,back:1,wall:ppal(S,'hall'),roof:S.era===0?ppal(S,'roof'):'#9aa0a6',roofMat:'roof'});add(dep.M,'depot');L.dep={x0:xh+4,x1:dep.x1,z0:5,z1:16};L.doors.push([(xh+4+dep.x1)/2,5]);
   if(S.el){add(pPower(-32,zb,S),'power');const c=pChimney(-24+2,zb+8,22,0.6,S);add(c.M,'chim');L.chim.push({p:c.top,k:1.5});}
   const rd=pRD(-50,17,S);add(rd.M,'rd');
   // водонапорная башня — у крупного завода (как у Форда в Хайленд-Парке — с названием на баке)
@@ -54,6 +54,8 @@ function plgLayout(S){
   if(S.team>0){const tz=zMax+10,x0=xMin+14,x1=Math.max(xh,x0+90);L.track={cx:(x0+x1)/2,cz:tz+17,rx:(x1-x0)/2,rz:15,w:7};add(pTeam(x0-17,tz+10,S),'team');L.doors.push([x0-12.5,tz+10]);zMax=tz+36;}
   L.zMax=zMax;L.X0=xMin-6;L.X1=L.railX?L.railX+6:L.lot.x1+6;
   add(pFence(L.X0+0.5,L.X1-(L.railX?9:0.5),-5.5,gx,S),'fence');add(pGateArch(gx,-5.5,S),'arch');add(pGuard(gx+5.6,-3.4,S),'guard');
+  // 0.36: флаг страны той эпохи — у ворот
+  add(pFlag(gx-6.2,-4.6,S),'flag');
   return L;}
 // Ограда по периметру: дощатый забор (до 1906), кирпичная стена со столбами, бетон 1920-х
 function plgWall(mb,pts,S){const brick=S.era>=1,H=S.era===0?1.8:S.era===1?2.3:2.5,col=S.era===0?'#8a6a44':S.era===1?'#9a4e3a':'#a8a49a';
@@ -115,7 +117,7 @@ function plgWagon(col){const mb=new MB();mb.e[3]=txLay('wood_wall',1);pBox(mb,0,
 /* ---------- сцена целиком: сетки в видеокарту, надписи, машины, люди, пути ---------- */
 function plgLabels(texts){const S=1024,cv=mkCanvas(S,512),g=cv.getContext('2d'),mb=new MB(true);let x=2,y=2,h=0;
   texts.forEach(({d,n,L})=>{const w=Math.min(1000,Math.round(d.w*90)),hh=Math.round(d.h*90);if(x+w>S){x=2;y+=h+3;h=0;}if(y+hh>512)return;
-    g.save();g.translate(x,y);g.scale(w/d.w,hh/d.h);g.fillStyle=d.c;g.font=d.font;g.textAlign='center';g.textBaseline='middle';g.fillText(d.text,d.w/2,d.h*0.54);g.restore();
+    g.save();g.translate(x,y);g.scale(w/d.w,hh/d.h);g.fillStyle=d.c;g.font=d.font;g.textAlign='center';g.textBaseline='middle';g.fillText(d.text,d.w/2,d.h*0.54,d.w*0.96);g.restore();
     const u0=x/S,v0=y/512,u1=(x+w)/S,v1=(y+hh)/512,o=q=>[q[0]+n[0]*L*1.4,q[1]+n[1]*L*1.4,q[2]+n[2]*L*1.4],p0=o(d.at[0]),p1=o(d.at[1]),p3=o(d.at[2]),p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];
     mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[u0,v1],[u1,v1],[u1,v0],[u0,v0]]);x+=w+3;h=Math.max(h,hh);});
   return {cv,mb};}

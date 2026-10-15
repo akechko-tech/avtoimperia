@@ -50,6 +50,7 @@ function checkEvents(){
   HIST.forEach((h,i)=>{if(h.y!==s.y||h.m!==s.m||s.seen['h'+i]||!inCountries(h.c,s.country)||HIST_WORLD.test(h.title))return;s.seen['h'+i]=1;
     const rid=HIST_REEL[h.img];if(rid){reelUnlock(s,rid);pushEvent({...h,choices:(h.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника','reel:'+rid]])},true);}else pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
+  try{ruCheck(s);}catch(e){console.warn('ru',e);}
   checkShows(s);checkTenders(s);try{histReelCheck(s);}catch(e){console.warn('hist reel',e);}
   try{warTaxNews(s);}catch(e){console.warn('war tax news',e);}
   try{dxCheck(s);}catch(e){console.warn('duel x',e);}
@@ -76,29 +77,33 @@ function rivalNews(s,c,g,nv,cur){
   pushEvent({title:'Конкуренты наступают',kicker:'Рынок · '+SEG[g].name.toLowerCase()+' класс',img:m0&&m0[2]&&IMG[m0[2]]?m0[2]:'',imgCap:m0?`${nm(A)} ${m0[1]}`:'',deck:`${B?`«${nm(A)}», «${nm(B)}»${C?` и «${nm(C)}»`:''}`:`«${nm(A)}»`} отвечают на успех «${s.company}»`,
     text:`Покупатели класса «${SEG[g].name}» всё чаще выбирают «${s.company}»${z?`: в прошлом месяце ваших машин купили ${fmtN(z.you)} из ${fmtN(z.size)} (${pct(sh,0)})`:''}. Старые марки ответили:\n${lines.join('\n')}\nТеперь их машины для покупателей ${rvWord(nv)} привлекательнее, чем до вашего наступления${sh>0?`, и ваша доля в классе может упасть примерно до ${pct(sh2,0)}`:''}.\nКак ответить: ${mine?`«${mine.name}» сейчас — ${Math.round(TT.r*100)}% соперника; `:''}улучшения в конструкторском бюро, новая модель, цена и реклама — или другие классы и страны. История помнит: Ford держал половину рынка США, пока General Motors не предложил покупателям выбор.`},true);}
 /* ---------- заказы ведомств и фирм ---------- */
+// 0.36: Россия — до революции ведомства и управы Империи, после — советские учреждения
+const ruOrg=(a,b)=>typeof G!=='undefined'&&G&&G.y>=1918?b:a;
 const TENDERS={
-  post:{y:1897,kind:'van',n:[4,16],lim:1.1,mo:6,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии'}[c]),
+  post:{y:1897,kind:'van',n:[4,16],lim:1.1,mo:6,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии',ru:ruOrg('Почтово-телеграфное ведомство','Наркомат почт и телеграфов')}[c]),
     text:(o)=>`${o.who} меняет конные повозки на моторные и закупает ${o.n} фургонов для посылок. Главное для почты — надёжность и цена.`},
-  brew:{y:1898,kind:'van',n:[3,10],lim:1.05,mo:5,who:c=>({fr:'Большие магазины «Бон Марше»',de:'Пивоварня «Лёвенброй»',uk:'Универмаг «Хэрродс»',us:'Пивоварня «Анхойзер-Буш»',it:'Пивоварня «Перони»'}[c]),
+  brew:{y:1898,kind:'van',n:[3,10],lim:1.05,mo:5,who:c=>({fr:'Большие магазины «Бон Марше»',de:'Пивоварня «Лёвенброй»',uk:'Универмаг «Хэрродс»',us:'Пивоварня «Анхойзер-Буш»',it:'Пивоварня «Перони»',ru:ruOrg('Торговый дом «Братья Елисеевы»','Моссельпром')}[c]),
     text:(o)=>`${o.who} хочет развозить товар на моторах: заказ на ${o.n} фургонов. Если машины не подведут, будут и новые заказы.`},
-  taxi:{y:1905,kind:'car',n:[20,80],lim:0.92,mo:6,who:c=>'Таксомоторный парк '+({fr:'Парижа',de:'Берлина',uk:'Лондона',us:'Нью-Йорка',it:'Милана'}[c]),
+  taxi:{y:1905,kind:'car',n:[20,80],lim:0.92,mo:6,who:c=>'Таксомоторный парк '+({fr:'Парижа',de:'Берлина',uk:'Лондона',us:'Нью-Йорка',it:'Милана',ru:'Москвы'}[c]),
     text:(o)=>`${o.who} покупает ${o.n} машин для такси. Парк берёт оптом и торгуется, зато машины будут на глазах у всего города.`},
-  fire:{y:1906,kind:'truck',n:[2,8],lim:1.3,mo:6,who:c=>'Пожарная команда '+({fr:'Парижа',de:'Берлина',uk:'Лондона',us:'Нью-Йорка',it:'Турина'}[c]),
+  fire:{y:1906,kind:'truck',n:[2,8],lim:1.3,mo:6,who:c=>'Пожарная команда '+({fr:'Парижа',de:'Берлина',uk:'Лондона',us:'Нью-Йорка',it:'Турина',ru:'Москвы'}[c]),
     text:(o)=>`${o.who} переходит с лошадей на моторы: нужно ${o.n} машин, которые заводятся с полоборота и не ломаются в пути.`},
-  army:{y:1908,to:1914,kind:'truck',n:[10,40],lim:1.2,mo:8,cs:['de','fr','uk'],who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Пруссии',uk:'Военное министерство Британии'}[c]),
+  army:{y:1908,to:1914,kind:'truck',n:[10,40],lim:1.2,mo:8,cs:['de','fr','uk','ru'],who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Пруссии',uk:'Военное министерство Британии',ru:'Военное министерство России'}[c]),
     text:(o)=>`${o.who} платит за грузовики, которые в войну можно будет призвать в армию. Заказ — ${o.n} машин с поставкой за ${o.mo} месяцев.`},
-  city:{y:1912,kind:'truck',n:[5,25],lim:1.1,mo:7,who:c=>'Городская управа '+({fr:'Лиона',de:'Мюнхена',uk:'Манчестера',us:'Чикаго',it:'Рима'}[c]),
+  city:{y:1912,kind:'truck',n:[5,25],lim:1.1,mo:7,who:c=>c==='ru'?ruOrg('Городская управа Киева','Мосгубкоммунхоз'):'Городская управа '+({fr:'Лиона',de:'Мюнхена',uk:'Манчестера',us:'Чикаго',it:'Рима'}[c]),
     text:(o)=>`${o.who} закупает ${o.n} грузовиков для уборки улиц и стройки.`},
   // 0.32: мотоциклы — сельская почта и армия (связные, санитары, пулемётные расчёты в коляске)
-  mpost:{y:1903,to:1926,kind:'moto',n:[8,40],lim:1.05,mo:5,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии'}[c]),
+  mpost:{y:1903,to:1926,kind:'moto',n:[8,40],lim:1.05,mo:5,who:c=>({fr:'Почта Франции',de:'Имперская почта',uk:'Королевская почта',us:'Почта США',it:'Королевская почта Италии',ru:ruOrg('Почтово-телеграфное ведомство','Наркомат почт и телеграфов')}[c]),
     text:(o)=>`${o.who} сажает сельских почтальонов на мотоциклы: заказ на ${o.n} машин. Главное — чтобы мотоцикл заводился в любую погоду и не просил ремонта.`},
-  marmy:{y:1914,to:1919,war:1,gap:7,kind:'moside',n:[80,500],lim:1.15,mo:6,who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Германии',uk:'Военное министерство Британии',us:'Военное министерство США',it:'Военное министерство Италии'}[c]),
+  marmy:{y:1914,to:1919,war:1,gap:7,kind:'moside',n:[80,500],lim:1.15,mo:6,who:c=>({fr:'Военное министерство Франции',de:'Военное министерство Германии',uk:'Военное министерство Британии',us:'Военное министерство США',it:'Военное министерство Италии',ru:'Военное министерство России'}[c]),
     text:(o)=>`Армии нужны мотоциклы: связные возят приказы между штабами, санитары — раненых, в коляске ставят пулемёт. ${o.who} заказывает ${o.n} мотоциклов с поставкой за ${o.mo} месяцев. Заказ займёт мотоцех, зато платят сразу и щедро.`}
 };
 const MOTO_TENDER={moto:1,moside:1};
 function tenderModel(s,kind){if(MOTO_TENDER[kind])return motoForTender(s,kind);return s.models.filter(m=>m.status==='prod'&&!isMoto(m)&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
 function checkTenders(s){
   if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
+  // 0.36: в России с осени 1917 до весны 1921 года (переворот, гражданская война, разруха) заказов у ведомств и фирм нет
+  if(s.country==='ru'&&yf(s)>=1917.8&&yf(s)<1921.5)return;
   const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&(!t.war||isWar(s.y,s.m,s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=(t.gap||18)&&tenderModel(s,t.kind));if(!L.length)return;
   const [k,t]=L[Math.floor(Math.random()*L.length)],md=tenderModel(s,t.kind),scale=(1+T(s)/10)*(s.country==='us'?1.8:1);
   const n=Math.max(2,Math.round((t.n[0]+Math.random()*(t.n[1]-t.n[0]))*scale)),lim=Math.round(refPrice(md,s)*t.lim/10)*10;
@@ -134,6 +139,7 @@ function resolve(key){
   if(/^w:/.test(key))worldResolve(s,key);
   if(/^cc:/.test(key))chanceResolve(s,key);if(key==='brandGo'){try{tab='market';}catch(_){}}
   if(/^ma:/.test(key)&&maResolve(s,key))return;
+  if(/^ru:/.test(key)&&ruResolve(s,key))return;
   if(key==='dxYes'||key==='dxNo')dxAnswer(s,key);
   if(key==='dxDrive'){s.pending.shift();save();render();dxToday(s,key);return;}if(key==='dxSim')dxToday(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);

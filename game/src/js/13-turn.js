@@ -200,12 +200,12 @@ function step(){
 }
 // Сколько можно задолжать до банкротства: запас по сложности плюс месяц отсрочки у поставщиков (детали и зарплата)
 // сколько долгов по счетам терпят поставщики и рабочие: месяц закупок и зарплаты; в кредитный кризис — втрое меньше (все хотят денег сразу)
-function debtLimit(s){const L=s.last,k=(typeof creditState==='function'&&['tight','crash'].includes(creditState(s).k))?0.3:1;return DIF().debt*cpi(s)+(L?((L.mat||0)+(L.wage||0))*k:0);}
+function debtLimit(s){if(s.soviet&&yf(s)<1921.25)return 1e12;const L=s.last,k=(typeof creditState==='function'&&['tight','crash'].includes(creditState(s).k))?0.3:1;return DIF().debt*cpi(s)+(L?((L.mat||0)+(L.wage||0))*k:0);}
 // 0.24: машин армии нужно не больше, чем ей нужно: нужда армии страны в месяц — грузовики, санитарные и штабные машины
 // (по истории: армия США к концу 1918 года — около 50 тысяч машин во Франции, британская — около 110 тысяч за войну,
 // французская — около 90 тысяч, германская — около 40 тысяч); вам — до 60% этого. Остальная мощность военного заказа —
 // военная продукция (моторы, снаряды, каски): её оплачивают так же, но в «Продано» она не входит
-const ARMY_NEED={us:6000,uk:2500,fr:2500,de:1000,it:800};
+const ARMY_NEED={us:6000,uk:2500,fr:2500,de:1000,it:800,ru:1500};
 function milNeed(s){return Math.round((ARMY_NEED[s.country]||1000)*0.6);}
 function endOfYear(s){
   s.m=0;s.y++;

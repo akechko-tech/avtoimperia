@@ -76,7 +76,7 @@ function matchWhen(s,v,r){const sea=v.sea||[3,4,5,6,7,8,9];for(let k=2;k<=5;k++)
 function matchTeams(s,c,y){const ok=t=>t.from<=y&&t.to>=y&&!(t.gap&&y>=t.gap[0]&&y<=t.gap[1])&&!pkIs(t,s)&&!playerMarque(t.n,s);
   const L=RACE_TEAMS.filter(t=>ok(t)&&t.c===c).sort((a,b)=>b.str-a.str);if(L.length)return L;
   // своих гоночных марок в стране ещё нет (Америка 1896) — местная марка с конструктором-любителем
-  return (COMPS[c]||[]).filter(cp=>!ownComp(cp,s)&&cp.since<=y&&(!cp.until||cp.until>=y)&&compVol(cp,s)>0).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,2).map(cp=>({n:compName(cp,s),c,str:0.85,mq:[cp.n]}));}
+  return (COMPS[c]||[]).filter(cp=>!cp.imp&&!ownComp(cp,s)&&cp.since<=y&&(!cp.until||cp.until>=y)&&compVol(cp,s)>0).sort((a,b)=>compVol(b,s)-compVol(a,s)).slice(0,2).map(cp=>({n:compName(cp,s),c,str:0.85,mq:[cp.n]}));}
 // пилот соперника: лучший гонщик марки в этот год (гонщики-основатели, что ездили лишь в своих гонках, — нет)
 function matchDriver(s,t,y,used){used=used||new Set([...(s.drivers||[]),PIONEERS[s.pioneer].drv].filter(Boolean));DRIVERS.forEach(d=>{if(aiOut(s,d.id))used.add(d.id);});
   const ok=d=>drvAllowed(d,null)&&!used.has(d.id),L=teamDrivers(t,y,used).filter(ok).sort((a,b)=>b.sk-a.sk);
@@ -104,7 +104,7 @@ function hcText(hc){return hc===1?'':hc>1?`фора: нужно продать �
 function offerSales(s,foreign){const L=s.last;if(!L||!L.mk)return null;const r=chalRnd(s,foreign?'exp':'sales');
   const mkts=foreign?Object.keys(L.mk).filter(c=>c!==s.country&&COUNTRIES[c]&&(L.mk[c].sold||0)>=5&&dealerCount(s,c)>0&&!warCut(s,c)):[s.country];
   const cand=[];mkts.forEach(c=>{const mk=L.mk[c];if(!mk||!mk.segs)return;SEGK.forEach(g=>{const you=(mk.segs[g]&&mk.segs[g].you)||0;if(you<3)return;
-    (COMPS[c]||[]).forEach((cp,i)=>{if(ownComp(cp,s)||holdOf(s,c,i)||!compAlive(cp,s))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v<=0)return;
+    (COMPS[c]||[]).forEach((cp,i)=>{if(cp.imp||ownComp(cp,s)||holdOf(s,c,i)||!compAlive(cp,s))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v<=0)return;
       // сколько соперник продал в этом классе за прошлый месяц (13-turn.js); нет данных — по годовому объёму марки
       const lg=((s.comps[c]||[])[i]||{}).lg,v1=lg&&lg[g]>0?lg[g]:v/12;if(v1<0.5)return;
       const ratio=you/v1;cand.push({c,g,cp,i,you,v:v1,ratio,d:Math.abs(Math.log(ratio))});});});});
@@ -141,7 +141,7 @@ function trialRival(s,C){const cp=(COMPS[s.country]||[])[C.ci],mdl=cp?compModel(
 function offerTrial(s){const r=chalRnd(s,'trial');if(isWar(s.y,s.m,s.country)||isWar(s.y,Math.min(11,s.m+2),s.country))return null;
   const L=s.last,mk=L&&L.mk&&L.mk[s.country];if(!mk||!mk.segs)return null;
   const gs=SEGK.filter(g=>g!=='sport'&&trialCars(s,g).length&&((mk.segs[g]&&mk.segs[g].you)||0)>=1);if(!gs.length)return null;const g=gs[Math.floor(r()*gs.length)];
-  const cps=(COMPS[s.country]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>!ownComp(x.cp,s)&&!acqHas(s,s.country,x.i)&&x.v>0&&compAlive(x.cp,s)).sort((a,b)=>b.v-a.v).slice(0,4);if(!cps.length)return null;
+  const cps=(COMPS[s.country]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*((cp.mix&&cp.mix[g])||0)})).filter(x=>!x.cp.imp&&!ownComp(x.cp,s)&&!acqHas(s,s.country,x.i)&&x.v>0&&compAlive(x.cp,s)).sort((a,b)=>b.v-a.v).slice(0,4);if(!cps.length)return null;
   const R=cps[Math.floor(r()*cps.length)],nm=compName(R.cp,s),rt=trialRoute(s.country,s.y),P=trialPick(s,g);if(!P)return null;
   const stake=Math.round(clamp((L.rev||0)*0.1,150*cpi(s),15000*cpi(s))/50)*50,end=mi(s)+(rt[2]>3000?2:1);
   const C={type:'trial',g,ci:R.i,mq:nm,route:rt[1],km:rt[2],rh:rt[3],md:P.m.id,end,x:stakeExtra(s,nm,'bt',1)};
@@ -164,7 +164,7 @@ function chalCheck(s){
 function salesChalCheck(){}   // 0.24: по продажам вызывают в общем порядке (chalCheck)
 function chalNews(s,o){const C=s.chal=Object.assign({},o.C,{stake:o.stake,acc:0});s.chalLast=mi(s);s.chalKind=o.kind;
   const H=rivalHero(C.mq,s),h=rivalHead(C.mq,s.y)||(C.ci!=null?rivalHead(((COMPS[C.c||s.country]||[])[C.ci]||{}).n,s.y):null);C.h=h;
-  const who=h?`${h.n}, ${h.role} ${C.mq},`:`Глава марки ${C.mq}`,img=h&&h.wiki&&IMG[h.wiki]?h.wiki:'',cap=h?`${h.n} — ${h.role} ${C.mq}`:'',sc=rivalryScore(s,C.mq),xs=C.x?` А сверху — ${STAKE_X[C.x.k]}.`:'';
+  const who=h?`${h.n}, ${h.role} ${C.mq},`:`Глава марки ${C.mq}`,img=h&&h.wiki&&IMG[h.wiki]?h.wiki:'',cap=h?`${h.n} — ${h.role} ${C.mq}`:'',sc=rivalryScore(s,C.mq),xs=C.x?` А сверху — ${stakeXText(C)}.`:'';
   const T=chalNewsText(s,C,who,xs);
   pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+C.mq+')':C.mq} ${T.verb} «${s.company}»`,deck:T.deck+(sc?` · счёт ${sc}`:''),img,imgCap:cap,text:T.text,choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);}
 function chalNewsText(s,C,who,xs){const st=stakeText(C);

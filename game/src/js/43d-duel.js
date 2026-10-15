@@ -118,16 +118,22 @@ function trophyCabinetCard(s){const T=(s.trophies||[]).slice();if(!T.length)retu
   return `<section class="card trocab" id="sec-trophies"><div class="row"><h2>🏆 Кабинет трофеев</h2><span class="pill">${T.length}</span></div>
     <p class="small muted" style="margin-top:4px">🏆 ${cnt('cup')} · 👑 ${cnt('title')} · 📜 ${cnt('charter')} · 🎖 ${cnt('medal')} · 📈 ${cnt('record')} · 🎯 ${cnt('goal')} · 📰 ${cnt('clip')}. Нажмите на трофей — праздник повторится, а газету и кинохронику можно пересмотреть.</p>${shelves}</section>`;}
 /* ---------- ставка: деньги и иногда ещё что-то ощутимое ---------- */
-const STAKE_X={legacy:'30 очков наследия',bp:'чертежи соперника',drv:'гонщик соперника',dealer:'дилеры соперника',eng:'инженер соперника'};
+const STAKE_X={legacy:'очки наследия',bp:'чертежи соперника',drv:'гонщик соперника',dealer:'дилеры соперника',eng:'инженер соперника'};
+// 0.36: очки наследия — по размеру ставки: мелкий спор на сотни долларов — 2–3 очка, крупное пари — до 10 (было 30 за любое).
+// Из пари за игру — не больше 30 очков (было 90); дальше — половина ставки деньгами
+const LEG_BET_MAX=30;
+function stakeLeg(C){const X=C&&C.x;if(!X||X.k!=='legacy')return 0;if(X.pts==null){const ci=typeof G!=='undefined'&&G?cpi(G):1;X.pts=clamp(Math.round(10*Math.sqrt((C.stake||0)/(4000*ci))),2,10);}return X.pts;}
+function stakeXText(C){const X=C&&C.x;if(!X||!STAKE_X[X.k])return '';if(X.k!=='legacy')return STAKE_X[X.k];const n=stakeLeg(C);return `${n} ${plural(n,'очко','очка','очков')} наследия`;}
 // одно и то же в течение месяца (доска вызовов перерисовывается — ставка не должна прыгать)
 // 0.24: в деловых пари (продажи, пробег — их стало много) гонщика соперника не бывает, а очки наследия — реже
 function stakeExtra(s,mq,salt,biz){const r=(hashStr('sx|'+mq+'|'+mi(s)+'|'+(salt||''))%1000)/1000;if(r<0.45)return null;
   if(biz)return {k:r<0.5?'legacy':r<0.67?'bp':r<0.86?'dealer':'eng',mq};
   return {k:r<0.58?'legacy':r<0.7?'bp':r<0.8?'dealer':r<0.9?'eng':'drv',mq};}
-function stakeText(C){return money(C.stake)+(C.x&&STAKE_X[C.x.k]?` + ${STAKE_X[C.x.k]}`:'');}
+function stakeText(C){const t=stakeXText(C);return money(C.stake)+(t?` + ${t}`:'');}
 function stakeApply(s,C,H){const X=C.x;if(!X)return '';
   // очков наследия из пари — не больше 90 за игру (три выигрыша); дальше — половина ставки деньгами
-  if(X.k==='legacy'){if((s.legBonus||0)>=90){s.cash+=Math.round(C.stake*0.5);return 'вместо очков наследия (их из пари уже 90) — ещё половина ставки деньгами';}s.legBonus=(s.legBonus||0)+30;return '+30 очков наследия';}
+  if(X.k==='legacy'){const n=Math.min(stakeLeg(C),LEG_BET_MAX-(s.legBet||0));if(n<=0){s.cash+=Math.round(C.stake*0.5);return `вместо очков наследия (их из пари уже ${LEG_BET_MAX}) — ещё половина ставки деньгами`;}
+    s.legBonus=(s.legBonus||0)+n;s.legBet=(s.legBet||0)+n;return `+${n} ${plural(n,'очко','очка','очков')} наследия`;}
   if(X.k==='bp'){const L=rdActive(s);if(L.length){L.forEach(p=>{p.need=Math.max((p.prog||0)+1,Math.round(p.need*0.7));});return 'чертежи соперника: работа КБ короче на 30%';}s.rd.bpStock=(s.rd.bpStock||0)+1;return 'чертежи соперника: следующий проект КБ — на 30% быстрее';}
   if(X.k==='eng'){s.rd.engUntil=Math.max(s.rd.engUntil||0,mi(s))+12;return 'инженер соперника переходит в ваше КБ: +15% к работе КБ на год';}
   if(X.k==='dealer'){const c=H.c&&COUNTRIES[H.c]?H.c:s.country;s.dealers[c]=(s.dealers[c]||0)+2;return `2 дилера ${c===s.country?'соперника':'в стране соперника ('+COUNTRIES[c].name+')'} переходят к вам`;}

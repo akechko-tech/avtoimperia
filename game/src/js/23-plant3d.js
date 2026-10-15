@@ -8,6 +8,42 @@ function plantState(s){const capE=capEff(s),halls=clamp(Math.round(1+Math.log10(
     wh:clamp(Math.round(Math.log2(Math.max(12,s.wh||12)/12)),0,6),rd:s.rd?s.rd.lvl:1,team:s.rdept||0,el:techLv(s,'elec'),fo:techLv(s,'foundry'),pr:techLv(s,'press'),
     pa:[...new Set(s.models.filter(x=>x.status==='prod'||x.status==='sale').map(x=>x.paint||'#1b1d22'))].slice(0,3),tr:s.models.some(x=>x.status==='prod'&&isTruck(x))?1:0,
     st:stock<=0?0:stock<5?1:stock<30?2:stock<200?3:4,sz:['Мастерская','Фабрика','Концерн','Автоимперия'].indexOf(rank(companyValue(s))),co:s.company,c:s.country,y:s.y};}
+/* ---------- 0.36: антураж страны ----------
+   Заводы строили по-своему: в США — красный кирпич, а с 1910-х бетон и стекло Альберта Кана; в Англии — тёмный кирпич и сланцевые
+   крыши; во Франции — светлый камень и цинк; в Германии — жёлтый клинкер; в Италии — охра и черепица (а в 1920-е — бетон Линготто);
+   в России — красный кирпич, белая контора и крашеные зелёные крыши. Над воротами — флаг страны той эпохи, на цехах — надписи
+   на её языке. */
+const PLANT_PAL={
+  us:[{hall:'#9a4e3a',roof:'#5d4a42',off:'#a8573f',offRoof:'#3f4650',chim:'#8a3f2c'},{hall:'#a3543c',roof:'#55504a',off:'#b0634a',offRoof:'#3f4650',chim:'#8a3f2c'},{hall:'#c9c4b8',roof:'#6d737b',off:'#d8d0c0',offRoof:'#4f5660',chim:'#8a8580'}],
+  uk:[{hall:'#7e4434',roof:'#4a4e58',off:'#8a4a38',offRoof:'#454a54',chim:'#6e3426'},{hall:'#834636',roof:'#4a4e58',off:'#8f4e3b',offRoof:'#454a54',chim:'#6e3426'},{hall:'#8c5444',roof:'#50545c',off:'#c9b896',offRoof:'#454a54',chim:'#74392a'}],
+  fr:[{hall:'#cdbb98',roof:'#5a6068',off:'#ddd0b4',offRoof:'#4c5560',chim:'#9a5440'},{hall:'#d2c19e',roof:'#5a6068',off:'#e2d6bc',offRoof:'#4c5560',chim:'#9a5440'},{hall:'#d6ccb8',roof:'#6a7078',off:'#e6dcc6',offRoof:'#4c5560',chim:'#8e8a84'}],
+  de:[{hall:'#c9a868',roof:'#5a3c34',off:'#b8946a',offRoof:'#4a3a34',chim:'#8a4a34'},{hall:'#c4a265',roof:'#5a3c34',off:'#bf9c70',offRoof:'#4a3a34',chim:'#8a4a34'},{hall:'#bfa77a',roof:'#5e5048',off:'#d8cbb0',offRoof:'#4a3a34',chim:'#8a5a44'}],
+  it:[{hall:'#d4a86a',roof:'#a85a3a',off:'#e0b880',offRoof:'#a85a3a',chim:'#9a5440'},{hall:'#d8ad70',roof:'#a85a3a',off:'#e4bf88',offRoof:'#a85a3a',chim:'#9a5440'},{hall:'#d9d0be',roof:'#8a8f96',off:'#e8d2a8',offRoof:'#a85a3a',chim:'#9a8a80'}],
+  ru:[{hall:'#a84a34',roof:'#3f6a4a',off:'#efe6d0',offRoof:'#3f6a4a',chim:'#9a4430'},{hall:'#ac4e36',roof:'#3f6a4a',off:'#f0e4c4',offRoof:'#3f6a4a',chim:'#9a4430'},{hall:'#b85a3e',roof:'#4a5a50',off:'#e8dcc0',offRoof:'#3f6a4a',chim:'#8e4a36'}]};
+function ppal(S,k){const P=PLANT_PAL[S&&S.c]||PLANT_PAL.us;return P[clamp(S.era||0,0,2)][k];}
+// надписи на цехах — на языке страны
+const PLANT_SIGN={us:{asm:'ASSEMBLY',line:'ASSEMBLY LINE',fo:'FOUNDRY',pr:'PRESS SHOP'},uk:{asm:'ERECTING SHOP',line:'ASSEMBLY LINE',fo:'FOUNDRY',pr:'PRESS SHOP'},
+  fr:{asm:'MONTAGE',line:'CHAÎNE',fo:'FONDERIE',pr:'EMBOUTISSAGE'},de:{asm:'MONTAGE',line:'FLIESSBAND',fo:'GIESSEREI',pr:'PRESSWERK'},
+  it:{asm:'MONTAGGIO',line:'CATENA',fo:'FONDERIA',pr:'PRESSE'},ru:{asm:'СБОРКА',line:'КОНВЕЙЕР',fo:'ЛИТЕЙНАЯ',pr:'ПРЕССЫ'}};
+function psign(S,k){return (PLANT_SIGN[S&&S.c]||PLANT_SIGN.us)[k];}
+// флаг страны той эпохи на высоком флагштоке (полосы — гранями: видно с обеих сторон)
+// вывеска над воротами — как писали в стране: USINES …, …-WERKE, OFFICINE …, … MOTOR WORKS, ЗАВОДЪ «…»
+function gateText(S){const co=String(S.co||'').toUpperCase(),y=S.y||1900;return {fr:'USINES '+co,de:co+'-WERKE',it:'OFFICINE '+co,uk:co+' MOTOR WORKS',us:co+' MOTOR CAR CO.',ru:(y<1918?'ЗАВОДЪ':'ЗАВОД')+' «'+co+'»'}[S.c]||co;}
+function pFlag(x,z,S){const M=new Mesh(),H=13,w=4.2,h=2.8,y1=H-0.25,y0=y1-h,x0=x+0.12,x1=x0+w,zz=z;
+  pCylM(M,x,0,z,H,0.07,'#d8d6d0');
+  const q=(a,b,c,d,col)=>mFace(M,[[a,c,zz],[b,c,zz],[b,d,zz],[a,d,zz]],col,'paint',null,true);
+  const V=cols=>cols.forEach((c,i)=>q(x0+w*i/cols.length,x0+w*(i+1)/cols.length,y0,y1,c)),Hz=cols=>cols.forEach((c,i)=>q(x0,x1,y1-h*(i+1)/cols.length,y1-h*i/cols.length,c));
+  const c=S.c,y=S.y||1900;
+  if(c==='fr')V(['#2b4f9a','#f4f2ec','#c8322a']);
+  else if(c==='it'){V(['#2f7a45','#f4f2ec','#c8322a']);const cx=x0+w/2,cy=(y0+y1)/2,r=0.32;q(cx-r,cx+r,cy-r*1.2,cy+r,'#c8322a');q(cx-0.06,cx+0.06,cy-r*0.9,cy+r*0.8,'#f4f2ec');q(cx-r*0.8,cx+r*0.8,cy-0.06,cy+0.06,'#f4f2ec');}
+  else if(c==='de')Hz(y>=1919?['#1c1c1c','#c8322a','#e8c24a']:['#1c1c1c','#f4f2ec','#c8322a']);
+  else if(c==='ru'){if(y>=1918)q(x0,x1,y0,y1,'#c8322a');else Hz(['#f4f2ec','#2b4f9a','#c8322a']);}
+  else if(c==='uk'){q(x0,x1,y0,y1,'#22336b');const cx=x0+w/2,cy=(y0+y1)/2,d=(a,b,col,t)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),nx=-dy/L*t,ny=dx/L*t;mFace(M,[[a[0]+nx,a[1]+ny,zz],[b[0]+nx,b[1]+ny,zz],[b[0]-nx,b[1]-ny,zz],[a[0]-nx,a[1]-ny,zz]],col,'paint',null,true);};
+    d([x0,y0],[x1,y1],'#f4f2ec',0.16);d([x0,y1],[x1,y0],'#f4f2ec',0.16);d([x0,y0],[x1,y1],'#c8322a',0.06);d([x0,y1],[x1,y0],'#c8322a',0.06);
+    q(cx-0.3,cx+0.3,y0,y1,'#f4f2ec');q(x0,x1,cy-0.3,cy+0.3,'#f4f2ec');q(cx-0.18,cx+0.18,y0,y1,'#c8322a');q(x0,x1,cy-0.18,cy+0.18,'#c8322a');}
+  else{for(let i=0;i<13;i++)q(x0,x1,y1-h*(i+1)/13,y1-h*i/13,i%2?'#f4f2ec':'#c8322a');q(x0,x0+w*0.42,y1-h*7/13,y1,'#22336b');}
+  M.foot=[x-0.4,x1,z-0.4,z+0.4];return M;}
+function pCylM(M,x,y0,z,H,r,col){const n=6;for(let i=0;i<n;i++){const a=i/n*6.2832,b=(i+1)/n*6.2832;mFace(M,[[x+Math.cos(a)*r,y0,z+Math.sin(a)*r],[x+Math.cos(b)*r,y0,z+Math.sin(b)*r],[x+Math.cos(b)*r,y0+H,z+Math.sin(b)*r],[x+Math.cos(a)*r,y0+H,z+Math.sin(a)*r]],col,'metal',[x,y0+H/2,z]);}}
 // Сдвинуть модель целиком (грани, рисунок на них, пятно тени)
 function mShift(M,dx,dy,dz){const sh=q=>[q[0]+dx,q[1]+dy,q[2]+dz];
   M.F.forEach(f=>{f.p=f.p.map(sh);if(f.deco)f.deco.forEach(d=>{['a','b','dot'].forEach(k=>{if(d[k])d[k]=sh(d[k]);});if(d.poly)d.poly=d.poly.map(sh);if(d.at)d.at=d.at.map(sh);if(d.ring)d.ring=[d.ring[0]+dx,d.ring[1]+dy,d.ring[2]+dz,d.ring[3]];});});
@@ -26,7 +62,7 @@ function pSaw(M,x0,x1,z0,z1,H,col,wall){const n=Math.max(2,Math.round((x1-x0)/5)
 // Ряд окон на фасаде (P(u,v) — точка стены)
 function pWins(f,P,u0,u1,step,v,w,h,o){for(let u=u0;u<=u1+0.01;u+=step)wWin(f,P,u,v,w,h,o);}
 // Цех: кирпич (потом бетон), высокие арочные окна, ворота; фронтон на улицу
-function pHall(x0,x1,z0,z1,H,S,o){o=o||{};const M=new Mesh(),wall=S.era===2?(o.cw||'#b9b4aa'):o.wall||'#9a4e3a',roof=S.sea==='w'?'#e6ecf0':o.roofc||(S.era===2?'#6d737b':'#5d4a42'),glass=o.glass||'#39495a';
+function pHall(x0,x1,z0,z1,H,S,o){o=o||{};const M=new Mesh(),wall=o.wall||o.cw||ppal(S,'hall'),roof=S.sea==='w'?'#e6ecf0':o.roofc||ppal(S,'roof'),glass=o.glass||'#39495a';
   const W=mBox(M,x0,0,z0,x1,H,z1,wall,'wall',['d','t']),F=(u,v)=>[u,v,z0-0.012],Rt=(u,v)=>[x1+0.012,v,u];
   const bw=x1-x0,n=Math.max(1,Math.round(bw/2.6));pWins(W.b,F,x0+bw/(n+1),x1-bw/(n+1)+0.01,bw/(n+1),1.6,1.1,H-3.6,{arch:S.era<2,glass,frame:S.era===2?'#d8d6d0':'#e6dcc6'});
   pWins(W.r,Rt,z0+1.6,z1-1.4,2.3,1.6,1.1,H-3.6,{arch:S.era<2,glass,frame:S.era===2?'#d8d6d0':'#e6dcc6'});
@@ -37,11 +73,11 @@ function pHall(x0,x1,z0,z1,H,S,o){o=o||{};const M=new Mesh(),wall=S.era===2?(o.c
     sb.b.deco=[{text:o.sign,at:[[sx-sw/2+0.1,sy+0.1,z0-0.215-dz],[sx+sw/2-0.1,sy+0.1,z0-0.215-dz],[sx-sw/2+0.1,sy+1.2,z0-0.215-dz]],w:sw-0.2,h:1.1,c:'#e8c56a',font:'bold 0.8px Impact,sans-serif'}];}
   M.foot=[x0-0.6,x1+1.4,z0-0.6,z1+0.6];return M;}
 // Труба: кирпичная, с поясками и оголовком
-function pChimney(x,z,h,r,S){const M=new Mesh(),col=S.era===2?'#8a8580':'#8a3f2c';mBox(M,x-r,0,z-r,x+r,h*0.35,z+r,col,'wall',['d']);const t=mBox(M,x-r*0.8,h*0.35,z-r*0.8,x+r*0.8,h,z+r*0.8,col,'wall',['d']);
+function pChimney(x,z,h,r,S){const M=new Mesh(),col=ppal(S,'chim');mBox(M,x-r,0,z-r,x+r,h*0.35,z+r,col,'wall',['d']);const t=mBox(M,x-r*0.8,h*0.35,z-r*0.8,x+r*0.8,h,z+r*0.8,col,'wall',['d']);
   mBox(M,x-r,h,z-r,x+r,h+0.7,z+r,shade(col,-0.25),'matte',['d']);[0.5,0.7,0.9].forEach(k=>{t.b.deco=t.b.deco||[];t.b.deco.push({a:[x-r*0.8,h*k,z-r*0.8-0.01],b:[x+r*0.8,h*k,z-r*0.8-0.01],w:0.18,c:shade(col,-0.3)});});
   M.foot=[x-r-0.5,x+r+2,z-r-0.5,z+r+0.5];return {M,top:[x,h+0.8,z]};}
 // Контора с часами на башенке и вывеской компании
-function pOffice(x0,z0,S){const M=new Mesh(),fl=[1,2,3,4][Math.max(0,S.sz)],L=10+fl*3,D=9,H=fl*3.4+0.6,wall=S.era===2?'#d8d0c0':'#b7654a',x1=x0+L,z1=z0+D,roof=S.sea==='w'?'#e6ecf0':'#4f5660';
+function pOffice(x0,z0,S){const M=new Mesh(),fl=[1,2,3,4][Math.max(0,S.sz)],L=10+fl*3,D=9,H=fl*3.4+0.6,wall=ppal(S,'off'),x1=x0+L,z1=z0+D,roof=S.sea==='w'?'#e6ecf0':ppal(S,'offRoof');
   const W=mBox(M,x0,0,z0,x1,H,z1,wall,'wall',['d','t']),F=(u,v)=>[u,v,z0-0.012],Rt=(u,v)=>[x1+0.012,v,u];
   for(let f=0;f<fl;f++)pWins(W.b,F,x0+1.6,x1-1.6,(L-3.2)/Math.max(1,Math.round((L-3.2)/2.2)),0.9+f*3.4,1.0,1.7,{frame:'#efe6d2',glass:'#34465a'});
   for(let f=0;f<fl;f++)pWins(W.r,Rt,z0+1.8,z1-1.8,2.6,0.9+f*3.4,1.0,1.7,{frame:'#efe6d2'});
@@ -83,7 +119,7 @@ function pRD(x1,z0,S){const M=new Mesh(),lv=S.rd,big=lv>=7,lab=lv>=5,off=lv>=3,L
   sb.b.deco=[{text:big?'ИНСТИТУТ':lab?'ЛАБОРАТОРИЯ':'КБ',at:[[sx-sw/2+0.1,sy+0.08,z0-(big?2.47:0.18)],[sx+sw/2-0.1,sy+0.08,z0-(big?2.47:0.18)],[sx-sw/2+0.1,sy+0.84,z0-(big?2.47:0.18)]],w:sw-0.2,h:0.76,c:'#e8c56a',font:'bold 0.6px Impact,sans-serif'}];
   return {M,x0};}
 // Электростанция: машинный зал, тонкая труба, мачты с проводами
-function pPower(x0,z0,S){const M=new Mesh(),L=8,D=7,H=6,wall=S.era===2?'#b9b4aa':'#a0533e',x1=x0+L,z1=z0+D;const W=mBox(M,x0,0,z0,x1,H,z1,wall,'wall',['d','t']);
+function pPower(x0,z0,S){const M=new Mesh(),L=8,D=7,H=6,wall=ppal(S,'hall'),x1=x0+L,z1=z0+D;const W=mBox(M,x0,0,z0,x1,H,z1,wall,'wall',['d','t']);
   pWins(W.b,(u,v)=>[u,v,z0-0.012],x0+1.5,x1-1.5,2.5,1.4,1.1,3.2,{arch:1});pGable(M,x0,x1,z0,z1,H,1.8,0.3,S.sea==='w'?'#e6ecf0':'#55504c',wall);
   [x1+2,x1+5].forEach(x=>{mBox(M,x-0.12,0,z0+2-0.12,x+0.12,9,z0+2+0.12,'#5a4a3a','wood');mBox(M,x-1.2,8.4,z0+2-0.08,x+1.2,8.6,z0+2+0.08,'#5a4a3a','wood');});
   M.foot=[x0-0.5,x1+6,z0-0.5,z1+0.5];return M;}
@@ -125,12 +161,12 @@ function plantImage2d(s){const S=plantState(s),key=JSON.stringify(S);let v=PLANT
   const off=pOffice(-44,3,S);addM(off.M,3);
   const rd=pRD(-47,24,S);addM(rd.M,24);
   const hx0=off.x1+5,hw=11,hd=16,hH=S.era===2?9:7.5;
-  if(S.cv){const n=Math.max(2,S.h);addM(pHall(hx0,hx0+n*hw,6,6+hd+4,hH+1,S,{saw:1,sign:'КОНВЕЙЕР'}),6);}
-  else for(let i=0;i<S.h;i++)addM(pHall(hx0+i*hw,hx0+i*hw+hw-1.2,6,6+hd,hH,S,{sign:i===0?'СБОРКА':null}),6+i*0.01);
+  if(S.cv){const n=Math.max(2,S.h);addM(pHall(hx0,hx0+n*hw,6,6+hd+4,hH+1,S,{saw:1,sign:psign(S,'line')}),6);}
+  else for(let i=0;i<S.h;i++)addM(pHall(hx0+i*hw,hx0+i*hw+hw-1.2,6,6+hd,hH,S,{sign:i===0?psign(S,'asm'):null}),6+i*0.01);
   const xh=hx0+(S.cv?Math.max(2,S.h):S.h)*hw;
   for(let i=0;i<Math.max(1,Math.ceil(S.h/2));i++){const c=pChimney(hx0+i*hw*2+hw*0.8,6+hd+3,S.era===2?26:22,0.9,S);addM(c.M,6+hd+3);smoke.push(c.top);}
-  if(S.fo){const f=pHall(hx0,hx0+14,34,48,8,S,{glass:'#e8913a',sign:'ЛИТЕЙКА',wall:'#7a4636'});addM(f,34);const c=pChimney(hx0+17,42,34,1.3,S);addM(c.M,42);smoke.push(c.top);}
-  if(S.pr){addM(pHall(hx0+18,hx0+34,34,48,10,S,{sign:'ПРЕСС'}),34.1);}
+  if(S.fo){const f=pHall(hx0,hx0+14,34,48,8,S,{glass:'#e8913a',sign:psign(S,'fo'),wall:'#7a4636'});addM(f,34);const c=pChimney(hx0+17,42,34,1.3,S);addM(c.M,42);smoke.push(c.top);}
+  if(S.pr){addM(pHall(hx0+18,hx0+34,34,48,10,S,{sign:psign(S,'pr')}),34.1);}
   const dep=pDepot(xh+3,5,S);addM(dep.M,5);
   if(S.el){addM(pPower(-30,30,S),30);const c=pChimney(-22,38,20,0.55,S);addM(c.M,38);smoke.push(c.top);}
   let zMax=0;items.forEach(it=>{if(it.M.foot)zMax=Math.max(zMax,it.M.foot[3]);});

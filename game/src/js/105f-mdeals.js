@@ -19,7 +19,7 @@ function mStat(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return null;const st=((
   const va=full?Math.max(0,st.prev):v,sh=Math.min(0.95,va/mMarket(s,c)),profit=v*P*(s.y<1920?0.09:0.075),capU=Math.max(0.5,Math.round(v/12*0.085*1.1*10)/10),dl=Math.max(1,Math.round(v/12/Math.max(1,dealerTP(s)*MOTO_DLR)));
   const A=capU*capUnitCost(s)*0.55+dl*dealerCost(s)*0.5,V=Math.max(3000,Math.round(Math.max(A*0.8,profit*9+A*0.25)*(DIF().maK??1)/1000)*1000);
   return {cp,nm:compName(cp,s),v,va,sh,P,profit,capU,dl,V};}
-function mdealBlock(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return 'нельзя';if(mholdOf(s,c,i))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function mdealBlock(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp||cp.imp)return 'нельзя';if(mholdOf(s,c,i))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';return '';}
 // цена — оценка и премия владельцам: 20%, а за лидера рынка — больше (до +50% при половине рынка: владельцы знают себе цену)
 function mdealPrem(M){return 0.2+0.6*clamp(M.sh,0,0.5);}

@@ -184,7 +184,32 @@ function raceResults(rc,res,mode,info){
 const RACE_FAIL_PART={'мотор':'e','зажигание':'e','карбюратор':'e','радиатор':'e','клапан':'e','подшипник':'e','цепь привода':'g','цепь':'g','рессора':'c'};
 // «−10% → −9,5%»: после короткой гонки сдвиг меньше процента — с десятыми, чтобы было видно
 function dvPair(c){const d=Math.abs(c.a-c.b)*100<1.5?1:0,f=v=>((v-1)*100).toFixed(d).replace('.',',').replace(/^-/,'−');return f(c.b)+'% → '+f(c.a)+'%';}
-function raceDevLearn(s,rc,all){const out=[],byMd={};
+// 0.36: с гоночной командой (гоночный отдел завода) гонка — ещё и работа КБ: отзыв «участие в гонках должно положительно влиять
+// на КБ и помогать дорабатывать модели — участницы гонок, при наличии гоночной команды». Так и было: гоночные отделы Peugeot,
+// Mercedes, Fiat, Bentley приносили в КБ данные о моторах, тормозах и шинах, а серийные машины получали усиленные детали.
+//  · КБ: 3–6 месяцев после гонки работает быстрее (+4% за уровень гоночного отдела, до +24%); проекты по деталям машины,
+//    которая ехала, сразу продвигаются (гонка — испытания этих деталей на пределе);
+//  · модель-участница: надёжнее (поломок меньше, до −30%) и чуть мощнее (до +4%: гоночная доводка мотора) — навсегда.
+const RR_MAX=0.3,RP_MAX=0.04;
+function raceTeamLearn(s,rc,all){const lv=s.rdept||0;if(lv<1)return null;const mine=all.filter(r=>r.you&&r.md);if(!mine.length)return null;
+  const km=rc.km||100,len=clamp(km/300,0.5,2),out={lv,kb:0,pj:[],md:[]};
+  // КБ быстрее несколько месяцев
+  const k=Math.min(0.24,0.04*lv),mo=Math.round(clamp(2+len*2,3,6));s.rd.raceK=Math.max(k,(s.rd.raceUntil||0)>mi(s)?s.rd.raceK||0:0);s.rd.raceUntil=Math.max(s.rd.raceUntil||0,mi(s)+mo);out.kb=k;out.mo=mo;
+  // проекты по деталям машин, которые ехали: прибавка — как ½–2 месяца работы (длинная гонка — больше; детали той машины — вдвое)
+  const used=new Set();mine.forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(md)PART_KEYS.forEach(q=>used.add(md[q]));});
+  rdActive(s).forEach(pj=>{if(pj.kind==='study')return;const own=used.has(pj.id),add=rdPtsOf(s,pj)*len*(own?1:0.35)*(0.6+0.1*lv);if(add<0.05)return;pj.prog=Math.min(pj.need-0.01,(pj.prog||0)+add);out.pj.push({name:pj.name,add,own});});
+  // модели-участницы: доводка по итогам гонки (сошли по поломке — узнали больше)
+  const seen=new Set();mine.forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(!md||seen.has(md.id))return;seen.add(md.id);
+    const fails=(r.stops||[]).length+(r.dnf?1:0),dr=(0.02+0.01*lv)*len*(1+0.5*Math.min(2,fails)),dp=(0.003+0.0015*lv)*len,r0=md.rr||0,p0=md.rp||0;
+    md.rr=Math.min(RR_MAX,r0+dr*(1-r0/RR_MAX));md.rp=Math.min(RP_MAX,p0+dp*(1-p0/RP_MAX));out.md.push({md,rr:[r0,md.rr],rp:[p0,md.rp]});});
+  const pct2=x=>(Math.round(x*1000)/10).toString().replace('.',',')+'%';
+  addLog(`🏁 Гоночная команда после «${rc.name}»: КБ работает на ${Math.round(k*100)}% быстрее ещё ${mo} мес.${out.pj.length?'; продвинулись проекты: '+out.pj.map(p=>'«'+p.name+'»').join(', '):''}; ${out.md.map(o=>`«${o.md.name}» доведена — поломок меньше на ${pct2(o.rr[1])}, мощность +${pct2(o.rp[1])}`).join('; ')}.`,'good');
+  return out;}
+function raceTeamHTML(T){const pc=x=>(Math.round(x*1000)/10).toString().replace('.',',')+'%';
+  return `<div class="label" style="margin-top:14px">Гоночная команда — КБ и доводка</div>
+    <p class="small good" style="margin-top:4px">🛠 КБ разбирает данные гонки: работает на ${Math.round(T.kb*100)}% быстрее ещё ${T.mo} мес.${T.pj.length?` Продвинулись: ${T.pj.map(p=>'«'+esc(p.name)+'»'+(p.own?' (детали этой машины)':'')).join(', ')}.`:''}</p>
+    ${T.md.map(o=>`<p class="small good" style="margin-top:4px">🔧 <b>«${esc(o.md.name)}»</b> доведена гонкой: поломок меньше на ${pc(o.rr[1])}${o.rr[0]>0.0005?` (было ${pc(o.rr[0])})`:''}, мощность +${pc(o.rp[1])} — у всех машин этой модели.</p>`).join('')}`;}
+function raceDevLearn(s,rc,all){const out=[],byMd={};try{const T=raceTeamLearn(s,rc,all);if(T)out.team=T;}catch(e){console.warn('raceTeam',e);}
   all.filter(r=>r.you&&r.md).forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(!md)return;
     const fails=(r.stops||[]).concat(r.dnf&&RACE_FAIL_PART[r.dnf]&&!(r.stops||[]).includes(r.dnf)?[r.dnf]:[]),fk=new Set(fails.map(w=>RACE_FAIL_PART[w]).filter(Boolean));
     const o=byMd[md.id]||(byMd[md.id]={md,ch:{},know:[]});
@@ -256,6 +281,7 @@ function openRaceResult(){
     ${L.chal&&L.chal.res!=='draw'?`<p class="${L.chal.res==='win'?'good':'bad'}" style="margin-top:8px"><b>⚔️ ${L.chal.match?esc(MATCH_ST[L.chal.C.type]||'Пари')+' с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграна':'проиграна'):'Пари с '+esc(L.chal.C.mq)+' '+(L.chal.res==='win'?'выиграно':'проиграно')}: ${L.chal.res==='win'?'+':'−'}${money(L.chal.C.stake)}</b>${!L.chal.match&&L.chal.them<999?` <span class="small muted">(их лучшая машина — ${L.chal.them}-я)</span>`:''}</p>`:''}
     ${L.rc.match&&(L.vMe||L.vTh)?`<p class="small" style="margin-top:4px">${L.rc.kind==='record'?'Скорость на заезде':'Средняя скорость'}: вы — <b>${L.vMe?L.vMe+' км/ч':'—'}</b>, ${esc(L.rc.rv.n)} — <b>${L.vTh?L.vTh+' км/ч':'—'}</b>${L.rc.purse&&L.best===1?` · сбор с трибун ${money(L.rc.purse)}`:''}</p>`:''}${L.lsr?`<p class="good" style="margin-top:6px"><b>📈 Быстрее мирового рекорда: ${L.lsr.v} км/ч</b> <span class="small muted">(рекорд — ${L.lsr.old[1]} км/ч, ${esc(L.lsr.old[2])})</span></p>`:''}
     ${(L.dev||[]).length?`<div class="label" style="margin-top:14px">Гонка — испытание</div>${L.dev.map(o=>{const p=parts(o.md);return `<p class="small good" style="margin-top:4px">🔧 <b>«${esc(o.md.name)}»</b>: ${Object.keys(o.ch).map(k=>`${RISK_NAME[k]} ближе к ТЗ (${dvPair(o.ch[k])})`).concat(o.know.map(k=>`слабое место — ${esc(p[k].name.toLowerCase())}: улучшение в КБ дешевле`)).join('; ')}${o.mo?` — как ${String(Math.round(o.mo*10)/10).replace('.',',')} мес. доводки в серии`:''}.</p>`;}).join('')}`:''}
+    ${L.dev&&L.dev.team?raceTeamHTML(L.dev.team):''}
     ${(L.inj||[]).length?`<div class="label" style="margin-top:14px">Травмы</div>${L.inj.map(o=>`<p class="small ${o.mine?'bad':'muted'}" style="margin-top:4px">🏥 <b>${esc(o.nm)}</b> (${esc(o.car)}): ${esc(o.txt)} — ${o.retire?'уходит из гонок':'вернётся в '+miDate(o.until)}</p>`).join('')}`:''}
     ${champs}${rc.match?'':dchMini(s,rc.y)}
     <button class="btn primary block" style="margin-top:16px" data-act="close">Дальше</button>`);

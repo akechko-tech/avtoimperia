@@ -182,7 +182,19 @@ function updateRaceHUD(){
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
   svcHUD();try{dxHUD(F);}catch(_){}
   raceFrontRec();
-  const lead=order[0],tim=R.scn&&R.scn.timed,board=order.slice(0,5).map((o,i)=>{const gap=i===0?'':o.dnf?'сход':tim?(o.wait?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'+'+Math.max(0,scnOrderKey(o)-scnOrderKey(lead)).toFixed(0)+' с'):o.fin!==null&&lead.fin!==null?'+'+(o.fin-lead.fin).toFixed(1):'+'+raceGapSec(o)+' с';return `<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}"><span>${i+1}</span>${esc((o.drvName||o.name).split(' ').slice(-1)[0])}<small>${esc(o.you?o.label:o.priv?o.label+' · ч.':o.name)}</small><em>${gap}</em></div>`;}).join('');
+  // 0.36: таблица гонки говорит, что происходит: первые трое, а дальше — вы и ваши соседи (кто впереди и сзади и на сколько секунд),
+  // цвет команды, гонщик и марка, кто в боксах, на ремонте, на спущенном колесе, кто сошёл. Отзыв: «лидерборд ни о чём не говорит»
+  const lead=order[0],tim=R.scn&&R.scn.timed,gapOf=o=>o===lead?0:o.dnf?null:tim?(o.wait?null:Math.max(0,scnOrderKey(o)-scnOrderKey(lead))):o.fin!==null&&lead.fin!==null?o.fin-lead.fin:raceGapSec(o);
+  const pi=order.indexOf(F),pick=new Set([0,1,2]);if(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
+  order.forEach((o,i)=>{if((o.you||o.pmy)&&pick.size<7)pick.add(i);});
+  const idx=[...pick].sort((a,b)=>a-b),gF=pi>=0?gapOf(F):null,sec=x=>x<10&&x%1?x.toFixed(1).replace('.',','):Math.round(x);
+  const stat=o=>o.dnf?'сход':o.fin!==null?'финиш':o.wait?'ждёт старта':o.svc===2||o.pitT>0?'⛽ боксы':o.stopT>0?'🔧 ремонт':o.punct?'🛞 прокол':'';
+  let prev=-1;const board=idx.map(i=>{const o=order[i],g=gapOf(o),st=stat(o),near=pi>=0&&Math.abs(i-pi)===1&&gF!==null&&g!==null&&!o.dnf;
+      const gap=o.dnf?'сход':i===0?(o.fin!==null?'финиш':'лидер'):near?(i<pi?'▲ '+sec(Math.max(0,gF-g))+' с':'▼ '+sec(Math.max(0,g-gF))+' с'):g===null?(o.wait&&tim?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':''):'+'+sec(g)+' с';
+      const who=o===F&&R.mode==='drive'?'Вы':(o.drvName||o.name).split(' ').slice(-1)[0],mq=o.you||o.pmy?(o.label||o.name):o.priv?o.name+' · частник':o.name;
+      const sep=prev>=0&&i>prev+1?'<div class="sep">⋯</div>':'';prev=i;
+      return `${sep}<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}${o.dnf?' out':''}"><span>${i+1}</span><i style="background:${o.color||(o.md&&o.md.paint)||'#888'}"></i>${esc(who)}<small>${esc(mq)}${st&&!o.dnf&&st!=='финиш'?' · '+st:''}</small><em>${gap}</em></div>`;}).join('')
+    +`<div class="foot">${pi>=0?`${pi+1}-й из ${order.length}${pi>0&&gF!==null?` · до лидера ${sec(gF)} с`:''}`:`${order.length} ${plural(order.length,'участник','участника','участников')}`}${order.filter(o=>o.dnf).length?` · сошли ${order.filter(o=>o.dnf).length}`:''}</div>`;
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();try{navTick();}catch(e){console.warn('nav',e);}
   const m=document.getElementById('rMsg');

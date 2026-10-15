@@ -80,7 +80,7 @@ function motoAdvice(s,add){const L=s.last,home=s.country,mk=L&&L.mk&&L.mk[home];
   // мотомастерская: путь к автомобилю
   if(s.motoStart&&!lineOn(s,'car')&&!s.carShopB){const need=carShopNeed(s);
     if(!need.length)add(80,'🚗','Мастерская готова к автомобилю: опыт есть, КБ справится, денег хватает. Поставьте оборудование для автомобилей.',`Оборудование · ${money(carShopCost(s))}`,()=>ACT.carShop(),'plant');
-    else if(s.m===0||s.m===6)add(26,'🚗',`Путь к автомобилю: ${need.join('; ')}.`,'Подробнее',()=>{},'plant');}
+    else if(s.m===0||s.m===6)add(26,'🚗',`Путь к автомобилю: ${need.join('; ')}.`,'Подробнее',()=>{tab='plant';setOpen('carshop',true);return 'fc-carshop';},'plant');}
   // мастерская там, где мотоциклов покупают мало (Германия, Италия до 1920-х): главный рынок — Франция, родина мотоцикла
   if(s.motoStart&&home!=='fr'&&!impLv(s,'fr')&&!tradeBan(s,'fr')&&s.models.some(m=>m.status==='prod'&&isMoto(m))&&(s.m%3===0)){const pf=marketPotential(s,'fr'),ph=homeDemand(s),c1=impCost(s,'fr',1);
     if(pf>Math.max(1,ph*0.5)&&s.cash>c1*1.5)add(70,'🌍',`Дома ваших мотоциклов берут ≈ ${fmtD(ph)} в месяц, а во Франции брали бы ≈ ${fmtD(pf)}: это родина мотоцикла. Импортёр в Париже — главный рынок мастерской.`,`Импортёр · ${money(c1)}`,()=>{impUp(G,'fr');},'market');}

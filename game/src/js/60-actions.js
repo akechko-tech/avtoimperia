@@ -20,7 +20,10 @@ const ACT={
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
   // завод
   capAdd:d=>{if(capOrder(G,+d.n))rerender();},
-  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){t.run();save();render();flushToasts();}},
+  // 0.36: совет может вести к разделу: run() возвращает id раздела — открываем вкладку и прокручиваем к нему («Путь к автомобилю → Подробнее»)
+  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=document.getElementById(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
+  // 0.36: дилеры — быстрый переход между странами
+  dlrC:d=>{G.ui=G.ui||{};G.ui.dlrC=d.c;setOpen('net_'+d.c,true);rerender();},
   helperToggle:()=>{if(!G)return;G.helper=G.helper||{};G.helper.on=!G.helper.on;toast(G.helper.on?'Помощник управляющего включён':'Помощник выключен');save();openSettings();render();},
   whAdd:d=>{if(whOrder(G,+d.n))rerender();},
   capSell:()=>{if(G.cap<=3)return;const n=Math.max(1,Math.round(G.cap*0.2)),v=Math.round(G.plantVal*n/G.cap*0.4);G.cap-=n;G.plantVal-=G.plantVal*n/(G.cap+n);G.cash+=v;addLog(`Часть цехов продана за ${money(v)}.`);rerender();},
