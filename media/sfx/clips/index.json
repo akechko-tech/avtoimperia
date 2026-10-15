@@ -350,5 +350,60 @@
   "d": 60,
   "size": 530134,
   "ref": true
+ },
+ "surf_sea": {
+  "key": "File:Sea waves.wav|0|20.5|v1",
+  "title": "File:Sea waves.wav",
+  "page": "https://commons.wikimedia.org/wiki/File:Sea_waves.wav",
+  "lic": "CC BY-SA 4.0",
+  "by": "Ganesh Mohan T",
+  "g": "sea",
+  "d": 20.5,
+  "size": 164301,
+  "ref": false
+ },
+ "surf_lake": {
+  "key": "File:Lake Okeechobee Surf in April 2016.ogg|30|60|v1",
+  "title": "File:Lake Okeechobee Surf in April 2016.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:Lake_Okeechobee_Surf_in_April_2016.ogg",
+  "lic": "CC BY-SA 4.0",
+  "by": "Andrew Migneault",
+  "g": "sea",
+  "d": 60,
+  "size": 480488,
+  "ref": false
+ },
+ "surf_big": {
+  "key": "File:Wave (Gravity Sound).wav|0|60|v1",
+  "title": "File:Wave (Gravity Sound).wav",
+  "page": "https://commons.wikimedia.org/wiki/File:Wave_(Gravity_Sound).wav",
+  "lic": "CC BY 4.0",
+  "by": "Gravity Sound",
+  "g": "sea",
+  "d": 60,
+  "size": 480817,
+  "ref": false
+ },
+ "gulls": {
+  "key": "File:XC707075 - European Herring Gull - Larus argentatus.mp3|0|19.3|v1",
+  "title": "File:XC707075 - European Herring Gull - Larus argentatus.mp3",
+  "page": "https://commons.wikimedia.org/wiki/File:XC707075_-_European_Herring_Gull_-_Larus_argentatus.mp3",
+  "lic": "CC0",
+  "by": "Sonothèque ADVL",
+  "g": "sea",
+  "d": 19.3,
+  "size": 154967,
+  "ref": false
+ },
+ "gull2": {
+  "key": "File:Mouette-ornitho'log.ogg|0|7.3|v1",
+  "title": "File:Mouette-ornitho'log.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:Mouette-ornitho%27log.ogg",
+  "lic": "CC BY-SA 4.0",
+  "by": "Alacave62",
+  "g": "sea",
+  "d": 7.3,
+  "size": 58558,
+  "ref": false
  }
 }
