@@ -2930,13 +2930,21 @@ function warSeize(s){for(const c of Object.keys(COUNTRIES)){if(c===s.country||!a
     text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление всё, что было у «${s.company}»: ${W.join(', ')}. ${big?'Вложенное потеряно. ':''}Продаж там больше нет — и после войны их не будет, пока вы не откроете рынок заново: с импортёра или покупкой местной марки.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
+  // 0.36: русской фирме с лета 1917 года газета о пошлинах каждой страны не нужна: после переворота трест отрезан от мира сразу (11e-russia.js)
+  if(s.country==='ru'&&t>=1917.5)return;
   Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;const now=tradeRule(c,s.country,t);
     for(const dm of [3,4,5,6]){const fut=tradeRule(c,s.country,t+dm/12);const ch=(fut.ban?1:0)!==(now.ban?1:0)||Math.abs((fut.duty||0)-(now.duty||0))>0.02||(fut.quota||0)!==(now.quota||0);if(!ch)continue;
+      // 0.36: о советских порядках (ввоз закрыт с весны 1918 года) газеты узнают только после переворота — не раньше декабря 1917-го
+      if(c==='ru'&&t<1917.9&&t+dm/12>=1918)return;
+      // и войну газета заранее не предсказывает: блокаду Германии объявляет сама война (11b-world.js), а не заметка весной 1914 года
+      if(fut.ban&&!now.ban&&/^война/.test(fut.why)&&t<1914.58)return;
       const key=c+'|'+fut.why;if(s.tradeSaid[key])return;s.tradeSaid[key]=1;const when=MONTHS_G[(s.m+dm)%12]+' '+(s.y+Math.floor((s.m+dm)/12));
-      const up=fut.ban||(fut.duty||0)>(now.duty||0)||(fut.quota&&!now.quota),mine=dealerCount(s,c)>0||impLv(s,c)>0;
-      if(!mine&&!up)return;
-      pushEvent({kicker:'Торговля',title:`${COUNTRIES[c].name}: ${fut.ban?'ввоз машин закроют':up?'пошлина на машины вырастет':fut.duty===0?'пошлину на машины отменят':'пошлина на машины снизится'}`,deck:`С ${when}: ${fut.why}`,
-        text:`Правительство объявило заранее: с ${when} — ${fut.why}. Сейчас — ${now.ban?'ввоз закрыт':now.quota?'ввоз по квоте':`пошлина ${Math.round((now.duty||0)*100)}%`}.\n${up?(mine?'Импортёры спешат завезти машины до срока. Защита от пошлины — сборка из комплектов (пошлина только на детали) или свой завод в стране.':'Если собирались на этот рынок — думайте о сборке на месте.'):'Покупателям ваши машины станут дешевле — время открыть дилеров.'}`},true);
+      // запрет снимают — «ввоз откроют» (раньше такая заметка называлась «пошлина вырастет»)
+      const open=now.ban&&!fut.ban,up=!open&&(fut.ban||(fut.duty||0)>(now.duty||0)||(fut.quota&&!now.quota)),mine=dealerCount(s,c)>0||impLv(s,c)>0;
+      // о России (рынок маленький) — только тем, кто там торгует
+      if(!mine&&(c==='ru'||!(up||open)))return;
+      pushEvent({kicker:'Торговля',title:`${COUNTRIES[c].name}: ${fut.ban?'ввоз машин закроют':open?'ввоз машин откроют'+(fut.quota?' — по квоте':''):up?'пошлина на машины вырастет':fut.duty===0?'пошлину на машины отменят':'пошлина на машины снизится'}`,deck:`С ${when}: ${fut.why}`,
+        text:`Правительство объявило заранее: с ${when} — ${fut.why}. Сейчас — ${now.ban?'ввоз закрыт':now.quota?'ввоз по квоте':`пошлина ${Math.round((now.duty||0)*100)}%`}.\n${open?`${mine?'Ваши дилеры снова смогут получать машины':'Рынок снова открыт — время открыть дилеров'}: пошлина ${Math.round((fut.duty||0)*100)}%${fut.quota?`, квота — ${fut.quota} машин в год`:''}.`:up?(mine?'Импортёры спешат завезти машины до срока. Защита от пошлины — сборка из комплектов (пошлина только на детали) или свой завод в стране.':'Если собирались на этот рынок — думайте о сборке на месте.'):'Покупателям ваши машины станут дешевле — время открыть дилеров.'}`},true);
       return;}});}
 /* ---------- за месяц ---------- */
 function tradeMonth(s){try{impTick(s);}catch(e){console.warn(e);}try{warSeize(s);}catch(e){console.warn(e);}try{tradeNews(s);}catch(e){console.warn(e);}
@@ -12838,15 +12846,16 @@ function vMarket(){
   const mo=false;
   // 0.36: фирма делает только мотоциклы — сначала её рынок мотоциклов, рынок машин ниже и свёрнут («Ваши 0» сбивал с толку)
   const mOnly=motoVis(s)&&!lineOn(s,'car'),mH=L?(L.mhome||0):0;
-  return `${advisorCard(s,'market')}${chalCard(s,'market')}${mOnly?vMarketMoto():''}${foldCard('mkhome',!mOnly,`<h2>${mOnly?'🚗 Машины · ':''}${COUNTRIES[home].name}</h2><span class="pill ${e.tone}">${e.label}</span>`,`
+  return `${advisorCard(s,'market')}${chalCard(s,'market')}${mOnly?vMarketMoto('mk'):''}${foldCard('mkhome',!mOnly,`<h2>${mOnly?'🚗 Машины · ':''}${COUNTRIES[home].name}</h2><span class="pill ${e.tone}">${e.label}</span>`,`
     ${mOnly?`<p class="small muted" style="margin-top:6px">Ваша фирма пока делает мотоциклы — их продажи в разделе «Мотоциклы» выше. Машины появятся, когда построите автомобильный цех (вкладка «Завод»).</p>`:''}
     <div class="meta"><div>Рынок/мес<b>${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))}</b></div><div>Ваши${mH&&!mOnly?'<small>машин</small>':''}<b>${L?fmtN(L.homeSold):'—'}</b>${mH&&!mOnly?`<small>+ ${fmtN(mH)} мотоциклов</small>`:''}</div><div>Доля<b>${L?pct(L.share,1):'—'}</b></div><div>Цены к 1913<b>${Math.round(cpi(s)*100)}%</b></div></div>${home==='us'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Америке много, но дороги плохи, и машины пока берут неохотно. Во Франции машины уже в моде: откройте там дилеров ниже, пошлина невелика.</p>':''}${home==='it'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Италии мало, свой рынок крошечный. Продавайте и за границей: во Франции покупателей в разы больше, пошлина — 12%.</p>':''}<div class="hr"></div>
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
     <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: для своих перевозок они выбирают машину, на которой дешевле тонно-километр.</p>${horseHTML(s,home,M,R0)}`,`рынок ${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))} в месяц · ваши ${L?fmtN(L.homeSold):'—'} · доля ${L?pct(L.share,1):'—'}`)}
-  ${mOnly?'':vMarketMoto()}
+  ${mOnly?'':vMarketMoto('mk')}
   ${foldCard('dealers',true,'<h2>Дилеры и экспорт</h2>',`<p class="small muted" style="margin-top:2px">Дилер — торговец в своём городе: покупает у вас машины со скидкой ${Math.round(dMargin(s)*100)}%, продаёт их и чинит. Где нет вашего дилера, там машину не купить; больше дилеров, чем городов с покупателями, не бывает. Первые дилеры открываются в больших городах и сразу видят большую часть покупателей. Когда спрос растёт, дилеры сами нанимают продавцов, а к марке, которая хорошо продаётся, новые города просятся сами. Новый дилер — ${money(dc)} (разъездные агенты, вывеска, демонстрационная машина), поддержка ${money(dealerUpkeep(s))} в месяц. За границей сначала нужен импортёр, потом своё отделение и сборочный завод; покупатель там платит пошлину, а вы — доставку (по Европе ${money(40*cpi(s))}, через Атлантику ${money(90*cpi(s))}). Пошлины меняются по годам — смотрите карту «Мир».</p>
     <div class="label" style="margin-top:10px">Скидка дилерам</div><div class="chips">${Object.entries(DPOL).map(([k,p])=>`<button class="chip ${(s.dpol||'std')===k?'on':''}" data-act="dpol" data-v="${k}">${p.n} · ${Math.round(p.m*100)}%<small>${p.d}</small></button>`).join('')}</div>
     <div style="margin-top:6px">${net}</div>`,`дома ${fmtN(dealerCount(s,home))} ${plural(dealerCount(s,home),'дилер','дилера','дилеров')} · покупателей видят ${Math.round(reachOf(s,home)*100)}%${nAb?` · за границей: ${nAb} ${plural(nAb,'страна','страны','стран')}`:''}`)}
+  ${vMarketMoto('comps')}
   ${mo?'':sharesCard(s)}
   ${mo?'':dealsCard(s)}
   ${mo?'':foldCard('buyers',false,'<h2>Покупатели</h2>',`
@@ -12984,7 +12993,8 @@ function lineEmptyCard(s,L){
   return '';}
 function canDesign(s,L){return L==='moto'?lineOn(s,'moto')||!!s.mshopB:lineOn(s,'car')||!!s.carShopB;}
 /* ---------- «Продажи»: рынок мотоциклов дома, мотомарки ---------- */
-function vMarketMoto(){if(!motoVis(G))return '';
+// 0.36: part — 'mk' (рынок мотоциклов) или 'comps' (мотомарки): между ними на «Рынке» теперь стоят дилеры
+function vMarketMoto(part){if(!motoVis(G))return '';
   const s=G,home=s.country,L=s.last,M=L&&L.mk[home],R0=mkCountry(home,s,[]),ms=M&&M.msegs;
   const rowsS=MOTOSEG.map(g=>{const z=ms&&ms[g]?ms[g].size:R0.segs[g].inc,you=ms&&ms[g]?ms[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${fmtD(z)}</td><td class="n">${M?fmtD(you):'—'}</td><td class="n">${M&&z>0?pct(you/z,1):'—'}</td><td class="n">${money(prefP(g,home,s))}</td></tr>`;}).join('');
   const msize=ms?MOTOSEG.reduce((a,g)=>a+(ms[g]?ms[g].size:0),0):MOTOSEG.reduce((a,g)=>a+R0.segs[g].inc,0),csize=M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0),mine=L?(L.mhome||0):0;
@@ -12995,12 +13005,12 @@ function vMarketMoto(){if(!motoVis(G))return '';
     inner=`${th}<span>${esc(r.name)}${r.model?`<small>${esc(r.model)}</small>`:''}</span><div class="bar"><i style="width:${r.sales/mx*100}%;background:${r.you?'var(--brass)':r.color||'#888'}"></i></div><span class="num" style="text-align:right">${fmtN(r.sales)}</span>`;
     return r.cp?`<button class="comp" data-act="mbrand" data-c="${home}" data-i="${r.ci}" aria-label="История марки ${esc(r.name)}">${inner}</button>`:`<div class="comp you">${inner}</div>`;}).join('');
   const br=bikeReach(s,home),rv=MOTOSEG.map(g=>{const v=rivalBoost(s,home,g);return v>0.05?`${SEG[g].name.toLowerCase()} — ${rvWord(v)}`:'';}).filter(Boolean).join(', ');
-  return `${foldCard('mkmoto',true,`<h2>🏍 Мотоциклы · ${COUNTRIES[home].name}</h2>`,`
+  const mk=`${foldCard('mkmoto',true,`<h2>🏍 Мотоциклы · ${COUNTRIES[home].name}</h2>`,`
     <div class="meta"><div>Рынок/мес<b>${fmtD(msize)}</b></div><div>Ваши<b>${L?fmtN(mine):'—'}</b></div><div>Доля<b>${L&&msize>0?pct(mine/msize,1):'—'}</b></div><div>Машин/мес<b>${fmtD(csize)}</b></div></div>
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${rowsS}</table>
     <p class="small muted" style="margin-top:10px">Мотоцикл и дешёвый автомобиль борются за одних покупателей: чем дешевле машина, тем меньше мотоциклов. ${br>0?`До 1920 года мотоциклы продают и велосипедные лавки — их видят ${Math.round(Math.max(br,reachOf(s,home))*100)}% покупателей, даже где ваших дилеров нет.`:'Велосипедные лавки мотоциклами больше не торгуют — только ваши дилеры (дилер продаёт втрое больше мотоциклов, чем машин).'}</p>
-    ${rv?`<p class="small warn" style="margin-top:6px">Мотомарки отвечают на ваш успех: ${rv}.</p>`:''}`,`рынок ${fmtD(msize)} в месяц · ваши ${L?fmtN(mine):'—'}`)}
-  ${foldCard('mcomps',true,`<h2>Мотомарки</h2><span class="pill ${place<=3?'good':'warn'}">вы ${place}-е</span>`,`<p class="small muted" style="margin-top:2px">Продано мотоциклов ${full?`за ${s.y-1} год`:'с начала года'}. Нажмите на марку — её история.</p><div style="margin-top:8px">${comp}</div>`,`вы ${place}-е из ${rows.length}`)}`;}
+    ${rv?`<p class="small warn" style="margin-top:6px">Мотомарки отвечают на ваш успех: ${rv}.</p>`:''}`,`рынок ${fmtD(msize)} в месяц · ваши ${L?fmtN(mine):'—'}`)}`,cmp=`${foldCard('mcomps',true,`<h2>Мотомарки</h2><span class="pill ${place<=3?'good':'warn'}">вы ${place}-е</span>`,`<p class="small muted" style="margin-top:2px">Продано мотоциклов ${full?`за ${s.y-1} год`:'с начала года'}. Нажмите на марку — её история.</p><div style="margin-top:8px">${comp}</div>`,`вы ${place}-е из ${rows.length}`)}`;
+  return part==='mk'?mk:part==='comps'?cmp:mk+cmp;}
 // карточка мотомарки
 function mbrandHTML(c,i,s){const cp=(MCOMPS[c]||[])[i];if(!cp)return '';const H=MBRAND_HIST[cp.n]||{},st=((s.mcomps||{})[c]||[])[i]||{},m=compModel(cp,s),nm=compName(cp,s),im=(m&&m[2]&&IMG[m[2]])||(cp.wiki&&IMG[cp.wiki]);
   const full=(st.prev||0)>0,sales=full?st.prev:(st.yr||0),models=(cp.models||[]).filter(x=>x[0]<=s.y).map(x=>`<li><span class="num">${x[0]}</span> ${esc(x[1])}</li>`).join('');
@@ -16922,7 +16932,9 @@ function renderMgr(){const mg=document.getElementById('rMgr');if(!R||R.mode==='d
   mg.innerHTML=`<div class="mgr-top"><b>${esc(F.drvName||F.label)}</b><span>${esc(F.label)}${F.dnf?' · сход':''}</span></div>
    <div class="mgr-btns">${[['push','Атака'],['norm','Темп'],['save','Беречь']].map(([k,l])=>`<button class="${F.order===k?'on':''}" data-ord="${k}">${l}</button>`).join('')}<button class="${F.pitCall?'on':''}" data-ord="pit">В боксы</button></div>
    <div class="mgr-btns">${[1,2,4].map(v=>`<button class="${R.speed===v?'on':''}" data-spd="${v}">×${v}</button>`).join('')}<button data-ord="fin">Досчитать</button></div>`;}
-function updateRaceHUD(){
+// 0.36: ошибка в табло не должна останавливать гонку (кадр рисуется, а цикл гонки идёт дальше)
+function updateRaceHUD(){try{raceHUD();}catch(e){if(!R.hudErr){R.hudErr=1;console.warn('HUD',e);}}}
+function raceHUD(){
   // 0.33: место — в своём зачёте (автомобили и мотоциклы считаются отдельно)
   const F=R.follow,T=R.trk,cl=F.cls||'car',order=raceOrder().filter(c=>(c.cls||'car')===cl),place=order.indexOf(F)+1;
   document.getElementById('hPos').textContent=place+'/'+order.length+(cl==='moto'?' 🏍':'');
@@ -16950,8 +16962,8 @@ function updateRaceHUD(){
   raceFrontRec();
   // 0.36: таблица гонки говорит, что происходит: первые трое, а дальше — вы и ваши соседи (кто впереди и сзади и на сколько секунд),
   // цвет команды, гонщик и марка, кто в боксах, на ремонте, на спущенном колесе, кто сошёл. Отзыв: «лидерборд ни о чём не говорит»
-  const lead=order[0],tim=R.scn&&R.scn.timed,gapOf=o=>o===lead?0:o.dnf?null:tim?(o.wait?null:Math.max(0,scnOrderKey(o)-scnOrderKey(lead))):o.fin!==null&&lead.fin!==null?o.fin-lead.fin:raceGapSec(o);
-  const pi=order.indexOf(F),pick=new Set([0,1,2]);if(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
+  const lead=order[0],tim=R.scn&&R.scn.timed,gapOf=o=>!o||!lead?null:o===lead?0:o.dnf?null:tim?(o.wait?null:Math.max(0,scnOrderKey(o)-scnOrderKey(lead))):o.fin!==null&&lead.fin!==null?o.fin-lead.fin:raceGapSec(o);
+  const pi=order.indexOf(F),pick=new Set([0,1,2].filter(i=>i<order.length));   // в матче один на один участников двоеif(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
   order.forEach((o,i)=>{if((o.you||o.pmy)&&pick.size<7)pick.add(i);});
   const idx=[...pick].sort((a,b)=>a-b),gF=pi>=0?gapOf(F):null,sec=x=>x<10&&x%1?x.toFixed(1).replace('.',','):Math.round(x);
   const stat=o=>o.dnf?'сход':o.fin!==null?'финиш':o.wait?'ждёт старта':o.svc===2||o.pitT>0?'⛽ боксы':o.stopT>0?'🔧 ремонт':o.punct?'🛞 прокол':'';
@@ -17290,7 +17302,7 @@ function dvPair(c){const d=Math.abs(c.a-c.b)*100<1.5?1:0,f=v=>((v-1)*100).toFixe
 //  · КБ: 3–6 месяцев после гонки работает быстрее (+4% за уровень гоночного отдела, до +24%); проекты по деталям машины,
 //    которая ехала, продвигаются (гонка — испытания этих деталей на пределе) — не чаще раза в два месяца;
 //  · модель-участница: надёжнее (поломок меньше, до −20%) и чуть мощнее (до +3%: гоночная доводка мотора) — навсегда.
-//  Замер (8 гонок по 400 км за сезон, гоночный отдел 3-го уровня): проекты по деталям этой машины — плюс ≈1,7 месяца работы КБ,
+//  Замер (8 гонок по 400 км за сезон, гоночный отдел 3-го уровня): проекты по деталям этой машины — плюс ≈1,9 месяца работы КБ,
 //  остальные — ≈0,5; поломок меньше на ≈14%, мощность +1,8%. Раньше было +10,8 месяца, −26% и +3,6% — гонки заменяли КБ.
 const RR_MAX=0.2,RP_MAX=0.03;
 function raceTeamLearn(s,rc,all){const lv=s.rdept||0;if(lv<1)return null;const mine=all.filter(r=>r.you&&r.md);if(!mine.length)return null;

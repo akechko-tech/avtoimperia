@@ -121,13 +121,21 @@ function warSeize(s){for(const c of Object.keys(COUNTRIES)){if(c===s.country||!a
     text:`Война: власти страны «${COUNTRIES[c].name}» взяли под управление всё, что было у «${s.company}»: ${W.join(', ')}. ${big?'Вложенное потеряно. ':''}Продаж там больше нет — и после войны их не будет, пока вы не откроете рынок заново: с импортёра или покупкой местной марки.`},true);}}
 /* ---------- газета предупреждает о новой пошлине за 3–6 месяцев ---------- */
 function tradeNews(s){if(DIF().simple)return;const t=tNow(s);s.tradeSaid=s.tradeSaid||{};
+  // 0.36: русской фирме с лета 1917 года газета о пошлинах каждой страны не нужна: после переворота трест отрезан от мира сразу (11e-russia.js)
+  if(s.country==='ru'&&t>=1917.5)return;
   Object.keys(COUNTRIES).forEach(c=>{if(c===s.country)return;const now=tradeRule(c,s.country,t);
     for(const dm of [3,4,5,6]){const fut=tradeRule(c,s.country,t+dm/12);const ch=(fut.ban?1:0)!==(now.ban?1:0)||Math.abs((fut.duty||0)-(now.duty||0))>0.02||(fut.quota||0)!==(now.quota||0);if(!ch)continue;
+      // 0.36: о советских порядках (ввоз закрыт с весны 1918 года) газеты узнают только после переворота — не раньше декабря 1917-го
+      if(c==='ru'&&t<1917.9&&t+dm/12>=1918)return;
+      // и войну газета заранее не предсказывает: блокаду Германии объявляет сама война (11b-world.js), а не заметка весной 1914 года
+      if(fut.ban&&!now.ban&&/^война/.test(fut.why)&&t<1914.58)return;
       const key=c+'|'+fut.why;if(s.tradeSaid[key])return;s.tradeSaid[key]=1;const when=MONTHS_G[(s.m+dm)%12]+' '+(s.y+Math.floor((s.m+dm)/12));
-      const up=fut.ban||(fut.duty||0)>(now.duty||0)||(fut.quota&&!now.quota),mine=dealerCount(s,c)>0||impLv(s,c)>0;
-      if(!mine&&!up)return;
-      pushEvent({kicker:'Торговля',title:`${COUNTRIES[c].name}: ${fut.ban?'ввоз машин закроют':up?'пошлина на машины вырастет':fut.duty===0?'пошлину на машины отменят':'пошлина на машины снизится'}`,deck:`С ${when}: ${fut.why}`,
-        text:`Правительство объявило заранее: с ${when} — ${fut.why}. Сейчас — ${now.ban?'ввоз закрыт':now.quota?'ввоз по квоте':`пошлина ${Math.round((now.duty||0)*100)}%`}.\n${up?(mine?'Импортёры спешат завезти машины до срока. Защита от пошлины — сборка из комплектов (пошлина только на детали) или свой завод в стране.':'Если собирались на этот рынок — думайте о сборке на месте.'):'Покупателям ваши машины станут дешевле — время открыть дилеров.'}`},true);
+      // запрет снимают — «ввоз откроют» (раньше такая заметка называлась «пошлина вырастет»)
+      const open=now.ban&&!fut.ban,up=!open&&(fut.ban||(fut.duty||0)>(now.duty||0)||(fut.quota&&!now.quota)),mine=dealerCount(s,c)>0||impLv(s,c)>0;
+      // о России (рынок маленький) — только тем, кто там торгует
+      if(!mine&&(c==='ru'||!(up||open)))return;
+      pushEvent({kicker:'Торговля',title:`${COUNTRIES[c].name}: ${fut.ban?'ввоз машин закроют':open?'ввоз машин откроют'+(fut.quota?' — по квоте':''):up?'пошлина на машины вырастет':fut.duty===0?'пошлину на машины отменят':'пошлина на машины снизится'}`,deck:`С ${when}: ${fut.why}`,
+        text:`Правительство объявило заранее: с ${when} — ${fut.why}. Сейчас — ${now.ban?'ввоз закрыт':now.quota?'ввоз по квоте':`пошлина ${Math.round((now.duty||0)*100)}%`}.\n${open?`${mine?'Ваши дилеры снова смогут получать машины':'Рынок снова открыт — время открыть дилеров'}: пошлина ${Math.round((fut.duty||0)*100)}%${fut.quota?`, квота — ${fut.quota} машин в год`:''}.`:up?(mine?'Импортёры спешат завезти машины до срока. Защита от пошлины — сборка из комплектов (пошлина только на детали) или свой завод в стране.':'Если собирались на этот рынок — думайте о сборке на месте.'):'Покупателям ваши машины станут дешевле — время открыть дилеров.'}`},true);
       return;}});}
 /* ---------- за месяц ---------- */
 function tradeMonth(s){try{impTick(s);}catch(e){console.warn(e);}try{warSeize(s);}catch(e){console.warn(e);}try{tradeNews(s);}catch(e){console.warn(e);}

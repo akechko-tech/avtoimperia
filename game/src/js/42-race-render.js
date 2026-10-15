@@ -156,7 +156,9 @@ function renderMgr(){const mg=document.getElementById('rMgr');if(!R||R.mode==='d
   mg.innerHTML=`<div class="mgr-top"><b>${esc(F.drvName||F.label)}</b><span>${esc(F.label)}${F.dnf?' · сход':''}</span></div>
    <div class="mgr-btns">${[['push','Атака'],['norm','Темп'],['save','Беречь']].map(([k,l])=>`<button class="${F.order===k?'on':''}" data-ord="${k}">${l}</button>`).join('')}<button class="${F.pitCall?'on':''}" data-ord="pit">В боксы</button></div>
    <div class="mgr-btns">${[1,2,4].map(v=>`<button class="${R.speed===v?'on':''}" data-spd="${v}">×${v}</button>`).join('')}<button data-ord="fin">Досчитать</button></div>`;}
-function updateRaceHUD(){
+// 0.36: ошибка в табло не должна останавливать гонку (кадр рисуется, а цикл гонки идёт дальше)
+function updateRaceHUD(){try{raceHUD();}catch(e){if(!R.hudErr){R.hudErr=1;console.warn('HUD',e);}}}
+function raceHUD(){
   // 0.33: место — в своём зачёте (автомобили и мотоциклы считаются отдельно)
   const F=R.follow,T=R.trk,cl=F.cls||'car',order=raceOrder().filter(c=>(c.cls||'car')===cl),place=order.indexOf(F)+1;
   document.getElementById('hPos').textContent=place+'/'+order.length+(cl==='moto'?' 🏍':'');
@@ -184,8 +186,8 @@ function updateRaceHUD(){
   raceFrontRec();
   // 0.36: таблица гонки говорит, что происходит: первые трое, а дальше — вы и ваши соседи (кто впереди и сзади и на сколько секунд),
   // цвет команды, гонщик и марка, кто в боксах, на ремонте, на спущенном колесе, кто сошёл. Отзыв: «лидерборд ни о чём не говорит»
-  const lead=order[0],tim=R.scn&&R.scn.timed,gapOf=o=>o===lead?0:o.dnf?null:tim?(o.wait?null:Math.max(0,scnOrderKey(o)-scnOrderKey(lead))):o.fin!==null&&lead.fin!==null?o.fin-lead.fin:raceGapSec(o);
-  const pi=order.indexOf(F),pick=new Set([0,1,2]);if(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
+  const lead=order[0],tim=R.scn&&R.scn.timed,gapOf=o=>!o||!lead?null:o===lead?0:o.dnf?null:tim?(o.wait?null:Math.max(0,scnOrderKey(o)-scnOrderKey(lead))):o.fin!==null&&lead.fin!==null?o.fin-lead.fin:raceGapSec(o);
+  const pi=order.indexOf(F),pick=new Set([0,1,2].filter(i=>i<order.length));   // в матче один на один участников двоеif(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
   order.forEach((o,i)=>{if((o.you||o.pmy)&&pick.size<7)pick.add(i);});
   const idx=[...pick].sort((a,b)=>a-b),gF=pi>=0?gapOf(F):null,sec=x=>x<10&&x%1?x.toFixed(1).replace('.',','):Math.round(x);
   const stat=o=>o.dnf?'сход':o.fin!==null?'финиш':o.wait?'ждёт старта':o.svc===2||o.pitT>0?'⛽ боксы':o.stopT>0?'🔧 ремонт':o.punct?'🛞 прокол':'';

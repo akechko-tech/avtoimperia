@@ -6,7 +6,7 @@ race=sys.argv[1] if len(sys.argv)>1 else 'pbp-1895'
 tag=sys.argv[2] if len(sys.argv)>2 else 'a'
 with sync_playwright() as p:
     b=p.chromium.launch()
-    pg=b.new_page(viewport={'width':400,'height':820},device_scale_factor=2)
+    pg=b.new_page(viewport={'width':400,'height':820},device_scale_factor=2);pg.set_default_timeout(120000)
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' and 'net::' not in m.text and 'Failed to load' not in m.text else None)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(200)
@@ -25,7 +25,11 @@ with sync_playwright() as p:
     pg.screenshot(path=out+f'r_setup_{tag}.png',full_page=False)
     pg.evaluate("sb.scrollTop=sb.scrollHeight");pg.wait_for_timeout(200);pg.screenshot(path=out+f'r_setup2_{tag}.png')
     pg.click('[data-act=rMode][data-v=drive]');pg.wait_for_timeout(200)
-    pg.click('[data-act=raceGo]');pg.wait_for_timeout(1500)
+    pg.click('[data-act=raceGo]')
+    for _ in range(60):   # 0.30+: перед гонкой — кинохроника (на программном рендере начинается не сразу)
+        pg.wait_for_timeout(500)
+        if pg.evaluate("!!(R&&R.film)"): break
+    pg.evaluate("try{filmSkip()}catch(_){}");pg.wait_for_timeout(800)
     pg.screenshot(path=out+f'r_tips_{tag}.png')
     if pg.evaluate("!document.getElementById('rTips').hidden"):pg.click('#rTipsGo')
     pg.wait_for_timeout(4500)
@@ -40,7 +44,11 @@ with sync_playwright() as p:
     pg.evaluate(f"closeSheet();closePaper();G.pending=[];delete G.raceDone['{race}'];delete G.cres['{race}'];G.season={{}};render()")
     jsclick(f'[data-act=raceSetup][data-k="{race}"]');pg.wait_for_timeout(300)
     pg.click('[data-act=rMode][data-v=manage]');pg.wait_for_timeout(200)
-    pg.click('[data-act=raceGo]');pg.wait_for_timeout(9000);pg.screenshot(path=out+f'r_manage_{tag}.png')
+    pg.click('[data-act=raceGo]')
+    for _ in range(60):
+        pg.wait_for_timeout(500)
+        if pg.evaluate("!!(R&&R.film)"): break
+    pg.evaluate("try{filmSkip()}catch(_){}");pg.wait_for_timeout(7500);pg.screenshot(path=out+f'r_manage_{tag}.png')
     pg.click('#rMgr [data-spd="4"]');pg.wait_for_timeout(6000);pg.screenshot(path=out+f'r_manage2_{tag}.png')
     pg.click('#rMgr [data-ord="fin"]');pg.wait_for_timeout(25000);pg.screenshot(path=out+f'r_manage_res_{tag}.png')
     print('R after',pg.evaluate("!!R"))

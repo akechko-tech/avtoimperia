@@ -35,7 +35,8 @@ function lineEmptyCard(s,L){
   return '';}
 function canDesign(s,L){return L==='moto'?lineOn(s,'moto')||!!s.mshopB:lineOn(s,'car')||!!s.carShopB;}
 /* ---------- «Продажи»: рынок мотоциклов дома, мотомарки ---------- */
-function vMarketMoto(){if(!motoVis(G))return '';
+// 0.36: part — 'mk' (рынок мотоциклов) или 'comps' (мотомарки): между ними на «Рынке» теперь стоят дилеры
+function vMarketMoto(part){if(!motoVis(G))return '';
   const s=G,home=s.country,L=s.last,M=L&&L.mk[home],R0=mkCountry(home,s,[]),ms=M&&M.msegs;
   const rowsS=MOTOSEG.map(g=>{const z=ms&&ms[g]?ms[g].size:R0.segs[g].inc,you=ms&&ms[g]?ms[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${fmtD(z)}</td><td class="n">${M?fmtD(you):'—'}</td><td class="n">${M&&z>0?pct(you/z,1):'—'}</td><td class="n">${money(prefP(g,home,s))}</td></tr>`;}).join('');
   const msize=ms?MOTOSEG.reduce((a,g)=>a+(ms[g]?ms[g].size:0),0):MOTOSEG.reduce((a,g)=>a+R0.segs[g].inc,0),csize=M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0),mine=L?(L.mhome||0):0;
@@ -46,12 +47,12 @@ function vMarketMoto(){if(!motoVis(G))return '';
     inner=`${th}<span>${esc(r.name)}${r.model?`<small>${esc(r.model)}</small>`:''}</span><div class="bar"><i style="width:${r.sales/mx*100}%;background:${r.you?'var(--brass)':r.color||'#888'}"></i></div><span class="num" style="text-align:right">${fmtN(r.sales)}</span>`;
     return r.cp?`<button class="comp" data-act="mbrand" data-c="${home}" data-i="${r.ci}" aria-label="История марки ${esc(r.name)}">${inner}</button>`:`<div class="comp you">${inner}</div>`;}).join('');
   const br=bikeReach(s,home),rv=MOTOSEG.map(g=>{const v=rivalBoost(s,home,g);return v>0.05?`${SEG[g].name.toLowerCase()} — ${rvWord(v)}`:'';}).filter(Boolean).join(', ');
-  return `${foldCard('mkmoto',true,`<h2>🏍 Мотоциклы · ${COUNTRIES[home].name}</h2>`,`
+  const mk=`${foldCard('mkmoto',true,`<h2>🏍 Мотоциклы · ${COUNTRIES[home].name}</h2>`,`
     <div class="meta"><div>Рынок/мес<b>${fmtD(msize)}</b></div><div>Ваши<b>${L?fmtN(mine):'—'}</b></div><div>Доля<b>${L&&msize>0?pct(mine/msize,1):'—'}</b></div><div>Машин/мес<b>${fmtD(csize)}</b></div></div>
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${rowsS}</table>
     <p class="small muted" style="margin-top:10px">Мотоцикл и дешёвый автомобиль борются за одних покупателей: чем дешевле машина, тем меньше мотоциклов. ${br>0?`До 1920 года мотоциклы продают и велосипедные лавки — их видят ${Math.round(Math.max(br,reachOf(s,home))*100)}% покупателей, даже где ваших дилеров нет.`:'Велосипедные лавки мотоциклами больше не торгуют — только ваши дилеры (дилер продаёт втрое больше мотоциклов, чем машин).'}</p>
-    ${rv?`<p class="small warn" style="margin-top:6px">Мотомарки отвечают на ваш успех: ${rv}.</p>`:''}`,`рынок ${fmtD(msize)} в месяц · ваши ${L?fmtN(mine):'—'}`)}
-  ${foldCard('mcomps',true,`<h2>Мотомарки</h2><span class="pill ${place<=3?'good':'warn'}">вы ${place}-е</span>`,`<p class="small muted" style="margin-top:2px">Продано мотоциклов ${full?`за ${s.y-1} год`:'с начала года'}. Нажмите на марку — её история.</p><div style="margin-top:8px">${comp}</div>`,`вы ${place}-е из ${rows.length}`)}`;}
+    ${rv?`<p class="small warn" style="margin-top:6px">Мотомарки отвечают на ваш успех: ${rv}.</p>`:''}`,`рынок ${fmtD(msize)} в месяц · ваши ${L?fmtN(mine):'—'}`)}`,cmp=`${foldCard('mcomps',true,`<h2>Мотомарки</h2><span class="pill ${place<=3?'good':'warn'}">вы ${place}-е</span>`,`<p class="small muted" style="margin-top:2px">Продано мотоциклов ${full?`за ${s.y-1} год`:'с начала года'}. Нажмите на марку — её история.</p><div style="margin-top:8px">${comp}</div>`,`вы ${place}-е из ${rows.length}`)}`;
+  return part==='mk'?mk:part==='comps'?cmp:mk+cmp;}
 // карточка мотомарки
 function mbrandHTML(c,i,s){const cp=(MCOMPS[c]||[])[i];if(!cp)return '';const H=MBRAND_HIST[cp.n]||{},st=((s.mcomps||{})[c]||[])[i]||{},m=compModel(cp,s),nm=compName(cp,s),im=(m&&m[2]&&IMG[m[2]])||(cp.wiki&&IMG[cp.wiki]);
   const full=(st.prev||0)>0,sales=full?st.prev:(st.yr||0),models=(cp.models||[]).filter(x=>x[0]<=s.y).map(x=>`<li><span class="num">${x[0]}</span> ${esc(x[1])}</li>`).join('');

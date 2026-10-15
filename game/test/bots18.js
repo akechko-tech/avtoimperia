@@ -32,7 +32,7 @@ if(A[0]==='all'){
 const bot0=A[0]||'strong',noexp=bot0.endsWith('-noexp'),bot=bot0.replace('-noexp',''),country=A[1]||'us',seed=+(A[2]||7),diff=A[3]||'normal';
 require('./harness.js')(`
 Math.random=(()=>{let a=${seed}*7919%2147483647||1;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
-const BOT=${JSON.stringify(bot)},CC=${JSON.stringify(country)};if(process.env.USEDK)globalThis.USEDK=+process.env.USEDK;if(process.env.BSUS)globalThis.BSUS=+process.env.BSUS;if(process.env.GHOSTK)globalThis.GHOSTK=+process.env.GHOSTK;
+const BOT=${JSON.stringify(bot)},CC=${JSON.stringify(country)};if(process.env.USEDK)globalThis.USEDK=+process.env.USEDK;if(process.env.BSUS)globalThis.BSUS=+process.env.BSUS;if(process.env.GHOSTK)globalThis.GHOSTK=+process.env.GHOSTK;if(process.env.NOTEAM)raceTeamLearn=()=>null;
 newGame(${JSON.stringify(process.env.PION||'custom')},CC,'Бот','${diff}','Первая');${process.env.PB_OFF?`${JSON.stringify(process.env.PB_OFF.split(','))}.forEach(k=>{delete PIONEERS[G.pioneer].b[k];});`:''}
 const NOEXP=${noexp};if(BOT==='strong')G.helper={on:1,noExp:NOEXP?1:0};if(BOT==='debt')G.helper={on:1,keepLoan:1};
 let lastDesign=0,overY=0,peakV=0,peakY=0;

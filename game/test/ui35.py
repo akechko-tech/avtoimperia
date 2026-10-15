@@ -28,7 +28,7 @@ with sync_playwright() as p:
     def heroes(v):
         pg.click(f'[data-act=ngPath][data-v={v}]');pg.wait_for_timeout(250)
         return pg.eval_on_selector_all('#sheetBody [data-act=rpick]' if v=='racer' else '#sheetBody [data-act=pion]','e=>e.map(x=>x.dataset.v)')
-    exp={'maker':['ford','olds','renault','agnelli','custom'],'tech':['benz','maybach','lanchester','bugatti','custom'],'money':['peugeot','durant','rolls','custom'],'moto':['dedion','morris','wanderer','bianchi','custom']}
+    exp={'maker':['ford','olds','renault','agnelli','frese','custom'],'tech':['benz','maybach','lanchester','bugatti','custom'],'money':['peugeot','durant','rolls','ryabush','custom'],'moto':['dedion','morris','wanderer','bianchi','meller','custom']}
     for v,want in exp.items():
         h=heroes(v);ok(sorted(h)==sorted(want),v+': '+', '.join(h))
         ok(pg.query_selector('#sheetBody [data-act=ngBack]') is not None and pg.query_selector('#sheetBody [data-act=startgame]') is not None,v+': «← Другой путь» и старт')

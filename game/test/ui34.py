@@ -53,8 +53,8 @@ with sync_playwright() as p:
     pg.evaluate("document.querySelector('#sheetBody .dbtns').scrollIntoView({block:'center'})");pg.wait_for_timeout(150);pg.screenshot(path=out+'3_truck.png')
     js("closeSheet()")
     # карточка модели
-    js("(()=>{tab='models';setOpen('cmp'+G.models[0].id,true);setOpen('md'+G.models[0].id,true);render();})()");pg.wait_for_timeout(400)
-    el=pg.query_selector('.cmp-x[data-k=comf]')
+    js("(()=>{tab='models';setOpen('cmp'+G.models[0].id,true);setOpen('md'+G.models[0].id,true);setOpen('m'+G.models[0].id+'rv',true);render();})()");pg.wait_for_timeout(400)   # 0.36: сравнение — в разделе «Против соперников»
+    el=pg.query_selector('#view .cmp-x[data-k=comf]')
     if el:
         el.scroll_into_view_if_needed();pg.wait_for_timeout(200);el.click();pg.wait_for_timeout(300);t=pg.inner_text('#xpop') if pg.query_selector('#xpop') else ''
         ok('Комфорт' in t and 'Итого' in t and 'Больше всего' not in t,'карточка модели: окно «Комфорт» (без советов — модель уже в серии)');js("xpopClose()")
@@ -66,7 +66,7 @@ with sync_playwright() as p:
       G.cap=16000;G.plantVal=16000*capUnitCost(G)*0.6;G.staffAuto=true;G.workers=20000;G.dealers={de:2600,fr:700,uk:40,us:900,it:250};G.dcap={de:3.5,fr:3.5,uk:1,us:3.5,it:3.5};G.imp={fr:4,uk:1,us:4,it:4};
       const nm={fr:'Mors',us:'Mercer',it:'Itala'};G.hold=Object.keys(nm).map(c=>{const i=(COMPS[c]||[]).findIndex(cp=>cp.n===nm[c]);return {c,i,n:nm[c],nm:nm[c],mode:'int',st:1,t:mi(G)-60,sh0:{},paid:1,pay:'cash',mood:65};}).filter(h=>h.i>=0);
       for(let k=0;k<14;k++){G.pending=[];if(k===1||k===4)G.models.forEach(m=>{const bp=bestPriceFor(m,G);if(bp&&bp.price)m.price=bp.price;});if(k>=1)G.models[6].price=Math.round(prefP('moto','de',G)*0.6/10)*10;step();}G.pending=[];for(let i=0;i<8;i++)try{closePaper();}catch(_){};
-      tab='models';G.models.forEach(m=>setOpen('md'+m.id,true));render();})()""");pg.wait_for_timeout(600)
+      tab='models';G.models.forEach(m=>{setOpen('md'+m.id,true);['pt','du','co','rv','sp'].forEach(x=>setOpen('m'+m.id+x,true));});render();})()""");pg.wait_for_timeout(600)   # 0.36: карточка модели — по разделам; раскрыты все
     t=pg.inner_text('#app') if pg.query_selector('#app') else pg.inner_text('body')
     ok('как у соперников ≈' in t,'п. 1: в карточке модели — «как у соперников ≈ $…»')
     ok('Для покупателей ≈' in t and 'Открытый кузов' in t,'п. 2: скрытые штрафы и «для покупателей ≈ N% соперника» (открытая народная 1929 года)')
@@ -79,13 +79,18 @@ with sync_playwright() as p:
     if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'6_after.png')
     el=pg.query_selector('text=т·км на')
     if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'7_truck.png')
-    js("(()=>{tab='market';['net_fr','net_us','net_de','exp'].forEach(k=>setOpen(k,true));render();})()");pg.wait_for_timeout(500)
-    t=pg.inner_text('#app') if pg.query_selector('#app') else pg.inner_text('body')
-    ok('Свой завод здесь не нужен' in t and pg.query_selector('[data-act=impSell]') is not None,'п. 5: «Свой завод здесь не нужен» и кнопка «Продать завод»')
-    ok('Сеть продаёт меньше пятой части' in t and pg.query_selector('[data-act=dealerShrink]') is not None,'п. 6: совет о недогруженной сети и «Салоны поменьше»')
-    ok(pg.query_selector('[data-act=leaveCountry]') is not None,'п. 7: «Уйти из страны»')
+    # 0.36: у дилеров — одна страна на экране, остальные — кнопками стран: собираем текст по каждой
+    t='';acts=set()
+    for c in ['de','fr','us','uk','it']:
+        js("(c=>{tab='market';G.ui=G.ui||{};G.ui.dlrC=c;setOpen('net_'+c,true);render();})('%s')"%c);pg.wait_for_timeout(300)
+        t+=pg.inner_text('#app') if pg.query_selector('#app') else pg.inner_text('body')
+        acts|=set(pg.eval_on_selector_all('#view [data-act]','e=>e.map(x=>x.dataset.act)'))
+    ok('Свой завод здесь не нужен' in t and 'impSell' in acts,'п. 5: «Свой завод здесь не нужен» и кнопка «Продать завод»')
+    ok('Сеть продаёт меньше пятой части' in t and 'dealerShrink' in acts,'п. 6: совет о недогруженной сети и «Салоны поменьше»')
+    ok('leaveCountry' in acts,'п. 7: «Уйти из страны»')
     ok('⚔️ Мотоцикл: доля' in t and '· порог 10%/14%' in t and 'натиск' in t,'п. 9: ответ соперников по классам в карточке страны (дешёвый мотоцикл дома: доля выше порога «Историка», натиск)')
     ok('ваши машины видят' in t and 'Для всей страны нужно' in t,'п. 8: охват за границей ниже 30% — сколько нужно дилеров и что они дадут')
+    js("(()=>{G.ui.dlrC='fr';render();})()");pg.wait_for_timeout(300)
     el=pg.query_selector('text=Свой завод здесь не нужен')
     if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'8_country.png')
     js("(()=>{tab='plant';setOpen('cap',true);setOpen('fin',true);setOpen('pl',true);render();})()");pg.wait_for_timeout(500)

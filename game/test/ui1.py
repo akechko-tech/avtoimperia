@@ -12,7 +12,8 @@ with sync_playwright() as p:
     pg.click('[data-act=startgame]');pg.wait_for_timeout(400)
     for i in range(14):
         pg.evaluate("G.pending=[];doStep()")
-    pg.wait_for_timeout(300);pg.screenshot(path=out+'m1.png',full_page=True)
+    pg.evaluate("try{sagaStop();}catch(_){};for(let i=0;i<8;i++)try{closePaper();}catch(_){};closeSheet();G.pending=[];render();")   # 0.35+: после первого хода открывается фильм о герое
+    pg.wait_for_timeout(600);pg.screenshot(path=out+'m1.png',full_page=True)
     for t in ['models','market','log']:
         pg.click(f'.tab[data-t={t}]');pg.wait_for_timeout(300);pg.screenshot(path=out+f'm_{t}.png',full_page=True)
     pg.click('.tab[data-t=models]');pg.click('[data-act=design]');pg.wait_for_timeout(300);pg.screenshot(path=out+'m_design.png')

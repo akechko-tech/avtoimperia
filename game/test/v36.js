@@ -38,5 +38,15 @@ const quiet=()=>{for(let i=0;i<8;i++)try{closePaper();}catch(_){};G.pending=[];}
   ok(!tradeRule('ru','fr',1913).ban&&tradeRule('ru','fr',1919).ban&&tradeRule('ru','fr',1924).quota===300,'ввоз в Россию: пошлина 35% до революции, блокада, потом квота Внешторга');
   newGame('custom','ru','Трест','normal');quiet();G.y=1922;G.m=0;G.soviet={t:mi(G),nep:1};const tr={...G.models[0],id:G.nextId++,name:'Грузовик',b:'b7',e:'e9',g:'g5',c:'c4',k:'k2',w:'w6',status:'prod'};G.models.push(tr);
   ruCheck(G);const o=(G.orders||[]).find(x=>/план 1922/i.test(x.who));ok(o&&o.md===tr.id&&o.price>unitCost(tr,G),'январь 1922 года: главк заказал грузовики — '+(o?o.n+' шт. по '+money(o.price):'нет'));}
+// ---------- 6) газета о пошлинах: о России — только тем, кто там торгует, и без пророчеств ----------
+{const news=(c,dl,y0,y1)=>{newGame(c==='ru'?'frese':'custom',c,'T','normal');quiet();G.y=y0;G.m=0;dl.forEach(k=>{G.dealers[k]=5;});const out=[],pe=pushEvent;
+    pushEvent=(e,x)=>{if(e.kicker==='Торговля')out.push({t:G.y+G.m/12,title:e.title});return pe(e,x);};
+    try{while(G.y<y1){tradeNews(G);G.m++;if(G.m>11){G.m=0;G.y++;}}}finally{pushEvent=pe;}return out;};
+  const a=news('us',[],1900,1930),b=news('us',['ru'],1900,1930),w=news('fr',[],1912,1916),r=news('ru',['fr'],1912,1925);
+  ok(!a.some(n=>/^Россия/.test(n.title)),'США без дилеров в России — без русских новостей ('+a.length+' заметок о пошлинах за 30 лет)');
+  const ban=b.find(n=>/Россия: ввоз машин закроют/.test(n.title)),op=b.find(n=>/Россия: ввоз машин откроют/.test(n.title));
+  ok(ban&&ban.t>=1917.9&&op,'с дилерами в России: о закрытии ввоза — только после переворота ('+(ban?dstr({y:Math.floor(ban.t),m:Math.round(ban.t%1*12)}):'нет')+'), об открытии по квоте — '+(op?dstr({y:Math.floor(op.t),m:Math.round(op.t%1*12)}):'нет'));
+  ok(!w.some(n=>/Германия: ввоз машин закроют/.test(n.title)),'войну газета весной 1914 года не предсказывает');
+  ok(!r.some(n=>n.t>=1917.5),'русской фирме с лета 1917 года — без заметок о пошлинах каждой страны (было пять сразу)');}
 console.log(fails?'ОШИБОК: '+fails:'всё в порядке');
 `);

@@ -43,7 +43,7 @@ function play(mk,yEnd,path){mk();quiet();let n=0;while(G.y<yEnd&&!G.over&&n++<70
   ok(G.emig&&G.country==='fr'&&!dealerCount(G,'ru')&&!G.over,'уехали: «'+G.company+'» во Франции ('+cityOf(G)+'), дилеров в России нет, касса '+money(G.cash));
   const S=(G.saga&&G.saga.seen)||[];ok(S.includes('frese7')&&sagaChapter(G,SAGA.frese.find(c=>c.id==='frese7'),false).t==='На чужбине','фильм Фрезе: глава «На чужбине» ('+S.length+' глав просмотрено)');}
 {play(()=>newGame('ryabush','ru','АМО','normal'),1923,'stay');
-  ok(G.soviet&&G.soviet.nep&&G.country==='ru'&&!G.over,'остались: трест на хозрасчёте, «'+G.company+'» в '+cityOf(G));
+  ok(G.soviet&&G.soviet.nep&&G.country==='ru'&&!G.over,'остались: трест на хозрасчёте, «'+G.company+'», город — '+cityOf(G));
   ok(warCut(G,'fr')&&tradeRule('fr','ru',1923).ban,'за границу трест не торгует: '+tradeRule('fr','ru',1923).why);
   const L=G.log.filter(l=>/План 1922|План 1923|главк заказал|Главк ждёт/.test(l.text)).map(l=>l.text);ok(L.length>=1,'план главка: '+(L[0]||'нет'));
   const S=(G.saga&&G.saga.seen)||[];ok(S.includes('ryab6'),'глава «Костлявая рука» (август 1917) просмотрена');}

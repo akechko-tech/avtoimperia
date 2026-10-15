@@ -20,8 +20,8 @@ with sync_playwright() as p:
     pg.click('.p-btn');pg.wait_for_timeout(400)
     pg.screenshot(path=out+'intro2.png',full_page=False)
     pg.click('.p-btn');pg.wait_for_timeout(300)
-    for i in range(3): pg.evaluate("G.pending=[];doStep();closeSheet();closePaper();G.pending=[];")
-    pg.evaluate("render();window.scrollTo(0,0)");pg.wait_for_timeout(200)
+    for i in range(3): pg.evaluate("G.pending=[];doStep();closeSheet();closePaper();try{sagaStop();}catch(_){};G.pending=[];")
+    pg.evaluate("render();window.scrollTo(0,0)");pg.wait_for_timeout(600)   # фильм о герое закрывается полсекунды
     pg.screenshot(path=out+'plant.png',full_page=True)
     pg.click('.tab[data-t=models]');pg.wait_for_timeout(300);pg.screenshot(path=out+'models.png',full_page=True)
     if pg.query_selector('[data-act=rdPick]'):
@@ -39,7 +39,7 @@ with sync_playwright() as p:
     pg.click('[data-act=choose][data-k=tbid0]');pg.wait_for_timeout(500)
     pg.screenshot(path=out+'launch.png',full_page=False)
     pg.evaluate("closePaper();G.pending=[];")
-    pg.evaluate("G.pending=[];doStep();closeSheet();closePaper();G.pending=[];tab='models';render();window.scrollTo(0,0)");pg.wait_for_timeout(300)
+    pg.evaluate("G.pending=[];doStep();closeSheet();closePaper();try{sagaStop();}catch(_){};G.pending=[];tab='models';render();window.scrollTo(0,0)");pg.wait_for_timeout(300)
     pg.screenshot(path=out+'orders.png',full_page=False)
     # итоги года
     pg.evaluate("G.pending=[];G.lastRank=5;G.homePrev=400;G.homePrev2=200;(G.comps[G.country]||[]).forEach((o,i)=>{o.prev=300-i*20;});yearReview(G);render();")
