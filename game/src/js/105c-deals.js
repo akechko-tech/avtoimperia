@@ -165,7 +165,7 @@ function maSubEvents(s){if(s.pending.length)return false;const now=mi(s);
 const MA_INVESTORS={us:['Пьер Дюпон','банкирский дом J. P. Morgan & Co.','Dillon, Read & Co.'],fr:['Банк Парижа и Нидерландов','дом Ротшильдов','Лионский кредит'],
   uk:['Barclays','лорд Нафилд и компаньоны','Bank of England (через посредников)'],de:['Дойче банк','Дрезднер банк','дом Варбургов'],it:['Коммерческий банк Италии','Кредитный банк Италии','семья Перроне'],ru:['Азовско-Донской банк','Русско-Азиатский банк','братья Рябушинские']};
 function maWho(c,k){const L=MA_INVESTORS[c]||MA_INVESTORS.fr;return L[Math.floor(maRnd(k)*L.length)];}
-function maInbound(s){if(s.over||s.pending.length||s.y<1902)return;const now=mi(s);
+function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.country==='ru'&&!s.emig&&yf(s)>=1917.83))return;const now=mi(s);
   if(maFates(s))return;if(maSubEvents(s))return;if(maSqueeze(s))return;
   // 1) марка ищет покупателя (слабая или падающая; в кризис — чаще)
   const cs=creditState(s).k,crisis=cs==='panic'||cs==='tight'||cs==='crash'||Object.keys(COUNTRIES).some(c=>econ(s.y,s.m,c).f<0.88);

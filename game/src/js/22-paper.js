@@ -33,7 +33,7 @@ function paperHTML(o,s){
   // кинохроника — кадром плёнки прямо в номере (кнопка «▶» запускает ролик, газета остаётся открытой)
   const rid=paperReelId(o),reel=rid?paperReelHTML(rid,s):'',ch=(o.choices||[['Дальше','close']]).filter(c=>!(reel&&/^reel:/.test(c[1])));
   return `<article class="paper ${REDUCE?'':'spin'}">
-    <div class="p-top"><span>${COUNTRIES[s.country].city} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
+    <div class="p-top"><span>${cityOf(s)} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
     <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
@@ -59,11 +59,11 @@ function closePaper(){PW.hidden=true;PW.innerHTML='';}
 /* ---------- газеты об игроке: начало пути, рекорды, новинки, итоги года ---------- */
 // Фото из истории автомобиля, которые нужны газетам (загружаются вместе с остальными)
 const HIST_PHOTOS=['Benz Patent-Motorwagen','Highland Park Ford Plant','Charles F. Kettering','Austin 7','Ford Model A (1927–1931)','Daimler Motor-Lastwagen','Oldsmobile Curved Dash','Ford Model T'];
-const C_GEN={fr:'Франции',de:'Германии',uk:'Британии',us:'Америки',it:'Италии'};
+const C_GEN={fr:'Франции',de:'Германии',uk:'Британии',us:'Америки',it:'Италии',ru:'России'};
 function introPapers(s){const P=PIONEERS[s.pioneer],C=COUNTRIES[s.country],md=s.models[0],p=parts(md),me=P.name==='Свой персонаж',kids=DIF().simple;
   pushEvent({kicker:'Январь 1895',title:'Экипажи без лошадей',deck:'Моторная повозка из диковинки становится делом',img:'Benz Patent-Motorwagen',imgCap:'«Моторваген» Карла Бенца, 1886 год',choices:[['Читать дальше','ok'],['▶ Кинохроника','reel:intro']],
     text:'Десять лет назад Карл Бенц проехал по Мангейму на трёхколёсном «моторвагене», и прохожие шарахались от треска мотора. Теперь Панар и Левассор, Пежо и де Дион собирают экипажи, которые обгоняют почтовых лошадей, а газеты пишут о первых состязаниях моторов. Банкиры пожимают плечами, извозчики смеются: «Купите лучше лошадь».\nНо тот, кто сегодня откроет мастерскую, может посадить за руль весь мир.'},true);
-  pushEvent({own:1,kicker:C.city,title:`«${s.company}» открывает мастерскую`,deck:`${me?'Новый фабрикант':P.name} берётся строить автомобили`,
+  pushEvent({own:1,kicker:cityOf(s),title:`«${s.company}» открывает мастерскую`,deck:`${me?'Новый фабрикант':P.name} берётся строить автомобили`,
     text:`В мастерской ${s.workers} рабочих, в кассе ${money(s.cash)}. Первая машина компании — «${md.name}»: ${p.e.name}, ${p.b.name.toLowerCase()}. Её уже продают ${s.dealers[s.country]} дилера в больших городах.\nЦель — к 1930 году стать величайшей автоимперией эпохи и потягаться с Ford, General Motors, Citroën и FIAT.\n`+
       (kids?'Помощник сам ставит цены, открывает дилеров, строит цеха и склад. Ваше дело — придумывать машины (в конструкторе есть кнопка «Подобрать детали повыгоднее»), улучшать в КБ моторы и другие детали, выигрывать гонки и смотреть, как растёт империя. Советник на вкладке «Завод» подскажет, что делать.'
         :'С чего начать: следите за советником на вкладке «Завод» — у каждого совета есть кнопка. Загрузите конструкторское бюро: улучшения сразу делают машины лучше. Придумайте новую модель — кнопка «Подобрать детали повыгоднее» поможет. Откройте дилеров там, где ваши машины купят. Один ход — один месяц.')},true);}

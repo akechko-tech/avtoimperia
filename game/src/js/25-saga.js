@@ -5,7 +5,7 @@ const SAGA={};
 const BN_ADD={race:1,convEarly:1};
 // 0.35: у пути «Мотомастерская» — свой фильм (25d-saga-moto.js): свой персонаж-мотоциклист не смотрит историю автомобильной мастерской
 function sagaList(s){return (s.pioneer!=='custom'&&SAGA[s.pioneer])||(s.motoStart&&SAGA.moto)||SAGA.custom||[];}
-function sagaFill(t,s){const P=PIONEERS[s.pioneer]||PIONEERS.custom;return String(t||'').replace(/\{name\}/g,s.pioneer==='custom'?(s.hero||'Основатель'):P.name).replace(/\{co\}/g,s.company).replace(/\{city\}/g,(COUNTRIES[s.country]||{}).city||'').replace(/\{y\}/g,s.y);}
+function sagaFill(t,s){const P=PIONEERS[s.pioneer]||PIONEERS.custom;return String(t||'').replace(/\{name\}/g,s.pioneer==='custom'?(s.hero||'Основатель'):P.name).replace(/\{co\}/g,s.company).replace(/\{city\}/g,cityOf(s)).replace(/\{y\}/g,s.y);}
 // Момент главы: год, первая машина, гонка, победа, продажи, война, кризис, 1929…
 function sagaCond(s,w){const S=s.saga||{};
   if(w==='start')return true;
@@ -18,6 +18,7 @@ function sagaCond(s,w){const S=s.saga||{};
   if(w==='finale')return s.y>=1929;
   if(w==='tech:line')return ((s.tech||{}).line||0)>=1;
   if(w==='king')return (s.titles||[]).some(t=>/^king-/.test(t.id||''));
+  const tm=/^t:([\d.]+)$/.exec(w);if(tm)return yf(s)>=+tm[1];
   const m=/^(y|sold|yearSold):(\d+)$/.exec(w);if(m){const v=+m[2];return m[1]==='y'?s.y>=v:m[1]==='sold'?totalSold(s)>=v:Math.max((s.peak||{}).year||0,s.yearSold||0)>=v;}
   return false;}
 /* ---------- 0.25: глава знает, что происходит в игре ----------
@@ -83,6 +84,7 @@ function sagaFxText(fx,s){const L=[];if(!fx)return '';
     L.push(k==='devTime'?`разработка ${pc<0?'быстрее':'медленнее'} на ${Math.abs(pc)}% (${sagaMonths(mo)})`:`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
   Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const pc=Math.round((v-1)*100);if(pc&&SEG[g])L.push(`${g==='moto'?'спрос на мотоциклы':g==='moside'?'спрос на мотоциклы с коляской':'спрос: '+SEG[g].name.toLowerCase()+' класс'} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
   if(fx.mood)L.push(`настроение пилотов ${fx.mood>0?'+':'−'}${Math.abs(fx.mood)}`);
+  if(fx.ruSafe)L.push('если придётся уехать — с собой 85% кассы, а не 60%');
   return L.join(' · ');}
 function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
   if(fx.cash)s.cash+=sagaCash(s,fx);
@@ -94,15 +96,40 @@ function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
   if(fx.rep)s.rep=clamp(s.rep+fx.rep,0,100);
   const B=s.sagaB=s.sagaB||{};Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const o=B[k];if(o&&now<o.until){o.v=BN_ADD[k]?o.v+v:o.v*v;o.until=Math.max(o.until,now+mo);}else B[k]={v,until:now+mo};});
   const SG=s.sagaSeg=s.sagaSeg||{};Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const o=SG[g];if(o&&now<o.until){o.v*=v;o.until=Math.max(o.until,now+mo);}else SG[g]={v,until:now+mo};});
-  if(fx.mood&&typeof moodAdd==='function')(s.drivers||[]).forEach(id=>moodAdd(s,id,fx.mood));}
+  if(fx.mood&&typeof moodAdd==='function')(s.drivers||[]).forEach(id=>moodAdd(s,id,fx.mood));
+  if(fx.ruSafe)s.ruSafe=1;}
 // Бонусы глав действуют вместе с чертами героя (10-model.js: bn, segBonus)
 function sagaBn(k,v){const S=G&&G.sagaB&&G.sagaB[k];if(!S||mi(G)>=S.until)return v;return BN_ADD[k]?v+S.v:v*S.v;}
 function sagaSegK(g){const S=G&&G.sagaSeg&&G.sagaSeg[g];return S&&mi(G)<S.until?S.v:1;}
 /* ---------- кинозал: титр главы, сцены с голосом, выбор, итог ---------- */
 let SAGAP=null;
-function sagaImg(key){const im=key&&IMG[key];return im&&im.src?im.src:'';}
-// Голоса фильма: рассказчица — baya, мужские роли — eugene, женские — xenia (записаны заранее; нет записи — синтезатор устройства)
-const SAGA_NARR='baya';
+// 0.36: фото сцены может зависеть от страны: {de:'…',uk:'…',def:'…'} (война в Германии — немецкая мобилизация, в Британии — Сомма)
+function sagaImg(key){if(key&&typeof key==='object')key=key[G&&G.country]||key.def;const im=key&&IMG[key];return im&&im.src?im.src:'';}
+// Голоса фильма: рассказчик — aidar (0.36: отзыв «рассказчик пищит, верни мужской приятный голос» — вместо рассказчицы baya),
+// мужские роли — eugene, женские — xenia (записаны заранее; нет записи — синтезатор устройства)
+const SAGA_NARR='aidar';
+/* 0.36: строка с подстановками читается живым голосом по частям: «1903 год.» — отдельной записью (1880–1935), остальное — тоже
+   записью, но вместо названия вашей фирмы и имени героя — «фирма», «основатель» (на экране — как было). Иначе — синтезатор. */
+const SAGA_SPOKEN_FIX=[['выбирают «{co}».','выбирают эту марку.'],['дома «{co}» знают хуже','дома марку знают хуже'],['вывеску: «{co}».','вывеску со своим именем.'],
+  ['принадлежит «{co}».','принадлежит фирме.'],['первая «{co}» на четырёх колёсах','первая машина фирмы на четырёх колёсах'],['с эмблемой «{co}»','с эмблемой фирмы'],
+  ['Покупатель знает: «{co}» довезёт','Покупатель знает: эта марка довезёт'],['«{co}» — одно из первых имён Милана','Эта марка — одно из первых имён Милана'],
+  ['Велосипеды, мотоциклы, машины — «{co}» делает всё','Велосипеды, мотоциклы, машины — фирма делает всё']];
+const SAGA_FUNC=/^(С|с|чем|Что|что|Как|как|Где|где|Чем|ли|Если|если|А|а|но|Но|—|и|И|то|теперь|уже|когда|Когда)$/;
+function sagaSpoken(t){let x=String(t||''),y=false;
+  x=x.replace(/^(\{city\}|[А-ЯЁ][а-яё-]+), \{y\} год\. /,()=>{y=true;return '';}).replace(/^\{y\} год\. /,()=>{y=true;return '';});
+  SAGA_SPOKEN_FIX.forEach(([a,b])=>{x=x.split(a).join(b);});
+  x=x.replace(/(^|[.!?]\s+)\{name\} /g,'$1Основатель ').replace(/ \{name\} /g,' ');
+  x=x.replace(/(^|\s)у «\{co\}»/g,'$1у фирмы');
+  // название после слова «машины», «завод», «мотоциклы»… можно опустить; после «как», «что», «если» — «фирма» (перед глаголом в неопределённой форме — «фирме»)
+  x=x.replace(/(\S+) «\{co\}»( ?)(\S*)/g,(m,w,sp,nx)=>{if(/[.!?]$/.test(w))return w+' Фирма'+sp+nx;
+    if(SAGA_FUNC.test(w)||/[,:—]$/.test(w))return w+' '+(/^(\S+(ть|ти|чь)|на)[?,.]?$/.test(nx)?'фирме':'фирма')+sp+nx;return w+sp+nx;});
+  x=x.replace(/^«\{co\}» /,'Фирма ');
+  return /[{}]/.test(x)?null:{y,x:x.trim()};}
+function sagaVoiceParts(t,s){const raw=String(t||'');if(!/[{}]/.test(raw))return [sagaFill(raw,s)];const sp=sagaSpoken(raw);if(!sp)return null;return (sp.y?[s.y+' год.']:[]).concat(sp.x?[sp.x]:[]);}
+function sagaSay(t,spk,onEnd){const s=G,txt=sagaFill(t,s),P=sagaVoiceParts(t,s);
+  if(P&&P.length){const d=P.length>1?voiceSayParts(P,spk,onEnd):voiceDur(P[0],spk)?voiceSay(P[0],spk,onEnd):0;if(d)return d;}
+  return voiceSay(txt,spk,onEnd);}
+function sagaPreload(t,spk){try{const P=sagaVoiceParts(t,G);if(P&&P[0])voicePreload(P[0],spk);}catch(_){}}
 function sagaVoiceOf(sc){return sc&&sc.who?voiceOfWho(sc.who):SAGA_NARR;}
 function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=sagaChapter(s,L[k],!replay);if(!ch){if(!replay)sagaDone(id,-1);return;}
   sagaStop();const P=PIONEERS[s.pioneer]||PIONEERS.custom,el=document.createElement('div');el.className='sg';el.id='sagaScreen';
@@ -131,7 +158,7 @@ function sagaSetBg(src){const Q=SAGAP;if(!Q)return;const im=Q.el.querySelector('
 function sagaTitle(){const Q=SAGAP,s=G,ch=Q.ch,n=Q.k+1;
   sagaSetBg(sagaImg((ch.sc.find(x=>x.img)||{}).img)||Q.portrait);
   Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-title in"><div class="sg-kick">${esc(PIONEERS[s.pioneer]&&s.pioneer!=='custom'?PIONEERS[s.pioneer].name:sagaFill('{name}',s))} · фильм</div><div class="sg-ch">Глава ${n}</div><div class="sg-t">${esc(sagaFill(ch.t,s))}</div>${ch.y?`<div class="sg-y">${ch.y}</div>`:''}</div>`;
-  const sc0=ch.sc[0];if(sc0)try{voicePreload(sagaFill(sc0.say||sc0.line||'',s),sagaVoiceOf(sc0));}catch(_){}
+  const sc0=ch.sc[0];if(sc0)sagaPreload(sc0.say||sc0.line||'',sagaVoiceOf(sc0));
   clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),2600);}
 function sagaNext(){const Q=SAGAP;if(!Q||Q.q)return;sagaGo(Q.i+1);}
 function sagaGo(i){const Q=SAGAP;if(!Q)return;if(Q.q){Q.q=0;Q.el.querySelector('.sg-skip').style.visibility='';}clearTimeout(Q.timer);voiceStop();Q.i=i;const s=G,sc=Q.ch.sc[i];if(!sc){sagaQuestion();return;}
@@ -139,22 +166,22 @@ function sagaGo(i){const Q=SAGAP;if(!Q)return;if(Q.q){Q.q=0;Q.el.querySelector('
   const txt=sagaFill(sc.say||sc.line||'',s),who=sc.who?sagaFill(sc.who,s):'';
   Q.el.querySelector('.sg-body').innerHTML=sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
   sagaDots();
-  const nx=Q.ch.sc[i+1];if(nx)try{voicePreload(sagaFill(nx.say||nx.line||'',s),sagaVoiceOf(nx));}catch(_){}
+  const nx=Q.ch.sc[i+1];if(nx)sagaPreload(nx.say||nx.line||'',sagaVoiceOf(nx));
   // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения
-  const d=voiceSay(txt,sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),450);}});
+  const d=sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),450);}});
   Q.timer=setTimeout(()=>{if(SAGAP===Q&&Q.i===i)sagaNext();},(d?d+6:Math.max(3.8,1.6+txt.length/14))*1000);}
 function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);voiceStop();const s=G,ch=Q.ch;Q.q=1;Q.i=ch.sc.length;sagaDots();
   if(Q.replay){const pk=(s.saga&&s.saga.pick||{})[ch.id],o=ch.o&&ch.o[pk];Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${o?`<p class="sg-res">Ваш выбор: «${esc(sagaFill(o.t,s))}». ${esc(sagaFill(o.res,s))}</p>`:''}<button class="sg-o" data-k="-1"><b>Закрыть</b></button></div>`;}
   else Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${(ch.o||[]).map((o,i)=>`<button class="sg-o" data-k="${i}"><b>${esc(sagaFill(o.t,s))}</b><small>${esc(sagaFxText(o.fx,s))}</small></button>`).join('')}</div>`;
   Q.el.querySelector('.sg-skip').style.visibility='hidden';
   Q.el.querySelectorAll('.sg-o').forEach(b=>b.onclick=e=>{e.stopPropagation();sagaPick(+b.dataset.k);});
-  if(!Q.replay)voiceSay(sagaFill(ch.q,s),SAGA_NARR);}
+  if(!Q.replay)sagaSay(ch.q,SAGA_NARR);}
 function sagaPick(k){const Q=SAGAP;if(!Q)return;const s=G,ch=Q.ch,o=ch.o&&ch.o[k];
   if(Q.replay||k<0||!o){sagaStop();return;}
   sagaApply(s,o.fx);addLog(`🎬 «${sagaFill(ch.t,s)}»: ${sagaFill(o.t,s)}. ${sagaFill(o.res,s)}`,'hist');
   Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><p class="sg-res">${esc(sagaFill(o.res,s))}</p><p class="sg-fx">${esc(sagaFxText(o.fx,s))}</p><button class="sg-o" data-k="-1"><b>Дальше ▸</b></button></div>`;
   Q.el.querySelector('.sg-o').onclick=e=>{e.stopPropagation();sagaDone(ch.id,k);};
-  voiceSay(sagaFill(o.res,s),SAGA_NARR);}
+  sagaSay(o.res,SAGA_NARR);}
 function sagaDone(id,k){const s=G,S=s.saga=s.saga||{seen:[],pick:{},last:mi(s)};if(!S.seen.includes(id))S.seen.push(id);if(k>=0){S.pick=S.pick||{};S.pick[id]=k;}
   sagaStop();const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);save();render();}
 function sagaStop(){const Q=SAGAP;SAGAP=null;voiceStop();if(!Q)return;clearTimeout(Q.timer);try{if(AU.sagaHold){AU.sagaHold=false;musicPlay();}}catch(_){}Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},400);}

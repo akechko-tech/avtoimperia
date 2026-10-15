@@ -1,6 +1,7 @@
 /* ================= Звуки мира в гонке — как их слышит гонщик =================
    Записи с Викисклада (общественное достояние и свободные лицензии): трибуны, зрители у дороги, аплодисменты, птицы по месту
-   и времени суток, колокола, собаки, петухи, повозки, духовой оркестр, паровоз, дождь, гром, река, овцы; прибой — синтез.
+   и времени суток, колокола, собаки, петухи, повозки, духовой оркестр, паровоз, дождь, гром, река, овцы, прибой и чайки (0.36; до загрузки
+   записи прибоя — синтез).
    0.20: всё слышно с места гонщика. У каждого звука есть источник на трассе: трибуна, кучка зрителей, церковь, хутор с собакой
    и петухом, повозка, река у моста, море, оркестр, громкоговоритель (рупор) у трибун, жандарм, отара, поезд, соседи по гонке.
    Громкость — по расстоянию (−6 дБ на каждое удвоение, шкала для игры помягче), даль срезает верхи, сзади — глуше, панорама — по
@@ -37,7 +38,7 @@ function ambSurfBuf(){if(AMB.buf.surf)return AMB.buf.surf;const c=AU.ctx,sr=c.sa
 
 /* ---------- слух гонщика: уровень у уха, даль, панорама, шум кабины ---------- */
 // Уровни источников, дБ на расстоянии 1 м (по живым замерам, округлённо): трибуна — сотни людей, кучка зрителей — 5 человек на фигуру
-const AMB_L={stand:95,standCheer:107,crowd:66,crowdCheer:84,bells:118,dog:96,rooster:100,horse:80,stream:82,surf:86,band:104,pa:102,paLoud:108,gend:102,sheep:88,train:110,whistle:128,horn:104,fanfare:106,applause:103};
+const AMB_L={stand:95,standCheer:107,crowd:66,crowdCheer:84,bells:118,dog:96,rooster:100,horse:80,stream:82,surf:84,surfBeach:92,gull:92,band:104,pa:102,paLoud:108,gend:102,sheep:88,train:110,whistle:128,horn:104,fanfare:106,applause:103};
 // шум в кабине у уха (дБ): ветер в открытой машине, мотор, шины
 function ambNoise(me){const v=Math.abs(me.vx||0),rpm=clamp(me.rpm||0,0,1.1),thr=me.thr||0,on=!(me.dnf&&v<0.5);
   const Lw=v>1?62+37.7*Math.log10(Math.max(v,1.5)/10):36,Le=on?57+13*rpm+5*thr:30,Lr=v>1?48+20*Math.log10(Math.max(v,1.5)/10)+(me.off?6:0):30;
@@ -54,6 +55,13 @@ function ambHear(L,x,z,r0){const Ls=AMB.lis;if(!Ls)return {g:0,pan:0,lp:16000,d:
   return {g:Math.min(0.85,ambLvl(Lr)*ambMask(Lr-Ls.N)),pan:clamp((dx*Ls.rx+dz*Ls.rz)/d,-1,1)*0.85,lp,d,Lr};}
 // «разлитый» звук (птицы, сверчки): уровень у уха уже задан
 function ambHearD(L){const Ls=AMB.lis;if(!Ls||L<=0)return 0;const Lr=L-Ls.occ*1.2;return ambLvl(Lr)*ambMask(Lr-Ls.N);}
+// 0.36: море — источник-линия (берег тянется на километры): с расстоянием тише на 10 дБ за каждые десять раз, а не на 20, как точка;
+// у пляжа накат громче (океанская волна); шум кабины закрывает его так же, как всё остальное
+function ambSea(E){const Ls=AMB.lis;let best=null,bd=1e18;if(!Ls)return {g:0,pan:0,lp:16000,d:1e9,p:null};
+  for(const e of E.sea){const dx=e.x-Ls.x,dz=e.z-Ls.z,R0=1500+(e.rad||0);if(dx*dx+dz*dz>R0*R0)continue;const p=ambNearPt(e,Ls.x,Ls.z),d=Math.hypot(p.x-Ls.x,p.z-Ls.z);if(d<bd){bd=d;best=p;}}
+  if(!best)return {g:0,pan:0,lp:16000,d:1e9,p:null};
+  const d=Math.max(bd,4),Lr=(E.beach?AMB_L.surfBeach:AMB_L.surf)-10*Math.log10(d)-0.002*d-Ls.occ;let lp=clamp(16000*Math.exp(-d/600),900,16000);if(Ls.occ>0.5)lp=Math.min(lp,900+15000*Math.exp(-Ls.occ/4));
+  const dx=best.x-Ls.x,dz=best.z-Ls.z;return {g:Math.min(0.85,ambLvl(Lr)*ambMask(Lr-Ls.N)),pan:clamp((dx*Ls.rx+dz*Ls.rz)/d,-1,1)*0.7,lp,d:bd,p:best};}
 // ближайшая точка протяжённого источника (трибуны вдоль дороги, река, берег)
 function ambNearPt(e,x,z){if(!e.P)return e;let b=e.P[0],bd=1e18;for(const p of e.P){const d=(p[0]-x)*(p[0]-x)+(p[1]-z)*(p[1]-z);if(d<bd){bd=d;b=p;}}return {x:b[0],z:b[1]};}
 // сумма по источникам одного звука (энергией): громкость, панорама и даль — по самым слышным
@@ -103,6 +111,8 @@ function ambEmitters(T){const n=T.n,W=T.W,S=T.segT||new Uint8Array(n),cfg=T.cfg|
   else for(let i=0;i<n;i+=6)for(const sd of [1,-1])for(const o of [40,90,160,240]){const p=at(i,sd*o);if(realWet(T,p[0],p[1])>0.5){seaP.push(p);break;}}
   if(seaP.length){for(let k=0;k<seaP.length;k+=40){const P=seaP.slice(k,k+40);let cx=0,cz=0;P.forEach(p=>{cx+=p[0];cz+=p[1];});cx/=P.length;cz/=P.length;
     const rad=Math.max(...P.map(p=>Math.hypot(p[0]-cx,p[1]-cz)));E.sea.push({P,x:cx,z:cz,rad,r0:6,id:id++});}}
+  // 0.36: прибой — запись: на пляже — океанский накат, у озера и залива — мелкая волна, у дороги вдоль моря — морской
+  E.beach=cfg.terr==='beach';{let co='';try{co=(placeWater(T.rc||{},cfg.host)||{}).co||'';}catch(_){}E.seaRec=E.beach?'surf_big':/озер|залив/.test(co)?'surf_lake':'surf_sea';}
   // старт, финиш: громкоговоритель (рупор), оркестр
   const fi=T.finishIdx,si=T.startIdx,big=T.closed||(cfg.crowd||0)>0.3;
   const nearStand=i=>{let b=null,bd=1e9;E.stand.forEach(s=>{let d=Math.abs(s.i-i);if(T.closed)d=Math.min(d,n-d);if(d<bd){bd=d;b=s;}});return bd<40?b:null;};
@@ -231,7 +241,7 @@ function ambStart(){if(!AU.ctx||!R||R.mode==='sim')return;ambIndex();const c=AU.
   const E=AMB.E,want=['rain'];if(E){if(E.stand.length)want.push('crowd_big','crowd_race','applause');if(E.crowd.length)want.push('crowd_murmur','crowd_race');if(E.farm.length)want.push('dog_bark');
     if(E.church.length)want.push('bells_village');if(E.river.length)want.push('stream');if(E.band.length)want.push('brass_parade');if(E.cart.length)want.push('horse_carriage');}
   if(R.trk.rails&&R.trk.rails.length)want.push('steam_train',R.trk.cfg.host==='us'?'steam_whistle_us':'steam_whistle');
-  want.forEach(id=>ambBuf(id));if(E&&E.sea.length)try{ambSurfBuf();}catch(_){}
+  want.forEach(id=>ambBuf(id));if(E&&E.sea.length){try{ambSurfBuf();}catch(_){}ambBuf(E.seaRec);ambBuf('gulls');ambBuf('gull2');}
   const L=[ANN.ready,ANN.count,ANN.go];if(R.me)L.push(annGo(R.me.num||1));L.forEach(t=>annBuf(t));}
 function ambStop(){AMB.on=false;const t=AU.ctx?AU.ctx.currentTime:0;Object.values(AMB.beds).forEach(B=>{if(B.ch){B.ch.g.gain.setTargetAtTime(0,t,0.3);const s=B.src;setTimeout(()=>{try{s.stop();}catch(_){}},1500);}});AMB.beds={};
   AMB.shots.slice().forEach(S=>ambShotEnd(S,0.3));AMB.shots=[];}
@@ -261,7 +271,11 @@ function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow||R
   {const a=ambAgg(E.crowd,g=>g.L,3,150);ambBed('crowd_murmur',a.g,dt,a.pan,a.lp);}
   {let a=ambAgg(E.cart,AMB_L.horse,2,120);if(R.dx&&R.dx.k==='horse'){const h=ambHear(AMB_L.horse+8,R.dx.pos[0],R.dx.pos[2],2);if(h.g>a.g)a=h;}ambBed('horse_carriage',night&&!(R.dx&&R.dx.k==='horse')?0:a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.river,AMB_L.stream,6,400);ambBed('stream',a.g,dt,a.pan,a.lp);}
-  if(E.sea.length){const a=ambAgg(E.sea,AMB_L.surf,6,900);ambBed('surf',a.g,dt,a.pan,a.lp);}
+  // 0.36: море — запись прибоя (пока не скачалась — синтез); над берегом днём — чайки: крик стаи и иногда одна совсем рядом
+  if(E.sea.length){const h=ambSea(E),rec=AMB.buf[E.seaRec]?E.seaRec:'surf';ambBed(rec,h.g,dt,h.pan,h.lp);if(rec!=='surf')ambBed('surf',0,dt,0,16000);
+    const gk=(day||dawn||dusk)&&!night?clamp(1-(h.d-40)/360,0,1)*(1-rain):0;dif('gulls',gk>0.02,63,gk,1,2.2);
+    if(gk>0.3&&h.p&&ambCool('gull',6+Math.random()*12)){const a=Math.random()*6.283,r=12+Math.random()*55;
+      ambShot('gull2',[h.p.x+Math.sin(a)*r,h.p.z+Math.cos(a)*r],AMB_L.gull,{off:Math.random()*3,dur:2.2+Math.random()*2.5,fade:0.3,r0:2});}}
   {let best=null;if(T.rails&&typeof railLine==='function')T.rails.forEach(rl=>{const st=rl.st;if(!st||st.state!==1)return;const Ln=railLine(T,rl),s=st.s-st.dir*5,h=ambHear(AMB_L.train,Ln.p[0]+Ln.d[0]*s,Ln.p[2]+Ln.d[1]*s,3);if(!best||h.g>best.g)best=h;});
     if(R.dx&&R.dx.k==='train'){const h=ambHear(AMB_L.train,R.dx.pos[0],R.dx.pos[2],3);h.g*=0.35+0.65*Math.min(1,(R.dx.v||0)/8);if(!best||h.g>best.g)best=h;}
     ambBed('steam_train',best?best.g:0,dt,best?best.pan:0,best?best.lp:16000);}

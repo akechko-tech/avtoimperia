@@ -380,6 +380,9 @@ function qLabel(r){return r<0.85?['Хуже соперников','bad']:r<1.08?
 function totalSold(s){return s.models.reduce((a,m)=>a+(isMoto(m)?0:m.totalSold),0)+(s.milTotal||0);}   // 0.24: и машины для армии (0.32: мотоциклы — отдельно)
 function motoSold(s){return s.models.reduce((a,m)=>a+(isMoto(m)?m.totalSold||0:0),0)+(s.mmilTotal||0);}
 function addLog(text,kind=''){G.log.push({d:dstr(G),text,kind});if(G.log.length>400)G.log.shift();}
+// 0.36: город компании — по основателю (Фрезе — Петербург) и по эпохе: Петербург с осени 1914 года — Петроград, с 1924-го — Ленинград
+function cityOf(s){const P=s&&PIONEERS[s.pioneer],C=s&&COUNTRIES[s.country];let n=(P&&P.c===s.country&&P.city)||(C?C.city:'');
+  if(n==='Петербург'){const t=(s.y||1895)+(s.m||0)/12;n=t>=1924.08?'Ленинград':t>=1914.66?'Петроград':'Петербург';}return n;}
 function hostName(c){return c==='intl'?'Международная':(COUNTRIES[c]?COUNTRIES[c].name:({be:'Бельгия',es:'Испания',mc:'Монако',at:'Австрия',ch:'Швейцария'}[c]||c));}
 const fmtN=n=>{n=Math.round(n);return Math.abs(n)>=1e6?(n/1e6).toFixed(n>=1e7?1:2).replace('.',',')+' млн':Math.abs(n)>=1e4?Math.round(n/1000)+' тыс.':n.toLocaleString('ru-RU');};
 function lastOf(arr,y,f){const a=arr.filter(x=>x.y<=y&&(!f||f(x)));return a[a.length-1];}
@@ -401,8 +404,9 @@ function newGame(pioneer,country,company,diff,firstName){
   G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,1895);const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
   G.maV=30;try{awInit(G,true);}catch(_){}
   const P=PIONEERS[pioneer];
-  addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${C.city}. В мастерской ${G.workers} рабочих, первая модель — «${mname}», дилеров — ${G.dealers[country]}.`,'hist');
+  addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${cityOf(G)}. В мастерской ${G.workers} рабочих, первая модель — «${mname}», дилеров — ${G.dealers[country]}.`,'hist');
   if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
   if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит найти импортёра.','hist');
   if(country==='it')addLog('Богатых семей в Италии немного, и свой рынок крошечный. Покупателей в разы больше во Франции и Германии — найдите там импортёров.','hist');
+  if(country==='ru')addLog('Машин в России — десятки: покупают великие князья, купцы-миллионщики и казна. Дорог нет, полгода снег и распутица, ввоз из-за границы облагается пошлиной. Основной рынок — Франция и Германия: найдите там импортёров, а дома держитесь заказов казны.','hist');
 }

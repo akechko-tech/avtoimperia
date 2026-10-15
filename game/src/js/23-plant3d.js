@@ -196,7 +196,7 @@ function plantImage2d(s){const S=plantState(s),key=JSON.stringify(S);let v=PLANT
   poly([[-420,0,-16],[420,0,-16],[420,0,-8],[-420,0,-8]],road);poly([[-420,0,-8],[420,0,-8],[420,0,-6.2],[-420,0,-6.2]],winter?'#e4e8ec':'#b8b0a0');
   if(S.era>=1){g.strokeStyle='rgba(240,236,220,.55)';g.lineWidth=1.4;g.setLineDash([10,12]);const a=P(-420,0,-12),b=P(420,0,-12);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.setLineDash([]);}
   // деревья: ряд на дальнем краю поля, по бокам и за цехами
-  const treeT=S.c==='it'?'cypress':S.c==='us'?'elm':S.c==='de'?'oak':'plane';
+  const treeT=S.c==='it'?'cypress':S.c==='us'?'elm':S.c==='de'?'oak':S.c==='ru'?'birch':'plane';
   const drawTree=(x,z,i,sc)=>{const t=scenSprite(winter?'birch':treeT,i%3,1);if(!t)return;const p=P(x,0,z),k=ppm/SCEN_PPM*(sc||1)*(0.8+((i*37)%10)/25),w=t.img.width*k,h=t.img.height*k;g.save();if(winter)g.filter='saturate(0.25) brightness(1.08)';else if(autumn)g.filter='hue-rotate(-38deg) saturate(1.3)';g.drawImage(t.img,p[0]-w*t.ax,p[1]-h*t.ay,w,h);g.restore();};
   for(let x=-300,i=0;x<300;x+=9+(i*7)%6,i++)drawTree(x,zF+2,i,0.85);
   const drawItem=it=>{const r=renderModel(it.M,yaw,pitch,ppm,{shadow:0.34,blur:0.25,outline:ppm>4?1.2:0.8});const o=P(0,0,0);g.drawImage(r.img,o[0]-r.ax*r.img.width,o[1]-r.ay*r.img.height);};

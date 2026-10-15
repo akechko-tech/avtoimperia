@@ -7,7 +7,7 @@
      (узнаваемость за границей растёт), поражение — газеты пишут, чья машина застряла в песках.
    Вызовы приходят и из стран, где у вас дилеры: там и смотр, и газеты. */
 const ELEG_VENUE={fr:['Булонский лес, Париж','графиня де Ноай и Поль Пуаре'],it:['Сан-Ремо','графиня ди Сан-Мартино'],uk:['Херлингем-клуб, Лондон','леди Говард де Уолден'],
-  de:['Баден-Баден','великая герцогиня Баденская'],us:['Ньюпорт, Род-Айленд','миссис Вандербильт']};
+  de:['Баден-Баден','великая герцогиня Баденская'],us:['Ньюпорт, Род-Айленд','миссис Вандербильт'],ru:['Стрелка Елагина острова, Петербург','княгиня Зинаида Юсупова и художник Александр Бенуа']};
 const EXPED_ROUTES=[[1907,'Пекин — Париж',16000,'В 1907 году «Итала» князя Боргезе прошла от Пекина до Парижа за два месяца: Гоби, Байкал, Сибирь — а дорог почти нигде не было.'],
   [1908,'Нью-Йорк — Париж через Аляску и Сибирь',35000,'В 1908 году «Томас Флаер» обошёл полмира — из Нью-Йорка через Сибирь в Париж — и выиграл «Великую гонку».'],
   [1922,'Через Сахару: Туггурт — Тимбукту',3200,'Зимой 1922–1923 годов полугусеничные «Ситроены» впервые пересекли Сахару — двадцать дней по пескам.'],
@@ -18,7 +18,7 @@ function elegScore(md,s,c){let k=1;try{k=classScore(md,s,c);}catch(_){}const b=p
   return k*(g==='lux'?1.12:g==='sport'?1.04:0.92)*(b.closed?1.08:1)*(1+0.035*eq)*(md.t==='t2'?1.06:1);}
 function elegPick(s,c){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&!isTruck(m)&&['lux','middle','sport'].includes(segOf(m))).map(m=>({m,v:elegScore(m,s,c)})).sort((a,b)=>b.v-a.v)[0]||null;}
 function offerEleg(s){if(s.y<1908)return null;const r=chalRnd(s,'eleg');const C0=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!warCut(s,c)));
-  const c=r()<0.5||C0.length<2?s.country:C0[1+Math.floor(r()*(C0.length-1))],v=ELEG_VENUE[c];if(!v||isWar(s.y,s.m,c))return null;const P=elegPick(s,c);if(!P)return null;
+  const c=r()<0.5||C0.length<2?s.country:C0[1+Math.floor(r()*(C0.length-1))],v=ELEG_VENUE[c];if(!v||isWar(s.y,s.m,c)||(c==='ru'&&s.y>=1917))return null;const P=elegPick(s,c);if(!P)return null;
   const cps=(COMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)*(((cp.mix&&cp.mix.lux)||0)+0.3*((cp.mix&&cp.mix.middle)||0))})).filter(x=>!ownComp(x.cp,s)&&!holdOf(s,c,x.i)&&x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);if(!cps.length)return null;
   const R=cps[Math.floor(r()*cps.length)],nm=compName(R.cp,s),L=s.last,stake=Math.round(clamp(((L&&L.rev)||0)*0.05,120*cpi(s),9000*cpi(s))/50)*50;
   const C={type:'eleg',c,ci:R.i,mq:nm,venue:v[0],judge:v[1],md:P.m.id,end:mi(s)+2,x:stakeExtra(s,nm,'be',1)};

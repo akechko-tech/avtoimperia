@@ -30,7 +30,7 @@ function carSVG(md,opt={}){
 }
 function portraitSVG(key){
   const P=PIONEERS[key],init=P.name.split(' ').map(w=>w[0]).join('');
-  const hue={us:'#6a5840',de:'#5b5a52',fr:'#6b5a48',uk:'#5a5a4a',it:'#6a5244'}[P.c]||'#5a5048';
+  const hue={us:'#6a5840',de:'#5b5a52',fr:'#6b5a48',uk:'#5a5a4a',it:'#6a5244',ru:'#5e4c3e'}[P.c]||'#5a5048';
   const beard=P.beard?`<path d="M26,44 Q32,58 38,44 Q36,50 32,51 Q28,50 26,44Z" fill="#241c14"/>`:`<path d="M27,44 Q32,47 37,44 Q34,46 32,46 Q30,46 27,44Z" fill="#241c14"/>`;
   return `<svg viewBox="0 0 64 80" aria-hidden="true"><defs><radialGradient id="pg${key}" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#d9c8a2"/><stop offset="1" stop-color="${hue}"/></radialGradient></defs>
   <ellipse cx="32" cy="40" rx="30" ry="38" fill="#d9ab52"/><ellipse cx="32" cy="40" rx="27" ry="35" fill="url(#pg${key})"/>

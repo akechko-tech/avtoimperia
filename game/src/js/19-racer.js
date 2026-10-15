@@ -202,7 +202,7 @@ function racerPaper(s,rc,res,me,k,works){const X=s.racer,second=res.find(r=>r.po
     hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:real?`В ${rc.y} году в настоящей истории: ${real}`:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};}
 /* ---------- предложения: заводские команды и спонсоры ---------- */
 const RX_SPONS={fr:[['Michelin','шины',1895]],uk:[['Dunlop','шины',1895]],de:[['Continental','шины',1895],['Bosch','магнето',1902]],it:[['Pirelli','шины',1899]],
-  us:[['Goodrich','шины',1896],['Firestone','шины',1904]],intl:[['Castrol','масло',1909],['Shell','бензин',1907],['Bosch','магнето',1902]]};
+  us:[['Goodrich','шины',1896],['Firestone','шины',1904]],ru:[['Треугольник','шины',1900],['Проводник','шины',1904],['Бранобель','бензин',1901]],intl:[['Castrol','масло',1909],['Shell','бензин',1907],['Bosch','магнето',1902]]};
 function racerSalary(s,t){const X=s.racer;return Math.round(110*cpi(s)*(0.5+X.sk*1.5)*(0.6+X.fame/60)*t.str/5)*5;}
 // Кто может позвать: в войну 1914–1918 годов в Европе не гоняются — зовут только американские команды (туда уехали Ресту и Де Пальма);
 // после войны немецкие команды и гонщики Антанты до 1924 года друг друга не нанимают
@@ -310,7 +310,7 @@ function racerFirstModel(g,md){const segs=['lux','middle','people'].concat(sport
   if(best)['e','g','c','k','b','t','w'].forEach(k2=>{md[k2]=best.m[k2];});return best?best.k:'middle';}
 // 0.29: первая машина марки — как в истории: Lancia — «Тип 51» (будущая «Альфа»), Chevrolet — «Серия C», Maserati — «Тип 26»
 const RACER_FIRST={lancia:'Тип 51',l_chevrolet:'Серия C',rickenbacker:'Модель A',a_maserati:'Тип 26'};
-function racerModelName(X,nm,c){if(RACER_FIRST[X.id])return RACER_FIRST[X.id];const L={it:'Tipo 1',fr:'Type A',de:'Typ 1',uk:'Model A',us:'Model A'};return `${nm} ${L[c]||'Model A'}`.slice(0,24);}
+function racerModelName(X,nm,c){if(RACER_FIRST[X.id])return RACER_FIRST[X.id];const L={it:'Tipo 1',fr:'Type A',de:'Typ 1',uk:'Model A',us:'Model A',ru:'Тип А'};return `${nm} ${L[c]||'Model A'}`.slice(0,24);}
 function racerFound(opt,name,loan){const s=G,X=s.racer;if(!X||!isRacer(s))return false;
   const inv=opt==='partner'?racerInvestor(s):0,B=opt==='buy'?racerBrandOffer(s):null,need=racerFoundPrice(s,opt);
   loan=clamp(Math.round(+loan||0),0,racerLoanMax(s));if(s.cash+loan+inv<need+racerFoundWork(s)){toast('Не хватает денег');return false;}

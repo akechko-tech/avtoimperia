@@ -83,7 +83,7 @@ const WORLD=[
     text:'Зарплату в Германии платят дважды в день: рабочие бегут в лавки, пока деньги не обесценились. Деньги возят тачками. Машины не покупает почти никто, выручка в марках тает по дороге домой.\nЗато за доллары можно купить целый завод — за бесценок.',
     mean:'Продажи в Германии почти нулевые, выручка в марках обесценивается. Можно дёшево купить там завод: ввоз закрыт, а свой завод работает.',
     fx:s=>{wfxAdd(s,'de','*',-0.6,6,'гиперинфляция в Германии');},
-    ch:[['Купить завод в Германии за бесценок','wInflBuy'],['Не рисковать','wInflNo']],
+    ch:[['Купить завод в Германии за бесценок','wInflBuy'],['Не рисковать','wInflNo']],chOk:(s,k)=>k!=='wInflBuy'||!s.soviet,   // 0.36: советскому тресту заводов за границей не купить
     res:{wInflBuy:s=>{if(s.country==='de'){const v=Math.round(s.cap*0.3);s.cap+=v;s.cash-=Math.round(v*capUnitCost(s)*0.25);return '«{co}» скупила станки разорившихся соседей за четверть цены: мощности выросли.';}
         const c=Math.round(impCost(s,'de',4)*0.25/1000)*1000;if(s.cash+Math.max(0,maxLoan(s)-(s.loan||0))<c)return `На завод в Германии нужно ${money(c)} — у «{co}» таких денег нет. Завод купили другие.`;s.cash-=c;s.imp=s.imp||{};s.imp.de=4;s.dealers.de=Math.max(dealerCount(s,'de'),8);(s.impSince=s.impSince||{}).de=s.impSince.de??mi(s);return `«{co}» купила завод в Германии за ${money(c)} — четверть цены. Когда марка окрепнет, машины пойдут без пошлины.`;},wInflNo:s=>''}},
   {id:'lindbergh',y:1927,m:4,reel:'w:lindbergh',img:'Spirit of St. Louis',title:'Линдберг перелетел Атлантику',deck:'20–21 мая 1927 года: Нью-Йорк — Париж без посадки',
@@ -140,7 +140,7 @@ function worldCheck(s){s.wseen=s.wseen||{};WORLD.forEach(W=>{let y=W.y,m=W.m;if(
   addLog(`${W.title}: ${W.mean}`,'hist');
   let tx=W.text;if(W.textF)try{const t=W.textF(s);if(t)tx+='\n'+t;}catch(e){console.warn(e);}
   pushEvent({kicker:W.sad?'Мир':'Мир · кинохроника',title:W.title,deck:late&&W.late?W.late:W.deck,text:tx,img:W.img&&IMG[W.img]?W.img:'',imgCap:W.deck,mean:W.mean,world:W.id,reel:rid,
-    choices:W.ch.map(c=>[c[0],c[1]==='mil'?'mil':'w:'+W.id+':'+c[1]])},true);});
+    choices:W.ch.filter(c=>!W.chOk||W.chOk(s,c[1])).map(c=>[c[0],c[1]==='mil'?'mil':'w:'+W.id+':'+c[1]])},true);});
   // газета через месяц — чем обернулся выбор
   (s.wnext||[]).filter(x=>x.at<=mi(s)).forEach(x=>{if(x.text)pushEvent({kicker:'Мир · месяц спустя',own:1,title:x.title,deck:x.deck,text:x.text.replace(/\{co\}/g,s.company)},true);});
   s.wnext=(s.wnext||[]).filter(x=>x.at>mi(s));wfxClean(s);}

@@ -7,7 +7,10 @@ const add=(t,v)=>{t=String(t||'').replace(/\\s+/g,' ').trim();if(!t||/[{}]/.test
 for(const k in REELS)REELS[k].sh.forEach(sh=>{if(sh.say)add(sh.say,'aidar');});
 for(const k in VGEN)add(VGEN[k],'aidar');
 // 0.25: у главы бывают варианты (v) — по положению дел в игре; голос нужен всем
-const chv=ch=>{(ch.sc||[]).forEach(sc=>{if(sc.who)add(sc.line,voiceOfWho(sc.who));else add(sc.say,SAGA_NARR);});if(ch.q)add(ch.q,SAGA_NARR);(ch.o||[]).forEach(o=>add(o.res,SAGA_NARR));};
+// 0.36: строки с подстановками — по частям (sagaVoiceParts): год — своей записью, остальное — без названия фирмы и имени
+const S0={y:1900,m:0,company:'Фирма',pioneer:'custom',country:'fr'};const addP=(t,v)=>{if(!/[{}]/.test(t)){add(t,v);return;}const P=sagaVoiceParts(t,S0);if(P)P.filter(p=>!/^1900 год\.$/.test(p)).forEach(p=>add(p,v));};
+const chv=ch=>{(ch.sc||[]).forEach(sc=>{if(sc.who)addP(sc.line,voiceOfWho(sc.who));else addP(sc.say,SAGA_NARR);});if(ch.q)addP(ch.q,SAGA_NARR);(ch.o||[]).forEach(o=>addP(o.res,SAGA_NARR));};
+for(let y=1880;y<=1935;y++)add(y+' год.',SAGA_NARR);
 for(const p in SAGA)SAGA[p].forEach(ch=>{chv(ch);(ch.v||[]).forEach(chv);});
 RACES.forEach(rc=>add(raceIntroText(rc),'aidar'));
 // 0.19: исторические сценарии (рассказ перед стартом и титры с голосом) и диктор с трибуны

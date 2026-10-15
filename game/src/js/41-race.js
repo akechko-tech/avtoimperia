@@ -895,9 +895,10 @@ const PRIV_DRV={chasseloup:'De Dion-Bouton',jellinek:'Mercedes',e_zborowski:'Mer
   wishart:[[1912,'Mercedes'],[1914,'Mercer']],nagel:'Руссо-Балт',suvorin:'Benz',l_zborowski:'Aston Martin',g_masetti:[[1921,'Fiat'],[1926,'Mercedes']],materassi:[[1924,'Itala'],[1929,'Bugatti']],junek:'Bugatti',vizcaya:'Bugatti',
   sabipa:'Bugatti',campbell:[[1922,'Sunbeam'],[1935,'Bugatti']],kaye_don:'Sunbeam',etancelin:'Bugatti',williams:'Bugatti',helle_nice:'Bugatti',nuvolari:[[1926,'Bianchi'],[1929,'Bugatti']],stuck:'Austro-Daimler',
   ivanowski:'Alfa Romeo',barnato:'Bentley',birkin:'Bentley',kidston:'Bentley',rubin:'Bentley',benjafield:'Bentley',c_durant:'Miller',woodbury:'Miller',devore:'Miller',souders:'Duesenberg'};
-const NAT_C={'Франция':'fr','Бельгия':'fr','Монако':'fr','Испания':'fr','США':'us','Канада':'us','Великобритания':'uk','Австралия':'uk','Германия':'de','Австро-Венгрия':'de','Чехословакия':'de','Швейцария':'de','Венгрия':'de','Россия':'de','Италия':'it'};
+const NAT_C={'Франция':'fr','Бельгия':'fr','Монако':'fr','Испания':'fr','США':'us','Канада':'us','Великобритания':'uk','Австралия':'uk','Германия':'de','Австро-Венгрия':'de','Чехословакия':'de','Швейцария':'de','Венгрия':'de','Россия':'ru','Италия':'it'};
 const AMATEUR={fr:['Месье','Бертен','Дюбуа','Лефевр','Моро','Жирар','Ренье','Фавр','Лакомб'],uk:['Мистер','Эшворт','Кларк','Хардинг','Беннет','Филдинг','Прайс','Лоуренс'],de:['Герр','Шмидт','Вебер','Краус','Хоффман','Беккер','Ланге','Фогель'],
-  us:['Мистер','Келлер','Бёрнс','Мейсон','Прескотт','Картер','Холлоуэй','Рид'],it:['Синьор','Галли','Риччи','Бьянки','Конти','Марини','Фаббри','Серра']};
+  us:['Мистер','Келлер','Бёрнс','Мейсон','Прескотт','Картер','Холлоуэй','Рид'],it:['Синьор','Галли','Риччи','Бьянки','Конти','Марини','Фаббри','Серра'],
+  ru:['Господин','Волков','Лебедев','Соколов','Орлов','Арсеньев','Кудрявцев','Белозёров']};
 function playerMarque(m,s){return RACE_TEAMS.some(t=>pkIs(t,s)&&(t.n===m||t.mq.includes(m)))||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&(b.n.includes(m)||(b.models||[]).some(x=>x[1].includes(m)))));}
 function privMarque(id,y){const v=PRIV_DRV[id];if(typeof v==='string')return v;const x=v.find(a=>y<=a[0]);return x?x[1]:v[v.length-1][1];}
 function wpick(a,wf){const w=a.map(wf),t=w.reduce((x,y)=>x+y,0);let r=Math.random()*t;for(let i=0;i<a.length;i++){r-=w[i];if(r<=0)return a[i];}return a[a.length-1];}

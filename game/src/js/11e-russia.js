@@ -18,6 +18,8 @@ const RU_HIST=[
   {y:1922,m:11,c:'ru',img:'x:ru-tverskoy-1920s',title:'Образован СССР',deck:'Союз Советских Социалистических Республик',text:'Россия, Украина, Белоруссия и Закавказье объединились в Союз. Ввоз машин — только через государство, по лицензиям Внешторга: свой автомобиль стране нужен как никогда.'},
   {y:1928,m:9,c:'ru',img:'x:ru-plan-poster-1930',title:'Первая пятилетка',deck:'Индустриализация: тракторы, грузовики, сталь',text:'Нэп сворачивают: частную торговлю душат налогами, на первом месте — план. Государство заказывает грузовики тысячами и строит новые автозаводы; в 1929 году подписан договор с Фордом о заводе в Нижнем Новгороде.'}];
 RU_HIST.forEach(h=>HIST.push(h));
+// гонка Петербург — Москва 1907 года: Артюр Дюре на «Лорен-Дитрихе» — победитель (фото к газете о гонке)
+RACES.forEach(r=>{if(r.id==='x80901'&&!r.img)r.img='x:ru-race-1907';});
 // HIST: «Перемирие!» и «Ревущие двадцатые» — не для России (там гражданская война и нэп)
 HIST.forEach(h=>{if(h.title==='Перемирие!'||h.title==='Ревущие двадцатые')h.c=h.c?h.c:'!ru';});
 
@@ -33,7 +35,29 @@ function ruCheck(s){if(s.country!=='ru'||s.over)return;const t=yf(s);
     // гражданская война: завод живёт военными заказами, убытки покрывает главк
     if(t<1921.25&&s.cash<0){s.soviet.sub=(s.soviet.sub||0)-s.cash;s.cash=0;}
     if(t>=1920.9&&s.military&&!s.soviet.peace){s.soviet.peace=1;s.military=false;addLog('Гражданская война кончилась: военные заказы Красной армии прекращены.','hist');}
-    if(t>=1921.25&&!s.soviet.nep){s.soviet.nep=1;addLog(`Нэп: «${s.company}» переходит на хозрасчёт — убытки больше никто не покроет${s.soviet.sub?` (за гражданскую войну главк покрыл ${money(s.soviet.sub)})`:''}.`,'hist');}}}
+    if(t>=1921.25&&!s.soviet.nep){s.soviet.nep=1;addLog(`Нэп: «${s.company}» переходит на хозрасчёт — убытки больше никто не покроет${s.soviet.sub?` (за гражданскую войну главк покрыл ${money(s.soviet.sub)})`:''}.`,'hist');}
+    // при нэпе — годовой план главка (январь), с пятилеткой (октябрь 1928) — ещё и заказ пятилетки
+    if(s.soviet.nep&&s.m===0&&s.y>=1922&&(s.soviet.plan||0)<s.y){s.soviet.plan=s.y;ruPlan(s,0);}
+    if(s.soviet.nep&&t>=1928.75&&!s.soviet.five){s.soviet.five=1;ruPlan(s,1);}}}
+/* ---------- план треста ----------
+   При нэпе заводы — тресты на хозрасчёте, но главный покупатель — государство: Красная армия, тресты, кооперация, Мосгубкоммунхоз.
+   Каждый январь главк заказывает тресту грузовики (нет грузовика — машины) по себестоимости с наценкой 10%. Так и жило АМО:
+   первые десять АМО-Ф-15 — к 7 ноября 1924 года, в 1925-м — 113 грузовиков, в 1926-м — 342, в 1927-м — 469. С первой пятилеткой
+   (октябрь 1928 года) государству нужны тысячи грузовиков: заказ растёт в разы. */
+const RU_PLAN={1922:30,1923:40,1924:60,1925:120,1926:300,1927:450,1928:650,1929:1400,1930:2200};
+function ruPlan(s,five){const P=s.models.filter(m=>m.status==='prod'),L=P.filter(m=>!isMoto(m)),T=L.filter(isTruck),M=P.filter(isMoto),best=A=>A.slice().sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
+  // мотоциклетный трест (у «Дукса» — только мотоциклы) получает план на мотоциклы: для армии, почты и милиции
+  const md=T.length?best(T):L.length?best(L):M.length?best(M):null;
+  if(!md){addLog(`Главк ждёт от «${s.company}» грузовик: в производстве ничего нет — плана на ${s.y} год не будет.`,'bad');return;}
+  const mo=isMoto(md),want=(RU_PLAN[s.y]||RU_PLAN[1930])*(five?1.5:1)*(isTruck(md)?1:mo?0.8:0.5),n=Math.max(10,Math.round(Math.min(want,capEff(s)*12*0.7)/5)*5);
+  const price=Math.round(unitCost(md,s)*1.1/10)*10,tr=isTruck(md);s.orders=s.orders||[];
+  s.orders.push({id:'plan-'+s.y+(five?'-5':''),md:md.id,n,left:n,price,due:mi(s)+(five?14:11),who:five?'Главк (заказ пятилетки)':'Главк ВСНХ (план '+s.y+' года)',start:mi(s)});
+  const W=(a,b,c)=>plural(n,a,b,c),what=tr?W('грузовик','грузовика','грузовиков'):mo?W('мотоцикл','мотоцикла','мотоциклов'):W('машину','машины','машин'),what1=tr?what:mo?what:W('машина','машины','машин');
+  addLog(`${five?'Пятилетка':'План '+s.y+' года'}: главк заказал ${fmtN(n)} ${what} «${md.name}» по ${money(price)}.`,'good');
+  pushEvent({own:1,img:five?'x:ru-plan-poster-1930':'x:ru-amo-f15',title:five?'Пятилетка: грузовики нужны тысячами':`План треста на ${s.y} год`,
+    deck:`${fmtN(n)} ${what1} «${md.name}» по ${money(price)} — срок ${five?'до конца 1929 года':'до конца года'}`,
+    text:five?`Первый пятилетний план: тракторы, грузовики, сталь. Государство строит новые автозаводы и заказывает у «${s.company}» всё, что завод может сделать сверх годового плана. Цена — себестоимость плюс десятая часть: прибыль невелика, но завод загружен.\nНе успеете — неустойка и выговор директору.`
+      :`Главк распределил заказы: «${s.company}» поставляет ${tr?'грузовики Красной армии, трестам и кооперации':mo?'мотоциклы армии, почте и милиции':'машины учреждениям и трестам'}. Цена — себестоимость плюс десятая часть: на хозрасчёте это верный доход, рынок нэпманов — сверх плана.${tr||mo?'':'\nГрузовик главку нужнее: с грузовиком план будет вдвое больше.'}\nНе успеете — неустойка и выговор директору.`},true);}
 function ruResolve(s,key){const ev=s.pending[0];
   if(key==='ru:emig'){s.pending.shift();pushEvent({own:1,img:'x:ru-petrograd-1917',title:'Куда уехать?',deck:'Через Финляндию, Одессу или Владивосток — с мастерами и чертежами',
       text:`С собой — лучшие мастера, чертежи, часть станков и деньги, которые успели перевести за границу. Завод в России, склад и дилеры остаются здесь — их отберёт новая власть. Марку «${s.company}» за границей помнят по газетам и гонкам.\nГде начинать заново?`,
@@ -50,7 +74,7 @@ function ruResolve(s,key){const ev=s.pending[0];
 function ruEmigrate(s,c){const was=s.country,C=COUNTRIES[c];
   s.emig={from:was,to:c,y:s.y,m:s.m};s.country=c;
   s.cap=Math.max(4,Math.round(s.cap*0.25));s.capBuild=[];s.plantVal=Math.round((s.plantVal||0)*0.25);s.wh=Math.max(12,Math.round((s.wh||12)*0.3));s.whBuild=[];
-  s.workers=Math.max(5,Math.round((s.workers||10)*0.15));s.cash=Math.round(Math.max(0,s.cash)*0.6);s.loan=0;s.military=false;s.orders=[];s.tenders=[];s.strikeNext=false;s.wagePol='market';s.staffAuto=true;
+  s.workers=Math.max(5,Math.round((s.workers||10)*0.15));s.cash=Math.round(Math.max(0,s.cash)*(s.ruSafe?0.85:0.6));s.loan=0;s.military=false;s.orders=[];s.tenders=[];s.strikeNext=false;s.wagePol='market';s.staffAuto=true;
   s.models.forEach(m=>{m.stock=0;m.backlog=0;m.fc=m.fc||0;});
   // дилеры: в России — потеряны; в новой стране — свои (были дилеры у импортёра — остаются), остальные страны — как были
   s.dealers=s.dealers||{};s.dealers[was]=0;s.dealers[c]=Math.max(2,dealerCount(s,c));if(s.imp){delete s.imp[c];s.imp[was]=0;}if(s.impB){delete s.impB[c];delete s.impB[was];}

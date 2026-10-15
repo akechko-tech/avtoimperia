@@ -27,6 +27,8 @@ if(process.env.DIFFX)Object.assign(DIFFS[${JSON.stringify(DIFF)}],JSON.parse(pro
 newGame(${JSON.stringify(PION)},${JSON.stringify(CC)},'Мастер',${JSON.stringify(DIFF)},'Первая');
 const s=G,DEALS=${DEALS},RACING=${RACES},QUIET=${QUIET};
 const MOTO=+(process.env.MOTO||0);
+// 0.36: NOTEAM=1 — без пользы гоночной команды для КБ и моделей (сравнить баланс)
+if(process.env.NOTEAM)raceTeamLearn=()=>null;
 // FRUGAL=1 — бережливый старт в Америке: до 1900 года без проектов КБ, технологий и лишних дилеров; дешёвая машина — с 1899 года
 const FRUGAL=+(process.env.FRUGAL||0);
 const CLS=()=>{const L=['middle'];if(s.y>=(FRUGAL&&s.country==='us'?1899:1902))L.unshift('people');if(s.y>=1906)L.push('lux');if(sportOpen(s)&&s.y>=1908)L.push('sport');if(s.y>=1912)L.push('van');if(MOTO&&lineOn(s,'moto')){L.push('moto');if(s.y>=1906)L.push('moside');}return L;};

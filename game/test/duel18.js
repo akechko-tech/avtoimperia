@@ -63,7 +63,11 @@ ok(u1-u0>0.03&&u1-u0<=0.04+1e-9,'после победы спрос в стра�
 G.m+=2;ok(duelEffect(G,c)>0.039,'через 2 месяца ещё действует');G.m+=1;ok(duelEffect(G,c)===0,'через 3 месяца эффект прошёл');G.m=3;G.duelFx=[];
 duelOutcome(G,{type:'race',rk:rcs[0].key,mq:'Fiat',stake:800},false,{});ok(modelExtras(md,c,G)-u0<-0.03,'после поражения — минус');
 // добавки к ставке работают
-G.duelFx=[];const L0=playerLegacy(G).total;stakeApply(G,{stake:1000,x:{k:'legacy'}},H);ok(Math.abs(playerLegacy(G).total-L0-30)<1e-6,'очки наследия из пари: +30');
+// 0.36: очки наследия из пари — по ставке (мелкий спор — пара очков, крупный — до 10), за всю игру из пари не больше 30 (отзыв: «+30 в наследие за мелкий спор?»)
+G.duelFx=[];G.legBet=0;const L0=playerLegacy(G).total,C1={stake:1000,x:{k:'legacy'}},want1=stakeLeg(C1);stakeApply(G,C1,H);
+ok(want1>=2&&want1<=10&&Math.abs(playerLegacy(G).total-L0-want1)<1e-6,'очки наследия из пари по ставке $1000: +'+want1+' (не +30)');
+{const big={stake:40000*cpi(G),x:{k:'legacy'}};ok(stakeLeg(big)===10,'крупная ставка — не больше 10 очков');for(let i=0;i<6;i++)stakeApply(G,{stake:40000*cpi(G),x:{k:'legacy'}},H);
+  ok(G.legBet===30,'за всю игру из пари — не больше 30 очков ('+G.legBet+'; дальше — половина ставки деньгами)');}
 G.rd.projs=[{kind:'upg',id:'e1',name:'Проект',need:20,prog:2}];stakeApply(G,{stake:1000,x:{k:'bp'}},H);ok(G.rd.projs[0].need===14,'чертежи соперника: КБ на 30% быстрее ('+G.rd.projs[0].need+')');
 const d0=dealerCount(G,c);stakeApply(G,{stake:1000,x:{k:'dealer'}},H);ok(dealerCount(G,c)===d0+2,'дилеры соперника переходят к вам');
 // витрина и кабинет

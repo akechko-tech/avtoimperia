@@ -3,7 +3,7 @@
    секундомеры судей. Мотомарка соперника вызывает в газетах: чей мотоцикл быстрее? Ваш лучший мотоцикл в гоночной подготовке
    против их лучшего. Быстрее мирового рекорда своего года — рекорд в газетах всего мира.
    Места рекордов: Ашер под Парижем, Бруклендс, Дейтона-Бич, Кремона, Ингольштадтское шоссе. */
-const MREC_VENUE={fr:'Ашер под Парижем — мерный километр',uk:'Бруклендс — мерная миля',us:'Дейтона-Бич — мерная миля',it:'шоссе у Кремоны — мерный километр',de:'Ингольштадтское шоссе — мерный километр'};
+const MREC_VENUE={fr:'Ашер под Парижем — мерный километр',uk:'Бруклендс — мерная миля',us:'Дейтона-Бич — мерная миля',it:'шоссе у Кремоны — мерный километр',de:'Ингольштадтское шоссе — мерный километр',ru:'Петербургское шоссе — мерная верста'};
 // мировой рекорд скорости мотоцикла, км/ч (по истории, округлённо): 1903 — Кёртисс, 1920 — Уокер на Indian, 1926 — Темпл, 1929 — Хенне на BMW
 const MREC_WR={1903:103,1907:110,1909:122,1911:137,1913:150,1920:167,1923:174,1926:195,1928:207,1929:217};
 function mrecWR(y){return tabAt(MREC_WR,y);}
@@ -16,7 +16,7 @@ function mrecRival(y){const e=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp
 function mrecBest(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&isMoto(m)&&segOf(m)==='moto').map(m=>({m,v:mrecSpeed(m,s.y)})).sort((a,b)=>b.v-a.v)[0]||null;}
 function offerMrec(s){if(s.y<1903||!lineOn(s,'moto'))return null;const P=mrecBest(s);if(!P)return null;const r=chalRnd(s,'mrec');
   const C0=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!warCut(s,c))),c=r()<0.6||C0.length<2?s.country:C0[1+Math.floor(r()*(C0.length-1))];
-  if(isWar(s.y,s.m,c))return null;const L=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.v>0&&!x.cp.imp).sort((a,b)=>b.v-a.v).slice(0,3);if(!L.length)return null;
+  if(isWar(s.y,s.m,c)||(c==='ru'&&s.y>=1917))return null;const L=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.v>0&&!x.cp.imp).sort((a,b)=>b.v-a.v).slice(0,3);if(!L.length)return null;
   const R=L[Math.floor(r()*L.length)],nm=compName(R.cp,s),Ls=s.last,stake=Math.round(clamp(((Ls&&Ls.rev)||0)*0.03,80*cpi(s),6000*cpi(s))/50)*50;
   const C={type:'mrec',c,ci:R.i,mq:nm,venue:MREC_VENUE[c],md:P.m.id,end:mi(s)+2,x:stakeExtra(s,nm,'mr',1)};
   return {id:'mrec',kind:'mrec',title:`Мерная миля: «${s.company}» против ${nm}`,sub:`${MREC_VENUE[c]} · чей мотоцикл быстрее · мировой рекорд ${Math.round(mrecWR(s.y))} км/ч`,stake,C};}

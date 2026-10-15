@@ -21,8 +21,13 @@ function voiceSay(text,spk,onEnd){voiceStop();const t=String(text||'').trim();if
     a.onended=fin;a.onerror=()=>{if(ttsSay(t,onEnd)){done=true;return;}fin();};a.src=voiceUrl(t,spk);a.volume=1;VOICE.cb=fin;VOICE.t=performance.now();
     const p=a.play();if(p&&p.catch)p.catch(()=>setTimeout(fin,d*1000));return d;}
   if(ttsSay(t,onEnd))return Math.max(2.5,t.length/13);return 0;}
+// 0.36: строка по частям («1903 год.» + остальное): все части записаны — живой голос читает их подряд; иначе 0 (решает вызывающий)
+function voiceSayParts(parts,spk,onEnd){const P=(parts||[]).map(p=>String(p||'').trim()).filter(Boolean);if(P.length<2)return P.length&&voiceDur(P[0],spk)?voiceSay(P[0],spk,onEnd):0;
+  if(!reelVoiceOn()||!P.every(p=>voiceDur(p,spk)))return 0;const tok={};let i=0;
+  const next=()=>{if(VOICE.seq!==tok)return;if(i>=P.length){VOICE.seq=null;onEnd&&onEnd();return;}const p=P[i++];voiceSay(p,spk,next);VOICE.seq=tok;};
+  VOICE.seq=tok;next();return P.reduce((a,p)=>a+voiceDur(p,spk),0);}
 function voicePreload(text,spk){const t=String(text||'').trim();if(!t||!voiceDur(t,spk))return;try{const a=new Audio();a.preload='auto';a.src=voiceUrl(t,spk);VOICE.pre=a;}catch(e){}}
-function voiceStop(){try{if(VOICE.el){VOICE.el.onended=VOICE.el.onerror=null;VOICE.el.pause();}}catch(_){}VOICE.cb=null;ttsStop();}
+function voiceStop(){VOICE.seq=null;try{if(VOICE.el){VOICE.el.onended=VOICE.el.onerror=null;VOICE.el.pause();}}catch(_){}VOICE.cb=null;ttsStop();}
 function voicePause(on){try{if(VOICE.el&&VOICE.el.src&&!VOICE.el.src.startsWith('data:')){if(on)VOICE.el.pause();else{const p=VOICE.el.play();if(p&&p.catch)p.catch(()=>{});}}}catch(_){}try{if(window.speechSynthesis){on?speechSynthesis.pause():speechSynthesis.resume();}}catch(_){}}
 // Голос героя фильма: женские роли — xenia, мужские — eugene
 const VOICE_FEM=/^(Клара|Барбара|Адальджиза|Графиня|Паолина|Баронесса|Княгиня|Королева|Берта|Мерседес|Мари|Мария|Жанна|Анна|Элиза|Эмма|Люси|Джейн|Роза|Кристина|Луиза|Катарина|Жозефина|Маргарита|Эдит|Ирэн|Изабель|Элен|Сюзанна|Аделаида|Каролина|Лаура|Лиза|Софи|Мадлен|Мать|Мама|Жена|Дочь|Сестра|Бабушка|Вдова|Госпожа|Мадам|Миссис|Синьора|Фрау|Хозяйка|Секретарша|Продавщица|Горничная|Служанка|Учительница|Журналистка|Медсестра|Работница|Девушка|Женщина|Дама)/i;

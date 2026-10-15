@@ -19,7 +19,7 @@ newGame('custom','fr','Т','normal');quiet();ok(sagaList(G)===SAGA.custom,'ав�
         Object.keys(f.b||{}).forEach(z=>{if(!BK.includes(z))bad.push(c.id+': b.'+z);});Object.keys(f.seg||{}).forEach(z=>{if(!SK.includes(z))bad.push(c.id+': seg.'+z);});
         if(!sagaFxText(f,G))bad.push(c.id+': у выбора «'+x.t+'» нет последствий');});
       const txt=JSON.stringify(sc)+JSON.stringify(o)+q;if(/доктор/i.test(txt))bad.push(c.id+': доктор');
-      (sc||[]).forEach(x=>{if(x.img&&!T.has(x.img))bad.push(c.id+': фото «'+x.img+'» не в списке');});}));
+      (sc||[]).forEach(x=>{[].concat(x.img&&typeof x.img==='object'?Object.values(x.img):x.img||[]).forEach(k=>{if(!T.has(k))bad.push(c.id+': фото «'+k+'» не в списке');});});}));
     ok(!bad.length,k+': '+SAGA[k].length+' глав — сцены, вопрос, выборы с последствиями, без «доктора»'+(bad.length?' — '+bad.slice(0,5).join('; '):''));}}
 // ---------- 3) выбор знает, есть ли у фирмы автомобили ----------
 {newMotoGame('dedion','fr','Д','normal','М1');quiet();G.y=1910;const t=()=>sagaChapter(G,SAGA.dedion.find(x=>x.id==='dedion5'),false).o.map(o=>o.t).join(' / ');

@@ -188,19 +188,21 @@ function dvPair(c){const d=Math.abs(c.a-c.b)*100<1.5?1:0,f=v=>((v-1)*100).toFixe
 // на КБ и помогать дорабатывать модели — участницы гонок, при наличии гоночной команды». Так и было: гоночные отделы Peugeot,
 // Mercedes, Fiat, Bentley приносили в КБ данные о моторах, тормозах и шинах, а серийные машины получали усиленные детали.
 //  · КБ: 3–6 месяцев после гонки работает быстрее (+4% за уровень гоночного отдела, до +24%); проекты по деталям машины,
-//    которая ехала, сразу продвигаются (гонка — испытания этих деталей на пределе);
-//  · модель-участница: надёжнее (поломок меньше, до −30%) и чуть мощнее (до +4%: гоночная доводка мотора) — навсегда.
-const RR_MAX=0.3,RP_MAX=0.04;
+//    которая ехала, продвигаются (гонка — испытания этих деталей на пределе) — не чаще раза в два месяца;
+//  · модель-участница: надёжнее (поломок меньше, до −20%) и чуть мощнее (до +3%: гоночная доводка мотора) — навсегда.
+//  Замер (8 гонок по 400 км за сезон, гоночный отдел 3-го уровня): проекты по деталям этой машины — плюс ≈1,7 месяца работы КБ,
+//  остальные — ≈0,5; поломок меньше на ≈14%, мощность +1,8%. Раньше было +10,8 месяца, −26% и +3,6% — гонки заменяли КБ.
+const RR_MAX=0.2,RP_MAX=0.03;
 function raceTeamLearn(s,rc,all){const lv=s.rdept||0;if(lv<1)return null;const mine=all.filter(r=>r.you&&r.md);if(!mine.length)return null;
   const km=rc.km||100,len=clamp(km/300,0.5,2),out={lv,kb:0,pj:[],md:[]};
   // КБ быстрее несколько месяцев
   const k=Math.min(0.24,0.04*lv),mo=Math.round(clamp(2+len*2,3,6));s.rd.raceK=Math.max(k,(s.rd.raceUntil||0)>mi(s)?s.rd.raceK||0:0);s.rd.raceUntil=Math.max(s.rd.raceUntil||0,mi(s)+mo);out.kb=k;out.mo=mo;
   // проекты по деталям машин, которые ехали: прибавка — как ½–2 месяца работы (длинная гонка — больше; детали той машины — вдвое)
   const used=new Set();mine.forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(md)PART_KEYS.forEach(q=>used.add(md[q]));});
-  rdActive(s).forEach(pj=>{if(pj.kind==='study')return;const own=used.has(pj.id),add=rdPtsOf(s,pj)*len*(own?1:0.35)*(0.6+0.1*lv);if(add<0.05)return;pj.prog=Math.min(pj.need-0.01,(pj.prog||0)+add);out.pj.push({name:pj.name,add,own});});
+  if(mi(s)-(s.rd.racePjT??-99)>=2){s.rd.racePjT=mi(s);rdActive(s).forEach(pj=>{if(pj.kind==='study')return;const own=used.has(pj.id),add=rdPtsOf(s,pj)*len*(own?0.35:0.1)*(0.6+0.1*lv);if(add<0.05)return;pj.prog=Math.min(pj.need-0.01,(pj.prog||0)+add);out.pj.push({name:pj.name,add,own});});}
   // модели-участницы: доводка по итогам гонки (сошли по поломке — узнали больше)
   const seen=new Set();mine.forEach(r=>{const md=s.models.find(m=>m.id===r.md.id);if(!md||seen.has(md.id))return;seen.add(md.id);
-    const fails=(r.stops||[]).length+(r.dnf?1:0),dr=(0.02+0.01*lv)*len*(1+0.5*Math.min(2,fails)),dp=(0.003+0.0015*lv)*len,r0=md.rr||0,p0=md.rp||0;
+    const fails=(r.stops||[]).length+(r.dnf?1:0),dr=(0.01+0.004*lv)*len*(1+0.5*Math.min(2,fails)),dp=(0.001+0.0005*lv)*len,r0=md.rr||0,p0=md.rp||0;
     md.rr=Math.min(RR_MAX,r0+dr*(1-r0/RR_MAX));md.rp=Math.min(RP_MAX,p0+dp*(1-p0/RP_MAX));out.md.push({md,rr:[r0,md.rr],rp:[p0,md.rp]});});
   const pct2=x=>(Math.round(x*1000)/10).toString().replace('.',',')+'%';
   addLog(`🏁 Гоночная команда после «${rc.name}»: КБ работает на ${Math.round(k*100)}% быстрее ещё ${mo} мес.${out.pj.length?'; продвинулись проекты: '+out.pj.map(p=>'«'+p.name+'»').join(', '):''}; ${out.md.map(o=>`«${o.md.name}» доведена — поломок меньше на ${pct2(o.rr[1])}, мощность +${pct2(o.rp[1])}`).join('; ')}.`,'good');

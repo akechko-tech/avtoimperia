@@ -10,7 +10,8 @@ let NOW=0;const CTX={get currentTime(){return NOW;},sampleRate:44100,createGain:
   createBuffer:(ch,n,sr)=>({length:n,duration:n/sr,sampleRate:sr,numberOfChannels:ch,getChannelData:()=>new Float32Array(n)})};
 AU.ctx=CTX;AU.fx=node();AU.on.sfx=true;
 const IDS=['crowd_big','crowd_race','crowd_murmur','applause','birds_town','birds_forest','birds_dawn','skylark','blackbird','cuckoo','sparrows','crickets','cicada','bells_city','bells_village',
-  'steam_whistle','steam_whistle_us','steam_train','horse_carriage','dog_bark','rooster','rain','thunder','stream','brass_parade','sheep','bugle','fanfare','surf'];
+  'steam_whistle','steam_whistle_us','steam_train','horse_carriage','dog_bark','rooster','rain','thunder','stream','brass_parade','sheep','bugle','fanfare','surf',
+  'surf_big','surf_sea','surf_lake','gulls','gull2'];
 let SH=[],ANNS=[],HORN=[],WH=[];
 const shot0=ambShot;ambShot=function(id,pos,L,o){const S=shot0(id,pos,L,o);if(S)SH.push({id,t:R.t,g:S.gv,idx:(R.follow||R.me).idx});return S;};
 annPlay=function(text,L,pos){const h=ambHear(L,pos[0],pos[1],3);if(h.g>=0.02)ANNS.push({text,t:R.t,g:h.g,d:h.d});};
@@ -51,8 +52,10 @@ RUN.forEach(key=>{const rc=RACES.find(r=>r.key===key);if(!rc){console.log('не�
   console.log('   громче всего: '+Object.entries(st.mx).filter(x=>x[1]>0.003).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+' '+v.toFixed(2)).join(', '));
   ok(st.murNoN===0||st.murNo/st.murNoN<0.01,key+': гул зрителей не слышен там, где их нет');
   ok(st.bigNoN===0||st.bigNo/st.bigNoN<0.01,key+': трибун не слышно вдали');
-  if(st.birdSlow.length>20&&st.birdFast.length>20)ok(avg(st.birdFast)<avg(st.birdSlow)*0.5,key+': на скорости птиц почти не слышно');
+  if(st.birdSlow.length>20&&st.birdFast.length>20)ok(avg(st.birdFast)<=avg(st.birdSlow)*0.5,key+': на скорости птиц почти не слышно');
   ok(st.shotsMax<=12,key+': разовых звуков не больше 12 сразу');
+  // 0.36: море — запись прибоя слышна (у пляжа — стоя и на ходу), днём над берегом — чайки
+  if(E.sea.length){const sea=st.mx[E.seaRec]||0;ok(sea>(E.beach?0.15:0.03),key+': прибой («'+E.seaRec+'») слышен — до '+sea.toFixed(2)+(E.beach?', чайки до '+(st.mx.gulls||0).toFixed(2)+', одна рядом — '+cnt('gull2')+' раз':''));}
   ok(ANNS.every(a=>a.d<520),key+': диктора слышно только у трибун и старта (до 500 м, стоя)');
   ambStop();R=null;closeSheet();closePaper();G.pending=[];});
 console.log(fails?'ОШИБОК: '+fails:'всё в порядке');

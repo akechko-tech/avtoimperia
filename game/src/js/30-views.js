@@ -407,8 +407,6 @@ function setCash(v){const el=document.getElementById('cash');el.className=v<0?'n
 // широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
 function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
 function flagKey(s){const c=s.country,y=s.y;if(c==='de')return y>=1919?'de2':'de1';if(c==='ru')return y>=1918?'ru2':'ru1';return c;}
-// город компании — по эпохе (Петербург в войну стал Петроградом, Ленинградом — в 1924-м)
-function cityOf(s){const C=COUNTRIES[s.country];if(C&&C.cityBy){let n=C.city;C.cityBy.forEach(([y,v])=>{if(s.y>=y)n=v;});return n;}return C?C.city:'';}
 function render(){
   const s=G;if(!s)return;if(s.mode==='racer'){racerRender(s);return;}racerNav();try{autoCredit(s);dealerFit(s);}catch(_){}
   // 0.36: антураж страны — цвета интерфейса, полоска флага под шапкой и флажок эпохи у названия (Германия: до 1919 — имперский,

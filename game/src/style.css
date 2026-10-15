@@ -904,6 +904,8 @@ body[data-cc] .top{background:linear-gradient(var(--bg) 82%,transparent)}
 body[data-cc] .wrap .top::after{content:'';position:absolute;left:16px;right:16px;bottom:6px;height:3px;border-radius:2px;opacity:.85;background:var(--flagbar,transparent)}
 body[data-cc] .top{position:sticky}
 .cflag{display:inline-block;width:16px;height:11px;margin-right:6px;vertical-align:-1px;border-radius:1px;box-shadow:0 0 0 1px rgba(255,255,255,.25);background:var(--flag,transparent)}
+/* 0.36: флажок в шапке не должен выталкивать кассу и кнопки за край: название фирмы сжимается с многоточием */
+.top>div:first-child{min-width:0;flex:1 1 auto}.top>.row{flex:none}.top .co{max-width:100%}
 body[data-fl=fr]{--flag:linear-gradient(90deg,#2b4f9a 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#2b4f9a 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%)}
 body[data-fl=it]{--flag:radial-gradient(circle at 50% 50%,#c8322a 0 2px,transparent 2.5px),linear-gradient(90deg,#2f7a45 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#2f7a45 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%)}
 body[data-fl=de1]{--flag:linear-gradient(#1c1c1c 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#1c1c1c 33.3%,#f4f2ec 33.3% 66.6%,#c8322a 66.6%)}

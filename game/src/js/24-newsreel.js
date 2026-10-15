@@ -326,7 +326,7 @@ function ttsSay(text,onEnd){
 function ttsStop(){try{if(window.AndroidTTS)AndroidTTS.stop();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.cancel();}catch(e){}}
 /* ---------- проигрыватель: кадры, живой голос одной дорожкой, листание ◀◀ ▶▶, пауза, перемотка по шкале, свайп ---------- */
 let REEL=null;
-function reelFill(t,s){return String(t||'').replace(/\{co\}/g,s.company).replace(/\{city\}/g,COUNTRIES[s.country].city).replace(/\{y\}/g,s.y);}
+function reelFill(t,s){return String(t||'').replace(/\{co\}/g,s.company).replace(/\{city\}/g,cityOf(s)).replace(/\{y\}/g,s.y);}
 // Кинохроника по метке: несколько настоящих фильмов на метку — у каждого ролика свой (films/index.js)
 // Похожая хроника, если точной нет: горная гонка — гонка на дороге, трек — старт и заезд, джаз и крах — улица 1920-х
 const REEL_ALT={race_mountain:['race_run','country_road'],race_track:['race_run','race_start'],jazz_dance:['street1920'],road_build:['country_road','horse_cart'],crash1929:['street1920','street1910'],street_ru:['street1910']};

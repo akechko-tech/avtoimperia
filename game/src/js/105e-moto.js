@@ -78,12 +78,12 @@ function newMotoGame(pioneer,country,company,diff,firstName){
   g.dealers={[country]:1};   // мотоциклы продают велосипедные лавки: своих агентов — один
   g.plantVal=g.cap*capUnitCost(g);g.wh=10;g.ad=10;
   try{awInit(g,true);}catch(_){}
-  g.log=[];addLog(`${PIONEERS[g.pioneer]&&PIONEERS[g.pioneer].name!=='Свой персонаж'?PIONEERS[g.pioneer].name+' открыл':'Вы открыли'} мотомастерскую «${g.company}», ${COUNTRIES[country].city}. ${g.workers} рабочих, первый мотоцикл — «${nm}». Его продают ${g.dealers[country]} ${plural(g.dealers[country],'агент','агента','агентов')} и велосипедные лавки.`,'hist');
+  g.log=[];addLog(`${PIONEERS[g.pioneer]&&PIONEERS[g.pioneer].name!=='Свой персонаж'?PIONEERS[g.pioneer].name+' открыл':'Вы открыли'} мотомастерскую «${g.company}», ${cityOf(g)}. ${g.workers} рабочих, первый мотоцикл — «${nm}». Его продают ${g.dealers[country]} ${plural(g.dealers[country],'агент','агента','агентов')} и велосипедные лавки.`,'hist');
   return g;}
 function motoIntroPapers(s){const md=s.models[0],p=parts(md),C=COUNTRIES[s.country];
   pushEvent({kicker:'Январь '+s.y,title:'Мотор на велосипеде',deck:'Трициклы де Диона и «мотоциклетка» Вернеров',img:'De Dion-Bouton tricycle',imgCap:'Трицикл De Dion-Bouton',choices:[['Читать дальше','ok']],
     text:'По Парижу трещат трициклы де Диона: лёгкий быстроходный мотор, три колеса, никакой лошади. Братья Вернер поставили моторчик на велосипед и назвали машину «мотоциклеткой». Мотоцикл стоит в пять-шесть раз дешевле автомобиля: его берут врачи, почтальоны, коммивояжёры и молодые смельчаки.\nНастоящий автомобиль пока по карману немногим. Но мастерская, которая научится делать моторы и рамы, однажды сможет построить и его.'},true);
-  pushEvent({own:1,kicker:C.city,title:`«${s.company}» открывает мотомастерскую`,deck:'Сначала мотоциклы — потом автомобиль',
+  pushEvent({own:1,kicker:cityOf(s),title:`«${s.company}» открывает мотомастерскую`,deck:'Сначала мотоциклы — потом автомобиль',
     text:`В мастерской ${s.workers} рабочих, в кассе ${money(s.cash)}. Первый мотоцикл — «${md.name}»: ${p.e.name.toLowerCase()}, ${p.c.name.toLowerCase()}. Его продают велосипедные лавки и ${s.dealers[s.country]} ${plural(s.dealers[s.country],'агент','агента','агентов')}.\nАвтомобиль — когда наберётесь опыта: не меньше пяти лет работы и 3000 мотоциклов, КБ — мастерская опытных образцов и деньги на оборудование для автомобилей (вкладка «Завод»). В истории на это уходило пять–восемь лет.\nОдин ход — один месяц.`},true);}
 /* ---------- армия, почта, рекорды ---------- */
 // мотоцикл в армии: связные, санитары, пулемётные расчёты в коляске (Douglas поставил британской армии ~25 000 машин)

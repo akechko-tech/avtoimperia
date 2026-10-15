@@ -105,6 +105,8 @@ function pickChoice(ev){const K=ev.choices.map(c=>c[1]);
   if(K.some(k=>/^ma:/.test(k)))return K.find(k=>/^ma:\w+:N|^ma:aucSkip|^ok$/.test(k))||K[K.length-1];
   // 0.30: дуэль вживую — боты не ездят сами, едет шофёр (быстрый итог)
   if(K.includes('dxSim'))return 'dxSim';
+  // 0.36: Россия, 1917 год — путь задаёт RU=emig|stay|sell (по умолчанию — уехать), страна эмиграции — RUTO
+  if(K.includes('ru:emig'))return 'ru:'+(process.env.RU||'emig');if(K.some(k=>/^ru:to:/.test(k)))return 'ru:to:'+(process.env.RUTO||'fr');
   // 0.24: на гонку, матч и спор о скорости простые боты тоже не соглашаются — они не ездят, а неявка стоит ставки и репутации
   if(BOT!=='strong'&&BOT!=='debt'){if(K.includes('chalNo')&&G.chal&&['race','match','record'].includes(G.chal.type))return 'chalNo';return K[0];}
   // заказ: только если цена покрывает себестоимость с запасом и есть деньги на выпуск
@@ -130,6 +132,7 @@ for(let k=0;k<35*12;k++){
   if(process.env.V==='5'&&G.last&&G.y>=(+process.env.VY||1919)&&G.y<=(+process.env.VY||1919)+2){const L=G.last,f=v=>(v/1e6).toFixed(1);console.log(yB+'.'+G.m,'прод',L.sold,'ПРИБ',f(L.profit),'касса',f(G.cash),'кредит',f(G.loan),'лимит',f(maxLoan(G)),'отзыв',f(L.recall||0),'%',f(L.int),'предел долга',f(debtLimit(G)),'завод',f(G.plantVal),'склад',f(stockValue(G)),'кред',creditState(G).k,'cut',levCut(G,creditState(G)).toFixed(2));}
   if(process.env.V==='4'&&G.last&&G.y<(+process.env.VY||1903)){const L=G.last,f=v=>Math.round(v||0);console.log(yB+'.'+G.m,'прод',L.sold,'спрос',Math.round(L.demand||0),'выр',f(L.rev),'мат',f(L.mat),'зп',f(L.wage),'накл',f(L.ovh),'дил',f(L.dlr),'рекл',f(L.ad),'адм',f(L.adm),'КБ',f(L.rd),'%',f(L.int),'тек',f(L.turn),'гар',f(L.war),'ПРИБ',f(L.profit),'| касса',f(G.cash),'кред',G.loan,'раб',G.workers,'цех',G.cap,'склад',G.models.reduce((a,m)=>a+m.stock,0),'дил',JSON.stringify(G.dealers),'КБур',G.rd.lvl,'пр',rdActive(G).length);}
   if(G.last&&yB>=1928){const L=G.last;globalThis.SB=globalThis.SB||{};for(const c in L.mk){const x=L.mk[c];SB[c]=(SB[c]||0)+((x&&x.sold)||0);}globalThis.REV=(globalThis.REV||0)+(L.rev||0);globalThis.PRF=(globalThis.PRF||0)+(L.profit||0);}
+  if(process.env.WATCH)try{eval(process.env.WATCH);}catch(e){console.log('WATCH',e.message);}   // отладка: WATCH='if(G.soviet)console.log(G.y,G.m,JSON.stringify(G.imp))'
   const v=companyValue(G);if(v>peakV){peakV=v;peakY=G.y;}
   if(BOT==='greedy'&&G.y>=1912&&v<peakV*0.5&&!fellY)fellY=G.y;
   if(process.env.VM&&G.m===0&&G.y>=+process.env.VM)G.models.filter(m=>m.status!=='off').forEach(m=>console.log('   MD',G.y,m.name,m.status,segOf(m),'$'+m.price,'uc',Math.round(unitCost(m,G)),'mat',Math.round(matCost(m,G)),'hrs',Math.round(hoursPerCar(m,G)),'vol',m.vol,'made',m.made,'sold',m.lastSold,'dem',m.lastDem,'ref',Math.round(refPrice(m,G)),'q',classScore(m,G).toFixed(2),'cx',complexity(m).toFixed(2),'parts',PART_KEYS.map(k=>m[k]).join(','),'launched',m.launched,'ramp',m.ramp));
