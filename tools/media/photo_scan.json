@@ -1528,5 +1528,716 @@
 ],
 "pat": [],
 "note": ""
+},
+{
+"k": "saga:l-auto",
+"w": [
+"L'Auto",
+"Henri Desgrange"
+],
+"q": [
+"L'Auto-Vélo 1900",
+"L'Auto-Vélo journal",
+"L'Auto journal 1903",
+"L'Auto Velo une"
+],
+"pat": [],
+"note": "газета L'Auto-Vélo / L'Auto"
+},
+{
+"k": "saga:tour-1903",
+"w": [
+"1903 Tour de France",
+"Maurice Garin"
+],
+"q": [
+"Tour de France 1903 départ",
+"Maurice Garin 1903",
+"Montgeron Réveil-Matin 1903"
+],
+"pat": [],
+"note": "первый Тур 1903"
+},
+{
+"k": "saga:dd-tricycle",
+"w": [
+"De Dion-Bouton tricycle"
+],
+"q": [
+"De Dion-Bouton tricycle",
+"tricycle De Dion Bouton 1898",
+"De Dion-Bouton motor tricycle 1899",
+"tricycle à pétrole De Dion"
+],
+"pat": [],
+"note": "трицикл де Дион"
+},
+{
+"k": "saga:tri-race",
+"w": [],
+"q": [
+"course de tricycles 1898",
+"tricycle course automobile 1899",
+"Paris-Marseille-Paris 1896",
+"tricycle De Dion course"
+],
+"pat": [],
+"note": "гонка трициклов"
+},
+{
+"k": "saga:dd-v8",
+"w": [],
+"q": [
+"De Dion-Bouton V8",
+"De Dion Bouton 1912 V8",
+"De Dion-Bouton 1910 automobile",
+"De Dion-Bouton type CJ"
+],
+"pat": [],
+"note": "V8 де Дион 1910"
+},
+{
+"k": "saga:dd-autocanon",
+"w": [],
+"q": [
+"autocanon De Dion-Bouton",
+"autocanon de 75 1915",
+"De Dion-Bouton anti-aircraft 1914"
+],
+"pat": [],
+"note": "автопушка"
+},
+{
+"k": "saga:werner",
+"w": [
+"Werner (motorcycles)"
+],
+"q": [
+"Werner motocyclette 1898",
+"Werner motorcycle 1901",
+"motocyclette Werner frères",
+"Michel Werner motocyclette"
+],
+"pat": [],
+"note": "Вернер"
+},
+{
+"k": "saga:sidecar",
+"w": [
+"Sidecar"
+],
+"q": [
+"wicker sidecar antique motorcycle",
+"sidecar osier 1912",
+"motorcycle wicker sidecar 1910",
+"forecar 1905 motorcycle"
+],
+"pat": [],
+"note": "плетёная коляска"
+},
+{
+"k": "saga:moto-race",
+"w": [],
+"q": [
+"course de motocyclettes 1903",
+"motorcycle race 1905",
+"Paris-Madrid 1903 motocyclette",
+"motocyclette course 1902"
+],
+"pat": [],
+"note": "гонка мотоциклов"
+},
+{
+"k": "saga:tt-1907",
+"w": [
+"Isle of Man TT",
+"Rem Fowler"
+],
+"q": [
+"Rem Fowler 1907 Norton",
+"Isle of Man Tourist Trophy 1907",
+"Tourist Trophy 1911 motorcycle",
+"Isle of Man TT 1914"
+],
+"pat": [],
+"note": "остров Мэн"
+},
+{
+"k": "saga:olympia",
+"w": [
+"London Motor Show"
+],
+"q": [
+"Olympia motor show 1910",
+"Olympia Motor Show 1913",
+"motor show Olympia 1908",
+"Olympia exhibition 1905 motor"
+],
+"pat": [],
+"note": "выставка в Олимпии"
+},
+{
+"k": "saga:wanderer",
+"w": [
+"Wanderer (company)",
+"Wanderer W1"
+],
+"q": [
+"Wanderer Motorrad 1912",
+"Wanderer Puppchen",
+"Wanderer W1 1913",
+"Wanderer Fahrrad 1900",
+"Wanderer-Werke Schönau"
+],
+"pat": [],
+"note": "Вандерер"
+},
+{
+"k": "saga:dkw",
+"w": [
+"DKW"
+],
+"q": [
+"DKW E 206",
+"DKW Luxus 200",
+"DKW Motorrad 1928",
+"DKW Reichsfahrtmodell"
+],
+"pat": [],
+"note": "DKW 1920-х"
+},
+{
+"k": "saga:bianchi",
+"w": [
+"Bianchi (company)"
+],
+"q": [
+"Bianchi bicicletta 1900",
+"Bianchi motocicletta 1910",
+"Bianchi automobile 1910",
+"Bianchi Freccia Celeste",
+"Edoardo Bianchi officina"
+],
+"pat": [],
+"note": "Бьянки"
+},
+{
+"k": "saga:giro-1909",
+"w": [
+"1909 Giro d'Italia",
+"Luigi Ganna"
+],
+"q": [
+"Giro d'Italia 1909",
+"Luigi Ganna 1909",
+"Giro d'Italia 1910 partenza"
+],
+"pat": [],
+"note": "Джиро 1909"
+},
+{
+"k": "saga:monza-1925",
+"w": [
+"Autodromo Nazionale di Monza"
+],
+"q": [
+"Monza 1925 Gran Premio",
+"Nuvolari Bianchi 350",
+"autodromo di Monza 1922",
+"Gran Premio delle Nazioni Monza motociclette"
+],
+"pat": [],
+"note": "Монца 1925"
+},
+{
+"k": "saga:autostrada",
+"w": [
+"Autostrada dei Laghi",
+"Piero Puricelli"
+],
+"q": [
+"Autostrada dei Laghi 1925",
+"autostrada Milano Laghi inaugurazione",
+"autostrada 1924 Milano"
+],
+"pat": [],
+"note": "автострада"
+},
+{
+"k": "saga:red-flag",
+"w": [
+"Locomotive Acts"
+],
+"q": [
+"red flag act locomotive",
+"man with red flag in front of motor car",
+"Locomotive Act 1865 red flag"
+],
+"pat": [],
+"note": "красный флаг"
+},
+{
+"k": "saga:1000-miles",
+"w": [
+"Thousand Miles Trial"
+],
+"q": [
+"Thousand Mile Trial 1900",
+"1000 miles trial 1900",
+"Automobile Club 1900 trial"
+],
+"pat": [],
+"note": "тысяча миль"
+},
+{
+"k": "saga:rolls-flyer",
+"w": [],
+"q": [
+"Charles Rolls Wright Flyer",
+"Charles Rolls 1910 flight",
+"Charles Rolls aeroplane",
+"Charles Rolls balloon"
+],
+"pat": [],
+"note": "Роллс и самолёт"
+},
+{
+"k": "saga:wilbur-lemans",
+"w": [],
+"q": [
+"Wilbur Wright Le Mans 1908",
+"Wilbur Wright Hunaudières",
+"Wilbur Wright Pau 1909",
+"Wilbur Wright 1908 France"
+],
+"pat": [],
+"note": "Уилбур во Франции"
+},
+{
+"k": "saga:rr-armoured",
+"w": [
+"Rolls-Royce Armoured Car"
+],
+"q": [
+"Rolls-Royce armoured car 1914",
+"Rolls-Royce armoured car 1915",
+"Rolls-Royce armoured car 1920 pattern"
+],
+"pat": [],
+"note": "броневик"
+},
+{
+"k": "saga:enzo-young",
+"w": [],
+"q": [
+"Enzo Ferrari 1920",
+"Enzo Ferrari Alfa Romeo 1923",
+"Enzo Ferrari giovane",
+"Enzo Ferrari 1924 Pescara"
+],
+"pat": [],
+"note": "молодой Энцо"
+},
+{
+"k": "saga:valentino",
+"w": [],
+"q": [
+"Parco del Valentino Torino 1900",
+"Torino Valentino cartolina",
+"Torino neve 1910",
+"Parco del Valentino Torino antica"
+],
+"pat": [],
+"note": "Валентино"
+},
+{
+"k": "saga:salon-paris",
+"w": [
+"Paris Motor Show"
+],
+"q": [
+"Salon de l'automobile 1907 Grand Palais",
+"Salon de l'automobile 1910",
+"Salon automobile Grand Palais 1905",
+"Salon de l'automobile 1912"
+],
+"pat": [],
+"note": "парижский салон"
+},
+{
+"k": "saga:rouge",
+"w": [
+"Ford River Rouge complex"
+],
+"q": [
+"River Rouge plant 1927",
+"Ford River Rouge 1930",
+"Ford Rouge plant 1928",
+"Ford River Rouge plant LCCN"
+],
+"pat": [],
+"note": "Ривер-Руж"
+},
+{
+"k": "saga:ny-show",
+"w": [],
+"q": [
+"Madison Square Garden automobile show 1905",
+"New York automobile show 1906",
+"automobile show Madison Square Garden",
+"auto show 1908 New York"
+],
+"pat": [],
+"note": "нью-йоркская выставка"
+},
+{
+"k": "saga:blitzen",
+"w": [],
+"q": [
+"Blitzen Benz 1911",
+"Blitzen-Benz Burman",
+"Blitzen Benz Daytona",
+"Blitzen Benz 1909"
+],
+"pat": [],
+"note": "Блитцен-Бенц"
+},
+{
+"k": "saga:race-dust",
+"w": [
+"1903 Paris–Madrid race"
+],
+"q": [
+"Paris-Madrid 1903",
+"course Paris-Madrid 1903 poussière",
+"Gordon Bennett 1903 Athy",
+"course automobile 1902"
+],
+"pat": [],
+"note": "пыль гонки"
+},
+{
+"k": "saga:war-it",
+"w": [],
+"q": [
+"bersaglieri ciclisti 1915",
+"alpini 1915",
+"esercito italiano 1915",
+"partenza soldati 1915 Italia"
+],
+"pat": [],
+"note": "Италия в войне"
+},
+{
+"k": "saga:war-de",
+"w": [],
+"q": [
+"Mobilmachung 1914",
+"Soldaten 1914 Abmarsch Bahnhof",
+"Ausmarsch 1914 Truppen"
+],
+"pat": [],
+"note": "Германия 1914"
+},
+{
+"k": "saga:war-uk",
+"w": [],
+"q": [
+"despatch rider motorcycle 1915",
+"Triumph despatch rider",
+"British Army motorcycle 1916",
+"motorcycle despatch rider France 1915"
+],
+"pat": [],
+"note": "связные"
+},
+{
+"k": "saga:war-us",
+"w": [],
+"q": [
+"American troops 1917 parade",
+"doughboys 1918 France",
+"Liberty Loan parade 1918"
+],
+"pat": [],
+"note": "Америка 1917"
+},
+{
+"k": "saga:twenties-it",
+"w": [],
+"q": [
+"Milano 1925 automobili",
+"Milano anni venti piazza Duomo"
+],
+"pat": [],
+"note": "Милан 1920-х"
+},
+{
+"k": "ru:russo-balt",
+"w": [
+"Russo-Balt"
+],
+"q": [
+"Руссо-Балт",
+"Russo-Balt C24",
+"Russo-Balt 1912",
+"Руссо-Балт С24-40"
+],
+"pat": [],
+"note": "Руссо-Балт"
+},
+{
+"k": "ru:rbvz",
+"w": [],
+"q": [
+"Русско-Балтийский вагонный завод",
+"Russo-Balt factory Riga",
+"Russo-Balt wagon works"
+],
+"pat": [],
+"note": "РБВЗ"
+},
+{
+"k": "ru:nagel",
+"w": [],
+"q": [
+"Нагель Руссо-Балт Монте-Карло",
+"Andrei Nagel Russo-Balt",
+"Russo-Balt Monte Carlo 1912"
+],
+"pat": [],
+"note": "Нагель"
+},
+{
+"k": "ru:yakovlev",
+"w": [],
+"q": [
+"Яковлев Фрезе 1896",
+"Yakovlev Freze automobile",
+"первый русский автомобиль 1896",
+"Yakovlev and Freze car"
+],
+"pat": [],
+"note": "Яковлев и Фрезе"
+},
+{
+"k": "ru:puzyrev",
+"w": [],
+"q": [
+"Пузырёв автомобиль",
+"Пузырев автомобиль 1911",
+"Puzyrev automobile"
+],
+"pat": [],
+"note": "Пузырёв"
+},
+{
+"k": "ru:lessner",
+"w": [],
+"q": [
+"Лесснер автомобиль",
+"Lessner automobile 1907",
+"Lessner car Saint Petersburg"
+],
+"pat": [],
+"note": "Лесснер"
+},
+{
+"k": "ru:dux",
+"w": [],
+"q": [
+"Дукс завод",
+"Дукс Меллер",
+"Dux factory Moscow",
+"Меллер Юлий Александрович",
+"Дукс мотоцикл"
+],
+"pat": [],
+"note": "Дукс"
+},
+{
+"k": "ru:amo",
+"w": [
+"AMO F-15",
+"ZiL"
+],
+"q": [
+"АМО Ф-15",
+"AMO F-15 1924",
+"завод АМО 1924",
+"АМО Ф15 первые грузовики"
+],
+"pat": [],
+"note": "АМО"
+},
+{
+"k": "ru:nami",
+"w": [
+"NAMI-1"
+],
+"q": [
+"НАМИ-1",
+"NAMI-1 1927"
+],
+"pat": [],
+"note": "НАМИ-1"
+},
+{
+"k": "ru:race-1907",
+"w": [],
+"q": [
+"автогонка Петербург Москва 1907",
+"гонка Санкт-Петербург Москва 1908",
+"Duray 1907 Petersburg Moscow",
+"автомобильная гонка 1908 Россия"
+],
+"pat": [],
+"note": "гонка Петербург—Москва"
+},
+{
+"k": "ru:kegresse",
+"w": [
+"Adolphe Kégresse"
+],
+"q": [
+"Kégresse 1915",
+"полугусеничный автомобиль Кегресс",
+"Rolls-Royce Kegresse",
+"Packard Kegresse"
+],
+"pat": [],
+"note": "Кегресс"
+},
+{
+"k": "ru:revolution",
+"w": [
+"October Revolution"
+],
+"q": [
+"бронеавтомобиль 1917 Петроград",
+"Petrograd 1917 armoured car",
+"грузовик 1917 Петроград",
+"Petrograd 1917 truck soldiers"
+],
+"pat": [],
+"note": "революция"
+},
+{
+"k": "ru:nep",
+"w": [
+"New Economic Policy"
+],
+"q": [
+"Москва НЭП улица",
+"Moscow 1925 street",
+"Москва 1926 Тверская",
+"Moscow 1920s automobile"
+],
+"pat": [],
+"note": "НЭП"
+},
+{
+"k": "ru:izh",
+"w": [],
+"q": [
+"ИЖ-1 мотоцикл",
+"Izh-1 motorcycle 1929",
+"Ижевск мотоцикл 1928"
+],
+"pat": [],
+"note": "ИЖ-1"
+},
+{
+"k": "ru:people",
+"w": [
+"Pavel Ryabushinsky"
+],
+"q": [
+"Рябушинский Павел Павлович",
+"Шидловский Михаил Владимирович",
+"Фрязиновский Руссо-Балт",
+"Меллер Дукс портрет"
+],
+"pat": [],
+"note": "портреты"
+},
+{
+"k": "ru:road",
+"w": [],
+"q": [
+"Russian road 1910 automobile mud",
+"автомобиль 1910 Россия дорога",
+"автопробег 1910 Россия"
+],
+"pat": [],
+"note": "дорога"
+},
+{
+"k": "ru:petersburg",
+"w": [],
+"q": [
+"Невский проспект 1910",
+"Nevsky Prospekt 1910",
+"Санкт-Петербург 1912 автомобиль"
+],
+"pat": [],
+"note": "Петербург"
+},
+{
+"k": "ru:moscow",
+"w": [],
+"q": [
+"Тверская улица 1910",
+"Москва 1912 улица автомобиль",
+"Moscow 1909 street"
+],
+"pat": [],
+"note": "Москва"
+},
+{
+"k": "ru:tsar-garage",
+"w": [],
+"q": [
+"Nicholas II automobile",
+"Императорский гараж",
+"Delaunay-Belleville Nicholas II",
+"Николай II автомобиль"
+],
+"pat": [],
+"note": "царский гараж"
+},
+{
+"k": "ru:muromets",
+"w": [
+"Sikorsky Ilya Muromets"
+],
+"q": [
+"Илья Муромец 1914 Сикорский",
+"Sikorsky Ilya Muromets 1914"
+],
+"pat": [],
+"note": "Илья Муромец"
+},
+{
+"k": "ru:aerosled",
+"w": [],
+"q": [
+"аэросани 1915",
+"аэросани Дукс",
+"aerosledge 1920"
+],
+"pat": [],
+"note": "аэросани"
+},
+{
+"k": "ru:plan",
+"w": [],
+"q": [
+"первая пятилетка плакат",
+"Five-year plan poster 1929",
+"Нижегородский автозавод строительство 1930"
+],
+"pat": [],
+"note": "пятилетка"
 }
 ]

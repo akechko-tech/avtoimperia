@@ -226,5 +226,40 @@
 "d": 60,
 "g": "ref",
 "ref": 1
+},
+{
+"id": "surf_sea",
+"title": "File:Sea waves.wav",
+"t": 0,
+"d": 20.5,
+"g": "sea"
+},
+{
+"id": "surf_lake",
+"title": "File:Lake Okeechobee Surf in April 2016.ogg",
+"t": 30,
+"d": 60,
+"g": "sea"
+},
+{
+"id": "surf_big",
+"title": "File:Wave (Gravity Sound).wav",
+"t": 0,
+"d": 60,
+"g": "sea"
+},
+{
+"id": "gulls",
+"title": "File:XC707075 - European Herring Gull - Larus argentatus.mp3",
+"t": 0,
+"d": 19.3,
+"g": "sea"
+},
+{
+"id": "gull2",
+"title": "File:Mouette-ornitho'log.ogg",
+"t": 0,
+"d": 7.3,
+"g": "sea"
 }
 ]
