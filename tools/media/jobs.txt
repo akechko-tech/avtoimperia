@@ -1,2 +1,2 @@
 photos_scan
-sfx_cut
+photos

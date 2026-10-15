@@ -2239,5 +2239,230 @@
 ],
 "pat": [],
 "note": "пятилетка"
+},
+{
+"k": "ru:frese",
+"w": [
+"Pyotr Frese"
+],
+"q": [
+"Фрезе Пётр Александрович",
+"Пётр Фрезе каретный мастер",
+"Frese Petr Aleksandrovich",
+"Фрезе и К экипажная фабрика"
+],
+"pat": [],
+"note": "портрет Фрезе"
+},
+{
+"k": "ru:nizhny-1896",
+"w": [
+"All-Russia Exhibition 1896"
+],
+"q": [
+"Всероссийская выставка 1896 Нижний Новгород",
+"Nizhny Novgorod exhibition 1896",
+"Нижегородская выставка 1896 павильон",
+"Всероссийская промышленная и художественная выставка"
+],
+"pat": [],
+"note": "Нижегородская выставка 1896"
+},
+{
+"k": "ru:utro-rossii",
+"w": [
+"Utro Rossii"
+],
+"q": [
+"Утро России газета",
+"газета Утро России 1912",
+"Utro Rossii newspaper"
+],
+"pat": [],
+"note": "«Утро России»"
+},
+{
+"k": "ru:kuchino",
+"w": [
+"Dmitri Pavlovich Riabouchinsky"
+],
+"q": [
+"Кучинский аэродинамический институт",
+"Aerodynamic Institute Kuchino",
+"Рябушинский Дмитрий Павлович",
+"Kuchino aerodynamic institute 1904"
+],
+"pat": [],
+"note": "Кучино"
+},
+{
+"k": "ru:nesterov",
+"w": [
+"Pyotr Nesterov"
+],
+"q": [
+"Нестеров Пётр Николаевич",
+"Nesterov loop 1913",
+"Нестеров Ньюпор 1913",
+"Pyotr Nesterov aviator"
+],
+"pat": [],
+"note": "Нестеров"
+},
+{
+"k": "ru:utochkin",
+"w": [
+"Sergei Utochkin"
+],
+"q": [
+"Уточкин Сергей Исаевич",
+"Utochkin aviator 1910",
+"Уточкин авиатор Фарман"
+],
+"pat": [],
+"note": "Уточкин"
+},
+{
+"k": "ru:emigre-paris",
+"w": [
+"White émigré"
+],
+"q": [
+"Russian émigrés Paris 1920s",
+"русская эмиграция Париж 1925",
+"Russian taxi driver Paris 1920s",
+"русские таксисты Париж"
+],
+"pat": [],
+"note": "эмиграция"
+},
+{
+"k": "ru:civil-war",
+"w": [
+"Russian Civil War"
+],
+"q": [
+"Red Army 1919 truck",
+"Гражданская война 1919 грузовик",
+"Red Army 1920 armoured car",
+"бронеавтомобиль 1919 Красная армия"
+],
+"pat": [],
+"note": "гражданская война"
+},
+{
+"k": "ru:race-1907b",
+"w": [],
+"q": [
+"Петербург Москва 1908 гонка автомобиль",
+"Duray Lorraine-Dietrich 1907 Moscou",
+"course Saint-Pétersbourg Moscou 1907",
+"St. Petersburg Moscow race 1908 Hemery Benz",
+"Московское шоссе 1908 гонка"
+],
+"pat": [],
+"note": "гонка Петербург — Москва"
+},
+{
+"k": "ru:road2",
+"w": [],
+"q": [
+"Russian road 1915 mud automobile",
+"Russian army automobile 1915 mud",
+"Prokudin-Gorsky road",
+"Прокудин-Горский дорога",
+"дорога Россия 1910 фото"
+],
+"pat": [],
+"note": "дорога"
+},
+{
+"k": "ru:manege",
+"w": [
+"Mikhailovsky Manege"
+],
+"q": [
+"Михайловский манеж выставка",
+"Михайловский манеж 1913 автомобильная выставка",
+"Mikhailovsky Manege Saint Petersburg"
+],
+"pat": [],
+"note": "манеж"
+},
+{
+"k": "ru:elagin",
+"w": [
+"Yelagin Island"
+],
+"q": [
+"Елагин остров стрелка",
+"Стрелка Елагина острова 1910",
+"Yelagin Island Strelka"
+],
+"pat": [],
+"note": "Елагин остров"
+},
+{
+"k": "ru:palace-square",
+"w": [
+"Palace Square"
+],
+"q": [
+"Дворцовая площадь 1900",
+"Palace Square Saint Petersburg 1900",
+"Дворцовая площадь 1910 автомобиль"
+],
+"pat": [],
+"note": "Дворцовая площадь"
+},
+{
+"k": "ru:hippodrome",
+"w": [
+"Moscow Hippodrome"
+],
+"q": [
+"Московский ипподром бега",
+"Московский ипподром 1900",
+"Orlov trotter race 1900",
+"орловский рысак бега"
+],
+"pat": [],
+"note": "бега"
+},
+{
+"k": "saga:sidecar2",
+"w": [],
+"q": [
+"sidecar 1912 motorcycle wicker",
+"motorcycle with sidecar 1913",
+"Harley-Davidson sidecar 1915",
+"motocyclette side-car 1912"
+],
+"pat": [],
+"note": "коляска"
+},
+{
+"k": "saga:olympia2",
+"w": [],
+"q": [
+"Olympia Motor Show London 1913",
+"Olympia motor exhibition 1911",
+"Motor Show Olympia 1920s",
+"Olympia exhibition hall London 1910"
+],
+"pat": [],
+"note": "Олимпия"
+},
+{
+"k": "saga:twenties-it2",
+"w": [],
+"q": [
+"Milano 1925 tram",
+"Torino 1925 via Roma",
+"Milano 1928 piazza",
+"Roma 1926 via automobili"
+],
+"pat": [],
+"note": "Италия 1920-х"
 }
 ]
