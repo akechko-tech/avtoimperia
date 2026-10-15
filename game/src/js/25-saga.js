@@ -167,8 +167,10 @@ function sagaGo(i){const Q=SAGAP;if(!Q)return;if(Q.q){Q.q=0;Q.el.querySelector('
   Q.el.querySelector('.sg-body').innerHTML=sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
   sagaDots();
   const nx=Q.ch.sc[i+1];if(nx)sagaPreload(nx.say||nx.line||'',sagaVoiceOf(nx));
-  // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения
-  const d=sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),450);}});
+  // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения.
+  // 0.36: голос «договорил» слишком быстро (запись не загрузилась, нет сети и голоса телефона) — кадр стоит, пока текст можно прочесть
+  const t0=performance.now(),need=Math.max(3.8,1.6+txt.length/14)*1000;
+  const d=sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);const el=performance.now()-t0;Q.timer=setTimeout(()=>sagaNext(),el<need*0.6?need-el:450);}});
   Q.timer=setTimeout(()=>{if(SAGAP===Q&&Q.i===i)sagaNext();},(d?d+6:Math.max(3.8,1.6+txt.length/14))*1000);}
 function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);voiceStop();const s=G,ch=Q.ch;Q.q=1;Q.i=ch.sc.length;sagaDots();
   if(Q.replay){const pk=(s.saga&&s.saga.pick||{})[ch.id],o=ch.o&&ch.o[pk];Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${o?`<p class="sg-res">Ваш выбор: «${esc(sagaFill(o.t,s))}». ${esc(sagaFill(o.res,s))}</p>`:''}<button class="sg-o" data-k="-1"><b>Закрыть</b></button></div>`;}

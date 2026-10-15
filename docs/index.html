@@ -10979,8 +10979,10 @@ function sagaGo(i){const Q=SAGAP;if(!Q)return;if(Q.q){Q.q=0;Q.el.querySelector('
   Q.el.querySelector('.sg-body').innerHTML=sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
   sagaDots();
   const nx=Q.ch.sc[i+1];if(nx)sagaPreload(nx.say||nx.line||'',sagaVoiceOf(nx));
-  // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения
-  const d=sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);Q.timer=setTimeout(()=>sagaNext(),450);}});
+  // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения.
+  // 0.36: голос «договорил» слишком быстро (запись не загрузилась, нет сети и голоса телефона) — кадр стоит, пока текст можно прочесть
+  const t0=performance.now(),need=Math.max(3.8,1.6+txt.length/14)*1000;
+  const d=sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);const el=performance.now()-t0;Q.timer=setTimeout(()=>sagaNext(),el<need*0.6?need-el:450);}});
   Q.timer=setTimeout(()=>{if(SAGAP===Q&&Q.i===i)sagaNext();},(d?d+6:Math.max(3.8,1.6+txt.length/14))*1000);}
 function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);voiceStop();const s=G,ch=Q.ch;Q.q=1;Q.i=ch.sc.length;sagaDots();
   if(Q.replay){const pk=(s.saga&&s.saga.pick||{})[ch.id],o=ch.o&&ch.o[pk];Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${o?`<p class="sg-res">Ваш выбор: «${esc(sagaFill(o.t,s))}». ${esc(sagaFill(o.res,s))}</p>`:''}<button class="sg-o" data-k="-1"><b>Закрыть</b></button></div>`;}
@@ -12848,7 +12850,7 @@ function vMarket(){
   const mOnly=motoVis(s)&&!lineOn(s,'car'),mH=L?(L.mhome||0):0;
   return `${advisorCard(s,'market')}${chalCard(s,'market')}${mOnly?vMarketMoto('mk'):''}${foldCard('mkhome',!mOnly,`<h2>${mOnly?'🚗 Машины · ':''}${COUNTRIES[home].name}</h2><span class="pill ${e.tone}">${e.label}</span>`,`
     ${mOnly?`<p class="small muted" style="margin-top:6px">Ваша фирма пока делает мотоциклы — их продажи в разделе «Мотоциклы» выше. Машины появятся, когда построите автомобильный цех (вкладка «Завод»).</p>`:''}
-    <div class="meta"><div>Рынок/мес<b>${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))}</b></div><div>Ваши${mH&&!mOnly?'<small>машин</small>':''}<b>${L?fmtN(L.homeSold):'—'}</b>${mH&&!mOnly?`<small>+ ${fmtN(mH)} мотоциклов</small>`:''}</div><div>Доля<b>${L?pct(L.share,1):'—'}</b></div><div>Цены к 1913<b>${Math.round(cpi(s)*100)}%</b></div></div>${home==='us'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Америке много, но дороги плохи, и машины пока берут неохотно. Во Франции машины уже в моде: откройте там дилеров ниже, пошлина невелика.</p>':''}${home==='it'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Италии мало, свой рынок крошечный. Продавайте и за границей: во Франции покупателей в разы больше, пошлина — 12%.</p>':''}<div class="hr"></div>
+    <div class="meta"><div>Рынок/мес<b>${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))}</b></div><div>${mH&&!mOnly?'Ваши машины':'Ваши'}<b>${L?fmtN(L.homeSold):'—'}</b>${mH&&!mOnly?`<small>+ ${fmtN(mH)} мотоциклов</small>`:''}</div><div>Доля<b>${L?pct(L.share,1):'—'}</b></div><div>Цены к 1913<b>${Math.round(cpi(s)*100)}%</b></div></div>${home==='us'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Америке много, но дороги плохи, и машины пока берут неохотно. Во Франции машины уже в моде: откройте там дилеров ниже, пошлина невелика.</p>':''}${home==='it'&&s.y<1905?'<p class="small warn" style="margin-top:8px">Богатых семей в Италии мало, свой рынок крошечный. Продавайте и за границей: во Франции покупателей в разы больше, пошлина — 12%.</p>':''}<div class="hr"></div>
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
     <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: для своих перевозок они выбирают машину, на которой дешевле тонно-километр.</p>${horseHTML(s,home,M,R0)}`,`рынок ${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))} в месяц · ваши ${L?fmtN(L.homeSold):'—'} · доля ${L?pct(L.share,1):'—'}`)}
   ${mOnly?'':vMarketMoto('mk')}
@@ -13568,7 +13570,7 @@ if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:
 window.addEventListener('resize',()=>xpopClose());
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.35';
+const GAME_VER='0.36';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
