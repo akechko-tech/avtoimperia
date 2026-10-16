@@ -1,3 +1,1 @@
-ru3_scan
 music_cut
-sfx_cut
