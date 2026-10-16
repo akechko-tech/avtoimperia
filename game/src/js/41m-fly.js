@@ -82,9 +82,13 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
 function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;if(!tg){el.hidden=true;return;}
   const VP=FWR.VPf;if(!VP)return;const p=[tg[0],tg[1]===undefined?FL.me.p[1]:tg[1],tg[2]],cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];let x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
-  const on=cw>0&&Math.abs(x)<0.92&&Math.abs(y)<0.85;if(!on){if(cw<0){x=-x;y=-y;}const k=0.9/Math.max(Math.abs(x),Math.abs(y)*1.06,0.001);x*=k;y*=k;}
+  const on=cw>0&&Math.abs(x)<0.92&&Math.abs(y)<0.85;if(!on){if(cw<0){x=-x;y=-y;}const k=Math.min(0.86/Math.max(Math.abs(x),0.001),(y>0?0.4:0.48)/Math.max(Math.abs(y),0.001));x*=k;y*=k;}
   const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight,d=Math.hypot(p[0]-FL.me.p[0],p[2]-FL.me.p[2])*(M.kd||1);el.hidden=false;el.classList.toggle('edge',!on);
-  el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';el.querySelector('i').style.transform=on?'':`rotate(${Math.atan2(-y,x)}rad)`;
+  const sx=(x*0.5+0.5)*W,sy=(0.5-y*0.5)*H;el.style.left=sx+'px';el.style.top=sy+'px';el.querySelector('i').style.transform=on?'':`rotate(${Math.atan2(-y,x)}rad)`;
+  // 0.37: цель за табличкой задания или соперников — подпись не лезет в их текст (остаётся кружок; расстояние — в табличке)
+  {const now=performance.now();if(!FLY.panR||now-FLY.panRt>500){FLY.panRt=now;const R=el.parentNode.getBoundingClientRect();
+      FLY.panR=['fGoal','fBoard','fIns'].map(id=>document.getElementById(id)).filter(b=>b&&!b.hidden&&b.offsetWidth).map(b=>{const r=b.getBoundingClientRect();return [r.left-R.left,r.top-R.top,r.right-R.left,r.bottom-R.top];});}
+    let under=false;for(const r of FLY.panR)if(sx>r[0]-90&&sx<r[2]+8&&sy>r[1]-12&&sy<r[3]+12){under=true;break;}el.classList.toggle('under',under);}
   el.querySelector('b').textContent=(tg[3]?tg[3]+' · ':'')+(d>=1000?(d/1000).toFixed(d<10000?1:0).replace('.',',')+' км':Math.round(d)+' м');}
 /* ---------- начало и конец полёта ---------- */
 function flyTest(md){const s=G;if(!flyCan())return false;const P=airHeroFlies(s)?airPilotList(s)[0]:airBestPilot(s);return flyStart({kind:'test',md,pil:P});}

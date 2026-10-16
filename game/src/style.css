@@ -975,6 +975,7 @@ body.flying{overflow:hidden}
 #flyScreen .f-mark i{position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;border:2px solid #ffe28a;box-shadow:0 0 6px rgba(0,0,0,.6)}
 #flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
 #flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}
+#flyScreen .f-mark.under b{display:none}
 #flyScreen .f-load{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#0b1420;color:var(--brass);font-family:var(--display);font-size:20px}
 #flyScreen .f-load[hidden]{display:none}
 #flyScreen .f-help,#flyScreen .f-end{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:min(92%,460px);max-height:84%;overflow:auto;padding:16px 18px;border-radius:14px;background:rgba(8,16,26,.94);border:1px solid var(--line);color:var(--text);font-family:var(--body,inherit);font-size:14px;line-height:1.45}

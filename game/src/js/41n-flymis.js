@@ -127,7 +127,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     const dest={channel:'Дувр',alps:'Домодоссола',pyrenees:'Мадрид',russia:ev.key==='spbmos-1911'?'Москва':ev.key==='kiev-1914'?'Киев':'Пекин',england:ev.key==='lonman-1910'?'Манчестер':'финиш',med:'Бизерта',atlantic:'Ирландия'}[M.place]||'финиш';M.destN=dest;
     const cruise=M.place==='alps'?2500:M.place==='pyrenees'?2000:M.place==='atlantic'||M.place==='med'?600:450;
     M.goal=()=>{const a=me(),d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])*km/1000;return `<b>До: ${dest} — ${fmtN(Math.round(d))} км</b><span>в пути ${flFmtT(FL.t*km)} · бензин ${Math.round(a.fuel/a.fuelMax*100)}%${M.place==='alps'?' · перевал — 2 000 м':''}</span>`;};
-    M.board=()=>`<b>В истории</b><p>${esc(ev.h[0])}: ${esc(ev.h[2])}</p>`;
+    M.board=()=>`<b>В истории</b><p>${esc(airEvMine(G,ev)?'Вы':ev.h[0])}: ${esc(ev.h[2])}</p>`;
     M.target=()=>[M.B[0],undefined,M.B[1],dest];
     M.auto=()=>{const a=me();flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
     M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);

@@ -995,6 +995,7 @@ body.flying{overflow:hidden}
 #flyScreen .f-mark i{position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;border:2px solid #ffe28a;box-shadow:0 0 6px rgba(0,0,0,.6)}
 #flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
 #flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}
+#flyScreen .f-mark.under b{display:none}
 #flyScreen .f-load{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#0b1420;color:var(--brass);font-family:var(--display);font-size:20px}
 #flyScreen .f-load[hidden]{display:none}
 #flyScreen .f-help,#flyScreen .f-end{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:min(92%,460px);max-height:84%;overflow:auto;padding:16px 18px;border-radius:14px;background:rgba(8,16,26,.94);border:1px solid var(--line);color:var(--text);font-family:var(--body,inherit);font-size:14px;line-height:1.45}
@@ -14894,7 +14895,7 @@ function vLog(){
   const papers=G.papers.slice().reverse().map((p,i)=>`<button class="chip" style="width:100%;margin-top:6px" data-act="reopenPaper" data-k="${G.papers.length-1-i}"><small>${p.d}</small>${esc(p.title)}</button>`).join('');
   const last=G.papers[G.papers.length-1];
   const sold=G.soldTo&&G.over&&G.y<1930?`<section class="card"><span class="label">Компания продана</span><h2 style="margin-top:2px">Начать с другой марки</h2><p class="small" style="margin-top:4px">За «${esc(G.soldTo.co)}» вы получили ${money(G.soldTo.mine)}. Купите действующую марку — с заводами, дилерами и машинами — и ведите её до 1930 года.</p><button class="btn primary block" style="margin-top:8px" data-act="rbOpen">Выбрать марку</button></section>`:'';
-  return sold+`<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя. Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
+  return sold+`<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">${typeof airOnly==='function'&&airOnly(G)?'В 1930 году вашу фирму сравнят с настоящими авиастроителями: Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Boeing. Очки дают масштаб, рынок, изобретения, рекорды и призы, капитал и имя.':'В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя.'} Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
   ${legacyCard()}${titlesCard(G)}${boardCard(G)}${trophyCabinetCard(G)}${sagaCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
   ${foldCard('ach',false,`<h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span>`,`<div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div>`,`получено ${got} из ${ACH.length}`)}
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
@@ -15464,6 +15465,8 @@ function openHelp(){
     <p><b>Риск новинок.</b> Деталь раньше истории или только что появившаяся у поставщиков — передний край: прототип может потребовать доработки, серия — выйти не по ТЗ (мотор слабее, рама слабее, ресурс ниже), первые годы — «детские болезни». Обкатанная деталь даёт ровно то, что обещано. Доводка в КБ исправляет отклонения сразу.</p>
     <p><b>КБ.</b> Восемь уровней: чем больше бюро, тем больше проектов одновременно. Улучшает детали (★) и строит прототипы будущих деталей; с 3-го уровня открывает технологии завода раньше истории — это «первенства». Проекты разложены по трём папкам: улучшения (детали ваших машин и современные), новые (прототипы и машины конкурентов на изучение) и устаревшие.</p>
     <p><b>Гонки.</b> Сезоны и чемпионаты своего времени. Команда до трёх машин: одну можно вести самому — в объёмной 3D-графике (на слабых телефонах можно включить простую). Характеристики машины считаются из деталей: вес, мощность, коробка, тормоза, шины. В гонке справа вверху видно ближайший поворот и скорость, на которой его можно пройти, слева внизу — сколько сцепления шин уже занято; «?» — как ехать. Гоночный отдел (шесть уровней) даёт заводской кузов, надёжность, мощность и быстрые пит-стопы.</p>
+    <p><b>Авиация.</b> С 1909 года любая фирма может построить авиацех, а путь «Авиатор» начинается с ангара на краю поля: герои — Блерио, Фарман, Вуазен, братья Райт, Кёртисс, Фоккер, Юнкерс, Сопвич, де Хэвилленд, Капрони, Сикорский — или свой авиатор. Конструктор: назначение, схема, материал, мотор и число моторов, управление, шасси, винт, оружие, кабина, крыло; расчёт сразу показывает скорость, подъём, потолок, дальность и посадочную скорость и сравнивает с лучшей машиной года. Опытный аэроплан сначала облетать, потом оснастка и серия. Покупатели — спортсмены и лётные школы, армия и флот (конкурсы и контракты со сроком и неустойкой), после войны — почта и авиалинии. У каждого героя — свой фильм по настоящей истории.</p>
+    <p><b>Небо.</b> Состязания 1908–1929 годов (приз Дейча — Аршдекона, Реймс, Ла-Манш, кубки Гордона Беннетта и Шнейдера, перелёты, военные конкурсы, мировые рекорды), а в войну — фронт: патруль, перехват, аэростаты, разведка, бомбардировка. Летать можно самому в 3D (ручка — справа, газ — слева, «Огонь» и «Бомба», виды, автопилот и ускорение времени, «Сесть» — конец полёта) или узнать результат сразу — «Доверить лётчику».</p>
     <p><b>Путь гонщика.</b> «Новая игра» → «Начать гонщиком»: исторический пилот (Лянча, Шевроле, Рикенбакер, Мазерати, Феррари) или свой — страна и год дебюта. Купите подержанную гоночную машину, устройтесь испытателем на завод, выигрывайте призы и славу: заводы позовут в команду (жалованье, доля призов, премии), шинные фирмы платят за победы. «Рейтинг» сравнивает вас с лучшими гонщиками 1895–1929 годов. Накопив капитал, основайте марку — с нуля, с партнёром или купив слабую марку, — и игра продолжится партией магната.</p>
     <p><b>Вызовы.</b> Соперники бросают вызов в газетах, а на доске вызовов («Империя») их можно брать самим: пари на гонку, матч-гонка один на один (ипподромы, Бруклендс, Индианаполис, дощатые треки), спор о скорости на мерной миле или круге, продажи класса за квартал, полгода или год — дома и на экспорт (если силы неравны — с форой), пробег на надёжность серийных машин. Выигрыш — ставка, слава и грамота, проигрыш или неявка — ставка и насмешки прессы.</p>
     <p><b>Цель.</b> ${G&&typeof airOnly==='function'&&airOnly(G)?'Величайшая авиационная фирма эпохи: в 1930 году её сравнят с настоящими авиастроителями':'Величайшая автоимперия эпохи: в 1930 году компанию сравнят с реальными'} по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
@@ -19232,9 +19235,13 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
 function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;if(!tg){el.hidden=true;return;}
   const VP=FWR.VPf;if(!VP)return;const p=[tg[0],tg[1]===undefined?FL.me.p[1]:tg[1],tg[2]],cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];let x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
-  const on=cw>0&&Math.abs(x)<0.92&&Math.abs(y)<0.85;if(!on){if(cw<0){x=-x;y=-y;}const k=0.9/Math.max(Math.abs(x),Math.abs(y)*1.06,0.001);x*=k;y*=k;}
+  const on=cw>0&&Math.abs(x)<0.92&&Math.abs(y)<0.85;if(!on){if(cw<0){x=-x;y=-y;}const k=Math.min(0.86/Math.max(Math.abs(x),0.001),(y>0?0.4:0.48)/Math.max(Math.abs(y),0.001));x*=k;y*=k;}
   const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight,d=Math.hypot(p[0]-FL.me.p[0],p[2]-FL.me.p[2])*(M.kd||1);el.hidden=false;el.classList.toggle('edge',!on);
-  el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';el.querySelector('i').style.transform=on?'':`rotate(${Math.atan2(-y,x)}rad)`;
+  const sx=(x*0.5+0.5)*W,sy=(0.5-y*0.5)*H;el.style.left=sx+'px';el.style.top=sy+'px';el.querySelector('i').style.transform=on?'':`rotate(${Math.atan2(-y,x)}rad)`;
+  // 0.37: цель за табличкой задания или соперников — подпись не лезет в их текст (остаётся кружок; расстояние — в табличке)
+  {const now=performance.now();if(!FLY.panR||now-FLY.panRt>500){FLY.panRt=now;const R=el.parentNode.getBoundingClientRect();
+      FLY.panR=['fGoal','fBoard','fIns'].map(id=>document.getElementById(id)).filter(b=>b&&!b.hidden&&b.offsetWidth).map(b=>{const r=b.getBoundingClientRect();return [r.left-R.left,r.top-R.top,r.right-R.left,r.bottom-R.top];});}
+    let under=false;for(const r of FLY.panR)if(sx>r[0]-90&&sx<r[2]+8&&sy>r[1]-12&&sy<r[3]+12){under=true;break;}el.classList.toggle('under',under);}
   el.querySelector('b').textContent=(tg[3]?tg[3]+' · ':'')+(d>=1000?(d/1000).toFixed(d<10000?1:0).replace('.',',')+' км':Math.round(d)+' м');}
 /* ---------- начало и конец полёта ---------- */
 function flyTest(md){const s=G;if(!flyCan())return false;const P=airHeroFlies(s)?airPilotList(s)[0]:airBestPilot(s);return flyStart({kind:'test',md,pil:P});}
@@ -19469,7 +19476,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     const dest={channel:'Дувр',alps:'Домодоссола',pyrenees:'Мадрид',russia:ev.key==='spbmos-1911'?'Москва':ev.key==='kiev-1914'?'Киев':'Пекин',england:ev.key==='lonman-1910'?'Манчестер':'финиш',med:'Бизерта',atlantic:'Ирландия'}[M.place]||'финиш';M.destN=dest;
     const cruise=M.place==='alps'?2500:M.place==='pyrenees'?2000:M.place==='atlantic'||M.place==='med'?600:450;
     M.goal=()=>{const a=me(),d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])*km/1000;return `<b>До: ${dest} — ${fmtN(Math.round(d))} км</b><span>в пути ${flFmtT(FL.t*km)} · бензин ${Math.round(a.fuel/a.fuelMax*100)}%${M.place==='alps'?' · перевал — 2 000 м':''}</span>`;};
-    M.board=()=>`<b>В истории</b><p>${esc(ev.h[0])}: ${esc(ev.h[2])}</p>`;
+    M.board=()=>`<b>В истории</b><p>${esc(airEvMine(G,ev)?'Вы':ev.h[0])}: ${esc(ev.h[2])}</p>`;
     M.target=()=>[M.B[0],undefined,M.B[1],dest];
     M.auto=()=>{const a=me();flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
     M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);
@@ -21382,9 +21389,14 @@ function airEvSoon(s){const T=mi(s);return airEvList(s).filter(ev=>{const st=air
 // какие аэропланы годятся: облетанные, а для Кубка Шнейдера — гидроаэропланы; на военный конкурс — своего назначения
 function airEvMds(s,ev){return (s.air.models||[]).filter(m=>m.flown&&m.status!=='off'&&m.status!=='dev'&&(!ev.sea||airStats(m,tNow(s)).sea)&&(ev.kind!=='trial'||!ev.mil||m.role===ev.mil.role||ev.mil.role==='recon'&&['recon','train','sport'].includes(m.role)));}
 /* ---------- соперники: победитель по истории и типичные аэропланы года ---------- */
+/* 0.37: вы сами — победитель по истории (Блерио на Ла-Манше, Кёртисс в Реймсе, Сикорский в Москве): себя в соперниках не видно,
+   результат истории показывает другой лётчик эпохи, а газета пишет «в истории это сделали вы» */
+function airEvMine(s,ev){const P=PIONEERS[s.pioneer];if(!P||!P.air||s.pioneer==='custom')return false;const sur=P.name.split(' ').slice(-1)[0];return String(ev.h[0]).includes(sur);}
+function airEvHist(s,ev){const H=ev.h;return airEvMine(s,ev)?`В истории это сделали вы: «${H[1]}» — ${H[2]}.`:`В истории: ${H[0]} на ${H[1]} — ${H[2]}.`;}
 function airEvField(s,ev){const t=airEvT(ev),F=[],hv=AIR_EV_HV[ev.key]||0,sk=AIR_PILOTS.filter(p=>p.from<=t&&p.to+0.99>=t&&(ev.open||p.c===ev.c));
   const ref=r=>{const m=airRefMd(r,t);return {md:m,st:airStats(m,t)};};
   const W={n:ev.h[0],plane:ev.h[1],hist:1};
+  if(airEvMine(s,ev)){const sur=PIONEERS[s.pioneer].name.split(' ').slice(-1)[0],alt=sk.find(p=>!p.n.includes(sur));W.n=alt?alt.n:'Лучший соперник';W.hist=0;W.plane='';}
   // соперники — чуть медленнее победителя по истории (кто был быстрее его — тот бы и победил)
   if(ev.kind==='speed'){W.v=hv||ref('race').st.v*0.95;F.push(W);const R=ref('race'),S=ref('sport');[[R,0.93],[S,0.9],[R,0.86],[S,0.82]].forEach(([x,k],i)=>{const p=sk[i]||{n:['Пилот завода','Лейтенант флота','Спортсмен','Инженер-пилот'][i],sk:0.75};if(p.n===W.n)return;
     const v=x.st.v*k*(0.92+0.08*(p.sk||0.75));F.push({n:p.n,plane:x.md.name,v:hv?Math.min(v,hv*[0.99,0.95,0.9,0.85][i]):v});});}
@@ -21416,11 +21428,11 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   const fameG=(won?(ev.open?10:6):res.place===2?3:res.place===3?1:-1)*bn('airFame')*(ev.prize>20000?1.5:1);A.fame=clamp(A.fame+fameG,0,100);if(won)A.wins=(A.wins||0)+1;
   if(md&&won&&['sport','race','train'].includes(md.role)){md.boost=Math.min(2,(md.boost||1)+0.25);}
   // первые в мире: перелёт или петля раньше истории
-  if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y+(ev.m>=6?1:0),ev.h[0]);}catch(_){}
+  if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y+(ev.m>=6?1:0),airEvMine(s,ev)?'вы сами в настоящей истории':ev.h[0]);}catch(_){}
   // военный конкурс: победителю — заказ армии
   if(won&&ev.mil&&md){const n=Math.max(1,Math.round(ev.mil.n*(0.6+0.4*Math.random())));airOrderAdd(s,{md:md.id,n,price:airMilPrice(s,md),due:mi(s)+8,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1});}
   try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}
-  const H=ev.h,hist=`В истории: ${H[0]} на ${H[1]} — ${H[2]}.`;
+  const hist=airEvHist(s,ev);
   pushEvent({own:1,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${who} на «${md?md.name:''}» — ${res.txt}`,
     text:`${won?(prize?`Приз — ${money(prize)}. `:'')+'Газеты печатают портрет лётчика на первой полосе, у ангаров — очередь из желающих купить такой же аэроплан.':res.place<=3&&res.place>1?(prize?`Приз за ${res.place}-е место — ${money(prize)}. `:'')+'Неплохо — но помнят только победителей.':'Толпа расходится разочарованной. Механики уже разбирают мотор.'}\n${hist}`},true);
   return {prize,fameG};}
@@ -21450,10 +21462,10 @@ function airRecCan(s,k){const A=s.air;if(!A||!A.lv)return false;if(airWarOn(s.co
 let AEV=null;
 function openAirEv(key){const s=G,ev=AIR_EV.find(e=>e.key===key);if(!ev)return;const L=airEvMds(s,ev),pils=airPilotList(s);AEV=AEV&&AEV.key===key?AEV:{key,md:L[0]?L[0].id:null,pid:(airBestPilot(s)||{}).id};
   const md=L.find(m=>m.id===AEV.md)||L[0],st=md?airStats(md,tNow(s)):null,F=airEvField(s,ev),open=airEvStatus(s,ev)==='open';
-  const fl=F.map(x=>`<li><p>${esc(x.n)} — ${esc(x.plane||'')}${x.v?` · ${Math.round(x.v)} км/ч`:x.d?` · ${fmtN(x.d)} км`:x.a?` · ${fmtN(x.a)} м`:''}${x.hist?' <span class="muted">(победитель в истории)</span>':''}</p></li>`).join('');
+  const fl=F.map((x,i)=>`<li><time>${i+1}.</time><p>${esc(x.n)}${x.plane?' — '+esc(x.plane):''}${x.v?` · ${Math.round(x.v)} км/ч`:x.d?` · ${fmtN(x.d)} км`:x.a?` · ${fmtN(x.a)} м`:''}${x.hist?' <span class="muted">(победитель в истории)</span>':''}</p></li>`).join('');
   openSheet(`<div class="row"><h2>${esc(ev.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${MONTHS_G[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.len?` · ${fmtN(ev.len)} км`:''}${ev.prize?` · приз ${money(Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10)}`:''}${ev.mil?` · победителю — заказ армии`:''}</p>
     ${photoHTML(AIR_IMG[ev.h[1]]||ev.h[1])}
-    <p class="small" style="margin-top:8px">В истории: ${esc(ev.h[0])} на ${esc(ev.h[1])} — ${esc(ev.h[2])}.</p>
+    <p class="small" style="margin-top:8px">${esc(airEvHist(s,ev))}</p>
     ${fl?`<div class="label" style="margin-top:12px">Соперники</div><ul class="log">${fl}</ul>`:''}
     <div class="label" style="margin-top:12px">Аэроплан</div>${L.length?`<div class="chips">${L.map(m=>`<button class="chip ${md&&m.id===md.id?'on':''}" data-act="aevMd" data-v="${m.id}">${esc(m.name)}<small>${airSt(airStats(m,tNow(s)))}</small></button>`).join('')}</div>`:`<p class="small bad">Нет подходящего облетанного аэроплана${ev.sea?' — нужен гидроаэроплан (поплавки или лодка)':''}.</p>`}
     <div class="label" style="margin-top:12px">Лётчик</div><div class="chips">${pils.map(p=>`<button class="chip ${AEV.pid===p.id?'on':''}" data-act="aevPil" data-v="${p.id}">${esc(p.hero?p.n+' (вы)':p.n)}<small>мастерство ${Math.round(p.sk*100)}</small></button>`).join('')}</div>
