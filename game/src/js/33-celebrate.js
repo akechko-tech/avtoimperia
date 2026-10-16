@@ -5,6 +5,7 @@ let CEL=null;
 // 0.30: у каждого достижения — свои фанфары: победа, кубок, титул, рекорд, первенство, медаль, сделка
 const CEL_KIND={'🏁':'win','🏆':'cup','👑':'title','🚗':'record','🌟':'first','🥇':'medal','🤝':'deal','⚔️':'duel','🏅':'medal','🏛':'legacy'};
 function celebrate(big,sub,icon,kind){
+  try{if(typeof G!=='undefined'&&G)G.celebT=mi(G);}catch(_){}
   try{if(CEL){CEL.el.remove();cancelAnimationFrame(CEL.raf);}}catch(_){}
   const el=document.createElement('div');el.className='cel';
   el.innerHTML=`<canvas></canvas><div class="cel-t"><i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`;

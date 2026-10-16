@@ -471,6 +471,11 @@ function carStep(c,trk,dt){
   else if(c.shift<=0&&v<vg*1.02){Fx=thr*pw/Math.max(v,vCr);}
   if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);}
   const muR=mu*kR/kA,muF=mu*kF/kA,Fxmax=muR*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
+  // 0.37: в грязи и на раскисшем склоне колесо буксует — мотоциклист толкает машину ногами (у ранних мотоциклов — и педалями),
+  // механик выскакивает и толкает автомобиль. Раньше мотоцикл в грязи на подъёме Ла-Тюрби вставал намертво: «газ» есть — хода нет
+  const wantGas=c.player&&R&&R.mode==='drive'?!!rKeys.gas:thr>0.2;
+  c.push=0;if(!stopped&&!c.rev&&wantGas&&v<2.5&&v>-0.5&&(spin>0.05||mu<0.6||grade>0.05)){const moto=c.cls==='moto';
+    const kp=moto?0.13:c.mech?0.05:0.02;if(kp>0){c.push=kp*c.m*GRAV*clamp((2.5-v)/1.5,0,1);Fx+=c.push;}}
   // вода в луже и жидкая грязь тормозят по квадрату скорости
   const wd=su.k==='puddle'?0.0016:su.k==='mudhole'?0.005:0;
   const drag=c.kd*v*Math.abs(v)+crr*c.m*GRAV*Math.sign(v)+c.m*GRAV*grade/Math.sqrt(1+grade*grade)+c.m*wd*v*Math.abs(v);
@@ -861,7 +866,7 @@ function aiMotoMd(y){const E=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp-
   const g=GEARBOX.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.eff-a.eff)[0],k=BRAKES.filter(x=>x.moto&&x.y<=y).pop(),w=TYRES.filter(x=>x.moto&&x.y<=y).pop();
   return {e:eng.id,g:g.id,c:c.id,k:k.id,b:'mb0',w:w.id,t:'t0',paint:'#333',made:0,ai:1};}
 function motoField(rc,s){if(!raceMoto(rc)||!ENGINES.some(x=>x.moto&&x.y<=rc.y))return [];const y=rc.y,host=COUNTRIES[rc.c]?rc.c:'fr',ss={y,m:6},L=[];
-  [host,'fr','uk','de','us','it','ru'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(!cp.imp&&compVol(cp,ss)>0&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
+  [host,'fr','uk','de','us','it','ru'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(!cp.imp&&compVol(cp,ss)>0&&!(s&&ownComp(cp,s))&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
   const n=Math.min(L.length,['hill','sprint'].includes(rc.t)?3:4),names=AMATEUR[host]||AMATEUR.fr,md=aiMotoMd(y);
   return L.slice(0,n).map((o,i)=>{const nm=compName(o.cp,ss),col=['#3a2a1c','#1f2b3a','#7a1f1a','#2b3a24'][i%4];return {you:false,spec:1,cls:'moto',name:nm,label:nm+(y<1902?' · трицикл':' · мотоцикл'),drvName:names[0]+' '+names[1+((i*3+y)%(names.length-1))],drvId:null,sk:0.72+0.05*((i+y)%3),md:{...md,name:nm,paint:col},prep:2,tyre:'soft',gear:0,
     color:col,pw:DIF().race,relK:1,tc:o.c};});}
@@ -983,6 +988,8 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;const w=twPunctTxt(me).toUpperCase();rMsg(me.flat?`ПРОКОЛ: ${w}! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ`:me.punctWhy==='wear'?`ШИНА СТЁРТА ДО КОРДА — ЛОПНУЛА: ${w}. ЖМИТЕ 🔧`:`ПРОКОЛ: ${w}! ЖМИТЕ 🔧`,2.4);}if(!me.punct)me.punctSaid=0;
     if(me.punct&&twRimN(me)&&!me.rimSaid){me.rimSaid=1;rMsg('ПОКРЫШКА РАЗЛЕТЕЛАСЬ — ЕДЕМ НА ОБОДЕ!',2.2);}
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
+    // 0.37: буксуем в грязи — человек толкает (см. c.push в физике)
+    if(me.push>0){me.pushT=(me.pushT||0)+dt;if(me.pushT>0.8&&!me.pushSaid){me.pushSaid=1;rMsg(me.cls==='moto'?'ГОНЩИК ТОЛКАЕТ МОТОЦИКЛ ИЗ ГРЯЗИ':me.mech?'МЕХАНИК ВЫСКОЧИЛ И ТОЛКАЕТ':'ТОЛКАЕМ ИЗ ГРЯЗИ',1.6);}}else{me.pushT=0;if(me.vx>5)me.pushSaid=0;}
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
     {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.wait&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;
       // 0.29: последняя точка, где машина шла по дороге вперёд, — сюда и возвращаем
@@ -990,6 +997,8 @@ function raceTick(dt){
       // 0.29: застрял, даже если колёса крутятся (склон между ветками серпантина, упёрся в насыпь): нет продвижения к финишу
       const busy=me.wait||me.stopT>0||me.pitT>0||me.svc===2||me.dnf||me.fin!==null||me.inWater===2||R.t<=2;
       if(busy||me.prog>me.npP+6){me.npP=me.prog;me.npT=0;}else me.npT+=dt;
+      // 0.37: стоит за обочиной (после аварии, ремонт ещё не вызван) — кнопка «Вернуться на трассу» нужна и тогда
+      me.offStill=Math.abs(me.lat)>T.W/2+3&&Math.abs(me.vx)<1.5&&!me.dnf&&me.fin===null&&R.t>2?(me.offStill||0)+dt:0;
       // через 20 с без продвижения маршалы сами выталкивают машину на дорогу (время потеряно, но гонка не встаёт)
       if(me.npT>20){racerBackOnTrack(me,true);}}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
@@ -1033,7 +1042,10 @@ function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);l
   for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;for(const i of L){const p=trk.pts[i],d=(p[0]-x)**2+(p[2]-z)**2;if(d<bd){bd=d;bi=i;}}}
   return bi<0?null:{i:bi,d:Math.sqrt(bd)};}
 // Вернуть машину на дорогу в точку i (там, где она съехала), с тем же кругом
-function respawnAt(c,i,lap){const T=R.trk;c.idx=clamp(i,0,T.n-1);if(lap!==undefined)c.lap=lap;respawn(c);c.offIdx=-1;trackLocal(T,c);}
+function respawnAt(c,i,lap){const T=R.trk;i=clamp(i,0,T.n-1);
+  // 0.37: точка возврата в пятне грязи или в луже — ставим за пятно (иначе машину вернут туда же, где она застряла)
+  {const k=T.patchAt&&T.patchAt[i],P=k?T.patches[k-1]:null;if(P&&(P.kind==='mudhole'||P.kind==='puddle')&&i>=P.i0-2&&i<=P.i1+2)i=Math.min(T.n-1,P.i1+3);}
+  c.idx=clamp(i,0,T.n-1);if(lap!==undefined)c.lap=lap;respawn(c);c.offIdx=-1;trackLocal(T,c);}
 // 0.29: «Вернуться на трассу» — туда, где машина съехала, или в последнюю точку, где она шла по дороге; отменяет зависший сервис
 function racerBackOnTrack(m,auto){const T=R.trk;if(m.svc===1){m.svc=0;m.svc1T=0;m.svcNo=R.time+4;}
   if(m.offIdx>=0)respawnAt(m,m.offIdx,m.offLap);else if(m.goodIdx>=0)respawnAt(m,m.goodIdx,m.goodLap);else respawn(m);

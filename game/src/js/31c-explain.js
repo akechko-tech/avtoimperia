@@ -179,7 +179,7 @@ function xpopAdm(s){const L=s.last||{},P=L.admP||admParts(s,L),rev=(L.rev||0)+(L
     <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${(()=>{const kd=DIFFS[s.diff]&&DIFFS[s.diff].org!=null?DIFFS[s.diff].org:1,kp=k/(kd||1),P0=PIONEERS[s.pioneer];return Math.abs(k-1)>0.001?` ${Math.abs(kd-1)>0.001?`На уровне «${esc(dn)}» рост с размером ×${xn(kd,1)}`:''}${Math.abs(kp-1)>0.004?`${Math.abs(kd-1)>0.001?', у ':'У '}${esc(P0?P0.name:'')} — ещё ×${xn(kp,2)}`:''} — уже в строках ниже.`:'';})()}</p>
     <table class="xp-t xp-c xp-a">
     ${row('Основа','правление, бухгалтерия, юристы',pp(P.base))}
-    ${row('Выпуск',`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
+    ${row('Выпуск',`${P.made||!P.mm?`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')}`:''}${P.mm?`${P.made?' и ':''}${fmtN(P.mm)} ${plural(P.mm,'мотоцикл','мотоцикла','мотоциклов')} (мотоцикл — четверть машины)`:''} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
     ${row('Страны сбыта за границей',P.fmL&&P.fmL.length?P.fmL.map(c=>(COUNTRIES[c]||{}).name||c).join(', ')+' — по 0,5%':'нет',(P.cty?'+':'')+pp(P.cty*k))}
     ${row('Модели в производстве',nmTxt+'; снятые — не в счёт. Три — в основе, каждое удвоение сверх них +1,2%',(P.mdl?'+':'')+pp(P.mdl*k))}
     ${row('Итого',`${pp(L.admK||P.total)} выручки ${money(rev)}`,money(L.adm||0),'xp-tot')}</table>

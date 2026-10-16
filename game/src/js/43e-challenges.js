@@ -68,7 +68,8 @@ const LSR=[[1898.96,63.15,'граф Шасслу-Лоба (Jeantaud)'],[1899.32,
 function lsrAt(y,m){const t=y+m/12;let r=null;LSR.forEach(x=>{if(x[0]<=t)r=x;});return r;}
 const MATCH_ST={match:'Матч-гонка',record:'Спор о скорости'};
 // своя марка под другим именем (Ford (Манчестер) у Форда) — не соперник
-function ownComp(cp,s){return pkIs(cp,s)||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&cp.n!==b.n&&cp.n.startsWith(b.n+' (')));}
+function ownComp(cp,s){if(!cp||!s)return false;const nm=x=>String(x||'').toLowerCase().replace(/[«»"']/g,'').trim();
+  return pkIs(cp,s)||(!!s.company&&nm(compName(cp,s))===nm(s.company))||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&cp.n!==b.n&&cp.n.startsWith(b.n+' (')));}
 // детерминированный «жребий»: доска вызовов перерисовывается — предложения в течение месяца не должны прыгать
 function chalRnd(s,salt){return mulberry32(hashStr('ch|'+mi(s)+'|'+s.company+'|'+(salt||'')));}
 function raceByKey(key){return RACES.find(r=>r.key===key)||(typeof G!=='undefined'&&G&&G.chal&&G.chal.rc&&G.chal.rc.key===key?G.chal.rc:null);}

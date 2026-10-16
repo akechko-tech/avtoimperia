@@ -7,7 +7,7 @@ function plantState(s){const capE=capEff(s),halls=clamp(Math.round(1+Math.log10(
   return {h:halls,cv:techLv(s,'line')>=2?1:0,era:s.y<1906?0:s.y<1918?1:2,sea:m===11||m<=1?'w':m>=8&&m<=10?'a':'s',war:econ(s.y,s.m,s.country).war?1:0,
     wh:clamp(Math.round(Math.log2(Math.max(12,s.wh||12)/12)),0,6),rd:s.rd?s.rd.lvl:1,team:s.rdept||0,el:techLv(s,'elec'),fo:techLv(s,'foundry'),pr:techLv(s,'press'),
     pa:[...new Set(s.models.filter(x=>x.status==='prod'||x.status==='sale').map(x=>x.paint||'#1b1d22'))].slice(0,3),tr:s.models.some(x=>x.status==='prod'&&isTruck(x))?1:0,
-    st:stock<=0?0:stock<5?1:stock<30?2:stock<200?3:4,sz:['Мастерская','Фабрика','Концерн','Автоимперия'].indexOf(rank(companyValue(s))),co:s.company,c:s.country,y:s.y};}
+    st:stock<=0?0:stock<5?1:stock<30?2:stock<200?3:4,sz:['Мастерская','Фабрика','Концерн','Автоимперия'].indexOf(rank(companyValue(s))),co:s.company,c:s.country,y:s.y,fl:flagKey(s)};}
 /* ---------- 0.36: антураж страны ----------
    Заводы строили по-своему: в США — красный кирпич, а с 1910-х бетон и стекло Альберта Кана; в Англии — тёмный кирпич и сланцевые
    крыши; во Франции — светлый камень и цинк; в Германии — жёлтый клинкер; в Италии — охра и черепица (а в 1920-е — бетон Линготто);
@@ -37,7 +37,12 @@ function pFlag(x,z,S){const M=new Mesh(),H=13,w=4.2,h=2.8,y1=H-0.25,y0=y1-h,x0=x
   if(c==='fr')V(['#2b4f9a','#f4f2ec','#c8322a']);
   else if(c==='it'){V(['#2f7a45','#f4f2ec','#c8322a']);const cx=x0+w/2,cy=(y0+y1)/2,r=0.32;q(cx-r,cx+r,cy-r*1.2,cy+r,'#c8322a');q(cx-0.06,cx+0.06,cy-r*0.9,cy+r*0.8,'#f4f2ec');q(cx-r*0.8,cx+r*0.8,cy-0.06,cy+0.06,'#f4f2ec');}
   else if(c==='de')Hz(y>=1919?['#1c1c1c','#c8322a','#e8c24a']:['#1c1c1c','#f4f2ec','#c8322a']);
-  else if(c==='ru'){if(y>=1918)q(x0,x1,y0,y1,'#c8322a');else Hz(['#f4f2ec','#2b4f9a','#c8322a']);}
+  else if(c==='ru'){const fl=S.fl||(y>=1918?'ru2':'ru1');if(fl==='ru1')Hz(['#f4f2ec','#2b4f9a','#c8322a']);else{q(x0,x1,y0,y1,'#c8322a');const g='#e8c24a',zf=zz,Q=(a,b,c2,d)=>mFace(M,[[a,c2,zf],[b,c2,zf],[b,d,zf],[a,d,zf]],g,'paint',null,true);
+      // РСФСР — золотые буквы в крыже (полосками-литерами), СССР — звезда, серп и молот
+      if(fl==='ru3'){for(let i=0;i<5;i++){const lx=x0+0.25+i*0.36;Q(lx,lx+0.08,y1-0.95,y1-0.3);Q(lx,lx+0.24,y1-0.38,y1-0.3);Q(lx,lx+0.24,y1-0.95,y1-0.87);}}
+      else if(fl==='ru4'){const sx=x0+0.75,sy=y1-0.45;Q(sx-0.12,sx+0.12,sy-0.12,sy+0.12);
+        for(let i=0;i<7;i++){const a=Math.PI*(0.15+i*0.11),r=0.42,cx=x0+0.75,cy=y1-1.25;Q(cx+Math.cos(a)*r-0.05,cx+Math.cos(a)*r+0.05,cy-Math.sin(a)*r-0.05,cy-Math.sin(a)*r+0.05);}
+        Q(x0+0.55,x0+0.95,y1-1.0,y1-0.9);Q(x0+0.7,x0+0.8,y1-1.65,y1-0.9);}}}
   else if(c==='uk'){q(x0,x1,y0,y1,'#22336b');const cx=x0+w/2,cy=(y0+y1)/2,d=(a,b,col,t)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),nx=-dy/L*t,ny=dx/L*t;mFace(M,[[a[0]+nx,a[1]+ny,zz],[b[0]+nx,b[1]+ny,zz],[b[0]-nx,b[1]-ny,zz],[a[0]-nx,a[1]-ny,zz]],col,'paint',null,true);};
     d([x0,y0],[x1,y1],'#f4f2ec',0.16);d([x0,y1],[x1,y0],'#f4f2ec',0.16);d([x0,y0],[x1,y1],'#c8322a',0.06);d([x0,y1],[x1,y0],'#c8322a',0.06);
     q(cx-0.3,cx+0.3,y0,y1,'#f4f2ec');q(x0,x1,cy-0.3,cy+0.3,'#f4f2ec');q(cx-0.18,cx+0.18,y0,y1,'#c8322a');q(x0,x1,cy-0.18,cy+0.18,'#c8322a');}

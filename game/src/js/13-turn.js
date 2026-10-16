@@ -242,10 +242,11 @@ const RESP_MIN=50;
 // выручки (каждая поглощённая марка ставит в производство свою модель): 25 моделей — +8,8%, будто модель на 20 машин в месяц держит
 // отдел размером с концерн. Теперь модели дорожают медленнее: каждое удвоение их числа сверх трёх — +1,2% (до шести — как раньше:
 // 4 → +0,5%, 6 → +1,2%; 12 → +2,4%; 25 → +3,7%); мотоцикл — полмодели. Разбор — «как посчитано» у строки «Контора» в финансах.
-function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
+// 0.37: выпуск конторы — и мотоциклы (мотоцикл — четверть машины): у мотофирмы раньше было «0 машин в месяц»
+function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),mm=(r&&r.mmade)||((s.last&&s.last.mmade)||0),eq=made+mm*0.25,fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
   P=(s.models||[]).filter(m=>m.status==='prod'),nmM=P.filter(m=>isMoto(m)).length,nmC=P.length-nmM,nm=nmC+nmM*0.5,k=(DIF().org??1)*bn('org');
-  const out=0.011*Math.log2(1+made/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
-  return {made,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
+  const out=0.011*Math.log2(1+eq/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
+  return {made,mm,eq,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
 function admRate(s,r){return admParts(s,r).total;}
 function rivalsReact(s,r){const D=DIF(),T0=D.share||0.2,rate=D.rvRate||1,mx=D.rvMax||1.3;if(!s.rv)s.rv={};
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;const rv=s.rv[c]=s.rv[c]||{};

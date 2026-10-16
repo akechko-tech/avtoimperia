@@ -224,7 +224,8 @@ const FLAVOR=[
 ];
 const byId=(a,id)=>a.find(x=>x.id===id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const money=n=>(n<0?'−':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru-RU');
+// 0.37: минус не отрывается от суммы при переносе строки (связка U+2060 между «−» и «$»)
+const money=n=>(n<0?'−\u2060':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru-RU');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const range=(a,b)=>{const r=[];for(let i=a;i<=b;i++)r.push(i);return r;};
 const REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -112,7 +112,8 @@ function ambEmitters(T){const n=T.n,W=T.W,S=T.segT||new Uint8Array(n),cfg=T.cfg|
   if(seaP.length){for(let k=0;k<seaP.length;k+=40){const P=seaP.slice(k,k+40);let cx=0,cz=0;P.forEach(p=>{cx+=p[0];cz+=p[1];});cx/=P.length;cz/=P.length;
     const rad=Math.max(...P.map(p=>Math.hypot(p[0]-cx,p[1]-cz)));E.sea.push({P,x:cx,z:cz,rad,r0:6,id:id++});}}
   // 0.36: прибой — запись: на пляже — океанский накат, у озера и залива — мелкая волна, у дороги вдоль моря — морской
-  E.beach=cfg.terr==='beach';{let co='';try{co=(placeWater(T.rc||{},cfg.host)||{}).co||'';}catch(_){}E.seaRec=E.beach?'surf_big':/озер|залив/.test(co)?'surf_lake':'surf_sea';}
+  E.beach=cfg.terr==='beach';{let co='';try{co=(placeWater(T.rc||{},cfg.host)||{}).co||'';}catch(_){}// 0.37: «Wave (Gravity Sound)» (surf_big) оказалась мелодией, а не прибоем — на пляже теперь настоящий океанский накат (surf_ocean), пока он не скачан — морской
+  E.seaRec=E.beach?'surf_ocean':/озер|залив/.test(co)?'surf_lake':'surf_sea';}
   // старт, финиш: громкоговоритель (рупор), оркестр
   const fi=T.finishIdx,si=T.startIdx,big=T.closed||(cfg.crowd||0)>0.3;
   const nearStand=i=>{let b=null,bd=1e9;E.stand.forEach(s=>{let d=Math.abs(s.i-i);if(T.closed)d=Math.min(d,n-d);if(d<bd){bd=d;b=s;}});return bd<40?b:null;};
@@ -241,7 +242,7 @@ function ambStart(){if(!AU.ctx||!R||R.mode==='sim')return;ambIndex();const c=AU.
   const E=AMB.E,want=['rain'];if(E){if(E.stand.length)want.push('crowd_big','crowd_race','applause');if(E.crowd.length)want.push('crowd_murmur','crowd_race');if(E.farm.length)want.push('dog_bark');
     if(E.church.length)want.push('bells_village');if(E.river.length)want.push('stream');if(E.band.length)want.push('brass_parade');if(E.cart.length)want.push('horse_carriage');}
   if(R.trk.rails&&R.trk.rails.length)want.push('steam_train',R.trk.cfg.host==='us'?'steam_whistle_us':'steam_whistle');
-  want.forEach(id=>ambBuf(id));if(E&&E.sea.length){try{ambSurfBuf();}catch(_){}ambBuf(E.seaRec);ambBuf('gulls');ambBuf('gull2');}
+  want.forEach(id=>ambBuf(id));if(E&&E.sea.length){try{ambSurfBuf();}catch(_){}ambBuf(E.seaRec);if(E.seaRec!=='surf_sea')ambBuf('surf_sea');ambBuf('gulls');ambBuf('gull2');}
   const L=[ANN.ready,ANN.count,ANN.go];if(R.me)L.push(annGo(R.me.num||1));L.forEach(t=>annBuf(t));}
 function ambStop(){AMB.on=false;const t=AU.ctx?AU.ctx.currentTime:0;Object.values(AMB.beds).forEach(B=>{if(B.ch){B.ch.g.gain.setTargetAtTime(0,t,0.3);const s=B.src;setTimeout(()=>{try{s.stop();}catch(_){}},1500);}});AMB.beds={};
   AMB.shots.slice().forEach(S=>ambShotEnd(S,0.3));AMB.shots=[];}
@@ -272,7 +273,7 @@ function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow||R
   {let a=ambAgg(E.cart,AMB_L.horse,2,120);if(R.dx&&R.dx.k==='horse'){const h=ambHear(AMB_L.horse+8,R.dx.pos[0],R.dx.pos[2],2);if(h.g>a.g)a=h;}ambBed('horse_carriage',night&&!(R.dx&&R.dx.k==='horse')?0:a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.river,AMB_L.stream,6,400);ambBed('stream',a.g,dt,a.pan,a.lp);}
   // 0.36: море — запись прибоя (пока не скачалась — синтез); над берегом днём — чайки: крик стаи и иногда одна совсем рядом
-  if(E.sea.length){const h=ambSea(E),rec=AMB.buf[E.seaRec]?E.seaRec:'surf';ambBed(rec,h.g,dt,h.pan,h.lp);if(rec!=='surf')ambBed('surf',0,dt,0,16000);
+  if(E.sea.length){const h=ambSea(E),rec=AMB.buf[E.seaRec]?E.seaRec:AMB.buf.surf_sea?'surf_sea':'surf';ambBed(rec,h.g,dt,h.pan,h.lp);if(rec!=='surf')ambBed('surf',0,dt,0,16000);
     const gk=(day||dawn||dusk)&&!night?clamp(1-(h.d-40)/360,0,1)*(1-rain):0;dif('gulls',gk>0.02,63,gk,1,2.2);
     if(gk>0.3&&h.p&&ambCool('gull',6+Math.random()*12)){const a=Math.random()*6.283,r=12+Math.random()*55;
       ambShot('gull2',[h.p.x+Math.sin(a)*r,h.p.z+Math.cos(a)*r],AMB_L.gull,{off:Math.random()*3,dur:2.2+Math.random()*2.5,fade:0.3,r0:2});}}

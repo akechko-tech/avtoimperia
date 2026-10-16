@@ -119,7 +119,7 @@ function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key===
   const p=clamp(0.35+0.8*(S-1)+2.2*(1-bid/o.lim)+(s.rep-50)/250,0.05,0.95);
   if(Math.random()<p){s.orders.push({id:mi(s)+'-'+o.k,md:md.id,n:o.n,left:o.n,price:bid,due:mi(s)+o.mo,who:o.who,start:mi(s)});
     addLog(`Заказ выигран: ${o.who} — ${fmtN(o.n)} машин «${md.name}» по ${money(bid)}. Срок — ${o.mo} мес.`,'good');pendingToasts.push('📜 Заказ ваш: '+o.who);}
-  else{const mo=isMoto(md),L=mo?compList(s.country,'moto').filter(cp=>compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)):topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
+  else{const mo=isMoto(md),L=mo?compList(s.country,'moto').filter(cp=>compAlive(cp,s)&&!ownComp(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)):topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
 function yearlyCompetitors(s){
   for(const c in COMPS)COMPS[c].forEach((cp,i)=>{
     if(pkIs(cp,s))return;const home=c===s.country||dealerCount(s,c)>0;if(!home)return;

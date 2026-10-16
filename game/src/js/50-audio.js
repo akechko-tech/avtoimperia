@@ -219,6 +219,27 @@ const MUS_C=(()=>{const o={},put=(c,ids)=>ids.split(' ').forEach(k=>o[k]=c);
   put('it','core_ngrato tell_finale');
   put('uk','tipperary colonel_bogey pomp mogul warriors_dance jupiter mercury first_suite faded_picture any_old_time');
   return o;})();
+// 0.37: музыка под момент. Записи, у которых есть последний год (гимн Империи — до 1917, «Рабочая Марсельеза» — до 1918);
+// что происходит в стране сейчас: война — марши и драма, революция — драма и марши, кризис — грусть и покой,
+// праздник (победа, рекорд, титул — пару месяцев) — торжество; в 1920-х — джаз и фокстрот (у Советской России — свои песни)
+const MUS_TO={tsar_hymn:1917,worker_marseillaise:1918};
+function musMoment(s){if(!s)return 'calm';const c=s.country,t=s.y+(s.m||0)/12;
+  if(c==='ru'&&t>=1917.15&&t<1921.3)return 'rev';
+  try{if(econ(s.y,s.m,c).war)return 'war';}catch(_){}
+  try{const k=creditState(s).k;if(k==='panic'||k==='crash'||k==='tight')return 'crisis';}catch(_){}
+  if(s.celebT!=null&&mi(s)-s.celebT<=2)return 'fest';return 'calm';}
+const MUS_MOOD_W={war:{march:2.6,drama:2,sad:1.5,triumph:1.3,comic:0.35,lively:0.8,calm:0.8},rev:{drama:2.6,march:2.2,sad:1.5,comic:0.3,lively:0.6,calm:0.7},
+  crisis:{sad:2.6,calm:1.6,drama:1.3,triumph:0.4,comic:0.5,lively:0.7},fest:{triumph:3.2,lively:1.6,race:1.4,sad:0.4,drama:0.8},calm:{}};
+const MUS_ST_W={war:{march:1.8,jazz:0.5,charl:0.4,fox:0.7,rag:0.7,cake:0.6},rev:{march:1.6,jazz:0.3,charl:0.2,fox:0.4,rag:0.4,cake:0.4},crisis:{waltz:1.3,classic:1.3},fest:{march:1.5},calm:{}};
+// вес записи: страна (своя — вчетверо, у Советской России — вшестеро; страны, где у вас дилеры, — в полтора раза), момент, давно ли звучала
+function musWeight(t,s,ctx){let w=1;const home=s&&s.country;
+  if(t.c&&s){w*=t.c===home?(s.soviet?6:4):(s.dealers&&(s.dealers[t.c]||0)>0)?1.6:1;}
+  // своя страна — по-своему: в России и Италии чужой джаз реже; у Советской России — только изредка
+  if(s&&!t.c&&(t.st==='jazz'||t.st==='charl'||t.st==='fox')&&(home==='ru'||home==='it'))w*=s.soviet?0.35:0.7;
+  const M=MUS_MOOD_W[ctx]||{},S=MUS_ST_W[ctx]||{};w*=(M[t.mood]||1)*(S[t.st]||1);
+  if(s&&s.y>=1920&&!s.soviet&&(t.st==='jazz'||t.st==='fox'||t.st==='charl'))w*=1.4;
+  const h=AU.recent||[];const k=h.indexOf(t.title);if(k>=0)w*=0.08+0.9*k/Math.max(1,h.length);
+  return w;}
 function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
@@ -229,15 +250,17 @@ function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','ma
   return L.concat((all?[0]:[0,1]).flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]}))));}
 function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
-  if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
+  if(AU.on.mode!=='all'){L=L.filter(t=>!(MUS_TO[t.id]&&MUS_TO[t.id]<y));let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
   // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
   // 0.24: синтезатора («оркестриона») в плейлисте больше нет совсем — свои записи оркестра вшиты в игру; не играет ничего — тишина
   {const bad=AU.badSrc||{};L=L.filter(t=>!bad[t.src]);}
   // 0.29: свои мелодии игры — только когда записей эпохи мало (без сети) или в режиме «Все»: долго их не послушаешь
   if(AU.on.mode!=='all'){const real=L.filter(t=>!t.own);if(real.length>=6)L=real;}
-  // 0.30: песни своей страны звучат чаще (втрое), стран, где у вас дилеры, — в полтора раза: Шаляпин в России, Карузо в Италии, Брюан во Франции
-  const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')));const home=G&&G.country,wt=t=>!t.c||!G?1:t.c===home?3:(G.dealers&&(G.dealers[t.c]||0)>0)?1.6:1;
-  L=L.map(t=>({t,k:Math.pow(rnd(),1/wt(t))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
+  // 0.30: песни своей страны звучат чаще, стран, где у вас дилеры, — в полтора раза: Шаляпин в России, Карузо в Италии, Брюан во Франции.
+  // 0.37: и под момент (война, революция, кризис, праздник), и вперемешку каждый раз по-новому (раньше порядок зависел только от года)
+  const ctx=AU.on.mode==='all'?'calm':musMoment(G);AU.ctx0=ctx;AU.shuf=AU.shuf||(Math.random()*1e9|0);
+  const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')+ctx)+AU.shuf);
+  L=L.map(t=>({t,k:Math.pow(rnd(),1/Math.max(0.01,musWeight(t,G,ctx)))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
   // 0.29: первой звучит запись эпохи, а не своя мелодия игры
   if(start){const k=L.findIndex(t=>!t.own);if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
@@ -257,7 +280,9 @@ function musicPlay(force){
     AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
     AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
   if(!AU.ducked)AU.el.volume=R?0.2:0.5;
-  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;}
+  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;
+    // 0.37: что звучало недавно — в следующих плейлистах реже (последние 14 записей)
+    AU.recent=(AU.recent||[]).filter(x=>x!==tr.title);AU.recent.push(tr.title);if(AU.recent.length>14)AU.recent.shift();}
   if(AU.el.paused){const pr=AU.el.play();if(pr&&pr.catch)pr.catch(()=>{});}
   musUI();
 }
@@ -304,7 +329,8 @@ function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div
 function auSched(){
   const c=AU.ctx;if(!c)return;
   while(AU.next<c.currentTime+0.15){
-    if(AU.lastY!==(G&&G.y)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
+    {const mk=G?G.y*12+G.m:-1;if(mk!==AU.momMk){AU.momMk=mk;AU.mom=G?musMoment(G):'calm';}}
+    if(AU.lastY!==(G&&G.y)||(G&&AU.on.mode!=='all'&&AU.ctx0&&AU.mom!==AU.ctx0)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
     // под кинохронику — свой танец ролика, тихо
     const RS=AU.reelSty&&typeof REEL!=='undefined'&&REEL?AU.reelSty:null;
     const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race);

@@ -252,7 +252,7 @@ function horseHTML(s,c,M,R0){if(s.y<1896)return '';const Rx=R0||mkCountry(c,s,[]
     <div class="hleg small">${horse/pool>0.02?`<span><i style="background:#9a7448"></i>лошадь ${pp(horse/pool)}</span>`:''}<span><i style="background:#6f8aa6"></i>конкуренты ${pp(riv/pool)}</span><span><i style="background:var(--brass)"></i>ваши ${pp(you/pool)}</span></div>
     <p class="small muted" style="margin-top:6px">Каждой перевозке — своя машина: лавке, которая развозит хлеб, нужен фургон, мебель по городу возят на полуторатонке, большие партии между городами — на трёхтонке. Фирма выбирает по цене тонно-километра: машина за годы службы, ремонт и простои, бензин, шофёр.${horse/pool>0.02?' Пока мотор не выгоднее, часть фирм берёт лошадь.':' Лошадей фирмы уже почти не покупают.'}</p></div>`;}
 // 0.29: доли рынка — дома, в каждой стране и во всём мире: ваши продажи против марок-конкурентов (за прошлый год;
-// в первый год — с начала года). Конкуренция идёт на всех пяти рынках: в каждой стране — свои марки и свой спрос.
+// в первый год — с начала года). Конкуренция идёт на всех рынках: в каждой стране — свои марки и свой спрос.
 const WORLD_NAME={'Ford (Манчестер)':'Ford'};
 function sharesData(s,sel){const cs=Object.keys(COUNTRIES),full=Object.keys(s.mPrev||{}).length>0,val=o=>full?(o.prev||0):(o.yr||0);
   const mine=c=>full?((s.cPrev||{})[c]||0):((s.cY||{})[c]||0),mkt=c=>full?((s.mPrev||{})[c]||0):((s.mY||{})[c]||0);
@@ -272,7 +272,7 @@ function sharesCard(s){const cs=Object.keys(COUNTRIES),sel=(s.ui&&s.ui.mkC)||'wo
   const mx=Math.max(1,...show.map(r=>r.v)),me=D.L.find(r=>r.you)||{v:0};
   const chip=(k,lab)=>{const d=k==='world'?null:sharesData(s,k),sh=k==='world'?null:(d.L.find(r=>r.you)||{v:0}).v/Math.max(1,d.tot);return `<button class="chip ${sel===k?'on':''}" data-act="mkC" data-v="${k}">${lab}${sh!==null?`<small>вы ${pct(sh,sh<0.1?1:0)}</small>`:''}</button>`;};
   const rows=show.map(r=>`<tr class="${r.you?'you':''}"><td>${r.rest?'':(named.indexOf(r)+1)+'.'}</td><td>${esc(r.n)}${r.sub?` <span class="pill">ваши ${Math.round(r.sub*100)}%</span>`:''}${sel==='world'&&!r.you&&!r.rest&&r.cs&&r.cs.length?`<small>${r.cs.map(c=>COUNTRIES[c].name).join(', ')}</small>`:''}</td><td style="width:34%"><div class="bar"><i style="width:${r.v/mx*100}%;background:${r.you?'var(--brass)':r.rest?'var(--line)':(r.color||'#888')}"></i></div></td><td class="n">${fmtN(r.v)}</td><td class="n sh">${pct(r.v/tot,r.v/tot<0.1?1:0)}</td></tr>`).join('');
-  const what=sel==='world'?'во всём мире (пять рынков)':COUNTRIES[sel].name+(sel===s.country?' — дома':'');
+  const what=sel==='world'?`во всём мире (${Object.keys(COUNTRIES).length} ${plural(Object.keys(COUNTRIES).length,'рынок','рынка','рынков')})`:COUNTRIES[sel].name+(sel===s.country?' — дома':'');
   const body=`<p class="small muted" style="margin-top:2px">Продано машин ${D.full?`за ${s.y-1} год`:'с начала года'} ${what}. На каждом рынке — свои марки и свой спрос: за границей вы соревнуетесь с местными марками этой страны${sel!=='world'&&sel!==s.country&&!dealerCount(s,sel)?'. Своих дилеров здесь пока нет — продаж тоже':''}.</p>
     <div class="chips sm" style="margin-top:8px">${chip('world','Мир')}${cs.map(c=>chip(c,COUNTRIES[c].name)).join('')}</div>
     <table class="pl shares-t" style="margin-top:8px"><tr><th></th><th>Марка</th><th></th><th class="n">Машин</th><th class="n sh">Доля</th></tr>${rows}</table>
@@ -308,7 +308,8 @@ function vMarket(){
       +(c==='uk'&&home!=='uk'&&s.y>=1904&&!(s.hub&&s.hub.ca)?`<button class="btn sm" data-act="hubStart" ${s.cash<hubCost(s)?'disabled':''}>Сборка в Канаде (льгота для стран Империи) · ${money(hubCost(s))}</button>`:'');
     const grow=d&&dealerGrowOk(s,c)&&(gs>0||room===0)?`<button class="btn sm${gs>0?' primary':''}" data-act="dealerGrow" data-c="${c}" ${s.cash<gc?'disabled':''}>Салоны дилеров +25% · ${money(gc)}</button>`:'';
     const btns=cut?'':(d?(short>0?add(short,' — продать всем',1)+(short>=8?add(Math.max(1,Math.round(short/4)),''):''):add(Math.max(1,Math.min(room,Math.round(mx*0.05))),room>1?' в новых городах':'')+(room>big*1.5?add(big):''))+grow:'')+up+extra;
-    const R=c===home?null:ruleNow(s,c),rtxt=R?`<p class="small ${tradeBan(s,c)?'bad':R.quota?'warn':'muted'}" style="margin-top:4px">${tradeBan(s,c)?'⛔ ':''}${esc(R.why)}${R.quota&&!localMade(s,c)?` · квота ${fmtN(R.quota)} машин в год${s.quotaY&&s.quotaY[c]?`, продано ${fmtN(s.quotaY[c])}`:''}`:''}${c==='uk'&&hubOn(s,'ca')&&R.pref?' · ваши машины идут из Канады по льготе Империи (2/3 ставки)':''}</p>`:'';
+    // 0.37: «пошлина 12%» — уже в заголовке страны; отдельной строкой — только когда правило говорит больше (тариф года, запрет, квота)
+    const R=c===home?null:ruleNow(s,c),rtxt=R&&!(/^пошлина \d+%$/.test(R.why||'')&&!R.quota&&!tradeBan(s,c)&&!R.pref)?`<p class="small ${tradeBan(s,c)?'bad':R.quota?'warn':'muted'}" style="margin-top:4px">${tradeBan(s,c)?'⛔ ':''}${esc(R.why)}${R.quota&&!localMade(s,c)?` · квота ${fmtN(R.quota)} машин в год${s.quotaY&&s.quotaY[c]?`, продано ${fmtN(s.quotaY[c])}`:''}`:''}${c==='uk'&&hubOn(s,'ca')&&R.pref?' · ваши машины идут из Канады по льготе Империи (2/3 ставки)':''}</p>`:'';
     // 0.23: за блокадой — коротко и ясно, почему продаж нет и что будет дальше
     const cutTxt=cut?`<p class="small bad" style="margin-top:4px">⛔ Блокада: ${home==='de'?'немецким машинам за границу не пробиться — морские пути закрыты британским флотом.':`ни машин, ни деталей, ни денег в Германию не провезти — британский флот закрыл её моря.`}${intIn(s,c)?` Ваша марка «${esc(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)}» отрезана: её заводы работают сами по себе под надзором властей, вам — ни машин, ни выручки до конца войны.`:lv>=3?` Ваш ${lv>=4?'завод':'цех сборки'} отрезан: работает на нужды страны, вам — ни выручки, ни связи до конца войны.`:dealerCount(s,c)?' Дилеры остались без машин.':''}${home!=='de'&&home!=='uk'&&home!=='fr'&&home!=='it'?` Если ваша страна вступит в войну с Германией — всё, что там ваше, конфискуют.`:''} Торговля вернётся летом 1919 года.</p>`:'';
     const boTxt=bc?`<p class="small good" style="margin-top:4px">🤝 Марка «${esc(compName(bc.cp,s))}» продаётся${bo.disc<1?` на ${Math.round((1-bo.disc)*100)}% дешевле обычного`:''} — до ${MONTHS[(bo.until%12+12)%12]} ${1895+Math.floor(bo.until/12)}: её заводы, дилеры и покупатели станут вашими, пошлины не будет. Это другой путь на рынок — вместо импортёра и отделения.</p>`:'';
@@ -407,7 +408,10 @@ function setCash(v){const el=document.getElementById('cash');el.className=v<0?'n
   const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=moneyC(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
 // широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
 function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
-function flagKey(s){const c=s.country,y=s.y;if(c==='de')return y>=1919?'de2':'de1';if(c==='ru')return y>=1918?'ru2':'ru1';return c;}
+// 0.37: Россия — трёхцветный флаг до Октябрьского переворота (ноябрь 1917), потом красное знамя, с весны 1918 года — флаг РСФСР
+// (золотые буквы в крыже), с 1924 года — флаг СССР (серп, молот и звезда)
+function flagKey(s){const c=s.country,y=s.y,t=y+(s.m||0)/12;if(c==='de')return y>=1919?'de2':'de1';
+  if(c==='ru')return t<1917.83?'ru1':t<1918.3?'ru2':t<1924.08?'ru3':'ru4';return c;}
 function render(){
   const s=G;if(!s)return;if(s.mode==='racer'){racerRender(s);return;}racerNav();try{autoCredit(s);dealerFit(s);}catch(_){}
   // 0.36: антураж страны — цвета интерфейса, полоска флага под шапкой и флажок эпохи у названия (Германия: до 1919 — имперский,

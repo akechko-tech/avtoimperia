@@ -158,8 +158,10 @@ function plantRedundantHTML(s,c){const lv=impLv(s,c);if(lv<3||!intIn(s,c)||impBu
 // «Во Франции…»: где — для строк про страну
 const IN_C={de:'В Германии',fr:'Во Франции',uk:'В Британии',us:'В США',it:'В Италии',ru:'В России'};
 function inC(c){return IN_C[c]||`В стране «${esc((COUNTRIES[c]||{}).name||c)}»`;}
+// 0.37: что продаёт фирма — для строк «ваши машины видят…» (у мотофирмы — мотоциклы)
+function waresW(s){const c=lineOn(s,'car'),m=lineOn(s,'moto');return c&&m?'машины и мотоциклы':m?'мотоциклы':'машины';}
 function reachHTML(s,c){const I=reachInfo(s,c);if(I.r>=0.3||!I.d)return '';
-  return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши машины видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
+  return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
 function contestHTML(s,c){const mk=s.last&&s.last.mk&&s.last.mk[c];if(!mk)return '';const L=ALLSEG.map(g=>{const P=contestParts(s,c,g);if(P.tot<0.02&&P.sh<P.thrP*0.8)return '';
   return `<p class="small ${P.tot>0.2?'warn':'muted'}" style="margin-top:3px">⚔️ ${esc(SEG[g].name)}: доля ${pct(P.sh,0)} · порог ${pct(P.thrP,0)}${P.thrR!==P.thrP?`/${pct(P.thrR,0)}`:''} · спрос ×${xk2(P.mul)}${P.tot>0.02?` (${contestTxt(P)})`:''}${P.pend?` · готовится ответ: ${P.pend}`:''}</p>`;}).filter(Boolean);
   return L.length?`<div style="margin-top:4px">${L.join('')}<p class="small muted" style="margin-top:2px">Порог — на «${esc((DIFFS[s.diff]||{}).name||'')}»: выше первой доли соперники давят, выше второй — снижают цены и готовят модели-ответы.</p></div>`:'';}

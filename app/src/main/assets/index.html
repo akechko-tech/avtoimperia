@@ -925,6 +925,9 @@ body[data-fl=de1]{--flag:linear-gradient(#1c1c1c 33.3%,#f4f2ec 33.3% 66.6%,#c832
 body[data-fl=de2]{--flag:linear-gradient(#1c1c1c 33.3%,#c8322a 33.3% 66.6%,#e8c24a 66.6%);--flagbar:linear-gradient(90deg,#1c1c1c 33.3%,#c8322a 33.3% 66.6%,#e8c24a 66.6%)}
 body[data-fl=ru1]{--flag:linear-gradient(#f4f2ec 33.3%,#2b4f9a 33.3% 66.6%,#c8322a 66.6%);--flagbar:linear-gradient(90deg,#f4f2ec 33.3%,#2b4f9a 33.3% 66.6%,#c8322a 66.6%)}
 body[data-fl=ru2]{--flag:#c8322a;--flagbar:linear-gradient(90deg,#c8322a,#e8c24a 50%,#c8322a)}
+/* 0.37: флаг РСФСР (1918–1924: золотые буквы в крыже) и флаг СССР (с 1924 года: серп, молот и звезда) */
+body[data-fl=ru3]{--flag:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23c8322a'/%3E%3Crect x='1.2' y='1.2' width='12.6' height='6.6' fill='none' stroke='%23e8c24a' stroke-width='0.7'/%3E%3Ctext x='7.5' y='6.3' font-size='5.2' font-family='Georgia,serif' font-weight='bold' text-anchor='middle' fill='%23e8c24a'%3E%D0%A0%D0%A1%D0%A4%D0%A1%D0%A0%3C/text%3E%3C/svg%3E") center/100% 100% no-repeat;--flagbar:linear-gradient(90deg,#c8322a,#e8c24a 50%,#c8322a)}
+body[data-fl=ru4]{--flag:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23c8322a'/%3E%3Cg fill='%23e8c24a'%3E%3Cpath d='M5.6 1 l0.55 1.25 1.35 0.1 -1.05 0.85 0.35 1.3 -1.2 -0.75 -1.2 0.75 0.35 -1.3 -1.05 -0.85 1.35 -0.1z' fill='none' stroke='%23e8c24a' stroke-width='0.45'/%3E%3Cpath d='M3.2 9.6 a3.4 3.4 0 0 0 5.6 -4.2 a2.6 2.6 0 0 1 -4.3 3.3 z'/%3E%3Cpath d='M3.6 5.2 l1 -0.9 4.6 5.2 -0.8 0.7z'/%3E%3Crect x='2.6' y='4.2' width='2.2' height='1.1' transform='rotate%28-42 3.7 4.75%29'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;--flagbar:linear-gradient(90deg,#c8322a,#e8c24a 50%,#c8322a)}
 body[data-fl=uk]{--flag:linear-gradient(#c8322a,#c8322a) center/100% 2px no-repeat,linear-gradient(90deg,#c8322a,#c8322a) center/2px 100% no-repeat,linear-gradient(#f4f2ec,#f4f2ec) center/100% 4px no-repeat,linear-gradient(90deg,#f4f2ec,#f4f2ec) center/4px 100% no-repeat,linear-gradient(33deg,transparent 44%,#f4f2ec 44% 56%,transparent 56%),linear-gradient(-33deg,transparent 44%,#f4f2ec 44% 56%,transparent 56%),#22336b;--flagbar:linear-gradient(90deg,#22336b 30%,#f4f2ec 30% 36%,#c8322a 36% 64%,#f4f2ec 64% 70%,#22336b 70%)}
 body[data-fl=us]{--flag:linear-gradient(#22336b,#22336b) 0 0/45% 54% no-repeat,repeating-linear-gradient(#c8322a 0 0.846px,#f4f2ec 0.846px 1.692px);--flagbar:linear-gradient(90deg,#22336b 30%,#c8322a 30% 40%,#f4f2ec 40% 50%,#c8322a 50% 60%,#f4f2ec 60% 70%,#c8322a 70% 80%,#f4f2ec 80% 90%,#c8322a 90%)}
 body[data-cc] .bar-nav{background:var(--bg)}
@@ -1203,7 +1206,8 @@ const FLAVOR=[
 ];
 const byId=(a,id)=>a.find(x=>x.id===id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const money=n=>(n<0?'−':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru-RU');
+// 0.37: минус не отрывается от суммы при переносе строки (связка U+2060 между «−» и «$»)
+const money=n=>(n<0?'−\u2060':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru-RU');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const range=(a,b)=>{const r=[];for(let i=a;i<=b;i++)r.push(i);return r;};
 const REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3588,7 +3592,7 @@ function mStat(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp)return null;const st=((
   const va=full?Math.max(0,st.prev):v,sh=Math.min(0.95,va/mMarket(s,c)),profit=v*P*(s.y<1920?0.09:0.075),capU=Math.max(0.5,Math.round(v/12*0.085*1.1*10)/10),dl=Math.max(1,Math.round(v/12/Math.max(1,dealerTP(s)*MOTO_DLR)));
   const A=capU*capUnitCost(s)*0.55+dl*dealerCost(s)*0.5,V=Math.max(3000,Math.round(Math.max(A*0.8,profit*9+A*0.25)*(DIF().maK??1)/1000)*1000);
   return {cp,nm:compName(cp,s),v,va,sh,P,profit,capU,dl,V};}
-function mdealBlock(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp||cp.imp)return 'нельзя';if(mholdOf(s,c,i))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function mdealBlock(s,c,i){const cp=(MCOMPS[c]||[])[i];if(!cp||cp.imp||ownComp(cp,s))return 'нельзя';if(mholdOf(s,c,i))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';return '';}
 // цена — оценка и премия владельцам: 20%, а за лидера рынка — больше (до +50% при половине рынка: владельцы знают себе цену)
 function mdealPrem(M){return 0.2+0.6*clamp(M.sh,0,0.5);}
@@ -3609,7 +3613,7 @@ function mdealDo(s,c,i){if(mdealBlock(s,c,i))return null;const M=mStat(s,c,i),pr
 // покупатели поглощённой мотомарки — как у автомобильных: в первый год около двух третей её доли, через 3–4 года — треть
 function mBoughtShare(c,g,s){let v=0;mholdIn(s,c).forEach(h=>{const x=(h.sh0&&h.sh0[g])||0;if(x>0)v+=x*maLoy(s,h);});return Math.min(0.85,v);}
 // строки мотомарок в «Сделках»
-function mdealsHTML(s,sel){const L=(MCOMPS[sel]||[]).map((cp,i)=>({cp,i})).filter(o=>compAlive(o.cp,s)||mholdOf(s,sel,o.i)).map(o=>({...o,M:mStat(s,sel,o.i),b:mdealBlock(s,sel,o.i)})).filter(o=>o.M).sort((a,b)=>b.M.v-a.M.v);
+function mdealsHTML(s,sel){const L=(MCOMPS[sel]||[]).map((cp,i)=>({cp,i})).filter(o=>(compAlive(o.cp,s)||mholdOf(s,sel,o.i))&&!ownComp(o.cp,s)).map(o=>({...o,M:mStat(s,sel,o.i),b:mdealBlock(s,sel,o.i)})).filter(o=>o.M).sort((a,b)=>b.M.v-a.M.v);
   if(!L.length)return '';
   return `<div class="label" style="margin-top:12px">🏍 Мотомарки</div>`+L.map(o=>{const M=o.M,P=mdealPrice(s,sel,o.i),h=o.b==='ваша'?mholdOf(s,sel,o.i):null;
     // купленная мотомарка — что досталось (как у купленных автомобильных марок), а не её прежний выпуск и доля
@@ -3788,8 +3792,10 @@ function plantRedundantHTML(s,c){const lv=impLv(s,c);if(lv<3||!intIn(s,c)||impBu
 // «Во Франции…»: где — для строк про страну
 const IN_C={de:'В Германии',fr:'Во Франции',uk:'В Британии',us:'В США',it:'В Италии',ru:'В России'};
 function inC(c){return IN_C[c]||`В стране «${esc((COUNTRIES[c]||{}).name||c)}»`;}
+// 0.37: что продаёт фирма — для строк «ваши машины видят…» (у мотофирмы — мотоциклы)
+function waresW(s){const c=lineOn(s,'car'),m=lineOn(s,'moto');return c&&m?'машины и мотоциклы':m?'мотоциклы':'машины';}
 function reachHTML(s,c){const I=reachInfo(s,c);if(I.r>=0.3||!I.d)return '';
-  return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши машины видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
+  return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
 function contestHTML(s,c){const mk=s.last&&s.last.mk&&s.last.mk[c];if(!mk)return '';const L=ALLSEG.map(g=>{const P=contestParts(s,c,g);if(P.tot<0.02&&P.sh<P.thrP*0.8)return '';
   return `<p class="small ${P.tot>0.2?'warn':'muted'}" style="margin-top:3px">⚔️ ${esc(SEG[g].name)}: доля ${pct(P.sh,0)} · порог ${pct(P.thrP,0)}${P.thrR!==P.thrP?`/${pct(P.thrR,0)}`:''} · спрос ×${xk2(P.mul)}${P.tot>0.02?` (${contestTxt(P)})`:''}${P.pend?` · готовится ответ: ${P.pend}`:''}</p>`;}).filter(Boolean);
   return L.length?`<div style="margin-top:4px">${L.join('')}<p class="small muted" style="margin-top:2px">Порог — на «${esc((DIFFS[s.diff]||{}).name||'')}»: выше первой доли соперники давят, выше второй — снижают цены и готовят модели-ответы.</p></div>`:'';}
@@ -4369,7 +4375,7 @@ function tenderResolve(s,key){const o=s.tenderNow;s.tenderNow=null;if(!o||key===
   const p=clamp(0.35+0.8*(S-1)+2.2*(1-bid/o.lim)+(s.rep-50)/250,0.05,0.95);
   if(Math.random()<p){s.orders.push({id:mi(s)+'-'+o.k,md:md.id,n:o.n,left:o.n,price:bid,due:mi(s)+o.mo,who:o.who,start:mi(s)});
     addLog(`Заказ выигран: ${o.who} — ${fmtN(o.n)} машин «${md.name}» по ${money(bid)}. Срок — ${o.mo} мес.`,'good');pendingToasts.push('📜 Заказ ваш: '+o.who);}
-  else{const mo=isMoto(md),L=mo?compList(s.country,'moto').filter(cp=>compAlive(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)):topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
+  else{const mo=isMoto(md),L=mo?compList(s.country,'moto').filter(cp=>compAlive(cp,s)&&!ownComp(cp,s)).sort((a,b)=>compVol(b,s)-compVol(a,s)):topRivals(s.country,o.k==='taxi'?'people':'truck',s,1),w=L.length?compName(L[0],s):'конкурент';addLog(`Заказ ушёл к «${w}»: ${o.who} выбрал их предложение.`,'bad');pendingToasts.push('Заказ ушёл к «'+w+'»');}}
 function yearlyCompetitors(s){
   for(const c in COMPS)COMPS[c].forEach((cp,i)=>{
     if(pkIs(cp,s))return;const home=c===s.country||dealerCount(s,c)>0;if(!home)return;
@@ -5264,10 +5270,11 @@ const RESP_MIN=50;
 // выручки (каждая поглощённая марка ставит в производство свою модель): 25 моделей — +8,8%, будто модель на 20 машин в месяц держит
 // отдел размером с концерн. Теперь модели дорожают медленнее: каждое удвоение их числа сверх трёх — +1,2% (до шести — как раньше:
 // 4 → +0,5%, 6 → +1,2%; 12 → +2,4%; 25 → +3,7%); мотоцикл — полмодели. Разбор — «как посчитано» у строки «Контора» в финансах.
-function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
+// 0.37: выпуск конторы — и мотоциклы (мотоцикл — четверть машины): у мотофирмы раньше было «0 машин в месяц»
+function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),mm=(r&&r.mmade)||((s.last&&s.last.mmade)||0),eq=made+mm*0.25,fmL=Object.keys(s.dealers||{}).filter(c=>c!==s.country&&dealerCount(s,c)>0),
   P=(s.models||[]).filter(m=>m.status==='prod'),nmM=P.filter(m=>isMoto(m)).length,nmC=P.length-nmM,nm=nmC+nmM*0.5,k=(DIF().org??1)*bn('org');
-  const out=0.011*Math.log2(1+made/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
-  return {made,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
+  const out=0.011*Math.log2(1+eq/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
+  return {made,mm,eq,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
 function admRate(s,r){return admParts(s,r).total;}
 function rivalsReact(s,r){const D=DIF(),T0=D.share||0.2,rate=D.rvRate||1,mx=D.rvMax||1.3;if(!s.rv)s.rv={};
   for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;const rv=s.rv[c]=s.rv[c]||{};
@@ -5815,7 +5822,7 @@ function humanLegacyHTML(s){if(!s.pfl)return '';const L=humanLegacy(s),m=L.me,ro
   if(m.truck||L.top.truck.length)lines.push(row('Фирмы',m.truck?`${oneIn(m.truck,'фирма')} с грузовиком возит грузы на вашем`:'ваших грузовиков у фирм пока нет',cmp(L.top.truck,b=>oneIn(b.v))));
   if(m.lux||(L.top.lux.length&&s.y>=1900))lines.push(row('Люкс',m.lux?`${oneIn(m.lux)} дорогая машина — ваша`:'ваших дорогих машин пока нет',cmp(L.top.lux,b=>oneIn(b.v))));
   if((m.sport||L.top.sport.length)&&sportAny(s))lines.push(row('Спорт',m.sport?`${oneIn(m.sport)} спортивная машина — ваша`:'ваших спортивных машин пока нет',cmp(L.top.sport,b=>oneIn(b.v))));
-  return `<div class="label" style="margin-top:12px">Наследие в людях</div><div class="hum">${lines.join('')}</div><p class="small muted" style="margin-top:4px">Все пять стран игры: семьи, машины и грузовики на дорогах (машина служит ${Math.round(tabAt(CAR_LIFE,yf(s)))} лет). Серым — самые большие марки для сравнения.</p>`;}
+  return `<div class="label" style="margin-top:12px">Наследие в людях</div><div class="hum">${lines.join('')}</div><p class="small muted" style="margin-top:4px">Все ${Object.keys(COUNTRIES).length===6?'шесть':Object.keys(COUNTRIES).length} стран игры: семьи, машины и грузовики на дорогах (машина служит ${Math.round(tabAt(CAR_LIFE,yf(s)))} лет). Серым — самые большие марки для сравнения.</p>`;}
 
 /* ================= CAR STATS: physics from components ================= */
 // Подготовка к гонке: серийная машина, облегчённая (без тента, крыльев и задних сидений), заводской гоночный кузов
@@ -6061,7 +6068,7 @@ function adviceList(s){
     // за границей машины видят меньше 30% покупателей
     if(act.length){let bc=null,bI=null;Object.keys(COUNTRIES).forEach(c=>{if(c===home||!dealerCount(s,c)||warCut(s,c)||tradeBan(s,c))return;const I=reachInfo(s,c);if(I.r<0.3&&I.pot>(bI?bI.pot:0)&&I.miss>0){bc=c;bI=I;}});
       if(bc){const n=Math.max(1,Math.min(bI.miss,Math.floor(Math.max(0,s.cash-3000*cpi(s))/dealerCost(s)),Math.round(bI.need*0.1)));
-        add(44,'🌍',`${inC(bc)} ваши машины видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:null,n>=1?()=>{buyDealers(G,bc,n);}:null,'market');}}
+        add(44,'🌍',`${inC(bc)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:null,n>=1?()=>{buyDealers(G,bc,n);}:null,'market');}}
     // соперники отвечают на вашу долю — скидка не поможет
     {let worst=null;act.forEach(md=>{if(isTruck(md))return;const P=contestParts(s,home,segOf(md));if(P.tot>0.2&&(!worst||P.tot>worst.P.tot))worst={md,P};});
       if(worst)add(50,'⚔️',`Соперники отвечают на вашу долю в классе «${SEG[segOf(worst.md)].name}»: спрос ×${xk2(worst.P.mul)} (${contestTxt(worst.P)}). Скидку съест новый ответ — выгоднее поднять цену «${worst.md.name}».`,'К модели',()=>{tab='models';setOpen('md'+worst.md.id,true);},'models');}
@@ -7046,7 +7053,7 @@ function plantState(s){const capE=capEff(s),halls=clamp(Math.round(1+Math.log10(
   return {h:halls,cv:techLv(s,'line')>=2?1:0,era:s.y<1906?0:s.y<1918?1:2,sea:m===11||m<=1?'w':m>=8&&m<=10?'a':'s',war:econ(s.y,s.m,s.country).war?1:0,
     wh:clamp(Math.round(Math.log2(Math.max(12,s.wh||12)/12)),0,6),rd:s.rd?s.rd.lvl:1,team:s.rdept||0,el:techLv(s,'elec'),fo:techLv(s,'foundry'),pr:techLv(s,'press'),
     pa:[...new Set(s.models.filter(x=>x.status==='prod'||x.status==='sale').map(x=>x.paint||'#1b1d22'))].slice(0,3),tr:s.models.some(x=>x.status==='prod'&&isTruck(x))?1:0,
-    st:stock<=0?0:stock<5?1:stock<30?2:stock<200?3:4,sz:['Мастерская','Фабрика','Концерн','Автоимперия'].indexOf(rank(companyValue(s))),co:s.company,c:s.country,y:s.y};}
+    st:stock<=0?0:stock<5?1:stock<30?2:stock<200?3:4,sz:['Мастерская','Фабрика','Концерн','Автоимперия'].indexOf(rank(companyValue(s))),co:s.company,c:s.country,y:s.y,fl:flagKey(s)};}
 /* ---------- 0.36: антураж страны ----------
    Заводы строили по-своему: в США — красный кирпич, а с 1910-х бетон и стекло Альберта Кана; в Англии — тёмный кирпич и сланцевые
    крыши; во Франции — светлый камень и цинк; в Германии — жёлтый клинкер; в Италии — охра и черепица (а в 1920-е — бетон Линготто);
@@ -7076,7 +7083,12 @@ function pFlag(x,z,S){const M=new Mesh(),H=13,w=4.2,h=2.8,y1=H-0.25,y0=y1-h,x0=x
   if(c==='fr')V(['#2b4f9a','#f4f2ec','#c8322a']);
   else if(c==='it'){V(['#2f7a45','#f4f2ec','#c8322a']);const cx=x0+w/2,cy=(y0+y1)/2,r=0.32;q(cx-r,cx+r,cy-r*1.2,cy+r,'#c8322a');q(cx-0.06,cx+0.06,cy-r*0.9,cy+r*0.8,'#f4f2ec');q(cx-r*0.8,cx+r*0.8,cy-0.06,cy+0.06,'#f4f2ec');}
   else if(c==='de')Hz(y>=1919?['#1c1c1c','#c8322a','#e8c24a']:['#1c1c1c','#f4f2ec','#c8322a']);
-  else if(c==='ru'){if(y>=1918)q(x0,x1,y0,y1,'#c8322a');else Hz(['#f4f2ec','#2b4f9a','#c8322a']);}
+  else if(c==='ru'){const fl=S.fl||(y>=1918?'ru2':'ru1');if(fl==='ru1')Hz(['#f4f2ec','#2b4f9a','#c8322a']);else{q(x0,x1,y0,y1,'#c8322a');const g='#e8c24a',zf=zz,Q=(a,b,c2,d)=>mFace(M,[[a,c2,zf],[b,c2,zf],[b,d,zf],[a,d,zf]],g,'paint',null,true);
+      // РСФСР — золотые буквы в крыже (полосками-литерами), СССР — звезда, серп и молот
+      if(fl==='ru3'){for(let i=0;i<5;i++){const lx=x0+0.25+i*0.36;Q(lx,lx+0.08,y1-0.95,y1-0.3);Q(lx,lx+0.24,y1-0.38,y1-0.3);Q(lx,lx+0.24,y1-0.95,y1-0.87);}}
+      else if(fl==='ru4'){const sx=x0+0.75,sy=y1-0.45;Q(sx-0.12,sx+0.12,sy-0.12,sy+0.12);
+        for(let i=0;i<7;i++){const a=Math.PI*(0.15+i*0.11),r=0.42,cx=x0+0.75,cy=y1-1.25;Q(cx+Math.cos(a)*r-0.05,cx+Math.cos(a)*r+0.05,cy-Math.sin(a)*r-0.05,cy-Math.sin(a)*r+0.05);}
+        Q(x0+0.55,x0+0.95,y1-1.0,y1-0.9);Q(x0+0.7,x0+0.8,y1-1.65,y1-0.9);}}}
   else if(c==='uk'){q(x0,x1,y0,y1,'#22336b');const cx=x0+w/2,cy=(y0+y1)/2,d=(a,b,col,t)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),nx=-dy/L*t,ny=dx/L*t;mFace(M,[[a[0]+nx,a[1]+ny,zz],[b[0]+nx,b[1]+ny,zz],[b[0]-nx,b[1]-ny,zz],[a[0]-nx,a[1]-ny,zz]],col,'paint',null,true);};
     d([x0,y0],[x1,y1],'#f4f2ec',0.16);d([x0,y1],[x1,y0],'#f4f2ec',0.16);d([x0,y0],[x1,y1],'#c8322a',0.06);d([x0,y1],[x1,y0],'#c8322a',0.06);
     q(cx-0.3,cx+0.3,y0,y1,'#f4f2ec');q(x0,x1,cy-0.3,cy+0.3,'#f4f2ec');q(cx-0.18,cx+0.18,y0,y1,'#c8322a');q(x0,x1,cy-0.18,cy+0.18,'#c8322a');}
@@ -12743,7 +12755,7 @@ function horseHTML(s,c,M,R0){if(s.y<1896)return '';const Rx=R0||mkCountry(c,s,[]
     <div class="hleg small">${horse/pool>0.02?`<span><i style="background:#9a7448"></i>лошадь ${pp(horse/pool)}</span>`:''}<span><i style="background:#6f8aa6"></i>конкуренты ${pp(riv/pool)}</span><span><i style="background:var(--brass)"></i>ваши ${pp(you/pool)}</span></div>
     <p class="small muted" style="margin-top:6px">Каждой перевозке — своя машина: лавке, которая развозит хлеб, нужен фургон, мебель по городу возят на полуторатонке, большие партии между городами — на трёхтонке. Фирма выбирает по цене тонно-километра: машина за годы службы, ремонт и простои, бензин, шофёр.${horse/pool>0.02?' Пока мотор не выгоднее, часть фирм берёт лошадь.':' Лошадей фирмы уже почти не покупают.'}</p></div>`;}
 // 0.29: доли рынка — дома, в каждой стране и во всём мире: ваши продажи против марок-конкурентов (за прошлый год;
-// в первый год — с начала года). Конкуренция идёт на всех пяти рынках: в каждой стране — свои марки и свой спрос.
+// в первый год — с начала года). Конкуренция идёт на всех рынках: в каждой стране — свои марки и свой спрос.
 const WORLD_NAME={'Ford (Манчестер)':'Ford'};
 function sharesData(s,sel){const cs=Object.keys(COUNTRIES),full=Object.keys(s.mPrev||{}).length>0,val=o=>full?(o.prev||0):(o.yr||0);
   const mine=c=>full?((s.cPrev||{})[c]||0):((s.cY||{})[c]||0),mkt=c=>full?((s.mPrev||{})[c]||0):((s.mY||{})[c]||0);
@@ -12763,7 +12775,7 @@ function sharesCard(s){const cs=Object.keys(COUNTRIES),sel=(s.ui&&s.ui.mkC)||'wo
   const mx=Math.max(1,...show.map(r=>r.v)),me=D.L.find(r=>r.you)||{v:0};
   const chip=(k,lab)=>{const d=k==='world'?null:sharesData(s,k),sh=k==='world'?null:(d.L.find(r=>r.you)||{v:0}).v/Math.max(1,d.tot);return `<button class="chip ${sel===k?'on':''}" data-act="mkC" data-v="${k}">${lab}${sh!==null?`<small>вы ${pct(sh,sh<0.1?1:0)}</small>`:''}</button>`;};
   const rows=show.map(r=>`<tr class="${r.you?'you':''}"><td>${r.rest?'':(named.indexOf(r)+1)+'.'}</td><td>${esc(r.n)}${r.sub?` <span class="pill">ваши ${Math.round(r.sub*100)}%</span>`:''}${sel==='world'&&!r.you&&!r.rest&&r.cs&&r.cs.length?`<small>${r.cs.map(c=>COUNTRIES[c].name).join(', ')}</small>`:''}</td><td style="width:34%"><div class="bar"><i style="width:${r.v/mx*100}%;background:${r.you?'var(--brass)':r.rest?'var(--line)':(r.color||'#888')}"></i></div></td><td class="n">${fmtN(r.v)}</td><td class="n sh">${pct(r.v/tot,r.v/tot<0.1?1:0)}</td></tr>`).join('');
-  const what=sel==='world'?'во всём мире (пять рынков)':COUNTRIES[sel].name+(sel===s.country?' — дома':'');
+  const what=sel==='world'?`во всём мире (${Object.keys(COUNTRIES).length} ${plural(Object.keys(COUNTRIES).length,'рынок','рынка','рынков')})`:COUNTRIES[sel].name+(sel===s.country?' — дома':'');
   const body=`<p class="small muted" style="margin-top:2px">Продано машин ${D.full?`за ${s.y-1} год`:'с начала года'} ${what}. На каждом рынке — свои марки и свой спрос: за границей вы соревнуетесь с местными марками этой страны${sel!=='world'&&sel!==s.country&&!dealerCount(s,sel)?'. Своих дилеров здесь пока нет — продаж тоже':''}.</p>
     <div class="chips sm" style="margin-top:8px">${chip('world','Мир')}${cs.map(c=>chip(c,COUNTRIES[c].name)).join('')}</div>
     <table class="pl shares-t" style="margin-top:8px"><tr><th></th><th>Марка</th><th></th><th class="n">Машин</th><th class="n sh">Доля</th></tr>${rows}</table>
@@ -12799,7 +12811,8 @@ function vMarket(){
       +(c==='uk'&&home!=='uk'&&s.y>=1904&&!(s.hub&&s.hub.ca)?`<button class="btn sm" data-act="hubStart" ${s.cash<hubCost(s)?'disabled':''}>Сборка в Канаде (льгота для стран Империи) · ${money(hubCost(s))}</button>`:'');
     const grow=d&&dealerGrowOk(s,c)&&(gs>0||room===0)?`<button class="btn sm${gs>0?' primary':''}" data-act="dealerGrow" data-c="${c}" ${s.cash<gc?'disabled':''}>Салоны дилеров +25% · ${money(gc)}</button>`:'';
     const btns=cut?'':(d?(short>0?add(short,' — продать всем',1)+(short>=8?add(Math.max(1,Math.round(short/4)),''):''):add(Math.max(1,Math.min(room,Math.round(mx*0.05))),room>1?' в новых городах':'')+(room>big*1.5?add(big):''))+grow:'')+up+extra;
-    const R=c===home?null:ruleNow(s,c),rtxt=R?`<p class="small ${tradeBan(s,c)?'bad':R.quota?'warn':'muted'}" style="margin-top:4px">${tradeBan(s,c)?'⛔ ':''}${esc(R.why)}${R.quota&&!localMade(s,c)?` · квота ${fmtN(R.quota)} машин в год${s.quotaY&&s.quotaY[c]?`, продано ${fmtN(s.quotaY[c])}`:''}`:''}${c==='uk'&&hubOn(s,'ca')&&R.pref?' · ваши машины идут из Канады по льготе Империи (2/3 ставки)':''}</p>`:'';
+    // 0.37: «пошлина 12%» — уже в заголовке страны; отдельной строкой — только когда правило говорит больше (тариф года, запрет, квота)
+    const R=c===home?null:ruleNow(s,c),rtxt=R&&!(/^пошлина \d+%$/.test(R.why||'')&&!R.quota&&!tradeBan(s,c)&&!R.pref)?`<p class="small ${tradeBan(s,c)?'bad':R.quota?'warn':'muted'}" style="margin-top:4px">${tradeBan(s,c)?'⛔ ':''}${esc(R.why)}${R.quota&&!localMade(s,c)?` · квота ${fmtN(R.quota)} машин в год${s.quotaY&&s.quotaY[c]?`, продано ${fmtN(s.quotaY[c])}`:''}`:''}${c==='uk'&&hubOn(s,'ca')&&R.pref?' · ваши машины идут из Канады по льготе Империи (2/3 ставки)':''}</p>`:'';
     // 0.23: за блокадой — коротко и ясно, почему продаж нет и что будет дальше
     const cutTxt=cut?`<p class="small bad" style="margin-top:4px">⛔ Блокада: ${home==='de'?'немецким машинам за границу не пробиться — морские пути закрыты британским флотом.':`ни машин, ни деталей, ни денег в Германию не провезти — британский флот закрыл её моря.`}${intIn(s,c)?` Ваша марка «${esc(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)}» отрезана: её заводы работают сами по себе под надзором властей, вам — ни машин, ни выручки до конца войны.`:lv>=3?` Ваш ${lv>=4?'завод':'цех сборки'} отрезан: работает на нужды страны, вам — ни выручки, ни связи до конца войны.`:dealerCount(s,c)?' Дилеры остались без машин.':''}${home!=='de'&&home!=='uk'&&home!=='fr'&&home!=='it'?` Если ваша страна вступит в войну с Германией — всё, что там ваше, конфискуют.`:''} Торговля вернётся летом 1919 года.</p>`:'';
     const boTxt=bc?`<p class="small good" style="margin-top:4px">🤝 Марка «${esc(compName(bc.cp,s))}» продаётся${bo.disc<1?` на ${Math.round((1-bo.disc)*100)}% дешевле обычного`:''} — до ${MONTHS[(bo.until%12+12)%12]} ${1895+Math.floor(bo.until/12)}: её заводы, дилеры и покупатели станут вашими, пошлины не будет. Это другой путь на рынок — вместо импортёра и отделения.</p>`:'';
@@ -12898,7 +12911,10 @@ function setCash(v){const el=document.getElementById('cash');el.className=v<0?'n
   const from=shownCash,t0=performance.now();shownCash=v;cancelAnimationFrame(cashRaf);const tick=now=>{const k=Math.min(1,(now-t0)/600),e=1-Math.pow(1-k,3);el.textContent=moneyC(from+(v-from)*e);if(k<1)cashRaf=requestAnimationFrame(tick);};cashRaf=requestAnimationFrame(tick);}
 // широкий экран в горизонтальном положении (Fold 7, планшет): витрина «Империя» — колонкой справа
 function wideLand(){try{return matchMedia('(orientation:landscape) and (min-width:760px)').matches;}catch(_){return false;}}
-function flagKey(s){const c=s.country,y=s.y;if(c==='de')return y>=1919?'de2':'de1';if(c==='ru')return y>=1918?'ru2':'ru1';return c;}
+// 0.37: Россия — трёхцветный флаг до Октябрьского переворота (ноябрь 1917), потом красное знамя, с весны 1918 года — флаг РСФСР
+// (золотые буквы в крыже), с 1924 года — флаг СССР (серп, молот и звезда)
+function flagKey(s){const c=s.country,y=s.y,t=y+(s.m||0)/12;if(c==='de')return y>=1919?'de2':'de1';
+  if(c==='ru')return t<1917.83?'ru1':t<1918.3?'ru2':t<1924.08?'ru3':'ru4';return c;}
 function render(){
   const s=G;if(!s)return;if(s.mode==='racer'){racerRender(s);return;}racerNav();try{autoCredit(s);dealerFit(s);}catch(_){}
   // 0.36: антураж страны — цвета интерфейса, полоска флага под шапкой и флажок эпохи у названия (Германия: до 1919 — имперский,
@@ -12994,7 +13010,7 @@ function vMarketMoto(part){if(!motoVis(G))return '';
   const rowsS=MOTOSEG.map(g=>{const z=ms&&ms[g]?ms[g].size:R0.segs[g].inc,you=ms&&ms[g]?ms[g].you:0;return `<tr><td>${SEG[g].name}</td><td class="n">${fmtD(z)}</td><td class="n">${M?fmtD(you):'—'}</td><td class="n">${M&&z>0?pct(you/z,1):'—'}</td><td class="n">${money(prefP(g,home,s))}</td></tr>`;}).join('');
   const msize=ms?MOTOSEG.reduce((a,g)=>a+(ms[g]?ms[g].size:0),0):MOTOSEG.reduce((a,g)=>a+R0.segs[g].inc,0),csize=M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0),mine=L?(L.mhome||0):0;
   const full=(s.mhomePrev||0)>0||(s.mcomps&&(s.mcomps[home]||[]).some(o=>(o.prev||0)>0)),val=o=>full?(o.prev||0):(o.yr||0);
-  const rows=[{name:s.company,you:1,sales:full?(s.mhomePrev||0):(s.mhomeY||0)},...(MCOMPS[home]||[]).map((cp,i)=>({cp,i})).filter(o=>compAlive(o.cp,s)).map(o=>{const st=((s.mcomps||{})[home]||[])[o.i]||{},m=compModel(o.cp,s);return {name:compName(o.cp,s),sales:val(st),model:m?m[1]:'',img:m&&m[2],cp:o.cp,ci:o.i,color:st.color||'#888'};})].sort((a,b)=>b.sales-a.sales);
+  const rows=[{name:s.company,you:1,sales:full?(s.mhomePrev||0):(s.mhomeY||0)},...(MCOMPS[home]||[]).map((cp,i)=>({cp,i})).filter(o=>compAlive(o.cp,s)&&!ownComp(o.cp,s)).map(o=>{const st=((s.mcomps||{})[home]||[])[o.i]||{},m=compModel(o.cp,s);return {name:compName(o.cp,s),sales:val(st),model:m?m[1]:'',img:m&&m[2],cp:o.cp,ci:o.i,color:st.color||'#888'};})].sort((a,b)=>b.sales-a.sales);
   const mx=Math.max(1,...rows.map(r=>r.sales)),place=rows.findIndex(r=>r.you)+1;
   const comp=rows.slice(0,9).map(r=>{const th=r.img&&IMG[r.img]?`<img class="thumb" src="${IMG[r.img].src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="thumb mthumb-svg">${motoSVG({b:'mb0',e:'me3',c:'mf3',g:'mt2',paint:r.color||'#555'},{thumb:1})}</span>`,
     inner=`${th}<span>${esc(r.name)}${r.model?`<small>${esc(r.model)}</small>`:''}</span><div class="bar"><i style="width:${r.sales/mx*100}%;background:${r.you?'var(--brass)':r.color||'#888'}"></i></div><span class="num" style="text-align:right">${fmtN(r.sales)}</span>`;
@@ -13522,7 +13538,7 @@ function xpopAdm(s){const L=s.last||{},P=L.admP||admParts(s,L),rev=(L.rev||0)+(L
     <p class="xp-w">Правление, бухгалтерия, юристы, сбыт. Доля выручки растёт с размером: больше машин, стран и моделей — больше управляющих, бумаг и согласований.${(()=>{const kd=DIFFS[s.diff]&&DIFFS[s.diff].org!=null?DIFFS[s.diff].org:1,kp=k/(kd||1),P0=PIONEERS[s.pioneer];return Math.abs(k-1)>0.001?` ${Math.abs(kd-1)>0.001?`На уровне «${esc(dn)}» рост с размером ×${xn(kd,1)}`:''}${Math.abs(kp-1)>0.004?`${Math.abs(kd-1)>0.001?', у ':'У '}${esc(P0?P0.name:'')} — ещё ×${xn(kp,2)}`:''} — уже в строках ниже.`:'';})()}</p>
     <table class="xp-t xp-c xp-a">
     ${row('Основа','правление, бухгалтерия, юристы',pp(P.base))}
-    ${row('Выпуск',`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
+    ${row('Выпуск',`${P.made||!P.mm?`${fmtN(P.made)} ${plural(P.made,'машина','машины','машин')}`:''}${P.mm?`${P.made?' и ':''}${fmtN(P.mm)} ${plural(P.mm,'мотоцикл','мотоцикла','мотоциклов')} (мотоцикл — четверть машины)`:''} в месяц: каждое удвоение сверх ~400 — +1,1%`,'+'+pp(P.out*k))}
     ${row('Страны сбыта за границей',P.fmL&&P.fmL.length?P.fmL.map(c=>(COUNTRIES[c]||{}).name||c).join(', ')+' — по 0,5%':'нет',(P.cty?'+':'')+pp(P.cty*k))}
     ${row('Модели в производстве',nmTxt+'; снятые — не в счёт. Три — в основе, каждое удвоение сверх них +1,2%',(P.mdl?'+':'')+pp(P.mdl*k))}
     ${row('Итого',`${pp(L.admK||P.total)} выручки ${money(rev)}`,money(L.adm||0),'xp-tot')}</table>
@@ -13712,6 +13728,7 @@ let CEL=null;
 // 0.30: у каждого достижения — свои фанфары: победа, кубок, титул, рекорд, первенство, медаль, сделка
 const CEL_KIND={'🏁':'win','🏆':'cup','👑':'title','🚗':'record','🌟':'first','🥇':'medal','🤝':'deal','⚔️':'duel','🏅':'medal','🏛':'legacy'};
 function celebrate(big,sub,icon,kind){
+  try{if(typeof G!=='undefined'&&G)G.celebT=mi(G);}catch(_){}
   try{if(CEL){CEL.el.remove();cancelAnimationFrame(CEL.raf);}}catch(_){}
   const el=document.createElement('div');el.className='cel';
   el.innerHTML=`<canvas></canvas><div class="cel-t"><i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`;
@@ -14761,6 +14778,11 @@ function carStep(c,trk,dt){
   else if(c.shift<=0&&v<vg*1.02){Fx=thr*pw/Math.max(v,vCr);}
   if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);}
   const muR=mu*kR/kA,muF=mu*kF/kA,Fxmax=muR*Fzr*0.98;let spin=0;if(Fx>Fxmax){spin=(Fx-Fxmax)/Fxmax;Fx=Fxmax+(Fx-Fxmax)*0.2;}
+  // 0.37: в грязи и на раскисшем склоне колесо буксует — мотоциклист толкает машину ногами (у ранних мотоциклов — и педалями),
+  // механик выскакивает и толкает автомобиль. Раньше мотоцикл в грязи на подъёме Ла-Тюрби вставал намертво: «газ» есть — хода нет
+  const wantGas=c.player&&R&&R.mode==='drive'?!!rKeys.gas:thr>0.2;
+  c.push=0;if(!stopped&&!c.rev&&wantGas&&v<2.5&&v>-0.5&&(spin>0.05||mu<0.6||grade>0.05)){const moto=c.cls==='moto';
+    const kp=moto?0.13:c.mech?0.05:0.02;if(kp>0){c.push=kp*c.m*GRAV*clamp((2.5-v)/1.5,0,1);Fx+=c.push;}}
   // вода в луже и жидкая грязь тормозят по квадрату скорости
   const wd=su.k==='puddle'?0.0016:su.k==='mudhole'?0.005:0;
   const drag=c.kd*v*Math.abs(v)+crr*c.m*GRAV*Math.sign(v)+c.m*GRAV*grade/Math.sqrt(1+grade*grade)+c.m*wd*v*Math.abs(v);
@@ -15151,7 +15173,7 @@ function aiMotoMd(y){const E=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp-
   const g=GEARBOX.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.eff-a.eff)[0],k=BRAKES.filter(x=>x.moto&&x.y<=y).pop(),w=TYRES.filter(x=>x.moto&&x.y<=y).pop();
   return {e:eng.id,g:g.id,c:c.id,k:k.id,b:'mb0',w:w.id,t:'t0',paint:'#333',made:0,ai:1};}
 function motoField(rc,s){if(!raceMoto(rc)||!ENGINES.some(x=>x.moto&&x.y<=rc.y))return [];const y=rc.y,host=COUNTRIES[rc.c]?rc.c:'fr',ss={y,m:6},L=[];
-  [host,'fr','uk','de','us','it','ru'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(!cp.imp&&compVol(cp,ss)>0&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
+  [host,'fr','uk','de','us','it','ru'].forEach(c=>(MCOMPS[c]||[]).forEach((cp,i)=>{if(!cp.imp&&compVol(cp,ss)>0&&!(s&&ownComp(cp,s))&&!L.some(o=>o.cp.n===cp.n)&&!(s&&typeof mholdOf==='function'&&mholdOf(s,c,i)))L.push({cp,c});}));
   const n=Math.min(L.length,['hill','sprint'].includes(rc.t)?3:4),names=AMATEUR[host]||AMATEUR.fr,md=aiMotoMd(y);
   return L.slice(0,n).map((o,i)=>{const nm=compName(o.cp,ss),col=['#3a2a1c','#1f2b3a','#7a1f1a','#2b3a24'][i%4];return {you:false,spec:1,cls:'moto',name:nm,label:nm+(y<1902?' · трицикл':' · мотоцикл'),drvName:names[0]+' '+names[1+((i*3+y)%(names.length-1))],drvId:null,sk:0.72+0.05*((i+y)%3),md:{...md,name:nm,paint:col},prep:2,tyre:'soft',gear:0,
     color:col,pw:DIF().race,relK:1,tc:o.c};});}
@@ -15273,6 +15295,8 @@ function raceTick(dt){
     if(me.punct&&!me.punctSaid){me.punctSaid=1;const w=twPunctTxt(me).toUpperCase();rMsg(me.flat?`ПРОКОЛ: ${w}! ДО ФИНИША БЛИЗКО — ДОТЯНИТЕ`:me.punctWhy==='wear'?`ШИНА СТЁРТА ДО КОРДА — ЛОПНУЛА: ${w}. ЖМИТЕ 🔧`:`ПРОКОЛ: ${w}! ЖМИТЕ 🔧`,2.4);}if(!me.punct)me.punctSaid=0;
     if(me.punct&&twRimN(me)&&!me.rimSaid){me.rimSaid=1;rMsg('ПОКРЫШКА РАЗЛЕТЕЛАСЬ — ЕДЕМ НА ОБОДЕ!',2.2);}
     if(me.slipR>0.22&&me.vx>10&&!me.skidSaid){me.skidSaid=1;rMsg('ЗАНОС!',0.9);}if(me.slipR<0.1)me.skidSaid=0;
+    // 0.37: буксуем в грязи — человек толкает (см. c.push в физике)
+    if(me.push>0){me.pushT=(me.pushT||0)+dt;if(me.pushT>0.8&&!me.pushSaid){me.pushSaid=1;rMsg(me.cls==='moto'?'ГОНЩИК ТОЛКАЕТ МОТОЦИКЛ ИЗ ГРЯЗИ':me.mech?'МЕХАНИК ВЫСКОЧИЛ И ТОЛКАЕТ':'ТОЛКАЕМ ИЗ ГРЯЗИ',1.6);}}else{me.pushT=0;if(me.vx>5)me.pushSaid=0;}
     if(me.fuelRate&&me.fin===null&&!me.fuelSaid&&me.fuel<fuelNeed(me,T)&&me.fuel<32){me.fuelSaid=1;rMsg('БЕНЗИНА ДО ФИНИША НЕ ХВАТИТ — ЖМИТЕ 🔧',2.8);}if(me.fuel>60)me.fuelSaid=0;
     {const wr=Math.abs(angWrap(me.yaw-Math.atan2(T.T[me.idx][0],T.T[me.idx][1])))>1.25;me.stuck=(Math.abs(me.lat)>T.W/2+3||me.vx<1.5||wr)&&R.t>2&&!me.wait&&!(me.stopT>0)&&!(me.pitT>0)&&!me.svc&&!me.dnf&&me.fin===null&&me.inWater!==2?me.stuck+dt:0;
       // 0.29: последняя точка, где машина шла по дороге вперёд, — сюда и возвращаем
@@ -15280,6 +15304,8 @@ function raceTick(dt){
       // 0.29: застрял, даже если колёса крутятся (склон между ветками серпантина, упёрся в насыпь): нет продвижения к финишу
       const busy=me.wait||me.stopT>0||me.pitT>0||me.svc===2||me.dnf||me.fin!==null||me.inWater===2||R.t<=2;
       if(busy||me.prog>me.npP+6){me.npP=me.prog;me.npT=0;}else me.npT+=dt;
+      // 0.37: стоит за обочиной (после аварии, ремонт ещё не вызван) — кнопка «Вернуться на трассу» нужна и тогда
+      me.offStill=Math.abs(me.lat)>T.W/2+3&&Math.abs(me.vx)<1.5&&!me.dnf&&me.fin===null&&R.t>2?(me.offStill||0)+dt:0;
       // через 20 с без продвижения маршалы сами выталкивают машину на дорогу (время потеряно, но гонка не встаёт)
       if(me.npT>20){racerBackOnTrack(me,true);}}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
@@ -15323,7 +15349,10 @@ function nearestOnTrack(trk,x,z){const cx=Math.floor(x/30),cz=Math.floor(z/30);l
   for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=trk.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;for(const i of L){const p=trk.pts[i],d=(p[0]-x)**2+(p[2]-z)**2;if(d<bd){bd=d;bi=i;}}}
   return bi<0?null:{i:bi,d:Math.sqrt(bd)};}
 // Вернуть машину на дорогу в точку i (там, где она съехала), с тем же кругом
-function respawnAt(c,i,lap){const T=R.trk;c.idx=clamp(i,0,T.n-1);if(lap!==undefined)c.lap=lap;respawn(c);c.offIdx=-1;trackLocal(T,c);}
+function respawnAt(c,i,lap){const T=R.trk;i=clamp(i,0,T.n-1);
+  // 0.37: точка возврата в пятне грязи или в луже — ставим за пятно (иначе машину вернут туда же, где она застряла)
+  {const k=T.patchAt&&T.patchAt[i],P=k?T.patches[k-1]:null;if(P&&(P.kind==='mudhole'||P.kind==='puddle')&&i>=P.i0-2&&i<=P.i1+2)i=Math.min(T.n-1,P.i1+3);}
+  c.idx=clamp(i,0,T.n-1);if(lap!==undefined)c.lap=lap;respawn(c);c.offIdx=-1;trackLocal(T,c);}
 // 0.29: «Вернуться на трассу» — туда, где машина съехала, или в последнюю точку, где она шла по дороге; отменяет зависший сервис
 function racerBackOnTrack(m,auto){const T=R.trk;if(m.svc===1){m.svc=0;m.svc1T=0;m.svcNo=R.time+4;}
   if(m.offIdx>=0)respawnAt(m,m.offIdx,m.offLap);else if(m.goodIdx>=0)respawnAt(m,m.goodIdx,m.goodLap);else respawn(m);
@@ -16949,7 +16978,7 @@ function raceHUD(){
   const db=document.getElementById('bDmg'),dl=100-F.dmg;db.style.width=dl+'%';db.style.background=dl<40?'var(--bad)':dl<70?'var(--warn)':'var(--good)';
   {const fb=document.getElementById('bFuel'),need=fuelNeed(F,T),ok=F.fuel>=need;fb.style.width=F.fuel+'%';fb.style.background=F.fuel<12?'var(--bad)':ok?'var(--brass)':'#e8894a';
    const nk=document.getElementById('bFuelNeed');if(nk){nk.style.left=Math.min(100,need)+'%';nk.style.display=F.fuelRate&&F.fin===null&&need>1?'block':'none';}}
-  document.getElementById('rReset').hidden=!(R.me&&(R.me.stuck>1.2||(R.me.npT||0)>4||(R.me.svc===1&&(R.me.svc1T||0)>2)));
+  document.getElementById('rReset').hidden=!(R.me&&(R.me.stuck>1.2||(R.me.npT||0)>4||(R.me.offStill||0)>2||(R.me.svc===1&&(R.me.svc1T||0)>2)));
   // педаль тормоза подсказывает задний ход: на месте — «держи — назад», включён — «НАЗАД ◀»
   {const b=document.querySelector('#rCtrl .brk'),m=R.me;if(b&&m){const st=m.rev?2:Math.abs(m.vx)<0.5&&R.t>0.8&&m.fin===null&&!m.dnf?1:0;
     if(b.dataset.l!==String(st)){b.dataset.l=String(st);b.classList.toggle('rev',st===2);b.innerHTML=st===2?'НАЗАД ◀':st===1?'ТОРМОЗ<small>держи — назад</small>':'ТОРМОЗ';}}}
@@ -18173,7 +18202,8 @@ const LSR=[[1898.96,63.15,'граф Шасслу-Лоба (Jeantaud)'],[1899.32,
 function lsrAt(y,m){const t=y+m/12;let r=null;LSR.forEach(x=>{if(x[0]<=t)r=x;});return r;}
 const MATCH_ST={match:'Матч-гонка',record:'Спор о скорости'};
 // своя марка под другим именем (Ford (Манчестер) у Форда) — не соперник
-function ownComp(cp,s){return pkIs(cp,s)||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&cp.n!==b.n&&cp.n.startsWith(b.n+' (')));}
+function ownComp(cp,s){if(!cp||!s)return false;const nm=x=>String(x||'').toLowerCase().replace(/[«»"']/g,'').trim();
+  return pkIs(cp,s)||(!!s.company&&nm(compName(cp,s))===nm(s.company))||Object.values(COMPS).some(L=>L.some(b=>pkIs(b,s)&&cp.n!==b.n&&cp.n.startsWith(b.n+' (')));}
 // детерминированный «жребий»: доска вызовов перерисовывается — предложения в течение месяца не должны прыгать
 function chalRnd(s,salt){return mulberry32(hashStr('ch|'+mi(s)+'|'+s.company+'|'+(salt||'')));}
 function raceByKey(key){return RACES.find(r=>r.key===key)||(typeof G!=='undefined'&&G&&G.chal&&G.chal.rc&&G.chal.rc.key===key?G.chal.rc:null);}
@@ -18583,7 +18613,7 @@ function mrecRival(y){const e=ENGINES.filter(x=>x.moto&&x.y<=y).sort((a,b)=>b.hp
 function mrecBest(s){return s.models.filter(m=>(m.status==='prod'||m.status==='sale')&&isMoto(m)&&segOf(m)==='moto').map(m=>({m,v:mrecSpeed(m,s.y)})).sort((a,b)=>b.v-a.v)[0]||null;}
 function offerMrec(s){if(s.y<1903||!lineOn(s,'moto'))return null;const P=mrecBest(s);if(!P)return null;const r=chalRnd(s,'mrec');
   const C0=[s.country].concat(Object.keys(COUNTRIES).filter(c=>c!==s.country&&dealerCount(s,c)>0&&!warCut(s,c))),c=r()<0.6||C0.length<2?s.country:C0[1+Math.floor(r()*(C0.length-1))];
-  if(isWar(s.y,s.m,c)||(c==='ru'&&s.y>=1917))return null;const L=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.v>0&&!x.cp.imp).sort((a,b)=>b.v-a.v).slice(0,3);if(!L.length)return null;
+  if(isWar(s.y,s.m,c)||(c==='ru'&&s.y>=1917))return null;const L=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,v:compVol(cp,s)})).filter(x=>x.v>0&&!x.cp.imp&&!ownComp(x.cp,s)).sort((a,b)=>b.v-a.v).slice(0,3);if(!L.length)return null;
   const R=L[Math.floor(r()*L.length)],nm=compName(R.cp,s),Ls=s.last,stake=Math.round(clamp(((Ls&&Ls.rev)||0)*0.03,80*cpi(s),6000*cpi(s))/50)*50;
   const C={type:'mrec',c,ci:R.i,mq:nm,venue:MREC_VENUE[c],md:P.m.id,end:mi(s)+2,x:stakeExtra(s,nm,'mr',1)};
   return {id:'mrec',kind:'mrec',title:`Мерная миля: «${s.company}» против ${nm}`,sub:`${MREC_VENUE[c]} · чей мотоцикл быстрее · мировой рекорд ${Math.round(mrecWR(s.y))} км/ч`,stake,C};}
@@ -23964,6 +23994,27 @@ const MUS_C=(()=>{const o={},put=(c,ids)=>ids.split(' ').forEach(k=>o[k]=c);
   put('it','core_ngrato tell_finale');
   put('uk','tipperary colonel_bogey pomp mogul warriors_dance jupiter mercury first_suite faded_picture any_old_time');
   return o;})();
+// 0.37: музыка под момент. Записи, у которых есть последний год (гимн Империи — до 1917, «Рабочая Марсельеза» — до 1918);
+// что происходит в стране сейчас: война — марши и драма, революция — драма и марши, кризис — грусть и покой,
+// праздник (победа, рекорд, титул — пару месяцев) — торжество; в 1920-х — джаз и фокстрот (у Советской России — свои песни)
+const MUS_TO={tsar_hymn:1917,worker_marseillaise:1918};
+function musMoment(s){if(!s)return 'calm';const c=s.country,t=s.y+(s.m||0)/12;
+  if(c==='ru'&&t>=1917.15&&t<1921.3)return 'rev';
+  try{if(econ(s.y,s.m,c).war)return 'war';}catch(_){}
+  try{const k=creditState(s).k;if(k==='panic'||k==='crash'||k==='tight')return 'crisis';}catch(_){}
+  if(s.celebT!=null&&mi(s)-s.celebT<=2)return 'fest';return 'calm';}
+const MUS_MOOD_W={war:{march:2.6,drama:2,sad:1.5,triumph:1.3,comic:0.35,lively:0.8,calm:0.8},rev:{drama:2.6,march:2.2,sad:1.5,comic:0.3,lively:0.6,calm:0.7},
+  crisis:{sad:2.6,calm:1.6,drama:1.3,triumph:0.4,comic:0.5,lively:0.7},fest:{triumph:3.2,lively:1.6,race:1.4,sad:0.4,drama:0.8},calm:{}};
+const MUS_ST_W={war:{march:1.8,jazz:0.5,charl:0.4,fox:0.7,rag:0.7,cake:0.6},rev:{march:1.6,jazz:0.3,charl:0.2,fox:0.4,rag:0.4,cake:0.4},crisis:{waltz:1.3,classic:1.3},fest:{march:1.5},calm:{}};
+// вес записи: страна (своя — вчетверо, у Советской России — вшестеро; страны, где у вас дилеры, — в полтора раза), момент, давно ли звучала
+function musWeight(t,s,ctx){let w=1;const home=s&&s.country;
+  if(t.c&&s){w*=t.c===home?(s.soviet?6:4):(s.dealers&&(s.dealers[t.c]||0)>0)?1.6:1;}
+  // своя страна — по-своему: в России и Италии чужой джаз реже; у Советской России — только изредка
+  if(s&&!t.c&&(t.st==='jazz'||t.st==='charl'||t.st==='fox')&&(home==='ru'||home==='it'))w*=s.soviet?0.35:0.7;
+  const M=MUS_MOOD_W[ctx]||{},S=MUS_ST_W[ctx]||{};w*=(M[t.mood]||1)*(S[t.st]||1);
+  if(s&&s.y>=1920&&!s.soviet&&(t.st==='jazz'||t.st==='fox'||t.st==='charl'))w*=1.4;
+  const h=AU.recent||[];const k=h.indexOf(t.title);if(k>=0)w*=0.08+0.9*k/Math.max(1,h.length);
+  return w;}
 function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
@@ -23974,15 +24025,17 @@ function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','ma
   return L.concat((all?[0]:[0,1]).flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]}))));}
 function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
-  if(AU.on.mode!=='all'){let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
+  if(AU.on.mode!=='all'){L=L.filter(t=>!(MUS_TO[t.id]&&MUS_TO[t.id]<y));let E=L.filter(t=>t.y<=y+1&&(t.orch||t.y>=y-14));if(E.length<5)E=L.filter(t=>t.y<=y+3).sort((a,b)=>b.y-a.y).slice(0,5);if(E.length<3)E=L.slice().sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y)).slice(0,4);L=E;}
   // 0.19: есть оркестровые записи — синтезатор не нужен; без сети — оркестрион и мелодии игры
   // 0.24: синтезатора («оркестриона») в плейлисте больше нет совсем — свои записи оркестра вшиты в игру; не играет ничего — тишина
   {const bad=AU.badSrc||{};L=L.filter(t=>!bad[t.src]);}
   // 0.29: свои мелодии игры — только когда записей эпохи мало (без сети) или в режиме «Все»: долго их не послушаешь
   if(AU.on.mode!=='all'){const real=L.filter(t=>!t.own);if(real.length>=6)L=real;}
-  // 0.30: песни своей страны звучат чаще (втрое), стран, где у вас дилеры, — в полтора раза: Шаляпин в России, Карузо в Италии, Брюан во Франции
-  const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')));const home=G&&G.country,wt=t=>!t.c||!G?1:t.c===home?3:(G.dealers&&(G.dealers[t.c]||0)>0)?1.6:1;
-  L=L.map(t=>({t,k:Math.pow(rnd(),1/wt(t))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
+  // 0.30: песни своей страны звучат чаще, стран, где у вас дилеры, — в полтора раза: Шаляпин в России, Карузо в Италии, Брюан во Франции.
+  // 0.37: и под момент (война, революция, кризис, праздник), и вперемешку каждый раз по-новому (раньше порядок зависел только от года)
+  const ctx=AU.on.mode==='all'?'calm':musMoment(G);AU.ctx0=ctx;AU.shuf=AU.shuf||(Math.random()*1e9|0);
+  const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')+ctx)+AU.shuf);
+  L=L.map(t=>({t,k:Math.pow(rnd(),1/Math.max(0.01,musWeight(t,G,ctx)))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
   // 0.29: первой звучит запись эпохи, а не своя мелодия игры
   if(start){const k=L.findIndex(t=>!t.own);if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
@@ -24002,7 +24055,9 @@ function musicPlay(force){
     AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
     AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
   if(!AU.ducked)AU.el.volume=R?0.2:0.5;
-  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;}
+  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;
+    // 0.37: что звучало недавно — в следующих плейлистах реже (последние 14 записей)
+    AU.recent=(AU.recent||[]).filter(x=>x!==tr.title);AU.recent.push(tr.title);if(AU.recent.length>14)AU.recent.shift();}
   if(AU.el.paused){const pr=AU.el.play();if(pr&&pr.catch)pr.catch(()=>{});}
   musUI();
 }
@@ -24049,7 +24104,8 @@ function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div
 function auSched(){
   const c=AU.ctx;if(!c)return;
   while(AU.next<c.currentTime+0.15){
-    if(AU.lastY!==(G&&G.y)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
+    {const mk=G?G.y*12+G.m:-1;if(mk!==AU.momMk){AU.momMk=mk;AU.mom=G?musMoment(G):'calm';}}
+    if(AU.lastY!==(G&&G.y)||(G&&AU.on.mode!=='all'&&AU.ctx0&&AU.mom!==AU.ctx0)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
     // под кинохронику — свой танец ролика, тихо
     const RS=AU.reelSty&&typeof REEL!=='undefined'&&REEL?AU.reelSty:null;
     const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race);
@@ -24594,7 +24650,8 @@ function ambEmitters(T){const n=T.n,W=T.W,S=T.segT||new Uint8Array(n),cfg=T.cfg|
   if(seaP.length){for(let k=0;k<seaP.length;k+=40){const P=seaP.slice(k,k+40);let cx=0,cz=0;P.forEach(p=>{cx+=p[0];cz+=p[1];});cx/=P.length;cz/=P.length;
     const rad=Math.max(...P.map(p=>Math.hypot(p[0]-cx,p[1]-cz)));E.sea.push({P,x:cx,z:cz,rad,r0:6,id:id++});}}
   // 0.36: прибой — запись: на пляже — океанский накат, у озера и залива — мелкая волна, у дороги вдоль моря — морской
-  E.beach=cfg.terr==='beach';{let co='';try{co=(placeWater(T.rc||{},cfg.host)||{}).co||'';}catch(_){}E.seaRec=E.beach?'surf_big':/озер|залив/.test(co)?'surf_lake':'surf_sea';}
+  E.beach=cfg.terr==='beach';{let co='';try{co=(placeWater(T.rc||{},cfg.host)||{}).co||'';}catch(_){}// 0.37: «Wave (Gravity Sound)» (surf_big) оказалась мелодией, а не прибоем — на пляже теперь настоящий океанский накат (surf_ocean), пока он не скачан — морской
+  E.seaRec=E.beach?'surf_ocean':/озер|залив/.test(co)?'surf_lake':'surf_sea';}
   // старт, финиш: громкоговоритель (рупор), оркестр
   const fi=T.finishIdx,si=T.startIdx,big=T.closed||(cfg.crowd||0)>0.3;
   const nearStand=i=>{let b=null,bd=1e9;E.stand.forEach(s=>{let d=Math.abs(s.i-i);if(T.closed)d=Math.min(d,n-d);if(d<bd){bd=d;b=s;}});return bd<40?b:null;};
@@ -24723,7 +24780,7 @@ function ambStart(){if(!AU.ctx||!R||R.mode==='sim')return;ambIndex();const c=AU.
   const E=AMB.E,want=['rain'];if(E){if(E.stand.length)want.push('crowd_big','crowd_race','applause');if(E.crowd.length)want.push('crowd_murmur','crowd_race');if(E.farm.length)want.push('dog_bark');
     if(E.church.length)want.push('bells_village');if(E.river.length)want.push('stream');if(E.band.length)want.push('brass_parade');if(E.cart.length)want.push('horse_carriage');}
   if(R.trk.rails&&R.trk.rails.length)want.push('steam_train',R.trk.cfg.host==='us'?'steam_whistle_us':'steam_whistle');
-  want.forEach(id=>ambBuf(id));if(E&&E.sea.length){try{ambSurfBuf();}catch(_){}ambBuf(E.seaRec);ambBuf('gulls');ambBuf('gull2');}
+  want.forEach(id=>ambBuf(id));if(E&&E.sea.length){try{ambSurfBuf();}catch(_){}ambBuf(E.seaRec);if(E.seaRec!=='surf_sea')ambBuf('surf_sea');ambBuf('gulls');ambBuf('gull2');}
   const L=[ANN.ready,ANN.count,ANN.go];if(R.me)L.push(annGo(R.me.num||1));L.forEach(t=>annBuf(t));}
 function ambStop(){AMB.on=false;const t=AU.ctx?AU.ctx.currentTime:0;Object.values(AMB.beds).forEach(B=>{if(B.ch){B.ch.g.gain.setTargetAtTime(0,t,0.3);const s=B.src;setTimeout(()=>{try{s.stop();}catch(_){}},1500);}});AMB.beds={};
   AMB.shots.slice().forEach(S=>ambShotEnd(S,0.3));AMB.shots=[];}
@@ -24754,7 +24811,7 @@ function ambTick(dt){if(!AMB.on||!R||!AU.ctx)return;const T=R.trk,me=R.follow||R
   {let a=ambAgg(E.cart,AMB_L.horse,2,120);if(R.dx&&R.dx.k==='horse'){const h=ambHear(AMB_L.horse+8,R.dx.pos[0],R.dx.pos[2],2);if(h.g>a.g)a=h;}ambBed('horse_carriage',night&&!(R.dx&&R.dx.k==='horse')?0:a.g,dt,a.pan,a.lp);}
   {const a=ambAgg(E.river,AMB_L.stream,6,400);ambBed('stream',a.g,dt,a.pan,a.lp);}
   // 0.36: море — запись прибоя (пока не скачалась — синтез); над берегом днём — чайки: крик стаи и иногда одна совсем рядом
-  if(E.sea.length){const h=ambSea(E),rec=AMB.buf[E.seaRec]?E.seaRec:'surf';ambBed(rec,h.g,dt,h.pan,h.lp);if(rec!=='surf')ambBed('surf',0,dt,0,16000);
+  if(E.sea.length){const h=ambSea(E),rec=AMB.buf[E.seaRec]?E.seaRec:AMB.buf.surf_sea?'surf_sea':'surf';ambBed(rec,h.g,dt,h.pan,h.lp);if(rec!=='surf')ambBed('surf',0,dt,0,16000);
     const gk=(day||dawn||dusk)&&!night?clamp(1-(h.d-40)/360,0,1)*(1-rain):0;dif('gulls',gk>0.02,63,gk,1,2.2);
     if(gk>0.3&&h.p&&ambCool('gull',6+Math.random()*12)){const a=Math.random()*6.283,r=12+Math.random()*55;
       ambShot('gull2',[h.p.x+Math.sin(a)*r,h.p.z+Math.cos(a)*r],AMB_L.gull,{off:Math.random()*3,dur:2.2+Math.random()*2.5,fade:0.3,r0:2});}}
