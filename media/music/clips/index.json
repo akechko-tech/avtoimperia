@@ -4054,5 +4054,21 @@
   "perf": "",
   "c": "",
   "cue": 0
+ },
+ "plevitskaya_sinichka": {
+  "key": "File:Nadezhda Plevitskaya Za morem sinichka.ogg|start|191.9|0|v2|h1|k64",
+  "title": "File:Nadezhda Plevitskaya Za morem sinichka.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:Nadezhda_Plevitskaya_Za_morem_sinichka.ogg",
+  "lic": "Public domain",
+  "by": "Nadezhda Plevitskaya",
+  "cap": "«За морем синичка» — Надежда Плевицкая",
+  "st": "song",
+  "y": 1912,
+  "mood": "calm",
+  "d": 191.9,
+  "size": 1573042,
+  "perf": "",
+  "c": "ru",
+  "cue": 0
  }
 }
