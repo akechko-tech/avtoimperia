@@ -624,6 +624,19 @@ SFX2_QS = ['ocean waves', 'ocean surf', 'waves crashing', 'waves breaking', 'bre
            'Gnome rotary engine', 'radial engine', 'Tiger Moth', 'Sopwith', 'Fokker Dr.I', 'vintage aircraft', 'Category:Sounds of aircraft', 'Category:Sounds of airplanes',
            'machine gun', 'machine-gun burst', 'Maxim gun', 'Vickers machine gun', 'Lewis gun', 'anti-aircraft gun', 'artillery distant', 'gunfire distant', 'explosion distant']
 def sfx2_scan(): audio_scan_to('sfx2', SFX2_QS, 3, 900, 40)
+# 0.37: «Калинка», «Прощание славянки» и другие русские песни и марши, которых не нашёл второй проход
+RU3_QS = ['Kalinka', 'Калинка', 'Kalinka Larionov', 'Калинка-малинка', 'Kalinka song', 'Kalinka balalaika', 'Прощание славянки', 'Farewell of Slavianka', 'Proshchanie Slavyanki',
+          'Slavyanka march', 'Agapkin', 'Агапкин', 'Коробейники', 'Korobeiniki', 'Вдоль по Питерской', 'Along Peterskaya', 'Дорогой длинною', 'Dorogoi dlinnoyu', 'Those Were the Days 1925',
+          'Очи чёрные', 'Ochi chyornye', 'Светит месяц', 'Svetit mesyats', 'Барыня', 'Barynya', 'Камаринская', 'Две гитары', 'Two guitars Russian', 'Варяг песня', 'Varyag song',
+          'Тоска по родине', 'Амурские волны', 'Amur waves', 'Russian balalaika 1910', 'Andreyev Great Russian Orchestra', 'Russian folk song gramophone', 'Category:Songs in Russian']
+def ru3_scan():
+    audio_scan_to('music_ru3', RU3_QS, 40, 900, 50)
+    Pj = os.path.join(MEDIA, 'music_ru3', 'scan.json')
+    try:
+        L = json.load(open(Pj, encoding='utf-8'))
+        L = [e for e in L if not WORLD_BAN.search(' '.join([e.get('title', ''), e.get('desc', ''), e.get('artist', '')]))]
+        json.dump(L, open(Pj, 'w', encoding='utf-8'), ensure_ascii=False, indent=0); log('ru3_scan kept after ban', len(L))
+    except Exception as ex: log('ru3_scan filter', ex)
 
 # ---------------------------------------------------------------- пробы голоса: какие модели Silero есть и как звучат
 PROBE_LINES = ['Париж, июнь тысяча восемьсот девяносто пятого года. Двадцать два экипажа выстроились у Триумфальной арки, и толпа замерла в ожидании старта.',
@@ -942,7 +955,7 @@ def photos():
     import photo_scan as P
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
-JOBS = {'ru2_scan': ru2_scan, 'sfx2_scan': sfx2_scan, 'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
+JOBS = {'ru3_scan': ru3_scan, 'ru2_scan': ru2_scan, 'sfx2_scan': sfx2_scan, 'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
         'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan, 'world2_scan': world2_scan, 'fanfare_scan': fanfare_scan}
 
 if __name__ == '__main__':
