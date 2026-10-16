@@ -405,5 +405,38 @@
   "d": 7.3,
   "size": 58558,
   "ref": false
+ },
+ "surf_ocean": {
+  "key": "File:Ocean Waves on a Tropical Beach.ogg|30|60|v1",
+  "title": "File:Ocean Waves on a Tropical Beach.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:Ocean_Waves_on_a_Tropical_Beach.ogg",
+  "lic": "CC0",
+  "by": "Jarrod stanley",
+  "g": "sea",
+  "d": 60,
+  "size": 480488,
+  "ref": false
+ },
+ "plane_trimotor": {
+  "key": "File:EAA Ford TriMotor NC8407.ogg|0|55|v1",
+  "title": "File:EAA Ford TriMotor NC8407.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:EAA_Ford_TriMotor_NC8407.ogg",
+  "lic": "CC BY-SA 3.0",
+  "by": "Alexf",
+  "g": "air",
+  "d": 55,
+  "size": 439946,
+  "ref": false
+ },
+ "plane_prop": {
+  "key": "File:Propeller-plane-flying-steady-01.wav|0|20|v1",
+  "title": "File:Propeller-plane-flying-steady-01.wav",
+  "page": "https://commons.wikimedia.org/wiki/File:Propeller-plane-flying-steady-01.wav",
+  "lic": "CC BY-SA 4.0",
+  "by": "Versatile Virtuoso",
+  "g": "air",
+  "d": 20,
+  "size": 160660,
+  "ref": false
  }
 }

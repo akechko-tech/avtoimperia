@@ -1,172 +1,63 @@
-== job ru2_scan
-search Амурские волны -> 0
-search Amur Waves waltz -> 0
-search Amurskie volny -> 0
-search Ivanovici -> 7
-search Waves of the Danube -> 7
-search Danube Waves Ivanovici -> 7
-search Плевицкая -> 4
-search Plevitskaya -> 4
-search Вяльцева -> 3
-search Vyaltseva -> 3
-search Варя Панина -> 2
-search Panina -> 3
-search Морфесси -> 2
-search Собинов -> 2
-search Sobinov -> 2
-search Нежданова -> 2
-search Nezhdanova -> 2
-search Давыдов романс -> 0
-search Andreyev balalaika -> 0
-search balalaika orchestra -> 0
-search Great Russian Orchestra -> 6
-search Russian Balalaika Orchestra -> 0
-search Великорусский оркестр -> 0
-search Сирена Рекорд -> 1
-search Sirena Record -> 5
-search Sirena-Record -> 5
-search Пишущий Амур -> 1
-search Extraphone -> 0
-search Zonophone Russian -> 12
-search Gramophone Russian 1910 -> 1
-search Russian Gramophone -> 27
-search Victor Russian 1915 -> 4
-search Columbia Russian -> 50
-search Russian march 1910 -> 50
-search Russian military band -> 29
-search Преображенский марш -> 0
-search Preobrazhensky March -> 0
-search Марш Преображенского полка -> 1
-search Тоска по родине марш -> 0
-search Под двуглавым орлом -> 1
-search Unter dem Doppeladler -> 2
+== job ru3_scan
+search Kalinka -> 3
+search Калинка -> 50
+search Kalinka Larionov -> 3
+search Калинка-малинка -> 3
+search Kalinka song -> 3
+search Kalinka balalaika -> 0
+search Прощание славянки -> 7
+search Farewell of Slavianka -> 6
+search Proshchanie Slavyanki -> 6
+search Slavyanka march -> 0
+search Agapkin -> 8
+search Агапкин -> 6
+search Коробейники -> 2
+search Korobeiniki -> 9
+search Вдоль по Питерской -> 0
+search Along Peterskaya -> 0
+search Дорогой длинною -> 0
+search Dorogoi dlinnoyu -> 0
+search Those Were the Days 1925 -> 0
+search Очи чёрные -> 4
+search Ochi chyornye -> 1
 search Светит месяц -> 2
+search Svetit mesyats -> 0
 search Барыня -> 15
+search Barynya -> 0
 search Камаринская -> 0
-search Kamarinskaya Glinka -> 0
-search Тройка мчится -> 1
-search Ямщик, не гони -> 0
-search Ехали на тройке -> 0
-search Однозвучно гремит колокольчик -> 0
-search Вдоль по Питерской Шаляпин -> 0
-search Шаляпин Блоха -> 0
-search Chaliapin Volga -> 7
-search Chaliapin 1910 -> 1
-search Chaliapin Gramophone -> 2
-search Chaliapine Gramophone -> 0
-search Шаляпин Сомнение -> 0
-search Tchaikovsky Nutcracker -> 27
-search Nutcracker Suite 1910 -> 0
-search Casse-Noisette -> 49
-search Trepak -> 6
-search Swan Lake Tchaikovsky -> 24
-search Tchaikovsky Swan Lake scene -> 5
-search Lac des cygnes -> 2
-search Rimsky-Korsakov Song of India -> 0
-search Hymn to the Sun -> 4
-search Glinka Kamarinskaya -> 0
-search Glinka Valse-Fantaisie -> 0
-search Tchaikovsky Chanson triste -> 1
-search Tchaikovsky Humoresque -> 10
-search Come Josephine in My Flying Machine -> 1
-search Flying Machine song -> 0
-search Aeroplane waltz -> 0
-search aeroplane song 1910 -> 0
-search aviation march -> 50
-search Les aviateurs marche -> 0
-search Blériot marche -> 0
-search Up in an Aeroplane -> 1
-search Aviation two-step -> 0
-search Aeroplane rag -> 5
-search Lindbergh song -> 0
-search Lucky Lindy -> 31
-search airship song 1910 -> 0
-search Zeppelin Marsch -> 0
-search Category:Feodor Chaliapin -> 24
-search Category:Russian romances -> 0
-search Category:Russian folk songs -> 10
-search Category:Songs about aviation -> 0
-search Category:Balalaika -> 5
-music_ru2 scan: candidates 444 kept 276
-ru2_scan kept after ban 245
-== job ru2_scan took 93 s
-== job sfx2_scan
-search ocean waves -> 13
-search ocean surf -> 40
-search waves crashing -> 2
-search waves breaking -> 14
-search breaking waves -> 14
-search surf on the beach -> 40
-search beach waves -> 9
-search sea shore waves -> 1
-search waves on the shore -> 9
-search Atlantic surf -> 38
-search Pacific surf -> 9
-search seashore -> 7
-search coast waves -> 39
-search Brandung -> 40
-search Meeresrauschen -> 4
-search Wellen Meer -> 38
-search vagues mer -> 3
-search ressac -> 40
-search бриз прибой -> 0
-search прибой -> 22
-search шум моря -> 2
-search Category:Sounds of the sea -> 0
-search Category:Ocean sounds -> 0
-search Category:Sounds of waves -> 0
-search Category:Audio files of oceans -> 0
-search airplane engine -> 4
-search aircraft engine -> 6
-search propeller aircraft -> 15
-search propeller plane -> 3
-search biplane -> 2
-search airplane flyby -> 1
-search aircraft flyby -> 9
-search plane passing -> 9
-search rotary engine aircraft -> 0
-search Gnome rotary engine -> 0
-search radial engine -> 0
-search Tiger Moth -> 1
-search Sopwith -> 40
-search Fokker Dr.I -> 0
-search vintage aircraft -> 0
-search Category:Sounds of aircraft -> 0
-search Category:Sounds of airplanes -> 0
-search machine gun -> 40
-search machine-gun burst -> 1
-search Maxim gun -> 1
-search Vickers machine gun -> 0
-search Lewis gun -> 4
-search anti-aircraft gun -> 7
-search artillery distant -> 0
-search gunfire distant -> 1
-search explosion distant -> 4
-sfx2 scan: candidates 383 kept 202
-== job sfx2_scan took 53 s
+search Две гитары -> 0
+search Two guitars Russian -> 0
+search Варяг песня -> 0
+search Varyag song -> 0
+search Тоска по родине -> 0
+search Амурские волны -> 0
+search Amur waves -> 0
+search Russian balalaika 1910 -> 0
+search Andreyev Great Russian Orchestra -> 0
+search Russian folk song gramophone -> 2
+search Category:Songs in Russian -> 0
+music_ru3 scan: candidates 93 kept 26
+ru3_scan kept after ban 24
+== job ru3_scan took 31 s
 == job music_cut
-music sarmatov_avto 188 s 1548587
-music chaliapin_flea 182 s 1502365
-music chaliapin_vanya 177 s 1457651
-music chaliapin_ochi 90 s 744385
-music chaliapin_smotr 234 s 1912784
-music chaliapin_prophet 210 s 1729491
-music korobushka_1927 181 s 1490542
-music onegin_1905 210 s 1730810
-music tsar_hymn 116 s 960126
-music worker_marseillaise 197 s 1624454
-music nutcracker_ov 257 s 2125073
-music nutcracker_dragee 232 s 1924500
-music swan_scene 240 s 2210798
-music swan_finale 240 s 2213535
-music sleeping_waltz 237 s 1947288
-music igor_dance 240 s 1973252
-music igor_march 238 s 1957612
-music rach_prelude 228 s 1874348
-music rach_concerto2 240 s 2216823
-music kiev_gate 200 s 1843156
-music promenade 101 s 928585
-music scheherazade 240 s 2211523
-music overture_1812 210 s 1945586
-music bald_mountain 220 s 2028335
-== job music_cut took 549 s
+music josephine_1910 150 s 1233873
+music aeroplane_rag 200 s 1651364
+music aeroplane_glogau 168 s 1314779
+music aeroplane_randall 121 s 995419
+music chaliapin_volga 200 s 1646514
+music chaliapin_doubt 210 s 1735733
+music dvuglav_march 113 s 930254
+music ne_vecher 179 s 1455014
+music free_russia_hymn 202 s 1658542
+music vavich_troika 152 s 1251753
+music morfessy_tumanno 180 s 1482971
+music sarmatov_pochki 175 s 1439907
+music swan_cygnes 240 s 1977039
+music nutcracker_flowers 240 s 2214186
+music danube_1914 72 s 594542
+== job music_cut took 246 s
+== job sfx_cut
+sfx surf_ocean 480488
+sfx plane_trimotor 439946
+sfx plane_prop 160660
+== job sfx_cut took 16 s
