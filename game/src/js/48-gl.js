@@ -310,7 +310,9 @@ void main(){
 #ifdef CATCH
   {vec2 q=(v_wp.xz-u_foot.xy)/u_foot.zw;float e=length(q),ao2=(1.-smoothstep(.3,1.2,e))*.42;o=vec4(0.,0.,0.,clamp((1.-sh)*.58*(1.-smoothstep(1.3,2.8,e))+ao2,0.,.85));return;}
 #endif
-  if(m.w<-2.5&&m.w>-3.5){float t=u_time;N=normalize(vec3(sin(v_wp.x*.9+t*1.3)*.05+sin(v_wp.z*1.7-t*1.1)*.04+(vn2(v_wp.xz*.8+t*.3)-.5)*.1,1.,cos(v_wp.z*.8+t)*.05+sin(v_wp.x*1.9+t*1.7)*.03+(vn2(v_wp.zx*.7-t*.25)-.5)*.1));
+  if(m.w<-2.5&&m.w>-3.5){float t=u_time,wf=1.-smoothstep(40.,420.,dist),wl=smoothstep(150.,900.,dist)*(1.-smoothstep(4000.,12000.,dist));
+    // 0.37: мелкая рябь — вблизи; вдали — длинная волна (иначе с высоты рябь мерцает)
+    N=normalize(vec3((sin(v_wp.x*.9+t*1.3)*.05+sin(v_wp.z*1.7-t*1.1)*.04+(vn2(v_wp.xz*.8+t*.3)-.5)*.1)*wf+(vn2(v_wp.xz*.012+t*.02)-.5)*.06*wl,1.,(cos(v_wp.z*.8+t)*.05+sin(v_wp.x*1.9+t*1.7)*.03+(vn2(v_wp.zx*.7-t*.25)-.5)*.1)*wf+(vn2(v_wp.zx*.011-t*.02)-.5)*.06*wl));
     rough=.05;spec=1.;envK=1.;alb*=.55;}
   vec3 col;
   if(m.w<-.5&&m.w>-1.5){float nl=dot(N,u_sun),dif=max((nl+.55)/1.55,0.)*.9+pow(max(dot(-V,u_sun),0.),3.)*.35;col=alb*(u_sunC*dif*sh+mix(u_gndC,u_skyC,N.y*.5+.5));}

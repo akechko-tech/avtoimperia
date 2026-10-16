@@ -175,6 +175,8 @@ function enFire(kind){switch(kind){
   case 16:return {fire:Array.from({length:16},(_,k)=>k/16),amp:Array.from({length:16},(_,k)=>0.94+0.06*((k*5)%7)/6),bank:Array.from({length:16},(_,k)=>k%2),nb:2};
   case 'steam':return {fire:[0,0.25,0.5,0.75],amp:[1,0.78,0.95,0.72],cyc:1};
   case 'elec':return {fire:[0],amp:[0],cyc:1};}
+  // 0.37: авиамоторы — ротативные (7 и 9 цилиндров), звёзды
+  if(kind===7||kind===9||kind===5||kind===3)return {fire:Array.from({length:kind},(_,k)=>k/kind),amp:Array.from({length:kind},(_,k)=>0.92+0.08*((k*3)%kind)/kind)};
   return enFire(4);}
 // Типы моторов гоночных машин и массовых моделей: цилиндры, обороты, трубы, глушитель, нагнетатель
 const EN_TYPE={
@@ -198,6 +200,8 @@ const EN_TYPE={
   i8road:{lvl:4.5,c:8,idle:360,max:3200,pipe:[2.4],tau:2,noise:0.35,valve:0.05,thump:0.4},
   v8f:{lvl:4.2,c:'v8f',idle:380,max:2600,pipe:[1.9,2.0],tau:2.3,noise:0.42,valve:0.07,thump:0.55},
   v8x:{lvl:4.2,c:'v8x',idle:420,max:3400,pipe:[1.7,2.05],tau:2.4,noise:0.45,valve:0.06,thump:0.7},
+  rot7:{lvl:2.7,c:7,idle:420,max:1250,pipe:[0.45],tau:3.6,noise:0.72,valve:0.14,thump:0.85,open:1,pop:0.09}, // 0.37: «Гном» — ротативный, без глушителя, касторка
+  rad9:{lvl:2.5,c:9,idle:320,max:1900,pipe:[0.5],tau:3.1,noise:0.62,valve:0.08,thump:0.9,open:1,pop:0.05},  // звезда «Райт», «Юпитер»
   v8aero:{lvl:2.6,c:'v8f',idle:300,max:1400,pipe:[0.5,0.55],tau:3.5,noise:0.65,valve:0.1,thump:1,open:1,pop:0.06},
   v12:{lvl:2.6,c:12,idle:480,max:5000,pipe:[1.0,1.08],tau:1.6,noise:0.45,valve:0.05,gearW:0.004,open:1,pop:0.04},
   v12aero:{lvl:2.4,c:12,idle:260,max:1900,pipe:[0.55,0.6],tau:3.2,noise:0.65,valve:0.08,thump:1,open:1,pop:0.07},

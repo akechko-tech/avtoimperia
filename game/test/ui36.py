@@ -109,7 +109,7 @@ with sync_playwright() as p:
     js("(()=>{try{finishRace(true);}catch(_){};" + QUIET + "closeSheet();})()"); pg.wait_for_timeout(500)
     # 9) прибой на пляже Ормонд-Бич
     r = js("""(()=>{const rc=RACES.find(r=>r.key==='ormond-1905');try{if(R)R=null;}catch(_){};const T=buildTrack(rc,40,{});const E=ambEmitters(T);return {sea:E.sea.length,rec:E.seaRec};})()""")
-    ok(r and r['sea'] > 0 and r['rec'] == 'surf_big', 'Ормонд-Бич: море рядом (%s), прибой — запись океанского наката' % r)
+    ok(r and r['sea'] > 0 and r['rec'] == 'surf_ocean', 'Ормонд-Бич: море рядом (%s), прибой — запись океанского наката' % r)
     ok(not errs, 'без ошибок в консоли' + (': ' + ' | '.join(errs[:3]) if errs else ''))
     b.close()
 print('ОШИБОК: %d' % fails if fails else 'всё в порядке')

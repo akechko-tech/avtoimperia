@@ -156,7 +156,8 @@ const ACT={
   rxFound:d=>racerFoundAsk(d.k),
   rxFoundGo:d=>{if(racerFound(d.k,d.n,+d.v)){closeSheet();tab='plant';shownCash=null;lastDate='';save();render();}},
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
-    if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
+    if(draft.path==='air'){const P=PIONEERS[draft.pioneer],fn=(draft.first||'').trim();newAirGame(P&&P.air?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,fn==='Тип 1'?'':fn);airIntroPapers(G);}
+    else if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
     else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
@@ -182,6 +183,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
 // Кнопка «Назад» на Android: закрываем окна по очереди
 window.androidBack=function(){
   if(REEL){reelClose();return true;}
+  if(typeof FL!=='undefined'&&FL.on){const h=document.getElementById('fHelpBox');if(h&&!h.hidden){h.hidden=true;FL.paused=false;FLY.last=performance.now();}else flyQuitAsk();return true;}
   if(R){finishRace(true);return true;}
   if(!PW.hidden){const b=PW.querySelector('.p-btn');if(b)b.click();else closePaper();return true;}
   if(!sheet.hidden){if((G&&G.pending.length&&!evHold)||(draft&&draft.ng&&G&&G.over)||(draft&&draft.lock))return true;closeSheet();return true;}

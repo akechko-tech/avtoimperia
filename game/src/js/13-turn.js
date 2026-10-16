@@ -48,7 +48,7 @@ function step(){
   const kCap=needCap>0?Math.min(1,cap/needCap):1,kCapM=kCap;
   const needH=want.reduce((a,w,i)=>a+w*hrs[i]*kCap,0)+milCap*kCap*(carHrs.length?carHrs.reduce((a,b)=>a+b,0)/carHrs.length:800);
   if(s.staffAuto){const target=Math.ceil(needH/hpw*1.02);let d=target-s.workers;if(d>0)d=Math.min(d,Math.max(20,Math.round(s.workers*0.5)));else if(d<0)d=Math.max(d,-Math.round(s.workers*0.3));
-    if(d>0){r.hire=d*8*cpi(s);s.cash-=r.hire;}s.workers=Math.max(3,s.workers+d);}
+    if(d>0){r.hire=d*8*cpi(s);s.cash-=r.hire;}s.workers=Math.max(lineOn(s,'car')||lineOn(s,'moto')?3:0,s.workers+d);}
   const kLab=needH>0?Math.min(1,s.workers*hpw/needH):1,k=kCap*kLab,kM=k;r.bneck={cap:kCap,lab:kLab,wh:!!r.whCut,load:cap>0?needCap/cap:0,mcap:kCap,mload:cap>0?needCap/cap:0};
   r.capUsed=0;act.forEach((md,i)=>{md._cp={s0:md.stock,o0:md.ordSold||0,cx:cxU[i]};const kk=mo[i]?kM:k,made=Math.floor(want[i]*kk+(Math.random()<(want[i]*kk)%1?1:0));md._cp.m=made;md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.capUsed+=made*cxU[i];if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
   // 0.24: из военного заказа машины — столько, сколько нужно армии; остальное — военная продукция (моторы, снаряды, каски): деньги те же, но это не проданные машины
@@ -90,6 +90,7 @@ function step(){
     s.models.slice().sort((a,b)=>b.stock*whW(b)-a.stock*whW(a)).forEach(m=>{if(over<=0||!m.stock)return;const n=Math.min(m.stock,Math.ceil(over/whW(m)));over-=n*whW(m);m.stock-=n;const v=n*m.price*0.5;r.dump+=v;r.dumpN+=n;});
     if(mi(s)-(s.dumpSaid||-99)>=3){s.dumpSaid=mi(s);addLog(`Склад переполнен: ${fmtN(r.dumpN)} машин отдали перекупщикам за полцены. Расширьте склад на вкладке «Завод» или выпускайте меньше.`,'bad');pendingToasts.push('📦 Склад переполнен');}}}
   // расходы (0.25: спецакции оплачены при старте — в отчёт; доход от вложений — invMonth)
+  try{airMonth(s,r);}catch(e){console.warn('air',e);r.airP=0;}   // 0.37: авиацех — аэропланы, контракты, лётчики (105h-air.js)
   try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
   r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp+kitUpkeep(s,'kb');r.drv=driverPayroll(s);r.team=teamUpkeep(s)+kitUpkeep(s,'team');   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
@@ -119,7 +120,7 @@ function step(){
   {const AP=admParts(s,r);r.admK=AP.total;r.adm=r.admK*(r.rev+r.ord);r.admP={made:AP.made,fmL:AP.fmL,nmC:AP.nmC,nmM:AP.nmM,nm:AP.nm,k:AP.k,base:AP.base,out:AP.out,cty:AP.cty,mdl:AP.mdl,total:AP.total};}
   // 0.30: дивиденды дочерних компаний (их прибыль — по продажам прошлого месяца)
   try{maMonth(s,r);}catch(e){console.warn('ma month',e);r.div=0;}
-  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
+  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
@@ -208,6 +209,7 @@ function debtLimit(s){if(s.soviet&&yf(s)<1921.25)return 1e12;const L=s.last,k=(t
 const ARMY_NEED={us:6000,uk:2500,fr:2500,de:1000,it:800,ru:1500};
 function milNeed(s){return Math.round((ARMY_NEED[s.country]||1000)*0.6);}
 function endOfYear(s){
+  try{airYear(s);}catch(e){console.warn('air year',e);}
   s.m=0;s.y++;
   for(const c in s.comps)s.comps[c].forEach(o=>{o.prev2=o.prev||0;o.prev=o.yr||0;o.yr=0;o.ysPrev=o.ys||{};o.ys={};});s.homePrev2=s.homePrev||0;s.homePrev=s.homeY||0;s.homeY=0;
   for(const c in (s.mcomps||{}))s.mcomps[c].forEach(o=>{o.prev=o.yr||0;o.yr=0;});s.mhomePrev=s.mhomeY||0;s.mhomeY=0;s.myearPrev=s.myearSold||0;s.myearSold=0;

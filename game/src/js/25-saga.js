@@ -4,7 +4,8 @@
 const SAGA={};
 const BN_ADD={race:1,convEarly:1};
 // 0.35: у пути «Мотомастерская» — свой фильм (25d-saga-moto.js): свой персонаж-мотоциклист не смотрит историю автомобильной мастерской
-function sagaList(s){return (s.pioneer!=='custom'&&SAGA[s.pioneer])||(s.motoStart&&SAGA.moto)||SAGA.custom||[];}
+// 0.37: у авиатора — свои фильмы (SAGA.air и герои-авиаторы, 25g-saga-air.js), не автомобильные
+function sagaList(s){return (s.pioneer!=='custom'&&SAGA[s.pioneer])||(s.airStart&&(SAGA.air||[]))||(s.motoStart&&SAGA.moto)||SAGA.custom||[];}
 function sagaFill(t,s){const P=PIONEERS[s.pioneer]||PIONEERS.custom;return String(t||'').replace(/\{name\}/g,s.pioneer==='custom'?(s.hero||'Основатель'):P.name).replace(/\{co\}/g,s.company).replace(/\{city\}/g,cityOf(s)).replace(/\{y\}/g,s.y);}
 // Момент главы: год, первая машина, гонка, победа, продажи, война, кризис, 1929…
 function sagaCond(s,w){const S=s.saga||{};
@@ -20,6 +21,8 @@ function sagaCond(s,w){const S=s.saga||{};
   if(w==='king')return (s.titles||[]).some(t=>/^king-/.test(t.id||''));
   const tm=/^t:([\d.]+)$/.exec(w);if(tm)return yf(s)>=+tm[1];
   const m=/^(y|sold|yearSold):(\d+)$/.exec(w);if(m){const v=+m[2];return m[1]==='y'?s.y>=v:m[1]==='sold'?totalSold(s)>=v:Math.max((s.peak||{}).year||0,s.yearSold||0)>=v;}
+  // 0.37: моменты авиатора — первый полёт, первые продажи, первое состязание, военный заказ, война, фронт (25g-saga-air.js)
+  if(typeof airSagaCond==='function'){const r=airSagaCond(s,w);if(r!==undefined)return r;}
   return false;}
 /* ---------- 0.25: глава знает, что происходит в игре ----------
    Фильм рассказывает настоящую историю, но не должен спорить с партией: богатой фирме не предлагают «искать денег на долг»,
@@ -27,7 +30,7 @@ function sagaCond(s,w){const S=s.saga||{};
    v:[{if:s=>…, sc, q, o, t}] — вариант главы (первый подходящий); выбранный вариант запоминается, повтор показывает тот же.
    fx.legal:'событие:решение' — выбор в фильме и есть решение по газетному событию (11c-legal.js): его деньги и последствия.
    fx.cashK — доля кассы (выкуп акций у богатой фирмы стоит не «пару тысяч», а треть кассы). */
-function sagaMonthCost(s){const r=s.last||{};return Math.max(1,(r.mat||0)+(r.wage||0)+(r.ovh||0)+(r.dlr||0)+(r.ad||0)+(r.rd||0)+(r.int||0));}
+function sagaMonthCost(s){const r=s.last||{},a=r.air||{};return Math.max(1,(r.mat||0)+(r.wage||0)+(r.ovh||0)+(r.dlr||0)+(r.ad||0)+(r.rd||0)+(r.int||0)+(a.mat||0)+(a.wage||0)+(a.ovh||0));}   // 0.37: и авиацех
 // 0.35: деньги в выборе — по масштабу компании (отзыв: «денег не берут — сумма должна быть сообразна масштабу моего бизнеса»).
 // Суммы глав задуманы для мастерской — около $1000 расходов в месяц в ценах 1895 года; у фирмы покрупнее они во столько раз больше,
 // во сколько больше её расходы за месяц: «+$700 за первую машину» у мастерской — это и «+3 месяца расходов» у концерна
@@ -57,7 +60,10 @@ function sagaCheck(s){if(!s||s.over)return;const S=s.saga=s.saga||{seen:[],pick:
 function sagaAuto(s,id){const ch=sagaChapter(s,sagaList(s).find(c=>c.id===id),true),o=ch&&ch.o&&ch.o[0];if(o)sagaApply(s,o.fx);const S=s.saga=s.saga||{seen:[],pick:{}};if(!S.seen.includes(id))S.seen.push(id);S.pick=S.pick||{};if(o)S.pick[id]=0;
   const i=s.pending.findIndex(p=>p.saga===id);if(i>=0)s.pending.splice(i,1);}
 /* ---------- что даёт выбор: деньги, репутация, временные бонусы, спрос, настроение пилотов ---------- */
-const SAGA_B={lineCap:['Выпуск',1],quality:['Качество',1],workerEff:['Выработка рабочих',1],devTime:['Разработка',-1],devCost:['Стоимость разработки',-1],adEff:['Отдача рекламы',1],matCost:['Детали',-1],race:['Скорость в гонках',1],raceRep:['Слава побед',1],drvFee:['Гонорары пилотов',-1]};
+const SAGA_B={lineCap:['Выпуск',1],quality:['Качество',1],workerEff:['Выработка рабочих',1],devTime:['Разработка',-1],devCost:['Стоимость разработки',-1],adEff:['Отдача рекламы',1],matCost:['Детали',-1],race:['Скорость в гонках',1],raceRep:['Слава побед',1],drvFee:['Гонорары пилотов',-1],
+  // 0.37: авиация — те же множители, что у черт героя-авиатора (bn: airQ, airDev…)
+  airQ:['Качество аэропланов',1],airDev:['Разработка',-1],airCost:['Себестоимость аэропланов',-1],airEng:['Моторы',-1],airMil:['Военные заказы',1],airPriv:['Спрос спортсменов и школ',1],
+  airFame:['Слава рекордов и призов',1],airFight:['Истребители',1],airMulti:['Многомоторные',1],airTech:['Опытные работы',-1]};
 function sagaMonths(n){return n>=24&&n%12===0?`${n/12} ${plural(n/12,'год','года','лет')}`:`${n} ${plural(n,'месяц','месяца','месяцев')}`;}
 // что значит решение по газетному событию, если его принимают в фильме
 const SAGA_LEGAL_TXT={'fivedollar:lFiveYes':'зарплата «пять долларов в день»: рабочие не уходят, спрос в США +6% на 2 года','fivedollar:lFiveNo':'зарплата — по рынку',
@@ -81,9 +87,11 @@ function sagaFxText(fx,s){const L=[];if(!fx)return '';
   Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const d=SAGA_B[k];if(!d)return;
     if(k==='race'){L.push(`скорость в гонках +${Math.round(v*100)}% на ${sagaMonths(mo)}`);return;}
     const pc=Math.round((v-1)*100);if(!pc)return;const good=pc*d[1]>0;
-    L.push(k==='devTime'?`разработка ${pc<0?'быстрее':'медленнее'} на ${Math.abs(pc)}% (${sagaMonths(mo)})`:`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
+    L.push(k==='devTime'||k==='airDev'?`разработка ${pc<0?'быстрее':'медленнее'} на ${Math.abs(pc)}% (${sagaMonths(mo)})`:k==='airEng'||k==='airTech'||k==='airCost'?`${d[0].toLowerCase()} ${pc<0?'дешевле':'дороже'} на ${Math.abs(pc)}% (${sagaMonths(mo)})`:`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
   Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const pc=Math.round((v-1)*100);if(pc&&SEG[g])L.push(`${g==='moto'?'спрос на мотоциклы':g==='moside'?'спрос на мотоциклы с коляской':'спрос: '+SEG[g].name.toLowerCase()+' класс'} ${pc>0?'+':'−'}${Math.abs(pc)}% (${sagaMonths(mo)})`);});
   if(fx.mood)L.push(`настроение пилотов ${fx.mood>0?'+':'−'}${Math.abs(fx.mood)}`);
+  if(fx.afame)L.push(`слава авиатора ${fx.afame>0?'+':'−'}${Math.abs(fx.afame)}`);
+  if(fx.abroad)L.push('сборка за границей: Версаль не остановит авиацех');
   if(fx.ruSafe)L.push('если придётся уехать — с собой 85% кассы, а не 60%');
   return L.join(' · ');}
 function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
@@ -97,7 +105,9 @@ function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
   const B=s.sagaB=s.sagaB||{};Object.entries(fx.b||{}).forEach(([k,[v,mo]])=>{const o=B[k];if(o&&now<o.until){o.v=BN_ADD[k]?o.v+v:o.v*v;o.until=Math.max(o.until,now+mo);}else B[k]={v,until:now+mo};});
   const SG=s.sagaSeg=s.sagaSeg||{};Object.entries(fx.seg||{}).forEach(([g,[v,mo]])=>{const o=SG[g];if(o&&now<o.until){o.v*=v;o.until=Math.max(o.until,now+mo);}else SG[g]={v,until:now+mo};});
   if(fx.mood&&typeof moodAdd==='function')(s.drivers||[]).forEach(id=>moodAdd(s,id,fx.mood));
-  if(fx.ruSafe)s.ruSafe=1;}
+  if(fx.ruSafe)s.ruSafe=1;
+  if(fx.afame&&s.air)s.air.fame=clamp((s.air.fame||0)+fx.afame,0,100);
+  if(fx.abroad&&typeof airSagaAbroad==='function')airSagaAbroad(s);}
 // Бонусы глав действуют вместе с чертами героя (10-model.js: bn, segBonus)
 function sagaBn(k,v){const S=G&&G.sagaB&&G.sagaB[k];if(!S||mi(G)>=S.until)return v;return BN_ADD[k]?v+S.v:v*S.v;}
 function sagaSegK(g){const S=G&&G.sagaSeg&&G.sagaSeg[g];return S&&mi(G)<S.until?S.v:1;}

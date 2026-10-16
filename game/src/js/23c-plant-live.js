@@ -387,7 +387,7 @@ function plgPrepare(){if(PLG.busy)return;const gl=stuGL();if(!gl)return;const S=
     catch(e){console.warn('plant scene',e);PLG.fail++;}PLG.busy=false;plgLoop();if(PLG.want!==(PLG.sc&&PLG.sc.key))plgPrepare();};
   setTimeout(step,30);}
 function plgLoop(){if(PLG.raf)return;PLG.raf=requestAnimationFrame(plgTick);}
-function plgTick(now){PLG.raf=0;const cv=PLG.cv;if(!cv||!cv.isConnected||!plgOK()||document.hidden)return;if(typeof R!=='undefined'&&R&&!R.done)return;
+function plgTick(now){PLG.raf=0;const cv=PLG.cv;if(!cv||!cv.isConnected||!plgOK()||document.hidden)return;if(typeof R!=='undefined'&&R&&!R.done)return;if(typeof FL!=='undefined'&&FL.on)return;
   if(!PLG.onScr||(PLG.ready&&now-(PLG.kick||now)>120000)){PLG.last=0;return;}
   const dt=Math.min(0.1,PLG.last?(now-PLG.last)/1000:0.016);
   // не чаще ~30 кадров в секунду: сцене хватает, батарея целее

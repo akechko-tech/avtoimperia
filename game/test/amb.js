@@ -11,7 +11,7 @@ let NOW=0;const CTX={get currentTime(){return NOW;},sampleRate:44100,createGain:
 AU.ctx=CTX;AU.fx=node();AU.on.sfx=true;
 const IDS=['crowd_big','crowd_race','crowd_murmur','applause','birds_town','birds_forest','birds_dawn','skylark','blackbird','cuckoo','sparrows','crickets','cicada','bells_city','bells_village',
   'steam_whistle','steam_whistle_us','steam_train','horse_carriage','dog_bark','rooster','rain','thunder','stream','brass_parade','sheep','bugle','fanfare','surf',
-  'surf_big','surf_sea','surf_lake','gulls','gull2'];
+  'surf_ocean','surf_sea','surf_lake','gulls','gull2'];
 let SH=[],ANNS=[],HORN=[],WH=[];
 const shot0=ambShot;ambShot=function(id,pos,L,o){const S=shot0(id,pos,L,o);if(S)SH.push({id,t:R.t,g:S.gv,idx:(R.follow||R.me).idx});return S;};
 annPlay=function(text,L,pos){const h=ambHear(L,pos[0],pos[1],3);if(h.g>=0.02)ANNS.push({text,t:R.t,g:h.g,d:h.d});};

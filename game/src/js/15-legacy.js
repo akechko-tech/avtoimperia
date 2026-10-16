@@ -38,6 +38,8 @@ function legacyParts(o){
 // 0.32: не больше 20 очков за сезон — максимум спорта (150) за восемь сезонов побед, а не за пять: имя на трассах строят годами
 const SPORT_SEASON=20;
 function sportPts(s){const Y={};ownRaces(s).forEach(r=>{if(r.place!==1||r.y==null)return;Y[r.y]=(Y[r.y]||0)+(r.major?RACE_W.major:RACE_W.normal);});
+  // 0.37: победы в небе — как гонки (большие призы — как большие гонки), мировой рекорд — 4 очка
+  try{airSportYears(s).forEach(([y,v])=>{Y[y]=(Y[y]||0)+v;});}catch(_){}
   ownTitles(s).filter(t=>!/^king-/.test(t.id||'')||t.id==='king-race').forEach(t=>{if(t.y!=null)Y[t.y]=(Y[t.y]||0)+25*(t.w||1);});
   return Object.values(Y).reduce((a,v)=>a+Math.min(SPORT_SEASON,v),0);}
 function coFoundedY(s){return s.racer&&s.racer.founded?s.racer.founded.y:(s.startY||1895);}
@@ -56,7 +58,9 @@ function playerLegacy(s){
   const LH=(s.lhist||[]).filter(h=>h.sh!=null),age=Math.max(0,s.y-coFoundedY(s));
   const shareYrs=LH.length?LH.reduce((a,h)=>a+h.sh,0):(s.peak.shY!=null?s.peak.shY:((s.peak.share||{})[s.country]||0))*Math.min(age,15)*0.6;
   // 0.32: мотоциклы — за четверть машины (масштаб и выпуск, а не имя автомобильной марки)
-  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0)+0.25*Math.max(s.peak.myear||0,s.myearSold||0),cum:(typeof totalSold==='function'?totalSold(s):0)+0.25*motoSold(s),shareYrs,abroad,firsts:firstsLive(s),techs,kingTech:kings.filter(t=>t.id==='king-tech').length,
+  // 0.37: аэропланы — каждый за пять машин (масштаб), доля на рынке аэропланов — к доле рынка (у авиатора — вся, у автомобильной фирмы — половина)
+  const AL=airLegacyBits(s);
+  const L=legacyParts({peak:Math.max(s.peak.year||0,s.yearSold||0)+0.25*Math.max(s.peak.myear||0,s.myearSold||0)+AL.peak,cum:(typeof totalSold==='function'?totalSold(s):0)+0.25*motoSold(s)+AL.cum,shareYrs:shareYrs+AL.shY,abroad,firsts:firstsLive(s),techs,kingTech:kings.filter(t=>t.id==='king-tech').length,
     kingClass:kings.filter(t=>t.id!=='king-tech'&&t.id!=='king-race').length,sportPts:sportPts(s),val:companyValue(s),rep:s.rep,age,
     legend:(bestModel>=1e6?60:bestModel>=1e5?30:0)+(longModel?20:0)});
   // 0.21: очки наследия, выигранные в пари, — к имени марки (0.32: в пределах шкалы бренда — 160)
@@ -70,11 +74,11 @@ const LEG_NAMES={scale:'Масштаб',market:'Рынок',innov:'Иннова�
 // марка из истории, которую в этой партии основали вы (играя за Генри Форда, соревнуетесь и с «историческим Ford» — тем, что был на самом деле)
 const LEG_TWIN={ford:'Ford',benz:'Mercedes-Benz',renault:'Renault',peugeot:'Peugeot',bugatti:'Bugatti',agnelli:'FIAT',morris:'Morris',durant:'General Motors',rolls:'Rolls-Royce'};
 function legacyTable(s){
-  const me=playerLegacy(s),tw=s.brandRef?s.brandRef.n:LEG_TWIN[s.pioneer];const rows=HIST_CO.map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
+  const me=playerLegacy(s),tw=s.brandRef?s.brandRef.n:LEG_TWIN[s.pioneer];const rows=(typeof airOnly==='function'&&airOnly(s)?AIR_HIST_CO:HIST_CO).map(h=>({n:h.n===tw?'исторический '+h.n:h.n,c:h.c,p29:h.p29,val:h.val,note:h.note,L:histLegacy(h)}));
   rows.push({n:s.company,c:s.country,you:1,p29:s.peak.year||0,val:companyValue(s),L:me});
   rows.sort((a,b)=>b.L.total-a.L.total);return {rows,me,place:rows.findIndex(r=>r.you)+1};
 }
-function legacyTitle(t){
+function legacyTitle(t){if(G&&typeof airOnly==='function'&&airOnly(G))return airLegacyTitle(t);
   const me=t.me,cats=['scale','market','innov','sport','capital','brand'],norm=LEG_MAX;
   const top=cats.slice().sort((a,b)=>me[b]/norm[b]-me[a]/norm[a])[0];
   if(t.place===1)return ['Величайшая автоимперия эпохи','Ни одна реальная компания 1929 года не оставила такого следа.'];

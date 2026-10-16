@@ -51,6 +51,7 @@ function checkEvents(){
     const rid=HIST_REEL[h.img];if(rid){reelUnlock(s,rid);pushEvent({...h,choices:(h.choices||[['Читать дальше','ok']]).concat([['▶ Кинохроника','reel:'+rid]])},true);}else pushEvent(h,true);});
   if(bn('convEarly',0)&&s.y===1912&&s.m===0&&!s.seen.conv){s.seen.conv=1;pushEvent({own:1,title:'Конвейер можно строить раньше всех',deck:`Инженеры «${s.company}» придумали движущуюся линию`,text:'Сборка на движущейся ленте ускорит выпуск в разы. Внедрение доступно на вкладке «Завод» — раньше конкурентов.'},true);}
   try{ruCheck(s);}catch(e){console.warn('ru',e);}
+  try{airCheck(s);}catch(e){console.warn('air check',e);}
   checkShows(s);checkTenders(s);try{histReelCheck(s);}catch(e){console.warn('hist reel',e);}
   try{warTaxNews(s);}catch(e){console.warn('war tax news',e);}
   try{dxCheck(s);}catch(e){console.warn('duel x',e);}
@@ -140,6 +141,7 @@ function resolve(key){
   if(/^cc:/.test(key))chanceResolve(s,key);if(key==='brandGo'){try{tab='market';}catch(_){}}
   if(/^ma:/.test(key)&&maResolve(s,key))return;
   if(/^ru:/.test(key)&&ruResolve(s,key))return;
+  if(/^air:/.test(key)&&airResolve(s,key))return;
   if(key==='dxYes'||key==='dxNo')dxAnswer(s,key);
   if(key==='dxDrive'){s.pending.shift();save();render();dxToday(s,key);return;}if(key==='dxSim')dxToday(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);

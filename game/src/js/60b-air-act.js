@@ -1,0 +1,45 @@
+/* ================= 0.37: АВИАЦИЯ — ДЕЙСТВИЯ (кнопки авиацеха, конструктора, «Неба») ================= */
+function adKeep(){const e=document.getElementById('aname');if(e&&ADR)ADR.name=e.value;}
+Object.assign(ACT,{
+  airShop:()=>{if(airShopStart(G))rerender();else toast('Не хватает денег');},
+  airCap:d=>{if(airCapStart(G,d.k))rerender();},
+  airLine:()=>{if(airLineStart(G))rerender();},
+  airTech:d=>{if(airTechStart(G,d.k))rerender();},
+  airWkAuto:d=>{G.air.wkAuto=d.v==='1';rerender();},
+  airWk:d=>{const A=G.air,k=Math.max(1,Math.round(A.wk*0.1));if(+d.d>0){G.cash-=k*8*cpi(G);A.wk+=k;}else A.wk=Math.max(2,A.wk-k);rerender();},
+  airDesign:()=>{if(!G||!airOn(G)){toast('Сначала постройте авиацех');return;}if(airDevBusy(G)>=airDevSlots(G)){toast('Все конструкторы заняты');return;}openAirDesigner();},
+  adSec:d=>{adKeep();const top=sb.scrollTop;ADR.open=ADR.open===d.k?null:d.k;renderAirDesigner();sb.scrollTop=top;},
+  adPick:d=>{adKeep();const top=sb.scrollTop;if(d.k==='w')ADR.w=d.v;else ADR[d.k]=d.v;if(d.k==='f'){const F=byId(AIR_FRAME,d.v);ADR.n=clamp(ADR.n||1,F.ne[0],F.ne[1]);if(F.needMat&&!F.needMat.includes(ADR.m)){const m=F.needMat.map(id=>byId(AIR_MAT,id)).find(x=>airPartOk(G,x,'m'));if(m)ADR.m=m.id;}if(F.boat)ADR.g='g2';}
+    renderAirDesigner();sb.scrollTop=top;},
+  adN:d=>{adKeep();const top=sb.scrollTop,F=byId(AIR_FRAME,ADR.f);ADR.n=clamp((ADR.n||1)+(+d.d),F.ne[0],F.ne[1]);renderAirDesigner();sb.scrollTop=top;},
+  adRole:d=>{adKeep();const top=sb.scrollTop,nm=ADR.name,pt=ADR.paint;ADR={...airDefaultDesign(G,d.v),name:nm,paint:pt,open:null};renderAirDesigner();sb.scrollTop=top;},
+  adPaint:d=>{adKeep();const top=sb.scrollTop;ADR.paint=d.v;renderAirDesigner();sb.scrollTop=top;},
+  adGo:()=>{adKeep();const md=airDesignStart(G,ADR);if(md){ADR=null;closeSheet();tab='models';save();render();toast('📐 Проект начат: «'+md.name+'»');}},
+  airProd:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(airProdStart(G,md))rerender();else toast('Не хватает денег на оснастку');},
+  airFix:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(md){md.status='dev';md.devLeft=1;md.devT=1;md.flaw=0;md.flown=0;md.vk=Math.max(md.vk||1,0.98);rerender();}},
+  airFlyBtn:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;if(typeof flyTest==='function'&&flyTest(md))return;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();},
+  airTestBtn:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();},
+  airPrice:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const p=airPriceOf(md,s),st=Math.max(50,Math.round(p*0.05/50)*50);md.price=Math.max(100,p+st*(+d.d));rerender();},
+  airPriceAuto:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(md){md.price=0;rerender();}},
+  airPlan:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const cur=md.plan==='auto'?Math.round((md.fc||0)*1.05):+md.plan,st=Math.max(1,Math.round(Math.max(cur,4)*0.15));md.plan=Math.max(0,cur+st*(+d.d));rerender();},
+  airPlanAuto:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(md){md.plan='auto';rerender();}},
+  airOff:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(!md)return;if(!confirmOnce('airOff'+md.id,'Нажмите ещё раз: снять с производства'))return;md.status=md.stock>0?'sale':'off';G.air.orders=G.air.orders.filter(o=>o.md!==md.id||o.left<=0);addLog(`«${md.name}» снят с производства${md.stock>0?': остаток распродаётся со скидкой':''}.`);rerender();},
+  airHire:d=>{if(airHire(G,d.k))rerender();},
+  airFire:d=>{if(!confirmOnce('airFire'+d.k,'Нажмите ещё раз: уволить'))return;airFire(G,d.k);rerender();},
+  frGo:d=>{FRS=null;openFront(d.k);},
+  frMd:d=>{if(!FRS)return;FRS.md=+d.v;const top=sb.scrollTop;openFront(FRS.k);sb.scrollTop=top;},
+  frPil:d=>{if(!FRS)return;FRS.pid=d.v;const top=sb.scrollTop;openFront(FRS.k);sb.scrollTop=top;},
+  frFly:()=>{if(!FRS)return;const s=G,m=frMissions(s).find(x=>x.k===FRS.k),md=s.air.models.find(x=>x.id===FRS.md);if(!m||!md)return;const P=airPilotList(s).find(p=>p.id===FRS.pid)||airBestPilot(s);closeSheet();
+    if(typeof flyFront==='function'&&flyFront(m,md,P))return;frAuto(m.k);},
+  frAuto:()=>{if(FRS)frAuto(FRS.k);},
+  airEv:d=>{AEV=null;openAirEv(d.k);},
+  airRec:d=>{AEV=null;openAirRec(d.k);},
+  aevMd:d=>{if(!AEV)return;AEV.md=+d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
+  aevPil:d=>{if(!AEV)return;AEV.pid=d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
+  aevQuick:()=>{if(AEV)airEvQuick(AEV.key,AEV.md,AEV.pid);},
+  aevFly:()=>{if(!AEV)return;const s=G,ev=AIR_EV.find(e=>e.key===AEV.key),md=s.air.models.find(m=>m.id===+AEV.md);if(!ev||!md)return;closeSheet();if(typeof flyEvent==='function'&&flyEvent(ev,md,AEV.pid))return;airEvQuick(AEV.key,AEV.md,AEV.pid);},
+  arecQuick:()=>{if(AEV)airRecQuick(AEV.rec,AEV.md,AEV.pid);},
+  arecFly:()=>{if(!AEV)return;const s=G,md=s.air.models.find(m=>m.id===+AEV.md);if(!md)return;closeSheet();if(typeof flyRecord==='function'&&flyRecord(AEV.rec,md,AEV.pid))return;airRecQuick(AEV.rec,AEV.md,AEV.pid);},
+  airCarShop:()=>{const s=G;if(lineOn(s,'car')||s.carShopB)return;const c=Math.round((CARSHOP.c*cpi(s)+CARSHOP.cap*capUnitCost(s))/100)*100;if(s.cash<c)return;s.cash-=c;s.plantVal+=c*0.8;
+    const mo=Math.max(2,Math.round(CARSHOP.mo*(DIF().build??1)));s.carShopB={left:mo,t:mo};addLog(`Ставим оборудование для автомобилей: ${money(c)}, ${mo} мес.`,'good');rerender();}
+});

@@ -918,3 +918,70 @@ body[data-fl=ru4]{--flag:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 body[data-fl=uk]{--flag:linear-gradient(#c8322a,#c8322a) center/100% 2px no-repeat,linear-gradient(90deg,#c8322a,#c8322a) center/2px 100% no-repeat,linear-gradient(#f4f2ec,#f4f2ec) center/100% 4px no-repeat,linear-gradient(90deg,#f4f2ec,#f4f2ec) center/4px 100% no-repeat,linear-gradient(33deg,transparent 44%,#f4f2ec 44% 56%,transparent 56%),linear-gradient(-33deg,transparent 44%,#f4f2ec 44% 56%,transparent 56%),#22336b;--flagbar:linear-gradient(90deg,#22336b 30%,#f4f2ec 30% 36%,#c8322a 36% 64%,#f4f2ec 64% 70%,#22336b 70%)}
 body[data-fl=us]{--flag:linear-gradient(#22336b,#22336b) 0 0/45% 54% no-repeat,repeating-linear-gradient(#c8322a 0 0.846px,#f4f2ec 0.846px 1.692px);--flagbar:linear-gradient(90deg,#22336b 30%,#c8322a 30% 40%,#f4f2ec 40% 50%,#c8322a 50% 60%,#f4f2ec 60% 70%,#c8322a 70% 80%,#f4f2ec 80% 90%,#c8322a 90%)}
 body[data-cc] .bar-nav{background:var(--bg)}
+/* 0.37: авиация — небо в карточке аэроплана, подпись, винт */
+.carbox.airbox{background:linear-gradient(180deg,#5d7fa3 0,#9db8cf 55%,#d9e3e6 100%);padding:6px 0 4px}
+.carbox.airbox::before{background:radial-gradient(ellipse 30% 18% at 22% 30%,rgba(255,255,255,.55),rgba(255,255,255,0) 70%),radial-gradient(ellipse 26% 14% at 76% 22%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);height:100%}
+.carbox.airbox svg{max-height:150px}
+.air-caption{position:relative;text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#1f2f40;opacity:.8;margin-top:-2px}
+svg.airart .prop-spin{animation:propFlick .12s linear infinite}
+@keyframes propFlick{0%{opacity:.9}50%{opacity:.55}100%{opacity:.9}}
+@media (prefers-reduced-motion:reduce){svg.airart .prop-spin{animation:none}}
+/* ===== 0.37: полёт в 3D ===== */
+body.flying{overflow:hidden}
+#flyScreen{position:fixed;inset:0;z-index:25;background:#0b1420;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:var(--mono)}
+#flyScreen[hidden]{display:none!important}
+#flyScreen .f-view{position:absolute;inset:0}
+#flyScreen .f-view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#flyScreen .f-top{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top,0px)) 10px 16px;background:linear-gradient(rgba(4,9,16,.72),rgba(4,9,16,0))}
+#flyScreen .f-top .label{color:var(--brass);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+#flyScreen .f-top .btns{display:flex;gap:6px;flex:none;flex-wrap:nowrap}
+#flyScreen .f-top .btn.sm{padding:4px 9px;font-size:12px;min-height:30px;background:rgba(8,16,26,.5)}
+#flyScreen .f-top .btn.on{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+#flyScreen .f-clock{color:var(--muted);font-size:12px;flex:none}
+#flyScreen .f-goal{position:absolute;left:10px;top:calc(46px + env(safe-area-inset-top,0px));z-index:5;max-width:min(58%,420px);padding:6px 10px;border-radius:10px;background:rgba(5,12,22,.55);color:var(--text);font-size:12px;line-height:1.35}
+#flyScreen .f-goal b{display:block;color:var(--brass);font-size:13px}
+#flyScreen .f-goal span{color:#cfd8e0}
+#flyScreen .f-board{position:absolute;right:10px;top:calc(46px + env(safe-area-inset-top,0px));z-index:5;max-width:40%;padding:6px 10px;border-radius:10px;background:rgba(5,12,22,.5);font-size:11px;color:#cfd8e0}
+#flyScreen .f-board[hidden]{display:none}
+#flyScreen .f-board b{color:var(--brass);display:block;margin-bottom:2px}
+#flyScreen .f-board p{margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#flyScreen .f-board p.me{color:#ffe28a;font-weight:700}
+#flyScreen .f-ins{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;gap:4px;padding:5px 8px;border-radius:10px;background:rgba(5,12,22,.55);font-size:9px;color:var(--muted);pointer-events:none;white-space:nowrap}
+#flyScreen .f-ins>div{min-width:58px;text-align:center}
+#flyScreen .f-ins b{display:block;font-size:17px;color:var(--text);line-height:1.1}
+#flyScreen .f-ins small{display:block;font-size:9px}
+#flyScreen .f-ins .bad b,#flyScreen .f-ins .bad{color:var(--bad)}
+#flyScreen .f-thr{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:6;width:58px;display:flex;flex-direction:column;align-items:center;gap:4px;touch-action:none}
+#flyScreen .f-thr-bar{position:relative;width:46px;height:min(34vh,200px);border-radius:12px;border:2px solid var(--brass);background:rgba(5,12,22,.5);overflow:hidden}
+#flyScreen .f-thr-bar i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(rgba(201,164,92,.95),rgba(201,164,92,.55))}
+#flyScreen .f-thr-bar em{position:absolute;left:0;right:0;top:4px;text-align:center;font-style:normal;font-size:11px;color:#fff;text-shadow:0 1px 2px #000}
+#flyScreen .f-thr b{font-size:11px;color:var(--brass)}
+#flyScreen .f-stick{position:absolute;right:0;bottom:0;width:56%;height:52%;z-index:4;touch-action:none}
+#flyScreen .f-stick small{position:absolute;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));color:rgba(255,255,255,.45);font-size:10px}
+#flyScreen .f-base{position:absolute;right:70px;bottom:90px;width:124px;height:124px;margin:-62px 0 0 -62px;border-radius:50%;border:2px solid rgba(255,255,255,.28);background:rgba(5,12,22,.18);pointer-events:none}
+#flyScreen .f-stick:not(.on) .f-base{left:auto!important;top:auto!important;margin:0;opacity:.55}
+#flyScreen .f-knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(201,164,92,.75);border:2px solid rgba(255,255,255,.6)}
+#flyScreen .f-fire,#flyScreen .f-bomb{position:absolute;z-index:6;left:calc(80px + env(safe-area-inset-left,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;border:2px solid #c8483a;background:rgba(80,20,16,.55);color:#ffd2c8;font-weight:800;font-size:13px;touch-action:none}
+#flyScreen .f-bomb{bottom:calc(60px + env(safe-area-inset-bottom,0px));border-color:var(--brass);background:rgba(60,48,20,.55);color:#f3d38a;width:70px;height:70px}
+#flyScreen .f-fire.down,#flyScreen .f-bomb.down{background:#c8483a;color:#fff}
+#flyScreen .f-fire[hidden],#flyScreen .f-bomb[hidden]{display:none}
+#flyScreen .f-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:7;padding:6px 14px;border-radius:10px;background:rgba(5,12,22,.6);color:#fff;font-family:var(--display);font-size:17px;font-weight:700;opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:86%}
+#flyScreen .f-msg.show{opacity:1}
+#flyScreen .f-msg.good{color:#bfe8a8}#flyScreen .f-msg.bad{color:#ffb4a8}
+#flyScreen .f-warn{position:absolute;left:50%;top:calc(96px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:7;padding:4px 12px;border-radius:8px;background:rgba(140,30,20,.75);color:#fff;font-weight:800;font-size:13px;letter-spacing:.06em;pointer-events:none;white-space:nowrap}
+#flyScreen .f-warn[hidden]{display:none}
+#flyScreen .f-mark{position:absolute;z-index:5;width:0;height:0;pointer-events:none}
+#flyScreen .f-mark[hidden]{display:none}
+#flyScreen .f-mark i{position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;border:2px solid #ffe28a;box-shadow:0 0 6px rgba(0,0,0,.6)}
+#flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
+#flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}
+#flyScreen .f-load{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#0b1420;color:var(--brass);font-family:var(--display);font-size:20px}
+#flyScreen .f-load[hidden]{display:none}
+#flyScreen .f-help,#flyScreen .f-end{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:min(92%,460px);max-height:84%;overflow:auto;padding:16px 18px;border-radius:14px;background:rgba(8,16,26,.94);border:1px solid var(--line);color:var(--text);font-family:var(--body,inherit);font-size:14px;line-height:1.45}
+#flyScreen .f-help[hidden],#flyScreen .f-end[hidden]{display:none}
+#flyScreen .f-help h3,#flyScreen .f-end h2{margin:0 0 8px;color:var(--brass);font-family:var(--display)}
+#flyScreen .f-end h2.good{color:#bfe8a8}#flyScreen .f-end h2.bad{color:#ffb4a8}
+#flyScreen .f-help p,#flyScreen .f-end p{margin:6px 0}
+#flyScreen .f-help .btns,#flyScreen .f-end .btns{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:440px){#flyScreen .f-top .btn.sm{padding:4px 7px}#flyScreen .f-ins>div{min-width:50px}#flyScreen .f-ins b{font-size:15px}#flyScreen .f-goal{max-width:62%}}
+@media (orientation:portrait){#flyScreen .f-ins{bottom:auto;top:calc(150px + env(safe-area-inset-top,0px));left:10px;transform:none;flex-direction:column;gap:2px;padding:5px 6px}#flyScreen .f-ins>div{min-width:64px}}

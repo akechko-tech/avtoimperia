@@ -5,6 +5,7 @@ const STU={cache:new Map(),fb:null,cb:null,db:null,rfb:null,rb:null,w:0,h:0,floo
 function stuGL(){
   if(STU.fail>2)return null;
   if(typeof R!=='undefined'&&R&&R.gl&&!R.done)return null;           // идёт 3D-гонка — видеокарта занята
+  if(typeof FL!=='undefined'&&FL.on)return null;                      // 0.37: идёт полёт
   const cv=document.getElementById('rgl');if(!cv||!g3Can())return null;
   try{if(!g3Init(cv))return null;}catch(e){STU.fail++;return null;}
   const gl=G3.gl;if(!gl||gl.isContextLost())return null;
