@@ -595,6 +595,36 @@ def world_scan():
         json.dump(L, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=0); log('world_scan kept after ban', len(L))
     except Exception as ex: log('world_scan filter', ex)
 
+# 0.37: второй проход по русским записям эпохи (лейблы, певцы, балалаечные оркестры, марши и вальсы), песни об авиации;
+# морской прибой без музыки (запись «Wave (Gravity Sound)» оказалась мелодией) и звуки авиации (мотор, винт, пулемёт, зенитки)
+RU2_QS = ['Амурские волны', 'Amur Waves waltz', 'Amurskie volny', 'Ivanovici', 'Waves of the Danube', 'Danube Waves Ivanovici', 'Плевицкая', 'Plevitskaya', 'Вяльцева',
+          'Vyaltseva', 'Варя Панина', 'Panina', 'Морфесси', 'Собинов', 'Sobinov', 'Нежданова', 'Nezhdanova', 'Давыдов романс', 'Andreyev balalaika', 'balalaika orchestra',
+          'Great Russian Orchestra', 'Russian Balalaika Orchestra', 'Великорусский оркестр', 'Сирена Рекорд', 'Sirena Record', 'Sirena-Record', 'Пишущий Амур', 'Extraphone',
+          'Zonophone Russian', 'Gramophone Russian 1910', 'Russian Gramophone', 'Victor Russian 1915', 'Columbia Russian', 'Russian march 1910', 'Russian military band',
+          'Преображенский марш', 'Preobrazhensky March', 'Марш Преображенского полка', 'Тоска по родине марш', 'Под двуглавым орлом', 'Unter dem Doppeladler',
+          'Светит месяц', 'Барыня', 'Камаринская', 'Kamarinskaya Glinka', 'Тройка мчится', 'Ямщик, не гони', 'Ехали на тройке', 'Однозвучно гремит колокольчик',
+          'Вдоль по Питерской Шаляпин', 'Шаляпин Блоха', 'Chaliapin Volga', 'Chaliapin 1910', 'Chaliapin Gramophone', 'Chaliapine Gramophone', 'Шаляпин Сомнение',
+          'Tchaikovsky Nutcracker', 'Nutcracker Suite 1910', 'Casse-Noisette', 'Trepak', 'Swan Lake Tchaikovsky', 'Tchaikovsky Swan Lake scene', 'Lac des cygnes',
+          'Rimsky-Korsakov Song of India', 'Hymn to the Sun', 'Glinka Kamarinskaya', 'Glinka Valse-Fantaisie', 'Tchaikovsky Chanson triste', 'Tchaikovsky Humoresque',
+          'Come Josephine in My Flying Machine', 'Flying Machine song', 'Aeroplane waltz', 'aeroplane song 1910', 'aviation march', 'Les aviateurs marche', 'Blériot marche',
+          'Up in an Aeroplane', 'Aviation two-step', 'Aeroplane rag', 'Lindbergh song', 'Lucky Lindy', 'airship song 1910', 'Zeppelin Marsch',
+          'Category:Feodor Chaliapin', 'Category:Russian romances', 'Category:Russian folk songs', 'Category:Songs about aviation', 'Category:Balalaika']
+def ru2_scan():
+    audio_scan_to('music_ru2', RU2_QS, 40, 900, 50)
+    P = os.path.join(MEDIA, 'music_ru2', 'scan.json')
+    try:
+        L = json.load(open(P, encoding='utf-8'))
+        L = [e for e in L if not WORLD_BAN.search(' '.join([e.get('title', ''), e.get('desc', ''), e.get('artist', '')]))]
+        json.dump(L, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=0); log('ru2_scan kept after ban', len(L))
+    except Exception as ex: log('ru2_scan filter', ex)
+SFX2_QS = ['ocean waves', 'ocean surf', 'waves crashing', 'waves breaking', 'breaking waves', 'surf on the beach', 'beach waves', 'sea shore waves', 'waves on the shore',
+           'Atlantic surf', 'Pacific surf', 'seashore', 'coast waves', 'Brandung', 'Meeresrauschen', 'Wellen Meer', 'vagues mer', 'ressac', 'бриз прибой', 'прибой', 'шум моря',
+           'Category:Sounds of the sea', 'Category:Ocean sounds', 'Category:Sounds of waves', 'Category:Audio files of oceans',
+           'airplane engine', 'aircraft engine', 'propeller aircraft', 'propeller plane', 'biplane', 'airplane flyby', 'aircraft flyby', 'plane passing', 'rotary engine aircraft',
+           'Gnome rotary engine', 'radial engine', 'Tiger Moth', 'Sopwith', 'Fokker Dr.I', 'vintage aircraft', 'Category:Sounds of aircraft', 'Category:Sounds of airplanes',
+           'machine gun', 'machine-gun burst', 'Maxim gun', 'Vickers machine gun', 'Lewis gun', 'anti-aircraft gun', 'artillery distant', 'gunfire distant', 'explosion distant']
+def sfx2_scan(): audio_scan_to('sfx2', SFX2_QS, 3, 900, 40)
+
 # ---------------------------------------------------------------- пробы голоса: какие модели Silero есть и как звучат
 PROBE_LINES = ['Париж, июнь тысяча восемьсот девяносто пятого года. Двадцать два экипажа выстроились у Триумфальной арки, и толпа замерла в ожидании старта.',
                'Внимание! Номер седьмой выходит вперёд! Какая скорость — шестьдесят километров в час по пыльной дороге!',
@@ -912,7 +942,7 @@ def photos():
     import photo_scan as P
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
-JOBS = {'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
+JOBS = {'ru2_scan': ru2_scan, 'sfx2_scan': sfx2_scan, 'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
         'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan, 'world2_scan': world2_scan, 'fanfare_scan': fanfare_scan}
 
 if __name__ == '__main__':

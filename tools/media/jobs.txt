@@ -1,1 +1,3 @@
-photos
+ru2_scan
+sfx2_scan
+music_cut
