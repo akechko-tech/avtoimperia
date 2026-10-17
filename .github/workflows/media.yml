@@ -41,6 +41,11 @@ jobs:
           fi
       - name: Задания
         run: python3 tools/media/run.py
+      # 0.38: голос и музыка — в релизах GitHub (сайт Pages вмещает 1 ГБ): догружаем новое, пишем media/published.json
+      - name: Голос и музыка — в релизы
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tools/media/publish.py || echo 'релизы: не удалось'
       - name: Сохранить в ветку media
         run: |
           git config user.name "github-actions[bot]"
