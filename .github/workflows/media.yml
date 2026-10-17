@@ -43,6 +43,8 @@ jobs:
         run: python3 tools/media/run.py
       # 0.38: голос и музыка — в релизах GitHub (сайт Pages вмещает 1 ГБ): по заданию publish догружаем новое, пишем media/published.json
       - name: Голос и музыка — в релизы (только для задания publish)
+        timeout-minutes: 230
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

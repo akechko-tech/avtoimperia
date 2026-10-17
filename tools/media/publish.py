@@ -3,7 +3,7 @@
 (предрелизы — чтобы не стать «latest» вместо APK), догружает в них новые и изменившиеся файлы, пишет media/published.json
 (какие имена и размеры действительно лежат в релизах — сверено после загрузки) — по нему tools/sync_media.py собирает
 указатели для игры. Адрес файла: https://github.com/akechko-tech/avtoimperia/releases/download/<тег>/<имя>; тег голоса —
-по первому знаку хэша. Ограничения API GitHub (403/429, secondary rate limit) — ждём и повторяем; что не долилось за этот
+по первому знаку хэша. Загрузка не чаще ~75 файлов в минуту (вторичные лимиты API); при ограничении ждём четверть часа и повторяем; что не долилось за этот
 запуск, в published.json не попадает и дольётся следующим запуском. Журнал — media/publish.log (в коммит)."""
 import json, os, re, subprocess, sys, time
 
@@ -19,18 +19,20 @@ def log(*a):
     try: open(LOGF, 'w', encoding='utf-8').write('\n'.join(LOGL[-600:]) + '\n')
     except Exception: pass
 
-def gh(cmd, tries=14):
-    """gh с ожиданием при ограничениях API: пауза растёт до 5 минут (всего до ~35 минут на одну команду)"""
+PACE = float(os.environ.get('PUBLISH_PACE', '0.8'))   # секунд на файл: ~75 загрузок в минуту — ниже вторичных лимитов API (900 очков в минуту на адрес, POST — 5 очков)
+
+def gh(cmd, tries=6):
+    """gh с ожиданием при ограничениях API: лимит — ждём 15 минут (часовое окно), прочие сбои — минуту-две"""
     r = None
     for k in range(tries):
         r = subprocess.run(['gh'] + cmd, capture_output=True, text=True)
         if r.returncode == 0: return r
         err = (r.stderr or r.stdout or '').strip()
         if cmd[:2] == ['release', 'view'] and 'not found' in err.lower(): return r
-        limited = re.search(r'rate limit|403|429|abuse|secondary|too many|timeout|timed out|50[234]|EOF|connection|reset', err, re.I)
-        wait = min(300, 30 * (k + 1)) if limited else min(60, 5 * (k + 1))
-        log('gh retry', ' '.join(cmd[:3]), k + 1, 'wait', wait, 's:', err[-220:].replace('\n', ' | '))
-        time.sleep(wait)
+        limited = re.search(r'rate limit|secondary|abuse|429|403', err, re.I)
+        wait = 900 if limited else min(120, 60 * (k + 1))
+        log('gh retry', ' '.join(cmd[:3]), k + 1, 'wait', wait, 's:', err[-300:].replace('\n', ' | '))
+        if k + 1 < tries: time.sleep(wait)
     return r
 
 def assets(tag):
@@ -47,16 +49,16 @@ def assets(tag):
     return {a['name']: a['size'] for a in json.loads(r.stdout).get('assets', []) if a.get('state', 'uploaded') == 'uploaded'}
 
 def publish(tag, paths, pub):
-    """долить в релиз tag файлы paths, которых там нет или размер другой; в pub — только то, что после этого лежит в релизе"""
+    """долить в релиз tag файлы paths, которых там нет или размер другой (по 10 за вызов, не чаще PACE); в pub — только то, что после этого лежит в релизе"""
     have = assets(tag)
     todo = [p for p in paths if have.get(os.path.basename(p)) != os.path.getsize(p)]
     bad = 0
-    for i in range(0, len(todo), 40):
-        chunk = todo[i:i + 40]
-        r = gh(['release', 'upload', tag, '-R', REPO, '--clobber'] + chunk, tries=8)
+    for i in range(0, len(todo), 10):
+        chunk = todo[i:i + 10]; t0 = time.time()
+        r = gh(['release', 'upload', tag, '-R', REPO, '--clobber'] + chunk)
         if r.returncode != 0: bad += len(chunk); log('upload failed', tag, os.path.basename(chunk[0]), '…', (r.stderr or r.stdout or '')[-200:].replace('\n', ' | '))
-        else: log(tag, 'uploaded', min(i + 40, len(todo)), 'of', len(todo))
-        time.sleep(1.5)
+        elif (i // 10) % 10 == 9 or i + 10 >= len(todo): log(tag, 'uploaded', min(i + 10, len(todo)), 'of', len(todo), '| %.1f/s' % (10 / max(0.1, time.time() - t0)))
+        time.sleep(max(0.0, len(chunk) * PACE - (time.time() - t0)))
     if todo: have = assets(tag)
     miss = 0
     for p in paths:
