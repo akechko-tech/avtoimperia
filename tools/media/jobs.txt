@@ -1,2 +1,1 @@
-voice_probe2
-anthem
+publish
