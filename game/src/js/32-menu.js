@@ -1,5 +1,5 @@
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.37';
+const GAME_VER='0.38';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
