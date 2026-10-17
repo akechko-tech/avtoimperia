@@ -24,7 +24,7 @@ jobs:
           python3 -m pip install --quiet --user --break-system-packages pillow numpy || python3 -m pip install --quiet pillow numpy
       - name: Нейросетевой голос (только для задания voice)
         run: |
-          if grep -qxE 'voice|voice_probe|voice5' tools/media/jobs.txt; then
+          if grep -qxE 'voice|voice_probe|voice_probe2|voice5' tools/media/jobs.txt; then
             python3 -m pip install --quiet --user --break-system-packages torch --index-url https://download.pytorch.org/whl/cpu || python3 -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
             python3 -m pip install --quiet --user --break-system-packages omegaconf || python3 -m pip install --quiet omegaconf
           fi
@@ -41,11 +41,12 @@ jobs:
           fi
       - name: Задания
         run: python3 tools/media/run.py
-      # 0.38: голос и музыка — в релизах GitHub (сайт Pages вмещает 1 ГБ): догружаем новое, пишем media/published.json
-      - name: Голос и музыка — в релизы
+      # 0.38: голос и музыка — в релизах GitHub (сайт Pages вмещает 1 ГБ): по заданию publish догружаем новое, пишем media/published.json
+      - name: Голос и музыка — в релизы (только для задания publish)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 tools/media/publish.py || echo "релизы - не удалось"
+        run: |
+          if grep -qx 'publish' tools/media/jobs.txt; then python3 tools/media/publish.py || echo "релизы - не удалось"; else echo "без публикации"; fi
       - name: Сохранить в ветку media
         run: |
           git config user.name "github-actions[bot]"

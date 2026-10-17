@@ -873,8 +873,147 @@ def piano_rag(T, seed=11, banjo=False):
 
 def piano_cake(T, seed=37): return piano_rag(T, seed, banjo=True)
 
-STYLE = {'march': march_salon, 'rag': piano_rag, 'waltz': waltz, 'tango': tango, 'jazz': jazz, 'cake': piano_cake, 'fox': fox, 'charl': charl}
-META = {'avto': ('march', 'triumph', 'салонный оркестр'), 'reel': ('rag', 'lively', 'фортепиано'), 'valse': ('waltz', 'calm', 'салонный оркестр'), 'tango': ('tango', 'drama', 'оркестр танго'),
+
+# ---------- 0.38: марш «Автоимперия» заново (отзыв: «титульная мелодия так себе, какофония из звуков») ----------
+# Новая мелодия (пунктирный ритм, ясная линия с кульминацией) и своё напевное трио; оркестр — военный духовой, но слоёв мало:
+# мелодия у корнетов (во втором проведении — кларнеты октавой выше, тихо), бас-аккорды (туба — валторны), лёгкий малый барабан,
+# контрмелодия тромбонов и эуфониума только в торжественном трио — диатоническая, по ступеням гаммы; никаких хроматических
+# «перепалок» и арфовых пассажей. Фа мажор, трио — си-бемоль мажор.
+SCALE_MAJ = [0, 2, 4, 5, 7, 9, 11]
+
+def parse_trio(T):
+    if not T.get('trio'): return None
+    T2 = dict(T); T2['mel'] = T['trio']; T2['ch'] = T['tch']
+    mel, chords, bars, beats = parse(T2); return mel, chords, bars
+
+def march_band2(T, seed=7):
+    mel, chords, bars, beats = parse(T); bpm = T['bpm']; S = Score(bpm, seed); B = beats
+    K = -7; mel = [(b, d, p + K) for b, d, p in mel]; chords = [tr_ch(c, K) for c in chords]   # фа мажор, трио — си-бемоль мажор: регистр корнетов не выше до третьей октавы
+    tr = parse_trio(T); tmel, tch = (([(b, d, p + K) for b, d, p in tr[0]], [tr_ch(c, K) for c in tr[1]]) if tr else ([(b, d, p + K + 5) for b, d, p in mel], [tr_ch(c, 5) for c in chords]))
+    PIC, CL, CRN, CRN2, HRN, TBN, EUP, TUBA, GLK, DR = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    S.setup(PIC, 72, 60, 50, 36); S.setup(CL, 71, 92, 46, 40); S.setup(CRN, 56, 106, 66, 34, 2); S.setup(CRN2, 56, 90, 60, 34, 2)
+    S.setup(HRN, 60, 94, 80, 44); S.setup(TBN, 57, 100, 78, 40); S.setup(EUP, 57, 96, 70, 40); S.setup(TUBA, 58, 112, 64, 34)
+    S.setup(GLK, 9, 46, 56, 44); S.setup(DR, 0, 96, 64, 30, 0)
+    CAP = {PIC: 94, CL: 86, CRN: 84, CRN2: 80, HRN: 72, GLK: 96}
+    key_pc = (0 + K) % 12
+    def scale(pc0): return [(pc0 + x) % 12 for x in SCALE_MAJ]
+    def harm_below(p, ch):
+        c = [n for n in tones(ch, p - 9, p - 3)]
+        return max(c) if c else p - 4
+    def drums(b0, nb, lvl, snare=True, crash=True, roll_last=True):
+        for k in range(nb):
+            t = b0 + k * B
+            S.note(DR, t, 0.4, 36, 78 * lvl); S.note(DR, t + 2, 0.4, 36, 62 * lvl)
+            if crash and k == 0: S.note(DR, t, 1.2, 49, 54 * lvl)
+            if snare:
+                S.note(DR, t + 1, 0.2, 38, 54 * lvl); S.note(DR, t + 3, 0.2, 38, 50 * lvl)
+                S.note(DR, t + 2.5, 0.1, 38, 26 * lvl); S.note(DR, t + 3.5, 0.1, 38, 30 * lvl)
+            if roll_last and (k % 8 == 7):
+                for r in range(8): S.note(DR, t + 3 + r / 8, 0.08, 38, (30 + r * 5) * lvl)
+    def oompah(b0, chs, lvl, horns=True, tbn=False):
+        for k, ch in enumerate(chs):
+            t = b0 + k * B; root = nearest(40, [n for n in range(34, 46) if (n - ch[0]) % 12 == 0]); fifth = root + 7 if root + 7 <= 46 else root - 5
+            S.note(TUBA, t, 0.8, root, 92 * lvl); S.note(TUBA, t + 2, 0.8, fifth, 82 * lvl)
+            if horns:
+                v = sorted(set(nearest(q, tones(ch, 55, 69)) for q in (58, 62, 65)))
+                for a in (1, 3):
+                    for q in v: S.note(HRN, t + a, 0.38, q, 56 * lvl)
+            if tbn:
+                for q in sorted(set(nearest(q, [n for n in range(46, 59) if (n - ch[0]) % 12 in (0, 7)]) for q in (50, 53))): S.note(TBN, t, 1.7, q, 50 * lvl); S.note(TBN, t + 2, 1.7, q, 46 * lvl)
+    def melody(b0, M, chs, insts):
+        for b, d, p in M:
+            bar = int(b // B); ch = chs[min(bar, len(chs) - 1)]
+            for inst, dv, vel, mode in insts:
+                q = (harm_below(p, ch) if mode == 'harm' else p) + dv
+                if inst in CAP: q = fold(q, CAP[inst])
+                S.note(inst, b0 + b, d * (0.9 if d <= 0.5 else 0.95), q, vel)
+    def counter(b0, M, chs, pc0, insts, lo=50, hi=62):
+        """контрмелодия: по половинкам и четвертям, аккордовые звуки, проходящие — по гамме; ни одна нота не трётся полутоном с мелодией"""
+        sc = scale(pc0); prev = 55
+        def mel_pcs(x0, x1): return set(p % 12 for bb, d, p in M if bb < x1 and bb + d > x0)
+        def pick(near, cands, span):
+            mp = mel_pcs(*span); good = [n for n in cands if not any((n - q) % 12 in (1, 11) for q in mp)]
+            return nearest(near, good or cands)
+        for k, ch in enumerate(chs):
+            t = b0 + k * B; c = [n for n in tones(ch, lo, hi)]
+            a = pick(prev, c, (k * B, k * B + 2))
+            nxt = chs[k + 1] if k + 1 < len(chs) else ch; cn = tones(nxt, lo, hi); goal = nearest(a, cn)
+            b_ = pick(a + (3 if goal > a else -3), [n for n in c if n != a] or c, (k * B + 2, k * B + 3))
+            # проходящий звук к следующему аккорду — только если не трётся ни с аккордом (валторны), ни с мелодией
+            mp = mel_pcs(k * B + 3, k * B + 4); clash = lambda n: any((n - q) % 12 in (1, 11) for q in [p % 12 for p in c] + list(mp))
+            steps = [n for n in range(min(b_, goal), max(b_, goal) + 1) if n % 12 in sc and n != b_ and n != goal and not clash(n)]
+            pas = (steps[0] if goal > b_ else steps[-1]) if steps else b_
+            if abs(pas - b_) > 2: pas = b_
+            for inst, dv, vel in insts:
+                S.note(inst, t, 1.95, a + dv, vel); S.note(inst, t + 2, 0.95, b_ + dv, vel - 4); S.note(inst, t + 3, 0.95, pas + dv, vel - 8)
+            prev = goal
+    t = 0.0
+    # вступление (4 такта): фанфара медных на доминанте — пунктиром, и удар на тонику; дробь на последней доле
+    dom = (key_pc + 7) % 12
+    fan = [(0, 0.75, 0), (0.75, 0.25, 0), (1, 0.75, 4), (1.75, 0.25, 4), (2, 1, 7), (3, 1, 12), (4, 2, 7), (6, 1, 4), (7, 1, 0)]
+    for b, d, iv in fan:
+        p = 65 + ((dom - 65) % 12) - 12 + iv   # от фа первой октавы вверх по аккорду доминанты
+        S.note(CRN, t + b, d * 0.9, p + 12 if p + 12 <= 84 else p, 100); S.note(CRN2, t + b, d * 0.9, p, 86); S.note(TBN, t + b, d * 0.9, p - 12, 88); S.note(TUBA, t + b, d * 0.9, p - 12 if p - 12 <= 46 else p - 24, 92)
+        S.note(HRN, t + b, d * 0.9, p, 70)
+    for r in range(16): S.note(DR, t + 8 + r / 4, 0.1, 38, 34 + r * 3)
+    for k, iv in enumerate((7, 5, 4, 2)):
+        p = 46 + ((key_pc - 46) % 12) + iv - 12
+        S.note(TUBA, t + 8 + k, 0.9, p, 90); S.note(TBN, t + 8 + k, 0.9, p + 12, 84); S.note(EUP, t + 8 + k, 0.9, p + 12, 78)
+    S.note(DR, t + 8, 0.5, 36, 96); S.note(DR, t + 8, 1.0, 49, 64)
+    for b in range(12, 16): S.note(TUBA, t + b, 0.45, 46 + ((key_pc - 46) % 12) - 12 + 7, 86); S.note(DR, t + b, 0.15, 38, 60 + (b - 12) * 8)
+    t += 4 * B
+    # первая часть: корнеты (мелодия), бас — валторны, малый барабан
+    A = chords[:bars]
+    melody(t, mel, A, [(CRN, 0, 92, '')]); oompah(t, A, 1.0); drums(t, bars, 0.95)
+    t += bars * B
+    # повтор: кларнеты октавой выше (тихо), вторые корнеты — терцией ниже, контрмелодия эуфониума
+    melody(t, mel, A, [(CRN, 0, 96, ''), (CL, 0, 62, ''), (CRN2, 0, 70, 'harm')]); oompah(t, A, 1.05, tbn=True); counter(t, mel, A, key_pc, [(EUP, 0, 72)], 48, 60); drums(t, bars, 1.05)
+    t += bars * B
+    # трио (ми-бемоль мажор), тихо: кларнеты и эуфониум октавой ниже, валторны держат аккорд, туба — только на первую долю
+    tb = len(tch); tpc = (key_pc + 5) % 12
+    melody(t, tmel, tch, [(CL, 0, 70, ''), (EUP, -12, 66, ''), (CRN2, 0, 46, 'harm')])
+    for k, ch in enumerate(tch):
+        tt = t + k * B; root = nearest(41, [n for n in range(34, 46) if (n - ch[0]) % 12 == 0])
+        S.note(TUBA, tt, 1.6, root, 66); S.note(TUBA, tt + 2, 0.8, root + 7 if root + 7 <= 46 else root - 5, 56)
+        for q in sorted(set(nearest(q, tones(ch, 53, 67)) for q in (58, 62, 65))): S.note(HRN, tt + 1, 0.4, q, 40); S.note(HRN, tt + 3, 0.4, q, 38)
+        S.note(DR, tt, 0.3, 36, 40); S.note(DR, tt + 2, 0.3, 36, 32)
+    t += tb * B
+    # «разговор» медных и деревянных (8 тактов): низкая медь — ритм «та-та-та—» на тонике и доминанте, деревянные отвечают гаммой вниз
+    dpc = (tpc + 7) % 12; sc = scale(tpc)
+    for k in range(8):
+        tt = t + k * B; pc = tpc if k % 2 == 0 else dpc; root = nearest(41, [n for n in range(34, 46) if (n - pc) % 12 == 0])
+        for b in (0, 0.5, 1.0):
+            S.note(TBN, tt + b, 0.4, root + 12, 96); S.note(EUP, tt + b, 0.4, root + 7, 90); S.note(TUBA, tt + b, 0.4, root, 98); S.note(DR, tt + b, 0.15, 38, 70)
+        S.note(DR, tt, 0.4, 36, 90)
+        top = nearest(79, [n for n in range(72, 86) if (n - pc) % 12 in (0, 4, 7)])
+        run = [n for n in range(top - 12, top + 1) if n % 12 in sc][::-1][:4]
+        for e, q in enumerate(run):
+            S.note(CL, tt + 2 + e * 0.5, 0.45, q, 76); S.note(PIC, tt + 2 + e * 0.5, 0.45, fold(q + 12, CAP[PIC]), 52); S.note(CRN, tt + 2 + e * 0.5, 0.45, fold(q - 12, CAP[CRN]), 72)
+        if k >= 6:
+            for r in range(8): S.note(DR, tt + r / 2, 0.08, 38, 50 + r * 5 + (k - 6) * 10)
+    S.note(DR, t + 8 * B - 0.5, 0.5, 36, 100); S.note(DR, t + 8 * B - 0.5, 1.0, 49, 70)
+    t += 8 * B
+    # торжественное трио: корнеты и кларнеты в унисон, пикколо октавой выше (тихо), вторые корнеты терцией ниже, контрмелодия тромбонов и эуфониума, колокольчики на сильных долях
+    melody(t, tmel, tch, [(CRN, 0, 104, ''), (CL, 0, 84, ''), (PIC, 12, 56, ''), (CRN2, 0, 78, 'harm')])
+    counter(t, tmel, tch, tpc, [(TBN, 0, 94), (EUP, 0, 88)], 50, 62)
+    for b, d, p in tmel:
+        if d >= 1 and abs(b % 2) < 1e-6: S.note(GLK, t + b, 0.6, fold(p + 12, CAP[GLK]), 34)
+    oompah(t, tch, 1.15); drums(t, tb, 1.15)
+    t += tb * B
+    # финал: два аккорда тутти — пауза — короткий удар
+    def tutti(at, dur, vel):
+        root = 46 + ((tpc - 46) % 12) - 12
+        for p in (root, root + 12, root + 19, root + 24, root + 28, root + 31, root + 36):
+            inst = TUBA if p < 44 else TBN if p < 56 else HRN if p < 64 else CRN
+            S.note(inst, at, dur, p, vel)
+            if p >= 56: S.note(CL, at, dur, fold(p + 12, CAP[CL]), vel - 18)
+        S.note(EUP, at, dur, root + 12, vel - 6); S.note(DR, at, 0.5, 36, vel); S.note(DR, at, 1.4, 49, vel - 36)
+    tutti(t, 1.4, 108); tutti(t + 2, 1.4, 110); tutti(t + B + 1, 0.6, 118)
+    S.tempo_at(t - 2, bpm * 0.94)
+    return S
+
+STYLE = {'march': march_band2, 'rag': piano_rag, 'waltz': waltz, 'tango': tango, 'jazz': jazz, 'cake': piano_cake, 'fox': fox, 'charl': charl}
+META = {'avto': ('march', 'triumph', 'духовой оркестр'), 'reel': ('rag', 'lively', 'фортепиано'), 'valse': ('waltz', 'calm', 'салонный оркестр'), 'tango': ('tango', 'drama', 'оркестр танго'),
         'jazz': ('jazz', 'lively', 'джаз-бэнд'), 'cake': ('cake', 'lively', 'фортепиано и банджо'), 'fox': ('fox', 'calm', 'танцевальный оркестр'), 'charl': ('charl', 'lively', 'горячий джаз-оркестр')}
 SF2_URLS = ['https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2']
 
@@ -910,14 +1049,14 @@ def run(media, log=print):
         st, mood, band = META.get(tid, (T['sty'], 'lively', 'оркестр'))
         S = STYLE[st](T); mid = os.path.join(tmp, tid + '.mid'); wav = os.path.join(tmp, tid + '.wav'); out = os.path.join(D, 'own_' + tid + '.m4a')
         S.write(mid); open(os.path.join(D, 'own_' + tid + '.mid'), 'wb').write(open(mid, 'rb').read())
-        sh(['fluidsynth', '-ni', '-q', '-g', '0.55', '-r', '44100', '-R', '1', '-C', '1', '-o', 'synth.reverb.room-size=0.84', '-o', 'synth.reverb.level=0.66',
+        sh(['fluidsynth', '-ni', '-q', '-g', '0.5', '-r', '44100', '-R', '1', '-C', '0', '-o', 'synth.reverb.room-size=0.62', '-o', 'synth.reverb.level=0.38',
             '-o', 'synth.reverb.width=1.0', '-o', 'synth.reverb.damp=0.6', '-o', 'synth.polyphony=512', '-F', wav, sf2, mid])
         # ровная громкость (как у остальных записей) и мягкая «плёнка» зала; хвост реверберации не обрезать
         end = S.seconds(S.length())
         sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 4.0), '-af', 'highpass=f=35,equalizer=f=210:t=q:w=1.0:g=2.5,equalizer=f=2600:t=q:w=1.3:g=-5,treble=g=-7:f=5200,lowpass=f=9000,loudnorm=I=-19:TP=-2:LRA=11,afade=t=out:st=%.2f:d=3' % (end + 1.0),
             '-c:a', 'aac', '-b:a', '112k', '-ar', '44100', out])
         dur = float(sh(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', out]).strip() or 0)
-        idx['own_' + tid] = {'cap': T['name'] + ' (' + ({'reel': 'фортепиано', 'cake': 'фортепиано и банджо', 'avto': 'салонный оркестр'}.get(tid, 'оркестр')) + ')', 'st': st, 'y': T['y'], 'mood': mood, 'd': round(dur, 1), 'lic': 'CC0 — сочинено для игры',
+        idx['own_' + tid] = {'cap': T['name'] + ' (' + ({'reel': 'фортепиано', 'cake': 'фортепиано и банджо', 'avto': 'духовой оркестр'}.get(tid, 'оркестр')) + ')', 'st': st, 'y': T['y'], 'mood': mood, 'd': round(dur, 1), 'lic': 'CC0 — сочинено для игры',
                              'page': '', 'by': 'Мелодия «Автоимперии», ' + band + ' (тембры ' + sfname.split(' (')[0] + ')'}
         LOG('anthem:', tid, st, round(dur, 1), 's', round(os.path.getsize(out) / 1024), 'KB')
     # короткие темы игры: фанфара и темы соперников (в плейлист не идут — пометка cue)

@@ -955,7 +955,122 @@ def photos():
     import photo_scan as P
     P.fetch(MEDIA, TOOLS, log, jget, get)
 
-JOBS = {'ru3_scan': ru3_scan, 'ru2_scan': ru2_scan, 'sfx2_scan': sfx2_scan, 'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
+
+# ---------------------------------------------------------------- 0.38: пробы голосов рассказчика (отзыв «не нравится голос рассказчиков»)
+PROBE_LINES = [
+    ('Январь 1909 года. Луи Блерио разбогател на ацетиленовых фарах: ими светят автомобили половины Франции. Все эти деньги он потратил на аэропланы.', 'narr'),
+    ('Тридцать семь минут — и белые скалы Дувра. Посадка жёсткая, шасси и винт сломаны. Газеты пишут: Англия больше не остров.', 'narr'),
+    ('Касторка — для «Гнома». Он крутится весь, вместе с винтом, и масло летит во все стороны. Зато лёгкий и не перегревается.', 'male'),
+    ('Луи, у нас долги. Если заложим фабрику фар — что потом? Обещай, что этот аэроплан будет последним.', 'fem'),
+]
+
+def _wav_write(path, a, sr):
+    import numpy as np, wave
+    a = np.asarray(a, dtype='float32'); pk = float(np.max(np.abs(a))) or 1.0; a = a / pk * 0.9
+    with wave.open(path, 'wb') as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr); w.writeframes((a * 32767).astype('int16').tobytes())
+
+def _probe_mp3(parts, out, sr):
+    """склеить фразы с паузами 0,7 с, обработать как в voice(), записать mp3"""
+    import numpy as np
+    tmp = out[:-4] + '.wav'; gap = np.zeros(int(sr * 0.7), 'float32')
+    a = np.concatenate([x for p in parts for x in (p, gap)][:-1])
+    _wav_write(tmp, a, sr)
+    sh(['ffmpeg', '-v', 'error', '-i', tmp, '-af', 'highpass=f=70,acompressor=threshold=-18dB:ratio=2.5:attack=5:release=120,loudnorm=I=-17:TP=-1.5:LRA=9',
+        '-ac', '1', '-ar', '24000', '-c:a', 'libmp3lame', '-b:a', '64k', '-y', out]); os.remove(tmp)
+
+def _pip(*pk):
+    r = subprocess.run([sys.executable, '-m', 'pip', 'install', '--quiet', '--user', '--break-system-packages'] + list(pk), capture_output=True, text=True)
+    if r.returncode != 0:
+        r = subprocess.run([sys.executable, '-m', 'pip', 'install', '--quiet'] + list(pk), capture_output=True, text=True)
+    if r.returncode != 0: raise RuntimeError('pip: ' + (r.stderr or '')[-400:])
+
+def voice_probe2():
+    """Одни и те же четыре фразы фильма — разными голосами: Silero (как сейчас, с паузами и медленнее, другой диктор),
+    Vosk-TTS (несколько дикторов), Piper, XTTS v2 (несколько голосов). Результат — media/voice_probe2/*.mp3 + index.json:
+    пользователь слушает и выбирает, потом задание voice перезаписывает все фразы выбранным голосом."""
+    import numpy as np
+    sys.path.insert(0, TOOLS)
+    from ru_norm import norm
+    D = os.path.join(MEDIA, 'voice_probe2'); os.makedirs(D, exist_ok=True); idx = {}
+    texts = [norm(t) for t, _ in PROBE_LINES]
+    def done(key, title, parts, sr, note=''):
+        try:
+            _probe_mp3(parts, os.path.join(D, key + '.mp3'), sr); idx[key] = {'t': title, 'note': note}; log('probe ok', key)
+        except Exception as e: log('probe mp3 error', key, repr(e)[:200])
+    # --- Silero v4_ru: сейчас (aidar), с паузами и темпом через SSML, eugene
+    try:
+        import torch
+        torch.set_num_threads(max(1, os.cpu_count() or 2))
+        model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language='ru', speaker='v4_ru', trust_repo=True)
+        SR = 48000
+        def sil(spk, text, ssml=False):
+            if ssml:
+                t = re.sub(r',\s+', ', <break time="250ms"/>', text); t = re.sub(r'([.!?…])\s+', r'\1 <break time="450ms"/>', t)
+                return model.apply_tts(ssml_text='<speak><prosody rate="90%" pitch="-4%">' + t + '</prosody></speak>', speaker=spk, sample_rate=SR, put_accent=True, put_yo=True).numpy()
+            return model.apply_tts(text=text, speaker=spk, sample_rate=SR, put_accent=True, put_yo=True).numpy()
+        for key, title, spk, ssml in [('silero_aidar', 'Silero aidar — как сейчас', 'aidar', False), ('silero_aidar_slow', 'Silero aidar — медленнее, с паузами, ниже', 'aidar', True),
+                                      ('silero_eugene', 'Silero eugene', 'eugene', False), ('silero_eugene_slow', 'Silero eugene — медленнее, с паузами', 'eugene', True)]:
+            try: done(key, title, [sil(spk, t, ssml) for t in texts], SR)
+            except Exception as e: log('silero error', key, repr(e)[:200])
+    except Exception as e: log('silero load error', repr(e)[:300])
+    # --- Vosk-TTS (alphacep): русская модель с несколькими дикторами
+    try:
+        _pip('vosk-tts')
+        from vosk_tts import Model, Synth
+        import tempfile, wave
+        mdl = Model(model_name='vosk-model-tts-ru-0.7-multi'); synth = Synth(mdl)
+        for spk in range(0, 5):
+            try:
+                parts = []; sr = 22050
+                for t in texts:
+                    tmp = os.path.join(D, '_v.wav'); synth.synth(t, tmp, speaker_id=spk)
+                    with wave.open(tmp, 'rb') as w: sr = w.getframerate(); parts.append(np.frombuffer(w.readframes(w.getnframes()), 'int16').astype('float32') / 32767)
+                done('vosk_%d' % spk, 'Vosk-TTS, диктор %d' % spk, parts, sr)
+            except Exception as e: log('vosk error', spk, repr(e)[:200])
+    except Exception as e: log('vosk load error', repr(e)[:300])
+    # --- Piper: ru_RU denis / dmitri / ruslan
+    try:
+        _pip('piper-tts')
+        import wave
+        for v in ('ru_RU-denis-medium', 'ru_RU-dmitri-medium', 'ru_RU-ruslan-medium'):
+            try:
+                base = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/ru/ru_RU/%s/medium/%s' % (v.split('-')[1], v)
+                for ext in ('.onnx', '.onnx.json'):
+                    p = os.path.join(D, v + ext)
+                    if not os.path.exists(p): open(p, 'wb').write(get(base + ext, timeout=300))
+                parts = []; sr = 22050
+                for t in texts:
+                    tmp = os.path.join(D, '_p.wav'); r = subprocess.run([sys.executable, '-m', 'piper', '-m', os.path.join(D, v + '.onnx'), '-f', tmp], input=t, capture_output=True, text=True)
+                    if r.returncode != 0: raise RuntimeError(r.stderr[-300:])
+                    with wave.open(tmp, 'rb') as w: sr = w.getframerate(); parts.append(np.frombuffer(w.readframes(w.getnframes()), 'int16').astype('float32') / 32767)
+                done('piper_' + v.split('-')[1], 'Piper ' + v.split('-')[1], parts, sr)
+                for ext in ('.onnx', '.onnx.json'): os.remove(os.path.join(D, v + ext))
+            except Exception as e: log('piper error', v, repr(e)[:200])
+    except Exception as e: log('piper load error', repr(e)[:300])
+    # --- XTTS v2 (coqui-tts): многоязычная модель, встроенные голоса
+    try:
+        _pip('coqui-tts')
+        os.environ['COQUI_TOS_AGREED'] = '1'
+        from TTS.api import TTS
+        tts = TTS('tts_models/multilingual/multi-dataset/xtts_v2')
+        spks = ['Viktor Eka', 'Damien Black', 'Craig Gutsy', 'Andrew Chipper', 'Baldur Sanjin']
+        raw = [t for t, _ in PROBE_LINES]   # XTTS читает цифры сам
+        for spk in spks:
+            try:
+                parts = [np.asarray(tts.tts(text=t, speaker=spk, language='ru'), 'float32') for t in raw]
+                done('xtts_' + spk.split(' ')[0].lower(), 'XTTS v2 — ' + spk, parts, 24000, 'Coqui, некоммерческая лицензия')
+            except Exception as e: log('xtts error', spk, repr(e)[:200])
+    except Exception as e: log('xtts load error', repr(e)[:300])
+    for f in os.listdir(D):
+        if f.startswith('_'): os.remove(os.path.join(D, f))
+    json.dump(idx, open(os.path.join(D, 'index.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    log('voice_probe2 done', len(idx), 'clips')
+
+
+def publish(): log('publish: голос и музыка уходят в релизы отдельным шагом workflow (tools/media/publish.py)')
+
+JOBS = {'publish': publish, 'voice_probe2': voice_probe2, 'ru3_scan': ru3_scan, 'ru2_scan': ru2_scan, 'sfx2_scan': sfx2_scan, 'photos_scan': photos_scan, 'photos': photos, 'terrain': terrain, 'films_scan': films_scan, 'films_cut': films_cut, 'samples': samples, 'tex': tex, 'voice': voice,
         'anthem': anthem, 'music_scan': music_scan, 'sfx_scan': sfx_scan, 'voice_probe': voice_probe, 'voice5': voice5, 'music_cut': music_cut, 'sfx_cut': sfx_cut, 'faces': faces, 'hits_scan': hits_scan, 'world_scan': world_scan, 'world2_scan': world2_scan, 'fanfare_scan': fanfare_scan}
 
 if __name__ == '__main__':
