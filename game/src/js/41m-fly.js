@@ -53,7 +53,7 @@ function flyInput(dt){const me=FL.me,c=me.ctl,K=FLY.keys,st=FLY.st;if(me.crash)r
   if(K.ShiftLeft||K.ShiftRight)FLY.thrT=Math.min(1,FLY.thrT+dt*0.6);if(K.ControlLeft||K.ControlRight)FLY.thrT=Math.max(0,FLY.thrT-dt*0.6);c.thr=FLY.thrT;
   FL.fire=FLY.fire||!!K.Space;FL.bomb=FLY.bomb||!!K.KeyB;}
 function flWarpMax(){const M=FL.mi,me=FL.me;if(!M||!me)return 1;if(me.crash||M.over)return 1;const agl=me.p[1]-Math.max(0,fwHgt(FW.S,me.p[0],me.p[2]));
-  if(me.gnd||agl<60||FLY.landing)return 2;if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||4);}
+  if(me.gnd||agl<60)return 2;if(FLY.landing)return 4;/* 0.38: лётчик ведёт на посадку — можно ×4, у земли ×2 */if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||4);}
 /* ---------- камера ---------- */
 function flyCam(dt){const me=FL.me,cv=G3.cv,asp=Math.max(0.3,(cv.clientWidth||1)/(cv.clientHeight||1)),mesh=FL.meMesh,v=me.v,sp=l3(v);
   const hf=FLY.cam===1?1.25:1.05;let vf=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.92;if(2*Math.atan(Math.tan(vf/2)*asp)>1.8)vf=2*Math.atan(Math.tan(0.9)/asp);

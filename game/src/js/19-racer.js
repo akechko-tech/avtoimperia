@@ -263,7 +263,7 @@ function racerStep(s){if(!s||s.over||s.pending.length)return false;const X=s.rac
   s.m++;if(s.m>11){s.m=0;s.y++;racerYear(s);}
   if(X.job&&!racerJobObj(s)){addLog(`${brandShort(X.job.n)} закрыл гоночный отдел: место испытателя закончилось.`,'hist');X.job=null;}
   if(X.team&&!racerTeamObj(s)){addLog(`${brandShort(X.team.n)} больше не выставляет команду: контракт закончился.`,'hist');X.teamsBefore.push(X.team.n);X.team=null;}
-  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&!raceWarBlocked(rc,s)){const st=racerStatus(rc,s);if(st[2])addLog(`Открыта запись на гонку «${rc.name}» (${MONTHS_G[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');}});
+  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&!raceWarBlocked(rc,s)){const st=racerStatus(rc,s);if(st[2])addLog(`Открыта запись на гонку «${rc.name}» (в ${MONTHS_P[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');}});
   racerSeasonTick(s);racerNews(s);
   if(s.cash<-Math.round(600*cpi(s))){s.over=true;s.pending.push({title:'Карьера окончена',deck:`${X.name}: долги`,text:`Деньги кончились, а долги выросли: машину забрали кредиторы. Гоночная карьера окончена в ${dstr(s)}.`,paper:true,choices:[['Итоги','rx:final']]});}
   else if(s.y>=1930){s.over=true;racerFinal(s);}

@@ -34,7 +34,7 @@ ok(voiceOfWho('Алиса Блерио')==='xenia'&&voiceOfWho('Эми Джон�
 {const T=allTitles();['Louis Blériot','Blériot XI','Fokker D.VII','Sopwith Camel','Hubert Latham','Sikorsky Ilya Muromets','Junkers F 13','Grande Semaine d\\'Aviation de la Champagne'].forEach(t=>ok(T.includes(t),'фото в списке: '+t));}
 /* ---------- полёт: каждый исторический аэроплан ---------- */
 FL.noFail=true;const land={H:()=>30,surf:()=>'grass',obst:()=>null},sea={H:()=>-5,surf:()=>'water',obst:()=>null};const dt=1/120;let n=0,fails=[];
-for(const role of ['sport','race','fight','recon','bomb','sea','pax'])for(const e of (AIR_RIVAL[role]||[])){if(e[0]>1930)continue;const t=e[0],md={...e[2],role,name:e[1]},st=airStats(md,t);globalThis.FW=st.sea?sea:land;n++;
+for(const role of ['sport','race','fight','recon','bomb','sea','pax'])for(const e of (AIR_RIVAL[role]||[])){if(e[0]>1930)continue;const t=e[0],md={...e[2],role,name:e[1]},st=airStats(md,t);FW=st.sea?sea:land;n++;
   const ac=flCraft(md,t,{rnd:()=>0.3});flPlace(ac,0,0,0,null);ac.ctl.thr=1;let T=0;
   while(ac.gnd&&T<90&&!ac.crash){if(st.sea||ac.gr.gp<0.05)ac.ctl.sy=ac.V>ac.Vs*0.9?0.9:0;flStep(ac,dt);T+=dt;}
   if(ac.gnd||ac.crash){fails.push(e[1]+': не взлетел ('+(ac.crash||'разбег '+Math.round(ac.dist)+' м')+')');continue;}

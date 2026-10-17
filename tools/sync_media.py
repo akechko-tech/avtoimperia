@@ -50,20 +50,37 @@ def film():
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.FILMS_INDEX=' + json.dumps({'clips': clips, 'tags': tags}, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('film: updated', n, 'clips', len(clips), 'tags', {k: len(v) for k, v in tags.items()})
 
+def published():
+    """0.38: что лежит в релизах GitHub (media/published.json пишет tools/media/publish.py в workflow «Медиа»)"""
+    try: return json.loads(git('show', 'origin/media:media/published.json'))
+    except Exception: return None
+
 def voice():
-    """Голос (0.19): Silero v5, mp3 64 кбит/с — копируется как есть, без пережатия."""
+    """Голос (0.19): Silero, mp3 48 кбит/с. 0.38: сами записи — в релизах GitHub (voice-<первый знак хэша>), на сайте — только указатель
+    и слова механика (из них собирается voice/nav.js, вшитый в приложение)."""
     D = os.path.join(DOCS, 'voice'); os.makedirs(D, exist_ok=True); n = 0
     idx = json.loads(git('show', 'origin/media:media/voice/index.json'))
     have = {os.path.basename(f) for f in files('media/voice')}
+    pub = published(); pubv = (pub or {}).get('voice') if pub else None
+    if pubv is not None:
+        missing = [h for h in idx if h + '.mp3' in have and h + '.mp3' not in pubv]
+        if missing: print('voice: %d записей ещё не в релизах (workflow «Медиа» догрузит) — в указатель не попадут: %s…' % (len(missing), ', '.join(missing[:5])))
+        have = {f for f in have if f in pubv}
+    # слова механика — локально (для nav.js), остальное — только в релизах
+    nav = set()
+    try:
+        out = subprocess.run(['node', '-e', "require('%s')(`console.log(JSON.stringify([...new Set(navLines())].map(t=>voiceHash(t,'nav'))))`)" % os.path.join(ROOT, 'game', 'test', 'harness.js').replace('\\', '/')], capture_output=True, text=True)
+        nav = set(json.loads(out.stdout.strip().splitlines()[-1]))
+    except Exception as e: print('nav lines:', e)
     for h in idx:
-        if h + '.mp3' not in have: continue
+        if h + '.mp3' not in have or h not in nav: continue
         n += pull('media/voice/%s.mp3' % h, os.path.join(D, h + '.mp3'))
     # 0.25: только строки, которые игра ещё произносит (tools/media/voice_lines.json) — старые тексты не храним
     try: keep = {x.get('h') for x in json.load(open(os.path.join(ROOT, 'tools', 'media', 'voice_lines.json'), encoding='utf-8'))}
     except Exception: keep = None
     ok = {h: d for h, d in idx.items() if h + '.mp3' in have and (keep is None or h in keep)}
     for f in os.listdir(D):
-        if f.endswith('.mp3') and f[:-4] not in ok: os.remove(os.path.join(D, f))
+        if f.endswith('.mp3') and (f[:-4] not in ok or f[:-4] not in nav): os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w').write('window.VOICE_INDEX=' + json.dumps(ok, separators=(',', ':')) + ';\n')
     print('voice: updated', n, 'lines', len(ok))
     # 0.34: голос механика одним файлом (voice/nav.js) — вшивается в приложение, читает легенду без сети
@@ -79,9 +96,13 @@ def music():
     man = json.loads(git('show', 'origin/media:media/music/clips/index.json'))
     have = {os.path.basename(f) for f in files('media/music/clips')}
     idx = {}
+    pub = published(); pubm = (pub or {}).get('music') if pub else None   # 0.38: записи — в релизе «music», на сайте только указатель
+    if pubm is not None:
+        missing = [c for c in man if c + '.m4a' in have and c + '.m4a' not in pubm]
+        if missing: print('music: %d записей ещё не в релизе (workflow «Медиа» догрузит) — в указатель не попадут: %s' % (len(missing), ', '.join(missing[:8])))
+        have = {f for f in have if f in pubm}
     for cid, m in man.items():
         if cid + '.m4a' not in have: continue
-        n += pull('media/music/clips/%s.m4a' % cid, os.path.join(D, cid + '.m4a'))
         t = m.get('title', '')
         perf = ('Оркестр морской пехоты США' if 'Marine' in t else 'Оркестр ВВС США' if 'Air Force' in t else 'Оркестр ВМС США' if 'Navy' in t else
                 'Оркестр армии США' if 'Army' in t else 'Оркестр береговой охраны США' if 'Coast Guard' in t else 'Кевин Маклауд' if 'MacLeod' in t or 'ISRC USUAN' in t else
@@ -107,7 +128,7 @@ def music():
         if m.get('cue'): cues.add(cid); continue
         idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'lic', 'page', 'by')}; idx[cid]['own'] = 1
     for f in os.listdir(D):
-        if f.endswith('.m4a') and f[:-4] not in idx and f[:-4] not in cues: os.remove(os.path.join(D, f))
+        if f.endswith('.m4a') and (f[:-4] not in idx or not idx[f[:-4]].get('own')) and f[:-4] not in cues: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.MUSIC_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('music: updated', n, 'tracks', len(idx), 'own', sorted(k for k in idx if idx[k].get('own')), 'cues', len(cues))
 

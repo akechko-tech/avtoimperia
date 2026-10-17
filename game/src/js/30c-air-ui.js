@@ -68,7 +68,7 @@ function airAdvice(s){const A=s.air,t=tNow(s),T=[];
   const proto=A.models.find(m=>m.status==='proto'&&!m.flown);if(proto)T.push(['✈',`«${proto.name}» ждёт первого полёта.`,'Лететь','airFlyBtn',proto.id]);
   const flown=A.models.find(m=>m.status==='proto'&&m.flown);if(flown)T.push(['🏭',`«${flown.name}» облетан — пора в серию (оснастка ${money(airToolCost(s,flown))}).`,'В серию','airProd',flown.id]);
   if(!A.models.some(m=>m.status==='dev'||m.status==='prod'||m.status==='proto'||m.status==='tool'))T.push(['📐','Нет ни одного аэроплана в работе — начертите новый.','Конструктор','airDesign']);
-  const ev=typeof airEvSoon==='function'?airEvSoon(s)[0]:null;if(ev)T.push(['🏆',`${ev.name}: приз ${money(ev.prize)}.`,'В «Небо»','tab','race']);
+  const ev=typeof airEvSoon==='function'?airEvSoon(s)[0]:null;if(ev)T.push(['🏆',ev.dyn?`${ev.name}: победителю — заказ на ${fmtN(ev.mil.n)} машин.`:`${ev.name}: приз ${money(ev.prize)}.`,'В «Небо»','tab','race']);
   const old=A.models.find(m=>m.status==='prod'&&airQ(m,t).q<0.75);if(old)T.push(['⚠',`«${old.name}» устарел (оценка ${airQ(old,t).q.toFixed(2).replace('.',',')}) — покупатели уходят к новым.`,'Конструктор','airDesign']);
   if((A.last&&A.last.load||0)>1.05)T.push(['🔨','Ангары переполнены — заказы не успевают.','Ангар','tab','plant']);
   if(airWarOn(s.country,t)&&!A.models.some(m=>m.role==='fight')&&t>=1915.3)T.push(['⚔','Фронту нужны истребители: скорость, подъём и пулемёт через винт.','Конструктор','airDesign']);

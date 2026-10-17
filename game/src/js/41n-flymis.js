@@ -33,7 +33,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   M.quitText=()=>'Попытка не засчитана: аэроплан вернётся в ангар.';
   M.clock=()=>flFmtT((FL.t||0)*(FL.k||1));
   /* ===== первый полёт ===== */
-  if(k==='test'){M.title=`Первый полёт: «${md.name}»`;const need=t<1909?25:t<1911?80:150,early=t<1909;M.phase=0;M.mood='clear';M.sc={};
+  if(k==='test'){M.title=`Первый полёт: «${md.name}»`;const need=t<1909?25:t<1911?80:150,early=t<1909;M.phase=0;M.maxH=0;M.mood='clear';M.sc={};
     // 0.38: программа испытания (отзыв «миссия скучновато»): взлёт → набор высоты на время → вираж вокруг пилона → пролёт над ангарами → посадка в круг; оценка испытателя
     const py=[M.A[0]+(early?500:900),M.A[1]+(early?300:500)],pyR=early?220:260;M.objs.push({k:'pylon',x:py[0],z:py[1],h:20,col:'#f0d040'},{k:'gate',x:M.A[0],z:M.A[1],a:0,w:120,h:6});
     const PH=[['Взлёт',()=>`Газ — до отказа, ручку не трогать: оторвётся сам.`],['Набор высоты — на время',()=>`${Math.round(altF())} из ${need} м${M.tAir?' · '+flFmtT(FL.t-M.tAir):''}`],

@@ -71,11 +71,15 @@ const STY={
   fox:{bpm:116,div:2,beats:4,swing:0.58,prog:[[0,'M6'],[9,'m7'],[2,'m7'],[7,'D'],[0,'M6'],[9,'m7'],[2,'m7'],[7,'D'],[5,'M6'],[5,'m'],[0,'M6'],[9,'D'],[2,'m7'],[7,'D'],[0,'M6'],[0,'M6']],key:63},
   charl:{bpm:132,div:2,beats:4,swing:0.55,prog:[[4,'D'],[4,'D'],[9,'D'],[9,'D'],[2,'D'],[2,'D'],[7,'D'],[7,'D'],[0,'M6'],[0,'M6'],[4,'D'],[4,'D'],[9,'D'],[2,'D'],[7,'D'],[0,'M6']],key:60}
 };
-// Свои мелодии «Автоимперии» (сочинены для игры): ноты по восьмым (марш), шестнадцатым (регтайм, танго) или четвертям (вальс); «-» — тянуть, «.» — пауза
+// Свои мелодии «Автоимперии» (сочинены для игры): ноты по шестнадцатым (марш, регтайм, танго) или четвертям (вальс); «-» — тянуть, «.» — пауза
+// 0.38: марш сочинён заново — пунктирный ритм, ясная линия с кульминацией и своё трио; оркестровка — духовой оркестр без лишних слоёв (была «какофония»)
 const TUNES={
-  avto:{name:'«Автоимперия», марш',bpm:112,div:2,beats:4,sty:'march',y:1895,
-    mel:'G4 - C5 - E5 - G5 - | C6 - - - G5 - E5 - | F5 - A5 - C6 - A5 - | G5 - - - - - . . | E5 - G5 - C6 - E6 - | D6 - C6 - A5 - C6 - | B5 - A5 - F#5 - A5 - | G5 - - - - - . . | A5 - A5 B5 C6 - A5 - | G5 - E5 - C5 - E5 - | F#5 - A5 - D6 - C6 - | B5 - G5 - D5 - . . | E5 - G5 - C6 - - E6 | D6 - C6 - A5 - F5 - | G5 - B5 - D6 - B5 - | C6 - - - - - . .',
-    ch:'C C F G C Am D7 G F C D7 G7 C F G7 C'},
+  avto:{name:'«Автоимперия», марш',bpm:116,div:4,beats:4,sty:'march',y:1895,
+    mel:'C5 - - D5 E5 - - F5 G5 - - - E5 - C5 - | D5 - - E5 F5 - - G5 B5 - - - - - - - | C6 - - B5 C6 - D6 - E6 - - - C6 - G5 - | A5 - - G5 F5 - E5 - D5 - - - - - . . | C5 - - D5 E5 - - F5 G5 - - - E5 - C5 - | F5 - - G5 A5 - - C6 A5 - - - F5 - - - | G5 - - A5 B5 - C6 - D6 - - - B5 - G5 - | C6 - - - - - - - . . . . G4 - - - | E5 - - A5 C6 - - B5 A5 - - - E5 - - - | F5 - - A5 D6 - - C6 A5 - - - F5 - - - | G5 - - B5 D6 - - F6 D6 - B5 - G5 - - - | C6 - - - - - - - E5 - F5 - G5 - - - | C5 - - D5 E5 - - F5 G5 - - - E5 - C5 - | A5 - - G5 A5 - - C6 F6 - - - C6 - A5 - | G5 - - A5 B5 - - D6 F6 - E6 - D6 - B5 - | C6 - - - - - - - - - - - . . . .',
+    ch:'C G7 C G7 C F G7 C Am Dm G7 C C F G7 C',
+    // 0.38: трио (напевная вторая часть в субдоминанте) — в оркестровой записи звучит тихо, потом торжественно
+    trio:'A4 - - - - - - - C5 - - - F5 - - - | A5 - - - - - - - G5 - - - F5 - - - | E5 - - - - - - - G5 - - - Bb5 - - - | G5 - - - - - - - - - - - - - - - | E5 - - - - - - - G5 - - - C6 - - - | Bb5 - - - - - - - G5 - - - E5 - - - | F5 - - - - - - - A5 - - - C6 - - - | A5 - - - - - - - - - - - . . . . | A5 - - - - - - - C6 - - - Eb6 - - - | D6 - - - - - - - Bb5 - - - F5 - - - | A5 - - - - - - - F5 - - - C5 - - - | D5 - - - - - - - F#5 - - - A5 - - - | Bb5 - - - - - - - D6 - - - G5 - - - | E5 - - - - - - - G5 - - - Bb5 - - - | A5 - - - - - - - F5 - - - C5 - - - | F5 - - - - - - - - - - - - - - -',
+    tch:'F F C7 C7 C7 C7 F F F7 Bb F D7 Gm C7 F F'},
   reel:{name:'«Кинохроника», регтайм',bpm:96,div:4,beats:2,sty:'rag',y:1899,
     mel:'A5 - C6 A5 - F5 - . | G5 A5 - F5 - . C5 - | Bb5 - G5 E5 - C5 - . | A5 - - - F5 - . . | A5 - C6 A5 - F5 - A5 | F#5 A5 - D6 - C6 A5 - | Bb5 - G5 D5 - G5 - Bb5 | A5 - - - G5 - . . | D6 - Bb5 F5 - Bb5 - D6 | C6 - A5 F5 - A5 - C6 | B5 - G5 D5 - F5 - B5 | C6 - - - Bb5 - G5 - | A5 - C6 A5 - F5 - A5 | F#5 - A5 D6 - C6 - A5 | G5 - Bb5 E5 - G5 - C5 | F5 - - - - - . .',
     ch:'F F C7 F F D7 Gm C7 Bb F G7 C7 F D7 C7 F'},
@@ -200,7 +204,7 @@ function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
   AU.duckT=setTimeout(()=>{AU.duckI=setInterval(()=>{const t=v0();let v=Math.min(t,(el.volume||0)+t*0.06);try{el.volume=v;}catch(_){v=t;}if(v>=t-1e-3){clearInterval(AU.duckI);AU.ducked=0;}},90);},Math.max(800,sec*1000+300));}
 // 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
-const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (салонный оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», салонный оркестр'},
+const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (духовой оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», духовой оркестр'},
   own_reel:{cap:'«Кинохроника», регтайм (фортепиано)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», фортепиано'},
   own_valse:{cap:'«Вальс гонщиков» (оркестр)',st:'waltz',y:1895,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
   own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'},
@@ -240,7 +244,7 @@ function musWeight(t,s,ctx){let w=1;const home=s&&s.country;
   if(s&&s.y>=1920&&!s.soviet&&(t.st==='jazz'||t.st==='fox'||t.st==='charl'))w*=1.4;
   const h=AU.recent||[];const k=h.indexOf(t.title);if(k>=0)w*=0.08+0.9*k/Math.max(1,h.length);
   return w;}
-function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
+function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:own?'music/'+id+'.m4a':MEDIA_REL+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
 function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
@@ -315,16 +319,19 @@ function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth===SY
 // Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы (живыми инструментами)
 function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats,A=ARR[T.sty]||ARR.rag;
   // 0.23: как и в оркестре — ниже, без писка: марш в фа мажоре, регтайм и танго — на кварту ниже
-  if(!T._m){T._m=T.mel.replace(/\|/g,' ').trim().split(/\s+/);T._c=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;}
-  const M=T._m,len=M.length,idx=AU.step%len,pass=Math.floor(AU.step/len),bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
+  if(!T._m){const A0=T.mel.replace(/\|/g,' ').trim().split(/\s+/),ca=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;
+    // 0.38: у марша есть трио — части идут как у Сузы: A, A, трио, трио (и всё один раз); у остальных — три прохода одной части
+    if(T.trio){const Tr=T.trio.replace(/\|/g,' ').trim().split(/\s+/),ct=T.tch.trim().split(/\s+/).map(chordOf);T._m=A0.concat(A0,Tr,Tr);T._c=ca.concat(ca,ct,ct);T._sec=A0.length;T._passes=1;}
+    else{T._m=A0;T._c=ca;T._sec=0;T._passes=3;}}
+  const M=T._m,len=M.length,idx=AU.step%len,pass0=Math.floor(AU.step/len),pass=T._sec?Math.floor(idx/T._sec)%2:pass0,quiet=T._sec&&Math.floor(idx/T._sec)===2,bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
   if(play){
     if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
     else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.16));}
     else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
-      if(T.sty==='march'){if(pos===0)drum('kick',t,0.5);if(pos===h)drum('crash',t,0.12);if(pos===spb-2||pos===spb-1)drum('snare',t,0.3);}}
+      if(T.sty==='march'){if(pos===0)drum('kick',t,quiet?0.25:0.5);if(pos===h&&!quiet)drum('crash',t,0.12);if(pos===spb-T.div||pos===spb-T.div/2)drum('snare',t,quiet?0.15:0.3);}}
     const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;
-      inst(mi2,n,t,sub*d*0.95,0.4);if(d>=2||pass===1)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
-    if(AU.step>=len*3-1)musEnd(SY,t+sub);}
+      inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
+    if(AU.step>=len*T._passes-1)musEnd(SY,t+sub);}
   return sub;}
 function auSched(){
   const c=AU.ctx;if(!c)return;

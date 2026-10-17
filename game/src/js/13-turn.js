@@ -181,7 +181,7 @@ function step(){
   if(Math.random()<WAGE_POL[s.wagePol||'market'].strike*(s.workers>200?1.4:1)&&!s.pending.length&&s.workers>30)strikeThreat();
   s.m++;
   if(s.m>11){endOfYear(s);}
-  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&raceEligible(rc,s)&&!raceWarBlocked(rc,s))addLog(`Открыта запись на гонку «${rc.name}» (${MONTHS_G[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');});
+  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&raceEligible(rc,s)&&!raceWarBlocked(rc,s))addLog(`Открыта запись на гонку «${rc.name}» (в ${MONTHS_P[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');});
   seasonTick(s);
   checkAch();checkMilestones(s);
   // 0.21: перерасход покрывает банк — в пределах кредитного лимита (в кризис лимит урезан, а в панику кредит закрыт)

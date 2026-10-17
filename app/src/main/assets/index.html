@@ -894,6 +894,13 @@ button.qbx:active{opacity:.8}
 /* 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры */
 .ng-path{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start;text-align:left;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 12px 10px;cursor:pointer;color:var(--text)}
 .ng-path:hover,.ng-path:focus-visible{border-color:var(--brass)}
+/* 0.38: направление — три кнопки в ряд; ярлык героя (фабрикант, гонщик, авиатор…) */
+.ng-dirs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ng-dir{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;cursor:pointer;color:var(--text)}
+.ng-dir b{font-family:var(--display);font-size:15px}.ng-dir .ng-ico{font-size:26px;margin:0}
+.ng-dir.on{border-color:var(--brass);background:rgba(217,171,82,.14)}
+.ng-tag{display:inline-block;vertical-align:2px;margin-left:6px;padding:1px 7px;border-radius:9px;border:1px solid var(--brass);color:var(--brass);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:.04em;text-transform:uppercase}
+.brass{color:var(--brass)}
 .ng-ico{font-size:28px;line-height:1;margin-top:2px;text-align:center}
 .ng-b{display:block;min-width:0}
 .ng-b b{display:block;font-family:var(--display);font-size:18px}
@@ -4507,7 +4514,7 @@ function airMktRole(c,role,t,part){const M=AIR_MKT[c];if(!M)return 0;let v=0;
   if((!part||part==='mil')&&['recon','fight','bomb','train','sea'].includes(role))v+=tabAt(M.mil,t)*airMix(AIR_MIL_MIX,t,role);
   return Math.max(0,v);}
 // авиазаводы страны в этом назначении: вес — выпуск по истории
-function airComps(c,role,t){return (ACOMPS[c]||[]).filter(x=>x.since<=t&&(!x.until||x.until>t)&&(x.mix[role]||0)>0).map(x=>({x,w:tabAt(x.v,t)*(x.mix[role]||0)})).filter(o=>o.w>0.01);}
+function airComps(c,role,t,s){const me=(s||(typeof G!=='undefined'&&G)||{}).pioneer;return (ACOMPS[c]||[]).filter(x=>x.since<=t&&(!x.until||x.until>t)&&(x.mix[role]||0)>0&&!(x.pk&&x.pk===me)).map(x=>({x,w:tabAt(x.v,t)*(x.mix[role]||0)})).filter(o=>o.w>0.01);}
 // союзники и враги в войне 1914–1918 (Россия — до Брестского мира; США — с апреля 1917; Италия — с мая 1915)
 function airWarOn(c,t){if(c==='us')return t>=1917.26&&t<1918.87;if(c==='it')return t>=1915.39&&t<1918.87;if(c==='ru')return t>=1914.58&&t<1918.2;return t>=1914.58&&t<1918.87;}
 function airFoe(a,b,t){if(a===b)return false;if(!airWarOn(a,t)||!airWarOn(b,t))return false;return (a==='de')!==(b==='de');}
@@ -4598,7 +4605,7 @@ function airCivSeg(role){return role==='sport'||role==='train'?'priv':'line';}
 function airCivDemand(s,t){const A=s.air,act=A.models.filter(m=>m.status==='prod'||m.status==='sale'),out={},mk={};
   const byRole={};act.forEach(m=>{if(m.role==='race')return;(byRole[m.role]=byRole[m.role]||[]).push(m);});
   for(const role in byRole){const L=byRole[role],seg=airCivSeg(role),qs=L.map(m=>airQ(m,t).q);
-    for(const c in COUNTRIES){const M=airMktRole(c,role,t,'civ');if(M<=0.01)continue;const comps=airComps(c,role,t),W=comps.reduce((a,o)=>a+o.w,0)+Math.max(0,M*0.15);
+    for(const c in COUNTRIES){const M=airMktRole(c,role,t,'civ');if(M<=0.01)continue;const comps=airComps(c,role,t,s),W=comps.reduce((a,o)=>a+o.w,0)+Math.max(0,M*0.15);
       const a=L.map((m,i)=>m.status==='sale'?airAttr(s,m,c,seg,t,qs[i],comps)*1.4:airAttr(s,m,c,seg,t,qs[i],comps)),Ap=a.reduce((x,y)=>x+y,0);if(Ap<=0)continue;
       const share=Math.min(0.9,Ap/(Ap+W)),K=mk[c]=mk[c]||{};K[role]=(K[role]||0)+M;
       L.forEach((m,i)=>{const d=M*share*a[i]/Ap;(out[m.id]=out[m.id]||{})[c]=d;});}}
@@ -4609,12 +4616,12 @@ function airCivK(s,c){const t=tNow(s);let k=1;if(t>=1920.9&&t<1922)k=0.7;if(t>=1
 const AIR_MIL_ROLES=['recon','fight','bomb','train','sea'];
 function airCapUnits(s,md){const kg=airStats(md,tNow(s)).W;return Math.max(0.2,(s.air.cap||0)*1000/kg);}
 // сколько аэропланов этого назначения армия закажет у вас за n месяцев
-function airMilWant(s,md,months,c){c=c||s.country;const t=tNow(s),M=airMktRole(c,md.role,t,'mil');if(M<=0.01)return 0;const comps=airComps(c,md.role,t),W=comps.reduce((a,o)=>a+o.w,0)+M*0.1,
+function airMilWant(s,md,months,c){c=c||s.country;const t=tNow(s),M=airMktRole(c,md.role,t,'mil');if(M<=0.01)return 0;const comps=airComps(c,md.role,t,s),W=comps.reduce((a,o)=>a+o.w,0)+M*0.1,
   q=airQ(md,t).q;let a=airAttr(s,md,c,'mil',t,q,comps);if(a<=0)return 0;
   if(airWarOn(c,t)){const ref=comps.length?comps.map(o=>o.w).sort((x,y)=>x-y)[Math.floor(comps.length/2)]:M*0.2;a*=clamp(airCapUnits(s,md)*12/Math.max(1,ref),0.3,3);}
   const sh=Math.min(0.85,a/(a+W));return M*sh*months/12;}
 function airMilPrice(s,md){const t=tNow(s),c=airCost(md,t,s,md.made).unit,ref=airRefPrice(md.role,t);return Math.round(clamp(c*1.22,ref*0.7,ref*1.35)/10)*10;}
-function airOrderAdd(s,o){const A=s.air;o.id=o.id||('ao'+(A.oid=(A.oid||0)+1));o.left=o.n;A.orders.push(o);if(o.mil)A.milN=(A.milN||0)+1;return o;}   // milN — для фильма: первый военный заказ
+function airOrderAdd(s,o){const A=s.air;o.id=o.id||('ao'+(A.oid=(A.oid||0)+1));o.left=o.n;A.orders.push(o);if(o.mil)A.milN=(A.milN||0)+1;A.ordN=(A.ordN||0)+1;return o;}   // milN — для фильма: первый военный заказ
 /* ---------- месяц авиацеха (из step) ---------- */
 function airMonth(s,r){const A=s.air;if(!A)return;const t=tNow(s),R={rev:0,ord:0,mat:0,wage:0,ovh:0,hire:0,tool:0,made:0,sold:0,ordN:0,lic:0,mk:{},fine:0,roy:0};r.air=R;
   if(A.b){A.b.left--;if(A.b.left<=0){A.b=null;A.lv=1;A.cap=Math.max(A.cap||0,AIRSHOP.cap);A.wk=Math.max(A.wk||0,AIRSHOP.wk);s.lines=s.lines||{car:1};s.lines.air=1;
@@ -4695,7 +4702,7 @@ function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats
     res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':P.n+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
   else if(kind==='flaw'){md.vk=Math.round((0.92+Math.random()*0.04)*1000)/1000;md.flown=1;md.flaw=1;md.status=md.role==='race'?'race':'proto';
     res={kind:'flaw',text:`«${md.name}» ${o.self?'слушается и садится, но на земле механики качают головами':'взлетел, но тянет хуже расчёта'}: мотор перегревается, полотно на крыле «дышит». Скорость — ${Math.round(airStats(md,t).v)} км/ч вместо ${Math.round(st.v)}. Доводка — месяц в авиацехе.`};}
-  else{md.vk=Math.round((0.97+Math.random()*0.06+Math.min(0.02,(A.flights||0)*0.002))*1000)/1000;md.flown=1;md.status=md.role==='race'?'race':'proto';A.fame=Math.min(100,A.fame+(o.self?3:2));
+  else{md.vk=Math.round((0.97+Math.random()*0.06+Math.min(0.02,(A.flights||0)*0.002)+(o.prog?0.01*o.prog:0))*1000)/1000;md.flown=1;md.status=md.role==='race'?'race':'proto';A.fame=Math.min(100,A.fame+(o.self?3:2)+(o.prog>=0.8?1:0));
     const s2=airStats(md,t),who=P.hero?'Вы':P.n,v=P.hero?'подняли':'поднял';
     res={kind:'ok',text:o.self?`${who} ${v} «${md.name}» в воздух${o.secs?` и пробыли в нём ${o.secs>=120?Math.round(o.secs/60)+' мин':Math.round(o.secs)+' с'}`:''}. ${o.hard?'Посадка жёсткая, но шасси выдержало. ':'Посадка — мягкая, на три точки. '}Механики снимают показания: скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`:
       `${who} ${v} «${md.name}» после ${Math.round(40+s2.vs*1.2)} метров разбега. Круг над полем, вираж, посадка — без единой поломки. Скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`};}
@@ -4723,17 +4730,26 @@ function airCheck(s){const A=s.air;if(!A||!A.lv||s.pending.length)return;const t
   // Версальский договор: Германии запрещено строить аэропланы
   if(s.country==='de'&&t>=1919.5&&!A.versailles){A.versailles=1;pushEvent({own:1,kicker:'Версаль',title:'Германии запрещено строить аэропланы',deck:'До 1922 года — ни одного',text:`По Версальскому договору союзная комиссия опечатывает авиазаводы и режет моторы. Фоккер вывез в Голландию 220 самолётов и 400 моторов в шести поездах; Юнкерс строит в Швеции и под Москвой.\nПеренести сборку за границу — дорого, но авиацех будет жить.`,
     choices:[[`Перенести сборку за границу (${money(Math.round((s.plantVal||0)*0.05+8000*cpi(s)))})`,'air:abroad'],['Законсервировать авиацех','ok']]},true);return;}
-  // военные заказы: в войну — раз в квартал, в мирное время — весной и осенью
+  // военные заказы: в войну — раз в квартал, в мирное время — весной и осенью.
+  // 0.38: первый заказ на модель — только через конкурс министерства (отзыв: «должны выполнять испытание для получения заказа,
+  // и сравнивать нас будут с конкурентами»): министерство объявляет условия, участвуют фирмы страны, место решает заказ.
+  // Повторные заказы на модель, уже прошедшую конкурс (или уже строившуюся для армии), приходят без конкурса, пока она не устарела.
   const war=airWarOn(s.country,t);if(t>=1910.9&&((war&&s.m%3===1)||(!war&&(s.m===2||s.m===8)))&&!(s.country==='de'&&airVersailles(t)&&!A.abroad)){
-    let best=null;AIR_MIL_ROLES.forEach(role=>{const B=airBestFor(s,role);if(!B||B.q<0.6)return;if(A.orders.some(o=>o.md===B.md.id&&o.left>0&&o.due-T>2))return;
+    let best=null,trial=null;AIR_MIL_ROLES.forEach(role=>{const B=airBestFor(s,role);if(!B||B.q<0.6)return;if(A.orders.some(o=>o.md===B.md.id&&o.left>0&&o.due-T>2))return;
       const months=war?4:6;let n=Math.round(airMilWant(s,B.md,months)*(war?1:0.8)),c=s.country;
       if(n<1&&war===false&&!s.soviet){['fr','uk','ru','it','us','de'].forEach(cc=>{if(cc===s.country)return;const m2=Math.round(airMilWant(s,B.md,months,cc));if(m2>n){n=m2;c=cc;}});}
-      n=Math.min(n,Math.max(1,Math.round(airCapUnits(s,B.md)*months*1.1)));
-      if(n>=1&&(!best||n*airMilPrice(s,B.md)>best.n*best.price))best={md:B.md,n,price:airMilPrice(s,B.md),c,months,q:B.q};});
+      n=Math.min(n,Math.max(1,Math.round(airCapUnits(s,B.md)*months*1.1)));if(n<1)return;
+      const proven=(B.md.milWon||0)>0||(B.md.milRep||0)>=5;
+      if(proven&&B.q>=0.9){if(!best||n*airMilPrice(s,B.md)>best.n*best.price)best={md:B.md,n,price:airMilPrice(s,B.md),c,months,q:B.q};}
+      else if(!trial||n>trial.n)trial={role,n,c,months};});
     if(best){const who=airMinistry(best.c,t,best.md.role);A.offer={md:best.md.id,n:best.n,price:best.price,due:T+best.months+1,who,c:best.c,mil:1};
-      pushEvent({own:1,kicker:war?'Военный заказ':'Заказ армии',title:`${who}: ${fmtN(best.n)} «${best.md.name}»`,deck:`по ${money(best.price)} — ${money(best.n*best.price)}, за ${best.months} мес.`,
-        text:`${who} ${war?'берёт всё, что летает и стреляет':'выбирает аэропланы для своих отрядов'}. «${best.md.name}» — ${best.q>=1.05?'лучше':best.q>=0.95?'не хуже':'чуть хуже'} ${airRefEntry(best.md.role,t)[1]} — ${best.q>=0.95?'и министерство готово платить':'но строить можно быстро'}. Цена — расходы завода и пятая часть сверху.\nВ авиацехе места на ${fmtN(Math.round(airCapUnits(s,best.md)))} таких аэропланов в месяц. Не успеете — неустойка десятая часть цены.${war?` Четверть суммы (${money(Math.round(best.n*best.price*0.25))}) министерство платит вперёд — на ангары и мастеров.`:''}`,
+      pushEvent({own:1,kicker:war?'Военный заказ':'Заказ армии',title:`${who}: ещё ${fmtN(best.n)} «${best.md.name}»`,deck:`по ${money(best.price)} — ${money(best.n*best.price)}, за ${best.months} мес.`,
+        text:`«${best.md.name}» уже знают в войсках: ${war?'фронт просит ещё, и министерство заказывает без нового конкурса':'министерство продлевает заказ без нового конкурса'}. «${best.md.name}» — ${best.q>=1.05?'лучше':best.q>=0.95?'не хуже':'чуть хуже'} ${airRefEntry(best.md.role,t)[1]}. Цена — расходы завода и пятая часть сверху.\nВ авиацехе места на ${fmtN(Math.round(airCapUnits(s,best.md)))} таких аэропланов в месяц. Не успеете — неустойка десятая часть цены.${war?` Четверть суммы (${money(Math.round(best.n*best.price*0.25))}) министерство платит вперёд — на ангары и мастеров.`:''}`,
         choices:[['Подписать','air:sign'],['Отказаться','air:nosign']]},true);return;}
+    if(trial){const ev=airTrialNew(s,trial.role,trial.c,trial.n,trial.months,war);if(ev){const who=airMinistry(trial.c,t,trial.role),R=AIR_ROLES[trial.role],F=airEvField(s,ev);
+      pushEvent({own:1,kicker:war?'Военный конкурс':'Конкурс министерства',title:`${who} объявляет конкурс: ${R.n.toLowerCase()}`,deck:`победителю — заказ на ${fmtN(trial.n)} машин, второму — на ${fmtN(Math.round(trial.n*0.4))}`,
+        text:`${who} ${war?'срочно ищет':'выбирает'} ${R.n.toLowerCase()} для своих отрядов и устраивает сравнительные испытания в ${MONTHS_P[ev.m]}: подъём на высоту на время, скорость на базе, посадка в круг у трибун. Комиссия ставит оценку каждой машине.\nУчастники: ${F.map(x=>`${x.n} (${x.plane})`).join(', ')} — и вы, если заявите облетанный аэроплан на вкладке «Небо». Лететь можно самому или доверить лётчику.\n${R.d}`,
+        choices:[['К конкурсу','air:ev:'+ev.key],['Позже','ok']]},true);return;}}
     // в войну: если своих годных аэропланов нет — строить чужие по лицензии
     if(war&&(A.cap||0)>=1&&!A.licOffer||war&&A.licOffer&&T-A.licOffer>=6){for(const role of ['fight','recon','bomb']){const B=airBestFor(s,role);if(B&&B.q>=0.8)continue;const L=airLicChoice(s,role);if(!L)continue;
       if(A.models.some(m=>m.lic&&m.name===L[1]&&m.status!=='off'))continue;A.licOffer=T;const md={...L[2],role,name:L[1]},n=Math.max(2,Math.round(Math.min(airMilWant(s,{...md,milRep:20},4)*0.6,airCapUnits(s,md)*4)));
@@ -4741,9 +4757,15 @@ function airCheck(s){const A=s.air;if(!A||!A.lv||s.pending.length)return;const t
         choices:[['Строить по лицензии','air:lic'],['Отказаться','ok']]},true);return;}}}
   // исторические лётчики погибают в свой год (по истории)
   (A.pil||[]).forEach(p=>{const P=AIR_PILOTS.find(x=>x.id===p.id);if(P&&P.d&&t>=P.d+0.5&&!p.gone){p.gone=1;}});A.pil=(A.pil||[]).filter(p=>!p.gone);}
+// 0.38: конкурс министерства на заказ — событие «Неба» (43i-airev.js) со сроком в следующем месяце; хранится в s.air.trials
+function airTrialNew(s,role,c,n,months,war){const A=s.air,t=tNow(s);const y=s.m===11?s.y+1:s.y,m=(s.m+1)%12,key=`mil-${c}-${y}-${m}-${role}`;
+  A.trials=(A.trials||[]).filter(e=>(e.y-1895)*12+e.m>=mi(s)-2);if(A.trials.some(e=>e.key===key))return null;
+  const ev={key,y,m,name:`Конкурс ${c===s.country?'министерства':'в '+COUNTRIES[c].name+' (род. п.)'.replace(' (род. п.)','')}: ${AIR_ROLES[role].n.toLowerCase()}`,place:FW_HOME[c]||'reims',kind:'trial',c,prize:Math.round(1200*cpi(s)/100)*100,mil:{n,role,months,war:!!war},len:100,dyn:1,h:['','','']};
+  A.trials.push(ev);return ev;}
 function airMinistry(c,t,role){const sea=role==='sea';return c==='fr'?(sea?'Морское министерство Франции':'Военное министерство Франции'):c==='uk'?(sea?'Адмиралтейство':t<1918.25?'Военное министерство (Королевский лётный корпус)':'Министерство авиации'):
   c==='de'?(sea?'Имперский флот':'Инспекция авиационных войск'):c==='it'?'Военное министерство Италии':c==='us'?(sea?'Флот США':'Военное министерство США (Сигнальный корпус)'):(c==='ru'&&t>=1918?'Главкоавиа':'Военное министерство России');}
 function airResolve(s,key){const A=s.air;if(!A)return false;const [,cmd,id]=key.split(':'),md=id?A.models.find(m=>String(m.id)===id):null;
+  if(cmd==='ev'){s.pending.shift();tab='race';save();render();try{openAirEv(key.slice(7));}catch(e){console.warn(e);}return true;}
   if(cmd==='design'){s.pending.shift();tab='models';save();render();try{openAirDesigner();}catch(e){console.warn(e);}return true;}
   if(cmd==='fly'&&md){s.pending.shift();save();render();if(typeof flyTest==='function'&&flyTest(md))return true;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
   if(cmd==='test'&&md){s.pending.shift();const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
@@ -4786,7 +4808,7 @@ function airIntroPapers(s){const A=s.air,md=A.models[0],t=tNow(s),st=airStats(md
 function airYear(s){const A=s.air;if(!A||!A.lv)return;const t=s.y+0.5,Y=A.y||{sold:0,rev:0,home:0},tot=AIR_ROLE_K.reduce((a,r)=>a+airMktRole(s.country,r,t),0);
   A.peakY=Math.max(A.peakY||0,Y.sold||0);if(tot>1){const sh=clamp((Y.home||0)/tot,0,1);A.shYrs=(A.shYrs||0)+sh;A.shLast=sh;}A.hist=(A.hist||[]).concat({y:s.y,sold:Y.sold||0,rev:Math.round(Y.rev||0),fame:Math.round(A.fame)}).slice(-40);A.y={sold:0,rev:0,home:0};}
 function airLegacyBits(s){const A=s.air;if(!A||!A.lv)return {peak:0,cum:0,shY:0};const k=airOnly(s)?1:0.5;return {peak:5*Math.max(A.peakY||0,(A.y||{}).sold||0),cum:5*(A.sold||0),shY:k*(A.shYrs||0)};}
-function airSportYears(s){const A=s.air,out=[];if(!A)return out;const Y={};Object.entries(A.ev||{}).forEach(([k,r])=>{if(r.place!==1)return;const ev=AIR_EV.find(e=>e.key===k);Y[r.y]=(Y[r.y]||0)+(ev&&(ev.open||ev.prize>=10000)?RACE_W.major:RACE_W.normal);});
+function airSportYears(s){const A=s.air,out=[];if(!A)return out;const Y={};Object.entries(A.ev||{}).forEach(([k,r])=>{if(r.place!==1)return;const ev=airEvByKey(s,k);if(ev&&ev.dyn)return;Y[r.y]=(Y[r.y]||0)+(ev&&(ev.open||ev.prize>=10000)?RACE_W.major:RACE_W.normal);});
   Object.values(A.rec||{}).forEach(r=>{Y[r.y]=(Y[r.y]||0)+4;});return Object.entries(Y).map(([y,v])=>[+y,v]);}
 function airLegacyTitle(t){const me=t.me,cats=['scale','market','innov','sport','capital','brand'],top=cats.slice().sort((a,b)=>me[b]/LEG_MAX[b]-me[a]/LEG_MAX[a])[0];
   if(t.place===1)return ['Величайшая авиационная империя эпохи','Ни одна настоящая авиационная фирма 1929 года не оставила такого следа.'];
@@ -6205,7 +6227,7 @@ function step(){
   if(Math.random()<WAGE_POL[s.wagePol||'market'].strike*(s.workers>200?1.4:1)&&!s.pending.length&&s.workers>30)strikeThreat();
   s.m++;
   if(s.m>11){endOfYear(s);}
-  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&raceEligible(rc,s)&&!raceWarBlocked(rc,s))addLog(`Открыта запись на гонку «${rc.name}» (${MONTHS_G[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');});
+  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&raceEligible(rc,s)&&!raceWarBlocked(rc,s))addLog(`Открыта запись на гонку «${rc.name}» (в ${MONTHS_P[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');});
   seasonTick(s);
   checkAch();checkMilestones(s);
   // 0.21: перерасход покрывает банк — в пределах кредитного лимита (в кризис лимит урезан, а в панику кредит закрыт)
@@ -7553,7 +7575,7 @@ function racerStep(s){if(!s||s.over||s.pending.length)return false;const X=s.rac
   s.m++;if(s.m>11){s.m=0;s.y++;racerYear(s);}
   if(X.job&&!racerJobObj(s)){addLog(`${brandShort(X.job.n)} закрыл гоночный отдел: место испытателя закончилось.`,'hist');X.job=null;}
   if(X.team&&!racerTeamObj(s)){addLog(`${brandShort(X.team.n)} больше не выставляет команду: контракт закончился.`,'hist');X.teamsBefore.push(X.team.n);X.team=null;}
-  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&!raceWarBlocked(rc,s)){const st=racerStatus(rc,s);if(st[2])addLog(`Открыта запись на гонку «${rc.name}» (${MONTHS_G[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');}});
+  RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&!raceWarBlocked(rc,s)){const st=racerStatus(rc,s);if(st[2])addLog(`Открыта запись на гонку «${rc.name}» (в ${MONTHS_P[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');}});
   racerSeasonTick(s);racerNews(s);
   if(s.cash<-Math.round(600*cpi(s))){s.over=true;s.pending.push({title:'Карьера окончена',deck:`${X.name}: долги`,text:`Деньги кончились, а долги выросли: машину забрали кредиторы. Гоночная карьера окончена в ${dstr(s)}.`,paper:true,choices:[['Итоги','rx:final']]});}
   else if(s.y>=1930){s.over=true;racerFinal(s);}
@@ -8395,7 +8417,9 @@ function voiceLoad(){if(VOICE.idx)return Promise.resolve(VOICE.idx);if(VOICE.loa
 function voiceDur(text,spk){const d=VOICE.idx&&VOICE.idx[voiceHash(text,spk)];return d||0;}
 // В приложении (страница с file://) звук голоса берётся с сайта игры; без сети — говорит голос телефона
 const VOICE_REMOTE='https://akechko-tech.github.io/avtoimperia/';
-function voiceUrl(text,spk){return (location.protocol==='file:'?VOICE_REMOTE:'')+'voice/'+voiceHash(text,spk)+'.mp3';}
+// 0.38: записи голоса и музыки лежат в релизах GitHub (сайт Pages вмещает 1 ГБ — медиа больше): voice-<первый знак хэша>/<хэш>.mp3, music/<id>.m4a
+const MEDIA_REL='https://github.com/akechko-tech/avtoimperia/releases/download/';
+function voiceUrl(text,spk){const h=voiceHash(text,spk);return MEDIA_REL+'voice-'+h[0]+'/'+h+'.mp3';}
 // Разрешить звук: браузеры дают играть голос только после нажатия — «разогреваем» проигрыватель прямо в обработчике нажатия
 function voiceUnlock(){if(VOICE.unlocked)return;try{const a=VOICE.el||(VOICE.el=new Audio());a.src=VOICE_SILENT;const p=a.play();if(p&&p.then)p.then(()=>{VOICE.unlocked=true;}).catch(()=>{});else VOICE.unlocked=true;}catch(e){}}
 // Сказать строку. Возвращает длительность в секундах (0 — голоса нет); onEnd — когда договорит
@@ -15123,7 +15147,7 @@ function airAdvice(s){const A=s.air,t=tNow(s),T=[];
   const proto=A.models.find(m=>m.status==='proto'&&!m.flown);if(proto)T.push(['✈',`«${proto.name}» ждёт первого полёта.`,'Лететь','airFlyBtn',proto.id]);
   const flown=A.models.find(m=>m.status==='proto'&&m.flown);if(flown)T.push(['🏭',`«${flown.name}» облетан — пора в серию (оснастка ${money(airToolCost(s,flown))}).`,'В серию','airProd',flown.id]);
   if(!A.models.some(m=>m.status==='dev'||m.status==='prod'||m.status==='proto'||m.status==='tool'))T.push(['📐','Нет ни одного аэроплана в работе — начертите новый.','Конструктор','airDesign']);
-  const ev=typeof airEvSoon==='function'?airEvSoon(s)[0]:null;if(ev)T.push(['🏆',`${ev.name}: приз ${money(ev.prize)}.`,'В «Небо»','tab','race']);
+  const ev=typeof airEvSoon==='function'?airEvSoon(s)[0]:null;if(ev)T.push(['🏆',ev.dyn?`${ev.name}: победителю — заказ на ${fmtN(ev.mil.n)} машин.`:`${ev.name}: приз ${money(ev.prize)}.`,'В «Небо»','tab','race']);
   const old=A.models.find(m=>m.status==='prod'&&airQ(m,t).q<0.75);if(old)T.push(['⚠',`«${old.name}» устарел (оценка ${airQ(old,t).q.toFixed(2).replace('.',',')}) — покупатели уходят к новым.`,'Конструктор','airDesign']);
   if((A.last&&A.last.load||0)>1.05)T.push(['🔨','Ангары переполнены — заказы не успевают.','Ангар','tab','plant']);
   if(airWarOn(s.country,t)&&!A.models.some(m=>m.role==='fight')&&t>=1915.3)T.push(['⚔','Фронту нужны истребители: скорость, подъём и пулемёт через винт.','Конструктор','airDesign']);
@@ -15208,7 +15232,7 @@ function airMktSum(s){const t=tNow(s),c=s.country,tot=AIR_ROLE_K.reduce((a,r)=>a
 function airMarketView(s){return `<section class="card"><h2>Заказчики</h2><p class="small muted" style="margin-top:4px">Сколько аэропланов покупают в стране за год и у кого. Спортсмены и школы платят сразу, армия и флот — по контрактам: министерство сравнивает ваш аэроплан с лучшими и берёт у тех, кто успевает строить.</p></section>${airMarketHTML(s)}`;}
 function airMarketHTML(s){const A=s.air,t=tNow(s),c=s.country,war=airWarOn(c,t);
   const roles=AIR_ROLE_K.filter(r=>r!=='race'&&airMktRole(c,r,t)>0.3);
-  const rows=roles.map(r=>{const civ=airMktRole(c,r,t,'civ'),mil=airMktRole(c,r,t,'mil'),comps=airComps(c,r,t).sort((a,b)=>b.w-a.w),W=comps.reduce((a,o)=>a+o.w,0)||1,mine=A.models.filter(m=>m.role===r&&(m.status==='prod'||m.status==='sale')),ref=airRefEntry(r,t);
+  const rows=roles.map(r=>{const civ=airMktRole(c,r,t,'civ'),mil=airMktRole(c,r,t,'mil'),comps=airComps(c,r,t,s).sort((a,b)=>b.w-a.w),W=comps.reduce((a,o)=>a+o.w,0)||1,mine=A.models.filter(m=>m.role===r&&(m.status==='prod'||m.status==='sale')),ref=airRefEntry(r,t);
     const top=comps.slice(0,4).map(o=>`${esc(o.x.n)} ${pct(o.w/W,0)}`).join(' · ');const myY=mine.reduce((a,m)=>a+(m.lastSold||0)*12,0);
     return `<div class="race-item"><div class="row"><h3>${AIR_ROLES[r].ico} ${AIR_ROLES[r].n}</h3><b class="num">${fmtN(Math.round(civ+mil))} в год</b></div>
       <p class="small muted">${civ>0.3?`покупатели — ${fmtN(Math.round(civ))}`:''}${civ>0.3&&mil>0.3?' · ':''}${mil>0.3?`армия и флот — ${fmtN(Math.round(mil))}`:''} · эталон «${esc(ref[1])}», ${money(airRefPrice(r,t))}</p>
@@ -15216,7 +15240,9 @@ function airMarketHTML(s){const A=s.air,t=tNow(s),c=s.country,war=airWarOn(c,t);
   const ord=A.orders.map(o=>{const m=A.models.find(x=>x.id===o.md);return `<p class="small" style="margin-top:4px">${esc(o.who)}: «${esc(m?m.name:'?')}» — ${fmtN(o.n-o.left)} из ${fmtN(o.n)} по ${money(o.price)}, срок ${dstr({y:1895+Math.floor(o.due/12),m:o.due%12})}</p>`;}).join('');
   const abroad=['fr','uk','de','it','us','ru'].filter(x=>x!==c).map(x=>{const r=airReach(s,x,'priv');return `${COUNTRIES[x].name}: ${r<=0?'<span class="bad">закрыто</span>':r>=0.3?'открыто':'трудно'}`;}).join(' · ');
   return `<section class="card"><div class="row"><h2>${COUNTRIES[c].name}</h2><span class="pill ${war?'bad':'good'}">${war?'война':'мир'}</span></div>${rows||'<p class="small muted" style="margin-top:6px">Аэропланов здесь пока почти не покупают.</p>'}</section>
-    <section class="card"><h2>Контракты</h2>${ord||'<p class="small muted" style="margin-top:6px">Контрактов нет. Армия выбирает аэропланы весной и осенью (в войну — каждый квартал): нужна модель в серии, не хуже эталона.</p>'}</section>
+    <section class="card"><h2>Контракты</h2>${ord||'<p class="small muted" style="margin-top:6px">Контрактов нет.</p>'}
+      ${(()=>{const Tr=(A.trials||[]).filter(e=>airEvStatus(s,e)==='open');return Tr.length?Tr.map(e=>`<button class="ec-row tri" data-act="airEv" data-k="${esc(e.key)}" style="margin-top:6px"><i>⚔</i><span><b>${esc(e.name)}</b> — ${MONTHS_N[e.m]} ${e.y}: победителю заказ на ${fmtN(e.mil.n)}, второму — на ${fmtN(Math.round(e.mil.n*0.4))}. Заявка — на вкладке «Небо».</span></button>`).join(''):'';})()}
+      <p class="small muted" style="margin-top:6px">Первый заказ на модель армия даёт по итогам конкурса: весной и осенью (в войну — каждый квартал) министерство объявляет сравнительные испытания, участвуют фирмы страны, комиссия ставит оценки. Победителю — заказ, второму — меньший. Модель, уже прошедшую конкурс, потом заказывают снова без испытаний, пока она не отстанет от эталона.</p></section>
     <section class="card"><h2>За границей</h2><p class="small muted" style="margin-top:6px">Спортсмены и школы других стран покупают ваши аэропланы, если о вас слышали (слава ${Math.round(A.fame)}). ${abroad}.</p></section>`;}
 
 /* ================= SHEETS ================= */
@@ -15350,70 +15376,76 @@ function openRD(){
     ${XF.length?`<div style="margin-top:8px">${fold('rdX','🔁 Переносы между линейками',`<p class="small muted" style="margin-top:4px">Изобретение принадлежит марке: что освоено в автомобиле, можно перенести в мотоцикл, и наоборот. Перенос дешевле нового исследования и вдвое быстрее, но может не удаться — тогда деталь выходит тяжелее или дороже, а вторая попытка дешевле и вероятнее.</p>${XF.map(item).join('')}`,true,`${XF.length} ${plural(XF.length,'перенос','переноса','переносов')} · лучший шанс ${Math.round(Math.max(...XF.map(p=>p.chance))*100)}%`)}</div>`:''}
     ${!L.length?'<p class="small muted" style="margin-top:10px">Все доступные детали улучшены до предела.</p>':''}`);
 }
-// 0.35: новая игра — сначала путь, потом его исторические фигуры (отзыв: «сначала выбор пути, появляются персонажи для выбора: гонщик —
-// одни исторические фигуры, мото — другие, либо фабрикант, финансист, техник»). Фабрикант, финансист и техник — своя марка с января 1895 года
-const NG_PATHS=[
-  {k:'racer',ico:'🏁',t:'Гонщик',when:'дебют — с 1895 по 1924 год',d:'Призы, заводские команды и слава — потом своя марка, как у Лянчи и Шевроле.'},
-  {k:'moto',ico:'🏍',t:'Мотомастерская',when:'с 1899 по 1905 год — по стране',d:'Мало денег и мотоциклы — потом автомобильный цех, как у NSU, Laurin & Klement и Peugeot.'},
-  // 0.37: путь «Авиатор» — аэропланы, рекорды, призы, армия; потом, может быть, и автомобили (как у Вуазена и Фармана)
-  {k:'air',ico:'✈',t:'Авиатор',when:'с 1907 по 1915 год — по герою',d:'Аэропланы: рекорды и призы, армия и война в небе. Потом, может быть, и автомобили — как у Вуазена и Фармана.'},
-  {k:'maker',ico:'🏭',t:'Фабрикант',when:'январь 1895 года',d:'Поток и мощности: машина дешевле, чем у всех, — и её покупает каждый.'},
-  {k:'money',ico:'💼',t:'Финансист',when:'январь 1895 года',d:'Капитал, кредит и сделки: покупайте марки и собирайте из них империю.'},
-  {k:'tech',ico:'🔧',t:'Техник',when:'январь 1895 года',d:'Лучшие машины эпохи: КБ, качество и изобретения раньше других.'}];
-function ngPathOf(d){return d.path==='racer'?'racer':d.path==='moto'?'moto':d.path==='air'?'air':(d.role||'maker');}
-// герои пути: гонщики — из RACERS, мотоциклисты — PIONEERS с moto, фабриканты, финансисты и техники — PIONEERS с role
+/* 0.38: новая игра — направление → страна → герои этой страны и направления (отзыв: «в выборе сверху выбираем направление —
+   авто, мото или авиа, а затем соответствующих героев; вместе с героем и страна: засунуть Даймлера в Россию не получится, начать
+   авиа с Даймлером нельзя — под каждую комбинацию направление-страна свой выбор героев. Гонщик, финансист и т. д. — атрибут героя,
+   а не выбор»). Ярлык героя — фабрикант, финансист, техник, гонщик (он начинает путь гонщика), мотоциклист, авиатор. */
+const NG_DIRS=[
+  {k:'car',ico:'🚗',t:'Автомобили',when:'январь 1895 года · гонщики — с 1895 по 1924 год',d:'Своя марка: от мастерской до автоимперии. Гонщик начинает с купленной гоночной машины, призов и заводских команд — и основывает марку, как Лянча и Шевроле.'},
+  {k:'moto',ico:'🏍',t:'Мотоциклы',when:'с 1899 по 1905 год — по стране',d:'Мотомастерская: мало денег и мотоциклы — потом автомобильный цех, как у NSU, Laurin & Klement и Peugeot.'},
+  {k:'air',ico:'✈',t:'Аэропланы',when:'с 1907 по 1915 год — по герою',d:'Авиамастерская: рекорды и призы, армия и война в небе. Потом, может быть, и автомобили — как у Вуазена и Фармана.'}];
+const NG_TAG={maker:'Фабрикант',money:'Финансист',tech:'Техник',racer:'Гонщик',moto:'Мотоциклист',air:'Авиатор'};
+const NG_PATHS=NG_DIRS;   // старое имя — для проверок
+function ngDirOf(d){return d.dir||'car';}
+// герои направления в стране: автомобили — фабриканты, финансисты, техники (PIONEERS с role) и гонщики (RACERS); мотоциклы — PIONEERS с moto; аэропланы — с air;
+// в конце — свой персонаж (и свой гонщик у автомобилей)
+function ngHeroList(dir,c){const L=[];
+  if(dir==='car'){Object.keys(PIONEERS).filter(k=>{const P=PIONEERS[k];return k!=='custom'&&!P.racer&&!P.moto&&!P.air&&!!P.role&&P.c===c;}).forEach(k=>L.push({k,kind:'pio',tag:NG_TAG[PIONEERS[k].role]}));
+    Object.entries(RACERS).filter(([k,r])=>k!=='custom'&&r.c===c).forEach(([k])=>L.push({k,kind:'racer',tag:'Гонщик'}));}
+  else Object.keys(PIONEERS).filter(k=>{const P=PIONEERS[k];return k!=='custom'&&(dir==='moto'?!!P.moto:!!P.air)&&P.c===c;}).forEach(k=>L.push({k,kind:'pio',tag:NG_TAG[dir]}));
+  L.push({k:'custom',kind:'custom',tag:dir==='car'?'Фабрикант':NG_TAG[dir]});if(dir==='car')L.push({k:'rcustom',kind:'racer',tag:'Гонщик'});return L;}
 function ngHeroes(k){if(k==='racer')return Object.keys(RACERS).filter(x=>x!=='custom');return Object.keys(PIONEERS).filter(x=>x!=='custom'&&(k==='moto'?PIONEERS[x].moto:k==='air'?PIONEERS[x].air:PIONEERS[x].role===k));}
 function ngFace(k,racer){const P=racer?RACERS[k]:PIONEERS[k],d=racer&&DRIVERS.find(x=>x.id===k),im=racer?d&&IMG[DRIVER_WIKI[d.id]]:P.wiki&&IMG[P.wiki],nm=racer?P.n:P.name;
   return im?`<span class="ng-face"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></span>`:!racer&&typeof portraitSVG==='function'?`<span class="ng-face ng-svg">${portraitSVG(k)}</span>`:`<span class="ng-face ng-ini">${esc(String(nm).split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;}
-function openPathPick(){
-  const card=p=>{const H=ngHeroes(p.k),racer=p.k==='racer',names=H.map(k=>{const n=racer?RACERS[k].n:PIONEERS[k].name;return n.split(' ').slice(-1)[0];}).join(', ');
-    return `<button class="ng-path" data-act="ngPath" data-v="${p.k}"><span class="ng-ico">${p.ico}</span><span class="ng-b"><b>${p.t}</b><small class="ng-when">${p.when}</small><span class="ng-d">${p.d}</span><span class="ng-faces">${H.slice(0,5).map(k=>ngFace(k,racer)).join('')}<small>${esc(names)}${H.length?' или свой персонаж':''}</small></span></span></button>`;};
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
-    <p class="small muted" style="margin-top:6px">Кем вы начнёте? Путь решает, когда и с чего начнётся игра и за кого из исторических фигур можно играть. Цель одна — к 1930 году создать величайшую автоимперию эпохи.</p>
-    <div class="stack" style="margin-top:12px;gap:8px">${NG_PATHS.slice(0,3).map(card).join('')}</div>
-    <div class="label" style="margin-top:16px">Своя марка с января 1895 года</div>
-    <div class="stack" style="margin-top:8px;gap:8px">${NG_PATHS.slice(3).map(card).join('')}</div>`);}
+function ngCustomCo(dir){return dir==='moto'?'Мотомастерская':dir==='air'?'Авиамастерская':PIONEERS.custom.co;}
+// герой выбран: страна — его; свой персонаж — в выбранной стране
+function ngSetHero(d,kind,k){d.hero={kind,k};
+  if(kind==='pio'){d.country=PIONEERS[k].c;d.company=PIONEERS[k].co;}
+  else if(kind==='racer'&&k!=='rcustom'){d.country=RACERS[k].c;}
+  else if(kind==='custom'){d.company=ngCustomCo(d.dir);}}
+function ngHeroOk(d){const L=ngHeroList(d.dir,d.country);return L.some(h=>h.kind===d.hero.kind&&h.k===d.hero.k);}
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
-  draft={ng:true,lock:!G,pioneer:prev?prev.pioneer:'ford',country:prev?prev.country:'us',company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
-    path:prev&&prev.path||'company',role:prev&&prev.role||null,step:prev&&prev.step||'path',racer:prev&&prev.racer||'custom',rname:prev&&prev.rname||'',rc:prev&&prev.rc||'fr',ry:prev&&prev.ry||1900};
-  if(draft.step==='path'){openPathPick();return;}
-  const PT=NG_PATHS.find(p=>p.k===ngPathOf(draft))||NG_PATHS[2];
-  const pathChips=`<div class="row ng-back" style="margin-top:10px"><button class="linkbtn" data-act="ngBack">← Другой путь</button><span class="small muted">${PT.ico} ${PT.t} · ${PT.when}</span></div>`;
-  if(draft.path==='racer'){openRacerNew(pathChips);return;}
-  // 0.34: у «Мотомастерской» — свои герои (мотоциклисты, что потом строили автомобили) и «Свой персонаж»; у марки — автомобилисты
-  // 0.35: у фабриканта, финансиста и техника — свои (role), Энцо Феррари — у гонщиков
-  const moto=draft.path==='moto',air=draft.path==='air',role=moto||air?null:(draft.role||'maker');if(!moto&&!air)draft.role=role;
-  const fits=k=>{const P=PIONEERS[k];return !!P&&!P.racer&&(k==='custom'||(air?!!P.air:moto?!!P.moto:(!P.moto&&!P.air&&P.role===role)));};
-  if(!fits(draft.pioneer)){const was=PIONEERS[draft.pioneer],nk=moto?'custom':air?'bleriot':(ngHeroes(role)[0]||'custom');if(!was||draft.company===was.co)draft.company=nk==='custom'?(moto?'Мотомастерская':PIONEERS.custom.co):PIONEERS[nk].co;draft.pioneer=nk;if(nk!=='custom')draft.country=PIONEERS[nk].c;}
-  const AP=air?PIONEERS[draft.pioneer]:null,aY=air?(AP&&AP.air?AP.ay:(ASTART_C[draft.country]||1909)):0;
-  const list=Object.keys(PIONEERS).filter(fits).sort((a,b)=>(a==='custom')-(b==='custom')).map(k=>[k,PIONEERS[k]]).map(([k,P])=>`<button class="pion ${draft.pioneer===k?'on':''}" data-act="pion" data-v="${k}">${portraitHTML(k)}<div><h3>${P.name}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}</div><p>${P.bio}</p><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`).join('');
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>${pathChips}
-    <p class="small muted" style="margin-top:8px">${air?`${AP&&AP.air&&AP.am?MONTHS_N[AP.am].replace(/^./,c=>c.toUpperCase()):'Январь'} ${aY} года. Ангар на поле за городом, горстка мастеров и первый аэроплан. Покупатели — спортсмены, лётные школы и армия; призы — тысячи; война — десятки тысяч машин. ${(()=>{const t=ASTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:moto?`Январь ${motoStartY(draft.country)} года. Мастерская с горсткой рабочих и одним мотоциклом. Наберитесь опыта, постройте автомобильный цех и выпустите первую машину — как Laurin & Klement, NSU и Peugeot. ${(()=>{const t=MSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`:`${(()=>{const t=CSTART_TIP[draft.country];return t?`<b>Старт: ${t[0]}.</b> ${t[1]}`:'';})()}`} ${air?'Цель — создать величайшую авиационную фирму эпохи. В 1930 году её сравнят с настоящими — Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Caproni, «Дукс» — по масштабу, рынку, изобретениям, рекордам, капиталу и имени.':'Цель — создать величайшую автоимперию эпохи. В 1930 году вашу компанию сравнят с реальными — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce — по масштабу, рынку, изобретениям, победам, капиталу и имени.'}</p>
-    <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
-    <label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(draft.company)}" maxlength="28" style="margin-top:6px">
-    <label class="label" for="fname" style="display:block;margin-top:12px">Как назовёте ${air?'первый аэроплан':moto?'первый мотоцикл':'первую машину'}?</label><input type="text" id="fname" value="${esc(air?(draft.first&&draft.first!=='Тип 1'?draft.first:((AP&&AP.a1&&AP.a1.name)||airStartDesign(draft.country,aY).name)):(draft.first||'Тип 1'))}" maxlength="24" style="margin-top:6px" placeholder="Тип 1">
-    <div class="label" style="margin-top:14px">Страна</div>
-    <div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.country===k?'on':''}" data-act="country" data-v="${k}">${c.name}<small>${c.city} · ${money(c.cash)} · гоночный цвет — ${c.raceName}</small><small>${c.note}</small></button>`).join('')}</div>
+  draft={ng:true,lock:!G,dir:prev&&prev.dir||'car',country:prev&&prev.country||'us',hero:prev&&prev.hero||{kind:'pio',k:'ford'},company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
+    rname:prev&&prev.rname||'',ry:prev&&prev.ry||1900};
+  const d=draft;if(!ngHeroOk(d)){d.hero={kind:'custom',k:'custom'};d.company=ngCustomCo(d.dir);}
+  // имя первого аэроплана, подставленное за игрока («Блерио XI», «Моноплан № 1»), — не его выбор: у другого героя — другое
+  if(d.first&&(d.first==='Моноплан № 1'||d.first==='Биплан № 1'||Object.values(PIONEERS).some(P=>P.a1&&P.a1.name===d.first)))d.first='Тип 1';
+  const dir=d.dir,DIR=NG_DIRS.find(x=>x.k===dir),c=d.country,H=d.hero,isRacer=H.kind==='racer',cust=H.kind==='custom',rcust=isRacer&&H.k==='rcustom';
+  // старые поля черновика — для запуска (60-actions.js): путь и герой
+  d.path=isRacer?'racer':dir==='moto'?'moto':dir==='air'?'air':'company';d.pioneer=H.kind==='pio'||cust?H.k:'custom';d.racer=isRacer?(rcust?'custom':H.k):'custom';d.rc=c;d.role=H.kind==='pio'&&PIONEERS[H.k].role||'maker';
+  const AP=dir==='air'&&H.kind==='pio'?PIONEERS[H.k]:null,aY=dir==='air'?(AP?AP.ay:(ASTART_C[c]||1909)):0;
+  const TIP=dir==='air'?ASTART_TIP:dir==='moto'?MSTART_TIP:CSTART_TIP;
+  const dirs=`<div class="ng-dirs">${NG_DIRS.map(x=>`<button class="ng-dir ${x.k===dir?'on':''}" data-act="ngDir" data-v="${x.k}"><span class="ng-ico">${x.ico}</span><b>${x.t}</b></button>`).join('')}</div>
+    <p class="small muted" style="margin-top:8px"><b class="brass">${DIR.when}.</b> ${DIR.d}</p>`;
+  const countries=`<div class="label" style="margin-top:14px">Страна</div>
+    <div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,x])=>{const t=TIP[k],n=ngHeroList(dir,k).filter(h=>h.kind!=='custom'&&h.k!=='rcustom').length;
+      return `<button class="chip ${c===k?'on':''}" data-act="country" data-v="${k}">${x.name}<small>${x.city} · ${money(x.cash)}${t?` · старт: ${t[0]}`:''}</small><small>${n?`${n} ${plural(n,'герой','героя','героев')} и свой персонаж`:'свой персонаж'}</small></button>`;}).join('')}</div>
+    ${TIP[c]?`<p class="small muted" style="margin-top:6px"><b>Старт: ${TIP[c][0]}.</b> ${TIP[c][1]}</p>`:''}`;
+  const card=h=>{const on=H.kind===h.kind&&H.k===h.k,tag=`<span class="ng-tag">${h.tag}</span>`;
+    if(h.kind==='racer'){if(h.k==='rcustom')return `<button class="pion ${on?'on':''}" data-act="rpick" data-v="custom"><div class="ph-oval rx-anon"><span>🏁</span></div><div><h3>Свой гонщик ${tag}</h3><div class="yrs">${esc(COUNTRIES[c].name)} · год дебюта — на выбор</div><p>Начните с нуля: купите первую машину, заработайте имя и капитал — и основайте свою марку.</p></div></button>`;
+      const P=RACERS[h.k],dr=DRIVERS.find(x=>x.id===h.k),im=dr&&IMG[DRIVER_WIKI[dr.id]];
+      return `<button class="pion ${on?'on':''}" data-act="rpick" data-v="${h.k}">${im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>'}<div><h3>${esc(P.n)} ${tag}</h3><div class="yrs">дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}
+    const P=PIONEERS[h.k];if(h.kind==='custom')return `<button class="pion ${on?'on':''}" data-act="pion" data-v="custom">${portraitHTML('custom')}<div><h3>Свой персонаж ${tag}</h3><div class="yrs">${esc(COUNTRIES[c].name)} · ${dir==='air'?`${ASTART_C[c]||1909} год`:dir==='moto'?`${motoStartY(c)} год`:'1895 год'}</div><p>${dir==='air'?'Ангар на поле за городом, горстка мастеров и первый аэроплан.':dir==='moto'?'Мастерская с горсткой рабочих и одним мотоциклом.':P.bio}</p></div></button>`;
+    return `<button class="pion ${on?'on':''}" data-act="pion" data-v="${h.k}">${portraitHTML(h.k)}<div><h3>${P.name} ${tag}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}${dir==='air'&&P.ay?` · ${P.am?MONTHS_N[P.am]+' ':''}${P.ay} год`:''}</div><p>${P.bio}</p><div class="bon">${(P.plus||[]).map(x=>`<span class="p">${x}</span>`).join('')}${(P.minus||[]).map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`;};
+  const heroes=`<div class="label" style="margin-top:14px">Кто вы? · ${esc(COUNTRIES[c].name)}</div><div class="stack" style="margin-top:8px;gap:8px">${ngHeroList(dir,c).map(card).join('')}</div>`;
+  const goal=dir==='air'?'Цель — создать величайшую авиационную фирму эпохи: в 1930 году её сравнят с настоящими — Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Caproni, «Дукс».':isRacer?'Путь гонщика: призы, спонсоры и заводские команды, рейтинг лучших гонщиков эпохи; накопите капитал — и основайте свою марку, дальше игра пойдёт в режиме магната.':'Цель — создать величайшую автоимперию эпохи: в 1930 году вашу компанию сравнят с настоящими — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce.';
+  const fields=isRacer?(rcust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(d.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
+      <div class="label" style="margin-top:14px">Год дебюта</div><div class="chips" style="margin-top:6px">${Object.keys(RX_ERA).map(y=>`<button class="chip ${+d.ry===+y?'on':''}" data-act="ryear" data-v="${y}">${y}<small>${RX_ERA[y]}</small></button>`).join('')}</div>`:'')
+    :`<label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(d.company)}" maxlength="28" style="margin-top:6px">
+    <label class="label" for="fname" style="display:block;margin-top:12px">Как назовёте ${dir==='air'?'первый аэроплан':dir==='moto'?'первый мотоцикл':'первую машину'}?</label><input type="text" id="fname" value="${esc(dir==='air'?(d.first&&d.first!=='Тип 1'?d.first:((AP&&AP.a1&&AP.a1.name)||airStartDesign(c,aY).name)):(d.first||'Тип 1'))}" maxlength="24" style="margin-top:6px" placeholder="Тип 1">`;
+  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>
+    ${dirs}${countries}${heroes}
+    <p class="small muted" style="margin-top:10px">${goal}</p>
+    ${fields}
     <div class="label" style="margin-top:14px">Сложность</div>
-    <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,d])=>`<button class="chip ${draft.diff===k?'on':''}" data-act="diff" data-v="${k}">${d.name}<small>${d.desc}</small></button>`).join('')}</div>
-    <button class="btn primary block" style="margin-top:16px" data-act="startgame">${air?'Открыть авиамастерскую':moto?'Открыть мотомастерскую':'Основать компанию'}</button>`);
-  document.getElementById('cname').addEventListener('input',e=>{draft.company=e.target.value;});
-  document.getElementById('fname').addEventListener('input',e=>{draft.first=e.target.value;});
+    <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,x])=>`<button class="chip ${d.diff===k?'on':''}" data-act="diff" data-v="${k}">${x.name}<small>${isRacer&&k==='kids'?'Соперники слабее, аварии мягче':x.desc}</small></button>`).join('')}</div>
+    <button class="btn primary block" style="margin-top:16px" data-act="${isRacer?'startracer':'startgame'}">${isRacer?'Выйти на старт':dir==='air'?'Открыть авиамастерскую':dir==='moto'?'Открыть мотомастерскую':'Основать компанию'}</button>`);
+  const cn=document.getElementById('cname');if(cn)cn.addEventListener('input',e=>{draft.company=e.target.value;});
+  const fn=document.getElementById('fname');if(fn)fn.addEventListener('input',e=>{draft.first=e.target.value;});
+  const rn=document.getElementById('rname');if(rn)rn.addEventListener('input',e=>{draft.rname=e.target.value;});
 }
 const RX_ERA={1895:'первые гонки городов',1900:'Кубок Гордона Беннетта',1905:'Гран-при и Вандербильт',1910:'Индианаполис и Тарга',1919:'после войны',1924:'наддув и Монца'};
-function openRacerNew(pathChips){const cust=draft.racer==='custom';
-  const list=Object.entries(RACERS).map(([k,P])=>{const d=DRIVERS.find(x=>x.id===k);return `<button class="pion ${draft.racer===k?'on':''}" data-act="rpick" data-v="${k}">${(()=>{const im=d&&IMG[DRIVER_WIKI[d.id]];return im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>';})()}<div><h3>${esc(P.n)}</h3><div class="yrs">${P.y?`дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}`:'любая страна и год дебюта'}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}).join('');
-  openSheet(`<div class="row"><h2>Новая игра</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="В главное меню">×</button>'}</div>${pathChips}
-    <p class="small muted" style="margin-top:8px">Путь гонщика: купите первую машину, выигрывайте призы, подписывайте контракты со спонсорами и заводскими командами, сравнивайте себя с лучшими гонщиками эпохи. Накопите капитал — и основайте свою марку, как Лянча в 1906 году или Шевроле в 1911-м: дальше игра пойдёт в режиме магната.</p>
-    <div class="label" style="margin-top:14px">Кто вы?</div><div class="stack" style="margin-top:8px;gap:8px">${list}</div>
-    ${cust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(draft.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
-      <div class="label" style="margin-top:14px">Страна</div><div class="country" style="margin-top:6px">${Object.entries(COUNTRIES).map(([k,c])=>`<button class="chip ${draft.rc===k?'on':''}" data-act="rcountry" data-v="${k}">${c.name}<small>${c.city} · гоночный цвет — ${c.raceName}</small></button>`).join('')}</div>
-      <div class="label" style="margin-top:14px">Год дебюта</div><div class="chips" style="margin-top:6px">${Object.keys(RX_ERA).map(y=>`<button class="chip ${+draft.ry===+y?'on':''}" data-act="ryear" data-v="${y}">${y}<small>${RX_ERA[y]}</small></button>`).join('')}</div>`:''}
-    <div class="label" style="margin-top:14px">Сложность</div>
-    <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,d])=>`<button class="chip ${draft.diff===k?'on':''}" data-act="diff" data-v="${k}">${d.name}<small>${k==='kids'?'Соперники слабее, аварии мягче':d.desc}</small></button>`).join('')}</div>
-    <button class="btn primary block" style="margin-top:16px" data-act="startracer">Выйти на старт</button>`);
-  const rn=document.getElementById('rname');if(rn)rn.addEventListener('input',e=>{draft.rname=e.target.value;});}
 function openMenuSheet(){
   openSheet(`<div class="row"><h2>Меню</h2>${X}</div>
     <p class="small muted" style="margin-top:4px">«${esc(G.company)}» · ${dstr(G)} · игра сохраняется сама каждый месяц.</p>
@@ -18979,8 +19011,8 @@ function flCraft(md,y,o){o=o||{};const st=airStats(md,y),A=st.A,P=A.P,gr=air3dGe
     p:[0,0,0],v:[0,0,0],fw:[0,0,1],up:[0,1,0],rt:[1,0,0],w:[0,0,0],
     thr:0,eng:{run:1,rpm:0,fail:null,smoke:0},dmg:{eng:0,wing:0,tail:0,pil:0,fire:0},hp:1,
     gnd:1,th:gr.gp,sea:st.sea,rail:!!P.g.rail,tr:a0+0.12,al:0,be:0,V:0,n:1,stall:0,drop:0,crash:null,hard:0,
-    ctl:{sx:0,sy:0,rd:0,thr:0},pm:st.roll*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
-    tau:0.1+Math.min(0.3,A.W/16000),kA:o.kA||3.2,trimK:o.trimK===undefined?1.4:o.trimK,lvlK:o.lvlK===undefined?1.1:o.lvlK,
+    ctl:{sx:0,sy:0,rd:0,thr:0},pm:Math.max(40,st.roll*1.5)*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
+    tau:0.08+Math.min(0.22,A.W/20000),kA:o.kA||4.6,trimK:o.trimK===undefined?1.4:o.trimK,lvlK:o.lvlK===undefined?1.1:o.lvlK,
     name:md.name,dist:0,air:0,t:0,rnd:o.rnd||Math.random,ai:o.ai||null,team:o.team||0,id:o.id||0};
   ac.thMax=gr.gp>0.05?gr.gp:0.14;ac.burn=A.hpN*A.P.e.sfc/3600;ac.haz=-Math.log(clamp(st.rel,0.2,0.9999))/3600;return ac;}
 // высота центра тяжести над землёй на колёсах при угле тангажа th (хвост на земле — при th = gp)
@@ -19132,6 +19164,18 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
   const rho=RHO0*airSig(ac.p[1]),qd=0.5*rho*V*V,den=Math.max(1,qd*ac.A.S*ac.CLa),nv=(V*1.2*(gT-gam)+FLG*Math.cos(gam))/Math.max(0.35,Math.cos(phi));
   c.aCmd=clamp(ac.a0+ac.m*nv/den,ac.an+0.02,ac.as-(o.edge?0.005:0.03));c.sy=0;
   if(o.spd!==undefined)c.thr=clamp(0.55+(o.spd-ac.V)*0.12,0,1);else c.thr=o.thr===undefined?1:o.thr;}
+/* ---------- 0.38: посадка лётчиком («Сесть»): выход на дальнюю точку, глиссада 4° на круг, выравнивание у земли, пробег ----------
+   A — центр поля [x,z], gy — его высота. Состояние — в ac.ld; возвращает 'ip' | 'final' | 'flare' | 'roll' | 'done' */
+function flAutoLand(ac,A,gy,dt){const W=flW();let L=ac.ld;const dx=ac.p[0]-A[0],dz=ac.p[2]-A[1],d=Math.hypot(dx,dz);
+  if(!L){const u=d>50?[dx/d,dz/d]:[0,1];L=ac.ld={st:d>1400?'final':'ip',u,ip:[A[0]+u[0]*1900,A[1]+u[1]*1900],t:0};}
+  L.t+=dt;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));
+  if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=0;const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&ac.V>3?clamp(e*2,-1,1):0;L.st=ac.V<2.5?'done':'roll';return L.st;}
+  if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:gy+130,spd:ac.Vs*1.45,floor:50,bank:0.7});if(di<220||(L.t>8&&di<400))L.st='final';return L.st;}
+  // прямая: нос на круг, глиссада 4°, скорость 1,3 посадочной; ниже 7 м — выравнивание: газ долой, нос подбирать, снижение 0,6 м/с
+  const glide=gy+flHcg(ac,0)+Math.max(0,d-40)*Math.tan(0.07);
+  if(agl>7&&L.st!=='flare'){flAuto(ac,{x:A[0],z:A[1],alt:Math.min(glide,ac.p[1]),spd:ac.Vs*1.3,floor:0,dive:0.12,bank:0.5});L.st='final';return L.st;}
+  L.st='flare';flAuto(ac,{hdg:flHdg(ac),alt:ac.p[1]-0.6,thr:0,floor:0,edge:1,bank:0.3});const V=Math.max(4,ac.V),qd=0.5*RHO0*V*V,sink=-ac.v[1];
+  ac.ctl.aCmd=clamp(ac.a0+ac.m*(FLG+(sink-0.6)*1.5)/Math.max(1,qd*ac.A.S*ac.CLa),ac.an,ac.as-0.01);ac.ctl.thr=0;return L.st;}
 /* ---------- соперник по кругу: летит по точкам с постоянной скоростью (результат — по истории) ---------- */
 function flKin(o){return Object.assign({p:[0,0,0],psi:0,phi:0,pit:0,V:30,alt:60,bm:0.75,i:0,R:120,kin:1,lap:0},o);}
 function flKinStep(k,dt){const P=k.wp;if(!P||!P.length)return;const t=P[k.i];const dx=t[0]-k.p[0],dz=t[1]-k.p[2],d=Math.hypot(dx,dz);
@@ -19173,7 +19217,9 @@ function flyBind(){const $=id=>document.getElementById(id),st=FLY.st;
   $('fCam').onclick=()=>{FLY.cam=(FLY.cam+1)%4;FLY.ce=null;flToast(['Вид сзади','Из кабины','Издали','С земли'][FLY.cam]);};
   $('fWarp').onclick=()=>{const M=FL.mi,L=[1,2,4,8,16,32,64].filter(w=>w<=(M?flWarpMax():1));const i=L.indexOf(FLY.warp);FLY.warp=L[(i+1)%L.length]||1;$('fWarp').textContent='×'+FLY.warp;};
   $('fAuto').onclick=()=>{FLY.auto=!FLY.auto;$('fAuto').classList.toggle('on',FLY.auto);flToast(FLY.auto?'Автопилот: лётчик ведёт сам':'Ручное управление');if(!FLY.auto){FLY.warp=Math.min(FLY.warp,4);$('fWarp').textContent='×'+FLY.warp;if(FL.me)FL.me.ctl.aCmd=null;}};
-  $('fLand').onclick=()=>{if(FL.mi&&FL.mi.land)FL.mi.land();};
+  // 0.38: «Сесть» — лётчик честно заходит на посадку (дальняя точка, глиссада, выравнивание), а не «сел» мгновенно; ещё нажатие — снова ручное
+  $('fLand').onclick=()=>{const M=FL.mi;if(!M||!M.land)return;if(FLY.landing){FLY.landing=null;if(FL.me){FL.me.ld=null;FL.me.ctl.aCmd=null;}flToast('Ручное управление');return;}
+    const at=M.landAt?M.landAt():[M.A[0],M.A[1],FW&&FW.S.A?FW.S.A.y:0];FLY.landing={at,fin:()=>M.land()};FLY.auto=false;$('fAuto').classList.remove('on');if(FL.me)FL.me.ld=null;FLY.warp=Math.min(FLY.warp,2);$('fWarp').textContent='×'+FLY.warp;flToast('Лётчик заходит на посадку','good');};
   $('fQuit').onclick=()=>flyQuitAsk();$('fHelp').onclick=()=>flyHelp();
   window.addEventListener('keydown',e=>{if(!FL.on)return;FLY.keys[e.code]=true;if(e.code==='KeyC')$('fCam').click();if(e.code==='KeyT')$('fWarp').click();if(e.code==='KeyP')$('fAuto').click();if(e.code==='Escape')flyQuitAsk();
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();});
@@ -19190,14 +19236,14 @@ function flyQuitAsk(){if(!FL.on)return;const M=FL.mi;if(M&&M.over){flyClose();re
   document.getElementById('fQ1').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};document.getElementById('fQ2').onclick=()=>{b.hidden=true;if(M&&M.quit)M.quit();else flyClose();};}
 /* ---------- управление ---------- */
 function flyInput(dt){const me=FL.me,c=me.ctl,K=FLY.keys,st=FLY.st;if(me.crash)return;
-  if(FLY.auto&&FL.mi&&FL.mi.auto){FL.mi.auto(dt);return;}c.aCmd=null;c.lvl=true;
+  if(FLY.landing)return;if(FLY.auto&&FL.mi&&FL.mi.auto){FL.mi.auto(dt);return;}c.aCmd=null;c.lvl=true;
   let sx=st.x,sy=st.y;const kx=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0),ky=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0);
   FLY.kx=(FLY.kx||0)+(kx-(FLY.kx||0))*Math.min(1,dt*(kx?5:9));FLY.ky=(FLY.ky||0)+(ky-(FLY.ky||0))*Math.min(1,dt*(ky?4:9));if(Math.abs(FLY.kx)>0.01)sx=FLY.kx;if(Math.abs(FLY.ky)>0.01)sy=FLY.ky;
-  const ex=v=>Math.sign(v)*Math.pow(Math.abs(v),1.5);c.sx=ex(sx);c.sy=ex(sy);c.rd=(K.KeyE?1:0)-(K.KeyQ?1:0);
+  const ex=v=>Math.sign(v)*Math.pow(Math.abs(v),1.25);c.sx=ex(sx);c.sy=ex(sy);c.rd=(K.KeyE?1:0)-(K.KeyQ?1:0);
   if(K.ShiftLeft||K.ShiftRight)FLY.thrT=Math.min(1,FLY.thrT+dt*0.6);if(K.ControlLeft||K.ControlRight)FLY.thrT=Math.max(0,FLY.thrT-dt*0.6);c.thr=FLY.thrT;
   FL.fire=FLY.fire||!!K.Space;FL.bomb=FLY.bomb||!!K.KeyB;}
 function flWarpMax(){const M=FL.mi,me=FL.me;if(!M||!me)return 1;if(me.crash||M.over)return 1;const agl=me.p[1]-Math.max(0,fwHgt(FW.S,me.p[0],me.p[2]));
-  if(me.gnd||agl<60)return 2;if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||4);}
+  if(me.gnd||agl<60)return 2;if(FLY.landing)return 4;/* 0.38: лётчик ведёт на посадку — можно ×4, у земли ×2 */if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||4);}
 /* ---------- камера ---------- */
 function flyCam(dt){const me=FL.me,cv=G3.cv,asp=Math.max(0.3,(cv.clientWidth||1)/(cv.clientHeight||1)),mesh=FL.meMesh,v=me.v,sp=l3(v);
   const hf=FLY.cam===1?1.25:1.05;let vf=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.92;if(2*Math.atan(Math.tan(vf/2)*asp)>1.8)vf=2*Math.atan(Math.tan(0.9)/asp);
@@ -19223,7 +19269,7 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
   $('fThrI').style.height=Math.round(FLY.thrT*100)+'%';$('fThrK').textContent=Math.round((FLY.auto?me.thr:FLY.thrT)*100)+'%';
   const w=$('fWarn');const wt=me.crash?'':me.stall&&!me.gnd?'СРЫВ!':stallW&&!me.gnd?'Мала скорость':me.creak?'ТРЕЩАТ ЛОНЖЕРОНЫ':!me.eng.run&&!me.gnd?'Мотор стоит — планируйте на посадку':fuel<0.08&&!me.gnd?'Мало бензина':'';me.creak=0;w.hidden=!wt;w.textContent=wt;
   $('fClock').textContent=M&&M.clock?M.clock():'';if(M&&M.goal)$('fGoal').innerHTML=M.goal();if(M&&M.board){const b=M.board();$('fBoard').innerHTML=b;$('fBoard').hidden=!b;}
-  $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&M.canLand&&M.canLand());$('fWarp').textContent='×'+FLY.warp;
+  $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&(FLY.landing||M.canLand&&M.canLand()));$('fLand').textContent=FLY.landing?'Сам':'Сесть';$('fLand').classList.toggle('on',!!FLY.landing);$('fWarp').textContent='×'+FLY.warp;
   $('fFire').hidden=!(M&&M.guns);$('fBomb').hidden=!(M&&M.bombs);}
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
 function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;if(!tg){el.hidden=true;return;}
@@ -19244,7 +19290,7 @@ function flyFront(m,md,P){if(!flyCan())return false;return flyStart({kind:'war',
 function flyStart(cfg){if(FL.on)return true;const s=G;let M;try{M=flMission(cfg);}catch(e){console.error(e);return false;}
   const el=flyEl(),cv=document.getElementById('rgl');if(!cv)return false;let ok=false;try{ok=g3Init(cv);}catch(e){ok=false;}if(!ok)return false;
   FL.on=true;FL.cfg=cfg;FL.mi=M;FL.paused=false;FL.t=0;FL.k=1;FL.noFail=false;FL.wind=[0,0,0];FL.fire=false;FL.bomb=false;
-  Object.assign(FLY,{cam:0,warp:1,auto:false,ce:null,fb:null,thrT:0,fire:false,bomb:false,keys:{},last:performance.now()});
+  Object.assign(FLY,{cam:0,warp:1,auto:false,landing:null,ce:null,fb:null,thrT:0,fire:false,bomb:false,keys:{},last:performance.now()});
   FLY.cvParent=cv.parentNode;FLY.cvNext=cv.nextSibling;document.getElementById('fView').appendChild(cv);cv.hidden=false;
   el.hidden=false;document.body.classList.add('flying');document.getElementById('fName').textContent=M.title||'';document.getElementById('fEnd').hidden=true;document.getElementById('fHelpBox').hidden=true;
   document.getElementById('fLoad').hidden=false;document.getElementById('fLoadT').textContent=cfg.kind==='test'?'Выкатываем аэроплан из ангара…':'Аэродром готовится…';
@@ -19276,7 +19322,7 @@ function flyLoop(now){if(!FL.on)return;FLY.raf=requestAnimationFrame(flyLoop);co
 function flyTick(dt,dtR){const M=FL.mi,me=FL.me;
   if(dt>0){flyInput(dt);const wm=flWarpMax();if(FLY.warp>wm)FLY.warp=wm;
     const sim=dt*(M.over?1:FLY.warp),h=FLY.warp<=4?1/120:1/30,n=Math.min(600,Math.ceil(sim/h)),d=sim/n;
-    for(let i=0;i<n;i++){const p0=[me.p[0],me.p[1],me.p[2]];if(FLY.auto&&M.auto&&!me.crash)M.auto(d);flStep(me,d);
+    for(let i=0;i<n;i++){const p0=[me.p[0],me.p[1],me.p[2]];if(FLY.landing&&!me.crash){const L=FLY.landing,st=flAutoLand(me,L.at,L.at[2],d);if(st==='done'){FLY.landing=null;me.ld=null;if(!M.over)L.fin();}}else if(FLY.auto&&M.auto&&!me.crash)M.auto(d);flStep(me,d);
       if(M.ai)M.ai(d);for(const k of M.rivals)flKinStep(k,d);FL.t+=d;if(!M.over&&M.step)M.step(d,p0);}
     fwPartsTick(Math.min(dt*FLY.warp,0.2));flyFx(dt);FL.pa=(FL.pa||0)+dt*(8+me.eng.rpm*110);}
   // телефон не успевает — кадр мельче (до 0,6), тени и дальний лес — проще; успевает — обратно
@@ -19291,7 +19337,7 @@ function flyFx(dt){const me=FL.me,E=FW.S,M=FL.mi;
   if(me.gnd&&me.V>6){const s=flSurf(me.p[0],me.p[2]);if(Math.random()<dt*me.V*0.8){const back=[me.p[0]-me.fw[0]*3,me.p[1]-1.2,me.p[2]-me.fw[2]*3];
     if(s.k==='water')fwPart(back[0]+(Math.random()-0.5)*2,0.3,back[2],(Math.random()-0.5)*3,2+Math.random()*2,(Math.random()-0.5)*3,0.8,4,1.2,[220,228,234],0.55,6);
     else fwPart(back[0]+(Math.random()-0.5)*2,back[1],back[2],(Math.random()-0.5),0.6,(Math.random()-0.5),0.8,5,1.6,[150,138,112],0.28);}}
-  if(me.dmg.eng>0.3||me.dmg.fire>0){if(Math.random()<dt*20)fwPart(me.p[0]+me.fw[0]*2,me.p[1],me.p[2]+me.fw[2]*2,0,1,0,1.2,6,4,me.dmg.fire>0?[40,36,34]:[90,88,86],0.5);}}
+  if(me.dmg.eng>0.3||me.dmg.fire>0){if(Math.random()<dt*8)fwPart(me.p[0]+me.fw[0]*2,me.p[1],me.p[2]+me.fw[2]*2,0,1,0,1.0,4,3,me.dmg.fire>0?[40,36,34]:[110,106,102],0.4);}}
 function flyItems(cam){const me=FL.me,M=FL.mi,L=[],mm=FLY.mM||(FLY.mM=new Float32Array(16));m4basis(mm,me.rt,me.up,me.fw,me.p);
   L.push({mesh:FL.meMesh,M:mm,p:me.p,rpm:me.eng.run?me.eng.rpm:me.eng.rpm*0.5,pa:FL.pa,me:1,cock:cam.cock});
   M.rivals.forEach((k,i)=>{const ax=flKinAxes(k),m=k.Mx||(k.Mx=new Float32Array(16));m4basis(m,ax.rt,ax.up,ax.fw,k.p);L.push({mesh:k.mesh,M:m,p:k.p,rpm:0.95,pa:FL.pa*1.07+i});});
@@ -19375,15 +19421,28 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   M.quitText=()=>'Попытка не засчитана: аэроплан вернётся в ангар.';
   M.clock=()=>flFmtT((FL.t||0)*(FL.k||1));
   /* ===== первый полёт ===== */
-  if(k==='test'){M.title=`Первый полёт: «${md.name}»`;const need=t<1909?25:t<1911?80:150;M.phase=0;M.mood='clear';
-    M.goal=()=>M.phase===0?`<b>Взлёт</b><span>Газ — до отказа, ручку не трогать: оторвётся сам. Наберите ${need} м.</span>`:M.phase===1?`<b>Набор высоты</b><span>${Math.round(altF())} из ${need} м</span>`:`<b>Посадка</b><span>Круг над полем и посадка на аэродром: газ убрать, у земли — ручку на себя.</span>`;
-    M.target=()=>M.phase>=2?[M.A[0],gyA()+2,M.A[1],'аэродром']:null;
+  if(k==='test'){M.title=`Первый полёт: «${md.name}»`;const need=t<1909?25:t<1911?80:150,early=t<1909;M.phase=0;M.maxH=0;M.mood='clear';M.sc={};
+    // 0.38: программа испытания (отзыв «миссия скучновато»): взлёт → набор высоты на время → вираж вокруг пилона → пролёт над ангарами → посадка в круг; оценка испытателя
+    const py=[M.A[0]+(early?500:900),M.A[1]+(early?300:500)],pyR=early?220:260;M.objs.push({k:'pylon',x:py[0],z:py[1],h:20,col:'#f0d040'},{k:'gate',x:M.A[0],z:M.A[1],a:0,w:120,h:6});
+    const PH=[['Взлёт',()=>`Газ — до отказа, ручку не трогать: оторвётся сам.`],['Набор высоты — на время',()=>`${Math.round(altF())} из ${need} м${M.tAir?' · '+flFmtT(FL.t-M.tAir):''}`],
+      ['Вираж вокруг жёлтого пилона',()=>M.nearPy?'Обогнули — возвращайтесь к полю':'Обогните пилон и вернитесь к аэродрому'],['Пролёт над полем',()=>`Пройдите над кругом у ангаров ниже ${early?30:45} м — пусть видят, что аэроплан слушается`],
+      ['Посадка',()=>'Газ убрать, планировать на круг, у земли — ручку на себя. Чем ближе к кругу, тем лучше']];
+    M.goal=()=>`<b>${M.phase+1} из 5: ${PH[M.phase][0]}</b><span>${PH[M.phase][1]()}</span>`;
+    M.target=()=>M.phase===2?(M.nearPy?[M.A[0],gyA()+30,M.A[1],'к полю']:[py[0],undefined,py[1],'пилон']):M.phase===3?[M.A[0],gyA()+20,M.A[1],'над кругом']:M.phase>=4?[M.A[0],gyA()+2,M.A[1],'круг']:null;
     M.step=()=>{const a=me();if(a.crash){M.done('crash');return;}if(!M.flew&&!a.gnd){M.flew=1;M.tAir=FL.t;flToast('Оторвался!','good');M.phase=1;}
-      if(M.flew){if(!a.gnd)M.maxH=Math.max(M.maxH,agl());if(M.phase===1&&agl()>need){M.phase=2;flToast('Высота набрана — заходите на посадку','good');}
-        if(a.gnd&&a.V<2.5){if(FL.t-M.tAir<20||M.maxH<8){M.flew=0;M.phase=0;flToast('Это подлёт — нужен настоящий полёт');}else M.done('land');}}};
+      if(!M.flew)return;if(!a.gnd)M.maxH=Math.max(M.maxH,agl());const dA=Math.hypot(a.p[0]-M.A[0],a.p[2]-M.A[1]);
+      if(M.phase===1&&agl()>need){M.sc.climb=FL.t-M.tAir;M.phase=2;flToast(`Высота ${need} м за ${flFmtT(M.sc.climb)} — теперь вираж вокруг пилона`,'good');}
+      else if(M.phase===2){if(!M.nearPy&&Math.hypot(a.p[0]-py[0],a.p[2]-py[1])<pyR){M.nearPy=1;flToast('Пилон обогнут — назад к полю','good');}
+        if(M.nearPy&&dA<700){M.sc.turn=1;M.phase=3;flToast('Вираж выполнен — пролёт над полем, пониже','good');}}
+      else if(M.phase===3){const h=agl();if(dA<150&&h<(early?30:45)&&h>4&&!a.gnd){M.sc.fly=1;M.phase=4;flToast('Публика в восторге! Заходите на посадку','good');try{auSfx('cheer',0.7);}catch(_){}}}
+      if(a.gnd&&a.V<2.5){if(FL.t-M.tAir<20||M.maxH<8){M.flew=0;M.phase=0;flToast('Это подлёт — нужен настоящий полёт');}else{M.sc.land=dA;M.done('land');}}};
     M.canLand=()=>M.phase>=2&&Math.hypot(me().p[0]-M.A[0],me().p[2]-M.A[1])<1600&&!me().gnd;M.land=()=>M.done('land',1);
-    M.done=(how,auto)=>{const a=me(),risk=airTestRisk(s,md,P);let res;if(how==='crash')res=airTestApply(s,md,P,'crash',{why:a.crash,self:1});
-      else res=airTestApply(s,md,P,Math.random()<risk*0.55?'flaw':'ok',{self:1,secs:(FL.t-(M.tAir||0)),hard:a.hard||auto&&Math.random()<0.2});
+    // оценка испытателя: подъём против расчёта, вираж, пролёт, посадка у круга; хорошая программа уменьшает шанс «не так, как задумано»
+    M.score=()=>{const ref=Math.max(20,st.t1k*60*need/1000);let q=0.25;if(M.sc.climb)q+=0.25*clamp(ref/M.sc.climb,0.4,1.2);if(M.sc.turn)q+=0.2;if(M.sc.fly)q+=0.15;if(M.sc.land!=null)q+=0.15*clamp(1.2-M.sc.land/250,0,1);return clamp(q,0,1);};
+    M.done=(how,auto)=>{const a=me(),risk=airTestRisk(s,md,P),q=M.score();let res;if(how==='crash')res=airTestApply(s,md,P,'crash',{why:a.crash,self:1});
+      else res=airTestApply(s,md,P,Math.random()<risk*0.55*(1.35-0.7*q)?'flaw':'ok',{self:1,secs:(FL.t-(M.tAir||0)),hard:a.hard||auto&&Math.random()<0.2,prog:q});
+      const prog=[M.sc.climb?`подъём на ${need} м — ${flFmtT(M.sc.climb)}`:'',M.sc.turn?'вираж вокруг пилона':'',M.sc.fly?'пролёт над полем':'',M.sc.land!=null?`посадка в ${Math.round(M.sc.land)} м от круга`:(auto?'посадку сделал испытатель':'')].filter(Boolean).join(', ');
+      if(res.kind!=='crash'&&prog)res.text+=` Программа: ${prog}. Оценка испытателя — ${Math.round(q*10)} из 10.`;
       M.fin(res.kind==='crash'?'Аэроплан разбит':res.kind==='flaw'?'Летает — но не так, как задумано':'«'+md.name+'» летает!',res.text,res,res.kind==='crash'?'bad':res.kind==='ok'?'good':'');};
     M.quit=()=>{if(!M.flew){flyClose();return;}const res=airTestAuto(s,md,P.id);M.res=res;M.over=true;M.apply();flyClose();};M.quitText=()=>M.flew?'Испытатель посадит аэроплан сам — результат определит его посадка.':'Аэроплан вернётся в ангар; лететь можно позже — с карточки модели.';
     M.apply=()=>{airFlightNews(s,md,M.res);};M.fallback=()=>{const res=airTestAuto(s,md,P.id);airFlightNews(s,md,res);};
@@ -19398,6 +19457,8 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   const ssE=st.sea?flSeaStart(M.place):null;if(ssE&&ev){M.A=ssE.A;O=[ssE.A[0]+ssE.n[0]*180+ssE.f[0]*420,ssE.A[1]+ssE.n[1]*180+ssE.f[1]*420];f=ssE.f;n=ssE.n;M.start={x:ssE.A[0],z:ssE.A[1],hdg:Math.atan2(f[0],f[1])};}
   const circuit=(lapKm,laps)=>{const L=lapKm*1000,C=flRect(O,f,n,L*0.36,L*0.14);M.C=C;M.lapKm=C.len/1000;M.laps=laps;M.seq=[C.start];for(let l=0;l<laps;l++){C.gates.forEach(g=>M.seq.push(g));M.seq.push(C.start);}M.gi=0;M.lap=0;
     C.P.forEach((p,i)=>M.objs.push({k:'pylon',x:p[0],z:p[1],h:24,sea:!!st.sea||!!(ev&&ev.sea),col:['#e0402a','#f0d040','#2a60c0','#40a040'][i]}));
+    // 0.38: трасса — по чистому полю: просеки вдоль сторон прямоугольника и от аэродрома к линии старта
+    C.P.forEach((p,i)=>{const q=C.P[(i+1)%C.P.length];M.objs.push({k:'clear',a:[p[0],p[1]],b:[q[0],q[1]],w:260});});M.objs.push({k:'clear',a:[M.A[0],M.A[1]],b:[O[0],O[1]],w:300});
     M.objs.push({k:'gate',x:O[0],z:O[1],a:Math.atan2(f[0],f[1])+Math.PI/2,w:460,h:16,sea:!!st.sea});M.aims=C.gates.map(g=>g.aim);};
   const gateStep=(p0)=>{const a=me(),g=M.seq[M.gi];if(!g)return false;if(!flCross(p0,a.p,g.a,g.b))return false;if(g.dir&&a.v[0]*g.dir[0]+a.v[2]*g.dir[1]<0)return false;M.gi++;return g;};
   const nextAim=()=>{const g=M.seq&&M.seq[M.gi];return g?[g.aim[0],undefined,g.aim[1],g.n]:null;};
@@ -19450,6 +19511,9 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   if(k==='rspeed'){M.title='Рекорд скорости на базе 3 км';const cur=airRecCur(s,'speed'),zb=ss?O[1]:700,xb=ss?O[0]:0,u=ss?f:[1,0],w=ss?n:[0,1];
     const G1=[xb-u[0]*1500,zb-u[1]*1500],G2=[xb+u[0]*1500,zb+u[1]*1500],seg=(c)=>({a:[c[0]-w[0]*300,c[1]-w[1]*300],b:[c[0]+w[0]*300,c[1]+w[1]*300]});
     [G1,G2].forEach(c=>{for(const sd of [-1,1])M.objs.push({k:'pylon',x:c[0]+w[0]*sd*300,z:c[1]+w[1]*sd*300,h:20,sea:!!st.sea,col:'#e0402a'});});
+    M.objs.push({k:'clear',a:[G1[0]-u[0]*900,G1[1]-u[1]*900],b:[G2[0]+u[0]*900,G2[1]+u[1]*900],w:420},{k:'clear',a:[M.A[0],M.A[1]],b:[xb,zb],w:300});
+    // судейские палатки и флаги на концах базы — видно, где она
+    [G1,G2].forEach(c=>M.objs.push({k:'judge',x:c[0]+w[0]*380,z:c[1]+w[1]*380,a:Math.atan2(u[0],u[1])}));
     M.pass=[];M.cur=null;M.need=0;
     M.goal=()=>`<b>${M.pass.length===0?'Первый проход':M.pass.length===1?'Обратный проход':'Готово'}</b><span>${M.cur?'на базе: '+flFmtT(FL.t-M.cur.t0):'Влетайте в ворота базы ниже 150 м, на полном газу.'}${M.pass.length?' · первый: '+flKmh(3/(M.pass[0]/3600))+' км/ч':''}</span>`;
     M.board=()=>`<b>Мировой рекорд</b><p>${flKmh(cur.v)} км/ч — ${esc(cur.who)}</p>`;
@@ -19469,12 +19533,12 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     const dest={channel:'Дувр',alps:'Домодоссола',pyrenees:'Мадрид',russia:ev.key==='spbmos-1911'?'Москва':ev.key==='kiev-1914'?'Киев':'Пекин',england:ev.key==='lonman-1910'?'Манчестер':'финиш',med:'Бизерта',atlantic:'Ирландия'}[M.place]||'финиш';M.destN=dest;
     const cruise=M.place==='alps'?2500:M.place==='pyrenees'?2000:M.place==='atlantic'||M.place==='med'?600:450;
     M.goal=()=>{const a=me(),d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])*km/1000;return `<b>До: ${dest} — ${fmtN(Math.round(d))} км</b><span>в пути ${flFmtT(FL.t*km)} · бензин ${Math.round(a.fuel/a.fuelMax*100)}%${M.place==='alps'?' · перевал — 2 000 м':''}</span>`;};
-    M.board=()=>`<b>В истории</b><p>${esc(airEvMine(G,ev)?'Вы':ev.h[0])}: ${esc(ev.h[2])}</p>`;
+    if(!ev.dyn)M.board=()=>`<b>В истории</b><p>${esc(airEvMine(G,ev)?'Вы':ev.h[0])}: ${esc(ev.h[2])}</p>`;
     M.target=()=>[M.B[0],undefined,M.B[1],dest];
     M.auto=()=>{const a=me();flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
     M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);
       if(M.flew&&a.gnd&&a.V<3){if(d<900)M.done(true);else M.done(false,a.eng.run?'сел, не долетев':'вынужденная посадка: '+(a.eng.fail||'мотор'));}};
-    M.canLand=()=>{const a=me();return M.flew&&!a.gnd&&Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])<2600;};M.land=()=>M.done(true);
+    M.canLand=()=>{const a=me();return M.flew&&!a.gnd&&Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])<2600;};M.land=()=>M.done(true);M.landAt=()=>[M.B[0],M.B[1],FW&&FW.S.B?FW.S.B.y:0];
     M.done=(ok,why)=>{const h=Math.round(FL.t*km/360)/10,sea=/channel|med|atlantic/.test(M.place),wet=!ok&&why&&/вод/.test(why);
       const res={ev:ev.key,md:md.id,pil:P.id,field:F,ok,h,place:ok?1:0,txt:ok?`долетел за ${String(h).replace('.',',')} ч`:wet||(!ok&&sea)?'сел на воду — лётчика подобрал миноносец':why||'не долетел'};
       M.fin(ok?`${dest}! Перелёт удался`:'Перелёт не удался',ok?`${who} ${P.hero?'долетели':'долетел'} за ${String(h).replace('.',',')} ч.`:res.txt,res,ok?'good':'bad');};
@@ -19482,6 +19546,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   /* ===== военный конкурс: подъём, скорость на базе, посадка в круг ===== */
   if(k==='trial'){const H1=t<1912?300:500,role=ev.mil?ev.mil.role:'recon',zb=900,G1=[-1500,zb],G2=[1500,zb],ref=airStats(airRefMd(role,t),t);M.task=0;M.sc={};
     [G1,G2].forEach(c=>{for(const sd of [-1,1])M.objs.push({k:'pylon',x:c[0],z:c[1]+sd*300,h:18,col:'#e0402a'});});M.objs.push({k:'gate',x:0,z:0,a:0,w:120,h:8});
+    M.objs.push({k:'clear',a:[G1[0]-900,zb],b:[G2[0]+900,zb],w:420},{k:'judge',x:G1[0]-380,z:zb,a:Math.PI/2},{k:'judge',x:G2[0]+380,z:zb,a:-Math.PI/2});
     const tasks=['Подъём на '+H1+' м — на время','Скорость на базе 3 км','Посадка в круг у трибун'];
     M.goal=()=>`<b>Задание ${M.task+1} из 3: ${tasks[Math.min(2,M.task)]}</b><span>${M.task===0?(M.tUp?flFmtT(FL.t-M.tUp)+' · '+Math.round(altF())+' м':'Дайте газ — время пойдёт с разбега'):M.task===1?(M.bas?'на базе: '+flFmtT(FL.t-M.bas.t0):'через ворота базы — по прямой'):'садитесь как можно ближе к белому кругу в середине поля'}</span>`;
     M.target=()=>M.task===1?(M.bas?[M.bas.to[0],undefined,M.bas.to[1],'финиш базы']:[G1[0],undefined,G1[1],'база']):M.task===2?[M.A[0],gyA(),M.A[1],'круг']:null;
@@ -21029,7 +21094,7 @@ function chalCheck(s){
 function salesChalCheck(){}   // 0.24: по продажам вызывают в общем порядке (chalCheck)
 function chalNews(s,o){const C=s.chal=Object.assign({},o.C,{stake:o.stake,acc:0});s.chalLast=mi(s);s.chalKind=o.kind;
   const H=rivalHero(C.mq,s),h=rivalHead(C.mq,s.y)||(C.ci!=null?rivalHead(((COMPS[C.c||s.country]||[])[C.ci]||{}).n,s.y):null);C.h=h;
-  const who=h?`${h.n}, ${h.role} ${C.mq},`:`Глава марки ${C.mq}`,img=h&&h.wiki&&IMG[h.wiki]?h.wiki:'',cap=h?`${h.n} — ${h.role} ${C.mq}`:'',sc=rivalryScore(s,C.mq),xs=C.x?` А сверху — ${stakeXText(C)}.`:'';
+  const roleMq=h?(String(h.role).toLowerCase().includes(String(C.mq).toLowerCase().split(/[\s-]/)[0])?h.role:h.role+' '+C.mq):'',who=h?`${h.n}, ${roleMq},`:`Глава марки ${C.mq}`,img=h&&h.wiki&&IMG[h.wiki]?h.wiki:'',cap=h?`${h.n} — ${roleMq}`:'',sc=rivalryScore(s,C.mq),xs=C.x?` А сверху — ${stakeXText(C)}.`:'';
   const T=chalNewsText(s,C,who,xs);
   pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+C.mq+')':C.mq} ${T.verb} «${s.company}»`,deck:T.deck+(sc?` · счёт ${sc}`:''),img,imgCap:cap,text:T.text,choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);}
 function chalNewsText(s,C,who,xs){const st=stakeText(C);
@@ -21122,7 +21187,7 @@ function matchResults(rc,res,mode,info){const s=G;if(!s)return;info=info||{};con
   if(win){try{celebrate(lsr?'Быстрее мирового рекорда!':rc.kind==='record'?'Скорость ваша!':'Матч выигран!',`${rc.venue} · «${me.label}»${vMe?` · ${vMe} км/ч`:''}`,lsr?'📈':'⚔️');}catch(_){}}
   checkAch();save();render();flushToasts();}
 /* ---------- карточки ---------- */
-function chalHeadRow(C,s){const h=C.h||rivalHead(C.mq,s.y);return h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)} ${esc(C.mq)}</small></div></div>`:'';}
+function chalHeadRow(C,s){const h=C.h||rivalHead(C.mq,s.y);return h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)}${String(h.role).toLowerCase().includes(String(C.mq).toLowerCase().split(/[\s-]/)[0])?'':' '+esc(C.mq)}</small></div></div>`:'';}
 function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:'';
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m,t=mi(s),open=t>=T-1&&t<=T,rs=matchRivalStats(rc),rec=C.type==='record',sprint=rc.t==='sprint';
     return `<section class="card chal"><div class="row"><span class="label">⚔️ ${MATCH_ST[C.type]}</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}
@@ -21374,10 +21439,12 @@ const AIR_EV_KIND={speed:'гонка вокруг пилонов',dist:'даль
 function airEvT(ev){return ev.y+ev.m/12;}
 // окно записи: перелёты-призы — полгода до даты рекорда в истории; остальное — месяц до старта и сам месяц
 function airEvWin(ev){const T=(ev.y-1895)*12+ev.m;return ev.kind==='cross'||ev.kind==='circle'||ev.kind==='loop'?[T-6,T]:[T-1,T];}
-function airEvFor(s,ev){const c=s.country,t=airEvT(ev);if(ev.kind==='trial'&&!ev.open&&ev.c!==c)return false;if(!ev.open&&ev.c!==c&&ev.kind!=='cross')return false;
+function airEvFor(s,ev){const c=s.country,t=airEvT(ev);if(ev.dyn)return true;if(ev.kind==='trial'&&!ev.open&&ev.c!==c)return false;if(!ev.open&&ev.c!==c&&ev.kind!=='cross')return false;
   if(airWarOn(c,t)||(airWarOn(ev.c,t)&&ev.c!==c))return false;if(airFoe(c,ev.c,t))return false;if(s.soviet&&ev.c!=='ru')return false;if(c==='de'&&t>=1919.5&&t<1926&&ev.c!=='de')return false;return true;}
 function airEvStatus(s,ev){const A=s.air||{},T=mi(s),[a,b]=airEvWin(ev),r=(A.ev||{})[ev.key];if(r)return r.miss?'missed':'done';if(T<a)return 'soon';if(T<=b)return 'open';return 'closed';}
-function airEvList(s){return AIR_EV.filter(ev=>airEvFor(s,ev));}
+// 0.38: к состязаниям по истории добавляются конкурсы министерств на заказ (105h-air.js — airTrialNew), они в s.air.trials
+function airEvList(s){return AIR_EV.filter(ev=>airEvFor(s,ev)).concat((s.air&&s.air.trials)||[]);}
+function airEvByKey(s,key){return AIR_EV.find(e=>e.key===key)||((s&&s.air&&s.air.trials)||[]).find(e=>e.key===key)||null;}
 function airEvSoon(s){const T=mi(s);return airEvList(s).filter(ev=>{const st=airEvStatus(s,ev);return st==='open'||(st==='soon'&&airEvWin(ev)[0]-T<=3);});}
 // какие аэропланы годятся: облетанные, а для Кубка Шнейдера — гидроаэропланы; на военный конкурс — своего назначения
 function airEvMds(s,ev){return (s.air.models||[]).filter(m=>m.flown&&m.status!=='off'&&m.status!=='dev'&&(!ev.sea||airStats(m,tNow(s)).sea)&&(ev.kind!=='trial'||!ev.mil||m.role===ev.mil.role||ev.mil.role==='recon'&&['recon','train','sport'].includes(m.role)));}
@@ -21395,6 +21462,10 @@ function airEvField(s,ev){const t=airEvT(ev),F=[],hv=AIR_EV_HV[ev.key]||0,sk=AIR
     const v=x.st.v*k*(0.92+0.08*(p.sk||0.75));F.push({n:p.n,plane:x.md.name,v:hv?Math.min(v,hv*[0.99,0.95,0.9,0.85][i]):v});});}
   else if(ev.kind==='dist'){W.d=hv||ref('sport').st.range;F.push(W);const S=ref('sport');[0.75,0.6,0.45].forEach((k,i)=>{const p=sk[i]||{n:'Авиатор',sk:0.7};if(p.n!==W.n)F.push({n:p.n,plane:S.md.name,d:Math.round(hv*k)});});}
   else if(ev.kind==='alt'){W.a=hv||ref('sport').st.ceil*0.5;F.push(W);[0.8,0.6].forEach((k,i)=>{const p=sk[i]||{n:'Авиатор',sk:0.7};if(p.n!==W.n)F.push({n:p.n,plane:ref('sport').md.name,a:Math.round(W.a*k)});});}
+  else if(ev.kind==='trial'&&ev.dyn){const role=ev.mil.role,C=airComps(ev.c,role,t,s).sort((a,b)=>b.w-a.w).slice(0,4),cq={fr:1,de:0.99,uk:0.98,it:0.96,us:t<1917?0.93:0.98,ru:0.9}[ev.c]||0.95,r0=mulberry32(hashStr(ev.key));
+    // 0.38: у соперника — его собственная машина: последняя выпущенная, иначе опытная (выйдет в ближайшие два года), иначе «своей постройки» — не эталон класса чужой марки
+    const base=[1.0,0.96,0.92,0.87];(C.length?C:[{x:{n:'Казённый завод'}}]).forEach((o,i)=>{const ML=o.x.models||[],mdl=ML.filter(m=>m[0]<=ev.y).slice(-1)[0],nxt=!mdl&&ML.find(m=>m[0]<=ev.y+2);
+      F.push({n:'«'+o.x.n+'»',plane:mdl?mdl[1]:nxt?'опытный '+nxt[1]:'аэроплан своей постройки',q:Math.round(base[i]*cq*(0.97+0.06*r0())*(ev.mil.war?1.02:1)*100)/100});});}
   else if(ev.kind==='trial'){W.q=1.04;F.push(W);[0.98,0.93,0.88].forEach((q,i)=>F.push({n:['«'+((airComps(ev.c,ev.mil?ev.mil.role:'recon',t)[i]||{x:{n:'Завод'}}).x.n)+'»'][0],plane:ref(ev.mil?ev.mil.role:'recon').md.name,q}));}
   else F.push(W);return F;}
 /* ---------- результат без съёмки ---------- */
@@ -21423,14 +21494,21 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   // первые в мире: перелёт или петля раньше истории
   if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y+(ev.m>=6?1:0),airEvMine(s,ev)?'вы сами в настоящей истории':ev.h[0]);}catch(_){}
   // военный конкурс: победителю — заказ армии
-  if(won&&ev.mil&&md){const n=Math.max(1,Math.round(ev.mil.n*(0.6+0.4*Math.random())));airOrderAdd(s,{md:md.id,n,price:airMilPrice(s,md),due:mi(s)+8,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1});}
+  if(ev.mil&&md&&!res.dnf){const k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:0,n=Math.round(ev.mil.n*k);
+    if(n>=1){const price=airMilPrice(s,md),adv=ev.mil.war?Math.round(n*price*0.25):0;if(adv)s.cash+=adv;airOrderAdd(s,{md:md.id,n,price,due:mi(s)+(ev.mil.months||6)+2,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1,adv,advLeft:adv});md.milWon=(md.milWon||0)+1;md.milRep=clamp((md.milRep||0)+(won?6:2),-40,60);res.order=n;res.adv=adv;}}
+  if(ev.dyn){A.trials=(A.trials||[]).filter(e=>e.key!==ev.key);}
   try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}
   const hist=airEvHist(s,ev);
+  if(ev.dyn){const F=res.field||[],top=F.slice().sort((a,b)=>b.q-a.q)[0],ord=res.order?`${ev.mil.war?'Военный заказ':'Заказ'}: ${fmtN(res.order)} «${md.name}» по ${money(airMilPrice(s,md))}${res.adv?`, четверть суммы (${money(res.adv)}) — вперёд`:''}.`:'';
+    pushEvent({own:1,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,
+      deck:`${who} на «${md?md.name:''}» — ${res.txt}${res.place<=F.length+1?` · ${res.place}-е место из ${F.length+1}`:''}`,
+      text:`${won?`Комиссия поставила вашей машине высшую оценку: ${top?`${top.n} (${top.plane}) — ${top.q.toFixed(2).replace('.',',')}`:''}. ${ord} Газеты пишут о заводе, которому верит армия.`:res.order?`Победил ${top?top.n+' ('+top.plane+', '+top.q.toFixed(2).replace('.',',')+')':'соперник'}, но министерство берёт и ваш аэроплан — меньшей серией. ${ord}`:res.dnf?`Сход с испытаний: ${res.dnf}. Заказ ушёл к ${top?top.n:'соперникам'}.`:`Оценки комиссии: ${F.slice().sort((a,b)=>b.q-a.q).map(x=>`${x.n} — ${x.q.toFixed(2).replace('.',',')}`).join(', ')}; ваша — ${(res.q||0).toFixed(2).replace('.',',')}. Заказ ушёл к ${top?top.n:'соперникам'}. Следующий конкурс — ${ev.mil.war?'через квартал':'через полгода'}: доработайте машину или начертите новую под их требования.`}`},true);
+    return {prize,fameG};}
   pushEvent({own:1,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${who} на «${md?md.name:''}» — ${res.txt}`,
     text:`${won?(prize?`Приз — ${money(prize)}. `:'')+'Газеты печатают портрет лётчика на первой полосе, у ангаров — очередь из желающих купить такой же аэроплан.':res.place<=3&&res.place>1?(prize?`Приз за ${res.place}-е место — ${money(prize)}. `:'')+'Неплохо — но помнят только победителей.':'Толпа расходится разочарованной. Механики уже разбирают мотор.'}\n${hist}`},true);
   return {prize,fameG};}
 // результат без съёмки — сразу
-function airEvQuick(key,mdId,pid){const s=G,ev=AIR_EV.find(e=>e.key===key),md=s.air.models.find(m=>m.id===+mdId);if(!ev||!md||airEvStatus(s,ev)!=='open')return;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);
+function airEvQuick(key,mdId,pid){const s=G,ev=airEvByKey(s,key),md=s.air.models.find(m=>m.id===+mdId);if(!ev||!md||airEvStatus(s,ev)!=='open')return;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);
   const res=airEvSim(s,ev,md,P);airEvApply(s,ev,res);closeSheet();save();render();}
 // пропущенные состязания закрываются сами
 function airEvMonth(s){const A=s.air;if(!A||!A.lv)return;const T=mi(s);airEvList(s).forEach(ev=>{const [,b]=airEvWin(ev);if(T>b&&!(A.ev||{})[ev.key]&&T-b<=2){A.ev=A.ev||{};A.ev[ev.key]={miss:1};}});}
@@ -21453,12 +21531,16 @@ function airRecQuick(k,mdId,pid){const s=G,md=s.air.models.find(m=>m.id===+mdId)
 function airRecCan(s,k){const A=s.air;if(!A||!A.lv)return false;if(airWarOn(s.country,tNow(s)))return false;return !((A.rtry||{})[k]>mi(s)-3);}
 /* ---------- вкладка «Небо» ---------- */
 let AEV=null;
-function openAirEv(key){const s=G,ev=AIR_EV.find(e=>e.key===key);if(!ev)return;const L=airEvMds(s,ev),pils=airPilotList(s);AEV=AEV&&AEV.key===key?AEV:{key,md:L[0]?L[0].id:null,pid:(airBestPilot(s)||{}).id};
+function openAirEv(key){const s=G,ev=airEvByKey(s,key);if(!ev)return;const L=airEvMds(s,ev),pils=airPilotList(s);AEV=AEV&&AEV.key===key?AEV:{key,md:L[0]?L[0].id:null,pid:(airBestPilot(s)||{}).id};
   const md=L.find(m=>m.id===AEV.md)||L[0],st=md?airStats(md,tNow(s)):null,F=airEvField(s,ev),open=airEvStatus(s,ev)==='open';
-  const fl=F.map((x,i)=>`<li><time>${i+1}.</time><p>${esc(x.n)}${x.plane?' — '+esc(x.plane):''}${x.v?` · ${Math.round(x.v)} км/ч`:x.d?` · ${fmtN(x.d)} км`:x.a?` · ${fmtN(x.a)} м`:''}${x.hist?' <span class="muted">(победитель в истории)</span>':''}</p></li>`).join('');
-  openSheet(`<div class="row"><h2>${esc(ev.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${MONTHS_G[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.len?` · ${fmtN(ev.len)} км`:''}${ev.prize?` · приз ${money(Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10)}`:''}${ev.mil?` · победителю — заказ армии`:''}</p>
-    ${photoHTML(AIR_IMG[ev.h[1]]||ev.h[1])}
-    <p class="small" style="margin-top:8px">${esc(airEvHist(s,ev))}</p>
+  const fl=F.map((x,i)=>`<li><time>${i+1}.</time><p>${esc(x.n)}${x.plane?' — '+esc(x.plane):''}${x.v?` · ${Math.round(x.v)} км/ч`:x.d?` · ${fmtN(x.d)} км`:x.a?` · ${fmtN(x.a)} м`:x.q&&ev.dyn?` · ожидаемая оценка ${x.q.toFixed(2).replace('.',',')}`:''}${x.hist?' <span class="muted">(победитель в истории)</span>':''}</p></li>`).join('');
+  // 0.38: конкурс министерства — условия, сравнение вашей машины с эталоном класса, что получит победитель и второй
+  const ref=ev.dyn&&ev.mil?airStats(airRefMd(ev.mil.role,tNow(s)),tNow(s)):null,myQ=ev.dyn&&md?airQ(md,tNow(s),ev.mil.role).q:0;
+  const dynInfo=ev.dyn?`<p class="small" style="margin-top:8px">${esc(airMinistry(ev.c,tNow(s),ev.mil.role))} сравнивает машины на испытаниях: подъём на высоту на время, скорость на базе, посадка в круг. Победителю — заказ на <b>${fmtN(ev.mil.n)}</b> машин, второму — на ${fmtN(Math.round(ev.mil.n*0.4))}${ev.mil.war?`, третьему — на ${fmtN(Math.round(ev.mil.n*0.15))}; четверть суммы — вперёд`:''}.</p>
+    ${md&&ref?`<p class="small muted" style="margin-top:4px">Эталон класса сейчас — ${esc(airRefEntry(ev.mil.role,tNow(s))[1])}: ${airSt(ref)}. Ваш «${esc(md.name)}»: ${airSt(st)} · оценка против эталона — <b>${myQ.toFixed(2).replace('.',',')}</b>${myQ>=(F[0]||{q:1}).q?' (выше лучшего соперника)':myQ>=(F[1]||{q:0.9}).q?' (на заказ хватит)':' (соперники сильнее — нужна машина лучше)'}.</p>`:''}`:'';
+  openSheet(`<div class="row"><h2>${esc(ev.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${MONTHS_N[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.len&&!ev.dyn?` · ${fmtN(ev.len)} км`:''}${ev.prize&&!ev.dyn?` · приз ${money(Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10)}`:''}${ev.mil?` · победителю — заказ армии`:''}</p>
+    ${ev.dyn?dynInfo:photoHTML(AIR_IMG[ev.h[1]]||ev.h[1])}
+    ${ev.dyn?'':`<p class="small" style="margin-top:8px">${esc(airEvHist(s,ev))}</p>`}
     ${fl?`<div class="label" style="margin-top:12px">Соперники</div><ul class="log">${fl}</ul>`:''}
     <div class="label" style="margin-top:12px">Аэроплан</div>${L.length?`<div class="chips">${L.map(m=>`<button class="chip ${md&&m.id===md.id?'on':''}" data-act="aevMd" data-v="${m.id}">${esc(m.name)}<small>${airSt(airStats(m,tNow(s)))}</small></button>`).join('')}</div>`:`<p class="small bad">Нет подходящего облетанного аэроплана${ev.sea?' — нужен гидроаэроплан (поплавки или лодка)':''}.</p>`}
     <div class="label" style="margin-top:12px">Лётчик</div><div class="chips">${pils.map(p=>`<button class="chip ${AEV.pid===p.id?'on':''}" data-act="aevPil" data-v="${p.id}">${esc(p.hero?p.n+' (вы)':p.n)}<small>мастерство ${Math.round(p.sk*100)}</small></button>`).join('')}</div>
@@ -21472,9 +21554,9 @@ function openAirRec(k){const s=G,L=(s.air.models||[]).filter(m=>m.flown&&m.statu
     ${md&&can?`<div class="btns" style="margin-top:14px"><button class="btn primary" data-act="arecFly">✈ Лететь (3D)</button><button class="btn" data-act="arecQuick">Узнать результат</button></div>`:`<p class="small muted" style="margin-top:12px">${!can?'Попытка — не чаще раза в три месяца, и не в войну.':''}</p>`}`);}
 function airSkyHTML(s){const A=s.air,t=tNow(s),T=mi(s);if(!A||!A.lv)return '';
   const L=airEvList(s).filter(ev=>{const st=airEvStatus(s,ev);return st==='open'||(st==='soon'&&airEvWin(ev)[0]-T<=14);}).sort((a,b)=>airEvT(a)-airEvT(b)).slice(0,6);
-  const evRow=ev=>{const st=airEvStatus(s,ev),pr=Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10;return `<div class="race-item"><div class="row"><div><h3>${esc(ev.name)}</h3><p class="small muted">${MONTHS_G[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${pr?` · приз ${money(pr)}`:''}${ev.sea?' · гидроаэропланы':''}</p></div>
+  const evRow=ev=>{const st=airEvStatus(s,ev),pr=Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10;return `<div class="race-item"><div class="row"><div><h3>${esc(ev.name)}</h3><p class="small muted">${MONTHS_N[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.dyn?` · победителю — заказ на ${fmtN(ev.mil.n)} машин`:pr?` · приз ${money(pr)}`:''}${ev.sea?' · гидроаэропланы':''}</p></div>
     <button class="btn sm ${st==='open'?'primary':''}" data-act="airEv" data-k="${ev.key}">${st==='open'?'Участвовать':'Подробнее'}</button></div></div>`;};
-  const done=Object.entries(A.ev||{}).filter(([,r])=>!r.miss).slice(-6).reverse().map(([k,r])=>{const ev=AIR_EV.find(e=>e.key===k);return `<li class="${r.place===1?'good':''}"><time>${r.y}</time><p>${esc(ev?ev.name:k)}: ${r.place===1?'победа':r.place?r.place+'-е место':'неудача'} — ${esc(r.who)}, ${esc(r.txt)}</p></li>`;}).join('');
+  const done=Object.entries(A.ev||{}).filter(([,r])=>!r.miss).slice(-6).reverse().map(([k,r])=>{const ev=airEvByKey(s,k);return `<li class="${r.place===1?'good':''}"><time>${r.y}</time><p>${esc(ev?ev.name:k)}: ${r.place===1?'победа':r.place?r.place+'-е место':'неудача'} — ${esc(r.who)}, ${esc(r.txt)}</p></li>`;}).join('');
   const recs=Object.keys(AIR_REC_N).map(k=>{const c=airRecCur(s,k),can=airRecCan(s,k);return `<div class="race-item"><div class="row"><div><h3>${AIR_REC_N[k][0]}</h3><p class="small muted">${fmtN(Math.round(c.v))} ${AIR_REC_N[k][1]} — ${esc(c.who)}${c.mine?' <span class="good">(ваш)</span>':''}</p></div><button class="btn sm" data-act="airRec" data-k="${k}" ${can?'':'disabled'}>Попытка</button></div></div>`;}).join('');
   const pil=airPilotList(s).map(p=>`<div class="row" style="margin-top:6px"><p class="small">${esc(p.hero?p.n+' — основатель':p.n)} · мастерство ${Math.round(p.sk*100)}${p.sal?` · ${money(p.sal)} в мес.`:''}</p>${p.sal?`<button class="linkbtn" data-act="airFire" data-k="${p.id}">уволить</button>`:''}</div>`).join('');
   const hire=airPilotsForHire(s).slice(0,6).map(P=>`<div class="row" style="margin-top:6px"><p class="small">${esc(P.n)} · мастерство ${Math.round(P.sk*100)} · ${money(airPilotSal(s,P)*(P.c===s.country?1:1.3))} в мес.</p><button class="btn sm" data-act="airHire" data-k="${P.id}" ${(A.pil||[]).length>=4?'disabled':''}>Нанять</button></div>`).join('');
@@ -27013,6 +27095,8 @@ function fwBuild(key,o){o=o||{};const B=FW_SC[key]||FW_SC.reims,y=o.y||1912;
   // аэродромы: старт и (у перелёта) место посадки; гидроаэропланы — у берега (гавань)
   const af=(x,z,sea)=>{const r=sea?0:Math.max(380,o.afR||450);const f={x,z,r,sea,y:0};f.y=sea?0:Math.max(2,fwHraw(S,x,z));S.fields.push(f);return f;};
   S.A=af(A[0],A[1],seaStart);if(Bp)S.B=af(Bp[0],Bp[1],seaStart&&!o.landB);
+  // 0.38: просеки задания — база рекорда, трасса по пилонам, круг посадки без леса (отзыв: «база в деревьях, как туда сесть?»)
+  S.clear=(o.objs||[]).filter(x=>x.k==='clear');(o.objs||[]).forEach(x=>{if(x.k==='pylon'||x.k==='gate'||x.k==='ring')S.clear.push({a:[x.x,x.z],b:[x.x,x.z],w:x.k==='gate'?(x.w||100)*0.7+40:90});});
   FW={S,key,H:(x,z)=>fwHgt(S,x,z),surf:(x,z)=>fwSurf(x,z),obst:(x,y2,z,r)=>fwObst(x,y2,z,r),nodes:new Map(),tiles:new Map(),queue:new Map(),tq:[],frame:0,objs:[],col:[],hot:[],extra:o.objs||[],
     sea:S.bio==='coast'||S.bio==='strait'||S.bio==='lagoon'||!!S.river||S.bio==='lake',ready:false,mood:o.mood||'clear',y};
   fwSites(S,o);fwMaps(S);
@@ -27023,7 +27107,7 @@ function fwSites(S,o){const rnd=mulberry32(S.seed+7);S.towns=[];S.roads=[];S.rai
   for(const t of S.towns0||(S.towns0=(FW_SC[S.key]||{}).towns||[])){if(!land(t.x,t.z)&&!t.isl)continue;const st=S.bio==='strait'&&t.x>0?S.stB:S.st;S.towns.push({...t,r:Math.sqrt(t.n)*(t.city?26:34)+40,st});}
   // деревни вокруг (кроме гор и моря)
   const nV=S.bio==='mount'?6:S.bio==='strait'?8:14;for(let i=0;i<nV;i++){const x=(rnd()-0.5)*21000,z=(rnd()-0.5)*21000;if(!land(x,z))continue;
-    if(S.fields.some(f=>Math.hypot(x-f.x,z-f.z)<f.r+700))continue;if(S.towns.some(t=>Math.hypot(x-t.x,z-t.z)<t.r+900))continue;const n=8+Math.floor(rnd()*22),st=S.bio==='strait'&&x>0?S.stB:S.st;S.towns.push({x,z,n,r:Math.sqrt(n)*34+40,st,vil:1});}
+    if(S.fields.some(f=>Math.hypot(x-f.x,z-f.z)<f.r+700))continue;if(S.towns.some(t=>Math.hypot(x-t.x,z-t.z)<t.r+900))continue;if(S.clear&&S.clear.length&&fwClear(S,x,z,250))continue;const n=8+Math.floor(rnd()*22),st=S.bio==='strait'&&x>0?S.stB:S.st;S.towns.push({x,z,n,r:Math.sqrt(n)*34+40,st,vil:1});}
   // дороги: от аэродрома к ближним городам и между соседями (прямо, с изгибами)
   const pts=[...S.fields.filter(f=>!f.sea).map(f=>[f.x,f.z]),...S.towns.map(t=>[t.x,t.z])];
   for(let i=0;i<pts.length;i++){const near=pts.map((p,j)=>[Math.hypot(p[0]-pts[i][0],p[1]-pts[i][1]),j]).filter(q=>q[1]!==i).sort((a,b)=>a[0]-b[0]).slice(0,2);
@@ -27045,8 +27129,11 @@ function fwSurf(x,z){const S=FW.S,h=fwHgt(S,x,z);if(h<0)return 'water';
   const e=12,sl=Math.hypot(fwHgt(S,x+e,z)-fwHgt(S,x-e,z),fwHgt(S,x,z+e)-fwHgt(S,x,z-e))/(2*e);if(sl>0.35||(S.bio==='mount'&&h>2300))return 'rock';
   return 'grass';}
 // лес: пятна по шуму, не на аэродроме, не в городе, не у воды
+function fwClear(S,x,z,m){for(const c of S.clear||[]){const ax=c.a[0],az=c.a[1],bx=c.b[0],bz=c.b[1],dx=bx-ax,dz=bz-az,L2=dx*dx+dz*dz;const t=L2>0?clamp(((x-ax)*dx+(z-az)*dz)/L2,0,1):0;
+    const px=ax+dx*t,pz=az+dz*t;if(Math.hypot(x-px,z-pz)<c.w+(m||0))return true;}return false;}
 function fwForest(S,x,z){const n=fbm2(x/1500,z/1500,S.seed+40,3),thr=0.66-S.forest*0.42;let f=sstep(thr-0.02,thr+0.05,n);if(!f)return 0;
   for(const a of S.fields)if(!a.sea&&Math.hypot(x-a.x,z-a.z)<a.r+250)return 0;
+  if(S.clear&&S.clear.length&&fwClear(S,x,z))return 0;
   if(S.front&&Math.abs(z-S.front.z)<1100)f*=0.25;return f;}
 // препятствия: дома, ангары, трибуны, пилоны, аэростаты, деревья, приметы
 function fwObst(x,y,z,r){const W=FW;if(!W)return null;const gy=fwHgt(W.S,x,z),agl=y-Math.max(0,gy);
@@ -27170,6 +27257,14 @@ function fwAirfield(f,S,o){const mb=new MB(),y=S.y,rnd=mulberry32(hashStr('af'+f
 // объекты задания: пилоны, ворота старта, аэростаты, склады и мосты, корабли, буйки
 function fwMission(objs,S){const mb=new MB(),hot=[];
   objs.forEach(o=>{const gy=o.sea?0:Math.max(0,fwHgt(S,o.x,o.z));
+    if(o.k==='clear')return;
+    // 0.38: судейская палатка с флагами и зрителями у концов базы — чтобы базу было видно с воздуха
+    if(o.k==='judge'){const a=o.a||0,c=Math.cos(a),sn=Math.sin(a),P=(u,v,q)=>[o.x+u*c+q*sn,gy+v,o.z-u*sn+q*c];
+      pBox(mb,o.x,gy,o.z,4,2.6,3,'#e8e2d2',MID.cloth,a);mb.poly([P(-4.6,2.6,-3.6),P(4.6,2.6,-3.6),P(0,5,0)],[0,0.6,-0.8],hex2rgb('#d8d0bc'),MID.cloth);mb.poly([P(4.6,2.6,3.6),P(-4.6,2.6,3.6),P(0,5,0)],[0,0.6,0.8],hex2rgb('#d8d0bc'),MID.cloth);
+      mb.poly([P(4.6,2.6,-3.6),P(4.6,2.6,3.6),P(0,5,0)],[0.8,0.6,0],hex2rgb('#cfc6b0'),MID.cloth);mb.poly([P(-4.6,2.6,3.6),P(-4.6,2.6,-3.6),P(0,5,0)],[-0.8,0.6,0],hex2rgb('#cfc6b0'),MID.cloth);
+      for(const q of [-7,7]){const b=P(0,0,q);pCyl(mb,[b[0],gy,b[2]],[b[0],gy+9,b[2]],0.09,0.07,'#3a3a3a',5,MID.metal);pBox(mb,b[0]+0.9,gy+7.6,b[2],0.9,1.2,0.02,q<0?'#e0402a':'#f0ece2',MID.cloth);}
+      for(let i=0;i<6;i++){const b=P(6+(i%3)*1.3,0,-2+Math.floor(i/3)*4);pBox(mb,b[0],gy,b[2],0.22,1.65,0.22,['#2a2a2e','#3a3530','#1f2a40'][i%3],MID.cloth);}
+      FW.col.push({x:o.x,z:o.z,r:5,y0:gy-2,y1:gy+5,why:'врезался в судейскую палатку'});return;}
     if(o.k==='pylon'){const h=o.h||24;for(let k=0;k<6;k++)pBox(mb,o.x,gy+k*h/6,o.z,0.7,h/6,0.7,k%2?'#f0ece2':'#1a1a1a',MID.paint);pCyl(mb,[o.x,gy+h,o.z],[o.x,gy+h+3,o.z],0.06,0.05,'#2a2a2a',5,MID.metal);pBox(mb,o.x+0.9,gy+h+1.6,o.z,0.9,1.3,0.02,o.col||'#e0402a',MID.cloth);
       if(o.sea){pCyl(mb,[o.x,-0.6,o.z],[o.x,0.6,o.z],4,4,'#5a4a3a',10,MID.wood);}
       FW.col.push({x:o.x,z:o.z,r:1.4,y0:gy-2,y1:gy+h+3,why:'врезался в пилон'});}
@@ -27246,11 +27341,11 @@ function fwTreeTile(i,j,lod){const s=512,x0=-FW_ROOT/2+i*s,z0=-FW_ROOT/2+j*s,S=F
   const put=(x,z,k,sc)=>{const h=fwHgt(S,x,z);if(h<1)return;mb.add(fwTreeP(k,lod),X3(rnd()*6.28,sc,[x,h-0.3,z]));n++;};
   for(let z=z0+sp/2;z<z0+s&&n<700;z+=sp)for(let x=x0+sp/2;x<x0+s&&n<700;x+=sp){const xx=x+(rnd()-0.5)*sp*0.8,zz=z+(rnd()-0.5)*sp*0.8,f=fo(xx,zz);
     if(f>0.2&&rnd()<Math.pow(f,1.3)*0.92){const T=st(xx).tr;put(xx,zz,T[Math.floor(rnd()*T.length)],(0.8+rnd()*0.45)*(f>0.6?1.25:1));}
-    else if(f<0.05&&rnd()<0.006){const h=fwHgt(S,xx,zz);if(h>1.5&&fwSurf(xx,zz)==='grass'&&!S.fields.some(a=>Math.hypot(xx-a.x,zz-a.z)<a.r+40))put(xx,zz,st(xx).tr[0],0.9+rnd()*0.3);}}
+    else if(f<0.05&&rnd()<0.006){const h=fwHgt(S,xx,zz);if(h>1.5&&fwSurf(xx,zz)==='grass'&&!S.fields.some(a=>Math.hypot(xx-a.x,zz-a.z)<a.r+40)&&!(S.clear&&S.clear.length&&fwClear(S,xx,zz)))put(xx,zz,st(xx).tr[0],0.9+rnd()*0.3);}}
   // аллеи вдоль дорог (во Франции — тополя и платаны)
   for(const r of S.roads){if(!r.trees)continue;for(let q=0;q<r.p.length-1;q++){const a=r.p[q],b=r.p[q+1],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(Math.max(a[0],b[0])<x0-20||Math.min(a[0],b[0])>x0+s+20||Math.max(a[1],b[1])<z0-20||Math.min(a[1],b[1])>z0+s+20)continue;
     const ux=(b[0]-a[0])/L,uz=(b[1]-a[1])/L;for(let t=0;t<L;t+=14){const x=a[0]+ux*t,z=a[1]+uz*t;if(x<x0||x>=x0+s||z<z0||z>=z0+s)continue;if(S.towns.some(tw=>Math.hypot(x-tw.x,z-tw.z)<tw.r))continue;
-      for(const sd of [-1,1])put(x-uz*sd*7,z+ux*sd*7,'pop',0.85+rnd()*0.2);}}}
+      if(S.clear&&S.clear.length&&fwClear(S,x,z))continue;for(const sd of [-1,1])put(x-uz*sd*7,z+ux*sd*7,'pop',0.85+rnd()*0.2);}}}
   const g=g3Mesh(mb);return {m:g,lod,n};}
 function fwTrees(eye,planes){const out=[],R=gq().trees>=1&&!FWR.lowQ?2100:1300,s=512,i0=Math.floor((eye[0]-R+FW_ROOT/2)/s),i1=Math.floor((eye[0]+R+FW_ROOT/2)/s),j0=Math.floor((eye[2]-R+FW_ROOT/2)/s),j1=Math.floor((eye[2]+R+FW_ROOT/2)/s);
   if(eye[1]-Math.max(0,fwHgt(FW.S,eye[0],eye[2]))>2500)return out;
@@ -27297,7 +27392,7 @@ function fwPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=FW.parts;if(P.le
 function fwPartsTick(dt){const P=FW.parts;for(let i=P.length-1;i>=0;i--){const p=P[i];p.life-=dt;if(p.life<=0){P.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=p.gv*dt;const dr=Math.exp(-dt*0.6);p.vx*=dr;p.vz*=dr;}}
 function fwPuffDraw(L,bw,bh,cam,I){if(!L.length)return;const gl=G3.gl,e=FWR.eye,d=I.data;let n=0;
   const S=L.map(p=>[(p.x-e[0])**2+(p.y-e[1])**2+(p.z-e[2])**2,p]).sort((a,b)=>b[0]-a[0]);
-  for(const [,p] of S){if(n>=I.max)break;const o=n*8;if(p.life!==undefined){const k=1-p.life/p.max;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255;d[o+5]=p.c[1]/255;d[o+6]=p.c[2]/255;d[o+7]=p.a<0?p.a*(1-k):p.a*(1-k)*Math.min(1,k*6+0.25);}
+  for(const [dd,p] of S){if(n>=I.max)break;const o=n*8;if(p.life!==undefined){const k=1-p.life/p.max,sz=p.s+p.g*k,near=Math.min(1,Math.max(0,(Math.sqrt(dd)-sz*0.8)/(sz*1.6+6)));d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=sz;d[o+4]=p.c[0]/255;d[o+5]=p.c[1]/255;d[o+6]=p.c[2]/255;d[o+7]=(p.a<0?p.a*(1-k):p.a*(1-k)*Math.min(1,k*6+0.25))*near;}
     else{d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s;d[o+4]=d[o+5]=d[o+6]=p.g;d[o+7]=p.a;}n++;}
   const P=fwUse('part',bw,bh);gl.uniform3fv(P.u.u_camR,cam.rt);gl.uniform3fv(P.u.u_camU,cam.up);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.puff||(G3.cache.puff=g3Tex(r3dPuff(),{cs:true,ct:true})));gl.uniform1i(P.u.u_tex,1);gl.activeTexture(gl.TEXTURE0);
   gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);g3InstDraw(I,n);gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}
@@ -27457,11 +27552,15 @@ const STY={
   fox:{bpm:116,div:2,beats:4,swing:0.58,prog:[[0,'M6'],[9,'m7'],[2,'m7'],[7,'D'],[0,'M6'],[9,'m7'],[2,'m7'],[7,'D'],[5,'M6'],[5,'m'],[0,'M6'],[9,'D'],[2,'m7'],[7,'D'],[0,'M6'],[0,'M6']],key:63},
   charl:{bpm:132,div:2,beats:4,swing:0.55,prog:[[4,'D'],[4,'D'],[9,'D'],[9,'D'],[2,'D'],[2,'D'],[7,'D'],[7,'D'],[0,'M6'],[0,'M6'],[4,'D'],[4,'D'],[9,'D'],[2,'D'],[7,'D'],[0,'M6']],key:60}
 };
-// Свои мелодии «Автоимперии» (сочинены для игры): ноты по восьмым (марш), шестнадцатым (регтайм, танго) или четвертям (вальс); «-» — тянуть, «.» — пауза
+// Свои мелодии «Автоимперии» (сочинены для игры): ноты по шестнадцатым (марш, регтайм, танго) или четвертям (вальс); «-» — тянуть, «.» — пауза
+// 0.38: марш сочинён заново — пунктирный ритм, ясная линия с кульминацией и своё трио; оркестровка — духовой оркестр без лишних слоёв (была «какофония»)
 const TUNES={
-  avto:{name:'«Автоимперия», марш',bpm:112,div:2,beats:4,sty:'march',y:1895,
-    mel:'G4 - C5 - E5 - G5 - | C6 - - - G5 - E5 - | F5 - A5 - C6 - A5 - | G5 - - - - - . . | E5 - G5 - C6 - E6 - | D6 - C6 - A5 - C6 - | B5 - A5 - F#5 - A5 - | G5 - - - - - . . | A5 - A5 B5 C6 - A5 - | G5 - E5 - C5 - E5 - | F#5 - A5 - D6 - C6 - | B5 - G5 - D5 - . . | E5 - G5 - C6 - - E6 | D6 - C6 - A5 - F5 - | G5 - B5 - D6 - B5 - | C6 - - - - - . .',
-    ch:'C C F G C Am D7 G F C D7 G7 C F G7 C'},
+  avto:{name:'«Автоимперия», марш',bpm:116,div:4,beats:4,sty:'march',y:1895,
+    mel:'C5 - - D5 E5 - - F5 G5 - - - E5 - C5 - | D5 - - E5 F5 - - G5 B5 - - - - - - - | C6 - - B5 C6 - D6 - E6 - - - C6 - G5 - | A5 - - G5 F5 - E5 - D5 - - - - - . . | C5 - - D5 E5 - - F5 G5 - - - E5 - C5 - | F5 - - G5 A5 - - C6 A5 - - - F5 - - - | G5 - - A5 B5 - C6 - D6 - - - B5 - G5 - | C6 - - - - - - - . . . . G4 - - - | E5 - - A5 C6 - - B5 A5 - - - E5 - - - | F5 - - A5 D6 - - C6 A5 - - - F5 - - - | G5 - - B5 D6 - - F6 D6 - B5 - G5 - - - | C6 - - - - - - - E5 - F5 - G5 - - - | C5 - - D5 E5 - - F5 G5 - - - E5 - C5 - | A5 - - G5 A5 - - C6 F6 - - - C6 - A5 - | G5 - - A5 B5 - - D6 F6 - E6 - D6 - B5 - | C6 - - - - - - - - - - - . . . .',
+    ch:'C G7 C G7 C F G7 C Am Dm G7 C C F G7 C',
+    // 0.38: трио (напевная вторая часть в субдоминанте) — в оркестровой записи звучит тихо, потом торжественно
+    trio:'A4 - - - - - - - C5 - - - F5 - - - | A5 - - - - - - - G5 - - - F5 - - - | E5 - - - - - - - G5 - - - Bb5 - - - | G5 - - - - - - - - - - - - - - - | E5 - - - - - - - G5 - - - C6 - - - | Bb5 - - - - - - - G5 - - - E5 - - - | F5 - - - - - - - A5 - - - C6 - - - | A5 - - - - - - - - - - - . . . . | A5 - - - - - - - C6 - - - Eb6 - - - | D6 - - - - - - - Bb5 - - - F5 - - - | A5 - - - - - - - F5 - - - C5 - - - | D5 - - - - - - - F#5 - - - A5 - - - | Bb5 - - - - - - - D6 - - - G5 - - - | E5 - - - - - - - G5 - - - Bb5 - - - | A5 - - - - - - - F5 - - - C5 - - - | F5 - - - - - - - - - - - - - - -',
+    tch:'F F C7 C7 C7 C7 F F F7 Bb F D7 Gm C7 F F'},
   reel:{name:'«Кинохроника», регтайм',bpm:96,div:4,beats:2,sty:'rag',y:1899,
     mel:'A5 - C6 A5 - F5 - . | G5 A5 - F5 - . C5 - | Bb5 - G5 E5 - C5 - . | A5 - - - F5 - . . | A5 - C6 A5 - F5 - A5 | F#5 A5 - D6 - C6 A5 - | Bb5 - G5 D5 - G5 - Bb5 | A5 - - - G5 - . . | D6 - Bb5 F5 - Bb5 - D6 | C6 - A5 F5 - A5 - C6 | B5 - G5 D5 - F5 - B5 | C6 - - - Bb5 - G5 - | A5 - C6 A5 - F5 - A5 | F#5 - A5 D6 - C6 - A5 | G5 - Bb5 E5 - G5 - C5 | F5 - - - - - . .',
     ch:'F F C7 F F D7 Gm C7 Bb F G7 C7 F D7 C7 F'},
@@ -27586,7 +27685,7 @@ function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
   AU.duckT=setTimeout(()=>{AU.duckI=setInterval(()=>{const t=v0();let v=Math.min(t,(el.volume||0)+t*0.06);try{el.volume=v;}catch(_){v=t;}if(v>=t-1e-3){clearInterval(AU.duckI);AU.ducked=0;}},90);},Math.max(800,sec*1000+300));}
 // 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
-const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (салонный оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», салонный оркестр'},
+const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (духовой оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», духовой оркестр'},
   own_reel:{cap:'«Кинохроника», регтайм (фортепиано)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», фортепиано'},
   own_valse:{cap:'«Вальс гонщиков» (оркестр)',st:'waltz',y:1895,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
   own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'},
@@ -27626,7 +27725,7 @@ function musWeight(t,s,ctx){let w=1;const home=s&&s.country;
   if(s&&s.y>=1920&&!s.soviet&&(t.st==='jazz'||t.st==='fox'||t.st==='charl'))w*=1.4;
   const h=AU.recent||[];const k=h.indexOf(t.title);if(k>=0)w*=0.08+0.9*k/Math.max(1,h.length);
   return w;}
-function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:(own?'':ORCH_BASE())+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
+function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:own?'music/'+id+'.m4a':MEDIA_REL+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
 function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
@@ -27701,16 +27800,19 @@ function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth===SY
 // Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы (живыми инструментами)
 function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats,A=ARR[T.sty]||ARR.rag;
   // 0.23: как и в оркестре — ниже, без писка: марш в фа мажоре, регтайм и танго — на кварту ниже
-  if(!T._m){T._m=T.mel.replace(/\|/g,' ').trim().split(/\s+/);T._c=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;}
-  const M=T._m,len=M.length,idx=AU.step%len,pass=Math.floor(AU.step/len),bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
+  if(!T._m){const A0=T.mel.replace(/\|/g,' ').trim().split(/\s+/),ca=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;
+    // 0.38: у марша есть трио — части идут как у Сузы: A, A, трио, трио (и всё один раз); у остальных — три прохода одной части
+    if(T.trio){const Tr=T.trio.replace(/\|/g,' ').trim().split(/\s+/),ct=T.tch.trim().split(/\s+/).map(chordOf);T._m=A0.concat(A0,Tr,Tr);T._c=ca.concat(ca,ct,ct);T._sec=A0.length;T._passes=1;}
+    else{T._m=A0;T._c=ca;T._sec=0;T._passes=3;}}
+  const M=T._m,len=M.length,idx=AU.step%len,pass0=Math.floor(AU.step/len),pass=T._sec?Math.floor(idx/T._sec)%2:pass0,quiet=T._sec&&Math.floor(idx/T._sec)===2,bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
   if(play){
     if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
     else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.16));}
     else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
-      if(T.sty==='march'){if(pos===0)drum('kick',t,0.5);if(pos===h)drum('crash',t,0.12);if(pos===spb-2||pos===spb-1)drum('snare',t,0.3);}}
+      if(T.sty==='march'){if(pos===0)drum('kick',t,quiet?0.25:0.5);if(pos===h&&!quiet)drum('crash',t,0.12);if(pos===spb-T.div||pos===spb-T.div/2)drum('snare',t,quiet?0.15:0.3);}}
     const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;
-      inst(mi2,n,t,sub*d*0.95,0.4);if(d>=2||pass===1)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
-    if(AU.step>=len*3-1)musEnd(SY,t+sub);}
+      inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
+    if(AU.step>=len*T._passes-1)musEnd(SY,t+sub);}
   return sub;}
 function auSched(){
   const c=AU.ctx;if(!c)return;
@@ -28648,15 +28750,15 @@ const ACT={
   toMenu:()=>{if(G)save();closeSheet();closePaper();showMainMenu();},
   continue:()=>{if(loadSlot('auto')){hideMainMenu();tab='plant';shownCash=null;lastDate='';render();if(G.over&&G.final)openFinal();}},
   newgame:()=>{draft=null;stopAuto();openNewGame();},
-  pion:d=>{const top=sb.scrollTop,f=document.getElementById('fname');if(f)draft.first=f.value;draft.pioneer=d.v;draft.diff=draft.diff||'normal';draft.country=PIONEERS[d.v].c;draft.company=PIONEERS[d.v].co;const keep=draft;openNewGame();draft=keep;sb.scrollTop=top;},
-  country:d=>{const top=sb.scrollTop;draft.country=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
+  // 0.38: новая игра — направление → страна → герой (31-sheets.js: openNewGame); старые действия ngPath/ngBack оставлены для проверок
+  pion:d=>{const top=sb.scrollTop;ngKeep();ngSetHero(draft,d.v==='custom'?'custom':'pio',d.v);openNewGame();sb.scrollTop=top;},
+  rpick:d=>{const top=sb.scrollTop;ngKeep();ngSetHero(draft,'racer',d.v==='custom'?'rcustom':d.v);openNewGame();sb.scrollTop=top;},
+  country:d=>{const top=sb.scrollTop;ngKeep();draft.country=d.v;if(!ngHeroOk(draft))ngSetHero(draft,'custom','custom');openNewGame();sb.scrollTop=top;},
   diff:d=>{const top=sb.scrollTop;draft.diff=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
-  // 0.28: путь гонщика; 0.35: путь выбирают первым — гонщик, мотомастерская или своя марка (фабрикант, финансист, техник)
-  ngPath:d=>{ngKeep();const v=d.v;if(v==='maker'||v==='money'||v==='tech'){draft.path='company';draft.role=v;}else if(v==='company'){draft.path='company';draft.role=draft.role||'maker';}else draft.path=v;
-    draft.step='who';openNewGame();sb.scrollTop=0;},
-  ngBack:()=>{ngKeep();draft.step='path';openNewGame();sb.scrollTop=0;},
-  rpick:d=>{const top=sb.scrollTop;ngKeep();draft.racer=d.v;openNewGame();sb.scrollTop=top;},
-  rcountry:d=>{const top=sb.scrollTop;ngKeep();draft.rc=d.v;openNewGame();sb.scrollTop=top;},
+  ngDir:d=>{ngKeep();draft.dir=d.v;if(!ngHeroOk(draft))ngSetHero(draft,'custom','custom');openNewGame();},
+  ngPath:d=>{ngKeep();const v=d.v;draft.dir=v==='moto'?'moto':v==='air'?'air':'car';if(v==='racer')ngSetHero(draft,'racer','rcustom');else if(!ngHeroOk(draft)||draft.hero.kind==='racer')ngSetHero(draft,'custom','custom');openNewGame();sb.scrollTop=0;},
+  ngBack:()=>{ngKeep();openNewGame();sb.scrollTop=0;},
+  rcountry:d=>{const top=sb.scrollTop;ngKeep();draft.country=d.v;openNewGame();sb.scrollTop=top;},
   ryear:d=>{const top=sb.scrollTop;ngKeep();draft.ry=+d.v;openNewGame();sb.scrollTop=top;},
   startracer:()=>{ngKeep();racerNew(draft.racer,draft.rc,draft.ry,draft.racer==='custom'?draft.rname:'',draft.diff);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';racerIntro(G);save();render();AU.lastY=null;},
   rxRace:d=>racerOpenRace(d.k),
@@ -28741,7 +28843,7 @@ Object.assign(ACT,{
   aevMd:d=>{if(!AEV)return;AEV.md=+d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
   aevPil:d=>{if(!AEV)return;AEV.pid=d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
   aevQuick:()=>{if(AEV)airEvQuick(AEV.key,AEV.md,AEV.pid);},
-  aevFly:()=>{if(!AEV)return;const s=G,ev=AIR_EV.find(e=>e.key===AEV.key),md=s.air.models.find(m=>m.id===+AEV.md);if(!ev||!md)return;closeSheet();if(typeof flyEvent==='function'&&flyEvent(ev,md,AEV.pid))return;airEvQuick(AEV.key,AEV.md,AEV.pid);},
+  aevFly:()=>{if(!AEV)return;const s=G,ev=airEvByKey(s,AEV.key),md=s.air.models.find(m=>m.id===+AEV.md);if(!ev||!md)return;closeSheet();if(typeof flyEvent==='function'&&flyEvent(ev,md,AEV.pid))return;airEvQuick(AEV.key,AEV.md,AEV.pid);},
   arecQuick:()=>{if(AEV)airRecQuick(AEV.rec,AEV.md,AEV.pid);},
   arecFly:()=>{if(!AEV)return;const s=G,md=s.air.models.find(m=>m.id===+AEV.md);if(!md)return;closeSheet();if(typeof flyRecord==='function'&&flyRecord(AEV.rec,md,AEV.pid))return;airRecQuick(AEV.rec,AEV.md,AEV.pid);},
   airCarShop:()=>{const s=G;if(lineOn(s,'car')||s.carShopB)return;const c=Math.round((CARSHOP.c*cpi(s)+CARSHOP.cap*capUnitCost(s))/100)*100;if(s.cash<c)return;s.cash-=c;s.plantVal+=c*0.8;
