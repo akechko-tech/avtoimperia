@@ -190,7 +190,7 @@ function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}ca
   const own=(L.find(x=>/^own_/.test(x))||'own_cue_fanfare').slice(8),cue=()=>auCue(own,0.8,()=>{try{auReelFanfare();}catch(_){}});
   const id=L.find(x=>/^fan_/.test(x)&&!(CUE[x]&&CUE[x].bad)&&(loc||(I[x]&&remoteOk())));
   if(!id){cue();return;}
-  auCueSrc(id,'music/'+id+'.m4a',0.85,cue,FANF_SEC[kind]||9);}
+  auCueSrc(id,'music/'+id+'.m4a',0.85,cue,FANF_SEC[kind]||9);}   // 0.38: фанфары эпохи (fan_*) остались рядом с игрой — звучат и без сети
 const FANF_SEC={win:8,cup:10,title:12,record:8,first:10,medal:8,deal:8,legacy:14,duel:8};
 function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}

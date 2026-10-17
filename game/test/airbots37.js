@@ -7,6 +7,7 @@ const pick=ev=>{const ch=ev.choices||[['ok','ok']];let k=ch.find(x=>/^air:test:/
   k=ch.find(x=>x[1]==='ru:emig');if(k)return k[1];k=ch.find(x=>/^ru:to:us$/.test(x[1]));if(k)return k[1];
   k=ch.find(x=>/^(saga|ok)$/.test(x[1]));return k?k[1]:ch[ch.length-1][1];};
 for(const item of list){const [h,cc]=item.split(':'),c=cc||PIONEERS[h].c;let errs=[];const t0=Date.now();
+  Math.random=mulberry32(hashStr('airbots38|'+item));   // 0.38: воспроизводимая партия (боты играют на грани — без зерна итог плавал)
   newAirGame(h,c,'','normal','');airIntroPapers(G);sagaCheck(G);
   const clear=()=>{let g=0;while(G.pending.length&&g++<30){const ev=G.pending[0],key=pick(ev);try{resolve(key);}catch(e){errs.push('resolve '+key+': '+e.message);G.pending.shift();}if(G.pending[0]===ev)G.pending.shift();}};
   clear();let minCash=G.cash,films=0,trials=0,wins=0;

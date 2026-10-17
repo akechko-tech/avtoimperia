@@ -66,7 +66,8 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   // первые в мире: перелёт или петля раньше истории
   if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y+(ev.m>=6?1:0),airEvMine(s,ev)?'вы сами в настоящей истории':ev.h[0]);}catch(_){}
   // военный конкурс: победителю — заказ армии
-  if(ev.mil&&md&&!res.dnf){const k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:0,n=Math.round(ev.mil.n*k);
+  // 0.38: в войну фронту нужно всё, что летает, — заказ поменьше получает и тот, кто не победил, но показал не хуже 0,9 от лучшего
+  if(ev.mil&&md&&!res.dnf){const topQ=Math.max(0,...(res.field||[]).map(x=>x.q||0)),k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:ev.mil.war&&(res.q||0)>=0.9*topQ?0.1:0,n=Math.round(ev.mil.n*k);
     if(n>=1){const price=airMilPrice(s,md),adv=ev.mil.war?Math.round(n*price*0.25):0;if(adv)s.cash+=adv;airOrderAdd(s,{md:md.id,n,price,due:mi(s)+(ev.mil.months||6)+2,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1,adv,advLeft:adv});md.milWon=(md.milWon||0)+1;md.milRep=clamp((md.milRep||0)+(won?6:2),-40,60);res.order=n;res.adv=adv;}}
   if(ev.dyn){A.trials=(A.trials||[]).filter(e=>e.key!==ev.key);}
   try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}

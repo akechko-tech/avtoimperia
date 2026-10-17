@@ -127,8 +127,11 @@ def music():
         # 0.23: короткие темы (фанфара, темы соперников) — файлы рядом с игрой, но не в плейлисте
         if m.get('cue'): cues.add(cid); continue
         idx[cid] = {k: m.get(k) for k in ('cap', 'st', 'y', 'mood', 'd', 'lic', 'page', 'by')}; idx[cid]['own'] = 1
+    # 0.38: фанфары эпохи (fan_*, ≈1,7 МБ) остаются рядом с игрой и в APK — звучат и без сети; остальные записи — только в релизе
+    for cid in man:
+        if cid.startswith('fan_') and cid + '.m4a' in have: n += pull('media/music/clips/%s.m4a' % cid, os.path.join(D, cid + '.m4a'))
     for f in os.listdir(D):
-        if f.endswith('.m4a') and (f[:-4] not in idx or not idx[f[:-4]].get('own')) and f[:-4] not in cues: os.remove(os.path.join(D, f))
+        if f.endswith('.m4a') and not f.startswith('fan_') and (f[:-4] not in idx or not idx[f[:-4]].get('own')) and f[:-4] not in cues: os.remove(os.path.join(D, f))
     open(os.path.join(D, 'index.js'), 'w', encoding='utf-8').write('window.MUSIC_INDEX=' + json.dumps(idx, ensure_ascii=False, separators=(',', ':')) + ';\n')
     print('music: updated', n, 'tracks', len(idx), 'own', sorted(k for k in idx if idx[k].get('own')), 'cues', len(cues))
 

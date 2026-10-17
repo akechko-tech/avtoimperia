@@ -46,7 +46,7 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   const run=ac.eng.run&&ac.fuel>0;ac.thr+=(clamp(c.thr,0,1)-ac.thr)*Math.min(1,dt*2.2);
   const pw=run?ac.thr*(1-ac.dmg.eng*0.75):0;
   // воздух вокруг аэроплана
-  const wd=FL.wind,va=[ac.v[0]-wd[0],ac.v[1]-wd[1],ac.v[2]-wd[2]],V=l3(va);ac.V=V;
+  const wd=FL.wind,va=[ac.v[0]-wd[0],ac.v[1]-wd[1],ac.v[2]-wd[2]],V=l3(va);ac.V=V;ac.Vg=l3(ac.v);   // 0.38: Vg — путевая: «остановился» считается по ней, а не по воздушной (при ветре 3 м/с стоящий аэроплан имел V=3)
   const u=d3(va,ac.fw),vn=d3(va,ac.up),vr=d3(va,ac.rt);
   const al=V>0.5?Math.atan2(-vn,u):0,be=V>0.5?Math.asin(clamp(vr/V,-1,1)):0;ac.al=al;ac.be=be;
   const qd=0.5*rho*V*V,vh=V>0.3?[va[0]/V,va[1]/V,va[2]/V]:ac.fw;
@@ -130,7 +130,7 @@ function flGround(ac,dt,F,Lf,ld,Df,T,pw,qd,V){const c=ac.ctl,m=ac.m,s=flSurf(ac.
   const hd=flHdg(ac),fh=[Math.sin(hd),0,Math.cos(hd)],vg=d3(ac.v,fh),lat=[ac.v[0]-fh[0]*vg,0,ac.v[2]-fh[2]*vg];
   const N=Math.max(0,m*FLG-Lf*ld[1]);
   // сопротивление качению: трава, пашня, вода (горб у глиссирования), полозья
-  let mu=ac.rail?0.35:s.k==='field'?0.11:0.07;if(ac.gr.gp>0.05)mu+=0.06*clamp(ac.th/ac.gr.gp,0,1);// костыль на хвосте пашет землюif(water){const r=V/Math.max(5,ac.Vs);mu=0.045+0.09*Math.exp(-Math.pow((r-0.5)/0.28,2));}
+  let mu=ac.rail?0.35:s.k==='field'?0.11:0.07;if(ac.gr.gp>0.05)mu+=0.06*clamp(ac.th/ac.gr.gp,0,1);/* костыль на хвосте пашет землю */if(water){const r=V/Math.max(5,ac.Vs);mu=0.045+0.09*Math.exp(-Math.pow((r-0.5)/0.28,2));}
   if(ac.rail&&ac.cat>0){ac.cat-=vg*dt;T+=m*FLG*0.55;mu=0.02;}
   const Fx=T*Math.cos(ac.th)-Df*Math.sign(vg||1)-mu*N*Math.sign(vg||(T>0?1:0));
   let nv=vg+Fx/m*dt;if(vg>0&&nv<0&&T<mu*N)nv=0;if(Math.abs(nv)<0.05&&T<mu*N)nv=0;
@@ -176,7 +176,7 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
 function flAutoLand(ac,A,gy,dt){const W=flW();let L=ac.ld;const dx=ac.p[0]-A[0],dz=ac.p[2]-A[1],d=Math.hypot(dx,dz);
   if(!L){const u=d>50?[dx/d,dz/d]:[0,1];L=ac.ld={st:d>1400?'final':'ip',u,ip:[A[0]+u[0]*1900,A[1]+u[1]*1900],t:0};}
   L.t+=dt;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));
-  if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=0;const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&ac.V>3?clamp(e*2,-1,1):0;L.st=ac.V<2.5?'done':'roll';return L.st;}
+  if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=0;const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&(ac.Vg||0)>3?clamp(e*2,-1,1):0;L.st=(ac.Vg||0)<2.5?'done':'roll';return L.st;}
   if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:gy+130,spd:ac.Vs*1.45,floor:50,bank:0.7});if(di<220||(L.t>8&&di<400))L.st='final';return L.st;}
   // прямая: нос на круг, глиссада 4°, скорость 1,3 посадочной; ниже 7 м — выравнивание: газ долой, нос подбирать, снижение 0,6 м/с
   const glide=gy+flHcg(ac,0)+Math.max(0,d-40)*Math.tan(0.07);

@@ -78,8 +78,15 @@ with sync_playwright() as p:
     js("FL.me.ctl.aCmd=null"); pg.wait_for_timeout(2500)
     pg.screenshot(path=out + '7_air.png')
     ok(js("!document.getElementById('fLand').hidden"), 'кнопка «Сесть» видна')
-    js("document.getElementById('fLand').click()"); pg.wait_for_timeout(3000)
-    ok(js("!document.getElementById('fEnd').hidden"), 'итог полёта на экране')
+    # 0.38: «Сесть» — лётчик сам заводит на посадку (минуты игрового времени): считаем заход в расчёте, как flyTick
+    js("document.getElementById('fLand').click()"); pg.wait_for_timeout(500)
+    st = json.loads(js("""(()=>{const me=FL.me,M=FL.mi;let n=0,st='';for(let i=0;i<120*300&&FLY.landing;i++){const p0=[...me.p];const L=FLY.landing;st=flAutoLand(me,L.at,L.at[2],1/120);
+       if(st==='done'){FLY.landing=null;me.ld=null;if(!M.over)L.fin();}flStep(me,1/120);FL.t+=1/120;if(!M.over&&M.step)M.step(1/120,p0);n++;if(me.crash)break;}
+       return JSON.stringify({st,sec:Math.round(n/120),crash:me.crash||null,over:!!M.over});})()"""))
+    for i in range(20):
+        pg.wait_for_timeout(500)
+        if js("!document.getElementById('fEnd').hidden"): break
+    ok(st['st'] == 'done' and not st['crash'] and js("!document.getElementById('fEnd').hidden"), 'лётчик посадил сам (%s с), итог полёта на экране' % st['sec'])
     pg.screenshot(path=out + '8_end.png')
     js("document.getElementById('fEndOk')&&document.getElementById('fEndOk').click()"); pg.wait_for_timeout(1500)
     r = json.loads(js("JSON.stringify({on:FL.on,flown:window.__md.flown,pend:G.pending.map(e=>e.title)})"))
