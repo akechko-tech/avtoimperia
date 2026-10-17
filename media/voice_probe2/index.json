@@ -1,0 +1,50 @@
+{
+ "silero_aidar": {
+  "t": "Silero aidar — как сейчас",
+  "note": ""
+ },
+ "silero_aidar_slow": {
+  "t": "Silero aidar — медленнее, с паузами, ниже",
+  "note": ""
+ },
+ "silero_eugene": {
+  "t": "Silero eugene",
+  "note": ""
+ },
+ "silero_eugene_slow": {
+  "t": "Silero eugene — медленнее, с паузами",
+  "note": ""
+ },
+ "vosk_0": {
+  "t": "Vosk-TTS, диктор 0",
+  "note": ""
+ },
+ "vosk_1": {
+  "t": "Vosk-TTS, диктор 1",
+  "note": ""
+ },
+ "vosk_2": {
+  "t": "Vosk-TTS, диктор 2",
+  "note": ""
+ },
+ "vosk_3": {
+  "t": "Vosk-TTS, диктор 3",
+  "note": ""
+ },
+ "vosk_4": {
+  "t": "Vosk-TTS, диктор 4",
+  "note": ""
+ },
+ "piper_denis": {
+  "t": "Piper denis",
+  "note": ""
+ },
+ "piper_dmitri": {
+  "t": "Piper dmitri",
+  "note": ""
+ },
+ "piper_ruslan": {
+  "t": "Piper ruslan",
+  "note": ""
+ }
+}
