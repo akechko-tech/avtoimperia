@@ -19,7 +19,18 @@ def log(*a):
     try: open(LOGF, 'w', encoding='utf-8').write('\n'.join(LOGL[-600:]) + '\n')
     except Exception: pass
 
-PACE = float(os.environ.get('PUBLISH_PACE', '0.8'))   # секунд на файл: ~75 загрузок в минуту — ниже вторичных лимитов API (900 очков в минуту на адрес, POST — 5 очков)
+PACE = float(os.environ.get('PUBLISH_PACE', '1.2'))
+
+def limits(note=''):
+    """состояние лимитов API у токена workflow: core (api.github.com) — журнал; мало осталось — ждём до сброса"""
+    r = subprocess.run(['gh', 'api', 'rate_limit'], capture_output=True, text=True)
+    if r.returncode != 0: log('rate_limit?', note, (r.stderr or '')[-200:]); return
+    try:
+        R = json.loads(r.stdout)['resources']; c = R.get('core', {})
+        log('limits', note, ' '.join('%s %s/%s reset in %d s' % (k, v.get('remaining'), v.get('limit'), max(0, v.get('reset', 0) - time.time())) for k, v in R.items() if k in ('core', 'graphql', 'integration_manifest')))
+        if c.get('remaining', 1000) < 60:
+            w = min(3700, max(60, c.get('reset', 0) - time.time() + 15)); log('core limit nearly spent — wait %d s' % w); time.sleep(w)
+    except Exception as e: log('rate_limit parse', repr(e)[:100])   # секунд на файл: ~75 загрузок в минуту — ниже вторичных лимитов API (900 очков в минуту на адрес, POST — 5 очков)
 
 def gh(cmd, tries=6):
     """gh с ожиданием при ограничениях API: лимит — ждём 15 минут (часовое окно), прочие сбои — минуту-две"""
@@ -32,7 +43,7 @@ def gh(cmd, tries=6):
         limited = re.search(r'rate limit|secondary|abuse|429|403', err, re.I)
         wait = 900 if limited else min(120, 60 * (k + 1))
         log('gh retry', ' '.join(cmd[:3]), k + 1, 'wait', wait, 's:', err[-300:].replace('\n', ' | '))
-        if k + 1 < tries: time.sleep(wait)
+        if k + 1 < tries: limits('after error'); time.sleep(wait)
     return r
 
 def assets(tag):
@@ -53,6 +64,7 @@ def publish(tag, paths, pub):
     have = assets(tag)
     todo = [p for p in paths if have.get(os.path.basename(p)) != os.path.getsize(p)]
     bad = 0
+    if todo: limits(tag)
     for i in range(0, len(todo), 10):
         chunk = todo[i:i + 10]; t0 = time.time()
         r = gh(['release', 'upload', tag, '-R', REPO, '--clobber'] + chunk)
@@ -77,6 +89,7 @@ def main():
     pub.setdefault('music', {}); pub.setdefault('voice', {})
     only = sys.argv[1:]  # publish.py [music] [voice]
     n = miss = 0
+    limits('start')
     if not only or 'music' in only:
         D = os.path.join(MEDIA, 'music', 'clips')
         files = sorted(os.path.join(D, f) for f in os.listdir(D) if f.endswith('.m4a')) if os.path.isdir(D) else []

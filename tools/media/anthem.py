@@ -1049,8 +1049,9 @@ def run(media, log=print):
         st, mood, band = META.get(tid, (T['sty'], 'lively', 'оркестр'))
         S = STYLE[st](T); mid = os.path.join(tmp, tid + '.mid'); wav = os.path.join(tmp, tid + '.wav'); out = os.path.join(D, 'own_' + tid + '.m4a')
         S.write(mid); open(os.path.join(D, 'own_' + tid + '.mid'), 'wb').write(open(mid, 'rb').read())
-        sh(['fluidsynth', '-ni', '-q', '-g', '0.5', '-r', '44100', '-R', '1', '-C', '0', '-o', 'synth.reverb.room-size=0.62', '-o', 'synth.reverb.level=0.38',
-            '-o', 'synth.reverb.width=1.0', '-o', 'synth.reverb.damp=0.6', '-o', 'synth.polyphony=512', '-F', wav, sf2, mid])
+        # 0.38: марш — суше и тише (плац, а не зал: большая реверберация размазывала медь в «какофонию»); остальные пьесы — как были
+        hall = ['-g', '0.5', '-C', '0', '-o', 'synth.reverb.room-size=0.62', '-o', 'synth.reverb.level=0.38'] if st == 'march' else ['-g', '0.55', '-C', '1', '-o', 'synth.reverb.room-size=0.84', '-o', 'synth.reverb.level=0.66']
+        sh(['fluidsynth', '-ni', '-q', '-r', '44100', '-R', '1'] + hall + ['-o', 'synth.reverb.width=1.0', '-o', 'synth.reverb.damp=0.6', '-o', 'synth.polyphony=512', '-F', wav, sf2, mid])
         # ровная громкость (как у остальных записей) и мягкая «плёнка» зала; хвост реверберации не обрезать
         end = S.seconds(S.length())
         sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 4.0), '-af', 'highpass=f=35,equalizer=f=210:t=q:w=1.0:g=2.5,equalizer=f=2600:t=q:w=1.3:g=-5,treble=g=-7:f=5200,lowpass=f=9000,loudnorm=I=-19:TP=-2:LRA=11,afade=t=out:st=%.2f:d=3' % (end + 1.0),
