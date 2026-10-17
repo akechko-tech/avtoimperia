@@ -45,7 +45,7 @@ jobs:
       - name: Голос и музыка — в релизы
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 tools/media/publish.py || echo 'релизы: не удалось'
+        run: python3 tools/media/publish.py || echo "релизы - не удалось"
       - name: Сохранить в ветку media
         run: |
           git config user.name "github-actions[bot]"
