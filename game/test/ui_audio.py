@@ -10,7 +10,7 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     js=lambda s:pg.evaluate(s)
     pg.mouse.click(10,10);pg.wait_for_timeout(300)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(200);pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150);pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.wait_for_timeout(200);pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150);pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     js("()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}}")
     print('ctx',js("!!AU.ctx&&AU.ctx.state"),'EN',js("[EN.ok,EN.fail]"))
     for i in range(20):

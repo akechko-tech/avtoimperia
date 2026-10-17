@@ -23,7 +23,9 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/docs/index.html'); pg.wait_for_timeout(1500)
     js = lambda s: pg.evaluate(s)
     js("demoStop();hideMainMenu();openNewGame()"); pg.wait_for_timeout(300)
-    js("document.querySelector('[data-act=ngPath][data-v=air]').click()"); pg.wait_for_timeout(300)
+    js("document.querySelector('[data-act=ngDir][data-v=air]').click()"); pg.wait_for_timeout(300)
+    js("document.querySelector('[data-act=country][data-v=fr]').click()"); pg.wait_for_timeout(300)
+    js("document.querySelector('[data-act=pion][data-v=bleriot]').click()"); pg.wait_for_timeout(300)
     js("document.querySelector('[data-act=startgame]').click()"); pg.wait_for_timeout(1000)
     js("try{sagaStop();}catch(_){};for(let i=0;i<8;i++)try{closePaper();}catch(_){};G.pending=[];AU.on.flyHelp=1;")
     for kind, key in CASES:

@@ -4,7 +4,7 @@ with sync_playwright() as p:
     b=p.chromium.launch(args=['--enable-unsafe-swiftshader']);pg=b.new_page(viewport={'width':300,'height':560})
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(300)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     keys=pg.evaluate("""()=>{const pk={};RACES.forEach(r=>{const c=trackCfg(r);const k=r.t+'|'+(r.track||'')+'|'+c.terr+'|'+c.host+(c.night?'|n':'')+(c.stages?'|s':'')+'|'+(r.y<1906?0:r.y<1919?1:2);if(!pk[k])pk[k]=r.key;});return Object.values(pk);}""")
     print(len(keys),'трасс')
     bad=[]

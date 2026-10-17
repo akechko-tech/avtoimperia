@@ -27,7 +27,9 @@ function flyBind(){const $=id=>document.getElementById(id),st=FLY.st;
   $('fCam').onclick=()=>{FLY.cam=(FLY.cam+1)%4;FLY.ce=null;flToast(['Вид сзади','Из кабины','Издали','С земли'][FLY.cam]);};
   $('fWarp').onclick=()=>{const M=FL.mi,L=[1,2,4,8,16,32,64].filter(w=>w<=(M?flWarpMax():1));const i=L.indexOf(FLY.warp);FLY.warp=L[(i+1)%L.length]||1;$('fWarp').textContent='×'+FLY.warp;};
   $('fAuto').onclick=()=>{FLY.auto=!FLY.auto;$('fAuto').classList.toggle('on',FLY.auto);flToast(FLY.auto?'Автопилот: лётчик ведёт сам':'Ручное управление');if(!FLY.auto){FLY.warp=Math.min(FLY.warp,4);$('fWarp').textContent='×'+FLY.warp;if(FL.me)FL.me.ctl.aCmd=null;}};
-  $('fLand').onclick=()=>{if(FL.mi&&FL.mi.land)FL.mi.land();};
+  // 0.38: «Сесть» — лётчик честно заходит на посадку (дальняя точка, глиссада, выравнивание), а не «сел» мгновенно; ещё нажатие — снова ручное
+  $('fLand').onclick=()=>{const M=FL.mi;if(!M||!M.land)return;if(FLY.landing){FLY.landing=null;if(FL.me){FL.me.ld=null;FL.me.ctl.aCmd=null;}flToast('Ручное управление');return;}
+    const at=M.landAt?M.landAt():[M.A[0],M.A[1],FW&&FW.S.A?FW.S.A.y:0];FLY.landing={at,fin:()=>M.land()};FLY.auto=false;$('fAuto').classList.remove('on');if(FL.me)FL.me.ld=null;FLY.warp=Math.min(FLY.warp,2);$('fWarp').textContent='×'+FLY.warp;flToast('Лётчик заходит на посадку','good');};
   $('fQuit').onclick=()=>flyQuitAsk();$('fHelp').onclick=()=>flyHelp();
   window.addEventListener('keydown',e=>{if(!FL.on)return;FLY.keys[e.code]=true;if(e.code==='KeyC')$('fCam').click();if(e.code==='KeyT')$('fWarp').click();if(e.code==='KeyP')$('fAuto').click();if(e.code==='Escape')flyQuitAsk();
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();});
@@ -44,14 +46,14 @@ function flyQuitAsk(){if(!FL.on)return;const M=FL.mi;if(M&&M.over){flyClose();re
   document.getElementById('fQ1').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};document.getElementById('fQ2').onclick=()=>{b.hidden=true;if(M&&M.quit)M.quit();else flyClose();};}
 /* ---------- управление ---------- */
 function flyInput(dt){const me=FL.me,c=me.ctl,K=FLY.keys,st=FLY.st;if(me.crash)return;
-  if(FLY.auto&&FL.mi&&FL.mi.auto){FL.mi.auto(dt);return;}c.aCmd=null;c.lvl=true;
+  if(FLY.landing)return;if(FLY.auto&&FL.mi&&FL.mi.auto){FL.mi.auto(dt);return;}c.aCmd=null;c.lvl=true;
   let sx=st.x,sy=st.y;const kx=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0),ky=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0);
   FLY.kx=(FLY.kx||0)+(kx-(FLY.kx||0))*Math.min(1,dt*(kx?5:9));FLY.ky=(FLY.ky||0)+(ky-(FLY.ky||0))*Math.min(1,dt*(ky?4:9));if(Math.abs(FLY.kx)>0.01)sx=FLY.kx;if(Math.abs(FLY.ky)>0.01)sy=FLY.ky;
-  const ex=v=>Math.sign(v)*Math.pow(Math.abs(v),1.5);c.sx=ex(sx);c.sy=ex(sy);c.rd=(K.KeyE?1:0)-(K.KeyQ?1:0);
+  const ex=v=>Math.sign(v)*Math.pow(Math.abs(v),1.25);c.sx=ex(sx);c.sy=ex(sy);c.rd=(K.KeyE?1:0)-(K.KeyQ?1:0);
   if(K.ShiftLeft||K.ShiftRight)FLY.thrT=Math.min(1,FLY.thrT+dt*0.6);if(K.ControlLeft||K.ControlRight)FLY.thrT=Math.max(0,FLY.thrT-dt*0.6);c.thr=FLY.thrT;
   FL.fire=FLY.fire||!!K.Space;FL.bomb=FLY.bomb||!!K.KeyB;}
 function flWarpMax(){const M=FL.mi,me=FL.me;if(!M||!me)return 1;if(me.crash||M.over)return 1;const agl=me.p[1]-Math.max(0,fwHgt(FW.S,me.p[0],me.p[2]));
-  if(me.gnd||agl<60)return 2;if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||4);}
+  if(me.gnd||agl<60||FLY.landing)return 2;if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||4);}
 /* ---------- камера ---------- */
 function flyCam(dt){const me=FL.me,cv=G3.cv,asp=Math.max(0.3,(cv.clientWidth||1)/(cv.clientHeight||1)),mesh=FL.meMesh,v=me.v,sp=l3(v);
   const hf=FLY.cam===1?1.25:1.05;let vf=asp<1?2*Math.atan(Math.tan(hf/2)/asp):0.92;if(2*Math.atan(Math.tan(vf/2)*asp)>1.8)vf=2*Math.atan(Math.tan(0.9)/asp);
@@ -77,7 +79,7 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
   $('fThrI').style.height=Math.round(FLY.thrT*100)+'%';$('fThrK').textContent=Math.round((FLY.auto?me.thr:FLY.thrT)*100)+'%';
   const w=$('fWarn');const wt=me.crash?'':me.stall&&!me.gnd?'СРЫВ!':stallW&&!me.gnd?'Мала скорость':me.creak?'ТРЕЩАТ ЛОНЖЕРОНЫ':!me.eng.run&&!me.gnd?'Мотор стоит — планируйте на посадку':fuel<0.08&&!me.gnd?'Мало бензина':'';me.creak=0;w.hidden=!wt;w.textContent=wt;
   $('fClock').textContent=M&&M.clock?M.clock():'';if(M&&M.goal)$('fGoal').innerHTML=M.goal();if(M&&M.board){const b=M.board();$('fBoard').innerHTML=b;$('fBoard').hidden=!b;}
-  $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&M.canLand&&M.canLand());$('fWarp').textContent='×'+FLY.warp;
+  $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&(FLY.landing||M.canLand&&M.canLand()));$('fLand').textContent=FLY.landing?'Сам':'Сесть';$('fLand').classList.toggle('on',!!FLY.landing);$('fWarp').textContent='×'+FLY.warp;
   $('fFire').hidden=!(M&&M.guns);$('fBomb').hidden=!(M&&M.bombs);}
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
 function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;if(!tg){el.hidden=true;return;}
@@ -98,7 +100,7 @@ function flyFront(m,md,P){if(!flyCan())return false;return flyStart({kind:'war',
 function flyStart(cfg){if(FL.on)return true;const s=G;let M;try{M=flMission(cfg);}catch(e){console.error(e);return false;}
   const el=flyEl(),cv=document.getElementById('rgl');if(!cv)return false;let ok=false;try{ok=g3Init(cv);}catch(e){ok=false;}if(!ok)return false;
   FL.on=true;FL.cfg=cfg;FL.mi=M;FL.paused=false;FL.t=0;FL.k=1;FL.noFail=false;FL.wind=[0,0,0];FL.fire=false;FL.bomb=false;
-  Object.assign(FLY,{cam:0,warp:1,auto:false,ce:null,fb:null,thrT:0,fire:false,bomb:false,keys:{},last:performance.now()});
+  Object.assign(FLY,{cam:0,warp:1,auto:false,landing:null,ce:null,fb:null,thrT:0,fire:false,bomb:false,keys:{},last:performance.now()});
   FLY.cvParent=cv.parentNode;FLY.cvNext=cv.nextSibling;document.getElementById('fView').appendChild(cv);cv.hidden=false;
   el.hidden=false;document.body.classList.add('flying');document.getElementById('fName').textContent=M.title||'';document.getElementById('fEnd').hidden=true;document.getElementById('fHelpBox').hidden=true;
   document.getElementById('fLoad').hidden=false;document.getElementById('fLoadT').textContent=cfg.kind==='test'?'Выкатываем аэроплан из ангара…':'Аэродром готовится…';
@@ -130,7 +132,7 @@ function flyLoop(now){if(!FL.on)return;FLY.raf=requestAnimationFrame(flyLoop);co
 function flyTick(dt,dtR){const M=FL.mi,me=FL.me;
   if(dt>0){flyInput(dt);const wm=flWarpMax();if(FLY.warp>wm)FLY.warp=wm;
     const sim=dt*(M.over?1:FLY.warp),h=FLY.warp<=4?1/120:1/30,n=Math.min(600,Math.ceil(sim/h)),d=sim/n;
-    for(let i=0;i<n;i++){const p0=[me.p[0],me.p[1],me.p[2]];if(FLY.auto&&M.auto&&!me.crash)M.auto(d);flStep(me,d);
+    for(let i=0;i<n;i++){const p0=[me.p[0],me.p[1],me.p[2]];if(FLY.landing&&!me.crash){const L=FLY.landing,st=flAutoLand(me,L.at,L.at[2],d);if(st==='done'){FLY.landing=null;me.ld=null;if(!M.over)L.fin();}}else if(FLY.auto&&M.auto&&!me.crash)M.auto(d);flStep(me,d);
       if(M.ai)M.ai(d);for(const k of M.rivals)flKinStep(k,d);FL.t+=d;if(!M.over&&M.step)M.step(d,p0);}
     fwPartsTick(Math.min(dt*FLY.warp,0.2));flyFx(dt);FL.pa=(FL.pa||0)+dt*(8+me.eng.rpm*110);}
   // телефон не успевает — кадр мельче (до 0,6), тени и дальний лес — проще; успевает — обратно
@@ -145,7 +147,7 @@ function flyFx(dt){const me=FL.me,E=FW.S,M=FL.mi;
   if(me.gnd&&me.V>6){const s=flSurf(me.p[0],me.p[2]);if(Math.random()<dt*me.V*0.8){const back=[me.p[0]-me.fw[0]*3,me.p[1]-1.2,me.p[2]-me.fw[2]*3];
     if(s.k==='water')fwPart(back[0]+(Math.random()-0.5)*2,0.3,back[2],(Math.random()-0.5)*3,2+Math.random()*2,(Math.random()-0.5)*3,0.8,4,1.2,[220,228,234],0.55,6);
     else fwPart(back[0]+(Math.random()-0.5)*2,back[1],back[2],(Math.random()-0.5),0.6,(Math.random()-0.5),0.8,5,1.6,[150,138,112],0.28);}}
-  if(me.dmg.eng>0.3||me.dmg.fire>0){if(Math.random()<dt*20)fwPart(me.p[0]+me.fw[0]*2,me.p[1],me.p[2]+me.fw[2]*2,0,1,0,1.2,6,4,me.dmg.fire>0?[40,36,34]:[90,88,86],0.5);}}
+  if(me.dmg.eng>0.3||me.dmg.fire>0){if(Math.random()<dt*8)fwPart(me.p[0]+me.fw[0]*2,me.p[1],me.p[2]+me.fw[2]*2,0,1,0,1.0,4,3,me.dmg.fire>0?[40,36,34]:[110,106,102],0.4);}}
 function flyItems(cam){const me=FL.me,M=FL.mi,L=[],mm=FLY.mM||(FLY.mM=new Float32Array(16));m4basis(mm,me.rt,me.up,me.fw,me.p);
   L.push({mesh:FL.meMesh,M:mm,p:me.p,rpm:me.eng.run?me.eng.rpm:me.eng.rpm*0.5,pa:FL.pa,me:1,cock:cam.cock});
   M.rivals.forEach((k,i)=>{const ax=flKinAxes(k),m=k.Mx||(k.Mx=new Float32Array(16));m4basis(m,ax.rt,ax.up,ax.fw,k.p);L.push({mesh:k.mesh,M:m,p:k.p,rpm:0.95,pa:FL.pa*1.07+i});});

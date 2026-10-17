@@ -69,6 +69,8 @@ function fwBuild(key,o){o=o||{};const B=FW_SC[key]||FW_SC.reims,y=o.y||1912;
   // аэродромы: старт и (у перелёта) место посадки; гидроаэропланы — у берега (гавань)
   const af=(x,z,sea)=>{const r=sea?0:Math.max(380,o.afR||450);const f={x,z,r,sea,y:0};f.y=sea?0:Math.max(2,fwHraw(S,x,z));S.fields.push(f);return f;};
   S.A=af(A[0],A[1],seaStart);if(Bp)S.B=af(Bp[0],Bp[1],seaStart&&!o.landB);
+  // 0.38: просеки задания — база рекорда, трасса по пилонам, круг посадки без леса (отзыв: «база в деревьях, как туда сесть?»)
+  S.clear=(o.objs||[]).filter(x=>x.k==='clear');(o.objs||[]).forEach(x=>{if(x.k==='pylon'||x.k==='gate'||x.k==='ring')S.clear.push({a:[x.x,x.z],b:[x.x,x.z],w:x.k==='gate'?(x.w||100)*0.7+40:90});});
   FW={S,key,H:(x,z)=>fwHgt(S,x,z),surf:(x,z)=>fwSurf(x,z),obst:(x,y2,z,r)=>fwObst(x,y2,z,r),nodes:new Map(),tiles:new Map(),queue:new Map(),tq:[],frame:0,objs:[],col:[],hot:[],extra:o.objs||[],
     sea:S.bio==='coast'||S.bio==='strait'||S.bio==='lagoon'||!!S.river||S.bio==='lake',ready:false,mood:o.mood||'clear',y};
   fwSites(S,o);fwMaps(S);
@@ -79,7 +81,7 @@ function fwSites(S,o){const rnd=mulberry32(S.seed+7);S.towns=[];S.roads=[];S.rai
   for(const t of S.towns0||(S.towns0=(FW_SC[S.key]||{}).towns||[])){if(!land(t.x,t.z)&&!t.isl)continue;const st=S.bio==='strait'&&t.x>0?S.stB:S.st;S.towns.push({...t,r:Math.sqrt(t.n)*(t.city?26:34)+40,st});}
   // деревни вокруг (кроме гор и моря)
   const nV=S.bio==='mount'?6:S.bio==='strait'?8:14;for(let i=0;i<nV;i++){const x=(rnd()-0.5)*21000,z=(rnd()-0.5)*21000;if(!land(x,z))continue;
-    if(S.fields.some(f=>Math.hypot(x-f.x,z-f.z)<f.r+700))continue;if(S.towns.some(t=>Math.hypot(x-t.x,z-t.z)<t.r+900))continue;const n=8+Math.floor(rnd()*22),st=S.bio==='strait'&&x>0?S.stB:S.st;S.towns.push({x,z,n,r:Math.sqrt(n)*34+40,st,vil:1});}
+    if(S.fields.some(f=>Math.hypot(x-f.x,z-f.z)<f.r+700))continue;if(S.towns.some(t=>Math.hypot(x-t.x,z-t.z)<t.r+900))continue;if(S.clear&&S.clear.length&&fwClear(S,x,z,250))continue;const n=8+Math.floor(rnd()*22),st=S.bio==='strait'&&x>0?S.stB:S.st;S.towns.push({x,z,n,r:Math.sqrt(n)*34+40,st,vil:1});}
   // дороги: от аэродрома к ближним городам и между соседями (прямо, с изгибами)
   const pts=[...S.fields.filter(f=>!f.sea).map(f=>[f.x,f.z]),...S.towns.map(t=>[t.x,t.z])];
   for(let i=0;i<pts.length;i++){const near=pts.map((p,j)=>[Math.hypot(p[0]-pts[i][0],p[1]-pts[i][1]),j]).filter(q=>q[1]!==i).sort((a,b)=>a[0]-b[0]).slice(0,2);
@@ -101,8 +103,11 @@ function fwSurf(x,z){const S=FW.S,h=fwHgt(S,x,z);if(h<0)return 'water';
   const e=12,sl=Math.hypot(fwHgt(S,x+e,z)-fwHgt(S,x-e,z),fwHgt(S,x,z+e)-fwHgt(S,x,z-e))/(2*e);if(sl>0.35||(S.bio==='mount'&&h>2300))return 'rock';
   return 'grass';}
 // лес: пятна по шуму, не на аэродроме, не в городе, не у воды
+function fwClear(S,x,z,m){for(const c of S.clear||[]){const ax=c.a[0],az=c.a[1],bx=c.b[0],bz=c.b[1],dx=bx-ax,dz=bz-az,L2=dx*dx+dz*dz;const t=L2>0?clamp(((x-ax)*dx+(z-az)*dz)/L2,0,1):0;
+    const px=ax+dx*t,pz=az+dz*t;if(Math.hypot(x-px,z-pz)<c.w+(m||0))return true;}return false;}
 function fwForest(S,x,z){const n=fbm2(x/1500,z/1500,S.seed+40,3),thr=0.66-S.forest*0.42;let f=sstep(thr-0.02,thr+0.05,n);if(!f)return 0;
   for(const a of S.fields)if(!a.sea&&Math.hypot(x-a.x,z-a.z)<a.r+250)return 0;
+  if(S.clear&&S.clear.length&&fwClear(S,x,z))return 0;
   if(S.front&&Math.abs(z-S.front.z)<1100)f*=0.25;return f;}
 // препятствия: дома, ангары, трибуны, пилоны, аэростаты, деревья, приметы
 function fwObst(x,y,z,r){const W=FW;if(!W)return null;const gy=fwHgt(W.S,x,z),agl=y-Math.max(0,gy);
@@ -226,6 +231,14 @@ function fwAirfield(f,S,o){const mb=new MB(),y=S.y,rnd=mulberry32(hashStr('af'+f
 // объекты задания: пилоны, ворота старта, аэростаты, склады и мосты, корабли, буйки
 function fwMission(objs,S){const mb=new MB(),hot=[];
   objs.forEach(o=>{const gy=o.sea?0:Math.max(0,fwHgt(S,o.x,o.z));
+    if(o.k==='clear')return;
+    // 0.38: судейская палатка с флагами и зрителями у концов базы — чтобы базу было видно с воздуха
+    if(o.k==='judge'){const a=o.a||0,c=Math.cos(a),sn=Math.sin(a),P=(u,v,q)=>[o.x+u*c+q*sn,gy+v,o.z-u*sn+q*c];
+      pBox(mb,o.x,gy,o.z,4,2.6,3,'#e8e2d2',MID.cloth,a);mb.poly([P(-4.6,2.6,-3.6),P(4.6,2.6,-3.6),P(0,5,0)],[0,0.6,-0.8],hex2rgb('#d8d0bc'),MID.cloth);mb.poly([P(4.6,2.6,3.6),P(-4.6,2.6,3.6),P(0,5,0)],[0,0.6,0.8],hex2rgb('#d8d0bc'),MID.cloth);
+      mb.poly([P(4.6,2.6,-3.6),P(4.6,2.6,3.6),P(0,5,0)],[0.8,0.6,0],hex2rgb('#cfc6b0'),MID.cloth);mb.poly([P(-4.6,2.6,3.6),P(-4.6,2.6,-3.6),P(0,5,0)],[-0.8,0.6,0],hex2rgb('#cfc6b0'),MID.cloth);
+      for(const q of [-7,7]){const b=P(0,0,q);pCyl(mb,[b[0],gy,b[2]],[b[0],gy+9,b[2]],0.09,0.07,'#3a3a3a',5,MID.metal);pBox(mb,b[0]+0.9,gy+7.6,b[2],0.9,1.2,0.02,q<0?'#e0402a':'#f0ece2',MID.cloth);}
+      for(let i=0;i<6;i++){const b=P(6+(i%3)*1.3,0,-2+Math.floor(i/3)*4);pBox(mb,b[0],gy,b[2],0.22,1.65,0.22,['#2a2a2e','#3a3530','#1f2a40'][i%3],MID.cloth);}
+      FW.col.push({x:o.x,z:o.z,r:5,y0:gy-2,y1:gy+5,why:'врезался в судейскую палатку'});return;}
     if(o.k==='pylon'){const h=o.h||24;for(let k=0;k<6;k++)pBox(mb,o.x,gy+k*h/6,o.z,0.7,h/6,0.7,k%2?'#f0ece2':'#1a1a1a',MID.paint);pCyl(mb,[o.x,gy+h,o.z],[o.x,gy+h+3,o.z],0.06,0.05,'#2a2a2a',5,MID.metal);pBox(mb,o.x+0.9,gy+h+1.6,o.z,0.9,1.3,0.02,o.col||'#e0402a',MID.cloth);
       if(o.sea){pCyl(mb,[o.x,-0.6,o.z],[o.x,0.6,o.z],4,4,'#5a4a3a',10,MID.wood);}
       FW.col.push({x:o.x,z:o.z,r:1.4,y0:gy-2,y1:gy+h+3,why:'врезался в пилон'});}

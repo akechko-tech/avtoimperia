@@ -21,7 +21,9 @@ with sync_playwright() as p:
     js("demoStop();hideMainMenu();")
     # 1) новая игра: путь «Авиатор», цель — авиационная фирма
     js("openNewGame()"); pg.wait_for_timeout(300)
-    js("document.querySelector('[data-act=ngPath][data-v=air]').click()"); pg.wait_for_timeout(400)
+    js("document.querySelector('[data-act=ngDir][data-v=air]').click()"); pg.wait_for_timeout(300)
+    js("document.querySelector('[data-act=country][data-v=fr]').click()"); pg.wait_for_timeout(300)
+    js("document.querySelector('[data-act=pion][data-v=bleriot]').click()"); pg.wait_for_timeout(400)
     t = js("document.getElementById('sheet').textContent")
     ok('авиационную фирму' in t and 'автоимперию' not in t, 'новая игра «Авиатор»: цель — авиационная фирма, не автоимперия')
     pg.screenshot(path=out + '1_newgame.png')

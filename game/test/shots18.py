@@ -30,7 +30,7 @@ with sync_playwright() as p:
         pg=b.new_page(viewport={'width':vp[0],'height':vp[1]},device_scale_factor=2)
         errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('console: '+m.text) if m.type=='error' and 'TUNNEL' not in m.text and 'Failed to load' not in m.text and 'ERR_' not in m.text else None)
         pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
-        pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(500)
+        pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(500)
         close_all(pg,12)
         pg.evaluate("G.pending=[];SAGAP=null;const s=document.getElementById('sagaScreen');if(s)s.remove();closeSheet();closePaper();tab='plant';render();")
         pg.wait_for_timeout(300);pg.screenshot(path=out+f'u18_{name}_start.png')

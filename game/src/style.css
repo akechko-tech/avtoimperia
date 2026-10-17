@@ -881,6 +881,13 @@ button.qbx:active{opacity:.8}
 /* 0.35: новая игра — сначала путь (гонщик, мотомастерская, фабрикант, финансист, техник), потом его исторические фигуры */
 .ng-path{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start;text-align:left;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 12px 10px;cursor:pointer;color:var(--text)}
 .ng-path:hover,.ng-path:focus-visible{border-color:var(--brass)}
+/* 0.38: направление — три кнопки в ряд; ярлык героя (фабрикант, гонщик, авиатор…) */
+.ng-dirs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ng-dir{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;cursor:pointer;color:var(--text)}
+.ng-dir b{font-family:var(--display);font-size:15px}.ng-dir .ng-ico{font-size:26px;margin:0}
+.ng-dir.on{border-color:var(--brass);background:rgba(217,171,82,.14)}
+.ng-tag{display:inline-block;vertical-align:2px;margin-left:6px;padding:1px 7px;border-radius:9px;border:1px solid var(--brass);color:var(--brass);font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:.04em;text-transform:uppercase}
+.brass{color:var(--brass)}
 .ng-ico{font-size:28px;line-height:1;margin-top:2px;text-align:center}
 .ng-b{display:block;min-width:0}
 .ng-b b{display:block;font-family:var(--display);font-size:18px}

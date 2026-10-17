@@ -11,7 +11,7 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     js=lambda s:pg.evaluate(s)
     clean="(()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}G.pending=[];})()"
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=agnelli]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300);js(clean)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=it]');pg.click('[data-act=pion][data-v=agnelli]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300);js(clean)
     for i in range(130): js("(()=>{G.pending=[];if(G.cash<3e5)G.cash+=3e5;doStep();closeSheet();closePaper();G.pending=[];if(SAGAP)try{sagaStop();}catch(_){}})()")
     print('date',js("dstr(G)"),'models',js("G.models.map(m=>m.name+':'+m.status).join(', ')"))
     # сделка с итальянской маркой (с гарантией согласия)

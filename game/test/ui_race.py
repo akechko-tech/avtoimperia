@@ -9,8 +9,8 @@ with sync_playwright() as p:
     pg=b.new_page(viewport={'width':400,'height':820},device_scale_factor=2);pg.set_default_timeout(120000)
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' and 'net::' not in m.text and 'Failed to load' not in m.text else None)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(200)
-    pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.wait_for_timeout(200)
+    pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150)
     pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("()=>{for(let i=0;i<6;i++)closePaper();closeSheet();}");pg.wait_for_timeout(200)
     # перенести игру к месяцу гонки, дать денег и подходящую машину

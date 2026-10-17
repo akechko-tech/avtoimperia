@@ -4,7 +4,7 @@ out='/tmp/claude-0/-home-claude/78ad6e73-468f-5068-9de0-30834cd44849/scratchpad/
 with sync_playwright() as p:
     b=p.chromium.launch();pg=b.new_page(viewport={'width':400,'height':820},device_scale_factor=2)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     for d in [0.35,-0.35]:
         pg.evaluate("""d=>{const rc=RACES.find(r=>r.key==='gpacf-1906');G.pending=[];G.y=rc.y;G.m=rc.m;G.cash=1e6;const md=G.models[0];
           startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0}]});cancelAnimationFrame(rRaf);R.t=1;

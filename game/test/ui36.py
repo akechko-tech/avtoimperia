@@ -30,8 +30,8 @@ with sync_playwright() as p:
     js("demoStop()"); pg.wait_for_timeout(500)   # дальше — без живой заставки: на программном рендере она отнимает весь процессор
     # 2) Россия: путь «Фабрикант» → Фрезе → страна Россия
     pg.click('[data-act=newgame]'); pg.wait_for_timeout(300)
-    pg.click('[data-act=ngPath][data-v=maker]'); pg.wait_for_timeout(300)
-    ok(pg.query_selector('#sheetBody [data-act=pion][data-v=frese]') is not None, 'у фабриканта есть Пётр Фрезе')
+    pg.click('[data-act=ngDir][data-v=car]'); pg.wait_for_timeout(300);pg.click('[data-act=country][data-v=ru]'); pg.wait_for_timeout(300)
+    ok(pg.query_selector('#sheetBody [data-act=pion][data-v=frese]') is not None, 'у автомобилей в России есть Пётр Фрезе')
     pg.click('[data-act=pion][data-v=frese]'); pg.wait_for_timeout(300)
     r = js("({c:draft.country,co:draft.company})"); ok(r['c'] == 'ru' and r['co'] == 'Фрезе и Ко', 'Фрезе: ' + str(r))
     t = pg.inner_text('#sheetBody'); ok('Россия' in t and 'очень трудно' in t, 'страна «Россия» и предупреждение «очень трудно» на экране')

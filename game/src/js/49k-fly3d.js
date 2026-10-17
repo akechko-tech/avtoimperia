@@ -47,11 +47,11 @@ function fwTreeTile(i,j,lod){const s=512,x0=-FW_ROOT/2+i*s,z0=-FW_ROOT/2+j*s,S=F
   const put=(x,z,k,sc)=>{const h=fwHgt(S,x,z);if(h<1)return;mb.add(fwTreeP(k,lod),X3(rnd()*6.28,sc,[x,h-0.3,z]));n++;};
   for(let z=z0+sp/2;z<z0+s&&n<700;z+=sp)for(let x=x0+sp/2;x<x0+s&&n<700;x+=sp){const xx=x+(rnd()-0.5)*sp*0.8,zz=z+(rnd()-0.5)*sp*0.8,f=fo(xx,zz);
     if(f>0.2&&rnd()<Math.pow(f,1.3)*0.92){const T=st(xx).tr;put(xx,zz,T[Math.floor(rnd()*T.length)],(0.8+rnd()*0.45)*(f>0.6?1.25:1));}
-    else if(f<0.05&&rnd()<0.006){const h=fwHgt(S,xx,zz);if(h>1.5&&fwSurf(xx,zz)==='grass'&&!S.fields.some(a=>Math.hypot(xx-a.x,zz-a.z)<a.r+40))put(xx,zz,st(xx).tr[0],0.9+rnd()*0.3);}}
+    else if(f<0.05&&rnd()<0.006){const h=fwHgt(S,xx,zz);if(h>1.5&&fwSurf(xx,zz)==='grass'&&!S.fields.some(a=>Math.hypot(xx-a.x,zz-a.z)<a.r+40)&&!(S.clear&&S.clear.length&&fwClear(S,xx,zz)))put(xx,zz,st(xx).tr[0],0.9+rnd()*0.3);}}
   // аллеи вдоль дорог (во Франции — тополя и платаны)
   for(const r of S.roads){if(!r.trees)continue;for(let q=0;q<r.p.length-1;q++){const a=r.p[q],b=r.p[q+1],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(Math.max(a[0],b[0])<x0-20||Math.min(a[0],b[0])>x0+s+20||Math.max(a[1],b[1])<z0-20||Math.min(a[1],b[1])>z0+s+20)continue;
     const ux=(b[0]-a[0])/L,uz=(b[1]-a[1])/L;for(let t=0;t<L;t+=14){const x=a[0]+ux*t,z=a[1]+uz*t;if(x<x0||x>=x0+s||z<z0||z>=z0+s)continue;if(S.towns.some(tw=>Math.hypot(x-tw.x,z-tw.z)<tw.r))continue;
-      for(const sd of [-1,1])put(x-uz*sd*7,z+ux*sd*7,'pop',0.85+rnd()*0.2);}}}
+      if(S.clear&&S.clear.length&&fwClear(S,x,z))continue;for(const sd of [-1,1])put(x-uz*sd*7,z+ux*sd*7,'pop',0.85+rnd()*0.2);}}}
   const g=g3Mesh(mb);return {m:g,lod,n};}
 function fwTrees(eye,planes){const out=[],R=gq().trees>=1&&!FWR.lowQ?2100:1300,s=512,i0=Math.floor((eye[0]-R+FW_ROOT/2)/s),i1=Math.floor((eye[0]+R+FW_ROOT/2)/s),j0=Math.floor((eye[2]-R+FW_ROOT/2)/s),j1=Math.floor((eye[2]+R+FW_ROOT/2)/s);
   if(eye[1]-Math.max(0,fwHgt(FW.S,eye[0],eye[2]))>2500)return out;
@@ -98,7 +98,7 @@ function fwPart(x,y,z,vx,vy,vz,size,grow,life,col,a,gv){const P=FW.parts;if(P.le
 function fwPartsTick(dt){const P=FW.parts;for(let i=P.length-1;i>=0;i--){const p=P[i];p.life-=dt;if(p.life<=0){P.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=p.gv*dt;const dr=Math.exp(-dt*0.6);p.vx*=dr;p.vz*=dr;}}
 function fwPuffDraw(L,bw,bh,cam,I){if(!L.length)return;const gl=G3.gl,e=FWR.eye,d=I.data;let n=0;
   const S=L.map(p=>[(p.x-e[0])**2+(p.y-e[1])**2+(p.z-e[2])**2,p]).sort((a,b)=>b[0]-a[0]);
-  for(const [,p] of S){if(n>=I.max)break;const o=n*8;if(p.life!==undefined){const k=1-p.life/p.max;d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s+p.g*k;d[o+4]=p.c[0]/255;d[o+5]=p.c[1]/255;d[o+6]=p.c[2]/255;d[o+7]=p.a<0?p.a*(1-k):p.a*(1-k)*Math.min(1,k*6+0.25);}
+  for(const [dd,p] of S){if(n>=I.max)break;const o=n*8;if(p.life!==undefined){const k=1-p.life/p.max,sz=p.s+p.g*k,near=Math.min(1,Math.max(0,(Math.sqrt(dd)-sz*0.8)/(sz*1.6+6)));d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=sz;d[o+4]=p.c[0]/255;d[o+5]=p.c[1]/255;d[o+6]=p.c[2]/255;d[o+7]=(p.a<0?p.a*(1-k):p.a*(1-k)*Math.min(1,k*6+0.25))*near;}
     else{d[o]=p.x;d[o+1]=p.y;d[o+2]=p.z;d[o+3]=p.s;d[o+4]=d[o+5]=d[o+6]=p.g;d[o+7]=p.a;}n++;}
   const P=fwUse('part',bw,bh);gl.uniform3fv(P.u.u_camR,cam.rt);gl.uniform3fv(P.u.u_camU,cam.up);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.cache.puff||(G3.cache.puff=g3Tex(r3dPuff(),{cs:true,ct:true})));gl.uniform1i(P.u.u_tex,1);gl.activeTexture(gl.TEXTURE0);
   gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);g3InstDraw(I,n);gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}

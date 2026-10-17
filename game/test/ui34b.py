@@ -18,7 +18,7 @@ with sync_playwright() as p:
     js=lambda s:pg.evaluate(s)
     def clean(): js("(()=>{for(let i=0;i<8;i++)try{closePaper();}catch(_){};try{closeSheet();}catch(_){};if(typeof SAGAP!=='undefined'&&SAGAP)try{sagaStop();}catch(_){};G.pending=[];})()")
     # 1) новая игра: путь «Мотомастерская» — свои герои
-    pg.click('[data-act=newgame]');pg.wait_for_timeout(200);pg.click('[data-act=ngPath][data-v=moto]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.wait_for_timeout(200);pg.click('[data-act=ngDir][data-v=moto]');pg.wait_for_timeout(300)
     names=pg.eval_on_selector_all('#sheetBody .pion h3','e=>e.map(x=>x.textContent)')
     ok(all(any(n in x for x in names) for n in ('Альбер де Дион','Уильям Моррис','Иоганн Винкльхофер','Эдоардо Бьянки')),'мотомастерская — свои герои: '+', '.join(names))
     ok(not any('Форд' in x or 'Бенц' in x for x in names),'автомобильных героев в списке нет')

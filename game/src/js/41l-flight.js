@@ -18,8 +18,8 @@ function flCraft(md,y,o){o=o||{};const st=airStats(md,y),A=st.A,P=A.P,gr=air3dGe
     p:[0,0,0],v:[0,0,0],fw:[0,0,1],up:[0,1,0],rt:[1,0,0],w:[0,0,0],
     thr:0,eng:{run:1,rpm:0,fail:null,smoke:0},dmg:{eng:0,wing:0,tail:0,pil:0,fire:0},hp:1,
     gnd:1,th:gr.gp,sea:st.sea,rail:!!P.g.rail,tr:a0+0.12,al:0,be:0,V:0,n:1,stall:0,drop:0,crash:null,hard:0,
-    ctl:{sx:0,sy:0,rd:0,thr:0},pm:st.roll*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
-    tau:0.1+Math.min(0.3,A.W/16000),kA:o.kA||3.2,trimK:o.trimK===undefined?1.4:o.trimK,lvlK:o.lvlK===undefined?1.1:o.lvlK,
+    ctl:{sx:0,sy:0,rd:0,thr:0},pm:Math.max(40,st.roll*1.5)*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
+    tau:0.08+Math.min(0.22,A.W/20000),kA:o.kA||4.6,trimK:o.trimK===undefined?1.4:o.trimK,lvlK:o.lvlK===undefined?1.1:o.lvlK,
     name:md.name,dist:0,air:0,t:0,rnd:o.rnd||Math.random,ai:o.ai||null,team:o.team||0,id:o.id||0};
   ac.thMax=gr.gp>0.05?gr.gp:0.14;ac.burn=A.hpN*A.P.e.sfc/3600;ac.haz=-Math.log(clamp(st.rel,0.2,0.9999))/3600;return ac;}
 // высота центра тяжести над землёй на колёсах при угле тангажа th (хвост на земле — при th = gp)
@@ -171,6 +171,18 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
   const rho=RHO0*airSig(ac.p[1]),qd=0.5*rho*V*V,den=Math.max(1,qd*ac.A.S*ac.CLa),nv=(V*1.2*(gT-gam)+FLG*Math.cos(gam))/Math.max(0.35,Math.cos(phi));
   c.aCmd=clamp(ac.a0+ac.m*nv/den,ac.an+0.02,ac.as-(o.edge?0.005:0.03));c.sy=0;
   if(o.spd!==undefined)c.thr=clamp(0.55+(o.spd-ac.V)*0.12,0,1);else c.thr=o.thr===undefined?1:o.thr;}
+/* ---------- 0.38: посадка лётчиком («Сесть»): выход на дальнюю точку, глиссада 4° на круг, выравнивание у земли, пробег ----------
+   A — центр поля [x,z], gy — его высота. Состояние — в ac.ld; возвращает 'ip' | 'final' | 'flare' | 'roll' | 'done' */
+function flAutoLand(ac,A,gy,dt){const W=flW();let L=ac.ld;const dx=ac.p[0]-A[0],dz=ac.p[2]-A[1],d=Math.hypot(dx,dz);
+  if(!L){const u=d>50?[dx/d,dz/d]:[0,1];L=ac.ld={st:d>1400?'final':'ip',u,ip:[A[0]+u[0]*1900,A[1]+u[1]*1900],t:0};}
+  L.t+=dt;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));
+  if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=0;const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&ac.V>3?clamp(e*2,-1,1):0;L.st=ac.V<2.5?'done':'roll';return L.st;}
+  if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:gy+130,spd:ac.Vs*1.45,floor:50,bank:0.7});if(di<220||(L.t>8&&di<400))L.st='final';return L.st;}
+  // прямая: нос на круг, глиссада 4°, скорость 1,3 посадочной; ниже 7 м — выравнивание: газ долой, нос подбирать, снижение 0,6 м/с
+  const glide=gy+flHcg(ac,0)+Math.max(0,d-40)*Math.tan(0.07);
+  if(agl>7&&L.st!=='flare'){flAuto(ac,{x:A[0],z:A[1],alt:Math.min(glide,ac.p[1]),spd:ac.Vs*1.3,floor:0,dive:0.12,bank:0.5});L.st='final';return L.st;}
+  L.st='flare';flAuto(ac,{hdg:flHdg(ac),alt:ac.p[1]-0.6,thr:0,floor:0,edge:1,bank:0.3});const V=Math.max(4,ac.V),qd=0.5*RHO0*V*V,sink=-ac.v[1];
+  ac.ctl.aCmd=clamp(ac.a0+ac.m*(FLG+(sink-0.6)*1.5)/Math.max(1,qd*ac.A.S*ac.CLa),ac.an,ac.as-0.01);ac.ctl.thr=0;return L.st;}
 /* ---------- соперник по кругу: летит по точкам с постоянной скоростью (результат — по истории) ---------- */
 function flKin(o){return Object.assign({p:[0,0,0],psi:0,phi:0,pit:0,V:30,alt:60,bm:0.75,i:0,R:120,kin:1,lap:0},o);}
 function flKinStep(k,dt){const P=k.wp;if(!P||!P.length)return;const t=P[k.i];const dx=t[0]-k.p[0],dz=t[1]-k.p[2],d=Math.hypot(dx,dz);

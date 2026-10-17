@@ -11,10 +11,12 @@ const AIR_EV_KIND={speed:'гонка вокруг пилонов',dist:'даль
 function airEvT(ev){return ev.y+ev.m/12;}
 // окно записи: перелёты-призы — полгода до даты рекорда в истории; остальное — месяц до старта и сам месяц
 function airEvWin(ev){const T=(ev.y-1895)*12+ev.m;return ev.kind==='cross'||ev.kind==='circle'||ev.kind==='loop'?[T-6,T]:[T-1,T];}
-function airEvFor(s,ev){const c=s.country,t=airEvT(ev);if(ev.kind==='trial'&&!ev.open&&ev.c!==c)return false;if(!ev.open&&ev.c!==c&&ev.kind!=='cross')return false;
+function airEvFor(s,ev){const c=s.country,t=airEvT(ev);if(ev.dyn)return true;if(ev.kind==='trial'&&!ev.open&&ev.c!==c)return false;if(!ev.open&&ev.c!==c&&ev.kind!=='cross')return false;
   if(airWarOn(c,t)||(airWarOn(ev.c,t)&&ev.c!==c))return false;if(airFoe(c,ev.c,t))return false;if(s.soviet&&ev.c!=='ru')return false;if(c==='de'&&t>=1919.5&&t<1926&&ev.c!=='de')return false;return true;}
 function airEvStatus(s,ev){const A=s.air||{},T=mi(s),[a,b]=airEvWin(ev),r=(A.ev||{})[ev.key];if(r)return r.miss?'missed':'done';if(T<a)return 'soon';if(T<=b)return 'open';return 'closed';}
-function airEvList(s){return AIR_EV.filter(ev=>airEvFor(s,ev));}
+// 0.38: к состязаниям по истории добавляются конкурсы министерств на заказ (105h-air.js — airTrialNew), они в s.air.trials
+function airEvList(s){return AIR_EV.filter(ev=>airEvFor(s,ev)).concat((s.air&&s.air.trials)||[]);}
+function airEvByKey(s,key){return AIR_EV.find(e=>e.key===key)||((s&&s.air&&s.air.trials)||[]).find(e=>e.key===key)||null;}
 function airEvSoon(s){const T=mi(s);return airEvList(s).filter(ev=>{const st=airEvStatus(s,ev);return st==='open'||(st==='soon'&&airEvWin(ev)[0]-T<=3);});}
 // какие аэропланы годятся: облетанные, а для Кубка Шнейдера — гидроаэропланы; на военный конкурс — своего назначения
 function airEvMds(s,ev){return (s.air.models||[]).filter(m=>m.flown&&m.status!=='off'&&m.status!=='dev'&&(!ev.sea||airStats(m,tNow(s)).sea)&&(ev.kind!=='trial'||!ev.mil||m.role===ev.mil.role||ev.mil.role==='recon'&&['recon','train','sport'].includes(m.role)));}
@@ -32,6 +34,9 @@ function airEvField(s,ev){const t=airEvT(ev),F=[],hv=AIR_EV_HV[ev.key]||0,sk=AIR
     const v=x.st.v*k*(0.92+0.08*(p.sk||0.75));F.push({n:p.n,plane:x.md.name,v:hv?Math.min(v,hv*[0.99,0.95,0.9,0.85][i]):v});});}
   else if(ev.kind==='dist'){W.d=hv||ref('sport').st.range;F.push(W);const S=ref('sport');[0.75,0.6,0.45].forEach((k,i)=>{const p=sk[i]||{n:'Авиатор',sk:0.7};if(p.n!==W.n)F.push({n:p.n,plane:S.md.name,d:Math.round(hv*k)});});}
   else if(ev.kind==='alt'){W.a=hv||ref('sport').st.ceil*0.5;F.push(W);[0.8,0.6].forEach((k,i)=>{const p=sk[i]||{n:'Авиатор',sk:0.7};if(p.n!==W.n)F.push({n:p.n,plane:ref('sport').md.name,a:Math.round(W.a*k)});});}
+  else if(ev.kind==='trial'&&ev.dyn){const role=ev.mil.role,C=airComps(ev.c,role,t,s).sort((a,b)=>b.w-a.w).slice(0,4),cq={fr:1,de:0.99,uk:0.98,it:0.96,us:t<1917?0.93:0.98,ru:0.9}[ev.c]||0.95,r0=mulberry32(hashStr(ev.key));
+    const base=[1.0,0.96,0.92,0.87];(C.length?C:[{x:{n:'Казённый завод'}}]).forEach((o,i)=>{const mdl=(o.x.models||[]).filter(m=>m[0]<=ev.y).slice(-1)[0];
+      F.push({n:'«'+o.x.n+'»',plane:mdl?mdl[1]:ref(role).md.name,q:Math.round(base[i]*cq*(0.97+0.06*r0())*(ev.mil.war?1.02:1)*100)/100});});}
   else if(ev.kind==='trial'){W.q=1.04;F.push(W);[0.98,0.93,0.88].forEach((q,i)=>F.push({n:['«'+((airComps(ev.c,ev.mil?ev.mil.role:'recon',t)[i]||{x:{n:'Завод'}}).x.n)+'»'][0],plane:ref(ev.mil?ev.mil.role:'recon').md.name,q}));}
   else F.push(W);return F;}
 /* ---------- результат без съёмки ---------- */
@@ -60,14 +65,21 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   // первые в мире: перелёт или петля раньше истории
   if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y+(ev.m>=6?1:0),airEvMine(s,ev)?'вы сами в настоящей истории':ev.h[0]);}catch(_){}
   // военный конкурс: победителю — заказ армии
-  if(won&&ev.mil&&md){const n=Math.max(1,Math.round(ev.mil.n*(0.6+0.4*Math.random())));airOrderAdd(s,{md:md.id,n,price:airMilPrice(s,md),due:mi(s)+8,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1});}
+  if(ev.mil&&md&&!res.dnf){const k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:0,n=Math.round(ev.mil.n*k);
+    if(n>=1){const price=airMilPrice(s,md),adv=ev.mil.war?Math.round(n*price*0.25):0;if(adv)s.cash+=adv;airOrderAdd(s,{md:md.id,n,price,due:mi(s)+(ev.mil.months||6)+2,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1,adv,advLeft:adv});md.milWon=(md.milWon||0)+1;md.milRep=clamp((md.milRep||0)+(won?6:2),-40,60);res.order=n;res.adv=adv;}}
+  if(ev.dyn){A.trials=(A.trials||[]).filter(e=>e.key!==ev.key);}
   try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}
   const hist=airEvHist(s,ev);
+  if(ev.dyn){const F=res.field||[],top=F.slice().sort((a,b)=>b.q-a.q)[0],ord=res.order?`${ev.mil.war?'Военный заказ':'Заказ'}: ${fmtN(res.order)} «${md.name}» по ${money(airMilPrice(s,md))}${res.adv?`, четверть суммы (${money(res.adv)}) — вперёд`:''}.`:'';
+    pushEvent({own:1,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,
+      deck:`${who} на «${md?md.name:''}» — ${res.txt}${res.place<=F.length+1?` · ${res.place}-е место из ${F.length+1}`:''}`,
+      text:`${won?`Комиссия поставила вашей машине высшую оценку: ${top?`${top.n} (${top.plane}) — ${top.q.toFixed(2).replace('.',',')}`:''}. ${ord} Газеты пишут о заводе, которому верит армия.`:res.order?`Победил ${top?top.n+' ('+top.plane+', '+top.q.toFixed(2).replace('.',',')+')':'соперник'}, но министерство берёт и ваш аэроплан — меньшей серией. ${ord}`:res.dnf?`Сход с испытаний: ${res.dnf}. Заказ ушёл к ${top?top.n:'соперникам'}.`:`Оценки комиссии: ${F.slice().sort((a,b)=>b.q-a.q).map(x=>`${x.n} — ${x.q.toFixed(2).replace('.',',')}`).join(', ')}; ваша — ${(res.q||0).toFixed(2).replace('.',',')}. Заказ ушёл к ${top?top.n:'соперникам'}. Следующий конкурс — ${ev.mil.war?'через квартал':'через полгода'}: доработайте машину или начертите новую под их требования.`}`},true);
+    return {prize,fameG};}
   pushEvent({own:1,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${who} на «${md?md.name:''}» — ${res.txt}`,
     text:`${won?(prize?`Приз — ${money(prize)}. `:'')+'Газеты печатают портрет лётчика на первой полосе, у ангаров — очередь из желающих купить такой же аэроплан.':res.place<=3&&res.place>1?(prize?`Приз за ${res.place}-е место — ${money(prize)}. `:'')+'Неплохо — но помнят только победителей.':'Толпа расходится разочарованной. Механики уже разбирают мотор.'}\n${hist}`},true);
   return {prize,fameG};}
 // результат без съёмки — сразу
-function airEvQuick(key,mdId,pid){const s=G,ev=AIR_EV.find(e=>e.key===key),md=s.air.models.find(m=>m.id===+mdId);if(!ev||!md||airEvStatus(s,ev)!=='open')return;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);
+function airEvQuick(key,mdId,pid){const s=G,ev=airEvByKey(s,key),md=s.air.models.find(m=>m.id===+mdId);if(!ev||!md||airEvStatus(s,ev)!=='open')return;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);
   const res=airEvSim(s,ev,md,P);airEvApply(s,ev,res);closeSheet();save();render();}
 // пропущенные состязания закрываются сами
 function airEvMonth(s){const A=s.air;if(!A||!A.lv)return;const T=mi(s);airEvList(s).forEach(ev=>{const [,b]=airEvWin(ev);if(T>b&&!(A.ev||{})[ev.key]&&T-b<=2){A.ev=A.ev||{};A.ev[ev.key]={miss:1};}});}
@@ -90,12 +102,16 @@ function airRecQuick(k,mdId,pid){const s=G,md=s.air.models.find(m=>m.id===+mdId)
 function airRecCan(s,k){const A=s.air;if(!A||!A.lv)return false;if(airWarOn(s.country,tNow(s)))return false;return !((A.rtry||{})[k]>mi(s)-3);}
 /* ---------- вкладка «Небо» ---------- */
 let AEV=null;
-function openAirEv(key){const s=G,ev=AIR_EV.find(e=>e.key===key);if(!ev)return;const L=airEvMds(s,ev),pils=airPilotList(s);AEV=AEV&&AEV.key===key?AEV:{key,md:L[0]?L[0].id:null,pid:(airBestPilot(s)||{}).id};
+function openAirEv(key){const s=G,ev=airEvByKey(s,key);if(!ev)return;const L=airEvMds(s,ev),pils=airPilotList(s);AEV=AEV&&AEV.key===key?AEV:{key,md:L[0]?L[0].id:null,pid:(airBestPilot(s)||{}).id};
   const md=L.find(m=>m.id===AEV.md)||L[0],st=md?airStats(md,tNow(s)):null,F=airEvField(s,ev),open=airEvStatus(s,ev)==='open';
-  const fl=F.map((x,i)=>`<li><time>${i+1}.</time><p>${esc(x.n)}${x.plane?' — '+esc(x.plane):''}${x.v?` · ${Math.round(x.v)} км/ч`:x.d?` · ${fmtN(x.d)} км`:x.a?` · ${fmtN(x.a)} м`:''}${x.hist?' <span class="muted">(победитель в истории)</span>':''}</p></li>`).join('');
-  openSheet(`<div class="row"><h2>${esc(ev.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${MONTHS_G[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.len?` · ${fmtN(ev.len)} км`:''}${ev.prize?` · приз ${money(Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10)}`:''}${ev.mil?` · победителю — заказ армии`:''}</p>
-    ${photoHTML(AIR_IMG[ev.h[1]]||ev.h[1])}
-    <p class="small" style="margin-top:8px">${esc(airEvHist(s,ev))}</p>
+  const fl=F.map((x,i)=>`<li><time>${i+1}.</time><p>${esc(x.n)}${x.plane?' — '+esc(x.plane):''}${x.v?` · ${Math.round(x.v)} км/ч`:x.d?` · ${fmtN(x.d)} км`:x.a?` · ${fmtN(x.a)} м`:x.q&&ev.dyn?` · ожидаемая оценка ${x.q.toFixed(2).replace('.',',')}`:''}${x.hist?' <span class="muted">(победитель в истории)</span>':''}</p></li>`).join('');
+  // 0.38: конкурс министерства — условия, сравнение вашей машины с эталоном класса, что получит победитель и второй
+  const ref=ev.dyn&&ev.mil?airStats(airRefMd(ev.mil.role,tNow(s)),tNow(s)):null,myQ=ev.dyn&&md?airQ(md,tNow(s),ev.mil.role).q:0;
+  const dynInfo=ev.dyn?`<p class="small" style="margin-top:8px">${esc(airMinistry(ev.c,tNow(s),ev.mil.role))} сравнивает машины на испытаниях: подъём на высоту на время, скорость на базе, посадка в круг. Победителю — заказ на <b>${fmtN(ev.mil.n)}</b> машин, второму — на ${fmtN(Math.round(ev.mil.n*0.4))}${ev.mil.war?`, третьему — на ${fmtN(Math.round(ev.mil.n*0.15))}; четверть суммы — вперёд`:''}.</p>
+    ${md&&ref?`<p class="small muted" style="margin-top:4px">Эталон класса сейчас — ${esc(airRefEntry(ev.mil.role,tNow(s))[1])}: ${airSt(ref)}. Ваш «${esc(md.name)}»: ${airSt(st)} · оценка против эталона — <b>${myQ.toFixed(2).replace('.',',')}</b>${myQ>=(F[0]||{q:1}).q?' (выше лучшего соперника)':myQ>=(F[1]||{q:0.9}).q?' (на заказ хватит)':' (соперники сильнее — нужна машина лучше)'}.</p>`:''}`:'';
+  openSheet(`<div class="row"><h2>${esc(ev.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${MONTHS_G[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.len&&!ev.dyn?` · ${fmtN(ev.len)} км`:''}${ev.prize&&!ev.dyn?` · приз ${money(Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10)}`:''}${ev.mil?` · победителю — заказ армии`:''}</p>
+    ${ev.dyn?dynInfo:photoHTML(AIR_IMG[ev.h[1]]||ev.h[1])}
+    ${ev.dyn?'':`<p class="small" style="margin-top:8px">${esc(airEvHist(s,ev))}</p>`}
     ${fl?`<div class="label" style="margin-top:12px">Соперники</div><ul class="log">${fl}</ul>`:''}
     <div class="label" style="margin-top:12px">Аэроплан</div>${L.length?`<div class="chips">${L.map(m=>`<button class="chip ${md&&m.id===md.id?'on':''}" data-act="aevMd" data-v="${m.id}">${esc(m.name)}<small>${airSt(airStats(m,tNow(s)))}</small></button>`).join('')}</div>`:`<p class="small bad">Нет подходящего облетанного аэроплана${ev.sea?' — нужен гидроаэроплан (поплавки или лодка)':''}.</p>`}
     <div class="label" style="margin-top:12px">Лётчик</div><div class="chips">${pils.map(p=>`<button class="chip ${AEV.pid===p.id?'on':''}" data-act="aevPil" data-v="${p.id}">${esc(p.hero?p.n+' (вы)':p.n)}<small>мастерство ${Math.round(p.sk*100)}</small></button>`).join('')}</div>
@@ -111,7 +127,7 @@ function airSkyHTML(s){const A=s.air,t=tNow(s),T=mi(s);if(!A||!A.lv)return '';
   const L=airEvList(s).filter(ev=>{const st=airEvStatus(s,ev);return st==='open'||(st==='soon'&&airEvWin(ev)[0]-T<=14);}).sort((a,b)=>airEvT(a)-airEvT(b)).slice(0,6);
   const evRow=ev=>{const st=airEvStatus(s,ev),pr=Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10;return `<div class="race-item"><div class="row"><div><h3>${esc(ev.name)}</h3><p class="small muted">${MONTHS_G[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${pr?` · приз ${money(pr)}`:''}${ev.sea?' · гидроаэропланы':''}</p></div>
     <button class="btn sm ${st==='open'?'primary':''}" data-act="airEv" data-k="${ev.key}">${st==='open'?'Участвовать':'Подробнее'}</button></div></div>`;};
-  const done=Object.entries(A.ev||{}).filter(([,r])=>!r.miss).slice(-6).reverse().map(([k,r])=>{const ev=AIR_EV.find(e=>e.key===k);return `<li class="${r.place===1?'good':''}"><time>${r.y}</time><p>${esc(ev?ev.name:k)}: ${r.place===1?'победа':r.place?r.place+'-е место':'неудача'} — ${esc(r.who)}, ${esc(r.txt)}</p></li>`;}).join('');
+  const done=Object.entries(A.ev||{}).filter(([,r])=>!r.miss).slice(-6).reverse().map(([k,r])=>{const ev=airEvByKey(s,k);return `<li class="${r.place===1?'good':''}"><time>${r.y}</time><p>${esc(ev?ev.name:k)}: ${r.place===1?'победа':r.place?r.place+'-е место':'неудача'} — ${esc(r.who)}, ${esc(r.txt)}</p></li>`;}).join('');
   const recs=Object.keys(AIR_REC_N).map(k=>{const c=airRecCur(s,k),can=airRecCan(s,k);return `<div class="race-item"><div class="row"><div><h3>${AIR_REC_N[k][0]}</h3><p class="small muted">${fmtN(Math.round(c.v))} ${AIR_REC_N[k][1]} — ${esc(c.who)}${c.mine?' <span class="good">(ваш)</span>':''}</p></div><button class="btn sm" data-act="airRec" data-k="${k}" ${can?'':'disabled'}>Попытка</button></div></div>`;}).join('');
   const pil=airPilotList(s).map(p=>`<div class="row" style="margin-top:6px"><p class="small">${esc(p.hero?p.n+' — основатель':p.n)} · мастерство ${Math.round(p.sk*100)}${p.sal?` · ${money(p.sal)} в мес.`:''}</p>${p.sal?`<button class="linkbtn" data-act="airFire" data-k="${p.id}">уволить</button>`:''}</div>`).join('');
   const hire=airPilotsForHire(s).slice(0,6).map(P=>`<div class="row" style="margin-top:6px"><p class="small">${esc(P.n)} · мастерство ${Math.round(P.sk*100)} · ${money(airPilotSal(s,P)*(P.c===s.country?1:1.3))} в мес.</p><button class="btn sm" data-act="airHire" data-k="${P.id}" ${(A.pil||[]).length>=4?'disabled':''}>Нанять</button></div>`).join('');

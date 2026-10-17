@@ -101,7 +101,7 @@ function airMktRole(c,role,t,part){const M=AIR_MKT[c];if(!M)return 0;let v=0;
   if((!part||part==='mil')&&['recon','fight','bomb','train','sea'].includes(role))v+=tabAt(M.mil,t)*airMix(AIR_MIL_MIX,t,role);
   return Math.max(0,v);}
 // авиазаводы страны в этом назначении: вес — выпуск по истории
-function airComps(c,role,t){return (ACOMPS[c]||[]).filter(x=>x.since<=t&&(!x.until||x.until>t)&&(x.mix[role]||0)>0).map(x=>({x,w:tabAt(x.v,t)*(x.mix[role]||0)})).filter(o=>o.w>0.01);}
+function airComps(c,role,t,s){const me=(s||(typeof G!=='undefined'&&G)||{}).pioneer;return (ACOMPS[c]||[]).filter(x=>x.since<=t&&(!x.until||x.until>t)&&(x.mix[role]||0)>0&&!(x.pk&&x.pk===me)).map(x=>({x,w:tabAt(x.v,t)*(x.mix[role]||0)})).filter(o=>o.w>0.01);}
 // союзники и враги в войне 1914–1918 (Россия — до Брестского мира; США — с апреля 1917; Италия — с мая 1915)
 function airWarOn(c,t){if(c==='us')return t>=1917.26&&t<1918.87;if(c==='it')return t>=1915.39&&t<1918.87;if(c==='ru')return t>=1914.58&&t<1918.2;return t>=1914.58&&t<1918.87;}
 function airFoe(a,b,t){if(a===b)return false;if(!airWarOn(a,t)||!airWarOn(b,t))return false;return (a==='de')!==(b==='de');}
@@ -192,7 +192,7 @@ function airCivSeg(role){return role==='sport'||role==='train'?'priv':'line';}
 function airCivDemand(s,t){const A=s.air,act=A.models.filter(m=>m.status==='prod'||m.status==='sale'),out={},mk={};
   const byRole={};act.forEach(m=>{if(m.role==='race')return;(byRole[m.role]=byRole[m.role]||[]).push(m);});
   for(const role in byRole){const L=byRole[role],seg=airCivSeg(role),qs=L.map(m=>airQ(m,t).q);
-    for(const c in COUNTRIES){const M=airMktRole(c,role,t,'civ');if(M<=0.01)continue;const comps=airComps(c,role,t),W=comps.reduce((a,o)=>a+o.w,0)+Math.max(0,M*0.15);
+    for(const c in COUNTRIES){const M=airMktRole(c,role,t,'civ');if(M<=0.01)continue;const comps=airComps(c,role,t,s),W=comps.reduce((a,o)=>a+o.w,0)+Math.max(0,M*0.15);
       const a=L.map((m,i)=>m.status==='sale'?airAttr(s,m,c,seg,t,qs[i],comps)*1.4:airAttr(s,m,c,seg,t,qs[i],comps)),Ap=a.reduce((x,y)=>x+y,0);if(Ap<=0)continue;
       const share=Math.min(0.9,Ap/(Ap+W)),K=mk[c]=mk[c]||{};K[role]=(K[role]||0)+M;
       L.forEach((m,i)=>{const d=M*share*a[i]/Ap;(out[m.id]=out[m.id]||{})[c]=d;});}}
@@ -203,12 +203,12 @@ function airCivK(s,c){const t=tNow(s);let k=1;if(t>=1920.9&&t<1922)k=0.7;if(t>=1
 const AIR_MIL_ROLES=['recon','fight','bomb','train','sea'];
 function airCapUnits(s,md){const kg=airStats(md,tNow(s)).W;return Math.max(0.2,(s.air.cap||0)*1000/kg);}
 // сколько аэропланов этого назначения армия закажет у вас за n месяцев
-function airMilWant(s,md,months,c){c=c||s.country;const t=tNow(s),M=airMktRole(c,md.role,t,'mil');if(M<=0.01)return 0;const comps=airComps(c,md.role,t),W=comps.reduce((a,o)=>a+o.w,0)+M*0.1,
+function airMilWant(s,md,months,c){c=c||s.country;const t=tNow(s),M=airMktRole(c,md.role,t,'mil');if(M<=0.01)return 0;const comps=airComps(c,md.role,t,s),W=comps.reduce((a,o)=>a+o.w,0)+M*0.1,
   q=airQ(md,t).q;let a=airAttr(s,md,c,'mil',t,q,comps);if(a<=0)return 0;
   if(airWarOn(c,t)){const ref=comps.length?comps.map(o=>o.w).sort((x,y)=>x-y)[Math.floor(comps.length/2)]:M*0.2;a*=clamp(airCapUnits(s,md)*12/Math.max(1,ref),0.3,3);}
   const sh=Math.min(0.85,a/(a+W));return M*sh*months/12;}
 function airMilPrice(s,md){const t=tNow(s),c=airCost(md,t,s,md.made).unit,ref=airRefPrice(md.role,t);return Math.round(clamp(c*1.22,ref*0.7,ref*1.35)/10)*10;}
-function airOrderAdd(s,o){const A=s.air;o.id=o.id||('ao'+(A.oid=(A.oid||0)+1));o.left=o.n;A.orders.push(o);if(o.mil)A.milN=(A.milN||0)+1;return o;}   // milN — для фильма: первый военный заказ
+function airOrderAdd(s,o){const A=s.air;o.id=o.id||('ao'+(A.oid=(A.oid||0)+1));o.left=o.n;A.orders.push(o);if(o.mil)A.milN=(A.milN||0)+1;A.ordN=(A.ordN||0)+1;return o;}   // milN — для фильма: первый военный заказ
 /* ---------- месяц авиацеха (из step) ---------- */
 function airMonth(s,r){const A=s.air;if(!A)return;const t=tNow(s),R={rev:0,ord:0,mat:0,wage:0,ovh:0,hire:0,tool:0,made:0,sold:0,ordN:0,lic:0,mk:{},fine:0,roy:0};r.air=R;
   if(A.b){A.b.left--;if(A.b.left<=0){A.b=null;A.lv=1;A.cap=Math.max(A.cap||0,AIRSHOP.cap);A.wk=Math.max(A.wk||0,AIRSHOP.wk);s.lines=s.lines||{car:1};s.lines.air=1;
@@ -289,7 +289,7 @@ function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats
     res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':P.n+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
   else if(kind==='flaw'){md.vk=Math.round((0.92+Math.random()*0.04)*1000)/1000;md.flown=1;md.flaw=1;md.status=md.role==='race'?'race':'proto';
     res={kind:'flaw',text:`«${md.name}» ${o.self?'слушается и садится, но на земле механики качают головами':'взлетел, но тянет хуже расчёта'}: мотор перегревается, полотно на крыле «дышит». Скорость — ${Math.round(airStats(md,t).v)} км/ч вместо ${Math.round(st.v)}. Доводка — месяц в авиацехе.`};}
-  else{md.vk=Math.round((0.97+Math.random()*0.06+Math.min(0.02,(A.flights||0)*0.002))*1000)/1000;md.flown=1;md.status=md.role==='race'?'race':'proto';A.fame=Math.min(100,A.fame+(o.self?3:2));
+  else{md.vk=Math.round((0.97+Math.random()*0.06+Math.min(0.02,(A.flights||0)*0.002)+(o.prog?0.01*o.prog:0))*1000)/1000;md.flown=1;md.status=md.role==='race'?'race':'proto';A.fame=Math.min(100,A.fame+(o.self?3:2)+(o.prog>=0.8?1:0));
     const s2=airStats(md,t),who=P.hero?'Вы':P.n,v=P.hero?'подняли':'поднял';
     res={kind:'ok',text:o.self?`${who} ${v} «${md.name}» в воздух${o.secs?` и пробыли в нём ${o.secs>=120?Math.round(o.secs/60)+' мин':Math.round(o.secs)+' с'}`:''}. ${o.hard?'Посадка жёсткая, но шасси выдержало. ':'Посадка — мягкая, на три точки. '}Механики снимают показания: скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`:
       `${who} ${v} «${md.name}» после ${Math.round(40+s2.vs*1.2)} метров разбега. Круг над полем, вираж, посадка — без единой поломки. Скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`};}
@@ -317,17 +317,26 @@ function airCheck(s){const A=s.air;if(!A||!A.lv||s.pending.length)return;const t
   // Версальский договор: Германии запрещено строить аэропланы
   if(s.country==='de'&&t>=1919.5&&!A.versailles){A.versailles=1;pushEvent({own:1,kicker:'Версаль',title:'Германии запрещено строить аэропланы',deck:'До 1922 года — ни одного',text:`По Версальскому договору союзная комиссия опечатывает авиазаводы и режет моторы. Фоккер вывез в Голландию 220 самолётов и 400 моторов в шести поездах; Юнкерс строит в Швеции и под Москвой.\nПеренести сборку за границу — дорого, но авиацех будет жить.`,
     choices:[[`Перенести сборку за границу (${money(Math.round((s.plantVal||0)*0.05+8000*cpi(s)))})`,'air:abroad'],['Законсервировать авиацех','ok']]},true);return;}
-  // военные заказы: в войну — раз в квартал, в мирное время — весной и осенью
+  // военные заказы: в войну — раз в квартал, в мирное время — весной и осенью.
+  // 0.38: первый заказ на модель — только через конкурс министерства (отзыв: «должны выполнять испытание для получения заказа,
+  // и сравнивать нас будут с конкурентами»): министерство объявляет условия, участвуют фирмы страны, место решает заказ.
+  // Повторные заказы на модель, уже прошедшую конкурс (или уже строившуюся для армии), приходят без конкурса, пока она не устарела.
   const war=airWarOn(s.country,t);if(t>=1910.9&&((war&&s.m%3===1)||(!war&&(s.m===2||s.m===8)))&&!(s.country==='de'&&airVersailles(t)&&!A.abroad)){
-    let best=null;AIR_MIL_ROLES.forEach(role=>{const B=airBestFor(s,role);if(!B||B.q<0.6)return;if(A.orders.some(o=>o.md===B.md.id&&o.left>0&&o.due-T>2))return;
+    let best=null,trial=null;AIR_MIL_ROLES.forEach(role=>{const B=airBestFor(s,role);if(!B||B.q<0.6)return;if(A.orders.some(o=>o.md===B.md.id&&o.left>0&&o.due-T>2))return;
       const months=war?4:6;let n=Math.round(airMilWant(s,B.md,months)*(war?1:0.8)),c=s.country;
       if(n<1&&war===false&&!s.soviet){['fr','uk','ru','it','us','de'].forEach(cc=>{if(cc===s.country)return;const m2=Math.round(airMilWant(s,B.md,months,cc));if(m2>n){n=m2;c=cc;}});}
-      n=Math.min(n,Math.max(1,Math.round(airCapUnits(s,B.md)*months*1.1)));
-      if(n>=1&&(!best||n*airMilPrice(s,B.md)>best.n*best.price))best={md:B.md,n,price:airMilPrice(s,B.md),c,months,q:B.q};});
+      n=Math.min(n,Math.max(1,Math.round(airCapUnits(s,B.md)*months*1.1)));if(n<1)return;
+      const proven=(B.md.milWon||0)>0||(B.md.milRep||0)>=5;
+      if(proven&&B.q>=0.9){if(!best||n*airMilPrice(s,B.md)>best.n*best.price)best={md:B.md,n,price:airMilPrice(s,B.md),c,months,q:B.q};}
+      else if(!trial||n>trial.n)trial={role,n,c,months};});
     if(best){const who=airMinistry(best.c,t,best.md.role);A.offer={md:best.md.id,n:best.n,price:best.price,due:T+best.months+1,who,c:best.c,mil:1};
-      pushEvent({own:1,kicker:war?'Военный заказ':'Заказ армии',title:`${who}: ${fmtN(best.n)} «${best.md.name}»`,deck:`по ${money(best.price)} — ${money(best.n*best.price)}, за ${best.months} мес.`,
-        text:`${who} ${war?'берёт всё, что летает и стреляет':'выбирает аэропланы для своих отрядов'}. «${best.md.name}» — ${best.q>=1.05?'лучше':best.q>=0.95?'не хуже':'чуть хуже'} ${airRefEntry(best.md.role,t)[1]} — ${best.q>=0.95?'и министерство готово платить':'но строить можно быстро'}. Цена — расходы завода и пятая часть сверху.\nВ авиацехе места на ${fmtN(Math.round(airCapUnits(s,best.md)))} таких аэропланов в месяц. Не успеете — неустойка десятая часть цены.${war?` Четверть суммы (${money(Math.round(best.n*best.price*0.25))}) министерство платит вперёд — на ангары и мастеров.`:''}`,
+      pushEvent({own:1,kicker:war?'Военный заказ':'Заказ армии',title:`${who}: ещё ${fmtN(best.n)} «${best.md.name}»`,deck:`по ${money(best.price)} — ${money(best.n*best.price)}, за ${best.months} мес.`,
+        text:`«${best.md.name}» уже знают в войсках: ${war?'фронт просит ещё, и министерство заказывает без нового конкурса':'министерство продлевает заказ без нового конкурса'}. «${best.md.name}» — ${best.q>=1.05?'лучше':best.q>=0.95?'не хуже':'чуть хуже'} ${airRefEntry(best.md.role,t)[1]}. Цена — расходы завода и пятая часть сверху.\nВ авиацехе места на ${fmtN(Math.round(airCapUnits(s,best.md)))} таких аэропланов в месяц. Не успеете — неустойка десятая часть цены.${war?` Четверть суммы (${money(Math.round(best.n*best.price*0.25))}) министерство платит вперёд — на ангары и мастеров.`:''}`,
         choices:[['Подписать','air:sign'],['Отказаться','air:nosign']]},true);return;}
+    if(trial){const ev=airTrialNew(s,trial.role,trial.c,trial.n,trial.months,war);if(ev){const who=airMinistry(trial.c,t,trial.role),R=AIR_ROLES[trial.role],F=airEvField(s,ev);
+      pushEvent({own:1,kicker:war?'Военный конкурс':'Конкурс министерства',title:`${who} объявляет конкурс: ${R.n.toLowerCase()}`,deck:`победителю — заказ на ${fmtN(trial.n)} машин, второму — на ${fmtN(Math.round(trial.n*0.4))}`,
+        text:`${who} ${war?'срочно ищет':'выбирает'} ${R.n.toLowerCase()} для своих отрядов и устраивает сравнительные испытания в ${MONTHS_P[ev.m]}: подъём на высоту на время, скорость на базе, посадка в круг у трибун. Комиссия ставит оценку каждой машине.\nУчастники: ${F.map(x=>`${x.n} (${x.plane})`).join(', ')} — и вы, если заявите облетанный аэроплан на вкладке «Небо». Лететь можно самому или доверить лётчику.\n${R.d}`,
+        choices:[['К конкурсу','air:ev:'+ev.key],['Позже','ok']]},true);return;}}
     // в войну: если своих годных аэропланов нет — строить чужие по лицензии
     if(war&&(A.cap||0)>=1&&!A.licOffer||war&&A.licOffer&&T-A.licOffer>=6){for(const role of ['fight','recon','bomb']){const B=airBestFor(s,role);if(B&&B.q>=0.8)continue;const L=airLicChoice(s,role);if(!L)continue;
       if(A.models.some(m=>m.lic&&m.name===L[1]&&m.status!=='off'))continue;A.licOffer=T;const md={...L[2],role,name:L[1]},n=Math.max(2,Math.round(Math.min(airMilWant(s,{...md,milRep:20},4)*0.6,airCapUnits(s,md)*4)));
@@ -335,9 +344,15 @@ function airCheck(s){const A=s.air;if(!A||!A.lv||s.pending.length)return;const t
         choices:[['Строить по лицензии','air:lic'],['Отказаться','ok']]},true);return;}}}
   // исторические лётчики погибают в свой год (по истории)
   (A.pil||[]).forEach(p=>{const P=AIR_PILOTS.find(x=>x.id===p.id);if(P&&P.d&&t>=P.d+0.5&&!p.gone){p.gone=1;}});A.pil=(A.pil||[]).filter(p=>!p.gone);}
+// 0.38: конкурс министерства на заказ — событие «Неба» (43i-airev.js) со сроком в следующем месяце; хранится в s.air.trials
+function airTrialNew(s,role,c,n,months,war){const A=s.air,t=tNow(s);const y=s.m===11?s.y+1:s.y,m=(s.m+1)%12,key=`mil-${c}-${y}-${m}-${role}`;
+  A.trials=(A.trials||[]).filter(e=>(e.y-1895)*12+e.m>=mi(s)-2);if(A.trials.some(e=>e.key===key))return null;
+  const ev={key,y,m,name:`Конкурс ${c===s.country?'министерства':'в '+COUNTRIES[c].name+' (род. п.)'.replace(' (род. п.)','')}: ${AIR_ROLES[role].n.toLowerCase()}`,place:FW_HOME[c]||'reims',kind:'trial',c,prize:Math.round(1200*cpi(s)/100)*100,mil:{n,role,months,war:!!war},len:100,dyn:1,h:['','','']};
+  A.trials.push(ev);return ev;}
 function airMinistry(c,t,role){const sea=role==='sea';return c==='fr'?(sea?'Морское министерство Франции':'Военное министерство Франции'):c==='uk'?(sea?'Адмиралтейство':t<1918.25?'Военное министерство (Королевский лётный корпус)':'Министерство авиации'):
   c==='de'?(sea?'Имперский флот':'Инспекция авиационных войск'):c==='it'?'Военное министерство Италии':c==='us'?(sea?'Флот США':'Военное министерство США (Сигнальный корпус)'):(c==='ru'&&t>=1918?'Главкоавиа':'Военное министерство России');}
 function airResolve(s,key){const A=s.air;if(!A)return false;const [,cmd,id]=key.split(':'),md=id?A.models.find(m=>String(m.id)===id):null;
+  if(cmd==='ev'){s.pending.shift();tab='race';save();render();try{openAirEv(key.slice(7));}catch(e){console.warn(e);}return true;}
   if(cmd==='design'){s.pending.shift();tab='models';save();render();try{openAirDesigner();}catch(e){console.warn(e);}return true;}
   if(cmd==='fly'&&md){s.pending.shift();save();render();if(typeof flyTest==='function'&&flyTest(md))return true;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
   if(cmd==='test'&&md){s.pending.shift();const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
@@ -380,7 +395,7 @@ function airIntroPapers(s){const A=s.air,md=A.models[0],t=tNow(s),st=airStats(md
 function airYear(s){const A=s.air;if(!A||!A.lv)return;const t=s.y+0.5,Y=A.y||{sold:0,rev:0,home:0},tot=AIR_ROLE_K.reduce((a,r)=>a+airMktRole(s.country,r,t),0);
   A.peakY=Math.max(A.peakY||0,Y.sold||0);if(tot>1){const sh=clamp((Y.home||0)/tot,0,1);A.shYrs=(A.shYrs||0)+sh;A.shLast=sh;}A.hist=(A.hist||[]).concat({y:s.y,sold:Y.sold||0,rev:Math.round(Y.rev||0),fame:Math.round(A.fame)}).slice(-40);A.y={sold:0,rev:0,home:0};}
 function airLegacyBits(s){const A=s.air;if(!A||!A.lv)return {peak:0,cum:0,shY:0};const k=airOnly(s)?1:0.5;return {peak:5*Math.max(A.peakY||0,(A.y||{}).sold||0),cum:5*(A.sold||0),shY:k*(A.shYrs||0)};}
-function airSportYears(s){const A=s.air,out=[];if(!A)return out;const Y={};Object.entries(A.ev||{}).forEach(([k,r])=>{if(r.place!==1)return;const ev=AIR_EV.find(e=>e.key===k);Y[r.y]=(Y[r.y]||0)+(ev&&(ev.open||ev.prize>=10000)?RACE_W.major:RACE_W.normal);});
+function airSportYears(s){const A=s.air,out=[];if(!A)return out;const Y={};Object.entries(A.ev||{}).forEach(([k,r])=>{if(r.place!==1)return;const ev=airEvByKey(s,k);if(ev&&ev.dyn)return;Y[r.y]=(Y[r.y]||0)+(ev&&(ev.open||ev.prize>=10000)?RACE_W.major:RACE_W.normal);});
   Object.values(A.rec||{}).forEach(r=>{Y[r.y]=(Y[r.y]||0)+4;});return Object.entries(Y).map(([y,v])=>[+y,v]);}
 function airLegacyTitle(t){const me=t.me,cats=['scale','market','innov','sport','capital','brand'],top=cats.slice().sort((a,b)=>me[b]/LEG_MAX[b]-me[a]/LEG_MAX[a])[0];
   if(t.place===1)return ['Величайшая авиационная империя эпохи','Ни одна настоящая авиационная фирма 1929 года не оставила такого следа.'];

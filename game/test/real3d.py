@@ -12,7 +12,7 @@ with sync_playwright() as p:
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html'); pg.wait_for_timeout(400)
     if os.environ.get('FRAMES'): pg.evaluate('window.__frames=%d' % int(os.environ['FRAMES']))
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]'); pg.click('[data-act=pion][data-v=renault]'); pg.click('[data-act=startgame]'); pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]'); pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]'); pg.click('[data-act=startgame]'); pg.wait_for_timeout(300)
     for key in keys:
         # данные трассы — тем же путём, что в игре (скрипт terrain/<id>.js)
         pg.evaluate("k=>{window.__rl=0;const rc=RACES.find(r=>r.key===k);realLoad(rc,()=>{window.__rl=1;});}", key)

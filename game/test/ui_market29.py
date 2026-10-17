@@ -9,7 +9,7 @@ with sync_playwright() as p:
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' and 'net::' not in m.text and 'Failed to load' not in m.text else None)
     pg.route(lambda u:not u.startswith('file:'),lambda r:r.abort())
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=agnelli]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=it]');pg.click('[data-act=pion][data-v=agnelli]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("(()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}})()")
     pg.evaluate("G.cash+=60000;G.dealers.fr=10;G.dealers.uk=4;")
     for i in range(26): pg.evaluate("(()=>{G.pending=[];doStep();closeSheet();closePaper();G.pending=[];if(SAGAP)try{sagaStop();}catch(_){}})()")

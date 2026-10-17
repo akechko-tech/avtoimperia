@@ -7,8 +7,8 @@ with sync_playwright() as p:
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append('C:'+m.text) if m.type=='error' and 'net::' not in m.text and 'Failed to load' not in m.text else None)
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(600)
     pg.screenshot(path=out+'m0.png')
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(300)
-    pg.click('[data-act=pion][data-v=ford]');pg.wait_for_timeout(200)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.wait_for_timeout(300)
+    pg.click('[data-act=country][data-v=us]');pg.click('[data-act=pion][data-v=ford]');pg.wait_for_timeout(200)
     pg.click('[data-act=startgame]');pg.wait_for_timeout(400)
     for i in range(14):
         pg.evaluate("G.pending=[];doStep()")

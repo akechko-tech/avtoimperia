@@ -20,7 +20,7 @@ with sync_playwright() as p:
     clean="(()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}G.pending=[];})()"
     step="(()=>{G.pending=[];doStep();closeSheet();closePaper();G.pending=[];})()"
     # 1) мотомастерская: один список моделей, без переключателя наверху
-    pg.click('[data-act=newgame]');pg.wait_for_timeout(200);pg.click('[data-act=ngPath][data-v=moto]');pg.wait_for_timeout(250)
+    pg.click('[data-act=newgame]');pg.wait_for_timeout(200);pg.click('[data-act=ngDir][data-v=moto]');pg.wait_for_timeout(250)
     pg.click('[data-act=country][data-v=fr]');pg.wait_for_timeout(150);pg.click('[data-act=startgame]');pg.wait_for_timeout(400)
     ok(js("lineOn(G,'moto')&&!lineOn(G,'car')&&G.cap>0")==True,'мотомастерская: '+js("dstr(G)")+', цеха '+str(js("G.cap")))
     js(clean);js("(()=>{tab='models';render();window.scrollTo(0,0);})()");pg.wait_for_timeout(250);pg.screenshot(path=out+'1_models.png')

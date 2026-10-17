@@ -172,7 +172,7 @@ function chalCheck(s){
 function salesChalCheck(){}   // 0.24: по продажам вызывают в общем порядке (chalCheck)
 function chalNews(s,o){const C=s.chal=Object.assign({},o.C,{stake:o.stake,acc:0});s.chalLast=mi(s);s.chalKind=o.kind;
   const H=rivalHero(C.mq,s),h=rivalHead(C.mq,s.y)||(C.ci!=null?rivalHead(((COMPS[C.c||s.country]||[])[C.ci]||{}).n,s.y):null);C.h=h;
-  const who=h?`${h.n}, ${h.role} ${C.mq},`:`Глава марки ${C.mq}`,img=h&&h.wiki&&IMG[h.wiki]?h.wiki:'',cap=h?`${h.n} — ${h.role} ${C.mq}`:'',sc=rivalryScore(s,C.mq),xs=C.x?` А сверху — ${stakeXText(C)}.`:'';
+  const roleMq=h?(String(h.role).toLowerCase().includes(String(C.mq).toLowerCase().split(/[\s-]/)[0])?h.role:h.role+' '+C.mq):'',who=h?`${h.n}, ${roleMq},`:`Глава марки ${C.mq}`,img=h&&h.wiki&&IMG[h.wiki]?h.wiki:'',cap=h?`${h.n} — ${roleMq}`:'',sc=rivalryScore(s,C.mq),xs=C.x?` А сверху — ${stakeXText(C)}.`:'';
   const T=chalNewsText(s,C,who,xs);
   pushEvent({kicker:'Вызов',title:`${h?h.n+' ('+C.mq+')':C.mq} ${T.verb} «${s.company}»`,deck:T.deck+(sc?` · счёт ${sc}`:''),img,imgCap:cap,text:T.text,choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]},true);}
 function chalNewsText(s,C,who,xs){const st=stakeText(C);
@@ -265,7 +265,7 @@ function matchResults(rc,res,mode,info){const s=G;if(!s)return;info=info||{};con
   if(win){try{celebrate(lsr?'Быстрее мирового рекорда!':rc.kind==='record'?'Скорость ваша!':'Матч выигран!',`${rc.venue} · «${me.label}»${vMe?` · ${vMe} км/ч`:''}`,lsr?'📈':'⚔️');}catch(_){}}
   checkAch();save();render();flushToasts();}
 /* ---------- карточки ---------- */
-function chalHeadRow(C,s){const h=C.h||rivalHead(C.mq,s.y);return h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)} ${esc(C.mq)}</small></div></div>`:'';}
+function chalHeadRow(C,s){const h=C.h||rivalHead(C.mq,s.y);return h?`<div class="row chal-who" style="margin-top:6px;gap:10px;justify-content:flex-start">${headPhoto(h)}<div><b>${esc(h.n)}</b><br><small class="muted">${esc(h.role)}${String(h.role).toLowerCase().includes(String(C.mq).toLowerCase().split(/[\s-]/)[0])?'':' '+esc(C.mq)}</small></div></div>`:'';}
 function chalCardNew(s,C){const sc=rivalryScore(s,C.mq),scT=sc?` <small class="muted">· ${esc(rivalryTxt(s,C.mq))}</small>`:'';
   if(C.type==='match'||C.type==='record'){const rc=C.rc,T=(rc.y-1895)*12+rc.m,t=mi(s),open=t>=T-1&&t<=T,rs=matchRivalStats(rc),rec=C.type==='record',sprint=rc.t==='sprint';
     return `<section class="card chal"><div class="row"><span class="label">⚔️ ${MATCH_ST[C.type]}</span><span class="pill warn">${esc(stakeText(C))}</span></div>${chalHeadRow(C,s)}

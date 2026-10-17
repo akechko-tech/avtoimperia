@@ -37,7 +37,7 @@ Object.assign(ACT,{
   aevMd:d=>{if(!AEV)return;AEV.md=+d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
   aevPil:d=>{if(!AEV)return;AEV.pid=d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
   aevQuick:()=>{if(AEV)airEvQuick(AEV.key,AEV.md,AEV.pid);},
-  aevFly:()=>{if(!AEV)return;const s=G,ev=AIR_EV.find(e=>e.key===AEV.key),md=s.air.models.find(m=>m.id===+AEV.md);if(!ev||!md)return;closeSheet();if(typeof flyEvent==='function'&&flyEvent(ev,md,AEV.pid))return;airEvQuick(AEV.key,AEV.md,AEV.pid);},
+  aevFly:()=>{if(!AEV)return;const s=G,ev=airEvByKey(s,AEV.key),md=s.air.models.find(m=>m.id===+AEV.md);if(!ev||!md)return;closeSheet();if(typeof flyEvent==='function'&&flyEvent(ev,md,AEV.pid))return;airEvQuick(AEV.key,AEV.md,AEV.pid);},
   arecQuick:()=>{if(AEV)airRecQuick(AEV.rec,AEV.md,AEV.pid);},
   arecFly:()=>{if(!AEV)return;const s=G,md=s.air.models.find(m=>m.id===+AEV.md);if(!md)return;closeSheet();if(typeof flyRecord==='function'&&flyRecord(AEV.rec,md,AEV.pid))return;airRecQuick(AEV.rec,AEV.md,AEV.pid);},
   airCarShop:()=>{const s=G;if(lineOn(s,'car')||s.carShopB)return;const c=Math.round((CARSHOP.c*cpi(s)+CARSHOP.cap*capUnitCost(s))/100)*100;if(s.cash<c)return;s.cash-=c;s.plantVal+=c*0.8;

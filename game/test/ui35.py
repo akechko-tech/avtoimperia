@@ -17,27 +17,30 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
     js=lambda s:pg.evaluate(s)
     def clean(): js("(()=>{for(let i=0;i<8;i++)try{closePaper();}catch(_){};try{closeSheet();}catch(_){};if(typeof SAGAP!=='undefined'&&SAGAP)try{sagaStop();}catch(_){};G.pending=[];})()")
-    # 1) первый экран — только пути
+    # 1) 0.38: первый экран — направление, страна, герои этой страны (ярлык — атрибут героя); старые пути (ngPath) — для совместимости
     pg.click('[data-act=newgame]');pg.wait_for_timeout(250)
-    paths=pg.eval_on_selector_all('#sheetBody [data-act=ngPath]','e=>e.map(x=>x.dataset.v)')
-    ok(paths==['racer','moto','maker','money','tech'],'сначала — путь: '+', '.join(paths))
-    ok(pg.query_selector('#sheetBody [data-act=pion]') is None and pg.query_selector('#sheetBody [data-act=startgame]') is None,'на первом экране — ни персонажей, ни кнопки старта')
-    t=pg.inner_text('#sheetBody')
-    ok(all(n in t for n in ('Лянча','Дион','Форд','Дюрант','Бенц')),'на карточках путей — их исторические фигуры')
+    dirs=pg.eval_on_selector_all('#sheetBody [data-act=ngDir]','e=>e.map(x=>x.dataset.v)')
+    ok(dirs==['car','moto','air'],'сверху — направление: '+', '.join(dirs))
+    ok(pg.query_selector('#sheetBody [data-act=country]') is not None and pg.query_selector('#sheetBody [data-act=startgame]') is not None,'на том же экране — страна и старт')
     pg.screenshot(path=out+'1_paths.png')
-    def heroes(v):
-        pg.click(f'[data-act=ngPath][data-v={v}]');pg.wait_for_timeout(250)
-        return pg.eval_on_selector_all('#sheetBody [data-act=rpick]' if v=='racer' else '#sheetBody [data-act=pion]','e=>e.map(x=>x.dataset.v)')
-    exp={'maker':['ford','olds','renault','agnelli','frese','custom'],'tech':['benz','maybach','lanchester','bugatti','custom'],'money':['peugeot','durant','rolls','ryabush','custom'],'moto':['dedion','morris','wanderer','bianchi','meller','custom']}
-    for v,want in exp.items():
-        h=heroes(v);ok(sorted(h)==sorted(want),v+': '+', '.join(h))
-        ok(pg.query_selector('#sheetBody [data-act=ngBack]') is not None and pg.query_selector('#sheetBody [data-act=startgame]') is not None,v+': «← Другой путь» и старт')
-        pg.click('[data-act=ngBack]');pg.wait_for_timeout(200)
-    h=heroes('racer');ok('ferrari' in h and 'lancia' in h and pg.query_selector('#sheetBody [data-act=startracer]') is not None,'гонщик: '+', '.join(h)+' (Феррари — здесь, а не у марки)')
-    pg.click('[data-act=ngBack]');pg.wait_for_timeout(200)
-    ok(pg.query_selector('#sheetBody [data-act=ngPath][data-v=money]') is not None,'«← Другой путь» — снова выбор пути')
+    def heroes(dir,c):
+        pg.click(f'[data-act=ngDir][data-v={dir}]');pg.wait_for_timeout(150);pg.click(f'[data-act=country][data-v={c}]');pg.wait_for_timeout(250)
+        return pg.eval_on_selector_all('#sheetBody [data-act=pion],#sheetBody [data-act=rpick]','e=>e.map(x=>x.dataset.v)')
+    exp={('car','us'):['ford','olds','durant','l_chevrolet','rickenbacker','custom','custom'],('car','de'):['benz','maybach','custom','custom'],('car','it'):['agnelli','lancia','a_maserati','ferrari','custom','custom'],
+         ('car','ru'):['frese','ryabush','custom','custom'],('moto','fr'):['dedion','custom'],('moto','us'):['custom'],('air','de'):['fokker','junkers','custom'],('air','ru'):['sikorsky','custom']}
+    for (dir,c),want in exp.items():
+        h=heroes(dir,c);ok(h==want,'%s · %s: %s'%(dir,c,', '.join(h)))
+    tags=pg.eval_on_selector_all('#sheetBody .pion .ng-tag','e=>e.map(x=>x.textContent)')
+    ok(tags==['Авиатор','Авиатор'],'ярлыки героев: '+', '.join(tags))
+    heroes('car','it');tags=pg.eval_on_selector_all('#sheetBody .pion .ng-tag','e=>e.map(x=>x.textContent)')
+    ok(tags==['Фабрикант','Гонщик','Гонщик','Гонщик','Фабрикант','Гонщик'],'Италия, автомобили: '+', '.join(tags)+' (Феррари — гонщик)')
+    pg.click('[data-act=rpick][data-v=lancia]');pg.wait_for_timeout(250)
+    ok(pg.query_selector('#sheetBody [data-act=startracer]') is not None and js("draft.path")=='racer','Лянча — путь гонщика, кнопка «Выйти на старт»')
+    pg.click('[data-act=country][data-v=fr]');pg.wait_for_timeout(250)
+    r=js("({c:draft.country,h:draft.hero.k,co:draft.company})");ok(r['c']=='fr' and r['h']=='custom','сменили страну — герой другой страны не остаётся: '+str(r))
+    ok(pg.query_selector('#sheetBody [data-act=pion][data-v=benz]') is None,'Бенца во Франции нет')
     # 2) финансист: Дюрант — Америка, «Дюрант-Дорт»; кредит больше, марки дешевле, контора дороже
-    pg.click('[data-act=ngPath][data-v=money]');pg.wait_for_timeout(250);pg.click('[data-act=pion][data-v=durant]');pg.wait_for_timeout(250)
+    pg.click('[data-act=ngDir][data-v=car]');pg.wait_for_timeout(250);pg.click('[data-act=country][data-v=us]');pg.click('[data-act=pion][data-v=durant]');pg.wait_for_timeout(250)
     r=js("({c:draft.country,co:draft.company,p:draft.pioneer,role:draft.role})");ok(r['c']=='us' and r['co']=='Дюрант-Дорт' and r['role']=='money','Дюрант: '+str(r))
     pg.screenshot(path=out+'2_money.png')
     pg.click('[data-act=startgame]');pg.wait_for_timeout(600)

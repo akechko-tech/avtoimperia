@@ -5,7 +5,7 @@ with sync_playwright() as p:
     b=p.chromium.launch();pg=b.new_page(viewport={'width':400,'height':860},device_scale_factor=2)
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.click('[data-act=pion][data-v=ford]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=us]');pg.click('[data-act=pion][data-v=ford]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("G.cash+=40000;G.dealers.fr=10;G.dealers.uk=8;G.dealers.de=6;")
     for i in range(30): pg.evaluate("G.pending=[];doStep();closeSheet();closePaper();try{sagaStop();}catch(_){};G.pending=[];")
     pg.evaluate("render()");pg.wait_for_timeout(600)   # фильм о герое закрывается полсекунды — не мешает нажатиям

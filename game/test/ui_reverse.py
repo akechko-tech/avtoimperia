@@ -8,8 +8,8 @@ with sync_playwright() as p:
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.route(lambda u:not u.startswith('file:'),lambda r:r.abort())
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(500)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=maker]');pg.wait_for_timeout(200)
-    pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.wait_for_timeout(200)
+    pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=renault]');pg.wait_for_timeout(150)
     pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("()=>{for(let i=0;i<6;i++)closePaper();closeSheet();if(SAGAP)try{sagaStop();}catch(_){}}");pg.wait_for_timeout(200)
     pg.evaluate(f"""(()=>{{const rc=RACES.find(r=>r.key==='{race}');G.pending=[];G.y=rc.y;G.m=Math.max(0,rc.m-1);G.cash=200000;G.rdept=1;

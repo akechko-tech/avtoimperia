@@ -6,7 +6,7 @@ with sync_playwright() as p:
     pg.route('**/*wikimedia*',lambda r:r.abort())
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('file:///home/claude/Avtoimperia-Android/game/dist/avtoimperia.html');pg.wait_for_timeout(400)
-    pg.click('[data-act=newgame]');pg.click('[data-act=ngPath][data-v=tech]');pg.click('[data-act=pion][data-v=bugatti]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
+    pg.click('[data-act=newgame]');pg.click('[data-act=ngDir][data-v=car]');pg.click('[data-act=country][data-v=fr]');pg.click('[data-act=pion][data-v=bugatti]');pg.click('[data-act=startgame]');pg.wait_for_timeout(300)
     pg.evaluate("""(()=>{G.pending=[];G.y=1925;G.m=3;G.cash=500000;G.rdept=3;G.dealers.us=10;G.dealers.it=5;G.dealers.uk=5;G.dealers.de=5;
       const md=G.models[0];md.e='e7';md.c='c5';md.w='w6';md.b='b1';md.t='t0';md.name='Тип 35';
       G.drivers=availDrivers(G).sort((a,b)=>b.sk-a.sk).slice(0,2).map(d=>d.id);tab='race';render();})()""")
