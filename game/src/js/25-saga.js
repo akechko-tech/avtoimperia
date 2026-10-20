@@ -45,6 +45,12 @@ function sagaChose(s,id){const w=(s.wpick||{})[id];if(w)return w;
   // сохранения до 0.25: решение по иску Доджей не записано — узнаём по дивидендам (2% выручки до 1920 года)
   if(id==='dodgesuit'&&(s.wseen||{}).dodgesuit){const L=s.legal||{};return L.roy&&L.roy.k===0.02&&L.roy.until===miAt(1920,0)?'lDodgePay':'lDodgeBuy';}
   return '';}
+// 0.39: что выбрали в прошлых главах — для развилок дальше (sagaPicked) и для писем-телеграмм от знакомых героев (o.after)
+function sagaPicked(s,id,k){const P=(s.saga&&s.saga.pick)||{};return k===undefined?P[id]:P[id]===k;}
+function sagaMail(s,o,ch){if(!o||!o.after)return;const A=Array.isArray(o.after)?o.after:[o.after];const S=s.saga=s.saga||{seen:[],pick:{}};S.mail=S.mail||[];
+  A.forEach(m=>S.mail.push({at:mi(s)+(m.mo||3),from:m.from||'',text:m.text||'',kind:m.kind||'Телеграмма',img:m.img||null,ch:ch?ch.id:''}));}
+function sagaMailCheck(s){const S=s.saga;if(!S||!S.mail||!S.mail.length)return;const now=mi(s),due=S.mail.filter(m=>m.at<=now);if(!due.length)return;S.mail=S.mail.filter(m=>m.at>now);
+  due.forEach(m=>{pushEvent({own:1,kicker:m.kind,title:m.from?`${m.kind}: ${m.from}`:m.kind,deck:'',img:m.img||undefined,text:m.text,choices:[['Прочитано','ok']]},true);});}
 function sagaChapter(s,ch,fix){if(!ch||!ch.v)return ch;const S=s.saga=s.saga||{seen:[],pick:{}};S.var=S.var||{};
   let k=S.var[ch.id];if(k===undefined){k=ch.v.findIndex(v=>{try{return !!v.if(s);}catch(e){return false;}});if(fix)S.var[ch.id]=k;}
   const v=k>=0?ch.v[k]:null;if(!v)return ch;const o={...ch,...v};delete o.v;delete o.if;return o;}
@@ -52,7 +58,7 @@ function sagaReady(s,ch){const W=Array.isArray(ch.when)?ch.when:[ch.when];if(W.e
   // запасной путь: глава не «застревает», если игрок не гоняется или продаёт мало — через три года после её даты она всё равно придёт
   return !W.includes('start')&&!W.includes('finale')&&ch.y>0&&s.y>=ch.y+3;}
 // Проверка раз в месяц: не чаще одной главы в два месяца, по порядку
-function sagaCheck(s){if(!s||s.over)return;const S=s.saga=s.saga||{seen:[],pick:{},last:-99,t0:mi(s)};if(!S.seen)S.seen=[];
+function sagaCheck(s){if(!s||s.over)return;const S=s.saga=s.saga||{seen:[],pick:{},last:-99,t0:mi(s)};if(!S.seen)S.seen=[];try{sagaMailCheck(s);}catch(e){console.warn('saga mail',e);}
   if(s.pending.some(p=>p.saga))return;if(S.seen.length&&mi(s)-S.last<2)return;
   const L=sagaList(s);for(let k=0;k<L.length;k++){const ch=L[k];if(S.seen.includes(ch.id))continue;if(!sagaReady(s,ch))continue;
     s.pending.push({saga:ch.id,title:'Фильм: '+ch.t,text:'',choices:[['Смотреть главу','saga']]});S.last=mi(s);return;}}
@@ -190,7 +196,7 @@ function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);voiceSt
   if(!Q.replay)sagaSay(ch.q,SAGA_NARR);}
 function sagaPick(k){const Q=SAGAP;if(!Q)return;const s=G,ch=Q.ch,o=ch.o&&ch.o[k];
   if(Q.replay||k<0||!o){sagaStop();return;}
-  sagaApply(s,o.fx);addLog(`🎬 «${sagaFill(ch.t,s)}»: ${sagaFill(o.t,s)}. ${sagaFill(o.res,s)}`,'hist');
+  sagaApply(s,o.fx);sagaMail(s,o,ch);addLog(`🎬 «${sagaFill(ch.t,s)}»: ${sagaFill(o.t,s)}. ${sagaFill(o.res,s)}`,'hist');
   Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><p class="sg-res">${esc(sagaFill(o.res,s))}</p><p class="sg-fx">${esc(sagaFxText(o.fx,s))}</p><button class="sg-o" data-k="-1"><b>Дальше ▸</b></button></div>`;
   Q.el.querySelector('.sg-o').onclick=e=>{e.stopPropagation();sagaDone(ch.id,k);};
   sagaSay(o.res,SAGA_NARR);}

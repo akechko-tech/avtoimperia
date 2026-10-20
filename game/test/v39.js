@@ -91,5 +91,16 @@ const mk=(y,role,o)=>{const e=airRefEntry(role,y),md={...e[2],role,name:e[1]};re
   ok(Math.abs(bn('airSea')-1.08)<1e-9,'черта героя: лодки +8% ('+bn('airSea').toFixed(2)+')');
   newAirGame('gakkel','ru','','normal','');const m2=G.air.models[0];ok(G.y===1910&&m2.name==='Гаккель-III'&&!airHeroFlies(G)&&airBestPilot(G),'Гаккель: 1910 год, «Гаккель-III», сам не летает — машину поднимет лётчик '+airBestPilot(G).n);
   ok(sagaList(G).length===5&&sagaList(G).every(ch=>ch.o&&ch.o.length===3&&ch.q),'сюжет Гаккеля: 5 глав, в каждой вопрос и три ответа');}
+/* ---------- сюжет: выбор помнится, телеграммы приходят ---------- */
+{newAirGame('gakkel','ru','','normal','');const L=sagaList(G),ga1=L[0],ga2=L[1];G.saga={seen:[],pick:{},last:-99,t0:mi(G)};
+  // выбрали «нанять Алехновича» — через 5 месяцев телеграмма от него, а вторая глава знает, что он уже в команде
+  sagaApply(G,ga1.o[2].fx);sagaMail(G,ga1.o[2],ga1);G.saga.seen.push('ga1');G.saga.pick.ga1=2;
+  ok(G.saga.mail&&G.saga.mail.length===1&&/Алехнович/.test(G.saga.mail[0].from),'телеграмма назначена: от '+G.saga.mail[0].from+' через '+(G.saga.mail[0].at-mi(G))+' мес.');
+  G.pending=[];for(let k=0;k<4;k++){G.m++;if(G.m>11){G.m=0;G.y++;}}sagaMailCheck(G);const n0=G.pending.length;G.m++;sagaMailCheck(G);
+  ok(n0===0&&G.pending.length===1&&/Телеграмма: Глеб/.test(G.pending[0].title)&&!G.saga.mail.length,'через 5 месяцев пришла: «'+G.pending[0].title+'»');
+  const v=sagaChapter(G,ga2,false);ok(/Алехнович, которого Гаккель взял/.test(v.sc[0].say),'вторая глава помнит выбор первой: '+v.sc[0].say.slice(0,60)+'…');
+  G.saga.pick.ga1=0;delete G.saga.var;const v0=sagaChapter(G,ga2,false);ok(!/которого Гаккель взял/.test(v0.sc[0].say),'при другом выборе — обычный текст');
+  const gr=SAGA.grigorovich,tele=[].concat(...gr.map(c=>c.o.filter(o=>o.after).map(o=>o.after)));ok(tele.length>=4&&tele.every(t=>t.from&&t.text.length>60),'Григорович: писем и телеграмм от знакомых — '+tele.length);
+  G.pending=[];}
 console.log(bad?'ОШИБОК: '+bad:'всё в порядке');if(bad)process.exitCode=1;
 }`);
