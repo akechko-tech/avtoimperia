@@ -71,7 +71,10 @@ function frBullets(dt,M){const B=FL.bul;if(!B||!B.length)return;const me=FL.me,t
         const sx=p1[0]-p0[0],sy=p1[1]-p0[1],sz=p1[2]-p0[2],L2=sx*sx+sy*sy+sz*sz,tt=clamp(((w[0]-p0[0])*sx+(w[1]-p0[1])*sy+(w[2]-p0[2])*sz)/Math.max(1e-6,L2),0,1),qx=p0[0]+sx*tt-w[0],qy=p0[1]+sy*tt-w[1],qz=p0[2]+sz*tt-w[2];
         if(qx*qx+qy*qy+qz*qz<h.r*h.r){frHit(a,h.k,b.dmg,M);hit=true;fwPart(w[0],w[1],w[2],0,0.5,0,0.4,1.5,0.4,[60,56,50],0.5);break;}}if(hit)break;}
     if(!hit&&M.ball&&!M.ball.burn&&b.side===0){const q=M.ball,dx=q.x-p1[0],dy=q.y-p1[1],dz=q.z-p1[2];if(dx*dx+dy*dy*0.4+dz*dz*0.25<81){q.hp-=0.045*b.dmg;hit=true;if(q.hp<=0){q.burn=FL.t;if(M.onBall)M.onBall();}}}
-    if(hit)B.splice(i,1);else if(p1[1]<Math.max(0,fwHgt(FW.S,p1[0],p1[2]))){B.splice(i,1);if(Math.random()<0.3)fwPart(p1[0],p1[1]+0.3,p1[2],0,1,0,0.6,2,0.8,[120,108,90],0.35);}}}
+    if(hit)B.splice(i,1);else if(p1[1]<Math.max(0,fwHgt(FW.S,p1[0],p1[2]))){B.splice(i,1);
+      // 0.39: наземная мишень (щит) — попадания считает комиссия
+      if(M.gtg&&b.side===0){const g=M.gtg,dx=p1[0]-g.x,dz=p1[2]-g.z,c=Math.cos(g.a||0),sn=Math.sin(g.a||0),u=dx*c-dz*sn,v=dx*sn+dz*c;if(Math.abs(u)<(g.w||6)&&Math.abs(v)<(g.h||2.5)){g.hits=(g.hits||0)+1;fwPart(p1[0],p1[1]+0.4,p1[2],0,1.5,0,0.5,2,0.6,[240,236,220],0.7);if(M.onGtg)M.onGtg(g.hits);continue;}}
+      if(Math.random()<0.3)fwPart(p1[0],p1[1]+0.3,p1[2],0,1,0,0.6,2,0.8,[120,108,90],0.35);}}}
 // огонь из пулемётов: курсовые — по ручке «огонь», стрелок — сам по ближнему врагу в задней полусфере
 function frGuns(a,dt,want,M){const g=a.gun;if(!g)return;g.cd-=dt;g.cdo=(g.cdo||0)-dt;const sh=[a.p[0]+a.fw[0]*(a.mesh.len*0.35)+a.up[0]*0.5,a.p[1]+a.fw[1]*(a.mesh.len*0.35)+a.up[1]*0.5,a.p[2]+a.fw[2]*(a.mesh.len*0.35)+a.up[2]*0.5];sh.vx=a.v[0];sh.vy=a.v[1];sh.vz=a.v[2];
   if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],a.fw,g.spread,a.side,1);}
@@ -141,10 +144,7 @@ function frMission(cfg,M){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,m=cfg.fm,T=FR_
     if(M.ball&&M.ball.burn){const q=M.ball,k=FL.t-q.burn;if(k<20){q.y-=dt*(4+k*1.5);if(Math.random()<dt*30)fwPart(q.x+(Math.random()-0.5)*8,q.y+(Math.random()-0.5)*6,q.z+(Math.random()-0.5)*14,0,2,0,3,9,4,k<6?[255,140,40]:[40,36,32],k<6?-1.5:0.6);}}
     // снимки и бомбы
     if(M.pts){for(const p of M.pts){if(!p.ok&&Math.hypot(a.p[0]-p.x,a.p[2]-p.z)<320&&a.p[1]-Math.max(0,fwHgt(FW.S,p.x,p.z))<2000){p.ok=1;flToast('Снимок!','good');if(M.pts.every(q=>q.ok))M.obj=1;}}}
-    if(M.tg&&FL.bomb&&!M.bombT&&M.bombsLeft>0&&!a.gnd){M.bombT=0.6;M.bombsLeft--;(M.drops||(M.drops=[])).push({p:a.p.slice(),v:a.v.slice()});}if(M.bombT)M.bombT=Math.max(0,M.bombT-dt);
-    if(M.drops)for(let i=M.drops.length-1;i>=0;i--){const b=M.drops[i];b.v[1]-=FLG*dt;b.v[0]*=1-dt*0.05;b.v[2]*=1-dt*0.05;b.p[0]+=b.v[0]*dt;b.p[1]+=b.v[1]*dt;b.p[2]+=b.v[2]*dt;const g=Math.max(0,fwHgt(FW.S,b.p[0],b.p[2]));
-      if(b.p[1]<=g){M.drops.splice(i,1);for(let k=0;k<14;k++)fwPart(b.p[0]+(Math.random()-0.5)*10,g+2,b.p[2]+(Math.random()-0.5)*10,(Math.random()-0.5)*8,6+Math.random()*10,(Math.random()-0.5)*8,4,16,5,k<4?[255,160,60]:[70,62,52],k<4?-1.5:0.7,3);frSnd('boom',Math.min(1,300/Math.max(50,Math.hypot(b.p[0]-a.p[0],b.p[2]-a.p[2]))));
-        if(Math.hypot(b.p[0]-M.tg.x,b.p[2]-M.tg.z)<75){M.tg.hit++;M.obj=1;flToast('Попадание в станцию!','good');}}}};
+    frBombs(dt,M,a,(d)=>{if(d<75){M.tg.hit++;M.obj=1;flToast('Попадание в станцию!','good');}});};
   M.step=()=>{const a=me();if(a.crash){M.done(false);return;}const home=a.p[2]<fz-600;if(a.gnd&&a.Vg<2.5&&M.flew){M.done(!!M.obj&&Math.hypot(a.p[0],a.p[2])<1500||!!M.obj&&home);return;}if(!a.gnd)M.flew=1;};
   M.canLand=()=>{const a=me();return M.flew&&!a.gnd&&M.obj&&a.p[2]<fz-600;};M.land=()=>M.done(true);
   M.quitText=()=>'Вылет не засчитан — в отряде скажут, что вы повернули назад.';M.quit=()=>{M.res={ok:false,v:M.kills,txt:'Вернулся, не выполнив задания.'};M.over=true;M.apply();flyClose();};
@@ -152,6 +152,11 @@ function frMission(cfg,M){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,m=cfg.fm,T=FR_
     M.res={ok:!!ok,v:M.kills,lost,hurt:lost?2:0,ace:!!M.aceDown,txt};M.fin(ok?'Задание выполнено!':lost?'Сбит':'Неудача',txt,M.res,ok?'good':'bad');};
   M.apply=()=>{frApply(s,m,md,P,M.res);};M.fallback=()=>{FRS={k:m.k,md:md.id,pid:P.id};frAuto(m.k);};
   return M;}
+// бомбы: сброс по кнопке (не чаще раза в 0,6 с), падение с сопротивлением, разрыв у земли; onHit(d) — промах до цели M.tg (0.39: общее для фронта и военных конкурсов)
+function frBombs(dt,M,a,onHit){if(M.tg&&FL.bomb&&!M.bombT&&M.bombsLeft>0&&!a.gnd){M.bombT=0.6;M.bombsLeft--;(M.drops||(M.drops=[])).push({p:a.p.slice(),v:a.v.slice(),h0:a.p[1]-Math.max(0,fwHgt(FW.S,a.p[0],a.p[2]))});if(M.onDrop)M.onDrop();}if(M.bombT)M.bombT=Math.max(0,M.bombT-dt);
+  if(M.drops)for(let i=M.drops.length-1;i>=0;i--){const b=M.drops[i];b.v[1]-=FLG*dt;b.v[0]*=1-dt*0.05;b.v[2]*=1-dt*0.05;b.p[0]+=b.v[0]*dt;b.p[1]+=b.v[1]*dt;b.p[2]+=b.v[2]*dt;const g=Math.max(0,fwHgt(FW.S,b.p[0],b.p[2]));
+    if(b.p[1]<=g){M.drops.splice(i,1);for(let k=0;k<14;k++)fwPart(b.p[0]+(Math.random()-0.5)*10,g+2,b.p[2]+(Math.random()-0.5)*10,(Math.random()-0.5)*8,6+Math.random()*10,(Math.random()-0.5)*8,4,16,5,k<4?[255,160,60]:[70,62,52],k<4?-1.5:0.7,3);frSnd('boom',Math.min(1,300/Math.max(50,Math.hypot(b.p[0]-a.p[0],b.p[2]-a.p[2]))));
+      if(onHit)onHit(Math.hypot(b.p[0]-M.tg.x,b.p[2]-M.tg.z),b);}}}
 // аэростат наблюдения «колбаса»: оболочка, стабилизаторы, корзина
 function frBallMesh(){const C=G3.cache;if(C.frBall)return C.frBall;const mb=new MB();pBlob(mb,0,0,0,6.2,6.2,14,'#b8b090',()=>0.5,1,MID.cloth);for(const a of [0,2.1,4.2])pBlob(mb,Math.cos(a)*4.5,Math.sin(a)*4.5,-11,2.2,2.2,3.5,'#a8a080',()=>0.5,0,MID.cloth);
   pBox(mb,0,-12,2,0.8,1.1,0.8,'#6a5a40',MID.wood);mb.rod([0,-6,1],[0,-11,2],0.04,hex2rgb('#2a2a2a'),MID.metal);return C.frBall={mesh:{op:g3Mesh(mb),pr:null,disc:null,pil:null,props:[],r:16,span:12,hit:[]}};}

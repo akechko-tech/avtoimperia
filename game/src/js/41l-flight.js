@@ -18,7 +18,7 @@ function flCraft(md,y,o){o=o||{};const st=airStats(md,y),A=st.A,P=A.P,gr=air3dGe
     p:[0,0,0],v:[0,0,0],fw:[0,0,1],up:[0,1,0],rt:[1,0,0],w:[0,0,0],
     thr:0,eng:{run:1,rpm:0,fail:null,smoke:0},dmg:{eng:0,wing:0,tail:0,pil:0,fire:0},hp:1,
     gnd:1,th:gr.gp,sea:st.sea,rail:!!P.g.rail,tr:a0+0.12,al:0,be:0,V:0,n:1,stall:0,drop:0,crash:null,hard:0,
-    ctl:{sx:0,sy:0,rd:0,thr:0},pm:Math.max(40,st.roll*1.5)*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
+    ctl:{sx:0,sy:0,rd:0,thr:0,brk:0},brakes:P.g.id==='g3',ovs:0,starts:0,pm:Math.max(40,st.roll*1.5)*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
     tau:0.08+Math.min(0.22,A.W/20000),kA:o.kA||4.6,trimK:o.trimK===undefined?1.4:o.trimK,lvlK:o.lvlK===undefined?1.1:o.lvlK,
     name:md.name,dist:0,air:0,t:0,rnd:o.rnd||Math.random,ai:o.ai||null,team:o.team||0,id:o.id||0};
   ac.thMax=gr.gp>0.05?gr.gp:0.14;ac.burn=A.hpN*A.P.e.sfc/3600;ac.haz=-Math.log(clamp(st.rel,0.2,0.9999))/3600;return ac;}
@@ -41,22 +41,22 @@ function flBank(ac){return Math.atan2(-ac.rt[1],ac.up[1]);}
 function flHdg(ac){return Math.atan2(ac.fw[0],ac.fw[2]);}
 function flPitch(ac){return Math.asin(clamp(ac.fw[1],-1,1));}
 /* ---------- шаг физики ---------- */
-function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.max(0,ac.p[1]),rho=RHO0*airSig(h),S=A.S,m=ac.m;ac.t+=dt;
+function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.max(0,ac.p[1]),gH=Math.max(W.H(ac.p[0],ac.p[2]),0),agl=ac.p[1]-gH,rho=RHO0*airSig(h)*(FL.wx?FL.wx.sig:1),S=A.S,m=ac.m;ac.t+=dt;/* 0.39: плотность — ещё и по температуре дня */
   // мотор: газ — с запаздыванием; повреждён — тянет хуже; кончился бензин или отказал — стоит
   const run=ac.eng.run&&ac.fuel>0;ac.thr+=(clamp(c.thr,0,1)-ac.thr)*Math.min(1,dt*2.2);
   const pw=run?ac.thr*(1-ac.dmg.eng*0.75):0;
   // воздух вокруг аэроплана
-  const wd=FL.wind,va=[ac.v[0]-wd[0],ac.v[1]-wd[1],ac.v[2]-wd[2]],V=l3(va);ac.V=V;ac.Vg=l3(ac.v);   // 0.38: Vg — путевая: «остановился» считается по ней, а не по воздушной (при ветре 3 м/с стоящий аэроплан имел V=3)
+  const wd=FL.wx?wxWindAt(ac.p[0],ac.p[1],ac.p[2],agl,(FL.t||0)+ac.t*0.001):FL.wind,va=[ac.v[0]-wd[0],ac.v[1]-wd[1],ac.v[2]-wd[2]],V=l3(va);ac.V=V;ac.Vg=l3(ac.v);ac.wd=wd;/* 0.39: ветер по высоте, порывы, термики, гроза */   // 0.38: Vg — путевая: «остановился» считается по ней, а не по воздушной (при ветре 3 м/с стоящий аэроплан имел V=3)
   const u=d3(va,ac.fw),vn=d3(va,ac.up),vr=d3(va,ac.rt);
   const al=V>0.5?Math.atan2(-vn,u):0,be=V>0.5?Math.asin(clamp(vr/V,-1,1)):0;ac.al=al;ac.be=be;
   const qd=0.5*rho*V*V,vh=V>0.3?[va[0]/V,va[1]/V,va[2]/V]:ac.fw;
   const CL=flCL(ac,al)*(1-ac.dmg.wing*0.45),sw=clamp((Math.abs(al)-ac.as+0.02)/0.15,0,1);
   // подушка у земли: индуктивное сопротивление меньше, когда до земли меньше размаха
-  const agl=ac.p[1]-Math.max(W.H(ac.p[0],ac.p[2]),0),gb=Math.max(0.5,agl)/ac.gr.span,ge=gb<1?(16*gb*gb)/(1+16*gb*gb):1;
+  const gb=Math.max(0.5,agl)/ac.gr.span,ge=gb<1?(16*gb*gb)/(1+16*gb*gb):1;
   // винт на малом газу «мельница» — тормозит (крутое планирование без мотора)
   const CD=A.cd0*(1+ac.dmg.wing*0.6+ac.dmg.tail*0.3)+CL*CL/(Math.PI*A.ar*A.e)*ge+1.25*Math.pow(Math.sin(al),2)*sw+0.5*Math.pow(Math.sin(be),2)+(pw<0.2?ac.gr.propA*0.22*(1-pw/0.2)/S:0);
   let ld=v3x(vh,ac.rt);const ll=l3(ld)||1;ld=[ld[0]/ll,ld[1]/ll,ld[2]/ll];
-  const T=pw>0?airThrust(A,Math.max(0,u),h,pw):0;
+  const T=pw>0?airThrust(A,Math.max(0,u),h,pw)*(FL.wx?FL.wx.sig:1):0;
   const Lf=qd*S*CL,Df=qd*S*CD,Yf=-qd*S*0.25*Math.sin(be);
   const F=[ld[0]*Lf-vh[0]*Df+ac.rt[0]*Yf+ac.fw[0]*T,ld[1]*Lf-vh[1]*Df+ac.rt[1]*Yf+ac.fw[1]*T-m*FLG,ld[2]*Lf-vh[2]*Df+ac.rt[2]*Yf+ac.fw[2]*T];
   ac.n=(Lf*d3(ld,ac.up))/(m*FLG);ac.stall=Math.abs(al)>ac.as?1:0;ac.T=T;ac.L=Lf;ac.D=Df;
@@ -69,6 +69,8 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   const aLvl=clamp(ac.a0+m*(FLG*Math.cos(gam)-0.45*Math.max(8,V)*gam)/cphi/Math.max(1,qd*S*ac.CLa),ac.an,ac.as-0.015);
   let aCmd;if(c.aCmd!==undefined&&c.aCmd!==null)aCmd=clamp(c.aCmd,ac.an,ac.as+0.06);
   else{if(Math.abs(c.sy)<0.12)ac.tr+=(aLvl-ac.tr)*Math.min(1,dt*ac.trimK);aCmd=c.sy>=0?ac.tr+c.sy*(ac.as+0.06-ac.tr):ac.tr+c.sy*(ac.tr-ac.an-0.02);}
+  // 0.39: лётчик не ломает машину сам — на большой скорости тянет ручку лишь до ~1,15 предельной перегрузки (лонжероны трещат, но держат); выход из пикирования возможен
+  if(ac.dmg.pil<1){if(aCmd>ac.tr){const aL=ac.a0+ac.st.g*1.15*m*FLG/Math.max(1,qd*S)/ac.CLa;aCmd=Math.min(aCmd,Math.max(aL,ac.tr));}else{const aN=ac.a0-ac.st.g*0.6*m*FLG/Math.max(1,qd*S)/ac.CLa;aCmd=Math.max(aCmd,Math.min(aN,ac.tr));}}
   const ap=[a[0]-vh[0]*d3(a,vh),a[1]-vh[1]*d3(a,vh),a[2]-vh[2]*d3(a,vh)],Vp=Math.max(3,V);
   const qP=d3(ap,ac.up)/Vp,rP=d3(ap,ac.rt)/Vp,tail=1-ac.dmg.tail*0.6;
   let qT=qP+ac.kA*Math.min(1,ceT)*tail*(aCmd-al);
@@ -78,6 +80,8 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   // срыв: одно крыло падает раньше — аэроплан валится на крыло и в штопор, если держать ручку на себя
   if(al>ac.as+0.02){if(!ac.drop)ac.drop=ac.rnd()<0.5?-1:1;const k=clamp((al-ac.as)*7,0,1.6)*(1.3-ac.st.stab*0.6);pT+=ac.drop*k;rT+=ac.drop*k*0.5;}else if(al<ac.as-0.03)ac.drop=0;
   if(ac.dmg.pil>=1){pT=0.8;qT=-0.3;}
+  // 0.39: болтанка — рывки по крену, тангажу и курсу (термики, порывы у земли, горы, гроза); сильнее на малой скорости (меньше напор — меньше демпфирование)
+  if(FL.wx&&!ac.gnd){const tb=wxTurb(agl,ac.p[0],ac.p[2]);if(tb>0.02){const tt=(FL.t||0)*1.7+ac.t*0.3+(ac.id||0)*2.1,k=tb*(0.7+0.6*(1-Math.min(1,ce)));pT+=k*0.9*wxN(tt,1.3);qT+=k*0.45*wxN(tt*1.13,4.1);rT+=k*0.25*wxN(tt*0.87,2.2);ac.turb=tb;}else ac.turb=0;}
   qT=clamp(qT,-2.6,2.6);rT=clamp(rT,-1.6,1.6);pT=clamp(pT,-ac.pm*1.35-0.2,ac.pm*1.35+0.2);
   const kr=1-Math.exp(-dt/ac.tau),kp=1-Math.exp(-dt/(ac.tau*0.8));
   ac.w[0]+=(pT-ac.w[0])*kp;ac.w[1]+=(qT-ac.w[1])*kr;ac.w[2]+=(rT-ac.w[2])*kr;
@@ -87,7 +91,7 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   const dx=ac.v[0]*dt,dz=ac.v[2]*dt;ac.p[0]+=dx;ac.p[1]+=ac.v[1]*dt;ac.p[2]+=dz;ac.dist+=Math.hypot(dx,dz);ac.air+=dt;
   // перегрузка: за прочностью — трещат лонжероны, за полуторной — крыло ломается
   const g=ac.st.g;if(ac.n>g*1.5||ac.n<-g*0.9)flCrash(ac,'крыло сложилось от перегрузки');else if(ac.n>g){ac.dmg.wing=Math.min(1,ac.dmg.wing+(ac.n-g)*dt*0.12);ac.creak=1;}
-  if(V>ac.st.v/3.6*1.55){ac.dmg.wing=Math.min(1,ac.dmg.wing+dt*0.15);ac.creak=1;if(ac.dmg.wing>=1)flCrash(ac,'флаттер: обшивку сорвало в пикировании');}
+  {const vm=ac.st.v/3.6;ac.ovs=V>vm*1.55?2:V>vm*1.3?1:0;if(ac.ovs===2){ac.dmg.wing=Math.min(1,ac.dmg.wing+dt*0.15);ac.creak=1;if(ac.dmg.wing>=1)flCrash(ac,'флаттер — обшивку сорвало в пикировании');}}
   flBurn(ac,dt,pw,run);flContact(ac);}
 // поворот осей аэроплана: крен p (вправо +), тангаж q (нос вверх +), рыскание r (вправо +)
 function flRotate(ac,p,q,r){const f=ac.fw,u=ac.up,rt=ac.rt;
@@ -98,8 +102,36 @@ function flRotate(ac,p,q,r){const f=ac.fw,u=ac.up,rt=ac.rt;
 function flBurn(ac,dt,pw,run){if(!run){ac.eng.rpm+=(-ac.eng.rpm+(ac.V/Math.max(20,ac.st.v/3.6))*0.35)*Math.min(1,dt*1.5);return;}
   const k=FL.k||1;ac.fuel=Math.max(0,ac.fuel-ac.burn*Math.max(0.12,pw)*dt*k);ac.m=ac.mE+ac.fuel;
   ac.eng.rpm+=((0.25+0.75*pw)*(0.85+0.15*clamp(ac.V/Math.max(20,ac.st.v/3.6),0,1.4))-ac.eng.rpm)*Math.min(1,dt*3);
-  if(!FL.noFail&&ac.rnd()<ac.haz*(0.45+0.75*pw)*dt*k*(1+ac.dmg.eng*20)){ac.eng.run=0;ac.eng.fail=ac.dmg.eng>0.3?'мотор разбит':ac.rnd()<0.5?'заглох мотор':'лопнул бензопровод';flMsg(ac,'Мотор заглох!','bad');}
+  if(!FL.noFail&&ac.rnd()<ac.haz*(0.45+0.75*pw)*dt*k*(1+ac.dmg.eng*20)*(1+(FL.wx?FL.wx.rain*0.7:0))){/* 0.39: в дождь магнето капризнее */ac.eng.run=0;ac.eng.fail=ac.dmg.eng>0.3?'мотор разбит':ac.rnd()<0.5?'заглох мотор':'лопнул бензопровод';flMsg(ac,'Мотор заглох!','bad');}
   if(ac.fuel<=0&&!ac.eng.fail){ac.eng.run=0;ac.eng.fail='кончился бензин';flMsg(ac,'Кончился бензин!','bad');}}
+/* 0.39: мотор стоит — что делать (отзыв: «мотор заглох? и что? как его оживить? где сервис?»)
+   Завести: механик (или сам лётчик) крутит винт; в воздухе — только заглохший мотор и только на скорости (винт раскручивается потоком).
+   Починить: бензопровод — полчаса в поле; разбитый мотор — только где есть люди (деревня, аэродром в 2–3 км), 3 часа и деньги.
+   Заправиться: там же, где есть люди. Время идёт в зачёт перелёта. */
+function flHelpNear(ac){const S=(typeof FW!=='undefined'&&FW&&FW.S)||null;if(!S)return null;let best=null;
+  const put=(x,z,n,r)=>{const d=Math.hypot(ac.p[0]-x,ac.p[2]-z);if(d<r&&(!best||d<best.d))best={n,d};};
+  (S.fields||[]).forEach(f=>put(f.x,f.z,'аэродром',1800));(S.towns||[]).forEach(t=>put(t.x,t.z,t.city?'город':'деревня',t.city?3500:2600));return best;}
+function flEngOpts(ac){const o=[];if(ac.crash)return o;const f=ac.eng.fail||'',help=flHelpNear(ac);
+  if(ac.eng.run){/* 0.39: сели в поле с работающим мотором — у деревни можно долить бензин и подлатать мотор */if(!ac.gnd||(ac.Vg||0)>1.5)return o;
+    if(ac.fuel<ac.fuelMax*0.6&&help)o.push({k:'fuel',t:'Заправиться',sub:`${help.n} рядом · 40 мин`,min:40,cost:12});if(ac.dmg.eng>0.3&&help)o.push({k:'fix',t:'Ремонт мотора',sub:`${help.n} рядом · 3 ч`,min:180,cost:180});return o;}
+  if(ac.gnd){if(f===''||f==='заглох мотор')o.push({k:'start',t:'Завести мотор',sub:ac.starts?'ещё раз':'крутим винт'});
+    if(f==='лопнул бензопровод')o.push({k:'fix',t:'Починить бензопровод',sub:'30 мин',min:30,cost:20});
+    if(f==='мотор разбит'||ac.dmg.eng>0.3){if(help)o.push({k:'fix',t:'Ремонт мотора',sub:`${help.n} рядом · 3 ч`,min:180,cost:180});else o.push({k:'no',t:'Мотор разбит',sub:'чинить негде: ни деревни, ни аэродрома рядом'});}
+    if(f==='кончился бензин'){if(help)o.push({k:'fuel',t:'Заправиться',sub:`${help.n} рядом · 40 мин`,min:40,cost:12});else o.push({k:'no',t:'Бензина нет',sub:'ни деревни, ни аэродрома рядом'});}}
+  else if(f==='заглох мотор'&&ac.V>ac.Vs*1.25)o.push({k:'start',t:'Запустить мотор',sub:'винт раскручен потоком'});
+  return o;}
+// 0.39: куда садиться вне аэродрома: ближнее поле (до 6 км), луг у деревни или просто вперёд по курсу (с мёртвым мотором — сколько хватит высоты)
+function flLandSpot(ac){const S=(typeof FW!=='undefined'&&FW&&FW.S)||null,W=flW();let best=null;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));const reach=ac.eng.run?6000:Math.max(600,agl*6);
+  if(S){for(const f of S.fields||[]){if(f.sea&&!ac.sea)continue;const d=Math.hypot(ac.p[0]-f.x,ac.p[2]-f.z);if(d<reach&&(!best||d<best.d))best={x:f.x,z:f.z,d,n:'аэродром'};}
+    if(!best)for(const t of S.towns||[]){const d=Math.hypot(ac.p[0]-t.x,ac.p[2]-t.z);if(d<reach&&d>300&&(!best||d<best.d)){const k=(d-650)/d;best={x:ac.p[0]+(t.x-ac.p[0])*k,z:ac.p[2]+(t.z-ac.p[2])*k,d,n:t.city?'луг у города':'луг у деревни'};}}}
+  if(!best){const r=Math.max(700,Math.min(reach,agl*5));best={x:ac.p[0]+ac.fw[0]*r,z:ac.p[2]+ac.fw[2]*r,d:r,n:'поле впереди'};}
+  best.y=Math.max(0,W.H(best.x,best.z));return best;}
+function flEngStart(ac){if(ac.crash||ac.eng.run)return false;ac.starts=(ac.starts||0)+1;const rot=ac.P.e.cool==='r';
+  const p=ac.gnd?(rot?0.62:0.75)-Math.min(0.3,ac.starts*0.08):0.5;ac.starting={left:ac.gnd?(rot?7:5)+ac.starts*2:4,ok:ac.rnd()<p};return true;}
+function flEngTick(ac,dt){const st=ac.starting;if(!st)return null;st.left-=dt;if(st.left>0)return 'wait';ac.starting=null;
+  if(st.ok){ac.eng.run=1;ac.eng.fail=null;ac.thr=0.1;flMsg(ac,'Мотор схватил!','good');return 'ok';}flMsg(ac,'Не схватывает','bad');return 'fail';}
+function flRepair(ac,kind){const help=flHelpNear(ac);if(kind==='fuel'){ac.fuel=ac.fuelMax;ac.m=ac.mE+ac.fuel;ac.eng.fail=null;ac.eng.run=1;ac.thr=0.1;return 40;}
+  if(kind==='fix'){const eng=ac.eng.fail==='мотор разбит'||ac.dmg.eng>0.3;ac.eng.fail=null;ac.eng.run=1;ac.thr=0.1;ac.dmg.eng=eng?0.12:ac.dmg.eng;ac.haz*=eng?1.6:1.25;ac.starts=0;return eng?180:30;}return 0;}
 function flMsg(ac,t,cls){if(ac===FL.me&&typeof flToast==='function')flToast(t,cls);}
 function flCrash(ac,why){if(ac.crash)return;ac.crash=why;ac.crashT=ac.t;ac.v=[ac.v[0]*0.2,Math.min(0,ac.v[1])*0.2,ac.v[2]*0.2];if(typeof flOnCrash==='function')flOnCrash(ac,why);}
 /* ---------- земля и вода ---------- */
@@ -130,7 +162,9 @@ function flGround(ac,dt,F,Lf,ld,Df,T,pw,qd,V){const c=ac.ctl,m=ac.m,s=flSurf(ac.
   const hd=flHdg(ac),fh=[Math.sin(hd),0,Math.cos(hd)],vg=d3(ac.v,fh),lat=[ac.v[0]-fh[0]*vg,0,ac.v[2]-fh[2]*vg];
   const N=Math.max(0,m*FLG-Lf*ld[1]);
   // сопротивление качению: трава, пашня, вода (горб у глиссирования), полозья
-  let mu=ac.rail?0.35:s.k==='field'?0.11:0.07;if(ac.gr.gp>0.05)mu+=0.06*clamp(ac.th/ac.gr.gp,0,1);/* костыль на хвосте пашет землю */if(water){const r=V/Math.max(5,ac.Vs);mu=0.045+0.09*Math.exp(-Math.pow((r-0.5)/0.28,2));}
+  let mu=ac.rail?0.35:s.k==='field'?0.11:0.07;if(ac.gr.gp>0.05)mu+=0.06*clamp(ac.th/ac.gr.gp,0,1)*(1+0.8*clamp(c.sy,0,1));/* костыль на хвосте пашет землю, ручка на себя — глубже */
+  if(ac.brakes&&c.brk>0&&!water)mu+=0.28*clamp(c.brk,0,1)*(FL.wx&&FL.wx.rain>0.3?0.6:1);/* 0.39: колёсные тормоза (шасси 1925 года); по мокрой траве хуже */
+  if(FL.wx&&FL.wx.rain>0.3&&!water)mu*=0.8;/* мокрое поле — пробег длиннее */if(water){const r=V/Math.max(5,ac.Vs);mu=0.045+0.09*Math.exp(-Math.pow((r-0.5)/0.28,2));}
   if(ac.rail&&ac.cat>0){ac.cat-=vg*dt;T+=m*FLG*0.55;mu=0.02;}
   const Fx=T*Math.cos(ac.th)-Df*Math.sign(vg||1)-mu*N*Math.sign(vg||(T>0?1:0));
   let nv=vg+Fx/m*dt;if(vg>0&&nv<0&&T<mu*N)nv=0;if(Math.abs(nv)<0.05&&T<mu*N)nv=0;
@@ -176,7 +210,7 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
 function flAutoLand(ac,A,gy,dt){const W=flW();let L=ac.ld;const dx=ac.p[0]-A[0],dz=ac.p[2]-A[1],d=Math.hypot(dx,dz);
   if(!L){const u=d>50?[dx/d,dz/d]:[0,1];L=ac.ld={st:d>1400?'final':'ip',u,ip:[A[0]+u[0]*1900,A[1]+u[1]*1900],t:0};}
   L.t+=dt;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));
-  if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=0;const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&(ac.Vg||0)>3?clamp(e*2,-1,1):0;L.st=(ac.Vg||0)<2.5?'done':'roll';return L.st;}
+  if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=(ac.Vg||0)>6?0.6:0;/* 0.39: пробег — ручку на себя (костыль пашет землю) */ac.ctl.brk=ac.brakes&&(ac.Vg||0)>4?1:0;/* и тормоза, если есть */const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&(ac.Vg||0)>3?clamp(e*2,-1,1):0;L.st=(ac.Vg||0)<2.5?'done':'roll';return L.st;}
   if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:gy+130,spd:ac.Vs*1.45,floor:50,bank:0.7});if(di<220||(L.t>8&&di<400))L.st='final';return L.st;}
   // прямая: нос на круг, глиссада 4°, скорость 1,3 посадочной; ниже 7 м — выравнивание: газ долой, нос подбирать, снижение 0,6 м/с
   const glide=gy+flHcg(ac,0)+Math.max(0,d-40)*Math.tan(0.07);

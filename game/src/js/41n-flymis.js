@@ -18,7 +18,9 @@ const FW_HOME_SEA={fr:'monaco',uk:'cowes',de:'kiel',us:'bay_us',it:'naples',ru:'
 function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.kind,st=airStats(md,t),me=()=>FL.me;
   let place=cfg.place||(st.sea?FW_HOME_SEA[s.country]:FW_HOME[s.country])||'reims';
   if(st.sea&&!flSeaStart(place))place=FW_HOME_SEA[s.country]||'cowes';
-  const M={kind:k,cfg,P,md,st,t0:null,place,A:[0,0],B:null,sea:st.sea,objs:[],rivals:[],stands:false,crowd:0,parked:[],warpMax:4,warpAuto:16,maxH:0,over:false,kd:1,mood:null};
+  const M={kind:k,cfg,P,md,st,t0:null,place,A:[0,0],B:null,sea:st.sea,objs:[],rivals:[],stands:false,crowd:0,parked:[],warpMax:8,warpAuto:16,maxH:0,over:false,kd:1,mood:null};/* 0.39: вручную до ×8 */
+  // 0.39: встал на земле. Мотор стоит, но его можно завести, починить или заправиться — полёт не кончен, пока лётчик не сошёл сам (M.quit) или чинить негде
+  const stuck=(a)=>{if(!a.gnd||a.Vg>=3)return false;if(a.eng.run||a.crash)return true;if(a.starting)return false;const o=flEngOpts(a);return !o.some(x=>x.k!=='no');};
   const ss=st.sea?flSeaStart(place):null;let O=[150,0],f=[0,1],n=[-1,0];
   if(ss){M.A=ss.A;O=[ss.A[0]+ss.n[0]*180+ss.f[0]*420,ss.A[1]+ss.n[1]*180+ss.f[1]*420];f=ss.f;n=ss.n;}
   M.start={x:ss?ss.A[0]:O[0]-f[0]*380+n[0]*90,z:ss?ss.A[1]:O[1]-f[1]*380+n[1]*90,hdg:Math.atan2(f[0],f[1])};
@@ -85,7 +87,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.target=nextAim;
     M.step=(dt,p0)=>{const a=me();if(a.crash){M.done('dnf','авария: '+a.crash);return;}      const g=gateStep(p0);if(g){if(M.gi===1){M.t0=FL.t;M.dist=0;flToast('Старт! Время пошло','good');}else if(g===M.C.start){M.lap++;M.dist=M.lap*M.lapKm;flToast(`Круг ${M.lap}: ${flFmtT(FL.t-M.t0)}`,'good');if(M.gi>=M.seq.length){M.done('fin');return;}}
         else{flToast(g.n+' ✓');const done=M.lap*M.lapKm+(M.C.gates.indexOf(g)+1)*M.lapKm/5;M.dist=done;}}
-      if(M.t0!==null&&a.gnd&&a.Vg<3){M.done('dnf',a.eng.run?'сел, не закончив гонку':'вынужденная посадка: '+(a.eng.fail||'мотор'));}};
+      if(M.t0!==null&&stuck(a)){M.done('dnf',a.eng.run?'сел, не закончив гонку':'вынужденная посадка: '+(a.eng.fail||'мотор'));}};
     M.done=(how,why)=>{let res;if(how==='fin'){const T=FL.t-M.t0,v=M.nom/(T/3600);res={ev:ev.key,md:md.id,pil:P.id,field:F,v,place:1+F.filter(x=>x.v>v).length,txt:`${flKmh(v)} км/ч`};}
       else res={ev:ev.key,md:md.id,pil:P.id,field:F,v:0,place:F.length+1,dnf:why,txt:`сошёл: ${why}`};
       M.fin(res.place===1?'Победа!':res.dnf?'Сход':res.place+'-е место',res.dnf?res.txt:`Средняя скорость — ${res.txt}. ${res.place===1?'Быстрее всех!':'Победитель — '+esc((F.find(x=>x.v>=res.v)||F[0]).n)+'.'}`,res,res.place===1?'good':res.dnf?'bad':'');};
@@ -98,7 +100,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     if(k==='rdist'){const cur=airRecCur(s,'dist');M.board=()=>`<b>Мировой рекорд</b><p>${fmtN(Math.round(cur.v))} км — ${esc(cur.who)}</p><p class="me">${who} — ${fmtN(Math.round(M.lap*M.lapKm))} км</p>`;}
     M.target=nextAim;M.auto=()=>{const a=me(),g=M.seq[M.gi];flAuto(a,{x:g.aim[0],z:g.aim[1],alt:aimAlt,spd:st.vc/3.6*0.92,bank:0.5});};
     M.step=(dt,p0)=>{const a=me();if(a.crash){M.done(a.crash);return;}const g=gateStep(p0);if(g===M.C.start){if(M.gi===1){M.t0=FL.t;flToast('Старт!','good');}else{M.lap++;flToast(`Круг ${M.lap}`);}}
-      if(M.t0!==null&&a.gnd&&a.Vg<3)M.done(a.eng.run?null:(a.eng.fail||'мотор'));};
+      if(M.t0!==null&&stuck(a))M.done(a.eng.run?null:(a.eng.fail||'мотор'));};
     M.canLand=()=>M.t0!==null&&!me().gnd;M.land=()=>M.done(null,1);
     M.done=(why,auto)=>{const d=Math.round(M.lap*M.lapKm),txt=`${fmtN(d)} км по кругу${why?' — '+why:''}`;
       if(k==='rdist'){M.res={rec:'dist',v:d,txt};M.fin(d>airRecCur(s,'dist').v*1.005?'Мировой рекорд!':'Рекорд не побит',txt,M.res,d>airRecCur(s,'dist').v*1.005?'good':'');return;}
@@ -112,7 +114,7 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.auto=()=>{const a=me();flAuto(a,{hdg:flHdg(a)+0.35,alt:a.p[1]+3000,thr:1,bank:0.35,climbK:1,edge:1});};
     M.step=(dt)=>{const a=me();if(a.crash){M.done(a.crash);return;}if(!a.gnd){M.maxH=Math.max(M.maxH,altF());M.flew=1;}
       M.hist.push([FL.t,a.p[1]]);while(M.hist.length&&M.hist[0][0]<FL.t-40)M.hist.shift();if(!M.ceil&&M.maxH>150&&M.hist.length>2&&FL.t-M.hist[0][0]>30&&(a.p[1]-M.hist[0][1])/(FL.t-M.hist[0][0])<0.35&&a.thr>0.9){M.ceil=1;flToast('Потолок! Мотору не хватает воздуха','good');}
-      if(M.flew&&a.gnd&&a.Vg<3)M.done(null);};
+      if(M.flew&&stuck(a))M.done(null);};
     M.canLand=()=>M.maxH>40&&!me().gnd;M.land=()=>M.done(null,1);
     M.done=(why)=>{const a2=Math.round(M.maxH/10)*10,txt=`${fmtN(a2)} м${why?' — '+why:''}`;
       if(k==='ralt'){const ok=a2>cur.v*1.005;M.res={rec:'alt',v:a2,txt};M.fin(ok?'Мировой рекорд!':'Рекорд не побит',`Барограф показал ${txt}.`,M.res,ok?'good':'');return;}
@@ -134,8 +136,8 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
       for(const [g,other] of [[sA,G2],[sB,G1]]){if(!flCross(p0,a.p,g.a,g.b))continue;const gEnd=other===G2?sB:sA;
         if(M.cur&&M.cur.end===g){const T=FL.t-M.cur.t0;if(agl()>150){flToast('Выше 150 м — проход не засчитан','bad');}else{M.pass.push(T);flToast(`Проход ${M.pass.length}: ${flKmh(3/(T/3600))} км/ч`,'good');}M.cur=null;if(M.pass.length>=2){M.done(null);return;}continue;}
         if(!M.cur){if(agl()>150){flToast('Слишком высоко: ниже 150 м!','bad');continue;}M.cur={t0:FL.t,end:gEnd,to:other};flToast('Вход в базу!');}}
-      if(a.gnd&&a.Vg<3&&M.flew)M.done('сел');if(!a.gnd)M.flew=1;};
-    M.done=(why)=>{if(M.pass.length<2){M.res=null;M.fin('Попытка не удалась',why?'Аэроплан '+why+'.':'Нужно два прохода по базе навстречу друг другу.',null,'bad');return;}
+      if(M.flew&&stuck(a))M.done(a.eng.run?'сел':'вынужденная посадка: '+(a.eng.fail||'мотор'));if(!a.gnd)M.flew=1;};
+    M.done=(why)=>{if(M.pass.length<2){M.res=null;M.fin('Попытка не удалась',why?(why==='сел'?'Сели, не пройдя базу дважды.':/^вынужденная/.test(why)?'Аэроплан не долетел: '+why+'.':'Аэроплан разбит: '+why+'.'):'Нужно два прохода по базе навстречу друг другу.',null,'bad');return;}
       const v=6/((M.pass[0]+M.pass[1])/3600),ok=v>cur.v*1.005,txt=`${flKmh(v)} км/ч на базе 3 км`;M.res={rec:'speed',v,txt};M.fin(ok?'Мировой рекорд!':'Рекорд не побит',txt,M.res,ok?'good':'');};
     M.apply=()=>{if(M.res)airRecApply(s,'speed',md,P,M.res.v,M.res.txt);else{const A=s.air;A.rtry=A.rtry||{};A.rtry.speed=mi(s);}};M.fallback=()=>airRecQuick('speed',md.id,P.id);M.quit=()=>flyClose();M.quitText=()=>'Попытку можно повторить через три месяца.';
     return M;}
@@ -149,8 +151,14 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.target=()=>[M.B[0],undefined,M.B[1],dest];
     M.auto=()=>{const a=me();flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
     M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);
-      if(M.flew&&a.gnd&&a.Vg<3){if(d<900)M.done(true);else M.done(false,a.eng.run?'сел, не долетев':'вынужденная посадка: '+(a.eng.fail||'мотор'));}};
-    M.canLand=()=>{const a=me();return M.flew&&!a.gnd&&Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])<2600;};M.land=()=>M.done(true);M.landAt=()=>[M.B[0],M.B[1],FW&&FW.S.B?FW.S.B.y:0];
+      // 0.39: промежуточная посадка не кончает перелёт — заправились, починились и дальше (как Ведрин на Париж — Мадрид); конец — у финиша, при аварии или если чинить негде
+      if(M.flew&&a.gnd&&a.Vg<3){if(d<900)M.done(true);else if(!a.eng.run&&stuck(a))M.done(false,'вынужденная посадка: '+(a.eng.fail||'мотор'));else if(a.eng.run&&!M.downMsg){M.downMsg=1;flToast('Сели в поле — перелёт продолжается: заправка и ремонт кнопками, дальше газ и взлёт');}}
+      if(!a.gnd)M.downMsg=0;};
+    M.skipStop=()=>{const a=me();return a.eng.fail?'мотор стоит':M.place==='alps'&&a.p[1]<gyA()+1500&&Math.abs(a.p[0])<3000?'горы впереди':null;};
+    // 0.39: сесть можно и в пути — на поле, на луг у деревни (заправиться, починить мотор) — перелёт продолжается; у финиша — зачёт
+    const nearB=()=>{const a=me();return Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])<2600;};
+    M.canLand=()=>{const a=me();return M.flew&&!a.gnd;};M.landAt=()=>{if(nearB())return [M.B[0],M.B[1],FW&&FW.S.B?FW.S.B.y:0];const L=flLandSpot(me());M.spotN=L.n;return [L.x,L.z,L.y];};
+    M.land=()=>{if(nearB()){M.done(true);return;}flToast('Сели: '+(M.spotN||'поле')+'. Заправка и ремонт — кнопками, дальше — газ и взлёт');};
     M.done=(ok,why)=>{const h=Math.round(FL.t*km/360)/10,sea=/channel|med|atlantic/.test(M.place),wet=!ok&&why&&/вод/.test(why);
       const res={ev:ev.key,md:md.id,pil:P.id,field:F,ok,h,place:ok?1:0,txt:ok?`долетел за ${String(h).replace('.',',')} ч`:wet||(!ok&&sea)?'сел на воду — лётчика подобрал миноносец':why||'не долетел'};
       M.fin(ok?`${dest}! Перелёт удался`:'Перелёт не удался',ok?`${who} ${P.hero?'долетели':'долетел'} за ${String(h).replace('.',',')} ч.`:res.txt,res,ok?'good':'bad');};
@@ -159,19 +167,43 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   if(k==='trial'){const H1=t<1912?300:500,role=ev.mil?ev.mil.role:'recon',zb=900,G1=[-1500,zb],G2=[1500,zb],ref=airStats(airRefMd(role,t),t);M.task=0;M.sc={};
     [G1,G2].forEach(c=>{for(const sd of [-1,1])M.objs.push({k:'pylon',x:c[0],z:c[1]+sd*300,h:18,col:'#e0402a'});});M.objs.push({k:'gate',x:0,z:0,a:0,w:120,h:8});
     M.objs.push({k:'clear',a:[G1[0]-900,zb],b:[G2[0]+900,zb],w:420},{k:'judge',x:G1[0]-380,z:zb,a:Math.PI/2},{k:'judge',x:G2[0]+380,z:zb,a:-Math.PI/2});
-    const tasks=['Подъём на '+H1+' м — на время','Скорость на базе 3 км','Посадка в круг у трибун'];
-    M.goal=()=>`<b>Задание ${M.task+1} из 3: ${tasks[Math.min(2,M.task)]}</b><span>${M.task===0?(M.tUp?flFmtT(FL.t-M.tUp)+' · '+Math.round(altF())+' м':'Дайте газ — время пойдёт с разбега'):M.task===1?(M.bas?'на базе: '+flFmtT(FL.t-M.bas.t0):'через ворота базы — по прямой'):'садитесь как можно ближе к белому кругу в середине поля'}</span>`;
-    M.target=()=>M.task===1?(M.bas?[M.bas.to[0],undefined,M.bas.to[1],'финиш базы']:[G1[0],undefined,G1[1],'база']):M.task===2?[M.A[0],gyA(),M.A[1],'круг']:null;
+    // 0.39: боевые задания комиссии — по роду машины и году, как в истории (аэро-мишень Мишлена 1912, стрельба по щиту, фоторазведка)
+    const rnd=mulberry32(hashStr(ev.key+'w')),T=[{id:'climb',n:'Подъём на '+H1+' м — на время'},{id:'speed',n:'Скорость на базе 3 км'}];let wpn=null;
+    if(role==='bomb'&&t>=1912){wpn={id:'bomb',n:'Бомбометание: 3 бомбы в аэро-мишень с 200 м'};M.tg={x:0,z:-1500,hit:0};M.objs.push({k:'aerotarget',x:0,z:-1500,r:10},{k:'judge',x:70,z:-1560,a:0},{k:'clear',a:[-400,-1500],b:[400,-1500],w:320});M.bombs=true;M.bombsLeft=3;M.sc.bombs=[];}
+    else if(role==='fight'&&t>=1915){const g=frGunOf(md,P.sk);if(g.fwd){wpn={id:'gun',n:'Стрельба по щиту: 60 патронов'};M.gtg={x:700,z:-1500,a:Math.PI/2,w:6,h:2.5,hits:0};M.objs.push({k:'sheet',x:700,z:-1500,a:Math.PI/2},{k:'judge',x:700,z:-1590,a:0},{k:'clear',a:[700,-1100],b:[700,-1900],w:200});M.guns=true;M.gunLim=60;}else M.sc.noGun=1;}
+    else if((role==='recon'||role==='train'||role==='sea')&&t>=1912){wpn={id:'recon',n:'Разведка: снять лагерь, батарею и обоз'};M.pts=[];const names=['лагерь','батарея','обоз'];
+      for(let i=0;i<3;i++){const a=rnd()*6.283,d=2300+rnd()*1700,x=Math.round(Math.sin(a)*d),z=Math.round(Math.cos(a)*d);M.pts.push({x,z,n:names[i],ok:0});
+        if(i===1)M.objs.push({k:'aa',x,z},{k:'aa',x:x+28,z:z+10},{k:'aa',x:x-28,z:z-8},{k:'camp',x:x+60,z:z+40,n:4});else M.objs.push({k:'camp',x,z,n:i===0?12:5});}}
+    if(wpn)T.push(wpn);T.push({id:'land',n:'Посадка в круг у трибун'});const cur=()=>T[Math.min(T.length-1,M.task)].id,next=()=>{M.task=Math.min(T.length-1,M.task+1);};
+    const wpnLine=()=>{const id=cur();if(id==='bomb')return `бомб осталось ${M.bombsLeft} · сброс с 200 м над белым кругом (кнопка «Бомбы»)${M.sc.bombs.length?' · промахи: '+M.sc.bombs.map(d=>Math.round(d)+' м').join(', '):''}`;
+      if(id==='gun'){const g=me().gun;return `патронов ${g?g.ammo:0} · попаданий ${M.gtg.hits} · щит — на поле южнее, заход вдоль него, кнопка «Огонь»`;}
+      if(id==='recon'){const left=M.pts.filter(p=>!p.ok);return `снято ${3-left.length} из 3 · ${left.length?'дальше: '+left[0].n+' — пройти над целью на 150…1500 м':'все цели сняты'}`;}return '';};
+    M.goal=()=>`<b>Задание ${M.task+1} из ${T.length}: ${T[Math.min(T.length-1,M.task)].n}</b><span>${cur()==='climb'?(M.tUp?flFmtT(FL.t-M.tUp)+' · '+Math.round(altF())+' м':'Дайте газ — время пойдёт с разбега'):cur()==='speed'?(M.bas?'на базе: '+flFmtT(FL.t-M.bas.t0):'через ворота базы — по прямой'):cur()==='land'?'садитесь как можно ближе к белому кругу в середине поля':wpnLine()}</span>`;
+    M.target=()=>{const id=cur();if(id==='speed')return M.bas?[M.bas.to[0],undefined,M.bas.to[1],'финиш базы']:[G1[0],undefined,G1[1],'база'];if(id==='land')return [M.A[0],gyA(),M.A[1],'круг'];
+      if(id==='bomb')return [M.tg.x,Math.max(0,fwHgt(FW.S,M.tg.x,M.tg.z)),M.tg.z,'аэро-мишень'];if(id==='gun')return [M.gtg.x,Math.max(0,fwHgt(FW.S,M.gtg.x,M.gtg.z)),M.gtg.z,'щит'];
+      if(id==='recon'){const p=M.pts.find(q=>!q.ok);return p?[p.x,undefined,p.z,p.n]:null;}return null;};
     M.board=()=>`<b>Комиссия</b>${F.map(x=>`<p>${esc(x.n)} — ${(x.q||0).toFixed(2).replace('.',',')}</p>`).join('')}`;
-    M.step=(dt,p0)=>{const a=me();if(a.crash){M.done(a.crash);return;}if(M.tUp==null&&a.thr>0.5)M.tUp=FL.t;
-      if(M.task===0&&altF()>=H1){M.sc.climb=FL.t-M.tUp;M.task=1;flToast(`Подъём: ${flFmtT(M.sc.climb)}`,'good');}
-      if(M.task===1){const seg=c=>({a:[c[0],c[1]-300],b:[c[0],c[1]+300]});for(const [c,o] of [[G1,G2],[G2,G1]]){const g=seg(c);if(!flCross(p0,a.p,g.a,g.b))continue;
-        if(M.bas&&M.bas.to===c){const T=FL.t-M.bas.t0;M.sc.v=3/(T/3600);M.task=2;M.bas=null;flToast(`База: ${flKmh(M.sc.v)} км/ч`,'good');break;}if(!M.bas){M.bas={t0:FL.t,to:o};flToast('Вход в базу!');}}}
-      if(M.task===2&&a.gnd&&a.Vg<2.5){M.sc.land=Math.hypot(a.p[0]-M.A[0],a.p[2]-M.A[1]);M.done(null);}
-      if(M.task<2&&M.tUp!=null&&a.gnd&&a.Vg<2.5&&FL.t-M.tUp>30)M.done('сел, не выполнив задания');};
-    M.done=(why)=>{const qd=airQ(md,t,role).q;let perf=0.75;if(!why){const cl=clamp((ref.t1k*60*H1/1000)/Math.max(30,M.sc.climb||999),0.5,1.5),sp=clamp((M.sc.v||0)/Math.max(30,ref.v*0.95),0.5,1.4),ld=clamp(1.3-(M.sc.land||300)/150,0.4,1.3);perf=(cl+sp+ld)/3;}
+    M.init=()=>{const a=me();a.side=0;a.mesh=FL.meMesh;if(M.guns){a.gun=frGunOf(md,P.sk);a.gun.ammo=M.gunLim;}};
+    M.ai=(dt)=>{const a=me();if(M.guns&&a.gun){frGuns(a,dt,FL.fire&&!a.crash&&cur()==='gun',M);if(cur()==='gun'&&a.gun.ammo<=0&&!M.gunT)M.gunT=FL.t;}frBullets(dt,M);
+      if(M.bombs)frBombs(dt,M,a,(d,b)=>{if(b.h0<150){M.sc.bombs.push(200);flToast('Сброс ниже 150 м — промах засчитан','bad');}else{M.sc.bombs.push(d);flToast(d<10?'В круг!':`Разрыв в ${Math.round(d)} м от центра`,d<30?'good':'');}});};
+    M.onGtg=(h)=>flToast(`Попадание в щит: ${h}`,'good');M.aimOn=()=>cur()==='bomb';
+    M.step=(dt,p0)=>{const a=me();if(a.crash){M.done(a.crash);return;}if(M.tUp==null&&a.thr>0.5)M.tUp=FL.t;const id=cur();
+      if(id==='climb'&&altF()>=H1){M.sc.climb=FL.t-M.tUp;next();flToast(`Подъём: ${flFmtT(M.sc.climb)}`,'good');}
+      if(id==='speed'){const seg=c=>({a:[c[0],c[1]-300],b:[c[0],c[1]+300]});for(const [c,o] of [[G1,G2],[G2,G1]]){const g=seg(c);if(!flCross(p0,a.p,g.a,g.b))continue;
+        if(M.bas&&M.bas.to===c){const Tt=FL.t-M.bas.t0;M.sc.v=3/(Tt/3600);next();M.bas=null;flToast(`База: ${flKmh(M.sc.v)} км/ч`,'good');break;}if(!M.bas){M.bas={t0:FL.t,to:o};flToast('Вход в базу!');}}}
+      if(id==='bomb'&&M.sc.bombs.length>=3&&!(M.drops&&M.drops.length)){M.sc.bomb=M.sc.bombs.reduce((q,d)=>q+d,0)/3;next();flToast(`Бомбометание: среднее отклонение ${Math.round(M.sc.bomb)} м`,M.sc.bomb<30?'good':'');}
+      if(id==='gun'&&M.gunT&&FL.t-M.gunT>2){M.sc.gun=M.gtg.hits;next();flToast(`Стрельба: ${M.sc.gun} попаданий из 60`,M.sc.gun>=12?'good':'');}
+      if(id==='recon'){const agl=altF();for(const q of M.pts){if(!q.ok&&Math.hypot(a.p[0]-q.x,a.p[2]-q.z)<300&&agl>150&&agl<1500){q.ok=1;flToast(`Снимок: ${q.n}`,'good');}}
+        if(M.pts.every(q=>q.ok)){M.sc.recon=FL.t-M.tUp;next();flToast('Все цели сняты — на посадку','good');}}
+      if(cur()==='land'&&a.gnd&&a.Vg<2.5){M.sc.land=Math.hypot(a.p[0]-M.A[0],a.p[2]-M.A[1]);M.done(null);}
+      if(cur()!=='land'&&M.tUp!=null&&stuck(a)&&FL.t-M.tUp>30)M.done(a.eng.run?'сел, не выполнив задания':'вынужденная посадка: '+(a.eng.fail||'мотор'));};
+    M.done=(why)=>{const qd=airQ(md,t,role).q;let perf=0.75,wp=null;
+      if(!why){const cl=clamp((ref.t1k*60*H1/1000)/Math.max(30,M.sc.climb||999),0.5,1.5),sp=clamp((M.sc.v||0)/Math.max(30,ref.v*0.95),0.5,1.4),ld=clamp(1.3-(M.sc.land||300)/150,0.4,1.3);
+        if(wpn){wp=wpn.id==='bomb'?clamp(1.35-(M.sc.bomb||200)/80,0.4,1.35):wpn.id==='gun'?clamp(0.5+(M.sc.gun||0)/25,0.5,1.4):clamp(0.5+0.3*M.pts.filter(q=>q.ok).length,0.5,1.4)*((M.sc.recon||0)>1200?0.9:1);}
+        else if(M.sc.noGun)wp=0.6;perf=wp==null?(cl+sp+ld)/3:(cl+sp+ld+wp*1.2)/4.2;}
       const q=why?qd*0.6:qd*(0.82+0.18*perf),res={ev:ev.key,md:md.id,pil:P.id,field:F,q,place:1+F.filter(x=>x.q>q).length,txt:`оценка комиссии ${q.toFixed(2).replace('.',',')}`+(why?' — '+why:'')};
-      M.fin(res.place===1?'Первое место!':res.place+'-е место',`${res.txt}.${M.sc.climb?` Подъём на ${H1} м — ${flFmtT(M.sc.climb)}.`:''}${M.sc.v?` Скорость — ${flKmh(M.sc.v)} км/ч.`:''}${M.sc.land!=null?` Посадка в ${Math.round(M.sc.land)} м от круга.`:''}`,res,res.place===1?'good':'');};
+      const wtxt=!why&&wpn?(wpn.id==='bomb'?` Бомбы — в среднем ${Math.round(M.sc.bomb||0)} м от центра мишени.`:wpn.id==='gun'?` Стрельба — ${M.sc.gun||0} попаданий в щит из 60.`:` Разведка — снято ${M.pts.filter(q=>q.ok).length} из 3 за ${flFmtT(M.sc.recon||0)}.`):M.sc.noGun?' Без курсового пулемёта стрельбу не зачли — оценка снижена.':'';
+      M.fin(res.place===1?'Первое место!':res.place+'-е место',`${res.txt}.${M.sc.climb?` Подъём на ${H1} м — ${flFmtT(M.sc.climb)}.`:''}${M.sc.v?` Скорость — ${flKmh(M.sc.v)} км/ч.`:''}${wtxt}${M.sc.land!=null?` Посадка в ${Math.round(M.sc.land)} м от круга.`:''}`,res,res.place===1?'good':'');};
     return M;}
   /* ===== круг в километр (1908) и мёртвая петля (1913) ===== */
   if(k==='circle'){const py=[M.A[0],M.A[1]+520];M.objs.push({k:'pylon',x:py[0],z:py[1],h:16,col:'#e0402a'},{k:'gate',x:M.A[0],z:M.A[1],a:Math.PI/2,w:300,h:10});M.start={x:M.A[0],z:M.A[1]-300,hdg:0};M.phase=0;

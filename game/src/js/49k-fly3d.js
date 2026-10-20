@@ -150,7 +150,7 @@ function fwRender(cam,items,dt){const gl=G3.gl;if(!gl||G3.lost||gl.isContextLost
   gl.bindVertexArray(G3.full.vao);gl.drawArrays(gl.TRIANGLES,0,3);G3.dc++;gl.depthMask(true);
   // облака и дальний дым
   gl.enable(gl.BLEND);FWR.VP=VPf;const far=[],near=[];for(const p of FW.parts){((p.x-eye[0])**2+(p.y-eye[1])**2+(p.z-eye[2])**2<farN*farN*0.8?near:far).push(p);}
-  fwPuffDraw(FW.clouds.concat(far),bw,bh,cam,FW.cI);gl.disable(gl.BLEND);
+  fwPuffDraw(FW.clouds.concat(far,typeof wxPuffs==='function'&&FL.wx?wxPuffs(cam):[]),bw,bh,cam,FW.cI);gl.disable(gl.BLEND);/* 0.39: грозовые столбы, завесы дождя, стаи птиц, молнии */
   // ближний проход: кабина, свой аэроплан, земля под колёсами
   gl.clear(gl.DEPTH_BUFFER_BIT);pass(false);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.disable(gl.CULL_FACE);

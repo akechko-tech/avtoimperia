@@ -239,6 +239,16 @@ function fwMission(objs,S){const mb=new MB(),hot=[];
       for(const q of [-7,7]){const b=P(0,0,q);pCyl(mb,[b[0],gy,b[2]],[b[0],gy+9,b[2]],0.09,0.07,'#3a3a3a',5,MID.metal);pBox(mb,b[0]+0.9,gy+7.6,b[2],0.9,1.2,0.02,q<0?'#e0402a':'#f0ece2',MID.cloth);}
       for(let i=0;i<6;i++){const b=P(6+(i%3)*1.3,0,-2+Math.floor(i/3)*4);pBox(mb,b[0],gy,b[2],0.22,1.65,0.22,['#2a2a2e','#3a3530','#1f2a40'][i%3],MID.cloth);}
       FW.col.push({x:o.x,z:o.z,r:5,y0:gy-2,y1:gy+5,why:'врезался в судейскую палатку'});return;}
+    // 0.39: военные конкурсы с оружием — аэро-мишень (белый круг с крестом, как у Мишлена), щит для стрельбы, лагерь из палаток для фоторазведки
+    if(o.k==='aerotarget'){const R=o.r||10,n=36;for(let i=0;i<n;i++){const a=i/n*6.2832,b=(i+1)/n*6.2832;mb.poly([[o.x+Math.cos(a)*R,gy+0.12,o.z+Math.sin(a)*R],[o.x+Math.cos(b)*R,gy+0.12,o.z+Math.sin(b)*R],[o.x+Math.cos(b)*(R-1.6),gy+0.12,o.z+Math.sin(b)*(R-1.6)],[o.x+Math.cos(a)*(R-1.6),gy+0.12,o.z+Math.sin(a)*(R-1.6)]],[0,1,0],hex2rgb('#f4f0e6'),MID.cloth);}
+      pBox(mb,o.x,gy+0.1,o.z,R*0.7,0.06,0.9,'#f4f0e6',MID.cloth);pBox(mb,o.x,gy+0.1,o.z,0.9,0.06,R*0.7,'#f4f0e6',MID.cloth);pBox(mb,o.x,gy+0.1,o.z,2.2,0.08,2.2,'#d8382a',MID.cloth);
+      for(const q of [[R+4,0],[-R-4,0],[0,R+4],[0,-R-4]]){pCyl(mb,[o.x+q[0],gy,o.z+q[1]],[o.x+q[0],gy+5,o.z+q[1]],0.07,0.06,'#3a3a3a',5,MID.metal);pBox(mb,o.x+q[0]+0.7,gy+4,o.z+q[1],0.7,0.9,0.02,'#f0ece2',MID.cloth);}return;}
+    if(o.k==='sheet'){const a=o.a||0;pBox(mb,o.x,gy+0.05,o.z,6,0.08,2.5,'#f4f0e6',MID.cloth,a);pBox(mb,o.x,gy+0.1,o.z,1.2,0.06,1.2,'#1a1a1a',MID.cloth,a);pBox(mb,o.x,gy+0.12,o.z,0.45,0.05,0.45,'#f4f0e6',MID.cloth,a);
+      for(const q of [-7,7]){pCyl(mb,[o.x+q,gy,o.z],[o.x+q,gy+4,o.z],0.07,0.06,'#3a3a3a',5,MID.metal);pBox(mb,o.x+q+0.6,gy+3.2,o.z,0.6,0.8,0.02,'#d8382a',MID.cloth);}return;}
+    if(o.k==='camp'){const rnd=mulberry32(hashStr('c'+Math.round(o.x)+'_'+Math.round(o.z)));const n=o.n||10;for(let i=0;i<n;i++){const x=o.x+((i%5)-2)*7+(rnd()-0.5)*2,z=o.z+Math.floor(i/5)*8+(rnd()-0.5)*2,g2=Math.max(0,fwHgt(S,x,z));
+        pCyl(mb,[x,g2,z],[x,g2+3.2,z],2.4,0.05,'#d9d2bc',8,MID.cloth);pCyl(mb,[x,g2+3.1,z],[x,g2+3.6,z],0.05,0.04,'#3a3a3a',4,MID.metal);}
+      pCyl(mb,[o.x-20,gy,o.z-6],[o.x-20,gy+8,o.z-6],0.09,0.07,'#3a3a3a',5,MID.metal);pBox(mb,o.x-19.2,gy+6.8,o.z-6,0.9,1.1,0.02,'#2a4a8a',MID.cloth);
+      for(let i=0;i<4;i++)pBox(mb,o.x+10+i*3,gy,o.z-10,0.5,1.4,1.1,'#6a5a40',MID.wood);/* повозки */for(let i=0;i<8;i++)pBox(mb,o.x-8+i*2.2,gy,o.z+22,0.22,1.65,0.22,['#4a5038','#3a4030'][i%2],MID.cloth);return;}
     if(o.k==='pylon'){const h=o.h||24;for(let k=0;k<6;k++)pBox(mb,o.x,gy+k*h/6,o.z,0.7,h/6,0.7,k%2?'#f0ece2':'#1a1a1a',MID.paint);pCyl(mb,[o.x,gy+h,o.z],[o.x,gy+h+3,o.z],0.06,0.05,'#2a2a2a',5,MID.metal);pBox(mb,o.x+0.9,gy+h+1.6,o.z,0.9,1.3,0.02,o.col||'#e0402a',MID.cloth);
       if(o.sea){pCyl(mb,[o.x,-0.6,o.z],[o.x,0.6,o.z],4,4,'#5a4a3a',10,MID.wood);}
       FW.col.push({x:o.x,z:o.z,r:1.4,y0:gy-2,y1:gy+h+3,why:'врезался в пилон'});}
