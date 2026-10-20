@@ -503,6 +503,11 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .rl-shots,.rl-shot{position:absolute;inset:0}
 .rl-shot{opacity:0;transition:opacity .8s ease}
 .rl-shot.on{opacity:1}
+/* 0.39: монтаж — диафрагма, склейка встык, титры с наездом */
+.rl-shot.cut{transition:none}.rl-shot.gone{transition:none;opacity:0}
+.rl-shot.iris-in{clip-path:circle(0% at 50% 50%);transition:opacity .2s,clip-path 1.6s cubic-bezier(.3,.7,.3,1)}.rl-shot.iris-in.on{clip-path:circle(78% at 50% 50%)}
+.rl-shot.iris-out{clip-path:circle(78% at 50% 50%);transition:opacity .3s,clip-path 2.4s cubic-bezier(.6,0,.8,.4) 1.2s}.rl-shot.iris-out.on{clip-path:circle(0% at 50% 50%)}
+.rl-shot.title .rl-orn{animation:rlTitle 5s ease-out both}@keyframes rlTitle{0%{transform:scale(.94);opacity:0}8%{opacity:1}100%{transform:scale(1.02);opacity:1}}
 .rl-img{position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:cover;transform:translate(-50%,-50%) scale(1.05);filter:grayscale(1) sepia(.38) contrast(1.18) brightness(.92)}
 .rl-img.plant{filter:grayscale(.85) sepia(.5) contrast(1.1) brightness(.95)}
 .rl-car{position:absolute;left:50%;top:50%;width:100%;height:100%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 60%,#8a7f6a,#2b2620 75%)}

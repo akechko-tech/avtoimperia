@@ -375,7 +375,8 @@ function playReel(id){
     <div class="rl-sub"></div>
     <div class="rl-ctl"><button class="rl-btn" data-rl="prev" aria-label="Предыдущий кадр">◀◀</button><button class="rl-btn big" data-rl="pause" aria-label="Пауза">❚❚</button><button class="rl-btn" data-rl="next" aria-label="Следующий кадр">▶▶</button><button class="rl-btn" data-rl="voice" aria-label="Голос диктора">${reelVoiceOn()?'🔊':'🔇'}</button><button class="rl-btn" data-rl="close" aria-label="Закрыть">✕</button></div>`;
   document.body.appendChild(el);
-  const shots=[{leader:1},...R0.sh];REEL={id,R:R0,shots,i:-1,el,timer:0,raf:0,used:{},paused:false};
+  // 0.39: в конце — титр «Конец» с подписью выпуска; монтаж — диафрагма в начале и в конце, резкие склейки на хронике гонок
+  const shots=[{leader:1},...R0.sh,{c:'Конец',s:`${R0.t||'Кинохроника'}${R0.y?' · '+R0.y:''}`,end:1}];REEL={id,R:R0,shots,i:-1,el,timer:0,raf:0,used:{},paused:false};
   const Q=REEL,bar=el.querySelector('.rl-bar');
   // шкала: отрезок на каждый кадр — нажмите, чтобы перейти
   const draw=()=>{const tot=shots.reduce((a,x)=>a+reelShotDur(x,s),0);bar.innerHTML=shots.map((x,k)=>`<span data-k="${k}" style="flex:${reelShotDur(x,s)/tot}"><i></i></span>`).join('');};
@@ -397,10 +398,14 @@ function reelPause(on){const Q=REEL;if(!Q)return;Q.paused=on;const b=Q.el.queryS
 function reelGo(i){const Q=REEL;if(!Q)return;clearTimeout(Q.timer);voiceStop();if(Q.paused)reelPause(false);
   if(i>=Q.shots.length){reelClose();return;}i=Math.max(0,i);Q.i=i;
   const s=G,sh=Q.shots[i],box=Q.el.querySelector('.rl-shots'),div=document.createElement('div');if(!box){reelClose();return;}div.className='rl-shot';
+  // 0.39: монтаж — первый кадр открывается диафрагмой, хроника гонок и улиц клеится встык, титры — с лёгким наездом; в конце диафрагма закрывается
+  const rr=mulberry32(hashStr(Q.id+'m'+i)),cut=!!(sh.v&&/race|street|parade|convoy|crowd/.test(sh.v)&&rr()<0.6),iris=i===1||sh.end;
+  if(iris)div.classList.add(sh.end?'iris-out':'iris-in');else if(cut)div.classList.add('cut');if(sh.c!==undefined||sh.q!==undefined)div.classList.add('title');
   div.innerHTML=reelShotHTML(sh,s,Q,i);box.appendChild(div);
   requestAnimationFrame(()=>div.classList.add('on'));
-  [...box.children].forEach(c=>{if(c!==div){c.classList.remove('on');setTimeout(()=>c.remove(),900);}});
-  const say=reelSay(sh,s),dur=reelShotDur(sh,s);
+  [...box.children].forEach(c=>{if(c!==div){c.classList.remove('on');if(cut)c.classList.add('gone');setTimeout(()=>c.remove(),900);}});
+  const say=reelSay(sh,s),dur=sh.end?3.2:reelShotDur(sh,s);
+  try{reelSfx(sh,dur,Q);}catch(_){}
   // медленный наезд камеры по фото и машине (у каждого кадра — своё направление)
   const im=div.querySelector('.rl-img,.rl-car');if(im&&im.animate){const r=mulberry32(hashStr(Q.id+i)),z0=1.04+r()*0.06,z1=z0+0.08+r()*0.1,dx=(r()-0.5)*6,dy=(r()-0.5)*4;
     try{im.animate([{transform:`translate(-50%,-50%) scale(${z0}) translate(${dx}%,${dy}%)`},{transform:`translate(-50%,-50%) scale(${z1}) translate(${-dx}%,${-dy}%)`}],{duration:(dur+1.5)*1000,fill:'forwards',easing:'linear'});}catch(_){}}
@@ -423,7 +428,8 @@ function reelFx(){const Q=REEL;if(!Q)return;const cv=Q.el.querySelector('.rl-gra
       fl.style.opacity=(Math.random()*0.09).toFixed(3);fr.style.transform=Math.random()<0.15?`translateY(${(Math.random()-0.5)*1.6}px)`:'';}
     Q.raf=requestAnimationFrame(loop);};
   Q.raf=requestAnimationFrame(loop);}
-function reelClose(){const Q=REEL;if(!Q)return;REEL=null;clearTimeout(Q.timer);cancelAnimationFrame(Q.raf);voiceStop();reelAudio(false);try{Q.el.querySelectorAll('video').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load();}catch(_){}});Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},350);}catch(_){}}
+function reelSfxStop(Q){try{if(Q&&Q.sfx){const c=AU.ctx,t=c.currentTime;Q.sfx.g.gain.setTargetAtTime(0,t,0.3);const src=Q.sfx.src;setTimeout(()=>{try{src.stop();}catch(_){}},1200);Q.sfx=null;}}catch(_){}}
+function reelClose(){try{reelSfxStop(REEL);}catch(_){}const Q=REEL;if(!Q)return;REEL=null;clearTimeout(Q.timer);cancelAnimationFrame(Q.raf);voiceStop();reelAudio(false);try{Q.el.querySelectorAll('video').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load();}catch(_){}});Q.el.classList.add('out');setTimeout(()=>{try{Q.el.remove();}catch(_){}},350);}catch(_){}}
 // Звук: музыка эпохи тихо под диктора (свой танец у каждого ролика), трещит проектор; в начале — короткие фанфары
 // 0.19: музыка под кинохронику — настоящий оркестр по настроению ролика (гонка — галоп, завод — «деловая», итоги года — марш),
 // тише под голос диктора; без сети — прежний синтезатор
@@ -443,6 +449,16 @@ function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
 // 0.23: фанфара — оркестром (трубы, валторны, тромбоны, литавры; файл рядом с игрой), без файла — семплы корнета
 function auReelFanfare(){try{if(!AU.ctx||!AU.on.music)return;const synth=()=>{const t=AU.ctx.currentTime+0.05;[[67,0,0.18],[72,0.2,0.18],[76,0.4,0.18],[79,0.6,0.5],[76,1.15,0.16],[79,1.35,0.9]].forEach(([n,d,l])=>{inst('cornet',n-7,t+d,l,0.5);inst('trumpet',n-19,t+d,l,0.25);});};
   auCue('fanfare',0.7,synth);}catch(e){}}
+// 0.39: звук в кадре — по метке хроники или названию фото: гонка — рёв трибун, аэроплан — мотор, поезд — паровоз, улица — пролётки, парад — оркестр и колокола
+const REEL_SFX=[[/race_crowd|race_start|race_run|Grand Prix|Cup|Gordon Bennett|Vanderbilt|Indianapolis|Targa|Le Mans|Brooklands|race/i,'crowd_race',0.5],[/aviation|lindbergh|Bl[ée]riot|Wright|Farman|Curtiss|Sikorsky|Reims|aircraft|aero|airplane|Flyer|Spirit of St/i,'plane_prop',0.42],
+  [/train_steam|railway|locomotive|station/i,'steam_train',0.45],[/horse_cart|street1900|street_ru|carriage|Velo|Voiturette|1895|1896|1897|1898|1899/i,'horse_carriage',0.4],[/armistice|parade|Armistice|victory/i,'brass_parade',0.45],
+  [/motor_show|expo1900|michelin|exhibition|Salon|Show/i,'crowd_murmur',0.4],[/titanic|ship|harbour|harbor|port|Schneider|Monaco/i,'gulls',0.4],[/flood|rain|storm/i,'rain',0.5],[/sf1906|earthquake|fire/i,'bells_city',0.4],[/farm|tractor|country_road|village/i,'birds_town',0.35],
+  [/factory|assembly_line|plant|works|Fabrik|Werk/i,'steam_train',0.18],[/street1910|street1920|bus_taxi|city|Paris|London|Berlin|New York|Detroit|Moscow|Petersburg/i,'crowd_murmur',0.32],[/cup|trophy|winner|champion|medal|подиум/i,'applause',0.45]];
+function reelSfx(sh,dur,Q){const c=AU.ctx;if(!c||!AU.on.sfx||typeof ambBuf!=='function')return;const key=[sh.v||'',sh.i||'',sh.cap||''].join(' ');let pick=null;for(const [re,id,v] of REEL_SFX){if(re.test(key)){pick=[id,v];break;}}
+  const cur=Q.sfx;if(cur){const g=cur.g,t=c.currentTime;try{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,0.35);setTimeout(()=>{try{cur.src.stop();}catch(_){}},1500);}catch(_){}Q.sfx=null;}
+  if(!pick)return;const [id,vol]=pick,my=(Q.sfxN=(Q.sfxN||0)+1);
+  ambBuf(id).then(b=>{if(!b||!REEL||REEL!==Q||Q.sfxN!==my)return;try{const src=c.createBufferSource();src.buffer=b;src.loop=true;const g=c.createGain();const t=c.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol*0.55,t+0.9);
+      g.gain.setTargetAtTime(0,t+Math.max(1.2,dur-0.6),0.4);src.connect(g);g.connect(AU.fx);src.start(t,Math.random()*Math.max(0,b.duration-dur-1));src.stop(t+dur+2);Q.sfx={src,g};}catch(_){}});}
 function auReelTick(){try{if(AU.ctx&&AU.on.sfx)vNoise(AU.ctx.currentTime,0.05,0.08,'bandpass',1500,AU.fx);}catch(e){}}
 /* ---------- кинохроника во вкладке «Империя»: все открытые ролики ---------- */
 function reelKind(id){return id.startsWith('tech:')?'завод':id.startsWith('part:')?'КБ':id.startsWith('model:')?'новая модель':id.startsWith('year:')?'итоги года':id.startsWith('race:')?'гонка':id.startsWith('show:')?'выставка':'история';}
