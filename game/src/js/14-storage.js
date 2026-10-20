@@ -1,12 +1,35 @@
 /* ================= STORAGE: slots, autosave, hall of fame ================= */
-const SAVE_PREFIX='avt8-',SLOTS=['auto','1','2','3'];
+// 0.39: 12 слотов (было 3) — слоты лежат в IndexedDB (localStorage тесен), автосохранение — по-прежнему в localStorage;
+// при старте слоты читаются в память, поэтому список и загрузка работают сразу; старые слоты 1–3 из localStorage переносятся сами.
+// Перенос на другое устройство: «код сохранения» — сжатый (gzip) base64 в буфер обмена, обратно — вставкой.
+const SAVE_PREFIX='avt8-',SLOTS=['auto','1','2','3','4','5','6','7','8','9','10','11','12'];
 const slotKey=k=>SAVE_PREFIX+'slot-'+k;
+const SLOT_MEM={};let SLOT_DB=null;
+function slotDb(){if(SLOT_DB)return SLOT_DB;SLOT_DB=new Promise((ok,no)=>{try{if(typeof indexedDB==='undefined'){ok(null);return;}const r=indexedDB.open('avtoimperia-saves',1);r.onupgradeneeded=()=>{r.result.createObjectStore('slots');};r.onsuccess=()=>ok(r.result);r.onerror=()=>ok(null);r.onblocked=()=>ok(null);}catch(e){ok(null);}});return SLOT_DB;}
+function slotDbPut(k,txt){return slotDb().then(db=>new Promise(ok=>{if(!db){ok(false);return;}try{const tx=db.transaction('slots','readwrite');tx.objectStore('slots').put(txt,k);tx.oncomplete=()=>ok(true);tx.onerror=()=>ok(false);}catch(e){ok(false);}}));}
+function slotDbDel(k){return slotDb().then(db=>new Promise(ok=>{if(!db){ok(false);return;}try{const tx=db.transaction('slots','readwrite');tx.objectStore('slots').delete(k);tx.oncomplete=()=>ok(true);tx.onerror=()=>ok(false);}catch(e){ok(false);}}));}
+function slotDbAll(){return slotDb().then(db=>new Promise(ok=>{if(!db){ok({});return;}try{const out={},tx=db.transaction('slots','readonly'),st=tx.objectStore('slots'),req=st.openCursor();req.onsuccess=()=>{const c=req.result;if(c){out[c.key]=c.value;c.continue();}else ok(out);};req.onerror=()=>ok(out);}catch(e){ok({});}}));}
+// при старте: слоты из базы — в память; старые слоты из localStorage — в базу
+function slotsInit(){return slotDbAll().then(all=>{for(const k in all)SLOT_MEM[k]=all[k];
+  SLOTS.forEach(k=>{if(k==='auto')return;try{const t=localStorage.getItem(slotKey(k));if(t&&!SLOT_MEM[k]){SLOT_MEM[k]=t;slotDbPut(k,t).then(okk=>{if(okk)try{localStorage.removeItem(slotKey(k));}catch(_){}});}}catch(_){}});
+  if(typeof slotsReady==='function')try{slotsReady();}catch(_){}}).catch(()=>{});}
 function save(){if(!G)return;try{localStorage.setItem(slotKey('auto'),JSON.stringify(G));localStorage.setItem(SAVE_PREFIX+'last','auto');}catch(e){}}
-function saveTo(k){if(!G)return false;try{G.savedAt=Date.now();localStorage.setItem(slotKey(k),JSON.stringify(G));localStorage.setItem(SAVE_PREFIX+'last',k);return true;}catch(e){return false;}}
-function slotRaw(k){try{const x=JSON.parse(localStorage.getItem(slotKey(k))||'null');if(x&&x.v===8)return x;}catch(e){}return null;}
-function slotInfo(k){const x=slotRaw(k);return x?{company:x.company,y:x.y,m:x.m,cash:x.cash,pioneer:x.pioneer,country:x.country,over:x.over,at:x.savedAt}:null;}
+function saveTo(k){if(!G)return false;try{G.savedAt=Date.now();const txt=JSON.stringify(G);if(k==='auto'){localStorage.setItem(slotKey(k),txt);}else{SLOT_MEM[k]=txt;slotDbPut(k,txt).then(ok=>{if(!ok)try{localStorage.setItem(slotKey(k),txt);}catch(_){}});}
+  try{localStorage.setItem(SAVE_PREFIX+'last',k);}catch(_){}return true;}catch(e){return false;}}
+function slotRaw(k){try{const t=k==='auto'?localStorage.getItem(slotKey(k)):(SLOT_MEM[k]||localStorage.getItem(slotKey(k)));const x=JSON.parse(t||'null');if(x&&x.v===8)return x;}catch(e){}return null;}
+function slotInfo(k){const x=slotRaw(k);return x?{company:x.company,y:x.y,m:x.m,cash:x.cash,pioneer:x.pioneer,country:x.country,over:x.over,at:x.savedAt,dir:x.lines&&!x.lines.car&&x.lines.air?'air':x.lines&&!x.lines.car&&x.lines.moto?'moto':'car'}:null;}
 function loadSlot(k){const x=slotRaw(k);if(!x)return false;G=migrate(x);try{racerBrandLink();}catch(_){}return true;}
-function deleteSlot(k){try{localStorage.removeItem(slotKey(k));}catch(e){}}
+function deleteSlot(k){delete SLOT_MEM[k];try{localStorage.removeItem(slotKey(k));}catch(e){}slotDbDel(k);}
+// код сохранения: gzip + base64 (CompressionStream есть в Chrome/WebView с 2020 года; без него — просто base64)
+function saveCode(){if(!G)return Promise.resolve('');const txt=JSON.stringify(G),b64=u8=>{let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s);};
+  const raw=new TextEncoder().encode(txt);if(typeof CompressionStream==='undefined')return Promise.resolve('AVT1:'+b64(raw));
+  return new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer().then(ab=>'AVTZ:'+b64(new Uint8Array(ab))).catch(()=>'AVT1:'+b64(raw));}
+function loadCode(code){code=String(code||'').trim();const m=/^(AVT1|AVTZ):([A-Za-z0-9+/=\s]+)$/.exec(code);if(!m)return Promise.resolve(false);
+  let u8;try{const bin=atob(m[2].replace(/\s+/g,''));u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);}catch(e){return Promise.resolve(false);}
+  const parse=txt=>{try{const x=JSON.parse(txt);if(!x||x.v!==8)return false;G=migrate(x);try{racerBrandLink();}catch(_){}return true;}catch(e){return false;}};
+  if(m[1]==='AVT1')return Promise.resolve(parse(new TextDecoder().decode(u8)));
+  if(typeof DecompressionStream==='undefined')return Promise.resolve(false);
+  return new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).text().then(parse).catch(()=>false);}
 function migrate(x){
   x.tech=x.tech||{};x.dealers=x.dealers||{[x.country]:1};x.capBuild=x.capBuild||[];x.peak=x.peak||{year:0,share:{}};x.firsts=x.firsts||{};x.titles=x.titles||[];
   x.season=x.season||{};x.cres=x.cres||{};x.rdept=x.rdept||0;x.contracts=x.contracts||{};x.hist.share=x.hist.share||[];x.pw=x.pw||{};x.drivers=x.drivers||[];

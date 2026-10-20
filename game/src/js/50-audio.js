@@ -244,7 +244,9 @@ function musWeight(t,s,ctx){let w=1;const home=s&&s.country;
   if(s&&s.y>=1920&&!s.soviet&&(t.st==='jazz'||t.st==='fox'||t.st==='charl'))w*=1.4;
   const h=AU.recent||[];const k=h.indexOf(t.title);if(k>=0)w*=0.08+0.9*k/Math.max(1,h.length);
   return w;}
-function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:own?'music/'+id+'.m4a':MEDIA_REL+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
+// 0.39: записи, которые не стоит ставить в граммофон (отзыв: «Друзья мсье» — однообразный скрежет): изношенные акустические валики
+const MUS_BAN={fragson_amis:1};
+function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!MUS_BAN[id]&&!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:own?'music/'+id+'.m4a':MEDIA_REL+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
 function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
@@ -276,7 +278,7 @@ function musBuild(start){
 function musCur(){return AU.pl[AU.idx]||null;}
 function musicPlay(force){
   // 0.36: пока идёт фильм о герое (рассказ голосом), музыка на паузе — потом продолжается с того же места
-  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&(!R||AU.on.race)&&tr;
+  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
   if(!want){if(AU.el&&!AU.el.paused)AU.el.pause();AU.synth=null;AU.real=false;musUI();return;}
   if(tr.synth){if(AU.el&&!AU.el.paused)AU.el.pause();AU.real=false;if(force||!AU.synth||AU.synth.title!==tr.title){AU.synth=tr;AU.step=0;tr.end=0;AU.mel=0;}AU.nowPlaying=null;musUI();return;}
   AU.synth=null;AU.real=true;

@@ -260,6 +260,7 @@ function scnWaitControl(c,dt){const S=R.scn,T=R.trk;if(S.st==='lemans'){c.thr=0;
 function scnElapsed(c,t){const t0=c.t0===null||c.t0===undefined?(c.relT||0):c.t0;return t-t0-(c.neuT||0);}
 // Порядок в гонке с раздельным стартом: по расчётному времени
 function scnOrderKey(c){const S=R.scn,T=R.trk;if(c.fin!==null)return scnElapsed(c,c.fin);const t0=c.t0===null||c.t0===undefined?(c.relT||0):c.t0;
+  if(c.wait||R.time<t0)return 1e6+t0;/* 0.39: кто ещё ждёт старта — в конце таблицы по очереди, а не «лидер» (отзыв: странно, что в гонке лидер ждёт старта) */
   return (Math.max(0,R.time-t0)-(c.neuT||0))+Math.max(0,T.raceLen-c.prog)/Math.max(1,S.vRef);}
 // Кого рисовать: гонщики и машина-лидер
 function raceVisCars(){return R&&R.pace?R.cars.concat([R.pace]):R.cars;}

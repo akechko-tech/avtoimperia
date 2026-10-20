@@ -15,6 +15,8 @@ const ACT={
     const e=document.getElementById('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
     if(!open)toast(`«${rc.name}»: запись откроется за месяц до старта`);},
   tab:d=>{tab=d.t;render();const e=d.sec&&document.getElementById(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
+  // 0.39: подсказка «нужно …» ведёт к делу: вкладка → раскрыть карточку → прокрутить к строке и подсветить
+  go:d=>{if(d.t)tab=d.t;if(d.open)setOpen(d.open,true);if(d.open2)setOpen(d.open2,true);render();const e=d.id&&document.getElementById(d.id);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');setTimeout(()=>e.classList.remove('hl'),2600);}else window.scrollTo(0,0);},
   next:()=>doStep(),
   quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
@@ -134,6 +136,11 @@ const ACT={
   saveOpen:()=>openSlots('save'),
   loadOpen:()=>openSlots('load'),
   saveSlot:d=>{if(saveTo(d.k)){toast('Сохранено: слот '+d.k);closeSheet();}else toast('Не удалось сохранить');},
+  delSlot:d=>{if(!confirm('Стереть слот '+d.k+'?'))return;deleteSlot(d.k);openSlots(G?'save':'load');},
+  saveCopy:()=>{saveCode().then(code=>{if(!code){toast('Не удалось собрать код');return;}const ta=document.getElementById('saveCodeOut');const show=()=>{if(ta){ta.style.display='block';ta.value=code;ta.focus();ta.select();}};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code).then(()=>{toast(`Код сохранения в буфере обмена (${fmtN(Math.round(code.length/1024))} КБ)`);show();}).catch(show);else show();});},
+  loadCode:()=>{const ta=document.getElementById('saveCodeIn');if(!ta||!ta.value.trim()){toast('Вставьте код сохранения');return;}
+    loadCode(ta.value).then(ok=>{if(!ok){toast('Код не читается — проверьте, что скопировали целиком');return;}closeSheet();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;if(AU.pl&&AU.pl.length)musBuild(true);toast('Загружено из кода: '+G.company);});},
   loadSlot:d=>{if(loadSlot(d.k)){closeSheet();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;if(AU.pl&&AU.pl.length)musBuild(true);toast('Загружено: '+(d.k==='auto'?'автосохранение':'слот '+d.k));}},
   toMenu:()=>{if(G)save();closeSheet();closePaper();showMainMenu();},
   continue:()=>{if(loadSlot('auto')){hideMainMenu();tab='plant';shownCash=null;lastDate='';render();if(G.over&&G.final)openFinal();}},

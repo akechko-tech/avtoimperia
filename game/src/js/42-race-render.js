@@ -192,7 +192,7 @@ function raceHUD(){
   const idx=[...pick].sort((a,b)=>a-b),gF=pi>=0?gapOf(F):null,sec=x=>x<10&&x%1?x.toFixed(1).replace('.',','):Math.round(x);
   const stat=o=>o.dnf?'сход':o.fin!==null?'финиш':o.wait?'ждёт старта':o.svc===2||o.pitT>0?'⛽ боксы':o.stopT>0?'🔧 ремонт':o.punct?'🛞 прокол':'';
   let prev=-1;const board=idx.map(i=>{const o=order[i],g=gapOf(o),st=stat(o),near=pi>=0&&Math.abs(i-pi)===1&&gF!==null&&g!==null&&!o.dnf;
-      const gap=o.dnf?'сход':i===0?(o.fin!==null?'финиш':'лидер'):near?(i<pi?'▲ '+sec(Math.max(0,gF-g))+' с':'▼ '+sec(Math.max(0,g-gF))+' с'):g===null?(o.wait&&tim?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':''):'+'+sec(g)+' с';
+      const gap=o.dnf?'сход':i===0?(o.fin!==null?'финиш':o.wait&&tim?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'лидер'):near?(i<pi?'▲ '+sec(Math.max(0,gF-g))+' с':'▼ '+sec(Math.max(0,g-gF))+' с'):g===null?(o.wait&&tim?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':''):'+'+sec(g)+' с';
       const who=o===F&&R.mode==='drive'?'Вы':(o.drvName||o.name).split(' ').slice(-1)[0],mq=o.you||o.pmy?(o.label||o.name):o.priv?o.name+' · частник':o.name;
       const sep=prev>=0&&i>prev+1?'<div class="sep">⋯</div>':'';prev=i;
       return `${sep}<div class="${o.you?'you':o.pmy?'mine':''}${o===F?' me':''}${o.dnf?' out':''}"><span>${i+1}</span><i style="background:${o.color||(o.md&&o.md.paint)||'#888'}"></i>${esc(who)}<small>${esc(mq)}${st&&!o.dnf&&st!=='финиш'?' · '+st:''}</small><em>${gap}</em></div>`;}).join('')

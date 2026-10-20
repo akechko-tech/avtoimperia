@@ -203,9 +203,51 @@ function fwTown(t,S){const mb=new MB(),rnd=mulberry32(hashStr('t'+Math.round(t.x
   const g=g3Mesh(mb);if(!g)return null;FW.col.push({x:t.x,z:t.z,r:t.r*0.7,y0:-50,y1:fwHgt(S,t.x,t.z)+hmax*0.6,why:'врезался в дома'});
   return {m:g,c:[t.x,fwHgt(S,t.x,t.z)+10,t.z],r:t.r+40,town:1};}
 // человечки толпы: тело, голова, шляпа
-function fwCrowd(mb,x0,z0,x1,z1,n,gy,rnd,y){const cl=y<1914?['#2a2a2e','#3a3530','#e8e4dc','#4a3a30','#1f2a40','#d8d0c0']:['#2a2a2e','#4a4438','#6a6450','#1f2a40','#c8c0b0','#5a3a30'];
-  for(let i=0;i<n;i++){const t=rnd(),x=x0+(x1-x0)*t+(rnd()-0.5)*3,z=z0+(z1-z0)*t+(rnd()-0.5)*3,h=1.55+rnd()*0.25,c=cl[Math.floor(rnd()*cl.length)];
-    pCyl(mb,[x,gy,z],[x,gy+h*0.82,z],0.22,0.18,c,5,MID.cloth,false);pBlob(mb,x,gy+h*0.9,z,0.11,0.13,0.11,'#d8b090',()=>0.5,0,MID.skin);if(rnd()<0.6)pCyl(mb,[x,gy+h*0.97,z],[x,gy+h*1.04,z],0.16,0.14,rnd()<0.5?'#2a2a2e':'#e8e0c8',6,MID.cloth);}}
+function fwCrowd(mb,x0,z0,x1,z1,n,gy,rnd,y,opt){const cl=y<1914?['#2a2a2e','#3a3530','#e8e4dc','#4a3a30','#1f2a40','#d8d0c0']:['#2a2a2e','#4a4438','#6a6450','#1f2a40','#c8c0b0','#5a3a30'];
+  // 0.39: публика эпохи — дамы в светлых платьях под зонтиками, господа в котелках и канотье, дети; стоят не строем, а кучками
+  const dress=['#e8e0d0','#d8c8d8','#c8d0e0','#e6d2b8','#f0e8e0'],par=['#f0e8d8','#d8a8a8','#a8c0d8','#e8d890','#c8d8b8'];
+  for(let i=0;i<n;i++){const t=rnd(),x=x0+(x1-x0)*t+(rnd()-0.5)*3.5,z=z0+(z1-z0)*t+(rnd()-0.5)*3.5,lady=rnd()<0.4,kid=!lady&&rnd()<0.12,h=kid?1.05+rnd()*0.2:1.55+rnd()*0.25,c=lady?dress[Math.floor(rnd()*dress.length)]:cl[Math.floor(rnd()*cl.length)];
+    if(lady)pCyl(mb,[x,gy,z],[x,gy+h*0.82,z],0.3,0.16,c,6,MID.cloth,false);else pCyl(mb,[x,gy,z],[x,gy+h*0.82,z],0.2,0.18,c,5,MID.cloth,false);
+    pBlob(mb,x,gy+h*0.9,z,0.11,0.13,0.11,'#d8b090',()=>0.5,0,MID.skin);
+    if(lady){if(rnd()<0.55){pCyl(mb,[x,gy+h*1.0,z],[x,gy+h*1.3,z],0.03,0.02,'#3a3a3a',4,MID.metal);pCyl(mb,[x,gy+h*1.22,z],[x,gy+h*1.32,z],0.52,0.06,par[Math.floor(rnd()*par.length)],8,MID.cloth);}else pCyl(mb,[x,gy+h*0.98,z],[x,gy+h*1.04,z],0.3,0.26,rnd()<0.5?'#e8e0c8':'#d8c0b0',7,MID.cloth);}
+    else if(!kid&&rnd()<0.75){const top=rnd()<0.35;pCyl(mb,[x,gy+h*0.97,z],[x,gy+h*(top?1.12:1.03),z],top?0.13:0.16,top?0.13:0.14,top?'#1a1a1a':rnd()<0.5?'#2a2a2e':'#e8e0c8',6,MID.cloth);if(!top)pCyl(mb,[x,gy+h*0.97,z],[x,gy+h*0.985,z],0.24,0.24,'#e8e0c8',6,MID.cloth);}}
+  if(opt&&opt.flags){for(let i=0;i<n/12;i++){const t=rnd(),x=x0+(x1-x0)*t,z=z0+(z1-z0)*t;pCyl(mb,[x,gy+1.2,z],[x,gy+2.6,z],0.015,0.015,'#3a3a3a',4,MID.metal);pBox(mb,x+0.35,gy+2.2,z,0.35,0.35,0.02,opt.flags[i%opt.flags.length],MID.cloth);}}}
+// 0.39: духовой оркестр у трибун — эстрада, музыканты в мундирах с медью, капельмейстер (под него и звучит марш)
+function fwBand(mb,x,z,gy,a,rnd){const c=Math.cos(a),sn=Math.sin(a),P=(u,v)=>[x+u*c+v*sn,z-u*sn+v*c];pBox(mb,x,gy,z,7,0.5,4.5,'#8a6a4a',MID.wood,a);
+  for(let i=0;i<12;i++){const q=P((i%6-2.5)*1.1,Math.floor(i/6)*1.5-0.6),h=1.7;pCyl(mb,[q[0],gy+0.5,q[1]],[q[0],gy+0.5+h*0.82,q[1]],0.2,0.17,'#1f2a50',5,MID.cloth,false);pBlob(mb,q[0],gy+0.5+h*0.9,q[1],0.11,0.13,0.11,'#d8b090',()=>0.5,0,MID.skin);
+    pCyl(mb,[q[0],gy+0.5+h*0.97,q[1]],[q[0],gy+0.5+h*1.1,q[1]],0.14,0.14,'#1f2a50',6,MID.cloth);pBlob(mb,q[0]-sn*0.25,gy+0.5+h*0.7,q[1]-c*0.25,i%4===0?0.22:0.12,i%4===0?0.22:0.12,0.1,'#d9b24a',()=>0.5,0,MID.metal);}
+  const k=P(0,-2.2);pCyl(mb,[k[0],gy+0.5,k[1]],[k[0],gy+0.5+1.4,k[1]],0.2,0.17,'#1a1a1a',5,MID.cloth,false);pBlob(mb,k[0],gy+0.5+1.55,k[1],0.11,0.13,0.11,'#d8b090',()=>0.5,0,MID.skin);pCyl(mb,[k[0],gy+2.2,k[1]],[k[0],gy+2.1,k[1]],0.14,0.14,'#1a1a1a',6,MID.cloth);
+  for(const sd of [-1,1]){const q=P(sd*4,2.4);pCyl(mb,[q[0],gy,q[1]],[q[0],gy+6,q[1]],0.08,0.06,'#e8e4dc',5,MID.paint);for(let i=0;i<8;i++){const t=i/8;const p0=P(sd*4-sd*t*8,2.4+Math.sin(t*3.14)*0.5);}}}
+// 0.39: гирлянды флажков между шестами (треугольники вперемежку), автомобили публики за трибунами, фотографы со штативами
+function fwBunting(mb,x0,z0,x1,z1,gy,cols,nPole){nPole=nPole||6;for(let i=0;i<nPole;i++){const t=i/(nPole-1),x=x0+(x1-x0)*t,z=z0+(z1-z0)*t;pCyl(mb,[x,gy,z],[x,gy+5.5,z],0.07,0.05,'#e8e4dc',5,MID.paint);
+    if(i<nPole-1){const t2=(i+1)/(nPole-1),x2=x0+(x1-x0)*t2,z2=z0+(z1-z0)*t2,L=Math.hypot(x2-x,z2-z),nf=Math.floor(L/1.1);
+      for(let k=0;k<nf;k++){const u=(k+0.5)/nf,sag=Math.sin(u*Math.PI)*0.7,px=x+(x2-x)*u,pz=z+(z2-z)*u,py=gy+5.4-sag,dx=(x2-x)/L*0.4,dz=(z2-z)/L*0.4;
+        mb.poly([[px-dx,py,pz-dz],[px+dx,py,pz+dz],[px,py-0.55,pz]],[dz*2.5,0,-dx*2.5],hex2rgb(cols[k%cols.length]),MID.cloth);}}}}
+function fwCars(mb,x,z0,z1,gy,n,rnd,y){const cols=['#1a1a1a','#2a3a1e','#6a1a1a','#1f2a40','#4a3a2a','#8a7a1a','#2a2a2a'];for(let i=0;i<n;i++){const z=z0+(z1-z0)*(i+0.5)/n+(rnd()-0.5)*1.5,c=cols[Math.floor(rnd()*cols.length)],a=(rnd()-0.5)*0.15,old=y<1912;
+    pBox(mb,x,gy+0.55,z,1.75,0.5,0.75,c,MID.paint,a);pBox(mb,x-0.9,gy+1.05,z,0.85,0.35,0.7,c,MID.paint,a);/* кузов и капот */
+    if(old){pBox(mb,x+0.3,gy+1.05,z,0.9,0.5,0.65,'#3a3028',MID.cloth,a);pCyl(mb,[x+0.6,gy+1.55,z-0.7],[x+0.6,gy+2.4,z-0.7],0.03,0.03,'#2a2a2a',4,MID.metal);pBox(mb,x+0.3,gy+2.35,z,1.3,0.06,0.8,'#2a2420',MID.cloth,a);}
+    else{pBox(mb,x+0.4,gy+1.05,z,1.1,0.55,0.68,c,MID.paint,a);pBox(mb,x+0.4,gy+1.6,z,1.1,0.04,0.7,'#2a2420',MID.cloth,a);}
+    for(const [dx,dz] of [[-1.1,-0.75],[-1.1,0.75],[1.1,-0.75],[1.1,0.75]])pCyl(mb,[x+dx,gy+0.45,z+dz-0.08],[x+dx,gy+0.45,z+dz+0.08],0.42,0.42,'#2a2420',10,MID.tyre,true);
+    if(rnd()<0.5)pCyl(mb,[x-1.5,gy+1.0,z+0.4],[x-1.5,gy+1.0,z+0.6],0.14,0.14,'#d9b24a',8,MID.metal);}}
+function fwPhotogs(mb,x,z,gy,rnd,n){for(let i=0;i<(n||3);i++){const px=x+i*2.6+(rnd()-0.5),pz=z+(rnd()-0.5)*1.5;for(let k=0;k<3;k++){const a=k/3*6.283;pCyl(mb,[px+Math.cos(a)*0.5,gy,pz+Math.sin(a)*0.5],[px,gy+1.45,pz],0.02,0.02,'#5a4a3a',4,MID.wood);}
+    pBox(mb,px,gy+1.45,pz,0.18,0.22,0.16,'#2a2420',MID.wood);pBox(mb,px+0.25,gy+1.5,pz,0.08,0.1,0.1,'#8a7a5a',MID.metal);pBox(mb,px-0.15,gy+1.5,pz,0.2,0.3,0.3,'#1a1a1a',MID.cloth);
+    pCyl(mb,[px-0.6,gy,pz],[px-0.6,gy+1.4,pz],0.2,0.17,'#2a2a2e',5,MID.cloth,false);pBlob(mb,px-0.6,gy+1.55,pz,0.11,0.13,0.11,'#d8b090',()=>0.5,0,MID.skin);}}
+// 0.39: объявления эпохи — щиты у ограды с текстом (атлас надписей, как в автогонках) и рекламный шар над полем
+function fwLabel(key,w,h,draw){if(!FW.lab){const S=1024,cv=mkCanvas(S,S);FW.lab={cv,g:cv.getContext('2d'),x:0,y:0,h:0,S,slots:{}};}const L=FW.lab;if(L.slots[key])return L.slots[key];
+  if(L.x+w>L.S){L.x=0;L.y+=L.h+2;L.h=0;}if(L.y+h>L.S)return null;const s={u0:L.x/L.S,v0:L.y/L.S,u1:(L.x+w)/L.S,v1:(L.y+h)/L.S};const g=L.g;g.save();g.translate(L.x,L.y);g.beginPath();g.rect(0,0,w,h);g.clip();draw(g,w,h);g.restore();
+  L.x+=w+2;L.h=Math.max(L.h,h);L.slots[key]=s;FW.labDirty=true;return s;}
+function fwSignQuad(s,p0,p1,p3,n){if(!FW.signs)FW.signs=new MB(true);const mb=FW.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[s.u0,s.v1],[s.u1,s.v1],[s.u1,s.v0],[s.u0,s.v0]]);FW.signsDirty=true;}
+const FW_ADS=[['DUNLOP','ШИНЫ ДЛЯ АЭРОПЛАНОВ','#1f3f7a','#f1e6c8'],['GNOME','РОТАТИВНЫЕ МОТОРЫ · ПАРИЖ','#3a2a1c','#e8c56a'],['BOSCH','МАГНЕТО — ИСКРА ВЕРНАЯ','#b8322a','#f7ecd0'],['CHAUVIÈRE','ВИНТЫ «ИНТЕГРАЛЬ»','#2b5a3a','#f1e6c8'],
+  ['MICHELIN','ПРИЗ ЗА ТОЧНОСТЬ','#1a3a6a','#f4efe0'],['CONTINENTAL','ПРОРЕЗИНЕННОЕ ПОЛОТНО','#4a3a1a','#f1e6c8'],['ШАМПАНСКОЕ','ПОГРЕБА РЕЙМСА','#6a1a2a','#f4e6c8'],['ГРАММОФОНЪ','ПЛАСТИНКИ · НОВИНКИ','#2a2a2a','#e8e0c8'],['АВТО-МОТО-ВЕЛО','ВЫСТАВКА · ВХОД 1 ФР.','#3a5a2a','#f1e6c8']];
+function fwAdSign(mb,x,z,gy,a,ad,w,h){w=w||6;h=h||2.4;const c=Math.cos(a),sn=Math.sin(a),P=(u,v,q)=>[x+u*c+q*sn,gy+v,z-u*sn+q*c];
+  for(const sd of [-1,1]){const b=P(sd*(w/2-0.3),0,0);pBox(mb,b[0],gy,b[2],0.12,h+1.3,0.12,'#6a5a48',MID.wood);}pBox(mb,x,gy+1.0,z,w/2+0.15,h+0.3,0.08,'#e8e0cc',MID.wood,a);
+  const key='ad|'+ad[0]+'|'+ad[1],s=fwLabel(key,384,154,(g,W,H)=>{g.fillStyle=ad[2];g.fillRect(0,0,W,H);g.fillStyle='rgba(255,255,255,.1)';g.fillRect(0,0,W,H*0.35);g.strokeStyle=ad[3];g.lineWidth=5;g.strokeRect(9,9,W-18,H-18);
+    g.fillStyle=ad[3];g.textAlign='center';g.textBaseline='middle';let fs=64;g.font=`bold ${fs}px Georgia,"Times New Roman",serif`;while(g.measureText(ad[0]).width>W*0.86&&fs>20){fs-=3;g.font=`bold ${fs}px Georgia,"Times New Roman",serif`;}g.fillText(ad[0],W/2,H*0.4);
+    fs=24;g.font=`${fs}px Georgia,"Times New Roman",serif`;while(g.measureText(ad[1]).width>W*0.9&&fs>12){fs-=2;g.font=`${fs}px Georgia,"Times New Roman",serif`;}g.fillText(ad[1],W/2,H*0.78);});
+  if(s){const nrm=[sn,0,c];fwSignQuad(s,P(-w/2,1.15,0.1),P(w/2,1.15,0.1),P(-w/2,1.15+h,0.1),nrm);fwSignQuad(s,P(w/2,1.15,-0.1),P(-w/2,1.15,-0.1),P(w/2,1.15+h,-0.1),[-sn,0,-c]);/* с обратной стороны — тоже объявление, не зеркальное */}}
+function fwAdBalloon(mb,x,z,gy,ad,h){h=h||70;pBlob(mb,x,gy+h,z,4.2,4.6,4.2,'#d8c898',()=>0.5,1,MID.cloth);pCyl(mb,[x,gy+h-5.6,z],[x,gy+h-4.4,z],0.06,0.9,'#8a7a5a',6,MID.cloth);pCyl(mb,[x,gy,z],[x,gy+h-5.6,z],0.03,0.03,'#5a5048',4,MID.metal);
+  const s=fwLabel('bal|'+ad[0],320,120,(g,W,H)=>{g.fillStyle='#f4efe0';g.fillRect(0,0,W,H);g.fillStyle=ad[2];g.fillRect(0,0,W,10);g.fillRect(0,H-10,W,10);g.fillStyle=ad[2];g.textAlign='center';g.textBaseline='middle';let fs=58;g.font=`bold ${fs}px Georgia,serif`;while(g.measureText(ad[0]).width>W*0.9&&fs>20){fs-=3;g.font=`bold ${fs}px Georgia,serif`;}g.fillText(ad[0],W/2,H/2);});
+  if(s){for(const sd of [-1,1]){const n=[0,0,sd];fwSignQuad(s,[x-5,gy+h-12,z+sd*0.02],[x+5,gy+h-12,z+sd*0.02],[x-5,gy+h-8.5,z+sd*0.02],n);}pCyl(mb,[x-5,gy+h-8.4,z],[x-5,gy+h-4.4,z],0.015,0.015,'#5a5048',3,MID.metal);pCyl(mb,[x+5,gy+h-8.4,z],[x+5,gy+h-4.4,z],0.015,0.015,'#5a5048',3,MID.metal);}}
 // аэродром: ангары (по эпохе), трибуны и зрители, флаги, «колдунчик», вышка судей
 function fwAirfield(f,S,o){const mb=new MB(),y=S.y,rnd=mulberry32(hashStr('af'+f.x+','+f.z)),gy=f.y,hx=f.x-f.r*0.82,L=k=>txLay(k,1);
   const nH=y<1914?5:y<1919?6:3;for(let i=0;i<nH;i++){const z=f.z+(i-(nH-1)/2)*(y<1919?24:42);
@@ -221,7 +263,13 @@ function fwAirfield(f,S,o){const mb=new MB(),y=S.y,rnd=mulberry32(hashStr('af'+f
   const fl={fr:['#1f3e8c','#fff','#c8102e'],uk:['#1f3e8c','#c8102e','#fff'],de:['#141414','#fff','#c8102e'],us:['#c8102e','#fff','#1f3e8c'],it:['#1b7a3a','#fff','#c8102e'],ru:y<1918?['#fff','#1f3e8c','#c8102e']:['#c8102e','#c8102e','#c8102e']}[o.c||'fr']||['#fff','#fff','#fff'];
   for(let i=0;i<3;i++){const x=hx+12,z=f.z-40+i*40;pCyl(mb,[x,gy,z],[x,gy+14,z],0.12,0.08,'#e8e4dc',6,MID.paint);fl.forEach((c,k)=>pBox(mb,x,gy+12.6-k*0.55,z+1.2,0.03,0.55,1.1,c,MID.cloth));}
   {const x=f.x,z=f.z+f.r*0.9;pCyl(mb,[x,gy,z],[x,gy+7,z],0.1,0.08,'#e8e4dc',6,MID.paint);for(let k=0;k<4;k++)pCyl(mb,[x,gy+6.6,z+k*0.6],[x,gy+6.6,z+(k+1)*0.6],0.4-k*0.06,0.34-k*0.06,k%2?'#fff':'#e05a2a',10,MID.cloth);}
-  if(o.stands){const sx=f.x+f.r*0.62;for(let i=-2;i<=2;i++)mb.add(pStand(),X3(Math.PI,1,[sx,gy,f.z+i*17]));fwCrowd(mb,sx-7,f.z-130,sx-7,f.z+130,o.crowd||260,gy,rnd,y);
+  if(o.stands){const sx=f.x+f.r*0.62;for(let i=-2;i<=2;i++)mb.add(pStand(),X3(Math.PI,1,[sx,gy,f.z+i*17]));fwCrowd(mb,sx-7,f.z-130,sx-7,f.z+130,o.crowd||260,gy,rnd,y,{flags:fl});
+    // 0.39: антураж авиационной недели — толпа гуще у трибун, гирлянды флажков, щиты с объявлениями, оркестр, фотографы, автомобили публики, рекламный шар
+    fwCrowd(mb,sx-9,f.z-60,sx-9,f.z+60,Math.round((o.crowd||260)*0.5),gy,rnd,y,{flags:fl});fwBunting(mb,sx-6,f.z-135,sx-6,f.z+135,gy,[fl[0],fl[1],fl[2],'#e8c56a'],12);
+    const ads=FW_ADS.slice();if(o.ads)o.ads.forEach(a=>ads.unshift(a));const nAd=Math.min(ads.length,6);for(let i=0;i<nAd;i++){const z=f.z-150+i*(300/(nAd-1||1));fwAdSign(mb,sx-11,z,gy,-Math.PI/2,ads[(i+(hashStr('ad'+f.x)%ads.length))%ads.length]);}
+    fwBand(mb,sx-14,f.z+105,gy,-Math.PI/2,rnd);fwPhotogs(mb,f.x+120,f.z-20,gy,rnd,3);fwCars(mb,sx+16,f.z-120,f.z+120,gy,y<1909?6:14,rnd,y);
+    if(y>=1908)fwAdBalloon(mb,sx-40,f.z-200,gy,ads[(2+(hashStr('bal'+f.x)%ads.length))%ads.length],65+(hashStr('h'+f.x)%30));
+    FW.band={x:sx-14,z:f.z+105,y:gy};
     // вышка судей с табло
     const tx=sx-4,tz=f.z+60;mb.e[3]=L('wood_wall');pBox(mb,tx,gy,tz,2,9,2,'#8a6a4a',MID.wood);pBox(mb,tx,gy+9,tz,2.6,0.4,2.6,'#6a5040',MID.wood);mb.e[3]=0;pBox(mb,tx-2.7,gy+6,tz,0.1,3,3.5,'#1a1a1a',MID.paint);
     FW.col.push({x:sx,z:f.z,box:1,ux:0,uz:1,hu:45,hv:5,y0:gy-5,y1:gy+8,why:'врезался в трибуны'});}

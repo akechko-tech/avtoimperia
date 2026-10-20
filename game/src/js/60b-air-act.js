@@ -40,6 +40,8 @@ Object.assign(ACT,{
   aevFly:()=>{if(!AEV)return;const s=G,ev=airEvByKey(s,AEV.key),md=s.air.models.find(m=>m.id===+AEV.md);if(!ev||!md)return;closeSheet();if(typeof flyEvent==='function'&&flyEvent(ev,md,AEV.pid))return;airEvQuick(AEV.key,AEV.md,AEV.pid);},
   arecQuick:()=>{if(AEV)airRecQuick(AEV.rec,AEV.md,AEV.pid);},
   arecFly:()=>{if(!AEV)return;const s=G,md=s.air.models.find(m=>m.id===+AEV.md);if(!md)return;closeSheet();if(typeof flyRecord==='function'&&flyRecord(AEV.rec,md,AEV.pid))return;airRecQuick(AEV.rec,AEV.md,AEV.pid);},
+  airMotoShop:()=>{const s=G;if(lineOn(s,'moto')||s.mshopB)return;const c=Math.round((MSHOP.c*cpi(s)*1.4+1.5*capUnitCost(s))/100)*100;if(s.cash<c)return;s.cash-=c;s.plantVal+=c*0.7;s.cap=(s.cap||0)+1.5;if(!s.motoStart)s.motoStart=s.y;
+    const mo=Math.max(1,Math.round(MSHOP.mo*(DIF().build??1)));s.mshopB={left:mo,t:mo,lv:1};addLog(`Ставим мотоциклетную мастерскую при авиамастерской: ${money(c)}, ${mo} мес. Сбыт — через велосипедные лавки: откройте дилеров на «Рынке».`,'good');rerender();},
   airCarShop:()=>{const s=G;if(lineOn(s,'car')||s.carShopB)return;const c=Math.round((CARSHOP.c*cpi(s)+CARSHOP.cap*capUnitCost(s))/100)*100;if(s.cash<c)return;s.cash-=c;s.plantVal+=c*0.8;
     const mo=Math.max(2,Math.round(CARSHOP.mo*(DIF().build??1)));s.carShopB={left:mo,t:mo};addLog(`Ставим оборудование для автомобилей: ${money(c)}, ${mo} мес.`,'good');rerender();}
 });

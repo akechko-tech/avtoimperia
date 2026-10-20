@@ -6,4 +6,5 @@ if(window.MUSIC_MANIFEST){AU.tracks=window.MUSIC_MANIFEST;}
 loadImages();
 // 0.36: фото-материалы для 3D начинают грузиться сразу при запуске — живая заставка и первая гонка появляются быстрее
 try{texPrefetch();}catch(_){}
+try{slotsInit();}catch(_){}   // 0.39: слоты 1–12 из IndexedDB — в память (список и загрузка работают сразу)
 showMainMenu();

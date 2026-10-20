@@ -212,6 +212,9 @@ function flyAudioStart(){const c=AU.ctx;if(!c)return;try{enLoad();}catch(_){}con
   FLY.au={g,nz,bp,wg,rn,slots:new Map(),nid:900};g.gain.setTargetAtTime(1,c.currentTime,0.4);
   const tryW=()=>{if(!FL.on||!FLY.au)return;if(EN.ok){FLY.au.wk=enStart(g);}else setTimeout(tryW,300);};tryW();
   try{if(AU.mus)AU.mus.gain.setTargetAtTime(AU.on.music?0.05:0,c.currentTime,0.5);}catch(_){}
+  // 0.39: в полёте граммофон молчит — только ветер и мотор; у трибун играет духовой оркестр (марш слышен с земли и на бреющем, вдали стихает)
+  try{AU.flyHold=true;musicPlay();}catch(_){}
+  if(FW&&FW.band&&FL.mi.stands&&AU.on.music){try{const a=new Audio('music/own_avto.m4a');a.loop=true;a.volume=0;a.preload='auto';const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});FLY.band=a;}catch(_){}}
   if(FL.mi.stands){try{auSfx('cheer',0.8);}catch(_){}
     // 0.37: гул толпы у трибун — запись, по кругу; громкость — по расстоянию от камеры до трибун
     try{ambBuf('crowd_big').then(b=>{const A=FLY.au;if(!b||!A||A.crowd||!FL.on)return;const src=c.createBufferSource();src.buffer=b;src.loop=true;const cg=c.createGain();cg.gain.value=0;
@@ -221,6 +224,7 @@ function flyAudio(cam){const a=FLY.au,c=AU.ctx;if(!a||!c)return;const me=FL.me,t
     a.crowd.cg.gain.setTargetAtTime((AU.on.sfx?1:0)*(cam.cock?0.5:0.8)/(1+Math.pow(d/70,1.5)),t,0.4);a.crowd.lp.frequency.setTargetAtTime(clamp(16000/(1+d/90),900,12000),t,0.4);}
   const ov=me.ovs===2||me.creak?1:me.ovs===1?0.5:0,gst=FL.wx?clamp(FL.wx.ws/10,0,1)*(0.5+0.5*wxN(FL.wx.t*0.25,FL.wx.ph[0]))*(1+(me.turb||0)):0;
   if(a.rn)a.rn.gain.setTargetAtTime((FL.wx?FL.wx.rain*(cam.cock?0.2:0.1):0)*(AU.on.sfx?1:0),t,0.5);
+  if(FLY.band&&FW&&FW.band){const b=FW.band,d=Math.hypot(cam.eye[0]-b.x,cam.eye[1]-b.y,cam.eye[2]-b.z),v=clamp(0.85/(1+Math.pow(d/90,1.7)),0,0.85)*(AU.on.music?1:0)*(cam.cock?0.55:1)*(AU.on.vol!==undefined?AU.on.vol:1)*(1-0.5*clamp((me.eng.rpm||0)-0.3,0,1)*(cam.cock?1:0));try{FLY.band.volume=clamp(v,0,1);}catch(_){}}
   a.wg.gain.setTargetAtTime(((cam.cock?0.16:0.07)*w*w+ov*0.22+gst*0.06)*(AU.on.sfx?1:0),t,ov?0.08:0.25);a.bp.frequency.setTargetAtTime(ov?160+Math.random()*120:500+V*14,t,ov?0.05:0.3);
   if(!a.wk||EN.node!==a.wk)return;const msgs=[],set=[],pick=[me];
   const others=FL.mi.rivals.concat(FL.mi.foes||[]).filter(x=>!x.crash).map(x=>[Math.hypot(x.p[0]-me.p[0],x.p[1]-me.p[1],x.p[2]-me.p[2]),x]).sort((p,q)=>p[0]-q[0]).slice(0,2);others.forEach(o=>{if(o[0]<900)pick.push(o[1]);});
@@ -239,7 +243,7 @@ function flyEnd(title,text,cls){const b=document.getElementById('fEnd'),M=FL.mi;
   setTimeout(()=>{if(!FL.on||FL.mi!==M)return;b.innerHTML=`<h2 class="${cls||''}">${esc(title)}</h2><p>${text}</p><div class="btns"><button class="btn primary" id="fEndOk">Принять</button><button class="btn" id="fEndLook">Осмотреться</button></div>`;b.hidden=false;
     document.getElementById('fEndOk').onclick=()=>{try{if(M.apply)M.apply();}catch(e){console.error(e);}flyClose();save();render();};
     document.getElementById('fEndLook').onclick=()=>{b.hidden=true;setTimeout(()=>{if(FL.on&&FL.mi===M)b.hidden=false;},6000);};},M.res&&M.res.kind==='crash'||FL.me.crash?2600:900);}
-function flyClose(){if(!FL.on&&!FLY.el)return;FL.on=false;cancelAnimationFrame(FLY.raf);flyAudioStop();try{fwDispose();}catch(e){console.warn(e);}FL.me=null;FL.mi=null;
+function flyClose(){if(!FL.on&&!FLY.el)return;FL.on=false;cancelAnimationFrame(FLY.raf);flyAudioStop();if(FLY.band){try{FLY.band.pause();}catch(_){}FLY.band=null;}try{AU.flyHold=false;musicPlay();}catch(_){}try{fwDispose();}catch(e){console.warn(e);}FL.me=null;FL.mi=null;
   const cv=document.getElementById('rgl');if(cv&&FLY.cvParent){if(FLY.cvNext&&FLY.cvNext.parentNode===FLY.cvParent)FLY.cvParent.insertBefore(cv,FLY.cvNext);else FLY.cvParent.appendChild(cv);cv.hidden=true;}
   if(FLY.el)FLY.el.hidden=true;document.body.classList.remove('flying');}
 // 3D не вышло: результат — по расчёту, как без съёмки

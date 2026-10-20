@@ -110,6 +110,7 @@ function fwDrawCraft(P,it,glass){const gl=G3.gl,m=it.mesh;if(!glass){gl.uniformM
 function fwRender(cam,items,dt){const gl=G3.gl;if(!gl||G3.lost||gl.isContextLost())throw new Error('lost');FWR.t+=dt;FW.frame=FW.frame||0;
   const cv=G3.cv,W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;const Q=gq(),dpr=Math.min(Q.dpr,window.devicePixelRatio||1)*(FWR.scale||1),bw=Math.max(1,Math.round(W*dpr)),bh=Math.max(1,Math.round(H*dpr));
   if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;}
+  if(FW.signsDirty){if(FW.signM)g3Free(FW.signM);FW.signM=g3Mesh(FW.signs);FW.signsDirty=false;}if(FW.labDirty&&FW.lab){if(FW.texLab)gl.deleteTexture(FW.texLab);FW.texLab=g3Tex(FW.lab.cv,{cs:true,ct:true});FW.labDirty=false;}
   const E=FWR.E,eye=cam.eye;FWR.eye=eye;texBind(FWR.sky);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,G3.dum2);gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,G3.dum2);gl.activeTexture(gl.TEXTURE0);
   const asp=bw/bh,vf=cam.fov,agl=eye[1]-Math.max(0,fwHgt(FW.S,eye[0],eye[2]));
   const V=FWR.V||(FWR.V=m4()),Pf=FWR.Pf||(FWR.Pf=m4()),Pn=FWR.Pn||(FWR.Pn=m4()),VPf=FWR.VPf||(FWR.VPf=m4()),VPn=FWR.VPn||(FWR.VPn=m4());
@@ -139,6 +140,8 @@ function fwRender(cam,items,dt){const gl=G3.gl;if(!gl||G3.lost||gl.isContextLost
     gl.uniformMatrix4fv(P.u.u_model,false,m4());
     for(const o of FW.objs){const d=dEye(o);if(!o.all&&(far?d+o.r<nearF*0.9:d-o.r>lim))continue;if(!o.all&&!inFrustum(fr,o.c,o.r))continue;g3Draw(o.m);}
     for(const [d,T] of trees){if(!far&&d>lim+400)continue;g3Draw(T.m);}
+    // 0.39: щиты с объявлениями и ленты рекламного шара — текст из атласа надписей
+    if(FW.signM&&FW.texLab){const Pt=fwUse('tex',bw,bh);gl.uniformMatrix4fv(Pt.u.u_model,false,m4());gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,FW.texLab);gl.uniform1i(Pt.u.u_tex,1);gl.activeTexture(gl.TEXTURE0);g3Draw(FW.signM);}
     // земля: подробная карта — рядом, грубая — вдали
     P=fwUse('terr',bw,bh);gl.uniform4fv(P.u.u_tl,FW.lays.tl);gl.uniform4fv(P.u.u_tl2,FW.lays.tl2);gl.uniform4fv(P.u.u_tp,FW.lays.tp);gl.uniformMatrix4fv(P.u.u_model,false,m4());
     for(const grp of [true,false]){const Mp=grp?FW.mapN:FW.mapF;gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,Mp.texA);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,Mp.texB);gl.activeTexture(gl.TEXTURE0);gl.uniform4fv(P.u.u_cm,Mp.u);
@@ -182,5 +185,5 @@ function fwPrepare(mood){const S=FW.S,gl=G3.gl;
   FW.Lmax=gfxQ()==='eco'?7:FW_LMAX;FW.nodes.set(fwKey(0,0,0),fwNodeBuild(0,0,0));
   fwObjects(FW.objOpt||{});FW.clouds=fwClouds(mood);FW.parts=[];FW.cI=g3Inst(1400,2,G3.quadC);FW.pI=g3Inst(700,2,G3.quadC);FWR.E=fwEnv(mood,FW.sunAz||2.2);}
 function fwDispose(){const W=FW;if(!W)return;const gl=G3.gl;if(gl&&!gl.isContextLost()){for(const n of W.nodes.values())g3Free(n.m);for(const t of W.tiles.values())g3Free(t.m);W.objs.forEach(o=>g3Free(o.m));
-    if(W.water)g3Free(W.water);[W.mapN,W.mapF].forEach(M=>{if(M&&M.texA){gl.deleteTexture(M.texA);gl.deleteTexture(M.texB);}});g3InstFree(W.cI);g3InstFree(W.pI);}
+    if(W.water)g3Free(W.water);if(W.signM)g3Free(W.signM);if(W.texLab)gl.deleteTexture(W.texLab);[W.mapN,W.mapF].forEach(M=>{if(M&&M.texA){gl.deleteTexture(M.texA);gl.deleteTexture(M.texB);}});g3InstFree(W.cI);g3InstFree(W.pI);}
   FW=null;}

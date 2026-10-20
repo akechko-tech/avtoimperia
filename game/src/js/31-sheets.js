@@ -213,9 +213,13 @@ function openMenuSheet(){
 }
 function slotLabel(k){const i=slotInfo(k);return i?`${esc(i.company)} · ${MONTHS[i.m]} ${i.y}${i.over?' · окончена':''}<small>${COUNTRIES[i.country]?COUNTRIES[i.country].name:''} · ${money(i.cash)}${i.at?' · '+new Date(i.at).toLocaleDateString('ru-RU'):''}</small>`:'Пусто<small>—</small>';}
 function openSlots(mode){
-  const rows=SLOTS.filter(k=>mode==='load'||k!=='auto').map(k=>{const i=slotInfo(k);return `<button class="chip" style="width:100%;margin-top:6px" data-act="${mode==='save'?'saveSlot':'loadSlot'}" data-k="${k}" ${mode==='load'&&!i?'disabled':''}><b>${k==='auto'?'Автосохранение':'Слот '+k}</b> — ${slotLabel(k)}</button>`;}).join('');
+  const ico=i=>i?(i.dir==='air'?'✈ ':i.dir==='moto'?'🏍 ':'🚗 '):'';
+  const rows=SLOTS.filter(k=>mode==='load'||k!=='auto').map(k=>{const i=slotInfo(k);return `<div class="row" style="gap:6px;margin-top:6px"><button class="chip" style="flex:1" data-act="${mode==='save'?'saveSlot':'loadSlot'}" data-k="${k}" ${mode==='load'&&!i?'disabled':''}><b>${k==='auto'?'Автосохранение':'Слот '+k}</b> — ${ico(i)}${slotLabel(k)}</button>${i&&k!=='auto'?`<button class="iconbtn sm" data-act="delSlot" data-k="${k}" aria-label="Стереть слот ${k}">×</button>`:''}</div>`;}).join('');
   openSheet(`<div class="row"><h2>${mode==='save'?'Сохранить игру':'Загрузить игру'}</h2>${G?X:'<button class="iconbtn" data-act="toMenu" aria-label="Назад">×</button>'}</div><div style="margin-top:8px">${rows}</div>
-    ${mode==='save'?'<p class="small muted" style="margin-top:10px">Автосохранение пишется каждый месяц само. Слоты 1–3 — ваши точки возврата.</p>':''}`);
+    ${mode==='save'?`<p class="small muted" style="margin-top:10px">Автосохранение пишется каждый месяц само. Слоты 1–12 — ваши точки возврата (0.39: было три).</p>
+      <div class="hr"></div><div class="label">Перенос на другое устройство</div><p class="small muted" style="margin-top:4px">Код сохранения — вся игра одной строкой: скопируйте и перешлите себе (почтой, в мессенджер), на другом устройстве — «Загрузить игру» → «Вставить код».</p>
+      <div class="btns" style="margin-top:6px"><button class="btn sm" data-act="saveCopy">Скопировать код сохранения</button></div><textarea id="saveCodeOut" class="small" style="width:100%;margin-top:6px;height:52px;display:none" readonly></textarea>`
+    :`<div class="hr"></div><div class="label">Из кода сохранения</div><textarea id="saveCodeIn" class="small" style="width:100%;margin-top:6px;height:52px" placeholder="Вставьте код AVTZ:…"></textarea><div class="btns" style="margin-top:6px"><button class="btn sm" data-act="loadCode">Загрузить из кода</button></div>`}`);
 }
 function openSettings(){
   openSheet(`<div class="row"><h2>Настройки</h2>${X}</div>
