@@ -1,27 +1,10 @@
-== job anthem
-anthem: download https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2
-anthem: soundfont /home/runner/work/_temp/anthem/MuseScore_General.sf2 MuseScore General (S. Christian Collins, MIT)
-anthem: avto march 164.8 s 2306 KB
-anthem: reel rag 94.7 s 1309 KB
-anthem: valse waltz 125.6 s 1743 KB
-anthem: tango tango 111.8 s 1554 KB
-anthem: jazz jazz 102.4 s 1423 KB
-anthem: cake cake 90.9 s 1256 KB
-anthem: fox fox 137.2 s 1906 KB
-anthem: charl charl 86.4 s 1203 KB
-anthem: aero march 159.5 s 2230 KB
-anthem: pole waltz 124.0 s 1721 KB
-anthem: cue fanfare 2.7 s 52 KB
-anthem: cue win 2.8 s 53 KB
-anthem: cue duel_proud_l 4.2 s 71 KB
-anthem: cue duel_proud_w 5.3 s 83 KB
-anthem: cue duel_biz_l 4.1 s 68 KB
-anthem: cue duel_biz_w 5.1 s 81 KB
-anthem: cue duel_aristo_l 4.6 s 75 KB
-anthem: cue duel_aristo_w 5.8 s 88 KB
-anthem: cue duel_sharp_l 4.1 s 69 KB
-anthem: cue duel_sharp_w 5.1 s 81 KB
-== job anthem took 116 s
+== job voice
+voice 20 lines 19 s
+voice 40 lines 29 s
+voice 60 lines 41 s
+voice 80 lines 52 s
+voice done 88 new lines; total 4333
+== job voice took 62 s
 == job publish
 publish: голос и музыка уходят в релизы отдельным шагом workflow (tools/media/publish.py)
 == job publish took 0 s
