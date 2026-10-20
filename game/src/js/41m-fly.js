@@ -189,14 +189,18 @@ function flyFx(dt){const me=FL.me,E=FW.S,M=FL.mi;
   if(me.gnd&&me.V>6){const s=flSurf(me.p[0],me.p[2]);if(Math.random()<dt*me.V*0.8){const back=[me.p[0]-me.fw[0]*3,me.p[1]-1.2,me.p[2]-me.fw[2]*3];
     if(s.k==='water')fwPart(back[0]+(Math.random()-0.5)*2,0.3,back[2],(Math.random()-0.5)*3,2+Math.random()*2,(Math.random()-0.5)*3,0.8,4,1.2,[220,228,234],0.55,6);
     else fwPart(back[0]+(Math.random()-0.5)*2,back[1],back[2],(Math.random()-0.5),0.6,(Math.random()-0.5),0.8,5,1.6,[150,138,112],0.28);}}
+  // 0.39: выхлоп мотора — сизые клубки у патрубков, чаще на полном газу; ротативный мотор дымит касторкой сильнее
+  if(me.eng.run&&me.eng.rpm>0.15&&FL.meMesh&&FL.meMesh.props){const rot=me.P&&me.P.e&&me.P.e.cool==='r';if(Math.random()<dt*(4+me.eng.rpm*(rot?26:16))){const pp=FL.meMesh.props[Math.floor(Math.random()*FL.meMesh.props.length)],e=pp.eng||[pp.x,pp.y,pp.z-0.5],sd=Math.random()<0.5?-1:1;
+    const ex=e[0]+sd*0.45,ey=e[1]-0.25,ez=e[2]-0.2,x=me.p[0]+me.rt[0]*ex+me.up[0]*ey+me.fw[0]*ez,y=me.p[1]+me.rt[1]*ex+me.up[1]*ey+me.fw[1]*ez,z=me.p[2]+me.rt[2]*ex+me.up[2]*ey+me.fw[2]*ez;
+    fwPart(x,y,z,me.v[0]*0.9+(Math.random()-0.5)*0.6-me.rt[0]*sd*0.4,me.v[1]*0.9+0.3,me.v[2]*0.9+(Math.random()-0.5)*0.6-me.rt[2]*sd*0.4,0.16+me.eng.rpm*0.1,1.4,0.7+Math.random()*0.4,rot?[150,150,158]:[128,134,146],2.55);}}
   if(me.dmg.eng>0.3||me.dmg.fire>0){if(Math.random()<dt*8)fwPart(me.p[0]+me.fw[0]*2,me.p[1],me.p[2]+me.fw[2]*2,0,1,0,1.0,4,3,me.dmg.fire>0?[40,36,34]:[110,106,102],0.4);}
   // 0.39: обшивка рвётся — клочья полотна летят с концов крыла назад (отзыв: «обшивку сорвало — где, не вижу»)
   if(me.dmg.wing>0.15&&(me.ovs===2||me.creak||me.dmg.wing>0.6)&&Math.random()<dt*(6+me.dmg.wing*30)){const sd=Math.random()<0.5?-1:1,sp=FL.meMesh?FL.meMesh.span*0.5*(0.5+Math.random()*0.5):4;
     const x=me.p[0]+me.rt[0]*sp*sd,y=me.p[1]+me.rt[1]*sp*sd+0.3,z=me.p[2]+me.rt[2]*sp*sd;fwPart(x,y,z,me.v[0]*0.35+(Math.random()-0.5)*4,me.v[1]*0.35+1+Math.random()*2,me.v[2]*0.35+(Math.random()-0.5)*4,0.45,2.2,0.3,[236,228,206],0.95);}}
 function flyItems(cam){const me=FL.me,M=FL.mi,L=[],mm=FLY.mM||(FLY.mM=new Float32Array(16));m4basis(mm,me.rt,me.up,me.fw,me.p);
-  L.push({mesh:FL.meMesh,M:mm,p:me.p,rpm:me.eng.run?me.eng.rpm:me.eng.rpm*0.5,pa:FL.pa,me:1,cock:cam.cock});
+  L.push({mesh:FL.meMesh,M:mm,p:me.p,rpm:me.eng.run?me.eng.rpm:me.eng.rpm*0.5,pa:FL.pa,me:1,cock:cam.cock,ctl:flyCtlVis(me),wa:me.wa||0});
   M.rivals.forEach((k,i)=>{const ax=flKinAxes(k),m=k.Mx||(k.Mx=new Float32Array(16));m4basis(m,ax.rt,ax.up,ax.fw,k.p);L.push({mesh:k.mesh,M:m,p:k.p,rpm:0.95,pa:FL.pa*1.07+i});});
-  (M.foes||[]).forEach((a,i)=>{if(!a.mesh)return;const m=a.Mx||(a.Mx=new Float32Array(16));m4basis(m,a.rt,a.up,a.fw,a.p);L.push({mesh:a.mesh,M:m,p:a.p,rpm:a.crash?0:a.eng.run?a.eng.rpm:0.2,pa:FL.pa*0.93+i});});
+  (M.foes||[]).forEach((a,i)=>{if(!a.mesh)return;const m=a.Mx||(a.Mx=new Float32Array(16));m4basis(m,a.rt,a.up,a.fw,a.p);L.push({mesh:a.mesh,M:m,p:a.p,rpm:a.crash?0:a.eng.run?a.eng.rpm:0.2,pa:FL.pa*0.93+i,ctl:flyCtlVis(a),wa:a.wa||0});});
   if(M.ball&&M.ballMesh&&!(M.ball.burn&&FL.t-M.ball.burn>20)){const q=M.ball,m=M.bM||(M.bM=new Float32Array(16));m4basis(m,[1,0,0],[0,1,0],[0,0,1],[q.x,q.y,q.z]);L.push({mesh:M.ballMesh.mesh,M:m,p:[q.x,q.y,q.z],rpm:0,pa:0});}
   (FW.parked||[]).forEach(q=>{if(!q.mesh){q.mesh=air3dMesh(q.md,FW.y,q.c);const g=q.mesh.gear,gp=g.gp,fw=[Math.sin(q.a)*Math.cos(gp),Math.sin(gp),Math.cos(q.a)*Math.cos(gp)],rt=[Math.cos(q.a),0,-Math.sin(q.a)],up=v3x(fw,rt);
       const h=Math.max(g.gearY*Math.cos(gp)-g.wheelZ*Math.sin(gp),g.skidY*Math.cos(gp)-g.skidZ*Math.sin(gp));q.p=[q.x,q.y+h,q.z];q.Mx=new Float32Array(16);m4basis(q.Mx,rt,up,fw,q.p);}
@@ -257,6 +261,10 @@ function flyAimMark(){const el=document.getElementById('fAim'),M=FL.mi,me=FL.me;
   const cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15],x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
   if(!(cw>0&&Math.abs(x)<0.95&&Math.abs(y)<0.95)){el.hidden=true;return;}const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight;el.hidden=false;el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';
   const tg=M.tg;if(tg){const d=Math.hypot(p[0]-tg.x,p[2]-tg.z);el.classList.toggle('on',d<12);el.querySelector('b').textContent=d<12?'в круг':Math.round(d)+' м';}}
+/* ---------- 0.39: видимые отклонения рулей: ручка плюс то, что делает сам аэроплан (автопилот, выравнивание, срыв) ---------- */
+function flyCtlVis(a){const c=a.ctl||{},w=a.w||[0,0,0];const v=a.vis||(a.vis={sx:0,sy:0,rd:0});
+  const tx=clamp((c.sx||0)+w[0]*0.5,-1,1),ty=clamp((c.sy||0)*0.9+w[1]*0.9+(a.ctl&&a.ctl.aCmd!=null?(a.ctl.aCmd-(a.al||0))*3:0),-1,1),tr=clamp((c.rd||0)+w[2]*1.5+(a.be||0)*2.5,-1,1);
+  v.sx+=(tx-v.sx)*0.35;v.sy+=(ty-v.sy)*0.35;v.rd+=(tr-v.rd)*0.35;return v;}
 /* ---------- 0.39: сводка погоды в полёте и гром ---------- */
 function wxLine(me){const wx=FL.wx;if(!wx)return '';const W=flW(),agl=me.p[1]-Math.max(0,W.H(me.p[0],me.p[2])),wd=me.wd||wx.w0,ws=Math.hypot(wd[0],wd[2]),dirs=['С','СВ','В','ЮВ','Ю','ЮЗ','З','СЗ'];
   const from=dirs[Math.round(((Math.atan2(wd[0],wd[2])+Math.PI)%6.2832)/(Math.PI/4))%8];const L=[];

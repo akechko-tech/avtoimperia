@@ -89,6 +89,7 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   // ---- движение
   ac.v[0]+=a[0]*dt;ac.v[1]+=a[1]*dt;ac.v[2]+=a[2]*dt;
   const dx=ac.v[0]*dt,dz=ac.v[2]*dt;ac.p[0]+=dx;ac.p[1]+=ac.v[1]*dt;ac.p[2]+=dz;ac.dist+=Math.hypot(dx,dz);ac.air+=dt;
+  if(ac.wa!==undefined&&ac.wa>0)ac.wa*=Math.exp(-dt*0.4);/* 0.39: в воздухе колёса докручиваются и встают */
   // перегрузка: за прочностью — трещат лонжероны, за полуторной — крыло ломается
   const g=ac.st.g;if(ac.n>g*1.5||ac.n<-g*0.9)flCrash(ac,'крыло сложилось от перегрузки');else if(ac.n>g){ac.dmg.wing=Math.min(1,ac.dmg.wing+(ac.n-g)*dt*0.12);ac.creak=1;}
   {const vm=ac.st.v/3.6;ac.ovs=V>vm*1.55?2:V>vm*1.3?1:0;if(ac.ovs===2){ac.dmg.wing=Math.min(1,ac.dmg.wing+dt*0.15);ac.creak=1;if(ac.dmg.wing>=1)flCrash(ac,'флаттер — обшивку сорвало в пикировании');}}
@@ -160,6 +161,7 @@ function flSetGnd(ac,hdg,th,gy){const s=Math.sin(hdg),c=Math.cos(hdg),ct=Math.co
 function flGround(ac,dt,F,Lf,ld,Df,T,pw,qd,V){const c=ac.ctl,m=ac.m,s=flSurf(ac.p[0],ac.p[2]),water=s.k==='water';
   if(water&&!ac.sea){flCrash(ac,'аэроплан в воде');return;}
   const hd=flHdg(ac),fh=[Math.sin(hd),0,Math.cos(hd)],vg=d3(ac.v,fh),lat=[ac.v[0]-fh[0]*vg,0,ac.v[2]-fh[2]*vg];
+  if(!water)ac.wa=((ac.wa||0)+vg*dt/Math.max(0.2,ac.gr.wheelR||0.35))%6.2832;/* 0.39: колёса крутятся по путевой скорости */
   const N=Math.max(0,m*FLG-Lf*ld[1]);
   // сопротивление качению: трава, пашня, вода (горб у глиссирования), полозья
   let mu=ac.rail?0.35:s.k==='field'?0.11:0.07;if(ac.gr.gp>0.05)mu+=0.06*clamp(ac.th/ac.gr.gp,0,1)*(1+0.8*clamp(c.sy,0,1));/* костыль на хвосте пашет землю, ручка на себя — глубже */

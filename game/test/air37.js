@@ -3,7 +3,7 @@ require('./harness.js')(`{
 let bad=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)bad++;};
 /* ---------- фильмы ---------- */
 const heroes=Object.keys(PIONEERS).filter(k=>PIONEERS[k].air);
-ok(heroes.length===11,'героев-авиаторов: '+heroes.length);
+ok(heroes.length===13,'героев-авиаторов: '+heroes.length+' (0.39: + Гаккель и Григорович)');
 heroes.forEach(k=>ok(Array.isArray(SAGA[k])&&SAGA[k].length>=5,'фильм у героя '+k+': глав '+(SAGA[k]||[]).length));
 ok(Array.isArray(SAGA.air)&&SAGA.air.length>=8,'свой авиатор: глав '+(SAGA.air||[]).length);
 const okFx=new Set(['cash','afame','b','abroad','rep']);let errs=[];

@@ -283,6 +283,8 @@ function musicPlay(force){
   if(tr.synth){if(AU.el&&!AU.el.paused)AU.el.pause();AU.real=false;if(force||!AU.synth||AU.synth.title!==tr.title){AU.synth=tr;AU.step=0;tr.end=0;AU.mel=0;}AU.nowPlaying=null;musUI();return;}
   AU.synth=null;AU.real=true;
   if(!AU.el){AU.el=new Audio();AU.el.preload='auto';AU.el.addEventListener('ended',()=>musNext(1));
+    // 0.39: записи сменяются мягко — в конце громкость сходит на нет за три секунды, в начале поднимается за две (вместо обрыва и щелчка)
+    AU.el.addEventListener('timeupdate',()=>{const el=AU.el;if(!el||AU.ducked||!isFinite(el.duration)||el.duration<12)return;const base=R?0.2:0.5,t=el.currentTime,left=el.duration-t;const k=Math.min(1,t/2)*Math.min(1,Math.max(0,left-0.3)/3);const v=base*(0.15+0.85*k);if(Math.abs(el.volume-v)>0.01)try{el.volume=v;}catch(_){}});
     AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
     AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
   if(!AU.ducked)AU.el.volume=R?0.2:0.5;

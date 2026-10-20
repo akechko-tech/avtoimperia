@@ -104,6 +104,15 @@ function fwPuffDraw(L,bw,bh,cam,I){if(!L.length)return;const gl=G3.gl,e=FWR.eye,
   gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);g3InstDraw(I,n);gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}
 /* ---------- аэропланы: корпус, винт (лопасти или размытый диск), летчик (в кабине — не рисуем) ---------- */
 function fwDrawCraft(P,it,glass){const gl=G3.gl,m=it.mesh;if(!glass){gl.uniformMatrix4fv(P.u.u_model,false,it.M);g3Draw(m.op);if(!it.cock&&m.pil)g3Draw(m.pil);
+    // 0.39: рули ходят за ручкой, колёса крутятся
+    {const tmp=FWR.tmp2||(FWR.tmp2=m4()),C=it.ctl||{sx:0,sy:0,rd:0};
+      if(m.ail){const h=m.ailH;for(const sd of [-1,1]){/* пластина построена на своём месте по размаху (x>0); левый элерон — зеркально, отклонение противоположное */
+          const ang=sd*C.sx*0.5,c=Math.cos(ang),s2=Math.sin(ang),L=FWR.tmpL||(FWR.tmpL=m4());L.fill(0);L[0]=sd;L[5]=c;L[6]=s2;L[9]=-s2;L[10]=c;L[12]=0;L[13]=h[1];L[14]=h[2];L[15]=1;m4mul(tmp,it.M,L);
+        gl.uniformMatrix4fv(P.u.u_model,false,tmp);g3Draw(m.ail);}}
+      if(m.elev){air3dHingeMat(tmp,it.M,m.elevH,'x',C.sy*0.5,1);gl.uniformMatrix4fv(P.u.u_model,false,tmp);g3Draw(m.elev);}
+      if(m.rud){air3dHingeMat(tmp,it.M,m.rudH,'y',-(C.rd||0)*0.55,1);gl.uniformMatrix4fv(P.u.u_model,false,tmp);g3Draw(m.rud);}
+      if(m.whl){const wa=it.wa||0;for(const w of m.wheels){air3dHingeMat(tmp,it.M,[w.x,w.y,w.z],'x',wa,w.s);gl.uniformMatrix4fv(P.u.u_model,false,tmp);g3Draw(m.whl);}}
+      gl.uniformMatrix4fv(P.u.u_model,false,it.M);}
     const tmp=FWR.tmp||(FWR.tmp=m4());m.props.forEach((pp,k)=>{const sp=it.rpm||0;if(sp>0.55)return;air3dPropMat(tmp,it.M,pp,(it.pa||0)*(pp.dir||1)+k);gl.uniformMatrix4fv(P.u.u_model,false,tmp);g3Draw(m.pr);});return;}
   if((it.rpm||0)<=0.3||!m.disc)return;const tmp=FWR.tmp||(FWR.tmp=m4());m.props.forEach(pp=>{air3dPropMat(tmp,it.M,pp,0);gl.uniformMatrix4fv(P.u.u_model,false,tmp);g3Draw(m.disc);});}
 /* ---------- кадр ---------- */

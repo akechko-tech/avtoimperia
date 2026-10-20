@@ -50,7 +50,9 @@ function air3dMesh(md,y,c){const key=air3dKey(md,y,c);if(AIR3D_CACHE.has(key))re
       const cc=hex2rgb('#c8102e');for(let k=0;k<10;k+=2){mb.poly([Q(0,0,0.006),pts[(k+9)%10],pts[k],pts[k+1]],n,cc,MID.paint);}return;}
     mk.ring.forEach((cc,i)=>{const rr=r*(1-i*0.33),pts=[];for(let k=0;k<18;k++){const a=k/18*6.2832;pts.push(Q(Math.cos(a)*rr,Math.sin(a)*rr,0.004*(i+1)));}mb.poly(pts,n,hex2rgb(cc),MID.paint);});};
   // крыло: профиль с изгибом и толщиной, нервюры полосками; x0..x1 — по размаху от оси, z — передняя кромка, yy — высота, dih — поперечное V
-  const wing=(x0,x1,z,yy,cc,th,dih,mark)=>{const S=8,tt=th||Math.max(0.06,cc*0.07),dh=dih||0;
+  // 0.39: рули и колёса — отдельными деталями, чтобы двигались (элероны, руль высоты, руль направления — за ручкой; колёса крутятся на разбеге)
+  const WL=[],RUD={},WH=[];let inTail=false;
+  const wing=(x0,x1,z,yy,cc,th,dih,mark)=>{const S=8,tt=th||Math.max(0.06,cc*0.07),dh=dih||0;WL.push({x0,x1,z,yy,cc,tt,dh,tail:inTail,col:c0,colD});
     const prof=k=>[[z,0],[z-cc*0.12,tt*0.85],[z-cc*0.35,tt],[z-cc*0.7,tt*0.55],[z-cc,0.01]][k];
     for(const sd of [-1,1]){for(let i=0;i<S;i++){const u0=i/S,u1=(i+1)/S,X0=sd*(x0+(x1-x0)*u0),X1=sd*(x0+(x1-x0)*u1),Y0=yy+Math.abs(X0)*dh,Y1=yy+Math.abs(X1)*dh,t1=i===S-1?0.82:1;
       for(let k=0;k<4;k++){const a=prof(k),q=prof(k+1);mb.poly([[X0,Y0+a[1],a[0]],[X1,Y1+a[1]*t1,a[0]],[X1,Y1+q[1]*t1,q[0]],[X0,Y0+q[1],q[0]]],[0,1,0.18*(2-k)],k%2?colU:c0,skinM);}
@@ -60,7 +62,7 @@ function air3dMesh(md,y,c){const key=air3dKey(md,y,c);if(AIR3D_CACHE.has(key))re
     if(mark&&marked){const xm=x1*0.74,zm=z-cc*0.47,rr=Math.min(cc*0.38,0.8);for(const sd of [-1,1]){const yb=yy+Math.abs(xm)*dh;disk(sd*xm,yb+tt*0.75,zm,rr,[0,1,0]);disk(sd*xm,yb-0.004,zm,rr,[0,-1,0]);}}};
   const strut=(a,q,w)=>mb.rod(a,q,w||0.07,hex2rgb(wood),MID.wood),wire=(a,q)=>mb.rod(a,q,0.014,hex2rgb('#8f9296'),MID.metal);
   const pilot=(x,yy,z)=>{pBlob(pm,x,yy+0.17,z,0.13,0.15,0.14,leather,R5,lod,MID.leather);pBlob(pm,x,yy+0.1,z+0.12,0.09,0.05,0.04,'#3a3a3a',R5,0,MID.glass);pCyl(pm,[x,yy-0.15,z],[x,yy+0.03,z],0.21,0.17,'#5b4632',8,MID.cloth);};
-  const wheel=(x,yy,z,r)=>{pCyl(mb,[x-0.08,yy,z],[x+0.08,yy,z],r,r,tyre,16,MID.tyre);pCyl(mb,[x-0.09,yy,z],[x+0.09,yy,z],r*0.32,r*0.32,'#6a6c70',10,MID.metal);};
+  const wheel=(x,yy,z,r)=>{WH.push({x,y:yy,z,r});};
   // мотор: ротативный (капот-кольцо и цилиндры), звезда, «Анзани»-веер, рядный (короб, патрубки)
   const engine=(x,yy,z,inl)=>{const e=P.e,R=clamp(0.28+Math.sqrt(e.hp)/40,0.32,0.75);
     if(e.cool==='r'){pCyl(mb,[x,yy,z-0.05],[x,yy,z+0.38],R*1.05,R*0.97,metal,18,MID.metal,false);pCyl(mb,[x,yy,z+0.3],[x,yy,z+0.4],R*0.6,R*0.45,'#3a3c40',14,MID.metal);
@@ -70,8 +72,9 @@ function air3dMesh(md,y,c){const key=air3dKey(md,y,c);if(AIR3D_CACHE.has(key))re
     else{pBox(mb,x,yy-R*0.55,z-0.25,R*0.6,R*1.1,0.62,inl?'#6b6f73':col,inl?MID.metal:skinM);if(!inl)pBox(mb,x,yy-R*0.5,z+0.39,R*0.55,R*1.0,0.03,'#2b2d30',MID.metal);
       for(let k=0;k<3;k++)pCyl(mb,[x+R*0.55,yy+0.12,z+0.2-k*0.3],[x+R*0.78,yy+0.45,z+0.2-k*0.3],0.045,0.04,'#3a3a3a',6,MID.metal);}};
   // хвост: стабилизатор с рулём высоты, киль с рулём направления (в войну — полосы цветов страны или крест)
-  const tail=(z,yy,sc)=>{const s2=sc||1,hs=clamp(b*0.17,1.2,4.2)*s2,hc=clamp(ch*0.7,0.7,2.2)*s2;wing(0.05,hs,z+hc*0.6,yy,hc,0.04,0);
+  const tail=(z,yy,sc)=>{const s2=sc||1,hs=clamp(b*0.17,1.2,4.2)*s2,hc=clamp(ch*0.7,0.7,2.2)*s2;inTail=true;wing(0.05,hs,z+hc*0.6,yy,hc,0.04,0);inTail=false;
     const fh2=clamp(hc*1.1,0.8,2.6)*s2,rd=mk.rud&&marked,fin=[[0,yy,z+hc*0.4],[0,yy+fh2*0.75,z-hc*0.2],[0,yy+fh2,z-hc*0.55],[0,yy+fh2*0.95,z-hc*0.95],[0,yy-0.15,z-hc*0.95]];
+    RUD.z=z-hc*0.95;RUD.y0=yy-0.1;RUD.y1=yy+fh2*0.9;RUD.c=hc*0.38;RUD.col=rd?hex2rgb('#ffffff'):c0;
     for(const sd of [1,-1])mb.poly(fin.map(p=>[p[0]+sd*0.025,p[1],p[2]]),[sd,0,0],rd?hex2rgb('#ffffff'):c0,skinM);
     if(rd){const z0=z-hc*0.95,zw=hc*0.42/3;mk.rud.forEach((cc,i)=>{for(const sd of [1,-1]){const za=z0+zw*(2-i),zb=za+zw;mb.poly([[sd*0.03,yy-0.12,za],[sd*0.03,yy-0.12,zb],[sd*0.03,yy+fh2*0.95,zb],[sd*0.03,yy+fh2*0.95,za]],[sd,0,0],hex2rgb(cc),MID.paint);}});}
     else if(marked&&(mk.cross||mk.star)){disk(0.035,yy+fh2*0.48,z-hc*0.55,Math.min(0.42,fh2*0.3),[1,0,0]);disk(-0.035,yy+fh2*0.48,z-hc*0.55,Math.min(0.42,fh2*0.3),[-1,0,0]);}};
@@ -152,7 +155,21 @@ function air3dMesh(md,y,c){const key=air3dKey(md,y,c);if(AIR3D_CACHE.has(key))re
     dc.poly(pts,[0,0,1],[120,100,80],46);dc.poly(pts2,[0,0,1],[90,72,55],30);}
   const hit=[{x:0,y:0,z:0,r:Math.max(fwd,fh)*0.8,k:'fus'},{x:0,y:0,z:G.zNose-0.6,r:Math.max(fwd,fh)*0.6,k:'eng'},{x:G.eye[0],y:G.eye[1]-0.2,z:G.eye[2],r:0.45,k:'pil'},
     {x:b*0.28,y:0.3,z:0,r:Math.max(0.9,ch*0.75),k:'wing'},{x:-b*0.28,y:0.3,z:0,r:Math.max(0.9,ch*0.75),k:'wing'},{x:0,y:0.3,z:-L*0.55,r:1,k:'tail'}];
-  const S=mb.sphere(),out={op:g3Mesh(mb),pr:g3Mesh(pr),disc:g3Mesh(dc),pil:g3Mesh(pm),props:G.props,eye:G.eye,gear:G.gear,span:b,len:L,r:S.r,c:S.c,hit,geo:G};
-  if(AIR3D_CACHE.size>24){for(const [k,v] of AIR3D_CACHE){g3Free(v.op);g3Free(v.pr);g3Free(v.disc);g3Free(v.pil);AIR3D_CACHE.delete(k);if(AIR3D_CACHE.size<=16)break;}}
+  // 0.39: подвижные поверхности — пластины за задней кромкой (как навесные элероны Фармана), геометрия относительно оси навески
+  const plate=(bm,xa,xb,c,col,cd)=>{const th=0.04;bm.poly([[xa,th/2,0],[xb,th/2,0],[xb,th/2,-c],[xa,th/2,-c]],[0,1,0],col,skinM);bm.poly([[xa,-th/2,0],[xa,-th/2,-c],[xb,-th/2,-c],[xb,-th/2,0]],[0,-1,0],cd,skinM);
+    bm.poly([[xa,th/2,-c],[xb,th/2,-c],[xb,-th/2,-c],[xa,-th/2,-c]],[0,0,-1],cd,skinM);};
+  const surf={};{const mains=WL.filter(w=>!w.tail).sort((a,b)=>b.x1-a.x1),mw=mains[0],ew=WL.filter(w=>w.tail).sort((a,b)=>b.x1-a.x1)[0];
+    if(mw&&mw.x1>1.5){const xa=mw.x0+(mw.x1-mw.x0)*0.62,xb=mw.x1*0.97,xm=(xa+xb)/2;const am=new MB();plate(am,xa,xb,mw.cc*0.26,mw.col,mw.colD);surf.ail=g3Mesh(am);surf.ailH=[xm,mw.yy+xm*mw.dh+mw.tt*0.25,mw.z-mw.cc];surf.ailX=[xa,xb];}
+    if(ew){const em=new MB();plate(em,-ew.x1*0.96,ew.x1*0.96,ew.cc*0.38,ew.col,ew.colD);surf.elev=g3Mesh(em);surf.elevH=[0,ew.yy+ew.tt*0.3,ew.z-ew.cc];}
+    if(RUD.z!==undefined){const rm=new MB(),h0=RUD.y0,h1=RUD.y1,c=RUD.c;rm.poly([[0.02,h0,0],[0.02,h1,0],[0.02,h1,-c],[0.02,h0,-c]],[1,0,0],RUD.col,skinM);rm.poly([[-0.02,h0,0],[-0.02,h0,-c],[-0.02,h1,-c],[-0.02,h1,0]],[-1,0,0],RUD.col,skinM);rm.poly([[0.02,h0,-c],[0.02,h1,-c],[-0.02,h1,-c],[-0.02,h0,-c]],[0,0,-1],RUD.col,skinM);surf.rud=g3Mesh(rm);surf.rudH=[0,0,RUD.z];}
+    if(WH.length){const r0=WH[0].r,wm=new MB();pCyl(wm,[-0.08,0,0],[0.08,0,0],r0,r0,tyre,16,MID.tyre);pCyl(wm,[-0.09,0,0],[0.09,0,0],r0*0.32,r0*0.32,'#6a6c70',10,MID.metal);for(let k=0;k<6;k++){const a=k/6*6.2832;wm.rod([0,Math.cos(a)*r0*0.3,Math.sin(a)*r0*0.3],[0,Math.cos(a)*r0*0.95,Math.sin(a)*r0*0.95],0.012,hex2rgb('#9a9c9e'),MID.metal);}
+      surf.whl=g3Mesh(wm);surf.wheels=WH.map(w=>({x:w.x,y:w.y,z:w.z,s:w.r/r0}));}}
+  const S=mb.sphere(),out={op:g3Mesh(mb),pr:g3Mesh(pr),disc:g3Mesh(dc),pil:g3Mesh(pm),props:G.props,eye:G.eye,gear:G.gear,span:b,len:L,r:S.r,c:S.c,hit,geo:G,...surf};
+  if(AIR3D_CACHE.size>24){for(const [k,v] of AIR3D_CACHE){air3dFreeOne(v);AIR3D_CACHE.delete(k);if(AIR3D_CACHE.size<=16)break;}}
   AIR3D_CACHE.set(key,out);return out;}
-function air3dFreeAll(){for(const v of AIR3D_CACHE.values()){g3Free(v.op);g3Free(v.pr);g3Free(v.disc);g3Free(v.pil);}AIR3D_CACHE.clear();}
+function air3dFreeOne(v){['op','pr','disc','pil','ail','elev','rud','whl'].forEach(k=>{if(v[k])g3Free(v[k]);});}
+function air3dFreeAll(){for(const v of AIR3D_CACHE.values())air3dFreeOne(v);AIR3D_CACHE.clear();}
+// 0.39: матрица подвижной детали: поворот вокруг оси навески (ax: 'x' — руль высоты и элероны, 'y' — руль направления) в точке h
+function air3dHingeMat(o,M,h,ax,ang,sc){const c=Math.cos(ang),s=Math.sin(ang),L=m4(),k=sc||1;
+  if(ax==='x'){L[5]=c*k;L[6]=s*k;L[9]=-s*k;L[10]=c*k;L[0]=k;}else{L[0]=c*k;L[2]=-s*k;L[8]=s*k;L[10]=c*k;L[5]=k;}
+  L[12]=h[0];L[13]=h[1];L[14]=h[2];return m4mul(o,M,L);}

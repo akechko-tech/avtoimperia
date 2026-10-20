@@ -52,7 +52,7 @@ function airPlantView(s){const A=s.air,L=s.last,R=A.last||{},t=tNow(s),P=PIONEER
     <tr><td><b>Итог месяца</b></td><td class="n"><b class="${L.profit>=0?'good':'bad'}">${money(L.profit)}</b></td></tr></table>`:'<p class="small muted">Отчёт появится после первого месяца. Нажмите «Следующий месяц» внизу.</p>';
   const ml=maxLoan(s),stp=Math.max(500,Math.round(ml/10/500)*500);
   return `<div class="carbox airbox">${A.models.length?airArtSVG(A.models.filter(m=>m.status!=='off').slice(-1)[0]||A.models[0],{y:t,c:s.country,anim:true}):''}<div class="air-caption">${esc(cityOf(s))} · ${A.models.filter(m=>m.status==='prod').length} ${plural(A.models.filter(m=>m.status==='prod').length,'модель','модели','моделей')} в серии</div></div>
-    ${airAdviceCard(s)}
+    ${typeof advisorCard==='function'?advisorCard(s):airAdviceCard(s)}
     <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?fmtN((R.sold||0)+(R.ordN||0)):'—'}</b></div><div class="kpi"><span class="label">Слава</span><b>${Math.round(A.fame)}</b></div></div>
     ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><span class="label">Основатель</span><h3>${esc(P.name)}</h3><p class="small muted">${(P.plus||[]).map(esc).join(' · ')}</p></div></section>`:''}
     <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${money(s.cash)}</span></div>${spark(s.hist.cash)}</section>

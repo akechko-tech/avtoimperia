@@ -139,6 +139,8 @@ function adviceList(s){
   {const k=[...KIT.kb,...KIT.team].find(k=>!kitHas(s,k.id)&&k.y<=s.y&&!kitNeed(s,k)&&(k.g==='kb'||(s.rdept||0)>0)&&s.cash>kitCost(s,k)*8);
     if(k&&act.length)add(18,'🔧',`${k.y>=s.y-1?'Новинка эпохи':'Можно купить'} для ${k.g==='kb'?'бюро':'гоночной команды'}: «${k.name}». ${k.txt}.`,`Купить · ${money(kitCost(s,k))}`,()=>ACT.kitBuy({k:k.id}),k.g==='kb'?'models':'race');}
   if(s.rd.lvl<RD_MAX&&s.cash>rdUpCost(s)*6&&act.length)add(25,'🎓',`Денег хватает, чтобы расширить конструкторское бюро: «${RD_LV[s.rd.lvl+1]}».`,`Расширить · ${money(rdUpCost(s))}`,()=>ACT.rdUp(),'models');
+  // 0.39: дела авиацеха — в том же списке (одна система управления для авто, мото и аэро)
+  if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
   return T.sort((a,b)=>b.p-a.p);
 }
 function advisorCard(s,where){
