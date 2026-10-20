@@ -1018,7 +1018,8 @@ body.flying{overflow:hidden}
 #flyScreen .f-mark[hidden]{display:none}
 #flyScreen .f-aim{position:absolute;z-index:5;width:0;height:0;pointer-events:none}#flyScreen .f-aim[hidden]{display:none}
 #flyScreen .f-aim i{position:absolute;left:-11px;top:-11px;width:22px;height:22px;background:linear-gradient(#ffd27a,#ffd27a) center/2px 100% no-repeat,linear-gradient(#ffd27a,#ffd27a) center/100% 2px no-repeat;filter:drop-shadow(0 0 3px rgba(0,0,0,.8))}
-#flyScreen .f-aim b{position:absolute;left:14px;top:-8px;font-size:11px;color:#ffd27a;text-shadow:0 0 4px #000;white-space:nowrap}#flyScreen .f-aim.on i{background-color:transparent;border:2px solid #9fe39a;border-radius:50%;background-image:none}#flyScreen .f-aim.on b{color:#9fe39a}
+#flyScreen .f-aim b{position:absolute;left:14px;top:-8px;font-size:11px;color:#ffd27a;text-shadow:0 0 4px #000;white-space:nowrap}
+#flyScreen .f-aim.edge i{display:none}#flyScreen .f-aim.edge b{left:0;top:0;transform:translate(-50%,-50%);font-size:13px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(5,12,22,.6)}#flyScreen .f-aim.edge.on b{color:#9fe39a;font-size:15px}#flyScreen .f-aim.on i{background-color:transparent;border:2px solid #9fe39a;border-radius:50%;background-image:none}#flyScreen .f-aim.on b{color:#9fe39a}
 #flyScreen .f-mark i{position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;border:2px solid #ffe28a;box-shadow:0 0 6px rgba(0,0,0,.6)}
 #flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
 #flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}
@@ -7179,12 +7180,13 @@ function adviceList(s){
   return T.sort((a,b)=>b.p-a.p);
 }
 function advisorCard(s,where){
-  const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:3),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null;
+  const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:4),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null;
   if(!show.length&&(!H||where))return '';TIPS=show;
-  return `<section class="card advisor"><div class="row"><span class="label">💡 Советник</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':''}</div>
+  // 0.39: «Дела» — что сделать сейчас, кнопкой к действию (одна система для авто, мото и аэро)
+  return `<section class="card advisor"><div class="row"><span class="label">📋 Дела${where?'':' и советы'}</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':`<button class="linkbtn small" data-act="helperToggle">поручить рутину помощнику</button>`}</div>
     ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}
     ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}</div>`).join('')}
-    ${!where&&all.length>3?`<p class="small muted" style="margin-top:6px">Ещё советов: ${all.length-3}. Сначала самые важные.</p>`:''}</section>`;}
+    ${!where&&all.length>4?`<p class="small muted" style="margin-top:6px">Ещё дел: ${all.length-4}. Сначала самые важные.</p>`:''}</section>`;}
 // Помощник управляющего: каждый месяц сам делает безопасные вещи — цены, дилеры, цеха, склад, КБ, кредит
 function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models.filter(m=>m.status==='prod'),L=s.last,home=s.country,cs=creditState(s),calm=cs.k==='ok'||cs.k==='war';
   // 0.21: запас кассы — два месяца постоянных расходов; вложения — из кассы сверх запаса и (в спокойное время) из половины свободного кредита
@@ -15420,7 +15422,7 @@ function airSalesExplain(s,md){const A=s.air,t=tNow(s),q=airQ(md,t).q,seg=airCiv
   const lever=(ico,txt,b,act,k,extra)=>`<div class="row" style="margin-top:6px;align-items:center"><p class="small" style="flex:1">${ico} ${txt}</p>${b?`<button class="btn sm" data-act="${act}" ${k!==undefined?`data-k="${k}"`:''} ${extra||''}>${b}</button>`:''}</div>`;
   const fameNeed=Math.round((A.fame||0)+12);
   const body=`<p class="small muted" style="margin-top:6px">Спрос = рынок страны × ваша доля. Доля — из привлекательности: оценка заказчиков ${q.toFixed(2).replace('.',',')} → ×${qK.toFixed(2).replace('.',',')} (за каждые +0,2 к оценке спрос вдвое), слава ${Math.round(A.fame||0)} → ×${fame.toFixed(2).replace('.',',')}, цена ${money(pr)} против типичной ${money(rp)} → ×${prK.toFixed(2).replace('.',',')} (дешевле на 10 % — спрос ×1,26). За границей — только если туда можно продавать (мир, не враг, слава).</p>
-    <table class="pl ptab" style="margin-top:6px"><tr><th>Страна</th><th class="n">рынок в год</th><th class="n">ваша доля</th><th class="n">в месяц</th><th>соперники</th></tr>${rows.join('')||'<tr><td colspan="5" class="muted">Таких аэропланов сейчас не покупают.</td></tr>'}</table>
+    <table class="pl ptab" style="margin-top:6px"><tr><th>Страна</th><th class="n">рынок в год</th><th class="n">ваша доля</th><th class="n">в месяц</th><th>соперники</th></tr>${rows.join('')||`<tr><td colspan="5" class="muted">${['recon','fight','bomb','sea'].includes(md.role)?'Частные покупатели такие машины не берут: '+airRoleN(md.role).toLowerCase()+' продаётся армии и флоту по контрактам — заказ даёт конкурс министерства (вкладка «Рынок» → «Контракты»).':'Таких аэропланов сейчас не покупают.'}</td></tr>`}</table>
     <p class="small" style="margin-top:6px">Итого спрос ≈ <b>${fmtD(tot/12)}</b> в месяц; в прошлом месяце сделали ${fmtN(md.lastMade||0)}${load>1.02?` — <span class="bad">ангары заняты на ${pct(load,0)}: место на ${fmtN(cap)} т в месяц, выпуск урезан до ${pct(k1,0)}</span>`:''}${k2<0.98?` — <span class="bad">не хватает мастеров (${pct(k2,0)} от нужного)</span>`:''}${md.stock>Math.max(2,(md.dem||0)*2)?` — <span class="warn">в ангаре ${fmtN(md.stock)}: сделано больше, чем берут</span>`:''}.</p>
     <div class="label" style="margin-top:8px">Рычаги</div>
     ${md.price>0||pr>rp*1.02?lever('💰',`Цена: сейчас ${money(pr)}${pr>rp*1.02?' — дороже типичной, часть покупателей уходит':''}.`,'Дешевле','airPrice',md.id,'data-d="-1"'):lever('💰',`Цена ${money(pr)} — по оценке; ниже ${money(Math.round(airCost(md,t,s,md.made).unit*1.15/50)*50)} продавать себе в убыток.`,'Дешевле','airPrice',md.id,'data-d="-1"')}
@@ -15428,7 +15430,8 @@ function airSalesExplain(s,md){const A=s.air,t=tNow(s),q=airQ(md,t).q,seg=airCiv
     ${lever('🏆',`Слава ${Math.round(A.fame||0)}: победы на митингах, рекорды и перелёты (+3…+8 за победу); слава ${fameNeed} дала бы ×${(0.35+fameNeed/55).toFixed(2).replace('.',',')}.`,airOnly(s)?'В «Гонки»':'В «Гонки»','tab',undefined,'data-t="race"')}
     ${load>0.9?lever('🏗',`Ангары почти полны (${pct(load,0)}): новый ангар или цех даст место.`,'В «Завод»','tab',undefined,'data-t="plant"'):''}
     ${md.plan!=='auto'?lever('🔧',`План выпуска задан вручную (${fmtN(+md.plan||0)}); по спросу было бы ${fmtN(Math.round((md.fc||0)*1.05))}.`,'План по спросу','airPlanAuto',md.id):''}`;
-  return `<div style="margin-top:8px">${fold('aex'+md.id,'Как посчитано: спрос и продажи',body,false,`${fmtD(tot/12)} в месяц · доля дома ${pct((()=>{const c=s.country,M=airMktRole(c,md.role,t,'civ'),comps=airComps(c,md.role,t,s),W=comps.reduce((a,o)=>a+o.w,0)+Math.max(0,M*0.15),a=airAttr(s,md,c,seg,t,q,comps);return a>0?Math.min(0.9,a/(a+W)):0;})(),0)}`)}</div>`;}
+  const homeM=airMktRole(s.country,md.role,t,'civ'),homeShare=(()=>{if(homeM<=0.01)return null;const c=s.country,comps=airComps(c,md.role,t,s),W=comps.reduce((a,o)=>a+o.w,0)+Math.max(0,homeM*0.15),a=airAttr(s,md,c,seg,t,q,comps);return a>0?Math.min(0.9,a/(a+W)):0;})();
+  return `<div style="margin-top:8px">${fold('aex'+md.id,'Как посчитано: спрос и продажи',body,false,homeShare===null?'частных покупателей нет — только контракты':`${fmtD(tot/12)} в месяц · доля дома ${pct(homeShare,0)}`)}</div>`;}
 /* ---------- конструктор аэроплана ---------- */
 let ADR=null;
 function airDefaultDesign(s,role){const t=tNow(s),ref=airRefMd(role,t),d={role,f:ref.f,m:ref.m,e:ref.e,n:ref.n||1,c:ref.c,g:ref.g,p:ref.p,a:ref.a||'w0',k:ref.k||'k1',w:ref.w||'mid'};
@@ -16018,7 +16021,7 @@ if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:
 window.addEventListener('resize',()=>xpopClose());
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.38';
+const GAME_VER='0.39';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -19831,8 +19834,12 @@ function flyAimMark(){const el=document.getElementById('fAim'),M=FL.mi,me=FL.me;
   // падение с сопротивлением (как в frBombs: горизонтальная скорость гаснет ~5 %/с): t из h≈g t²/2, снос ≈ v·(1−e^{−0.05t})/0.05
   const tf=Math.sqrt(2*h/FLG),kx=(1-Math.exp(-0.05*tf))/0.05;const p=[me.p[0]+me.v[0]*kx,gy,me.p[2]+me.v[2]*kx];
   const cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15],x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
-  if(!(cw>0&&Math.abs(x)<0.95&&Math.abs(y)<0.95)){el.hidden=true;return;}const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight;el.hidden=false;el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';
-  const tg=M.tg;if(tg){const d=Math.hypot(p[0]-tg.x,p[2]-tg.z);el.classList.toggle('on',d<12);el.querySelector('b').textContent=d<12?'в круг':Math.round(d)+' м';}}
+  const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight,tg=M.tg,on=cw>0&&Math.abs(x)<0.95&&Math.abs(y)<0.95;el.hidden=false;
+  if(on){el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';el.classList.remove('edge');if(tg){const d=Math.hypot(p[0]-tg.x,p[2]-tg.z);el.classList.toggle('on',d<12);el.querySelector('b').textContent=d<12?'в круг':Math.round(d)+' м';}return;}
+  // точка падения под носом, вне кадра (как настоящий прицел — в люке в полу): внизу экрана — сколько ещё до сброса по курсу
+  if(!tg){el.hidden=true;return;}el.classList.add('edge');el.style.left=(W*0.5)+'px';el.style.top=(H*0.72)+'px';
+  const vh=Math.hypot(me.v[0],me.v[2])||1,ux=me.v[0]/vh,uz=me.v[2]/vh,along=(tg.x-p[0])*ux+(tg.z-p[2])*uz,side=Math.abs((tg.x-p[0])*uz-(tg.z-p[2])*ux);
+  const hit=Math.abs(along)<12&&side<12;el.classList.toggle('on',hit);el.querySelector('b').textContent=hit?'СБРОС!':along>0?`сброс через ${Math.round(along)} м${side>25?' · в стороне '+Math.round(side)+' м':''}`:'мишень позади';}
 /* ---------- 0.39: видимые отклонения рулей: ручка плюс то, что делает сам аэроплан (автопилот, выравнивание, срыв) ---------- */
 function flyCtlVis(a){const c=a.ctl||{},w=a.w||[0,0,0];const v=a.vis||(a.vis={sx:0,sy:0,rd:0});
   const tx=clamp((c.sx||0)+w[0]*0.5,-1,1),ty=clamp((c.sy||0)*0.9+w[1]*0.9+(a.ctl&&a.ctl.aCmd!=null?(a.ctl.aCmd-(a.al||0))*3:0),-1,1),tr=clamp((c.rd||0)+w[2]*1.5+(a.be||0)*2.5,-1,1);
