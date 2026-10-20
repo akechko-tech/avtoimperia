@@ -1013,7 +1013,7 @@ def march_band2(T, seed=7):
     return S
 
 STYLE = {'march': march_band2, 'rag': piano_rag, 'waltz': waltz, 'tango': tango, 'jazz': jazz, 'cake': piano_cake, 'fox': fox, 'charl': charl}
-META = {'avto': ('march', 'triumph', 'духовой оркестр'), 'reel': ('rag', 'lively', 'фортепиано'), 'valse': ('waltz', 'calm', 'салонный оркестр'), 'tango': ('tango', 'drama', 'оркестр танго'),
+META = {'avto': ('march', 'triumph', 'духовой оркестр'), 'aero': ('march', 'lively', 'духовой оркестр'), 'pole': ('waltz', 'calm', 'салонный оркестр'), 'reel': ('rag', 'lively', 'фортепиано'), 'valse': ('waltz', 'calm', 'салонный оркестр'), 'tango': ('tango', 'drama', 'оркестр танго'),
         'jazz': ('jazz', 'lively', 'джаз-бэнд'), 'cake': ('cake', 'lively', 'фортепиано и банджо'), 'fox': ('fox', 'calm', 'танцевальный оркестр'), 'charl': ('charl', 'lively', 'горячий джаз-оркестр')}
 SF2_URLS = ['https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2']
 
@@ -1057,7 +1057,7 @@ def run(media, log=print):
         sh(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-t', '%.2f' % (end + 4.0), '-af', 'highpass=f=35,equalizer=f=210:t=q:w=1.0:g=2.5,equalizer=f=2600:t=q:w=1.3:g=-5,treble=g=-7:f=5200,lowpass=f=9000,loudnorm=I=-19:TP=-2:LRA=11,afade=t=out:st=%.2f:d=3' % (end + 1.0),
             '-c:a', 'aac', '-b:a', '112k', '-ar', '44100', out])
         dur = float(sh(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', out]).strip() or 0)
-        idx['own_' + tid] = {'cap': T['name'] + ' (' + ({'reel': 'фортепиано', 'cake': 'фортепиано и банджо', 'avto': 'духовой оркестр'}.get(tid, 'оркестр')) + ')', 'st': st, 'y': T['y'], 'mood': mood, 'd': round(dur, 1), 'lic': 'CC0 — сочинено для игры',
+        idx['own_' + tid] = {'cap': T['name'] + ' (' + ({'reel': 'фортепиано', 'cake': 'фортепиано и банджо', 'avto': 'духовой оркестр', 'aero': 'духовой оркестр'}.get(tid, 'оркестр')) + ')', 'st': st, 'y': T['y'], 'mood': mood, 'd': round(dur, 1), 'lic': 'CC0 — сочинено для игры',
                              'page': '', 'by': 'Мелодия «Автоимперии», ' + band + ' (тембры ' + sfname.split(' (')[0] + ')'}
         LOG('anthem:', tid, st, round(dur, 1), 's', round(os.path.getsize(out) / 1024), 'KB')
     # короткие темы игры: фанфара и темы соперников (в плейлист не идут — пометка cue)
