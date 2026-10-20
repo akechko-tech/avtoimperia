@@ -1005,7 +1005,8 @@ body.flying{overflow:hidden}
 #flyScreen .f-mark[hidden]{display:none}
 #flyScreen .f-aim{position:absolute;z-index:5;width:0;height:0;pointer-events:none}#flyScreen .f-aim[hidden]{display:none}
 #flyScreen .f-aim i{position:absolute;left:-11px;top:-11px;width:22px;height:22px;background:linear-gradient(#ffd27a,#ffd27a) center/2px 100% no-repeat,linear-gradient(#ffd27a,#ffd27a) center/100% 2px no-repeat;filter:drop-shadow(0 0 3px rgba(0,0,0,.8))}
-#flyScreen .f-aim b{position:absolute;left:14px;top:-8px;font-size:11px;color:#ffd27a;text-shadow:0 0 4px #000;white-space:nowrap}#flyScreen .f-aim.on i{background-color:transparent;border:2px solid #9fe39a;border-radius:50%;background-image:none}#flyScreen .f-aim.on b{color:#9fe39a}
+#flyScreen .f-aim b{position:absolute;left:14px;top:-8px;font-size:11px;color:#ffd27a;text-shadow:0 0 4px #000;white-space:nowrap}
+#flyScreen .f-aim.edge i{display:none}#flyScreen .f-aim.edge b{left:0;top:0;transform:translate(-50%,-50%);font-size:13px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(5,12,22,.6)}#flyScreen .f-aim.edge.on b{color:#9fe39a;font-size:15px}#flyScreen .f-aim.on i{background-color:transparent;border:2px solid #9fe39a;border-radius:50%;background-image:none}#flyScreen .f-aim.on b{color:#9fe39a}
 #flyScreen .f-mark i{position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;border:2px solid #ffe28a;box-shadow:0 0 6px rgba(0,0,0,.6)}
 #flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
 #flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}

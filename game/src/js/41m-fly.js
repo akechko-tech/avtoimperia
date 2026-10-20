@@ -260,8 +260,12 @@ function flyAimMark(){const el=document.getElementById('fAim'),M=FL.mi,me=FL.me;
   // падение с сопротивлением (как в frBombs: горизонтальная скорость гаснет ~5 %/с): t из h≈g t²/2, снос ≈ v·(1−e^{−0.05t})/0.05
   const tf=Math.sqrt(2*h/FLG),kx=(1-Math.exp(-0.05*tf))/0.05;const p=[me.p[0]+me.v[0]*kx,gy,me.p[2]+me.v[2]*kx];
   const cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15],x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
-  if(!(cw>0&&Math.abs(x)<0.95&&Math.abs(y)<0.95)){el.hidden=true;return;}const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight;el.hidden=false;el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';
-  const tg=M.tg;if(tg){const d=Math.hypot(p[0]-tg.x,p[2]-tg.z);el.classList.toggle('on',d<12);el.querySelector('b').textContent=d<12?'в круг':Math.round(d)+' м';}}
+  const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight,tg=M.tg,on=cw>0&&Math.abs(x)<0.95&&Math.abs(y)<0.95;el.hidden=false;
+  if(on){el.style.left=((x*0.5+0.5)*W)+'px';el.style.top=((0.5-y*0.5)*H)+'px';el.classList.remove('edge');if(tg){const d=Math.hypot(p[0]-tg.x,p[2]-tg.z);el.classList.toggle('on',d<12);el.querySelector('b').textContent=d<12?'в круг':Math.round(d)+' м';}return;}
+  // точка падения под носом, вне кадра (как настоящий прицел — в люке в полу): внизу экрана — сколько ещё до сброса по курсу
+  if(!tg){el.hidden=true;return;}el.classList.add('edge');el.style.left=(W*0.5)+'px';el.style.top=(H*0.72)+'px';
+  const vh=Math.hypot(me.v[0],me.v[2])||1,ux=me.v[0]/vh,uz=me.v[2]/vh,along=(tg.x-p[0])*ux+(tg.z-p[2])*uz,side=Math.abs((tg.x-p[0])*uz-(tg.z-p[2])*ux);
+  const hit=Math.abs(along)<12&&side<12;el.classList.toggle('on',hit);el.querySelector('b').textContent=hit?'СБРОС!':along>0?`сброс через ${Math.round(along)} м${side>25?' · в стороне '+Math.round(side)+' м':''}`:'мишень позади';}
 /* ---------- 0.39: видимые отклонения рулей: ручка плюс то, что делает сам аэроплан (автопилот, выравнивание, срыв) ---------- */
 function flyCtlVis(a){const c=a.ctl||{},w=a.w||[0,0,0];const v=a.vis||(a.vis={sx:0,sy:0,rd:0});
   const tx=clamp((c.sx||0)+w[0]*0.5,-1,1),ty=clamp((c.sy||0)*0.9+w[1]*0.9+(a.ctl&&a.ctl.aCmd!=null?(a.ctl.aCmd-(a.al||0))*3:0),-1,1),tr=clamp((c.rd||0)+w[2]*1.5+(a.be||0)*2.5,-1,1);
