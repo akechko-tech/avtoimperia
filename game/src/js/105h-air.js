@@ -73,7 +73,7 @@ function airQ(md,t,role){role=role||md.role;const st=airStats(md,t),ref=airRefMd
   if(role==='mail'&&st.mail<100&&!st.closed){q*=0.3;why.push('нет почтового отсека');}
   if(role==='pax'&&st.pax<3){q*=0.3;why.push('мало мест для пассажиров');}
   if(st.climb<15){q*=0.3;why.push('еле отрывается от земли');}
-  if(!md.ref){q*=bn('airQ');if(st.n>1)q*=bn('airMulti');if(role==='fight')q*=bn('airFight');}
+  if(!md.ref){q*=bn('airQ');if(st.n>1)q*=bn('airMulti');if(role==='fight')q*=bn('airFight');if(st.sea)q*=bn('airSea');/* 0.39: Григорович — лодки */}
   return {q,by,why,st,rs,ref};}
 /* ---------- стоимость: материалы, мотор, работа ---------- */
 const AIR_FCX={fc:1.1,fp:1,fm:0.9,fb:1,fs:1.05,ft:1.2,fx:1.25,fw:1.4,fk:1.15,fr:1.4};
@@ -377,6 +377,7 @@ function newAirGame(pioneer,country,company,diff,firstName){
   g.fleet={};g.mkY={};for(const cc in COUNTRIES)g.fleet[cc]=fleetHist(cc,y);for(const cc in COUNTRIES){try{const R2=mkCountry(cc,g,[]);g.mkY[cc]=SEGK.reduce((a,gg)=>a+R2.segs[gg].inc,0)*12/SEASON[0];}catch(_){}}
   g.cash=Math.round(COUNTRIES[country].cash*(P.air?P.acash:0.5)*bn('cash')*DIF().cash/100)*100;
   const A=airInit(g);A.lv=1;A.cap=AIRSHOP.cap;A.wk=P.air&&P.sk<0.5?12:10;A.fame=P.air?P.afame:6;(P.atech||[]).forEach(id=>{A.tech[id]=1;});
+  (P.pil||[]).forEach(id=>{const PL=AIR_PILOTS.find(x=>x.id===id);if(PL)A.pil=(A.pil||[]).concat({id,sal:airPilotSal(g,PL),at:mi(g)});});/* 0.39: герой, который сам не летает, начинает со своим лётчиком */
   const d0=P.air&&P.a1?P.a1:airStartDesign(country,y),nm=(firstName||'').trim()||d0.name,md=airNewModel(g,{...d0,name:nm},{status:'proto',flown:0,pk:d0.pk||1});
   if(d0.st==='prod'){md.status='prod';md.flown=1;md.launched=mi(g);md.price=0;}else A.proto=[md.id];
   g.plantVal=Math.round(3000*cpi(g));g.wh=0;

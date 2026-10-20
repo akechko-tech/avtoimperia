@@ -84,5 +84,12 @@ const mk=(y,role,o)=>{const e=airRefEntry(role,y),md={...e[2],role,name:e[1]};re
   r.M.task=2;const q=r.M.pts[0];flPlace(r.me,q.x,q.z,0,{h:400,v:30,thr:0.8});r.M.tUp=0;FL.t=100;r.M.step(1/60,[q.x,400,q.z]);ok(q.ok===1&&/снято 1 из 3/.test(r.M.goal()),'пролёт над лагерем на 400 м — снимок: '+r.M.goal().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,90));
   const r0=mk2(1910,'recon','w0');ok(!r0.M.pts&&r0.M.goal().includes('из 3'),'1910 год: оружия в программе ещё нет — три задания');
   FL.on=false;FL.me=null;FL.mi=null;}
+/* ---------- герои России: Гаккель и Григорович ---------- */
+{const L=ngHeroList('air','ru').map(h=>h.k);ok(L.includes('gakkel')&&L.includes('grigorovich')&&L.includes('sikorsky'),'авиаторы России: '+L.join(', '));
+  newAirGame('grigorovich','ru','','normal','');const md=G.air.models[0],st=airStats(md,tNow(G));ok(G.y===1913&&md.role==='sea'&&st.sea&&md.status==='proto','Григорович: 1913 год, первая машина — летающая лодка «'+md.name+'» ('+Math.round(st.v)+' км/ч)');
+  ok(sagaList(G).length===6&&sagaList(G)[0].id==='gr1'&&sagaList(G)[0].sc.every(x=>!/\{/.test(x.say||x.line||'')),'сюжет Григоровича: 6 глав, тексты без подстановок');
+  ok(Math.abs(bn('airSea')-1.08)<1e-9,'черта героя: лодки +8% ('+bn('airSea').toFixed(2)+')');
+  newAirGame('gakkel','ru','','normal','');const m2=G.air.models[0];ok(G.y===1910&&m2.name==='Гаккель-III'&&!airHeroFlies(G)&&airBestPilot(G),'Гаккель: 1910 год, «Гаккель-III», сам не летает — машину поднимет лётчик '+airBestPilot(G).n);
+  ok(sagaList(G).length===5&&sagaList(G).every(ch=>ch.o&&ch.o.length===3&&ch.q),'сюжет Гаккеля: 5 глав, в каждой вопрос и три ответа');}
 console.log(bad?'ОШИБОК: '+bad:'всё в порядке');if(bad)process.exitCode=1;
 }`);
