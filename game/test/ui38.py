@@ -35,7 +35,7 @@ with sync_playwright() as p:
     ok(r['c'] == 'ru' and r['hero']['k'] == 'custom' and 'maybach' not in r['cards'] and 'frese' in r['cards'], 'переключили на Россию: герой — свой персонаж, в списке Фрезе, Майбаха нет (%s)' % r['cards'])
     js("document.querySelector('[data-act=ngDir][data-v=air]').click()"); pg.wait_for_timeout(300)
     r = json.loads(js("JSON.stringify({c:draft.country,cards:[...document.querySelectorAll('[data-act=pion]')].map(e=>e.dataset.v),racers:document.querySelectorAll('[data-act=rpick]').length})"))
-    ok(r['c'] == 'ru' and r['cards'] == ['sikorsky', 'custom'] and r['racers'] == 0, 'аэропланы · Россия: только Сикорский и свой авиатор, гонщиков нет (%s)' % r['cards'])
+    ok(r['c'] == 'ru' and r['cards'] == ['sikorsky', 'gakkel', 'grigorovich', 'custom'] and r['racers'] == 0, 'аэропланы · Россия: Сикорский, Гаккель, Григорович и свой авиатор (0.39), гонщиков нет (%s)' % r['cards'])
     pg.screenshot(path=out + '1_newgame.png')
     # старт за Майбаха: флаг в шапке — немецкий
     js("document.querySelector('[data-act=ngDir][data-v=car]').click()"); pg.wait_for_timeout(200)
