@@ -218,7 +218,8 @@ function flyAudioStart(){const c=AU.ctx;if(!c)return;try{enLoad();}catch(_){}con
   try{if(AU.mus)AU.mus.gain.setTargetAtTime(AU.on.music?0.05:0,c.currentTime,0.5);}catch(_){}
   // 0.39: в полёте граммофон молчит — только ветер и мотор; у трибун играет духовой оркестр (марш слышен с земли и на бреющем, вдали стихает)
   try{AU.flyHold=true;musicPlay();}catch(_){}
-  if(FW&&FW.band&&FL.mi.stands&&AU.on.music){try{const a=new Audio('music/own_avto.m4a');a.loop=true;a.volume=0;a.preload='auto';const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});FLY.band=a;}catch(_){}}
+  if(FW&&FW.band&&FL.mi.stands&&AU.on.music){try{const pick=hashStr(FL.mi.title||'')%2?'own_aero':'own_avto',a=new Audio('music/'+pick+'.m4a');a.loop=true;a.volume=0;a.preload='auto';
+      a.addEventListener('error',()=>{if(a.dataset.fb)return;a.dataset.fb=1;a.src='music/own_avto.m4a';const p2=a.play();if(p2&&p2.catch)p2.catch(()=>{});});/* нет записи — марш «Автоимперия» */const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});FLY.band=a;}catch(_){}}
   if(FL.mi.stands){try{auSfx('cheer',0.8);}catch(_){}
     // 0.37: гул толпы у трибун — запись, по кругу; громкость — по расстоянию от камеры до трибун
     try{ambBuf('crowd_big').then(b=>{const A=FLY.au;if(!b||!A||A.crowd||!FL.on)return;const src=c.createBufferSource();src.buffer=b;src.loop=true;const cg=c.createGain();cg.gain.value=0;

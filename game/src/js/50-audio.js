@@ -205,6 +205,8 @@ function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2
   AU.duckT=setTimeout(()=>{AU.duckI=setInterval(()=>{const t=v0();let v=Math.min(t,(el.volume||0)+t*0.06);try{el.volume=v;}catch(_){v=t;}if(v>=t-1e-3){clearInterval(AU.duckI);AU.ducked=0;}},90);},Math.max(800,sec*1000+300));}
 // 0.22: свои мелодии игры в оркестровке — файлы рядом с игрой (в APK вшиты): играют и без сети
 const OWN_MUSIC={own_avto:{cap:'«Автоимперия», марш (духовой оркестр)',st:'march',y:1895,mood:'triumph',by:'Мелодия «Автоимперии», духовой оркестр'},
+  own_aero:{cap:'«Авиационный марш» (духовой оркестр)',st:'march',y:1909,mood:'lively',by:'Мелодия «Автоимперии», духовой оркестр'},/* 0.39 */
+  own_pole:{cap:'«Вальс над полем» (салонный оркестр)',st:'waltz',y:1910,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
   own_reel:{cap:'«Кинохроника», регтайм (фортепиано)',st:'rag',y:1899,mood:'lively',by:'Мелодия «Автоимперии», фортепиано'},
   own_valse:{cap:'«Вальс гонщиков» (оркестр)',st:'waltz',y:1895,mood:'calm',by:'Мелодия «Автоимперии», салонный оркестр'},
   own_tango:{cap:'«Танго мотора» (оркестр)',st:'tango',y:1913,mood:'drama',by:'Мелодия «Автоимперии», оркестр танго'},
@@ -245,7 +247,8 @@ function musWeight(t,s,ctx){let w=1;const home=s&&s.country;
   const h=AU.recent||[];const k=h.indexOf(t.title);if(k>=0)w*=0.08+0.9*k/Math.max(1,h.length);
   return w;}
 // 0.39: записи, которые не стоит ставить в граммофон (отзыв: «Друзья мсье» — однообразный скрежет): изношенные акустические валики
-const MUS_BAN={fragson_amis:1};
+// Проверка записей по шипению в тихих местах (доля энергии выше 3 кГц, плоскость шума), треску и динамике: 15 самых изношенных валиков — вон
+const MUS_BAN={fragson_amis:1,school_days:1,hot_time:1,billy_dream:1,italian_street:1,mill_stream:1,ballgame_1908:1,rainbows:1,sweetheart:1,louisville_lou:1,rainy_blues:1,steamboat_bill:1,sammy_1905:1,carolina_morning:1,farm_paree:1,devil_town:1};
 function orchTracks(){const I=Object.assign({},OWN_MUSIC,ORCH.idx||{});return Object.keys(I).filter(id=>!MUS_BAN[id]&&!(I[id]&&I[id].cue)&&(/^own_/.test(id)||remoteOk())).map(id=>{const m=I[id],own=/^own_/.test(id);return {orch:true,own,id,src:own?'music/'+id+'.m4a':MEDIA_REL+'music/'+id+'.m4a',title:m.cap||id,y:m.y||1900,st:m.st||'march',mood:m.mood||'lively',by:m.by||'',lic:m.lic||'',page:m.page||'',c:m.c||MUS_C[id]||''};});}
 // оркестр по настроению и году (для кинохроники): зерно — чтобы у ролика всегда был один и тот же марш
 function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>t.y<=y+3&&!bad[t.src]);if(!L.length)return null;const M=L.filter(t=>t.mood===mood),P=M.length?M:L;return P[hashStr(String(seed||mood)+y)%P.length];}
