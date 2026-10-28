@@ -711,7 +711,8 @@ function lmkCnHall(M,x0,x1,z0,z1,y,H,o){o=o||{};const red='#9a2a22',col='#8a2a22
   if(o.two){lmkCnRoof(M,x0,x1,z0,z1,yb+H+0.2,rh*0.35,2.2,rf);const i=Math.min(W,L)*0.16,y2=yb+H+0.2+rh*0.35;mBox(M,x0+i,y2-0.2,z0+i,x1-i,y2+H*0.42,z1-i,red,'wall',['d','t']);lmkCnRoof(M,x0+i-0.4,x1-i+0.4,z0+i-0.4,z1-i+0.4,y2+H*0.42,rh*0.7,2.0,rf);}
   else lmkCnRoof(M,x0,x1,z0,z1,yb+H+0.2,rh,2.4,rf);}
 // Пагода: восьмигранные (или квадратные) ярусы с загнутыми карнизами, навершие; в США — гоночная «пагода» Индианаполиса
-function lmkPagoda(M,o,h,hf,r,S){if(h==='us'){const B=BLD.pagoda(r,0),k=clamp((o.h||22)/22,0.8,2);lmkScale(B,k,k,k);return lmkAdd(M,B);}
+// 0.40: в США «пагода» — судейская башня Индианаполиса только для неё самой; храмы и монастыри (Чайнатаун Сан-Франциско) — настоящая пагода
+function lmkPagoda(M,o,h,hf,r,S){if(h==='us'&&!/храм|temple|монастыр|церковь|church|кумирн/i.test(o.n||'')){const B=BLD.pagoda(r,0),k=clamp((o.h||22)/22,0.8,2);lmkScale(B,k,k,k);return lmkAdd(M,B);}
   const H=clamp(o.h>0?o.h:30,10,90),R0=clamp((o.w||o.l||H*0.32)/2,3,14),n=clamp(Math.round(H/(R0*0.7+2.4)),5,13),oct=r()<0.75,sd=oct?8:4,a0=-Math.PI/sd,
     wc=r()<0.5?'#c8b48c':'#9a958c',rf=r()<0.3?'#3f6a4a':'#4a5058',dk='#2a2622';
   lmkRev(M,[0,-1,0],[[R0*1.35,0],[R0*1.35,1.6],[0,1.6]],sd,'#d8d2c4','stone',{fl:1,a0});let y=0.6;const hs=H*0.84;
@@ -719,6 +720,25 @@ function lmkPagoda(M,o,h,hf,r,S){if(h==='us'){const B=BLD.pagoda(r,0),k=clamp((o
     const T=lmkRev(M,[0,y,0],[[ri,0],[ri,hi]],sd,wc,'wall',{fl:1,a0});T[0].forEach((f,k)=>{if(k%2===i%2)lmkWin(f,lmkFP(f),0,y+hi*0.2,ri*0.32,hi*0.45,{ar:1,f:'#9a2a22',op:dk});});
     y+=hi;const re=ri+1.0+R0*0.12;lmkEaveN(M,0,y,0,ri,re,sd,a0,rf,0.35+R0*0.03,0.6+R0*0.04);lmkRev(M,[0,y,0],[[ri+0.05,0],[rn,0.7]],sd,rf,'roof',{fl:1,a0});y+=0.7;}
   lmkRev(M,[0,y,0],[[0.5,0],[0.5,1.2],[0.9,1.3],[0.9,1.6],[0.3,1.7],[0.25,H-y-0.5],[0,H-y]],8,'#c9a24a','metal');}
+/* ---------- 0.40: ротонда — Дворец изящных искусств (Сан-Франциско, 1915): стилобат, восемь колонн, антаблемент, барабан с окнами,
+   купол, две дуги колоннады по сторонам (отзыв: на Гран-при 1915 года перед крутым поворотом вместо дворца стояла судейская башня) ---------- */
+function lmkRotunda(M,o,h,hf,r,S){const H=clamp(o.h>0?o.h:45,24,60),R=clamp(Math.min(o.l||50,o.w||50)*0.3,9,19),wc='#dccaa2',tr=shade(wc,-0.12),dk='#5a4a36',dome='#b4674a',gl='#2e3446';
+  lmkPl(M,-R*1.4,R*1.4,-R*1.4,R*1.4,hf,'#8a8274',0.1);
+  // стилобат — три ступени
+  lmkRev(M,[0,-0.6,0],[[R*1.3,0],[R*1.3,0.8],[R*1.18,0.8],[R*1.18,1.5],[R*1.06,1.5],[R*1.06,2.1],[0,2.1]],8,'#cfc3a6','stone',{fl:1,a0:-Math.PI/8});
+  const y0=1.5,Hc=H*0.42,rc=clamp(R*0.075,0.9,1.5);
+  // восемь колонн по кругу и антаблемент над ними
+  for(let k=0;k<8;k++){const a=k/8*Math.PI*2+Math.PI/8;lmkCol(M,Math.cos(a)*R*0.88,y0,Math.sin(a)*R*0.88,rc,Hc,wc,'stone',10);}
+  const yE=y0+Hc;lmkRev(M,[0,yE,0],[[R*0.72,0],[R*1.0,0],[R*1.0,Hc*0.12],[R*1.04,Hc*0.12],[R*1.04,Hc*0.17],[R*0.78,Hc*0.17],[R*0.78,0]],8,tr,'stone',{fl:1,a0:-Math.PI/8});
+  // барабан с арочными окнами, кольцо-карниз, купол и фонарь
+  const yD=yE+Hc*0.17,Hd=H*0.14,rd=R*0.72;const D=lmkRev(M,[0,yD,0],[[rd,0],[rd,Hd]],16,wc,'wall');D[0].forEach((f,i)=>{if(i%2===0)lmkWin(f,lmkFP(f),0,yD+Hd*0.2,rd*0.22,Hd*0.45,{ar:1,f:tr,g:gl});});
+  lmkRev(M,[0,yD+Hd,0],[[rd*1.06,0],[rd*1.06,0.5],[rd*0.98,0.5]],16,tr,'stone');
+  const yT=yD+Hd+0.5,hD=Math.max(H-yT-2.5,rd*0.55);lmkDome(M,0,yT,0,rd*0.98,hD,dome,'roof',16);
+  lmkRev(M,[0,yT+hD-0.2,0],[[1.1,0],[1.1,1.2],[0.5,1.4],[0.5,2.2],[0,2.5]],8,'#c9a24a','metal');
+  // колоннады по дугам слева и справа: ряд колонн пониже и балка над ними
+  const Rc=R*2.1,Hk=Hc*0.7,n=7;[[Math.PI*0.62,Math.PI*1.38],[-Math.PI*0.38,Math.PI*0.38]].forEach(([a0,a1])=>{for(let k=0;k<=n;k++){const a=a0+(a1-a0)*k/n;lmkCol(M,Math.cos(a)*Rc,y0,Math.sin(a)*Rc,rc*0.8,Hk,wc,'stone',8);}
+    lmkRev(M,[0,y0+Hk,0],[[Rc-rc*1.6,0],[Rc+rc*1.6,0],[Rc+rc*1.6,Hk*0.12],[Rc-rc*1.6,Hk*0.12],[Rc-rc*1.6,0]],14,tr,'stone',{a0,a1});
+    lmkRev(M,[0,-0.6,0],[[Rc-rc*2.4,0],[Rc+rc*2.4,0],[Rc+rc*2.4,2.1],[Rc-rc*2.4,2.1],[Rc-rc*2.4,0]],14,'#cfc3a6','stone',{a0,a1});});}
 /* ---------- инженерные: акведук, обсерватория, водонапорная башня ---------- */
 // Точки по ломаной через равные доли длины (n отрезков)
 function lmkResN(P,n){const S=[0];for(let i=1;i<P.length;i++)S.push(S[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));const L=S[S.length-1],out=[];let j=0;
@@ -774,5 +794,6 @@ const LMK_B={cathedral:lmkCathedral,church:lmkChurch,chapel:lmkChapel,castle:lmk
   mosque:lmkMosque,pagoda:lmkPagoda,aqueduct:lmkAqueduct,observatory:lmkObserv,water_tower:lmkWTower};
 function lmMesh(o,host,hf){o=o||{};const h=LMK_ST[host]?host:'fr',k=o.k||'',O={k,l:+o.l||0,w:+o.w||0,h:+o.h||0,y:+o.y||0,n:o.n||'',line:o.line},
     r=mulberry32(hashStr((O.n)+'|'+k+'|'+h+'|'+Math.round(O.l))),S=lmkS(h),M=new Mesh(),H=typeof hf==='function'?hf:null;
-  try{(LMK_B[k]||lmkOther)(M,O,h,H,r,S);}catch(e){console.warn('lmMesh',k,e);M.F.length=0;lmkOther(M,O,h,H,mulberry32(1),S);}
+  const B=/изящных искусств|fine arts|ротонд|rotunda/i.test(O.n)?lmkRotunda:(LMK_B[k]||lmkOther);/* 0.40: Дворец изящных искусств — ротонда */
+  try{B(M,O,h,H,r,S);}catch(e){console.warn('lmMesh',k,e);M.F.length=0;lmkOther(M,O,h,H,mulberry32(1),S);}
   return lmkFoot(M);}

@@ -40,7 +40,7 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{})});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,airId:ev.airId||null,noArt:ev.noArt?1:0,mark:ev.mark?1:0,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{})});
 }
 const HIST_WORLD=/^(Война!|Италия вступает в войну|США вступают в войну|Перемирие!|Послевоенный спад|Чёрный вторник)$/;
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}

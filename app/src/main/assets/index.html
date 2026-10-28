@@ -49,6 +49,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .kpi{background:var(--panel2);padding:10px 12px}
 .kpi b{display:block;font-family:var(--mono);font-size:17px;font-weight:500;margin-top:2px}
+/* 0.40: сводка месяца по направлениям */
+.sumc .kpis{margin-top:8px}.sumc h2{margin:0}
+table.sum-t{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}table.sum-t th{font-weight:500;color:var(--muted);text-align:right;font-size:11px;padding:2px 4px;border-bottom:1px solid var(--line)}table.sum-t th:first-child{text-align:left}
+table.sum-t td{padding:4px;border-bottom:1px solid var(--line);vertical-align:top}table.sum-t td.n{text-align:right;font-family:var(--mono);white-space:nowrap}table.sum-t td small{display:block;font-family:var(--sans,inherit);font-size:11px;color:var(--muted);white-space:normal}table.sum-t tr.tot td{font-weight:600;border-bottom:0}
 .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)} .muted{color:var(--muted)}
 h2{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;margin:0;text-transform:uppercase;text-wrap:balance}
 h3{font-size:17px;margin:0;font-weight:600}
@@ -189,6 +193,8 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .p-deck{font-style:italic;text-align:center;font-size:15px;border-bottom:1px solid var(--ink);padding-bottom:8px}
 .p-fig{margin:10px 0 4px;border:1px solid var(--ink);background:#e4d8b8}
 .p-fig svg{display:block;width:100%;height:auto;filter:grayscale(1) sepia(.35) contrast(1.35)}
+/* 0.40: аэроплан в газете — профиль 320×140, на бумаге, как гравюра */
+.p-fig.p-air{padding:6px 10px;background:#ece2c6}.p-fig.p-air svg{max-height:200px;margin:0 auto}
 .p-cap{font-size:11px;font-style:italic;text-align:center;margin-bottom:8px}
 .p-cols{columns:2 190px;column-gap:16px;column-rule:1px solid rgba(34,28,20,.4);font-size:14.5px;line-height:1.45;text-align:justify;hyphens:auto}
 .p-cols p{margin:0 0 8px}
@@ -3012,7 +3018,7 @@ function buyDealers(s,c,n){if(warCut(s,c))return 0;const dc=dealerCost(s);n=Math
   pendingToasts.push(`🏪 +${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}${where}: покупателей видят ${Math.round(r1*100)}%`);
   return n;}
 // Представительство за границей: договор с импортёром → своё отделение → сборочный завод
-function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
+function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;if(lv>=2&&typeof intIn==='function'&&intIn(s,c))return false;/* 0.40: поглощённая марка уже строит на месте */const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
   if(s.cash<cost||(L.y&&s.y<L.y)||warCut(s,c)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
   // отделение, сборка и завод строятся месяцами (13b/105b): деньги сразу, уровень — когда достроят
   const mo=impMonths(s,c,lv+1);if(mo>0){s.cash-=cost;s.impB=s.impB||{};s.impB[c]={lv:lv+1,left:mo,t:mo};addLog(`${COUNTRIES[c].name}: ${lv+1===2?'открываем своё отделение':lv+1===3?'строим цех сборки из комплектов':'строим свой завод'} — ${money(cost)}, ${mo} мес.`,'good');return true;}
@@ -3023,7 +3029,7 @@ function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c
   return true;}
 // Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
 // сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
-function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(s.lic&&s.lic[c])||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(s.lic&&s.lic[c])||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;if(lv>=2&&typeof intIn==='function'&&intIn(s,c))return Infinity;/* 0.40: своя марка уже строит на месте */const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
   const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
   const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
   const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];
@@ -3813,7 +3819,8 @@ function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.countr
   if(s.y>=1912&&me>8e6*cpi(s)&&now-(s.maSellT??-99)>=120&&Math.random()<0.006){s.maSellT=now;const P=Math.round(me*(1.2+0.2*maRnd('sell'+now))/1e4)*1e4,who=maWho(s.country,'buy'+now);
     pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} предлагает купить «${s.company}» целиком`,deck:`${money(P)} — на ${Math.round((P/me-1)*100)}% больше стоимости компании`,
       text:`${capF(who)} предлагает выкупить «${s.company}» целиком: ${money(P)} наличными — вам и совладельцам. Если согласитесь, компанией будут управлять новые хозяева, а вы получите свою часть денег — и сможете купить другую марку в любой стране или подвести итог.\nТак в 1925 году вдовы братьев Додж продали Dodge Brothers банкирам Dillon, Read & Co. за 146 миллионов долларов — крупнейшая сделка своего времени.`,
-      choices:[[`Продать за ${money(P)}${partnersShare(s)>0?` (вам — ${money(Math.round(P*(1-partnersShare(s))))})`:''}`,'ma:sell:Y:'+P],['Отказаться','ma:sell:N']]},true);return;}}
+      // 0.40: на «Юном» первой стоит кнопка «Отказаться» — ребёнок жмёт первую и терял компанию (карьера кончалась в 1914 году)
+      choices:(DIF().simple?[['Отказаться','ma:sell:N'],[`Продать за ${money(P)}`,'ma:sell:Y:'+P]]:[[`Продать за ${money(P)}${partnersShare(s)>0?` (вам — ${money(Math.round(P*(1-partnersShare(s))))})`:''}`,'ma:sell:Y:'+P],['Отказаться','ma:sell:N']])},true);return;}}
 
 /* ---------- банкротства и торги ---------- */
 // Исторические развязки марок (кто купил, когда, продолжилась ли марка). Если вы там торгуете — можно перебить покупателя.
@@ -4667,7 +4674,7 @@ function airOrderAdd(s,o){const A=s.air;o.id=o.id||('ao'+(A.oid=(A.oid||0)+1));o
 function airMonth(s,r){const A=s.air;if(!A)return;const t=tNow(s),R={rev:0,ord:0,mat:0,wage:0,ovh:0,hire:0,tool:0,made:0,sold:0,ordN:0,lic:0,mk:{},fine:0,roy:0};r.air=R;
   if(A.b){A.b.left--;if(A.b.left<=0){A.b=null;A.lv=1;A.cap=Math.max(A.cap||0,AIRSHOP.cap);A.wk=Math.max(A.wk||0,AIRSHOP.wk);s.lines=s.lines||{car:1};s.lines.air=1;
     addLog(`Авиацех готов: ангар на ${fmtN(AIRSHOP.cap*1000/300)} лёгких аэропланов в месяц, ${A.wk} мастеров — столяры, мотористы, швеи для полотна.`,'good');
-    pushEvent({own:1,kicker:'Авиацех',title:`«${s.company}» строит аэропланы`,deck:'Ангар, стапели, швейная для полотна',text:`Авиацех готов. Начертите первый аэроплан: назначение, схема, мотор, крыло — расчёт покажет скорость, подъём и потолок. Опытный образец строится несколько месяцев, потом — первый полёт.\nАэропланы покупают спортсмены и лётные школы, армия проводит конкурсы, а газеты пишут о каждом рекорде.`,choices:[['Начертить аэроплан','air:design'],['Позже','ok']]},true);}}
+    pushEvent({own:1,noArt:1,kicker:'Авиацех',title:`«${s.company}» строит аэропланы`,deck:'Ангар, стапели, швейная для полотна',text:`Авиацех готов. Начертите первый аэроплан: назначение, схема, мотор, крыло — расчёт покажет скорость, подъём и потолок. Опытный образец строится несколько месяцев, потом — первый полёт.\nАэропланы покупают спортсмены и лётные школы, армия проводит конкурсы, а газеты пишут о каждом рекорде.`,choices:[['Начертить аэроплан','air:design'],['Позже','ok']]},true);}}
   A.capB=(A.capB||[]).filter(b=>{b.left--;if(b.left<=0){A.cap=(A.cap||0)+b.add;const B=AIR_CAPB.find(x=>x.k===b.k)||{n:'Цех'};addLog(`Авиацех: «${B.n}» готов — места в ангарах на ${fmtN(A.cap)} т взлётного веса в месяц.`,'good');pendingToasts.push('✈ '+B.n);return false;}return true;});
   if(A.lineB){A.lineB.left--;if(A.lineB.left<=0){A.line=A.lineB.lv;A.lineB=null;const L=AIR_LINE[A.line];addLog(`Авиацех: «${L.n}» — ${L.d}.`,'good');pendingToasts.push('✈ '+L.n);}}
   if(!A.lv)return;
@@ -4750,7 +4757,7 @@ function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats
   return res;}
 function airFlightNews(s,md,res){const ch=[];if(res.kind!=='crash'&&md.role!=='race'&&md.status==='proto')ch.push([`В серию (оснастка ${money(airToolCost(s,md))})`,'air:prod:'+md.id]);
   if(res.kind==='flaw')ch.push(['Доводка — месяц','air:fix:'+md.id]);ch.push(['Понятно','ok']);
-  pushEvent({own:1,kicker:'Первый полёт',title:res.kind==='crash'?`«${md.name}» разбит на испытаниях`:res.kind==='flaw'?`«${md.name}» летает — но не так, как задумано`:`«${md.name}» летает!`,deck:AIR_ROLES[md.role].n,text:res.text,choices:ch},true);}
+  pushEvent({own:1,airId:md.id,kicker:'Первый полёт',title:res.kind==='crash'?`«${md.name}» разбит на испытаниях`:res.kind==='flaw'?`«${md.name}» летает — но не так, как задумано`:`«${md.name}» летает!`,deck:AIR_ROLES[md.role].n,text:res.text,choices:ch},true);}
 function airProdStart(s,md){if(!md||md.status!=='proto'||!md.flown)return false;const c=airToolCost(s,md);if(s.cash<c)return false;s.cash-=c;md.status='tool';md.toolLeft=1;md.toolCost=c;md.price=0;
   addLog(`«${md.name}»: стапели и шаблоны для серии — ${money(c)}. Через месяц — первые серийные аэропланы.`);return true;}
 /* ---------- события авиацеха (из checkEvents) ---------- */
@@ -4763,13 +4770,13 @@ function airBestFor(s,role){const t=tNow(s);let best=null,bq=0;(s.air.models||[]
 function airCheck(s){const A=s.air;if(!A||!A.lv||s.pending.length)return;const t=tNow(s),T=mi(s);
   // опытный образец готов — первый полёт
   if((A.proto||[]).length){const id=A.proto.shift(),md=A.models.find(m=>m.id===id);if(md&&md.status==='proto'&&!md.flown){const me=airHeroFlies(s),bp=airBestPilot(s);
-    pushEvent({own:1,kicker:'Авиацех',title:`«${md.name}»: опытный образец готов`,deck:'Первый полёт',img:'',text:`Мастера выкатили «${md.name}» из ангара. ${AIR_ROLES[md.role].n}, ${airParts(md).f.name.toLowerCase()}, ${airParts(md).e.name}. Расчёт обещает ${Math.round(airStats(md,t).v)} км/ч — но расчёт ещё никогда не летал.\nКто поднимет его в воздух?`,
+    pushEvent({own:1,airId:md.id,kicker:'Авиацех',title:`«${md.name}»: опытный образец готов`,deck:'Первый полёт',img:'',text:`Мастера выкатили «${md.name}» из ангара. ${AIR_ROLES[md.role].n}, ${airParts(md).f.name.toLowerCase()}, ${airParts(md).e.name}. Расчёт обещает ${Math.round(airStats(md,t).v)} км/ч — но расчёт ещё никогда не летал.\nКто поднимет его в воздух?`,
       choices:[[me?'✈ Лететь самому (3D)':'✈ Сесть за штурвал (3D)','air:fly:'+id],[`Доверить: ${bp.hero?'вы сами, без съёмки':bp.n}`,'air:test:'+id],['Позже','ok']]},true);return;}}
   // перемирие: военные заказы расторгнуты
   if(t>=1918.87&&!A.armist&&airWarOn(s.country,1918.8)){A.armist=1;const L=A.orders.filter(o=>o.mil);if(L.length){let comp=0;L.forEach(o=>{comp+=o.left*o.price*0.15;});A.orders=A.orders.filter(o=>!o.mil);comp=Math.round(comp);s.cash+=comp;
-    pushEvent({own:1,kicker:'Перемирие',title:'Военное министерство расторгает заказы на аэропланы',deck:`Неустойка заводу — ${money(comp)}`,text:`Война кончилась — армии не нужны тысячи аэропланов. Все контракты расторгнуты, за недоделанное министерство платит пятнадцатую долю цены. На складах стоят тысячи новых машин и моторов — скоро их распродадут за гроши.\nЧто дальше? Почта, авиалинии, спортсмены и аэроклубы — рынок маленький, но он растёт.`},true);return;}}
+    pushEvent({own:1,noArt:1,kicker:'Перемирие',title:'Военное министерство расторгает заказы на аэропланы',deck:`Неустойка заводу — ${money(comp)}`,text:`Война кончилась — армии не нужны тысячи аэропланов. Все контракты расторгнуты, за недоделанное министерство платит пятнадцатую долю цены. На складах стоят тысячи новых машин и моторов — скоро их распродадут за гроши.\nЧто дальше? Почта, авиалинии, спортсмены и аэроклубы — рынок маленький, но он растёт.`},true);return;}}
   // Версальский договор: Германии запрещено строить аэропланы
-  if(s.country==='de'&&t>=1919.5&&!A.versailles){A.versailles=1;pushEvent({own:1,kicker:'Версаль',title:'Германии запрещено строить аэропланы',deck:'До 1922 года — ни одного',text:`По Версальскому договору союзная комиссия опечатывает авиазаводы и режет моторы. Фоккер вывез в Голландию 220 самолётов и 400 моторов в шести поездах; Юнкерс строит в Швеции и под Москвой.\nПеренести сборку за границу — дорого, но авиацех будет жить.`,
+  if(s.country==='de'&&t>=1919.5&&!A.versailles){A.versailles=1;pushEvent({own:1,noArt:1,kicker:'Версаль',title:'Германии запрещено строить аэропланы',deck:'До 1922 года — ни одного',text:`По Версальскому договору союзная комиссия опечатывает авиазаводы и режет моторы. Фоккер вывез в Голландию 220 самолётов и 400 моторов в шести поездах; Юнкерс строит в Швеции и под Москвой.\nПеренести сборку за границу — дорого, но авиацех будет жить.`,
     choices:[[`Перенести сборку за границу (${money(Math.round((s.plantVal||0)*0.05+8000*cpi(s)))})`,'air:abroad'],['Законсервировать авиацех','ok']]},true);return;}
   // военные заказы: в войну — раз в квартал, в мирное время — весной и осенью.
   // 0.38: первый заказ на модель — только через конкурс министерства (отзыв: «должны выполнять испытание для получения заказа,
@@ -4784,17 +4791,17 @@ function airCheck(s){const A=s.air;if(!A||!A.lv||s.pending.length)return;const t
       if(proven&&B.q>=0.9){if(!best||n*airMilPrice(s,B.md)>best.n*best.price)best={md:B.md,n,price:airMilPrice(s,B.md),c,months,q:B.q};}
       else if(!trial||n>trial.n)trial={role,n,c,months};});
     if(best){const who=airMinistry(best.c,t,best.md.role);A.offer={md:best.md.id,n:best.n,price:best.price,due:T+best.months+1,who,c:best.c,mil:1};
-      pushEvent({own:1,kicker:war?'Военный заказ':'Заказ армии',title:`${who}: ещё ${fmtN(best.n)} «${best.md.name}»`,deck:`по ${money(best.price)} — ${money(best.n*best.price)}, за ${best.months} мес.`,
+      pushEvent({own:1,airId:best.md.id,mark:1,kicker:war?'Военный заказ':'Заказ армии',title:`${who}: ещё ${fmtN(best.n)} «${best.md.name}»`,deck:`по ${money(best.price)} — ${money(best.n*best.price)}, за ${best.months} мес.`,
         text:`«${best.md.name}» уже знают в войсках: ${war?'фронт просит ещё, и министерство заказывает без нового конкурса':'министерство продлевает заказ без нового конкурса'}. «${best.md.name}» — ${best.q>=1.05?'лучше':best.q>=0.95?'не хуже':'чуть хуже'} ${airRefEntry(best.md.role,t)[1]}. Цена — расходы завода и пятая часть сверху.\nВ авиацехе места на ${fmtN(Math.round(airCapUnits(s,best.md)))} таких аэропланов в месяц. Не успеете — неустойка десятая часть цены.${war?` Четверть суммы (${money(Math.round(best.n*best.price*0.25))}) министерство платит вперёд — на ангары и мастеров.`:''}`,
         choices:[['Подписать','air:sign'],['Отказаться','air:nosign']]},true);return;}
     if(trial){const ev=airTrialNew(s,trial.role,trial.c,trial.n,trial.months,war);if(ev){const who=airMinistry(trial.c,t,trial.role),R=AIR_ROLES[trial.role],F=airEvField(s,ev);
-      pushEvent({own:1,kicker:war?'Военный конкурс':'Конкурс министерства',title:`${who} объявляет конкурс: ${R.n.toLowerCase()}`,deck:`победителю — заказ на ${fmtN(trial.n)} машин, второму — на ${fmtN(Math.round(trial.n*0.4))}`,
+      pushEvent({own:1,noArt:1,kicker:war?'Военный конкурс':'Конкурс министерства',title:`${who} объявляет конкурс: ${R.n.toLowerCase()}`,deck:`победителю — заказ на ${fmtN(trial.n)} машин, второму — на ${fmtN(Math.round(trial.n*0.4))}`,
         text:`${who} ${war?'срочно ищет':'выбирает'} ${R.n.toLowerCase()} для своих отрядов и устраивает сравнительные испытания в ${MONTHS_P[ev.m]}: подъём на высоту на время, скорость на базе, посадка в круг у трибун. Комиссия ставит оценку каждой машине.\nУчастники: ${F.map(x=>`${x.n} (${x.plane})`).join(', ')} — и вы, если заявите облетанный аэроплан на вкладке «Гонки». Лететь можно самому или доверить лётчику.\n${R.d}`,
         choices:[['К конкурсу','air:ev:'+ev.key],['Позже','ok']]},true);return;}}
     // в войну: если своих годных аэропланов нет — строить чужие по лицензии
     if(war&&(A.cap||0)>=1&&!A.licOffer||war&&A.licOffer&&T-A.licOffer>=6){for(const role of ['fight','recon','bomb']){const B=airBestFor(s,role);if(B&&B.q>=0.8)continue;const L=airLicChoice(s,role);if(!L)continue;
       if(A.models.some(m=>m.lic&&m.name===L[1]&&m.status!=='off'))continue;A.licOffer=T;const md={...L[2],role,name:L[1]},n=Math.max(2,Math.round(Math.min(airMilWant(s,{...md,milRep:20},4)*0.6,airCapUnits(s,md)*4)));
-      A.licO={role,name:L[1],d:L[2],n};pushEvent({own:1,kicker:'Военный заказ',title:`Строить «${L[1]}» по лицензии`,deck:`${fmtN(n)} штук за 4 месяца`,text:`Фронту нужны ${AIR_ROLES[role].n.toLowerCase()}ы, а годного своего у «${s.company}» нет. Министерство предлагает строить «${L[1]}» по чертежам — с отчислением конструктору восьмой доли цены. Так в войну строили все: SPAD — Блерио и каретники, «Кэмелы» — мебельные фабрики, «Альбатросы» — вагонные заводы.`,
+      A.licO={role,name:L[1],d:L[2],n};pushEvent({own:1,noArt:1,kicker:'Военный заказ',title:`Строить «${L[1]}» по лицензии`,deck:`${fmtN(n)} штук за 4 месяца`,text:`Фронту нужны ${AIR_ROLES[role].n.toLowerCase()}ы, а годного своего у «${s.company}» нет. Министерство предлагает строить «${L[1]}» по чертежам — с отчислением конструктору восьмой доли цены. Так в войну строили все: SPAD — Блерио и каретники, «Кэмелы» — мебельные фабрики, «Альбатросы» — вагонные заводы.`,
         choices:[['Строить по лицензии','air:lic'],['Отказаться','ok']]},true);return;}}}
   // исторические лётчики погибают в свой год (по истории)
   (A.pil||[]).forEach(p=>{const P=AIR_PILOTS.find(x=>x.id===p.id);if(P&&P.d&&t>=P.d+0.5&&!p.gone){p.gone=1;}});A.pil=(A.pil||[]).filter(p=>!p.gone);}
@@ -4844,7 +4851,7 @@ function airIntroPapers(s){const A=s.air,md=A.models[0],t=tNow(s),st=airStats(md
     text:t<1908.6?'Аэроплан — машина тяжелее воздуха, которая летит сама, — ещё диковина. Сантос-Дюмон пролетел 220 метров над Багатель, братья Вуазен строят «коробки» на заказ, а в Америке братья Райт уверяют, что летают уже четыре года. Покупателей — единицы: спортсмены, мечтатели и богачи.\nКто построит аэроплан, который летает дольше минуты и поворачивает, получит приз и славу.':
       t<1914.5?'Аэроплан купить можно: спортсмены летают на митингах за призы, лётные школы учат первых авиаторов, газеты платят тысячи за перелёты — через Ла-Манш, из Лондона в Манчестер, из Парижа в Мадрид. Армии устраивают конкурсы и заказывают первые десятки аэропланов-разведчиков.\nКаждый рекорд — заголовок на первой полосе и заказы.':
       'Война: аэропланы-разведчики ведут артиллерию, истребители дерутся над окопами, бомбардировщики летят на города. Министерства заказывают тысячи машин у всех, кто может строить.'},true);
-  pushEvent({own:1,kicker:cityOf(s),title:`«${s.company}» строит аэропланы`,deck:`Первый — «${md.name}»`,
+  pushEvent({own:1,airId:md.id,kicker:cityOf(s),title:`«${s.company}» строит аэропланы`,deck:`Первый — «${md.name}»`,
     text:`В мастерской ${A.wk} мастеров, в кассе ${money(s.cash)}. «${md.name}»: ${AIR_ROLES[md.role].n.toLowerCase()}, ${airParts(md).f.name.toLowerCase()}, ${airParts(md).e.name}; по расчёту — ${Math.round(st.v)} км/ч.\n${md.status==='prod'?'Аэроплан уже летает — его можно продавать, выставлять на состязания и улучшать.':'Опытный образец готов к первому полёту.'} Деньги приносят продажи спортсменам и школам, призы состязаний и заказы армии.\nВкладки те же, что у автомобильных и мотоциклетных фирм: «Завод» — ангар и мастерская, «Модели» — аэропланы и конструктор, «Рынок» — заказчики, «Гонки» — состязания, рекорды${t>=1914.5?' и фронт':''}. Один ход — один месяц.`},true);}
 /* ---------- итоги года и наследие ---------- */
 function airYear(s){const A=s.air;if(!A||!A.lv)return;const t=s.y+0.5,Y=A.y||{sold:0,rev:0,home:0},tot=AIR_ROLE_K.reduce((a,r)=>a+airMktRole(s.country,r,t),0);
@@ -5354,7 +5361,7 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{})});
+  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,airId:ev.airId||null,noArt:ev.noArt?1:0,mark:ev.mark?1:0,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{})});
 }
 const HIST_WORLD=/^(Война!|Италия вступает в войну|США вступают в войну|Перемирие!|Послевоенный спад|Чёрный вторник)$/;
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
@@ -8177,9 +8184,13 @@ function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[
     <div class="p-btns"><button class="p-btn" data-act="paperBack">← К номеру</button></div></article>`;}
 function paperHTML(o,s){
   // своя машина — только в новостях о компании; в остальных — фото события или ничего
-  const M=MAST[s.country],own=o.car||o.carId||o.own,md=o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
+  // 0.40: новость об аэроплане — рисунок аэроплана (airId), новость без машины (noArt) — без рисунка; раньше в заметке о перелёте
+  // или конкурсе стоял лучший автомобиль или мотоцикл компании (отзыв: «изображение на объявлении часто ни о том»)
+  const M=MAST[s.country],own=o.car||o.carId||o.own,air=o.air||(o.airId&&s.air?s.air.models.find(m=>m.id===o.airId):null)||null;
+  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),py=o.y||s.y,pm=o.m===undefined?s.m:o.m,also=(o.also?o.also:flavorPick(s,py,pm,2,o.arch||0,false)).map(flvByTitle).filter(Boolean);
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
+      :air?`<figure class="p-fig p-air" style="margin-inline:0">${airArtSVG(air,{y:py+pm/12,c:s.country,mark:o.mark||0})}</figure><div class="p-cap">${esc(o.caption||('«'+air.name+'» компании «'+s.company+'»'))}</div>`
       :md?`<figure class="p-fig" style="margin-inline:0">${carArt(md,Object.assign({paper:1},o.carOpt||{}))}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>`:'';
   const hist=o.hist&&IMG[o.hist]?`<div class="p-hist"><img src="${IMG[o.hist].src}" alt="" referrerpolicy="no-referrer"><span>${esc(o.histCap||'Так было в истории')}</span></div>`:'';
   // кинохроника — кадром плёнки прямо в номере (кнопка «▶» запускает ролик, газета остаётся открытой)
@@ -8202,7 +8213,7 @@ const PW=document.getElementById('paperWrap');
 let PAPER_CUR=null;
 function showPaper(o,store=true){
   if(store){if(!o.also)o.also=flavorPick(G,G.y,G.m,2,G.papers.length+mi(G),true);
-    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||'',mean:o.mean||''});if(G.papers.length>40)G.papers.shift();save();}
+    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,airId:o.airId||(o.air&&o.air.id)||null,noArt:o.noArt?1:0,mark:o.mark?1:0,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||'',mean:o.mean||''});if(G.papers.length>40)G.papers.shift();save();}
   PAPER_CUR=o;PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}
@@ -14749,6 +14760,25 @@ function qbar(r,label,xid){const [l,tone]=qLabel(r),h=`<div class="row small" st
 const pct=(x,d=0)=>(x*100).toFixed(d).replace('.',',')+'%';
 function techEffects(lv){const e=[];if(lv.hrs)e.push(`−${Math.round((1-lv.hrs)*100)}% часов на машину`);if(lv.cap)e.push(`+${Math.round((lv.cap-1)*100)}% мощности`);if(lv.mat)e.push(`деталь дешевле на ${Math.round((1-lv.mat)*100)}%`);if(lv.def)e.push(`брак ${pct(lv.def,1)}`);if(lv.dem)e.push(`спрос +${Math.round(lv.dem*100)}%`);return e.join(' · ');}
 function unitCost(md,s){s=s||G;return matCost(md,s)+hoursPerCar(md,s)/hoursPerWorker(s)*wageNow(s);}
+// 0.40: сводка месяца наверху «Завода» и «Ангара»: сделано, продано и выручка по направлениям — автомобили, мотоциклы, аэропланы
+// (отзыв: «продажи, производство авиа для меня загадка, надо искать — выведи суммарные данные наверх с разбивкой по направлениям»)
+function monthSumCard(s,opt){opt=opt||{};const L=s.last,A=s.air,R=(L&&L.air)||null,air=opt.air;
+  const kp=`<div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Касса</span><b class="${s.cash<0?'bad':''}">${money(s.cash)}</b></div><div class="kpi"><span class="label">${air?'Слава':'Репутация'}</span><b>${air?Math.round(A.fame):Math.round(s.rep)+'<span class="muted small">/100</span>'}</b></div></div>`;
+  if(!L)return `<section class="card sumc"><div class="row"><h2>Итоги месяца</h2><span class="small muted">первый месяц впереди</span></div>${kp}<p class="small muted" style="margin-top:6px">Сводка по направлениям появится после первого хода.</p></section>`;
+  const rows=[];const car=L.made||L.sold||L.milN||L.ordN||lineOn(s,'car'),moto=L.mmade||L.msold||L.mordN||(s.lines&&s.lines.moto),av=R&&(R.made||R.sold||R.ordN||A&&A.lv>0);
+  const sub=(a,b)=>[a?`армии ${fmtN(a)}`:'',b?`по заказам ${fmtN(b)}`:''].filter(Boolean).join(', ');
+  const on=(L.ordN||0)+(L.mordN||0),ordC=on?(L.ord||0)*(L.ordN||0)/on:0,ordM=on?(L.ord||0)-ordC:0;/* заказы ведомств — по числу машин и мотоциклов */
+  if(car)rows.push({n:'🚗 Автомобили',made:L.made||0,sold:(L.sold||0)+(L.milN||0)+(L.ordN||0),sub:sub(L.milN,L.ordN),rev:(L.rev||0)-(L.mrev||0)+(L.mil||0)+ordC});
+  if(moto)rows.push({n:'🏍 Мотоциклы',made:L.mmade||0,sold:(L.msold||0)+(L.mordN||0),sub:sub(0,L.mordN),rev:(L.mrev||0)+ordM});
+  if(av)rows.push({n:'✈ Аэропланы',made:R.made||0,sold:(R.sold||0)+(R.ordN||0),sub:R.ordN?`контракты ${fmtN(R.ordN)}`:'',rev:(R.rev||0)+(R.ord||0)+(R.lic||0),net:R.net});
+  const tot={made:rows.reduce((a,r)=>a+r.made,0),sold:rows.reduce((a,r)=>a+r.sold,0),rev:rows.reduce((a,r)=>a+r.rev,0)};
+  // что ещё в работе: заказы ведомств и армии по машинам и аэропланам
+  const oc=(s.orders||[]).reduce((a,o)=>a+(o.left||0),0),oa=A?(A.orders||[]).reduce((a,o)=>a+(o.left||0),0):0;
+  const work=[oc?`машин по заказам — ${fmtN(oc)}`:'',oa?`аэропланов по контрактам — ${fmtN(oa)}`:''].filter(Boolean).join(' · ');
+  const tr=r=>`<tr><td>${r.n}</td><td class="n">${fmtN(r.made)}</td><td class="n">${fmtN(r.sold)}${r.sub?`<small>${r.sub}</small>`:''}</td><td class="n">${money(r.rev)}${r.net!==undefined?`<small class="${r.net<0?'bad':'good'}">итог ${money(r.net)}</small>`:''}</td></tr>`;
+  return `<section class="card sumc"><div class="row"><h2>Итоги месяца</h2><span class="small muted">${esc(L.label||dstr(s))}</span></div>
+    <table class="sum-t"><tr><th></th><th>Сделано</th><th>Продано</th><th>Выручка</th></tr>${rows.map(tr).join('')}${rows.length>1?`<tr class="tot"><td>Всего</td><td class="n">${fmtN(tot.made)}</td><td class="n">${fmtN(tot.sold)}</td><td class="n">${money(tot.rev)}</td></tr>`:''}</table>
+    ${work?`<p class="small muted" style="margin-top:4px">В работе: ${work}</p>`:''}${kp}</section>`;}
 function vPlant(){
   const s=G,L=s.last,cap=capEff(s),act=s.models.filter(m=>m.status==='prod');
   const util=capUtil(s),hpw=hoursPerWorker(s);
@@ -14789,8 +14819,8 @@ function vPlant(){
   const staffHTML=`    <div class="chips" style="margin-top:8px"><button class="chip ${s.staffAuto?'on':''}" data-act="staffAuto" data-v="1">Нанимать по плану выпуска<small>отдел кадров сам держит нужный штат</small></button><button class="chip ${s.staffAuto?'':'on'}" data-act="staffAuto" data-v="0">Вручную<small>шаг — 10% штата</small></button></div>
     <div class="label" style="margin-top:12px">Зарплата</div><div class="chips">${Object.entries(WAGE_POL).map(([k,w])=>`<button class="chip ${wp===k?'on':''}" data-act="wagePol" data-v="${k}" ${w.y&&s.y<w.y-techEarly(s)?'disabled':''}>${w.name}<small>×${String(w.k).replace('.',',')} ставки · выработка ${w.prod>=1?'+':'−'}${Math.round(Math.abs(w.prod-1)*100)}% · текучесть ${w.turn}${w.y&&s.y<w.y-techEarly(s)?' · с '+(w.y-techEarly(s))+' г.':''}</small></button>`).join('')}</div>`;
   return `<div class="scene">${plantHTML(s)}</div>
+  ${monthSumCard(s)}
   ${advisorCard(s)}
-  <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?fmtN(L.sold+(L.milN||0)+(L.ordN||0)+(L.msold||0)+(L.mordN||0))+' шт.':'—'}</b>${L&&(L.milN||L.ordN||L.msold||L.mordN)?`<small class="muted" style="display:block;font-size:11px;margin-top:2px">${[L.sold?(L.msold?'машин ':'покупателям ')+fmtN(L.sold):'',L.msold?'мотоциклов '+fmtN(L.msold):'',L.milN?'армии '+fmtN(L.milN):'',(L.ordN||L.mordN)?'по заказам '+fmtN((L.ordN||0)+(L.mordN||0)):''].filter(Boolean).join(' · ')}</small>`:''}</div><div class="kpi"><span class="label">Репутация</span><b>${Math.round(s.rep)}<span class="muted small">/100</span></b></div></div>
   ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><h3>${P.name} <button class="btn sm" data-act="founder">О нём ▸</button></h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
   <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${money(s.cash)}</span></div>${spark(s.hist.cash)}</section>
   ${foldCard('cap',true,'<h2>Мощности</h2>',`
@@ -15037,7 +15067,10 @@ function vMarket(){
     const room=dealerRoom(s,c),reach=reachOf(s,c),tp=dealerTPc(s,c),cap=d*tp,short=dealersShort(s,c),gs=room>0?0:dealerGrowSteps(s,c),gc=dealerGrowCost(s,c);
     const add=(n,lab,pri)=>{const k=Math.min(n,room);return k<1?'':`<button class="btn sm${pri?' primary':''}" data-act="dealers" data-c="${c}" data-n="${k}" ${s.cash<k*dc?'disabled':''}>+${fmtN(k)}${lab||''} · ${money(k*dc)}</button>`;};
     const cut=c!==home&&warCut(s,c);
-    const big=Math.max(5,Math.round(mx*0.1/5)*5),bld=c!==home&&impBuilding(s,c),lic=c!==home&&s.lic&&s.lic[c],nx=!lic&&!bld&&lv<4?IMP_LV[lv+1]:null,nxC=nx?impCost(s,c,lv+1):0,nxOk=nx&&(!nx.y||s.y>=nx.y)&&!cut&&!(tradeBan(s,c)&&lv+1<3),mo=nx?impMonths(s,c,lv+1):0;
+    // 0.40: поглощённая марка строит ваши машины на месте — сборка из комплектов и свой завод здесь не нужны и не предлагаются
+    // (отзыв: «зачем сборочное производство в США, если у меня там под моим брендом компания?»)
+    const own=c!==home&&!cut&&intIn(s,c);
+    const big=Math.max(5,Math.round(mx*0.1/5)*5),bld=c!==home&&impBuilding(s,c),lic=c!==home&&s.lic&&s.lic[c],nx=!lic&&!bld&&lv<4&&!(own&&lv>=2)?IMP_LV[lv+1]:null,nxC=nx?impCost(s,c,lv+1):0,nxOk=nx&&(!nx.y||s.y>=nx.y)&&!cut&&!(tradeBan(s,c)&&lv+1<3),mo=nx?impMonths(s,c,lv+1):0;
     const upLab=['Договор с импортёром','Открыть своё отделение','Сборка из комплектов','Построить свой завод'][lv];
     const up=c===home||!nx?'':`<button class="btn sm${lv===0?' primary':''}" data-act="impUp" data-c="${c}" ${!nxOk||s.cash<nxC?'disabled':''}>${upLab} · ${money(nxC)}${mo?` · ${mo} мес.`:''}</button>`;
     const bo=null,bc=null,bp=0; // 0.30: продажа марок — в «Сделках» (переговоры, доли, торги)
@@ -15055,8 +15088,8 @@ function vMarket(){
     // 0.33: что забрала война — пока вы не вернулись в страну
     const SZ=c!==home&&s.seized&&s.seized[c],seizedTxt=SZ&&!lv&&!dealerCount(s,c)?`<p class="small bad" style="margin-top:4px">⛔ ${MONTHS[SZ.m]} ${SZ.y}: в войну конфисковано — ${esc(SZ.what.join(', '))}. Здесь у вас сейчас ничего нет и продаж нет; рынок открывается заново — с импортёра${s.y>=1919?'':' (после войны)'} или покупкой местной марки.</p>`:'';
     const lvTxt=c===home?'':seizedTxt+boTxt+cutTxt+(bld?`<p class="small warn" style="margin-top:4px">${cut||bld.frozen?`Стройка заморожена блокадой: ${esc(IMP_LV[bld.lv].n.toLowerCase())} — осталось ${bld.left} мес. после войны`:`Строится: ${esc(IMP_LV[bld.lv].n.toLowerCase())} — ещё ${bld.left} мес.`}</p>`:'')+(lic?`<p class="small good" style="margin-top:4px">Лицензия: ${lic.at>mi(s)?`местный завод начнёт выпуск через ${lic.at-mi(s)} мес.`:`местный завод делает ваши машины — без пошлины и доставки, вам ${Math.round(LIC_ROY*100)}% цены с каждой`}.</p>`:'')
-      +(intIn(s,c)&&!cut?`<p class="small good" style="margin-top:4px">Заводы поглощённой марки «${esc(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)}» делают ваши машины здесь: пошлины нет.</p>`:'')+(subList(s).filter(h=>h.c===c).length?`<p class="small muted" style="margin-top:4px">Ваши дочерние компании здесь: ${subList(s).filter(h=>h.c===c).map(h=>'«'+esc(h.nm||h.n)+'» '+Math.round(h.st*100)+'%').join(', ')} — свои марки и дилеры, вам — дивиденды.</p>`:'')
-      +(cut?'':lic&&lv>=1?`<p class="small muted" style="margin-top:4px">Пока действует лицензия, своё отделение, сборку и завод здесь не открыть: машины делает местный завод. Хотите строить своё — отзовите лицензию (кнопка ниже).</p>`:lv===0?`<p class="small" style="margin-top:4px">Своих продавцов здесь нет. Первый шаг — <b>импортёр</b>: местная фирма берёт ${Math.round(IMP_LV[1].cut*100)}% цены и продаёт ваши машины через агентов в больших городах${pot>0?`. По прикидке ваши модели брали бы здесь ≈ <b class="num">${fmtD(pot*Math.pow(IMP_LV[1].cap,0.7))}</b> в месяц`:''}. Или — <b>лицензия</b> местному заводу: почти даром, без пошлины, но вам лишь ${Math.round(LIC_ROY*100)}% цены.</p>`
+      +(own?`<p class="small good" style="margin-top:4px">Заводы поглощённой марки «${esc(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)}» делают ваши машины здесь: без пошлины и доставки, для покупателей — местная марка. Сборка из комплектов и свой завод здесь не нужны${lv>=3?` — свой ${lv>=4?'завод':'цех сборки'} здесь тоже есть`:''}.</p>`:'')+(subList(s).filter(h=>h.c===c).length?`<p class="small muted" style="margin-top:4px">Ваши дочерние компании здесь: ${subList(s).filter(h=>h.c===c).map(h=>'«'+esc(h.nm||h.n)+'» '+Math.round(h.st*100)+'%').join(', ')} — свои марки и дилеры, вам — дивиденды.</p>`:'')
+      +(cut||(own&&lv>=2)?'':lic&&lv>=1?`<p class="small muted" style="margin-top:4px">Пока действует лицензия, своё отделение, сборку и завод здесь не открыть: машины делает местный завод. Хотите строить своё — отзовите лицензию (кнопка ниже).</p>`:lv===0?`<p class="small" style="margin-top:4px">Своих продавцов здесь нет. Первый шаг — <b>импортёр</b>: местная фирма берёт ${Math.round(IMP_LV[1].cut*100)}% цены и продаёт ваши машины через агентов в больших городах${pot>0?`. По прикидке ваши модели брали бы здесь ≈ <b class="num">${fmtD(pot*Math.pow(IMP_LV[1].cap,0.7))}</b> в месяц`:''}. Или — <b>лицензия</b> местному заводу: почти даром, без пошлины, но вам лишь ${Math.round(LIC_ROY*100)}% цены.</p>`
       :lv===1?`<p class="small muted" style="margin-top:4px">Импортёр берёт ${Math.round(IL.cut*100)}% цены и торгует только в больших городах (до ${fmtN(mx)} агентов). <b>Своё отделение</b> — как Ford of Britain в 1909 году: без посредника, дилеры по всей стране, содержание ${money(impUpkeep({...s,imp:{...(s.imp||{}),[c]:2}},c))} в месяц.</p>`
       :lv===2?`<p class="small muted" style="margin-top:4px">Своё отделение «${esc(s.company)}». ${s.y>=IMP_LV[3].y?`<b>Сборка из комплектов</b> — как у Ford в Траффорд-парке (1911): пошлина только на детали (${Math.round(IMP_LV[3].tar*100)}% ставки), доставка вдвое дешевле, покупатели считают машины почти своими; содержание ${money(impUpkeep({...s,imp:{...(s.imp||{}),[c]:3}},c))} в месяц, нужен объём.`:'Сборка за границей появится с 1904 года.'}</p>`
       :lv===3?`<p class="small good" style="margin-top:4px">Сборка из комплектов: пошлина ${pct(tf,0)}, доставка вдвое дешевле. ${s.y>=IMP_LV[4].y?`<b>Свой завод</b> — пошлины и доставки нет совсем, машины для покупателей местные; но в войну завод противника конфискуют.`:''}</p>`
@@ -15354,8 +15387,8 @@ function airPlantView(s){const A=s.air,L=s.last,R=A.last||{},t=tNow(s),P=PIONEER
     <tr><td><b>Итог месяца</b></td><td class="n"><b class="${L.profit>=0?'good':'bad'}">${money(L.profit)}</b></td></tr></table>`:'<p class="small muted">Отчёт появится после первого месяца. Нажмите «Следующий месяц» внизу.</p>';
   const ml=maxLoan(s),stp=Math.max(500,Math.round(ml/10/500)*500);
   return `<div class="carbox airbox">${A.models.length?airArtSVG(A.models.filter(m=>m.status!=='off').slice(-1)[0]||A.models[0],{y:t,c:s.country,anim:true}):''}<div class="air-caption">${esc(cityOf(s))} · ${A.models.filter(m=>m.status==='prod').length} ${plural(A.models.filter(m=>m.status==='prod').length,'модель','модели','моделей')} в серии</div></div>
+    ${monthSumCard(s,{air:1})}
     ${typeof advisorCard==='function'?advisorCard(s):airAdviceCard(s)}
-    <div class="kpis"><div class="kpi"><span class="label">Прибыль</span><b class="${L&&L.profit<0?'bad':''}">${L?money(L.profit):'—'}</b></div><div class="kpi"><span class="label">Продано</span><b>${L?fmtN((R.sold||0)+(R.ordN||0)):'—'}</b></div><div class="kpi"><span class="label">Слава</span><b>${Math.round(A.fame)}</b></div></div>
     ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><span class="label">Основатель</span><h3>${esc(P.name)}</h3><p class="small muted">${(P.plus||[]).map(esc).join(' · ')}</p></div></section>`:''}
     <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${money(s.cash)}</span></div>${spark(s.hist.cash)}</section>
     ${foldCard('airShop',true,'<h2>Авиамастерская</h2>',airShopHTML(s),airShopSum(s))}
@@ -16988,6 +17021,10 @@ function placeScenery(trk,rnd){
     const o=solidAt(trk,t,i,off);if(o?!solidClear(trk,o):(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i)))return false;
     spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
+  // 0.40: у крутого поворота (шпилька, разворот) постройки и случайные предметы не ставим — перед поворотом и за ним дорога чистая,
+  // виден сам поворот и зрители (отзыв: «в американском Гран-при каша изображений и объектов перед крутым разворотом»)
+  const bendNear=(i,r)=>{for(let k=-r;k<=r;k++)if(sharp(i+k))return true;return false;};
+  const house=(i,t,off,v)=>!bendNear(i,10)&&add(i,t,off,v,'s',0);
   planRoute(trk,rnd);const S=trk.segT;
   // 0.30: дуэль с экспрессом — железная дорога вдоль шоссе (на ней ни домов, ни деревьев)
   if(trk.rc.dx==='train')try{dxRailBuild(trk);const o=trk.rc.dxO||{};[[trk.startIdx+4,o.from],[trk.finishIdx-6,o.to]].forEach(([i,nm])=>{if(nm&&i>=0&&i<n)spr[i].push({t:'tsign',off:W/2+2.6,v:0,k:'s',nm:nm});});}catch(e){console.warn('dxRail',e);trk.dxRail=null;}
@@ -17026,7 +17063,7 @@ function placeScenery(trk,rnd){
       if(rnd()<0.18)add(i,'bush',(rnd()<0.5?-1:1)*(W/2+2.4+rnd()*3),Math.floor(rnd()*3),'s',0);}
     else if(sg===RSEG.village){// село: дома вдоль дороги, перед ними ограды, за ними сады
       const sd=(Math.floor(i/7)%2)?1:-1;
-      if(i%7===0&&rnd()<0.85){add(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+10+rnd()*3),Math.floor(rnd()*3),'s',0);if(rnd()<0.6)tree(sd*(W/2+21+rnd()*6));}
+      if(i%7===0&&rnd()<0.85){if(house(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+10+rnd()*3),Math.floor(rnd()*3))&&rnd()<0.6)tree(sd*(W/2+21+rnd()*6));}
       if(i%3===0&&(i%7)<5)add(i,fenceT,sd*(W/2+3.4),0,'s',0.4);
       if(i%29===9&&rnd()<0.6)add(i,rnd()<0.5?'cart':set.verst?'well':'bush',-sd*(W/2+4+rnd()*3),0,'s',1.2);
       if(!church&&S[i-20]===RSEG.village&&S[i+20]===RSEG.village&&rnd()<0.08){church=1;add(i,set.church||'church',-sd*(W/2+12),Math.floor(rnd()*3),'s',4);}
@@ -17040,13 +17077,13 @@ function placeScenery(trk,rnd){
       if(i%13===0&&rnd()<0.5)tree(bend*(W/2+6+rnd()*10),rnd()<0.6?'fir':'pine');}
     else if(sg===RSEG.coast){const c=trk.coast.find(q=>i>=q.i0&&i<=q.i1),sd=c?c.side:1;// у моря: низкая стена над водой, со стороны суши — сосны, пальмы, виллы
       if(i%3===0)add(i,'wall',sd*(W/2+1.5),0,'s',0.4);if(rnd()<0.2)tree(-sd*(W/2+4+rnd()*14),set.trees.includes('palm')?(rnd()<0.5?'palm':'pine'):rnd()<0.5?'pine':set.trees[0]);
-      if(i%41===17&&rnd()<0.6)add(i,set.houses[Math.floor(rnd()*set.houses.length)],-sd*(W/2+14+rnd()*8),Math.floor(rnd()*3),'s',0);}
+      if(i%41===17&&rnd()<0.6)house(i,set.houses[Math.floor(rnd()*set.houses.length)],-sd*(W/2+14+rnd()*8),Math.floor(rnd()*3));}
     else{// поля: редкие деревья, стога, хутора, ограды кусками
       if(rnd()<(tr==='sand'?0.06:0.1)){const sd=rnd()<0.5?-1:1;tree(sd*(W/2+3.5+Math.pow(rnd(),1.4)*40),tr==='snow'?'fir':tr==='mount'&&set.mount&&rnd()<0.45?'rock':undefined);}
-      if(i%17===5&&rnd()<0.45&&tr!=='snow'&&tr!=='sand')add(i,set.verst||cfg.host==='de'||cfg.host==='at'?'stog':'hay',(rnd()<0.5?-1:1)*(W/2+16+rnd()*26),0,'s',1.8);
-      if(i%47===11&&rnd()<0.7){const sd=rnd()<0.5?-1:1;add(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+18+rnd()*18),Math.floor(rnd()*3),'s',0);}
+      if(i%17===5&&rnd()<0.45&&tr!=='snow'&&tr!=='sand'&&!bendNear(i,10))add(i,set.verst||cfg.host==='de'||cfg.host==='at'?'stog':'hay',(rnd()<0.5?-1:1)*(W/2+16+rnd()*26),0,'s',1.8);
+      if(i%47===11&&rnd()<0.7){const sd=rnd()<0.5?-1:1;house(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+18+rnd()*18),Math.floor(rnd()*3));}
       if(Math.floor(i/60)%3===1&&i%3===0)add(i,fenceT,(Math.floor(i/180)%2?1:-1)*(W/2+2.2),0,'s',0.4);}
-    if(i%31===5&&rnd()<0.5&&sg!==RSEG.forest&&sg!==RSEG.serp){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
+    if(i%31===5&&rnd()<0.5&&sg!==RSEG.forest&&sg!==RSEG.serp&&!bendNear(i,10)){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
     if(i%50===0&&set.extra.includes('km'))add(i,'km',-(W/2+1.3),0,'s',0.25);
     if(set.verst&&i%60===7)add(i,'verst',-(W/2+1.5),0,'s');
     // 0.29: столбы — только там, где по эпохе шла линия (телеграф, телефон, позже электричество), с проводами до соседнего столба
@@ -22049,11 +22086,11 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}
   const hist=airEvHist(s,ev);
   if(ev.dyn){const F=res.field||[],top=F.slice().sort((a,b)=>b.q-a.q)[0],ord=res.order?`${ev.mil.war?'Военный заказ':'Заказ'}: ${fmtN(res.order)} «${md.name}» по ${money(airMilPrice(s,md))}${res.adv?`, четверть суммы (${money(res.adv)}) — вперёд`:''}.`:'';
-    pushEvent({own:1,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,
+    pushEvent({own:1,airId:md?md.id:null,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,
       deck:`${who} на «${md?md.name:''}» — ${res.txt}${res.place<=F.length+1?` · ${res.place}-е место из ${F.length+1}`:''}`,
       text:`${won?`Комиссия поставила вашей машине высшую оценку: ${top?`${top.n} (${top.plane}) — ${top.q.toFixed(2).replace('.',',')}`:''}. ${ord} Газеты пишут о заводе, которому верит армия.`:res.order?`Победил ${top?top.n+' ('+top.plane+', '+top.q.toFixed(2).replace('.',',')+')':'соперник'}, но министерство берёт и ваш аэроплан — меньшей серией. ${ord}`:res.dnf?`Сход с испытаний: ${res.dnf}. Заказ ушёл к ${top?top.n:'соперникам'}.`:`Оценки комиссии: ${F.slice().sort((a,b)=>b.q-a.q).map(x=>`${x.n} — ${x.q.toFixed(2).replace('.',',')}`).join(', ')}; ваша — ${(res.q||0).toFixed(2).replace('.',',')}. Заказ ушёл к ${top?top.n:'соперникам'}. Следующий конкурс — ${ev.mil.war?'через квартал':'через полгода'}: доработайте машину или начертите новую под их требования.`}`},true);
     return {prize,fameG};}
-  pushEvent({own:1,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${who} на «${md?md.name:''}» — ${res.txt}`,
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${who} на «${md?md.name:''}» — ${res.txt}`,
     text:`${won?(prize?`Приз — ${money(prize)}. `:'')+'Газеты печатают портрет лётчика на первой полосе, у ангаров — очередь из желающих купить такой же аэроплан.':res.place<=3&&res.place>1?(prize?`Приз за ${res.place}-е место — ${money(prize)}. `:'')+'Неплохо — но помнят только победителей.':'Толпа расходится разочарованной. Механики уже разбирают мотор.'}\n${hist}`},true);
   return {prize,fameG};}
 // результат без съёмки — сразу
@@ -22074,8 +22111,8 @@ function airRecTry(s,k,md,P){const t=tNow(s),st=airStats(md,t),sk=P.sk,r=Math.ra
 function airRecApply(s,k,md,P,v,txt){const A=s.air,cur=airRecCur(s,k),who=P.hero?PIONEERS[s.pioneer].name:P.n;A.rtry=A.rtry||{};A.rtry[k]=mi(s);
   if(v>cur.v*1.005){A.rec=A.rec||{};A.rec[k]={v,who,plane:md.name,y:s.y,m:s.m};A.fame=clamp(A.fame+12*bn('airFame'),0,100);if(md.boost!==undefined||true)md.boost=Math.min(2,(md.boost||1)+0.3);
     try{trophyAdd(s,{kind:'record',title:`${AIR_REC_N[k][0]}: ${txt}`,sub:`${who} на «${md.name}»`,story:`Прежний рекорд — ${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]} (${cur.who}).`});}catch(_){}
-    pushEvent({own:1,kicker:'Мировой рекорд',title:`${AIR_REC_N[k][0]}: ${txt}!`,deck:`${who} на «${md.name}»`,text:`Международная авиационная федерация засчитала рекорд: ${txt}. Прежний принадлежал ${cur.who}${cur.plane?' на «'+cur.plane+'»':''} — ${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}.\nРекорд — лучшая реклама: о «${s.company}» пишут газеты всего мира.`},true);return true;}
-  pushEvent({own:1,kicker:'Попытка рекорда',title:`${AIR_REC_N[k][0]}: не вышло`,deck:`${who} на «${md.name}» — ${txt}`,text:`До рекорда (${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}, ${cur.who}) не хватило. Нужен аэроплан быстрее, легче или выше — или лётчик смелее.`},true);return false;}
+    pushEvent({own:1,airId:md?md.id:null,kicker:'Мировой рекорд',title:`${AIR_REC_N[k][0]}: ${txt}!`,deck:`${who} на «${md.name}»`,text:`Международная авиационная федерация засчитала рекорд: ${txt}. Прежний принадлежал ${cur.who}${cur.plane?' на «'+cur.plane+'»':''} — ${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}.\nРекорд — лучшая реклама: о «${s.company}» пишут газеты всего мира.`},true);return true;}
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Попытка рекорда',title:`${AIR_REC_N[k][0]}: не вышло`,deck:`${who} на «${md.name}» — ${txt}`,text:`До рекорда (${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}, ${cur.who}) не хватило. Нужен аэроплан быстрее, легче или выше — или лётчик смелее.`},true);return false;}
 function airRecQuick(k,mdId,pid){const s=G,md=s.air.models.find(m=>m.id===+mdId);if(!md)return;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);const R=airRecTry(s,k,md,P);airRecApply(s,k,md,P,R.v,R.txt);closeSheet();save();render();}
 function airRecCan(s,k){const A=s.air;if(!A||!A.lv)return false;if(airWarOn(s.country,tNow(s)))return false;return !((A.rtry||{})[k]>mi(s)-3);}
 /* ---------- вкладка «Небо» ---------- */
@@ -22165,7 +22202,7 @@ function frApply(s,m,md,P,r){const A=s.air;A.front=A.front||{};A.fr=A.fr||{v:0,n
   if(r.hurt){if(P.hero)A.heroHurt=mi(s)+r.hurt;else{const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+r.hurt;}}
   A.front[m.id]={ok:!!r.ok,txt:r.txt};
   const n=A.pv[P.id]||0,aceNow=r.v&&n>=5&&n-r.v<5;
-  pushEvent({own:1,kicker:'Фронт',title:r.ace?`${who} сбил аса!`:aceNow?`${who} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${who} на «${md.name}»`,
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Фронт',title:r.ace?`${who} сбил аса!`:aceNow?`${who} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${who} на «${md.name}»`,
     text:`${r.txt}${r.v?`\nПобед в этом вылете: ${r.v}. Всего у ${P.hero?'вас':who}: ${n}.`:''}\n${r.ok?`Об аэроплане «${md.name}» говорят в отрядах — штаб охотнее заказывает такие.`:`В отрядах ворчат: «${md.name}» не вытянул.`}`},true);}
 // без съёмки: по качеству аэроплана против противника, мастерству лётчика и удаче
 function frAuto(k){const s=G,m=frMissions(s).find(x=>x.k===k);if(!m||!FRS)return;const md=s.air.models.find(x=>x.id===FRS.md),P=airPilotList(s).find(p=>p.id===FRS.pid)||airBestPilot(s);if(!md)return;
@@ -25156,7 +25193,8 @@ function lmkCnHall(M,x0,x1,z0,z1,y,H,o){o=o||{};const red='#9a2a22',col='#8a2a22
   if(o.two){lmkCnRoof(M,x0,x1,z0,z1,yb+H+0.2,rh*0.35,2.2,rf);const i=Math.min(W,L)*0.16,y2=yb+H+0.2+rh*0.35;mBox(M,x0+i,y2-0.2,z0+i,x1-i,y2+H*0.42,z1-i,red,'wall',['d','t']);lmkCnRoof(M,x0+i-0.4,x1-i+0.4,z0+i-0.4,z1-i+0.4,y2+H*0.42,rh*0.7,2.0,rf);}
   else lmkCnRoof(M,x0,x1,z0,z1,yb+H+0.2,rh,2.4,rf);}
 // Пагода: восьмигранные (или квадратные) ярусы с загнутыми карнизами, навершие; в США — гоночная «пагода» Индианаполиса
-function lmkPagoda(M,o,h,hf,r,S){if(h==='us'){const B=BLD.pagoda(r,0),k=clamp((o.h||22)/22,0.8,2);lmkScale(B,k,k,k);return lmkAdd(M,B);}
+// 0.40: в США «пагода» — судейская башня Индианаполиса только для неё самой; храмы и монастыри (Чайнатаун Сан-Франциско) — настоящая пагода
+function lmkPagoda(M,o,h,hf,r,S){if(h==='us'&&!/храм|temple|монастыр|церковь|church|кумирн/i.test(o.n||'')){const B=BLD.pagoda(r,0),k=clamp((o.h||22)/22,0.8,2);lmkScale(B,k,k,k);return lmkAdd(M,B);}
   const H=clamp(o.h>0?o.h:30,10,90),R0=clamp((o.w||o.l||H*0.32)/2,3,14),n=clamp(Math.round(H/(R0*0.7+2.4)),5,13),oct=r()<0.75,sd=oct?8:4,a0=-Math.PI/sd,
     wc=r()<0.5?'#c8b48c':'#9a958c',rf=r()<0.3?'#3f6a4a':'#4a5058',dk='#2a2622';
   lmkRev(M,[0,-1,0],[[R0*1.35,0],[R0*1.35,1.6],[0,1.6]],sd,'#d8d2c4','stone',{fl:1,a0});let y=0.6;const hs=H*0.84;
@@ -25164,6 +25202,25 @@ function lmkPagoda(M,o,h,hf,r,S){if(h==='us'){const B=BLD.pagoda(r,0),k=clamp((o
     const T=lmkRev(M,[0,y,0],[[ri,0],[ri,hi]],sd,wc,'wall',{fl:1,a0});T[0].forEach((f,k)=>{if(k%2===i%2)lmkWin(f,lmkFP(f),0,y+hi*0.2,ri*0.32,hi*0.45,{ar:1,f:'#9a2a22',op:dk});});
     y+=hi;const re=ri+1.0+R0*0.12;lmkEaveN(M,0,y,0,ri,re,sd,a0,rf,0.35+R0*0.03,0.6+R0*0.04);lmkRev(M,[0,y,0],[[ri+0.05,0],[rn,0.7]],sd,rf,'roof',{fl:1,a0});y+=0.7;}
   lmkRev(M,[0,y,0],[[0.5,0],[0.5,1.2],[0.9,1.3],[0.9,1.6],[0.3,1.7],[0.25,H-y-0.5],[0,H-y]],8,'#c9a24a','metal');}
+/* ---------- 0.40: ротонда — Дворец изящных искусств (Сан-Франциско, 1915): стилобат, восемь колонн, антаблемент, барабан с окнами,
+   купол, две дуги колоннады по сторонам (отзыв: на Гран-при 1915 года перед крутым поворотом вместо дворца стояла судейская башня) ---------- */
+function lmkRotunda(M,o,h,hf,r,S){const H=clamp(o.h>0?o.h:45,24,60),R=clamp(Math.min(o.l||50,o.w||50)*0.3,9,19),wc='#dccaa2',tr=shade(wc,-0.12),dk='#5a4a36',dome='#b4674a',gl='#2e3446';
+  lmkPl(M,-R*1.4,R*1.4,-R*1.4,R*1.4,hf,'#8a8274',0.1);
+  // стилобат — три ступени
+  lmkRev(M,[0,-0.6,0],[[R*1.3,0],[R*1.3,0.8],[R*1.18,0.8],[R*1.18,1.5],[R*1.06,1.5],[R*1.06,2.1],[0,2.1]],8,'#cfc3a6','stone',{fl:1,a0:-Math.PI/8});
+  const y0=1.5,Hc=H*0.42,rc=clamp(R*0.075,0.9,1.5);
+  // восемь колонн по кругу и антаблемент над ними
+  for(let k=0;k<8;k++){const a=k/8*Math.PI*2+Math.PI/8;lmkCol(M,Math.cos(a)*R*0.88,y0,Math.sin(a)*R*0.88,rc,Hc,wc,'stone',10);}
+  const yE=y0+Hc;lmkRev(M,[0,yE,0],[[R*0.72,0],[R*1.0,0],[R*1.0,Hc*0.12],[R*1.04,Hc*0.12],[R*1.04,Hc*0.17],[R*0.78,Hc*0.17],[R*0.78,0]],8,tr,'stone',{fl:1,a0:-Math.PI/8});
+  // барабан с арочными окнами, кольцо-карниз, купол и фонарь
+  const yD=yE+Hc*0.17,Hd=H*0.14,rd=R*0.72;const D=lmkRev(M,[0,yD,0],[[rd,0],[rd,Hd]],16,wc,'wall');D[0].forEach((f,i)=>{if(i%2===0)lmkWin(f,lmkFP(f),0,yD+Hd*0.2,rd*0.22,Hd*0.45,{ar:1,f:tr,g:gl});});
+  lmkRev(M,[0,yD+Hd,0],[[rd*1.06,0],[rd*1.06,0.5],[rd*0.98,0.5]],16,tr,'stone');
+  const yT=yD+Hd+0.5,hD=Math.max(H-yT-2.5,rd*0.55);lmkDome(M,0,yT,0,rd*0.98,hD,dome,'roof',16);
+  lmkRev(M,[0,yT+hD-0.2,0],[[1.1,0],[1.1,1.2],[0.5,1.4],[0.5,2.2],[0,2.5]],8,'#c9a24a','metal');
+  // колоннады по дугам слева и справа: ряд колонн пониже и балка над ними
+  const Rc=R*2.1,Hk=Hc*0.7,n=7;[[Math.PI*0.62,Math.PI*1.38],[-Math.PI*0.38,Math.PI*0.38]].forEach(([a0,a1])=>{for(let k=0;k<=n;k++){const a=a0+(a1-a0)*k/n;lmkCol(M,Math.cos(a)*Rc,y0,Math.sin(a)*Rc,rc*0.8,Hk,wc,'stone',8);}
+    lmkRev(M,[0,y0+Hk,0],[[Rc-rc*1.6,0],[Rc+rc*1.6,0],[Rc+rc*1.6,Hk*0.12],[Rc-rc*1.6,Hk*0.12],[Rc-rc*1.6,0]],14,tr,'stone',{a0,a1});
+    lmkRev(M,[0,-0.6,0],[[Rc-rc*2.4,0],[Rc+rc*2.4,0],[Rc+rc*2.4,2.1],[Rc-rc*2.4,2.1],[Rc-rc*2.4,0]],14,'#cfc3a6','stone',{a0,a1});});}
 /* ---------- инженерные: акведук, обсерватория, водонапорная башня ---------- */
 // Точки по ломаной через равные доли длины (n отрезков)
 function lmkResN(P,n){const S=[0];for(let i=1;i<P.length;i++)S.push(S[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));const L=S[S.length-1],out=[];let j=0;
@@ -25219,7 +25276,8 @@ const LMK_B={cathedral:lmkCathedral,church:lmkChurch,chapel:lmkChapel,castle:lmk
   mosque:lmkMosque,pagoda:lmkPagoda,aqueduct:lmkAqueduct,observatory:lmkObserv,water_tower:lmkWTower};
 function lmMesh(o,host,hf){o=o||{};const h=LMK_ST[host]?host:'fr',k=o.k||'',O={k,l:+o.l||0,w:+o.w||0,h:+o.h||0,y:+o.y||0,n:o.n||'',line:o.line},
     r=mulberry32(hashStr((O.n)+'|'+k+'|'+h+'|'+Math.round(O.l))),S=lmkS(h),M=new Mesh(),H=typeof hf==='function'?hf:null;
-  try{(LMK_B[k]||lmkOther)(M,O,h,H,r,S);}catch(e){console.warn('lmMesh',k,e);M.F.length=0;lmkOther(M,O,h,H,mulberry32(1),S);}
+  const B=/изящных искусств|fine arts|ротонд|rotunda/i.test(O.n)?lmkRotunda:(LMK_B[k]||lmkOther);/* 0.40: Дворец изящных искусств — ротонда */
+  try{B(M,O,h,H,r,S);}catch(e){console.warn('lmMesh',k,e);M.F.length=0;lmkOther(M,O,h,H,mulberry32(1),S);}
   return lmkFoot(M);}
 
 /* ================= 3D-ДВИЖОК ГОНКИ (WebGL2): шейдеры, сетки, тени, туман ================= */

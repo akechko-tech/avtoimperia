@@ -191,7 +191,8 @@ function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.countr
   if(s.y>=1912&&me>8e6*cpi(s)&&now-(s.maSellT??-99)>=120&&Math.random()<0.006){s.maSellT=now;const P=Math.round(me*(1.2+0.2*maRnd('sell'+now))/1e4)*1e4,who=maWho(s.country,'buy'+now);
     pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} предлагает купить «${s.company}» целиком`,deck:`${money(P)} — на ${Math.round((P/me-1)*100)}% больше стоимости компании`,
       text:`${capF(who)} предлагает выкупить «${s.company}» целиком: ${money(P)} наличными — вам и совладельцам. Если согласитесь, компанией будут управлять новые хозяева, а вы получите свою часть денег — и сможете купить другую марку в любой стране или подвести итог.\nТак в 1925 году вдовы братьев Додж продали Dodge Brothers банкирам Dillon, Read & Co. за 146 миллионов долларов — крупнейшая сделка своего времени.`,
-      choices:[[`Продать за ${money(P)}${partnersShare(s)>0?` (вам — ${money(Math.round(P*(1-partnersShare(s))))})`:''}`,'ma:sell:Y:'+P],['Отказаться','ma:sell:N']]},true);return;}}
+      // 0.40: на «Юном» первой стоит кнопка «Отказаться» — ребёнок жмёт первую и терял компанию (карьера кончалась в 1914 году)
+      choices:(DIF().simple?[['Отказаться','ma:sell:N'],[`Продать за ${money(P)}`,'ma:sell:Y:'+P]]:[[`Продать за ${money(P)}${partnersShare(s)>0?` (вам — ${money(Math.round(P*(1-partnersShare(s))))})`:''}`,'ma:sell:Y:'+P],['Отказаться','ma:sell:N']])},true);return;}}
 
 /* ---------- банкротства и торги ---------- */
 // Исторические развязки марок (кто купил, когда, продолжилась ли марка). Если вы там торгуете — можно перебить покупателя.

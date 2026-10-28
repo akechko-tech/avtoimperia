@@ -236,6 +236,10 @@ function placeScenery(trk,rnd){
     const o=solidAt(trk,t,i,off);if(o?!solidClear(trk,o):(Math.abs(off)>W/2+1&&nearTrack(trk,x,z,W/2+1.5,i)))return false;
     spr[i].push({t,off,v:v||0,k:kind||'s'});if(o)addCollider(trk,o.x,o.z,o.r,t,i,o);else if(colR)addCollider(trk,x,z,colR,t,i);return true;};
   const sharp=i=>Math.abs(trk.K[((i%n)+n)%n])>1/40;
+  // 0.40: у крутого поворота (шпилька, разворот) постройки и случайные предметы не ставим — перед поворотом и за ним дорога чистая,
+  // виден сам поворот и зрители (отзыв: «в американском Гран-при каша изображений и объектов перед крутым разворотом»)
+  const bendNear=(i,r)=>{for(let k=-r;k<=r;k++)if(sharp(i+k))return true;return false;};
+  const house=(i,t,off,v)=>!bendNear(i,10)&&add(i,t,off,v,'s',0);
   planRoute(trk,rnd);const S=trk.segT;
   // 0.30: дуэль с экспрессом — железная дорога вдоль шоссе (на ней ни домов, ни деревьев)
   if(trk.rc.dx==='train')try{dxRailBuild(trk);const o=trk.rc.dxO||{};[[trk.startIdx+4,o.from],[trk.finishIdx-6,o.to]].forEach(([i,nm])=>{if(nm&&i>=0&&i<n)spr[i].push({t:'tsign',off:W/2+2.6,v:0,k:'s',nm:nm});});}catch(e){console.warn('dxRail',e);trk.dxRail=null;}
@@ -274,7 +278,7 @@ function placeScenery(trk,rnd){
       if(rnd()<0.18)add(i,'bush',(rnd()<0.5?-1:1)*(W/2+2.4+rnd()*3),Math.floor(rnd()*3),'s',0);}
     else if(sg===RSEG.village){// село: дома вдоль дороги, перед ними ограды, за ними сады
       const sd=(Math.floor(i/7)%2)?1:-1;
-      if(i%7===0&&rnd()<0.85){add(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+10+rnd()*3),Math.floor(rnd()*3),'s',0);if(rnd()<0.6)tree(sd*(W/2+21+rnd()*6));}
+      if(i%7===0&&rnd()<0.85){if(house(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+10+rnd()*3),Math.floor(rnd()*3))&&rnd()<0.6)tree(sd*(W/2+21+rnd()*6));}
       if(i%3===0&&(i%7)<5)add(i,fenceT,sd*(W/2+3.4),0,'s',0.4);
       if(i%29===9&&rnd()<0.6)add(i,rnd()<0.5?'cart':set.verst?'well':'bush',-sd*(W/2+4+rnd()*3),0,'s',1.2);
       if(!church&&S[i-20]===RSEG.village&&S[i+20]===RSEG.village&&rnd()<0.08){church=1;add(i,set.church||'church',-sd*(W/2+12),Math.floor(rnd()*3),'s',4);}
@@ -288,13 +292,13 @@ function placeScenery(trk,rnd){
       if(i%13===0&&rnd()<0.5)tree(bend*(W/2+6+rnd()*10),rnd()<0.6?'fir':'pine');}
     else if(sg===RSEG.coast){const c=trk.coast.find(q=>i>=q.i0&&i<=q.i1),sd=c?c.side:1;// у моря: низкая стена над водой, со стороны суши — сосны, пальмы, виллы
       if(i%3===0)add(i,'wall',sd*(W/2+1.5),0,'s',0.4);if(rnd()<0.2)tree(-sd*(W/2+4+rnd()*14),set.trees.includes('palm')?(rnd()<0.5?'palm':'pine'):rnd()<0.5?'pine':set.trees[0]);
-      if(i%41===17&&rnd()<0.6)add(i,set.houses[Math.floor(rnd()*set.houses.length)],-sd*(W/2+14+rnd()*8),Math.floor(rnd()*3),'s',0);}
+      if(i%41===17&&rnd()<0.6)house(i,set.houses[Math.floor(rnd()*set.houses.length)],-sd*(W/2+14+rnd()*8),Math.floor(rnd()*3));}
     else{// поля: редкие деревья, стога, хутора, ограды кусками
       if(rnd()<(tr==='sand'?0.06:0.1)){const sd=rnd()<0.5?-1:1;tree(sd*(W/2+3.5+Math.pow(rnd(),1.4)*40),tr==='snow'?'fir':tr==='mount'&&set.mount&&rnd()<0.45?'rock':undefined);}
-      if(i%17===5&&rnd()<0.45&&tr!=='snow'&&tr!=='sand')add(i,set.verst||cfg.host==='de'||cfg.host==='at'?'stog':'hay',(rnd()<0.5?-1:1)*(W/2+16+rnd()*26),0,'s',1.8);
-      if(i%47===11&&rnd()<0.7){const sd=rnd()<0.5?-1:1;add(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+18+rnd()*18),Math.floor(rnd()*3),'s',0);}
+      if(i%17===5&&rnd()<0.45&&tr!=='snow'&&tr!=='sand'&&!bendNear(i,10))add(i,set.verst||cfg.host==='de'||cfg.host==='at'?'stog':'hay',(rnd()<0.5?-1:1)*(W/2+16+rnd()*26),0,'s',1.8);
+      if(i%47===11&&rnd()<0.7){const sd=rnd()<0.5?-1:1;house(i,set.houses[Math.floor(rnd()*set.houses.length)],sd*(W/2+18+rnd()*18),Math.floor(rnd()*3));}
       if(Math.floor(i/60)%3===1&&i%3===0)add(i,fenceT,(Math.floor(i/180)%2?1:-1)*(W/2+2.2),0,'s',0.4);}
-    if(i%31===5&&rnd()<0.5&&sg!==RSEG.forest&&sg!==RSEG.serp){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
+    if(i%31===5&&rnd()<0.5&&sg!==RSEG.forest&&sg!==RSEG.serp&&!bendNear(i,10)){const e=set.extra[Math.floor(rnd()*set.extra.length)];const near=e==='km'||e==='wall'||e==='hedge'||e==='fence';add(i,e,(rnd()<0.5?-1:1)*(near?W/2+1.6:W/2+6+rnd()*10),Math.floor(rnd()*4),'s',near?0.4:0);}
     if(i%50===0&&set.extra.includes('km'))add(i,'km',-(W/2+1.3),0,'s',0.25);
     if(set.verst&&i%60===7)add(i,'verst',-(W/2+1.5),0,'s');
     // 0.29: столбы — только там, где по эпохе шла линия (телеграф, телефон, позже электричество), с проводами до соседнего столба

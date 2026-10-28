@@ -45,7 +45,7 @@ function frApply(s,m,md,P,r){const A=s.air;A.front=A.front||{};A.fr=A.fr||{v:0,n
   if(r.hurt){if(P.hero)A.heroHurt=mi(s)+r.hurt;else{const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+r.hurt;}}
   A.front[m.id]={ok:!!r.ok,txt:r.txt};
   const n=A.pv[P.id]||0,aceNow=r.v&&n>=5&&n-r.v<5;
-  pushEvent({own:1,kicker:'Фронт',title:r.ace?`${who} сбил аса!`:aceNow?`${who} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${who} на «${md.name}»`,
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Фронт',title:r.ace?`${who} сбил аса!`:aceNow?`${who} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${who} на «${md.name}»`,
     text:`${r.txt}${r.v?`\nПобед в этом вылете: ${r.v}. Всего у ${P.hero?'вас':who}: ${n}.`:''}\n${r.ok?`Об аэроплане «${md.name}» говорят в отрядах — штаб охотнее заказывает такие.`:`В отрядах ворчат: «${md.name}» не вытянул.`}`},true);}
 // без съёмки: по качеству аэроплана против противника, мастерству лётчика и удаче
 function frAuto(k){const s=G,m=frMissions(s).find(x=>x.k===k);if(!m||!FRS)return;const md=s.air.models.find(x=>x.id===FRS.md),P=airPilotList(s).find(p=>p.id===FRS.pid)||airBestPilot(s);if(!md)return;

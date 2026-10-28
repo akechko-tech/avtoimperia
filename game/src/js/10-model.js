@@ -334,7 +334,7 @@ function buyDealers(s,c,n){if(warCut(s,c))return 0;const dc=dealerCost(s);n=Math
   pendingToasts.push(`🏪 +${fmtN(n)} ${plural(n,'дилер','дилера','дилеров')}${where}: покупателей видят ${Math.round(r1*100)}%`);
   return n;}
 // Представительство за границей: договор с импортёром → своё отделение → сборочный завод
-function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
+function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c)||licOn(s,c)||(s.lic&&s.lic[c]))return false;if(lv>=2&&typeof intIn==='function'&&intIn(s,c))return false;/* 0.40: поглощённая марка уже строит на месте */const L=IMP_LV[lv+1],cost=impCost(s,c,lv+1);
   if(s.cash<cost||(L.y&&s.y<L.y)||warCut(s,c)||(lv+1<=2&&tradeBan(s,c)&&!(lv+1===2&&lv===1)))return false;
   // отделение, сборка и завод строятся месяцами (13b/105b): деньги сразу, уровень — когда достроят
   const mo=impMonths(s,c,lv+1);if(mo>0){s.cash-=cost;s.impB=s.impB||{};s.impB[c]={lv:lv+1,left:mo,t:mo};addLog(`${COUNTRIES[c].name}: ${lv+1===2?'открываем своё отделение':lv+1===3?'строим цех сборки из комплектов':'строим свой завод'} — ${money(cost)}, ${mo} мес.`,'good');return true;}
@@ -345,7 +345,7 @@ function impUp(s,c){const lv=impLv(s,c);if(c===s.country||lv>=4||impBuilding(s,c
   return true;}
 // Во сколько месяцев окупится следующий шаг за границей: отделение возвращает долю импортёра и открывает всю страну,
 // сборочный завод снижает пошлину (машины дешевле для покупателя) и доставку
-function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(s.lic&&s.lic[c])||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
+function impPayback(s,c){const lv=impLv(s,c);if(lv<1||lv>=4||impBuilding(s,c)||warCut(s,c)||(s.lic&&s.lic[c])||(IMP_LV[lv+1].y&&s.y<IMP_LV[lv+1].y))return Infinity;if(lv>=2&&typeof intIn==='function'&&intIn(s,c))return Infinity;/* 0.40: своя марка уже строит на месте */const sold=(s.dsm&&s.dsm[c])||0;if(sold<1)return Infinity;
   const act=(s.models||[]).filter(m=>m.status==='prod');if(!act.length)return Infinity;const P=act.reduce((a,m)=>a+m.price,0)/act.length;
   const cost=impCost(s,c,lv+1),up=impUpkeep({...s,imp:{...(s.imp||{}),[c]:lv+1}},c);
   const du=tradeRule(c,s.country,tNow(s)).duty||0,nx=IMP_LV[lv+1],cu=IMP_LV[lv];

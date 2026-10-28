@@ -92,11 +92,36 @@ function drive(md,script,T,V0,win){startRace({rc,mode:'drive',entries:[{drv:'me'
   ac.Vg=1;M.step();ok(fin&&fin.ok&&/долетел/.test(fin.txt),'остановились — перелёт засчитан: '+(fin&&fin.txt));
   // в воздухе в 2 км от цели автопилот сам заходит на посадку
   const M2=flMission({md,pil:P,ev:evc,kind:'cross',place:'channel'});FL.mi=M2;M2.flew=1;M2.fin=()=>{};const ac2=flCraft(md,y,{rnd:()=>0.3});FL.me=ac2;flPlace(ac2,7400,0,Math.PI/2,{h:400,v:ac2.Vs*1.5,thr:0.8});
-  FLY.landing=null;FLY.auto=true;document.getElementById=()=>({classList:{remove(){},add(){},toggle(){}},textContent:''});M2.auto();
+  FLY.landing=null;FLY.auto=true;const gE=document.getElementById;document.getElementById=()=>({classList:{remove(){},add(){},toggle(){}},textContent:''});M2.auto();document.getElementById=gE;
   ok(!!FLY.landing&&FLY.auto===false&&Math.abs(FLY.landing.at[0]-9500)<1,'в 2,1 км от цели автопилот передал лётчику посадку у финиша: '+JSON.stringify(FLY.landing&&FLY.landing.at.map(Math.round)));
   ok(flySkipStop()==='посадка','«Долететь» при этом останавливается — посадку видно');
   // неудача: где и далеко ли
   const M3=flMission({md,pil:P,ev:evc,kind:'cross',place:'channel'});FL.mi=M3;M3.flew=1;let f3=null;M3.fin=(t,x,res)=>{f3=res;};const ac3=flCraft(md,y,{rnd:()=>0.3});FL.me=ac3;flPlace(ac3,0,0,Math.PI/2,{h:200,v:ac3.Vs*1.5});
   ac3.crash='крыло сложилось от перегрузки';M3.step();ok(f3&&/км от цели/.test(f3.txt)&&/над лугами|над водой|над полями/.test(f3.txt),'неудача описана с местом и расстоянием: '+(f3&&f3.txt));
   FLY.landing=null;FLY.auto=false;FL.me=null;FL.mi=null;FW=undefined;FL.noFail=false;}
+/* ---------- газета: аэроплан в заметке об аэроплане, без рисунка — где машины ни при чём ---------- */
+{newGame('renault','fr','T','normal');const A=airInit(G);const e=airRefEntry('sport',1912),md={...e[2],role:'sport',name:e[1],id:7,status:'prod'};A.models.push(md);G.y=1912;G.m=5;
+  const h1=paperHTML({own:1,airId:7,kicker:'Небо',title:'Перелёт',text:'Текст'},G);ok(/p-fig p-air/.test(h1)&&!/car-art|<figure class="p-fig" /.test(h1)&&/«Блерио|«/.test(h1),'заметка с airId — рисунок аэроплана, не автомобиль');
+  const h2=paperHTML({own:1,kicker:'Авиацех',title:'Завод',text:'Текст',noArt:1},G);ok(!/<figure/.test(h2),'заметка с noArt — без рисунка машины');
+  const h3=paperHTML({own:1,kicker:'Рекорд',title:'Сотая машина',text:'Текст'},G);ok(/<figure class="p-fig"/.test(h3)&&!/p-air/.test(h3),'обычная заметка о компании — по-прежнему с автомобилем');
+  G.pending=[];pushEvent({own:1,airId:7,noArt:0,kicker:'Небо',title:'Т',text:'т'});ok(G.pending[G.pending.length-1].airId===7,'pushEvent передаёт airId в газету');G.pending=[];}
+/* ---------- сводка месяца по направлениям ---------- */
+{newGame('renault','fr','T','normal');const h0=monthSumCard(G);ok(/Итоги месяца/.test(h0)&&/первый месяц впереди/.test(h0),'до первого хода — заглушка с кассой');
+  G.last={label:'май 1912',made:12,sold:9,milN:2,ordN:1,ord:5000,rev:40000,mrev:3000,mmade:5,msold:4,profit:1200,air:{made:2,sold:1,ordN:1,rev:9000,ord:8000,lic:0,net:2500}};G.lines={car:1,moto:1};airInit(G).lv=1;
+  const h=monthSumCard(G);ok(/Автомобили/.test(h)&&/Мотоциклы/.test(h)&&/Аэропланы/.test(h)&&/Всего/.test(h),'три направления и итог');
+  ok(/армии 2, по заказам 1/.test(h)&&/контракты 1/.test(h),'продано — с разбивкой: армии, по заказам, контракты');
+  const ha=monthSumCard(G,{air:1});ok(/Слава/.test(ha)&&/Аэропланы/.test(ha),'в ангаре — та же сводка со славой');
+  ok(vPlant.toString().includes('monthSumCard(s)')&&airPlantView.toString().includes('monthSumCard(s,{air:1})'),'сводка стоит наверху «Завода» и «Ангара»');}
+/* ---------- антураж: у крутого поворота без построек; Дворец изящных искусств — ротонда ---------- */
+{const M=lmMesh({k:'pagoda',n:'Дворец изящных искусств',l:67.4,w:58.3,h:48},'us',()=>0),b=lmkBox3(M);
+  ok(M.F.length>600&&b[4]>40&&b[4]<50&&(b[3]-b[0])>60,'ротонда: '+M.F.length+' граней, высота '+b[4].toFixed(0)+' м, ширина '+(b[3]-b[0]).toFixed(0)+' м');
+  const T=lmMesh({k:'pagoda',n:'Храм Конг Чоу',l:19.3,w:17.1,h:16},'us',()=>0),I=lmMesh({k:'pagoda',n:'Пагода',l:12,w:12,h:22},'us',()=>0);
+  ok(T.F.length>150&&I.F.length<120,'в США храм — пагода ('+T.F.length+' граней), безымянная пагода — судейская башня Инди ('+I.F.length+')');
+  // выдуманная трасса с крутыми поворотами: в 10 сегментах от шпильки нет домов
+  newGame('renault','fr','T','normal');G.cash=1e6;const rc2=Object.assign({},RACES.find(r=>r.t==='sprint'),{y:1910,key:'v40-bend',terr:'macadam'});const md2=G.models[0];
+  let tried=0,badH=0,sharpN=0,houses=0;for(let k=0;k<4&&sharpN<3;k++){startRace({rc:Object.assign({},rc2,{key:'v40-bend'+k}),mode:'drive',entries:[{drv:'me',md:md2,prep:2,tyre:'soft',gear:0}]});const T2=R.trk,n=T2.n;tried++;
+    const sh=i=>Math.abs(T2.K[((i%n)+n)%n])>1/40,H=/house|barn|villa|cafe|fachwerk|izba|dacha|cottage|farm/;
+    for(let i=0;i<n;i++){const L=T2.spr[i].filter(o=>H.test(o.t));houses+=L.length;if(!L.length)continue;let near=false;for(let q=-10;q<=10;q++)if(sh(i+q))near=true;if(near)badH+=L.length;}
+    for(let i=0;i<n;i++)if(sh(i))sharpN++;finishRace(true);closeSheet();closePaper();G.pending=[];}
+  ok(badH===0&&houses>0,'дома у крутых поворотов: '+badH+' из '+houses+' (трасс '+tried+', крутых сегментов '+sharpN+')');}
 console.log(bad?('ОШИБОК: '+bad):'всё в порядке');process.exitCode=bad?1:0;}`);

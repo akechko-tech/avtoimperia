@@ -25,9 +25,13 @@ function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[
     <div class="p-btns"><button class="p-btn" data-act="paperBack">← К номеру</button></div></article>`;}
 function paperHTML(o,s){
   // своя машина — только в новостях о компании; в остальных — фото события или ничего
-  const M=MAST[s.country],own=o.car||o.carId||o.own,md=o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
+  // 0.40: новость об аэроплане — рисунок аэроплана (airId), новость без машины (noArt) — без рисунка; раньше в заметке о перелёте
+  // или конкурсе стоял лучший автомобиль или мотоцикл компании (отзыв: «изображение на объявлении часто ни о том»)
+  const M=MAST[s.country],own=o.car||o.carId||o.own,air=o.air||(o.airId&&s.air?s.air.models.find(m=>m.id===o.airId):null)||null;
+  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),py=o.y||s.y,pm=o.m===undefined?s.m:o.m,also=(o.also?o.also:flavorPick(s,py,pm,2,o.arch||0,false)).map(flvByTitle).filter(Boolean);
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
+      :air?`<figure class="p-fig p-air" style="margin-inline:0">${airArtSVG(air,{y:py+pm/12,c:s.country,mark:o.mark||0})}</figure><div class="p-cap">${esc(o.caption||('«'+air.name+'» компании «'+s.company+'»'))}</div>`
       :md?`<figure class="p-fig" style="margin-inline:0">${carArt(md,Object.assign({paper:1},o.carOpt||{}))}</figure><div class="p-cap">${esc(o.caption||('«'+md.name+'» компании «'+s.company+'»'))}</div>`:'';
   const hist=o.hist&&IMG[o.hist]?`<div class="p-hist"><img src="${IMG[o.hist].src}" alt="" referrerpolicy="no-referrer"><span>${esc(o.histCap||'Так было в истории')}</span></div>`:'';
   // кинохроника — кадром плёнки прямо в номере (кнопка «▶» запускает ролик, газета остаётся открытой)
@@ -50,7 +54,7 @@ const PW=document.getElementById('paperWrap');
 let PAPER_CUR=null;
 function showPaper(o,store=true){
   if(store){if(!o.also)o.also=flavorPick(G,G.y,G.m,2,G.papers.length+mi(G),true);
-    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||'',mean:o.mean||''});if(G.papers.length>40)G.papers.shift();save();}
+    G.papers.push({d:dstr(G),y:G.y,m:G.m,title:o.title,deck:o.deck||'',text:o.text,kicker:o.kicker||'',img:o.img||'',imgCap:o.imgCap||'',carId:o.carId||(o.car&&o.car.id)||null,airId:o.airId||(o.air&&o.air.id)||null,noArt:o.noArt?1:0,mark:o.mark?1:0,carOpt:o.carOpt||null,own:o.own?1:0,caption:o.caption||'',hist:o.hist||'',histCap:o.histCap||'',also:o.also,reel:paperReelId(o)||'',mean:o.mean||''});if(G.papers.length>40)G.papers.shift();save();}
   PAPER_CUR=o;PW.innerHTML=paperHTML(o,G);PW.hidden=false;PW.scrollTop=0;auSfx('paper',1);
 }
 function closePaper(){PW.hidden=true;PW.innerHTML='';}

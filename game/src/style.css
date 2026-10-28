@@ -36,6 +36,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .kpi{background:var(--panel2);padding:10px 12px}
 .kpi b{display:block;font-family:var(--mono);font-size:17px;font-weight:500;margin-top:2px}
+/* 0.40: сводка месяца по направлениям */
+.sumc .kpis{margin-top:8px}.sumc h2{margin:0}
+table.sum-t{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}table.sum-t th{font-weight:500;color:var(--muted);text-align:right;font-size:11px;padding:2px 4px;border-bottom:1px solid var(--line)}table.sum-t th:first-child{text-align:left}
+table.sum-t td{padding:4px;border-bottom:1px solid var(--line);vertical-align:top}table.sum-t td.n{text-align:right;font-family:var(--mono);white-space:nowrap}table.sum-t td small{display:block;font-family:var(--sans,inherit);font-size:11px;color:var(--muted);white-space:normal}table.sum-t tr.tot td{font-weight:600;border-bottom:0}
 .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)} .muted{color:var(--muted)}
 h2{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;margin:0;text-transform:uppercase;text-wrap:balance}
 h3{font-size:17px;margin:0;font-weight:600}
@@ -176,6 +180,8 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .p-deck{font-style:italic;text-align:center;font-size:15px;border-bottom:1px solid var(--ink);padding-bottom:8px}
 .p-fig{margin:10px 0 4px;border:1px solid var(--ink);background:#e4d8b8}
 .p-fig svg{display:block;width:100%;height:auto;filter:grayscale(1) sepia(.35) contrast(1.35)}
+/* 0.40: аэроплан в газете — профиль 320×140, на бумаге, как гравюра */
+.p-fig.p-air{padding:6px 10px;background:#ece2c6}.p-fig.p-air svg{max-height:200px;margin:0 auto}
 .p-cap{font-size:11px;font-style:italic;text-align:center;margin-bottom:8px}
 .p-cols{columns:2 190px;column-gap:16px;column-rule:1px solid rgba(34,28,20,.4);font-size:14.5px;line-height:1.45;text-align:justify;hyphens:auto}
 .p-cols p{margin:0 0 8px}
