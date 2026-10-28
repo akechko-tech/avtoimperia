@@ -16,9 +16,10 @@ respawn(me);me.vx=10;trackLocal(R.trk,me);me.tw=[70,70,70,70];twSync(me);twPunct
 ok(!me.punct&&me.tyre<1&&t<30,'прокол: сервис за '+t.toFixed(1)+' с (скорость была '+Math.round(v0*3.6)+' км/ч), шины '+me.tyre);
 drive(4);ok(me.vx>4,'после сервиса едет: '+Math.round(me.vx*3.6)+' км/ч');
 // 2) бензин кончился → сам останавливается и доливает
-me.fuel=0.3;t=0;let sawSvc=false;while(t<40){drive(0.1);t+=0.1;if(me.svc)sawSvc=true;if(sawSvc&&!me.svc)break;}
+// 0.40: машина без руля успевает уйти с дороги в лес — перед проверкой бензина ставим её на дорогу
+respawn(me);me.vx=8;me.fuel=0.3;t=0;let sawSvc=false;while(t<40){drive(0.1);t+=0.1;if(me.svc)sawSvc=true;if(sawSvc&&!me.svc)break;}
 ok(sawSvc&&me.fuel>=99,'пустой бак: сервис сам, бензин '+Math.round(me.fuel)+'%, за '+t.toFixed(1)+' с');
-const vA=me.vx;drive(5);ok(me.vx>vA+2,'с полным баком разгоняется: '+Math.round(vA*3.6)+' → '+Math.round(me.vx*3.6)+' км/ч');
+respawn(me);me.vx=0;const vA=me.vx;drive(5);ok(me.vx>vA+2,'с полным баком разгоняется: '+Math.round(vA*3.6)+' → '+Math.round(me.vx*3.6)+' км/ч');
 finishRace(true);closeSheet();closePaper();G.pending=[];
 // 3) уклон: подъём на горе медленнее, чем по ровному
 rc=start(r=>r.t==='hill'&&r.y>=1905&&r.y<1912);me=R.me;
