@@ -39,7 +39,10 @@ function airEvField(s,ev){const t=airEvT(ev),F=[],hv=AIR_EV_HV[ev.key]||0,sk=AIR
     const base=[1.0,0.96,0.92,0.87];(C.length?C:[{x:{n:'Казённый завод'}}]).forEach((o,i)=>{const ML=o.x.models||[],mdl=ML.filter(m=>m[0]<=ev.y).slice(-1)[0],nxt=!mdl&&ML.find(m=>m[0]<=ev.y+2);
       F.push({n:'«'+o.x.n+'»',plane:mdl?mdl[1]:nxt?'опытный '+nxt[1]:'аэроплан своей постройки',q:Math.round(base[i]*cq*(0.97+0.06*r0())*(ev.mil.war?1.02:1)*100)/100});});}
   else if(ev.kind==='trial'){W.q=1.04;F.push(W);[0.98,0.93,0.88].forEach((q,i)=>F.push({n:['«'+((airComps(ev.c,ev.mil?ev.mil.role:'recon',t)[i]||{x:{n:'Завод'}}).x.n)+'»'][0],plane:ref(ev.mil?ev.mil.role:'recon').md.name,q}));}
-  else F.push(W);return F;}
+  else F.push(W);
+  // 0.40: уровень сложности — соперники в небе на «Юном», «Лёгкой» и «Норме» слабее (DIFFS.air), на «Магнате» и «Историке» — как в истории
+  const ka=(typeof DIF==='function'?DIF().air:1)||1;if(ka!==1)F.forEach(x=>{if(x.v)x.v=Math.round(x.v*ka*10)/10;if(x.d)x.d=Math.round(x.d*ka);if(x.a)x.a=Math.round(x.a*ka);if(x.q)x.q=Math.round(x.q*(1-(1-ka)*0.5)*100)/100;});
+  return F;}
 /* ---------- результат без съёмки ---------- */
 function airEvSim(s,ev,md,pil){const t=tNow(s),st=airStats(md,t),sk=pil.sk,r=()=>Math.random(),rel=st.rel,F=airEvField(s,ev),res={ev:ev.key,md:md.id,pil:pil.id,field:F};
   const hours=h=>Math.pow(rel,h*(1+(1-sk)*0.5)),fail=h=>r()>hours(h);

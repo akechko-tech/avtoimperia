@@ -6,9 +6,17 @@
 const WX_PLACE={channel:{sea:1,wind:1.6,rain:0.18,fog:0.25,dir:[-0.8,0.5]},england:{wind:1.2,rain:0.2,fog:0.2,dir:[-0.8,0.4]},atlantic:{sea:1,wind:2.2,rain:0.15,fog:0.1},med:{sea:1,wind:1.2,rain:-0.08,storm:0.05},
   alps:{wind:1.3,mount:1,temp:-8,storm:0.1,rain:0.05},pyrenees:{wind:1.1,mount:1,temp:-4,storm:0.08},russia:{wind:1,temp:-3,rain:0.05,storm:0.05},plain:{},strait:{sea:1,wind:1.5,rain:0.1},coast:{sea:1,wind:1.3},lagoon:{sea:1,wind:0.9},lake:{wind:0.8}};
 function wxSeason(m){return m>=11||m<=1?'winter':m<=4?'spring':m<=7?'summer':'autumn';}
+// 0.40: предел ветра по роду полёта — доля крейсерской скорости аэроплана, которую можно отдать ветру на высоте (на 100–600 м ветер
+// в полтора раза сильнее, чем у земли): в сильный ветер не летали — ждали затишья. Раньше тихоходный аэроплан 1909 года мог попасть
+// в ветер 13 м/с при своих 17 и шёл к цели боком, носом в поле (отзыв: «летим боком»)
+const WX_KIND={test:0.15,circle:0.15,speed:0.25,rspeed:0.2,dist:0.25,rdist:0.25,alt:0.3,ralt:0.3,cross:0.3,trial:0.25,loop:0.2,war:0.45,other:0.3};
+function wxCap(kind,vc){const k=WX_KIND[kind]||WX_KIND.other;return clamp((vc||70)/3.6*k/1.6,1.5,12);}
 function wxMake(o){const rnd=mulberry32((o.seed|0)+7777),m=o.m|0,sea=!!o.sea,P=Object.assign({},WX_PLACE[o.place]||{},(o.bio&&WX_PLACE[o.bio])||{}),S=wxSeason(m),early=o.y<1912;
   // ветер у земли: чаще слабый; у моря и в горах свежее; ранние годы — летали в тихую погоду
-  let ws=(rnd()*rnd()*9+rnd()*2)*(P.wind||1)*(early?0.6:1);if(S==='winter'||S==='autumn')ws*=1.2;ws=clamp(ws,0,early?6:13);/* до 1912 года в сильный ветер не летали */
+  const D=(typeof DIF==='function'&&typeof G!=='undefined'&&G&&DIF().fly)||{wind:1};
+  let ws=(rnd()*rnd()*9+rnd()*2)*(P.wind||1)*(early?0.6:1)*D.wind;if(S==='winter'||S==='autumn')ws*=1.2;ws=clamp(ws,0,early?6:13);/* до 1912 года в сильный ветер не летали */
+  // 0.40: сильнее предела для этого полёта и аэроплана — ждали затишья: к вылету ветер стих до предела (сколько ждали — в сводке)
+  const cap=o.vc?wxCap(o.kind,o.vc):(early?6:13);let wait=0;if(ws>cap){wait=Math.round(1+(ws-cap)*1.5+rnd()*3);ws=cap*(0.7+0.3*rnd());}
   let wa=rnd()*6.283;if(P.dir&&rnd()<0.6)wa=Math.atan2(P.dir[0],P.dir[1])+(rnd()-0.5)*0.8;
   const mood=o.mood||'clear';
   // дождь, туман, гроза — по сезону и месту
@@ -16,13 +24,13 @@ function wxMake(o){const rnd=mulberry32((o.seed|0)+7777),m=o.m|0,sea=!!o.sea,P=O
   const rain=rnd()<pr?0.35+rnd()*0.65:0;
   const fog=(mood==='morning'?0.5:0.12)+(P.fog||0);const vis=rnd()<fog?2+rnd()*6:rain?9+rnd()*8:40;/* км */
   const hour=o.hour===undefined?11+rnd()*6:o.hour,noon=S==='summer'?1:S==='winter'?0.3:0.65,land=!sea;
-  let ps=(S==='summer'?0.2:S==='spring'||S==='autumn'?0.08:0.01)+(P.storm||0);if(hour<12||mood==='morning'||rain>0.6)ps*=0.4;if(early)ps*=0.6;
+  let ps=(S==='summer'?0.2:S==='spring'||S==='autumn'?0.08:0.01)+(P.storm||0);if(hour<12||mood==='morning'||rain>0.6)ps*=0.4;if(early)ps*=0.6;ps*=D.wind;/* 0.40: на лёгких уровнях гроза реже */
   const storm=rnd()<ps&&land?wxStorm(rnd,o,wa,ws):null;
   // термики: летом после полудня над сушей; над морем и утром — почти нет; горы — болтанка у склонов
-  const therm=land?clamp((hour-9)/5,0,1)*noon*(mood==='clear'||mood==='cloudy'?1:0.5)*(0.4+rnd()*0.6):0.08;
+  const therm=(land?clamp((hour-9)/5,0,1)*noon*(mood==='clear'||mood==='cloudy'?1:0.5)*(0.4+rnd()*0.6):0.08)*D.wind;
   const temp=Math.round(({winter:2,spring:12,summer:24,autumn:11})[S]+(P.temp||0)+(rnd()-0.5)*8+(hour>13?2:0));
   const sig=288.15/(288.15+(temp-15)*0.85);
-  const wx={ws,wa,w0:[Math.sin(wa)*ws,0,Math.cos(wa)*ws],gust:0.2+rnd()*0.4+(storm?0.2:0),veer:0.26,/* рад на 1000 м */
+  const wx={ws,wa,w0:[Math.sin(wa)*ws,0,Math.cos(wa)*ws],gust:(0.2+rnd()*0.4+(storm?0.2:0))*(wait?0.6:1)*Math.min(1,D.wind+0.3),veer:0.26,/* рад на 1000 м */cap,kind:o.kind||'',wait,
     rain,vis,storm,therm,mount:!!P.mount,temp,sig,sea,t:0,ph:[rnd()*6.3,rnd()*6.3,rnd()*6.3],birds:[],flash:0,bolts:[],hour,season:S};
   wx.name=wxText(wx);return wx;}
 // грозовые ячейки: 1–3, на пути между A и B (или у поля), с наковальней; дрейфуют с ветром наверху
@@ -33,7 +41,7 @@ function wxStorm(rnd,o,wa,ws){const n=1+Math.floor(rnd()*2.4),cells=[];const A=o
 function wxText(wx){const dirs=['С','СВ','В','ЮВ','Ю','ЮЗ','З','СЗ'],from=dirs[Math.round(((wx.wa+Math.PI)%6.2832)/(Math.PI/4))%8];
   const w=wx.ws<1.5?'штиль':`ветер ${Math.round(wx.ws)} м/с с ${from}${wx.gust>0.45?', порывы':''}`;
   const L=[w];if(wx.ws>=1.5)L.push(`на 1000 м — ${Math.round(wx.ws*2)} м/с`);if(wx.rain)L.push(wx.rain>0.7?'ливень':'дождь');if(wx.vis<12)L.push(wx.vis<5?'туман':'дымка');
-  if(wx.storm)L.push('гроза');if(wx.therm>0.55)L.push('болтанка');L.push(`${wx.temp>0?'+':''}${wx.temp}°`);return L.join(' · ');}
+  if(wx.storm)L.push('гроза');if(wx.therm>0.55)L.push('болтанка');L.push(`${wx.temp>0?'+':''}${wx.temp}°`);if(wx.wait)L.push(`ждали затишья ${wx.wait} ч`);return L.join(' · ');}
 // ---- ветер в точке: профиль по высоте (логарифм), заход по часовой, порывы (сумма синусов), термики, гроза
 function wxN(t,ph){return 0.5*Math.sin(t*1.31+ph)+0.3*Math.sin(t*2.93+ph*1.7)+0.2*Math.sin(t*5.17+ph*0.4);}
 function wxWindAt(x,y,z,agl,t){const wx=FL.wx;if(!wx)return FL.wind||[0,0,0];const h=Math.max(2,agl);

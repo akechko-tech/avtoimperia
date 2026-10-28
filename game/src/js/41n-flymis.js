@@ -149,10 +149,15 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.goal=()=>{const a=me(),d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])*km/1000;return `<b>До: ${dest} — ${fmtN(Math.round(d))} км</b><span>в пути ${flFmtT(FL.t*km)} · бензин ${Math.round(a.fuel/a.fuelMax*100)}%${M.place==='alps'?' · перевал — 2 000 м':''}</span>`;};
     if(!ev.dyn)M.board=()=>`<b>В истории</b><p>${esc(airEvMine(G,ev)?'Вы':ev.h[0])}: ${esc(ev.h[2])}</p>`;
     M.target=()=>[M.B[0],undefined,M.B[1],dest];
-    M.auto=()=>{const a=me();flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
-    M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);
+    const distB=()=>{const a=me();return Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);};
+    // 0.40: автопилот (и «Долететь») у цели сам заходит на посадку — раньше аэроплан кружил над финишем, пока игрок не нажмёт «Сесть»
+    M.auto=()=>{const a=me();if(distB()<2400&&!a.gnd&&M.flew&&typeof flyLandGo==='function'&&flyLandGo(dest+' под крылом — лётчик заходит на посадку'))return;
+      flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
+    M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=distB();
+      // 0.40: сели у цели (ближе 1,5 км) — прибыли: газ убран, тормоза (если есть), катимся до остановки — и зачёт
+      if(M.flew&&a.gnd&&d<1500){if(!M.arrived){M.arrived=1;if(typeof FLY!=='undefined')FLY.thrT=0;flToast(`${dest}! Газ убран — катимся до остановки`,'good');}a.ctl.thr=0;if(a.brakes)a.ctl.brk=1;if(a.Vg<3)M.done(true);return;}
       // 0.39: промежуточная посадка не кончает перелёт — заправились, починились и дальше (как Ведрин на Париж — Мадрид); конец — у финиша, при аварии или если чинить негде
-      if(M.flew&&a.gnd&&a.Vg<3){if(d<900)M.done(true);else if(!a.eng.run&&stuck(a))M.done(false,'вынужденная посадка: '+(a.eng.fail||'мотор'));else if(a.eng.run&&!M.downMsg){M.downMsg=1;flToast('Сели в поле — перелёт продолжается: заправка и ремонт кнопками, дальше газ и взлёт');}}
+      if(M.flew&&a.gnd&&a.Vg<3){if(!a.eng.run&&stuck(a))M.done(false,'вынужденная посадка: '+(a.eng.fail||'мотор'));else if(a.eng.run&&!M.downMsg){M.downMsg=1;flToast('Сели в поле — перелёт продолжается: заправка и ремонт кнопками, дальше газ и взлёт');}}
       if(!a.gnd)M.downMsg=0;};
     M.skipStop=()=>{const a=me();return a.eng.fail?'мотор стоит':M.place==='alps'&&a.p[1]<gyA()+1500&&Math.abs(a.p[0])<3000?'горы впереди':null;};
     // 0.39: сесть можно и в пути — на поле, на луг у деревни (заправиться, починить мотор) — перелёт продолжается; у финиша — зачёт
@@ -160,7 +165,10 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.canLand=()=>{const a=me();return M.flew&&!a.gnd;};M.landAt=()=>{if(nearB())return [M.B[0],M.B[1],FW&&FW.S.B?FW.S.B.y:0];const L=flLandSpot(me());M.spotN=L.n;return [L.x,L.z,L.y];};
     M.land=()=>{if(nearB()){M.done(true);return;}flToast('Сели: '+(M.spotN||'поле')+'. Заправка и ремонт — кнопками, дальше — газ и взлёт');};
     M.done=(ok,why)=>{const h=Math.round(FL.t*km/360)/10,sea=/channel|med|atlantic/.test(M.place),wet=!ok&&why&&/вод/.test(why);
-      const res={ev:ev.key,md:md.id,pil:P.id,field:F,ok,h,place:ok?1:0,txt:ok?`долетел за ${String(h).replace('.',',')} ч`:wet||(!ok&&sea)?'сел на воду — лётчика подобрал миноносец':why||'не долетел'};
+      // 0.40: где кончился перелёт — по местности под аэропланом и в километрах до цели (отзыв: непонятно было, что случилось и далеко ли)
+      const a=me(),left=Math.round(distB()*km/1000),where=()=>{const k=flSurf(a.p[0],a.p[2]).k;return k==='water'?'над водой':k==='forest'?'над лесом':k==='town'?'над городом':k==='rock'?'в горах':k==='field'?'над полями':'над лугами';};
+      const fail=!ok?((wet||sea&&/вод|утон|море/.test(why||''))?'сел на воду — лётчика подобрал миноносец':(why||'не долетел')+(why&&/лес|город|крыш|скал|вод|земл|пол[яе]|постройк|мор[ея]|вынужденная|сел/.test(why)?'':' '+where()))+(left>0?` — в ${fmtN(left)} км от цели`:''):'';
+      const res={ev:ev.key,md:md.id,pil:P.id,field:F,ok,h,place:ok?1:0,txt:ok?`долетел за ${String(h).replace('.',',')} ч`:fail};
       M.fin(ok?`${dest}! Перелёт удался`:'Перелёт не удался',ok?`${who} ${P.hero?'долетели':'долетел'} за ${String(h).replace('.',',')} ч.`:res.txt,res,ok?'good':'bad');};
     return M;}
   /* ===== военный конкурс: подъём, скорость на базе, посадка в круг ===== */

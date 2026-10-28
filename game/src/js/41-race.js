@@ -283,6 +283,8 @@ function placeScenery(trk,rnd){
       if(i%3===0)[1,-1].forEach(sd=>{for(let k=0;k<5;k++)add(i,'vine',sd*(W/2+5+k*2.6),0,'s',0);});if(i%40===11&&rnd()<0.6)tree((rnd()<0.5?-1:1)*(W/2+22),cfg.host==='it'||cfg.host==='es'?'cypress':'oak');}
     else if(sg===RSEG.serp){// серпантин: у обрыва — столбики-отбойники, у скалы — камни
       const bend=trk.K[i]>0?1:-1;if(i%2===0)add(i,'gstone',-bend*(W/2+1.1),0,'s',0.18);if(i%9===0&&rnd()<0.5)add(i,'rock',bend*(W/2+4+rnd()*3),Math.floor(rnd()*3),'s',1.2);
+      // 0.40: скала со стороны горы — стена: на насыпь под 60° не заехать (отзыв: машина на Тарга Флорио вставала на бок у обочины)
+      trk.bar[i]=Object.assign(trk.bar[i]||{},bend>0?{L:W/2+3.2}:{R:W/2+3.2});
       if(i%13===0&&rnd()<0.5)tree(bend*(W/2+6+rnd()*10),rnd()<0.6?'fir':'pine');}
     else if(sg===RSEG.coast){const c=trk.coast.find(q=>i>=q.i0&&i<=q.i1),sd=c?c.side:1;// у моря: низкая стена над водой, со стороны суши — сосны, пальмы, виллы
       if(i%3===0)add(i,'wall',sd*(W/2+1.5),0,'s',0.4);if(rnd()<0.2)tree(-sd*(W/2+4+rnd()*14),set.trees.includes('palm')?(rnd()<0.5?'palm':'pine'):rnd()<0.5?'pine':set.trees[0]);
@@ -723,19 +725,28 @@ function playerControl(c,dt){
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
   // на скользком (мокрый булыжник, трава, грязь, лёд) шины держат слабее — машина плывёт по-настоящему
   const gk=clamp(((c.muNow||c.grip)-0.25)/0.7,0.12,1);
-  if(PHY.hold){c.vy*=1-Math.min(0.3,dt*5*PHY.hold*gk);c.r*=1-Math.min(0.2,dt*2.5*PHY.hold*gk);}
   if(R.tilt&&R.tiltVal!==undefined)c.steer+=clamp(clamp(R.tiltVal/22,-1,1)-c.steer,-4*dt,4*dt);
   else if(RW.drag)c.steer+=clamp(RW.target-c.steer,-7*dt,7*dt);
   else{const dir=rKeys.left?-1:rKeys.right?1:0;
     // кнопки крутят руль, а не ставят его: короткое касание — лёгкая поправка, долгое нажатие разгоняет поворот
-    if(dir){c.hold+=dt;const rate=0.7+2.1*Math.min(1,c.hold/0.6);c.steer=clamp(c.steer+dir*rate*(c.steer*dir<0?1.8:1)*dt,-1,1);}
+    // 0.40: с первого касания руль идёт быстрее (1,0 вместо 0,7 в секунду) и разгоняется за полсекунды — поворот откликается сразу
+    if(dir){c.hold+=dt;const rate=1.0+2.2*Math.min(1,c.hold/0.5);c.steer=clamp(c.steer+dir*rate*(c.steer*dir<0?1.8:1)*dt,-1,1);}
     else{c.hold=0;c.steer-=clamp(c.steer,-back,back);}}
   // полный поворот — чуть за пределом сцепления на этой скорости: на прямой руль точный, в шпильке — полный угол колёс
   const mu=c.muNow||c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
   let want=c.steer*dmax;
-  // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
-  if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
+  // помощник: колёса чуть доворачиваются по ходу заноса (контрруль)
+  if(!hist&&v>4)want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
+  // 0.40: «держалка» гасит только лишнее — вращение сверх того, что задаёт руль (rk — поворот по геометрии колёс), и снос задних
+  // колёс за пиком шины (угол увода задней оси больше 0,15 — пик у 0,145). Раньше гасились всё вращение и весь увод: на малой скорости машина шла
+  // по дуге вдвое шире, чем задаёт руль (25 км/ч: 11,6 м вместо 5–6, 0,42 g — «едем как по рельсам»), а на большой — держала 1,2 g,
+  // больше, чем дают шины. Теперь в повороте работают шины, а помощь ловит только занос (отзыв: «летим боком»)
+  if(PHY.hold&&v>1){const rk=v*Math.tan(c.delta)/Math.max(0.5,c.L),rEx=c.r*(c.r-rk)>0?c.r-rk:0;
+    let kr=4*PHY.hold*gk;if(!hist&&v>4)kr+=15*Math.max(0,c.slipR-0.08);
+    if(rEx)c.r-=rEx*Math.min(0.5,dt*kr);
+    const ar=Math.atan2(c.vy-c.b*c.r,v),ex=Math.abs(ar)>0.15?ar-0.15*Math.sign(ar):0;
+    if(ex)c.vy-=ex*v*Math.min(0.3,dt*6*PHY.hold*gk);}
   // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
   // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
   const still=Math.abs(c.vx)<0.5;
@@ -755,7 +766,9 @@ function playerControl(c,dt){
   if(moto&&!c.rev){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
     const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.04,1);let tc=false;
     if(c.thr>tMax){c.thr=tMax;tc=true;}
-    const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}c.r*=1-Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
+    // 0.40: ESP мотоцикла гасит только вращение сверх поворота по рулю (rk2) — раньше гасило всё, и мотоцикл в заносе шёл прямо, боком
+    const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}
+      const rk2=v*Math.tan(c.delta)/Math.max(0.5,c.L),ex2=c.r*(c.r-rk2)>0?c.r-rk2:0;if(ex2)c.r-=ex2*Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
     if(tc&&gIn&&R)c.asTC=R.time+0.35;
     if(c.brk>0&&v>0.5){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
       const cap=Math.max(0.1,Math.min(capR,capF));if(c.brk>cap){c.brk=cap;esc=true;}}

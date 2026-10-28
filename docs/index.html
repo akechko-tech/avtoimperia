@@ -1133,17 +1133,20 @@ const PIONEERS={
 // а не прибавка соперникам: ответ отбирает покупателей у вас, а не раздувает рынок); rboost — предел моделей-ответов; org — издержки размера компании
 // (контора, сбыт, управление — растут с выпуском и числом рынков, как содержание городов в «Цивилизации»); copyMax и copyRate — насколько и как быстро
 // соперники перенимают устройство ваших лучших машин (★ к эталону класса); drv — мастерство пилотов соперников
+// 0.40: «Юный», «Лёгкая» и «Норма» мягче (отзыв: «можно сделать уровень юный, начальный и средний полегче»): больше денег на старте,
+// конкуренты слабее, соперники в гонках медленнее (race, drv), кредит больше; air — сила соперников в авиации, fly — полёт:
+// stall — запас до срыва (сдвиг критического угла), wind — доля ветра и болтанки, fail — частота отказов, dmg — поломки, fuel — запас топлива
 const DIFFS={
-  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2,comp:0.7,race:0.9,bad:0.3,debt:80000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
-    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.88},
-  easy:{name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.5,comp:0.8,race:0.93,bad:0.6,debt:25000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
-    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.94},
-  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1,comp:1,race:1,bad:1,debt:15000,share:0.2,rvRate:1.2,rvMax:1.3,pwMin:0.7,
-    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:1},
+  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2.5,comp:0.6,race:0.85,bad:0.3,debt:120000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
+    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.85,air:0.88,fly:{stall:-0.02,wind:0.4,fail:0.3,dmg:0.4,fuel:1.3}},
+  easy:{name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.8,comp:0.72,race:0.9,bad:0.6,debt:40000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
+    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.9,air:0.93,fly:{stall:-0.02,wind:0.6,fail:0.6,dmg:0.6,fuel:1.15}},
+  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1.2,comp:0.9,race:0.96,bad:1,debt:20000,share:0.2,rvRate:1,rvMax:1,pwMin:0.7,
+    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:0.97,air:0.97,fly:{stall:0.02,wind:0.8,fail:1,dmg:1,fuel:1}},
   hard:{name:'Магнат',desc:'Конкуренты агрессивнее и быстрее перенимают ваши новинки, большая компания дороже в управлении, кредит дороже, кризисы сильнее',cash:0.85,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:1.7,pwMin:0.65,
-    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04},
+    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}},
   hist:{name:'Историк',desc:'Как «Божество» в «Цивилизации»: соперники сильны и мгновенно отвечают, большая компания дорога в управлении — первое место в наследии здесь исключительное достижение',cash:0.75,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:1.9,pwMin:0.6,
-    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08}
+    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}}
 };
 // Типичная машина соперников в каждом классе: с ней покупатель сравнивает вашу (год, прототип, детали)
 const RIVAL_CAR={
@@ -17039,6 +17042,8 @@ function placeScenery(trk,rnd){
       if(i%3===0)[1,-1].forEach(sd=>{for(let k=0;k<5;k++)add(i,'vine',sd*(W/2+5+k*2.6),0,'s',0);});if(i%40===11&&rnd()<0.6)tree((rnd()<0.5?-1:1)*(W/2+22),cfg.host==='it'||cfg.host==='es'?'cypress':'oak');}
     else if(sg===RSEG.serp){// серпантин: у обрыва — столбики-отбойники, у скалы — камни
       const bend=trk.K[i]>0?1:-1;if(i%2===0)add(i,'gstone',-bend*(W/2+1.1),0,'s',0.18);if(i%9===0&&rnd()<0.5)add(i,'rock',bend*(W/2+4+rnd()*3),Math.floor(rnd()*3),'s',1.2);
+      // 0.40: скала со стороны горы — стена: на насыпь под 60° не заехать (отзыв: машина на Тарга Флорио вставала на бок у обочины)
+      trk.bar[i]=Object.assign(trk.bar[i]||{},bend>0?{L:W/2+3.2}:{R:W/2+3.2});
       if(i%13===0&&rnd()<0.5)tree(bend*(W/2+6+rnd()*10),rnd()<0.6?'fir':'pine');}
     else if(sg===RSEG.coast){const c=trk.coast.find(q=>i>=q.i0&&i<=q.i1),sd=c?c.side:1;// у моря: низкая стена над водой, со стороны суши — сосны, пальмы, виллы
       if(i%3===0)add(i,'wall',sd*(W/2+1.5),0,'s',0.4);if(rnd()<0.2)tree(-sd*(W/2+4+rnd()*14),set.trees.includes('palm')?(rnd()<0.5?'palm':'pine'):rnd()<0.5?'pine':set.trees[0]);
@@ -17479,19 +17484,28 @@ function playerControl(c,dt){
   // шины держат дорогу: боковой снос гасится быстрее, машина не «плывёт»
   // на скользком (мокрый булыжник, трава, грязь, лёд) шины держат слабее — машина плывёт по-настоящему
   const gk=clamp(((c.muNow||c.grip)-0.25)/0.7,0.12,1);
-  if(PHY.hold){c.vy*=1-Math.min(0.3,dt*5*PHY.hold*gk);c.r*=1-Math.min(0.2,dt*2.5*PHY.hold*gk);}
   if(R.tilt&&R.tiltVal!==undefined)c.steer+=clamp(clamp(R.tiltVal/22,-1,1)-c.steer,-4*dt,4*dt);
   else if(RW.drag)c.steer+=clamp(RW.target-c.steer,-7*dt,7*dt);
   else{const dir=rKeys.left?-1:rKeys.right?1:0;
     // кнопки крутят руль, а не ставят его: короткое касание — лёгкая поправка, долгое нажатие разгоняет поворот
-    if(dir){c.hold+=dt;const rate=0.7+2.1*Math.min(1,c.hold/0.6);c.steer=clamp(c.steer+dir*rate*(c.steer*dir<0?1.8:1)*dt,-1,1);}
+    // 0.40: с первого касания руль идёт быстрее (1,0 вместо 0,7 в секунду) и разгоняется за полсекунды — поворот откликается сразу
+    if(dir){c.hold+=dt;const rate=1.0+2.2*Math.min(1,c.hold/0.5);c.steer=clamp(c.steer+dir*rate*(c.steer*dir<0?1.8:1)*dt,-1,1);}
     else{c.hold=0;c.steer-=clamp(c.steer,-back,back);}}
   // полный поворот — чуть за пределом сцепления на этой скорости: на прямой руль точный, в шпильке — полный угол колёс
   const mu=c.muNow||c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
   let want=c.steer*dmax;
-  // помощник: колёса чуть доворачиваются по ходу заноса (контрруль), вращение гасится, когда задок срывается
-  if(!hist&&v>4){want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);c.r*=1-Math.min(0.5,dt*15*Math.max(0,c.slipR-0.08));}
+  // помощник: колёса чуть доворачиваются по ходу заноса (контрруль)
+  if(!hist&&v>4)want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
+  // 0.40: «держалка» гасит только лишнее — вращение сверх того, что задаёт руль (rk — поворот по геометрии колёс), и снос задних
+  // колёс за пиком шины (угол увода задней оси больше 0,15 — пик у 0,145). Раньше гасились всё вращение и весь увод: на малой скорости машина шла
+  // по дуге вдвое шире, чем задаёт руль (25 км/ч: 11,6 м вместо 5–6, 0,42 g — «едем как по рельсам»), а на большой — держала 1,2 g,
+  // больше, чем дают шины. Теперь в повороте работают шины, а помощь ловит только занос (отзыв: «летим боком»)
+  if(PHY.hold&&v>1){const rk=v*Math.tan(c.delta)/Math.max(0.5,c.L),rEx=c.r*(c.r-rk)>0?c.r-rk:0;
+    let kr=4*PHY.hold*gk;if(!hist&&v>4)kr+=15*Math.max(0,c.slipR-0.08);
+    if(rEx)c.r-=rEx*Math.min(0.5,dt*kr);
+    const ar=Math.atan2(c.vy-c.b*c.r,v),ex=Math.abs(ar)>0.15?ar-0.15*Math.sign(ar):0;
+    if(ex)c.vy-=ex*v*Math.min(0.3,dt*6*PHY.hold*gk);}
   // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
   // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
   const still=Math.abs(c.vx)<0.5;
@@ -17511,7 +17525,9 @@ function playerControl(c,dt){
   if(moto&&!c.rev){const muN=c.muNow||c.grip,Fzr=c.m*GRAV*c.a/c.L,u=Math.min(1,Math.abs(v*c.r)/(muN*GRAV+0.01)),side=Math.sqrt(Math.max(0.05,1-u*u));
     const vg=c.gr[c.gear-1]||10,pw=Math.max(1,c.P*(1-c.dmg/250)),tMax=clamp(0.9*muN*Fzr*side*Math.max(v,2.2+0.22*vg)/pw,0.04,1);let tc=false;
     if(c.thr>tMax){c.thr=tMax;tc=true;}
-    const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}c.r*=1-Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
+    // 0.40: ESP мотоцикла гасит только вращение сверх поворота по рулю (rk2) — раньше гасило всё, и мотоцикл в заносе шёл прямо, боком
+    const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}
+      const rk2=v*Math.tan(c.delta)/Math.max(0.5,c.L),ex2=c.r*(c.r-rk2)>0?c.r-rk2:0;if(ex2)c.r-=ex2*Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
     if(tc&&gIn&&R)c.asTC=R.time+0.35;
     if(c.brk>0&&v>0.5){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
       const cap=Math.max(0.1,Math.min(capR,capF));if(c.brk>cap){c.brk=cap;esc=true;}}
@@ -19256,9 +19272,17 @@ function exh2d(o,sx,sy,scale,me){if(o.dnf||!o.spec3)return;const P=exhProfile(o)
 const WX_PLACE={channel:{sea:1,wind:1.6,rain:0.18,fog:0.25,dir:[-0.8,0.5]},england:{wind:1.2,rain:0.2,fog:0.2,dir:[-0.8,0.4]},atlantic:{sea:1,wind:2.2,rain:0.15,fog:0.1},med:{sea:1,wind:1.2,rain:-0.08,storm:0.05},
   alps:{wind:1.3,mount:1,temp:-8,storm:0.1,rain:0.05},pyrenees:{wind:1.1,mount:1,temp:-4,storm:0.08},russia:{wind:1,temp:-3,rain:0.05,storm:0.05},plain:{},strait:{sea:1,wind:1.5,rain:0.1},coast:{sea:1,wind:1.3},lagoon:{sea:1,wind:0.9},lake:{wind:0.8}};
 function wxSeason(m){return m>=11||m<=1?'winter':m<=4?'spring':m<=7?'summer':'autumn';}
+// 0.40: предел ветра по роду полёта — доля крейсерской скорости аэроплана, которую можно отдать ветру на высоте (на 100–600 м ветер
+// в полтора раза сильнее, чем у земли): в сильный ветер не летали — ждали затишья. Раньше тихоходный аэроплан 1909 года мог попасть
+// в ветер 13 м/с при своих 17 и шёл к цели боком, носом в поле (отзыв: «летим боком»)
+const WX_KIND={test:0.15,circle:0.15,speed:0.25,rspeed:0.2,dist:0.25,rdist:0.25,alt:0.3,ralt:0.3,cross:0.3,trial:0.25,loop:0.2,war:0.45,other:0.3};
+function wxCap(kind,vc){const k=WX_KIND[kind]||WX_KIND.other;return clamp((vc||70)/3.6*k/1.6,1.5,12);}
 function wxMake(o){const rnd=mulberry32((o.seed|0)+7777),m=o.m|0,sea=!!o.sea,P=Object.assign({},WX_PLACE[o.place]||{},(o.bio&&WX_PLACE[o.bio])||{}),S=wxSeason(m),early=o.y<1912;
   // ветер у земли: чаще слабый; у моря и в горах свежее; ранние годы — летали в тихую погоду
-  let ws=(rnd()*rnd()*9+rnd()*2)*(P.wind||1)*(early?0.6:1);if(S==='winter'||S==='autumn')ws*=1.2;ws=clamp(ws,0,early?6:13);/* до 1912 года в сильный ветер не летали */
+  const D=(typeof DIF==='function'&&typeof G!=='undefined'&&G&&DIF().fly)||{wind:1};
+  let ws=(rnd()*rnd()*9+rnd()*2)*(P.wind||1)*(early?0.6:1)*D.wind;if(S==='winter'||S==='autumn')ws*=1.2;ws=clamp(ws,0,early?6:13);/* до 1912 года в сильный ветер не летали */
+  // 0.40: сильнее предела для этого полёта и аэроплана — ждали затишья: к вылету ветер стих до предела (сколько ждали — в сводке)
+  const cap=o.vc?wxCap(o.kind,o.vc):(early?6:13);let wait=0;if(ws>cap){wait=Math.round(1+(ws-cap)*1.5+rnd()*3);ws=cap*(0.7+0.3*rnd());}
   let wa=rnd()*6.283;if(P.dir&&rnd()<0.6)wa=Math.atan2(P.dir[0],P.dir[1])+(rnd()-0.5)*0.8;
   const mood=o.mood||'clear';
   // дождь, туман, гроза — по сезону и месту
@@ -19266,13 +19290,13 @@ function wxMake(o){const rnd=mulberry32((o.seed|0)+7777),m=o.m|0,sea=!!o.sea,P=O
   const rain=rnd()<pr?0.35+rnd()*0.65:0;
   const fog=(mood==='morning'?0.5:0.12)+(P.fog||0);const vis=rnd()<fog?2+rnd()*6:rain?9+rnd()*8:40;/* км */
   const hour=o.hour===undefined?11+rnd()*6:o.hour,noon=S==='summer'?1:S==='winter'?0.3:0.65,land=!sea;
-  let ps=(S==='summer'?0.2:S==='spring'||S==='autumn'?0.08:0.01)+(P.storm||0);if(hour<12||mood==='morning'||rain>0.6)ps*=0.4;if(early)ps*=0.6;
+  let ps=(S==='summer'?0.2:S==='spring'||S==='autumn'?0.08:0.01)+(P.storm||0);if(hour<12||mood==='morning'||rain>0.6)ps*=0.4;if(early)ps*=0.6;ps*=D.wind;/* 0.40: на лёгких уровнях гроза реже */
   const storm=rnd()<ps&&land?wxStorm(rnd,o,wa,ws):null;
   // термики: летом после полудня над сушей; над морем и утром — почти нет; горы — болтанка у склонов
-  const therm=land?clamp((hour-9)/5,0,1)*noon*(mood==='clear'||mood==='cloudy'?1:0.5)*(0.4+rnd()*0.6):0.08;
+  const therm=(land?clamp((hour-9)/5,0,1)*noon*(mood==='clear'||mood==='cloudy'?1:0.5)*(0.4+rnd()*0.6):0.08)*D.wind;
   const temp=Math.round(({winter:2,spring:12,summer:24,autumn:11})[S]+(P.temp||0)+(rnd()-0.5)*8+(hour>13?2:0));
   const sig=288.15/(288.15+(temp-15)*0.85);
-  const wx={ws,wa,w0:[Math.sin(wa)*ws,0,Math.cos(wa)*ws],gust:0.2+rnd()*0.4+(storm?0.2:0),veer:0.26,/* рад на 1000 м */
+  const wx={ws,wa,w0:[Math.sin(wa)*ws,0,Math.cos(wa)*ws],gust:(0.2+rnd()*0.4+(storm?0.2:0))*(wait?0.6:1)*Math.min(1,D.wind+0.3),veer:0.26,/* рад на 1000 м */cap,kind:o.kind||'',wait,
     rain,vis,storm,therm,mount:!!P.mount,temp,sig,sea,t:0,ph:[rnd()*6.3,rnd()*6.3,rnd()*6.3],birds:[],flash:0,bolts:[],hour,season:S};
   wx.name=wxText(wx);return wx;}
 // грозовые ячейки: 1–3, на пути между A и B (или у поля), с наковальней; дрейфуют с ветром наверху
@@ -19283,7 +19307,7 @@ function wxStorm(rnd,o,wa,ws){const n=1+Math.floor(rnd()*2.4),cells=[];const A=o
 function wxText(wx){const dirs=['С','СВ','В','ЮВ','Ю','ЮЗ','З','СЗ'],from=dirs[Math.round(((wx.wa+Math.PI)%6.2832)/(Math.PI/4))%8];
   const w=wx.ws<1.5?'штиль':`ветер ${Math.round(wx.ws)} м/с с ${from}${wx.gust>0.45?', порывы':''}`;
   const L=[w];if(wx.ws>=1.5)L.push(`на 1000 м — ${Math.round(wx.ws*2)} м/с`);if(wx.rain)L.push(wx.rain>0.7?'ливень':'дождь');if(wx.vis<12)L.push(wx.vis<5?'туман':'дымка');
-  if(wx.storm)L.push('гроза');if(wx.therm>0.55)L.push('болтанка');L.push(`${wx.temp>0?'+':''}${wx.temp}°`);return L.join(' · ');}
+  if(wx.storm)L.push('гроза');if(wx.therm>0.55)L.push('болтанка');L.push(`${wx.temp>0?'+':''}${wx.temp}°`);if(wx.wait)L.push(`ждали затишья ${wx.wait} ч`);return L.join(' · ');}
 // ---- ветер в точке: профиль по высоте (логарифм), заход по часовой, порывы (сумма синусов), термики, гроза
 function wxN(t,ph){return 0.5*Math.sin(t*1.31+ph)+0.3*Math.sin(t*2.93+ph*1.7)+0.2*Math.sin(t*5.17+ph*0.4);}
 function wxWindAt(x,y,z,agl,t){const wx=FL.wx;if(!wx)return FL.wind||[0,0,0];const h=Math.max(2,agl);
@@ -19355,6 +19379,10 @@ function wxEnv(E0){const wx=FL.wx;if(!wx||!E0)return E0;if(!wx.E0)wx.E0=JSON.par
 const FLG=9.81;
 const d3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],l3=a=>Math.hypot(a[0],a[1],a[2]);
 const FL={on:false,wind:[0,0,0],k:1};
+// 0.40: полёт по уровню сложности (DIFFS.fly): stall — на сколько за критический угол пускает ручка (на «Юном» и «Лёгкой» лётчик
+// держит чуть ниже срыва), wind — доля ветра и болтанки, fail — частота отказов, dmg — поломки, fuel — запас бензина
+const FLY_DIF0={stall:0.06,wind:1,fail:1,dmg:1,fuel:1};
+function flDif(){const d=(typeof DIF==='function'&&typeof G!=='undefined'&&G)?DIF().fly:null;return d?Object.assign({},FLY_DIF0,d):FLY_DIF0;}
 // мир по умолчанию (для расчётов без 3D): ровное поле на уровне 30 м
 const FW0={H:()=>30,surf:()=>'grass',obst:()=>null};
 function flW(){return (typeof FW!=='undefined'&&FW&&FW.H)?FW:FW0;}
@@ -19368,7 +19396,7 @@ function flCraft(md,y,o){o=o||{};const st=airStats(md,y),A=st.A,P=A.P,gr=air3dGe
     gnd:1,th:gr.gp,sea:st.sea,rail:!!P.g.rail,tr:a0+0.12,al:0,be:0,V:0,n:1,stall:0,drop:0,crash:null,hard:0,
     ctl:{sx:0,sy:0,rd:0,thr:0,brk:0},brakes:P.g.id==='g3',ovs:0,starts:0,pm:Math.max(40,st.roll*1.5)*Math.PI/180,tractor:!(P.f.id==='fp'||P.f.id==='fc'),
     tau:0.08+Math.min(0.22,A.W/20000),kA:o.kA||4.6,trimK:o.trimK===undefined?1.4:o.trimK,lvlK:o.lvlK===undefined?1.1:o.lvlK,
-    name:md.name,dist:0,air:0,t:0,rnd:o.rnd||Math.random,ai:o.ai||null,team:o.team||0,id:o.id||0};
+    name:md.name,dist:0,air:0,t:0,rnd:o.rnd||Math.random,ai:o.ai||null,team:o.team||0,id:o.id||0,dif:o.dif||flDif()};
   ac.thMax=gr.gp>0.05?gr.gp:0.14;ac.burn=A.hpN*A.P.e.sfc/3600;ac.haz=-Math.log(clamp(st.rel,0.2,0.9999))/3600;return ac;}
 // высота центра тяжести над землёй на колёсах при угле тангажа th (хвост на земле — при th = gp)
 function flHcg(ac,th){const g=ac.gr,c=Math.cos(th),s=Math.sin(th);return Math.max(g.gearY*c-g.wheelZ*s,g.skidY*c-g.skidZ*s);}
@@ -19389,7 +19417,7 @@ function flBank(ac){return Math.atan2(-ac.rt[1],ac.up[1]);}
 function flHdg(ac){return Math.atan2(ac.fw[0],ac.fw[2]);}
 function flPitch(ac){return Math.asin(clamp(ac.fw[1],-1,1));}
 /* ---------- шаг физики ---------- */
-function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.max(0,ac.p[1]),gH=Math.max(W.H(ac.p[0],ac.p[2]),0),agl=ac.p[1]-gH,rho=RHO0*airSig(h)*(FL.wx?FL.wx.sig:1),S=A.S,m=ac.m;ac.t+=dt;/* 0.39: плотность — ещё и по температуре дня */
+function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,D=ac.dif||FLY_DIF0,h=Math.max(0,ac.p[1]),gH=Math.max(W.H(ac.p[0],ac.p[2]),0),agl=ac.p[1]-gH,rho=RHO0*airSig(h)*(FL.wx?FL.wx.sig:1),S=A.S,m=ac.m;ac.t+=dt;/* 0.39: плотность — ещё и по температуре дня */
   // мотор: газ — с запаздыванием; повреждён — тянет хуже; кончился бензин или отказал — стоит
   const run=ac.eng.run&&ac.fuel>0;ac.thr+=(clamp(c.thr,0,1)-ac.thr)*Math.min(1,dt*2.2);
   const pw=run?ac.thr*(1-ac.dmg.eng*0.75):0;
@@ -19415,8 +19443,11 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   // брошенная ручка — лётчик ведёт ровно: траектория плавно выходит в горизонт (подъём и снижение гаснут за 2–3 с)
   const gam=Math.asin(clamp(ac.v[1]/Math.max(1,l3(ac.v)),-1,1)),cphi=Math.max(0.5,Math.cos(flBank(ac)));
   const aLvl=clamp(ac.a0+m*(FLG*Math.cos(gam)-0.45*Math.max(8,V)*gam)/cphi/Math.max(1,qd*S*ac.CLa),ac.an,ac.as-0.015);
-  let aCmd;if(c.aCmd!==undefined&&c.aCmd!==null)aCmd=clamp(c.aCmd,ac.an,ac.as+0.06);
-  else{if(Math.abs(c.sy)<0.12)ac.tr+=(aLvl-ac.tr)*Math.min(1,dt*ac.trimK);aCmd=c.sy>=0?ac.tr+c.sy*(ac.as+0.06-ac.tr):ac.tr+c.sy*(ac.tr-ac.an-0.02);}
+  let aCmd;if(c.aCmd!==undefined&&c.aCmd!==null)aCmd=clamp(c.aCmd,ac.an,ac.as+D.stall);
+  else{if(Math.abs(c.sy)<0.12)ac.tr+=(aLvl-ac.tr)*Math.min(1,dt*ac.trimK);aCmd=c.sy>=0?ac.tr+c.sy*(ac.as+D.stall-ac.tr):ac.tr+c.sy*(ac.tr-ac.an-0.02);}
+  // 0.40: на «Юном» и «Лёгкой» лётчик не даёт крылу сорваться с ручки: угол атаки — не выше критического с запасом, и чем быстрее
+  // нос уже идёт вверх, тем раньше ручка «упирается» (без этого угол проскакивал критический по инерции на 0,05–0,08)
+  if(D.stall<0){const lim=ac.as+D.stall-Math.max(0,ac.w[1])*ac.kA*0.07;if(aCmd>lim)aCmd=lim;}
   // 0.39: лётчик не ломает машину сам — на большой скорости тянет ручку лишь до ~1,15 предельной перегрузки (лонжероны трещат, но держат); выход из пикирования возможен
   if(ac.dmg.pil<1){if(aCmd>ac.tr){const aL=ac.a0+ac.st.g*1.15*m*FLG/Math.max(1,qd*S)/ac.CLa;aCmd=Math.min(aCmd,Math.max(aL,ac.tr));}else{const aN=ac.a0-ac.st.g*0.6*m*FLG/Math.max(1,qd*S)/ac.CLa;aCmd=Math.max(aCmd,Math.min(aN,ac.tr));}}
   const ap=[a[0]-vh[0]*d3(a,vh),a[1]-vh[1]*d3(a,vh),a[2]-vh[2]*d3(a,vh)],Vp=Math.max(3,V);
@@ -19429,7 +19460,7 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   if(al>ac.as+0.02){if(!ac.drop)ac.drop=ac.rnd()<0.5?-1:1;const k=clamp((al-ac.as)*7,0,1.6)*(1.3-ac.st.stab*0.6);pT+=ac.drop*k;rT+=ac.drop*k*0.5;}else if(al<ac.as-0.03)ac.drop=0;
   if(ac.dmg.pil>=1){pT=0.8;qT=-0.3;}
   // 0.39: болтанка — рывки по крену, тангажу и курсу (термики, порывы у земли, горы, гроза); сильнее на малой скорости (меньше напор — меньше демпфирование)
-  if(FL.wx&&!ac.gnd){const tb=wxTurb(agl,ac.p[0],ac.p[2]);if(tb>0.02){const tt=(FL.t||0)*1.7+ac.t*0.3+(ac.id||0)*2.1,k=tb*(0.7+0.6*(1-Math.min(1,ce)));pT+=k*0.9*wxN(tt,1.3);qT+=k*0.45*wxN(tt*1.13,4.1);rT+=k*0.25*wxN(tt*0.87,2.2);ac.turb=tb;}else ac.turb=0;}
+  if(FL.wx&&!ac.gnd){const tb=wxTurb(agl,ac.p[0],ac.p[2]);if(tb>0.02){const tt=(FL.t||0)*1.7+ac.t*0.3+(ac.id||0)*2.1,k=tb*(0.7+0.6*(1-Math.min(1,ce)))*D.wind;pT+=k*0.9*wxN(tt,1.3);qT+=k*0.45*wxN(tt*1.13,4.1);rT+=k*0.25*wxN(tt*0.87,2.2);ac.turb=tb;}else ac.turb=0;}
   qT=clamp(qT,-2.6,2.6);rT=clamp(rT,-1.6,1.6);pT=clamp(pT,-ac.pm*1.35-0.2,ac.pm*1.35+0.2);
   const kr=1-Math.exp(-dt/ac.tau),kp=1-Math.exp(-dt/(ac.tau*0.8));
   ac.w[0]+=(pT-ac.w[0])*kp;ac.w[1]+=(qT-ac.w[1])*kr;ac.w[2]+=(rT-ac.w[2])*kr;
@@ -19439,8 +19470,8 @@ function flStep(ac,dt){if(ac.crash)return;const W=flW(),A=ac.A,c=ac.ctl,h=Math.m
   const dx=ac.v[0]*dt,dz=ac.v[2]*dt;ac.p[0]+=dx;ac.p[1]+=ac.v[1]*dt;ac.p[2]+=dz;ac.dist+=Math.hypot(dx,dz);ac.air+=dt;
   if(ac.wa!==undefined&&ac.wa>0)ac.wa*=Math.exp(-dt*0.4);/* 0.39: в воздухе колёса докручиваются и встают */
   // перегрузка: за прочностью — трещат лонжероны, за полуторной — крыло ломается
-  const g=ac.st.g;if(ac.n>g*1.5||ac.n<-g*0.9)flCrash(ac,'крыло сложилось от перегрузки');else if(ac.n>g){ac.dmg.wing=Math.min(1,ac.dmg.wing+(ac.n-g)*dt*0.12);ac.creak=1;}
-  {const vm=ac.st.v/3.6;ac.ovs=V>vm*1.55?2:V>vm*1.3?1:0;if(ac.ovs===2){ac.dmg.wing=Math.min(1,ac.dmg.wing+dt*0.15);ac.creak=1;if(ac.dmg.wing>=1)flCrash(ac,'флаттер — обшивку сорвало в пикировании');}}
+  const g=ac.st.g;if(ac.n>g*1.5||ac.n<-g*0.9)flCrash(ac,'крыло сложилось от перегрузки');else if(ac.n>g){ac.dmg.wing=Math.min(1,ac.dmg.wing+(ac.n-g)*dt*0.12*D.dmg);ac.creak=1;}
+  {const vm=ac.st.v/3.6;ac.ovs=V>vm*1.55?2:V>vm*1.3?1:0;if(ac.ovs===2){ac.dmg.wing=Math.min(1,ac.dmg.wing+dt*0.15*D.dmg);ac.creak=1;if(ac.dmg.wing>=1)flCrash(ac,'флаттер — обшивку сорвало в пикировании');}}
   flBurn(ac,dt,pw,run);flContact(ac);}
 // поворот осей аэроплана: крен p (вправо +), тангаж q (нос вверх +), рыскание r (вправо +)
 function flRotate(ac,p,q,r){const f=ac.fw,u=ac.up,rt=ac.rt;
@@ -19449,9 +19480,9 @@ function flRotate(ac,p,q,r){const f=ac.fw,u=ac.up,rt=ac.rt;
   let F=v3n(rot(f)),U=rot(u);let R=v3n(v3x(U,F));U=v3x(F,R);ac.fw=F;ac.up=U;ac.rt=R;}
 // бензин и мотор: расход по мощности, отказ — по надёжности (за час полёта), чаще на полном газу
 function flBurn(ac,dt,pw,run){if(!run){ac.eng.rpm+=(-ac.eng.rpm+(ac.V/Math.max(20,ac.st.v/3.6))*0.35)*Math.min(1,dt*1.5);return;}
-  const k=FL.k||1;ac.fuel=Math.max(0,ac.fuel-ac.burn*Math.max(0.12,pw)*dt*k);ac.m=ac.mE+ac.fuel;
+  const k=FL.k||1,D=ac.dif||FLY_DIF0;ac.fuel=Math.max(0,ac.fuel-ac.burn*Math.max(0.12,pw)*dt*k/D.fuel);ac.m=ac.mE+ac.fuel;
   ac.eng.rpm+=((0.25+0.75*pw)*(0.85+0.15*clamp(ac.V/Math.max(20,ac.st.v/3.6),0,1.4))-ac.eng.rpm)*Math.min(1,dt*3);
-  if(!FL.noFail&&ac.rnd()<ac.haz*(0.45+0.75*pw)*dt*k*(1+ac.dmg.eng*20)*(1+(FL.wx?FL.wx.rain*0.7:0))){/* 0.39: в дождь магнето капризнее */ac.eng.run=0;ac.eng.fail=ac.dmg.eng>0.3?'мотор разбит':ac.rnd()<0.5?'заглох мотор':'лопнул бензопровод';flMsg(ac,'Мотор заглох!','bad');}
+  if(!FL.noFail&&ac.rnd()<ac.haz*D.fail*(0.45+0.75*pw)*dt*k*(1+ac.dmg.eng*20)*(1+(FL.wx?FL.wx.rain*0.7:0))){/* 0.39: в дождь магнето капризнее */ac.eng.run=0;ac.eng.fail=ac.dmg.eng>0.3?'мотор разбит':ac.rnd()<0.5?'заглох мотор':'лопнул бензопровод';flMsg(ac,'Мотор заглох!','bad');}
   if(ac.fuel<=0&&!ac.eng.fail){ac.eng.run=0;ac.eng.fail='кончился бензин';flMsg(ac,'Кончился бензин!','bad');}}
 /* 0.39: мотор стоит — что делать (отзыв: «мотор заглох? и что? как его оживить? где сервис?»)
    Завести: механик (или сам лётчик) крутит винт; в воздухе — только заглохший мотор и только на скорости (винт раскручивается потоком).
@@ -19486,7 +19517,7 @@ function flCrash(ac,why){if(ac.crash)return;ac.crash=why;ac.crashT=ac.t;ac.v=[ac
 /* ---------- земля и вода ---------- */
 // поверхность под аэропланом: высота (вода — 0) и что там
 function flSurf(x,z){const W=flW(),g=W.H(x,z);if(g<0)return {y:0,k:'water'};return {y:g,k:W.surf(x,z)};}
-function flContact(ac){const W=flW(),s=flSurf(ac.p[0],ac.p[2]),th=flPitch(ac),phi=flBank(ac),hc=flHcg(ac,clamp(th,-0.6,0.6)),tip=ac.gr.span*0.5*Math.abs(Math.sin(phi));
+function flContact(ac){const W=flW(),s=flSurf(ac.p[0],ac.p[2]),th=flPitch(ac),phi=flBank(ac),D=ac.dif||FLY_DIF0,soft=(1-D.dmg),hc=flHcg(ac,clamp(th,-0.6,0.6)),tip=ac.gr.span*0.5*Math.abs(Math.sin(phi));
   const low=ac.p[1]-Math.max(hc*Math.cos(phi),tip-0.3);
   // постройки, деревья, пилоны
   const ob=W.obst(ac.p[0],ac.p[1],ac.p[2],ac.gr.span*0.35);if(ob){flCrash(ac,ob);return;}
@@ -19494,13 +19525,13 @@ function flContact(ac){const W=flW(),s=flSurf(ac.p[0],ac.p[2]),th=flPitch(ac),ph
   const vy=ac.v[1],vh=Math.hypot(ac.v[0],ac.v[2]);
   if(tip-0.3>hc&&Math.abs(phi)>0.22){flCrash(ac,s.k==='water'?'задел крылом воду':'задел крылом землю');return;}
   if(th<-0.1&&vh>8){flCrash(ac,s.k==='water'?'зарылся носом в воду':'ударился носом о землю');return;}
-  if(vy<-4.6-(ac.sea?0:0.4)){flCrash(ac,s.k==='water'?'разбился о воду':'удар о землю — шасси подломилось');return;}
+  if(vy<-4.6-(ac.sea?0:0.4)-soft*0.8){flCrash(ac,s.k==='water'?'разбился о воду':'удар о землю — шасси подломилось');return;}
   if(s.k==='water'&&!ac.sea){flCrash(ac,'сел на воду — аэроплан тонет');return;}
   if(s.k!=='water'&&ac.sea&&vh>4){flCrash(ac,'гидроаэроплан на суше — поплавки разбиты');return;}
   if(s.k==='forest'){flCrash(ac,'упал в лес');return;}if(s.k==='town'){flCrash(ac,'упал на крыши');return;}if(s.k==='rock'){flCrash(ac,'разбился о скалы');return;}
   if(vh>ac.Vs*1.9&&s.k!=='field'&&s.k!=='grass'){flCrash(ac,'слишком быстро — аэроплан опрокинулся');return;}
   // жёсткая посадка — отскок и поломка
-  if(vy<-2.6){ac.hp-=0.18;ac.hard++;ac.dmg.tail=Math.min(1,ac.dmg.tail+0.1);ac.v[1]=-vy*0.3;ac.p[1]=s.y+hc+0.05;flMsg(ac,'Жёсткая посадка!','bad');if(ac.hp<=0)flCrash(ac,'шасси подломилось');return;}
+  if(vy<-2.6-soft*1.2){ac.hp-=0.18*D.dmg;ac.hard++;ac.dmg.tail=Math.min(1,ac.dmg.tail+0.1);ac.v[1]=-vy*0.3;ac.p[1]=s.y+hc+0.05;flMsg(ac,'Жёсткая посадка!','bad');if(ac.hp<=0)flCrash(ac,'шасси подломилось');return;}
   // касание
   ac.gnd=1;ac.th=clamp(th,-0.05,ac.thMax);ac.v[1]=0;ac.w=[0,0,0];ac.touch=(ac.touch||0)+1;ac.tdV=vy;ac.tdS=s.k;
   const hd=flHdg(ac);flSetGnd(ac,hd,ac.th,s.y);}
@@ -19553,7 +19584,7 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
   const vmin=ac.Vs*(o.vmin||1.3);if(V<vmin&&agl>floor*0.5)gT=Math.min(gT,gam-(vmin-V)*0.03);
   // угол атаки: нормальная перегрузка, чтобы траектория шла к нужному наклону, с поправкой на крен
   const rho=RHO0*airSig(ac.p[1]),qd=0.5*rho*V*V,den=Math.max(1,qd*ac.A.S*ac.CLa),nv=(V*1.2*(gT-gam)+FLG*Math.cos(gam))/Math.max(0.35,Math.cos(phi));
-  c.aCmd=clamp(ac.a0+ac.m*nv/den,ac.an+0.02,ac.as-(o.edge?0.005:0.03));c.sy=0;
+  c.aCmd=clamp(ac.a0+ac.m*nv/den,ac.an+0.02,ac.as-(o.edge?0.005:0.03)-((ac.dif||FLY_DIF0).stall<0.02?0.01:0));c.sy=0;/* 0.40: на лёгких уровнях автопилот держит запас до срыва */
   if(o.spd!==undefined)c.thr=clamp(0.55+(o.spd-ac.V)*0.12,0,1);else c.thr=o.thr===undefined?1:o.thr;}
 /* ---------- 0.38: посадка лётчиком («Сесть»): выход на дальнюю точку, глиссада 4° на круг, выравнивание у земли, пробег ----------
    A — центр поля [x,z], gy — его высота. Состояние — в ac.ld; возвращает 'ip' | 'final' | 'flare' | 'roll' | 'done' */
@@ -19610,8 +19641,7 @@ function flyBind(){const $=id=>document.getElementById(id),st=FLY.st;
   $('fWarp').onclick=()=>{const M=FL.mi,L=[1,2,4,8,16,32,64].filter(w=>w<=(M?flWarpMax():1));const i=L.indexOf(FLY.warp);FLY.warp=L[(i+1)%L.length]||1;$('fWarp').textContent='×'+FLY.warp;};
   $('fAuto').onclick=()=>{FLY.auto=!FLY.auto;if(!FLY.auto&&FLY.skip)flySkip(false);$('fAuto').classList.toggle('on',FLY.auto);flToast(FLY.auto?'Автопилот: лётчик ведёт сам':'Ручное управление');if(!FLY.auto){FLY.warp=Math.min(FLY.warp,4);$('fWarp').textContent='×'+FLY.warp;if(FL.me)FL.me.ctl.aCmd=null;}};
   // 0.38: «Сесть» — лётчик честно заходит на посадку (дальняя точка, глиссада, выравнивание), а не «сел» мгновенно; ещё нажатие — снова ручное
-  $('fLand').onclick=()=>{const M=FL.mi;if(!M||!M.land)return;if(FLY.landing){FLY.landing=null;if(FL.me){FL.me.ld=null;FL.me.ctl.aCmd=null;}flToast('Ручное управление');return;}
-    const at=M.landAt?M.landAt():[M.A[0],M.A[1],FW&&FW.S.A?FW.S.A.y:0];FLY.landing={at,fin:()=>M.land()};FLY.auto=false;$('fAuto').classList.remove('on');if(FL.me)FL.me.ld=null;FLY.warp=Math.min(FLY.warp,2);$('fWarp').textContent='×'+FLY.warp;flToast('Лётчик заходит на посадку','good');};
+  $('fLand').onclick=()=>{const M=FL.mi;if(!M||!M.land)return;if(FLY.landing){FLY.landing=null;if(FL.me){FL.me.ld=null;FL.me.ctl.aCmd=null;}flToast('Ручное управление');return;}flyLandGo();};
   $('fQuit').onclick=()=>flyQuitAsk();$('fHelp').onclick=()=>flyHelp();
   // 0.39: тормоз (держать), «Долететь» — досчитать полёт без ожидания, панель «мотор стоит»
   hold('fBrake','brake');
@@ -19644,7 +19674,11 @@ function flWarpMax(){const M=FL.mi,me=FL.me;if(!M||!me)return 1;if(me.crash||M.o
   if(me.gnd)return 2;if(FLY.landing)return 4;/* 0.38: лётчик ведёт на посадку — можно ×4, у земли ×2 */if(agl<60&&!FLY.auto)return 2;/* 0.39: автопилот держит высоту сам — у земли его не режем (рекорд дальности шёл на ×2 часами) */
   if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||8);}
 /* ---------- 0.39: «Долететь» — полёт досчитывается без ожидания, пока не случится что-то, что требует лётчика ---------- */
-function flySkipStop(){const me=FL.me,M=FL.mi;if(!me||!M)return 'нет полёта';if(M.over)return '';if(me.crash)return 'авария';if(!me.eng.run)return 'мотор стоит';
+// 0.40: «Сесть» — и по кнопке, и само у цели перелёта (автопилот подводит, лётчик садится); msg — что сказать
+function flyLandGo(msg){const M=FL.mi,$=id=>document.getElementById(id);if(!M||!M.land||FLY.landing)return false;
+  const at=M.landAt?M.landAt():[M.A[0],M.A[1],FW&&FW.S.A?FW.S.A.y:0];FLY.landing={at,fin:()=>M.land()};FLY.auto=false;const ba=$('fAuto');if(ba)ba.classList.remove('on');if(FL.me)FL.me.ld=null;
+  FLY.warp=Math.min(FLY.warp,2);const bw=$('fWarp');if(bw)bw.textContent='×'+FLY.warp;flToast(msg||'Лётчик заходит на посадку','good');return true;}
+function flySkipStop(){const me=FL.me,M=FL.mi;if(!me||!M)return 'нет полёта';if(M.over)return '';if(me.crash)return 'авария';if(!me.eng.run)return 'мотор стоит';if(FLY.landing)return 'посадка';/* 0.40: у цели лётчик садится — смотрим */
   if(me.fuel/Math.max(1,me.fuelMax)<0.12)return 'бензин на исходе';if(me.dmg.eng>0.3)return 'мотор повреждён';if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<4000))return 'противник рядом';
   if(M.skipStop){const r=M.skipStop();if(r)return r;}return null;}
 function flySkip(on){const b=document.getElementById('fSkipBox'),M=FL.mi;if(on&&(!M||!M.auto||!FL.me||FL.me.gnd))return;FLY.skip=!!on;
@@ -19652,7 +19686,7 @@ function flySkip(on){const b=document.getElementById('fSkipBox'),M=FL.mi;if(on&&
   else{b.hidden=true;}document.getElementById('fSkip').classList.toggle('on',!!on);}
 function flySkipTick(){const me=FL.me,M=FL.mi,t0=performance.now();let n=0;const d=1/30;
   while(performance.now()-t0<20&&n<4000){const p0=[me.p[0],me.p[1],me.p[2]];if(M.auto)M.auto(d);flStep(me,d);if(M.ai)M.ai(d);for(const k of M.rivals)flKinStep(k,d);FL.t+=d;if(!M.over&&M.step)M.step(d,p0);n++;
-    const why=flySkipStop();if(why!==null){flySkip(false);if(why)flToast(why==='мотор стоит'?'Мотор стоит — вы за ручкой':why==='бензин на исходе'?'Бензин на исходе — вы за ручкой':why,why?'bad':'');break;}}
+    const why=flySkipStop();if(why!==null){flySkip(false);if(why&&why!=='посадка')flToast(why==='мотор стоит'?'Мотор стоит — вы за ручкой':why==='бензин на исходе'?'Бензин на исходе — вы за ручкой':why,'bad');break;}}
   if(me.fuel/Math.max(1,me.fuelMax)<0.12&&!FLY.skipFuelHint){FLY.skipFuelHint=1;flToast('Бензин на исходе: «Сесть» — лётчик подберёт поле, заправимся у деревни','bad');}
   const b=document.getElementById('fSkipBox');if(!b.hidden){const g=M.goal?M.goal().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'';b.querySelector('span').textContent=g.slice(0,120);}}
 /* ---------- 0.39: мотор стоит — завести, починить, заправиться ---------- */
@@ -19676,7 +19710,7 @@ function flyCam(dt){const me=FL.me,cv=G3.cv,asp=Math.max(0.3,(cv.clientWidth||1)
   else if(FLY.cam===3&&!FLY.skip){let c=FLY.fb;const ahead=sp>3?v3n(v):me.fw;if(!c||Math.hypot(c[0]-me.p[0],c[2]-me.p[2])>700||d3([c[0]-me.p[0],0,c[2]-me.p[2]],ahead)<-260){
       const sd=Math.random()<0.5?-1:1,x=me.p[0]+ahead[0]*380+ahead[2]*sd*60,z=me.p[2]+ahead[2]*380-ahead[0]*sd*60,gy=Math.max(0,fwHgt(W.S,x,z));c=FLY.fb=[x,Math.max(gy+1.7,Math.min(me.p[1]-8,gy+70)),z];}
     eye=c;fw=v3n([me.p[0]-c[0],me.p[1]-c[1],me.p[2]-c[2]]);rt=v3n(v3x([0,1,0],fw));up=v3x(fw,rt);vf*=clamp(Math.hypot(me.p[0]-c[0],me.p[2]-c[2])/260,0.35,1);}
-  else{const far=FLY.cam===2||(FLY.cam===3&&FLY.skip),D=clamp(mesh.span*1.15+5,9,42)*(far?2.6:1),Hh=D*(far?0.35:0.24),dir=sp>4?v3n([v[0]/sp*0.55+me.fw[0]*0.45,v[1]/sp*0.55+me.fw[1]*0.45,v[2]/sp*0.55+me.fw[2]*0.45]):me.fw;
+  else{const far=FLY.cam===2||(FLY.cam===3&&FLY.skip),D=clamp(mesh.span*1.15+5,9,42)*(far?2.6:1),Hh=D*(far?0.35:0.24),dir=sp>4?v3n([v[0]/sp*0.25+me.fw[0]*0.75,v[1]/sp*0.25+me.fw[1]*0.75,v[2]/sp*0.25+me.fw[2]*0.75]):me.fw;/* 0.40: камера — больше за носом, чем за путём: при боковом ветре аэроплан не висит в кадре боком */
     // 0.39: камера догоняет в масштабе игрового времени — при ускорении и «Долететь» аэроплан не убегает из кадра
     const tg=[me.p[0]-dir[0]*D,me.p[1]-dir[1]*D+Hh,me.p[2]-dir[2]*D];if(!FLY.ce)FLY.ce=tg.slice();const k=FLY.skip?1:1-Math.exp(-dt*Math.max(1,FLY.warp)*(me.gnd?6:4.5));for(let i=0;i<3;i++)FLY.ce[i]+=(tg[i]-FLY.ce[i])*k;
     const gy=Math.max(me.sea||W.sea?0:-1e9,fwHgt(W.S,FLY.ce[0],FLY.ce[2]));if(FLY.ce[1]<gy+1.6)FLY.ce[1]=gy+1.6;eye=FLY.ce;
@@ -19740,7 +19774,7 @@ function flySetup(mood){const s=G,M=FL.mi,cfg=FL.cfg,t=tNow(s),md=cfg.md;
   me.ctl.thr=FLY.thrT=M.start.air?0.8:0;
   M.rivals.forEach(k=>{k.mesh=air3dMesh(k.md,t,'');});if(M.init)M.init();
   // 0.39: погода дня — ветер по высоте, порывы, термики, дождь, гроза, птицы (раньше — случайный ветерок до 3 м/с)
-  FL.wx=wxMake({place:M.place,bio:FW.S.bio,y:t,m:s.m,seed:s.y*131+hashStr(M.place+(cfg.ev?cfg.ev.key:M.kind)),sea:!!FW.sea,mood,A:M.A,B:M.B,hour:M.hour});if(M.wxFix)Object.assign(FL.wx,M.wxFix(FL.wx));FL.wind=FL.wx.w0.slice();wxBirdsInit(FW.S);
+  FL.wx=wxMake({place:M.place,bio:FW.S.bio,y:t,m:s.m,seed:s.y*131+hashStr(M.place+(cfg.ev?cfg.ev.key:M.kind)),sea:!!FW.sea,mood,A:M.A,B:M.B,hour:M.hour,kind:M.kind,vc:M.st?M.st.vc:0});if(M.wxFix)Object.assign(FL.wx,M.wxFix(FL.wx));FL.wind=FL.wx.w0.slice();wxBirdsInit(FW.S);
   // первые куски земли — сразу
   const t0=performance.now();for(let i=0;i<12&&performance.now()-t0<900;i++){const cam=flyCam(0.016);const pl=frustumOf((()=>{const V=m4(),P=m4(),VP=m4();m4view(V,cam.eye,cam.rt,cam.up,cam.fw);m4persp(P,cam.fov,1.5,20,95000);return m4mul(VP,P,V);})());fwSelect(cam.eye,pl);fwBuildSome(80);}
   flyAudioStart();document.getElementById('fLoad').hidden=true;FLY.last=performance.now();
@@ -20015,10 +20049,15 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.goal=()=>{const a=me(),d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1])*km/1000;return `<b>До: ${dest} — ${fmtN(Math.round(d))} км</b><span>в пути ${flFmtT(FL.t*km)} · бензин ${Math.round(a.fuel/a.fuelMax*100)}%${M.place==='alps'?' · перевал — 2 000 м':''}</span>`;};
     if(!ev.dyn)M.board=()=>`<b>В истории</b><p>${esc(airEvMine(G,ev)?'Вы':ev.h[0])}: ${esc(ev.h[2])}</p>`;
     M.target=()=>[M.B[0],undefined,M.B[1],dest];
-    M.auto=()=>{const a=me();flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
-    M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);
+    const distB=()=>{const a=me();return Math.hypot(a.p[0]-M.B[0],a.p[2]-M.B[1]);};
+    // 0.40: автопилот (и «Долететь») у цели сам заходит на посадку — раньше аэроплан кружил над финишем, пока игрок не нажмёт «Сесть»
+    M.auto=()=>{const a=me();if(distB()<2400&&!a.gnd&&M.flew&&typeof flyLandGo==='function'&&flyLandGo(dest+' под крылом — лётчик заходит на посадку'))return;
+      flAuto(a,{x:M.B[0],z:M.B[1],alt:Math.max(gyA()+cruise,a.p[1]>gyA()+cruise?a.p[1]:0),spd:st.vc/3.6*0.95,bank:0.4,floor:120});};
+    M.step=()=>{const a=me();if(a.crash){M.done(false,a.crash);return;}if(!a.gnd)M.flew=1;const d=distB();
+      // 0.40: сели у цели (ближе 1,5 км) — прибыли: газ убран, тормоза (если есть), катимся до остановки — и зачёт
+      if(M.flew&&a.gnd&&d<1500){if(!M.arrived){M.arrived=1;if(typeof FLY!=='undefined')FLY.thrT=0;flToast(`${dest}! Газ убран — катимся до остановки`,'good');}a.ctl.thr=0;if(a.brakes)a.ctl.brk=1;if(a.Vg<3)M.done(true);return;}
       // 0.39: промежуточная посадка не кончает перелёт — заправились, починились и дальше (как Ведрин на Париж — Мадрид); конец — у финиша, при аварии или если чинить негде
-      if(M.flew&&a.gnd&&a.Vg<3){if(d<900)M.done(true);else if(!a.eng.run&&stuck(a))M.done(false,'вынужденная посадка: '+(a.eng.fail||'мотор'));else if(a.eng.run&&!M.downMsg){M.downMsg=1;flToast('Сели в поле — перелёт продолжается: заправка и ремонт кнопками, дальше газ и взлёт');}}
+      if(M.flew&&a.gnd&&a.Vg<3){if(!a.eng.run&&stuck(a))M.done(false,'вынужденная посадка: '+(a.eng.fail||'мотор'));else if(a.eng.run&&!M.downMsg){M.downMsg=1;flToast('Сели в поле — перелёт продолжается: заправка и ремонт кнопками, дальше газ и взлёт');}}
       if(!a.gnd)M.downMsg=0;};
     M.skipStop=()=>{const a=me();return a.eng.fail?'мотор стоит':M.place==='alps'&&a.p[1]<gyA()+1500&&Math.abs(a.p[0])<3000?'горы впереди':null;};
     // 0.39: сесть можно и в пути — на поле, на луг у деревни (заправиться, починить мотор) — перелёт продолжается; у финиша — зачёт
@@ -20026,7 +20065,10 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     M.canLand=()=>{const a=me();return M.flew&&!a.gnd;};M.landAt=()=>{if(nearB())return [M.B[0],M.B[1],FW&&FW.S.B?FW.S.B.y:0];const L=flLandSpot(me());M.spotN=L.n;return [L.x,L.z,L.y];};
     M.land=()=>{if(nearB()){M.done(true);return;}flToast('Сели: '+(M.spotN||'поле')+'. Заправка и ремонт — кнопками, дальше — газ и взлёт');};
     M.done=(ok,why)=>{const h=Math.round(FL.t*km/360)/10,sea=/channel|med|atlantic/.test(M.place),wet=!ok&&why&&/вод/.test(why);
-      const res={ev:ev.key,md:md.id,pil:P.id,field:F,ok,h,place:ok?1:0,txt:ok?`долетел за ${String(h).replace('.',',')} ч`:wet||(!ok&&sea)?'сел на воду — лётчика подобрал миноносец':why||'не долетел'};
+      // 0.40: где кончился перелёт — по местности под аэропланом и в километрах до цели (отзыв: непонятно было, что случилось и далеко ли)
+      const a=me(),left=Math.round(distB()*km/1000),where=()=>{const k=flSurf(a.p[0],a.p[2]).k;return k==='water'?'над водой':k==='forest'?'над лесом':k==='town'?'над городом':k==='rock'?'в горах':k==='field'?'над полями':'над лугами';};
+      const fail=!ok?((wet||sea&&/вод|утон|море/.test(why||''))?'сел на воду — лётчика подобрал миноносец':(why||'не долетел')+(why&&/лес|город|крыш|скал|вод|земл|пол[яе]|постройк|мор[ея]|вынужденная|сел/.test(why)?'':' '+where()))+(left>0?` — в ${fmtN(left)} км от цели`:''):'';
+      const res={ev:ev.key,md:md.id,pil:P.id,field:F,ok,h,place:ok?1:0,txt:ok?`долетел за ${String(h).replace('.',',')} ч`:fail};
       M.fin(ok?`${dest}! Перелёт удался`:'Перелёт не удался',ok?`${who} ${P.hero?'долетели':'долетел'} за ${String(h).replace('.',',')} ч.`:res.txt,res,ok?'good':'bad');};
     return M;}
   /* ===== военный конкурс: подъём, скорость на базе, посадка в круг ===== */
@@ -21977,7 +22019,10 @@ function airEvField(s,ev){const t=airEvT(ev),F=[],hv=AIR_EV_HV[ev.key]||0,sk=AIR
     const base=[1.0,0.96,0.92,0.87];(C.length?C:[{x:{n:'Казённый завод'}}]).forEach((o,i)=>{const ML=o.x.models||[],mdl=ML.filter(m=>m[0]<=ev.y).slice(-1)[0],nxt=!mdl&&ML.find(m=>m[0]<=ev.y+2);
       F.push({n:'«'+o.x.n+'»',plane:mdl?mdl[1]:nxt?'опытный '+nxt[1]:'аэроплан своей постройки',q:Math.round(base[i]*cq*(0.97+0.06*r0())*(ev.mil.war?1.02:1)*100)/100});});}
   else if(ev.kind==='trial'){W.q=1.04;F.push(W);[0.98,0.93,0.88].forEach((q,i)=>F.push({n:['«'+((airComps(ev.c,ev.mil?ev.mil.role:'recon',t)[i]||{x:{n:'Завод'}}).x.n)+'»'][0],plane:ref(ev.mil?ev.mil.role:'recon').md.name,q}));}
-  else F.push(W);return F;}
+  else F.push(W);
+  // 0.40: уровень сложности — соперники в небе на «Юном», «Лёгкой» и «Норме» слабее (DIFFS.air), на «Магнате» и «Историке» — как в истории
+  const ka=(typeof DIF==='function'?DIF().air:1)||1;if(ka!==1)F.forEach(x=>{if(x.v)x.v=Math.round(x.v*ka*10)/10;if(x.d)x.d=Math.round(x.d*ka);if(x.a)x.a=Math.round(x.a*ka);if(x.q)x.q=Math.round(x.q*(1-(1-ka)*0.5)*100)/100;});
+  return F;}
 /* ---------- результат без съёмки ---------- */
 function airEvSim(s,ev,md,pil){const t=tNow(s),st=airStats(md,t),sk=pil.sk,r=()=>Math.random(),rel=st.rel,F=airEvField(s,ev),res={ev:ev.key,md:md.id,pil:pil.id,field:F};
   const hours=h=>Math.pow(rel,h*(1+(1-sk)*0.5)),fail=h=>r()>hours(h);
@@ -26598,7 +26643,8 @@ function r3dCarUpdate(c,dt,E){
   const yc=y(c.lat)+hm;st.y=yc;
   // наклон по дороге (подъём и вираж)
   const t=T.T[c.idx],nn=T.N[c.idx],i2=T.closed?(c.idx+1)%n:Math.min(n-1,c.idx+1),i1=T.closed?(c.idx-1+n)%n:Math.max(0,c.idx-1);
-  const sl=(T.pts[i2][1]-T.pts[i1][1])/(2*T.step)+pm,ls=(y(c.lat+0.7)-y(c.lat-0.7))/1.4+rm;
+  // 0.40: наклон кузова не круче 27° — на насыпи у обочины (Тарга Флорио, подъём от старта) машина вставала на бок под 60°
+  const sl=clamp((T.pts[i2][1]-T.pts[i1][1])/(2*T.step)+pm,-0.5,0.5),ls=clamp((y(c.lat+0.7)-y(c.lat-0.7))/1.4+rm,-0.5,0.5);
   let up=v3n([-sl*t[0]-ls*nn[0],1,-sl*t[1]-ls*nn[1]]);const fw0=[Math.sin(c.yaw),0,Math.cos(c.yaw)];let rt=v3n(v3x(up,fw0)),fw=v3x(rt,up);
   // 0.33: одиночный мотоцикл в повороте ложится внутрь — весь, с колёсами и гонщиком, вокруг пятна шины (трицикл и коляска — нет)
   const moto=c.cls==='moto',ml=moto&&r3dCarMesh(c.spec3,false).lean;

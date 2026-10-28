@@ -29,8 +29,7 @@ function flyBind(){const $=id=>document.getElementById(id),st=FLY.st;
   $('fWarp').onclick=()=>{const M=FL.mi,L=[1,2,4,8,16,32,64].filter(w=>w<=(M?flWarpMax():1));const i=L.indexOf(FLY.warp);FLY.warp=L[(i+1)%L.length]||1;$('fWarp').textContent='×'+FLY.warp;};
   $('fAuto').onclick=()=>{FLY.auto=!FLY.auto;if(!FLY.auto&&FLY.skip)flySkip(false);$('fAuto').classList.toggle('on',FLY.auto);flToast(FLY.auto?'Автопилот: лётчик ведёт сам':'Ручное управление');if(!FLY.auto){FLY.warp=Math.min(FLY.warp,4);$('fWarp').textContent='×'+FLY.warp;if(FL.me)FL.me.ctl.aCmd=null;}};
   // 0.38: «Сесть» — лётчик честно заходит на посадку (дальняя точка, глиссада, выравнивание), а не «сел» мгновенно; ещё нажатие — снова ручное
-  $('fLand').onclick=()=>{const M=FL.mi;if(!M||!M.land)return;if(FLY.landing){FLY.landing=null;if(FL.me){FL.me.ld=null;FL.me.ctl.aCmd=null;}flToast('Ручное управление');return;}
-    const at=M.landAt?M.landAt():[M.A[0],M.A[1],FW&&FW.S.A?FW.S.A.y:0];FLY.landing={at,fin:()=>M.land()};FLY.auto=false;$('fAuto').classList.remove('on');if(FL.me)FL.me.ld=null;FLY.warp=Math.min(FLY.warp,2);$('fWarp').textContent='×'+FLY.warp;flToast('Лётчик заходит на посадку','good');};
+  $('fLand').onclick=()=>{const M=FL.mi;if(!M||!M.land)return;if(FLY.landing){FLY.landing=null;if(FL.me){FL.me.ld=null;FL.me.ctl.aCmd=null;}flToast('Ручное управление');return;}flyLandGo();};
   $('fQuit').onclick=()=>flyQuitAsk();$('fHelp').onclick=()=>flyHelp();
   // 0.39: тормоз (держать), «Долететь» — досчитать полёт без ожидания, панель «мотор стоит»
   hold('fBrake','brake');
@@ -63,7 +62,11 @@ function flWarpMax(){const M=FL.mi,me=FL.me;if(!M||!me)return 1;if(me.crash||M.o
   if(me.gnd)return 2;if(FLY.landing)return 4;/* 0.38: лётчик ведёт на посадку — можно ×4, у земли ×2 */if(agl<60&&!FLY.auto)return 2;/* 0.39: автопилот держит высоту сам — у земли его не режем (рекорд дальности шёл на ×2 часами) */
   if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<3500))return 1;return FLY.auto?(M.warpAuto||16):(M.warpMax||8);}
 /* ---------- 0.39: «Долететь» — полёт досчитывается без ожидания, пока не случится что-то, что требует лётчика ---------- */
-function flySkipStop(){const me=FL.me,M=FL.mi;if(!me||!M)return 'нет полёта';if(M.over)return '';if(me.crash)return 'авария';if(!me.eng.run)return 'мотор стоит';
+// 0.40: «Сесть» — и по кнопке, и само у цели перелёта (автопилот подводит, лётчик садится); msg — что сказать
+function flyLandGo(msg){const M=FL.mi,$=id=>document.getElementById(id);if(!M||!M.land||FLY.landing)return false;
+  const at=M.landAt?M.landAt():[M.A[0],M.A[1],FW&&FW.S.A?FW.S.A.y:0];FLY.landing={at,fin:()=>M.land()};FLY.auto=false;const ba=$('fAuto');if(ba)ba.classList.remove('on');if(FL.me)FL.me.ld=null;
+  FLY.warp=Math.min(FLY.warp,2);const bw=$('fWarp');if(bw)bw.textContent='×'+FLY.warp;flToast(msg||'Лётчик заходит на посадку','good');return true;}
+function flySkipStop(){const me=FL.me,M=FL.mi;if(!me||!M)return 'нет полёта';if(M.over)return '';if(me.crash)return 'авария';if(!me.eng.run)return 'мотор стоит';if(FLY.landing)return 'посадка';/* 0.40: у цели лётчик садится — смотрим */
   if(me.fuel/Math.max(1,me.fuelMax)<0.12)return 'бензин на исходе';if(me.dmg.eng>0.3)return 'мотор повреждён';if(M.foes&&M.foes.some(f=>!f.crash&&!f.down&&Math.hypot(f.p[0]-me.p[0],f.p[2]-me.p[2])<4000))return 'противник рядом';
   if(M.skipStop){const r=M.skipStop();if(r)return r;}return null;}
 function flySkip(on){const b=document.getElementById('fSkipBox'),M=FL.mi;if(on&&(!M||!M.auto||!FL.me||FL.me.gnd))return;FLY.skip=!!on;
@@ -71,7 +74,7 @@ function flySkip(on){const b=document.getElementById('fSkipBox'),M=FL.mi;if(on&&
   else{b.hidden=true;}document.getElementById('fSkip').classList.toggle('on',!!on);}
 function flySkipTick(){const me=FL.me,M=FL.mi,t0=performance.now();let n=0;const d=1/30;
   while(performance.now()-t0<20&&n<4000){const p0=[me.p[0],me.p[1],me.p[2]];if(M.auto)M.auto(d);flStep(me,d);if(M.ai)M.ai(d);for(const k of M.rivals)flKinStep(k,d);FL.t+=d;if(!M.over&&M.step)M.step(d,p0);n++;
-    const why=flySkipStop();if(why!==null){flySkip(false);if(why)flToast(why==='мотор стоит'?'Мотор стоит — вы за ручкой':why==='бензин на исходе'?'Бензин на исходе — вы за ручкой':why,why?'bad':'');break;}}
+    const why=flySkipStop();if(why!==null){flySkip(false);if(why&&why!=='посадка')flToast(why==='мотор стоит'?'Мотор стоит — вы за ручкой':why==='бензин на исходе'?'Бензин на исходе — вы за ручкой':why,'bad');break;}}
   if(me.fuel/Math.max(1,me.fuelMax)<0.12&&!FLY.skipFuelHint){FLY.skipFuelHint=1;flToast('Бензин на исходе: «Сесть» — лётчик подберёт поле, заправимся у деревни','bad');}
   const b=document.getElementById('fSkipBox');if(!b.hidden){const g=M.goal?M.goal().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'';b.querySelector('span').textContent=g.slice(0,120);}}
 /* ---------- 0.39: мотор стоит — завести, починить, заправиться ---------- */
@@ -95,7 +98,7 @@ function flyCam(dt){const me=FL.me,cv=G3.cv,asp=Math.max(0.3,(cv.clientWidth||1)
   else if(FLY.cam===3&&!FLY.skip){let c=FLY.fb;const ahead=sp>3?v3n(v):me.fw;if(!c||Math.hypot(c[0]-me.p[0],c[2]-me.p[2])>700||d3([c[0]-me.p[0],0,c[2]-me.p[2]],ahead)<-260){
       const sd=Math.random()<0.5?-1:1,x=me.p[0]+ahead[0]*380+ahead[2]*sd*60,z=me.p[2]+ahead[2]*380-ahead[0]*sd*60,gy=Math.max(0,fwHgt(W.S,x,z));c=FLY.fb=[x,Math.max(gy+1.7,Math.min(me.p[1]-8,gy+70)),z];}
     eye=c;fw=v3n([me.p[0]-c[0],me.p[1]-c[1],me.p[2]-c[2]]);rt=v3n(v3x([0,1,0],fw));up=v3x(fw,rt);vf*=clamp(Math.hypot(me.p[0]-c[0],me.p[2]-c[2])/260,0.35,1);}
-  else{const far=FLY.cam===2||(FLY.cam===3&&FLY.skip),D=clamp(mesh.span*1.15+5,9,42)*(far?2.6:1),Hh=D*(far?0.35:0.24),dir=sp>4?v3n([v[0]/sp*0.55+me.fw[0]*0.45,v[1]/sp*0.55+me.fw[1]*0.45,v[2]/sp*0.55+me.fw[2]*0.45]):me.fw;
+  else{const far=FLY.cam===2||(FLY.cam===3&&FLY.skip),D=clamp(mesh.span*1.15+5,9,42)*(far?2.6:1),Hh=D*(far?0.35:0.24),dir=sp>4?v3n([v[0]/sp*0.25+me.fw[0]*0.75,v[1]/sp*0.25+me.fw[1]*0.75,v[2]/sp*0.25+me.fw[2]*0.75]):me.fw;/* 0.40: камера — больше за носом, чем за путём: при боковом ветре аэроплан не висит в кадре боком */
     // 0.39: камера догоняет в масштабе игрового времени — при ускорении и «Долететь» аэроплан не убегает из кадра
     const tg=[me.p[0]-dir[0]*D,me.p[1]-dir[1]*D+Hh,me.p[2]-dir[2]*D];if(!FLY.ce)FLY.ce=tg.slice();const k=FLY.skip?1:1-Math.exp(-dt*Math.max(1,FLY.warp)*(me.gnd?6:4.5));for(let i=0;i<3;i++)FLY.ce[i]+=(tg[i]-FLY.ce[i])*k;
     const gy=Math.max(me.sea||W.sea?0:-1e9,fwHgt(W.S,FLY.ce[0],FLY.ce[2]));if(FLY.ce[1]<gy+1.6)FLY.ce[1]=gy+1.6;eye=FLY.ce;
@@ -159,7 +162,7 @@ function flySetup(mood){const s=G,M=FL.mi,cfg=FL.cfg,t=tNow(s),md=cfg.md;
   me.ctl.thr=FLY.thrT=M.start.air?0.8:0;
   M.rivals.forEach(k=>{k.mesh=air3dMesh(k.md,t,'');});if(M.init)M.init();
   // 0.39: погода дня — ветер по высоте, порывы, термики, дождь, гроза, птицы (раньше — случайный ветерок до 3 м/с)
-  FL.wx=wxMake({place:M.place,bio:FW.S.bio,y:t,m:s.m,seed:s.y*131+hashStr(M.place+(cfg.ev?cfg.ev.key:M.kind)),sea:!!FW.sea,mood,A:M.A,B:M.B,hour:M.hour});if(M.wxFix)Object.assign(FL.wx,M.wxFix(FL.wx));FL.wind=FL.wx.w0.slice();wxBirdsInit(FW.S);
+  FL.wx=wxMake({place:M.place,bio:FW.S.bio,y:t,m:s.m,seed:s.y*131+hashStr(M.place+(cfg.ev?cfg.ev.key:M.kind)),sea:!!FW.sea,mood,A:M.A,B:M.B,hour:M.hour,kind:M.kind,vc:M.st?M.st.vc:0});if(M.wxFix)Object.assign(FL.wx,M.wxFix(FL.wx));FL.wind=FL.wx.w0.slice();wxBirdsInit(FW.S);
   // первые куски земли — сразу
   const t0=performance.now();for(let i=0;i<12&&performance.now()-t0<900;i++){const cam=flyCam(0.016);const pl=frustumOf((()=>{const V=m4(),P=m4(),VP=m4();m4view(V,cam.eye,cam.rt,cam.up,cam.fw);m4persp(P,cam.fov,1.5,20,95000);return m4mul(VP,P,V);})());fwSelect(cam.eye,pl);fwBuildSome(80);}
   flyAudioStart();document.getElementById('fLoad').hidden=true;FLY.last=performance.now();

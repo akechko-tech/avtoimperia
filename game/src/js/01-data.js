@@ -41,17 +41,20 @@ const PIONEERS={
 // а не прибавка соперникам: ответ отбирает покупателей у вас, а не раздувает рынок); rboost — предел моделей-ответов; org — издержки размера компании
 // (контора, сбыт, управление — растут с выпуском и числом рынков, как содержание городов в «Цивилизации»); copyMax и copyRate — насколько и как быстро
 // соперники перенимают устройство ваших лучших машин (★ к эталону класса); drv — мастерство пилотов соперников
+// 0.40: «Юный», «Лёгкая» и «Норма» мягче (отзыв: «можно сделать уровень юный, начальный и средний полегче»): больше денег на старте,
+// конкуренты слабее, соперники в гонках медленнее (race, drv), кредит больше; air — сила соперников в авиации, fly — полёт:
+// stall — запас до срыва (сдвиг критического угла), wind — доля ветра и болтанки, fail — частота отказов, dmg — поломки, fuel — запас топлива
 const DIFFS={
-  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2,comp:0.7,race:0.9,bad:0.3,debt:80000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
-    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.88},
-  easy:{name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.5,comp:0.8,race:0.93,bad:0.6,debt:25000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
-    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.94},
-  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1,comp:1,race:1,bad:1,debt:15000,share:0.2,rvRate:1.2,rvMax:1.3,pwMin:0.7,
-    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:1},
+  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2.5,comp:0.6,race:0.85,bad:0.3,debt:120000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
+    rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.85,air:0.88,fly:{stall:-0.02,wind:0.4,fail:0.3,dmg:0.4,fuel:1.3}},
+  easy:{name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.8,comp:0.72,race:0.9,bad:0.6,debt:40000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
+    rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.9,air:0.93,fly:{stall:-0.02,wind:0.6,fail:0.6,dmg:0.6,fuel:1.15}},
+  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1.2,comp:0.9,race:0.96,bad:1,debt:20000,share:0.2,rvRate:1,rvMax:1,pwMin:0.7,
+    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:0.97,air:0.97,fly:{stall:0.02,wind:0.8,fail:1,dmg:1,fuel:1}},
   hard:{name:'Магнат',desc:'Конкуренты агрессивнее и быстрее перенимают ваши новинки, большая компания дороже в управлении, кредит дороже, кризисы сильнее',cash:0.85,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:1.7,pwMin:0.65,
-    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04},
+    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}},
   hist:{name:'Историк',desc:'Как «Божество» в «Цивилизации»: соперники сильны и мгновенно отвечают, большая компания дорога в управлении — первое место в наследии здесь исключительное достижение',cash:0.75,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:1.9,pwMin:0.6,
-    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08}
+    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}}
 };
 // Типичная машина соперников в каждом классе: с ней покупатель сравнивает вашу (год, прототип, детали)
 const RIVAL_CAR={

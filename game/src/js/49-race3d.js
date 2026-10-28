@@ -795,7 +795,8 @@ function r3dCarUpdate(c,dt,E){
   const yc=y(c.lat)+hm;st.y=yc;
   // наклон по дороге (подъём и вираж)
   const t=T.T[c.idx],nn=T.N[c.idx],i2=T.closed?(c.idx+1)%n:Math.min(n-1,c.idx+1),i1=T.closed?(c.idx-1+n)%n:Math.max(0,c.idx-1);
-  const sl=(T.pts[i2][1]-T.pts[i1][1])/(2*T.step)+pm,ls=(y(c.lat+0.7)-y(c.lat-0.7))/1.4+rm;
+  // 0.40: наклон кузова не круче 27° — на насыпи у обочины (Тарга Флорио, подъём от старта) машина вставала на бок под 60°
+  const sl=clamp((T.pts[i2][1]-T.pts[i1][1])/(2*T.step)+pm,-0.5,0.5),ls=clamp((y(c.lat+0.7)-y(c.lat-0.7))/1.4+rm,-0.5,0.5);
   let up=v3n([-sl*t[0]-ls*nn[0],1,-sl*t[1]-ls*nn[1]]);const fw0=[Math.sin(c.yaw),0,Math.cos(c.yaw)];let rt=v3n(v3x(up,fw0)),fw=v3x(rt,up);
   // 0.33: одиночный мотоцикл в повороте ложится внутрь — весь, с колёсами и гонщиком, вокруг пятна шины (трицикл и коляска — нет)
   const moto=c.cls==='moto',ml=moto&&r3dCarMesh(c.spec3,false).lean;
