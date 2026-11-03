@@ -43,6 +43,8 @@ function allTitles(){const t=new Set();Object.values(DRIVER_WIKI).forEach(x=>t.a
   if(typeof SAGA!=='undefined')Object.values(SAGA).forEach(L=>L.forEach(ch=>[ch.sc||[]].concat((ch.v||[]).map(v=>v.sc||[])).forEach(S=>S.forEach(x=>{if(!x.img)return;if(typeof x.img==='object')Object.values(x.img).forEach(v=>t.add(v));else t.add(x.img);}))));
   // 0.37: авиация — аэропланы соперников и их фирмы, лётчики, состязания
   if(typeof AIR_IMG!=='undefined'){Object.values(AIR_IMG).forEach(x=>t.add(x));Object.values(ACOMPS).flat().forEach(c=>{if(c.wiki)t.add(c.wiki);(c.models||[]).forEach(m=>m[2]&&t.add(m[2]));});AIR_PILOTS.forEach(p=>p.wiki&&t.add(p.wiki));AIR_EV.forEach(e=>e.h&&e.h[1]&&t.add(AIR_IMG[e.h[1]]||e.h[1]));}
+  // 0.41: кто вручал призы — портреты учредителей кубков (02b-awards.js)
+  if(typeof AWARDS!=='undefined'){Object.values(AWARDS).forEach(a=>a.byWiki&&t.add(a.byWiki));Object.values(AW_CLUB).forEach(a=>a.byWiki&&t.add(a.byWiki));AIR_AWARDS.forEach(([,a])=>a.byWiki&&t.add(a.byWiki));}
   return [...t];}
 /* 0.37: фото из сборки (img/manifest.js) — не повод не спрашивать Википедию о новых статьях: героях России, авиаторах, аэропланах.
    Спрашиваем только то, чего нет в сборке; ответ помним неделю вместе со списком спрошенного (новая версия игры — новые статьи — спросим их) */

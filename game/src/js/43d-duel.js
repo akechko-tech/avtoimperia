@@ -106,11 +106,18 @@ function trophyPaper(t){if(!t||!t.pt||!G||!G.papers)return -1;for(let i=G.papers
 function trophyHTML(t){const s=G,md=t.carId!=null?s.models.find(m=>m.id===t.carId):null,pi=trophyPaper(t),reel=(()=>{try{return t.reel&&reelGet(t.reel,s)?t.reel:'';}catch(_){return '';}})();
   const ph=md?`<div class="carbox tro-car">${carArt(md,{w:420,prep:t.prep||0,num:t.num||0,y:t.y})}</div>`:t.img&&IMG[t.img]?`<figure class="tro-ph"><img src="${IMG[t.img].src}" alt="" referrerpolicy="no-referrer"></figure>`:'';
   const lr=t.rk&&typeof lastRace!=='undefined'&&lastRace&&lastRace.rc&&lastRace.rc.key===t.rk;
+  // 0.41: у кубка гонки — настоящий приз серии (рисунок, кто вручал, музыка церемонии)
+  const AW=(()=>{try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk);return rc?[awardOf(rc,s),t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)]:null;}
+    if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak);return ev?[airAwardOf(ev,s),t.place||1]:null;}}catch(e){console.warn('award',e);}return null;})();
   return `<div class="row"><span class="label">${esc(TROPHY_KIND[t.kind]||'Трофей')} · ${MONTHS_N[t.m]||''} ${t.y}</span>${X}</div>
-    <div class="tro-big">${TROPHY_ICON[t.kind]||'🏆'}</div><h2 style="text-align:center">${esc(t.title)}</h2>${t.sub?`<p class="small muted" style="text-align:center;margin-top:4px">${esc(t.sub)}</p>`:''}
+    ${AW&&AW[0]?`<div class="tro-award">${awardSVG(AW[0],{place:AW[1],w:170,y:t.y})}</div>`:`<div class="tro-big">${TROPHY_ICON[t.kind]||'🏆'}</div>`}<h2 style="text-align:center">${esc(t.title)}</h2>${t.sub?`<p class="small muted" style="text-align:center;margin-top:4px">${esc(t.sub)}</p>`:''}
+    ${AW&&AW[0]?awardCard(AW[0],AW[1],{y:t.y}).replace('<div class="aw-pic">','<div class="aw-pic" hidden>'):''}
     ${ph}${t.story?`<p style="margin-top:10px">${esc(t.story)}</p>`:''}
     <div class="stack" style="margin-top:14px">${reel?`<button class="btn primary block" data-act="reel" data-k="${esc(reel)}">▶ Пересмотреть: кинохроника</button>`:''}${pi>=0?`<button class="btn ${reel?'':'primary '}block" data-act="reopenPaper" data-k="${pi}">📰 Пересмотреть: газета того дня</button>`:''}${lr?'<button class="btn block" data-act="troRace">🏁 Итоги гонки</button>':''}<button class="btn block" data-act="close">Закрыть</button></div>`;}
-function trophyReplay(i){const t=(G.trophies||[])[i];if(!t)return;try{celebrate(t.title,t.sub||'',TROPHY_ICON[t.kind]||'🏆');}catch(_){}openSheet(trophyHTML(t));}
+function trophyReplay(i){const t=(G.trophies||[])[i];if(!t)return;
+  // 0.41: повтор кубка гонки — с тем же призом и музыкой церемонии
+  let o=null;try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk),a=rc&&awardOf(rc,G);if(a)o={award:a,place:t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)};}else if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak),a=ev&&airAwardOf(ev,G);if(a)o={award:a,place:t.place||1};}}catch(_){}
+  try{celebrate(t.title,t.sub||'',TROPHY_ICON[t.kind]||'🏆',null,o);}catch(_){}openSheet(trophyHTML(t));}
 function trophyCabinetCard(s){const T=(s.trophies||[]).slice();if(!T.length)return `<section class="card trocab" id="sec-trophies"><h2>🏆 Кабинет трофеев</h2><p class="small muted" style="margin-top:6px">Пока пусто. Кубки гонок, медали, грамоты за выигранные пари, титулы года, рекорды продаж и газетные вырезки появятся здесь — с датой, снимком и историей.</p></section>`;
   const by={};T.forEach((t,i)=>{(by[t.y]=by[t.y]||[]).push([t,i]);});
   const shelves=Object.keys(by).sort((a,b)=>b-a).map(y=>`<div class="tro-shelf"><span class="label">${y}</span><div class="tro-row">${by[y].map(([t,i])=>`<button class="tro" data-act="trophy" data-k="${i}" title="${esc(t.title)}"><i>${TROPHY_ICON[t.kind]||'🏆'}</i><b>${esc(t.title)}</b><small>${MONTHS[t.m]||''}${t.sub?' · '+esc(t.sub):''}</small></button>`).join('')}</div></div>`).join('');

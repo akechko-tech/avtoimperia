@@ -1052,6 +1052,30 @@ body.flying{overflow:hidden}
 #flyScreen .f-help .btns,#flyScreen .f-end .btns{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:440px){#flyScreen .f-top .btn.sm{padding:4px 7px}#flyScreen .f-ins>div{min-width:50px}#flyScreen .f-ins b{font-size:15px}#flyScreen .f-goal{max-width:62%}}
 @media (orientation:portrait){#flyScreen .f-ins{bottom:auto;top:calc(150px + env(safe-area-inset-top,0px));left:10px;transform:none;flex-direction:column;gap:2px;padding:5px 6px}#flyScreen .f-ins>div{min-width:64px}}
+
+/* 0.41: награды — карточка приза (праздник, итоги гонки, витрина, газета) */
+.cel.has-aw{pointer-events:auto}
+.cel-t.cel-aw{max-width:min(92vw,420px);padding:14px 20px 12px}
+.cel-aw .aw-i{display:block;line-height:0;margin:0 auto}
+.cel-aw .aw-i svg{filter:drop-shadow(0 6px 14px rgba(0,0,0,.6))}
+.cel-aw b{font-size:clamp(28px,8vw,44px)}
+.cel-aw .aw-cup{display:block;margin-top:6px;font-style:normal;font-family:"Playfair Display",var(--serif);font-size:17px;font-weight:700;color:#f6e3a8}
+.cel-aw span{font-size:14px}
+.aw-who{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;text-align:left}
+.cel-aw .aw-who>span,.aw-card .aw-who>span{display:inline;margin:0;max-width:none}
+.aw-by{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;border:1px solid rgba(241,210,122,.6);background:#2a2114}
+.aw-ini{display:inline-flex;align-items:center;justify-content:center;font-family:"Playfair Display",var(--serif);font-weight:700;font-size:13px;color:#f1d27a;letter-spacing:.04em}
+.cel-aw .aw-mus{display:block;margin-top:6px;font-size:13px;color:#e9d9b2}
+.cel-aw .aw-tap{display:block;margin-top:8px;font-size:11px;color:rgba(246,236,210,.55)}
+.aw-card{display:flex;gap:12px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1px solid var(--line,#d9cdb4);border-radius:10px;background:linear-gradient(rgba(241,210,122,.14),rgba(241,210,122,.04))}
+.aw-card .aw-pic{flex:none;line-height:0}
+.aw-card .aw-txt{flex:1;min-width:0}
+.aw-card .aw-txt b{font-family:"Playfair Display",var(--serif);font-size:15px;line-height:1.2;display:block}
+.aw-card .aw-who{justify-content:flex-start;margin-top:6px}
+.aw-card .aw-by{width:32px;height:32px;border-color:var(--line,#d9cdb4)}
+.aw-card .aw-ini{color:inherit;background:rgba(0,0,0,.06)}
+.aw-card p.small{margin-top:4px}
+.tro-award{display:flex;justify-content:center;line-height:0;margin-top:6px}
 </style>
 
 <div class="wrap" hidden>
@@ -1725,6 +1749,177 @@ const RACE_HOST={gb1900:'fr',pb1901:'fr',pv1902:'fr',peking:'ru',nyparis:'us',mo
 RACES.forEach(r=>{if(MAJOR_IDS.includes(r.id))r.major=1;r.host=RACE_HOST[r.id]||(r.host&&r.host!=='intl'?r.host:(r.c==='intl'?'fr':r.c));});
 RACES.sort((a,b)=>a.y-b.y||a.m-b.m);
 
+
+/* ================= 0.41: НАГРАДЫ — ЧТО ВРУЧАЛИ, КТО ВРУЧАЛ, ЧТО ИГРАЛО =================
+   Отзыв: «кубки и награды — используй исторические кубки и награды, указывай, кто вручал, с изображением; играет та же мелодия,
+   что и на вручении в этой гонке в прошлом». У каждой серии гонок — свой приз: что это (чаша, бронзовая доска, статуэтка, щит,
+   блюдо, венок, медаль), кто вручал (портрет — статья Википедии, как у гонщиков), одна строка истории и музыка церемонии —
+   гимн страны-хозяйки эпохи (своей мелодией игры, без сети) или запись оркестра из библиотеки. У гонок без известного приза —
+   приз клуба-организатора страны. Карточка — после финиша на призовом месте, в листе итогов, в витрине и в газете. */
+const AW_CLUB={
+  fr:{cup:'Приз Автомобильного клуба Франции',kind:'cup',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt',until:1922,by2:'президент Автомобильного клуба Франции',note:'Автомобильный клуб Франции (1895) — старейший в мире; его президент барон ван Зюйлен вручал призы ACF почти тридцать лет.'},
+  uk:{cup:'Приз Королевского автомобильного клуба',kind:'cup',by:'Королевский автомобильный клуб (RAC)',note:'Автомобильный клуб Великобритании и Ирландии (1897), с 1907 года — Королевский.'},
+  de:{cup:'Приз Императорского автомобильного клуба',kind:'cup',by:'Императорский автомобильный клуб (KAC)',until:1918,by2:'Автомобильный клуб Германии (AvD)',note:'Клуб под покровительством кайзера; после 1918 года — Автомобильный клуб Германии.'},
+  us:{cup:'Приз Американской автомобильной ассоциации',kind:'cup',by:'гоночный комитет AAA',note:'Американская автомобильная ассоциация (1902) ведала гонками в США полвека.'},
+  it:{cup:'Приз Автомобильного клуба Италии',kind:'cup',by:'Автомобильный клуб Италии',note:'Итальянские автоклубы — Турин, Милан, Брешиа — соперничали за лучшие гонки страны.'},
+  ru:{cup:'Приз Императорского Российского автомобильного общества',kind:'cup',by:'Императорское Российское автомобильное общество',note:'ИРАО (1903) состояло под высочайшим покровительством; призы — от общества и от великих князей.'},
+  at:{cup:'Приз Австрийского автомобильного клуба',kind:'cup',by:'Австрийский автомобильный клуб',note:'Венский клуб устраивал гонки на Земмеринге с 1899 года.'},
+  ch:{cup:'Приз Автомобильного клуба Швейцарии',kind:'cup',by:'Автомобильный клуб Швейцарии'},be:{cup:'Приз Королевского автомобильного клуба Бельгии',kind:'cup',by:'Королевский автомобильный клуб Бельгии'},
+  es:{cup:'Приз Королевского автомобильного клуба',kind:'cup',by:'король Альфонсо XIII',byWiki:'Alfonso XIII',note:'Король сам бывал на гонках в Сан-Себастьяне и вручал кубки.'},
+  mc:{cup:'Приз Спортивного автомобильного клуба Монако',kind:'cup',by:'Спортивный автомобильный клуб Монако'},ie:{cup:'Приз Королевского ирландского автомобильного клуба',kind:'cup',by:'Королевский ирландский автомобильный клуб'},ly:{cup:'Приз Автомобильного клуба Триполи',kind:'cup',by:'Автомобильный клуб Триполи'}};
+// по сериям гонок (ключ — id серии из 02-races.js); mus — страна, чья музыка играет, если не страна гонки
+const AWARDS={
+  pbp:{cup:'Первый приз Комитета гонки — 31 500 франков',kind:'plate',by:'граф Альбер де Дион, председатель комитета',byWiki:'Jules-Albert de Dion',note:'По регламенту первый приз достался четырёхместному «Пежо» Кёхлина: Левассор пришёл первым, но на двухместной машине.'},
+  chicago:{cup:'Золотая медаль «Таймс-Геральд» и $2 000',kind:'medal',by:'Герман Кольсаат, издатель',byWiki:'Herman Henry Kohlsaat',note:'Газета «Chicago Times-Herald» учредила первую американскую гонку и приз в $5 000 на всех.'},
+  pmp:{cup:'Приз Автомобильного клуба Франции',kind:'plate',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt',note:'Первая гонка, устроенная самим клубом: десять этапов, призы по этапам и общий.'},
+  brighton:{cup:'Памятная медаль «Пробега эмансипации»',kind:'medal',by:'Гарри Лоусон, Клуб моторных экипажей',byWiki:'Harry John Lawson',note:'Победителей не было: ехали в честь отмены «закона о красном флаге».'},
+  turbie:{cup:'Кубок Автомобильного клуба Ниццы',kind:'cup',by:'Автомобильный клуб Ниццы',note:'Подъём на Ла-Тюрби венчал «Неделю скорости» в Ницце; в 1903 году здесь разбился граф Зборовский.'},
+  semmering:{cup:'Кубок Земмеринга',kind:'cup',by:'Австрийский автомобильный клуб',note:'Старейшая горная гонка Европы (1899); кубок клуба и серебряные плакетки по классам.',mus:'at'},
+  thousand:{cup:'Медаль Автомобильного клуба за надёжность',kind:'medal',by:'Клод Джонсон, секретарь Автомобильного клуба',byWiki:'Claude Johnson',note:'Машины получали медали за безотказность, а не за скорость.'},
+  gb1900:{cup:'Кубок Гордона Беннетта',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',note:'Серебряная скульптура Андре Окока — Победа на «Панаре», 17 кг; кубок переходил к автоклубу страны победителя, и она устраивала следующую гонку.',mus:'you'},
+  gb1903:{cup:'Кубок Гордона Беннетта',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',note:'Ирландия, 1903: гонку устроили по закону, принятому специально ради неё; британские машины — в «гоночном зелёном».',mus:'you'},
+  gb1904:{cup:'Кубок Гордона Беннетта',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',note:'Таунус, 1904: на старте — кайзер Вильгельм II; кубок увёз Тери на «Ришар-Бразье».',mus:'you'},
+  gb1905:{cup:'Кубок Гордона Беннетта',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',note:'Овернь, 1905: последняя гонка на кубок — французы предпочли Гран-при без ограничения в три машины на страну.',mus:'you'},
+  pb1901:{cup:'Приз Париж — Берлин',kind:'cup',by:'Императорский автомобильный клуб',note:'За финишем в Берлине следил кайзер; победителя Фурнье встречал весь Берлин.'},
+  pv1902:{cup:'Приз Париж — Вена',kind:'cup',by:'Австрийский автомобильный клуб',note:'Марсель Рено на лёгкой машине обошёл гигантов через перевал Арльберг.',mus:'at'},
+  ardennes:{cup:'Кубок Арденнского круга',kind:'cup',by:'барон Пьер де Кроэз',byWiki:'Pierre de Crawhez',note:'Первая гонка по замкнутому кругу (1902): барон де Кроэз придумал и устроил её у Бастони.',mus:'be'},
+  ventoux:{cup:'Кубок Мон-Ванту',kind:'cup',by:'Автомобильный клуб Воклюза',note:'Подъём на «лысую гору» Прованса — 21,6 км серпантина с 1902 года.'},
+  ormond:{cup:'Кубок Дьюара за милю',kind:'cup',by:'сэр Томас Дьюар',byWiki:'Thomas Dewar, 1st Baron Dewar',note:'Шотландский виноторговец подарил кубок за рекорд мили на песке Ормонда; трибуны стояли у отеля «Ормонд».'},
+  pm1903:{cup:'Приз Автомобильного клуба Франции',kind:'plate',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt',note:'Гонку остановили в Бордо после гибели гонщиков и зрителей; призы вручили по итогам первого этапа.'},
+  vanderbilt:{cup:'Кубок Вандербильта',kind:'cup',by:'Уильям К. Вандербильт-младший',byWiki:'William Kissam Vanderbilt II',note:'Серебряная чаша Tiffany весом 10,5 кг (30 фунтов), стоимостью $2 500 — первый большой приз Америки.'},
+  herkomer:{cup:'Приз Геркомера',kind:'statue',by:'сэр Хьюберт фон Геркомер',byWiki:'Hubert von Herkomer',note:'Художник учредил состязание туристических машин и сам изваял бронзовую статуэтку приза.'},
+  shelsley:{cup:'Кубок Шелсли-Уолш',kind:'cup',by:'Мидлендский автомобильный клуб',note:'Самая старая гонка Британии, которая идёт до сих пор: 1000 ярдов в гору с 1905 года.'},
+  glidden:{cup:'Кубок Глиддена',kind:'cup',by:'Чарльз Глидден',byWiki:'Charles Jasper Glidden',note:'Телефонный магнат Глидден подарил кубок за надёжность в турах через полстраны.'},
+  tt:{cup:'Tourist Trophy — статуэтка Меркурия',kind:'statue',by:'Королевский автомобильный клуб (RAC)',note:'Серебряная фигура Меркурия на шаре — старейший переходящий приз автогонок (1905).'},
+  targa:{cup:'Тарга Флорио',kind:'targa',by:'Винченцо Флорио',byWiki:'Vincenzo Florio',note:'Золотая доска («тарга») по эскизу Рене Лалика: Флорио придумал гонку по горам Сицилии и сам вручал приз победителю.'},
+  x24910:{cup:'Кубок Флорио',kind:'cup',by:'Винченцо Флорио',byWiki:'Vincenzo Florio',note:'Серебряный кубок, учреждённый в 1905 году в Брешии; разыгрывался до 1927 года.'},
+  gpacf:{cup:'Кубок Гран-при ACF и 45 000 франков',kind:'cup',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt',note:'Первый Гран-при (1906) заменил Кубок Гордона Беннетта: без квоты в три машины на страну.'},
+  peking:{cup:'Приз «Ле Матен» — бутылка шампанского «Мумм»',kind:'plate',by:'газета «Ле Матен»',note:'Приз был символическим — магнум шампанского; князь Боргезе на «Итале» приехал первым через Гоби и Сибирь.'},
+  kaiser:{cup:'Кайзерпрайс',kind:'cup',by:'кайзер Вильгельм II',byWiki:'Wilhelm II',note:'Золотой кубок кайзера за гонку в Таунусе; Надзаро на «Фиате» принимал его из рук императора.'},
+  x80901:{cup:'Приз Императорского Российского автомобильного общества',kind:'cup',by:'Императорское Российское автомобильное общество',note:'Гонка Москва — Петербург 1907 года: 650 вёрст, призы общества и газет.'},
+  brooklands:{cup:'Кубок Брукландса',kind:'cup',by:'Хью Локк Кинг, владелец трека',byWiki:'Hugh F. Locke King',note:'Первый в мире гоночный автодром (1907): гонки шли по правилам ипподрома — цвета вместо номеров, ставки на тотализаторе.'},
+  x69903:{cup:'Кубок скорости',kind:'cup',by:'Автомобильный клуб Брешии'},
+  nyparis:{cup:'Приз «Ле Матен» и «Нью-Йорк Таймс»',kind:'cup',by:'редакции «Ле Матен» и «Нью-Йорк Таймс»',note:'Кругосветная гонка 1908 года: «Томас Флайер» прошёл 35 000 км за 169 дней.'},
+  henry:{cup:'Приз принца Генриха',kind:'statue',by:'принц Генрих Прусский',byWiki:'Prince Henry of Prussia (1862–1929)',note:'Брат кайзера, моряк и автомобилист, учредил пробег туристических машин и вручал серебряную фигуру победителю.'},
+  x87575:{cup:'Приз Императорского Российского автомобильного общества',kind:'cup',by:'Императорское Российское автомобильное общество'},
+  savannah:{cup:'Большой приз Америки',kind:'cup',by:'Автомобильный клуб Америки',note:'Ответ Нью-Йорка Кубку Вандербильта: гонка по дорогам Саванны по европейским правилам Гран-при.'},
+  santamonica:{cup:'Кубок Санта-Моники',kind:'cup',by:'Торговая палата Санта-Моники'},
+  alpen:{cup:'Альпийский кубок',kind:'cup',by:'Австрийский автомобильный клуб',note:'Альпийский пробег: перевалы Австрии, штрафные очки за остановки; кубок — за безупречный пробег.',mus:'at'},
+  elgin:{cup:'Национальный кубок Элгина',kind:'cup',by:'Элгинская часовая компания',note:'Часовой завод Элгина учредил кубок дорожных гонок близ Чикаго (1910).'},
+  x30184:{cup:'Большой приз Америки',kind:'cup',by:'Автомобильный клуб Америки'},
+  x51007:{cup:'Кубок Ралли Монте-Карло',kind:'cup',by:'Спортивный автомобильный клуб Монако',note:'Первое ралли (1911): экипажи съезжались в Монако из разных городов Европы, судьи оценивали и машину, и пассажиров.',mus:'fr'},
+  indy:{cup:'Венок, чек и кубок Спидвея',kind:'wreath',by:'Карл Фишер, президент Спидвея',byWiki:'Carl G. Fisher',note:'Победителю первой «пятисотки» (1911) — $14 250 призовых, лавровый венок и кубок; Фишер сам встречал победителя на кирпичном треке.'},
+  x38020:{cup:'Приз Автомобильного клуба Сарты',kind:'cup',by:'Жорж Дюран, Автомобильный клуб Сарты',note:'Клуб Ле-Мана, который в 1923 году придумает «24 часа».'},
+  dieppe:{cup:'Кубок Гран-при ACF',kind:'cup',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt'},
+  x13597:{cup:'Кубок Сарты',kind:'cup',by:'Жорж Дюран, Автомобильный клуб Сарты'},
+  x17567:{cup:'Большой приз Санкт-Петербургского автомобиль-клуба',kind:'cup',by:'Санкт-Петербургский автомобиль-клуб',note:'Гран-при России 1913 года по Волхонскому шоссе: приз клуба и подарки от великих князей.'},
+  x87929:{cup:'Кубок короля Альфонсо XIII',kind:'cup',by:'король Альфонсо XIII',byWiki:'Alfonso XIII',note:'Король приезжал на трассу Ласарте и вручал кубок Гран-при Испании сам.'},
+  x2844:{cup:'Приз Императорского Российского автомобильного общества',kind:'cup',by:'Императорское Российское автомобильное общество'},
+  lyon1914:{cup:'Кубок Гран-при ACF',kind:'cup',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt',note:'Последний Гран-при перед войной: «Мерседесы» Лаутеншлагера заняли весь подиум.'},
+  x49337:{cup:'Кубок Спидвей-парка',kind:'cup',by:'Чикагский автомобильный клуб'},
+  x20757:{cup:'Кубок Астора',kind:'cup',by:'Винсент Астор',byWiki:'Vincent Astor',note:'Молодой наследник Асторов подарил кубок дощатому треку Шипсхед-Бэй (1915).'},
+  pikes:{cup:'Кубок Пенроуза',kind:'cup',by:'Спенсер Пенроуз',byWiki:'Spencer Penrose',note:'Пенроуз построил платную дорогу на Пайкс-Пик и в 1916 году учредил гонку «к облакам».'},
+  x55729:{cup:'Шаронвилльский приз',kind:'cup',by:'гоночный комитет AAA'},
+  x73534:{cup:'Кубок Харкнесса',kind:'cup',by:'Гарри Харкнесс',byWiki:'Harry Harkness',note:'Нефтяной наследник и гонщик, хозяин трека Шипсхед-Бэй.'},
+  x57075:{cup:'«Либерти Свипстейкс»',kind:'cup',by:'гоночный комитет AAA',note:'Гонка военного 1918 года: сборы — на заём свободы.'},
+  x60423:{cup:'Приз Шипсхед-Бэй',kind:'cup',by:'гоночный комитет AAA'},
+  x44688:{cup:'Кубок Муджелло',kind:'cup',by:'Автомобильный клуб Флоренции'},
+  x78542:{cup:'Приз Беверли-Хиллз',kind:'cup',by:'гоночный комитет AAA'},board1:{cup:'Приз дощатого трека Беверли-Хиллз',kind:'cup',by:'гоночный комитет AAA'},board0:{cup:'Приз дощатого трека Атлантик-Сити',kind:'cup',by:'гоночный комитет AAA'},
+  lm1921:{cup:'Кубок Гран-при ACF',kind:'cup',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt',note:'Первая победа американской машины в Гран-при: «Дюзенберг» Мёрфи с гидравлическими тормозами.'},
+  brescia:{cup:'Кубок Гран-при Италии',kind:'cup',by:'Автомобильный клуб Брешии'},x15626:{cup:'Кубок Гран-при вуатюреток',kind:'cup',by:'Автомобильный клуб Брешии'},
+  jcc200:{cup:'Кубок JCC 200 миль',kind:'cup',by:'Юношеский автомобильный клуб (JCC)'},x59677:{cup:'Кубок JCC 200 миль',kind:'cup',by:'Юношеский автомобильный клуб (JCC)'},
+  klausen:{cup:'Кубок Клаузена',kind:'cup',by:'Автомобильный клуб Швейцарии',note:'Самая длинная горная гонка Европы — 21,5 км перевала Клаузен.',mus:'ch'},
+  monza1922:{cup:'Кубок Гран-при Италии',kind:'cup',by:'Автомобильный клуб Милана',note:'Автодром в королевском парке Монцы построили за сто дней к Гран-при 1922 года.'},
+  lemans:{cup:'Кубок Радж-Уитворт',kind:'cup',by:'Жорж Дюран и Шарль Фару, ACO',byWiki:'Charles Faroux',note:'«24 часа» разыгрывали трёхлетний кубок фирмы Радж-Уитворт — за лучший результат за три года подряд.'},
+  x95919:{cup:'Кубок Савио',kind:'cup',by:'Автомобильный клуб Равенны'},
+  x79680:{cup:'Кубок короля Альфонсо XIII',kind:'cup',by:'король Альфонсо XIII',byWiki:'Alfonso XIII'},
+  itgp:{cup:'Кубок Гран-при Италии',kind:'cup',by:'Автомобильный клуб Милана'},x6663:{cup:'Кубок Гран-при Монцы',kind:'cup',by:'Автомобильный клуб Милана'},
+  acerbo1924:{cup:'Коппа Ачербо',kind:'cup',by:'Джакомо Ачербо',byWiki:'Giacomo Acerbo',note:'Кубок в память брата, Тито Ачербо, погибшего на войне; первую гонку в Пескаре выиграл молодой Энцо Феррари.'},
+  acerbo:{cup:'Коппа Ачербо',kind:'cup',by:'Джакомо Ачербо',byWiki:'Giacomo Acerbo'},
+  spa24:{cup:'Кубок 24 часов Спа',kind:'cup',by:'Королевский автомобильный клуб Бельгии',mus:'be'},europe1924:{cup:'Кубок Гран-при Европы',kind:'cup',by:'барон Этьен ван Зюйлен, президент ACF',byWiki:'Étienne van Zuylen van Nyevelt'},
+  x80394:{cup:'Кубок Гран-при Европы',kind:'cup',by:'король Альберт I',byWiki:'Albert I of Belgium',note:'Король-автомобилист бывал в Спа и вручал призы сам.',mus:'be'},
+  avus1926:{cup:'Кубок Гран-при Германии',kind:'cup',by:'Автомобильный клуб Германии (AvD)',note:'Первый Гран-при Германии — на АФУСе, под дождём; победил 25-летний Караччиола.'},
+  x81442:{cup:'Кубок Гран-при Европы',kind:'cup',by:'король Альфонсо XIII',byWiki:'Alfonso XIII',mus:'es'},
+  bgp1926:{cup:'Кубок Гран-при Великобритании',kind:'cup',by:'Королевский автомобильный клуб (RAC)'},x30443:{cup:'Кубок Гран-при Великобритании',kind:'cup',by:'Королевский автомобильный клуб (RAC)'},
+  daytona1927:{cup:'Золотая медаль за рекорд скорости',kind:'medal',by:'Американская автомобильная ассоциация',note:'Сигрейв на «Санбиме» — 327 км/ч на песке Дейтоны (1927).'},
+  mille:{cup:'Кубок Милле Милья',kind:'cup',by:'граф Аймо Маджи',byWiki:'Aymo Maggi',note:'Четверо из Брешии — Маджи, Маццотти, Кастаньето и Канестрини — придумали гонку в тысячу миль по дорогам Италии.'},
+  eifel:{cup:'Кубок Айфельреннен',kind:'cup',by:'ADAC',note:'Первая гонка на новом Нюрбургринге (1927).'},
+  x42022:{cup:'Кубок Гран-при Рима',kind:'cup',by:'Автомобильный клуб Рима'},
+  nurb1927:{cup:'Кубок Гран-при Германии',kind:'cup',by:'Автомобильный клуб Германии (AvD)'},degp:{cup:'Кубок Гран-при Германии',kind:'cup',by:'Автомобильный клуб Германии (AvD)'},
+  x18018:{cup:'Кубок Гран-при Марны',kind:'cup',by:'Автомобильный клуб Шампани'},
+  x38768:{cup:'Кубок Гран-при Триполи',kind:'cup',by:'губернатор Эмилио де Боно',byWiki:'Emilio De Bono',mus:'it'},
+  monaco:{cup:'Кубок Гран-при Монако',kind:'cup',by:'князь Луи II',byWiki:'Louis II, Prince of Monaco',note:'Антони Ногес придумал гонку по улицам княжества, а князь вручил кубок «Уильямсу» на «Бугатти».',mus:'fr'},
+  x79977:{cup:'Кубок «Двойной двенадцатки»',kind:'cup',by:'Юношеский автомобильный клуб (JCC)'},
+  x22765:{cup:'Кубок Ирландского Свободного государства',kind:'cup',by:'генерал-губернатор Джеймс Макнил',byWiki:'James McNeill',note:'Гран-при Ирландии в Феникс-парке (1929): кубок Свободного государства и кубок «Эйреанн».',mus:'ie'}};
+// небо: по ключу события (03d-air.js); ищется по началу ключа
+const AIR_AWARDS=[
+  ['archdeacon',{cup:'Большой приз Дейча — Аршдекона',kind:'plate',by:'Анри Дейч де ла Мёрт и Эрнест Аршдекон',byWiki:'Henri Deutsch de la Meurthe',note:'50 000 франков за первый километр по кругу; Фарман взял их 13 января 1908 года в Исси.'}],
+  ['sciam',{cup:'Кубок «Сайентифик Американ»',kind:'cup',by:'журнал Scientific American',note:'Серебряный кубок за первый публичный полёт на километр в Америке.'}],
+  ['fortmyer',{cup:'Контракт Корпуса связи и премия',kind:'plate',by:'бригадный генерал Джеймс Аллен, Корпус связи',note:'Армия купила первый аэроплан за $30 000 с премией за скорость сверх 40 миль в час.'}],
+  ['channel',{cup:'Приз «Дейли Мейл» — £1 000',kind:'plate',by:'лорд Нортклифф',byWiki:'Alfred Harmsworth, 1st Viscount Northcliffe',note:'Издатель «Дейли Мейл» учредил приз за перелёт через Ла-Манш; чек Блерио вручили в Лондоне.'}],
+  ['lonman',{cup:'Приз «Дейли Мейл» — £10 000',kind:'plate',by:'лорд Нортклифф',byWiki:'Alfred Harmsworth, 1st Viscount Northcliffe',note:'Лондон — Манчестер за сутки: Польян обошёл Грэм-Уайта ночным полётом.'}],
+  ['britain',{cup:'Приз «Дейли Мейл» — £10 000',kind:'plate',by:'лорд Нортклифф',byWiki:'Alfred Harmsworth, 1st Viscount Northcliffe'}],
+  ['atlantic',{cup:'Приз «Дейли Мейл» — £10 000',kind:'plate',by:'лорд Нортклифф',byWiki:'Alfred Harmsworth, 1st Viscount Northcliffe',note:'Чек Алкоку и Брауну вручил военный министр Уинстон Черчилль; обоих посвятили в рыцари.'}],
+  ['reims-gb',{cup:'Кубок Гордона Беннетта (авиация)',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',note:'Серебряная скульптура: аэроплан Райтов над облаками; кубок увозила страна победителя.',mus:'you'}],
+  ['belmont',{cup:'Кубок Гордона Беннетта (авиация)',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',mus:'you'}],
+  ['gb-',{cup:'Кубок Гордона Беннетта (авиация)',kind:'statue',by:'Джеймс Гордон Беннетт-младший',byWiki:'James Gordon Bennett Jr.',mus:'you'}],
+  ['reims-',{cup:'Приз Большой недели авиации в Шампани',kind:'cup',by:'маркиз Мельхиор де Полиньяк, комитет Реймса',byWiki:'Melchior de Polignac',note:'Шампанские дома Реймса собрали 200 000 франков призов на первую в мире авиационную неделю.'}],
+  ['concours',{cup:'Военный приз конкурса в Реймсе',kind:'plate',by:'военное министерство Франции'}],
+  ['la-1910',{cup:'Приз авиамитинга в Домингес-Филд',kind:'cup',by:'Аэроклуб Калифорнии'}],
+  ['spb-',{cup:'Приз Императорского Всероссийского аэроклуба',kind:'cup',by:'Императорский Всероссийский аэроклуб'}],['spbmos',{cup:'Приз перелёта Петербург — Москва',kind:'cup',by:'Императорский Всероссийский аэроклуб',note:'Из девяти вылетевших долетел один — Васильев.'}],
+  ['mosmil',{cup:'Приз Военного ведомства',kind:'plate',by:'Военное ведомство России'}],['loop',{cup:'Приз Киевского общества воздухоплавания',kind:'medal',by:'Киевское общество воздухоплавания'}],
+  ['kiev',{cup:'Приз перелёта Петербург — Киев',kind:'cup',by:'Императорский Всероссийский аэроклуб'}],['moscow-peking',{cup:'Награда Общества друзей воздушного флота',kind:'medal',by:'Общество друзей воздушного флота',mus:'ru'}],
+  ['alps-1910',{cup:'Приз Миланского комитета — 70 000 лир',kind:'plate',by:'Миланский комитет перелёта',note:'Чавес перелетел Симплон и разбился при посадке в Домодоссоле.'}],
+  ['parmad',{cup:'Приз «Пти Паризьен»',kind:'plate',by:'газета «Пти Паризьен»'}],['larkhill',{cup:'Приз Военного министерства — £5 000',kind:'plate',by:'Военное министерство Британии'}],
+  ['schneider',{cup:'Кубок Шнейдера',kind:'statue',by:'Жак Шнейдер',byWiki:'Jacques Schneider',note:'Бронзовая статуэтка Эрнеста Габара — крылатая фигура, целующая волну; три победы подряд — кубок насовсем.'}],
+  ['med-1913',{cup:'Приз Аэроклуба Франции',kind:'cup',by:'Аэроклуб Франции'}],
+  ['pulitzer',{cup:'Кубок Пулитцера',kind:'cup',by:'Ральф Пулитцер',byWiki:'Ralph Pulitzer',note:'Сыновья Джозефа Пулитцера учредили гонку скорости (1920); её выигрывали армейские и флотские лётчики.'}],
+  ['kingscup',{cup:'Королевский кубок',kind:'cup',by:'король Георг V',byWiki:'George V',note:'Кубок учредил сам король — для гонок по кругу вокруг Британии.'}],
+  ['orteig',{cup:'Приз Ортейга — $25 000',kind:'plate',by:'Раймон Ортейг',byWiki:'Raymond Orteig',note:'Нью-йоркский отельер держал приз за перелёт Нью-Йорк — Париж восемь лет, пока его не взял Линдберг.'}],
+  ['nar-',{cup:'Приз Национальных авиагонок',kind:'cup',by:'Национальная аэронавтическая ассоциация'}],
+  ['guggen',{cup:'Приз Гуггенхайма — $100 000',kind:'plate',by:'Дэниел Гуггенхайм',byWiki:'Daniel Guggenheim',note:'Фонд Гуггенхайма искал безопасный аэроплан: короткий взлёт, медленная посадка.'}],
+  ['thompson',{cup:'Кубок Томпсона',kind:'cup',by:'Чарльз Томпсон, Thompson Products',note:'Главная гонка Америки на скорость по замкнутому кругу (1929–1961).'}]];
+// музыка церемонии по стране и году: гимн — своя мелодия игры (TUNES), запись — из библиотеки оркестра (нужна сеть)
+function awardMusicOf(c,y){c=c||'fr';
+  const M={fr:{tune:'hymn_fr',rec:['sambre_meuse','marche_lorraine'],n:'«Марсельеза»'},mc:{tune:'hymn_fr',rec:['sambre_meuse'],n:'«Марсельеза»'},
+    uk:{tune:'hymn_uk',rec:['pomp','first_suite'],n:'«God Save the King»'},ie:y<1922?{tune:'hymn_uk',rec:['pomp'],n:'«God Save the King»'}:{rec:['pomp'],n:'марш'},
+    us:{tune:'hymn_us',rec:['stars_stripes','washington_post'],n:'«The Star-Spangled Banner»'},
+    de:y<1919?{tune:'hymn_uk',rec:['alte_kameraden'],n:'«Heil dir im Siegerkranz»'}:{rec:['alte_kameraden'],n:'«Старые товарищи»'},
+    at:{rec:['radetzky','kaiserwalzer'],n:'Марш Радецкого'},ch:{tune:'hymn_uk',rec:[],n:'«Rufst du, mein Vaterland»'},
+    it:{rec:['aida_marina_1906','tell_finale'],n:'Триумфальный марш из «Аиды»'},ly:{rec:['aida_marina_1906'],n:'Триумфальный марш из «Аиды»'},
+    ru:y<1917.2?{rec:['tsar_hymn'],n:'«Боже, Царя храни»'}:y<1918.5?{rec:['free_russia_hymn'],n:'«Гимн свободной России»'}:{rec:['slavianka'],n:'«Прощание славянки»'},
+    be:{rec:['sambre_meuse'],n:'марш'},es:{rec:[],n:'туш'}};
+  return M[c]||{rec:[],n:'туш'};}
+// приз гонки: по серии, иначе — клуб страны; страна музыки — гонки, у международных — хозяина; mus:'you' — страна победителя (вы)
+function awardOf(rc,s){if(!rc)return null;const id=rc.id||String(rc.key||'').replace(/-\d+$/,''),A=AWARDS[id],c0=(rc.host&&rc.host!=='other'&&rc.host!=='intl')?rc.host:(rc.c&&rc.c!=='intl'?rc.c:(s?s.country:'fr')),y=rc.y||1900;
+  const base=AW_CLUB[c0]||AW_CLUB.fr,a=Object.assign({},base,A||{});
+  if(!A&&base.until&&y>base.until){a.by=base.by2||a.by;delete a.byWiki;}
+  let mc=a.mus==='you'?(s?s.country:c0):(a.mus||c0);if(!awardMusicOf(mc,y).rec&&!awardMusicOf(mc,y).tune)mc=c0;
+  a.id=id;a.c=mc;a.y=y;a.music=awardMusicOf(mc,y);a.name=rc.name;return a;}
+function airAwardOf(ev,s){if(!ev)return null;const key=ev.key||'',hit=AIR_AWARDS.find(([p])=>key.startsWith(p)),c0=ev.c||(s?s.country:'fr'),y=ev.y||1909;
+  const a=Object.assign({cup:'Приз аэроклуба',kind:'cup',by:'аэроклуб страны'},hit?hit[1]:{});const mc=a.mus==='you'?(s?s.country:c0):(a.mus||c0);
+  a.id='air:'+key;a.c=mc;a.y=y;a.music=awardMusicOf(mc,y);a.name=ev.name;a.air=1;return a;}
+/* ---------- рисунок приза: SVG по виду, с гравировкой и лентой страны ---------- */
+const AW_RIB={fr:['#1f3e8c','#ffffff','#c8102e'],uk:['#1f3e8c','#ffffff','#c8102e'],us:['#c8102e','#ffffff','#1f3e8c'],de:['#232323','#ffffff','#c8102e'],it:['#1b7a3a','#ffffff','#c8102e'],ru:['#ffffff','#1f3e8c','#c8102e'],
+  at:['#c8102e','#ffffff','#c8102e'],ch:['#c8102e','#ffffff','#c8102e'],be:['#232323','#f0c419','#c8102e'],es:['#c8102e','#f0c419','#c8102e'],mc:['#c8102e','#ffffff','#c8102e'],ie:['#1b7a3a','#ffffff','#e0892a'],ly:['#1b7a3a','#ffffff','#c8102e']};
+function awardSVG(a,o){o=o||{};const place=o.place||1,kind=place===1?(a.kind||'cup'):'medal',W=200,H=170,met=place===1?(kind==='targa'?['#b8863b','#8a5f23','#e9c57a']:['#dcdcdc','#8c8f94','#ffffff']):place===2?['#cfd3d8','#7f848a','#f4f6f8']:['#b57a3f','#7a4a1f','#dca06a'];
+  const [m0,m1,m2]=met,rib=AW_RIB[a.c]||AW_RIB.fr,txt=esc((a.name||'').replace(/^(Кубок|Приз|Гонка) /,'').slice(0,(o.place||1)===1&&(a.kind||'cup')!=='medal'?26:14)),yr=o.y||a.y||'',id=(a.id||'a').replace(/[^a-z0-9]/gi,'');
+  const grad=`<defs><linearGradient id="g${id}" x1="0" x2="1"><stop offset="0" stop-color="${m1}"/><stop offset=".35" stop-color="${m2}"/><stop offset=".6" stop-color="${m0}"/><stop offset="1" stop-color="${m1}"/></linearGradient><linearGradient id="r${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${rib[0]}"/><stop offset=".34" stop-color="${rib[0]}"/><stop offset=".34" stop-color="${rib[1]}"/><stop offset=".66" stop-color="${rib[1]}"/><stop offset=".66" stop-color="${rib[2]}"/><stop offset="1" stop-color="${rib[2]}"/></linearGradient></defs>`;
+  const fill=`url(#g${id})`,eng=`<text x="100" y="${kind==='targa'?94:kind==='plate'?78:kind==='wreath'?96:kind==='statue'?150:kind==='shield'?96:kind==='medal'?112:76}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="${kind==='medal'?9:kind==='cup'?11:10}" fill="${m1}">${txt}</text><text x="100" y="${kind==='targa'?110:kind==='plate'?95:kind==='wreath'?112:kind==='statue'?162:kind==='shield'?112:kind==='medal'?124:93}" text-anchor="middle" font-family="Georgia,serif" font-size="${kind==='cup'?13:11}" font-weight="bold" fill="${m1}">${yr}</text>`;
+  let body='';
+  if(kind==='cup')body=`<rect x="70" y="150" width="60" height="12" rx="2" fill="#4a3424"/><rect x="80" y="140" width="40" height="12" rx="2" fill="${fill}"/><rect x="94" y="112" width="12" height="30" fill="${fill}"/><path d="M50 40 Q50 118 100 118 Q150 118 150 40 Z" fill="${fill}" stroke="${m1}" stroke-width="1.5"/><path d="M50 48 Q22 50 24 72 Q26 92 56 90" fill="none" stroke="${fill}" stroke-width="8" stroke-linecap="round"/><path d="M150 48 Q178 50 176 72 Q174 92 144 90" fill="none" stroke="${fill}" stroke-width="8" stroke-linecap="round"/><ellipse cx="100" cy="40" rx="50" ry="7" fill="${m2}" stroke="${m1}"/>`;
+  else if(kind==='targa')body=`<rect x="30" y="40" width="140" height="100" rx="6" fill="${fill}" stroke="${m1}" stroke-width="2"/><rect x="38" y="48" width="124" height="84" rx="3" fill="none" stroke="${m1}" stroke-width="1"/><circle cx="100" cy="66" r="14" fill="none" stroke="${m1}" stroke-width="1.5"/><path d="M90 70 Q100 56 110 70" fill="none" stroke="${m1}" stroke-width="1.5"/><rect x="60" y="140" width="80" height="8" fill="#4a3424"/>`;
+  else if(kind==='statue')body=`<rect x="60" y="138" width="80" height="22" rx="2" fill="#2e2a26"/><rect x="72" y="120" width="56" height="18" fill="${fill}"/><path d="M84 58 Q52 44 50 78 Q66 64 90 74 Z M116 58 Q148 44 150 78 Q134 64 110 74 Z" fill="${m2}" stroke="${m1}" stroke-width="1"/><circle cx="100" cy="34" r="8" fill="${fill}"/><path d="M93 44 L107 44 L111 82 L89 82 Z" fill="${fill}"/><path d="M89 82 L111 82 L120 120 L80 120 Z" fill="${fill}" stroke="${m1}" stroke-width=".6"/><path d="M94 50 L78 30 M106 50 L122 30" stroke="${fill}" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="76" cy="26" r="6" fill="none" stroke="${m2}" stroke-width="2.5"/><circle cx="124" cy="26" r="6" fill="none" stroke="${m2}" stroke-width="2.5"/>`;
+  else if(kind==='plate')body=`<ellipse cx="100" cy="80" rx="74" ry="52" fill="${fill}" stroke="${m1}" stroke-width="2"/><ellipse cx="100" cy="80" rx="58" ry="38" fill="none" stroke="${m1}" stroke-width="1"/><rect x="70" y="138" width="60" height="10" rx="2" fill="#4a3424"/>`;
+  else if(kind==='wreath')body=`<path d="M100 150 C40 140 30 70 60 40 M100 150 C160 140 170 70 140 40" fill="none" stroke="#3f6a2e" stroke-width="10" stroke-linecap="round"/>${[...Array(14)].map((_,i)=>{const t=i/13,x1=100-62*Math.sin(t*2.6)+6,y1=150-(110*t),x2=100+62*Math.sin(t*2.6)-6;return `<ellipse cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" rx="9" ry="4" fill="#5b8a3a" transform="rotate(${-40+t*60} ${x1.toFixed(1)} ${y1.toFixed(1)})"/><ellipse cx="${x2.toFixed(1)}" cy="${y1.toFixed(1)}" rx="9" ry="4" fill="#5b8a3a" transform="rotate(${40-t*60} ${x2.toFixed(1)} ${y1.toFixed(1)})"/>`;}).join('')}<rect x="88" y="128" width="24" height="34" fill="url(#r${id})"/>`;
+  else if(kind==='shield')body=`<path d="M40 36 H160 V96 Q160 136 100 156 Q40 136 40 96 Z" fill="${fill}" stroke="${m1}" stroke-width="2"/><path d="M50 44 H150 V94 Q150 126 100 144 Q50 126 50 94 Z" fill="none" stroke="${m1}"/>`;
+  else body=`<rect x="84" y="10" width="32" height="70" fill="url(#r${id})"/><circle cx="100" cy="104" r="38" fill="${fill}" stroke="${m1}" stroke-width="2"/><circle cx="100" cy="104" r="30" fill="none" stroke="${m1}" stroke-width="1"/><text x="100" y="98" text-anchor="middle" font-family="Georgia,serif" font-size="18" font-weight="bold" fill="${m1}">${place===1?'I':place===2?'II':'III'}</text>`;
+  return `<svg class="aw-svg" viewBox="0 0 ${W} ${H}" width="${o.w||140}" height="${Math.round((o.w||140)*H/W)}" role="img" aria-label="${esc(a.cup||'')}">${grad}${body}${eng}</svg>`;}
+// портрет вручителя: статья Википедии (фото в сборке или подгруженное), иначе — овал с инициалами
+function awardByHTML(a){const im=a.byWiki&&typeof IMG!=='undefined'&&IMG[a.byWiki],ini=(a.by||'').replace(/^(граф|барон|сэр|князь|король|кайзер|принц|лорд|генерал-губернатор|губернатор|маркиз)\s+/i,'').split(/[\s,]+/).filter(w=>w.length>1&&/^[А-ЯA-Z]/.test(w)).map(w=>w[0]).slice(0,2).join('')||'·';
+  return im?`<img class="aw-by" src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="aw-by aw-ini">${esc(ini)}</span>`;}
+function awardCard(a,place,o){if(!a)return '';o=o||{};place=place||1;
+  return `<div class="aw-card ${place===1?'win':'pod'}"><div class="aw-pic">${awardSVG(a,{place,y:o.y||a.y,w:o.w||96})}</div><div class="aw-txt"><b>${esc(place===1?a.cup:(place===2?'Серебряная':'Бронзовая')+' медаль · '+a.cup)}</b><span class="aw-who small">${awardByHTML(a)}<span>${place===1?'Вручает':'Награждает'}: ${esc(a.by||'')}</span></span>${a.note&&!o.short?`<p class="small muted">${esc(a.note)}</p>`:''}${a.music&&a.music.n?`<p class="small muted">♪ ${esc(a.music.n)}</p>`:''}</div></div>`;}
 
 /* ================= HISTORY DATA: markets, prices, wages, competitors ================= */
 // Все деньги — доллары США того времени. Опорные годы, между ними — интерполяция.
@@ -7738,9 +7933,11 @@ function racerResults(rc,res,mode,info){const s=G,X=s.racer;info=info||{};
   // после подиума в большой гонке заводы присматриваются к гонщику
   if(pos&&pos<=3)X.hot=mi(s)+2;
   lastRace={rc,res,k,won:mine+sp,best:pos,mode,rx:{lines,works}};evHold=1;openRaceResult();
-  if(pos===1){try{celebrate('Победа!',`${rc.name} · ${works?me.works:'частник на «'+me.label+'»'}`,'🏁');}catch(_){}const P=racerPaper(s,rc,res,me,k,works);showPaper(P,true);
+  let AWD=null;try{AWD=rc.match||rc.dx?null:awardOf(rc,s);}catch(e){}/* 0.41: приз гонки */
+  if(pos===1){try{celebrate('Победа!',`${rc.name} · ${works?me.works:'частник на «'+me.label+'»'}`,'🏁',null,AWD?{award:AWD,place:1}:null);}catch(_){}const P=racerPaper(s,rc,res,me,k,works);showPaper(P,true);
     try{trophyAdd(s,{kind:'cup',title:`Победа: ${rc.name}`,sub:`${X.name} · «${me.label}»`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}}
-  else if(pos&&pos<=3)try{trophyAdd(s,{kind:'medal',title:`${pos}-е место: ${rc.name}`,sub:`${X.name} · «${me.label}»`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).`,key:'race|'+rc.key,rk:rc.key});}catch(e){}
+  else if(pos&&pos<=3){if(AWD)try{celebrate(pos===2?'Второе место!':'Третье место!',`${rc.name} · ${works?me.works:'частник на «'+me.label+'»'}`,pos===2?'🥈':'🥉','medal',{award:AWD,place:pos});}catch(_){}
+    try{trophyAdd(s,{kind:'medal',title:`${pos}-е место: ${rc.name}`,sub:`${X.name} · «${me.label}»`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).${AWD?` Награждает ${AWD.by}.`:''}`,key:'race|'+rc.key,rk:rc.key});}catch(e){}}
   save();render();flushToasts();}
 function racerPaper(s,rc,res,me,k,works){const X=s.racer,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&me.fin!=null?(second.fin-me.fin)*k:0;
   const real=rc.win&&!/^Победителей/.test(rc.win)?rc.win:'';
@@ -8278,6 +8475,8 @@ function allTitles(){const t=new Set();Object.values(DRIVER_WIKI).forEach(x=>t.a
   if(typeof SAGA!=='undefined')Object.values(SAGA).forEach(L=>L.forEach(ch=>[ch.sc||[]].concat((ch.v||[]).map(v=>v.sc||[])).forEach(S=>S.forEach(x=>{if(!x.img)return;if(typeof x.img==='object')Object.values(x.img).forEach(v=>t.add(v));else t.add(x.img);}))));
   // 0.37: авиация — аэропланы соперников и их фирмы, лётчики, состязания
   if(typeof AIR_IMG!=='undefined'){Object.values(AIR_IMG).forEach(x=>t.add(x));Object.values(ACOMPS).flat().forEach(c=>{if(c.wiki)t.add(c.wiki);(c.models||[]).forEach(m=>m[2]&&t.add(m[2]));});AIR_PILOTS.forEach(p=>p.wiki&&t.add(p.wiki));AIR_EV.forEach(e=>e.h&&e.h[1]&&t.add(AIR_IMG[e.h[1]]||e.h[1]));}
+  // 0.41: кто вручал призы — портреты учредителей кубков (02b-awards.js)
+  if(typeof AWARDS!=='undefined'){Object.values(AWARDS).forEach(a=>a.byWiki&&t.add(a.byWiki));Object.values(AW_CLUB).forEach(a=>a.byWiki&&t.add(a.byWiki));AIR_AWARDS.forEach(([,a])=>a.byWiki&&t.add(a.byWiki));}
   return [...t];}
 /* 0.37: фото из сборки (img/manifest.js) — не повод не спрашивать Википедию о новых статьях: героях России, авиаторах, аэропланах.
    Спрашиваем только то, чего нет в сборке; ответ помним неделю вместе со списком спрошенного (новая версия игры — новые статьи — спросим их) */
@@ -16365,13 +16564,17 @@ function demoStop(fail){if(DEMO.raf)cancelAnimationFrame(DEMO.raf);DEMO.raf=0;co
 let CEL=null;
 // 0.30: у каждого достижения — свои фанфары: победа, кубок, титул, рекорд, первенство, медаль, сделка
 const CEL_KIND={'🏁':'win','🏆':'cup','👑':'title','🚗':'record','🌟':'first','🥇':'medal','🤝':'deal','⚔️':'duel','🏅':'medal','🏛':'legacy'};
-function celebrate(big,sub,icon,kind){
+// 0.41: opt.award — карточка приза вместо одинакового кубка: что вручают (рисунок приза), кто (портрет), какая музыка (гимн или марш
+// той церемонии); держится дольше и закрывается касанием. Отзыв: «не с одинаковым кубком и музыкой, а под событие и приз»
+function celebrate(big,sub,icon,kind,opt){opt=opt||{};const aw=opt.award||null,place=opt.place||1;
+  if(aw&&sub&&aw.cup&&sub.indexOf(aw.cup+' · ')===0)sub=sub.slice(aw.cup.length+3);/* название гонки = название приза — не повторять */
   try{if(typeof G!=='undefined'&&G)G.celebT=mi(G);}catch(_){}
   try{if(CEL){CEL.el.remove();cancelAnimationFrame(CEL.raf);}}catch(_){}
-  const el=document.createElement('div');el.className='cel';
-  el.innerHTML=`<canvas></canvas><div class="cel-t"><i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`;
+  const el=document.createElement('div');el.className='cel'+(aw?' has-aw':'');
+  const awH=aw?`<i class="aw-i">${awardSVG(aw,{place,w:132,y:aw.y})}</i><b>${esc(big)}</b><em class="aw-cup">${esc(place===1?aw.cup:(place===2?'Серебряная':'Бронзовая')+' медаль · '+aw.cup)}</em>${sub?`<span>${esc(sub)}</span>`:''}<span class="aw-who">${awardByHTML(aw)}<span>${place===1?'Вручает':'Награждает'}: ${esc(aw.by||'')}</span></span>${aw.music&&aw.music.n?`<small class="aw-mus">♪ ${esc(aw.music.n)}</small>`:''}<small class="aw-tap">коснитесь, чтобы закрыть</small>`:'';
+  el.innerHTML=`<canvas></canvas><div class="cel-t${aw?' cel-aw':''}">${aw?awH:`<i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}`}</div>`;
   document.body.appendChild(el);
-  try{if(AU.ctx&&AU.on.music)auFanfare(kind||CEL_KIND[icon]||'cup');auSfx('cheer',1);}catch(_){}
+  try{if(AU.ctx&&AU.on.music){if(aw)auAward(aw,place);else auFanfare(kind||CEL_KIND[icon]||'cup');}auSfx('cheer',1);}catch(_){}
   try{navigator.vibrate&&navigator.vibrate([40,60,40]);}catch(_){}
   const Q=CEL={el,t0:performance.now(),raf:0,P:[]};
   const cv=el.querySelector('canvas'),dpr=Math.min(1.5,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;
@@ -16388,7 +16591,9 @@ function celebrate(big,sub,icon,kind){
         g.save();g.translate(p.x,p.y);g.rotate(p.r);g.scale(1,Math.abs(Math.cos(age*6+p.ph))*0.9+0.1);g.fillStyle=p.c;g.fillRect(-p.w/2,-p.h/2,p.w,p.h);g.restore();}
       if(age<3.4)Q.raf=requestAnimationFrame(loop);};
     Q.raf=requestAnimationFrame(loop);}
-  setTimeout(()=>{if(CEL===Q){el.classList.add('out');setTimeout(()=>{try{el.remove();}catch(_){}if(CEL===Q)CEL=null;},500);}},REDUCE?1800:3300);}
+  const bye=()=>{if(CEL===Q){el.classList.add('out');setTimeout(()=>{try{el.remove();}catch(_){}if(CEL===Q)CEL=null;},500);}};
+  if(aw)el.addEventListener('pointerdown',e=>{e.stopPropagation();bye();},{passive:true});
+  setTimeout(bye,aw?(REDUCE?5000:7500):REDUCE?1800:3300);}
 
 /* ================= RACE SETUP: team (cars and motorcycles within the race rules), drivers, preparation, mode ================= */
 const RACE_ACT={};
@@ -20835,10 +21040,13 @@ function raceResults(rc,res,mode,info){
   lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn,dev};
   evHold=1;openRaceResult();
   if(M&&M.best===1&&best!==1){try{celebrate('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍');}catch(_){}showPaper(motoRacePaper(rc,mres,M.row,k),true);}
-  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle);showPaper(P,true);
+  // 0.41: приз гонки — свой у каждой серии: рисунок, кто вручает, музыка той церемонии (гимн победителю, марш — призёрам)
+  let AWD=null;try{AWD=rc.match||rc.dx?null:awardOf(rc,s);}catch(e){console.warn('award',e);}
+  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁',null,AWD?{award:AWD,place:1}:null);}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle,AWD);showPaper(P,true);
     try{trophyAdd(s,{kind:'cup',title:cupTitle||`Победа: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+(bestRow.player?'вы за рулём':bestRow.drv):''}`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,
       carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,pt:P.title,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){console.warn('trophy',e);}}
-  else if(best&&best<=3)try{trophyAdd(s,{kind:'medal',title:`${best}-е место: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+bestRow.drv:''}`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).`,key:'race|'+rc.key,carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}
+  else if(best&&best<=3){if(AWD)try{celebrate(best===2?'Второе место!':'Третье место!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,best===2?'🥈':'🥉','medal',{award:AWD,place:best});}catch(_){}
+    try{trophyAdd(s,{kind:'medal',title:`${best}-е место: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+bestRow.drv:''}`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).${AWD?` Награждает ${AWD.by}.`:''}`,key:'race|'+rc.key,carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
@@ -20915,14 +21123,14 @@ function motoRacePaper(rc,mres,row,k){const s=G,second=mres.find(r=>r.pos===2),g
     text:`В гонке «${rc.name}» мотоциклы шли вместе с автомобилями, но свой зачёт выиграл мотоцикл «${s.company}». ${second?`Второе место среди мотоциклов — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\nМотоциклисты читают спортивные новости внимательнее всех: спрос на «${row.label}» вырастет на ближайшие месяцы.`,
     carId:row.md?row.md.id:null,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${row.label}» компании «${s.company}» — первый среди мотоциклов в гонке «${rc.name}»`,
     hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};}
-function racePaper(rc,res,row,k,cup){
-  const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0;
+function racePaper(rc,res,row,k,cup,aw){
+  const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0,awT=aw?` Победителю — ${aw.cup.replace(/^(Кубок|Приз|Венок|Золотая|Памятная|Первый|Большой|Национальный)/,m=>m.toLowerCase())}, вручает ${aw.by}${aw.music&&aw.music.n?`; оркестр играет ${aw.music.n}`:''}.`:'';
   const drv=row.player?(PIONEERS[s.pioneer].name+' лично'):(row.drv||'Пилот компании');
   const real=rc.win&&!/^Победителей/.test(rc.win)?rc.win:'',ht=real&&RACE_TEAMS.find(t=>t.from<=rc.y&&t.to>=rc.y&&t.mq.some(m=>real.toLowerCase().includes(m.toLowerCase())));
   const hist=!real?'':ht&&pkIs(ht,s)?`Так было и в настоящей истории: в ${rc.y} году здесь победил ${real}.`:`В настоящей истории эту гонку выиграл ${real}. В этот раз история пошла иначе.`;
   return {kicker:cup?'Кубок Гордона Беннетта':'Спорт',title:cup?`Кубок Гордона Беннетта — у «${s.company}»!`:`«${s.company}» выигрывает ${rc.name}!`,
     deck:`${drv} на «${row.label}» — первым на финише${row.fin!=null?` за ${fmtRaceTime(row.fin*k)}`:''}`,
-    text:`Гонка «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) завершилась победой машины «${s.company}». ${second?`Второе место — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\n${hist}\nПобеда в гонке — лучшая реклама: покупатели ${rc.major?'по всей стране':'в округе'} только о ней и говорят. Спрос на «${row.label}» вырастет на ближайшие месяцы.`,
+    text:`Гонка «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) завершилась победой машины «${s.company}». ${second?`Второе место — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}${awT}\n${hist}\nПобеда в гонке — лучшая реклама: покупатели ${rc.major?'по всей стране':'в округе'} только о ней и говорят. Спрос на «${row.label}» вырастет на ближайшие месяцы.`,
     carId:row.md?row.md.id:null,own:1,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${row.label}» компании «${s.company}» — победитель гонки «${rc.name}»${row.drv?`, за рулём ${row.player?drv:row.drv}`:''}`,
     hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:real?`В ${rc.y} году в настоящей истории: ${real}`:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};
 }
@@ -20941,6 +21149,7 @@ function openRaceResult(){
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">Итоги: ${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
     <p class="small muted" style="margin-top:4px">${rc.match?esc(MATCH_ST[rc.kind]||'')+' · '+esc(rc.venue):RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · у победителя — время ${rc.kind==='record'?'заезда':'всей гонки'}, у остальных — отставание от него; ниже — средняя скорость</p>
     ${L.cup?`<p class="good" style="margin-top:8px"><b>🏆 ${esc(L.cup)}</b></p>`:''}
+    ${(()=>{try{if(!L.best||L.best>3||rc.match||rc.dx)return '';const a=awardOf(rc,s);return a?awardCard(a,L.best):'';}catch(e){console.warn('award',e);return '';}})()}
     ${MR.length?'<div class="label" style="margin-top:12px">Автомобили</div>':''}<table class="pl res" style="margin-top:${MR.length?4:10}px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время / отставание</th></tr>${rows}</table>
     ${L.carIn===false?'':`<p style="margin-top:10px">${rc.match?(L.best===1?`<b>${rc.kind==='record'?'Ваше время лучше!':'Вы первым на финише!'}</b>`:L.best?(rc.kind==='record'?'Соперник оказался быстрее.':'Соперник первым на финише.'):'Ваша машина не доехала до финиша.'):L.rx?(L.best?`Ваше место — <b>${L.best}-е</b>.`:'Вы не доехали до финиша.'):L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won-(ML?ML.won:0)?` ${L.rx?'Заработано':'Призовые'}: <b class="good">${money(won-(ML?ML.won:0))}</b>.`:''}</p>`}
     ${mrows}
@@ -21480,11 +21689,18 @@ function trophyPaper(t){if(!t||!t.pt||!G||!G.papers)return -1;for(let i=G.papers
 function trophyHTML(t){const s=G,md=t.carId!=null?s.models.find(m=>m.id===t.carId):null,pi=trophyPaper(t),reel=(()=>{try{return t.reel&&reelGet(t.reel,s)?t.reel:'';}catch(_){return '';}})();
   const ph=md?`<div class="carbox tro-car">${carArt(md,{w:420,prep:t.prep||0,num:t.num||0,y:t.y})}</div>`:t.img&&IMG[t.img]?`<figure class="tro-ph"><img src="${IMG[t.img].src}" alt="" referrerpolicy="no-referrer"></figure>`:'';
   const lr=t.rk&&typeof lastRace!=='undefined'&&lastRace&&lastRace.rc&&lastRace.rc.key===t.rk;
+  // 0.41: у кубка гонки — настоящий приз серии (рисунок, кто вручал, музыка церемонии)
+  const AW=(()=>{try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk);return rc?[awardOf(rc,s),t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)]:null;}
+    if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak);return ev?[airAwardOf(ev,s),t.place||1]:null;}}catch(e){console.warn('award',e);}return null;})();
   return `<div class="row"><span class="label">${esc(TROPHY_KIND[t.kind]||'Трофей')} · ${MONTHS_N[t.m]||''} ${t.y}</span>${X}</div>
-    <div class="tro-big">${TROPHY_ICON[t.kind]||'🏆'}</div><h2 style="text-align:center">${esc(t.title)}</h2>${t.sub?`<p class="small muted" style="text-align:center;margin-top:4px">${esc(t.sub)}</p>`:''}
+    ${AW&&AW[0]?`<div class="tro-award">${awardSVG(AW[0],{place:AW[1],w:170,y:t.y})}</div>`:`<div class="tro-big">${TROPHY_ICON[t.kind]||'🏆'}</div>`}<h2 style="text-align:center">${esc(t.title)}</h2>${t.sub?`<p class="small muted" style="text-align:center;margin-top:4px">${esc(t.sub)}</p>`:''}
+    ${AW&&AW[0]?awardCard(AW[0],AW[1],{y:t.y}).replace('<div class="aw-pic">','<div class="aw-pic" hidden>'):''}
     ${ph}${t.story?`<p style="margin-top:10px">${esc(t.story)}</p>`:''}
     <div class="stack" style="margin-top:14px">${reel?`<button class="btn primary block" data-act="reel" data-k="${esc(reel)}">▶ Пересмотреть: кинохроника</button>`:''}${pi>=0?`<button class="btn ${reel?'':'primary '}block" data-act="reopenPaper" data-k="${pi}">📰 Пересмотреть: газета того дня</button>`:''}${lr?'<button class="btn block" data-act="troRace">🏁 Итоги гонки</button>':''}<button class="btn block" data-act="close">Закрыть</button></div>`;}
-function trophyReplay(i){const t=(G.trophies||[])[i];if(!t)return;try{celebrate(t.title,t.sub||'',TROPHY_ICON[t.kind]||'🏆');}catch(_){}openSheet(trophyHTML(t));}
+function trophyReplay(i){const t=(G.trophies||[])[i];if(!t)return;
+  // 0.41: повтор кубка гонки — с тем же призом и музыкой церемонии
+  let o=null;try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk),a=rc&&awardOf(rc,G);if(a)o={award:a,place:t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)};}else if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak),a=ev&&airAwardOf(ev,G);if(a)o={award:a,place:t.place||1};}}catch(_){}
+  try{celebrate(t.title,t.sub||'',TROPHY_ICON[t.kind]||'🏆',null,o);}catch(_){}openSheet(trophyHTML(t));}
 function trophyCabinetCard(s){const T=(s.trophies||[]).slice();if(!T.length)return `<section class="card trocab" id="sec-trophies"><h2>🏆 Кабинет трофеев</h2><p class="small muted" style="margin-top:6px">Пока пусто. Кубки гонок, медали, грамоты за выигранные пари, титулы года, рекорды продаж и газетные вырезки появятся здесь — с датой, снимком и историей.</p></section>`;
   const by={};T.forEach((t,i)=>{(by[t.y]=by[t.y]||[]).push([t,i]);});
   const shelves=Object.keys(by).sort((a,b)=>b-a).map(y=>`<div class="tro-shelf"><span class="label">${y}</span><div class="tro-row">${by[y].map(([t,i])=>`<button class="tro" data-act="trophy" data-k="${i}" title="${esc(t.title)}"><i>${TROPHY_ICON[t.kind]||'🏆'}</i><b>${esc(t.title)}</b><small>${MONTHS[t.m]||''}${t.sub?' · '+esc(t.sub):''}</small></button>`).join('')}</div></div>`).join('');
@@ -22243,7 +22459,10 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   if(ev.mil&&md&&!res.dnf){const topQ=Math.max(0,...(res.field||[]).map(x=>x.q||0)),k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:ev.mil.war&&(res.q||0)>=0.9*topQ?0.1:0,n=Math.round(ev.mil.n*k);
     if(n>=1){const price=airMilPrice(s,md),adv=ev.mil.war?Math.round(n*price*0.25):0;if(adv)s.cash+=adv;airOrderAdd(s,{md:md.id,n,price,due:mi(s)+(ev.mil.months||6)+2,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1,adv,advLeft:adv});md.milWon=(md.milWon||0)+1;md.milRep=clamp((md.milRep||0)+(won?6:2),-40,60);res.order=n;res.adv=adv;}}
   if(ev.dyn){A.trials=(A.trials||[]).filter(e=>e.key!==ev.key);}
-  try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}
+  // 0.41: призовое место — праздник с призом этого состязания (кубок Шнейдера, чек «Дейли Мейл», кубок Гордона Беннетта…), кто вручал, гимн или марш
+  let AWD=null;try{if(res.place>=1&&res.place<=3&&!res.dnf)AWD=airAwardOf(ev,s);}catch(e){console.warn('airAward',e);}
+  if(AWD)try{celebrate(won?'Победа в небе!':res.place===2?'Второе место!':'Третье место!',`${ev.name} · ${who} на «${md?md.name:''}»`,won?'✈️':res.place===2?'🥈':'🥉',won?'cup':'medal',{award:AWD,place:res.place});}catch(_){}
+  try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt+(AWD?` ${won?'Приз':'Награда'} — ${AWD.cup}, ${won?'вручает':'награждает'} ${AWD.by}.`:''),ak:AWD?ev.key:null,place:res.place});}catch(_){}
   const hist=airEvHist(s,ev);
   if(ev.dyn){const F=res.field||[],top=F.slice().sort((a,b)=>b.q-a.q)[0],ord=res.order?`${ev.mil.war?'Военный заказ':'Заказ'}: ${fmtN(res.order)} «${md.name}» по ${money(airMilPrice(s,md))}${res.adv?`, четверть суммы (${money(res.adv)}) — вперёд`:''}.`:'';
     pushEvent({own:1,airId:md?md.id:null,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,
@@ -28398,7 +28617,8 @@ function drum(name,t,v,dest){const I=INS.idx&&INS.idx.inst.drums,B=INS.buf.drums
 // Оркестровки танцев эпохи: мелодия, подголосок, аккорды, бас, ударные
 const ARR={rag:{mel:'honky',ch:'piano',bass:'piano',dr:0},cake:{mel:'piano',ch:'banjo',bass:'tuba',dr:1},march:{mel:'cornet',mel2:'trumpet',ch:'trombone',bass:'tuba',dr:2},
   waltz:{mel:'violin',ch:'pizz',bass:'bass',dr:0},tango:{mel:'accordion',mel2:'violin',ch:'piano',bass:'bass',dr:0},fox:{mel:'clarinet',ch:'banjo',bass:'tuba',dr:3},
-  charl:{mel:'trumpet',mel2:'clarinet',ch:'banjo',bass:'tuba',dr:4},jazz:{mel:'clarinet',mel2:'trumpet',ch:'piano',bass:'bass',dr:5}};
+  charl:{mel:'trumpet',mel2:'clarinet',ch:'banjo',bass:'tuba',dr:4},jazz:{mel:'clarinet',mel2:'trumpet',ch:'piano',bass:'bass',dr:5},
+  hymn:{mel:'trumpet',ch:'trombone',bass:'tuba',dr:0}};/* 0.41: гимн на церемонии — духовой оркестр, без ударных */
 function vKick(t,v){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(45,t+0.12);o.connect(g);g.connect(AU.mus);env(g,t,0.004,v,0.2);o.start(t);o.stop(t+0.3);}
 const CH={M:[0,4,7],D:[0,4,7,10],m:[0,3,7],m7:[0,3,7,10],M6:[0,4,7,9]};
 const STY={
@@ -28429,7 +28649,17 @@ const TUNES={
     ch:'D D A7 A7 A7 A7 D D G G D D E7 A7 D D'},
   tango:{name:'«Танго мотора»',bpm:112,div:4,beats:2,sty:'tango',y:1913,
     mel:'E5 - - A5 - - C6 B5 | A5 - - - - . E5 - | G#5 - - B5 - - D6 C6 | B5 - - - - . E5 - | D6 - - B5 - - G#5 E5 | B5 - - - - . . . | C6 - - A5 - - E5 C5 | A5 - - - - . . . | F5 - - A5 - - D6 C6 | A5 - - - - . F5 - | E5 - - A5 - - C6 E6 | C6 - - - - . . . | B5 - - G#5 - - E5 D5 | E5 - - G#5 - - B5 D6 | C6 - - B5 - - A5 G#5 | A5 - - - - - . .',
-    ch:'Am Am E7 E7 E7 E7 Am Am Dm Dm Am Am E7 E7 Am Am'}
+    ch:'Am Am E7 E7 E7 E7 Am Am Dm Dm Am Am E7 E7 Am Am'},
+  // 0.41: гимны на вручении призов (мелодии народные, записаны по нотам; звучат без сети). cue — только церемония, не плейлист
+  hymn_uk:{name:'«God Save the King»',bpm:92,div:2,beats:3,sty:'hymn',y:1745,cue:1,passes:1,k:0,
+    mel:'G4 - G4 - A4 - | F#4 - - G4 A4 - | B4 - B4 - C5 - | B4 - - A4 G4 - | A4 - G4 - F#4 - | G4 - - - - - | D5 - D5 - D5 - | D5 - - C5 B4 - | C5 - C5 - C5 - | C5 - - B4 A4 - | B4 - C5 B4 A4 G4 | B4 - - C5 D5 - | E5 C5 B4 - A4 - | G4 - - - - -',
+    ch:'G D7 G G D7 G G G C D7 G G D7 G'},
+  hymn_fr:{name:'«Марсельеза»',bpm:104,div:4,beats:4,sty:'hymn',y:1792,cue:1,passes:1,k:0,
+    mel:'. . . . . . . . . . . . D4 - - D4 | G4 - - - G4 - - - A4 - - - A4 - - - | D5 - - - - - B4 - G4 - - G4 B4 - - G4 | E5 - - - C6 - - - - - - - A5 - - F#5 | G5 - - - - - - - . . . . D4 - - D4 | G4 - - - G4 - - - A4 - - - A4 - - - | D5 - - - - - B4 - G4 - - G4 B4 - - G4 | E5 - - - C6 - - - - - - - A5 - - F#5 | G5 - - - - - - - - - - - . . . .',
+    ch:'D7 G G D7 G G G D7 G'},
+  hymn_us:{name:'«The Star-Spangled Banner»',bpm:88,div:4,beats:3,sty:'hymn',y:1814,cue:1,passes:1,k:0,
+    mel:'. . . . . . . . F4 - - D4 | Bb3 - - - D4 - - - F4 - - - | Bb4 - - - - - - - D5 - C5 - | Bb4 - - - D4 - - - E4 - - - | F4 - - - - - - - F4 - F4 - | D5 - - - - - C5 - Bb4 - - - | A4 - - - - - - - G4 - A4 - | Bb4 - - - Bb4 - - - F4 - - - | D4 - - - Bb3 - - - - - - -',
+    ch:'Bb Bb Bb Bb F7 Bb F7 Bb Bb'}
 };
 function noteMidi(t){const m=/^([A-G])(#|b)?(\d)$/.exec(t);if(!m)return 60;return {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(+m[3]+1)*12;}
 function chordOf(t){const m=/^([A-G])(#|b)?(.*)$/.exec(t);const pc=({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+12)%12;return [60+pc,({'':'M',m:'m','7':'D',m7:'m7','6':'M6'})[m[3]]||'M'];}
@@ -28533,6 +28763,13 @@ function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}ca
   if(!id){cue();return;}
   auCueSrc(id,'music/'+id+'.m4a',0.85,cue,FANF_SEC[kind]||9);}   // 0.38: фанфары эпохи (fan_*) остались рядом с игрой — звучат и без сети
 const FANF_SEC={win:8,cup:10,title:12,record:8,first:10,medal:8,deal:8,legacy:14,duel:8};
+// 0.41: музыка вручения приза — как на той церемонии: победителю гимн страны (своя мелодия игры — без сети; нет мелодии —
+// запись оркестра из библиотеки, нет сети — фанфары кубка); 2–3-му месту — марш страны или туш
+function auAward(a,place){if(!AU.ctx&&typeof auInit==='function')try{auInit();}catch(_){}if(!AU.ctx||!AU.on.music)return '';
+  const m=(a&&a.music)||{},I=(ORCH&&ORCH.idx)||{},rec=(m.rec||[]).find(id=>I[id]&&!(CUE[id]&&CUE[id].bad));
+  if(place===1&&m.tune&&TUNES[m.tune]&&auTuneCue(m.tune))return 'tune';
+  if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9);return 'rec';}
+  auFanfare(place===1?'cup':'medal');return 'fanfare';}
 function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
@@ -28596,7 +28833,7 @@ function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>
 function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
 function eraStyles(y){return y<1906?['cake','rag','waltz']:y<1912?['rag','waltz','march']:y<1919?['march','tango'].concat(y>=1914?['fox']:['rag']):y<1923?['jazz','fox','tango','waltz']:['jazz','charl','fox','tango'];}
 function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','march','jazz','waltz','cake','tango','fox','charl']:eraStyles(y),R2=['I','II','III'];
-  const L=Object.keys(TUNES).filter(k=>all||TUNES[k].y<=y).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
+  const L=Object.keys(TUNES).filter(k=>!TUNES[k].cue&&(all||TUNES[k].y<=y)).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
   return L.concat((all?[0]:[0,1]).flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]}))));}
 function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
@@ -28621,6 +28858,7 @@ function musBuild(start){
 }
 function musCur(){return AU.pl[AU.idx]||null;}
 function musicPlay(force){
+  if(AU.synth&&AU.synth.cue&&!force&&AU.on.music&&!AU.paused){musUI();return;}/* 0.41: гимн на церемонии доиграет */
   // 0.36: пока идёт фильм о герое (рассказ голосом), музыка на паузе — потом продолжается с того же места
   const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
   if(!want){if(AU.el&&!AU.el.paused)AU.el.pause();AU.synth=null;AU.real=false;musUI();return;}
@@ -28663,22 +28901,30 @@ function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
   if(!C.length)return prev;let best=C[0],bw=-1e9;C.forEach(n=>{const d=Math.abs(n-prev),w=(d===0?0.35:d<=4?1.6:d<=7?0.9:0.25)+rnd()*0.9;if(w>bw){bw=w;best=n;}});
   AU.mel=best;return best;}
 // Пьеса кончилась — следующая в плейлисте
-function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth===SY)musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
+function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth!==SY)return;if(SY.cue){auTuneCueEnd(SY);return;}musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
+// 0.41: мелодия игры по поводу (гимн на церемонии): звучит один раз вместо музыки, потом музыка возвращается
+function auTuneCue(key){const T=TUNES[key];if(!T||!AU.ctx)return false;if(AU.synth&&AU.synth.cue)return true;
+  const prev={synth:AU.synth,step:AU.step,mel:AU.mel,el:!!(AU.el&&!AU.el.paused)};if(prev.el)try{AU.el.pause();}catch(_){}
+  AU.synth={synth:true,st:'tune',tune:key,title:'Церемония: '+T.name,cue:1,prev};AU.step=0;AU.mel=0;AU.next=Math.max(AU.next,AU.ctx.currentTime+0.25);musUI();return true;}
+function auTuneCueEnd(SY){if(AU.synth!==SY)return;const p=SY.prev||{};AU.synth=null;if(p.synth&&!p.synth.cue){AU.synth=p.synth;AU.step=p.step||0;AU.mel=p.mel||0;p.synth.end=0;}
+  musicPlay();}
 // Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы (живыми инструментами)
 function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats,A=ARR[T.sty]||ARR.rag;
   // 0.23: как и в оркестре — ниже, без писка: марш в фа мажоре, регтайм и танго — на кварту ниже
-  if(!T._m){const A0=T.mel.replace(/\|/g,' ').trim().split(/\s+/),ca=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;
+  if(!T._m){const A0=T.mel.replace(/\|/g,' ').trim().split(/\s+/),ca=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.k!=null?T.k:T.sty==='march'?-7:T.sty==='waltz'?0:-5;
     // 0.38: у марша есть трио — части идут как у Сузы: A, A, трио, трио (и всё один раз); у остальных — три прохода одной части
     if(T.trio){const Tr=T.trio.replace(/\|/g,' ').trim().split(/\s+/),ct=T.tch.trim().split(/\s+/).map(chordOf);T._m=A0.concat(A0,Tr,Tr);T._c=ca.concat(ca,ct,ct);T._sec=A0.length;T._passes=1;}
-    else{T._m=A0;T._c=ca;T._sec=0;T._passes=3;}}
+    else{T._m=A0;T._c=ca;T._sec=0;T._passes=T.passes||3;}}
   const M=T._m,len=M.length,idx=AU.step%len,pass0=Math.floor(AU.step/len),pass=T._sec?Math.floor(idx/T._sec)%2:pass0,quiet=T._sec&&Math.floor(idx/T._sec)===2,bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
-  if(play){
-    if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
+  if(play&&!SY.end){/* 0.41: после последней ноты не начинать сначала, пока ждём смены пьесы */
+    if(T.sty==='hymn'){if(SY.began){if(pos===0)inst('tuba',root-24,t,beat*T.beats*0.95,0.42);if(pos%T.div===0)tones.forEach(i=>inst('trombone',root-12+i,t,beat*0.95,0.13));}}
+    else if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
     else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.16));}
     else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
       if(T.sty==='march'){if(pos===0)drum('kick',t,quiet?0.25:0.5);if(pos===h&&!quiet)drum('crash',t,0.12);if(pos===spb-T.div||pos===spb-T.div/2)drum('snare',t,quiet?0.15:0.3);}}
-    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;
-      inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
+    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;SY.began=1;
+      if(T.sty==='hymn'){inst('trumpet',n,t,sub*d*0.95,0.42);inst('cornet',n,t,Math.min(sub*d,0.4),0.1);if(d*sub>1.7)inst('trumpet',n,t+1.5,sub*d-1.5,0.3);/* длинную ноту передувают — семпл короче */}
+      else{inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}}
     if(AU.step>=len*T._passes-1)musEnd(SY,t+sub);}
   return sub;}
 function auSched(){
@@ -28688,7 +28934,7 @@ function auSched(){
     if(AU.lastY!==(G&&G.y)||(G&&AU.on.mode!=='all'&&AU.ctx0&&AU.mom!==AU.ctx0)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
     // под кинохронику — свой танец ролика, тихо
     const RS=AU.reelSty&&typeof REEL!=='undefined'&&REEL?AU.reelSty:null;
-    const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race);
+    const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race||SY.cue);
     if(SY&&SY.tune&&TUNES[SY.tune]){const d=tuneStep(SY,AU.next,play);AU.next+=d;AU.step++;continue;}
     const st=RS||(SY&&STY[SY.st]?SY.st:styleFor()),A=ARR[st]||ARR.rag;
     const S=STY[st],vv=SY?SY.v||0:0,beat=60/(S.bpm*[1,0.93,1.07][vv]),sub=beat/S.div,stepsBar=S.div*(S.beats||(st==='rag'?2:4));

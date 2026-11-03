@@ -191,9 +191,11 @@ function racerResults(rc,res,mode,info){const s=G,X=s.racer;info=info||{};
   // после подиума в большой гонке заводы присматриваются к гонщику
   if(pos&&pos<=3)X.hot=mi(s)+2;
   lastRace={rc,res,k,won:mine+sp,best:pos,mode,rx:{lines,works}};evHold=1;openRaceResult();
-  if(pos===1){try{celebrate('Победа!',`${rc.name} · ${works?me.works:'частник на «'+me.label+'»'}`,'🏁');}catch(_){}const P=racerPaper(s,rc,res,me,k,works);showPaper(P,true);
+  let AWD=null;try{AWD=rc.match||rc.dx?null:awardOf(rc,s);}catch(e){}/* 0.41: приз гонки */
+  if(pos===1){try{celebrate('Победа!',`${rc.name} · ${works?me.works:'частник на «'+me.label+'»'}`,'🏁',null,AWD?{award:AWD,place:1}:null);}catch(_){}const P=racerPaper(s,rc,res,me,k,works);showPaper(P,true);
     try{trophyAdd(s,{kind:'cup',title:`Победа: ${rc.name}`,sub:`${X.name} · «${me.label}»`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}}
-  else if(pos&&pos<=3)try{trophyAdd(s,{kind:'medal',title:`${pos}-е место: ${rc.name}`,sub:`${X.name} · «${me.label}»`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).`,key:'race|'+rc.key,rk:rc.key});}catch(e){}
+  else if(pos&&pos<=3){if(AWD)try{celebrate(pos===2?'Второе место!':'Третье место!',`${rc.name} · ${works?me.works:'частник на «'+me.label+'»'}`,pos===2?'🥈':'🥉','medal',{award:AWD,place:pos});}catch(_){}
+    try{trophyAdd(s,{kind:'medal',title:`${pos}-е место: ${rc.name}`,sub:`${X.name} · «${me.label}»`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).${AWD?` Награждает ${AWD.by}.`:''}`,key:'race|'+rc.key,rk:rc.key});}catch(e){}}
   save();render();flushToasts();}
 function racerPaper(s,rc,res,me,k,works){const X=s.racer,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&me.fin!=null?(second.fin-me.fin)*k:0;
   const real=rc.win&&!/^Победителей/.test(rc.win)?rc.win:'';

@@ -169,10 +169,13 @@ function raceResults(rc,res,mode,info){
   lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn,dev};
   evHold=1;openRaceResult();
   if(M&&M.best===1&&best!==1){try{celebrate('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍');}catch(_){}showPaper(motoRacePaper(rc,mres,M.row,k),true);}
-  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁');}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle);showPaper(P,true);
+  // 0.41: приз гонки — свой у каждой серии: рисунок, кто вручает, музыка той церемонии (гимн победителю, марш — призёрам)
+  let AWD=null;try{AWD=rc.match||rc.dx?null:awardOf(rc,s);}catch(e){console.warn('award',e);}
+  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁',null,AWD?{award:AWD,place:1}:null);}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle,AWD);showPaper(P,true);
     try{trophyAdd(s,{kind:'cup',title:cupTitle||`Победа: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+(bestRow.player?'вы за рулём':bestRow.drv):''}`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,
       carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,pt:P.title,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){console.warn('trophy',e);}}
-  else if(best&&best<=3)try{trophyAdd(s,{kind:'medal',title:`${best}-е место: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+bestRow.drv:''}`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).`,key:'race|'+rc.key,carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}
+  else if(best&&best<=3){if(AWD)try{celebrate(best===2?'Второе место!':'Третье место!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,best===2?'🥈':'🥉','medal',{award:AWD,place:best});}catch(_){}
+    try{trophyAdd(s,{kind:'medal',title:`${best}-е место: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+bestRow.drv:''}`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).${AWD?` Награждает ${AWD.by}.`:''}`,key:'race|'+rc.key,carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
   checkAch();save();render();flushToasts();
 }
@@ -249,14 +252,14 @@ function motoRacePaper(rc,mres,row,k){const s=G,second=mres.find(r=>r.pos===2),g
     text:`В гонке «${rc.name}» мотоциклы шли вместе с автомобилями, но свой зачёт выиграл мотоцикл «${s.company}». ${second?`Второе место среди мотоциклов — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\nМотоциклисты читают спортивные новости внимательнее всех: спрос на «${row.label}» вырастет на ближайшие месяцы.`,
     carId:row.md?row.md.id:null,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${row.label}» компании «${s.company}» — первый среди мотоциклов в гонке «${rc.name}»`,
     hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};}
-function racePaper(rc,res,row,k,cup){
-  const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0;
+function racePaper(rc,res,row,k,cup,aw){
+  const s=G,second=res.find(r=>r.pos===2),gap=second&&second.fin!=null&&row.fin!=null?(second.fin-row.fin)*k:0,awT=aw?` Победителю — ${aw.cup.replace(/^(Кубок|Приз|Венок|Золотая|Памятная|Первый|Большой|Национальный)/,m=>m.toLowerCase())}, вручает ${aw.by}${aw.music&&aw.music.n?`; оркестр играет ${aw.music.n}`:''}.`:'';
   const drv=row.player?(PIONEERS[s.pioneer].name+' лично'):(row.drv||'Пилот компании');
   const real=rc.win&&!/^Победителей/.test(rc.win)?rc.win:'',ht=real&&RACE_TEAMS.find(t=>t.from<=rc.y&&t.to>=rc.y&&t.mq.some(m=>real.toLowerCase().includes(m.toLowerCase())));
   const hist=!real?'':ht&&pkIs(ht,s)?`Так было и в настоящей истории: в ${rc.y} году здесь победил ${real}.`:`В настоящей истории эту гонку выиграл ${real}. В этот раз история пошла иначе.`;
   return {kicker:cup?'Кубок Гордона Беннетта':'Спорт',title:cup?`Кубок Гордона Беннетта — у «${s.company}»!`:`«${s.company}» выигрывает ${rc.name}!`,
     deck:`${drv} на «${row.label}» — первым на финише${row.fin!=null?` за ${fmtRaceTime(row.fin*k)}`:''}`,
-    text:`Гонка «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) завершилась победой машины «${s.company}». ${second?`Второе место — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}\n${hist}\nПобеда в гонке — лучшая реклама: покупатели ${rc.major?'по всей стране':'в округе'} только о ней и говорят. Спрос на «${row.label}» вырастет на ближайшие месяцы.`,
+    text:`Гонка «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км) завершилась победой машины «${s.company}». ${second?`Второе место — ${second.you?'тоже у «'+s.company+'»':second.name}${gap>0?`, отставание ${fmtRaceTime(gap)}`:''}.`:''}${awT}\n${hist}\nПобеда в гонке — лучшая реклама: покупатели ${rc.major?'по всей стране':'в округе'} только о ней и говорят. Спрос на «${row.label}» вырастет на ближайшие месяцы.`,
     carId:row.md?row.md.id:null,own:1,carOpt:{prep:row.prep||0,num:row.num||0,country:s.country,y:rc.y},caption:`«${row.label}» компании «${s.company}» — победитель гонки «${rc.name}»${row.drv?`, за рулём ${row.player?drv:row.drv}`:''}`,
     hist:rc.img&&IMG[rc.img]?rc.img:'',histCap:real?`В ${rc.y} году в настоящей истории: ${real}`:rc.name,act:'paperClose',choices:[['К итогам гонки','close']]};
 }
@@ -275,6 +278,7 @@ function openRaceResult(){
   openSheet(`<div class="row"><div><span class="label">${MONTHS[rc.m]} ${rc.y} · ${hostName(rc.c)}</span><h2 style="margin-top:2px">Итоги: ${esc(rc.name)}</h2></div><button class="iconbtn" data-act="close" aria-label="Закрыть">×</button></div>
     <p class="small muted" style="margin-top:4px">${rc.match?esc(MATCH_ST[rc.kind]||'')+' · '+esc(rc.venue):RTYPE[rc.t]} · ${rc.km.toLocaleString('ru-RU')} км · у победителя — время ${rc.kind==='record'?'заезда':'всей гонки'}, у остальных — отставание от него; ниже — средняя скорость</p>
     ${L.cup?`<p class="good" style="margin-top:8px"><b>🏆 ${esc(L.cup)}</b></p>`:''}
+    ${(()=>{try{if(!L.best||L.best>3||rc.match||rc.dx)return '';const a=awardOf(rc,s);return a?awardCard(a,L.best):'';}catch(e){console.warn('award',e);return '';}})()}
     ${MR.length?'<div class="label" style="margin-top:12px">Автомобили</div>':''}<table class="pl res" style="margin-top:${MR.length?4:10}px"><tr><th class="n">#</th><th>Пилот, марка</th><th class="n">Время / отставание</th></tr>${rows}</table>
     ${L.carIn===false?'':`<p style="margin-top:10px">${rc.match?(L.best===1?`<b>${rc.kind==='record'?'Ваше время лучше!':'Вы первым на финише!'}</b>`:L.best?(rc.kind==='record'?'Соперник оказался быстрее.':'Соперник первым на финише.'):'Ваша машина не доехала до финиша.'):L.rx?(L.best?`Ваше место — <b>${L.best}-е</b>.`:'Вы не доехали до финиша.'):L.best?`Лучший результат команды — <b>${L.best}-е место</b>.`:'Ни одна машина команды не добралась до финиша.'}${won-(ML?ML.won:0)?` ${L.rx?'Заработано':'Призовые'}: <b class="good">${money(won-(ML?ML.won:0))}</b>.`:''}</p>`}
     ${mrows}

@@ -57,7 +57,8 @@ function drum(name,t,v,dest){const I=INS.idx&&INS.idx.inst.drums,B=INS.buf.drums
 // Оркестровки танцев эпохи: мелодия, подголосок, аккорды, бас, ударные
 const ARR={rag:{mel:'honky',ch:'piano',bass:'piano',dr:0},cake:{mel:'piano',ch:'banjo',bass:'tuba',dr:1},march:{mel:'cornet',mel2:'trumpet',ch:'trombone',bass:'tuba',dr:2},
   waltz:{mel:'violin',ch:'pizz',bass:'bass',dr:0},tango:{mel:'accordion',mel2:'violin',ch:'piano',bass:'bass',dr:0},fox:{mel:'clarinet',ch:'banjo',bass:'tuba',dr:3},
-  charl:{mel:'trumpet',mel2:'clarinet',ch:'banjo',bass:'tuba',dr:4},jazz:{mel:'clarinet',mel2:'trumpet',ch:'piano',bass:'bass',dr:5}};
+  charl:{mel:'trumpet',mel2:'clarinet',ch:'banjo',bass:'tuba',dr:4},jazz:{mel:'clarinet',mel2:'trumpet',ch:'piano',bass:'bass',dr:5},
+  hymn:{mel:'trumpet',ch:'trombone',bass:'tuba',dr:0}};/* 0.41: гимн на церемонии — духовой оркестр, без ударных */
 function vKick(t,v){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(45,t+0.12);o.connect(g);g.connect(AU.mus);env(g,t,0.004,v,0.2);o.start(t);o.stop(t+0.3);}
 const CH={M:[0,4,7],D:[0,4,7,10],m:[0,3,7],m7:[0,3,7,10],M6:[0,4,7,9]};
 const STY={
@@ -88,7 +89,17 @@ const TUNES={
     ch:'D D A7 A7 A7 A7 D D G G D D E7 A7 D D'},
   tango:{name:'«Танго мотора»',bpm:112,div:4,beats:2,sty:'tango',y:1913,
     mel:'E5 - - A5 - - C6 B5 | A5 - - - - . E5 - | G#5 - - B5 - - D6 C6 | B5 - - - - . E5 - | D6 - - B5 - - G#5 E5 | B5 - - - - . . . | C6 - - A5 - - E5 C5 | A5 - - - - . . . | F5 - - A5 - - D6 C6 | A5 - - - - . F5 - | E5 - - A5 - - C6 E6 | C6 - - - - . . . | B5 - - G#5 - - E5 D5 | E5 - - G#5 - - B5 D6 | C6 - - B5 - - A5 G#5 | A5 - - - - - . .',
-    ch:'Am Am E7 E7 E7 E7 Am Am Dm Dm Am Am E7 E7 Am Am'}
+    ch:'Am Am E7 E7 E7 E7 Am Am Dm Dm Am Am E7 E7 Am Am'},
+  // 0.41: гимны на вручении призов (мелодии народные, записаны по нотам; звучат без сети). cue — только церемония, не плейлист
+  hymn_uk:{name:'«God Save the King»',bpm:92,div:2,beats:3,sty:'hymn',y:1745,cue:1,passes:1,k:0,
+    mel:'G4 - G4 - A4 - | F#4 - - G4 A4 - | B4 - B4 - C5 - | B4 - - A4 G4 - | A4 - G4 - F#4 - | G4 - - - - - | D5 - D5 - D5 - | D5 - - C5 B4 - | C5 - C5 - C5 - | C5 - - B4 A4 - | B4 - C5 B4 A4 G4 | B4 - - C5 D5 - | E5 C5 B4 - A4 - | G4 - - - - -',
+    ch:'G D7 G G D7 G G G C D7 G G D7 G'},
+  hymn_fr:{name:'«Марсельеза»',bpm:104,div:4,beats:4,sty:'hymn',y:1792,cue:1,passes:1,k:0,
+    mel:'. . . . . . . . . . . . D4 - - D4 | G4 - - - G4 - - - A4 - - - A4 - - - | D5 - - - - - B4 - G4 - - G4 B4 - - G4 | E5 - - - C6 - - - - - - - A5 - - F#5 | G5 - - - - - - - . . . . D4 - - D4 | G4 - - - G4 - - - A4 - - - A4 - - - | D5 - - - - - B4 - G4 - - G4 B4 - - G4 | E5 - - - C6 - - - - - - - A5 - - F#5 | G5 - - - - - - - - - - - . . . .',
+    ch:'D7 G G D7 G G G D7 G'},
+  hymn_us:{name:'«The Star-Spangled Banner»',bpm:88,div:4,beats:3,sty:'hymn',y:1814,cue:1,passes:1,k:0,
+    mel:'. . . . . . . . F4 - - D4 | Bb3 - - - D4 - - - F4 - - - | Bb4 - - - - - - - D5 - C5 - | Bb4 - - - D4 - - - E4 - - - | F4 - - - - - - - F4 - F4 - | D5 - - - - - C5 - Bb4 - - - | A4 - - - - - - - G4 - A4 - | Bb4 - - - Bb4 - - - F4 - - - | D4 - - - Bb3 - - - - - - -',
+    ch:'Bb Bb Bb Bb F7 Bb F7 Bb Bb'}
 };
 function noteMidi(t){const m=/^([A-G])(#|b)?(\d)$/.exec(t);if(!m)return 60;return {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(+m[3]+1)*12;}
 function chordOf(t){const m=/^([A-G])(#|b)?(.*)$/.exec(t);const pc=({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+12)%12;return [60+pc,({'':'M',m:'m','7':'D',m7:'m7','6':'M6'})[m[3]]||'M'];}
@@ -192,6 +203,13 @@ function auFanfare(kind){if(!AU.ctx&&typeof auInit==='function')try{auInit();}ca
   if(!id){cue();return;}
   auCueSrc(id,'music/'+id+'.m4a',0.85,cue,FANF_SEC[kind]||9);}   // 0.38: фанфары эпохи (fan_*) остались рядом с игрой — звучат и без сети
 const FANF_SEC={win:8,cup:10,title:12,record:8,first:10,medal:8,deal:8,legacy:14,duel:8};
+// 0.41: музыка вручения приза — как на той церемонии: победителю гимн страны (своя мелодия игры — без сети; нет мелодии —
+// запись оркестра из библиотеки, нет сети — фанфары кубка); 2–3-му месту — марш страны или туш
+function auAward(a,place){if(!AU.ctx&&typeof auInit==='function')try{auInit();}catch(_){}if(!AU.ctx||!AU.on.music)return '';
+  const m=(a&&a.music)||{},I=(ORCH&&ORCH.idx)||{},rec=(m.rec||[]).find(id=>I[id]&&!(CUE[id]&&CUE[id].bad));
+  if(place===1&&m.tune&&TUNES[m.tune]&&auTuneCue(m.tune))return 'tune';
+  if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9);return 'rec';}
+  auFanfare(place===1?'cup':'medal');return 'fanfare';}
 function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
@@ -255,7 +273,7 @@ function orchPick(mood,y,seed){const bad=AU.badSrc||{},L=orchTracks().filter(t=>
 function musAll(){const L=[];if(remoteOk())for(const st in AU.tracks)(AU.tracks[st]||[]).forEach(t=>{if(/^LL-Q\d|^[A-Z][a-z](-[a-z]{2})?-/.test(t.title||''))return;L.push(Object.assign({st,y:ST_DEFY[st]||1910},t));});return L.concat(orchTracks());}
 function eraStyles(y){return y<1906?['cake','rag','waltz']:y<1912?['rag','waltz','march']:y<1919?['march','tango'].concat(y>=1914?['fox']:['rag']):y<1923?['jazz','fox','tango','waltz']:['jazz','charl','fox','tango'];}
 function musSynth(){const y=G?G.y:1895,all=AU.on.mode==='all',sts=all?['rag','march','jazz','waltz','cake','tango','fox','charl']:eraStyles(y),R2=['I','II','III'];
-  const L=Object.keys(TUNES).filter(k=>all||TUNES[k].y<=y).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
+  const L=Object.keys(TUNES).filter(k=>!TUNES[k].cue&&(all||TUNES[k].y<=y)).map(k=>({synth:true,st:'tune',tune:k,y:TUNES[k].y,title:'Мелодия игры: '+TUNES[k].name}));
   return L.concat((all?[0]:[0,1]).flatMap(v=>sts.map(st=>({synth:true,st,v,y,title:'Оркестрион: '+ST_NAME[st]+' '+R2[v]}))));}
 function musBuild(start){
   const y=G?G.y:1895;let L=musAll();
@@ -280,6 +298,7 @@ function musBuild(start){
 }
 function musCur(){return AU.pl[AU.idx]||null;}
 function musicPlay(force){
+  if(AU.synth&&AU.synth.cue&&!force&&AU.on.music&&!AU.paused){musUI();return;}/* 0.41: гимн на церемонии доиграет */
   // 0.36: пока идёт фильм о герое (рассказ голосом), музыка на паузе — потом продолжается с того же места
   const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
   if(!want){if(AU.el&&!AU.el.paused)AU.el.pause();AU.synth=null;AU.real=false;musUI();return;}
@@ -322,22 +341,30 @@ function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
   if(!C.length)return prev;let best=C[0],bw=-1e9;C.forEach(n=>{const d=Math.abs(n-prev),w=(d===0?0.35:d<=4?1.6:d<=7?0.9:0.25)+rnd()*0.9;if(w>bw){bw=w;best=n;}});
   AU.mel=best;return best;}
 // Пьеса кончилась — следующая в плейлисте
-function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth===SY)musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
+function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth!==SY)return;if(SY.cue){auTuneCueEnd(SY);return;}musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
+// 0.41: мелодия игры по поводу (гимн на церемонии): звучит один раз вместо музыки, потом музыка возвращается
+function auTuneCue(key){const T=TUNES[key];if(!T||!AU.ctx)return false;if(AU.synth&&AU.synth.cue)return true;
+  const prev={synth:AU.synth,step:AU.step,mel:AU.mel,el:!!(AU.el&&!AU.el.paused)};if(prev.el)try{AU.el.pause();}catch(_){}
+  AU.synth={synth:true,st:'tune',tune:key,title:'Церемония: '+T.name,cue:1,prev};AU.step=0;AU.mel=0;AU.next=Math.max(AU.next,AU.ctx.currentTime+0.25);musUI();return true;}
+function auTuneCueEnd(SY){if(AU.synth!==SY)return;const p=SY.prev||{};AU.synth=null;if(p.synth&&!p.synth.cue){AU.synth=p.synth;AU.step=p.step||0;AU.mel=p.mel||0;p.synth.end=0;}
+  musicPlay();}
 // Своя мелодия игры: мелодия по нотам, аккомпанемент — по стилю пьесы (живыми инструментами)
 function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div,spb=T.div*T.beats,A=ARR[T.sty]||ARR.rag;
   // 0.23: как и в оркестре — ниже, без писка: марш в фа мажоре, регтайм и танго — на кварту ниже
-  if(!T._m){const A0=T.mel.replace(/\|/g,' ').trim().split(/\s+/),ca=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.sty==='march'?-7:T.sty==='waltz'?0:-5;
+  if(!T._m){const A0=T.mel.replace(/\|/g,' ').trim().split(/\s+/),ca=T.ch.trim().split(/\s+/).map(chordOf);T._k=T.k!=null?T.k:T.sty==='march'?-7:T.sty==='waltz'?0:-5;
     // 0.38: у марша есть трио — части идут как у Сузы: A, A, трио, трио (и всё один раз); у остальных — три прохода одной части
     if(T.trio){const Tr=T.trio.replace(/\|/g,' ').trim().split(/\s+/),ct=T.tch.trim().split(/\s+/).map(chordOf);T._m=A0.concat(A0,Tr,Tr);T._c=ca.concat(ca,ct,ct);T._sec=A0.length;T._passes=1;}
-    else{T._m=A0;T._c=ca;T._sec=0;T._passes=3;}}
+    else{T._m=A0;T._c=ca;T._sec=0;T._passes=T.passes||3;}}
   const M=T._m,len=M.length,idx=AU.step%len,pass0=Math.floor(AU.step/len),pass=T._sec?Math.floor(idx/T._sec)%2:pass0,quiet=T._sec&&Math.floor(idx/T._sec)===2,bar=Math.floor(idx/spb),pos=idx%spb,ch=T._c[bar%T._c.length],root=ch[0]+T._k,tones=CH[ch[1]];
-  if(play){
-    if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
+  if(play&&!SY.end){/* 0.41: после последней ноты не начинать сначала, пока ждём смены пьесы */
+    if(T.sty==='hymn'){if(SY.began){if(pos===0)inst('tuba',root-24,t,beat*T.beats*0.95,0.42);if(pos%T.div===0)tones.forEach(i=>inst('trombone',root-12+i,t,beat*0.95,0.13));}}
+    else if(T.sty==='waltz'){if(pos===0)inst('bass',root-24,t,beat*0.9,0.5);else tones.forEach(i=>inst('pizz',root-12+i,t,beat*0.35,0.18));}
     else if(T.sty==='tango'){const hab=[1,0,0,1,1,0,1,0];if(hab[pos])inst('bass',root-24+(pos===3||pos===6?7:0),t,sub*(pos===0?2.6:1.6),0.5);if(pos===4||pos===6)tones.forEach(i=>inst('piano',root-12+i,t,sub*0.7,0.16));}
     else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
       if(T.sty==='march'){if(pos===0)drum('kick',t,quiet?0.25:0.5);if(pos===h&&!quiet)drum('crash',t,0.12);if(pos===spb-T.div||pos===spb-T.div/2)drum('snare',t,quiet?0.15:0.3);}}
-    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;
-      inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}
+    const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;SY.began=1;
+      if(T.sty==='hymn'){inst('trumpet',n,t,sub*d*0.95,0.42);inst('cornet',n,t,Math.min(sub*d,0.4),0.1);if(d*sub>1.7)inst('trumpet',n,t+1.5,sub*d-1.5,0.3);/* длинную ноту передувают — семпл короче */}
+      else{inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}}
     if(AU.step>=len*T._passes-1)musEnd(SY,t+sub);}
   return sub;}
 function auSched(){
@@ -347,7 +374,7 @@ function auSched(){
     if(AU.lastY!==(G&&G.y)||(G&&AU.on.mode!=='all'&&AU.ctx0&&AU.mom!==AU.ctx0)){AU.lastY=G&&G.y;if(AU.pl.length)musBuild(false);}
     // под кинохронику — свой танец ролика, тихо
     const RS=AU.reelSty&&typeof REEL!=='undefined'&&REEL?AU.reelSty:null;
-    const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race);
+    const SY=RS?null:AU.synth,play=RS?AU.on.music:SY&&AU.on.music&&!AU.paused&&(!R||AU.on.race||SY.cue);
     if(SY&&SY.tune&&TUNES[SY.tune]){const d=tuneStep(SY,AU.next,play);AU.next+=d;AU.step++;continue;}
     const st=RS||(SY&&STY[SY.st]?SY.st:styleFor()),A=ARR[st]||ARR.rag;
     const S=STY[st],vv=SY?SY.v||0:0,beat=60/(S.bpm*[1,0.93,1.07][vv]),sub=beat/S.div,stepsBar=S.div*(S.beats||(st==='rag'?2:4));

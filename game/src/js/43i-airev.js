@@ -73,7 +73,10 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   if(ev.mil&&md&&!res.dnf){const topQ=Math.max(0,...(res.field||[]).map(x=>x.q||0)),k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:ev.mil.war&&(res.q||0)>=0.9*topQ?0.1:0,n=Math.round(ev.mil.n*k);
     if(n>=1){const price=airMilPrice(s,md),adv=ev.mil.war?Math.round(n*price*0.25):0;if(adv)s.cash+=adv;airOrderAdd(s,{md:md.id,n,price,due:mi(s)+(ev.mil.months||6)+2,who:airMinistry(ev.c,airEvT(ev),ev.mil.role),c:ev.c,mil:1,adv,advLeft:adv});md.milWon=(md.milWon||0)+1;md.milRep=clamp((md.milRep||0)+(won?6:2),-40,60);res.order=n;res.adv=adv;}}
   if(ev.dyn){A.trials=(A.trials||[]).filter(e=>e.key!==ev.key);}
-  try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt});}catch(_){}
+  // 0.41: призовое место — праздник с призом этого состязания (кубок Шнейдера, чек «Дейли Мейл», кубок Гордона Беннетта…), кто вручал, гимн или марш
+  let AWD=null;try{if(res.place>=1&&res.place<=3&&!res.dnf)AWD=airAwardOf(ev,s);}catch(e){console.warn('airAward',e);}
+  if(AWD)try{celebrate(won?'Победа в небе!':res.place===2?'Второе место!':'Третье место!',`${ev.name} · ${who} на «${md?md.name:''}»`,won?'✈️':res.place===2?'🥈':'🥉',won?'cup':'medal',{award:AWD,place:res.place});}catch(_){}
+  try{trophyAdd(s,{kind:'air',title:ev.name,sub:won?`Победа: ${who} на «${md?md.name:''}»`:`${res.place}-е место`,story:res.txt+(AWD?` ${won?'Приз':'Награда'} — ${AWD.cup}, ${won?'вручает':'награждает'} ${AWD.by}.`:''),ak:AWD?ev.key:null,place:res.place});}catch(_){}
   const hist=airEvHist(s,ev);
   if(ev.dyn){const F=res.field||[],top=F.slice().sort((a,b)=>b.q-a.q)[0],ord=res.order?`${ev.mil.war?'Военный заказ':'Заказ'}: ${fmtN(res.order)} «${md.name}» по ${money(airMilPrice(s,md))}${res.adv?`, четверть суммы (${money(res.adv)}) — вперёд`:''}.`:'';
     pushEvent({own:1,airId:md?md.id:null,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,

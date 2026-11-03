@@ -1032,3 +1032,27 @@ body.flying{overflow:hidden}
 #flyScreen .f-help .btns,#flyScreen .f-end .btns{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:440px){#flyScreen .f-top .btn.sm{padding:4px 7px}#flyScreen .f-ins>div{min-width:50px}#flyScreen .f-ins b{font-size:15px}#flyScreen .f-goal{max-width:62%}}
 @media (orientation:portrait){#flyScreen .f-ins{bottom:auto;top:calc(150px + env(safe-area-inset-top,0px));left:10px;transform:none;flex-direction:column;gap:2px;padding:5px 6px}#flyScreen .f-ins>div{min-width:64px}}
+
+/* 0.41: награды — карточка приза (праздник, итоги гонки, витрина, газета) */
+.cel.has-aw{pointer-events:auto}
+.cel-t.cel-aw{max-width:min(92vw,420px);padding:14px 20px 12px}
+.cel-aw .aw-i{display:block;line-height:0;margin:0 auto}
+.cel-aw .aw-i svg{filter:drop-shadow(0 6px 14px rgba(0,0,0,.6))}
+.cel-aw b{font-size:clamp(28px,8vw,44px)}
+.cel-aw .aw-cup{display:block;margin-top:6px;font-style:normal;font-family:"Playfair Display",var(--serif);font-size:17px;font-weight:700;color:#f6e3a8}
+.cel-aw span{font-size:14px}
+.aw-who{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;text-align:left}
+.cel-aw .aw-who>span,.aw-card .aw-who>span{display:inline;margin:0;max-width:none}
+.aw-by{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;border:1px solid rgba(241,210,122,.6);background:#2a2114}
+.aw-ini{display:inline-flex;align-items:center;justify-content:center;font-family:"Playfair Display",var(--serif);font-weight:700;font-size:13px;color:#f1d27a;letter-spacing:.04em}
+.cel-aw .aw-mus{display:block;margin-top:6px;font-size:13px;color:#e9d9b2}
+.cel-aw .aw-tap{display:block;margin-top:8px;font-size:11px;color:rgba(246,236,210,.55)}
+.aw-card{display:flex;gap:12px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1px solid var(--line,#d9cdb4);border-radius:10px;background:linear-gradient(rgba(241,210,122,.14),rgba(241,210,122,.04))}
+.aw-card .aw-pic{flex:none;line-height:0}
+.aw-card .aw-txt{flex:1;min-width:0}
+.aw-card .aw-txt b{font-family:"Playfair Display",var(--serif);font-size:15px;line-height:1.2;display:block}
+.aw-card .aw-who{justify-content:flex-start;margin-top:6px}
+.aw-card .aw-by{width:32px;height:32px;border-color:var(--line,#d9cdb4)}
+.aw-card .aw-ini{color:inherit;background:rgba(0,0,0,.06)}
+.aw-card p.small{margin-top:4px}
+.tro-award{display:flex;justify-content:center;line-height:0;margin-top:6px}

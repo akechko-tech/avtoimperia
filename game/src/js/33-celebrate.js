@@ -4,13 +4,17 @@
 let CEL=null;
 // 0.30: у каждого достижения — свои фанфары: победа, кубок, титул, рекорд, первенство, медаль, сделка
 const CEL_KIND={'🏁':'win','🏆':'cup','👑':'title','🚗':'record','🌟':'first','🥇':'medal','🤝':'deal','⚔️':'duel','🏅':'medal','🏛':'legacy'};
-function celebrate(big,sub,icon,kind){
+// 0.41: opt.award — карточка приза вместо одинакового кубка: что вручают (рисунок приза), кто (портрет), какая музыка (гимн или марш
+// той церемонии); держится дольше и закрывается касанием. Отзыв: «не с одинаковым кубком и музыкой, а под событие и приз»
+function celebrate(big,sub,icon,kind,opt){opt=opt||{};const aw=opt.award||null,place=opt.place||1;
+  if(aw&&sub&&aw.cup&&sub.indexOf(aw.cup+' · ')===0)sub=sub.slice(aw.cup.length+3);/* название гонки = название приза — не повторять */
   try{if(typeof G!=='undefined'&&G)G.celebT=mi(G);}catch(_){}
   try{if(CEL){CEL.el.remove();cancelAnimationFrame(CEL.raf);}}catch(_){}
-  const el=document.createElement('div');el.className='cel';
-  el.innerHTML=`<canvas></canvas><div class="cel-t"><i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`;
+  const el=document.createElement('div');el.className='cel'+(aw?' has-aw':'');
+  const awH=aw?`<i class="aw-i">${awardSVG(aw,{place,w:132,y:aw.y})}</i><b>${esc(big)}</b><em class="aw-cup">${esc(place===1?aw.cup:(place===2?'Серебряная':'Бронзовая')+' медаль · '+aw.cup)}</em>${sub?`<span>${esc(sub)}</span>`:''}<span class="aw-who">${awardByHTML(aw)}<span>${place===1?'Вручает':'Награждает'}: ${esc(aw.by||'')}</span></span>${aw.music&&aw.music.n?`<small class="aw-mus">♪ ${esc(aw.music.n)}</small>`:''}<small class="aw-tap">коснитесь, чтобы закрыть</small>`:'';
+  el.innerHTML=`<canvas></canvas><div class="cel-t${aw?' cel-aw':''}">${aw?awH:`<i>${icon||'🏆'}</i><b>${esc(big)}</b>${sub?`<span>${esc(sub)}</span>`:''}`}</div>`;
   document.body.appendChild(el);
-  try{if(AU.ctx&&AU.on.music)auFanfare(kind||CEL_KIND[icon]||'cup');auSfx('cheer',1);}catch(_){}
+  try{if(AU.ctx&&AU.on.music){if(aw)auAward(aw,place);else auFanfare(kind||CEL_KIND[icon]||'cup');}auSfx('cheer',1);}catch(_){}
   try{navigator.vibrate&&navigator.vibrate([40,60,40]);}catch(_){}
   const Q=CEL={el,t0:performance.now(),raf:0,P:[]};
   const cv=el.querySelector('canvas'),dpr=Math.min(1.5,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;
@@ -27,4 +31,6 @@ function celebrate(big,sub,icon,kind){
         g.save();g.translate(p.x,p.y);g.rotate(p.r);g.scale(1,Math.abs(Math.cos(age*6+p.ph))*0.9+0.1);g.fillStyle=p.c;g.fillRect(-p.w/2,-p.h/2,p.w,p.h);g.restore();}
       if(age<3.4)Q.raf=requestAnimationFrame(loop);};
     Q.raf=requestAnimationFrame(loop);}
-  setTimeout(()=>{if(CEL===Q){el.classList.add('out');setTimeout(()=>{try{el.remove();}catch(_){}if(CEL===Q)CEL=null;},500);}},REDUCE?1800:3300);}
+  const bye=()=>{if(CEL===Q){el.classList.add('out');setTimeout(()=>{try{el.remove();}catch(_){}if(CEL===Q)CEL=null;},500);}};
+  if(aw)el.addEventListener('pointerdown',e=>{e.stopPropagation();bye();},{passive:true});
+  setTimeout(bye,aw?(REDUCE?5000:7500):REDUCE?1800:3300);}
