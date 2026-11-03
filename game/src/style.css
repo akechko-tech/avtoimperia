@@ -36,6 +36,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .kpi{background:var(--panel2);padding:10px 12px}
 .kpi b{display:block;font-family:var(--mono);font-size:17px;font-weight:500;margin-top:2px}
+/* 0.41: господство — шесть шкал до 50 % мира, метка лидера */
+.dom-row{margin-top:8px}.dom-row .row{align-items:baseline}.dom-row.won span{color:var(--good)}
+.dom-bar{position:relative;height:8px;background:var(--line);border-radius:4px;margin-top:3px;overflow:visible}.dom-bar i{display:block;height:100%;border-radius:4px;background:var(--brass)}
+.dom-bar u{position:absolute;top:-3px;width:2px;height:14px;background:var(--bad);transform:translateX(-1px)}
+.dom-screen h2{margin-top:4px}
 /* 0.40: сводка месяца по направлениям */
 .sumc .kpis{margin-top:8px}.sumc h2{margin:0}
 table.sum-t{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}table.sum-t th{font-weight:500;color:var(--muted);text-align:right;font-size:11px;padding:2px 4px;border-bottom:1px solid var(--line)}table.sum-t th:first-child{text-align:left}

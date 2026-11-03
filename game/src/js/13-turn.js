@@ -169,6 +169,8 @@ function step(){
   // ценовая война прежних версий понемногу уходит — теперь конкуренты отвечают снижением цен и новыми моделями (13b-economy.js)
   for(const c in (s.pw||{}))for(const g in s.pw[c])s.pw[c][g]=Math.min(1,(s.pw[c][g]||1)+0.006);
   econMonth(s,r);
+  // 0.41: мировой итог с начала партии (л. с., доллары, победы, первенства) и проверка господства — 16-world.js
+  try{worldMonth(s,r);domCheck(s);}catch(e){console.warn('world',e);}
   // итоги месяца
   const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);s.last=r;
   const H=s.hist;H.cash.push(Math.round(s.cash));H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(Math.round(r.profit));H.share.push(+(r.share*100).toFixed(2));

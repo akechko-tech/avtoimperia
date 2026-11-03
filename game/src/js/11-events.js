@@ -155,6 +155,7 @@ function resolve(key){
   if(/^rx:/.test(key)&&racerResolve(s,key))return;
   if(key==='restart'){s.pending=[];draft=null;openNewGame();return;}
   if(key==='final'){s.pending.shift();finalResults(s,true);save();render();return;}
+  if(key==='domScreen'){s.pending.shift();save();render();try{openSheet(domScreenHTML(s));}catch(e){console.warn(e);}return;}
   s.pending.shift();save();render();
 }
 const ACH=[
