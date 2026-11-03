@@ -160,7 +160,7 @@ function ngHeroOk(d){const L=ngHeroList(d.dir,d.country);return L.some(h=>h.kind
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
   draft={ng:true,lock:!G,dir:prev&&prev.dir||'car',country:prev&&prev.country||'us',hero:prev&&prev.hero||{kind:'pio',k:'ford'},company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
-    rname:prev&&prev.rname||'',ry:prev&&prev.ry||1900};
+    rname:prev&&prev.rname||'',ry:prev&&prev.ry||1900,bots:prev&&prev.bots||'live'};/* 0.41: соперники живые / по истории */
   const d=draft;if(!ngHeroOk(d)){d.hero={kind:'custom',k:'custom'};d.company=ngCustomCo(d.dir);}
   // имя первого аэроплана, подставленное за игрока («Блерио XI», «Моноплан № 1»), — не его выбор: у другого героя — другое
   if(d.first&&(d.first==='Моноплан № 1'||d.first==='Биплан № 1'||Object.values(PIONEERS).some(P=>P.a1&&P.a1.name===d.first)))d.first='Тип 1';
@@ -193,6 +193,8 @@ function openNewGame(){
     ${fields}
     <div class="label" style="margin-top:14px">Сложность</div>
     <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,x])=>`<button class="chip ${d.diff===k?'on':''}" data-act="diff" data-v="${k}">${x.name}<small>${isRacer&&k==='kids'?'Соперники слабее, аварии мягче':x.desc}</small></button>`).join('')}</div>
+    ${isRacer?'':`<div class="label" style="margin-top:14px">Соперники</div>
+    <div class="country" style="margin-top:6px"><button class="chip ${d.bots!=='hist'?'on':''}" data-act="ngbots" data-v="live">Живые<small>Двенадцать марок играют сами: цены, модели, заводы, экспорт, гонки, покупки — и стремятся к господству</small></button><button class="chip ${d.bots==='hist'?'on':''}" data-act="ngbots" data-v="hist">По истории<small>Соперники идут по своей настоящей истории, как в прежних версиях</small></button></div>`}
     <button class="btn primary block" style="margin-top:16px" data-act="${isRacer?'startracer':'startgame'}">${isRacer?'Выйти на старт':dir==='air'?'Открыть авиамастерскую':dir==='moto'?'Открыть мотомастерскую':'Основать компанию'}</button>`);
   const cn=document.getElementById('cname');if(cn)cn.addEventListener('input',e=>{draft.company=e.target.value;});
   const fn=document.getElementById('fname');if(fn)fn.addEventListener('input',e=>{draft.first=e.target.value;});

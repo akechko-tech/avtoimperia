@@ -847,7 +847,7 @@ function fieldTeams(rc,s,nTeam){
   if(rc.t==='endurance'||rc.t==='rally'||rc.id==='mille')teams=teams.filter(t=>!['Miller','Duesenberg','Frontenac','Durant'].includes(t.n));
   teams.sort((a,b)=>b.str-a.str);
   if(/^gb\d/.test(rc.id)){const cnt={[s.country]:nTeam};teams=teams.filter(t=>['fr','de','uk','us','it'].includes(t.c)&&(cnt[t.c]=(cnt[t.c]||0)+1)<=3);}
-  const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(t);});
+  const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(typeof botTeam==='function'?botTeam(s,t):t);});/* 0.41: команда бота сильнее на его бюджет гонок */
   return out;
 }
 // Гоночная машина соперников: самая прочная рама, самый мощный мотор, который она выдержит, лучшие коробка, тормоза и шины своего года

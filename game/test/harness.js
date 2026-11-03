@@ -3,6 +3,7 @@ const el=()=>new Proxy({style:{},classList:{add(){},remove(){},toggle(){},contai
 global.document={getElementById:()=>el(),addEventListener(){},querySelectorAll:()=>[],querySelector:()=>null,createElement:()=>el(),body:el()};
 global.window={matchMedia:()=>({matches:true}),scrollTo(){},devicePixelRatio:1,addEventListener(){},orientation:0};global.matchMedia=window.matchMedia;
 const store={};global.localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=String(v)},removeItem:k=>{delete store[k]}};
+global.BOTS_OFF=true;/* 0.41: живые соперники выключены в прогонах, если тест не включит их сам (BOTS_OFF=false) */
 global.requestAnimationFrame=()=>0;global.cancelAnimationFrame=()=>{};global.performance={now:()=>Date.now()};
 global.setTimeout=()=>0;global.setInterval=()=>0;global.clearInterval=()=>{};global.fetch=()=>Promise.reject();global.Audio=function(){return el();};
 const fs=require('fs'),path=require('path');

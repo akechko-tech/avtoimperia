@@ -150,6 +150,7 @@ const ACT={
   rpick:d=>{const top=sb.scrollTop;ngKeep();ngSetHero(draft,'racer',d.v==='custom'?'rcustom':d.v);openNewGame();sb.scrollTop=top;},
   country:d=>{const top=sb.scrollTop;ngKeep();draft.country=d.v;if(!ngHeroOk(draft))ngSetHero(draft,'custom','custom');openNewGame();sb.scrollTop=top;},
   diff:d=>{const top=sb.scrollTop;draft.diff=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
+  ngbots:d=>{const top=sb.scrollTop;draft.bots=d.v;ngKeep();openNewGame();sb.scrollTop=top;},/* 0.41: соперники живые / по истории */
   ngDir:d=>{ngKeep();draft.dir=d.v;if(!ngHeroOk(draft))ngSetHero(draft,'custom','custom');openNewGame();},
   ngPath:d=>{ngKeep();const v=d.v;draft.dir=v==='moto'?'moto':v==='air'?'air':'car';if(v==='racer')ngSetHero(draft,'racer','rcustom');else if(!ngHeroOk(draft)||draft.hero.kind==='racer')ngSetHero(draft,'custom','custom');openNewGame();sb.scrollTop=0;},
   ngBack:()=>{ngKeep();openNewGame();sb.scrollTop=0;},
@@ -165,7 +166,7 @@ const ACT={
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
     if(draft.path==='air'){const P=PIONEERS[draft.pioneer],fn=(draft.first||'').trim();newAirGame(P&&P.air?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,fn==='Тип 1'?'':fn);airIntroPapers(G);}
     else if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
-    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
+    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}if(draft.bots==='hist')G.botsOff=1;sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},

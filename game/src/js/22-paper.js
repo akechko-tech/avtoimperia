@@ -8,14 +8,15 @@ function flavorLine(s){return flavorOf(s)[2];}
 // «Также в номере» на выпуск: 2–3 заметки своего времени; свежие — первыми, остальные — те, что реже попадались (не повторяем одну и ту же)
 function flavorPick(s,y,m,n,seed,mark){const now=y*12+m,age=x=>now-(x[0]*12+x[1]),seen=s.flvSeen||(s.flvSeen={}),lim=mark?2:99;
   // заметка попадает в газеты не больше двух раз; кончились свежие — «как это было» из прошлых лет (по разу), а нет и таких — место под рынок
-  let L=FLAVOR.filter(x=>{const a=age(x);return a>=0&&a<=(x[4]||18)&&(seen[x[2]]||0)<lim;});
-  if(!L.length)L=FLAVOR.filter(x=>{const a=age(x);return a>=12&&a<=72&&!(seen[x[2]]||0);}).slice(-6);
+  const ALL=FLAVOR.concat(typeof botFlv==='function'?botFlv(s):[]);/* 0.41: ходы живых соперников — тоже новости номера */
+  let L=ALL.filter(x=>{const a=age(x);return a>=0&&a<=(x[4]||18)&&(seen[x[2]]||0)<lim;});
+  if(!L.length)L=ALL.filter(x=>{const a=age(x);return a>=12&&a<=72&&!(seen[x[2]]||0);}).slice(-6);
   const r=mulberry32((seed||0)*7919+now*104729),sc=L.map(x=>{const n0=seen[x[2]]||0;return {x,k:(age(x)<=1&&!n0?-15:0)+n0*6+age(x)/6+r()*4};});sc.sort((a,b)=>a.k-b.k);
   const out=sc.slice(0,n).map(o=>o.x[2]);if(mark)out.forEach(t=>seen[t]=(seen[t]||0)+1);return out;}
 const agoTxt=(f,y,m)=>{const a=Math.floor((y*12+m-(f[0]*12+f[1]))/12);return a<1?'':a===1?'Год назад: ':a<5?a+' года назад: ':a+' лет назад: ';};
-const flvByTitle=t=>FLAVOR.find(x=>x[2]===t);
+const flvByTitle=t=>FLAVOR.find(x=>x[2]===t)||(typeof botFlv==='function'&&typeof G!=='undefined'&&G?botFlv(G).find(x=>x[2]===t):null);
 // Полная заметка «из того же номера»; назад — к выпуску
-function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[f[3]],txt=FLAVOR_TXT[t]||t,M=MAST[G.country];
+function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[f[3]],txt=FLAVOR_TXT[t]||(typeof botNewsTxt==='function'?botNewsTxt(G,t):'')||t,M=MAST[G.country];
   return `<article class="paper">
     <div class="p-top"><span>${MONTHS_N[f[1]]} ${f[0]}</span><span>Также в номере</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>

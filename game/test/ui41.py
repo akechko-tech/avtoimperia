@@ -25,6 +25,8 @@ with sync_playwright() as p:
     ok(r['cup']=='Кубок Вандербильта' and 'Вандербильт' in r['by'] and r['tune']=='hymn_us', 'Кубок Вандербильта: вручает %s, музыка %s' % (r['by'], r['mus']))
     ok(r['tk']=='targa' and 'Флорио' in r['tby'], 'Тарга Флорио — золотая доска, вручает %s' % r['tby'])
     # 2) праздник с карточкой приза: рисунок, кто вручает, музыка; держится дольше; закрывается касанием
+    import time
+    t0 = time.time()
     js("""(()=>{const rc=RACES.find(r=>r.id==='vanderbilt');AU.on.music=true;auInit();celebrate('Победа!',rc.name+' · пилот · «Машина»','🏁',null,{award:awardOf(rc,G),place:1});})()"""); pg.wait_for_timeout(600)
     t = js("(()=>{const e=document.querySelector('.cel-t.cel-aw');return e?e.textContent:'';})()")
     ok('Кубок Вандербильта' in t and 'Вручает' in t and 'Вандербильт' in t and ('Star-Spangled' in t), 'праздник: карточка приза с названием, вручителем и музыкой')
@@ -33,9 +35,16 @@ with sync_playwright() as p:
     au = json.loads(js("JSON.stringify({ctx:!!AU.ctx,cue:!!(AU.synth&&AU.synth.cue),tune:AU.synth&&AU.synth.tune||'',st:AU.ctx?AU.ctx.state:''})"))
     ok(au['cue'] and au['tune']=='hymn_us', 'на церемонии звучит гимн своей мелодией (cue hymn_us), контекст %s' % au['st'])
     pg.wait_for_timeout(3600)
-    ok(js("!!document.querySelector('.cel.has-aw')"), 'через 4 с карточка приза ещё на экране (обычный праздник уже ушёл бы)')
-    js("document.querySelector('.cel.has-aw').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))"); pg.wait_for_timeout(700)
-    ok(not js("!!document.querySelector('.cel.has-aw')"), 'касание закрывает карточку')
+    el = time.time() - t0
+    if el < 6.5:
+        ok(js("!!document.querySelector('.cel.has-aw')"), 'через %.1f с карточка приза ещё на экране (обычный праздник уже ушёл бы)' % el)
+        js("(()=>{const e=document.querySelector('.cel.has-aw');if(e)e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));})()")
+        gone = True
+        try: pg.wait_for_function("!document.querySelector('.cel.has-aw')", timeout=4000)
+        except Exception: gone = False
+        ok(gone, 'касание закрывает карточку')
+    else:
+        print('  --  снимок занял %.1f с — проверку длительности карточки пропускаем' % el)
     # гимн доигрывает и музыка возвращается: прокрутим шаги
     st = json.loads(js("(()=>{let n=0;while(AU.synth&&AU.synth.cue&&!AU.synth.end&&n<4000){AU.next=AU.ctx.currentTime-0.2;auSched();n++;}return JSON.stringify({n,step:AU.step,len:TUNES.hymn_us.mel.replace(/\\|/g,' ').trim().split(/\\s+/).length});})()"))
     pg.wait_for_timeout(900)

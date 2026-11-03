@@ -58,7 +58,7 @@ function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}
 // стоимость ваших долей в дочерних компаниях (входит в стоимость компании)
 function maHoldValue(s){return subList(s).reduce((a,h)=>{const M=maStat(s,h.c,h.i);return a+(M&&compAlive(M.cp,s)?M.V*h.st:0);},0);}
 // можно ли вести переговоры
-function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';if(s.botAcq&&s.botAcq[cp.n])return 'куплена: '+s.botAcq[cp.n];/* 0.41 */const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n])return 'в концерне';if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';
   const t=(s.dealNo||{})[c+i];if(t&&t>mi(s))return 'пауза';return '';}
 // главный класс марки (не грузовики; спорт — где он уже есть)

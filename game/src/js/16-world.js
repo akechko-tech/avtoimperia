@@ -57,7 +57,9 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
   for(const c in COMPS){const L=(s.comps&&s.comps[c])||[];COMPS[c].forEach((cp,i)=>{const x=L[i];if(!x||!x.lg||pkIs(cp,s))return;let hp=0,rev=0,un=0;
       for(const g in x.lg){const n=x.lg[g]||0;if(!n)continue;un+=n;hp+=n*hpTyp(g,y);rev+=n*prefP(g,c,s);}
       if(!un)return;if(cp.imp){W.hp+=hp;W.rev+=rev;W.cu[c]=(W.cu[c]||0)+un;return;}// импорт — не компания, но мир
-      wAdd(W,cp.n,cp.c||c,c,hp,rev,un);});}
+      const own=(s.botAcq&&s.botAcq[cp.n])||cp.n;/* 0.41: марка, купленная ботом, — в его зачёт */wAdd(W,own,cp.c||c,c,hp,rev,un);});}
+  // 0.41: экспорт живых соперников сверх истории (17b-bots.js: botSold → B.xs за этот месяц)
+  if(s.bots&&!s.botsOff)for(const n in s.bots){const B=s.bots[n];for(const c in (B.xs||{}))for(const g in B.xs[c]){const u=B.xs[c][g];if(u>0)wAdd(W,B.n,B.c,c,u*hpTyp(g,y),u*prefP(g,c,s),u);}}
   // ---- мотомарки (03c-moto.js): продажи месяца без разбивки по классам
   if(typeof MCOMPS!=='undefined')for(const c in MCOMPS){const L=(s.mcomps&&s.mcomps[c])||[];MCOMPS[c].forEach((cp,i)=>{const x=L[i];if(!x||!(x.last>0))return;const h=hpTyp('moto',y)*1.05;
       if(cp.imp){W.hp+=x.last*h;W.rev+=x.last*prefMoto('moto',c,s);return;}wAdd(W,coKey(cp.n),c,c,x.last*h,x.last*prefMoto('moto',c,s),0);});}
@@ -74,17 +76,19 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
   if(typeof AIR_EV!=='undefined'){const A=s.air;AIR_EV.forEach(ev=>{const k='air|'+ev.key;if(W.sd[k]||ev.y>s.y-(ev.m!==undefined&&ev.m<=s.m?0:1))return;W.sd[k]=1;const pts=ev.open||ev.prize>=10000?RACE_W.major:RACE_W.normal;W.sport+=pts;
       const mineWin=A&&A.ev&&A.ev[ev.key]&&A.ev[ev.key].place===1;if(!mineWin&&ev.h&&ev.h[1])wco(W,coKey(ev.h[1]),ev.c||'').sport+=pts;});}
   // ---- первенства по истории: кто и когда впервые (PART_HIST, TECH) — считаются, когда год настал и первенство не ушло вам (или боту)
-  {const taken=s.firsts||{};const put=(key,hy,who)=>{if(W.fh[key]||y<hy)return;W.fh[key]=1;if(taken[key])return;W.firsts++;const n=coKey(String(who).split(/,| и /)[0].replace(/\(.*$/,'').trim());if(n)wco(W,n,'').firsts++;};
+  {const taken=s.firsts||{},bf=s.botFirsts||{};const put=(key,hy,who)=>{const b=bf[key];if(b){hy=Math.min(hy,b.y);who=b.n;}/* 0.41: бот опередил историю */if(W.fh[key]||y<hy)return;W.fh[key]=1;if(taken[key])return;W.firsts++;const n=b?b.n:coKey(String(who).split(/,| и /)[0].replace(/\(.*$/,'').trim());if(n)wco(W,n,'').firsts++;};
     for(const id in PART_HIST)put('part:'+id,PART_HIST[id][0],PART_HIST[id][1]);
     for(const k in TECH)(TECH[k].lv||[]).forEach((lv,i)=>{if(lv.hist)put('tech:'+k+':'+(i+1),lv.hist[0],lv.hist[1]);});
     if(typeof AIR_TECH!=='undefined')AIR_TECH.forEach(T=>put('air_'+T.id,Math.floor(T.y),T.who));}
   return W;}
 /* ---------- таблица господства ---------- */
-function worldCo(s){const W=s.world;if(!W||!W.v)return [];const y=yf(s),mk=c=>(s.mkY&&s.mkY[c])||1000;let msum=0;for(const c in COUNTRIES)msum+=mk(c);
-  const out=[];for(const n in W.co){const o=W.co[n];let aw=0;for(const c in COUNTRIES){const sh=W.cu[c]?(o.cu[c]||0)/W.cu[c]:0;aw+=Math.min(1,Math.sqrt(sh/0.2))*mk(c)/msum;}
+// узнаваемость: вес страны — корень из её рынка (люди, не машины: иначе Америка — 85 % мира), марку знают по её доле покупателей страны
+function awW(s){const mk=c=>Math.sqrt((s.mkY&&s.mkY[c])||1000),W={};let sum=0;for(const c in COUNTRIES){W[c]=mk(c);sum+=W[c];}for(const c in W)W[c]/=sum;return W;}
+function worldCo(s){const W=s.world;if(!W||!W.v)return [];const y=yf(s),AW=awW(s);
+  const out=[];for(const n in W.co){const o=W.co[n];let aw=0;for(const c in COUNTRIES){const sh=W.cu[c]?(o.cu[c]||0)/W.cu[c]:0;aw+=Math.min(1,sh*1.25)*AW[c];}
     out.push({n,c:o.c,hp:o.hp,rev:o.rev,sport:o.sport,firsts:o.firsts,val:o.r12*VAL_K,aw,bot:!!(s.bots&&s.bots[n])});/* r12 — скользящая годовая выручка (каждый месяц ×11/12 плюс месяц) */}
   return out;}
-function worldMine(s){const W=s.world;if(!W||!W.v)return null;const mk=c=>(s.mkY&&s.mkY[c])||1000;let msum=0,aw=0;for(const c in COUNTRIES){msum+=mk(c);}for(const c in COUNTRIES)aw+=clamp(awOf(s,c),0,1)*mk(c)/msum;
+function worldMine(s){const W=s.world;if(!W||!W.v)return null;const AW=awW(s);let aw=0;for(const c in COUNTRIES)aw+=clamp(awOf(s,c),0,1)*AW[c];
   return {n:s.company,you:1,c:s.country,hp:W.my.hp,rev:W.my.rev,sport:(W.my.sport||0)+(W.my.air||0),firsts:firstsLive(s),val:Math.max(0,companyValue(s)),aw};}
 function domTable(s){const W=s.world;if(!W||!W.v)return null;const me=worldMine(s),L=worldCo(s),age=(mi(s)-(W.since||0))/12,out={};
   const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,o)=>a+o.val,0)+me.val,brand:1};

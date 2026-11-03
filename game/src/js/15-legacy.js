@@ -10,6 +10,7 @@ const PART_HIST={me4:[1905,'FN (Four)'],me5:[1907,'Indian и Harley-Davidson'],m
   w2:[1895,'Michelin'],w3:[1904,'Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1908,'Rudge-Whitworth'],w6:[1913,'Goodyear и Palmer'],w7:[1908,'Sankey'],w8:[1923,'Firestone'],
   b4:[1910,'Cadillac (закрытый кузов Fisher)'],b9:[1922,'Essex (Coach)'],b5:[1922,'Dodge Brothers и Budd'],b6:[1896,'Daimler']};
 function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
+  if(s.botFirsts&&s.botFirsts[key]&&s.botFirsts[key].y<=s.y){const b=s.botFirsts[key];addLog(`${name}: первенство уже у ${b.n} (${b.y}).`,'');return;}/* 0.41: бот успел раньше */
   s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
   const rid=reelGet(key,s)?key:null;if(rid)reelUnlock(s,rid);
   try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только в ${histY} году.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}

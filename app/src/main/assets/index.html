@@ -1165,15 +1165,15 @@ const PIONEERS={
 // конкуренты слабее, соперники в гонках медленнее (race, drv), кредит больше; air — сила соперников в авиации, fly — полёт:
 // stall — запас до срыва (сдвиг критического угла), wind — доля ветра и болтанки, fail — частота отказов, dmg — поломки, fuel — запас топлива
 const DIFFS={
-  kids:{name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2.5,comp:0.6,race:0.85,bad:0.3,debt:120000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
+  kids:{bot:{iq:0.3,bonus:0.8},name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2.5,comp:0.6,race:0.85,bad:0.3,debt:120000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
     rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.85,air:0.88,fly:{stall:-0.02,wind:0.4,fail:0.3,dmg:0.4,fuel:1.3}},
-  easy:{name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.8,comp:0.72,race:0.9,bad:0.6,debt:40000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
+  easy:{bot:{iq:0.5,bonus:0.9},name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.8,comp:0.72,race:0.9,bad:0.6,debt:40000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
     rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.9,air:0.93,fly:{stall:-0.02,wind:0.6,fail:0.6,dmg:0.6,fuel:1.15}},
-  normal:{name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1.2,comp:0.9,race:0.96,bad:1,debt:20000,share:0.2,rvRate:1,rvMax:1,pwMin:0.7,
+  normal:{bot:{iq:0.7,bonus:1.0},name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1.2,comp:0.9,race:0.96,bad:1,debt:20000,share:0.2,rvRate:1,rvMax:1,pwMin:0.7,
     rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:0.97,air:0.97,fly:{stall:0.02,wind:0.8,fail:1,dmg:1,fuel:1}},
-  hard:{name:'Магнат',desc:'Конкуренты агрессивнее и быстрее перенимают ваши новинки, большая компания дороже в управлении, кредит дороже, кризисы сильнее',cash:0.85,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:1.7,pwMin:0.65,
+  hard:{bot:{iq:0.9,bonus:1.15},name:'Магнат',desc:'Конкуренты агрессивнее и быстрее перенимают ваши новинки, большая компания дороже в управлении, кредит дороже, кризисы сильнее',cash:0.85,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:1.7,pwMin:0.65,
     rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}},
-  hist:{name:'Историк',desc:'Как «Божество» в «Цивилизации»: соперники сильны и мгновенно отвечают, большая компания дорога в управлении — первое место в наследии здесь исключительное достижение',cash:0.75,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:1.9,pwMin:0.6,
+  hist:{bot:{iq:1.0,bonus:1.3},name:'Историк',desc:'Как «Божество» в «Цивилизации»: соперники сильны и мгновенно отвечают, большая компания дорога в управлении — первое место в наследии здесь исключительное достижение',cash:0.75,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:1.9,pwMin:0.6,
     rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}}
 };
 // Типичная машина соперников в каждом классе: с ней покупатель сравнивает вашу (год, прототип, детали)
@@ -3449,7 +3449,7 @@ function pwOf(s,c,g){return (s.pw&&s.pw[c]&&s.pw[c][g])||1;}
 // 0.32: ответ — штраф к вашим машинам в этом классе и стране (contest), а не прибавка всем соперникам: прибавка соперникам
 // поднимала их и над «не покупать вовсе» — рынок раздувался втрое против истории, а ваши продажи почти не падали
 function rivalBoost(s,c,g){return ((s.rv&&s.rv[c]&&s.rv[c][g])||0)+respBoost(s,c,g);}
-function contest(s,c,g){const cut=respCut(s,c,g);return rivalBoost(s,c,g)+(cut>0?-BR*Math.log(1-cut):0);}
+function contest(s,c,g){const cut=respCut(s,c,g);return rivalBoost(s,c,g)+(cut>0?-BR*Math.log(1-cut):0)+(s&&s.bots&&!s.botsOff?botPress(s,c,g):0);}/* 0.41: + натиск живых соперников */
 // Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
 function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
   const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{if(pkIs(cp,s)||(!mo&&acqHas(s,c,i)))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
@@ -3476,7 +3476,9 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   return b-Math.log(difComp(s));}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
-  const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g));if(v>0){out.push({cp,i,v});sum+=v;}});
+  const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g)*botK(s,cp,c,g));if(v>0){out.push({cp,i,v});sum+=v;}});
+  // 0.41: живые соперники — экспорт туда, где марки по истории не было (17b-bots.js)
+  if(!mo&&s&&s.bots&&!s.botsOff)botExports(s,c,g,S).forEach(o=>{out.push(o);sum+=o.v;});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах
@@ -3887,7 +3889,7 @@ function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}
 // стоимость ваших долей в дочерних компаниях (входит в стоимость компании)
 function maHoldValue(s){return subList(s).reduce((a,h)=>{const M=maStat(s,h.c,h.i);return a+(M&&compAlive(M.cp,s)?M.V*h.st:0);},0);}
 // можно ли вести переговоры
-function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';if(s.botAcq&&s.botAcq[cp.n])return 'куплена: '+s.botAcq[cp.n];/* 0.41 */const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
   if(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n])return 'в концерне';if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';
   const t=(s.dealNo||{})[c+i];if(t&&t>mi(s))return 'пауза';return '';}
 // главный класс марки (не грузовики; спорт — где он уже есть)
@@ -6442,7 +6444,7 @@ function step(){
   // конкуренты и рынки для экрана «Рынок»: сколько купили у реальных марок и у вас
   for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>{x.last=0;x.lg={};});const MC=D.mk[c],sg={};let size=0;
     // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
-    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x)return;x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
+    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x){if(o.bot)botSold(s,o.bot,c,g,o.sales);return;}x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
     // 0.32: мотоциклы — свои классы и свои марки (s.mcomps)
     const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;});const msg={};let msize=0;
     MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x)x.last+=o.sales;});});
@@ -6468,6 +6470,8 @@ function step(){
   econMonth(s,r);
   // 0.41: мировой итог с начала партии (л. с., доллары, победы, первенства) и проверка господства — 16-world.js
   try{worldMonth(s,r);domCheck(s);}catch(e){console.warn('world',e);}
+  // 0.41: живые соперники делают ход после вашего — 17b-bots.js
+  try{botsMonth(s,r);}catch(e){console.warn('bots',e);}
   // итоги месяца
   const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);s.last=r;
   const H=s.hist;H.cash.push(Math.round(s.cash));H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(Math.round(r.profit));H.share.push(+(r.share*100).toFixed(2));
@@ -7003,6 +7007,7 @@ const PART_HIST={me4:[1905,'FN (Four)'],me5:[1907,'Indian и Harley-Davidson'],m
   w2:[1895,'Michelin'],w3:[1904,'Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1908,'Rudge-Whitworth'],w6:[1913,'Goodyear и Palmer'],w7:[1908,'Sankey'],w8:[1923,'Firestone'],
   b4:[1910,'Cadillac (закрытый кузов Fisher)'],b9:[1922,'Essex (Coach)'],b5:[1922,'Dodge Brothers и Budd'],b6:[1896,'Daimler']};
 function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
+  if(s.botFirsts&&s.botFirsts[key]&&s.botFirsts[key].y<=s.y){const b=s.botFirsts[key];addLog(`${name}: первенство уже у ${b.n} (${b.y}).`,'');return;}/* 0.41: бот успел раньше */
   s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
   const rid=reelGet(key,s)?key:null;if(rid)reelUnlock(s,rid);
   try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только в ${histY} году.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}
@@ -7240,7 +7245,9 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
   for(const c in COMPS){const L=(s.comps&&s.comps[c])||[];COMPS[c].forEach((cp,i)=>{const x=L[i];if(!x||!x.lg||pkIs(cp,s))return;let hp=0,rev=0,un=0;
       for(const g in x.lg){const n=x.lg[g]||0;if(!n)continue;un+=n;hp+=n*hpTyp(g,y);rev+=n*prefP(g,c,s);}
       if(!un)return;if(cp.imp){W.hp+=hp;W.rev+=rev;W.cu[c]=(W.cu[c]||0)+un;return;}// импорт — не компания, но мир
-      wAdd(W,cp.n,cp.c||c,c,hp,rev,un);});}
+      const own=(s.botAcq&&s.botAcq[cp.n])||cp.n;/* 0.41: марка, купленная ботом, — в его зачёт */wAdd(W,own,cp.c||c,c,hp,rev,un);});}
+  // 0.41: экспорт живых соперников сверх истории (17b-bots.js: botSold → B.xs за этот месяц)
+  if(s.bots&&!s.botsOff)for(const n in s.bots){const B=s.bots[n];for(const c in (B.xs||{}))for(const g in B.xs[c]){const u=B.xs[c][g];if(u>0)wAdd(W,B.n,B.c,c,u*hpTyp(g,y),u*prefP(g,c,s),u);}}
   // ---- мотомарки (03c-moto.js): продажи месяца без разбивки по классам
   if(typeof MCOMPS!=='undefined')for(const c in MCOMPS){const L=(s.mcomps&&s.mcomps[c])||[];MCOMPS[c].forEach((cp,i)=>{const x=L[i];if(!x||!(x.last>0))return;const h=hpTyp('moto',y)*1.05;
       if(cp.imp){W.hp+=x.last*h;W.rev+=x.last*prefMoto('moto',c,s);return;}wAdd(W,coKey(cp.n),c,c,x.last*h,x.last*prefMoto('moto',c,s),0);});}
@@ -7257,17 +7264,19 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
   if(typeof AIR_EV!=='undefined'){const A=s.air;AIR_EV.forEach(ev=>{const k='air|'+ev.key;if(W.sd[k]||ev.y>s.y-(ev.m!==undefined&&ev.m<=s.m?0:1))return;W.sd[k]=1;const pts=ev.open||ev.prize>=10000?RACE_W.major:RACE_W.normal;W.sport+=pts;
       const mineWin=A&&A.ev&&A.ev[ev.key]&&A.ev[ev.key].place===1;if(!mineWin&&ev.h&&ev.h[1])wco(W,coKey(ev.h[1]),ev.c||'').sport+=pts;});}
   // ---- первенства по истории: кто и когда впервые (PART_HIST, TECH) — считаются, когда год настал и первенство не ушло вам (или боту)
-  {const taken=s.firsts||{};const put=(key,hy,who)=>{if(W.fh[key]||y<hy)return;W.fh[key]=1;if(taken[key])return;W.firsts++;const n=coKey(String(who).split(/,| и /)[0].replace(/\(.*$/,'').trim());if(n)wco(W,n,'').firsts++;};
+  {const taken=s.firsts||{},bf=s.botFirsts||{};const put=(key,hy,who)=>{const b=bf[key];if(b){hy=Math.min(hy,b.y);who=b.n;}/* 0.41: бот опередил историю */if(W.fh[key]||y<hy)return;W.fh[key]=1;if(taken[key])return;W.firsts++;const n=b?b.n:coKey(String(who).split(/,| и /)[0].replace(/\(.*$/,'').trim());if(n)wco(W,n,'').firsts++;};
     for(const id in PART_HIST)put('part:'+id,PART_HIST[id][0],PART_HIST[id][1]);
     for(const k in TECH)(TECH[k].lv||[]).forEach((lv,i)=>{if(lv.hist)put('tech:'+k+':'+(i+1),lv.hist[0],lv.hist[1]);});
     if(typeof AIR_TECH!=='undefined')AIR_TECH.forEach(T=>put('air_'+T.id,Math.floor(T.y),T.who));}
   return W;}
 /* ---------- таблица господства ---------- */
-function worldCo(s){const W=s.world;if(!W||!W.v)return [];const y=yf(s),mk=c=>(s.mkY&&s.mkY[c])||1000;let msum=0;for(const c in COUNTRIES)msum+=mk(c);
-  const out=[];for(const n in W.co){const o=W.co[n];let aw=0;for(const c in COUNTRIES){const sh=W.cu[c]?(o.cu[c]||0)/W.cu[c]:0;aw+=Math.min(1,Math.sqrt(sh/0.2))*mk(c)/msum;}
+// узнаваемость: вес страны — корень из её рынка (люди, не машины: иначе Америка — 85 % мира), марку знают по её доле покупателей страны
+function awW(s){const mk=c=>Math.sqrt((s.mkY&&s.mkY[c])||1000),W={};let sum=0;for(const c in COUNTRIES){W[c]=mk(c);sum+=W[c];}for(const c in W)W[c]/=sum;return W;}
+function worldCo(s){const W=s.world;if(!W||!W.v)return [];const y=yf(s),AW=awW(s);
+  const out=[];for(const n in W.co){const o=W.co[n];let aw=0;for(const c in COUNTRIES){const sh=W.cu[c]?(o.cu[c]||0)/W.cu[c]:0;aw+=Math.min(1,sh*1.25)*AW[c];}
     out.push({n,c:o.c,hp:o.hp,rev:o.rev,sport:o.sport,firsts:o.firsts,val:o.r12*VAL_K,aw,bot:!!(s.bots&&s.bots[n])});/* r12 — скользящая годовая выручка (каждый месяц ×11/12 плюс месяц) */}
   return out;}
-function worldMine(s){const W=s.world;if(!W||!W.v)return null;const mk=c=>(s.mkY&&s.mkY[c])||1000;let msum=0,aw=0;for(const c in COUNTRIES){msum+=mk(c);}for(const c in COUNTRIES)aw+=clamp(awOf(s,c),0,1)*mk(c)/msum;
+function worldMine(s){const W=s.world;if(!W||!W.v)return null;const AW=awW(s);let aw=0;for(const c in COUNTRIES)aw+=clamp(awOf(s,c),0,1)*AW[c];
   return {n:s.company,you:1,c:s.country,hp:W.my.hp,rev:W.my.rev,sport:(W.my.sport||0)+(W.my.air||0),firsts:firstsLive(s),val:Math.max(0,companyValue(s)),aw};}
 function domTable(s){const W=s.world;if(!W||!W.v)return null;const me=worldMine(s),L=worldCo(s),age=(mi(s)-(W.since||0))/12,out={};
   const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,o)=>a+o.val,0)+me.val,brand:1};
@@ -7591,6 +7600,122 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   // реклама — около 4% выручки (в кризис — вдвое меньше)
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*(calm?0.04:0.02)))/10)*10;
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}
+
+/* ================= 0.41: ЖИВЫЕ СОПЕРНИКИ =================
+   Отзыв: «соревновательность — цель нестабильная, за другие бренды играют боты, совершающие активные действия, то есть играя
+   параллельно, пошагово»; «бот может и должен стремиться выиграть; уровни сложности как в Цивилизации плюс боты более умные
+   на более сложных уровнях». Двенадцать марок — по две великие державы на страну — живут своей игрой: после вашего хода каждая
+   смотрит, в какой категории господства она ближе всего к цели, и делает ход: снижает или поднимает цены, выпускает модель,
+   расширяет завод, идёт за границу (импортёр → отделение → сборка → завод), усиливает гоночную команду, вкладывается в лабораторию
+   (и может опередить историю с новинкой), покупает меньшую марку своей страны. Остальные 44 марки — фон по истории, как раньше.
+   Связь с рынком: вес бота в разделе класса = историческая кривая × botK (привлекательность и цена, не больше мощности); экспорт —
+   доля чужого рынка по уровню присутствия; натиск бота на вас — через contest (как скидки соперников). Без ботов (s.botsOff или
+   партия до 0.41 без s.bots) всё считается как раньше: боты меняют историю ровно на свои действия.
+   Сложность (DIFFS.bot): iq — вероятность сделать лучший ход (иначе — ничего или случайный дешёвый), bonus — множитель денег бота. */
+const BOT_DEF=[{n:'Ford',c:'us',alt:'Chevrolet'},{n:'Buick',c:'us',alt:'Willys-Overland'},{n:'Peugeot',c:'fr',alt:'De Dion-Bouton'},{n:'Renault',c:'fr',alt:'Panhard et Levassor'},
+  {n:'Daimler',c:'de',alt:'Benz & Cie.'},{n:'Opel',c:'de',alt:'Adler'},{n:'Humber',c:'uk',alt:'Wolseley'},{n:'Austin',c:'uk',alt:'Morris'},
+  {n:'FIAT',c:'it',alt:'Itala'},{n:'Lancia',c:'it',alt:'Alfa Romeo'},{n:'Руссо-Балт',c:'ru',alt:'Лесснер'},{n:'АМО',c:'ru',alt:'НАМИ'}];
+const BOT_XP=[0,0.008,0.02,0.04,0.075];   // доля чужого рынка класса по уровню присутствия: импортёр, отделение, сборка, завод
+const BOT_XP_N=['','импортёра','отделение','сборку из комплектов','завод'],BOT_XP_COST=[0,0.03,0.08,0.25,0.6],BOT_XP_FLOOR=[0,8000,30000,120000,400000];
+const BOT_CAP_MAX=2.5,BOT_Q_MAX=0.35;
+const BOT_OPEN={us:0.6,uk:1,fr:0.6,de:0.7,it:0.6,ru:1.2};   // открытость рынка для чужих марок: Британия и Россия ввозили много, Франция и Италия — мало
+const BOT_ORDER={scale:['cap','model','export','rd','race'],market:['model','export','cap','race','rd'],sport:['race','model','cap','export','rd'],innov:['rd','model','race','cap','export'],capital:['model','cap','export','rd','race'],brand:['export','race','model','cap','rd']};
+const BOT_IN={de:'в Германии',fr:'во Франции',uk:'в Британии',us:'в Америке',it:'в Италии',ru:'в России'};
+const SEG_LOC={people:'в народном классе',middle:'в среднем классе',lux:'в классе люкс',sport:'в спортивном классе',truck:'в грузовиках'},SEG_GEN={people:'народного класса',middle:'среднего класса',lux:'класса люкс',sport:'спортивного класса',truck:'— грузовик'};
+function botDif(){const D=DIF();return D.bot||{iq:0.7,bonus:1};}
+function botsOn(s){if(typeof BOTS_OFF!=='undefined'&&BOTS_OFF)return false;/* прогоны калибровки — без ботов */return !!(s&&!s.botsOff&&s.mode!=='racer');}
+// бот по имени марки (и по купленным им маркам — их продажи идут в его зачёт)
+function botByBrand(s,n){if(!s||!s.bots)return null;const k=coKey(n);if(s.bots[k]&&!s.bots[k].dead)return s.bots[k];const o=s.botAcq&&s.botAcq[n];return o&&s.bots[o]&&!s.bots[o].dead?s.bots[o]:null;}
+function botCp(s,B){const L=COMPS[B.c]||[];for(let i=0;i<L.length;i++)if(L[i].n===B.n)return {cp:L[i],i};return null;}
+function botMainSeg(B){const cp=(COMPS[B.c]||[]).find(x=>x.n===B.n),mix=(cp&&cp.mix)||{middle:1};let g='middle',b=-1;for(const k in mix)if(mix[k]>b){b=mix[k];g=k;}return g;}
+// присутствие бота в стране: дома и там, где у марки по истории был завод (Ford в Манчестере) — завод; иначе — что построил сам
+function botPres(s,B,c){if(c===B.c)return 4;if((COMPS[c]||[]).some(cp=>!cp.imp&&coKey(cp.n)===B.n&&compAlive(cp,s)))return 4;return (B.pres&&B.pres[c])||0;}
+function botHistRev(s,B){const X=botCp(s,B);if(!X)return 0;let rev=0;const v=compVol(X.cp,s);for(const g in (X.cp.mix||{}))rev+=v*X.cp.mix[g]*prefP(g,B.c,s);return rev;}
+function botsInit(s){s.bots={};s.botAcq=s.botAcq||{};s.botFirsts=s.botFirsts||{};s.botNews=s.botNews||[];
+  BOT_DEF.forEach((d,i)=>{let n=d.n;const cp0=(COMPS[d.c]||[]).find(x=>x.n===n);if(!cp0||pkIs(cp0,s))n=d.alt;if(!(COMPS[d.c]||[]).some(x=>x.n===n))return;
+    const B={n,c:d.c,i,cash:0,pres:{},q:{},pk:{},capK:1,rd:0,race:0,goal:'scale',log:[],xs:{},xy:{},xp:{},sh:{},acq:[],mdY:{},xpY:{},born:mi(s),firsts:0};
+    B.cash=botHistRev(s,B)*0.3;s.bots[n]=B;});return s.bots;}
+/* ---------- связь с рынком ---------- */
+// вес марки-бота в разделе класса: привлекательность (модели) и цена, не больше построенных мощностей
+function botK(s,cp,c,g){const B=botByBrand(s,cp.n);if(!B||B.n!==coKey(cp.n))return 1;return Math.min(B.capK||1,Math.exp(1.2*(B.q[g]||0)-Math.log(B.pk[g]||1)));}
+// экспорт ботов туда, где марки по истории не было: доля рынка класса по присутствию (compSplit дополняет этим список)
+function botExports(s,c,g,S){const out=[];if(!botsOn(s)||!s.bots||isMotoSeg(g))return out;
+  for(const n in s.bots){const B=s.bots[n];if(B.dead||B.c===c)continue;const lv=(B.pres&&B.pres[c])||0;if(!lv)continue;
+    if((COMPS[c]||[]).some(cp=>!cp.imp&&coKey(cp.n)===B.n))continue;/* по истории марка здесь уже есть (Ford в Манчестере) — её запись и считается */const cp=(COMPS[B.c]||[]).find(x=>x.n===B.n),mx=cp&&cp.mix&&cp.mix[g];if(!mx||!cp||!compAlive(cp,s))continue;
+    const v=S*BOT_XP[lv]*(BOT_OPEN[c]||1)*Math.sqrt(mx)*Math.exp(1.2*(B.q[g]||0)-Math.log(B.pk[g]||1));if(v>0)out.push({cp:{n:B.n,bot:1,c:B.c,mix:{[g]:1}},i:-1,bot:B.n,v});}
+  return out;}
+function botSold(s,n,c,g,units){const B=s.bots&&s.bots[n];if(!B)return;const X=B.xs=B.xs||{};const T=X[c]=X[c]||{};T[g]=(T[g]||0)+units;}
+// натиск ботов на вас в классе (в contest, как скидки соперников): доля бота × (привлекательность сверх истории + скидка)
+function botPress(s,c,g){if(!botsOn(s)||!s.bots)return 0;let p=0;for(const n in s.bots){const B=s.bots[n];if(B.dead)continue;const sh=B.sh&&B.sh[c]&&B.sh[c][g];if(!sh)continue;
+    p+=sh*Math.max(0,1.2*(B.q[g]||0)-Math.log(B.pk[g]||1))*0.4;}return Math.min(0.6,p);}
+// гоночная команда бота: бюджет гонок усиливает заводскую команду (fieldTeams)
+function botTeam(s,t){if(!botsOn(s)||!s.bots||!t)return t;const B=botByBrand(s,t.n)||(t.mq||[]).map(m=>botByBrand(s,m)).find(Boolean);if(!B||!B.race)return t;return Object.assign({},t,{str:t.str*(1+0.22*B.race),botN:B.n});}
+/* ---------- ход бота ---------- */
+function botGoal(s,B){try{const L=worldCo(s),W=s.world,me=worldMine(s),o=L.find(x=>x.n===B.n);if(!o||!me)return B.goal||'scale';
+    const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,x)=>a+x.val,0)+me.val},f={scale:'hp',market:'rev',sport:'sport',innov:'firsts',capital:'val'};
+    let best='scale',bs=-1;for(const k in f){const sh=tot[k]>0?o[f[k]]/tot[k]:0;if(sh>bs){bs=sh;best=k;}}if(o.aw>=0.5&&bs<0.35)best='brand';return best;}catch(_){return B.goal||'scale';}}
+function botCost(B,k,floor){return Math.max(floor,(B.r12||0)*k);}
+function botPrices(s,B,r,y){const cp=(COMPS[B.c]||[]).find(x=>x.n===B.n);if(!cp)return null;const mk=r.mk&&r.mk[B.c];let note=null;const amb=B.goal==='capital'?0.9:B.goal==='scale'||B.goal==='market'?1.35:1.15,hv=compVol(cp,s);
+  for(const g in (cp.mix||{})){if(!cp.mix[g])continue;const pk=B.pk[g]||1,sh=(B.sh[B.c]&&B.sh[B.c][g])||0,z=mk&&mk.segs&&mk.segs[g],you=z&&z.size>0?z.you/z.size:0;let nk=pk;
+    const S=segAnnual(B.c,g,s),tgt=Math.min(0.6,(S>0?hv*cp.mix[g]/S:0.1)*amb+0.02);/* цель — своя историческая доля с запасом по амбиции */
+    if(you>0.25&&you>sh&&B.cash>B.r12*0.05){nk=Math.max(0.85,pk-0.03);if(pk-nk>0.02&&y-(B.warY||0)>=2){B.warY=y;note={w:3,t:`${B.n} снижает цены`,txt:`${B.n} отвечает на успех «${s.company}»: цены ${SEG_LOC[g]||''} ${BOT_IN[B.c]} снижены — у покупателей вашей марки появился соблазн.`};}}
+    else if(sh<tgt*0.7&&B.cash>B.r12*0.08)nk=Math.max(0.85,pk-0.02);else if(sh>0.5||B.goal==='capital')nk=Math.min(1.12,pk+0.01);else nk=pk+(1-pk)*0.1;
+    B.pk[g]=Math.round(nk*1000)/1000;}return note;}
+function botPlan(s,B,r,y){const D=botDif(),main=botMainSeg(B),cp=(COMPS[B.c]||[]).find(x=>x.n===B.n);if(!cp)return null;const R=B.r12||0,cpiK=cpi(s);
+  const want=Math.exp(1.2*(B.q[main]||0)-Math.log(B.pk[main]||1)),C={};
+  if(want>(B.capK||1)*0.9&&(B.capK||1)<BOT_CAP_MAX&&y-(B.capY||0)>=1)C.cap={cost:botCost(B,0.12,20000*cpiK),w:2,
+    go(){B.capK=Math.min(BOT_CAP_MAX,(B.capK||1)+0.25);B.capY=y;return {t:`${B.n} расширяет завод`,txt:`${B.n} строит новые цеха ${BOT_IN[B.c]}: мощности выросли на четверть. Марка готова продавать больше, чем в настоящей истории.`};}};
+  {let g=null,bs=9;for(const k in cp.mix){if(!cp.mix[k])continue;const age=y-(B.mdY[k]||(cp.since||1895)),sh=(B.sh[B.c]&&B.sh[B.c][k])||0;if(age>=(y>=1920?2:3)&&sh<bs){bs=sh;g=k;}}
+    if(g)C.model={cost:botCost(B,0.15,15000*cpiK),w:2,go(){const dq=(0.15+0.1*Math.random())*D.bonus;B.q[g]=Math.min(BOT_Q_MAX,(B.q[g]||0)+dq);B.mdY[g]=y;return {t:`${B.n}: новая модель ${SEG_GEN[g]||''}`.replace(/ — грузовик$/,' — грузовик'),txt:`${B.n} показала новую машину ${SEG_GEN[g]||''}. Покупатели ${BOT_IN[B.c]} считают её на ${Math.round(dq*100)} % привлекательнее прежней.`};}};}
+  {const home=(B.sh[B.c]&&B.sh[B.c][main])||0;if(home>=0.15||y>=1908){const mk=c=>(s.mkY&&s.mkY[c])||0;const nX=Object.keys(B.pres||{}).filter(c=>B.pres[c]>0).length,cs=Object.keys(COUNTRIES).filter(c=>c!==B.c&&botPres(s,B,c)<4&&y-(B.xpY[c]||0)>=3&&!isWar(s.y,s.m,c)&&((B.pres&&B.pres[c])||nX<3)).sort((a,b)=>mk(b)-mk(a));
+    const c=cs[0];if(c){const lv=((B.pres&&B.pres[c])||0)+1;C.export={cost:botCost(B,BOT_XP_COST[lv],BOT_XP_FLOOR[lv]*cpiK),w:lv>=3?3:1,go(){B.pres=B.pres||{};B.pres[c]=lv;B.xpY[c]=y;
+      return {t:`${B.n} ${lv===4?'строит завод':lv===3?'открывает сборку':lv===2?'открывает отделение':'нашла импортёра'} ${BOT_IN[c]}`,txt:`${B.n} ${lv===1?'договорилась с импортёром':lv===2?'открыла своё отделение':lv===3?'начала сборку машин из комплектов':'строит собственный завод'} ${BOT_IN[c]}: в настоящей истории марка туда не шла. ${c===s.country?'Это ваш домашний рынок — ждите борьбы за покупателя.':''}`};}};}}}
+  if((B.race||0)<1&&y-(B.rcY||0)>=1)C.race={cost:botCost(B,0.05,4000*cpiK),w:B.goal==='sport'?2:1,go(){B.race=Math.min(1,(B.race||0)+0.25);B.rcY=y;return {t:`${B.n} ${B.race>0.3?'снова усиливает':'усиливает'} гоночную команду`,txt:`${B.n} увеличила бюджет гонок: заводские машины получат лучших гонщиков и моторы — соперник на трассах стал опаснее.`};}};
+  if((B.rd||0)<1&&y-(B.rdY||0)>=1)C.rd={cost:botCost(B,0.08,5000*cpiK),w:B.goal==='innov'?2:1,go(){B.rd=Math.min(1,(B.rd||0)+0.2);B.rdY=y;return {t:`${B.n} ${B.rd>0.25?'расширяет':'открывает'} лабораторию`,txt:`${B.n} вкладывается в конструкторское бюро: теперь марка может опередить историю с новинкой — и забрать первенство себе.`};}};
+  const order=BOT_ORDER[B.goal]||BOT_ORDER.scale,L=order.map(k=>C[k]&&Object.assign({k},C[k])).filter(Boolean);if(!L.length)return null;
+  if(Math.random()<D.iq){const a=L.find(x=>B.cash>=x.cost);return a||null;}
+  if(Math.random()<0.5)return null;const cheap=L.filter(x=>B.cash>=x.cost);return cheap.length?cheap[Math.floor(Math.random()*cheap.length)]:null;}
+// первенство: бот с лабораторией может опередить историю на 1–3 года — новинка ближайших лет уходит ему
+function botFirst(s,B,y){if(!(B.rd>0)||(B.firsts||0)>=3||y-(s.botFirstY||0)<2||Math.random()>(0.05+0.15*B.rd)*botDif().iq)return null;const W=s.world||{},fh=W.fh||{},taken=s.firsts||{},bf=s.botFirsts=s.botFirsts||{};
+  const L=Object.keys(PART_HIST).filter(id=>{const h=PART_HIST[id];return h[0]>y&&h[0]<=y+3&&!fh['part:'+id]&&!taken['part:'+id]&&!bf['part:'+id]&&!/^m/.test(id);});if(!L.length)return null;
+  const id=L[Math.floor(Math.random()*L.length)],h=PART_HIST[id],P=(typeof ALL_PARTS==='function'?ALL_PARTS():[]).find(q=>q.id===id);
+  // имя детали без марки-прародителя («Daimler Phönix, 2 цил. 8 л.с.» → «мотор 2 цил. 8 л.с.»)
+  const kind={e:'мотор',g:'коробка передач',c:'шасси',k:'тормоза',b:'кузов',w:'колёса и шины'}[id[0]]||'узел',raw=P?P.name:id,name=/,/.test(raw)?kind+' '+raw.replace(/^[^,]+,\s*/,''):kind+' «'+raw+'»';
+  bf['part:'+id]={n:B.n,y:s.y,hy:h[0]};B.firsts=(B.firsts||0)+1;s.botFirstY=y;
+  return {w:4,t:`${B.n} первыми в мире: ${name}`,txt:`${B.n} опередила историю на ${h[0]-y} ${plural(h[0]-y,'год','года','лет')}: ${name} — в настоящем прошлом это сделал ${h[1]} только в ${h[0]} году. Первенство теперь не достанется ни вам, ни истории.`};}
+// покупка меньшей марки своей страны — раз в четыре года, если касса позволяет
+function botMA(s,B,y){if(y<1905||y-(B.maY||0)<4||B.cash<=0||(B.acq||[]).length>=2||!['scale','capital','market'].includes(B.goal)||Math.random()>0.35*botDif().iq)return null;const X=botCp(s,B);if(!X)return null;const myV=compVol(X.cp,s);const L=[];
+  (COMPS[B.c]||[]).forEach((cp,i)=>{if(cp.imp||cp===X.cp||pkIs(cp,s)||!compAlive(cp,s)||(s.botAcq&&s.botAcq[cp.n])||(s.bots&&s.bots[coKey(cp.n)]))return;if(typeof dealBlock==='function'&&dealBlock(s,B.c,i))return;if(typeof holdOf==='function'&&holdOf(s,B.c,i))return;/* у вас есть доля — бот не лезет */
+    const v=compVol(cp,s);if(v<=0||v>myV*0.5)return;const V=typeof dealValue==='function'?dealValue(s,B.c,i)*2:0;if(V>0&&B.cash>=V*1.2)L.push({cp,i,V});});
+  if(!L.length)return null;const d=L[Math.floor(Math.random()*L.length)];B.cash-=d.V;B.maY=y;s.botAcq=s.botAcq||{};s.botAcq[d.cp.n]=B.n;B.acq.push(d.cp.n);
+  return {w:4,t:`${B.n} покупает ${compName(d.cp,s)}`,txt:`${B.n} купила марку ${compName(d.cp,s)} за ${money(d.V)}: её заводы и покупатели теперь в зачёте ${B.n}. Так в 1908 году Дюрант собирал General Motors из Buick, Oldsmobile и Cadillac.`};}
+function botLog(B,s,txt){B.log=B.log||[];B.log.unshift({t:mi(s),txt});if(B.log.length>8)B.log.length=8;}
+// месяц ботов — после рынка и мирового итога (13-turn.js): продажи, касса, цены, один большой ход, первенства и сделки
+function botsMonth(s,r){if(!botsOn(s))return;if(!s.bots)botsInit(s);const D=botDif(),y=yf(s);let news=[];
+  Object.values(s.bots).forEach((B,bi)=>{const X=botCp(s,B);if(!X||!compAlive(X.cp,s)||(typeof acqHas==='function'&&acqHas(s,B.c,X.i))){if(!B.dead){B.dead=1;B.deadT=mi(s);}return;}B.dead=0;
+    // продажи месяца: свои записи по истории (дома и филиалы), купленные марки, экспорт сверх истории
+    let units=0,rev=0;B.sh=B.sh||{};for(const c in COMPS){const L=(s.comps&&s.comps[c])||[];COMPS[c].forEach((cp,i)=>{if(cp.imp)return;const own=coKey(cp.n)===B.n,acq=s.botAcq&&s.botAcq[cp.n]===B.n;if(!own&&!acq)return;const x=L[i];if(!x||!x.lg)return;
+        for(const g in x.lg){const n=x.lg[g]||0;if(!n)continue;units+=n;rev+=n*prefP(g,c,s)*(own?(B.pk[g]||1):1);if(own){const z=r.mk&&r.mk[c]&&r.mk[c].segs&&r.mk[c].segs[g];(B.sh[c]=B.sh[c]||{})[g]=z&&z.size>0?Math.min(0.95,n/z.size):0;}}});}
+    for(const c in (B.xs||{}))for(const g in B.xs[c]){const n=B.xs[c][g];units+=n;rev+=n*prefP(g,c,s)*(B.pk[g]||1);const z=r.mk&&r.mk[c]&&r.mk[c].segs&&r.mk[c].segs[g];(B.sh[c]=B.sh[c]||{})[g]=z&&z.size>0?Math.min(0.95,n/z.size):0;B.xy[c]=(B.xy[c]||0)+n;}
+    B.xs={};B.r12=(B.r12==null?rev*12:B.r12)*11/12+rev;B.u12=(B.u12==null?units*12:B.u12)*11/12+units;
+    let pk=0,pw=0;for(const g in X.cp.mix){pk+=(B.pk[g]||1)*X.cp.mix[g];pw+=X.cp.mix[g];}pk=pw?pk/pw:1;
+    B.cash+=rev*(0.08+0.5*(pk-0.85))*D.bonus;for(const g in B.q)B.q[g]*=0.985;
+    if(s.m===0||!B.goal)B.goal=botGoal(s,B);
+    const pn=botPrices(s,B,r,y);if(pn)news.push(Object.assign({B},pn));
+    const a=botPlan(s,B,r,y);if(a){B.cash-=a.cost;const o=a.go();if(o){botLog(B,s,o.t);news.push(Object.assign({B,w:a.w},o));}}
+    if(s.m===(bi*5+2)%12){const f=botFirst(s,B,y);if(f){botLog(B,s,f.t);news.push(Object.assign({B},f));}}
+    if(s.m===(bi*7+5)%12){const m=botMA(s,B,y);if(m){botLog(B,s,m.t);news.push(Object.assign({B},m));}}
+    if(s.m===11){B.xp=B.xy;B.xy={};}});
+  // газета — не больше одной заметки о соперниках в месяц: самая важная; остальные — в журнал марки
+  if(news.length){news.sort((a,b)=>(b.w||1)-(a.w||1));const n=news[0];botNewsAdd(s,n);}
+  if(s.botNews&&s.botNews.length>30)s.botNews.splice(0,s.botNews.length-30);}
+function botNewsAdd(s,n){s.botNews=s.botNews||[];let t=n.t;if(s.botNews.some(x=>x.t===t))t+=` (${s.y})`;const cp=(COMPS[n.B.c]||[]).find(x=>x.n===n.B.n),m=cp?compModel(cp,s):null;
+  s.botNews.push({y:s.y,m:s.m,t,txt:n.txt,img:m&&m[2]&&IMG[m[2]]?m[2]:'',n:n.B.n});addLog(`${n.t}.`,'hist');}
+// «Также в номере»: заметки о ходах ботов — как события эпохи (22-paper.js)
+function botFlv(s){return ((s&&s.botNews)||[]).map(b=>[b.y,b.m,b.t,b.img||'',8]);}
+function botNewsTxt(s,t){const b=((s&&s.botNews)||[]).find(x=>x.t===t);return b?b.txt:'';}
+// строка о боте для таблицы «Конкуренты»: цель и последний ход
+function botMark(s,n){if(s.botAcq&&s.botAcq[n])return `<span class="pill muted">куплена: ${esc(s.botAcq[n])}</span>`;const B=botByBrand(s,n);if(!B||B.n!==coKey(n))return '';const last=B.log&&B.log[0];return `<span class="pill muted" title="живой соперник: играет сам">живой</span>${last?` <small class="muted">${esc(last.txt)}</small>`:''}`;}
 
 /* ================= ВЫСТАВКИ: стенд за деньги — репутация, заказы, дилеры, медали ================= */
 // Настоящие выставки эпохи: даты, места и цифры — по истории Парижского салона, IAA, SMMT, Нью-Йоркской выставки и спискам
@@ -8519,14 +8644,15 @@ function flavorLine(s){return flavorOf(s)[2];}
 // «Также в номере» на выпуск: 2–3 заметки своего времени; свежие — первыми, остальные — те, что реже попадались (не повторяем одну и ту же)
 function flavorPick(s,y,m,n,seed,mark){const now=y*12+m,age=x=>now-(x[0]*12+x[1]),seen=s.flvSeen||(s.flvSeen={}),lim=mark?2:99;
   // заметка попадает в газеты не больше двух раз; кончились свежие — «как это было» из прошлых лет (по разу), а нет и таких — место под рынок
-  let L=FLAVOR.filter(x=>{const a=age(x);return a>=0&&a<=(x[4]||18)&&(seen[x[2]]||0)<lim;});
-  if(!L.length)L=FLAVOR.filter(x=>{const a=age(x);return a>=12&&a<=72&&!(seen[x[2]]||0);}).slice(-6);
+  const ALL=FLAVOR.concat(typeof botFlv==='function'?botFlv(s):[]);/* 0.41: ходы живых соперников — тоже новости номера */
+  let L=ALL.filter(x=>{const a=age(x);return a>=0&&a<=(x[4]||18)&&(seen[x[2]]||0)<lim;});
+  if(!L.length)L=ALL.filter(x=>{const a=age(x);return a>=12&&a<=72&&!(seen[x[2]]||0);}).slice(-6);
   const r=mulberry32((seed||0)*7919+now*104729),sc=L.map(x=>{const n0=seen[x[2]]||0;return {x,k:(age(x)<=1&&!n0?-15:0)+n0*6+age(x)/6+r()*4};});sc.sort((a,b)=>a.k-b.k);
   const out=sc.slice(0,n).map(o=>o.x[2]);if(mark)out.forEach(t=>seen[t]=(seen[t]||0)+1);return out;}
 const agoTxt=(f,y,m)=>{const a=Math.floor((y*12+m-(f[0]*12+f[1]))/12);return a<1?'':a===1?'Год назад: ':a<5?a+' года назад: ':a+' лет назад: ';};
-const flvByTitle=t=>FLAVOR.find(x=>x[2]===t);
+const flvByTitle=t=>FLAVOR.find(x=>x[2]===t)||(typeof botFlv==='function'&&typeof G!=='undefined'&&G?botFlv(G).find(x=>x[2]===t):null);
 // Полная заметка «из того же номера»; назад — к выпуску
-function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[f[3]],txt=FLAVOR_TXT[t]||t,M=MAST[G.country];
+function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[f[3]],txt=FLAVOR_TXT[t]||(typeof botNewsTxt==='function'?botNewsTxt(G,t):'')||t,M=MAST[G.country];
   return `<article class="paper">
     <div class="p-top"><span>${MONTHS_N[f[1]]} ${f[0]}</span><span>Также в номере</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
@@ -15377,7 +15503,9 @@ function horseHTML(s,c,M,R0){if(s.y<1896)return '';const Rx=R0||mkCountry(c,s,[]
 const WORLD_NAME={'Ford (Манчестер)':'Ford'};
 function sharesData(s,sel){const cs=Object.keys(COUNTRIES),full=Object.keys(s.mPrev||{}).length>0,val=o=>full?(o.prev||0):(o.yr||0);
   const mine=c=>full?((s.cPrev||{})[c]||0):((s.cY||{})[c]||0),mkt=c=>full?((s.mPrev||{})[c]||0):((s.mY||{})[c]||0);
-  const one=c=>{const L=(COMPS[c]||[]).map((cp,i)=>({cp,i})).filter(o=>!pkIs(o.cp,s)&&!acqHas(s,c,o.i)).map(o=>{const st=(s.comps[c]||[])[o.i]||{},h=subOf(s,c,o.i);return {n:compName(o.cp,s),v:val(st),color:st.color||'#888',c,sub:h?h.st:0};}).filter(r=>r.v>0.5);
+  const one=c=>{const L=(COMPS[c]||[]).map((cp,i)=>({cp,i})).filter(o=>!pkIs(o.cp,s)&&!acqHas(s,c,o.i)).map(o=>{const st=(s.comps[c]||[])[o.i]||{},h=subOf(s,c,o.i);return {n:compName(o.cp,s),v:val(st),color:st.color||'#888',c,sub:h?h.st:0,bn:o.cp.n};}).filter(r=>r.v>0.5);
+    // 0.41: живые соперники, пришедшие на этот рынок сверх истории
+    if(s.bots&&!s.botsOff)for(const n in s.bots){const B=s.bots[n];const v=full?((B.xp||{})[c]||0):((B.xy||{})[c]||0);if(v>0.5&&!(COMPS[c]||[]).some(cp=>!cp.imp&&coKey(cp.n)===B.n))L.push({n:B.n,v,color:'#b08d57',c,bn:B.n,xp:1});}
     L.push({n:s.company,v:mine(c),you:1,c});const tot=Math.max(mkt(c),L.reduce((a,r)=>a+r.v,0)),sum=L.reduce((a,r)=>a+r.v,0);if(tot-sum>0.5)L.push({n:'Мелкие марки и импорт',v:tot-sum,rest:1,c});return {L:L.sort((a,b)=>b.v-a.v),tot};};
   if(sel!=='world')return Object.assign(one(sel),{full});
   const M=new Map();let tot=0;cs.forEach(c=>{const D=one(c);tot+=D.tot;D.L.forEach(r=>{const k=r.you?'__you':r.rest?'__rest':(WORLD_NAME[r.n]||r.n);let o=M.get(k);if(!o){o={n:r.you?s.company:r.rest?'Мелкие марки и импорт':(WORLD_NAME[r.n]||r.n),v:0,you:r.you,rest:r.rest,color:r.color,cs:[],sub:r.sub||0};M.set(k,o);}o.v+=r.v;if(r.v>0.5&&!o.cs.includes(c))o.cs.push(c);});});
@@ -15392,7 +15520,7 @@ function sharesCard(s){const cs=Object.keys(COUNTRIES),sel=(s.ui&&s.ui.mkC)||'wo
   const named=D.L.filter(r=>!r.rest),place=named.findIndex(r=>r.you)+1,show=named.slice(0,8);if(place>8)show.push(named[place-1]);const rest=D.L.find(r=>r.rest);if(rest)show.push(rest);
   const mx=Math.max(1,...show.map(r=>r.v)),me=D.L.find(r=>r.you)||{v:0};
   const chip=(k,lab)=>{const d=k==='world'?null:sharesData(s,k),sh=k==='world'?null:(d.L.find(r=>r.you)||{v:0}).v/Math.max(1,d.tot);return `<button class="chip ${sel===k?'on':''}" data-act="mkC" data-v="${k}">${lab}${sh!==null?`<small>вы ${pct(sh,sh<0.1?1:0)}</small>`:''}</button>`;};
-  const rows=show.map(r=>`<tr class="${r.you?'you':''}"><td>${r.rest?'':(named.indexOf(r)+1)+'.'}</td><td>${esc(r.n)}${r.sub?` <span class="pill">ваши ${Math.round(r.sub*100)}%</span>`:''}${sel==='world'&&!r.you&&!r.rest&&r.cs&&r.cs.length?`<small>${r.cs.map(c=>COUNTRIES[c].name).join(', ')}</small>`:''}</td><td style="width:34%"><div class="bar"><i style="width:${r.v/mx*100}%;background:${r.you?'var(--brass)':r.rest?'var(--line)':(r.color||'#888')}"></i></div></td><td class="n">${fmtN(r.v)}</td><td class="n sh">${pct(r.v/tot,r.v/tot<0.1?1:0)}</td></tr>`).join('');
+  const rows=show.map(r=>`<tr class="${r.you?'you':''}"><td>${r.rest?'':(named.indexOf(r)+1)+'.'}</td><td>${esc(r.n)}${r.sub?` <span class="pill">ваши ${Math.round(r.sub*100)}%</span>`:''}${r.xp?' <span class="pill muted">ввоз</span>':''}${!r.you&&!r.rest&&r.bn&&typeof botMark==='function'?' '+botMark(s,r.bn):''}${sel==='world'&&!r.you&&!r.rest&&r.cs&&r.cs.length?`<small>${r.cs.map(c=>COUNTRIES[c].name).join(', ')}</small>`:''}</td><td style="width:34%"><div class="bar"><i style="width:${r.v/mx*100}%;background:${r.you?'var(--brass)':r.rest?'var(--line)':(r.color||'#888')}"></i></div></td><td class="n">${fmtN(r.v)}</td><td class="n sh">${pct(r.v/tot,r.v/tot<0.1?1:0)}</td></tr>`).join('');
   const what=sel==='world'?`во всём мире (${Object.keys(COUNTRIES).length} ${plural(Object.keys(COUNTRIES).length,'рынок','рынка','рынков')})`:COUNTRIES[sel].name+(sel===s.country?' — дома':'');
   const body=`<p class="small muted" style="margin-top:2px">Продано машин ${D.full?`за ${s.y-1} год`:'с начала года'} ${what}. На каждом рынке — свои марки и свой спрос: за границей вы соревнуетесь с местными марками этой страны${sel!=='world'&&sel!==s.country&&!dealerCount(s,sel)?'. Своих дилеров здесь пока нет — продаж тоже':''}.</p>
     <div class="chips sm" style="margin-top:8px">${chip('world','Мир')}${cs.map(c=>chip(c,COUNTRIES[c].name)).join('')}</div>
@@ -16040,7 +16168,7 @@ function ngHeroOk(d){const L=ngHeroList(d.dir,d.country);return L.some(h=>h.kind
 function openNewGame(){
   const prev=draft&&draft.ng?draft:null;
   draft={ng:true,lock:!G,dir:prev&&prev.dir||'car',country:prev&&prev.country||'us',hero:prev&&prev.hero||{kind:'pio',k:'ford'},company:prev?prev.company:PIONEERS.ford.co,diff:prev?prev.diff:'normal',first:prev?prev.first:'Тип 1',
-    rname:prev&&prev.rname||'',ry:prev&&prev.ry||1900};
+    rname:prev&&prev.rname||'',ry:prev&&prev.ry||1900,bots:prev&&prev.bots||'live'};/* 0.41: соперники живые / по истории */
   const d=draft;if(!ngHeroOk(d)){d.hero={kind:'custom',k:'custom'};d.company=ngCustomCo(d.dir);}
   // имя первого аэроплана, подставленное за игрока («Блерио XI», «Моноплан № 1»), — не его выбор: у другого героя — другое
   if(d.first&&(d.first==='Моноплан № 1'||d.first==='Биплан № 1'||Object.values(PIONEERS).some(P=>P.a1&&P.a1.name===d.first)))d.first='Тип 1';
@@ -16073,6 +16201,8 @@ function openNewGame(){
     ${fields}
     <div class="label" style="margin-top:14px">Сложность</div>
     <div class="country" style="margin-top:6px">${Object.entries(DIFFS).map(([k,x])=>`<button class="chip ${d.diff===k?'on':''}" data-act="diff" data-v="${k}">${x.name}<small>${isRacer&&k==='kids'?'Соперники слабее, аварии мягче':x.desc}</small></button>`).join('')}</div>
+    ${isRacer?'':`<div class="label" style="margin-top:14px">Соперники</div>
+    <div class="country" style="margin-top:6px"><button class="chip ${d.bots!=='hist'?'on':''}" data-act="ngbots" data-v="live">Живые<small>Двенадцать марок играют сами: цены, модели, заводы, экспорт, гонки, покупки — и стремятся к господству</small></button><button class="chip ${d.bots==='hist'?'on':''}" data-act="ngbots" data-v="hist">По истории<small>Соперники идут по своей настоящей истории, как в прежних версиях</small></button></div>`}
     <button class="btn primary block" style="margin-top:16px" data-act="${isRacer?'startracer':'startgame'}">${isRacer?'Выйти на старт':dir==='air'?'Открыть авиамастерскую':dir==='moto'?'Открыть мотомастерскую':'Основать компанию'}</button>`);
   const cn=document.getElementById('cname');if(cn)cn.addEventListener('input',e=>{draft.company=e.target.value;});
   const fn=document.getElementById('fname');if(fn)fn.addEventListener('input',e=>{draft.first=e.target.value;});
@@ -17990,7 +18120,7 @@ function fieldTeams(rc,s,nTeam){
   if(rc.t==='endurance'||rc.t==='rally'||rc.id==='mille')teams=teams.filter(t=>!['Miller','Duesenberg','Frontenac','Durant'].includes(t.n));
   teams.sort((a,b)=>b.str-a.str);
   if(/^gb\d/.test(rc.id)){const cnt={[s.country]:nTeam};teams=teams.filter(t=>['fr','de','uk','us','it'].includes(t.c)&&(cnt[t.c]=(cnt[t.c]||0)+1)<=3);}
-  const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(t);});
+  const want=clamp((rc.major?8:5)-nTeam+2,3,8),out=[];teams.forEach(t=>{if(out.length<want&&!out.some(p=>p.n===t.n))out.push(typeof botTeam==='function'?botTeam(s,t):t);});/* 0.41: команда бота сильнее на его бюджет гонок */
   return out;
 }
 // Гоночная машина соперников: самая прочная рама, самый мощный мотор, который она выдержит, лучшие коробка, тормоза и шины своего года
@@ -29868,6 +29998,7 @@ const ACT={
   rpick:d=>{const top=sb.scrollTop;ngKeep();ngSetHero(draft,'racer',d.v==='custom'?'rcustom':d.v);openNewGame();sb.scrollTop=top;},
   country:d=>{const top=sb.scrollTop;ngKeep();draft.country=d.v;if(!ngHeroOk(draft))ngSetHero(draft,'custom','custom');openNewGame();sb.scrollTop=top;},
   diff:d=>{const top=sb.scrollTop;draft.diff=d.v;ngKeep();openNewGame();sb.scrollTop=top;},
+  ngbots:d=>{const top=sb.scrollTop;draft.bots=d.v;ngKeep();openNewGame();sb.scrollTop=top;},/* 0.41: соперники живые / по истории */
   ngDir:d=>{ngKeep();draft.dir=d.v;if(!ngHeroOk(draft))ngSetHero(draft,'custom','custom');openNewGame();},
   ngPath:d=>{ngKeep();const v=d.v;draft.dir=v==='moto'?'moto':v==='air'?'air':'car';if(v==='racer')ngSetHero(draft,'racer','rcustom');else if(!ngHeroOk(draft)||draft.hero.kind==='racer')ngSetHero(draft,'custom','custom');openNewGame();sb.scrollTop=0;},
   ngBack:()=>{ngKeep();openNewGame();sb.scrollTop=0;},
@@ -29883,7 +30014,7 @@ const ACT={
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
     if(draft.path==='air'){const P=PIONEERS[draft.pioneer],fn=(draft.first||'').trim();newAirGame(P&&P.air?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,fn==='Тип 1'?'':fn);airIntroPapers(G);}
     else if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
-    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
+    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}if(draft.bots==='hist')G.botsOff=1;sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
