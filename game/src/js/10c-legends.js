@@ -206,6 +206,8 @@ function legendStart(s,id){const L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open
   m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);addLog(`Начата разработка легенды «${nm}» (${money(dc)}, ${m.devLeft} мес.).`,'good');return true;}
 // 0.43: легенда-ровесница старта становится первой моделью: та же базовая машина, но с именем, бонусами и местом среди двух легенд марки
 function startLegendOf(s){return legendsOf(s).find(L=>L.y<=s.y+1&&(L.kind==='people'||L.kind==='middle')&&!legendMissing(s,L).length)||null;}
+// то же до начала партии (экран новой игры): по годам деталей, без прототипов
+function startLegendDef(pk,c,y0){y0=y0||1895;const L=(LEGENDS[pk]||(pk==='custom'?LEGENDS_C[c]:null)||[]);return L.find(x=>x.y<=y0+1&&(x.kind==='people'||x.kind==='middle')&&PART_KEYS.every(k=>{const id=x.d[k];if(!id)return true;const cat=PART_CATS.find(q=>q.k===k),p=cat&&byId(cat.arr(),id);return p&&p.y<=y0;}))||null;}
 function startLegend(s,firstName){const L=startLegendOf(s),m=s.models&&s.models[0];if(!L||!m||(s.legends&&s.legends[L.id]))return null;
   // класс — как у обычной первой модели (средний, t1): народного класса в 1895 году ещё нет — «Вело» народной машиной продавался бы по три штуки в год
   const nm=(firstName||'').trim()||L.name;Object.assign(m,{name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:m.t||'t1',w:L.d.w,legend:L.id,paint:legendPaint(L,s.y)||m.paint});

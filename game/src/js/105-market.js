@@ -151,7 +151,7 @@ function pwOf(s,c,g){return (s.pw&&s.pw[c]&&s.pw[c][g])||1;}
 // 0.32: ответ — штраф к вашим машинам в этом классе и стране (contest), а не прибавка всем соперникам: прибавка соперникам
 // поднимала их и над «не покупать вовсе» — рынок раздувался втрое против истории, а ваши продажи почти не падали
 function rivalBoost(s,c,g){return ((s.rv&&s.rv[c]&&s.rv[c][g])||0)+respBoost(s,c,g);}
-function contest(s,c,g){const cut=respCut(s,c,g);return rivalBoost(s,c,g)+(cut>0?-BR*Math.log(1-cut):0)+(s&&s.bots&&!s.botsOff?botPress(s,c,g):0);}/* 0.41: + натиск живых соперников */
+function contest(s,c,g){const cut=respCut(s,c,g);return rivalBoost(s,c,g)+(cut>0?-BR*Math.log(1-cut):0)+(s&&s.bots&&botsOn(s)?botPress(s,c,g):0);}/* 0.41: + натиск живых соперников */
 // Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
 function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
   const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{if(pkIs(cp,s)||(!mo&&acqHas(s,c,i)))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
@@ -180,7 +180,7 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
 function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
   const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g)*botK(s,cp,c,g));if(v>0){out.push({cp,i,v});sum+=v;}});
   // 0.41: живые соперники — экспорт туда, где марки по истории не было (17b-bots.js)
-  if(!mo&&s&&s.bots&&!s.botsOff)botExports(s,c,g,S).forEach(o=>{out.push(o);sum+=o.v;});
+  if(!mo&&s&&s.bots&&botsOn(s))botExports(s,c,g,S).forEach(o=>{out.push(o);sum+=o.v;});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах

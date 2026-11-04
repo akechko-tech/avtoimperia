@@ -64,7 +64,7 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
       if(!un)return;if(cp.imp){W.hp+=hp;W.rev+=rev;W.cu[c]=(W.cu[c]||0)+un;return;}// импорт — не компания, но мир
       const own=(s.botAcq&&s.botAcq[cp.n])||cp.n;/* 0.41: марка, купленная ботом, — в его зачёт */wAdd(W,own,cp.c||c,c,hp,rev,un);});}
   // 0.41: экспорт живых соперников сверх истории (17b-bots.js: botSold → B.xs за этот месяц)
-  if(s.bots&&!s.botsOff)for(const n in s.bots){const B=s.bots[n];for(const c in (B.xs||{}))for(const g in B.xs[c]){const u=B.xs[c][g];if(u>0)wAdd(W,B.n,B.c,c,u*hpTyp(g,y),u*prefP(g,c,s),u);}}
+  if(s.bots&&botsOn(s))for(const n in s.bots){const B=s.bots[n];for(const c in (B.xs||{}))for(const g in B.xs[c]){const u=B.xs[c][g];if(u>0)wAdd(W,B.n,B.c,c,u*hpTyp(g,y),u*prefP(g,c,s),u);}}
   // ---- мотомарки (03c-moto.js): продажи месяца без разбивки по классам
   if(typeof MCOMPS!=='undefined')for(const c in MCOMPS){const L=(s.mcomps&&s.mcomps[c])||[];MCOMPS[c].forEach((cp,i)=>{const x=L[i];if(!x||!(x.last>0))return;const h=hpTyp('moto',y)*1.05;
       if(cp.imp){W.hp+=x.last*h;W.rev+=x.last*prefMoto('moto',c,s);return;}wAdd(W,coKey(cp.n),c,c,x.last*h,x.last*prefMoto('moto',c,s),0);});}
@@ -109,29 +109,65 @@ function worldCo(s){const W=s.world;if(!W||!W.v)return [];const y=yf(s),AW=awW(s
   return out;}
 function worldMine(s){const W=s.world;if(!W||!W.v)return null;const AW=awW(s);let aw=0;for(const c in COUNTRIES)aw+=clamp(awOf(s,c),0,1)*AW[c];
   return {n:s.company,you:1,c:s.country,hp:W.my.hp,rev:W.my.rev,sport:(W.my.sport||0)+(W.my.air||0),firsts:firstsLive(s),val:Math.max(0,companyValue(s)),aw};}
+/* ---------- 0.44: исторический лучший показатель — как было бы в настоящей истории к этой дате, без вас и живых соперников ----------
+   Отзыв: «чтобы победить, недостаточно господства в реалии живой игры — нужно превзойти и исторический лучший показатель».
+   W.hist копится теми же месяцами, что и живой мир, но по историческим кривым марок (compVol × mix), истории гонок (histRaceWinner),
+   состязаний и рекордов неба и первенств (PART_HIST, TECH, AIR_TECH) — марка вашего первопроходца и купленные марки считаются как в истории. */
+function hco(H,n,c){let o=H.co[n];if(!o)o=H.co[n]={hp:0,rev:0,sport:0,firsts:0,r12:0,cu:{},c:c||''};return o;}
+function histMonthAdd(s,H,y,m){const ss={y,m,country:s.country},t=y+m/12+0.01,yf0=y+(m+0.5)/12;
+  for(const n in H.co)H.co[n].r12*=11/12;
+  for(const c in COMPS)COMPS[c].forEach(cp=>{const v=compVol(cp,ss)/12;if(!(v>0))return;const mix=cp.mix||{middle:1};let hp=0,rev=0,un=0;
+    for(const g in mix){const u=v*mix[g];if(!u)continue;un+=u;hp+=u*hpTyp(g,yf0);rev+=u*prefP(g,c,ss);}
+    H.hp+=hp;H.rev+=rev;H.cu[c]=(H.cu[c]||0)+un;if(cp.imp)return;const o=hco(H,coKey(cp.n),cp.c||c);o.hp+=hp;o.rev+=rev;o.r12+=rev;o.cu[c]=(o.cu[c]||0)+un;});
+  if(typeof MCOMPS!=='undefined')for(const c in MCOMPS)MCOMPS[c].forEach(cp=>{const v=compVol(cp,ss)/12;if(!(v>0))return;const h=hpTyp('moto',yf0)*1.05,rev=v*prefMoto('moto',c,ss);H.hp+=v*h;H.rev+=rev;if(cp.imp)return;const o=hco(H,coKey(cp.n),c);o.hp+=v*h;o.rev+=rev;o.r12+=rev;});
+  if(typeof AIR_MKT!=='undefined'&&t>=1908)for(const c in AIR_MKT)for(const role of ['sport','train','recon','fight','bomb','sea','mail','pax']){const mk=airMktRole(c,role,t)/12;if(mk<0.05)continue;
+    const L=airComps(c,role,t,{pioneer:'__none__'}),sw=L.reduce((a,o)=>a+o.w,0);if(!sw)continue;const h=hpAir(role,t);let pr=2500;try{pr=airRefPrice(role,t);}catch(_){pr=1500+h*25;}
+    L.forEach(o=>{const u=mk*o.w/sw,q=hco(H,coKey(o.x.n),c);q.hp+=u*h;q.rev+=u*pr;q.r12+=u*pr;H.hp+=u*h;H.rev+=u*pr;});}
+  // гонки этого месяца — по истории; зачёт мотоциклов — треть
+  const now=(y-1895)*12+m;RACES.forEach(rc=>{if((rc.y-1895)*12+rc.m!==now)return;const pts=rc.major?RACE_W.major:RACE_W.normal,w=histRaceWinner(rc);if(w){H.sport+=pts;hco(H,coKey(w),rc.c||'').sport+=pts;}
+    const mw=histMotoWinner(rc,s);if(mw){const mp=rc.major?2:1;H.sport+=mp;hco(H,coKey(mw),'').sport+=mp;}});
+  if(typeof AIR_EV!=='undefined')AIR_EV.forEach(ev=>{if(ev.y!==y||(ev.m||0)!==m)return;const pts=ev.open||ev.prize>=10000?RACE_W.major:RACE_W.normal;H.sport+=pts;if(ev.h&&ev.h[1])hco(H,coKey(ev.h[1]),ev.c||'').sport+=pts;});
+  if(typeof AIR_REC!=='undefined')for(const kind in AIR_REC)AIR_REC[kind].forEach(r=>{const ry=Math.floor(r[0]),rm=Math.min(11,Math.floor((r[0]-ry)*12));if(ry!==y||rm!==m)return;H.sport+=4;const n=coKey(String(r[3]||'').split(/[ -]/)[0]);if(n)hco(H,n,'').sport+=4;});
+  // первенства истории, наступившие в этом месяце (год настал — считаем в январе)
+  if(m===0){const put=(hy,who)=>{if(hy!==y)return;H.firsts++;const n=coKey(String(who).split(/,| и /)[0].replace(/\(.*$/,'').trim());if(n)hco(H,n,'').firsts++;};
+    for(const id in PART_HIST)put(PART_HIST[id][0],PART_HIST[id][1]);for(const k in TECH)(TECH[k].lv||[]).forEach(lv=>{if(lv.hist)put(lv.hist[0],lv.hist[1]);});
+    if(typeof AIR_TECH!=='undefined')AIR_TECH.forEach(T=>{if(T.h&&T.h[1])put(Math.floor(T.y),T.h[1]);});}
+  H.at=now;}
+function histWorld(s){const W=s.world;if(!W||!W.v)return null;let H=W.hist;const now=mi(s);
+  if(!H||H.v!==1){H=W.hist={v:1,at:(W.since!=null?W.since:now)-1,co:{},cu:{},hp:0,rev:0,sport:0,firsts:0};}
+  let guard=0;while(H.at<now&&guard++<600){const k=H.at+1;try{histMonthAdd(s,H,1895+Math.floor(k/12),k%12);}catch(e){console.warn('hist',e);H.at=k;}}
+  return H;}
+// лучший в истории по категории на эту дату: {n, v}
+function histBest(s,k){const H=histWorld(s);if(!H)return null;let best=null;const AW=k==='brand'?awW(s):null;
+  for(const n in H.co){const o=H.co[n];let v;if(k==='scale')v=o.hp;else if(k==='market')v=o.rev;else if(k==='sport')v=o.sport;else if(k==='innov')v=o.firsts;else if(k==='capital')v=o.r12*VAL_K;
+    else{v=0;for(const c in COUNTRIES){const sh=H.cu[c]?(o.cu[c]||0)/H.cu[c]:0;v+=Math.min(1,sh*1.25)*AW[c];}}
+    if(v>0&&(!best||v>best.v))best={n,v,c:o.c};}
+  return best;}
 function domTable(s){const W=s.world;if(!W||!W.v)return null;const me=worldMine(s),L=worldCo(s),age=(mi(s)-(W.since||0))/12,out={};
   const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,o)=>a+o.val,0)+me.val,brand:1};
   const f={scale:'hp',market:'rev',sport:'sport',innov:'firsts',capital:'val',brand:'aw'};
   DOM_K.forEach(k=>{const key=f[k];let lead=null;L.forEach(o=>{if(!lead||o[key]>lead.v)lead={n:o.n,v:o[key],c:o.c,bot:o.bot};});
     const mine=me[key],world=k==='brand'?1:Math.max(tot[k],mine),share=k==='brand'?mine:(world>0?mine/world:0);
-    const ripe=k==='brand'?age>=DOM_FLOOR.brand:world>=DOM_FLOOR[k];
-    out[k]={mine,world,share,lead,ripe,ok:ripe&&share>=DOM_SHARE&&(!lead||mine>lead.v)&&mine>0,leadShare:lead?(k==='brand'?lead.v:(world>0?lead.v/world:0)):0};});
+    const ripe=k==='brand'?age>=DOM_FLOOR.brand:world>=DOM_FLOOR[k];let hist=null;try{hist=histBest(s,k);}catch(e){console.warn('histBest',e);}
+    // 0.44: победа — господство в живом мире и больше лучшего показателя настоящей истории на эту дату
+    out[k]={mine,world,share,lead,ripe,hist,histOk:!hist||mine>hist.v,ok:ripe&&share>=DOM_SHARE&&(!lead||mine>lead.v)&&mine>0&&(!hist||mine>hist.v),leadShare:lead?(k==='brand'?lead.v:(world>0?lead.v/world:0)):0,histShare:hist?(k==='brand'?hist.v:(world>0?hist.v/world:0)):0};});
   return out;}
 // бот (или любая живая компания) держит господство: доля ≥ 50 % и больше всех, включая вас
 function domBots(s){const W=s.world;if(!W||!W.v||!s.bots)return null;const me=worldMine(s),L=worldCo(s),age=(mi(s)-(W.since||0))/12,f={scale:'hp',market:'rev',sport:'sport',innov:'firsts',capital:'val',brand:'aw'};
   const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,o)=>a+o.val,0)+me.val};
   for(const k of DOM_K){const key=f[k],world=k==='brand'?1:tot[k];if(k==='brand'?age<DOM_FLOOR.brand:world<DOM_FLOOR[k])continue;
-    for(const o of L){if(!o.bot)continue;const v=o[key],share=k==='brand'?v:v/Math.max(1e-9,world);if(share<DOM_SHARE||v<=me[key])continue;if(L.some(q=>q!==o&&q[key]>=v))continue;return {k,n:o.n,c:o.c,share};}}
+    let hist=null;try{hist=histBest(s,k);}catch(_){}
+    for(const o of L){if(!o.bot)continue;const v=o[key],share=k==='brand'?v:v/Math.max(1e-9,world);if(share<DOM_SHARE||v<=me[key])continue;if(L.some(q=>q!==o&&q[key]>=v))continue;if(hist&&v<=hist.v)continue;/* 0.44: и боту нужно превзойти историю */return {k,n:o.n,c:o.c,share};}}
   return null;}
 function domCheck(s){if(!s.world||!s.world.v||s.over)return;const T=domTable(s);if(!T)return;
   if(!s.dom){const k=DOM_K.find(q=>T[q].ok);if(k){s.dom={k,y:s.y,m:s.m,who:'you'};domWin(s,k,T[k]);return;}}
   if(!s.domLost&&!s.dom){const b=domBots(s);if(b){s.domLost={k:b.k,n:b.n,y:s.y,m:s.m};domLose(s,b);}}}
 function domFmt(k,v){if(k==='brand')return Math.round(v*100)+' %';if(k==='market'||k==='capital')return money(v);if(k==='scale')return fmtN(Math.round(v))+' л. с.';return fmtN(Math.round(v));}
-function domWin(s,k,T){const name=DOM_N[k];try{celebrate('Господство!',`${name}: ${Math.round(T.share*100)} % мира — «${s.company}»`,'🏛','legacy');}catch(_){}
-  try{trophyAdd(s,{kind:'record',title:`Господство: ${name.toLowerCase()}`,sub:`${dstr(s)} · ${Math.round(T.share*100)} % мира`,story:DOM_STORY[k](s,T),key:'dom|'+k,pt:'Господство!'});}catch(_){}
+function domWin(s,k,T){const name=DOM_N[k];if(T&&T.hist)T.histTxt=` Лучший показатель настоящей истории к этому дню — ${T.hist.n}: ${domFmt(k,T.hist.v)} — остался позади.`;try{celebrate('Господство!',`${name}: ${Math.round(T.share*100)} % мира — «${s.company}»`,'🏛','legacy');}catch(_){}
+  try{trophyAdd(s,{kind:'record',title:`Господство: ${name.toLowerCase()}`,sub:`${dstr(s)} · ${Math.round(T.share*100)} % мира`,story:DOM_STORY[k](s,T)+(T.histTxt||''),key:'dom|'+k,pt:'Господство!'});}catch(_){}
   s.legBonus=(s.legBonus||0)+100;s.rep=clamp(s.rep+10,0,100);
   pushEvent({own:1,kicker:'Экстренный выпуск',title:`«${s.company}» господствует: ${name.toLowerCase()}`,deck:`${Math.round(T.share*100)} % всего мира по этому показателю${T.lead?` — ближайший соперник, ${esc(T.lead.n)}, ${Math.round(T.leadShare*100)} %`:''}`,
-    text:DOM_STORY[k](s,T)+`\nКак в «Цивилизации», это победа: вы заняли доминирующее положение в одной из шести категорий наследия, считая с первого дня компании. Можно играть дальше — до 1930 года и других категорий — или подвести итог эпохи.`,
+    text:DOM_STORY[k](s,T)+(T.histTxt||'')+`\nКак в «Цивилизации», это победа: вы заняли доминирующее положение в одной из шести категорий наследия, считая с первого дня компании. Можно играть дальше — до 1930 года и других категорий — или подвести итог эпохи.`,
     choices:[['Экран победы','domScreen'],['Играть дальше','ok']]},true);}
 function domLose(s,b){const name=DOM_N[b.k];
   pushEvent({own:1,noArt:1,kicker:'Экстренный выпуск',title:`${esc(b.n)} господствует: ${name.toLowerCase()}`,deck:`${Math.round(b.share*100)} % мира по этому показателю — больше, чем у кого бы то ни было, включая «${s.company}»`,
@@ -153,14 +189,15 @@ function domCard(s){const T=domTable(s);if(!T)return `<section class="card" id="
   const best=DOM_K.slice().sort((a,b)=>T[b].share-T[a].share)[0];
   const rows=DOM_K.map(k=>{const q=T[k],pct=Math.round(q.share*1000)/10,lp=Math.round(q.leadShare*1000)/10,won=s.dom&&s.dom.k===k;
     return `<div class="dom-row ${won?'won':''}"><div class="row"><span>${DOM_N[k]}${won?' <span class="pill good">господство</span>':''}</span><b class="num">${pct.toFixed(pct<10?1:0).replace('.',',')} %</b></div>
-      <div class="bar dom-bar"><i style="width:${Math.min(100,q.share/DOM_SHARE*100)}%"></i>${q.lead?`<u style="left:${Math.min(100,q.leadShare/DOM_SHARE*100)}%" title="${esc(q.lead.n)}"></u>`:''}</div>
+      <div class="bar dom-bar"><i style="width:${Math.min(100,q.share/DOM_SHARE*100)}%"></i>${q.lead?`<u style="left:${Math.min(100,q.leadShare/DOM_SHARE*100)}%" title="${esc(q.lead.n)}"></u>`:''}${q.hist?`<u class="hist" style="left:${Math.min(100,q.histShare/DOM_SHARE*100)}%" title="в истории: ${esc(q.hist.n)}"></u>`:''}</div>
       <p class="small muted">${q.lead?`лидер — ${esc(q.lead.n)}${q.lead.bot?' <span class="pill muted">живой</span>':''}: ${lp.toFixed(lp<10?1:0).replace('.',',')} %`:'соперников нет'} · ${k==='brand'?'':`вы: ${domFmt(k,q.mine)} · `}мир: ${k==='brand'?'узнаваемость с весом рынков':domFmt(k,q.world)}${q.ripe?'':' · <span class="warn">мир ещё мал</span>'}</p>
+      ${q.hist?`<p class="small ${q.histOk?'good':'muted'}">в истории к этой дате лучший — ${esc(q.hist.n)}: ${domFmt(k,q.hist.v)}${q.histOk?' — вы уже выше':' — нужно больше'}</p>`:''}
       <p class="small muted dom-how">${DOM_HOW[k]}</p></div>`;}).join('');
   return `<section class="card" id="sec-dom"><div class="row"><h2>Господство</h2><span class="pill ${s.dom?'good':'muted'}">${s.dom?DOM_N[s.dom.k]+' '+s.dom.y:'цель — 50 %'}</span></div>
-    <p class="small muted" style="margin-top:4px">Как в «Цивилизации»: половина мира по любой из шести категорий — с первого дня компании, считая всех: марки по истории, живых соперников и авиазаводы. Ближе всего — ${DOM_N[best].toLowerCase()}.</p>
+    <p class="small muted" style="margin-top:4px">Как в «Цивилизации»: половина мира по любой из шести категорий — с первого дня компании, считая всех: марки по истории, живых соперников и авиазаводы, — и больше, чем лучший в настоящей истории к этой дате. Ближе всего — ${DOM_N[best].toLowerCase()}.</p>
     <div style="margin-top:8px">${rows}</div>${s.domLost?`<p class="small bad" style="margin-top:6px">${esc(s.domLost.n)} держит господство: ${DOM_N[s.domLost.k].toLowerCase()} (${MONTHS[s.domLost.m]} ${s.domLost.y}).</p>`:''}</section>`;}
 function domScreenHTML(s){const T=domTable(s),t=legacyTable(s),k=s.dom?s.dom.k:(s.domLost?s.domLost.k:null),win=!!s.dom;
   const head=win?`<h2>Победа: ${DOM_N[k].toLowerCase()}</h2><p class="small">${MONTHS[s.dom.m]} ${s.dom.y} · «${esc(s.company)}» — ${Math.round(T[k].share*100)} % мира</p>`:s.domLost?`<h2>${esc(s.domLost.n)} господствует</h2><p class="small">${DOM_N[k]} · ${MONTHS[s.domLost.m]} ${s.domLost.y}</p>`:'<h2>Господство</h2>';
-  return `<div class="dom-screen">${head}${T?DOM_K.map(q=>`<div class="row small"><span>${DOM_N[q]}</span><span class="num">${Math.round(T[q].share*100)} %${T[q].lead?` <span class="muted">· ${esc(T[q].lead.n)} ${Math.round(T[q].leadShare*100)} %</span>`:''}</span></div>`).join(''):''}
+  return `<div class="dom-screen">${head}${T?DOM_K.map(q=>`<div class="row small"><span>${DOM_N[q]}</span><span class="num">${Math.round(T[q].share*100)} %${T[q].lead?` <span class="muted">· ${esc(T[q].lead.n)} ${Math.round(T[q].leadShare*100)} %</span>`:''}${T[q].hist?` <span class="muted">· история: ${esc(T[q].hist.n)} ${domFmt(q,T[q].hist.v)}</span>`:''}</span></div>`).join(''):''}
     <p class="small muted" style="margin-top:8px">Наследие: ${t.place}-е место среди компаний эпохи, ${Math.round(t.me.total)} очков${win?' (+100 за господство)':''}.</p>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" data-act="close">Играть дальше</button><button class="btn" data-act="final">Сравнить с историей</button></div></div>`;}

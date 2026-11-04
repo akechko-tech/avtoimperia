@@ -279,7 +279,7 @@ function sharesData(s,sel){const cs=Object.keys(COUNTRIES),full=Object.keys(s.mP
   const mine=c=>full?((s.cPrev||{})[c]||0):((s.cY||{})[c]||0),mkt=c=>full?((s.mPrev||{})[c]||0):((s.mY||{})[c]||0);
   const one=c=>{const L=(COMPS[c]||[]).map((cp,i)=>({cp,i})).filter(o=>!pkIs(o.cp,s)&&!acqHas(s,c,o.i)).map(o=>{const st=(s.comps[c]||[])[o.i]||{},h=subOf(s,c,o.i);return {n:compName(o.cp,s),v:val(st),color:st.color||'#888',c,sub:h?h.st:0,bn:o.cp.n};}).filter(r=>r.v>0.5);
     // 0.41: живые соперники, пришедшие на этот рынок сверх истории
-    if(s.bots&&!s.botsOff)for(const n in s.bots){const B=s.bots[n];const v=full?((B.xp||{})[c]||0):((B.xy||{})[c]||0);if(v>0.5&&!(COMPS[c]||[]).some(cp=>!cp.imp&&coKey(cp.n)===B.n))L.push({n:B.n,v,color:'#b08d57',c,bn:B.n,xp:1});}
+    if(s.bots&&botsOn(s))for(const n in s.bots){const B=s.bots[n];const v=full?((B.xp||{})[c]||0):((B.xy||{})[c]||0);if(v>0.5&&!(COMPS[c]||[]).some(cp=>!cp.imp&&coKey(cp.n)===B.n))L.push({n:B.n,v,color:'#b08d57',c,bn:B.n,xp:1});}
     L.push({n:s.company,v:mine(c),you:1,c});const tot=Math.max(mkt(c),L.reduce((a,r)=>a+r.v,0)),sum=L.reduce((a,r)=>a+r.v,0);if(tot-sum>0.5)L.push({n:'Мелкие марки и импорт',v:tot-sum,rest:1,c});return {L:L.sort((a,b)=>b.v-a.v),tot};};
   if(sel!=='world')return Object.assign(one(sel),{full});
   const M=new Map();let tot=0;cs.forEach(c=>{const D=one(c);tot+=D.tot;D.L.forEach(r=>{const k=r.you?'__you':r.rest?'__rest':(WORLD_NAME[r.n]||r.n);let o=M.get(k);if(!o){o={n:r.you?s.company:r.rest?'Мелкие марки и импорт':(WORLD_NAME[r.n]||r.n),v:0,you:r.you,rest:r.rest,color:r.color,cs:[],sub:r.sub||0};M.set(k,o);}o.v+=r.v;if(r.v>0.5&&!o.cs.includes(c))o.cs.push(c);});});

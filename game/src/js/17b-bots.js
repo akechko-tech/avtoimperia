@@ -20,7 +20,7 @@ const BOT_ORDER={scale:['cap','model','export','rd','race'],market:['model','exp
 const BOT_IN={de:'в Германии',fr:'во Франции',uk:'в Британии',us:'в Америке',it:'в Италии',ru:'в России'};
 const SEG_LOC={people:'в народном классе',middle:'в среднем классе',lux:'в классе люкс',sport:'в спортивном классе',truck:'в грузовиках'},SEG_GEN={people:'народного класса',middle:'среднего класса',lux:'класса люкс',sport:'спортивного класса',truck:'— грузовик'};
 function botDif(){const D=DIF();return D.bot||{iq:0.7,bonus:1};}
-function botsOn(s){if(typeof BOTS_OFF!=='undefined'&&BOTS_OFF)return false;/* прогоны калибровки — без ботов */return !!(s&&!s.botsOff&&s.mode!=='racer');}
+function botsOn(s){if(typeof BOTS_OFF!=='undefined'&&BOTS_OFF)return false;/* прогоны калибровки — без ботов */return !!(s&&s.mode!=='racer');}/* 0.44: соперники всегда живые (отзыв); s.botsOff из 0.41–0.43 больше не учитывается */
 // бот по имени марки (и по купленным им маркам — их продажи идут в его зачёт)
 function botByBrand(s,n){if(!s||!s.bots)return null;const k=coKey(n);if(s.bots[k]&&!s.bots[k].dead)return s.bots[k];const o=s.botAcq&&s.botAcq[n];return o&&s.bots[o]&&!s.bots[o].dead?s.bots[o]:null;}
 function botCp(s,B){const L=COMPS[B.c]||[];for(let i=0;i<L.length;i++)if(L[i].n===B.n)return {cp:L[i],i};return null;}

@@ -37,10 +37,10 @@ let bad=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)bad++;};
 }
 /* ---------- живые соперники ---------- */
 {BOTS_OFF=false;const seed=k=>{let a=k;Math.random=()=>{a=(a*16807)%2147483647;return a/2147483647;};};
-  const run=(diff,years,off)=>{seed(11);newGame('custom','fr','Проба',diff,'Ласточка');G.helper={on:1};if(off)G.botsOff=1;const mk={};
+  const run=(diff,years,off)=>{seed(11);newGame('custom','fr','Проба',diff,'Ласточка');G.helper={on:1};BOTS_OFF=!!off;/* 0.44: «без ботов» — только прогон калибровки (BOTS_OFF), в игре соперники всегда живые */const mk={};
     for(let k=0;k<years*12;k++){while(G.pending.length)resolve(G.pending[0].choices[0][1]);if(G.m%3===0&&rdActive(G).length<rdSlots(G)){const pj=suggestProject(G);if(pj&&G.cash>rdCost(pj,G)*3)rdBegin(G,pj);}
       step();if(G.m===11){mk[G.y]={};for(const c in COUNTRIES)mk[G.y][c]=G.mY[c]||0;}if(G.over){G.over=false;G.cash=Math.max(G.cash,0);}}
-    return {s:G,mk};};
+    BOTS_OFF=false;return {s:G,mk};};
   const A=run('normal',35,false),s=A.s,B=s.bots;
   ok(B&&Object.keys(B).length===12,'35 лет на «Норме»: двенадцать живых марок созданы');
   const alive=Object.values(B).filter(b=>!b.dead);ok(alive.length>=8&&alive.every(b=>(b.log||[]).length>0),'живых к 1930 году '+alive.length+', у каждой есть ходы в журнале');
@@ -57,7 +57,7 @@ let bad=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)bad++;};
   // сохранение и загрузка
   {const raw=JSON.stringify(s);const s2=JSON.parse(raw);G=s2;let err=null;try{for(let k=0;k<3;k++){while(G.pending.length)resolve(G.pending[0].choices[0][1]);step();}}catch(e){err=e;}ok(!err&&G.bots&&Object.keys(G.bots).length===12,'после сохранения и загрузки боты продолжают играть'+(err?' | '+err.message:''));}
   // без ботов — как раньше
-  const C=run('normal',12,true);ok(!C.s.bots&&C.s.botsOff===1,'партия «по истории»: ботов нет');
+  const C=run('normal',12,true);ok(!C.s.bots,'прогон без ботов (BOTS_OFF, как калибровка): ботов нет');
   const mkA=A.mk[1906],mkC=C.mk[1906];let dev=0;for(const c in mkA)dev=Math.max(dev,Math.abs(mkA[c]-mkC[c])/Math.max(1,mkC[c]));ok(dev<=0.25,'размер рынков стран в 1906 году с ботами и без — в пределах ±25 % (максимум '+Math.round(dev*100)+' %)');
   // сложность: на «Историке» боты сильнее, чем на «Юном»
   const K=run('kids',22,false),H=run('hist',22,false);const fh=X=>{const o=worldCo(X.s).find(q=>q.n==='Ford');return o?o.hp/Math.max(1,X.s.world.hp):0;};

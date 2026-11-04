@@ -19,18 +19,15 @@ with sync_playwright() as p:
     pg.goto('file:///home/claude/avtoimperia/docs/index.html'); pg.wait_for_timeout(1500)
     js = lambda s: pg.evaluate(s)
     js("demoStop();hideMainMenu();")
-    # 1) новая игра: переключатель «Соперники»
+    # 1) новая игра: соперники всегда живые (0.44), переключателя нет
     js("openNewGame()"); pg.wait_for_timeout(300)
     t = js("document.getElementById('sheetBody')?document.getElementById('sheetBody').textContent:sb.textContent")
-    ok('Соперники' in t and 'Живые' in t and 'По истории' in t and js("!!document.querySelector('[data-act=ngbots][data-v=live].on')"), 'в новой игре — выбор «Соперники: Живые / По истории», живые по умолчанию')
+    ok('Соперники живые' in t and not js("!!document.querySelector('[data-act=ngbots]')"), 'в новой игре — «Соперники живые: двенадцать марок играют сами», переключателя «по истории» нет')
     pg.screenshot(path=out + 'b1_newgame.png', full_page=True)
-    js("document.querySelector('[data-act=ngbots][data-v=hist]').click()"); pg.wait_for_timeout(300)
-    ok(js("!!document.querySelector('[data-act=ngbots][data-v=hist].on')"), 'переключается на «По истории»')
     js("document.querySelector('[data-act=startgame]').click()"); pg.wait_for_timeout(800)
     js("try{sagaStop();}catch(_){};for(let i=0;i<8;i++)try{closePaper();}catch(_){};G.pending=[];")
-    ok(js("G.botsOff===1"), 'партия «по истории»: G.botsOff=1')
-    js("G.pending=[];doStep();"); pg.wait_for_timeout(500)
-    ok(js("!G.bots"), 'после хода ботов нет (как в прежних версиях)')
+    js("G.botsOff=1;G.pending=[];doStep();"); pg.wait_for_timeout(500)
+    ok(js("!!G.bots&&botsOn(G)"), 'даже со старым флагом «по истории» боты играют')
     # 2) живые: новая партия, 14 месяцев
     js("newGame('custom','fr','Проба','normal','Ласточка');G.pending=[];try{sagaStop();}catch(_){};")
     for i in range(14):
