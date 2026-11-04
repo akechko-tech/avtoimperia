@@ -108,13 +108,13 @@ function showRun(s,sh,e){e.done=1;const H=SHOW_HOST[sh.h],c=H.c,home=c===s.count
   e.res={orders,dl,rep,medal};
   const rv=showRivals(s,c);
   const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
-  pushEvent({kicker:'Выставка',reel:rid,title:showName(sh),deck:`Стенд «${s.company}»: ${[orders?fmtN(orders)+' заказов':'',dl?'+'+dl+' дилеров':'',medal?{gold:'золото',silver:'серебро',bronze:'бронза'}[medal]:'',aw.length?aw.length+' '+plural(aw.length,'награда','награды','наград'):'','репутация +'+rep].filter(Boolean).join(' · ')}`,cel:medal||aw.length?[medal?'Медаль выставки!':aw[0].title,`«${md.name}» · ${showName(sh)}`,'🥇','medal']:null,img:sh.img&&IMG[sh.img]?sh.img:'',imgCap:sh.img?`${sh.venue} — ${SHOW_HOST[sh.h].name}`:'',carId:md.id,
+  pushEvent({kicker:'Выставка',reel:rid,title:showName(sh),deck:`Стенд «${s.company}»: ${[orders?fmtN(orders)+' заказов':'',dl?'+'+dl+' дилеров':'',medal?{gold:'золото',silver:'серебро',bronze:'бронза'}[medal]:'',aw.length?aw.length+' '+plural(aw.length,'награда','награды','наград'):'','репутация +'+rep].filter(Boolean).join(' · ')}`,cel:medal||aw.length?[medal?'Медаль выставки!':aw[0].title,`«${md.name}» · ${showName(sh)}`,'🥇','medal',(()=>{try{const a=showAwardOf(sh.h,sh.y,s);return a?{award:a,place:medal==='silver'?2:medal==='bronze'?3:1}:null;}catch(_){return null;}})()]:null,img:sh.img&&IMG[sh.img]?sh.img:'',imgCap:sh.img?`${sh.venue} — ${SHOW_HOST[sh.h].name}`:'',carId:md.id,
     text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}${big?'Большой':'Малый'} стенд «${s.company}» — «${md.name}». ${out.join(' ')}\n${rv.length?`Рядом стенды ${rv.map(n=>'«'+n+'»').join(', ')}. `:''}Интерес покупателей к марке продержится несколько месяцев${home?'':' — и не только в этой стране'}.`},true);
   addLog(`${showName(sh)}: ${out.join(' ')}`,'good');}
 // награды выставки: вероятность — от машины, стенда и имени марки; у каждой своя история
 function showAwards(s,sh,md,big,S,hadMedal){const H=SHOW_HOST[sh.h],y=sh.y,p=parts(md),st=carBase(md,0,y),out=[],R=Math.random,major=H.w>=2.5;
   const add=(k,title,txt,rep,u)=>{out.push({k,title,txt,rep,u});s.awards=s.awards||[];s.awards.push({y,k,title,show:showName(sh),md:md.name});
-    try{trophyAdd(s,{kind:'medal',title:`${title}: ${showName(sh)}`,sub:`«${md.name}»`,story:txt,key:'aw|'+k+'|'+sh.id,carId:md.id,pt:title});}catch(_){}};
+    try{trophyAdd(s,{kind:'medal',title:`${title}: ${showName(sh)}`,sub:`«${md.name}»`,story:txt,key:'aw|'+k+'|'+sh.id,carId:md.id,pt:title,sk:sh.h,sy:sh.y});}catch(_){}};
   // лучшая машина выставки (если медаль жюри уже есть — это она)
   if(!hadMedal&&!sh.ver){const pb=clamp((S-0.95)*1.8+(big?0.12:0)+(s.rep-50)/250,0.02,0.7)*(major?0.8:1);if(R()<pb)add('best',major?'Приз прессы «Лучшая машина салона»':'Приз «Лучшая машина выставки»',`Журналисты и жюри назвали «${md.name}» лучшей машиной: ${showName(sh)}.`,2.5,0.05);}
   // техническая новинка: свежие детали, новинки оснащения, первенства

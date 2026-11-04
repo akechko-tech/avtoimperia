@@ -1056,3 +1056,10 @@ body.flying{overflow:hidden}
 .aw-card .aw-ini{color:inherit;background:rgba(0,0,0,.06)}
 .aw-card p.small{margin-top:4px}
 .tro-award{display:flex;justify-content:center;line-height:0;margin-top:6px}
+
+.dom-how{opacity:.7;font-size:11px;margin-top:1px}
+
+/* 0.42: энциклопедия в газете */
+.p-wiki{margin:10px 0 4px;padding:8px 10px;border:1px solid rgba(60,40,20,.35);border-left:4px solid rgba(60,40,20,.5);font-family:"Playfair Display",Georgia,serif;font-size:13.5px;line-height:1.4;color:#2a2217;background:rgba(255,250,235,.55)}
+.p-wiki b{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;color:#4a3b25}
+.p-wiki .p-wiki-a{display:block;margin-top:5px;font-style:italic;font-size:12px;color:#5a4423}

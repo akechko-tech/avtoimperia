@@ -108,7 +108,8 @@ function trophyHTML(t){const s=G,md=t.carId!=null?s.models.find(m=>m.id===t.carI
   const lr=t.rk&&typeof lastRace!=='undefined'&&lastRace&&lastRace.rc&&lastRace.rc.key===t.rk;
   // 0.41: у кубка гонки — настоящий приз серии (рисунок, кто вручал, музыка церемонии)
   const AW=(()=>{try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk);return rc?[awardOf(rc,s),t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)]:null;}
-    if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak);return ev?[airAwardOf(ev,s),t.place||1]:null;}}catch(e){console.warn('award',e);}return null;})();
+    if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak);return ev?[airAwardOf(ev,s),t.place||1]:null;}
+    if(t.sk){const a=showAwardOf(t.sk,t.sy||t.y,s);return a?[a,1]:null;}}catch(e){console.warn('award',e);}return null;})();
   return `<div class="row"><span class="label">${esc(TROPHY_KIND[t.kind]||'Трофей')} · ${MONTHS_N[t.m]||''} ${t.y}</span>${X}</div>
     ${AW&&AW[0]?`<div class="tro-award">${awardSVG(AW[0],{place:AW[1],w:170,y:t.y})}</div>`:`<div class="tro-big">${TROPHY_ICON[t.kind]||'🏆'}</div>`}<h2 style="text-align:center">${esc(t.title)}</h2>${t.sub?`<p class="small muted" style="text-align:center;margin-top:4px">${esc(t.sub)}</p>`:''}
     ${AW&&AW[0]?awardCard(AW[0],AW[1],{y:t.y}).replace('<div class="aw-pic">','<div class="aw-pic" hidden>'):''}
@@ -116,7 +117,7 @@ function trophyHTML(t){const s=G,md=t.carId!=null?s.models.find(m=>m.id===t.carI
     <div class="stack" style="margin-top:14px">${reel?`<button class="btn primary block" data-act="reel" data-k="${esc(reel)}">▶ Пересмотреть: кинохроника</button>`:''}${pi>=0?`<button class="btn ${reel?'':'primary '}block" data-act="reopenPaper" data-k="${pi}">📰 Пересмотреть: газета того дня</button>`:''}${lr?'<button class="btn block" data-act="troRace">🏁 Итоги гонки</button>':''}<button class="btn block" data-act="close">Закрыть</button></div>`;}
 function trophyReplay(i){const t=(G.trophies||[])[i];if(!t)return;
   // 0.41: повтор кубка гонки — с тем же призом и музыкой церемонии
-  let o=null;try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk),a=rc&&awardOf(rc,G);if(a)o={award:a,place:t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)};}else if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak),a=ev&&airAwardOf(ev,G);if(a)o={award:a,place:t.place||1};}}catch(_){}
+  let o=null;try{if(t.rk&&(t.kind==='cup'||t.kind==='medal')){const rc=raceByKey(t.rk),a=rc&&awardOf(rc,G);if(a)o={award:a,place:t.kind==='cup'?1:(+(t.title.match(/^(\d)-е/)||[])[1]||2)};}else if(t.ak){const ev=AIR_EV.find(e=>e.key===t.ak),a=ev&&airAwardOf(ev,G);if(a)o={award:a,place:t.place||1};}else if(t.sk){const a=showAwardOf(t.sk,t.sy||t.y,G);if(a)o={award:a,place:1};}}catch(_){}
   try{celebrate(t.title,t.sub||'',TROPHY_ICON[t.kind]||'🏆',null,o);}catch(_){}openSheet(trophyHTML(t));}
 function trophyCabinetCard(s){const T=(s.trophies||[]).slice();if(!T.length)return `<section class="card trocab" id="sec-trophies"><h2>🏆 Кабинет трофеев</h2><p class="small muted" style="margin-top:6px">Пока пусто. Кубки гонок, медали, грамоты за выигранные пари, титулы года, рекорды продаж и газетные вырезки появятся здесь — с датой, снимком и историей.</p></section>`;
   const by={};T.forEach((t,i)=>{(by[t.y]=by[t.y]||[]).push([t,i]);});

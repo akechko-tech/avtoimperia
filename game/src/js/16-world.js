@@ -32,9 +32,14 @@ function coKey(n){if(!n)return '';let s=String(n).replace(/^«|»$/g,'').trim();
   const m=low.match(/^([a-zа-яё&.\- ]+?)(?:\s+[a-z]{0,2}\d|\s+\(|\s+[ivx]+$|$)/i);if(m){const b=m[1].trim();const k=CO_ALIAS[b];if(k)return k;if(b.length>=3&&b!==low)return s.slice(0,b.length).replace(/\s+$/,'');}
   return s;}
 const RACE_BY_KEY={};
+// победитель гонки по истории (для гонок до окна партии): известный победитель (rc.win) или сильнейшая команда года с бонусом хозяев
+function histRaceWinner(rc){const teams=RACE_TEAMS.filter(t=>t.from<=rc.y&&t.to>=rc.y);const hw=histWinnerTeam(rc,teams);if(hw)return hw.n;let best=null,bs=0;
+  teams.forEach(t=>{const b=(t.boost&&t.boost[rc.y])||1,v=t.str*b*(t.c===rc.c?1.08:1);if(v>bs){bs=v;best=t;}});return best?best.n:'';}
+// победитель зачёта мотоциклов по истории: сильнейшая мотомарка страны гонки (motoField — хозяева первыми), если в гонке был класс мотоциклов
+function histMotoWinner(rc,s){try{if(!raceMoto(rc))return null;const F=motoField(rc,null);if(!F.length)return null;return F[(rc.y+rc.m)%Math.min(2,F.length)].name;}catch(_){return null;}}
 function raceByKey(k){if(!RACE_BY_KEY.__n||RACE_BY_KEY.__n!==RACES.length){for(const q in RACE_BY_KEY)delete RACE_BY_KEY[q];RACES.forEach(r=>RACE_BY_KEY[r.key]=r);RACE_BY_KEY.__n=RACES.length;}return RACE_BY_KEY[k];}
 /* ---------- накопители ---------- */
-function worldInit(s){return s.world={v:1,since:mi(s),hp:0,rev:0,sport:0,firsts:0,co:{},cu:{},sd:{},my:{hp:0,rev:0,hpY:0,hpPeak:0,cu:{}},fh:{}};}
+function worldInit(s){return s.world={v:2,since:mi(s),hp:0,rev:0,sport:0,firsts:0,co:{},cu:{},sd:{},my:{hp:0,rev:0,hpY:0,hpPeak:0,cu:{}},fh:{}};}
 function wco(W,n,c){let o=W.co[n];if(!o)o=W.co[n]={hp:0,rev:0,sport:0,firsts:0,r12:0,cu:{},c:c||''};else if(c&&!o.c)o.c=c;return o;}
 function wAdd(W,n,c,country,hp,rev,units){const o=wco(W,n,c);o.hp+=hp;o.rev+=rev;o.r12+=rev;W.hp+=hp;W.rev+=rev;
   if(units&&country){o.cu[country]=(o.cu[country]||0)+units;W.cu[country]=(W.cu[country]||0)+units;}}
@@ -67,14 +72,28 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
   if(typeof AIR_MKT!=='undefined'&&t>=1908)for(const c in AIR_MKT){for(const role of ['sport','train','recon','fight','bomb','sea','mail','pax']){const mk=airMktRole(c,role,t)/12;if(mk<0.05)continue;
       const L=airComps(c,role,t,s),sw=L.reduce((a,o)=>a+o.w,0);if(!sw)continue;const h=hpAir(role,t);let pr=2500;try{pr=airRefPrice(role,t);}catch(_){pr=1500+h*25;}
       L.forEach(o=>wAdd(W,coKey(o.x.n),c,'',mk*o.w/sw*h,mk*o.w/sw*pr,0));}}
-  // ---- гонки: кто выиграл (43-season.js: s.cres) — очки компании-победителю
-  for(const k in (s.cres||{})){if(W.sd[k])continue;const cr=s.cres[k];if(!cr||cr.x){W.sd[k]=1;continue;}const rc=raceByKey(k);if(!rc){W.sd[k]=1;continue;}
-    const pts=rc.major?RACE_W.major:RACE_W.normal;W.sd[k]=1;if(!cr.w)continue;W.sport+=pts;
-    if(cr.me===1||cr.w===s.company){W.my.sport=(W.my.sport||0)+pts;}else wco(W,coKey(cr.w),cr.c||'').sport+=pts;}
-  // ---- небо: ваши победы и рекорды — как в наследии (airSportYears); чужие — по истории состязаний, когда год прошёл
+  // ---- гонки: все гонки эпохи с начала партии (s.startY), каждая один раз (W.sd). Отзыв 0.41: «победил 62 из 62 — как они считали?»:
+  // раньше считались только итоги последних двух лет (s.cres), а победа в зачёте мотоциклов шла за победу в гонке. Теперь: в окне партии —
+  // по итогам (s.cres, ждём их два месяца), раньше — по истории (histRaceWinner); зачёт мотоциклов — треть очков (большая 2, обычная 1)
+  // тому, кто выиграл класс (мотомарка по истории или вы); ваши прежние победы — из журнала гонок (s.raceLog)
+  if(W.v<2){W.v=2;W.sport=0;W.my.sport=0;W.my.air=0;for(const n in W.co)W.co[n].sport=0;for(const k in W.sd)if(!/^part:|^tech:|^atech:|^air:/.test(k))delete W.sd[k];}
+  {const y0=s.startY||1895,now=mi(s),RL=s.raceLog||[];let rlIdx=null;const rl=()=>{if(!rlIdx){rlIdx={};RL.forEach(e=>{if(e&&e.key)(rlIdx[e.key]=rlIdx[e.key]||[]).push(e);});}return rlIdx;};
+    RACES.forEach(rc=>{const k=rc.key;if(W.sd[k])return;const t0=(rc.y-1895)*12+rc.m;if(rc.y<y0){W.sd[k]=1;return;}if(t0>=now)return;const cr=s.cres&&s.cres[k];
+      if(!cr&&now-t0<=2)return;/* итоги ещё не подведены (seasonTick идёт после) — подождём */W.sd[k]=1;if(cr&&cr.x)return;/* отменена войной */
+      const pts=rc.major?RACE_W.major:RACE_W.normal,mp=rc.major?2:1,L=rl()[k]||[],myCar=L.some(e=>!e.cls&&e.place===1),myMoto=L.some(e=>e.cls==='moto'&&e.place===1);
+      let carW=null,motoW=null;
+      if(cr){const mo=cr.mo!=null?cr.mo:(!L.some(e=>!e.cls)&&L.some(e=>e.cls==='moto')&&cr.w===s.company?1:0);/* старые записи: «вы» без машин = зачёт мотоциклов */
+        if(!mo)carW=(cr.w===s.company||myCar)?'me':(cr.w||null);
+        motoW=cr.mw?(cr.mw===s.company?'me':cr.mw):myMoto?'me':(mo?(cr.w===s.company?'me':cr.w||null):histMotoWinner(rc,s));}
+      else{carW=myCar?'me':histRaceWinner(rc);motoW=myMoto?'me':histMotoWinner(rc,s);}
+      if(carW){W.sport+=pts;if(carW==='me')W.my.sport=(W.my.sport||0)+pts;else wco(W,coKey(carW),(cr&&cr.c)||rc.c||'').sport+=pts;}
+      if(motoW){W.sport+=mp;if(motoW==='me')W.my.sport=(W.my.sport||0)+mp;else wco(W,coKey(motoW),'').sport+=mp;}});}
+  // ---- небо: ваши победы и рекорды — как в наследии (airSportYears: событие 6/2, рекорд 4); чужие — по истории состязаний и рекордов, когда год прошёл
   try{const mine=airSportYears(s).reduce((a,[y2,v])=>a+v,0);W.my.air=mine;}catch(_){}
   if(typeof AIR_EV!=='undefined'){const A=s.air;AIR_EV.forEach(ev=>{const k='air|'+ev.key;if(W.sd[k]||ev.y>s.y-(ev.m!==undefined&&ev.m<=s.m?0:1))return;W.sd[k]=1;const pts=ev.open||ev.prize>=10000?RACE_W.major:RACE_W.normal;W.sport+=pts;
-      const mineWin=A&&A.ev&&A.ev[ev.key]&&A.ev[ev.key].place===1;if(!mineWin&&ev.h&&ev.h[1])wco(W,coKey(ev.h[1]),ev.c||'').sport+=pts;});}
+      const mineWin=A&&A.ev&&A.ev[ev.key]&&A.ev[ev.key].place===1;if(!mineWin&&ev.h&&ev.h[1])wco(W,coKey(ev.h[1]),ev.c||'').sport+=pts;});
+    if(typeof AIR_REC!=='undefined')for(const kind in AIR_REC)AIR_REC[kind].forEach((r,i)=>{const k='arec|'+kind+'|'+i;if(W.sd[k]||r[0]>y)return;W.sd[k]=1;W.sport+=4;const n=coKey(String(r[3]||'').split(/[ -]/)[0]);if(n&&n!==coKey(s.company))wco(W,n,'').sport+=4;});
+    if(A&&A.rec)for(const kind in A.rec){const k='myrec|'+kind;if(!W.sd[k]){W.sd[k]=1;W.sport+=4;}}}
   // ---- первенства по истории: кто и когда впервые (PART_HIST, TECH) — считаются, когда год настал и первенство не ушло вам (или боту)
   {const taken=s.firsts||{},bf=s.botFirsts||{};const put=(key,hy,who)=>{const b=bf[key];if(b){hy=Math.min(hy,b.y);who=b.n;}/* 0.41: бот опередил историю */if(W.fh[key]||y<hy)return;W.fh[key]=1;if(taken[key])return;W.firsts++;const n=b?b.n:coKey(String(who).split(/,| и /)[0].replace(/\(.*$/,'').trim());if(n)wco(W,n,'').firsts++;};
     for(const id in PART_HIST)put('part:'+id,PART_HIST[id][0],PART_HIST[id][1]);
@@ -126,12 +145,17 @@ const DOM_STORY={
   capital:(s,T)=>`Стоимость «${s.company}» — ${money(T.mine)} — больше, чем все остальные автомобильные, мотоциклетные и авиационные компании мира вместе взятые (${money(T.world-T.mine)}).`,
   brand:(s,T)=>`Вашу марку знает больше половины покупателей мира — узнаваемость ${Math.round(T.mine*100)} % с весом рынков, — и ни одну другую не знают лучше.`};
 /* ---------- карточка «Господство» (вкладка «Империя») и экран итога ---------- */
+// как считается каждая категория — одной строкой под шкалой (отзыв 0.41: «62 из 62 — как они считали?»)
+const DOM_HOW={scale:'лошадиные силы всех проданных машин, мотоциклов и аэропланов мира',market:'выручка всех марок мира в долларах',
+  sport:'победы с начала партии во всех гонках эпохи: большая гонка 6 очков, обычная 2, зачёт мотоциклов 2/1, перелёт или гонка в небе 6/2, рекорд 4',
+  innov:'первенства: кто первым в мире сделал деталь или технологию (история, вы, живые соперники)',capital:'стоимость компаний: годовая выручка × 1,5; ваша — оценка банкиров',brand:'узнаваемость по странам с весом рынков (√размера)'};
 function domCard(s){const T=domTable(s);if(!T)return `<section class="card" id="sec-dom"><div class="row"><h2>Господство</h2></div><p class="small muted" style="margin-top:4px">Мировой итог копится с первого хода: лошадиные силы, доллары, победы, первенства, капитал, узнаваемость. Господство — половина мира по любой из шести категорий и больше любого соперника.</p></section>`;
   const best=DOM_K.slice().sort((a,b)=>T[b].share-T[a].share)[0];
   const rows=DOM_K.map(k=>{const q=T[k],pct=Math.round(q.share*1000)/10,lp=Math.round(q.leadShare*1000)/10,won=s.dom&&s.dom.k===k;
     return `<div class="dom-row ${won?'won':''}"><div class="row"><span>${DOM_N[k]}${won?' <span class="pill good">господство</span>':''}</span><b class="num">${pct.toFixed(pct<10?1:0).replace('.',',')} %</b></div>
       <div class="bar dom-bar"><i style="width:${Math.min(100,q.share/DOM_SHARE*100)}%"></i>${q.lead?`<u style="left:${Math.min(100,q.leadShare/DOM_SHARE*100)}%" title="${esc(q.lead.n)}"></u>`:''}</div>
-      <p class="small muted">${q.lead?`лидер — ${esc(q.lead.n)}${q.lead.bot?' <span class="pill muted">живой</span>':''}: ${lp.toFixed(lp<10?1:0).replace('.',',')} %`:'соперников нет'} · мир: ${k==='brand'?'узнаваемость с весом рынков':domFmt(k,q.world)}${q.ripe?'':' · <span class="warn">мир ещё мал</span>'}</p></div>`;}).join('');
+      <p class="small muted">${q.lead?`лидер — ${esc(q.lead.n)}${q.lead.bot?' <span class="pill muted">живой</span>':''}: ${lp.toFixed(lp<10?1:0).replace('.',',')} %`:'соперников нет'} · ${k==='brand'?'':`вы: ${domFmt(k,q.mine)} · `}мир: ${k==='brand'?'узнаваемость с весом рынков':domFmt(k,q.world)}${q.ripe?'':' · <span class="warn">мир ещё мал</span>'}</p>
+      <p class="small muted dom-how">${DOM_HOW[k]}</p></div>`;}).join('');
   return `<section class="card" id="sec-dom"><div class="row"><h2>Господство</h2><span class="pill ${s.dom?'good':'muted'}">${s.dom?DOM_N[s.dom.k]+' '+s.dom.y:'цель — 50 %'}</span></div>
     <p class="small muted" style="margin-top:4px">Как в «Цивилизации»: половина мира по любой из шести категорий — с первого дня компании, считая всех: марки по истории, живых соперников и авиазаводы. Ближе всего — ${DOM_N[best].toLowerCase()}.</p>
     <div style="margin-top:8px">${rows}</div>${s.domLost?`<p class="small bad" style="margin-top:6px">${esc(s.domLost.n)} держит господство: ${DOM_N[s.domLost.k].toLowerCase()} (${MONTHS[s.domLost.m]} ${s.domLost.y}).</p>`:''}</section>`;}

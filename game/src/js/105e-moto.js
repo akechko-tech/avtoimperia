@@ -36,8 +36,16 @@ function carShopNeed(s){const L=[];const mm=motoMade(s),yrs=s.motoStart?yf(s)-s.
 function carShopCan(s){return !lineOn(s,'car')&&!s.carShopB&&!carShopNeed(s).length;}
 function carShopStart(s){if(!carShopCan(s))return false;const c=carShopCost(s);s.cash-=c;s.plantVal+=c*0.8;const mo=Math.max(2,Math.round(CARSHOP.mo*(DIF().build??1)));s.carShopB={left:mo,t:mo};
   addLog(`Ставим оборудование для автомобилей: ${money(c)}, ${mo} мес. Можно уже чертить первую машину.`,'good');pendingToasts.push('🏭 Оборудование для автомобилей');return true;}
+// 0.42: куплен и присоединён автозавод (105c-deals.js: maIntegrate) — путь к автомобилю пройден: его конструкторы, чертежи и стапели — ваши.
+// Отзыв: «купил автозавод в США — почему потом я должен ставить автооборудование на мотофабрику?»
+function carLineByDeal(s,h){if(lineOn(s,'car'))return false;const cp=h&&COMPS[h.c]&&COMPS[h.c][h.i];if(!cp)return false;s.lines=s.lines||{};s.lines.car=1;s.carY=s.y;s.carShopB=null;
+  addLog(`Вместе с маркой ${compName(cp,s)} пришли её конструкторы, чертежи и стапели: «${s.company}» может делать автомобили — путь к автомобилю пройден, оборудование дома ставить не нужно.`,'good');
+  try{pushEvent({own:1,kicker:'Завод',title:`«${s.company}»: автомобили — вместе с ${compName(cp,s)}`,deck:'Путь к автомобилю пройден покупкой',text:`Купленный автозавод ${compName(cp,s)} ${BOT_IN[h.c]||''} делает машины — а значит, умеет их делать и «${s.company}»: инженеры и чертежи общие, места под машины уже есть (мощности завода пришли вместе с маркой). Первую свою машину можно чертить: «Модели» → «Новая модель». Так Laurin & Klement после покупки заводов RAF в Либерце (1912) получили готовое автомобильное производство.`});}catch(_){}
+  pendingToasts.push('🚗 Можно делать автомобили');return true;}
+function acqCarAny(s){return (s.hold||[]).find(h=>h&&h.mode==='int'&&(h.st==null||h.st>=1)&&COMPS[h.c]&&COMPS[h.c][h.i]&&!COMPS[h.c][h.i].imp)||null;}
 // стройки цехов — каждый месяц (из step)
 function motoTick(s){
+  if(!lineOn(s,'car')){const h=acqCarAny(s);if(h)try{carLineByDeal(s,h);}catch(e){console.warn('carLine',e);}}
   if(s.mshopB){s.mshopB.left--;if(s.mshopB.left<=0){const lv=s.mshopB.lv||1;s.mshopB=null;s.lines=s.lines||{car:1};s.lines.moto=Math.max(motoLv(s),lv);
     if(lv===2){addLog(`Поток мотоциклов готов: часов на мотоцикл на треть меньше, места в цехе — на пятую часть.`,'good');pendingToasts.push('🏍 Поток мотоциклов');}
     else{addLog(`Мотоциклетный участок готов: мотоциклы делаются в тех же цехах, что и машины (место — на ${fmtN(Math.round(1/Math.max(0.02,motoCx(s))))} мотоциклов вместо одной машины). Начертите мотоцикл: «Модели» → «Новая модель» → класс «Мотоцикл».`,'good');pendingToasts.push('🏍 Можно делать мотоциклы');}}}

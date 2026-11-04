@@ -65,6 +65,9 @@ const ACT={
   carShop:()=>{if(carShopStart(G)){save();rerender();}},
   mbrand:d=>{const h=mbrandHTML(d.c,+d.i,G);if(h)openSheet(h);},
   legPaint:d=>{if(!draft||!draft.legendDraft)return;draft.paint=d.v;document.querySelectorAll('[data-act=legPaint]').forEach(b=>b.classList.toggle('on',b.dataset.v===d.v));},
+  // 0.42: справка о детали — зачем нужна (сравнение с вашей) и статья энциклопедии
+  partInfo:d=>{const x=ALL_PARTS().find(q=>q.id===d.k);if(!x)return;const why=partWhy(G,x),w=partWiki(x.id),h=PART_HIST[x.id];
+    openSheet(`<div class="row"><h2>${esc(x.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${esc(x.note||'')}${h?` В истории первыми — ${esc(h[1])}, ${h[0]}.`:''}</p>${why?`<p style="margin-top:8px"><b>Зачем это нужно.</b> ${esc(why)}</p>`:''}${w?wikiBoxHTML(w):''}`);try{wikiFill(sb);}catch(_){}},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
     if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v))draft.t='t2';

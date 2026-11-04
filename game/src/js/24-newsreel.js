@@ -303,8 +303,9 @@ function paperReelHTML(id,s){const R=id&&reelGet(id,s);if(!R)return '';const d=r
 function reelTitle(id,s){const R=reelGet(id,s);return R?R.t:'';}
 // Открыть ролик для хроники и предложить посмотреть: газета с кадром плёнки
 function reelUnlock(s,id){s.reels=s.reels||[];if(!s.reels.includes(id)){s.reels.push(id);if(s.reels.length>90)s.reels.shift();}}
-function reelOffer(s,id,title,deck,text){if(!reelGet(id,s))return;reelUnlock(s,id);
-  pushEvent({own:1,kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['Дальше','ok'],['▶ Смотреть кинохронику','reel:'+id]]},true);}
+function reelOffer(s,id,title,deck,text,x){if(!reelGet(id,s))return;reelUnlock(s,id);
+  // 0.42: x.wk — статья энциклопедии (22b-wiki.js), x.why — «зачем это нужно»
+  pushEvent(Object.assign({own:1,kicker:'Кинохроника',title,deck:deck||'',text:(text?text+'\n':'')+(x&&x.why?'Зачем это нужно. '+x.why+'\n':'')+'Кинохроника расскажет, как это было в истории и что это значит для автомобилей.',choices:[['Дальше','ok'],['▶ Смотреть кинохронику','reel:'+id]]},x&&x.wk?{wk:x.wk}:{}),true);}
 // Исторические ролики эпохи — по датам (один раз)
 // (война 1914 и крах 1929 — теперь мировые события с выбором: 11b-world.js)
 const HIST_REEL_T=[[1919,1,'h:peace','Мир','Заводы возвращаются к мирным машинам'],[1924,2,'h:twenties','Ревущие двадцатые','Джаз, кредит и машина для каждого']];
