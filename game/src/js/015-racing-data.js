@@ -9,7 +9,7 @@ const RACE_TEAMS=[
   {n:'Renault',c:'fr',from:1900,to:1908,str:1.0,mq:['Renault'],pk:'renault'},{n:'Darracq',c:'fr',from:1902,to:1908,str:0.95,mq:['Darracq']},
   {n:'Brasier',c:'fr',from:1903,to:1908,str:1.02,mq:['Brasier','Richard-Brasier']},{n:'Clément-Bayard',c:'fr',from:1903,to:1908,str:0.92,mq:['Clément-Bayard']},
   {n:'Delage',c:'fr',from:1911,to:1927,str:1.05,mq:['Delage']},{n:'Ballot',c:'fr',from:1919,to:1922,str:1.05,mq:['Ballot']},
-  {n:'Bugatti',c:'fr',from:1911,to:1929,str:1.1,mq:['Bugatti'],pk:'bugatti',boost:{1924:1.06}},{n:'Talbot',c:'fr',from:1921,to:1929,str:0.98,mq:['Talbot','Talbot-Darracq']},
+  {n:'Bugatti',c:'fr',from:1911,to:1929,str:1.1,mq:['Bugatti'],pk:'bugatti',boost:{1924:1.06,1925:1.09,1926:1.1,1927:1.09,1928:1.07,1929:1.06}}/* 0.45: Type 35 — самый побеждающий гоночный автомобиль эпохи (Тарга 1925–29, чемпионат 1926) */,{n:'Talbot',c:'fr',from:1921,to:1929,str:0.98,mq:['Talbot','Talbot-Darracq']},
   {n:'Mercedes',c:'de',from:1899,to:1929,str:1.1,mq:['Mercedes','Mercedes-Benz','Daimler'],pk:'maybach',gap:[1915,1920]},{n:'Benz',c:'de',from:1899,to:1925,str:1.0,mq:['Benz'],pk:'benz',gap:[1915,1921]},
   {n:'Opel',c:'de',from:1903,to:1914,str:0.9,mq:['Opel']},{n:'Austro-Daimler',c:'de',from:1909,to:1922,str:0.95,mq:['Austro-Daimler']},
   {n:'FIAT',c:'it',from:1900,to:1927,str:1.1,mq:['Fiat'],pk:'agnelli',gap:[1915,1920]},{n:'Itala',c:'it',from:1904,to:1913,str:1.0,mq:['Itala']},
