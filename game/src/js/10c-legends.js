@@ -180,7 +180,7 @@ function legendCardHTML(s){const L=legendsOf(s);if(!L.length)return '';
     return `<div class="race-item legend ${st}"><div class="row" style="gap:10px;align-items:flex-start">${im?`<img class="cmp-ph" src="${im.src}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}<div style="flex:1"><span class="mo">${esc(KIND_NAME[x.kind])} · в истории ${x.y} г.</span><h3 style="margin-top:2px">★ ${esc(x.name)}</h3>
       <p class="small muted" style="margin-top:2px">${esc(x.t)}</p><p class="small good" style="margin-top:4px">${esc(legendFxText(x))}</p>
       ${st==='locked'?`<p class="small warn" style="margin-top:4px">Нужно: ${ms.map(m=>esc(m.name)+(m.y>s.y?` (${m.y} г.${m.part?' или прототип в КБ':''})`:'')).join(', ')}</p>`:''}</div></div>
-      ${st==='open'?`<button class="btn primary block" style="margin-top:8px" data-act="legendOpen" data-k="${x.id}">Разработать «${esc(x.name)}» · ${money(legendDevCost(s,x))}</button>`:st==='done'?'<p class="small good" style="margin-top:6px">✓ Уже ваша</p>':st==='limit'?'<p class="small muted" style="margin-top:6px">Две легенды марки уже выбраны</p>':''}</div>`;};
+      ${st==='open'?`<button class="btn primary block" style="margin-top:8px" data-act="legendOpen" data-k="${x.id}">Разработать «${esc(x.name)}» · ${money(legendDevCost(s,x))}</button>`:st==='done'?`<p class="small good" style="margin-top:6px">${(s.legends||{})[x.id]&&s.legends[x.id].start?'✓ Ваша первая модель — с неё началась марка':'✓ Уже ваша'}</p>`:st==='limit'?'<p class="small muted" style="margin-top:6px">Две легенды марки уже выбраны</p>':''}</div>`;};
   const used=legendCount(s);
   return foldCard('legend',open.length>0,`<h2>★ Легенды марки</h2><span class="label">${open.length?'можно разработать: '+open.length+' · выбрано '+used+' из '+LEGEND_MAX:used?'выбрано: '+used+' из '+LEGEND_MAX:L.length+' в истории марки'}</span>`,
     `<p class="small muted" style="margin-top:4px">Исторические модели марки. Открываются, когда у вас есть все их детали (КБ может построить прототипы раньше истории) и нужные технологии завода. Разработка — дольше и дороже, зато у легенды особые бонусы. <b>Легенд у марки — не больше двух</b>${used?`: выбрано ${used} из ${LEGEND_MAX}`:''} — выбирайте, какие станут её именем.</p>${L.map(row).join('')}`,
@@ -204,6 +204,12 @@ function legendStart(s,id){const L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open
   const nm=((draft&&draft.legendDraft===id&&draft.name)||L.name).trim()||L.name;
   const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.legendDraft===id&&draft.paint)||legendPaint(L,s.y)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
   m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);addLog(`Начата разработка легенды «${nm}» (${money(dc)}, ${m.devLeft} мес.).`,'good');return true;}
+// 0.43: легенда-ровесница старта становится первой моделью: та же базовая машина, но с именем, бонусами и местом среди двух легенд марки
+function startLegendOf(s){return legendsOf(s).find(L=>L.y<=s.y+1&&(L.kind==='people'||L.kind==='middle')&&!legendMissing(s,L).length)||null;}
+function startLegend(s,firstName){const L=startLegendOf(s),m=s.models&&s.models[0];if(!L||!m||(s.legends&&s.legends[L.id]))return null;
+  // класс — как у обычной первой модели (средний, t1): народного класса в 1895 году ещё нет — «Вело» народной машиной продавался бы по три штуки в год
+  const nm=(firstName||'').trim()||L.name;Object.assign(m,{name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:m.t||'t1',w:L.d.w,legend:L.id,paint:legendPaint(L,s.y)||m.paint});
+  s.legends=s.legends||{};s.legends[L.id]={y:s.y,m:s.m,start:1};return L;}
 // выпуск легенды: газеты, репутация, очки наследия
 function legendLaunch(s,md){const L=LEGEND_BY[md.legend];if(!L)return;s.rep=clamp(s.rep+(L.rep||4),0,100);s.legBonus=(s.legBonus||0)+10;
   const early=s.y<L.y?L.y-s.y:0;

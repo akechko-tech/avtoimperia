@@ -399,12 +399,15 @@ function newGame(pioneer,country,company,diff,firstName){
   if(DIF().helper)G.helper={on:1};
   G.plantVal=G.cap*capUnitCost(G);
   G.cash=Math.round(C.cash*bn('cash')*DIF().cash);G.rep=bn('rep',30);
+  // 0.43: первая модель — легенда марки, если она ровесница старта и все её детали уже есть («Вело» Бенца 1895, «Яковлев и Фрезе» 1896).
+  // Отзыв: «очень странно, что я начинаю игру с „Тип 1“, а не легендарной модели, которая также базовая и идентична»
+  let SL=null;try{SL=startLegend(G,firstName);}catch(e){console.warn('startLegend',e);}
   const md=G.models[0];md.price=Math.round(refPrice(md,G)/10)*10;
   G.dealers[country]=Math.max(1,Math.round(dealerNeed(country,G)/3));
   G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,1895);const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
   G.maV=30;try{awInit(G,true);}catch(_){}
   const P=PIONEERS[pioneer];
-  addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${cityOf(G)}. В мастерской ${G.workers} рабочих, первая модель — «${mname}», дилеров — ${G.dealers[country]}.`,'hist');
+  addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${cityOf(G)}. В мастерской ${G.workers} рабочих, первая модель — «${md.name}»${SL?' (легенда марки)':''}, дилеров — ${G.dealers[country]}.`,'hist');
   if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
   if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит найти импортёра.','hist');
   if(country==='it')addLog('Богатых семей в Италии немного, и свой рынок крошечный. Покупателей в разы больше во Франции и Германии — найдите там импортёров.','hist');
