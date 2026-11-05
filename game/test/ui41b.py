@@ -45,7 +45,8 @@ with sync_playwright() as p:
     r = json.loads(js("""(()=>{const s=G;const picks=[];for(let k=0;k<6;k++)picks.push(...flavorPick(s,s.y,s.m,3,k+100,false));const bt=(s.botNews||[]).map(x=>x.t);const hit=picks.find(p=>bt.includes(p));const html=hit?flavorHTML(hit):'';return JSON.stringify({hit:hit||'',ok:!!hit&&html.includes('Также в номере')&&html.length>200,len:html.length});})()"""))
     ok(r['ok'], 'ход бота — среди «Также в номере», открывается заметкой: «%s»' % r['hit'])
     # 5) карточка «Господство»: лидер-бот помечен
-    js("tab='empire';render()"); pg.wait_for_timeout(400)
+    # 0.46: в марте 1896 года всё ведёт Panhard (по истории) — ставим живого Peugeot в лидеры масштаба
+    js("(()=>{const W=G.world,o=wco(W,'Peugeot','fr');const mx=Math.max(...Object.values(W.co).map(q=>q.hp));W.hp+=mx*2-o.hp;o.hp=mx*2;})();tab='empire';render()"); pg.wait_for_timeout(400)
     t = js("(()=>{const e=document.getElementById('sec-dom');return e?e.textContent:'';})()")
     ok('Господство' in t and ('живой' in t), 'карточка «Господство»: у лидера-бота пометка «живой»')
     pg.screenshot(path=out + 'b3_dom.png', full_page=True)

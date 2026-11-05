@@ -8,7 +8,7 @@ const go=(n)=>{for(let k=0;k<n;k++){while(G.pending.length)resolve(G.pending[0].
 /* ---------- зачёт побед ---------- */
 seed(5);newGame('custom','ru','Проба','normal','Ласточка');G.helper={on:1};go(15*12);
 {const W=G.world,T=domTable(G),past=RACES.filter(r=>r.y>=1895&&(r.y-1895)*12+r.m<mi(G)-2).length,done=RACES.filter(r=>W.sd[r.key]).length;
-  ok(W.v===2&&done>=past-3,'все гонки эпохи с начала партии учтены в мировом зачёте: '+done+' из '+past+' прошедших');
+  ok(W.v>=2&&done>=past-3,'все гонки эпохи с начала партии учтены в мировом зачёте: '+done+' из '+past+' прошедших');
   ok(W.sport>=250&&T.sport.world===W.sport&&T.sport.mine===0,'мир спорта к '+G.y+' году — '+W.sport+' очков (гонки, зачёт мотоциклов, небо, рекорды), у пассивного игрока 0');
   const L=worldCo(G).filter(o=>o.sport>0).sort((a,b)=>b.sport-a.sport);ok(L.length>=8&&L[0].sport<W.sport*0.5,'очки разложены по маркам ('+L.slice(0,4).map(o=>o.n+' '+o.sport).join(', ')+'), лидер меньше половины');
   const moto=Object.keys(W.co).filter(n=>MCOMPS.ru.concat(MCOMPS.fr,MCOMPS.uk,MCOMPS.de,MCOMPS.us,MCOMPS.it).some(cp=>coKey(cp.n)===n)&&W.co[n].sport>0);
@@ -16,7 +16,7 @@ seed(5);newGame('custom','ru','Проба','normal','Ласточка');G.helper
   ok(Object.keys(W.sd).some(k=>k.startsWith('arec|'))&&W.co['Wright']&&W.co['Wright'].sport>=4,'рекорды неба по истории — 4 очка строителю аэроплана (Wright: '+(W.co['Wright']||{}).sport+')');
   // перенос: старый мир (v1) с мусором пересчитывается
   W.v=1;W.sport=62;W.my.sport=62;for(const n in W.co)W.co[n].sport=777;worldMonth(G,G.last);
-  ok(W.v===2&&W.my.sport===0&&W.sport>=250&&!Object.values(W.co).some(o=>o.sport===777),'сохранение 0.41: «62 из 62» пересчитано заново по всем гонкам ('+W.sport+')');
+  ok(W.v>=2&&W.my.sport===0&&W.sport>=250&&!Object.values(W.co).some(o=>o.sport===777),'сохранение 0.41: «62 из 62» пересчитано заново по всем гонкам ('+W.sport+')');
   // своя победа в зачёте мотоциклов — треть очков, автомобильный победитель — свои
   const rc=RACES.find(r=>r.y===G.y&&r.m<G.m&&raceMoto(r))||RACES.find(r=>r.y===G.y-1&&raceMoto(r));
   if(rc){delete W.sd[rc.key];const was=W.sport,wm=W.my.sport||0;G.cres[rc.key]={w:'Panhard et Levassor',d:'',me:-1,c:'fr',pv:0,mo:0,mw:G.company};G.raceLog.push({y:rc.y,key:rc.key,name:rc.name,place:1,cls:'moto'});
