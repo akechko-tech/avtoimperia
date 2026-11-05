@@ -14,16 +14,19 @@ function DIF(){return DIFFS[(G&&G.diff)||'normal'];}
 const upgL=id=>(G&&G.rd&&G.rd.upg[id])||0;
 // 0.32: детали мотоциклов — в тех же каталогах с пометкой moto: автомобилю их не предлагаем, мотоциклу — только их
 function unlockedP(arr,s,moto){return arr.filter(x=>!!x.moto===!!moto&&(x.y<=s.y||(s.rd&&s.rd.early.includes(x.id))));}
-// Конструкторское бюро: 8 уровней. Чем больше бюро, тем больше проектов оно ведёт одновременно
-const RD_LV=['','Чертёжная комната','Мастерская опытных образцов','Конструкторское бюро','Испытательная станция','Экспериментальный цех','Исследовательский отдел','Научный центр','Институт автомобиля'];
-const RD_MAX=8;
+// Конструкторское бюро: 14 уровней (0.48: отзыв «допустить расширение КБ за пределы 8, каждый уровень принципиально дороже в
+// поддержании») — расширение и содержание растут геометрически (×1,6 и ×1,65 за уровень), проектов одновременно — до семи,
+// прототипы — до десяти лет вперёд. Чем больше бюро, тем больше проектов оно ведёт одновременно
+const RD_LV=['','Чертёжная комната','Мастерская опытных образцов','Конструкторское бюро','Испытательная станция','Экспериментальный цех','Исследовательский отдел','Научный центр','Институт автомобиля',
+  'Лаборатория моторов','Полигон и испытательный трек','Аэродинамическая труба','Научно-исследовательский институт','Академия конструкторов','Всемирный центр исследований'];
+const RD_MAX=14;
 function rdSlots(s){return 1+Math.floor((s.rd.lvl-1)/2);}
 function rdPoints(s){return (2+s.rd.lvl)/3*bn('rd');}          // очков в месяц на один проект
-function rdUpCost(s){return Math.round(4000*s.rd.lvl*Math.pow(1.12,Math.max(0,s.rd.lvl-4))*cpi(s)*(1+0.05*T(s))/100)*100;}
+function rdUpCost(s){return Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100;}
 // 0.32: КБ мотомастерской (пока нет автомобиля) — вдвое дешевле: чертёжник и пара механиков
-function rdUpkeep(s){return Math.round(60*Math.pow(s.rd.lvl,1.35)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
+function rdUpkeep(s){return Math.round(60*Math.pow(1.65,s.rd.lvl-1)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
 function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
-function rdHorizon(s){return [0,2,3,4,4,5,6,7,7][s.rd.lvl]||2;}
+function rdHorizon(s){return [0,2,3,4,4,5,6,7,7,8,8,9,9,10,10][s.rd.lvl]||2;}
 function rdActive(s){return s.rd.projs||[];}
 // Все инженеры бюро делят силы между проектами по долям: один проект получает всё
 // 0.36: гоночный опыт — после гонки с гоночной командой КБ несколько месяцев работает быстрее (43-season.js, raceDevLearn)
@@ -42,7 +45,7 @@ function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
   const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s),MU=massParts(s.y);
   rdLines(s).forEach(mo=>PART_CATS.forEach(cat=>{const arr=cat.arr().filter(x=>!!x.moto===!!mo),cn=mo?MOTO_CAT[cat.k]:cat.rd,rk=mo?motoRdK(s,cat.k):1;
-    unlockedP(arr,s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round((6*(l+1)+x.q/8+(l>=3?8*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
+    unlockedP(arr,s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round(((6+x.q/8)*Math.pow(1.6,l)+(l>=3?6*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
     if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round((10+6*(nx.y-s.y))*rk)),yrs:nx.y-s.y});
   }));
@@ -63,7 +66,7 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
   if(pj.kind==='xfer')return xferCost(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
-  const k=pj.kind==='early'?3+0.4*(pj.yrs||1):0.8*Math.pow(1.25,(pj.lvl||1)-1);
+  const k=pj.kind==='early'?3+0.4*(pj.yrs||1):0.8*Math.pow(1.5,(pj.lvl||1)-1);/* 0.48: каждая ступень улучшения в полтора раза дороже и в 1,6 раза дольше (rdProjects: need) */
   // в 1890-х опыты — дело мастерской: дёшево; к 1905 году — настоящие опытные цеха и стенды
   const era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));
   return Math.max(50,Math.round(((80+25*(pj.need||10))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+pc*k)*era*rdShareK(pj,s)/50)*50);}
@@ -256,7 +259,7 @@ const TECH={
 const TECH_ORDER=['tools','elec','parts','line','school','qc','foundry','press','paint','credit'];
 function techLv(s,k){return (s.tech&&s.tech[k])||0;}
 function techNext(s,k){const d=TECH[k],l=techLv(s,k);return l<d.max?d.lv[l]:null;}
-function techEarly(s){const l=s.rd?s.rd.lvl:1;return (l>=7?4:l>=5?3:l>=4?2:l>=3?1:0)+(bn('convEarly',0)?1:0);}
+function techEarly(s){const l=s.rd?s.rd.lvl:1;return (l>=10?5:l>=7?4:l>=5?3:l>=4?2:l>=3?1:0)+(bn('convEarly',0)?1:0);}
 function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+techEarly(s))return false;if(nx.need)for(const r in nx.need)if(techLv(s,r)<nx.need[r])return false;return true;}
 function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)/100)*100;}
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}

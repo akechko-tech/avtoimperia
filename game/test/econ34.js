@@ -47,8 +47,8 @@ function stuttgart(){seed(13);newGame('custom','de','Моторные масте
   for(let k=0;k<4&&!G.over;k++){const md=G.models[0],A=fcAfter(G,priceFc(md,G,md.price)),st0=G.models.map(m=>m.stock);G.pending=[];step();
     let adj=0;G.models.forEach((m,i)=>{adj+=(m.stock-st0[i])*unitCost({...m,vol:Math.max(1,m.lastMade||1)},G);});const act=G.last.profit+adj,e=A.after/act-1;worst=Math.max(worst,Math.abs(e));n++;L.push(Math.round(e*1000)/10+'%');}
   ok(n===4&&worst<0.1,'штутгартская партия («Историк», 1929, 8 моделей, 4 страны, салоны ×3,5): прогноз после всех расходов против итога месяца без склада — '+L.join(', '));
-  const md=G.models[1],h=priceLine(md,G);ok(/до конторы и сети/.test(h)&&/В месяц после всех расходов/.test(h),'прогноз цены: две строки — до конторы и сети и после всех расходов');
-  const t=priceTable(md,G);ok(/После всех/.test(t),'таблица цен: столбец «После всех расходов», лучшая цена — по нему');}
+  const md=G.models[1],h=priceLine(md,G);ok(/до конторы и сети/.test(h)&&/после всех расходов/.test(h)&&/Нетто по модели в месяц/.test(h)&&/доля общих расходов/.test(h),'прогноз цены: до конторы и сети, нетто по модели (её доля общих расходов) и вся фирма после всех расходов');
+  const t=priceTable(md,G);ok(/Нетто/.test(t)&&/Вся фирма|После всех/.test(t),'таблица цен: столбцы «Нетто модели» и «Вся фирма после всех расходов», лучшая цена — по фирме');}
 // ---------- 4. продажа завода при купленной марке ----------
 {stuttgart();G.pending=[];step();const c='fr',md=G.models[0],up0=impUpkeep(G,c),v=impSellValue(G,c),cash0=G.cash;
   ok(impDownTo(G,c)===2&&v>0,'Франция: свой завод при поглощённой Mors — продать сразу до отделения за '+money(v));

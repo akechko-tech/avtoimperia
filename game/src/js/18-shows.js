@@ -55,7 +55,13 @@ function showName(sh){return SHOW_HOST[sh.h].name+' '+sh.y;}
 function showRelevant(sh,s){const H=SHOW_HOST[sh.h];if(s.soviet&&H.c!==s.country)return false;return H.c===s.country||dealerCount(s,H.c)>0||H.w>=2.5;}
 // Чужие выставки без своих дилеров зовут реже: не чаще раза в три года (Всемирная — всегда)
 function showAskOk(sh,s){const H=SHOW_HOST[sh.h];if(H.c===s.country||dealerCount(s,H.c)>0||sh.medals)return true;const t=(s.showAsk||{})[sh.h];return t===undefined||mi(s)-t>=34;}
-function standCost(sh,s,big){return Math.round(260*tabAt(CPI,sh.y)*(1+(sh.y-1895)*0.06)*SHOW_HOST[sh.h].w*(big?3:1)/50)*50;}
+// 0.48 (отзыв: «три категории участия, расходы растут с масштабом компании»): малый стенд, большой стенд, павильон марки —
+// ×1, ×3, ×8 от базовой цены места; база растёт с размером компании — корень из годовой выручки (мастерская за $150 тыс. в год
+// платит как раньше, завод на $5 млн — в семь раз больше, концерн на $100 млн — в сорок): у большой марки и стенд, и ожидания больше
+const SHOW_TIER={1:{n:'Малый стенд',k:1,fx:1},2:{n:'Большой стенд',k:3,fx:2},3:{n:'Павильон марки',k:8,fx:3.5}};
+function coScale(s){const W=s.world&&s.world.my;const r12=W&&W.r12?W.r12:((s.last&&s.last.rev)||0)*12;return clamp(Math.pow(r12/(1.5e5*cpi(s)),0.55),1,60);}
+function standCost(sh,s,tier){const T=SHOW_TIER[tier===true?2:tier===false?1:(tier||1)]||SHOW_TIER[1];return Math.round(260*tabAt(CPI,sh.y)*(1+(sh.y-1895)*0.06)*SHOW_HOST[sh.h].w*T.k*coScale(s)/50)*50;}
+function showTierOf(e){return e?(e.tier||(e.big?2:1)):1;}
 // Что везти: лучшая машина в продаже; если продаж ещё нет — прототип из разработки
 function showModel(s){const act=s.models.filter(m=>m.status==='prod').sort((a,b)=>classScore(b,s)-classScore(a,s));return act[0]||s.models.find(m=>m.status==='dev')||null;}
 // Интерес покупателей после выставки: полезность марки в стране, затухает за полгода-год
@@ -67,41 +73,41 @@ function checkShows(s){
   // приглашение за месяц: одна выставка в месяц, самая важная
   const next=SHOWS.filter(sh=>showMi(sh)===mi(s)+1&&!s.shows[sh.id]&&showRelevant(sh,s)&&showAskOk(sh,s)).sort((a,b)=>SHOW_HOST[b.h].w-SHOW_HOST[a.h].w+(SHOW_HOST[b.h].c===s.country?1:0)-(SHOW_HOST[a.h].c===s.country?1:0))[0];
   if(next&&showModel(s))showInvite(s,next);}
-function showInvite(s,sh){const H=SHOW_HOST[sh.h],md=showModel(s),c1=standCost(sh,s,false),c2=standCost(sh,s,true),home=H.c===s.country,dl=dealerCount(s,H.c);
+function showInvite(s,sh){const H=SHOW_HOST[sh.h],md=showModel(s),c1=standCost(sh,s,1),c2=standCost(sh,s,2),c3=standCost(sh,s,3),home=H.c===s.country,dl=dealerCount(s,H.c);
   s.shows[sh.id]={inv:1,md:md.id};s.showNow=sh.id;s.showAsk=s.showAsk||{};s.showAsk[sh.h]=mi(s);
   const proto=md.status==='dev';
   const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
   pushEvent({kicker:'Приглашение на выставку',title:showName(sh),deck:`${sh.venue} · ${MONTHS_N[sh.m]} ${sh.y}`,carId:md.id,reel:rid,
-    text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}Устроители предлагают «${s.company}» место на выставке. Малый стенд — машина на подиуме, большой — ещё и мотор в разрезе, продавцы, буклеты и пробные поездки.\n`
+    text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}Устроители предлагают «${s.company}» место на выставке. Малый стенд — машина на подиуме; большой — ещё и мотор в разрезе, продавцы, буклеты и пробные поездки; павильон марки — своё здание с оркестром, все модели, банкет для торговцев и прессы: заказов и дилеров втрое больше, чем с малого стенда, и больше шансов на награды. Плата растёт с размером компании.\n`
       +`Повезём ${proto?'прототип':'модель'} «${md.name}». На выставке ${proto?'покупатели узнают о новинке заранее':'подписывают заказы'}, о марке пишут газеты${home?'':`, а местные торговцы ищут, чьи машины продавать${dl?'':` — так можно открыть первых дилеров: ${COUNTRIES[H.c].name}`}`}.${sh.ver?'\nУсловие устроителей: машина должна своим ходом доехать из Парижа в Версаль и обратно. Ненадёжная может сломаться в пути — тогда вернут половину платы.':''}${sh.medals?'\nНа Всемирной выставке жюри раздаёт медали: чем лучше машина против соперников, тем выше шанс на золото.':''}`,
-    choices:[[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0']]},true);}
+    choices:[[`Павильон марки — ${money(c3)}`,'show3'],[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0']]},true);}
 function showBook(s,key){const id=s.showNow;s.showNow=null;const sh=SHOWS.find(x=>x.id===id);if(!sh)return;const e=s.shows[id]||(s.shows[id]={});
   if(key==='show0'){e.skip=1;addLog(`Вы не поехали на выставку: ${showName(sh)}.`);return;}
-  const big=key==='show2',cost=standCost(sh,s,big);if(s.cash<cost){e.skip=1;addLog(`Не хватило денег на стенд: ${showName(sh)}.`,'bad');pendingToasts.push('Не хватило денег на стенд');return;}
-  s.cash-=cost;e.big=big?1:0;e.cost=cost;e.inv=0;addLog(`Снят ${big?'большой':'малый'} стенд: ${showName(sh)} (${money(cost)}).`,'good');pendingToasts.push('🏛 Стенд на выставке: '+SHOW_HOST[sh.h].name);}
+  const tier=key==='show3'?3:key==='show2'?2:1,cost=standCost(sh,s,tier);if(s.cash<cost){e.skip=1;addLog(`Не хватило денег на стенд: ${showName(sh)}.`,'bad');pendingToasts.push('Не хватило денег на стенд');return;}
+  s.cash-=cost;e.tier=tier;e.big=tier>=2?1:0;e.cost=cost;e.inv=0;addLog(`${tier===3?'Снят павильон марки':tier===2?'Снят большой стенд':'Снят малый стенд'}: ${showName(sh)} (${money(cost)}).`,'good');pendingToasts.push((tier===3?'🏛 Павильон марки на выставке: ':'🏛 Стенд на выставке: ')+SHOW_HOST[sh.h].name);}
 // День выставки: проверка в пути (Париж 1898), заказы, дилеры, интерес покупателей, медали; газета об итогах
 function showRun(s,sh,e){e.done=1;const H=SHOW_HOST[sh.h],c=H.c,home=c===s.country,md=s.models.find(m=>m.id===e.md)||showModel(s);if(!md)return;
-  const big=!!e.big,S=clamp(classScore(md,s),0.4,1.8),proto=md.status==='dev',out=[];let rep=0,u=0,orders=0,dl=0,medal=null;
+  const tier=showTierOf(e),big=tier>=2,fx=SHOW_TIER[tier].fx,S=clamp(classScore(md,s),0.4,1.8),proto=md.status==='dev',out=[];let rep=0,u=0,orders=0,dl=0,medal=null;
   if(sh.ver){const rel=carBase(md,0,s.y).rel,p=clamp(0.45+0.55*rel,0.5,0.97);if(Math.random()>p){const back=Math.round((e.cost||0)/2);s.cash+=back;e.fail=1;
     pushEvent({kicker:'Выставка',title:showName(sh),deck:`«${md.name}» не доехал до Версаля`,carId:md.id,text:`${showFacts(sh,s)}\nПроверочная поездка не задалась: в пути у «${md.name}» случилась поломка, и устроители не допустили машину на выставку. Половину платы за стенд — ${money(back)} — вернули.\nНадёжность — первое, что покупатели проверяют сами.`},true);
     addLog(`«${md.name}» сломался по дороге в Версаль и не попал на выставку. Вернули ${money(back)}.`,'bad');return;}
     out.push(`«${md.name}» своим ходом съездил в Версаль и обратно — машину допустили.`);}
   // репутация растёт понемногу и тем медленнее, чем она выше; интерес покупателей — на полгода
-  rep=(big?1.5:0.6)*H.w/3*(s.rep<55?1:s.rep<70?0.5:0.2);if(s.showRepY===s.y)rep*=0.25;else s.showRepY=s.y;u=(big?0.16:0.08)*H.w/3*(proto?1.2:1)*clamp(S,0.6,1.4);
+  rep=0.6*fx*H.w/3*(s.rep<55?1:s.rep<70?0.5:0.2);if(s.showRepY===s.y)rep*=0.25;else s.showRepY=s.y;u=0.08*fx*H.w/3*(proto?1.2:1)*clamp(S,0.6,1.4);
   if(!proto&&md.status==='prod'){const mk=s.last&&s.last.mk&&s.last.mk[c],size=mk&&mk.size?mk.size:SEGK.reduce((a,g)=>a+mkCountry(c,s,[]).segs[g].inc,0);
-    orders=Math.round(0.4*Math.pow(Math.max(1,size),0.7)*(big?2:1)*S*S*(home?1:0.5)*H.w/3);orders=Math.min(orders,Math.max(8,Math.round((md.vol||md.fc||4)*3)));
+    orders=Math.round(0.4*Math.pow(Math.max(1,size),0.7)*fx*S*S*(home?1:0.5)*H.w/3);orders=Math.min(orders,Math.max(8,Math.round((md.vol||md.fc||4)*(tier===3?5:3))));
     if(orders>=2&&(s.orders||[]).length<5){s.orders=s.orders||[];s.orders.push({id:'show-'+sh.id,md:md.id,n:orders,left:orders,price:md.price,due:mi(s)+5,who:'Покупатели выставки: '+SHOW_HOST[sh.h].name,start:mi(s)});
       out.push(`Подписано ${fmtN(orders)} ${plural(orders,'твёрдый заказ','твёрдых заказа','твёрдых заказов')} на «${md.name}» по ${money(md.price)} — поставка за 5 месяцев сверх плана.`);}else orders=0;}
   if(proto)out.push(`Прототип «${md.name}» собрал толпу: покупатели ждут начала продаж.`);
-  if(!home){dl=big?(H.w>=2.5?2:1):(H.w>=2.5&&!dealerCount(s,c)?1:0);if(dl){if(!impLv(s,c)){s.imp=s.imp||{};s.imp[c]=1;s.dealers[c]=Math.max(2,dealerCount(s,c)+dl);out.push(`Местный импортёр подписал договор — ${COUNTRIES[c].name}: он возьмёт ${Math.round(IMP_LV[1].cut*100)}% цены и откроет агентов в больших городах.`);}else{dl=Math.min(dl,dealerRoom(s,c));if(dl){s.dealers[c]=dealerCount(s,c)+dl;out.push(`Торговцы подписали договоры: ${fmtN(dl)} ${plural(dl,'новый дилер','новых дилера','новых дилеров')} — ${COUNTRIES[c].name}.`);}}}}
-  if(sh.medals){const p=clamp((S-0.85)*1.6+(big?0.12:0),0.06,0.85),r=Math.random();medal=r<p*0.45?'gold':r<p*0.8?'silver':r<p?'bronze':null;
+  if(!home){dl=tier===3?(H.w>=2.5?3:2):big?(H.w>=2.5?2:1):(H.w>=2.5&&!dealerCount(s,c)?1:0);if(dl){if(!impLv(s,c)){s.imp=s.imp||{};s.imp[c]=1;s.dealers[c]=Math.max(2,dealerCount(s,c)+dl);out.push(`Местный импортёр подписал договор — ${COUNTRIES[c].name}: он возьмёт ${Math.round(IMP_LV[1].cut*100)}% цены и откроет агентов в больших городах.`);}else{dl=Math.min(dl,dealerRoom(s,c));if(dl){s.dealers[c]=dealerCount(s,c)+dl;out.push(`Торговцы подписали договоры: ${fmtN(dl)} ${plural(dl,'новый дилер','новых дилера','новых дилеров')} — ${COUNTRIES[c].name}.`);}}}}
+  if(sh.medals){const p=clamp((S-0.85)*1.6+(tier===3?0.2:big?0.12:0),0.06,0.85),r=Math.random();medal=r<p*0.45?'gold':r<p*0.8?'silver':r<p?'bronze':null;
     if(medal){const M={gold:['золотую',4,0.08],silver:['серебряную',2.5,0.05],bronze:['бронзовую',1.5,0.03]}[medal];rep+=M[1];u+=M[2];s.medals=s.medals||[];s.medals.push({y:sh.y,name:showName(sh),kind:medal,md:md.name});out.push(`Жюри присудило «${md.name}» ${M[0]} медаль!`);
       trophyAdd(s,{kind:'medal',title:`${{gold:'Золотая',silver:'Серебряная',bronze:'Бронзовая'}[medal]} медаль: ${showName(sh)}`,sub:`«${md.name}»`,story:`Жюри выставки присудило «${md.name}» ${M[0]} медаль.`,key:'show|'+sh.id,carId:md.id,pt:showName(sh),reel:REELS['show:'+sh.h]?'show:'+sh.h:''});}
     else out.push('Медали достались другим: жюри сочло соперников сильнее.');}
   // 0.30: НАГРАДЫ ЖЮРИ И ПРЕССЫ — не только медаль выставки: лучшая машина, техническая новинка, элегантность кузова, надёжность.
   // Так Cadillac дважды получил кубок Дьюара (1908 — взаимозаменяемые детали, 1913 — электростартер и свет Delco), а Ford —
   // Гран-при Панамо-Тихоокеанской выставки 1915 года за сборочный конвейер. Награда — репутация, интерес покупателей и заказы.
-  const aw=showAwards(s,sh,md,big,S,!!medal);aw.forEach(a=>{rep+=a.rep;u+=a.u;out.push(a.txt);});
+  const aw=showAwards(s,sh,md,big,S,!!medal,tier);aw.forEach(a=>{rep+=a.rep;u+=a.u;out.push(a.txt);});
   if(aw.length&&orders>0){const extra=Math.round(orders*0.35*aw.length);const O=(s.orders||[]).find(o=>o.id==='show-'+sh.id);if(O&&extra>0){O.n+=extra;O.left+=extra;orders+=extra;out.push(`После наград — ещё ${fmtN(extra)} ${plural(extra,'заказ','заказа','заказов')}.`);}}
   e.aw=aw.map(a=>a.k);
   rep=Math.round(rep*10)/10;s.rep=clamp(s.rep+rep,0,100);s.showFx=s.showFx||{};const prev=showEffect(s,c);s.showFx[c]={u:Math.min(0.35,Math.max(prev,u)+0.3*Math.min(prev,u)),t:mi(s)};s.showsDone=(s.showsDone||0)+1;
@@ -109,18 +115,18 @@ function showRun(s,sh,e){e.done=1;const H=SHOW_HOST[sh.h],c=H.c,home=c===s.count
   const rv=showRivals(s,c);
   const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
   pushEvent({kicker:'Выставка',reel:rid,title:showName(sh),deck:`Стенд «${s.company}»: ${[orders?fmtN(orders)+' заказов':'',dl?'+'+dl+' дилеров':'',medal?{gold:'золото',silver:'серебро',bronze:'бронза'}[medal]:'',aw.length?aw.length+' '+plural(aw.length,'награда','награды','наград'):'','репутация +'+rep].filter(Boolean).join(' · ')}`,cel:medal||aw.length?[medal?'Медаль выставки!':aw[0].title,`«${md.name}» · ${showName(sh)}`,'🥇','medal',(()=>{try{const a=showAwardOf(sh.h,sh.y,s);return a?{award:a,place:medal==='silver'?2:medal==='bronze'?3:1}:null;}catch(_){return null;}})()]:null,img:sh.img&&IMG[sh.img]?sh.img:'',imgCap:sh.img?`${sh.venue} — ${SHOW_HOST[sh.h].name}`:'',carId:md.id,
-    text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}${big?'Большой':'Малый'} стенд «${s.company}» — «${md.name}». ${out.join(' ')}\n${rv.length?`Рядом стенды ${rv.map(n=>'«'+n+'»').join(', ')}. `:''}Интерес покупателей к марке продержится несколько месяцев${home?'':' — и не только в этой стране'}.`},true);
+    text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}${tier===3?'Павильон марки':big?'Большой стенд':'Малый стенд'} «${s.company}» — «${md.name}»${tier===3&&s.models.filter(m=>m.status==='prod').length>1?' и все модели марки':''}. ${out.join(' ')}\n${rv.length?`Рядом стенды ${rv.map(n=>'«'+n+'»').join(', ')}. `:''}Интерес покупателей к марке продержится несколько месяцев${home?'':' — и не только в этой стране'}.`},true);
   addLog(`${showName(sh)}: ${out.join(' ')}`,'good');}
 // награды выставки: вероятность — от машины, стенда и имени марки; у каждой своя история
-function showAwards(s,sh,md,big,S,hadMedal){const H=SHOW_HOST[sh.h],y=sh.y,p=parts(md),st=carBase(md,0,y),out=[],R=Math.random,major=H.w>=2.5;
+function showAwards(s,sh,md,big,S,hadMedal,tier){const H=SHOW_HOST[sh.h],y=sh.y,p=parts(md),st=carBase(md,0,y),out=[],R=Math.random,major=H.w>=2.5;const pav=tier===3;/* 0.48: павильон марки — шансы на награды выше */
   const add=(k,title,txt,rep,u)=>{out.push({k,title,txt,rep,u});s.awards=s.awards||[];s.awards.push({y,k,title,show:showName(sh),md:md.name});
     try{trophyAdd(s,{kind:'medal',title:`${title}: ${showName(sh)}`,sub:`«${md.name}»`,story:txt,key:'aw|'+k+'|'+sh.id,carId:md.id,pt:title,sk:sh.h,sy:sh.y});}catch(_){}};
   // лучшая машина выставки (если медаль жюри уже есть — это она)
-  if(!hadMedal&&!sh.ver){const pb=clamp((S-0.95)*1.8+(big?0.12:0)+(s.rep-50)/250,0.02,0.7)*(major?0.8:1);if(R()<pb)add('best',major?'Приз прессы «Лучшая машина салона»':'Приз «Лучшая машина выставки»',`Журналисты и жюри назвали «${md.name}» лучшей машиной: ${showName(sh)}.`,2.5,0.05);}
+  if(!hadMedal&&!sh.ver){const pb=clamp((S-0.95)*1.8+(pav?0.2:big?0.12:0)+(s.rep-50)/250,0.02,0.7)*(major?0.8:1);if(R()<pb)add('best',major?'Приз прессы «Лучшая машина салона»':'Приз «Лучшая машина выставки»',`Журналисты и жюри назвали «${md.name}» лучшей машиной: ${showName(sh)}.`,2.5,0.05);}
   // техническая новинка: свежие детали, новинки оснащения, первенства
   const fresh=PART_KEYS.filter(k=>(p[k].y||1895)>=y-1).length,eqn=eqOf(md).filter(id=>{const e=EQ_BY[id];return e&&y<=e.hist[0]+3;}).length,
     firsts=Object.keys(s.firsts||{}).filter(k=>(k.startsWith('part:')&&PART_KEYS.some(q=>md[q]===k.slice(5)))||(k.startsWith('eq:')&&eqHas(md,k.slice(3)))).length;
-  const pt=clamp(0.1*fresh+0.14*eqn+0.25*firsts+(big?0.06:0),0,0.8);
+  const pt=clamp(0.1*fresh+0.14*eqn+0.25*firsts+(pav?0.1:big?0.06:0),0,0.8);
   if(R()<pt)add('tech',y>=1906&&H.c==='uk'?'Кубок Дьюара — за техническое достижение':'Золотая медаль за технику',firsts?`Жюри отметило то, чего ещё нет ни у кого: ${Object.keys(s.firsts).filter(k=>(k.startsWith('part:')&&PART_KEYS.some(q=>md[q]===k.slice(5)))||(k.startsWith('eq:')&&eqHas(md,k.slice(3)))).map(k=>s.firsts[k].name).slice(0,2).join(', ')}.`:eqn?`Жюри отметило новинки «${md.name}»: ${eqOf(md).filter(id=>y<=EQ_BY[id].hist[0]+3).map(id=>EQ_BY[id].name.toLowerCase()).join(', ')}.`:`Жюри отметило новейшие узлы «${md.name}».`,3,0.06);
   // элегантность кузова (конкурсы элегантности — с 1920-х)
   if(y>=1920&&!isTruck(md)){const pe=clamp(0.08+(p.b.closed?0.12:0)+(p.t.id==='t2'?0.15:0)+0.25*(paintBright(md.paint)-0.4),0,0.45);if(R()<pe)add('style','Приз конкурса элегантности',`Кузов и цвет «${md.name}» покорили жюри конкурса элегантности.`,1.5,0.04);}
@@ -131,10 +137,10 @@ function showRivals(s,c){const L=(COMPS[c]||[]).filter(cp=>!pkIs(cp,s)&&compAliv
 // Карточка на «Рынке»: ближайшие выставки и прошлые стенды
 function showsCard(s){const now=mi(s),up=SHOWS.filter(sh=>showMi(sh)>=now&&showMi(sh)<=now+13&&showRelevant(sh,s)).slice(0,5),past=SHOWS.filter(sh=>s.shows&&s.shows[sh.id]&&s.shows[sh.id].done).slice(-3).reverse();
   if(!up.length&&!past.length)return '';
-  const st=sh=>{const e=s.shows&&s.shows[sh.id];if(e&&e.done)return e.fail?'<span class="pill bad">не допущены</span>':'<span class="pill good">были</span>';if(e&&e.cost)return `<span class="pill good">${e.big?'большой':'малый'} стенд</span>`;if(e&&e.skip)return '<span class="pill muted">не едем</span>';return showMi(sh)-now<=1?'<span class="pill warn">приглашение</span>':`<span class="pill muted">${money(standCost(sh,s,false))}+</span>`;};
+  const st=sh=>{const e=s.shows&&s.shows[sh.id];if(e&&e.done)return e.fail?'<span class="pill bad">не допущены</span>':'<span class="pill good">были</span>';if(e&&e.cost)return `<span class="pill good">${showTierOf(e)===3?'павильон марки':e.big?'большой стенд':'малый стенд'}</span>`;if(e&&e.skip)return '<span class="pill muted">не едем</span>';return showMi(sh)-now<=1?'<span class="pill warn">приглашение</span>':`<span class="pill muted">${money(standCost(sh,s,false))}+</span>`;};
   const row=sh=>`<div class="race-item"><div class="row"><div><span class="mo">${MONTHS[sh.m]} ${sh.y} · ${COUNTRIES[SHOW_HOST[sh.h].c].name}</span><h3 style="margin-top:2px">${esc(SHOW_HOST[sh.h].name)}</h3><p class="small muted">${esc(sh.venue)}</p></div>${st(sh)}</div></div>`;
   const res=sh=>{const r=s.shows[sh.id].res;return r?`<p class="small muted" style="margin-top:-4px;padding:0 4px">${[r.orders?fmtN(r.orders)+' заказов':'',r.dl?'+'+r.dl+' дилеров':'',r.medal?{gold:'золотая медаль',silver:'серебряная медаль',bronze:'бронзовая медаль'}[r.medal]:'','репутация +'+r.rep].filter(Boolean).join(' · ')}</p>`:'';};
   const nx=up[0],inv=nx&&showMi(nx)-now<=1&&!(s.shows&&s.shows[nx.id]);
-  return foldCard('shows',!!inv,'<h2>Выставки</h2>'+(inv?'<span class="pill warn">приглашение</span>':''),`<p class="small muted" style="margin-top:2px">Автосалоны эпохи: стенд стоит денег, зато приносит заказы, внимание газет и покупателей, а за границей — первого импортёра и дилеров. Приглашение приходит за месяц.</p>
+  return foldCard('shows',!!inv,'<h2>Выставки</h2>'+(inv?'<span class="pill warn">приглашение</span>':''),`<p class="small muted" style="margin-top:2px">Автосалоны эпохи: малый стенд, большой стенд или павильон марки — плата растёт с размером компании, зато стенд приносит заказы, внимание газет и покупателей, а за границей — первого импортёра и дилеров. Приглашение приходит за месяц.</p>
     ${up.length?`<div style="margin-top:6px">${up.map(row).join('')}</div>`:''}${past.length?`<div class="label" style="margin-top:10px">Ваши стенды</div>${past.map(sh=>row(sh)+res(sh)).join('')}`:''}
     ${(s.medals||[]).length?`<div class="trophies" style="margin-top:8px">${s.medals.map(m=>`<span>${{gold:'🥇',silver:'🥈',bronze:'🥉'}[m.kind]} ${esc(m.name)}</span>`).join('')}</div>`:''}`,nx?`ближайшая: ${esc(SHOW_HOST[nx.h].name)}, ${MONTHS[nx.m].toLowerCase()} ${nx.y}${(s.medals||[]).length?` · медалей ${s.medals.length}`:''}`:`медалей ${(s.medals||[]).length}`);}

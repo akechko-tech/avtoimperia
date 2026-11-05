@@ -81,7 +81,7 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
   // сохранения 0.41 (v1): зачёт побед заново по всем гонкам (ниже, раздел гонок)
   if(W.v<2){W.v=2;W.sport=0;W.my.sport=0;W.my.air=0;for(const n in W.co)W.co[n].sport=0;for(const k in W.sd)if(!/^part:|^tech:|^atech:|^air:/.test(k))delete W.sd[k];}
   // 0.46: сохранения 0.41–0.45 — марки одной компании под одним именем (Ford (Манчестер) → Ford), скользящая выручка у вас
-  if(W.v<3){W.v=3;for(const n in W.co){const k=coKey(n);if(k===n||!k)continue;const o=W.co[n],q=wco(W,k,o.c);q.hp+=o.hp;q.rev+=o.rev;q.sport+=o.sport;q.firsts+=o.firsts;q.r12+=o.r12;for(const c in o.cu)q.cu[c]=(q.cu[c]||0)+o.cu[c];delete W.co[n];}if(W.my.r12==null)W.my.r12=0;}
+  if(W.v<3){W.v=3;for(const n in W.co){const k=coKey(n);if(k===n||!k)continue;const o=W.co[n],q=wco(W,k,o.c);q.hp+=o.hp;q.rev+=o.rev;q.sport+=o.sport;q.firsts+=o.firsts;q.r12+=o.r12;for(const c in o.cu)q.cu[c]=(q.cu[c]||0)+o.cu[c];delete W.co[n];}if(W.my.r12==null){const r0=s.last||{};W.my.r12=12*(((r0.rev||0)/Math.max(0.5,1-dMargin(s)))+(r0.mil||0)+(r0.ord||0)+(r0.dump||0));}/* 0.48: годовая выручка — с последнего месяца, не с нуля */}
   // годовая выручка марок — скользящая: в начале месяца каждую сдвигаем на 1/12
   for(const n in W.co)W.co[n].r12*=11/12;W.my.r12=(W.my.r12||0)*11/12;
   // ---- вы
@@ -147,8 +147,12 @@ function worldClients(W){let cl=0;for(const c in W.cu)cl+=W.cu[c]||0;return cl;}
    (раньше — узнаваемость в процентах; у вас считалась рекламная, 105-market.js: 3 % парка — две трети, 76 % мира в 1903 году при 9 % рынка);
    капитал — полторы годовые выручки, как у марок истории и соперников (оценка банкиров вашей компании в 1903 году давала $45 млн
    при выручке $5 млн — 53 % «капитала мира»). */
-function worldMine(s){const W=s.world;if(!W||!W.v)return null;const M=W.my;let cl=0;for(const c in M.cu)cl+=M.cu[c]||0;
-  return {n:s.company,you:1,c:s.country,hp:M.hp,rev:M.rev,sport:(M.sport||0)+(M.air||0),firsts:firstsLive(s),val:Math.max(0,(M.r12||0)*VAL_K),cl};}
+/* 0.48: капитал — снова оценка банкиров вашей компании (companyValue: касса, завод, запасы, вложения, прибыль ×7, купленные доли;
+   отзыв 0.47: «у меня капитал не ноль, компания стоит 45 млн» — полторы выручки давали $0 на свежем сохранении); у марок истории
+   и соперников — полторы годовые выручки, как и было. Дочерняя марка с контрольным пакетом в мир отдельно не идёт (0.46), так что
+   её стоимость в вашей оценке не удваивает мир. */
+function worldMine(s){const W=s.world;if(!W||!W.v)return null;const M=W.my;let cl=0;for(const c in M.cu)cl+=M.cu[c]||0;let val=0;try{val=Math.max(0,companyValue(s));}catch(_){val=Math.max(0,(M.r12||0)*VAL_K);}
+  return {n:s.company,you:1,c:s.country,hp:M.hp,rev:M.rev,sport:(M.sport||0)+(M.air||0),firsts:firstsLive(s),val,cl};}
 /* ---------- 0.44: исторический лучший показатель — как было бы в настоящей истории к этой дате, без вас и живых соперников ----------
    Отзыв: «чтобы победить, недостаточно господства в реалии живой игры — нужно превзойти и исторический лучший показатель».
    W.hist копится теми же месяцами, что и живой мир, но по историческим кривым марок (compVol × mix), истории гонок (histRaceWinner),
@@ -215,7 +219,10 @@ function domBots(s){const W=s.world;if(!W||!W.v||!s.bots)return null;const me=wo
   return null;}
 function domCheck(s){if(!s.world||!s.world.v||s.over)return;const T=domTable(s);if(!T)return;
   // сохранения 0.41–0.45: победа по одной категории — по правилам 0.46 остаётся, только если категорий уже две; иначе партия продолжается
-  if(s.dom&&!s.dom.ks){const ks=domHeld(T);if(ks.length>=DOM_NEED)s.dom.ks=ks.slice(0,DOM_NEED);else{delete s.dom;addLog('Правила 0.46: господство — по двум категориям сразу, в каждой больше половины мира и больше рекорда эпохи. Прежняя победа по одной категории снята, партия продолжается.','');}}
+  if(s.dom&&!s.dom.ks){const ks=domHeld(T);if(ks.length>=DOM_NEED)s.dom.ks=ks.slice(0,DOM_NEED);else{delete s.dom;
+      // 0.48: и трофей той победы («Господство: инновации… рекорд эпохи Cadillac: 5») — из витрины, и +100 наследия — назад
+      if(s.trophies){const n0=s.trophies.length;s.trophies=s.trophies.filter(t=>!(t.key&&/^dom\|/.test(t.key))&&!/^Господство:/.test(t.title||''));if(s.trophies.length<n0)s.legBonus=Math.max(0,(s.legBonus||0)-100);}
+      addLog('Правила 0.46: господство — по двум категориям сразу, в каждой больше половины мира и больше рекорда эпохи. Прежняя победа по одной категории снята, партия продолжается.','');}}
   if(s.domLost&&!s.domLost.ks){const b=domBots(s);if(b)s.domLost.ks=b.ks;else delete s.domLost;}
   if(!s.dom){const ks=domHeld(T);if(ks.length>=DOM_NEED){s.dom={k:ks[0],ks:ks.slice(0,DOM_NEED),y:s.y,m:s.m,who:'you'};domWin(s,s.dom.ks,T);return;}}
   if(!s.domLost&&!s.dom){const b=domBots(s);if(b){s.domLost={k:b.k,ks:b.ks,n:b.n,y:s.y,m:s.m};domLose(s,b);}}}
@@ -245,7 +252,7 @@ const DOM_STORY={
 const DOM_HOW={scale:'лошадиные силы всех проданных машин, мотоциклов и аэропланов мира — с начала партии',market:'выручка всех марок мира — машины, мотоциклы, аэропланы — в долларах, с начала партии',
   sport:'победы с начала партии во всех гонках эпохи: большая гонка 6 очков, обычная 2, зачёт мотоциклов 2/1, перелёт или гонка в небе 6/2, рекорд 4',
   innov:'первенства: кто первым в мире сделал деталь, технологию, новинку оснащения или неба, совершил перелёт — история, вы, живые соперники; мир — по каталогу игры (86 первенств эпохи), рекорд эпохи — по таблице изобретений марок настоящей истории',
-  capital:'стоимость компаний — полторы годовые выручки, у всех одна мерка (оценка банкиров вашей компании — в «Империи»)',
+  capital:'стоимость компаний: марки истории и соперники — полторы годовые выручки; ваша — оценка банкиров (касса, завод, запасы, вложения, прибыль, купленные доли)',
   brand:'клиенты: сколько людей купили машину, мотоцикл или аэроплан марки с начала партии — у всех одна мерка'};
 function domCard(s){const T=domTable(s);if(!T)return `<section class="card" id="sec-dom"><div class="row"><h2>Господство</h2></div><p class="small muted" style="margin-top:4px">Мировой итог копится с первого хода: лошадиные силы, доллары, победы, первенства, капитал, узнаваемость. Господство — две категории из шести: в каждой больше половины мира и больше рекорда эпохи.</p></section>`;
   const held=domHeld(T),near=DOM_K.filter(k=>!held.includes(k)).sort((a,b)=>Math.min(T[b].share/DOM_SHARE,T[b].hist?T[b].mine/T[b].hist.v:1)-Math.min(T[a].share/DOM_SHARE,T[a].hist?T[a].mine/T[a].hist.v:1));

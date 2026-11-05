@@ -145,7 +145,7 @@ function resolve(key){
   if(key==='dxYes'||key==='dxNo')dxAnswer(s,key);
   if(key==='dxDrive'){s.pending.shift();save();render();dxToday(s,key);return;}if(key==='dxSim')dxToday(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
-  if(key==='show0'||key==='show1'||key==='show2')showBook(s,key);
+  if(key==='show0'||key==='show1'||key==='show2'||key==='show3')showBook(s,key);
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));

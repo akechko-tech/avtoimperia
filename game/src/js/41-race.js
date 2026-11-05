@@ -361,6 +361,8 @@ class RaceCar{constructor(e){
   this.crr0=0;this.surf='';this.surfIn=0;this.surfP=null;this.wetRoad=false;this.tun=0;this.muNow=0;this.flood=0;this.crash=null;this.inWater=0;this.wetT=0;this.waterY=0;this.rescueT=0;this.rescueIdx=0;this.trainHit=0;this.gateWait=0;
   // 0.30: четыре шины (41f-tyres.js): износ, «партия», прокол (1 — спущено, 2 — обод), путь на спущенном, сколько до обода, запаски
   this.tw=[0,0,0,0];this.tq=[1,1,1,1];this.tp=[0,0,0,0];this.tpd=[0,0,0,0];this.tpL=[400,400,400,400];this.spares=2;this.spare0=2;this.punctW=-1;this.punctWhy='';this.rimSaid=0;this.svcL=null;}}
+const BRK_CAP=6.2;/* м/с²: лучшие тормоза эпохи на сухом */
+function brakeDec(c,mu){return (c.brakeK||0.5)*Math.min(mu*GRAV,BRK_CAP);}
 function mkRaceCar(e,y,trk){
   const st=carStats(e.md,e.prep,y),terr=TERR[trk.cfg.terr]||TERR.dirt,c=new RaceCar(e);
   const m=st.kg,P=st.P*(e.pw||1),kd=st.kd,crr=st.crr*(terr.crr||1);
@@ -462,6 +464,13 @@ function carStep(c,trk,dt){
   if(c.shift>0)c.shift-=dt;else{if(c.rpm>0.96&&c.gear<c.gr.length){c.gear++;c.shift=0.28;}else if(c.gear>1&&Math.abs(v)<c.gr[c.gear-2]*0.55){c.gear--;c.shift=0.2;}}
   vg=c.gr[c.gear-1];
   const Fzf=c.m*GRAV*c.b/c.L,Fzr=c.m*GRAV*c.a/c.L;
+  // 0.48 (отзыв: «барабаны лёгкие, заносят машину и быстро её останавливают; на четыре колеса держат как на рельсах»):
+  // замедление тормозов — не «сила тормоза × сцепление шин» (у ленточного тормоза 1895 года выходило 3,5 м/с², как у барабанов
+  // двадцатых), а по эпохе: brakeDec — доля от 6,2 м/с² (лента 2,6, задние барабаны 3,4, четыре колеса 4,5, гидравлика 5,3);
+  // на мокром и рыхлом — по сцеплению. Сила на ось — не больше, чем держит ось: лишнее уходит в юз (колесо скользит, а не
+  // «тормозит сильнее»), и заблокированная ось всё-таки держит вбок часть (задняя — 30 %, передняя — 40 %): задние барабаны
+  // на пределе дают скольжение, а не разворот, а тормоза на четыре колеса не превращают руль в рельсы
+  const bdecN=brakeDec(c,mu);
   // 0.34: машина «встаёт» (поломка, бак пуст, сервис, сход) — на скорости тормозит плавно, а не намертво: раньше полный тормоз
   // на ходу блокировал задние колёса, и машину разворачивало (отзыв: «кончился бензин — машину заносит и разворачивает»)
   let Fx=0;const thr=stopped?0:c.thr,brk=stopped?(Math.abs(c.vx)>4?Math.max(Math.min(c.brk,0.6),0.3):1):c.brk;
@@ -470,9 +479,9 @@ function carStep(c,trk,dt){
   // на крутом подъёме первая передача «ползёт» (сцепление с проскальзыванием): слабые машины 1890-х не встают намертво
   const vLo=2.2+0.22*vg,vCr=c.gear===1&&grade>0.04?Math.max(1,vLo*(1-clamp((grade-0.04)/0.1,0,1)*0.6)):vLo;
   if(c.rev&&!stopped){// задняя передача: медленно (до ~9 км/ч), торможение — «Газом»
-    const vr=-v;if(brk>0.05)Fx=vr>0.2?brk*c.brakeK*mu*c.m*GRAV:0;else if(thr>0.05)Fx=vr<2.4?-thr*Math.min(pw/2.2,c.m*2.4):-c.m*0.2;else Fx=vr>0.15?c.m*2.2:0;}
+    const vr=-v;if(brk>0.05)Fx=vr>0.2?brk*c.m*bdecN:0;else if(thr>0.05)Fx=vr<2.4?-thr*Math.min(pw/2.2,c.m*2.4):-c.m*0.2;else Fx=vr>0.15?c.m*2.2:0;}
   else{
-  if(brk>0.05&&v>0.3)Fx=-brk*c.brakeK*mu*c.m*GRAV;
+  if(brk>0.05&&v>0.3)Fx=-brk*c.m*bdecN;
   else if(brk>0.05&&v<=0.3&&!stopped){Fx=v>0.02?-brk*c.m*1.8:0;}
   else if(c.shift<=0&&v<vg*1.02){Fx=thr*pw/Math.max(v,vCr);}
   if(v<0&&brk<0.05)Fx=Math.max(Fx,c.m*2);}
@@ -496,8 +505,10 @@ function carStep(c,trk,dt){
   else{
     const af=Math.atan2(c.vy+c.a*c.r,sp)-c.delta*Math.sign(v),ar=Math.atan2(c.vy-c.b*c.r,sp);
     // сколько продольной силы у каждой оси: тяга — только задние колёса, тормоз — по осям (c.fb — доля передних)
-    const brkF=brk>0.05&&!c.rev&&Fx<0?-Fx:0,fb=c.fb||0,FxR=brkF?brkF*(1-fb):Math.abs(Fx),FxF=brkF*fb;
-    const rearCap=Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxR/(muR*Fzr+1)),2))),frontCap=FxF?Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxF/(muF*Fzf+1)),2))):1;
+    const brkF=brk>0.05&&!c.rev&&Fx<0?-Fx:0,fb=c.fb||0;let FxR=brkF?brkF*(1-fb):Math.abs(Fx),FxF=brkF*fb;
+    // 0.48: ось не тормозит сильнее, чем держит: лишнее — юз (скользящее колесо даёт ещё 15 % сверх предела)
+    let lockR=0,lockF=0;if(brkF){const cR=0.9*muR*Fzr,cF=0.9*muF*Fzf;if(FxR>cR){lockR=Math.min(1,(FxR-cR)/cR);FxR=cR+(FxR-cR)*0.15;}if(FxF>cF){lockF=Math.min(1,(FxF-cF)/cF);FxF=cF+(FxF-cF)*0.15;}Fx=-(FxR+FxF);}
+    const rearCap=Math.max(lockR>0?0.3:0.05,Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxR/(muR*Fzr+1)),2)))),frontCap=FxF?Math.max(0.4,Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxF/(muF*Fzf+1)),2)))):1;c.lockR=lockR;c.lockF=lockF;
     const Fyf=tyreSat(af,Fzf,frontCap,muF),Fyr=tyreSat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
     const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
     const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump+rgh.ay,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull+rgh.dr+(c.punct?twPull(c)*(c.punctWhy==='wear'?0.3:0.6)*Math.min(1,sp/15):0);
@@ -623,7 +634,7 @@ function aiControl(c,trk,dt){
   const ordK=c.order==='push'?1.03:c.order==='save'?0.91:1;
   const mu0=roadMuAt(trk,c.idx)*c.grip*twAll(c)*(c.punct?0.85:1),mu=mu0*(0.8+0.17*sk)*ordK,muC=mu*0.9;
   // тормозит тем позже, чем опытнее: новичок — с запасом
-  const bdec=c.brakeK*mu*GRAV*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05,aNeed=0;
+  const bdec=brakeDec(c,mu)*(0.78+0.1*clamp((sk-0.55)/0.45,0,1));let vt=c.vtop*1.05,aNeed=0;
   // скорость — по кривизне той дуги, которой пилот едет (ось дороги + доля гоночной линии);
   // 0.34: и какое замедление нужно, чтобы войти в поворот с этой скоростью — тормозить заранее и по прямой, а не в самом повороте
   // профиль скорости впереди «с конца» (как у гоночных симуляторов): в каждой точке — не больше, чем держат шины в повороте,
@@ -649,7 +660,7 @@ function aiControl(c,trk,dt){
   // 0.34: тормоз — по профилю скорости: выше профиля — тормозить с нужным замедлением (заранее и твёрдо, без «качелей»
   // газ-тормоз), а не «чуть-чуть, когда уже быстро»: так машина входила в поворот быстрее, чем можно, и тормозила в самом
   // повороте — у машин с тормозами на задних колёсах это занос и разворот
-  {const full=c.brakeK*mu0*GRAV+0.01;c.brk=v>vt?clamp((Math.max(aNeed,0.5)/full)*1.1+(v-vt)*0.15,0.12,1):0;
+  {const full=brakeDec(c,mu0)+0.01;c.brk=v>vt?clamp((Math.max(aNeed,0.5)/full)*1.1+(v-vt)*0.15,0.12,1):0;
     // в повороте тормоз — только в пределах сцепления, что осталось от поворота (круг трения)
     if(latDem>0.15)c.brk=Math.min(c.brk,clamp(1.1*Math.sqrt(Math.max(0,1-latDem*latDem))*((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0)))+0.15),0.06,1));
     // и по прямой — не до блокировки задних колёс (заблокированные колёса не держат вбок — разворот)
@@ -757,7 +768,7 @@ function playerControl(c,dt){
   if(!c.rev){if(rKeys.brake&&still&&!rKeys.gas){c.revT=(c.revT||0)+dt;if(c.revT>0.45){c.rev=true;c.revT=0;rMsg('ЗАДНИЙ ХОД — «ТОРМОЗ» ВЕДЁТ НАЗАД',1.6);try{auSfx('shift',0.8);}catch(_){}}}else c.revT=0;}
   else if(rKeys.gas&&c.vx>-0.4){c.rev=false;c.revT=0;rMsg('ВПЕРЁД',0.8);try{auSfx('shift',0.6);}catch(_){}}
   const gIn=c.rev?rKeys.brake:rKeys.gas,bIn=c.rev?rKeys.gas:rKeys.brake;
-  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,6*dt);
+  c.thr+=clamp((gIn?1:0)-c.thr,-6*dt,4*dt);c.brk+=clamp((bIn?1:0)-c.brk,-8*dt,4*dt);/* 0.48: педаль тормоза — треть секунды до полного */
   if(!hist&&c.slipR>0.16&&c.thr>0.4)c.thr*=0.6;
   // 0.34: мотоцикл — помощь гонщику, «вшитая»: газ не срывает заднее колесо в пробуксовку (сколько держит шина с учётом наклона
   // в повороте), тормоз не блокирует колёса (как ABS) — на мощном мотоцикле и вне асфальта иначе не проехать
@@ -774,9 +785,14 @@ function playerControl(c,dt){
     const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}
       const rk2=v*Math.tan(c.delta)/Math.max(0.5,c.L),ex2=c.r*(c.r-rk2)>0?c.r-rk2:0;if(ex2)c.r-=ex2*Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
     if(tc&&gIn&&R)c.asTC=R.time+0.35;
-    if(c.brk>0&&v>0.5){const fb=c.fb||0,full=c.brakeK*muN*c.m*GRAV+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
+    if(c.brk>0&&v>0.5){const fb=c.fb||0,full=brakeDec(c,muN)*c.m+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
       const cap=Math.max(0.1,Math.min(capR,capF));if(c.brk>cap){c.brk=cap;esc=true;}}
     if(esc&&bIn&&R)c.asABS=R.time+0.35;}
+  // 0.48: автомобиль — в повороте водитель отпускает тормоз настолько, чтобы передние колёса держали руль (передней оси — не больше
+  // трёх четвертей её сцепления): тормоза на четыре колеса не «ставят на рельсы»; по прямой тормоз полный
+  // задней оси — не больше двух третей (тормоза только на задние колёса на пределе в повороте — разворот)
+  if(!moto&&!c.rev&&c.brk>0.2&&v>3&&Math.abs(c.delta)>0.06){const muN=c.muNow||c.grip,fb=c.fb||0,Fzf=c.m*GRAV*c.b/c.L,Fzr=c.m*GRAV*c.a/c.L,full=brakeDec(c,muN)*c.m+1,capF=fb>0?0.75*muN*Fzf/(fb*full):9,capR=fb<1?0.65*muN*Fzr/((1-fb)*full):9,cap=Math.min(capF,capR);
+    if(c.brk>cap){c.brk=Math.max(0.2,cap);if(bIn&&R)c.asABS=R.time+0.35;}}
   // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
   if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }

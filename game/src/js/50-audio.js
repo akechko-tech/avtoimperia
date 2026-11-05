@@ -91,13 +91,13 @@ const TUNES={
     mel:'E5 - - A5 - - C6 B5 | A5 - - - - . E5 - | G#5 - - B5 - - D6 C6 | B5 - - - - . E5 - | D6 - - B5 - - G#5 E5 | B5 - - - - . . . | C6 - - A5 - - E5 C5 | A5 - - - - . . . | F5 - - A5 - - D6 C6 | A5 - - - - . F5 - | E5 - - A5 - - C6 E6 | C6 - - - - . . . | B5 - - G#5 - - E5 D5 | E5 - - G#5 - - B5 D6 | C6 - - B5 - - A5 G#5 | A5 - - - - - . .',
     ch:'Am Am E7 E7 E7 E7 Am Am Dm Dm Am Am E7 E7 Am Am'},
   // 0.41: гимны на вручении призов (мелодии народные, записаны по нотам; звучат без сети). cue — только церемония, не плейлист
-  hymn_uk:{name:'«God Save the King»',bpm:92,div:2,beats:3,sty:'hymn',y:1745,cue:1,passes:1,k:0,
+  hymn_uk:{name:'«God Save the King»',bpm:92,div:2,beats:3,sty:'hymn',y:1745,cue:1,passes:1,k:-2,
     mel:'G4 - G4 - A4 - | F#4 - - G4 A4 - | B4 - B4 - C5 - | B4 - - A4 G4 - | A4 - G4 - F#4 - | G4 - - - - - | D5 - D5 - D5 - | D5 - - C5 B4 - | C5 - C5 - C5 - | C5 - - B4 A4 - | B4 - C5 B4 A4 G4 | B4 - - C5 D5 - | E5 C5 B4 - A4 - | G4 - - - - -',
     ch:'G D7 G G D7 G G G C D7 G G D7 G'},
-  hymn_fr:{name:'«Марсельеза»',bpm:104,div:4,beats:4,sty:'hymn',y:1792,cue:1,passes:1,k:0,
+  hymn_fr:{name:'«Марсельеза»',bpm:104,div:4,beats:4,sty:'hymn',y:1792,cue:1,passes:1,k:-2,
     mel:'. . . . . . . . . . . . D4 - - D4 | G4 - - - G4 - - - A4 - - - A4 - - - | D5 - - - - - B4 - G4 - - G4 B4 - - G4 | E5 - - - C6 - - - - - - - A5 - - F#5 | G5 - - - - - - - . . . . D4 - - D4 | G4 - - - G4 - - - A4 - - - A4 - - - | D5 - - - - - B4 - G4 - - G4 B4 - - G4 | E5 - - - C6 - - - - - - - A5 - - F#5 | G5 - - - - - - - - - - - . . . .',
     ch:'D7 G G D7 G G G D7 G'},
-  hymn_us:{name:'«The Star-Spangled Banner»',bpm:88,div:4,beats:3,sty:'hymn',y:1814,cue:1,passes:1,k:0,
+  hymn_us:{name:'«The Star-Spangled Banner»',bpm:88,div:4,beats:3,sty:'hymn',y:1814,cue:1,passes:1,k:-2,
     mel:'. . . . . . . . F4 - - D4 | Bb3 - - - D4 - - - F4 - - - | Bb4 - - - - - - - D5 - C5 - | Bb4 - - - D4 - - - E4 - - - | F4 - - - - - - - F4 - F4 - | D5 - - - - - C5 - Bb4 - - - | A4 - - - - - - - G4 - A4 - | Bb4 - - - Bb4 - - - F4 - - - | D4 - - - Bb3 - - - - - - -',
     ch:'Bb Bb Bb Bb F7 Bb F7 Bb Bb'}
 };
@@ -207,7 +207,10 @@ const FANF_SEC={win:8,cup:10,title:12,record:8,first:10,medal:8,deal:8,legacy:14
 // запись оркестра из библиотеки, нет сети — фанфары кубка); 2–3-му месту — марш страны или туш
 function auAward(a,place){if(!AU.ctx&&typeof auInit==='function')try{auInit();}catch(_){}if(!AU.ctx||!AU.on.music)return '';
   const m=(a&&a.music)||{},I=(ORCH&&ORCH.idx)||{},rec=(m.rec||[]).find(id=>I[id]&&!(CUE[id]&&CUE[id].bad));
-  if(place===1&&m.tune&&TUNES[m.tune]&&auTuneCue(m.tune))return 'tune';
+  // 0.48 (отзыв: «Марсельеза — очень противная пищалка»): гимн — запись духового оркестра (media: anthem → own_hymn_*.m4a, в APK вшита);
+  // синтезатор из нарезок — только если записи нет
+  if(place===1&&m.tune&&TUNES[m.tune]){const rid='own_'+m.tune;if(!(CUE[rid]&&CUE[rid].bad)){auCueSrc(rid,'music/'+rid+'.m4a',0.85,()=>{if(!auTuneCue(m.tune))auFanfare('cup');},22);return 'hymn';}
+    if(auTuneCue(m.tune))return 'tune';}
   if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9);return 'rec';}
   auFanfare(place===1?'cup':'medal');return 'fanfare';}
 function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
@@ -363,7 +366,7 @@ function tuneStep(SY,t,play){const T=TUNES[SY.tune],beat=60/T.bpm,sub=beat/T.div
     else{const h=spb/2;if(pos===0||pos===h)inst(A.bass,root-24+(pos===h?7:0),t,beat*0.9,0.5);if(pos===h/2||pos===h+h/2)tones.forEach(i=>inst(A.ch,root-12+i,t,beat*0.35,0.17));
       if(T.sty==='march'){if(pos===0)drum('kick',t,quiet?0.25:0.5);if(pos===h&&!quiet)drum('crash',t,0.12);if(pos===spb-T.div||pos===spb-T.div/2)drum('snare',t,quiet?0.15:0.3);}}
     const tok=M[idx];if(tok!=='-'&&tok!=='.'){let d=1;while(M[(idx+d)%len]==='-'&&d<16)d++;const n=noteMidi(tok)+T._k,mi2=pass===1&&A.mel2?A.mel2:A.mel;SY.began=1;
-      if(T.sty==='hymn'){inst('trumpet',n,t,sub*d*0.95,0.42);inst('cornet',n,t,Math.min(sub*d,0.4),0.1);if(d*sub>1.7)inst('trumpet',n,t+1.5,sub*d-1.5,0.3);/* длинную ноту передувают — семпл короче */}
+      if(T.sty==='hymn'){const q=n>79?n-12:n;/* 0.48: гимны на тон ниже (k:-2) и не выше соль второй октавы — синтезатор из нарезок свистел на верхах */inst('trumpet',q,t,sub*d*0.95,0.36);inst('cornet',q,t,Math.min(sub*d,0.4),0.1);inst('trombone',q-12,t,sub*d*0.9,0.16);if(d*sub>1.7)inst('trumpet',q,t+1.5,sub*d-1.5,0.26);/* длинную ноту передувают — семпл короче */}
       else{inst(mi2,n,t,sub*d*0.95,quiet?0.26:0.4);if((d>=2||pass===1)&&!quiet)inst(T.sty==='march'?'trombone':'piano',n-12,t,sub*d*0.9,pass===1?0.2:0.12);}}
     if(AU.step>=len*T._passes-1)musEnd(SY,t+sub);}
   return sub;}

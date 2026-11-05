@@ -85,6 +85,13 @@ function fixedNow(s){const L=s.last||{};return {dlr:dlrCostNow(s),ovh:plantOverh
 function fcAfter(s,f){const F=fixedNow(s),rev=f.rev||0,admK=admRate(s,{made:Math.round(f.cars||0)}),adm=admK*rev;
   const pre=(f.brand||0)-adm-F.dlr-F.ovh-F.int-F.rd-F.team-F.ad-(f.war||0)-F.sto+F.fin,tax=pre>0?pre*taxRate(s.y):0,part=pre-tax>0&&s.partners&&s.partners.length?(pre-tax)*partnersShare(s):0;
   return {after:pre-tax-part,pre,adm,admK,rev,F,tax,part,fixed:F.dlr+F.ovh+F.int+F.rd+F.team+F.ad};}
+// 0.48: нетто по модели (отзыв: «как изменится нетто результат именно по этой модели — с учётом аллокации на неё административных
+// и общих расходов»): маржа с её продаж минус её доля общих расходов — контора, сеть и представительства, содержание завода,
+// проценты, КБ, команда, реклама, гарантия, склад (минус то, что идёт само) — по доле модели в выручке марки; налог и доля партнёров — с остатка
+function modelNet(md,s,f){f=f||brandFc(md,s,md.price);const A=fcAfter(s,f),sh=(f.rev||0)>0?Math.min(1,Math.max(0,(f.selfRev||0)/f.rev)):1;
+  const parts={adm:A.adm*sh,dlr:A.F.dlr*sh,ovh:A.F.ovh*sh,rest:(A.F.int+A.F.rd+A.F.team+A.F.ad+(f.war||0)+A.F.sto-A.F.fin)*sh};
+  const over=parts.adm+parts.dlr+parts.ovh+parts.rest,pre=(f.pr||0)-over,tax=pre>0?pre*taxRate(s.y):0,part=pre-tax>0&&s.partners&&s.partners.length?(pre-tax)*partnersShare(s):0;
+  return {net:pre-tax-part,pre,over,sh,parts,tax,part,gross:f.pr||0,firm:A.after};}
 // во сколько конторы обходится модель (контора с ней минус контора без неё) и что она приносит (маржа с её продаж)
 function modelOffice(md,s,f){f=f||brandFc(md,s,md.price);const self=f.selfRev||0,cars=f.cars||0,mo=isMoto(md);
   const rw=admRate(s,{made:Math.round(cars)}),without=s.models.map(m=>m.id===md.id?{...m,status:'off'}:m);

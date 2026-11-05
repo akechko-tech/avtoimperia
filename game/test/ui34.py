@@ -75,7 +75,7 @@ with sync_playwright() as p:
     ok('На линии' in t,'п. 11: сколько мест на линии занимает машина')
     el=pg.query_selector('text=Для покупателей ≈');
     if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'5_hidden.png')
-    el=pg.query_selector('text=В месяц после всех расходов')
+    el=pg.query_selector('text=Нетто по модели в месяц')
     if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'6_after.png')
     el=pg.query_selector('text=т·км на')
     if el: el.scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=out+'7_truck.png')
