@@ -68,6 +68,8 @@ const ACT={
   // 0.42: справка о детали — зачем нужна (сравнение с вашей) и статья энциклопедии
   partInfo:d=>{const x=ALL_PARTS().find(q=>q.id===d.k);if(!x)return;const why=partWhy(G,x),w=partWiki(x.id),h=PART_HIST[x.id];
     openSheet(`<div class="row"><h2>${esc(x.name)}</h2>${X}</div><p class="small muted" style="margin-top:4px">${esc(x.note||'')}${h?` В истории первыми — ${esc(h[1])}, ${h[0]}.`:''}</p>${why?`<p style="margin-top:8px"><b>Зачем это нужно.</b> ${esc(why)}</p>`:''}${w?wikiBoxHTML(w):''}`);try{wikiFill(sb);}catch(_){}},
+  // 0.47: изобретения марок настоящей истории — откуда рекорд эпохи по инновациям
+  innovTable:()=>{openSheet(innovSheetHTML(G));},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
     if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v))draft.t='t2';

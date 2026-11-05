@@ -49,8 +49,8 @@ function botPress(s,c,g){if(!botsOn(s)||!s.bots)return 0;let p=0;for(const n in 
 function botTeam(s,t){if(!botsOn(s)||!s.bots||!t)return t;const B=botByBrand(s,t.n)||(t.mq||[]).map(m=>botByBrand(s,m)).find(Boolean);if(!B||!B.race)return t;return Object.assign({},t,{str:t.str*(1+0.22*B.race),botN:B.n});}
 /* ---------- ход бота ---------- */
 function botGoal(s,B){try{const L=worldCo(s),W=s.world,me=worldMine(s),o=L.find(x=>x.n===B.n);if(!o||!me)return B.goal||'scale';
-    const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,x)=>a+x.val,0)+me.val},f={scale:'hp',market:'rev',sport:'sport',innov:'firsts',capital:'val'};
-    let best='scale',bs=-1;for(const k in f){const sh=tot[k]>0?o[f[k]]/tot[k]:0;if(sh>bs){bs=sh;best=k;}}if(o.aw>=0.5&&bs<0.35)best='brand';return best;}catch(_){return B.goal||'scale';}}
+    const tot={scale:W.hp,market:W.rev,sport:W.sport,innov:W.firsts+me.firsts,capital:L.reduce((a,x)=>a+x.val,0)+me.val,brand:worldClients(W)},f={scale:'hp',market:'rev',sport:'sport',innov:'firsts',capital:'val',brand:'cl'};/* 0.47: бренд — клиенты */
+    let best='scale',bs=-1;for(const k in f){const sh=tot[k]>0?o[f[k]]/tot[k]:0;if(sh>bs){bs=sh;best=k;}}return best;}catch(_){return B.goal||'scale';}}
 function botCost(B,k,floor){return Math.max(floor,(B.r12||0)*k);}
 function botPrices(s,B,r,y){const cp=(COMPS[B.c]||[]).find(x=>x.n===B.n);if(!cp)return null;const mk=r.mk&&r.mk[B.c];let note=null;const amb=B.goal==='capital'?0.9:B.goal==='scale'||B.goal==='market'?1.35:1.15,hv=compVol(cp,s);
   for(const g in (cp.mix||{})){if(!cp.mix[g])continue;const pk=B.pk[g]||1,sh=(B.sh[B.c]&&B.sh[B.c][g])||0,z=mk&&mk.segs&&mk.segs[g],you=z&&z.size>0?z.you/z.size:0;let nk=pk;

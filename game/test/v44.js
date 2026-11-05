@@ -10,7 +10,7 @@ ok(!G.world.hist,'помесячного исторического мира (0.
 const E=histEra();ok(E===HIST_ERA_DATA&&E.y0===1895&&E.y1===1930,'рекорд эпохи берётся из сборки (16a-era.js), эпоха 1895–1930');
 {const t0=Date.now();const F=histEraCompute();const dev=Math.max(...DOM_K.map(k=>Math.abs(F.best[k].v-E.best[k].v)/Math.max(1e-9,E.best[k].v)));ok(dev<0.005&&DOM_K.every(k=>F.best[k].n===E.best[k].n),'сборка не устарела: пересчёт рекорда эпохи совпадает ('+(Date.now()-t0)+' мс, расхождение '+(dev*100).toFixed(2)+' %)');}
 const T=domTable(G);ok(DOM_K.every(k=>T[k].hist&&T[k].hist.n&&T[k].hist.v>0),'у каждой категории — рекордсмен эпохи: '+DOM_K.map(k=>k+' '+T[k].hist.n).join(', '));
-ok(T.scale.hist.n==='Ford'&&T.scale.hist.v>4e8&&T.sport.hist.n==='Bugatti'&&T.brand.hist.n==='Ford'&&T.capital.hist.n==='Ford','рекорды: Ford — '+domFmt('scale',T.scale.hist.v)+' за эпоху, Bugatti — '+T.sport.hist.v+' очков побед, Ford — узнаваемость '+Math.round(T.brand.hist.v*100)+' % и капитал '+domFmt('capital',T.capital.hist.v));
+ok(T.scale.hist.n==='Ford'&&T.scale.hist.v>4e8&&T.sport.hist.n==='Bugatti'&&T.brand.hist.n==='Ford'&&T.capital.hist.n==='Ford','рекорды: Ford — '+domFmt('scale',T.scale.hist.v)+' за эпоху, Bugatti — '+T.sport.hist.v+' очков побед, Ford — '+domFmt('brand',T.brand.hist.v)+' и капитал '+domFmt('capital',T.capital.hist.v));
 // условие победы: половина живого мира — мало, нужно больше истории
 {const W=G.world,hv=T.scale.hist.v;W.my.hp=Math.max(W.hp,1)*1.2;W.hp=W.my.hp+W.hp;/* игрок — 55 % живого мира */const T2=domTable(G);
   ok(T2.scale.share>=0.5&&!T2.scale.ok&&!T2.scale.histOk,'55 % живого мира в '+G.y+' году ('+domFmt('scale',W.my.hp)+') — не победа: рекорд эпохи Ford '+domFmt('scale',hv)+' не превзойдён');
