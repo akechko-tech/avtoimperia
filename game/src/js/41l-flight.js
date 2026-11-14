@@ -199,17 +199,22 @@ function flGround(ac,dt,F,Lf,ld,Df,T,pw,qd,V){const c=ac.ctl,m=ac.m,s=flSurf(ac.
   flSetGnd(ac,hdg,ac.th,s2.y);}
 /* ---------- автопилот: курс, высота, скорость ----------
    o: {x,z — точка или hdg — курс; alt — высота над морем; spd — скорость (м/с) или thr — газ; bank — наибольший крен} */
+function flVminK(ac){return clamp(0.9*(ac.st.v/3.6)/Math.max(1,ac.Vs),1.08,1.3);}
 function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
   let hdg=o.hdg;if(o.x!==undefined)hdg=Math.atan2(o.x-ac.p[0],o.z-ac.p[2]);
   if(ac.gnd){c.aCmd=null;c.thr=o.thr===undefined?1:o.thr;const e=angWrap(hdg-flHdg(ac));c.sx=clamp(e*2,-1,1);c.sy=ac.V>ac.Vs*1.12?0.85:ac.V>ac.Vs*0.6?-0.4:0;return;}
-  const psi=flHdg(ac),e=angWrap(hdg-psi),bm=o.bank||0.6,phi=flBank(ac);
+  // 0.49: крен автопилота — по запасу скорости: в вираже скорость срыва растёт (Vs/√cos φ), у самой посадочной скорости лётчик кренит едва-едва.
+  // Истребителю в бою (edge) предел не ставим — он сам знает, что делает
+  const psi=flHdg(ac),e=angWrap(hdg-psi),bm=o.edge?(o.bank||0.6):Math.min(o.bank||0.6,Math.max(0.15,Math.acos(clamp(Math.pow(1.1*ac.Vs/V,2),0,1)))),phi=flBank(ac);
   const phiT=clamp(e*1.7,-bm,bm);c.sx=clamp((phiT-phi)*2.4-ac.w[0]*0.3,-1,1);c.lvl=false;
   const gam=Math.asin(clamp(ac.v[1]/Math.max(1,l3(ac.v)),-1,1)),cmax=Math.max(0.03,Math.min(0.35,(ac.st.climb/60)/V*0.9));
   const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2])),floor=o.floor===undefined?40:o.floor;
   let gT=clamp(((o.alt===undefined?ac.p[1]:o.alt)-ac.p[1])*0.012,-(o.dive||0.18),cmax*(o.climbK||1));
   if(agl<floor)gT=Math.max(gT,clamp((floor-agl)*0.02,0.02,cmax));
   // скорость не ниже 1,3 посадочной: на малой скорости нос — ниже
-  const vmin=ac.Vs*(o.vmin||1.3);if(V<vmin&&agl>floor*0.5)gT=Math.min(gT,gam-(vmin-V)*0.03);
+  // 0.49: у аэропланов 1909–1911 годов наибольшая скорость — всего 1,2–1,35 посадочной: «не ниже 1,3» им не по силам, автопилот опускал нос до самой земли.
+  // Запас — не больше девяти десятых от наибольшей скорости (но не меньше 1,08 посадочной)
+  const vmin=ac.Vs*(o.vmin||flVminK(ac));if(V<vmin&&agl>floor*0.5)gT=Math.min(gT,gam-(vmin-V)*0.03);
   // угол атаки: нормальная перегрузка, чтобы траектория шла к нужному наклону, с поправкой на крен
   const rho=RHO0*airSig(ac.p[1]),qd=0.5*rho*V*V,den=Math.max(1,qd*ac.A.S*ac.CLa),nv=(V*1.2*(gT-gam)+FLG*Math.cos(gam))/Math.max(0.35,Math.cos(phi));
   c.aCmd=clamp(ac.a0+ac.m*nv/den,ac.an+0.02,ac.as-(o.edge?0.005:0.03)-((ac.dif||FLY_DIF0).stall<0.02?0.01:0));c.sy=0;/* 0.40: на лёгких уровнях автопилот держит запас до срыва */
@@ -217,13 +222,19 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
 /* ---------- 0.38: посадка лётчиком («Сесть»): выход на дальнюю точку, глиссада 4° на круг, выравнивание у земли, пробег ----------
    A — центр поля [x,z], gy — его высота. Состояние — в ac.ld; возвращает 'ip' | 'final' | 'flare' | 'roll' | 'done' */
 function flAutoLand(ac,A,gy,dt){const W=flW();let L=ac.ld;const dx=ac.p[0]-A[0],dz=ac.p[2]-A[1],d=Math.hypot(dx,dz);
-  if(!L){const u=d>50?[dx/d,dz/d]:[0,1];L=ac.ld={st:d>1400?'final':'ip',u,ip:[A[0]+u[0]*1900,A[1]+u[1]*1900],t:0};}
+  // 0.49: дальняя точка — по скорости аэроплана (минута лёта: 700 м у машины 1909 года, 1900 м у быстрой), высота над ней — по глиссаде.
+  // Раньше все уходили на 1900 м и 130 м: слабый аэроплан туда не добирался и назад шёл ниже глиссады
+  if(!L){const u=d>50?[dx/d,dz/d]:[0,1],R=clamp(ac.Vs*60,600,1900);L=ac.ld={st:d>R*0.75?'final':'ip',u,R,hIP:Math.max(40,R*Math.tan(0.07)),ip:[A[0]+u[0]*R,A[1]+u[1]*R],t:0};}
   L.t+=dt;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));
   if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=(ac.Vg||0)>6?0.6:0;/* 0.39: пробег — ручку на себя (костыль пашет землю) */ac.ctl.brk=ac.brakes&&(ac.Vg||0)>4?1:0;/* и тормоза, если есть */const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&(ac.Vg||0)>3?clamp(e*2,-1,1):0;L.st=(ac.Vg||0)<2.5?'done':'roll';return L.st;}
-  if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:gy+130,spd:ac.Vs*1.45,floor:50,bank:0.7});if(di<220||(L.t>8&&di<400))L.st='final';return L.st;}
+  // газ — не только по скорости, но и по высоте: ниже заданной — прибавить (0.49: слабый мотор на «0,55 газа» не держал высоту — аэроплан оседал и садился за километр до круга)
+  const thrAlt=(tgt)=>{ac.ctl.thr=clamp(ac.ctl.thr+(tgt-ac.p[1])*0.05,0,1);};
+  if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]),hT=gy+(L.hIP||130);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:hT,spd:Math.min(ac.Vs*1.45,ac.st.v/3.6*0.94),floor:Math.min(50,(L.hIP||130)*0.6),bank:0.7});thrAlt(hT);if(di<Math.min(220,(L.R||1900)*0.2)||(L.t>8&&di<Math.min(400,(L.R||1900)*0.35))){L.st='final';L.alt0=ac.p[1];}return L.st;}
   // прямая: нос на круг, глиссада 4°, скорость 1,3 посадочной; ниже 7 м — выравнивание: газ долой, нос подбирать, снижение 0,6 м/с
   const glide=gy+flHcg(ac,0)+Math.max(0,d-40)*Math.tan(0.07);
-  if(agl>7&&L.st!=='flare'){flAuto(ac,{x:A[0],z:A[1],alt:Math.min(glide,ac.p[1]),spd:ac.Vs*1.3,floor:0,dive:0.12,bank:0.5});L.st='final';return L.st;}
+  // ниже глиссады — идём ровно на высоте входа в прямую, пока глиссада не опустится к нам (раньше цель «не выше текущей» сползала вниз вместе с аэропланом)
+  if(L.alt0===undefined)L.alt0=ac.p[1];
+  if(agl>7&&L.st!=='flare'){const tgt=Math.min(glide,Math.max(L.alt0,gy+flHcg(ac,0)+12));flAuto(ac,{x:A[0],z:A[1],alt:tgt,spd:ac.Vs*flVminK(ac),floor:d>150?10:0,dive:0.12,bank:0.5});thrAlt(tgt);L.st='final';return L.st;}
   L.st='flare';flAuto(ac,{hdg:flHdg(ac),alt:ac.p[1]-0.6,thr:0,floor:0,edge:1,bank:0.3});const V=Math.max(4,ac.V),qd=0.5*RHO0*V*V,sink=-ac.v[1];
   ac.ctl.aCmd=clamp(ac.a0+ac.m*(FLG+(sink-0.6)*1.5)/Math.max(1,qd*ac.A.S*ac.CLa),ac.an,ac.as-0.01);ac.ctl.thr=0;return L.st;}
 /* ---------- соперник по кругу: летит по точкам с постоянной скоростью (результат — по истории) ---------- */

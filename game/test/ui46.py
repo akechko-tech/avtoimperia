@@ -32,7 +32,7 @@ with sync_playwright() as p:
     js("try{raceLoadUI(false);document.getElementById('raceScreen').hidden=true;if(typeof R!=='undefined'&&R&&R.gl)try{r3dDispose();}catch(_){};R=null;}catch(_){};try{closeSheet();}catch(_){};for(let i=0;i<10;i++)try{closePaper();}catch(_){};G.pending=[];tab='empire';render();")
     pg.wait_for_timeout(400); pg.evaluate("document.getElementById('sec-dom').scrollIntoView()"); pg.wait_for_timeout(200); pg.screenshot(path=out + '1_dom_card.png', full_page=False)
     # две категории — победа: газета
-    js("""(()=>{const W=G.world,T=domTable(G);W.my.hp=Math.max(T.scale.hist.v*1.01,W.hp);W.hp=W.my.hp/0.6;W.my.rev=Math.max(T.market.hist.v*1.01,W.rev);W.rev=W.my.rev/0.6;domCheck(G);render();})()""")
+    js("""(()=>{G.over=false;/* партия за девять лет могла кончиться (банкротство) — проверяем победу, а не её */const W=G.world,T=domTable(G);W.my.hp=Math.max(T.scale.hist.v*1.01,W.hp);W.hp=W.my.hp/0.6;W.my.rev=Math.max(T.market.hist.v*1.01,W.rev);W.rev=W.my.rev/0.6;domCheck(G);render();})()""")
     pg.wait_for_timeout(800)
     ok(js("!!(G.dom&&G.dom.ks&&G.dom.ks.length===2)"), 'победа по двум категориям: ' + str(js("G.dom?G.dom.ks.join('+'):''")))
     js("try{closeSheet();}catch(_){};(()=>{const e=G.pending.find(x=>/господствует/.test(x.title||''));if(e)showEvent(e);})()"); pg.wait_for_timeout(900)

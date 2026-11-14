@@ -229,6 +229,7 @@ function maFates(s){const now=mi(s);for(const f of BRAND_FATE){if(f.y!==s.y||f.m
   return false;}
 // рынок раздавлен: если ваша доля в стране выдавила марку (её доля — меньше 40% исторической два года подряд), она разоряется
 function maSqueeze(s){if(s.m!==2)return false;for(const c of Object.keys(COUNTRIES)){const mk=(s.mPrev||{})[c]||0;if(!mk||!maPresent(s,c))continue;
+    if(((s.cPrev||{})[c]||0)/mk<0.05)continue;/* 0.49: «не выдержала соперничества с вами» — только там, где у вас хотя бы двадцатая часть рынка: десять дилеров в чужой стране марку не разоряют (и военный спад 1915 года — не ваша заслуга) */
     const histTot=(COMPS[c]||[]).reduce((a,cp)=>a+compVol(cp,s),0)||1;
     for(let i=0;i<(COMPS[c]||[]).length;i++){const cp=COMPS[c][i];if(cp.imp||pkIs(cp,s)||holdOf(s,c,i)||!compAlive(cp,s)||(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n]))continue;
       const st=(s.comps[c]||[])[i]||{},hs=compVol(cp,s)/histTot,a1=(st.prev||0)/mk,a2=(st.prev2||0)/Math.max(1,(s.mPrev2||{})[c]||mk);

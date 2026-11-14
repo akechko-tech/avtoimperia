@@ -26,14 +26,16 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   M.start={x:ss?ss.A[0]:O[0]-f[0]*380+n[0]*90,z:ss?ss.A[1]:O[1]-f[1]*380+n[1]*90,hdg:Math.atan2(f[0],f[1])};
   const gyA=()=>FW&&FW.S.A?FW.S.A.y:0,agl=()=>{const a=me();return a.p[1]-Math.max(0,fwHgt(FW.S,a.p[0],a.p[2]));},altF=()=>me().p[1]-gyA();
   const who=P.hero?'Вы':P.n;
+  // 0.49: итог, часы и текст выхода — общие для всех заданий, и ставятся ДО боевого вылета: с 0.37 они стояли ниже «return frMission», у вылетов на фронт
+  // не было M.fin — в конце полёта (сбит, сел, выполнил) игра падала в «результат по расчёту», и газета писала случайный исход вместо настоящего
+  M.fin=(title,text,res,cls)=>{if(M.over)return;M.over=true;M.res=res;FLY.auto=false;flyEnd(title,text,cls);};
+  M.quitText=()=>'Попытка не засчитана: аэроплан вернётся в ангар.';
+  M.clock=()=>flFmtT((FL.t||0)*(FL.k||1));
   if(k==='war')return frMission(cfg,M);
   // соперники в небе (для зрелища): эталонные аэропланы года, летят по кругу со своей скоростью
   const rivalsOn=(aims,list,alt)=>{list.slice(0,2).forEach((x,i)=>{const role=t>=1909?'race':'sport',rm={...airRefMd(t<1912?'sport':role,t),paint:['#b7bcc0','#a8261d','#2e4a7a','#d8b13a'][i%4]};
     const a=aims[(i*2+1)%aims.length];M.rivals.push(flKin({p:[a[0],gyA()+70+i*25,a[1]],psi:i*2,V:Math.max(15,(x.v||st.v*0.9)/3.6),alt:gyA()+70+i*25,wp:aims,i:(i*2+2)%aims.length,R:110,md:rm,name:x.n}));});};
   M.parked=(()=>{const L=[];['sport','train','recon','fight'].forEach((r,i)=>{if(L.length>=3)return;const e=airRefEntry(r,t);if(e&&e[0]<=t+0.01&&(i<2||airWarOn(s.country,t)))L.push({...airRefMd(r,t),paint:['#d9cfb2','#b7bcc0','#6c6a40','#b07a45'][i]});});return L;})();
-  M.fin=(title,text,res,cls)=>{if(M.over)return;M.over=true;M.res=res;FLY.auto=false;flyEnd(title,text,cls);};
-  M.quitText=()=>'Попытка не засчитана: аэроплан вернётся в ангар.';
-  M.clock=()=>flFmtT((FL.t||0)*(FL.k||1));
   /* ===== первый полёт ===== */
   if(k==='test'){M.title=`Первый полёт: «${md.name}»`;const need=t<1909?25:t<1911?80:150,early=t<1909;M.phase=0;M.maxH=0;M.mood='clear';M.sc={};
     // 0.38: программа испытания (отзыв «миссия скучновато»): взлёт → набор высоты на время → вираж вокруг пилона → пролёт над ангарами → посадка в круг; оценка испытателя
@@ -54,7 +56,8 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     // оценка испытателя: подъём против расчёта, вираж, пролёт, посадка у круга; хорошая программа уменьшает шанс «не так, как задумано»
     M.score=()=>{const ref=Math.max(20,st.t1k*60*need/1000);let q=0.25;if(M.sc.climb)q+=0.25*clamp(ref/M.sc.climb,0.4,1.2);if(M.sc.turn)q+=0.2;if(M.sc.fly)q+=0.15;if(M.sc.land!=null)q+=0.15*clamp(1.2-M.sc.land/250,0,1);return clamp(q,0,1);};
     M.done=(how,auto)=>{const a=me(),risk=airTestRisk(s,md,P),q=M.score();let res;if(how==='crash')res=airTestApply(s,md,P,'crash',{why:a.crash,self:1});
-      else res=airTestApply(s,md,P,Math.random()<risk*0.55*(1.35-0.7*q)?'flaw':'ok',{self:1,secs:(FL.t-(M.tAir||0)),hard:a.hard||auto&&Math.random()<0.2,prog:q});
+      else{const eng=!a.eng.run&&a.eng.fail&&a.eng.fail!=='кончился бензин'?a.eng.fail:'';/* 0.49: мотор отказал в первом полёте — это не «летает!», а доводка: в отчёте так и сказано */
+        res=airTestApply(s,md,P,eng||Math.random()<risk*0.55*(1.35-0.7*q)?'flaw':'ok',{self:1,secs:(FL.t-(M.tAir||0)),hard:a.hard||auto&&Math.random()<0.2,prog:q,eng});}
       const prog=[M.sc.climb?`подъём на ${need} м — ${flFmtT(M.sc.climb)}`:'',M.sc.turn?'вираж вокруг пилона':'',M.sc.fly?'пролёт над полем':'',M.sc.land!=null?`посадка в ${Math.round(M.sc.land)} м от круга`:(auto?'посадку сделал испытатель':'')].filter(Boolean).join(', ');
       if(res.kind!=='crash'&&prog)res.text+=` Программа: ${prog}. Оценка испытателя — ${Math.round(q*10)} из 10.`;
       M.fin(res.kind==='crash'?'Аэроплан разбит':res.kind==='flaw'?'Летает — но не так, как задумано':'«'+md.name+'» летает!',res.text,res,res.kind==='crash'?'bad':res.kind==='ok'?'good':'');};

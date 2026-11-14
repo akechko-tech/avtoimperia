@@ -86,7 +86,10 @@ with sync_playwright() as p:
         pg.wait_for_timeout(500)
         if js("!!(FL.on&&FL.me&&document.getElementById('fLoad').hidden)") or not js('FL.on'): break
     ok(r == 'ok' and js('FL.on'), 'первый полёт загрузился (%.0f с)' % ((i + 1) * 0.5))
-    g = js("document.getElementById('fGoal').textContent")
+    for i in range(40):  # задание появляется с первым кадром полёта
+        g = js("document.getElementById('fGoal').textContent")
+        if '1 из 5' in g: break
+        pg.wait_for_timeout(500)
     ok('1 из 5' in g and 'Взлёт' in g, 'программа: «%s»' % g[:40])
     pg.set_viewport_size({'width': 844, 'height': 390}); pg.wait_for_timeout(1000)
     # газ в пол (как игрок) и набор высоты автопилотом в расчёте

@@ -9,12 +9,16 @@ const PART_HIST={me4:[1905,'FN (Four)'],me5:[1907,'Indian и Harley-Davidson'],m
   c2:[1891,'Panhard et Levassor'],c3:[1901,'Mercedes (Вильгельм Майбах)'],c6:[1908,'Ford (Model T)'],c5:[1906,'Морис Удай (гидравлический амортизатор)'],c7:[1922,'Lancia (Lambda)'],
   w2:[1895,'Michelin'],w3:[1904,'Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1908,'Rudge-Whitworth'],w6:[1913,'Goodyear и Palmer'],w7:[1908,'Sankey'],w8:[1923,'Firestone'],
   b4:[1910,'Cadillac (закрытый кузов Fisher)'],b9:[1922,'Essex (Coach)'],b5:[1922,'Dodge Brothers и Budd'],b6:[1896,'Daimler']};
-function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
+// 0.49: histM — месяц события в истории (0–11), если он известен: опередили на месяцы — так и пишем («на 2 месяца», «только в сентябре 1913 года»),
+// а не «на 1 год… только в 1914 году», как выходило у мёртвой петли (Нестеров сделал её в сентябре 1913-го)
+function recordFirst(s,key,name,histY,who,histM,art){if(!s.firsts)s.firsts={};const hm=histM===undefined||histM===null?null:+histM;
+  if(s.firsts[key]||(hm===null?s.y>=histY:s.y*12+s.m>=histY*12+hm))return;
+  const dm=hm===null?(histY-s.y)*12:histY*12+hm-(s.y*12+s.m),yrs=Math.floor(dm/12),lead=dm>=12?`${yrs} ${plural(yrs,'год','года','лет')}`:`${dm} ${plural(dm,'месяц','месяца','месяцев')}`,when=hm===null||dm>=12?`в ${histY} году`:`в ${MONTHS_P[hm]} ${histY} года`;
   if(s.botFirsts&&s.botFirsts[key]&&s.botFirsts[key].y<=s.y){const b=s.botFirsts[key];addLog(`${name}: первенство уже у ${b.n} (${b.y}).`,'');return;}/* 0.41: бот успел раньше */
-  s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
+  s.firsts[key]={y:s.y,name,hy:histY,who};if(hm!==null)s.firsts[key].hm=hm;addLog(`Первыми в мире: ${name} — на ${lead} раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
   const rid=reelGet(key,s)?key:null;if(rid)reelUnlock(s,rid);
-  try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только в ${histY} году.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}
-  if(!G.pending.length)pushEvent({own:1,title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`,choices:rid?[['Читать дальше','ok'],['▶ Кинохроника','reel:'+rid]]:undefined},true);
+  try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${lead} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только ${when}.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}
+  if(!G.pending.length)pushEvent({own:1,...(art||{}),/* 0.49: art — {airId} или {noArt:1}: у первенства в небе — аэроплан, а не лучший автомобиль марки */title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${lead}: в настоящем прошлом это сделал ${who} только ${when}. Газеты всего мира пишут о новинке.`,choices:rid?[['Читать дальше','ok'],['▶ Кинохроника','reel:'+rid]]:undefined},true);
   s.rep=clamp(s.rep+4,0,100);}
 function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p.e,p.g,p.c,p.k,p.b,p.w].forEach(x=>{const h=x&&PART_HIST[x.id];if(h&&s.y<h[0]&&!cp[x.id])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}

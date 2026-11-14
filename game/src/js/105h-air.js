@@ -219,7 +219,7 @@ function airMonth(s,r){const A=s.air;if(!A)return;const t=tNow(s),R={rev:0,ord:0
   if(!A.lv)return;
   // опытные работы (изобретения раньше истории)
   A.rd=(A.rd||[]).filter(p=>{p.left--;if(p.left>0)return true;A.tech[p.id]=1;const T=AIR_TECH.find(z=>z.id===p.id);if(T){const yrs=Math.max(0,Math.round(T.y-t));addLog(`Авиацех: «${T.n}» — готово${yrs>0?`, на ${yrs} ${plural(yrs,'год','года','лет')} раньше истории`:''}.`,'good');pendingToasts.push('🔬 '+T.n);
-    if(yrs>0)try{recordFirst(s,'air_'+T.id,T.n,Math.floor(T.y),T.who);}catch(_){}}return false;});
+    if(yrs>0)try{recordFirst(s,'air_'+T.id,T.n,Math.floor(T.y),T.who,null,{noArt:1});}catch(_){}}return false;});
   // проекты: чертежи и опытный образец; оснастка серии
   A.models.forEach(md=>{if(md.status==='dev'){md.devLeft--;if(md.devLeft<=0){md.status='proto';md.protoAt=mi(s);A.proto=(A.proto||[]).concat(md.id);}}
     else if(md.status==='tool'){md.toolLeft=(md.toolLeft||1)-1;if(md.toolLeft<=0){md.status='prod';md.launched=mi(s);addLog(`«${md.name}» пошёл в серию.`,'good');}}});
@@ -279,6 +279,9 @@ function airHire(s,id){const P=AIR_PILOTS.find(x=>x.id===id),A=s.air;if(!P||(A.p
   addLog(`В авиацех пришёл лётчик ${P.n}: ${money(Math.round(sal))} в месяц. Он будет летать на состязаниях и испытывать новые аэропланы.`,'good');return true;}
 function airFire(s,id){const A=s.air;A.pil=(A.pil||[]).filter(p=>p.id!==id);}
 /* ---------- первый полёт и серия ---------- */
+// 0.49: имя в начале фразы — с заглавной (capF: «Заводской испытатель поднял…»); лётчицы — в женском роде
+const AIR_FEM=['delaroche','quimby','law','earhart','zvereva'];function airFem(P){return !!(P&&!P.hero&&AIR_FEM.includes(P.id));}
+function airCanTest(md){return !!md&&md.status==='proto'&&!md.flown;}
 function airToolCost(s,md){return Math.round((airCost(md,tNow(s),s,0).unit*2+500*cpi(s))/50)*50;}
 function airTestRisk(s,md,P){const A=s.air,st=airStats(md,tNow(s));return clamp(0.03+(1-st.ease)*0.16+(st.vs>95?0.05:0)+(1-P.sk)*0.14+(md.role==='race'?0.05:0)-(A.flights||0)*0.004,0.02,0.4)*(DIF().bad||1);}
 function airTestAuto(s,md,pid){const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s),risk=airTestRisk(s,md,P),r=Math.random();return airTestApply(s,md,P,r<risk*0.35?'crash':r<risk?'flaw':'ok');}
@@ -286,12 +289,12 @@ function airTestAuto(s,md,pid){const P=airPilotList(s).find(p=>p.id===pid)||airB
 function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats(md,t);A.flights=(A.flights||0)+1;let res;
   if(kind==='crash'){md.status='dev';md.devLeft=2;md.devT=2;const c=Math.round((md.devCost||2000)*0.4/50)*50;s.cash-=c;A.fame=Math.max(0,A.fame-3);
     if(P.hero)A.heroHurt=mi(s)+3;else if(P.id!=='test'){const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+3;}
-    res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':P.n+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
+    res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':capF(P.n)+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
   else if(kind==='flaw'){md.vk=Math.round((0.92+Math.random()*0.04)*1000)/1000;md.flown=1;md.flaw=1;md.status=md.role==='race'?'race':'proto';
-    res={kind:'flaw',text:`«${md.name}» ${o.self?'слушается и садится, но на земле механики качают головами':'взлетел, но тянет хуже расчёта'}: мотор перегревается, полотно на крыле «дышит». Скорость — ${Math.round(airStats(md,t).v)} км/ч вместо ${Math.round(st.v)}. Доводка — месяц в авиацехе.`};}
+    res={kind:'flaw',text:`${o.eng?`В воздухе отказал мотор${o.eng==='мотор разбит'?' — разбит':o.eng==='лопнул бензопровод'?' — лопнул бензопровод':''}; посадка — с планирования, без тяги. `:''}«${md.name}» ${o.self?'слушается и садится, но на земле механики качают головами':'взлетел, но тянет хуже расчёта'}: мотор перегревается, полотно на крыле «дышит». Скорость — ${Math.round(airStats(md,t).v)} км/ч вместо ${Math.round(st.v)}. Доводка — месяц в авиацехе.`};}
   else{md.vk=Math.round((0.97+Math.random()*0.06+Math.min(0.02,(A.flights||0)*0.002)+(o.prog?0.01*o.prog:0))*1000)/1000;md.flown=1;md.status=md.role==='race'?'race':'proto';A.fame=Math.min(100,A.fame+(o.self?3:2)+(o.prog>=0.8?1:0));
-    const s2=airStats(md,t),who=P.hero?'Вы':P.n,v=P.hero?'подняли':'поднял';
-    res={kind:'ok',text:o.self?`${who} ${v} «${md.name}» в воздух${o.secs?` и пробыли в нём ${o.secs>=120?Math.round(o.secs/60)+' мин':Math.round(o.secs)+' с'}`:''}. ${o.hard?'Посадка жёсткая, но шасси выдержало. ':'Посадка — мягкая, на три точки. '}Механики снимают показания: скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`:
+    const s2=airStats(md,t),who=P.hero?'Вы':capF(P.n),fem=airFem(P),v=P.hero?'подняли':fem?'подняла':'поднял',was=P.hero?'пробыли':fem?'пробыла':'пробыл';
+    res={kind:'ok',text:o.self?`${who} ${v} «${md.name}» в воздух${o.secs?` и ${was} в нём ${o.secs>=120?Math.round(o.secs/60)+' мин':Math.round(o.secs)+' с'}`:''}. ${o.hard?'Посадка жёсткая, но шасси выдержало. ':'Посадка — мягкая, на три точки. '}Механики снимают показания: скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`:
       `${who} ${v} «${md.name}» после ${Math.round(40+s2.vs*1.2)} метров разбега. Круг над полем, вираж, посадка — без единой поломки. Скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`};}
   return res;}
 function airFlightNews(s,md,res){const ch=[];if(res.kind!=='crash'&&md.role!=='race'&&md.status==='proto')ch.push([`В серию (оснастка ${money(airToolCost(s,md))})`,'air:prod:'+md.id]);
@@ -354,6 +357,7 @@ function airMinistry(c,t,role){const sea=role==='sea';return c==='fr'?(sea?'Мо
 function airResolve(s,key){const A=s.air;if(!A)return false;const [,cmd,id]=key.split(':'),md=id?A.models.find(m=>String(m.id)===id):null;
   if(cmd==='ev'){s.pending.shift();tab='race';save();render();try{openAirEv(key.slice(7));}catch(e){console.warn(e);}return true;}
   if(cmd==='design'){s.pending.shift();tab='models';save();render();try{openAirDesigner();}catch(e){console.warn(e);}return true;}
+  if((cmd==='fly'||cmd==='test')&&md&&!airCanTest(md)){s.pending.shift();save();render();return true;}
   if(cmd==='fly'&&md){s.pending.shift();save();render();if(typeof flyTest==='function'&&flyTest(md))return true;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
   if(cmd==='test'&&md){s.pending.shift();const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
   if(cmd==='prod'&&md){if(!airProdStart(s,md))toast('Не хватает денег на оснастку');}

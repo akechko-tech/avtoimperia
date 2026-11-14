@@ -2758,7 +2758,7 @@ const AIR_EV=[
   {key:'larkhill-1912',y:1912,m:7,name:'Военный конкурс в Ларкхилле',place:'england',kind:'trial',c:'uk',prize:19500,mil:{n:20,role:'recon'},len:100,h:['Сэмюэл Коди','Cody V','£4 000 и заказ армии']},
   {key:'gb-1912',y:1912,m:8,name:'Кубок Гордона Беннетта в Чикаго',place:'meet',kind:'speed',c:'us',prize:5000,laps:6,len:200,open:1,h:['Жюль Ведрин','Deperdussin Monocoque','200 км — 174 км/ч']},
   {key:'schneider-1913',y:1913,m:3,name:'Кубок Шнейдера в Монако',place:'monaco',kind:'speed',c:'fr',prize:4900,laps:8,len:280,sea:1,open:1,h:['Морис Прево','Deperdussin (гидро)','280 км — 73 км/ч с остановками']},
-  {key:'loop-1913',y:1913,m:7,name:'Мёртвая петля',place:'kiev',kind:'loop',c:'ru',prize:2000,h:['Пётр Нестеров','Nieuport IV','первая петля — 9 сентября 1913 года над Киевом']},
+  {key:'loop-1913',y:1913,m:8,name:'Мёртвая петля',place:'kiev',kind:'loop',c:'ru',prize:2000,h:['Пётр Нестеров','Nieuport IV','первая петля — 9 сентября 1913 года над Киевом']},
   {key:'gb-1913',y:1913,m:8,name:'Кубок Гордона Беннетта в Реймсе',place:'reims',kind:'speed',c:'fr',prize:5000,laps:10,len:200,open:1,h:['Морис Прево','Deperdussin (Gnome 160)','200 км — 203,8 км/ч']},
   {key:'med-1913',y:1913,m:8,name:'Перелёт через Средиземное море',place:'med',kind:'cross',c:'fr',prize:5000,len:780,open:1,h:['Ролан Гаррос','Morane-Saulnier G','Фрежюс — Бизерта, 780 км за 7 ч 53 мин']},
   {key:'schneider-1914',y:1914,m:3,name:'Кубок Шнейдера в Монако',place:'monaco',kind:'speed',c:'fr',prize:4900,laps:10,len:280,sea:1,open:1,h:['Говард Пикстон','Sopwith Tabloid','280 км — 139,7 км/ч']},
@@ -4095,6 +4095,7 @@ function maFates(s){const now=mi(s);for(const f of BRAND_FATE){if(f.y!==s.y||f.m
   return false;}
 // рынок раздавлен: если ваша доля в стране выдавила марку (её доля — меньше 40% исторической два года подряд), она разоряется
 function maSqueeze(s){if(s.m!==2)return false;for(const c of Object.keys(COUNTRIES)){const mk=(s.mPrev||{})[c]||0;if(!mk||!maPresent(s,c))continue;
+    if(((s.cPrev||{})[c]||0)/mk<0.05)continue;/* 0.49: «не выдержала соперничества с вами» — только там, где у вас хотя бы двадцатая часть рынка: десять дилеров в чужой стране марку не разоряют (и военный спад 1915 года — не ваша заслуга) */
     const histTot=(COMPS[c]||[]).reduce((a,cp)=>a+compVol(cp,s),0)||1;
     for(let i=0;i<(COMPS[c]||[]).length;i++){const cp=COMPS[c][i];if(cp.imp||pkIs(cp,s)||holdOf(s,c,i)||!compAlive(cp,s)||(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n]))continue;
       const st=(s.comps[c]||[])[i]||{},hs=compVol(cp,s)/histTot,a1=(st.prev||0)/mk,a2=(st.prev2||0)/Math.max(1,(s.mPrev2||{})[c]||mk);
@@ -4934,7 +4935,7 @@ function airMonth(s,r){const A=s.air;if(!A)return;const t=tNow(s),R={rev:0,ord:0
   if(!A.lv)return;
   // опытные работы (изобретения раньше истории)
   A.rd=(A.rd||[]).filter(p=>{p.left--;if(p.left>0)return true;A.tech[p.id]=1;const T=AIR_TECH.find(z=>z.id===p.id);if(T){const yrs=Math.max(0,Math.round(T.y-t));addLog(`Авиацех: «${T.n}» — готово${yrs>0?`, на ${yrs} ${plural(yrs,'год','года','лет')} раньше истории`:''}.`,'good');pendingToasts.push('🔬 '+T.n);
-    if(yrs>0)try{recordFirst(s,'air_'+T.id,T.n,Math.floor(T.y),T.who);}catch(_){}}return false;});
+    if(yrs>0)try{recordFirst(s,'air_'+T.id,T.n,Math.floor(T.y),T.who,null,{noArt:1});}catch(_){}}return false;});
   // проекты: чертежи и опытный образец; оснастка серии
   A.models.forEach(md=>{if(md.status==='dev'){md.devLeft--;if(md.devLeft<=0){md.status='proto';md.protoAt=mi(s);A.proto=(A.proto||[]).concat(md.id);}}
     else if(md.status==='tool'){md.toolLeft=(md.toolLeft||1)-1;if(md.toolLeft<=0){md.status='prod';md.launched=mi(s);addLog(`«${md.name}» пошёл в серию.`,'good');}}});
@@ -4994,6 +4995,9 @@ function airHire(s,id){const P=AIR_PILOTS.find(x=>x.id===id),A=s.air;if(!P||(A.p
   addLog(`В авиацех пришёл лётчик ${P.n}: ${money(Math.round(sal))} в месяц. Он будет летать на состязаниях и испытывать новые аэропланы.`,'good');return true;}
 function airFire(s,id){const A=s.air;A.pil=(A.pil||[]).filter(p=>p.id!==id);}
 /* ---------- первый полёт и серия ---------- */
+// 0.49: имя в начале фразы — с заглавной (capF: «Заводской испытатель поднял…»); лётчицы — в женском роде
+const AIR_FEM=['delaroche','quimby','law','earhart','zvereva'];function airFem(P){return !!(P&&!P.hero&&AIR_FEM.includes(P.id));}
+function airCanTest(md){return !!md&&md.status==='proto'&&!md.flown;}
 function airToolCost(s,md){return Math.round((airCost(md,tNow(s),s,0).unit*2+500*cpi(s))/50)*50;}
 function airTestRisk(s,md,P){const A=s.air,st=airStats(md,tNow(s));return clamp(0.03+(1-st.ease)*0.16+(st.vs>95?0.05:0)+(1-P.sk)*0.14+(md.role==='race'?0.05:0)-(A.flights||0)*0.004,0.02,0.4)*(DIF().bad||1);}
 function airTestAuto(s,md,pid){const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s),risk=airTestRisk(s,md,P),r=Math.random();return airTestApply(s,md,P,r<risk*0.35?'crash':r<risk?'flaw':'ok');}
@@ -5001,12 +5005,12 @@ function airTestAuto(s,md,pid){const P=airPilotList(s).find(p=>p.id===pid)||airB
 function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats(md,t);A.flights=(A.flights||0)+1;let res;
   if(kind==='crash'){md.status='dev';md.devLeft=2;md.devT=2;const c=Math.round((md.devCost||2000)*0.4/50)*50;s.cash-=c;A.fame=Math.max(0,A.fame-3);
     if(P.hero)A.heroHurt=mi(s)+3;else if(P.id!=='test'){const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+3;}
-    res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':P.n+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
+    res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':capF(P.n)+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
   else if(kind==='flaw'){md.vk=Math.round((0.92+Math.random()*0.04)*1000)/1000;md.flown=1;md.flaw=1;md.status=md.role==='race'?'race':'proto';
-    res={kind:'flaw',text:`«${md.name}» ${o.self?'слушается и садится, но на земле механики качают головами':'взлетел, но тянет хуже расчёта'}: мотор перегревается, полотно на крыле «дышит». Скорость — ${Math.round(airStats(md,t).v)} км/ч вместо ${Math.round(st.v)}. Доводка — месяц в авиацехе.`};}
+    res={kind:'flaw',text:`${o.eng?`В воздухе отказал мотор${o.eng==='мотор разбит'?' — разбит':o.eng==='лопнул бензопровод'?' — лопнул бензопровод':''}; посадка — с планирования, без тяги. `:''}«${md.name}» ${o.self?'слушается и садится, но на земле механики качают головами':'взлетел, но тянет хуже расчёта'}: мотор перегревается, полотно на крыле «дышит». Скорость — ${Math.round(airStats(md,t).v)} км/ч вместо ${Math.round(st.v)}. Доводка — месяц в авиацехе.`};}
   else{md.vk=Math.round((0.97+Math.random()*0.06+Math.min(0.02,(A.flights||0)*0.002)+(o.prog?0.01*o.prog:0))*1000)/1000;md.flown=1;md.status=md.role==='race'?'race':'proto';A.fame=Math.min(100,A.fame+(o.self?3:2)+(o.prog>=0.8?1:0));
-    const s2=airStats(md,t),who=P.hero?'Вы':P.n,v=P.hero?'подняли':'поднял';
-    res={kind:'ok',text:o.self?`${who} ${v} «${md.name}» в воздух${o.secs?` и пробыли в нём ${o.secs>=120?Math.round(o.secs/60)+' мин':Math.round(o.secs)+' с'}`:''}. ${o.hard?'Посадка жёсткая, но шасси выдержало. ':'Посадка — мягкая, на три точки. '}Механики снимают показания: скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`:
+    const s2=airStats(md,t),who=P.hero?'Вы':capF(P.n),fem=airFem(P),v=P.hero?'подняли':fem?'подняла':'поднял',was=P.hero?'пробыли':fem?'пробыла':'пробыл';
+    res={kind:'ok',text:o.self?`${who} ${v} «${md.name}» в воздух${o.secs?` и ${was} в нём ${o.secs>=120?Math.round(o.secs/60)+' мин':Math.round(o.secs)+' с'}`:''}. ${o.hard?'Посадка жёсткая, но шасси выдержало. ':'Посадка — мягкая, на три точки. '}Механики снимают показания: скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`:
       `${who} ${v} «${md.name}» после ${Math.round(40+s2.vs*1.2)} метров разбега. Круг над полем, вираж, посадка — без единой поломки. Скорость ${Math.round(s2.v)} км/ч, подъём на 1000 м за ${s2.t1k<60?s2.t1k.toFixed(1).replace('.',',')+' мин':'—'}, потолок ${fmtN(Math.round(s2.ceil/100)*100)} м.`};}
   return res;}
 function airFlightNews(s,md,res){const ch=[];if(res.kind!=='crash'&&md.role!=='race'&&md.status==='proto')ch.push([`В серию (оснастка ${money(airToolCost(s,md))})`,'air:prod:'+md.id]);
@@ -5069,6 +5073,7 @@ function airMinistry(c,t,role){const sea=role==='sea';return c==='fr'?(sea?'Мо
 function airResolve(s,key){const A=s.air;if(!A)return false;const [,cmd,id]=key.split(':'),md=id?A.models.find(m=>String(m.id)===id):null;
   if(cmd==='ev'){s.pending.shift();tab='race';save();render();try{openAirEv(key.slice(7));}catch(e){console.warn(e);}return true;}
   if(cmd==='design'){s.pending.shift();tab='models';save();render();try{openAirDesigner();}catch(e){console.warn(e);}return true;}
+  if((cmd==='fly'||cmd==='test')&&md&&!airCanTest(md)){s.pending.shift();save();render();return true;}
   if(cmd==='fly'&&md){s.pending.shift();save();render();if(typeof flyTest==='function'&&flyTest(md))return true;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
   if(cmd==='test'&&md){s.pending.shift();const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();return true;}
   if(cmd==='prod'&&md){if(!airProdStart(s,md))toast('Не хватает денег на оснастку');}
@@ -7066,12 +7071,16 @@ const PART_HIST={me4:[1905,'FN (Four)'],me5:[1907,'Indian и Harley-Davidson'],m
   c2:[1891,'Panhard et Levassor'],c3:[1901,'Mercedes (Вильгельм Майбах)'],c6:[1908,'Ford (Model T)'],c5:[1906,'Морис Удай (гидравлический амортизатор)'],c7:[1922,'Lancia (Lambda)'],
   w2:[1895,'Michelin'],w3:[1904,'Continental'],w4:[1906,'Michelin (съёмные обода)'],w5:[1908,'Rudge-Whitworth'],w6:[1913,'Goodyear и Palmer'],w7:[1908,'Sankey'],w8:[1923,'Firestone'],
   b4:[1910,'Cadillac (закрытый кузов Fisher)'],b9:[1922,'Essex (Coach)'],b5:[1922,'Dodge Brothers и Budd'],b6:[1896,'Daimler']};
-function recordFirst(s,key,name,histY,who){if(!s.firsts)s.firsts={};if(s.firsts[key]||s.y>=histY)return;
+// 0.49: histM — месяц события в истории (0–11), если он известен: опередили на месяцы — так и пишем («на 2 месяца», «только в сентябре 1913 года»),
+// а не «на 1 год… только в 1914 году», как выходило у мёртвой петли (Нестеров сделал её в сентябре 1913-го)
+function recordFirst(s,key,name,histY,who,histM,art){if(!s.firsts)s.firsts={};const hm=histM===undefined||histM===null?null:+histM;
+  if(s.firsts[key]||(hm===null?s.y>=histY:s.y*12+s.m>=histY*12+hm))return;
+  const dm=hm===null?(histY-s.y)*12:histY*12+hm-(s.y*12+s.m),yrs=Math.floor(dm/12),lead=dm>=12?`${yrs} ${plural(yrs,'год','года','лет')}`:`${dm} ${plural(dm,'месяц','месяца','месяцев')}`,when=hm===null||dm>=12?`в ${histY} году`:`в ${MONTHS_P[hm]} ${histY} года`;
   if(s.botFirsts&&s.botFirsts[key]&&s.botFirsts[key].y<=s.y){const b=s.botFirsts[key];addLog(`${name}: первенство уже у ${b.n} (${b.y}).`,'');return;}/* 0.41: бот успел раньше */
-  s.firsts[key]={y:s.y,name,hy:histY,who};addLog(`Первыми в мире: ${name} — на ${histY-s.y} г. раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
+  s.firsts[key]={y:s.y,name,hy:histY,who};if(hm!==null)s.firsts[key].hm=hm;addLog(`Первыми в мире: ${name} — на ${lead} раньше, чем ${who}.`,'good');pendingToasts.push('🌟 Первыми: '+name);
   const rid=reelGet(key,s)?key:null;if(rid)reelUnlock(s,rid);
-  try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только в ${histY} году.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}
-  if(!G.pending.length)pushEvent({own:1,title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${histY-s.y} ${plural(histY-s.y,'год','года','лет')}: в настоящем прошлом это сделал ${who} только в ${histY} году. Газеты всего мира пишут о новинке.`,choices:rid?[['Читать дальше','ok'],['▶ Кинохроника','reel:'+rid]]:undefined},true);
+  try{trophyAdd(s,{kind:'record',title:`Первыми в мире: ${name}`,sub:`на ${lead} раньше, чем ${who}`,story:`В настоящей истории это сделал ${who} только ${when}.`,key:'first|'+key,reel:rid||'',pt:'Первыми в мире!'});}catch(_){}
+  if(!G.pending.length)pushEvent({own:1,...(art||{}),/* 0.49: art — {airId} или {noArt:1}: у первенства в небе — аэроплан, а не лучший автомобиль марки */title:'Первыми в мире!',deck:name,text:`«${s.company}» опередила историю на ${lead}: в настоящем прошлом это сделал ${who} только ${when}. Газеты всего мира пишут о новинке.`,choices:rid?[['Читать дальше','ok'],['▶ Кинохроника','reel:'+rid]]:undefined},true);
   s.rep=clamp(s.rep+4,0,100);}
 function checkFirstParts(md){const s=G,p=parts(md),cp=(s.rd&&s.rd.copied)||{};[p.e,p.g,p.c,p.k,p.b,p.w].forEach(x=>{const h=x&&PART_HIST[x.id];if(h&&s.y<h[0]&&!cp[x.id])recordFirst(s,'part:'+x.id,x.name,h[0],h[1]);});}
 function checkFirstTech(k,l){const s=G,lv=TECH[k].lv[l-1];if(lv&&lv.hist)recordFirst(s,'tech:'+k+':'+l,lv.name,lv.hist[0],lv.hist[1]);}
@@ -9012,7 +9021,7 @@ function paperHTML(o,s){
     ${fig}${reel}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${o.wk&&typeof wikiBoxHTML==='function'?wikiBoxHTML(o.wk):''}${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
-      <div class="p-mkt"><b>Рынок</b>${L?`Продано машин: ${fmtN(L.sold+(L.milN||0)+(L.ordN||0))}${L.milN?` (армии — ${fmtN(L.milN)})`:''} · ${s.over&&s.soldTo?'ваши деньги '+money(s.soldTo.mine):'касса '+money(s.cash)}`:'Первые продажи впереди'}</div></div>
+      <div class="p-mkt"><b>Рынок</b>${L?`Продано машин за месяц: ${fmtN(L.sold+(L.milN||0)+(L.ordN||0))}${L.milN?` (армии — ${fmtN(L.milN)})`:''} · ${s.over&&s.soldTo?'ваши деньги '+money(s.soldTo.mine):'касса '+money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
     ${o.mean?`<div class="p-mean"><b>Что это значит для вас</b><span>${esc(o.mean)}</span></div>`:''}
     <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
@@ -16405,7 +16414,7 @@ function airMarketHTML(s){const A=s.air,t=tNow(s),c=s.country,war=airWarOn(c,t);
     const top=comps.slice(0,4).map(o=>`${esc(o.x.n)} ${pct(o.w/W,0)}`).join(' · ');const myY=mine.reduce((a,m)=>a+(m.lastSold||0)*12,0);
     return `<div class="race-item"><div class="row"><h3>${AIR_ROLES[r].ico} ${AIR_ROLES[r].n}</h3><b class="num">${fmtN(Math.round(civ+mil))} в год</b></div>
       <p class="small muted">${civ>0.3?`покупатели — ${fmtN(Math.round(civ))}`:''}${civ>0.3&&mil>0.3?' · ':''}${mil>0.3?`армия и флот — ${fmtN(Math.round(mil))}`:''} · эталон «${esc(ref[1])}», ${money(airRefPrice(r,t))}</p>
-      ${top?`<p class="small" style="margin-top:2px">${top}</p>`:''}${mine.length?`<p class="small good" style="margin-top:2px">Ваши: ${mine.map(m=>`«${esc(m.name)}» — оценка ${airQ(m,t).q.toFixed(2).replace('.',',')}`).join(', ')}${myY>0?` · продаёте ≈ ${fmtN(Math.round(myY))} в год`:''}</p>`:''}</div>`;}).join('');
+      ${top?`<p class="small" style="margin-top:2px">${top}</p>`:''}${mine.length?`<p class="small good" style="margin-top:2px">Ваши: ${mine.map(m=>`«${esc(m.name)}» — оценка ${airQ(m,t).q.toFixed(2).replace('.',',')}`).join(', ')}${myY>0?` · продаёте ≈ ${fmtN(Math.round(myY))} в год`:''}</p>${myY<=0&&mil>0.3&&!A.orders.some(o=>o.left>0&&mine.some(m=>m.id===o.md))?`<p class="small warn" style="margin-top:2px">Армия пока не берёт: первый заказ на модель — только по итогам конкурса министерства (${war?'в войну — каждый квартал':'весной и осенью'}). Заявка — на вкладке «Гонки», когда конкурс объявят.</p>`:''}`:''}</div>`;}).join('');
   const ord=A.orders.map(o=>{const m=A.models.find(x=>x.id===o.md);return `<p class="small" style="margin-top:4px">${esc(o.who)}: «${esc(m?m.name:'?')}» — ${fmtN(o.n-o.left)} из ${fmtN(o.n)} по ${money(o.price)}, срок ${dstr({y:1895+Math.floor(o.due/12),m:o.due%12})}</p>`;}).join('');
   const abroad=['fr','uk','de','it','us','ru'].filter(x=>x!==c).map(x=>{const r=airReach(s,x,'priv');return `${COUNTRIES[x].name}: ${r<=0?'<span class="bad">закрыто</span>':r>=0.3?'открыто':'трудно'}`;}).join(' · ');
   return `<section class="card"><div class="row"><h2>${COUNTRIES[c].name}</h2><span class="pill ${war?'bad':'good'}">${war?'война':'мир'}</span></div>${rows||'<p class="small muted" style="margin-top:6px">Аэропланов здесь пока почти не покупают.</p>'}</section>
@@ -16427,7 +16436,7 @@ function showEvent(){
   if(ev.saga){if(!SAGAP)sagaPlay(ev.saga);return;}
   if(ev.duel){duelShow(ev);return;}
   if(ev.chance){openSheet(chanceHTML(ev));return;}
-  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск'),mean:ev.mean,reel:ev.reel,wk:ev.wk||null});return;}
+  if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,airId:ev.airId,noArt:ev.noArt,mark:ev.mark,/* 0.49: без этих трёх полей заметка о вылете, рекорде или первом полёте шла с лучшим автомобилем или мотоциклом марки — газета 0.40 умела рисовать аэроплан, но событие до неё его не доносило */own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск'),mean:ev.mean,reel:ev.reel,wk:ev.wk||null});return;}
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
@@ -16946,7 +16955,7 @@ if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:
 window.addEventListener('resize',()=>xpopClose());
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.48';
+const GAME_VER='0.49';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -20512,17 +20521,22 @@ function flGround(ac,dt,F,Lf,ld,Df,T,pw,qd,V){const c=ac.ctl,m=ac.m,s=flSurf(ac.
   flSetGnd(ac,hdg,ac.th,s2.y);}
 /* ---------- автопилот: курс, высота, скорость ----------
    o: {x,z — точка или hdg — курс; alt — высота над морем; spd — скорость (м/с) или thr — газ; bank — наибольший крен} */
+function flVminK(ac){return clamp(0.9*(ac.st.v/3.6)/Math.max(1,ac.Vs),1.08,1.3);}
 function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
   let hdg=o.hdg;if(o.x!==undefined)hdg=Math.atan2(o.x-ac.p[0],o.z-ac.p[2]);
   if(ac.gnd){c.aCmd=null;c.thr=o.thr===undefined?1:o.thr;const e=angWrap(hdg-flHdg(ac));c.sx=clamp(e*2,-1,1);c.sy=ac.V>ac.Vs*1.12?0.85:ac.V>ac.Vs*0.6?-0.4:0;return;}
-  const psi=flHdg(ac),e=angWrap(hdg-psi),bm=o.bank||0.6,phi=flBank(ac);
+  // 0.49: крен автопилота — по запасу скорости: в вираже скорость срыва растёт (Vs/√cos φ), у самой посадочной скорости лётчик кренит едва-едва.
+  // Истребителю в бою (edge) предел не ставим — он сам знает, что делает
+  const psi=flHdg(ac),e=angWrap(hdg-psi),bm=o.edge?(o.bank||0.6):Math.min(o.bank||0.6,Math.max(0.15,Math.acos(clamp(Math.pow(1.1*ac.Vs/V,2),0,1)))),phi=flBank(ac);
   const phiT=clamp(e*1.7,-bm,bm);c.sx=clamp((phiT-phi)*2.4-ac.w[0]*0.3,-1,1);c.lvl=false;
   const gam=Math.asin(clamp(ac.v[1]/Math.max(1,l3(ac.v)),-1,1)),cmax=Math.max(0.03,Math.min(0.35,(ac.st.climb/60)/V*0.9));
   const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2])),floor=o.floor===undefined?40:o.floor;
   let gT=clamp(((o.alt===undefined?ac.p[1]:o.alt)-ac.p[1])*0.012,-(o.dive||0.18),cmax*(o.climbK||1));
   if(agl<floor)gT=Math.max(gT,clamp((floor-agl)*0.02,0.02,cmax));
   // скорость не ниже 1,3 посадочной: на малой скорости нос — ниже
-  const vmin=ac.Vs*(o.vmin||1.3);if(V<vmin&&agl>floor*0.5)gT=Math.min(gT,gam-(vmin-V)*0.03);
+  // 0.49: у аэропланов 1909–1911 годов наибольшая скорость — всего 1,2–1,35 посадочной: «не ниже 1,3» им не по силам, автопилот опускал нос до самой земли.
+  // Запас — не больше девяти десятых от наибольшей скорости (но не меньше 1,08 посадочной)
+  const vmin=ac.Vs*(o.vmin||flVminK(ac));if(V<vmin&&agl>floor*0.5)gT=Math.min(gT,gam-(vmin-V)*0.03);
   // угол атаки: нормальная перегрузка, чтобы траектория шла к нужному наклону, с поправкой на крен
   const rho=RHO0*airSig(ac.p[1]),qd=0.5*rho*V*V,den=Math.max(1,qd*ac.A.S*ac.CLa),nv=(V*1.2*(gT-gam)+FLG*Math.cos(gam))/Math.max(0.35,Math.cos(phi));
   c.aCmd=clamp(ac.a0+ac.m*nv/den,ac.an+0.02,ac.as-(o.edge?0.005:0.03)-((ac.dif||FLY_DIF0).stall<0.02?0.01:0));c.sy=0;/* 0.40: на лёгких уровнях автопилот держит запас до срыва */
@@ -20530,13 +20544,19 @@ function flAuto(ac,o){const c=ac.ctl,V=Math.max(4,ac.V),W=flW();
 /* ---------- 0.38: посадка лётчиком («Сесть»): выход на дальнюю точку, глиссада 4° на круг, выравнивание у земли, пробег ----------
    A — центр поля [x,z], gy — его высота. Состояние — в ac.ld; возвращает 'ip' | 'final' | 'flare' | 'roll' | 'done' */
 function flAutoLand(ac,A,gy,dt){const W=flW();let L=ac.ld;const dx=ac.p[0]-A[0],dz=ac.p[2]-A[1],d=Math.hypot(dx,dz);
-  if(!L){const u=d>50?[dx/d,dz/d]:[0,1];L=ac.ld={st:d>1400?'final':'ip',u,ip:[A[0]+u[0]*1900,A[1]+u[1]*1900],t:0};}
+  // 0.49: дальняя точка — по скорости аэроплана (минута лёта: 700 м у машины 1909 года, 1900 м у быстрой), высота над ней — по глиссаде.
+  // Раньше все уходили на 1900 м и 130 м: слабый аэроплан туда не добирался и назад шёл ниже глиссады
+  if(!L){const u=d>50?[dx/d,dz/d]:[0,1],R=clamp(ac.Vs*60,600,1900);L=ac.ld={st:d>R*0.75?'final':'ip',u,R,hIP:Math.max(40,R*Math.tan(0.07)),ip:[A[0]+u[0]*R,A[1]+u[1]*R],t:0};}
   L.t+=dt;const agl=ac.p[1]-Math.max(0,W.H(ac.p[0],ac.p[2]));
   if(ac.gnd){ac.ctl.aCmd=null;ac.ctl.thr=0;ac.ctl.sy=(ac.Vg||0)>6?0.6:0;/* 0.39: пробег — ручку на себя (костыль пашет землю) */ac.ctl.brk=ac.brakes&&(ac.Vg||0)>4?1:0;/* и тормоза, если есть */const e=angWrap(Math.atan2(A[0]-ac.p[0],A[1]-ac.p[2])-flHdg(ac));ac.ctl.sx=d>60&&(ac.Vg||0)>3?clamp(e*2,-1,1):0;L.st=(ac.Vg||0)<2.5?'done':'roll';return L.st;}
-  if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:gy+130,spd:ac.Vs*1.45,floor:50,bank:0.7});if(di<220||(L.t>8&&di<400))L.st='final';return L.st;}
+  // газ — не только по скорости, но и по высоте: ниже заданной — прибавить (0.49: слабый мотор на «0,55 газа» не держал высоту — аэроплан оседал и садился за километр до круга)
+  const thrAlt=(tgt)=>{ac.ctl.thr=clamp(ac.ctl.thr+(tgt-ac.p[1])*0.05,0,1);};
+  if(L.st==='ip'){const di=Math.hypot(L.ip[0]-ac.p[0],L.ip[1]-ac.p[2]),hT=gy+(L.hIP||130);flAuto(ac,{x:L.ip[0],z:L.ip[1],alt:hT,spd:Math.min(ac.Vs*1.45,ac.st.v/3.6*0.94),floor:Math.min(50,(L.hIP||130)*0.6),bank:0.7});thrAlt(hT);if(di<Math.min(220,(L.R||1900)*0.2)||(L.t>8&&di<Math.min(400,(L.R||1900)*0.35))){L.st='final';L.alt0=ac.p[1];}return L.st;}
   // прямая: нос на круг, глиссада 4°, скорость 1,3 посадочной; ниже 7 м — выравнивание: газ долой, нос подбирать, снижение 0,6 м/с
   const glide=gy+flHcg(ac,0)+Math.max(0,d-40)*Math.tan(0.07);
-  if(agl>7&&L.st!=='flare'){flAuto(ac,{x:A[0],z:A[1],alt:Math.min(glide,ac.p[1]),spd:ac.Vs*1.3,floor:0,dive:0.12,bank:0.5});L.st='final';return L.st;}
+  // ниже глиссады — идём ровно на высоте входа в прямую, пока глиссада не опустится к нам (раньше цель «не выше текущей» сползала вниз вместе с аэропланом)
+  if(L.alt0===undefined)L.alt0=ac.p[1];
+  if(agl>7&&L.st!=='flare'){const tgt=Math.min(glide,Math.max(L.alt0,gy+flHcg(ac,0)+12));flAuto(ac,{x:A[0],z:A[1],alt:tgt,spd:ac.Vs*flVminK(ac),floor:d>150?10:0,dive:0.12,bank:0.5});thrAlt(tgt);L.st='final';return L.st;}
   L.st='flare';flAuto(ac,{hdg:flHdg(ac),alt:ac.p[1]-0.6,thr:0,floor:0,edge:1,bank:0.3});const V=Math.max(4,ac.V),qd=0.5*RHO0*V*V,sink=-ac.v[1];
   ac.ctl.aCmd=clamp(ac.a0+ac.m*(FLG+(sink-0.6)*1.5)/Math.max(1,qd*ac.A.S*ac.CLa),ac.an,ac.as-0.01);ac.ctl.thr=0;return L.st;}
 /* ---------- соперник по кругу: летит по точкам с постоянной скоростью (результат — по истории) ---------- */
@@ -20600,9 +20620,12 @@ function flyHelp(){const b=document.getElementById('fHelpBox');if(!b.hidden){b.h
   <p><b>Пробег</b>: газ долой, ручку на себя — костыль пашет землю и тормозит. Колёсные тормоза есть только у шасси с тормозами (кнопка <b>ТОРМОЗ</b>, держать).</p>
   <p><b>Мотор стал</b> — внизу появятся кнопки: завести (в воздухе — винт раскрутит встречный поток, на земле — механик), починить или заправиться в поле. Долгий перелёт — <b>⏩ Долететь</b>: лётчик ведёт сам, а часы бегут, пока не случится что-то, что требует вас.</p>
   <p>На клавиатуре: стрелки или W/A/S/D — ручка, Shift/Ctrl — газ, X — тормоз, пробел — огонь, B — бомбы, C — вид, T — время, P — автопилот.</p><button class="btn primary" id="fHelpOk">Понятно</button>`;b.hidden=false;document.getElementById('fHelpOk').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};}
-function flyQuitAsk(){if(!FL.on)return;const M=FL.mi;if(M&&M.over){flyClose();return;}FL.paused=true;const b=document.getElementById('fHelpBox');
+function flyQuitAsk(){if(!FL.on)return;const M=FL.mi;
+  // 0.49: итог уже есть (окно «Принять / Осмотреться») — «Выход» его принимает, а не выбрасывает: раньше после «Осмотреться» и «Выход»
+  // разбитый опытный образец оставался целым, и первый полёт можно было повторять в тот же месяц, пока не выйдет удачно
+  if(M&&M.over){try{if(M.apply)M.apply();}catch(e){console.error(e);}flyClose();try{save();render();}catch(_){}return;}FL.paused=true;const b=document.getElementById('fHelpBox');
   b.innerHTML=`<h3>Прервать полёт?</h3><p>${esc(M&&M.quitText?M.quitText():'Результат не будет засчитан.')}</p><div class="btns"><button class="btn" id="fQ1">Продолжить полёт</button><button class="btn primary" id="fQ2">Прервать</button></div>`;b.hidden=false;
-  document.getElementById('fQ1').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};document.getElementById('fQ2').onclick=()=>{b.hidden=true;if(M&&M.quit)M.quit();else flyClose();};}
+  document.getElementById('fQ1').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};document.getElementById('fQ2').onclick=()=>{b.hidden=true;if(M&&M.quit)M.quit();else flyClose();try{save();render();}catch(_){}};}
 /* ---------- управление ---------- */
 function flyInput(dt){const me=FL.me,c=me.ctl,K=FLY.keys,st=FLY.st;if(me.crash)return;
   if(FLY.landing)return;if(FLY.auto&&FL.mi&&FL.mi.auto){FL.mi.auto(dt);return;}c.aCmd=null;c.lvl=true;
@@ -20673,7 +20696,7 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
   if(me.gnd&&!me.brakes&&me.Vg>8&&M&&!M.over&&FLY.landed!==1&&!FLY.landing&&!FLY.auto&&me.air>20&&me.ctl.thr<0.2){FLY.landed=1;flToast('Тормозов нет: ручку на себя — костыль пашет землю, газ долой');}
   $('fBrake').hidden=!(me.brakes&&me.gnd&&!me.crash);$('fSkip').hidden=!(M&&M.auto&&!me.gnd&&!M.over&&!me.crash);flyEngPanel();
   $('fClock').textContent=M&&M.clock?M.clock():'';if(M&&M.goal)$('fGoal').innerHTML=M.goal()+(FL.wx?'<em class="wx">'+wxLine(me)+'</em>':'');
-  if(FL.wx){const r=$('fRain');r.hidden=!(FL.wx.rain>0.05);if(!r.hidden)r.style.opacity=(0.25+FL.wx.rain*0.6)*(cam.cock?1.2:1);const f=$('fFlash');f.style.opacity=FL.wx.flash>0?FL.wx.flash*0.55:0;}if(M&&M.board){const b=M.board();$('fBoard').innerHTML=b;$('fBoard').hidden=!b;}
+  if(FL.wx){const r=$('fRain');r.hidden=!(FL.wx.rain>0.05);if(!r.hidden)r.style.opacity=(0.25+FL.wx.rain*0.6)*(cam.cock?1.2:1);const f=$('fFlash');f.style.opacity=FL.wx.flash>0?FL.wx.flash*0.55:0;}{const b=M&&M.board?M.board():'';$('fBoard').innerHTML=b;$('fBoard').hidden=!b;}/* 0.49: у задания без таблицы (первый полёт) в углу висела пустая серая плашка — или таблица прошлого полёта */
   $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&(FLY.landing||M.canLand&&M.canLand()));$('fLand').textContent=FLY.landing?'Сам':'Сесть';$('fLand').classList.toggle('on',!!FLY.landing);$('fWarp').textContent='×'+FLY.warp;
   $('fFire').hidden=!(M&&M.guns);$('fBomb').hidden=!(M&&M.bombs);}
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
@@ -20692,13 +20715,16 @@ function flyTest(md){const s=G;if(!flyCan())return false;const P=airHeroFlies(s)
 function flyEvent(ev,md,pid){const s=G;if(!flyCan())return false;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);return flyStart({kind:ev.kind,md,pil:P,ev});}
 function flyRecord(k,md,pid){const s=G;if(!flyCan())return false;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);return flyStart({kind:'r'+k,md,pil:P});}
 function flyFront(m,md,P){if(!flyCan())return false;return flyStart({kind:'war',md,pil:P,fm:m});}
+// 0.49: итог полёта применяется ровно один раз — по «Принять», по «Выход» после итога или по «Прервать»
+function flApplyOnce(M){const ap=M.apply;M.apply=()=>{if(M.applied)return;M.applied=1;if(ap)ap();};return M;}
 function flyStart(cfg){if(FL.on)return true;const s=G;let M;try{M=flMission(cfg);}catch(e){console.error(e);return false;}
+  flApplyOnce(M);
   const el=flyEl(),cv=document.getElementById('rgl');if(!cv)return false;let ok=false;try{ok=g3Init(cv);}catch(e){ok=false;}if(!ok)return false;
   FL.on=true;FL.cfg=cfg;FL.mi=M;FL.paused=false;FL.t=0;FL.k=1;FL.noFail=false;FL.wind=[0,0,0];FL.wx=null;FL.fire=false;FL.bomb=false;
   Object.assign(FLY,{cam:0,warp:1,auto:false,landing:null,ce:null,fb:null,thrT:0,fire:false,bomb:false,brake:false,skip:false,landed:0,keys:{},last:performance.now()});
   const sk=document.getElementById('fSkipBox');if(sk)sk.hidden=true;const en=document.getElementById('fEng');if(en){en.hidden=true;en.dataset.sig='';}
   FLY.cvParent=cv.parentNode;FLY.cvNext=cv.nextSibling;document.getElementById('fView').appendChild(cv);cv.hidden=false;
-  el.hidden=false;document.body.classList.add('flying');document.getElementById('fName').textContent=M.title||'';document.getElementById('fEnd').hidden=true;document.getElementById('fHelpBox').hidden=true;
+  el.hidden=false;document.body.classList.add('flying');document.getElementById('fName').textContent=M.title||'';{const g=document.getElementById('fGoal'),bd=document.getElementById('fBoard');if(g)g.innerHTML='';if(bd){bd.innerHTML='';bd.hidden=true;}}/* 0.49: задание и таблица прошлого полёта не висят до первого кадра нового */document.getElementById('fEnd').hidden=true;document.getElementById('fHelpBox').hidden=true;
   document.getElementById('fLoad').hidden=false;document.getElementById('fLoadT').textContent=cfg.kind==='test'?'Выкатываем аэроплан из ангара…':'Аэродром готовится…';
   try{auInit();}catch(_){}
   const mood=M.mood||'clear';
@@ -20808,7 +20834,11 @@ function flyClose(){if(!FL.on&&!FLY.el)return;FL.on=false;cancelAnimationFrame(F
   const cv=document.getElementById('rgl');if(cv&&FLY.cvParent){if(FLY.cvNext&&FLY.cvNext.parentNode===FLY.cvParent)FLY.cvParent.insertBefore(cv,FLY.cvNext);else FLY.cvParent.appendChild(cv);cv.hidden=true;}
   if(FLY.el)FLY.el.hidden=true;document.body.classList.remove('flying');}
 // 3D не вышло: результат — по расчёту, как без съёмки
-function flyFail(e){console.warn('fly',e);const M=FL.mi;flyClose();try{toast('3D-полёт недоступен — результат по расчёту');}catch(_){}try{if(M&&M.fallback)M.fallback();}catch(err){console.error(err);}try{save();render();}catch(_){}}
+function flyFail(e){console.warn('fly',e);const M=FL.mi;flyClose();
+  // 0.49: полёт уже дал итог (M.res) — он и идёт в зачёт; «по расчёту» — только если 3D подвело до итога. Что сломалось — в журнал (ошибка в полёте не должна молча подменять результат)
+  try{FLY.err=String(e&&e.message||e).slice(0,160);}catch(_){}
+  if(M&&M.over&&M.res&&M.apply){try{M.apply();}catch(err){console.error(err);}try{save();render();}catch(_){}return;}
+  try{toast('3D-полёт прервался — результат по расчёту');}catch(_){}try{if(M&&M.fallback&&!M.applied)M.fallback();}catch(err){console.error(err);}try{save();render();}catch(_){}}
 
 /* ---------- 0.39: бомбовый прицел — крестик там, куда упадёт бомба, сброшенная сейчас (прицел Райли Скотта, 1912) ---------- */
 function flyAimMark(){const el=document.getElementById('fAim'),M=FL.mi,me=FL.me;if(!el)return;const want=M&&M.bombs&&!M.over&&me&&!me.gnd&&!me.crash&&(M.bombsLeft||0)>0&&(!M.aimOn||M.aimOn());if(!want){el.hidden=true;return;}
@@ -20867,14 +20897,16 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
   M.start={x:ss?ss.A[0]:O[0]-f[0]*380+n[0]*90,z:ss?ss.A[1]:O[1]-f[1]*380+n[1]*90,hdg:Math.atan2(f[0],f[1])};
   const gyA=()=>FW&&FW.S.A?FW.S.A.y:0,agl=()=>{const a=me();return a.p[1]-Math.max(0,fwHgt(FW.S,a.p[0],a.p[2]));},altF=()=>me().p[1]-gyA();
   const who=P.hero?'Вы':P.n;
+  // 0.49: итог, часы и текст выхода — общие для всех заданий, и ставятся ДО боевого вылета: с 0.37 они стояли ниже «return frMission», у вылетов на фронт
+  // не было M.fin — в конце полёта (сбит, сел, выполнил) игра падала в «результат по расчёту», и газета писала случайный исход вместо настоящего
+  M.fin=(title,text,res,cls)=>{if(M.over)return;M.over=true;M.res=res;FLY.auto=false;flyEnd(title,text,cls);};
+  M.quitText=()=>'Попытка не засчитана: аэроплан вернётся в ангар.';
+  M.clock=()=>flFmtT((FL.t||0)*(FL.k||1));
   if(k==='war')return frMission(cfg,M);
   // соперники в небе (для зрелища): эталонные аэропланы года, летят по кругу со своей скоростью
   const rivalsOn=(aims,list,alt)=>{list.slice(0,2).forEach((x,i)=>{const role=t>=1909?'race':'sport',rm={...airRefMd(t<1912?'sport':role,t),paint:['#b7bcc0','#a8261d','#2e4a7a','#d8b13a'][i%4]};
     const a=aims[(i*2+1)%aims.length];M.rivals.push(flKin({p:[a[0],gyA()+70+i*25,a[1]],psi:i*2,V:Math.max(15,(x.v||st.v*0.9)/3.6),alt:gyA()+70+i*25,wp:aims,i:(i*2+2)%aims.length,R:110,md:rm,name:x.n}));});};
   M.parked=(()=>{const L=[];['sport','train','recon','fight'].forEach((r,i)=>{if(L.length>=3)return;const e=airRefEntry(r,t);if(e&&e[0]<=t+0.01&&(i<2||airWarOn(s.country,t)))L.push({...airRefMd(r,t),paint:['#d9cfb2','#b7bcc0','#6c6a40','#b07a45'][i]});});return L;})();
-  M.fin=(title,text,res,cls)=>{if(M.over)return;M.over=true;M.res=res;FLY.auto=false;flyEnd(title,text,cls);};
-  M.quitText=()=>'Попытка не засчитана: аэроплан вернётся в ангар.';
-  M.clock=()=>flFmtT((FL.t||0)*(FL.k||1));
   /* ===== первый полёт ===== */
   if(k==='test'){M.title=`Первый полёт: «${md.name}»`;const need=t<1909?25:t<1911?80:150,early=t<1909;M.phase=0;M.maxH=0;M.mood='clear';M.sc={};
     // 0.38: программа испытания (отзыв «миссия скучновато»): взлёт → набор высоты на время → вираж вокруг пилона → пролёт над ангарами → посадка в круг; оценка испытателя
@@ -20895,7 +20927,8 @@ function flMission(cfg){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,ev=cfg.ev,k=cfg.
     // оценка испытателя: подъём против расчёта, вираж, пролёт, посадка у круга; хорошая программа уменьшает шанс «не так, как задумано»
     M.score=()=>{const ref=Math.max(20,st.t1k*60*need/1000);let q=0.25;if(M.sc.climb)q+=0.25*clamp(ref/M.sc.climb,0.4,1.2);if(M.sc.turn)q+=0.2;if(M.sc.fly)q+=0.15;if(M.sc.land!=null)q+=0.15*clamp(1.2-M.sc.land/250,0,1);return clamp(q,0,1);};
     M.done=(how,auto)=>{const a=me(),risk=airTestRisk(s,md,P),q=M.score();let res;if(how==='crash')res=airTestApply(s,md,P,'crash',{why:a.crash,self:1});
-      else res=airTestApply(s,md,P,Math.random()<risk*0.55*(1.35-0.7*q)?'flaw':'ok',{self:1,secs:(FL.t-(M.tAir||0)),hard:a.hard||auto&&Math.random()<0.2,prog:q});
+      else{const eng=!a.eng.run&&a.eng.fail&&a.eng.fail!=='кончился бензин'?a.eng.fail:'';/* 0.49: мотор отказал в первом полёте — это не «летает!», а доводка: в отчёте так и сказано */
+        res=airTestApply(s,md,P,eng||Math.random()<risk*0.55*(1.35-0.7*q)?'flaw':'ok',{self:1,secs:(FL.t-(M.tAir||0)),hard:a.hard||auto&&Math.random()<0.2,prog:q,eng});}
       const prog=[M.sc.climb?`подъём на ${need} м — ${flFmtT(M.sc.climb)}`:'',M.sc.turn?'вираж вокруг пилона':'',M.sc.fly?'пролёт над полем':'',M.sc.land!=null?`посадка в ${Math.round(M.sc.land)} м от круга`:(auto?'посадку сделал испытатель':'')].filter(Boolean).join(', ');
       if(res.kind!=='crash'&&prog)res.text+=` Программа: ${prog}. Оценка испытателя — ${Math.round(q*10)} из 10.`;
       M.fin(res.kind==='crash'?'Аэроплан разбит':res.kind==='flaw'?'Летает — но не так, как задумано':'«'+md.name+'» летает!',res.text,res,res.kind==='crash'?'bad':res.kind==='ok'?'good':'');};
@@ -23003,7 +23036,7 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   const fameG=(won?(ev.open?10:6):res.place===2?3:res.place===3?1:-1)*bn('airFame')*(ev.prize>20000?1.5:1);A.fame=clamp(A.fame+fameG,0,100);if(won)A.wins=(A.wins||0)+1;
   if(md&&won&&['sport','race','train'].includes(md.role)){md.boost=Math.min(2,(md.boost||1)+0.25);}
   // первые в мире: перелёт или петля раньше истории
-  if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y+(ev.m>=6?1:0),airEvMine(s,ev)?'вы сами в настоящей истории':ev.h[0]);}catch(_){}
+  if(won&&['cross','circle','loop'].includes(ev.kind)&&mi(s)<(ev.y-1895)*12+ev.m)try{recordFirst(s,'air_ev_'+ev.key,ev.name,ev.y,airEvMine(s,ev)?'вы сами в настоящей истории':ev.h[0],ev.m,md?{airId:md.id}:{noArt:1});/* 0.49: с месяцем события — без «+1 год» для второй половины года */}catch(_){}
   // военный конкурс: победителю — заказ армии
   // 0.38: в войну фронту нужно всё, что летает, — заказ поменьше получает и тот, кто не победил, но показал не хуже 0,9 от лучшего
   if(ev.mil&&md&&!res.dnf){const topQ=Math.max(0,...(res.field||[]).map(x=>x.q||0)),k=won?(0.6+0.4*Math.random()):res.place===2?0.4:res.place===3&&ev.mil.war?0.15:ev.mil.war&&(res.q||0)>=0.9*topQ?0.1:0,n=Math.round(ev.mil.n*k);
@@ -23016,10 +23049,10 @@ function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P
   const hist=airEvHist(s,ev);
   if(ev.dyn){const F=res.field||[],top=F.slice().sort((a,b)=>b.q-a.q)[0],ord=res.order?`${ev.mil.war?'Военный заказ':'Заказ'}: ${fmtN(res.order)} «${md.name}» по ${money(airMilPrice(s,md))}${res.adv?`, четверть суммы (${money(res.adv)}) — вперёд`:''}.`:'';
     pushEvent({own:1,airId:md?md.id:null,kicker:ev.mil.war?'Военный конкурс':'Конкурс министерства',title:won?`Конкурс выигран: «${md.name}» идёт в армию`:res.place<=3&&res.order?`Конкурс: ${res.place}-е место — и заказ`:`Конкурс проигран: комиссия предпочла ${top?top.n:'других'}`,
-      deck:`${who} на «${md?md.name:''}» — ${res.txt}${res.place<=F.length+1?` · ${res.place}-е место из ${F.length+1}`:''}`,
+      deck:`${capF(who)} на «${md?md.name:''}» — ${res.txt}${res.place<=F.length+1?` · ${res.place}-е место из ${F.length+1}`:''}`,
       text:`${won?`Комиссия поставила вашей машине высшую оценку: ${top?`${top.n} (${top.plane}) — ${top.q.toFixed(2).replace('.',',')}`:''}. ${ord} Газеты пишут о заводе, которому верит армия.`:res.order?`Победил ${top?top.n+' ('+top.plane+', '+top.q.toFixed(2).replace('.',',')+')':'соперник'}, но министерство берёт и ваш аэроплан — меньшей серией. ${ord}`:res.dnf?`Сход с испытаний: ${res.dnf}. Заказ ушёл к ${top?top.n:'соперникам'}.`:`Оценки комиссии: ${F.slice().sort((a,b)=>b.q-a.q).map(x=>`${x.n} — ${x.q.toFixed(2).replace('.',',')}`).join(', ')}; ваша — ${(res.q||0).toFixed(2).replace('.',',')}. Заказ ушёл к ${top?top.n:'соперникам'}. Следующий конкурс — ${ev.mil.war?'через квартал':'через полгода'}: доработайте машину или начертите новую под их требования.`}`},true);
     return {prize,fameG};}
-  pushEvent({own:1,airId:md?md.id:null,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${who} на «${md?md.name:''}» — ${res.txt}`,
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Небо',title:won?`${ev.name}: победа «${s.company}»!`:res.place>1&&res.place<=3?`${ev.name}: ${res.place}-е место`:`${ev.name}: неудача`,deck:`${capF(who)} на «${md?md.name:''}» — ${res.txt}`,
     text:`${won?(prize?`Приз — ${money(prize)}. `:'')+'Газеты печатают портрет лётчика на первой полосе, у ангаров — очередь из желающих купить такой же аэроплан.':res.place<=3&&res.place>1?(prize?`Приз за ${res.place}-е место — ${money(prize)}. `:'')+'Неплохо — но помнят только победителей.':'Толпа расходится разочарованной. Механики уже разбирают мотор.'}\n${hist}`},true);
   return {prize,fameG};}
 // результат без съёмки — сразу
@@ -23040,10 +23073,12 @@ function airRecTry(s,k,md,P){const t=tNow(s),st=airStats(md,t),sk=P.sk,r=Math.ra
 function airRecApply(s,k,md,P,v,txt){const A=s.air,cur=airRecCur(s,k),who=P.hero?PIONEERS[s.pioneer].name:P.n;A.rtry=A.rtry||{};A.rtry[k]=mi(s);
   if(v>cur.v*1.005){A.rec=A.rec||{};A.rec[k]={v,who,plane:md.name,y:s.y,m:s.m};A.fame=clamp(A.fame+12*bn('airFame'),0,100);if(md.boost!==undefined||true)md.boost=Math.min(2,(md.boost||1)+0.3);
     try{trophyAdd(s,{kind:'record',title:`${AIR_REC_N[k][0]}: ${txt}`,sub:`${who} на «${md.name}»`,story:`Прежний рекорд — ${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]} (${cur.who}).`});}catch(_){}
-    pushEvent({own:1,airId:md?md.id:null,kicker:'Мировой рекорд',title:`${AIR_REC_N[k][0]}: ${txt}!`,deck:`${who} на «${md.name}»`,text:`Международная авиационная федерация засчитала рекорд: ${txt}. Прежний принадлежал ${cur.who}${cur.plane?' на «'+cur.plane+'»':''} — ${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}.\nРекорд — лучшая реклама: о «${s.company}» пишут газеты всего мира.`},true);return true;}
-  pushEvent({own:1,airId:md?md.id:null,kicker:'Попытка рекорда',title:`${AIR_REC_N[k][0]}: не вышло`,deck:`${who} на «${md.name}» — ${txt}`,text:`До рекорда (${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}, ${cur.who}) не хватило. Нужен аэроплан быстрее, легче или выше — или лётчик смелее.`},true);return false;}
+    pushEvent({own:1,airId:md?md.id:null,kicker:'Мировой рекорд',title:`${AIR_REC_N[k][0]}: ${txt}!`,deck:`${capF(who)} на «${md.name}»`,text:`Международная авиационная федерация засчитала рекорд: ${txt}. Прежний принадлежал ${cur.who}${cur.plane?' на «'+cur.plane+'»':''} — ${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}.\nРекорд — лучшая реклама: о «${s.company}» пишут газеты всего мира.`},true);return true;}
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Попытка рекорда',title:`${AIR_REC_N[k][0]}: не вышло`,deck:`${capF(who)} на «${md.name}» — ${txt}`,text:`До рекорда (${fmtN(Math.round(cur.v))} ${AIR_REC_N[k][1]}, ${cur.who}) не хватило. Нужен аэроплан быстрее, легче или выше — или лётчик смелее.`},true);return false;}
 function airRecQuick(k,mdId,pid){const s=G,md=s.air.models.find(m=>m.id===+mdId);if(!md)return;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);const R=airRecTry(s,k,md,P);airRecApply(s,k,md,P,R.v,R.txt);closeSheet();save();render();}
 function airRecCan(s,k){const A=s.air;if(!A||!A.lv)return false;if(airWarOn(s.country,tNow(s)))return false;return !((A.rtry||{})[k]>mi(s)-3);}
+// 0.49: почему попытки нет — 'war' (FAI в войну рекордов не утверждала: рекорд скорости сентября 1913 года простоял до 1920-го) или сколько месяцев ждать
+function airRecWait(s,k){const A=s.air;if(!A||!A.lv)return 0;if(airWarOn(s.country,tNow(s)))return 'war';const r=(A.rtry||{})[k];return r===undefined?0:Math.max(0,r+3-mi(s));}
 /* ---------- вкладка «Небо» ---------- */
 let AEV=null;
 function openAirEv(key){const s=G,ev=airEvByKey(s,key);if(!ev)return;const L=airEvMds(s,ev),pils=airPilotList(s);AEV=AEV&&AEV.key===key?AEV:{key,md:L[0]?L[0].id:null,pid:(airBestPilot(s)||{}).id};
@@ -23066,19 +23101,19 @@ function openAirRec(k){const s=G,L=(s.air.models||[]).filter(m=>m.flown&&m.statu
     <div class="label" style="margin-top:12px">Аэроплан</div>${L.length?`<div class="chips">${L.map(m=>`<button class="chip ${md&&m.id===md.id?'on':''}" data-act="aevMd" data-v="${m.id}">${esc(m.name)}<small>${airSt(airStats(m,tNow(s)))}</small></button>`).join('')}</div>`:'<p class="small bad">Нет облетанного аэроплана.</p>'}
     ${md?`<p class="small muted" style="margin-top:6px">По расчёту «${esc(md.name)}» даст около ${fmtN(est)} ${AIR_REC_N[k][1]}.</p>`:''}
     <div class="label" style="margin-top:12px">Лётчик</div><div class="chips">${pils.map(p=>`<button class="chip ${AEV.pid===p.id?'on':''}" data-act="aevPil" data-v="${p.id}">${esc(p.hero?p.n+' (вы)':p.n)}<small>мастерство ${Math.round(p.sk*100)}</small></button>`).join('')}</div>
-    ${md&&can?`<div class="btns" style="margin-top:14px"><button class="btn primary" data-act="arecFly">✈ Лететь (3D)</button><button class="btn" data-act="arecQuick">Узнать результат</button></div>`:`<p class="small muted" style="margin-top:12px">${!can?'Попытка — не чаще раза в три месяца, и не в войну.':''}</p>`}`);}
+    ${md&&can?`<div class="btns" style="margin-top:14px"><button class="btn primary" data-act="arecFly">✈ Лететь (3D)</button><button class="btn" data-act="arecQuick">Узнать результат</button></div>`:`<p class="small muted" style="margin-top:12px">${!can?(w=>w==='war'?'Идёт война: федерация рекордов не засчитывает. Попытки откроются с перемирием.':`Попытка — не чаще раза в три месяца: следующая — через ${w} мес.`)(airRecWait(s,k)):''}</p>`}`);}
 function airSkyHTML(s){const A=s.air,t=tNow(s),T=mi(s);if(!A||!A.lv)return '';
   const L=airEvList(s).filter(ev=>{const st=airEvStatus(s,ev);return st==='open'||(st==='soon'&&airEvWin(ev)[0]-T<=14);}).sort((a,b)=>airEvT(a)-airEvT(b)).slice(0,6);
   const evRow=ev=>{const st=airEvStatus(s,ev),pr=Math.round(ev.prize*cpi(s)/tabAt(CPI,ev.y)/10)*10;return `<div class="race-item"><div class="row"><div><h3>${esc(ev.name)}</h3><p class="small muted">${MONTHS_N[ev.m]} ${ev.y} · ${AIR_EV_KIND[ev.kind]}${ev.dyn?` · победителю — заказ на ${fmtN(ev.mil.n)} машин`:pr?` · приз ${money(pr)}`:''}${ev.sea?' · гидроаэропланы':''}</p></div>
     <button class="btn sm ${st==='open'?'primary':''}" data-act="airEv" data-k="${ev.key}">${st==='open'?'Участвовать':'Подробнее'}</button></div></div>`;};
   const done=Object.entries(A.ev||{}).filter(([,r])=>!r.miss).slice(-6).reverse().map(([k,r])=>{const ev=airEvByKey(s,k);return `<li class="${r.place===1?'good':''}"><time>${r.y}</time><p>${esc(ev?ev.name:k)}: ${r.place===1?'победа':r.place?r.place+'-е место':'неудача'} — ${esc(r.who)}, ${esc(r.txt)}</p></li>`;}).join('');
-  const recs=Object.keys(AIR_REC_N).map(k=>{const c=airRecCur(s,k),can=airRecCan(s,k);return `<div class="race-item"><div class="row"><div><h3>${AIR_REC_N[k][0]}</h3><p class="small muted">${fmtN(Math.round(c.v))} ${AIR_REC_N[k][1]} — ${esc(c.who)}${c.mine?' <span class="good">(ваш)</span>':''}</p></div><button class="btn sm" data-act="airRec" data-k="${k}" ${can?'':'disabled'}>Попытка</button></div></div>`;}).join('');
+  const recs=Object.keys(AIR_REC_N).map(k=>{const c=airRecCur(s,k),can=airRecCan(s,k);return `<div class="race-item"><div class="row"><div><h3>${AIR_REC_N[k][0]}</h3><p class="small muted">${fmtN(Math.round(c.v))} ${AIR_REC_N[k][1]} — ${esc(c.who)}${c.mine?' <span class="good">(ваш)</span>':''}</p></div><button class="btn sm" data-act="airRec" data-k="${k}" ${can?'':'disabled'}>${(w=>w==='war'?'После войны':w>0?`Через ${w} мес.`:'Попытка')(airRecWait(s,k))}</button></div></div>`;}).join('');
   const pil=airPilotList(s).map(p=>`<div class="row" style="margin-top:6px"><p class="small">${esc(p.hero?p.n+' — основатель':p.n)} · мастерство ${Math.round(p.sk*100)}${p.sal?` · ${money(p.sal)} в мес.`:''}</p>${p.sal?`<button class="linkbtn" data-act="airFire" data-k="${p.id}">уволить</button>`:''}</div>`).join('');
   const hire=airPilotsForHire(s).slice(0,6).map(P=>`<div class="row" style="margin-top:6px"><p class="small">${esc(P.n)} · мастерство ${Math.round(P.sk*100)} · ${money(airPilotSal(s,P)*(P.c===s.country?1:1.3))} в мес.</p><button class="btn sm" data-act="airHire" data-k="${P.id}" ${(A.pil||[]).length>=4?'disabled':''}>Нанять</button></div>`).join('');
   const war=airWarOn(s.country,t);
   return `${war&&typeof airFrontHTML==='function'?airFrontHTML(s):''}
     <section class="card"><h2>Состязания и перелёты</h2>${L.length?L.map(evRow).join(''):`<p class="small muted" style="margin-top:6px">${war?'Война: авиамитинги отменены, лётчики — на фронте.':'Ближайших состязаний нет.'}</p>`}</section>
-    <section class="card"><h2>Мировые рекорды</h2><p class="small muted" style="margin-top:4px">Рекорды засчитывает Международная авиационная федерация (FAI, 1905). Каждый рекорд — слава марки и заказы.</p>${recs}</section>
+    <section class="card"><h2>Мировые рекорды</h2><p class="small muted" style="margin-top:4px">Рекорды засчитывает Международная авиационная федерация (FAI, 1905). Каждый рекорд — слава марки и заказы.</p>${war?'<p class="small warn" style="margin-top:6px">Идёт война: федерация рекордов не засчитывает — лётчики и аэропланы нужны фронту (так было и в истории: до конца войны рекордов не утверждали). Попытки откроются с перемирием; пока слава добывается на фронте — карточка «Фронт» выше.</p>':''}${recs}</section>
     <section class="card"><h2>Лётчики</h2>${pil}${hire?`<div class="label" style="margin-top:12px">Можно нанять</div>${hire}`:''}</section>
     ${done?foldCard('airDone',false,'<h2>Итоги</h2>',`<ul class="log" style="margin-top:6px">${done}</ul>`,`побед: ${A.wins||0} · призов: ${money(A.prizes||0)}`):''}`;}
 function airSkyCard(s){if(s.mode==='racer'||!airOn(s))return '';return `<section class="card"><h2>✈ Небо</h2><p class="small muted" style="margin-top:4px">Авиамитинги, перелёты, рекорды и лётчики авиацеха.</p></section>${airSkyHTML(s)}`;}
@@ -23131,7 +23166,7 @@ function frApply(s,m,md,P,r){const A=s.air;A.front=A.front||{};A.fr=A.fr||{v:0,n
   if(r.hurt){if(P.hero)A.heroHurt=mi(s)+r.hurt;else{const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+r.hurt;}}
   A.front[m.id]={ok:!!r.ok,txt:r.txt};
   const n=A.pv[P.id]||0,aceNow=r.v&&n>=5&&n-r.v<5;
-  pushEvent({own:1,airId:md?md.id:null,kicker:'Фронт',title:r.ace?`${who} сбил аса!`:aceNow?`${who} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${who} на «${md.name}»`,
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Фронт',title:r.ace?`${capF(who)} сбил${airFem(P)?'а':''} аса!`:aceNow?`${capF(who)} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${capF(who)} на «${md.name}»`,
     text:`${r.txt}${r.v?`\nПобед в этом вылете: ${r.v}. Всего у ${P.hero?'вас':who}: ${n}.`:''}\n${r.ok?`Об аэроплане «${md.name}» говорят в отрядах — штаб охотнее заказывает такие.`:`В отрядах ворчат: «${md.name}» не вытянул.`}`},true);}
 // без съёмки: по качеству аэроплана против противника, мастерству лётчика и удаче
 function frAuto(k){const s=G,m=frMissions(s).find(x=>x.k===k);if(!m||!FRS)return;const md=s.air.models.find(x=>x.id===FRS.md),P=airPilotList(s).find(p=>p.id===FRS.pid)||airBestPilot(s);if(!md)return;
@@ -23139,7 +23174,7 @@ function frAuto(k){const s=G,m=frMissions(s).find(x=>x.k===k);if(!m||!FRS)return
   const edge=(me.v-foe.v)/Math.max(60,foe.v)*1.2+(foe.turn-me.turn)/Math.max(8,foe.turn)*0.6+(me.gun-foe.gun)*0.5+(P.sk-0.7)*1.1-(m.ace?0.25:0);
   const p=clamp(0.5+edge*0.6-(m.foes>1?0.08*(m.foes-1):0),0.12,0.9),ok=r()<p,v=ok&&['patrol','intercept'].includes(m.k)&&m.foes?1+(r()<p*0.4?1:0):0,lost=!ok&&r()<0.35;
   const T=FR_T[m.k],txt=ok?{patrol:'Патруль прошёл над окопами: вражеский аэроплан сбит, остальные ушли.',intercept:'Разведчик сбит над нашими позициями — снимки сгорели вместе с ним.',balloon:'Аэростат вспыхнул факелом, наблюдатели выпрыгнули с парашютами.',recon:'Все три снимка — в штабе: батареи врага на карте.',bomb:'Бомбы легли на пути и склады станции — пожар виден с наших окопов.'}[m.k]
-    :lost?'Аэроплан сбит над линией фронта; лётчик ранен и выбрался к своим.':'Вернулся ни с чем: противник оказался сильнее.';
+    :lost?'Аэроплан сбит над линией фронта; лётчик ранен и выбрался к своим.':'Вылет впустую: противник оказался сильнее.';
   frApply(s,m,md,P,{ok,v,lost,hurt:lost?2:0,ace:ok&&m.ace&&v>0,txt});closeSheet();save();render();}
 /* ---------- вылет в 3D: мир «Фронт», враги, пулемёты, зенитки ---------- */
 function frBullet(sh,dir,spread,side,dmg){const B=FL.bul||(FL.bul=[]);if(B.length>260)B.shift();const r=()=>(Math.random()-0.5)*2*spread,d=v3n([dir[0]+r(),dir[1]+r(),dir[2]+r()]),v=760;
@@ -23233,9 +23268,17 @@ function frMission(cfg,M){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,m=cfg.fm,T=FR_
     frBombs(dt,M,a,(d)=>{if(d<75){M.tg.hit++;M.obj=1;flToast('Попадание в станцию!','good');}});};
   M.step=()=>{const a=me();if(a.crash){M.done(false);return;}const home=a.p[2]<fz-600;if(a.gnd&&a.Vg<2.5&&M.flew){M.done(!!M.obj&&Math.hypot(a.p[0],a.p[2])<1500||!!M.obj&&home);return;}if(!a.gnd)M.flew=1;};
   M.canLand=()=>{const a=me();return M.flew&&!a.gnd&&M.obj&&a.p[2]<fz-600;};M.land=()=>M.done(true);
-  M.quitText=()=>'Вылет не засчитан — в отряде скажут, что вы повернули назад.';M.quit=()=>{M.res={ok:false,v:M.kills,txt:'Вернулся, не выполнив задания.'};M.over=true;M.apply();flyClose();};
-  M.done=(ok)=>{const a=me(),lost=!!a.crash,overFoe=a.p[2]>fz;const txt=ok?{patrol:'Патруль выполнен.',intercept:'Разведчик сбит.',balloon:'Аэростат сожжён.',recon:'Снимки доставлены в штаб.',bomb:`Станция под бомбами: попаданий ${M.tg?M.tg.hit:0}.`}[m.k]+(M.kills?` Сбито: ${M.kills}.`:''):lost?(overFoe?`Сбит над вражескими окопами — ${P.hero?'вас':'лётчика'} вытащили пехотинцы ночью, ранен.`:`Аэроплан разбит (${a.crash}); ${P.hero?'вы ранены':'лётчик ранен'}.`):'Задание не выполнено.';
-    M.res={ok:!!ok,v:M.kills,lost,hurt:lost?2:0,ace:!!M.aceDown,txt};M.fin(ok?'Задание выполнено!':lost?'Сбит':'Неудача',txt,M.res,ok?'good':'bad');};
+  // 0.49: задание выполнено и аэроплан уже над своими — «Выход» засчитывает вылет (лётчик дотянет до аэродрома сам); иначе — повернул назад
+  const homeNow=()=>{const a=me();return !!(a&&M.obj&&!a.crash&&a.p[2]<fz-600);};
+  M.quitText=()=>homeNow()?'Задание выполнено, вы над своими: лётчик посадит аэроплан сам — вылет засчитают.':M.obj?'Задание выполнено, но вы ещё над врагом: выйдете сейчас — вылет не засчитают. Дотяните за линию окопов.':'Вылет не засчитан — в отряде скажут, что вы повернули назад.';
+  M.quit=()=>{if(homeNow()){M.done(true,1);M.apply();M.applied=1;flyClose();return;}M.res={ok:false,v:M.kills,txt:M.obj?'Задание выполнено, но до своих аэроплан не дотянул — сел у чужих окопов.':'Вылет прерван: задание не выполнено.'};M.over=true;M.apply();M.applied=1;flyClose();};
+  // 0.49: что сделано — то сделано: аэростат сожжён (разведчик сбит, бомбы на станции), а аэроплан разбит на обратном пути — задание засчитано, машина потеряна.
+  // Снимки разведки — исключение: они должны доехать до штаба
+  M.done=(ok)=>{const a=me(),lost=!!a.crash,overFoe=a.p[2]>fz,did=!!M.obj&&m.k!=='recon';if(lost&&did)ok=true;
+    const good={patrol:'Патруль выполнен.',intercept:'Разведчик сбит.',balloon:'Аэростат сожжён.',recon:'Снимки доставлены в штаб.',bomb:`Станция под бомбами: попаданий ${M.tg?M.tg.hit:0}.`}[m.k]+(M.kills?` Сбито: ${M.kills}.`:'');
+    const crashT=overFoe?`${did?'На обратном пути сбит':'Сбит'} над вражескими окопами — ${P.hero?'вас':'лётчика'} вытащили пехотинцы ночью, ранен.`:`Аэроплан разбит (${a.crash}); ${P.hero?'вы ранены':'лётчик ранен'}.`;
+    const txt=ok?good+(lost?' '+crashT:''):lost?crashT:M.obj?'Снимки сделаны, но в штаб не попали.':'Задание не выполнено.';
+    M.res={ok:!!ok,v:M.kills,lost,hurt:lost?2:0,ace:!!M.aceDown,txt};M.fin(ok?(lost?'Задание выполнено — аэроплан потерян':'Задание выполнено!'):lost?'Сбит':'Неудача',txt,M.res,ok&&!lost?'good':ok?'':'bad');};
   M.apply=()=>{frApply(s,m,md,P,M.res);};M.fallback=()=>{FRS={k:m.k,md:md.id,pid:P.id};frAuto(m.k);};
   return M;}
 // бомбы: сброс по кнопке (не чаще раза в 0,6 с), падение с сопротивлением, разрыв у земли; onHit(d) — промах до цели M.tg (0.39: общее для фронта и военных конкурсов)
@@ -30510,8 +30553,8 @@ Object.assign(ACT,{
   adGo:()=>{adKeep();const md=airDesignStart(G,ADR);if(md){ADR=null;closeSheet();tab='models';save();render();toast('📐 Проект начат: «'+md.name+'»');}},
   airProd:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(airProdStart(G,md))rerender();else toast('Не хватает денег на оснастку');},
   airFix:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(md){md.status='dev';md.devLeft=1;md.devT=1;md.flaw=0;md.flown=0;md.vk=Math.max(md.vk||1,0.98);rerender();}},
-  airFlyBtn:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;if(typeof flyTest==='function'&&flyTest(md))return;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();},
-  airTestBtn:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();},
+  airFlyBtn:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;if(!airCanTest(md)){rerender();return;}/* 0.49: первый полёт — один: облётанный или разбитый образец второй раз не «испытывают» */if(typeof flyTest==='function'&&flyTest(md))return;const res=airTestAuto(s,md,airHeroFlies(s)?'hero':airBestPilot(s).id);airFlightNews(s,md,res);save();render();},
+  airTestBtn:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;if(!airCanTest(md)){rerender();return;}const res=airTestAuto(s,md,airBestPilot(s).id);airFlightNews(s,md,res);save();render();},
   airPrice:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const p=airPriceOf(md,s),st=Math.max(50,Math.round(p*0.05/50)*50);md.price=Math.max(100,p+st*(+d.d));rerender();},
   airPriceAuto:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(md){md.price=0;rerender();}},
   airPlan:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const cur=md.plan==='auto'?Math.round((md.fc||0)*1.05):+md.plan,st=Math.max(1,Math.round(Math.max(cur,4)*0.15));md.plan=Math.max(0,cur+st*(+d.d));rerender();},

@@ -383,7 +383,7 @@ const AIR_EV=[
   {key:'larkhill-1912',y:1912,m:7,name:'Военный конкурс в Ларкхилле',place:'england',kind:'trial',c:'uk',prize:19500,mil:{n:20,role:'recon'},len:100,h:['Сэмюэл Коди','Cody V','£4 000 и заказ армии']},
   {key:'gb-1912',y:1912,m:8,name:'Кубок Гордона Беннетта в Чикаго',place:'meet',kind:'speed',c:'us',prize:5000,laps:6,len:200,open:1,h:['Жюль Ведрин','Deperdussin Monocoque','200 км — 174 км/ч']},
   {key:'schneider-1913',y:1913,m:3,name:'Кубок Шнейдера в Монако',place:'monaco',kind:'speed',c:'fr',prize:4900,laps:8,len:280,sea:1,open:1,h:['Морис Прево','Deperdussin (гидро)','280 км — 73 км/ч с остановками']},
-  {key:'loop-1913',y:1913,m:7,name:'Мёртвая петля',place:'kiev',kind:'loop',c:'ru',prize:2000,h:['Пётр Нестеров','Nieuport IV','первая петля — 9 сентября 1913 года над Киевом']},
+  {key:'loop-1913',y:1913,m:8,name:'Мёртвая петля',place:'kiev',kind:'loop',c:'ru',prize:2000,h:['Пётр Нестеров','Nieuport IV','первая петля — 9 сентября 1913 года над Киевом']},
   {key:'gb-1913',y:1913,m:8,name:'Кубок Гордона Беннетта в Реймсе',place:'reims',kind:'speed',c:'fr',prize:5000,laps:10,len:200,open:1,h:['Морис Прево','Deperdussin (Gnome 160)','200 км — 203,8 км/ч']},
   {key:'med-1913',y:1913,m:8,name:'Перелёт через Средиземное море',place:'med',kind:'cross',c:'fr',prize:5000,len:780,open:1,h:['Ролан Гаррос','Morane-Saulnier G','Фрежюс — Бизерта, 780 км за 7 ч 53 мин']},
   {key:'schneider-1914',y:1914,m:3,name:'Кубок Шнейдера в Монако',place:'monaco',kind:'speed',c:'fr',prize:4900,laps:10,len:280,sea:1,open:1,h:['Говард Пикстон','Sopwith Tabloid','280 км — 139,7 км/ч']},

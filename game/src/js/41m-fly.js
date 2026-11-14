@@ -47,9 +47,12 @@ function flyHelp(){const b=document.getElementById('fHelpBox');if(!b.hidden){b.h
   <p><b>Пробег</b>: газ долой, ручку на себя — костыль пашет землю и тормозит. Колёсные тормоза есть только у шасси с тормозами (кнопка <b>ТОРМОЗ</b>, держать).</p>
   <p><b>Мотор стал</b> — внизу появятся кнопки: завести (в воздухе — винт раскрутит встречный поток, на земле — механик), починить или заправиться в поле. Долгий перелёт — <b>⏩ Долететь</b>: лётчик ведёт сам, а часы бегут, пока не случится что-то, что требует вас.</p>
   <p>На клавиатуре: стрелки или W/A/S/D — ручка, Shift/Ctrl — газ, X — тормоз, пробел — огонь, B — бомбы, C — вид, T — время, P — автопилот.</p><button class="btn primary" id="fHelpOk">Понятно</button>`;b.hidden=false;document.getElementById('fHelpOk').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};}
-function flyQuitAsk(){if(!FL.on)return;const M=FL.mi;if(M&&M.over){flyClose();return;}FL.paused=true;const b=document.getElementById('fHelpBox');
+function flyQuitAsk(){if(!FL.on)return;const M=FL.mi;
+  // 0.49: итог уже есть (окно «Принять / Осмотреться») — «Выход» его принимает, а не выбрасывает: раньше после «Осмотреться» и «Выход»
+  // разбитый опытный образец оставался целым, и первый полёт можно было повторять в тот же месяц, пока не выйдет удачно
+  if(M&&M.over){try{if(M.apply)M.apply();}catch(e){console.error(e);}flyClose();try{save();render();}catch(_){}return;}FL.paused=true;const b=document.getElementById('fHelpBox');
   b.innerHTML=`<h3>Прервать полёт?</h3><p>${esc(M&&M.quitText?M.quitText():'Результат не будет засчитан.')}</p><div class="btns"><button class="btn" id="fQ1">Продолжить полёт</button><button class="btn primary" id="fQ2">Прервать</button></div>`;b.hidden=false;
-  document.getElementById('fQ1').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};document.getElementById('fQ2').onclick=()=>{b.hidden=true;if(M&&M.quit)M.quit();else flyClose();};}
+  document.getElementById('fQ1').onclick=()=>{b.hidden=true;FL.paused=false;FLY.last=performance.now();};document.getElementById('fQ2').onclick=()=>{b.hidden=true;if(M&&M.quit)M.quit();else flyClose();try{save();render();}catch(_){}};}
 /* ---------- управление ---------- */
 function flyInput(dt){const me=FL.me,c=me.ctl,K=FLY.keys,st=FLY.st;if(me.crash)return;
   if(FLY.landing)return;if(FLY.auto&&FL.mi&&FL.mi.auto){FL.mi.auto(dt);return;}c.aCmd=null;c.lvl=true;
@@ -120,7 +123,7 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
   if(me.gnd&&!me.brakes&&me.Vg>8&&M&&!M.over&&FLY.landed!==1&&!FLY.landing&&!FLY.auto&&me.air>20&&me.ctl.thr<0.2){FLY.landed=1;flToast('Тормозов нет: ручку на себя — костыль пашет землю, газ долой');}
   $('fBrake').hidden=!(me.brakes&&me.gnd&&!me.crash);$('fSkip').hidden=!(M&&M.auto&&!me.gnd&&!M.over&&!me.crash);flyEngPanel();
   $('fClock').textContent=M&&M.clock?M.clock():'';if(M&&M.goal)$('fGoal').innerHTML=M.goal()+(FL.wx?'<em class="wx">'+wxLine(me)+'</em>':'');
-  if(FL.wx){const r=$('fRain');r.hidden=!(FL.wx.rain>0.05);if(!r.hidden)r.style.opacity=(0.25+FL.wx.rain*0.6)*(cam.cock?1.2:1);const f=$('fFlash');f.style.opacity=FL.wx.flash>0?FL.wx.flash*0.55:0;}if(M&&M.board){const b=M.board();$('fBoard').innerHTML=b;$('fBoard').hidden=!b;}
+  if(FL.wx){const r=$('fRain');r.hidden=!(FL.wx.rain>0.05);if(!r.hidden)r.style.opacity=(0.25+FL.wx.rain*0.6)*(cam.cock?1.2:1);const f=$('fFlash');f.style.opacity=FL.wx.flash>0?FL.wx.flash*0.55:0;}{const b=M&&M.board?M.board():'';$('fBoard').innerHTML=b;$('fBoard').hidden=!b;}/* 0.49: у задания без таблицы (первый полёт) в углу висела пустая серая плашка — или таблица прошлого полёта */
   $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&(FLY.landing||M.canLand&&M.canLand()));$('fLand').textContent=FLY.landing?'Сам':'Сесть';$('fLand').classList.toggle('on',!!FLY.landing);$('fWarp').textContent='×'+FLY.warp;
   $('fFire').hidden=!(M&&M.guns);$('fBomb').hidden=!(M&&M.bombs);}
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
@@ -139,13 +142,16 @@ function flyTest(md){const s=G;if(!flyCan())return false;const P=airHeroFlies(s)
 function flyEvent(ev,md,pid){const s=G;if(!flyCan())return false;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);return flyStart({kind:ev.kind,md,pil:P,ev});}
 function flyRecord(k,md,pid){const s=G;if(!flyCan())return false;const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s);return flyStart({kind:'r'+k,md,pil:P});}
 function flyFront(m,md,P){if(!flyCan())return false;return flyStart({kind:'war',md,pil:P,fm:m});}
+// 0.49: итог полёта применяется ровно один раз — по «Принять», по «Выход» после итога или по «Прервать»
+function flApplyOnce(M){const ap=M.apply;M.apply=()=>{if(M.applied)return;M.applied=1;if(ap)ap();};return M;}
 function flyStart(cfg){if(FL.on)return true;const s=G;let M;try{M=flMission(cfg);}catch(e){console.error(e);return false;}
+  flApplyOnce(M);
   const el=flyEl(),cv=document.getElementById('rgl');if(!cv)return false;let ok=false;try{ok=g3Init(cv);}catch(e){ok=false;}if(!ok)return false;
   FL.on=true;FL.cfg=cfg;FL.mi=M;FL.paused=false;FL.t=0;FL.k=1;FL.noFail=false;FL.wind=[0,0,0];FL.wx=null;FL.fire=false;FL.bomb=false;
   Object.assign(FLY,{cam:0,warp:1,auto:false,landing:null,ce:null,fb:null,thrT:0,fire:false,bomb:false,brake:false,skip:false,landed:0,keys:{},last:performance.now()});
   const sk=document.getElementById('fSkipBox');if(sk)sk.hidden=true;const en=document.getElementById('fEng');if(en){en.hidden=true;en.dataset.sig='';}
   FLY.cvParent=cv.parentNode;FLY.cvNext=cv.nextSibling;document.getElementById('fView').appendChild(cv);cv.hidden=false;
-  el.hidden=false;document.body.classList.add('flying');document.getElementById('fName').textContent=M.title||'';document.getElementById('fEnd').hidden=true;document.getElementById('fHelpBox').hidden=true;
+  el.hidden=false;document.body.classList.add('flying');document.getElementById('fName').textContent=M.title||'';{const g=document.getElementById('fGoal'),bd=document.getElementById('fBoard');if(g)g.innerHTML='';if(bd){bd.innerHTML='';bd.hidden=true;}}/* 0.49: задание и таблица прошлого полёта не висят до первого кадра нового */document.getElementById('fEnd').hidden=true;document.getElementById('fHelpBox').hidden=true;
   document.getElementById('fLoad').hidden=false;document.getElementById('fLoadT').textContent=cfg.kind==='test'?'Выкатываем аэроплан из ангара…':'Аэродром готовится…';
   try{auInit();}catch(_){}
   const mood=M.mood||'clear';
@@ -255,7 +261,11 @@ function flyClose(){if(!FL.on&&!FLY.el)return;FL.on=false;cancelAnimationFrame(F
   const cv=document.getElementById('rgl');if(cv&&FLY.cvParent){if(FLY.cvNext&&FLY.cvNext.parentNode===FLY.cvParent)FLY.cvParent.insertBefore(cv,FLY.cvNext);else FLY.cvParent.appendChild(cv);cv.hidden=true;}
   if(FLY.el)FLY.el.hidden=true;document.body.classList.remove('flying');}
 // 3D не вышло: результат — по расчёту, как без съёмки
-function flyFail(e){console.warn('fly',e);const M=FL.mi;flyClose();try{toast('3D-полёт недоступен — результат по расчёту');}catch(_){}try{if(M&&M.fallback)M.fallback();}catch(err){console.error(err);}try{save();render();}catch(_){}}
+function flyFail(e){console.warn('fly',e);const M=FL.mi;flyClose();
+  // 0.49: полёт уже дал итог (M.res) — он и идёт в зачёт; «по расчёту» — только если 3D подвело до итога. Что сломалось — в журнал (ошибка в полёте не должна молча подменять результат)
+  try{FLY.err=String(e&&e.message||e).slice(0,160);}catch(_){}
+  if(M&&M.over&&M.res&&M.apply){try{M.apply();}catch(err){console.error(err);}try{save();render();}catch(_){}return;}
+  try{toast('3D-полёт прервался — результат по расчёту');}catch(_){}try{if(M&&M.fallback&&!M.applied)M.fallback();}catch(err){console.error(err);}try{save();render();}catch(_){}}
 
 /* ---------- 0.39: бомбовый прицел — крестик там, куда упадёт бомба, сброшенная сейчас (прицел Райли Скотта, 1912) ---------- */
 function flyAimMark(){const el=document.getElementById('fAim'),M=FL.mi,me=FL.me;if(!el)return;const want=M&&M.bombs&&!M.over&&me&&!me.gnd&&!me.crash&&(M.bombsLeft||0)>0&&(!M.aimOn||M.aimOn());if(!want){el.hidden=true;return;}

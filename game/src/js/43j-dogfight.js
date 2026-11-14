@@ -45,7 +45,7 @@ function frApply(s,m,md,P,r){const A=s.air;A.front=A.front||{};A.fr=A.fr||{v:0,n
   if(r.hurt){if(P.hero)A.heroHurt=mi(s)+r.hurt;else{const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+r.hurt;}}
   A.front[m.id]={ok:!!r.ok,txt:r.txt};
   const n=A.pv[P.id]||0,aceNow=r.v&&n>=5&&n-r.v<5;
-  pushEvent({own:1,airId:md?md.id:null,kicker:'Фронт',title:r.ace?`${who} сбил аса!`:aceNow?`${who} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${who} на «${md.name}»`,
+  pushEvent({own:1,airId:md?md.id:null,kicker:'Фронт',title:r.ace?`${capF(who)} сбил${airFem(P)?'а':''} аса!`:aceNow?`${capF(who)} — ас: пять побед на «${md.name}»`:r.ok?`${T.n}: задание выполнено`:`${T.n}: неудача`,deck:`${capF(who)} на «${md.name}»`,
     text:`${r.txt}${r.v?`\nПобед в этом вылете: ${r.v}. Всего у ${P.hero?'вас':who}: ${n}.`:''}\n${r.ok?`Об аэроплане «${md.name}» говорят в отрядах — штаб охотнее заказывает такие.`:`В отрядах ворчат: «${md.name}» не вытянул.`}`},true);}
 // без съёмки: по качеству аэроплана против противника, мастерству лётчика и удаче
 function frAuto(k){const s=G,m=frMissions(s).find(x=>x.k===k);if(!m||!FRS)return;const md=s.air.models.find(x=>x.id===FRS.md),P=airPilotList(s).find(p=>p.id===FRS.pid)||airBestPilot(s);if(!md)return;
@@ -53,7 +53,7 @@ function frAuto(k){const s=G,m=frMissions(s).find(x=>x.k===k);if(!m||!FRS)return
   const edge=(me.v-foe.v)/Math.max(60,foe.v)*1.2+(foe.turn-me.turn)/Math.max(8,foe.turn)*0.6+(me.gun-foe.gun)*0.5+(P.sk-0.7)*1.1-(m.ace?0.25:0);
   const p=clamp(0.5+edge*0.6-(m.foes>1?0.08*(m.foes-1):0),0.12,0.9),ok=r()<p,v=ok&&['patrol','intercept'].includes(m.k)&&m.foes?1+(r()<p*0.4?1:0):0,lost=!ok&&r()<0.35;
   const T=FR_T[m.k],txt=ok?{patrol:'Патруль прошёл над окопами: вражеский аэроплан сбит, остальные ушли.',intercept:'Разведчик сбит над нашими позициями — снимки сгорели вместе с ним.',balloon:'Аэростат вспыхнул факелом, наблюдатели выпрыгнули с парашютами.',recon:'Все три снимка — в штабе: батареи врага на карте.',bomb:'Бомбы легли на пути и склады станции — пожар виден с наших окопов.'}[m.k]
-    :lost?'Аэроплан сбит над линией фронта; лётчик ранен и выбрался к своим.':'Вернулся ни с чем: противник оказался сильнее.';
+    :lost?'Аэроплан сбит над линией фронта; лётчик ранен и выбрался к своим.':'Вылет впустую: противник оказался сильнее.';
   frApply(s,m,md,P,{ok,v,lost,hurt:lost?2:0,ace:ok&&m.ace&&v>0,txt});closeSheet();save();render();}
 /* ---------- вылет в 3D: мир «Фронт», враги, пулемёты, зенитки ---------- */
 function frBullet(sh,dir,spread,side,dmg){const B=FL.bul||(FL.bul=[]);if(B.length>260)B.shift();const r=()=>(Math.random()-0.5)*2*spread,d=v3n([dir[0]+r(),dir[1]+r(),dir[2]+r()]),v=760;
@@ -147,9 +147,17 @@ function frMission(cfg,M){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,m=cfg.fm,T=FR_
     frBombs(dt,M,a,(d)=>{if(d<75){M.tg.hit++;M.obj=1;flToast('Попадание в станцию!','good');}});};
   M.step=()=>{const a=me();if(a.crash){M.done(false);return;}const home=a.p[2]<fz-600;if(a.gnd&&a.Vg<2.5&&M.flew){M.done(!!M.obj&&Math.hypot(a.p[0],a.p[2])<1500||!!M.obj&&home);return;}if(!a.gnd)M.flew=1;};
   M.canLand=()=>{const a=me();return M.flew&&!a.gnd&&M.obj&&a.p[2]<fz-600;};M.land=()=>M.done(true);
-  M.quitText=()=>'Вылет не засчитан — в отряде скажут, что вы повернули назад.';M.quit=()=>{M.res={ok:false,v:M.kills,txt:'Вернулся, не выполнив задания.'};M.over=true;M.apply();flyClose();};
-  M.done=(ok)=>{const a=me(),lost=!!a.crash,overFoe=a.p[2]>fz;const txt=ok?{patrol:'Патруль выполнен.',intercept:'Разведчик сбит.',balloon:'Аэростат сожжён.',recon:'Снимки доставлены в штаб.',bomb:`Станция под бомбами: попаданий ${M.tg?M.tg.hit:0}.`}[m.k]+(M.kills?` Сбито: ${M.kills}.`:''):lost?(overFoe?`Сбит над вражескими окопами — ${P.hero?'вас':'лётчика'} вытащили пехотинцы ночью, ранен.`:`Аэроплан разбит (${a.crash}); ${P.hero?'вы ранены':'лётчик ранен'}.`):'Задание не выполнено.';
-    M.res={ok:!!ok,v:M.kills,lost,hurt:lost?2:0,ace:!!M.aceDown,txt};M.fin(ok?'Задание выполнено!':lost?'Сбит':'Неудача',txt,M.res,ok?'good':'bad');};
+  // 0.49: задание выполнено и аэроплан уже над своими — «Выход» засчитывает вылет (лётчик дотянет до аэродрома сам); иначе — повернул назад
+  const homeNow=()=>{const a=me();return !!(a&&M.obj&&!a.crash&&a.p[2]<fz-600);};
+  M.quitText=()=>homeNow()?'Задание выполнено, вы над своими: лётчик посадит аэроплан сам — вылет засчитают.':M.obj?'Задание выполнено, но вы ещё над врагом: выйдете сейчас — вылет не засчитают. Дотяните за линию окопов.':'Вылет не засчитан — в отряде скажут, что вы повернули назад.';
+  M.quit=()=>{if(homeNow()){M.done(true,1);M.apply();M.applied=1;flyClose();return;}M.res={ok:false,v:M.kills,txt:M.obj?'Задание выполнено, но до своих аэроплан не дотянул — сел у чужих окопов.':'Вылет прерван: задание не выполнено.'};M.over=true;M.apply();M.applied=1;flyClose();};
+  // 0.49: что сделано — то сделано: аэростат сожжён (разведчик сбит, бомбы на станции), а аэроплан разбит на обратном пути — задание засчитано, машина потеряна.
+  // Снимки разведки — исключение: они должны доехать до штаба
+  M.done=(ok)=>{const a=me(),lost=!!a.crash,overFoe=a.p[2]>fz,did=!!M.obj&&m.k!=='recon';if(lost&&did)ok=true;
+    const good={patrol:'Патруль выполнен.',intercept:'Разведчик сбит.',balloon:'Аэростат сожжён.',recon:'Снимки доставлены в штаб.',bomb:`Станция под бомбами: попаданий ${M.tg?M.tg.hit:0}.`}[m.k]+(M.kills?` Сбито: ${M.kills}.`:'');
+    const crashT=overFoe?`${did?'На обратном пути сбит':'Сбит'} над вражескими окопами — ${P.hero?'вас':'лётчика'} вытащили пехотинцы ночью, ранен.`:`Аэроплан разбит (${a.crash}); ${P.hero?'вы ранены':'лётчик ранен'}.`;
+    const txt=ok?good+(lost?' '+crashT:''):lost?crashT:M.obj?'Снимки сделаны, но в штаб не попали.':'Задание не выполнено.';
+    M.res={ok:!!ok,v:M.kills,lost,hurt:lost?2:0,ace:!!M.aceDown,txt};M.fin(ok?(lost?'Задание выполнено — аэроплан потерян':'Задание выполнено!'):lost?'Сбит':'Неудача',txt,M.res,ok&&!lost?'good':ok?'':'bad');};
   M.apply=()=>{frApply(s,m,md,P,M.res);};M.fallback=()=>{FRS={k:m.k,md:md.id,pid:P.id};frAuto(m.k);};
   return M;}
 // бомбы: сброс по кнопке (не чаще раза в 0,6 с), падение с сопротивлением, разрыв у земли; onHit(d) — промах до цели M.tg (0.39: общее для фронта и военных конкурсов)
