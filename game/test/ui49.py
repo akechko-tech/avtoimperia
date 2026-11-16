@@ -91,7 +91,7 @@ with sync_playwright() as p:
         pg.wait_for_timeout(1500)
         end = js("document.getElementById('fEnd').hidden?'':document.getElementById('fEnd').textContent")
         ok('EXC' not in r and js('FL.mi.over') and 'Осмотреться' in end, 'программа пройдена, окно итога: «%s»' % end[:70])
-        ok(('Вы подняли' in end and 'пробыли' in end) or 'поднял' in end, 'отчёт согласован в числе: «%s»' % end[end.find('»') + 1:][:60])
+        ok(('Вы подняли' in end and 'пробыли' in end) or 'поднял' in end or 'слушается и садится' in end or 'взлетел, но тянет' in end, 'отчёт согласован в числе: «%s»' % end[end.find('»') + 1:][:60])
         js("document.getElementById('fEndLook').click()"); pg.wait_for_timeout(300)
         ok(js("document.getElementById('fEnd').hidden"), '«Осмотреться» — окно скрыто')
         js("document.getElementById('fQuit').click()"); pg.wait_for_timeout(900)

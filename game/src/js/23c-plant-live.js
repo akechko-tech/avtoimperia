@@ -119,7 +119,7 @@ function plgLabels(texts){const S=1024,cv=mkCanvas(S,512),g=cv.getContext('2d'),
   texts.forEach(({d,n,L})=>{const w=Math.min(1000,Math.round(d.w*90)),hh=Math.round(d.h*90);if(x+w>S){x=2;y+=h+3;h=0;}if(y+hh>512)return;
     g.save();g.translate(x,y);g.scale(w/d.w,hh/d.h);g.fillStyle=d.c;g.font=d.font;g.textAlign='center';g.textBaseline='middle';g.fillText(d.text,d.w/2,d.h*0.54,d.w*0.96);g.restore();
     const u0=x/S,v0=y/512,u1=(x+w)/S,v1=(y+hh)/512,o=q=>[q[0]+n[0]*L*1.4,q[1]+n[1]*L*1.4,q[2]+n[2]*L*1.4],p0=o(d.at[0]),p1=o(d.at[1]),p3=o(d.at[2]),p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];
-    mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[u0,v1],[u1,v1],[u1,v0],[u0,v0]]);x+=w+3;h=Math.max(h,hh);});
+    mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV({u0,u1,v0,v1},p0,p1,n));x+=w+3;h=Math.max(h,hh);});
   return {cv,mb};}
 // Люди: несколько обликов рабочих эпохи, у каждого 4 кадра шага и «стоит»
 function plgPeople(S){const out=[],y=S.y,rnd=mulberry32(hashStr('plgp|'+y+S.c)),work=['#3b4a5e','#4a4a44','#5a4a3a','#34465e','#6a5e4e'];

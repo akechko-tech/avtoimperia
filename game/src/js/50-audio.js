@@ -187,10 +187,28 @@ function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)r
 // 0.23: короткие оркестровые темы (фанфара кинохроники и праздника, темы соперников в пари) — файлы рядом с игрой (в APK вшиты);
 // нет файла или звук не пустили — прежние семплы или синтезатор (fb)
 const CUE={};
-function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+// 0.50 (отзыв: «во время награждения и после играют одновременно две мелодии — в честь победы в гонке и в игре, получается каша»):
+// у мелодии по поводу (гимн церемонии, фанфары, тема пари) — один канал. Пока она звучит, граммофон игры стоит на паузе целиком
+// (раньше он лишь приглушался до восьмой части громкости, а если был выключен на время гонки — после финиша включался поверх гимна);
+// вторая мелодия по поводу не накладывается: более важная (гимн — 3, фанфары — 2, тема — 1) сменяет прежнюю, менее важная не звучит вовсе
+// (выигранный матч: фанфары праздника шли вместе с победной темой пари). Кончилась — граммофон продолжает с того же места, мягко.
+function cueBegin(a,prio){const c=AU.cue;let was=!!(AU.el&&!AU.el.paused),want=0;
+  if(AU.synth&&AU.synth.cue){if(prio<3)return false;const p=AU.synth.prev||{};was=was||!!p.el;AU.synth=p.synth&&!p.synth.cue?p.synth:null;}
+  if(c&&c.a!==a&&!c.a.paused&&!c.a.ended){if((c.prio||0)>prio)return false;AU.cue=null;was=was||c.was;want=c.want||0;try{clearInterval(c.a.fadeI);clearTimeout(c.a.capT);c.a.pause();}catch(_){}}
+  else if(c){was=was||c.was;want=c.want||0;}
+  AU.cue={a,prio,was,want,t:Date.now()};if(AU.el&&!AU.el.paused)try{AU.el.pause();}catch(_){}
+  clearTimeout(AU.duckT);clearInterval(AU.duckI);AU.ducked=0;
+  if(!a.cueEv){a.cueEv=1;['ended','pause','error'].forEach(ev=>a.addEventListener(ev,()=>cueEnd(a)));}
+  clearTimeout(AU.cueT);AU.cueT=setTimeout(()=>cueEnd(a),60000);return true;}
+function cueEnd(a){const c=AU.cue;if(!c||c.a!==a)return;AU.cue=null;clearTimeout(AU.cueT);
+  if(c.was||c.want)setTimeout(()=>{if(AU.cue||(AU.synth&&AU.synth.cue))return;try{musicPlay(c.want===2);if(AU.el&&!AU.el.paused)musDuck(0.1);}catch(_){}},350);}
+// мелодию по поводу обрывает сам игрок: «следующая», «пауза», музыка гонки, выключение музыки
+function cueStop(){const c=AU.cue;if(!c)return;AU.cue=null;clearTimeout(AU.cueT);try{clearInterval(c.a.fadeI);clearTimeout(c.a.capT);c.a.pause();}catch(_){}}
+function auCue(id,vol,fb,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
+    if(!cueBegin(a,prio||1))return;
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
-    const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:5)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(5);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи оркестров (файлы рядом с игрой, в APK вшиты: music/fan_*.m4a);
 // без файла — свои оркестровые темы игры. Победа — «Первый сигнал» горна (его трубят на ипподромах), кубок — дробь и «Грандиозо»,
 // титул — трубы «Аиды», рекорд — «Сигнал адъютанта», первенство — «К знамени», медаль — туш, сделка — «Сбор», наследие —
@@ -209,17 +227,17 @@ function auAward(a,place){if(!AU.ctx&&typeof auInit==='function')try{auInit();}c
   const m=(a&&a.music)||{},I=(ORCH&&ORCH.idx)||{},rec=(m.rec||[]).find(id=>I[id]&&!(CUE[id]&&CUE[id].bad));
   // 0.48 (отзыв: «Марсельеза — очень противная пищалка»): гимн — запись духового оркестра (media: anthem → own_hymn_*.m4a, в APK вшита);
   // синтезатор из нарезок — только если записи нет
-  if(place===1&&m.tune&&TUNES[m.tune]){const rid='own_'+m.tune;if(!(CUE[rid]&&CUE[rid].bad)){auCueSrc(rid,'music/'+rid+'.m4a',0.85,()=>{if(!auTuneCue(m.tune))auFanfare('cup');},22);return 'hymn';}
+  if(place===1&&m.tune&&TUNES[m.tune]){const rid='own_'+m.tune;if(!(CUE[rid]&&CUE[rid].bad)){auCueSrc(rid,'music/'+rid+'.m4a',0.85,()=>{if(!auTuneCue(m.tune))auFanfare('cup');},22,3);return 'hymn';}
     if(auTuneCue(m.tune))return 'tune';}
-  if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9);return 'rec';}
+  if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9,3);return 'rec';}
   auFanfare(place===1?'cup':'medal');return 'fanfare';}
-function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+function auCueSrc(id,src,vol,fb,maxSec,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
+    if(!cueBegin(a,prio||2))return;/* 0.50: звучит более важная мелодия — эта молчит (и запасная тоже) */
     clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
     // 0.30: длинную запись (фанфары) после maxSec плавно уводим — праздник короче оркестровой пьесы
-    const dur=()=>Math.min(isFinite(a.duration)&&a.duration>0?a.duration:6,maxSec?maxSec+1.8:99);
     if(maxSec){clearTimeout(a.capT);a.capT=setTimeout(()=>{if(a.paused)return;const t0=performance.now();a.fadeI=setInterval(()=>{const k=1-(performance.now()-t0)/1800;if(k<=0){clearInterval(a.fadeI);try{a.pause();}catch(_){}return;}try{a.volume=v0*k;}catch(_){}},60);},maxSec*1000);}
-    const p=a.play();if(p&&p.then)p.then(()=>musDuck(dur())).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(6);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
 function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
@@ -302,8 +320,12 @@ function musBuild(start){
 function musCur(){return AU.pl[AU.idx]||null;}
 function musicPlay(force){
   if(AU.synth&&AU.synth.cue&&!force&&AU.on.music&&!AU.paused){musUI();return;}/* 0.41: гимн на церемонии доиграет */
+  // 0.50: идёт мелодия по поводу — граммофон ждёт её конца (кто и зачем просил музыку — запомним); музыку выключили совсем — молчит и она
+  // (начался фильм о герое, кинохроника или полёт — там нужна тишина: мелодия обрывается)
+  if(AU.cue&&AU.cue.a.paused&&Date.now()-AU.cue.t>2500)AU.cue=null;/* запись встала сама, а событие не пришло */
+  if(AU.cue){if(!AU.on.music||AU.sagaHold||AU.flyHold||AU.reelHold)cueStop();else{AU.cue.want=Math.max(AU.cue.want||0,force?2:1);if(AU.el&&!AU.el.paused)try{AU.el.pause();}catch(_){}musUI();return;}}
   // 0.36: пока идёт фильм о герое (рассказ голосом), музыка на паузе — потом продолжается с того же места
-  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
+  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&!AU.reelHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
   if(!want){if(AU.el&&!AU.el.paused)AU.el.pause();AU.synth=null;AU.real=false;musUI();return;}
   if(tr.synth){if(AU.el&&!AU.el.paused)AU.el.pause();AU.real=false;if(force||!AU.synth||AU.synth.title!==tr.title){AU.synth=tr;AU.step=0;tr.end=0;AU.mel=0;}AU.nowPlaying=null;musUI();return;}
   AU.synth=null;AU.real=true;
@@ -326,8 +348,8 @@ function musErr(){const tr=AU.nowPlaying;if(tr){AU.badSrc=AU.badSrc||{};AU.badSr
   if((AU.remoteErr||0)>=3&&local.length){AU.remoteOff=Date.now();AU.remoteErr=0;AU.errs=0;AU.sig='';AU.pl=local;AU.idx=0;musicPlay(true);return;}
   if(AU.errs<AU.pl.length){musNext(1);return;}
   AU.pl=[];AU.idx=0;AU.errs=0;AU.noMusic=1;if(AU.el&&AU.el.pause)AU.el.pause();musUI();}
-function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)return;const bad=AU.badSrc||{};let k=0;do{AU.idx=((AU.idx+d)%n+n)%n;}while(++k<n&&AU.pl[AU.idx]&&bad[AU.pl[AU.idx].src]);AU.paused=false;if(!AU.on.music){AU.on.music=true;auApply();}musicPlay(true);}
-function musToggle(){if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
+function musNext(d,user){if(user)cueStop();if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)return;const bad=AU.badSrc||{};let k=0;do{AU.idx=((AU.idx+d)%n+n)%n;}while(++k<n&&AU.pl[AU.idx]&&bad[AU.pl[AU.idx].src]);AU.paused=false;if(!AU.on.music){AU.on.music=true;auApply();}musicPlay(true);}
+function musToggle(){cueStop();if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
 function musMode(){AU.on.mode=AU.on.mode==='all'?'era':'all';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}AU.sig='';musBuild(true);toast(AU.on.mode==='all'?'Вся фонотека 1895–1929':'Музыка текущей эпохи');}
 function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
   const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by&&!tr.title.includes(tr.by)?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):AU.noMusic?'Записи не загрузились — музыки нет':'Фонотека загружается…';
@@ -347,7 +369,7 @@ function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
 function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth!==SY)return;if(SY.cue){auTuneCueEnd(SY);return;}musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
 // 0.41: мелодия игры по поводу (гимн на церемонии): звучит один раз вместо музыки, потом музыка возвращается
 function auTuneCue(key){const T=TUNES[key];if(!T||!AU.ctx)return false;if(AU.synth&&AU.synth.cue)return true;
-  const prev={synth:AU.synth,step:AU.step,mel:AU.mel,el:!!(AU.el&&!AU.el.paused)};if(prev.el)try{AU.el.pause();}catch(_){}
+  const prev={synth:AU.synth,step:AU.step,mel:AU.mel,el:!!(AU.el&&!AU.el.paused)||!!(AU.cue&&(AU.cue.was||AU.cue.want))};cueStop();if(AU.el&&!AU.el.paused)try{AU.el.pause();}catch(_){}
   AU.synth={synth:true,st:'tune',tune:key,title:'Церемония: '+T.name,cue:1,prev};AU.step=0;AU.mel=0;AU.next=Math.max(AU.next,AU.ctx.currentTime+0.25);musUI();return true;}
 function auTuneCueEnd(SY){if(AU.synth!==SY)return;const p=SY.prev||{};AU.synth=null;if(p.synth&&!p.synth.cue){AU.synth=p.synth;AU.step=p.step||0;AU.mel=p.mel||0;p.synth.end=0;}
   musicPlay();}

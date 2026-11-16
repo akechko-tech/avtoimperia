@@ -254,7 +254,7 @@ document.getElementById('rQuit').addEventListener('click',()=>{if(!R)return;if(R
 document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me)racerBackOnTrack(R.me,false);});
 // Кнопка сервиса: машина остановится, механик сменит шины, дольёт бензин и подтянет поломки
 document.getElementById('rSvc').addEventListener('click',()=>{const m=R&&R.me;if(!m||R.mode!=='drive'||m.dnf||m.fin!==null||m.svc||m.pitT>0)return;m.svc=1;rMsg('ОСТАНАВЛИВАЕМСЯ',1);});
-document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
+document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();cueStop();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
 // 0.31: механик — читает всю легенду, только опасное или молчит
 document.getElementById('rNavB').addEventListener('click',()=>{const m=legMode(),nx=m==='full'?'danger':m==='danger'?'off':'full';AU.on.nav=nx;try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}
   rNavUI();toast(nx==='full'?'🗣 Механик читает всю легенду трассы':nx==='danger'?'🗣 Механик — только опасные повороты':'🗣 Механик молчит');if(nx==='off')try{navStopVoice();}catch(_){}});

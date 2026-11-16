@@ -448,7 +448,12 @@ function r3dLabelAtlas(){const S=1024,cv=mkCanvas(S,S);R3.lab={cv,g:cv.getContex
 function r3dLabel(key,w,h,draw){const L=R3.lab;if(L.slots[key])return L.slots[key];if(L.x+w>L.S){L.x=0;L.y+=L.h+2;L.h=0;}if(L.y+h>L.S)return null;const s={u0:L.x/L.S,v0:L.y/L.S,u1:(L.x+w)/L.S,v1:(L.y+h)/L.S};
   L.g.save();L.g.translate(L.x,L.y);draw(L.g,w,h);L.g.restore();L.x+=w+2;L.h=Math.max(L.h,h);L.slots[key]=s;R3.labDirty=true;return s;}
 // Квадрат с надписью: углы p0 (низ-лево), p1 (низ-право), p3 (верх-лево)
-function r3dSignQuad(s,p0,p1,p3,n){const mb=R3.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[s.u0,s.v1],[s.u1,s.v1],[s.u1,s.v0],[s.u0,s.v0]]);R3.signsDirty=true;}
+// 0.50 (отзыв: «почему надписи зеркальные на объявлениях на трассе?»): где у надписи лево, решает не порядок углов, а взгляд зрителя,
+// стоящего перед щитом (камера: вправо = вверх × вперёд, значит для смотрящего против нормали n право — (−n.z, n.x)). Щиты объявлений,
+// таблички городов и грифельные доски задавали углы «по правой руке» — и текст с лица читался справа налево; растяжка «Финиш»
+// и вывески домов были верны. Теперь любой щит читается с лица, как бы ни шли углы
+function signUV(s,p0,p1,n){const d=(p1[0]-p0[0])*-n[2]+(p1[2]-p0[2])*n[0],a=d<0?s.u1:s.u0,b=d<0?s.u0:s.u1;return [[a,s.v1],[b,s.v1],[b,s.v0],[a,s.v0]];}
+function r3dSignQuad(s,p0,p1,p3,n){const mb=R3.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV(s,p0,p1,n));R3.signsDirty=true;}
 function r3dTexts(texts,X){texts.forEach(({d,n,L})=>{const s=r3dLabel('t|'+d.text+'|'+d.c+'|'+d.font,Math.min(512,Math.round(d.w*80)),Math.round(d.h*80),(g,w,h)=>{g.fillStyle='rgba(0,0,0,0)';g.clearRect(0,0,w,h);g.scale(w/d.w,h/d.h);g.fillStyle=d.c;g.font=d.font;g.textAlign='center';g.textBaseline='middle';g.fillText(d.text,d.w/2,d.h*0.54);});if(!s)return;
   const nw=r3dXf({r:X.r,s:1,t:[0,0,0]},n),o=q=>{const w=r3dXf(X,q);return [w[0]+nw[0]*L*1.2,w[1]+nw[1]*L*1.2,w[2]+nw[2]*L*1.2];};r3dSignQuad(s,o(d.at[0]),o(d.at[1]),o(d.at[2]),nw);});}
 function r3dAd(v,x,y,z,face){const ads=[['ШИНЫ','#1f3f7a','#f1e6c8','ПРОЧНЫЕ И БЫСТРЫЕ'],['БЕНЗИН','#b8322a','#f7ecd0','ДЛЯ ГОНОК'],['СВЕЧИ','#2b5a3a','#f1e6c8','ИСКРА ВЕРНАЯ'],['МАСЛО','#3a2a1c','#e8c56a','МОТОР БЕРЕЖЁТ']][v%4];

@@ -414,6 +414,8 @@ function tyrePhase(w){return w<0.5?0:w<0.8?1:2;}
 const TYRE_SURF={asphalt:0.85,concrete:0.9,brick:1,pave:1.3,board:0.8,macadam:1.1,dirt:0.9,mount:1.15,mud:0.7,sand:0.85,beach:0.8,snow:0.6,
   verge:1.2,grass:0.6,field:0.7,forest:1.1,rock:1.9,dune:0.7,puddle:0.7,mudhole:0.7,water:0.5};
 function fuelNeed(c,T){return c.fuelRate?Math.max(0,T.raceLen-c.prog)*c.fuelRate*0.85:0;}
+function pitAtLine(c,T){const cfg=T.cfg,rem=Math.max(0,T.raceLen-c.prog),must=!!(c.punct||c.tyre>60||c.dmg>40||c.limp||(c.fuelRate&&c.fuel<rem*c.fuelRate*1.06+5)),slow=c.vx<Math.min(15,Math.max(2.5,(c.vtop||30)*0.5));
+  return !!(((c.player?c.pitCall:c.wantPit)||(slow&&must))&&c.lap>0&&c.lap<cfg.laps);}
 function svcNeed(c){return {tyre:c.punct||c.tyre>20,fuel:!!c.fuelRate&&c.fuel<92,dmg:c.dmg>15||!!c.limp};}
 function svcPlan(c){const T=R.trk,need=svcNeed(c),what=[];let t=2.5;
   // 0.30: меняют пробитые и стёртые колёса по отдельности (41f-tyres.js)
@@ -1003,7 +1005,12 @@ function raceTick(dt){
     if(!c.player&&!cfg.pits&&!c.punct&&!c.tyreSwap&&!c.dnf&&c.fin===null&&c.tyre>88&&T.raceLen-c.prog>T.raceLen*0.12){c.flat=false;c.tyreSwap=true;}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){twFix(c,twPlan(c,true),true);c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
-      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if((c.vx<15||(c.wantPit&&!c.player))&&c.lap>0){c.pitT=(4+(c.fuel<60?2*(c.pfuelK||1):0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
+      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;
+        // 0.50 (отзыв: «зачем меня заправлять в конце каждого круга на овале, если бензина хватает?»): в боксы заезжают по делу, а не потому, что
+        // линию проехали медленнее 54 км/ч — машина 1896 года быстрее и не умеет, и её (и соперников) останавливали на каждом круге.
+        // Теперь: соперник — когда решил сам (шины, бензин, поломка), вы — когда сбросили ход у линии (вдвое ниже своей наибольшей скорости)
+        // и есть что делать: прокол, шины стёрты, кузов побит или бензина не хватит до финиша. Остальное — кнопкой «Сервис»
+        if(pitAtLine(c,T)){c.pitT=(4+(c.fuel<60?2*(c.pfuelK||1):0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
     if(c.stopT>0){c.stopT-=dt*(Math.abs(c.vx)<1.5?1:0.3);c.thr=0;c.brk=Math.abs(c.vx)>4?0.35:1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if((c.punct&&!c.flat||c.tyreSwap)&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;
       // 0.30: меняют только нужные колёса: пробитые (и совсем стёртые); износ всех — все четыре

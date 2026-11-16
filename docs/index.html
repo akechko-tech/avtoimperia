@@ -9539,7 +9539,7 @@ function plgLabels(texts){const S=1024,cv=mkCanvas(S,512),g=cv.getContext('2d'),
   texts.forEach(({d,n,L})=>{const w=Math.min(1000,Math.round(d.w*90)),hh=Math.round(d.h*90);if(x+w>S){x=2;y+=h+3;h=0;}if(y+hh>512)return;
     g.save();g.translate(x,y);g.scale(w/d.w,hh/d.h);g.fillStyle=d.c;g.font=d.font;g.textAlign='center';g.textBaseline='middle';g.fillText(d.text,d.w/2,d.h*0.54,d.w*0.96);g.restore();
     const u0=x/S,v0=y/512,u1=(x+w)/S,v1=(y+hh)/512,o=q=>[q[0]+n[0]*L*1.4,q[1]+n[1]*L*1.4,q[2]+n[2]*L*1.4],p0=o(d.at[0]),p1=o(d.at[1]),p3=o(d.at[2]),p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];
-    mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[u0,v1],[u1,v1],[u1,v0],[u0,v0]]);x+=w+3;h=Math.max(h,hh);});
+    mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV({u0,u1,v0,v1},p0,p1,n));x+=w+3;h=Math.max(h,hh);});
   return {cv,mb};}
 // Люди: несколько обликов рабочих эпохи, у каждого 4 кадра шага и «стоит»
 function plgPeople(S){const out=[],y=S.y,rnd=mulberry32(hashStr('plgp|'+y+S.c)),work=['#3b4a5e','#4a4a44','#5a4a3a','#34465e','#6a5e4e'];
@@ -10270,7 +10270,9 @@ function reelAudio(on,mus,R0,id){try{if(on)try{orchLoad();}catch(_){}
   {const a=AU.reelEl;clearInterval(AU.reelDuck);if(on&&tr){const e=a||(AU.reelEl=new Audio());e.loop=true;e.src=tr.src;e.volume=0;const p=e.play();if(p&&p.catch)p.catch(()=>{});
       AU.reelDuck=setInterval(()=>{if(!REEL){e.volume=Math.max(0,e.volume-0.05);if(e.volume<=0.01){e.pause();clearInterval(AU.reelDuck);}return;}const want=REEL.paused?0:VOICE.cb?0.1:0.3;e.volume=clamp(e.volume+(want-e.volume)*0.25,0,1);if(REEL.paused&&!e.paused)e.pause();else if(!REEL.paused&&e.paused){const q=e.play();if(q&&q.catch)q.catch(()=>{});}},120);}
     else if(a&&!on){AU.reelDuck=setInterval(()=>{a.volume=Math.max(0,a.volume-0.06);if(a.volume<=0.01){a.pause();clearInterval(AU.reelDuck);}},80);}}
-  if(AU.el){if(on){AU.reelWas=!AU.el.paused;if(AU.reelWas)AU.el.pause();}else if(AU.reelWas){AU.reelWas=false;musicPlay();}}
+  // 0.50: ролик обрывает и мелодию по поводу (гимн церемонии), граммофон ждёт конца ролика (AU.reelHold) и продолжает, если играл до него
+  if(on){AU.reelWas=!!(AU.el&&!AU.el.paused)||!!(AU.cue&&(AU.cue.was||AU.cue.want));if(typeof cueStop==='function')cueStop();AU.reelHold=true;if(AU.el&&!AU.el.paused)AU.el.pause();}
+  else{AU.reelHold=false;if(AU.reelWas){AU.reelWas=false;musicPlay();}}
   if(AU.ctx&&AU.mus){AU.mus.gain.setTargetAtTime(on?0.045:(AU.on.music?(R?0.07:0.16):0),AU.ctx.currentTime,0.3);}
   clearInterval(AU.proj);AU.proj=0;
   if(on&&AU.ctx&&AU.on.sfx)AU.proj=setInterval(()=>{if(!REEL||!AU.ctx||REEL.paused)return;const t=AU.ctx.currentTime;for(let k=0;k<3;k++)vNoise(t+k/18,0.012,0.018,'bandpass',2600,AU.fx);},167);}catch(e){}}
@@ -16962,7 +16964,7 @@ if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:
 window.addEventListener('resize',()=>xpopClose());
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.49';
+const GAME_VER='0.50';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -18110,6 +18112,8 @@ function tyrePhase(w){return w<0.5?0:w<0.8?1:2;}
 const TYRE_SURF={asphalt:0.85,concrete:0.9,brick:1,pave:1.3,board:0.8,macadam:1.1,dirt:0.9,mount:1.15,mud:0.7,sand:0.85,beach:0.8,snow:0.6,
   verge:1.2,grass:0.6,field:0.7,forest:1.1,rock:1.9,dune:0.7,puddle:0.7,mudhole:0.7,water:0.5};
 function fuelNeed(c,T){return c.fuelRate?Math.max(0,T.raceLen-c.prog)*c.fuelRate*0.85:0;}
+function pitAtLine(c,T){const cfg=T.cfg,rem=Math.max(0,T.raceLen-c.prog),must=!!(c.punct||c.tyre>60||c.dmg>40||c.limp||(c.fuelRate&&c.fuel<rem*c.fuelRate*1.06+5)),slow=c.vx<Math.min(15,Math.max(2.5,(c.vtop||30)*0.5));
+  return !!(((c.player?c.pitCall:c.wantPit)||(slow&&must))&&c.lap>0&&c.lap<cfg.laps);}
 function svcNeed(c){return {tyre:c.punct||c.tyre>20,fuel:!!c.fuelRate&&c.fuel<92,dmg:c.dmg>15||!!c.limp};}
 function svcPlan(c){const T=R.trk,need=svcNeed(c),what=[];let t=2.5;
   // 0.30: меняют пробитые и стёртые колёса по отдельности (41f-tyres.js)
@@ -18699,7 +18703,12 @@ function raceTick(dt){
     if(!c.player&&!cfg.pits&&!c.punct&&!c.tyreSwap&&!c.dnf&&c.fin===null&&c.tyre>88&&T.raceLen-c.prog>T.raceLen*0.12){c.flat=false;c.tyreSwap=true;}
     if(!c.player||R.mode!=='drive')aiControl(c,T,dt);else playerService(c,dt);
     if(cfg.pits){if(c.pitT>0){c.pitT-=dt;c.thr=0;c.brk=1;if(c.pitT<=0){twFix(c,twPlan(c,true),true);c.fuel=100;c.heat=0;c.dmg=Math.max(0,c.dmg-35);c.pitCall=false;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'ГОТОВО!',1);}}
-      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;if((c.vx<15||(c.wantPit&&!c.player))&&c.lap>0){c.pitT=(4+(c.fuel<60?2*(c.pfuelK||1):0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
+      else if(c.lapSeen!==c.lap&&c.lap>=0&&c.idx<6){c.lapSeen=c.lap;
+        // 0.50 (отзыв: «зачем меня заправлять в конце каждого круга на овале, если бензина хватает?»): в боксы заезжают по делу, а не потому, что
+        // линию проехали медленнее 54 км/ч — машина 1896 года быстрее и не умеет, и её (и соперников) останавливали на каждом круге.
+        // Теперь: соперник — когда решил сам (шины, бензин, поломка), вы — когда сбросили ход у линии (вдвое ниже своей наибольшей скорости)
+        // и есть что делать: прокол, шины стёрты, кузов побит или бензина не хватит до финиша. Остальное — кнопкой «Сервис»
+        if(pitAtLine(c,T)){c.pitT=(4+(c.fuel<60?2*(c.pfuelK||1):0)+(c.punct||c.tyre>50?c.wheelChange*0.4:0))*(parts(c.md).w.pit||1)*(c.pitK||1);if(c.player)rMsg('БОКСЫ',2);}else if(c.player&&c.lap>0&&c.lap<cfg.laps)rMsg('КРУГ '+(c.lap+1)+'/'+cfg.laps,1.2);}}
     if(c.stopT>0){c.stopT-=dt*(Math.abs(c.vx)<1.5?1:0.3);c.thr=0;c.brk=Math.abs(c.vx)>4?0.35:1;if(c.stopT<=0){c.stopT=0;if(c.you)rMsgT((c.player?'':(c.drvName||c.label)+': ')+'СНОВА В ПУТИ',1);}}
     else if((c.punct&&!c.flat||c.tyreSwap)&&c.vx<1.2&&!(cfg.pits&&c.pitT>0)&&!(c.player&&R.mode==='drive')){c.fix=(c.fix||0)+dt;
       // 0.30: меняют только нужные колёса: пробитые (и совсем стёртые); износ всех — все четыре
@@ -21375,7 +21384,7 @@ document.getElementById('rQuit').addEventListener('click',()=>{if(!R)return;if(R
 document.getElementById('rReset').addEventListener('click',()=>{if(R&&R.me)racerBackOnTrack(R.me,false);});
 // Кнопка сервиса: машина остановится, механик сменит шины, дольёт бензин и подтянет поломки
 document.getElementById('rSvc').addEventListener('click',()=>{const m=R&&R.me;if(!m||R.mode!=='drive'||m.dnf||m.fin!==null||m.svc||m.pitT>0)return;m.svc=1;rMsg('ОСТАНАВЛИВАЕМСЯ',1);});
-document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
+document.getElementById('rMus').addEventListener('click',()=>{auInit();AU.on.race=!AU.on.race;if(AU.on.race&&!AU.on.music)AU.on.music=true;auApply();cueStop();musicPlay(true);rMusUI();toast(AU.on.race?'♪ Музыка в гонке: '+(musCur()?musCur().title:''):'Музыка в гонке выключена');});
 // 0.31: механик — читает всю легенду, только опасное или молчит
 document.getElementById('rNavB').addEventListener('click',()=>{const m=legMode(),nx=m==='full'?'danger':m==='danger'?'off':'full';AU.on.nav=nx;try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}
   rNavUI();toast(nx==='full'?'🗣 Механик читает всю легенду трассы':nx==='danger'?'🗣 Механик — только опасные повороты':'🗣 Механик молчит');if(nx==='off')try{navStopVoice();}catch(_){}});
@@ -27330,7 +27339,12 @@ function r3dLabelAtlas(){const S=1024,cv=mkCanvas(S,S);R3.lab={cv,g:cv.getContex
 function r3dLabel(key,w,h,draw){const L=R3.lab;if(L.slots[key])return L.slots[key];if(L.x+w>L.S){L.x=0;L.y+=L.h+2;L.h=0;}if(L.y+h>L.S)return null;const s={u0:L.x/L.S,v0:L.y/L.S,u1:(L.x+w)/L.S,v1:(L.y+h)/L.S};
   L.g.save();L.g.translate(L.x,L.y);draw(L.g,w,h);L.g.restore();L.x+=w+2;L.h=Math.max(L.h,h);L.slots[key]=s;R3.labDirty=true;return s;}
 // Квадрат с надписью: углы p0 (низ-лево), p1 (низ-право), p3 (верх-лево)
-function r3dSignQuad(s,p0,p1,p3,n){const mb=R3.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[s.u0,s.v1],[s.u1,s.v1],[s.u1,s.v0],[s.u0,s.v0]]);R3.signsDirty=true;}
+// 0.50 (отзыв: «почему надписи зеркальные на объявлениях на трассе?»): где у надписи лево, решает не порядок углов, а взгляд зрителя,
+// стоящего перед щитом (камера: вправо = вверх × вперёд, значит для смотрящего против нормали n право — (−n.z, n.x)). Щиты объявлений,
+// таблички городов и грифельные доски задавали углы «по правой руке» — и текст с лица читался справа налево; растяжка «Финиш»
+// и вывески домов были верны. Теперь любой щит читается с лица, как бы ни шли углы
+function signUV(s,p0,p1,n){const d=(p1[0]-p0[0])*-n[2]+(p1[2]-p0[2])*n[0],a=d<0?s.u1:s.u0,b=d<0?s.u0:s.u1;return [[a,s.v1],[b,s.v1],[b,s.v0],[a,s.v0]];}
+function r3dSignQuad(s,p0,p1,p3,n){const mb=R3.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV(s,p0,p1,n));R3.signsDirty=true;}
 function r3dTexts(texts,X){texts.forEach(({d,n,L})=>{const s=r3dLabel('t|'+d.text+'|'+d.c+'|'+d.font,Math.min(512,Math.round(d.w*80)),Math.round(d.h*80),(g,w,h)=>{g.fillStyle='rgba(0,0,0,0)';g.clearRect(0,0,w,h);g.scale(w/d.w,h/d.h);g.fillStyle=d.c;g.font=d.font;g.textAlign='center';g.textBaseline='middle';g.fillText(d.text,d.w/2,d.h*0.54);});if(!s)return;
   const nw=r3dXf({r:X.r,s:1,t:[0,0,0]},n),o=q=>{const w=r3dXf(X,q);return [w[0]+nw[0]*L*1.2,w[1]+nw[1]*L*1.2,w[2]+nw[2]*L*1.2];};r3dSignQuad(s,o(d.at[0]),o(d.at[1]),o(d.at[2]),nw);});}
 function r3dAd(v,x,y,z,face){const ads=[['ШИНЫ','#1f3f7a','#f1e6c8','ПРОЧНЫЕ И БЫСТРЫЕ'],['БЕНЗИН','#b8322a','#f7ecd0','ДЛЯ ГОНОК'],['СВЕЧИ','#2b5a3a','#f1e6c8','ИСКРА ВЕРНАЯ'],['МАСЛО','#3a2a1c','#e8c56a','МОТОР БЕРЕЖЁТ']][v%4];
@@ -28875,7 +28889,7 @@ function fwPhotogs(mb,x,z,gy,rnd,n){for(let i=0;i<(n||3);i++){const px=x+i*2.6+(
 function fwLabel(key,w,h,draw){if(!FW.lab){const S=1024,cv=mkCanvas(S,S);FW.lab={cv,g:cv.getContext('2d'),x:0,y:0,h:0,S,slots:{}};}const L=FW.lab;if(L.slots[key])return L.slots[key];
   if(L.x+w>L.S){L.x=0;L.y+=L.h+2;L.h=0;}if(L.y+h>L.S)return null;const s={u0:L.x/L.S,v0:L.y/L.S,u1:(L.x+w)/L.S,v1:(L.y+h)/L.S};const g=L.g;g.save();g.translate(L.x,L.y);g.beginPath();g.rect(0,0,w,h);g.clip();draw(g,w,h);g.restore();
   L.x+=w+2;L.h=Math.max(L.h,h);L.slots[key]=s;FW.labDirty=true;return s;}
-function fwSignQuad(s,p0,p1,p3,n){if(!FW.signs)FW.signs=new MB(true);const mb=FW.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,[[s.u0,s.v1],[s.u1,s.v1],[s.u1,s.v0],[s.u0,s.v0]]);FW.signsDirty=true;}
+function fwSignQuad(s,p0,p1,p3,n){if(!FW.signs)FW.signs=new MB(true);const mb=FW.signs,p2=[p1[0]+p3[0]-p0[0],p1[1]+p3[1]-p0[1],p1[2]+p3[2]-p0[2]];mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV(s,p0,p1,n)/* 0.50: с лица — не зеркально (объявления аэродрома читались справа налево с обеих сторон, шар — с одной) */);FW.signsDirty=true;}
 const FW_ADS=[['DUNLOP','ШИНЫ ДЛЯ АЭРОПЛАНОВ','#1f3f7a','#f1e6c8'],['GNOME','РОТАТИВНЫЕ МОТОРЫ · ПАРИЖ','#3a2a1c','#e8c56a'],['BOSCH','МАГНЕТО — ИСКРА ВЕРНАЯ','#b8322a','#f7ecd0'],['CHAUVIÈRE','ВИНТЫ «ИНТЕГРАЛЬ»','#2b5a3a','#f1e6c8'],
   ['MICHELIN','ПРИЗ ЗА ТОЧНОСТЬ','#1a3a6a','#f4efe0'],['CONTINENTAL','ПРОРЕЗИНЕННОЕ ПОЛОТНО','#4a3a1a','#f1e6c8'],['ШАМПАНСКОЕ','ПОГРЕБА РЕЙМСА','#6a1a2a','#f4e6c8'],['ГРАММОФОНЪ','ПЛАСТИНКИ · НОВИНКИ','#2a2a2a','#e8e0c8'],['АВТО-МОТО-ВЕЛО','ВЫСТАВКА · ВХОД 1 ФР.','#3a5a2a','#f1e6c8']];
 function fwAdSign(mb,x,z,gy,a,ad,w,h){w=w||6;h=h||2.4;const c=Math.cos(a),sn=Math.sin(a),P=(u,v,q)=>[x+u*c+q*sn,gy+v,z-u*sn+q*c];
@@ -29351,10 +29365,28 @@ function orchLoad(){if(ORCH.idx)return Promise.resolve(ORCH.idx);if(ORCH.loadP)r
 // 0.23: короткие оркестровые темы (фанфара кинохроники и праздника, темы соперников в пари) — файлы рядом с игрой (в APK вшиты);
 // нет файла или звук не пустили — прежние семплы или синтезатор (fb)
 const CUE={};
-function auCue(id,vol,fb){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+// 0.50 (отзыв: «во время награждения и после играют одновременно две мелодии — в честь победы в гонке и в игре, получается каша»):
+// у мелодии по поводу (гимн церемонии, фанфары, тема пари) — один канал. Пока она звучит, граммофон игры стоит на паузе целиком
+// (раньше он лишь приглушался до восьмой части громкости, а если был выключен на время гонки — после финиша включался поверх гимна);
+// вторая мелодия по поводу не накладывается: более важная (гимн — 3, фанфары — 2, тема — 1) сменяет прежнюю, менее важная не звучит вовсе
+// (выигранный матч: фанфары праздника шли вместе с победной темой пари). Кончилась — граммофон продолжает с того же места, мягко.
+function cueBegin(a,prio){const c=AU.cue;let was=!!(AU.el&&!AU.el.paused),want=0;
+  if(AU.synth&&AU.synth.cue){if(prio<3)return false;const p=AU.synth.prev||{};was=was||!!p.el;AU.synth=p.synth&&!p.synth.cue?p.synth:null;}
+  if(c&&c.a!==a&&!c.a.paused&&!c.a.ended){if((c.prio||0)>prio)return false;AU.cue=null;was=was||c.was;want=c.want||0;try{clearInterval(c.a.fadeI);clearTimeout(c.a.capT);c.a.pause();}catch(_){}}
+  else if(c){was=was||c.was;want=c.want||0;}
+  AU.cue={a,prio,was,want,t:Date.now()};if(AU.el&&!AU.el.paused)try{AU.el.pause();}catch(_){}
+  clearTimeout(AU.duckT);clearInterval(AU.duckI);AU.ducked=0;
+  if(!a.cueEv){a.cueEv=1;['ended','pause','error'].forEach(ev=>a.addEventListener(ev,()=>cueEnd(a)));}
+  clearTimeout(AU.cueT);AU.cueT=setTimeout(()=>cueEnd(a),60000);return true;}
+function cueEnd(a){const c=AU.cue;if(!c||c.a!==a)return;AU.cue=null;clearTimeout(AU.cueT);
+  if(c.was||c.want)setTimeout(()=>{if(AU.cue||(AU.synth&&AU.synth.cue))return;try{musicPlay(c.want===2);if(AU.el&&!AU.el.paused)musDuck(0.1);}catch(_){}},350);}
+// мелодию по поводу обрывает сам игрок: «следующая», «пауза», музыка гонки, выключение музыки
+function cueStop(){const c=AU.cue;if(!c)return;AU.cue=null;clearTimeout(AU.cueT);try{clearInterval(c.a.fadeI);clearTimeout(c.a.capT);c.a.pause();}catch(_){}}
+function auCue(id,vol,fb,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
+    if(!cueBegin(a,prio||1))return;
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
-    const p=a.play();if(p&&p.then)p.then(()=>musDuck(isFinite(a.duration)&&a.duration>0?a.duration:5)).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(5);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи оркестров (файлы рядом с игрой, в APK вшиты: music/fan_*.m4a);
 // без файла — свои оркестровые темы игры. Победа — «Первый сигнал» горна (его трубят на ипподромах), кубок — дробь и «Грандиозо»,
 // титул — трубы «Аиды», рекорд — «Сигнал адъютанта», первенство — «К знамени», медаль — туш, сделка — «Сбор», наследие —
@@ -29373,17 +29405,17 @@ function auAward(a,place){if(!AU.ctx&&typeof auInit==='function')try{auInit();}c
   const m=(a&&a.music)||{},I=(ORCH&&ORCH.idx)||{},rec=(m.rec||[]).find(id=>I[id]&&!(CUE[id]&&CUE[id].bad));
   // 0.48 (отзыв: «Марсельеза — очень противная пищалка»): гимн — запись духового оркестра (media: anthem → own_hymn_*.m4a, в APK вшита);
   // синтезатор из нарезок — только если записи нет
-  if(place===1&&m.tune&&TUNES[m.tune]){const rid='own_'+m.tune;if(!(CUE[rid]&&CUE[rid].bad)){auCueSrc(rid,'music/'+rid+'.m4a',0.85,()=>{if(!auTuneCue(m.tune))auFanfare('cup');},22);return 'hymn';}
+  if(place===1&&m.tune&&TUNES[m.tune]){const rid='own_'+m.tune;if(!(CUE[rid]&&CUE[rid].bad)){auCueSrc(rid,'music/'+rid+'.m4a',0.85,()=>{if(!auTuneCue(m.tune))auFanfare('cup');},22,3);return 'hymn';}
     if(auTuneCue(m.tune))return 'tune';}
-  if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9);return 'rec';}
+  if(rec&&remoteOk()){auCueSrc(rec,MEDIA_REL+'music/'+rec+'.m4a',place===1?0.85:0.7,()=>auFanfare(place===1?'cup':'medal'),place===1?16:9,3);return 'rec';}
   auFanfare(place===1?'cup':'medal');return 'fanfare';}
-function auCueSrc(id,src,vol,fb,maxSec){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
+function auCueSrc(id,src,vol,fb,maxSec,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio(src);a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
+    if(!cueBegin(a,prio||2))return;/* 0.50: звучит более важная мелодия — эта молчит (и запасная тоже) */
     clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
     // 0.30: длинную запись (фанфары) после maxSec плавно уводим — праздник короче оркестровой пьесы
-    const dur=()=>Math.min(isFinite(a.duration)&&a.duration>0?a.duration:6,maxSec?maxSec+1.8:99);
     if(maxSec){clearTimeout(a.capT);a.capT=setTimeout(()=>{if(a.paused)return;const t0=performance.now();a.fadeI=setInterval(()=>{const k=1-(performance.now()-t0)/1800;if(k<=0){clearInterval(a.fadeI);try{a.pause();}catch(_){}return;}try{a.volume=v0*k;}catch(_){}},60);},maxSec*1000);}
-    const p=a.play();if(p&&p.then)p.then(()=>musDuck(dur())).catch(()=>{a.bad=1;if(fb)fb();});else musDuck(6);}catch(e){if(a)a.bad=1;if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
 function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;
@@ -29466,8 +29498,12 @@ function musBuild(start){
 function musCur(){return AU.pl[AU.idx]||null;}
 function musicPlay(force){
   if(AU.synth&&AU.synth.cue&&!force&&AU.on.music&&!AU.paused){musUI();return;}/* 0.41: гимн на церемонии доиграет */
+  // 0.50: идёт мелодия по поводу — граммофон ждёт её конца (кто и зачем просил музыку — запомним); музыку выключили совсем — молчит и она
+  // (начался фильм о герое, кинохроника или полёт — там нужна тишина: мелодия обрывается)
+  if(AU.cue&&AU.cue.a.paused&&Date.now()-AU.cue.t>2500)AU.cue=null;/* запись встала сама, а событие не пришло */
+  if(AU.cue){if(!AU.on.music||AU.sagaHold||AU.flyHold||AU.reelHold)cueStop();else{AU.cue.want=Math.max(AU.cue.want||0,force?2:1);if(AU.el&&!AU.el.paused)try{AU.el.pause();}catch(_){}musUI();return;}}
   // 0.36: пока идёт фильм о герое (рассказ голосом), музыка на паузе — потом продолжается с того же места
-  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
+  const tr=musCur(),want=AU.on.music&&!AU.paused&&!AU.sagaHold&&!AU.flyHold&&!AU.reelHold&&(!R||AU.on.race)&&tr;/* 0.39: в полёте граммофон молчит */
   if(!want){if(AU.el&&!AU.el.paused)AU.el.pause();AU.synth=null;AU.real=false;musUI();return;}
   if(tr.synth){if(AU.el&&!AU.el.paused)AU.el.pause();AU.real=false;if(force||!AU.synth||AU.synth.title!==tr.title){AU.synth=tr;AU.step=0;tr.end=0;AU.mel=0;}AU.nowPlaying=null;musUI();return;}
   AU.synth=null;AU.real=true;
@@ -29490,8 +29526,8 @@ function musErr(){const tr=AU.nowPlaying;if(tr){AU.badSrc=AU.badSrc||{};AU.badSr
   if((AU.remoteErr||0)>=3&&local.length){AU.remoteOff=Date.now();AU.remoteErr=0;AU.errs=0;AU.sig='';AU.pl=local;AU.idx=0;musicPlay(true);return;}
   if(AU.errs<AU.pl.length){musNext(1);return;}
   AU.pl=[];AU.idx=0;AU.errs=0;AU.noMusic=1;if(AU.el&&AU.el.pause)AU.el.pause();musUI();}
-function musNext(d){if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)return;const bad=AU.badSrc||{};let k=0;do{AU.idx=((AU.idx+d)%n+n)%n;}while(++k<n&&AU.pl[AU.idx]&&bad[AU.pl[AU.idx].src]);AU.paused=false;if(!AU.on.music){AU.on.music=true;auApply();}musicPlay(true);}
-function musToggle(){if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
+function musNext(d,user){if(user)cueStop();if(!AU.pl.length)musBuild(true);const n=AU.pl.length;if(!n)return;const bad=AU.badSrc||{};let k=0;do{AU.idx=((AU.idx+d)%n+n)%n;}while(++k<n&&AU.pl[AU.idx]&&bad[AU.pl[AU.idx].src]);AU.paused=false;if(!AU.on.music){AU.on.music=true;auApply();}musicPlay(true);}
+function musToggle(){cueStop();if(!AU.on.music){AU.on.music=true;AU.paused=false;auApply();return;}AU.paused=!AU.paused;musicPlay();}
 function musMode(){AU.on.mode=AU.on.mode==='all'?'era':'all';try{localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(e){}AU.sig='';musBuild(true);toast(AU.on.mode==='all'?'Вся фонотека 1895–1929':'Музыка текущей эпохи');}
 function musUI(){const tr=musCur(),on=AU.on.music&&!AU.paused;
   const txt=tr?(tr.synth?tr.title:tr.orch?tr.title+(tr.by&&!tr.title.includes(tr.by)?' — '+tr.by:''):tr.title.replace(/\s*\(.*?\)/g,' ').replace(/\s+/g,' ').trim().slice(0,60)+(tr.y?' · '+tr.y:'')):AU.noMusic?'Записи не загрузились — музыки нет':'Фонотека загружается…';
@@ -29511,7 +29547,7 @@ function melPick(root,tones,rnd,lo,hi){const prev=AU.mel||((lo+hi)>>1),C=[];
 function musEnd(SY,t){if(SY.end)return;SY.end=1;setTimeout(()=>{if(AU.synth!==SY)return;if(SY.cue){auTuneCueEnd(SY);return;}musNext(1);},Math.max(0,(t-AU.ctx.currentTime)*1000+400));}
 // 0.41: мелодия игры по поводу (гимн на церемонии): звучит один раз вместо музыки, потом музыка возвращается
 function auTuneCue(key){const T=TUNES[key];if(!T||!AU.ctx)return false;if(AU.synth&&AU.synth.cue)return true;
-  const prev={synth:AU.synth,step:AU.step,mel:AU.mel,el:!!(AU.el&&!AU.el.paused)};if(prev.el)try{AU.el.pause();}catch(_){}
+  const prev={synth:AU.synth,step:AU.step,mel:AU.mel,el:!!(AU.el&&!AU.el.paused)||!!(AU.cue&&(AU.cue.was||AU.cue.want))};cueStop();if(AU.el&&!AU.el.paused)try{AU.el.pause();}catch(_){}
   AU.synth={synth:true,st:'tune',tune:key,title:'Церемония: '+T.name,cue:1,prev};AU.step=0;AU.mel=0;AU.next=Math.max(AU.next,AU.ctx.currentTime+0.25);musUI();return true;}
 function auTuneCueEnd(SY){if(AU.synth!==SY)return;const p=SY.prev||{};AU.synth=null;if(p.synth&&!p.synth.cue){AU.synth=p.synth;AU.step=p.step||0;AU.mel=p.mel||0;p.synth.end=0;}
   musicPlay();}
@@ -30510,7 +30546,7 @@ const ACT={
     else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
-  plPrev:()=>{auInit();musNext(-1);},plNext:()=>{auInit();musNext(1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
+  plPrev:()=>{auInit();musNext(-1,1);},plNext:()=>{auInit();musNext(1,1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
   audio:d=>{AU.on[d.k]=!AU.on[d.k];auApply();openSettings();},
   ctlTilt:d=>{AU.on.steer=d.v;AU.on.tilt=d.v==='tilt';auApply();openSettings();},
   gfx:d=>{AU.on.gfx=d.v;auApply();openSettings();toast(d.v==='3d'?'Гонки — в объёмной графике':'Гонки — в простой графике');},
