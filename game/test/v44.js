@@ -17,7 +17,7 @@ ok(T.scale.hist.n==='Ford'&&T.scale.hist.v>4e8&&T.sport.hist.n==='Bugatti'&&T.br
   W.my.hp=hv*1.01;W.hp=Math.max(W.hp,W.my.hp*2.5);const T3=domTable(G);ok(T3.scale.histOk&&!T3.scale.ok&&T3.scale.share<0.5,'больше рекорда эпохи, но меньше половины живого мира — ещё не победа');
   W.my.hp=Math.max(hv*1.01,W.hp);W.hp=W.my.hp/0.6;const T4=domTable(G);ok(T4.scale.ok&&T4.scale.histOk,'и больше половины живого мира, и больше рекорда эпохи — победа (оба условия)');}
 // карточка и экран показывают историю
-{const h=domCard(G);ok(/рекорд эпохи [(]1895–1930[)] — /.test(h)&&/u class="hist"/.test(h)&&/два условия/.test(h),'карточка «Господство»: «два условия», строка «рекорд эпохи (1895–1930) — …» и метка рекорда на шкале');
+{const h=domCard(G);ok(/рекорд эпохи [(]1895–1930[)] — /.test(h)&&/(у вас (с первого дня )?[$0-9]|вы уже выше)/.test(h)&&/два условия/.test(h),'карточка «Господство»: «два условия», строка «рекорд эпохи (1895–1930) — …» с вашим итогом (0.51: метки рекорда на шкале доли за десять лет нет');
   ok(/рекорд эпохи: /.test(domScreenHTML(G)),'экран итога: «рекорд эпохи: …» в каждой строке');}
 // бот тоже должен превзойти историю
 {const W=G.world;const b=Object.values(G.bots).find(x=>!x.dead);const o=wco(W,b.n,b.c);o.hp=W.hp*2;W.hp=o.hp+W.hp;W.my.hp=1;const hv=histBest(G,'scale').v;const r=domBots(G);
