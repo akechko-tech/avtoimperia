@@ -119,8 +119,8 @@ function xpopChar(md,s,k,tip){const D=xCharData(md,s,k),C=D.C,w=C.W[k]||0,mo=isM
     ${body}${tip?xTipHTML(md,s,k,mo):''}`;}
 /* ---------- итог «против соперника»: вклад каждой черты по её важности ---------- */
 function xScoreData(md,s){const C=classCompare(md,s,s.country),L=[];
-  CHAR_K.forEach(k=>{if(!C.W[k])return;L.push({l:CHAR_NAMES[k],sa:wDots(C.W[k])+' '+Math.round(C.W[k]*100)+'%',ta:xpc(C.by[k]),f:Math.pow(C.by[k],C.W[k]),k});});
-  const X=[];if(segOf(md)==='lux'){let lo=0;CHAR_K.forEach(k=>{if(C.W[k]>0.05)lo=Math.min(lo,Math.log(C.by[k]));});if(lo<0)X.push({l:'Люкс без слабых мест',sa:'худшая черта тянет вниз',f:Math.exp(0.35*lo)});}
+  CHAR_K.forEach(k=>{if(!C.W[k])return;L.push({l:CHAR_NAMES[k],sa:wDots(C.W[k])+' '+Math.round(C.W[k]*100)+'% · '+ZONE_N[C.zone[k]],ta:xpc(C.by[k]),f:Math.exp(C.W[k]*C.u[k]),k,zone:C.zone[k]});});
+  const X=[];if(segOf(md)==='lux'){let lo=0;CHAR_K.forEach(k=>{if(C.W[k]>0.05)lo=Math.min(lo,C.u[k]);});if(lo<0)X.push({l:'Люкс без слабых мест',sa:'худшая черта тянет вниз',f:Math.exp(0.35*lo)});}
   const q=bn('quality');if(Math.abs(q-1)>1e-9)X.push({l:'Конструктор-основатель',f:q});
   if(overpower(md))X.push({l:'Рама не держит мотор',f:0.85});
   const la=md.legend?legendK(md,'appeal'):1;if(Math.abs(la-1)>1e-9)X.push({l:'Имя легенды',f:la});

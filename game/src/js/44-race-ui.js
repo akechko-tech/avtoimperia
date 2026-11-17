@@ -38,10 +38,10 @@ function teamCard(s){
   const lv=s.rdept||0,D=RDEPT[lv],N=RDEPT[lv+1],c=rdeptCost(s),own=(s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean);
   const free=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,6);
   return `<section class="card"><div class="row"><span class="label">Команда</span><span class="pill warn">${lv}/${RDEPT.length-1}</span></div><h2 style="margin-top:2px">${esc(D.name)}</h2>
-    <p class="small muted" style="margin-top:4px">${D.desc}${lv?` Содержание ${money(teamUpkeep(s))} в месяц.`:''}</p>
+    <p class="small muted" style="margin-top:4px">${D.desc}${lv?` Содержание ${money(teamUpkeep(s))} в месяц${teamUpkeep(s)>Math.round(D.up*cpi(s))?` (${(rdeptShare(lv)*100).toFixed(2).replace('.',',')} % оборота)`:''}. <button class="linkbtn small" data-act="rdeptDown">сократить отдел</button>`:''}</p>
     ${(()=>{const B=rbudOf(s),net=B.won-B.spent,P=TM_POL[tmPol(s)];return `<div class="meta" style="margin-top:8px"><div>Гонки ${s.y}: расходы<b>${money(B.spent)}</b></div><div>Призовые<b class="${B.won>0?'good':''}">${money(B.won)}</b></div><div>Итог<b class="${net>=0?'good':'bad'}">${net>=0?'+':'−'}${money(Math.abs(net))}</b></div></div>
       <p class="small muted" style="margin-top:4px">«Участвовать» у гонки: менеджер сам подбирает машины, пилотов и подготовку под лучший итог при разумных деньгах — на кнопке цена, шанс победы и приз.</p>`;})()}
-    ${N?`<div class="tech-row"><div><h3>${esc(N.name)}</h3><p class="small muted">${N.desc} Содержание ${money(Math.round(N.up*cpi(s)))} в месяц.</p></div><button class="btn sm" data-act="rdeptUp" ${s.cash<c?'disabled':''}>${money(c)}</button></div>`:''}
+    ${N?`<div class="tech-row"><div><h3>${esc(N.name)}</h3><p class="small muted">${N.desc} Содержание ${money(teamUpkeepAt(s,lv+1))} в месяц.</p></div><button class="btn sm" data-act="rdeptUp" ${s.cash<c?'disabled':''}>${money(c)}</button></div>`:''}
     ${kitHTML(s,'team')}
     <div class="label" style="margin-top:14px">Пилоты по контракту · ${own.length} из 3</div>
     ${own.length?own.map(d=>{const o=moodOf(s,d.id),v=Math.round(o.v),bc=bonusCost(d,s),can=mi(s)-(o.bm??-99)>=3;
@@ -78,6 +78,7 @@ function vRace(){
 Object.assign(RACE_ACT,{
   hire:d=>{const s=G,dr=DRIVERS.find(x=>x.id===d.k),f=driverFee(dr,s);if(!dr||s.cash<f||(s.drivers||[]).length>=3)return;s.cash-=f;s.drivers.push(dr.id);s.dmood=s.dmood||{};s.dmood[dr.id]={v:70,why:'Новый контракт',m:mi(s)};addLog(`${dr.n} подписал контракт с «${s.company}» (${money(f)}, жалованье ${money(driverSalary(dr,s))} в месяц).`,'good');checkAch();rerender();flushToasts();},
   fire:d=>{const s=G,dr=DRIVERS.find(x=>x.id===d.k);s.drivers=s.drivers.filter(id=>id!==d.k);if(s.dmood)delete s.dmood[d.k];if(dr)addLog(`${dr.n} покинул команду.`);rerender();},
+  rdeptDown:()=>{const s=G;if(!(s.rdept>0))return;const was=teamUpkeep(s);s.rdept--;addLog(`Гоночный отдел сокращён: «${RDEPT[s.rdept].name}». Содержание — ${money(teamUpkeep(s))} в месяц вместо ${money(was)}.`,'');rerender();flushToasts();},
   rdeptUp:()=>{const s=G,c=rdeptCost(s);if(!RDEPT[(s.rdept||0)+1]||s.cash<c)return;s.cash-=c;s.plantVal+=c*0.3;s.rdept=(s.rdept||0)+1;(s.drivers||[]).forEach(id=>moodAdd(s,id,6,'Новый уровень гоночного отдела'));addLog(`Создан новый уровень гоночного отдела: ${RDEPT[s.rdept].name} (${money(c)}).`,'good');rerender();},
   drvBonus:d=>{const s=G,dr=DRIVERS.find(x=>x.id===d.k);if(!dr||!(s.drivers||[]).includes(dr.id))return;const o=moodOf(s,dr.id),c=bonusCost(dr,s);if(s.cash<c||mi(s)-(o.bm??-99)<3)return;
     s.cash-=c;o.bm=mi(s);moodAdd(s,dr.id,15,'Премия от хозяина');addLog(`${dr.n} получил премию ${money(c)} и повеселел.`,'good');rerender();},

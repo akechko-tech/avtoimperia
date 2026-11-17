@@ -257,8 +257,14 @@ function offerPrice(md,c,s,price){const home=c===s.country,P=priceIn(md,c,s,pric
 // Сколько вам остаётся с машины в стране: минус скидка дилеру и импортёру, доставка; по лицензии — доля цены
 function netPer(md,c,s,price){const P=priceIn(md,c,s,price);if(c===s.country)return P*(1-dMargin(s));if(licOn(s,c))return P*LIC_ROY;const IL=impOf(s,c);return (P*(1-dMargin(s)-(IL&&IL.cut||0))-shipCostTo(s,c)*shipK(s,c)*shipW(md))*fxOf(s,c);}
 /* ---------- рынок страны ---------- */
-const PRICE_KINK=Math.log(0.85),PRICE_KINK_K=0.4;
-function priceU(r){const x=Math.log(r);return x>=PRICE_KINK?x:PRICE_KINK+(x-PRICE_KINK)*PRICE_KINK_K;}
+/* 0.51: цена ниже цены класса помогает всё слабее и упирается в предел (ТЗ 0.51, тема 2: «цена играет значение до какой-то степени»).
+   Пример эпохи — Ford T в 1924–1926 годах: при цене около половины цены Chevrolet и новых снижениях доля падала — покупатель уходил
+   за закрытым кузовом, новизной и рассрочкой. С 0.32 здесь был излом: ниже 85 % цены класса скидка работала в 0,4 силы, но без предела.
+   Теперь выигрыш от низкой цены — PRICE_SAT·tanh: у цены класса наклон прежний, на 30 % дешевле класса взято почти всё, предел —
+   как у прежней формулы при половине цены класса. Дороже класса — как раньше. Доступность (budget) считается отдельно и осталась:
+   дешёвая машина по-прежнему открывает новых покупателей — так Model T и растил рынок. */
+const PRICE_SAT=0.4;
+function priceU(r){const x=Math.log(r);return x>=0?x:-PRICE_SAT*Math.tanh(-x/PRICE_SAT);}
 // Чем большую часть бюджета съедает машина, тем меньше хочется её брать; дороже бюджета — почти никто
 function budget(x){return x<=0.9?Math.log(1-Math.max(0,x)):Math.log(0.1)-10*(x-0.9);}
 // models — ваши модели в продаже в этой стране; ov — {id, price}: «а если поставить другую цену»; kap — сила конкурентов вместо таблицы (для подбора)
@@ -284,7 +290,7 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
     const sh=(HAZ*(n-o)+o/hold*clamp(0.25*B/pm,1,4))/12*f;R.shop+=sh;if(sh<=0)continue;
     const U=(q,P,fair)=>u0+AQ*Math.log(q)-BR*Math.log(P/fair)+GB*budget(P/B);
     // 0.32: ваша цена намного ниже рыночной помогает слабее: дилеры не любят малую наценку, покупатели не верят «слишком дешёвому»,
-    // соперники отвечают скидками на виду у всех. Ниже 85% цены класса каждый следующий процент скидки даёт вдвое с лишним меньше
+    // соперники отвечают скидками на виду у всех. 0.51: выигрыш тает плавно и упирается в предел (priceU)
     const UO=(q,P,fair)=>u0+AQ*Math.log(q)-BR*priceU(P/fair)+GB*budget(P/B);
     let Si=0;const ei=rivals.map(x=>{const e=Math.exp(U(x.q,x.P,x.fair)+x.k);Si+=e;return e;});
     // ваши модели: внутри класса похожие машины делят покупателей

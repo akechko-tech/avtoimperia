@@ -8,8 +8,11 @@ const RDEPT=[
   {name:'Спортивный департамент',cost:40000,up:1500,rel:1.1,pit:0.62,prep:0.55,pw:1.05,desc:'Свой испытательный трек: надёжность +10%, мощность +5%, пит-стопы на 38% быстрее, подготовка вдвое дешевле.'},
   {name:'Гоночная фабрика',cost:80000,up:2600,rel:1.12,pit:0.56,prep:0.48,pw:1.07,desc:'Отдельный цех гоночных машин: надёжность +12%, мощность +7%, пит-стопы почти вдвое быстрее.'},
   {name:'Экспериментальный гоночный цех',cost:150000,up:4200,rel:1.14,pit:0.5,prep:0.42,pw:1.1,desc:'Гоночные моторы с наддувом и лучшие механики эпохи: надёжность +14%, мощность +10%, пит-стопы вдвое быстрее.'}];
-function teamUpkeep(s){return Math.round(RDEPT[s.rdept||0].up*cpi(s));}
-function rdeptCost(s){const n=RDEPT[(s.rdept||0)+1];return n?Math.round(n.cost*cpi(s)/50)*50:0;}
+// 0.51: содержание отдела — не меньше доли оборота по ступени (10-model.js: RDEPT_SHARE)
+function rdeptShare(lvl){return RDEPT_SHARE*Math.pow(clamp(lvl/(RDEPT.length-1),0,1),1.5);}
+function teamUpkeepAt(s,lvl){if(!lvl||!RDEPT[lvl])return 0;return Math.max(Math.round(RDEPT[lvl].up*cpi(s)),Math.round(bizRev(s)*rdeptShare(lvl)/12));}
+function teamUpkeep(s){return teamUpkeepAt(s,s.rdept||0);}
+function rdeptCost(s){const n=RDEPT[(s.rdept||0)+1];return n?Math.max(Math.round(n.cost*cpi(s)/50)*50,Math.round(teamUpkeepAt(s,(s.rdept||0)+1)*6/50)*50):0;}
 // 0.34: подготовка мотоцикла — около трети цены машинной (приз и слава класса мотоциклов — около трети)
 function prepCost(rc,prep,s,md){return Math.round(racePrizeBase(rc)*PREP[prep].cost*(RDEPT[s.rdept||0].prep||1)*kitK(s,'prep')*(md&&isMoto(md)?0.35:1)/10)*10;}
 

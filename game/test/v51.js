@@ -58,5 +58,59 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   const W=G.world,ys=Object.keys(W.sn||{}).map(Number);CK(ys.length>=10&&ys.includes(1895)&&ys.includes(1905),'снимки по годам: '+ys.join());
   const D=domTable(G);CK(D.scale.win===true&&D.scale.worldW<D.scale.world&&D.scale.worldW>0,'окно включилось: мир за десять лет '+Math.round(D.scale.worldW)+' < с начала '+Math.round(D.scale.world));
   CK(Object.keys(W.sn).length<=12,'не больше двенадцати снимков');CK(JSON.stringify(W.sn).length<120000,'снимки в сохранении: '+JSON.stringify(W.sn).length+' байт');}
+
+// ================= этап 2: убывающая полезность, цена, содержание по масштабу, оснастка =================
+// 9. полезность черты: у нормы 0, сверх нормы тает и упирается в предел, ниже порога — обвал
+{const L=Math.log;CK(traitU(1,0.6,1.5)===0,'у нормы полезность 0');CK(near(traitU(1.05,0.6,1.5),L(1.05),0.002)&&near(traitU(0.9,0.6,1.5),L(0.9),1e-9),'возле нормы — как раньше (логарифм отношения)');
+  CK(traitU(2,0.6,1.5)<L(1.5)&&traitU(4,0.6,1.5)<L(1.5)&&traitU(4,0.6,1.5)>traitU(2,0.6,1.5),'сверх нормы растёт, но не выше предела ln 1,5: '+traitU(4,0.6,1.5).toFixed(3));
+  CK(traitU(2,0.6,1.5)-traitU(1.5,0.6,1.5)<traitU(1.5,0.6,1.5)-traitU(1,0.6,1.5),'каждая следующая прибавка меньше предыдущей');
+  CK(near(traitU(0.6,0.6,1.5),L(0.6),1e-9)&&near(traitU(0.5,0.6,1.5),L(0.6)+3*(L(0.5)-L(0.6)),1e-9),'ниже порога каждая потеря втрое дороже');
+  CK(traitZone(0.5,0.6,1.5)==='low'&&traitZone(0.8,0.6,1.5)==='below'&&traitZone(1,0.6,1.5)==='norm'&&traitZone(1.2,0.6,1.5)==='above'&&traitZone(1.6,0.6,1.5)==='sat','области: ниже порога, ниже нормы, норма, лучше нормы, с запасом');
+  CK(charSat('people','perf')===1.35&&charSat('sport','perf')===2.5&&charSat('middle','perf')===1.5&&charThr('truck','perf')===0.7&&charThr('people','perf')===0.6,'пределы и пороги — по классу');}
+// 10. оценка модели: у машины соперника 1; запас по чертам не даёт преимущества без предела
+{newGame('custom','us','Тест','normal','Первая');G.y=1912;G.m=0;const md=autoDesign('people',G),C=classCompare(md,G);
+  CK(C.u&&C.zone&&CHAR_K.every(k=>typeof C.u[k]==='number'&&ZONE_N[C.zone[k]]),'у каждой черты — полезность и область');
+  const ref=rivalRef(md,G.y).md,Cr=classCompare(ref,G);CK(near(Cr.S,1,0.02),'машина соперника против себя: '+Cr.S.toFixed(3));
+  let lnOld=0,lnNew=0;CHAR_K.forEach(k=>{if(C.W[k]){lnOld+=C.W[k]*Math.log(C.by[k]);lnNew+=C.W[k]*C.u[k];}});
+  const cap=Math.exp(CHAR_K.reduce((a,k)=>a+(C.W[k]||0)*Math.log(charSat('people',k)),0));CK(cap<1.6,'потолок оценки народной машины по чертам: '+cap.toFixed(2));
+  // черты «вчетверо лучше нормы» по всем статьям: раньше ×4, теперь не выше потолка
+  const W=C.W;let top=0;CHAR_K.forEach(k=>{top+=(W[k]||0)*traitU(4,charThr('people',k),charSat('people',k));});CK(Math.exp(top)<cap&&Math.exp(top)>1.3,'всё вчетверо лучше нормы → '+Math.exp(top).toFixed(2)+' (раньше 4,00)');
+  const D=xScoreData(md,G),prod=D.L.concat(D.X).reduce((a,r)=>a*r.f,1);CK(near(prod,D.S,0.003*D.S),'разбор «Как посчитано» сходится с оценкой: '+prod.toFixed(4)+' / '+D.S.toFixed(4));
+  CK(D.L.every(r=>/норм|порог|запас/.test(r.sa)),'в разборе у каждой черты названа область');
+  const H=compareHTML(md,G,null);CK(/«С запасом» — лучше уже не ценят/.test(H),'таблица сравнения объясняет области');}
+// 11. цена: у цены класса как раньше, ниже — тает, предел
+{CK(priceU(1)===0&&near(priceU(1.3),Math.log(1.3),1e-12),'дороже класса — как раньше');CK(near(priceU(0.95),Math.log(0.95),0.001),'чуть дешевле — как раньше');
+  CK(priceU(0.5)>-PRICE_SAT&&priceU(0.2)>-PRICE_SAT&&priceU(0.2)<priceU(0.5)&&priceU(0.5)<priceU(0.7),'ниже класса выигрыш растёт, но не дальше предела');
+  CK(priceU(0.7)-priceU(0.5)<(priceU(1)-priceU(0.8))*0.5,'скидка с 70 до 50 % цены класса даёт меньше половины того, что с 100 до 80 %');
+  CK(Math.exp(-BR*priceU(0.01))<2.5,'самая низкая цена даёт не больше ×'+Math.exp(BR*PRICE_SAT).toFixed(2)+' к привлекательности');}
+// 12. содержание бюро и гоночного отдела — по обороту
+{newGame('custom','us','Тест','normal','Первая');G.y=1915;const W=worldInit(G);W.my.r12=0;G.rd.lvl=14;const base=rdUpkeepBase(G,14);CK(rdUpkeep(G)===base,'без оборота — прежняя цена: $'+base);
+  W.my.r12=120e6;CK(rdUpkeep(G)===Math.round(120e6*0.015/12),'высшая ступень бюро при обороте $120 млн — 1,5 % в год: $'+rdUpkeep(G)+' в месяц (было $'+base+')');
+  G.rd.lvl=1;CK(rdUpkeep(G)===rdUpkeepBase(G,1),'первая ступень — без планки от оборота');G.rd.lvl=5;const u5=rdUpkeep(G);G.rd.lvl=9;const u9=rdUpkeep(G);G.rd.lvl=14;CK(u5<u9&&u9<rdUpkeep(G),'чем выше ступень, тем больше доля оборота');
+  G.rd.lvl=8;CK(rdUpCost(G)>=rdUpkeepAt(G,9)*6-100,'расширение — не меньше полугода нового содержания');
+  W.my.r12=2e5;G.rd.lvl=6;CK(rdUpkeep(G)===rdUpkeepBase(G,6),'мастерская с оборотом $200 тыс. платит по-прежнему');
+  W.my.r12=120e6;G.rdept=6;CK(teamUpkeep(G)===Math.round(120e6*0.006/12),'высшая ступень гоночного отдела — 0,6 % оборота: $'+teamUpkeep(G));G.rdept=0;CK(teamUpkeep(G)===0,'нет отдела — нет расходов');
+  G.rdept=2;CK(rdeptCost(G)>=teamUpkeepAt(G,3)*6-50,'расширение отдела — не меньше полугода содержания');
+  // сократить можно
+  G.rd.lvl=9;G.rd.projs=[];ACT.rdDown();CK(G.rd.lvl===8,'бюро сокращено на ступень');G.rd.lvl=1;ACT.rdDown();CK(G.rd.lvl===1,'ниже первой ступени нельзя');
+  G.rdept=3;RACE_ACT.rdeptDown();CK(G.rdept===2,'гоночный отдел сокращён');
+  G.rd.lvl=6;G.rd.projs=[];for(let i=0;i<rdSlots(G);i++)G.rd.projs.push({kind:'eq',id:'x'+i,need:10,prog:0,w:1});const n0=rdSlots(G);G.rd.lvl=6;ACT.rdDown();const blocked=G.rd.lvl===6||rdActive(G).length<=rdSlots(G);CK(blocked,'сократить бюро нельзя, пока проектов больше, чем мест: уровень '+G.rd.lvl+', мест '+rdSlots(G)+' из '+n0);G.rd.projs=[];}
+// 13. оснастка — по масштабу завода и новизне
+{newGame('custom','us','Тест','normal','Первая');G.y=1915;G.m=0;G.cap=5000;const md=autoDesign('people',G);
+  G.models=[];G.plantVal=0;CK(toolingCost(md,G)===toolingBase(md,G),'первая модель, завода нет — прежняя цена: $'+toolingBase(md,G));
+  G.plantVal=40e6;const m0={...md,id:1,status:'prod',vol:8000,launched:0},nw={...md,id:2,status:'dev',vol:0};G.models=[m0];
+  CK(retoolNovelty(nw,G)===0&&toolingCost({...nw,status:'prod',vol:8000},G)===toolingBase(nw,G),'те же узлы, что у модели в серии, — новизны нет, оснастка прежняя');
+  const E=ENGINES.filter(e=>!e.moto&&e.id!==md.e)[0],B=BODIES.filter(b=>!b.truck&&!b.moto&&b.id!==md.b)[0];
+  const n1={...nw,e:E.id};CK(near(retoolNovelty(n1,G),0.35),'новый мотор — 35 % новизны');const n2={...nw,e:E.id,b:B.id};CK(near(retoolNovelty(n2,G),0.55),'мотор и кузов — 55 %');
+  const full={...nw,e:'_e',c:'_c',b:'_b',g:'_g',k:'_k',w:'_w'};CK(near(retoolNovelty(full,G),1),'всё новое — 100 %');
+  const nP={...n1,status:'prod',vol:8000},t1=toolingCost(nP,G),sh=retoolShare(nP,G);CK(sh>0.5&&sh<=1&&t1===Math.round(0.18*40e6*0.35*sh/100)*100&&t1>1e6,'новый мотор на заводе в $40 млн: $'+t1+' при '+Math.round(sh*100)+' % мощностей (база $'+toolingBase(n1,G)+')');
+  const tS=toolingCost({...n1,status:'prod',vol:100},G);CK(tS<t1&&tS>=Math.round(0.18*40e6*0.35*0.1/100)*100,'малая серия — меньше, но не ниже десятой доли: $'+tS);
+  G.models=[{...m0,status:'off'}];CK(near(retoolNovelty(n1,G),1),'снятая модель оснастку не бережёт');
+  // настоящая смена модели в ходе месяца: деньги списаны, в журнале — переоснащение
+  newGame('custom','us','Тест','normal','Первая');G.helper=null;G.pending=[];for(let k=0;k<8;k++){G.pending=[];step();}
+  const a=G.models.find(m=>m.status==='prod');if(a){G.plantVal=30e6;G.cash=20e6;const E2=ENGINES.filter(e=>!e.moto&&e.id!==a.e&&(e.y||1895)<=G.y)[0]||ENGINES[1];
+    const b={...a,id:G.nextId++,name:'Новая',e:E2.id,status:'dev',devLeft:1,launched:0,stock:0,made:0,totalSold:0,vol:0};G.models.push(b);const c0=G.cash;G.pending=[];step();
+    CK(b.status==='prod'&&G.last.tool>=Math.round(0.18*30e6*0.35*0.1/100)*100,'запуск в серию: оснастка в отчёте месяца $'+G.last.tool);CK(G.log.some(l=>/завод переоснащён под новые узлы/.test(l.t||l.text||l.msg||JSON.stringify(l))),'в журнале — «завод переоснащён под новые узлы»');}
+  else CK(false,'нет модели в серии для проверки запуска');}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

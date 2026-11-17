@@ -22,9 +22,21 @@ const RD_LV=['','Чертёжная комната','Мастерская опы
 const RD_MAX=14;
 function rdSlots(s){return 1+Math.floor((s.rd.lvl-1)/2);}
 function rdPoints(s){return (2+s.rd.lvl)/3*bn('rd');}          // очков в месяц на один проект
-function rdUpCost(s){return Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100;}
+/* ---------- 0.51: содержание бюро и гоночного отдела — по масштабу бизнеса ----------
+   ТЗ 0.51 (решение автора): «каждый следующий уровень должен стоить дороже, и это должно соотноситься с масштабами бизнеса».
+   Замер этапа 1: бюро доходило до высшей ступени к 1910 году, её содержание — меньше 1 % выручки; гоночный отдел высшей ступени —
+   $50 тыс. в год при выручке в сотни миллионов. Теперь у содержания есть нижняя планка от оборота: чем выше ступень, тем большая
+   доля годовой выручки (скользящей, 16-world.js: W.my.r12) уходит на неё — у высшей ступени бюро 1,5 %, у высшей ступени гоночного
+   отдела 0,6 % (инженерные службы автозаводов 1920-х стоили 1–2 % продаж). Мастерская платит по-прежнему сотни долларов. Расширение
+   стоит не меньше полугода нового содержания. Ступень можно и сократить (rdDown, rdeptDown). */
+const RD_SHARE=0.015,RDEPT_SHARE=0.006;
+function bizRev(s){const M=s&&s.world&&s.world.my;return M&&M.r12>0?M.r12:0;}
+function rdBizShare(lvl){return RD_SHARE*Math.pow(clamp((lvl-1)/(RD_MAX-1),0,1),1.5);}
+function rdUpkeepBase(s,lvl){return Math.round(60*Math.pow(1.65,lvl-1)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
+function rdUpkeepAt(s,lvl){return Math.max(rdUpkeepBase(s,lvl),Math.round(bizRev(s)*rdBizShare(lvl)/12));}
+function rdUpCost(s){return Math.max(Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100,Math.round(rdUpkeepAt(s,s.rd.lvl+1)*6/100)*100);}
 // 0.32: КБ мотомастерской (пока нет автомобиля) — вдвое дешевле: чертёжник и пара механиков
-function rdUpkeep(s){return Math.round(60*Math.pow(1.65,s.rd.lvl-1)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
+function rdUpkeep(s){return rdUpkeepAt(s,s.rd.lvl);}
 function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
 function rdHorizon(s){return [0,2,3,4,4,5,6,7,7,8,8,9,9,10,10][s.rd.lvl]||2;}
 function rdActive(s){return s.rd.projs||[];}
@@ -168,14 +180,34 @@ function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'va
 // а не с полуторатонкой (раньше 3-тонный грузовик выглядел «прожорливым и слабым» — на вдвое больший груз)
 function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y),b=byId(BODIES,md.b),tb=kind==='truck'&&b&&b.truck&&md.b!=='b6'&&(b.y||1895)<=y?md.b:null;
   return {name:r[1],y:r[0],kind,md:{...r[2],...(tb?{b:tb}:{}),t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
+/* ---------- 0.51: убывающая полезность каждой черты (ТЗ 0.51, тема 3; решение автора) ----------
+   Раньше оценка была произведением отношений к сопернику класса: вдвое лучше нормы — вдвое больше вклад, и так до ×4; вместе со спросом
+   (куб качества) это давало машине «с запасом» преимущество без предела (замер этапа 2: у бота надёжность 2,9 нормы, экономичность 3,1).
+   Теперь у черты три области. Норма класса и года — машина соперника (она взята из истории). Сверх нормы прибавка тает и упирается
+   в предел CHAR_SAT: покупатель народной машины не платит за мощность в полтора раза выше обычной — это уже следующий класс (Dodge 1915 года:
+   35 сил против 20 у Ford T — и цена на 60 % выше). Ниже нормы — как раньше; ниже порога CHAR_THR машина для класса не годится: каждая
+   следующая потеря стоит втрое дороже (циклокары 1913–1914 годов с 8–10 силами продавались два сезона). Итог — взвешенная сумма
+   полезностей по весам класса (CHAR_W), S — её экспонента: у нормы S = 1, как и было, поэтому мир без игрока не меняется. */
+const CHAR_SAT_DEF={perf:1.5,rel:1.6,comf:1.6,ease:1.5,safe:1.5,econ:1.5,cap:1.3};
+const CHAR_SAT={people:{perf:1.35,comf:1.4},lux:{perf:1.7,rel:1.8,comf:2,econ:1.2},sport:{perf:2.5,safe:1.8,comf:1.3,econ:1.2},truck:{perf:1.3,comf:1.2,econ:1.6},moto:{perf:1.8},moside:{perf:1.4}};
+const CHAR_THR_DEF={perf:0.6,rel:0.6,comf:0.5,ease:0.5,safe:0.6,econ:0.5,cap:0.5};
+const CHAR_THR={lux:{comf:0.7,rel:0.7},sport:{perf:0.75},truck:{perf:0.7,rel:0.7}};
+const CHAR_LOW=3;   // ниже порога каждая потеря весит втрое
+function charSat(g,k){const t=CHAR_SAT[g];return (t&&t[k])||CHAR_SAT_DEF[k]||1.5;}
+function charThr(g,k){const t=CHAR_THR[g];return (t&&t[k])||CHAR_THR_DEF[k]||0.5;}
+// r — во сколько раз черта лучше нормы класса; ответ — полезность в «логарифмах отношения» (у нормы 0)
+function traitU(r,thr,sat){const x=Math.log(r);if(x>=0){const L=Math.log(sat);return L*Math.tanh(x/L);}const xt=Math.log(thr);return x>=xt?x:xt+(x-xt)*CHAR_LOW;}
+// область: low — ниже порога (не годится), below — ниже нормы, norm, above — лучше нормы, sat — насыщение (дальше почти ничего)
+function traitZone(r,thr,sat){return r<thr?'low':r<0.95?'below':r<=1.05?'norm':r<sat*0.98?'above':'sat';}
+const ZONE_N={low:'ниже порога',below:'ниже нормы',norm:'норма',above:'лучше нормы',sat:'с запасом — дальше не ценят'};
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
-function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={};let lnS=0;
+function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={},u={},zone={};let lnS=0;
   // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
   const LC=md.legend?legendCh(md):null,A=LC?Object.assign({},A0):A0;if(LC)for(const k in LC)if(A[k])A[k]*=LC[k];
-  CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4);by[k]=r;if(W[k])lnS+=W[k]*Math.log(r);});
+  CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4),th=charThr(g,k),sa=charSat(g,k);by[k]=r;u[k]=traitU(r,th,sa);zone[k]=traitZone(r,th,sa);if(W[k])lnS+=W[k]*u[k];});
   // 0.26: люкс — машина без слабых мест: худшая черта (кроме экономичности) тянет вниз всю оценку
-  if(g==='lux'){let lo=0;CHAR_K.forEach(k=>{if(W[k]>0.05)lo=Math.min(lo,Math.log(by[k]));});lnS+=0.35*lo;}
-  return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,W,ref,A,R};}
+  if(g==='lux'){let lo=0;CHAR_K.forEach(k=>{if(W[k]>0.05)lo=Math.min(lo,u[k]);});lnS+=0.35*lo;}
+  return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,u,zone,W,ref,A,R};}
 function classScore(md,s,c){return classCompare(md,s,c).S;}
 // Качество для рынка: доля лучшей машины эпохи (у соперников класса — QG)
 function mq(md,s,c){return Math.max(0.05,QG[segOf(md)]*classScore(md,s,c));}
@@ -378,7 +410,18 @@ function levCut(s,cs){if(cs.k!=='tight'&&cs.k!=='crash'||!(s.loan>0))return 1;co
 function maxLoan(s){const cs=creditState(s);return Math.round((0.6*(s.plantVal+stockValue(s))+15000*cpi(s))*cs.lim*levCut(s,cs)*bn('loan')/1000)*1000;}   // bn('loan') — 0.35: финансисту банки дают больше
 function devCost(md,s){s=s||G;return Math.round(((isMoto(md)?400:1500)+designEffort(md)*35)*cpi(s)*(1+T(s)*0.03)*bn('devCost')*(studyIns(md,s)?0.8:1)/100)*100;}
 function devMonths(md){return Math.max(1,Math.round((2+Math.ceil(designEffort(md)/32))*bn('devTime')*kitK(G,'dev'))-(studyIns(md)?1:0));}
-function toolingCost(md,s){return Math.round(((isMoto(md)?250:800)+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
+/* 0.51: оснастка — по масштабу завода и по новизне модели (ТЗ 0.51, тема 2: «смена модели стоит заводу переоснащения»).
+   Раньше оснастка стоила тысячи долларов при заводе в десятки миллионов, и новая модель каждый год была почти бесплатной. В истории
+   переход Ford с Model T на Model A (1927) — полгода без выпуска и $100–250 млн. Теперь у оснастки есть нижняя планка: RETOOL_K
+   стоимости завода × новизна × доля мощностей под модель. Новизна — доля крупных узлов, которых нет ни у одной вашей модели в серии
+   или распродаже (мотор 35 %, рама 25 %, кузов 20 %, коробка 10 %, тормоза и колёса по 5 %): обновить кузов дёшево, сменить всё —
+   дорого. Первая модель фирмы стоит по-прежнему: завода ещё нет. */
+const RETOOL_K=0.18,RETOOL_W={e:0.35,c:0.25,b:0.2,g:0.1,k:0.05,w:0.05};
+function retoolNovelty(md,s){const L=(s.models||[]).filter(m=>m!==md&&m.id!==md.id&&(m.status==='prod'||m.status==='sale')&&isMoto(m)===isMoto(md));if(!L.length)return 1;
+  let best=1;L.forEach(m=>{let d=0;for(const k in RETOOL_W)if(m[k]!==md[k])d+=RETOOL_W[k];if(d<best)best=d;});return best;}
+function retoolShare(md,s){let v=0;try{v=md.vol>0&&md.id>0&&md.status==='prod'?md.vol:forecastDemand(md,s);}catch(_){}return clamp(v*complexity(md)/Math.max(1,s.cap||1),0.1,1);}
+function toolingBase(md,s){return Math.round(((isMoto(md)?250:800)+300*complexity(md))*cpi(s)*(techLv(s,'line')===2?4:techLv(s,'tools')>=2?2:1)/100)*100;}
+function toolingCost(md,s){const base=toolingBase(md,s);if(!s||!(s.plantVal>0)||md.legend)return base;return Math.max(base,Math.round(RETOOL_K*s.plantVal*retoolNovelty(md,s)*retoolShare(md,s)/100)*100);}
 function qLabel(r){return r<0.85?['Хуже соперников','bad']:r<1.08?['Как у соперников','warn']:['Лучше соперников','good'];}
 function totalSold(s){return s.models.reduce((a,m)=>a+(isMoto(m)?0:m.totalSold),0)+(s.milTotal||0);}   // 0.24: и машины для армии (0.32: мотоциклы — отдельно)
 function motoSold(s){return s.models.reduce((a,m)=>a+(isMoto(m)?m.totalSold||0:0),0)+(s.mmilTotal||0);}

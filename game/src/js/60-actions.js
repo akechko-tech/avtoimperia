@@ -104,6 +104,7 @@ const ACT={
   rdStudy:d=>{if(studyStart(G,d.k)){closeSheet();checkAch();save();render();flushToasts();}},
   rdStop:d=>{const pj=G.rd.projs[+d.k];if(!pj)return;if(!confirmOnce('rdStop'+(+d.k),'Нажмите ещё раз: сделанное по проекту пропадёт'))return;G.rd.projs.splice(+d.k,1);addLog(`КБ остановило проект: ${pj.name}.`);rerender();},
   kitBuy:d=>{if(kitBuy(G,d.k)){checkAch();rerender();flushToasts();}},
+  rdDown:()=>{if(G.rd.lvl<=1)return;const was=rdUpkeep(G);G.rd.lvl--;if(rdActive(G).length>rdSlots(G)){G.rd.lvl++;toast('Сначала завершите проекты: у бюро поменьше не хватит мест','bad');flushToasts();return;}addLog(`Конструкторское бюро сокращено: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень. Содержание — ${money(rdUpkeep(G))} в месяц вместо ${money(was)}.`,'');rerender();flushToasts();},
   rdUp:()=>{const c=rdUpCost(G);if(G.rd.lvl<RD_MAX&&G.cash>=c){G.cash-=c;G.rd.lvl++;addLog(`Конструкторское бюро выросло: «${RD_LV[G.rd.lvl]}», ${G.rd.lvl}-й уровень.`,'good');checkAch();rerender();flushToasts();}},
   mkC:d=>{G.ui=G.ui||{};G.ui.mkC=d.v;rerender();},
   fold:d=>{setOpen(d.k,!isOpen(d.k,d.def==='1'));if(!sheet.hidden&&draft===null&&sb.querySelector('[data-k="'+d.k+'"]')){const top=sb.scrollTop;openRD();sb.scrollTop=top;return;}rerender();},
