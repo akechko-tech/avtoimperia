@@ -170,20 +170,24 @@ function raceResults(rc,res,mode,info){
   const dnfN=team.filter(r=>r.dnf).length,cw=won-(M?M.won:0);
   if(carIn)addLog(`«${rc.name}»: ${best?`лучший результат — ${best}-е место (${bestRow.drv||'пилот'}, «${bestRow.label}»)`:'все машины сошли'}${cw?`, призовые ${money(cw)}`:''}${dnfN&&best?`, сходов: ${dnfN}`:''}.`,best===1?'good':best?'':'bad');
   lastRace={rc,res,k,won,best,mode,cup:cupTitle,chal,inj,mres,M,carIn,dev};
-  evHold=1;openRaceResult();
+  // 0.51: гонки сезона одной кнопкой (info.quiet) — без экрана итогов и церемоний; газета и торжество — только за победу в большой гонке
+  const quiet=!!info.quiet,fest=(...a)=>{if(!quiet||(best===1&&major))celebrate(...a);};
+  if(quiet){const T=s.tmMsg&&s.tmMsg.m===mi(s)?s.tmMsg:(s.tmMsg={m:mi(s),list:[]});T.list.push(`«${rc.name}» — ${best?best+'-е место':'сход'}${won?', призовые '+money(won):''}`);}
+  else{evHold=1;openRaceResult();}
   // 0.41: приз гонки — свой у каждой серии: рисунок, кто вручает, музыка той церемонии (гимн победителю, марш — призёрам)
   let AWD=null;try{AWD=rc.match||rc.dx?null:awardOf(rc,s);}catch(e){console.warn('award',e);}
   // 0.42: зачёт мотоциклов — та же церемония и тот же вручитель (отзыв: «в классе мотоциклов награды опять обычные»)
   const AWM=AWD&&M&&M.best&&M.best<=3?Object.assign({},AWD,{cup:AWD.cup+' — зачёт мотоциклов'}):null;
-  if(M&&M.best===1&&best!==1){try{celebrate('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍',null,AWM?{award:AWM,place:1}:null);}catch(_){}showPaper(motoRacePaper(rc,mres,M.row,k,AWM),true);}
-  else if(M&&M.best&&M.best<=3&&!(best&&best<=3)&&AWM){try{celebrate(M.best===2?'Второе место среди мотоциклов!':'Третье место среди мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,M.best===2?'🥈':'🥉','medal',{award:AWM,place:M.best});}catch(_){}}
-  if(best===1){try{celebrate(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁',null,AWD?{award:AWD,place:1}:null);}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle,AWD);showPaper(P,true);
+  if(M&&M.best===1&&best!==1){try{fest('Победа в классе мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,'🏍',null,AWM?{award:AWM,place:1}:null);}catch(_){}if(!quiet)showPaper(motoRacePaper(rc,mres,M.row,k,AWM),true);}
+  else if(M&&M.best&&M.best<=3&&!(best&&best<=3)&&AWM){try{fest(M.best===2?'Второе место среди мотоциклов!':'Третье место среди мотоциклов!',`${rc.name} · ${M.row.drv||'гонщик'} · «${M.row.label}»`,M.best===2?'🥈':'🥉','medal',{award:AWM,place:M.best});}catch(_){}}
+  if(best===1){try{fest(cupTitle?'Кубок наш!':'Победа!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,cupTitle?'🏆':'🏁',null,AWD?{award:AWD,place:1}:null);}catch(_){}const P=racePaper(rc,res,bestRow,k,cupTitle,AWD);if(!quiet||major)showPaper(P,true);
     try{trophyAdd(s,{kind:'cup',title:cupTitle||`Победа: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+(bestRow.player?'вы за рулём':bestRow.drv):''}`,story:`${P.deck}. ${rc.km.toLocaleString('ru-RU')} км, ${RTYPE[rc.t]||''}.${L_hist(rc)}`,key:'race|'+rc.key,
       carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,pt:P.title,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){console.warn('trophy',e);}}
-  else if(best&&best<=3){if(AWD)try{celebrate(best===2?'Второе место!':'Третье место!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,best===2?'🥈':'🥉','medal',{award:AWD,place:best});}catch(_){}
+  else if(best&&best<=3){if(AWD)try{fest(best===2?'Второе место!':'Третье место!',`${rc.name} · ${bestRow.player?'вы за рулём':(bestRow.drv||'пилот')} · «${bestRow.label}»`,best===2?'🥈':'🥉','medal',{award:AWD,place:best});}catch(_){}
     try{trophyAdd(s,{kind:'medal',title:`${best}-е место: ${rc.name}`,sub:`«${bestRow.label}»${bestRow.drv?' · '+bestRow.drv:''}`,story:`Подиум в гонке «${rc.name}» (${rc.km.toLocaleString('ru-RU')} км).${AWD?` Награждает ${AWD.by}.`:''}`,key:'race|'+rc.key,carId:bestRow.md?bestRow.md.id:null,prep:bestRow.prep||1,num:bestRow.num||0,rk:rc.key,reel:typeof raceReelId==='function'?raceReelId(rc):''});}catch(e){}}
   else{const pm=res.find(r=>r.pmy&&!r.dnf);if(pm&&pm.pos<=3)privPublicity(s,rc,pm,pm.pos,true);}
-  checkAch();save();render();flushToasts();
+  try{rivalNews(s);}catch(e){console.warn('rivalNews',e);}
+  checkAch();if(!quiet){save();render();flushToasts();}
 }
 /* ---------- 0.34: гонка — испытательный стенд ----------
    Отзыв: «новые модели ломче, но участие в гонках должно давать прогресс в доводке и надёжности». Так и было: заводы

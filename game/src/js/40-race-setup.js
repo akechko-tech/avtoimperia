@@ -173,10 +173,27 @@ Object.assign(RACE_ACT,{
   raceGo:()=>{const s=G,rc=raceByKey(RS.key);if(!rc||R)return;const tot=setupTotal(rc,s);if(s.cash<tot.total||RS.entries.some(e=>!e.drv))return;
     s.cash-=tot.total;const n=RS.entries.length;rbudAdd(s,tot.total,0);
     addLog(`Заявка на «${rc.name}»: ${n} ${plural(n,'машина','машины','машин')}, расходы ${money(tot.total)}.`);
-    const setup={rc,mode:RS.mode,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
-    RS=null;closeSheet();stopAuto();save();realLoad(setup.rc,()=>startRace(setup));}
+    const quiet=!!RS.quiet,setup={rc,mode:RS.mode,quiet,entries:RS.entries.map(e=>({drv:e.drv,md:s.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
+    setup.entries.forEach(e=>markSeen(s,e.md));   // 0.51: новинку на трассе видят соперники
+    RS=null;if(quiet){startRace(setup);return;}closeSheet();stopAuto();save();if(setup.mode==='calc')startRace(setup);else realLoad(setup.rc,()=>startRace(setup));}
 });
 
+/* ---------- 0.51: гонки сезона одной кнопкой (ТЗ 0.51, тема 5) ----------
+   Автор: «хочу нажать кнопку, разрешающую провести гонку за определённый бюджет моей гоночной команды, в самом верху, где
+   помощник, — а не лезть в гоночное меню, спускаться вниз, соглашаться на бюджет, смотреть результаты». s.tm.auto — команда
+   сама заявляется во все гонки месяца, пока укладывается в годовой бюджет s.tm.cap: состав выбирает менеджер (managerPlan),
+   итог считается без заезда (raceCalc) и ложится строкой в «Дела»; экран итогов и газета — только за победу в большой гонке.
+   Выйти на трассу самому можно по-прежнему: гонку, в которой вы уже участвовали, команда не трогает. */
+function raceAutoCapDef(s){return Math.max(Math.round(1500*cpi(s)/100)*100,Math.round(bizRev(s)*0.01/1000)*1000);}
+function raceAutoOn(s){return !!(s&&s.tm&&s.tm.auto&&s.mode!=='racer');}
+function raceAutoLeft(s){const cap=(s.tm&&s.tm.cap)||0;return Math.max(0,cap-(rbudOf(s).spent||0));}
+function raceAutoMonth(s){if(!raceAutoOn(s)||R)return;let left=raceAutoLeft(s);
+  RACES.forEach(rc=>{if(rc.y!==s.y||rc.m!==s.m||rc.match||rc.dx||s.raceDone[rc.key]!==undefined)return;let st=null;try{st=raceStatus(rc,s);}catch(_){return;}if(!st||!st[2])return;
+    let M=null;try{M=managerPlan(s,rc);}catch(e){console.warn('raceAuto',e);}if(!M||!M.entries.length)return;
+    const T=s.tmMsg&&s.tmMsg.m===mi(s)?s.tmMsg:(s.tmMsg={m:mi(s),list:[]});
+    if(M.cost>left){T.list.push(`«${rc.name}» — пропущена: бюджет года исчерпан`);return;}if(s.cash<M.cost)return;
+    const sp0=rbudOf(s).spent||0;RS={key:rc.key,entries:M.entries,open:0,mode:'calc',more:false,quiet:1};try{RACE_ACT.raceGo();}catch(e){console.warn('raceAuto go',e);RS=null;}
+    left-=Math.max(0,(rbudOf(s).spent||0)-sp0);});}
 /* ---------- 0.29: менеджер команды — «Участвовать»: сам назначает пилотов и машины в пределах бюджета, итог — сразу ---------- */
 // Политика бюджета: сколько машин, можно ли приглашать пилотов на гонку, какая доля кассы на одну гонку
 const TM_POL={eco:{n:'Экономно',d:'одна машина, свои пилоты, без гоночной подготовки',cars:1,hire:0,prep2:0,cash:0.05},
@@ -210,6 +227,28 @@ function managerLineup(s,rc,pol){const P=TM_POL[pol||tmPol(s)],cars=mgrCarsFor(s
 // Шансы — быстрая прикидка по силе заводских команд эпохи, частников, ваших машин и пилотов (как «итог без вас»).
 function mgrDrv(s,id){return id==='me'?{sk:pioSk(s)}:(drvObj(id)||{sk:0.6});}
 function mgrPerf(s,rc,e,md){const ref=rankOf(aiCarMd(rc.y),aiPrep(rc),rc.y),sk=mgrDrv(s,e.drv).sk+kitAdd(s,'sk');return Math.pow(rankOf(md,e.prep,rc.y)*kitK(s,'pw')/ref,1.6)*(0.8+0.4*(sk-0.5))*(globalThis.MGRK??0.94);}
+/* ---------- 0.51: расчёт гонки без заезда ----------
+   ТЗ 0.51, тема 5: «гонки сезона одной кнопкой» и быстрый расчёт для замеров. Раньше участие «в один клик» молча прокручивало
+   настоящую физику заезда — 2–12 секунд счёта на гонку, партия бота с гонками шла около часа. Теперь итог считается тем же
+   расчётом, которым менеджер команды оценивает шансы (mgrOdds): сила машины и гонщика против заводских команд, частников и
+   мотоциклов эпохи, случайный разброс формы, сходы по надёжности — только разыгрывается одна гонка и выдаётся весь протокол.
+   Режим «смотреть» и «за рулём» по-прежнему идут настоящим заездом. */
+function raceCalc(setup){const s=G,rc=setup.rc,pio=PIONEERS[s.pioneer],rnd=Math.random,len=rc.km*1000;
+  const ref=rankOf(aiCarMd(rc.y),aiPrep(rc),rc.y),MK=globalThis.MGRK??0.94,nz=globalThis.MGRN??0.3,dnf=dnfTarget(rc.y,rc.t)*(['road','rally','endurance'].includes(rc.t)?2:0.9);
+  const why=()=>pick(['мотор','зажигание','подшипник','рессора','радиатор','шины']);
+  const L=setup.entries.map((e,i)=>{const me=e.drv==='me',d=me?null:DRIVERS.find(x=>x.id===e.drv),st=carStats(e.md,e.prep,rc.y),ok=rnd()<=finishChance(st,rc,s);
+    return {you:true,cls:isMoto(e.md)?'moto':'car',name:s.company,label:e.md.name,drv:me?pio.name:(d?d.n:''),drvId:e.drv,md:e.md,prep:e.prep,num:i+1,v:mgrPerf(s,rc,e,e.md)*(1-nz/2+rnd()*nz),dnf:ok?null:why(),vt:st.vmax||st.top||0};});
+  const teams=fieldTeams(rc,s,setup.entries.length),hw=histWinnerTeam(rc,teams);
+  raceField(rc,s,setup.entries.length,setup.entries.map(e=>e.drv)).forEach(e=>{const moto=e.cls==='moto',str=Math.pow(e.relK||1,1/0.6);let p,out;
+    if(moto){p=Math.pow(rankOf(e.md,e.prep,rc.y)/ref,1.6)*(0.8+0.4*((e.sk||0.65)-0.5))*MK;out=rnd()>finishChance(carStats(e.md,e.prep,rc.y),rc,s);}
+    else if(e.priv){p=privPerf(e,rc);out=rnd()<dnf*1.1;}
+    else{const isHw=hw&&e.name===hw.n;p=(e.pw||1)*(isHw?1.12:1);out=!isHw&&rnd()<dnf*clamp(1.4-0.4*str,0.6,1.3);}
+    L.push({you:false,cls:moto?'moto':'car',name:e.name,label:e.label,drv:e.drvName,drvId:e.drvId||null,md:null,prep:e.prep,tc:e.tc,priv:e.priv?1:0,pmy:e.pmy||0,works:e.works||'',v:p*(0.92+rnd()*0.16),dnf:out?why():null});});
+  // порядок: финишировавшие — по силе в этой гонке, сошедшие — следом; время — от средней скорости победителя эпохи
+  L.sort((a,b)=>(a.dnf?1:0)-(b.dnf?1:0)||b.v-a.v);const top=L.find(o=>!o.dnf),vRef=Math.max(8,(top&&top.vt?top.vt:aiTopSpeed(rc.y))*0.55),t0=len/vRef,pc={};
+  const res=L.map(o=>{pc[o.cls]=(pc[o.cls]||0)+1;return {pos:pc[o.cls],cls:o.cls,name:o.name,drv:o.drv,you:o.you,player:false,label:o.label,fin:o.dnf?null:t0*Math.pow((top?top.v:o.v)/Math.max(1e-6,o.v),0.35),dnf:o.dnf,md:o.you?o.md:null,drvId:o.drvId,tc:o.tc,num:o.num,prep:o.prep,punct:0,priv:o.priv||0,pmy:o.pmy||0,inj:null,mInj:null,dmg:0,works:o.works||'',stops:[]};});
+  return {res,info:{len,quit:false,calc:1}};}
+function aiTopSpeed(y){try{const st=carStats(aiCarMd(y),2,y);return st.vmax||st.top||30;}catch(_){return 30;}}
 function mgrOdds(s,rc,entries,N){const cars=mgrCarsFor(s,rc),rnd=mulberry32(hashStr(rc.key+'|'+mi(s)+'|'+entries.map(e=>e.drv+e.car+e.prep).join())),dnf=dnfTarget(rc.y,rc.t)*(['road','rally','endurance'].includes(rc.t)?2:0.9);
   const teams=fieldTeams(rc,s,entries.length),hw=histWinnerTeam(rc,teams),pr=privField(rc,s,new Set());
   const mine=entries.map(e=>{const md=cars.find(m=>m.id===e.car)||cars[0],st=carStats(md,e.prep,rc.y);return {p:mgrPerf(s,rc,e,md),fin:finishChance(st,rc,s),mo:isMoto(md)};});
@@ -217,7 +256,7 @@ function mgrOdds(s,rc,entries,N){const cars=mgrCarsFor(s,rc),rnd=mulberry32(hash
   const moto=mine.length&&mine.every(m=>m.mo),ref=rankOf(aiCarMd(rc.y),aiPrep(rc),rc.y),mf=moto?motoField(rc,s).map(e=>({p:Math.pow(rankOf(e.md,e.prep,rc.y)/ref,1.6)*(0.8+0.4*(e.sk-0.5))*(globalThis.MGRK??0.94),fin:finishChance(carStats(e.md,e.prep,rc.y),rc,s)})):[];
   const P=[0,0,0,0];for(let n=0;n<N;n++){const R=[];
     if(moto)mf.forEach(o=>{if(rnd()>o.fin)return;R.push(o.p*(0.92+rnd()*0.16));});
-    else{teams.forEach(t=>{if(rnd()<dnf*clamp(1.4-0.4*t.str,0.6,1.3)&&t!==hw)return;R.push(Math.pow(t.str,1.6)*teamBoost(t,rc)*(t===hw?1.12:1)*(0.92+rnd()*0.16));});
+    else{teams.forEach(t=>{if(rnd()<dnf*clamp(1.4-0.4*t.str,0.6,1.3)&&t!==hw)return;R.push(Math.pow(t.str,1.6)*teamBoost(t,rc)*(1+raceHeat(s))*(t===hw?1.12:1)*(0.92+rnd()*0.16));});
     pr.forEach(e=>{if(rnd()<dnf*1.1)return;R.push(privPerf(e,rc)*(0.92+rnd()*0.16));});}
     let best=-1;const nz=globalThis.MGRN??0.3;mine.forEach(m=>{if(rnd()>m.fin)return;const v=m.p*(1-nz/2+rnd()*nz);if(v>best)best=v;});
     if(best<0){P[3]++;continue;}const ahead=R.filter(v=>v>best).length;P[Math.min(3,ahead)]++;}
@@ -235,12 +274,14 @@ function managerPlan(s,rc){const key=rc.key+'|'+mi(s)+'|'+Math.round(Math.log2(M
   for(const pool of pools)for(let k=1;k<=Math.min(maxE,4);k++){const ds=pool.slice(0,k);if(ds.length<k)continue;
     for(const lean of [0,1]){const entries=ds.map((p,j)=>{const md=cars[Math.min(j,cars.length-1)],e={drv:p.id,car:md.id,prep:1,tyre:'soft',gear:0},a=raceAdvice(rc,e,md,carStats(md,1,rc.y),s);Object.assign(e,a.rec);if(lean&&e.prep>1)e.prep=1;if(!prepAllowed(e.prep,s,rc,md))e.prep=1;return e;});
       const cost=entries.reduce((a,e)=>a+entryCost(rc,e,s).total,0);if(cost>s.cash||(k>1&&cost>cap))continue;
-      const O=mgrOdds(s,rc,entries,260),ev=O.win*(pz+fame)+O.p2*(pz*0.5+fame*0.3)+O.p3*(pz*0.25+fame*0.12)-cost;
+      const O=mgrOdds(s,rc,entries,globalThis.MGRSIMS||260),ev=O.win*(pz+fame)+O.p2*(pz*0.5+fame*0.3)+O.p3*(pz*0.25+fame*0.12)-cost;
       if(!best||ev>best.ev+Math.max(50,cost*0.02))best={entries,cost,ev,O};}}
   C.set(key,best);return best;}
 Object.assign(RACE_ACT,{
   raceQuick:d=>{const s=G,rc=raceByKey(d.k);if(!rc||R||s.pending.length)return;const M=managerPlan(s,rc);if(!M||!M.entries.length){toast(raceCarsFor(s,rc).length?'Денег не хватает даже на одну машину':'Нет машин в производстве');return;}
-    RS={key:d.k,entries:M.entries,open:0,mode:'sim',more:false};RACE_ACT.raceGo();},
+    RS={key:d.k,entries:M.entries,open:0,mode:'calc',more:false};RACE_ACT.raceGo();},   // 0.51: «в один клик» — расчёт без заезда (raceCalc), итог сразу
+  raceAutoToggle:()=>{const s=G;if(!s)return;s.tm=s.tm||{};s.tm.auto=!s.tm.auto;if(s.tm.auto&&!(s.tm.cap>0))s.tm.cap=raceAutoCapDef(s);toast(s.tm.auto?`Команда сама участвует в гонках сезона: до ${money(s.tm.cap)} в год`:'Гонки сезона — снова по вашей заявке');save();render();flushToasts();},
+  raceAutoBud:d=>{const s=G;if(!s)return;s.tm=s.tm||{};const c=s.tm.cap>0?s.tm.cap:raceAutoCapDef(s),step=cpi(s)*100,n=d&&d.k==='-'?c/1.5:c*1.5;s.tm.cap=Math.max(Math.round(500*cpi(s)/100)*100,Math.round(n/step)*step);save();render();},
   raceQuickEdit:d=>{const s=G,rc=raceByKey(d.k);if(!rc)return;const M=managerLineup(s,rc);RS={key:d.k,entries:M&&M.entries.length?M.entries:[defaultEntry(s,rc,[])],open:0,mode:'sim',more:false};renderRaceSetup();}
 });
 // 0.19: как проходила гонка на самом деле — старт, час, погода

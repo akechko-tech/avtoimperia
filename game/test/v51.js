@@ -120,5 +120,68 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   const l0=G.rd.lvl,d0=G.rdept;G.rd.projs=[];if(cut)cut.run();CK(G.rd.lvl===l0-1||G.rdept===d0-1,'кнопка совета сокращает ступень');
   CK(!tips.some(t=>/Денег хватает, чтобы расширить конструкторское бюро/.test(t.text)),'расширять бюро при такой прибыли не советуют');
   G.hist.profit=G.hist.profit.slice(0,-12).concat(Array(12).fill(3e6));G.cash=5e7;const t2=adviceList(G);CK(!t2.some(t=>/Содержание растёт с оборотом/.test(t.text)),'при большой прибыли сокращать не советуют');}
+
+// ================= цена опережения и гонки =================
+// 15. цена опережения: каждый год — ×1,6 к цене и ×1,4 к сроку; планка от оборота; деталь из будущего дороже в серии; технология завода раньше срока дороже
+{CK(near(aheadCostK(0),1)&&near(aheadCostK(1),1.6)&&near(aheadCostK(5),Math.pow(1.6,5))&&aheadCostK(5)>10&&aheadCostK(5)<11,'пять лет опережения — в 10,5 раза дороже');CK(near(aheadTimeK(5),Math.pow(1.4,5),1e-9),'и в 5,4 раза дольше');
+  newGame('custom','us','Тест','normal','Первая');G.y=1905;G.m=0;G.rd.lvl=14;G.rd.projs=[];const W=worldInit(G);W.my.r12=0;
+  const P=rdProjects(G).filter(p=>p.kind==='early'&&!p.moto);CK(P.length>0&&P.every(p=>p.need===Math.max(4,Math.round(10*aheadTimeK(p.yrs)))),'срок прототипа — 10 очков × 1,4^лет: '+P.map(p=>p.yrs+'г→'+p.need).join(' '));
+  const far=P.slice().sort((a,b)=>b.yrs-a.yrs)[0],near1=P.slice().sort((a,b)=>a.yrs-b.yrs)[0];
+  if(far&&near1&&far.yrs>near1.yrs){const c0=rdCost(near1,G),c1=rdCost(far,G);CK(c1>c0,'дальше в будущее — дороже: '+near1.yrs+' г. $'+c0+', '+far.yrs+' г. $'+c1);}
+  const e5={kind:'early',id:P[0].id,ck:P[0].ck,need:54,yrs:5},small=rdCost(e5,G);W.my.r12=100e6;const big=rdCost(e5,G);
+  CK(big===Math.round(100e6*0.001*aheadCostK(5)/50)*50&&big>small*5,'фирма с оборотом $100 млн за пять лет опережения платит 1 % оборота: $'+big+' (мастерская — $'+small+')');
+  W.my.r12=100e6;const e1={...e5,yrs:1,need:14};CK(rdCost(e1,G)===Math.max(Math.round(100e6*0.001*1.6/50)*50,rdCost(e1,G)),'год опережения — 0,16 % оборота: $'+rdCost(e1,G));
+  const up={kind:'upg',id:P[0].id,ck:P[0].ck,need:10,lvl:1};W.my.r12=0;const u0=rdCost(up,G);W.my.r12=100e6;CK(rdCost(up,G)===u0,'улучшение своей детали от оборота не зависит');
+  const fut=ENGINES.filter(e=>!e.moto&&e.y===1910)[0]||ENGINES.filter(e=>!e.moto&&e.y>1906)[0],old=ENGINES.filter(e=>!e.moto&&e.y<=1903).pop();
+  CK(near(aheadPartK(fut,G),1+Math.min(0.9,0.15*(fut.y-1905)),1e-9)&&aheadPartK(old,G)===1,'деталь '+fut.y+' года в 1905-м в серии дороже на '+Math.round((aheadPartK(fut,G)-1)*100)+' %; освоенная историей — без наценки');
+  G.y=fut.y;CK(aheadPartK(fut,G)===1,'история догнала — наценки нет');G.y=1905;
+  G.cap=2000;const tk=TECH_ORDER.find(k=>{const nx=techNext(G,k);return nx&&(nx.y||1895)>G.y;});if(tk){const nx=techNext(G,tk),c=techCost(G,tk);G.y=nx.y;const cy=techCost(G,tk);G.y=1905;CK(c>cy*1.3,'технология завода на '+(nx.y-1905)+' г. раньше срока дороже: $'+c+' против $'+cy);}}
+// 16. расчёт гонки без заезда и ответ соперников
+{Math.random=(()=>{let a=11;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();newGame('custom','fr','Тест','normal','Первая');G.helper={on:1};
+  for(let k=0;k<12*11;k++){let g=0;while(G.pending.length&&g++<30)resolve(G.pending[0].choices[0][1]);if(G.over||!step())break;}
+  G.pending=[];G.over=false;G.cash=Math.max(G.cash,5e6);const rc=RACES.find(r=>r.y===G.y&&!r.match&&!r.dx&&r.m>=G.m&&raceCarsFor(G,r).length&&raceEligible(r,G));
+  CK(!!rc,'есть гонка года для проверки: '+(rc&&rc.key));
+  if(rc){G.m=rc.m;const M=managerPlan(G,rc);CK(M&&M.entries.length>0,'менеджер собрал состав');
+    const setup={rc,mode:'calc',entries:M.entries.map(e=>({drv:e.drv,md:G.models.find(m=>m.id===e.car),prep:e.prep,tyre:e.tyre,gear:e.gear}))};
+    const C=raceCalc(setup),res=C.res,cars=res.filter(r=>r.cls==='car');
+    CK(cars.length>=4&&cars.every((r,i)=>r.pos===i+1),'протокол: места по порядку, машин '+cars.length);CK(res.filter(r=>r.you).length===setup.entries.length&&res.filter(r=>r.you).every(r=>r.md&&r.drv),'ваши машины в протоколе — с моделью и гонщиком');
+    CK(res.every(r=>(r.dnf?r.fin===null:r.fin>0)),'сошедшие без времени, финишировавшие — со временем');const fin=cars.filter(r=>!r.dnf);CK(fin.every((r,i)=>i===0||r.fin>=fin[i-1].fin),'время растёт по местам');CK(C.info.len===rc.km*1000&&C.info.calc===1,'дистанция — полная');
+    // сходится с прикидкой менеджера
+    let w=0;const N=400;for(let i=0;i<N;i++){const t=raceCalc(setup).res.filter(r=>r.you&&!r.dnf&&r.cls==='car');if(t.length&&Math.min(...t.map(r=>r.pos))===1)w++;}
+    const O=mgrOdds(G,rc,M.entries,400);CK(Math.abs(w/N-O.win)<0.09,'доля побед в расчёте ('+Math.round(w/N*100)+' %) сходится с прикидкой менеджера ('+Math.round(O.win*100)+' %)');
+    // «в один клик» — без заезда, итог сразу
+    const n0=G.raceLog.length,c0=G.cash,t0=Date.now();RACE_ACT.raceQuick({k:rc.key});CK(G.raceDone[rc.key]!==undefined&&G.raceLog.length===n0+1&&!R,'«Участвовать в один клик»: гонка сыграна, заезд не запускался');CK(Date.now()-t0<1500,'итог — сразу ('+(Date.now()-t0)+' мс)');CK(G.cash!==c0,'заявка оплачена');
+    G.pending=[];
+    // соперники копируют новинку через два года
+    const fut=ENGINES.filter(e=>!e.moto&&e.y>G.y+3).sort((a,b)=>b.hp-a.hp)[0],car=G.models.find(m=>m.status==='prod');
+    if(fut&&car){G.seenPart={};const before=aiCarMd(G.y).e;markSeen(G,{...car,e:fut.id});CK(G.seenPart[fut.id]===G.y,'новинка замечена соперниками в '+G.y+' году');CK(aiCarMd(G.y).e===before&&aiCarMd(G.y+1).e!==fut.id,'год спустя её у них ещё нет');
+      const Cc=CHASSIS.filter(c=>!c.moto&&c.y<=G.y+2).reduce((a,x)=>!a||x.max>a.max?x:a,null);
+      CK(fut.hp>Cc.max||aiCarMd(G.y+2).e===fut.id,'через два года ('+(G.y+2)+') мотор «'+fut.name+'» стоит на машинах заводских команд'+(fut.hp>Cc.max?' (если выдержит рама)':''));
+      CK(aiHas(fut,G.y+2)&&!aiHas(fut,G.y+1)&&aiHas(fut,fut.y),'aiHas: по сроку копирования и по истории');G.diff='hist';CK(aiHas(fut,G.y+1),'на «Историке» копируют за год');G.diff='kids';CK(!aiHas(fut,G.y+3)&&aiHas(fut,G.y+4),'на «Юном магнате» — за четыре');G.diff='normal';
+      G.y+=2;const L0=G.log.length;rivalNews(G);CK(G.log.slice(0,Math.max(1,G.log.length-L0+1)).some(l=>/разобрались в вашей новинке/.test(JSON.stringify(l)))||G.log.some(l=>/разобрались в вашей новинке/.test(JSON.stringify(l))),'в журнале — соперники разобрались в новинке');G.y-=2;G.seenPart={};}
+    // бюджеты соперников растут от ваших побед
+    const y=G.y;G.raceLog=[];CK(raceHeat(G)===0,'нет гонок — нет ответа');
+    G.raceLog=Array.from({length:9},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<3?1:4}));CK(raceHeat(G)===0,'треть побед — прибавки нет');
+    G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<6?1:3}));CK(near(raceHeat(G),(0.6-1/3)*0.75,1e-9),'шесть побед из десяти — соперники сильнее на '+Math.round(raceHeat(G)*100)+' %');
+    G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%3),key:'x'+i,place:1}));CK(near(raceHeat(G),0.3),'все победы — предел +30 %');
+    const O1=mgrOdds(G,rc,M.entries,600);G.raceLog=[];const O0=mgrOdds(G,rc,M.entries,600);CK(O1.win<O0.win||O0.win<0.03,'с ответом соперников шанс победы ниже: '+Math.round(O0.win*100)+' % → '+Math.round(O1.win*100)+' %');
+    G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%3),key:'x'+i,place:1}));const F1=raceField(rc,G,1,[]).filter(e=>!e.priv&&e.cls!=='moto')[0];G.raceLog=[];const F0=raceField(rc,G,1,[]).find(e=>e.name===F1.name);
+    CK(F0&&near(F1.pw/F0.pw,1.3,0.001),'сила заводской команды в заезде — тоже ×1,3');
+    G.raceLog=Array.from({length:10},(_,i)=>({y:y-12,key:'x'+i,place:1}));CK(raceHeat(G)===0,'давние победы не считаются');G.raceLog=[];G.heatSaid=0;
+    G.raceLog=Array.from({length:10},(_,i)=>({y,key:'x'+i,place:1}));rivalNews(G);CK(G.heatSaid===30&&G.log.some(l=>/Соперники ответили на ваши победы/.test(JSON.stringify(l))),'в журнале — соперники ответили на победы');G.raceLog=[];G.heatSaid=0;}}
+// 17. гонки сезона одной кнопкой
+{Math.random=(()=>{let a=5;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();newGame('custom','fr','Тест','normal','Первая');G.helper={on:1};
+  for(let k=0;k<12*10;k++){let g=0;while(G.pending.length&&g++<30)resolve(G.pending[0].choices[0][1]);if(G.over||!step())break;}
+  G.pending=[];G.over=false;G.cash=Math.max(G.cash,3e6);while(G.m!==0){G.pending=[];step();}G.pending=[];
+  CK(!raceAutoOn(G),'по умолчанию гонки — по вашей заявке');CK(/Гонки сезона: по вашей заявке/.test(advisorCard(G))&&/data-act="raceAutoToggle"/.test(advisorCard(G)),'в «Делах» — строка гонок сезона с кнопкой');
+  RACE_ACT.raceAutoToggle();CK(raceAutoOn(G)&&G.tm.cap===raceAutoCapDef(G)&&G.tm.cap>0,'включено: бюджет года по умолчанию $'+G.tm.cap);const H=advisorCard(G);CK(/команда участвует сама/.test(H)&&/data-act="raceAutoBud" data-k="[+]"/.test(H)&&/выключить/.test(H),'строка показывает бюджет, остаток и кнопки − и +');
+  const c1=G.tm.cap;RACE_ACT.raceAutoBud({k:'+'});CK(G.tm.cap>c1,'«+» прибавляет бюджет');RACE_ACT.raceAutoBud({k:'-'});RACE_ACT.raceAutoBud({k:'-'});CK(G.tm.cap<c1,'«−» убавляет');G.tm.cap=5e6;
+  const y0=G.y,n0=G.raceLog.length;let stops=0,sheets=0,msgs=0;for(let k=0;k<12&&G.y===y0;k++){let g=0;while(G.pending.length&&g++<30){const ev=G.pending[0];if(/гонк|Гран|Кубок|заезд/i.test(ev.title||''))stops++;resolve(ev.choices[0][1]);}if(typeof lastRace!=='undefined'&&lastRace&&lastRace.shown)sheets++;if(G.over||!step())break;if(G.tmMsg&&G.tmMsg.m===mi(G)-1&&G.tmMsg.list.length)msgs++;}
+  const ran=G.raceLog.length-n0;CK(ran>=2,'за год команда сама сыграла гонок: '+ran);CK(msgs>=1&&rbudOf({rbud:G.rbud,y:y0},y0).spent>0,'итоги — строкой в «Делах», расходы — в бюджете года');CK(!R,'заезды не запускались');
+  const T=G.tmMsg&&G.tmMsg.list||[];CK(G.log.some(l=>/лучший результат|все машины сошли/.test(JSON.stringify(l))),'в журнале — итог каждой гонки строкой');
+  // бюджет исчерпан — гонка пропущена с пометкой; гонку, сыгранную вручную, команда не трогает
+  G.pending=[];G.over=false;while(G.m!==0){G.pending=[];step();}G.pending=[];G.tm.cap=1;const y1=G.y,n1=G.raceLog.length;let skipMsg=0;for(let k=0;k<12&&G.y===y1;k++){G.pending=[];if(!step())break;if(G.tmMsg&&G.tmMsg.list.some(t=>/бюджет года исчерпан/.test(t)))skipMsg++;}
+  CK(G.raceLog.length===n1&&skipMsg>=1,'бюджета нет — гонки пропущены, в «Делах» сказано почему');
+  RACE_ACT.raceAutoToggle();CK(!raceAutoOn(G),'выключается той же кнопкой');}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

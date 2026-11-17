@@ -4,6 +4,7 @@ function step(){
   const s=G;if(s&&s.mode==='racer')return racerStep(s);   // 0.28: путь гонщика — свой месяц (19-racer.js)
   if(!s||s.over||s.pending.length)return false;
   helperMonth(s);
+  try{raceAutoMonth(s);}catch(e){console.warn('raceAutoMonth',e);}   // 0.51: гонки сезона одной кнопкой
   const eHome=econ(s.y,s.m,s.country);
   const r={rev:0,mat:0,wage:0,ovh:0,dlr:0,ad:s.ad,sto:0,int:0,mil:0,milN:0,made:0,sold:0,demand:0,homeSold:0,tool:0,war:0,hire:0,fin:0,lostCap:0,lostDlr:0,team:0,ord:0,ordN:0,dump:0,dumpN:0,fine:0,mk:{}};
   // разработка и запуск моделей
@@ -11,7 +12,7 @@ function step(){
     // 0.21: новая модель идёт на тот же завод — поставщики и рабочие уже есть: себестоимость считаем от половины выпуска прежних моделей
     {const prev=s.models.filter(m=>m!==md&&m.status==='prod'&&(m.vol||0)>0),g=segOf(md),same=prev.filter(m=>segOf(m)===g),src=same.length?same:prev;
       const v=src.reduce((a,m)=>Math.max(a,m.vol||0),0)*(same.length?0.6:0.35);if(v>(md.vol||0))md.vol=Math.round(v*10)/10;}
-    const tc=toolingCost(md,s);s.cash-=tc;r.tool+=tc;addLog(`Модель «${md.name}» пошла в серию. Оснастка обошлась в ${money(tc)}${tc>toolingBase(md,s)*1.5?' — завод переоснащён под новые узлы':''}.`,'good');checkFirstParts(md);try{eqFirsts(md);}catch(_){}if(md.legend)try{legendLaunch(s,md);}catch(e){console.warn(e);}else launchPaper(s,md);
+    const tc=toolingCost(md,s);s.cash-=tc;r.tool+=tc;try{markSeen(s,md);}catch(_){}/* 0.51: новинку в серии видят соперники */addLog(`Модель «${md.name}» пошла в серию. Оснастка обошлась в ${money(tc)}${tc>toolingBase(md,s)*1.5?' — завод переоснащён под новые узлы':''}.`,'good');checkFirstParts(md);try{eqFirsts(md);}catch(_){}if(md.legend)try{legendLaunch(s,md);}catch(e){console.warn(e);}else launchPaper(s,md);
     // 0.32: незрелые детали могли выйти не по ТЗ
     try{const dv=devRoll(s,md);if(dv.length)devNews(s,md,dv);}catch(e){console.warn('dev',e);}}}});
   s.capBuild=(s.capBuild||[]).filter(b=>{b.left--;if(b.left<=0){s.cap+=b.units;addLog(`Новый цех введён в строй: мощность ${fmtN(Math.round(capEff(s)))} машин в месяц.`,'good');return false;}return true;});

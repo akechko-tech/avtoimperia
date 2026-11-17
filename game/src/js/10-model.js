@@ -53,13 +53,26 @@ const MOTO_CAT={e:'Мотор мотоцикла',g:'Передача мотоц
 function engExp(s,mo){let n=0;ENGINES.forEach(x=>{if(!!x.moto!==!!mo)return;if(s.rd.early.includes(x.id))n++;n+=upgL(x.id)/3;});return n;}
 function motoRdK(s,ck){return 0.6*(ck==='e'&&engExp(s,0)>=1?0.7:1);}
 function rdLines(s){const L=[];if(lineOn(s,'car')||s.carShopB||!lineOn(s,'moto'))L.push(0);if(lineOn(s,'moto')||s.mshopB)L.push(1);return L;}
+/* ---------- 0.51: цена опережения (ТЗ 0.51, тема 3; решение автора) ----------
+   «Если Форд пытается на пять лет раньше начать производство двигателя или технологии — должен быть мультипликатор, который
+   делает это более дорогим и более затратным». Замеры этапов 1–2: прототип на десять лет раньше истории стоил немногим дороже,
+   чем на год (3 + 0,4 × лет), а в деньгах — тысячи долларов; гоночная машина с мотором из будущего выигрывала 9 гонок из 10.
+   Теперь каждый год опережения — ×AHEAD_COST к цене и ×AHEAD_TIME к сроку (пять лет — вдесятеро дороже и впятеро дольше),
+   и у цены есть нижняя планка от оборота фирмы: AHEAD_REV годовой выручки × тот же множитель (год — 0,16 %, пять лет — 1 %,
+   десять лет — 11 %: «за прорыв платят как за завод»). Деталь, которую история ещё не освоила, дороже и в серии:
+   +15 % за каждый год до её исторического года (aheadPartK), не больше +90 % — поставщиков ещё нет. Заводская технология
+   раньше своего года дорожает тем же множителем. Риск доработки прототипа и трудной наладки был и раньше (10f-risk.js). */
+const AHEAD_COST=1.6,AHEAD_TIME=1.4,AHEAD_REV=0.001;
+function aheadCostK(yrs){return Math.pow(AHEAD_COST,Math.max(0,yrs||0));}
+function aheadTimeK(yrs){return Math.pow(AHEAD_TIME,Math.max(0,yrs||0));}
+function aheadPartK(x,s){const d=x&&s?(x.y||1895)-yf(s):0;return d>0?1+Math.min(0.9,0.15*d):1;}
 function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
   const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s),MU=massParts(s.y);
   rdLines(s).forEach(mo=>PART_CATS.forEach(cat=>{const arr=cat.arr().filter(x=>!!x.moto===!!mo),cn=mo?MOTO_CAT[cat.k]:cat.rd,rk=mo?motoRdK(s,cat.k):1;
     unlockedP(arr,s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round(((6+x.q/8)*Math.pow(1.6,l)+(l>=3?6*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
-    if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round((10+6*(nx.y-s.y))*rk)),yrs:nx.y-s.y});
+    if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round(10*aheadTimeK(nx.y-s.y)*rk)),yrs:nx.y-s.y});
   }));
   // 0.32: «Перенос» — технология, которую марка освоила в одной линейке, в другую (105e-moto.js)
   try{xferProjects(s).forEach(pj=>list.push(pj));}catch(e){console.warn('xfer',e);}
@@ -78,10 +91,11 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
   if(pj.kind==='xfer')return xferCost(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
-  const k=pj.kind==='early'?3+0.4*(pj.yrs||1):0.8*Math.pow(1.5,(pj.lvl||1)-1);/* 0.48: каждая ступень улучшения в полтора раза дороже и в 1,6 раза дольше (rdProjects: need) */
+  const k=pj.kind==='early'?3*aheadCostK(pj.yrs||1):0.8*Math.pow(1.5,(pj.lvl||1)-1);/* 0.48: каждая ступень улучшения в полтора раза дороже и в 1,6 раза дольше (rdProjects: need) */
   // в 1890-х опыты — дело мастерской: дёшево; к 1905 году — настоящие опытные цеха и стенды
   const era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));
-  return Math.max(50,Math.round(((80+25*(pj.need||10))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+pc*k)*era*rdShareK(pj,s)/50)*50);}
+  const base=Math.max(50,Math.round(((80+25*(pj.need||10))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+pc*k)*era*rdShareK(pj,s)/50)*50);
+  return pj.kind==='early'?Math.max(base,Math.round(bizRev(s)*AHEAD_REV*aheadCostK(pj.yrs||1)/50)*50):base;}
 // 0.32 (ТЗ «Мото и технологии»): опыт у марки общий — звёзды КБ на моторах и шинах одной линейки удешевляют проекты
 // моторов и шин другой: −6% за звезду, до −30% (моторист, доводивший автомобильный мотор, знает и мотоциклетный)
 function rdShareK(pj,s){if(!pj||(pj.ck!=='e'&&pj.ck!=='w')||!s||!s.rd||!s.rd.upg)return 1;const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null;if(!x)return 1;
@@ -101,7 +115,7 @@ function wageNow(s){return wageBase(s)*WAGE_POL[s.wagePol||'market'].k*(s.shifts
 const PART_US={1895:0.95,1899:0.86,1903:0.8,1910:0.72};
 function partCountry(s){const c=s.country;return c==='us'?tabAt(PART_US,yf(s)):c==='uk'||c==='it'?1.05:1;}
 // деталь дешевеет с годами (поставщики учатся), но не больше чем вдвое; отсчёт — с появления детали или с 1895 года
-function partCost(x,s){return x.c*1.15*cpi(s)*Math.max(0.5,1-0.025*Math.max(0,yf(s)-Math.max(1895,x.y)))*partCountry(s)*flawK(x,s,'c');}
+function partCost(x,s){return x.c*1.15*cpi(s)*Math.max(0.5,1-0.025*Math.max(0,yf(s)-Math.max(1895,x.y)))*partCountry(s)*flawK(x,s,'c')*aheadPartK(x,s);}
 // 0.32: неудачный перенос технологии — своя деталь тяжелее или дороже, пока поставщики не начнут делать её как следует (105e-moto.js)
 function flawK(x,s,k){const F=s&&s.rd&&s.rd.flaw&&x&&s.rd.flaw[x.id];return F&&F[k]&&s.y<(x.y||1895)?F[k]:1;}
 // Детали модели. У старых сохранений и чужих машин коробки и тормозов может не быть — берём типичные для эпохи
@@ -293,7 +307,7 @@ function techLv(s,k){return (s.tech&&s.tech[k])||0;}
 function techNext(s,k){const d=TECH[k],l=techLv(s,k);return l<d.max?d.lv[l]:null;}
 function techEarly(s){const l=s.rd?s.rd.lvl:1;return (l>=10?5:l>=7?4:l>=5?3:l>=4?2:l>=3?1:0)+(bn('convEarly',0)?1:0);}
 function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+techEarly(s))return false;if(nx.need)for(const r in nx.need)if(techLv(s,r)<nx.need[r])return false;return true;}
-function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)/100)*100;}
+function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)*aheadCostK((nx.y||1895)-s.y)/100)*100;}   // 0.51: раньше своего года — дороже
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
 function hoursPerCar(md,s){const conv=techLv(s,'line')===2,mo=isMoto(md),act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)===mo).length,mk=mo&&typeof motoLv==='function'&&motoLv(s)>=2?MSHOP2.hrs:1;

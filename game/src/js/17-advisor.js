@@ -147,12 +147,18 @@ function adviceList(s){
   if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
   return T.sort((a,b)=>b.p-a.p);
 }
+// 0.51: гонки сезона одной кнопкой — строка в «Делах»: включить, бюджет на год, что команда сделала в прошлом месяце
+function raceAutoLine(s){if(!s||s.mode==='racer'||typeof raceAutoOn!=='function')return '';let cars=0;try{cars=s.models.some(m=>m.status==='prod')&&RACES.some(r=>r.y===s.y)?1:0;}catch(_){}
+  if(!cars&&!raceAutoOn(s))return '';const T=s.tmMsg&&s.tmMsg.m===mi(s)-1?s.tmMsg.list:null,on=raceAutoOn(s);
+  return `<div class="row" style="margin-top:8px;align-items:center;gap:6px;flex-wrap:wrap"><span class="small">🏁 Гонки сезона: ${on?`команда участвует сама — до <b class="num">${money(s.tm.cap)}</b> в год, осталось ${money(raceAutoLeft(s))}`:'по вашей заявке'}</span>
+    ${on?`<span class="btnrow" style="gap:4px"><button class="btn small" data-act="raceAutoBud" data-k="-" aria-label="Уменьшить бюджет">−</button><button class="btn small" data-act="raceAutoBud" data-k="+" aria-label="Увеличить бюджет">+</button><button class="linkbtn small" data-act="raceAutoToggle">выключить</button></span>`:`<button class="linkbtn small" data-act="raceAutoToggle">поручить команде</button>`}</div>
+    ${T&&T.length?`<p class="small" style="margin-top:4px">Команда в прошлом месяце: ${esc(T.join('; '))}.</p>`:''}`;}
 function advisorCard(s,where){
   const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:4),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null;
-  if(!show.length&&(!H||where))return '';TIPS=show;
+  if(!show.length&&(!H||where)&&(where||!raceAutoLine(s)))return '';TIPS=show;
   // 0.39: «Дела» — что сделать сейчас, кнопкой к действию (одна система для авто, мото и аэро)
   return `<section class="card advisor"><div class="row"><span class="label">📋 Дела${where?'':' и советы'}</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':`<button class="linkbtn small" data-act="helperToggle">поручить рутину помощнику</button>`}</div>
-    ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}
+    ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
     ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}</div>`).join('')}
     ${!where&&all.length>4?`<p class="small muted" style="margin-top:6px">Ещё дел: ${all.length-4}. Сначала самые важные.</p>`:''}</section>`;}
 // Помощник управляющего: каждый месяц сам делает безопасные вещи — цены, дилеры, цеха, склад, КБ, кредит

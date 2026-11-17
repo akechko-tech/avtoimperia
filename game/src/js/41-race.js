@@ -814,7 +814,10 @@ function wearSetup(c,trk,rc){
   twInit(c,rc.y);
   c.wheelChange=(trk.cfg.dur||110)*(p.w.pit?0.022*p.w.pit/0.35:rc.y<1906?0.055:0.042)*(c.st.mech?(c.subMech?1.15:1):1.4)*(c.pitK||1);
 }
-function startRace(setup){try{voiceUnlock();}catch(_){}
+function startRace(setup){
+  if(setup.mode==='calc'&&!setup.rc.match&&!setup.rc.dx&&G.mode!=='racer'){const C=raceCalc(setup);if(setup.quiet)C.info.quiet=1;raceResults(setup.rc,C.res,'sim',C.info);return;}   // 0.51: расчёт без заезда
+  if(setup.mode==='calc')setup.mode='sim';
+  try{voiceUnlock();}catch(_){}
   const s=G,rc=setup.rc,dl=RDEPT[s.rdept||0],pio=PIONEERS[s.pioneer],pd=pio.drv&&DRIVERS.find(d=>d.id===pio.drv);
   // хозяин в больнице — в режиме «за рулём» вы ведёте первую машину команды вместо её пилота
   const noMe=!setup.entries.some(e=>e.drv==='me');
@@ -872,9 +875,27 @@ function fieldTeams(rc,s,nTeam){
 // Подготовка заводских машин: на выносливость, в марафонах и в «Милле Милья» — серийный кузов, иначе гоночный
 function aiPrep(rc){return rc.t==='endurance'||rc.t==='rally'||rc.id==='mille'?1:2;}
 // 0.32: детали мотоциклов в автомобильную гоночную машину не ставим
-function bestPart(arr,y,key,f){return arr.filter(x=>x.y<=y&&!x.moto&&(!f||f(x))).reduce((a,x)=>!a||x[key]>a[key]?x:a,null);}
+/* ---------- 0.51: заводские команды отвечают игроку (ТЗ 0.51, тема 5) ----------
+   Автор: «выигрывал практически всё; ни Bugatti, ни другие не ответили — не увеличивали бюджеты». Замеры: машина с деталями
+   из будущего выигрывала 8–9 гонок из 10, сила команд от побед игрока не зависела. Теперь ответа два.
+   Копирование: деталь, которую история ещё не освоила, соперники видят на вашей машине — на трассе или в серии (markSeen) —
+   и через COPY_LAG лет ставят на свои гоночные машины (aiHas): преимущество «из будущего» живёт год-два, а не десятилетие.
+   Бюджеты: чем больше гонок вы выиграли за этот и два прошлых сезона, тем сильнее заводские команды (raceHeat): от трети
+   побед прибавки нет, дальше +0,75 % к силе за каждый процент побед, не больше +30 %. Сбавите — остынут и они. */
+const COPY_LAG={kids:4,easy:3,normal:2,hard:2,hist:1},HEAT_K={kids:0.3,easy:0.6,normal:1,hard:1.15,hist:1.3},HEAT_MAX=0.3;
+function copyLag(s){return COPY_LAG[(s&&s.diff)||'normal']||2;}
+function markSeen(s,md){if(!s||!md)return;const S=s.seenPart=s.seenPart||{};['e','g','c','k','w'].forEach(k=>{const x=partById(md[k]);if(x&&x.y>s.y&&S[x.id]==null)S[x.id]=s.y;});}
+function aiHas(x,y){if(x.y<=y)return true;const s=typeof G!=='undefined'?G:null,S=s&&s.seenPart;return !!(S&&S[x.id]!=null&&y>=S[x.id]+copyLag(s));}
+function raceHeat(s){if(!s||!s.raceLog||s.mode==='racer')return 0;let n=0,w=0;for(let i=s.raceLog.length-1;i>=0;i--){const e=s.raceLog[i];if(e.y<s.y-2)break;n++;if(e.place===1)w++;}
+  return n<4?0:clamp((w/n-1/3)*0.75,0,HEAT_MAX)*(HEAT_K[s.diff]||1);}
+// новости ответа: что скопировали и насколько выросли бюджеты — по строке, когда меняется
+function rivalNews(s){if(!s||s.mode==='racer')return;const S=s.seenPart||{},said=s.copySaid=s.copySaid||{},lag=copyLag(s);
+  for(const id in S){if(said[id]||s.y<S[id]+lag)continue;said[id]=1;const x=partById(id);if(x&&x.y>s.y)addLog(`Заводские команды разобрались в вашей новинке: «${x.name}» теперь стоит и на их гоночных машинах — на ${x.y-s.y} ${plural(x.y-s.y,'год','года','лет')} раньше истории.`,'bad');}
+  const h=Math.round(raceHeat(s)*100),was=s.heatSaid||0;if(Math.abs(h-was)>=8||(h===0&&was>0)){s.heatSaid=h;
+    addLog(h>was?`Соперники ответили на ваши победы: бюджеты заводских команд выросли, их машины и гонщики сильнее на ${h} %.`:h>0?`Заводские команды сбавили обороты: вы побеждаете реже, их перевес — ${h} %.`:'Заводские команды вернулись к обычным бюджетам: гонку за вами они больше не ведут.',h>was?'bad':'');}}
+function bestPart(arr,y,key,f){return arr.filter(x=>aiHas(x,y)&&!x.moto&&(!f||f(x))).reduce((a,x)=>!a||x[key]>a[key]?x:a,null);}
 function aiCarMd(y,name){const c=bestPart(CHASSIS,y,'max'),e=bestPart(ENGINES,y,'hp',x=>x.hp<=c.max)||ENGINES[0];
-  return {e:e.id,g:bestPart(GEARBOX,y,'eff').id,c:c.id,k:bestPart(BRAKES,y,'brk').id,b:'b1',w:TYRES.filter(x=>x.y<=y&&!x.moto&&(!x.solid||y<1895)).reduce((a,x)=>!a||x.grip+(x.pit?0.004:0)>a.grip+(a.pit?0.004:0)?x:a,null).id,t:'t0',paint:'#333',name:name||'',made:0,ai:1};}
+  return {e:e.id,g:bestPart(GEARBOX,y,'eff').id,c:c.id,k:bestPart(BRAKES,y,'brk').id,b:'b1',w:TYRES.filter(x=>aiHas(x,y)&&!x.moto&&(!x.solid||y<1895)).reduce((a,x)=>!a||x.grip+(x.pit?0.004:0)>a.grip+(a.pit?0.004:0)?x:a,null).id,t:'t0',paint:'#333',name:name||'',made:0,ai:1};}
 // Типичная ненадёжность соперников: от неё считается частота поломок в гонке
 function fieldRelRef(rc,s){const T=fieldTeams(rc,s,1);if(!T.length)return 0.2;const prep=aiPrep(rc),st=carStats(aiCarMd(rc.y),prep,rc.y);return Math.max(0.05,1-T.reduce((a,t)=>a+clamp(st.rel*Math.pow(t.str,0.6),0.3,0.995),0)/T.length);}
 function teamBoost(t,rc){return (t.boost&&Object.keys(t.boost).some(k=>rc.y>=+k)?1.06:1)*(rc.t==='endurance'&&t.endur?t.endur:1);}
@@ -889,7 +910,7 @@ function raceField(rc,s,nTeam,taken){
     const pool=teamDrivers(t,y,used),any=DRIVERS.filter(d=>d.from<=y&&d.to>=y&&!used.has(d.id)),L=pool.length?pool:any;
     const d=L.sort((a,b)=>b.sk-a.sk)[Math.floor(Math.random()*Math.min(2,L.length))]||{n:'',sk:0.75};if(d.id)used.add(d.id);
     const md=aiCarMd(y,t.n);
-    const boost=teamBoost(t,rc)*DIF().race;
+    const boost=teamBoost(t,rc)*DIF().race*(1+raceHeat(s));   // 0.51: ответ на победы игрока
     out.push({you:false,name:t.n,label:t.n,drvName:d.n,drvId:d.id||null,sk:d.sk||0.75,md,prep:aiPrep(rc),tyre:Math.random()<0.5?'soft':'hard',gear:0,color:y>=1903?(t.c==='intl'||!COUNTRIES[t.c]?'#F28C00':COUNTRIES[t.c].race):['#2b2320','#3a2a1c','#1f2b3a','#4a1f1a'][i%4],pw:Math.pow(t.str,1.6)*boost,relK:Math.pow(t.str,0.6),tc:t.c});
   });
   return out.concat(privField(rc,s,used,nPriv)).concat(motoField(rc,s));

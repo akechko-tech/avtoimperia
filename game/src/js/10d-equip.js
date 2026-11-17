@@ -61,7 +61,7 @@ function eqProjects(s){const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),o
   EQUIP.forEach(e=>{if(eqDev(s,e.id)||s.y>=e.hist[0]+1||s.y<e.y-1||busy.has('eq:'+e.id))return;if(e.req&&!eqAvail(s,e.req)&&!busy.has('eq:'+e.req)&&!(e.req==='el'&&e.id==='st'))return;
     const yrs=Math.max(1,e.hist[0]+1-s.y);out.push({kind:'eq',id:e.id,cat:'Оснащение',ck:'eq',name:e.name,need:14+5*yrs,yrs});});
   return out;}
-function eqCostRD(pj,s){const e=EQ_BY[pj.id],era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));return Math.max(100,Math.round(((80+25*(pj.need||12))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+(e?e.c:30)*cpi(s)*40)*era/50)*50);}
+function eqCostRD(pj,s){const e=EQ_BY[pj.id],era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));return Math.max(100,Math.round(((80+25*(pj.need||12))*cpi(s)*(1+0.03*T(s))*bn('rdCost')+(e?e.c:30)*cpi(s)*40)*era/50)*50,Math.round(bizRev(s)*AHEAD_REV*aheadCostK(pj.yrs||1)/50)*50);}   // 0.51: цена опережения — не меньше доли оборота
 function eqDone(s,pj){const e=EQ_BY[pj.id];if(!e)return;s.rd.eq=s.rd.eq||{};s.rd.eq[e.id]=1;
   addLog(`КБ сделало новинку: ${e.name}${s.y<e.hist[0]?` — на ${e.hist[0]-s.y} ${plural(e.hist[0]-s.y,'год','года','лет')} раньше, чем ${e.hist[1]}`:''}. Поставьте её на новую модель в конструкторе («Новинки»).`,'good');
   pendingToasts.push('🔬 Новинка: '+e.name);}

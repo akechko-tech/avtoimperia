@@ -28,6 +28,7 @@ if(A[0]==='all'){
 }
 const style=A[0]||'ford',diff=A[1]||'normal',seed=+(A[2]||11),pio=A[3]||'ford',country=A[4]||'us';
 require('./harness.js')(`
+globalThis.MGRSIMS=+process.env.MGRSIMS||70;   // прикидка менеджера по 70 розыгрышам вместо 260 — боту хватает, партия втрое быстрее
 BOTS_OFF=!!process.env.NOBOTS;   // NOBOTS=1 — без живых соперников (сравнение: что они отнимают)
 Math.random=(()=>{let a=${seed}*7919%2147483647||1;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 const STYLE=${JSON.stringify(style)},CC=${JSON.stringify(country)},QUIET=!!process.env.QUIET;
@@ -35,7 +36,7 @@ const FORD=/^ford/.test(STYLE),RACE=FORD&&!/norace/.test(STYLE),RDX=FORD&&!/nord
 newGame(${JSON.stringify(pio)},CC,'','${diff}','Первая');
 G.helper={on:1};
 if(process.env.HOOK)eval(process.env.HOOK);   // HOOK='…' — код для разовой диагностики (например, обернуть функцию игры и печатать её вызовы)
-let lastDesign=0,starts=0,wins=0,majors=0,spentRace=0;const first={},firstDom={},yr={};
+const seenPlan={};let lastDesign=0,starts=0,wins=0,majors=0,spentRace=0;const first={},firstDom={},yr={};
 const cls=()=>CC==='us'?(G.y>=1903?'people':'middle'):(G.y>=1912?'people':'middle');
 function pAvg(){const pr=G.hist.profit.slice(-12);return pr.length>=6?pr.reduce((a,b)=>a+b,0)/pr.length:0;}
 // запас: два месяца постоянных расходов и (0.51) двенадцатая часть годового оборота — без него спад 1920–1921 годов разоряет
@@ -81,7 +82,7 @@ function raceMonth(){
   try{if(RDEPT[(G.rdept||0)+1]&&free()>rdeptCost(G)*2&&pa>(teamUpkeepAt(G,(G.rdept||0)+1)+rdUpkeep(G))*4)RACE_ACT.rdeptUp();}catch(e){}
   try{(KIT.team||[]).forEach(k=>{if(!kitHas(G,k.id)&&k.y<=G.y&&!kitNeed(G,k)&&free()>kitCost(G,k)*2)kitBuy(G,k.id);});}catch(e){}
   RACES.forEach(rc=>{if(!raceOpen(rc,G)||G.raceDone[rc.key]!==undefined||G.pending.length)return;let open=false;try{open=raceStatus(rc,G)[2];}catch(_){}
-    if(!open)return;let M=null;try{M=managerPlan(G,rc);}catch(_){}if(!M||!M.entries.length)return;if(M.cost>Math.max(free()*0.3,G.cash*0.08))return;if(!(M.O.win>=0.12||(rc.major&&M.O.win>=0.05)||(M.O.win+M.O.p2+M.O.p3>=0.45)))return;const c0=G.cash,tq=Date.now();try{RACE_ACT.raceQuick({k:rc.key});}catch(e){if(!QUIET)console.log('race err',rc.key,e.message);R=null;return;}
+    if(!open)return;const ck=rc.key+'|'+mi(G);if(seenPlan[ck])return;seenPlan[ck]=1;let M=null;try{M=managerPlan(G,rc);}catch(_){}if(!M||!M.entries.length)return;if(M.cost>Math.max(free()*0.3,G.cash*0.08))return;if(!(M.O.win>=0.12||(rc.major&&M.O.win>=0.05)||(M.O.win+M.O.p2+M.O.p3>=0.45)))return;const c0=G.cash,tq=Date.now();try{RACE_ACT.raceQuick({k:rc.key});}catch(e){if(!QUIET)console.log('race err',rc.key,e.message);R=null;return;}
     if(process.env.TIME)console.log('  гонка',rc.key,rc.t,rc.km+'км',Date.now()-tq,'мс, место',G.raceDone[rc.key],'шанс',Math.round(M.O.win*100)+'%','машин',M.entries.length,'цена',M.cost);
     const d=G.raceDone[rc.key];if(d!==undefined){starts++;spentRace+=Math.max(0,c0-G.cash);if(d===1){wins++;if(rc.major)majors++;}}
     let g=0;while(G.pending.length&&g++<20)resolve(pickChoice(G.pending[0]));});}
