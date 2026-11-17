@@ -68,6 +68,22 @@ with sync_playwright() as p:
     ok(r['ran'] >= 1 and r['scr'] == 0 and not r['R'], 'за год команда сыграла %d гонок, экран заезда не открывался' % r['ran'])
     ok(len(r['msg']) > 5, 'итог — строкой: ' + r['msg'][:90])
     js("tab='plant';render();"); pg.wait_for_timeout(300); dash = js("(()=>{const e=document.querySelector('.card.advisor');return e?e.outerHTML:'';})()")
+    # гонка за рулём: подсказка о повороте считает путь по настоящим тормозам и видит шпильку за дугой; смена шин у обочины — с подписью
+    js("""(()=>{try{finishRace(true);}catch(_){};R=null;G.pending=[];AU.on.gfx='2d';const rc=RACES.find(r=>r.key==='klausen-1922');const md=G.models[0];const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
+      startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0},{drv:DRIVERS.find(d=>d.from<=rc.y&&d.to>=rc.y).id,md,prep:2,tyre:'hard',gear:0}]});})()""")
+    pg.wait_for_timeout(6500)
+    r = js("""(()=>{const me=R.me,T=R.trk;R.t=Math.max(R.t,1);me.wait=false;
+      // ставим машину на прямую перед первой шпилькой на полном ходу
+      let j=-1;for(let i=5;i<T.n-60;i++){if(Math.abs(T.K[i])>1/20){j=i;break;}}const i0=Math.max(2,j-Math.round(70/T.step)),p=T.pts[i0],t=T.T[i0];me.idx=i0;me.x=p[0];me.z=p[2];me.yaw=Math.atan2(t[0],t[1]);me.vx=24;me.vy=0;me.r=0;me.segT=0;trackLocal(T,me);
+      const pn=paceNote(me);raceAssistHUD();const n=document.getElementById('rNote');return {pn,txt:n?n.textContent:'',cls:n?n.className:'',hid:n?n.hidden:true,j,i0,dec:brakeDec(me,1),cap:BRK_CAP};})()""")
+    ok(r['pn'] and r['pn']['hair'] and r['pn']['need'] > 20, 'за 70 м до шпильки на 86 км/ч подсказка видит шпильку: %s км/ч, тормозной путь %.0f м' % (r['pn'] and r['pn']['kmh'], r['pn'] and r['pn']['need'] or 0))
+    ok(not r['hid'] and str(r['pn']['kmh']) in r['txt'] and ('ТОРМОЗИ' in r['txt']) == (r['pn']['lvl'] == 'bad'), 'на экране: «%s» (%s)' % (r['txt'], r['cls']))
+    r2 = js("""(()=>{const me=R.me;me.vx=30;const pn=paceNote(me);raceAssistHUD();return {lvl:pn&&pn.lvl,txt:document.getElementById('rNote').textContent};})()""")
+    ok(r2['lvl'] == 'bad' and 'ТОРМОЗИ' in r2['txt'], 'быстрее — «ТОРМОЗИ!» заранее: ' + r2['txt'])
+    r3 = js("""(()=>{const o=R.cars.find(c=>!c.player);o.wait=false;o.tyreSwap=true;o.vx=0;o.punct=false;o.stopT=0;document.getElementById('rBoard').dataset.t='';raceHUD();return document.getElementById('rBoard').textContent;})()""")
+    ok('шины' in r3, 'соперник меняет стёртые шины у обочины — в таблице «🛞 шины»')
+    js("(()=>{try{finishRace(true);closeSheet();closePaper();}catch(_){};R=null;G.pending=[];})()"); pg.wait_for_timeout(300)
+    ok(not errs, 'ошибок на странице нет: ' + '; '.join(errs)[:200])
     # снимки карточки — на чистой странице с теми же стилями (живые сцены 3D мешают снимку под программной отрисовкой)
     js("(()=>{try{sagaStop();}catch(_){};try{musicStop();}catch(_){};document.querySelectorAll('canvas,video,audio').forEach(e=>e.remove());})()")
     for name, card in (('1_young', card1), ('2_window', card2), ('4_dela', dash)):

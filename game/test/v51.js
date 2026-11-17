@@ -183,5 +183,77 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   G.pending=[];G.over=false;while(G.m!==0){G.pending=[];step();}G.pending=[];G.tm.cap=1;const y1=G.y,n1=G.raceLog.length;let skipMsg=0;for(let k=0;k<12&&G.y===y1;k++){G.pending=[];if(!step())break;if(G.tmMsg&&G.tmMsg.list.some(t=>/бюджет года исчерпан/.test(t)))skipMsg++;}
   CK(G.raceLog.length===n1&&skipMsg>=1,'бюджета нет — гонки пропущены, в «Делах» сказано почему');
   RACE_ACT.raceAutoToggle();CK(!raceAutoOn(G),'выключается той же кнопкой');}
+// 18. управление в гонке: тормоза в мере шин, перенос веса в торможении, контрруль, подсказки (замер — handling51.js, drive51.js)
+{setupRender=()=>{};setupRaceUI=()=>{};auRaceStart=()=>{};auSfx=()=>{};SCN_OFF=true;let sd=7;Math.random=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+  newGame('renault','fr','Тест','normal');G.cash=1e6;
+  const su0=surfUnder,gr0=gradeAt,rs0=respawn,ra0=respawnAt;surfUnder=(c,trk,lat)=>su0(c,trk,0);gradeAt=()=>0;respawn=()=>{};respawnAt=()=>{};
+  const field=(y,kmh,terr,diff,moto,kid)=>{G.diff=diff||'normal';const rc=Object.assign({},RACES.find(r=>r.t==='sprint'),{y,key:'hnd-test',terr});const md=G.models[0];{const a=aiCarMd(y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,y,x=>!x.truck&&!x.moto).id;if(kid)md.k=kid;
+    let mdU=md;if(moto){mdU=Object.assign({},md,{cls:'moto'});const a=aiMotoMd(y);['e','g','c','k','w'].forEach(k=>{if(a[k]!==undefined)mdU[k]=a[k];});mdU.b=lastOf(BODIES,y,x=>x.moto&&!x.side).id;}
+    startRace({rc,mode:'drive',entries:[{drv:'me',md:mdU,prep:2,tyre:'soft',gear:0}]});const me=R.me;R.cars=[me];R.t=0.001;R.trk.colG=null;R.trk.bar=[];R.trk.rg=null;me.vx=kmh/3.6;me.gear=me.gr.length;
+    const p=R.trk.pts[40],t=R.trk.T[40];me.idx=40;me.x=p[0];me.z=p[2];me.yaw=Math.atan2(t[0],t[1]);me.punctRate=0;me.tyreRate=0;R.hz0=0;return me;};
+  const endRace=()=>{try{finishRace(true);closeSheet();closePaper();}catch(_){}G.pending=[];};
+  const drive=(me,script,dur)=>{const x0=me.x,z0=me.z,yaw0=me.yaw,fx=Math.sin(yaw0),fz=Math.cos(yaw0),o={maxB:0,t90:null,stop:null,b:0,sp:0};let f=0;
+    while(R&&f<dur*60){f++;const tt=f/60,k=script(tt);rKeys.left=false;rKeys.right=!!k.r;rKeys.gas=!!k.g;rKeys.brake=!!k.b;R.t+=1/60;R.time+=1/60;playerControl(me,1/60);raceTick(1/60);if(!R)break;
+      const b=Math.atan2(me.vy,Math.max(1,Math.abs(me.vx)))*57.3,psi=(me.yaw-yaw0)*57.3,sp=Math.hypot(me.vx,me.vy),X=(me.x-x0)*fx+(me.z-z0)*fz;o.maxB=Math.max(o.maxB,Math.abs(b));o.b=b;o.sp=sp;
+      if(!o.t90&&Math.abs(psi+b)>=90)o.t90={t:tt,X,v:sp*3.6};if(!o.stop&&sp<1.5&&tt>0.5){o.stop={t:tt,X};break;}}
+    endRace();return o;};
+  const both=t=>({r:t>0.2,b:t>0.2}),brakeOnly=t=>({b:t>0.2});
+  // тормозной путь: лестница эпохи в мере игровых шин
+  {const a=drive(field(1925,110,'asphalt'),brakeOnly,20),b=drive(field(1925,150,'asphalt'),brakeOnly,20),c=drive(field(1913,100,'macadam'),brakeOnly,20),d=drive(field(1906,70,'macadam'),brakeOnly,20);
+    CK(a.stop&&a.stop.X>56&&a.stop.X<76,'машина 1925 года со 110 км/ч встаёт за 56–76 м (в 0.50 — 88): '+(a.stop&&a.stop.X.toFixed(0)));
+    CK(b.stop&&b.stop.X>100&&b.stop.X<132,'со 150 км/ч — за 100–132 м (в 0.50 — 156): '+(b.stop&&b.stop.X.toFixed(0)));
+    CK(c.stop&&c.stop.X>56&&c.stop.X<78,'машина 1913 года со 100 км/ч — 56–78 м (в 0.50 — 88): '+(c.stop&&c.stop.X.toFixed(0)));
+    CK(d.stop&&d.stop.X>46&&d.stop.X<66&&d.maxB<6,'задние барабаны 1906 года с 70 км/ч — 46–66 м, без разворота: '+(d.stop&&d.stop.X.toFixed(0))+', β '+d.maxB.toFixed(0));}
+  // тормоз с рулём: машина поворачивает на тормозе, а не идёт по рельсам; занос — не разворот
+  {const a=drive(field(1925,110,'asphalt'),both,14),b=drive(field(1925,150,'asphalt'),both,14),c=drive(field(1913,100,'macadam'),both,14),d=drive(field(1906,70,'macadam'),both,14);
+    CK(a.t90&&a.t90.X<54&&a.t90.v>42&&a.maxB<27,'1925, 110 км/ч, тормоз и руль: курс 90° через '+(a.t90&&a.t90.X.toFixed(0))+' м на '+(a.t90&&a.t90.v.toFixed(0))+' км/ч (в 0.50 — 58 м на 29 км/ч), занос до '+a.maxB.toFixed(0)+'°');
+    CK(b.t90&&b.t90.X<90&&b.t90.v>55&&b.maxB<27,'1925, 150 км/ч: '+(b.t90&&b.t90.X.toFixed(0))+' м на '+(b.t90&&b.t90.v.toFixed(0))+' км/ч (в 0.50 — 103 м на 43)');
+    CK(c.t90&&c.t90.X<52&&c.maxB<27,'1913, 100 км/ч: '+(c.t90&&c.t90.X.toFixed(0))+' м (в 0.50 — 56)');
+    CK(d.t90&&d.t90.X<33&&d.maxB<27,'1906, задние барабаны, 70 км/ч: '+(d.t90&&d.t90.X.toFixed(0))+' м, занос до '+d.maxB.toFixed(0)+'° — не разворот');}
+  // «Историк»: помощи рулём нет — полный тормоз с рулём до упора на 150 км/ч разворачивает; отпустил вовремя — занос ловится
+  {const h=drive(field(1925,150,'asphalt','hist'),both,14),r=drive(field(1925,150,'asphalt','hist'),t=>({r:t>0.2&&t<1.4,b:t>0.2&&t<1.4}),7),n=drive(field(1925,150,'asphalt','normal'),t=>({r:t>0.2&&t<1.4,b:t>0.2&&t<1.4}),7);
+    CK(h.maxB>50,'«Историк», 150 км/ч, тормоз и руль до упора — разворот (β '+h.maxB.toFixed(0)+'°)');
+    CK(r.maxB<62&&Math.abs(r.b)<12&&r.sp>8,'«Историк»: отпустил через 1,2 с — занос '+r.maxB.toFixed(0)+'° пойман (в конце '+r.b.toFixed(0)+'°)');
+    CK(n.maxB<25&&Math.abs(n.b)<6,'«Норма»: тот же манёвр — занос до '+n.maxB.toFixed(0)+'°, машина выравнивается');G.diff='normal';}
+  // мотоцикл: путь короче, на тормозе поворачивает
+  {const a=drive(field(1925,120,'asphalt','normal',1),brakeOnly,20),b=drive(field(1925,120,'asphalt','normal',1),both,14),c=drive(field(1925,120,'asphalt','normal',1),t=>({r:t>0.2}),14);
+    CK(a.stop&&a.stop.X<114,'мотоцикл 1925 года со 120 км/ч встаёт за '+(a.stop&&a.stop.X.toFixed(0))+' м (в 0.50 — 128)');
+    CK(b.t90&&b.t90.X<78&&b.maxB<24,'мотоцикл: тормоз и руль — 90° через '+(b.t90&&b.t90.X.toFixed(0))+' м (в 0.50 — 78), без разворота');
+    CK(c.t90&&c.t90.X<95,'мотоцикл: руль без тормоза на 120 км/ч — 90° через '+(c.t90&&c.t90.X.toFixed(0))+' м (в 0.50 — 100: контрруль съедал руль)');}
+  // перенос веса и пределы осей
+  {const c4=field(1925,110,'asphalt'),mu4=1.2;const s1=brakeShift(c4,c4.m*3,mu4),s2=brakeShift(c4,c4.m*6,mu4);
+    CK(brakeShift(c4,0,mu4)===0&&s1>0&&near(s2,2*s1,1e-6)&&near(s1,c4.m*3*c4.h/c4.L,1e-6),'перенос веса — сила торможения × высота центра тяжести / база');
+    CK(brakeCapR(c4,mu4,0.9)>1&&brakeCapF(c4,mu4,0.9)>1&&brakeReal(c4,mu4,0.8)>0.94*brakeDec(c4,mu4),'тормоза на четыре колеса: до полной педали оси не блокируются');
+    CK(near(BRK_CAP,8.4)&&brakeDec(c4,mu4)>7&&brakeDec(c4,0.5)<brakeDec(c4,mu4),'мера тормозов — 8,4 м/с² на сухом, на скользком — по сцеплению');endRace();
+    const c2=field(1906,70,'macadam','normal',0,'k2');CK(c2.fb===0&&brakeCapR(c2,1,0.9)<0.9&&brakeCapR(c2,1,0.5)<brakeCapR(c2,1,0.9)&&brakeReal(c2,1,0.8)<brakeDec(c2,1)*0.9,'задние барабаны: предел — разгруженная задняя ось (педаль до '+brakeCapR(c2,1,0.9).toFixed(2)+'), настоящее замедление '+brakeReal(c2,1,0.8).toFixed(1)+' из '+brakeDec(c2,1).toFixed(1)+' м/с²');endRace();}
+  // контрруль: в обычном повороте на 180 км/ч помощник не съедает руль; в заносе — работает в полную силу
+  {const c=field(1930,180,'asphalt');c.muNow=c.grip;const v=50,dmax=Math.min(0.5,1.3*c.L*c.muNow*GRAV/(v*v)+0.09);
+    const hold=(sl)=>{c.steer=0;c.delta=0;c.hold=0;for(let k=0;k<60;k++){c.vx=v;c.vy=-4;c.r=0.15;c.slipR=sl;rKeys.right=true;rKeys.left=rKeys.gas=rKeys.brake=false;playerControl(c,1/60);}return c.delta;};
+    const d1=hold(0.07),d2=hold(0.25);rKeys.right=false;
+    CK(d1>0.66*dmax,'180 км/ч, руль до упора, угол кузова 4,6°: колёса повёрнуты на '+(d1/dmax*100).toFixed(0)+'% полного руля (раньше — меньше половины)');
+    CK(d2<d1*0.8,'в заносе (увод задней оси 0,25) контрруль работает: '+(d2/dmax*100).toFixed(0)+'%');endRace();}
+  // подсказка: быстрые дуги, шпилька за дугой, настоящий тормозной путь
+  {const c=field(1925,150,'asphalt'),TK=R.trk,K0=TK.K.slice?TK.K.slice():Array.from(TK.K),st=TK.step,setK=(f)=>{for(let i=0;i<TK.n;i++)TK.K[i]=f(i-c.idx);};
+    c.vtop=60;c.vx=55;c.grade=0;c.segT=0;const mu0=roadMuAt(TK,c.idx)*c.grip*twAll(c);
+    setK(d=>d>=70&&d<95?1/150:0);let pn=paceNote(c);const vc=Math.sqrt(mu0*PACE_MU*GRAV*150);
+    CK(pn&&near(pn.vc,vc,0.01)&&pn.dir===1&&!pn.hair&&near(pn.dist,70*st,0.01),'дуга 150 м на 198 км/ч — подсказка есть: '+(pn&&pn.kmh)+' км/ч через '+(pn&&pn.dist.toFixed(0))+' м (раньше дуги положе 75 м не замечались)');
+    const need=(55*55-vc*vc)/(2*brakeReal(c,mu0,0.8)*0.9)+55*PACE_REACT;CK(pn&&near(pn.need,need,0.5)&&pn.lvl===(need>pn.dist?'bad':'warn'),'путь торможения — по настоящему замедлению с запасом на реакцию: '+(pn&&pn.need.toFixed(0))+' м');
+    setK(d=>d>=Math.round(need/st)-6&&d<Math.round(need/st)+20?1/150:0);pn=paceNote(c);CK(pn&&pn.lvl==='bad','ближе тормозного пути — «ТОРМОЗИ!»');
+    setK(d=>d>=Math.round(need/st)+12&&d<Math.round(need/st)+40?1/150:0);pn=paceNote(c);CK(pn&&pn.lvl==='warn','с запасом — предупреждение без «тормози»');
+    c.vx=40;pn=paceNote(c);CK(pn&&pn.lvl==='ok'&&pn.need===0,'скорость уже подходит — «ок»');
+    // плавная дуга, за ней шпилька
+    c.vx=30;const vh=Math.sqrt(mu0*PACE_MU*GRAV*15),needH=(900-vh*vh)/(2*brakeReal(c,mu0,0.8)*0.9)+30*PACE_REACT,hs=Math.max(12,Math.floor(needH/st)-2);setK(d=>d>=2&&d<hs-4?1/90:d>=hs&&d<hs+12?-1/15:0);pn=paceNote(c);
+    CK(pn&&pn.hair&&pn.dir===-1&&near(pn.vc,vh,0.01)&&pn.lvl==='bad','за плавной дугой шпилька: подсказка показывает шпильку ('+(pn&&pn.kmh)+' км/ч, «тормози»), а не ближнюю дугу');
+    c.vx=8;pn=paceNote(c);CK(pn&&pn.dir===1&&!pn.hair&&pn.lvl==='ok','тихим ходом — ближний поворот, без тревоги');
+    // голос «Тормози!» — по той же подсказке, один раз на поворот
+    c.vx=30;c.brk=0;NAV.brkJ=undefined;let said=0;const ns0=navSay;navSay=function(k){if(k==='brk')said++;};legBrake(c,TK);legBrake(c,TK);CK(said===1&&NAV.brkJ===paceNote(c).j,'голос «Тормози!» — раз на поворот, по подсказке');
+    c.brk=0.8;NAV.brkJ=undefined;legBrake(c,TK);CK(said===1,'гонщик уже тормозит — голос молчит');navSay=ns0;c.brk=0;
+    for(let i=0;i<TK.n;i++)TK.K[i]=K0[i];endRace();
+    // задние барабаны: путь в подсказке длиннее, чем по паспорту тормозов
+    const c2=field(1906,70,'macadam','normal',0,'k2'),T2=R.trk,m2=roadMuAt(T2,c2.idx)*c2.grip*twAll(c2);c2.vtop=30;c2.vx=20;c2.grade=0;c2.segT=0;for(let i=0;i<T2.n;i++)T2.K[i]=(i-c2.idx>=30&&i-c2.idx<45)?1/20:0;
+    const p2=paceNote(c2),v2=Math.sqrt(m2*PACE_MU*GRAV*20),nominal=(400-v2*v2)/(2*brakeDec(c2,m2)*0.9)+20*PACE_REACT;CK(p2&&p2.need>nominal*1.1,'задние барабаны: тормозить раньше — '+(p2&&p2.need.toFixed(0))+' м вместо '+nominal.toFixed(0)+' по паспорту тормозов');endRace();}
+  // смена стёртых шин у обочины и «застряли» — с подписью
+  {const src=String(raceTick)+String(typeof raceBoard==='function'?raceBoard:'');CK(/ЗАСТРЯЛИ\\?/.test(String(raceTick))&&/npT>12/.test(String(raceTick)),'упёрлись и газуем — подсказка; маршалы выталкивают через 12 с');}
+  surfUnder=su0;gradeAt=gr0;respawn=rs0;respawnAt=ra0;}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

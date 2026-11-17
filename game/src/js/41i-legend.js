@@ -114,8 +114,8 @@ function legTick(me,T,recon){if(!T.leg)T.leg=legBuild(T);const LG=T.leg,L=LG.L;i
     q++;break;}
   NAV.legI=q;NAV.legSaid=(NAV.legSaid||0)+1;
   navSpeak(words.map(w=>LEG_W[w]),sub.join(' · '),5);}
-// «Тормози!» — следующий поворот близко, а скорость для него велика и гонщик не тормозит
-function legBrake(me,T){const LG=T.leg;if(!LG||!LG.L.length)return;const kc=legPos(T,me),st=T.step;
-  const c=LG.L.find(x=>x.t==='c'&&x.k0>kc&&(x.k0-kc)*st<80);if(!c||NAV.brkC===c)return;
-  const v=Math.max(0,me.vx),mu=roadMuAt(T,me.idx)*me.grip*twAll(me)*1.08,vc=Math.sqrt(mu*GRAV*(c.Rl||c.R)),bdec=(me.brakeK||0.8)*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0,d=(c.k0-kc)*st;
-  if(need>d*0.95&&!(me.brk>0.5)){NAV.brkC=c;navSay('brk',10,0.9);}}
+// «Тормози!» — скорость для поворота впереди велика, тормозного пути осталось впритык, а гонщик не тормозит
+// 0.51: по той же подсказке, что на экране (paceNote: настоящее замедление машины, быстрые дуги, дальний взгляд) — раньше голос считал путь
+// по тормозам до 0.48 и только на 80 м вперёд: со 150 км/ч «тормози» звучало, когда поворот уже не взять
+function legBrake(me,T){let pn=null;try{pn=paceNote(me);}catch(_){}if(!pn||pn.lvl!=='bad'||me.brk>0.5||pn.dist<4)return;
+  if(NAV.brkJ!==undefined&&Math.abs(NAV.brkJ-pn.j)<=6)return;NAV.brkJ=pn.j;navSay('brk',10,0.9);}

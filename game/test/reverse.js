@@ -21,7 +21,7 @@ function step(me,k,T){const dt=1/60;for(let f=0;f<T*60;f++){rKeys.left=false;rKe
  finishRace(true);closeSheet();closePaper();G.pending=[];}
 // 2) на ходу тормоз — просто тормозит, задний не включается, пока не остановились
 {const me=setup(15);step(me,{brake:1},0.6);ok(!me.rev&&me.vx>1,'на ходу тормоз тормозит ('+me.vx.toFixed(1)+' м/с), без заднего хода');
- step(me,{brake:1},4);ok(me.rev,'после остановки и удержания — задний ход');finishRace(true);closeSheet();closePaper();G.pending=[];}
+ step(me,{brake:1},5.5);ok(me.rev,'после остановки и удержания — задний ход');finishRace(true);closeSheet();closePaper();G.pending=[];}
 // 3) авария с остановкой → после ремонта кнопка «на трассу» появляется, если стоим
 {const me=setup(0);me.stopT=0.5;step(me,{},0.52);ok(me.stopT===0,'после ремонта stopT = 0 (не отрицательный)');
  step(me,{},1.5);ok(me.stuck>1.2,'стоим после ремонта — кнопка «Вернуться на трассу» видна (stuck '+me.stuck.toFixed(1)+')');

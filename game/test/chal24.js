@@ -41,6 +41,7 @@ G.pending=[];const R4=runMatch();ok(R4&&R4.L.rc.kind==='record'&&R4.L.res.length
 ok(R4.L.vMe>20&&R4.L.vMe<200,'скорость на заезде правдоподобна: '+R4.L.vMe+' км/ч');
 const lsr=lsrAt(1899,5);ok(lsr&&lsr[1]===105.88,'мировой рекорд к маю 1899: '+(lsr&&lsr[1])+' км/ч — '+(lsr&&lsr[2]));
 // ---------- 5. продажи класса: помесячный счёт, итог в срок ----------
+Math.random=(()=>{let a=2024;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();/* 0.51: своё зерно — раздел не зависит от того, сколько случайных чисел съели заезды выше */
 newGame('ford','us','Форд Мотор','normal');G.cash+=40000;
 for(let i=0;i<12*16+3;i++){G.pending=[];botMonth('grow');if(i===30){G.dealers.uk=(G.dealers.uk||0)+4;if(!impLv(G,'uk'))impUp(G,'uk');}G.chal=null;step();}
 G.pending=[];const os=chalOffers(G).find(o=>o.kind==='sales');ok(!!os,'Форд, '+dstr(G)+': вызов по продажам — «'+(os&&os.title)+'» · '+(os&&os.sub));

@@ -1,7 +1,11 @@
 /* ================= RACE ENGINE: track, vehicle physics, AI, lifecycle ================= */
 const GRAV=9.81;
 // Жёсткость шин (на рад угла увода) и «держалка» для машины игрока — подобраны так, чтобы машина ехала туда, куда смотрит нос
-const PHY={tk:11,hold:1};
+// tk — жёсткость шины; hold — «держалка» игрока; 0.51: wt — доля переноса веса в торможении (1 — по физике); cap — сколько бокового
+// ускорения (в долях сцепления) «держалка» может добавить, гася снос задних колёс (раньше — без предела: с переносом веса выходило вдвое
+// больше, чем держат шины); rearUse — доля сцепления задней оси под тормоз в повороте; trail/trailH — с какого угла увода задней оси
+// нога отпускает тормоз («Норма» и «Историк»), trailMin — до какой педали
+const PHY={tk:11,hold:1,wt:1,cap:0.5,rearUse:0.65,trail:0.14,trailH:0.14,trailMin:0.25};
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 // Покрытия: цвета псевдо-3D, сцепление, качение, живучесть шин, пыль, тряска
@@ -361,8 +365,25 @@ class RaceCar{constructor(e){
   this.crr0=0;this.surf='';this.surfIn=0;this.surfP=null;this.wetRoad=false;this.tun=0;this.muNow=0;this.flood=0;this.crash=null;this.inWater=0;this.wetT=0;this.waterY=0;this.rescueT=0;this.rescueIdx=0;this.trainHit=0;this.gateWait=0;
   // 0.30: четыре шины (41f-tyres.js): износ, «партия», прокол (1 — спущено, 2 — обод), путь на спущенном, сколько до обода, запаски
   this.tw=[0,0,0,0];this.tq=[1,1,1,1];this.tp=[0,0,0,0];this.tpd=[0,0,0,0];this.tpL=[400,400,400,400];this.spares=2;this.spare0=2;this.punctW=-1;this.punctWhy='';this.rimSaid=0;this.svcL=null;}}
-const BRK_CAP=6.2;/* м/с²: лучшие тормоза эпохи на сухом */
+// 0.51: 8,4 вместо 6,2. В 0.48 тормоза стали «по эпохе» в настоящих числах (0,27–0,54 g), а шины остались игровыми (1,0–1,3 g вбок):
+// машина держала поворот как спортивная, а тормозила вдвое дольше прежнего (со 110 км/ч — 88 м вместо 48) — «при торможении не
+// поворачивает, как по рельсам». Теперь тормоза — та же лестница эпохи (лента 0,42, задние барабаны 0,55, четыре колеса 0,72–0,9,
+// гидравлика 0,86, серво 0,9), но в мере игровых шин: со 110 км/ч машина 1925 года встаёт за 68 м (в 0.50 — 88, до 0.48 — 48).
+// У тормозов только на задних колёсах предел — не сами тормоза, а разгруженная задняя ось (см. перенос веса ниже): 3,5 м/с²
+const BRK_CAP=8.4;/* м/с²: лучшие тормоза эпохи на сухом */
 function brakeDec(c,mu){return (c.brakeK||0.5)*Math.min(mu*GRAV,BRK_CAP);}
+// 0.51: перенос веса при торможении — нос «клюёт»: передние колёса нагружаются, задние разгружаются (высота центра тяжести c.h к базе).
+// Раньше нагрузка осей в торможении не менялась: передние колёса брали 60 % тормоза при половине веса и теряли боковое сцепление,
+// задние держали — машина с тормозом шла прямо («как по рельсам»): со 110 км/ч с рулём до упора курс менялся на 90° только к остановке.
+// Теперь в торможении передок цепляется, зад облегчается — машина доворачивает на тормозе, а перебор (задние барабаны, полный тормоз
+// в повороте) даёт занос задней оси
+function brakeShift(c,brkF,mu){return brkF>0?Math.min(Math.min(brkF,mu*c.m*GRAV)*PHY.wt*(c.h||0.65)/c.L,c.m*GRAV*c.a/c.L*0.7):0;}
+// наибольшая педаль (0…1), при которой ось занята торможением не больше доли use своего сцепления, — с переносом веса
+function brakeCapR(c,mu,use){const fb=c.fb||0;return fb<1?use*mu*GRAV*(c.a/c.L)/((brakeDec(c,mu)+0.01)*((1-fb)+use*mu*PHY.wt*(c.h||0.65)/c.L)):9;}
+function brakeCapF(c,mu,use){const fb=c.fb||0,den=fb-use*mu*PHY.wt*(c.h||0.65)/c.L;return fb>0&&den>0.02?use*mu*GRAV*(c.b/c.L)/((brakeDec(c,mu)+0.01)*den):9;}
+// замедление, которого машина достигает на деле: тормоза эпохи, но не больше, чем держат оси до блокировки (use — доля сцепления оси):
+// у машины с тормозами только на задних колёсах предел — разгруженная задняя ось, а не сами тормоза
+function brakeReal(c,mu,use){return brakeDec(c,mu)*Math.min(1,brakeCapR(c,mu,use),brakeCapF(c,mu,use));}
 function mkRaceCar(e,y,trk){
   const st=carStats(e.md,e.prep,y),terr=TERR[trk.cfg.terr]||TERR.dirt,c=new RaceCar(e);
   const m=st.kg,P=st.P*(e.pw||1),kd=st.kd,crr=st.crr*(terr.crr||1);
@@ -509,9 +530,15 @@ function carStep(c,trk,dt){
     // сколько продольной силы у каждой оси: тяга — только задние колёса, тормоз — по осям (c.fb — доля передних)
     const brkF=brk>0.05&&!c.rev&&Fx<0?-Fx:0,fb=c.fb||0;let FxR=brkF?brkF*(1-fb):Math.abs(Fx),FxF=brkF*fb;
     // 0.48: ось не тормозит сильнее, чем держит: лишнее — юз (скользящее колесо даёт ещё 15 % сверх предела)
-    let lockR=0,lockF=0;if(brkF){const cR=0.9*muR*Fzr,cF=0.9*muF*Fzf;if(FxR>cR){lockR=Math.min(1,(FxR-cR)/cR);FxR=cR+(FxR-cR)*0.15;}if(FxF>cF){lockF=Math.min(1,(FxF-cF)/cF);FxF=cF+(FxF-cF)*0.15;}Fx=-(FxR+FxF);}
-    const rearCap=Math.max(lockR>0?0.3:0.05,Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxR/(muR*Fzr+1)),2)))),frontCap=FxF?Math.max(0.4,Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxF/(muF*Fzf+1)),2)))):1;c.lockR=lockR;c.lockF=lockF;
-    const Fyf=tyreSat(af,Fzf,frontCap,muF),Fyr=tyreSat(ar,Fzr,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
+    // 0.51: перенос веса в торможении (brakeShift): нагрузка осей — уже с «клевком»
+    // (в два прохода: перенос считается по силе, которая дошла до дороги, — с заблокированной осью она меньше той, что просит педаль)
+    let dz=brakeShift(c,brkF,mu),FzfB=Fzf+dz,FzrB=Fzr-dz,lockR=0,lockF=0;
+    if(brkF){const r0=FxR,f0=FxF;for(let it=0;it<2;it++){FxR=r0;FxF=f0;lockR=0;lockF=0;const cR=0.9*muR*FzrB,cF=0.9*muF*FzfB;
+        if(FxR>cR){lockR=Math.min(1,(FxR-cR)/cR);FxR=cR+(FxR-cR)*0.15;}if(FxF>cF){lockF=Math.min(1,(FxF-cF)/cF);FxF=cF+(FxF-cF)*0.15;}
+        if(it||FxR+FxF>brkF*0.985)break;dz=brakeShift(c,FxR+FxF,mu);FzfB=Fzf+dz;FzrB=Fzr-dz;}
+      Fx=-(FxR+FxF);}
+    const rearCap=Math.max(lockR>0?0.3:0.05,Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxR/(muR*FzrB+1)),2)))),frontCap=FxF?Math.max(0.4,Math.sqrt(Math.max(0.05,1-Math.pow(Math.min(1,FxF/(muF*FzfB+1)),2)))):1;c.lockR=lockR;c.lockF=lockF;
+    const Fyf=tyreSat(af,FzfB,frontCap,muF),Fyr=tyreSat(ar,FzrB,1.15*rearCap*(1-Math.min(0.5,spin*0.5)),muR);
     const cd=Math.cos(c.delta),sd=Math.sin(c.delta);
     const dvx=(Fx-Fyf*sd-drag)/c.m+c.vy*c.r,dvy=(Fyf*cd+Fyr)/c.m-c.vx*c.r+bump+rgh.ay,dr=(c.a*Fyf*cd-c.b*Fyr)/c.Iz+bump*0.18+pull+rgh.dr+(c.punct?twPull(c)*(c.punctWhy==='wear'?0.3:0.6)*Math.min(1,sp/15):0);
     c.vx+=dvx*dt;c.vy+=dvy*dt;c.r+=dr*dt;c.r*=0.9995;c.slipR=Math.abs(ar);c.slipF=Math.abs(af);
@@ -647,7 +674,7 @@ function aiControl(c,trk,dt){
     for(let it=0;it<=m;it++){let j=c.idx+2*it;if(closed)j%=n;else if(j>=n)j=n-1;const kk=onL?K[j]+pr*(KL[j]-K[j]):K[j];KS[it]=(kk<0?-kk:kk)+1e-4;}
     // тормозят задние колёса (в модели тормоз нагружает заднюю ось): в повороте им остаётся лишь доля сцепления задней оси —
     // поэтому тормозить надо до поворота, по прямой
-    const rf=clamp((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0))),0.3,1);
+    const rf=clamp(brakeCapR(c,mu0,0.9),0.3,1);/* 0.51: с переносом веса — задние колёса в торможении разгружены */
     let vn=Math.min(vt,Math.sqrt(mg/KS[m]));VL[m]=vn;
     for(let it=m-1;it>=0;it--){const k=KS[it],vc=Math.sqrt(mg/k),u=Math.min(1,vn*vn*k/mg),a=bp*Math.sqrt(Math.max(0.04,1-u*u))*(1-(1-rf)*Math.min(1,u/0.3));vn=Math.min(vc,Math.sqrt(vn*vn+2*a*ds));VL[it]=vn;}
     vt=Math.min(vt,VL[0]);
@@ -664,9 +691,9 @@ function aiControl(c,trk,dt){
   // повороте — у машин с тормозами на задних колёсах это занос и разворот
   {const full=brakeDec(c,mu0)+0.01;c.brk=v>vt?clamp((Math.max(aNeed,0.5)/full)*1.1+(v-vt)*0.15,0.12,1):0;
     // в повороте тормоз — только в пределах сцепления, что осталось от поворота (круг трения)
-    if(latDem>0.15)c.brk=Math.min(c.brk,clamp(1.1*Math.sqrt(Math.max(0,1-latDem*latDem))*((c.a/c.L)/Math.max(0.3,c.brakeK*(1-(c.fb||0)))+0.15),0.06,1));
+    if(latDem>0.15)c.brk=Math.min(c.brk,clamp(1.1*Math.sqrt(Math.max(0,1-latDem*latDem))*(Math.min(brakeCapR(c,mu0,0.9),brakeCapF(c,mu0,0.9))+0.1),0.06,1));
     // и по прямой — не до блокировки задних колёс (заблокированные колёса не держат вбок — разворот)
-    c.brk=Math.min(c.brk,clamp(0.95*(c.a/c.L)/Math.max(0.2,c.brakeK*(1-(c.fb||0))),0.35,1));}
+    c.brk=Math.min(c.brk,clamp(Math.min(brakeCapR(c,mu0,0.88),brakeCapF(c,mu0,0.88)),0.35,1));}
   // выносит наружу поворота дальше своей линии (или к самой бровке) — сбросить газ; тормоз — только почти по прямой
   {const tl=c.laneT!==undefined?c.laneT:(c.lane||0)+LL[c.idx]*pr,out=-Math.sign(kN)*(c.lat-tl)-0.9,edge=-Math.sign(kN)*c.lat-(trk.W/2-0.7),wide=Math.max(out,edge);c.wide=Math.abs(kN)>1/400?wide:0;
     if(Math.abs(kN)>1/400&&wide>0&&v>8){c.thr=Math.min(c.thr,wide>0.6?0:0.2);if(latDem<0.35)c.brk=Math.max(c.brk,Math.min(0.3,wide*0.1));}}
@@ -753,7 +780,12 @@ function playerControl(c,dt){
   const mu=c.muNow||c.grip,dmax=Math.min(0.5,(hist?1.7:1.3)*c.L*mu*GRAV/Math.max(1,v*v)+0.09);
   let want=c.steer*dmax;
   // помощник: колёса чуть доворачиваются по ходу заноса (контрруль)
-  if(!hist&&v>4)want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),moto?-0.2:-0.12,moto?0.2:0.12);
+  // 0.51 (отзыв: «быстрые машины почти не поворачивают, как на рельсах; хуже всего на Монце»): контрруль шёл за углом кузова к пути
+  // (до 0,12 рад), а на большой скорости этот угол есть в любом повороте (шинам нужен угол увода: 4–5° на 190 км/ч), полный же руль
+  // там — всего 0,10–0,12 рад: помощник съедал руль наполовину, а в торможении, когда зад облегчён, — целиком (машина шла прямо).
+  // Теперь в обычном повороте помощник берёт не больше трети руля (гасит рывки), а в полную силу включается, когда задние колёса
+  // уже за пределом сцепления (угол увода больше 0,12) — то есть в настоящем заносе
+  if(!hist&&v>4){const lim=0.3*dmax+clamp(((c.slipR||0)-0.12)/0.08,0,1)*(moto?0.2:0.12);want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),-lim,lim);}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
   // 0.40: «держалка» гасит только лишнее — вращение сверх того, что задаёт руль (rk — поворот по геометрии колёс), и снос задних
   // колёс за пиком шины (угол увода задней оси больше 0,15 — пик у 0,145). Раньше гасились всё вращение и весь увод: на малой скорости машина шла
@@ -763,7 +795,7 @@ function playerControl(c,dt){
     let kr=4*PHY.hold*gk;if(!hist&&v>4)kr+=15*Math.max(0,c.slipR-0.08);
     if(rEx)c.r-=rEx*Math.min(0.5,dt*kr);
     const ar=Math.atan2(c.vy-c.b*c.r,v),ex=Math.abs(ar)>0.15?ar-0.15*Math.sign(ar):0;
-    if(ex)c.vy-=ex*v*Math.min(0.3,dt*6*PHY.hold*gk);}
+    if(ex){const dv=ex*v*Math.min(0.3,dt*6*PHY.hold*gk),lim=(PHY.cap||9)*mu*GRAV*dt;c.vy-=clamp(dv,-lim,lim);}}
   // задний ход (0.19): стоим и держим «Тормоз» полсекунды — включается задняя передача, «Тормоз» теперь едет назад,
   // «Газ» тормозит; остановились и жмём «Газ» — снова вперёд. На приборе — «R», звук переключения и надпись.
   const still=Math.abs(c.vx)<0.5;
@@ -787,14 +819,21 @@ function playerControl(c,dt){
     const sl=c.slipR||0;let esc=false;if(v>2.5&&sl>0.1){const k=clamp(1-(sl-0.1)/0.08,0,1);if(c.thr>tMax*k){c.thr=tMax*k;tc=true;}if(c.brk>0.1+0.9*k){c.brk=0.1+0.9*k;esc=true;}
       const rk2=v*Math.tan(c.delta)/Math.max(0.5,c.L),ex2=c.r*(c.r-rk2)>0?c.r-rk2:0;if(ex2)c.r-=ex2*Math.min(0.5,dt*20*(sl-0.08));c.vy*=1-Math.min(0.25,dt*6*(sl-0.08));}
     if(tc&&gIn&&R)c.asTC=R.time+0.35;
-    if(c.brk>0&&v>0.5){const fb=c.fb||0,full=brakeDec(c,muN)*c.m+1,Fzf=c.m*GRAV*c.b/c.L,capR=fb<1?0.92*muN*Fzr*side/((1-fb)*full):9,capF=fb>0?0.92*muN*Fzf*side/(fb*full):9;
-      const cap=Math.max(0.1,Math.min(capR,capF));if(c.brk>cap){c.brk=cap;esc=true;}}
+    if(c.brk>0&&v>0.5){const cap=Math.max(0.1,Math.min(brakeCapR(c,muN,0.92*side),brakeCapF(c,muN,0.92*side)));if(c.brk>cap){c.brk=cap;esc=true;}}/* 0.51: с переносом веса */
     if(esc&&bIn&&R)c.asABS=R.time+0.35;}
   // 0.48: автомобиль — в повороте водитель отпускает тормоз настолько, чтобы передние колёса держали руль (передней оси — не больше
   // трёх четвертей её сцепления): тормоза на четыре колеса не «ставят на рельсы»; по прямой тормоз полный
   // задней оси — не больше двух третей (тормоза только на задние колёса на пределе в повороте — разворот)
-  if(!moto&&!c.rev&&c.brk>0.2&&v>3&&Math.abs(c.delta)>0.06){const muN=c.muNow||c.grip,fb=c.fb||0,Fzf=c.m*GRAV*c.b/c.L,Fzr=c.m*GRAV*c.a/c.L,full=brakeDec(c,muN)*c.m+1,capF=fb>0?0.75*muN*Fzf/(fb*full):9,capR=fb<1?0.65*muN*Fzr/((1-fb)*full):9,cap=Math.min(capF,capR);
+  // 0.51: доли — с переносом веса (brakeCapF/R): в торможении зад разгружен, и задние колёса блокируются раньше, чем считалось
+  if(!moto&&!c.rev&&c.brk>0.2&&v>3&&Math.abs(c.delta)>0.06){const muN=c.muNow||c.grip,cap=Math.min(brakeCapF(c,muN,0.75),brakeCapR(c,muN,PHY.rearUse));
     if(c.brk>cap){c.brk=Math.max(0.2,cap);if(bIn&&R)c.asABS=R.time+0.35;}}
+  // 0.51: и по прямой нога не блокирует задние колёса (тормоза только на задних колёсах сильнее, чем держит разгруженная задняя ось):
+  // заблокированные колёса не держат вбок — машину ставит поперёк. На «Историке» дозировать тормоз — дело гонщика
+  if(!hist&&!moto&&!c.rev&&c.brk>0.3&&v>3){const cap=brakeCapR(c,c.muNow||c.grip,0.88);if(c.brk>cap)c.brk=Math.max(0.3,cap);}
+  // 0.51: зад пошёл в занос на тормозе — помощник отпускает тормоз (как газ в пробуксовке): вес возвращается на задние колёса, и они
+  // снова держат. На «Историке» нога отпускает тормоз так же (PHY.trailH), но контрруля нет и руль круче: полный тормоз с рулём до упора
+  // на большой скорости — разворот, если не отпустить вовремя
+  if((!hist||PHY.trailH)&&!moto&&!c.rev&&PHY.trail&&c.brk>PHY.trailMin&&v>4){const t0=hist?PHY.trailH:PHY.trail;if(c.slipR>t0){const k=clamp(1-(c.slipR-t0)/0.12,PHY.trailMin,1);if(c.brk>k)c.brk=k;}}
   // ограничение сценария: колонна за машиной-лидером, нейтрализация в городе
   if(c.vCap&&c.vx>c.vCap){c.thr=0;c.brk=Math.max(c.brk,Math.min(1,(c.vx-c.vCap)/3));}
 }
@@ -1060,8 +1099,10 @@ function raceTick(dt){
       if(busy||me.prog>me.npP+6){me.npP=me.prog;me.npT=0;}else me.npT+=dt;
       // 0.37: стоит за обочиной (после аварии, ремонт ещё не вызван) — кнопка «Вернуться на трассу» нужна и тогда
       me.offStill=Math.abs(me.lat)>T.W/2+3&&Math.abs(me.vx)<1.5&&!me.dnf&&me.fin===null&&R.t>2?(me.offStill||0)+dt:0;
-      // через 20 с без продвижения маршалы сами выталкивают машину на дорогу (время потеряно, но гонка не встаёт)
-      if(me.npT>20){racerBackOnTrack(me,true);}}
+      // без продвижения маршалы сами выталкивают машину на дорогу (время потеряно, но гонка не встаёт)
+      // 0.51: упёрлись и газуем на месте — подсказка, что делать (раз на случай); маршалы выталкивают через 12 с, а не через 20
+      if(R.mode==='drive'&&rKeys.gas&&!me.rev&&Math.abs(me.vx)<1&&!busy&&!me.svc){me.jamT=(me.jamT||0)+dt;if(me.jamT>2.2&&!me.jamSaid){me.jamSaid=1;rMsg('ЗАСТРЯЛИ? «ВЕРНУТЬСЯ НА ТРАССУ» ИЛИ ЗАДНИЙ ХОД: ДЕРЖИТЕ «ТОРМОЗ»',3.2);}}else{me.jamT=0;if(me.vx>4)me.jamSaid=0;}
+      if(me.npT>12){racerBackOnTrack(me,true);}}
     // срезать нельзя: если по трассе «продвинулись» дальше, чем проехали по полю, — назад, туда, где съехали
     if(!me.dnf&&me.fin===null){const off=Math.abs(me.lat)>T.W/2+2.5;
       if(off){if(me.offIdx<0){me.offIdx=me.idx;me.offProg=me.prog;me.offDist=0;me.offLap=me.lap;}me.offDist+=Math.abs(me.vx)*dt;

@@ -47,7 +47,8 @@ R3.on=false;finishRace(true);closeSheet();closePaper();G.pending=[];
   startRace({rc:rc6,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'soft',gear:0},{drv:DRIVERS.find(d=>d.from<=rc6.y&&d.to>=rc6.y).id,md,prep:2,tyre:'hard',gear:0}]});R.t=0.01;R.hz0=0;
   const ai=R.cars.find(c=>c.you&&!c.player),T6=R.trk;ai.punctRate=0;R.cars.forEach(c=>{c.punctRate=0;});
   // ставим его почти на финиш, на ходу, и прокалываем
-  ai.lap=T6.cfg.laps-1;ai.idx=T6.closed?Math.max(0,T6.n-Math.round(60/T6.step)):T6.n-Math.round(60/T6.step);const P6=T6.pts[ai.idx],TT6=T6.T[ai.idx];ai.x=P6[0];ai.z=P6[2];ai.yaw=Math.atan2(TT6[0],TT6[1]);ai.vx=25;trackLocal(T6,ai);
+  ai.lap=T6.cfg.laps-1;ai.idx=T6.closed?Math.max(0,T6.n-Math.round(60/T6.step)):T6.n-Math.round(60/T6.step);const P6=T6.pts[ai.idx],TT6=T6.T[ai.idx];ai.x=P6[0];ai.z=P6[2];ai.yaw=Math.atan2(TT6[0],TT6[1]);ai.vx=15;/* 0.51: 54 км/ч вместо 90 — на мокром грунте с двумя спущенными колёсами исход на 90 км/ч был лотереей (каждый пятый прогон — разворот, и до правок физики) */trackLocal(T6,ai);
+  R.me.ghostT=999;/* 0.51: своя машина стоит на стартовой решётке у финиша — убрана с пути, проверяем решение «ехать на ободе», а не столкновение */
   ai.prog=T6.raceLen-60;twPunct(ai,0,T6,'nail');let stopped=0;for(let f=0;f<60*20&&ai.fin===null;f++){R.t+=1/60;R.time+=1/60;raceTick(1/60);if(ai.vx<0.5)stopped++;}
   ok(ai.flat&&ai.fin!==null&&stopped<30,'прокол за 60 м до финиша: ехать дальше — '+ai.flat+', финишировал: '+(ai.fin!==null)+', стоял кадров: '+stopped);
   // а в начале гонки — меняет колесо

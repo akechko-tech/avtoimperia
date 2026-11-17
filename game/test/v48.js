@@ -44,10 +44,10 @@ const seed=k=>{let a=k;Math.random=()=>{a=(a*16807)%2147483647;return a/21474836
     while(c.vx>0.3&&t<15){c.thr=0;c.brk=1;c.delta=steer;playerControl(c,1/60);c.delta=steer;carStep=origStep;origStep(c,trk,1/60);t+=1/60;maxR=Math.max(maxR,Math.abs(c.r));}
     rKeys.brake=false;R=null;return {dist:Math.hypot(c.x-x0,c.z-z0),t,maxR,dec:brakeDec(c,0.92),c};};
   const a=trial('k1',0),b=trial('k2',0),d=trial('k3',0),e=trial('k4',0);
-  ok(a.dec<2.8&&a.dec>2.3&&b.dec<3.6&&d.dec>4.2&&e.dec>5&&e.dec<5.8,'замедление по эпохе на сухом: лента '+a.dec.toFixed(1)+' м/с², задние барабаны '+b.dec.toFixed(1)+', четыре колеса '+d.dec.toFixed(1)+', гидравлика '+e.dec.toFixed(1));
-  ok(a.dist>40&&a.dist<56&&b.dist>30&&b.dist<42&&d.dist>24&&d.dist<33&&e.dist>20&&e.dist<28&&[a,b,d,e].every(x=>x.maxR<0.15),'с 60 км/ч по прямой: лента '+a.dist.toFixed(0)+' м, барабаны '+b.dist.toFixed(0)+', четыре колеса '+d.dist.toFixed(0)+', гидравлика '+e.dist.toFixed(0)+' — без разворота');
+  /* 0.51: лестница та же, мера — 8,4 м/с² вместо 6,2 */ok(a.dec<3.8&&a.dec>3.2&&b.dec>4.3&&b.dec<4.9&&d.dec>5.7&&e.dec>6.9&&e.dec<7.6,'замедление по эпохе на сухом: лента '+a.dec.toFixed(1)+' м/с², задние барабаны '+b.dec.toFixed(1)+', четыре колеса '+d.dec.toFixed(1)+', гидравлика '+e.dec.toFixed(1));
+  /* 0.51: с переносом веса задние барабаны упираются в сцепление разгруженной задней оси — путь как у ленты; четыре колеса — вдвое короче */ok(a.dist>35&&a.dist<47&&b.dist>33&&b.dist<45&&b.dist<=a.dist+1&&d.dist>18&&d.dist<27&&e.dist>16&&e.dist<24&&e.dist<d.dist&&[a,b,d,e].every(x=>x.maxR<0.15),'с 60 км/ч по прямой: лента '+a.dist.toFixed(0)+' м, барабаны '+b.dist.toFixed(0)+', четыре колеса '+d.dist.toFixed(0)+', гидравлика '+e.dist.toFixed(0)+' — без разворота');
   const f=trial('k2',0.12),g=trial('k4',0.12);
-  ok(f.maxR<1.6&&f.dist>25&&f.c.vx<0.5,'задние барабаны с рулём на тормозе: помощь водителя отпускает тормоз до двух третей сцепления задней оси — машина скользит, но не разворачивается (max рыскание '+f.maxR.toFixed(2)+' рад/с, '+f.dist.toFixed(0)+' м)');
+  ok(f.maxR<1.6&&f.dist>17&&f.c.vx<0.5,'задние барабаны с рулём на тормозе: помощь водителя отпускает тормоз до двух третей сцепления задней оси — машина скользит, но не разворачивается (max рыскание '+f.maxR.toFixed(2)+' рад/с, '+f.dist.toFixed(0)+' м)');
   ok(g.maxR>0.3&&g.maxR<1.2,'тормоза на четыре колеса с рулём: машина поворачивает на тормозе (рыскание '+g.maxR.toFixed(2)+' рад/с), а не идёт по рельсам');
   carStep=origStep;}
 console.log(bad?'ОШИБОК: '+bad:'всё в порядке');process.exit(bad?1:0);}`);

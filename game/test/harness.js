@@ -7,6 +7,6 @@ global.BOTS_OFF=true;/* 0.41: живые соперники выключены �
 global.requestAnimationFrame=()=>0;global.cancelAnimationFrame=()=>{};global.performance={now:()=>Date.now()};
 global.setTimeout=()=>0;global.setInterval=()=>0;global.clearInterval=()=>{};global.fetch=()=>Promise.reject();global.Audio=function(){return el();};
 const fs=require('fs'),path=require('path');
-const dir=path.join(__dirname,'../src/js');
+const dir=process.env.SRC||path.join(__dirname,'../src/js');/* SRC — папка исходников другой версии (сравнение поколений физики) */
 const code=fs.readdirSync(dir).filter(f=>f.endsWith('.js')&&f!=='99-boot.js').sort().map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
 module.exports=function(extra){return eval(code+'\n'+extra);};

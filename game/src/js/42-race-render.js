@@ -187,10 +187,12 @@ function raceHUD(){
   // 0.36: таблица гонки говорит, что происходит: первые трое, а дальше — вы и ваши соседи (кто впереди и сзади и на сколько секунд),
   // цвет команды, гонщик и марка, кто в боксах, на ремонте, на спущенном колесе, кто сошёл. Отзыв: «лидерборд ни о чём не говорит»
   const lead=order[0],tim=R.scn&&R.scn.timed,gapOf=o=>!o||!lead?null:o===lead?0:o.dnf?null:tim?(o.wait?null:Math.max(0,scnOrderKey(o)-scnOrderKey(lead))):o.fin!==null&&lead.fin!==null?o.fin-lead.fin:raceGapSec(o);
-  const pi=order.indexOf(F),pick=new Set([0,1,2].filter(i=>i<order.length));   // в матче один на один участников двоеif(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
+  const pi=order.indexOf(F),pick=new Set([0,1,2].filter(i=>i<order.length));   // в матче один на один участников двое
+  // 0.51: соседи по месту (кто прямо впереди и сзади) — строка попала в комментарий выше и не работала: в таблице были только первые трое и вы
+  if(pi>=0){[pi-1,pi,pi+1].forEach(i=>{if(i>=0&&i<order.length)pick.add(i);});}
   order.forEach((o,i)=>{if((o.you||o.pmy)&&pick.size<7)pick.add(i);});
   const idx=[...pick].sort((a,b)=>a-b),gF=pi>=0?gapOf(F):null,sec=x=>x<10&&x%1?x.toFixed(1).replace('.',','):Math.round(x);
-  const stat=o=>o.dnf?'сход':o.fin!==null?'финиш':o.wait?'ждёт старта':o.svc===2||o.pitT>0?'⛽ боксы':o.stopT>0?'🔧 ремонт':o.punct?'🛞 прокол':'';
+  const stat=o=>o.dnf?'сход':o.fin!==null?'финиш':o.wait?'ждёт старта':o.svc===2||o.pitT>0?'⛽ боксы':o.stopT>0?'🔧 ремонт':o.tyreSwap&&o.vx<1.5?'🛞 шины':o.punct?'🛞 прокол':'';/* 0.51: смена стёртых шин у обочины — с подписью (отзыв: «машина стоит и не едет, наверное застряла») */
   let prev=-1;const board=idx.map(i=>{const o=order[i],g=gapOf(o),st=stat(o),near=pi>=0&&Math.abs(i-pi)===1&&gF!==null&&g!==null&&!o.dnf;
       const gap=o.dnf?'сход':i===0?(o.fin!==null?'финиш':o.wait&&tim?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':'лидер'):near?(i<pi?'▲ '+sec(Math.max(0,gF-g))+' с':'▼ '+sec(Math.max(0,g-gF))+' с'):g===null?(o.wait&&tim?'старт '+Math.max(0,Math.ceil(o.relT-R.time))+' с':''):'+'+sec(g)+' с';
       const who=o===F&&R.mode==='drive'?'Вы':(o.drvName||o.name).split(' ').slice(-1)[0],mq=o.you||o.pmy?(o.label||o.name):o.priv?o.name+' · частник':o.name;
@@ -200,7 +202,7 @@ function raceHUD(){
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();try{navTick();}catch(e){console.warn('nav',e);}
   const m=document.getElementById('rMsg');
-  m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
+  m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':(F.tyreSwap&&F.vx<1.5)?'МЕНЯЕМ СТЁРТЫЕ ШИНЫ…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
   m.classList.toggle('small',m.textContent.length>14);
 }
 // Кнопка 🔧: что нужно машине; горит, когда без механика дальше плохо
@@ -209,13 +211,31 @@ function svcHUD(){const b=document.getElementById('rSvc'),m=R.me,on=!!(m&&R.mode
     if(m.punct){lab=m.flat?'Дотяните':'Колесо';hot=!m.flat;}else if(m.fuelRate&&(m.fuel<12||(m.fuel<32&&m.fuel<fuelNeed(m,R.trk)))){lab='Бензин';hot=true;}else if(m.tyre>=80){lab='Шины';hot=true;}else if(m.dmg>55||m.limp){lab='Ремонт';hot=true;}}}
   const sig=(on?1:0)+lab+hot;if(b.dataset.s===sig)return;b.dataset.s=sig;b.hidden=!on;b.classList.toggle('hot',hot);b.classList.toggle('busy',!!(m&&m.svc));b.lastChild.textContent=lab;}
 /* ---------- подсказки водителю: ближайший поворот и его скорость, сцепление шин ---------- */
-// Ближайший поворот впереди (до 200 м): сторона, скорость, с которой шины его удержат, расстояние, нужно ли тормозить
-function paceNote(F){const T=R.trk,n=T.n,st=T.step,mu=roadMuAt(T,F.idx)*F.grip*twAll(F)*1.08;
-  let j0=-1,kmax=0,dir=0;for(let d=0;d<50;d++){let j=F.idx+d;if(T.closed)j%=n;else if(j>=n)break;const k=T.K[j];
-    if(j0<0){if(Math.abs(k)>1/75){j0=d;dir=Math.sign(k);kmax=Math.abs(k);}}else{if(Math.sign(k)===dir&&Math.abs(k)>1/160)kmax=Math.max(kmax,Math.abs(k));else break;}}
-  if(j0<0)return null;const vc=Math.sqrt(mu*GRAV/kmax);if(vc>F.vtop*0.97)return null;
-  const v=Math.max(0,F.vx),dist=Math.max(0,j0*st-(F.segT||0)*st),bdec=F.brakeK*mu*GRAV*0.8,need=v>vc?(v*v-vc*vc)/(2*bdec):0;
-  return {dir,kmh:Math.max(5,Math.round(vc*3.6/5)*5),dist,lvl:v<=vc*1.04?'ok':need>dist*0.9?'bad':'warn',hair:1/kmax<20};}
+// Ближайший поворот впереди: сторона, скорость, с которой шины его удержат, расстояние, нужно ли тормозить
+// 0.51 (отзыв: «быстрые машины при торможении не поворачивают, идут как по рельсам; хуже всего на Монце и в горах»). Замер роботом,
+// который едет «газ в пол» и тормозит по подсказке: на Клаузене и Тарга Флорио 1922 года — сход в первой же шпильке, на Монце подсказки
+// не было ни разу. Причины: 1) тормозной путь считался по тормозам до 0.48 (вдвое сильнее настоящих) — «ТОРМОЗИ!» звучало, когда
+// тормозить уже поздно; 2) поворотом считалась только дуга круче 75 м — быстрые дуги Монцы (100–300 м), которые машина двадцатых на
+// полном ходу не держит, подсказка не видела; 3) смотрела на 200 м — со 150 км/ч этого мало. Теперь: путь — по настоящему замедлению
+// машины (brakeDec) с уклоном и с запасом на реакцию (0,3 с); поворот значим, если машина на своей наибольшей скорости его не держит;
+// взгляд — тем дальше, чем быстрее едем (до 420 м)
+function paceNote(F){const T=R.trk,n=T.n,st=T.step,mu0=roadMuAt(T,F.idx)*F.grip*twAll(F),mu=mu0*PACE_MU,mg=mu*GRAV,v=Math.max(0,F.vx),vt=Math.max(6,F.vtop||20);
+  const kThr=Math.max(1/420,mg/(vt*vt*0.94)),D=Math.ceil(Math.min(420,Math.max(200,60+v*6))/st),bdec=Math.max(0.8,brakeReal(F,mu0,0.8)*0.9+GRAV*(F.grade||0)*0.8),off=(F.segT||0)*st;
+  // повороты впереди — по порядку; показываем тот, перед которым тормозить раньше всего (за плавной дугой может стоять шпилька:
+  // раньше подсказка видела только ближний поворот, и «ТОРМОЗИ!» перед шпилькой за дугой приходило на её входе)
+  let seg=null,first=null,best=null;
+  const close=()=>{if(!seg)return;const vc=Math.sqrt(mg/seg.k),c=seg;seg=null;if(vc>vt*0.97)return;c.vc=vc;c.dist=Math.max(0,c.d0*st-off);c.need=v>vc?(v*v-vc*vc)/(2*bdec)+v*PACE_REACT:0;c.gap=c.dist-c.need;
+    if(!first)first=c;if(v>vc*1.04&&(!best||c.gap<best.gap))best=c;};
+  for(let d=0;d<D;d++){let j=F.idx+d;if(T.closed)j%=n;else if(j>=n)break;const k=T.K[j],ak=k<0?-k:k,sg=k<0?-1:1;
+    if(seg){if(sg===seg.dir&&ak>kThr*0.47){if(ak>seg.k)seg.k=ak;continue;}close();}
+    if(ak>kThr)seg={d0:d,dir:sg,k:ak};}
+  close();
+  if(!first)return null;const c=best&&(best.gap<0||best===first||best.gap<v*2)?best:first;
+  return {dir:c.dir,kmh:Math.max(5,Math.round(c.vc*3.6/5)*5),dist:c.dist,need:c.need,vc:c.vc,j:T.closed?(F.idx+c.d0)%n:F.idx+c.d0,lvl:v<=c.vc*1.04?'ok':c.gap<0?'bad':'warn',hair:1/c.k<20};}
+const PACE_REACT=0.3;/* с: запас на реакцию гонщика */
+// доля сцепления шин, на которую рассчитана скорость подсказки: раньше 1,08 — быстрее, чем держит машина на полном руле (0,96) и чем
+// едет лучший соперник (0,87 на своей линии); по такой подсказке в быстрых дугах выносило наружу
+const PACE_MU=0.95;
 function raceAssistHUD(){const me=R.me,note=document.getElementById('rNote'),grip=document.getElementById('rGrip');
   const on=me&&R.mode==='drive'&&!me.dnf&&me.fin===null&&!(me.stopT>0)&&!(me.pitT>0);
   const pn=on&&R.t>0?paceNote(me):null;
@@ -231,9 +251,9 @@ const WET_N={asphalt:'мокрый асфальт',concrete:'мокрый бет
   mud:'жидкая грязь',verge:'мокрая обочина',grass:'мокрая трава',field:'раскисшая пашня',forest:'мокрый лес',rock:'мокрые камни'};
 // Как ехать: коротко о физике гонки. Первые две гонки — перед стартом (гонка ждёт), потом — по кнопке «?» (пауза)
 const DRIVE_TIPS=[['◀ ▶','руль. Держите — колёса поворачивают сильнее; отпустили — сами встают прямо.'],
-  ['↱ 45','справа вверху — впереди поворот, шины удержат машину до 45 км/ч. Жёлтая рамка — сбавьте, красная — тормозите сейчас.'],
+  ['↱ 45','справа вверху — впереди поворот, шины удержат машину до 45 км/ч. Жёлтая рамка — скоро тормозить; красная «ТОРМОЗИ!» загорается за тормозной путь вашей машины — жмите тормоз и держите, пока скорость не сравняется с числом.'],
   ['ШИНЫ','слева внизу — сколько сцепления занято: зелёные держат, жёлтые с визгом — на пределе, красные — машину несёт наружу.'],
-  ['Тормоз','— на прямой, до поворота. В повороте ровный газ, на выходе — полный. Резкий тормоз в повороте может развернуть.'],
+  ['Тормоз','— до поворота, по прямой. С рулём машина на тормозе доворачивает, зад уходит в занос: отпустили тормоз — выровнялась. Тормоза только на задних колёсах слабы — тормозите раньше. На «Историке» полный тормоз с рулём до упора разворачивает.'],
   ['Дорога','асфальт и кирпич держат лучше всего, гравий хуже, грязь, песок и снег — плохо: тормозите раньше.'],
   ['Твёрдое','деревья, дома, заборы и зрители не пропускают. Удар — повреждение; поломку механик чинит на обочине.'],
   ['Шины','вверху слева — четыре колеса, как на машине (сверху передние): зелёное — протектор цел; жёлтое (стёрто больше половины) — держит хуже; красное — вот-вот лопнет; мигает — прокол. Задние стираются на газу и при пробуксовке, передние — в поворотах и на торможении. На спущенном колесо тянет машину в свою сторону, а когда покрышка разлетится — едете на ободе: искры, дым, удары. Механик меняет только пробитые и стёртые колёса.'],

@@ -31,7 +31,7 @@ function navPackLoad(){if(NAVPACK.p)return NAVPACK.p;
 function navB64(b){const t=atob(b),n=t.length,u=new Uint8Array(n);for(let i=0;i<n;i++)u[i]=t.charCodeAt(i);return u.buffer;}
 // голос механика слышен, когда включены звуки игры (кнопка 🗣 в гонке — читает всё, только опасное или молчит)
 function navVoiceOn(){return !!(AU.ctx&&AU.on.sfx);}
-function navReset(){NAV.R=R;NAV.lt=undefined;NAV.legI=0;NAV.legK=undefined;NAV.legSaid=0;NAV.brkC=null;NAV.srcs=[];NAV.q=[];NAV.until=0;NAV.cd={};NAV.said={};NAV.curve=null;NAV.rank=0;NAV.rankT=0;NAV.tp=null;NAV.dmg=0;NAV.prog=0;NAV.oilT=60+Math.random()*60;NAV.wet=0;NAV.start=0;NAV.fin=0;NAV.dustT=0;
+function navReset(){NAV.R=R;NAV.lt=undefined;NAV.legI=0;NAV.legK=undefined;NAV.legSaid=0;NAV.brkC=null;NAV.brkJ=undefined;NAV.srcs=[];NAV.q=[];NAV.until=0;NAV.cd={};NAV.said={};NAV.curve=null;NAV.rank=0;NAV.rankT=0;NAV.tp=null;NAV.dmg=0;NAV.prog=0;NAV.oilT=60+Math.random()*60;NAV.wet=0;NAV.start=0;NAV.fin=0;NAV.dustT=0;
   NAV.pan=R.rc.c==='us'&&R.rc.y>=1910?0.32:-0.32;   // руль справа (Европа, ранние американцы) — механик слева; у американцев с 1910-х — наоборот
   if(navVoiceOn())navLines().forEach(t=>navBuf(t));}
 // запись слова: из вшитого файла, иначе — с сайта; неудачу не запоминаем (в следующий раз попробуем снова)
