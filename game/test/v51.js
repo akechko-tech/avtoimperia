@@ -112,5 +112,13 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const b={...a,id:G.nextId++,name:'Новая',e:E2.id,status:'dev',devLeft:1,launched:0,stock:0,made:0,totalSold:0,vol:0};G.models.push(b);const c0=G.cash;G.pending=[];step();
     CK(b.status==='prod'&&G.last.tool>=Math.round(0.18*30e6*0.35*0.1/100)*100,'запуск в серию: оснастка в отчёте месяца $'+G.last.tool);CK(G.log.some(l=>/завод переоснащён под новые узлы/.test(l.t||l.text||l.msg||JSON.stringify(l))),'в журнале — «завод переоснащён под новые узлы»');}
   else CK(false,'нет модели в серии для проверки запуска');}
+// 14. советник: расширять бюро — когда новая ступень по силам; сократить — когда содержание съедает прибыль
+{Math.random=(()=>{let a=7;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();newGame('custom','fr','Тест','normal','Первая');G.helper={on:1};
+  for(let k=0;k<12*10;k++){let g=0;while(G.pending.length&&g++<30)resolve(G.pending[0].choices[0][1]);if(G.over||!step())break;}
+  G.pending=[];G.world.my.r12=200e6;G.rd.lvl=12;G.rdept=5;G.hist.profit=G.hist.profit.slice(0,-12).concat(Array(12).fill(120000));
+  const tips=adviceList(G),cut=tips.find(t=>/Содержание растёт с оборотом/.test(t.text));CK(!!cut&&/Сократить (бюро|отдел)/.test(cut.btn),'совет сократить: '+(cut&&cut.text.slice(0,70)));
+  const l0=G.rd.lvl,d0=G.rdept;G.rd.projs=[];if(cut)cut.run();CK(G.rd.lvl===l0-1||G.rdept===d0-1,'кнопка совета сокращает ступень');
+  CK(!tips.some(t=>/Денег хватает, чтобы расширить конструкторское бюро/.test(t.text)),'расширять бюро при такой прибыли не советуют');
+  G.hist.profit=G.hist.profit.slice(0,-12).concat(Array(12).fill(3e6));G.cash=5e7;const t2=adviceList(G);CK(!t2.some(t=>/Содержание растёт с оборотом/.test(t.text)),'при большой прибыли сокращать не советуют');}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);
