@@ -83,7 +83,7 @@ function rdProjects(s){
 // 0.24: устаревшая деталь — её уже обогнала деталь новее (по своей главной мере), появившаяся хотя бы два года назад,
 // а сама она старше восьми лет и не стоит на ваших машинах: улучшать её почти незачем
 const PART_BETTER={e:(z,x)=>z.rel>=x.rel&&z.hp>=x.hp*0.9,g:(z,x)=>z.eff>=x.eff&&(z.relK||1)>=(x.relK||1),c:(z,x)=>z.max>=x.max&&z.ride>=x.ride,
-  w:(z,x)=>z.grip>=x.grip&&z.life>=x.life&&!z.solid&&(!x.pit||(z.pit&&z.pit<=x.pit)),k:(z,x)=>z.brk>=x.brk,b:(z,x)=>!!z.truck===!!x.truck&&!!z.closed===!!x.closed&&z.seats>=x.seats&&(z.comf||1)>=(x.comf||1)&&(z.pay||0)>=(x.pay||0)&&z.cd<=x.cd*1.1};
+  w:(z,x)=>z.grip>=x.grip&&z.life>=x.life&&!z.solid&&(!x.pit||(z.pit&&z.pit<=x.pit)),k:(z,x)=>z.brk>=x.brk,b:(z,x)=>!!z.truck===!!x.truck&&bodyKind(z)===bodyKind(x)&&!!z.closed===!!x.closed&&z.seats>=x.seats&&(z.comf||1)>=(x.comf||1)&&(z.pay||0)>=(x.pay||0)&&z.cd<=x.cd*1.1};
 function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETTER[ck];if(!cat||!f)return false;const arr=cat.arr(),x=byId(arr,id);if(!x||s.y-Math.max(1893,x.y||1895)<8)return false;
   return arr.some(z=>z!==x&&!!z.moto===!!x.moto&&(z.y||1895)>(x.y||1895)&&(z.y||1895)<=s.y-2&&f(z,x));}   // 0.33: мотоциклетную деталь сравниваем только с мотоциклетными
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
@@ -167,6 +167,17 @@ const CHAR_W={people:{perf:0.08,rel:0.22,comf:0.06,ease:0.12,safe:0.05,econ:0.32
   truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0},
   // 0.32: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места, работа в непогоду
   moto:CHAR_W_MOTO.moto,moside:CHAR_W_MOTO.moside};
+// 0.51: что ценит покупатель каждого нового вида техники (ТЗ 0.51, тема 3: «у каждого вида свой покупатель»)
+Object.assign(CHAR_W,{bus:{perf:0.08,rel:0.34,comf:0.06,ease:0.06,safe:0.1,econ:0.26,cap:0.1},coach:{perf:0.18,rel:0.26,comf:0.24,ease:0.04,safe:0.12,econ:0.12,cap:0.04},
+  school:{perf:0.04,rel:0.3,comf:0.04,ease:0.06,safe:0.22,econ:0.24,cap:0.1},fire:{perf:0.38,rel:0.4,comf:0,ease:0.08,safe:0.12,econ:0.02,cap:0},
+  amb:{perf:0.22,rel:0.34,comf:0.26,ease:0.06,safe:0.1,econ:0.02,cap:0},mail:{perf:0.14,rel:0.42,comf:0,ease:0.08,safe:0.04,econ:0.32,cap:0},
+  tank:{perf:0.1,rel:0.36,comf:0,ease:0.06,safe:0.12,econ:0.36,cap:0},dump:{perf:0.2,rel:0.42,comf:0,ease:0.06,safe:0.06,econ:0.26,cap:0},
+  refuse:{perf:0.06,rel:0.4,comf:0,ease:0.12,safe:0.06,econ:0.36,cap:0},taxi:{perf:0.06,rel:0.3,comf:0.16,ease:0.12,safe:0.06,econ:0.3,cap:0},
+  tractor:{perf:0.3,rel:0.34,comf:0,ease:0.1,safe:0,econ:0.26,cap:0},crawler:{perf:0.4,rel:0.38,comf:0,ease:0.06,safe:0,econ:0.16,cap:0},
+  staff:{perf:0.3,rel:0.4,comf:0.1,ease:0.08,safe:0.08,econ:0.04,cap:0},mamb:{perf:0.16,rel:0.44,comf:0.24,ease:0.06,safe:0.08,econ:0.02,cap:0},
+  armored:{perf:0.36,rel:0.44,comf:0,ease:0.08,safe:0.12,econ:0,cap:0},ltank:{perf:0.4,rel:0.5,comf:0,ease:0.06,safe:0.04,econ:0,cap:0}});
+// вид техники модели — ключ весов, порогов и насыщений: у нового вида свой, у прочих — класс
+function kindKey(md){const g=segOf(md);if(g!=='truck')return g;const k=bodyKind(byId(BODIES,md.b));return CHAR_W[k]?k:'truck';}
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
 function carChar(md,y){
@@ -178,7 +189,7 @@ function carChar(md,y){
     comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6,t3:0.95}[p.t.id]||1),
     ease:p.g.ease*(1+0.04*U(p.g.id))*(0.6+0.4*p.k.ease)*(p.w.solid?0.85:1)*Math.pow(1000/Math.max(500,mass),0.2),
     safe:st.brk*st.grip*(p.b.closed?1.12:1),econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
-    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel,fuel,mtbf,vT:truck?truckSpeed(st,pay):0};
+    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel,fuel,mtbf,vT:truck?truckSpeed(st,pay)*(p.b.trk?0.45:p.b.farm?0.6:1):0,seats:p.b.seats||2,trk:p.b.trk?1:0,arm:p.b.arm||0};
 }
 // 0.26: средняя скорость гружёного грузовика в пути, км/ч: полный кузов, подъём 2%, дороги эпохи (≈55% предельной)
 function truckSpeed(st,pay){const m=st.kg+pay*1000,g=9.81,A=st.kd,B=(st.crr+0.02)*m*g;let v=10;for(let i=0;i<30;i++){const f=A*v*v*v+B*v-st.P,df=3*A*v*v+B;v=Math.max(2,v-f/df);}
@@ -189,7 +200,7 @@ function dvSig(md){return md&&md.dv?Object.keys(md.dv).map(k=>k+dvNow(md,k).toFi
 function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer+kitCarSig(G):'')+PART_KEYS.map(k=>upgL(md[k])).join('')+dvSig(md)].join('|');
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
 // С кем сравнивают: фургон — с фургонами, грузовик — с грузовиками, легковую — с машинами своего класса
-function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
+function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?bodyKind(b):segOf(md);}/* 0.51: у нового вида техники — свой эталон */
 // 0.33: грузовик сравнивают с грузовиком своей грузоподъёмности: трёхтонку — с трёхтонкой соперников (её мотор, рама, коробка),
 // а не с полуторатонкой (раньше 3-тонный грузовик выглядел «прожорливым и слабым» — на вдвое больший груз)
 function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y),b=byId(BODIES,md.b),tb=kind==='truck'&&b&&b.truck&&md.b!=='b6'&&(b.y||1895)<=y?md.b:null;
@@ -206,6 +217,14 @@ const CHAR_SAT_DEF={perf:1.5,rel:1.6,comf:1.6,ease:1.5,safe:1.5,econ:1.5,cap:1.3
 const CHAR_SAT={people:{perf:1.35,comf:1.4},lux:{perf:1.7,rel:1.8,comf:2,econ:1.2},sport:{perf:2.5,safe:1.8,comf:1.3,econ:1.2},truck:{perf:1.3,comf:1.2,econ:1.6},moto:{perf:1.8},moside:{perf:1.4}};
 const CHAR_THR_DEF={perf:0.6,rel:0.6,comf:0.5,ease:0.5,safe:0.6,econ:0.5,cap:0.5};
 const CHAR_THR={lux:{comf:0.7,rel:0.7},sport:{perf:0.75},truck:{perf:0.7,rel:0.7}};
+// 0.51: новые виды. Пожарной и военной машине нельзя быть слабой и ненадёжной; школьному автобусу — плохо тормозить; автобусу и
+// цистерне мощность сверх нормы почти ничего не даёт, пожарной и танку — даёт
+Object.assign(CHAR_SAT,{bus:{perf:1.3,comf:1.3,econ:1.6},coach:{perf:1.6,comf:1.8},school:{perf:1.2,comf:1.2,econ:1.6},fire:{perf:1.8,rel:1.8},amb:{perf:1.5,comf:1.8,rel:1.7},mail:{perf:1.4,econ:1.6},
+  tank:{perf:1.3,econ:1.6},dump:{perf:1.5,rel:1.7},refuse:{perf:1.2,econ:1.6},taxi:{perf:1.3,comf:1.5,econ:1.6},tractor:{perf:1.6,rel:1.7},crawler:{perf:1.7,rel:1.7},
+  staff:{perf:1.6,rel:1.8},mamb:{perf:1.4,rel:1.8,comf:1.6},armored:{perf:1.7,rel:1.8},ltank:{perf:1.7,rel:1.9}});
+Object.assign(CHAR_THR,{bus:{perf:0.7,rel:0.7,safe:0.7},coach:{perf:0.75,rel:0.7,comf:0.7},school:{rel:0.7,safe:0.75},fire:{perf:0.75,rel:0.75},amb:{perf:0.7,rel:0.75,comf:0.7},mail:{rel:0.75},
+  tank:{perf:0.7,rel:0.7,safe:0.7},dump:{perf:0.7,rel:0.7},refuse:{rel:0.7},taxi:{rel:0.7},tractor:{perf:0.7,rel:0.7},crawler:{perf:0.75,rel:0.7},
+  staff:{perf:0.7,rel:0.75},mamb:{rel:0.75,comf:0.7},armored:{perf:0.75,rel:0.75},ltank:{perf:0.75,rel:0.8}});
 const CHAR_LOW=3;   // ниже порога каждая потеря весит втрое
 function charSat(g,k){const t=CHAR_SAT[g];return (t&&t[k])||CHAR_SAT_DEF[k]||1.5;}
 function charThr(g,k){const t=CHAR_THR[g];return (t&&t[k])||CHAR_THR_DEF[k]||0.5;}
@@ -215,7 +234,7 @@ function traitU(r,thr,sat){const x=Math.log(r);if(x>=0){const L=Math.log(sat);re
 function traitZone(r,thr,sat){return r<thr?'low':r<0.95?'below':r<=1.05?'norm':r<sat*0.98?'above':'sat';}
 const ZONE_N={low:'ниже порога',below:'ниже нормы',norm:'норма',above:'лучше нормы',sat:'с запасом — дальше не ценят'};
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
-function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={},u={},zone={};let lnS=0;
+function classCompare(md,s,c){const y=s.y,g=kindKey(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={},u={},zone={};let lnS=0;
   // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
   const LC=md.legend?legendCh(md):null,A=LC?Object.assign({},A0):A0;if(LC)for(const k in LC)if(A[k])A[k]*=LC[k];
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4),th=charThr(g,k),sa=charSat(g,k);by[k]=r;u[k]=traitU(r,th,sa);zone[k]=traitZone(r,th,sa);if(W[k])lnS+=W[k]*u[k];});
@@ -223,15 +242,35 @@ function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=char
   if(g==='lux'){let lo=0;CHAR_K.forEach(k=>{if(W[k]>0.05)lo=Math.min(lo,u[k]);});lnS+=0.35*lo;}
   return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,u,zone,W,ref,A,R};}
 function classScore(md,s,c){return classCompare(md,s,c).S;}
+// 0.51: годится ли деталь x (категория k) этому виду техники при остальных деталях проекта: 'low' — черта ниже порога вида (слабый мотор
+// для трёхтонки, слабые тормоза для автобуса), 'frame' — мотор не по раме, 'old' — устарела (есть деталь не хуже ни в чём), 'sat' — с запасом
+// (черта в области насыщения: платить дальше незачем), '' — годится
+const FIT_TRAIT={e:'perf',g:'ease',c:'comf',k:'safe',w:'safe'};
+// «устарела» для конструктора — строже, чем partObsolete у «Передовой модели»: есть другая доступная деталь, которая не хуже ни в одном
+// свойстве и не дороже (дешёвый экономичный мотор рядом с мощным дорогим — не устаревший, а другой выбор)
+const DOM_HI={e:['hp','rel'],g:['eff','ease'],c:['max','ride'],w:['grip','life'],k:['brk','ease']},DOM_LO={e:['fuel','kg'],g:[],c:['kg'],w:[],k:[]};
+function partDominated(k,x,s,mo){const cat=PART_CATS.find(c=>c.k===k),hi=DOM_HI[k],lo=DOM_LO[k];if(!cat||!hi)return false;const cx=partCost(x,s);
+  return unlockedP(cat.arr(),s,mo).some(z=>{if(z.id===x.id||!!z.solid!==!!x.solid)return false;let strict=false;for(const f of hi){if((z[f]||0)<(x[f]||0))return false;if((z[f]||0)>(x[f]||0))strict=true;}
+    for(const f of lo){if((z[f]||0)>(x[f]||0))return false;if((z[f]||0)<(x[f]||0))strict=true;}const cz=partCost(z,s);if(cz>cx)return false;return strict||cz<cx;});}
+function partFit(md,k,x,s){try{const t={...md,[k]:x.id},mo=isMoto(md);
+    if(k==='e'){const mx=Math.max(...unlockedP(CHASSIS,s,mo).map(c=>chassisMax(c,t)));if(engineHp(x,t)>mx)return 'frame';}
+    if(k==='c'&&overpower(t))return 'frame';
+    if(partDominated(k,x,s,mo))return 'old';
+    const z=classCompare(t,s,s.country).zone[FIT_TRAIT[k]];return z==='low'?'low':z==='sat'?'sat':'';}catch(_){return '';}}
 // Качество для рынка: доля лучшей машины эпохи (у соперников класса — QG)
 function mq(md,s,c){return Math.max(0.05,QG[segOf(md)]*classScore(md,s,c));}
 function modelR(md,s){return classScore(md,s);}
 // Грузоподъёмность: фургон стоит дешевле грузовика, трёхтонка — дороже
-function payK(md){const b=byId(BODIES,md.b);return b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1;}
+function payK(md){const b=byId(BODIES,md.b);return b.truck?(b.pk||Math.pow((b.pay||1.5)/1.5,0.6)):1;}/* 0.51: pk — типичная цена нового вида против полуторатонки */
 const KIND_TRIM={people:'t0',middle:'t1',lux:'t2',sport:'t3',van:'t0',truck:'t0',moto:'t0',moside:'t0'};
+for(const k in KIND_NEW)KIND_TRIM[k]='t0';
 const KIND_NAME={people:'Народная',middle:'Средний класс',lux:'Люкс',sport:'Спортивная',van:'Фургон',truck:'Грузовик',moto:'Мотоцикл',moside:'Мотоцикл с коляской'};
+for(const k in KIND_NEW)KIND_NAME[k]=KIND_NEW[k].n;
+// вид → класс рынка: всё «не легковое» покупают как технику для дела (рынок работ, 105-market.js)
+function kindSeg(kind){return kind==='van'||kind==='truck'||kindIsNew(kind)?'truck':kind;}
 function kindBodyOk(kind,b){if(kind==='moto')return !!b.moto&&(b.seats||1)<=1;if(kind==='moside')return !!b.moto&&(b.seats||1)>1;if(b.moto)return false;
-  return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&b.id!=='b6':kind==='sport'?bodyOpen(b.id):!b.truck;}
+  if(kindIsNew(kind))return bodyKind(b)===kind;
+  return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&bodyKind(b)==='truck':kind==='sport'?bodyOpen(b.id):!b.truck;}
 // Конструкция соперника класса — отправная точка для новой модели
 function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRIM[kind]};}
 // Подбор конструкции: по очереди меняем каждую деталь на лучшую для прибыли при подходящей цене
@@ -258,7 +297,7 @@ function autoDesign(kind,s,base){
     for(const x of unlockedP(arr,s,mo)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
     if(bx)md=bx;}
   // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
-  try{md.eq=eqAuto(md,kind==='van'||kind==='truck'?'truck':kind,s);}catch(_){md.eq=[];}
+  try{md.eq=eqAuto(md,kindSeg(kind),s);}catch(_){md.eq=[];}
   designValue(md,s);return md;}
 // 0.34: «Передовая модель» — современные детали (и прототипы КБ), которые больше всего поднимают итог против соперника
 // у покупателей класса, без оглядки на себестоимость (в «Подобрать детали повыгоднее» решает прибыль). Устаревшие детали
@@ -269,7 +308,7 @@ function autoDesign(kind,s,base){
 const FRONT_KEYS=['e','g','c','w','k'];
 function frontDesign(kind,s,base){
   let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0};
-  const mo=kind==='moto'||kind==='moside',tr=kind==='truck'||kind==='van';
+  const mo=kind==='moto'||kind==='moside',tr=kindSeg(kind)==='truck';
   const P0=tr?refPrice(md,s):0,val=t=>tr&&typeof xTruckU==='function'?xTruckU(t,s,P0):classScore(t,s,s.country);
   const cand=k=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s,mo).filter(x=>!partObsolete(k,x.id,s));
   const frames=cand('c'),fit=t=>{if(!overpower(t))return t;let best=null,bv=-1e18;frames.forEach(c=>{const u={...t,c:c.id};if(overpower(u))return;const v=val(u);if(v>bv){bv=v;best=u;}});return best;};

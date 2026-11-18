@@ -1080,6 +1080,16 @@ body.flying{overflow:hidden}
 .dom-bar u.hist{background:#b08d57;height:10px;top:-1px}
 /* 0.47: лист «Изобретения марок» */
 .innov-co{border-top:1px solid var(--line);padding:6px 0}.innov-co summary{display:flex;justify-content:space-between;align-items:baseline;cursor:pointer;list-style:none}.innov-co summary::-webkit-details-marker{display:none}.innov-co ul{margin:6px 0 0 0;padding-left:0;list-style:none}.innov-co li{padding:2px 0}.innov-co li .num{display:inline-block;min-width:38px;opacity:.7}
+
+/* 0.51: конструктор-воронка */
+.ktiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ktile{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px;cursor:pointer}
+.ktile i{grid-row:1/4;font-style:normal;font-size:26px}.ktile b{font-size:14px}.ktile small{color:var(--muted);font-size:11px;line-height:1.25}.ktile em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--brass)}
+.ktile.off,.krow.off{opacity:.55}
+.krows{display:grid;gap:6px;margin-top:8px}
+.krow{display:grid;grid-template-columns:1fr auto;column-gap:10px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:9px 10px;cursor:pointer}
+.krow b{font-size:14px}.krow small{grid-column:1;color:var(--muted);font-size:11px;line-height:1.25}.krow em{grid-column:2;grid-row:1/3;align-self:center;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--brass);text-align:right;white-space:nowrap}
+.chip .ftag{font-style:normal;font-size:10px;border-radius:3px;padding:0 4px;margin-left:2px;white-space:nowrap}.chip .ftag.sat{background:rgba(201,162,74,.18);color:var(--brass)}.chip .ftag.bad{background:rgba(179,39,30,.18);color:var(--bad)}.chip.unfit{opacity:.6}
 </style>
 
 <div class="wrap" hidden>
@@ -1661,6 +1671,74 @@ const FLAVOR_TXT={
   'Под Гудзоном открыт туннель Холланда для автомобилей':'Под рекой Гудзон открыт туннель Холланда между Нью-Йорком и Нью-Джерси — первый длинный туннель для автомобилей с мощной вентиляцией: огромные вентиляторы выгоняют выхлопные газы.',
   'Микки Маус впервые заговорил в мультфильме «Пароходик Вилли»':'Уолт Дисней показал «Пароходик Вилли» — первый мультфильм со звуком, записанным вместе с изображением. Мышонок Микки насвистывает песенку и сразу становится звездой.'
 };
+
+/* ================= 0.51: ВЕСЬ РЯД ТЕХНИКИ ЭПОХИ (ТЗ 0.51, тема 3; решение автора: «сразу весь ряд, уместный для этой эпохи») =================
+   До 0.51 завод строил легковые машины, фургон, грузовики 1,5 и 3 т и мотоциклы. Теперь — всё, что делала автомобильная промышленность
+   до 1930 года: тяжёлый грузовик и тягач с полуприцепом, автобусы, спецтехника на грузовом шасси, такси, тракторы, военные машины.
+   Кузов — та же деталь, что и раньше (мотор, рама, коробка, шины, тормоза — общие), но у каждого вида свой покупатель, своя мерка работы
+   и свой эталон соперника (105-market.js: «работы»). Годы появления сверены: claude/issledovanie-tehnika-0.51.md.
+   kind — вид техники (назначение); truck:true — «не легковая» (все прежние проверки легковых её не видят); pay — груз, т (у автобуса —
+   вес пассажиров); pk — во сколько раз машина дороже полуторатонного грузовика того же года (типичная цена вида);
+   arm — броня (военные), trk — гусеницы; crew — экипаж на работе; art — рисунок (20-art.js).
+   Цена кузова c — всё особое в машине (насос и лестницы, броня, салон автобуса): подобрана так, чтобы при типичной цене вида
+   доля себестоимости была как у грузовика (у трактора — тоньше, у военных — толще). */
+BODIES.push(
+  {id:'b12',name:'Грузовик 5 т',y:1916,q:36,c:1280,kg:2300,cd:2.5,cg:1.05,cx:1.6,truck:true,seats:2,pay:5,comf:1,kind:'truck',art:'heavy',note:'Как Mack AC (1916) — «бульдог» на цепях: уголь, лес, стройка, фронтовые дороги'},
+  {id:'b13',name:'Тягач с полуприцепом, 8 т',y:1918,q:40,c:1850,kg:2700,cd:2.8,cg:1.05,cx:1.7,truck:true,seats:2,pay:8,comf:1,kind:'truck',art:'semi',note:'Полуприцеп Фрюхофа (1914; фирма — 1918): «лошадь тянет больше, чем везёт, — и грузовик тоже»'},
+  {id:'b14',name:'Городской автобус',y:1905,q:26,c:3450,kg:1500,cd:2.6,cg:1.2,cx:1.6,truck:true,seats:34,pay:2.2,pk:3.0,comf:1,kind:'bus',art:'bus',crew:2,note:'Первые моторные омнибусы — 1898–1905 годы; лондонский B-type (1910, 34 места) — первый массовый'},
+  {id:'b15',name:'Междугородний автобус',y:1921,q:38,c:3450,kg:1700,cd:2.2,cg:0.95,cx:1.8,truck:true,seats:22,pay:1.6,pk:5.0,closed:1,comf:1.5,kind:'coach',art:'coach',note:'Fageol Safety Coach (1921): первый автобус, построенный как автобус, — низкий, широкий, 22 места'},
+  {id:'b16',name:'Школьный автобус',y:1914,q:14,c:1250,kg:800,cd:2.2,cg:1.05,cx:1.2,truck:true,seats:24,pay:1.2,pk:1.5,closed:1,comf:0.9,kind:'school',art:'school',note:'Кузов для школьников на грузовом шасси: скамьи вдоль бортов, дверь сзади'},
+  {id:'b17',name:'Пожарный автомобиль',y:1906,q:30,c:7400,kg:1400,cd:2.2,cg:1.0,cx:1.9,truck:true,seats:6,pay:1.5,pk:6.0,comf:1,kind:'fire',art:'fire',crew:5,note:'Knox (1905–1906) и Waterous (1906): насос и лестницы на автомобильном шасси вместо парового насоса на конной тяге'},
+  {id:'b18',name:'Санитарный автомобиль',y:1909,q:16,c:1200,kg:520,cd:1.6,cg:0.95,cx:1.3,truck:true,seats:4,pay:0.5,pk:1.6,closed:1,comf:1.4,kind:'amb',art:'amb',crew:2,note:'Закрытый кузов на двое носилок, мягкие рессоры'},
+  {id:'b19',name:'Почтовый фургон',y:1907,q:9,c:590,kg:430,cd:1.7,cg:0.9,cx:1.0,truck:true,seats:2,pay:0.6,pk:0.9,closed:1,comf:1,kind:'mail',art:'mail',note:'Запирающийся кузов и расписание: почта не ждёт'},
+  {id:'b20',name:'Автоцистерна',y:1910,q:20,c:1550,kg:1100,cd:2.1,cg:1.05,cx:1.4,truck:true,seats:2,pay:2.5,pk:1.8,comf:1,kind:'tank',art:'tank',note:'Керосин, бензин, молоко — наливом вместо бочек'},
+  {id:'b21',name:'Самосвал',y:1912,q:22,c:1300,kg:1300,cd:2.2,cg:1.0,cx:1.5,truck:true,seats:2,pay:2.5,pk:1.7,comf:1,kind:'dump',art:'dump',note:'Опрокидной кузов с подъёмником: песок, щебень, уголь'},
+  {id:'b22',name:'Мусоровоз',y:1922,q:20,c:1100,kg:1300,cd:2.2,cg:1.0,cx:1.5,truck:true,seats:3,pay:2,pk:1.8,comf:1,kind:'refuse',art:'refuse',crew:3,note:'Закрытый кузов для городской очистки вместо конной телеги'},
+  {id:'b23',name:'Таксомотор',y:1905,q:14,c:900,kg:380,cd:1.4,cg:0.84,cx:1.2,truck:true,seats:4,pay:0.3,pk:1.1,closed:1,comf:1.35,kind:'taxi',art:'taxi',note:'Renault AG (1905): ландоле с таксометром — парижское, а с 1907 года и лондонское, и нью-йоркское такси'},
+  {id:'b24',name:'Трактор колёсный',y:1902,q:16,c:430,kg:900,cd:2.4,cg:0.9,cx:1.1,truck:true,seats:1,pay:0.2,pk:0.62,comf:0.7,kind:'tractor',art:'tractor',farm:1,note:'Hart-Parr и Ivel (1902) — первые удачные бензиновые тракторы; Fordson (1917) — первый массовый'},
+  {id:'b25',name:'Трактор гусеничный',y:1908,q:30,c:3700,kg:2400,cd:2.6,cg:0.9,cx:1.8,truck:true,seats:1,pay:0.2,pk:3.6,comf:0.7,kind:'crawler',art:'crawler',farm:1,trk:1,note:'Holt Caterpillar: бензиновый гусеничный трактор — в серии с 1908 года; тяжёлая почва, лес, дороги, артиллерия'},
+  {id:'b26',name:'Штабной автомобиль',y:1906,q:12,c:490,kg:330,cd:1.25,cg:0.74,cx:1.0,truck:true,seats:5,pay:0.4,pk:1.1,comf:1.1,kind:'staff',art:'staff',mil:1,note:'Усиленный открытый кузов для офицеров и связи'},
+  {id:'b27',name:'Военно-санитарный автомобиль',y:1912,q:16,c:820,kg:560,cd:1.7,cg:0.98,cx:1.3,truck:true,seats:6,pay:0.6,pk:1.4,closed:1,comf:1.25,kind:'mamb',art:'mamb',mil:1,crew:2,note:'Четверо носилок под брезентом: от перевязочного пункта до госпиталя'},
+  {id:'b28',name:'Бронеавтомобиль',y:1905,q:34,c:8700,kg:1900,cd:2.2,cg:1.1,cx:2.0,truck:true,seats:3,pay:0.5,pk:7,closed:1,comf:0.8,kind:'armored',art:'armored',mil:1,arm:1,crew:3,note:'Charron-Girardot-Voigt (1905–1906): броня и пулемёт во вращающейся башне на автомобильном шасси'},
+  {id:'b29',name:'Лёгкий танк',y:1917,q:60,c:9400,kg:5200,cd:3.0,cg:0.9,cx:2.6,truck:true,seats:2,pay:0.3,pk:11,closed:1,comf:0.6,kind:'ltank',art:'ltank',mil:1,arm:2,trk:1,crew:2,note:'Renault FT (1917): вращающаяся башня, мотор сзади — схема всех танков после него; построено больше трёх тысяч'}
+);
+// Вид техники кузова: у прежних грузовых — фургон и грузовик
+function bodyKind(b){return b?b.kind||(b.truck?(b.id==='b6'?'van':'truck'):b.moto?((b.seats||1)>1?'moside':'moto'):''):'';}
+// Группы видов — первый шаг конструктора. ic — значок, who — кто покупает
+const KIND_GRP={
+  car:{n:'Легковой автомобиль',ic:'🚗',who:'семьи, врачи, коммивояжёры, богачи',kinds:['people','middle','lux','sport','taxi']},
+  cargo:{n:'Грузовик',ic:'🚚',who:'лавки, заводы, перевозчики',kinds:['van','truck']},
+  bus:{n:'Автобус',ic:'🚌',who:'города, автобусные линии, школы',kinds:['bus','coach','school']},
+  spec:{n:'Спецтехника',ic:'🚒',who:'города, почта, нефтяные компании, подрядчики',kinds:['fire','amb','mail','tank','dump','refuse']},
+  farm:{n:'Трактор',ic:'🚜',who:'фермеры, лесные и дорожные работы',kinds:['tractor','crawler']},
+  mil:{n:'Военная техника',ic:'🪖',who:'армия',kinds:['staff','mamb','armored','ltank']},
+  moto:{n:'Мотоцикл',ic:'🏍',who:'рабочие, почтальоны, спортсмены',kinds:['moto','moside']}
+};
+// Виды, появившиеся в 0.51: имя, родительный падеж для подписей, мерка работы
+const KIND_NEW={bus:{n:'Городской автобус'},coach:{n:'Междугородний автобус'},school:{n:'Школьный автобус'},fire:{n:'Пожарный автомобиль'},amb:{n:'Санитарный автомобиль'},
+  mail:{n:'Почтовый фургон'},tank:{n:'Автоцистерна'},dump:{n:'Самосвал'},refuse:{n:'Мусоровоз'},taxi:{n:'Такси'},tractor:{n:'Трактор колёсный'},crawler:{n:'Трактор гусеничный'},
+  staff:{n:'Штабной автомобиль'},mamb:{n:'Военно-санитарный'},armored:{n:'Бронеавтомобиль'},ltank:{n:'Лёгкий танк'}};
+function kindGroup(kind){for(const g in KIND_GRP)if(KIND_GRP[g].kinds.includes(kind))return g;return 'car';}
+function kindIsNew(kind){return !!KIND_NEW[kind];}
+// Эталон соперников для новых видов: год, прототип из истории, детали (кузов — свой). С ним покупатель сравнивает вашу машину
+Object.assign(RIVAL_CAR,{
+  bus:[[1905,'Milnes-Daimler',{e:'e3',g:'g2',c:'c3',k:'k2',b:'b14',w:'w1'}],[1910,'LGOC B-type',{e:'e4',g:'g5',c:'c4',k:'k2',b:'b14',w:'w1'}],[1920,'AEC K-type',{e:'e14',g:'g6',c:'c4',k:'k2',b:'b14',w:'w1'}],[1925,'Leyland Titan',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b14',w:'w8'}]],
+  coach:[[1921,'Fageol Safety Coach',{e:'e6',g:'g5',c:'c5',k:'k3',b:'b15',w:'w7'}],[1927,'Yellow Coach',{e:'e8',g:'g5',c:'c5',k:'k4',b:'b15',w:'w8'}]],
+  school:[[1914,'Wayne Works',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b16',w:'w3'}],[1920,'Ford Model TT',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b16',w:'w7'}],[1927,'Blue Bird',{e:'e14',g:'g6',c:'c5',k:'k5',b:'b16',w:'w8'}]],
+  fire:[[1906,'Knox',{e:'e3',g:'g5',c:'c3',k:'k2',b:'b17',w:'w1'}],[1911,'American LaFrance',{e:'e4',g:'g5',c:'c4',k:'k2',b:'b17',w:'w1'}],[1914,'Seagrave',{e:'e5',g:'g5',c:'c4',k:'k2',b:'b17',w:'w1'}],[1918,'Ahrens-Fox',{e:'e6',g:'g5',c:'c4',k:'k2',b:'b17',w:'w6'}],[1925,'American LaFrance',{e:'e6',g:'g5',c:'c5',k:'k3',b:'b17',w:'w8'}],[1928,'Ahrens-Fox',{e:'e8',g:'g5',c:'c5',k:'k3',b:'b17',w:'w8'}]],
+  amb:[[1909,'Cunningham',{e:'e4',g:'g3',c:'c3',k:'k2',b:'b18',w:'w4'}],[1915,'Ford Model T',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b18',w:'w6'}],[1924,'Dodge Brothers',{e:'e14',g:'g6',c:'c5',k:'k3',b:'b18',w:'w8'}]],
+  mail:[[1907,'Peugeot',{e:'e10',g:'g3',c:'c3',k:'k2',b:'b19',w:'w2'}],[1914,'Ford Model T',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b19',w:'w3'}],[1925,'Morris',{e:'e11',g:'g6',c:'c4',k:'k2',b:'b19',w:'w8'}]],
+  tank:[[1910,'Saurer',{e:'e4',g:'g2',c:'c4',k:'k2',b:'b20',w:'w1'}],[1920,'Mack AB',{e:'e14',g:'g6',c:'c5',k:'k2',b:'b20',w:'w1'}],[1926,'White',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b20',w:'w8'}]],
+  dump:[[1912,'Peerless',{e:'e4',g:'g2',c:'c4',k:'k2',b:'b21',w:'w1'}],[1920,'Mack AC',{e:'e14',g:'g6',c:'c5',k:'k2',b:'b21',w:'w1'}],[1926,'Autocar',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b21',w:'w8'}]],
+  refuse:[[1922,'SD Freighter',{e:'e14',g:'g6',c:'c4',k:'k2',b:'b22',w:'w1'}],[1927,'Dennis',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b22',w:'w8'}]],
+  taxi:[[1905,'Renault AG',{e:'e10',g:'g3',c:'c3',k:'k2',b:'b23',w:'w2'}],[1911,'Unic',{e:'e9',g:'g3',c:'c3',k:'k2',b:'b23',w:'w4'}],[1922,'Checker',{e:'e14',g:'g6',c:'c4',k:'k2',b:'b23',w:'w7'}],[1928,'Austin 12/4',{e:'e14',g:'g6',c:'c5',k:'k5',b:'b23',w:'w8'}]],
+  tractor:[[1902,'Hart-Parr',{e:'e2',g:'g2',c:'c3',k:'k1',b:'b24',w:'w1'}],[1905,'Hart-Parr 22-45',{e:'e3',g:'g2',c:'c3',k:'k1',b:'b24',w:'w1'}],[1910,'IHC Mogul',{e:'e4',g:'g2',c:'c3',k:'k1',b:'b24',w:'w1'}],[1917,'Fordson F',{e:'e9',g:'g6',c:'c6',k:'k1',b:'b24',w:'w1'}],[1924,'McCormick-Deering Farmall',{e:'e9',g:'g6',c:'c4',k:'k2',b:'b24',w:'w1'}]],
+  crawler:[[1908,'Holt Caterpillar',{e:'e4',g:'g2',c:'c3',k:'k1',b:'b25',w:'w1'}],[1914,'Holt 75',{e:'e5',g:'g2',c:'c4',k:'k2',b:'b25',w:'w1'}],[1925,'Caterpillar Sixty',{e:'e6',g:'g6',c:'c5',k:'k2',b:'b25',w:'w1'}]],
+  staff:[[1906,'Mercedes',{e:'e3',g:'g3',c:'c3',k:'k2',b:'b26',w:'w2'}],[1911,'Vauxhall D-type',{e:'e4',g:'g5',c:'c4',k:'k2',b:'b26',w:'w4'}],[1916,'Dodge Brothers',{e:'e14',g:'g6',c:'c4',k:'k2',b:'b26',w:'w6'}],[1925,'Citroën-Kégresse',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b26',w:'w8'}]],
+  mamb:[[1912,'Fiat 15',{e:'e4',g:'g5',c:'c4',k:'k2',b:'b27',w:'w1'}],[1915,'Ford Model T',{e:'e9',g:'g4',c:'c6',k:'k2',b:'b27',w:'w6'}],[1924,'Morris-Commercial',{e:'e14',g:'g6',c:'c5',k:'k3',b:'b27',w:'w8'}]],
+  armored:[[1905,'Charron-Girardot-Voigt',{e:'e3',g:'g3',c:'c3',k:'k2',b:'b28',w:'w1'}],[1914,'Rolls-Royce',{e:'e5',g:'g5',c:'c4',k:'k2',b:'b28',w:'w6'}],[1920,'Lanchester',{e:'e6',g:'g5',c:'c5',k:'k3',b:'b28',w:'w6'}],[1928,'Vickers Crossley',{e:'e7',g:'g6',c:'c5',k:'k3',b:'b28',w:'w8'}]],
+  ltank:[[1917,'Renault FT',{e:'e14',g:'g5',c:'c4',k:'k2',b:'b29',w:'w1'}],[1925,'Vickers Medium',{e:'e6',g:'g5',c:'c5',k:'k2',b:'b29',w:'w1'}],[1928,'Т-18 (МС-1)',{e:'e14',g:'g6',c:'c5',k:'k2',b:'b29',w:'w1'}]]
+});
 
 /* ================= HISTORICAL RACES ================= */
 const RTYPE={sprint:'Спринт на скорость',road:'Гонка по дорогам',circuit:'Кольцевая трасса',endurance:'Гонка на выносливость',hill:'Гонка в гору',rally:'Марафон',oval:'Овал'};
@@ -2997,7 +3075,7 @@ function rdProjects(s){
 // 0.24: устаревшая деталь — её уже обогнала деталь новее (по своей главной мере), появившаяся хотя бы два года назад,
 // а сама она старше восьми лет и не стоит на ваших машинах: улучшать её почти незачем
 const PART_BETTER={e:(z,x)=>z.rel>=x.rel&&z.hp>=x.hp*0.9,g:(z,x)=>z.eff>=x.eff&&(z.relK||1)>=(x.relK||1),c:(z,x)=>z.max>=x.max&&z.ride>=x.ride,
-  w:(z,x)=>z.grip>=x.grip&&z.life>=x.life&&!z.solid&&(!x.pit||(z.pit&&z.pit<=x.pit)),k:(z,x)=>z.brk>=x.brk,b:(z,x)=>!!z.truck===!!x.truck&&!!z.closed===!!x.closed&&z.seats>=x.seats&&(z.comf||1)>=(x.comf||1)&&(z.pay||0)>=(x.pay||0)&&z.cd<=x.cd*1.1};
+  w:(z,x)=>z.grip>=x.grip&&z.life>=x.life&&!z.solid&&(!x.pit||(z.pit&&z.pit<=x.pit)),k:(z,x)=>z.brk>=x.brk,b:(z,x)=>!!z.truck===!!x.truck&&bodyKind(z)===bodyKind(x)&&!!z.closed===!!x.closed&&z.seats>=x.seats&&(z.comf||1)>=(x.comf||1)&&(z.pay||0)>=(x.pay||0)&&z.cd<=x.cd*1.1};
 function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETTER[ck];if(!cat||!f)return false;const arr=cat.arr(),x=byId(arr,id);if(!x||s.y-Math.max(1893,x.y||1895)<8)return false;
   return arr.some(z=>z!==x&&!!z.moto===!!x.moto&&(z.y||1895)>(x.y||1895)&&(z.y||1895)<=s.y-2&&f(z,x));}   // 0.33: мотоциклетную деталь сравниваем только с мотоциклетными
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
@@ -3081,6 +3159,17 @@ const CHAR_W={people:{perf:0.08,rel:0.22,comf:0.06,ease:0.12,safe:0.05,econ:0.32
   truck:{perf:0.12,rel:0.38,comf:0,ease:0.06,safe:0.06,econ:0.38,cap:0},
   // 0.32: мотоцикл — скорость, надёжность, цена владения; с коляской — надёжность, места, работа в непогоду
   moto:CHAR_W_MOTO.moto,moside:CHAR_W_MOTO.moside};
+// 0.51: что ценит покупатель каждого нового вида техники (ТЗ 0.51, тема 3: «у каждого вида свой покупатель»)
+Object.assign(CHAR_W,{bus:{perf:0.08,rel:0.34,comf:0.06,ease:0.06,safe:0.1,econ:0.26,cap:0.1},coach:{perf:0.18,rel:0.26,comf:0.24,ease:0.04,safe:0.12,econ:0.12,cap:0.04},
+  school:{perf:0.04,rel:0.3,comf:0.04,ease:0.06,safe:0.22,econ:0.24,cap:0.1},fire:{perf:0.38,rel:0.4,comf:0,ease:0.08,safe:0.12,econ:0.02,cap:0},
+  amb:{perf:0.22,rel:0.34,comf:0.26,ease:0.06,safe:0.1,econ:0.02,cap:0},mail:{perf:0.14,rel:0.42,comf:0,ease:0.08,safe:0.04,econ:0.32,cap:0},
+  tank:{perf:0.1,rel:0.36,comf:0,ease:0.06,safe:0.12,econ:0.36,cap:0},dump:{perf:0.2,rel:0.42,comf:0,ease:0.06,safe:0.06,econ:0.26,cap:0},
+  refuse:{perf:0.06,rel:0.4,comf:0,ease:0.12,safe:0.06,econ:0.36,cap:0},taxi:{perf:0.06,rel:0.3,comf:0.16,ease:0.12,safe:0.06,econ:0.3,cap:0},
+  tractor:{perf:0.3,rel:0.34,comf:0,ease:0.1,safe:0,econ:0.26,cap:0},crawler:{perf:0.4,rel:0.38,comf:0,ease:0.06,safe:0,econ:0.16,cap:0},
+  staff:{perf:0.3,rel:0.4,comf:0.1,ease:0.08,safe:0.08,econ:0.04,cap:0},mamb:{perf:0.16,rel:0.44,comf:0.24,ease:0.06,safe:0.08,econ:0.02,cap:0},
+  armored:{perf:0.36,rel:0.44,comf:0,ease:0.08,safe:0.12,econ:0,cap:0},ltank:{perf:0.4,rel:0.5,comf:0,ease:0.06,safe:0.04,econ:0,cap:0}});
+// вид техники модели — ключ весов, порогов и насыщений: у нового вида свой, у прочих — класс
+function kindKey(md){const g=segOf(md);if(g!=='truck')return g;const k=bodyKind(byId(BODIES,md.b));return CHAR_W[k]?k:'truck';}
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
 function carChar(md,y){
@@ -3092,7 +3181,7 @@ function carChar(md,y){
     comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6,t3:0.95}[p.t.id]||1),
     ease:p.g.ease*(1+0.04*U(p.g.id))*(0.6+0.4*p.k.ease)*(p.w.solid?0.85:1)*Math.pow(1000/Math.max(500,mass),0.2),
     safe:st.brk*st.grip*(p.b.closed?1.12:1),econ:Math.pow(1/fuel,0.8)*Math.pow((p.w.life||300)*(1+0.1*U(p.w.id)),0.05)*Math.pow(mtbf,0.1),
-    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel,fuel,mtbf,vT:truck?truckSpeed(st,pay):0};
+    cap:truck?pay:(p.b.seats||2),hp:st.hp,kg:st.kg,relP:st.rel,fuel,mtbf,vT:truck?truckSpeed(st,pay)*(p.b.trk?0.45:p.b.farm?0.6:1):0,seats:p.b.seats||2,trk:p.b.trk?1:0,arm:p.b.arm||0};
 }
 // 0.26: средняя скорость гружёного грузовика в пути, км/ч: полный кузов, подъём 2%, дороги эпохи (≈55% предельной)
 function truckSpeed(st,pay){const m=st.kg+pay*1000,g=9.81,A=st.kd,B=(st.crr+0.02)*m*g;let v=10;for(let i=0;i<30;i++){const f=A*v*v*v+B*v-st.P,df=3*A*v*v+B;v=Math.max(2,v-f/df);}
@@ -3103,7 +3192,7 @@ function dvSig(md){return md&&md.dv?Object.keys(md.dv).map(k=>k+dvNow(md,k).toFi
 function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'+(md.rl||0):md.ai?'a':(G?G.pioneer+kitCarSig(G):'')+PART_KEYS.map(k=>upgL(md[k])).join('')+dvSig(md)].join('|');
   let v=CH_CACHE.get(key);if(!v){v=carChar(md,y);if(CH_CACHE.size>800)CH_CACHE.clear();CH_CACHE.set(key,v);}return v;}
 // С кем сравнивают: фургон — с фургонами, грузовик — с грузовиками, легковую — с машинами своего класса
-function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?(md.b==='b6'?'van':'truck'):segOf(md);}
+function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?bodyKind(b):segOf(md);}/* 0.51: у нового вида техники — свой эталон */
 // 0.33: грузовик сравнивают с грузовиком своей грузоподъёмности: трёхтонку — с трёхтонкой соперников (её мотор, рама, коробка),
 // а не с полуторатонкой (раньше 3-тонный грузовик выглядел «прожорливым и слабым» — на вдвое больший груз)
 function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y),b=byId(BODIES,md.b),tb=kind==='truck'&&b&&b.truck&&md.b!=='b6'&&(b.y||1895)<=y?md.b:null;
@@ -3120,6 +3209,14 @@ const CHAR_SAT_DEF={perf:1.5,rel:1.6,comf:1.6,ease:1.5,safe:1.5,econ:1.5,cap:1.3
 const CHAR_SAT={people:{perf:1.35,comf:1.4},lux:{perf:1.7,rel:1.8,comf:2,econ:1.2},sport:{perf:2.5,safe:1.8,comf:1.3,econ:1.2},truck:{perf:1.3,comf:1.2,econ:1.6},moto:{perf:1.8},moside:{perf:1.4}};
 const CHAR_THR_DEF={perf:0.6,rel:0.6,comf:0.5,ease:0.5,safe:0.6,econ:0.5,cap:0.5};
 const CHAR_THR={lux:{comf:0.7,rel:0.7},sport:{perf:0.75},truck:{perf:0.7,rel:0.7}};
+// 0.51: новые виды. Пожарной и военной машине нельзя быть слабой и ненадёжной; школьному автобусу — плохо тормозить; автобусу и
+// цистерне мощность сверх нормы почти ничего не даёт, пожарной и танку — даёт
+Object.assign(CHAR_SAT,{bus:{perf:1.3,comf:1.3,econ:1.6},coach:{perf:1.6,comf:1.8},school:{perf:1.2,comf:1.2,econ:1.6},fire:{perf:1.8,rel:1.8},amb:{perf:1.5,comf:1.8,rel:1.7},mail:{perf:1.4,econ:1.6},
+  tank:{perf:1.3,econ:1.6},dump:{perf:1.5,rel:1.7},refuse:{perf:1.2,econ:1.6},taxi:{perf:1.3,comf:1.5,econ:1.6},tractor:{perf:1.6,rel:1.7},crawler:{perf:1.7,rel:1.7},
+  staff:{perf:1.6,rel:1.8},mamb:{perf:1.4,rel:1.8,comf:1.6},armored:{perf:1.7,rel:1.8},ltank:{perf:1.7,rel:1.9}});
+Object.assign(CHAR_THR,{bus:{perf:0.7,rel:0.7,safe:0.7},coach:{perf:0.75,rel:0.7,comf:0.7},school:{rel:0.7,safe:0.75},fire:{perf:0.75,rel:0.75},amb:{perf:0.7,rel:0.75,comf:0.7},mail:{rel:0.75},
+  tank:{perf:0.7,rel:0.7,safe:0.7},dump:{perf:0.7,rel:0.7},refuse:{rel:0.7},taxi:{rel:0.7},tractor:{perf:0.7,rel:0.7},crawler:{perf:0.75,rel:0.7},
+  staff:{perf:0.7,rel:0.75},mamb:{rel:0.75,comf:0.7},armored:{perf:0.75,rel:0.75},ltank:{perf:0.75,rel:0.8}});
 const CHAR_LOW=3;   // ниже порога каждая потеря весит втрое
 function charSat(g,k){const t=CHAR_SAT[g];return (t&&t[k])||CHAR_SAT_DEF[k]||1.5;}
 function charThr(g,k){const t=CHAR_THR[g];return (t&&t[k])||CHAR_THR_DEF[k]||0.5;}
@@ -3129,7 +3226,7 @@ function traitU(r,thr,sat){const x=Math.log(r);if(x>=0){const L=Math.log(sat);re
 function traitZone(r,thr,sat){return r<thr?'low':r<0.95?'below':r<=1.05?'norm':r<sat*0.98?'above':'sat';}
 const ZONE_N={low:'ниже порога',below:'ниже нормы',norm:'норма',above:'лучше нормы',sat:'с запасом — дальше не ценят'};
 // Во сколько раз машина лучше типичной машины соперников класса (1 — такая же), по каждой черте и в сумме
-function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={},u={},zone={};let lnS=0;
+function classCompare(md,s,c){const y=s.y,g=kindKey(md),ref=rivalRef(md,y),A0=charOf(md,y),R=charOf(ref.md,y),W=charW(g,c||s.country),by={},u={},zone={};let lnS=0;
   // 0.22: у легендарной модели марки — свои сильные черты и громкое имя
   const LC=md.legend?legendCh(md):null,A=LC?Object.assign({},A0):A0;if(LC)for(const k in LC)if(A[k])A[k]*=LC[k];
   CHAR_K.forEach(k=>{const r=clamp(A[k]/R[k],0.25,4),th=charThr(g,k),sa=charSat(g,k);by[k]=r;u[k]=traitU(r,th,sa);zone[k]=traitZone(r,th,sa);if(W[k])lnS+=W[k]*u[k];});
@@ -3137,15 +3234,35 @@ function classCompare(md,s,c){const y=s.y,g=segOf(md),ref=rivalRef(md,y),A0=char
   if(g==='lux'){let lo=0;CHAR_K.forEach(k=>{if(W[k]>0.05)lo=Math.min(lo,u[k]);});lnS+=0.35*lo;}
   return {S:Math.exp(lnS)*bn('quality')*(overpower(md)?0.85:1)*(md.legend?legendK(md,'appeal'):1),by,u,zone,W,ref,A,R};}
 function classScore(md,s,c){return classCompare(md,s,c).S;}
+// 0.51: годится ли деталь x (категория k) этому виду техники при остальных деталях проекта: 'low' — черта ниже порога вида (слабый мотор
+// для трёхтонки, слабые тормоза для автобуса), 'frame' — мотор не по раме, 'old' — устарела (есть деталь не хуже ни в чём), 'sat' — с запасом
+// (черта в области насыщения: платить дальше незачем), '' — годится
+const FIT_TRAIT={e:'perf',g:'ease',c:'comf',k:'safe',w:'safe'};
+// «устарела» для конструктора — строже, чем partObsolete у «Передовой модели»: есть другая доступная деталь, которая не хуже ни в одном
+// свойстве и не дороже (дешёвый экономичный мотор рядом с мощным дорогим — не устаревший, а другой выбор)
+const DOM_HI={e:['hp','rel'],g:['eff','ease'],c:['max','ride'],w:['grip','life'],k:['brk','ease']},DOM_LO={e:['fuel','kg'],g:[],c:['kg'],w:[],k:[]};
+function partDominated(k,x,s,mo){const cat=PART_CATS.find(c=>c.k===k),hi=DOM_HI[k],lo=DOM_LO[k];if(!cat||!hi)return false;const cx=partCost(x,s);
+  return unlockedP(cat.arr(),s,mo).some(z=>{if(z.id===x.id||!!z.solid!==!!x.solid)return false;let strict=false;for(const f of hi){if((z[f]||0)<(x[f]||0))return false;if((z[f]||0)>(x[f]||0))strict=true;}
+    for(const f of lo){if((z[f]||0)>(x[f]||0))return false;if((z[f]||0)<(x[f]||0))strict=true;}const cz=partCost(z,s);if(cz>cx)return false;return strict||cz<cx;});}
+function partFit(md,k,x,s){try{const t={...md,[k]:x.id},mo=isMoto(md);
+    if(k==='e'){const mx=Math.max(...unlockedP(CHASSIS,s,mo).map(c=>chassisMax(c,t)));if(engineHp(x,t)>mx)return 'frame';}
+    if(k==='c'&&overpower(t))return 'frame';
+    if(partDominated(k,x,s,mo))return 'old';
+    const z=classCompare(t,s,s.country).zone[FIT_TRAIT[k]];return z==='low'?'low':z==='sat'?'sat':'';}catch(_){return '';}}
 // Качество для рынка: доля лучшей машины эпохи (у соперников класса — QG)
 function mq(md,s,c){return Math.max(0.05,QG[segOf(md)]*classScore(md,s,c));}
 function modelR(md,s){return classScore(md,s);}
 // Грузоподъёмность: фургон стоит дешевле грузовика, трёхтонка — дороже
-function payK(md){const b=byId(BODIES,md.b);return b.truck?Math.pow((b.pay||1.5)/1.5,0.6):1;}
+function payK(md){const b=byId(BODIES,md.b);return b.truck?(b.pk||Math.pow((b.pay||1.5)/1.5,0.6)):1;}/* 0.51: pk — типичная цена нового вида против полуторатонки */
 const KIND_TRIM={people:'t0',middle:'t1',lux:'t2',sport:'t3',van:'t0',truck:'t0',moto:'t0',moside:'t0'};
+for(const k in KIND_NEW)KIND_TRIM[k]='t0';
 const KIND_NAME={people:'Народная',middle:'Средний класс',lux:'Люкс',sport:'Спортивная',van:'Фургон',truck:'Грузовик',moto:'Мотоцикл',moside:'Мотоцикл с коляской'};
+for(const k in KIND_NEW)KIND_NAME[k]=KIND_NEW[k].n;
+// вид → класс рынка: всё «не легковое» покупают как технику для дела (рынок работ, 105-market.js)
+function kindSeg(kind){return kind==='van'||kind==='truck'||kindIsNew(kind)?'truck':kind;}
 function kindBodyOk(kind,b){if(kind==='moto')return !!b.moto&&(b.seats||1)<=1;if(kind==='moside')return !!b.moto&&(b.seats||1)>1;if(b.moto)return false;
-  return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&b.id!=='b6':kind==='sport'?bodyOpen(b.id):!b.truck;}
+  if(kindIsNew(kind))return bodyKind(b)===kind;
+  return kind==='van'?b.id==='b6':kind==='truck'?!!b.truck&&bodyKind(b)==='truck':kind==='sport'?bodyOpen(b.id):!b.truck;}
 // Конструкция соперника класса — отправная точка для новой модели
 function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRIM[kind]};}
 // Подбор конструкции: по очереди меняем каждую деталь на лучшую для прибыли при подходящей цене
@@ -3172,7 +3289,7 @@ function autoDesign(kind,s,base){
     for(const x of unlockedP(arr,s,mo)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
     if(bx)md=bx;}
   // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
-  try{md.eq=eqAuto(md,kind==='van'||kind==='truck'?'truck':kind,s);}catch(_){md.eq=[];}
+  try{md.eq=eqAuto(md,kindSeg(kind),s);}catch(_){md.eq=[];}
   designValue(md,s);return md;}
 // 0.34: «Передовая модель» — современные детали (и прототипы КБ), которые больше всего поднимают итог против соперника
 // у покупателей класса, без оглядки на себестоимость (в «Подобрать детали повыгоднее» решает прибыль). Устаревшие детали
@@ -3183,7 +3300,7 @@ function autoDesign(kind,s,base){
 const FRONT_KEYS=['e','g','c','w','k'];
 function frontDesign(kind,s,base){
   let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol:Math.max(20,(s.last&&s.last.made)||20),launched:mi(s),status:'prod',price:0};
-  const mo=kind==='moto'||kind==='moside',tr=kind==='truck'||kind==='van';
+  const mo=kind==='moto'||kind==='moside',tr=kindSeg(kind)==='truck';
   const P0=tr?refPrice(md,s):0,val=t=>tr&&typeof xTruckU==='function'?xTruckU(t,s,P0):classScore(t,s,s.country);
   const cand=k=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),s,mo).filter(x=>!partObsolete(k,x.id,s));
   const frames=cand('c'),fit=t=>{if(!overpower(t))return t;let best=null,bv=-1e18;frames.forEach(c=>{const u={...t,c:c.id};if(overpower(u))return;const v=val(u);if(v>bv){bv=v;best=u;}});return best;};
@@ -3706,24 +3823,87 @@ function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*
 const TRUCK_USE={van:{n:'По району',who:'лавки, булочные, молочники, почта',d:45,s:0.3,h:4,lf:0.7,bp:3},
   city:{n:'По городу',who:'мебель, уголь, стройматериалы',d:70,s:1.4,h:6,lf:0.55,bp:2.4},
   haul:{n:'Между городами',who:'большие партии на сотни километров',d:160,s:2.6,h:9,lf:0.5,bp:1.8}};
-const TUSE=['van','city','haul'];
+/* ---------- 0.51: работы для всего ряда техники (ТЗ 0.51, тема 3) ----------
+   Прежние три перевозки остались как были. Новые работы: тяжёлые грузы (5 т и тягач с полуприцепом), автобусы, такси, почта, цистерна,
+   самосвал, городская очистка, пожарная охрана, скорая помощь — это доли того же рынка коммерческих машин (статистика «грузовики и
+   автобусы» считала их вместе), поэтому мир без игрока в сумме не меняется. Тракторы и военная техника — отдельные покупатели со
+   своими числами (FARM_MKT, ARMY_BUY). У каждой работы своя мерка: m:'t' — тонно-километр, 'p' — пассажиро-километр, 'ha' — гектар,
+   'x' — день службы (оценка по sc: скорость с грузом, надёжность, мощность, комфорт). kinds — какие виды техники берутся за работу;
+   crew — экипаж на зарплате; cq — насколько работа ценит комфорт; own — свой пул покупателей, не доля рынка грузовиков. */
+Object.assign(TRUCK_USE.van,{grp:'cargo',kinds:['van','truck'],un:'т·км'});Object.assign(TRUCK_USE.city,{grp:'cargo',kinds:['van','truck'],un:'т·км'});Object.assign(TRUCK_USE.haul,{grp:'cargo',kinds:['van','truck'],un:'т·км'});
+Object.assign(TRUCK_USE,{
+  bulk:{n:'Тяжёлые грузы',who:'уголь, лес, зерно, стройки — партиями по 5–8 тонн',d:120,s:8,h:9,lf:0.5,bp:1.6,grp:'cargo',kinds:['van','truck'],un:'т·км'},
+  bus:{n:'Городские маршруты',who:'города и омнибусные общества',m:'p',d:110,s:34,h:10,lf:0.45,bp:1.8,grp:'bus',kinds:['bus'],kind:'bus',un:'пасс·км',crew:2},
+  coach:{n:'Междугородние линии',who:'автобусные компании',m:'p',d:260,s:22,h:9,lf:0.6,bp:1.6,grp:'bus',kinds:['coach'],kind:'coach',un:'пасс·км',cq:0.5},
+  school:{n:'Школьные перевозки',who:'школьные округа',m:'p',d:50,s:24,h:3,lf:0.5,bp:3,grp:'bus',kinds:['school'],kind:'school',un:'пасс·км'},
+  taxi:{n:'Такси',who:'таксомоторные компании',m:'p',d:130,s:2,h:10,lf:0.45,bp:2.4,grp:'car',kinds:['taxi'],kind:'taxi',un:'пасс·км',cq:0.4},
+  mail:{n:'Почта',who:'почтовые ведомства',d:90,s:0.5,h:7,lf:0.6,bp:1.8,grp:'spec',kinds:['mail'],kind:'mail',un:'т·км'},
+  tank:{n:'Топливо и молоко наливом',who:'нефтяные компании, молочные заводы',d:90,s:2.5,h:7,lf:0.5,bp:2,grp:'spec',kinds:['tank'],kind:'tank',un:'т·км'},
+  dump:{n:'Стройка и дороги',who:'подрядчики, дорожные управления',d:60,s:2.5,h:8,lf:0.5,bp:2.2,grp:'spec',kinds:['dump'],kind:'dump',un:'т·км'},
+  refuse:{n:'Городская очистка',who:'городские службы',d:40,s:2,h:7,lf:0.5,bp:2.6,grp:'spec',kinds:['refuse'],kind:'refuse',un:'т·км',crew:3},
+  fire:{n:'Пожарная охрана',who:'города',m:'x',d:15,bp:1.2,grp:'spec',kinds:['fire'],kind:'fire',un:'день службы',crew:5,sc:{vT:0.6,mtbf:0.5,hp:0.5}},
+  amb:{n:'Скорая помощь',who:'больницы и города',m:'x',d:40,bp:1.6,grp:'spec',kinds:['amb'],kind:'amb',un:'день службы',crew:2,sc:{vT:0.5,mtbf:0.5,comf:0.5}},
+  plough:{n:'Пахота и уборка',who:'фермеры',m:'ha',h:9,s:250,bp:2.6,grp:'farm',kinds:['tractor','crawler'],kind:'tractor',un:'гектар',own:1},
+  heavy:{n:'Тяжёлая почва, лес, дороги',who:'крупные хозяйства, лесные и дорожные работы',m:'ha',h:9,s:1200,bp:1.6,grp:'farm',kinds:['tractor','crawler'],kind:'crawler',un:'гектар',own:1,soil:1},
+  staff:{n:'Штабные машины',who:'армия',m:'x',d:60,bp:1.4,grp:'mil',kinds:['staff'],kind:'staff',un:'день службы',own:1,sc:{vT:0.6,mtbf:0.6,comf:0.2}},
+  mamb:{n:'Военная санитарная служба',who:'армия',m:'x',d:50,bp:1.4,grp:'mil',kinds:['mamb'],kind:'mamb',un:'день службы',own:1,crew:2,sc:{vT:0.4,mtbf:0.7,comf:0.4}},
+  armored:{n:'Бронеавтомобили',who:'армия',m:'x',d:30,bp:1,grp:'mil',kinds:['armored'],kind:'armored',un:'день службы',own:1,crew:3,sc:{vT:0.6,mtbf:0.7,hp:0.3}},
+  ltank:{n:'Танковые части',who:'армия',m:'x',d:15,bp:0.8,grp:'mil',kinds:['ltank'],kind:'ltank',un:'день службы',own:1,crew:2,sc:{vT:0.5,mtbf:0.8,hp:0.4}}});
+const TUSE=Object.keys(TRUCK_USE);
+// доля рынка коммерческих машин, которую занимает работа (остальное — три прежние перевозки). Числа — оценки по истории отрасли:
+// США, 1929 год — около 880 тыс. грузовиков и автобусов, из них автобусов всех видов ~15 тыс., пожарных машин 3–5 тыс., самосвалов и
+// цистерн — десятки тысяч, такси ~25 тыс.; в Европе автобусов в разы больше (до шестой части выпуска), школьный автобус — американский
+const JOB_SH={taxi:{1897:0,1905:0.02,1910:0.04,1920:0.035,1929:0.03},bus:{1898:0,1905:0.012,1912:0.04,1920:0.04,1929:0.05},coach:{1912:0,1921:0.006,1929:0.02},
+  school:{1913:0,1920:0.004,1929:0.012},mail:{1900:0,1907:0.004,1914:0.006,1929:0.006},tank:{1905:0,1910:0.008,1920:0.02,1929:0.03},dump:{1908:0,1912:0.006,1920:0.02,1929:0.035},
+  refuse:{1915:0,1922:0.004,1929:0.008},fire:{1903:0,1906:0.003,1914:0.006,1929:0.005},amb:{1905:0,1909:0.003,1914:0.005,1929:0.005}};
+const JOB_C={bus:{us:0.15,it:0.7,ru:0.5},school:{us:0.35,uk:0.08,de:0.05,fr:0.05,it:0.05,ru:0.03},taxi:{ru:0.5,it:0.7},coach:{us:0.4,ru:0.5}};
+const BULK_SH={1914:0,1918:0.04,1929:0.1};   // тяжёлые грузы — из перевозок между городами
+// тракторы: продано в год, шт. (оценка по выпуску: США — 4 тыс. в 1910-м, 200 тыс. в 1920-м, провал 1921-го, 220 тыс. в 1929-м); доля тяжёлых работ
+const FARM_MKT={us:{1901:0,1903:300,1907:800,1910:4000,1914:12000,1916:30000,1918:130000,1920:200000,1921:70000,1923:130000,1926:180000,1929:220000},
+  uk:{1901:0,1903:20,1910:200,1915:800,1918:8000,1920:6000,1925:4000,1929:6000},de:{1905:0,1910:100,1920:800,1925:5000,1929:9000},
+  fr:{1905:0,1910:100,1919:3000,1925:4000,1929:6000},it:{1908:0,1912:50,1919:1200,1929:3000},ru:{1905:0,1910:50,1913:150,1918:0,1923:1000,1925:6000,1929:12000}};
+const FARM_HEAVY={1907:0,1908:0.03,1914:0.06,1918:0.1,1929:0.1};
+// армия: закупки в год на 1000 единиц потребности страны (ARMY_NEED) в мирное время; в войну — во столько раз больше
+const ARMY_BUY={staff:{1905:0,1906:6,1913:14,1920:10,1929:12},mamb:{1911:0,1912:3,1929:4},armored:{1904:0,1905:0.3,1913:1.2,1920:2.5,1929:4},ltank:{1916:0,1917:6,1920:3,1929:8}};
+const ARMY_WAR={staff:20,mamb:35,armored:25,ltank:60};
+function jobFits(u,md){const U=TRUCK_USE[u];if(!md||md.probe)return !U.own;return U.kinds.includes(bodyKind(byId(BODIES,md.b)));}
+function jobsOf(md){return TUSE.filter(u=>jobFits(u,md));}
+function jobOwnPool(u,c,s){const t=yf(s),ec=econ(s.y,s.m,c);
+  if(u==='plough'||u==='heavy'){const tot=tabAt(FARM_MKT[c]||FARM_MKT.it,t)/12*SEASON[s.m]*(ec.war?1:ec.f),h=tabAt(FARM_HEAVY,t);return u==='heavy'?tot*h:tot*(1-h);}
+  const A=ARMY_BUY[u];return A?tabAt(A,t)*((typeof ARMY_NEED!=='undefined'&&ARMY_NEED[c])||1000)/1000/12*(ec.war?ARMY_WAR[u]:1):0;}
+// оценка службы (m:'x'): скорость с грузом, надёжность, мощность, комфорт — в степенях работы
+// JOB_SC_K — насколько служба ценит качество против цены: машина вдвое лучше по всем статьям — как дешевле на четверть (без этого множителя
+// прокачанные детали давали в «службе» перевес без меры: замер — 88–99 % рынка пожарных и санитарных машин)
+const JOB_SC_K=0.18;
+function jobScore(U,ch){let x=0;const sc=U.sc||{};for(const k in sc)x+=sc[k]*Math.log(Math.max(0.05,k==='vT'?ch.vT||10:k==='mtbf'?ch.mtbf:k==='hp'?ch.hp:k==='comf'?ch.comf:ch[k]||1));return Math.exp(JOB_SC_K*x);}
 // какая доля фирм возит как: сначала почти одна развозка, с дорогами двадцатых растут перевозки между городами
 const TUSE_SH={1895:[0.85,0.15,0],1905:[0.78,0.2,0.02],1912:[0.62,0.32,0.06],1918:[0.5,0.38,0.12],1922:[0.45,0.37,0.18],1929:[0.4,0.35,0.25]};
 // бензин, $ за литр (в Европе — с налогами и доставкой); годы службы грузовика
 const FUEL_P={us:{1895:0.04,1915:0.05,1920:0.075,1925:0.055,1929:0.05},eu:{1895:0.08,1915:0.09,1920:0.14,1925:0.11,1929:0.1}};
 const TRUCK_LIFE={1895:5,1910:6,1920:7,1929:8};
 const BTC=7,TQ=2.6;
-function truckUseSh(c,s){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
-  const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}return {van:v[0],city:v[1],haul:v[2]};}
+function truckUseSh(c,s,md){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
+  const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}
+  // 0.51: новые работы — доли того же рынка (прежние три перевозки сжимаются на их сумму); свои пулы — в долях рынка грузовиков
+  const o={},war=econ(s.y,s.m,c).war;let add=0;for(const u in JOB_SH){const x=tabAt(JOB_SH[u],t)*((JOB_C[u]&&JOB_C[u][c])||1)*(u==='amb'&&war?2:1);o[u]=x;add+=x;}
+  const k=1-add,bulk=Math.min(tabAt(BULK_SH,t),v[2]*0.6);o.van=v[0]*k;o.city=v[1]*k;o.haul=(v[2]-bulk)*k;o.bulk=bulk*k;
+  const tp=truckPool(c,s);TUSE.forEach(u=>{if(TRUCK_USE[u].own)o[u]=tp>0?jobOwnPool(u,c,s)/tp:0;});
+  if(md)TUSE.forEach(u=>{if(!jobFits(u,md))o[u]=0;});return o;}
 // Эталон соперников для каждой перевозки: фургон, полуторатонка, трёхтонка (до 1920 года — полуторатонка)
 // 0.34: соперники копируют и грузовик — их эталон перевозки получает те же ★ копирования (тонно-километр дешевле); без копирования — как прежде
-function truckRef(u,y){const cp=typeof copyExtra==='function'?Math.round(copyExtra(u==='van'?'van':'truck')*10)/10:0;if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:cp};const r=rivalCar('truck',y)[2];return {...r,b:u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:cp};}
+function truckRef(u,y){const U=TRUCK_USE[u];if(U.kind){const k=U.kind,r=rivalCar(k,y)[2],cp=typeof copyExtra==='function'?Math.round(copyExtra(k)*10)/10:0;return {...r,t:'t0',ref:1,rl:cp};}
+  const cp=typeof copyExtra==='function'?Math.round(copyExtra(u==='van'?'van':'truck')*10)/10:0;if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:cp};const r=rivalCar('truck',y)[2];
+  return {...r,b:u==='bulk'?(y>=1922?'b13':y>=1916?'b12':'b8'):u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:cp};}
 // Во что фирме обходится тонно-километр на этой машине при цене P (в $ того времени)
-function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf);
-  const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1;
-  const kmDay=Math.min(U.d,(ch.vT||15)*U.h),down=clamp(0.4/mt,0.01,0.3),days=300*(1-down),km=kmDay*days;
-  const own=P*(1/life+0.06),rep=P*0.08*(1+3/mt),fuel=km*9*ch.fuel/100*fp,tot=own+rep+fuel+drv;
-  const tkm=km*Math.min(pay,U.s)*U.lf;return {cpk:tot/Math.max(1,tkm),tot,tkm,kmDay,own,rep,fuel,drv};}
+function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf),m=U.m||'t';
+  const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1*(U.crew||1);
+  const down=clamp(0.4/mt,0.01,0.3);let kmDay,days,tkm,fk=1;
+  if(m==='ha'){// трактор: сезон в поле, тяга на крюке (гусеницы держат почву лучше; колёсный на тяжёлой работе буксует)
+    days=110*(1-down);kmDay=U.h*4;fk=3;tkm=Math.min(U.s,days*U.h*ch.hp*(ch.trk?0.62:0.48)*(U.soil&&!ch.trk?0.5:1)*0.032);}/* U.s — сколько гектаров работы у хозяйства за сезон: трактор мощнее нужного ферме ничего не добавляет */
+  else if(m==='x'){days=300*(1-down);kmDay=U.d;tkm=days*jobScore(U,ch);}
+  else{kmDay=Math.min(U.d,(ch.vT||15)*U.h);days=300*(1-down);tkm=kmDay*days*(m==='p'?Math.min(ch.seats||2,U.s):Math.min(pay,U.s))*U.lf*(U.cq?Math.pow(ch.comf,U.cq):1);}
+  const km=kmDay*days,own=P*(1/life+0.06),rep=P*0.08*(1+3/mt),fuel=km*9*ch.fuel/100*fp*fk,tot=own+rep+fuel+drv;
+  return {cpk:tot/Math.max(m==='t'?1:1e-6,tkm),tot,tkm,kmDay,own,rep,fuel,drv};}
 // Остальное, что ценит шофёр и хозяин: простота вождения, тормоза, кабина — немного
 function truckSoft(md,ref,y){const A=charOf(md,y),R=charOf(ref,y);return 0.1*Math.log(clamp(A.ease/R.ease,0.25,4))+0.08*Math.log(clamp(A.safe/R.safe,0.25,4))+0.04*Math.log(clamp(A.comf/R.comf,0.25,4));}
 function truckMarket(R,c,s,ms,pr,K,u0){
@@ -3732,14 +3912,16 @@ function truckMarket(R,c,s,ms,pr,K,u0){
   // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
   const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
   const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s)-contest(s,c,'truck');});R.byU=R.byU||{};
-  for(const u of TUSE){const pu=pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
+  for(const u of TUSE){const own=!!TRUCK_USE[u].own,pu=own?jobOwnPool(u,c,s):pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
     const ei=Math.exp(u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR);let m=-1e9;
-    const L=ms.map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
+    const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
       else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk;v=u0-0.5-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y)+ex[md.id];}
       v=(v+bk)/LAM;if(v>m)m=v;return {md,v};});
     let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
-    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);z.inc+=ri;Z.riv=ri;
+    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);Z.riv=ri;
+    // свой пул (тракторы, армия): соперники — не марки из таблицы грузовиков, а «остальной мир» (16-world.js: в мир, но без имени)
+    if(own){const an=R.anon=R.anon||{n:0,rev:0,hp:0};an.n+=ri;an.rev+=ri*Pref;an.hp+=ri*(byId(ENGINES,ref.e)||{hp:20}).hp;}else z.inc+=ri;
     L.forEach(x=>{const d=pu*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
   R.shop+=pool;
 }
@@ -4665,11 +4847,12 @@ function hiddenHTML(md,s,inDesigner){if(isTruck(md))return '';const B=buyersPct(
 
 /* ---------- грузовик: главное — тонно-километр ---------- */
 // самая массовая для модели перевозка (где фирмы берут её охотнее всего) и цена тонно-километра против эталона на ней
-function truckHead(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s);P=P||md.price||refPrice(md,s);let best=null;
+function truckHead(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s,md);P=P||md.price||refPrice(md,s);let best=null;
   TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cp=truckCost(md,u,c,s,P).cpk,
     w=sh[u]*Math.exp(-BTC*Math.log(cp/cR)-TRUCK_USE[u].bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y));if(!best||w>best.w)best={u,w,cp,cR,k:cp/cR};});
   if(!best)return null;const d=Math.round((1-best.k)*100);
-  return Object.assign(best,{txt:Math.abs(d)<1?`т·км как у соперника`:`т·км на ${Math.abs(d)}% ${d>0?'дешевле':'дороже'} соперника`,tone:best.k<=0.97?'good':best.k>1.05?'bad':'warn',use:TRUCK_USE[best.u].n.toLowerCase()});}
+  const un=TRUCK_USE[best.u].un||'т·км';/* 0.51: у каждой работы своя мерка */
+  return Object.assign(best,{un,txt:Math.abs(d)<1?`${un} как у соперника`:`${un} на ${Math.abs(d)}% ${d>0?'дешевле':'дороже'} соперника`,tone:best.k<=0.97?'good':best.k>1.05?'bad':'warn',use:TRUCK_USE[best.u].n.toLowerCase()});}
 
 /* ---------- прибыль после всех расходов ---------- */
 // постоянные расходы месяца — как в отчёте (13-turn.js): сеть и представительства, содержание завода, проценты, КБ, команда, реклама
@@ -5751,7 +5934,7 @@ const TENDERS={
     text:(o)=>`Армии нужны мотоциклы: связные возят приказы между штабами, санитары — раненых, в коляске ставят пулемёт. ${o.who} заказывает ${o.n} мотоциклов с поставкой за ${o.mo} месяцев. Заказ займёт мотоцех, зато платят сразу и щедро.`}
 };
 const MOTO_TENDER={moto:1,moside:1};
-function tenderModel(s,kind){if(MOTO_TENDER[kind])return motoForTender(s,kind);return s.models.filter(m=>m.status==='prod'&&!isMoto(m)&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
+function tenderModel(s,kind){if(MOTO_TENDER[kind])return motoForTender(s,kind);return s.models.filter(m=>m.status==='prod'&&!isMoto(m)&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&bodyKind(byId(BODIES,m.b))==='truck'&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
 function checkTenders(s){
   if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
   // 0.36: в России с осени 1917 до весны 1921 года (переворот, гражданская война, разруха) заказов у ведомств и фирм нет
@@ -6577,7 +6760,7 @@ function step(){
     // 0.32: мотоциклы — свои классы и свои марки (s.mcomps)
     const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;});const msg={};let msize=0;
     MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x)x.last+=o.sales;});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;mk.lostDlr=lostC[c]||0;}
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;if(MC.anon)mk.anon={n:MC.anon.n,rev:MC.anon.rev,hp:MC.anon.hp};/* 0.51: тракторы и армия — продажи «остального мира» */mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md),mo=isMotoSeg(g);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(!m)continue;
     if(mo){if(m.msegs&&m.msegs[g]){m.msegs[g].you+=so;m.msegs[g].size+=so;m.msize+=so;}}else if(m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   chalTallyYou(s,r);
@@ -7421,6 +7604,8 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
       if(!un)return;if(cp.imp){W.hp+=hp;W.rev+=rev;W.cu[c]=(W.cu[c]||0)+un;return;}// импорт — не компания, но мир
       if(heldByMe(s,c,i)){wMine(W,c,hp,rev,un);return;}/* 0.46: ваша дочерняя марка — в ваш зачёт */
       const own=(s.botAcq&&s.botAcq[cp.n])||coKey(cp.n);/* 0.41: марка, купленная ботом, — в его зачёт */wAdd(W,own,cp.c||c,c,hp,rev,un);});}
+  // 0.51: тракторы и военная техника соперников — мир без имени (их делали сотни фирм вне таблицы автомобильных марок)
+  if(r.mk)for(const c in r.mk){const a=r.mk[c]&&r.mk[c].anon;if(a&&a.n>0){W.hp+=a.hp;W.rev+=a.rev;W.cu[c]=(W.cu[c]||0)+a.n;}}
   // 0.41: экспорт живых соперников сверх истории (17b-bots.js: botSold → B.xs за этот месяц)
   if(s.bots&&botsOn(s))for(const n in s.bots){const B=s.bots[n];for(const c in (B.xs||{}))for(const g in B.xs[c]){const u=B.xs[c][g];if(u>0)wAdd(W,B.n,B.c,c,u*hpTyp(g,y),u*prefP(g,c,s),u);}}
   // ---- мотомарки (03c-moto.js): продажи месяца без разбивки по классам; покупатели — за четверть
@@ -7959,6 +8144,12 @@ function adviceList(s){
   const rc=RACES.filter(r=>raceOpen(r,s)&&raceEligible(r,s)&&!raceWarBlocked(r,s)&&!s.cres[r.key]&&s.raceDone[r.key]===undefined).sort((a,b)=>a.m-b.m)[0];if(rc&&act.length&&raceCarsFor(s,rc).length)add(35,'🏁',`Открыта запись на гонку «${rc.name}». Победа — слава марке и покупатели.`,'К гонке',()=>{try{ACT.raceTo({k:rc.key});}catch(e){console.warn('advisor race',e);}},'race');
   // фургоны для бизнеса
   if(s.y>=1896&&act.length&&lineOn(s,'car')&&!s.models.some(m=>isTruck(m)&&m.status!=='off')&&s.cash>devCost({...rivalDesign('van',s.y)},s)*2)add(22,'🚚','Лавки, пивоварни и почта покупают фургоны, а ведомства объявляют заказы. Сделайте фургон.','Фургон',()=>openDesigner('van'),'models');
+  // 0.51: открылся рынок нового вида техники, а у вас в этой группе ничего нет — совет с кнопкой прямо на шаг выбора назначения
+  // (один совет за раз: самая большая из свободных групп; о каждой группе напоминаем три года)
+  if(act.length&&lineOn(s,'car')){let best=null;['bus','spec','farm','mil'].forEach(g=>{const K=KIND_GRP[g],open=K.kinds.filter(k=>kindOpen(k,s));if(!open.length)return;
+      if(s.models.some(m=>m.status!=='off'&&open.includes(bodyKind(byId(BODIES,m.b)))))return;const y0=Math.min(...open.map(kindYear));if(s.y>y0+3&&g!=='farm'||s.y>1920&&g==='farm')return;
+      const pool=open.reduce((a,k)=>a+kindPool(k,s),0);if(pool>=3&&(!best||pool>best.pool))best={g,pool,K};});
+    if(best&&s.cash>devCost({...rivalDesign(KIND_GRP[best.g].kinds[0],s.y)},s)*2)add(20,best.K.ic,`${best.K.n}: в вашей стране берут около ${fmtD(best.pool)} в месяц — ${best.K.who}. У вас в этой группе пока ничего нет.`,best.K.n,()=>openKindStep(best.g),'models');}
   // КБ растёт
   // 0.30: оснащение эпохи для бюро и команды
   {const k=[...KIT.kb,...KIT.team].find(k=>!kitHas(s,k.id)&&k.y<=s.y&&!kitNeed(s,k)&&(k.g==='kb'||(s.rdept||0)>0)&&s.cash>kitCost(s,k)*8);
@@ -8749,6 +8940,44 @@ function racerFoundAsk(k){const s=G,X=s.racer,nm=(document.getElementById('rxNam
     <button class="btn primary block" style="margin-top:14px" data-act="rxFoundGo" data-k="${k}" data-v="${loan}" data-n="${esc(nm)}">Основать марку</button>`);}
 
 /* ================= ART ================= */
+// 0.51: рисунки новых видов техники (вид сбоку, нос вправо). g — опорные точки шасси: rear — задний свес, x0 — передняя стенка кабины,
+// railY — верх рамы. Возвращает b — кузов; w — свои колёса (трактор, гусеницы); twin — сдвоенная задняя ось; wx — добавочные колёса
+function kindArt(art,g){const {rear,x0,railY,front,paint,dark,glass,metal,driver,R,wy,GY,rx,fx,leather}=g,W=x0-rear,r=(x,y,w,h,f,o)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${f}"${o?` opacity="${o}"`:''}/>`,wood='#6b4a2b';
+  const cab=()=>r(x0-24,railY-42,24,42,paint)+r(x0-19,railY-36,14,13,glass,.85),wins=(xa,xb,y,h,n)=>{let o='';const w=(xb-xa-(n+1)*3)/n;for(let i=0;i<n;i++)o+=r(xa+3+i*(w+3),y,w,h,glass,.85);return o;},
+    cross=(cx,cy)=>`<circle cx="${cx}" cy="${cy}" r="7" fill="#f4f1e8"/><rect x="${cx-1.6}" y="${cy-5}" width="3.2" height="10" fill="#b3271e"/><rect x="${cx-5}" y="${cy-1.6}" width="10" height="3.2" fill="#b3271e"/>`;
+  if(art==='heavy'){let o=cab()+r(rear-10,railY-13,x0-26-rear+10,10,wood);for(let x=rear-8;x<x0-28;x+=11)o+=r(x,railY-30,2,17,wood);o+=r(rear-10,railY-30,x0-26-rear+10,2,wood)+r(rear-10,railY-21,x0-26-rear+10,2,wood);return {b:o,twin:1};}
+  if(art==='semi'){const tx=rear-22;let o=cab()+r(tx,railY-46,x0-30-tx,46,paint)+r(tx,railY-48,x0-30-tx,3,dark)+r(tx+4,railY-24,x0-38-tx,2,metal,.6)+r(x0-34,railY-4,10,4,dark);return {b:o,wx:[tx+14]};}
+  if(art==='bus'){const xa=rear-6;let o=r(xa,railY-34,x0-xa,34,paint)+wins(xa,x0-2,railY-30,13,5)+r(xa,railY-14,x0-xa,2,metal,.7);
+    // империал: лестница сзади, скамьи и поручень наверху
+    o+=r(xa-2,railY-37,x0-xa+6,3,dark)+`<path d="M${xa+2},${railY-37} v-13 M${x0},${railY-37} v-13 M${xa+2},${railY-50} H${x0}" stroke="${dark}" stroke-width="1.6" fill="none"/>`;for(let x=xa+10;x<x0-8;x+=14)o+=r(x,railY-46,8,9,leather);
+    o+=`<path d="M${xa-2},${railY} l-7,-10 v-27" stroke="${dark}" stroke-width="2" fill="none"/>`+driver(x0+6,railY-28);return {b:o};}
+  if(art==='coach'){const xa=rear-8;let o=`<path d="M${xa},${railY} V${railY-30} Q${xa+2},${railY-40} ${xa+14},${railY-40} H${x0-6} Q${x0},${railY-38} ${x0},${railY-28} V${railY}Z" fill="${paint}"/>`+wins(xa+2,x0-2,railY-35,13,6)+r(xa,railY-18,x0-xa,2,metal,.8)+r(xa+10,railY-45,x0-xa-30,4,dark)+r(xa+14,railY-49,22,4,wood)+r(xa+40,railY-49,16,4,leather);return {b:o};}
+  if(art==='school'){const xa=rear;let o=r(xa,railY-38,x0-xa,38,paint)+r(xa-1,railY-40,x0-xa+2,3,dark)+wins(xa,x0-2,railY-33,12,5)+r(xa,railY-16,x0-xa,3,dark,.8);return {b:o};}
+  if(art==='fire'){let o=r(rear-2,railY-16,x0-rear+2,16,paint)+r(x0-22,railY-22,22,6,paint)+driver(x0-12,railY-36)+driver(x0-34,railY-30);
+    o+=`<path d="M${rear-8},${railY-30} H${x0-30} M${rear-8},${railY-36} H${x0-30}" stroke="${wood}" stroke-width="1.8"/>`;for(let x=rear-4;x<x0-32;x+=8)o+=`<line x1="${x}" y1="${railY-36}" x2="${x}" y2="${railY-30}" stroke="${wood}" stroke-width="1.2"/>`;
+    o+=`<circle cx="${rear+16}" cy="${railY-22}" r="7" fill="${metal}" stroke="${dark}" stroke-width="1.2"/><circle cx="${rear+16}" cy="${railY-22}" r="2.5" fill="${dark}"/>`+r(rear+30,railY-26,18,10,metal)+`<circle cx="${x0-2}" cy="${railY-30}" r="3.4" fill="${metal}" stroke="${dark}" stroke-width="1"/>`;return {b:o};}
+  if(art==='amb'||art==='mail'){const xa=rear;let o=r(xa,railY-44,x0-18-xa,44,art==='amb'?'#ece8dc':paint)+r(xa,railY-46,x0-16-xa,3,dark)+r(x0-18,railY-40,18,3,dark)+r(x0-18,railY-16,18,16,art==='amb'?'#ece8dc':paint)+driver(x0-9,railY-30);
+    o+=art==='amb'?cross((xa+x0-18)/2,railY-24)+r(xa+6,railY-38,12,8,glass,.8):r(xa+10,railY-30,22,14,'#f4f1e8')+`<path d="M${xa+10},${railY-30} l11,8 l11,-8" stroke="${dark}" stroke-width="1.4" fill="none"/>`;return {b:o};}
+  if(art==='mamb'){const xa=rear-2;let o=cab()+`<path d="M${xa},${railY} V${railY-30} Q${(xa+x0-26)/2},${railY-46} ${x0-26},${railY-30} V${railY}Z" fill="#8c8a6e"/>`+cross((xa+x0-26)/2,railY-20);return {b:o};}
+  if(art==='tank'){const xa=rear-4,xb=x0-27;let o=cab()+`<rect x="${xa}" y="${railY-30}" width="${xb-xa}" height="28" rx="13" fill="${paint}"/>`+r(xa+10,railY-30,2,28,dark,.35)+r(xb-12,railY-30,2,28,dark,.35)+r((xa+xb)/2-5,railY-35,10,6,metal)+r(xa+6,railY-18,xb-xa-12,2,metal,.6);return {b:o,twin:1};}
+  if(art==='dump'){const xa=rear-6,xb=x0-27;let o=cab()+`<path d="M${xa},${railY-26} L${xb},${railY-14} V${railY-2} H${xa+6}Z" fill="${paint}"/><path d="M${xa+4},${railY-25} q14,-13 30,-3 q10,-6 ${xb-xa-40},9z" fill="#8a7a5c"/>`+`<line x1="${xb-10}" y1="${railY-2}" x2="${xb-24}" y2="${railY-18}" stroke="${metal}" stroke-width="3"/>`;return {b:o,twin:1};}
+  if(art==='refuse'){const xa=rear-4,xb=x0-27;let o=cab()+`<path d="M${xa},${railY} V${railY-22} Q${xa},${railY-36} ${xa+16},${railY-36} H${xb-10} Q${xb},${railY-36} ${xb},${railY-26} V${railY}Z" fill="${paint}"/>`;for(let x=xa+10;x<xb-14;x+=20)o+=r(x,railY-32,14,10,dark,.5);o+=r(xa,railY-14,xb-xa,2,metal,.6);return {b:o,twin:1};}
+  if(art==='taxi'){const ww=(W-14)/2;let o=r(rear+2,railY-46,W-2,46,paint)+r(rear,railY-48,W+2,4,dark)+r(rear+6,railY-40,ww,16,glass,.85)+r(rear+10+ww,railY-40,ww-2,16,glass,.85);
+    for(let x=rear+2,i=0;x<x0-5;x+=5,i++)o+=r(x,railY-21,5,3,i%2?'#f4f1e8':'#e3b524')+r(x,railY-18,5,3,i%2?'#e3b524':'#f4f1e8');o+=r(x0-9,railY-56,7,8,'#b3271e');return {b:o};}
+  if(art==='staff'){let o=`<path d="M${rear},${railY} L${rear},${railY-16} Q${rear},${railY-20} ${rear+4},${railY-20} L${x0},${railY-18} L${x0},${railY}Z" fill="#6f6f54"/>`+`<path d="M${rear+18},${railY-20} v-12 q0,-3 3,-3 h10 q3,0 3,3 v12z" fill="${leather}"/><path d="M${x0-30},${railY-19} v-13 q0,-3 3,-3 h10 q3,0 3,3 v13z" fill="${leather}"/>`+driver(x0-16,railY-33)+driver(rear+26,railY-33)
+      +`<circle cx="${rear-4}" cy="${railY-14}" r="9" fill="${dark}"/><circle cx="${rear-4}" cy="${railY-14}" r="4" fill="${metal}"/><line x1="${x0+3}" y1="${railY-18}" x2="${x0+3}" y2="${railY-40}" stroke="${dark}" stroke-width="1.4"/><path d="M${x0+3},${railY-40} h11 l-3,3.5 l3,3.5 h-11z" fill="#b3271e"/>`;return {b:o};}
+  if(art==='armored'){const xa=rear-4,c='#6b6d58';let o=`<path d="M${xa},${railY+2} V${railY-24} L${xa+10},${railY-34} H${x0-4} L${front-10},${railY-22} L${front-4},${railY-12} V${railY+2}Z" fill="${c}"/>`+`<rect x="${xa+26}" y="${railY-50}" width="30" height="17" rx="5" fill="${c}" stroke="${dark}" stroke-width="1"/><rect x="${xa+54}" y="${railY-44}" width="22" height="3" fill="${dark}"/>`
+      +r(x0-18,railY-28,12,3,dark)+r(xa+8,railY-26,10,3,dark);for(let x=xa+8;x<front-12;x+=12)o+=`<circle cx="${x}" cy="${railY-6}" r="1.1" fill="${dark}"/>`;return {b:o,nohood:1};}
+  if(art==='tractor'){const RR=R*1.75,rcx=rx+8,fcx=fx-6,fr=R*0.72,sp=(cx,cy,rr,n)=>{let o=`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${dark}" stroke-width="5"/><circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="#b3271e" stroke-width="1.6"/><g class="spin" style="transform-origin:${cx}px ${cy}px">`;for(let i=0;i<n;i++){const a=i/n*6.283;o+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(a)*rr).toFixed(1)}" y2="${(cy+Math.sin(a)*rr).toFixed(1)}" stroke="#b3271e" stroke-width="1.6"/>`;}return o+`</g><circle cx="${cx}" cy="${cy}" r="3.5" fill="${metal}"/>`;};
+    let o=r(rcx+6,railY-20,front-rcx-14,22,paint)+r(front-10,railY-22,6,26,metal)+r(rcx+34,railY-38,3,18,dark)+`<path d="M${rcx-6},${railY-24} q2,-8 12,-6 v10z" fill="${leather}"/>`+driver(rcx+2,railY-38)+`<line x1="${rcx+12}" y1="${railY-26}" x2="${rcx+24}" y2="${railY-20}" stroke="${dark}" stroke-width="2"/>`;
+    return {b:o,w:sp(rcx,GY-RR,RR,12)+sp(fcx,GY-fr,fr,8),nohood:1};}
+  if(art==='crawler'||art==='ltank'){const xa=rear-6,xb=front-6,ty=GY-22,c=art==='ltank'?'#6b6d58':paint;
+    let w=`<rect x="${xa}" y="${ty}" width="${xb-xa}" height="22" rx="11" fill="${dark}"/><rect x="${xa+3}" y="${ty+3}" width="${xb-xa-6}" height="16" rx="8" fill="#3a3c42"/>`;for(let x=xa+12;x<xb-8;x+=15)w+=`<circle cx="${x}" cy="${ty+11}" r="5.5" fill="${dark}"/><circle cx="${x}" cy="${ty+11}" r="2" fill="${metal}"/>`;
+    for(let x=xa+6;x<xb-4;x+=7)w+=`<rect x="${x}" y="${ty-1}" width="3" height="2" fill="${metal}" opacity=".6"/>`;
+    let o;if(art==='crawler')o=r(xa+34,ty-22,xb-xa-44,22,c)+r(xb-14,ty-24,6,26,metal)+r(xa+60,ty-38,3,16,dark)+`<path d="M${xa+6},${ty-40} H${xa+40} M${xa+8},${ty-40} V${ty} M${xa+38},${ty-40} V${ty-20}" stroke="${dark}" stroke-width="2" fill="none"/>`+r(xa+4,ty-43,40,4,c)+driver(xa+22,ty-24);
+    else o=`<path d="M${xa+4},${ty+2} L${xa+12},${ty-18} H${xb-22} L${xb-6},${ty-4} V${ty+2}Z" fill="${c}"/>`+`<rect x="${xa+38}" y="${ty-36}" width="28" height="19" rx="6" fill="${c}" stroke="${dark}" stroke-width="1"/><rect x="${xa+64}" y="${ty-30}" width="24" height="4" fill="${dark}"/>`+r(xa+46,ty-40,10,5,c)+`<path d="M${xa+2},${ty+12} l-16,-4 l2,-6z" fill="${dark}"/>`;
+    return {b:o,w,nohood:1};}
+  return null;}
 function carSVG(md,opt={}){
   const p=parts(md),hp=p.e.hp,ei=hp<=3?0:hp<=8?1:hp<=16?2:hp<=25?3:hp<=40?4:hp<=60?5:7,cy=p.c.y,ci=cy<1896?0:cy<1902?1:cy<1910?2:cy<1920?3:4,bid=({b9:'b4',b11:'b4',b10:'b1'})[p.b.id]||p.b.id;
   const paint=md.paint||'#1b1d22',dark='#15161a',leather='#4a2f1f',glass='#a9c6db';
@@ -8757,8 +8986,8 @@ function carSVG(md,opt={}){
   const front=fx+14,x0=front-hoodL-4,rear=rx-22;
   const metal=ci>=4?'#cfd3da':(md.t==='t0'?'#34363c':'#c9a24a');
   const hoodH=hoodL?12+(ei>=4?4:0)+(ei>=7?2:0):0;
-  let b='';
-  if(ci>=2){const fen=cx=>`<path d="M${cx-R-4},${wy+2} Q${cx-R-4},${wy-R-6} ${cx},${wy-R-6} Q${cx+R+4},${wy-R-6} ${cx+R+4},${wy+2} L${cx+R+1},${wy+2} Q${cx+R},${wy-R-2} ${cx},${wy-R-2} Q${cx-R},${wy-R-2} ${cx-R-1},${wy+2}Z" fill="${ci>=4?paint:dark}"/>`;b+=fen(rx)+fen(fx);if(!truck)b+=`<rect x="${rx+R+2}" y="${wy-2}" width="${fx-rx-2*R-4}" height="3" fill="${dark}"/>`;}
+  let b='',KA=null;
+  if(ci>=2&&!(p.b.trk||p.b.farm)){const fen=cx=>`<path d="M${cx-R-4},${wy+2} Q${cx-R-4},${wy-R-6} ${cx},${wy-R-6} Q${cx+R+4},${wy-R-6} ${cx+R+4},${wy+2} L${cx+R+1},${wy+2} Q${cx+R},${wy-R-2} ${cx},${wy-R-2} Q${cx-R},${wy-R-2} ${cx-R-1},${wy+2}Z" fill="${ci>=4?paint:dark}"/>`;b+=fen(rx)+fen(fx);if(!truck)b+=`<rect x="${rx+R+2}" y="${wy-2}" width="${fx-rx-2*R-4}" height="3" fill="${dark}"/>`;}
   b+=`<rect x="${rear}" y="${railY-2}" width="${front-rear}" height="4" fill="${dark}"/>`;
   const driver=(x,y)=>`<rect x="${x-5}" y="${y}" width="10" height="11" rx="3" fill="#3c3f47"/><circle cx="${x}" cy="${y-4}" r="4.2" fill="#e0b894"/><path d="M${x-5},${y-5} q5,-6 10,0 z" fill="${dark}"/>`;
   if(bid==='b1'){b+=`<rect x="${rear+4}" y="${railY-14}" width="${x0-rear-4}" height="14" rx="2" fill="${paint}"/><path d="M${rear+6},${railY-14} v-18 q0,-4 4,-4 h14 q4,0 4,4 v18z" fill="${leather}"/>`+driver(rear+22,railY-30)+`<line x1="${x0-2}" y1="${railY-14}" x2="${x0-10}" y2="${railY-30}" stroke="${dark}" stroke-width="2"/><ellipse cx="${x0-10}" cy="${railY-30}" rx="4" ry="1.6" fill="${dark}"/>`;}
@@ -8767,13 +8996,15 @@ function carSVG(md,opt={}){
   else if(bid==='b4'){const ww=(x0-rear-14)/2;b+=`<rect x="${rear+2}" y="${railY-46}" width="${x0-rear-2}" height="46" rx="2" fill="${paint}"/><rect x="${rear}" y="${railY-48}" width="${x0-rear+2}" height="4" rx="1" fill="${dark}"/><rect x="${rear+6}" y="${railY-40}" width="${ww}" height="16" fill="${glass}" opacity=".85"/><rect x="${rear+10+ww}" y="${railY-40}" width="${ww-2}" height="16" fill="${glass}" opacity=".85"/><rect x="${rear+2}" y="${railY-20}" width="${x0-rear-2}" height="2" fill="${metal}" opacity=".7"/>`;}
   else if(bid==='b5'){b+=`<path d="M${rear},${railY} L${rear},${railY-18} Q${rear+2},${railY-40} ${rear+24},${railY-42} L${x0-14},${railY-42} Q${x0-3},${railY-40} ${x0},${railY-20} L${x0},${railY}Z" fill="${paint}"/><path d="M${rear+8},${railY-22} Q${rear+10},${railY-36} ${rear+26},${railY-37} L${(rear+x0)/2},${railY-37} L${(rear+x0)/2},${railY-22}Z" fill="${glass}" opacity=".85"/><path d="M${(rear+x0)/2+3},${railY-22} L${(rear+x0)/2+3},${railY-37} L${x0-15},${railY-37} Q${x0-6},${railY-35} ${x0-4},${railY-22}Z" fill="${glass}" opacity=".85"/><rect x="${rear}" y="${railY-16}" width="${x0-rear}" height="2" fill="${metal}" opacity=".8"/>`;}
   else if(bid==='b6'){b+=`<rect x="${rear}" y="${railY-44}" width="${x0-18-rear}" height="44" rx="2" fill="${paint}"/><rect x="${rear+6}" y="${railY-34}" width="${x0-30-rear}" height="3" fill="${metal}"/><rect x="${x0-18}" y="${railY-40}" width="18" height="3" fill="${dark}"/><rect x="${x0-18}" y="${railY-16}" width="18" height="16" fill="${paint}"/>`+driver(x0-9,railY-30);}
+  else if(p.b.art&&(KA=kindArt(p.b.art,{rear,x0,railY,front,paint,dark,glass,metal,driver,R,wy,GY,rx,fx,leather}))){b+=KA.b;}
   else{const big=bid==='b8';b+=`<rect x="${x0-24}" y="${railY-42}" width="24" height="42" rx="2" fill="${paint}"/><rect x="${x0-19}" y="${railY-36}" width="14" height="13" fill="${glass}" opacity=".85"/><rect x="${rear-(big?8:4)}" y="${railY-12}" width="${x0-26-rear+(big?8:4)}" height="9" fill="#6b4a2b"/>`;for(let x=rear-(big?6:2);x<x0-28;x+=12)b+=`<rect x="${x}" y="${railY-24}" width="2" height="12" fill="#6b4a2b"/>`;b+=`<rect x="${rear-(big?8:4)}" y="${railY-24}" width="${x0-26-rear+(big?8:4)}" height="2" fill="#6b4a2b"/>`;}
-  if(hoodL){b+=`<path d="M${x0},${railY} L${x0},${railY-hoodH} L${front-8},${railY-hoodH+2} Q${front-4},${railY-hoodH+3} ${front-4},${railY-hoodH+6} L${front-4},${railY}Z" fill="${paint}"/>`;if(ei>=3)for(let i=0;i<Math.min(6,ei);i++)b+=`<rect x="${x0+6+i*5}" y="${railY-hoodH+5}" width="2" height="${hoodH-9}" fill="${dark}" opacity=".45"/>`;b+=`<rect x="${front-5}" y="${railY-hoodH}" width="5" height="${hoodH}" rx="1" fill="${metal}"/><circle cx="${front+1}" cy="${railY-hoodH+3}" r="3.2" fill="${metal}" stroke="${dark}" stroke-width="1"/>`;}
+  if(KA&&KA.nohood){}
+  else if(hoodL){b+=`<path d="M${x0},${railY} L${x0},${railY-hoodH} L${front-8},${railY-hoodH+2} Q${front-4},${railY-hoodH+3} ${front-4},${railY-hoodH+6} L${front-4},${railY}Z" fill="${paint}"/>`;if(ei>=3)for(let i=0;i<Math.min(6,ei);i++)b+=`<rect x="${x0+6+i*5}" y="${railY-hoodH+5}" width="2" height="${hoodH-9}" fill="${dark}" opacity=".45"/>`;b+=`<rect x="${front-5}" y="${railY-hoodH}" width="5" height="${hoodH}" rx="1" fill="${metal}"/><circle cx="${front+1}" cy="${railY-hoodH+3}" r="3.2" fill="${metal}" stroke="${dark}" stroke-width="1"/>`;}
   else b+=`<circle cx="${x0+2}" cy="${railY-16}" r="3" fill="${metal}" stroke="${dark}" stroke-width="1"/>`;
   const wheel=cx=>{let w=`<circle cx="${cx}" cy="${wy}" r="${R}" fill="${dark}"/>`;if(md.t==='t2'&&ci>=3)w+=`<circle cx="${cx}" cy="${wy}" r="${R-3}" fill="none" stroke="#e8e6df" stroke-width="2.2"/>`;
     if(ci>=4)w+=`<circle cx="${cx}" cy="${wy}" r="${R-5}" fill="#2e3036"/><g class="spin" style="transform-origin:${cx}px ${wy}px"><circle cx="${cx}" cy="${wy}" r="${R-8}" fill="none" stroke="${metal}" stroke-width="1.2" stroke-dasharray="3 3"/></g><circle cx="${cx}" cy="${wy}" r="3" fill="${metal}"/>`;
     else{const wood=ci<=1?'#caa46b':'#8e6f45';w+=`<circle cx="${cx}" cy="${wy}" r="${R-3}" fill="none" stroke="${wood}" stroke-width="2"/><g class="spin" style="transform-origin:${cx}px ${wy}px">`;const n=ci<=1?12:10;for(let i=0;i<n;i++){const a=i/n*Math.PI*2;w+=`<line x1="${cx}" y1="${wy}" x2="${(cx+Math.cos(a)*(R-3)).toFixed(1)}" y2="${(wy+Math.sin(a)*(R-3)).toFixed(1)}" stroke="${wood}" stroke-width="1.4"/>`;}w+=`</g><circle cx="${cx}" cy="${wy}" r="3" fill="${metal}"/>`;}return w;};
-  const wheels=wheel(fx)+(bid==='b8'?wheel(rx-6):'')+wheel(rx);
+  const wheels=KA&&KA.w!==undefined?KA.w:wheel(fx)+(bid==='b8'||(KA&&KA.twin)?wheel(rx-6):'')+wheel(rx)+(KA&&KA.wx?KA.wx.map(wheel).join(''):'');
   const shadow=`<ellipse cx="${(rx+fx)/2}" cy="${GY+2}" rx="${wb/2+34}" ry="3" fill="#000" opacity=".28"/>`;
   const xmlns=opt.standalone?' xmlns="http://www.w3.org/2000/svg" width="220" height="100"':'';
   return `<svg${xmlns} viewBox="0 0 220 100" class="car ${opt.anim?'anim':''}" role="img" aria-label="${esc(md.name||'Автомобиль')}">${shadow}<g class="body">${b}</g>${wheels}</svg>`;
@@ -9193,6 +9424,10 @@ const PART_WIKI={
   k1:['Ленточный тормоз','Band brake'],k2:['Барабанный тормоз','Drum brake'],k3:['Барабанный тормоз','Drum brake'],k6:['Hispano-Suiza H6','Hispano-Suiza H6'],k4:['Тормозная система','Hydraulic brake'],k5:['Барабанный тормоз','Drum brake'],
   b1:['','Runabout (car)'],b2:['Тонно','Tonneau'],b3:['Фаэтон (кузов)','Phaeton body'],b11:['Лимузин','Limousine'],b10:['Родстер','Roadster (automobile)'],b4:['Седан','Sedan (automobile)'],b9:['','Essex (automobile)'],b5:['','Budd Company'],
   b6:['Фургон','Van'],b7:['Грузовой автомобиль','Truck'],b8:['Грузовой автомобиль','Truck'],
+  // 0.51: новые виды техники
+  b12:['Грузовой автомобиль','Mack AC'],b13:['Полуприцеп','Semi-trailer'],b14:['Автобус','LGOC B-type'],b15:['Автобус','Coach (bus)'],b16:['Школьный автобус','School bus'],b17:['Пожарный автомобиль','Fire engine'],
+  b18:['Автомобиль скорой помощи','Ambulance'],b19:['Фургон','Van'],b20:['Автоцистерна','Tank truck'],b21:['Самосвал','Dump truck'],b22:['Мусоровоз','Garbage truck'],b23:['Такси','Taxi'],
+  b24:['Трактор','Tractor'],b25:['Гусеничный движитель','Continuous track'],b26:['Легковой автомобиль','Staff car'],b27:['Автомобиль скорой помощи','Ambulance'],b28:['Бронеавтомобиль','Armored car (military)'],b29:['Рено FT-17','Renault FT'],
   me1:['De Dion-Bouton','De Dion-Bouton'],me2:['Мотоцикл','Motorcycle engine'],me3:['Магнето','Ignition magneto'],me4:['','FN Four'],me5:['V-образный двигатель','V-twin engine'],me6:['Нижнеклапанный двигатель','Flathead engine'],
   me7:['Двухтактный двигатель','Two-stroke engine'],me8:['BMW R32','BMW R32'],me9:['OHV','Overhead valve engine'],me10:['','J. A. Prestwich Industries'],me11:['DKW','DKW'],
   mt1:['Ремённая передача','Belt (mechanical)'],mt2:['Клиноремённая передача','Belt (mechanical)'],mt3:['Цепная передача','Roller chain'],mt4:['Кикстартер','Kick start'],mt5:['Карданная передача','Drive shaft'],
@@ -15852,9 +16087,12 @@ function costHTML(md,s){if(md.status!=='prod')return '';const v=Math.max(1,model
   return `<p class="small muted" style="margin-top:6px">Себестоимость ${money(mat+lab)} = детали ${money(mat)} + работа ${money(lab)} при выпуске ≈ ${fmtD(v)} в месяц. <span class="good">Больше выпуск — дешевле машина:</span> при ${fmtN(v*3)} в месяц — ${money(at(3))}, при ${fmtN(v*10)} — ${money(at(10))}${l>0.02?`. Опыт рабочих: ${fmtN(md.made||0)} машин уже собрано — работы на ${Math.round(l*100)}% меньше`:''}.</p>`;}
 // 0.26: грузовик — для каких перевозок он годится: цена тонно-километра против эталона соперников и кто его взял
 function cpkTxt(x){if(!isFinite(x)||x<=0)return '—';if(x<0.1)return (Math.round(x*1000)/10).toString().replace('.',',')+'¢';if(x<1)return Math.round(x*100)+'¢';return '$'+x.toFixed(2).replace('.',',');}
-function truckHint(md,s){if(!isTruck(md)||md.status==='off')return '';const c=s.country,PT=prefP('truck',c,s),U=md.useD||{},tot=TUSE.reduce((a,u)=>a+(U[u]||0),0),sh=truckUseSh(c,s);
+function truckHint(md,s){if(!isTruck(md)||md.status==='off')return '';const c=s.country,PT=prefP('truck',c,s),U=md.useD||{},tot=TUSE.reduce((a,u)=>a+(U[u]||0),0),sh=truckUseSh(c,s,md);
   const rows=TUSE.filter(u=>sh[u]>0.005).map(u=>{const ref=truckRef(u,s.y),cR=truckCost(ref,u,c,s,PT*payK(ref)).cpk,cM=truckCost(md,u,c,s,md.price).cpk,r=cR/cM,tone=r>=1.05?'good':r<0.9?'bad':'muted';
     return `<tr><td>${TRUCK_USE[u].n}<small class="muted"> · ${esc(TRUCK_USE[u].who)}</small></td><td class="n ${tone}">${cpkTxt(cM)}</td><td class="n muted">${cpkTxt(cR)}</td><td class="n">${md.status==='prod'&&tot>0?pct((U[u]||0)/tot,0):'—'}</td></tr>`;}).join('');
+  // 0.51: у нового вида техники своя мерка работы (пассажиро-километр, гектар, день службы) и свой покупатель
+  const un=(TRUCK_USE[jobsOf(md)[0]]||{}).un||'т·км';if(un!=='т·км'||kindIsNew(bodyKind(byId(BODIES,md.b))))return `<div class="label" style="margin-top:10px">${({'пасс·км':'Пассажиро-километр','гектар':'Гектар работы','день службы':'День службы','т·км':'Тонно-километр'})[un]}: во что обходится покупателю</div><table class="pl ptab ctab" style="margin-top:4px"><tr><th>Работа</th><th class="n">Ваша</th><th class="n">Соперники</th><th class="n">Берут</th></tr>${rows}</table>
+    <p class="small muted" style="margin-top:4px">Покупатель считает всё: машину за годы службы, ремонт и простои, топливо, экипаж — и сколько работы она сделает${un==='день службы'?' (скорость с грузом, надёжность, мощность)':un==='гектар'?' (тяга на крюке; гусеницы — для тяжёлой почвы)':''}. «Берут» — кто купил вашу машину в прошлом месяце.</p>`;
   return `<div class="label" style="margin-top:10px">Тонно-километр: во что обходится перевозка</div><table class="pl ptab ctab" style="margin-top:4px"><tr><th>Перевозки</th><th class="n">Ваша</th><th class="n">Соперники</th><th class="n">Берут</th></tr>${rows}</table>
     <p class="small muted" style="margin-top:4px">Фирма считает всё: машину за годы службы, ремонт и простои, бензин, шофёра — и сколько тонн машина перевезёт за день. Фургон хорош для развозки по району, полуторатонка — по городу, трёхтонка — между городами: одна машина другую не заменяет. «Берут» — кто купил вашу машину в прошлом месяце.</p>`;}
 function stockWarn(md){return md.status==='prod'&&md.stock>Math.max(3,(md.fc||0)*3);}
@@ -16010,10 +16248,13 @@ function horseSplit(s,c,M,R0){const TZ=M&&M.segs&&M.segs.truck,pool=(M&&M.tpool)
 function horseHTML(s,c,M,R0){if(s.y<1896)return '';const Rx=R0||mkCountry(c,s,[]),uses=(M&&M.tuse)||Rx.segs.truck.uses;if(!uses)return '';
   let pool=0,riv=0,you=0;TUSE.forEach(u=>{const z=uses[u];if(z){pool+=z.pool;riv+=z.riv;you+=z.you;}});if(pool<=0)return '';
   const horse=Math.max(0,pool-riv-you),pp=x=>pct(x,x<0.1?1:0);
-  const rows=TUSE.filter(u=>uses[u]&&uses[u].pool>0.05).map(u=>{const z=uses[u],h=Math.max(0,z.pool-z.riv-z.you),w=x=>Math.max(0,Math.min(100,x/z.pool*100));
-    return `<div style="margin-top:8px"><div class="row small"><span><b>${TRUCK_USE[u].n}</b> <span class="muted">· ${esc(TRUCK_USE[u].who)}</span></span><span class="muted">${fmtD(z.pool)} фирм</span></div>
+  // 0.51: работ стало двадцать — перевозки показываем по одной, остальное сводим по группам (автобусы, спецтехника, такси, тракторы, армия)
+  const GN={bus:'Автобусы',spec:'Спецтехника',car:'Такси',farm:'Тракторы',mil:'Армия'},GW={bus:'города, автобусные линии, школы',spec:'города, почта, нефть, стройка',car:'таксомоторные компании',farm:'фермеры, лес, дороги',mil:'военное ведомство'},agg={};
+  TUSE.forEach(u=>{const z=uses[u],g=TRUCK_USE[u].grp;if(!z||g==='cargo')return;const a=agg[g]=agg[g]||{pool:0,riv:0,you:0};a.pool+=z.pool;a.riv+=z.riv;a.you+=z.you;});
+  const rows=TUSE.filter(u=>TRUCK_USE[u].grp==='cargo'&&uses[u]&&uses[u].pool>0.05).map(u=>[TRUCK_USE[u].n,TRUCK_USE[u].who,uses[u]]).concat(Object.keys(GN).filter(g=>agg[g]&&agg[g].pool>0.05).map(g=>[GN[g],GW[g],agg[g]])).map(([n,who,z])=>{const h=Math.max(0,z.pool-z.riv-z.you),w=x=>Math.max(0,Math.min(100,x/z.pool*100));
+    return `<div style="margin-top:8px"><div class="row small"><span><b>${n}</b> <span class="muted">· ${esc(who)}</span></span><span class="muted">${fmtD(z.pool)} ${z===agg.farm||z===agg.mil?'в мес.':'фирм'}</span></div>
       <div class="hbar" style="margin-top:4px">${h/z.pool>0.02?`<i style="width:${w(h)}%;background:#9a7448"></i>`:''}<i style="width:${w(z.riv)}%;background:#6f8aa6"></i><i style="width:${w(z.you)}%;background:var(--brass)"></i></div></div>`;}).join('');
-  return `<div style="margin-top:14px"><div class="row small"><span class="label">🚚 Кто покупает грузовые машины</span><span class="muted">фирм в месяц ≈ ${fmtD(pool)}</span></div>${rows}
+  return `<div style="margin-top:14px"><div class="row small"><span class="label">🚚 Кто покупает технику для дела</span><span class="muted">фирм в месяц ≈ ${fmtD(pool)}</span></div>${rows}
     <div class="hleg small">${horse/pool>0.02?`<span><i style="background:#9a7448"></i>лошадь ${pp(horse/pool)}</span>`:''}<span><i style="background:#6f8aa6"></i>конкуренты ${pp(riv/pool)}</span><span><i style="background:var(--brass)"></i>ваши ${pp(you/pool)}</span></div>
     <p class="small muted" style="margin-top:6px">Каждой перевозке — своя машина: лавке, которая развозит хлеб, нужен фургон, мебель по городу возят на полуторатонке, большие партии между городами — на трёхтонке. Фирма выбирает по цене тонно-километра: машина за годы службы, ремонт и простои, бензин, шофёр.${horse/pool>0.02?' Пока мотор не выгоднее, часть фирм берёт лошадь.':' Лошадей фирмы уже почти не покупают.'}</p></div>`;}
 // 0.29: доли рынка — дома, в каждой стране и во всём мире: ваши продажи против марок-конкурентов (за прошлый год;
@@ -16541,7 +16782,7 @@ function showEvent(){
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
-function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
+function designKind(d){const b=byId(BODIES,d.b);return b.truck?bodyKind(b):segOf(d);}
 // 0.34: что сделала кнопка-помощник («Передовая модель», «Подобрать детали повыгоднее») — строкой под кнопками,
 // пока проект не меняли (тост под листом конструктора не виден)
 let dNote=null;
@@ -16560,9 +16801,37 @@ function dApply(md,label){const s=G,sig0=dSig(draft),b0=designMd(s,draft),tr=isT
   const same=dSig(draft)===sig0;
   dNote={txt:same?`${label}: менять нечего — проект уже такой.`:`${label}: ${main}, себестоимость <b class="num">${money(U0)} → ${money(U1)}</b>.${pr.length?`<br><span class="warn">🔬 Прототипы КБ: ${pr.map(x=>esc(x.name)).join(', ')} — риск «не по ТЗ».</span>`:''}`,sig:dSig(draft)};
   const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;}
-function openDesigner(kind){kind=kind||(!lineOn(G,'car')&&!G.carShopB?'moto':(G.y>=1908?'people':'middle'));dNote=null;
+/* ---------- 0.51: конструктор-воронка (ТЗ 0.51, тема 3): шаг 1 — вид техники, шаг 2 — назначение, шаг 3 — только годные детали ---------- */
+function kindOpen(kind,s){const mo=isMotoSeg(kind);return unlockedP(BODIES,s,mo).some(b=>kindBodyOk(kind,b))&&(kind!=='sport'||unlockedP(TRIMS,s).some(x=>x.id==='t3'));}
+function kindYear(kind){if(kind==='sport')return 1901;const L=BODIES.filter(b=>kindBodyOk(kind,b)).map(b=>b.y);return L.length?Math.max(1895,Math.min(...L)):1895;}
+function grpOk(g,s){return g==='moto'?canDesign(s,'moto'):canDesign(s,'car');}
+// сколько покупателей у вида в своей стране сейчас, в месяц (рынок работ; у легковых — не считаем: класс и так на виду)
+function kindPool(kind,s,body){const c=s.country;if(kindSeg(kind)!=='truck')return 0;const sh=truckUseSh(c,s),tp=truckPool(c,s),md={b:body||(BODIES.find(b=>kindBodyOk(kind,b))||{}).id};
+  // грузовые: у каждой грузоподъёмности — своя перевозка (фургон — по району, 1,5 т — по городу, 3 т — между городами, 5–8 т — тяжёлые грузы)
+  if(kind==='van'||kind==='truck'){const pay=(byId(BODIES,md.b)||{}).pay||1.5;return tp*sh[pay<=0.8?'van':pay<=1.5?'city':pay<=3?'haul':'bulk'];}
+  return TUSE.reduce((a,u)=>a+(jobFits(u,md)?(TRUCK_USE[u].own?jobOwnPool(u,c,s):tp*sh[u]):0),0);}
+function kindWho(kind){const U=TUSE.map(u=>TRUCK_USE[u]).filter(U=>U.kind===kind)[0];return U?U.who+' · мерка — '+U.un:'';}
+function openDesigner(kind,body){if(!kind)return openKindStep(null);dNote=null;
   draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};
+  if(body&&kindBodyOk(kind,byId(BODIES,body)))draft.b=body;else if(!unlockedP(BODIES,G,isMotoSeg(kind)).some(b=>b.id===draft.b)){const b=unlockedP(BODIES,G,isMotoSeg(kind)).filter(x=>kindBodyOk(kind,x));if(b.length)draft.b=b[b.length-1].id;}
   try{draft.eq=eqAuto(draft,kindIsTruck(kind)?'truck':kind,G);}catch(_){draft.eq=[];}renderDesigner();}
+function openKindStep(grp){const s=G,X2=X;
+  if(!grp){const tiles=Object.keys(KIND_GRP).map(g=>{const K=KIND_GRP[g],ok=grpOk(g,s),open=K.kinds.filter(k=>kindOpen(k,s)).length,y0=Math.min(...K.kinds.map(kindYear));
+      const st=!ok?`<span class="bad">нет ${g==='moto'?'мото':'автомобильного '}цеха</span>`:open?`${open} ${plural(open,'вид','вида','видов')}`:`<span class="muted">с ${y0} года</span>`;
+      return `<button class="ktile${ok&&open?'':' off'}" data-act="kgrp" data-v="${g}"><i>${K.ic}</i><b>${K.n}</b><small>${esc(K.who)}</small><em>${st}</em></button>`;}).join('')
+      +(typeof airOn==='function'&&airOn(s)?`<button class="ktile" data-act="airDesign"><i>✈</i><b>Аэроплан</b><small>спортсмены, почта, армия</small><em>свой конструктор</em></button>`:'');
+    return openSheet(`<div class="row"><h2>Новая модель</h2>${X2}</div><p class="small muted">Шаг 1 из 3 · что строим</p><div class="ktiles">${tiles}</div>`);}
+  const K=KIND_GRP[grp],c=s.country,PT=prefP('truck',c,s);
+  const row=(kind,body,name,sub)=>{const open=body?unlockedP(BODIES,s).some(b=>b.id===body):kindOpen(kind,s),y=body?byId(BODIES,body).y:kindYear(kind),tr=kindSeg(kind)==='truck',pool=tr&&open?kindPool(kind,s,body):0;
+    const price=tr?PT*payK({b:body||(BODIES.find(b=>kindBodyOk(kind,b))||{}).id}):prefP(kind,c,s);
+    const st=open?(tr?`≈ ${fmtD(pool)} в мес.`:'')+` · ${money(price)}`:`в истории — с ${y} года`;
+    return `<button class="krow${open?'':' off'}" data-act="kkind" data-v="${kind}"${body?` data-b="${body}"`:''}${open?'':' data-lock="1"'}><b>${esc(name)}</b><small>${esc(sub)}</small><em>${st}</em></button>`;};
+  let rows;
+  if(grp==='cargo')rows=BODIES.filter(b=>b.truck&&(bodyKind(b)==='van'||bodyKind(b)==='truck')).sort((a,b)=>(a.pay||0)-(b.pay||0)).map(b=>row(bodyKind(b),b.id,b.name,b.id==='b6'?'развозка по району: лавки, булочные':b.pay<=1.5?'по городу: мебель, уголь, стройматериалы':b.pay<=3?'между городами':'тяжёлые грузы: уголь, лес, стройки')).join('');
+  else rows=K.kinds.map(k=>row(k,null,KIND_NAME[k]||SEG[k].name,kindWho(k)||({people:'рабочие, фермеры, служащие — главное цена и расход',middle:'врачи, инженеры, лавочники — комфорт и надёжность',lux:'богачи — лучшее во всём',sport:'спортсмены — скорость и тормоза',moto:'одиночка: дёшево и быстро',moside:'с коляской: семья и ремесло'})[k]||'')).join('');
+  const lock=K.kinds.some(k=>!kindOpen(k,s))||grp==='cargo'&&BODIES.some(b=>b.truck&&bodyKind(b)==='truck'&&b.y>s.y);
+  openSheet(`<div class="row"><h2>${K.ic} ${K.n}</h2>${X2}</div><div class="row"><p class="small muted">Шаг 2 из 3 · назначение</p><button class="btn sm" data-act="kgrp" data-v="">← Вид техники</button></div><div class="krows">${rows}</div>
+    ${lock?`<p class="small muted" style="margin-top:10px">Серым — то, чего в этом году ещё не строят. Построить раньше истории можно: кузов-прототип заказывают в КБ, и каждый год опережения стоит в 1,6 раза дороже. <button class="btn sm" data-act="rdPick">В КБ</button></p>`:''}`);}
 // 0.30: новинки оснащения в конструкторе — стартер, электросвет, ветровое стекло… (свои — из КБ, остальные — у поставщиков)
 function eqDesignHTML(d,s,kind){const g=kindIsTruck(kind)?'truck':kind;if(g==='truck'||isMotoSeg(g))return '';const y=yf(s),L=eqOf(d);
   const items=EQUIP.filter(e=>e.y<=s.y+3&&(eqAvail(s,e.id)||rdActive(s).some(p=>p.kind==='eq'&&p.id===e.id)));if(!items.length)return '';
@@ -16594,27 +16863,31 @@ function renderDesigner(){
   // себестоимость — при том выпуске, который купят по этой цене: экономия масштаба
   md.vol=Math.max(3,dem);const uc=unitCost(md,s),hrs=hoursPerCar(md,s),ucAt=k=>unitCost({...md,vol:md.vol*k},s);
   const mo=isMoto(md);
-  const chips=(arr,k,sub,f)=>`<div class="chips">${unlockedP(arr,s,mo&&arr!==TRIMS).filter(x=>!f||f(x)).map(x=>`<button class="chip ${d[k]===x.id?'on':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${arr===TRIMS?trimName(x,s):x.name}${upgL(x.id)?' ★'+upgL(x.id):''}${x.y>s.y?' 🔬':''}<small>${sub(x)}</small></button>`).join('')}</div>`;
+  // 0.51: «после выбора вида остаются только допустимые детали»: слабые для этого вида, устаревшие и те, что не выдержит рама, скрыты
+  // (кнопка «показать все» возвращает их с пометкой); избыточные — с пометкой «с запасом»
+  const FITN={low:'слабо для этого вида',old:'устарело',frame:k=>k==='e'?'нет рамы под такой мотор':'не выдержит мотор',sat:'с запасом'};
+  const chips=(arr,k,sub,f)=>{const all=unlockedP(arr,s,mo&&arr!==TRIMS).filter(x=>!f||f(x)),fit=all.map(x=>arr===TRIMS||k==='b'||k==='paint'?'':partFit(md,k,x,s)),hid=all.filter((x,i)=>fit[i]&&fit[i]!=='sat'&&d[k]!==x.id).length;
+    return `<div class="chips">${all.map((x,i)=>{const ft=fit[i],bad=ft&&ft!=='sat';if(bad&&!d.all&&d[k]!==x.id)return '';const tag=ft?(typeof FITN[ft]==='function'?FITN[ft](k):FITN[ft]):'';
+      return `<button class="chip ${d[k]===x.id?'on':''}${bad?' unfit':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${arr===TRIMS?trimName(x,s):x.name}${upgL(x.id)?' ★'+upgL(x.id):''}${x.y>s.y?' 🔬':''}${tag?` <em class="ftag ${ft==='sat'?'sat':'bad'}">${tag}</em>`:''}<small>${sub(x)}</small></button>`;}).join('')}</div>${hid?`<p class="small muted" style="margin:6px 10px 0">${d.all?'Показаны все детали.':`Скрыто ${hid}: не ${plural(hid,'годится','годятся','годятся')} для этого вида техники.`} <button class="btn sm" data-act="dall">${d.all?'Только годные':'Показать все'}</button></p>`:''}`;};
   const ease=x=>x>=0.8?'лёгкая':x>=0.5?'обычная':'тяжёлая',pedal=x=>x>=0.8?'мягкая педаль':'тугая педаль',star=x=>upgL(x.id)?' ★'+upgL(x.id):'';
   const SUB={e:x=>`${Math.round(engineHp(x))} л.с. · ${x.kg} кг · расход ${Math.round(x.fuel*100)} · ${pc(x)}`,g:x=>`КПД ${Math.round(x.eff*100)}% · ${ease(x.ease)} · ${pc(x)}`,
     c:x=>`до ${Math.round(chassisMax(x))} л.с. · ${x.kg} кг · ход ${Math.round(x.ride*100)} · ${pc(x)}`,w:x=>`сцепление ${Math.round(x.grip*100)} · ресурс ${fmtN(x.life)} км · ${pc(x)}`,
-    k:x=>`сила ${Math.round(x.brk*100)} · ${pedal(x.ease)} · ${pc(x)}`,t:x=>`${({t0:'народный',t1:'средний',t2:'люкс',t3:'спортивный'})[x.id]} класс · ${money(x.c*cpi(s))}`,b:x=>x.moto?`${(x.seats||1)>1?'коляска, '+x.seats+' '+plural(x.seats,'место','места','мест'):'одиночка'} · ${x.kg} кг · ${pc(x)}`:`${x.truck?(x.pay+' т груза'):(x.seats+' мест')}${x.closed?' · закрытый':''} · ${x.kg} кг · ${pc(x)}`};
+    k:x=>`сила ${Math.round(x.brk*100)} · ${pedal(x.ease)} · ${pc(x)}`,t:x=>`${({t0:'народный',t1:'средний',t2:'люкс',t3:'спортивный'})[x.id]} класс · ${money(x.c*cpi(s))}`,b:x=>x.moto?`${(x.seats||1)>1?'коляска, '+x.seats+' '+plural(x.seats,'место','места','мест'):'одиночка'} · ${x.kg} кг · ${pc(x)}`:`${x.kind&&x.kind!=='truck'?(['bus','coach','school','taxi','staff'].includes(x.kind)?x.seats+' мест':['mail','tank','dump','refuse'].includes(x.kind)?String(x.pay).replace('.',',')+' т груза':'экипаж '+(x.crew||1)):x.truck?(String(x.pay).replace('.',',')+' т груза'):(x.seats+' мест')}${x.closed&&!x.kind?' · закрытый':''} · ${x.kg} кг · ${pc(x)}`};
   const MSN={e:'Мотор',g:'Передача',c:'Рама и вилка',w:'Шины',k:'Тормоз',b:'Седло или коляска'};
   const sec=(cat)=>{const x=p[cat.k],open=d.open===cat.k;return `<div class="dsec${open?' open':''}"><button class="dsec-h" data-act="dsec" data-k="${cat.k}"><span class="label">${mo&&MSN[cat.k]?MSN[cat.k]:cat.name}</span><b>${esc(cat.k==='t'?trimName(x,s):x.name)}${star(x)}</b><small>${SUB[cat.k](x)}</small><i>${open?'▴':'▾'}</i></button>
-    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>mo?!!y.moto:kindIsTruck(kind)?!!y.truck:kind==='sport'?bodyOpen(y.id):!y.truck):cat.k==='t'?(y=>y.id!=='t3'||bodyOpen(d.b)):null)+(x.note||cat.k==='e'?`<p class="small muted" style="margin-top:6px">${esc(x.note||'')}${cat.k==='e'&&typeof exhNote==='function'?(x.note?' ':'')+esc(exhNote(x)):''}</p>`:'')+(typeof REELS!=='undefined'&&REELS['part:'+x.id]?`<button class="btn sm" style="margin-top:6px" data-act="reel" data-k="part:${x.id}">▶ Кинохроника: как это устроено</button>`:'')+(cat.k!=='t'&&typeof partWiki==='function'&&partWiki(x.id)?` <button class="btn sm" style="margin-top:6px" data-act="partInfo" data-k="${x.id}">📖 Зачем и откуда</button>`:''):''}</div>`;};
-  // 0.33: классы машин и мотоциклов — в одном ряду (что умеет делать завод)
+    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>kindBodyOk(kind,y)):cat.k==='t'?(y=>y.id!=='t3'||bodyOpen(d.b)):null)+(x.note||cat.k==='e'?`<p class="small muted" style="margin-top:6px">${esc(x.note||'')}${cat.k==='e'&&typeof exhNote==='function'?(x.note?' ':'')+esc(exhNote(x)):''}</p>`:'')+(typeof REELS!=='undefined'&&REELS['part:'+x.id]?`<button class="btn sm" style="margin-top:6px" data-act="reel" data-k="part:${x.id}">▶ Кинохроника: как это устроено</button>`:'')+(cat.k!=='t'&&typeof partWiki==='function'&&partWiki(x.id)?` <button class="btn sm" style="margin-top:6px" data-act="partInfo" data-k="${x.id}">📖 Зачем и откуда</button>`:''):''}</div>`;};
   const carOk=canDesign(s,'car'),motoOk=canDesign(s,'moto');
-  const classChips=(carOk?[['people','t0'],['middle','t1'],['lux','t2']].concat(unlockedP(TRIMS,s).some(x=>x.id==='t3')?[['sport','t3']]:[]).map(([g2,t])=>`<button class="chip ${!mo&&!kindIsTruck(kind)&&d.t===t?'on':''}" data-act="dclass" data-v="${g2}">${SEG[g2].name}<small>${money(prefP(g2,s.country,s))}</small></button>`).join('')
-    +(s.y>=1896||unlockedP(BODIES,s).some(b=>b.truck)?`<button class="chip ${kind==='van'?'on':''}" data-act="dclass" data-v="van">Фургон<small>для бизнеса</small></button>`:'')
-    +(unlockedP(BODIES,s).some(b=>b.truck&&b.id!=='b6')?`<button class="chip ${kind==='truck'?'on':''}" data-act="dclass" data-v="truck">Грузовик<small>для бизнеса</small></button>`:''):'')
-    +(motoOk?MOTOSEG.map(g2=>`<button class="chip ${kind===g2?'on':''}" data-act="dclass" data-v="${g2}">🏍 ${g2==='moto'?'Мотоцикл':'С коляской'}<small>${money(prefP(g2,s.country,s))}</small></button>`).join(''):'');
   const classNote=(carOk?'':lineEmptyCard(s,'car'))+(motoOk||!motoVis(s)?'':lineEmptyCard(s,'moto'));
+  // 0.51: шаг 3 воронки — вид уже выбран; рядом только соседи по группе (класс легковой, одиночка или коляска), остальное — «Изменить»
+  const kgrp=kindGroup(kind),sib=kgrp==='car'&&kind!=='taxi'?[['people','t0'],['middle','t1'],['lux','t2']].concat(unlockedP(TRIMS,s).some(x=>x.id==='t3')?[['sport','t3']]:[]).map(([g2,t])=>`<button class="chip ${d.t===t?'on':''}" data-act="dclass" data-v="${g2}">${SEG[g2].name}<small>${money(prefP(g2,s.country,s))}</small></button>`).join('')
+    :kgrp==='moto'?MOTOSEG.map(g2=>`<button class="chip ${kind===g2?'on':''}" data-act="dclass" data-v="${g2}">🏍 ${g2==='moto'?'Мотоцикл':'С коляской'}<small>${money(prefP(g2,s.country,s))}</small></button>`).join(''):'';
   openSheet(`<div class="row"><h2>${mo?'Новый мотоцикл':'Новая модель'}</h2>${X}</div>
     <div class="carbox">${carArt(md,{anim:true})}</div>
     <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
-    <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
-    ${kindIsTruck(kind)?(()=>{const TH=truckHead({...md,price:Math.round(ref/10)*10},s,Math.round(ref/10)*10);return TH?`<p class="small ${TH.tone}" style="margin-top:12px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)} — фирмы выбирают по тонно-километру; «% соперника» — ниже</span></p>`:'';})():''}
+    <div class="row" style="margin-top:14px"><span class="small"><b>${KIND_GRP[kgrp].ic} ${KIND_GRP[kgrp].n}</b> <span class="muted">› ${esc(KIND_NAME[kind])}${kindIsTruck(kind)&&kindWho(kind)?' · '+esc(kindWho(kind)):''}</span></span><button class="btn sm" data-act="kgrp" data-v="${kgrp}">Изменить</button></div>
+    ${sib?`<div class="chips">${sib}</div>`:''}${classNote}
+    ${kindIsTruck(kind)?(()=>{const TH=truckHead({...md,price:Math.round(ref/10)*10},s,Math.round(ref/10)*10);return TH?`<p class="small ${TH.tone}" style="margin-top:12px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)} — ${TH.un==='т·км'?'фирмы выбирают по тонно-километру':'покупатель выбирает по цене работы'}; «% соперника» — ниже</span></p>`:'';})():''}
     ${compareHTML(md,s,'d')}${hiddenHTML({...md,price:Math.round(ref/10)*10},s,true)}
     <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Подобрать детали повыгоднее</button></div>${dNoteHTML(d)}
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
@@ -16632,7 +16905,7 @@ function renderDesigner(){
     <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
   document.getElementById('mname').addEventListener('input',e=>{draft.name=e.target.value;});
 }
-function kindIsTruck(k){return k==='van'||k==='truck';}
+function kindIsTruck(k){return k==='van'||k==='truck'||kindIsNew(k);}
 function openRD(){
   // 0.33: проекты машин и мотоциклов — в одном списке (мотоциклетные помечены 🏍); переносы между ними — отдельной группой
   const s=G,mv=motoVis(s),ALL=rdProjects(s),XF=ALL.filter(p=>p.kind==='xfer'),L=ALL.filter(p=>p.kind!=='xfer'),pts=rdTotal(s)/(rdActive(s).length+1),free=rdSlots(s)-rdActive(s).length;
@@ -16915,7 +17188,7 @@ function xCharData(md,s,k){const y=s.y,C=classCompare(md,s,s.country),A=xSide(md
   out.by=by;return out;}
 // грузовик фирмы выбирают по цене тонно-километра (105-market.js, truckMarket): привлекательность для фирм по видам перевозок при цене P
 // (совет сравнивает детали при одной цене: лучше ли машина для фирм, а не дороже ли она)
-function xTruckU(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s);let U=0;
+function xTruckU(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s,md);let U=0;
   TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cp=truckCost(md,u,c,s,P).cpk;
     U+=sh[u]*Math.exp(-BTC*Math.log(cp/cR)-TRUCK_USE[u].bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y));});return U;}
 // лучшая замена одной детали для черты k (или для итога 'S') — из тех, что можно поставить сейчас; итог (у грузовика — выбор фирм) не хуже
@@ -16971,16 +17244,17 @@ function xpopScore(md,s,tip){const D=xScoreData(md,s),tone=f=>f>1.005?'good':f<0
 // проект грузовика md1 против md0 при одной цене машины P (для строки под кнопками конструктора): спрос фирм (отношение
 // привлекательности, как в выборе фирм), тонно-километр по долям перевозок в стране и удобство шофёру (лёгкость, тормоза, комфорт)
 // (тонно-километр и удобство усреднены с весом перевозок, где фирмы и выбирают — как в xTruckU, — чтобы объяснение сходилось со спросом)
-function xTruckCmp(md0,md1,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s),R=[];let U0=0,U1=0;
+function xTruckCmp(md0,md1,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s,md0),R=[];let U0=0,U1=0;
   TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,bp=TRUCK_USE[u].bp,
     c0=truckCost(md0,u,c,s,P).cpk,c1=truckCost(md1,u,c,s,P).cpk,f0=truckSoft(md0,ref,s.y),f1=truckSoft(md1,ref,s.y),
     V=(cp,f)=>sh[u]*Math.exp(-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*f),u0=V(c0,f0),u1=V(c1,f1);
     U0+=u0;U1+=u1;R.push({u0,u1,lc:Math.log(c1/c0),lf:f1-f0});});
   let lc=0,lf=0;if(U0>0&&U1>0)R.forEach(r=>{const w=(r.u0/U0+r.u1/U1)/2;lc+=w*r.lc;lf+=w*r.lf;});
   const ok=x=>isFinite(x)&&x>0?x:1;return {dem:ok(U0>0?U1/U0:1),cpk:ok(Math.exp(lc)),soft:ok(Math.exp(TQ*lf))};}
-function xTruckHTML(md,s){const c=s.country,P=md.price||refPrice(md,s),PT=prefP('truck',c,s),sh=truckUseSh(c,s),tone=f=>f>1.005?'good':f<0.995?'bad':'muted';
+function xTruckHTML(md,s){const c=s.country,P=md.price||refPrice(md,s),PT=prefP('truck',c,s),sh=truckUseSh(c,s,md),tone=f=>f>1.005?'good':f<0.995?'bad':'muted';
   const rows=TUSE.filter(u=>sh[u]>0.005).map(u=>{const ref=truckRef(u,s.y),cR=truckCost(ref,u,c,s,PT*payK(ref)).cpk,cM=truckCost(md,u,c,s,P).cpk,f=cR/cM;
     return `<tr><td>${esc(TRUCK_USE[u].n)}</td><td>${cpkTxt(cM)}</td><td>${cpkTxt(cR)}</td><td class="${tone(f)}">${xk(f)}</td></tr>`;}).join('');
+  const un=(TRUCK_USE[jobsOf(md)[0]]||{}).un||'т·км';if(un!=='т·км'||kindIsNew(bodyKind(byId(BODIES,md.b))))return `<p class="xp-w" style="margin-top:8px">Эту технику покупатель выбирает по цене работы — ${un}: машина за годы службы, ремонт, топливо, экипаж против того, сколько работы она сделает; этот итог задаёт лишь «типичную цену».</p><table class="xp-t"><tr><th>${un}</th><th>Вы</th><th>Соперники</th><th>→</th></tr>${rows}</table>`;
   return `<p class="xp-w" style="margin-top:8px">Грузовик фирмы выбирают по цене тонно-километра — машина за годы службы, ремонт, бензин, шофёр, — и ещё по тому, легко ли его вести, как тормозит и удобно ли шофёру; этот итог задаёт лишь «типичную цену».</p><table class="xp-t"><tr><th>Тонно-км</th><th>Вы</th><th>Соперники</th><th>→</th></tr>${rows}</table>`;}
 /* ---------- себестоимость: детали по прайсу, скидки, объём и опыт, работа ---------- */
 function xCostData(md,s){const p=parts(md),tc=s.tech||{},mo=isMoto(md),L=[];let base=0;
@@ -25484,6 +25758,8 @@ function carGalHTML(md,k){const v=CAR_VIEWS.find(x=>x.k===k)||CAR_VIEWS[0];
 const CARD3D=new Map();
 function carArt(md,opt={}){
   if(isMoto(md))return motoSVG(md,opt);   // 0.32: мотоцикл — рисунок сбоку (3D — в 0.33)
+  // 0.51: новые виды техники (автобус, пожарная, трактор, танк…) — рисунок сбоку: трёхмерных моделей у них пока нет, а общий «грузовик» обманывал бы
+  try{const b0=byId(BODIES,md.b);if(b0&&b0.art)return carSVG(md,opt);}catch(_){}
   try{const y=opt.y||(md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895));
     // тот же облик, что в гонке: кузов, цвет, колёса, капот по мотору; для газеты о гонке — в гоночной подготовке, с номером и экипажем
     const prep=opt.prep||0,crew=prep>0||!!opt.crew,S=modelSpec(md,prep,y,{mech:prep>0&&mechanicEra(y),num:prep>0?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:opt.w||600,crew};if(opt.yaw!==undefined){o.yaw=opt.yaw;o.pitch=opt.pitch;}
@@ -30653,6 +30929,9 @@ const ACT={
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
+  // 0.51: воронка конструктора — вид техники, назначение
+  kgrp:d=>openKindStep(d.v||null),dall:()=>{draft.all=!draft.all;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  kkind:d=>{if(d.lock){toast('Этого ещё не строят: кузов-прототип заказывают в КБ');return;}const g=kindGroup(d.v);if(!grpOk(g,G)){toast(g==='moto'?'Нужен мотоциклетный цех':'Нужен автомобильный цех');return;}openDesigner(d.v,d.b||null);},
   // 0.32–0.33: мотоциклы — оборудование для мотоциклов, оборудование для автомобилей у «Мотомастерской», мотомарки
   line:d=>{G.ui=G.ui||{};G.ui.line=d.v==='moto'?'moto':'car';rerender();},
   mshop:()=>{if(mshopStart(G)){save();rerender();}else toast('Не хватает денег на оборудование');},

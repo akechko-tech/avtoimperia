@@ -255,5 +255,69 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   // смена стёртых шин у обочины и «застряли» — с подписью
   {const src=String(raceTick)+String(typeof raceBoard==='function'?raceBoard:'');CK(/ЗАСТРЯЛИ\\?/.test(String(raceTick))&&/npT>12/.test(String(raceTick)),'упёрлись и газуем — подсказка; маршалы выталкивают через 12 с');}
   surfUnder=su0;gradeAt=gr0;respawn=rs0;respawnAt=ra0;}
+// 19. весь ряд техники и конструктор-воронка (этап «Конструктор и новые виды техники»)
+{let sd=3;Math.random=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};newGame('ford','us','Тест','normal');G.cash=1e7;const s=G;
+  const NK=Object.keys(KIND_NEW),nb=BODIES.filter(b=>b.art);
+  CK(nb.length===18&&nb.every(b=>b.truck&&b.kind&&b.pay>0&&b.c>0&&b.kg>0&&b.note),'18 новых кузовов: у каждого вид, вес, цена, справка');
+  CK(NK.length===16&&NK.every(k=>BODIES.some(b=>b.kind===k)&&RIVAL_CAR[k]&&CHAR_W[k]&&KIND_NAME[k]&&KIND_TRIM[k]==='t0'&&kindSeg(k)==='truck'&&TUSE.some(u=>TRUCK_USE[u].kinds.includes(k))),'16 новых видов: кузов, эталон соперника, веса черт, работа на рынке');
+  {const badRef=[];NK.forEach(k=>RIVAL_CAR[k].forEach(r=>{for(const pk of PART_KEYS){const x=byId(PART_CATS.find(c=>c.k===pk).arr(),r[2][pk]);if(!x||x.y>r[0])badRef.push(k+' '+r[0]+' '+pk);}if(overpower({...r[2],t:'t0'}))badRef.push(k+' '+r[0]+' рама');if(bodyKind(byId(BODIES,r[2].b))!==k)badRef.push(k+' кузов');}));
+    CK(!badRef.length,'эталоны соперников собраны из деталей своего года и своего кузова: '+badRef.join(', '));}
+  CK(Object.keys(KIND_GRP).every(g=>KIND_GRP[g].kinds.length)&&NK.every(k=>kindGroup(k)!=='car'||k==='taxi')&&kindGroup('truck')==='cargo'&&kindGroup('people')==='car'&&kindGroup('moside')==='moto','семь групп видов: у каждого вида своя группа');
+  CK(bodyKind(byId(BODIES,'b6'))==='van'&&bodyKind(byId(BODIES,'b8'))==='truck'&&bodyKind(byId(BODIES,'b12'))==='truck'&&bodyKind(byId(BODIES,'b14'))==='bus'&&bodyKind(byId(BODIES,'b3'))==='','прежние кузова: фургон и грузовик — как были, 5 т и тягач — грузовики');
+  // доли работ: в сумме — весь прежний рынок грузовиков; у соперников доля одна во всех работах → мир без игрока не меняется
+  {let worst=0,early=0;for(const c of Object.keys(COUNTRIES))for(let y=1895;y<=1929;y++){G.y=y;G.m=5;const sh=truckUseSh(c,s);let sum=0;TUSE.forEach(u=>{if(!TRUCK_USE[u].own)sum+=sh[u];});worst=Math.max(worst,Math.abs(sum-1));if(y<=1896)NK.forEach(k=>{TUSE.forEach(u=>{if(TRUCK_USE[u].kind===k&&!TRUCK_USE[u].own)early+=sh[u];});});}
+    CK(worst<1e-9&&early===0,'доли работ в сумме дают весь рынок грузовиков — во всех странах, 1895–1929 (отклонение '+worst.toExponential(1)+'); до 1897 года новых работ нет');}
+  {G.y=1925;G.m=5;const MC=mkCountry('us',s,[]),U=MC.segs.truck.uses;let inc=0,own=0,k0=null,flat=true;TUSE.forEach(u=>{const z=U[u];if(!z||z.pool<=0)return;if(TRUCK_USE[u].own){own+=z.riv;return;}inc+=z.riv;const k=z.riv/z.pool;if(k0===null)k0=k;else if(Math.abs(k-k0)>1e-9)flat=false;});
+    CK(flat&&near(inc,MC.segs.truck.inc,1e-6)&&near(inc,MC.segs.truck.pool*k0,1e-6),'у соперников одна доля во всех работах рынка грузовиков: их продажи в сумме — те же, что до новых работ ('+Math.round(inc)+' в месяц)');
+    CK(MC.anon&&near(MC.anon.n,own,1e-6)&&own>1000&&MC.anon.rev>0&&MC.anon.hp>0,'тракторы и армия — свой пул: продажи соперников идут в «мир без имени» ('+Math.round(own)+' в месяц), а не маркам грузовиков');
+    const sh=truckUseSh('us',s);CK(sh.bus<0.012&&sh.coach<0.012&&sh.school<0.006&&sh.taxi>0.02&&sh.dump>0.02&&sh.fire<0.01,'США, 1925: автобусы всех видов — около 2 % рынка, пожарные — меньше 1 % (как в истории)');
+    const shu=truckUseSh('uk',s);CK(shu.bus>sh.bus*4&&shu.school<sh.school,'в Британии городских автобусов в разы больше, школьный автобус — американский');
+    G.y=1917;G.m=5;CK(jobOwnPool('ltank','fr',s)>20*jobOwnPool('ltank','it',{...s,y:1925})&&jobOwnPool('ltank','fr',{...s,y:1915})===0&&jobOwnPool('armored','fr',s)>jobOwnPool('armored','fr',{...s,y:1925}),'армия: в войну закупки в десятки раз больше; танков до 1917 года не берут');
+    G.y=1925;CK(jobOwnPool('plough','us',s)>20*jobOwnPool('plough','de',s)&&jobOwnPool('heavy','us',s)<jobOwnPool('plough','us',s)*0.2&&jobOwnPool('plough','us',{...s,y:1900})===0,'тракторы: рынок США — на порядок больше европейских; тяжёлые работы — десятая часть');}
+  // какая техника за какую работу берётся
+  {const m=(k,b)=>({...rivalDesign(k,1925),b:b||rivalDesign(k,1925).b,t:'t0'});
+    CK(jobsOf(m('bus')).join()==='bus'&&jobsOf(m('fire')).join()==='fire'&&jobsOf(m('truck')).join()==='van,city,haul,bulk'&&jobsOf(m('truck','b13')).join()==='van,city,haul,bulk'&&jobsOf(m('tractor')).join()==='plough,heavy'&&jobsOf(m('ltank')).join()==='ltank','автобус — только маршруты, пожарная — только охрана, грузовик — четыре перевозки, трактор — пахота и тяжёлые работы');
+    CK(jobFits('bus',{probe:{}})&&!jobFits('plough',{probe:{}}),'пробная машина калибровки — во всех работах рынка грузовиков, но не в своих пулах');
+    const sh=truckUseSh('us',s,m('bus'));CK(sh.bus>0&&TUSE.every(u=>u==='bus'||sh[u]===0),'доли для модели — только её работы');}
+  // мерки работы
+  {G.y=1925;G.m=5;const mk=(k,o)=>({...rivalDesign(k,1925),t:'t0',id:-9,...o});
+    const b1=truckCost(mk('bus'),'bus','us',s,4000),tx=truckCost(mk('taxi'),'taxi','us',s,1400);CK(b1.tkm>tx.tkm*8&&b1.drv>tx.drv*1.9,'пассажиро-километр: автобус на 34 места везёт на порядок больше такси; на автобусе — шофёр и кондуктор');
+    const t1=truckCost(mk('tractor'),'plough','us',s,800),c1=truckCost(mk('crawler'),'plough','us',s,4600),t2=truckCost(mk('tractor'),'heavy','us',s,800),c2=truckCost(mk('crawler'),'heavy','us',s,4600);
+    CK(near(t1.tkm,250)&&near(c1.tkm,250)&&c1.cpk>t1.cpk*1.3,'гектар: ферме хватает лёгкого трактора — гусеничный на пахоте ничего не добавляет и обходится дороже ('+c1.cpk.toFixed(1)+' против '+t1.cpk.toFixed(1)+' $/га)');
+    CK(c2.tkm>t2.tkm*2.5&&c2.cpk<t2.cpk,'тяжёлая почва, лес, дороги: гусеничный делает втрое больше колёсного и выходит дешевле на гектар');
+    const f0=mk('fire'),f1={...f0,e:'e8'};const a=truckCost(f0,'fire','us',s,7000),b=truckCost(f1,'fire','us',s,7000);CK(b.tkm>a.tkm&&b.tkm<a.tkm*1.25,'день службы: мотор в полтора раза мощнее — служба лучше, но меньше чем на четверть (+'+Math.round((b.tkm/a.tkm-1)*100)+' %)');
+    const h5=truckCost(mk('truck',{b:'b12'}),'bulk','us',s,2600),h15=truckCost(mk('truck',{b:'b7'}),'bulk','us',s,1280),r=truckRef('bulk',1925);CK(h5.cpk<h15.cpk*0.6&&r.b==='b13'&&truckRef('bulk',1918).b==='b12'&&truckRef('haul',1925).b==='b8','тяжёлые грузы: пятитонка возит тонно-километр вдвое дешевле полуторатонки; эталон — тягач с полуприцепом');}
+  // типичная цена и веса черт
+  {G.y=1925;G.m=5;const P=k=>prefP('truck','us',s)*payK({b:rivalDesign(k,1925).b});
+    CK(near(P('bus')/P('truck'),3)&&near(P('fire')/P('truck'),6)&&P('tractor')<P('truck')*0.7&&P('ltank')>P('truck')*10,'типичные цены: автобус — три грузовика, пожарная — шесть, трактор дешевле грузовика, танк — больше десяти');
+    const md={...rivalDesign('fire',1925),t:'t0',id:-9},weak={...md,e:'e9'};CK(kindKey(md)==='fire'&&kindKey({...md,b:'b7'})==='truck'&&kindKey({...rivalDesign('people',1925),t:'t0'})==='people','ключ вида: у пожарной свои веса, у грузовика и легковой — прежние');
+    const C0=classCompare(md,s,'us'),C1=classCompare(weak,s,'us');CK(C1.zone.perf==='low'&&C1.S<C0.S*0.7&&C0.W.perf>0.3&&C0.ref.kind==='fire','пожарная с мотором в 20 сил — «ниже порога»: оценка '+C1.S.toFixed(2)+' против '+C0.S.toFixed(2));}
+  // годные детали
+  {G.y=1925;G.m=5;const t5={...rivalDesign('truck',1925),b:'b12',t:'t0',id:-9},pp={...rivalDesign('people',1925),t:'t0',id:-9},E=id=>byId(ENGINES,id);
+    CK(partFit(t5,'e',E('e1'),s)==='low'&&partFit(t5,'e',E('e9'),s)==='low'&&partFit(t5,'e',E('e7'),s)!=='low','пятитонке мотор в 3 и в 20 сил не годится («трёхтонке нельзя ставить 3 или 10 сил»)');
+    CK(partFit(pp,'e',E('e9'),s)===''&&partFit(pp,'e',E('e6'),s)==='sat','народной машине мотор соперника годится, V8 — «с запасом»');
+    CK(!partDominated('e',E('e9'),s,false)&&partFit(pp,'c',byId(CHASSIS,'c1'),s)==='frame','дешёвый мотор — не «устаревший»; деревянная рама 1885 года мотор в 20 сил не выдержит');
+    G.y=1900;CK(partFit({...rivalDesign('middle',1900),t:'t1',id:-9},'e',E('e2'),s)==='','в 1900 году мотор Daimler Phönix — годная деталь');G.y=1925;}
+  // воронка: три шага
+  {G.y=1925;G.m=5;let html='';const os=openSheet;openSheet=h=>{html=h;};const de=document.getElementById;document.getElementById=()=>({addEventListener(){},style:{},classList:{add(){},remove(){},toggle(){}}});
+    openDesigner();CK(/Шаг 1 из 3/.test(html)&&(html.match(/class="ktile/g)||[]).length>=7&&/data-v="mil"/.test(html)&&/Военная техника/.test(html),'шаг 1: семь видов техники');
+    openKindStep('bus');CK(/Шаг 2 из 3/.test(html)&&(html.match(/class="krow[ "]/g)||[]).length===3&&!/data-lock/.test(html)&&/пасс·км/.test(html)&&/в мес\\./.test(html),'шаг 2, автобусы в 1925 году: три назначения, у каждого покупатель, мерка, размер рынка и цена');
+    G.y=1903;openKindStep('bus');CK((html.match(/data-lock="1"/g)||[]).length===3&&/в истории — с 1905 года/.test(html)&&/В КБ/.test(html),'в 1903 году автобусов ещё не строят: строки закрыты, указан год и путь через КБ');
+    openKindStep('cargo');CK((html.match(/class="krow[ "]/g)||[]).length===5&&(html.match(/data-lock="1"/g)||[]).length===4,'грузовые: пять грузоподъёмностей, в 1903 году доступен один фургон');G.y=1925;
+    openDesigner('fire');CK(designKind(draft)==='fire'&&draft.b==='b17'&&/Спецтехника/.test(html)&&/Пожарный автомобиль/.test(html)&&/день службы/.test(html)&&/data-act="kgrp" data-v="spec"/.test(html)&&!/data-act="dclass"/.test(html),'шаг 3: пожарная — вид и назначение в шапке, кнопка «Изменить», соседних классов нет');
+    draft.open='b';renderDesigner();CK((html.match(/data-k="b" data-v="/g)||[]).length===1,'кузов — только своего вида');
+    draft.open='e';renderDesigner();const shown=(html.match(/data-k="e" data-v="/g)||[]).length,hid=+(html.match(/Скрыто (\\d+)/)||[0,0])[1];CK(shown>=1&&shown<=4&&hid>=6&&/Показать все/.test(html),'моторы: показано '+shown+', скрыто '+hid+' — не годятся пожарной машине');
+    draft.all=true;renderDesigner();CK((html.match(/data-k="e" data-v="/g)||[]).length===shown+hid&&/ftag bad/.test(html)&&/Только годные/.test(html),'«Показать все» — все моторы с пометками, почему не годятся');
+    openDesigner('truck','b12');CK(draft.b==='b12'&&designKind(draft)==='truck','грузовик 5 т: выбранный кузов стоит сразу');
+    openDesigner('people');CK((html.match(/data-act="dclass"/g)||[]).length>=3&&/с запасом/.test((draft.open='e',renderDesigner(),html)),'легковая: соседние классы — чипами; мощный мотор помечен «с запасом»');
+    openSheet=os;document.getElementById=de;draft=null;}
+  // спрос: каждая модель продаётся только в своих работах; рисунки
+  {G.y=1925;G.m=5;const kinds=['truck'].concat(NK);G.models=kinds.map((k,i)=>{const md={...rivalDesign(k,1925),id:300+i,name:k,made:500,vol:100,launched:mi(G)-20,status:'prod',price:0,stock:0,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)/10)*10;return md;});
+    let okU=true,sold=0,err='';try{const D=demandAll(G);G.models.forEach(md=>{const by=D.mk.us.byU[md.id]||{};const js=jobsOf(md);for(const u in by){if(!js.includes(u))okU=false;sold+=by[u];}});
+      G.y=1917;const D2=demandAll(G);}catch(e){err=e.message;}G.y=1925;
+    CK(!err&&okU&&sold>0,'модели всех видов сразу: спрос считается без ошибок (и в войну), каждая продаётся только в своих работах '+err);
+    const svgs=G.models.map(md=>carSVG(md,{}));CK(svgs.every(x=>/^<svg/.test(x)&&!/undefined|NaN/.test(x)&&x.length>600),'рисунки новых видов собраны без пропусков');
+    const TH=truckHead(G.models[1],G);CK(TH&&TH.un==='пасс·км'&&/пасс·км/.test(TH.txt),'строка «работа против соперника» — в своей мерке');G.models=[];}
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

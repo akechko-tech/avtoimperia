@@ -58,6 +58,9 @@ const ACT={
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
   revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
+  // 0.51: воронка конструктора — вид техники, назначение
+  kgrp:d=>openKindStep(d.v||null),dall:()=>{draft.all=!draft.all;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
+  kkind:d=>{if(d.lock){toast('Этого ещё не строят: кузов-прототип заказывают в КБ');return;}const g=kindGroup(d.v);if(!grpOk(g,G)){toast(g==='moto'?'Нужен мотоциклетный цех':'Нужен автомобильный цех');return;}openDesigner(d.v,d.b||null);},
   // 0.32–0.33: мотоциклы — оборудование для мотоциклов, оборудование для автомобилей у «Мотомастерской», мотомарки
   line:d=>{G.ui=G.ui||{};G.ui.line=d.v==='moto'?'moto':'car';rerender();},
   mshop:()=>{if(mshopStart(G)){save();rerender();}else toast('Не хватает денег на оборудование');},

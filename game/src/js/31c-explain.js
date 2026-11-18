@@ -79,7 +79,7 @@ function xCharData(md,s,k){const y=s.y,C=classCompare(md,s,s.country),A=xSide(md
   out.by=by;return out;}
 // грузовик фирмы выбирают по цене тонно-километра (105-market.js, truckMarket): привлекательность для фирм по видам перевозок при цене P
 // (совет сравнивает детали при одной цене: лучше ли машина для фирм, а не дороже ли она)
-function xTruckU(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s);let U=0;
+function xTruckU(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s,md);let U=0;
   TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cp=truckCost(md,u,c,s,P).cpk;
     U+=sh[u]*Math.exp(-BTC*Math.log(cp/cR)-TRUCK_USE[u].bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y));});return U;}
 // лучшая замена одной детали для черты k (или для итога 'S') — из тех, что можно поставить сейчас; итог (у грузовика — выбор фирм) не хуже
@@ -135,16 +135,17 @@ function xpopScore(md,s,tip){const D=xScoreData(md,s),tone=f=>f>1.005?'good':f<0
 // проект грузовика md1 против md0 при одной цене машины P (для строки под кнопками конструктора): спрос фирм (отношение
 // привлекательности, как в выборе фирм), тонно-километр по долям перевозок в стране и удобство шофёру (лёгкость, тормоза, комфорт)
 // (тонно-километр и удобство усреднены с весом перевозок, где фирмы и выбирают — как в xTruckU, — чтобы объяснение сходилось со спросом)
-function xTruckCmp(md0,md1,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s),R=[];let U0=0,U1=0;
+function xTruckCmp(md0,md1,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s,md0),R=[];let U0=0,U1=0;
   TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,bp=TRUCK_USE[u].bp,
     c0=truckCost(md0,u,c,s,P).cpk,c1=truckCost(md1,u,c,s,P).cpk,f0=truckSoft(md0,ref,s.y),f1=truckSoft(md1,ref,s.y),
     V=(cp,f)=>sh[u]*Math.exp(-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*f),u0=V(c0,f0),u1=V(c1,f1);
     U0+=u0;U1+=u1;R.push({u0,u1,lc:Math.log(c1/c0),lf:f1-f0});});
   let lc=0,lf=0;if(U0>0&&U1>0)R.forEach(r=>{const w=(r.u0/U0+r.u1/U1)/2;lc+=w*r.lc;lf+=w*r.lf;});
   const ok=x=>isFinite(x)&&x>0?x:1;return {dem:ok(U0>0?U1/U0:1),cpk:ok(Math.exp(lc)),soft:ok(Math.exp(TQ*lf))};}
-function xTruckHTML(md,s){const c=s.country,P=md.price||refPrice(md,s),PT=prefP('truck',c,s),sh=truckUseSh(c,s),tone=f=>f>1.005?'good':f<0.995?'bad':'muted';
+function xTruckHTML(md,s){const c=s.country,P=md.price||refPrice(md,s),PT=prefP('truck',c,s),sh=truckUseSh(c,s,md),tone=f=>f>1.005?'good':f<0.995?'bad':'muted';
   const rows=TUSE.filter(u=>sh[u]>0.005).map(u=>{const ref=truckRef(u,s.y),cR=truckCost(ref,u,c,s,PT*payK(ref)).cpk,cM=truckCost(md,u,c,s,P).cpk,f=cR/cM;
     return `<tr><td>${esc(TRUCK_USE[u].n)}</td><td>${cpkTxt(cM)}</td><td>${cpkTxt(cR)}</td><td class="${tone(f)}">${xk(f)}</td></tr>`;}).join('');
+  const un=(TRUCK_USE[jobsOf(md)[0]]||{}).un||'т·км';if(un!=='т·км'||kindIsNew(bodyKind(byId(BODIES,md.b))))return `<p class="xp-w" style="margin-top:8px">Эту технику покупатель выбирает по цене работы — ${un}: машина за годы службы, ремонт, топливо, экипаж против того, сколько работы она сделает; этот итог задаёт лишь «типичную цену».</p><table class="xp-t"><tr><th>${un}</th><th>Вы</th><th>Соперники</th><th>→</th></tr>${rows}</table>`;
   return `<p class="xp-w" style="margin-top:8px">Грузовик фирмы выбирают по цене тонно-километра — машина за годы службы, ремонт, бензин, шофёр, — и ещё по тому, легко ли его вести, как тормозит и удобно ли шофёру; этот итог задаёт лишь «типичную цену».</p><table class="xp-t"><tr><th>Тонно-км</th><th>Вы</th><th>Соперники</th><th>→</th></tr>${rows}</table>`;}
 /* ---------- себестоимость: детали по прайсу, скидки, объём и опыт, работа ---------- */
 function xCostData(md,s){const p=parts(md),tc=s.tech||{},mo=isMoto(md),L=[];let base=0;

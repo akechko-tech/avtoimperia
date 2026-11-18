@@ -68,11 +68,12 @@ function hiddenHTML(md,s,inDesigner){if(isTruck(md))return '';const B=buyersPct(
 
 /* ---------- грузовик: главное — тонно-километр ---------- */
 // самая массовая для модели перевозка (где фирмы берут её охотнее всего) и цена тонно-километра против эталона на ней
-function truckHead(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s);P=P||md.price||refPrice(md,s);let best=null;
+function truckHead(md,s,P){const c=s.country,PT=prefP('truck',c,s),sh=truckUseSh(c,s,md);P=P||md.price||refPrice(md,s);let best=null;
   TUSE.forEach(u=>{if(sh[u]<=0)return;const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cp=truckCost(md,u,c,s,P).cpk,
     w=sh[u]*Math.exp(-BTC*Math.log(cp/cR)-TRUCK_USE[u].bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y));if(!best||w>best.w)best={u,w,cp,cR,k:cp/cR};});
   if(!best)return null;const d=Math.round((1-best.k)*100);
-  return Object.assign(best,{txt:Math.abs(d)<1?`т·км как у соперника`:`т·км на ${Math.abs(d)}% ${d>0?'дешевле':'дороже'} соперника`,tone:best.k<=0.97?'good':best.k>1.05?'bad':'warn',use:TRUCK_USE[best.u].n.toLowerCase()});}
+  const un=TRUCK_USE[best.u].un||'т·км';/* 0.51: у каждой работы своя мерка */
+  return Object.assign(best,{un,txt:Math.abs(d)<1?`${un} как у соперника`:`${un} на ${Math.abs(d)}% ${d>0?'дешевле':'дороже'} соперника`,tone:best.k<=0.97?'good':best.k>1.05?'bad':'warn',use:TRUCK_USE[best.u].n.toLowerCase()});}
 
 /* ---------- прибыль после всех расходов ---------- */
 // постоянные расходы месяца — как в отчёте (13-turn.js): сеть и представительства, содержание завода, проценты, КБ, команда, реклама

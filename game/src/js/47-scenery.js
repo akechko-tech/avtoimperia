@@ -427,6 +427,8 @@ function carGalHTML(md,k){const v=CAR_VIEWS.find(x=>x.k===k)||CAR_VIEWS[0];
 const CARD3D=new Map();
 function carArt(md,opt={}){
   if(isMoto(md))return motoSVG(md,opt);   // 0.32: мотоцикл — рисунок сбоку (3D — в 0.33)
+  // 0.51: новые виды техники (автобус, пожарная, трактор, танк…) — рисунок сбоку: трёхмерных моделей у них пока нет, а общий «грузовик» обманывал бы
+  try{const b0=byId(BODIES,md.b);if(b0&&b0.art)return carSVG(md,opt);}catch(_){}
   try{const y=opt.y||(md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895));
     // тот же облик, что в гонке: кузов, цвет, колёса, капот по мотору; для газеты о гонке — в гоночной подготовке, с номером и экипажем
     const prep=opt.prep||0,crew=prep>0||!!opt.crew,S=modelSpec(md,prep,y,{mech:prep>0&&mechanicEra(y),num:prep>0?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:opt.w||600,crew};if(opt.yaw!==undefined){o.yaw=opt.yaw;o.pitch=opt.pitch;}

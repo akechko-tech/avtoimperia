@@ -151,7 +151,7 @@ function step(){
     // 0.32: мотоциклы — свои классы и свои марки (s.mcomps)
     const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;});const msg={};let msize=0;
     MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x)x.last+=o.sales;});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;mk.lostDlr=lostC[c]||0;}
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;if(MC.anon)mk.anon={n:MC.anon.n,rev:MC.anon.rev,hp:MC.anon.hp};/* 0.51: тракторы и армия — продажи «остального мира» */mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md),mo=isMotoSeg(g);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(!m)continue;
     if(mo){if(m.msegs&&m.msegs[g]){m.msegs[g].you+=so;m.msegs[g].size+=so;m.msize+=so;}}else if(m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   chalTallyYou(s,r);

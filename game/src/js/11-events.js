@@ -100,7 +100,7 @@ const TENDERS={
     text:(o)=>`Армии нужны мотоциклы: связные возят приказы между штабами, санитары — раненых, в коляске ставят пулемёт. ${o.who} заказывает ${o.n} мотоциклов с поставкой за ${o.mo} месяцев. Заказ займёт мотоцех, зато платят сразу и щедро.`}
 };
 const MOTO_TENDER={moto:1,moside:1};
-function tenderModel(s,kind){if(MOTO_TENDER[kind])return motoForTender(s,kind);return s.models.filter(m=>m.status==='prod'&&!isMoto(m)&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
+function tenderModel(s,kind){if(MOTO_TENDER[kind])return motoForTender(s,kind);return s.models.filter(m=>m.status==='prod'&&!isMoto(m)&&(kind==='van'?m.b==='b6':kind==='truck'?isTruck(m)&&bodyKind(byId(BODIES,m.b))==='truck'&&m.b!=='b6':!isTruck(m)&&segOf(m)!=='lux')).sort((a,b)=>classScore(b,s)-classScore(a,s))[0];}
 function checkTenders(s){
   if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
   // 0.36: в России с осени 1917 до весны 1921 года (переворот, гражданская война, разруха) заказов у ведомств и фирм нет

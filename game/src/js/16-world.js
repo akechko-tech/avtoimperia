@@ -100,6 +100,8 @@ function worldMonth(s,r){const W=s.world&&s.world.v?s.world:worldInit(s),y=yf(s)
       if(!un)return;if(cp.imp){W.hp+=hp;W.rev+=rev;W.cu[c]=(W.cu[c]||0)+un;return;}// импорт — не компания, но мир
       if(heldByMe(s,c,i)){wMine(W,c,hp,rev,un);return;}/* 0.46: ваша дочерняя марка — в ваш зачёт */
       const own=(s.botAcq&&s.botAcq[cp.n])||coKey(cp.n);/* 0.41: марка, купленная ботом, — в его зачёт */wAdd(W,own,cp.c||c,c,hp,rev,un);});}
+  // 0.51: тракторы и военная техника соперников — мир без имени (их делали сотни фирм вне таблицы автомобильных марок)
+  if(r.mk)for(const c in r.mk){const a=r.mk[c]&&r.mk[c].anon;if(a&&a.n>0){W.hp+=a.hp;W.rev+=a.rev;W.cu[c]=(W.cu[c]||0)+a.n;}}
   // 0.41: экспорт живых соперников сверх истории (17b-bots.js: botSold → B.xs за этот месяц)
   if(s.bots&&botsOn(s))for(const n in s.bots){const B=s.bots[n];for(const c in (B.xs||{}))for(const g in B.xs[c]){const u=B.xs[c][g];if(u>0)wAdd(W,B.n,B.c,c,u*hpTyp(g,y),u*prefP(g,c,s),u);}}
   // ---- мотомарки (03c-moto.js): продажи месяца без разбивки по классам; покупатели — за четверть

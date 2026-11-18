@@ -316,24 +316,87 @@ function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*
 const TRUCK_USE={van:{n:'По району',who:'лавки, булочные, молочники, почта',d:45,s:0.3,h:4,lf:0.7,bp:3},
   city:{n:'По городу',who:'мебель, уголь, стройматериалы',d:70,s:1.4,h:6,lf:0.55,bp:2.4},
   haul:{n:'Между городами',who:'большие партии на сотни километров',d:160,s:2.6,h:9,lf:0.5,bp:1.8}};
-const TUSE=['van','city','haul'];
+/* ---------- 0.51: работы для всего ряда техники (ТЗ 0.51, тема 3) ----------
+   Прежние три перевозки остались как были. Новые работы: тяжёлые грузы (5 т и тягач с полуприцепом), автобусы, такси, почта, цистерна,
+   самосвал, городская очистка, пожарная охрана, скорая помощь — это доли того же рынка коммерческих машин (статистика «грузовики и
+   автобусы» считала их вместе), поэтому мир без игрока в сумме не меняется. Тракторы и военная техника — отдельные покупатели со
+   своими числами (FARM_MKT, ARMY_BUY). У каждой работы своя мерка: m:'t' — тонно-километр, 'p' — пассажиро-километр, 'ha' — гектар,
+   'x' — день службы (оценка по sc: скорость с грузом, надёжность, мощность, комфорт). kinds — какие виды техники берутся за работу;
+   crew — экипаж на зарплате; cq — насколько работа ценит комфорт; own — свой пул покупателей, не доля рынка грузовиков. */
+Object.assign(TRUCK_USE.van,{grp:'cargo',kinds:['van','truck'],un:'т·км'});Object.assign(TRUCK_USE.city,{grp:'cargo',kinds:['van','truck'],un:'т·км'});Object.assign(TRUCK_USE.haul,{grp:'cargo',kinds:['van','truck'],un:'т·км'});
+Object.assign(TRUCK_USE,{
+  bulk:{n:'Тяжёлые грузы',who:'уголь, лес, зерно, стройки — партиями по 5–8 тонн',d:120,s:8,h:9,lf:0.5,bp:1.6,grp:'cargo',kinds:['van','truck'],un:'т·км'},
+  bus:{n:'Городские маршруты',who:'города и омнибусные общества',m:'p',d:110,s:34,h:10,lf:0.45,bp:1.8,grp:'bus',kinds:['bus'],kind:'bus',un:'пасс·км',crew:2},
+  coach:{n:'Междугородние линии',who:'автобусные компании',m:'p',d:260,s:22,h:9,lf:0.6,bp:1.6,grp:'bus',kinds:['coach'],kind:'coach',un:'пасс·км',cq:0.5},
+  school:{n:'Школьные перевозки',who:'школьные округа',m:'p',d:50,s:24,h:3,lf:0.5,bp:3,grp:'bus',kinds:['school'],kind:'school',un:'пасс·км'},
+  taxi:{n:'Такси',who:'таксомоторные компании',m:'p',d:130,s:2,h:10,lf:0.45,bp:2.4,grp:'car',kinds:['taxi'],kind:'taxi',un:'пасс·км',cq:0.4},
+  mail:{n:'Почта',who:'почтовые ведомства',d:90,s:0.5,h:7,lf:0.6,bp:1.8,grp:'spec',kinds:['mail'],kind:'mail',un:'т·км'},
+  tank:{n:'Топливо и молоко наливом',who:'нефтяные компании, молочные заводы',d:90,s:2.5,h:7,lf:0.5,bp:2,grp:'spec',kinds:['tank'],kind:'tank',un:'т·км'},
+  dump:{n:'Стройка и дороги',who:'подрядчики, дорожные управления',d:60,s:2.5,h:8,lf:0.5,bp:2.2,grp:'spec',kinds:['dump'],kind:'dump',un:'т·км'},
+  refuse:{n:'Городская очистка',who:'городские службы',d:40,s:2,h:7,lf:0.5,bp:2.6,grp:'spec',kinds:['refuse'],kind:'refuse',un:'т·км',crew:3},
+  fire:{n:'Пожарная охрана',who:'города',m:'x',d:15,bp:1.2,grp:'spec',kinds:['fire'],kind:'fire',un:'день службы',crew:5,sc:{vT:0.6,mtbf:0.5,hp:0.5}},
+  amb:{n:'Скорая помощь',who:'больницы и города',m:'x',d:40,bp:1.6,grp:'spec',kinds:['amb'],kind:'amb',un:'день службы',crew:2,sc:{vT:0.5,mtbf:0.5,comf:0.5}},
+  plough:{n:'Пахота и уборка',who:'фермеры',m:'ha',h:9,s:250,bp:2.6,grp:'farm',kinds:['tractor','crawler'],kind:'tractor',un:'гектар',own:1},
+  heavy:{n:'Тяжёлая почва, лес, дороги',who:'крупные хозяйства, лесные и дорожные работы',m:'ha',h:9,s:1200,bp:1.6,grp:'farm',kinds:['tractor','crawler'],kind:'crawler',un:'гектар',own:1,soil:1},
+  staff:{n:'Штабные машины',who:'армия',m:'x',d:60,bp:1.4,grp:'mil',kinds:['staff'],kind:'staff',un:'день службы',own:1,sc:{vT:0.6,mtbf:0.6,comf:0.2}},
+  mamb:{n:'Военная санитарная служба',who:'армия',m:'x',d:50,bp:1.4,grp:'mil',kinds:['mamb'],kind:'mamb',un:'день службы',own:1,crew:2,sc:{vT:0.4,mtbf:0.7,comf:0.4}},
+  armored:{n:'Бронеавтомобили',who:'армия',m:'x',d:30,bp:1,grp:'mil',kinds:['armored'],kind:'armored',un:'день службы',own:1,crew:3,sc:{vT:0.6,mtbf:0.7,hp:0.3}},
+  ltank:{n:'Танковые части',who:'армия',m:'x',d:15,bp:0.8,grp:'mil',kinds:['ltank'],kind:'ltank',un:'день службы',own:1,crew:2,sc:{vT:0.5,mtbf:0.8,hp:0.4}}});
+const TUSE=Object.keys(TRUCK_USE);
+// доля рынка коммерческих машин, которую занимает работа (остальное — три прежние перевозки). Числа — оценки по истории отрасли:
+// США, 1929 год — около 880 тыс. грузовиков и автобусов, из них автобусов всех видов ~15 тыс., пожарных машин 3–5 тыс., самосвалов и
+// цистерн — десятки тысяч, такси ~25 тыс.; в Европе автобусов в разы больше (до шестой части выпуска), школьный автобус — американский
+const JOB_SH={taxi:{1897:0,1905:0.02,1910:0.04,1920:0.035,1929:0.03},bus:{1898:0,1905:0.012,1912:0.04,1920:0.04,1929:0.05},coach:{1912:0,1921:0.006,1929:0.02},
+  school:{1913:0,1920:0.004,1929:0.012},mail:{1900:0,1907:0.004,1914:0.006,1929:0.006},tank:{1905:0,1910:0.008,1920:0.02,1929:0.03},dump:{1908:0,1912:0.006,1920:0.02,1929:0.035},
+  refuse:{1915:0,1922:0.004,1929:0.008},fire:{1903:0,1906:0.003,1914:0.006,1929:0.005},amb:{1905:0,1909:0.003,1914:0.005,1929:0.005}};
+const JOB_C={bus:{us:0.15,it:0.7,ru:0.5},school:{us:0.35,uk:0.08,de:0.05,fr:0.05,it:0.05,ru:0.03},taxi:{ru:0.5,it:0.7},coach:{us:0.4,ru:0.5}};
+const BULK_SH={1914:0,1918:0.04,1929:0.1};   // тяжёлые грузы — из перевозок между городами
+// тракторы: продано в год, шт. (оценка по выпуску: США — 4 тыс. в 1910-м, 200 тыс. в 1920-м, провал 1921-го, 220 тыс. в 1929-м); доля тяжёлых работ
+const FARM_MKT={us:{1901:0,1903:300,1907:800,1910:4000,1914:12000,1916:30000,1918:130000,1920:200000,1921:70000,1923:130000,1926:180000,1929:220000},
+  uk:{1901:0,1903:20,1910:200,1915:800,1918:8000,1920:6000,1925:4000,1929:6000},de:{1905:0,1910:100,1920:800,1925:5000,1929:9000},
+  fr:{1905:0,1910:100,1919:3000,1925:4000,1929:6000},it:{1908:0,1912:50,1919:1200,1929:3000},ru:{1905:0,1910:50,1913:150,1918:0,1923:1000,1925:6000,1929:12000}};
+const FARM_HEAVY={1907:0,1908:0.03,1914:0.06,1918:0.1,1929:0.1};
+// армия: закупки в год на 1000 единиц потребности страны (ARMY_NEED) в мирное время; в войну — во столько раз больше
+const ARMY_BUY={staff:{1905:0,1906:6,1913:14,1920:10,1929:12},mamb:{1911:0,1912:3,1929:4},armored:{1904:0,1905:0.3,1913:1.2,1920:2.5,1929:4},ltank:{1916:0,1917:6,1920:3,1929:8}};
+const ARMY_WAR={staff:20,mamb:35,armored:25,ltank:60};
+function jobFits(u,md){const U=TRUCK_USE[u];if(!md||md.probe)return !U.own;return U.kinds.includes(bodyKind(byId(BODIES,md.b)));}
+function jobsOf(md){return TUSE.filter(u=>jobFits(u,md));}
+function jobOwnPool(u,c,s){const t=yf(s),ec=econ(s.y,s.m,c);
+  if(u==='plough'||u==='heavy'){const tot=tabAt(FARM_MKT[c]||FARM_MKT.it,t)/12*SEASON[s.m]*(ec.war?1:ec.f),h=tabAt(FARM_HEAVY,t);return u==='heavy'?tot*h:tot*(1-h);}
+  const A=ARMY_BUY[u];return A?tabAt(A,t)*((typeof ARMY_NEED!=='undefined'&&ARMY_NEED[c])||1000)/1000/12*(ec.war?ARMY_WAR[u]:1):0;}
+// оценка службы (m:'x'): скорость с грузом, надёжность, мощность, комфорт — в степенях работы
+// JOB_SC_K — насколько служба ценит качество против цены: машина вдвое лучше по всем статьям — как дешевле на четверть (без этого множителя
+// прокачанные детали давали в «службе» перевес без меры: замер — 88–99 % рынка пожарных и санитарных машин)
+const JOB_SC_K=0.18;
+function jobScore(U,ch){let x=0;const sc=U.sc||{};for(const k in sc)x+=sc[k]*Math.log(Math.max(0.05,k==='vT'?ch.vT||10:k==='mtbf'?ch.mtbf:k==='hp'?ch.hp:k==='comf'?ch.comf:ch[k]||1));return Math.exp(JOB_SC_K*x);}
 // какая доля фирм возит как: сначала почти одна развозка, с дорогами двадцатых растут перевозки между городами
 const TUSE_SH={1895:[0.85,0.15,0],1905:[0.78,0.2,0.02],1912:[0.62,0.32,0.06],1918:[0.5,0.38,0.12],1922:[0.45,0.37,0.18],1929:[0.4,0.35,0.25]};
 // бензин, $ за литр (в Европе — с налогами и доставкой); годы службы грузовика
 const FUEL_P={us:{1895:0.04,1915:0.05,1920:0.075,1925:0.055,1929:0.05},eu:{1895:0.08,1915:0.09,1920:0.14,1925:0.11,1929:0.1}};
 const TRUCK_LIFE={1895:5,1910:6,1920:7,1929:8};
 const BTC=7,TQ=2.6;
-function truckUseSh(c,s){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
-  const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}return {van:v[0],city:v[1],haul:v[2]};}
+function truckUseSh(c,s,md){const L=TUSE_SH,ys=Object.keys(L).map(Number),t=yf(s);let a=ys[0],b=ys[ys.length-1];for(const y of ys){if(y<=t)a=y;if(y>=t){b=y;break;}}
+  const f=b>a?(t-a)/(b-a):0,v=L[a].map((x,i)=>x+(L[b][i]-x)*f);if(c==='us'&&t>1915){const d=Math.min(0.06,(t-1915)*0.006);v[2]+=d;v[0]-=d;}
+  // 0.51: новые работы — доли того же рынка (прежние три перевозки сжимаются на их сумму); свои пулы — в долях рынка грузовиков
+  const o={},war=econ(s.y,s.m,c).war;let add=0;for(const u in JOB_SH){const x=tabAt(JOB_SH[u],t)*((JOB_C[u]&&JOB_C[u][c])||1)*(u==='amb'&&war?2:1);o[u]=x;add+=x;}
+  const k=1-add,bulk=Math.min(tabAt(BULK_SH,t),v[2]*0.6);o.van=v[0]*k;o.city=v[1]*k;o.haul=(v[2]-bulk)*k;o.bulk=bulk*k;
+  const tp=truckPool(c,s);TUSE.forEach(u=>{if(TRUCK_USE[u].own)o[u]=tp>0?jobOwnPool(u,c,s)/tp:0;});
+  if(md)TUSE.forEach(u=>{if(!jobFits(u,md))o[u]=0;});return o;}
 // Эталон соперников для каждой перевозки: фургон, полуторатонка, трёхтонка (до 1920 года — полуторатонка)
 // 0.34: соперники копируют и грузовик — их эталон перевозки получает те же ★ копирования (тонно-километр дешевле); без копирования — как прежде
-function truckRef(u,y){const cp=typeof copyExtra==='function'?Math.round(copyExtra(u==='van'?'van':'truck')*10)/10:0;if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:cp};const r=rivalCar('truck',y)[2];return {...r,b:u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:cp};}
+function truckRef(u,y){const U=TRUCK_USE[u];if(U.kind){const k=U.kind,r=rivalCar(k,y)[2],cp=typeof copyExtra==='function'?Math.round(copyExtra(k)*10)/10:0;return {...r,t:'t0',ref:1,rl:cp};}
+  const cp=typeof copyExtra==='function'?Math.round(copyExtra(u==='van'?'van':'truck')*10)/10:0;if(u==='van')return {...rivalCar('van',y)[2],t:'t0',ref:1,rl:cp};const r=rivalCar('truck',y)[2];
+  return {...r,b:u==='bulk'?(y>=1922?'b13':y>=1916?'b12':'b8'):u==='haul'&&y>=1920?'b8':'b7',t:'t0',ref:1,rl:cp};}
 // Во что фирме обходится тонно-километр на этой машине при цене P (в $ того времени)
-function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf);
-  const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1;
-  const kmDay=Math.min(U.d,(ch.vT||15)*U.h),down=clamp(0.4/mt,0.01,0.3),days=300*(1-down),km=kmDay*days;
-  const own=P*(1/life+0.06),rep=P*0.08*(1+3/mt),fuel=km*9*ch.fuel/100*fp,tot=own+rep+fuel+drv;
-  const tkm=km*Math.min(pay,U.s)*U.lf;return {cpk:tot/Math.max(1,tkm),tot,tkm,kmDay,own,rep,fuel,drv};}
+function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pay=Math.max(0.1,ch.cap),mt=Math.max(1.5,ch.mtbf),m=U.m||'t';
+  const life=tabAt(TRUCK_LIFE,t),fp=tabAt(FUEL_P[c==='us'?'us':'eu'],t),drv=12*wageBase(s,c)*1.1*(U.crew||1);
+  const down=clamp(0.4/mt,0.01,0.3);let kmDay,days,tkm,fk=1;
+  if(m==='ha'){// трактор: сезон в поле, тяга на крюке (гусеницы держат почву лучше; колёсный на тяжёлой работе буксует)
+    days=110*(1-down);kmDay=U.h*4;fk=3;tkm=Math.min(U.s,days*U.h*ch.hp*(ch.trk?0.62:0.48)*(U.soil&&!ch.trk?0.5:1)*0.032);}/* U.s — сколько гектаров работы у хозяйства за сезон: трактор мощнее нужного ферме ничего не добавляет */
+  else if(m==='x'){days=300*(1-down);kmDay=U.d;tkm=days*jobScore(U,ch);}
+  else{kmDay=Math.min(U.d,(ch.vT||15)*U.h);days=300*(1-down);tkm=kmDay*days*(m==='p'?Math.min(ch.seats||2,U.s):Math.min(pay,U.s))*U.lf*(U.cq?Math.pow(ch.comf,U.cq):1);}
+  const km=kmDay*days,own=P*(1/life+0.06),rep=P*0.08*(1+3/mt),fuel=km*9*ch.fuel/100*fp*fk,tot=own+rep+fuel+drv;
+  return {cpk:tot/Math.max(m==='t'?1:1e-6,tkm),tot,tkm,kmDay,own,rep,fuel,drv};}
 // Остальное, что ценит шофёр и хозяин: простота вождения, тормоза, кабина — немного
 function truckSoft(md,ref,y){const A=charOf(md,y),R=charOf(ref,y);return 0.1*Math.log(clamp(A.ease/R.ease,0.25,4))+0.08*Math.log(clamp(A.safe/R.safe,0.25,4))+0.04*Math.log(clamp(A.comf/R.comf,0.25,4));}
 function truckMarket(R,c,s,ms,pr,K,u0){
@@ -342,14 +405,16 @@ function truckMarket(R,c,s,ms,pr,K,u0){
   // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
   const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
   const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s)-contest(s,c,'truck');});R.byU=R.byU||{};
-  for(const u of TUSE){const pu=pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
+  for(const u of TUSE){const own=!!TRUCK_USE[u].own,pu=own?jobOwnPool(u,c,s):pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
     const ei=Math.exp(u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR);let m=-1e9;
-    const L=ms.map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
+    const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
       else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk;v=u0-0.5-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y)+ex[md.id];}
       v=(v+bk)/LAM;if(v>m)m=v;return {md,v};});
     let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
-    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);z.inc+=ri;Z.riv=ri;
+    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);Z.riv=ri;
+    // свой пул (тракторы, армия): соперники — не марки из таблицы грузовиков, а «остальной мир» (16-world.js: в мир, но без имени)
+    if(own){const an=R.anon=R.anon||{n:0,rev:0,hp:0};an.n+=ri;an.rev+=ri*Pref;an.hp+=ri*(byId(ENGINES,ref.e)||{hp:20}).hp;}else z.inc+=ri;
     L.forEach(x=>{const d=pu*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
   R.shop+=pool;
 }

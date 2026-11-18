@@ -15,7 +15,7 @@ function showEvent(){
   openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
-function designKind(d){const b=byId(BODIES,d.b);return b.truck?(d.b==='b6'?'van':'truck'):segOf(d);}
+function designKind(d){const b=byId(BODIES,d.b);return b.truck?bodyKind(b):segOf(d);}
 // 0.34: что сделала кнопка-помощник («Передовая модель», «Подобрать детали повыгоднее») — строкой под кнопками,
 // пока проект не меняли (тост под листом конструктора не виден)
 let dNote=null;
@@ -34,9 +34,37 @@ function dApply(md,label){const s=G,sig0=dSig(draft),b0=designMd(s,draft),tr=isT
   const same=dSig(draft)===sig0;
   dNote={txt:same?`${label}: менять нечего — проект уже такой.`:`${label}: ${main}, себестоимость <b class="num">${money(U0)} → ${money(U1)}</b>.${pr.length?`<br><span class="warn">🔬 Прототипы КБ: ${pr.map(x=>esc(x.name)).join(', ')} — риск «не по ТЗ».</span>`:''}`,sig:dSig(draft)};
   const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;}
-function openDesigner(kind){kind=kind||(!lineOn(G,'car')&&!G.carShopB?'moto':(G.y>=1908?'people':'middle'));dNote=null;
+/* ---------- 0.51: конструктор-воронка (ТЗ 0.51, тема 3): шаг 1 — вид техники, шаг 2 — назначение, шаг 3 — только годные детали ---------- */
+function kindOpen(kind,s){const mo=isMotoSeg(kind);return unlockedP(BODIES,s,mo).some(b=>kindBodyOk(kind,b))&&(kind!=='sport'||unlockedP(TRIMS,s).some(x=>x.id==='t3'));}
+function kindYear(kind){if(kind==='sport')return 1901;const L=BODIES.filter(b=>kindBodyOk(kind,b)).map(b=>b.y);return L.length?Math.max(1895,Math.min(...L)):1895;}
+function grpOk(g,s){return g==='moto'?canDesign(s,'moto'):canDesign(s,'car');}
+// сколько покупателей у вида в своей стране сейчас, в месяц (рынок работ; у легковых — не считаем: класс и так на виду)
+function kindPool(kind,s,body){const c=s.country;if(kindSeg(kind)!=='truck')return 0;const sh=truckUseSh(c,s),tp=truckPool(c,s),md={b:body||(BODIES.find(b=>kindBodyOk(kind,b))||{}).id};
+  // грузовые: у каждой грузоподъёмности — своя перевозка (фургон — по району, 1,5 т — по городу, 3 т — между городами, 5–8 т — тяжёлые грузы)
+  if(kind==='van'||kind==='truck'){const pay=(byId(BODIES,md.b)||{}).pay||1.5;return tp*sh[pay<=0.8?'van':pay<=1.5?'city':pay<=3?'haul':'bulk'];}
+  return TUSE.reduce((a,u)=>a+(jobFits(u,md)?(TRUCK_USE[u].own?jobOwnPool(u,c,s):tp*sh[u]):0),0);}
+function kindWho(kind){const U=TUSE.map(u=>TRUCK_USE[u]).filter(U=>U.kind===kind)[0];return U?U.who+' · мерка — '+U.un:'';}
+function openDesigner(kind,body){if(!kind)return openKindStep(null);dNote=null;
   draft={name:(typeof brandNextName==='function'&&brandNextName(G))||'Тип '+(G.models.length+1),...rivalDesign(kind,G.y),paint:PAINTS[G.models.length%PAINTS.length].id,open:null};
+  if(body&&kindBodyOk(kind,byId(BODIES,body)))draft.b=body;else if(!unlockedP(BODIES,G,isMotoSeg(kind)).some(b=>b.id===draft.b)){const b=unlockedP(BODIES,G,isMotoSeg(kind)).filter(x=>kindBodyOk(kind,x));if(b.length)draft.b=b[b.length-1].id;}
   try{draft.eq=eqAuto(draft,kindIsTruck(kind)?'truck':kind,G);}catch(_){draft.eq=[];}renderDesigner();}
+function openKindStep(grp){const s=G,X2=X;
+  if(!grp){const tiles=Object.keys(KIND_GRP).map(g=>{const K=KIND_GRP[g],ok=grpOk(g,s),open=K.kinds.filter(k=>kindOpen(k,s)).length,y0=Math.min(...K.kinds.map(kindYear));
+      const st=!ok?`<span class="bad">нет ${g==='moto'?'мото':'автомобильного '}цеха</span>`:open?`${open} ${plural(open,'вид','вида','видов')}`:`<span class="muted">с ${y0} года</span>`;
+      return `<button class="ktile${ok&&open?'':' off'}" data-act="kgrp" data-v="${g}"><i>${K.ic}</i><b>${K.n}</b><small>${esc(K.who)}</small><em>${st}</em></button>`;}).join('')
+      +(typeof airOn==='function'&&airOn(s)?`<button class="ktile" data-act="airDesign"><i>✈</i><b>Аэроплан</b><small>спортсмены, почта, армия</small><em>свой конструктор</em></button>`:'');
+    return openSheet(`<div class="row"><h2>Новая модель</h2>${X2}</div><p class="small muted">Шаг 1 из 3 · что строим</p><div class="ktiles">${tiles}</div>`);}
+  const K=KIND_GRP[grp],c=s.country,PT=prefP('truck',c,s);
+  const row=(kind,body,name,sub)=>{const open=body?unlockedP(BODIES,s).some(b=>b.id===body):kindOpen(kind,s),y=body?byId(BODIES,body).y:kindYear(kind),tr=kindSeg(kind)==='truck',pool=tr&&open?kindPool(kind,s,body):0;
+    const price=tr?PT*payK({b:body||(BODIES.find(b=>kindBodyOk(kind,b))||{}).id}):prefP(kind,c,s);
+    const st=open?(tr?`≈ ${fmtD(pool)} в мес.`:'')+` · ${money(price)}`:`в истории — с ${y} года`;
+    return `<button class="krow${open?'':' off'}" data-act="kkind" data-v="${kind}"${body?` data-b="${body}"`:''}${open?'':' data-lock="1"'}><b>${esc(name)}</b><small>${esc(sub)}</small><em>${st}</em></button>`;};
+  let rows;
+  if(grp==='cargo')rows=BODIES.filter(b=>b.truck&&(bodyKind(b)==='van'||bodyKind(b)==='truck')).sort((a,b)=>(a.pay||0)-(b.pay||0)).map(b=>row(bodyKind(b),b.id,b.name,b.id==='b6'?'развозка по району: лавки, булочные':b.pay<=1.5?'по городу: мебель, уголь, стройматериалы':b.pay<=3?'между городами':'тяжёлые грузы: уголь, лес, стройки')).join('');
+  else rows=K.kinds.map(k=>row(k,null,KIND_NAME[k]||SEG[k].name,kindWho(k)||({people:'рабочие, фермеры, служащие — главное цена и расход',middle:'врачи, инженеры, лавочники — комфорт и надёжность',lux:'богачи — лучшее во всём',sport:'спортсмены — скорость и тормоза',moto:'одиночка: дёшево и быстро',moside:'с коляской: семья и ремесло'})[k]||'')).join('');
+  const lock=K.kinds.some(k=>!kindOpen(k,s))||grp==='cargo'&&BODIES.some(b=>b.truck&&bodyKind(b)==='truck'&&b.y>s.y);
+  openSheet(`<div class="row"><h2>${K.ic} ${K.n}</h2>${X2}</div><div class="row"><p class="small muted">Шаг 2 из 3 · назначение</p><button class="btn sm" data-act="kgrp" data-v="">← Вид техники</button></div><div class="krows">${rows}</div>
+    ${lock?`<p class="small muted" style="margin-top:10px">Серым — то, чего в этом году ещё не строят. Построить раньше истории можно: кузов-прототип заказывают в КБ, и каждый год опережения стоит в 1,6 раза дороже. <button class="btn sm" data-act="rdPick">В КБ</button></p>`:''}`);}
 // 0.30: новинки оснащения в конструкторе — стартер, электросвет, ветровое стекло… (свои — из КБ, остальные — у поставщиков)
 function eqDesignHTML(d,s,kind){const g=kindIsTruck(kind)?'truck':kind;if(g==='truck'||isMotoSeg(g))return '';const y=yf(s),L=eqOf(d);
   const items=EQUIP.filter(e=>e.y<=s.y+3&&(eqAvail(s,e.id)||rdActive(s).some(p=>p.kind==='eq'&&p.id===e.id)));if(!items.length)return '';
@@ -68,27 +96,31 @@ function renderDesigner(){
   // себестоимость — при том выпуске, который купят по этой цене: экономия масштаба
   md.vol=Math.max(3,dem);const uc=unitCost(md,s),hrs=hoursPerCar(md,s),ucAt=k=>unitCost({...md,vol:md.vol*k},s);
   const mo=isMoto(md);
-  const chips=(arr,k,sub,f)=>`<div class="chips">${unlockedP(arr,s,mo&&arr!==TRIMS).filter(x=>!f||f(x)).map(x=>`<button class="chip ${d[k]===x.id?'on':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${arr===TRIMS?trimName(x,s):x.name}${upgL(x.id)?' ★'+upgL(x.id):''}${x.y>s.y?' 🔬':''}<small>${sub(x)}</small></button>`).join('')}</div>`;
+  // 0.51: «после выбора вида остаются только допустимые детали»: слабые для этого вида, устаревшие и те, что не выдержит рама, скрыты
+  // (кнопка «показать все» возвращает их с пометкой); избыточные — с пометкой «с запасом»
+  const FITN={low:'слабо для этого вида',old:'устарело',frame:k=>k==='e'?'нет рамы под такой мотор':'не выдержит мотор',sat:'с запасом'};
+  const chips=(arr,k,sub,f)=>{const all=unlockedP(arr,s,mo&&arr!==TRIMS).filter(x=>!f||f(x)),fit=all.map(x=>arr===TRIMS||k==='b'||k==='paint'?'':partFit(md,k,x,s)),hid=all.filter((x,i)=>fit[i]&&fit[i]!=='sat'&&d[k]!==x.id).length;
+    return `<div class="chips">${all.map((x,i)=>{const ft=fit[i],bad=ft&&ft!=='sat';if(bad&&!d.all&&d[k]!==x.id)return '';const tag=ft?(typeof FITN[ft]==='function'?FITN[ft](k):FITN[ft]):'';
+      return `<button class="chip ${d[k]===x.id?'on':''}${bad?' unfit':''}" data-act="pick" data-k="${k}" data-v="${x.id}">${arr===TRIMS?trimName(x,s):x.name}${upgL(x.id)?' ★'+upgL(x.id):''}${x.y>s.y?' 🔬':''}${tag?` <em class="ftag ${ft==='sat'?'sat':'bad'}">${tag}</em>`:''}<small>${sub(x)}</small></button>`;}).join('')}</div>${hid?`<p class="small muted" style="margin:6px 10px 0">${d.all?'Показаны все детали.':`Скрыто ${hid}: не ${plural(hid,'годится','годятся','годятся')} для этого вида техники.`} <button class="btn sm" data-act="dall">${d.all?'Только годные':'Показать все'}</button></p>`:''}`;};
   const ease=x=>x>=0.8?'лёгкая':x>=0.5?'обычная':'тяжёлая',pedal=x=>x>=0.8?'мягкая педаль':'тугая педаль',star=x=>upgL(x.id)?' ★'+upgL(x.id):'';
   const SUB={e:x=>`${Math.round(engineHp(x))} л.с. · ${x.kg} кг · расход ${Math.round(x.fuel*100)} · ${pc(x)}`,g:x=>`КПД ${Math.round(x.eff*100)}% · ${ease(x.ease)} · ${pc(x)}`,
     c:x=>`до ${Math.round(chassisMax(x))} л.с. · ${x.kg} кг · ход ${Math.round(x.ride*100)} · ${pc(x)}`,w:x=>`сцепление ${Math.round(x.grip*100)} · ресурс ${fmtN(x.life)} км · ${pc(x)}`,
-    k:x=>`сила ${Math.round(x.brk*100)} · ${pedal(x.ease)} · ${pc(x)}`,t:x=>`${({t0:'народный',t1:'средний',t2:'люкс',t3:'спортивный'})[x.id]} класс · ${money(x.c*cpi(s))}`,b:x=>x.moto?`${(x.seats||1)>1?'коляска, '+x.seats+' '+plural(x.seats,'место','места','мест'):'одиночка'} · ${x.kg} кг · ${pc(x)}`:`${x.truck?(x.pay+' т груза'):(x.seats+' мест')}${x.closed?' · закрытый':''} · ${x.kg} кг · ${pc(x)}`};
+    k:x=>`сила ${Math.round(x.brk*100)} · ${pedal(x.ease)} · ${pc(x)}`,t:x=>`${({t0:'народный',t1:'средний',t2:'люкс',t3:'спортивный'})[x.id]} класс · ${money(x.c*cpi(s))}`,b:x=>x.moto?`${(x.seats||1)>1?'коляска, '+x.seats+' '+plural(x.seats,'место','места','мест'):'одиночка'} · ${x.kg} кг · ${pc(x)}`:`${x.kind&&x.kind!=='truck'?(['bus','coach','school','taxi','staff'].includes(x.kind)?x.seats+' мест':['mail','tank','dump','refuse'].includes(x.kind)?String(x.pay).replace('.',',')+' т груза':'экипаж '+(x.crew||1)):x.truck?(String(x.pay).replace('.',',')+' т груза'):(x.seats+' мест')}${x.closed&&!x.kind?' · закрытый':''} · ${x.kg} кг · ${pc(x)}`};
   const MSN={e:'Мотор',g:'Передача',c:'Рама и вилка',w:'Шины',k:'Тормоз',b:'Седло или коляска'};
   const sec=(cat)=>{const x=p[cat.k],open=d.open===cat.k;return `<div class="dsec${open?' open':''}"><button class="dsec-h" data-act="dsec" data-k="${cat.k}"><span class="label">${mo&&MSN[cat.k]?MSN[cat.k]:cat.name}</span><b>${esc(cat.k==='t'?trimName(x,s):x.name)}${star(x)}</b><small>${SUB[cat.k](x)}</small><i>${open?'▴':'▾'}</i></button>
-    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>mo?!!y.moto:kindIsTruck(kind)?!!y.truck:kind==='sport'?bodyOpen(y.id):!y.truck):cat.k==='t'?(y=>y.id!=='t3'||bodyOpen(d.b)):null)+(x.note||cat.k==='e'?`<p class="small muted" style="margin-top:6px">${esc(x.note||'')}${cat.k==='e'&&typeof exhNote==='function'?(x.note?' ':'')+esc(exhNote(x)):''}</p>`:'')+(typeof REELS!=='undefined'&&REELS['part:'+x.id]?`<button class="btn sm" style="margin-top:6px" data-act="reel" data-k="part:${x.id}">▶ Кинохроника: как это устроено</button>`:'')+(cat.k!=='t'&&typeof partWiki==='function'&&partWiki(x.id)?` <button class="btn sm" style="margin-top:6px" data-act="partInfo" data-k="${x.id}">📖 Зачем и откуда</button>`:''):''}</div>`;};
-  // 0.33: классы машин и мотоциклов — в одном ряду (что умеет делать завод)
+    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>kindBodyOk(kind,y)):cat.k==='t'?(y=>y.id!=='t3'||bodyOpen(d.b)):null)+(x.note||cat.k==='e'?`<p class="small muted" style="margin-top:6px">${esc(x.note||'')}${cat.k==='e'&&typeof exhNote==='function'?(x.note?' ':'')+esc(exhNote(x)):''}</p>`:'')+(typeof REELS!=='undefined'&&REELS['part:'+x.id]?`<button class="btn sm" style="margin-top:6px" data-act="reel" data-k="part:${x.id}">▶ Кинохроника: как это устроено</button>`:'')+(cat.k!=='t'&&typeof partWiki==='function'&&partWiki(x.id)?` <button class="btn sm" style="margin-top:6px" data-act="partInfo" data-k="${x.id}">📖 Зачем и откуда</button>`:''):''}</div>`;};
   const carOk=canDesign(s,'car'),motoOk=canDesign(s,'moto');
-  const classChips=(carOk?[['people','t0'],['middle','t1'],['lux','t2']].concat(unlockedP(TRIMS,s).some(x=>x.id==='t3')?[['sport','t3']]:[]).map(([g2,t])=>`<button class="chip ${!mo&&!kindIsTruck(kind)&&d.t===t?'on':''}" data-act="dclass" data-v="${g2}">${SEG[g2].name}<small>${money(prefP(g2,s.country,s))}</small></button>`).join('')
-    +(s.y>=1896||unlockedP(BODIES,s).some(b=>b.truck)?`<button class="chip ${kind==='van'?'on':''}" data-act="dclass" data-v="van">Фургон<small>для бизнеса</small></button>`:'')
-    +(unlockedP(BODIES,s).some(b=>b.truck&&b.id!=='b6')?`<button class="chip ${kind==='truck'?'on':''}" data-act="dclass" data-v="truck">Грузовик<small>для бизнеса</small></button>`:''):'')
-    +(motoOk?MOTOSEG.map(g2=>`<button class="chip ${kind===g2?'on':''}" data-act="dclass" data-v="${g2}">🏍 ${g2==='moto'?'Мотоцикл':'С коляской'}<small>${money(prefP(g2,s.country,s))}</small></button>`).join(''):'');
   const classNote=(carOk?'':lineEmptyCard(s,'car'))+(motoOk||!motoVis(s)?'':lineEmptyCard(s,'moto'));
+  // 0.51: шаг 3 воронки — вид уже выбран; рядом только соседи по группе (класс легковой, одиночка или коляска), остальное — «Изменить»
+  const kgrp=kindGroup(kind),sib=kgrp==='car'&&kind!=='taxi'?[['people','t0'],['middle','t1'],['lux','t2']].concat(unlockedP(TRIMS,s).some(x=>x.id==='t3')?[['sport','t3']]:[]).map(([g2,t])=>`<button class="chip ${d.t===t?'on':''}" data-act="dclass" data-v="${g2}">${SEG[g2].name}<small>${money(prefP(g2,s.country,s))}</small></button>`).join('')
+    :kgrp==='moto'?MOTOSEG.map(g2=>`<button class="chip ${kind===g2?'on':''}" data-act="dclass" data-v="${g2}">🏍 ${g2==='moto'?'Мотоцикл':'С коляской'}<small>${money(prefP(g2,s.country,s))}</small></button>`).join(''):'';
   openSheet(`<div class="row"><h2>${mo?'Новый мотоцикл':'Новая модель'}</h2>${X}</div>
     <div class="carbox">${carArt(md,{anim:true})}</div>
     <div class="row" style="margin-top:8px"><span class="pill warn">${esc(KIND_NAME[kind])}</span><div class="btns">${PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="pick" data-k="paint" data-v="${c.id}" aria-label="${c.name}"></button>`).join('')}</div></div>
     <label class="label" for="mname" style="display:block;margin-top:12px">Название</label><input type="text" id="mname" value="${esc(d.name)}" maxlength="24" style="margin-top:6px">
-    <div class="label" style="margin-top:14px">Для кого ${mo?'мотоцикл':'машина'}</div><div class="chips">${classChips}</div>${classNote}
-    ${kindIsTruck(kind)?(()=>{const TH=truckHead({...md,price:Math.round(ref/10)*10},s,Math.round(ref/10)*10);return TH?`<p class="small ${TH.tone}" style="margin-top:12px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)} — фирмы выбирают по тонно-километру; «% соперника» — ниже</span></p>`:'';})():''}
+    <div class="row" style="margin-top:14px"><span class="small"><b>${KIND_GRP[kgrp].ic} ${KIND_GRP[kgrp].n}</b> <span class="muted">› ${esc(KIND_NAME[kind])}${kindIsTruck(kind)&&kindWho(kind)?' · '+esc(kindWho(kind)):''}</span></span><button class="btn sm" data-act="kgrp" data-v="${kgrp}">Изменить</button></div>
+    ${sib?`<div class="chips">${sib}</div>`:''}${classNote}
+    ${kindIsTruck(kind)?(()=>{const TH=truckHead({...md,price:Math.round(ref/10)*10},s,Math.round(ref/10)*10);return TH?`<p class="small ${TH.tone}" style="margin-top:12px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)} — ${TH.un==='т·км'?'фирмы выбирают по тонно-километру':'покупатель выбирает по цене работы'}; «% соперника» — ниже</span></p>`:'';})():''}
     ${compareHTML(md,s,'d')}${hiddenHTML({...md,price:Math.round(ref/10)*10},s,true)}
     <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Подобрать детали повыгоднее</button></div>${dNoteHTML(d)}
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
@@ -106,7 +138,7 @@ function renderDesigner(){
     <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
   document.getElementById('mname').addEventListener('input',e=>{draft.name=e.target.value;});
 }
-function kindIsTruck(k){return k==='van'||k==='truck';}
+function kindIsTruck(k){return k==='van'||k==='truck'||kindIsNew(k);}
 function openRD(){
   // 0.33: проекты машин и мотоциклов — в одном списке (мотоциклетные помечены 🏍); переносы между ними — отдельной группой
   const s=G,mv=motoVis(s),ALL=rdProjects(s),XF=ALL.filter(p=>p.kind==='xfer'),L=ALL.filter(p=>p.kind!=='xfer'),pts=rdTotal(s)/(rdActive(s).length+1),free=rdSlots(s)-rdActive(s).length;

@@ -134,6 +134,12 @@ function adviceList(s){
   const rc=RACES.filter(r=>raceOpen(r,s)&&raceEligible(r,s)&&!raceWarBlocked(r,s)&&!s.cres[r.key]&&s.raceDone[r.key]===undefined).sort((a,b)=>a.m-b.m)[0];if(rc&&act.length&&raceCarsFor(s,rc).length)add(35,'🏁',`Открыта запись на гонку «${rc.name}». Победа — слава марке и покупатели.`,'К гонке',()=>{try{ACT.raceTo({k:rc.key});}catch(e){console.warn('advisor race',e);}},'race');
   // фургоны для бизнеса
   if(s.y>=1896&&act.length&&lineOn(s,'car')&&!s.models.some(m=>isTruck(m)&&m.status!=='off')&&s.cash>devCost({...rivalDesign('van',s.y)},s)*2)add(22,'🚚','Лавки, пивоварни и почта покупают фургоны, а ведомства объявляют заказы. Сделайте фургон.','Фургон',()=>openDesigner('van'),'models');
+  // 0.51: открылся рынок нового вида техники, а у вас в этой группе ничего нет — совет с кнопкой прямо на шаг выбора назначения
+  // (один совет за раз: самая большая из свободных групп; о каждой группе напоминаем три года)
+  if(act.length&&lineOn(s,'car')){let best=null;['bus','spec','farm','mil'].forEach(g=>{const K=KIND_GRP[g],open=K.kinds.filter(k=>kindOpen(k,s));if(!open.length)return;
+      if(s.models.some(m=>m.status!=='off'&&open.includes(bodyKind(byId(BODIES,m.b)))))return;const y0=Math.min(...open.map(kindYear));if(s.y>y0+3&&g!=='farm'||s.y>1920&&g==='farm')return;
+      const pool=open.reduce((a,k)=>a+kindPool(k,s),0);if(pool>=3&&(!best||pool>best.pool))best={g,pool,K};});
+    if(best&&s.cash>devCost({...rivalDesign(KIND_GRP[best.g].kinds[0],s.y)},s)*2)add(20,best.K.ic,`${best.K.n}: в вашей стране берут около ${fmtD(best.pool)} в месяц — ${best.K.who}. У вас в этой группе пока ничего нет.`,best.K.n,()=>openKindStep(best.g),'models');}
   // КБ растёт
   // 0.30: оснащение эпохи для бюро и команды
   {const k=[...KIT.kb,...KIT.team].find(k=>!kitHas(s,k.id)&&k.y<=s.y&&!kitNeed(s,k)&&(k.g==='kb'||(s.rdept||0)>0)&&s.cash>kitCost(s,k)*8);

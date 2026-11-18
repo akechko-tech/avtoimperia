@@ -16,6 +16,10 @@ const PART_WIKI={
   k1:['Ленточный тормоз','Band brake'],k2:['Барабанный тормоз','Drum brake'],k3:['Барабанный тормоз','Drum brake'],k6:['Hispano-Suiza H6','Hispano-Suiza H6'],k4:['Тормозная система','Hydraulic brake'],k5:['Барабанный тормоз','Drum brake'],
   b1:['','Runabout (car)'],b2:['Тонно','Tonneau'],b3:['Фаэтон (кузов)','Phaeton body'],b11:['Лимузин','Limousine'],b10:['Родстер','Roadster (automobile)'],b4:['Седан','Sedan (automobile)'],b9:['','Essex (automobile)'],b5:['','Budd Company'],
   b6:['Фургон','Van'],b7:['Грузовой автомобиль','Truck'],b8:['Грузовой автомобиль','Truck'],
+  // 0.51: новые виды техники
+  b12:['Грузовой автомобиль','Mack AC'],b13:['Полуприцеп','Semi-trailer'],b14:['Автобус','LGOC B-type'],b15:['Автобус','Coach (bus)'],b16:['Школьный автобус','School bus'],b17:['Пожарный автомобиль','Fire engine'],
+  b18:['Автомобиль скорой помощи','Ambulance'],b19:['Фургон','Van'],b20:['Автоцистерна','Tank truck'],b21:['Самосвал','Dump truck'],b22:['Мусоровоз','Garbage truck'],b23:['Такси','Taxi'],
+  b24:['Трактор','Tractor'],b25:['Гусеничный движитель','Continuous track'],b26:['Легковой автомобиль','Staff car'],b27:['Автомобиль скорой помощи','Ambulance'],b28:['Бронеавтомобиль','Armored car (military)'],b29:['Рено FT-17','Renault FT'],
   me1:['De Dion-Bouton','De Dion-Bouton'],me2:['Мотоцикл','Motorcycle engine'],me3:['Магнето','Ignition magneto'],me4:['','FN Four'],me5:['V-образный двигатель','V-twin engine'],me6:['Нижнеклапанный двигатель','Flathead engine'],
   me7:['Двухтактный двигатель','Two-stroke engine'],me8:['BMW R32','BMW R32'],me9:['OHV','Overhead valve engine'],me10:['','J. A. Prestwich Industries'],me11:['DKW','DKW'],
   mt1:['Ремённая передача','Belt (mechanical)'],mt2:['Клиноремённая передача','Belt (mechanical)'],mt3:['Цепная передача','Roller chain'],mt4:['Кикстартер','Kick start'],mt5:['Карданная передача','Drive shaft'],
