@@ -383,7 +383,7 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   {newGame('ford','us','Тест','normal','Первая');G.y=1925;G.m=5;const rc=RACES.find(x=>x.y===1925&&!raceMoto(x));
     const mk2=(k,id)=>({...rivalDesign(k,1925),id,name:k,status:'prod',launched:mi(G)-5,price:500,stock:0,made:10,vol:10,paint:'#333',eq:[]});
     G.models=[mk2('ltank',1),mk2('bus',2),mk2('tractor',3),mk2('fire',4),mk2('people',5),mk2('truck',6)];
-    const L=raceCarsFor(G,rc).map(m=>m.name);CK(L.includes('people')&&L.includes('truck')&&!L.some(n=>/ltank|bus|tractor|fire/.test(n)),'в гонку записывают автомобили и прежние грузовики, но не танк, автобус, трактор и пожарную: '+L.join(', '));
+    const L=raceCarsFor(G,rc).map(m=>m.name);CK(L.includes('people')&&L.includes('truck')&&L.some(n=>/bus/.test(n))&&!L.some(n=>/ltank|tractor/.test(n)),'в гонку записывают автомобили, грузовики и (с отзыва 21 ноября) автобусы — у них свой кузов; танк и трактор — нет: '+L.join(', '));
     CK(plural(21,'автомобильной компании','автомобильных компаний','автомобильных компаний')==='автомобильной компании'&&plural(22,'а','б','в')==='б'&&plural(25,'а','б','в')==='в','«среди 21 автомобильной компании»');G.models=[];}
 }
 // 21. этап 4б: своя линия под модель — ведёт помощник; подбор деталей учитывает мощность завода
@@ -898,6 +898,85 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
       CK(frHuman(f3,1/60,{foes:[f3]},l3(d3v),d3v)===false&&f3.ai.st==='attack'&&f3.ai.ovCk===1,'опытному везёт — удержался сзади; второй раз на этом заходе кость не бросают');
       f.ai.t=0;f.ai.until=0.5;for(let i=0;i<40&&f.ai.st==='over';i++){f.ai.t+=1/60;frHuman(f,1/60,M,100,d);}CK(f.ai.st==='attack'&&f.ai.tail===0,'манёвр кончился — снова атакует, счёт времени на хвосте с нуля');}
     Math.random=R0;FW=sv.FW;fwPart=sv.fwPart;frSnd=sv.frSnd;fwHgt=sv.fwHgt;flToast=sv.flToast;air3dMesh=sv.air3dMesh;Object.assign(FL,sv.FL0);}
+}
+// ---------- 26. отзыв автора 21 ноября (вечер): трассы, кусты, мотоцикл, автобус и закрытый кузов в гонке, пилот, свои узлы ----------
+{const R0=Math.random,rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();};
+  const TD='/home/claude/avtoimperia/docs/terrain/',load=id=>{if(!window.REAL_TRACKS||!window.REAL_TRACKS[id])require(TD+id+'.js');return window.REAL_TRACKS[id];};
+  // маршруты: петли и отростки вырезаны
+  {const cut={roma:87,strasbourg:687,sf1915:107,tarare:62,lasarte:465};
+    for(const id in cut){const D=load(id),F=realFix(D),n=F.pts.length;CK(F!==D&&F._fixed&&F._fixed.gone===cut[id]&&n===D.pts.length-cut[id],id+': из маршрута вырезано '+(F._fixed?F._fixed.gone:'—')+' точек из '+D.pts.length);
+      CK(!rfxPairs(F.pts,false,true).some(Boolean),id+': двух проходов по одной дороге больше нет');
+      const inR=k=>k>=0&&k<n;CK((F.seg||[]).every(q=>inR(q[1])&&inR(q[2])&&q[1]<=q[2])&&(F.bridges||[]).every(b=>inR(b.i))&&(F.notes||[]).every(q=>inR(q.i))&&(F.coast||[]).every(q=>inR(q.i0)&&inR(q.i1)),id+': участки, мосты и подписи — в пределах нового маршрута');
+      CK(realFix(D)===F&&D.pts.length===n+cut[id],id+': починка считается один раз, исходные данные не тронуты');}
+    const M=load('monaco'),FM=realFix(M),tw=rfxTwins(M.pts).tw;let mx=0,mx0=0,c=0;for(let i=0;i<tw.length;i++)if(tw[i]>=0){c++;mx=Math.max(mx,Math.abs(FM.pts[i][2]-FM.pts[tw[i]][2]));mx0=Math.max(mx0,Math.abs(M.pts[i][2]-M.pts[tw[i]][2]));}
+    CK(M.closed&&FM.pts.length===M.pts.length&&c>10&&mx<=1&&mx0>40,'Монако (круг): маршрут не режем; два прохода у набережной — на одной высоте (было до '+(mx0/10).toFixed(1)+' м, стало '+(mx/10).toFixed(2)+' м)');
+    // все 78 файлов: открытые — без совпадающих проходов, вырезано не больше 60 %
+    const ids=require('fs').readdirSync(TD).filter(f=>/\.js$/.test(f)).map(f=>f.replace('.js',''));let badIds=[],fixed=[];
+    ids.forEach(id=>{const D=load(id),F=realFix(D);if(F!==D)fixed.push(id);if(!D.closed&&rfxPairs(F.pts,false,true).some(Boolean))badIds.push(id);if(F.pts.length<D.pts.length*0.4)badIds.push(id+'!');});
+    CK(ids.length>=78&&!badIds.length,'все '+ids.length+' трасс: после починки ни на одной открытой нет двух проходов по одной дороге'+(badIds.length?': '+badIds.join(','):''));
+    CK(fixed.sort().join(',')==='lasarte,monaco,roma,sf1915,strasbourg,tarare','починка тронула ровно шесть трасс: '+fixed.join(', '));}
+  // Гран-при Рима: в собранной трассе ветки больше не сходятся; на серпантине обочина не лежит на соседней ветке
+  {BOTS_OFF=true;newGame('renault','fr','T','normal');const all=[...RACES,...EXTRA_RACES];
+    const build=(id,y,v)=>{const r0=all.find(r=>r.id===id),rc={...r0,y,key:r0.id+'|'+y};load(realIdOf(rc));return buildTrack(rc,v);};
+    const minBranch=T=>{let m=1e9;const P=T.pts,n=T.n,g=Math.ceil(80/T.step);for(let i=0;i<n;i+=2)for(let j=i+g;j<n;j+=2){if(T.closed&&n-(j-i)<g)continue;const d=Math.hypot(P[i][0]-P[j][0],P[i][2]-P[j][2]);if(d<m)m=d;}return m;};
+    const TR=build('x42022',1927,26);CK(TR.real&&minBranch(TR)>TR.W+12,'Гран-при Рима: ветки трассы не подходят друг к другу ближе '+minBranch(TR).toFixed(0)+' м (было 0,9 м на 320 метрах)');
+    const TK=build('klausen',1927,40),L=branchLims(TK),W=TK.W;let cl=0,on=0;for(let i=0;i<TK.n;i++)for(const sd of [1,-1]){const lim=L[i*2+(sd>0?0:1)];if(lim<14)cl++;
+      for(const a of [0,1.5,4,8.5,14].filter(a=>a<=lim).concat(lim<14&&lim>0.3?[lim]:[])){const o=sd*(W/2+a);if(a>0.2&&branchNear(TK,TK.pts[i][0]+TK.N[i][0]*o,TK.pts[i][2]+TK.N[i][1]*o,W/2-0.3,i,Math.ceil((W+16)/TK.step)+2))on++;}}
+    CK(cl>40&&on===0,'Клаузен, серпантин: обочина укорочена у '+cl+' поперечников — ни одна её точка не лежит на полотне соседней ветки');
+    const T0=build('pm1903',1903,26),L0=branchLims(T0);let c0=0;for(let i=0;i<L0.length;i++)if(L0[i]<14)c0++;CK(c0===0,'обычная дорога без петель: обочины прежние');
+    const TM=build('monaco',1929,26);let near=1e9;(TM.tunnels||[]).forEach(q=>{for(let a=q.i0;a<=q.i1;a+=2)for(let k=0;k<TM.n;k+=2){let g=Math.abs(k-a);g=Math.min(g,TM.n-g);if(g<=16)continue;const d=Math.hypot(TM.pts[k][0]-TM.pts[a][0],TM.pts[k][2]-TM.pts[a][2]);if(d<near)near=d;}});
+    CK((TM.tunnels||[]).length===1&&near>TM.W/2+26,'Монако: тоннель есть, и до соседней ветки от него '+near.toFixed(0)+' м — гребень над ним её не накрывает (было 17 м)');
+    CK(!(TM.col||[]).some(o=>o.kind==='rock'&&o.box&&o.box.hu===1.6&&[1,0.5,0,-0.5,-1].some(c=>nearTrack(TM,o.x+o.box.vx*o.box.hv*c,o.z+o.box.vz*o.box.hv*c,TM.W/2-0.2))),'Монако: стены порталов не стоят на полотне');
+    // куст — не стена; дерево — стена
+    const car=()=>({x:0,z:0,yaw:0,vx:20,vy:0,r:0,dmg:0,hit:0,crash:null,len:4,L:2.6,you:1,player:1});
+    const cb=car(),cc=carCapsule(cb),nose=[cc[0],cc[1]];const far=(Math.hypot(cc[0],cc[1])>Math.hypot(cc[2],cc[3])?[cc[0],cc[1]]:[cc[2],cc[3]]);
+    const ob=k=>({x:far[0]+(far[0]>0?0.3:far[0]<0?-0.3:0),z:far[1]+(far[1]>0?0.3:-0.3),r:1,kind:k});
+    {const c=car(),o=ob('bush'),x0=c.x,z0=c.z;for(let i=0;i<30;i++)obstacleHit(c,o,1/60);CK(c.x===x0&&c.z===z0&&c.vx<20&&c.vx>14&&c.dmg===0&&!c.crash,'куст: машину не отбрасывает и не бьёт — за полсекунды в кустах скорость 72 → '+Math.round(c.vx*3.6)+' км/ч');
+      const c2=car(),o2=ob('oak');obstacleHit(c2,o2,1/60);CK((c2.x!==x0||c2.z!==z0)&&(c2.vx<19||c2.crash||c2.dmg>0),'дерево по-прежнему твёрдое');
+      const c3=car(),h={x:o.x,z:o.z,r:3,kind:'hedge',box:{ux:1,uz:0,vx:0,vz:1,hu:2.5,hv:0.8}};for(let i=0;i<30;i++)obstacleHit(c3,h,1/60);CK(c3.x===x0&&c3.vx<20&&c3.vx<c.vx+0.01,'живая изгородь тормозит сильнее куста, но не останавливает: '+Math.round(c3.vx*3.6)+' км/ч');
+      const c4=car();obstacleHit(c4,o,0);CK(c4.vx===20,'второй проход проверки столкновений скорость не снимает');}}
+  // мотоцикл: в торможении руль остаётся у гонщика
+  {const mk=moto=>({cls:moto?'moto':'car',vx:40,vy:-4,r:0,steer:0,delta:0,hold:0,L:1.4,b:0.7,grip:1,muNow:1,slipR:0.16});
+    const run=(moto,A)=>{const c=mk(moto),sR=R,sK={...rKeys},sP=PHY.motoA,sH=PHY.hold;R={tilt:0};PHY.hold=0;if(A)PHY.motoA=A;else delete PHY.motoA;rKeys.left=false;rKeys.right=true;try{for(let i=0;i<45;i++){c.slipR=0.16;c.vy=-4;try{playerControl(c,1/60);}catch(_){/* дальше руля — газ и тормоз, им нужна настоящая машина */}}}finally{R=sR;Object.assign(rKeys,sK);if(sP)PHY.motoA=sP;else delete PHY.motoA;PHY.hold=sH;}return c.delta;};
+    const dNew=run(true),dOld=run(true,[1,0.2]),dCar=run(false);
+    CK(dNew>0.03&&dOld<0.012&&dNew>dOld*3,'мотоцикл, 144 км/ч, зад в заносе, руль вправо: колесо повёрнуто на '+(dNew*57.3).toFixed(1)+'° (со старым помощником — '+(dOld*57.3).toFixed(1)+'°)');
+    CK(dCar>0.02,'у автомобиля в тех же условиях — '+(dCar*57.3).toFixed(1)+'° (не менялось)');}
+  // вид в гонке: автобус — автобус, закрытая модель — закрытая
+  {BOTS_OFF=true;newGame('ford','us','T','normal','M');const md={...G.models[0]},st=(b,p,o)=>carStyle({...md,b,t:o&&o.t||md.t},p,1927,true);
+    CK(st('b15',0)==='bus'&&st('b14',1)==='bus'&&st('b16',0)==='bus','междугородний, городской и школьный автобус в гонке — автобус (был грузовик)');
+    CK(st('b18',0)==='van'&&st('b19',0)==='van'&&st('b23',0)==='sedan'&&st('b26',0)==='tourer'&&st('b8',0)==='truck'&&st('b6',0)==='van','санитарная и почтовая — фургон, такси — закрытый автомобиль, штабная — фаэтон, грузовик — грузовик');
+    CK(st('b5',2)==='sedan'&&st('b4',2)==='sedan'&&st('b9',2)==='sedan'&&st('b5',0)==='sedan','закрытая модель и с заводской гоночной подготовкой остаётся закрытой (была открытая гоночная)');
+    CK(st('b3',2)==='gp1925'&&st('b1',2)==='gp1925'&&st('b10',2)==='sport','открытые — как раньше: гоночный кузов, родстер — спортивный');
+    CK(modelSpec({...md,b:'b5'},2,1927,{}).strip===1&&modelSpec({...md,b:'b15'},0,1927,{}).style==='bus','у закрытой гоночной — полоса и номер; у автобуса свой ключ облика');
+    const kd=b=>raceKindOk({...md,b});CK(kd('b15')&&kd('b14')&&kd('b18')&&kd('b23')&&kd('b17')&&!kd('b24')&&!kd('b25')&&!kd('b28')&&!kd('b29'),'в гонки можно автобус, санитарную, такси, пожарную; нельзя трактор, бронеавтомобиль, танк');
+    // модель автобуса строится без ошибок (подробная и простая)
+    let okM=true,why='';try{const sp=modelSpec({...md,b:'b15'},0,1927,{});[typeof carModel==='function'?carModel:null,typeof carModelLo==='function'?carModelLo:null].filter(Boolean).forEach(f=>{const M=f(sp);if(!M)okM=false;});}catch(e){okM=false;why=e.message;}CK(okM,'трёхмерная модель автобуса строится'+(why?': '+why:''));}
+  // заявка: травмированного пилота заменяет лучший свободный
+  {BOTS_OFF=true;rnd(3);newGame('ford','us','Форд','normal','T');const s=G;s.y=1928;s.m=5;s.cash=45e6;s.rdept=3;s.pending=[];s.drivers=['nuvolari'];s.inj={};
+    const rc=RACES.find(r=>r.y===1928&&r.t==='circuit'&&raceCarsFor(s,r).length);const sO=openSheet,sT=toast;let said=[];openSheet=()=>{};toast=x=>{said.push(x);};
+    try{RS={key:rc.key,entries:[defaultEntry(s,rc,[])],open:0,mode:'manage',more:false};CK(RS.entries[0].drv==='nuvolari','здоровый пилот команды — в заявке');
+      s.inj.nuvolari={until:mi(s)+3,txt:'сломаны рёбра'};let thrown='';try{renderRaceSetup();}catch(e){thrown=e.message;}
+      CK(RS.entries[0].drv&&RS.entries[0].drv!=='nuvolari'&&!drvOut(s,RS.entries[0].drv),'пилот травмирован — в его машине сразу другой: '+RS.entries[0].drv+(thrown?' ['+thrown+']':''));
+      CK(said.some(x=>/сломаны рёбра/.test(x)&&/сел|садитесь/.test(x)),'и об этом сказано: '+said.join(' | '));
+      const e2=defaultEntry(s,rc,RS.entries.map(x=>x.drv),'car');CK(e2.drv&&e2.drv!==RS.entries[0].drv&&e2.drv!=='nuvolari','«Ещё машина» — со своим пилотом: '+e2.drv);}
+    finally{openSheet=sO;toast=sT;RS=null;}}
+  // свои узлы: видны в «Улучшениях», доводятся на месте
+  {BOTS_OFF=true;rnd(5);newGame('ford','us','Форд','normal','T');const s=G;s.y=1912;s.m=3;s.cash=5e6;s.pending=[];s.rd.lvl=Math.max(2,s.rd.lvl||0);const e0=G.models[0].e;
+    const fin=()=>{const pj=rdActive(s).find(p=>p.kind==='own');CK(!!pj,'проект своей разработки в КБ');s.rd.projs=s.rd.projs.filter(p=>p!==pj);ownDone(s,pj);s.pending=[];return pj;};
+    CK(ownStart(s,{k:'e',base:e0,tech:[],goal:'power',gl:1,name:'Мотор Форда'}),'своя разработка начата');fin();const x=ownParts(s,'e')[0];
+    CK(x&&x.own&&x.name==='Мотор Форда'&&s.custom.length===1,'свой мотор готов: '+(x&&x.name));
+    const U=rdProjects(s).filter(p=>p.kind==='upg'&&p.id===x.id);CK(U.length===1&&U[0].own===1&&U[0].name==='Мотор Форда'&&U[0].lvl===upgL(x.id)+1,'свой мотор есть в списке «Улучшения» (раньше его там не было)');
+    CK(rdProjects(s).filter(p=>p.kind==='upg'&&!p.own).length>3,'исторические детали в списке остались');
+    const hp0=x.hp,id0=x.id,P=ownPreview(s,{k:'e',base:x.id,tech:[],goal:'power',gl:1,into:1});CK(P&&!P.why&&P.pj.sp.into===1&&P.pj.name==='Мотор Форда','доводка: проект на том же узле, под тем же именем');
+    CK(ownStart(s,{k:'e',base:x.id,tech:[],goal:'power',gl:1,into:1,name:'другое имя'}),'доводка начата');CK(ownIntoBusy(s,x.id)&&!ownStart(s,{k:'e',base:x.id,tech:[],goal:'light',gl:1,into:1}),'пока узел дорабатывают, вторую доводку не начать');
+    fin();CK(s.custom.length===1&&x.id===id0&&x.name==='Мотор Форда'&&x.hp>hp0&&x.rev===2&&x.revY===1912&&/Доводка 1912 года/.test(x.art),'доводка закончена: узел тот же (не новая версия), мощность '+hp0+' → '+x.hp+' л.с., доводка №1');
+    CK(byId(ENGINES,id0)===x&&rdProjects(s).some(p=>p.kind==='upg'&&p.id===id0),'узел на месте в каталоге партии и в «Улучшениях»');
+    CK(ownStart(s,{k:'e',base:x.id,tech:[],goal:'light',gl:1,into:0,name:'Второй мотор'}),'«Новый узел на его основе» — по-прежнему можно');fin();CK(s.custom.length===2&&s.custom[1].name==='Второй мотор'&&s.custom[1].id!==id0&&x.rev===2,'и это отдельный узел; первый не тронут');
+    {const t0=OWN_TECH.find(t=>t.cat.includes('e'));s.xp[t0.a]=99;x.tech=[t0.id];const P2=ownPreview(s,{k:'e',base:x.id,tech:[t0.id],goal:'power',gl:1,into:1});CK(P2&&/уже применён/.test(P2.why||''),'приём, уже применённый к узлу, второй раз не берётся: '+(P2&&P2.why));x.tech=[];}
+    const sO=openSheet;let H='';openSheet=h=>{H=h;};try{openOwn(null);CK(/data-act="ownRefine" data-id="xe1"/.test(H)&&/Доработать/.test(H)&&/доводка №1 [(]1912[)]/.test(H),'в списке своих узлов — кнопка «Доработать» и номер доводки');
+      ownDraftInit(s,'e',false,x.id);openOwn('e',false);CK(/id="owninto"/.test(H)&&/Доработать этот узел/.test(H)&&/Новый узел на его основе/.test(H)&&!/id="ownname"/.test(H)&&/Доработать · /.test(H),'лист доводки: выбор «доработать / новый узел», имя не спрашивают, кнопка «Доработать»');
+      ownDraft.into=0;openOwn('e',false);CK(/id="ownname"/.test(H)&&/Начать · /.test(H),'«Новый узел» — с названием и кнопкой «Начать»');}finally{openSheet=sO;ownDraft=null;}}
+  Math.random=R0;
 }
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

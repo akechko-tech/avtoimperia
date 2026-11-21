@@ -328,7 +328,8 @@ function r3dVeg(i0,i1){const T=R3.T,cfg=T.cfg,A=R3.veg,n=T.n,W=T.W;if(!A||cfg.te
   const sandy=cfg.terr==='sand'||cfg.terr==='beach',mnt=cfg.terr==='mount'||cfg.uphill,dryland=sandy||['it','es','ly','mc'].includes(cfg.host),per=Math.round((sandy?2:mnt?4:7)*gq().veg),out=[];
   for(let ii=i0;ii<i1;ii++){const i=ii%n;if(R3.town[i]||tunNear(T,i,3))continue;const r=mulberry32(i*7919+13),p=T.pts[i],nn=T.N[i],t=T.T[i];
     for(const sd of [1,-1]){if(cfg.terr==='beach'&&sd>0)continue;
-      for(let k=0;k<per;k++){const a=0.9+Math.pow(r(),1.8)*13,off=sd*(W/2+a),al=r()*T.step,x=p[0]+nn[0]*off+t[0]*al,z=p[2]+nn[1]*off+t[1]*al,y=groundAt(i,off)-0.04;
+      const lim=typeof branchLims==='function'?branchLims(T)[i*2+(sd>0?0:1)]:14;/* 0.51: трава не растёт на соседней ветке дороги */
+      for(let k=0;k<per;k++){const a=0.9+Math.pow(r(),1.8)*13,off=sd*(W/2+a),al=r()*T.step,x=p[0]+nn[0]*off+t[0]*al,z=p[2]+nn[1]*off+t[1]*al;if(a>lim){r();r();r();r();continue;}const y=groundAt(i,off)-0.04;
         const q=r(),L2=dryland?(q<0.6?dry:q<0.9?gr:fl):mnt?(q<0.35?dry:q<0.85?gr:fe):(q<0.1?fl:q<0.2?dry:q<0.27&&a>4?fe:gr),sp=L2[Math.floor(r()*L2.length)],k2=(0.75+r()*0.6)*(a<3?0.9:1.1);
         out.push(x,y,z,sp.w*k2,sp.h*k2,sp.u,sp.v,sp.du,sp.dv,0,0.78+r()*0.3,sp.sway);}}}
   return out.length?new Float32Array(out):null;}
@@ -350,9 +351,15 @@ function r3dSection(i,iu){
   let kmax=0;for(let d=-3;d<=3;d++){const j=T.closed?((i+d)%n+n)%n:clamp(i+d,0,n-1);if(Math.abs(T.K[j])>Math.abs(kmax))kmax=T.K[j];}
   const town=R3.town[i];
   if(T.bridge&&T.bridge[i])return {road,uv,rw,iu,sh:[null,null],tex:r3dTexKey(i),tint:0.92+0.16*vnz(iu/9,0.5,5),town,i,bridge:1};
-  const sh=[1,-1].map(sd=>{const inner=kmax*sd>0,aMax=inner?Math.min(14,0.85/Math.abs(kmax)-W/2):14;
-    const A=(town?[0,0.12,3,6,14]:[0,1.5,4,8.5,14]).filter(a=>a<=aMax);if(A.length<2)return null;
-    const pts=A.map((a,k)=>{const off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;let y=a===14?fH(x,z)-0.6:shoulderY(i,sd,a,x,z);if(a===0)y-=0.02;return [x,y,z];});pts.A=A;return pts;});
+  const SL=typeof branchLims==='function'?branchLims(T):null;
+  const sh=[1,-1].map(sd=>{const inner=kmax*sd>0,aMax=inner?Math.min(14,0.85/Math.abs(kmax)-W/2):14,lim=SL?SL[i*2+(sd>0?0:1)]:14;
+    let A=(town?[0,0.12,3,6,14]:[0,1.5,4,8.5,14]).filter(a=>a<=aMax),foot=0;
+    // 0.51: рядом другая ветка трассы — обочина кончается на полпути к ней, обрыв закрывает откос до земли
+    if(lim<14&&lim<aMax){A=A.filter(a=>a<lim-0.2);if(lim>0.3){A.push(lim);foot=1;}}
+    if(A.length<2)return null;
+    const pts=A.map((a,k)=>{const off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;let y=a===14?fH(x,z)-0.6:shoulderY(i,sd,a,x,z);if(a===0)y-=0.02;return [x,y,z];});
+    if(foot){const a=lim+0.3,off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;pts.push([x,Math.min(pts[pts.length-1][1]-0.05,fH(x,z)-0.6),z]);A.push(a);}
+    pts.A=A;return pts;});
   return {road,uv,rw,iu,sh,tex:r3dTexKey(i),tint:0.92+0.16*vnz(iu/9,0.5,5),town,i};
 }
 // Смещение от колеи — в четвёртый байт нормали (шейдер дороги читает его как v_rl, метры/4)
@@ -622,7 +629,8 @@ function r3dCamera(dt,W,H){
     const a=F.yaw+(R3.orbA||0),Dd=R3.orbD||4.6;eye=[F.x-Math.sin(a)*Dd,cm.y+(R3.orbH||1.5),F.z-Math.cos(a)*Dd];look=[F.x,cm.y+0.7,F.z];near=0.1;}
   else{// чувство скорости: на разгоне камера чуть отстаёт и опускается, на торможении — подъезжает к машине
     const ac=cm.v0===undefined?0:(F.vx-cm.v0)/Math.max(0.005,dt);cm.v0=F.vx;cm.lag=(cm.lag||0)+(clamp(ac*0.07,-0.55,0.75)-(cm.lag||0))*Math.min(1,dt*2.5);
-    const D=(v===1?8.8:5.4)*(1+0.07*sp)+cm.lag,Hc=(v===1?3.5:2.25)*(1-0.1*sp),A=v===1?12:8,LH=v===1?0.2:0.55;
+    // 0.51: автобус и фургон выше и длиннее машины — камера дальше и выше, иначе кузов закрывает дорогу
+    const big=F.style==='bus'?1:F.style==='van'?0.35:0,D=(v===1?8.8:5.4)*(1+0.07*sp)+cm.lag+big*2.8,Hc=(v===1?3.5:2.25)*(1-0.1*sp)+big*1.5,A=v===1?12:8,LH=(v===1?0.2:0.55)+big*0.5;
     let back=cm.y;const bi=R3.T.closed?((F.idx-Math.round(D/R3.T.step))%R3.T.n+R3.T.n)%R3.T.n:Math.max(0,F.idx-Math.round(D/R3.T.step));back=Math.max(back,R3.T.pts[bi][1]);
     // камера не уходит в склон: над землёй по пути от машины к камере; круча между ними — подъезжаем ближе и выше
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}

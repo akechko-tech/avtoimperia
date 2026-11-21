@@ -33,7 +33,10 @@ function teamCount(s,entries){let c=0,m=0;(entries||[]).forEach(e=>{if(entryIsMo
 // 0.33: мотоциклы — в гонках, где по истории у них был свой зачёт (02-races.js, MOTO_RACE); в остальных — только машины
 // 0.51, этап 5 (отзыв на пробную сборку: «танк и автобус в гонке — обычный грузовик»): рабочая техника этапа 4 — автобусы, спецмашины,
 // тракторы, военные — в гонки не записывается. Её место — испытания ведомств (этап госзаказов); там у неё будет и свой вид в 3D.
-function raceKindOk(m){return isMoto(m)||!kindIsNew(bodyKind(byId(BODIES,m.b)));}
+// 0.51 (повторный отзыв автора): у автобусов теперь свой кузов в 3D, у санитарной, почтовой, такси и штабной — фургон и автомобиль:
+// их в гонки записывать можно. Без своего вида остались тракторы, бронеавтомобиль и танк — они по-прежнему не записываются.
+const RACE_NO={tractor:1,crawler:1,armored:1,ltank:1};
+function raceKindOk(m){return isMoto(m)||!RACE_NO[bodyKind(byId(BODIES,m.b))];}
 function raceCarsFor(s,rc){const mo=raceMoto(rc);return s.models.filter(m=>m.status==='prod'&&(!isMoto(m)||mo)&&raceKindOk(m));}
 // 0.33: менеджер команды выставляет машины; мотоциклы — когда машин нет (у мотомастерской), и тогда шансы и призы — по классу мотоциклов
 function mgrCarsFor(s,rc){const L=raceCarsFor(s,rc),c=L.filter(m=>!isMoto(m));return c.length?c:L;}
@@ -57,7 +60,7 @@ function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]|
 function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'барабаны на задних колёсах':b<0.8?'на все четыре колеса':'гидравлика или сервоусилитель';}
 function openRaceSetup(key){
   const s=G,rc=raceByKey(key);if(!rc||R)return;
-  if(!raceCarsFor(s,rc).length){toast(s.models.some(m=>m.status==='prod'&&!raceKindOk(m))&&!s.models.some(m=>m.status==='prod'&&raceKindOk(m)&&!isMoto(m))?'В гонки записывают автомобили и мотоциклы: автобусы, спецмашины, тракторы и военная техника не участвуют':s.models.some(m=>m.status==='prod')?'В этой гонке едут только автомобили':'Нет машин в производстве');return;}
+  if(!raceCarsFor(s,rc).length){toast(s.models.some(m=>m.status==='prod'&&!raceKindOk(m))&&!s.models.some(m=>m.status==='prod'&&raceKindOk(m)&&!isMoto(m))?'Тракторы, бронеавтомобиль и танк в гонки не записывают':s.models.some(m=>m.status==='prod')?'В этой гонке едут только автомобили':'Нет машин в производстве');return;}
   // пока игрок выбирает машины и пилотов — фото-материалы гонки уже грузятся
   try{texPrefetch();}catch(_){}
   if(!RS||RS.key!==key)RS={key,entries:[defaultEntry(s,rc,[])],open:0,mode:'drive',more:false};
@@ -69,7 +72,11 @@ function renderRaceSetup(keepScroll){
   // 0.34: регламент — лишние машины или мотоциклы сверх предела гонки снимаются с заявки
   {const R0=raceRule(rc);let c=0,m=0;RS.entries=RS.entries.filter(e=>entryIsMoto(s,e)?++m<=R0.motos:++c<=R0.cars);if(!RS.entries.length)RS.entries=[defaultEntry(s,rc,[])];RS.open=Math.min(RS.open,RS.entries.length-1);}
   // хозяин в больнице: пилотов команды не трогаем, а «Еду сам» — ведёте машину №1 вместо её пилота
-  RS.entries.forEach(e=>{if(e.drv&&drvOut(s,e.drv))e.drv=null;});
+  // 0.51 (отзыв автора: «пилот травмирован — другого надо ставить вручную»): выбыл пилот из заявки — в его машину сразу садится
+  // лучший свободный (свой, а нет своих — приглашённый на гонку), с сообщением; пусто остаётся, только если сажать некого
+  RS.entries.forEach(e=>{if(!(e.drv&&drvOut(s,e.drv)))return;const was=e.drv,nm=id=>id==='me'?'вы':((drvObj(id)||{}).n||id);
+    const nd=defaultEntry(s,rc,RS.entries.map(x=>x.drv).filter(x=>x&&x!==was),entryIsMoto(s,e)?'moto':'car').drv;e.drv=nd&&!drvOut(s,nd)?nd:null;
+    if(typeof toast==='function')toast(e.drv?`${nm(was)}: ${injNote(s,was)||'не может ехать'} — в машину ${e.drv==='me'?'садитесь вы':'сел '+nm(e.drv)}`:`${nm(was)} не может ехать — выберите пилота`);});
   const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||((meSick||!pioRacer(s))&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
   const tot=setupTotal(rc,s),missing=RS.entries.findIndex(e=>!e.drv),champs=raceChamps(rc).map(id=>CHAMPS[id].name(rc.y));
   const n=RS.entries.length,gb=GBC_IDS.includes(rc.id),RR=raceRule(rc),TC=teamCount(s,RS.entries),canMoto=RR.motos>0&&cars.some(m=>isMoto(m)),canCar=cars.some(m=>!isMoto(m));

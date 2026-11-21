@@ -30,7 +30,7 @@ for(const id of ids){const D=window.REAL_TRACKS[id];if(!D)continue;
   const rv=(D.bridges||[]).map(b=>b.name).filter(n=>n&&n!=='—');ok(rv.every(n=>!lat.test(n)),'реки под мостами: '+(rv.join(', ')||'—'));
   // трасса игры строится по данным
   const vref=rc.y<1910?28:rc.y<1920?36:44;let T;try{T=buildTrack(rc,vref);}catch(e){console.log(e.stack);}
-  ok(T&&T.real&&T.real.d===D,'трасса строится по настоящей карте ('+(T?T.n+' точек, '+Math.round(T.n*T.step/100)/10+' км':'—')+')');if(!T)continue;
+  ok(T&&T.real&&(T.real.d===D||T.real.d===realFix(D)),'трасса строится по настоящей карте ('+(T?T.n+' точек, '+Math.round(T.n*T.step/100)/10+' км':'—')+')');if(!T)continue;
   ok(D.closed?T.closed:!T.closed,D.closed?'настоящий овал: круг '+Math.round(T.len)+' м':'кусок настоящей дороги (не выдуманное кольцо)');
   const tw=(T.seg||[]).filter(s=>s.type===RSEG.town&&s.cap).map(s=>s.cap.split(':')[0]);const br=(T.seg||[]).filter(s=>s.type===RSEG.bridge).map(s=>s.cap);
   if(!D.closed&&!(T.cfg.oval||T.cfg.sprint||['board','brooklands','indy','monaco'].includes(rc.track)))ok((T.seg||[]).length>0,'сценарий по карте: '+T.seg.length+' участков'+(tw.length?', города: '+tw.join(', '):'')+(br.length?', '+br.join(', '):''));

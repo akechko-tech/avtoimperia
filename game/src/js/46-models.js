@@ -150,15 +150,16 @@ function carModelV1(S){
     // номер на хвосте
     tailLamp(-1.3,0.18,yb+0.3);G.len=[-1.6,zf+0.1];G.t=t;
     if(S.acc)mBox(M,-0.065,top-0.004,0.05,0.065,top+0.016,zf,S.acc,'paint');}
-  else if(st==='van'||st==='truck'){
-    const truck=st==='truck',big=S.b==='b8',wb=truck?(big?3.6:3.2):2.5,t=1.45,rF=truck?0.46:0.44,rR=truck?0.5:0.44;wt='wood';wheels(wb,t,rF,rR,truck?0.12:0.08,big,truck);
+  else if(st==='van'||st==='truck'||st==='bus'){
+    const bus=st==='bus',truck=st==='truck',big=S.b==='b8'||bus,wb=bus?(S.b==='b15'?3.9:3.4):truck?(big?3.6:3.2):2.5,t=1.45,rF=truck||bus?0.46:0.44,rR=truck||bus?0.5:0.44;wt='wood';wheels(wb,t,rF,rR,truck||bus?0.12:0.08,big,truck);
     const zf=wb/2+0.3;radiator(zf,0.34,0.62,1.2,y<1906?'coil':'vert');hood(zf,wb/2-0.45,0.36,0.62,1.2,true);
     mBox(M,-0.55,0.7,wb/2-0.95,0.55,1.3,wb/2-0.45,col,'paint',['t']);
     mBox(M,-0.62,1.95,wb/2-1.25,0.62,2.02,wb/2-0.4,shade(col,-0.3),'paint');[-1,1].forEach(sd=>mBox(M,sd*0.58-0.03,1.2,wb/2-0.45,sd*0.58+0.03,1.95,wb/2-0.4,dark,'matte'));
     seats(wb/2-0.95,[-0.25,0.25],0.95,0.45,0.2);mSteer(M,0.25,1.45,wb/2-0.6,0.19,S);drv(0.25,1.0,wb/2-0.95,wb/2-0.62);if(S.mech)mechc(-0.25,1.0,wb/2-0.95);
-    const z1=wb/2-1.3,z0=truck?-wb/2-0.9:-wb/2-0.5;
+    const z1=wb/2-1.3,z0=truck?-wb/2-0.9:bus?-wb/2-1.4:-wb/2-0.5;
     if(truck){mBox(M,-0.95,0.95,z0,0.95,1.05,z1,'#6a4a2c','wood');[-1,1].forEach(sd=>mBox(M,sd*0.95-0.05,1.05,z0,sd*0.95+0.05,1.5,z1,'#8a6a44','wood'));const tb=mBox(M,-0.95,1.05,z0,0.95,1.5,z0+0.08,'#8a6a44','wood');
       const deco=[];for(let k=1;k<4;k++)deco.push({a:[-0.95,1.05+k*0.11,z0-0.01],b:[0.95,1.05+k*0.11,z0-0.01],w:0.012,c:'#4a3420'});tb.b.deco=deco;}
+    else if(bus){mBox(M,-0.92,0.78,z0,0.92,2.42,z1,col,'paint');mBox(M,-0.93,2.4,z0-0.02,0.93,2.47,z1+0.02,shade(col,0.5),'paint');[-1,1].forEach(sd=>mBox(M,sd*0.925-0.01,1.6,z0+0.3,sd*0.925+0.01,2.12,z1-0.28,'#1e2a33','glass'));}
     else{const f=mBox(M,-0.72,0.78,z0,0.72,2.0,z1,col,'paint');f.b.deco=[{a:[0,0.82,z0-0.01],b:[0,1.95,z0-0.01],w:0.015,c:shade(col,-0.45)},{a:[-0.72,1.9,z0-0.01],b:[0.72,1.9,z0-0.01],w:0.012,c:shade(col,-0.45)}];}
     tailLamp(z0-0.02,0.6,0.95);G.len=[z0,zf+0.1];G.t=t+(big?0.3:0);}
   else{ // серийные: runabout, sport, tonneau, tourer, sedan

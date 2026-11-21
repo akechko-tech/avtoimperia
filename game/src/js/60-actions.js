@@ -107,7 +107,8 @@ const ACT={
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
   /* 0.51, этап 4в: своя разработка и авиамотор (16c-own.js) */
   ownOpen:()=>openOwn(null),ownCat:d=>openOwn(d.k,d.mo==='1'),
-  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},
+  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
+  ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
   ownTech:d=>{if(!ownDraft)return;const T=ownDraft.tech,i=T.indexOf(d.id);if(i>=0)T.splice(i,1);else{if(T.length>=2)T.shift();T.push(d.id);}ownRe();},
   ownGoal:d=>{if(!ownDraft)return;ownDraft.goal=d.g;ownRe();},ownGl:d=>{if(!ownDraft)return;ownDraft.gl=+d.n;ownRe();},
   ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},

@@ -3091,7 +3091,9 @@ function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
   const busy=new Set(rdActive(s).map(p=>p.kind+':'+p.id)),mx=rdMaxUpg(s),hz=rdHorizon(s),MU=massParts(s.y);
   rdLines(s).forEach(mo=>PART_CATS.forEach(cat=>{const arr=cat.arr().filter(x=>!!x.moto===!!mo),cn=mo?MOTO_CAT[cat.k]:cat.rd,rk=mo?motoRdK(s,cat.k):1;
-    unlockedP(arr,s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.y||1895,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round(((6+x.q/8)*Math.pow(1.6,l)+(l>=3?6*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
+    // 0.51 (отзыв автора: «не могу найти свой новый мотор при попытке его улучшить»): свои узлы лежат вне каталогов, и сюда их добавляет
+    // unlockedP — но только если получает сам каталог, а не его отфильтрованную копию. Раньше приходила копия: своих узлов в «Улучшениях» не было
+    unlockedP(cat.arr(),s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.own?9999:x.y||1895,own:x.own?1:0,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round(((6+x.q/8)*Math.pow(1.6,l)+(l>=3?6*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
     if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round(10*aheadTimeK(nx.y-s.y)*rk)),yrs:nx.y-s.y});
   }));
@@ -8631,6 +8633,14 @@ function ownBuild(s,sp){const cat=OWN_CAT[sp.k],x0=cat&&byId(cat.arr(),sp.base);
   ['hp','kg','life'].forEach(f=>{if(x[f]!=null)x[f]=Math.round(x[f]*(f==='hp'&&x[f]<20?10:1))/(f==='hp'&&x[f]<20?10:1);});x.c=Math.round(x.c);
   ['rel','eff','ease','ride','grip','brk','relK','punct','wear','cd','comf','fuel','cx','max'].forEach(f=>{if(x[f]!=null)x[f]=+x[f].toFixed(3);});
   const hist=ownHistYear(sp.k,x);x.own=1;x.k=sp.k;x.yh=hist;x.y=Math.max(s.y,hist);x.base=x0.id;x.tech=(sp.tech||[]).slice();x.goal=sp.goal;x.gl=sp.gl||1;return x;}
+/* 0.51 (отзыв автора: «хотелось бы дорабатывать свой мотор до выпуска и дальше улучшать его характеристики, не плодя бесконечные
+   недоверсии»): доводка — тот же узел. Проект меняет черты уже существующего узла: имя, патент, машины, лицензии остаются;
+   у узла растёт номер доводки. Приём, уже применённый к узлу, второй раз не берётся. */
+function ownIntoOf(s,sp){const x=sp&&sp.into?ownGet(s,sp.base):null;return x&&x.k===sp.k?x:null;}
+function ownIntoBusy(s,id){return rdActive(s).some(p=>p.kind==='own'&&p.sp&&p.sp.into&&p.sp.base===id);}
+function ownRefine(s,o,x,pj){const keep={id:1,name:1,base:1,made:1,pat:1,ser:1,cp:1,note:1,art:1,own:1,k:1,rev:1,tech:1};for(const f in x)if(!keep[f])o[f]=x[f];
+  o.tech=[...new Set([...(o.tech||[]),...(x.tech||[])])];o.rev=(o.rev||1)+1;o.revY=s.y;const T2=(pj.sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);
+  o.art=(o.art||'')+` Доводка ${s.y} года${T2.length?' ('+T2.map(t=>t.n.toLowerCase()).join(' и ')+')':''}: цель — ${ownGoalName(x.goal,x.k).toLowerCase()}.`;return o;}
 function ownNeed(sp,x0,yrs){return Math.max(4,Math.round((8+(x0.q||10)/8)*(1+0.45*(sp.tech||[]).length+0.2*OWN_GS[clamp(sp.gl||1,1,3)])*aheadTimeK(yrs)));}
 // цена проекта — как у прототипа КБ: опыты и образцы, цена самого узла ×3, каждый год опережения ×1,6; планка от оборота
 function ownRdCost(pj,s){s=s||G;const yrs=pj.yrs||0,era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));
@@ -8638,20 +8648,23 @@ function ownRdCost(pj,s){s=s||G;const yrs=pj.yrs||0,era=Math.min(1,0.25+0.05*Mat
   return Math.max(base,Math.round(bizRev(s)*AHEAD_REV*aheadCostK(yrs)/50)*50);}   // планка — тысячная годового оборота: своя разработка большой фирмы не бывает «за копейки»
 // что получится: узел, год по истории, цена, срок, риск, сравнение с лучшим историческим узлом года и почему нельзя (если нельзя)
 function ownPreview(s,sp){const x=ownBuild(s,sp);if(!x)return null;const x0=byId(OWN_CAT[sp.k].arr(),sp.base),yrs=Math.max(0,x.yh-s.y),need=ownNeed(sp,x0,yrs),best=ownBest(s,sp.k,x)||x0;
-  const pj={kind:'own',id:'own',ck:sp.k,cat:OWN_CAT[sp.k].n,name:sp.name||'',need,yrs,pc:partCost(x,s),moto:!!x.moto,sp:{k:sp.k,base:sp.base,tech:(sp.tech||[]).slice(),goal:sp.goal,gl:sp.gl||1,name:sp.name||''}};
+  const into=ownIntoOf(s,sp);
+  const pj={kind:'own',id:'own',ck:sp.k,cat:OWN_CAT[sp.k].n,name:into?into.name:sp.name||'',need,yrs,pc:partCost(x,s),moto:!!x.moto,sp:{k:sp.k,base:sp.base,tech:(sp.tech||[]).slice(),goal:sp.goal,gl:sp.gl||1,name:into?into.name:sp.name||'',into:into?1:0}};
   const cost=ownRdCost(pj,s),T2=(sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);let why='';
+  if(into){const rep=T2.find(t=>(into.tech||[]).includes(t.id));if(rep)why=`Приём «${rep.n.toLowerCase()}» к этому узлу уже применён`;else if(ownIntoBusy(s,into.id))why='Этот узел уже дорабатывают';}
   if(!OWN_GOAL[sp.goal])why='Выберите цель';else if(T2.some(t=>!xpTechOk(s,t))){const t=T2.find(t=>!xpTechOk(s,t));why=`Мало опыта: «${XP_AREA[t.a].n}» ${Math.floor(xpOf(s,t.a))} из ${t.xp}`;}
   else if(yrs>OWN_LIMIT)why=`Предел эпохи: такой узел история освоит только в ${x.yh} году — материалы и станки ${s.y} года этого не дадут`;
   else if(rdActive(s).length>=rdSlots(s))why='В КБ нет свободного места для проекта';else if(s.cash<cost)why='Не хватает денег';
   const cmp=OWN_MEAS[sp.k].map(([n,f,d])=>({n,d,mine:f(x),base:f(x0),best:f(best)}));
   return {x,x0,best,yrs,need,cost,pj,why,cmp,months:Math.max(1,Math.ceil(need/Math.max(0.01,rdTotal(s)/(rdActive(s).length+1)))),rework:protoRisk({kind:'own',yrs}),risk:partRisk(x,s.y)};}
 function ownNextName(s,k){const n=ownParts(s,k).length+1,w={e:'мотор',g:'коробка',c:'рама',w:'шины',k:'тормоза',b:'кузов'}[k];return `${s.company}: ${w} №${n}`.slice(0,40);}
-function ownStart(s,sp){const P=ownPreview(s,sp);if(!P||P.why)return false;P.pj.name=(sp.name||'').trim()||ownNextName(s,sp.k);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='own'+s.ownN;return rdBegin(s,P.pj);}
+function ownStart(s,sp){const P=ownPreview(s,sp);if(!P||P.why)return false;const into=ownIntoOf(s,sp);if(into&&ownIntoBusy(s,into.id))return false;P.pj.name=into?into.name:(sp.name||'').trim()||ownNextName(s,sp.k);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='own'+s.ownN;return rdBegin(s,P.pj);}
 // статья «Зачем и откуда»
 function ownArticle(s,x){const x0=byId(OWN_CAT[x.k].arr(),x.base),T2=(x.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean),yrs=x.yh-(x.made?x.made.y:s.y);
   return `Основа — ${x0?x0.name:'свой узел'}. `+(T2.length?`Приёмы: ${T2.map(t=>t.n.toLowerCase()).join(' и ')}. ${T2.map(t=>t.h).join(' ')} `:'')+`Цель — ${ownGoalName(x.goal,x.k).toLowerCase()}. `
     +(x.yh>1930?`В истории до 1930 года такого узла не было: по чертам он соответствует ${x.yh} году.`:yrs>0?`По чертам это ${x.yh} год: история пришла к такому узлу на ${yrs} ${plural(yrs,'год','года','лет')} позже.`:`По чертам это ${x.yh} год: в истории такие узлы уже делали — но этот ваш, и доводить его вам.`);}
-function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы больше нет.`,'bad');return;}s.custom=s.custom||[];s.ownId=(s.ownId||0)+1;x.id='x'+x.k+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};
+function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы больше нет.`,'bad');return;}s.custom=s.custom||[];
+  {const o=ownIntoOf(s,pj.sp);if(o){ownRefine(s,o,x,pj);ownSync(s);xpAdd(s,XP_CAT[o.k],2);addLog(`КБ закончило доводку: ${o.name} — доводка №${o.rev-1}, узел тот же.`,'good');pendingToasts.push('🧪 Доводка: '+o.name);return;}}s.ownId=(s.ownId||0)+1;x.id='x'+x.k+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};
   x.note=`Своя разработка ${s.y} года.`;x.art=ownArticle(s,x);s.custom.push(x);ownSync(s);s.rd.upg[x.id]=Math.floor(upgL(x.base)/2);xpAdd(s,XP_CAT[x.k],3);
   const yrs=Math.max(0,x.yh-s.y),pc=ownPatCost(s);addLog(`КБ закончило свою разработку: ${x.name}${yrs>0?` — на ${yrs} ${plural(yrs,'год','года','лет')} раньше истории`:''}.`,'good');pendingToasts.push('🧪 Свой узел: '+x.name);
   if(yrs>0)try{recordFirst(s,'own_'+x.id,x.name,x.yh,'отрасль пришла к такому узлу',null,{noArt:1});}catch(_){}
@@ -8789,7 +8802,7 @@ function ownKeep(){try{const e=document.getElementById('ownname');if(e&&ownDraft
 function ownRe(){ownKeep();let top=0;try{top=sb.scrollTop;}catch(_){}openOwn(ownDraft.k,ownDraft.moto);try{sb.scrollTop=top;}catch(_){}}
 function aeRe(){let top=0;try{top=sb.scrollTop;}catch(_){}openAeng();try{sb.scrollTop=top;}catch(_){}}
 function aeKeep(){try{const e=document.getElementById('aename');if(e&&aeDraft&&typeof e.value==='string')aeDraft.name=e.value.trim().slice(0,40);}catch(_){}}
-function ownDraftInit(s,k,moto){const B=ownBaseList(s,k,moto);ownDraft={k,moto:!!moto,base:B[0]?B[0].id:null,tech:[],goal:'power',gl:1,name:''};return ownDraft;}
+function ownDraftInit(s,k,moto,base){const B=ownBaseList(s,k,moto),b0=base&&B.some(x=>x.id===base)?base:B[0]?B[0].id:null;ownDraft={k,moto:!!moto,base:b0,tech:[],goal:'power',gl:1,name:'',into:1};return ownDraft;}
 function ownFmt(v,d){return d===0?fmtN(Math.round(v)):v.toFixed(d).replace('.',',');}
 function ownPreviewHTML(s,P){if(!P)return '';const x=P.x,rows=P.cmp.map(c=>`<tr><td>${esc(c.n)}</td><td class="num">${ownFmt(c.base,c.d)}</td><td class="num ${c.mine>c.base*1.005?'good':c.mine<c.base*0.995?'bad':''}"><b>${ownFmt(c.mine,c.d)}</b></td><td class="num muted">${ownFmt(c.best,c.d)}</td></tr>`).join('');
   const pc0=partCost(P.x0,s),pc1=partCost(x,s);
@@ -8807,19 +8820,23 @@ function openOwn(k,moto){const s=G;ownEnsure(s);if(!k){ownDraft=null;const mv=li
       <div class="label" style="margin-top:14px">Шаг 1. Что делаем</div>${cv?Object.keys(OWN_CAT).map(q=>cat(q,false)).join(''):''}${mv?['e','c','w','k'].map(q=>cat(q,true)).join(''):''}
       ${aeCan(s)?`<button class="race-item" data-act="aeOpen" style="display:block;width:100%;text-align:left"><span class="mo">✈ Авиамотор</span><h3 style="margin-top:2px">${esc((aeBase(s)||{name:'—'}).name)}</h3><p class="small muted">основа — ваш самый сильный мотор · для своих аэропланов и на продажу авиазаводам</p></button>`:''}
       ${mine.length?`<div class="label" style="margin-top:14px">Свои узлы</div>${mine.map(x=>ownItemHTML(s,x)).join('')}`:''}`);}
-  if(!ownDraft||ownDraft.k!==k||ownDraft.moto!==!!moto)ownDraftInit(s,k,moto);const d=ownDraft,B=ownBaseList(s,k,d.moto),P=d.base?ownPreview(s,d):null;
+  if(!ownDraft||ownDraft.k!==k||ownDraft.moto!==!!moto)ownDraftInit(s,k,moto);const d=ownDraft,B=ownBaseList(s,k,d.moto);
+  // свои узлы — в начале списка основ: их и дорабатывают; выбранная основа видна всегда
+  const BL=[...B.filter(x=>x.own),...B.filter(x=>!x.own)].slice(0,5);if(d.base&&!BL.some(x=>x.id===d.base)){const bx=B.find(x=>x.id===d.base);if(bx)BL.push(bx);}
+  const bo=ownGet(s,d.base),into=bo&&d.into?bo:null;if(into)d.tech=d.tech.filter(t=>!(into.tech||[]).includes(t));const P=d.base?ownPreview(s,d):null;
   const techs=OWN_TECH.filter(t=>t.cat.includes(k)),chip=(on,act,attrs,txt,dis)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs} ${dis?'disabled':''}>${txt}</button>`;
   openSheet(`<div class="row"><h2>${d.moto?'🏍 ':''}${OWN_CAT[k].n}: своя разработка</h2>${X}</div>
     <div class="row" style="margin-top:8px"><span class="small"><b>Шаг 2. Основа</b></span><button class="btn sm" data-act="ownOpen">Изменить узел</button></div>
-    <div class="chips">${B.slice(0,4).map(x=>chip(d.base===x.id,'ownBase',`data-id="${x.id}"`,esc(x.name)+(upgL(x.id)?' ★'+upgL(x.id):''))).join('')}</div>
+    <div class="chips">${BL.map(x=>chip(d.base===x.id,'ownBase',`data-id="${x.id}"`,(x.own?'🧪 ':'')+esc(x.name)+(upgL(x.id)?' ★'+upgL(x.id):''))).join('')}</div>
+    ${bo?`<div class="chips" id="owninto" style="margin-top:6px">${chip(!!d.into,'ownInto','data-v="1"','Доработать этот узел<small>тот же узел: имя, патент и машины остаются</small>')}${chip(!d.into,'ownInto','data-v="0"','Новый узел на его основе<small>отдельное имя и отдельный патент</small>')}</div>`:''}
     <div class="label" style="margin-top:12px">Шаг 3. Приёмы — один или два (второй даёт меньше)</div>
-    ${techs.length?`<div class="chips">${techs.map(t=>{const ok=xpTechOk(s,t),on=d.tech.includes(t.id);return `<button class="chip${on?' on':''}" data-act="ownTech" data-id="${t.id}" ${ok?'':'disabled'}>${esc(t.n)}<small>${ok?esc(t.d):`нужен опыт: ${XP_AREA[t.a].n.toLowerCase()} ${Math.floor(xpOf(s,t.a))} из ${t.xp}`}</small></button>`;}).join('')}</div>`:'<p class="small muted" style="margin-top:4px">Для этого узла приёмов из опыта нет — только цель.</p>'}
+    ${techs.length?`<div class="chips">${techs.map(t=>{const used=!!(into&&(into.tech||[]).includes(t.id)),ok=xpTechOk(s,t)&&!used,on=d.tech.includes(t.id)&&!used;return `<button class="chip${on?' on':''}" data-act="ownTech" data-id="${t.id}" ${ok?'':'disabled'}>${esc(t.n)}<small>${used?'уже применён к этому узлу':ok?esc(t.d):`нужен опыт: ${XP_AREA[t.a].n.toLowerCase()} ${Math.floor(xpOf(s,t.a))} из ${t.xp}`}</small></button>`;}).join('')}</div>`:'<p class="small muted" style="margin-top:4px">Для этого узла приёмов из опыта нет — только цель.</p>'}
     <div class="label" style="margin-top:12px">Шаг 4. Цель</div><div class="chips">${Object.keys(OWN_GOAL).map(g=>chip(d.goal===g,'ownGoal',`data-g="${g}"`,ownGoalName(g,k))).join('')}</div>
     <div class="chips">${[1,2,3].map(n=>chip(d.gl===n,'ownGl',`data-n="${n}"`,['Шаг','Два шага','Три шага'][n-1])).join('')}<span class="small muted" style="align-self:center">каждый следующий шаг даёт меньше и стоит дольше</span></div>
-    <label class="label" for="ownname" style="display:block;margin-top:12px">Название</label><input type="text" id="ownname" value="${esc(d.name||ownNextName(s,k))}" maxlength="40" style="margin-top:6px">
+    ${into?`<p class="small" style="margin-top:12px">Узел: <b>${esc(into.name)}</b> — доводка №${into.rev||1}. Название не меняется.</p>`:`<label class="label" for="ownname" style="display:block;margin-top:12px">Название</label><input type="text" id="ownname" value="${esc(d.name||ownNextName(s,k))}" maxlength="40" style="margin-top:6px">`}
     <div class="card" style="margin-top:12px;background:var(--panel2)"><div class="label">Что получится</div>${ownPreviewHTML(s,P)}</div>
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
-    <button class="btn primary block" style="margin-top:12px" data-act="ownStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
+    <button class="btn primary block" style="margin-top:12px" data-act="ownStart" ${!P||P.why?'disabled':''}>${into?'Доработать':'Начать'} · ${P?money(P.cost):''}</button>`);}
 let aeDraft=null;
 function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_TYPE).filter(k=>aeTypeOk(s,k));aeDraft={type:ks[ks.length-1]||'inline',goal:'power',gl:1,name:''};}const d=aeDraft,P=aePreview(s,d),x=P&&P.x,b=P&&P.best;
   const chip=(on,act,attrs,txt,dis)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs} ${dis?'disabled':''}>${txt}</button>`,C=x?aeSaleCalc(s,{...x,made:{y:s.y-2,m:s.m}}):null;
@@ -8839,9 +8856,9 @@ function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_
       <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки ${Math.round(P.rework*100)}%${C?` · продажа авиазаводам: около ${fmtN(Math.round(C.dem))} в месяц по ${money(C.price)}, с мотора ${money(C.price-C.cost)}`:''}</p></div>`:''}
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
-function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null;
-  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
-    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p></div>`;}
+function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null,busy=!ae&&ownIntoBusy(s,x.id);
+  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
+    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p>${ae?'':`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
 function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}
 function ownXpHTML(md,s){if(!md||!s||!(s.custom||[]).length)return '';const L=(s.custom||[]).filter(x=>md[x.k]===x.id).map(x=>({x,G:ownGain(md,s,x)})).filter(o=>o.G);if(!L.length)return '';
@@ -18195,8 +18212,8 @@ function openRD(){
     return `<div class="race-item"><div class="row"><div><span class="mo">${esc(KIND_NAME[c.kind])} · эталон класса ${c.y} года</span><h3 style="margin-top:2px">${esc(c.name)}</h3></div><button class="btn sm" data-act="rdStudy" data-k="${c.kind}" ${dis?'disabled':''}>${c.done?'Изучен':c.busy?'В работе':'Купить · '+money(c.price)}</button></div>
       <p class="small muted" style="margin-top:4px">~${Math.ceil(STUDY_NEED/pts)} мес. в КБ. ${g.fut.length?`<span class="good">Внутри — то, чего нет у поставщиков: ${esc(g.fut.map(x=>x.name).join(', '))}.</span> `:''}${g.ups.length?`<span class="good">Доводка соперников: ${esc(g.ups.map(x=>x.name).join(', '))}.</span> `:''}Улучшать изученные детали станет быстрее, новая модель этого класса — дешевле.</p></div>`;};
   // 0.24: три раскрывающиеся группы — улучшения (детали ваших машин и современные), новые (прототипы и машины конкурентов), устаревшие
-  const upg=L.filter(p=>p.kind==='upg'),old=upg.filter(p=>!p.mine&&partObsolete(p.ck,p.id,s)),cur=upg.filter(p=>!old.includes(p)).sort((a,b)=>(b.mine?1:0)-(a.mine?1:0)||(b.py||0)-(a.py||0)),early=L.filter(p=>p.kind==='early'||p.kind==='eq');
-  const mineN=cur.filter(p=>p.mine).length,SLn=SL.filter(c=>!c.done&&!c.own).length,item2=pj=>pj.mine?item(pj).replace('<span class="mo">',`<span class="mo"><b class="good">● в ваших ${pj.moto?'мотоциклах':'машинах'}</b> · `):item(pj);
+  const upg=L.filter(p=>p.kind==='upg'),old=upg.filter(p=>!p.mine&&partObsolete(p.ck,p.id,s)),cur=upg.filter(p=>!old.includes(p)).sort((a,b)=>(b.own?1:0)-(a.own?1:0)||(b.mine?1:0)-(a.mine?1:0)||(b.py||0)-(a.py||0)),early=L.filter(p=>p.kind==='early'||p.kind==='eq');
+  const mineN=cur.filter(p=>p.mine).length,SLn=SL.filter(c=>!c.done&&!c.own).length,item2=pj=>pj.own?item(pj).replace('<span class="mo">',`<span class="mo"><b class="good">🧪 свой узел${pj.mine?' · в ваших '+(pj.moto?'мотоциклах':'машинах'):''}</b> · `):pj.mine?item(pj).replace('<span class="mo">',`<span class="mo"><b class="good">● в ваших ${pj.moto?'мотоциклах':'машинах'}</b> · `):item(pj);
   openSheet(`<div class="row"><h2>Проекты КБ</h2>${X}</div>
     <p class="small muted" style="margin-top:6px">${RD_LV[s.rd.lvl]}: силы бюро поровну делятся между проектами (потом можно перераспределить), свободных мест — ${Math.max(0,free)}. Чем выше уровень, тем дальше в будущее можно заглянуть с прототипами.</p>
     <p class="small muted" style="margin-top:4px">Каждый проект стоит денег сверх содержания бюро (${money(rdUpkeep(s))} в месяц): опытные образцы, материалы, стенды и испытания — платите при старте.</p>
@@ -18823,7 +18840,10 @@ function teamCount(s,entries){let c=0,m=0;(entries||[]).forEach(e=>{if(entryIsMo
 // 0.33: мотоциклы — в гонках, где по истории у них был свой зачёт (02-races.js, MOTO_RACE); в остальных — только машины
 // 0.51, этап 5 (отзыв на пробную сборку: «танк и автобус в гонке — обычный грузовик»): рабочая техника этапа 4 — автобусы, спецмашины,
 // тракторы, военные — в гонки не записывается. Её место — испытания ведомств (этап госзаказов); там у неё будет и свой вид в 3D.
-function raceKindOk(m){return isMoto(m)||!kindIsNew(bodyKind(byId(BODIES,m.b)));}
+// 0.51 (повторный отзыв автора): у автобусов теперь свой кузов в 3D, у санитарной, почтовой, такси и штабной — фургон и автомобиль:
+// их в гонки записывать можно. Без своего вида остались тракторы, бронеавтомобиль и танк — они по-прежнему не записываются.
+const RACE_NO={tractor:1,crawler:1,armored:1,ltank:1};
+function raceKindOk(m){return isMoto(m)||!RACE_NO[bodyKind(byId(BODIES,m.b))];}
 function raceCarsFor(s,rc){const mo=raceMoto(rc);return s.models.filter(m=>m.status==='prod'&&(!isMoto(m)||mo)&&raceKindOk(m));}
 // 0.33: менеджер команды выставляет машины; мотоциклы — когда машин нет (у мотомастерской), и тогда шансы и призы — по классу мотоциклов
 function mgrCarsFor(s,rc){const L=raceCarsFor(s,rc),c=L.filter(m=>!isMoto(m));return c.length?c:L;}
@@ -18847,7 +18867,7 @@ function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]|
 function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'барабаны на задних колёсах':b<0.8?'на все четыре колеса':'гидравлика или сервоусилитель';}
 function openRaceSetup(key){
   const s=G,rc=raceByKey(key);if(!rc||R)return;
-  if(!raceCarsFor(s,rc).length){toast(s.models.some(m=>m.status==='prod'&&!raceKindOk(m))&&!s.models.some(m=>m.status==='prod'&&raceKindOk(m)&&!isMoto(m))?'В гонки записывают автомобили и мотоциклы: автобусы, спецмашины, тракторы и военная техника не участвуют':s.models.some(m=>m.status==='prod')?'В этой гонке едут только автомобили':'Нет машин в производстве');return;}
+  if(!raceCarsFor(s,rc).length){toast(s.models.some(m=>m.status==='prod'&&!raceKindOk(m))&&!s.models.some(m=>m.status==='prod'&&raceKindOk(m)&&!isMoto(m))?'Тракторы, бронеавтомобиль и танк в гонки не записывают':s.models.some(m=>m.status==='prod')?'В этой гонке едут только автомобили':'Нет машин в производстве');return;}
   // пока игрок выбирает машины и пилотов — фото-материалы гонки уже грузятся
   try{texPrefetch();}catch(_){}
   if(!RS||RS.key!==key)RS={key,entries:[defaultEntry(s,rc,[])],open:0,mode:'drive',more:false};
@@ -18859,7 +18879,11 @@ function renderRaceSetup(keepScroll){
   // 0.34: регламент — лишние машины или мотоциклы сверх предела гонки снимаются с заявки
   {const R0=raceRule(rc);let c=0,m=0;RS.entries=RS.entries.filter(e=>entryIsMoto(s,e)?++m<=R0.motos:++c<=R0.cars);if(!RS.entries.length)RS.entries=[defaultEntry(s,rc,[])];RS.open=Math.min(RS.open,RS.entries.length-1);}
   // хозяин в больнице: пилотов команды не трогаем, а «Еду сам» — ведёте машину №1 вместо её пилота
-  RS.entries.forEach(e=>{if(e.drv&&drvOut(s,e.drv))e.drv=null;});
+  // 0.51 (отзыв автора: «пилот травмирован — другого надо ставить вручную»): выбыл пилот из заявки — в его машину сразу садится
+  // лучший свободный (свой, а нет своих — приглашённый на гонку), с сообщением; пусто остаётся, только если сажать некого
+  RS.entries.forEach(e=>{if(!(e.drv&&drvOut(s,e.drv)))return;const was=e.drv,nm=id=>id==='me'?'вы':((drvObj(id)||{}).n||id);
+    const nd=defaultEntry(s,rc,RS.entries.map(x=>x.drv).filter(x=>x&&x!==was),entryIsMoto(s,e)?'moto':'car').drv;e.drv=nd&&!drvOut(s,nd)?nd:null;
+    if(typeof toast==='function')toast(e.drv?`${nm(was)}: ${injNote(s,was)||'не может ехать'} — в машину ${e.drv==='me'?'садитесь вы':'сел '+nm(e.drv)}`:`${nm(was)} не может ехать — выберите пилота`);});
   const meSick=meOut(s),hasMe=RS.entries.some(e=>e.drv==='me')||((meSick||!pioRacer(s))&&RS.entries.some(e=>e.drv));if(!hasMe&&RS.mode==='drive')RS.mode='manage';
   const tot=setupTotal(rc,s),missing=RS.entries.findIndex(e=>!e.drv),champs=raceChamps(rc).map(id=>CHAMPS[id].name(rc.y));
   const n=RS.entries.length,gb=GBC_IDS.includes(rc.id),RR=raceRule(rc),TC=teamCount(s,RS.entries),canMoto=RR.motos>0&&cars.some(m=>isMoto(m)),canCar=cars.some(m=>!isMoto(m));
@@ -19105,7 +19129,7 @@ function placeWater(rc,host){const t=(rc.id||'')+' '+(rc.name||'')+' '+(rc.hist|
 function planRoute(trk,rnd){
   const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);trk.tunnels=[];trk.tunAt=new Uint8Array(n);
   // Монако: знаменитый тоннель у моря (с 1929 года)
-  if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));planTunnel(trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно');}
+  if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));const A=[trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно'];if(!planTunnel(...A))planTunnel(...A,true);/* в Монако тесно: не нашлось свободного места — тоннель всё равно будет */}
   if(cfg.oval||rc.track==='board'||cfg.sprint||rc.track==='brooklands'||rc.track==='indy'||rc.track==='monaco')return;
   // 0.21: настоящая местность — сценарий по карте, а не по жребию
   if(trk.real){realPlan(trk);return;}
@@ -19153,12 +19177,16 @@ function planRoute(trk,rnd){
   // подписи для заставки: самые приметные участки
   list.forEach(o=>{if(o.cap===undefined)o.cap=o.type===RSEG.serp?'Серпантин: скала с одной стороны, обрыв — с другой':o.type===RSEG.forest&&o.i1-o.i0>90?'Лесная дорога: тень и корни':o.type===RSEG.avenue?'Аллея: деревья у самой дороги':o.type===RSEG.vine?'Виноградники по обе стороны':null;});}
 // Тоннель: пологий участок нужной длины подальше от городов, мостов, переезда и берега; кривизна — сначала самая малая
-function planTunnel(trk,S,list,r,a0,a1,l0,l1,cap){const {n,K}=trk;if(a1-a0<l1+30)return null;
+function planTunnel(trk,S,list,r,a0,a1,l0,l1,cap,any){const {n,K}=trk;if(a1-a0<l1+30)return null;
+  // 0.51: над тоннелем — скальный гребень шириной в десятки метров. Если рядом идёт другая ветка той же трассы (серпантин),
+  // гребень накрывал её: «приходится проезжать сквозь холм» (отзыв автора). Тоннель ставим только там, где соседней ветки нет
+  const P=trk.pts,R2=Math.pow(trk.W/2+(trk.rc.track==='monaco'?26:44),2),lone=(j,len)=>{for(let a=j-10;a<=j+len+10;a+=2){const b=trk.closed?((a%n)+n)%n:a;if(b<0||b>=n)continue;const p=P[b];
+      for(let k=0;k<n;k+=2){let g=Math.abs(k-b);if(trk.closed)g=Math.min(g,n-g);if(g<=16)continue;const dx=P[k][0]-p[0],dz=P[k][2]-p[2];if(dx*dx+dz*dz<R2)return false;}}return true;};
   const curvy=(i,len)=>{let m=0;for(let k=i;k<Math.min(n,i+len);k++)m=Math.max(m,Math.abs(K[k]));return m;};
   for(const kMax of [1/90,1/60,1/42])for(let t=0;t<50;t++){const len=l0+Math.floor(r()*(l1-l0+1)),j=a0+Math.floor(r()*Math.max(1,a1-a0-len));
     if(j<8||j+len>n-8)continue;if(curvy(j-4,len+8)>kMax)continue;let ok=true;
     for(let a=j-14;a<=j+len+14;a++){const b=trk.closed?((a%n)+n)%n:a;if(b<0||b>=n){ok=false;break;}const q=S[b];if(q===RSEG.town||q===RSEG.bridge||q===RSEG.rail||q===RSEG.coast||q===RSEG.tunnel){ok=false;break;}}
-    if(!ok)continue;for(let a=j;a<=j+len;a++){S[a]=RSEG.tunnel;trk.tunAt[a]=1;}const o={type:RSEG.tunnel,i0:j,i1:j+len,i:Math.round(j+len/2),cap,alt:18,w:3};list.push(o);trk.tunnels.push({i0:j,i1:j+len});return o;}
+    if(!ok||(!any&&!lone(j,len)))continue;for(let a=j;a<=j+len;a++){S[a]=RSEG.tunnel;trk.tunAt[a]=1;}const o={type:RSEG.tunnel,i0:j,i1:j+len,i:Math.round(j+len/2),cap,alt:18,w:3};list.push(o);trk.tunnels.push({i0:j,i1:j+len});return o;}
   return null;}
 // Тип участка у точки трассы
 function segAt(trk,i){return trk.segT?trk.segT[((i%trk.n)+trk.n)%trk.n]:RSEG.fields;}
@@ -19225,7 +19253,7 @@ const REAL_RACES={pm1903:{},targa:{},gb1903:{},indy:{},
 const REAL_SCEN={ru:'ru',cn:'cn',nl:'nl',us:'us',uk:'uk',ie:'ie',it:'it',de:'de',at:'at',ch:'ch',es:'es',be:'be',mc:'mc',ly:'ly',fr:'fr'};
 window.REAL_TRACKS=window.REAL_TRACKS||{};
 function realIdOf(rc){if(!rc)return null;const R=REAL_RACES[rc.id];if(!R)return null;if(R.v)return R.v[rc.y]||null;if(R.years&&!R.years.includes(rc.y))return null;return R.d||rc.id;}
-function realData(rc){const id=realIdOf(rc);return id?window.REAL_TRACKS[id]||null:null;}
+function realData(rc){const id=realIdOf(rc);const D=id?window.REAL_TRACKS[id]||null:null;return D&&typeof realFix==='function'?realFix(D):D;}/* 0.51: маршрут — без отростков и петель по той же улице */
 // подгрузить данные трассы до постройки (не дольше 4 с)
 function realLoad(rc,cb){const id=realIdOf(rc);if(!id||window.REAL_TRACKS[id]||typeof document==='undefined'||!document.head||!document.head.appendChild){cb();return;}
   let done=false;const fin=()=>{if(done)return;done=true;cb();};
@@ -19384,6 +19412,92 @@ function realMapSVG(trk){const D=trk.real.d,M=D.map;if(!M||!M.route||M.route.len
     <path d="${line(M.route)}" stroke="#8a6f4a" stroke-width="2" fill="none" opacity=".55"/><path d="${line(seg)}" stroke="#b3261e" stroke-width="3.2" fill="none" stroke-linecap="round"/>
     <circle cx="${X(seg[0][1])}" cy="${Y(seg[0][0])}" r="4" fill="#fff" stroke="#b3261e" stroke-width="2"/>${tw}
     <text x="${W-8}" y="${H-8}" text-anchor="end" font-size="7" fill="#6b5a40" font-family="Georgia,serif">© OpenStreetMap · Copernicus DEM</text></svg>`;}
+
+/* ================= 0.51: починка маршрутов настоящих трасс =================
+   Отзыв автора (21 ноября): «Гран-при Рима — полный бред: нужно поворачивать в кювет на пересечении дорог, чтобы попасть на путь
+   трассы»; «есть ещё трассы, где можно найти дерево на дороге или необходимость проезжать сквозь холм».
+   Причина — в данных маршрутов (их строит маршрутизатор по картам): местами он заезжает в переулок и возвращается той же
+   дорогой («отросток»), местами делает петлю и второй раз идёт по той же улице. В игре это две дороги одна на другой: обочина
+   и кювет одной лежат на полотне другой, высоты проходов разные (до 7 м), на развилке путь уходит «в кювет».
+   Осмотр всех 84 трасс нашёл это на пяти: Рим, Страсбург, Сан-Франциско, Тарар, Монако.
+   Осмотр на трёх длинах заезда нашёл ещё Ласарте (отросток в 3,7 км).
+   Открытый маршрут — петлю и отросток вырезаем (дорога идёт прямо). Круг (Монако: стартовая прямая и набережная сходятся
+   и пересекаются) — оба прохода ставим на одну высоту; обочины между ветками срезает branchLims. */
+const RFX_NEAR=30,RFX_WIDE=200,RFX_GAP=6;/* дм: «та же дорога» (сошлись вплотную); «идут рядом»; точек между проходами */
+function rfxSegD(p,a,b){const dx=b[0]-a[0],dz=b[1]-a[1],l2=dx*dx+dz*dz||1;let t=((p[0]-a[0])*dx+(p[1]-a[1])*dz)/l2;t=t<0?0:t>1?1:t;return [Math.hypot(a[0]+dx*t-p[0],a[1]+dz*t-p[1]),t];}
+function rfxDir(P,i,closed){const n=P.length,a=P[closed?(i-1+n)%n:Math.max(0,i-1)],b=P[closed?(i+1)%n:Math.min(n-1,i+1)],l=Math.hypot(b[0]-a[0],b[1]-a[1])||1;return [(b[0]-a[0])/l,(b[1]-a[1])/l];}
+/* места, где два прохода маршрута сошлись вплотную: для точки i — [отрезок j, доля, косинус между направлениями, расстояние]
+   (из нескольких — самый дальний по маршруту); cross — считать и пересечения под углом */
+function rfxPairs(P,closed,cross){const n=P.length,cell=80,g=new Map(),out=new Array(n).fill(null);
+  for(let i=0;i<n;i++){const k=Math.floor(P[i][0]/cell)+','+Math.floor(P[i][1]/cell);(g.get(k)||g.set(k,[]).get(k)).push(i);}
+  for(let i=0;i<n;i++){const cx=Math.floor(P[i][0]/cell),cz=Math.floor(P[i][1]/cell),di=rfxDir(P,i,closed);let best=null;
+    for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++){const L=g.get((cx+a)+','+(cz+b));if(!L)continue;for(const j of L){let gap=Math.abs(i-j);if(closed)gap=Math.min(gap,n-gap);if(gap<RFX_GAP)continue;
+      const j1=closed?(j+1)%n:j+1;if(j1>=n)continue;const [d,t]=rfxSegD(P[i],P[j],P[j1]);if(d>=RFX_NEAR)continue;const dj=rfxDir(P,j,closed),c=di[0]*dj[0]+di[1]*dj[1];
+      if(!cross&&Math.abs(c)<0.5)continue;if(!best||j>best[0])best=[j,t,c,d];}}
+    out[i]=best;}
+  return out;}
+const rfxD=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+/* открытый маршрут: что вырезать — [[i,j],…]: точки i+1…j уходят. Отросток (туда и обратно) режем целиком — от места, где
+   два его хода расходятся дальше 20 м; петлю и самопересечение — от первой общей точки до второй */
+function rfxCuts(P){const n=P.length,pr=rfxPairs(P,false,true),cuts=[];let i=0,last=-1;
+  /* пара видна хотя бы с одной стороны: поздняя точка легла на ранний отрезок — запишем её и ранней */
+  for(let k=0;k<n;k++){const q=pr[k];if(q&&q[0]<k){const e=q[0];if(!pr[e]||pr[e][0]<k)pr[e]=[k,0,q[2],q[3]];}}
+  while(i<n-RFX_GAP){const q=pr[i];if(!q||q[0]<=i){i++;continue;}let i0=i,j0=Math.min(n-2,q[0]);
+    if(q[2]<-0.5)while(i0-1>last&&j0+1<n-1&&rfxD(P[i0-1],P[j0+1])<RFX_WIDE){i0--;j0++;}
+    cuts.push([i0,j0]);last=j0;i=j0+1;}
+  return cuts;}
+/* круг: точки двух проходов одной улицы — для каждой номер парной (или −1) и знак: 1 — встречные, −1 — попутные */
+function rfxTwins(P){const n=P.length,pr=rfxPairs(P,true,false),tw=new Int32Array(n).fill(-1),sg=new Int8Array(n);
+  for(let i=0;i<n;i++){const q=pr[i];if(!q)continue;const rev=q[2]<0,j=q[0];
+    for(const st of [1,-1])for(let k=0;k<n/2;k++){const a=((i+st*k)%n+n)%n,b=((j+(rev?-st:st)*k)%n+n)%n;if(rfxD(P[a],P[b])>=RFX_WIDE)break;let gap=Math.abs(a-b);gap=Math.min(gap,n-gap);if(gap<RFX_GAP)break;
+      if(tw[a]<0){tw[a]=b;sg[a]=rev?1:(a<b?1:-1);}if(tw[b]<0){tw[b]=a;sg[b]=rev?1:(b<a?1:-1);}}}
+  return {tw,sg};}
+function realFix(D){if(!D||D._fix!==undefined)return D&&D._fix?D._fix:D;D._fix=null;
+  try{const P=D.pts,n=P.length;if(n<20)return D;
+    if(D.closed){// круг: вырезать нельзя. Два прохода одной улицы ставим на одну высоту (поздний — на 4 см ниже, чтобы два
+      // полотна не мерцали одно сквозь другое); обочины между ними срежет branchLims
+      const {tw}=rfxTwins(P);let cnt=0;for(let i=0;i<n;i++)if(tw[i]>=0)cnt++;if(!cnt)return D;const w=new Float32Array(n),tg=new Float32Array(n),R=6;
+      for(let i=0;i<n;i++)if(tw[i]>=0){const h=(P[i][2]+P[tw[i]][2])/2-(i>tw[i]?0.4:0);for(let k=-R;k<=R;k++){const q=((i+k)%n+n)%n,v=1-Math.abs(k)/(R+1);if(v>w[q]){w[q]=v;tg[q]=h;}}}
+      const out=P.map((p,i)=>w[i]>0?[p[0],p[1],p[2]+(tg[i]-p[2])*w[i]]:p);
+      return D._fix=Object.assign({},D,{pts:out,_fix:undefined,_lmK:undefined,_fixed:{twin:cnt}});}
+    const cuts=rfxCuts(P);if(!cuts.length)return D;
+    let gone=0;cuts.forEach(c=>{gone+=c[1]-c[0];});if(gone>n*0.6)return D;/* вырезать пришлось бы больше половины — данные не трогаем */
+    const map=new Int32Array(n),dead=new Uint8Array(n),pts=[];let c=0;
+    for(let k=0;k<n;k++){while(c<cuts.length&&k>cuts[c][1])c++;const cut=c<cuts.length&&k>cuts[c][0]&&k<=cuts[c][1];if(cut){dead[k]=1;map[k]=pts.length-1;}else{map[k]=pts.length;pts.push(P[k]);}}
+    const m=k=>map[clamp(k,0,n-1)],alive=(a,b)=>{for(let k=a;k<=b;k++)if(!dead[clamp(k,0,n-1)])return true;return false;};
+    const F=Object.assign({},D,{pts,_fix:undefined,_lmK:undefined,_fixed:{cuts,gone}});
+    if(D.seg)F.seg=D.seg.filter(s=>alive(s[1],s[2])).map(s=>{const o=s.slice();o[1]=m(s[1]);o[2]=m(s[2]);return o;});
+    if(D.bridges)F.bridges=D.bridges.filter(b=>!dead[clamp(b.i,0,n-1)]).map(b=>Object.assign({},b,{i:m(b.i),i0:b.i0===undefined?undefined:m(b.i0),i1:b.i1===undefined?undefined:m(b.i1)}));
+    if(D.rails)F.rails=D.rails.filter(r=>!dead[clamp(r.i,0,n-1)]).map(r=>Object.assign({},r,{i:m(r.i)}));
+    if(D.coast)F.coast=D.coast.filter(q=>alive(q.i0,q.i1)).map(q=>Object.assign({},q,{i0:m(q.i0),i1:m(q.i1)}));
+    if(D.notes)F.notes=D.notes.filter(q=>!dead[clamp(q.i,0,n-1)]).map(q=>Object.assign({},q,{i:m(q.i)}));
+    if(D.lm)F.lm=D.lm.map(o=>o.i===undefined?o:Object.assign({},o,{i:m(o.i)}));
+    return D._fix=F;}
+  catch(e){console.warn('realFix',e);return D;}}
+/* ================= обочины рядом с другой веткой дороги =================
+   У каждого поперечника дороги — обочина на 14 м в обе стороны. На серпантине и у перекрёстка в эти 14 м попадает другая
+   ветка той же трассы: обочина верхней ветки накрывала полотно нижней («проезжать сквозь холм»), у перекрёстка кювет одной
+   дороги лежал на другой. Теперь обочина кончается на полпути до полотна соседней ветки, а обрыв закрыт откосом до земли. */
+function branchLim(T,i,sd){const W=T.W,p=T.pts[i],nn=T.N[i],n=T.n,far=Math.ceil((W+16)/T.step)+2;
+  let lim=14;for(let a=0;a<=14;a+=0.5){const o=sd*(W/2+a),x=p[0]+nn[0]*o,z=p[2]+nn[1]*o;if(branchNear(T,x,z,W/2,i,far)){lim=a/2;break;}}return lim;}
+/* есть ли у точки (x,z) полотно другой ветки: отрезки дальше far точек по трассе от i */
+function branchNear(T,x,z,rad,i,far){const cx=Math.floor(x/30),cz=Math.floor(z/30),n=T.n,P=T.pts;if(!T.cgrid)return false;
+  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=T.cgrid[(cx+a)+','+(cz+b)];if(!L)continue;
+    for(const j0 of L)for(const j of [j0-1,j0]){/* в сетке — каждая вторая точка: берём оба отрезка у неё */if(j<0)continue;let g=Math.abs(j-i);if(T.closed)g=Math.min(g,n-g);if(g<far)continue;const j1=T.closed?(j+1)%n:j+1;if(j1>=n)continue;
+      const A=P[j],B=P[j1],dx=B[0]-A[0],dz=B[2]-A[2],l2=dx*dx+dz*dz||1;let t=((x-A[0])*dx+(z-A[2])*dz)/l2;t=t<0?0:t>1?1:t;const qx=A[0]+dx*t-x,qz=A[2]+dz*t-z;if(qx*qx+qz*qz<rad*rad)return true;}}
+  return false;}
+function branchLims(T){if(T.shLim)return T.shLim;const n=T.n,L=new Float32Array(n*2).fill(14);T.shLim=L;let any=0;
+  // сперва дёшево: есть ли у точки вообще чужая ветка в 24 м
+  for(let i=0;i<n;i++){const p=T.pts[i];if(!branchNear(T,p[0],p[2],T.W+15,i,Math.ceil((T.W+16)/T.step)+2))continue;L[i*2]=branchLim(T,i,1);L[i*2+1]=branchLim(T,i,-1);if(L[i*2]<14||L[i*2+1]<14)any++;}
+  T.shLimN=any;return L;}
+/* ================= кусты =================
+   Отзыв автора: «странно, что я могу врезаться в куст и он реально остановит машину, даже низкий». Куст, виноградная лоза,
+   агава и живая изгородь больше не стена: машина продирается сквозь них и теряет скорость. */
+const BRUSH={bush:7,vine:6,agave:5,hedge:10};/* замедление, м/с² на скорости 20 м/с */
+function brushHit(c,o,dt){const k=BRUSH[o.kind];if(!k)return false;const v=Math.abs(c.vx);if(!dt||v<0.3)return true;
+  const dec=k*(0.35+0.65*Math.min(1,v/20))*dt;c.vx-=Math.sign(c.vx)*Math.min(v,dec);c.vy*=Math.max(0,1-3*dt);
+  const now=(typeof R!=='undefined'&&R&&R.t)||0;if(c.you&&c.player&&v>6&&!(c.brushAt!==undefined&&now-c.brushAt<4&&now>=c.brushAt)){c.brushAt=now;if(typeof rMsgT==='function')rMsgT(o.kind==='hedge'?'ИЗГОРОДЬ — машина продирается':'КУСТЫ — теряем скорость',1.1);}
+  return true;}
 
 /* ================= RACE ENGINE: track, vehicle physics, AI, lifecycle ================= */
 const GRAV=9.81;
@@ -19712,8 +19826,10 @@ function placeScenery(trk,rnd){
       addCollider(trk,x,z,SOLID[tt].r,tt,bi);});}});// 0.26: и эти деревья твёрдые
   // порталы тоннелей: скальная стена по сторонам от проёма — твёрдая
   (trk.tunnels||[]).forEach(q=>{[[q.i0,1],[q.i1,-1]].forEach(([i,dir])=>{const p=pts[i],nn=N[i],tt=trk.T[i],hw=W/2+0.6;
-    [1,-1].forEach(sd=>{const hv=13,cx=p[0]+tt[0]*dir*1.6+nn[0]*sd*(hw+0.15+hv),cz=p[2]+tt[1]*dir*1.6+nn[1]*sd*(hw+0.15+hv);
-      addCollider(trk,cx,cz,Math.hypot(1.6,hv),'rock',i,{x:cx,z:cz,r:Math.hypot(1.6,hv),kind:'rock',box:{ux:tt[0],uz:tt[1],vx:nn[0],vz:nn[1],hu:1.6,hv}});});});});
+    // 0.51: стена не должна перегораживать соседнюю ветку трассы (в Монако невидимая скала стояла на полотне) — укорачиваем, пока мешает
+    [1,-1].forEach(sd=>{for(const hv of [13,9,6,3.5,1.8]){const cx=p[0]+tt[0]*dir*1.6+nn[0]*sd*(hw+0.15+hv),cz=p[2]+tt[1]*dir*1.6+nn[1]*sd*(hw+0.15+hv),o={x:cx,z:cz,r:Math.hypot(1.6,hv),kind:'rock',box:{ux:tt[0],uz:tt[1],vx:nn[0],vz:nn[1],hu:1.6,hv}};
+      let hit=false;for(const [a,c] of [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,0.5],[0,0],[0,-0.5]]){const x=cx+tt[0]*1.6*a+nn[0]*hv*c,z=cz+tt[1]*1.6*a+nn[1]*hv*c;if(typeof branchNear==='function'&&branchNear(trk,x,z,W/2+0.8,i,24)){hit=true;break;}}
+      if(hit)continue;addCollider(trk,cx,cz,o.r,'rock',i,o);break;}});});});
   // старт, финиш, трибуны, боксы
   const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});[1,-1].forEach(sd=>{const p=pts[fi],nn=N[fi];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',fi);});
   if(!cfg.closed){const si=Math.min(n-1,trk.startIdx+1);[1,-1].forEach(sd=>{const p=pts[si],nn=N[si];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',si);});}
@@ -19962,7 +20078,7 @@ function carStep(c,trk,dt){
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
   const L=colNear(trk,c.x,c.z,2.8);
   // второй проход: удар разворачивает машину, и нос может задеть стену снова — выталкиваем ещё раз
-  if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
+  if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o,ps?0:dt);}
   if(bar&&bar.par){// 0.26: парапет моста с двух сторон: изнутри — бортом к стенке, снаружи — не перелезть на полотно
     const al=Math.abs(lat),sg=Math.sign(lat)||1,face=lat>0?bar.L:bar.R,inn=face-CAR_R,out=face+bar.par+CAR_R;
     let al2=al;if(al>inn&&al<out){const nn=trk.N[c.idx],inside=c.parIn!==false,to=inside?inn:out,ex=al-to;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;al2=to;
@@ -19986,8 +20102,8 @@ function segSeg(S,Q){const d1x=S[2]-S[0],d1z=S[3]-S[1],d2x=Q[2]-Q[0],d2z=Q[3]-Q[
   let s=den>1e-9?clamp((b*f-c*e)/den,0,1):0,t=(b*s+f)/e;if(t<0){t=0;s=clamp(-c/a,0,1);}else if(t>1){t=1;s=clamp((b-c)/a,0,1);}
   return [S[0]+d1x*s,S[1]+d1z*s,Q[0]+d2x*t,Q[1]+d2z*t];}
 // Столкновение с препятствием: круг (дерево, столб) или прямоугольник (дом, забор, трибуна, толпа)
-function obstacleHit(c,o){const [ax,az,bx,bz]=carCapsule(c);
-  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R;if(d>=rr)return;const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
+function obstacleHit(c,o,dt){const [ax,az,bx,bz]=carCapsule(c),soft=!!BRUSH[o.kind];/* 0.51: куст и изгородь — не стена, машина продирается */
+  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R-(soft?0.5:0);if(d>=rr)return;if(soft){brushHit(c,o,dt);return;}const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
   const b=o.box;let best=null;
   const hu=b.hu,hv=b.hv;
   for(let k=0;k<=8;k++){const t=k/8,px=ax+(bx-ax)*t,pz=az+(bz-az)*t,lx=(px-o.x)*b.ux+(pz-o.z)*b.uz,lz=(px-o.x)*b.vx+(pz-o.z)*b.vz,cx=lx<-hu?-hu:lx>hu?hu:lx,cz=lz<-hv?-hv:lz>hv?hv:lz,dx=lx-cx,dz=lz-cz;
@@ -19995,7 +20111,7 @@ function obstacleHit(c,o){const [ax,az,bx,bz]=carCapsule(c);
     if(dx*dx+dz*dz>=CAR_R*CAR_R&&(dx!==0||dz!==0))continue;const d=Math.hypot(dx,dz);let pen,nl;
     if(d>1e-4){if(d>=CAR_R)continue;pen=CAR_R-d;nl=[dx/d,dz/d];}else{const ex=b.hu-Math.abs(lx),ez=b.hv-Math.abs(lz);if(ex<ez){nl=[Math.sign(lx)||1,0];pen=ex+CAR_R;}else{nl=[0,Math.sign(lz)||1];pen=ez+CAR_R;}}
     if(!best||pen>best.pen)best={pen,nl};}
-  if(!best)return;const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
+  if(!best)return;if(soft){brushHit(c,o,dt);return;}const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
 // Удар о препятствие с нормалью (nx,nz), направленной к машине: поперечная скорость отражается с потерей,
 // продольная теряет лишь трение удара, а сам удар разворачивает машину вдоль стены — она скользит и уходит от неё, а не липнет
 function wallHit(c,nx,nz,e,dmgK,kind,hx,hz){
@@ -20172,7 +20288,11 @@ function playerControl(c,dt){
   // там — всего 0,10–0,12 рад: помощник съедал руль наполовину, а в торможении, когда зад облегчён, — целиком (машина шла прямо).
   // Теперь в обычном повороте помощник берёт не больше трети руля (гасит рывки), а в полную силу включается, когда задние колёса
   // уже за пределом сцепления (угол увода больше 0,12) — то есть в настоящем заносе
-  if(!hist&&v>4){const lim=0.3*dmax+clamp(((c.slipR||0)-0.12)/0.08,0,1)*(moto?0.2:0.12);want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),-lim,lim);}
+  // 0.51, отзыв автора (мотоцикл 40 л.с. и выше: «жму на тормоза и вправо, а его несёт прямо»): у мотоцикла помощник брал весь
+  // увод кузова (×1) и до 0,2 рад сверх — в торможении, когда заднее колесо разгружено, он возвращал руль почти в ноль (0,2–0,3°
+  // вместо 4°), и мотоцикл поворачивал только заносом зада: с 150 км/ч путь за 2 с отклонялся на 27° (у автомобиля — на 40°).
+  // Теперь доля помощника у мотоцикла меньше (×0,5 и до 0,08 рад): руль остаётся в руках — 40° за те же 2 с
+  if(!hist&&v>4){const mA=PHY.motoA||[0.5,0.08],lim=0.3*dmax+clamp(((c.slipR||0)-0.12)/0.08,0,1)*(moto?mA[1]:0.12);want+=clamp(Math.atan2(c.vy,v)*(moto?mA[0]:0.7),-lim,lim);}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
   // 0.40: «держалка» гасит только лишнее — вращение сверх того, что задаёт руль (rk — поворот по геометрии колёс), и снос задних
   // колёс за пиком шины (угол увода задней оси больше 0,15 — пик у 0,145). Раньше гасились всё вращение и весь увод: на малой скорости машина шла
@@ -25540,10 +25660,14 @@ function poly(c,pts,fill){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1])
 function carStyle(md,prep,y,own){
   const p=parts(md),b=p.b.id;
   if(p.b.moto)return 'moto';   // 0.33: мотоцикл в 3D (трицикл, одиночка, с коляской — по деталям)
-  if(p.b.truck)return b==='b6'?'van':'truck';
+  // 0.51 (отзыв автора, дважды: «междугородный автобус в гонке — обычный грузовик»): у автобуса свой кузов с окнами; санитарная и
+  // почтовая машины — фургон; таксомотор — закрытый автомобиль, штабная машина — фаэтон; остальная рабочая техника — грузовик
+  if(p.b.truck){const k=typeof bodyKind==='function'?bodyKind(p.b):'';return k==='bus'||k==='coach'||k==='school'?'bus':k==='taxi'?'sedan':k==='staff'?'tourer':b==='b6'||k==='amb'||k==='mail'||k==='mamb'?'van':'truck';}
   // своя спортивная модель и в заводской подготовке остаётся спортивной (без фар, с номерами)
   const sport=b==='b10'||(b==='b1'&&md.t==='t3'&&y>=1910);
-  if(prep===2)return own&&sport?'sport':y<1901?'carriage':y<1907?'gp1901':y<1912?'gp1907':y<1925?'gp1912':'gp1925';
+  // 0.51 (отзыв автора: «моя модель закрытая, а в гонке её показывают открытой»): своя закрытая модель и с заводской гоночной
+  // подготовкой остаётся в своём закрытом кузове (с номером и полосой), а не превращается в открытую гоночную
+  if(prep===2)return own&&sport?'sport':own&&p.b.closed&&y>=1911?'sedan':y<1901?'carriage':y<1907?'gp1901':y<1912?'gp1907':y<1925?'gp1912':'gp1925';
   if(y<1901&&(b==='b1'||!own))return 'carriage';
   if(prep===1&&!own)return y<1912?'gp1901':'sport';
   return b==='b10'||(b==='b1'&&md.t==='t3'&&y>=1910)?'sport':b==='b1'?'runabout':b==='b2'?'tonneau':b==='b3'?'tourer':'sedan';
@@ -25552,7 +25676,7 @@ function carStyle(md,prep,y,own){
 // заводской гоночный кузов — узкий гоночный, но в цвете модели с полосой национального гоночного цвета
 function modelSpec(md,prep,y,o){o=o||{};const p=parts(md),bid=p.b.id,style=carStyle(md,prep,y,true),hp=engineHp(p.e,md),hpB=hp<=4?0:hp<=10?1:hp<=20?2:hp<=35?3:hp<=60?4:5;
   const color=md.paint||'#23427a',acc=prep===2&&y>=1903&&o.country&&COUNTRIES[o.country]?COUNTRIES[o.country].race:null;
-  const wheel=style==='moto'?'wire':o.wheel||wheelKind(md,y),mech=style==='moto'?false:o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=(prep===1||(prep===2&&style==='sport'))&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
+  const wheel=style==='moto'?'wire':o.wheel||wheelKind(md,y),mech=style==='moto'?false:o.mech!==undefined?!!o.mech:mechanicEra(y),num=o.num||0,strip=(prep===1||(prep===2&&(style==='sport'||style==='sedan')))&&!p.b.truck?1:0,lux=md.t==='t2'?1:0;
   // 0.21: у пилота с историческим фото — его лицо на голове
   const drv=o.drv&&typeof faceOf==='function'&&faceOf(o.drv)?o.drv:'';
   // 0.33: мотоцикл — облик по деталям: мотор, рама, передача, шины; коляска справа (в Британии — слева)
@@ -25712,15 +25836,16 @@ function carModelV1(S){
     // номер на хвосте
     tailLamp(-1.3,0.18,yb+0.3);G.len=[-1.6,zf+0.1];G.t=t;
     if(S.acc)mBox(M,-0.065,top-0.004,0.05,0.065,top+0.016,zf,S.acc,'paint');}
-  else if(st==='van'||st==='truck'){
-    const truck=st==='truck',big=S.b==='b8',wb=truck?(big?3.6:3.2):2.5,t=1.45,rF=truck?0.46:0.44,rR=truck?0.5:0.44;wt='wood';wheels(wb,t,rF,rR,truck?0.12:0.08,big,truck);
+  else if(st==='van'||st==='truck'||st==='bus'){
+    const bus=st==='bus',truck=st==='truck',big=S.b==='b8'||bus,wb=bus?(S.b==='b15'?3.9:3.4):truck?(big?3.6:3.2):2.5,t=1.45,rF=truck||bus?0.46:0.44,rR=truck||bus?0.5:0.44;wt='wood';wheels(wb,t,rF,rR,truck||bus?0.12:0.08,big,truck);
     const zf=wb/2+0.3;radiator(zf,0.34,0.62,1.2,y<1906?'coil':'vert');hood(zf,wb/2-0.45,0.36,0.62,1.2,true);
     mBox(M,-0.55,0.7,wb/2-0.95,0.55,1.3,wb/2-0.45,col,'paint',['t']);
     mBox(M,-0.62,1.95,wb/2-1.25,0.62,2.02,wb/2-0.4,shade(col,-0.3),'paint');[-1,1].forEach(sd=>mBox(M,sd*0.58-0.03,1.2,wb/2-0.45,sd*0.58+0.03,1.95,wb/2-0.4,dark,'matte'));
     seats(wb/2-0.95,[-0.25,0.25],0.95,0.45,0.2);mSteer(M,0.25,1.45,wb/2-0.6,0.19,S);drv(0.25,1.0,wb/2-0.95,wb/2-0.62);if(S.mech)mechc(-0.25,1.0,wb/2-0.95);
-    const z1=wb/2-1.3,z0=truck?-wb/2-0.9:-wb/2-0.5;
+    const z1=wb/2-1.3,z0=truck?-wb/2-0.9:bus?-wb/2-1.4:-wb/2-0.5;
     if(truck){mBox(M,-0.95,0.95,z0,0.95,1.05,z1,'#6a4a2c','wood');[-1,1].forEach(sd=>mBox(M,sd*0.95-0.05,1.05,z0,sd*0.95+0.05,1.5,z1,'#8a6a44','wood'));const tb=mBox(M,-0.95,1.05,z0,0.95,1.5,z0+0.08,'#8a6a44','wood');
       const deco=[];for(let k=1;k<4;k++)deco.push({a:[-0.95,1.05+k*0.11,z0-0.01],b:[0.95,1.05+k*0.11,z0-0.01],w:0.012,c:'#4a3420'});tb.b.deco=deco;}
+    else if(bus){mBox(M,-0.92,0.78,z0,0.92,2.42,z1,col,'paint');mBox(M,-0.93,2.4,z0-0.02,0.93,2.47,z1+0.02,shade(col,0.5),'paint');[-1,1].forEach(sd=>mBox(M,sd*0.925-0.01,1.6,z0+0.3,sd*0.925+0.01,2.12,z1-0.28,'#1e2a33','glass'));}
     else{const f=mBox(M,-0.72,0.78,z0,0.72,2.0,z1,col,'paint');f.b.deco=[{a:[0,0.82,z0-0.01],b:[0,1.95,z0-0.01],w:0.015,c:shade(col,-0.45)},{a:[-0.72,1.9,z0-0.01],b:[0.72,1.9,z0-0.01],w:0.012,c:shade(col,-0.45)}];}
     tailLamp(z0-0.02,0.6,0.95);G.len=[z0,zf+0.1];G.t=t+(big?0.3:0);}
   else{ // серийные: runabout, sport, tonneau, tourer, sedan
@@ -26186,9 +26311,9 @@ function carModel(S){
     tailLamp(lx,ly,lz);len=[Math.min(-1.62,zt-0.04),zr+0.1];track=t;
     if(S.acc)tube([[0,top+0.014,0.06],[0,top+0.014,zr-0.04]],0.035,S.acc,'paint',4);
     if(S.num&&hi){const f=mFace(M,[[-0.2,top-0.1,-1.02],[0.2,top-0.1,-1.02],[0.2,top-0.1,-0.72],[-0.2,top-0.1,-0.72]],col,'paint',[0,0,0]);}}
-  else if(st==='van'||st==='truck'){
-    const truck=st==='truck',big=S.b==='b8',wb=truck?(big?3.6:3.2):2.55,t=1.45,rF=truck?0.46:0.44,rR=truck?0.5:0.44,solid=truck&&y<1926,yf=rR+0.16;
-    if(truck||y<1912)wt='wood';chassis(wb,t,rF,rR,truck?0.12:0.08,{dual:big,solid,yf,fw:0.42,zEng0:wb/2-0.9,zEng1:wb/2});
+  else if(st==='van'||st==='truck'||st==='bus'){
+    const bus=st==='bus',truck=st==='truck',big=S.b==='b8'||bus,wb=bus?(S.b==='b15'?3.9:3.4):truck?(big?3.6:3.2):2.55,t=1.45,rF=truck||bus?0.46:0.44,rR=truck||bus?0.5:0.44,solid=truck&&y<1926,yf=rR+0.16;
+    if(truck||y<1912)wt='wood';chassis(wb,t,rF,rR,truck||bus?0.12:0.08,{dual:big,solid,yf,fw:0.42,zEng0:wb/2-0.9,zEng1:wb/2});
     const zr=wb/2+0.3,zd=wb/2-0.5,yt=yf+0.62;radiator(zr,0.34,yf,yt,y<1906?'honey':'vert',{apron:true});hood(zr-0.04,zd,0.36,0.4,yf,yt,yt+0.02,{louv:hi?6:0});
     headlamp(0.42,yt-0.05,zr-0.15,0.1,y<1920?'drum':'bowl');headlamp(-0.42,yt-0.05,zr-0.15,0.1,y<1920?'drum':'bowl');
     // кабина: открытая спереди с крышей на стойках
@@ -26196,14 +26321,18 @@ function carModel(S){
     seat(0,zc1+0.5,yb+0.38,0.55,0.4,0.42,{});steer(0.25,yt+0.28,zc0-0.22,0.19,0.8);drvF(0.25,yb+0.35,zc1+0.5,zc0-0.26,yt+0.28);if(S.mech)mechF(-0.25,yb+0.35,zc1+0.5);eyeAt(0.25,yb+0.35,zc1+0.5);
     const yr=yt+1.0;[-1,1].forEach(sd=>{tube([[sd*cw,yt+0.05,zc0-0.02],[sd*cw,yr,zc0-0.06]],0.025,K.dark,'paint',4);});
     mRBox(M,-cw-0.06,yr,zc1-0.1,cw+0.06,yr+0.06,zc0+0.08,0.03,K.dark,'paint');windscreen(zc0-0.02,cw-0.04,yt+0.08,yr-0.08,{lean:0.03});
-    const z1=zc1-0.05,z0=truck?-wb/2-0.95:-wb/2-0.55;
+    const z1=zc1-0.05,z0=truck?-wb/2-0.95:bus?-wb/2-1.45:-wb/2-0.55;
     if(truck){const by=Math.max(yf,rR*2+0.04);[-1,1].forEach(sd=>B(sd*0.4-0.05,yf-0.05,z0+0.1,sd*0.4+0.05,by,z1-0.1,K.chassis,'paint'));B(-0.98,by,z0,0.98,by+0.1,z1,'#6a4a2c','wood');
       [-1,1].forEach(sd=>{B(sd*0.98-0.04,by+0.1,z0,sd*0.98+0.04,by+0.5,z1,'#8a6a44','wood');for(let k=0;k<=4;k++){const z=z0+(z1-z0)*k/4;B(sd*0.98-0.05,by+0.1,z-0.04,sd*0.98+0.05,by+0.56,z+0.04,'#5a4028','wood');}});
       B(-0.98,by+0.1,z0,0.98,by+0.5,z0+0.06,'#8a6a44','wood');
       [-1,1].forEach(sd=>{const x=sd*(t/2+(big?tw0+0.05:0));mSweep(M,x,arcPath(rF,wb/2,rF+0.07,-0.3,Math.PI*0.7,hi?10:5),0.3,0.03,K.dark,[rF,wb/2]);});}
-    else{const P=(z,w,h,rr)=>({z,p:rsec(w,w-0.02,yf+0.05,yf+h,0.02,rr,n,'o')});const box=[P(z1,0.74,1.45,0.08),P(z0+0.05,0.74,1.45,0.08),P(z0,0.72,1.43,0.06)];
+    else{const bw=bus?0.93:0.74,bh=bus?1.78:1.45,P=(z,w,h,rr)=>({z,p:rsec(w,w-0.02,yf+0.05,yf+h,0.02,rr,n,'o')});const box=[P(z1,bw,bh,0.08),P(z0+0.05,bw,bh,0.08),P(z0,bw-0.02,bh-0.02,0.06)];
       mLoft2(M,box,col,'paint',{wrap:true});mCap(M,box[2],col,'paint',-1);mCap(M,box[0],col,'paint',1);
-      [-1,1].forEach(sd=>tube([[sd*0.745,yf+0.25,z1-0.15],[sd*0.745,yf+1.3,z1-0.15],[sd*0.745,yf+1.3,z0+0.2],[sd*0.745,yf+0.25,z0+0.2],[sd*0.745,yf+0.25,z1-0.15]],0.006,shade(col,0.35),'paint',3));
+      // автобус: ряд окон по бортам, заднее окно, светлая крыша и пояс под окнами
+      if(bus){const nw=S.b==='b15'?6:5,ya=yf+0.98,yb2=yf+1.5,za0=z0+0.3,L=z1-0.28-za0;for(let k=0;k<nw;k++){const za=za0+L*k/nw+0.05,zb=za0+L*(k+1)/nw-0.05;[-1,1].forEach(sd=>B(sd*(bw+0.004)-0.008,ya,za,sd*(bw+0.004)+0.008,yb2,zb,'#1e2a33','glass'));}
+        B(-bw*0.62,ya,z0-0.012,bw*0.62,yb2,z0+0.004,'#1e2a33','glass');B(-bw-0.012,yf+bh-0.03,z0-0.02,bw+0.012,yf+bh+0.05,z1+0.03,shade(col,0.5),'paint');
+        [-1,1].forEach(sd=>B(sd*(bw+0.004)-0.01,ya-0.1,z0+0.05,sd*(bw+0.004)+0.01,ya-0.05,z1-0.05,shade(col,-0.4),'paint'));}
+      if(!bus)[-1,1].forEach(sd=>tube([[sd*0.745,yf+0.25,z1-0.15],[sd*0.745,yf+1.3,z1-0.15],[sd*0.745,yf+1.3,z0+0.2],[sd*0.745,yf+0.25,z0+0.2],[sd*0.745,yf+0.25,z1-0.15]],0.006,shade(col,0.35),'paint',3));
       tube([[0,yf+0.12,z0-0.004],[0,yf+1.4,z0-0.004]],0.006,shade(col,-0.5),'paint',3);wings(wb,t,rF,{boardY:yf-0.02,frameY:yf,fwIn:0.42});}
     sideLamp(cw+0.06,yt,zc0-0.05);sideLamp(-cw-0.06,yt,zc0-0.05);tailLamp(0.62,yf+0.25,z0-0.03);len=[z0-0.05,zr+0.12];track=t+(big?0.3:0);}
   else{ // серийные: runabout, sport, tonneau, tourer, sedan
@@ -29196,7 +29325,8 @@ function r3dVeg(i0,i1){const T=R3.T,cfg=T.cfg,A=R3.veg,n=T.n,W=T.W;if(!A||cfg.te
   const sandy=cfg.terr==='sand'||cfg.terr==='beach',mnt=cfg.terr==='mount'||cfg.uphill,dryland=sandy||['it','es','ly','mc'].includes(cfg.host),per=Math.round((sandy?2:mnt?4:7)*gq().veg),out=[];
   for(let ii=i0;ii<i1;ii++){const i=ii%n;if(R3.town[i]||tunNear(T,i,3))continue;const r=mulberry32(i*7919+13),p=T.pts[i],nn=T.N[i],t=T.T[i];
     for(const sd of [1,-1]){if(cfg.terr==='beach'&&sd>0)continue;
-      for(let k=0;k<per;k++){const a=0.9+Math.pow(r(),1.8)*13,off=sd*(W/2+a),al=r()*T.step,x=p[0]+nn[0]*off+t[0]*al,z=p[2]+nn[1]*off+t[1]*al,y=groundAt(i,off)-0.04;
+      const lim=typeof branchLims==='function'?branchLims(T)[i*2+(sd>0?0:1)]:14;/* 0.51: трава не растёт на соседней ветке дороги */
+      for(let k=0;k<per;k++){const a=0.9+Math.pow(r(),1.8)*13,off=sd*(W/2+a),al=r()*T.step,x=p[0]+nn[0]*off+t[0]*al,z=p[2]+nn[1]*off+t[1]*al;if(a>lim){r();r();r();r();continue;}const y=groundAt(i,off)-0.04;
         const q=r(),L2=dryland?(q<0.6?dry:q<0.9?gr:fl):mnt?(q<0.35?dry:q<0.85?gr:fe):(q<0.1?fl:q<0.2?dry:q<0.27&&a>4?fe:gr),sp=L2[Math.floor(r()*L2.length)],k2=(0.75+r()*0.6)*(a<3?0.9:1.1);
         out.push(x,y,z,sp.w*k2,sp.h*k2,sp.u,sp.v,sp.du,sp.dv,0,0.78+r()*0.3,sp.sway);}}}
   return out.length?new Float32Array(out):null;}
@@ -29218,9 +29348,15 @@ function r3dSection(i,iu){
   let kmax=0;for(let d=-3;d<=3;d++){const j=T.closed?((i+d)%n+n)%n:clamp(i+d,0,n-1);if(Math.abs(T.K[j])>Math.abs(kmax))kmax=T.K[j];}
   const town=R3.town[i];
   if(T.bridge&&T.bridge[i])return {road,uv,rw,iu,sh:[null,null],tex:r3dTexKey(i),tint:0.92+0.16*vnz(iu/9,0.5,5),town,i,bridge:1};
-  const sh=[1,-1].map(sd=>{const inner=kmax*sd>0,aMax=inner?Math.min(14,0.85/Math.abs(kmax)-W/2):14;
-    const A=(town?[0,0.12,3,6,14]:[0,1.5,4,8.5,14]).filter(a=>a<=aMax);if(A.length<2)return null;
-    const pts=A.map((a,k)=>{const off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;let y=a===14?fH(x,z)-0.6:shoulderY(i,sd,a,x,z);if(a===0)y-=0.02;return [x,y,z];});pts.A=A;return pts;});
+  const SL=typeof branchLims==='function'?branchLims(T):null;
+  const sh=[1,-1].map(sd=>{const inner=kmax*sd>0,aMax=inner?Math.min(14,0.85/Math.abs(kmax)-W/2):14,lim=SL?SL[i*2+(sd>0?0:1)]:14;
+    let A=(town?[0,0.12,3,6,14]:[0,1.5,4,8.5,14]).filter(a=>a<=aMax),foot=0;
+    // 0.51: рядом другая ветка трассы — обочина кончается на полпути к ней, обрыв закрывает откос до земли
+    if(lim<14&&lim<aMax){A=A.filter(a=>a<lim-0.2);if(lim>0.3){A.push(lim);foot=1;}}
+    if(A.length<2)return null;
+    const pts=A.map((a,k)=>{const off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;let y=a===14?fH(x,z)-0.6:shoulderY(i,sd,a,x,z);if(a===0)y-=0.02;return [x,y,z];});
+    if(foot){const a=lim+0.3,off=sd*(W/2+a),x=p[0]+nn[0]*off,z=p[2]+nn[1]*off;pts.push([x,Math.min(pts[pts.length-1][1]-0.05,fH(x,z)-0.6),z]);A.push(a);}
+    pts.A=A;return pts;});
   return {road,uv,rw,iu,sh,tex:r3dTexKey(i),tint:0.92+0.16*vnz(iu/9,0.5,5),town,i};
 }
 // Смещение от колеи — в четвёртый байт нормали (шейдер дороги читает его как v_rl, метры/4)
@@ -29490,7 +29626,8 @@ function r3dCamera(dt,W,H){
     const a=F.yaw+(R3.orbA||0),Dd=R3.orbD||4.6;eye=[F.x-Math.sin(a)*Dd,cm.y+(R3.orbH||1.5),F.z-Math.cos(a)*Dd];look=[F.x,cm.y+0.7,F.z];near=0.1;}
   else{// чувство скорости: на разгоне камера чуть отстаёт и опускается, на торможении — подъезжает к машине
     const ac=cm.v0===undefined?0:(F.vx-cm.v0)/Math.max(0.005,dt);cm.v0=F.vx;cm.lag=(cm.lag||0)+(clamp(ac*0.07,-0.55,0.75)-(cm.lag||0))*Math.min(1,dt*2.5);
-    const D=(v===1?8.8:5.4)*(1+0.07*sp)+cm.lag,Hc=(v===1?3.5:2.25)*(1-0.1*sp),A=v===1?12:8,LH=v===1?0.2:0.55;
+    // 0.51: автобус и фургон выше и длиннее машины — камера дальше и выше, иначе кузов закрывает дорогу
+    const big=F.style==='bus'?1:F.style==='van'?0.35:0,D=(v===1?8.8:5.4)*(1+0.07*sp)+cm.lag+big*2.8,Hc=(v===1?3.5:2.25)*(1-0.1*sp)+big*1.5,A=v===1?12:8,LH=(v===1?0.2:0.55)+big*0.5;
     let back=cm.y;const bi=R3.T.closed?((F.idx-Math.round(D/R3.T.step))%R3.T.n+R3.T.n)%R3.T.n:Math.max(0,F.idx-Math.round(D/R3.T.step));back=Math.max(back,R3.T.pts[bi][1]);
     // камера не уходит в склон: над землёй по пути от машины к камере; круча между ними — подъезжаем ближе и выше
     let Dd=D,ey=back+Hc;for(let k=0;k<3;k++){let need=0;for(const t of [0.45,0.75,1]){const g=fH(F.x-fw[0]*Dd*t,F.z-fw[2]*Dd*t)+1.1,ly=cm.y+(ey-cm.y)*t;need=Math.max(need,(g-ly)/t);}
@@ -32456,7 +32593,8 @@ const ACT={
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
   /* 0.51, этап 4в: своя разработка и авиамотор (16c-own.js) */
   ownOpen:()=>openOwn(null),ownCat:d=>openOwn(d.k,d.mo==='1'),
-  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},
+  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
+  ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
   ownTech:d=>{if(!ownDraft)return;const T=ownDraft.tech,i=T.indexOf(d.id);if(i>=0)T.splice(i,1);else{if(T.length>=2)T.shift();T.push(d.id);}ownRe();},
   ownGoal:d=>{if(!ownDraft)return;ownDraft.goal=d.g;ownRe();},ownGl:d=>{if(!ownDraft)return;ownDraft.gl=+d.n;ownRe();},
   ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},

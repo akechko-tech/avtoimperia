@@ -92,6 +92,14 @@ function ownBuild(s,sp){const cat=OWN_CAT[sp.k],x0=cat&&byId(cat.arr(),sp.base);
   ['hp','kg','life'].forEach(f=>{if(x[f]!=null)x[f]=Math.round(x[f]*(f==='hp'&&x[f]<20?10:1))/(f==='hp'&&x[f]<20?10:1);});x.c=Math.round(x.c);
   ['rel','eff','ease','ride','grip','brk','relK','punct','wear','cd','comf','fuel','cx','max'].forEach(f=>{if(x[f]!=null)x[f]=+x[f].toFixed(3);});
   const hist=ownHistYear(sp.k,x);x.own=1;x.k=sp.k;x.yh=hist;x.y=Math.max(s.y,hist);x.base=x0.id;x.tech=(sp.tech||[]).slice();x.goal=sp.goal;x.gl=sp.gl||1;return x;}
+/* 0.51 (отзыв автора: «хотелось бы дорабатывать свой мотор до выпуска и дальше улучшать его характеристики, не плодя бесконечные
+   недоверсии»): доводка — тот же узел. Проект меняет черты уже существующего узла: имя, патент, машины, лицензии остаются;
+   у узла растёт номер доводки. Приём, уже применённый к узлу, второй раз не берётся. */
+function ownIntoOf(s,sp){const x=sp&&sp.into?ownGet(s,sp.base):null;return x&&x.k===sp.k?x:null;}
+function ownIntoBusy(s,id){return rdActive(s).some(p=>p.kind==='own'&&p.sp&&p.sp.into&&p.sp.base===id);}
+function ownRefine(s,o,x,pj){const keep={id:1,name:1,base:1,made:1,pat:1,ser:1,cp:1,note:1,art:1,own:1,k:1,rev:1,tech:1};for(const f in x)if(!keep[f])o[f]=x[f];
+  o.tech=[...new Set([...(o.tech||[]),...(x.tech||[])])];o.rev=(o.rev||1)+1;o.revY=s.y;const T2=(pj.sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);
+  o.art=(o.art||'')+` Доводка ${s.y} года${T2.length?' ('+T2.map(t=>t.n.toLowerCase()).join(' и ')+')':''}: цель — ${ownGoalName(x.goal,x.k).toLowerCase()}.`;return o;}
 function ownNeed(sp,x0,yrs){return Math.max(4,Math.round((8+(x0.q||10)/8)*(1+0.45*(sp.tech||[]).length+0.2*OWN_GS[clamp(sp.gl||1,1,3)])*aheadTimeK(yrs)));}
 // цена проекта — как у прототипа КБ: опыты и образцы, цена самого узла ×3, каждый год опережения ×1,6; планка от оборота
 function ownRdCost(pj,s){s=s||G;const yrs=pj.yrs||0,era=Math.min(1,0.25+0.05*Math.max(0,yf(s)-1895));
@@ -99,20 +107,23 @@ function ownRdCost(pj,s){s=s||G;const yrs=pj.yrs||0,era=Math.min(1,0.25+0.05*Mat
   return Math.max(base,Math.round(bizRev(s)*AHEAD_REV*aheadCostK(yrs)/50)*50);}   // планка — тысячная годового оборота: своя разработка большой фирмы не бывает «за копейки»
 // что получится: узел, год по истории, цена, срок, риск, сравнение с лучшим историческим узлом года и почему нельзя (если нельзя)
 function ownPreview(s,sp){const x=ownBuild(s,sp);if(!x)return null;const x0=byId(OWN_CAT[sp.k].arr(),sp.base),yrs=Math.max(0,x.yh-s.y),need=ownNeed(sp,x0,yrs),best=ownBest(s,sp.k,x)||x0;
-  const pj={kind:'own',id:'own',ck:sp.k,cat:OWN_CAT[sp.k].n,name:sp.name||'',need,yrs,pc:partCost(x,s),moto:!!x.moto,sp:{k:sp.k,base:sp.base,tech:(sp.tech||[]).slice(),goal:sp.goal,gl:sp.gl||1,name:sp.name||''}};
+  const into=ownIntoOf(s,sp);
+  const pj={kind:'own',id:'own',ck:sp.k,cat:OWN_CAT[sp.k].n,name:into?into.name:sp.name||'',need,yrs,pc:partCost(x,s),moto:!!x.moto,sp:{k:sp.k,base:sp.base,tech:(sp.tech||[]).slice(),goal:sp.goal,gl:sp.gl||1,name:into?into.name:sp.name||'',into:into?1:0}};
   const cost=ownRdCost(pj,s),T2=(sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);let why='';
+  if(into){const rep=T2.find(t=>(into.tech||[]).includes(t.id));if(rep)why=`Приём «${rep.n.toLowerCase()}» к этому узлу уже применён`;else if(ownIntoBusy(s,into.id))why='Этот узел уже дорабатывают';}
   if(!OWN_GOAL[sp.goal])why='Выберите цель';else if(T2.some(t=>!xpTechOk(s,t))){const t=T2.find(t=>!xpTechOk(s,t));why=`Мало опыта: «${XP_AREA[t.a].n}» ${Math.floor(xpOf(s,t.a))} из ${t.xp}`;}
   else if(yrs>OWN_LIMIT)why=`Предел эпохи: такой узел история освоит только в ${x.yh} году — материалы и станки ${s.y} года этого не дадут`;
   else if(rdActive(s).length>=rdSlots(s))why='В КБ нет свободного места для проекта';else if(s.cash<cost)why='Не хватает денег';
   const cmp=OWN_MEAS[sp.k].map(([n,f,d])=>({n,d,mine:f(x),base:f(x0),best:f(best)}));
   return {x,x0,best,yrs,need,cost,pj,why,cmp,months:Math.max(1,Math.ceil(need/Math.max(0.01,rdTotal(s)/(rdActive(s).length+1)))),rework:protoRisk({kind:'own',yrs}),risk:partRisk(x,s.y)};}
 function ownNextName(s,k){const n=ownParts(s,k).length+1,w={e:'мотор',g:'коробка',c:'рама',w:'шины',k:'тормоза',b:'кузов'}[k];return `${s.company}: ${w} №${n}`.slice(0,40);}
-function ownStart(s,sp){const P=ownPreview(s,sp);if(!P||P.why)return false;P.pj.name=(sp.name||'').trim()||ownNextName(s,sp.k);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='own'+s.ownN;return rdBegin(s,P.pj);}
+function ownStart(s,sp){const P=ownPreview(s,sp);if(!P||P.why)return false;const into=ownIntoOf(s,sp);if(into&&ownIntoBusy(s,into.id))return false;P.pj.name=into?into.name:(sp.name||'').trim()||ownNextName(s,sp.k);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='own'+s.ownN;return rdBegin(s,P.pj);}
 // статья «Зачем и откуда»
 function ownArticle(s,x){const x0=byId(OWN_CAT[x.k].arr(),x.base),T2=(x.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean),yrs=x.yh-(x.made?x.made.y:s.y);
   return `Основа — ${x0?x0.name:'свой узел'}. `+(T2.length?`Приёмы: ${T2.map(t=>t.n.toLowerCase()).join(' и ')}. ${T2.map(t=>t.h).join(' ')} `:'')+`Цель — ${ownGoalName(x.goal,x.k).toLowerCase()}. `
     +(x.yh>1930?`В истории до 1930 года такого узла не было: по чертам он соответствует ${x.yh} году.`:yrs>0?`По чертам это ${x.yh} год: история пришла к такому узлу на ${yrs} ${plural(yrs,'год','года','лет')} позже.`:`По чертам это ${x.yh} год: в истории такие узлы уже делали — но этот ваш, и доводить его вам.`);}
-function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы больше нет.`,'bad');return;}s.custom=s.custom||[];s.ownId=(s.ownId||0)+1;x.id='x'+x.k+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};
+function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы больше нет.`,'bad');return;}s.custom=s.custom||[];
+  {const o=ownIntoOf(s,pj.sp);if(o){ownRefine(s,o,x,pj);ownSync(s);xpAdd(s,XP_CAT[o.k],2);addLog(`КБ закончило доводку: ${o.name} — доводка №${o.rev-1}, узел тот же.`,'good');pendingToasts.push('🧪 Доводка: '+o.name);return;}}s.ownId=(s.ownId||0)+1;x.id='x'+x.k+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};
   x.note=`Своя разработка ${s.y} года.`;x.art=ownArticle(s,x);s.custom.push(x);ownSync(s);s.rd.upg[x.id]=Math.floor(upgL(x.base)/2);xpAdd(s,XP_CAT[x.k],3);
   const yrs=Math.max(0,x.yh-s.y),pc=ownPatCost(s);addLog(`КБ закончило свою разработку: ${x.name}${yrs>0?` — на ${yrs} ${plural(yrs,'год','года','лет')} раньше истории`:''}.`,'good');pendingToasts.push('🧪 Свой узел: '+x.name);
   if(yrs>0)try{recordFirst(s,'own_'+x.id,x.name,x.yh,'отрасль пришла к такому узлу',null,{noArt:1});}catch(_){}
@@ -250,7 +261,7 @@ function ownKeep(){try{const e=document.getElementById('ownname');if(e&&ownDraft
 function ownRe(){ownKeep();let top=0;try{top=sb.scrollTop;}catch(_){}openOwn(ownDraft.k,ownDraft.moto);try{sb.scrollTop=top;}catch(_){}}
 function aeRe(){let top=0;try{top=sb.scrollTop;}catch(_){}openAeng();try{sb.scrollTop=top;}catch(_){}}
 function aeKeep(){try{const e=document.getElementById('aename');if(e&&aeDraft&&typeof e.value==='string')aeDraft.name=e.value.trim().slice(0,40);}catch(_){}}
-function ownDraftInit(s,k,moto){const B=ownBaseList(s,k,moto);ownDraft={k,moto:!!moto,base:B[0]?B[0].id:null,tech:[],goal:'power',gl:1,name:''};return ownDraft;}
+function ownDraftInit(s,k,moto,base){const B=ownBaseList(s,k,moto),b0=base&&B.some(x=>x.id===base)?base:B[0]?B[0].id:null;ownDraft={k,moto:!!moto,base:b0,tech:[],goal:'power',gl:1,name:'',into:1};return ownDraft;}
 function ownFmt(v,d){return d===0?fmtN(Math.round(v)):v.toFixed(d).replace('.',',');}
 function ownPreviewHTML(s,P){if(!P)return '';const x=P.x,rows=P.cmp.map(c=>`<tr><td>${esc(c.n)}</td><td class="num">${ownFmt(c.base,c.d)}</td><td class="num ${c.mine>c.base*1.005?'good':c.mine<c.base*0.995?'bad':''}"><b>${ownFmt(c.mine,c.d)}</b></td><td class="num muted">${ownFmt(c.best,c.d)}</td></tr>`).join('');
   const pc0=partCost(P.x0,s),pc1=partCost(x,s);
@@ -268,19 +279,23 @@ function openOwn(k,moto){const s=G;ownEnsure(s);if(!k){ownDraft=null;const mv=li
       <div class="label" style="margin-top:14px">Шаг 1. Что делаем</div>${cv?Object.keys(OWN_CAT).map(q=>cat(q,false)).join(''):''}${mv?['e','c','w','k'].map(q=>cat(q,true)).join(''):''}
       ${aeCan(s)?`<button class="race-item" data-act="aeOpen" style="display:block;width:100%;text-align:left"><span class="mo">✈ Авиамотор</span><h3 style="margin-top:2px">${esc((aeBase(s)||{name:'—'}).name)}</h3><p class="small muted">основа — ваш самый сильный мотор · для своих аэропланов и на продажу авиазаводам</p></button>`:''}
       ${mine.length?`<div class="label" style="margin-top:14px">Свои узлы</div>${mine.map(x=>ownItemHTML(s,x)).join('')}`:''}`);}
-  if(!ownDraft||ownDraft.k!==k||ownDraft.moto!==!!moto)ownDraftInit(s,k,moto);const d=ownDraft,B=ownBaseList(s,k,d.moto),P=d.base?ownPreview(s,d):null;
+  if(!ownDraft||ownDraft.k!==k||ownDraft.moto!==!!moto)ownDraftInit(s,k,moto);const d=ownDraft,B=ownBaseList(s,k,d.moto);
+  // свои узлы — в начале списка основ: их и дорабатывают; выбранная основа видна всегда
+  const BL=[...B.filter(x=>x.own),...B.filter(x=>!x.own)].slice(0,5);if(d.base&&!BL.some(x=>x.id===d.base)){const bx=B.find(x=>x.id===d.base);if(bx)BL.push(bx);}
+  const bo=ownGet(s,d.base),into=bo&&d.into?bo:null;if(into)d.tech=d.tech.filter(t=>!(into.tech||[]).includes(t));const P=d.base?ownPreview(s,d):null;
   const techs=OWN_TECH.filter(t=>t.cat.includes(k)),chip=(on,act,attrs,txt,dis)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs} ${dis?'disabled':''}>${txt}</button>`;
   openSheet(`<div class="row"><h2>${d.moto?'🏍 ':''}${OWN_CAT[k].n}: своя разработка</h2>${X}</div>
     <div class="row" style="margin-top:8px"><span class="small"><b>Шаг 2. Основа</b></span><button class="btn sm" data-act="ownOpen">Изменить узел</button></div>
-    <div class="chips">${B.slice(0,4).map(x=>chip(d.base===x.id,'ownBase',`data-id="${x.id}"`,esc(x.name)+(upgL(x.id)?' ★'+upgL(x.id):''))).join('')}</div>
+    <div class="chips">${BL.map(x=>chip(d.base===x.id,'ownBase',`data-id="${x.id}"`,(x.own?'🧪 ':'')+esc(x.name)+(upgL(x.id)?' ★'+upgL(x.id):''))).join('')}</div>
+    ${bo?`<div class="chips" id="owninto" style="margin-top:6px">${chip(!!d.into,'ownInto','data-v="1"','Доработать этот узел<small>тот же узел: имя, патент и машины остаются</small>')}${chip(!d.into,'ownInto','data-v="0"','Новый узел на его основе<small>отдельное имя и отдельный патент</small>')}</div>`:''}
     <div class="label" style="margin-top:12px">Шаг 3. Приёмы — один или два (второй даёт меньше)</div>
-    ${techs.length?`<div class="chips">${techs.map(t=>{const ok=xpTechOk(s,t),on=d.tech.includes(t.id);return `<button class="chip${on?' on':''}" data-act="ownTech" data-id="${t.id}" ${ok?'':'disabled'}>${esc(t.n)}<small>${ok?esc(t.d):`нужен опыт: ${XP_AREA[t.a].n.toLowerCase()} ${Math.floor(xpOf(s,t.a))} из ${t.xp}`}</small></button>`;}).join('')}</div>`:'<p class="small muted" style="margin-top:4px">Для этого узла приёмов из опыта нет — только цель.</p>'}
+    ${techs.length?`<div class="chips">${techs.map(t=>{const used=!!(into&&(into.tech||[]).includes(t.id)),ok=xpTechOk(s,t)&&!used,on=d.tech.includes(t.id)&&!used;return `<button class="chip${on?' on':''}" data-act="ownTech" data-id="${t.id}" ${ok?'':'disabled'}>${esc(t.n)}<small>${used?'уже применён к этому узлу':ok?esc(t.d):`нужен опыт: ${XP_AREA[t.a].n.toLowerCase()} ${Math.floor(xpOf(s,t.a))} из ${t.xp}`}</small></button>`;}).join('')}</div>`:'<p class="small muted" style="margin-top:4px">Для этого узла приёмов из опыта нет — только цель.</p>'}
     <div class="label" style="margin-top:12px">Шаг 4. Цель</div><div class="chips">${Object.keys(OWN_GOAL).map(g=>chip(d.goal===g,'ownGoal',`data-g="${g}"`,ownGoalName(g,k))).join('')}</div>
     <div class="chips">${[1,2,3].map(n=>chip(d.gl===n,'ownGl',`data-n="${n}"`,['Шаг','Два шага','Три шага'][n-1])).join('')}<span class="small muted" style="align-self:center">каждый следующий шаг даёт меньше и стоит дольше</span></div>
-    <label class="label" for="ownname" style="display:block;margin-top:12px">Название</label><input type="text" id="ownname" value="${esc(d.name||ownNextName(s,k))}" maxlength="40" style="margin-top:6px">
+    ${into?`<p class="small" style="margin-top:12px">Узел: <b>${esc(into.name)}</b> — доводка №${into.rev||1}. Название не меняется.</p>`:`<label class="label" for="ownname" style="display:block;margin-top:12px">Название</label><input type="text" id="ownname" value="${esc(d.name||ownNextName(s,k))}" maxlength="40" style="margin-top:6px">`}
     <div class="card" style="margin-top:12px;background:var(--panel2)"><div class="label">Что получится</div>${ownPreviewHTML(s,P)}</div>
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
-    <button class="btn primary block" style="margin-top:12px" data-act="ownStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
+    <button class="btn primary block" style="margin-top:12px" data-act="ownStart" ${!P||P.why?'disabled':''}>${into?'Доработать':'Начать'} · ${P?money(P.cost):''}</button>`);}
 let aeDraft=null;
 function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_TYPE).filter(k=>aeTypeOk(s,k));aeDraft={type:ks[ks.length-1]||'inline',goal:'power',gl:1,name:''};}const d=aeDraft,P=aePreview(s,d),x=P&&P.x,b=P&&P.best;
   const chip=(on,act,attrs,txt,dis)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs} ${dis?'disabled':''}>${txt}</button>`,C=x?aeSaleCalc(s,{...x,made:{y:s.y-2,m:s.m}}):null;
@@ -300,9 +315,9 @@ function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_
       <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки ${Math.round(P.rework*100)}%${C?` · продажа авиазаводам: около ${fmtN(Math.round(C.dem))} в месяц по ${money(C.price)}, с мотора ${money(C.price-C.cost)}`:''}</p></div>`:''}
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
-function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null;
-  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
-    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p></div>`;}
+function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null,busy=!ae&&ownIntoBusy(s,x.id);
+  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
+    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p>${ae?'':`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
 function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}
 function ownXpHTML(md,s){if(!md||!s||!(s.custom||[]).length)return '';const L=(s.custom||[]).filter(x=>md[x.k]===x.id).map(x=>({x,G:ownGain(md,s,x)})).filter(o=>o.G);if(!L.length)return '';

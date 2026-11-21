@@ -325,8 +325,10 @@ function placeScenery(trk,rnd){
       addCollider(trk,x,z,SOLID[tt].r,tt,bi);});}});// 0.26: и эти деревья твёрдые
   // порталы тоннелей: скальная стена по сторонам от проёма — твёрдая
   (trk.tunnels||[]).forEach(q=>{[[q.i0,1],[q.i1,-1]].forEach(([i,dir])=>{const p=pts[i],nn=N[i],tt=trk.T[i],hw=W/2+0.6;
-    [1,-1].forEach(sd=>{const hv=13,cx=p[0]+tt[0]*dir*1.6+nn[0]*sd*(hw+0.15+hv),cz=p[2]+tt[1]*dir*1.6+nn[1]*sd*(hw+0.15+hv);
-      addCollider(trk,cx,cz,Math.hypot(1.6,hv),'rock',i,{x:cx,z:cz,r:Math.hypot(1.6,hv),kind:'rock',box:{ux:tt[0],uz:tt[1],vx:nn[0],vz:nn[1],hu:1.6,hv}});});});});
+    // 0.51: стена не должна перегораживать соседнюю ветку трассы (в Монако невидимая скала стояла на полотне) — укорачиваем, пока мешает
+    [1,-1].forEach(sd=>{for(const hv of [13,9,6,3.5,1.8]){const cx=p[0]+tt[0]*dir*1.6+nn[0]*sd*(hw+0.15+hv),cz=p[2]+tt[1]*dir*1.6+nn[1]*sd*(hw+0.15+hv),o={x:cx,z:cz,r:Math.hypot(1.6,hv),kind:'rock',box:{ux:tt[0],uz:tt[1],vx:nn[0],vz:nn[1],hu:1.6,hv}};
+      let hit=false;for(const [a,c] of [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,0.5],[0,0],[0,-0.5]]){const x=cx+tt[0]*1.6*a+nn[0]*hv*c,z=cz+tt[1]*1.6*a+nn[1]*hv*c;if(typeof branchNear==='function'&&branchNear(trk,x,z,W/2+0.8,i,24)){hit=true;break;}}
+      if(hit)continue;addCollider(trk,cx,cz,o.r,'rock',i,o);break;}});});});
   // старт, финиш, трибуны, боксы
   const fi=trk.finishIdx;spr[fi].push({t:'banner',off:0,v:0,k:'s'});[1,-1].forEach(sd=>{const p=pts[fi],nn=N[fi];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',fi);});
   if(!cfg.closed){const si=Math.min(n-1,trk.startIdx+1);[1,-1].forEach(sd=>{const p=pts[si],nn=N[si];addCollider(trk,p[0]+nn[0]*sd*(W/2+1.4),p[2]+nn[1]*sd*(W/2+1.4),0.2,'post',si);});}
@@ -575,7 +577,7 @@ function carStep(c,trk,dt){
   // столкновения с декорациями и стенами домов: отскок поперёк, вдоль — скольжение с трением
   const L=colNear(trk,c.x,c.z,2.8);
   // второй проход: удар разворачивает машину, и нос может задеть стену снова — выталкиваем ещё раз
-  if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o);}
+  if(L)for(let ps=0;ps<2;ps++)for(const o of L){const dx=c.x-o.x,dz=c.z-o.z,rr=o.r+2.6;if(dx*dx+dz*dz>rr*rr)continue;obstacleHit(c,o,ps?0:dt);}
   if(bar&&bar.par){// 0.26: парапет моста с двух сторон: изнутри — бортом к стенке, снаружи — не перелезть на полотно
     const al=Math.abs(lat),sg=Math.sign(lat)||1,face=lat>0?bar.L:bar.R,inn=face-CAR_R,out=face+bar.par+CAR_R;
     let al2=al;if(al>inn&&al<out){const nn=trk.N[c.idx],inside=c.parIn!==false,to=inside?inn:out,ex=al-to;c.x-=nn[0]*sg*ex;c.z-=nn[1]*sg*ex;al2=to;
@@ -599,8 +601,8 @@ function segSeg(S,Q){const d1x=S[2]-S[0],d1z=S[3]-S[1],d2x=Q[2]-Q[0],d2z=Q[3]-Q[
   let s=den>1e-9?clamp((b*f-c*e)/den,0,1):0,t=(b*s+f)/e;if(t<0){t=0;s=clamp(-c/a,0,1);}else if(t>1){t=1;s=clamp((b-c)/a,0,1);}
   return [S[0]+d1x*s,S[1]+d1z*s,Q[0]+d2x*t,Q[1]+d2z*t];}
 // Столкновение с препятствием: круг (дерево, столб) или прямоугольник (дом, забор, трибуна, толпа)
-function obstacleHit(c,o){const [ax,az,bx,bz]=carCapsule(c);
-  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R;if(d>=rr)return;const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
+function obstacleHit(c,o,dt){const [ax,az,bx,bz]=carCapsule(c),soft=!!BRUSH[o.kind];/* 0.51: куст и изгородь — не стена, машина продирается */
+  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R-(soft?0.5:0);if(d>=rr)return;if(soft){brushHit(c,o,dt);return;}const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
   const b=o.box;let best=null;
   const hu=b.hu,hv=b.hv;
   for(let k=0;k<=8;k++){const t=k/8,px=ax+(bx-ax)*t,pz=az+(bz-az)*t,lx=(px-o.x)*b.ux+(pz-o.z)*b.uz,lz=(px-o.x)*b.vx+(pz-o.z)*b.vz,cx=lx<-hu?-hu:lx>hu?hu:lx,cz=lz<-hv?-hv:lz>hv?hv:lz,dx=lx-cx,dz=lz-cz;
@@ -608,7 +610,7 @@ function obstacleHit(c,o){const [ax,az,bx,bz]=carCapsule(c);
     if(dx*dx+dz*dz>=CAR_R*CAR_R&&(dx!==0||dz!==0))continue;const d=Math.hypot(dx,dz);let pen,nl;
     if(d>1e-4){if(d>=CAR_R)continue;pen=CAR_R-d;nl=[dx/d,dz/d];}else{const ex=b.hu-Math.abs(lx),ez=b.hv-Math.abs(lz);if(ex<ez){nl=[Math.sign(lx)||1,0];pen=ex+CAR_R;}else{nl=[0,Math.sign(lz)||1];pen=ez+CAR_R;}}
     if(!best||pen>best.pen)best={pen,nl};}
-  if(!best)return;const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
+  if(!best)return;if(soft){brushHit(c,o,dt);return;}const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
 // Удар о препятствие с нормалью (nx,nz), направленной к машине: поперечная скорость отражается с потерей,
 // продольная теряет лишь трение удара, а сам удар разворачивает машину вдоль стены — она скользит и уходит от неё, а не липнет
 function wallHit(c,nx,nz,e,dmgK,kind,hx,hz){
@@ -785,7 +787,11 @@ function playerControl(c,dt){
   // там — всего 0,10–0,12 рад: помощник съедал руль наполовину, а в торможении, когда зад облегчён, — целиком (машина шла прямо).
   // Теперь в обычном повороте помощник берёт не больше трети руля (гасит рывки), а в полную силу включается, когда задние колёса
   // уже за пределом сцепления (угол увода больше 0,12) — то есть в настоящем заносе
-  if(!hist&&v>4){const lim=0.3*dmax+clamp(((c.slipR||0)-0.12)/0.08,0,1)*(moto?0.2:0.12);want+=clamp(Math.atan2(c.vy,v)*(moto?1:0.7),-lim,lim);}
+  // 0.51, отзыв автора (мотоцикл 40 л.с. и выше: «жму на тормоза и вправо, а его несёт прямо»): у мотоцикла помощник брал весь
+  // увод кузова (×1) и до 0,2 рад сверх — в торможении, когда заднее колесо разгружено, он возвращал руль почти в ноль (0,2–0,3°
+  // вместо 4°), и мотоцикл поворачивал только заносом зада: с 150 км/ч путь за 2 с отклонялся на 27° (у автомобиля — на 40°).
+  // Теперь доля помощника у мотоцикла меньше (×0,5 и до 0,08 рад): руль остаётся в руках — 40° за те же 2 с
+  if(!hist&&v>4){const mA=PHY.motoA||[0.5,0.08],lim=0.3*dmax+clamp(((c.slipR||0)-0.12)/0.08,0,1)*(moto?mA[1]:0.12);want+=clamp(Math.atan2(c.vy,v)*(moto?mA[0]:0.7),-lim,lim);}
   c.delta+=clamp(want-c.delta,-2.6*dt,2.6*dt);
   // 0.40: «держалка» гасит только лишнее — вращение сверх того, что задаёт руль (rk — поворот по геометрии колёс), и снос задних
   // колёс за пиком шины (угол увода задней оси больше 0,15 — пик у 0,145). Раньше гасились всё вращение и весь увод: на малой скорости машина шла

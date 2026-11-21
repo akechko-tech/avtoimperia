@@ -29,7 +29,7 @@ const REAL_RACES={pm1903:{},targa:{},gb1903:{},indy:{},
 const REAL_SCEN={ru:'ru',cn:'cn',nl:'nl',us:'us',uk:'uk',ie:'ie',it:'it',de:'de',at:'at',ch:'ch',es:'es',be:'be',mc:'mc',ly:'ly',fr:'fr'};
 window.REAL_TRACKS=window.REAL_TRACKS||{};
 function realIdOf(rc){if(!rc)return null;const R=REAL_RACES[rc.id];if(!R)return null;if(R.v)return R.v[rc.y]||null;if(R.years&&!R.years.includes(rc.y))return null;return R.d||rc.id;}
-function realData(rc){const id=realIdOf(rc);return id?window.REAL_TRACKS[id]||null:null;}
+function realData(rc){const id=realIdOf(rc);const D=id?window.REAL_TRACKS[id]||null:null;return D&&typeof realFix==='function'?realFix(D):D;}/* 0.51: маршрут — без отростков и петель по той же улице */
 // подгрузить данные трассы до постройки (не дольше 4 с)
 function realLoad(rc,cb){const id=realIdOf(rc);if(!id||window.REAL_TRACKS[id]||typeof document==='undefined'||!document.head||!document.head.appendChild){cb();return;}
   let done=false;const fin=()=>{if(done)return;done=true;cb();};

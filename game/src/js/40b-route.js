@@ -13,7 +13,7 @@ function placeWater(rc,host){const t=(rc.id||'')+' '+(rc.name||'')+' '+(rc.hist|
 function planRoute(trk,rnd){
   const {n,cfg,rc,K}=trk,set=SCEN_SETS[cfg.host],S=new Uint8Array(n),list=[];trk.segT=S;trk.seg=list;trk.rivers=[];trk.rails=[];trk.coast=[];trk.bridge=new Uint8Array(n);trk.tunnels=[];trk.tunAt=new Uint8Array(n);
   // Монако: знаменитый тоннель у моря (с 1929 года)
-  if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));planTunnel(trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно');}
+  if(rc.track==='monaco'){const r=mulberry32(hashStr('tun|'+rc.key));const A=[trk,S,list,r,Math.round(n*0.45),Math.round(n*0.75),24,32,'Тоннель у моря: из солнца — в темноту и обратно'];if(!planTunnel(...A))planTunnel(...A,true);/* в Монако тесно: не нашлось свободного места — тоннель всё равно будет */}
   if(cfg.oval||rc.track==='board'||cfg.sprint||rc.track==='brooklands'||rc.track==='indy'||rc.track==='monaco')return;
   // 0.21: настоящая местность — сценарий по карте, а не по жребию
   if(trk.real){realPlan(trk);return;}
@@ -61,12 +61,16 @@ function planRoute(trk,rnd){
   // подписи для заставки: самые приметные участки
   list.forEach(o=>{if(o.cap===undefined)o.cap=o.type===RSEG.serp?'Серпантин: скала с одной стороны, обрыв — с другой':o.type===RSEG.forest&&o.i1-o.i0>90?'Лесная дорога: тень и корни':o.type===RSEG.avenue?'Аллея: деревья у самой дороги':o.type===RSEG.vine?'Виноградники по обе стороны':null;});}
 // Тоннель: пологий участок нужной длины подальше от городов, мостов, переезда и берега; кривизна — сначала самая малая
-function planTunnel(trk,S,list,r,a0,a1,l0,l1,cap){const {n,K}=trk;if(a1-a0<l1+30)return null;
+function planTunnel(trk,S,list,r,a0,a1,l0,l1,cap,any){const {n,K}=trk;if(a1-a0<l1+30)return null;
+  // 0.51: над тоннелем — скальный гребень шириной в десятки метров. Если рядом идёт другая ветка той же трассы (серпантин),
+  // гребень накрывал её: «приходится проезжать сквозь холм» (отзыв автора). Тоннель ставим только там, где соседней ветки нет
+  const P=trk.pts,R2=Math.pow(trk.W/2+(trk.rc.track==='monaco'?26:44),2),lone=(j,len)=>{for(let a=j-10;a<=j+len+10;a+=2){const b=trk.closed?((a%n)+n)%n:a;if(b<0||b>=n)continue;const p=P[b];
+      for(let k=0;k<n;k+=2){let g=Math.abs(k-b);if(trk.closed)g=Math.min(g,n-g);if(g<=16)continue;const dx=P[k][0]-p[0],dz=P[k][2]-p[2];if(dx*dx+dz*dz<R2)return false;}}return true;};
   const curvy=(i,len)=>{let m=0;for(let k=i;k<Math.min(n,i+len);k++)m=Math.max(m,Math.abs(K[k]));return m;};
   for(const kMax of [1/90,1/60,1/42])for(let t=0;t<50;t++){const len=l0+Math.floor(r()*(l1-l0+1)),j=a0+Math.floor(r()*Math.max(1,a1-a0-len));
     if(j<8||j+len>n-8)continue;if(curvy(j-4,len+8)>kMax)continue;let ok=true;
     for(let a=j-14;a<=j+len+14;a++){const b=trk.closed?((a%n)+n)%n:a;if(b<0||b>=n){ok=false;break;}const q=S[b];if(q===RSEG.town||q===RSEG.bridge||q===RSEG.rail||q===RSEG.coast||q===RSEG.tunnel){ok=false;break;}}
-    if(!ok)continue;for(let a=j;a<=j+len;a++){S[a]=RSEG.tunnel;trk.tunAt[a]=1;}const o={type:RSEG.tunnel,i0:j,i1:j+len,i:Math.round(j+len/2),cap,alt:18,w:3};list.push(o);trk.tunnels.push({i0:j,i1:j+len});return o;}
+    if(!ok||(!any&&!lone(j,len)))continue;for(let a=j;a<=j+len;a++){S[a]=RSEG.tunnel;trk.tunAt[a]=1;}const o={type:RSEG.tunnel,i0:j,i1:j+len,i:Math.round(j+len/2),cap,alt:18,w:3};list.push(o);trk.tunnels.push({i0:j,i1:j+len});return o;}
   return null;}
 // Тип участка у точки трассы
 function segAt(trk,i){return trk.segT?trk.segT[((i%trk.n)+trk.n)%trk.n]:RSEG.fields;}

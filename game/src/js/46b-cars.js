@@ -362,9 +362,9 @@ function carModel(S){
     tailLamp(lx,ly,lz);len=[Math.min(-1.62,zt-0.04),zr+0.1];track=t;
     if(S.acc)tube([[0,top+0.014,0.06],[0,top+0.014,zr-0.04]],0.035,S.acc,'paint',4);
     if(S.num&&hi){const f=mFace(M,[[-0.2,top-0.1,-1.02],[0.2,top-0.1,-1.02],[0.2,top-0.1,-0.72],[-0.2,top-0.1,-0.72]],col,'paint',[0,0,0]);}}
-  else if(st==='van'||st==='truck'){
-    const truck=st==='truck',big=S.b==='b8',wb=truck?(big?3.6:3.2):2.55,t=1.45,rF=truck?0.46:0.44,rR=truck?0.5:0.44,solid=truck&&y<1926,yf=rR+0.16;
-    if(truck||y<1912)wt='wood';chassis(wb,t,rF,rR,truck?0.12:0.08,{dual:big,solid,yf,fw:0.42,zEng0:wb/2-0.9,zEng1:wb/2});
+  else if(st==='van'||st==='truck'||st==='bus'){
+    const bus=st==='bus',truck=st==='truck',big=S.b==='b8'||bus,wb=bus?(S.b==='b15'?3.9:3.4):truck?(big?3.6:3.2):2.55,t=1.45,rF=truck||bus?0.46:0.44,rR=truck||bus?0.5:0.44,solid=truck&&y<1926,yf=rR+0.16;
+    if(truck||y<1912)wt='wood';chassis(wb,t,rF,rR,truck||bus?0.12:0.08,{dual:big,solid,yf,fw:0.42,zEng0:wb/2-0.9,zEng1:wb/2});
     const zr=wb/2+0.3,zd=wb/2-0.5,yt=yf+0.62;radiator(zr,0.34,yf,yt,y<1906?'honey':'vert',{apron:true});hood(zr-0.04,zd,0.36,0.4,yf,yt,yt+0.02,{louv:hi?6:0});
     headlamp(0.42,yt-0.05,zr-0.15,0.1,y<1920?'drum':'bowl');headlamp(-0.42,yt-0.05,zr-0.15,0.1,y<1920?'drum':'bowl');
     // кабина: открытая спереди с крышей на стойках
@@ -372,14 +372,18 @@ function carModel(S){
     seat(0,zc1+0.5,yb+0.38,0.55,0.4,0.42,{});steer(0.25,yt+0.28,zc0-0.22,0.19,0.8);drvF(0.25,yb+0.35,zc1+0.5,zc0-0.26,yt+0.28);if(S.mech)mechF(-0.25,yb+0.35,zc1+0.5);eyeAt(0.25,yb+0.35,zc1+0.5);
     const yr=yt+1.0;[-1,1].forEach(sd=>{tube([[sd*cw,yt+0.05,zc0-0.02],[sd*cw,yr,zc0-0.06]],0.025,K.dark,'paint',4);});
     mRBox(M,-cw-0.06,yr,zc1-0.1,cw+0.06,yr+0.06,zc0+0.08,0.03,K.dark,'paint');windscreen(zc0-0.02,cw-0.04,yt+0.08,yr-0.08,{lean:0.03});
-    const z1=zc1-0.05,z0=truck?-wb/2-0.95:-wb/2-0.55;
+    const z1=zc1-0.05,z0=truck?-wb/2-0.95:bus?-wb/2-1.45:-wb/2-0.55;
     if(truck){const by=Math.max(yf,rR*2+0.04);[-1,1].forEach(sd=>B(sd*0.4-0.05,yf-0.05,z0+0.1,sd*0.4+0.05,by,z1-0.1,K.chassis,'paint'));B(-0.98,by,z0,0.98,by+0.1,z1,'#6a4a2c','wood');
       [-1,1].forEach(sd=>{B(sd*0.98-0.04,by+0.1,z0,sd*0.98+0.04,by+0.5,z1,'#8a6a44','wood');for(let k=0;k<=4;k++){const z=z0+(z1-z0)*k/4;B(sd*0.98-0.05,by+0.1,z-0.04,sd*0.98+0.05,by+0.56,z+0.04,'#5a4028','wood');}});
       B(-0.98,by+0.1,z0,0.98,by+0.5,z0+0.06,'#8a6a44','wood');
       [-1,1].forEach(sd=>{const x=sd*(t/2+(big?tw0+0.05:0));mSweep(M,x,arcPath(rF,wb/2,rF+0.07,-0.3,Math.PI*0.7,hi?10:5),0.3,0.03,K.dark,[rF,wb/2]);});}
-    else{const P=(z,w,h,rr)=>({z,p:rsec(w,w-0.02,yf+0.05,yf+h,0.02,rr,n,'o')});const box=[P(z1,0.74,1.45,0.08),P(z0+0.05,0.74,1.45,0.08),P(z0,0.72,1.43,0.06)];
+    else{const bw=bus?0.93:0.74,bh=bus?1.78:1.45,P=(z,w,h,rr)=>({z,p:rsec(w,w-0.02,yf+0.05,yf+h,0.02,rr,n,'o')});const box=[P(z1,bw,bh,0.08),P(z0+0.05,bw,bh,0.08),P(z0,bw-0.02,bh-0.02,0.06)];
       mLoft2(M,box,col,'paint',{wrap:true});mCap(M,box[2],col,'paint',-1);mCap(M,box[0],col,'paint',1);
-      [-1,1].forEach(sd=>tube([[sd*0.745,yf+0.25,z1-0.15],[sd*0.745,yf+1.3,z1-0.15],[sd*0.745,yf+1.3,z0+0.2],[sd*0.745,yf+0.25,z0+0.2],[sd*0.745,yf+0.25,z1-0.15]],0.006,shade(col,0.35),'paint',3));
+      // автобус: ряд окон по бортам, заднее окно, светлая крыша и пояс под окнами
+      if(bus){const nw=S.b==='b15'?6:5,ya=yf+0.98,yb2=yf+1.5,za0=z0+0.3,L=z1-0.28-za0;for(let k=0;k<nw;k++){const za=za0+L*k/nw+0.05,zb=za0+L*(k+1)/nw-0.05;[-1,1].forEach(sd=>B(sd*(bw+0.004)-0.008,ya,za,sd*(bw+0.004)+0.008,yb2,zb,'#1e2a33','glass'));}
+        B(-bw*0.62,ya,z0-0.012,bw*0.62,yb2,z0+0.004,'#1e2a33','glass');B(-bw-0.012,yf+bh-0.03,z0-0.02,bw+0.012,yf+bh+0.05,z1+0.03,shade(col,0.5),'paint');
+        [-1,1].forEach(sd=>B(sd*(bw+0.004)-0.01,ya-0.1,z0+0.05,sd*(bw+0.004)+0.01,ya-0.05,z1-0.05,shade(col,-0.4),'paint'));}
+      if(!bus)[-1,1].forEach(sd=>tube([[sd*0.745,yf+0.25,z1-0.15],[sd*0.745,yf+1.3,z1-0.15],[sd*0.745,yf+1.3,z0+0.2],[sd*0.745,yf+0.25,z0+0.2],[sd*0.745,yf+0.25,z1-0.15]],0.006,shade(col,0.35),'paint',3));
       tube([[0,yf+0.12,z0-0.004],[0,yf+1.4,z0-0.004]],0.006,shade(col,-0.5),'paint',3);wings(wb,t,rF,{boardY:yf-0.02,frameY:yf,fwIn:0.42});}
     sideLamp(cw+0.06,yt,zc0-0.05);sideLamp(-cw-0.06,yt,zc0-0.05);tailLamp(0.62,yf+0.25,z0-0.03);len=[z0-0.05,zr+0.12];track=t+(big?0.3:0);}
   else{ // серийные: runabout, sport, tonneau, tourer, sedan
