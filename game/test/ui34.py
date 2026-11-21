@@ -45,7 +45,7 @@ with sync_playwright() as p:
     pg.query_selector_all('#sheetBody .chip[data-act=pick][data-k=e]:not(.on)')[0].click();pg.wait_for_timeout(300)
     ok(pg.query_selector('#sheetBody .dnote') is None,'сменили деталь — строка ушла')
     pg.click('#sheetBody [data-act=dauto]');pg.wait_for_timeout(400);t=pg.inner_text('#sheetBody .dnote') if pg.query_selector('#sheetBody .dnote') else ''
-    ok('наибольшей прибыли' in t,'«Подобрать детали повыгоднее» — тоже строкой: '+t.replace('\n',' / '))
+    ok('Самая прибыльная' in t,'«Самая прибыльная» — тоже строкой: '+t.replace('\n',' / '))
     js("(()=>{openDesigner('truck');})()");pg.wait_for_timeout(300)
     ok(pg.query_selector('#sheetBody .dnote') is None,'новый проект — без строки')
     pg.click('#sheetBody [data-act=dfront]');pg.wait_for_timeout(400);t=pg.inner_text('#sheetBody .dnote') if pg.query_selector('#sheetBody .dnote') else ''
@@ -88,7 +88,8 @@ with sync_playwright() as p:
     ok('Свой завод здесь не нужен' in t and 'impSell' in acts,'п. 5: «Свой завод здесь не нужен» и кнопка «Продать завод»')
     ok('Сеть продаёт меньше пятой части' in t and 'dealerShrink' in acts,'п. 6: совет о недогруженной сети и «Салоны поменьше»')
     ok('leaveCountry' in acts,'п. 7: «Уйти из страны»')
-    ok('⚔️ Мотоцикл: доля' in t and '· порог 10%/14%' in t and 'натиск' in t,'п. 9: ответ соперников по классам в карточке страны (дешёвый мотоцикл дома: доля выше порога «Историка», натиск)')
+    # 0.51, этап 5: вычета «натиск за долю рынка» больше нет (сквозное правило 6) — в карточке страны его строки не осталось
+    ok('натиск' not in t and '· порог 10%/14%' not in t,'п. 9: строки «натиск за долю» в карточке страны больше нет (этап 5 ТЗ 0.51)')
     ok(('ваши машины видят' in t or 'ваши машины и мотоциклы видят' in t) and 'Для всей страны нужно' in t,'п. 8: охват за границей ниже 30% — сколько нужно дилеров и что они дадут')
     js("(()=>{G.ui.dlrC='fr';render();})()");pg.wait_for_timeout(300)
     el=pg.query_selector('text=Свой завод здесь не нужен')

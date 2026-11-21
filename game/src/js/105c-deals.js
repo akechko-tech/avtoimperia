@@ -109,7 +109,8 @@ function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;cons
   return h;}
 // поглощение: заводы, дилеры, местное производство, права на модели и технологии, часть покупателей
 function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.sh0=maShares0(s,c,h.i);
-  const capAdd=Math.max(2,Math.round(M.capU));s.cap+=capAdd;s.plantVal+=capAdd*capUnitCost(s)*0.5;
+  // 0.51, этап 4б: места купленного завода не сливаются в общий конвейер — это своя линия модели, которую на нём выпускают
+  const capAdd=Math.max(2,Math.round(M.capU));s.plantVal+=capAdd*capUnitCost(s)*0.5;
   // 0.34: её дилеры — только в свободных городах; салоны там, где ваши дилеры уже есть, продаются — деньгами при сделке
   // (раньше лишние дилеры раздували салоны ×3,5 через dealerFit — и содержание сети вместе с ними)
   const DS=maDealerSplit(s,c,M);
@@ -119,7 +120,9 @@ function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.
   const md=maTakeModel(s,c,cp,M.v);
   if(typeof carLineByDeal==='function'&&!lineOn(s,'car'))try{carLineByDeal(s,h);}catch(e){console.warn('carLine',e);}/* 0.42: мотомастерская купила автозавод — автомобили открыты */
   try{const g=maMainClass(cp,s,c),sc=studyCar(g,s.y);if(sc&&!((s.rd.studied||[]).includes(studyKey(sc))))studyDone(s,{id:sc.kind,y:sc.y,name:sc.name});}catch(e){console.warn('ma tech',e);}
-  h.capAdd=capAdd;h.dlAdd=DS.add;h.model=md?md.id:null;return h;}
+  h.capAdd=capAdd;h.dlAdd=DS.add;h.model=md?md.id:null;xlMigrate(s);
+  // мотоциклетная марка (или без модели) — места, как раньше, общему заводу
+  if(md&&!isMoto(md)){const L=xlAdopt(s,capAdd,md.id,compName(cp,s));h.xl=L.id;}else s.cap+=capAdd;return h;}
 // её машина — теперь ваша модель (права на конструкцию): в её главном классе, на деталях своего года; продаётся под вашей маркой везде
 // 0.34: имя — с маркой («Mercer Raceabout», «Itala 35/45 HP»), чтобы в «Моделях» было видно, откуда машина (отзыв: «купил марки,
 // но их моделей не вижу и не понимаю, произошло ли слияние»)

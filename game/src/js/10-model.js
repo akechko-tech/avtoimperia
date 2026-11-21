@@ -277,11 +277,57 @@ function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRI
 // Себестоимость считаем при том выпуске, который купят (экономия масштаба); если по обычной цене
 // машина убыточна, пробуем и цену «себестоимость + 10–25%» — иначе «лучшей» оказалась бы машина, которую никто не берёт
 // Убыток считаем не меньше чем на плановый выпуск: иначе «выгоднее» всего машина, которую никто не купит
-function designValue(md,s){const ref=refPrice(md,s),V=Math.max(5,md.vol||20);let best=-1e18,bp=ref;
-  const uc0=unitCost({...md,vol:V},s),cands=[0.85,1,1.15,1.3].map(k=>ref*k).concat([1.1,1.25].map(k=>uc0/(1-dMargin(s))*k));
-  for(const P of cands){md.price=Math.round(P);const d=forecastDemand(md,s),m=md.price*(1-dMargin(s))-unitCost({...md,vol:Math.max(5,d)},s),v=m>0?d*m:m*Math.max(d,V);if(v>best){best=v;bp=md.price;}}
-  md.price=bp;return best>0?best*(1-0.3*modelRisk(md,s.y)):best;}
-function autoDesign(kind,s,base){
+/* 0.51, этап 4б: подбор учитывает мощность завода (замечание автора 21 ноября). R — «сколько места на заводе» (designRoom);
+   без R подбор считает как раньше — так его зовут проверки и те, кому нужна «разумная машина класса» без оглядки на цех.
+   Места новой модели, по порядку:
+     1) свободные места общего конвейера (с заказанными цехами) — даром;
+     2) цех, который можно достроить на свои деньги (касса сверх резерва): место стоит содержания стен и окупаемости за три года;
+     3) места нынешних серий: за каждое — их прибыль на место; берутся, только если новая модель приносит на место больше.
+   Выпуск не больше того, что так наберётся; скидка за объём — при этом выпуске, а не при спросе. Поэтому при загруженном заводе
+   и пустой кассе выигрывает машина с наибольшей прибылью на место, а не та, которую больше купят.
+   • модели того же вида и класса, что и новая, считаются заменёнными: их места свободны, а спрос считается без них
+     (так делает игрок и так делали заводы: новая «народная» сменяет старую, а не делит с ней цех);
+   • размещение — по решению помощника (xlDecide): на своей линии мест по прогнозу и штрафа конвейера нет, но стены стоят
+     содержания; на общем конвейере соседи теряют часы — это тоже в счёт.
+   Замер (журнал этапа 4б): два первых варианта — «доля мест по спросу» и «только свободные места» — разоряли бота в начале
+   партии: подбор предлагал малую дорогую машину под свободный угол цеха, хотя место на заводе окупается за месяцы.
+   share — сколько модель получит при запуске, если ничего не строить и не снимать (модели общего конвейера ужимаются поровну). */
+function designRoom(s,kind){const all=(s.models||[]).filter(m=>m.status==='prod'),kOf=m=>{try{return designKind(m);}catch(_){return segOf(m);}},rep=kind?all.filter(m=>kOf(m)===kind):[],act=all.filter(m=>!rep.includes(m)),vol=m=>Math.max(m.fc||0,m.lastMade||0),kk=Math.max(0.05,xlK(s));
+  const w=m=>isMoto(m)?1:xlW(s,m);   // доля выпуска модели, которая идёт с общего конвейера
+  const cap=capEff(s)+(s.capBuild||[]).reduce((a,b)=>a+(b.units||0),0)*kk,used=act.reduce((a,m)=>a+vol(m)*placesOf(m,s)*w(m),0);
+  const prof=act.reduce((a,m)=>a+vol(m)*w(m)*Math.max(0,m.price*(1-dMargin(s))-unitCost(m,s)),0);
+  const cars=act.filter(m=>!isMoto(m)),hrH=wageNow(s)/Math.max(1,hoursPerWorker(s)),n=cars.reduce((a,m)=>a+w(m),0),cu=capUnitCost(s);
+  // ext — сколько часов (в долларах) потеряют соседи по общему конвейеру, если на нём появится ещё одна модель
+  const ext=techLv(s,'line')===2?cars.reduce((a,m)=>a+vol(m)*w(m)*(hoursPerCar(m,s,xlPenK(n+1))-hoursPerCar(m,s,xlPenK(n))),0)*hrH:0;
+  return {cap,used,free:Math.max(0,cap-used),ppp:used>0?prof/used:0,n,ext,hrH,conv:techLv(s,'line')===2,rep:rep.map(m=>m.id),repN:rep.map(m=>m.name),
+    build:Math.max(0,s.cash-xlReserve(s))/cu*kk,bcost:cu/kk*(0.009+1/XL_PAY),cu:cu/kk};}
+function designPlace(md,s,d,R){const o={cost:0,own:false,pen:null};
+  if(!isMoto(md)&&R.conv){const D=xlDecide(s,md,d);
+    if(D.own&&!D.reuse){o.own=true;o.pen=1;o.cost=Math.max(0,D.cost-(D.alt||0))*0.009;return o;}
+    if(D.why==='heir'){o.pen=1;}else{o.pen=xlPenK(R.n+1);o.cost=R.ext;}}
+  return o;}
+// оценка проекта: лучшая цена из шести и прибыль в месяц при ней. Возвращает {v — с поправкой на риск, prof (убыток — не меньше чем
+// на плановый выпуск: мерка поиска), raw — прибыль в месяц как есть (для показа), price, d — купят, out — сделают,
+// tight — мест не хватает, build — сколько мест достроить, share, own}
+function designEval(md,s,R){const ref=refPrice(md,s),V=Math.max(5,md.vol||20),dm=dMargin(s);let best=null;
+  const uc0=unitCost({...md,vol:V},s),cands=[0.85,1,1.15,1.3].map(k=>ref*k).concat([1.1,1.25].map(k=>uc0/(1-dm)*k));
+  for(const P of cands){md.price=Math.round(P);const d=forecastDemand(md,s,R&&R.rep.length?R.rep:null);
+    if(!R){const m=md.price*(1-dm)-unitCost({...md,vol:Math.max(5,d)},s),v=m>0?d*m:m*Math.max(d,V);if(!best||v>best.prof)best={prof:v,raw:d*m,price:md.price,d,out:d,share:d,tight:false,own:false,build:0};continue;}
+    const pl=designPlace(md,s,d,R),cx=placesOf(md,s),need=d*cx,tight=!pl.own&&need>R.free+1e-6,opts=[];
+    if(!tight)opts.push({out:d,cost:pl.cost,build:0});
+    else{const b=Math.min(need-R.free,R.build),o1={out:Math.min(d,(R.free+b)/cx),cost:pl.cost+b*R.bcost,build:b};opts.push(o1);
+      if(need>R.free+b+1e-6&&R.used>0){const out2=Math.min(d,(R.cap+b)/cx);opts.push({out:out2,cost:o1.cost+Math.max(0,out2*cx-R.free-b)*R.ppp,build:b});}}
+    for(const o of opts){const t={...md,vol:Math.max(5,o.out)},uc=pl.pen!=null?matCost(t,s)+hoursPerCar(t,s,pl.pen)/hoursPerWorker(s)*wageNow(s):unitCost(t,s);
+      const m=md.price*(1-dm)-uc,v=m>0?o.out*m-o.cost:m*Math.max(o.out,V)-o.cost;
+      if(!best||v>best.prof)best={prof:v,raw:o.out*m-o.cost,price:md.price,d,out:o.out,uc,tight,own:pl.own,build:o.build,buildC:o.build*R.cu,share:tight?Math.max(R.free,R.cap*need/Math.max(1,R.used+need))/cx:d};}}
+  md.price=best.price;best.v=best.prof>0?best.prof*(1-0.3*modelRisk(md,s.y)):best.prof;return best;}
+function designValue(md,s,R){return designEval(md,s,R).v;}
+// opt.cap — с оглядкой на мощность завода (кнопка «Самая прибыльная»). Поиск идёт от образца эпохи и от прежнего ответа
+// («без завода»), лучший по новой мерке побеждает — так подбор с мощностью никогда не хуже прежнего по своей же оценке.
+function autoDesign(kind,s,base,opt){if(!(opt&&opt.cap))return autoDesignRun(kind,s,base,null);
+  const R=designRoom(s,kind),a=autoDesignRun(kind,s,base,null),L=[autoDesignRun(kind,s,base,R),autoDesignRun(kind,s,a,R),a];let best=null,bv=-Infinity;
+  for(const x of L){const v=designValue(x,s,R);if(v>bv+1e-9){bv=v;best=x;}}return best;}
+function autoDesignRun(kind,s,base,R){
   const vol=Math.max(20,(s.last&&s.last.made)||20);
   let md={...(base||rivalDesign(kind,s.y)),t:KIND_TRIM[kind],id:-1,made:0,vol,launched:mi(s),status:'prod',price:0};
   const mo=kind==='moto'||kind==='moside';
@@ -292,15 +338,15 @@ function autoDesign(kind,s,base){
   // мотор мощнее рамы — подбираем к нему самую дешёвую раму, которая его выдержит
   const fit=t=>{if(!overpower(t))return t;const cs=unlockedP(CHASSIS,s,mo).filter(c=>!overpower({...t,c:c.id})).sort((a,b)=>partCost(a,s)-partCost(b,s));return cs.length?{...t,c:cs[0].id}:null;};
   if(overpower(md))md=fit(md)||md;
-  let bestV=designValue(md,s);
+  let bestV=designValue(md,s,R);
   for(let pass=0;pass<2;pass++)for(const k of PART_KEYS){const arr=PART_CATS.find(c=>c.k===k).arr();let bx=null;
-    for(const x of unlockedP(arr,s,mo)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s);if(v>bestV){bestV=v;bx=t;}}
+    for(const x of unlockedP(arr,s,mo)){if(x.id===md[k]||!ok(k,x))continue;const t=fit({...md,[k]:x.id});if(!t||t[k]!==x.id)continue;const v=designValue(t,s,R);if(v>bestV){bestV=v;bx=t;}}
     if(bx)md=bx;}
   // 0.30: оснащение — всё, что покупатели класса уже ждут, и то, что окупается
   try{md.eq=eqAuto(md,kindSeg(kind),s);}catch(_){md.eq=[];}
-  designValue(md,s);return md;}
+  designValue(md,s,R);return md;}
 // 0.34: «Передовая модель» — современные детали (и прототипы КБ), которые больше всего поднимают итог против соперника
-// у покупателей класса, без оглядки на себестоимость (в «Подобрать детали повыгоднее» решает прибыль). Устаревшие детали
+// у покупателей класса, без оглядки на себестоимость (в «Самой прибыльной» решает прибыль). Устаревшие детали
 // (их уже обогнали новые) меняются на лучшие современные — даже если старый мотор экономичнее: передовая машина не ездит
 // на моторе 1895 года. Меняется механика — мотор, коробка, рама, шины, тормоза; кузов остаётся: он задаёт тип машины
 // (народный фаэтон не превращается в лимузин, полуторатонка — в трёхтонку). Раму подбираем под мотор.
@@ -349,9 +395,13 @@ function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+te
 function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)*aheadCostK((nx.y||1895)-s.y)/100)*100;}   // 0.51: раньше своего года — дороже
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
-function hoursPerCar(md,s){const conv=techLv(s,'line')===2,mo=isMoto(md),act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)===mo).length,mk=mo&&typeof motoLv==='function'&&motoLv(s)>=2?MSHOP2.hrs:1;
+// 0.51, этап 4б: штраф конвейера за число моделей платят только машины, собранные на общем конвейере, и только за соседей по нему;
+// модель на своей линии (13c-lines.js) считается и платит лишь той долей выпуска, что линия не вместила.
+// pen — штраф задан снаружи (расчёт «что если» у помощника).
+function hoursPerCar(md,s,pen){const conv=techLv(s,'line')===2,mo=isMoto(md),mk=mo&&typeof motoLv==='function'&&motoLv(s)>=2?MSHOP2.hrs:1;
+  let pk=1;if(pen!=null)pk=pen;else if(conv){if(mo){const act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)).length;pk=act>1?1+0.12*(act-1):1;}else{const P=xlPenK(xlNEff(s)),L=xlOf(s,md);pk=L?1+Math.min(1,Math.max(0,L.ov||0))*(P-1):P;}}
   // в Америке станков на рабочего больше: машина требует меньше часов
-  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*(conv&&act>1?1+0.12*(act-1):1)*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1)*mk);}
+  return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*pk*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1)*mk);}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}
 function capEff(s){return s.cap*techMul(s,'cap')*(s.shifts>1?1.85:1)*bn('lineCap')*(convRebuild(s)?0.75:1)*techTroubleK(s);}
 // 0.33: завод один — мотоциклы делают в тех же цехах (места мотоцикл занимает в 7–10 раз меньше машины)

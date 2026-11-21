@@ -470,4 +470,5 @@ function demandAll(s,ov){
 // Спрос на модель при другой цене (подсказка игроку)
 function demandAt(md,s,price){const r=demandAll(s,{id:md.id,price});return Object.values(r.by[md.id]||{}).reduce((a,b)=>a+b,0)*(techLv(s,'credit')?1.15:1);}
 // Прогноз для новой модели: сколько возьмут дома рядом с вашими нынешними моделями
-function forecastDemand(md,s){const o={...md,id:-1},R=mkCountry(s.country,s,[...s.models.filter(m=>m.status==='prod'&&(!m.only||m.only===s.country)),o]);return (R.by[-1]||0)*(techLv(s,'credit')?1.15:1);}
+function forecastDemand(md,s,skip){const o={...md,id:-1},R=mkCountry(s.country,s,[...s.models.filter(m=>m.status==='prod'&&(!m.only||m.only===s.country)&&!(skip&&skip.includes(m.id))),o]);   // skip — модели, которые новая заменит (подбор, этап 4б)
+ return (R.by[-1]||0)*(techLv(s,'credit')?1.15:1);}

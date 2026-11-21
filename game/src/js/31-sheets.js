@@ -16,12 +16,13 @@ function showEvent(){
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
 function designKind(d){const b=byId(BODIES,d.b);return b.truck?bodyKind(b):segOf(d);}
-// 0.34: что сделала кнопка-помощник («Передовая модель», «Подобрать детали повыгоднее») — строкой под кнопками,
+// 0.34: что сделала кнопка-помощник («Передовая модель», «Самая прибыльная») — строкой под кнопками,
 // пока проект не меняли (тост под листом конструктора не виден)
 let dNote=null;
 const dSig=d=>PART_KEYS.map(k=>d[k]).join(',')+'|'+d.t+'|'+(d.eq||[]).join(',');
 function dNoteHTML(d){return dNote&&dNote.sig===dSig(d)?`<p class="small dnote">${dNote.txt}</p>`:'';}
 function dApply(md,label){const s=G,sig0=dSig(draft),b0=designMd(s,draft),tr=isTruck(b0),S0=classScore(b0,s,s.country),U0=unitCost(b0,s);
+  let R=null,E0=null,E1=null;try{R=designRoom(s,designKind(draft));E0=designEval({...b0},s,R);}catch(_){}
   PART_KEYS.forEach(x=>draft[x]=md[x]);draft.t=md.t;draft.eq=(md.eq||[]).slice();
   const b1=designMd(s,draft),S1=classScore(b1,s,s.country),U1=unitCost(b1,s),pr=PART_KEYS.map(x=>byId(PART_CATS.find(c=>c.k===x).arr(),draft[x])).filter(x=>x&&x.y>s.y);
   let main=`итог против соперника <b class="num">${Math.round(S0*100)}% → ${Math.round(S1*100)}%</b>`;
@@ -32,7 +33,13 @@ function dApply(md,label){const s=G,sig0=dSig(draft),b0=designMd(s,draft),tr=isT
     const dm=T.dem>=2?`≈ в ${xTimes(T.dem)} больше`:T.dem<=0.5?`≈ в ${xTimes(1/T.dem)} меньше`:pc(T.dem)<1?'тот же':'≈ '+(T.dem>1?'+':'−')+pc(T.dem)+'%';
     main=`спрос фирм при той же цене <b class="num ${T.dem>=1.005?'good':T.dem<=0.995?'bad':''}">${dm}</b>${why.length?` (${why.join(c1&&c2&&(T.cpk<1)===(T.soft>1)?' ':', ')})`:''}`;}
   const same=dSig(draft)===sig0;
-  dNote={txt:same?`${label}: менять нечего — проект уже такой.`:`${label}: ${main}, себестоимость <b class="num">${money(U0)} → ${money(U1)}</b>.${pr.length?`<br><span class="warn">🔬 Прототипы КБ: ${pr.map(x=>esc(x.name)).join(', ')} — риск «не по ТЗ».</span>`:''}`,sig:dSig(draft)};
+  // 0.51, этап 4б: что ищет кнопка — прибыль в месяц при лучшей цене и при выпуске, который завод действительно сделает
+  let prof='',room='';try{E1=designEval({...b1},s,R);const pm=v=>(v<0?'−':'')+money(Math.abs(Math.round(v)));
+    prof=`прибыль в месяц <b class="num ${E1.raw>E0.raw+Math.abs(E0.raw)*0.005?'good':E1.raw<E0.raw-Math.abs(E0.raw)*0.005?'bad':''}">${pm(E0.raw)} → ${pm(E1.raw)}</b>, `;
+    room=E1.own?''
+      :E1.tight?(E1.build>0.5&&E1.out>=E1.d*0.98?`<br><span class="muted">🏭 Завод загружен: под ${fmtN(Math.round(E1.d))} машин в месяц нужен цех примерно за ${money(Math.round(E1.buildC/100)*100)} — он в расчёте.</span>`
+        :`<br><span class="warn">🏭 Завод загружен, а на цех не хватает кассы: из ${fmtN(Math.round(E1.d))} машин, которые купят в месяц, завод сделает около ${fmtN(Math.max(1,Math.round(Math.min(E1.out,Math.max(E1.share,E1.out)))))}. Подбор искал наибольшую прибыль на одно место.</span>`):'';}catch(_){}
+  dNote={txt:same?`${label}: менять нечего — проект уже такой.`:`${label}: ${prof}${main}, себестоимость <b class="num">${money(U0)} → ${money(U1)}</b>.${room}${pr.length?`<br><span class="warn">🔬 Прототипы КБ: ${pr.map(x=>esc(x.name)).join(', ')} — риск «не по ТЗ».</span>`:''}`,sig:dSig(draft)};
   const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;}
 /* ---------- 0.51: конструктор-воронка (ТЗ 0.51, тема 3): шаг 1 — вид техники, шаг 2 — назначение, шаг 3 — только годные детали ---------- */
 function kindOpen(kind,s){const mo=isMotoSeg(kind);return unlockedP(BODIES,s,mo).some(b=>kindBodyOk(kind,b))&&(kind!=='sport'||unlockedP(TRIMS,s).some(x=>x.id==='t3'));}
@@ -122,7 +129,7 @@ function renderDesigner(){
     ${sib?`<div class="chips">${sib}</div>`:''}${classNote}
     ${kindIsTruck(kind)?(()=>{const TH=truckHead({...md,price:Math.round(ref/10)*10},s,Math.round(ref/10)*10);return TH?`<p class="small ${TH.tone}" style="margin-top:12px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)} — ${TH.un==='т·км'?'фирмы выбирают по тонно-километру':'покупатель выбирает по цене работы'}; «% соперника» — ниже</span></p>`:'';})():''}
     ${compareHTML(md,s,'d')}${hiddenHTML({...md,price:Math.round(ref/10)*10},s,true)}
-    <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Подобрать детали повыгоднее</button></div>${dNoteHTML(d)}
+    <div class="dbtns" style="margin-top:10px"><button class="btn sm" data-act="dcopy">Как у соперника</button><button class="btn sm" data-act="dfront">Передовая модель</button><button class="btn sm primary wide" data-act="dauto">Самая прибыльная</button></div>${dNoteHTML(d)}
     <div class="label" style="margin-top:14px">Детали — нажмите, чтобы выбрать</div>
     <div class="dsecs">${PART_CATS.map(sec).join('')}${mo?'':sec({k:'t',name:'Оснащение',arr:()=>TRIMS})}</div>${eqDesignHTML(d,s,kind)}
     <div class="card" style="margin-top:14px;background:var(--panel2)">
@@ -135,6 +142,7 @@ function renderDesigner(){
       <div style="margin-top:6px">${eqPriceLine({...md,id:-11,launched:mi(s)},s)}</div>
       <div class="meta"><div>Часов<b>${fmtN(Math.round(hrs))}</b></div><div>Разработка<b>${dm} мес.</b></div><div>Бюджет<b>${money(dc)}</b></div><div>Оснастка<b>${money(tc)}</b></div></div>${tc>toolingBase(md,s)?`<p class="small muted" style="margin-top:4px">Оснастка — при запуске в серию: переоснащение завода под новые узлы (новизна ${Math.round(retoolNovelty(md,s)*100)} %, под модель — ${Math.round(retoolShare(md,s)*100)} % мощностей). Узлы, которые уже стоят на ваших моделях в серии, оснастки не требуют.</p>`:''}
       <p class="small muted" style="margin-top:8px">Себестоимость — детали и работа при выпуске ≈ ${fmtD(md.vol)} в месяц (столько купят по этой цене). <span class="good">Экономия масштаба:</span> при ${fmtN(md.vol*3)} в месяц — ${money(ucAt(3))}, при ${fmtN(md.vol*10)} — ${money(ucAt(10))}; с опытом рабочих — ещё дешевле. Оснастку оплатите при запуске в серию${techLv(s,'line')===2?': конвейер под новую модель перестраивать дорого':''}.</p></div>
+    ${xlDraftHTML(s,d)}
     <button class="btn primary block" style="margin-top:14px" data-act="startdev" ${s.cash<dc?'disabled':''}>${s.cash<dc?'Не хватает денег на разработку':'Начать разработку · '+money(dc)}</button>`);
   document.getElementById('mname').addEventListener('input',e=>{draft.name=e.target.value;});
 }
@@ -270,7 +278,7 @@ function openHelp(){
   openSheet(`<div class="row"><h2>Как играть</h2>${X}</div>
   <div class="stack small" style="margin-top:12px">
     <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук, графика и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
-    <p><b>Модели.</b> Машина собирается из деталей: двигатель, коробка передач, рама с подвеской, колёса и шины, тормоза, кузов, оснащение. Покупатели сравнивают её с типичной машиной соперников своего класса — по мощности, надёжности, комфорту, простоте вождения, тормозам, экономичности и вместимости. Народному классу важнее экономичность и надёжность, люксу — комфорт и мощность. Дешёвые решения вроде планетарной коробки и ванадиевой рамы Ford T часто выгоднее самых дорогих деталей. Кнопка «Подобрать детали повыгоднее» предложит конструкцию сама.</p>
+    <p><b>Модели.</b> Машина собирается из деталей: двигатель, коробка передач, рама с подвеской, колёса и шины, тормоза, кузов, оснащение. Покупатели сравнивают её с типичной машиной соперников своего класса — по мощности, надёжности, комфорту, простоте вождения, тормозам, экономичности и вместимости. Народному классу важнее экономичность и надёжность, люксу — комфорт и мощность. Дешёвые решения вроде планетарной коробки и ванадиевой рамы Ford T часто выгоднее самых дорогих деталей. Кнопка «Самая прибыльная» предложит конструкцию сама: ищет наибольшую прибыль в месяц при выпуске, который ваш завод действительно сделает.</p>
     <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства — каждая для своих перевозок: фургон развозит товар по району, полуторатонка возит по городу, трёхтонка — между городами. Фирма выбирает машину, на которой дешевле тонно-километр: цена, ремонт и простои, бензин, шофёр. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
     <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
     <p><b>Производство.</b> План «авто» делает столько, сколько купят, и не больше, чем поместится на складе. Всё лишнее уходит перекупщикам за полцены. Мощность — цеха и смены; выработку поднимают станки, электрификация, взаимозаменяемые детали, конвейер и зарплата.</p>

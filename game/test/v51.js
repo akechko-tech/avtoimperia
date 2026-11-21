@@ -386,5 +386,101 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const L=raceCarsFor(G,rc).map(m=>m.name);CK(L.includes('people')&&L.includes('truck')&&!L.some(n=>/ltank|bus|tractor|fire/.test(n)),'в гонку записывают автомобили и прежние грузовики, но не танк, автобус, трактор и пожарную: '+L.join(', '));
     CK(plural(21,'автомобильной компании','автомобильных компаний','автомобильных компаний')==='автомобильной компании'&&plural(22,'а','б','в')==='б'&&plural(25,'а','б','в')==='в','«среди 21 автомобильной компании»');G.models=[];}
 }
+// 21. этап 4б: своя линия под модель — ведёт помощник; подбор деталей учитывает мощность завода
+{const rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();};
+  // завод с движущимся конвейером и тремя автомобилями: большая «народная», средняя, малая «люкс»
+  function plantXL(){rnd(7);newGame('custom','us','Тест','normal','Первая');G.pending=[];G.y=1920;G.m=3;G.cap=3000;G.cash=3e7;G.tech=G.tech||{};G.tech.line=2;G.tech.tools=2;G.tech.elec=1;G.workers=9000;G.plantVal=G.cap*capUnitCost(G);G.xl=[];G.xlV=1;
+    G.models=[];[['people',2500],['middle',300],['lux',20]].forEach(([k,v],i)=>{const d=autoDesign(k,G);const m={...d,id:10+i,name:k,paint:'#8a1c1c',plan:'auto',status:'prod',launched:mi(G)-30,stock:0,backlog:0,made:5000,vol:v,fc:v,lastMade:v};m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);});G.nextId=20;return G;}
+  const pen=m=>hoursPerCar(m,G)/hoursPerCar(m,G,1),M=n=>G.models.find(m=>m.name===n);
+  let s=plantXL();const A=M('people'),B=M('middle'),C=M('lux');
+  CK(near(pen(A),1.24,1e-9)&&near(pen(C),1.24,1e-9),'три модели на общем конвейере — +24 % часов каждой: '+pen(A).toFixed(3));
+  const DA=xlDecide(s,A,A.fc),DC=xlDecide(s,C,C.fc),DB=xlDecide(s,B,B.fc);
+  CK(!DA.own&&DA.why==='main','главная модель завода остаётся на общем конвейере: '+DA.why);
+  CK(DC.own&&DC.payM<=XL_PAY&&DC.cost===DC.n*xlUnitCost(s)&&DC.save>0,'малой модели помощник строит свою линию: '+money(DC.cost)+', окупится '+xlPayTxt(DC.payM));
+  CK(xlUnitCost(s)===Math.round(capUnitCost(s)*XL_COST*(1+XL_CONV)),'место на своей линии — ×1,5 и ещё доля конвейера: '+xlUnitCost(s)+' против '+capUnitCost(s));
+  CK(/Своя линия · .*окупится/.test(xlWhyTxt(DC))&&/На общий конвейер: главная модель/.test(xlWhyTxt(DA)),'решение — одной строкой: '+xlWhyTxt(DC)+' | '+xlWhyTxt(DA));
+  // стройка: пока линия строится, модель на общем конвейере; готова — штрафа нет ни у неё, ни из-за неё
+  const c0=s.cash,pv0=s.plantVal,L=xlTake(s,C,DC);CK(L&&near(c0-s.cash,DC.cost)&&near(s.plantVal-pv0,DC.cost)&&L.at>mi(s)&&!xlOf(s,C)&&near(pen(A),1.24,1e-9),'линия заказана: деньги ушли, цена — в стоимость завода, до готовности всё по-старому');
+  L.at=mi(s);CK(xlOf(s,C)===L&&near(pen(C),1,1e-9)&&near(pen(A),1.12,1e-9)&&near(pen(B),1.12,1e-9),'линия готова: «люкс» без штрафа, остальным — за одну соседку (+12 %)');
+  CK(xlCommon(s).length===2&&/Своя линия/.test(xlModelLine(s,C))&&/Свои линии под модели/.test(xlPlantHTML(s)),'карточка модели и «Завод» показывают линию');
+  // производство: модель делается на своей линии; чего линия не вместила — на общем конвейере, и штраф возвращается
+  {C.plan='40';L.cap=1;step();G.pending=[];CK(L.ov>0.8&&C.lastMade>=30,'линия мала — перелив на общий конвейер: сделано '+C.lastMade+' из 40, перелив '+pct(L.ov,0));
+    CK(near(pen(A),1.12+0.12*L.ov,1e-9)&&near(pen(C),1+L.ov*(pen(A)-1),1e-9),'перелив считается в штрафе конвейера своей долей: '+pen(A).toFixed(3)+', у самой модели '+pen(C).toFixed(3));
+    L.cap=200;C.plan='40';step();G.pending=[];CK(L.ov===0&&C.lastMade>=30&&near(pen(A),1.12,1e-9)&&near(pen(C),1,1e-9),'линии хватает — перелива нет, штраф снят: сделано '+C.lastMade);}
+  // правила помощника: старая модель, смена, наследница линии
+  s=plantXL();{const A=M('people'),B=M('middle'),C=M('lux');
+    B.launched=mi(s)-70;CK(xlDecide(s,B,B.fc).why==='old','модель в серии больше пяти лет — линию не строят');B.launched=mi(s)-30;
+    const d1={...autoDesign('middle',s),id:30,name:'middle2',status:'dev',devLeft:10,launched:0};CK(xlDecide(s,d1,200).why==='succ','новая модель того же класса сменяет прежнюю — линию ей не строят: '+xlWhyTxt(xlDecide(s,d1,200)));
+    const LC=xlAdopt(s,60,C.id,'');LC.src='own';const d2={...autoDesign('lux',s),id:31,name:'lux2',status:'dev',devLeft:10,launched:0};const DH=xlDecide(s,d2,15);CK(DH.why==='heir'&&/унаследует/.test(xlWhyTxt(DH)),'смена модели на линии линию унаследует: '+xlWhyTxt(DH));
+    // модель снята — линия свободна; новая модель другого класса берёт её часть переналадкой
+    C.status='off';s.models.push({...d2,status:'dev'});const r={};linesMonth(s,r);CK(LC.md===null&&LC.idle===1&&LC.keep===31,'модель снята — линия свободна и ждёт её смену из КБ: '+JSON.stringify(r.lines));
+    const sp={...autoDesign('sport',s),id:32,name:'sport',status:'prod',launched:mi(s)-8,fc:40,lastMade:40,vol:40,stock:0,backlog:0,plan:'auto',made:300};sp.price=Math.round(refPrice(sp,s)/10)*10;s.models.push(sp);
+    CK(!xlDecide(s,sp,40).reuse,'чужой модели ждущую линию не отдают');
+    // смены нет — свободную линию берёт другая модель: переналадка вместо стройки, только нужные места
+    s.models=s.models.filter(m=>m.id!==31);LC.keep=null;LC.cap=300;LC.val=300*xlUnitCost(s)*0.5;const DR=xlDecide(s,sp,40);
+    CK(DR.own&&DR.reuse===LC.id&&DR.n<LC.cap&&DR.cost===Math.round(LC.val*DR.n/LC.cap*XL_RETOOL)&&DR.cost<DR.n*xlUnitCost(s),'свободную линию переналаживают вместо стройки: '+money(DR.cost)+' против '+money(DR.n*xlUnitCost(s))+' за новую');
+    const cap0=LC.cap,c1=s.cash,L2=xlTake(s,sp,DR);CK(L2&&L2!==LC&&L2.md===sp.id&&near(c1-s.cash,DR.cost)&&sp.ramp>=1&&LC.cap===cap0-L2.cap&&LC.md===null,'переналадка: 30 % цены нужных мест и месяц освоения; лишние места остаются свободными ('+LC.cap+' из '+cap0+')');}
+  // простой: пока в КБ есть автомобиль без линии — линию держат; потом продают за 40 %
+  s=plantXL();{s.models=s.models.filter(m=>m.name==='people');const I=xlAdopt(s,50,null,'');I.src='own';I.val=50*xlUnitCost(s);s.plantVal+=I.val;
+    s.models.push({...autoDesign('middle',s),id:40,name:'нов',status:'dev',devLeft:9,launched:0});I.idle=XL_IDLE-1;linesMonth(s,{});CK(s.xl.includes(I)&&I.idle===XL_IDLE-1,'в КБ автомобиль без линии — простаивающую линию не продают');
+    s.models=s.models.filter(m=>m.status!=='dev');const c2=s.cash,vI=I.val,pv=s.plantVal,r2={};linesMonth(s,r2);CK(!s.xl.includes(I)&&near(s.cash-c2,Math.round(vI*0.995*XL_SELL))&&near(pv-s.plantVal,vI*0.995,1)&&r2.lines.some(x=>/продал/.test(x)),'полгода простоя — линия продана за 40 %: '+r2.lines.join('; '));}
+  // расширение: мест не хватает полгода; мало кассы — совет с кнопкой
+  s=plantXL();{const A=M('people'),B=M('middle'),C=M('lux');const L=xlAdopt(s,2,C.id,'');L.src='own';L.ov=0.9;C.fc=20;
+    for(let i=0;i<XL_SHORT-1;i++)linesMonth(s,{});CK(!L.grow&&L.short===XL_SHORT-1,'всплеск спроса помощник пережидает: '+L.short+' мес. — линию не трогает');linesMonth(s,{});CK(L.grow&&L.grow.n>=2&&L.short===0,'линии не хватает мест полгода — помощник расширяет: +'+(L.grow&&L.grow.n));
+    const n0=L.cap;s.y+=1;linesMonth(s,{});CK(L.cap>n0&&!L.grow,'расширение введено в строй: мест '+L.cap);
+    L.cap=2;L.grow=null;C.fc=20;C.launched=mi(s)-8;s.cash=xlReserve(s)+1000;L.short=XL_SHORT-1;L.ov=0.9;linesMonth(s,{});CK(!L.grow&&L.want&&L.want.c>0&&L.want.pay<=XL_PAY_GROW,'расширение окупается, но касса у резерва — помощник ждёт');
+    s.cash=L.want.c+5;const T=adviceList(s).find(x=>/Линии «lux» не хватает мест/.test(x.text));CK(T&&T.btn&&typeof T.run==='function','совет с кнопкой «Расширить»: '+(T&&T.btn));
+    T.run();CK(L.grow&&!L.want,'кнопка совета расширяет линию');L.grow=null;
+    // расширение считается по доле выпуска, которую оно снимает с общего конвейера: чем меньше перелив, тем меньше выгода
+    const g1=xlOvGain(s,C,20,2,20),g2=xlOvGain(s,C,20,18,20),g0=xlOvGain(s,C,20,0,20);CK(g1>g2&&g2>0&&near(g0,xlDecide(s,C,20).save,1e-6)&&g0>g1,'выгода расширения — по доле перелива: '+Math.round(g0)+' > '+Math.round(g1)+' > '+Math.round(g2));
+    A.fc=10;B.fc=5;C.fc=600;L.short=XL_SHORT;L.want=null;L.grow=null;s.cash=3e7;linesMonth(s,{});CK(!L.grow,'главной модели линию не расширяют — перелив идёт на общий конвейер');}
+  // срок окупаемости — не дольше половины оставшейся жизни модели, считая стройку
+  s=plantXL();{const B=M('middle');B.launched=mi(s)-6;const l0=xlLimit(s,B,0),l1=xlLimit(s,B,9);B.launched=mi(s)-48;const l2=xlLimit(s,B,0);const dv={...B,status:'dev'};
+    CK(near(l0,33)&&near(l1,24)&&near(l2,12)&&near(xlLimit(s,dv,0),XL_PAY),'срок окупаемости: молодой модели '+l0+' мес., со стройкой '+l1+', четырёхлетней '+l2+', новой из КБ '+xlLimit(s,dv,0));}
+  // линия велика: год загрузки ниже 40 % — лишние места продают, запас 30 %
+  s=plantXL();{const C=M('lux');const L=xlAdopt(s,400,C.id,'');L.src='own';L.val=400*xlUnitCost(s);s.plantVal+=L.val;const c0=s.cash,pv0=s.plantVal;let r={};for(let i=0;i<XL_LOWM;i++){r={};linesMonth(s,r);}
+    const keep=Math.max(2,Math.ceil(20*placesOf(C,s)*1.3/xlK(s)));CK(L.cap===keep&&s.cash>c0&&s.plantVal<pv0&&r.lines.some(x=>/лишние места продал/.test(x))&&L.md===C.id,'линия велика — лишние места проданы: осталось '+L.cap+' из 400, '+r.lines.join('; '));}
+  // отчёт — строкой в «Делах», и при выключенном помощнике; перевод модели с конвейера на линию раз в квартал
+  s=plantXL();{s.m=1;s.helper=null;const r={};linesMonth(s,r);CK(r.lines.some(x=>/на свою линию/.test(x))&&s.xlMsg.m===mi(s)+1&&s.xl.length===1,'раз в квартал помощник переводит модель на свою линию: '+r.lines.join('; '));
+    s.m=2;CK(!helperOn(s)&&/Линии завода: .*на свою линию/.test(advisorCard(s)),'строка «Линии завода» видна в «Делах» и без помощника управляющего');
+    globalThis.XLOFF=1;const D0=xlDecide(s,M('middle'),300);globalThis.XLOFF=0;CK(!D0.own,'выключатель для замеров');}
+  // до движущегося конвейера моделям никто не мешает — линий нет
+  s=plantXL();{s.tech.line=1;CK(near(pen(M('people')),1,1e-9)&&xlDecide(s,M('lux'),20).why==='noconv'&&xlDraftHTML(s,{...M('lux')})==='','без конвейера штрафа и линий нет');}
+  // купленный завод — своя линия его модели; мотоциклетный — общему заводу; старые сохранения
+  {rnd(21);newGame('renault','fr','Рено','normal');G.pending=[];G.y=1921;G.m=3;G.cash=6e7;const cap0=G.cap;
+    const Lc=(COMPS.fr||[]).map((cp,i)=>({cp,i})).filter(o=>!dealBlock(G,'fr',o.i)&&maStat(G,'fr',o.i));let h=null;
+    for(const o of Lc){for(const k of [1.3,1.8,2.5,3.5]){if(G.dealNo)delete G.dealNo['fr'+o.i];const r=dealDo(G,'fr',o.i,'cash',k);if(r&&r.ok){h=holdOf(G,'fr',o.i);break;}}if(h)break;}
+    const md=h&&G.models.find(m=>m.id===h.model),XL=h&&G.xl.find(x=>x.id===h.xl);
+    CK(h&&md&&XL&&XL.src==='hold'&&XL.md===md.id&&XL.cap===h.capAdd&&G.cap===cap0&&xlOf(G,md)===XL,'купленный завод — своя линия его модели, общий конвейер не вырос: '+(h&&h.capAdd)+' мест');
+    // старое сохранение: места купленного завода были в общем s.cap
+    const sv={cap:500,models:[{id:1,status:'prod',b:md.b,e:md.e,g:md.g,c:md.c,k:md.k,w:md.w,t:md.t},{id:2,status:'off',b:md.b}],hold:[{mode:'int',capAdd:120,model:1,n:'Марка'},{mode:'int',capAdd:80,model:2},{mode:'own',capAdd:50,model:1}]};
+    xlMigrate(sv);CK(sv.cap===380&&sv.xl.length===1&&sv.xl[0].cap===120&&sv.xl[0].md===1&&sv.hold[0].xl===sv.xl[0].id&&sv.xlV===1,'старое сохранение: завод купленной марки выделен из общего в свою линию (модель в серии), остальное не тронуто');
+    xlMigrate(sv);CK(sv.cap===380&&sv.xl.length===1,'повторно не выделяется');}
+  // подбор «Самая прибыльная» считает с мощностью завода
+  {rnd(5);newGame('custom','us','Тест','normal','Первая');G.pending=[];G.y=1903;G.m=2;const a=autoDesign('middle',G),b=autoDesign('middle',G,null,{cap:true}),sg=d=>PART_KEYS.map(x=>d[x]).join(',')+'|'+d.price;
+    CK(sg(a)===sg(b),'мастерская не загружена — подбор тот же, что и без оглядки на завод: '+sg(b));}
+  {rnd(5);newGame('custom','us','Тест','normal','Первая');G.pending=[];G.y=1912;G.m=3;G.cap=2;G.cash=3e5;G.workers=300;
+    const d=autoDesign('lux',G),m={...d,id:10,name:'Люкс',paint:'#8a1c1c',plan:'auto',status:'prod',launched:mi(G)-30,stock:0,backlog:0,made:500,vol:15,fc:15,lastMade:15};m.price=Math.round(refPrice(m,G)/10)*10;G.models=[m];
+    // касса есть: мест нет, но цех по карману — он в расчёте
+    let R=designRoom(G,'middle');const a=autoDesign('middle',G),E0=designEval({...a},G);let Ea=designEval({...a},G,R);
+    CK(R.ppp>0&&R.free===0&&R.rep.length===0&&R.build>1,'завод занят другой моделью: свободных мест нет, место приносит '+money(R.ppp)+' в месяц, касса позволяет достроить '+R.build.toFixed(0)+' мест');
+    CK(Ea.tight&&Ea.build>0&&near(Ea.out,Ea.d,1e-6)&&Ea.prof<E0.prof&&Ea.prof>0&&near(Ea.buildC,Ea.build*R.cu,1),'касса есть — в расчёте цех под модель: прибыль '+Math.round(Ea.prof)+' против '+Math.round(E0.prof)+' «без завода», цех '+money(Ea.buildC));
+    // кассы нет: модель не получит больше мест, чем есть у завода; занять чужие — только если прибыль на место выше
+    G.cash=1000;R=designRoom(G,'middle');Ea=designEval({...a},G,R);const b=autoDesign('middle',G,null,{cap:true}),Eb=designEval({...b},G,R);
+    CK(R.build===0&&Ea.tight&&Ea.build===0&&Ea.out<=R.cap/placesOf(a,G)+1e-6&&Ea.share<Ea.d&&Ea.prof<E0.prof,'кассы нет: выпуск не больше завода ('+Ea.out.toFixed(1)+' из '+Ea.d.toFixed(1)+' купят), прибыль '+Math.round(Ea.prof)+' против '+Math.round(E0.prof));
+    CK(Eb.prof>=Ea.prof-1e-6&&Eb.out<=R.cap/placesOf(b,G)+1e-6,'подбор с мощностью не хуже прежнего по своей мерке и не предлагает того, чего завод не выпустит: '+Math.round(Eb.prof)+' ≥ '+Math.round(Ea.prof)+', выпуск '+Eb.out.toFixed(1));
+    CK(!(Eb.out>0.01)||Eb.prof/(Eb.out*placesOf(b,G))>=0,'занятые места окупаются: прибыль на место '+(Eb.out>0.01?Math.round(Eb.prof/(Eb.out*placesOf(b,G))):0));
+    G.cash=3e5;
+    const R2=designRoom(G,'lux');CK(R2.rep.includes(10)&&near(R2.free,R2.cap)&&R2.repN[0]==='Люкс','модель того же класса считается заменённой: её места свободны');
+    const f1=forecastDemand({...d,price:m.price},G),f2=forecastDemand({...d,price:m.price},G,[10]);CK(f2>f1,'спрос на смену считается без прежней модели: '+f2.toFixed(1)+' против '+f1.toFixed(1));
+    // строка под кнопками: прибыль в месяц до и после, итог против соперника, предупреждение о загрузке
+    G.lines={car:true,moto:true};openDesigner('middle');ACT.dcopy();ACT.dauto();const t=dNote&&dNote.txt||'';
+    CK(/^Самая прибыльная: /.test(t)&&(/прибыль в месяц/.test(t)||/менять нечего/.test(t))&&!/NaN|undefined|Infinity/.test(t),'строка под кнопками — о прибыли: '+t.replace(/<[^>]+>/g,''));}
+  // конструктор: строка «Где собирать» и «Иначе»; запуск разработки строит линию
+  s=plantXL();{G.lines={car:true,moto:true};openDesigner('sport');const h1=xlDraftHTML(s,draft),D1=xlDraftDecide(s,draft);CK(/Где собирать:/.test(h1)&&/data-act="dxl"/.test(h1),'конструктор: «Где собирать» и кнопка «Иначе»: '+h1.replace(/<[^>]+>/g,''));
+    draft.xlOv=true;const D2=xlDraftDecide(s,draft);CK(D2.own===!D1.own||(!D1.own&&s.cash-D2.cost-devCost(designMd(s,draft),s)<0),'«Иначе» меняет решение: '+D1.own+' → '+D2.own);draft.xlOv=false;
+    const n0=s.xl.length,nm0=s.models.length;ACT.startdev();const nm=s.models[s.models.length-1];CK(s.models.length===nm0+1&&nm.status==='dev'&&(D1.own?(s.xl.length===n0+1&&s.xl[s.xl.length-1].md===nm.id&&s.xl[s.xl.length-1].at<=mi(s)+nm.devLeft):s.xl.length===n0),'запуск разработки: линия '+(D1.own?'заказана и будет готова к серии':'не нужна — '+D1.why));}
+  globalThis.XLOFF=0;
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

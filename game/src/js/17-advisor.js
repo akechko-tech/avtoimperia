@@ -60,7 +60,7 @@ function adviceList(s){
     // 0.27: минус в кассе — это долг поставщикам и рабочим, когда банк больше не даёт; объясняем, откуда он и сколько ещё в пути
     const ar=typeof arTotal==='function'?arTotal(s):0;
     add(s.cash<-lim*0.5?100:90,'💰',`Касса в минусе на ${money(-s.cash)}: ${n>0?'банк готов покрыть его кредитом.':loanOpen(s)?`кредит банка исчерпан (${money(s.loan)} из ${money(maxLoan(s))}) — это долг поставщикам и рабочим.`:creditState(s).t+' — это долг поставщикам и рабочим.'} При долге больше ${money(lim)} завод закроют.${ar>1?` От дилеров ещё придут ${money(ar)} — минус может уйти сам.`:''} Сократите рекламу, лишних дилеров и выпуск, продайте склад со скидкой.`,n>0?`Кредит ${money(n)}`:null,n>0?()=>{G.loan+=n;G.cash+=n;addLog(`Взят кредит ${money(n)}.`);}:null,'plant');}
-  if(!act.length&&!dev.length)add(95,'🛠','Сейчас нечего продавать. Придумайте машину: в конструкторе есть кнопка «Подобрать детали повыгоднее».','Конструктор',()=>openDesigner(),'models');
+  if(!act.length&&!dev.length)add(95,'🛠','Сейчас нечего продавать. Придумайте машину: в конструкторе есть кнопка «Самая прибыльная».','Конструктор',()=>openDesigner(),'models');
   // модели и цены
   act.forEach(md=>{const uc=unitCost(md,s),net=md.price*(1-dMargin(s)),C=classCompare(md,s,home);
     if(net<uc*0.98&&(md.lastSold||0)>0){const np=Math.round(uc/(1-dMargin(s))*1.12/10)*10;add(85,'📉',`«${md.name}» продаётся в убыток: себестоимость ${money(uc)}, а вам с машины достаётся ${money(net)}.`,`Цена ${money(np)}`,()=>{md.price=np;},'models');}
@@ -80,6 +80,9 @@ function adviceList(s){
   // КБ
   const free=rdSlots(s)-rdActive(s).length,pj=free>0&&suggestProject(s);
   if(pj)add(DIF().simple?72:60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.${DIF().simple?' Или выберите деталь сами: «Модели» → «Конструкторское бюро» → «+ Проект».':''}`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
+  // 0.51, этап 4б: линии ведёт помощник сам; совет — только когда расширение окупается, а резерв кассы не даёт его начать
+  (s.xl||[]).forEach(X=>{if(!X.want||X.grow)return;const m=s.models.find(q=>q.id===X.md);if(!m||s.cash<X.want.c)return;
+    add(62,'🏭',`Линии «${m.name}» не хватает мест. Расширение (+${fmtN(X.want.u||X.want.add)} машин в месяц) окупится ${xlPayTxt(X.want.pay)}, но касса после него уйдёт ниже резерва — помощник ждёт.`,`Расширить · ${money(X.want.c)}`,()=>{if(xlGrow(s,X,X.want.add,X.want.c)){save();render();}},'plant');});
   // мощности и склад
   if(L&&act.length){const util=capUtil(s),lost=act.reduce((a,m)=>a+(m.lostS||0)*(isMoto(m)?0.15:1),0),busy=(s.capBuild||[]).length;
     if(util>0.93&&lost>Math.max(1,L.sold*0.06)&&!busy){const n=Math.max(2,Math.round(s.cap*0.25)),c=n*capUnitCost(s);if(s.cash>c*1.2)add(75,'🏭',`Завод работает на пределе, а покупателям не хватило ${fmtD(lost)} машин. Постройте цех.`,`+25% · ${money(c)}`,()=>ACT.capAdd({n}),'plant');}
@@ -160,11 +163,11 @@ function raceAutoLine(s){if(!s||s.mode==='racer'||typeof raceAutoOn!=='function'
     ${on?`<span class="btnrow" style="gap:4px"><button class="btn small" data-act="raceAutoBud" data-k="-" aria-label="Уменьшить бюджет">−</button><button class="btn small" data-act="raceAutoBud" data-k="+" aria-label="Увеличить бюджет">+</button><button class="linkbtn small" data-act="raceAutoToggle">выключить</button></span>`:`<button class="linkbtn small" data-act="raceAutoToggle">поручить команде</button>`}</div>
     ${T&&T.length?`<p class="small" style="margin-top:4px">Команда в прошлом месяце: ${esc(T.join('; '))}.</p>`:''}`;}
 function advisorCard(s,where){
-  const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:4),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null;
-  if(!show.length&&(!H||where)&&(where||!raceAutoLine(s)))return '';TIPS=show;
+  const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:4),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null,XL=s.xlMsg&&s.xlMsg.m===mi(s)&&s.xlMsg.list.length?s.xlMsg.list:null;
+  if(!show.length&&((!H&&!XL)||where)&&(where||!raceAutoLine(s)))return '';TIPS=show;
   // 0.39: «Дела» — что сделать сейчас, кнопкой к действию (одна система для авто, мото и аэро)
   return `<section class="card advisor"><div class="row"><span class="label">📋 Дела${where?'':' и советы'}</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':`<button class="linkbtn small" data-act="helperToggle">поручить рутину помощнику</button>`}</div>
-    ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
+    ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${XL&&!where?`<p class="small good xlmsg" style="margin-top:6px">🏭 Линии завода: ${esc(XL.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
     ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}</div>`).join('')}
     ${!where&&all.length>4?`<p class="small muted" style="margin-top:6px">Ещё дел: ${all.length-4}. Сначала самые важные.</p>`:''}</section>`;}
 // Помощник управляющего: каждый месяц сам делает безопасные вещи — цены, дилеры, цеха, склад, КБ, кредит

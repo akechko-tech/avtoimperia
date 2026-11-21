@@ -37,7 +37,7 @@ for(const [pio,c,y] of [['ford','us',1903],['renault','fr',1910],['custom','de',
   for(const kind of KINDS){openDesigner(kind);const b0=draft.b;ACT.dfront();const a=dNote&&dNote.txt||'';
     ok(draft.b===b0&&FRONT_KEYS.every(k=>!partObsolete(k,draft[k],s)),y+' '+c+' '+kind+': передовая — тот же кузов, без устаревших деталей ('+FRONT_KEYS.map(k=>draft[k]).join(' ')+')');
     ACT.dauto();const b=dNote&&dNote.txt||'',t=a+' | '+b;
-    ok(a.startsWith('Передовая модель: ')&&b.startsWith('Детали для наибольшей прибыли: ')&&!/NaN|undefined|null|Infinity/.test(t),y+' '+c+' '+kind+': строка под кнопками — '+t);
+    ok(a.startsWith('Передовая модель: ')&&b.startsWith('Самая прибыльная: ')&&!/NaN|undefined|null|Infinity/.test(t),y+' '+c+' '+kind+': строка под кнопками — '+t);
     ok(!isTruck(draft)||/спрос фирм|менять нечего/.test(b),y+' '+kind+': у грузовика — спрос фирм');}}
 console.log('проверок: '+checks+(fails?', ОШИБОК: '+fails:' — всё в порядке'));
 `);

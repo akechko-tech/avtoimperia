@@ -45,13 +45,17 @@ function step(){
   // 0.33: завод один — машины и мотоциклы делят одни цеха (мотоцикл занимает место по своей трудоёмкости, на потоке мотоциклов —
   // на пятую часть меньше); рабочие общие. В 0.32 был отдельный мотоцех со своей мощностью.
   const cxU=act.map((m,i)=>mo[i]&&motoLv(s)>=2?cx[i]*MSHOP2.cx:cx[i]),carHrs=act.filter((m,i)=>!mo[i]).map(m=>hrs[act.indexOf(m)]);
-  const needCap=want.reduce((a,w,i)=>a+w*cxU[i],0)+milCap;
+  // 0.51, этап 4б: модель со своей линией делается на ней (места только её), остальные делят общий конвейер; рабочие общие.
+  // Чего линия не вместила — идёт на общий конвейер, как обычная модель; эта доля выпуска (L.ov) и считается в штрафе
+  // конвейера, пока помощник не расширит линию.
+  const xl=act.map(md=>xlOf(s,md)),wL=act.map((md,i)=>xl[i]?Math.min(want[i],xlEff(s,xl[i])/cxU[i]):0),wC=want.map((w,i)=>w-wL[i]);
+  const needCap=wC.reduce((a,w,i)=>a+w*cxU[i],0)+milCap;
   const kCap=needCap>0?Math.min(1,cap/needCap):1,kCapM=kCap;
-  const needH=want.reduce((a,w,i)=>a+w*hrs[i]*kCap,0)+milCap*kCap*(carHrs.length?carHrs.reduce((a,b)=>a+b,0)/carHrs.length:800);
+  const needH=want.reduce((a,w,i)=>a+(xl[i]?(wL[i]+wC[i]*kCap)*hrs[i]:w*hrs[i]*kCap),0)+milCap*kCap*(carHrs.length?carHrs.reduce((a,b)=>a+b,0)/carHrs.length:800);
   if(s.staffAuto){const target=Math.ceil(needH/hpw*1.02);let d=target-s.workers;if(d>0)d=Math.min(d,Math.max(20,Math.round(s.workers*0.5)));else if(d<0)d=Math.max(d,-Math.round(s.workers*0.3));
     if(d>0){r.hire=d*8*cpi(s);s.cash-=r.hire;}s.workers=Math.max(lineOn(s,'car')||lineOn(s,'moto')?3:0,s.workers+d);}
   const kLab=needH>0?Math.min(1,s.workers*hpw/needH):1,k=kCap*kLab,kM=k;r.bneck={cap:kCap,lab:kLab,wh:!!r.whCut,load:cap>0?needCap/cap:0,mcap:kCap,mload:cap>0?needCap/cap:0};
-  r.capUsed=0;act.forEach((md,i)=>{md._cp={s0:md.stock,o0:md.ordSold||0,cx:cxU[i]};const kk=mo[i]?kM:k,made=Math.floor(want[i]*kk+(Math.random()<(want[i]*kk)%1?1:0));md._cp.m=made;md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.capUsed+=made*cxU[i];if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
+  r.capUsed=0;act.forEach((md,i)=>{md._cp={s0:md.stock,o0:md.ordSold||0,cx:cxU[i]};const x=xl[i]?(wL[i]+wC[i]*kCap)*kLab:want[i]*(mo[i]?kM:k),made=Math.floor(x+(Math.random()<x%1?1:0));if(xl[i])xl[i].ov=want[i]>0?wC[i]/want[i]:0;md._cp.m=made;md.lastMade=made;md.made=(md.made||0)+made;md.vol=md.vol?md.vol*0.7+made*0.3:made;md.stock+=made;r.capUsed+=(xl[i]?(x>0?made*wC[i]*kCap*kLab/x:0):made)*cxU[i];if(mo[i])r.mmade=(r.mmade||0)+made;else r.made+=made;r.mat+=made*matCost(md,s);if(md.ramp>0)md.ramp--;});
   // 0.24: из военного заказа машины — столько, сколько нужно армии; остальное — военная продукция (моторы, снаряды, каски): деньги те же, но это не проданные машины
   if(milCap>0){const cars=act.filter((m,i)=>!mo[i]),mc=cars.length?cars.reduce((a,m)=>a+matCost(m,s),0)/cars.length:0,mu=Math.floor(milCap*k);if(mc>0){r.mat+=mu*mc;r.mil=mu*mc*1.35;r.milN=Math.min(mu,milNeed(s));r.milX=mu-r.milN;r.made+=mu;r.capUsed+=mu;r.milCap=mu;}}
   // поставки по заказам — в первую очередь
@@ -174,6 +178,8 @@ function step(){
   // 0.41: мировой итог с начала партии (л. с., доллары, победы, первенства) и проверка господства — 16-world.js
   try{worldMonth(s,r);domCheck(s);}catch(e){console.warn('world',e);}
   // 0.41: живые соперники делают ход после вашего — 17b-bots.js
+  // 0.51, этап 4б: линии под модели ведёт помощник — всегда
+  try{linesMonth(s,r);}catch(e){console.warn('lines',e);}
   // 0.51, этап 5: сначала считают месяц и ходят фирмы-соперники (17c-firms.js), потом — большая стратегия великих марок
   try{firmsMonth(s,r);}catch(e){console.warn('firms',e);}
   try{botsMonth(s,r);}catch(e){console.warn('bots',e);}

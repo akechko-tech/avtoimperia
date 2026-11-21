@@ -9,7 +9,7 @@
 //            TIME=1 — строка на каждую гонку (время расчёта, место, шанс по прикидке менеджера); DBG=1900 — помесячно до этого года.
 const {spawn}=require('child_process');
 // подбор чисел этапа 5: NESTMU, NESTTH и др. — из окружения (например, NESTMU=0.7)
-for(const k of ['NESTMU','NESTTH','NESTY0','NESTY1','FIRMOFF','FIRMFOLLOW'])if(process.env[k]!=null)globalThis[k]=+process.env[k];
+for(const k of ['NESTMU','NESTTH','NESTY0','NESTY1','FIRMOFF','FIRMFOLLOW','XLOFF'])if(process.env[k]!=null)globalThis[k]=+process.env[k];
 const A=process.argv.slice(2);
 if(A[0]==='all'){
   const seeds=+(A[1]||3),par=+(A[2]||3),styles=(A[3]||'ford,helper').split(','),diffs=(A[4]||'normal,hist').split(','),pio=A[5]||'ford',cc=A[6]||'us';
@@ -46,7 +46,7 @@ function reserve(){const L=G.last;return Math.max(3000*cpi(G),L?((L.wage||0)+(L.
 function free(){return G.cash-reserve();}
 // новая модель: сборка по образцу эпохи, затем — стиль автора: всё новейшее, что дало КБ раньше истории, если рама выдержит и оценка не падает
 function gain(d){const m=designMd(G,d);return (m.price*(1-dMargin(G))-unitCost(m,G))*m.vol;}
-function newModel(kind){let md=autoDesign(kind,G);
+function newModel(kind){let md=autoDesign(kind,G,null,process.env.NOCAPD?null:{cap:true});   // 0.51, этап 4б: кнопка «Самая прибыльная» считает с мощностью завода
   if(RDX)['e','g','c','k','w'].forEach(k=>{const arr=PART_CATS.find(c=>c.k===k).arr().filter(x=>!x.moto&&x.y>G.y&&G.rd.early.includes(x.id)).sort((a,b)=>b.y-a.y);
     // 0.51, этап 2: «запас» больше не окупается сам — новинку ставим, только если с ней модель приносит больше (цена по достоинству минус себестоимость, на ожидаемый выпуск)
     for(const x of arr){const t={...md,[k]:x.id};if(overpower(t))continue;let a=0,b=0;try{a=gain(md);b=gain(t);}catch(_){}if(b>a*1.02){md=t;break;}}});
@@ -54,7 +54,7 @@ function newModel(kind){let md=autoDesign(kind,G);
   const dc=devCost(md,G),need=dc*1.3+tc;if(G.cash<need&&loanOpen(G)){const n=Math.min(Math.max(0,maxLoan(G)-G.loan),Math.ceil((need*1.1-G.cash)/1000)*1000);if(n>0){G.loan+=n;G.cash+=n;}}
   if(G.cash<need)return null;G.cash-=dc;
   const m={...md,id:G.nextId++,name:'Модель '+G.nextId,paint:'#333',plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
-  m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);lastDesign=mi(G);return m;}
+  m.price=Math.round(refPrice(m,G)/10)*10;try{xlAtStart(G,m);}catch(_){}G.models.push(m);lastDesign=mi(G);return m;}   // линия — по решению помощника, как при запуске из конструктора
 // гоночная машина стилем автора: лучшая рама, самый сильный мотор, который она выдержит (и прототипы КБ), лучшие шины, тормоза, коробка, спортивный кузов
 let lastRaceCar=-99;
 function raceDesign(){let md=autoDesign('sport',G);const U=k=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),G,false),rk=t=>{try{return rankOf(t,2,G.y);}catch(_){return 0;}};

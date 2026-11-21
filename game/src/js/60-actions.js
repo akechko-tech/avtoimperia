@@ -28,7 +28,7 @@ const ACT={
   dlrC:d=>{G.ui=G.ui||{};G.ui.dlrC=d.c;setOpen('net_'+d.c,true);rerender();},
   helperToggle:()=>{if(!G)return;G.helper=G.helper||{};G.helper.on=!G.helper.on;toast(G.helper.on?'Помощник управляющего включён':'Помощник выключен');save();openSettings();render();},
   whAdd:d=>{if(whOrder(G,+d.n))rerender();},
-  capSell:()=>{if(G.cap<=3)return;const n=Math.max(1,Math.round(G.cap*0.2)),v=Math.round(G.plantVal*n/G.cap*0.4);G.cap-=n;G.plantVal-=G.plantVal*n/(G.cap+n);G.cash+=v;addLog(`Часть цехов продана за ${money(v)}.`);rerender();},
+  capSell:()=>{if(G.cap<=3)return;const n=Math.max(1,Math.round(G.cap*0.2)),pv=Math.max(0,G.plantVal-xlVal(G)),v=Math.round(pv*n/G.cap*0.4);G.cap-=n;G.plantVal-=pv*n/(G.cap+n);G.cash+=v;   /* 0.51, этап 4б: цена общих цехов — без своих линий */addLog(`Часть цехов продана за ${money(v)}.`);rerender();},
   shifts:d=>{G.shifts=+d.v;rerender();},
   staffAuto:d=>{G.staffAuto=d.v==='1';rerender();},
   workers:d=>{const k=Math.max(1,Math.round(G.workers*0.1));G.workers=Math.max(3,G.workers+k*(+d.d));if(+d.d>0){G.cash-=k*8*cpi(G);}rerender();},
@@ -93,11 +93,15 @@ const ACT={
   // 0.34: «Передовая модель» — лучшие современные детали и прототипы КБ для покупателей класса, себестоимость — потом;
   // что изменилось (итог, себестоимость, прототипы) — строкой под кнопками
   dfront:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(frontDesign(designKind(draft),G,base),'Передовая модель');},
-  dauto:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(autoDesign(designKind(draft),G,base),'Детали для наибольшей прибыли');},
+  dauto:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(autoDesign(designKind(draft),G,base,{cap:true}),'Самая прибыльная');},
+  dxl:()=>{draft.xlOv=!draft.xlOv;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   startdev:()=>{const md={...draft,eq:eqOf(draft).slice()},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||(typeof brandNextName==='function'&&brandNextName(G))||('Тип '+G.nextId);
     const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
-    m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);
-    addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
+    m.price=Math.round(refPrice(m,G)/10)*10;
+    // 0.51, этап 4б: общий конвейер или своя линия — решает помощник (всегда); «Иначе» в конструкторе — решение игрока
+    let xlTxt='';try{const D=xlDraftDecide(G,draft);if(draft.xlOv)m.xlNo=!D.own;if(D.own){const L=xlTake(G,m,D);if(L)xlTxt=` ${D.reuse?'Свободная линия переналажена':'Своя линия'} — ${money(D.cost)}${isFinite(D.payM)?`, окупится ${xlPayTxt(D.payM)}`:''}.`;}}catch(e){console.warn('xl',e);}
+    G.models.push(m);
+    addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).${xlTxt}`);closeSheet();tab='models';checkAch();save();render();},
   rdPick:()=>openRD(),
   legendOpen:d=>{openLegend(d.k);},
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
