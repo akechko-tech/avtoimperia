@@ -201,6 +201,10 @@ const ACT={
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
   rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},
+  recOpen:()=>{openRecords();},recTry:d=>{closeSheet();recTryNow(G,d.k);save();render();},recBuild:()=>{recDraft=null;openRecBuild();},recBack:()=>{openRecords();},
+  recOpt:d=>{recDraft=recDraft||{eng:'one',body:'std',name:''};const el=document.getElementById('recname');if(el)recDraft.name=el.value;recDraft[d.k]=d.v;openRecBuild();},
+  recStart:()=>{const el=document.getElementById('recname');if(el&&recDraft)recDraft.name=el.value;if(recStart(G,recDraft||{eng:'one',body:'std'})){recDraft=null;closeSheet();toast('Рекордный образец — в КБ');save();render();}else toast('Не вышло начать проект');},
+  trOpen:()=>{openTrials();},trEnter:d=>{if(trialEnter(G,d.id,d.md!=null&&d.md!==''?+d.md:null)){toast('Заявка принята');save();openTrials();render();}else toast('Заявить не вышло');},trTest:d=>{if(trialTest(G,+d.md)){save();closeSheet();render();}else toast('Испытание сейчас невозможно');},/* 0.51, этап 6 */
   rivPoach:d=>{if(rivPoach(G,d.c,+d.i)){toast('Инженер перешёл в ваше КБ');save();render();openRivals(d.c,+d.i);}else toast('Не вышло: не хватает денег или рано');},/* 0.51, этап 5б *//* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
   troRace:()=>{openRaceResult();},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},

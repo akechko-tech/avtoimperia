@@ -91,6 +91,7 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
   if(pj.kind==='own'||pj.kind==='aeng')return ownRdCost(pj,s);
+  if(pj.kind==='rec')return recRdCost(pj,s);   // 0.51, этап 6: рекордный образец
   if(pj.kind==='xfer')return xferCost(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
   const k=pj.kind==='early'?3*aheadCostK(pj.yrs||1):0.8*Math.pow(1.5,(pj.lvl||1)-1);/* 0.48: каждая ступень улучшения в полтора раза дороже и в 1,6 раза дольше (rdProjects: need) */

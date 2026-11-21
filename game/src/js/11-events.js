@@ -105,7 +105,7 @@ function checkTenders(s){
   if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
   // 0.36: в России с осени 1917 до весны 1921 года (переворот, гражданская война, разруха) заказов у ведомств и фирм нет
   if(s.country==='ru'&&yf(s)>=1917.8&&yf(s)<1921.5)return;
-  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&(!t.war||isWar(s.y,s.m,s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=(t.gap||18)&&tenderModel(s,t.kind));if(!L.length)return;
+  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&(!t.war||isWar(s.y,s.m,s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=(t.gap||18)&&tenderModel(s,t.kind)&&!(k==='army'&&typeof TRIALS!=='undefined'&&TRIALS.some(X=>X.c===s.country&&X.grp==='truck'&&s.y>=X.y0&&s.y<=X.y1)));if(!L.length)return;   // 0.51, этап 6: где в истории были испытания, армейский заказ дают они
   const [k,t]=L[Math.floor(Math.random()*L.length)],md=tenderModel(s,t.kind),scale=(1+T(s)/10)*(s.country==='us'?1.8:1);
   const n=Math.max(2,Math.round((t.n[0]+Math.random()*(t.n[1]-t.n[0]))*scale)),lim=Math.round(refPrice(md,s)*t.lim/10)*10;
   s.tenderSaid=s.tenderSaid||{};s.tenderSaid[k]=mi(s);
@@ -149,6 +149,7 @@ function resolve(key){
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
+  if(/^rec:/.test(key)&&recResolve(s,key))return;if(/^tr:/.test(key)&&trialResolve(s,key))return;   // 0.51, этап 6
   if(/^own:/.test(key))ownEvent(s,key);
   if(/^eng:/.test(key))engResolve(s,key);if(/^sh:/.test(key))shResolve(s,key);   // 0.51, этап 5б: главный конструктор, особый дивиденд   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
   if(key==='rescueYes'||key==='rescueNo'){rescueResolve(s,key);}

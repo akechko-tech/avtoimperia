@@ -3093,6 +3093,7 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
   if(pj.kind==='own'||pj.kind==='aeng')return ownRdCost(pj,s);
+  if(pj.kind==='rec')return recRdCost(pj,s);   // 0.51, этап 6: рекордный образец
   if(pj.kind==='xfer')return xferCost(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
   const k=pj.kind==='early'?3*aheadCostK(pj.yrs||1):0.8*Math.pow(1.5,(pj.lvl||1)-1);/* 0.48: каждая ступень улучшения в полтора раза дороже и в 1,6 раза дольше (rdProjects: need) */
@@ -3776,7 +3777,7 @@ function adEffect(s,c){const IL=impOf(s,c||s.country),a=(s.ad||0)*(IL?IL.ad||0.3
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
 // 0.26: в эпоху пионеров (до ~1906) о машинах узнают только из гонок, выставок и газет — слава весит втрое больше
 function pioneerK(s){return 1+2*clamp((1906-yf(s))/8,0,1);}
-function raceEffect(md,s){return (((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0))*pioneerK(s)+kingEffect(md,s);}
+function raceEffect(md,s){return (((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0))*pioneerK(s)+kingEffect(md,s)+(s.rec?recBoostU(md,s):0);}   // 0.51, этап 6: слава мирового рекорда
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
@@ -4019,8 +4020,8 @@ function truckMarket(R,c,s,ms,pr,K,u0){
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
     const farm=own&&TRUCK_USE[u].grp==='farm',FZ=farm?(R.farm=R.farm||{riv:0,rev:0,h:0,hrev:0,you:0}):null;   // 0.51, этап 5б: в тракторах у соперника тоже фирма (17d-firms2.js)
     const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?(farm?MF:1):MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
-    const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
-      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id];
+    const L=ms.filter(md=>jobFits(u,md)&&(typeof trGate!=='function'||trGate(md,u,c,s))).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
+      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id]+(typeof trU==='function'?trU(md,u,c,s):0);   // 0.51, этап 6: свидетельства ведомств
         if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}
         else if(farm){const ed=vq+dp+ex[md.id];if(FZ.edge==null||ed>FZ.edge){FZ.edge=ed;FZ.edgeP=dp;FZ.edgeQ=vq;FZ.edgeB=ex[md.id];}}}
       v=v/LAM;if(v>m)m=v;return {md,v};});
@@ -6009,13 +6010,13 @@ function fixStart(s,id){const md=s.models.find(m=>m.id===+id);if(!md||!md.dv)ret
   s.cash-=c;s.rdPaid=(s.rdPaid||0)+c;s.rd.projs.push({...fixProject(s,md),prog:0,cost:c});addLog(`КБ начало доводку «${md.name}» (${money(c)}).`);return true;}
 function fixDone(s,pj){const md=s.models.find(m=>m.id===pj.md);if(!md)return;delete md.dv;addLog(`КБ довело «${md.name}» до ТЗ: мотор, рама и тормоза — как в расчёте, ресурс восстановлен.`,'good');pendingToasts.push('🔧 Доводка: «'+md.name+'»');}
 // прототип на годы раньше истории: испытания могут выявить недостатки — проект дольше на 40% (один раз)
-function protoRisk(pj){if(pj.kind==='own'||pj.kind==='aeng')return clamp(0.15+0.12*(pj.yrs||0),0.15,0.7);return clamp(0.12*(pj.yrs||1),0.08,0.6);}
+function protoRisk(pj){if(pj.kind==='own'||pj.kind==='aeng'||pj.kind==='rec')return clamp(0.15+0.12*(pj.yrs||0),0.15,0.7);return clamp(0.12*(pj.yrs||1),0.08,0.6);}
 // заводская технология раньше своего года: риск трудной наладки
 function techRisk(s,k){const nx=techNext(s,k);if(!nx)return 0;const e=(nx.y||1895)-s.y;return e>0?clamp(0.2*e,0.15,0.7):0;}
 // трудная наладка: выпуск ниже, пока технологию не наладили
 function techTroubleK(s){const T=s.techTrouble;return T&&T.until>mi(s)?T.k:1;}
 // проверка при завершении: проект КБ — доработать ли прототип
-function protoCheck(s,pj){const own=pj.kind==='own'||pj.kind==='aeng';if((pj.kind!=='early'&&!own)||pj.rk)return false;pj.rk=1;if(Math.random()>=protoRisk(pj))return false;
+function protoCheck(s,pj){const own=pj.kind==='own'||pj.kind==='aeng'||pj.kind==='rec';if((pj.kind!=='early'&&!own)||pj.rk)return false;pj.rk=1;if(Math.random()>=protoRisk(pj))return false;
   const add=Math.round(pj.need*0.4);pj.need+=add;addLog(own?`Испытания «${pj.name}» выявили недостатки — опыты ещё на ${add} очк. КБ: своя разработка сырее покупной детали${pj.yrs>0?`, а эта ещё и на ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше истории`:''}.`:`Испытания прототипа «${pj.name}» выявили недостатки — опыты ещё на ${add} очк. КБ (новинка на ${pj.yrs} ${plural(pj.yrs||1,'год','года','лет')} раньше истории).`,'bad');
   pendingToasts.push('🔬 Прототип: доработка');return true;}
 // проверка при завершении технологии: наладка затягивается
@@ -6139,7 +6140,7 @@ function checkTenders(s){
   if(s.pending.length||s.over||(s.orders||[]).length>=3||Math.random()>0.035)return;
   // 0.36: в России с осени 1917 до весны 1921 года (переворот, гражданская война, разруха) заказов у ведомств и фирм нет
   if(s.country==='ru'&&yf(s)>=1917.8&&yf(s)<1921.5)return;
-  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&(!t.war||isWar(s.y,s.m,s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=(t.gap||18)&&tenderModel(s,t.kind));if(!L.length)return;
+  const L=Object.entries(TENDERS).filter(([k,t])=>s.y>=t.y&&(!t.to||s.y<t.to)&&(!t.cs||t.cs.includes(s.country))&&(!t.war||isWar(s.y,s.m,s.country))&&mi(s)-((s.tenderSaid||{})[k]||-99)>=(t.gap||18)&&tenderModel(s,t.kind)&&!(k==='army'&&typeof TRIALS!=='undefined'&&TRIALS.some(X=>X.c===s.country&&X.grp==='truck'&&s.y>=X.y0&&s.y<=X.y1)));if(!L.length)return;   // 0.51, этап 6: где в истории были испытания, армейский заказ дают они
   const [k,t]=L[Math.floor(Math.random()*L.length)],md=tenderModel(s,t.kind),scale=(1+T(s)/10)*(s.country==='us'?1.8:1);
   const n=Math.max(2,Math.round((t.n[0]+Math.random()*(t.n[1]-t.n[0]))*scale)),lim=Math.round(refPrice(md,s)*t.lim/10)*10;
   s.tenderSaid=s.tenderSaid||{};s.tenderSaid[k]=mi(s);
@@ -6183,6 +6184,7 @@ function resolve(key){
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
+  if(/^rec:/.test(key)&&recResolve(s,key))return;if(/^tr:/.test(key)&&trialResolve(s,key))return;   // 0.51, этап 6
   if(/^own:/.test(key))ownEvent(s,key);
   if(/^eng:/.test(key))engResolve(s,key);if(/^sh:/.test(key))shResolve(s,key);   // 0.51, этап 5б: главный конструктор, особый дивиденд   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
   if(key==='rescueYes'||key==='rescueNo'){rescueResolve(s,key);}
@@ -6795,6 +6797,142 @@ function ruNationalize(s){const L=s.last||{},fixed=(L.wage||0)+(L.ovh||0)+(L.dlr
   pushEvent({own:1,img:'x:ru-bolshevik-armour-1917',title:'Национализация',deck:`Декрет 28 июня 1918 года: «${s.company}» — собственность республики`,
     text:`Крупные заводы переходят государству. Вы остаётесь во главе — теперь «красным директором»: завод подчинён главку Высшего совета народного хозяйства, касса — то, что выделил главк (${money(s.cash)}), долги банкам аннулированы вместе с банками, заграничные дилеры и дела потеряны.\nИдёт гражданская война: покупателей нет, завод живёт заказами Красной армии — ремонт и сборка грузовиков, санитарных машин. Убытки покрывает главк, но только до конца войны: потом — хозрасчёт.`},true);}
 
+/* ================= 0.51, этап 6: ИСПЫТАНИЯ ВЕДОМСТВ =================
+   Автор (тема 7 ТЗ): «в авиации образец должен себя показать, а грузовики и мотоциклы берут по цене и стандартному качеству;
+   если в истории были испытания — нужен пробный заезд и показ». До этого этапа армия покупала военную технику игрока без всяких
+   испытаний, а заказ военного министерства на грузовики был обычным торгом по цене.
+   Теперь там, где испытания были в истории, заказ и право продажи дают они:
+     • конкурсы по календарю — субсидийные грузовики Германии (1908–1913), военный конкурс Франции (1905–1913), субсидийные
+       испытания Британии (1912–1914), пробег военного ведомства России (1911–1913), состязания тракторов в Виннипеге (1908–1913):
+       запись за четыре месяца, пробег считают по машине (надёжность, груз, ход, расход), участвуют марки страны;
+       победителю — заказ и свидетельство, призёрам — свидетельство;
+     • свидетельство субсидийного грузовика: покупателю такой машины казна доплачивает — без свидетельства грузовик в эти годы
+       продаётся хуже (доплату получают покупатели соперников);
+     • приёмка на полигоне — по заявке игрока: штабную и санитарную машины, бронеавтомобиль и танк армия в мирное время
+       закупает только после испытаний (в войну берёт всё); свидетельство — на пять лет;
+     • станция испытаний тракторов (США, с 1920 года, закон Небраски): итог печатают — хороший помогает продажам, без итога
+       и со слабым итогом трактор продаётся хуже.
+   Прочие заказы (почта, пивоварни, такси, города) — прежним торгом. Образцы и источники — claude/issledovanie-rekordy-ispytaniya-0.51.md. */
+const TRIALS=[
+  {id:'de-sub',c:'de',y0:1908,y1:1913,m:8,grp:'truck',sub:0.3,order:[20,60],n:'Испытания субсидийных грузовиков',who:'Военное министерство Пруссии',
+    hist:'С 1908 года прусское военное министерство доплачивает покупателю грузовика одобренного образца — при покупке и ещё пять лет — за право призвать машину в войну.'},
+  {id:'fr-mil',c:'fr',y0:1905,y1:1913,m:9,grp:'truck',sub:0.15,subY:1910,order:[15,50],n:'Военный конкурс грузовиков',who:'Автомобильный клуб Франции и военное министерство',
+    hist:'С 1905 года Автомобильный клуб Франции каждый год испытывает машины для армии; призы платит военное министерство, а с 1910 года покупатель премированного грузовика получает доплату.'},
+  {id:'uk-sub',c:'uk',y0:1912,y1:1914,m:5,grp:'truck',sub:0.05,order:[15,40],n:'Субсидийные испытания',who:'Военное министерство Британии',
+    hist:'Требования к субсидийному грузовику вышли в 1912 году; тогда же прошли первые испытания — свидетельства получил Leyland в классах три тонны и тридцать центнеров.'},
+  {id:'ru-run',c:'ru',y0:1911,y1:1913,m:8,grp:'truck',sub:0,order:[10,40],buyAll:1,n:'Испытательный пробег военного ведомства',who:'Военное министерство России',
+    hist:'В 1912 году 43 машины прошли Петербург — Псков — Минск — Смоленск — Москва — Петербург. Осенью испытывали грузовики: каждую машину, дошедшую до конца, казна покупала, лучшим маркам обещали заказы.'},
+  {id:'wpg',c:'us',y0:1908,y1:1913,m:6,grp:'farm',sub:0,order:[20,60],n:'Состязания тракторов в Виннипеге',who:'Виннипегская выставка',
+    hist:'На выставке в Виннипеге тракторы пахали наперегонки перед судьями: считали гектары, топливо и поломки. Победителей знали фермеры всей прерии.'}];
+const TR_CERT_M=60,TR_SUB_M=48,TR_OPEN=4,TR_RETEST=6,TR_NEB_Y=1920,
+  TR_PASS=0.85;   // приёмка на полигоне: не хуже 85 % образца года (образец каждый год улучшается; машина «как у всех пять лет назад» не пройдёт)
+const TR_GRP={truck:{kinds:['truck','semi'],n:'грузовик',use:'haul'},farm:{kinds:['tractor','crawler'],n:'трактор',use:'plough'}};
+function trKind(md){try{return bodyKind(byId(BODIES,md.b));}catch(_){return '';}}
+function trMil(md){const k=trKind(md);for(const u of TUSE){const U=TRUCK_USE[u];if(U.grp==='mil'&&U.kinds.includes(k))return u;}return null;}
+function trCertS(md,c,k,s){const C=md&&md.cert&&md.cert[c+':'+k];return C&&C.until>mi(s)?C:null;}
+function trSet(md,c,k,o,s){md.cert=md.cert||{};md.cert[c+':'+k]=Object.assign({until:mi(s)+(k==='sub'?TR_SUB_M:TR_CERT_M),y:s.y},o);}
+// мерка машины на испытаниях против эталона своего вида: надёжность, груз, ход, расход, простота
+function trScore(md,grp,c,s){const y=s.y;let ch,rf;try{ch=charOf(md,y);rf=charOf(rivalRef(md,y).md,y);}catch(_){return 0;}
+  if(grp==='farm'){try{const P=refPrice(md,s),a=truckCost(md,'plough',c,s,P).cpk,b=truckCost(rivalRef(md,y).md,'plough',c,s,P).cpk;return clamp(Math.pow(b/Math.max(1e-9,a),0.7)*Math.pow(ch.mtbf/Math.max(0.1,rf.mtbf),0.3),0.2,3);}catch(_){return 0;}}
+  if(grp==='mil'){const u=trMil(md);if(!u)return 0;const U=TRUCK_USE[u];return clamp(jobScore(U,ch)/Math.max(1e-9,jobScore(U,rf))*Math.pow(ch.mtbf/Math.max(0.1,rf.mtbf),0.25),0.2,3);}
+  const r=(a,b)=>Math.log(Math.max(0.05,a)/Math.max(0.05,b));
+  return clamp(Math.exp(0.45*r(ch.mtbf,rf.mtbf)+0.2*r(ch.cap,rf.cap)+0.15*r(ch.vT||15,rf.vT||15)-0.12*r(ch.fuel,rf.fuel)+0.08*r(ch.ease,rf.ease)),0.2,3);}
+function trBreakP(md,s){let ch,rf;try{ch=charOf(md,s.y);rf=charOf(rivalRef(md,s.y).md,s.y);}catch(_){return 0.3;}return clamp(0.3*rf.mtbf/Math.max(0.1,ch.mtbf),0.04,0.75);}
+function trModels(s,grp){const K=TR_GRP[grp].kinds;return (s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&!isMoto(m)&&K.includes(trKind(m)));}
+function trBest(s,grp,c){return trModels(s,grp).map(m=>({m,sc:trScore(m,grp,c,s)})).sort((a,b)=>b.sc-a.sc)[0]||null;}
+function trSells(s,c){return c===s.country||dealerCount(s,c)>0;}
+function trFee(s,T){return Math.round(Math.max(500*cpi(s),bizRev(s)*0.0002)/50)*50;}
+// когда конкурс этого года; открыт ли он для записи
+function trWhen(T,y){return (y-1895)*12+T.m;}
+function trOpenList(s){const t=mi(s),out=[];TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||!trSells(s,T.c))return;const at=trWhen(T,s.y);if(t>=at||at-t>TR_OPEN)return;const key=T.id+'|'+s.y,E=(s.trials&&s.trials.ent||{})[key];
+    out.push({T,at,key,ent:E||null,best:trBest(s,T.grp,T.c),fee:trFee(s,T)});});return out;}
+function trialEnter(s,id,mdId){const o=trOpenList(s).find(x=>x.T.id===id);if(!o||o.ent)return false;const md=mdId!=null?s.models.find(m=>m.id===mdId):o.best&&o.best.m;if(!md||s.cash<o.fee)return false;
+  s.cash-=o.fee;s.trials=s.trials||{};(s.trials.ent=s.trials.ent||{})[o.key]={md:md.id,fee:o.fee};addLog(`«${md.name}» заявлена: ${o.T.n} (${COUNTRIES[o.T.c].name}), ${MONTHS[o.T.m]} ${s.y}. Взнос ${money(o.fee)}.`);return true;}
+// соперники на конкурсе: марки страны (их сила — эталон вида и ход фирмы, если он есть)
+function trRivals(s,T){const out=[],c=T.c;
+  if(T.grp==='farm'){const F=typeof farmGet==='function'?farmGet(s,c):null;[F?F.n:farmName(s,c),'Hart-Parr','Rumely','Case'].slice(0,3).forEach((n,i)=>out.push({n,k:i===0&&F?Math.exp(firmDq(F,'farm',mi(s))*0.5):1}));}
+  else{let L=[];try{L=topRivals(c,'truck',s,3);}catch(_){}L.forEach(cp=>{const i=(COMPS[c]||[]).indexOf(cp),F=typeof firmGet==='function'?firmGet(s,c,i):null;out.push({n:compName(cp,s),k:F?Math.exp(firmDq(F,'truck',mi(s))*0.5):1});});
+    while(out.length<3)out.push({n:['завод из провинции','мастерская инженера','заграничная марка'][out.length],k:0.92});}
+  return out.map(o=>{const brk=Math.random()<0.3;return {n:o.n,sc:o.k*Math.exp((Math.random()+Math.random()-1)*0.1)*(brk?0.85:1)*DIF().race**0.3,brk};});}
+function trialRun(s,T,E){const md=s.models.find(m=>m.id===E.md);const key=T.id+'|'+s.y;if(!md||!(md.status==='prod'||md.status==='sale')){addLog(`${T.n}: заявленной модели больше нет в серии — заявка снята.`,'bad');return null;}
+  const sc0=trScore(md,T.grp,T.c,s),brk=Math.random()<trBreakP(md,s),me={n:`«${md.name}»`,sc:sc0*Math.exp((Math.random()+Math.random()-1)*0.06)*(brk?0.82:1),brk,you:1};
+  const L=[me,...trRivals(s,T)].sort((a,b)=>b.sc-a.sc),place=L.indexOf(me)+1,top=L[0].sc,scale=(1+T2(s)/10)*(T.c==='us'?1.8:1),t=mi(s);
+  const pass=place<=3&&me.sc>=top*0.88,price=Math.round(refPrice(md,s)*1.05/10)*10;let n=0;
+  if(place===1)n=Math.round((T.order[0]+Math.random()*(T.order[1]-T.order[0]))*scale);else if(pass)n=Math.round(T.order[0]*scale*0.5);else if(T.buyAll&&!brk)n=1;
+  if(pass){trSet(md,T.c,'sub',{place,sc:+me.sc.toFixed(2)},s);s.rep=clamp(s.rep+(place===1?2:1),0,100);}
+  if(n>0){s.orders=s.orders||[];s.orders.push({id:'tr-'+key,md:md.id,n,left:n,price,due:t+8,who:T.who,start:t});}
+  if(place===1)try{trophyAdd(s,{kind:'record',title:`${T.n}: первое место`,sub:`«${md.name}» · ${COUNTRIES[T.c].name}, ${s.y}`,story:T.hist,key:'tr|'+key});}catch(_){}
+  const tab=L.map((o,i)=>`${i+1}. ${o.n} — ${Math.round(o.sc*100)}${o.brk?' (поломка в пути)':''}`).join('\n'),sub=trSubOn(T,s.y)?` Покупателям «${md.name}» казна теперь доплачивает — до ${1895+Math.floor((t+TR_SUB_M)/12)} года.`:'';
+  pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания ведомства',title:`${T.n}: ${place===1?'первое место':pass?place+'-е место, свидетельство получено':brk?'поломка в пути':place+'-е место'}`,deck:`${COUNTRIES[T.c].name} · «${md.name}»`,
+    text:`${T.who} подвело итог (100 — образец года):\n${tab}\n${place===1?`Победа: заказ на ${fmtN(n)} машин по ${money(price)} и свидетельство.${sub}`:pass?`Свидетельство получено${n?`, заказ на ${fmtN(n)} машин по ${money(price)}`:''}.${sub}`:brk?`«${md.name}» встала в пути — судьи это записали.${n?'':' Свидетельства нет.'}`:`Свидетельства нет: до призёров не хватило.${n?` Машину, дошедшую до конца, казна купила (${money(price)}).`:''}`}\n${T.hist}`,choices:[['Ясно','ok']]},true);
+  return {place,pass,n,brk};}
+function T2(s){return typeof T==='function'?T(s):0;}
+function trSubOn(T,y){return T.sub>0&&y>=(T.subY||T.y0)&&y<=T.y1+1;}
+/* ---------- приёмка по заявке: полигон (военная техника) и станция испытаний тракторов ---------- */
+function trTestKind(md,s){if(trMil(md))return 'mil';const k=trKind(md);if(TR_GRP.farm.kinds.includes(k)&&s.y>=TR_NEB_Y&&trSells(s,'us'))return 'neb';return null;}
+function trTestC(md,s,k){return k==='neb'?'us':s.country;}
+function trTestWhy(s,md){const k=trTestKind(md,s);if(!k)return 'этой технике испытания не нужны';if(!(md.status==='prod'||md.status==='sale'||md.status==='dev'))return 'модель не в серии и не в КБ';const c=trTestC(md,s,k);
+  if((s.trials&&s.trials.q||[]).some(q=>q.md===md.id&&q.k===k))return 'испытания уже идут';const last=md.certT&&md.certT[c+':'+k];if(last!=null&&mi(s)-last<TR_RETEST)return `повторно — через ${TR_RETEST-(mi(s)-last)} мес.`;
+  if(k==='mil'&&isWar(s.y,s.m,c))return 'в войну армия берёт без испытаний';if(s.cash<trFee(s))return 'не хватает денег';return '';}
+function trialTest(s,mdId){const md=s.models.find(m=>m.id===mdId);if(!md||trTestWhy(s,md))return false;const k=trTestKind(md,s),c=trTestC(md,s,k),fee=trFee(s);s.cash-=fee;s.trials=s.trials||{};(s.trials.q=s.trials.q||[]).push({md:md.id,k,c,at:mi(s)+(k==='neb'?2:3)});
+  (md.certT=md.certT||{})[c+':'+k]=mi(s);addLog(`«${md.name}» отправлена на ${k==='neb'?'станцию испытаний тракторов (Небраска)':'полигон военного ведомства'}: итог через ${k==='neb'?2:3} мес. Взнос ${money(fee)}.`);return true;}
+function trTestDone(s,q){const md=s.models.find(m=>m.id===q.md);if(!md)return;const grp=q.k==='neb'?'farm':'mil',sc=trScore(md,grp,q.c,s)*Math.exp((Math.random()+Math.random()-1)*0.05),brk=Math.random()<trBreakP(md,s)*0.6,v=brk?sc*0.9:sc;
+  if(q.k==='neb'){trSet(md,'us','neb',{sc:+v.toFixed(2)},s);const good=v>=1;
+    pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания',title:`Станция в Небраске: «${md.name}» — ${Math.round(v*100)} к образцу года`,deck:good?'итог напечатан — фермеры это читают':v<0.8?'итог напечатан — и он не в вашу пользу':'итог напечатан: не хуже и не лучше других',
+      text:`Инженеры университета проверили заявленную мощность на крюке и на шкиве, расход и поломки. Итог «${md.name}» — ${Math.round(v*100)} (100 — образец года)${brk?'; в протоколе отмечена поломка':''}.\n${good?'С таким протоколом трактор продаётся лучше: фермер верит напечатанному числу больше, чем рекламе.':v<0.8?'Слабый итог печатают так же, как сильный: продавать будет труднее, пока трактор не доведён и не испытан заново.':'Протокол есть — трактор продаётся как все. Итог выше образца года дал бы прибавку.'}\nПо закону 1919 года ни один новый трактор нельзя продавать в Небраске без такой проверки; первым её прошёл Waterloo Boy в апреле 1920 года.`,choices:[['Ясно','ok']]},true);return;}
+  const pass=v>=TR_PASS;if(pass)trSet(md,q.c,'mil',{sc:+v.toFixed(2)},s);
+  pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания ведомства',title:`Полигон: «${md.name}» ${pass?'принята':'не принята'}`,deck:`${COUNTRIES[q.c].name} · ${Math.round(v*100)} к образцу года`,
+    text:`Комиссия военного ведомства закончила испытания «${md.name}»: ${Math.round(v*100)} (100 — образец года)${brk?'; в пути была поломка':''}.\n${pass?`Машина принята: армия может закупать её пять лет — до ${1895+Math.floor((mi(s)+TR_CERT_M)/12)} года.`:`Не принята: нужно не меньше ${Math.round(TR_PASS*100)}. Доведите машину (надёжность и то, что ценит армия в этом виде техники) и заявите снова — не раньше чем через ${TR_RETEST} мес.`}`,choices:[['Ясно','ok']]},true);}
+/* ---------- месяц ---------- */
+function trialsMonth(s,r){if(s.mode==='racer')return;const t=mi(s),S=s.trials=s.trials||{};
+  TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||trWhen(T,s.y)!==t)return;const key=T.id+'|'+s.y,E=(S.ent||{})[key];if(E){try{trialRun(s,T,E);}catch(e){console.warn('trial',e);}delete S.ent[key];}
+    else if(trSells(s,T.c)&&trModels(s,T.grp).length)addLog(`${T.n} (${COUNTRIES[T.c].name}) прошли без вас.`,'hist');});
+  if(S.q&&S.q.length){const D=S.q.filter(q=>q.at<=t);S.q=S.q.filter(q=>q.at>t);D.forEach(q=>{try{trTestDone(s,q);}catch(e){console.warn('trial test',e);}});}}
+/* ---------- рынок: кого армия закупает и кому казна доплачивает ---------- */
+// армия в мирное время закупает только технику, принятую на полигоне (эталон соперников принят всегда)
+function trGate(md,u,c,s){const U=TRUCK_USE[u];if(!U||U.grp!=='mil'||!md||md.probe||md.ref)return true;if(isWar(s.y,s.m,c))return true;if(trCertS(md,c,'mil',s))return true;
+  // модель ещё не в серии (чертёж, КБ): спрос прикидывают по тому, пройдёт ли она полигон
+  return !(md.status==='prod'||md.status==='sale')&&trScore(md,'mil',c,s)>=TR_PASS;}
+// поправка к привлекательности: субсидия покупателям грузовиков со свидетельством; протокол станции испытаний тракторов
+function trU(md,u,c,s){if(!md||md.probe||md.ref)return 0;const U=TRUCK_USE[u];if(!U)return 0;
+  if(U.grp==='farm'){if(c!=='us'||s.y<TR_NEB_Y)return 0;const C=trCertS(md,'us','neb',s);return !C?-0.12:C.sc>=1?Math.min(0.2,0.1+0.4*(C.sc-1)):C.sc<0.8?-0.1:0;}
+  if(u!=='haul'&&u!=='bulk')return 0;const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||trCertS(md,c,'sub',s))return 0;
+  return -0.5*(U.bp||2.5)*Math.log(1/(1-T.sub));}
+function trSubTxt(md,c,s){const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||!TR_GRP.truck.kinds.includes(trKind(md))||!trSells(s,c))return '';
+  return trCertS(md,c,'sub',s)?'':`без свидетельства (${T.n.toLowerCase()}) покупатели в стране «${COUNTRIES[c].name}» не получают доплату казны — ${Math.round(T.sub*100)}% цены`;}
+/* ---------- что показать ---------- */
+function trialModelLine(md,s){const L=[],t=mi(s),mk=trMil(md);
+  Object.keys(md.cert||{}).forEach(k=>{const C=md.cert[k];if(!(C.until>t))return;const [c,kk]=k.split(':');L.push(`${kk==='mil'?'принята армией':kk==='neb'?`протокол Небраски — ${Math.round((C.sc||1)*100)}`:'субсидийное свидетельство'} · ${COUNTRIES[c]?COUNTRIES[c].name:c} до ${1895+Math.floor(C.until/12)}`);});
+  let warn='';if(mk&&!isWar(s.y,s.m,s.country)&&!trCertS(md,s.country,'mil',s))warn='армия в мирное время закупает только технику, принятую на полигоне';
+  else if(trTestKind(md,s)==='neb'&&!trCertS(md,'us','neb',s))warn='в США трактор без протокола станции испытаний продаётся хуже';
+  else{for(const c in COUNTRIES){const x=trSubTxt(md,c,s);if(x){warn=x;break;}}}
+  const k=trTestKind(md,s),why=k?trTestWhy(s,md):'x',btn=k&&!why?`<button class="btn sm" style="margin-top:4px" data-act="trTest" data-md="${md.id}">${k==='neb'?'На станцию испытаний':'На полигон'} · ${money(trFee(s))}</button>`:'';
+  if(!L.length&&!warn&&!btn)return '';
+  return `<p class="small ${warn?'warn':'muted'}" style="margin-top:4px">🎖 ${L.length?L.join('; ')+'. ':''}${warn?capF(warn)+'.':''}</p>${btn}`;}
+function openTrials(){const s=G,O=trOpenList(s),t=mi(s);
+  const soon=TRIALS.filter(T=>trSells(s,T.c)&&s.y+1>=T.y0&&s.y<=T.y1&&!O.some(o=>o.T===T)).map(T=>`<p class="small muted" style="margin-top:4px">${esc(T.n)} · ${COUNTRIES[T.c].name} — каждый год в ${MONTHS[T.m].toLowerCase()}, до ${T.y1} года</p>`).join('');
+  const certs=(s.models||[]).filter(m=>m.cert&&Object.values(m.cert).some(C=>C.until>t)).map(m=>`<p class="small" style="margin-top:4px"><b>${esc(m.name)}</b></p>${trialModelLine(m,s)}`).join('');
+  const need=(s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&trTestKind(m,s)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s)).map(m=>`<div class="race-item"><h3>${esc(m.name)}</h3>${trialModelLine(m,s)}</div>`).join('');
+  openSheet(`<div class="row"><h2>🎖 Испытания ведомств</h2><button class="btn sm" data-act="close">Закрыть</button></div>
+    <p class="small muted">Там, где испытания были в истории, заказ и право продажи дают они. Пробег считают по машине — надёжность, груз, ход, расход; против вас — марки страны. Прочие заказы (почта, города, такси) — обычным торгом.</p>
+    ${O.length?O.map(o=>`<div class="race-item"><div class="row"><div><span class="mo">${COUNTRIES[o.T.c].name} · ${MONTHS[o.T.m]} ${s.y}</span><h3 style="margin-top:2px">${esc(o.T.n)}</h3></div><span class="pill ${o.ent?'good':'muted'}">${o.ent?'заявлены':'запись открыта'}</span></div>
+      <p class="small muted" style="margin-top:4px">${esc(o.T.hist)}</p>
+      ${o.ent?`<p class="small" style="margin-top:4px">Заявлена «${esc((s.models.find(m=>m.id===o.ent.md)||{}).name||'')}».</p>`:o.best?`<p class="small" style="margin-top:4px">Ваша лучшая машина — <b>«${esc(o.best.m.name)}»</b>: ${Math.round(o.best.sc*100)} к образцу года. Победителю — заказ и свидетельство${trSubOn(o.T,s.y)?` (покупателям — доплата казны, ${Math.round(o.T.sub*100)}% цены)`:''}.</p>
+        <button class="btn sm primary" style="margin-top:6px" data-act="trEnter" data-id="${o.T.id}" data-md="${o.best.m.id}" ${s.cash<o.fee?'disabled':''}>Заявить · ${money(o.fee)}</button>`:`<p class="small warn" style="margin-top:4px">Нужен ${TR_GRP[o.T.grp].n} в серии.</p>`}</div>`).join(''):'<p class="small muted" style="margin-top:8px">Сейчас запись на конкурсы закрыта.</p>'}
+    ${soon?`<div class="label" style="margin-top:10px">Конкурсы на ваших рынках</div>${soon}`:''}
+    ${need?`<div class="label" style="margin-top:10px">Приёмка по заявке</div>${need}`:''}
+    ${certs?`<div class="label" style="margin-top:10px">Свидетельства</div>${certs}`:''}`);}
+function trialAdvice(s,add){if(s.mode==='racer')return;
+  trOpenList(s).forEach(o=>{if(o.ent||!o.best||s.cash<o.fee)return;add(44,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS[o.T.m].toLowerCase()}): запись открыта. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
+  const md=(s.models||[]).find(m=>(m.status==='prod'||m.status==='sale'||(m.status==='dev'&&trMil(m)))&&trTestKind(m,s)&&!trTestWhy(s,m)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s));
+  if(md){const k=trTestKind(md,s);add(43,'🎖',k==='neb'?`«${md.name}» продаётся в США без протокола станции испытаний — фермеры таким тракторам верят меньше.`:`Армия в мирное время не закупит «${md.name}» без испытаний на полигоне.`,`${k==='neb'?'На станцию':'На полигон'} · ${money(trFee(s))}`,()=>{trialTest(s,md.id);},'models');}}
+function trialResolve(s,key){if(key==='tr:open'){try{s.pending.shift();save();render();openTrials();}catch(_){}return true;}return false;}
+// строка-вход в «Моделях»: показывается, когда есть что делать или что показать
+function trialCardHTML(s){if(!s||s.mode==='racer')return '';const O=trOpenList(s),t=mi(s),need=(s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&trTestKind(m,s)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s)).length,
+    have=(s.models||[]).filter(m=>m.cert&&Object.values(m.cert).some(C=>C.until>t)).length,q=(s.trials&&s.trials.q||[]).length;
+  if(!O.length&&!need&&!have&&!q)return '';const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
+  return `<section class="card"><div class="row"><div><h2>🎖 Испытания ведомств</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div></section>`;}
+
 /* ================= RACE CALENDAR, DRIVERS ================= */
 function driverFee(d,s){return Math.round(600*cpi(s)*(1+T(s)*0.08)*(0.4+d.sk*d.sk*1.8)*bn('drvFee')/50)*50;}
 function driverSalary(d,s){return Math.round(45*cpi(s)*(1+T(s)*0.05)*(0.4+d.sk*1.4)*bn('drvFee')/5)*5;}
@@ -6908,7 +7046,8 @@ function step(){
   // расходы (0.25: спецакции оплачены при старте — в отчёт; доход от вложений — invMonth)
   try{airMonth(s,r);}catch(e){console.warn('air',e);r.airP=0;}   // 0.37: авиацех — аэропланы, контракты, лётчики (105h-air.js)
   try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
-  try{ownMonth(s,r);}catch(e){console.warn('own',e);}   // 0.51, этап 4в: опыт, свои авиамоторы, патенты на свои узлы (16c-own.js)
+  try{ownMonth(s,r);}catch(e){console.warn('own',e);}
+  try{recMonth(s,r);trialsMonth(s,r);}catch(e){console.warn('rec/trials',e);}   // 0.51, этап 6: рекорды по истории, испытания ведомств   // 0.51, этап 4в: опыт, свои авиамоторы, патенты на свои узлы (16c-own.js)
   r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp+kitUpkeep(s,'kb');r.drv=driverPayroll(s);r.team=teamUpkeep(s)+kitUpkeep(s,'team');   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
   // 0.21: чертежи соперника, выигранные в пари, — следующий проект КБ короче на 30%
@@ -6917,7 +7056,7 @@ function step(){
     if(protoCheck(s,pj))return true;
     if(pj.kind==='fix'){fixDone(s,pj);return false;}
     if(pj.kind==='xfer'){xferDone(s,pj);return false;}
-    if(pj.kind==='own'){ownDone(s,pj);return false;}if(pj.kind==='aeng'){aeDone(s,pj);return false;}   // 0.51, этап 4в
+    if(pj.kind==='own'){ownDone(s,pj);return false;}if(pj.kind==='aeng'){aeDone(s,pj);return false;}if(pj.kind==='rec'){recDone(s,pj);return false;}   // 0.51, этап 4в
     if(pj.kind==='upg'){try{xpUpg(s,pj);}catch(_){}s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;if(s.rd.know)delete s.rd.know[pj.id];addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
     else if(pj.kind==='study')studyDone(s,pj);
     else if(pj.kind==='eq')eqDone(s,pj);
@@ -8749,6 +8888,7 @@ function adviceList(s){
   const T=[],L=s.last,act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev'),lim=debtLimit(s),home=s.country;
   const add=(p,icon,text,btn,run,tab)=>T.push({p,icon,text,btn,run,tab});
   if(s.over)return T;
+  try{recAdvice(s,add);trialAdvice(s,add);}catch(e){console.warn('rec advice',e);}   // 0.51, этап 6: рекорд в пределах досягаемости, открытые испытания ведомств
   // деньги
   if(s.cash<0){const room=loanOpen(s)?maxLoan(s)-s.loan:0,n=Math.max(0,Math.min(room,Math.ceil((-s.cash+3000*cpi(s))/1000)*1000));
     // 0.27: минус в кассе — это долг поставщикам и рабочим, когда банк больше не даёт; объясняем, откуда он и сколько ещё в пути
@@ -17184,7 +17324,7 @@ function ordersCard(s){const L=s.orders||[];if(!L.length)return '';
     <p class="small muted" style="margin-top:8px">Заказы выполняются сами: машины для них завод делает сверх плана и отдаёт в первую очередь. Не успеете к сроку — неустойка и удар по репутации.</p>`,
     L.map(o=>{const md=s.models.find(m=>m.id===o.md);return `${esc(o.who)}: ${fmtN(o.n-o.left)}/${fmtN(o.n)}${md?' «'+esc(md.name)+'»':''}`;}).join(' · ')+(late?' · <span class="warn">срок на исходе</span>':''));}
 function rdCardHTML(s){const rd=s.rd,L=rdActive(s),tot=rdTotal(s),slots=rdSlots(s),free=slots-L.length;
-  const rows=L.map((pj,i)=>{const pts=rdPtsOf(s,pj);return `<div class="rd-row"><div class="row small"><span>${pj.kind==='upg'?'Улучшение':pj.kind==='study'?'Изучение машины конкурента':pj.kind==='own'?'Своя разработка':pj.kind==='aeng'?'Авиамотор':'Прототип'}: <b>${esc(pj.name)}</b>${pj.kind==='upg'?' ★'+pj.lvl:''}</span><button class="iconbtn sm" data-act="rdStop" data-k="${i}" aria-label="Остановить проект">×</button></div>
+  const rows=L.map((pj,i)=>{const pts=rdPtsOf(s,pj);return `<div class="rd-row"><div class="row small"><span>${pj.kind==='upg'?'Улучшение':pj.kind==='study'?'Изучение машины конкурента':pj.kind==='own'?'Своя разработка':pj.kind==='aeng'?'Авиамотор':pj.kind==='rec'?'Рекордный образец':'Прототип'}: <b>${esc(pj.name)}</b>${pj.kind==='upg'?' ★'+pj.lvl:''}</span><button class="iconbtn sm" data-act="rdStop" data-k="${i}" aria-label="Остановить проект">×</button></div>
     <div class="bar" style="margin-top:6px"><i style="width:${Math.max(2,Math.min(100,(pj.prog||0)/pj.need*100))}%;background:var(--brass)"></i></div>
     <div class="row small muted" style="margin-top:4px"><span>${Math.floor(pj.prog||0)} из ${pj.need} · готово через ~${Math.max(1,Math.ceil((pj.need-(pj.prog||0))/pts))} мес.</span>${L.length>1?`<div class="step sm"><button data-act="rdW" data-k="${i}" data-d="-1" aria-label="Меньше сил">−</button><span>${Math.round(rdShare(s,pj)*100)}%</span><button data-act="rdW" data-k="${i}" data-d="1" aria-label="Больше сил">+</button></div>`:'<span>все силы бюро</span>'}</div></div>`;}).join('');
   // 0.31: карточку КБ можно свернуть — в свёрнутой одна строка: проекты и сроки (или «простаивает»)
@@ -17277,7 +17417,7 @@ function vModels(){
       ${(md.rr||0)>0.002?`<p class="small good" style="margin-top:6px">🏁 Доведена гонками: поломок меньше на ${Math.round(md.rr*100)}%, мощность +${(Math.round((md.rp||0)*1000)/10).toString().replace('.',',')}%</p>`:''}
       ${md.status==='prod'?fold(fk('co'),'Себестоимость',costHTML(md,s),false,`${money(uc)} за ${isMoto(md)?'мотоцикл':'машину'} при выпуске ≈ ${fmtD(Math.max(1,modelVol(md)))} в месяц`):''}
       ${fold(fk('rv'),'Против соперников',`${TH?`<p class="small ${TH.tone}" style="margin-top:6px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)}</span></p>`:''}
-        ${qbar(C.S,'Против соперника: '+C.ref.name,md.id)}${hiddenHTML(md,s)}${md.status==='prod'?contestModelLine(md,s)+officeLine(md,s):''}${xlModelLine(s,md)}${ownModelLine(md,s)}
+        ${qbar(C.S,'Против соперника: '+C.ref.name,md.id)}${hiddenHTML(md,s)}${md.status==='prod'?contestModelLine(md,s)+officeLine(md,s):''}${xlModelLine(s,md)}${ownModelLine(md,s)}${trialModelLine(md,s)}
         <div class="label" style="margin-top:10px">Что ценят покупатели</div><div>${cmpRows}</div><p class="small muted" style="margin-top:6px">●●● — главное для покупателей класса. 100% — как у соперника. Нажмите на строку — как посчитано. Улучшения в КБ поднимают эти цифры у всех ваших машин.</p>`,md.status==='dev',`${isTruck(md)&&TH?esc(TH.txt):Math.round(TT.r*100)+'% соперника'} · ${esc(C.ref.name)}`)}
       ${fold(fk('sp'),'Устройство',`<p class="spec">${specLine(md,s)}</p>
         <p class="small muted" style="margin-top:6px">На линии ${isMoto(md)?'мотоцикл':'машина'} занимает ${placesTxt(placesOf(md,s))} ${placesWord(placesOf(md,s))} (простая машина — 1).</p>
@@ -17294,7 +17434,7 @@ function vModels(){
   const L=s.models.slice().sort((a,b)=>ord[a.status]-ord[b.status]||b.id-a.id),live=L.filter(m=>m.status!=='off'),off=L.filter(m=>m.status==='off');
   const offCard=off.length?foldCard('offmodels',false,`<h2>Снятые</h2><span class="label">с производства · ${off.length}</span>`,`<div class="offlist">${off.map(card).join('')}</div>`,off.map(m=>esc(m.name)).join(', ')):'';
   const newBtn=(canDesign(s,'car')||canDesign(s,'moto')?`<button class="btn primary block" data-act="design">+ Новая модель</button>`:'')+(s.motoStart?lineEmptyCard(s,'car'):'');
-  return `${advisorCard(s,'models')}${planCard(s)}${rdCardHTML(s)}${newBtn}${lineOn(s,'car')?legendCardHTML(s):''}<p class="small muted" style="padding:0 4px">Похожие модели одной марки отбирают покупателей друг у друга: выгоднее разные машины для разных классов, чем несколько одинаковых.${mv?' Мотоцикл и мотоцикл с коляской — свои покупатели: одиночку берут молодые люди и почтальоны, с коляской — семьи, которым машина не по карману; дешёвый автомобиль отбирает у мотоцикла покупателей.':''} Нажмите на модель, чтобы развернуть или свернуть описание.</p>${live.map(card).join('')}${ordersCard(s)}${offCard}`;
+  return `${advisorCard(s,'models')}${planCard(s)}${trialCardHTML(s)}${rdCardHTML(s)}${newBtn}${lineOn(s,'car')?legendCardHTML(s):''}<p class="small muted" style="padding:0 4px">Похожие модели одной марки отбирают покупателей друг у друга: выгоднее разные машины для разных классов, чем несколько одинаковых.${mv?' Мотоцикл и мотоцикл с коляской — свои покупатели: одиночку берут молодые люди и почтальоны, с коляской — семьи, которым машина не по карману; дешёвый автомобиль отбирает у мотоцикла покупателей.':''} Нажмите на модель, чтобы развернуть или свернуть описание.</p>${live.map(card).join('')}${ordersCard(s)}${offCard}`;
 }
 function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?'':'off'}"><span class="num">${x.y<=1895?'—':x.y}</span><span>${x.name}</span><span class="num">${extra(x)}</span></div>`).join('');}
 // Сколько продавали бы ваши модели в стране при полной сети дилеров
@@ -24871,6 +25011,122 @@ function frBombs(dt,M,a,onHit){if(M.tg&&FL.bomb&&!M.bombT&&M.bombsLeft>0&&!a.gnd
 function frBallMesh(){const C=G3.cache;if(C.frBall)return C.frBall;const mb=new MB();pBlob(mb,0,0,0,6.2,6.2,14,'#b8b090',()=>0.5,1,MID.cloth);for(const a of [0,2.1,4.2])pBlob(mb,Math.cos(a)*4.5,Math.sin(a)*4.5,-11,2.2,2.2,3.5,'#a8a080',()=>0.5,0,MID.cloth);
   pBox(mb,0,-12,2,0.8,1.1,0.8,'#6a5a40',MID.wood);mb.rod([0,-6,1],[0,-11,2],0.04,hex2rgb('#2a2a2a'),MID.metal);return C.frBall={mesh:{op:g3Mesh(mb),pr:null,disc:null,pil:null,props:[],r:16,span:12,hit:[]}};}
 
+/* ================= 0.51, этап 6: МИРОВЫЕ РЕКОРДЫ И РЕКОРДНЫЙ ОБРАЗЕЦ =================
+   Автор (тема 6 ТЗ): состязания с лошадью и поездом оживляют начало, потом эта тема исчезает; рекорды были медийным событием
+   и работали на марку; можно строить особые образцы именно под рекорд — за деньги и время КБ.
+   До этого этапа рекорд был только поводом для пари с соперником («спор о скорости», мерная миля у мотоциклов), а проезд быстрее
+   мирового рекорда давал «неофициальный рекорд». Теперь:
+     • таблица мировых рекордов на всю эпоху: скорость на суше (1898–1929), суточный рекорд (с 1907 года), скорость мотоцикла;
+       рекорды авиации — в «Небе», как раньше;
+     • попытку объявляет сам игрок, когда захочет: расчёт по машине, гонщику и удаче; итог — газета, шкаф трофеев, слава марки на годы;
+     • рекордный образец — особый проект КБ, не для продажи: два мотора или авиамотор, обтекаемый кузов; дорогой, долгий, с риском;
+     • соперники берут рекорды по истории: рекорд игрока можно потерять — и газеты об этом напишут.
+   Образцы и источники — claude/issledovanie-rekordy-ispytaniya-0.51.md. */
+// суточный рекорд, средняя скорость за 24 часа (км/ч): [год+месяц/12, км/ч, кто]
+const H24=[[1905.9,73.4,'National (Индианаполис)'],[1907.49,106.1,'Селвин Эдж (Napier, Бруклендс)'],[1924.95,130.8,'AC (Монлери)'],[1925.5,141.0,'Renault 40 CV (Монлери)'],
+  [1926.55,173.6,'Renault 40 CV (Монлери)'],[1927.72,183.8,'Voisin (Монлери)']];
+const REC_CLS={
+  lsr:{n:'Рекорд скорости на суше',un:'км/ч',ic:'🏁',y0:1898,cool:6,boostM:36,boost:0.2,rep:4,where:y=>y<1904?'Ашер под Парижем':y<1922?'Ормонд-Бич, Флорида':y<1927?'пески Пендайна, Уэльс':'Дейтона-Бич, Флорида'},
+  h24:{n:'Суточный рекорд',un:'км/ч в среднем',ic:'⏱',y0:1906,cool:6,boostM:18,boost:0.2,rep:3,where:y=>y<1907?'Индианаполис':y<1924?'Бруклендс':'автодром Монлери'},
+  mlsr:{n:'Рекорд скорости мотоцикла',un:'км/ч',ic:'🏍',y0:1903,cool:6,boostM:24,boost:0.2,rep:2,where:y=>y<1920?'Ормонд-Бич, Флорида':'Арпажон под Парижем'}};
+const REC_ENG={one:{n:'Свой мотор, доведённый',pk:1.15,kg:1,rel:0.82,need:0},two:{n:'Два своих мотора',pk:2.25,kg:1.35,rel:0.68,need:5,y:1904},ae:{n:'Авиамотор',pk:0,kg:1,rel:0.72,need:5,y:1919}},
+  REC_BODY={std:{n:'Гоночный кузов',kd:0.92,need:0},stream:{n:'Обтекаемый кузов',kd:0.7,need:4,xp:20,y:1924}};
+function recT(s){return s.y+s.m/12;}
+function recHist(k,t){const L=k==='lsr'?LSR:k==='h24'?H24:null;if(k==='mlsr'){const v=mrecWR(t);return v>0?[Math.floor(t),v,'']:null;}let r=null;L.forEach(x=>{if(x[0]<=t)r=x;});return r;}
+function recMine(s,k){const R=s.rec&&s.rec[k];return R&&!R.lost?R:null;}
+// кому принадлежит рекорд сейчас
+function recCur(s,k){const h=recHist(k,recT(s)),m=recMine(s,k);return m&&(!h||m.v>=h[1])?{v:m.v,who:m.who,mine:1}:h?{v:h[1],who:h[2]||'по сводке Международной федерации'}:{v:0,who:'—'};}
+/* ---------- рекордный образец: проект КБ ---------- */
+function recSolve(P,kd,crr,m){let v=20;for(let i=0;i<40;i++){const f=kd*v*v*v+crr*m*9.81*v-P,df=3*kd*v*v+crr*m*9.81;v=Math.max(3,v-f/df);}return v;}
+// основа — самая быстрая своя автомобильная модель (в серии или в КБ)
+function recBase(s){let b=null;(s.models||[]).forEach(m=>{if(isMoto(m)||isTruck(m)||!(m.status==='prod'||m.status==='sale'||m.status==='dev'))return;let st=null;try{st=carStats(m,2,s.y);}catch(_){return;}if(!b||st.vmax>b.st.vmax)b={m,st};});return b;}
+function recAero(s){if(typeof AIR_ENG==='undefined')return null;const t=tNow(s);let b=null;AIR_ENG.forEach(e=>{if(e.y>t||e.race)return;if(!e.own&&!(s.air&&s.air.lv))return;try{if(!airPartOk(s,e,'e'))return;}catch(_){return;}if(!b||e.hp>b.hp)b=e;});return b;}
+function recOptOk(s,kind,id){const o=(kind==='eng'?REC_ENG:REC_BODY)[id];if(!o)return 'нет';if(o.y&&s.y<o.y&&!(o.xp!=null&&xpOf(s,'aero')>=o.xp+20))return o.xp!=null?`с ${o.y} года или с опытом «Аэродинамика» ${o.xp+20}`:`с ${o.y} года`;
+  if(o.xp!=null&&xpOf(s,'aero')<o.xp&&s.y<(o.y||0)+3)return `нужен опыт «Аэродинамика» ${o.xp}`;if(id==='ae'&&!recAero(s))return 'авиамотор — у марки с авиацией или своим авиамотором';return '';}
+function recBuild(s,sp){const B=recBase(s);if(!B)return null;const ae=sp.eng==='ae'?recAero(s):null,E=sp.eng==='ae'&&!ae?REC_ENG.one:REC_ENG[sp.eng]||REC_ENG.one,Bd=REC_BODY[sp.body]||REC_BODY.std,st=B.st;
+  let P=st.P*E.pk,kg=st.kg*E.kg,hp=st.hp*E.pk;if(ae){const k=ae.hp/Math.max(1,st.hp);P=st.P*k;hp=ae.hp;kg=st.kg+ae.kg*1.25;}
+  kg*=Bd===REC_BODY.stream?1.05:1;const v=recSolve(P,st.kd*Bd.kd,st.crr,kg),rel=clamp(E.rel-(Bd===REC_BODY.stream?0.03:0)+0.1*xpOf(s,'eng')/100,0.3,0.95);
+  return {base:B.m.id,baseName:B.m.name,eng:sp.eng||'one',body:sp.body||'std',ae:ae?ae.name:'',hp:Math.round(hp),kg:Math.round(kg),v:Math.round(v*3.6*10)/10,rel:+rel.toFixed(2),pc:partCost(parts(B.m).e,s)*(sp.eng==='two'?2:1)+(ae?airEngCost(ae,tNow(s),s):0)};}
+function recRdCost(pj,s){s=s||G;return Math.max(Math.round(ownRdCost(pj,s)*1.5/50)*50,Math.round(bizRev(s)*0.003/50)*50);}
+function recPreview(s,sp){const x=recBuild(s,sp);if(!x)return {why:'Нужна своя автомобильная модель — в серии или в КБ'};const E=REC_ENG[x.eng],Bd=REC_BODY[x.body],need=Math.round(12+E.need+Bd.need);
+  const pj={kind:'rec',id:'rec',ck:'e',cat:'Рекордный образец',name:sp.name||'',need,yrs:0,pc:x.pc*4+1500*cpi(s),sp:{eng:x.eng,body:x.body,name:sp.name||''}},cost=recRdCost(pj,s),cur=recCur(s,'lsr');let why=recOptOk(s,'eng',x.eng)||recOptOk(s,'body',x.body);
+  if(!why&&rdActive(s).length>=rdSlots(s))why='В КБ нет свободного места для проекта';else if(!why&&s.cash<cost)why='Не хватает денег';
+  return {x,pj,cost,need,why,cur,months:Math.max(1,Math.ceil(need/Math.max(0.01,rdTotal(s)/(rdActive(s).length+1)))),chance:recChance(x.v,cur.v,x.rel,0.8)};}
+function recStart(s,sp){const P=recPreview(s,sp);if(!P||P.why||!P.x)return false;s.recN=(s.recN||0)+1;P.pj.name=(sp.name||'').trim().slice(0,40)||`${s.company} Special № ${s.recN}`;P.pj.sp.name=P.pj.name;P.pj.id='rec'+s.recN;return rdBegin(s,P.pj);}
+function recDone(s,pj){const x=recBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы для образца больше нет.`,'bad');return;}s.recCars=s.recCars||[];
+  if(pj.short){x.v=Math.round(x.v*0.95*10)/10;x.rel=+(x.rel-0.05).toFixed(2);}   // на испытаниях вышло не по ТЗ
+  x.id='rc'+((s.recId=(s.recId||0)+1));x.name=pj.name;x.y=s.y;x.cost=pj.cost||0;s.recCars.push(x);try{xpAdd(s,'aero',5);xpAdd(s,'eng',4);}catch(_){}
+  pushEvent({own:1,noArt:1,kicker:'КБ',title:`Рекордный образец готов: «${x.name}»`,deck:`${fmtN(x.hp)} л.с. · расчётная скорость ${fmtN(Math.round(x.v))} км/ч`,
+    text:`«${x.name}» выкатили из опытного цеха: ${fmtN(x.hp)} л.с.${x.ae?` авиамотора ${x.ae}`:x.eng==='two'?' двух моторов':''}, ${x.body==='stream'?'обтекаемый кузов, ':''}${fmtN(x.kg)} кг. Расчётная скорость — ${fmtN(Math.round(x.v))} км/ч; мировой рекорд сейчас — ${fmtN(Math.round(recCur(s,'lsr').v))} км/ч (${recCur(s,'lsr').who}).\nПродавать образец нельзя — он построен ради одной мерной мили. Попытку объявляете вы: «Гонки» → «Мировые рекорды».`,choices:[['К рекордам','rec:open'],['Позже','ok']]},true);}
+/* ---------- попытка ---------- */
+function recChance(v,cur,rel,sk){if(!(v>0))return 0;const fin=clamp(0.5+0.5*rel,0.3,0.97),z=(v*(0.96+0.04*sk)-cur)/(Math.max(1,v)*0.012);return fin*clamp(0.5+z/3.4,0.02,0.98);}
+function recDriver(s){const D=(s.drivers||[]).map(id=>DRIVERS.find(d=>d.id===id)).filter(Boolean).sort((a,b)=>b.sk-a.sk)[0];return D?{n:D.n,sk:D.sk,id:D.id}:{n:(PIONEERS[s.pioneer]||{}).name||'испытатель завода',sk:typeof pioSk==='function'?pioSk(s):0.6,id:null};}
+function recFee(s,k){return Math.round(Math.max((k==='lsr'?3000:k==='h24'?2000:800)*cpi(s),bizRev(s)*(k==='lsr'?0.0006:k==='h24'?0.0004:0.00015))/100)*100;}
+function recWait(s,k){const t=(s.recTry||{})[k];return t==null?0:Math.max(0,t+REC_CLS[k].cool-mi(s));}
+// чем идти на рекорд: {v — расчётная скорость, rel — надёжность 0…1, name, car|md}
+function recEntry(s,k){if(k==='lsr'){let b=null;(s.recCars||[]).forEach(c=>{if(!c.out&&(!b||c.v>b.v))b=c;});if(b)return {v:b.v,rel:b.rel,name:b.name,car:b.id,special:1};
+    const B=recBase(s);if(!B||B.m.status==='dev')return null;return {v:Math.round(B.st.vmax*3.6*10)/10,rel:0.8,name:B.m.name,md:B.m.id};}
+  if(k==='h24'){let b=null;(s.models||[]).forEach(m=>{if(isMoto(m)||isTruck(m)||!(m.status==='prod'||m.status==='sale'))return;let st,ch,rf;try{st=carStats(m,1,s.y);ch=charOf(m,s.y);rf=charOf(rivalRef(m,s.y).md,s.y);}catch(_){return;}
+      const rel=clamp(0.55*Math.sqrt(ch.mtbf/Math.max(0.1,rf.mtbf)),0.15,0.95),v=st.vmax*3.6*(0.66+0.2*rel);/* сутки на кольце с виражами: надёжной машине гонщик даёт идти ближе к пределу */if(!b||v*(0.4+rel)>b.v*(0.4+b.rel))b={v:Math.round(v*10)/10,rel:+rel.toFixed(2),name:m.name,md:m.id};});return b;}
+  const M=mrecBest(s);return M?{v:Math.round(M.v*10)/10,rel:0.8,name:M.m.name,md:M.m.id}:null;}
+function recCan(s,k){const C=REC_CLS[k];if(!C||s.y<C.y0)return `с ${C.y0} года`;if(isWar(s.y,s.m,s.country))return 'в войну рекордов не ставят';const w=recWait(s,k);if(w)return `следующая попытка — через ${w} мес.`;
+  const E=recEntry(s,k);if(!E)return k==='mlsr'?'нужен мотоцикл в серии':'нужна машина в серии или рекордный образец';if(s.cash<recFee(s,k))return 'не хватает денег на выезд';return '';}
+function recTryNow(s,k){if(recCan(s,k))return null;const C=REC_CLS[k],E=recEntry(s,k),D=recDriver(s),cur=recCur(s,k),fee=recFee(s,k),t=mi(s);s.cash-=fee;(s.recTry=s.recTry||{})[k]=t;
+  const fin=clamp(0.5+0.5*E.rel,0.3,0.97),where=C.where(s.y),out={k,fee,cur,E,D,where};
+  if(Math.random()>fin){out.res='dnf';const crash=Math.random()<0.2;out.crash=crash;if(E.car){const c=s.recCars.find(x=>x.id===E.car);if(c){if(crash)c.out=1;else{const fix=Math.round((c.cost||0)*0.15/100)*100;s.cash-=fix;out.fix=fix;}}}
+    if(D.id)try{moodAdd(s,D.id,-6,'Попытка рекорда сорвалась');}catch(_){}
+    pushEvent({own:1,noArt:1,kicker:'Попытка рекорда',title:`${C.n}: ${crash?'авария':'машина не выдержала'}`,deck:`«${E.name}» · ${where}`,
+      text:`${D.n} на «${E.name}» ${k==='h24'?'сошёл с дистанции задолго до конца суток':'не прошёл мерный участок'}: ${crash?(E.car?'образец разбит и восстановлению не подлежит':'машина разбита')+'. Гонщик цел.':'мотор не выдержал.'}${out.fix?` Ремонт образца — ${money(out.fix)}.`:''}\nРекорд остался прежним: ${fmtN(Math.round(cur.v))} ${C.un} (${cur.who}). Выезд стоил ${money(fee)}; следующая попытка — через ${C.cool} мес.`,choices:[['Ясно','ok']]},true);return out;}
+  const v=Math.round(E.v*(0.96+0.04*D.sk)*(0.985+0.03*Math.random())*10)/10;out.v=v;
+  if(v>cur.v){out.res='rec';const who=`${D.n} («${E.name}»)`;s.rec=s.rec||{};s.rec[k]={v,who,y:s.y,m:s.m,t,car:E.car||null,md:E.md||null,until:t+C.boostM};
+    s.rep=clamp(s.rep+C.rep*bn('raceRep'),0,100);if(s.aw)for(const c in s.aw)s.aw[c]=+Math.min(0.95,(s.aw[c]||0)+(k==='lsr'?0.08:0.04)).toFixed(4);
+    if(E.md){const md=s.models.find(m=>m.id===E.md);if(md)md.raceBoost=Math.max(md.raceBoost||0,t+(k==='h24'?12:6));}
+    if(D.id)try{moodAdd(s,D.id,15,'Мировой рекорд');}catch(_){}try{xpAdd(s,k==='h24'?'eng':'aero',6);}catch(_){}
+    try{trophyAdd(s,{kind:'record',title:`${C.n}: ${fmtN(v)} ${C.un}`,sub:`${D.n} на «${E.name}» · ${where}`,story:`Прежний рекорд — ${fmtN(Math.round(cur.v*10)/10)} ${C.un} (${cur.who}).`,key:'rec|'+k+'|'+t});}catch(_){}
+    pushEvent({own:1,noArt:1,kicker:'Мировой рекорд',title:`${C.n}: ${fmtN(v)} ${C.un}!`,deck:`${D.n} на «${E.name}» · ${where}`,
+      text:`Хронометристы подтвердили: ${fmtN(v)} ${C.un}. Прежний рекорд — ${fmtN(Math.round(cur.v*10)/10)} (${cur.who}) — побит.\nОб этом пишут газеты всех стран: имя «${s.company}» ${k==='lsr'?'три года':k==='h24'?'полтора года':'два года'} будет на слуху у покупателей${k==='h24'?`, а «${E.name}» — у всех, кто выбирает машину на годы`:''}. Соперники рекорды не забывают: его можно потерять.`,choices:[['Отлично','ok']]},true);
+    try{pendingToasts.push(`${C.ic} Мировой рекорд: ${fmtN(v)} ${C.un}`);}catch(_){}return out;}
+  out.res='short';pushEvent({own:1,noArt:1,kicker:'Попытка рекорда',title:`${C.n}: не хватило ${fmtN(Math.round((cur.v-v)*10)/10)} ${k==='h24'?'км/ч':'км/ч'}`,deck:`«${E.name}» — ${fmtN(v)} ${C.un}`,
+    text:`${D.n} на «${E.name}» показал ${fmtN(v)} ${C.un} — рекорд (${fmtN(Math.round(cur.v*10)/10)}, ${cur.who}) устоял. Газеты пишут о смелой попытке, но помнят победителей.\nНужна машина быстрее${k==='lsr'?' — рекордный образец с двумя моторами, авиамотором или обтекаемым кузовом':k==='h24'?' и надёжнее':''}. Выезд стоил ${money(fee)}; следующая попытка — через ${C.cool} мес.`,choices:[['Ясно','ok']]},true);return out;}
+/* ---------- месяц: соперники берут рекорды по истории ---------- */
+function recMonth(s,r){const R=s.rec;if(!R)return;const t=recT(s);
+  for(const k in REC_CLS){const m=R[k];if(!m||m.lost)continue;const h=recHist(k,t);if(h&&h[1]>m.v){m.lost=mi(s);m.until=Math.min(m.until||0,mi(s)+6);const C=REC_CLS[k];
+      pushEvent({own:1,noArt:1,kicker:'Рекорд отобран',title:`${C.n}: ${fmtN(h[1])} ${C.un}`,deck:h[2]?`${h[2]}`:'новый мировой рекорд',
+        text:`Ваш рекорд ${m.y} года — ${fmtN(m.v)} ${C.un} — побит: ${h[2]?h[2]+' — ':''}${fmtN(h[1])} ${C.un}. Слава рекорда сойдёт за полгода.\nВернуть его можно: ${k==='lsr'?'новым рекордным образцом':'машиной быстрее и надёжнее'}.`,choices:[['К рекордам','rec:open'],['Ясно','ok']]},true);}}}
+// слава рекорда в спросе: марка на слуху (в последний год сходит)
+function recBoostU(md,s){const R=s&&s.rec;if(!R)return 0;const t=mi(s);let u=0;
+  for(const k in REC_CLS){const m=R[k];if(!m||!(m.until>t))continue;const C=REC_CLS[k],f=Math.min(1,(m.until-t)/12),mo=isMoto(md);
+    if(k==='mlsr'){if(mo)u+=C.boost*f;}else if(k==='h24'){u+=(md.id===m.md?C.boost:0.06)*f*(mo?0.3:1);}else u+=C.boost*f*(mo?0.5:1);}
+  return Math.min(0.35,u);}
+function recResolve(s,key){if(key==='rec:open'){try{s.pending.shift();save();render();openRecords();}catch(_){}return true;}return false;}
+/* ---------- что показать ---------- */
+let recDraft=null;
+function recRowHTML(s,k){const C=REC_CLS[k];if(s.y<C.y0)return '';const cur=recCur(s,k),E=recEntry(s,k),why=recCan(s,k),D=recDriver(s),mine=s.rec&&s.rec[k],fee=recFee(s,k),ch=E?recChance(E.v,cur.v,E.rel,D.sk):0;
+  return `<div class="race-item"><div class="row"><div><span class="mo">${C.ic} ${C.where(s.y)}</span><h3 style="margin-top:2px">${C.n}</h3></div><span class="pill ${cur.mine?'good':'muted'}">${fmtN(Math.round(cur.v*10)/10)} ${k==='h24'?'км/ч':C.un}</span></div>
+    <p class="small muted" style="margin-top:4px">Держит: ${cur.mine?`<b class="good">вы</b> — ${esc(cur.who)}`:esc(cur.who)}${mine&&mine.lost?` · ваш рекорд ${mine.y} года (${fmtN(mine.v)}) побит`:''}</p>
+    ${E?`<p class="small" style="margin-top:4px">Ваша машина: <b>«${esc(E.name)}»</b>${E.special?' (рекордный образец)':''} — расчёт ${fmtN(Math.round(E.v))} ${k==='h24'?'км/ч за сутки':'км/ч'} · шанс ${pct(ch,0)}${E.v<cur.v?' — <span class="warn">медленнее рекорда</span>':''}</p>`:''}
+    <div class="btns" style="margin-top:6px"><button class="btn sm ${!why&&ch>=0.25?'primary':''}" data-act="recTry" data-k="${k}" ${why?'disabled':''}>${why?esc(capF(why)):`Попытка · ${money(fee)}`}</button>${k==='lsr'?`<button class="btn sm" data-act="recBuild">Рекордный образец</button>`:''}</div></div>`;}
+function openRecords(){const s=G,cars=(s.recCars||[]).filter(c=>!c.out),pj=rdActive(s).filter(p=>p.kind==='rec');
+  openSheet(`<div class="row"><h2>🏁 Мировые рекорды</h2><button class="btn sm" data-act="close">Закрыть</button></div>
+    <p class="small muted">Рекорд — событие для газет всего мира: имя марки годами на слуху. Попытку объявляете вы; решают машина, гонщик и удача. Соперники берут рекорды по истории — свой можно потерять. Рекорды авиации — в «Небе».</p>
+    ${Object.keys(REC_CLS).map(k=>recRowHTML(s,k)).join('')}
+    ${cars.length||pj.length?`<div class="label" style="margin-top:10px">Рекордные образцы</div>${cars.map(c=>`<p class="small" style="margin-top:4px">🏁 <b>${esc(c.name)}</b> · ${c.y} · ${fmtN(c.hp)} л.с., ${fmtN(c.kg)} кг · расчёт ${fmtN(Math.round(c.v))} км/ч</p>`).join('')}${pj.map(p=>`<p class="small muted" style="margin-top:4px">В КБ: «${esc(p.name)}» — ${Math.round(100*p.prog/Math.max(1,p.need))}%</p>`).join('')}`:''}`);}
+function openRecBuild(){const s=G;recDraft=recDraft||{eng:'one',body:'std',name:''};const d=recDraft,P=recPreview(s,d),x=P.x;
+  const chip=(kind,id,o)=>{const w=recOptOk(s,kind,id);return `<button class="chip ${d[kind]===id?'on':''}" data-act="recOpt" data-k="${kind}" data-v="${id}" ${w?'disabled title="'+esc(w)+'"':''}>${o.n}</button>`;};
+  openSheet(`<div class="row"><h2>🏁 Рекордный образец</h2><button class="btn sm" data-act="recBack">Назад</button></div>
+    <p class="small muted">Особый проект КБ: машина ради одной мерной мили. Не для продажи. Основа — ваша самая быстрая модель${x?` («${esc(x.baseName)}»)`:''}.</p>
+    <div class="label" style="margin-top:8px">Мотор</div><div class="chips sm">${Object.keys(REC_ENG).map(id=>chip('eng',id,REC_ENG[id])).join('')}</div>
+    <div class="label" style="margin-top:8px">Кузов</div><div class="chips sm">${Object.keys(REC_BODY).map(id=>chip('body',id,REC_BODY[id])).join('')}</div>
+    ${x?`<div class="label" style="margin-top:10px">Что получится</div><p class="small" style="margin-top:4px"><b>${fmtN(x.hp)} л.с.</b>${x.ae?` (${esc(x.ae)})`:''}, ${fmtN(x.kg)} кг · расчётная скорость <b>${fmtN(Math.round(x.v))} км/ч</b> · рекорд сейчас ${fmtN(Math.round(P.cur.v))} км/ч (${esc(P.cur.who)})<br>Шанс рекорда с хорошим гонщиком — ${pct(P.chance,0)} · надёжность ${pct(x.rel,0)}<br>Проект: <b>${money(P.cost)}</b> · около ${P.months} мес. · риск «не по ТЗ» ${pct(protoRisk(P.pj),0)}</p>
+    <input id="recname" class="inp" style="margin-top:8px;width:100%" maxlength="40" placeholder="Имя образца" value="${esc(d.name||'')}">`:''}
+    <button class="btn primary block" style="margin-top:10px" data-act="recStart" ${P.why?'disabled':''}>${P.why?esc(P.why):`Начать · ${money(P.cost)}`}</button>`);}
+// карточка во вкладке «Гонки» и совет помощника
+function recCardHTML(s){if(!s||s.mode==='racer'||s.y<1898)return '';const L=Object.keys(REC_CLS).filter(k=>s.y>=REC_CLS[k].y0).map(k=>{const c=recCur(s,k);return `${REC_CLS[k].ic} ${fmtN(Math.round(c.v))}${c.mine?' — <b class="good">ваш</b>':''}`;});
+  return `<section class="card"><div class="row"><div><h2>Мировые рекорды</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="recOpen">Открыть</button></div></section>`;}
+function recAdvice(s,add){if(s.mode==='racer'||isWar(s.y,s.m,s.country))return;const D=recDriver(s);
+  for(const k in REC_CLS){if(recCan(s,k))continue;const E=recEntry(s,k),cur=recCur(s,k);if(cur.mine||!E)continue;const ch=recChance(E.v,cur.v,E.rel,D.sk);if(ch<0.4)continue;
+    add(38,REC_CLS[k].ic,`«${E.name}» может взять мировой рекорд: ${REC_CLS[k].n.toLowerCase()} — расчёт ${fmtN(Math.round(E.v))} против ${fmtN(Math.round(cur.v))} ${k==='h24'?'км/ч':REC_CLS[k].un}, шанс ${pct(ch,0)}.`,`Попытка · ${money(recFee(s,k))}`,()=>{recTryNow(s,k);},'race');return;}}
+
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
   const r=s.cres&&s.cres[rc.key],mine=s.raceDone[rc.key];
@@ -24932,7 +25188,7 @@ function vRace(){
   const nextMaj=RACES.filter(r=>r.y===y+1&&r.major);
   const openR=cur.filter(r=>raceStatus(r,s)[2]);
   const dPrev=s.m<2&&s.dch&&s.dch[y-1]&&s.dch[y-1].done?dchBlock(s,y-1):'';
-  return `${chalCard(s,'race')}${foldCard('champs',true,`<h2>Чемпионаты ${y}</h2>`,`
+  return `${chalCard(s,'race')}${recCardHTML(s)}${foldCard('champs',true,`<h2>Чемпионаты ${y}</h2>`,`
     <p class="small muted" style="margin-top:4px">Гонки идут сезонами, как в истории. В каждой гонке марка получает очки за лучшую свою машину. Титул приносит славу на год вперёд, а победы и чемпионства входят в наследие компании.</p>
     ${ch.length?ch.map(id=>champBlock(s,id,y)).join(''):'<p class="small muted" style="margin-top:8px">В этом году чемпионатов нет — только отдельные гонки.</p>'}
     ${dchBlock(s,y)}
@@ -32141,6 +32397,10 @@ const ACT={
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
   rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},
+  recOpen:()=>{openRecords();},recTry:d=>{closeSheet();recTryNow(G,d.k);save();render();},recBuild:()=>{recDraft=null;openRecBuild();},recBack:()=>{openRecords();},
+  recOpt:d=>{recDraft=recDraft||{eng:'one',body:'std',name:''};const el=document.getElementById('recname');if(el)recDraft.name=el.value;recDraft[d.k]=d.v;openRecBuild();},
+  recStart:()=>{const el=document.getElementById('recname');if(el&&recDraft)recDraft.name=el.value;if(recStart(G,recDraft||{eng:'one',body:'std'})){recDraft=null;closeSheet();toast('Рекордный образец — в КБ');save();render();}else toast('Не вышло начать проект');},
+  trOpen:()=>{openTrials();},trEnter:d=>{if(trialEnter(G,d.id,d.md!=null&&d.md!==''?+d.md:null)){toast('Заявка принята');save();openTrials();render();}else toast('Заявить не вышло');},trTest:d=>{if(trialTest(G,+d.md)){save();closeSheet();render();}else toast('Испытание сейчас невозможно');},/* 0.51, этап 6 */
   rivPoach:d=>{if(rivPoach(G,d.c,+d.i)){toast('Инженер перешёл в ваше КБ');save();render();openRivals(d.c,+d.i);}else toast('Не вышло: не хватает денег или рано');},/* 0.51, этап 5б *//* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
   troRace:()=>{openRaceResult();},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},

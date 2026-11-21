@@ -63,13 +63,13 @@ function fixStart(s,id){const md=s.models.find(m=>m.id===+id);if(!md||!md.dv)ret
   s.cash-=c;s.rdPaid=(s.rdPaid||0)+c;s.rd.projs.push({...fixProject(s,md),prog:0,cost:c});addLog(`КБ начало доводку «${md.name}» (${money(c)}).`);return true;}
 function fixDone(s,pj){const md=s.models.find(m=>m.id===pj.md);if(!md)return;delete md.dv;addLog(`КБ довело «${md.name}» до ТЗ: мотор, рама и тормоза — как в расчёте, ресурс восстановлен.`,'good');pendingToasts.push('🔧 Доводка: «'+md.name+'»');}
 // прототип на годы раньше истории: испытания могут выявить недостатки — проект дольше на 40% (один раз)
-function protoRisk(pj){if(pj.kind==='own'||pj.kind==='aeng')return clamp(0.15+0.12*(pj.yrs||0),0.15,0.7);return clamp(0.12*(pj.yrs||1),0.08,0.6);}
+function protoRisk(pj){if(pj.kind==='own'||pj.kind==='aeng'||pj.kind==='rec')return clamp(0.15+0.12*(pj.yrs||0),0.15,0.7);return clamp(0.12*(pj.yrs||1),0.08,0.6);}
 // заводская технология раньше своего года: риск трудной наладки
 function techRisk(s,k){const nx=techNext(s,k);if(!nx)return 0;const e=(nx.y||1895)-s.y;return e>0?clamp(0.2*e,0.15,0.7):0;}
 // трудная наладка: выпуск ниже, пока технологию не наладили
 function techTroubleK(s){const T=s.techTrouble;return T&&T.until>mi(s)?T.k:1;}
 // проверка при завершении: проект КБ — доработать ли прототип
-function protoCheck(s,pj){const own=pj.kind==='own'||pj.kind==='aeng';if((pj.kind!=='early'&&!own)||pj.rk)return false;pj.rk=1;if(Math.random()>=protoRisk(pj))return false;
+function protoCheck(s,pj){const own=pj.kind==='own'||pj.kind==='aeng'||pj.kind==='rec';if((pj.kind!=='early'&&!own)||pj.rk)return false;pj.rk=1;if(Math.random()>=protoRisk(pj))return false;
   const add=Math.round(pj.need*0.4);pj.need+=add;addLog(own?`Испытания «${pj.name}» выявили недостатки — опыты ещё на ${add} очк. КБ: своя разработка сырее покупной детали${pj.yrs>0?`, а эта ещё и на ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше истории`:''}.`:`Испытания прототипа «${pj.name}» выявили недостатки — опыты ещё на ${add} очк. КБ (новинка на ${pj.yrs} ${plural(pj.yrs||1,'год','года','лет')} раньше истории).`,'bad');
   pendingToasts.push('🔬 Прототип: доработка');return true;}
 // проверка при завершении технологии: наладка затягивается

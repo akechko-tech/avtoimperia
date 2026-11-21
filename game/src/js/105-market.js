@@ -206,7 +206,7 @@ function adEffect(s,c){const IL=impOf(s,c||s.country),a=(s.ad||0)*(IL?IL.ad||0.3
 function novelty(md,s){const age=(mi(s)-md.launched)/12;let u=age<1?0.15:0;u-=Math.min(0.3,0.03*Math.max(0,age-6));if(s.y>=1923)u-=Math.min(0.3,0.05*Math.max(0,age-3));return u;}
 // 0.26: в эпоху пионеров (до ~1906) о машинах узнают только из гонок, выставок и газет — слава весит втрое больше
 function pioneerK(s){return 1+2*clamp((1906-yf(s))/8,0,1);}
-function raceEffect(md,s){return (((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0))*pioneerK(s)+kingEffect(md,s);}
+function raceEffect(md,s){return (((md.raceBoost||0)>mi(s)?0.25:0)+((s.titleBoost||0)>mi(s)?0.3:0))*pioneerK(s)+kingEffect(md,s)+(s.rec?recBoostU(md,s):0);}   // 0.51, этап 6: слава мирового рекорда
 // Всё, кроме цены и качества: мощность, шины, репутация, реклама, новизна, гонки, чужая страна
 // Слишком слабый мотор отпугивает (в Европе с налогом на лошадиные силы маленький мотор народной машины — норма)
 function weakHp(md,s,c){const p=parts(md),ref=rivalRef(md,s.y),hpr=engineHp(p.e,md)/Math.max(1,byId(ENGINES,ref.md.e).hp),thr=c&&c!=='us'&&segOf(md)==='people'?0.45:0.65;return Math.max(0,Math.log(thr/hpr));}
@@ -449,8 +449,8 @@ function truckMarket(R,c,s,ms,pr,K,u0){
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
     const farm=own&&TRUCK_USE[u].grp==='farm',FZ=farm?(R.farm=R.farm||{riv:0,rev:0,h:0,hrev:0,you:0}):null;   // 0.51, этап 5б: в тракторах у соперника тоже фирма (17d-firms2.js)
     const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?(farm?MF:1):MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
-    const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
-      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id];
+    const L=ms.filter(md=>jobFits(u,md)&&(typeof trGate!=='function'||trGate(md,u,c,s))).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
+      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id]+(typeof trU==='function'?trU(md,u,c,s):0);   // 0.51, этап 6: свидетельства ведомств
         if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}
         else if(farm){const ed=vq+dp+ex[md.id];if(FZ.edge==null||ed>FZ.edge){FZ.edge=ed;FZ.edgeP=dp;FZ.edgeQ=vq;FZ.edgeB=ex[md.id];}}}
       v=v/LAM;if(v>m)m=v;return {md,v};});

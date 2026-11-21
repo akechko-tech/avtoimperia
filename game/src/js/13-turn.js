@@ -97,7 +97,8 @@ function step(){
   // расходы (0.25: спецакции оплачены при старте — в отчёт; доход от вложений — invMonth)
   try{airMonth(s,r);}catch(e){console.warn('air',e);r.airP=0;}   // 0.37: авиацех — аэропланы, контракты, лётчики (105h-air.js)
   try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
-  try{ownMonth(s,r);}catch(e){console.warn('own',e);}   // 0.51, этап 4в: опыт, свои авиамоторы, патенты на свои узлы (16c-own.js)
+  try{ownMonth(s,r);}catch(e){console.warn('own',e);}
+  try{recMonth(s,r);trialsMonth(s,r);}catch(e){console.warn('rec/trials',e);}   // 0.51, этап 6: рекорды по истории, испытания ведомств   // 0.51, этап 4в: опыт, свои авиамоторы, патенты на свои узлы (16c-own.js)
   r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp+kitUpkeep(s,'kb');r.drv=driverPayroll(s);r.team=teamUpkeep(s)+kitUpkeep(s,'team');   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
   // 0.21: чертежи соперника, выигранные в пари, — следующий проект КБ короче на 30%
@@ -106,7 +107,7 @@ function step(){
     if(protoCheck(s,pj))return true;
     if(pj.kind==='fix'){fixDone(s,pj);return false;}
     if(pj.kind==='xfer'){xferDone(s,pj);return false;}
-    if(pj.kind==='own'){ownDone(s,pj);return false;}if(pj.kind==='aeng'){aeDone(s,pj);return false;}   // 0.51, этап 4в
+    if(pj.kind==='own'){ownDone(s,pj);return false;}if(pj.kind==='aeng'){aeDone(s,pj);return false;}if(pj.kind==='rec'){recDone(s,pj);return false;}   // 0.51, этап 4в
     if(pj.kind==='upg'){try{xpUpg(s,pj);}catch(_){}s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;if(s.rd.know)delete s.rd.know[pj.id];addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
     else if(pj.kind==='study')studyDone(s,pj);
     else if(pj.kind==='eq')eqDone(s,pj);

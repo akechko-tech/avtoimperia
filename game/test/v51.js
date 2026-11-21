@@ -708,5 +708,100 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const B2=ownLicBuyer(G,x);CK(B2&&B2.F===F1,'следующая лицензия — следующей фирме');F1.gr=0.5;CK(!ownLicBuyer(G,x),'фирма в обиде лицензию не берёт');
     x.pat=null;CK(!ownLicSell(G,'xt1'),'без патента продавать нечего');G.custom=[];ownSync(G);BOTS_OFF=true;}
 }
+// ---------- 24. этап 6: мировые рекорды и рекордный образец; испытания ведомств ----------
+{const rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();},R0=Math.random;
+  const car=(k,y,id,nm,st)=>{const md={...rivalDesign(k,y),id,name:nm,status:st||'prod',launched:mi(G)-10,stock:0,made:100,vol:50,lastSold:10,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)/10)*10;return md;};
+  // таблицы рекордов на всю эпоху
+  {BOTS_OFF=true;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1912;G.m=3;
+    CK(recHist('lsr',1899.5)[1]===105.88&&recHist('lsr',1929.5)[1]===372.5&&recHist('h24',1908)[1]===106.1&&recHist('h24',1927.9)[1]===183.8&&!recHist('h24',1905)&&recHist('mlsr',1925)[1]>170,'таблицы: скорость на суше 1898–1929, суточный рекорд с 1907 года, мотоцикл');
+    const c=recCur(G,'lsr');CK(c.v===211.3&&/Олдфилд/.test(c.who)&&!c.mine,'рекорд скорости в 1912 году — '+c.v+' км/ч, '+c.who);
+    G.rec={lsr:{v:220,who:'Тест',y:1912,m:1,t:mi(G)-2,until:mi(G)+34}};CK(recCur(G,'lsr').mine&&recCur(G,'lsr').v===220,'свой рекорд выше — держит игрок');
+    // слава рекорда в спросе: сходит в последний год
+    const md=car('people',1912,801,'Н');G.models=[md];const u0=recBoostU(md,G);G.rec.lsr.until=mi(G)+6;const u1=recBoostU(md,G);G.rec.lsr.until=mi(G)-1;
+    CK(near(u0,REC_CLS.lsr.boost)&&near(u1,REC_CLS.lsr.boost/2)&&recBoostU(md,G)===0,'слава рекорда: +'+u0+' к привлекательности марки, в последний год сходит');
+    G.rec.lsr.until=mi(G)+30;const A=mkCountry('us',G,[md]).by[801];G.rec=null;const B=mkCountry('us',G,[md]).by[801];G.dealers.us=G.dealers.us||5;CK(A>=B,'рекорд помогает продажам марки: '+Math.round(B)+' → '+Math.round(A));
+    // рекорд отобран по истории
+    G.y=1922;G.m=3;G.rec={lsr:{v:213,who:'Тест',y:1921,m:1,t:mi(G)-12,until:mi(G)+24}};recMonth(G,{});CK(!G.rec.lsr.lost&&!G.pending.length,'пока история не догнала — рекорд ваш');
+    G.m=5;recMonth(G,{});CK(G.rec.lsr.lost&&G.rec.lsr.until<=mi(G)+6&&G.pending.length===1&&/Рекорд отобран/.test(G.pending[0].kicker)&&/Гиннесс/.test(G.pending[0].deck),'май 1922 года: Гиннесс на Sunbeam — рекорд отобран, слава сходит за полгода');
+    CK(!recCur(G,'lsr').mine,'в таблице — снова соперник');G.pending=[];}
+  // рекордный образец — проект КБ
+  {BOTS_OFF=true;rnd(5);newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1922;G.m=3;G.cash=5e6;G.rd.lvl=5;const md=car('sport',1922,810,'Спорт');G.models=[md];
+    const B=recBase(G);CK(B&&B.m===md&&B.st.vmax>30,'основа образца — самая быстрая своя модель: '+Math.round(B.st.vmax*3.6)+' км/ч');
+    const P1=recPreview(G,{eng:'one',body:'std'}),P2=recPreview(G,{eng:'two',body:'std'}),P3=recPreview(G,{eng:'two',body:'stream'}),P4=recPreview(G,{eng:'ae',body:'std'});
+    CK(P1.x.v>B.st.vmax*3.6&&P2.x.v>P1.x.v*1.15&&P2.x.hp>P1.x.hp*1.8&&P2.x.kg>P1.x.kg&&P2.x.rel<P1.x.rel&&P2.cost>P1.cost&&P2.need>P1.need,'два мотора: быстрее ('+P1.x.v+' → '+P2.x.v+' км/ч), тяжелее, капризнее, дороже ('+money(P1.cost)+' → '+money(P2.cost)+')');
+    CK(P3.why&&/1924/.test(P3.why)&&P4.why&&/авиамотор/.test(P4.why),'обтекаемый кузов — с 1924 года или с опытом; авиамотор — у марки с авиацией: '+P3.why);
+    G.xp={aero:45};CK(!recPreview(G,{eng:'two',body:'stream'}).why&&recPreview(G,{eng:'two',body:'stream'}).x.v>P2.x.v*1.05,'с опытом аэродинамики обтекаемый кузов доступен раньше и добавляет скорости');G.xp={};
+    CK(P2.chance>0.5&&P1.chance<0.1,'шанс рекорда виден до начала работ: один мотор '+pct(P1.chance,0)+', два — '+pct(P2.chance,0));
+    const c0=G.cash;CK(recStart(G,{eng:'two',body:'std',name:'Молния'})&&near(c0-G.cash,P2.cost)&&G.rd.projs.some(p=>p.kind==='rec'&&p.name==='Молния'),'проект «Молния» начат: '+money(P2.cost));
+    const pj=G.rd.projs.find(p=>p.kind==='rec');CK(rdCost(pj,G)===recRdCost(pj,G)&&protoRisk(pj)>=0.15,'цена и риск — как у особого проекта КБ');
+    G.rd.projs=G.rd.projs.filter(p=>p!==pj);recDone(G,pj);const rc=G.recCars[0];CK(rc&&rc.name==='Молния'&&near(rc.v,P2.x.v)&&G.pending.length===1&&/Рекордный образец готов/.test(G.pending[0].title)&&!/undefined|NaN/.test(G.pending[0].text),'образец готов: '+G.pending[0].deck);
+    CK(!G.models.some(m=>m.name==='Молния'),'в модельный ряд образец не попадает — он не для продажи');G.pending=[];
+    // попытка
+    const E=recEntry(G,'lsr');CK(E&&E.special&&E.car===rc.id&&near(E.v,rc.v),'на рекорд идёт образец, а не серийная машина');
+    CK(recCan(G,'lsr')===''&&/войну/.test((()=>{const y=G.y;G.y=1916;G.country='fr';const w=recCan(G,'lsr');G.y=y;G.country='us';return w;})()),'попытка возможна; в войну — нет');
+    Math.random=()=>0.5;const c1=G.cash,rep0=G.rep,O=recTryNow(G,'lsr');
+    CK(O&&O.res==='rec'&&O.v>211.3&&near(c1-G.cash,O.fee)&&G.rec.lsr.v===O.v&&G.rep>rep0&&recCur(G,'lsr').mine&&G.pending.length===1&&/Мировой рекорд/.test(G.pending[0].kicker),'рекорд: '+(O&&O.v)+' км/ч — '+(G.pending[0]||{}).title);
+    CK((G.trophies||[]).some(t=>/Рекорд скорости на суше/.test(t.title))&&recWait(G,'lsr')===REC_CLS.lsr.cool&&/через 6 мес/.test(recCan(G,'lsr')),'трофей в шкафу; следующая попытка — через полгода');G.pending=[];
+    // неудачи
+    G.recTry={};G.rec=null;Math.random=()=>0.99;const O2=recTryNow(G,'lsr');CK(O2.res==='dnf'&&!G.rec&&/не выдержала|авария/.test(G.pending[0].title),'надёжность подвела — попытка сорвана: '+G.pending[0].title);G.pending=[];
+    G.recTry={};rc.v=150;rc.out=0;Math.random=()=>0.5;const O3=recTryNow(G,'lsr');CK(O3.res==='short'&&!G.rec&&/не хватило/.test(G.pending[0].title),'медленнее рекорда — не хватило: '+G.pending[0].title);G.pending=[];
+    // совет и карточка
+    rc.v=P2.x.v;G.recTry={};const T=adviceList(G).find(x=>/мировой рекорд/.test(x.text));CK(T&&T.btn&&/Попытка/.test(T.btn),'совет с кнопкой, когда рекорд в пределах досягаемости: '+(T&&T.text));
+    CK(/Мировые рекорды/.test(recCardHTML(G))&&/211/.test(recCardHTML(G)),'карточка «Мировые рекорды» во вкладке «Гонки»');
+    let h1='',h2='';try{const os=openSheet;openSheet=h=>{h1=h;};openRecords();openSheet=h=>{h2=h;};recDraft=null;openRecBuild();openSheet=os;}catch(e){h1='ERR '+e.message;}
+    CK(/Рекорд скорости на суше/.test(h1)&&/Суточный рекорд/.test(h1)&&/Рекордные образцы/.test(h1)&&/Молния/.test(h1)&&!/undefined|NaN/.test(h1),'лист рекордов: три строки и образцы');
+    CK(/Два своих мотора/.test(h2)&&/Обтекаемый кузов/.test(h2)&&/Что получится/.test(h2)&&!/undefined|NaN/.test(h2),'лист образца: мотор, кузов, итог до начала работ');
+    // суточный рекорд — серийная машина: решают скорость и надёжность
+    G.y=1912;G.m=3;const m2=car('sport',1912,811,'Сутки');G.models=[m2];const E2=recEntry(G,'h24');CK(E2&&E2.md===811&&E2.v>80&&E2.v<carStats(m2,1,1912).vmax*3.6&&E2.rel>0.2,'суточный рекорд: серийная машина, средняя '+E2.v+' км/ч при надёжности '+E2.rel);
+    Math.random=()=>0.3;G.recTry={};G.rec=null;const O4=recTryNow(G,'h24');CK(O4&&(O4.res==='rec'?m2.raceBoost>mi(G)&&G.rec.h24.md===811:true),'попытка суточного рекорда: '+O4.res+(O4.v?' '+O4.v+' км/ч':''));G.pending=[];Math.random=R0;}
+  // испытания ведомств: конкурс по календарю
+  {BOTS_OFF=true;rnd(9);newGame('benz','de','Тест','normal','Первая');G.pending=[];G.y=1909;G.m=4;G.cash=5e6;const tr=car('truck',1914,820,'Грузовик');G.models=[tr];   // детали на пять лет впереди — вровень с образцом года (он улучшается каждый год)
+    const O=trOpenList(G);CK(O.length===1&&O[0].T.id==='de-sub'&&O[0].best.m===tr&&O[0].at-mi(G)===4&&!O[0].ent,'за четыре месяца открыта запись: '+O[0].T.n);
+    G.m=3;CK(trOpenList(G).length===0,'раньше — закрыта');G.m=4;
+    const T=adviceList(G).find(x=>/запись открыта/.test(x.text));CK(T&&/Заявить/.test(T.btn),'совет с кнопкой «Заявить»: '+(T&&T.text));
+    const c0=G.cash;T.run();CK(G.trials.ent['de-sub|1909'].md===820&&G.cash<c0&&trOpenList(G)[0].ent,'одно нажатие — модель заявлена, взнос '+money(c0-G.cash));
+    CK(/Испытания ведомств/.test(trialCardHTML(G))&&/✓/.test(trialCardHTML(G)),'строка «Испытания ведомств» в «Моделях»');
+    // без свидетельства покупатели не получают доплату — грузовик продаётся хуже
+    const pen=trU(tr,'haul','de',G);CK(pen<-0.3&&trU(tr,'city','de',G)===0&&trU(tr,'haul','us',G)===0&&/не получают доплату/.test(trSubTxt(tr,'de',G)),'субсидия 1908–1914: без свидетельства дальние перевозки −'+Math.abs(pen).toFixed(2)+' к привлекательности');
+    G.dealers.de=dealerNeed('de',G);G.rep=60;
+    // пробег: сильная машина побеждает — заказ и свидетельство
+    G.m=8;Math.random=()=>0.6;const sc=trScore(tr,'truck','de',G),scOld=trScore(car('truck',1900,829,'Стар'),'truck','de',G);CK(sc>0.9&&sc<1.1&&scOld<0.9,'мерка против образца года (100): машина своего года — '+Math.round(sc*100)+', машина 1900 года — '+Math.round(scOld*100));
+    const s0=mkCountry('de',G,[tr]).by[820],o0=(G.orders||[]).length,_rv=trRivals;trRivals=()=>[{n:'Büssing',sc:0.92},{n:'Daimler',sc:0.9,brk:true},{n:'NAG',sc:0.8}];trialsMonth(G,{});trRivals=_rv;const ev=G.pending[0],C=trCertS(tr,'de','sub',G);
+    CK(ev&&/Испытания ведомства/.test(ev.kicker)&&/100 — образец года/.test(ev.text)&&!/undefined|NaN/.test(ev.text)&&!G.trials.ent['de-sub|1909'],'итог пробега — таблицей: '+ev.title);
+    CK(!!C&&/первое место/.test(ev.title),'сильная машина побеждает: '+ev.title);
+    if(C){const s1=mkCountry('de',G,[tr]).by[820];CK(C.until===mi(G)+TR_SUB_M&&trU(tr,'haul','de',G)===0&&s1>s0*1.05&&(G.orders||[]).length>o0&&/субсидийное свидетельство/.test(trialModelLine(tr,G)),'свидетельство на четыре года: доплата покупателям — продажи '+Math.round(s0)+' → '+Math.round(s1)+', и заказ ведомства');}
+    else CK(/Свидетельства нет|поломка/.test(ev.text),'без призового места свидетельства нет');
+    G.pending=[];
+    // слабая машина проигрывает
+    const weak=car('truck',1900,821,'Старый');weak.status='prod';G.models=[weak];G.y=1910;G.m=4;G.trials.ent={};trialEnter(G,'de-sub',821);G.m=8;Math.random=()=>0.6;trialsMonth(G,{});
+    CK(!trCertS(weak,'de','sub',G)&&/Свидетельства нет|поломка/.test(G.pending[0].text),'машина десятилетней давности свидетельства не получает: '+G.pending[0].title);G.pending=[];
+    // армейский торг по цене там, где есть испытания, не приходит
+    G.y=1910;G.models=[tr];let army=0;rnd(3);for(let k=0;k<400;k++){G.pending=[];G.tenderSaid={};G.tenderNow=null;checkTenders(G);if(G.tenderNow&&G.tenderNow.k==='army')army++;}CK(army===0,'заказ военного министерства на грузовики в Германии 1910 года — только через испытания');G.pending=[];Math.random=R0;}
+  // приёмка на полигоне: военная техника
+  {BOTS_OFF=true;rnd(4);newGame('renault','fr','Тест','normal','Первая');G.pending=[];G.y=1925;G.m=2;G.cash=5e6;const ac=car('armored',1925,830,'Броневик');G.models=[ac];G.dealers.fr=dealerNeed('fr',G);
+    const u=trMil(ac);CK(u==='armored'&&trTestKind(ac,G)==='mil'&&!trGate(ac,u,'fr',G),'бронеавтомобиль без приёмки армия в мирное время не закупает');
+    const R0m=mkCountry('fr',G,[ac]);CK(!(R0m.by[830]>0),'продаж армии нет: '+Math.round(R0m.by[830]||0));
+    G.y=1916;CK(trGate(ac,u,'fr',G),'в войну армия берёт без испытаний');G.y=1925;
+    const dr={...ac,id:831,status:'dev'};CK(trGate(dr,u,'fr',G)===(trScore(dr,'mil','fr',G)>=TR_PASS),'чертёж: спрос прикидывают по тому, пройдёт ли машина полигон');
+    const A=adviceList(G).find(x=>/без испытаний на полигоне/.test(x.text));CK(A&&/На полигон/.test(A.btn)&&/На полигон/.test(trialModelLine(ac,G)),'совет и кнопка в карточке модели: «На полигон»');
+    const c0=G.cash;A.run();CK(G.trials.q.length===1&&G.cash<c0&&/уже идут/.test(trTestWhy(G,ac)),'заявка: итог через три месяца');
+    G.m=5;Math.random=()=>0.7;trialsMonth(G,{});const C=trCertS(ac,'fr','mil',G);CK(G.pending.length===1&&/Полигон/.test(G.pending[0].title)&&!/undefined|NaN/.test(G.pending[0].text),'итог приёмки: '+G.pending[0].title);
+    if(C){const R1=mkCountry('fr',G,[ac]);CK(trGate(ac,u,'fr',G)&&R1.by[830]>0&&C.until===mi(G)+TR_CERT_M&&/принята армией/.test(trialModelLine(ac,G)),'принята — армия закупает пять лет: '+R1.by[830].toFixed(1)+' в месяц');}
+    G.pending=[];Math.random=R0;}
+  // станция испытаний тракторов (Небраска, с 1920 года)
+  {BOTS_OFF=true;rnd(6);newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1921;G.m=2;G.cash=5e6;const t1=car('tractor',1921,840,'Трактор');G.models=[t1];G.dealers.us=dealerNeed('us',G);
+    CK(trTestKind(t1,G)==='neb'&&near(trU(t1,'plough','us',G),-0.12)&&trU(t1,'plough','fr',G)===0,'США с 1920 года: трактор без протокола продаётся хуже');G.y=1919;CK(trU(t1,'plough','us',G)===0&&!trTestKind(t1,G),'до закона 1919 года — нет');G.y=1921;
+    const a0=mkCountry('us',G,[t1]).by[840];CK(trialTest(G,840),'трактор отправлен на станцию');G.m=4;Math.random=()=>0.8;trialsMonth(G,{});const C=trCertS(t1,'us','neb',G);
+    CK(C&&G.pending.length===1&&/Небраск/.test(G.pending[0].title)&&/Waterloo Boy/.test(G.pending[0].text),'протокол напечатан: '+G.pending[0].title);
+    const a1=mkCountry('us',G,[t1]).by[840];CK(a1>a0&&trU(t1,'plough','us',G)>-0.12,'с протоколом продажи выше: '+Math.round(a0)+' → '+Math.round(a1));G.pending=[];
+    let h='';try{const os=openSheet;openSheet=x=>{h=x;};openTrials();openSheet=os;}catch(e){h='ERR '+e.message;}CK(/Испытания ведомств/.test(h)&&/Свидетельства/.test(h)&&/протокол Небраски/.test(h)&&!/undefined|NaN/.test(h),'лист «Испытания ведомств»: свидетельства');
+    // Виннипег
+    G.y=1910;G.m=2;G.models=[car('tractor',1910,841,'Трактор-10')];CK(trOpenList(G).some(o=>o.T.id==='wpg'),'состязания тракторов в Виннипеге — запись за четыре месяца');Math.random=R0;}
+  // партия с рекордами и испытаниями не падает; сохранение
+  {BOTS_OFF=false;rnd(31);newGame('benz','de','Тест','normal','Первая');G.cash=5e6;G.y=1908;G.m=0;G.models=[car('truck',1908,850,'Г'),car('people',1908,851,'Н')];G.cap=600;G.workers=900;G.dealers.de=30;G.rec={h24:{v:120,who:'Т',y:1908,m:0,t:mi(G),md:851,until:mi(G)+18}};
+    let err='',ent=0;try{for(let k=0;k<20;k++){G.pending=[];G.cash=Math.max(G.cash,2e6);const A=adviceList(G).find(x=>/Заявить/.test(x.btn||''));if(A){A.run();ent++;}step();}}catch(e){err=e.stack.split('\\n').slice(0,3).join(' | ');}
+    CK(!err&&ent>=1,'двадцать месяцев с рекордом и конкурсами — без ошибок, заявок: '+ent+' '+err);const s2=JSON.parse(JSON.stringify(G));CK(s2.rec&&s2.trials,'рекорды и заявки сохраняются');G.pending=[];BOTS_OFF=true;}
+  Math.random=R0;
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

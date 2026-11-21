@@ -59,7 +59,7 @@ function vRace(){
   const nextMaj=RACES.filter(r=>r.y===y+1&&r.major);
   const openR=cur.filter(r=>raceStatus(r,s)[2]);
   const dPrev=s.m<2&&s.dch&&s.dch[y-1]&&s.dch[y-1].done?dchBlock(s,y-1):'';
-  return `${chalCard(s,'race')}${foldCard('champs',true,`<h2>Чемпионаты ${y}</h2>`,`
+  return `${chalCard(s,'race')}${recCardHTML(s)}${foldCard('champs',true,`<h2>Чемпионаты ${y}</h2>`,`
     <p class="small muted" style="margin-top:4px">Гонки идут сезонами, как в истории. В каждой гонке марка получает очки за лучшую свою машину. Титул приносит славу на год вперёд, а победы и чемпионства входят в наследие компании.</p>
     ${ch.length?ch.map(id=>champBlock(s,id,y)).join(''):'<p class="small muted" style="margin-top:8px">В этом году чемпионатов нет — только отдельные гонки.</p>'}
     ${dchBlock(s,y)}
