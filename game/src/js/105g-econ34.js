@@ -40,7 +40,8 @@ function eqPriceLine(md,s,cls){const E=eqPrice(md,s);if(!E)return '';
 
 /* ---------- скрытые штрафы: часть спроса вне «% соперника» ---------- */
 // По строке на каждое слагаемое modelExtras, которое зависит от конструкции (Δ в полезности покупателя): множитель продаж e^Δ и причина.
-// Сумма Δ переводится в «для покупателей ≈ N% соперника»: N = S·e^(Δ/3) (продажи растут как S³).
+// Сумма Δ переводится в «для покупателей ≈ N% соперника»: N = S·e^(Δ·μ/3). 0.51, этап 5: внутри класса качество сравнивают резче —
+// продажи небольшой марки растут как S^(3/μ), μ = nestMu (1 до 1908 года, 0,6 с 1916-го); поправки вне «% соперника» действуют как раньше.
 const ERA_YEAR=y=>y>=1929?1929:y;
 function hiddenTerms(md,s,c){c=c||s.country;const g=segOf(md),p=parts(md),L=[],y=s.y,hp=Math.round(engineHp(p.e,md));
   const add=(id,d,txt)=>{if(Math.abs(d)>1e-9)L.push({id,d,mul:Math.exp(d),txt});};
@@ -59,7 +60,7 @@ function hiddenTerms(md,s,c){c=c||s.country;const g=segOf(md),p=parts(md),L=[],y
   if(c!==s.country){const tp=tastePen(md,c,s);if(tp)add('taste',-tp,'Чужой вкус: машина не похожа на местные');}
   const D=L.reduce((a,x)=>a+x.d,0);return {L,D,mul:Math.exp(D)};}
 // «для покупателей ≈ N% соперника»
-function buyersPct(md,s,c){const S=classScore(md,s,c),H=hiddenTerms(md,s,c);return {S,N:S*Math.exp(H.D/3),H};}
+function buyersPct(md,s,c){const S=classScore(md,s,c),H=hiddenTerms(md,s,c);return {S,N:S*Math.exp(H.D*nestMu(s)/3),H};}
 // строки для карточки модели и конструктора: каждое слагаемое больше 0,05 по модулю — множитель продаж и причина
 function hiddenHTML(md,s,inDesigner){if(isTruck(md))return '';const B=buyersPct(md,s),show=B.H.L.filter(x=>Math.abs(x.d)>0.05);if(!show.length)return '';
   const mul=x=>'×'+(x.mul>=10?Math.round(x.mul):x.mul.toFixed(2).replace('.',',').replace(/0$/,''));
@@ -99,18 +100,13 @@ function modelOffice(md,s,f){f=f||brandFc(md,s,md.price);const self=f.selfRev||0
   const rwo=admRate({...s,models:without},{made:Math.round(Math.max(0,cars-(mo?0:f.d)))});
   return {cost:rw*(f.rev||0)-rwo*Math.max(0,(f.rev||0)-self),contrib:f.pr||0,rate:rw};}
 
-/* ---------- ответ соперников ---------- */
-// штраф продаж ×e^−contest и из чего он складывается: натиск (доля выше порога уровня), скидки соперников, модели-ответы, объединение
-function contestParts(s,c,g){const D=DIF(),rv=(s.rv&&s.rv[c]&&s.rv[c][g])||0,o=s.resp&&s.resp[c]&&s.resp[c][g],t=mi(s);
-  let ms=0,mg=o?(o.mg||0):0;if(o)for(const x of o.ms||[])if(x.at<=t)ms+=x.k*Math.exp(-(t-x.at)/72);
-  const cap=D.rboost??RESP_BOOST_MAX,raw=ms+mg,kk=raw>cap?cap/raw:1;ms*=kk;mg*=kk;
-  const cut=respCut(s,c,g),cu=cut>0?-BR*Math.log(1-cut):0,tot=rv+ms+mg+cu,sh=o?o.sh:0,pend=o?(o.ms||[]).filter(x=>x.at>t).length:0;
-  return {rv,ms,mg,cut,cu,tot,mul:Math.exp(-tot),sh,thrP:D.share||0.2,thrR:D.rshare||0.25,pend};}
-function contestTxt(P){const L=[];if(P.rv>0.02)L.push(`натиск ×${xk2(Math.exp(-P.rv))}`);if(P.cu>0.02)L.push(`скидки соперников −${Math.round(P.cut*100)}% (×${xk2(Math.exp(-P.cu))})`);
-  if(P.ms>0.02)L.push(`модели-ответы ×${xk2(Math.exp(-P.ms))}`);if(P.mg>0.02)L.push(`объединение ×${xk2(Math.exp(-P.mg))}`);return L.join(', ');}
+/* ---------- ответ соперников ----------
+   0.51, этап 5: штрафа ×e^−contest к спросу на машины игрока больше нет (см. 13b-economy.js и 17c-firms.js). contestParts оставлен
+   для старых проверок и показывает нули; строки для игрока — ходы настоящих фирм. */
+function contestParts(s,c,g){const D=DIF();return {rv:0,ms:0,mg:0,cut:0,cu:0,tot:0,mul:1,sh:0,thrP:D.share||0.2,thrR:D.rshare||0.25,pend:0};}
+function contestTxt(P){return '';}
 function xk2(f){return f.toFixed(2).replace('.',',');}
-function contestModelLine(md,s){if(isTruck(md))return '';const P=contestParts(s,s.country,segOf(md));if(P.tot<=0.2)return '';
-  return `<p class="small warn" style="margin-top:6px">⚔️ Соперники отвечают на вашу долю: спрос ×${xk2(P.mul)} (${contestTxt(P)}). Скидку съест новый ответ — выгоднее поднять цену.</p>`;}
+function contestModelLine(md,s){return firmClassHTML(s,s.country,segOf(md));}
 
 /* ---------- завод: места ---------- */
 // сколько мест на линии занимает одна машина модели (простая машина — 1 место)
@@ -170,9 +166,10 @@ function inC(c){return IN_C[c]||`В стране «${esc((COUNTRIES[c]||{}).name
 function waresW(s){const c=lineOn(s,'car'),m=lineOn(s,'moto');return c&&m?'машины и мотоциклы':m?'мотоциклы':'машины';}
 function reachHTML(s,c){const I=reachInfo(s,c);if(I.r>=0.3||!I.d)return '';
   return `<p class="small warn" style="margin-top:4px">${inC(c)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(I.r*100))}% покупателей. Для всей страны нужно ~${fmtN(I.need)} дилеров${I.miss>0?` (~${money(I.cost)})`:''}${I.capLim?` — ${impLv(s,c)<=1?'импортёр торгует только в больших городах: нужно своё отделение':'больше не даёт способ торговли'}`:''}; будут брать ≈ ${fmtD(I.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% дилеры уходят к конкурентам — охват падает.':''}</p>`;}
-function contestHTML(s,c){const mk=s.last&&s.last.mk&&s.last.mk[c];if(!mk)return '';const L=ALLSEG.map(g=>{const P=contestParts(s,c,g);if(P.tot<0.02&&P.sh<P.thrP*0.8)return '';
-  return `<p class="small ${P.tot>0.2?'warn':'muted'}" style="margin-top:3px">⚔️ ${esc(SEG[g].name)}: доля ${pct(P.sh,0)} · порог ${pct(P.thrP,0)}${P.thrR!==P.thrP?`/${pct(P.thrR,0)}`:''} · спрос ×${xk2(P.mul)}${P.tot>0.02?` (${contestTxt(P)})`:''}${P.pend?` · готовится ответ: ${P.pend}`:''}</p>`;}).filter(Boolean);
-  return L.length?`<div style="margin-top:4px">${L.join('')}<p class="small muted" style="margin-top:2px">Порог — на «${esc((DIFFS[s.diff]||{}).name||'')}»: выше первой доли соперники давят, выше второй — снижают цены и готовят модели-ответы.</p></div>`:'';}
+// «Рынок», страна: чем соперники сейчас сильнее своей истории — по классам, где у игрока есть продажи
+function contestHTML(s,c){const mk=s.last&&s.last.mk&&s.last.mk[c];if(!mk||!s.firms)return '';const L=[...CARSEG,'truck'].map(g=>{const z=mk.segs[g];if(!z||!(z.you>0))return '';const F=firmClassLines(s,c,g).filter(o=>o.du>0&&o.sh>=0.02).slice(0,3);if(!F.length)return '';
+  return `<p class="small warn" style="margin-top:3px">⚔️ ${esc(SEG[g].name)}: ваша доля ${pct(z.you/Math.max(1,z.size),0)} · ${F.map(o=>`<b>${esc(o.n)}</b> — ${esc(o.txt)}`).join('; ')}</p>`;}).filter(Boolean);
+  return L.length?`<div style="margin-top:4px">${L.join('')}<p class="small muted" style="margin-top:2px">Это ходы самих марок: их цена, их новая машина, их завод. <button class="link" data-act="rivals" data-c="${c}">Все соперники</button></p></div>`:'';}
 // «Мощности»: сколько мест заняли в прошлом месяце машины, мотоциклы, склад, заказы и армия; мощность в нынешней смеси моделей
 function capUseHTML(s){const L=s.last,B=L&&L.capBy,X=capMix(s);if(!B&&!X.cars&&!X.motos)return '';
   const tot=B?B.car+B.moto+B.stock+B.ord+B.mil:0,f=x=>fmtN(Math.round(x));

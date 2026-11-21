@@ -292,6 +292,6 @@ function empireStrip(s){EC_FLASH=false;if(!s)return '';let t=null;try{t=legacyTa
     ${G2?`<button class="ec-row goal" data-act="tab" data-t="${G2.tab}" data-sec="${G2.sec||''}"><i>${G2.icon}</i><span>${esc(G2.text)}<em class="ec-bar"><b style="width:${Math.round(G2.pct*100)}%"></b></em></span></button>`:''}
     ${lastOn?`<button class="ec-row tri" data-act="trophy" data-k="${s.trophies.length-1}">${ph||`<i>${TROPHY_ICON[last.kind]||'🏆'}</i>`}<span>${esc(last.title)}${last.sub?' · '+esc(last.sub):''} <small>${MONTHS[last.m]} ${last.y}</small></span></button>`
       :last?'':`<button class="ec-row tri first" data-act="tab" data-t="race"><i>${airOnly(s)?'✈':'🏁'}</i><span><b>Первая цель:</b> ${airOnly(s)?'выиграйте состязание или поставьте рекорд':'выиграйте гонку или пари'} — триумф появится здесь</span></button>`}
-    ${chal}
+    ${chal}${typeof rivStrip==='function'?rivStrip(s):''}
     <button class="ec-row next" ${NS.rk?`data-act="raceTo" data-k="${esc(NS.rk)}"`:NS.tab?`data-act="tab" data-t="${NS.tab}"`:'data-act="next"'}><i>${NS.icon}</i><span><b>Дальше:</b> ${esc(NS.text)}</span></button>
  <div class="ec-badges" data-act="tab" data-t="log" data-sec="sec-trophies" role="button" aria-label="Титулы, пари, фильм, трофеи"><span title="Титулы">👑 ${tit}</span><span title="Выигранные пари">⚔️ ${won}</span><span title="Главы фильма">🎬 ${seen}/${L.length}</span><span title="Трофеи">🏆 ${tro}</span></div>`;}

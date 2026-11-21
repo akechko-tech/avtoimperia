@@ -185,6 +185,7 @@ const ACT={
   sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
+  rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},/* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
   troRace:()=>{openRaceResult();},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
   demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},

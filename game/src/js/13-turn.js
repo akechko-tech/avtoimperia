@@ -147,7 +147,7 @@ function step(){
   // конкуренты и рынки для экрана «Рынок»: сколько купили у реальных марок и у вас
   for(const c in COUNTRIES){const L=s.comps[c]||[];L.forEach(x=>{x.last=0;x.lg={};});const MC=D.mk[c],sg={};let size=0;
     // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
-    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x){if(o.bot)botSold(s,o.bot,c,g,o.sales);return;}x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
+    SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};if(z.edge!=null){sg[g].edge=z.edge;sg[g].edgeP=z.edgeP||0;sg[g].edgeQ=z.edgeQ||0;sg[g].edgeB=z.edgeB||0;}size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x){if(o.bot)botSold(s,o.bot,c,g,o.sales);return;}x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
     // 0.32: мотоциклы — свои классы и свои марки (s.mcomps)
     const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;});const msg={};let msize=0;
     MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x)x.last+=o.sales;});});
@@ -174,7 +174,10 @@ function step(){
   // 0.41: мировой итог с начала партии (л. с., доллары, победы, первенства) и проверка господства — 16-world.js
   try{worldMonth(s,r);domCheck(s);}catch(e){console.warn('world',e);}
   // 0.41: живые соперники делают ход после вашего — 17b-bots.js
+  // 0.51, этап 5: сначала считают месяц и ходят фирмы-соперники (17c-firms.js), потом — большая стратегия великих марок
+  try{firmsMonth(s,r);}catch(e){console.warn('firms',e);}
   try{botsMonth(s,r);}catch(e){console.warn('bots',e);}
+  try{firmNews(s,r);}catch(e){console.warn('firm news',e);}
   // итоги месяца
   const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);s.last=r;
   const H=s.hist;H.cash.push(Math.round(s.cash));H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(Math.round(r.profit));H.share.push(+(r.share*100).toFixed(2));
@@ -256,13 +259,7 @@ function admParts(s,r){const made=(r&&r.made)||((s.last&&s.last.made)||0),mm=(r&
   const out=0.011*Math.log2(1+eq/400),cty=0.005*fmL.length,mdl=0.012*Math.log2(1+Math.max(0,nm-3)/3);
   return {made,mm,eq,fmL,nmC,nmM,nm,k,base:0.03,out,cty,mdl,total:Math.min(0.25,0.03+k*(out+cty+mdl))};}
 function admRate(s,r){return admParts(s,r).total;}
-function rivalsReact(s,r){const D=DIF(),T0=D.share||0.2,rate=D.rvRate||1,mx=D.rvMax||1.3;if(!s.rv)s.rv={};
-  for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;const rv=s.rv[c]=s.rv[c]||{};
-    // 0.32: в эпоху пионеров рынок класса — десятки машин: на новичка с полусотней машин в год соперники не ополчаются (от ~50 машин класса в месяц)
-    ALLSEG.forEach(g=>{const z=isMotoSeg(g)?mk.msegs&&mk.msegs[g]:mk.segs[g];if(!z||z.size<RESP_MIN*(isMotoSeg(g)?2:1)){rv[g]=Math.max(0,(rv[g]||0)-0.004);return;}const sh=z.you/z.size,cur=rv[g]||0;
-      // 0.32: ваша доля упала ниже порога — соперники успокаиваются быстрее (раньше натиск держался десятилетиями и добивал марку после спада)
-      // в войну заводы соперников делают снаряды и грузовики для армии — им не до борьбы за покупателей (натиск не растёт)
-      const war=isWar(s.y,s.m,c);let nv=sh>T0&&!war?cur+0.015*rate*Math.min(3,(sh-T0)/T0):cur-(sh<T0*0.6||war?0.03:0.012);nv=clamp(nv,0,mx);rv[g]=nv;
-      if(c===s.country&&nv>0.25&&Math.floor(nv/0.4)>Math.floor(cur/0.4))rivalNews(s,c,g,nv,cur);});}}
+// 0.51, этап 5: «натиска» за долю рынка больше нет — соперники отвечают ходами своих фирм (17c-firms.js)
+function rivalsReact(s,r){if(s.rv)delete s.rv;}
 function strikeThreat(){pushEvent({title:'Рабочие грозят забастовкой',text:'Профсоюз требует прибавки. Без неё в следующем месяце выпуск упадёт вдвое.',choices:[['Поднять зарплату','raise'],['Переждать','wait']]},false);}
 function rank(v){return v<200000?'Мастерская':v<2000000?'Фабрика':v<20000000?'Концерн':'Автоимперия';}

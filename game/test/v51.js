@@ -319,5 +319,72 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const svgs=G.models.map(md=>carSVG(md,{}));CK(svgs.every(x=>/^<svg/.test(x)&&!/undefined|NaN/.test(x)&&x.length>600),'рисунки новых видов собраны без пропусков');
     const TH=truckHead(G.models[1],G);CK(TH&&TH.un==='пасс·км'&&/пасс·км/.test(TH.txt),'строка «работа против соперника» — в своей мерке');G.models=[];}
 }
+// ---------- 20. этап 5: фирмы-соперники вместо вычетов из спроса (отзыв автора на пробную сборку) ----------
+{const rnd=seed=>{let a=seed;Math.random=()=>{a=(a*16807)%2147483647;return a/2147483647;};};
+  // вычетов из спроса игрока больше нет
+  {newGame('ford','us','Тест','normal','Первая');G.y=1920;G.m=5;G.rv={us:{people:1}};G.resp={us:{people:{sh:0.6,over:30,cut:0.2,t:0,ms:[{at:0,k:0.5}],mg:0.25,mgd:1}}};G.pfleet={us:5e6};
+    const md={...rivalDesign('people',1920),id:900,name:'П',status:'prod',launched:mi(G)-30,price:500,stock:0,made:1000,vol:500,paint:'#333',eq:[]};
+    CK(contest(G,'us','people')===0&&contest(G,'us','truck')===0&&respCut(G,'us','people')===0&&respBoost(G,'us','people')===0&&botPress(G,'us','people')===0,'натиск, скидки, модели-ответы, объединение, натиск ботов: вычет из спроса игрока — ноль даже со старыми полями сохранения');
+    CK(usedPen(md,'us',G)===0,'вычета «подержанные машины своей марки» больше нет (даже при 5 млн своих машин на дорогах)');
+    const P=contestParts(G,'us','people');CK(P.tot===0&&P.mul===1,'contestParts: спрос ×1');
+    rivalsReact(G,{mk:{}});rivalsRespond(G,{mk:{}});CK(!G.rv&&!G.resp,'остатки натиска и ответов из старых сохранений убраны');
+    G.copy={people:1};rivalsCopy(G);rivalsCopy(G);CK(G.copy.people<1,'безымянное копирование не начисляется и сходит: '+G.copy.people);}
+  // рынок: без игрока и без ходов фирм — как прежде; класс-гнездо
+  {newGame('ford','us','Тест','normal','Первая');G.y=1922;G.m=5;G.firms={};
+    const R0=mkCountry('us',G,[]),T=firmTerms(G,'us','people');CK(near(T.M,1,1e-9)&&T.L.every(o=>o.m===1),'ходов нет — перевес марок 1');
+    const S=compSplit('us','people',G,1000),sw=T.L.reduce((a,o)=>a+o.w,0);CK(near(S.reduce((a,o)=>a+o.sales,0),1000*sw,1e-6),'продажи марок класса = их исторические доли ('+sw.toFixed(2)+')');
+    CK(near(nestMu({y:1907,m:0}),1)&&near(nestMu({y:1916,m:0}),NEST_MU)&&nestMu({y:1912,m:0})<1&&nestMu({y:1912,m:0})>NEST_MU,'сравнение внутри класса: 1 до 1908 года, '+NEST_MU+' с 1916-го');
+    // игрок в классе: соперник отвечает — теряет игрок, а не «никто»
+    const md={...rivalDesign('people',1922),id:901,name:'П',status:'prod',launched:mi(G)-10,price:0,stock:0,made:1000,vol:500,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)*0.9/10)*10;G.dealers.us=dealerNeed('us',G);G.rep=70;
+    const A=mkCountry('us',G,[md]),a1=A.by[901],r1=A.segs.people.inc;
+    CK(a1>0&&A.segs.people.edge!=null&&A.segs.people.edgeP>0,'игрок в классе: продажи '+Math.round(a1)+', перевес ценой '+A.segs.people.edgeP.toFixed(2));
+    CK(r1<R0.segs.people.inc,'соседи по классу теряют покупателей игроку: '+Math.round(R0.segs.people.inc)+' → '+Math.round(r1));
+    CK(a1+r1<R0.segs.people.inc+a1*0.999,'класс растёт меньше, чем продал игрок (часть покупателей — у соседей)');
+    // фирмы: у двух главных марок класса — модель-ответ и цена −15 %
+    BOTS_OFF=false;const W=compWeights('us','people',G).filter(o=>!o.bot).sort((x,y)=>y.w-x.w).slice(0,2),t=mi(G);
+    W.forEach(o=>{const F=firmMake(G,'us',o.i,o.cp);F.pk.people=0.85;F.md.people={q:0.5,from:t-5,till:t+60};F.cap=6;});
+    const T2=firmTerms(G,'us','people');CK(T2.M>1.3,'ответ двух марок: перевес соперников класса ×'+T2.M.toFixed(2));
+    const B=mkCountry('us',G,[md]),a2=B.by[901],r2=B.segs.people.inc;
+    CK(a2<a1*0.9,'ответ соперников отбирает покупателей у игрока: '+Math.round(a1)+' → '+Math.round(a2));
+    CK((r2-r1)>0&&(a1-a2)>(r2-r1)*0.25,'и берёт их заметной частью у него, а не «из воздуха»: соперники +'+Math.round(r2-r1)+', игрок −'+Math.round(a1-a2));
+    const S2=compSplit('us','people',G,1000),f0=S2.find(o=>o.i===W[0].i),s0=S.find(o=>o.i===W[0].i);CK(f0.sales>s0.sales*1.5,'ответившая марка продаёт больше своей истории: '+Math.round(s0.sales)+' → '+Math.round(f0.sales));
+    // ответ не вечен: модель снята, цена возвращена — всё как было
+    W.forEach(o=>{const F=G.firms['us:'+o.i];F.pk.people=1;F.md.people.till=t-1;});const C3=mkCountry('us',G,[md]);CK(near(C3.by[901],a1,1e-6),'модель-ответ сошла, цена вернулась — спрос игрока прежний: '+Math.round(C3.by[901]));
+    const F0=G.firms['us:'+W[0].i];F0.md.people={q:0.6,from:t-60,till:t+12};CK(firmDq(F0,'people',t)<0.6&&firmDq(F0,'people',t)>0,'старая модель-ответ тает к концу срока: '+firmDq(F0,'people',t).toFixed(2));
+    CK(firmPriceOpt(F0,'people',0.3,0.5,t,0.6)<firmPriceOpt(F0,'people',0.3,1,t,0.6)&&firmPriceOpt(F0,'people',0.03,0.5,t,0.6)>firmPriceOpt(F0,'people',0.3,0.5,t,0.6),'цена фирмы: потеряла долю — уступает; крупная марка уступает больше мелкой');
+    F0.ck=0.8;F0.ckTill=t+60;CK(firmPriceOpt(F0,'people',0.3,1,t,0.6)<0.85,'поток (себестоимость −20 %) уходит в цену');BOTS_OFF=true;G.firms={};}
+  // партия: игрок сильный — фирмы ходят после него; ходы видны; без вычетов
+  {BOTS_OFF=false;rnd(515);newGame('ford','us','Тест','normal','Первая');G.helper={on:1};G.cash=5e6;G.y=1912;G.m=0;G.dealers.us=Math.round(dealerNeed('us',G)*0.8);G.rep=75;G.cap=4000;G.workers=6000;
+    const md={...rivalDesign('people',1916),id:G.nextId++,name:'Т',status:'prod',launched:mi(G)-6,price:0,stock:0,made:5000,vol:3000,paint:'#333',eq:[],plan:'auto',backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,fc:0};md.price=Math.round(refPrice(md,G)*0.75/10)*10;G.models=[md];
+    const kinds={};let err='',mx=0,seenStrip=false;try{for(let k=0;k<54;k++){G.pending=[];G.cash=Math.max(G.cash,2e6);step();(G.last.riv||[]).forEach(n=>{if(n.c==='us')kinds[n.k]=(kinds[n.k]||0)+1;});if(!seenStrip&&rivStrip(G))seenStrip=true;
+      const z=G.last.mk.us.segs.people;mx=Math.max(mx,z.you/Math.max(1,z.size));}}catch(e){err=e.stack.split('\\n').slice(0,3).join(' | ');}
+    CK(!err,'четыре с половиной года партии с фирмами — без ошибок '+err);
+    CK(mx>0.3,'игрок берёт больше трети народного класса: '+Math.round(mx*100)+'%');
+    const ks=Object.keys(kinds);CK(ks.some(k=>/^(model0|line0|ad0|fin0)$/.test(k)),'фирмы отвечают программами: '+JSON.stringify(kinds));
+    CK(ks.some(k=>/^(cut|model|line|ad|fin)$/.test(k)),'и доводят их до рынка (цена, модель, поток, реклама, рассрочка)');
+    const F=Object.values(G.firms).filter(f=>f.c==='us'&&f.h12>0);CK(F.length>=8&&F.every(f=>isFinite(f.cash)&&isFinite(f.ld)&&f.ld>0),'у каждой фирмы — касса и загрузка: '+F.length+' фирм');
+    CK(F.some(f=>Object.values(f.pk).some(v=>v<0.97))||F.some(f=>Object.keys(f.md).length>0),'у фирм изменились цена или машина');
+    CK(seenStrip&&(G.rivLog||[]).length>0,'ход соперников виден на главном экране и копится в журнале ('+(G.rivLog||[]).length+')');
+    // экран «Соперники»
+    let html='';const os=openSheet;openSheet=h=>{html=h;};const de=document.getElementById;document.getElementById=()=>null;openRivals('us');openSheet=os;document.getElementById=de;
+    CK(/Соперники/.test(html)&&/Фирмы · /.test(html)&&(html.match(/class="tech-row" id="firmus/g)||[]).length>=8&&!/undefined|NaN/.test(html),'экран «Соперники»: карточки фирм без пропусков');
+    CK(/Цена: /.test(html)&&/Деньги: /.test(html)&&/Продажи за год/.test(html),'в карточке — продажи, цена и маржа, деньги');
+    const cm=firmClassHTML(G,'us','people');CK(cm===''||(/Ходы соперников в классе/.test(cm)&&!/undefined|NaN/.test(cm)),'строка в карточке модели — ходы марок класса');
+    // сохранение и загрузка
+    {const s2=JSON.parse(JSON.stringify(G));G=s2;let e2='';try{G.pending=[];step();}catch(e){e2=e.message;}CK(!e2&&Object.keys(G.firms).length>10,'после сохранения и загрузки фирмы продолжают ход '+e2);}
+    BOTS_OFF=true;}
+  // фирма в долгах: кредиторы, потом закрытие (не великая марка)
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.y=1912;G.m=0;G.firms={};const i=COMPS.us.findIndex(x=>x.n==='Stanley'),cp=COMPS.us[i],F=firmMake(G,'us',i,cp);F.h12=1e6;F.r12=5e5;F.p12=-1e5;F.cash=-4e5;F.ld=0.5;
+    const r={riv:[]};CK(firmState(G,r,F,cp,i)===false&&F.st==='bad','убытки и долг больше трети оборота — фирма «в долгах»');
+    F.bad=18;F.cash=-9e5;firmState(G,r,F,cp,i);CK(F.st==='ok'&&F.rec===1&&F.cash>0&&G.compK[cp.n]<1&&F.turn===1,'полтора года убытков — кредиторы: долги списаны, выпуск урезан, деньги на одну новую машину');
+    F.st='bad';F.bad=18;F.cash=-9e5;F.p12=-1e5;firmState(G,r,F,cp,i);CK(F.st==='dead'&&G.dead[cp.n]!=null&&compVol(cp,G)===0,'второй раз не спасают — марка закрыта');
+    CK(r.riv.length===3&&r.riv.every(n=>n.t&&n.txt&&!/undefined|NaN/.test(n.t+n.txt)),'о каждом повороте — заметка: '+r.riv.map(n=>n.k).join(', '));BOTS_OFF=true;}
+  // ляпы пробной сборки
+  {newGame('ford','us','Тест','normal','Первая');G.y=1925;G.m=5;const rc=RACES.find(x=>x.y===1925&&!raceMoto(x));
+    const mk2=(k,id)=>({...rivalDesign(k,1925),id,name:k,status:'prod',launched:mi(G)-5,price:500,stock:0,made:10,vol:10,paint:'#333',eq:[]});
+    G.models=[mk2('ltank',1),mk2('bus',2),mk2('tractor',3),mk2('fire',4),mk2('people',5),mk2('truck',6)];
+    const L=raceCarsFor(G,rc).map(m=>m.name);CK(L.includes('people')&&L.includes('truck')&&!L.some(n=>/ltank|bus|tractor|fire/.test(n)),'в гонку записывают автомобили и прежние грузовики, но не танк, автобус, трактор и пожарную: '+L.join(', '));
+    CK(plural(21,'автомобильной компании','автомобильных компаний','автомобильных компаний')==='автомобильной компании'&&plural(22,'а','б','в')==='б'&&plural(25,'а','б','в')==='в','«среди 21 автомобильной компании»');G.models=[];}
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

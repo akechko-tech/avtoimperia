@@ -19,7 +19,7 @@ function shop(){newMotoGame('custom','fr','Мото','normal','М1');G.y=1912;G.
   G.dealers.fr=25;const m=G.models[0];m.status='prod';m.price0=m.price=Math.round(refPrice(m,G)/10)*10;m.stock=0;
   const car={...G.models[0],id:G.nextId++,name:'Машина',e:'e9',g:'g5',c:'c4',k:'k2',b:'b3',t:'t1',w:'w6',status:'prod',stock:0,totalSold:0,made:0,lastSold:0};car.price0=car.price=Math.round(refPrice(car,G)/10)*10;G.models.push(car);}
 trial('мотоцикл, рядом машина',shop,()=>G.models.find(isMoto),[0.85,1,1.2]);
-trial('машина, рядом мотоцикл',shop,()=>G.models.find(m=>!isMoto(m)),[0.85,1,1.2]);
+trial('машина, рядом мотоцикл',shop,()=>G.models.find(m=>!isMoto(m)),[0.9,1,1.2]);/* 0.51, этап 5: внутри класса цена весит больше — при −15 % спрос вырастает вчетверо, и завод за месяц не успевает; прогноз проверяем на −10 % */
 // 2) мало дилеров: прогноз упирается в сеть и честно говорит об этом
 function few(){shop();G.dealers.fr=3;}
 const r=trial('три дилера — мотоцикл',few,()=>G.models.find(isMoto),[0.8,1]);

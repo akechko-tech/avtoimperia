@@ -202,7 +202,7 @@ function raceHUD(){
   const bd=document.getElementById('rBoard'),bk=(R.bid||(R.bid=Math.random().toString(36).slice(2,7)))+'|'+Math.floor(R.time*2);if(bd.dataset.t!==bk){bd.dataset.t=bk;bd.innerHTML=board;}
   raceAssistHUD();try{navTick();}catch(e){console.warn('nav',e);}
   const m=document.getElementById('rMsg');
-  m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':(F.tyreSwap&&F.vx<1.5)?'МЕНЯЕМ СТЁРТЫЕ ШИНЫ…':F.pitT>0?'МЕХАНИКИ РАБОТАЮТ…':'';
+  m.textContent=R.t<-3?(R.scn&&R.scn.st==='lemans'?'К МАШИНАМ!':'ВНИМАНИЕ!'):R.t<0?Math.ceil(-R.t):R.t<0.8?'СТАРТ!':R.msgT>0?R.msg:F.dnf?'СХОД: '+F.dnf:F.stopT>0?'РЕМОНТ: '+F.stopWhy:(F.punct&&F.vx<1.5)?'МЕНЯЕМ КОЛЕСО…':(F.tyreSwap&&F.vx<1.5)?'МЕНЯЕМ СТЁРТЫЕ ШИНЫ…':F.pitT>0?(Math.abs(F.vx)>1.5?'В БОКСЫ — ТОРМОЗИМ…':'МЕХАНИКИ РАБОТАЮТ…'):'';
   m.classList.toggle('small',m.textContent.length>14);
 }
 // Кнопка 🔧: что нужно машине; горит, когда без механика дальше плохо

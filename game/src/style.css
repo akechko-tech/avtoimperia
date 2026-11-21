@@ -648,6 +648,9 @@ table.dch .linkbtn{font:inherit;color:inherit;text-decoration:underline dotted;t
 .ec-row.goal>span{white-space:normal}
 .ec-row.first{background:rgba(116,211,154,.12)}
 .ec-row.chal{background:rgba(240,199,94,.14)}
+.ec-row.riv{background:rgba(120,160,220,.16)}
+.ec-row.riv>span{white-space:normal}
+button.link{background:none;border:0;padding:0;margin:0;color:var(--accent,#f0c75e);text-decoration:underline;font:inherit;cursor:pointer}
 .ec-row.next{background:rgba(217,171,82,.2)}
 .ec-row.next b{color:var(--brass)}
 .ec-bar{display:block;height:4px;border-radius:2px;background:rgba(142,168,195,.25);margin-top:3px;overflow:hidden}

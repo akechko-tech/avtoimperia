@@ -65,8 +65,6 @@ function adviceList(s){
   act.forEach(md=>{const uc=unitCost(md,s),net=md.price*(1-dMargin(s)),C=classCompare(md,s,home);
     if(net<uc*0.98&&(md.lastSold||0)>0){const np=Math.round(uc/(1-dMargin(s))*1.12/10)*10;add(85,'📉',`«${md.name}» продаётся в убыток: себестоимость ${money(uc)}, а вам с машины достаётся ${money(net)}.`,`Цена ${money(np)}`,()=>{md.price=np;},'models');}
     if(stockWarn(md)){const np=Math.max(20,Math.round(md.price*0.95/5)*5);add(70,'📦',`Машины «${md.name}» копятся на складе (${fmtN(md.stock)} шт.). Снизьте цену или выпуск.`,`Цена −5%`,()=>{md.price=np;},'models');}
-    // 0.21: подержанные своей марки — новая модель отвлечёт покупателей от перекупщиков
-    if(!dev.length&&usedPen(md,home,s)>0.25&&mi(s)-md.launched>=24)add(58,'🚙',`На дорогах много ваших машин прошлых лет, и перекупщики продают их дешевле новой «${md.name}». Новая модель — заметно другая — вернёт покупателей.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
   // 0.26: рынок крошечный — почему спрос такой маленький и что с этим делать
@@ -119,9 +117,11 @@ function adviceList(s){
     if(act.length){let bc=null,bI=null;Object.keys(COUNTRIES).forEach(c=>{if(c===home||!dealerCount(s,c)||warCut(s,c)||tradeBan(s,c))return;const I=reachInfo(s,c);if(I.r<0.3&&I.pot>(bI?bI.pot:0)&&I.miss>0){bc=c;bI=I;}});
       if(bc){const n=Math.max(1,Math.min(bI.miss,Math.floor(Math.max(0,s.cash-3000*cpi(s))/dealerCost(s)),Math.round(bI.need*0.1)));
         add(44,'🌍',`${inC(bc)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:null,n>=1?()=>{buyDealers(G,bc,n);}:null,'market');}}
-    // соперники отвечают на вашу долю — скидка не поможет
-    {let worst=null;act.forEach(md=>{if(isTruck(md))return;const P=contestParts(s,home,segOf(md));if(P.tot>0.2&&(!worst||P.tot>worst.P.tot))worst={md,P};});
-      if(worst)add(50,'⚔️',`Соперники отвечают на вашу долю в классе «${SEG[segOf(worst.md)].name}»: спрос ×${xk2(worst.P.mul)} (${contestTxt(worst.P)}). Скидку съест новый ответ — выгоднее поднять цену «${worst.md.name}».`,'К модели',()=>{tab='models';setOpen('md'+worst.md.id,true);},'models');}
+    // 0.51, этап 5: ход соперника против вашей модели — что он сделал и чем ответить (одно нажатие — к модели или в конструктор)
+    {const mv=rivMoves(s).filter(n=>n.c===home&&n.w>=3&&/^(model|line|cut|fin|ad)$/.test(n.k))[0];
+      if(mv){const F=firmGet(s,mv.c,mv.i),cp=(COMPS[mv.c]||[])[mv.i],g=F&&cp?firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0]:null,mine=g?act.filter(m=>!isMoto(m)&&segOf(m)===g).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]:null;
+        if(mine){const ans=mv.k==='model'?['Новая модель',()=>openDesigner(rivalKind(mine))]:mv.k==='cut'||mv.k==='line'?['К цене модели',()=>{tab='models';setOpen('md'+mine.id,true);}]:['Соперники',()=>openRivals(home)];
+          add(52,'⚔️',`${mv.t}. Это бьёт по «${mine.name}»: ${mv.k==='model'?'перевес вашей машины сократился — нужна модель лучше':mv.k==='cut'||mv.k==='line'?'у соперника машина стала дешевле — проверьте цену':mv.k==='fin'?'у соперника машину берут в рассрочку':'имя соперника стало громче'}.`,ans[0],ans[1],'models');}}}
     // модель приносит меньше, чем стоит конторе
     {let w=null;act.forEach(md=>{if(act.length<2)return;let O=null;try{O=modelOffice(md,s,priceFc(md,s,md.price));}catch(_){}if(O&&O.cost>Math.max(1,O.contrib)&&(!w||O.cost-O.contrib>w.O.cost-w.O.contrib))w={md,O};});
       if(w)add(46,'🏢',`«${w.md.name}» приносит ${money(Math.max(0,w.O.contrib))} в месяц, а держать её в линейке стоит конторе ${money(w.O.cost)}. Снимите с производства или поднимите цену.`,'К модели',()=>{tab='models';setOpen('md'+w.md.id,true);},'models');}

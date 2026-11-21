@@ -108,6 +108,18 @@ with sync_playwright() as p:
       let e='';try{step();}catch(x){e=String(x&&x.stack||x).slice(0,200);}G.pending=[];try{closeSheet();closePaper();}catch(_){};const m=G.models.find(x=>x.id===777);return {e,sold:m.lastSold||0,use:m.useD||{},hint:truckHint(m,G)};})()""")
     ok(not r['e'] and set(r['use'].keys()) <= {'bus'} and 'Пассажиро-километр' in r['hint'], 'городской автобус в серии: месяц без ошибок, продаётся только на маршрутах (%s шт.), в карточке — пассажиро-километр %s' % (r['sold'], r['e']))
     js("G.models=G.models.filter(m=>m.id!==777);render();")
+    # этап 5: ход соперников — полоса на главном экране, экран «Соперники», карточка фирмы
+    r = js("""(()=>{let e='';try{G.firms=G.firms||{};const c=G.country,L=COMPS[c],i=L.findIndex(x=>!x.imp&&compAlive(x,G)&&!pkIs(x,G)),cp=L[i],t=mi(G);
+      const F=G.firms[c+':'+i]||firmMake(G,c,i,cp),g=firmSegs(cp)[0];F.h12=F.h12||2e6;F.r12=F.r12||1.5e6;F.u12=F.u12||900;F.p12=F.p12||5e4;F.cash=F.cash==null?2e5:F.cash;F.ld=0.8;F.pk[g]=0.9;F.md[g]={q:0.4,from:t-3,till:t+60,name:'Проба',who:'«'+G.company+'»',you:1};F.prog={k:'line',g,at:t+9,cost:1,ck:0.8,who:'«'+G.company+'»'};F.log=[{t:t-1,txt:'снизила цены на 10%',k:'cut'}];
+      G.last=G.last||{};G.last.riv=[{n:compName(cp,G),bn:cp.n,c,i,t:compName(cp,G)+' снижает цены на 10%',txt:'Проверка хода.',w:3,k:'cut'},{n:compName(cp,G),bn:cp.n,c,i,t:compName(cp,G)+': новая модель «Проба»',txt:'Проверка хода.',w:4,k:'model'}];
+      render();}catch(x){e=String(x&&x.stack||x).slice(0,300);}
+      const strip=document.querySelector('.ec-row.riv');return {e,strip:strip?strip.textContent:'',act:strip?strip.dataset.act:''};})()""")
+    ok(not r['e'] and 'Ход соперников' in r['strip'] and 'ещё 1' in r['strip'] and r['act'] == 'rivals', 'полоса «Ход соперников» на главном экране: %s %s' % (r['strip'][:70], r['e']))
+    pg.click('.ec-row.riv'); pg.wait_for_timeout(300)
+    r = js("({txt:document.getElementById('sheetBody').textContent,n:document.querySelectorAll('#sheetBody .tech-row[id^=firm]').length,hid:document.getElementById('sheet').hidden})")
+    ok(not r['hid'] and 'Соперники' in r['txt'] and 'Их ход' in r['txt'] and r['n'] >= 1 and 'Проба' in r['txt'] and 'Готовит перестройку завода на поток' in r['txt'] and 'undefined' not in r['txt'] and 'NaN' not in r['txt'], 'экран «Соперники» одним нажатием: ход месяца и %s карточек фирм' % r['n'])
+    ok('Цена: −10% к обычной' in r['txt'].replace('\u2212', '−') and 'ответ' in r['txt'], 'карточка фирмы: цена −10 %, модель-ответ, программа')
+    js("closeSheet()")
     ok(not errs, 'ошибок на странице нет: ' + '; '.join(errs)[:200])
     # снимки карточки — на чистой странице с теми же стилями (живые сцены 3D мешают снимку под программной отрисовкой)
     js("(()=>{try{sagaStop();}catch(_){};try{musicStop();}catch(_){};document.querySelectorAll('canvas,video,audio').forEach(e=>e.remove());})()")

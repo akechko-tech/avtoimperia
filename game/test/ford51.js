@@ -8,6 +8,8 @@
 // Окружение: NOBOTS=1 — без живых соперников; END=1913 — остановиться в этом году; SWITCH=1906:hist — сменить сложность с этого года;
 //            TIME=1 — строка на каждую гонку (время расчёта, место, шанс по прикидке менеджера); DBG=1900 — помесячно до этого года.
 const {spawn}=require('child_process');
+// подбор чисел этапа 5: NESTMU, NESTTH и др. — из окружения (например, NESTMU=0.7)
+for(const k of ['NESTMU','NESTTH','NESTY0','NESTY1','FIRMOFF','FIRMFOLLOW'])if(process.env[k]!=null)globalThis[k]=+process.env[k];
 const A=process.argv.slice(2);
 if(A[0]==='all'){
   const seeds=+(A[1]||3),par=+(A[2]||3),styles=(A[3]||'ford,helper').split(','),diffs=(A[4]||'normal,hist').split(','),pio=A[5]||'ford',cc=A[6]||'us';

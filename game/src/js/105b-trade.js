@@ -77,7 +77,7 @@ function licCost(s,c){return Math.round(1500*cpi(s)/100)*100;}
 function licStart(s,c){if(c===s.country||impLv(s,c)>=2||(s.lic&&s.lic[c])||tradeBanHard(s,c))return false;const cost=licCost(s,c);if(s.cash<cost)return false;s.cash-=cost;
   s.lic=s.lic||{};s.lic[c]={at:mi(s)+6,t:mi(s)};s.imp=s.imp||{};if(!s.imp[c]){s.imp[c]=1;s.dealers[c]=Math.max(dealerCount(s,c),2);}(s.impSince=s.impSince||{})[c]=s.impSince[c]??mi(s);
   // утечка технологии: местные марки учатся на ваших чертежах
-  const g=(s.models.find(m=>m.status==='prod')&&segOf(s.models.find(m=>m.status==='prod')))||'middle',o=respOf(s,c,g);o.mg=(o.mg||0)+0.15;
+  const g=(s.models.find(m=>m.status==='prod')&&segOf(s.models.find(m=>m.status==='prod')))||'middle';try{firmLeak(s,c,g);}catch(_){}
   addLog(`${COUNTRIES[c].name}: лицензия продана местному заводу. Через полгода он начнёт выпускать ваши машины — без пошлины и доставки; вам — ${Math.round(LIC_ROY*100)}% цены. Чертежи увидят и конкуренты.`,'good');return true;}
 function licEnd(s,c){if(!s.lic||!s.lic[c])return;delete s.lic[c];addLog(`${COUNTRIES[c].name}: лицензия отозвана.`);}
 // 0.30: газетные предложения о продаже марок, доли в вас, слияния и торги — 105c-deals.js (maInbound)

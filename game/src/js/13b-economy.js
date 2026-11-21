@@ -83,37 +83,18 @@ function qualityResolve(s,key){const md=s.models.find(m=>m.id===s.scandalMd);s.s
   else{s.rep=clamp(s.rep-8,0,100);md.scandalK=0.35;md.scandalUntil=mi(s)+9;md.scandalAt=mi(s)-18;addLog(`«${md.name}»: компания отрицает поломки. Репутация упала, продажи тоже.`,'bad');}}
 function scandalEffect(md,s){return (md.scandalUntil||0)>mi(s)?Math.log(1-(md.scandalK||0)):0;}
 
-/* ---------- ответ конкурентов ---------- */
-// Если вы забираете больше четверти класса в стране (на «Норме»), лидер класса отвечает: снижает цены на 5–15%
-// или готовит модель-ответ (через 12–18 месяцев); долго доминируете — слабые марки объединяются против вас
-function respOf(s,c,g){s.resp=s.resp||{};const C=s.resp[c]=s.resp[c]||{};return C[g]=C[g]||{sh:0,over:0,cut:0,t:-99,ms:[],mg:0};}
-function respCut(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];return o?Math.min(o.cut||0,cutMax()):0;}
-// 0.32: насколько соперники готовы снизить цены — по уровню сложности (у них тоже есть себестоимость: на «Историке» — до 40%)
-function cutMax(){const D=DIF();return D.cutMax??RESP_CUT_MAX*(D.cut??1);}
-// ответ конкурентов не бесконечен: у лидера класса тоже есть предел — модели-ответы вместе дают не больше +0,6 (ТЗ: цена −5…15%, модель через 12–18 мес.)
+/* ---------- ответ конкурентов ----------
+   0.51, этап 5: прежнего ответа больше нет. С 0.21 он был вычетом из спроса на машины игрока: «скидки соперников» (до −30 %),
+   «модели-ответы» (таяли шесть лет) и «объединение слабых марок в концерн» (×0,78 к спросу навсегда — у самих марок при этом
+   не менялось ничего). Отзыв автора на пробную сборку: «формула не уходит после снижения моей доли и искажает экономическую
+   сущность происходящего». Теперь соперник отвечает своей ценой, своей машиной и своим заводом — 17c-firms.js.
+   Остатки из старых сохранений (s.resp) не действуют и убираются. */
 const RESP_CUT_MAX=0.15,RESP_BOOST_MAX=0.6;
-function respBoost(s,c,g){const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return 0;const t=mi(s);let u=o.mg||0;for(const x of o.ms||[])if(x.at<=t)u+=x.k*Math.exp(-(t-x.at)/72);return Math.min(DIF().rboost??RESP_BOOST_MAX,u);}
+function respCut(s,c,g){return 0;}
+function cutMax(){const D=DIF();return D.cutMax??RESP_CUT_MAX*(D.cut??1);}
+function respBoost(s,c,g){return 0;}
 function classLeader(s,c,g){const L=compList(c,g).filter(cp=>!pkIs(cp,s)&&compAlive(cp,s)&&cp.mix&&cp.mix[g]).map(cp=>({cp,v:compVol(cp,s)*cp.mix[g]})).sort((a,b)=>b.v-a.v);return L;}
-function rivalsRespond(s,r){const D=DIF(),T0=D.rshare||0.25,K=D.resp??1,cutK=D.cut??1,gap=D.rgap||12,t=mi(s);if(!K)return;
-  for(const c in r.mk){const mk=r.mk[c];if(!mk.segs)continue;
-    ALLSEG.forEach(g=>{const mo=isMotoSeg(g),z=mo?mk.msegs&&mk.msegs[g]:mk.segs[g];if(mo&&!(z&&z.you>0)&&!(s.resp&&s.resp[c]&&s.resp[c][g]))return;const o=respOf(s,c,g);const sh=z&&z.size>=RESP_MIN*(mo?2:1)?z.you/z.size:0;o.sh=o.sh*0.8+sh*0.2;
-      // 0.32: доля ниже порога — скидки соперников уходят быстрее (по 1% в месяц, а не по 0,5% при доле ниже 70% порога)
-      if(o.sh>T0)o.over++;else{o.over=Math.max(0,o.over-1);if(t-o.t>=6&&o.cut>0)o.cut=Math.max(0,+(o.cut-(o.sh<T0*0.7?0.012:0.006)).toFixed(3));}
-      if(o.over<3||t-o.t<gap||isWar(s.y,s.m,c))return;
-      const L=classLeader(s,c,g);if(!L.length)return;const lead=compName(L[0].cp,s),ex=clamp((o.sh-T0)/T0,0,2),home=c===s.country;o.t=t;
-      // цена или новая модель: сначала — цена (быстро), потом — модель-ответ; очень долгий перевес — слияние слабых марок
-      if(o.cut<cutMax()-0.001&&(o.ms.length>=o.cut/0.08||Math.random()<0.5)){const cut=Math.min(clamp(0.05+0.05*ex,0.05,0.15)*cutK,cutMax()-o.cut);o.cut=+Math.min(cutMax(),o.cut+cut).toFixed(3);
-        const txt=`${lead} снижает цены в классе «${SEG[g].name}» на ${Math.round(cut*100)}%${home?'':' ('+COUNTRIES[c].name+')'}: слишком много покупателей ушло к «${s.company}».`;addLog(txt,'bad');
-        if(home&&!s.pending.length)pushEvent({kicker:'Рынок',title:`${lead} снижает цены`,deck:`Класс «${SEG[g].name}» · −${Math.round(cut*100)}%`,text:`${txt}\nВаша доля класса — ${Math.round(o.sh*100)}%. Ответ простой: либо снижать цену вслед, либо предложить машину лучше. Дальше конкуренты могут выпустить модель-ответ.`},true);}
-      else{const at=t+12+Math.floor(Math.random()*7),k=(0.3+0.2*Math.min(1,ex))*K;o.ms.push({at,k,by:lead,said:0});
-        addLog(`${lead} готовит модель-ответ в классе «${SEG[g].name}»${home?'':' ('+COUNTRIES[c].name+')'} — выйдет через ${at-t} мес.`,'bad');}
-      if(o.over>=24&&!o.mgd){const W=L.slice(1).filter(x=>x.v>0).slice(-3);if(W.length>=2){o.mgd=1;o.mg=0.25*K;const names=W.map(x=>compName(x.cp,s));
-        const txt=`${names.slice(0,-1).join(', ')} и ${names[names.length-1]} объединились в концерн, чтобы выстоять против «${s.company}».`;addLog(txt,'bad');
-        if(home&&!s.pending.length)pushEvent({kicker:'Рынок',title:'Конкуренты объединились',deck:`Класс «${SEG[g].name}»`,text:`${txt}\nЧто это значит: вы слишком долго забирали больше четверти покупателей класса «${SEG[g].name}», и слабые марки объединились — у них теперь общие деньги, заводы и дилеры, их машины в этом классе стали заметно привлекательнее. Так в 1908 году Уильям Дюрант собрал General Motors из Buick, Oldsmobile, а затем Cadillac и Oakland.\nОтвет — лучшая машина и цена. Или своя сделка: на вкладке «Рынок» → «Сделки» можно купить марку-конкурента или предложить ей слияние.`},true);}}});
-    // модели-ответы выходят — газета
-    ALLSEG.forEach(g=>{const o=s.resp&&s.resp[c]&&s.resp[c][g];if(!o)return;(o.ms||[]).forEach(x=>{if(x.at<=t&&!x.said){x.said=1;const txt=`${x.by} выпустил модель-ответ в классе «${SEG[g].name}»${c===s.country?'':' ('+COUNTRIES[c].name+')'}: покупатели снова смотрят на соперников.`;addLog(txt,'bad');
-      if(c===s.country&&!s.pending.length)pushEvent({kicker:'Рынок',title:`${x.by}: ответ «${s.company}»`,deck:`Новая модель в классе «${SEG[g].name}»`,text:`${txt}\nНовинку готовили больше года — после того как «${s.company}» забрала слишком много покупателей класса. Её преимущество будет таять несколько лет.`},true);}});
-      o.ms=(o.ms||[]).filter(x=>x.at>t-240);});}}
+function rivalsRespond(s,r){if(s.resp)delete s.resp;}
 
 /* ---------- переманивание: дилеры и инженеры ---------- */
 function poachMonth(s,r){const t=mi(s);

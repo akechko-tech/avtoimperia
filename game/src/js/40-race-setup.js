@@ -31,7 +31,10 @@ function entryIsMoto(s,e){const md=(s.models||[]).find(m=>m.id===e.car);return !
 function mgrMaxE(rc,cars){const R=raceRule(rc),mo=cars.length&&cars.every(m=>isMoto(m));return Math.max(1,mo?R.motos:R.cars);}
 function teamCount(s,entries){let c=0,m=0;(entries||[]).forEach(e=>{if(entryIsMoto(s,e))m++;else c++;});return {c,m};}
 // 0.33: мотоциклы — в гонках, где по истории у них был свой зачёт (02-races.js, MOTO_RACE); в остальных — только машины
-function raceCarsFor(s,rc){const mo=raceMoto(rc);return s.models.filter(m=>m.status==='prod'&&(!isMoto(m)||mo));}
+// 0.51, этап 5 (отзыв на пробную сборку: «танк и автобус в гонке — обычный грузовик»): рабочая техника этапа 4 — автобусы, спецмашины,
+// тракторы, военные — в гонки не записывается. Её место — испытания ведомств (этап госзаказов); там у неё будет и свой вид в 3D.
+function raceKindOk(m){return isMoto(m)||!kindIsNew(bodyKind(byId(BODIES,m.b)));}
+function raceCarsFor(s,rc){const mo=raceMoto(rc);return s.models.filter(m=>m.status==='prod'&&(!isMoto(m)||mo)&&raceKindOk(m));}
 // 0.33: менеджер команды выставляет машины; мотоциклы — когда машин нет (у мотомастерской), и тогда шансы и призы — по классу мотоциклов
 function mgrCarsFor(s,rc){const L=raceCarsFor(s,rc),c=L.filter(m=>!isMoto(m));return c.length?c:L;}
 function raceRank(md,rc){const st=carStats(md,2,rc.y);return st.vmax*(0.55+0.45*st.rel)/(1+st.acc/60);}
@@ -54,7 +57,7 @@ function tyreLife(md,rc,e){const p=parts(md),cfg=trackCfg(rc),tr=TERR[cfg.terr]|
 function brakeName(b){return b<0.5?'ленточные, слабые':b<0.6?'барабаны на задних колёсах':b<0.8?'на все четыре колеса':'гидравлика или сервоусилитель';}
 function openRaceSetup(key){
   const s=G,rc=raceByKey(key);if(!rc||R)return;
-  if(!raceCarsFor(s,rc).length){toast(s.models.some(m=>m.status==='prod')?'В этой гонке едут только автомобили':'Нет машин в производстве');return;}
+  if(!raceCarsFor(s,rc).length){toast(s.models.some(m=>m.status==='prod'&&!raceKindOk(m))&&!s.models.some(m=>m.status==='prod'&&raceKindOk(m)&&!isMoto(m))?'В гонки записывают автомобили и мотоциклы: автобусы, спецмашины, тракторы и военная техника не участвуют':s.models.some(m=>m.status==='prod')?'В этой гонке едут только автомобили':'Нет машин в производстве');return;}
   // пока игрок выбирает машины и пилотов — фото-материалы гонки уже грузятся
   try{texPrefetch();}catch(_){}
   if(!RS||RS.key!==key)RS={key,entries:[defaultEntry(s,rc,[])],open:0,mode:'drive',more:false};

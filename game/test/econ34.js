@@ -30,7 +30,7 @@ const mk=(kind,y,extra)=>Object.assign({...rivalDesign(kind,y),id:500,name:'X',p
         const x=L[Math.floor(Math.random()*L.length)],md={...base,[cat.k]:x.id};if(segOf(md)!==segOf(base))continue;
         const dE=modelExtras(md,c,G)-modelExtras(base,c,G),dH=hiddenTerms(md,G,c).D-hiddenTerms(base,G,c).D;n++;if(Math.abs(dE-dH)>1e-9)bad++;
         const P=prefP(segOf(base),c,G),D=m=>mkCountry(c,G,[{...m,id:-3,price:P}],{id:-3,price:P},null,1).by[-3]||0,r=D(md)/Math.max(1e-12,D(base));
-        if(r>0&&isFinite(r)){const rS=Math.pow(classScore(md,G,c)/classScore(base,G,c),3),rN=Math.pow(buyersPct(md,G,c).N/buyersPct(base,G,c).N,3);if(Math.max(rS/r,r/rS)>1.5)errS++;if(Math.max(rN/r,r/rN)>1.5)errN++;}}}}
+        if(r>0&&isFinite(r)){const ex=3/nestMu(G),rS=Math.pow(classScore(md,G,c)/classScore(base,G,c),ex),rN=Math.pow(buyersPct(md,G,c).N/buyersPct(base,G,c).N,ex);if(Math.max(rS/r,r/rS)>1.5)errS++;if(Math.max(rN/r,r/rN)>1.5)errN++;}}}}
   ok(n>=500&&bad===0,'скрытые штрафы: '+n+' замен деталей — сумма строк равна изменению спроса вне S (modelExtras) во всех');
   ok(errN===0,'«для покупателей ≈ N% соперника» ошибается в продажах больше чем в 1,5 раза: '+errN+' раз (одно «% соперника» — '+errS+' из '+n+')');}
 // строки в карточке: открытый кузов в США 1925 года

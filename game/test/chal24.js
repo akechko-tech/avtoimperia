@@ -44,7 +44,7 @@ const lsr=lsrAt(1899,5);ok(lsr&&lsr[1]===105.88,'мировой рекорд к 
 Math.random=(()=>{let a=2024;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();/* 0.51: своё зерно — раздел не зависит от того, сколько случайных чисел съели заезды выше */
 newGame('ford','us','Форд Мотор','normal');G.cash+=40000;
 for(let i=0;i<12*16+3;i++){G.pending=[];botMonth('grow');if(i===30){G.dealers.uk=(G.dealers.uk||0)+4;if(!impLv(G,'uk'))impUp(G,'uk');}G.chal=null;step();}
-G.pending=[];const os=chalOffers(G).find(o=>o.kind==='sales');ok(!!os,'Форд, '+dstr(G)+': вызов по продажам — «'+(os&&os.title)+'» · '+(os&&os.sub));
+G.pending=[];G.chal=null;/* 0.51, этап 5: последний месяц прогона мог сам принести вызов — раздел проверяет пари по продажам, а не случай */const os=chalOffers(G).find(o=>o.kind==='sales');ok(!!os,'Форд, '+dstr(G)+': вызов по продажам — «'+(os&&os.title)+'» · '+(os&&os.sub));
 boardTake(G,'sales');const C5=G.chal,e5=C5.end;ok(C5&&C5.mon&&C5.start===mi(G),'пари по продажам: с '+dstr(G)+' до '+miDate(e5-1)+(C5.hc!==1?' · фора ×'+C5.hc:''));
 let res5=null;for(let k=0;k<14&&G.chal;k++){G.pending=[];botMonth('grow');const c=G.chal;step();if(!G.chal){res5=G.pending.find(e=>e.duel);break;}if(k===0)ok(c.you>0&&c.them>0,'счёт идёт каждый месяц: вы '+Math.round(c.you)+', '+c.mq+' '+Math.round(c.them));}
 ok(!!res5&&res5.duel.sales&&mi(G)===e5,'итог пари в срок ('+dstr(G)+'): '+(res5&&res5.title)+' — '+(res5&&('вы '+res5.duel.sales.you+', они '+res5.duel.sales.them+(res5.duel.sales.hc!==1?' ×'+res5.duel.sales.hc:''))));

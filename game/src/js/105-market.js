@@ -44,6 +44,15 @@ const TRUCK_POOL={1895:0.0025,1905:0.0028,1913:0.003,1917:0.0045,1920:0.005,1925
 // (по Лернеру наценка ≈ 1/|эластичность|). У настоящих машин эластичность спроса по цене — от −3 до −6 (Berry, Levinsohn, Pakes 1995),
 // у богатых покупателей эпохи пионеров — меньше; с 2,2 и бюджетом семьи маржа сильной модели — 25–45%.
 const INC_SIG=0.75,INC_TOP=0.05,ZT=1.6449,HAZ=0.15,AQ=3,GB=2,BR=globalThis.BRK??2.2,LAM=0.25,AQT=2.6,BT=4;
+/* 0.51, этап 5: выбор внутри класса. nestMu — насколько машины одного класса заменяют друг друга: 1 — марка соперничает с соседом
+   по классу не сильнее, чем с «не покупать вовсе» (так было до 0.51); меньше — сильнее. В эпоху пионеров каждая машина — штучная,
+   покупатель — энтузиаст, и сравнивать почти не с чем (1); с массовым рынком машины одного класса становятся похожи, и покупатель
+   выбирает между марками (с 1908 года сравнение резче, NEST_MU — с 1916-го). По Слоуну: до 1908 года рынок «классовый», с 1908-го —
+   массовый. Начало партии (до 1908 года) поэтому считается как раньше — оно и без того хрупкое (замер: 12 партий помощника).
+   NEST_TH — исходная доля новой марки в классе: 1 — при равной машине как раньше, 0 — как раньше там, где соперников нет.
+   Числа — по замеру партий бота (журнал этапа 5). */
+const NEST_MU=globalThis.NESTMU??0.6,NEST_TH=globalThis.NESTTH??1,NEST_Y0=globalThis.NESTY0??1908,NEST_Y1=globalThis.NESTY1??1916;
+function nestMu(s){return 1-(1-NEST_MU)*clamp((yf(s)-NEST_Y0)/(NEST_Y1-NEST_Y0),0,1);}
 // Качество машин конкурентов в классе — доля лучшей машины эпохи
 const QG={people:0.62,middle:0.8,lux:1,sport:0.92,truck:0.75,moto:QG_MOTO.moto,moside:QG_MOTO.moside};
 /* ---------- доходы семей ---------- */
@@ -150,8 +159,11 @@ function pwOf(s,c,g){return (s.pw&&s.pw[c]&&s.pw[c][g])||1;}
 // Ответ конкурентов на ваш успех: новые модели, дилеры и реклама делают их машины привлекательнее
 // 0.32: ответ — штраф к вашим машинам в этом классе и стране (contest), а не прибавка всем соперникам: прибавка соперникам
 // поднимала их и над «не покупать вовсе» — рынок раздувался втрое против истории, а ваши продажи почти не падали
-function rivalBoost(s,c,g){return ((s.rv&&s.rv[c]&&s.rv[c][g])||0)+respBoost(s,c,g);}
-function contest(s,c,g){const cut=respCut(s,c,g);return rivalBoost(s,c,g)+(cut>0?-BR*Math.log(1-cut):0)+(s&&s.bots&&botsOn(s)?botPress(s,c,g):0);}/* 0.41: + натиск живых соперников */
+function rivalBoost(s,c,g){return 0;}
+/* 0.51, этап 5: вычетов из спроса на машины игрока больше нет (отзыв автора: «не надо автоматической вечной заглушки в моём спросе»).
+   Раньше здесь складывались «натиск» за долю, «модели-ответы», «объединение», скидки соперников и натиск живых марок — до ×0,05.
+   Теперь соперник отвечает своей ценой и своей машиной (17c-firms.js), и это меняет его продажи внутри класса, а не ваш спрос. */
+function contest(s,c,g){return 0;}
 // Сколько марок делят класс (обратный индекс Херфиндаля): крупные марки по истории, мелкие мастерские — остаток
 function brandsN(c,g,s){const S=segAnnual(c,g,s)*(1-ghostShare(c,g,s));if(S<=0)return 1;let sq=0,sum=0;
   const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{if(pkIs(cp,s)||(!mo&&acqHas(s,c,i)))return;const v=compVol(cp,s)*((cp.mix&&cp.mix[g])||0);if(v>0){const x=Math.min(1,v/S);sq+=x*x;sum+=x;}});
@@ -177,11 +189,15 @@ function brandK(c,g,s){const tb=CALIB.k&&CALIB.k[c]&&CALIB.k[c][g];let k=tb&&Obj
   if(g==='truck')b=Math.max(b,TRUCK_FLOOR[c]); // смелые фирмы найдутся всегда: лавки, пивоварни, почта
   return b-Math.log(difComp(s));}
 // Продажи конкурентов по маркам: доля марки в классе — как в истории
-function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;let sum=0;
-  const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g)*botK(s,cp,c,g));if(v>0){out.push({cp,i,v});sum+=v;}});
+function compSplit(c,g,s,sales){const S=segAnnual(c,g,s),out=[];if(S<=0||sales<=0)return out;
+  // 0.51: доля марки в продажах соперников класса — её историческая доля × её нынешний перевес (цена, машина, рассрочка — 17c-firms.js)
+  const T=firmTerms(s,c,g);T.L.forEach(o=>{out.push({cp:o.cp,i:o.i,bot:o.bot,v:o.v,sales:sales*o.w*o.m/T.M});});return out;}
+// Исторические веса марок в классе: v — продажи по истории, w — доля в продажах соперников класса (мелкие мастерские — остаток)
+function compWeights(c,g,s){const S=segAnnual(c,g,s),L=[];if(S<=0)return L;let sum=0;
+  const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g));if(v>0){L.push({cp,i,v});sum+=v;}});
   // 0.41: живые соперники — экспорт туда, где марки по истории не было (17b-bots.js)
-  if(!mo&&s&&s.bots&&botsOn(s))botExports(s,c,g,S).forEach(o=>{out.push(o);sum+=o.v;});
-  const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;out.forEach(o=>o.sales=sales*o.v*k);return out;}
+  if(!mo&&s&&s.bots&&botsOn(s))botExports(s,c,g,S).forEach(o=>{L.push(o);});
+  const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;L.forEach(o=>o.w=o.v*k);L.rest=rest;return L;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах
 function reachOf(s,c){const d=dealerCount(s,c);return d?Math.pow(Math.min(1,d/dealerNeed(c,s)),0.7):0;}
@@ -226,14 +242,12 @@ function awMonth(s){if(!s.aw)awInit(s,!(s.hist&&s.hist.sales&&s.hist.sales.lengt
 // (раньше всё сразу давало до +2,5 — лучшая машина эпохи забирала почти весь класс)
 const FAME_CAP=1.3;
 function fameCap(x){return x>0?FAME_CAP*Math.tanh(x/FAME_CAP):x;}
-// 0.21 (ТЗ 5.4): подержанные машины вашей же марки. Хозяева меняют машину раз в 3–4 года и продают старую перекупщику —
-// чем больше ваших машин на дорогах страны, тем больше у перекупщиков дешёвых «почти таких же». Сильнее всего — в народном классе
-// и в двадцатые годы; новая модель заметно отличается от прошлых, и подержанные ей мешают меньше.
-const USED_ERA={1912:0,1918:0.5,1923:1};
-// Перекупщиков много там, где машин много: в Америке двадцатых машина почти в каждой семье, в Европе — у одной из двадцати.
-function usedPen(md,c,s){const g=segOf(md);if(g==='truck'||isTruck(md)||isMotoSeg(g))return 0;const era=tabAt(USED_ERA,yf(s));if(era<=0)return 0;
-  const pf=(s.pfleet&&s.pfleet[c])||0;if(pf<=0)return 0;const fl=Math.max(1,fleetOf(s,c)),sh=Math.min(0.6,pf/fl),age=(mi(s)-(md.launched||0))/12,mat=clamp(fl/households(c,s)/0.6,0.1,1);
-  return (globalThis.USEDK??5)*era*mat*(g==='people'?1:g==='middle'?0.55:0.15)*sh*clamp(0.35+0.22*age,0.35,1);}
+/* 0.51, этап 5: вычета «подержанные машины вашей же марки» больше нет. С 0.21 он снимал спрос с новых машин игрока пропорционально
+   его доле машин на дорогах страны — до ×0,05 в народном классе двадцатых — и держался годами после того, как доля падала (машины
+   служат 7–8 лет). По существу это было неверно: подержанный Ford отбивал покупателя и у нового Chevrolet, а не только у нового
+   Ford; общий эффект подержанных машин уже сидит в истории продаж класса и в насыщении рынка (чем больше машин на дорогах, тем
+   меньше покупающих впервые — mkCountry). Отзыв автора: «не надо автоматической вечной заглушки в моём спросе». */
+function usedPen(md,c,s){return 0;}
 // ваши машины на дорогах страны (легковые): новые прибавились, старые ушли на свалку
 function pfleetMonth(s,life){if(!s.pfleet){s.pfleet={};const H=(s.hist&&s.hist.sales)||[],n=Math.round(12*life);let a=0;H.slice(-n).forEach(v=>a+=v||0);s.pfleet[s.country]=a*0.7;}
   const add={},madd={};s.models.forEach(md=>{if(isTruck(md)||!md.soldBy)return;const A=isMoto(md)?madd:add;for(const c in md.soldBy)A[c]=(A[c]||0)+(md.soldBy[c]||0);});
@@ -244,8 +258,15 @@ function pfleetMonth(s,life){if(!s.pfleet){s.pfleet={};const H=(s.hist&&s.hist.s
 // нитроэмаль Duco) цветные машины в моде у всех: «любой цвет, если он чёрный» стоил Ford покупателей Chevrolet
 function paintBright(hex){const c=hex2rgb(hex||'#222'),mx=Math.max(...c)/255,mn=Math.min(...c)/255,sat=mx>0?(mx-mn)/mx:0;return clamp(sat*0.7+mx*0.5,0,1);}
 function lookU(md,g,s){const b=paintBright(md.paint),t=yf(s);if(g==='sport')return 0.6*(b-0.45);if(g==='truck'||isTruck(md))return 0;const f=clamp((t-1923)/3,0,1);return f*(g==='lux'?0.1:0.25)*(b-0.3);}
-function modelExtras(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md),mo=isMotoSeg(g);
-  return lookU(md,g,s)-3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+fameCap(repEffect(s)+adEffect(s,c)+showEffect(s,c)+raceEffect(md,s)+duelEffect(s,c))+(mo?awUM(s,c):awU(s,c))+novelty(md,s)+scandalEffect(md,s)+(typeof eqU==='function'?eqU(md,g,s):0)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+worldU(s,c,g)+relBonus(md,s)+(home?0:-foreignPen(s,c)-tastePen(md,c,s))+Math.log(segBonus(g))+(techLv(s,'credit')?0.15:0)-(overpower(md)?0.4:0);}
+/* 0.51, этап 5: внутри класса покупатель резче сравнивает то, что можно сравнить прямо, — качество и цену (делятся на nestMu).
+   Всё остальное (слава марки, реклама, гонки, известность, вид, мода эпохи, новизна, оснащение, скандал) действует как раньше:
+   эти поправки подбирались годами, и усиливать их нельзя — устаревшая модель и так теряет покупателя.
+   modelExtrasB — имя марки (на что соперник отвечает рекламой и гонками), modelExtrasP — сама машина. */
+function modelExtrasB(md,c,s){const g=segOf(md),home=c===s.country,mo=isMotoSeg(g);
+  return fameCap(repEffect(s)+adEffect(s,c)+showEffect(s,c)+raceEffect(md,s)+duelEffect(s,c))+(mo?awUM(s,c):awU(s,c))+worldU(s,c,g)+(home?0:-foreignPen(s,c))+(techLv(s,'credit')?0.15:0);}
+function modelExtrasP(md,c,s){const g=segOf(md),home=c===s.country,p=parts(md);
+  return lookU(md,g,s)-3.5*weakHp(md,s,c)-(p.w.solid&&g!=='truck'&&s.y>=1905?1.5:0)+novelty(md,s)+scandalEffect(md,s)+(typeof eqU==='function'?eqU(md,g,s):0)-eraPen(md,c,s)-usedPen(md,c,s)-hpTax(md,c,s)+relBonus(md,s)+(home?0:-tastePen(md,c,s))+Math.log(segBonus(g))-(overpower(md)?0.4:0);}
+function modelExtras(md,c,s){return modelExtrasB(md,c,s)+modelExtrasP(md,c,s);}
 // 0.26: своя цена в каждой стране — наценка или скидка к домашней (за границей рынок, налоги и доходы другие)
 const PMK=[[0.9,'−10%'],[1,'как дома'],[1.1,'+10%'],[1.25,'+25%']];
 function pmkOf(s,c){return c===s.country?1:((s.pmk&&s.pmk[c])||1);}
@@ -274,15 +295,22 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   // 0.32: мотоциклы — ещё два класса того же выбора: семья решает между мотоциклом, дешёвой машиной и «пока ничего»
   // (дешевеющий автомобиль отбирает покупателей мотоцикла сам, через общий выбор). Мотоцикл видят и в велосипедных лавках
   const rhoM=rhoOv!=null?rhoOv:models.some(m=>m.probe?isMotoSeg(m.probe.g):isMoto(m))?Math.max(rho,bikeReach(s,c)):rho;
-  const rivals=CARSEG.map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g)}));
-  MOTOSEG.forEach(g=>{if(segAnnual(c,g,s)>0)rivals.push({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g)});});
+  // 0.51, этап 5: M — во сколько раз марки-соперники класса сейчас привлекательнее своей истории (цена, машина, рассрочка); без их ходов — 1
+  const FM=g=>kap?1:firmTerms(s,c,g).M;
+  const rivals=CARSEG.map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:FM(g)}));
+  MOTOSEG.forEach(g=>{if(segAnnual(c,g,s)>0)rivals.push({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:1,mo:1});});
   const pr=md=>offerPrice(md,c,s,ov&&ov.id===md.id?ov.price:undefined);
-  const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>{if(md.probe)return {md,...md.probe};const g=segOf(md);return {md,g,q:mq(md,s,c),P:pr(md),fair:prefP(g,c,s)*payK(md),e:modelExtras(md,c,s)-contest(s,c,g)};});
+  const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>{if(md.probe)return {md,...md.probe};const g=segOf(md);const eB=modelExtrasB(md,c,s),eP=modelExtrasP(md,c,s);return {md,g,q:mq(md,s,c),P:pr(md),fair:prefP(g,c,s)*payK(md),e:eB+eP,eB,eP};});
   const BK={};CARSEG.forEach(g=>BK[g]=brandK(c,g,s));MOTOSEG.forEach(g=>{if(offs.some(o=>o.g===g))BK[g]=brandK(c,g,s);});
-  const R={c,f,H,inc,k,rho,rhoM,fleet:fleetOf(s,c),shop:0,buyers:0,segs:{},by:{}};
+  // исходная доля новой марки внутри класса: при равной машине она прежняя; там, где соперников почти нет, марка одна в классе
+  // имя марки внутри класса: исходная доля новой марки (BK против силы соперников k) и её слава
+  const MU=nestMu(s),TH=NEST_TH+(1-NEST_TH)/MU,KG={};for(const g in BK)KG[g]=K(g);
+  const R={c,f,H,inc,k,rho,rhoM,fleet:fleetOf(s,c),shop:0,buyers:0,segs:{},by:{},kap:kap?1:0};
   ALLSEG.forEach(g=>R.segs[g]={inc:0,you:0,size:0,price:prefP(g,c,s)});models.forEach(m=>R.by[m.id]=0);
+  // чем машина игрока лучше обычной машины класса (без имени марки): всего и отдельно ценой — на это смотрят фирмы-соперники
+  offs.forEach(o=>{if(o.md.probe)return;const z=R.segs[o.g],dp=-BR*priceU(o.P/o.fair),dq=AQ*Math.log(Math.max(0.05,o.q)/QG[o.g]),ed=dq+dp+(o.e||0);if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=dq;z.edgeB=o.e||0;}});
   // кто какие ваши машины видит: дилеры — и автомобиль, и мотоцикл; велосипедные лавки — только мотоцикл
-  const wB=Math.min(rho,rhoM),wC=Math.max(0,rho-rhoM),wM=Math.max(0,rhoM-rho),wN=1-Math.max(rho,rhoM);
+  const wB=Math.min(rho,rhoM),wC=Math.max(0,rho-rhoM),wM=Math.max(0,rhoM-rho),wN=1-Math.max(rho,rhoM),iMU=1/MU;
   let own=R.fleet;
   for(let i=BINS.length-1;i>=0;i--){
     const n=H*BINS[i].w,o=Math.min(n,own);own-=o;const I=inc.I[i],B=k*I;
@@ -292,14 +320,24 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
     // 0.32: ваша цена намного ниже рыночной помогает слабее: дилеры не любят малую наценку, покупатели не верят «слишком дешёвому»,
     // соперники отвечают скидками на виду у всех. 0.51: выигрыш тает плавно и упирается в предел (priceU)
     const UO=(q,P,fair)=>u0+AQ*Math.log(q)-BR*priceU(P/fair)+GB*budget(P/B);
-    let Si=0;const ei=rivals.map(x=>{const e=Math.exp(U(x.q,x.P,x.fair)+x.k);Si+=e;return e;});
     // ваши модели: внутри класса похожие машины делят покупателей
-    let Sp=0,SpM=0;const nest={};
-    offs.forEach(o2=>{o2.v=(UO(o2.q,o2.P,o2.fair)+o2.e+BK[o2.g])/LAM;const N=nest[o2.g]=nest[o2.g]||{m:-1e9,list:[]};N.list.push(o2);if(o2.v>N.m)N.m=o2.v;});
-    for(const g in nest){const N=nest[g];N.z=N.list.reduce((a,o2)=>a+Math.exp(o2.v-N.m),0);N.A=Math.exp(LAM*(Math.log(N.z)+N.m));if(isMotoSeg(g))SpM+=N.A;else Sp+=N.A;}
-    const dB=1+Si+Sp+SpM,dC=1+Si+Sp,dM=1+Si+SpM,du=1+Si,vR=wB/dB+wC/dC+wM/dM+wN/du,vC=wB/dB+wC/dC,vM=wB/dB+wM/dM;
-    rivals.forEach((x,j)=>{const d=sh*ei[j]*vR;R.segs[x.g].inc+=d;R.buyers+=d;});
-    for(const g in nest){const N=nest[g],vv=isMotoSeg(g)?vM:vC;N.list.forEach(o2=>{const d=sh*vv*N.A*Math.exp(o2.v-N.m)/N.z;R.by[o2.md.id]+=d;R.segs[g].you+=d;R.buyers+=d;});}
+    const nest={};
+    offs.forEach(o2=>{o2.v=(UO(o2.q,o2.P,o2.fair)*iMU+o2.e)/LAM;const N=nest[o2.g]=nest[o2.g]||{m:-1e9,list:[]};N.list.push(o2);if(o2.v>N.m)N.m=o2.v;});
+    for(const g in nest){const N=nest[g];N.z=N.list.reduce((a,o2)=>a+Math.exp(o2.v-N.m),0);N.lW=LAM*(Math.log(N.z)+N.m);}
+    /* 0.51, этап 5: покупатель сначала выбирает класс, потом марку внутри класса. Машины одного класса заменяют друг друга сильнее, чем
+       «купить — не купить»: сильная марка отбирает покупателей у соседей по классу, а не создаёт новых без меры, и ответ соперника
+       (цена, новая модель) бьёт по доле лидера, а не раздувает рынок. Без игрока и без ходов соперников класс продаёт ровно как в истории. */
+    let SCp=0,SCn=0,SMp=0,SMn=0;
+    const cl=rivals.map(x=>{const lu=U(x.q,x.P,x.fair)+x.k,lr=lu*iMU+Math.log(x.M),Tn=Math.exp(MU*lr),N=nest[x.g];let Tp=Tn,p=0;
+      if(N){const la=x.k*iMU+(BK[x.g]-x.k)*TH+N.lW,mm=Math.max(lr,la),ls=mm+Math.log(Math.exp(lr-mm)+Math.exp(la-mm));Tp=Math.exp(MU*ls);p=Math.exp(la-ls);N.hit=1;}
+      if(x.mo){SMp+=Tp;SMn+=Tn;}else{SCp+=Tp;SCn+=Tn;}return {x,Tn,Tp,p,N};});
+    // класс, где соперников в истории нет вовсе (сила −14), но у игрока есть машина
+    for(const g in nest){const N=nest[g];if(N.hit)continue;const A=Math.exp(BK[g]+MU*N.lW);if(isMotoSeg(g))SMp+=A;else SCp+=A;cl.push({x:{g,mo:isMotoSeg(g)},Tn:0,Tp:A,p:1,N});}
+    const dB=1+SCp+SMp,dC=1+SCp+SMn,dM=1+SCn+SMp,du=1+SCn+SMn;
+    cl.forEach(o3=>{const mo=o3.x.mo,vy=mo?wB/dB+wM/dM:wB/dB+wC/dC,vn=mo?wC/dC+wN/du:wM/dM+wN/du;
+      const dr=sh*(vy*o3.Tp*(1-o3.p)+vn*o3.Tn);if(dr>0){R.segs[o3.x.g].inc+=dr;R.buyers+=dr;}
+      if(o3.N&&o3.p>0){const N=o3.N,dy=sh*vy*o3.Tp*o3.p;N.list.forEach(o2=>{const d=dy*Math.exp(o2.v-N.m)/N.z;R.by[o2.md.id]+=d;R.segs[o3.x.g].you+=d;R.buyers+=d;});}});
+    for(const g in nest)nest[g].hit=0;
   }
   truckMarket(R,c,s,models.filter(m=>m.probe?m.probe.g==='truck':isTruck(m)),pr,K,u0);
   ALLSEG.forEach(g=>{const z=R.segs[g];z.size=z.inc+z.you;});
@@ -401,21 +439,24 @@ function truckCost(md,u,c,s,P){const U=TRUCK_USE[u],ch=charOf(md,s.y),t=yf(s),pa
 function truckSoft(md,ref,y){const A=charOf(md,y),R=charOf(ref,y);return 0.1*Math.log(clamp(A.ease/R.ease,0.25,4))+0.08*Math.log(clamp(A.safe/R.safe,0.25,4))+0.04*Math.log(clamp(A.comf/R.comf,0.25,4));}
 function truckMarket(R,c,s,ms,pr,K,u0){
   const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;z.uses={};if(pool<=0)return;
-  const sh=truckUseSh(c,s),bk=brandK(c,'truck',s),kR=K('truck'),pwT=pwOf(s,c,'truck');
+  const sh=truckUseSh(c,s),bk0=brandK(c,'truck',s),kR=K('truck'),pwT=pwOf(s,c,'truck');
+  // 0.51, этап 5: и здесь выбор внутри работы — между марками, а потом «мотор или лошадь»; M — перевес марок-соперников над своей историей
+  const MU=nestMu(s),MT=R.kap?1:firmTerms(s,c,'truck').M,iMU=1/MU,sB=kR*iMU+(bk0-kR)*(NEST_TH+(1-NEST_TH)*iMU);
   // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
   const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
-  const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s)-contest(s,c,'truck');});R.byU=R.byU||{};
+  const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s);});R.byU=R.byU||{};
   for(const u of TUSE){const own=!!TRUCK_USE[u].own,pu=own?jobOwnPool(u,c,s):pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
-    const ei=Math.exp(u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR);let m=-1e9;
-    const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)+md.probe.e;
-      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk;v=u0-0.5-BTC*Math.log(cp/cR)-bp*Math.log(P/Pref)+TQ*truckSoft(md,ref,s.y)+ex[md.id];}
-      v=(v+bk)/LAM;if(v>m)m=v;return {md,v};});
-    let A=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);A=Math.exp(LAM*(Math.log(zs)+m));}
-    const dr=1+ei+A,du=1+ei,ri=pu*ei*(R.rho/dr+(1-R.rho)/du);Z.riv=ri;
+    const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?1:MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
+    const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
+      else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id];
+        if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}}
+      v=v/LAM;if(v>m)m=v;return {md,v};});
+    let Tp=Tn,p=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);const la=sB+LAM*(Math.log(zs)+m),mm=Math.max(lr,la),ls=mm+Math.log(Math.exp(lr-mm)+Math.exp(la-mm));Tp=Math.exp(MU*ls);p=Math.exp(la-ls);}
+    const dr=1+Tp,du=1+Tn,ri=pu*(R.rho*Tp*(1-p)/dr+(1-R.rho)*Tn/du);Z.riv=ri;
     // свой пул (тракторы, армия): соперники — не марки из таблицы грузовиков, а «остальной мир» (16-world.js: в мир, но без имени)
     if(own){const an=R.anon=R.anon||{n:0,rev:0,hp:0};an.n+=ri;an.rev+=ri*Pref;an.hp+=ri*(byId(ENGINES,ref.e)||{hp:20}).hp;}else z.inc+=ri;
-    L.forEach(x=>{const d=pu*R.rho*A/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
+    if(p>0)L.forEach(x=>{const d=pu*R.rho*Tp*p/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
   R.shop+=pool;
 }
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
