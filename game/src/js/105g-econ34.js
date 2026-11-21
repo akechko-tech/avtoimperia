@@ -82,7 +82,7 @@ function dlrCostNow(s){return Object.keys(s.dealers||{}).reduce((a,c)=>a+(warCut
 function fixedNow(s){const L=s.last||{};return {dlr:dlrCostNow(s),ovh:plantOverhead(s)*(s.shifts>1?1.1:1),int:(s.loan||0)*loanRate(s)/12,
   rd:rdUpkeep(s)+(typeof kitUpkeep==='function'?kitUpkeep(s,'kb'):0),team:(typeof teamUpkeep==='function'?teamUpkeep(s)+kitUpkeep(s,'team'):0)+(typeof driverPayroll==='function'?driverPayroll(s):0),ad:s.ad||0,
   // то, что идёт само: кредитная компания, дивиденды дочерних, лицензии — как в прошлом месяце
-  fin:(L.finInc||0)-(L.finBad||0)+(L.div||0)+(L.lic||0)+(L.licIn||0)-(L.turn||0),sto:s.models.reduce((a,md)=>a+Math.max(0,md.stock)*matCost(md,s),0)*0.01};}
+  fin:(L.finInc||0)-(L.finBad||0)+(L.div||0)+(L.lic||0)+(L.licIn||0)-(L.turn||0)-(L.maBur||0),sto:s.models.reduce((a,md)=>a+Math.max(0,md.stock)*matCost(md,s),0)*0.01};}
 // f — прогноз марки (brandFc): выручка, машины, гарантия; контора — по admRate от прогнозной выручки и выпуска
 function fcAfter(s,f){const F=fixedNow(s),rev=f.rev||0,admK=admRate(s,{made:Math.round(f.cars||0)}),adm=admK*rev;
   const pre=(f.brand||0)-adm-F.dlr-F.ovh-F.int-F.rd-F.team-F.ad-(f.war||0)-F.sto+F.fin,tax=pre>0?pre*taxRate(s.y):0,part=pre-tax>0&&s.partners&&s.partners.length?(pre-tax)*partnersShare(s):0;

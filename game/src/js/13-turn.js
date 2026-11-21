@@ -128,12 +128,13 @@ function step(){
   {const AP=admParts(s,r);r.admK=AP.total;r.adm=r.admK*(r.rev+r.ord);r.admP={made:AP.made,fmL:AP.fmL,nmC:AP.nmC,nmM:AP.nmM,nm:AP.nm,k:AP.k,base:AP.base,out:AP.out,cty:AP.cty,mdl:AP.mdl,total:AP.total};}
   // 0.30: дивиденды дочерних компаний (их прибыль — по продажам прошлого месяца)
   try{maMonth(s,r);}catch(e){console.warn('ma month',e);r.div=0;}
-  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)+(r.aeP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
+  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)+(r.aeP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0)-(r.maBur||0);
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
   // 0.29: совладельцы по слияниям марок — их доля прибыли
   if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k);r.invSh=(r.invSh||0)+v;r.profit-=v;}
+  if(r.shDiv>0){r.invSh=(r.invSh||0)+r.shDiv;r.profit-=r.shDiv;}   // 0.51, этап 5б: особый дивиденд совладельцам по решению суда
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
   s.cash+=r.profit+r.tool+r.hire+r.rdp+r.prm-(r.rev+r.ord)+r.got+r.finIn-r.finOut;   // оснастка, найм, проекты КБ и спецакции уже списаны выше; рассрочка своей компании — деньги выданы и вернулись
@@ -155,9 +156,9 @@ function step(){
     // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
     SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};if(z.edge!=null){sg[g].edge=z.edge;sg[g].edgeP=z.edgeP||0;sg[g].edgeQ=z.edgeQ||0;sg[g].edgeB=z.edgeB||0;}size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x){if(o.bot)botSold(s,o.bot,c,g,o.sales);return;}x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
     // 0.32: мотоциклы — свои классы и свои марки (s.mcomps)
-    const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;});const msg={};let msize=0;
-    MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x)x.last+=o.sales;});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;if(MC.anon)mk.anon={n:MC.anon.n,rev:MC.anon.rev,hp:MC.anon.hp};/* 0.51: тракторы и армия — продажи «остального мира» */mk.lostDlr=lostC[c]||0;}
+    const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;x.lg={};});const msg={};let msize=0;
+    MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};if(z.edge!=null){msg[g].edge=z.edge;msg[g].edgeP=z.edgeP||0;msg[g].edgeQ=z.edgeQ||0;msg[g].edgeB=z.edgeB||0;}msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x){x.last+=o.sales;x.lg[g]=o.sales;}});});
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;mk.farm=MC.farm||null;if(MC.anon)mk.anon={n:MC.anon.n,rev:MC.anon.rev,hp:MC.anon.hp};/* 0.51: тракторы и армия — продажи «остального мира» */mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md),mo=isMotoSeg(g);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(!m)continue;
     if(mo){if(m.msegs&&m.msegs[g]){m.msegs[g].you+=so;m.msegs[g].size+=so;m.msize+=so;}}else if(m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   chalTallyYou(s,r);

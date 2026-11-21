@@ -143,7 +143,15 @@ function ownSuitCost(s){return Math.round(400*cpi(s)/50)*50;}
 function ownResolve(s,key){const a=key.split(':');if(a[1]==='pat'){if(!ownPatent(s,a[2]))toast('Не хватает денег на патент');return;}
   const x=ownGet(s,a[2]),fk=a[3]+':'+a[4],F=s.firms&&s.firms[fk];if(!x||!F)return;s.legal=s.legal||{};const O=s.legal.own=s.legal.own||[],t=mi(s),nm=firmName(s,F);
   if(a[1]==='lic'){const amt=ownLicFee(s,F);O.push({k:'lic',id:x.id,f:fk,amt,until:t+60});addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет.`,'good');}
-  if(a[1]==='sue'){const ahead=Math.max(0,x.yh-yf(s)),p=clamp(0.4+0.08*ahead,0.4,0.85);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),until:t+12,p});addLog(`Иск к ${nm} за «${x.name}» подан: суд через год.`);}}
+  if(a[1]==='sue'){const ahead=Math.max(0,x.yh-yf(s)),p=clamp(0.4+0.08*ahead,0.4,0.85);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),until:t+12,p});F.gr=Math.min(1,(F.gr||0)+0.4);F.grWhy=`иск за «${x.name}», ${s.y}`;addLog(`Иск к ${nm} за «${x.name}» подан: суд через год.`);}}
+// 0.51, этап 5б: продать лицензию по своей воле — крупнейшей фирме своей страны, у которой её ещё нет и которая не в обиде.
+// Деньги — пять лет, но её машины станут лучше: это ход против себя ради кассы (ход соперника — ownCopied).
+function ownLicBuyer(s,x){if(!s.firms||!firmsOn(s)||!x||x.k==='ae')return null;const t=mi(s),O=(s.legal&&s.legal.own)||[];let B=null;
+  (COMPS[s.country]||[]).forEach((cp,i)=>{const F=firmGet(s,s.country,i);if(!F||F.st!=='ok'||!(F.h12>0)||F.gr>0.2||acqHas(s,s.country,i))return;const key=s.country+':'+i;if(O.some(o=>o.id===x.id&&o.f===key&&o.until>t))return;if(!B||(F.r12||0)>(B.F.r12||0))B={F,key,i};});return B;}
+function ownLicSell(s,id){const x=ownGet(s,id);if(!x||!ownPatOn(s,x)||x.ser==null)return false;const B=ownLicBuyer(s,x);if(!B)return false;const F=B.F,t=mi(s),amt=ownLicFee(s,F),nm=firmName(s,F),cp=firmCp(F),g=firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
+  s.legal=s.legal||{};(s.legal.own=s.legal.own||[]).push({k:'lic',id:x.id,f:B.key,amt,until:t+60});x.cp=x.cp||{};x.cp[B.key]=t;
+  const M=F.md&&F.md[g];if(M&&t<M.till)M.q=clamp((M.q||0)+0.06,0.05,1.25);else F.md[g]={q:0.08,from:t,till:t+60,name:'',lic:1};
+  addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет. Её машины ${SEG_LOC[g]||''} станут лучше.`,'good');return true;}
 function ownLegalMonth(s,r){const O=s.legal&&s.legal.own;if(!O||!O.length)return;const t=mi(s);let inc=0,out=0;
   s.legal.own=O.filter(o=>{if(o.k==='lic'){if(o.until<=t)return false;inc+=o.amt;return true;}
     if(o.k==='suit'){if(o.until>t){out+=o.amt;return true;}const F=s.firms&&s.firms[o.f],x=ownGet(s,o.id),nm=F?firmName(s,F):'соперник',g=F&&F.md?Object.keys(F.md)[0]:null;
@@ -292,8 +300,8 @@ function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_
       <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки ${Math.round(P.rework*100)}%${C?` · продажа авиазаводам: около ${fmtN(Math.round(C.dem))} в месяц по ${money(C.price)}, с мотора ${money(C.price-C.cost)}`:''}</p></div>`:''}
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
-function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0;
-  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?'':`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
+function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null;
+  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
     <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p></div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
 function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}

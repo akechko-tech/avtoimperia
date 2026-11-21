@@ -574,5 +574,138 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     let ok3=true;try{ACT.aeOpen();ACT.aeType({k:'v'});ACT.aeGoal({g:'light'});}catch(e){ok3=false;err=String(e&&e.stack||e).slice(0,200);}CK(ok3&&aeDraft&&aeDraft.type==='v'&&aeDraft.goal==='light','лист «Свой авиамотор» открывается: '+err);}
   ownSync(null);
 }
+// ---------- 23. этап 5б: сделки и акционеры, группы фирм, люди, мотоциклетные фирмы (остаток темы 4) ----------
+{const rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();},R0=Math.random;
+  const free=(c,y)=>COMPS[c].map((cp,i)=>({cp,i})).filter(o=>!dealBlock(G,c,o.i)&&maStat(G,c,o.i)&&!(DEAL_PROUD[o.cp.n]>0)&&!(G.bots&&G.bots[coKey(o.cp.n)])&&compVol(o.cp,G)>300);
+  // (а) каждая следующая покупка дороже; купленная марка приходит с долгами и первые годы убыточна
+  {BOTS_OFF=true;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1912;G.m=0;G.cash=9e7;G.firms={};const L=free('us'),d={st:1,mode:'int',pay:'cash'};
+    CK(L.length>=3,'есть три марки на продажу: '+L.slice(0,3).map(o=>o.cp.n).join(', '));
+    const Q0=maAsk(G,'us',L[0].i,d),Q2a=maAsk(G,'us',L[2].i,d),M0=maStat(G,'us',L[0].i),D0=maDebtOf(G,'us',L[0].i,M0);
+    CK(Q0.ser===0&&maSerial(G)===0&&near(D0,Math.round(M0.V*MA_DEBT/1000)*1000),'первая покупка — без надбавки; долги марки — '+money(D0)+' ('+Math.round(MA_DEBT*100)+'% оценки)');
+    const N0=maDealNotes(G,'us',L[0].i,d,M0,Q0);CK(/переходят её долги/.test(N0)&&/в убыток/.test(N0)&&!/undefined|NaN/.test(N0),'до подписи видно, что придёт вместе с маркой');
+    const c0=G.cash,h0=maClose(G,'us',L[0].i,d,Q0.R);CK(h0&&h0.mode==='int'&&h0.debt&&h0.debt.tot===D0&&h0.debt.left===MA_DEBT_M&&h0.il&&h0.il.left===MA_LOSS_M&&near(h0.il.m0,M0.rev/12*MA_LOSS),'поглощение: долги на два года и убыточные первые два с половиной');
+    const Q1=maAsk(G,'us',L[1].i,d);CK(near(Q1.ser,MA_SERIAL)&&maSerial(G)===1,'вторая покупка — владельцы просят на '+Math.round(Q1.ser*100)+'% больше');maClose(G,'us',L[1].i,d,Q1.R);
+    const Q2=maAsk(G,'us',L[2].i,d);CK(near(Q2.ser,2*MA_SERIAL)&&Q2.R>Q2a.R*1.15,'третья — ещё дороже: '+money(Q2a.R)+' → '+money(Q2.R));
+    CK(/3-я покупка за десять лет/.test(maDealNotes(G,'us',L[2].i,d,Q2.M,Q2)),'и в переговорах сказано почему');
+    const r={};maBurMonth(G,r);const exp=G.hold.reduce((a,h)=>a+h.debt.m+h.il.m0,0);CK(near(r.maBur,Math.round(exp),2)&&r.maBur>0&&h0.debt.left===MA_DEBT_M-1,'месяц: долги и убытки купленных марок — '+money(r.maBur));
+    let tot=r.maBur;for(let k=0;k<40;k++){const q={};maBurMonth(G,q);tot+=q.maBur;}CK(h0.debt.left===0&&h0.il.left===0&&tot>G.hold.reduce((a,h)=>a+h.debt.tot,0),'за два с половиной года бремя сходит: всего '+money(tot));
+    CK(maBurTxt(h0)===''&&/долги: ещё/.test(maBurTxt({debt:{m:100,left:5},il:{m0:1,left:3}})),'строка в списке марок — пока бремя есть');
+    G.hold.forEach(h=>{h.t=mi(G)-MA_SERIAL_M-1;});CK(maSerial(G)===0&&maAsk(G,'us',L[2].i,d).ser===0,'покупки старше десяти лет в счёт не идут');
+    // партия: строка отчёта и прибыль
+    G.hold[0].debt={m:5000,left:3,tot:15000};G.hold[0].il={m0:3000,left:30};G.pending=[];step();CK(near(G.last.maBur,8000,1),'в отчёте месяца — «Купленные марки: долги и убытки первых лет»: '+money(G.last.maBur));}
+  // марка в беде: её настоящий долг; контрольный пакет — долг закрывает покупатель, дивиденды растут не сразу
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1921;G.m=0;G.cash=9e7;G.firms={};const L=free('us'),A=L[0],M=maStat(G,'us',A.i),F=firmMake(G,'us',A.i,A.cp);
+    F.h12=M.rev;F.r12=M.rev*0.6;F.p12=-M.rev*0.05;F.cash=-M.V*0.3;F.st='bad';F.bad=5;F.ld=0.6;
+    CK(near(maDebtOf(G,'us',A.i,M),Math.round(M.V*0.3/1000)*1000),'у марки в долгах к покупателю переходит её настоящий долг: '+money(maDebtOf(G,'us',A.i,M)));
+    F.cash=-M.V*2;CK(near(maDebtOf(G,'us',A.i,M),Math.round(M.V*0.6/1000)*1000),'но не больше 60% её оценки (остальное списывают кредиторы)');F.cash=-M.V*0.3;
+    const d={st:0.51,mode:'sub',pay:'cash'},Q=maAsk(G,'us',A.i,d),h=maClose(G,'us',A.i,d,Q.R);
+    CK(h&&h.mode==='sub'&&h.debt&&near(h.debt.tot,Math.round(M.V*0.3*0.51),2)&&F.cash>-M.V*0.16&&h.yt===mi(G),'контрольный пакет марки в долгах: свою часть долга закрывает покупатель');
+    CK(near(maYoungK(G,h),0.25)&&maFirmDivK(G,h)===0,'первые годы дочерняя платит четверть дивидендов, а пока в долгах — ничего');F.st='ok';F.cash=1;F.p12=1;
+    G.y+=1;CK(near(maYoungK(G,h),0.625)&&maFirmDivK(G,h)===1,'через год — больше половины');G.y+=1;CK(maYoungK(G,h)===1,'через два — полные');BOTS_OFF=true;}
+  // (б) совладельцы требуют особый дивиденд (Dodge против Ford, 1919)
+  {BOTS_OFF=true;newGame('ford','us','Тест','normal','Первая');G.pending=[];step();G.pending=[];G.y=1916;G.m=0;G.loan=0;G.cash=3e6;G.partners=[{n:'Братья Додж',sh:0.1,t:0}];G.world=G.world||{};G.world.my={...(G.world.my||{}),r12:1.2e6};
+    Object.assign(G.last,{wage:1e4,ovh:5e3,dlr:0,ad:0,rd:0,int:0,team:0,drv:0,adm:0,rev:1e5});
+    CK(near(shSurplus(G),2.7e6)&&shAsk(G)===135000,'излишек кассы — '+money(shSurplus(G))+'; совладельцам (10%) причитается '+money(shAsk(G)));
+    for(let k=0;k<SH_HOARD-1;k++)shMonth(G,{});CK(G.shHoard===SH_HOARD-1&&!shDemand(G),'одиннадцать месяцев — ещё терпят');shMonth(G,{});
+    CK(shDemand(G)&&G.pending.length===1&&/особый дивиденд/.test(G.pending[0].title)&&G.pending[0].choices[0][1]==='sh:pay:135000'&&G.pending[0].choices[1][1]==='sh:no:135000','год касса лежит без дела — требование: '+G.pending[0].deck);
+    CK(/Додж/.test(G.pending[0].text)&&/19,3/.test(G.pending[0].text)&&!/undefined|NaN/.test(G.pending[0].text),'в тексте — как было у Форда');
+    const c0=G.cash;resolve('sh:pay:135000');CK(near(c0-G.cash,135000)&&!G.shSuit,'выплатить — деньги ушли совладельцам');
+    for(let k=0;k<SH_HOARD;k++)shMonth(G,{});G.pending=[];CK(!shDemand(G),'второй раз — не раньше чем через три года');
+    G.shT=-999;CK(shDemand(G),'через три года — снова');resolve('sh:no:'+shAsk(G));const D=G.shSuit&&G.shSuit.D;CK(G.shSuit&&G.shSuit.at===mi(G)+SH_SUIT_M&&D>shAsk(G)*1.1,'отказать — суд через полтора года, на кону '+money(D));
+    CK(/судятся/.test(shNoteHTML(G)),'в «Финансах» видно, что идёт суд');
+    G.y+=2;const rep0=G.rep,r={};shMonth(G,r);CK(r.shDiv===D&&!G.shSuit&&G.rep<rep0,'суд на стороне совладельцев: особый дивиденд с процентами — '+money(r.shDiv));
+    G.shSuit={at:mi(G)+5,D:1000};G.partners=[];shMonth(G,{});CK(!G.shSuit&&G.shHoard===0,'выкупил доли — иск ушёл вместе с ними');
+    G.partners=[{n:'Мелкий',sh:0.03,t:0}];G.shHoard=40;G.shT=-999;CK(!shDemand(G),'совладельцы с долей меньше 5% в суд не идут');}
+  // (в) кредиторы ищут покупателя: сначала игрок, потом соседняя фирма — группа с настоящей экономикой
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1921;G.m=0;G.cash=9e7;G.firms={};const L=free('us'),A=L[0],B=L[1],M=maStat(G,'us',A.i),t=mi(G);
+    const F=firmMake(G,'us',A.i,A.cp);F.h12=M.rev;F.r12=M.rev*0.6;F.p12=-M.rev*0.05;F.cash=-M.rev*0.45;F.st='bad';F.bad=14;F.ld=0.6;
+    const O=firmMake(G,'us',B.i,B.cp);O.h12=M.rev*2;O.r12=M.rev*2;O.p12=M.rev*0.1;O.cash=M.rev*2;O.ck=0.8;O.ckTill=t+200;O.lineT=t-10;O.fin=1;O.finTill=t+200;
+    const r={riv:[]};firmState(G,r,F,A.cp,A.i);CK(F.bad===15&&G.maOffer&&G.maOffer.cred&&G.maOffer.i===A.i&&G.pending.length===1&&/Кредиторы/.test(G.pending[0].title),'за три месяца до кредиторов — предложение игроку: '+G.pending[0].deck);
+    CK(G.pending[0].choices[0][1]==='ma:talk:'+maKey('us',A.i)&&G.pending[0].choices[1][1]==='ma:credno:'+maKey('us',A.i)&&/Wolseley/.test(G.pending[0].text),'переговоры или отказ; в тексте — Моррис и Wolseley');
+    const Q=maAsk(G,'us',A.i,{st:1,mode:'int',pay:'cash'});CK(Q.R<M.V*0.75&&/Продают кредиторы/.test(maDealNotes(G,'us',A.i,{st:1,mode:'int',pay:'cash'},M,Q)),'цена на треть ниже оценки: '+money(Q.R)+' против '+money(M.V));
+    firmState(G,r,F,A.cp,A.i);firmState(G,r,F,A.cp,A.i);firmState(G,r,F,A.cp,A.i);CK(F.bad===18&&F.st==='bad'&&!F.rec&&F.own==null,'пока игрок думает — кредиторы и соседи ждут');
+    G.pending=[];maResolve(G,'ma:credno:'+maKey('us',A.i));CK(!G.maOffer,'«Не интересует» — предложение снято');
+    Math.random=()=>0.99;const st0=JSON.stringify([F.st,F.own]);const c1=O.cash;Math.random=()=>0.1;const res=firmState(G,r,F,A.cp,A.i);
+    CK(res===true&&F.st==='ok'&&F.own===B.i&&O.cash<c1&&O.grp.includes(A.i)&&r.riv.some(n=>n.k==='merge'&&/покупает/.test(n.t)&&!/undefined|NaN/.test(n.txt)),'марку купила соседняя фирма: '+(r.riv.find(n=>n.k==='merge')||{}).t);
+    CK(/^куплена: /.test(dealBlock(G,'us',A.i)),'игроку она больше не продаётся: '+dealBlock(G,'us',A.i));
+    G.y+=2;firmGroupMonth(G,r,F,A.cp);CK(near(F.ck,0.9)&&F.fin===1,'через два года поток и рассрочка хозяина — и на её заводе: себестоимость −'+Math.round((1-F.ck)*100)+'%');
+    F.st='bad';F.bad=3;F.cash=-F.h12*0.5;F.p12=-1;const c2=O.cash;firmState(G,r,F,A.cp,A.i);CK(F.st==='ok'&&O.cash<c2,'снова в долгах — закрывает касса хозяина');
+    let html='';try{const os=openSheet;openSheet=h=>{html=h;};const de=document.getElementById;document.getElementById=()=>null;F.r12=F.h12;O.gr=0;openRivals('us');openSheet=os;document.getElementById=de;}catch(e){html='ERR '+e.message;}
+    CK(/Принадлежит <b>/.test(html)&&/Группа: владеет/.test(html)&&!/undefined|NaN/.test(html),'в карточках фирм — кто кому принадлежит');
+    // игрок покупает у кредиторов сам: долги — его
+    F.own=null;O.grp=[];F.st='bad';F.bad=14;F.cash=-M.rev*0.45;F.offT=null;G.pending=[];firmState(G,r,F,A.cp,A.i);const Q2=maAsk(G,'us',A.i,{st:1,mode:'int',pay:'cash'}),M2=maStat(G,'us',A.i),D=maDebtOf(G,'us',A.i,M2),h=maClose(G,'us',A.i,{st:1,mode:'int',pay:'cash'},Q2.R);
+    CK(h&&h.debt.tot===D&&D>M2.V*MA_DEBT*2&&Q2.R<M2.V*0.8&&acqHas(G,'us',A.i),'игрок купил у кредиторов сам: '+money(Q2.R)+' при оценке '+money(M2.V)+', но с её долгами — '+money(D));Math.random=R0;BOTS_OFF=true;}
+  // (г) люди: главный конструктор, обида, лучший гонщик
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1922;G.m=0;G.cash=5e6;G.rd.lvl=3;G.firms={};const L=free('us'),A=L[0],t=mi(G),F=firmMake(G,'us',A.i,A.cp);F.cash=1e6;F.h12=5e6;
+    F.prog={k:'model',g:'people',at:t+10,cost:0,q:0.3,frac:0.5,who:'«Тест»',you:1,lq:0.6,q0:0};Math.random=()=>0.1;
+    CK(firmPoachEng(G,{riv:[]},F,'people')&&G.poachEng&&G.pending.length===1&&G.pending[0].choices[0][1]==='eng:keep'&&/Яно/.test(G.pending[0].text),'фирма, готовя ответ, зовёт вашего главного конструктора: '+G.pending[0].deck);
+    const cost=G.poachEng.cost,c0=G.cash,b0=bn('devTime');resolve('eng:keep');CK(near(c0-G.cash,cost)&&!G.poachEng&&near(bn('devTime'),b0)&&F.prog.frac===0.5,'удержать — прибавка, КБ работает как раньше');
+    G.pending=[];CK(!firmPoachEng(G,{riv:[]},F,'people'),'второй раз — не раньше чем через пять лет');G.poachEngT=-999;firmPoachEng(G,{riv:[]},F,'people');resolve('eng:let');
+    CK(near(bn('devTime'),b0*POACH_SLOW)&&near(F.prog.frac,0.65)&&near(F.prog.q,0.39)&&F.prog.poach===1,'отпустить — проекты КБ на '+Math.round((POACH_SLOW-1)*100)+'% дольше, ответ фирмы перенимает больше: '+F.prog.frac);
+    // игрок переманивает сам
+    const pc=rivPoachCost(G,F),c1=G.cash,at0=F.prog.at;CK(rivPoachCan(G,F)&&/Переманить инженера/.test(firmCardBtn(G,F,{},0)),'в карточке соперника — кнопка «Переманить инженера»');
+    CK(rivPoach(G,'us',A.i)&&near(c1-G.cash,pc)&&F.gr>=0.35&&F.prog.at===at0+6&&near(bn('devTime'),b0*POACH_SLOW*POACH_GAIN)&&!rivPoach(G,'us',A.i),'переманил: проекты быстрее, модель соперника задержана на полгода, обида запомнена');
+    const Q=maAsk(G,'us',A.i,{st:1,mode:'int',pay:'cash'});CK(near(Q.gr,F.gr*0.3)&&/помнят обиду/.test(maDealNotes(G,'us',A.i,{st:1,mode:'int',pay:'cash'},Q.M,Q)),'обида: марка продаётся дороже на '+Math.round(Q.gr*100)+'%');
+    {const Lc=[];firmCardExtra(G,F,{},Lc,0);CK(Lc.some(x=>/Помнит обиду/.test(x)&&/переманили инженера/.test(x)),'и это видно в её карточке');}
+    let g=F.gr;for(let k=0;k<48;k++)g*=0.985;CK(g<F.gr*0.5,'за четыре года обида сходит наполовину');
+    // лучший гонщик
+    const dr=DRIVERS.find(d=>d.from<=1922&&d.to>=1924);G.drivers=[dr.id];G.pending=[];let got=false;
+    for(let y=1922;y<=1929&&!got;y++){G.y=y;G.m=10;G.poachStarT=-999;G.poachNow=null;G.pending=[];G.raceLog=[1,1,1,2,5].map((p,k)=>({y,key:'r'+k,name:'Г'+k,place:p,drv:dr.n}));firmsPeople(G,{});got=!!G.poachNow;}
+    CK(got&&G.poachNow.id===dr.id&&G.pending[0].choices[0][1]==='poachKeep'&&/выиграли 3 из 5/.test(G.pending[0].text),'выигрывает больше '+Math.round(STAR_WIN*100)+'% гонок — соперники зовут лучшего гонщика: '+(G.pending[0]||{}).title);
+    G.raceLog=[1,3,4,2,5].map((p,k)=>({y:G.y,key:'r'+k,name:'Г'+k,place:p,drv:dr.n}));G.poachNow=null;G.poachStarT=-999;G.pending=[];firmsPeople(G,{});CK(!G.poachNow,'одна победа из пяти — не зовут');Math.random=R0;BOTS_OFF=true;}
+  // (д) мотоциклетные марки — тоже фирмы
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1914;G.m=5;G.firms={};
+    CK(near(firmTerms(G,'us','moto').M,1,1e-9),'ходов нет — перевес мотомарок 1');
+    const W=compWeights('us','moto',G).sort((a,b)=>b.w-a.w)[0],F=firmMake(G,'us',W.i,W.cp,1);
+    CK(G.firms['m:us:'+W.i]===F&&F.mo===1&&firmGet(G,'us',W.i,1)===F&&!firmGet(G,'us',W.i)&&firmCp(F)===W.cp&&firmName(G,F)===W.cp.n,'мотофирма — со своим ключом: '+W.cp.n);
+    F.pk.moto=0.8;F.cap=6;const M1=firmTerms(G,'us','moto').M;CK(M1>1.1&&near(firmTerms(G,'us','people').M,1,1e-9),'мотомарка снизила цену — перевес мотоциклов ×'+M1.toFixed(2)+', автомобильный класс не тронут');
+    const md={...autoDesign('moto',G),id:950,name:'М',status:'prod',launched:mi(G)-10,stock:0,made:500,vol:200,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)*0.9/10)*10;G.dealers.us=dealerNeed('us',G);G.rep=70;
+    const b1=mkCountry('us',G,[md]).by[950];F.pk.moto=1;const b0=mkCountry('us',G,[md]).by[950];CK(b0>0&&b1<b0*0.97,'её ход отбирает покупателей у мотоцикла игрока: '+Math.round(b0)+' → '+Math.round(b1));
+    const col=[];for(const c in MCOMPS)MCOMPS[c].forEach(mc=>{const cc=(COMPS[c]||[]).find(x=>x.n===mc.n);if(cc)col.push({c,mc,cc});});
+    if(col.length){const o=col[0];G.y=Math.max(mi(G)/12+1895,Math.max(o.mc.since,o.cc.since)+3)|0;const v0=compVol(o.cc,G);G.dead={['m:'+o.mc.n]:0};CK(compVol(o.mc,G)===0&&compVol(o.cc,G)===v0&&v0>0,'закрылась мотоциклетная '+o.mc.n+' — автомобильная '+o.cc.n+' жива');G.dead={};}
+    // партия: мотофирмы считают кассу; пока игрок их не теснит — не ходят
+    rnd(77);newGame('ford','us','Тест','normal','Первая');G.cash=5e6;G.y=1912;G.m=0;let err='',mv=0;try{for(let k=0;k<30;k++){G.pending=[];G.cash=Math.max(G.cash,2e6);step();mv+=(G.last.riv||[]).filter(n=>n.mo).length;}}catch(e){err=e.stack.split('\\n').slice(0,3).join(' | ');}
+    const MF=Object.keys(G.firms).filter(k=>/^m:/.test(k)).map(k=>G.firms[k]).filter(f=>f.h12>0);
+    CK(!err&&MF.length>=6&&MF.every(f=>f.mo===1&&isFinite(f.cash)&&f.st==='ok')&&mv===0,'два с половиной года с мотофирмами — без ошибок: '+MF.length+' фирм, ходов без повода — '+mv+' '+err);
+    const ld=MF.map(f=>f.ld).sort((a,b)=>a-b);CK(ld[0]>0.6&&ld[ld.length-1]<1.6,'загрузка мотофирм — около своей истории: '+ld[0].toFixed(2)+'…'+ld[ld.length-1].toFixed(2));
+    // модель-ответ мотофирмы на мотоцикл игрока
+    {const o=MF.sort((a,b)=>b.h12-a.h12)[0],cp=firmCp(o),g='moto',t=mi(G);o.rs={moto:0.6,moside:1};o.rg={moto:0.6,moside:1};o.cash=o.h12;o.prog=null;Math.random=()=>0.3;
+      const SG={moto:{size:1000,you:400,edge:0.8,edgeQ:0.5,edgeP:0.2,edgeB:0.1},moside:{size:100,you:0}},r={riv:[]};firmPlan(G,r,o,cp,o.i,SG,false);
+      CK(o.prog&&o.prog.k==='model'&&o.prog.you===1&&r.riv.some(n=>n.k==='model0'&&n.mo===1&&/мотоцикл/.test(n.txt)),'мотофирма отвечает моделью: '+(r.riv[0]||{}).t);
+      o.prog.at=t;firmDone(G,r,o,cp);CK(o.md.moto&&o.md.moto.q>0&&r.riv.some(n=>n.k==='model'&&/мотоцикл/.test(n.txt)&&!/undefined|NaN/.test(n.txt)),'и выводит её: '+(r.riv[r.riv.length-1]||{}).t);
+      o.rs={moto:0.5};o.prog=null;o.md={};const r2={riv:[]};SG.moto.edgeQ=0;SG.moto.edgeP=0.6;firmPlan(G,r2,o,cp,o.i,SG,false);CK(!o.prog||o.prog.k!=='line','потока и рассрочки у мотофирм нет: '+(o.prog?o.prog.k:'—'));Math.random=R0;}
+    let html='';try{const os=openSheet;openSheet=h=>{html=h;};const de=document.getElementById;document.getElementById=()=>null;G.lines={car:1,moto:1};openRivals('us');const h1=html;G.lines={car:1};openRivals('us');openSheet=os;document.getElementById=de;
+      CK(/Мотоциклетные фирмы/.test(h1)&&/id="firmmus/.test(h1)&&!/undefined|NaN/.test(h1)&&!/Мотоциклетные фирмы/.test(html),'экран «Соперники»: мотофирмы — отдельным блоком, только если игрок делает мотоциклы');}catch(e){CK(false,'экран «Соперники» с мотофирмами: '+e.message);}
+    Math.random=R0;BOTS_OFF=true;}
+  // (е) тракторы: у соперника в пуле фермеров тоже фирма (тракторная война 1922 года)
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1920;G.m=3;G.firms={};
+    const R0=mkCountry('us',G,[]);CK(R0.farm&&R0.farm.h>0&&near(R0.farm.riv,R0.farm.h,1e-6)&&R0.farm.you===0&&farmMult(G,'us')===1,'тракторный пул без игрока и без ходов — как в истории: '+Math.round(R0.farm.riv*12)+' тракторов в год');
+    const md={...rivalDesign('tractor',1920),id:960,name:'Трактор',status:'prod',launched:mi(G)-10,stock:0,made:500,vol:200,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)*0.8/10)*10;G.dealers.us=dealerNeed('us',G);G.rep=70;
+    const A=mkCountry('us',G,[md]),a0=A.by[960];CK(a0>0&&near(A.farm.you,a0,1e-6)&&A.farm.edge!=null&&A.farm.edgeP>0&&near(A.farm.h,R0.farm.h,1e-6),'трактор игрока дешевле — перевес ценой '+(A.farm.edgeP||0).toFixed(2)+', продажи '+Math.round(a0));
+    // месяц тракторной фирмы
+    const r={mk:{us:{farm:A.farm}},riv:[]};firmsFarm(G,r);const F=farmGet(G,'us');CK(F&&F.kf===1&&F.n==='International Harvester'&&F.h12>0&&F.st==='ok'&&firmCar(F)==='трактор','ведущий тракторный завод страны — фирма: '+(F&&F.n));
+    CK(farmName({company:'International Motors'},'us')==='J. I. Case'&&farmName({company:'Renault'},'fr')==='Latil','марка самого игрока в соперники не попадает');
+    // ход ценой и машиной
+    const cp=farmCp('us',F.n),r2={riv:[]};F.rs={farm:0.6};F.rg={farm:0.6};F.cash=F.h12;F.cap=6;for(let k=0;k<5;k++)firmPrices(G,r2,F,cp,'farm',{farm:{farm:FARM_SH}},false);
+    CK(F.pk.farm<0.95&&r2.riv.some(n=>n.k==='cut'&&n.kf===1&&/в тракторах/.test(n.txt)&&/1922/.test(n.txt)&&!/undefined|NaN/.test(n.txt)),'теряет фермеров — снижает цену: −'+Math.round((1-F.pk.farm)*100)+'%');
+    const B=mkCountry('us',G,[md]);CK(farmMult(G,'us')>1.03&&B.by[960]<a0*0.99,'её цена отбирает покупателей у трактора игрока: '+Math.round(a0)+' → '+Math.round(B.by[960])+' (соперники ×'+farmMult(G,'us').toFixed(2)+')');
+    Math.random=()=>0.3;const r3={riv:[]};firmPlan(G,r3,F,cp,'farm',{farm:{size:1000,you:400,edge:0.8,edgeQ:0.5,edgeP:0.2,edgeB:0}},false);
+    CK(F.prog&&F.prog.k==='model'&&F.prog.you===1&&r3.riv.some(n=>/трактор/.test(n.txt)),'трактор игрока лучше — готовит модель-ответ: '+(r3.riv[0]||{}).t);
+    F.prog.at=mi(G);firmDone(G,r3,F,cp);const C=mkCountry('us',G,[md]);CK(F.md.farm&&F.md.farm.q>0&&C.by[960]<B.by[960]&&r3.riv.some(n=>n.k==='model'&&/Farmall/.test(n.txt)&&!/undefined|NaN/.test(n.txt)),'и выводит её: продажи игрока '+Math.round(B.by[960])+' → '+Math.round(C.by[960]));
+    const h=farmCardHTML(G,'us');CK(/International Harvester/.test(h)&&/Трактор: новая модель/.test(h)&&!/undefined|NaN/.test(h),'карточка тракторного завода на экране «Соперники»');
+    // партия без тракторов игрока: фирма считает кассу и не ходит
+    rnd(78);newGame('ford','us','Тест','normal','Первая');G.cash=5e6;G.y=1919;G.m=0;let err='',mv=0;try{for(let k=0;k<24;k++){G.pending=[];G.cash=Math.max(G.cash,2e6);step();mv+=(G.last.riv||[]).filter(n=>n.kf).length;}}catch(e){err=e.stack.split('\\n').slice(0,3).join(' | ');}
+    const KF=Object.keys(G.firms).filter(k=>/^k:/.test(k)).map(k=>G.firms[k]);CK(!err&&KF.length>=1&&KF.every(f=>f.st==='ok'&&Math.abs(f.ld-1)<0.02&&!Object.keys(f.pk).length)&&mv===0,'два года без тракторов игрока: '+KF.length+' тракторных фирм, загрузка как в истории, ходов — '+mv+' '+err);
+    Math.random=R0;BOTS_OFF=true;}
+  // (ж) лицензию на свой узел можно продать и по своей воле
+  {BOTS_OFF=false;newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1922;G.m=0;G.cash=5e6;G.firms={};const L=free('us'),t=mi(G);
+    const F1=firmMake(G,'us',L[0].i,L[0].cp),F2=firmMake(G,'us',L[1].i,L[1].cp);F1.h12=F1.r12=6e6;F2.h12=F2.r12=9e6;F1.cash=F2.cash=1e5;
+    ownSync(G);G.custom=G.custom||[];const x={id:'xt1',k:'e',name:'Мотор Тест',base:'e1',yh:1926,made:{y:1921},ser:t-14,pat:{until:t+100}};G.custom.push(x);
+    const B=ownLicBuyer(G,x);CK(B&&B.F===F2,'покупатель лицензии — крупнейшая фирма страны: '+(B&&firmName(G,B.F)));
+    CK(/Лицензия: /.test(ownItemHTML(G,x))&&!/undefined|NaN/.test(ownItemHTML(G,x)),'у запатентованного узла — кнопка «Лицензия»');
+    const fee=ownLicFee(G,F2);CK(ownLicSell(G,'xt1')&&G.legal.own.some(o=>o.k==='lic'&&o.id==='xt1'&&o.amt===fee&&o.until===t+60)&&Object.values(F2.md).some(M=>M.q>0&&M.lic),'продал: '+money(fee)+' в месяц пять лет, машины покупателя стали лучше');
+    const B2=ownLicBuyer(G,x);CK(B2&&B2.F===F1,'следующая лицензия — следующей фирме');F1.gr=0.5;CK(!ownLicBuyer(G,x),'фирма в обиде лицензию не берёт');
+    x.pat=null;CK(!ownLicSell(G,'xt1'),'без патента продавать нечего');G.custom=[];ownSync(G);BOTS_OFF=true;}
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

@@ -119,6 +119,7 @@ function prefMoto(g,c,s){return tabAt(PREF_MOTO[g],yf(s))*(PREF_MOTO_C[c]||1);}
 /* ---------- помощники: мотоцикл ли модель, чьи марки в классе, велосипедные лавки ---------- */
 function isMoto(md){const b=md&&md.b&&byId(BODIES,md.b);return !!(b&&b.moto);}
 function motoSegOf(md){const b=byId(BODIES,md.b);return b&&(b.seats||1)>1?'moside':'moto';}
+for(const _c in MCOMPS)MCOMPS[_c].forEach(cp=>{cp.fk='m:'+cp.n;});   // 0.51, этап 5б: свой ключ закрытия и урезания — не путать с автомобильной маркой того же имени
 function compList(c,g){return isMotoSeg(g)?(MCOMPS[c]||[]):(COMPS[c]||[]);}
 // линейки марки: автомобили и мотоциклы (у старых сохранений — только автомобили)
 function lineOn(s,k){const L=s&&s.lines;if(!L)return k==='car';return !!L[k];}

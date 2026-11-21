@@ -112,6 +112,7 @@ const ACT={
   ownGoal:d=>{if(!ownDraft)return;ownDraft.goal=d.g;ownRe();},ownGl:d=>{if(!ownDraft)return;ownDraft.gl=+d.n;ownRe();},
   ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
   ownPat:d=>{if(ownPatent(G,d.id)){save();openOwn(null);render();}else toast('Не хватает денег на патент');},
+  ownLic:d=>{if(ownLicSell(G,d.id)){toast('Лицензия продана');save();openOwn(null);render();}else toast('Покупателя на лицензию нет');},/* 0.51, этап 5б */
   aeOpen:()=>{aeDraft=null;openAeng();},aeType:d=>{aeDraft.type=d.k;aeDraft.name='';aeRe();},aeGoal:d=>{aeDraft.goal=d.g;aeDraft.name='';aeRe();},aeGl:d=>{aeDraft.gl=+d.n;aeDraft.name='';aeRe();},
   aeStart:()=>{if(!aeDraft)return;aeKeep();if(aeStart(G,aeDraft)){aeDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
   aeSale:d=>{const x=(G.aeng||[]).find(q=>q.id===d.id);if(x){x.sale=x.sale?0:1;save();openOwn(null);}},
@@ -199,7 +200,8 @@ const ACT={
   sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
-  rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},/* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
+  rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},
+  rivPoach:d=>{if(rivPoach(G,d.c,+d.i)){toast('Инженер перешёл в ваше КБ');save();render();openRivals(d.c,+d.i);}else toast('Не вышло: не хватает денег или рано');},/* 0.51, этап 5б *//* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
   troRace:()=>{openRaceResult();},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
   demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},

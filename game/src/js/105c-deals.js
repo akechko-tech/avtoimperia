@@ -58,7 +58,7 @@ function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}
 // стоимость ваших долей в дочерних компаниях (входит в стоимость компании)
 function maHoldValue(s){return subList(s).reduce((a,h)=>{const M=maStat(s,h.c,h.i);return a+(M&&compAlive(M.cp,s)?M.V*h.st:0);},0);}
 // можно ли вести переговоры
-function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';if(s.botAcq&&s.botAcq[cp.n])return 'куплена: '+s.botAcq[cp.n];/* 0.41 */const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';if(s.botAcq&&s.botAcq[cp.n])return 'куплена: '+s.botAcq[cp.n];/* 0.41 */const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';{const F=typeof firmGet==='function'?firmGet(s,c,i):null,O=F&&typeof firmOwner==='function'?firmOwner(s,F):null;if(O&&!h)return 'куплена: '+firmName(s,O);}
   if(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n])return 'в концерне';if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';
   const t=(s.dealNo||{})[c+i];if(t&&t>mi(s))return 'пауза';return '';}
 // главный класс марки (не грузовики; спорт — где он уже есть)
@@ -76,10 +76,12 @@ function maAsk(s,c,i,d){const M=maStat(s,c,i);if(!M)return null;const nm=M.nm,cp
   if(M.tr>0.1)prem+=0.12;else if(M.tr<-0.1)prem-=0.15;
   if(econ(s.y,s.m,c).f<0.9)prem-=0.12;if(M.loss)prem-=0.2;
   if(d.mode==='int')prem+=0.06;
+  // 0.51, этап 5б: каждая следующая покупка дороже (владельцы знают, что вы скупаете марки); фирма помнит обиду
+  const ser=tot>=0.5&&have<0.5?maSerialPrem(s):0,gr=typeof firmGrudge==='function'?firmGrudge(s,c,i)*0.3:0;prem+=ser+gr;
   if(d.pay==='swap'){const me=Math.max(1,companyValue(s));if(me<M.V*0.6)return {M,refuse:'small',st};prem+=me<M.V?0.3:me<M.V*2?0.08:-0.03;}
   prem+=proud*0.3+(maRnd(nm+'|'+s.y)-0.5)*0.2;
   const O=s.maOffer&&s.maOffer.c===c&&s.maOffer.i===i&&s.maOffer.until>mi(s)?s.maOffer:null;if(O)prem=Math.min(prem,O.prem);
-  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)*bn('deal')/1000)*1000),st,prem};}   // 0.35: bn('deal') — финансист (Дюрант) покупает дешевле
+  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)*bn('deal')/1000)*1000),st,prem,ser,gr};}   // 0.35: bn('deal') — финансист (Дюрант) покупает дешевле
 function maAnswer(s,c,i,d,price){const Q=maAsk(s,c,i,d);if(!Q)return {k:'no',why:'нельзя'};if(Q.refuse)return {k:'no',why:Q.refuse,Q};
   if(price>=Q.R)return {k:'yes',Q};if(price>=Q.R*0.85)return {k:'counter',ask:Math.round(Q.R*1.03/1000)*1000,Q};return {k:'low',Q,far:price<Q.R*0.6};}
 // реплики владельцев
@@ -93,18 +95,19 @@ function maSay(k,ask){const L=MA_SAY[k]||MA_SAY.low;return L[Math.floor(Math.ran
 
 /* ---------- сделка ---------- */
 function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;const nm=M.nm,cp=M.cp;let h=holdOf(s,c,i);
-  const tot=Math.min(1,d.st),add=Math.max(0,tot-(h?h.st:0)),intNow=d.mode==='int'&&tot>=1,icost=intNow?maIntCost(s,M):0;
+  const tot=Math.min(1,d.st),had=h?h.st:0,add=Math.max(0,tot-had),intNow=d.mode==='int'&&tot>=1,icost=intNow?maIntCost(s,M):0,debt0=intNow?maDebtOf(s,c,i,M):0;
   if(d.pay==='cash'&&s.cash<price+icost)return null;if(d.pay!=='cash'&&s.cash<icost)return null;
   if(d.pay==='cash')s.cash-=price;else{const me=Math.max(1,companyValue(s)),k=clamp(price/(price+me),0.01,0.6);(s.partners=s.partners||[]).push({n:nm,sh:+k.toFixed(3),t:mi(s)});}
   if(!h){h={c,i,n:cp.n,nm,mode:'sub',st:0,t:mi(s),paid:0,pay:d.pay,mood:65,inv:0,boost:0,how:how||'deal'};holdList(s).push(h);}
   h.st=Math.min(1,h.st+add);h.paid=(h.paid||0)+price;h.nm=nm;
   if(s.maOffer&&s.maOffer.c===c&&s.maOffer.i===i)s.maOffer=null;
   if(intNow){s.cash-=icost;maIntegrate(s,h,M);}
+  try{maBurden(s,h,M,{int:intNow,had,debt:debt0});}catch(e){console.warn('ma burden',e);}   // 0.51, этап 5б: долги и убыточные первые годы
   s.rep=clamp(s.rep+1,0,100);
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
   const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}${h.dlSold?` (ещё ${fmtN(h.dlSold)} — в городах, где ваши дилеры уже есть: салоны проданы за ${money(h.dlSoldV||0)})`:''}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
-  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}.`,'good');
+  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}${h.debt&&h.debt.left>0?`. Её долги — ${money(h.debt.tot)} — гасятся два года`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
   return h;}
 // поглощение: заводы, дилеры, местное производство, права на модели и технологии, часть покупателей
@@ -138,11 +141,11 @@ function dealDo(s,c,i,kind,k){if(dealBlock(s,c,i))return null;const d={st:1,mode
   if(A.k!=='yes'){s.dealNo=s.dealNo||{};s.dealNo[c+i]=mi(s)+12;return {ok:false,nm:M.nm,p:0};}const h=maClose(s,c,i,d,price);return h?{ok:true,nm:M.nm,price}:null;}
 
 /* ---------- дочерние компании: каждый месяц ---------- */
-function maMonth(s,r){maMigrate(s);r.div=0;const now=mi(s);
+function maMonth(s,r){maMigrate(s);r.div=0;const now=mi(s);try{maBurMonth(s,r);shMonth(s,r);}catch(e){console.warn('ma burden month',e);}
   subList(s).slice().forEach(h=>{const M=maStat(s,h.c,h.i);
     if(!M||!compAlive(M.cp,s)){s.hold=s.hold.filter(x=>x!==h);addLog(`Дочерняя компания «${h.nm||h.n}» закрылась — вложения пропали.`,'bad');return;}
     const st=(s.comps[h.c]||[])[h.i]||{},u=st.last||0,prof=u*M.P*M.m;h.p12=(h.p12||0)*11/12+prof;
-    if(prof>0){const dv=prof*h.st*0.6;r.div+=dv;h.divY=(h.divY||0)+dv;}
+    if(prof>0){const dv=prof*h.st*0.6*maYoungK(s,h)*maFirmDivK(s,h);r.div+=dv;h.divY=(h.divY||0)+dv;}
     h.boost=(h.boost||0)*0.996;h.mood=clamp((h.mood??60)+(60-(h.mood??60))*0.02,0,100);
     // ваш класс в её стране: если вы там продаёте, её директора недовольны (вы — конкурент)
     const g=maMainClass(M.cp,s,h.c);if(s.models.some(m=>m.status==='prod'&&segOf(m)===g&&(m.soldBy||{})[h.c]>0))h.mood-=0.15;});
@@ -170,7 +173,7 @@ const MA_INVESTORS={us:['Пьер Дюпон','банкирский дом J. P.
   uk:['Barclays','лорд Нафилд и компаньоны','Bank of England (через посредников)'],de:['Дойче банк','Дрезднер банк','дом Варбургов'],it:['Коммерческий банк Италии','Кредитный банк Италии','семья Перроне'],ru:['Азовско-Донской банк','Русско-Азиатский банк','братья Рябушинские']};
 function maWho(c,k){const L=MA_INVESTORS[c]||MA_INVESTORS.fr;return L[Math.floor(maRnd(k)*L.length)];}
 function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.country==='ru'&&!s.emig&&yf(s)>=1917.83))return;const now=mi(s);
-  if(maFates(s))return;if(maSubEvents(s))return;if(maSqueeze(s))return;
+  if(maFates(s))return;if(maSubEvents(s))return;if(maSqueeze(s))return;try{if(shDemand(s))return;}catch(e){console.warn('sh demand',e);}
   // 1) марка ищет покупателя (слабая или падающая; в кризис — чаще)
   const cs=creditState(s).k,crisis=cs==='panic'||cs==='tight'||cs==='crash'||Object.keys(COUNTRIES).some(c=>econ(s.y,s.m,c).f<0.88);
   if(now-(s.brandOfferT??-99)>=10&&Math.random()<(crisis?0.09:0.05)){
@@ -263,7 +266,7 @@ function holdingsHTML(s){const L=s.hold||[];if(!L.length)return '';
   const rows=L.map(h=>{const M=maStat(s,h.c,h.i),k=maKey(h.c,h.i),nm=h.nm||(M&&M.nm)||h.n,where=COUNTRIES[h.c].name;
     // 0.34: что стало с маркой — её модели в вашей линейке (или кнопка выпустить её модель, если их нет: старые сохранения, сняли)
     if(h.mode==='int'){const ms=s.models.filter(m=>m.from===nm&&m.status!=='off'),cost=maModelCost(s,h);
-      return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · поглощена в ${1895+Math.floor((h.t||0)/12)} году${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small>
+      return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · поглощена в ${1895+Math.floor((h.t||0)/12)} году${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small>${maBurTxt(h)?`<small class="warn">${maBurTxt(h)}</small>`:''}
         <small>${ms.length?`🤝 Её модели — у вас в «Моделях»: ${ms.map(m=>`«${esc(m.name)}»`).join(', ')}`:'Своей марки больше нет: её заводы, дилеры и права на модели — ваши.'}</small>
         ${ms.length?'':`<div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maModel" data-k="${k}" ${s.cash<cost?'disabled':''}>Выпустить её модель под вашей маркой · ${money(cost)}</button></div>`}</div></div>`;}
     if(!M)return '';const sell=Math.round(M.V*h.st*0.9/1000)*1000,inv=Math.max(2000,Math.round(M.V*0.12/1000)*1000),icost=maIntCost(s,M);
@@ -307,6 +310,7 @@ function renderDeal(){const s=G;if(!NEG)return;const {c,i,d}=NEG,M=maStat(s,c,i)
     <div class="label" style="margin-top:8px">Как управлять</div><div class="chips sm">${chip('mode','sub','Дочерняя компания',d.mode==='sub')}${chip('mode','int','Под ваш бренд',d.mode==='int',d.st<1)}</div>
     <div class="label" style="margin-top:8px">Чем платить</div><div class="chips sm">${chip('pay','cash','Деньгами',d.pay==='cash')}${chip('pay','swap','Акциями',d.pay==='swap')}</div>
     <p class="small" style="margin-top:8px">${why}${d.pay==='swap'?` Оплата акциями: владельцы «${esc(nm)}» станут вашими совладельцами и будут получать ≈${Math.round(clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6)*100)}% вашей прибыли.`:''}</p>
+    ${maDealNotes(s,c,i,d,M,Q)}
     <div class="label" style="margin-top:10px">Ваше предложение за ${Math.round(add*100)}%</div><div class="chips sm">${ks}</div>
     ${log?`<div class="neg-log" style="margin-top:10px">${log}</div>`:''}
     ${over==='yes'?`<p class="small good" style="margin-top:10px">Сделка закрыта.</p><button class="btn primary block" style="margin-top:8px" data-act="negEnd">Готово</button>`:over?`<p class="small warn" style="margin-top:10px">${esc(over)}</p><button class="btn block" style="margin-top:8px" data-act="negEnd">Закрыть</button>`
@@ -345,6 +349,7 @@ function aucBid(b){const s=G,A=s.auc;if(!A||s.cash<b)return;const best=Math.max(
 function maResolve(s,key){const p=key.split(':');const k2=p[2]==='Y'||p[2]==='N'?p[3]:p[2];
   if(p[1]==='talk'){s.pending.shift();save();render();const [c,i]=String(p[2]).split('|');openDeal(c,+i,p[3]==='swap'?{st:1,pay:'swap',mode:'sub'}:{st:1});return true;}
   if(p[1]==='auc'){s.pending.shift();save();render();openAuction();return true;}
+  if(p[1]==='credno'){if(s.maOffer&&s.maOffer.cred)s.maOffer=null;return false;}   // 0.51, этап 5б: кредиторы ищут другого покупателя
   if(p[1]==='aucSkip'){aucFinish(s,false);return false;}
   if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новые совладельцы получают 20% прибыли.`,'good');}return false;}
   if(p[1]==='sell'){if(p[2]==='Y'){const P=+p[3],mine=Math.round(P*(1-partnersShare(s)));rbArchive(s,P,mine);s.soldTo={price:P,mine,y:s.y,m:s.m,co:s.company};s.over=true;s.pending.shift();

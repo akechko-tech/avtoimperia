@@ -18,7 +18,7 @@ const BOT_CAP_MAX=2.5,BOT_Q_MAX=0.35;
 const BOT_OPEN={us:0.6,uk:1,fr:0.6,de:0.7,it:0.6,ru:1.2};   // открытость рынка для чужих марок: Британия и Россия ввозили много, Франция и Италия — мало
 const BOT_ORDER={scale:['line','model','export','rd','race'],market:['model','line','export','race','rd'],sport:['race','model','export','rd','line'],innov:['rd','model','race','line','export'],capital:['model','export','rd','race','line'],brand:['export','race','model','rd','line']};
 const BOT_IN={de:'в Германии',fr:'во Франции',uk:'в Британии',us:'в Америке',it:'в Италии',ru:'в России'};
-const SEG_LOC={people:'в народном классе',middle:'в среднем классе',lux:'в классе люкс',sport:'в спортивном классе',truck:'в грузовиках'},SEG_GEN={people:'народного класса',middle:'среднего класса',lux:'класса люкс',sport:'спортивного класса',truck:'— грузовик'};
+const SEG_LOC={people:'в народном классе',middle:'в среднем классе',lux:'в классе люкс',sport:'в спортивном классе',truck:'в грузовиках',moto:'в мотоциклах',moside:'в мотоциклах с коляской',farm:'в тракторах'},SEG_GEN={people:'народного класса',middle:'среднего класса',lux:'класса люкс',sport:'спортивного класса',truck:'— грузовик'};
 function botDif(){const D=DIF();return D.bot||{iq:0.7,bonus:1};}
 function botsOn(s){if(typeof BOTS_OFF!=='undefined'&&BOTS_OFF)return false;/* прогоны калибровки — без ботов */return !!(s&&s.mode!=='racer');}/* 0.44: соперники всегда живые (отзыв); s.botsOff из 0.41–0.43 больше не учитывается */
 // бот по имени марки (и по купленным им маркам — их продажи идут в его зачёт)

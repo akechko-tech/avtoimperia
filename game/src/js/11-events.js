@@ -149,7 +149,8 @@ function resolve(key){
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
-  if(/^own:/.test(key))ownEvent(s,key);   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
+  if(/^own:/.test(key))ownEvent(s,key);
+  if(/^eng:/.test(key))engResolve(s,key);if(/^sh:/.test(key))shResolve(s,key);   // 0.51, этап 5б: главный конструктор, особый дивиденд   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
   if(key==='rescueYes'||key==='rescueNo'){rescueResolve(s,key);}
   if(key==='carDesign'){s.pending.shift();s.ui=s.ui||{};s.ui.line='car';tab='models';save();render();openDesigner();return;}
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}

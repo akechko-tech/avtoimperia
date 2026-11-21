@@ -133,8 +133,8 @@ const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),g==='truck'?ALPHA_Q[g]/ALPHA_P[g]:AQ/BR);}
 /* ---------- конкуренты ---------- */
 // 0.30: марка разорилась в вашей партии (s.dead) — её больше нет; досталась новому хозяину — слабее (s.compK); возрождённая вами — живёт и после своей даты (s.rev)
-function compVol(cp,s){const t=yf(s);if(s&&s.dead&&s.dead[cp.n]!=null&&mi(s)>=s.dead[cp.n])return 0;if(t<cp.since)return 0;
-  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[cp.n])||1);}
+function compVol(cp,s){const t=yf(s),KN=cp.fk||cp.n;if(s&&s.dead&&s.dead[KN]!=null&&mi(s)>=s.dead[KN])return 0;if(t<cp.since)return 0;
+  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[KN])||1);}
 function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
 function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
@@ -298,7 +298,7 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   // 0.51, этап 5: M — во сколько раз марки-соперники класса сейчас привлекательнее своей истории (цена, машина, рассрочка); без их ходов — 1
   const FM=g=>kap?1:firmTerms(s,c,g).M;
   const rivals=CARSEG.map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:FM(g)}));
-  MOTOSEG.forEach(g=>{if(segAnnual(c,g,s)>0)rivals.push({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:1,mo:1});});
+  MOTOSEG.forEach(g=>{if(segAnnual(c,g,s)>0)rivals.push({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:FM(g),mo:1});});   // этап 5б: мотомарки — тоже фирмы
   const pr=md=>offerPrice(md,c,s,ov&&ov.id===md.id?ov.price:undefined);
   const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>{if(md.probe)return {md,...md.probe};const g=segOf(md);const eB=modelExtrasB(md,c,s),eP=modelExtrasP(md,c,s);return {md,g,q:mq(md,s,c),P:pr(md),fair:prefP(g,c,s)*payK(md),e:eB+eP,eB,eP};});
   const BK={};CARSEG.forEach(g=>BK[g]=brandK(c,g,s));MOTOSEG.forEach(g=>{if(offs.some(o=>o.g===g))BK[g]=brandK(c,g,s);});
@@ -441,22 +441,25 @@ function truckMarket(R,c,s,ms,pr,K,u0){
   const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;z.uses={};if(pool<=0)return;
   const sh=truckUseSh(c,s),bk0=brandK(c,'truck',s),kR=K('truck'),pwT=pwOf(s,c,'truck');
   // 0.51, этап 5: и здесь выбор внутри работы — между марками, а потом «мотор или лошадь»; M — перевес марок-соперников над своей историей
-  const MU=nestMu(s),MT=R.kap?1:firmTerms(s,c,'truck').M,iMU=1/MU,sB=kR*iMU+(bk0-kR)*(NEST_TH+(1-NEST_TH)*iMU);
+  const MU=nestMu(s),MT=R.kap?1:firmTerms(s,c,'truck').M,MF=R.kap||typeof farmMult!=='function'?1:farmMult(s,c),iMU=1/MU,sB=kR*iMU+(bk0-kR)*(NEST_TH+(1-NEST_TH)*iMU);
   // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
   const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
   const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s);});R.byU=R.byU||{};
   for(const u of TUSE){const own=!!TRUCK_USE[u].own,pu=own?jobOwnPool(u,c,s):pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
-    const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?1:MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
+    const farm=own&&TRUCK_USE[u].grp==='farm',FZ=farm?(R.farm=R.farm||{riv:0,rev:0,h:0,hrev:0,you:0}):null;   // 0.51, этап 5б: в тракторах у соперника тоже фирма (17d-firms2.js)
+    const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?(farm?MF:1):MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
     const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
       else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id];
-        if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}}
+        if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}
+        else if(farm){const ed=vq+dp+ex[md.id];if(FZ.edge==null||ed>FZ.edge){FZ.edge=ed;FZ.edgeP=dp;FZ.edgeQ=vq;FZ.edgeB=ex[md.id];}}}
       v=v/LAM;if(v>m)m=v;return {md,v};});
     let Tp=Tn,p=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);const la=sB+LAM*(Math.log(zs)+m),mm=Math.max(lr,la),ls=mm+Math.log(Math.exp(lr-mm)+Math.exp(la-mm));Tp=Math.exp(MU*ls);p=Math.exp(la-ls);}
     const dr=1+Tp,du=1+Tn,ri=pu*(R.rho*Tp*(1-p)/dr+(1-R.rho)*Tn/du);Z.riv=ri;
+    if(farm){const T1=Math.exp(lu),h=pu*T1/(1+T1);FZ.riv+=ri;FZ.rev+=ri*Pref;FZ.h+=h;FZ.hrev+=h*Pref;}   // h — сколько соперники продали бы без игрока и без своих ходов
     // свой пул (тракторы, армия): соперники — не марки из таблицы грузовиков, а «остальной мир» (16-world.js: в мир, но без имени)
     if(own){const an=R.anon=R.anon||{n:0,rev:0,hp:0};an.n+=ri;an.rev+=ri*Pref;an.hp+=ri*(byId(ENGINES,ref.e)||{hp:20}).hp;}else z.inc+=ri;
-    if(p>0)L.forEach(x=>{const d=pu*R.rho*Tp*p/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
+    if(p>0)L.forEach(x=>{const d=pu*R.rho*Tp*p/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;if(farm)FZ.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
   R.shop+=pool;
 }
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}

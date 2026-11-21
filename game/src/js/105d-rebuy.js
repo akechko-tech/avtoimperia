@@ -71,7 +71,7 @@ function openRebuy(){const s=G;if(!s)return;rbMigrate(s);const cs=Object.keys(CO
 function bbPrice(s,p){return Math.max(1000,Math.round(companyValue(s)*(p.sh||0)*1.25/1000)*1000);}
 function bbInvPrice(s){const I=s.investor;if(!I||mi(s)>=I.until)return 0;const left=clamp((I.until-mi(s))/120,0.25,1);return Math.max(1000,Math.round(companyValue(s)*(I.sh||0)*1.2*left/1000)*1000);}
 function bbHTML(s,sh){const P=s.partners||[],I=s.investor&&mi(s)<s.investor.until?s.investor:null;if(!P.length&&!I)return '';const A=sh?' data-sh="1"':'';
-  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>`+
+  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
     P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">получают ${Math.round(p.sh*100)}% вашей прибыли${p.t!=null?' с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
       <button class="btn sm" data-act="bbBuy" data-k="${k}"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;}).join('')+
     (I?(()=>{const c=bbInvPrice(s);return `<div class="deal-row"><div style="flex:1"><b>Партнёр-инвестор</b> <span class="pill">${Math.round((I.sh||0)*100)}%</span><small class="muted">его доля — до ${1895+Math.floor(I.until/12)} года</small></div><button class="btn sm" data-act="bbInv"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;})():'')+

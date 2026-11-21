@@ -2409,6 +2409,7 @@ function prefMoto(g,c,s){return tabAt(PREF_MOTO[g],yf(s))*(PREF_MOTO_C[c]||1);}
 /* ---------- помощники: мотоцикл ли модель, чьи марки в классе, велосипедные лавки ---------- */
 function isMoto(md){const b=md&&md.b&&byId(BODIES,md.b);return !!(b&&b.moto);}
 function motoSegOf(md){const b=byId(BODIES,md.b);return b&&(b.seats||1)>1?'moside':'moto';}
+for(const _c in MCOMPS)MCOMPS[_c].forEach(cp=>{cp.fk='m:'+cp.n;});   // 0.51, этап 5б: свой ключ закрытия и урезания — не путать с автомобильной маркой того же имени
 function compList(c,g){return isMotoSeg(g)?(MCOMPS[c]||[]):(COMPS[c]||[]);}
 // линейки марки: автомобили и мотоциклы (у старых сохранений — только автомобили)
 function lineOn(s,k){const L=s&&s.lines;if(!L)return k==='car';return !!L[k];}
@@ -3709,8 +3710,8 @@ const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),g==='truck'?ALPHA_Q[g]/ALPHA_P[g]:AQ/BR);}
 /* ---------- конкуренты ---------- */
 // 0.30: марка разорилась в вашей партии (s.dead) — её больше нет; досталась новому хозяину — слабее (s.compK); возрождённая вами — живёт и после своей даты (s.rev)
-function compVol(cp,s){const t=yf(s);if(s&&s.dead&&s.dead[cp.n]!=null&&mi(s)>=s.dead[cp.n])return 0;if(t<cp.since)return 0;
-  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[cp.n])||1);}
+function compVol(cp,s){const t=yf(s),KN=cp.fk||cp.n;if(s&&s.dead&&s.dead[KN]!=null&&mi(s)>=s.dead[KN])return 0;if(t<cp.since)return 0;
+  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[KN])||1);}
 function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
 function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
@@ -3874,7 +3875,7 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
   // 0.51, этап 5: M — во сколько раз марки-соперники класса сейчас привлекательнее своей истории (цена, машина, рассрочка); без их ходов — 1
   const FM=g=>kap?1:firmTerms(s,c,g).M;
   const rivals=CARSEG.map(g=>({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:FM(g)}));
-  MOTOSEG.forEach(g=>{if(segAnnual(c,g,s)>0)rivals.push({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:1,mo:1});});
+  MOTOSEG.forEach(g=>{if(segAnnual(c,g,s)>0)rivals.push({g,q:QG[g],P:prefP(g,c,s)*pwOf(s,c,g),fair:prefP(g,c,s),k:K(g),M:FM(g),mo:1});});   // этап 5б: мотомарки — тоже фирмы
   const pr=md=>offerPrice(md,c,s,ov&&ov.id===md.id?ov.price:undefined);
   const offs=models.filter(m=>m.probe?m.probe.g!=='truck':!isTruck(m)).map(md=>{if(md.probe)return {md,...md.probe};const g=segOf(md);const eB=modelExtrasB(md,c,s),eP=modelExtrasP(md,c,s);return {md,g,q:mq(md,s,c),P:pr(md),fair:prefP(g,c,s)*payK(md),e:eB+eP,eB,eP};});
   const BK={};CARSEG.forEach(g=>BK[g]=brandK(c,g,s));MOTOSEG.forEach(g=>{if(offs.some(o=>o.g===g))BK[g]=brandK(c,g,s);});
@@ -4017,22 +4018,25 @@ function truckMarket(R,c,s,ms,pr,K,u0){
   const PT=prefP('truck',c,s),pool=truckPool(c,s),z=R.segs.truck;z.pool=pool;z.uses={};if(pool<=0)return;
   const sh=truckUseSh(c,s),bk0=brandK(c,'truck',s),kR=K('truck'),pwT=pwOf(s,c,'truck');
   // 0.51, этап 5: и здесь выбор внутри работы — между марками, а потом «мотор или лошадь»; M — перевес марок-соперников над своей историей
-  const MU=nestMu(s),MT=R.kap?1:firmTerms(s,c,'truck').M,iMU=1/MU,sB=kR*iMU+(bk0-kR)*(NEST_TH+(1-NEST_TH)*iMU);
+  const MU=nestMu(s),MT=R.kap?1:firmTerms(s,c,'truck').M,MF=R.kap||typeof farmMult!=='function'?1:farmMult(s,c),iMU=1/MU,sB=kR*iMU+(bk0-kR)*(NEST_TH+(1-NEST_TH)*iMU);
   // пробная машина (подбор силы конкурентов): как прежде — одно сравнение по качеству и цене
   const Uold=(q,P,fair)=>u0-0.5+TQ*Math.log(q/QG.truck)-4*Math.log(P/fair);
   const ex={};ms.forEach(md=>{if(!md.probe)ex[md.id]=modelExtras(md,c,s);});R.byU=R.byU||{};
   for(const u of TUSE){const own=!!TRUCK_USE[u].own,pu=own?jobOwnPool(u,c,s):pool*sh[u],Z=z.uses[u]={pool:pu,riv:0,you:0};if(pu<=0)continue;
     const ref=truckRef(u,s.y),Pref=PT*payK(ref),cR=truckCost(ref,u,c,s,Pref).cpk,cRp=truckCost(ref,u,c,s,Pref*pwT).cpk,bp=TRUCK_USE[u].bp;
-    const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?1:MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
+    const farm=own&&TRUCK_USE[u].grp==='farm',FZ=farm?(R.farm=R.farm||{riv:0,rev:0,h:0,hrev:0,you:0}):null;   // 0.51, этап 5б: в тракторах у соперника тоже фирма (17d-firms2.js)
+    const lu=u0-0.5-BTC*Math.log(cRp/cR)-bp*Math.log(pwT)+kR,M=own?(farm?MF:1):MT,lr=lu*iMU+Math.log(M),Tn=Math.exp(MU*lr);let m=-1e9;
     const L=ms.filter(md=>jobFits(u,md)).map(md=>{let v;if(md.probe)v=Uold(md.probe.q,md.probe.P,md.probe.fair||PT)*iMU+md.probe.e;
       else{const P=pr(md),cp=truckCost(md,u,c,s,P).cpk,dp=-bp*Math.log(P/Pref),vq=-BTC*Math.log(cp/cR)+TQ*truckSoft(md,ref,s.y);v=(u0-0.5+vq+dp)*iMU+ex[md.id];
-        if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}}
+        if(!own){const ed=vq+dp+ex[md.id];if(z.edge==null||ed>z.edge){z.edge=ed;z.edgeP=dp;z.edgeQ=vq;z.edgeB=ex[md.id];}}
+        else if(farm){const ed=vq+dp+ex[md.id];if(FZ.edge==null||ed>FZ.edge){FZ.edge=ed;FZ.edgeP=dp;FZ.edgeQ=vq;FZ.edgeB=ex[md.id];}}}
       v=v/LAM;if(v>m)m=v;return {md,v};});
     let Tp=Tn,p=0,zs=0;if(L.length){zs=L.reduce((a,x)=>a+Math.exp(x.v-m),0);const la=sB+LAM*(Math.log(zs)+m),mm=Math.max(lr,la),ls=mm+Math.log(Math.exp(lr-mm)+Math.exp(la-mm));Tp=Math.exp(MU*ls);p=Math.exp(la-ls);}
     const dr=1+Tp,du=1+Tn,ri=pu*(R.rho*Tp*(1-p)/dr+(1-R.rho)*Tn/du);Z.riv=ri;
+    if(farm){const T1=Math.exp(lu),h=pu*T1/(1+T1);FZ.riv+=ri;FZ.rev+=ri*Pref;FZ.h+=h;FZ.hrev+=h*Pref;}   // h — сколько соперники продали бы без игрока и без своих ходов
     // свой пул (тракторы, армия): соперники — не марки из таблицы грузовиков, а «остальной мир» (16-world.js: в мир, но без имени)
     if(own){const an=R.anon=R.anon||{n:0,rev:0,hp:0};an.n+=ri;an.rev+=ri*Pref;an.hp+=ri*(byId(ENGINES,ref.e)||{hp:20}).hp;}else z.inc+=ri;
-    if(p>0)L.forEach(x=>{const d=pu*R.rho*Tp*p/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
+    if(p>0)L.forEach(x=>{const d=pu*R.rho*Tp*p/dr*Math.exp(x.v-m)/zs;R.by[x.md.id]+=d;z.you+=d;Z.you+=d;if(farm)FZ.you+=d;const b=R.byU[x.md.id]=R.byU[x.md.id]||{};b[u]=(b[u]||0)+d;});}
   R.shop+=pool;
 }
 function marketsOf(s){return Object.keys(COUNTRIES).filter(c=>c===s.country||dealerCount(s,c)>0);}
@@ -4280,7 +4284,7 @@ function dealValue(s,c,i){const M=maStat(s,c,i);return M?M.V:0;}
 // стоимость ваших долей в дочерних компаниях (входит в стоимость компании)
 function maHoldValue(s){return subList(s).reduce((a,h)=>{const M=maStat(s,h.c,h.i);return a+(M&&compAlive(M.cp,s)?M.V*h.st:0);},0);}
 // можно ли вести переговоры
-function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';if(s.botAcq&&s.botAcq[cp.n])return 'куплена: '+s.botAcq[cp.n];/* 0.41 */const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';
+function dealBlock(s,c,i){const cp=(COMPS[c]||[])[i];if(!cp||cp.imp||pkIs(cp,s)||s.soviet)return 'нельзя';if(s.botAcq&&s.botAcq[cp.n])return 'куплена: '+s.botAcq[cp.n];/* 0.41 */const h=holdOf(s,c,i);if(h&&(h.mode==='int'||h.st>=1))return 'ваша';if(!compAlive(cp,s))return 'закрылась';{const F=typeof firmGet==='function'?firmGet(s,c,i):null,O=F&&typeof firmOwner==='function'?firmOwner(s,F):null;if(O&&!h)return 'куплена: '+firmName(s,O);}
   if(BRAND_GROUP[cp.n]!=null&&s.y>=BRAND_GROUP[cp.n])return 'в концерне';if(c!==s.country&&(warCut(s,c)||atWar(s.country,c,s.y,s.m)))return 'война';
   const t=(s.dealNo||{})[c+i];if(t&&t>mi(s))return 'пауза';return '';}
 // главный класс марки (не грузовики; спорт — где он уже есть)
@@ -4298,10 +4302,12 @@ function maAsk(s,c,i,d){const M=maStat(s,c,i);if(!M)return null;const nm=M.nm,cp
   if(M.tr>0.1)prem+=0.12;else if(M.tr<-0.1)prem-=0.15;
   if(econ(s.y,s.m,c).f<0.9)prem-=0.12;if(M.loss)prem-=0.2;
   if(d.mode==='int')prem+=0.06;
+  // 0.51, этап 5б: каждая следующая покупка дороже (владельцы знают, что вы скупаете марки); фирма помнит обиду
+  const ser=tot>=0.5&&have<0.5?maSerialPrem(s):0,gr=typeof firmGrudge==='function'?firmGrudge(s,c,i)*0.3:0;prem+=ser+gr;
   if(d.pay==='swap'){const me=Math.max(1,companyValue(s));if(me<M.V*0.6)return {M,refuse:'small',st};prem+=me<M.V?0.3:me<M.V*2?0.08:-0.03;}
   prem+=proud*0.3+(maRnd(nm+'|'+s.y)-0.5)*0.2;
   const O=s.maOffer&&s.maOffer.c===c&&s.maOffer.i===i&&s.maOffer.until>mi(s)?s.maOffer:null;if(O)prem=Math.min(prem,O.prem);
-  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)*bn('deal')/1000)*1000),st,prem};}   // 0.35: bn('deal') — финансист (Дюрант) покупает дешевле
+  return {M,R:Math.max(1000,Math.round(M.V*st*(1+prem)*bn('deal')/1000)*1000),st,prem,ser,gr};}   // 0.35: bn('deal') — финансист (Дюрант) покупает дешевле
 function maAnswer(s,c,i,d,price){const Q=maAsk(s,c,i,d);if(!Q)return {k:'no',why:'нельзя'};if(Q.refuse)return {k:'no',why:Q.refuse,Q};
   if(price>=Q.R)return {k:'yes',Q};if(price>=Q.R*0.85)return {k:'counter',ask:Math.round(Q.R*1.03/1000)*1000,Q};return {k:'low',Q,far:price<Q.R*0.6};}
 // реплики владельцев
@@ -4315,18 +4321,19 @@ function maSay(k,ask){const L=MA_SAY[k]||MA_SAY.low;return L[Math.floor(Math.ran
 
 /* ---------- сделка ---------- */
 function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;const nm=M.nm,cp=M.cp;let h=holdOf(s,c,i);
-  const tot=Math.min(1,d.st),add=Math.max(0,tot-(h?h.st:0)),intNow=d.mode==='int'&&tot>=1,icost=intNow?maIntCost(s,M):0;
+  const tot=Math.min(1,d.st),had=h?h.st:0,add=Math.max(0,tot-had),intNow=d.mode==='int'&&tot>=1,icost=intNow?maIntCost(s,M):0,debt0=intNow?maDebtOf(s,c,i,M):0;
   if(d.pay==='cash'&&s.cash<price+icost)return null;if(d.pay!=='cash'&&s.cash<icost)return null;
   if(d.pay==='cash')s.cash-=price;else{const me=Math.max(1,companyValue(s)),k=clamp(price/(price+me),0.01,0.6);(s.partners=s.partners||[]).push({n:nm,sh:+k.toFixed(3),t:mi(s)});}
   if(!h){h={c,i,n:cp.n,nm,mode:'sub',st:0,t:mi(s),paid:0,pay:d.pay,mood:65,inv:0,boost:0,how:how||'deal'};holdList(s).push(h);}
   h.st=Math.min(1,h.st+add);h.paid=(h.paid||0)+price;h.nm=nm;
   if(s.maOffer&&s.maOffer.c===c&&s.maOffer.i===i)s.maOffer=null;
   if(intNow){s.cash-=icost;maIntegrate(s,h,M);}
+  try{maBurden(s,h,M,{int:intNow,had,debt:debt0});}catch(e){console.warn('ma burden',e);}   // 0.51, этап 5б: долги и убыточные первые годы
   s.rep=clamp(s.rep+1,0,100);
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
   const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}${h.dlSold?` (ещё ${fmtN(h.dlSold)} — в городах, где ваши дилеры уже есть: салоны проданы за ${money(h.dlSoldV||0)})`:''}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
-  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}.`,'good');
+  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}${h.debt&&h.debt.left>0?`. Её долги — ${money(h.debt.tot)} — гасятся два года`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
   return h;}
 // поглощение: заводы, дилеры, местное производство, права на модели и технологии, часть покупателей
@@ -4360,11 +4367,11 @@ function dealDo(s,c,i,kind,k){if(dealBlock(s,c,i))return null;const d={st:1,mode
   if(A.k!=='yes'){s.dealNo=s.dealNo||{};s.dealNo[c+i]=mi(s)+12;return {ok:false,nm:M.nm,p:0};}const h=maClose(s,c,i,d,price);return h?{ok:true,nm:M.nm,price}:null;}
 
 /* ---------- дочерние компании: каждый месяц ---------- */
-function maMonth(s,r){maMigrate(s);r.div=0;const now=mi(s);
+function maMonth(s,r){maMigrate(s);r.div=0;const now=mi(s);try{maBurMonth(s,r);shMonth(s,r);}catch(e){console.warn('ma burden month',e);}
   subList(s).slice().forEach(h=>{const M=maStat(s,h.c,h.i);
     if(!M||!compAlive(M.cp,s)){s.hold=s.hold.filter(x=>x!==h);addLog(`Дочерняя компания «${h.nm||h.n}» закрылась — вложения пропали.`,'bad');return;}
     const st=(s.comps[h.c]||[])[h.i]||{},u=st.last||0,prof=u*M.P*M.m;h.p12=(h.p12||0)*11/12+prof;
-    if(prof>0){const dv=prof*h.st*0.6;r.div+=dv;h.divY=(h.divY||0)+dv;}
+    if(prof>0){const dv=prof*h.st*0.6*maYoungK(s,h)*maFirmDivK(s,h);r.div+=dv;h.divY=(h.divY||0)+dv;}
     h.boost=(h.boost||0)*0.996;h.mood=clamp((h.mood??60)+(60-(h.mood??60))*0.02,0,100);
     // ваш класс в её стране: если вы там продаёте, её директора недовольны (вы — конкурент)
     const g=maMainClass(M.cp,s,h.c);if(s.models.some(m=>m.status==='prod'&&segOf(m)===g&&(m.soldBy||{})[h.c]>0))h.mood-=0.15;});
@@ -4392,7 +4399,7 @@ const MA_INVESTORS={us:['Пьер Дюпон','банкирский дом J. P.
   uk:['Barclays','лорд Нафилд и компаньоны','Bank of England (через посредников)'],de:['Дойче банк','Дрезднер банк','дом Варбургов'],it:['Коммерческий банк Италии','Кредитный банк Италии','семья Перроне'],ru:['Азовско-Донской банк','Русско-Азиатский банк','братья Рябушинские']};
 function maWho(c,k){const L=MA_INVESTORS[c]||MA_INVESTORS.fr;return L[Math.floor(maRnd(k)*L.length)];}
 function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.country==='ru'&&!s.emig&&yf(s)>=1917.83))return;const now=mi(s);
-  if(maFates(s))return;if(maSubEvents(s))return;if(maSqueeze(s))return;
+  if(maFates(s))return;if(maSubEvents(s))return;if(maSqueeze(s))return;try{if(shDemand(s))return;}catch(e){console.warn('sh demand',e);}
   // 1) марка ищет покупателя (слабая или падающая; в кризис — чаще)
   const cs=creditState(s).k,crisis=cs==='panic'||cs==='tight'||cs==='crash'||Object.keys(COUNTRIES).some(c=>econ(s.y,s.m,c).f<0.88);
   if(now-(s.brandOfferT??-99)>=10&&Math.random()<(crisis?0.09:0.05)){
@@ -4485,7 +4492,7 @@ function holdingsHTML(s){const L=s.hold||[];if(!L.length)return '';
   const rows=L.map(h=>{const M=maStat(s,h.c,h.i),k=maKey(h.c,h.i),nm=h.nm||(M&&M.nm)||h.n,where=COUNTRIES[h.c].name;
     // 0.34: что стало с маркой — её модели в вашей линейке (или кнопка выпустить её модель, если их нет: старые сохранения, сняли)
     if(h.mode==='int'){const ms=s.models.filter(m=>m.from===nm&&m.status!=='off'),cost=maModelCost(s,h);
-      return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · поглощена в ${1895+Math.floor((h.t||0)/12)} году${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small>
+      return `<div class="deal-row"><div style="flex:1"><b>${esc(nm)}</b> <span class="pill good">под вашим брендом</span><small class="muted">${where} · поглощена в ${1895+Math.floor((h.t||0)/12)} году${h.capAdd?` · заводы +${fmtN(h.capAdd)} машин в месяц`:''}${h.dlAdd?` · дилеры +${fmtN(h.dlAdd)}`:''} · её покупатели с вами: ${pct(maLoy(s,h),0)} былой доли</small>${maBurTxt(h)?`<small class="warn">${maBurTxt(h)}</small>`:''}
         <small>${ms.length?`🤝 Её модели — у вас в «Моделях»: ${ms.map(m=>`«${esc(m.name)}»`).join(', ')}`:'Своей марки больше нет: её заводы, дилеры и права на модели — ваши.'}</small>
         ${ms.length?'':`<div class="btns" style="margin-top:6px"><button class="btn sm" data-act="maModel" data-k="${k}" ${s.cash<cost?'disabled':''}>Выпустить её модель под вашей маркой · ${money(cost)}</button></div>`}</div></div>`;}
     if(!M)return '';const sell=Math.round(M.V*h.st*0.9/1000)*1000,inv=Math.max(2000,Math.round(M.V*0.12/1000)*1000),icost=maIntCost(s,M);
@@ -4529,6 +4536,7 @@ function renderDeal(){const s=G;if(!NEG)return;const {c,i,d}=NEG,M=maStat(s,c,i)
     <div class="label" style="margin-top:8px">Как управлять</div><div class="chips sm">${chip('mode','sub','Дочерняя компания',d.mode==='sub')}${chip('mode','int','Под ваш бренд',d.mode==='int',d.st<1)}</div>
     <div class="label" style="margin-top:8px">Чем платить</div><div class="chips sm">${chip('pay','cash','Деньгами',d.pay==='cash')}${chip('pay','swap','Акциями',d.pay==='swap')}</div>
     <p class="small" style="margin-top:8px">${why}${d.pay==='swap'?` Оплата акциями: владельцы «${esc(nm)}» станут вашими совладельцами и будут получать ≈${Math.round(clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6)*100)}% вашей прибыли.`:''}</p>
+    ${maDealNotes(s,c,i,d,M,Q)}
     <div class="label" style="margin-top:10px">Ваше предложение за ${Math.round(add*100)}%</div><div class="chips sm">${ks}</div>
     ${log?`<div class="neg-log" style="margin-top:10px">${log}</div>`:''}
     ${over==='yes'?`<p class="small good" style="margin-top:10px">Сделка закрыта.</p><button class="btn primary block" style="margin-top:8px" data-act="negEnd">Готово</button>`:over?`<p class="small warn" style="margin-top:10px">${esc(over)}</p><button class="btn block" style="margin-top:8px" data-act="negEnd">Закрыть</button>`
@@ -4567,6 +4575,7 @@ function aucBid(b){const s=G,A=s.auc;if(!A||s.cash<b)return;const best=Math.max(
 function maResolve(s,key){const p=key.split(':');const k2=p[2]==='Y'||p[2]==='N'?p[3]:p[2];
   if(p[1]==='talk'){s.pending.shift();save();render();const [c,i]=String(p[2]).split('|');openDeal(c,+i,p[3]==='swap'?{st:1,pay:'swap',mode:'sub'}:{st:1});return true;}
   if(p[1]==='auc'){s.pending.shift();save();render();openAuction();return true;}
+  if(p[1]==='credno'){if(s.maOffer&&s.maOffer.cred)s.maOffer=null;return false;}   // 0.51, этап 5б: кредиторы ищут другого покупателя
   if(p[1]==='aucSkip'){aucFinish(s,false);return false;}
   if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новые совладельцы получают 20% прибыли.`,'good');}return false;}
   if(p[1]==='sell'){if(p[2]==='Y'){const P=+p[3],mine=Math.round(P*(1-partnersShare(s)));rbArchive(s,P,mine);s.soldTo={price:P,mine,y:s.y,m:s.m,co:s.company};s.over=true;s.pending.shift();
@@ -4666,7 +4675,7 @@ function openRebuy(){const s=G;if(!s)return;rbMigrate(s);const cs=Object.keys(CO
 function bbPrice(s,p){return Math.max(1000,Math.round(companyValue(s)*(p.sh||0)*1.25/1000)*1000);}
 function bbInvPrice(s){const I=s.investor;if(!I||mi(s)>=I.until)return 0;const left=clamp((I.until-mi(s))/120,0.25,1);return Math.max(1000,Math.round(companyValue(s)*(I.sh||0)*1.2*left/1000)*1000);}
 function bbHTML(s,sh){const P=s.partners||[],I=s.investor&&mi(s)<s.investor.until?s.investor:null;if(!P.length&&!I)return '';const A=sh?' data-sh="1"':'';
-  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>`+
+  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
     P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">получают ${Math.round(p.sh*100)}% вашей прибыли${p.t!=null?' с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
       <button class="btn sm" data-act="bbBuy" data-k="${k}"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;}).join('')+
     (I?(()=>{const c=bbInvPrice(s);return `<div class="deal-row"><div style="flex:1"><b>Партнёр-инвестор</b> <span class="pill">${Math.round((I.sh||0)*100)}%</span><small class="muted">его доля — до ${1895+Math.floor(I.until/12)} года</small></div><button class="btn sm" data-act="bbInv"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;})():'')+
@@ -4975,7 +4984,7 @@ function dlrCostNow(s){return Object.keys(s.dealers||{}).reduce((a,c)=>a+(warCut
 function fixedNow(s){const L=s.last||{};return {dlr:dlrCostNow(s),ovh:plantOverhead(s)*(s.shifts>1?1.1:1),int:(s.loan||0)*loanRate(s)/12,
   rd:rdUpkeep(s)+(typeof kitUpkeep==='function'?kitUpkeep(s,'kb'):0),team:(typeof teamUpkeep==='function'?teamUpkeep(s)+kitUpkeep(s,'team'):0)+(typeof driverPayroll==='function'?driverPayroll(s):0),ad:s.ad||0,
   // то, что идёт само: кредитная компания, дивиденды дочерних, лицензии — как в прошлом месяце
-  fin:(L.finInc||0)-(L.finBad||0)+(L.div||0)+(L.lic||0)+(L.licIn||0)-(L.turn||0),sto:s.models.reduce((a,md)=>a+Math.max(0,md.stock)*matCost(md,s),0)*0.01};}
+  fin:(L.finInc||0)-(L.finBad||0)+(L.div||0)+(L.lic||0)+(L.licIn||0)-(L.turn||0)-(L.maBur||0),sto:s.models.reduce((a,md)=>a+Math.max(0,md.stock)*matCost(md,s),0)*0.01};}
 // f — прогноз марки (brandFc): выручка, машины, гарантия; контора — по admRate от прогнозной выручки и выпуска
 function fcAfter(s,f){const F=fixedNow(s),rev=f.rev||0,admK=admRate(s,{made:Math.round(f.cars||0)}),adm=admK*rev;
   const pre=(f.brand||0)-adm-F.dlr-F.ovh-F.int-F.rd-F.team-F.ad-(f.war||0)-F.sto+F.fin,tax=pre>0?pre*taxRate(s.y):0,part=pre-tax>0&&s.partners&&s.partners.length?(pre-tax)*partnersShare(s):0;
@@ -5488,6 +5497,92 @@ function airNextStep(s){const A=s.air,t=tNow(s);const proto=A.models.find(m=>m.s
   if(!A.models.some(m=>['dev','proto','prod','tool','race'].includes(m.status)))return {icon:'📐',text:'Начертите аэроплан: «Модели» → «Новый аэроплан»',tab:'models'};
   const ev=airEvSoon(s).find(e=>airEvStatus(s,e)==='open');if(ev)return {icon:'🏆',text:`${ev.name} — запись открыта`,tab:'race'};
   return {icon:'▶',text:'Жмите «Следующий месяц» — аэропланы строятся и продаются',tab:null};}
+
+/* ================= 0.51, этап 5б: СДЕЛКИ И АКЦИОНЕРЫ =================
+   Автор (тема 2 ТЗ): в начале партии денег не хватает — это хорошо; потом их слишком много: хватает и на покупку марок, и на завод.
+   Остаток темы 4: дивиденды совладельцам, каждое следующее поглощение дороже, купленная марка первые годы убыточна и приходит
+   с долгами, предложение купить марку, попавшую к кредиторам. Образцы — claude/issledovanie-sdelki-0.51.md:
+     • Дюрант и General Motors (1908–1910): десятки покупок за два года, многие — переплата; в 1910-м касса пуста, банкиры дают
+       15 млн $ и на пять лет берут управление;
+     • Dodge против Ford (1919): излишек лежит в кассе, особых дивидендов нет — суд обязал выплатить 19,3 млн $; Форд выкупил доли;
+     • Wolseley (1927): марку у управляющего по банкротству купил Моррис, перебив Остина.
+   Ничего из этого не вычет «сам по себе»: всё — следствие сделки, которую заключил игрок, и видно до подписи. */
+const MA_SERIAL=0.12,      // каждая покупка за последние десять лет — владельцы следующей марки просят на столько больше
+  MA_SERIAL_MAX=0.6,MA_SERIAL_M=120,
+  MA_DEBT=0.08,            // обычные долги марки — доля её оценки (у марки в беде — её настоящий долг)
+  MA_DEBT_M=24,            // гасятся за столько месяцев
+  MA_LOSS=0.06,            // убыток купленного завода в первый месяц — доля его месячной выручки; сходит к нулю
+  MA_LOSS_M=30,            //   за столько месяцев
+  MA_YOUNG=24,             // дочерняя компания после покупки контроля перестраивается — дивиденды растут от четверти до полных
+  SH_MIN=0.05,             // совладельцы с долей меньше этой в суд не идут
+  SH_HOARD=12,             // касса лежит без дела столько месяцев подряд — требуют особый дивиденд
+  SH_GAP=36,               // не чаще
+  SH_SUIT_M=18,            // суд длится
+  SH_PART=0.5;             // какую часть излишка требуют раздать (совладельцам — их доля от неё)
+// сколько марок куплено под контроль за последние десять лет
+function maSerial(s){const t=mi(s);return holdList(s).filter(h=>(h.mode==='int'||h.st>=0.5)&&t-(h.t||0)<MA_SERIAL_M).length;}
+function maSerialPrem(s){return Math.min(MA_SERIAL_MAX,MA_SERIAL*maSerial(s));}
+// долги марки, которые перейдут покупателю
+function maDebtOf(s,c,i,M){const F=typeof firmGet==='function'?firmGet(s,c,i):null;return Math.round(Math.min(M.V*0.6,Math.max(M.V*MA_DEBT,F&&F.cash<0?-F.cash:0))/1000)*1000;}
+function maLossM(M){return M.rev/12*MA_LOSS;}
+function maLossYear1(M){let a=0;for(let k=0;k<12;k++)a+=maLossM(M)*(MA_LOSS_M-k)/MA_LOSS_M;return Math.round(a/1000)*1000;}
+// что сделка принесла сверх цены: долги и убытки первых лет (поглощение), долги марки в беде (контрольный пакет)
+function maBurden(s,h,M,o){const t=mi(s),F=typeof firmGet==='function'?firmGet(s,h.c,h.i):null;
+  if(o.int){const D=o.debt!=null?o.debt:maDebtOf(s,h.c,h.i,M);h.debt={m:Math.round(D/MA_DEBT_M),left:MA_DEBT_M,tot:D};h.il={m0:maLossM(M),left:MA_LOSS_M};return;}
+  if(h.st>=0.5&&o.had<0.5){h.yt=t;
+    if(F&&F.cash<0){const D=Math.round(-F.cash*h.st);h.debt={m:Math.round(D/MA_DEBT_M),left:MA_DEBT_M,tot:D};F.cash+=D;if(F.st==='bad'&&F.cash>=-F.h12*0.09){F.st='ok';F.bad=0;}}}}
+function maYoungK(s,h){return h.yt==null?1:clamp(0.25+0.75*(mi(s)-h.yt)/MA_YOUNG,0.25,1);}
+function maFirmDivK(s,h){const F=typeof firmGet==='function'?firmGet(s,h.c,h.i):null;return F&&(F.st==='bad'||(F.cash<0&&F.p12<0))?0:1;}
+// месяц: долги и убытки купленных марок — отдельной строкой отчёта
+function maBurMonth(s,r){r.maBur=0;holdList(s).forEach(h=>{if(h.debt&&h.debt.left>0){r.maBur+=h.debt.m;h.debt.left--;}if(h.il&&h.il.left>0){r.maBur+=h.il.m0*h.il.left/MA_LOSS_M;h.il.left--;}});r.maBur=Math.round(r.maBur);}
+// что сказать в переговорах до подписи
+function maDealNotes(s,c,i,d,M,Q){const L=[],h=holdOf(s,c,i),have=h?h.st:0,tot=Math.min(1,d.st),F=typeof firmGet==='function'?firmGet(s,c,i):null;
+  const O=s.maOffer&&s.maOffer.cred&&s.maOffer.c===c&&s.maOffer.i===i&&s.maOffer.until>mi(s);
+  if(O)L.push('<b>Продают кредиторы:</b> цена ниже оценки, но долги марки переходят к покупателю.');
+  if(Q&&Q.ser>0)L.push(`Это ваша ${maSerial(s)+1}-я покупка за десять лет — владельцы знают, что вы скупаете марки, и просят на <b>${Math.round(Q.ser*100)}%</b> больше.`);
+  if(Q&&Q.gr>0)L.push(`Здесь помнят обиду${F&&F.grWhy?` (${esc(F.grWhy)})`:''}: просят ещё на ${Math.round(Q.gr*100)}% больше.`);
+  if(d.mode==='int'&&tot>=1){const D=maDebtOf(s,c,i,M);L.push(`С маркой переходят её долги — <b>${money(D)}</b> (гасятся два года). Первые два с половиной года её завод работает в убыток: станки, люди и поставщики притираются — около <b>${money(maLossYear1(M))}</b> в первый год.`);}
+  else if(tot>=0.5&&have<0.5){if(F&&F.cash<0)L.push(`У марки долг <b>${money(-F.cash)}</b>: с контрольным пакетом вашу часть (${money(Math.round(-F.cash*tot))}) придётся закрыть за два года.`);L.push('Первые два года дочерняя компания перестраивается и платит меньше дивидендов.');}
+  return L.length?`<p class="small warn" style="margin-top:6px">${L.join(' ')}</p>`:'';}
+// строка в списке ваших марок
+function maBurTxt(h){const L=[];if(h.debt&&h.debt.left>0)L.push(`долги: ещё ${money(h.debt.m*h.debt.left)}, ${h.debt.left} мес.`);if(h.il&&h.il.left>0)L.push(`убытки первых лет — ещё ${h.il.left} мес.`);return L.join(' · ');}
+
+/* ---------- кредиторы ищут покупателя ---------- */
+function maCredPending(s,F,i){const O=s.maOffer;return !!(O&&O.cred&&O.c===F.c&&O.i===i&&O.until>mi(s));}
+function maCredOffer(s,r,F,cp,i){if(F.offT!=null||F.mo||s.mode==='racer'||s.over||!rivMine(s,F.c)||dealBlock(s,F.c,i))return false;const M=maStat(s,F.c,i);if(!M)return false;
+  if(companyValue(s)<M.V*0.4)return false;   // слишком мала, чтобы банки приняли покупателя всерьёз
+  const t=mi(s),old=s.maOffer;F.offT=t;s.maOffer={c:F.c,i,until:t+4,prem:-0.35,cred:1};
+  const Q=maAsk(s,F.c,i,{st:1,mode:'int',pay:'cash'});if(!Q||Q.refuse){s.maOffer=old||null;return false;}const debt=maDebtOf(s,F.c,i,M);
+  pushEvent({kicker:'Сделка',own:1,title:`Кредиторы «${M.nm}» ищут покупателя`,deck:`${COUNTRIES[F.c].name} · ${money(Q.R)} и долги ${money(debt)}`,
+    text:`«${M.nm}» второй год работает в убыток, и банки дали владельцам три месяца, чтобы найти покупателя. Первым пришли к вам: за всю марку просят ${money(Q.R)} — на треть ниже оценки (${money(M.V)}), но её долги, ${money(debt)}, переходят к покупателю.\nНе купите вы — её может купить соседняя фирма, и у вас станет одним сильным соперником больше. Не купит никто — завод возьмут кредиторы.\nТак в 1927 году Уильям Моррис купил Wolseley у управляющего по банкротству за 730 тысяч фунтов, перебив на торгах Остина.`,
+    choices:[['Переговоры','ma:talk:'+maKey(F.c,i)],['Не интересует','ma:credno:'+maKey(F.c,i)]]},true);
+  return true;}
+
+/* ---------- совладельцы и особый дивиденд ---------- */
+function shRev12(s){const b=typeof bizRev==='function'?bizRev(s):0;return b>0?b:((s.last&&s.last.rev)||0)*12;}
+// излишек: касса сверх долга, полугода постоянных расходов и четверти годовой выручки
+function shSurplus(s){const L=s.last;if(!L)return 0;const fixed=(L.wage||0)+(L.ovh||0)+(L.dlr||0)+(L.ad||0)+(L.rd||0)+(L.int||0)+(L.team||0)+(L.drv||0)+(L.adm||0);
+  return Math.max(0,s.cash-(s.loan||0)-Math.max(fixed*6,shRev12(s)*0.25));}
+function shAsk(s){return Math.round(shSurplus(s)*SH_PART*partnersShare(s)/1000)*1000;}
+function shMonth(s,r){const t=mi(s),k=partnersShare(s);
+  if(k<SH_MIN){s.shHoard=0;s.shSuit=null;return;}
+  s.shHoard=shSurplus(s)>shRev12(s)*0.1?(s.shHoard||0)+1:0;
+  const S=s.shSuit;if(S&&t>=S.at){s.shSuit=null;const D=Math.min(S.D,Math.max(0,Math.round(s.cash)));r.shDiv=(r.shDiv||0)+D;s.rep=clamp(s.rep-3,0,100);
+    addLog(`Суд встал на сторону совладельцев: «${s.company}» обязана выплатить им особый дивиденд — ${money(D)} с процентами и издержками. Газеты пишут об этом неделю.`,'bad');try{pendingToasts.push('⚖️ Суд: особый дивиденд совладельцам');}catch(_){}}}
+function shDemand(s){if(s.over||s.pending.length||s.shSuit||DIF().simple)return false;const t=mi(s),k=partnersShare(s);
+  if(k<SH_MIN||(s.shHoard||0)<SH_HOARD||t-(s.shT??-999)<SH_GAP)return false;const D=shAsk(s);if(D<2000*cpi(s))return false;s.shT=t;s.shHoard=0;
+  const who=(s.partners||[]).slice().sort((a,b)=>(b.sh||0)-(a.sh||0))[0],nm=who?who.n:'Совладельцы';
+  pushEvent({kicker:'Совладельцы',own:1,title:'Совладельцы требуют особый дивиденд',deck:`${money(D)} из кассы — им принадлежит ${Math.round(k*100)}% компании`,
+    text:`${nm} пишут в правление: в кассе «${s.company}» ${money(s.cash)}, и больше года эти деньги лежат без дела. Они требуют раздать половину излишка владельцам — на их долю это ${money(D)}.\nМожно выплатить. Можно отказать: тогда они подадут в суд, и через полтора года он, скорее всего, обяжет заплатить — с процентами. Можно выкупить их доли — в «Финансах».\nТак было у Форда: к 1916 году в кассе лежало 60 миллионов, Генри Форд отменил особые дивиденды ради новых заводов. Братья Додж подали в суд — и в 1919 году суд обязал выплатить 19,3 миллиона. После этого Форд выкупил доли всех совладельцев.`,
+    choices:[[`Выплатить ${money(D)}`,'sh:pay:'+D],['Отказать — пусть судятся','sh:no:'+D]]},true);return true;}
+function shResolve(s,key){const a=key.split(':'),D=+a[2]||0,t=mi(s);
+  if(a[1]==='pay'){const v=Math.min(D,Math.max(0,Math.round(s.cash)));s.cash-=v;s.shPaid=(s.shPaid||0)+v;addLog(`Совладельцам выплачен особый дивиденд — ${money(v)}.`,'hist');}
+  if(a[1]==='no'){s.shSuit={at:t+SH_SUIT_M,D:Math.round(D*1.15/1000)*1000};s.rep=clamp(s.rep-1,0,100);addLog(`Совладельцам отказано в особом дивиденде. Они подали в суд: решение — через полтора года, на кону ${money(s.shSuit.D)}.`,'bad');}}
+// строка в «Финансах» рядом с совладельцами
+function shNoteHTML(s){const k=partnersShare(s);if(k<SH_MIN)return '';const S=s.shSuit,t=mi(s);
+  if(S)return `<p class="small warn" style="margin-top:4px">⚖️ Совладельцы судятся за особый дивиденд: решение через ${Math.max(1,S.at-t)} мес., на кону ${money(S.D)}. Выкупите их доли — и иск уйдёт вместе с ними.</p>`;
+  const h=s.shHoard||0;if(h>=6&&shAsk(s)>=2000*cpi(s))return `<p class="small muted" style="margin-top:4px">Касса лежит без дела ${h} мес.: через ${Math.max(1,SH_HOARD-h)} мес. совладельцы потребуют особый дивиденд (сейчас это ${money(shAsk(s))}). Вложите деньги в дело или выкупите их доли.</p>`;
+  return '';}
 
 /* ================= CALIB: сила конкурентов по истории (генерируется test/calib.js) ================= */
 // k — насколько реальные марки класса привлекательнее «средней» машины: подобрано так, чтобы без игрока
@@ -6095,7 +6190,8 @@ function resolve(key){
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
-  if(/^own:/.test(key))ownEvent(s,key);   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
+  if(/^own:/.test(key))ownEvent(s,key);
+  if(/^eng:/.test(key))engResolve(s,key);if(/^sh:/.test(key))shResolve(s,key);   // 0.51, этап 5б: главный конструктор, особый дивиденд   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
   if(key==='rescueYes'||key==='rescueNo'){rescueResolve(s,key);}
   if(key==='carDesign'){s.pending.shift();s.ui=s.ui||{};s.ui.line='car';tab='models';save();render();openDesigner();return;}
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
@@ -6850,12 +6946,13 @@ function step(){
   {const AP=admParts(s,r);r.admK=AP.total;r.adm=r.admK*(r.rev+r.ord);r.admP={made:AP.made,fmL:AP.fmL,nmC:AP.nmC,nmM:AP.nmM,nm:AP.nm,k:AP.k,base:AP.base,out:AP.out,cty:AP.cty,mdl:AP.mdl,total:AP.total};}
   // 0.30: дивиденды дочерних компаний (их прибыль — по продажам прошлого месяца)
   try{maMonth(s,r);}catch(e){console.warn('ma month',e);r.div=0;}
-  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)+(r.aeP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
+  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)+(r.aeP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0)-(r.maBur||0);
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
   // 0.29: совладельцы по слияниям марок — их доля прибыли
   if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k);r.invSh=(r.invSh||0)+v;r.profit-=v;}
+  if(r.shDiv>0){r.invSh=(r.invSh||0)+r.shDiv;r.profit-=r.shDiv;}   // 0.51, этап 5б: особый дивиденд совладельцам по решению суда
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
   s.cash+=r.profit+r.tool+r.hire+r.rdp+r.prm-(r.rev+r.ord)+r.got+r.finIn-r.finOut;   // оснастка, найм, проекты КБ и спецакции уже списаны выше; рассрочка своей компании — деньги выданы и вернулись
@@ -6877,9 +6974,9 @@ function step(){
     // 0.24: lg — продажи марки по классам за месяц (для вызовов по продажам на любом рынке); chalTally — счёт пари
     SEGK.forEach(g=>{const z=MC.segs[g];sg[g]={size:z.inc,you:0,price:z.price};if(z.edge!=null){sg[g].edge=z.edge;sg[g].edgeP=z.edgeP||0;sg[g].edgeQ=z.edgeQ||0;sg[g].edgeB=z.edgeB||0;}size+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=L[o.i];if(!x){if(o.bot)botSold(s,o.bot,c,g,o.sales);return;}x.last+=o.sales;x.lg[g]=(x.lg[g]||0)+o.sales;if(c===s.country){const Y=x.ys=x.ys||{};Y[g]=(Y[g]||0)+o.sales;}chalTally(s,c,g,o);});});
     // 0.32: мотоциклы — свои классы и свои марки (s.mcomps)
-    const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;});const msg={};let msize=0;
-    MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x)x.last+=o.sales;});});
-    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;if(MC.anon)mk.anon={n:MC.anon.n,rev:MC.anon.rev,hp:MC.anon.hp};/* 0.51: тракторы и армия — продажи «остального мира» */mk.lostDlr=lostC[c]||0;}
+    const ML=(s.mcomps&&s.mcomps[c])||[];ML.forEach(x=>{x.last=0;x.lg={};});const msg={};let msize=0;
+    MOTOSEG.forEach(g=>{const z=MC.segs[g];if(!z)return;msg[g]={size:z.inc,you:0,price:z.price};if(z.edge!=null){msg[g].edge=z.edge;msg[g].edgeP=z.edgeP||0;msg[g].edgeQ=z.edgeQ||0;msg[g].edgeB=z.edgeB||0;}msize+=z.inc;compSplit(c,g,s,z.inc).forEach(o=>{const x=ML[o.i];if(x){x.last+=o.sales;x.lg[g]=o.sales;}});});
+    const mk=r.mk[c]=r.mk[c]||{sold:0,rev:0};mk.size=size;mk.segs=sg;mk.msegs=msg;mk.msize=msize;mk.shop=MC.shop;mk.tpool=MC.segs.truck.pool||0;mk.tuse=MC.segs.truck.uses||null;mk.farm=MC.farm||null;if(MC.anon)mk.anon={n:MC.anon.n,rev:MC.anon.rev,hp:MC.anon.hp};/* 0.51: тракторы и армия — продажи «остального мира» */mk.lostDlr=lostC[c]||0;}
   act.forEach(md=>{const g=segOf(md),mo=isMotoSeg(g);for(const c in (md.soldBy||{})){const so=md.soldBy[c],m=r.mk[c];if(!m)continue;
     if(mo){if(m.msegs&&m.msegs[g]){m.msegs[g].you+=so;m.msegs[g].size+=so;m.msize+=so;}}else if(m.segs[g]){m.segs[g].you+=so;m.segs[g].size+=so;m.size+=so;}}});
   chalTallyYou(s,r);
@@ -8435,7 +8532,15 @@ function ownSuitCost(s){return Math.round(400*cpi(s)/50)*50;}
 function ownResolve(s,key){const a=key.split(':');if(a[1]==='pat'){if(!ownPatent(s,a[2]))toast('Не хватает денег на патент');return;}
   const x=ownGet(s,a[2]),fk=a[3]+':'+a[4],F=s.firms&&s.firms[fk];if(!x||!F)return;s.legal=s.legal||{};const O=s.legal.own=s.legal.own||[],t=mi(s),nm=firmName(s,F);
   if(a[1]==='lic'){const amt=ownLicFee(s,F);O.push({k:'lic',id:x.id,f:fk,amt,until:t+60});addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет.`,'good');}
-  if(a[1]==='sue'){const ahead=Math.max(0,x.yh-yf(s)),p=clamp(0.4+0.08*ahead,0.4,0.85);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),until:t+12,p});addLog(`Иск к ${nm} за «${x.name}» подан: суд через год.`);}}
+  if(a[1]==='sue'){const ahead=Math.max(0,x.yh-yf(s)),p=clamp(0.4+0.08*ahead,0.4,0.85);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),until:t+12,p});F.gr=Math.min(1,(F.gr||0)+0.4);F.grWhy=`иск за «${x.name}», ${s.y}`;addLog(`Иск к ${nm} за «${x.name}» подан: суд через год.`);}}
+// 0.51, этап 5б: продать лицензию по своей воле — крупнейшей фирме своей страны, у которой её ещё нет и которая не в обиде.
+// Деньги — пять лет, но её машины станут лучше: это ход против себя ради кассы (ход соперника — ownCopied).
+function ownLicBuyer(s,x){if(!s.firms||!firmsOn(s)||!x||x.k==='ae')return null;const t=mi(s),O=(s.legal&&s.legal.own)||[];let B=null;
+  (COMPS[s.country]||[]).forEach((cp,i)=>{const F=firmGet(s,s.country,i);if(!F||F.st!=='ok'||!(F.h12>0)||F.gr>0.2||acqHas(s,s.country,i))return;const key=s.country+':'+i;if(O.some(o=>o.id===x.id&&o.f===key&&o.until>t))return;if(!B||(F.r12||0)>(B.F.r12||0))B={F,key,i};});return B;}
+function ownLicSell(s,id){const x=ownGet(s,id);if(!x||!ownPatOn(s,x)||x.ser==null)return false;const B=ownLicBuyer(s,x);if(!B)return false;const F=B.F,t=mi(s),amt=ownLicFee(s,F),nm=firmName(s,F),cp=firmCp(F),g=firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
+  s.legal=s.legal||{};(s.legal.own=s.legal.own||[]).push({k:'lic',id:x.id,f:B.key,amt,until:t+60});x.cp=x.cp||{};x.cp[B.key]=t;
+  const M=F.md&&F.md[g];if(M&&t<M.till)M.q=clamp((M.q||0)+0.06,0.05,1.25);else F.md[g]={q:0.08,from:t,till:t+60,name:'',lic:1};
+  addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет. Её машины ${SEG_LOC[g]||''} станут лучше.`,'good');return true;}
 function ownLegalMonth(s,r){const O=s.legal&&s.legal.own;if(!O||!O.length)return;const t=mi(s);let inc=0,out=0;
   s.legal.own=O.filter(o=>{if(o.k==='lic'){if(o.until<=t)return false;inc+=o.amt;return true;}
     if(o.k==='suit'){if(o.until>t){out+=o.amt;return true;}const F=s.firms&&s.firms[o.f],x=ownGet(s,o.id),nm=F?firmName(s,F):'соперник',g=F&&F.md?Object.keys(F.md)[0]:null;
@@ -8584,8 +8689,8 @@ function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_
       <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки ${Math.round(P.rework*100)}%${C?` · продажа авиазаводам: около ${fmtN(Math.round(C.dem))} в месяц по ${money(C.price)}, с мотора ${money(C.price-C.cost)}`:''}</p></div>`:''}
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
-function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0;
-  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?'':`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
+function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null;
+  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
     <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p></div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
 function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}
@@ -8833,7 +8938,7 @@ const BOT_CAP_MAX=2.5,BOT_Q_MAX=0.35;
 const BOT_OPEN={us:0.6,uk:1,fr:0.6,de:0.7,it:0.6,ru:1.2};   // открытость рынка для чужих марок: Британия и Россия ввозили много, Франция и Италия — мало
 const BOT_ORDER={scale:['line','model','export','rd','race'],market:['model','line','export','race','rd'],sport:['race','model','export','rd','line'],innov:['rd','model','race','line','export'],capital:['model','export','rd','race','line'],brand:['export','race','model','rd','line']};
 const BOT_IN={de:'в Германии',fr:'во Франции',uk:'в Британии',us:'в Америке',it:'в Италии',ru:'в России'};
-const SEG_LOC={people:'в народном классе',middle:'в среднем классе',lux:'в классе люкс',sport:'в спортивном классе',truck:'в грузовиках'},SEG_GEN={people:'народного класса',middle:'среднего класса',lux:'класса люкс',sport:'спортивного класса',truck:'— грузовик'};
+const SEG_LOC={people:'в народном классе',middle:'в среднем классе',lux:'в классе люкс',sport:'в спортивном классе',truck:'в грузовиках',moto:'в мотоциклах',moside:'в мотоциклах с коляской',farm:'в тракторах'},SEG_GEN={people:'народного класса',middle:'среднего класса',lux:'класса люкс',sport:'спортивного класса',truck:'— грузовик'};
 function botDif(){const D=DIF();return D.bot||{iq:0.7,bonus:1};}
 function botsOn(s){if(typeof BOTS_OFF!=='undefined'&&BOTS_OFF)return false;/* прогоны калибровки — без ботов */return !!(s&&s.mode!=='racer');}/* 0.44: соперники всегда живые (отзыв); s.botsOff из 0.41–0.43 больше не учитывается */
 // бот по имени марки (и по купленным им маркам — их продажи идут в его зачёт)
@@ -8950,8 +9055,19 @@ const FIRM_BT=3,          // насколько покупатель грузо�
   FIRM_FIN_Y={us:[1915,1925],uk:[1921,1930],fr:[1921,1930],de:[1924,1931],it:[1924,1931],ru:[1999,1999]};   // рассрочка: с какого года возможна и когда стала обычной
 function firmsOn(s){return botsOn(s)&&!globalThis.FIRMOFF;}/* FIRMOFF — замер «без ходов фирм» */
 function firmSkill(){const b=botDif();return {iq:b.iq??0.7,bonus:b.bonus??1};}
-function firmGet(s,c,i){return s&&s.firms?s.firms[c+':'+i]:null;}
-function firmMake(s,c,i,cp){s.firms=s.firms||{};return s.firms[c+':'+i]={c,i,n:cp.n,pk:{},md:{},ck:1,cap:1.15,fin:0,st:'ok',bad:0,log:[],rg:{},sh:{}};}
+function firmGet(s,c,i,mo){return s&&s.firms?s.firms[(mo==='k'?'k:':mo?'m:':'')+c+':'+i]:null;}
+function firmMake(s,c,i,cp,mo){s.firms=s.firms||{};const F={c,i,n:cp.n,pk:{},md:{},ck:1,cap:1.15,fin:0,st:'ok',bad:0,log:[],rg:{},sh:{}};if(mo)F.mo=1;return s.firms[(mo?'m:':'')+c+':'+i]=F;}
+/* 0.51, этап 5б: мотоциклетные марки — тоже фирмы (раньше их ответа не было вовсе: был только вычет из спроса, он снят на этапе 5).
+   Домен — откуда брать марки, их продажи и классы. Ключ мотофирмы в s.firms — с приставкой «m:»; закрытие и урезание выпуска — по cpK(cp),
+   чтобы мотоциклетный Peugeot не закрыл автомобильный. */
+const FD_CAR={mo:0,all:()=>COMPS,recs:(s,c)=>(s.comps&&s.comps[c])||[],segs:()=>[...CARSEG,'truck'],mk:m=>m&&m.segs,skip:(s,c,i,cp)=>cp.imp||pkIs(cp,s)||acqHas(s,c,i),min:8000},
+  FD_MOTO={mo:1,all:()=>MCOMPS,recs:(s,c)=>(s.mcomps&&s.mcomps[c])||[],segs:()=>MOTOSEG,mk:m=>m&&m.msegs,skip:(s,c,i,cp)=>cp.imp||pkIs(cp,s)||ownComp(cp,s)||!!mholdOf(s,c,i),min:2500};
+function firmList(F){return F&&F.kf?[]:((F&&F.mo?MCOMPS:COMPS)[F.c])||[];}
+function firmCp(F){return F&&F.kf?farmCp(F.c,F.n):firmList(F)[F.i];}
+function cpK(cp){return cp.fk||cp.n;}
+function firmOwner(s,F){return F&&F.own!=null?firmGet(s,F.c,F.own,F.mo):null;}
+function firmGrudge(s,c,i){const F=firmGet(s,c,i);return F&&F.gr>0.02?F.gr:0;}
+function firmCar(F,pl){return F&&F.kf?(pl?'тракторы':'трактор'):F&&F.mo?(pl?'мотоциклы':'мотоцикл'):(pl?'машины':'машина');}
 // фирма живого соперника по имени марки (её домашняя запись) — для экспорта сверх истории
 function firmHome(s,bn){const B=s.bots&&s.bots[bn];if(!B||!s.firms)return null;const L=COMPS[B.c]||[];for(let i=0;i<L.length;i++)if(L[i].n===B.n)return s.firms[B.c+':'+i]||null;return null;}
 // модель-ответ: её перевес над обычной машиной марки; в последнюю треть срока тает — машина стареет, покупатель это видит
@@ -8962,15 +9078,15 @@ function firmFin(F,t){return F.fin&&t<(F.finTill||0)?FIRM_FIN:0;}
 function firmAd(F,t){const A=F.ad;if(!A||t<A.from||t>=A.till)return 0;return A.u*Math.min(1,(A.till-t)/12);}
 /* Насколько марка сейчас привлекательнее своей истории в классе. Сама машина и цена (P) — их покупатель сравнивает с соседями по
    классу резче (делится на nestMu); имя марки — реклама, гонки, рассрочка (B) — как у игрока его слава. */
-function firmDuP(s,F,g){return firmDq(F,g,mi(s))-(g==='truck'?FIRM_BT:BR)*Math.log((F.pk&&F.pk[g])||1);}
+function firmDuP(s,F,g){return firmDq(F,g,mi(s))-(g==='truck'||g==='farm'?FIRM_BT:BR)*Math.log((F.pk&&F.pk[g])||1);}
 function firmDuB(s,F){const t=mi(s);return firmFin(F,t)+firmAd(F,t);}
 function firmDu(s,F,g){return firmDuP(s,F,g)+firmDuB(s,F);}
 function firmWant(s,F,g){return Math.exp(firmDuP(s,F,g)/nestMu(s)+firmDuB(s,F));}   // во сколько раз вырос бы сбыт марки, хватай ей завода
 function firmMult(s,F,g){if(!F||F.st==='dead')return 1;return Math.min(firmWant(s,F,g),FIRM_CAPX*(F.cap||1));}
 // марки класса с их нынешним перевесом: w — доля по истории, m — перевес, M — перевес всех соперников класса вместе
-function firmTerms(s,c,g){const L=compWeights(c,g,s),on=s&&s.firms&&firmsOn(s);let M=1,sw=0,sd=0;
+function firmTerms(s,c,g){const L=compWeights(c,g,s),on=s&&s.firms&&firmsOn(s),mo=isMotoSeg(g);let M=1,sw=0,sd=0;
   L.forEach(o=>{if(o.bot){o.m=on?firmMult(s,firmHome(s,o.bot),g):1;M+=o.w*o.m;return;}/* пришла сверх истории — прибавляется к классу целиком */
-    o.m=on?firmMult(s,s.firms[c+':'+o.i],g):1;M+=o.w*(o.m-1);sw+=o.w;sd+=o.w*(o.m-1);});
+    o.m=on?firmMult(s,s.firms[(mo?'m:':'')+c+':'+o.i],g):1;M+=o.w*(o.m-1);sw+=o.w;sd+=o.w*(o.m-1);});
   // мелкие марки без имени («остаток» класса) идут за крупными с половинной силой — иначе большая часть класса не отвечала бы никогда
   if(on&&sw>0.02&&sw<1){const mr=1+clamp(FIRM_FOLLOW*sd/sw,-0.3,6);M+=(1-sw)*(mr-1);L.mRest=mr;}
   return {M:Math.max(0.05,M),L};}
@@ -8982,29 +9098,31 @@ function firmSegs(cp){return Object.keys(cp.mix||{}).filter(g=>cp.mix[g]>=0.1);}
    у мелкой — тонкая (firmCost0: при исторической доле выгодна историческая цена — без повода фирма цену не трогает).
    Потеряв долю, фирма уступает в цене: крупная — заметно (ей есть что уступить), мелкая — почти никак; вернув долю — возвращает цену.
    Снижение себестоимости (поток) уходит в цену целиком. Ниже себестоимости с запасом 3 % цену не держат. */
-function firmEps(g,sh,mu){return (g==='truck'?FIRM_BT:BR)/mu*(1-clamp(sh,0,0.9))+0.3;}
+function firmEps(g,sh,mu){return (g==='truck'||g==='farm'?FIRM_BT:BR)/mu*(1-clamp(sh,0,0.9))+0.3;}
 function firmCost0(g,wh,mu){const e=firmEps(g,wh,mu);return (e-1)/e;}   // себестоимость — доля цены класса
 // загрузка завода: в пределах ±15 % от обычной себестоимость не меняется (и случайный год на цену не влияет)
 function firmCostK(F,t){const ld=F.ld==null?1:F.ld,x=ld<0.85?ld/0.85:ld>1.15?ld/1.15:1;return firmCk(F,t)*clamp(Math.pow(Math.max(0.2,x),-FIRM_SCALE),0.9,1.2);}
 function firmPriceOpt(F,g,wh,rs,t,mu){const eta=0.1+0.3*clamp(wh,0,0.7),x=Math.abs(rs-1)<0.05?1:clamp(rs,0.3,1.6),ck=firmCk(F,t);
   return clamp(Math.max(firmCost0(g,wh,mu)*firmCostK(F,t)*1.03,ck*Math.pow(x,eta)),0.65,1.2);}
-function firmName(s,F){const cp=(COMPS[F.c]||[])[F.i];return cp?compName(cp,s):F.n;}
-function firmNote(s,r,F,o){const n={n:firmName(s,F),bn:F.n,c:F.c,i:F.i,t:o.t,txt:o.txt,w:o.w||1,k:o.k||''};(r.riv=r.riv||[]).push(n);F.log=F.log||[];F.log.unshift({t:mi(s),txt:o.t,k:o.k||''});if(F.log.length>8)F.log.length=8;}
+function firmName(s,F){const cp=firmCp(F);return cp?compName(cp,s):F.n;}
+function firmNote(s,r,F,o){const n={n:firmName(s,F),bn:F.n,c:F.c,i:F.i,t:o.t,txt:o.txt,w:o.w||1,k:o.k||''};if(F.mo)n.mo=1;if(F.kf)n.kf=1;(r.riv=r.riv||[]).push(n);F.log=F.log||[];F.log.unshift({t:mi(s),txt:o.t,k:o.k||''});if(F.log.length>8)F.log.length=8;}
 // историческое имя новой модели, если ответ вышел рядом с настоящей премьерой марки
 function firmModelName(cp,y){let b=null;(cp.models||[]).forEach(x=>{if(Math.abs(x[0]-y)<=2&&(!b||Math.abs(x[0]-y)<Math.abs(b[0]-y)))b=x;});return b?b[1]:'';}
 function firmLeaderTxt(s,L){return L.you?`«${s.company}»`:L.n;}
 /* ---------- месяц фирм: счёт, состояние, ход ---------- */
-function firmsMonth(s,r){if(!firmsOn(s))return;s.firms=s.firms||{};const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s);r.riv=r.riv||[];
-  for(const c in COMPS){const mk=r.mk&&r.mk[c];if(!mk||!mk.segs)continue;const fm=firmSeason(s,c),dc=difComp(s),L=COMPS[c],recs=s.comps[c]||[];
+function firmsMonth(s,r){if(!firmsOn(s))return;s.firms=s.firms||{};r.riv=r.riv||[];firmsDom(s,r,FD_CAR);firmsDom(s,r,FD_MOTO);try{firmsFarm(s,r);}catch(e){console.warn('farm firms',e);}
+  try{firmsPeople(s,r);}catch(e){console.warn('firm people',e);}}
+function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D.all();
+  for(const c in ALL){const mk=r.mk&&r.mk[c],SG=D.mk(mk);if(!SG)continue;const fm=firmSeason(s,c),dc=difComp(s),L=ALL[c],recs=D.recs(s,c);
     // доли по истории в каждом классе — один раз на страну
     // сколько класс продаёт соперникам в обычный месяц (по истории): марка получает из этого свою долю — её продажи «как в истории»
-    const WH={},HS={};[...CARSEG,'truck'].forEach(g=>{WH[g]={};const W=compWeights(c,g,s);HS[g]=(W.rest||0)/12*fm*dc;W.forEach(o=>{if(!o.bot)WH[g][o.i]=o.w;});});
-    L.forEach((cp,i)=>{if(cp.imp||pkIs(cp,s)||acqHas(s,c,i))return;const x=recs[i];if(!x)return;const hv=compVol(cp,s);let F=s.firms[c+':'+i];
+    const WH={},HS={};D.segs().forEach(g=>{WH[g]={};const W=compWeights(c,g,s);HS[g]=(W.rest||0)/12*fm*dc;W.forEach(o=>{if(!o.bot)WH[g][o.i]=o.w;});});
+    L.forEach((cp,i)=>{if(D.skip(s,c,i,cp))return;const x=recs[i];if(!x)return;const hv=compVol(cp,s);let F=firmGet(s,c,i,D.mo);
       if(hv<=0){if(F&&F.st!=='dead'){F.st='dead';}return;}
-      if(!F)F=firmMake(s,c,i,cp);if(F.st==='dead')return;const segs=firmSegs(cp);
+      if(!F)F=firmMake(s,c,i,cp,D.mo);if(F.st==='dead')return;const segs=firmSegs(cp);
       // --- счёт месяца ---
       let rev=0,hrev=0,gross=0,fixed=0,units=0;
-      segs.forEach(g=>{const u=(x.lg&&x.lg[g])||0,P=prefP(g,c,s),pk=F.pk[g]||1,wh=WH[g]&&WH[g][i]||0,hu=HS[g]*wh,c0=firmCost0(g,wh||0.02,MU),z=mk.segs[g];
+      segs.forEach(g=>{const u=(x.lg&&x.lg[g])||0,P=prefP(g,c,s),pk=F.pk[g]||1,wh=WH[g]&&WH[g][i]||0,hu=HS[g]*wh,c0=firmCost0(g,wh||0.02,MU),z=SG[g];
         units+=u;rev+=u*P*pk;hrev+=hu*P;gross+=u*P*(pk-c0*firmCostK(F,t));fixed+=hu*P*Math.max(0.02,1-c0-FIRM_NET);
         // rg — продажи против обычных для марки (за год), rs — доля класса против её доли по истории (за полгода)
         F.rg[g]=hu>0.05?(F.rg[g]==null?1:F.rg[g])*11/12+Math.min(4,u/hu)/12:1;F.sh[g]=z&&z.size>0?Math.min(0.95,u/z.size):0;
@@ -9013,29 +9131,39 @@ function firmsMonth(s,r){if(!firmsOn(s))return;s.firms=s.firms||{};const t=mi(s)
       F.r12=(F.r12==null?hrev*12:F.r12)*11/12+rev;F.h12=(F.h12==null?hrev*12:F.h12)*11/12+hrev;F.p12=(F.p12==null?hrev*12*FIRM_NET:F.p12)*11/12+pft;F.u12=(F.u12==null?units*12:F.u12)*11/12+units;
       F.ld=F.h12>0?clamp((F.ld==null?1:F.ld)*0.8+0.2*(F.r12/F.h12),0.1,4):1;
       if(F.cash==null)F.cash=F.h12*0.2;F.cash+=pft>0?pft*0.5*SK.bonus:pft;   // половина прибыли уходит хозяевам и в налоги
-      if(F.h12<8000*cpi(s)||y-(cp.since||1895)<3)return;   // мастерская или новичок — пока просто живёт по истории
+      if(F.gr)F.gr=F.gr>0.02?F.gr*0.985:0;   // обида сходит наполовину за четыре года
+      if(F.h12<D.min*cpi(s)||y-(cp.since||1895)<3)return;   // мастерская или новичок — пока просто живёт по истории
+      firmGroupMonth(s,r,F,cp);   // марка в чужой группе: поток и рассрочка хозяина приходят и к ней
       // --- состояние: убытки → кредиторы → закрытие ---
       if(firmState(s,r,F,cp,i))return;
       // --- готовые программы ---
       if(F.prog&&t>=F.prog.at)firmDone(s,r,F,cp);
       if(F.capP&&t>=F.capP.at){F.capP=null;F.cap=Math.min(12,(F.cap||1)*1.6);firmNote(s,r,F,{w:1,k:'cap',t:`${firmName(s,F)}: новые цеха работают`,txt:`Завод ${firmName(s,F)} расширен: марка может выпускать в полтора раза больше.`});}
       // --- ход: живые великие марки — каждый месяц, остальные — раз в квартал ---
-      const bot=!!(s.bots&&s.bots[coKey(cp.n)]&&!s.bots[coKey(cp.n)].dead&&s.bots[coKey(cp.n)].c===c);
+      const bot=!D.mo&&!!(s.bots&&s.bots[coKey(cp.n)]&&!s.bots[coKey(cp.n)].dead&&s.bots[coKey(cp.n)].c===c);
       if(!bot&&(t+i)%3!==0)return;
       firmPrices(s,r,F,cp,i,WH,bot);
-      if(F.st==='ok'&&Math.random()<SK.iq*(bot?0.5:1))firmPlan(s,r,F,cp,i,mk,bot);});}}
-function firmState(s,r,F,cp,i){const t=mi(s),lim=F.h12*0.3,N=firmName(s,F);
-  if(F.st==='ok'){if(F.cash<-lim&&F.p12<0){F.st='bad';F.bad=0;F.prog=null;F.capP=null;firmNote(s,r,F,{w:3,k:'bad',t:`${N} несёт убытки`,txt:`${N} продаёт на ${Math.round((1-clamp(F.ld,0,1))*100)}% меньше обычного и второй год работает в убыток: долг перед банками и поставщиками — ${money(-F.cash)}. Программы новых машин остановлены. Если дела не поправятся, заводом займутся кредиторы.`});}return false;}
+      // у мотофирм жребий хода — от даты и имени, а не из общего потока случайных чисел: мир без действий игрока не сдвигается
+      if(F.st==='ok'&&(D.mo?maRnd('mf|'+c+'|'+i+'|'+t):Math.random())<SK.iq*(bot?0.5:1))firmPlan(s,r,F,cp,i,SG,bot);});}}
+function firmState(s,r,F,cp,i){const t=mi(s),lim=F.h12*0.3,N=firmName(s,F),KN=cpK(cp);
+  if(F.st==='ok'){if(F.cash<-lim&&F.p12<0){F.st='bad';F.bad=0;F.prog=null;F.capP=null;firmNote(s,r,F,{w:3,k:'bad',t:`${N} несёт убытки`,txt:`${N} продаёт на ${Math.round((1-clamp(F.ld,0,1))*100)}% меньше обычного и второй год работает в убыток: долг перед банками и поставщиками — ${money(-F.cash)}. Программы новых ${F.mo?'мотоциклов':'машин'} остановлены. Если дела не поправятся, заводом займутся кредиторы.`});}return false;}
   if(F.st==='bad'){F.bad++;
     // у великой марки есть хозяева с деньгами (касса её большой стратегии): закрывают часть долга
-    const B=s.bots&&s.bots[coKey(cp.n)];if(B&&!B.dead&&B.c===F.c&&B.cash>0&&F.cash<-lim*0.3){const x=Math.min(B.cash*0.5,-F.cash-lim*0.2);if(x>0){B.cash-=x;F.cash+=x;}}
+    const B=!F.mo&&s.bots&&s.bots[coKey(cp.n)];if(B&&!B.dead&&B.c===F.c&&B.cash>0&&F.cash<-lim*0.3){const x=Math.min(B.cash*0.5,-F.cash-lim*0.2);if(x>0){B.cash-=x;F.cash+=x;}}
+    // этап 5б: марку в группе держит касса хозяина — пока у него самого есть деньги
+    const O=firmOwner(s,F);if(O&&O.st==='ok'&&O.cash>0&&F.cash<-lim*0.3){const x=Math.min(O.cash*0.5,-F.cash-lim*0.2);if(x>0){O.cash-=x;F.cash+=x;}}
     if(F.cash>=-lim*0.3||(F.p12>0&&F.bad>=12)){F.st='ok';firmNote(s,r,F,{w:2,k:'ok',t:`${N} выбралась из долгов`,txt:`${N} снова работает с прибылью и расплатилась с кредиторами.`});return false;}
+    // этап 5б: за три месяца до кредиторов владельцы ищут покупателя — сначала предложение приходит игроку (Wolseley, 1927)
+    if(F.bad===15&&!F.mo&&!F.kf)try{maCredOffer(s,r,F,cp,i);}catch(e){console.warn('cred offer',e);}
     // полтора года убытков — завод берут кредиторы: долги списаны, слабые цеха закрыты, новому управляющему дают деньги на одну новую машину.
     // Второй раз спасают только великую марку; остальных распродают.
     if(F.bad>=18){
-      if((F.rec||0)>=1&&!B){F.st='dead';s.dead=s.dead||{};s.dead[cp.n]=t;firmNote(s,r,F,{w:5,k:'dead',t:`${N} закрыта`,txt:`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу. В 1920-е так исчезла половина американских автозаводов: в 1921 году их было 88, в 1927-м — 44.`});return true;}
-      const cut=(F.rec||0)>=1?0.85:0.75;F.rec=(F.rec||0)+1;F.st='ok';F.bad=0;F.cash=F.h12*0.1;F.pk={};F.prog=null;F.capP=null;F.turn=1;s.compK=s.compK||{};s.compK[cp.n]=Math.max(0.4,(s.compK[cp.n]||1)*cut);F.r12*=cut;F.h12*=cut;F.ld=1;F.rg={};F.rs={};
-      firmNote(s,r,F,{w:4,k:'rec',t:`${N} — в руках кредиторов`,txt:`Банки взяли ${N} под управление: долги списаны, слабые заводы закрыты, выпуск урезан на ${Math.round((1-cut)*100)}%. Новый управляющий получил деньги на одну новую машину. Так в 1910 году банкиры спасали General Motors, а в 1912-м из развалин United States Motor осталась одна Maxwell.`});return true;}
+      if(!F.mo&&!F.kf&&maCredPending(s,F,i))return false;   // игрок ещё думает над предложением кредиторов
+      // этап 5б: до кредиторов марку может купить соседняя фирма с деньгами — «концерн» с настоящей экономикой
+      if(!B&&!F.mo&&!F.kf){let done=false;try{done=firmMerge(s,r,F,cp,i);}catch(e){console.warn('merge',e);}if(done)return true;}
+      if((F.rec||0)>=1&&!B){F.st='dead';s.dead=s.dead||{};s.dead[KN]=t;firmNote(s,r,F,{w:5,k:'dead',t:`${N} закрыта`,txt:F.mo?`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу.`:`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу. В 1920-е так исчезла половина американских автозаводов: в 1921 году их было 88, в 1927-м — 44.`});return true;}
+      const cut=(F.rec||0)>=1?0.85:0.75;F.rec=(F.rec||0)+1;F.st='ok';F.bad=0;F.cash=F.h12*0.1;F.pk={};F.prog=null;F.capP=null;F.turn=1;s.compK=s.compK||{};s.compK[KN]=Math.max(0.4,(s.compK[KN]||1)*cut);F.r12*=cut;F.h12*=cut;F.ld=1;F.rg={};F.rs={};
+      firmNote(s,r,F,{w:4,k:'rec',t:`${N} — в руках кредиторов`,txt:`Банки взяли ${N} под управление: долги списаны, слабые заводы закрыты, выпуск урезан на ${Math.round((1-cut)*100)}%. Новый управляющий получил деньги на ${F.mo?'один новый мотоцикл':'одну новую машину'}.${F.mo?'':' Так в 1910 году банкиры спасали General Motors, а в 1912-м из развалин United States Motor осталась одна Maxwell.'}`});return true;}
     return false;}
   return false;}
 // цена: шаг к выгодной для фирмы цене; о заметном сдвиге — заметка
@@ -9047,16 +9175,16 @@ function firmPrices(s,r,F,cp,i,WH,bot){const t=mi(s),N=firmName(s,F),step=bot?0.
     if(firmWant(s,F,g)>FIRM_CAPX*(F.cap||1)*1.5)tg=Math.max(tg,pk+0.02);
     const nk=Math.abs(tg-pk)<0.012?pk:pk+clamp(tg-pk,-step,step);if(nk===pk)return;F.pk[g]=Math.round(nk*1000)/1000;
     const said=(F.pkSaid&&F.pkSaid[g])||1,d=F.pk[g]/said-1;if(Math.abs(d)>=0.07){(F.pkSaid=F.pkSaid||{})[g]=F.pk[g];const sh=Math.round((F.sh[g]||0)*100),mg=Math.round((F.pk[g]-firmCost0(g,wh,MU)*firmCostK(F,t))/F.pk[g]*100);
-      firmNote(s,r,F,d<0?{w:3,k:'cut',t:`${N} снижает цены на ${Math.round(-d*100)}%`,txt:`${N} снизила цены ${SEG_LOC[g]||''} ${BOT_IN[F.c]} на ${Math.round(-d*100)}%. ${firmCk(F,t)<0.97?'Себестоимость у неё упала после перестройки завода — есть что уступить.':`Её доля класса — ${sh}%: при такой доле держать прежнюю цену невыгодно.`} С машины ей остаётся ${mg}% цены.`}
+      firmNote(s,r,F,d<0?{w:3,k:'cut',t:`${N} снижает цены на ${Math.round(-d*100)}%`,txt:`${N} снизила цены ${SEG_LOC[g]||''} ${BOT_IN[F.c]} на ${Math.round(-d*100)}%. ${firmCk(F,t)<0.97?'Себестоимость у неё упала после перестройки завода — есть что уступить.':`Её доля класса — ${sh}%: при такой доле держать прежнюю цену невыгодно.`} С машины ей остаётся ${mg}% цены.${F.kf?' Так в 1922 году International Harvester ответила на «Фордзон» за 395 долларов: минус 230 долларов и плуг в придачу.':''}`}
         :{w:2,k:'up',t:`${N} поднимает цены на ${Math.round(d*100)}%`,txt:`${N} подняла цены ${SEG_LOC[g]||''} ${BOT_IN[F.c]} на ${Math.round(d*100)}%: её доля класса — ${sh}%, покупателей хватает.`});}});}
 // кто в классе впереди фирмы и чем: игрок (если у него от 5 % класса) или другая марка
-function firmLeader(s,F,g,mk){const z=mk.segs[g],t=mi(s),own={q:firmDq(F,g,t),p:-(g==='truck'?FIRM_BT:BR)*Math.log(F.pk[g]||1),b:firmDuB(s,F)};let L=null;
+function firmLeader(s,F,g,SG){const z=SG[g],t=mi(s),own={q:firmDq(F,g,t),p:-(g==='truck'||g==='farm'?FIRM_BT:BR)*Math.log(F.pk[g]||1),b:firmDuB(s,F)};let L=null;
   if(z&&z.size>0&&z.you/z.size>=0.05&&z.edge!=null){L={you:1,q:(z.edgeQ||0)-own.q,p:(z.edgeP||0)-own.p,b:(z.edgeB||0)-own.b,sh:z.you/z.size};}
-  (COMPS[F.c]||[]).forEach((cp,i)=>{if(i===F.i)return;const O=s.firms[F.c+':'+i];if(!O||O.st==='dead'||!cp.mix||!cp.mix[g]||(O.sh[g]||0)<0.05)return;
-    const q=firmDq(O,g,t)-own.q,p=-(g==='truck'?FIRM_BT:BR)*Math.log(O.pk[g]||1)-own.p,b=firmDuB(s,O)-own.b;if(q+p+b>0.1&&(!L||q+p+b>L.q+L.p+(L.b||0)))L={n:compName(cp,s),q,p,b,sh:O.sh[g]};});
+  firmList(F).forEach((cp,i)=>{if(i===F.i)return;const O=firmGet(s,F.c,i,F.mo);if(!O||O.st==='dead'||!cp.mix||!cp.mix[g]||(O.sh[g]||0)<0.05)return;
+    const q=firmDq(O,g,t)-own.q,p=-(g==='truck'||g==='farm'?FIRM_BT:BR)*Math.log(O.pk[g]||1)-own.p,b=firmDuB(s,O)-own.b;if(q+p+b>0.1&&(!L||q+p+b>L.q+L.p+(L.b||0)))L={n:compName(cp,s),q,p,b,sh:O.sh[g]};});
   return L;}
 // большой ход: одна программа за раз — модель-ответ, поток, рассрочка или расширение завода
-function firmPlan(s,r,F,cp,i,mk,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firmName(s,F),R=F.h12,can=k=>F.cash>=-R*0.3+R*k*0.5;
+function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firmName(s,F),R=F.h12,can=k=>F.cash>=-R*0.3+R*k*0.5;
   // завод не успевает: спрос на марку выше мощностей — стройка идёт отдельно от программ новых машин.
   // Удачная машина растит завод быстро: Chevrolet с моделью «490» — 13,6 тыс. машин в 1915 году, 63 тыс. в 1916-м, 126 тыс. в 1917-м
   const g0=firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
@@ -9066,28 +9194,30 @@ function firmPlan(s,r,F,cp,i,mk,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   // где потеряно больше всего: и доля класса, и сами продажи (один плохой год или чужой новый покупатель — ещё не повод)
   const RS=F.rs||{};let g=null,loss=0;firmSegs(cp).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*cp.mix[k];if(l>loss){loss=l;g=k;}});
   const turn=!!F.turn;if(turn&&!g)g=g0;
-  if(!g||(!turn&&((RS[g]||1)>(bot?0.94:0.9)||(F.rg[g]==null?1:F.rg[g])>(bot?0.97:0.95))))return;const L=firmLeader(s,F,g,mk);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
+  const gr=F.gr>0.02?F.gr:0;   // помнит обиду — на потерю доли из-за игрока отвечает раньше
+  if(!g||(!turn&&((RS[g]||1)>(bot?0.94:0.9)+0.05*gr||(F.rg[g]==null?1:F.rg[g])>(bot?0.97:0.95)+0.03*gr)))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
   // 1) машина хуже — модель-ответ
   const mdOld=F.md[g],mdAge=mdOld?t-mdOld.from:999;
-  if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g])),mon=Math.round((14+Math.random()*8)*(bot?0.8:1)),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random()),0.3,0.9);
-    F.cash-=cost;F.prog={k:'model',g,at:t+mon,cost,q:clamp(firmDq(F,g,t)+L.q*frac,0.05,1.2),frac,who,you:L.you?1:0};
-    firmNote(s,r,F,{w:2,k:'model0',t:`${N} готовит ответ ${who}`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}: машина ${who} лучше. Марка заказала новую модель за ${money(cost)} — выйдет примерно через ${mon} мес.`});return;}
+  if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g])),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);
+    F.cash-=cost;F.prog={k:'model',g,at:t+mon,cost,q:clamp(firmDq(F,g,t)+L.q*frac,0.05,1.2),frac,who,you:L.you?1:0,lq:L.q,q0:firmDq(F,g,t)};
+    if(L.you&&!F.kf)try{firmPoachEng(s,r,F,g);}catch(e){console.warn('poach eng',e);}   // этап 5б: к ответу готовятся и так — переманивают конструктора лидера
+    firmNote(s,r,F,{w:2,k:'model0',t:`${N} готовит ответ ${who}`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}: ${firmCar(F)} ${who} лучше. Марка заказала новую модель за ${money(cost)} — выйдет примерно через ${mon} мес.`});return;}
   // 2) у лидера цена ниже — перестроить завод на поток (до того как это сделали все)
-  if(L.p>=0.2&&firmCk(F,t)>=0.97&&t-(F.lineT||-999)>=96&&can(0.25)){const early=y<FIRM_LINE_Y[F.c],cost=R*0.25,mon=bot?15:18;F.cash-=cost;F.prog={k:'line',g,at:t+mon,cost,ck:early?0.8:0.9,who};
+  if(!F.mo&&!F.kf&&L.p>=0.2&&firmCk(F,t)>=0.97&&t-(F.lineT||-999)>=96&&can(0.25)){const early=y<FIRM_LINE_Y[F.c],cost=R*0.25,mon=bot?15:18;F.cash-=cost;F.prog={k:'line',g,at:t+mon,cost,ck:early?0.8:0.9,who};
     firmNote(s,r,F,{w:2,k:'line0',t:`${N} перестраивает завод`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}: у ${who} машина дешевле. Марка вкладывает ${money(cost)} в ${early?'поточное производство':'новые станки и поток'} — на это уйдёт полтора года. Так в 1924 году Opel поставил первый в Германии конвейер за миллион золотых марок.`});return;}
   // 3) у лидера громче имя — реклама и заводская команда на гонках
-  if((L.b||0)>=0.4&&L.b>=Math.max(L.q,L.p)&&!firmAd(F,t+6)&&can(0.06)){const cost=R*0.06,u=clamp(L.b*0.45,0.12,FIRM_AD);F.cash-=cost;F.prog={k:'ad',g,at:t+3,cost,u,who};
+  if(!F.kf&&(L.b||0)>=0.4&&L.b>=Math.max(L.q,L.p)&&!firmAd(F,t+6)&&can(0.06)){const cost=R*0.06,u=clamp(L.b*0.45,0.12,FIRM_AD);F.cash-=cost;F.prog={k:'ad',g,at:t+3,cost,u,who};
     firmNote(s,r,F,{w:2,k:'ad0',t:`${N} отвечает рекламой`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}: имя ${who} у всех на слуху. Марка закладывает ${money(cost)} на газеты, выставки и заводскую команду на гонках — три года кампании.`});return;}
   // 3) рассрочка — когда она в стране уже возможна, но ещё не у всех
   const FY=FIRM_FIN_Y[F.c]||[1999,1999];
-  if(y>=FY[0]&&y<FY[1]&&!firmFin(F,t)&&can(0.05)){const cost=R*0.05;F.cash-=cost;F.prog={k:'fin',g,at:t+6,cost};
+  if(!F.mo&&!F.kf&&y>=FY[0]&&y<FY[1]&&!firmFin(F,t)&&can(0.05)){const cost=R*0.05;F.cash-=cost;F.prog={k:'fin',g,at:t+6,cost};
     firmNote(s,r,F,{w:1,k:'fin0',t:`${N} готовит продажу в рассрочку`,txt:`${N} теряет покупателей и открывает кредитную контору: машину можно будет взять с первым взносом, остальное — за год. General Motors сделала это в 1919 году; к 1925-му в рассрочку продавали две трети новых машин Америки.`});return;}}
 function firmDone(s,r,F,cp){const P=F.prog,t=mi(s),y=yf(s),N=firmName(s,F),g=P.g;F.prog=null;
   if(P.k==='ad'){F.ad={u:P.u,from:t,till:t+36};firmNote(s,r,F,{w:2,k:'ad',t:`${N} — на всех афишах`,txt:`Кампания ${N} началась: полосы в газетах, стенды на выставках, заводские машины на гонках. Покупателей у марки ${BOT_IN[F.c]} станет больше примерно на ${Math.round((Math.exp(P.u)-1)*100)}% — пока кампания идёт.`});}
   else if(P.k==='model'){const life=y<1920?72:48,nm=firmModelName(cp,y),up=Math.round((Math.exp(P.q/AQ)-1)*100);F.md[g]={q:P.q,from:t,till:t+life,name:nm,who:P.who,you:P.you};
-    if(P.you)try{ownCopied(s,r,F,g);}catch(e){console.warn('own copy',e);}   // 0.51, этап 4в: с машиной игрока перенимают и его свой узел
-    firmNote(s,r,F,P.own?{w:3,k:'model',t:`${N}: новая модель${nm?` «${nm}»`:''}`,txt:`${N} вывела ${nm?`«${nm}»`:'новую машину'} ${SEG_GEN[g]||''} собственной разработки: покупатели считают её на ${up}% лучше прежних машин марки. В производстве она останется до ${Math.floor(1895+(t+life)/12)} года.`}
-      :{w:P.you?4:3,k:'model',t:`${N}: новая модель${nm?` «${nm}»`:''} — ответ ${P.who}`,txt:`${N} вывела ${nm?`«${nm}»`:'новую машину'} ${SEG_GEN[g]||''}. Инженеры разобрали машину ${P.who} и переняли ${Math.round(P.frac*100)}% её перевеса; покупатели считают новинку на ${up}% лучше прежних машин марки. В производстве она останется до ${Math.floor(1895+(t+life)/12)} года. Так в 1915 году Chevrolet вывел модель «490» против Ford T.`});}
+    if(P.you&&!F.mo&&!F.kf)try{ownCopied(s,r,F,g);}catch(e){console.warn('own copy',e);}   // 0.51, этап 4в: с машиной игрока перенимают и его свой узел
+    firmNote(s,r,F,P.own?{w:3,k:'model',t:`${N}: новая модель${nm?` «${nm}»`:''}`,txt:`${N} вывела ${nm?`«${nm}»`:F.mo?'новый мотоцикл':'новую машину'} ${F.mo?'':SEG_GEN[g]||''} собственной разработки: покупатели считают её на ${up}% лучше прежних ${F.mo?'мотоциклов':'машин'} марки. В производстве она останется до ${Math.floor(1895+(t+life)/12)} года.`}
+      :{w:P.you?4:3,k:'model',t:`${N}: новая модель${nm?` «${nm}»`:''} — ответ ${P.who}`,txt:F.kf?`${N} вывела новый трактор. Инженеры разобрали трактор ${P.who} и переняли ${Math.round(P.frac*100)}% его перевеса; фермеры считают новинку на ${up}% лучше прежних тракторов завода. В производстве она останется до ${Math.floor(1895+(t+life)/12)} года. Так International Harvester ответила «Фордзону»: сперва вал отбора мощности, потом пропашной Farmall — и обошла Форда.`:F.mo?`${N} вывела ${nm?`«${nm}»`:'новый мотоцикл'}. Инженеры разобрали мотоцикл ${P.who} и переняли ${Math.round(P.frac*100)}% его перевеса; покупатели считают новинку на ${up}% лучше прежних мотоциклов марки. В производстве она останется до ${Math.floor(1895+(t+life)/12)} года. Так шла гонка «сорок пятых»: Excelsior Super X (1925) — Indian Scout 101 (1928) — Harley-Davidson D (1929).`:`${N} вывела ${nm?`«${nm}»`:'новую машину'} ${SEG_GEN[g]||''}. Инженеры разобрали машину ${P.who} и переняли ${Math.round(P.frac*100)}% её перевеса; покупатели считают новинку на ${up}% лучше прежних машин марки. В производстве она останется до ${Math.floor(1895+(t+life)/12)} года. Так в 1915 году Chevrolet вывел модель «490» против Ford T.`});}
   else if(P.k==='line'){F.ck=P.ck;F.lineT=t;F.ckTill=Math.max(t+72,(FIRM_LINE_Y[F.c]-1895)*12+36);F.cap=Math.min(12,(F.cap||1)*1.5);
     firmNote(s,r,F,{w:4,k:'line',t:`${N} пустила поток: себестоимость −${Math.round((1-P.ck)*100)}%`,txt:`${N} закончила перестройку завода: машина обходится ей на ${Math.round((1-P.ck)*100)}% дешевле, выпуск может вырасти в полтора раза. Теперь ей выгодно снизить цену — ждите этого в ближайшие месяцы. Morris в 1921 году снизил цены на пятую часть и за три года стал первой маркой Британии.`});}
   else if(P.k==='fin'){const FY=FIRM_FIN_Y[F.c]||[1999,1999];F.fin=1;F.finTill=(FY[1]-1895)*12;
@@ -9100,16 +9230,16 @@ function firmNews(s,r){const L=r.riv||[];if(!L.length)return;L.sort((a,b)=>(b.w|
   s.rivLog=s.rivLog||[];L.forEach(n=>{s.rivLog.push({y:s.y,m:s.m,n:n.n,c:n.c,i:n.i,t:n.t,txt:n.txt,w:n.w,k:n.k});addLog(`${n.t}.`,n.c===s.country&&n.w>=3?'bad':'hist');});if(s.rivLog.length>80)s.rivLog.splice(0,s.rivLog.length-80);
   // заметка в газету: ходы на рынках, где игрок продаёт, важнее чужих
   const mine=c=>c===s.country||dealerCount(s,c)>0,top=L.filter(n=>n.w>=3).sort((a,b)=>((mine(b.c)?2:0)+b.w)-((mine(a.c)?2:0)+a.w))[0];
-  if(top){s.botNews=s.botNews||[];let t=top.t;if(s.botNews.some(x=>x.t===t))t+=` (${s.y})`;const cp=(COMPS[top.c]||[])[top.i],m=cp?compModel(cp,s):null;
+  if(top){s.botNews=s.botNews||[];let t=top.t;if(s.botNews.some(x=>x.t===t))t+=` (${s.y})`;const cp=((top.mo?MCOMPS:COMPS)[top.c]||[])[top.i],m=cp&&!top.mo?compModel(cp,s):null;
     s.botNews.push({y:s.y,m:s.m,t,txt:top.txt,img:m&&m[2]&&IMG[m[2]]?m[2]:'',n:top.bn});if(s.botNews.length>30)s.botNews.splice(0,s.botNews.length-30);}}
 /* ---------- что показать игроку ---------- */
 // фирма в цифрах — для карточки соперника
-function firmInfo(s,c,i){const F=firmGet(s,c,i),cp=(COMPS[c]||[])[i];if(!F||!cp)return null;const t=mi(s),segs=firmSegs(cp),g=segs.slice().sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
+function firmInfo(s,c,i,mo){const F=firmGet(s,c,i,mo),cp=((mo?MCOMPS:COMPS)[c]||[])[i];if(!F||!cp)return null;const t=mi(s),segs=firmSegs(cp),g=segs.slice().sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
   const wh=(compWeights(c,g,s).find(o=>o.i===i&&!o.bot)||{}).w||0.02,pk=F.pk[g]||1,cst=firmCost0(g,wh,nestMu(s))*firmCostK(F,t),M=F.md[g]&&t>=F.md[g].from&&t<F.md[g].till?F.md[g]:null;
   return {F,cp,n:compName(cp,s),g,segs,ld:F.ld==null?1:F.ld,pk,margin:(pk-cst)/pk,net:F.r12>0?F.p12/F.r12:0,cash:F.cash||0,r12:F.r12||0,h12:F.h12||0,u12:F.u12||0,ck:firmCk(F,t),fin:firmFin(F,t)>0,ad:firmAd(F,t),md:M,dq:firmDq(F,g,t),du:firmDu(s,F,g),mult:firmMult(s,F,g),cap:F.cap||1,prog:F.prog,st:F.st,rec:F.rec||0,sh:F.sh[g]||0};}
 // чем соперники класса сейчас сильнее своей истории — строки для карточки модели и «как посчитано»
-function firmClassLines(s,c,g){const out=[];if(!s.firms||!firmsOn(s))return out;const t=mi(s);
-  (COMPS[c]||[]).forEach((cp,i)=>{const F=s.firms[c+':'+i];if(!F||F.st==='dead'||!cp.mix||!cp.mix[g]||!compAlive(cp,s))return;const du=firmDu(s,F,g);if(Math.abs(du)<0.05)return;const L=[],pk=F.pk[g]||1,dq=firmDq(F,g,t);
+function firmClassLines(s,c,g){const out=[];if(!s.firms||!firmsOn(s))return out;const t=mi(s),mo=isMotoSeg(g);
+  ((mo?MCOMPS:COMPS)[c]||[]).forEach((cp,i)=>{const F=firmGet(s,c,i,mo);if(!F||F.st==='dead'||!cp.mix||!cp.mix[g]||!compAlive(cp,s))return;const du=firmDu(s,F,g);if(Math.abs(du)<0.05)return;const L=[],pk=F.pk[g]||1,dq=firmDq(F,g,t);
     if(Math.abs(pk-1)>=0.02)L.push(`цена ${pk<1?'−':'+'}${Math.round(Math.abs(1-pk)*100)}%`);if(dq>0.03)L.push(`новая модель${F.md[g].name?` «${F.md[g].name}»`:''} +${Math.round((Math.exp(dq/AQ)-1)*100)}%`);if(firmFin(F,t))L.push('рассрочка');if(firmAd(F,t)>0.05)L.push('реклама и гонки');
     out.push({n:compName(cp,s),i,du,sh:F.sh[g]||0,txt:L.join(', ')});});
   return out.sort((a,b)=>b.du*b.sh-a.du*a.sh);}
@@ -9118,33 +9248,35 @@ function firmClassHTML(s,c,g){const L=firmClassLines(s,c,g).filter(o=>o.du>0&&o.
 // ходы соперников за прошлый месяц — для полосы на главном экране
 function rivMoves(s){const r=s.last;return ((r&&r.riv)||[]).slice().sort((a,b)=>(b.w||1)-(a.w||1));}
 /* ---------- экран «Соперники»: их ход после вашего и карточки фирм ---------- */
-const RIV_ICON={model:'🚗',model0:'📐',line:'🏭',line0:'🏗',cut:'🔻',up:'🔺',fin:'💳',fin0:'💳',ad:'📣',ad0:'📣',cap:'🏭',cap0:'🏗',bad:'📉',ok:'📈',rec:'🏦',dead:'✖️',bot:'♟'};
+const RIV_ICON={merge:'🤝',offer:'🏦',poach:'🧑‍🔧',grp:'🏭',model:'🚗',model0:'📐',line:'🏭',line0:'🏗',cut:'🔻',up:'🔺',fin:'💳',fin0:'💳',ad:'📣',ad0:'📣',cap:'🏭',cap0:'🏗',bad:'📉',ok:'📈',rec:'🏦',dead:'✖️',bot:'♟'};
 function rivMine(s,c){return c===s.country||dealerCount(s,c)>0;}
 // полоса на главном экране: что соперники сделали после вашего хода (на рынках, где вы продаёте)
 function rivStrip(s){if(!s||!s.last||s.mode==='racer')return '';const L=rivMoves(s).filter(n=>rivMine(s,n.c)&&n.w>=2);if(!L.length)return '';
   const one=n=>`${RIV_ICON[n.k]||'⚔️'} ${esc(n.t)}`;
   return `<button class="ec-row riv" data-act="rivals" data-c="${L[0].c}"><i>♟</i><span><b>Ход соперников:</b> ${one(L[0])}${L.length>1?` <small>· ещё ${L.length-1}</small>`:''}</span></button>`;}
 function firmStateTxt(I){return I.st==='bad'?['в долгах','bad']:I.rec?['после кредиторов','warn']:I.net>0.03?['прибыльна','good']:I.net>-0.01?['на нуле','muted']:['в убытке','warn'];}
-function firmCardHTML(s,c,i,open){const I=firmInfo(s,c,i);if(!I)return '';const F=I.F,t=mi(s),st=firmStateTxt(I),yr=m=>Math.floor(1895+m/12),B=s.bots&&s.bots[coKey(I.cp.n)]&&s.bots[coKey(I.cp.n)].c===c;
+function firmCardHTML(s,c,i,open,mo){const I=firmInfo(s,c,i,mo);if(!I)return '';const F=I.F,t=mi(s),st=firmStateTxt(I),yr=m=>Math.floor(1895+m/12),B=!mo&&s.bots&&s.bots[coKey(I.cp.n)]&&s.bots[coKey(I.cp.n)].c===c;
   const L=[];
   L.push(`Продажи за год: <b class="num">${fmtN(Math.round(I.u12))}</b> · ${I.ld>1.05?`на ${Math.round((I.ld-1)*100)}% больше обычного`:I.ld<0.95?`<span class="warn">на ${Math.round((1-I.ld)*100)}% меньше обычного</span>`:'как обычно'}`);
-  L.push(`Цена: ${Math.abs(I.pk-1)<0.02?'обычная для класса':`<b>${I.pk<1?'−':'+'}${Math.round(Math.abs(1-I.pk)*100)}%</b> к обычной`} · с машины остаётся ${Math.round(I.margin*100)}% цены`);
+  L.push(`Цена: ${Math.abs(I.pk-1)<0.02?'обычная для класса':`<b>${I.pk<1?'−':'+'}${Math.round(Math.abs(1-I.pk)*100)}%</b> к обычной`} · с ${mo?'мотоцикла':'машины'} остаётся ${Math.round(I.margin*100)}% цены`);
   L.push(`Деньги: ${I.cash>=0?`запас ${money(I.cash)}`:`<span class="${I.st==='bad'?'bad':'warn'}">долг ${money(-I.cash)}</span>`} · прибыль за год ${I.net>=0?'':'−'}${Math.round(Math.abs(I.net)*100)}% выручки`);
-  if(I.md)L.push(`Машина: новая модель${I.md.name?` «${esc(I.md.name)}»`:''} ${yr(I.md.from)} года${I.md.who?` — ответ ${esc(I.md.who)}`:''}, на ${Math.round((Math.exp(I.dq/AQ)-1)*100)}% лучше прежних машин марки; в производстве до ${yr(I.md.till)}`);
+  if(I.md)L.push(`${mo?'Мотоцикл':'Машина'}: новая модель${I.md.name?` «${esc(I.md.name)}»`:''} ${yr(I.md.from)} года${I.md.who?` — ответ ${esc(I.md.who)}`:''}, на ${Math.round((Math.exp(I.dq/AQ)-1)*100)}% лучше прежних ${mo?'мотоциклов':'машин'} марки; в производстве до ${yr(I.md.till)}`);
   if(I.ck<0.97)L.push(`Завод: поток с ${yr(F.lineT||t)} года — себестоимость −${Math.round((1-I.ck)*100)}%`);
   if(I.cap>1.3)L.push(`Мощности: в ${(I.cap/1.15).toFixed(1).replace('.',',')} раза больше, чем в истории`);
   if(I.fin)L.push('Продаёт в рассрочку');if(I.ad>0.05)L.push(`Реклама и заводская команда на гонках — до ${yr(F.ad.till)} года`);
   const P=F.prog,pn=P?{model:'новую модель',line:'перестройку завода на поток',fin:'продажу в рассрочку',ad:'рекламную кампанию'}[P.k]:null;
   if(pn)L.push(`<b>Готовит ${pn}</b> — ${P.at-t<=1?'в ближайший месяц':`через ${P.at-t} мес.`}${P.who?` (ответ ${esc(P.who)})`:''}`);
   if(F.capP)L.push(`Строит новые цеха — через ${Math.max(1,F.capP.at-t)} мес.`);
+  try{firmCardExtra(s,F,I,L,mo);}catch(e){console.warn('firm card',e);}
   const log=(F.log||[]).slice(0,3).map(x=>`<small class="muted">${MONTHS[x.t%12]} ${yr(x.t)}: ${esc(x.txt)}</small>`).join('<br>');
-  return `<div class="tech-row" id="firm${c}${i}"><div class="row"><div><h3>${esc(I.n)}${B?' <span class="pill muted" title="великая марка: ведёт и большую стратегию — заграница, гонки, лаборатория, покупка марок">великая марка</span>':''}</h3><p class="small muted">${I.segs.map(g=>esc(SEG[g].name)).join(', ')} · доля главного класса ${pct(I.sh,0)}</p></div><span class="pill ${st[1]}">${st[0]}</span></div>
-    <p class="small" style="margin-top:4px">${L.join('<br>')}</p>${log?`<p style="margin-top:6px;line-height:1.35">${log}</p>`:''}</div>`;}
+  return `<div class="tech-row" id="firm${mo?'m':''}${c}${i}"><div class="row"><div><h3>${esc(I.n)}${B?' <span class="pill muted" title="великая марка: ведёт и большую стратегию — заграница, гонки, лаборатория, покупка марок">великая марка</span>':''}</h3><p class="small muted">${I.segs.map(g=>esc((SEG[g]||{name:g}).name)).join(', ')} · доля главного класса ${pct(I.sh,0)}</p></div><span class="pill ${st[1]}">${st[0]}</span></div>
+    <p class="small" style="margin-top:4px">${L.join('<br>')}</p>${log?`<p style="margin-top:6px;line-height:1.35">${log}</p>`:''}${firmCardBtn(s,F,I,mo)}</div>`;}
 function openRivals(c,fi){const s=G;c=c&&COUNTRIES[c]?c:s.country;const cs=Object.keys(COUNTRIES).filter(k=>rivMine(s,k)),mv=rivMoves(s),here=mv.filter(n=>n.c===c),else_=mv.filter(n=>n.c!==c&&rivMine(s,n.c)&&n.w>=3);
   const r=s.last,when=r?r.label:'';
   const mvHTML=L=>L.map(n=>`<div class="tech-row"><div class="row"><div><h3>${RIV_ICON[n.k]||'⚔️'} ${esc(n.t)}</h3><p class="small muted">${esc(n.txt)}</p></div></div></div>`).join('');
   const firms=(COMPS[c]||[]).map((cp,i)=>({cp,i,F:firmGet(s,c,i)})).filter(o=>o.F&&o.F.st!=='dead'&&!o.cp.imp&&compAlive(o.cp,s)&&(o.F.h12||0)>0).sort((a,b)=>(b.F.r12||0)-(a.F.r12||0));
-  const dead=Object.values(s.firms||{}).filter(F=>F.c===c&&F.st==='dead'&&s.dead&&s.dead[F.n]!=null).map(F=>`${esc(F.n)} (${Math.floor(1895+s.dead[F.n]/12)})`);
+  const mfirms=(MCOMPS[c]||[]).map((cp,i)=>({cp,i,F:firmGet(s,c,i,1)})).filter(o=>o.F&&o.F.st!=='dead'&&!o.cp.imp&&compAlive(o.cp,s)&&(o.F.h12||0)>=FD_MOTO.min*cpi(s)).sort((a,b)=>(b.F.r12||0)-(a.F.r12||0));
+  const dead=Object.values(s.firms||{}).filter(F=>F.c===c&&F.st==='dead'&&s.dead&&s.dead[F.mo?'m:'+F.n:F.n]!=null).map(F=>`${esc(F.n)}${F.mo?' (мотоциклы)':''} (${Math.floor(1895+s.dead[F.mo?'m:'+F.n:F.n]/12)})`);
   const old=(s.rivLog||[]).filter(n=>n.c===c&&!(n.y===s.y&&n.m===(r?((s.m+11)%12):-1))).slice(-10).reverse();
   openSheet(`<div class="row"><h2>♟ Соперники</h2><button class="btn sm" data-act="close">Закрыть</button></div>
     <p class="small muted">Каждая марка — фирма со своей ценой, своей машиной, своим заводом и своей кассой. Она ходит после вас. Её ход меняет её собственные продажи — покупателей она отбирает у соседей по классу, у вас тоже. Вычетов из вашего спроса «за долю рынка» в игре больше нет.</p>
@@ -9153,8 +9285,121 @@ function openRivals(c,fi){const s=G;c=c&&COUNTRIES[c]?c:s.country;const cs=Objec
       ${else_.length?`<p class="small muted" style="margin-top:8px">На других ваших рынках:</p>${mvHTML(else_)}`:''}</section>
     <section class="card" style="margin-top:10px"><h2>Фирмы · ${esc(COUNTRIES[c].name)}</h2>${firms.length?firms.map(o=>firmCardHTML(s,c,o.i)).join(''):'<p class="small muted">Пока это мастерские: счёт фирм начнётся, когда марки подрастут.</p>'}
       ${dead.length?`<p class="small muted" style="margin-top:8px">Закрылись в этой партии: ${dead.join(', ')}.</p>`:''}</section>
+    ${farmCardHTML(s,c)?`<section class="card" style="margin-top:10px"><h2>Тракторные заводы · ${esc(COUNTRIES[c].name)}</h2>${farmCardHTML(s,c)}</section>`:''}
+    ${mfirms.length&&(typeof lineOn!=='function'||lineOn(s,'moto'))?`<section class="card" style="margin-top:10px"><h2>Мотоциклетные фирмы · ${esc(COUNTRIES[c].name)}</h2>${mfirms.map(o=>firmCardHTML(s,c,o.i,false,1)).join('')}</section>`:''}
     ${old.length?`<section class="card" style="margin-top:10px"><h2>Раньше</h2>${old.map(n=>`<p class="small" style="margin-top:4px">${RIV_ICON[n.k]||'⚔️'} <span class="muted">${MONTHS[n.m]} ${n.y}:</span> ${esc(n.t)}</p>`).join('')}</section>`:''}`);
   if(fi!=null){const el=document.getElementById('firm'+c+fi);if(el&&el.scrollIntoView)el.scrollIntoView();}}
+
+/* ================= 0.51, этап 5б: ФИРМЫ — ГРУППЫ, ЛЮДИ, ОБИДЫ =================
+   Остаток темы 4 ТЗ. Автор (21 ноября): «Что такое концерн? Как он меняет экономику других участников процесса?» —
+   раньше «объединение в концерн» было вечным вычетом из спроса игрока. Теперь это ход фирмы:
+     • здоровая марка с деньгами покупает соседа в долгах (до того как завод возьмут кредиторы). Купленная марка остаётся отдельной
+       маркой, но за ней касса хозяина, а его поток и рассрочка приходят к ней через год-два. Меняется её экономика, а не спрос игрока;
+     • фирма, готовя ответ игроку, переманивает его главного конструктора (Fiat, 1922–1923: Бертарионе и Беккиа ушли в Sunbeam,
+       Бацци и Яно — в Alfa Romeo); удержать можно прибавкой. Переманивать у фирмы может и игрок;
+     • команда-соперник зовёт лучшего гонщика игрока, когда тот выигрывает слишком много;
+     • фирма помнит обиду (иск, переманенный инженер): дороже продаётся и раньше отвечает.
+   Образцы и источники — claude/issledovanie-sdelki-0.51.md. */
+const FIRM_MERGE_P=0.65,     // с какой вероятностью находится покупатель среди фирм, когда он есть
+  FIRM_MERGE_PRICE=0.12,     // цена марки в долгах — доля её обычной годовой выручки, плюс 60 % её долгов
+  POACH_GAP=60,              // инженера переманивают не чаще (мес.)
+  POACH_P=0.4,
+  POACH_SLOW=1.15,POACH_SLOW_M=18,   // ушёл главный конструктор: проекты КБ идут дольше
+  POACH_GAIN=0.9,POACH_GAIN_M=24,    // переманили чужого: проекты КБ идут быстрее
+  POACH_FRAC=0.15,           // модель-ответ фирмы перенимает на столько больше перевеса игрока
+  STAR_GAP=36,STAR_WIN=0.4;  // лучшего гонщика зовут, когда игрок выиграл больше этой доли гонок года
+const MERGE_SAY={us:'Так в 1928 году Chrysler купил Dodge и одним ходом встал рядом с Ford и General Motors.',uk:'Так в 1927 году Моррис купил Wolseley у управляющего по банкротству, перебив на торгах Остина.',
+  de:'Так в 1926 году Daimler и Benz, по отдельности не тянувшие кризис, слились в Daimler-Benz.',fr:'Так в 1925 году Citroën забрал заводы Mors.'};
+function buffSet(s,k,v,mo){const B=s.sagaB=s.sagaB||{},now=mi(s),o=B[k];if(o&&now<o.until){o.v=o.v*v;o.until=Math.max(o.until,now+mo);}else B[k]={v,until:now+mo};}
+/* ---------- группа: марка под крышей другой фирмы ---------- */
+function firmGroupMonth(s,r,F,cp){const O=firmOwner(s,F);if(!O)return;const t=mi(s);
+  if(O.st==='dead'){F.own=null;return;}
+  if(t-(F.ownT||0)>=24&&firmCk(O,t)<0.97&&firmCk(F,t)>=0.97){F.ck=(1+O.ck)/2;F.lineT=t;F.ckTill=O.ckTill;
+    firmNote(s,r,F,{w:3,k:'line',t:`${firmName(s,F)}: завод перестроен по образцу ${firmName(s,O)}`,txt:`${firmName(s,O)} перенесла свой поток на завод ${firmName(s,F)}: себестоимость там упала на ${Math.round((1-F.ck)*100)}%. Отдельно ${firmName(s,F)} на это денег не нашла бы.`});}
+  if(t-(F.ownT||0)>=12&&firmFin(O,t)&&!firmFin(F,t)){F.fin=1;F.finTill=O.finTill;
+    firmNote(s,r,F,{w:2,k:'fin',t:`${firmName(s,F)} продаёт в рассрочку`,txt:`Кредитная контора ${firmName(s,O)} теперь работает и на ${firmName(s,F)}: машину можно взять с первым взносом.`});}}
+// марка в долгах: до кредиторов её покупает соседняя фирма с деньгами
+function firmMerge(s,r,F,cp,i){if(!firmsOn(s)||F.own!=null||F.mo)return false;const t=mi(s),R=F.h12,debt=Math.max(0,-F.cash),need=R*FIRM_MERGE_PRICE+debt*0.6;
+  let O=null,oi=-1;(COMPS[F.c]||[]).forEach((c2,j)=>{if(j===i)return;const X=firmGet(s,F.c,j);if(!X||X.st!=='ok'||X.own!=null||holdOf(s,F.c,j))return;if(X.h12<R*0.6||X.cash<need*1.2)return;if(!O||X.cash>O.cash){O=X;oi=j;}});
+  if(!O||Math.random()>FIRM_MERGE_P)return false;
+  O.cash-=need;F.cash=R*0.05;F.st='ok';F.bad=0;F.own=oi;F.ownT=t;F.turn=1;F.prog=null;F.capP=null;F.pk={};F.rg={};F.rs={};(O.grp=O.grp||[]).push(i);
+  const ON=firmName(s,O),N=firmName(s,F),n=O.grp.length+1;
+  firmNote(s,r,O,{w:4,k:'merge',t:`${ON} покупает ${N}`,txt:`${N} не выбралась из долгов, и её купила ${ON} — за ${money(need)}, считая долги. ${N} остаётся отдельной маркой, но теперь за ней касса ${ON}: закрыть её стало труднее, а поток и рассрочка хозяина придут и на её завод. Под одной крышей — ${n} ${plural(n,'марка','марки','марок')}. ${MERGE_SAY[F.c]||''}`});
+  return true;}
+/* ---------- люди ---------- */
+function poachCost(s){return Math.max(2000*cpi(s),Math.round((rdUpkeep(s)||0)*6/100)*100);}
+// фирма, готовя ответ игроку, зовёт его главного конструктора
+function firmPoachEng(s,r,F,g){if(F.mo||DIF().simple||s.mode==='racer'||s.over||s.pending.length||s.poachEng)return false;const t=mi(s);
+  if(!s.rd||(s.rd.lvl||0)<2||t-(s.poachEngT??-999)<POACH_GAP||F.cash<=0||Math.random()>POACH_P)return false;
+  const N=firmName(s,F),cost=poachCost(s);s.poachEngT=t;s.poachEng={c:F.c,i:F.i,n:N,cost,g};
+  pushEvent({kicker:'КБ',own:1,title:`${N} переманивает вашего главного конструктора`,deck:`удержать — ${money(cost)}`,
+    text:`${N} готовит ответ вашей машине и начала с людей: вашему главному конструктору предложили вдвое больше и свой отдел.\nУдержать его можно прибавкой и премией — ${money(cost)} сразу. Отпустите — проекты вашего КБ полтора года будут идти на ${Math.round((POACH_SLOW-1)*100)}% дольше, а новая модель ${N} переймёт заметно больше вашего перевеса.\nТак в 1922–1923 годах лучшие инженеры Fiat ушли к соперникам: Бертарионе и Беккиа — в Sunbeam («английский Фиат» выиграл Гран-при Франции 1923 года), Бацци и Яно — в Alfa Romeo. Яно получал 1800 лир в месяц; ему предложили 3500.`,
+    choices:[[`Удержать: ${money(cost)}`,'eng:keep'],['Отпустить','eng:let']]},false);return true;}
+function engResolve(s,key){const P=s.poachEng;if(!P)return;s.poachEng=null;const F=firmGet(s,P.c,P.i);
+  if(key==='eng:keep'&&s.cash>=P.cost){s.cash-=P.cost;addLog(`Главный конструктор остаётся: прибавка и премия — ${money(P.cost)}.`,'good');return;}
+  buffSet(s,'devTime',POACH_SLOW,POACH_SLOW_M);
+  if(F&&F.prog&&F.prog.k==='model'&&F.prog.you){const Pg=F.prog;Pg.frac=Math.min(0.95,Pg.frac+POACH_FRAC);Pg.q=clamp((Pg.q0||0)+(Pg.lq||0)*Pg.frac,0.05,1.2);Pg.poach=1;}
+  addLog(`${key==='eng:keep'?'Денег на прибавку не нашлось — главный':'Главный'} конструктор ушёл в ${P.n}. Проекты КБ полтора года идут дольше; новая модель ${P.n} переймёт больше вашего перевеса.`,'bad');}
+// игрок переманивает инженера у фирмы (кнопка в карточке соперника)
+function rivPoachCost(s,F){return Math.round(Math.max(5000*cpi(s),(F.h12||0)*0.01)/1000)*1000;}
+function rivPoachCan(s,F){return !!(F&&!F.mo&&F.st!=='dead'&&s.rd&&(s.rd.lvl||0)>=2&&mi(s)-(s.poachMyT??-999)>=POACH_GAP&&((F.prog&&F.prog.k==='model')||Object.values(F.md||{}).some(M=>M&&mi(s)<M.till)));}
+function rivPoach(s,c,i){const F=firmGet(s,c,i);if(!rivPoachCan(s,F))return false;const cost=rivPoachCost(s,F);if(s.cash<cost)return false;const t=mi(s),N=firmName(s,F);
+  s.cash-=cost;s.poachMyT=t;buffSet(s,'devTime',POACH_GAIN,POACH_GAIN_M);F.lostT=t;F.gr=Math.min(1,(F.gr||0)+0.35);F.grWhy=`переманили инженера, ${s.y}`;
+  if(F.prog&&F.prog.k==='model'){F.prog.at+=6;F.prog.frac=Math.max(0.3,F.prog.frac-0.1);if(F.prog.q0!=null)F.prog.q=clamp(F.prog.q0+(F.prog.lq||0)*F.prog.frac,0.05,1.2);}
+  addLog(`Ведущий инженер ${N} перешёл в ваше КБ за ${money(cost)}: два года проекты идут на ${Math.round((1-POACH_GAIN)*100)}% быстрее. Следующая модель ${N} задержится на полгода. Обиду там запомнят.`,'good');return true;}
+// раз в год: команда-соперник зовёт лучшего гонщика, если игрок выигрывает слишком много
+function firmsPeople(s,r){if(s.m!==10||DIF().simple||s.mode==='racer'||s.over||s.pending.length||s.poachNow||!(s.drivers||[]).length)return;const t=mi(s);
+  if(t-(s.poachStarT??-999)<STAR_GAP)return;const Y=(s.raceLog||[]).filter(x=>x.y===s.y&&x.cls!=='moto');if(Y.length<4)return;const W=Y.filter(x=>x.place===1);if(W.length/Y.length<STAR_WIN)return;
+  if(maRnd('star|'+s.y+'|'+s.company)>0.6)return;
+  const cnt={};W.forEach(x=>{if(x.drv)cnt[x.drv]=(cnt[x.drv]||0)+1;});const D=s.drivers.map(id=>DRIVERS.find(d=>d.id===id)).filter(Boolean);if(!D.length)return;
+  D.sort((a,b)=>((cnt[b.n]||0)-(cnt[a.n]||0))||(b.sk-a.sk));const d=D[0];
+  const T=RACE_TEAMS.filter(x=>x.from<=s.y&&x.to>=s.y&&!pkIs(x,s)).sort((a,b)=>b.str-a.str).slice(0,3),tm=T.length?T[Math.floor(maRnd('star2|'+s.y)*T.length)]:{n:'соперники'};
+  const cost=Math.round(driverSalary(d,s)*12/10)*10;s.poachStarT=t;s.poachNow={id:d.id,team:tm.n,cost};
+  pushEvent({kicker:'Команда',title:`${tm.n} зовёт к себе ${d.n}`,deck:`вы выиграли ${W.length} из ${Y.length} гонок года — соперники отвечают`,img:IMG[DRIVER_WIKI[d.id]]?DRIVER_WIKI[d.id]:'',imgCap:d.n,
+    text:`Вы выиграли ${W.length} из ${Y.length} гонок сезона, и команда ${tm.n} решила не догонять вашу машину, а купить вашего гонщика: ${d.n} предложили контракт вдвое дороже.\nУдержать его можно прибавкой и премией — ${money(cost)} сразу. Иначе в следующем сезоне он выйдет на старт против вас.`,
+    choices:[[`Удержать: ${money(cost)}`,'poachKeep'],['Отпустить','poachLet']]},false);}
+/* ---------- карточка фирмы: группа, обида, кнопка ---------- */
+function firmCardExtra(s,F,I,L,mo){const O=firmOwner(s,F);if(O)L.push(`Принадлежит <b>${esc(firmName(s,O))}</b> с ${Math.floor(1895+(F.ownT||0)/12)} года: за ней касса хозяина`);
+  if(F.grp&&F.grp.length){const N=F.grp.map(j=>firmGet(s,F.c,j,mo)).filter(X=>X&&X.own===F.i&&X.st!=='dead').map(X=>esc(firmName(s,X)));if(N.length)L.push(`Группа: владеет ${N.join(', ')}`);}
+  if(F.gr>0.1)L.push(`<span class="warn">Помнит обиду</span>${F.grWhy?` (${esc(F.grWhy)})`:''}: дороже продаётся и раньше отвечает на ваши ходы`);
+  if(F.prog&&F.prog.poach)L.push('Над новой моделью работает ваш бывший главный конструктор');}
+function firmCardBtn(s,F,I,mo){if(mo||!rivPoachCan(s,F))return '';const c=rivPoachCost(s,F);
+  return `<button class="btn sm" style="margin-top:6px" data-act="rivPoach" data-c="${F.c}" data-i="${F.i}" ${s.cash<c?'disabled':''}>Переманить инженера · ${money(c)}</button>`;}
+/* ---------- тракторные заводы: фирма и в «своём» пуле фермеров ----------
+   На этапе 4 у тракторов соперник был «эталон из истории» — безымянный и неподвижный. Теперь у ведущего тракторного завода страны
+   та же экономика, что у марок: цена, модель-ответ, завод, касса. Образец — тракторная война 1922 года: Форд снизил цену «Фордзона»
+   с 625 до 395 долларов; International Harvester ответила ценой, потом машиной (вал отбора мощности, Farmall) и обошла Форда.
+   Ведущему заводу отдана половина продаж соперников; остальные идут за ним с половинной силой (как мелкие марки в классах). */
+const FARM_SH=0.5,
+  FARM_FIRM={us:['International Harvester','J. I. Case'],uk:['Austin (тракторы)','Saunderson'],fr:['Renault (тракторы)','Latil'],de:['Lanz','Hanomag'],it:['FIAT (тракторы)','Pavesi'],ru:['Путиловский завод','Харьковский паровозный']};
+function farmName(s,c){const L=FARM_FIRM[c]||['Тракторный завод'],w=String(L[0]).split(/[\s(]/)[0].toLowerCase(),co=String((s&&s.company)||'').toLowerCase();return w&&co.includes(w)?L[1]||L[0]:L[0];}
+function farmCp(c,n){return {n:n||'Тракторный завод',fk:'k:'+c+':farm',since:1900,mix:{farm:1},models:[]};}
+function farmGet(s,c){return s&&s.firms?s.firms['k:'+c+':farm']:null;}
+// во сколько раз соперники в тракторах привлекательнее своей истории (ведущий завод и те, кто идёт за ним)
+function farmMult(s,c){const F=farmGet(s,c);if(!F||F.st==='dead'||!firmsOn(s))return 1;const m=firmMult(s,F,'farm');return Math.max(0.2,1+(m-1)*(FARM_SH+(1-FARM_SH)*FIRM_FOLLOW));}
+function firmsFarm(s,r){const t=mi(s),SK=firmSkill(),MU=nestMu(s);
+  for(const c in (r.mk||{})){const Z=r.mk[c]&&r.mk[c].farm;if(!Z||!(Z.h>0))continue;let F=farmGet(s,c);
+    if(!F){if(Z.hrev*12*FARM_SH<FD_MOTO.min*cpi(s))continue;F=s.firms['k:'+c+':farm']={c,i:'farm',kf:1,n:farmName(s,c),pk:{},md:{},ck:1,cap:1.15,fin:0,st:'ok',bad:0,log:[],rg:{},sh:{}};}
+    if(F.st==='dead')continue;const cp=farmCp(c,F.n),g='farm',u=Z.riv*FARM_SH,hu=Z.h*FARM_SH,P=Z.h>0?Z.hrev/Z.h:0,pk=F.pk[g]||1,c0=firmCost0(g,FARM_SH,MU),tot=Z.riv+Z.you;
+    const rev=u*P*pk,hrev=hu*P,gross=u*P*(pk-c0*firmCostK(F,t)),fixed=hrev*Math.max(0.02,1-c0-FIRM_NET),pft=gross-fixed;
+    F.rg[g]=hu>0.05?(F.rg[g]==null?1:F.rg[g])*11/12+Math.min(4,u/hu)/12:1;F.sh[g]=tot>0?u/tot:0;(F.rs=F.rs||{})[g]=tot>0?(F.rs[g]==null?1:F.rs[g])*5/6+Math.min(4,(Z.riv/tot))/6:1;
+    F.r12=(F.r12==null?hrev*12:F.r12)*11/12+rev;F.h12=(F.h12==null?hrev*12:F.h12)*11/12+hrev;F.p12=(F.p12==null?hrev*12*FIRM_NET:F.p12)*11/12+pft;F.u12=(F.u12==null?u*12:F.u12)*11/12+u;
+    F.ld=F.h12>0?clamp((F.ld==null?1:F.ld)*0.8+0.2*(F.r12/F.h12),0.1,4):1;if(F.cash==null)F.cash=F.h12*0.2;F.cash+=pft>0?pft*0.5*SK.bonus:pft;if(F.gr)F.gr=F.gr>0.02?F.gr*0.985:0;
+    if(F.h12<FD_MOTO.min*cpi(s))continue;
+    if(firmState(s,r,F,cp,'farm'))continue;
+    if(F.prog&&t>=F.prog.at)firmDone(s,r,F,cp);
+    if(F.capP&&t>=F.capP.at){F.capP=null;F.cap=Math.min(12,(F.cap||1)*1.6);}
+    if(t%3!==0)continue;
+    firmPrices(s,r,F,cp,'farm',{farm:{farm:FARM_SH}},false);
+    if(F.st==='ok'&&maRnd('kf|'+c+'|'+t)<SK.iq)firmPlan(s,r,F,cp,'farm',{farm:{size:tot,you:Z.you,edge:Z.edge,edgeQ:Z.edgeQ||0,edgeP:Z.edgeP||0,edgeB:Z.edgeB||0}},false);}}
+function farmCardHTML(s,c){const F=farmGet(s,c);if(!F||F.st==='dead'||!(F.h12>0))return '';const t=mi(s),g='farm',pk=F.pk[g]||1,yr=m=>Math.floor(1895+m/12),M=F.md[g]&&t>=F.md[g].from&&t<F.md[g].till?F.md[g]:null,net=F.r12>0?F.p12/F.r12:0,L=[];
+  L.push(`Продажи за год: <b class="num">${fmtN(Math.round(F.u12||0))}</b> тракторов · ${F.ld>1.05?`на ${Math.round((F.ld-1)*100)}% больше обычного`:F.ld<0.95?`<span class="warn">на ${Math.round((1-F.ld)*100)}% меньше обычного</span>`:'как обычно'}`);
+  L.push(`Цена: ${Math.abs(pk-1)<0.02?'обычная':`<b>${pk<1?'−':'+'}${Math.round(Math.abs(1-pk)*100)}%</b> к обычной`}`);
+  L.push(`Деньги: ${F.cash>=0?`запас ${money(F.cash)}`:`<span class="${F.st==='bad'?'bad':'warn'}">долг ${money(-F.cash)}</span>`} · прибыль за год ${net>=0?'':'−'}${Math.round(Math.abs(net)*100)}% выручки`);
+  if(M)L.push(`Трактор: новая модель ${yr(M.from)} года${M.who?` — ответ ${esc(M.who)}`:''}, на ${Math.round((Math.exp(firmDq(F,g,t)/AQ)-1)*100)}% лучше прежних; в производстве до ${yr(M.till)}`);
+  if(F.prog&&F.prog.k==='model')L.push(`<b>Готовит новую модель</b> — ${F.prog.at-t<=1?'в ближайший месяц':`через ${F.prog.at-t} мес.`}${F.prog.who?` (ответ ${esc(F.prog.who)})`:''}`);
+  const st=F.st==='bad'?['в долгах','bad']:net>0.03?['прибыльна','good']:['на нуле','muted'];
+  return `<div class="tech-row" id="firmk${c}"><div class="row"><div><h3>${esc(F.n)}</h3><p class="small muted">тракторы · ведущий завод страны, за ним идут остальные</p></div><span class="pill ${st[1]}">${st[0]}</span></div><p class="small" style="margin-top:4px">${L.join('<br>')}</p></div>`;}
 
 /* ================= ВЫСТАВКИ: стенд за деньги — репутация, заказы, дилеры, медали ================= */
 // Настоящие выставки эпохи: даты, места и цифры — по истории Парижского салона, IAA, SMMT, Нью-Йоркской выставки и спискам
@@ -16831,7 +17076,7 @@ function vPlant(){
   const addQ=Math.max(2,Math.round(s.cap*0.25)),addH=Math.max(4,s.cap),ml=maxLoan(s),step=Math.max(1000,Math.round(ml/10/1000)*1000);
   const pl=L?`<table class="pl"><tr><td>Продажи (без скидки дилерам ${Math.round(dMargin(s)*100)}%)</td><td class="n">${money(L.rev)}</td></tr>${airPLRows(L)}${aePLRow(L)}${L.mil?`<tr><td>Военный заказ (${L.milX?`машин армии — ${fmtN(L.milN)}, военной продукции — ${fmtN(L.milX)} шт.`:`${fmtN(L.milN)} шт.`})</td><td class="n">${money(L.mil)}</td></tr>`:''}
     ${L.ord?`<tr><td>Заказы ведомств и фирм (${fmtN(L.ordN)} шт.)</td><td class="n">${money(L.ord)}</td></tr>`:''}${L.dump?`<tr><td>Распродажа излишков склада (${fmtN(L.dumpN)} шт.)</td><td class="n">${money(L.dump)}</td></tr>`:''}
-    ${L.div>1?`<tr><td>Дивиденды дочерних компаний <span class="small muted">(${subList(s).map(h=>esc(h.nm||h.n)+' '+Math.round(h.st*100)+'%').join(', ')})</span></td><td class="n">${money(L.div)}</td></tr>`:''}<tr><td>Детали и материалы</td><td class="n">−${money(L.mat)}</td></tr>${L.adm>1?`<tr><td><button class="linkbtn xrow" data-act="xadm" aria-label="Контора: как посчитано">Контора: управление и сбыт<i class="xi">i</i></button>${L.admK?` <span class="small muted">(${pct(L.admK,1)} выручки: чем больше выпуск, стран и моделей, тем дороже управление)</span>`:''}</td><td class="n">−${money(L.adm)}</td></tr>`:''}<tr><td>Зарплата</td><td class="n">−${money(L.wage)}</td></tr><tr><td>Содержание завода</td><td class="n">−${money(L.ovh)}</td></tr>
+    ${L.div>1?`<tr><td>Дивиденды дочерних компаний <span class="small muted">(${subList(s).map(h=>esc(h.nm||h.n)+' '+Math.round(h.st*100)+'%').join(', ')})</span></td><td class="n">${money(L.div)}</td></tr>`:''}${L.maBur>1?`<tr><td>Купленные марки: долги и убытки первых лет</td><td class="n">−${money(L.maBur)}</td></tr>`:''}<tr><td>Детали и материалы</td><td class="n">−${money(L.mat)}</td></tr>${L.adm>1?`<tr><td><button class="linkbtn xrow" data-act="xadm" aria-label="Контора: как посчитано">Контора: управление и сбыт<i class="xi">i</i></button>${L.admK?` <span class="small muted">(${pct(L.admK,1)} выручки: чем больше выпуск, стран и моделей, тем дороже управление)</span>`:''}</td><td class="n">−${money(L.adm)}</td></tr>`:''}<tr><td>Зарплата</td><td class="n">−${money(L.wage)}</td></tr><tr><td>Содержание завода</td><td class="n">−${money(L.ovh)}</td></tr>
     ${L.dlr?`<tr><td><button class="linkbtn xrow" data-act="xdlr" aria-label="Дилерская сеть: как посчитано">Дилерская сеть<i class="xi">i</i></button></td><td class="n">−${money(L.dlr)}</td></tr>`:''}<tr><td>Реклама</td><td class="n">−${money(L.ad)}</td></tr>${L.rd?`<tr><td>Конструкторское бюро${L.rdp?`<br><span class="small muted">из них проекты: ${money(L.rdp)}</span>`:''}</td><td class="n">−${money(L.rd)}</td></tr>`:''}${L.drv?`<tr><td>Гонщики</td><td class="n">−${money(L.drv)}</td></tr>`:''}${L.team?`<tr><td>Гоночная команда</td><td class="n">−${money(L.team)}</td></tr>`:''}
     ${L.sto>1?`<tr><td>Склад</td><td class="n">−${money(L.sto)}</td></tr>`:''}${L.war>1?`<tr><td>Гарантийный ремонт</td><td class="n">−${money(L.war)}</td></tr>`:''}${L.fin?`<tr><td>Кредит покупателям: комиссия банкам<br><span class="small muted">в рассрочку куплено машин на ${money(L.finCr||0)}: деньги покупателям дают банки и финансовые дома — за это они берут около 6% суммы. Можно кредитовать покупателей самим — «Кредит покупателям» ниже.</span></td><td class="n">−${money(L.fin)}</td></tr>`:''}${L.finInc>1?`<tr><td>Своя кредитная компания: проценты с покупателей</td><td class="n good">+${money(L.finInc)}</td></tr>`:''}${L.finBad>1?`<tr><td>Невозвраты по рассрочке</td><td class="n">−${money(L.finBad)}</td></tr>`:''}${L.invInc>1?`<tr><td>Доход от вложений<br><span class="small muted">${[L.invB>1?'купоны облигаций '+money(L.invB):'',L.invD>1?'дивиденды по акциям '+money(L.invD):''].filter(Boolean).join(' · ')}</span></td><td class="n good">+${money(L.invInc)}</td></tr>`:''}${L.prm>1?`<tr><td>Спецакции: реклама и пробеги</td><td class="n">−${money(L.prm)}</td></tr>`:''}${L.promo>1?`<tr><td>Спецакции: скидки покупателям</td><td class="n">−${money(L.promo)}</td></tr>`:''}${L.tool?`<tr><td>Оснастка новых моделей</td><td class="n">−${money(L.tool)}</td></tr>`:''}${L.hire>1?`<tr><td>Найм и обучение</td><td class="n">−${money(L.hire)}</td></tr>`:''}${L.turn>1?`<tr><td>Текучесть: замена ушедших (${fmtN(s.quitN||0)} чел.)</td><td class="n">−${money(L.turn)}</td></tr>`:''}${L.fine?`<tr><td>Неустойка по заказам</td><td class="n">−${money(L.fine)}</td></tr>`:''}${L.legal?`<tr><td>Патенты и суды</td><td class="n">−${money(L.legal)}</td></tr>`:''}${L.licIn?`<tr><td>Отчисления вам за патенты</td><td class="n good">+${money(L.licIn)}</td></tr>`:''}
     ${L.tax-(L.wtax||0)>1?`<tr><td>Налог на прибыль${L.trate?` (${Math.round(L.trate*100)}%)`:''}</td><td class="n">−${money(L.tax-(L.wtax||0))}</td></tr>`:''}${L.invSh>1||(typeof bbShare==='function'&&bbShare(s)>0)?`<tr><td>Доля партнёров и совладельцев${(s.partners||[]).length?` <span class="small muted">(${(s.partners||[]).map(p=>esc(p.n)+' '+Math.round(p.sh*100)+'%').join(', ')})</span>`:''}${typeof bbShare==='function'&&bbShare(s)>0?' <button class="btn sm" data-act="bbOpen">Выкупить</button>':''}</td><td class="n">${L.invSh>1?'−'+money(L.invSh):'—'}</td></tr>`:''}${L.wtax>1||L.wtaxAcc>1?(()=>{const W=warTaxOf(s);return `<tr><td>Военный ${W?W.name.replace(/^военный /,''):'налог на сверхприбыль'}${L.wtaxBack>1?` <span class="small">(с долгом задним числом ${money(L.wtaxBack)})</span>`:''}<br><span class="small muted">${L.wtaxAcc>1&&!(L.wtax>1)?`Закон ещё не принят, но налог считают с начала войны — в этом месяце набежало ${money(L.wtaxAcc)}, всего ${money(s.wtaxDue||0)}. `:''}${W?esc(W.why):''}</span></td><td class="n">${L.wtax>1?'−'+money(L.wtax):'—'}</td></tr>`;})():''}${L.int?`<tr><td>Проценты по кредиту</td><td class="n">−${money(L.int)}</td></tr>`:''}<tr class="tot"><td>Итог за ${L.label}</td><td class="n ${L.profit>=0?'good':'bad'}">${money(L.profit)}</td></tr>
@@ -31811,6 +32056,7 @@ const ACT={
   ownGoal:d=>{if(!ownDraft)return;ownDraft.goal=d.g;ownRe();},ownGl:d=>{if(!ownDraft)return;ownDraft.gl=+d.n;ownRe();},
   ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
   ownPat:d=>{if(ownPatent(G,d.id)){save();openOwn(null);render();}else toast('Не хватает денег на патент');},
+  ownLic:d=>{if(ownLicSell(G,d.id)){toast('Лицензия продана');save();openOwn(null);render();}else toast('Покупателя на лицензию нет');},/* 0.51, этап 5б */
   aeOpen:()=>{aeDraft=null;openAeng();},aeType:d=>{aeDraft.type=d.k;aeDraft.name='';aeRe();},aeGoal:d=>{aeDraft.goal=d.g;aeDraft.name='';aeRe();},aeGl:d=>{aeDraft.gl=+d.n;aeDraft.name='';aeRe();},
   aeStart:()=>{if(!aeDraft)return;aeKeep();if(aeStart(G,aeDraft)){aeDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
   aeSale:d=>{const x=(G.aeng||[]).find(q=>q.id===d.id);if(x){x.sale=x.sale?0:1;save();openOwn(null);}},
@@ -31898,7 +32144,8 @@ const ACT={
   sagaReplay:d=>{closeSheet();sagaPlay(d.k,true);},
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
-  rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},/* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
+  rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},
+  rivPoach:d=>{if(rivPoach(G,d.c,+d.i)){toast('Инженер перешёл в ваше КБ');save();render();openRivals(d.c,+d.i);}else toast('Не вышло: не хватает денег или рано');},/* 0.51, этап 5б *//* 0.51, этап 5: соперники — ход за месяц и карточки фирм */
   troRace:()=>{openRaceResult();},
   gq:d=>{AU.on.gq=d.v;auApply();openSettings();toast({eco:'Графика: экономно',hd:'Графика: HD',cine:'Графика: кино — максимум деталей'}[d.v]||'Графика');},
   demoToggle:()=>{AU.on.demo=AU.on.demo===false;auApply();openSettings();if(AU.on.demo===false&&typeof demoStop==='function')demoStop(true);},
