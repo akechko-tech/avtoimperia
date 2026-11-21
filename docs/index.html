@@ -1048,6 +1048,17 @@ body.flying{overflow:hidden}
 #flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
 #flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}
 #flyScreen .f-mark.under b{display:none}
+/* 0.51: воздушный бой — метка врага (ромб, за краем — стрелка), прицел и упреждение, «враг на хвосте» */
+#flyScreen .f-foe{position:absolute;z-index:5;width:0;height:0;pointer-events:none}#flyScreen .f-foe[hidden]{display:none}
+#flyScreen .f-foe i{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border:2px solid #ff6a5a;box-shadow:0 0 6px rgba(0,0,0,.6)}
+#flyScreen .f-foe.edge i{border:none;box-shadow:none;width:0;height:0;left:-11px;top:-11px;border-left:22px solid #ff6a5a;border-top:11px solid transparent;border-bottom:11px solid transparent;transform-origin:11px 11px;filter:drop-shadow(0 0 3px rgba(0,0,0,.8))}
+#flyScreen .f-foe b{position:absolute;left:19px;top:-8px;white-space:nowrap;font-size:11px;font-weight:700;color:#ffb0a4;text-shadow:0 1px 2px #000}
+#flyScreen .f-foe.hot i{animation:fFoeHot .45s infinite alternate}@keyframes fFoeHot{from{opacity:1}to{opacity:.35}}
+#flyScreen .f-lead{position:absolute;z-index:5;width:0;height:0;pointer-events:none}#flyScreen .f-lead[hidden]{display:none}
+#flyScreen .f-lead i{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid #ffd27a;box-shadow:0 0 4px rgba(0,0,0,.7)}
+#flyScreen .f-lead.lock i{border-color:#9fe39a;background:rgba(159,227,154,.3)}
+#flyScreen .f-gun{position:absolute;z-index:5;width:18px;height:18px;margin:-9px 0 0 -9px;pointer-events:none;background:linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat;opacity:.8;filter:drop-shadow(0 0 2px #000)}#flyScreen .f-gun[hidden]{display:none}
+#flyScreen .f-six{position:absolute;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:7;padding:4px 12px;border-radius:8px;background:rgba(190,20,10,.85);color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;pointer-events:none;white-space:nowrap;animation:fFoeHot .45s infinite alternate}#flyScreen .f-six[hidden]{display:none}
 #flyScreen .f-load{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#0b1420;color:var(--brass);font-family:var(--display);font-size:20px}
 #flyScreen .f-load[hidden]{display:none}
 #flyScreen .f-help,#flyScreen .f-end{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:min(92%,460px);max-height:84%;overflow:auto;padding:16px 18px;border-radius:14px;background:rgba(8,16,26,.94);border:1px solid var(--line);color:var(--text);font-family:var(--body,inherit);font-size:14px;line-height:1.45}
@@ -5370,7 +5381,7 @@ function airToolCost(s,md){return Math.round((airCost(md,tNow(s),s,0).unit*2+500
 function airTestRisk(s,md,P){const A=s.air,st=airStats(md,tNow(s));return clamp(0.03+(1-st.ease)*0.16+(st.vs>95?0.05:0)+(1-P.sk)*0.14+(md.role==='race'?0.05:0)-(A.flights||0)*0.004,0.02,0.4)*(DIF().bad||1);}
 function airTestAuto(s,md,pid){const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s),risk=airTestRisk(s,md,P),r=Math.random();return airTestApply(s,md,P,r<risk*0.35?'crash':r<risk?'flaw':'ok');}
 // итог первого полёта: разбит (o.why — как), летает с изъяном, летает; o.self — летели сами в 3D (o.secs — сколько в воздухе)
-function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats(md,t);A.flights=(A.flights||0)+1;let res;
+function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats(md,t);A.flights=(A.flights||0)+1;try{xpAdd(s,'aero',1.5);xpAdd(s,'alloy',0.5);}catch(_){}/* 0.51, этап 7: лётные часы — опыт */let res;
   if(kind==='crash'){md.status='dev';md.devLeft=2;md.devT=2;const c=Math.round((md.devCost||2000)*0.4/50)*50;s.cash-=c;A.fame=Math.max(0,A.fame-3);
     if(P.hero)A.heroHurt=mi(s)+3;else if(P.id!=='test'){const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+3;}
     res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':capF(P.n)+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}
@@ -6863,7 +6874,7 @@ function trRivals(s,T){const out=[],c=T.c;
   return out.map(o=>{const brk=Math.random()<0.3;return {n:o.n,sc:o.k*Math.exp((Math.random()+Math.random()-1)*0.1)*(brk?0.85:1)*DIF().race**0.3,brk};});}
 function trialRun(s,T,E){const md=s.models.find(m=>m.id===E.md);const key=T.id+'|'+s.y;if(!md||!(md.status==='prod'||md.status==='sale')){addLog(`${T.n}: заявленной модели больше нет в серии — заявка снята.`,'bad');return null;}
   const sc0=trScore(md,T.grp,T.c,s),brk=Math.random()<trBreakP(md,s),me={n:`«${md.name}»`,sc:sc0*Math.exp((Math.random()+Math.random()-1)*0.06)*(brk?0.82:1),brk,you:1};
-  const L=[me,...trRivals(s,T)].sort((a,b)=>b.sc-a.sc),place=L.indexOf(me)+1,top=L[0].sc,scale=(1+T2(s)/10)*(T.c==='us'?1.8:1),t=mi(s);
+  const L=[me,...trRivals(s,T)].sort((a,b)=>b.sc-a.sc),place=L.indexOf(me)+1,top=L[0].sc,scale=(1+trTierOf(s)/10)*(T.c==='us'?1.8:1),t=mi(s);
   const pass=place<=3&&me.sc>=top*0.88,price=Math.round(refPrice(md,s)*1.05/10)*10;let n=0;
   if(place===1)n=Math.round((T.order[0]+Math.random()*(T.order[1]-T.order[0]))*scale);else if(pass)n=Math.round(T.order[0]*scale*0.5);else if(T.buyAll&&!brk)n=1;
   if(pass){trSet(md,T.c,'sub',{place,sc:+me.sc.toFixed(2)},s);s.rep=clamp(s.rep+(place===1?2:1),0,100);}
@@ -6873,7 +6884,7 @@ function trialRun(s,T,E){const md=s.models.find(m=>m.id===E.md);const key=T.id+'
   pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания ведомства',title:`${T.n}: ${place===1?'первое место':pass?place+'-е место, свидетельство получено':brk?'поломка в пути':place+'-е место'}`,deck:`${COUNTRIES[T.c].name} · «${md.name}»`,
     text:`${T.who} подвело итог (100 — образец года):\n${tab}\n${place===1?`Победа: заказ на ${fmtN(n)} машин по ${money(price)} и свидетельство.${sub}`:pass?`Свидетельство получено${n?`, заказ на ${fmtN(n)} машин по ${money(price)}`:''}.${sub}`:brk?`«${md.name}» встала в пути — судьи это записали.${n?'':' Свидетельства нет.'}`:`Свидетельства нет: до призёров не хватило.${n?` Машину, дошедшую до конца, казна купила (${money(price)}).`:''}`}\n${T.hist}`,choices:[['Ясно','ok']]},true);
   return {place,pass,n,brk};}
-function T2(s){return typeof T==='function'?T(s):0;}
+function trTierOf(s){return typeof T==='function'?T(s):0;}
 function trSubOn(T,y){return T.sub>0&&y>=(T.subY||T.y0)&&y<=T.y1+1;}
 /* ---------- приёмка по заявке: полигон (военная техника) и станция испытаний тракторов ---------- */
 function trTestKind(md,s){if(trMil(md))return 'mil';const k=trKind(md);if(TR_GRP.farm.kinds.includes(k)&&s.y>=TR_NEB_Y&&trSells(s,'us'))return 'neb';return null;}
@@ -8994,7 +9005,7 @@ function adviceList(s){
     if(pr12.length>=6&&act.length&&(rdU>rdUpkeepBase(s,s.rd.lvl)||tmU>0)&&rdU+tmU>Math.max(0,pA)*0.35&&(s.rd.lvl>1||(s.rdept||0)>0)){const lab=rdU>=tmU&&s.rd.lvl>1,pct=pA>0?Math.round((rdU+tmU)/pA*100):0;
       add(46,'✂️',`Бюро и гоночный отдел стоят ${money(rdU+tmU)} в месяц${pct?` — ${pct} % прибыли`:' при убытке'}. Содержание растёт с оборотом фирмы: ступень можно сократить и вернуть позже.`,lab?'Сократить бюро':'Сократить отдел',()=>lab?ACT.rdDown():RACE_ACT.rdeptDown(),lab?'models':'race');}}
   // 0.39: дела авиацеха — в том же списке (одна система управления для авто, мото и аэро)
-  if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
+  if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{try{uiLine='air';}catch(_){}const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
   return T.sort((a,b)=>b.p-a.p);
 }
 // 0.51: гонки сезона одной кнопкой — строка в «Делах»: включить, бюджет на год, что команда сделала в прошлом месяце
@@ -9056,6 +9067,7 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   if(!s.techBuild&&calm&&!lean){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}
   // реклама — около 4% выручки (в кризис — вдвое меньше)
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*(calm?0.04:0.02)))/10)*10;
+  try{airHelperMonth(s,msg,pay,reserve);}catch(e){console.warn('air helper',e);}   // 0.51, этап 7: помощник ведёт и авиацех
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}
 
 /* ================= 0.41: ЖИВЫЕ СОПЕРНИКИ =================
@@ -9410,7 +9422,7 @@ function firmCardHTML(s,c,i,open,mo){const I=firmInfo(s,c,i,mo);if(!I)return '';
   try{firmCardExtra(s,F,I,L,mo);}catch(e){console.warn('firm card',e);}
   const log=(F.log||[]).slice(0,3).map(x=>`<small class="muted">${MONTHS[x.t%12]} ${yr(x.t)}: ${esc(x.txt)}</small>`).join('<br>');
   return `<div class="tech-row" id="firm${mo?'m':''}${c}${i}"><div class="row"><div><h3>${esc(I.n)}${B?' <span class="pill muted" title="великая марка: ведёт и большую стратегию — заграница, гонки, лаборатория, покупка марок">великая марка</span>':''}</h3><p class="small muted">${I.segs.map(g=>esc((SEG[g]||{name:g}).name)).join(', ')} · доля главного класса ${pct(I.sh,0)}</p></div><span class="pill ${st[1]}">${st[0]}</span></div>
-    <p class="small" style="margin-top:4px">${L.join('<br>')}</p>${log?`<p style="margin-top:6px;line-height:1.35">${log}</p>`:''}${firmCardBtn(s,F,I,mo)}</div>`;}
+    ${typeof brandAbout==='function'&&brandAbout(I.cp)?`<p class="small muted" style="margin-top:4px">${esc(brandAbout(I.cp))}</p>`:''}<p class="small" style="margin-top:4px">${L.join('<br>')}</p>${log?`<p style="margin-top:6px;line-height:1.35">${log}</p>`:''}${firmCardBtn(s,F,I,mo)}</div>`;}
 function openRivals(c,fi){const s=G;c=c&&COUNTRIES[c]?c:s.country;const cs=Object.keys(COUNTRIES).filter(k=>rivMine(s,k)),mv=rivMoves(s),here=mv.filter(n=>n.c===c),else_=mv.filter(n=>n.c!==c&&rivMine(s,n.c)&&n.w>=3);
   const r=s.last,when=r?r.label:'';
   const mvHTML=L=>L.map(n=>`<div class="tech-row"><div class="row"><div><h3>${RIV_ICON[n.k]||'⚔️'} ${esc(n.t)}</h3><p class="small muted">${esc(n.txt)}</p></div></div></div>`).join('');
@@ -17638,7 +17650,7 @@ function render(){
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
   lastDate=ds;setCash(s.over&&s.soldTo?s.soldTo.mine:s.cash);if(s.over&&s.soldTo){const lb=document.getElementById('cashLbl');if(lb)lb.textContent='Ваши деньги';}
   // 0.37: авиатор (только аэропланы) — свои вкладки; у автомобильной фирмы — раздел авиацеха на каждой вкладке
-  airNav();document.getElementById('view').innerHTML=airOnly(s)?airView(tab):tab==='plant'?vPlant()+airPlantCard(s):tab==='models'?vModels()+airModelsCard(s):tab==='market'?vMarket()+airMarketCard(s):tab==='race'?vRace()+airSkyCard(s):vLog();
+  airNav();document.getElementById('view').innerHTML=airOnly(s)?airView(tab):airSwitchOn(s)&&tab!=='log'?lineSwitchHTML(s)+(uiLine==='air'?airSubView(s,tab):tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():vRace()):tab==='plant'?vPlant()+airPlantCard(s):tab==='models'?vModels()+airModelsCard(s):tab==='market'?vMarket()+airMarketCard(s):tab==='race'?vRace()+airSkyCard(s):vLog();
   {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log'&&!wideLand();es.classList.remove('flash');if(EC_FLASH&&!REDUCE){void es.offsetWidth;es.classList.add('flash');}}}
   document.body.dataset.tab=tab;
   if(tab==='plant')plantAnim();
@@ -17932,10 +17944,12 @@ function airCatAllowed(cat,x,d,s){const role=d.role;if(cat==='a'){const mil=['re
   if(cat==='f'){if(x.race)return role==='race';return true;}
   if(cat==='e'&&x.race)return role==='race';return true;}
 function renderAirDesigner(){const s=G,d=ADR,t=tNow(s);if(!d)return;const P=airParts(d),E=airDesignErr(s,d),st=airStats(d,t),Q=airQ(d,t),dc=airDevCost(s,d),dm=airDevMonths(s,d),C=airCost(d,t,s,0),busy=airDevBusy(s)>=airDevSlots(s);
-  const roles=AIR_ROLE_K.map(r=>{const R=AIR_ROLES[r],ok=t>=R.y-0.01||(r==='fight'&&s.air.tech.sync);return `<button class="chip ${d.role===r?'on':''}" data-act="adRole" data-v="${r}" ${ok?'':'disabled'}>${R.ico} ${R.n}<small>${ok?(r==='race'?'призы и рекорды':money(airRefPrice(r,t))):'с '+Math.floor(R.y)+' г.'}</small></button>`;}).join('');
+  const roles=AIR_ROLE_K.map(r=>{const R=AIR_ROLES[r],ok=t>=R.y-0.01||(r==='fight'&&s.air.tech.sync);return `<button class="chip ${d.role===r?'on':''}" data-act="adRole" data-v="${r}" ${ok?'':'disabled'}>${R.ico} ${R.n}<small>${ok?(r==='race'?'призы и рекорды':money(airRefPrice(r,t))+' · '+(airMktRole(s.country,r,t)>=1?fmtN(Math.round(airMktRole(s.country,r,t))):'<1')+' в год'):'с '+Math.floor(R.y)+' г.'}</small></button>`;}).join('');
   const sec=([cat,name,arr])=>{if(cat==='a'&&!['recon','fight','bomb','sea'].includes(d.role))return '';const x=cat==='w'?P.w:P[cat],open=d.open===cat;
     const L=(cat==='w'?AIR_WING:airCatList(s,cat)).filter(z=>airCatAllowed(cat,z,d,s));
-    const chips=L.map(z=>`<button class="chip ${(cat==='w'?d.w:d[cat])===z.id?'on':''}" data-act="adPick" data-k="${cat}" data-v="${z.id}">${esc(z.name)}${z.y>t+0.01?' 🔬':''}<small>${esc(airPartSub(cat,z,s,d))}</small></button>`).join('');
+    // 0.51, этап 7: подсказка у каждой детали — какой станет оценка заказчиков; лучшая помечена
+    const NT=open?L.map(z=>airPickNote(s,d,cat,z.id,Q.q)):[],bq=NT.reduce((a,n)=>Math.max(a,n.q),-1);
+    const chips=L.map((z,i)=>`<button class="chip ${(cat==='w'?d.w:d[cat])===z.id?'on':''}" data-act="adPick" data-k="${cat}" data-v="${z.id}">${esc(z.name)}${z.y>t+0.01?' 🔬':''}${NT[i]&&NT[i].q>0&&NT[i].q>=bq-1e-9&&L.length>1?' ★':''}<small>${esc(airPartSub(cat,z,s,d))}</small>${NT[i]?`<small class="${NT[i].cls}">${esc(NT[i].txt)}</small>`:''}</button>`).join('');
     const nBtns=cat==='e'&&P.f.ne[1]>1?`<div class="row" style="padding:6px 10px 0"><span class="small">Моторов</span><div class="step sm"><button data-act="adN" data-d="-1">−</button><span>${d.n||1}</span><button data-act="adN" data-d="1">+</button></div></div>`:'';
     return `<div class="dsec${open?' open':''}"><button class="dsec-h" data-act="adSec" data-k="${cat}"><span class="label">${name}</span><b>${esc(x.name)}${cat==='e'&&(d.n||1)>1?' × '+d.n:''}</b><small>${esc(airPartSub(cat,x,s,d))}</small><i>${open?'▴':'▾'}</i></button>${open?`<div class="chips">${chips}</div>${nBtns}${x.note?`<p class="small muted" style="margin-top:6px">${esc(x.note)}</p>`:''}`:''}</div>`;};
   openSheet(`<div class="row"><h2>Новый аэроплан</h2>${X}</div>
@@ -17943,6 +17957,8 @@ function renderAirDesigner(){const s=G,d=ADR,t=tNow(s);if(!d)return;const P=airP
     <div class="row" style="margin-top:8px"><span class="pill warn">${AIR_ROLES[d.role].ico} ${AIR_ROLES[d.role].n}</span><div class="btns">${AIR_PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="adPaint" data-v="${c.id}" aria-label="${c.n}"></button>`).join('')}</div></div>
     <label class="label" for="aname" style="display:block;margin-top:12px">Название</label><input type="text" id="aname" value="${esc(d.name)}" maxlength="26" style="margin-top:6px">
     <div class="label" style="margin-top:12px">Назначение</div><p class="small muted">${esc(AIR_ROLES[d.role].d)}</p><div class="chips">${roles}</div>
+    <p class="small" id="adhint" style="margin-top:6px">👤 ${esc(airRoleHint(s,d.role))}</p>
+    <button class="btn block" style="margin-top:8px" data-act="adAuto">Подобрать под заказчика</button><p class="small muted" style="margin-top:4px">Соберёт лучшую оценку за свои деньги из деталей, что у вас есть. В каждом разделе у детали видно, какой с ней станет оценка; ★ — лучшая.</p>
     <div class="dsecs" style="margin-top:12px">${AIR_CATS.map(sec).join('')}</div>
     <div class="label" style="margin-top:14px">Расчёт</div>
     <div class="row"><span class="small">Оценка заказчиков</span><b class="num ${Q.q>=1.03?'good':Q.q<0.9?'bad':''}">${Q.q.toFixed(2).replace('.',',')}</b></div><p class="small muted">1,00 — как «${esc(Q.ref.name)}».${Q.why.length?' <span class="bad">'+esc(Q.why.join('; '))+'.</span>':''}</p>
@@ -17969,6 +17985,56 @@ function airMarketHTML(s){const A=s.air,t=tNow(s),c=s.country,war=airWarOn(c,t);
       ${(()=>{const Tr=(A.trials||[]).filter(e=>airEvStatus(s,e)==='open');return Tr.length?Tr.map(e=>`<button class="ec-row tri" data-act="airEv" data-k="${esc(e.key)}" style="margin-top:6px"><i>⚔</i><span><b>${esc(e.name)}</b> — ${MONTHS_N[e.m]} ${e.y}: победителю заказ на ${fmtN(e.mil.n)}, второму — на ${fmtN(Math.round(e.mil.n*0.4))}. Заявка — на вкладке «Гонки».</span></button>`).join(''):'';})()}
       <p class="small muted" style="margin-top:6px">Первый заказ на модель армия даёт по итогам конкурса: весной и осенью (в войну — каждый квартал) министерство объявляет сравнительные испытания, участвуют фирмы страны, комиссия ставит оценки. Победителю — заказ, второму — меньший. Модель, уже прошедшую конкурс, потом заказывают снова без испытаний, пока она не отстанет от эталона.</p></section>
     <section class="card"><h2>За границей</h2><p class="small muted" style="margin-top:6px">Спортсмены и школы других стран покупают ваши аэропланы, если о вас слышали (слава ${Math.round(A.fame)}). ${abroad}.</p></section>`;}
+
+/* ================= 0.51, этап 7: АВИАЦИЯ — ЧАСТЬ ПРОИЗВОДСТВА =================
+   Отзыв автора (21 ноября): «раздел авиации не проработан вовсе и живёт в управлении далеко от основного производства, внизу
+   экрана, без быстрой помощи в управлении, как договаривались, подсказки в выборе модели».
+   У автомобильной фирмы авиацех был карточкой в самом низу «Завода», «Моделей», «Рынка» и «Гонок» — после всего автомобильного.
+   Теперь:
+     • вверху этих вкладок — выбор направления: «Автомобили» или «Аэропланы»; ниже — только выбранное (тот же принцип, что ТЗ
+       просит для всех разделов: «сверху выбор, ниже только выбранное»);
+     • конструктор аэроплана подсказывает: у каждого назначения — покупатель, сколько берут в год и что он ценит; у каждой детали —
+       какой станет оценка заказчиков, если её поставить; кнопка «Подобрать под заказчика»;
+     • помощник управляющего ведёт и авиацех: первый полёт доверяет испытателю, облётанный образец ставит в серию, строит ангар,
+       когда заказы не успевают, — и отчитывается той же строкой в «Делах». */
+let uiLine='car';
+function airSwitchOn(s){return !!(s&&s.mode!=='racer'&&!airOnly(s)&&(airOn(s)||(s.air&&s.air.b)));}
+function lineSwitchHTML(s){const A=s.air,on=airOn(s),n=on?A.models.filter(m=>m.status==='prod').length:0,adv=on?airAdvice(s).length:0;
+  return `<div class="chips linesw" id="linesw"><button class="chip ${uiLine!=='air'?'on':''}" data-act="uiLine" data-v="car">🚗 Автомобили${lineOn(s,'moto')?' и мотоциклы':''}</button><button class="chip ${uiLine==='air'?'on':''}" data-act="uiLine" data-v="air">✈ Аэропланы<small>${on?`${n} в серии${adv?` · ${adv} ${plural(adv,'совет','совета','советов')}`:''}`:'авиацех строится'}</small></button></div>`;}
+// раздел авиации на вкладке — целиком, без автомобильного
+function airSubView(s,t){if(!airOn(s))return airPlantCard(s);try{return t==='plant'?airAdviceCard(s)+airPlantCard(s):t==='models'?airAdviceCard(s)+airModelsView(s):t==='market'?airMarketView(s):t==='race'?airSkyView(s):'';}
+  catch(e){console.error(e);return `<section class="card"><p class="bad">Ошибка экрана авиации: ${esc(e.message)}</p></section>`;}}
+/* ---------- конструктор: подсказки ---------- */
+// что ценит заказчик этого назначения — три главных черты
+function airRoleWants(role){const W=AIR_W[role]||AIR_W.sport;return Object.keys(W).sort((a,b)=>W[b]-W[a]).slice(0,3).map(k=>AIR_FN[k]||k);}
+function airRoleHint(s,role){const t=tNow(s),c=s.country,civ=airMktRole(c,role,t,'civ'),mil=airMktRole(c,role,t,'mil'),tot=civ+mil;if(role==='race')return 'Гоночный не продают: он для призов и рекордов. Ценят одно — скорость.';
+  const who=mil>civ*2?'армия и флот — по конкурсам министерства':civ>mil*2?'частные покупатели и школы — платят сразу':'и частные покупатели, и армия';
+  return `Покупают ${tot>=1?fmtN(Math.round(tot)):'меньше одного'} в год (${COUNTRIES[c].name}): ${who}. Ценят: ${airRoleWants(role).join(', ')}.${airWarOn(c,t)&&mil>civ?' Идёт война — берут всё, что летает и стреляет.':''}`;}
+// как изменится оценка заказчиков, если поставить эту деталь
+function airPickEval(s,d,cat,id){const t=tNow(s),d2={...d};if(cat==='w')d2.w=id;else d2[cat]=id;
+  if(cat==='f'){const F=byId(AIR_FRAME,id);if(F){d2.n=clamp(d2.n||1,F.ne[0],F.ne[1]);if(F.needMat&&!F.needMat.includes(d2.m)){const m=F.needMat.map(x=>byId(AIR_MAT,x)).find(x=>airPartOk(s,x,'m'));if(m)d2.m=m.id;}if(F.boat)d2.g='g2';}}
+  let q=0,err=[];try{err=airDesignErr(s,d2);q=airQ(d2,t).q;}catch(_){err=['не собрать'];}return {q,err,d:d2};}
+function airPickNote(s,d,cat,id,q0){const E=airPickEval(s,d,cat,id);if(E.err.length)return {txt:'✖ '+E.err[0],cls:'bad',q:-1};const dq=E.q-q0;return {txt:`оценка ${E.q.toFixed(2).replace('.',',')}`,cls:dq>0.015?'good':dq<-0.015?'bad':'',q:E.q};}
+// «Подобрать под заказчика»: по одной детали за проход — лучшая оценка за свои деньги; ошибок сборки быть не должно
+function airAutoDesign(s,d0){const t=tNow(s),ref=airRefMd(d0.role,t);let refC=1;try{refC=airCost(ref,t,s,0).unit;}catch(_){}
+  const val=d=>{let E;try{E=airDesignErr(s,d);}catch(_){return -9;}if(E.length)return -9;let q=0,c=refC;try{q=airQ(d,t).q;c=airCost(d,t,s,0).unit;}catch(_){return -9;}return d.role==='race'?q:q-0.25*Math.log(Math.max(0.2,c/Math.max(1,refC)));};
+  let d={...d0},best=val(d);const cats=['f','e','m','w','c','g','p','k','a'];
+  for(let pass=0;pass<3;pass++){let moved=false;cats.forEach(cat=>{const L=(cat==='w'?AIR_WING:airCatList(s,cat)).filter(z=>airCatAllowed(cat,z,d,s)&&(z.y||0)<=t+0.01);
+      L.forEach(z=>{const E=airPickEval(s,d,cat,z.id),v=val(E.d);if(v>best+1e-6){best=v;d={...E.d,name:d0.name,paint:d0.paint,open:null,role:d0.role};moved=true;}});});if(!moved)break;}
+  return best>-9?d:d0;}
+/* ---------- помощник управляющего ведёт и авиацех ---------- */
+function airHelperMonth(s,msg,pay,reserve){if(!airOn(s))return;const A=s.air,t=tNow(s);A.wkAuto=true;
+  // первый полёт: месяц образец ждёт хозяина (вдруг тот захочет лететь сам), потом его поднимает испытатель
+  A.models.forEach(md=>{if(!airCanTest(md))return;md.hw=(md.hw||0)+1;if(md.hw<2)return;try{const res=airTestAuto(s,md,airBestPilot(s).id);msg.push(`первый полёт «${md.name}» — ${res.kind==='crash'?'авария':res.kind==='flaw'?'облётан, есть недоделки':'облётан'}`);}catch(e){console.warn('air helper fly',e);}});
+  // облётанный образец — в серию (недоделки сперва доводит)
+  A.models.forEach(md=>{if(md.status!=='proto'||!md.flown||md.role==='race')return;if(md.flaw){md.status='dev';md.devLeft=1;md.devT=1;md.flaw=0;md.flown=0;md.vk=Math.max(md.vk||1,0.98);msg.push(`доводка «${md.name}» — месяц`);return;}
+    const c=airToolCost(s,md);if(pay(c)&&airProdStart(s,md))msg.push(`«${md.name}» — в серию, оснастка ${money(c)}`);});
+  // ангары переполнены два месяца подряд — строить: самый большой цех, что по карману и окупится заказами
+  const load=(A.last&&A.last.load)||0;A.hwLoad=load>1.05?(A.hwLoad||0)+1:0;
+  if(A.hwLoad>=2&&!(A.capB||[]).length){const B=AIR_CAPB.slice().reverse().find(b=>airCapCan(s,b.k)&&b.add<=Math.max(1.5,(A.cap||1)*1.5)&&s.cash-airCapCost(s,b.k)>=reserve);if(B&&airCapStart(s,B.k)){A.hwLoad=0;msg.push(`авиацех: строит «${B.n}» — ${money(airCapCost(s,B.k))}`);}}}
+/* ---------- что такое НАМИ ---------- */
+const BRAND_ABOUT={'НАМИ':'НАМИ — Научный автомоторный институт в Москве, основан в 1918 году: государственный институт, а не завод. Его малолитражку НАМИ-1 (по проекту Константина Шарапова) в 1927–1930 годах строил московский завод «Спартак» — по разным данным, от 370 до 512 машин. В партии марка появляется только там, где Россия стала советской: институт создало советское государство — без него не было бы ни института, ни машины.'};
+function brandAbout(cp){return cp&&(BRAND_ABOUT[cp.n]||cp.about)||'';}
 
 /* ================= SHEETS ================= */
 const sheet=document.getElementById('sheet'),sb=document.getElementById('sheetBody');
@@ -22315,7 +22381,7 @@ function flyBind(){const $=id=>document.getElementById(id),st=FLY.st;
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)FLY.last=performance.now();});}
 function flToast(t,cls){const el=document.getElementById('fMsg');if(!el)return;el.textContent=t;el.className='f-msg show '+(cls||'');clearTimeout(FLY.msgT);FLY.msgT=setTimeout(()=>{el.className='f-msg';},2600);}
 function flyHelp(){const b=document.getElementById('fHelpBox');if(!b.hidden){b.hidden=true;return;}FL.paused=true;
-  b.innerHTML=`<h3>Как лететь</h3><p><b>Ручка</b> — правым пальцем в любом месте справа: к себе (вниз) — нос вверх, от себя — вниз, вбок — крен и вираж. Отпустите — лётчик сам выровняет аэроплан.</p>
+  b.innerHTML=`<h3>Как лететь</h3>${FL.mi&&FL.mi.guns&&typeof frHelpHTML==='function'?frHelpHTML():''}<p><b>Ручка</b> — правым пальцем в любом месте справа: к себе (вниз) — нос вверх, от себя — вниз, вбок — крен и вираж. Отпустите — лётчик сам выровняет аэроплан.</p>
   <p><b>Газ</b> — шкала слева. Разбег: полный газ и ручку не трогать — хвост лежит на земле, аэроплан оторвётся сам, когда хватит скорости. Посадка: газ убрать, планировать и у самой земли плавно взять ручку на себя.</p>
   <p>Скорость меньше посадочной — <b>срыв</b>: крыло теряет опору, аэроплан валится на крыло. Отдайте ручку и дайте газ.</p>
   <p><b>Пробег</b>: газ долой, ручку на себя — костыль пашет землю и тормозит. Колёсные тормоза есть только у шасси с тормозами (кнопка <b>ТОРМОЗ</b>, держать).</p>
@@ -22401,7 +22467,7 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
   $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&(FLY.landing||M.canLand&&M.canLand()));$('fLand').textContent=FLY.landing?'Сам':'Сесть';$('fLand').classList.toggle('on',!!FLY.landing);$('fWarp').textContent='×'+FLY.warp;
   $('fFire').hidden=!(M&&M.guns);$('fBomb').hidden=!(M&&M.bombs);}
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
-function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;flyAimMark();if(!tg){el.hidden=true;return;}
+function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;flyAimMark();flyFoeMarks();if(!tg){el.hidden=true;return;}
   const VP=FWR.VPf;if(!VP)return;const p=[tg[0],tg[1]===undefined?FL.me.p[1]:tg[1],tg[2]],cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];let x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
   const on=cw>0&&Math.abs(x)<0.92&&Math.abs(y)<0.85;if(!on){if(cw<0){x=-x;y=-y;}const k=Math.min(0.86/Math.max(Math.abs(x),0.001),(y>0?0.4:0.48)/Math.max(Math.abs(y),0.001));x*=k;y*=k;}
   const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight,d=Math.hypot(p[0]-FL.me.p[0],p[2]-FL.me.p[2])*(M.kd||1);el.hidden=false;el.classList.toggle('edge',!on);
@@ -22447,6 +22513,7 @@ function flySetup(mood){const s=G,M=FL.mi,cfg=FL.cfg,t=tNow(s),md=cfg.md;
   const t0=performance.now();for(let i=0;i<12&&performance.now()-t0<900;i++){const cam=flyCam(0.016);const pl=frustumOf((()=>{const V=m4(),P=m4(),VP=m4();m4view(V,cam.eye,cam.rt,cam.up,cam.fw);m4persp(P,cam.fov,1.5,20,95000);return m4mul(VP,P,V);})());fwSelect(cam.eye,pl);fwBuildSome(80);}
   flyAudioStart();document.getElementById('fLoad').hidden=true;FLY.last=performance.now();
   if(!AU.on.flyHelp){try{AU.on.flyHelp=1;localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}setTimeout(()=>{if(FL.on)flyHelp();},400);}
+  else if(FL.mi&&FL.mi.guns&&!AU.on.frHelp51){try{AU.on.frHelp51=1;localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}setTimeout(()=>{if(FL.on)flyHelp();},400);}/* 0.51: первый боевой вылет — показать, что значат метки и прицел */
   else flToast(M.kind==='test'?'Газ — до отказа!':'Удачи!');
   setTimeout(()=>{if(FW)FW.loading=false;},2500);
   cancelAnimationFrame(FLY.raf);FLY.raf=requestAnimationFrame(flyLoop);}
@@ -24757,7 +24824,7 @@ function airEvSim(s,ev,md,pil){const t=tNow(s),st=airStats(md,t),sk=pil.sk,r=()=
   else if(ev.kind==='loop'){const ok=st.g>=4.5&&sk>=0.8&&st.climb>150&&r()<0.4+0.5*sk;res.ok=ok;res.place=ok?1:0;res.txt=ok?'петля!':'не хватило скорости — аэроплан скользнул на крыло, лётчик выровнял у самой земли';}
   return res;}
 /* ---------- итог: приз, слава, газета ---------- */
-function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P=airPilotList(s).find(p=>p.id===res.pil)||{n:'лётчик'},who=P.hero?PIONEERS[s.pioneer].name:P.n,won=res.place===1;
+function airEvApply(s,ev,res){try{xpAdd(s,'aero',res&&res.place===1?2.5:1.2);xpAdd(s,'eng',0.6);}catch(_){}/* 0.51, этап 7: лётные часы состязаний — опыт */const A=s.air,md=A.models.find(m=>m.id===res.md),P=airPilotList(s).find(p=>p.id===res.pil)||{n:'лётчик'},who=P.hero?PIONEERS[s.pioneer].name:P.n,won=res.place===1;
   A.ev=A.ev||{};A.ev[ev.key]={place:res.place,txt:res.txt,md:res.md,who,y:s.y,m:s.m,v:res.v||res.d||res.a||res.q||0};
   const prizeK=ev.kind==='speed'||ev.kind==='trial'||ev.kind==='alt'||ev.kind==='dist'?[1,0.5,0.25][res.place-1]||0:won?1:0;const prize=Math.round(ev.prize*prizeK*cpi(s)/tabAt(CPI,ev.y)/10)*10;
   if(prize>0){s.cash+=prize;A.prizes=(A.prizes||0)+prize;}
@@ -24926,7 +24993,7 @@ function frBullets(dt,M){const B=FL.bul;if(!B||!B.length)return;const me=FL.me,t
       if(Math.random()<0.3)fwPart(p1[0],p1[1]+0.3,p1[2],0,1,0,0.6,2,0.8,[120,108,90],0.35);}}}
 // огонь из пулемётов: курсовые — по ручке «огонь», стрелок — сам по ближнему врагу в задней полусфере
 function frGuns(a,dt,want,M){const g=a.gun;if(!g)return;g.cd-=dt;g.cdo=(g.cdo||0)-dt;const sh=[a.p[0]+a.fw[0]*(a.mesh.len*0.35)+a.up[0]*0.5,a.p[1]+a.fw[1]*(a.mesh.len*0.35)+a.up[1]*0.5,a.p[2]+a.fw[2]*(a.mesh.len*0.35)+a.up[2]*0.5];sh.vx=a.v[0];sh.vy=a.v[1];sh.vz=a.v[2];
-  if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],a.fw,g.spread,a.side,1);}
+  if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;const as=a===FL.me?frAssist(a,M):null,bd=as?as.aim:a.fw;/* 0.51: автоприцел игрока — очередь доводится в точку упреждения */for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],bd,g.spread,a.side,1);}
     if(Math.random()<0.5)fwPart(sh[0]+a.fw[0]*1.5,sh[1],sh[2]+a.fw[2]*1.5,0,0,0,0.35,0,0.04,[255,230,170],-2);if(a===FL.me)frSnd('gun',1);else frSnd('gun',0.6/(1+Math.hypot(a.p[0]-FL.me.p[0],a.p[1]-FL.me.p[1],a.p[2]-FL.me.p[2])/60));}
   if(g.obs&&g.cdo<=0){const foes=a.side===0?(M.foes||[]):[FL.me];let best=null,bd=420;for(const f of foes){if(f.crash||f.down)continue;const d=Math.hypot(f.p[0]-a.p[0],f.p[1]-a.p[1],f.p[2]-a.p[2]);if(d<bd){const dir=[(f.p[0]-a.p[0])/d,(f.p[1]-a.p[1])/d,(f.p[2]-a.p[2])/d];if(d3(dir,a.fw)<0.35){bd=d;best=[f,dir,d];}}}
     if(best){g.cdo=g.obsRate;const [f,dir,d]=best,lead=d/760,tp=[f.p[0]+f.v[0]*lead,f.p[1]+f.v[1]*lead,f.p[2]+f.v[2]*lead],aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frBullet([a.p[0]+a.up[0]*1.2,a.p[1]+a.up[1]*1.2,a.p[2]+a.up[2]*1.2],aim,g.obsSpread,a.side,0.9);}}}
@@ -24944,16 +25011,18 @@ function frAI(a,dt,M){const me=FL.me,c=a.ctl;if(a.crash)return;
     if(ai.done||a.hp<0.35){ai.done=1;flAuto(a,{x:a.p[0],z:a.p[2]+(s_foeDir())*4000,alt:ai.alt,thr:1,bank:0.5});}return;}
   if(me.crash||!tg){flAuto(a,{x:a.p[0],z:a.p[2]+s_foeDir()*3000,alt:ai.alt,thr:0.8});return;}
   const d=[me.p[0]-a.p[0],me.p[1]-a.p[1],me.p[2]-a.p[2]],dist=l3(d);
-  if(ai.st==='wait'){flAuto(a,{x:ai.home[0],z:ai.home[1],alt:ai.alt,thr:0.75,bank:0.4});if(dist<(ai.see||4200))ai.st='attack';frGuns(a,dt,false,M);return;}
+  if(ai.st==='wait'){flAuto(a,{x:ai.home[0],z:ai.home[1],alt:ai.alt,thr:0.75,bank:0.4});if(dist<(ai.see||4200)*frDif().see)ai.st='attack';frGuns(a,dt,false,M);return;}
   if(a.hp<0.35&&ai.st!=='flee'){ai.st='flee';}
   if(ai.st==='flee'){flAuto(a,{x:a.p[0],z:a.p[2]+s_foeDir()*5000,alt:a.p[1]-200,thr:1,bank:0.6,dive:0.3});frGuns(a,dt,false,M);return;}
+  /* 0.51: противник не висит на хвосте вечно — отваливает и заходит снова, на скорости проскакивает вперёд */
+  if(frHuman(a,dt,M,dist,d))return;
   // на хвосте у нас враг (то есть игрок) — уходит виражом
   const back=[-d[0]/dist,-d[1]/dist,-d[2]/dist],meAim=d3(me.fw,[-back[0],-back[1],-back[2]]);
   if(ai.st==='attack'&&dist<320&&d3(a.fw,back)>0.4&&meAim<-0.85&&Math.random()<dt*0.6){ai.st='evade';ai.until=ai.t+1.5+Math.random()*2.5;ai.dir=Math.random()<0.5?-1:1;}
   if(ai.st==='evade'){flAuto(a,{hdg:flHdg(a)+ai.dir*1.6,alt:a.p[1]-30,thr:1,bank:1.35,edge:1,floor:150});if(ai.t>ai.until)ai.st='attack';frGuns(a,dt,false,M);return;}
-  const lead=dist/760,tp=[me.p[0]+me.v[0]*lead,me.p[1]+me.v[1]*lead,me.p[2]+me.v[2]*lead];
+  const er=frAimErr(ai,dt),lead=dist/760,tp=[me.p[0]+me.v[0]*lead+er[0]*dist,me.p[1]+me.v[1]*lead+er[1]*dist,me.p[2]+me.v[2]*lead+er[2]*dist];/* 0.51: целится с ошибкой — тем большей, чем слабее лётчик и легче уровень */
   flAuto(a,{x:tp[0],z:tp[2],alt:tp[1],thr:1,bank:1.3,edge:1,floor:120,dive:0.45,climbK:1.2});
-  const aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frGuns(a,dt,dist<380&&d3(aim,a.fw)>0.993-(1-ai.sk)*0.006,M);}
+  const aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frGuns(a,dt,frBurst(ai,dt,dist<380&&d3(aim,a.fw)>0.993-(1-ai.sk)*0.006),M);}
 function s_foeDir(){return 1;}// враг — на севере (z больше линии фронта)
 function frMission(cfg,M){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,m=cfg.fm,T=FR_T[m.k],fz=FW_SC.front.front.z,me=()=>FL.me;
   M.title=T.n;M.place='front';M.mood=['clear','cloudy','cloudy','overcast','morning'][hashStr(m.id)%5];M.parked=[{...md,paint:md.paint}];M.warpMax=4;M.guns=true;M.bombs=airParts(md).a.bomb>0&&m.k==='bomb';M.foes=[];M.side=0;
@@ -25135,6 +25204,81 @@ function recCardHTML(s){if(!s||s.mode==='racer'||s.y<1898)return '';const L=Obje
 function recAdvice(s,add){if(s.mode==='racer'||isWar(s.y,s.m,s.country))return;const D=recDriver(s);
   for(const k in REC_CLS){if(recCan(s,k))continue;const E=recEntry(s,k),cur=recCur(s,k);if(cur.mine||!E)continue;const ch=recChance(E.v,cur.v,E.rel,D.sk);if(ch<0.4)continue;
     add(38,REC_CLS[k].ic,`«${E.name}» может взять мировой рекорд: ${REC_CLS[k].n.toLowerCase()} — расчёт ${fmtN(Math.round(E.v))} против ${fmtN(Math.round(cur.v))} ${k==='h24'?'км/ч':REC_CLS[k].un}, шанс ${pct(ch,0)}.`,`Попытка · ${money(recFee(s,k))}`,()=>{recTryNow(s,k);},'race');return;}}
+
+/* ===== 0.51, этап 7: воздушный бой =====
+   Письмо автора: в бою не видно, где враг, прицелиться трудно, а противник садится на хвост и висит там до конца.
+   1) метка врага: на экране — красный ромб с расстоянием, за краем — красная стрелка; «ВРАГ НА ХВОСТЕ» — когда он сзади и носом на вас;
+   2) прицел: крестик — куда летит очередь, кружок — куда целить с упреждением; нос рядом с кружком — очередь доводится сама
+      (на лёгких уровнях конус шире и доводка полнее, на «Историке» её нет);
+   3) противник — человек: целится с ошибкой, стреляет очередями, проскакивает вперёд на большой скорости,
+      а повисев на хвосте, отваливает в сторону и заходит снова. */
+const FR_RANGE=450;/* дальность действительного огня, м */
+/* cone — конус автоприцела, рад; k — какая доля конуса доводится целиком («захват»); tail — сколько секунд враг держится на хвосте; err — ошибка прицеливания врага;
+   pause — пауза между его очередями; burst — длина очереди; over — шанс проскочить вперёд; see — как далеко он вас замечает */
+const FR_DIF={kids:{cone:0.16,k:1,tail:4,err:2.0,pause:1.8,burst:0.8,over:0.9,see:0.75},
+  easy:{cone:0.12,k:0.85,tail:5.5,err:1.3,pause:1.4,burst:0.9,over:0.7,see:0.85},
+  normal:{cone:0.075,k:0.6,tail:8,err:0.5,pause:0.6,burst:1.2,over:0.5,see:1},
+  hard:{cone:0.05,k:0.5,tail:11,err:0.3,pause:0.35,burst:1.6,over:0.35,see:1},
+  hist:{cone:0,k:0,tail:14,err:0.2,pause:0.25,burst:2,over:0.25,see:1}};
+function frDif(){return FR_DIF[(typeof G!=='undefined'&&G&&G.diff)||'normal']||FR_DIF.normal;}
+/* упреждение: куда направить нос стрелку a, чтобы пуля встретила цель f. Пуля летит 760 м/с от точки выстрела и скорости
+   стрелка не наследует (так считает frBullet) — значит, в расчёте только путь цели за время полёта пули */
+function frLead(a,f){const r=[f.p[0]-a.p[0],f.p[1]-a.p[1],f.p[2]-a.p[2]],vr=f.v,d=l3(r);let t=d/760,q=r;
+  for(let i=0;i<2;i++){q=[r[0]+vr[0]*t,r[1]+vr[1]*t,r[2]+vr[2]*t];t=l3(q)/760;}const L=Math.max(1e-6,l3(q));
+  return {dir:[q[0]/L,q[1]/L,q[2]/L],d,t,p:[a.p[0]+q[0],a.p[1]+q[1],a.p[2]+q[2]]};}
+/* автоприцел игрока: ближайшая к носу точка упреждения в конусе; aim — куда пойдёт очередь */
+function frAssist(a,M){const D=frDif();if(!D.cone||!a||a!==FL.me||!M)return null;let best=null,bc=Math.cos(D.cone);
+  for(const f of (M.foes||[])){if(f.crash||f.down)continue;const L=frLead(a,f);if(L.d>FR_RANGE*1.15)continue;const c=d3(L.dir,a.fw);if(c>bc){bc=c;best=L;best.f=f;}}
+  if(!best)return null;/* ошибку наводки до k·cone убираем целиком (это «захват» — кружок зелёный), дальше до края конуса — частично */
+  const ang=Math.acos(Math.min(1,bc)),fix=D.k*D.cone,k=ang<=fix?1:fix/ang;best.lock=ang<=fix;best.aim=v3n([a.fw[0]+(best.dir[0]-a.fw[0])*k,a.fw[1]+(best.dir[1]-a.fw[1])*k,a.fw[2]+(best.dir[2]-a.fw[2])*k]);return best;}
+/* враг на хвосте: ближе 500 м, в задней полусфере игрока и носом на него */
+function frSix(M,me){if(!M||!me||me.crash||me.gnd)return null;let best=null;
+  for(const f of (M.foes||[])){if(f.crash||f.down||f.kind!=='fight')continue;const r=[f.p[0]-me.p[0],f.p[1]-me.p[1],f.p[2]-me.p[2]],d=l3(r);if(d>500||d<1)continue;
+    const u=[r[0]/d,r[1]/d,r[2]/d];if(d3(me.fw,u)>-0.35)continue;if(d3(f.fw,[-u[0],-u[1],-u[2]])<0.9)continue;if(!best||d<best.d)best={f,d,side:d3(me.rt,u)>0?1:-1};}
+  return best;}
+function frSixText(x){return x?`⚠ ВРАГ НА ХВОСТЕ — ${Math.round(x.d/10)*10} м, ${x.side>0?'справа':'слева'}`:'';}
+/* что показать в кабине: враги ближе 3,5 км (ближний — первым), точка упреждения, предупреждение */
+function frHud(M,me){if(!M||!me||!M.foes||M.over||me.crash)return null;const L=[];
+  for(const f of M.foes){if(f.crash||f.down)continue;const d=Math.hypot(f.p[0]-me.p[0],f.p[1]-me.p[1],f.p[2]-me.p[2]);if(d<3500)L.push({f,d});}
+  L.sort((x,y)=>x.d-y.d);const six=frSix(M,me),D=frDif();let lead=null;
+  if(me.gun&&me.gun.fwd&&!me.gnd){for(const x of L){if(x.d>FR_RANGE*1.15)break;const q=frLead(me,x.f);if(d3(q.dir,me.fw)<0.5)continue;lead={f:x.f,d:x.d,dir:q.dir,lock:!!D.cone&&d3(q.dir,me.fw)>Math.cos(D.k*D.cone)};break;}}
+  return {foes:L.slice(0,4),six,lead,gun:!!(me.gun&&me.gun.fwd&&!me.gnd)};}
+/* ---- ошибки противника ---- */
+function frAimErr(ai,dt){const D=frDif();ai.eT=(ai.eT||0)-dt;if(ai.eT<=0||!ai.e){ai.eT=0.5+Math.random()*0.9;const k=0.02*(1.35-ai.sk)*D.err;ai.e=[(Math.random()-0.5)*2*k,(Math.random()-0.5)*2*k,(Math.random()-0.5)*2*k];}return ai.e;}
+/* очередь: секунда-две огня, потом пауза (пулемёт греется, цель надо поймать заново) */
+function frBurst(ai,dt,want){const D=frDif();if(ai.hold>0){ai.hold-=dt;return false;}if(!want){ai.bT=Math.max(0,(ai.bT||0)-dt*2);return false;}
+  ai.bT=(ai.bT||0)+dt;if(ai.bT>(1+ai.sk*1.2)*D.burst){ai.bT=0;ai.hold=(0.7+(1-ai.sk)*1.6)*D.pause;}return true;}
+function frTailMax(ai){return frDif().tail*(0.7+0.6*ai.sk);}
+/* отвалить в сторону с набором (how='break') или проскочить прямо (how='over') */
+function frBreak(a,how,M){const ai=a.ai;ai.st=how;ai.dir=Math.random()<0.5?-1:1;ai.tail=0;ai.bT=0;ai.hold=0;
+  if(how==='over'){ai.hdg=flHdg(a);ai.balt=a.p[1]+20;ai.until=ai.t+2.2+Math.random()*1.6;}
+  else{ai.hdg=flHdg(a)+ai.dir*(1.7+Math.random()*0.9);ai.balt=a.p[1]+60+Math.random()*120;ai.until=ai.t+(4+Math.random()*3)*(1.3-0.4*ai.sk);}
+  if(M&&how==='over'&&!M.tipOver&&frDif().cone){M.tipOver=1;if(typeof flToast==='function')flToast('Противник проскочил — он перед вами!','good');}}
+/* шаг «человеческого» поведения в атаке: true — противник занят манёвром, атаку в этот кадр не ведёт */
+function frHuman(a,dt,M,dist,d){const ai=a.ai,me=FL.me,D=frDif();
+  if(ai.st==='break'||ai.st==='over'){flAuto(a,ai.st==='over'?{hdg:ai.hdg,alt:ai.balt,thr:1,bank:0.35,floor:150}:{hdg:ai.hdg,alt:ai.balt,thr:1,bank:1.25,edge:1,floor:150,climbK:1.2});frGuns(a,dt,false,M);if(ai.t>ai.until){ai.st='attack';ai.tail=0;}return true;}
+  if(ai.st!=='attack')return false;const u=[d[0]/dist,d[1]/dist,d[2]/dist];
+  const onTail=dist<350&&d3(me.fw,u)>0.3&&d3(a.fw,u)>0.7;/* счёт идёт только с дистанции огня: издалека догонять можно сколько угодно */ai.tail=onTail?(ai.tail||0)+dt:Math.max(0,(ai.tail||0)-dt*1.5);
+  if(ai.tail>frTailMax(ai)){frBreak(a,'break',M);return true;}
+  const close=-((me.v[0]-a.v[0])*u[0]+(me.v[1]-a.v[1])*u[1]+(me.v[2]-a.v[2])*u[2]);
+  if(dist>220)ai.ovCk=0;else if(dist<90&&close>8&&!ai.ovCk){ai.ovCk=1;if(Math.random()<D.over*(1.25-ai.sk)){frBreak(a,'over',M);return true;}}
+  return false;}
+/* справка перед первым боевым вылетом (и по кнопке «?») */
+function frHelpHTML(){const D=frDif();return `<p><b>Бой.</b> Красный ромб — враг; если он за краем экрана, туда показывает красная стрелка. Белый крестик — куда пойдёт очередь, жёлтый кружок — куда целить с упреждением: подведите крестик к кружку и жмите <b>ОГОНЬ</b> с 200–300 метров.${D.cone?' Кружок позеленел — прицел сам доведёт очередь.':' На этом уровне очередь идёт точно по крестику — доводки нет.'}</p><p><b>«ВРАГ НА ХВОСТЕ»</b> — не летите прямо: крутой вираж в сторону от него. Долго он за вами не удержится — отвалит или проскочит вперёд, и тогда он ваш.</p>`;}
+/* ---- кабина: метки врага, прицел, предупреждение ---- */
+function flyProj(p){const VP=typeof FWR!=='undefined'&&FWR?FWR.VPf:null;if(!VP)return null;const cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];
+  let x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;const on=cw>0&&Math.abs(x)<0.9&&Math.abs(y)<0.82;
+  if(!on){if(cw<0){x=-x;y=-y;}const k=Math.min(0.8/Math.max(Math.abs(x),0.001),(y>0?0.36:0.4)/Math.max(Math.abs(y),0.001));x*=k;y*=k;}return {x,y,on};}
+function flyFoeBox(){const host=document.getElementById('fMark');if(!host||!host.parentNode)return null;const box=host.parentNode;let w=box.querySelector('.f-foes');
+  if(!w){w=document.createElement('div');w.className='f-foes';w.innerHTML='<div class="f-foe" hidden><i></i><b></b></div>'.repeat(4)+'<div class="f-lead" hidden><i></i></div><div class="f-gun" hidden></div><div class="f-six" id="fSix" hidden></div>';box.appendChild(w);}return w;}
+function flyFoeMarks(){const w=flyFoeBox();if(!w)return;const M=FL.mi,me=FL.me,H=frHud(M,me),E=w.querySelectorAll('.f-foe'),ld=w.querySelector('.f-lead'),gn=w.querySelector('.f-gun'),sx=w.querySelector('.f-six');
+  if(!H||!FWR.VPf){E.forEach(e=>{e.hidden=true;});ld.hidden=gn.hidden=sx.hidden=true;return;}
+  const W=w.parentNode.clientWidth,Hh=w.parentNode.clientHeight,put=(el,q)=>{el.style.left=(q.x*0.5+0.5)*W+'px';el.style.top=(0.5-q.y*0.5)*Hh+'px';};
+  E.forEach((el,i)=>{const x=H.foes[i];if(!x){el.hidden=true;return;}const q=flyProj(x.f.p);if(!q){el.hidden=true;return;}el.hidden=false;put(el,q);el.classList.toggle('edge',!q.on);el.classList.toggle('hot',!!(H.six&&H.six.f===x.f));
+    el.querySelector('i').style.transform=q.on?'rotate(45deg)':`rotate(${Math.atan2(-q.y,q.x)}rad)`;el.querySelector('b').textContent=x.d<1000?Math.round(x.d/10)*10+' м':(Math.round(x.d/100)/10+' км').replace('.',',');});
+  if(H.gun){const q=flyProj([me.p[0]+me.fw[0]*300,me.p[1]+me.fw[1]*300,me.p[2]+me.fw[2]*300]);gn.hidden=!(q&&q.on);if(q&&q.on)put(gn,q);}else gn.hidden=true;
+  if(H.lead){const q=flyProj([me.p[0]+H.lead.dir[0]*H.lead.d,me.p[1]+H.lead.dir[1]*H.lead.d,me.p[2]+H.lead.dir[2]*H.lead.d]);ld.hidden=!(q&&q.on);if(q&&q.on){put(ld,q);ld.classList.toggle('lock',H.lead.lock);}}else ld.hidden=true;
+  const t=frSixText(H.six);sx.hidden=!t;if(t&&sx.textContent!==t)sx.textContent=t;}
 
 /* ================= RACE TAB: seasons, calendar, team, trophies ================= */
 function raceStatus(rc,s){
@@ -32406,6 +32550,7 @@ const ACT={
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
   rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},
+  uiLine:d=>{uiLine=d.v==='air'?'air':'car';render();try{window.scrollTo(0,0);}catch(_){}},adAuto:()=>{adKeep();const top=sb.scrollTop;ADR=airAutoDesign(G,ADR);renderAirDesigner();sb.scrollTop=top;toast('Подобрано под заказчика');},/* 0.51, этап 7 */
   recOpen:()=>{openRecords();},recTry:d=>{closeSheet();recTryNow(G,d.k);save();render();},recBuild:()=>{recDraft=null;openRecBuild();},recBack:()=>{openRecords();},
   recOpt:d=>{recDraft=recDraft||{eng:'one',body:'std',name:''};const el=document.getElementById('recname');if(el)recDraft.name=el.value;recDraft[d.k]=d.v;openRecBuild();},
   recStart:()=>{const el=document.getElementById('recname');if(el&&recDraft)recDraft.name=el.value;if(recStart(G,recDraft||{eng:'one',body:'std'})){recDraft=null;closeSheet();toast('Рекордный образец — в КБ');save();render();}else toast('Не вышло начать проект');},

@@ -201,6 +201,7 @@ const ACT={
   boardTake:d=>{boardTake(G,d.k);},
   trophy:d=>{trophyReplay(+d.k);},
   rivals:d=>{openRivals(d.c||null,d.i!=null&&d.i!==''?+d.i:null);},
+  uiLine:d=>{uiLine=d.v==='air'?'air':'car';render();try{window.scrollTo(0,0);}catch(_){}},adAuto:()=>{adKeep();const top=sb.scrollTop;ADR=airAutoDesign(G,ADR);renderAirDesigner();sb.scrollTop=top;toast('Подобрано под заказчика');},/* 0.51, этап 7 */
   recOpen:()=>{openRecords();},recTry:d=>{closeSheet();recTryNow(G,d.k);save();render();},recBuild:()=>{recDraft=null;openRecBuild();},recBack:()=>{openRecords();},
   recOpt:d=>{recDraft=recDraft||{eng:'one',body:'std',name:''};const el=document.getElementById('recname');if(el)recDraft.name=el.value;recDraft[d.k]=d.v;openRecBuild();},
   recStart:()=>{const el=document.getElementById('recname');if(el&&recDraft)recDraft.name=el.value;if(recStart(G,recDraft||{eng:'one',body:'std'})){recDraft=null;closeSheet();toast('Рекордный образец — в КБ');save();render();}else toast('Не вышло начать проект');},

@@ -153,10 +153,12 @@ function airCatAllowed(cat,x,d,s){const role=d.role;if(cat==='a'){const mil=['re
   if(cat==='f'){if(x.race)return role==='race';return true;}
   if(cat==='e'&&x.race)return role==='race';return true;}
 function renderAirDesigner(){const s=G,d=ADR,t=tNow(s);if(!d)return;const P=airParts(d),E=airDesignErr(s,d),st=airStats(d,t),Q=airQ(d,t),dc=airDevCost(s,d),dm=airDevMonths(s,d),C=airCost(d,t,s,0),busy=airDevBusy(s)>=airDevSlots(s);
-  const roles=AIR_ROLE_K.map(r=>{const R=AIR_ROLES[r],ok=t>=R.y-0.01||(r==='fight'&&s.air.tech.sync);return `<button class="chip ${d.role===r?'on':''}" data-act="adRole" data-v="${r}" ${ok?'':'disabled'}>${R.ico} ${R.n}<small>${ok?(r==='race'?'призы и рекорды':money(airRefPrice(r,t))):'с '+Math.floor(R.y)+' г.'}</small></button>`;}).join('');
+  const roles=AIR_ROLE_K.map(r=>{const R=AIR_ROLES[r],ok=t>=R.y-0.01||(r==='fight'&&s.air.tech.sync);return `<button class="chip ${d.role===r?'on':''}" data-act="adRole" data-v="${r}" ${ok?'':'disabled'}>${R.ico} ${R.n}<small>${ok?(r==='race'?'призы и рекорды':money(airRefPrice(r,t))+' · '+(airMktRole(s.country,r,t)>=1?fmtN(Math.round(airMktRole(s.country,r,t))):'<1')+' в год'):'с '+Math.floor(R.y)+' г.'}</small></button>`;}).join('');
   const sec=([cat,name,arr])=>{if(cat==='a'&&!['recon','fight','bomb','sea'].includes(d.role))return '';const x=cat==='w'?P.w:P[cat],open=d.open===cat;
     const L=(cat==='w'?AIR_WING:airCatList(s,cat)).filter(z=>airCatAllowed(cat,z,d,s));
-    const chips=L.map(z=>`<button class="chip ${(cat==='w'?d.w:d[cat])===z.id?'on':''}" data-act="adPick" data-k="${cat}" data-v="${z.id}">${esc(z.name)}${z.y>t+0.01?' 🔬':''}<small>${esc(airPartSub(cat,z,s,d))}</small></button>`).join('');
+    // 0.51, этап 7: подсказка у каждой детали — какой станет оценка заказчиков; лучшая помечена
+    const NT=open?L.map(z=>airPickNote(s,d,cat,z.id,Q.q)):[],bq=NT.reduce((a,n)=>Math.max(a,n.q),-1);
+    const chips=L.map((z,i)=>`<button class="chip ${(cat==='w'?d.w:d[cat])===z.id?'on':''}" data-act="adPick" data-k="${cat}" data-v="${z.id}">${esc(z.name)}${z.y>t+0.01?' 🔬':''}${NT[i]&&NT[i].q>0&&NT[i].q>=bq-1e-9&&L.length>1?' ★':''}<small>${esc(airPartSub(cat,z,s,d))}</small>${NT[i]?`<small class="${NT[i].cls}">${esc(NT[i].txt)}</small>`:''}</button>`).join('');
     const nBtns=cat==='e'&&P.f.ne[1]>1?`<div class="row" style="padding:6px 10px 0"><span class="small">Моторов</span><div class="step sm"><button data-act="adN" data-d="-1">−</button><span>${d.n||1}</span><button data-act="adN" data-d="1">+</button></div></div>`:'';
     return `<div class="dsec${open?' open':''}"><button class="dsec-h" data-act="adSec" data-k="${cat}"><span class="label">${name}</span><b>${esc(x.name)}${cat==='e'&&(d.n||1)>1?' × '+d.n:''}</b><small>${esc(airPartSub(cat,x,s,d))}</small><i>${open?'▴':'▾'}</i></button>${open?`<div class="chips">${chips}</div>${nBtns}${x.note?`<p class="small muted" style="margin-top:6px">${esc(x.note)}</p>`:''}`:''}</div>`;};
   openSheet(`<div class="row"><h2>Новый аэроплан</h2>${X}</div>
@@ -164,6 +166,8 @@ function renderAirDesigner(){const s=G,d=ADR,t=tNow(s);if(!d)return;const P=airP
     <div class="row" style="margin-top:8px"><span class="pill warn">${AIR_ROLES[d.role].ico} ${AIR_ROLES[d.role].n}</span><div class="btns">${AIR_PAINTS.map(c=>`<button class="swatch ${d.paint===c.id?'on':''}" style="background:${c.id}" data-act="adPaint" data-v="${c.id}" aria-label="${c.n}"></button>`).join('')}</div></div>
     <label class="label" for="aname" style="display:block;margin-top:12px">Название</label><input type="text" id="aname" value="${esc(d.name)}" maxlength="26" style="margin-top:6px">
     <div class="label" style="margin-top:12px">Назначение</div><p class="small muted">${esc(AIR_ROLES[d.role].d)}</p><div class="chips">${roles}</div>
+    <p class="small" id="adhint" style="margin-top:6px">👤 ${esc(airRoleHint(s,d.role))}</p>
+    <button class="btn block" style="margin-top:8px" data-act="adAuto">Подобрать под заказчика</button><p class="small muted" style="margin-top:4px">Соберёт лучшую оценку за свои деньги из деталей, что у вас есть. В каждом разделе у детали видно, какой с ней станет оценка; ★ — лучшая.</p>
     <div class="dsecs" style="margin-top:12px">${AIR_CATS.map(sec).join('')}</div>
     <div class="label" style="margin-top:14px">Расчёт</div>
     <div class="row"><span class="small">Оценка заказчиков</span><b class="num ${Q.q>=1.03?'good':Q.q<0.9?'bad':''}">${Q.q.toFixed(2).replace('.',',')}</b></div><p class="small muted">1,00 — как «${esc(Q.ref.name)}».${Q.why.length?' <span class="bad">'+esc(Q.why.join('; '))+'.</span>':''}</p>

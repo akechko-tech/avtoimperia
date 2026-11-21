@@ -1028,6 +1028,17 @@ body.flying{overflow:hidden}
 #flyScreen .f-mark.edge i{border-radius:0;border:none;width:0;height:0;left:-10px;top:-10px;border-left:20px solid #ffe28a;border-top:10px solid transparent;border-bottom:10px solid transparent;transform-origin:10px 10px}
 #flyScreen .f-mark b{position:absolute;left:16px;top:-8px;white-space:nowrap;font-size:11px;color:#ffe28a;text-shadow:0 1px 2px #000}
 #flyScreen .f-mark.under b{display:none}
+/* 0.51: воздушный бой — метка врага (ромб, за краем — стрелка), прицел и упреждение, «враг на хвосте» */
+#flyScreen .f-foe{position:absolute;z-index:5;width:0;height:0;pointer-events:none}#flyScreen .f-foe[hidden]{display:none}
+#flyScreen .f-foe i{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border:2px solid #ff6a5a;box-shadow:0 0 6px rgba(0,0,0,.6)}
+#flyScreen .f-foe.edge i{border:none;box-shadow:none;width:0;height:0;left:-11px;top:-11px;border-left:22px solid #ff6a5a;border-top:11px solid transparent;border-bottom:11px solid transparent;transform-origin:11px 11px;filter:drop-shadow(0 0 3px rgba(0,0,0,.8))}
+#flyScreen .f-foe b{position:absolute;left:19px;top:-8px;white-space:nowrap;font-size:11px;font-weight:700;color:#ffb0a4;text-shadow:0 1px 2px #000}
+#flyScreen .f-foe.hot i{animation:fFoeHot .45s infinite alternate}@keyframes fFoeHot{from{opacity:1}to{opacity:.35}}
+#flyScreen .f-lead{position:absolute;z-index:5;width:0;height:0;pointer-events:none}#flyScreen .f-lead[hidden]{display:none}
+#flyScreen .f-lead i{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid #ffd27a;box-shadow:0 0 4px rgba(0,0,0,.7)}
+#flyScreen .f-lead.lock i{border-color:#9fe39a;background:rgba(159,227,154,.3)}
+#flyScreen .f-gun{position:absolute;z-index:5;width:18px;height:18px;margin:-9px 0 0 -9px;pointer-events:none;background:linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat;opacity:.8;filter:drop-shadow(0 0 2px #000)}#flyScreen .f-gun[hidden]{display:none}
+#flyScreen .f-six{position:absolute;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:7;padding:4px 12px;border-radius:8px;background:rgba(190,20,10,.85);color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;pointer-events:none;white-space:nowrap;animation:fFoeHot .45s infinite alternate}#flyScreen .f-six[hidden]{display:none}
 #flyScreen .f-load{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#0b1420;color:var(--brass);font-family:var(--display);font-size:20px}
 #flyScreen .f-load[hidden]{display:none}
 #flyScreen .f-help,#flyScreen .f-end{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:min(92%,460px);max-height:84%;overflow:auto;padding:16px 18px;border-radius:14px;background:rgba(8,16,26,.94);border:1px solid var(--line);color:var(--text);font-family:var(--body,inherit);font-size:14px;line-height:1.45}

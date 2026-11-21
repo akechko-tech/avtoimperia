@@ -287,7 +287,7 @@ function airToolCost(s,md){return Math.round((airCost(md,tNow(s),s,0).unit*2+500
 function airTestRisk(s,md,P){const A=s.air,st=airStats(md,tNow(s));return clamp(0.03+(1-st.ease)*0.16+(st.vs>95?0.05:0)+(1-P.sk)*0.14+(md.role==='race'?0.05:0)-(A.flights||0)*0.004,0.02,0.4)*(DIF().bad||1);}
 function airTestAuto(s,md,pid){const P=airPilotList(s).find(p=>p.id===pid)||airBestPilot(s),risk=airTestRisk(s,md,P),r=Math.random();return airTestApply(s,md,P,r<risk*0.35?'crash':r<risk?'flaw':'ok');}
 // итог первого полёта: разбит (o.why — как), летает с изъяном, летает; o.self — летели сами в 3D (o.secs — сколько в воздухе)
-function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats(md,t);A.flights=(A.flights||0)+1;let res;
+function airTestApply(s,md,P,kind,o){o=o||{};const A=s.air,t=tNow(s),st=airStats(md,t);A.flights=(A.flights||0)+1;try{xpAdd(s,'aero',1.5);xpAdd(s,'alloy',0.5);}catch(_){}/* 0.51, этап 7: лётные часы — опыт */let res;
   if(kind==='crash'){md.status='dev';md.devLeft=2;md.devT=2;const c=Math.round((md.devCost||2000)*0.4/50)*50;s.cash-=c;A.fame=Math.max(0,A.fame-3);
     if(P.hero)A.heroHurt=mi(s)+3;else if(P.id!=='test'){const p=(A.pil||[]).find(x=>x.id===P.id);if(p)p.hurt=mi(s)+3;}
     res={kind:'crash',text:`${o.why?`Аэроплан ${o.why}. `:`На разбеге «${md.name}» вильнул, задел крылом землю и скапотировал. `}${P.hero?'Вы отделались переломом — три месяца без полётов.':capF(P.n)+' в больнице: три месяца без полётов.'} Образец — в щепки: новый обойдётся в ${money(c)} и два месяца.`};}

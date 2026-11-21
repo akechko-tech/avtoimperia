@@ -803,5 +803,101 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     CK(!err&&ent>=1,'двадцать месяцев с рекордом и конкурсами — без ошибок, заявок: '+ent+' '+err);const s2=JSON.parse(JSON.stringify(G));CK(s2.rec&&s2.trials,'рекорды и заявки сохраняются');G.pending=[];BOTS_OFF=true;}
   Math.random=R0;
 }
+// ---------- 25. этап 7: авиация — часть производства (переключатель, подсказки конструктора, помощник) и воздушный бой ----------
+{const rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();},R0=Math.random,deg=x=>x*Math.PI/180;
+  // переключатель «Автомобили | Аэропланы»
+  {BOTS_OFF=true;rnd(5);newGame('ford','us','Тест','normal','Первая');G.pending=[];G.y=1912;G.m=3;const s=G;
+    CK(!airSwitchOn(s),'авиацеха нет — переключателя нет');airInit(s);s.air.b={left:3};CK(airSwitchOn(s)&&/авиацех строится/.test(lineSwitchHTML(s)),'авиацех строится — переключатель уже есть');
+    delete s.air.b;s.air.lv=1;s.air.cap=2;s.air.wk=10;CK(airSwitchOn(s)&&airOn(s)&&!airOnly(s),'автомобильная фирма с авиацехом');
+    const H=lineSwitchHTML(s);CK(/data-act="uiLine" data-v="car"/.test(H)&&/data-act="uiLine" data-v="air"/.test(H)&&/Аэропланы/.test(H)&&/в серии/.test(H),'две кнопки направления, у аэропланов — сколько в серии');
+    uiLine='car';CK(/chip on" data-act="uiLine" data-v="car"/.test(lineSwitchHTML(s)),'выбраны автомобили');uiLine='air';CK(/chip on" data-act="uiLine" data-v="air"/.test(lineSwitchHTML(s)),'выбраны аэропланы');
+    const V={plant:airSubView(s,'plant'),models:airSubView(s,'models'),market:airSubView(s,'market'),race:airSubView(s,'race')};
+    CK(Object.keys(V).every(k=>typeof V[k]==='string'&&V[k].length>50&&!/Ошибка экрана авиации/.test(V[k])),'раздел авиации открывается на всех четырёх вкладках');
+    const sm=s.mode;s.mode='racer';CK(!airSwitchOn(s),'у гонщика переключателя нет');s.mode=sm;uiLine='car';}
+  {rnd(5);newAirGame('bleriot','fr','','normal','');CK(airOnly(G)&&!airSwitchOn(G),'чисто авиационной фирме переключатель не нужен');}
+  // конструктор: подсказки
+  {BOTS_OFF=true;rnd(7);newAirGame('bleriot','fr','','normal','');const s=G;s.pending=[];s.y=1916;s.m=5;s.air.lv=Math.max(1,s.air.lv||0);const t=tNow(s);
+    CK(airRoleWants('fight').length===3&&airRoleWants('fight').every(x=>typeof x==='string'&&x.length>2),'три главных черты для заказчика: '+airRoleWants('fight').join(', '));
+    const h=airRoleHint(s,'fight');CK(/Покупают/.test(h)&&/Ценят/.test(h),'подсказка назначения: сколько берут и что ценят');CK(/Гоночный не продают/.test(airRoleHint(s,'race')),'гоночный — не для продажи');
+    CK(/война/.test(h),'в войну подсказка истребителя говорит о войне: '+h);
+    ['fight','recon','sport'].forEach(role=>{const d0={...airRefMd(role,t),role,name:'Проба'},q0=airQ(d0,t).q,d1=airAutoDesign(s,d0);
+      CK(airDesignErr(s,d1).length===0,role+': подобранный аэроплан собирается без ошибок');CK(d1.role===role&&d1.name==='Проба','назначение и имя не трогаем');
+      const val=d=>airQ(d,t).q-(role==='race'?0:0.25*Math.log(Math.max(0.2,airCost(d,t,s,0).unit/Math.max(1,airCost(airRefMd(role,t),t,s,0).unit))));
+      CK(val(d1)>=val(d0)-1e-6,role+': подбор не хуже образца года по оценке за свои деньги ('+q0.toFixed(2)+' → '+airQ(d1,t).q.toFixed(2)+')');});
+    const d={...airRefMd('fight',t),role:'fight'},q0=airQ(d,t).q,N=AIR_ENG.filter(e=>(e.y||0)<=t).map(e=>airPickNote(s,d,'e',e.id,q0));
+    CK(N.length>2&&N.every(n=>/^оценка [0-9],[0-9][0-9]$/.test(n.txt)||/^✖ /.test(n.txt)),'у каждого мотора — оценка заказчиков или причина, почему его не поставить: '+N.map(n=>n.txt).join(' | '));
+    CK(N.some(n=>n.cls==='bad')||N.some(n=>n.cls==='good'),'хуже — красным, лучше — зелёным');}
+  // помощник управляющего ведёт авиацех
+  {BOTS_OFF=true;rnd(11);newAirGame('bleriot','fr','','normal','');const s=G;s.pending=[];s.y=1912;s.m=2;s.air.lv=Math.max(1,s.air.lv||0);s.cash=5e6;const t=tNow(s);
+    const md=airNewModel(s,{...airRefMd('sport',t),role:'sport',name:'Помощник'},{status:'proto'});md.status='proto';md.flown=0;md.flaw=0;
+    const msg=[],pay=c=>s.cash>=c;Math.random=()=>0.99;airHelperMonth(s,msg,pay,1000);CK(!md.flown&&md.hw===1&&!msg.length,'первый месяц образец ждёт хозяина');
+    airHelperMonth(s,msg,pay,1000);CK(md.flown&&msg.some(x=>/первый полёт «Помощник» — облётан/.test(x)),'на второй месяц его поднимает испытатель: '+msg.join('; '));
+    CK(md.status==='tool'&&msg.some(x=>/в серию/.test(x)),'облётанный образец — сразу в серию: '+md.status);
+    const md2=airNewModel(s,{...airRefMd('sport',t),role:'sport',name:'Сырой'},{status:'proto'});md2.status='proto';md2.flown=1;md2.flaw=1;const m2=[];airHelperMonth(s,m2,pay,1000);
+    CK(md2.status==='dev'&&m2.some(x=>/доводка «Сырой»/.test(x)),'образец с недоделками сперва доводят');
+    const md3=airNewModel(s,{...airRefMd('sport',t),role:'race',name:'Гонка'},{status:'proto'});md3.status='proto';md3.flown=1;md3.flaw=0;airHelperMonth(s,[],pay,1000);CK(md3.status==='proto','гоночный в серию не ставят');
+    s.air.last={load:1.3};s.air.capB=[];s.air.hwLoad=0;const m3=[];airHelperMonth(s,m3,pay,1000);CK(!m3.some(x=>/строит/.test(x))&&s.air.hwLoad===1,'ангар переполнен один месяц — ждём');
+    airHelperMonth(s,m3,pay,1000);CK(m3.some(x=>/авиацех: строит/.test(x))&&s.air.capB.length===1,'два месяца подряд — строит: '+m3.join('; '));Math.random=R0;}
+  CK(/1918/.test(brandAbout({n:'НАМИ'}))&&/институт/.test(brandAbout({n:'НАМИ'}))&&brandAbout({n:'Ford'})==='','НАМИ: что это за марка; у прочих строки нет');
+  // ----- воздушный бой -----
+  {const DL=['kids','easy','normal','hard','hist'];CK(DL.every((d,i)=>!i||FR_DIF[d].cone<FR_DIF[DL[i-1]].cone)&&FR_DIF.hist.cone===0,'автоприцел: чем легче уровень, тем шире конус; на «Историке» его нет');
+    CK(DL.every((d,i)=>!i||FR_DIF[d].tail>FR_DIF[DL[i-1]].tail)&&DL.every((d,i)=>!i||FR_DIF[d].err<FR_DIF[DL[i-1]].err),'чем труднее уровень, тем дольше враг держится на хвосте и точнее целится');}
+  {BOTS_OFF=true;rnd(3);newAirGame('bleriot','fr','','normal','');const s=G;s.pending=[];s.y=1917;s.m=6;s.air.lv=Math.max(1,s.air.lv||0);const t=tNow(s);
+    const md=airNewModel(s,{...airRefMd('fight',t),role:'fight',name:'Наш'},{status:'prod',flown:1});md.flown=1;md.status='prod';
+    const MESH=()=>({len:7,r:6,hit:[{x:0,y:0,z:0,r:0.9,k:'fus'},{x:0,y:0,z:1.8,r:0.7,k:'eng'},{x:2.6,y:0.3,z:0.3,r:1.1,k:'wing'},{x:-2.6,y:0.3,z:0.3,r:1.1,k:'wing'},{x:0,y:0.2,z:-3.6,r:0.8,k:'tail'}]});
+    const sv={FW,fwPart,frSnd,fwHgt,flToast,air3dMesh,FL0:{me:FL.me,mi:FL.mi,bul:FL.bul,t:FL.t}};let toast=[];FW={S:{A:{y:60},fields:[]},parts:[]};fwPart=()=>{};frSnd=()=>{};fwHgt=()=>0;flToast=x=>{toast.push(x);};air3dMesh=()=>MESH();
+    const plane=(x,y,z,hdg,side)=>{const a=flCraft(md,t,{rnd:()=>0.3});flPlace(a,x,z,hdg,{h:y,v:a.st.vc/3.6,thr:0.9});a.side=side;a.mesh=MESH();a.hp=1;a.kind='fight';a.md=md;return a;};
+    const me=plane(0,1500,0,0,0);FL.me=me;FL.bul=[];FL.t=0;me.gun={fwd:true,n:1,rate:10,ammo:500,spread:0,cd:0};
+    const foeAt=(ang,dist,o)=>{const f=plane(Math.sin(ang)*dist,1500+(o&&o.dy||0),Math.cos(ang)*dist,o&&o.hdg||0,1);f.ai={st:'attack',sk:0.7,home:[0,0],alt:1500,see:4000,i:0,t:0};f.target='me';f.gun={fwd:true,n:1,rate:10,ammo:500,spread:0.01,cd:0};Object.assign(f,o&&o.set||{});return f;};
+    const ang=(a,b)=>Math.acos(Math.min(1,d3(a,b)))*180/Math.PI;
+    // упреждение
+    {const f=foeAt(0,200,{hdg:Math.PI/2}),L=frLead(me,f),dirNow=v3n([f.p[0]-me.p[0],f.p[1]-me.p[1],f.p[2]-me.p[2]]);
+      CK(L.dir[0]>dirNow[0]+0.02&&L.t>0.2&&L.t<0.4&&near(L.d,200,1),'упреждение: по цели, идущей вправо, целить правее её ('+ang(L.dir,dirNow).toFixed(1)+'°, лететь пуле '+L.t.toFixed(2)+' с)');
+      const f2=foeAt(0,200,{hdg:0});f2.v=me.v.slice();CK(ang(frLead(me,f2).dir,v3n([f2.p[0]-me.p[0],f2.p[1]-me.p[1],f2.p[2]-me.p[2]]))<0.05,'цель идёт тем же курсом и с той же скоростью — упреждения нет');}
+    // автоприцел по уровням
+    {const shot=(diff,offDeg,dist)=>{G.diff=diff;const f=foeAt(deg(offDeg),dist||200,{hdg:0});f.v=me.v.slice();const M={foes:[f]},L=frLead(me,f),A=frAssist(me,M);return {A,res:A?ang(A.aim,L.dir):ang(me.fw,L.dir),off:ang(me.fw,L.dir)};};
+      const fwUp=ang(me.fw,[0,0,1]);/* нос чуть задран углом атаки — его учитываем в допусках */
+      let r=shot('normal',1);CK(r.A&&r.A.lock&&r.res<0.05,'«Норма», цель в '+r.off.toFixed(1)+'° от носа: захват, очередь идёт точно в упреждение');
+      r=shot('normal',3.6);CK(r.A&&!r.A.lock&&r.res>0.3&&r.res<r.off-1,'«Норма», '+r.off.toFixed(1)+'°: доводка частичная — остаётся '+r.res.toFixed(1)+'°');
+      r=shot('normal',7);CK(!r.A,'«Норма», '+r.off.toFixed(1)+'°: вне конуса — помощи нет');
+      r=shot('kids',7);CK(r.A&&r.A.lock&&r.res<0.05,'«Юный магнат», те же '+r.off.toFixed(1)+'°: захват');
+      r=shot('easy',5);CK(r.A&&r.A.lock,'«Лёгкая», '+r.off.toFixed(1)+'°: захват');r=shot('hard',2.2);CK(r.A&&!r.A.lock,'«Магнат», '+r.off.toFixed(1)+'°: только частичная доводка');
+      r=shot('hist',0.5);CK(!r.A,'«Историк»: автоприцела нет');r=shot('kids',1,700);CK(!r.A,'дальше дистанции огня автоприцел не работает');
+      // очередь действительно уходит в точку упреждения
+      G.diff='normal';const f=foeAt(deg(1),200,{hdg:0});f.v=me.v.slice();const M={foes:[f]},L=frLead(me,f);FL.bul=[];me.gun.cd=0;me.gun.ammo=500;frGuns(me,1/60,true,M);
+      const b=FL.bul[0],bv=b&&v3n(b.v);CK(b&&ang(bv,L.dir)<0.05&&ang(bv,me.fw)>0.8,'пули идут в упреждение, а не по носу (от носа '+(b?ang(bv,me.fw).toFixed(1):'?')+'°)');
+      G.diff='hist';FL.bul=[];me.gun.cd=0;frGuns(me,1/60,true,M);const b2=FL.bul[0];CK(b2&&ang(v3n(b2.v),me.fw)<0.05,'«Историк»: пули идут по носу');G.diff='normal';}
+    // враг на хвосте
+    {const behind=foeAt(Math.PI+0.2,200,{hdg:0}),M={foes:[behind]};let x=frSix(M,me);CK(x&&near(x.d,200,2)&&x.side===-1&&/ВРАГ НА ХВОСТЕ — 200 м, слева/.test(frSixText(x)),'враг сзади-слева носом на нас: '+frSixText(x));
+      const away=foeAt(Math.PI,200,{hdg:Math.PI});CK(!frSix({foes:[away]},me),'сзади, но уходит — не угроза');const front=foeAt(0,200,{hdg:Math.PI});CK(!frSix({foes:[front]},me),'спереди — не «на хвосте»');
+      const far=foeAt(Math.PI,700,{hdg:0});CK(!frSix({foes:[far]},me),'дальше 500 м — рано');const rec=foeAt(Math.PI,200,{hdg:0,set:{kind:'recon'}});CK(!frSix({foes:[rec]},me),'разведчик не гонится');
+      const dn=foeAt(Math.PI,200,{hdg:0,set:{down:1}});CK(!frSix({foes:[dn]},me),'сбитый — не угроза');CK(frSixText(null)==='','нет угрозы — нет надписи');
+      // что показывает кабина
+      const near1=foeAt(deg(1),220,{hdg:0}),M2={foes:[far,near1,behind,dn,foeAt(0.3,3000,{}),foeAt(0.5,5000,{}),foeAt(-0.4,2500,{})]};const H=frHud(M2,me);
+      CK(H&&H.foes.length===4&&H.foes[0].d<=H.foes[1].d&&H.foes[1].d<=H.foes[2].d&&!H.foes.some(q=>q.f===dn||q.d>3500),'метки: до четырёх живых врагов ближе 3,5 км, ближний — первым');
+      CK(H.six&&H.six.f===behind&&H.gun&&H.lead&&H.lead.f===near1&&H.lead.lock,'предупреждение — о том, кто сзади; кружок упреждения — на том, кто перед носом, захват');
+      G.diff='hist';const H2=frHud(M2,me);CK(H2.lead&&!H2.lead.lock,'«Историк»: кружок упреждения есть, захвата нет');G.diff='normal';
+      M2.over=true;CK(frHud(M2,me)===null,'вылет окончен — меток нет');}
+    // противник — человек: очереди, ошибка прицеливания, отвал с хвоста, проскок
+    {G.diff='normal';rnd(21);const ai={sk:0.7};let on=0,n=0;for(let i=0;i<600;i++){n++;if(frBurst(ai,1/60,true))on++;}CK(on/n>0.5&&on/n<0.9,'враг стреляет очередями: огонь '+Math.round(on/n*100)+' % времени');
+      const eK=(diff)=>{G.diff=diff;rnd(9);let m=0;for(let i=0;i<200;i++){const a2={sk:0.7};m+=l3(frAimErr(a2,1));}return m/200;};const ek=eK('kids'),en=eK('normal'),eh=eK('hist');G.diff='normal';
+      CK(ek>en*2&&en>eh*1.5&&eh>0,'ошибка прицеливания: «Юный магнат» '+(ek*1000).toFixed(0)+' тыс., «Норма» '+(en*1000).toFixed(0)+', «Историк» '+(eh*1000).toFixed(1)+' (рад × 1000)');
+      CK(frTailMax({sk:0.95})>frTailMax({sk:0.55})&&near(frTailMax({sk:0.5}),8,0.01),'на хвосте дольше держится сильный лётчик: '+frTailMax({sk:0.55}).toFixed(1)+'–'+frTailMax({sk:0.95}).toFixed(1)+' с на «Норме»');
+      // бой без экрана: игрок летит прямо, враг сзади на дистанции огня
+      const fight=(diff,sd)=>{G.diff=diff;rnd(sd);const m2=plane(0,1500,0,0,0);m2.gun=null;FL.me=m2;FL.bul=[];const f=foeAt(Math.PI,170,{hdg:0});f.p[0]=0;f.p[2]=-170;const M={foes:[f],onDown(){}};
+        let T=0,run=0,mx=0,br=0,fire=0,prev='attack';const dt=1/60,am=f.gun.ammo;for(;T<60;T+=dt){FL.t=T;flAuto(m2,{hdg:0,alt:1500,thr:0.9});frAI(f,dt,M);flStep(f,dt);flStep(m2,dt);frBullets(dt,M);
+          const x=frSix(M,m2);if(x&&x.d<350){run+=dt;mx=Math.max(mx,run);}else run=0;if(f.ai.st!==prev){if(f.ai.st==='break')br++;prev=f.ai.st;}}return {mx,br,shots:am-f.gun.ammo,lim:frTailMax(f.ai),hp:m2.hp};};
+      const A=fight('normal',4),K=fight('kids',4),Hh=fight('hist',4);
+      CK(A.br>=1&&A.mx<=A.lim+2.5,'«Норма»: за минуту враг отвалил '+A.br+' раза; подряд на хвосте не дольше '+A.mx.toFixed(1)+' с (предел лётчика '+A.lim.toFixed(1)+' с)');
+      CK(K.br>=A.br&&K.mx<A.mx&&K.mx<=K.lim+2.5,'«Юный магнат»: отвалов '+K.br+', подряд до '+K.mx.toFixed(1)+' с');CK(Hh.mx>A.mx&&Hh.shots>A.shots,'«Историк»: висит дольше ('+Hh.mx.toFixed(1)+' с) и стреляет больше ('+Hh.shots+' против '+A.shots+')');
+      CK(A.shots>50&&K.shots<A.shots,'враг при этом опасен: на «Норме» выпустил '+A.shots+' патронов, на «Юном магнате» '+K.shots);
+      // проскок: догнал на большой скорости вплотную
+      G.diff='normal';FL.me=me;const f=foeAt(Math.PI,80,{hdg:0});f.p[0]=0;f.p[2]=-80;f.v=[me.v[0],me.v[1],me.v[2]+15];const M={foes:[f]};toast=[];Math.random=()=>0;
+      const d=[me.p[0]-f.p[0],me.p[1]-f.p[1],me.p[2]-f.p[2]],r1=frHuman(f,1/60,M,l3(d),d);CK(r1===true&&f.ai.st==='over'&&M.tipOver===1&&toast.some(x=>/проскочил/.test(x)),'догнал вплотную на скорости — проскочил вперёд, игроку подсказка: '+toast.join(''));
+      const f3=foeAt(Math.PI,80,{hdg:0});f3.p[0]=0;f3.p[2]=-80;f3.v=[me.v[0],me.v[1],me.v[2]+15];Math.random=()=>0.99;const d3v=[me.p[0]-f3.p[0],me.p[1]-f3.p[1],me.p[2]-f3.p[2]];
+      CK(frHuman(f3,1/60,{foes:[f3]},l3(d3v),d3v)===false&&f3.ai.st==='attack'&&f3.ai.ovCk===1,'опытному везёт — удержался сзади; второй раз на этом заходе кость не бросают');
+      f.ai.t=0;f.ai.until=0.5;for(let i=0;i<40&&f.ai.st==='over';i++){f.ai.t+=1/60;frHuman(f,1/60,M,100,d);}CK(f.ai.st==='attack'&&f.ai.tail===0,'манёвр кончился — снова атакует, счёт времени на хвосте с нуля');}
+    Math.random=R0;FW=sv.FW;fwPart=sv.fwPart;frSnd=sv.frSnd;fwHgt=sv.fwHgt;flToast=sv.flToast;air3dMesh=sv.air3dMesh;Object.assign(FL,sv.FL0);}
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

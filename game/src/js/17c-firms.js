@@ -238,7 +238,7 @@ function firmCardHTML(s,c,i,open,mo){const I=firmInfo(s,c,i,mo);if(!I)return '';
   try{firmCardExtra(s,F,I,L,mo);}catch(e){console.warn('firm card',e);}
   const log=(F.log||[]).slice(0,3).map(x=>`<small class="muted">${MONTHS[x.t%12]} ${yr(x.t)}: ${esc(x.txt)}</small>`).join('<br>');
   return `<div class="tech-row" id="firm${mo?'m':''}${c}${i}"><div class="row"><div><h3>${esc(I.n)}${B?' <span class="pill muted" title="великая марка: ведёт и большую стратегию — заграница, гонки, лаборатория, покупка марок">великая марка</span>':''}</h3><p class="small muted">${I.segs.map(g=>esc((SEG[g]||{name:g}).name)).join(', ')} · доля главного класса ${pct(I.sh,0)}</p></div><span class="pill ${st[1]}">${st[0]}</span></div>
-    <p class="small" style="margin-top:4px">${L.join('<br>')}</p>${log?`<p style="margin-top:6px;line-height:1.35">${log}</p>`:''}${firmCardBtn(s,F,I,mo)}</div>`;}
+    ${typeof brandAbout==='function'&&brandAbout(I.cp)?`<p class="small muted" style="margin-top:4px">${esc(brandAbout(I.cp))}</p>`:''}<p class="small" style="margin-top:4px">${L.join('<br>')}</p>${log?`<p style="margin-top:6px;line-height:1.35">${log}</p>`:''}${firmCardBtn(s,F,I,mo)}</div>`;}
 function openRivals(c,fi){const s=G;c=c&&COUNTRIES[c]?c:s.country;const cs=Object.keys(COUNTRIES).filter(k=>rivMine(s,k)),mv=rivMoves(s),here=mv.filter(n=>n.c===c),else_=mv.filter(n=>n.c!==c&&rivMine(s,n.c)&&n.w>=3);
   const r=s.last,when=r?r.label:'';
   const mvHTML=L=>L.map(n=>`<div class="tech-row"><div class="row"><div><h3>${RIV_ICON[n.k]||'⚔️'} ${esc(n.t)}</h3><p class="small muted">${esc(n.txt)}</p></div></div></div>`).join('');

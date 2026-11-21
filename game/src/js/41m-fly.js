@@ -41,7 +41,7 @@ function flyBind(){const $=id=>document.getElementById(id),st=FLY.st;
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)FLY.last=performance.now();});}
 function flToast(t,cls){const el=document.getElementById('fMsg');if(!el)return;el.textContent=t;el.className='f-msg show '+(cls||'');clearTimeout(FLY.msgT);FLY.msgT=setTimeout(()=>{el.className='f-msg';},2600);}
 function flyHelp(){const b=document.getElementById('fHelpBox');if(!b.hidden){b.hidden=true;return;}FL.paused=true;
-  b.innerHTML=`<h3>Как лететь</h3><p><b>Ручка</b> — правым пальцем в любом месте справа: к себе (вниз) — нос вверх, от себя — вниз, вбок — крен и вираж. Отпустите — лётчик сам выровняет аэроплан.</p>
+  b.innerHTML=`<h3>Как лететь</h3>${FL.mi&&FL.mi.guns&&typeof frHelpHTML==='function'?frHelpHTML():''}<p><b>Ручка</b> — правым пальцем в любом месте справа: к себе (вниз) — нос вверх, от себя — вниз, вбок — крен и вираж. Отпустите — лётчик сам выровняет аэроплан.</p>
   <p><b>Газ</b> — шкала слева. Разбег: полный газ и ручку не трогать — хвост лежит на земле, аэроплан оторвётся сам, когда хватит скорости. Посадка: газ убрать, планировать и у самой земли плавно взять ручку на себя.</p>
   <p>Скорость меньше посадочной — <b>срыв</b>: крыло теряет опору, аэроплан валится на крыло. Отдайте ручку и дайте газ.</p>
   <p><b>Пробег</b>: газ долой, ручку на себя — костыль пашет землю и тормозит. Колёсные тормоза есть только у шасси с тормозами (кнопка <b>ТОРМОЗ</b>, держать).</p>
@@ -127,7 +127,7 @@ function flyHUD(dt,cam){FLY.hudT-=dt;const me=FL.me,M=FL.mi;flyMark(cam);if(FLY.
   $('fAuto').hidden=!(M&&M.auto&&!me.gnd);$('fLand').hidden=!(M&&M.land&&(FLY.landing||M.canLand&&M.canLand()));$('fLand').textContent=FLY.landing?'Сам':'Сесть';$('fLand').classList.toggle('on',!!FLY.landing);$('fWarp').textContent='×'+FLY.warp;
   $('fFire').hidden=!(M&&M.guns);$('fBomb').hidden=!(M&&M.bombs);}
 // метка цели: на экране — кружок с расстоянием, за экраном — стрелка у края
-function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;flyAimMark();if(!tg){el.hidden=true;return;}
+function flyMark(cam){const el=document.getElementById('fMark'),M=FL.mi,tg=M&&M.target?M.target():null;flyAimMark();flyFoeMarks();if(!tg){el.hidden=true;return;}
   const VP=FWR.VPf;if(!VP)return;const p=[tg[0],tg[1]===undefined?FL.me.p[1]:tg[1],tg[2]],cw=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];let x=(VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/cw,y=(VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/cw;
   const on=cw>0&&Math.abs(x)<0.92&&Math.abs(y)<0.85;if(!on){if(cw<0){x=-x;y=-y;}const k=Math.min(0.86/Math.max(Math.abs(x),0.001),(y>0?0.4:0.48)/Math.max(Math.abs(y),0.001));x*=k;y*=k;}
   const W=el.parentNode.clientWidth,H=el.parentNode.clientHeight,d=Math.hypot(p[0]-FL.me.p[0],p[2]-FL.me.p[2])*(M.kd||1);el.hidden=false;el.classList.toggle('edge',!on);
@@ -173,6 +173,7 @@ function flySetup(mood){const s=G,M=FL.mi,cfg=FL.cfg,t=tNow(s),md=cfg.md;
   const t0=performance.now();for(let i=0;i<12&&performance.now()-t0<900;i++){const cam=flyCam(0.016);const pl=frustumOf((()=>{const V=m4(),P=m4(),VP=m4();m4view(V,cam.eye,cam.rt,cam.up,cam.fw);m4persp(P,cam.fov,1.5,20,95000);return m4mul(VP,P,V);})());fwSelect(cam.eye,pl);fwBuildSome(80);}
   flyAudioStart();document.getElementById('fLoad').hidden=true;FLY.last=performance.now();
   if(!AU.on.flyHelp){try{AU.on.flyHelp=1;localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}setTimeout(()=>{if(FL.on)flyHelp();},400);}
+  else if(FL.mi&&FL.mi.guns&&!AU.on.frHelp51){try{AU.on.frHelp51=1;localStorage.setItem('avt-audio',JSON.stringify(AU.on));}catch(_){}setTimeout(()=>{if(FL.on)flyHelp();},400);}/* 0.51: первый боевой вылет — показать, что значат метки и прицел */
   else flToast(M.kind==='test'?'Газ — до отказа!':'Удачи!');
   setTimeout(()=>{if(FW)FW.loading=false;},2500);
   cancelAnimationFrame(FLY.raf);FLY.raf=requestAnimationFrame(flyLoop);}

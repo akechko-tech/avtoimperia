@@ -60,7 +60,7 @@ function airEvSim(s,ev,md,pil){const t=tNow(s),st=airStats(md,t),sk=pil.sk,r=()=
   else if(ev.kind==='loop'){const ok=st.g>=4.5&&sk>=0.8&&st.climb>150&&r()<0.4+0.5*sk;res.ok=ok;res.place=ok?1:0;res.txt=ok?'петля!':'не хватило скорости — аэроплан скользнул на крыло, лётчик выровнял у самой земли';}
   return res;}
 /* ---------- итог: приз, слава, газета ---------- */
-function airEvApply(s,ev,res){const A=s.air,md=A.models.find(m=>m.id===res.md),P=airPilotList(s).find(p=>p.id===res.pil)||{n:'лётчик'},who=P.hero?PIONEERS[s.pioneer].name:P.n,won=res.place===1;
+function airEvApply(s,ev,res){try{xpAdd(s,'aero',res&&res.place===1?2.5:1.2);xpAdd(s,'eng',0.6);}catch(_){}/* 0.51, этап 7: лётные часы состязаний — опыт */const A=s.air,md=A.models.find(m=>m.id===res.md),P=airPilotList(s).find(p=>p.id===res.pil)||{n:'лётчик'},who=P.hero?PIONEERS[s.pioneer].name:P.n,won=res.place===1;
   A.ev=A.ev||{};A.ev[ev.key]={place:res.place,txt:res.txt,md:res.md,who,y:s.y,m:s.m,v:res.v||res.d||res.a||res.q||0};
   const prizeK=ev.kind==='speed'||ev.kind==='trial'||ev.kind==='alt'||ev.kind==='dist'?[1,0.5,0.25][res.place-1]||0:won?1:0;const prize=Math.round(ev.prize*prizeK*cpi(s)/tabAt(CPI,ev.y)/10)*10;
   if(prize>0){s.cash+=prize;A.prizes=(A.prizes||0)+prize;}

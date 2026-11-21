@@ -77,7 +77,7 @@ function frBullets(dt,M){const B=FL.bul;if(!B||!B.length)return;const me=FL.me,t
       if(Math.random()<0.3)fwPart(p1[0],p1[1]+0.3,p1[2],0,1,0,0.6,2,0.8,[120,108,90],0.35);}}}
 // огонь из пулемётов: курсовые — по ручке «огонь», стрелок — сам по ближнему врагу в задней полусфере
 function frGuns(a,dt,want,M){const g=a.gun;if(!g)return;g.cd-=dt;g.cdo=(g.cdo||0)-dt;const sh=[a.p[0]+a.fw[0]*(a.mesh.len*0.35)+a.up[0]*0.5,a.p[1]+a.fw[1]*(a.mesh.len*0.35)+a.up[1]*0.5,a.p[2]+a.fw[2]*(a.mesh.len*0.35)+a.up[2]*0.5];sh.vx=a.v[0];sh.vy=a.v[1];sh.vz=a.v[2];
-  if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],a.fw,g.spread,a.side,1);}
+  if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;const as=a===FL.me?frAssist(a,M):null,bd=as?as.aim:a.fw;/* 0.51: автоприцел игрока — очередь доводится в точку упреждения */for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],bd,g.spread,a.side,1);}
     if(Math.random()<0.5)fwPart(sh[0]+a.fw[0]*1.5,sh[1],sh[2]+a.fw[2]*1.5,0,0,0,0.35,0,0.04,[255,230,170],-2);if(a===FL.me)frSnd('gun',1);else frSnd('gun',0.6/(1+Math.hypot(a.p[0]-FL.me.p[0],a.p[1]-FL.me.p[1],a.p[2]-FL.me.p[2])/60));}
   if(g.obs&&g.cdo<=0){const foes=a.side===0?(M.foes||[]):[FL.me];let best=null,bd=420;for(const f of foes){if(f.crash||f.down)continue;const d=Math.hypot(f.p[0]-a.p[0],f.p[1]-a.p[1],f.p[2]-a.p[2]);if(d<bd){const dir=[(f.p[0]-a.p[0])/d,(f.p[1]-a.p[1])/d,(f.p[2]-a.p[2])/d];if(d3(dir,a.fw)<0.35){bd=d;best=[f,dir,d];}}}
     if(best){g.cdo=g.obsRate;const [f,dir,d]=best,lead=d/760,tp=[f.p[0]+f.v[0]*lead,f.p[1]+f.v[1]*lead,f.p[2]+f.v[2]*lead],aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frBullet([a.p[0]+a.up[0]*1.2,a.p[1]+a.up[1]*1.2,a.p[2]+a.up[2]*1.2],aim,g.obsSpread,a.side,0.9);}}}
@@ -95,16 +95,18 @@ function frAI(a,dt,M){const me=FL.me,c=a.ctl;if(a.crash)return;
     if(ai.done||a.hp<0.35){ai.done=1;flAuto(a,{x:a.p[0],z:a.p[2]+(s_foeDir())*4000,alt:ai.alt,thr:1,bank:0.5});}return;}
   if(me.crash||!tg){flAuto(a,{x:a.p[0],z:a.p[2]+s_foeDir()*3000,alt:ai.alt,thr:0.8});return;}
   const d=[me.p[0]-a.p[0],me.p[1]-a.p[1],me.p[2]-a.p[2]],dist=l3(d);
-  if(ai.st==='wait'){flAuto(a,{x:ai.home[0],z:ai.home[1],alt:ai.alt,thr:0.75,bank:0.4});if(dist<(ai.see||4200))ai.st='attack';frGuns(a,dt,false,M);return;}
+  if(ai.st==='wait'){flAuto(a,{x:ai.home[0],z:ai.home[1],alt:ai.alt,thr:0.75,bank:0.4});if(dist<(ai.see||4200)*frDif().see)ai.st='attack';frGuns(a,dt,false,M);return;}
   if(a.hp<0.35&&ai.st!=='flee'){ai.st='flee';}
   if(ai.st==='flee'){flAuto(a,{x:a.p[0],z:a.p[2]+s_foeDir()*5000,alt:a.p[1]-200,thr:1,bank:0.6,dive:0.3});frGuns(a,dt,false,M);return;}
+  /* 0.51: противник не висит на хвосте вечно — отваливает и заходит снова, на скорости проскакивает вперёд */
+  if(frHuman(a,dt,M,dist,d))return;
   // на хвосте у нас враг (то есть игрок) — уходит виражом
   const back=[-d[0]/dist,-d[1]/dist,-d[2]/dist],meAim=d3(me.fw,[-back[0],-back[1],-back[2]]);
   if(ai.st==='attack'&&dist<320&&d3(a.fw,back)>0.4&&meAim<-0.85&&Math.random()<dt*0.6){ai.st='evade';ai.until=ai.t+1.5+Math.random()*2.5;ai.dir=Math.random()<0.5?-1:1;}
   if(ai.st==='evade'){flAuto(a,{hdg:flHdg(a)+ai.dir*1.6,alt:a.p[1]-30,thr:1,bank:1.35,edge:1,floor:150});if(ai.t>ai.until)ai.st='attack';frGuns(a,dt,false,M);return;}
-  const lead=dist/760,tp=[me.p[0]+me.v[0]*lead,me.p[1]+me.v[1]*lead,me.p[2]+me.v[2]*lead];
+  const er=frAimErr(ai,dt),lead=dist/760,tp=[me.p[0]+me.v[0]*lead+er[0]*dist,me.p[1]+me.v[1]*lead+er[1]*dist,me.p[2]+me.v[2]*lead+er[2]*dist];/* 0.51: целится с ошибкой — тем большей, чем слабее лётчик и легче уровень */
   flAuto(a,{x:tp[0],z:tp[2],alt:tp[1],thr:1,bank:1.3,edge:1,floor:120,dive:0.45,climbK:1.2});
-  const aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frGuns(a,dt,dist<380&&d3(aim,a.fw)>0.993-(1-ai.sk)*0.006,M);}
+  const aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frGuns(a,dt,frBurst(ai,dt,dist<380&&d3(aim,a.fw)>0.993-(1-ai.sk)*0.006),M);}
 function s_foeDir(){return 1;}// враг — на севере (z больше линии фронта)
 function frMission(cfg,M){const s=G,t=tNow(s),md=cfg.md,P=cfg.pil,m=cfg.fm,T=FR_T[m.k],fz=FW_SC.front.front.z,me=()=>FL.me;
   M.title=T.n;M.place='front';M.mood=['clear','cloudy','cloudy','overcast','morning'][hashStr(m.id)%5];M.parked=[{...md,paint:md.paint}];M.warpMax=4;M.guns=true;M.bombs=airParts(md).a.bomb>0&&m.k==='bomb';M.foes=[];M.side=0;

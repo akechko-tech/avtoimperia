@@ -57,7 +57,7 @@ function trRivals(s,T){const out=[],c=T.c;
   return out.map(o=>{const brk=Math.random()<0.3;return {n:o.n,sc:o.k*Math.exp((Math.random()+Math.random()-1)*0.1)*(brk?0.85:1)*DIF().race**0.3,brk};});}
 function trialRun(s,T,E){const md=s.models.find(m=>m.id===E.md);const key=T.id+'|'+s.y;if(!md||!(md.status==='prod'||md.status==='sale')){addLog(`${T.n}: заявленной модели больше нет в серии — заявка снята.`,'bad');return null;}
   const sc0=trScore(md,T.grp,T.c,s),brk=Math.random()<trBreakP(md,s),me={n:`«${md.name}»`,sc:sc0*Math.exp((Math.random()+Math.random()-1)*0.06)*(brk?0.82:1),brk,you:1};
-  const L=[me,...trRivals(s,T)].sort((a,b)=>b.sc-a.sc),place=L.indexOf(me)+1,top=L[0].sc,scale=(1+T2(s)/10)*(T.c==='us'?1.8:1),t=mi(s);
+  const L=[me,...trRivals(s,T)].sort((a,b)=>b.sc-a.sc),place=L.indexOf(me)+1,top=L[0].sc,scale=(1+trTierOf(s)/10)*(T.c==='us'?1.8:1),t=mi(s);
   const pass=place<=3&&me.sc>=top*0.88,price=Math.round(refPrice(md,s)*1.05/10)*10;let n=0;
   if(place===1)n=Math.round((T.order[0]+Math.random()*(T.order[1]-T.order[0]))*scale);else if(pass)n=Math.round(T.order[0]*scale*0.5);else if(T.buyAll&&!brk)n=1;
   if(pass){trSet(md,T.c,'sub',{place,sc:+me.sc.toFixed(2)},s);s.rep=clamp(s.rep+(place===1?2:1),0,100);}
@@ -67,7 +67,7 @@ function trialRun(s,T,E){const md=s.models.find(m=>m.id===E.md);const key=T.id+'
   pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания ведомства',title:`${T.n}: ${place===1?'первое место':pass?place+'-е место, свидетельство получено':brk?'поломка в пути':place+'-е место'}`,deck:`${COUNTRIES[T.c].name} · «${md.name}»`,
     text:`${T.who} подвело итог (100 — образец года):\n${tab}\n${place===1?`Победа: заказ на ${fmtN(n)} машин по ${money(price)} и свидетельство.${sub}`:pass?`Свидетельство получено${n?`, заказ на ${fmtN(n)} машин по ${money(price)}`:''}.${sub}`:brk?`«${md.name}» встала в пути — судьи это записали.${n?'':' Свидетельства нет.'}`:`Свидетельства нет: до призёров не хватило.${n?` Машину, дошедшую до конца, казна купила (${money(price)}).`:''}`}\n${T.hist}`,choices:[['Ясно','ok']]},true);
   return {place,pass,n,brk};}
-function T2(s){return typeof T==='function'?T(s):0;}
+function trTierOf(s){return typeof T==='function'?T(s):0;}
 function trSubOn(T,y){return T.sub>0&&y>=(T.subY||T.y0)&&y<=T.y1+1;}
 /* ---------- приёмка по заявке: полигон (военная техника) и станция испытаний тракторов ---------- */
 function trTestKind(md,s){if(trMil(md))return 'mil';const k=trKind(md);if(TR_GRP.farm.kinds.includes(k)&&s.y>=TR_NEB_Y&&trSells(s,'us'))return 'neb';return null;}

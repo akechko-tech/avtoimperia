@@ -458,7 +458,7 @@ function render(){
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
   lastDate=ds;setCash(s.over&&s.soldTo?s.soldTo.mine:s.cash);if(s.over&&s.soldTo){const lb=document.getElementById('cashLbl');if(lb)lb.textContent='Ваши деньги';}
   // 0.37: авиатор (только аэропланы) — свои вкладки; у автомобильной фирмы — раздел авиацеха на каждой вкладке
-  airNav();document.getElementById('view').innerHTML=airOnly(s)?airView(tab):tab==='plant'?vPlant()+airPlantCard(s):tab==='models'?vModels()+airModelsCard(s):tab==='market'?vMarket()+airMarketCard(s):tab==='race'?vRace()+airSkyCard(s):vLog();
+  airNav();document.getElementById('view').innerHTML=airOnly(s)?airView(tab):airSwitchOn(s)&&tab!=='log'?lineSwitchHTML(s)+(uiLine==='air'?airSubView(s,tab):tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():vRace()):tab==='plant'?vPlant()+airPlantCard(s):tab==='models'?vModels()+airModelsCard(s):tab==='market'?vMarket()+airMarketCard(s):tab==='race'?vRace()+airSkyCard(s):vLog();
   {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log'&&!wideLand();es.classList.remove('flash');if(EC_FLASH&&!REDUCE){void es.offsetWidth;es.classList.add('flash');}}}
   document.body.dataset.tab=tab;
   if(tab==='plant')plantAnim();

@@ -154,7 +154,7 @@ function adviceList(s){
     if(pr12.length>=6&&act.length&&(rdU>rdUpkeepBase(s,s.rd.lvl)||tmU>0)&&rdU+tmU>Math.max(0,pA)*0.35&&(s.rd.lvl>1||(s.rdept||0)>0)){const lab=rdU>=tmU&&s.rd.lvl>1,pct=pA>0?Math.round((rdU+tmU)/pA*100):0;
       add(46,'✂️',`Бюро и гоночный отдел стоят ${money(rdU+tmU)} в месяц${pct?` — ${pct} % прибыли`:' при убытке'}. Содержание растёт с оборотом фирмы: ступень можно сократить и вернуть позже.`,lab?'Сократить бюро':'Сократить отдел',()=>lab?ACT.rdDown():RACE_ACT.rdeptDown(),lab?'models':'race');}}
   // 0.39: дела авиацеха — в том же списке (одна система управления для авто, мото и аэро)
-  if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
+  if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{try{uiLine='air';}catch(_){}const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
   return T.sort((a,b)=>b.p-a.p);
 }
 // 0.51: гонки сезона одной кнопкой — строка в «Делах»: включить, бюджет на год, что команда сделала в прошлом месяце
@@ -216,4 +216,5 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   if(!s.techBuild&&calm&&!lean){const k=TECH_ORDER.find(k=>techOpen(s,k)&&room()>techCost(s,k)*2);if(k){const c=techCost(s,k);if(pay(c)){s.cash-=c;s.plantVal+=c*0.7;s.techBuild={k,left:techMonths(s,k)};msg.push('внедряет: '+techNext(s,k).name);}}}
   // реклама — около 4% выручки (в кризис — вдвое меньше)
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*(calm?0.04:0.02)))/10)*10;
+  try{airHelperMonth(s,msg,pay,reserve);}catch(e){console.warn('air helper',e);}   // 0.51, этап 7: помощник ведёт и авиацех
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}
