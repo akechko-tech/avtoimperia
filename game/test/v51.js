@@ -482,5 +482,81 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const n0=s.xl.length,nm0=s.models.length;ACT.startdev();const nm=s.models[s.models.length-1];CK(s.models.length===nm0+1&&nm.status==='dev'&&(D1.own?(s.xl.length===n0+1&&s.xl[s.xl.length-1].md===nm.id&&s.xl[s.xl.length-1].at<=mi(s)+nm.devLeft):s.xl.length===n0),'запуск разработки: линия '+(D1.own?'заказана и будет готова к серии':'не нужна — '+D1.why));}
   globalThis.XLOFF=0;
 }
+// 22. этап 4в: опыт, свои узлы и свой авиамотор
+{const rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();};
+  function co(y,xp,c){rnd(3);newGame('custom',c||'us','Мотор','normal','Первая');G.pending=[];G.y=y;G.m=3;G.cash=5e7;G.rd.lvl=8;G.xp={...(xp||{})};G.lines={car:true,moto:true};
+    const d=autoDesign('middle',G);Object.assign(G.models[0],d,{status:'prod',launched:mi(G)-20});G.world=G.world||worldInit(G);G.world.my.r12=2e7;return G;}
+  const nE=ENGINES.length,nA=AIR_ENG.length;
+  // опыт: убывающая отдача, копится выпуском и авиацией
+  let s=co(1914,{});xpAdd(s,'eng',10);const a1=xpOf(s,'eng');xpAdd(s,'eng',10);const a2=xpOf(s,'eng')-a1;CK(near(a1,10)&&a2<a1&&a2>5,'опыт: вторая десятка даётся труднее первой ('+a1.toFixed(1)+', потом +'+a2.toFixed(1)+')');
+  s=co(1914,{});xpMonth(s,{made:2000,mmade:0});const e1=xpOf(s,'eng');xpMonth(s,{made:2000,mmade:0,air:{made:6},ae:{n:20,licN:0}});CK(e1>0&&xpOf(s,'eng')-e1>e1*3&&xpOf(s,'alloy')>1&&xpOf(s,'aero')>1&&xpOf(s,'mass')>0,'опыт копится выпуском; аэропланы и авиамоторы учат моторам и сплавам быстрее: моторы '+xpOf(s,'eng').toFixed(2)+', сплавы '+xpOf(s,'alloy').toFixed(2));
+  // без опыта приём закрыт
+  s=co(1914,{eng:5});{const B=ownBaseList(s,'e',false)[0],P=ownPreview(s,{k:'e',base:B.id,tech:['ohc'],goal:'power',gl:1});CK(P&&/Мало опыта/.test(P.why)&&!ownStart(s,{k:'e',base:B.id,tech:['ohc'],goal:'power',gl:1}),'без опыта приём закрыт: '+P.why);}
+  s=co(1914,{eng:50,alloy:45,aero:40,brake:45,susp:35,mass:40});
+  {const B=ownBaseList(s,'e',false)[0],sp=(tech,goal,gl)=>({k:'e',base:B.id,tech,goal,gl,name:''});CK(B.id===s.models[0].e,'основа — мотор своих машин: '+B.name);
+    const P0=ownPreview(s,sp([],'power',1)),P1=ownPreview(s,sp([],'power',2)),P2=ownPreview(s,sp([],'power',3)),d1=P0.x.hp/B.hp-1,d2=P1.x.hp/P0.x.hp-1,d3=P2.x.hp/P1.x.hp-1;
+    CK(d1>d2&&d2>d3&&d3>0&&P2.need>P0.need,'цель: каждый следующий шаг даёт меньше и стоит дольше: +'+(d1*100).toFixed(1)+'%, +'+(d2*100).toFixed(1)+'%, +'+(d3*100).toFixed(1)+'%');
+    const A=ownPreview(s,sp(['ohc'],'cheap',1)),AB=ownPreview(s,sp(['sc','ohc'],'cheap',1)),Bq=ownPreview(s,sp(['sc'],'cheap',1));
+    CK(AB.x.hp/Bq.x.hp<A.x.hp/B.hp-0.02&&AB.x.hp>Bq.x.hp,'второй приём даёт меньше первого: верхний распредвал один +'+((A.x.hp/B.hp-1)*100).toFixed(0)+'%, вторым — +'+((AB.x.hp/Bq.x.hp-1)*100).toFixed(0)+'%');
+    CK(A.x.yh<=Bq.x.yh&&Bq.x.yh<=AB.x.yh&&A.x.own===1&&A.x.y>=s.y,'год по истории растёт с чертами: '+A.x.yh+' ≤ '+Bq.x.yh+' ≤ '+AB.x.yh);
+    // цена опережения: ×1,6 за год; пять лет — вдесятеро
+    const pj0={kind:'own',need:20,yrs:0,pc:300},pj5={...pj0,yrs:5,need:Math.round(20*aheadTimeK(5))};s.world.my.r12=0;const c0=ownRdCost(pj0,s),c5=ownRdCost(pj5,s);s.world.my.r12=2e7;
+    CK(c5/c0>=7&&near(ownRdCost({...pj0,yrs:5},s)/ownRdCost(pj0,s),aheadCostK(5),0.5),'узел на пять лет раньше истории — вдесятеро дороже: опыты и образцы '+money(c0)+' → '+money(c5)+' (×'+(c5/c0).toFixed(1)+'), у фирмы с оборотом ×'+(ownRdCost({...pj0,yrs:5},s)/ownRdCost(pj0,s)).toFixed(1));
+    const far=ownPreview(s,sp(['sc','alu'],'power',3));CK(far.yrs>OWN_LIMIT?/Предел эпохи/.test(far.why):far.yrs>0,'дальше десяти лет вперёд — предел эпохи: год по истории '+far.x.yh+(far.why?' — '+far.why:''));
+    // риск: свой узел сырее исторического того же года; опережающий — ещё и дороже в серии
+    const hist=ENGINES.find(z=>!z.moto&&z.y===s.y)||{y:s.y};CK(partRisk({...hist,own:1},s.y)>partRisk(hist,s.y)&&protoRisk({kind:'own',yrs:5})>protoRisk({kind:'own',yrs:0})&&protoRisk({kind:'own',yrs:0})>=0.15,'свой узел чаще выходит не по ТЗ: '+Math.round(partRisk({...hist,own:1},s.y)*100)+'% против '+Math.round(partRisk(hist,s.y)*100)+'%; доработка на испытаниях '+Math.round(protoRisk({kind:'own',yrs:5})*100)+'% при пяти годах опережения');
+    const ah=ownPreview(s,sp(['alu'],'light',1));CK(ah.yrs>0&&near(aheadPartK(ah.x,s),1+Math.min(0.9,0.15*(ah.x.y-yf(s))),1e-9)&&partCost(ah.x,s)>partCost(B,s),'опережающий узел дороже в серии: +'+Math.round((aheadPartK(ah.x,s)-1)*100)+'%');
+    // проект → узел: в каталоги не попадает, в конструкторе есть, в сохранении живёт
+    const spec=sp(['ohc'],'power',1);spec.name='Мотор «Комета»';const cash0=s.cash,n0=rdActive(s).length;CK(ownStart(s,spec)&&rdActive(s).length===n0+1&&s.cash<cash0&&rdActive(s)[n0].kind==='own','своя разработка — проект КБ, деньги при старте: '+money(cash0-s.cash));
+    const pj=rdActive(s)[n0];pj.rk=1;s.rd.projs=s.rd.projs.filter(p=>p!==pj);ownDone(s,pj);const x=s.custom[0];
+    CK(x&&x.name==='Мотор «Комета»'&&byId(ENGINES,x.id)===x&&ENGINES.length===nE&&!ENGINES.includes(x)&&unlockedP(ENGINES,s,false).includes(x)&&!byId(BRAKES,x.id)&&ALL_PARTS().includes(x),'свой узел: находится по номеру, в конструкторе есть, в каталоге соперников его нет');
+    const ev=s.pending[s.pending.length-1];CK(ev&&/Комета/.test(ev.title)&&ev.choices.some(c=>/^own:pat:/.test(c[1]))&&/Основа/.test(x.art)&&/распредвал/i.test(x.art),'газета о новинке со статьёй «зачем и откуда» и выбором патента: '+x.art.slice(0,90));s.pending=[];
+    const m=s.models[0],S0=classScore(m,s,s.country),u0=unitCost(m,s);m.e=x.id;const S1=classScore(m,s,s.country),h=ownXpHTML(m,s);CK(S1>S0&&/Свой узел «Мотор «Комета»» против основы/.test(h.replace(/<[^>]+>/g,''))&&/итог \+/.test(h.replace(/<[^>]+>/g,'')),'«Как посчитано»: что свой узел дал против основы — '+h.replace(/<[^>]+>/g,''));
+    const sv=JSON.parse(JSON.stringify(s));ownSync(null);CK(!byId(ENGINES,x.id),'реестр пуст — узла нет');const g2=migrate(sv);CK(byId(ENGINES,x.id)&&byId(ENGINES,x.id).name==='Мотор «Комета»'&&parts(g2.models[0]).e.id===x.id,'после загрузки сохранения свой узел на месте');ownSync(s);
+    // патент, копия соперника, лицензия и иск
+    const pc=ownPatCost(s),c1=s.cash;CK(ownPatent(s,x.id)&&near(c1-s.cash,pc)&&ownPatOn(s,x)&&!ownPatent(s,x.id),'патент на свой узел: '+money(pc)+', пятнадцать лет');
+    ownSeries(s);CK(x.ser===mi(s),'узел в серии — с этого месяца его могут разобрать');x.ser=mi(s)-13;s.firms={'us:0':{c:'us',i:0,md:{middle:{q:0.3}},r12:6e6,cash:1e5}};const F=s.firms['us:0'],g=segOf(m);F.md[g]=F.md[g]||{q:0.3};const q0=F.md[g].q;
+    const cp=ownCopied(s,{},F,g),ev2=s.pending[s.pending.length-1];CK(cp===x&&x.cp['us:0']===mi(s)&&F.md[g].q>q0&&ev2&&ev2.choices.length===3&&/скопировала/.test(ev2.title),'фирма-соперник с моделью-ответом перенимает свой узел; патент даёт выбор: '+ev2.choices.map(c=>c[0]).join(' / '));
+    CK(ownCopied(s,{},F,g)===null,'второй раз ту же копию не считают');s.pending=[];
+    ownEvent(s,'own:lic:'+x.id+':us:0');const r1={licIn:0,legal:0};ownLegalMonth(s,r1);CK(s.legal.own.length===1&&r1.licIn===ownLicFee(s,F)&&r1.licIn>0,'лицензия: '+money(r1.licIn)+' в месяц пять лет');
+    s.legal.own=[];ownEvent(s,'own:sue:'+x.id+':us:0');const r2={licIn:0,legal:0};ownLegalMonth(s,r2);CK(r2.legal===ownSuitCost(s)&&s.legal.own[0].p>=0.4,'иск: юристы '+money(r2.legal)+' в месяц, шанс '+Math.round(s.legal.own[0].p*100)+'%');
+    s.legal.own[0].until=mi(s);s.legal.own[0].p=1;const c2=s.cash,q1=F.md[g].q;ownLegalMonth(s,{});CK(s.cash>c2&&F.md[g].q<q1&&!s.legal.own.length,'суд выигран: компенсация '+money(s.cash-c2)+', копия снята с модели');
+    x.pat=null;x.cp={};const lg=G.log.length;ownCopied(s,{},F,g);CK(!s.pending.length&&/патента нет/.test(G.log[G.log.length-1].text),'без патента — только строка в журнале');}
+  // другие категории и мотоциклы; предел у шин
+  s=co(1920,{eng:50,alloy:45,aero:40,brake:45,susp:35,mass:40});{for(const k of Object.keys(OWN_CAT)){const B=ownBaseList(s,k,false)[0],P=ownPreview(s,{k,base:B.id,tech:OWN_TECH.filter(t=>t.cat.includes(k)).slice(0,1).map(t=>t.id),goal:'light',gl:1}),PL=ownPreview(s,{k,base:B.id,tech:[],goal:'light',gl:1});
+      CK(P&&PL.x.kg<B.kg&&P.cmp.length===2&&P.x.k===k&&isFinite(P.cost)&&P.cost>0&&P.x.yh>=1885&&!/NaN|undefined/.test(ownPreviewHTML(s,P)),OWN_CAT[k].n+': своя разработка считается — '+B.name+' → '+P.x.kg+' кг, год по истории '+P.x.yh+', '+money(P.cost));}
+    const Bm=ownBaseList(s,'e',true)[0];CK(Bm&&Bm.moto&&ownPreview(s,{k:'e',base:Bm.id,tech:[],goal:'power',gl:1}).x.moto,'мотоциклетный мотор — тоже основа');}
+  // новая партия — своих узлов прошлой нет
+  co(1914,{});CK(!Object.keys(OWN_MAP).length&&ENGINES.length===nE&&AIR_ENG.length===nA,'новая партия: реестр своих узлов пуст, каталоги не тронуты');
+  // свой авиамотор: сильное КБ и слабое
+  function aeCo(y,c,strong){const g=co(y,strong?{eng:60,alloy:40,mass:40}:{eng:5,alloy:0,mass:5},c);if(strong){const E=unlockedP(ENGINES,g,false).sort((a,b)=>b.hp-a.hp)[0];g.models[0].e=E.id;g.rd.upg[E.id]=4;}else g.models[0].e='e9';return g;}
+  {s=aeCo(1915,'fr',true);CK(aeCan(s)&&aeTypeOk(s,'inline')&&aeTypeOk(s,'v')&&!aeTypeOk(s,'radial'),'тип авиамотора — по году и опыту: в 1915-м рядный и V-образный, звезда — позже');
+    const PS=aePreview(s,{type:'v',goal:'power',gl:1});const w=aeCo(1915,'fr',false),PW=aePreview(w,{type:'v',goal:'power',gl:1});s=aeCo(1915,'fr',true);
+    CK(PS.x.hp>PW.x.hp*1.5&&PS.x.hp/PS.x.kg>PW.x.hp/PW.x.kg*1.2&&PS.x.rel>PW.x.rel,'сильное моторное КБ даёт авиамотор мощнее, легче и надёжнее: '+PS.x.hp+' л.с. '+(PS.x.hp/PS.x.kg).toFixed(2)+' л.с./кг против '+PW.x.hp+' л.с. '+(PW.x.hp/PW.x.kg).toFixed(2));
+    CK(/Rolls-Royce|Hispano/.test(AE_TYPE.v.h)&&PS.base&&PS.cost>0&&!PS.why,'проект «Авиамотор»: основа — '+PS.base.name+', '+money(PS.cost)+', ~'+PS.months+' мес.');
+    const sp={type:'v',goal:'power',gl:1,name:'Комета V'},n0=rdActive(s).length;CK(aeStart(s,sp)&&rdActive(s)[n0].kind==='aeng','авиамотор — проект автомобильного КБ');const pj=rdActive(s)[n0];s.rd.projs=[];aeDone(s,pj);const x=s.aeng[0];
+    CK(x&&x.own&&byId(AIR_ENG,x.id)===x&&AIR_ENG.length===nA&&airCatList(s,'e').includes(x)&&airPartOk(s,x,'e')&&airParts({e:x.id}).e===x,'свой авиамотор стоит в конструкторе аэроплана рядом с каталогом');s.pending=[];
+    const t=tNow(s),cA=airEngCost(x,t,s);s.tech.foundry=1;const cF=airEngCost(x,t,s);s.tech.foundry=0;CK(near(cF/cA,0.82,1e-6)&&near(cA,x.c*0.87*(x.y>t?1+Math.min(0.9,0.15*(x.y-t)):1)*Math.max(0.4,1-0.05*Math.max(0,t-x.y))*tabAt(CPI,t)/tabAt(CPI,Math.max(1895,x.y)),1),'цена своего мотора: без наценки поставщика, с литейкой −18 %: '+money(cA)+' → '+money(cF));
+    // продажа моторов авиазаводам: сильный зарабатывает, слабый — нет
+    x.made={y:s.y-3,m:0};const CS=aeSaleCalc(s,x),profS=CS.dem*12*(CS.price-CS.cost)-AE_FIX*cpi(s)*12;const xw={...PW.x,id:'w',made:{y:w.y-3,m:0}},CW=aeSaleCalc(w,xw),profW=CW.dem*12*(CW.price-CW.cost)-AE_FIX*cpi(w)*12;
+    CK(profS>PS.cost/3&&profW<PW.cost/5,'свои авиамоторы окупаются у сильного моторного КБ и не окупаются у слабого: в год '+money(Math.round(profS))+' при проекте '+money(PS.cost)+' против '+money(Math.round(profW))+' при '+money(PW.cost));
+    s.cap=600;const r={capUsed:0,made:500,mmade:0};rnd(5);aeMonth(s,r);CK(r.ae.n>0&&r.ae.rev>r.ae.cost&&r.aeP===Math.round(r.ae.rev-r.ae.cost-r.ae.fix)&&r.capUsed>0&&x.sold===r.ae.n,'месяц: продано '+r.ae.n+' моторов, прибыль '+money(r.aeP)+', моторы заняли места завода');
+    CK(/Авиамоторы: продано/.test(aePLRow(r))&&/испытательная станция/.test(aePLRow(r)),'строка «Авиамоторы» в отчёте месяца');
+    const eA=xpOf(s,'eng');xpMonth(s,r);CK(xpOf(s,'eng')>eA,'опыт обратно: авиамоторы учат автомобильные моторы');
+    // свой мотор не отнимут в войну; чужой вражеский — закрыт
+    const foe=AIR_ENG.find(e=>e.cty==='de'&&e.y<=1915&&!e.lic);CK(airWarOn('fr',1915.5)&&(!foe||!airPartOk(s,foe,'e'))&&airPartOk(s,x,'e'),'в войну свой мотор доступен всегда');
+    // заказ министерства: чужой мотор по лицензии
+    s.pending=[];s.cap=600;rnd(1);let off=false;for(let i=0;i<60&&!off;i++)off=aeLicOffer(s);const evL=s.pending[0];CK(off&&evL&&/Заказ на авиамоторы/.test(evL.title)&&/Либерти/.test(evL.text)&&s.aeLicAsk,'в войну министерство предлагает выпуск чужого мотора по лицензии: '+(evL&&evL.deck));
+    s.pending=[];ownEvent(s,'own:aelic:yes');const r3={capUsed:0};x.sale=0;aeMonth(s,r3);CK(s.aeLic&&r3.ae.licN>0&&r3.aeP>0&&near(r3.ae.licRev/r3.ae.licCost,1.12,1e-6),'заказ принят: '+r3.ae.licN+' моторов в месяц, себестоимость и 12 % сверху — '+money(r3.aeP));
+    s.y=1919;s.m=6;const r4={capUsed:0};aeMonth(s,r4);CK(!s.aeLic&&!r4.ae.licN,'война кончилась — заказ закрыт');}
+  // интерфейс: строка опыта в карточке КБ, листы «Своя разработка» и «Авиамотор» открываются
+  s=co(1920,{eng:50,alloy:45,aero:40,brake:45,susp:35,mass:40});{const h=ownCardHTML(s);CK(/Опыт:/.test(h)&&/data-act="ownOpen"/.test(h)&&/Своя разработка/.test(rdCardHTML(s)),'карточка КБ: строка опыта и кнопка «Своя разработка»');
+    CK(XP_KEYS.length===6&&/открыто:/.test(xpRowsHTML(s))&&!/NaN|undefined/.test(xpRowsHTML(s)),'шесть областей опыта: что открыто и что дальше');
+    let ok2=true,err='';try{openOwn(null);ACT.ownCat({k:'e',mo:'0'});ACT.ownTech({id:'ohc'});ACT.ownTech({id:'alu'});ACT.ownTech({id:'sc'});ACT.ownGoal({g:'light'});ACT.ownGl({n:'2'});}catch(e){ok2=false;err=String(e&&e.stack||e).slice(0,200);}
+    CK(ok2&&ownDraft&&ownDraft.tech.length===2&&ownDraft.tech.join()==='alu,sc'&&ownDraft.goal==='light'&&ownDraft.gl===2,'воронка «Своя разработка»: узел → приёмы (не больше двух) → цель: '+(ownDraft&&ownDraft.tech.join('+'))+' '+err);
+    const n0=rdActive(s).length;ownDraft.tech=['ohc'];ownDraft.gl=1;ACT.ownStart();CK(rdActive(s).length===n0+1&&ownDraft===null,'«Начать» — проект в КБ');
+    let ok3=true;try{ACT.aeOpen();ACT.aeType({k:'v'});ACT.aeGoal({g:'light'});}catch(e){ok3=false;err=String(e&&e.stack||e).slice(0,200);}CK(ok3&&aeDraft&&aeDraft.type==='v'&&aeDraft.goal==='light','лист «Свой авиамотор» открывается: '+err);}
+  ownSync(null);
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

@@ -165,7 +165,7 @@ const TRIMS=[{id:'t0',name:'Базовая',y:1885,q:0,c:0,cx:1},{id:'t1',name:'
   {id:'t3',name:'Спорт: облегчённый кузов, ковшеобразные сиденья, настроенный мотор',y:1901,q:10,c:260,cx:1.25,open:1,note:'Как Mercedes 35 HP (1901) — первая машина для гонщиков-любителей: низкая рама, мощный мотор, лёгкий кузов. Машина для тех, кто любит скорость. Только открытые кузова'}];
 // Разделы конструктора: какие детали из чего выбирать
 const PART_CATS=[{k:'e',arr:()=>ENGINES,name:'Двигатель',rd:'Двигатель'},{k:'g',arr:()=>GEARBOX,name:'Коробка передач',rd:'Коробка'},{k:'c',arr:()=>CHASSIS,name:'Рама и подвеска',rd:'Рама'},{k:'w',arr:()=>TYRES,name:'Колёса и шины',rd:'Колёса'},{k:'k',arr:()=>BRAKES,name:'Тормоза',rd:'Тормоза'},{k:'b',arr:()=>BODIES,name:'Кузов',rd:'Кузов'}];
-const ALL_PARTS=()=>[...ENGINES,...GEARBOX,...CHASSIS,...TYRES,...BRAKES,...BODIES];
+const ALL_PARTS=()=>[...ENGINES,...GEARBOX,...CHASSIS,...TYRES,...BRAKES,...BODIES,...Object.values(OWN_MAP).filter(x=>x.k!=='ae')];
 // Оснащение по годам: электрический стартер Delco появился у Cadillac в 1912 году
 function trimName(t,s){const y=s?s.y:1895;if(t.id==='t2')return y<1912?'Люкс: кожа, латунь, отделка':'Люкс: кожа, ковры, отделка салона';if(t.id==='t1')return y<1905?'Комфорт: фонари, тент':'Комфорт: тент, мягкие сиденья';return t.name;}
 const PAINTS=[{id:'#1b1d22',name:'Чёрный'},{id:'#1f4a36',name:'Зелёный'},{id:'#9e2b25',name:'Красный'},{id:'#23427a',name:'Синий'},{id:'#e3d6b4',name:'Сливочный'},{id:'#5c1e2a',name:'Бордо'},{id:'#e8e6de',name:'Белый'},{id:'#c9a227',name:'Жёлтый'}];
@@ -225,7 +225,10 @@ const FLAVOR=[
   [1927,9,'«Певец джаза» — первый звуковой фильм',''],[1928,8,'Флеминг открыл пенициллин','Alexander Fleming'],
   [1929,4,'В Голливуде впервые вручили «Оскары»',''],[1929,7,'Дирижабль «Граф Цеппелин» облетел вокруг света','LZ 127 Graf Zeppelin']
 ];
-const byId=(a,id)=>a.find(x=>x.id===id);
+// 0.51, этап 4в: свои узлы игрока лежат не в каталогах (каталоги перебирают соперники, гонки и мир без игрока), а в отдельном
+// списке партии; по номеру они находятся так же, как исторические (16c-own.js: ownSync)
+const OWN_MAP={},OWN_ARR={};
+const byId=(a,id)=>a.find(x=>x.id===id)||(OWN_MAP[id]&&OWN_ARR[id]===a?OWN_MAP[id]:undefined);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 // 0.37: минус не отрывается от суммы при переносе строки (связка U+2060 между «−» и «$»)
 const money=n=>(n<0?'−\u2060':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru-RU');

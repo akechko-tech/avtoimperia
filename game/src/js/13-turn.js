@@ -97,6 +97,7 @@ function step(){
   // расходы (0.25: спецакции оплачены при старте — в отчёт; доход от вложений — invMonth)
   try{airMonth(s,r);}catch(e){console.warn('air',e);r.airP=0;}   // 0.37: авиацех — аэропланы, контракты, лётчики (105h-air.js)
   try{legalMonth(s,r);}catch(e){console.warn(e);}   // 0.22: патенты и суды
+  try{ownMonth(s,r);}catch(e){console.warn('own',e);}   // 0.51, этап 4в: опыт, свои авиамоторы, патенты на свои узлы (16c-own.js)
   r.rdp=s.rdPaid||0;s.rdPaid=0;r.prm=s.promoPaid||0;s.promoPaid=0;invMonth(s,r);r.rd=rdUpkeep(s)+r.rdp+kitUpkeep(s,'kb');r.drv=driverPayroll(s);r.team=teamUpkeep(s)+kitUpkeep(s,'team');   // 0.22: проекты КБ оплачены при старте — здесь только в отчёт
   // конструкторское бюро: каждый проект продвигается каждый месяц
   // 0.21: чертежи соперника, выигранные в пари, — следующий проект КБ короче на 30%
@@ -105,7 +106,8 @@ function step(){
     if(protoCheck(s,pj))return true;
     if(pj.kind==='fix'){fixDone(s,pj);return false;}
     if(pj.kind==='xfer'){xferDone(s,pj);return false;}
-    if(pj.kind==='upg'){s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;if(s.rd.know)delete s.rd.know[pj.id];addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
+    if(pj.kind==='own'){ownDone(s,pj);return false;}if(pj.kind==='aeng'){aeDone(s,pj);return false;}   // 0.51, этап 4в
+    if(pj.kind==='upg'){try{xpUpg(s,pj);}catch(_){}s.rd.upg[pj.id]=(s.rd.upg[pj.id]||0)+1;if(s.rd.know)delete s.rd.know[pj.id];addLog(`КБ завершило улучшение: ${pj.name} (уровень ${s.rd.upg[pj.id]}).`,'good');pendingToasts.push('🔧 '+pj.name+' ★'+s.rd.upg[pj.id]);}
     else if(pj.kind==='study')studyDone(s,pj);
     else if(pj.kind==='eq')eqDone(s,pj);
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);
@@ -126,7 +128,7 @@ function step(){
   {const AP=admParts(s,r);r.admK=AP.total;r.adm=r.admK*(r.rev+r.ord);r.admP={made:AP.made,fmL:AP.fmL,nmC:AP.nmC,nmM:AP.nmM,nm:AP.nm,k:AP.k,base:AP.base,out:AP.out,cty:AP.cty,mdl:AP.mdl,total:AP.total};}
   // 0.30: дивиденды дочерних компаний (их прибыль — по продажам прошлого месяца)
   try{maMonth(s,r);}catch(e){console.warn('ma month',e);r.div=0;}
-  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
+  r.lic=r.lic||0;r.profit=r.rev+r.lic+(r.licIn||0)+(r.div||0)+r.mil+r.ord+r.dump+(r.airP||0)+(r.aeP||0)-r.adm-r.mat-r.wage-r.ovh-r.dlr-r.ad-r.sto-r.int-r.rd-r.drv-r.team-r.war-r.fin-r.tool-r.hire-r.fine-(r.legal||0)-(r.turn||0)+(r.invInc||0)+(r.finInc||0)-(r.finBad||0)-(r.promo||0)-(r.prm||0);
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}

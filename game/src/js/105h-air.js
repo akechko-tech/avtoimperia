@@ -80,6 +80,7 @@ const AIR_FCX={fc:1.1,fp:1,fm:0.9,fb:1,fs:1.05,ft:1.2,fx:1.25,fw:1.4,fk:1.15,fr:
 // мотор дешевеет: заводы учатся (−5% в год, не дешевле 40%); в войну — поток (−15%); после войны — излишки армии
 // (моторы военных лет продают за 40% до 1925 года — «Дженни» и «Авро» с моторами за гроши)
 function airEngCost(e,y,s){const ck=tabAt(CPI,y)/tabAt(CPI,Math.max(1895,e.y));let k=Math.max(0.4,1-0.05*Math.max(0,y-e.y))*ck;
+  if(e.own)return e.c*k*0.87*(s&&s.tech&&s.tech.foundry?0.82:1)*(e.y>y?1+Math.min(0.9,0.15*(e.y-y)):1);   // 0.51, этап 4в: свой мотор — без наценки поставщика, со своей литейкой дешевле; раньше истории — дороже
   if(y>=1915&&y<1918.9&&e.y<=1918)k*=0.85;if(y>=1919&&y<1925&&e.y<=1918&&!e.race)k*=0.45;
   if(s&&e.cty&&e.cty!==s.country&&e.cty!=='intl'&&!(e.lic&&e.lic[s.country]<=y))k*=1.15;return e.c*k;}
 function airCost(md,y,s,made){const A=airAero(md,y),P=A.P,n=A.n,ck=tabAt(CPI,y);
@@ -148,7 +149,7 @@ function airLineStart(s){const L=airLineNext(s);if(!L||s.air.lineB)return false;
   const mo=Math.max(1,Math.round(L.mo*(DIF().build??1)));s.air.lineB={lv:L.lv,left:mo,t:mo};addLog(`Авиацех: «${L.n}» — ${money(c)}, ${mo} мес.`);return true;}
 /* ---------- конструктор: доступные детали и проверка ---------- */
 // деталь доступна: по году (или своё изобретение раньше истории), в войну — без моторов врага (кроме лицензионных)
-function airPartOk(s,x,cat){if(!x)return false;const t=tNow(s),A=s.air||{};
+function airPartOk(s,x,cat){if(!x)return false;if(x.own)return true;const t=tNow(s),A=s.air||{};
   if(x.until&&t>=x.until&&!(A.keepOld&&A.keepOld[x.id]))return false;
   let y=x.y;if(cat==='a'&&x.yA&&s.country!=='de')y=x.yA;
   const mine=Object.keys(A.tech||{}).some(id=>{const T=AIR_TECH.find(z=>z.id===id);return T&&T.unl.includes(x.id);})||(A.early&&A.early[x.id]);
@@ -158,7 +159,7 @@ function airPartOk(s,x,cat){if(!x)return false;const t=tNow(s),A=s.air||{};
       if((s.soviet||(c==='ru'&&t>=1918&&t<1922))&&!(x.lic&&x.lic.ru<=t)&&x.cty!=='ru')return false;}}
   return true;}
 function airHasRole(s,r){return true;}
-function airCatList(s,cat){const L={f:AIR_FRAME,m:AIR_MAT,e:AIR_ENG,c:AIR_CTL,g:AIR_GEAR,p:AIR_PROP,a:AIR_ARM,k:AIR_CAB,w:AIR_WING}[cat];return L.filter(x=>cat==='w'||airPartOk(s,x,cat));}
+function airCatList(s,cat){const L={f:AIR_FRAME,m:AIR_MAT,e:AIR_ENG,c:AIR_CTL,g:AIR_GEAR,p:AIR_PROP,a:AIR_ARM,k:AIR_CAB,w:AIR_WING}[cat];const R=L.filter(x=>cat==='w'||airPartOk(s,x,cat));return cat==='e'&&s&&s.aeng&&s.aeng.length?R.concat(s.aeng):R;}
 // что не так с проектом (пустой список — можно строить)
 function airDesignErr(s,d){const E=[],P=airParts(d),t=tNow(s),role=d.role;
   if(!AIR_ROLES[role])E.push('выберите назначение');else if(t<AIR_ROLES[role].y-0.01&&!(role==='fight'&&(s.air.tech||{}).sync))E.push(`${AIR_ROLES[role].n.toLowerCase()} — с ${Math.floor(AIR_ROLES[role].y)} года`);

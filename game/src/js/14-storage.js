@@ -32,6 +32,7 @@ function loadCode(code){code=String(code||'').trim();const m=/^(AVT1|AVTZ):([A-Z
   return new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).text().then(parse).catch(()=>false);}
 function migrate(x){
   try{xlMigrate(x);}catch(_){}/* 0.51, этап 4б: места купленных заводов — в свои линии */
+  try{ownSync(x);}catch(_){}/* 0.51, этап 4в: свои узлы партии — в реестр, чтобы их находили модели */
   x.tech=x.tech||{};x.dealers=x.dealers||{[x.country]:1};x.capBuild=x.capBuild||[];x.peak=x.peak||{year:0,share:{}};x.firsts=x.firsts||{};x.titles=x.titles||[];
   x.season=x.season||{};x.cres=x.cres||{};x.rdept=x.rdept||0;x.contracts=x.contracts||{};x.hist.share=x.hist.share||[];x.pw=x.pw||{};x.drivers=x.drivers||[];
   x.models.forEach(m=>{if(m.plan===undefined)m.plan='auto';if(m.backlog===undefined)m.backlog=0;if(m.fc===undefined)m.fc=m.lastDem||0;

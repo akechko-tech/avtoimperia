@@ -131,7 +131,7 @@ function xpopScore(md,s,tip){const D=xScoreData(md,s),tone=f=>f>1.005?'good':f<0
     <p class="xp-w">Покупатели класса сравнивают каждую черту с ${esc(D.C.ref.name)} и взвешивают по важности: множитель черты — её процент в степени её веса. Итог — произведение. <span class="muted">Ниже 85% — «хуже соперников», выше 108% — «лучше».</span></p>
     <table class="xp-t"><tr><th></th><th>Вес</th><th>Черта</th><th>→</th></tr>${D.L.map(r=>`<tr><td>${esc(r.l)}</td><td>${r.sa.replace(/^(\S+) /,'<span class="xp-dots">$1</span> ')}</td><td class="${r.f>1.005?'good':r.f<0.995?'bad':''}">${r.ta}</td><td class="${tone(r.f)}">${xk(r.f)}</td></tr>`).join('')}
     ${D.X.map(r=>`<tr${r.rest?' class="muted"':''}><td>${esc(r.l)}</td><td colspan="2">${r.sa?`<small>${esc(r.sa)}</small>`:''}</td><td class="${tone(r.f)}">${xk(r.f)}</td></tr>`).join('')}
-    <tr class="xp-tot"><td>Итого</td><td colspan="2"></td><td class="${qt}">${xpc(D.S)}</td></tr></table>${isTruck(md)?xTruckHTML(md,s):''}${tip?xTipHTML(md,s,'S',isMoto(md)):''}`;}
+    <tr class="xp-tot"><td>Итого</td><td colspan="2"></td><td class="${qt}">${xpc(D.S)}</td></tr></table>${isTruck(md)?xTruckHTML(md,s):''}${ownXpHTML(md,s)}${tip?xTipHTML(md,s,'S',isMoto(md)):''}`;}
 // проект грузовика md1 против md0 при одной цене машины P (для строки под кнопками конструктора): спрос фирм (отношение
 // привлекательности, как в выборе фирм), тонно-километр по долям перевозок в стране и удобство шофёру (лёгкость, тормоза, комфорт)
 // (тонно-километр и удобство усреднены с весом перевозок, где фирмы и выбирают — как в xTruckU, — чтобы объяснение сходилось со спросом)

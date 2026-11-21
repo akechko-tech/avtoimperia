@@ -13,7 +13,8 @@ const bodyOpen=id=>OPEN_B.includes(id);
 function DIF(){return DIFFS[(G&&G.diff)||'normal'];}
 const upgL=id=>(G&&G.rd&&G.rd.upg[id])||0;
 // 0.32: детали мотоциклов — в тех же каталогах с пометкой moto: автомобилю их не предлагаем, мотоциклу — только их
-function unlockedP(arr,s,moto){return arr.filter(x=>!!x.moto===!!moto&&(x.y<=s.y||(s.rd&&s.rd.early.includes(x.id))));}
+function unlockedP(arr,s,moto){const L=arr.filter(x=>!!x.moto===!!moto&&(x.y<=s.y||(s.rd&&s.rd.early.includes(x.id))));
+  if(s&&s.custom&&s.custom.length){if(OWN_FOR!==s.custom)ownSync(s);s.custom.forEach(x=>{if(OWN_ARR[x.id]===arr&&!!x.moto===!!moto)L.push(x);});}return L;}   // 0.51, этап 4в: свои узлы — только своим машинам
 // Конструкторское бюро: 14 уровней (0.48: отзыв «допустить расширение КБ за пределы 8, каждый уровень принципиально дороже в
 // поддержании») — расширение и содержание растут геометрически (×1,6 и ×1,65 за уровень), проектов одновременно — до семи,
 // прототипы — до десяти лет вперёд. Чем больше бюро, тем больше проектов оно ведёт одновременно
@@ -89,6 +90,7 @@ function partObsolete(ck,id,s){const cat=PART_CATS.find(c=>c.k===ck),f=PART_BETT
 // 0.22: проект КБ стоит денег сверх содержания бюро — опытные образцы, материалы, стенды и испытания.
 // Улучшение — тем дороже, чем выше ступень и дороже сама деталь; прототип будущей детали — дороже всего.
 function rdCost(pj,s){s=s||G;if(!pj||pj.kind==='study')return 0;if(pj.kind==='eq')return eqCostRD(pj,s);
+  if(pj.kind==='own'||pj.kind==='aeng')return ownRdCost(pj,s);
   if(pj.kind==='xfer')return xferCost(pj,s);
   const cat=PART_CATS.find(c=>c.k===pj.ck),x=cat?byId(cat.arr(),pj.id):null,pc=x?partCost(x,s):250*cpi(s);
   const k=pj.kind==='early'?3*aheadCostK(pj.yrs||1):0.8*Math.pow(1.5,(pj.lvl||1)-1);/* 0.48: каждая ступень улучшения в полтора раза дороже и в 1,6 раза дольше (rdProjects: need) */
@@ -560,5 +562,6 @@ function newGame(pioneer,country,company,diff,firstName){
   if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
   if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит найти импортёра.','hist');
   if(country==='it')addLog('Богатых семей в Италии немного, и свой рынок крошечный. Покупателей в разы больше во Франции и Германии — найдите там импортёров.','hist');
+  try{ownSync(G);}catch(_){}   // 0.51, этап 4в: свои узлы прошлой партии — долой
   if(country==='ru')addLog('Машин в России — десятки: покупают великие князья, купцы-миллионщики и казна. Дорог нет, полгода снег и распутица, ввоз из-за границы облагается пошлиной. Основной рынок — Франция и Германия: найдите там импортёров, а дома держитесь заказов казны.','hist');
 }

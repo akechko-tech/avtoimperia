@@ -111,7 +111,7 @@ const XFER=[
   {k:'body',n:'Кузов с крылом',a:'b2',b:'mb2',cp:1}];
 const XFER_CP={3:'высокая',2:'средняя',1:'низкая'};
 function partById(id){for(const c of PART_CATS){const x=byId(c.arr(),id);if(x)return x;}return null;}
-function partCat(x){const c=PART_CATS.find(c=>c.arr().includes(x));return c?c.k:'e';}
+function partCat(x){if(x&&x.own&&x.k)return x.k;const c=PART_CATS.find(c=>c.arr().includes(x));return c?c.k:'e';}
 // марка владеет технологией: сделала прототип раньше истории, улучшала в КБ или выпускает с ней машины
 function xferOwn(s,x){if(!x)return false;if(s.rd.early.includes(x.id))return true;if(x.y>s.y)return false;return upgL(x.id)>0||(s.models||[]).some(m=>(m.made||0)>0&&PART_KEYS.some(k=>m[k]===x.id));}
 function rdDoneIn(s,mo){const D=s.rd.done||{};return (mo?D.m:D.c)||0;}

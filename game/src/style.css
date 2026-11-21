@@ -154,6 +154,9 @@ table.pl tr.tot td{border-top:1px solid var(--line-soft);padding-top:8px;font-we
 .ach div.got b{color:var(--brass)}
 .race-item{padding:10px 0;border-bottom:1px solid var(--line-soft)}
 .race-item:last-child{border-bottom:0}
+/* 0.51, этап 4в: строка списка, которую нажимают целиком (воронка «Своя разработка») */
+button.race-item{display:block;width:100%;text-align:left;background:transparent;color:inherit;font:inherit;border:0;border-bottom:1px solid var(--line-soft);cursor:pointer;margin:0}
+button.race-item[disabled]{opacity:.5;cursor:default}button.race-item:active{background:rgba(217,171,82,.1)}
 .race-item .mo{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .hist{font-family:var(--serif);font-size:15px;line-height:1.5;color:#d9d2c0;border-left:2px solid var(--brass);padding-left:12px;margin-top:10px}
 
