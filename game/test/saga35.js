@@ -10,7 +10,7 @@ for(const k of ['dedion','morris','wanderer','bianchi']){newMotoGame(k,PIONEERS[
 for(const k of ['durant','rolls']){newGame(k,PIONEERS[k].c,'Т','normal');quiet();ok(sagaList(G)===SAGA[k],PIONEERS[k].name+': свой фильм — «'+SAGA[k].map(c=>c.t).join('», «')+'»');}
 newGame('custom','fr','Т','normal');quiet();ok(sagaList(G)===SAGA.custom,'автомобильная мастерская, свой персонаж: прежний фильм «'+SAGA.custom[0].t+'»');
 // ---------- 2) главы целы: сцены, вопрос, выборы с итогом; ни слова о докторе; фото — в списке для сборки ----------
-{const T=new Set(allTitles()),BK=Object.keys(SAGA_B),SK=Object.keys(SEG),FX=['cash','cashK','rep','b','seg','mood','legal','roy','sup'],seen=new Set();let dup=[];
+{const T=new Set(allTitles()),BK=Object.keys(SAGA_B),SK=Object.keys(SEG),FX=['cash','cashK','rep','b','seg','mood','legal','roy','sup','loan','stake','who','wage','strike','mil','buyout']/* 0.51, этап 8б: настоящие последствия */,seen=new Set();let dup=[];
   Object.values(SAGA).forEach(L=>L.forEach(c=>{if(seen.has(c.id))dup.push(c.id);seen.add(c.id);}));ok(!dup.length,'все главы всех фильмов — с разными именами'+(dup.length?': '+dup.join(', '):''));
   for(const k of ['moto','dedion','morris','wanderer','bianchi','durant','rolls']){const bad=[];
     SAGA[k].forEach(c=>[{}].concat(c.v||[]).forEach(v=>{const sc=v.sc||c.sc,o=v.o||c.o,q=v.q||c.q;

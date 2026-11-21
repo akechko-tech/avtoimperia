@@ -114,7 +114,9 @@ const WORLD=[
     ch:[['Сократить долги','wCrashDebt'],['Рискнуть: скупать подешевевшее','wCrashRisk']],
     res:{wCrashDebt:s=>{const n=Math.max(0,Math.min(s.loan,Math.round((s.cash-3000*cpi(s))/1000)*1000));s.loan-=n;s.cash-=n;s.ad=Math.round((s.ad||0)*0.5);s.noRecall=mi(s)+12;return n>0?`«{co}» вернула банку ${money(n)} и урезала рекламу вдвое. Банк больше не требует денег.`:'У «{co}» нет долгов — нечего сокращать. Реклама урезана вдвое на всякий случай.';},
       wCrashRisk:s=>{s.capSale=mi(s)+6;return '«{co}» скупает станки и цеха разорившихся заводов: полгода они на 30% дешевле.';}}}];
-function bestModel(s){return s.models.filter(m=>m.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
+// 0.51, этап 8б: «ваша машина» в мировых событиях (пробег Нью-Йорк — Париж, помощь Сан-Франциско, рекорд 1927 года) — автомобиль, а не самый
+// продаваемый мотоцикл; у фирмы без легковых — грузовик, и только у чисто мотоциклетной — мотоцикл
+function bestModel(s){const P=s.models.filter(m=>m.status==='prod'),cars=P.filter(m=>!isMoto(m)&&!isTruck(m)),nm=P.filter(m=>!isMoto(m));return (cars.length?cars:nm.length?nm:P).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
 // 0.23: что война делает с вашими рынками за границей — по каждой стране, где вы есть
 function warMarkets(s){const home=s.country,L=[];
   Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const own=intIn(s,c)?`ваша марка «${acqIn(s,c)[0].nm||acqIn(s,c)[0].n}»`:impLv(s,c)>=4?'ваш завод':impLv(s,c)>=3?'ваш цех сборки':'';

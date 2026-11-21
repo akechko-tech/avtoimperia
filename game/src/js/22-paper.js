@@ -35,7 +35,9 @@ function paperHTML(o,s){
   // 0.40: новость об аэроплане — рисунок аэроплана (airId), новость без машины (noArt) — без рисунка; раньше в заметке о перелёте
   // или конкурсе стоял лучший автомобиль или мотоцикл компании (отзыв: «изображение на объявлении часто ни о том»)
   const M=MAST[s.country],own=o.car||o.carId||o.own,air=o.air||(o.airId&&s.air?s.air.models.find(m=>m.id===o.airId):null)||null;
-  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?paperOwnModel(o,s):null);
+  // 0.51, этап 8б: заметка с кадром кинохроники (новинки поставщиков, «Прототип готов», хроника эпохи) — без рисунка «лучшей машины фирмы»: она там ни при чём
+  const rid0=paperReelId(o);
+  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own&&!rid0?paperOwnModel(o,s):null);
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),py=o.y||s.y,pm=o.m===undefined?s.m:o.m,also=(o.also?o.also:flavorPick(s,py,pm,2,o.arch||0,false)).map(flvByTitle).filter(Boolean);
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
       :air?`<figure class="p-fig p-air" style="margin-inline:0">${airArtSVG(air,{y:py+pm/12,c:s.country,mark:o.mark||0})}</figure><div class="p-cap">${esc(o.caption||('«'+air.name+'» компании «'+s.company+'»'))}</div>`

@@ -1041,5 +1041,79 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   finally{openSheet=sO;OFFERS_INBOX=false;}
   Math.random=R0;
 }
+// ---------- 28. этап 8б: сюжет по партии — глава по состоянию, «история и ваша партия», настоящие последствия ----------
+{const R0=Math.random,rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();};
+  const find=id=>{for(const k of Object.keys(SAGA)){const c=SAGA[k].find(x=>x.id===id);if(c)return c;}return null;};
+  const opt=key=>{const a=key.split(':'),ch=find(a[0]);if(a.length===3)return ch.v[+a[1].slice(1)].o[+a[2]];return ch.o[+a[1]];};
+  BOTS_OFF=true;rnd(7);newGame('ford','us','Форд','normal','T');const s=G;s.pending=[];s.saga={seen:['ford1','ford2'],pick:{},last:-99,t0:mi(s)};
+  // глава по состоянию: «Машина для множества» (история — 1908) открывается по продажам
+  const tS=totalSold;try{
+    CK(sagaPaceOf({...s,y:1896},find('ford2')).d===undefined,'первая машина — завязка партии: «опередили историю» о ней не говорится');
+    s.y=1904;s.m=3;totalSold=()=>500;CK(!sagaReady(s,find('ford4')),'«Машина для множества»: до 2000 проданных машин глава не приходит');
+    totalSold=()=>2100;CK(sagaReady(s,find('ford4')),'2000 машин продано в 1904 году — глава приходит, не дожидаясь 1908-го');
+    s.raceLog=[];sagaCheck(s);const P=s.saga.pace&&s.saga.pace.ford4;
+    CK(s.pending.some(p=>p.saga==='ford4')&&P&&P.d===4&&P.y===1904&&P.hy===1908,'глава поставлена, запомнено: история — 1908, игра — 1904, на 4 года раньше');
+    const t=sagaPaceText(s,find('ford4'));CK(/В истории это случилось в 1908 году/.test(t)&&/1904-й/.test(t)&&/опередили историю на 4 года/.test(t),'первый кадр говорит, что игрок опередил историю: '+t);
+    const pc=sagaPaced(s,find('ford4'));CK(pc.sc.length===find('ford4').sc.length+1&&pc.sc[0].gen===1&&find('ford4').sc[0].gen===undefined,'кадр «история и ваша партия» добавлен первым, сама глава не тронута');
+    s.pending=[];
+    // гонок не было — глава о гонке не приходит ни в свой год, ни через три года; в карточке сказано, чего она ждёт
+    s.y=1906;CK(!sagaReady(s,find('ford3')),'«Десять миль в Гросс-Пойнте»: гонок не было — глава не приходит и через пять лет после даты');
+    CK(/выйдете на старт/.test(sagaWaitHint(s,find('ford3')))&&/откроется, когда выйдете на старт/.test(sagaCard(s)),'в карточке фильма: «откроется, когда выйдете на старт»');
+    s.raceLog=[{place:3}];CK(sagaReady(s,find('ford3')),'вышли на старт — глава открылась');
+    s.saga.pace={};s.saga.last=-99;s.saga.seen=['ford1','ford2','ford4'];sagaCheck(s);const P3=s.saga.pace.ford3;
+    CK(P3&&P3.d===-5&&/на 5 лет позже/.test(sagaPaceText(s,find('ford3'))),'пришли к гонкам позже истории — глава так и говорит: '+sagaPaceText(s,find('ford3')));s.pending=[];s.raceLog=[];
+    // глава по масштабу, до которого игрок не дошёл, приходит через три года после даты — и говорит, что история шла быстрее
+    totalSold=()=>300;s.saga.seen=['ford1','ford2','ford3'];s.y=1910;CK(!sagaReady(s,find('ford4')),'мало продано, 1910 год — «Машина для множества» ещё ждёт');
+    s.y=1911;CK(sagaReady(s,find('ford4')),'1911 год (история + 3) — глава приходит и без 2000 машин');
+    CK(/когда продадите 2.?000 машин/.test(sagaWaitHint({...s,y:1909},find('ford4'))),'в карточке — сколько осталось продать: '+sagaWaitHint({...s,y:1909},find('ford4')));
+    // главы биографии больше не ждут гонок
+    CK(sagaWhen(find('agnelli4')).join()==='y:1908'&&sagaWhen(find('peugeot4')).join()==='y:1896'&&sagaWhen(find('bugatti4')).join()==='y:1912','суд Аньелли, раздел семьи Пежо, чертёж Бугатти — по дате, без условия «первая гонка»');
+    CK(sagaWhen(find('renault4')).join()==='firstWin'&&sagaWhen(find('ford5')).join()==='y:1913'&&sagaWhen(find('ford6')).join()==='crisis','слава Гран-при — после своей победы; конвейер 1913 года и кризис — по календарю');
+    // очередь заказов
+    const md=s.models[0];md.status='prod';md.backlog=10;s.last={made:20};CK(!sagaCond(s,'backlog'),'очередь меньше двух месяцев выпуска — «большого заказа» нет');
+    md.backlog=80;CK(sagaCond(s,'backlog')&&sagaCond(s,'races:0')&&!sagaCond(s,'wins:1'),'очередь в четыре месяца выпуска — есть');md.backlog=0;
+    // масштаб против истории: календарная глава сравнивает выпуск
+    s.y=1913;s.m=2;s.peakLast=12000;s.saga.pace={ford5:sagaPaceOf(s,find('ford5'))};const t5=sagaPaceText(s,find('ford5'));
+    CK(s.saga.pace.ford5.d===undefined&&s.saga.pace.ford5.hv>100000&&/история шла быстрее/.test(t5)&&/«Ford»/.test(t5),'календарная глава сравнивает выпуск с историческим «Ford»: '+t5);
+    s.peakLast=400000;s.saga.pace={ford5:sagaPaceOf(s,find('ford5'))};CK(/впереди истории/.test(sagaPaceText(s,find('ford5'))),'выпуск вдвое больше исторического — «вы идёте впереди истории»');
+    s.peakLast=170000;s.saga.pace={ford5:sagaPaceOf(s,find('ford5'))};CK(sagaPaceText(s,find('ford5'))===''&&sagaPaced(s,find('ford5'))===find('ford5'),'идёте вровень с историей — лишнего кадра нет');
+  }finally{totalSold=tS;}
+  // настоящие последствия: что написано в ответе, то и происходит
+  CK(opt('ford6:1').fx.loan===1&&/заём/i.test(opt('ford6:1').t)&&opt('durant2:0').fx.loan===1&&/в долг/.test(opt('durant2:0').t)&&opt('ford3:0').fx.stake===1&&/инвестор/.test(opt('ford3:0').t)&&opt('custom7:v1:2').fx.stake===1&&/долю/.test(opt('custom7:v1:2').t),'таблица: заём и доля стоят у ответов про заём и инвесторов');
+  CK(['agnelli6:1','bianchi5:0','frese4:0','ryab6:0'].every(k=>opt(k).fx.wage===1&&/прибавк|жалованье/i.test(opt(k).t))&&['agnelli6:2','bianchi5:1','frese4:1','ryab6:1'].every(k=>opt(k).fx.strike===1),'таблица: прибавка — у ответов о прибавке, забастовка — у отказа рабочим');
+  CK(['olds6:2','renault5:0','peugeot6:0','custom5:0','ryab4:0'].every(k=>opt(k).fx.mil===1&&/военн|фронт|арми/i.test(opt(k).t)),'таблица: военный контракт — у ответов о заказах армии');
+  {const n=[];for(const k of Object.keys(SAGA))for(const ch of SAGA[k])[ch.o].concat((ch.v||[]).map(v=>v.o)).forEach(O=>(O||[]).forEach(o=>{const f=o.fx||{};if(f.loan||f.stake||f.wage||f.strike||f.mil)n.push(ch.id);}));CK(n.length===22,'настоящих последствий в ответах: '+n.length);}
+  rnd(3);newGame('ford','us','Форд','normal','T');{const s=G;s.pending=[];s.y=1921;s.m=2;s.cash=400000;s.loan=10000;s.partners=[];s.wagePol='market';s.strikeNext=false;
+    const f=opt('ford6:1').fx,a=Math.abs(sagaCash(s,f)),c0=s.cash,l0=s.loan,txt=sagaFxText(f,s);
+    CK(/это заём: долг [+]/.test(txt)&&/% годовых/.test(txt),'заём в ответе назван займом, со ставкой: '+txt);
+    sagaApply(s,f);CK(Math.abs(s.loan-l0-a)<1&&Math.abs(s.cash-c0-a)<1&&a>0,'«Взять заём у банкиров»: касса +'+a+', долг +'+a+' — настоящий');
+    const f2=opt('durant2:0').fx,a2=Math.abs(sagaCash(s,f2)),c1=s.cash,l1=s.loan,t2=sagaFxText(f2,s);sagaApply(s,f2);
+    CK(Math.abs(s.cash-c1)<1&&Math.abs(s.loan-l1-a2)<1&&/в долг: касса цела/.test(t2)&&!/^−/.test(t2),'«Строить цеха в долг»: касса цела, долг вырос — '+t2);
+    const f3=opt('ford3:0').fx,sh=sagaStakeSh(s,f3),t3=sagaFxText(f3,s);sagaApply(s,f3);const pp=s.partners[s.partners.length-1];
+    CK(pp&&pp.saga===1&&pp.n==='Инвесторы'&&Math.abs(pp.sh-sh)<0.002&&pp.sh>=0.02&&pp.sh<=0.2&&Math.abs(partnersShare(s)-pp.sh)<1e-9&&new RegExp(Math.round(sh*100)+'% прибыли').test(t3),'«Найти инвесторов»: у них настоящая доля прибыли — '+Math.round(pp.sh*100)+'% ('+t3+')');
+    const tw=sagaFxText(opt('frese4:0').fx,s);sagaApply(s,opt('frese4:0').fx);CK(s.wagePol==='good'&&/Выше рынка/.test(tw)&&/дороже на 25%/.test(tw),'«Восьмичасовой день и прибавка»: ставка жалованья — «Выше рынка»: '+tw);
+    sagaApply(s,opt('frese4:0').fx);CK(s.wagePol==='good'&&/уже выше рынка/.test(sagaFxText(opt('frese4:0').fx,s)),'выше рынка уже платят — ставка не меняется, ответ так и говорит');
+    sagaApply(s,opt('ryab6:1').fx);CK(s.strikeNext===true&&/забастовка в следующем месяце/.test(sagaFxText(opt('ryab6:1').fx,s)),'«Не уступать ни в чём»: забастовка в следующем месяце — настоящая');
+    s.military=false;s.y=1921;sagaApply(s,opt('custom5:0').fx);CK(!s.military,'войны нет — военного контракта фильм не подписывает');
+    s.y=1917;s.m=6;const tm=sagaFxText(opt('custom5:0').fx,s);sagaApply(s,opt('custom5:0').fx);CK(s.military===true&&/военный контракт/.test(tm),'война идёт — «Взять военный заказ» подписывает настоящий контракт: '+tm);
+    // что действует сейчас — видно в карточке фильма
+    s.y=1921;s.m=2;s.sagaB={};s.sagaSeg={};sagaApply(s,opt('ford4:0').fx);const L=sagaNowList(s);
+    CK(L.some(x=>/выпуск [+]6% — до /.test(x))&&L.some(x=>/спрос: народный [+]12%/.test(x))&&L.some(x=>/Инвесторы: [0-9]+% прибыли — пока не выкупите долю/.test(x)),'список действующих решений: '+L.join(' | '));
+    CK(/Решения фильма действуют сейчас/.test(sagaCard(s)),'карточка фильма показывает действующие решения');
+    {const tb=sagaFxText(opt('ford6:v0:0').fx,s);sagaApply(s,opt('ford6:v0:0').fx);CK(!s.partners.some(p=>p.saga)&&/выкуплены/.test(tb),'«Выкупить на свои деньги»: совладельцы из фильма выкуплены на самом деле — '+tb);}
+    s.y=1926;CK(!sagaNowList(s).some(x=>/выпуск/.test(x)),'срок вышел — строки нет');}
+  // рисунок соответствует заметке: «ваша машина» в мировом и случайном событии — автомобиль, а не самый продаваемый мотоцикл
+  rnd(5);newGame('ford','us','Форд','normal','T');{const s=G,car=s.models[0];car.status='prod';car.lastSold=20;
+    const mo={...car,id:901,name:'Мото',lastSold:500,b:BODIES.find(b=>b.moto).id},tr={...car,id:902,name:'Грузовик',lastSold:300,b:'b7'};
+    try{CK(isMoto(mo)&&isTruck(tr)&&!isMoto(car)&&!isTruck(car),'заготовки проверки: мотоцикл, грузовик, автомобиль');s.models=[car,mo,tr];
+      CK(bestModel(s)===car&&chModel(s)===car,'автомобиль есть — «ваша машина» это он, хотя мотоциклов и грузовиков продано больше');
+      s.models=[mo,tr];CK(bestModel(s)===tr&&chModel(s)===mo,'легковых нет: в мировом событии — грузовик; случайное событие о машине грузовик не берёт');
+      s.models=[mo];CK(bestModel(s)===mo&&chModel(s)===mo,'у мотоциклетной фирмы — мотоцикл');
+      s.models=[car,mo,tr];const h=paperHTML({own:1,kicker:'Кинохроника',title:'Прототип готов: Грузовик 3 т',deck:'На 2 года раньше рынка',text:'Текст.',choices:[['Дальше','ok'],['▶ Смотреть кинохронику','reel:h:peace']]},s);
+      CK(!/компании «Форд»/.test(h),'заметка с кадром кинохроники — без рисунка «лучшей машины фирмы»');
+      const h2=paperHTML({own:1,kicker:'Дилеры',title:'Очереди у дилеров',text:'Текст.'},s);CK(/«T» компании «Форд»/.test(h2),'обычная заметка о компании — с её автомобилем');}
+    finally{s.models=[car];}}
+  Math.random=R0;
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

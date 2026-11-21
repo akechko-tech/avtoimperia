@@ -10,6 +10,7 @@ function sagaFill(t,s){const P=PIONEERS[s.pioneer]||PIONEERS.custom;return Strin
 // Момент главы: год, первая машина, гонка, победа, продажи, война, кризис, 1929…
 function sagaCond(s,w){const S=s.saga||{};
   if(w==='start')return true;
+  if(typeof sagaCond51==='function'){const r=sagaCond51(s,w);if(r!==undefined)return r;}   // 0.51, этап 8б: очередь заказов, конвейер, число гонок и побед
   if(w==='firstProd')return s.models.some(m=>m.id!==1&&(m.status==='prod'||m.status==='sale'))||mi(s)-(S.t0||0)>=10;
   if(w==='firstRace')return (s.raceLog||[]).length>0;
   if(w==='firstWin')return (s.raceLog||[]).some(r=>r.place===1);
@@ -54,13 +55,12 @@ function sagaMailCheck(s){const S=s.saga;if(!S||!S.mail||!S.mail.length)return;c
 function sagaChapter(s,ch,fix){if(!ch||!ch.v)return ch;const S=s.saga=s.saga||{seen:[],pick:{}};S.var=S.var||{};
   let k=S.var[ch.id];if(k===undefined){k=ch.v.findIndex(v=>{try{return !!v.if(s);}catch(e){return false;}});if(fix)S.var[ch.id]=k;}
   const v=k>=0?ch.v[k]:null;if(!v)return ch;const o={...ch,...v};delete o.v;delete o.if;return o;}
-function sagaReady(s,ch){const W=Array.isArray(ch.when)?ch.when:[ch.when];if(W.every(w=>sagaCond(s,w)))return true;
-  // запасной путь: глава не «застревает», если игрок не гоняется или продаёт мало — через три года после её даты она всё равно придёт
-  return !W.includes('start')&&!W.includes('finale')&&ch.y>0&&s.y>=ch.y+3;}
+// 0.51, этап 8б: sagaReady — в 25k-saga51.js (глава открывается по состоянию компании; «через три года сама» — только у глав по масштабу)
 // Проверка раз в месяц: не чаще одной главы в два месяца, по порядку
 function sagaCheck(s){if(!s||s.over)return;const S=s.saga=s.saga||{seen:[],pick:{},last:-99,t0:mi(s)};if(!S.seen)S.seen=[];try{sagaMailCheck(s);}catch(e){console.warn('saga mail',e);}
   if(s.pending.some(p=>p.saga))return;if(S.seen.length&&mi(s)-S.last<2)return;
   const L=sagaList(s);for(let k=0;k<L.length;k++){const ch=L[k];if(S.seen.includes(ch.id))continue;if(!sagaReady(s,ch))continue;
+    try{const P=sagaPaceOf(s,ch);if(P){S.pace=S.pace||{};S.pace[ch.id]=P;}}catch(e){console.warn('saga pace',e);}
     s.pending.push({saga:ch.id,title:'Фильм: '+ch.t,text:'',choices:[['Смотреть главу','saga']]});S.last=mi(s);return;}}
 // Без экрана (проверки, автоигра): глава засчитывается с первым вариантом выбора
 function sagaAuto(s,id){const ch=sagaChapter(s,sagaList(s).find(c=>c.id===id),true),o=ch&&ch.o&&ch.o[0];if(o)sagaApply(s,o.fx);const S=s.saga=s.saga||{seen:[],pick:{}};if(!S.seen.includes(id))S.seen.push(id);S.pick=S.pick||{};if(o)S.pick[id]=0;
@@ -84,7 +84,8 @@ function sagaLegal(s,key){const [id,ch]=String(key).split(':'),W=(typeof WORLD!=
   s.wseen=s.wseen||{};s.wseen[id]=1;(s.wpick=s.wpick||{})[id]=ch||'';try{W.fx&&W.fx(s);}catch(e){console.warn(e);}
   let t='';try{t=ch&&W.res&&W.res[ch]?(W.res[ch](s)||''):'';}catch(e){console.warn(e);}return t.replace(/\{co\}/g,s.company);}
 function sagaFxText(fx,s){const L=[];if(!fx)return '';
-  if(fx.cash)L.push(`${fx.cash>0?'+':'−'}${money(Math.abs(sagaCash(s,fx)))}`);
+  if(fx.cash&&!(fx.loan&&fx.cash<0))L.push(`${fx.cash>0?'+':'−'}${money(Math.abs(sagaCash(s,fx)))}`);
+  if(typeof sagaRealText==='function')L.push(...sagaRealText(fx,s));
   if(fx.cashK)L.push(`${fx.cashK>0?'+':'−'}${Math.round(Math.abs(fx.cashK)*100)}% кассы (${money(Math.abs(fx.cashK)*Math.max(0,s.cash))})`);
   if(fx.legal&&SAGA_LEGAL_TXT[fx.legal])L.push(SAGA_LEGAL_TXT[fx.legal]);
   if(fx.roy)L.push(`дивиденды компаньонам — ${Math.round(fx.roy[0]*100)}% выручки (${sagaMonths(fx.roy[1])})`);
@@ -100,7 +101,7 @@ function sagaFxText(fx,s){const L=[];if(!fx)return '';
   if(fx.abroad)L.push('сборка за границей: Версаль не остановит авиацех');
   if(fx.ruSafe)L.push('если придётся уехать — с собой 85% кассы, а не 60%');
   return L.join(' · ');}
-function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
+function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash,R51=typeof sagaRealPre==='function'?sagaRealPre(s,fx):null;
   if(fx.cash)s.cash+=sagaCash(s,fx);
   if(fx.cashK)s.cash+=Math.round(Math.max(0,s.cash)*fx.cashK);
   if(fx.legal){const t=sagaLegal(s,fx.legal);if(t)addLog(t,'hist');}
@@ -113,7 +114,8 @@ function sagaApply(s,fx){if(!fx)return;const now=mi(s),c0=s.cash;
   if(fx.mood&&typeof moodAdd==='function')(s.drivers||[]).forEach(id=>moodAdd(s,id,fx.mood));
   if(fx.ruSafe)s.ruSafe=1;
   if(fx.afame&&s.air)s.air.fame=clamp((s.air.fame||0)+fx.afame,0,100);
-  if(fx.abroad&&typeof airSagaAbroad==='function')airSagaAbroad(s);}
+  if(fx.abroad&&typeof airSagaAbroad==='function')airSagaAbroad(s);
+  if(typeof sagaRealApply==='function')sagaRealApply(s,fx,R51);}   // 0.51, этап 8б: заём, доля инвесторов, жалованье, забастовка, военный контракт — настоящие
 // Бонусы глав действуют вместе с чертами героя (10-model.js: bn, segBonus)
 function sagaBn(k,v){const S=G&&G.sagaB&&G.sagaB[k];if(!S||mi(G)>=S.until)return v;return BN_ADD[k]?v+S.v:v*S.v;}
 function sagaSegK(g){const S=G&&G.sagaSeg&&G.sagaSeg[g];return S&&mi(G)<S.until?S.v:1;}
@@ -147,7 +149,7 @@ function sagaSay(t,spk,onEnd){const s=G,txt=sagaFill(t,s),P=sagaVoiceParts(t,s);
   return voiceSay(txt,spk,onEnd);}
 function sagaPreload(t,spk){try{const P=sagaVoiceParts(t,G);if(P&&P[0])voicePreload(P[0],spk);}catch(_){}}
 function sagaVoiceOf(sc){return sc&&sc.who?voiceOfWho(sc.who):SAGA_NARR;}
-function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=sagaChapter(s,L[k],!replay);if(!ch){if(!replay)sagaDone(id,-1);return;}
+function sagaPlay(id,replay){const s=G,L=sagaList(s),k=L.findIndex(c=>c.id===id),ch=sagaPaced(s,sagaChapter(s,L[k],!replay));if(!ch){if(!replay)sagaDone(id,-1);return;}
   sagaStop();const P=PIONEERS[s.pioneer]||PIONEERS.custom,el=document.createElement('div');el.className='sg';el.id='sagaScreen';
   el.innerHTML=`<div class="sg-bg"><img alt=""></div><div class="sg-shade"></div><div class="sg-bar top"></div><div class="sg-bar bot"></div>
     <div class="sg-body"></div><div class="sg-ctrl"><button class="sg-nav" data-sg="prev" aria-label="Назад">◀</button><button class="sg-nav" data-sg="next" aria-label="Дальше">▶</button><button class="sg-skip">К выбору ▸▸</button></div><div class="sg-dots"></div>`;
@@ -180,13 +182,13 @@ function sagaNext(){const Q=SAGAP;if(!Q||Q.q)return;sagaGo(Q.i+1);}
 function sagaGo(i){const Q=SAGAP;if(!Q)return;if(Q.q){Q.q=0;Q.el.querySelector('.sg-skip').style.visibility='';}clearTimeout(Q.timer);voiceStop();Q.i=i;const s=G,sc=Q.ch.sc[i];if(!sc){sagaQuestion();return;}
   if(sc.img)sagaSetBg(sagaImg(sc.img)||Q.portrait);else if(i===0)sagaSetBg(Q.portrait);
   const txt=sagaFill(sc.say||sc.line||'',s),who=sc.who?sagaFill(sc.who,s):'';
-  Q.el.querySelector('.sg-body').innerHTML=sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
+  Q.el.querySelector('.sg-body').innerHTML=sc.gen?`<div class="sg-say sg-pace in"><div class="sg-who">История и ваша партия</div><p>${esc(txt)}</p></div>`:sc.who?`<div class="sg-line in"><div class="sg-who">${esc(who)}</div><p>«${esc(txt.replace(/^[«"]|[»"]$/g,''))}»</p></div>`:`<div class="sg-say in"><p>${esc(txt)}</p></div>`;
   sagaDots();
   const nx=Q.ch.sc[i+1];if(nx)sagaPreload(nx.say||nx.line||'',sagaVoiceOf(nx));
   // живой голос: следующая сцена — сразу, как договорит; без голоса — по времени чтения.
   // 0.36: голос «договорил» слишком быстро (запись не загрузилась, нет сети и голоса телефона) — кадр стоит, пока текст можно прочесть
   const t0=performance.now(),need=Math.max(3.8,1.6+txt.length/14)*1000;
-  const d=sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);const el=performance.now()-t0;Q.timer=setTimeout(()=>sagaNext(),el<need*0.6?need-el:450);}});
+  const d=sc.gen?0:sagaSay(sc.say||sc.line||'',sagaVoiceOf(sc),()=>{if(SAGAP===Q&&!Q.q&&Q.i===i){clearTimeout(Q.timer);const el=performance.now()-t0;Q.timer=setTimeout(()=>sagaNext(),el<need*0.6?need-el:450);}});
   Q.timer=setTimeout(()=>{if(SAGAP===Q&&Q.i===i)sagaNext();},(d?d+6:Math.max(3.8,1.6+txt.length/14))*1000);}
 function sagaQuestion(){const Q=SAGAP;if(!Q)return;clearTimeout(Q.timer);voiceStop();const s=G,ch=Q.ch;Q.q=1;Q.i=ch.sc.length;sagaDots();
   if(Q.replay){const pk=(s.saga&&s.saga.pick||{})[ch.id],o=ch.o&&ch.o[pk];Q.el.querySelector('.sg-body').innerHTML=`<div class="sg-q in"><h3>${esc(sagaFill(ch.q,s))}</h3>${o?`<p class="sg-res">Ваш выбор: «${esc(sagaFill(o.t,s))}». ${esc(sagaFill(o.res,s))}</p>`:''}<button class="sg-o" data-k="-1"><b>Закрыть</b></button></div>`;}
@@ -207,5 +209,5 @@ function sagaStop(){const Q=SAGAP;SAGAP=null;voiceStop();if(!Q)return;clearTimeo
 function sagaCard(s){const L=sagaList(s),S=s.saga||{seen:[]},seen=L.filter(c=>(S.seen||[]).includes(c.id)),next=L.find(c=>!(S.seen||[]).includes(c.id));
   const P=PIONEERS[s.pioneer]||PIONEERS.custom;
   return `<section class="card sg-card" id="sec-saga"><div class="row"><h2>🎬 Фильм: ${esc(s.pioneer==='custom'?s.company:P.name)}</h2><span class="pill">${seen.length} из ${L.length}</span></div>
-    <p class="small muted" style="margin-top:4px">Художественный фильм по настоящей истории: глава приходит, когда в игре наступает её момент. Выбор в конце главы влияет на компанию.</p>
-    <div class="sg-list">${L.map((c0,i)=>{const c=sagaChapter(s,c0,false),got=(S.seen||[]).includes(c.id),pk=S.pick&&S.pick[c.id];return `<button class="sg-li ${got?'got':''}" ${got?`data-act="sagaReplay" data-k="${c.id}"`:'disabled'}><b>${i+1}. ${esc(got?sagaFill(c.t,s):'Ещё впереди')}</b><small>${got?(c.y?c.y+' · ':'')+(pk!==undefined&&c.o[pk]?'выбор: '+esc(sagaFill(c.o[pk].t,s)):'смотреть снова ▸'):c===next?'следующая глава':''}</small></button>`;}).join('')}</div></section>`;}
+    <p class="small muted" style="margin-top:4px">Художественный фильм по настоящей истории. Глава о деле приходит, когда к ней подошла ваша компания, — раньше или позже, чем в истории; глава о мире — по календарю. Выбор в конце главы влияет на компанию.</p>
+    <div class="sg-list">${L.map((c0,i)=>{const c=sagaChapter(s,c0,false),got=(S.seen||[]).includes(c.id),pk=S.pick&&S.pick[c.id];return `<button class="sg-li ${got?'got':''}" ${got?`data-act="sagaReplay" data-k="${c.id}"`:'disabled'}><b>${i+1}. ${esc(got?sagaFill(c.t,s):'Ещё впереди')}</b><small>${got?(c.y?c.y+(typeof sagaCameY==='function'?sagaCameY(s,c):'')+' · ':'')+(pk!==undefined&&c.o[pk]?'выбор: '+esc(sagaFill(c.o[pk].t,s)):'смотреть снова ▸'):(sagaWaitHint(s,c0)||(c===next?'следующая глава':''))}</small></button>`;}).join('')}</div>${sagaNowHTML(s)}</section>`;}

@@ -4,7 +4,7 @@
    с «Фордами», махараджи с сотнями «Роллс-Ройсов»), но случается с вашей маркой. Одна и та же карточка за игру выпадает один раз. */
 const CH_C={fr:'Франции',de:'Германии',uk:'Британии',us:'Америки',it:'Италии',ru:'России'};
 // подходящая модель: класс или грузовая
-function chModel(s,g){const L=s.models.filter(m=>m.status==='prod'&&(g==='truck'?isTruck(m):g==='van'?m.b==='b6':g?segOf(m)===g&&!isTruck(m):!isTruck(m)));return L.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
+function chModel(s,g){const L0=s.models.filter(m=>m.status==='prod'&&(g==='truck'?isTruck(m):g==='van'?m.b==='b6':g?segOf(m)===g&&!isTruck(m):!isTruck(m))),C=g?L0:L0.filter(m=>!isMoto(m)),L=C.length?C:L0;/* 0.51, этап 8б: «машина» в случайном событии — автомобиль, если он есть (раньше — самая продаваемая модель, у фирмы с мотоциклами это мотоцикл) */return L.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]||null;}
 function chOrder(s,md,n,k,who,mo){const price=Math.round(md.price*k/10)*10;s.orders=s.orders||[];s.orders.push({id:'cc-'+mi(s)+'-'+md.id,md:md.id,n,left:n,price,due:mi(s)+(mo||6),who,start:mi(s)});return price;}
 const CHANCE=[
   {id:'doctor',y0:1898,y1:1915,w:1.2,req:s=>!!chModel(s),title:'Доктор на моторе',

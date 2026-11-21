@@ -22,7 +22,7 @@ ok(TRIAL_ROUTES.ru&&trialRoute('ru',1913)[1].includes('Псков'),'пробе�
 ok(RX_SPONS.ru&&AMATEUR.ru&&NAT_C['Россия']==='ru'&&ELEG_VENUE.ru&&MREC_VENUE.ru&&DX_KIND.train.route.ru,'спонсоры, любители, пилоты, смотр, мерная верста и курьерский поезд — свои');
 ok(CHANCE.some(c=>c.id==='tsar'&&c.cc==='ru'),'карточка «Машина для Царского Села»');
 // ---------- 3) фильмы: главы целы, варианты после революции ----------
-{const T=new Set(allTitles()),BK=Object.keys(SAGA_B),SK=Object.keys(SEG),FX=['cash','cashK','rep','b','seg','mood','legal','roy','sup','ruSafe'];
+{const T=new Set(allTitles()),BK=Object.keys(SAGA_B),SK=Object.keys(SEG),FX=['cash','cashK','rep','b','seg','mood','legal','roy','sup','ruSafe','loan','stake','who','wage','strike','mil','buyout']/* 0.51, этап 8б */;
   const check=(k,L)=>{const bad=[];L.forEach(c=>[{}].concat(c.v||[]).forEach(v=>{const sc=v.sc||c.sc,o=v.o||c.o,q=v.q||c.q;
       if(!sc||sc.length<3)bad.push(c.id+': мало сцен');if(!q)bad.push(c.id+': нет вопроса');if(!o||o.length<2)bad.push(c.id+': мало выборов');if(!(v.t||c.t))bad.push(c.id+': без названия');
       (o||[]).forEach(x=>{const f=x.fx||{};if(!x.t||!x.res)bad.push(c.id+': выбор без текста');Object.keys(f).forEach(z=>{if(!FX.includes(z))bad.push(c.id+': fx.'+z);});
