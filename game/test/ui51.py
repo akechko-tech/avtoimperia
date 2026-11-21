@@ -161,6 +161,24 @@ with sync_playwright() as p:
     t = js("document.getElementById('sheetBody').textContent")
     ok('Свой авиамотор' in t and 'Что получится' in t and 'л.с. на кг' in t and 'продажа авиазаводам' in t and 'NaN' not in t and 'undefined' not in t, 'лист «Свой авиамотор»: тип, цель, сравнение с лучшим мотором года и прикидка продаж')
     js("closeSheet();G.rd.projs=[];render();")
+    # этап 5б: сделки и акционеры, группы фирм, люди
+    r = js("""(()=>{BOTS_OFF=false;G.pending=[];G.cash=9e7;G.rd.lvl=3;G.firms=G.firms||{};const t=mi(G);
+      const L=COMPS.us.map((cp,i)=>({cp,i})).filter(o=>!dealBlock(G,'us',o.i)&&maStat(G,'us',o.i)&&!(DEAL_PROUD[o.cp.n]>0)&&!(G.bots&&G.bots[coKey(o.cp.n)])&&compVol(o.cp,G)>300);
+      const A=L[0],B=L[1],C=L[2],FA=firmGet(G,'us',A.i)||firmMake(G,'us',A.i,A.cp),FB=firmGet(G,'us',B.i)||firmMake(G,'us',B.i,B.cp),FC=firmGet(G,'us',C.i)||firmMake(G,'us',C.i,C.cp);
+      [FA,FB,FC].forEach(F=>{F.h12=F.h12||3e6;F.r12=F.r12||3e6;F.p12=F.p12||1e5;F.cash=5e5;F.st='ok';F.u12=F.u12||5000;});
+      FA.own=B.i;FA.ownT=t-30;FB.grp=[A.i];FB.gr=0.5;FB.grWhy='иск за «Мотор», 1905';FC.prog={k:'model',g:'people',at:t+8,cost:0,q:0.3,frac:0.5,who:'«Форд Мотор»',you:1,lq:0.5,q0:0};
+      window.__T={a:A.i,b:B.i,c:C.i};openRivals('us');return {t:document.getElementById('sheetBody').textContent,btn:!!document.querySelector('#sheetBody [data-act=rivPoach][data-i="'+C.i+'"]')};})()""")
+    ok('Принадлежит' in r['t'] and 'Группа: владеет' in r['t'] and 'Помнит обиду' in r['t'] and r['btn'] and 'undefined' not in r['t'] and 'NaN' not in r['t'], 'экран «Соперники»: группа, обида и кнопка «Переманить инженера»')
+    c0 = js("G.cash"); pg.click('#sheetBody [data-act=rivPoach]'); pg.wait_for_timeout(400)
+    r = js("({d:%f-G.cash,gr:firmGet(G,'us',__T.c).gr||0,b:bn('devTime'),t:document.getElementById('sheetBody').textContent})" % c0)
+    ok(r['d'] > 0 and r['gr'] >= 0.35 and 'Помнит обиду' in r['t'], 'одно нажатие — инженер переманен: −$%d, обида запомнена' % r['d'])
+    js("closeSheet();openDeal('us',__T.c,{st:1,mode:'int',pay:'cash'})"); pg.wait_for_timeout(400)
+    t = js("document.getElementById('sheetBody').textContent")
+    ok('переходят её долги' in t and 'помнят обиду' in t and 'undefined' not in t and 'NaN' not in t, 'переговоры: до подписи видны долги марки, убыточные годы и обида')
+    js("""(()=>{try{NEG=null;}catch(_){};closeSheet();G.partners=[{n:'Братья Додж',sh:0.1,t:0}];G.shHoard=12;G.shT=-999;G.loan=0;G.cash=Math.max(G.cash,shRev12(G)*2+1e6);G.pending=[];shDemand(G);render();})()"""); pg.wait_for_timeout(500)
+    r = js("({n:G.pending.length,t:document.body.textContent,k:(G.pending[0]||{choices:[[]]}).choices.map(c=>c[1]).join(',')})")
+    ok(r['n'] == 1 and 'особый дивиденд' in r['t'] and 'sh:pay:' in r['k'] and 'sh:no:' in r['k'], 'событие «Совладельцы требуют особый дивиденд» — две кнопки')
+    js("resolve(G.pending[0].choices[1][1]);G.pending=[];G.partners=[];G.shSuit=null;BOTS_OFF=true;render();")
     ok(not errs, 'ошибок на странице нет: ' + '; '.join(errs)[:200])
     # снимки карточки — на чистой странице с теми же стилями (живые сцены 3D мешают снимку под программной отрисовкой)
     js("(()=>{try{sagaStop();}catch(_){};try{musicStop();}catch(_){};document.querySelectorAll('canvas,video,audio').forEach(e=>e.remove());})()")

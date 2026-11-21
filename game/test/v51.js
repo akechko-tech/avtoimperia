@@ -628,6 +628,7 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     Math.random=()=>0.99;const st0=JSON.stringify([F.st,F.own]);const c1=O.cash;Math.random=()=>0.1;const res=firmState(G,r,F,A.cp,A.i);
     CK(res===true&&F.st==='ok'&&F.own===B.i&&O.cash<c1&&O.grp.includes(A.i)&&r.riv.some(n=>n.k==='merge'&&/покупает/.test(n.t)&&!/undefined|NaN/.test(n.txt)),'марку купила соседняя фирма: '+(r.riv.find(n=>n.k==='merge')||{}).t);
     CK(/^куплена: /.test(dealBlock(G,'us',A.i)),'игроку она больше не продаётся: '+dealBlock(G,'us',A.i));
+    {const bi=COMPS.us.findIndex(x=>x.n==='Buick'),gy=G.y;G.y=1921;CK(!firmMergeOk(G,COMPS.us[bi])&&firmMergeOk(G,A.cp)&&!firmMergeOk(G,COMPS.uk.find(x=>x.n==='Rolls-Royce')),'марку из концерна (Buick в GM) и гордую марку (Rolls-Royce) соседям не продают');G.y=gy;}
     G.y+=2;firmGroupMonth(G,r,F,A.cp);CK(near(F.ck,0.9)&&F.fin===1,'через два года поток и рассрочка хозяина — и на её заводе: себестоимость −'+Math.round((1-F.ck)*100)+'%');
     F.st='bad';F.bad=3;F.cash=-F.h12*0.5;F.p12=-1;const c2=O.cash;firmState(G,r,F,A.cp,A.i);CK(F.st==='ok'&&O.cash<c2,'снова в долгах — закрывает касса хозяина');
     let html='';try{const os=openSheet;openSheet=h=>{html=h;};const de=document.getElementById;document.getElementById=()=>null;F.r12=F.h12;O.gr=0;openRivals('us');openSheet=os;document.getElementById=de;}catch(e){html='ERR '+e.message;}

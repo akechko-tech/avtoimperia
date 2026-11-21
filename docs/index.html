@@ -9319,8 +9319,11 @@ function firmGroupMonth(s,r,F,cp){const O=firmOwner(s,F);if(!O)return;const t=mi
   if(t-(F.ownT||0)>=12&&firmFin(O,t)&&!firmFin(F,t)){F.fin=1;F.finTill=O.finTill;
     firmNote(s,r,F,{w:2,k:'fin',t:`${firmName(s,F)} продаёт в рассрочку`,txt:`Кредитная контора ${firmName(s,O)} теперь работает и на ${firmName(s,F)}: машину можно взять с первым взносом.`});}}
 // марка в долгах: до кредиторов её покупает соседняя фирма с деньгами
-function firmMerge(s,r,F,cp,i){if(!firmsOn(s)||F.own!=null||F.mo)return false;const t=mi(s),R=F.h12,debt=Math.max(0,-F.cash),need=R*FIRM_MERGE_PRICE+debt*0.6;
-  let O=null,oi=-1;(COMPS[F.c]||[]).forEach((c2,j)=>{if(j===i)return;const X=firmGet(s,F.c,j);if(!X||X.st!=='ok'||X.own!=null||holdOf(s,F.c,j))return;if(X.h12<R*0.6||X.cash<need*1.2)return;if(!O||X.cash>O.cash){O=X;oi=j;}});
+// Не продаются: марки, уже входящие в концерн по истории (Buick, Oldsmobile, заграничные заводы Форда — за них решает концерн),
+// и гордые марки («моё имя на радиаторе не продаётся»). Заграничный завод чужой марки сам никого не покупает.
+function firmMergeOk(s,cp){const g=typeof BRAND_GROUP!=='undefined'?BRAND_GROUP[cp.n]:null;if(g!=null&&s.y>=g)return false;const pr=(typeof DEAL_PROUD!=='undefined'&&(DEAL_PROUD[compName(cp,s)]??DEAL_PROUD[cp.n]))||0;return !(pr>0&&maRnd(cp.n+'|proud|'+s.y)<pr);}
+function firmMerge(s,r,F,cp,i){if(!firmsOn(s)||F.own!=null||F.mo||F.kf||!firmMergeOk(s,cp))return false;const t=mi(s),R=F.h12,debt=Math.max(0,-F.cash),need=R*FIRM_MERGE_PRICE+debt*0.6;
+  let O=null,oi=-1;(COMPS[F.c]||[]).forEach((c2,j)=>{if(j===i||(typeof BRAND_GROUP!=='undefined'&&BRAND_GROUP[c2.n]===0))return;const X=firmGet(s,F.c,j);if(!X||X.st!=='ok'||X.own!=null||holdOf(s,F.c,j))return;if(X.h12<R*0.6||X.cash<need*1.2)return;if(!O||X.cash>O.cash){O=X;oi=j;}});
   if(!O||Math.random()>FIRM_MERGE_P)return false;
   O.cash-=need;F.cash=R*0.05;F.st='ok';F.bad=0;F.own=oi;F.ownT=t;F.turn=1;F.prog=null;F.capP=null;F.pk={};F.rg={};F.rs={};(O.grp=O.grp||[]).push(i);
   const ON=firmName(s,O),N=firmName(s,F),n=O.grp.length+1;
@@ -9341,7 +9344,7 @@ function engResolve(s,key){const P=s.poachEng;if(!P)return;s.poachEng=null;const
   if(F&&F.prog&&F.prog.k==='model'&&F.prog.you){const Pg=F.prog;Pg.frac=Math.min(0.95,Pg.frac+POACH_FRAC);Pg.q=clamp((Pg.q0||0)+(Pg.lq||0)*Pg.frac,0.05,1.2);Pg.poach=1;}
   addLog(`${key==='eng:keep'?'Денег на прибавку не нашлось — главный':'Главный'} конструктор ушёл в ${P.n}. Проекты КБ полтора года идут дольше; новая модель ${P.n} переймёт больше вашего перевеса.`,'bad');}
 // игрок переманивает инженера у фирмы (кнопка в карточке соперника)
-function rivPoachCost(s,F){return Math.round(Math.max(5000*cpi(s),(F.h12||0)*0.01)/1000)*1000;}
+function rivPoachCost(s,F){return Math.round(Math.max(5000*cpi(s),poachCost(s)*1.5)/1000)*1000;}   // полтора «удержания»: девять месячных бюджетов своего КБ
 function rivPoachCan(s,F){return !!(F&&!F.mo&&F.st!=='dead'&&s.rd&&(s.rd.lvl||0)>=2&&mi(s)-(s.poachMyT??-999)>=POACH_GAP&&((F.prog&&F.prog.k==='model')||Object.values(F.md||{}).some(M=>M&&mi(s)<M.till)));}
 function rivPoach(s,c,i){const F=firmGet(s,c,i);if(!rivPoachCan(s,F))return false;const cost=rivPoachCost(s,F);if(s.cash<cost)return false;const t=mi(s),N=firmName(s,F);
   s.cash-=cost;s.poachMyT=t;buffSet(s,'devTime',POACH_GAIN,POACH_GAIN_M);F.lostT=t;F.gr=Math.min(1,(F.gr||0)+0.35);F.grWhy=`переманили инженера, ${s.y}`;
