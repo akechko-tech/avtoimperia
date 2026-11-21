@@ -33,7 +33,7 @@ function setup(home,y,m){newGame('custom',home,'Экспорт','normal');at(y,m
 {const md=setup('fr',1915,3);ok(tradeBan(G,'de'),'Франция → Германия 1915: война');const md2=setup('us',1917,5);G.imp.de=4;G.plantVal=5e6;G.pending=[];warSeize(G);
   ok(G.imp.de===0&&G.pending.some(e=>/конфискован/.test(e.title)),'США вступили в войну: завод в Германии конфискован');}
 // 7. Газета предупреждает о пошлине за 3–6 месяцев
-{const md=setup('fr',1915,4);G.pending=[];tradeNews(G);const ev=G.pending.find(e=>/Британия|Великобритания/.test(e.title));ok(!!ev&&/33/.test(ev.deck),'апрель 1915: газета предупреждает о пошлинах Маккенны: «'+(ev?ev.title+' — '+ev.deck:'нет')+'»');}
+{const md=setup('fr',1915,4);G.pending=[];G.digest=[];tradeNews(G);const ev=G.pending.concat(G.digest||[]).find(e=>/Британия|Великобритания/.test(e.title));/* 0.51, этап 8: торговая сводка — в заметках месяца */ok(!!ev&&/33/.test(ev.deck),'апрель 1915: газета предупреждает о пошлинах Маккенны: «'+(ev?ev.title+' — '+ev.deck:'нет')+'»');}
 // 8. Сборка из комплектов: пошлина только на детали; свой завод — без пошлины
 {const md=setup('us',1926,3);const a=tariffOf(md,'fr',G);G.imp.fr=3;const b=tariffOf(md,'fr',G);G.imp.fr=4;const c=tariffOf(md,'fr',G);ok(b<a&&Math.abs(b-a*0.6)<0.001&&c===0,'Франция: целиком '+Math.round(a*100)+'%, из комплектов '+Math.round(b*100)+'%, свой завод '+Math.round(c*100)+'%');
   G.imp.fr=2;delete G.impB;G.cash=1e9;impUp(G,'fr');ok(G.impB&&G.impB.fr&&G.impB.fr.left>=6&&G.impB.fr.left<=9,'сборку из комплектов строят '+(G.impB&&G.impB.fr&&G.impB.fr.left)+' мес.');

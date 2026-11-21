@@ -14,7 +14,7 @@ for(const home of ['fr','us']){console.log('== дом: '+home);
     ok(!!ev&&ev.paper&&!!ev.mean&&ev.choices.length>=(W.legal?1:2),W.id+' ('+y+'): газета «'+(ev?ev.title:'—')+'», «что это значит»: '+(ev?ev.mean.slice(0,60)+'…':'нет'));
     ok(G.log.slice(L0).some(l=>l.text.includes(W.title)),W.id+': влияние записано в журнал');
     // ролик — кадром плёнки в газете
-    if(ev){const h=paperHTML({...ev,act:'choose'},G);ok(!W.reel||/p-reel/.test(h),W.id+': кадр кинохроники в газете');ok(/p-mean/.test(h),W.id+': карточка «Что это значит для вас»');}
+    if(ev){const h=paperHTML({...ev,act:'choose'},G);ok(!W.reel||/p-reel/.test(h),W.id+': кадр кинохроники в газете');ok(/p-gist/.test(h)&&/Что это значит для вас/.test(h),W.id+': карточка «Что это значит для вас»');/* 0.51, этап 8: вывод — под заголовком, крупно */}
     // выбор
     if(pick[W.id]>=ev.choices.length)pick[W.id]=ev.choices.length-1;
     const ch=ev.choices[pick[W.id]][1],cash0=G.cash,rep0=G.rep,st0=JSON.stringify({m:G.military,imp:G.imp,cut:G.cutUntil,cap:G.capSale,steel:G.steelUntil,ad:G.adFx,rel:G.relFx,rd:G.rd.bpStock,wfx:(G.wfx||[]).length,loan:G.loan,prices:G.models.map(x=>x.price),wp:G.wagePol,wk:G.workers,lg:JSON.stringify(G.legal||{}),ord:(G.orders||[]).length});

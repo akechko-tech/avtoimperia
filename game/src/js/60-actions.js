@@ -107,6 +107,7 @@ const ACT={
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
   /* 0.51, этап 4в: своя разработка и авиамотор (16c-own.js) */
   ownOpen:()=>openOwn(null),ownCat:d=>openOwn(d.k,d.mo==='1'),
+  digestRead:d=>digestRead(d.i),showPol:d=>{if(SHOW_POL[d.v]){G.showPol=d.v;save();render();}},/* 0.51, этап 8 */
   ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
   ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
   ownTech:d=>{if(!ownDraft)return;const T=ownDraft.tech,i=T.indexOf(d.id);if(i>=0)T.splice(i,1);else{if(T.length>=2)T.shift();T.push(d.id);}ownRe();},

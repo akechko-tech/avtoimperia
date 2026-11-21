@@ -80,7 +80,7 @@ with sync_playwright() as p:
     ok(not r['hid'] and str(r['pn']['kmh']) in r['txt'] and ('ТОРМОЗИ' in r['txt']) == (r['pn']['lvl'] == 'bad'), 'на экране: «%s» (%s)' % (r['txt'], r['cls']))
     r2 = js("""(()=>{const me=R.me;me.vx=30;const pn=paceNote(me);raceAssistHUD();return {lvl:pn&&pn.lvl,txt:document.getElementById('rNote').textContent};})()""")
     ok(r2['lvl'] == 'bad' and 'ТОРМОЗИ' in r2['txt'], 'быстрее — «ТОРМОЗИ!» заранее: ' + r2['txt'])
-    r3 = js("""(()=>{const o=R.cars.find(c=>!c.player);o.wait=false;o.tyreSwap=true;o.vx=0;o.punct=false;o.stopT=0;document.getElementById('rBoard').dataset.t='';raceHUD();return document.getElementById('rBoard').textContent;})()""")
+    r3 = js("""(()=>{const o=R.cars.find(c=>!c.player&&!c.dnf&&c.fin===null)||R.cars.find(c=>!c.player);o.dnf=null;o.fin=null;o.pitT=0;o.svc=0;o.wait=false;o.tyreSwap=true;o.vx=0;o.punct=false;o.stopT=0;document.getElementById('rBoard').dataset.t='';raceHUD();return document.getElementById('rBoard').textContent;})()""")
     ok('шины' in r3, 'соперник меняет стёртые шины у обочины — в таблице «🛞 шины»')
     js("(()=>{try{finishRace(true);closeSheet();closePaper();}catch(_){};R=null;G.pending=[];})()"); pg.wait_for_timeout(300)
     ok(not errs, 'ошибок на странице нет: ' + '; '.join(errs)[:200])

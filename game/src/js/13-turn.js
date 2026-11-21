@@ -3,6 +3,9 @@ const DEALER_MARGIN=0.16;
 function step(){
   const s=G;if(s&&s.mode==='racer')return racerStep(s);   // 0.28: путь гонщика — свой месяц (19-racer.js)
   if(!s||s.over||s.pending.length)return false;
+  // 0.51, этап 8: предложения, на которые за месяц не ответили, — отказ; если отказ что-то повлёк, игрок увидит это до нового месяца
+  s.played51=1;/* 0.51, этап 8: первый ход сделан — до него всё, что пишет газета (вступление, рассказ об основании), показывается целиком */
+  try{if(typeof offersExpire==='function'){offersExpire(s);if(s.pending.length){save();render();return false;}}}catch(e){console.warn('offers',e);}
   helperMonth(s);
   try{raceAutoMonth(s);}catch(e){console.warn('raceAutoMonth',e);}   // 0.51: гонки сезона одной кнопкой
   const eHome=econ(s.y,s.m,s.country);

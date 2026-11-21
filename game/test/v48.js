@@ -26,9 +26,9 @@ const seed=k=>{let a=k;Math.random=()=>{a=(a*16807)%2147483647;return a/21474836
   const c1=standCost(sh,G,1),c2=standCost(sh,G,2),c3=standCost(sh,G,3);ok(c3>c2*2&&c2>c1*2.5,'Парижский салон '+sh.y+': малый стенд '+money(c1)+', большой '+money(c2)+', павильон марки '+money(c3));
   G.world=G.world||worldInit(G);G.world.my.r12=5e6;const k1=standCost(sh,G,1);G.world.my.r12=1e8;const k2=standCost(sh,G,1);ok(k1>c1*3&&k2>k1*3,'плата растёт с размером компании: при выручке $5 млн в год — '+money(k1)+', при $100 млн — '+money(k2));
   G.world.my.r12=0;G.y=sh.y;G.m=sh.m-1;G.shows={};G.showNow=null;showInvite(G,sh);const ev=G.pending.find(e=>/Приглашение на выставку/.test(e.kicker||''));
-  ok(!!ev&&ev.choices.length===4&&/Павильон марки/.test(ev.choices[0][0])&&/павильон марки — своё здание/.test(ev.text),'приглашение: павильон марки, большой стенд, малый стенд, не участвовать');
+  ok(!!ev&&ev.choices.length===5&&ev.choices[4][1]==='showAuto'&&/Павильон марки/.test(ev.choices[0][0])&&/павильон марки — своё здание/.test(ev.text),'приглашение: павильон марки, большой стенд, малый стенд, не участвовать');
   const cash0=G.cash;showBook(G,'show3');const e=G.shows[sh.id];ok(e&&e.tier===3&&e.big===1&&cash0-G.cash===c3,'павильон снят: списано '+money(c3));
-  G.models[0].status='prod';G.models[0].vol=40;G.last=G.last||{};showRun(G,sh,e);const res=e.res;ok(!!res&&/Павильон марки/.test((G.pending.find(x=>x.kicker==='Выставка')||{}).text||''),'день выставки: «Павильон марки» в газете, заказов '+(res?res.orders:'?')+', репутация +'+(res?res.rep:'?'));}
+  G.models[0].status='prod';G.models[0].vol=40;G.last=G.last||{};G.digest=[];showRun(G,sh,e);const res=e.res;ok(!!res&&/Павильон марки/.test((G.pending.concat(G.digest||[]).find(x=>x.kicker==='Выставка')||{}).text||''),'день выставки: «Павильон марки» в газете, заказов '+(res?res.orders:'?')+', репутация +'+(res?res.rep:'?'));}
 /* ---------- бак родстера — в цвет кузова ---------- */
 {newGame('ford','us','Форд Мотор','normal','Модель R25');const md=G.models[0];md.paint='#9e2b25';md.b='b10';const hx=c=>'#'+c.map(v=>('0'+Math.round(v).toString(16)).slice(-2)).join('');
   const sp=modelSpec(md,0,1906,{country:'us',num:3,mech:true}),M=carModel(Object.assign({},sp,{lod:'hi'}));let red=0,brass=0;M.F.forEach(f=>{const c=hx(f.col);if(c==='#9e2b25')red++;if(c==='#c9a24a')brass++;});

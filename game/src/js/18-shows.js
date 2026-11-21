@@ -73,14 +73,16 @@ function checkShows(s){
   // приглашение за месяц: одна выставка в месяц, самая важная
   const next=SHOWS.filter(sh=>showMi(sh)===mi(s)+1&&!s.shows[sh.id]&&showRelevant(sh,s)&&showAskOk(sh,s)).sort((a,b)=>SHOW_HOST[b.h].w-SHOW_HOST[a.h].w+(SHOW_HOST[b.h].c===s.country?1:0)-(SHOW_HOST[a.h].c===s.country?1:0))[0];
   if(next&&showModel(s))showInvite(s,next);}
+/* 0.51, этап 8: приглашение не останавливает игру, если выставки ведёт управляющий (или игрок спрашивает только о своих) */
 function showInvite(s,sh){const H=SHOW_HOST[sh.h],md=showModel(s),c1=standCost(sh,s,1),c2=standCost(sh,s,2),c3=standCost(sh,s,3),home=H.c===s.country,dl=dealerCount(s,H.c);
   s.shows[sh.id]={inv:1,md:md.id};s.showNow=sh.id;s.showAsk=s.showAsk||{};s.showAsk[sh.h]=mi(s);
+  if(typeof showAutoInvite==='function'&&showAutoInvite(s,sh)){const rid0=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid0)reelUnlock(s,rid0);return;}
   const proto=md.status==='dev';
   const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
   pushEvent({kicker:'Приглашение на выставку',title:showName(sh),deck:`${sh.venue} · ${MONTHS_N[sh.m]} ${sh.y}`,carId:md.id,reel:rid,
     text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}Устроители предлагают «${s.company}» место на выставке. Малый стенд — машина на подиуме; большой — ещё и мотор в разрезе, продавцы, буклеты и пробные поездки; павильон марки — своё здание с оркестром, все модели, банкет для торговцев и прессы: заказов и дилеров втрое больше, чем с малого стенда, и больше шансов на награды. Плата растёт с размером компании.\n`
       +`Повезём ${proto?'прототип':'модель'} «${md.name}». На выставке ${proto?'покупатели узнают о новинке заранее':'подписывают заказы'}, о марке пишут газеты${home?'':`, а местные торговцы ищут, чьи машины продавать${dl?'':` — так можно открыть первых дилеров: ${COUNTRIES[H.c].name}`}`}.${sh.ver?'\nУсловие устроителей: машина должна своим ходом доехать из Парижа в Версаль и обратно. Ненадёжная может сломаться в пути — тогда вернут половину платы.':''}${sh.medals?'\nНа Всемирной выставке жюри раздаёт медали: чем лучше машина против соперников, тем выше шанс на золото.':''}`,
-    choices:[[`Павильон марки — ${money(c3)}`,'show3'],[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0']]},true);}
+    choices:[[`Павильон марки — ${money(c3)}`,'show3'],[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0'],['Дальше пусть решает управляющий','showAuto']]},true);}
 function showBook(s,key){const id=s.showNow;s.showNow=null;const sh=SHOWS.find(x=>x.id===id);if(!sh)return;const e=s.shows[id]||(s.shows[id]={});
   if(key==='show0'){e.skip=1;addLog(`Вы не поехали на выставку: ${showName(sh)}.`);return;}
   const tier=key==='show3'?3:key==='show2'?2:1,cost=standCost(sh,s,tier);if(s.cash<cost){e.skip=1;addLog(`Не хватило денег на стенд: ${showName(sh)}.`,'bad');pendingToasts.push('Не хватило денег на стенд');return;}

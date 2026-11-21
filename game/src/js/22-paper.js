@@ -24,12 +24,18 @@ function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[
     ${im?`<figure class="p-fig old" style="margin-inline:0"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
     <div class="p-cols">${txt.split('\n').filter(Boolean).map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>
     <div class="p-btns"><button class="p-btn" data-act="paperBack">← К номеру</button></div></article>`;}
+/* 0.51, этап 8 (автор: «Сотая машина» — а нарисован мотоцикл): рисунок к заметке о компании — того рода, о котором заметка.
+   Говорится о мотоцикле — мотоцикл; о грузовике или автобусе — грузовик; иначе — автомобиль (а не «лучшее, что есть в продаже»:
+   у фирмы с мотоциклами лучшим по счёту выходил мотоцикл). Нужного рода нет — лучшее из того, что есть. */
+function paperArtWant(o){const t=(o.title||'')+' '+(o.deck||'');return /мотоцикл|мотоциклет/i.test(t)?'moto':/грузовик|фургон|автобус|трактор/i.test(t)?'truck':'car';}
+function paperOwnModel(o,s){const prod=s.models.filter(m=>m.status==='prod'),w=paperArtWant(o),is=m=>w==='moto'?isMoto(m):w==='truck'?isTruck(m)&&!isMoto(m):!isMoto(m)&&!isTruck(m);
+  const pool=prod.filter(is),L=pool.length?pool:prod.filter(m=>w==='moto'||!isMoto(m)).length?prod.filter(m=>w==='moto'||!isMoto(m)):prod;return L.slice().sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models.find(is)||s.models[0];}
 function paperHTML(o,s){
   // своя машина — только в новостях о компании; в остальных — фото события или ничего
   // 0.40: новость об аэроплане — рисунок аэроплана (airId), новость без машины (noArt) — без рисунка; раньше в заметке о перелёте
   // или конкурсе стоял лучший автомобиль или мотоцикл компании (отзыв: «изображение на объявлении часто ни о том»)
   const M=MAST[s.country],own=o.car||o.carId||o.own,air=o.air||(o.airId&&s.air?s.air.models.find(m=>m.id===o.airId):null)||null;
-  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
+  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?paperOwnModel(o,s):null);
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),py=o.y||s.y,pm=o.m===undefined?s.m:o.m,also=(o.also?o.also:flavorPick(s,py,pm,2,o.arch||0,false)).map(flvByTitle).filter(Boolean);
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
       :air?`<figure class="p-fig p-air" style="margin-inline:0">${airArtSVG(air,{y:py+pm/12,c:s.country,mark:o.mark||0})}</figure><div class="p-cap">${esc(o.caption||('«'+air.name+'» компании «'+s.company+'»'))}</div>`
@@ -41,14 +47,13 @@ function paperHTML(o,s){
     <div class="p-top"><span>${cityOf(s)} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
-    <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
+    <h2 class="p-head">${esc(o.title)}</h2>${(()=>{const g=typeof evGist==='function'?evGist(o):null;return g?`<div class="p-gist ${g.tone}">${g.lab?`<b>${g.lab}</b>`:''}<span>${esc(g.txt)}</span></div>${o.mean&&o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}`:'';})()}
     ${fig}${reel}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${o.wk&&typeof wikiBoxHTML==='function'?wikiBoxHTML(o.wk):''}${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
       <div class="p-mkt"><b>Рынок</b>${L?`Продано машин за месяц: ${fmtN(L.sold+(L.milN||0)+(L.ordN||0))}${L.milN?` (армии — ${fmtN(L.milN)})`:''} · ${s.over&&s.soldTo?'ваши деньги '+money(s.soldTo.mine):'касса '+money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
-    ${o.mean?`<div class="p-mean"><b>Что это значит для вас</b><span>${esc(o.mean)}</span></div>`:''}
-    <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
+        <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
   </article>`;
 }
 const PW=document.getElementById('paperWrap');
@@ -77,7 +82,7 @@ const MILES=[[100,'Сотая машина','Сто машин — это сто
   [10000,'Десять тысяч машин','Столько Ford T завод Форда собрал за 1909 год. Пора думать о поточной линии и конвейере.'],
   [100000,'Сто тысяч машин','Ford впервые перешагнул сотню тысяч машин в год в 1912 году. Ваша марка — среди великих.'],
   [1000000,'Миллионная машина','Миллионный Ford T сошёл с конвейера в декабре 1915 года. Теперь и у вас миллион!']];
-function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms];if(!m||n<m[0])return;s.ms++;const top=s.models.filter(x=>x.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
+function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms];if(!m||n<m[0])return;s.ms++;const prodM=s.models.filter(x=>x.status==='prod'),carsM=prodM.filter(x=>!isMoto(x)),top=(carsM.length?carsM:prodM).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];/* 0.51: к «сотой машине» — машина, а не мотоцикл, даже если мотоциклов продано больше */
   pushEvent({own:1,cel:[m[1]+'!',`«${s.company}» · продано ${fmtN(m[0])} машин`,'🚗'],carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);
   try{trophyAdd(s,{kind:'record',title:m[1],sub:`продано ${fmtN(m[0])} машин`,story:m[2],key:'ms|'+m[0],carId:top?top.id:null,pt:`${m[1]} «${s.company}»!`});}catch(_){}}
 // 0.34: цену сравниваем с ценой равного спроса (при ней новинка продаётся как машины соперников), а не с «типичной»;

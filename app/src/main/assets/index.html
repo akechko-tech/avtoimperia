@@ -811,6 +811,13 @@ button.link{background:none;border:0;padding:0;margin:0;color:var(--accent,#f0c7
 .world-t td{vertical-align:top}
 
 /* 0.21: мировые события — «Что это значит для вас» под роликом в газете */
+/* 0.51, этап 8: главное — крупно. Вывод заметки под заголовком: крупный шрифт, цвет по смыслу */
+.paper .p-gist{margin:8px 0 10px;padding:10px 12px;border:2px solid #221c14;border-left-width:8px;background:rgba(34,28,20,.05);font-family:var(--serif);font-size:19px;line-height:1.3;font-weight:700;text-align:left}
+.paper .p-gist b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;font-weight:700}
+.paper .p-gist.good{border-color:#1f6b3a;background:rgba(31,107,58,.1);color:#124a26}.paper .p-gist.bad{border-color:#9a2018;background:rgba(154,32,24,.09);color:#7a1610}
+.ev-gist{margin-top:8px;padding:10px 12px;border-left:6px solid var(--line,#3a4a66);background:var(--panel2);border-radius:6px;font-size:18px;line-height:1.3;font-weight:700}
+.ev-gist small{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:3px;font-weight:600}
+.ev-gist.good{border-left-color:#4fc37a;color:#9fe3b4}.ev-gist.bad{border-left-color:#e2574c;color:#ffb0a8}
 .paper .p-mean{margin:14px 0 4px;padding:10px 12px;border:2px solid #221c14;background:rgba(34,28,20,.06);font-family:var(--serif);font-size:15px;line-height:1.35}
 .paper .p-mean b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
 /* 0.25: живые чертежи в кинохронике */
@@ -6088,7 +6095,12 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,airId:ev.airId||null,noArt:ev.noArt?1:0,mark:ev.mark?1:0,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{}),...(ev.wk?{wk:ev.wk}:{})});/* 0.42: wk — статья энциклопедии */
+  const P={title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,airId:ev.airId||null,noArt:ev.noArt?1:0,mark:ev.mark?1:0,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{}),...(ev.wk?{wk:ev.wk}:{})};/* 0.42: wk — статья энциклопедии */
+  // 0.51, этап 8: реже и весомее — мелкая новость не останавливает игру, а ложится в «Заметки месяца» (11g-quiet51.js)
+  // 0.51, этап 8: заметка зовёт на вкладку — в ней кнопка туда (а не «найдите сами»)
+  if(typeof evGoTab==='function'&&evIsNews(ev)&&!ev.cel){const g=evGoTab(text);if(g)P.choices=[[`Открыть «${g.n}»`,'go:'+g.id],...P.choices.map(c=>c[1]==='ok'&&c[0]==='Читать дальше'?['Закрыть','ok']:c)];}
+  const cls=typeof evClass==='function'?evClass(G,ev,paper):'stop';if(cls==='quiet'){digestAdd(G,P);return;}if(cls==='offer'&&offersOn()){offerAdd(G,P);return;}
+  if(typeof evIsNews==='function'&&evIsNews(ev))G.stopM=mi(G);G.pending.push(P);
 }
 const HIST_WORLD=/^(Война!|Италия вступает в войну|США вступают в войну|Перемирие!|Послевоенный спад|Чёрный вторник)$/;
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
@@ -6187,6 +6199,7 @@ function resolve(key){
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');const ev=s.pending[0];if(ev&&ev.world==='war')worldResolve(s,'w:war:mil');}
   if(/^w:/.test(key))worldResolve(s,key);
   if(/^cc:/.test(key))chanceResolve(s,key);if(key==='brandGo'){try{tab='market';}catch(_){}}
+  if(/^go:/.test(key)){try{tab=key.slice(3);if(typeof uiLine!=='undefined')uiLine='car';window.scrollTo(0,0);}catch(_){}}
   if(/^ma:/.test(key)&&maResolve(s,key))return;
   if(/^ru:/.test(key)&&ruResolve(s,key))return;
   if(/^air:/.test(key)&&airResolve(s,key))return;
@@ -6194,6 +6207,7 @@ function resolve(key){
   if(key==='dxDrive'){s.pending.shift();save();render();dxToday(s,key);return;}if(key==='dxSim')dxToday(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2'||key==='show3')showBook(s,key);
+  if(key==='showAuto'){s.showPol='auto';const sh=SHOWS.find(x=>x.id===s.showNow);if(sh){const t=showAutoTier(s,sh);showBook(s,'show'+t);}toast('Выставки ведёт управляющий — изменить можно в «Империи»');}
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
@@ -6946,6 +6960,76 @@ function trialCardHTML(s){if(!s||s.mode==='racer')return '';const O=trOpenList(s
   if(!O.length&&!need&&!have&&!q)return '';const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
   return `<section class="card"><div class="row"><div><h2>🎖 Испытания ведомств</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div></section>`;}
 
+/* ================= 0.51, этап 8: РЕЖЕ И ВЕСОМЕЕ =================
+   Автор: события часты и становятся рутиной. Замер партии бота (Форд, «Норма»): 590 остановок за 409 месяцев, в 152 месяцах —
+   по две и больше, до семи за месяц. Две пятых — выставки (123 приглашения и 110 отчётов), ещё 69 — «вышла кинохроника».
+   Правило: игру останавливает то, что требует решения или действительно важно; остальное — «Заметки месяца» в «Империи»
+   (их можно открыть и прочесть целиком) и строка в журнале.
+     • всегда останавливают: событие с выбором; мировые события; празднования (первенство, рекорд, медаль, титул); главы сюжета;
+       «Итоги года»; хроника эпохи;
+     • никогда не останавливают: «вышла кинохроника», торговые сводки, обозрения, обзор прессы за год,
+       отчёт о выставке без золотой медали;
+     • прочие новости — не больше одной в месяц, остальные — в заметки. */
+const EV_QUIET=/^(Кинохроника|Поставщики · кинохроника|Мир · кинохроника|Торговля|Автомобильное обозрение|Налоги|Итоги года · по версии прессы)$/;
+/* итог того, что игрок сам затеял (попытка рекорда, испытания, первый полёт, работа КБ), и большие вехи — всегда газетой */
+const EV_LOUD=/^(Итоги года$|Спорт и дела|Рекорд|Мировой рекорд|Попытка рекорда|Война|Перемирие|Версаль|Банкротство|Испытания|Первый полёт|КБ|Патенты|Совладельцы|Военн|Авиацех|Небо)/;
+function evChoices(ev){return (ev.choices||[]).filter(c=>!/^reel:/.test(c[1]||''));}
+function evIsNews(ev){const ch=evChoices(ev);return ch.length<=1&&(!ch.length||ch[0][1]==='ok');}
+/* необязательное предложение (вызов, пари, дуэль, сделка, приглашение, заказ): у него есть ответ «нет» — его ключ, иначе null */
+const EV_OFFER=/^(Вызов|Пари|Дуэль|Сделка|Приглашение на выставку|Деловой заказ)$/;
+function offerNo(ev){if(!EV_OFFER.test(ev.kicker||'')||ev.must)return null;const ch=evChoices(ev);if(ch.length<2)return null;const d=ch.find(c=>c[1]==='ok'||/No$|^show0$|^tskip$|:credno:/.test(c[1]));return d?d[1]:null;}
+/* 'stop' — остановить игру; 'quiet' — в заметки месяца; 'offer' — предложение: ждёт в «Делах» до конца месяца */
+function evClass(s,ev,paper){if(!evIsNews(ev))return offerNo(ev)?'offer':'stop';
+  const k=ev.kicker||'';
+  if(k==='Выставка')return /золото/.test(ev.deck||'')?'stop':'quiet';
+  if(k==='Итоги года · по версии прессы')return 'quiet';
+  if(ev.cel||ev.world||ev.saga||ev.duel||ev.dc||ev.mean||ev.mark||ev.loud)return 'stop';
+  if(!s.played51)return 'stop';/* до первого хода: вступление и рассказ об основании фирмы — не «заметки» */
+  if(EV_QUIET.test(k))return 'quiet';
+  if(EV_LOUD.test(k))return 'stop';
+  if(paper&&!k&&!ev.own)return 'stop';/* хроника эпохи: «Мотор вместо лошади», «Ревущие двадцатые» */
+  return s.stopM===mi(s)?'quiet':'stop';}
+function digestAdd(s,P){s.digest=s.digest||[];P.t=mi(s);s.digest.unshift(P);if(s.digest.length>60)s.digest.length=60;
+  if(typeof pendingToasts!=='undefined')pendingToasts.push('📰 '+(P.kicker?P.kicker+': ':'')+P.title);}
+function digestNow(s){const t=mi(s);return (s.digest||[]).filter(d=>t-d.t<=2);}
+/* открыть заметку целиком — как обычную газету (игрок сам попросил, так что это не «остановка») */
+function digestRead(i){const s=G,d=(s.digest||[])[+i];if(!d)return;d.read=1;s.pending.unshift(Object.assign({},d,{choices:[['Закрыть','ok']],fromDigest:1}));render();}
+function digestCard(s){const L=digestNow(s);if(!L.length)return '';const un=L.filter(d=>!d.read).length;
+  const rows=L.slice(0,12).map(d=>{const i=s.digest.indexOf(d);return `<button class="chip" style="width:100%;margin-top:6px;text-align:left${d.read?';opacity:.65':''}" data-act="digestRead" data-i="${i}"><small>${esc(d.kicker||'Новости')} · ${MONTHS[((d.t%12)+12)%12]} ${1895+Math.floor(d.t/12)}</small>${esc(d.title)}${d.deck?`<small>${esc(d.deck)}</small>`:''}</button>`;}).join('');
+  return foldCard('digest',un>0,`<h2>📰 Заметки месяца</h2>`,`<p class="small muted">То, ради чего игру останавливать не стоило. Нажмите — откроется заметка целиком.</p>${rows}`,`${L.length} ${plural(L.length,'заметка','заметки','заметок')}${un?` · новых ${un}`:''}`);}
+/* ---------- предложения: не окно посреди хода, а строка в советах с кнопкой «Открыть» ----------
+   Ждёт до конца месяца; не открыли — считается отказом (тем же ответом «нет», что был в окне). */
+function offersOn(){return (typeof OFFERS_INBOX==='undefined'||OFFERS_INBOX!==false)&&!(typeof G!=='undefined'&&G&&G.mode==='racer');}
+function offerAdd(s,P){s.offers=s.offers||[];P.t=mi(s);s.offers.push(P);if(typeof pendingToasts!=='undefined')pendingToasts.push('✉ '+(P.kicker?P.kicker+': ':'')+P.title);}
+function offerOpen(i){const s=G,P=(s.offers||[])[+i];if(!P)return;s.offers.splice(+i,1);s.pending.unshift(P);render();}
+function offersExpire(s){const L=s.offers||[];if(!L.length)return;s.offers=[];L.forEach(P=>{const no=offerNo(P);if(!no)return;try{s.pending.unshift(P);addLog(`Предложение осталось без ответа: ${P.title}.`,'hist');resolve(no);}catch(e){console.warn('offer expire',e);const k=s.pending.indexOf(P);if(k>=0)s.pending.splice(k,1);}});}
+function offerAdvice(s,add){(s.offers||[]).forEach((P,i)=>add(97,'✉',`${P.kicker}: ${P.title}${P.deck?' — '+P.deck:''}. Ответ — до конца месяца; без ответа это отказ.`,'Открыть',()=>offerOpen(i)));}
+/* ---------- выставки: кто решает ---------- */
+const SHOW_POL={auto:'решает управляющий',home:'спрашивать о своих, на чужие не ездить',ask:'спрашивать о каждой',none:'не ездить'};
+/* по умолчанию: с помощником — решает он; без него — спрашивают о выставках своей страны, на чужие не ездят (деньги без спроса
+   не тратятся). В прогонах и у ботов (ящик предложений выключен) — как раньше: спрашивают о каждой */
+function showPol(s){return SHOW_POL[s.showPol]?s.showPol:!offersOn()?'ask':(typeof helperOn==='function'&&helperOn(s))||(typeof DIF==='function'&&DIF().simple)?'auto':'home';}
+/* стенд по средствам: павильон — на главной выставке, если он дешевле 3 % кассы; большой — до 2 %; малый — до 2 %; иначе не едем */
+function showAutoTier(s,sh){const H=SHOW_HOST[sh.h],cash=Math.max(0,s.cash),home=H.c===s.country,has=home||dealerCount(s,H.c)>0||tradeOk(s,H.c);if(!has)return 0;
+  const c=t=>standCost(sh,s,t);if(H.w>=3&&c(3)<=cash*0.03)return 3;if(c(2)<=cash*0.02)return 2;if(c(1)<=cash*0.02)return 1;return 0;}
+function tradeOk(s,c){try{return !tradeBan(s,c);}catch(_){return true;}}
+/* true — приглашение решено без игрока */
+function showAutoInvite(s,sh){const pol=showPol(s),home=SHOW_HOST[sh.h].c===s.country;if(pol==='ask'||(pol==='home'&&home))return false;
+  const tier=pol==='auto'?showAutoTier(s,sh):0;s.showNow=sh.id;showBook(s,'show'+tier);
+  if(tier)addLog(`Выставки ведёт управляющий: ${showName(sh)} — ${SHOW_TIER[tier].n.toLowerCase()}.`,'hist');return true;}
+function showPolCard(s){if(!s.shows||!Object.keys(s.shows).length)return '';const p=showPol(s);
+  return `<section class="card" id="showpol"><div class="label">Выставки — ${esc(SHOW_POL[p])}</div><div class="chips" style="margin-top:6px">${Object.keys(SHOW_POL).map(k=>`<button class="chip${p===k?' on':''}" data-act="showPol" data-v="${k}">${esc(SHOW_POL[k][0].toUpperCase()+SHOW_POL[k].slice(1))}</button>`).join('')}</div><p class="small muted" style="margin-top:6px">Управляющий берёт стенд по средствам (до 2–3 % кассы) и пишет об итогах в заметках месяца; газета выходит, только если стенд взял золото.</p></section>`;}
+/* ================= ГЛАВНОЕ — КРУПНО =================
+   Автор: важное написано мелким текстом, приходится искать глазами, что хорошего или плохого произошло.
+   Под заголовком — вывод крупно и в цвете (зелёный — хорошо, красный — плохо); если заметка зовёт на вкладку — кнопка туда. */
+const EV_BAD=/убыт|штраф|пожар|забастов|банкрот|потер|сорван|не доехал|проигра|сход|авари|запре[тщ]|закро|дорожа|спад|кризис|война|иск |суд |отобран|сломал|перебои|травм|ушёл|уходит|отказ|не выдерж|упал|сниж|долг/i;
+const EV_GOOD=/прибыл|заказ|медал|золото|серебро|побед|выигра|рекорд|первы|рост|\+\s?\d|чемпион|титул|премия|приз|открыл|готов|принят|в серию|облётан|спрос/i;
+function evTone(ev){if(ev.tone)return ev.tone;if(ev.cel)return 'good';const t=(ev.title||'')+' '+(ev.deck||'')+' '+(ev.mean||''),b=EV_BAD.test(t),g=EV_GOOD.test(t);return b&&!g?'bad':g&&!b?'good':'';}
+/* вывод: «что это значит» (если задано), иначе подзаголовок — в нём у событий стоят числа */
+function evGist(ev){const txt=ev.mean||ev.deck||'';return txt?{txt,tone:evTone(ev),lab:ev.mean?'Что это значит для вас':''}:null;}
+const EV_TABS={'Завод':'plant','Модели':'models','Рынок':'market','Гонки':'race','Империя':'log'};
+function evGoTab(text){const m=/на вкладк[еу] «(Завод|Модели|Рынок|Гонки|Империя)»/.exec(text||'');return m?{id:EV_TABS[m[1]],n:m[1]}:null;}
+
 /* ================= RACE CALENDAR, DRIVERS ================= */
 function driverFee(d,s){return Math.round(600*cpi(s)*(1+T(s)*0.08)*(0.4+d.sk*d.sk*1.8)*bn('drvFee')/50)*50;}
 function driverSalary(d,s){return Math.round(45*cpi(s)*(1+T(s)*0.05)*(0.4+d.sk*1.4)*bn('drvFee')/5)*5;}
@@ -6965,6 +7049,9 @@ const DEALER_MARGIN=0.16;
 function step(){
   const s=G;if(s&&s.mode==='racer')return racerStep(s);   // 0.28: путь гонщика — свой месяц (19-racer.js)
   if(!s||s.over||s.pending.length)return false;
+  // 0.51, этап 8: предложения, на которые за месяц не ответили, — отказ; если отказ что-то повлёк, игрок увидит это до нового месяца
+  s.played51=1;/* 0.51, этап 8: первый ход сделан — до него всё, что пишет газета (вступление, рассказ об основании), показывается целиком */
+  try{if(typeof offersExpire==='function'){offersExpire(s);if(s.pending.length){save();render();return false;}}}catch(e){console.warn('offers',e);}
   helperMonth(s);
   try{raceAutoMonth(s);}catch(e){console.warn('raceAutoMonth',e);}   // 0.51: гонки сезона одной кнопкой
   const eHome=econ(s.y,s.m,s.country);
@@ -8916,6 +9003,7 @@ function adviceList(s){
   const T=[],L=s.last,act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev'),lim=debtLimit(s),home=s.country;
   const add=(p,icon,text,btn,run,tab)=>T.push({p,icon,text,btn,run,tab});
   if(s.over)return T;
+  try{if(typeof offerAdvice==='function')offerAdvice(s,add);}catch(e){console.warn('offer advice',e);}   // 0.51, этап 8: предложения ждут здесь, а не окном
   try{recAdvice(s,add);trialAdvice(s,add);}catch(e){console.warn('rec advice',e);}   // 0.51, этап 6: рекорд в пределах досягаемости, открытые испытания ведомств
   // деньги
   if(s.cash<0){const room=loanOpen(s)?maxLoan(s)-s.loan:0,n=Math.max(0,Math.min(room,Math.ceil((-s.cash+3000*cpi(s))/1000)*1000));
@@ -9641,14 +9729,16 @@ function checkShows(s){
   // приглашение за месяц: одна выставка в месяц, самая важная
   const next=SHOWS.filter(sh=>showMi(sh)===mi(s)+1&&!s.shows[sh.id]&&showRelevant(sh,s)&&showAskOk(sh,s)).sort((a,b)=>SHOW_HOST[b.h].w-SHOW_HOST[a.h].w+(SHOW_HOST[b.h].c===s.country?1:0)-(SHOW_HOST[a.h].c===s.country?1:0))[0];
   if(next&&showModel(s))showInvite(s,next);}
+/* 0.51, этап 8: приглашение не останавливает игру, если выставки ведёт управляющий (или игрок спрашивает только о своих) */
 function showInvite(s,sh){const H=SHOW_HOST[sh.h],md=showModel(s),c1=standCost(sh,s,1),c2=standCost(sh,s,2),c3=standCost(sh,s,3),home=H.c===s.country,dl=dealerCount(s,H.c);
   s.shows[sh.id]={inv:1,md:md.id};s.showNow=sh.id;s.showAsk=s.showAsk||{};s.showAsk[sh.h]=mi(s);
+  if(typeof showAutoInvite==='function'&&showAutoInvite(s,sh)){const rid0=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid0)reelUnlock(s,rid0);return;}
   const proto=md.status==='dev';
   const rid=REELS['show:'+sh.h]?'show:'+sh.h:'';if(rid)reelUnlock(s,rid);
   pushEvent({kicker:'Приглашение на выставку',title:showName(sh),deck:`${sh.venue} · ${MONTHS_N[sh.m]} ${sh.y}`,carId:md.id,reel:rid,
     text:`${showFacts(sh,s)?showFacts(sh,s)+'\n':''}Устроители предлагают «${s.company}» место на выставке. Малый стенд — машина на подиуме; большой — ещё и мотор в разрезе, продавцы, буклеты и пробные поездки; павильон марки — своё здание с оркестром, все модели, банкет для торговцев и прессы: заказов и дилеров втрое больше, чем с малого стенда, и больше шансов на награды. Плата растёт с размером компании.\n`
       +`Повезём ${proto?'прототип':'модель'} «${md.name}». На выставке ${proto?'покупатели узнают о новинке заранее':'подписывают заказы'}, о марке пишут газеты${home?'':`, а местные торговцы ищут, чьи машины продавать${dl?'':` — так можно открыть первых дилеров: ${COUNTRIES[H.c].name}`}`}.${sh.ver?'\nУсловие устроителей: машина должна своим ходом доехать из Парижа в Версаль и обратно. Ненадёжная может сломаться в пути — тогда вернут половину платы.':''}${sh.medals?'\nНа Всемирной выставке жюри раздаёт медали: чем лучше машина против соперников, тем выше шанс на золото.':''}`,
-    choices:[[`Павильон марки — ${money(c3)}`,'show3'],[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0']]},true);}
+    choices:[[`Павильон марки — ${money(c3)}`,'show3'],[`Большой стенд — ${money(c2)}`,'show2'],[`Малый стенд — ${money(c1)}`,'show1'],['Не участвовать','show0'],['Дальше пусть решает управляющий','showAuto']]},true);}
 function showBook(s,key){const id=s.showNow;s.showNow=null;const sh=SHOWS.find(x=>x.id===id);if(!sh)return;const e=s.shows[id]||(s.shows[id]={});
   if(key==='show0'){e.skip=1;addLog(`Вы не поехали на выставку: ${showName(sh)}.`);return;}
   const tier=key==='show3'?3:key==='show2'?2:1,cost=standCost(sh,s,tier);if(s.cash<cost){e.skip=1;addLog(`Не хватило денег на стенд: ${showName(sh)}.`,'bad');pendingToasts.push('Не хватило денег на стенд');return;}
@@ -10556,12 +10646,18 @@ function flavorHTML(t){const f=flvByTitle(t);if(!f)return '';const im=f[3]&&IMG[
     ${im?`<figure class="p-fig old" style="margin-inline:0"><img src="${im.src}" alt="" referrerpolicy="no-referrer">${credit(im)}</figure>`:''}
     <div class="p-cols">${txt.split('\n').filter(Boolean).map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>
     <div class="p-btns"><button class="p-btn" data-act="paperBack">← К номеру</button></div></article>`;}
+/* 0.51, этап 8 (автор: «Сотая машина» — а нарисован мотоцикл): рисунок к заметке о компании — того рода, о котором заметка.
+   Говорится о мотоцикле — мотоцикл; о грузовике или автобусе — грузовик; иначе — автомобиль (а не «лучшее, что есть в продаже»:
+   у фирмы с мотоциклами лучшим по счёту выходил мотоцикл). Нужного рода нет — лучшее из того, что есть. */
+function paperArtWant(o){const t=(o.title||'')+' '+(o.deck||'');return /мотоцикл|мотоциклет/i.test(t)?'moto':/грузовик|фургон|автобус|трактор/i.test(t)?'truck':'car';}
+function paperOwnModel(o,s){const prod=s.models.filter(m=>m.status==='prod'),w=paperArtWant(o),is=m=>w==='moto'?isMoto(m):w==='truck'?isTruck(m)&&!isMoto(m):!isMoto(m)&&!isTruck(m);
+  const pool=prod.filter(is),L=pool.length?pool:prod.filter(m=>w==='moto'||!isMoto(m)).length?prod.filter(m=>w==='moto'||!isMoto(m)):prod;return L.slice().sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models.find(is)||s.models[0];}
 function paperHTML(o,s){
   // своя машина — только в новостях о компании; в остальных — фото события или ничего
   // 0.40: новость об аэроплане — рисунок аэроплана (airId), новость без машины (noArt) — без рисунка; раньше в заметке о перелёте
   // или конкурсе стоял лучший автомобиль или мотоцикл компании (отзыв: «изображение на объявлении часто ни о том»)
   const M=MAST[s.country],own=o.car||o.carId||o.own,air=o.air||(o.airId&&s.air?s.air.models.find(m=>m.id===o.airId):null)||null;
-  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?(s.models.filter(m=>m.status==='prod').sort((a,b)=>modelR(b,s)-modelR(a,s))[0]||s.models[0]):null);
+  const md=air||o.noArt?null:o.car||(o.carId&&s.models.find(m=>m.id===o.carId))||(own?paperOwnModel(o,s):null);
   const L=s.last,paras=(o.text||'').split('\n').filter(Boolean),py=o.y||s.y,pm=o.m===undefined?s.m:o.m,also=(o.also?o.also:flavorPick(s,py,pm,2,o.arch||0,false)).map(flvByTitle).filter(Boolean);
   const fig=o.img&&IMG[o.img]?`<figure class="p-fig old" style="margin-inline:0"><img src="${IMG[o.img].src}" alt="" referrerpolicy="no-referrer">${credit(IMG[o.img])}</figure><div class="p-cap">${esc(o.imgCap||o.title)}</div>`
       :air?`<figure class="p-fig p-air" style="margin-inline:0">${airArtSVG(air,{y:py+pm/12,c:s.country,mark:o.mark||0})}</figure><div class="p-cap">${esc(o.caption||('«'+air.name+'» компании «'+s.company+'»'))}</div>`
@@ -10573,14 +10669,13 @@ function paperHTML(o,s){
     <div class="p-top"><span>${cityOf(s)} · ${MONTHS_N[s.m]} ${s.y}</span><span>№ ${mi(s)+1}</span><span>${M[1]}</span></div>
     <h1 class="p-mast ${M[2]?'frak':''}">${M[0]}</h1><div class="p-rule"></div>
     <div class="p-kick">${esc(o.kicker||'Экстренный выпуск')}</div>
-    <h2 class="p-head">${esc(o.title)}</h2>${o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}
+    <h2 class="p-head">${esc(o.title)}</h2>${(()=>{const g=typeof evGist==='function'?evGist(o):null;return g?`<div class="p-gist ${g.tone}">${g.lab?`<b>${g.lab}</b>`:''}<span>${esc(g.txt)}</span></div>${o.mean&&o.deck?`<div class="p-deck">${esc(o.deck)}</div>`:''}`:'';})()}
     ${fig}${reel}
     <div class="p-cols">${paras.map((p,i)=>`<p class="${i===0&&!/^[\d«"—–-]/.test(p)?'lead':''}">${esc(p)}</p>`).join('')}</div>${o.wk&&typeof wikiBoxHTML==='function'?wikiBoxHTML(o.wk):''}${hist}
     <div class="p-side p-alsos">${also.length?'<b class="p-also-h">Также в номере</b>':''}${also.map(f=>{const im=f[3]&&IMG[f[3]];return `<button class="p-also" data-act="paperAlso" data-k="${esc(f[2])}">${im?`<img src="${im.src}" alt="" referrerpolicy="no-referrer">`:''}<span>${agoTxt(f,py,pm)}${esc(f[2])}<i>читать ›</i></span></button>`;}).join('')}
       <div class="p-mkt"><b>Рынок</b>${L?`Продано машин за месяц: ${fmtN(L.sold+(L.milN||0)+(L.ordN||0))}${L.milN?` (армии — ${fmtN(L.milN)})`:''} · ${s.over&&s.soldTo?'ваши деньги '+money(s.soldTo.mine):'касса '+money(s.cash)}`:'Первые продажи впереди'}</div></div>
     ${o.arch!==undefined?`<div class="p-nav"><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch-1}" ${o.arch>0?'':'disabled'}>◀ Раньше</button><span>${o.arch+1} из ${G.papers.length}</span><button class="p-btn alt" data-act="reopenPaper" data-k="${o.arch+1}" ${o.arch<G.papers.length-1?'':'disabled'}>Позже ▶</button></div>`:''}
-    ${o.mean?`<div class="p-mean"><b>Что это значит для вас</b><span>${esc(o.mean)}</span></div>`:''}
-    <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
+        <div class="p-btns">${(ch.length?ch:[['Дальше','close']]).map((c,i)=>`<button class="p-btn ${i?'alt':''}" data-act="${o.act||'paperChoose'}" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>
   </article>`;
 }
 const PW=document.getElementById('paperWrap');
@@ -10609,7 +10704,7 @@ const MILES=[[100,'Сотая машина','Сто машин — это сто
   [10000,'Десять тысяч машин','Столько Ford T завод Форда собрал за 1909 год. Пора думать о поточной линии и конвейере.'],
   [100000,'Сто тысяч машин','Ford впервые перешагнул сотню тысяч машин в год в 1912 году. Ваша марка — среди великих.'],
   [1000000,'Миллионная машина','Миллионный Ford T сошёл с конвейера в декабре 1915 года. Теперь и у вас миллион!']];
-function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms];if(!m||n<m[0])return;s.ms++;const top=s.models.filter(x=>x.status==='prod').sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];
+function checkMilestones(s){const n=totalSold(s);s.ms=s.ms||0;const m=MILES[s.ms];if(!m||n<m[0])return;s.ms++;const prodM=s.models.filter(x=>x.status==='prod'),carsM=prodM.filter(x=>!isMoto(x)),top=(carsM.length?carsM:prodM).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0];/* 0.51: к «сотой машине» — машина, а не мотоцикл, даже если мотоциклов продано больше */
   pushEvent({own:1,cel:[m[1]+'!',`«${s.company}» · продано ${fmtN(m[0])} машин`,'🚗'],carId:top?top.id:null,kicker:'Рекорд',title:`${m[1]} «${s.company}»!`,deck:`${dstr(s)}: продано ${fmtN(m[0])} машин${top?`, лучше всех идёт «${top.name}»`:''}`,text:m[2]+`\nВ кассе ${money(s.cash)}, репутация ${Math.round(s.rep)} из 100. ${s.rep<50?'Поднимите репутацию надёжными машинами и победами в гонках.':'Покупатели доверяют вашей марке.'}`},true);
   try{trophyAdd(s,{kind:'record',title:m[1],sub:`продано ${fmtN(m[0])} машин`,story:m[2],key:'ms|'+m[0],carId:top?top.id:null,pt:`${m[1]} «${s.company}»!`});}catch(_){}}
 // 0.34: цену сравниваем с ценой равного спроса (при ней новинка продаётся как машины соперников), а не с «типичной»;
@@ -17635,7 +17730,7 @@ function vLog(){
   const last=G.papers[G.papers.length-1];
   const sold=G.soldTo&&G.over&&G.y<1930?`<section class="card"><span class="label">Компания продана</span><h2 style="margin-top:2px">Начать с другой марки</h2><p class="small" style="margin-top:4px">За «${esc(G.soldTo.co)}» вы получили ${money(G.soldTo.mine)}. Купите действующую марку — с заводами, дилерами и машинами — и ведите её до 1930 года.</p><button class="btn primary block" style="margin-top:8px" data-act="rbOpen">Выбрать марку</button></section>`:'';
   return sold+`<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">${typeof airOnly==='function'&&airOnly(G)?'В 1930 году вашу фирму сравнят с настоящими авиастроителями: Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Boeing. Очки дают масштаб, рынок, изобретения, рекорды и призы, капитал и имя.':'В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя.'} Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
-  ${(()=>{try{return domCard(G);}catch(e){console.warn('dom',e);return '';}})()}${legacyCard()}${titlesCard(G)}${boardCard(G)}${trophyCabinetCard(G)}${sagaCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
+  ${(()=>{try{return domCard(G);}catch(e){console.warn('dom',e);return '';}})()}${legacyCard()}${titlesCard(G)}${boardCard(G)}${trophyCabinetCard(G)}${sagaCard(G)}${digestCard(G)}${showPolCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
   ${foldCard('ach',false,`<h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span>`,`<div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div>`,`получено ${got} из ${ACH.length}`)}
   ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
@@ -18060,7 +18155,7 @@ function showEvent(){
   if(ev.duel){duelShow(ev);return;}
   if(ev.chance){openSheet(chanceHTML(ev));return;}
   if(ev.paper){if(PW.hidden||!PW.innerHTML)showPaper({title:ev.title,deck:ev.deck,text:ev.text,img:ev.img,imgCap:ev.imgCap,carId:ev.carId,airId:ev.airId,noArt:ev.noArt,mark:ev.mark,/* 0.49: без этих трёх полей заметка о вылете, рекорде или первом полёте шла с лучшим автомобилем или мотоциклом марки — газета 0.40 умела рисовать аэроплан, но событие до неё его не доносило */own:ev.own,carOpt:ev.carOpt,caption:ev.caption,hist:ev.hist,histCap:ev.histCap,choices:ev.choices,act:'choose',kicker:ev.kicker||(G.over?'Последний выпуск':'Экстренный выпуск'),mean:ev.mean,reel:ev.reel,wk:ev.wk||null});return;}
-  openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${ev.deck?`<p class="small warn" style="margin-top:4px">${esc(ev.deck)}</p>`:''}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
+  openSheet(`<span class="label">${dstr(G)}${ev.kicker?' · '+esc(ev.kicker):''}</span><h2 style="margin-top:4px">${esc(ev.title)}</h2>${(()=>{const g=typeof evGist==='function'?evGist(ev):null;return g?`<p class="ev-gist ${g.tone}">${g.lab?`<small>${g.lab}</small>`:''}${esc(g.txt)}</p>`:'';})()}${ev.text.split('\n').map(t=>`<p style="margin-top:10px">${esc(t)}</p>`).join('')}<div class="stack" style="margin-top:16px">${ev.choices.map((c,i)=>`<button class="btn ${i===0?'primary':''} block" data-act="choose" data-k="${c[1]}">${esc(c[0])}</button>`).join('')}</div>`);
 }
 const X=`<button class="iconbtn" data-act="close" aria-label="Закрыть">×</button>`;
 function designKind(d){const b=byId(BODIES,d.b);return b.truck?bodyKind(b):segOf(d);}
@@ -32586,6 +32681,7 @@ const ACT={
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
   /* 0.51, этап 4в: своя разработка и авиамотор (16c-own.js) */
   ownOpen:()=>openOwn(null),ownCat:d=>openOwn(d.k,d.mo==='1'),
+  digestRead:d=>digestRead(d.i),showPol:d=>{if(SHOW_POL[d.v]){G.showPol=d.v;save();render();}},/* 0.51, этап 8 */
   ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
   ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
   ownTech:d=>{if(!ownDraft)return;const T=ownDraft.tech,i=T.indexOf(d.id);if(i>=0)T.splice(i,1);else{if(T.length>=2)T.shift();T.push(d.id);}ownRe();},

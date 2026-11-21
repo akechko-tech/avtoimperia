@@ -13,7 +13,9 @@ newGame('maybach','de','Даймлер','normal','');ok(G.models[0].name==='Ти
 newGame('ford','us','Форд','normal','');ok(G.models[0].name==='Тип 1'&&!G.models[0].legend&&legendCount(G)===0,'у Форда легенды позже (1908) — старт прежний');
 newGame('custom','ru','Своя','normal','');ok(G.models[0].name==='Тип 1'&&!G.models[0].legend,'свой персонаж в России: С24 (1909) на старте недоступен — «Тип 1»');
 // экономика старта: Бенц с «Вело» за два года продаёт не хуже двух третей прежнего «Типа 1»
-const sim=(set)=>{Math.random=(()=>{let a=3;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();newGame('benz','de','Бенц','normal','');const m=G.models[0];if(set){Object.assign(m,set);delete m.legend;G.legends={};m.price=Math.round(refPrice(m,G)/10)*10;}
+const sim1=(set,sd)=>{Math.random=(()=>{let a=sd;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();newGame('benz','de','Бенц','normal','');const m=G.models[0];if(set){Object.assign(m,set);delete m.legend;G.legends={};m.price=Math.round(refPrice(m,G)/10)*10;}
   for(let k=0;k<24;k++){while(G.pending.length)resolve(G.pending[0].choices[0][1]);G.over=false;step();}return {cash:Math.round(G.cash),sold:G.models[0].totalSold};};
+// 0.51, этап 8: одно зерно зависело от порядка событий (заметки больше не останавливают игру) — считаем по трём зёрнам
+const sim=set=>[3,5,7].map(sd=>sim1(set,sd)).reduce((A,x)=>({cash:A.cash+Math.round(x.cash/3),sold:A.sold+x.sold}),{cash:0,sold:0});
 const a=sim(null),b=sim({name:'Тип 1',g:'g2',w:'w2',t:'t1'});ok(a.sold>=b.sold*0.6&&a.cash>=b.cash*0.9,'старт Бенца с «Вело» за 24 месяца: продано '+a.sold+' (было «Типом 1» '+b.sold+'), касса '+a.cash+' против '+b.cash);
 console.log(bad?'ОШИБОК: '+bad:'всё в порядке');process.exit(bad?1:0);}`);

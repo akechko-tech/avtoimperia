@@ -55,6 +55,7 @@ function adviceList(s){
   const T=[],L=s.last,act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev'),lim=debtLimit(s),home=s.country;
   const add=(p,icon,text,btn,run,tab)=>T.push({p,icon,text,btn,run,tab});
   if(s.over)return T;
+  try{if(typeof offerAdvice==='function')offerAdvice(s,add);}catch(e){console.warn('offer advice',e);}   // 0.51, этап 8: предложения ждут здесь, а не окном
   try{recAdvice(s,add);trialAdvice(s,add);}catch(e){console.warn('rec advice',e);}   // 0.51, этап 6: рекорд в пределах досягаемости, открытые испытания ведомств
   // деньги
   if(s.cash<0){const room=loanOpen(s)?maxLoan(s)-s.loan:0,n=Math.max(0,Math.min(room,Math.ceil((-s.cash+3000*cpi(s))/1000)*1000));

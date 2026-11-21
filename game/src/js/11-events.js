@@ -40,7 +40,12 @@ function pushEvent(ev,paper){
   const text=typeof ev.text==='function'?ev.text(G):ev.text;
   if(ev.fx)ev.fx(G);
   addLog(`${ev.title}. ${text}`,'hist');
-  G.pending.push({title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,airId:ev.airId||null,noArt:ev.noArt?1:0,mark:ev.mark?1:0,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{}),...(ev.wk?{wk:ev.wk}:{})});/* 0.42: wk — статья энциклопедии */
+  const P={title:ev.title,deck:ev.deck||'',text,img:ev.img||'',imgCap:ev.imgCap||'',kicker:ev.kicker||'',carId:ev.carId||null,airId:ev.airId||null,noArt:ev.noArt?1:0,mark:ev.mark?1:0,own:ev.own?1:0,carOpt:ev.carOpt||null,caption:ev.caption||'',hist:ev.hist||'',histCap:ev.histCap||'',paper:!!paper,choices:ev.choices||[['Читать дальше','ok']],cel:ev.cel||null,...(ev.duel?{duel:ev.duel}:{}),...(ev.dc?{dc:ev.dc}:{}),...(ev.world?{world:ev.world}:{}),...(ev.mean?{mean:ev.mean}:{}),...(ev.reel?{reel:ev.reel}:{}),...(ev.wk?{wk:ev.wk}:{})};/* 0.42: wk — статья энциклопедии */
+  // 0.51, этап 8: реже и весомее — мелкая новость не останавливает игру, а ложится в «Заметки месяца» (11g-quiet51.js)
+  // 0.51, этап 8: заметка зовёт на вкладку — в ней кнопка туда (а не «найдите сами»)
+  if(typeof evGoTab==='function'&&evIsNews(ev)&&!ev.cel){const g=evGoTab(text);if(g)P.choices=[[`Открыть «${g.n}»`,'go:'+g.id],...P.choices.map(c=>c[1]==='ok'&&c[0]==='Читать дальше'?['Закрыть','ok']:c)];}
+  const cls=typeof evClass==='function'?evClass(G,ev,paper):'stop';if(cls==='quiet'){digestAdd(G,P);return;}if(cls==='offer'&&offersOn()){offerAdd(G,P);return;}
+  if(typeof evIsNews==='function'&&evIsNews(ev))G.stopM=mi(G);G.pending.push(P);
 }
 const HIST_WORLD=/^(Война!|Италия вступает в войну|США вступают в войну|Перемирие!|Послевоенный спад|Чёрный вторник)$/;
 function inCountries(spec,c){if(!spec)return true;if(spec[0]==='!')return !spec.slice(1).split(',').includes(c);return spec.split(',').includes(c);}
@@ -139,6 +144,7 @@ function resolve(key){
   if(key==='mil'){s.military=true;addLog('Военный контракт подписан.');const ev=s.pending[0];if(ev&&ev.world==='war')worldResolve(s,'w:war:mil');}
   if(/^w:/.test(key))worldResolve(s,key);
   if(/^cc:/.test(key))chanceResolve(s,key);if(key==='brandGo'){try{tab='market';}catch(_){}}
+  if(/^go:/.test(key)){try{tab=key.slice(3);if(typeof uiLine!=='undefined')uiLine='car';window.scrollTo(0,0);}catch(_){}}
   if(/^ma:/.test(key)&&maResolve(s,key))return;
   if(/^ru:/.test(key)&&ruResolve(s,key))return;
   if(/^air:/.test(key)&&airResolve(s,key))return;
@@ -146,6 +152,7 @@ function resolve(key){
   if(key==='dxDrive'){s.pending.shift();save();render();dxToday(s,key);return;}if(key==='dxSim')dxToday(s,key);
   if(key==='tbid0'||key==='tbid1'||key==='tskip')tenderResolve(s,key);
   if(key==='show0'||key==='show1'||key==='show2'||key==='show3')showBook(s,key);
+  if(key==='showAuto'){s.showPol='auto';const sh=SHOWS.find(x=>x.id===s.showNow);if(sh){const t=showAutoTier(s,sh);showBook(s,'show'+t);}toast('Выставки ведёт управляющий — изменить можно в «Империи»');}
   if(/^(chal|poach)/.test(key))drvResolve(s,key);
   if(key==='qRecall'||key==='qDeny')qualityResolve(s,key);
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));

@@ -978,5 +978,68 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
       ownDraft.into=0;openOwn('e',false);CK(/id="ownname"/.test(H)&&/Начать · /.test(H),'«Новый узел» — с названием и кнопкой «Начать»');}finally{openSheet=sO;ownDraft=null;}}
   Math.random=R0;
 }
+// ---------- 27. этап 8: реже и весомее (заметки месяца, предложения, выставки), главное — крупно ----------
+{const R0=Math.random,rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();};
+  BOTS_OFF=true;rnd(4);newGame('ford','us','Форд','normal','T');const s=G;s.y=1908;s.m=4;s.cash=2e6;s.pending=[];s.digest=[];s.stopM=-1;pendingToasts.length=0;
+  const N=(k,o)=>Object.assign({kicker:k,title:'Заголовок',text:'Текст.'},o||{});
+  // до первого хода всё показывается целиком: вступление и рассказ об основании фирмы — не «заметки»
+  CK(!s.played51&&evClass(s,N('Кинохроника'),true)==='stop'&&evClass(s,N('Детройт',{title:'Фирма строит автомобили'}),true)==='stop','до первого хода газета ничего не прячет в заметки (вступление, основание фирмы)');
+  s.played51=1;
+  // что останавливает игру
+  CK(evClass(s,N('Кинохроника'),true)==='quiet'&&evClass(s,N('Торговля'),true)==='quiet'&&evClass(s,N('Автомобильное обозрение'),true)==='quiet','кинохроника, торговля, обозрение — в заметки');
+  CK(evClass(s,N('Выставка',{deck:'12 заказов · серебро',cel:['Медаль']}),true)==='quiet'&&evClass(s,N('Выставка',{deck:'12 заказов · золото'}),true)==='stop','отчёт о выставке — в заметки; с золотой медалью — газетой');
+  CK(evClass(s,N('Итоги года'),true)==='stop'&&evClass(s,N('Итоги года · по версии прессы',{cel:['Титул']}),true)==='quiet','итоги года — одна газета в год: обзор прессы уходит в заметки');
+  CK(evClass(s,N('Мир',{world:'war'}),true)==='stop'&&evClass(s,N('',{cel:['Первыми в мире!']}),true)==='stop'&&evClass(s,N('Попытка рекорда'),true)==='stop'&&evClass(s,N('Испытания ведомства'),true)==='stop'&&evClass(s,N('КБ · своя разработка'),true)==='stop','мир, празднование и итог своей затеи (рекорд, испытания, КБ) — всегда газетой');
+  CK(evClass(s,N('',{title:'Мотор вместо лошади'}),true)==='stop','хроника эпохи — газетой');
+  CK(evClass(s,N('Банкротство',{choices:[['Спасти','a'],['Нет','b']]}),true)==='stop'&&evClass(s,N('Дуэль сегодня',{choices:[['Сесть за руль','dxDrive'],['Шофёр','dxSim']]}),true)==='stop','решение, которое нельзя отложить, — останавливает');
+  CK(evClass(s,N('Вызов',{choices:[['Принять вызов','chalYes'],['Отказаться','chalNo']]}),true)==='offer'&&evClass(s,N('Сделка',{choices:[['Переговоры','ma:talk:x'],['Позже','ok']]}),true)==='offer'&&evClass(s,N('Приглашение на выставку',{choices:[['Стенд','show1'],['Не участвовать','show0'],['Управляющий','showAuto']]}),true)==='offer','вызов, сделка, приглашение — предложение');
+  CK(offerNo(N('Вызов',{choices:[['Да','chalYes'],['Нет','chalNo']]}))==='chalNo'&&offerNo(N('Приглашение на выставку',{choices:[['Стенд','show1'],['Нет','show0'],['Упр','showAuto']]}))==='show0'&&offerNo(N('Сделка',{choices:[['Да','ma:talk:1'],['Нет','ma:credno:1']]}))==='ma:credno:1','у предложения известен ответ «нет»');
+  // одна прочая новость в месяц
+  pushEvent(N('Дилеры',{own:1,title:'Первая новость'}),false);CK(s.pending.length===1&&s.stopM===mi(s),'первая новость месяца — остановка');
+  pushEvent(N('Дилеры',{own:1,title:'Вторая новость'}),false);CK(s.pending.length===1&&s.digest.length===1&&s.digest[0].title==='Вторая новость'&&pendingToasts.some(t=>/Вторая новость/.test(t)),'вторая за месяц — в заметки, с короткой строкой на экране');
+  pushEvent(N('Кинохроника',{title:'Новая хроника'}),true);CK(s.pending.length===1&&s.digest[0].title==='Новая хроника'&&G.log.some(l=>/Новая хроника/.test(l.t||l.text||JSON.stringify(l))),'кинохроника — в заметки; в журнале она тоже есть');
+  s.pending=[];const sO=openSheet;let H='';openSheet=h=>{H=h;};
+  try{const C=digestCard(s);CK(/Заметки месяца/.test(C)&&/data-act="digestRead" data-i="0"/.test(C)&&/Новая хроника/.test(C)&&/Вторая новость/.test(C),'карточка «Заметки месяца» в «Империи»');
+    digestRead(0);CK(s.pending.length===1&&s.pending[0].title==='Новая хроника'&&s.pending[0].choices[0][0]==='Закрыть'&&s.digest[0].read===1,'заметку можно открыть целиком — по своей воле');s.pending=[];
+    s.m++;pushEvent(N('Дилеры',{own:1,title:'Новый месяц'}),false);CK(s.pending.length===1,'в новом месяце — снова одна остановка');s.pending=[];
+    // предложения
+    const off=N('Сделка',{title:'«Бриско» ищет покупателя',deck:'просят $90 000',choices:[['Переговоры','ma:talk:zz'],['Позже','ok']]});
+    OFFERS_INBOX=false;pushEvent(off,true);CK(s.pending.length===1&&!(s.offers||[]).length,'в прогонах (ящик выключен) предложение идёт окном, как раньше');s.pending=[];
+    OFFERS_INBOX=true;pushEvent(off,true);CK(s.pending.length===0&&s.offers.length===1&&s.offers[0].title==='«Бриско» ищет покупателя','ящик включён: предложение не окно, а запись в «Делах»');
+    const T=[];offerAdvice(s,(p,ic,t,b,run)=>T.push({p,t,b,run}));CK(T.length===1&&T[0].b==='Открыть'&&/Бриско/.test(T[0].t)&&/до конца месяца/.test(T[0].t)&&T[0].p>=95,'в советах — строка с кнопкой «Открыть», в самом верху');
+    T[0].run();CK(s.pending.length===1&&s.pending[0].title==='«Бриско» ищет покупателя'&&s.pending[0].choices.length===2&&!s.offers.length,'«Открыть» — то же окно с теми же ответами');s.pending=[];
+    pushEvent(off,true);const lg=G.log.length;offersExpire(s);CK(!s.offers.length&&!s.pending.length&&G.log.length>lg&&G.log.some(l=>/осталось без ответа/.test(JSON.stringify(l))),'месяц прошёл без ответа — это отказ, запись в журнале');
+    s.mode='racer';CK(!offersOn(),'у гонщика ящика нет');s.mode=undefined;OFFERS_INBOX=false;
+    // выставки
+    CK(showPol(s)==='ask','в прогонах и у ботов — как раньше: спрашивают о каждой');OFFERS_INBOX=true;CK(showPol(s)==='home','в игре без помощника: спрашивают о выставках своей страны');s.helper={on:1};CK(showPol(s)==='auto','с помощником: выставки ведёт он');s.helper=null;s.showPol='ask';CK(showPol(s)==='ask','выбор игрока запоминается');OFFERS_INBOX=false;
+    const shH=SHOWS.find(q=>SHOW_HOST[q.h].c===s.country&&q.y>=1905),shF=SHOWS.find(q=>SHOW_HOST[q.h].c!==s.country&&q.y>=1905);s.shows={};
+    s.showPol='ask';CK(showAutoInvite(s,shH)===false&&showAutoInvite(s,shF)===false,'«спрашивать о каждой» — управляющий не вмешивается');
+    s.showPol='home';CK(showAutoInvite(s,shH)===false,'«о своих»: своя выставка — к игроку');
+    s.shows[shF.id]={inv:1,md:s.models[0].id};const c0=s.cash;CK(showAutoInvite(s,shF)===true&&s.shows[shF.id].skip===1&&s.cash===c0,'«о своих»: на чужую не едем и денег без спроса не тратим');
+    s.showPol='auto';s.cash=5e6;s.shows[shH.id]={inv:1,md:s.models[0].id};const c1=s.cash,t1=showAutoTier(s,shH);CK(t1>=1&&showAutoInvite(s,shH)===true&&s.shows[shH.id].tier===t1&&c1-s.cash===s.shows[shH.id].cost&&s.shows[shH.id].cost<=c1*0.03+1,'управляющий берёт стенд по средствам: '+SHOW_TIER[t1].n+' за '+s.shows[shH.id].cost+' (не больше 3 % кассы)');
+    s.cash=50;CK(showAutoTier(s,shH)===0,'денег нет — не едем');s.cash=5e6;s.showPol='none';s.shows['zz']=1;const shN=SHOWS.find(q=>q!==shH&&SHOW_HOST[q.h].c===s.country&&q.y>=1905)||shH;s.shows[shN.id]={inv:1,md:s.models[0].id};const c2=s.cash;showAutoInvite(s,shN);CK(s.cash===c2&&s.shows[shN.id].skip===1,'«не ездить» — не едем и не спрашиваем');
+    CK(/id="showpol"/.test(showPolCard(s))&&/data-act="showPol" data-v="auto"/.test(showPolCard(s)),'в «Империи» — карточка «Выставки» с выбором, кто решает');
+    s.showPol='ask';s.showNow=shH.id;s.shows[shH.id]={inv:1,md:s.models[0].id};s.pending=[{title:'x',choices:[['a','showAuto']]}];resolve('showAuto');CK(s.showPol==='auto','ответ «Дальше пусть решает управляющий» в приглашении меняет правило');s.pending=[];
+    // главное — крупно
+    let g=evGist({title:'Парижский салон',deck:'Стенд: 12 заказов · +2 дилера · репутация +0,4'});CK(g&&g.tone==='good'&&/12 заказов/.test(g.txt)&&!g.lab,'вывод заметки — её подзаголовок с числами; хорошая новость — зелёным');
+    g=evGist({title:'Пожар на складе',deck:'Сгорело 40 машин — убыток $12 000'});CK(g&&g.tone==='bad','плохая — красным');
+    g=evGist({title:'Война!',deck:'Европа',mean:'Гражданский спрос упадёт, армии нужны грузовики.'});CK(g&&g.lab==='Что это значит для вас'&&/грузовики/.test(g.txt),'где есть «что это значит для вас» — оно и стоит выводом');CK(evGist({title:'Без вывода'})===null,'нет вывода — нет блока');
+    const PH=paperHTML({title:'Парижский салон',deck:'12 заказов · +2 дилера',text:'Текст.',kicker:'Выставка',choices:[['Дальше','ok']]},s);
+    CK(/class="p-gist good"/.test(PH)&&PH.indexOf('p-gist')<PH.indexOf('p-cols')&&PH.indexOf('p-gist')>PH.indexOf('p-head')&&!/class="p-mean"/.test(PH),'в газете вывод стоит сразу под заголовком, крупно, до текста');
+    // кнопка действия
+    s.m++;pushEvent({own:1,kicker:'Дилеры',title:'Очереди у дилеров',text:'Завод не успевает. Стройте цеха на вкладке «Завод».'},false);const E=s.pending[0];
+    CK(E&&E.choices[0][1]==='go:plant'&&/Открыть «Завод»/.test(E.choices[0][0])&&E.choices.some(c=>c[1]==='ok'),'заметка зовёт на вкладку — в ней кнопка «Открыть „Завод“»');
+    tab='log';resolve('go:plant');CK(tab==='plant'&&!s.pending.length,'кнопка закрывает заметку и открывает вкладку');
+    // рисунок соответствует заметке
+    {const car=s.models[0];car.status='prod';car.lastSold=10;const mo={...car,id:901,name:'Мотоцикл Ф',b:BODIES.find(b=>b.moto).id,status:'prod',lastSold:999},tr={...car,id:902,name:'Грузовик Ф',b:'b7',status:'prod',lastSold:5};s.models.push(mo,tr);const mR=modelR;modelR=(m)=>m.id===901?9:m.id===902?1:5;
+      try{CK(paperOwnModel({title:'Сотая машина «Форд»!'},s)===car,'«Сотая машина» — рисунок автомобиля, хотя лучший по счёту — мотоцикл');CK(paperOwnModel({title:'Мотоцикл «Форд» — первый в своём классе!'},s)===mo,'заметка о мотоцикле — мотоцикл');
+        CK(paperOwnModel({title:'Заказ от почтового ведомства',deck:'двадцать фургонов'},s)===tr,'заметка о фургонах — грузовик');
+        s.ms=0;const tS=totalSold;totalSold=()=>150;s.pending=[];s.stopM=-1;checkMilestones(s);totalSold=tS;CK(s.pending[0]&&/Сотая машина/.test(s.pending[0].title)&&s.pending[0].carId===car.id,'веха «Сотая машина» берёт в рисунок автомобиль (мотоциклов продано больше)');s.pending=[];
+        s.models=s.models.filter(m=>m!==car&&m!==tr);CK(paperOwnModel({title:'Сотая машина'},s)===mo,'у фирмы одни мотоциклы — рисуем мотоцикл');}
+      finally{modelR=mR;s.models=s.models.filter(m=>m.id<900);if(!s.models.includes(car))s.models.unshift(car);}}
+    CK(evGoTab('Смотрите на вкладке «Рынок».').id==='market'&&evGoTab('Гонщик ждёт вас на вкладке «Гонки»').id==='race'&&evGoTab('ничего такого')===null,'вкладки узнаются по тексту');}
+  finally{openSheet=sO;OFFERS_INBOX=false;}
+  Math.random=R0;
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

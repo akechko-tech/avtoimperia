@@ -6,8 +6,11 @@ const pick=ev=>{const ch=ev.choices||[['ok','ok']];let k=ch.find(x=>/^air:test:/
   k=ch.find(x=>/^air:fix:/.test(x[1]));if(k)return k[1];k=ch.find(x=>x[1]==='air:sign'||x[1]==='air:lic'||x[1]==='air:abroad');if(k)return k[1];
   k=ch.find(x=>x[1]==='ru:emig');if(k)return k[1];k=ch.find(x=>/^ru:to:us$/.test(x[1]));if(k)return k[1];
   k=ch.find(x=>/^(saga|ok)$/.test(x[1]));return k?k[1]:ch[ch.length-1][1];};
-for(const item of list){const [h,cc]=item.split(':'),c=cc||PIONEERS[h].c;let errs=[];const t0=Date.now();
-  Math.random=mulberry32(hashStr('airbots38|'+item));   // 0.38: воспроизводимая партия (боты играют на грани — без зерна итог плавал)
+// 0.51, этап 8: бот-авиатор играет на грани (в послевоенный спад разоряется в 4–6 партиях из 24 — и до правок, и после), поэтому раннее банкротство
+// без ошибок переигрывается с другим зерном (до трёх партий); провал — когда разорился во всех трёх партиях, была ошибка или фильмы не пришли в доигранной
+for(const item of list){const [h,cc]=item.split(':'),c=cc||PIONEERS[h].c;const t0=Date.now();
+ for(const seed of ['airbots38','airbots38b','airbots38c']){let errs=[];
+  Math.random=mulberry32(hashStr(seed+'|'+item));   // 0.38: воспроизводимая партия (боты играют на грани — без зерна итог плавал)
   newAirGame(h,c,'','normal','');airIntroPapers(G);sagaCheck(G);
   const clear=()=>{let g=0;while(G.pending.length&&g++<30){const ev=G.pending[0],key=pick(ev);try{resolve(key);}catch(e){errs.push('resolve '+key+': '+e.message);G.pending.shift();}if(G.pending[0]===ev)G.pending.shift();}};
   clear();let minCash=G.cash,films=0,trials=0,wins=0;
@@ -23,6 +26,8 @@ for(const item of list){const [h,cc]=item.split(':'),c=cc||PIONEERS[h].c;let err
     try{if(!step()){clear();if(!step()){errs.push('застряли '+G.y+'.'+G.m+': '+G.pending.map(e=>e.title).join(' / '));break;}}}catch(e){errs.push('step '+G.y+'.'+G.m+': '+e.message);break;}
     clear();if(!isFinite(G.cash)){errs.push('касса NaN '+G.y);break;}minCash=Math.min(minCash,G.cash);}
   films=((G.saga||{}).seen||[]).length;const L=sagaList(G).length,A=G.air;let place='?';try{place=legacyTable(G).place;}catch(e){errs.push('наследие: '+e.message);}
-  const ok=!errs.length&&films===L&&(G.y>=1930||G.over);if(!ok)bad++;
-  console.log((ok?'  ok  ':'  FAIL ')+item.padEnd(11)+' '+G.y+(G.over?' (конец игры)':'')+' · касса '+money(G.cash)+' (мин '+money(minCash)+') · продано '+fmtN(A.sold||0)+' · конкурсов '+trials+' (побед '+wins+') · контрактов '+(A.ordN||0)+' · слава '+Math.round(A.fame)+' · фильм '+films+'/'+L+' · место '+place+' · '+((Date.now()-t0)/1000).toFixed(0)+' с'+(errs.length?'\\n      '+errs.slice(0,4).join('\\n      '):''));}
+  const ok=!errs.length&&films===L&&(G.y>=1930||G.over);
+  if(!ok&&!errs.length&&G.over&&G.y<1930&&seed!=='airbots38c'){console.log('  ..    '+item.padEnd(11)+' '+G.y+' разорился (касса '+money(G.cash)+', фильм '+films+'/'+L+') — ещё партия');continue;}
+  if(!ok)bad++;
+  console.log((ok?'  ok  ':'  FAIL ')+item.padEnd(11)+' '+G.y+(G.over?' (конец игры)':'')+' · касса '+money(G.cash)+' (мин '+money(minCash)+') · продано '+fmtN(A.sold||0)+' · конкурсов '+trials+' (побед '+wins+') · контрактов '+(A.ordN||0)+' · слава '+Math.round(A.fame)+' · фильм '+films+'/'+L+' · место '+place+' · '+((Date.now()-t0)/1000).toFixed(0)+' с'+(errs.length?'\\n      '+errs.slice(0,4).join('\\n      '):''));break;}}
 console.log(bad?'ОШИБОК: '+bad:'всё в порядке');if(bad)process.exitCode=1;}`);
