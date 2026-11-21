@@ -97,8 +97,8 @@ function trGate(md,u,c,s){const U=TRUCK_USE[u];if(!U||U.grp!=='mil'||!md||md.pro
 // поправка к привлекательности: субсидия покупателям грузовиков со свидетельством; протокол станции испытаний тракторов
 function trU(md,u,c,s){if(!md||md.probe||md.ref)return 0;const U=TRUCK_USE[u];if(!U)return 0;
   if(U.grp==='farm'){if(c!=='us'||s.y<TR_NEB_Y)return 0;const C=trCertS(md,'us','neb',s);return !C?-0.12:C.sc>=1?Math.min(0.2,0.1+0.4*(C.sc-1)):C.sc<0.8?-0.1:0;}
-  if(u!=='haul'&&u!=='bulk')return 0;const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||trCertS(md,c,'sub',s))return 0;
-  return -0.5*(U.bp||2.5)*Math.log(1/(1-T.sub));}
+  if(u!=='haul'&&u!=='bulk'&&u!=='city')return 0;if(!TR_GRP.truck.kinds.includes(trKind(md)))return 0;const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||trCertS(md,c,'sub',s))return 0;
+  return -(u==='city'?0.3:0.6)*(U.bp||2.5)*Math.log(1/(1-T.sub));}   // по городу субсидийных машин меньше: там берут и лёгкие развозные
 function trSubTxt(md,c,s){const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||!TR_GRP.truck.kinds.includes(trKind(md))||!trSells(s,c))return '';
   return trCertS(md,c,'sub',s)?'':`без свидетельства (${T.n.toLowerCase()}) покупатели в стране «${COUNTRIES[c].name}» не получают доплату казны — ${Math.round(T.sub*100)}% цены`;}
 /* ---------- что показать ---------- */

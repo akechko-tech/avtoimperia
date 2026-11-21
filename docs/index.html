@@ -6903,8 +6903,8 @@ function trGate(md,u,c,s){const U=TRUCK_USE[u];if(!U||U.grp!=='mil'||!md||md.pro
 // поправка к привлекательности: субсидия покупателям грузовиков со свидетельством; протокол станции испытаний тракторов
 function trU(md,u,c,s){if(!md||md.probe||md.ref)return 0;const U=TRUCK_USE[u];if(!U)return 0;
   if(U.grp==='farm'){if(c!=='us'||s.y<TR_NEB_Y)return 0;const C=trCertS(md,'us','neb',s);return !C?-0.12:C.sc>=1?Math.min(0.2,0.1+0.4*(C.sc-1)):C.sc<0.8?-0.1:0;}
-  if(u!=='haul'&&u!=='bulk')return 0;const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||trCertS(md,c,'sub',s))return 0;
-  return -0.5*(U.bp||2.5)*Math.log(1/(1-T.sub));}
+  if(u!=='haul'&&u!=='bulk'&&u!=='city')return 0;if(!TR_GRP.truck.kinds.includes(trKind(md)))return 0;const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||trCertS(md,c,'sub',s))return 0;
+  return -(u==='city'?0.3:0.6)*(U.bp||2.5)*Math.log(1/(1-T.sub));}   // по городу субсидийных машин меньше: там берут и лёгкие развозные
 function trSubTxt(md,c,s){const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||!TR_GRP.truck.kinds.includes(trKind(md))||!trSells(s,c))return '';
   return trCertS(md,c,'sub',s)?'':`без свидетельства (${T.n.toLowerCase()}) покупатели в стране «${COUNTRIES[c].name}» не получают доплату казны — ${Math.round(T.sub*100)}% цены`;}
 /* ---------- что показать ---------- */
@@ -25043,6 +25043,8 @@ function recHist(k,t){const L=k==='lsr'?LSR:k==='h24'?H24:null;if(k==='mlsr'){co
 function recMine(s,k){const R=s.rec&&s.rec[k];return R&&!R.lost?R:null;}
 // кому принадлежит рекорд сейчас
 function recCur(s,k){const h=recHist(k,recT(s)),m=recMine(s,k);return m&&(!h||m.v>=h[1])?{v:m.v,who:m.who,mine:1}:h?{v:h[1],who:h[2]||'по сводке Международной федерации'}:{v:0,who:'—'};}
+// прежние ступени рекорда — строкой календаря
+function recPast(k,t){const L=k==='lsr'?LSR:k==='h24'?H24:null;if(!L)return '';const P=L.filter(x=>x[0]<=t).slice(-4,-1).reverse();return P.length?`<br>Раньше: ${P.map(x=>`${Math.floor(x[0])} — ${fmtN(x[1])} (${esc(x[2])})`).join('; ')}`:'';}
 /* ---------- рекордный образец: проект КБ ---------- */
 function recSolve(P,kd,crr,m){let v=20;for(let i=0;i<40;i++){const f=kd*v*v*v+crr*m*9.81*v-P,df=3*kd*v*v+crr*m*9.81;v=Math.max(3,v-f/df);}return v;}
 // основа — самая быстрая своя автомобильная модель (в серии или в КБ)
@@ -25110,7 +25112,7 @@ function recResolve(s,key){if(key==='rec:open'){try{s.pending.shift();save();ren
 let recDraft=null;
 function recRowHTML(s,k){const C=REC_CLS[k];if(s.y<C.y0)return '';const cur=recCur(s,k),E=recEntry(s,k),why=recCan(s,k),D=recDriver(s),mine=s.rec&&s.rec[k],fee=recFee(s,k),ch=E?recChance(E.v,cur.v,E.rel,D.sk):0;
   return `<div class="race-item"><div class="row"><div><span class="mo">${C.ic} ${C.where(s.y)}</span><h3 style="margin-top:2px">${C.n}</h3></div><span class="pill ${cur.mine?'good':'muted'}">${fmtN(Math.round(cur.v*10)/10)} ${k==='h24'?'км/ч':C.un}</span></div>
-    <p class="small muted" style="margin-top:4px">Держит: ${cur.mine?`<b class="good">вы</b> — ${esc(cur.who)}`:esc(cur.who)}${mine&&mine.lost?` · ваш рекорд ${mine.y} года (${fmtN(mine.v)}) побит`:''}</p>
+    <p class="small muted" style="margin-top:4px">Держит: ${cur.mine?`<b class="good">вы</b> — ${esc(cur.who)}`:esc(cur.who)}${mine&&mine.lost?` · ваш рекорд ${mine.y} года (${fmtN(mine.v)}) побит`:''}${recPast(k,recT(s))}</p>
     ${E?`<p class="small" style="margin-top:4px">Ваша машина: <b>«${esc(E.name)}»</b>${E.special?' (рекордный образец)':''} — расчёт ${fmtN(Math.round(E.v))} ${k==='h24'?'км/ч за сутки':'км/ч'} · шанс ${pct(ch,0)}${E.v<cur.v?' — <span class="warn">медленнее рекорда</span>':''}</p>`:''}
     <div class="btns" style="margin-top:6px"><button class="btn sm ${!why&&ch>=0.25?'primary':''}" data-act="recTry" data-k="${k}" ${why?'disabled':''}>${why?esc(capF(why)):`Попытка · ${money(fee)}`}</button>${k==='lsr'?`<button class="btn sm" data-act="recBuild">Рекордный образец</button>`:''}</div></div>`;}
 function openRecords(){const s=G,cars=(s.recCars||[]).filter(c=>!c.out),pj=rdActive(s).filter(p=>p.kind==='rec');

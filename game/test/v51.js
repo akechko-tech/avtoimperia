@@ -762,7 +762,7 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const c0=G.cash;T.run();CK(G.trials.ent['de-sub|1909'].md===820&&G.cash<c0&&trOpenList(G)[0].ent,'одно нажатие — модель заявлена, взнос '+money(c0-G.cash));
     CK(/Испытания ведомств/.test(trialCardHTML(G))&&/✓/.test(trialCardHTML(G)),'строка «Испытания ведомств» в «Моделях»');
     // без свидетельства покупатели не получают доплату — грузовик продаётся хуже
-    const pen=trU(tr,'haul','de',G);CK(pen<-0.3&&trU(tr,'city','de',G)===0&&trU(tr,'haul','us',G)===0&&/не получают доплату/.test(trSubTxt(tr,'de',G)),'субсидия 1908–1914: без свидетельства дальние перевозки −'+Math.abs(pen).toFixed(2)+' к привлекательности');
+    const pen=trU(tr,'haul','de',G);CK(pen<-0.3&&trU(tr,'city','de',G)<0&&trU(tr,'city','de',G)>pen&&trU(tr,'bus','de',G)===0&&trU(tr,'haul','us',G)===0&&/не получают доплату/.test(trSubTxt(tr,'de',G)),'субсидия 1908–1914: без свидетельства дальние перевозки −'+Math.abs(pen).toFixed(2)+' к привлекательности');
     G.dealers.de=dealerNeed('de',G);G.rep=60;
     // пробег: сильная машина побеждает — заказ и свидетельство
     G.m=8;Math.random=()=>0.6;const sc=trScore(tr,'truck','de',G),scOld=trScore(car('truck',1900,829,'Стар'),'truck','de',G);CK(sc>0.9&&sc<1.1&&scOld<0.9,'мерка против образца года (100): машина своего года — '+Math.round(sc*100)+', машина 1900 года — '+Math.round(scOld*100));
