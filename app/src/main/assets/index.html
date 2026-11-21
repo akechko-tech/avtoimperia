@@ -7334,17 +7334,19 @@ function promoSheet(c){const s=G;if(!s)return;const segs=SEGK.filter(g=>g!=='spo
    Теперь у модели может быть своя линия — места только для неё:
      • модель на своей линии не считается в штрафе общего конвейера и сама его не платит; чего линия не вместила — идёт
        на общий конвейер, и в штрафе считается только эта доля выпуска;
-     • линия дороже обычного расширения (свои станки и оснастка под одну модель): ×1,5 цены места, на заводе с конвейером — ещё +30 %;
+     • линию выделяют из мест общего завода: платят только за свою оснастку и ветку конвейера — четверть цены места
+       (на заводе с движущимся конвейером — ещё +30 %); мест не хватает — недостающие строят: место и оснастка
+       (решение автора 21 ноября: линии удешевить, чтобы они снимали штраф и со «второй большой» модели; было ×1,95 за место);
      • техника завода (станки, электричество, конвейер, литейка, пресс, контроль) действует и на ней; рабочие — общие;
      • купленный завод — своя линия его модели.
    Линии — «не самый интересный аспект игры» (автор), поэтому ведёт их помощник, ВСЕГДА — даже когда «Помощник управляющего»
    в настройках выключен: решает при запуске разработки (по окупаемости), расширяет, сокращает, переналаживает под другую
    модель, продаёт после простоя. Игрок не обязан нажимать ничего; в конструкторе есть одна необязательная кнопка «Иначе».
    Историческая опора переналадки — переход Ford с Model T на Model A в 1927 году: заводы стояли около полугода. */
-const XL_COST=1.5,        // место на своей линии против места общего завода
-  XL_CONV=0.3,            // на заводе с движущимся конвейером — ещё доля цены конвейера
+const XL_SPLIT=0.25,      // оснастка одного места под одну модель — доля цены места общего завода
+  XL_CONV=0.3,            // на заводе с движущимся конвейером оснастка дороже на эту долю (своя ветка конвейера)
   XL_PAY=36,              // помощник строит линию, если окупается быстрее (мес.)
-  XL_RETOOL=0.3,          // переналадка под другую модель — доля цены линии
+  XL_BACK=0.85,           // общий завод загружен сильнее — освободившиеся места линии возвращаются ему, а не продаются
   XL_IDLE=6,              // простой до продажи (мес.)
   XL_SELL=0.4,            // продажа простаивающей линии — доля её цены (как цеха)
   XL_PEN=0.12,            // штраф общего конвейера за каждую модель сверх первой (hoursPerCar)
@@ -7372,7 +7374,8 @@ function xlOvGain(s,md,need,capU0,capU1){if(!(need>0)||techLv(s,'line')!==2)retu
   return (cost(clamp(1-capU0/need,0,1))-cost(clamp(1-capU1/need,0,1)))*hrH;}
 // цена всех линий в стоимости завода (у линии она стареет, как весь завод: −0,5 % в месяц)
 function xlVal(s){return (s.xl||[]).reduce((a,L)=>a+(L.val||0),0);}
-function xlUnitCost(s){return Math.round(capUnitCost(s)*XL_COST*(techLv(s,'line')===2?1+XL_CONV:1));}
+function xlFee(s){return Math.round(capUnitCost(s)*XL_SPLIT*(techLv(s,'line')===2?1+XL_CONV:1));}   // оснастка места: выделить место общего завода или переналадить свободную линию
+function xlUnitCost(s){return capUnitCost(s)+xlFee(s);}   // новое место линии: место и оснастка
 function xlReserve(s){const L=s.last,fixed=L?(L.wage||0)+(L.ovh||0)+(L.dlr||0)+(L.ad||0)+(L.rd||0)+(L.int||0)+(L.team||0)+(L.drv||0):2000*cpi(s);return Math.max(3000*cpi(s),fixed*2);}
 // автомобильные модели на общем конвейере (без модели ex)
 function xlCommon(s,ex){return (s.models||[]).filter(m=>m.status==='prod'&&!isMoto(m)&&!xlFree(s,m)&&(!ex||m.id!==ex.id));}
@@ -7396,8 +7399,8 @@ function xlNeed(s,m){return Math.max(m.fc||0,m.lastMade||0)*placesOf(m,s);}
 function xlMain(s,md,fc){const mine=fc*placesOf(md,s);return !(s.models||[]).some(m=>m.status==='prod'&&!isMoto(m)&&m.id!==md.id&&xlNeed(s,m)>mine);}
 function xlIdle(s,need,md){const t=mi(s),F=(s.xl||[]).filter(L=>L.md==null&&!(L.at>t)&&xlEff(s,L)>=need*0.3&&(L.keep==null||(md&&L.keep===md.id)));if(!F.length)return null;   // L.keep — линия ждёт смену своей модели из КБ
   const big=F.filter(L=>xlEff(s,L)>=need).sort((a,b)=>a.cap-b.cap)[0];return big||F.sort((a,b)=>b.cap-a.cap)[0];}
-function xlDecide(s,md,fc){const mo=isMoto(md),conv=techLv(s,'line')===2,cx=placesOf(md,s),kk=Math.max(0.05,xlK(s)),n=Math.max(2,Math.ceil(Math.max(1,fc)*1.15*cx/kk)),cost=n*xlUnitCost(s);
-  const out={own:false,n,cost,payM:Infinity,save:0,fc,why:'',alt:0};
+function xlDecide(s,md,fc){const mo=isMoto(md),conv=techLv(s,'line')===2,cx=placesOf(md,s),kk=Math.max(0.05,xlK(s)),nW=Math.max(2,Math.ceil(Math.max(1,fc)*1.15*cx/kk)),Q=mo?{n:nW,nC:0,nB:nW,cost:nW*xlUnitCost(s)}:xlCost(s,md,nW,Math.max(2,Math.ceil(Math.max(1,fc)*cx/kk))),n=Q.n,cost=Q.cost;
+  const out={own:false,n,nC:Q.nC,nB:Q.nB,cost,payM:Infinity,save:0,fc,why:'',alt:0};
   if(mo){out.why='moto';return out;}if(globalThis.XLOFF){out.why='nopay';return out;}   // XLOFF — замер «без линий» (ford51.js)
   if(!(fc>=1)){out.why=conv?'nopay':'noconv';return out;}
   const oth=xlCars(s,md),vol=m=>Math.max(m.fc||0,m.lastMade||0),nOth=oth.reduce((a,m)=>a+xlW(s,m),0),main=xlMain(s,md,fc);
@@ -7406,8 +7409,8 @@ function xlDecide(s,md,fc){const mo=isMoto(md),conv=techLv(s,'line')===2,cx=plac
   const used=oth.reduce((a,m)=>a+vol(m)*placesOf(m,s)*xlW(s,m),0)+xlMotoUse(s),free=Math.max(0,capEff(s)-used),short=Math.max(0,fc*cx-free),alt=Math.ceil(short/kk)*capUnitCost(s);out.alt=alt;
   const I=xlIdle(s,fc*cx,md);
   if(I){const nI=Math.min(I.cap,n),sv=main?0:xlOvGain(s,md,fc,0,nI*kk/cx),capV=Math.min(alt,nI*capUnitCost(s));   // линия мала — снимет штраф частично, зато не надо строить цех
-    const c=Math.round(I.val*nI/I.cap*XL_RETOOL),net=sv+capV/XL_PAY;   // переналаживают столько мест, сколько модели нужно; остальные ждут другую или продаются
-    if(net>0&&c/net<=xlLimit(s,md,1)&&s.cash-c>=xlReserve(s)){out.own=true;out.reuse=I.id;out.n=nI;out.cost=c;out.payM=c/net;return out;}}
+    const c=nI*xlFee(s),net=sv+capV/XL_PAY;   // переналаживают столько мест, сколько модели нужно; остальные ждут другую или продаются
+    if(net>0&&c/net<=xlLimit(s,md,1)&&s.cash-c>=xlReserve(s)){out.own=true;out.reuse=I.id;out.n=nI;out.nC=0;out.nB=0;out.cost=c;out.payM=c/net;return out;}}
   if(!conv){out.why='noconv';return out;}
   if(!(nOth>0.02)){out.why='alone';return out;}
   if(main){out.why='main';return out;}
@@ -7416,23 +7419,40 @@ function xlDecide(s,md,fc){const mo=isMoto(md),conv=techLv(s,'line')===2,cx=plac
     if(P){out.why=(s.xl||[]).some(L=>L.md===P.id)?'heir':'succ';out.heir=P.name;return out;}}
   const extra=Math.max(0,cost-alt),net=out.save-extra*0.009;
   if(net<=0){out.why='nopay';return out;}out.payM=extra/net;
-  if(out.payM>xlLimit(s,md,md.status==='prod'?capMonths(s,n):0)){out.why='slow';return out;}
+  if(out.payM>xlLimit(s,md,md.status==='prod'?(Q.nC>=Q.nB?1:capMonths(s,Q.nB)):0)){out.why='slow';return out;}
   if(s.cash-cost<xlReserve(s)){out.why='cash';return out;}
   out.own=true;return out;}
 function xlMotoUse(s){return (s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)).reduce((a,m)=>a+Math.max(m.fc||0,m.lastMade||0)*placesOf(m,s),0);}
+// сколько мест общего завода можно выделить модели: её собственные (если она уже на конвейере) и свободные.
+// Остальным моделям остаётся их нынешний выпуск с запасом 5 %; под модель из КБ берут только свободные места сверх запаса в 15 % завода.
+function xlCarveMax(s,md){const kk=Math.max(0.05,xlK(s)),vol=m=>Math.max(m.fc||0,m.lastMade||0),oth=xlCars(s,md).reduce((a,m)=>a+vol(m)*placesOf(m,s)*xlW(s,m),0)+xlMotoUse(s);
+  return Math.max(0,Math.floor(s.cap*(md&&md.status==='prod'?1:0.85)-oth*1.05/kk)-3);}
+function xlCommonLoad(s){const vol=m=>Math.max(m.fc||0,m.lastMade||0);return (xlCars(s).reduce((a,m)=>a+vol(m)*placesOf(m,s)*xlW(s,m),0)+xlMotoUse(s))/Math.max(1,capEff(s));}
+// цена n мест линии: сколько выделяется из общего завода (оснастка), сколько строится (место и оснастка)
+// n0 — места под сам выпуск без запаса: если их можно выделить целиком, запас не достраивают (не хватит — линию расширят потом)
+function xlCost(s,md,n,n0){let nC=Math.min(n,xlCarveMax(s,md));if(n0&&nC>=n0)n=nC;const nB=n-nC;return {n,nC,nB,cost:nC*xlFee(s)+nB*xlUnitCost(s)};}
+// места линии освободились: общему заводу, если он загружен (иначе цех пришлось бы достраивать), — иначе продать за 40 % цены
+function xlRelease(s,L,n){n=Math.min(n,L.cap);const vv=L.val*n/Math.max(1,L.cap);L.val-=vv;L.cap-=n;if(xlCommonLoad(s)>XL_BACK){s.cap+=n;return {back:n};}
+  const v=Math.round(vv*XL_SELL);s.cash+=v;s.plantVal=Math.max(0,s.plantVal-vv);return {sold:v};}
 function xlPayTxt(m){return m<=1?'за месяц':m<12?`за ${Math.round(m)} мес.`:`за ${(m/12).toFixed(1).replace('.',',').replace(',0','')} ${m<18?'год':m<54?'года':'лет'}`;}
-function xlWhyTxt(D){return D.own?`${D.reuse?'Свободная линия — переналадка':'Своя линия'} · ${money(D.cost)} · окупится ${xlPayTxt(D.payM)}`:'На общий конвейер: '+({moto:'мотоциклы собирают в общих цехах',noconv:'движущегося конвейера ещё нет — модели друг другу не мешают',alone:'других автомобилей на конвейере нет',main:'главная модель завода остаётся на нём — линии строят остальным',old:'модель в серии больше пяти лет — линию под неё не строят',heir:`линию унаследует от «${D.heir||''}», когда ту снимут`,succ:`она сменяет «${D.heir||''}» — место ей на общем конвейере`,nopay:'своя линия не окупится',slow:`своя линия окупится только ${xlPayTxt(D.payM)}`,cash:`на свою линию (${money(D.cost)}) не хватает кассы`}[D.why]||'своя линия не окупится');}
+function xlWhyTxt(D){return D.own?`${D.reuse?'Свободная линия — переналадка':D.nC>0&&!D.nB?'Своя линия из мест завода':'Своя линия'} · ${money(D.cost)} · окупится ${xlPayTxt(D.payM)}`:'На общий конвейер: '+({moto:'мотоциклы собирают в общих цехах',noconv:'движущегося конвейера ещё нет — модели друг другу не мешают',alone:'других автомобилей на конвейере нет',main:'главная модель завода остаётся на нём — линии строят остальным',old:'модель в серии больше пяти лет — линию под неё не строят',heir:`линию унаследует от «${D.heir||''}», когда ту снимут`,succ:`она сменяет «${D.heir||''}» — место ей на общем конвейере`,nopay:'своя линия не окупится',slow:`своя линия окупится только ${xlPayTxt(D.payM)}`,cash:`на свою линию (${money(D.cost)}) не хватает кассы`}[D.why]||'своя линия не окупится');}
 // заказ линии: строится за полгода-год (как цех); цена — в стоимость завода
-function xlBuild(s,md,n){n=Math.max(2,Math.round(n));const c=n*xlUnitCost(s);if(s.cash<c)return null;s.cash-=c;s.plantVal+=c;s.xl=s.xl||[];s.xlId=(s.xlId||0)+1;
-  const L={id:s.xlId,md:md.id,cap:n,val:c,at:mi(s)+Math.max(1,Math.min(capMonths(s,n),md.status==='dev'?Math.max(1,md.devLeft||1):99)),idle:0,src:'own'};s.xl.push(L);return L;}
+function xlBuild(s,md,n,nC){n=Math.max(2,Math.round(n));nC=clamp(Math.round(nC||0),0,Math.min(n,Math.max(0,s.cap-3)));const nB=n-nC,fee=nC*xlFee(s),cB=nB*xlUnitCost(s),c=fee+cB;if(s.cash<c)return null;
+  const vC=nC>0?Math.max(0,(s.plantVal||0)-xlVal(s))*nC/Math.max(1,s.cap):0,t=mi(s),dev=md.status==='dev'?Math.max(1,md.devLeft||1):99;   // выделенные места уносят свою долю стоимости общего завода
+  s.cash-=c;s.plantVal+=c;s.cap-=nC;s.xl=s.xl||[];s.xlId=(s.xlId||0)+1;
+  const L={id:s.xlId,md:md.id,cap:nC>0?nC:n,val:nC>0?vC+fee:c,at:t+(nC>0?(md.status==='dev'?dev:1):Math.max(1,Math.min(capMonths(s,n),dev))),idle:0,src:'own'};
+  if(nC>0&&nB>0){L.grow={n:nB,at:t+Math.max(1,Math.min(capMonths(s,nB),dev))};L.val+=cB;}   // недостающие места достраиваются
+  if(nC>0&&md.status==='prod')md.ramp=Math.max(md.ramp||0,1);   // месяц освоения
+  s.xl.push(L);return L;}
 // решение помощника — в дело: стройка или переналадка свободной линии (месяц освоения, если модель уже в серии)
-function xlTake(s,md,D){if(!D.reuse)return xlBuild(s,md,D.n);let L=(s.xl||[]).find(x=>x.id===D.reuse);if(!L||L.md!=null||s.cash<D.cost)return null;
+function xlTake(s,md,D){if(!D.reuse)return xlBuild(s,md,D.n,D.nC);let L=(s.xl||[]).find(x=>x.id===D.reuse);if(!L||L.md!=null||s.cash<D.cost)return null;
   if(D.n<L.cap*0.8){const v=Math.round(L.val*D.n/L.cap);s.xlId=(s.xlId||0)+1;const N={id:s.xlId,md:null,cap:D.n,val:v,at:0,idle:0,src:L.src,h:L.h};L.cap-=D.n;L.val-=v;s.xl.push(N);L=N;}   // большая линия — берём часть
   s.cash-=D.cost;L.md=md.id;L.keep=null;L.idle=0;L.low=0;L.short=0;if(md.status==='prod')md.ramp=Math.max(md.ramp||0,1);return L;}
 // запуск разработки без конструктора (боты, проверки) — то же решение помощника
 function xlAtStart(s,m){let fc=0;try{fc=forecastDemand({...m,status:'prod'},s);}catch(_){}const D=xlDecide(s,m,fc);if(D.own)D.L=xlTake(s,m,D);return D;}
 // расширение линии (помощник или кнопка совета)
-function xlGrow(s,L,add,c){if(!L||L.grow||s.cash<c)return false;s.cash-=c;s.plantVal+=c;L.val+=c;L.grow={n:add,at:mi(s)+capMonths(s,add)};L.short=0;L.want=null;return true;}
+function xlGrow(s,L,add,c,aC){if(!L||L.grow||s.cash<c)return false;aC=clamp(Math.round(aC||0),0,Math.min(add,Math.max(0,s.cap-3)));const vC=aC>0?Math.max(0,(s.plantVal||0)-xlVal(s))*aC/Math.max(1,s.cap):0;
+  s.cash-=c;s.plantVal+=c;s.cap-=aC;L.val+=c+vC;L.grow={n:add,at:mi(s)+(add>aC?capMonths(s,add-aC):1)};L.short=0;L.want=null;return true;}
 // модель на линию без стройки (купленный завод)
 function xlAdopt(s,cap,mdId,h){s.xl=s.xl||[];s.xlId=(s.xlId||0)+1;const L={id:s.xlId,md:mdId==null?null:mdId,cap:Math.max(1,Math.round(cap)),val:Math.round(cap*capUnitCost(s)*0.5),at:0,idle:0,src:'hold',h:h||''};s.xl.push(L);return L;}
 /* Старые сохранения: места купленных заводов сливались в общий s.cap — выделяем их в свои линии (решение автора 21 ноября).
@@ -7450,9 +7470,9 @@ function linesMonth(s,r){if(!s||s.mode==='racer')return;xlMigrate(s);const X=s.x
       // выпуска, что шла с общего конвейера, а если и общий завод полон — продаются машины, которых не хватало.
       // Всплеск спроса помощник пережидает: линию под пик не строят.
       if(md.status==='prod'&&!(L.at>t)&&!L.grow){const cx=placesOf(md,s),capU=xlEff(s,L)/cx,need=(md.fc||0)*1.05;L.short=need>capU*1.05?(L.short||0)+1:0;L.want=null;
-        if(L.short>=XL_SHORT&&!xlMain(s,md,need)){const add=Math.max(2,Math.ceil((need*1.2-capU)*cx/Math.max(0.05,xlK(s)))),c=add*xlUnitCost(s),addU=add*xlK(s)/cx,kC=(s.last&&s.last.bneck&&s.last.bneck.cap)||1;
+        if(L.short>=XL_SHORT&&!xlMain(s,md,need)){const add=Math.max(2,Math.ceil((need*1.2-capU)*cx/Math.max(0.05,xlK(s)))),QG=xlCost(s,md,add),c=QG.cost,addU=add*xlK(s)/cx,kC=(s.last&&s.last.bneck&&s.last.bneck.cap)||1;
           const gain=xlOvGain(s,md,need,capU,capU+addU)+Math.min(need-capU,addU)*(1-kC)*Math.max(0,md.price*(1-dMargin(s))-unitCost(md,s))-c*0.009;
-          if(gain>0&&c/gain<=Math.min(XL_PAY_GROW,xlLimit(s,md,capMonths(s,add)))){const u=Math.max(1,Math.round(addU));if(cashOk(c)){xlGrow(s,L,add,c);msg.push(`линия ${name(md)}: +${fmtN(u)} машин в месяц, ${money(c)}, окупится ${xlPayTxt(c/gain)}`);}else L.want={add,c,u,pay:c/gain};}}}
+          if(gain>0&&c/gain<=Math.min(XL_PAY_GROW,xlLimit(s,md,QG.nB>0?capMonths(s,QG.nB):1))){const u=Math.max(1,Math.round(addU));if(cashOk(c)){xlGrow(s,L,add,c,QG.nC);msg.push(`линия ${name(md)}: +${fmtN(u)} машин в месяц, ${money(c)}, окупится ${xlPayTxt(c/gain)}`);}else L.want={add,c,u,aC:QG.nC,pay:c/gain};}}}
       if(L.grow&&t>=L.grow.at){L.cap+=L.grow.n;L.grow=null;}
       return;}
     if(L.at>t)return;L.idle=(L.idle||0)+1;L.grow=null;L.want=null;L.ov=0;   // модель снята — линия свободна
@@ -7466,10 +7486,10 @@ function linesMonth(s,r){if(!s||s.mode==='racer')return;xlMigrate(s);const X=s.x
   // простой: продать через полгода — если в КБ нет автомобиля, которому линия может пригодиться
   const devCar=(s.models||[]).some(m=>m.status==='dev'&&!isMoto(m)&&!X.some(L=>L.md===m.id));
   for(let i=X.length-1;i>=0;i--){const L=X[i];if(L.md!=null||L.at>t)continue;if(devCar)L.idle=Math.min(L.idle,XL_IDLE-1);
-    if(L.idle>=XL_IDLE){const v=Math.round(L.val*XL_SELL);s.cash+=v;s.plantVal=Math.max(0,s.plantVal-L.val);X.splice(i,1);msg.push(`простаивающую линию${L.src==='hold'&&L.h?` (завод «${L.h}»)`:''} продал за ${money(v)}`);}}
+    if(L.idle>=XL_IDLE){const nn=L.cap,R=xlRelease(s,L,nn);X.splice(i,1);msg.push(R.back?`простаивающую линию${L.src==='hold'&&L.h?` (завод «${L.h}»)`:''} вернул общему заводу: ${fmtN(nn)} мест`:`простаивающую линию${L.src==='hold'&&L.h?` (завод «${L.h}»)`:''} продал за ${money(R.sold)}`);}}
   // модель с общего конвейера — на свою линию, когда это окупается (раз в квартал, не больше одной стройки сразу)
   if(s.m%3===1&&techLv(s,'line')===2&&!X.some(L=>L.at>t)){const C=xlCommon(s);if(C.length>1){const best=C.filter(m=>!m.xlNo&&t-(m.launched||0)>=6&&!X.some(L=>L.md===m.id)).map(m=>({m,D:xlDecide(s,m,Math.max(m.fc||0,m.lastMade||0))})).filter(o=>o.D.own&&!o.D.reuse).sort((a,b)=>a.D.payM-b.D.payM)[0];
-      if(best){const L=xlBuild(s,best.m,best.D.n);if(L)msg.push(`${name(best.m)} — на свою линию: ${money(best.D.cost)}, окупится ${xlPayTxt(best.D.payM)}`);}}}
+      if(best){const L=xlBuild(s,best.m,best.D.n,best.D.nC);if(L)msg.push(`${name(best.m)} — на свою линию${best.D.nC>0?` (${best.D.nB>0?'часть мест':'места'} — из общего завода)`:''}: ${money(best.D.cost)}, окупится ${xlPayTxt(best.D.payM)}`);}}}
   // линия год загружена меньше чем на 40 %: если штраф общего конвейера меньше её содержания — модель обратно на конвейер;
   // иначе лишние места продаются (как цеха — за 40 % цены), остаётся запас в 30 %
   X.forEach(L=>{const md=L.md!=null?prod(L.md):null;if(!md||md.status!=='prod'||L.at>t||L.grow)return;const fc=Math.max(md.fc||0,md.lastMade||0),needP=fc*placesOf(md,s),use=needP/Math.max(1,xlEff(s,L));L.low=use<XL_LOW?(L.low||0)+1:0;
@@ -7477,7 +7497,7 @@ function linesMonth(s,r){if(!s||s.mode==='racer')return;xlMigrate(s);const X=s.x
     const keep=Math.min(L.cap,Math.max(2,Math.ceil(needP*1.3/Math.max(0.05,xlK(s))))),cut=L.cap-keep;
     if(L.src!=='hold'&&xlDecide(s,md,fc).save<L.val*keep/L.cap*0.009){L.md=null;L.idle=XL_IDLE-1;L.ov=0;msg.push(`${name(md)} вернул на общий конвейер: линия загружена меньше чем на ${Math.round(XL_LOW*100)}%, а штраф конвейера меньше её содержания`);return;}
     if(cut<Math.max(2,L.cap*0.2))return;
-    const vv=L.val*cut/L.cap,v=Math.round(vv*XL_SELL);s.cash+=v;s.plantVal=Math.max(0,s.plantVal-vv);L.val-=vv;L.cap=keep;msg.push(`линия ${name(md)} велика: лишние места продал за ${money(v)}`);});
+    const R=xlRelease(s,L,cut);msg.push(R.back?`линия ${name(md)} велика: ${fmtN(cut)} мест вернул общему заводу`:`линия ${name(md)} велика: лишние места продал за ${money(R.sold)}`);});
   if(msg.length){addLog('Линии завода: '+msg.join('; ')+'.','hist');}}
 /* ---------- что показать игроку ---------- */
 function xlLoad(s,L){const md=L.md!=null?(s.models||[]).find(m=>m.id===L.md):null;if(!md||md.status!=='prod')return 0;return clamp((md.lastMade||0)*placesOf(md,s)/Math.max(1,xlEff(s,L)),0,1);}
@@ -7486,7 +7506,7 @@ function xlModelLine(s,md){const L=(s.xl||[]).find(x=>x.md===md.id);if(!L)return
   return `<p class="small muted" style="margin-top:4px">🏭 ${L.src==='hold'?`Завод «${esc(L.h||'купленной марки')}»`:'Своя линия'}: ${L.at>t?`строится, готова через ${L.at-t} мес.`:`${fmtN(Math.round(xlEff(s,L)/Math.max(0.01,placesOf(md,s))))} машин в месяц, загрузка ${pct(xlLoad(s,L),0)}`} · ${L.ov>0.05&&!(L.at>t)?`линия мала: ${pct(L.ov,0)} машин идёт с общего конвейера`+(L.grow?', расширяется':''):'штрафа общего конвейера нет'}. Линию ведёт помощник.</p>`;}
 // строка «Свои линии» в «Заводе»
 function xlPlantHTML(s){const X=s.xl||[];if(!X.length)return '';const t=mi(s);
-  return `<div class="tech-row"><div class="row"><div><h3>Свои линии под модели</h3><p class="small muted">Места только для одной модели: она не мешает общему конвейеру и сама не платит его штраф. Строит, расширяет, переналаживает и продаёт линии помощник.</p></div><span class="pill muted">${X.length}</span></div>
+  return `<div class="tech-row"><div class="row"><div><h3>Свои линии под модели</h3><p class="small muted">Места только для одной модели: она не мешает общему конвейеру и сама не платит его штраф. Линию выделяют из мест завода (платят за оснастку), недостающие места строят. Ведёт линии помощник.</p></div><span class="pill muted">${X.length}</span></div>
     ${X.map(L=>{const md=L.md!=null?s.models.find(m=>m.id===L.md):null;return `<p class="small" style="margin-top:4px">${L.src==='hold'?'🏬':'🏭'} <b>${md?esc(md.name):'простаивает'}</b>${L.src==='hold'?` · завод «${esc(L.h||'')}»`:''} · ${md?`до ${fmtN(Math.round(xlEff(s,L)/Math.max(0.01,placesOf(md,s))))} машин в месяц`:`${fmtN(L.cap)} мест`} · ${L.at>t?`строится, ${L.at-t} мес.`:md&&md.status==='prod'?`загрузка ${pct(xlLoad(s,L),0)}`:md?'ждёт модель из КБ':`простой ${L.idle||0} мес. из ${XL_IDLE}`}${L.grow?` · расширяется (+${fmtN(L.grow.n)})`:''}</p>`;}).join('')}</div>`;}
 // конструктор: одна строка с решением помощника и необязательная кнопка «Иначе»
 function xlDraftDecide(s,d){const md=designMd(s,d);let fc=0;try{fc=forecastDemand({...md,price:md.price||Math.round(refPrice(md,s)/10)*10},s);}catch(_){}const D=xlDecide(s,{...md,status:'dev'},fc);D.auto=D.own;   // линия строится, пока модель в КБ
@@ -8651,7 +8671,7 @@ function adviceList(s){
   if(pj)add(DIF().simple?72:60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.${DIF().simple?' Или выберите деталь сами: «Модели» → «Конструкторское бюро» → «+ Проект».':''}`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
   // 0.51, этап 4б: линии ведёт помощник сам; совет — только когда расширение окупается, а резерв кассы не даёт его начать
   (s.xl||[]).forEach(X=>{if(!X.want||X.grow)return;const m=s.models.find(q=>q.id===X.md);if(!m||s.cash<X.want.c)return;
-    add(62,'🏭',`Линии «${m.name}» не хватает мест. Расширение (+${fmtN(X.want.u||X.want.add)} машин в месяц) окупится ${xlPayTxt(X.want.pay)}, но касса после него уйдёт ниже резерва — помощник ждёт.`,`Расширить · ${money(X.want.c)}`,()=>{if(xlGrow(s,X,X.want.add,X.want.c)){save();render();}},'plant');});
+    add(62,'🏭',`Линии «${m.name}» не хватает мест. Расширение (+${fmtN(X.want.u||X.want.add)} машин в месяц) окупится ${xlPayTxt(X.want.pay)}, но касса после него уйдёт ниже резерва — помощник ждёт.`,`Расширить · ${money(X.want.c)}`,()=>{if(xlGrow(s,X,X.want.add,X.want.c,X.want.aC)){save();render();}},'plant');});
   // мощности и склад
   if(L&&act.length){const util=capUtil(s),lost=act.reduce((a,m)=>a+(m.lostS||0)*(isMoto(m)?0.15:1),0),busy=(s.capBuild||[]).length;
     if(util>0.93&&lost>Math.max(1,L.sold*0.06)&&!busy){const n=Math.max(2,Math.round(s.cap*0.25)),c=n*capUnitCost(s);if(s.cash>c*1.2)add(75,'🏭',`Завод работает на пределе, а покупателям не хватило ${fmtD(lost)} машин. Постройте цех.`,`+25% · ${money(c)}`,()=>ACT.capAdd({n}),'plant');}
