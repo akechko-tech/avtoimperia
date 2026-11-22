@@ -27,11 +27,11 @@ with sync_playwright() as p:
         pg.click(f'[data-act=ngDir][data-v={dir}]');pg.wait_for_timeout(150);pg.click(f'[data-act=country][data-v={c}]');pg.wait_for_timeout(250)
         return pg.eval_on_selector_all('#sheetBody [data-act=pion],#sheetBody [data-act=rpick]','e=>e.map(x=>x.dataset.v)')
     exp={('car','us'):['ford','olds','durant','l_chevrolet','rickenbacker','custom','custom'],('car','de'):['benz','maybach','custom','custom'],('car','it'):['agnelli','lancia','a_maserati','ferrari','custom','custom'],
-         ('car','ru'):['frese','ryabush','custom','custom'],('moto','fr'):['dedion','custom'],('moto','us'):['custom'],('air','de'):['fokker','junkers','custom'],('air','ru'):['sikorsky','custom']}
+         ('car','ru'):['frese','ryabush','custom','custom'],('moto','fr'):['dedion','custom'],('moto','us'):['custom'],('air','de'):['fokker','junkers','custom'],('air','ru'):['sikorsky','gakkel','grigorovich','custom']}   # 0.51, этап 9: с 0.37–0.40 в России три авиатора
     for (dir,c),want in exp.items():
         h=heroes(dir,c);ok(h==want,'%s · %s: %s'%(dir,c,', '.join(h)))
     tags=pg.eval_on_selector_all('#sheetBody .pion .ng-tag','e=>e.map(x=>x.textContent)')
-    ok(tags==['Авиатор','Авиатор'],'ярлыки героев: '+', '.join(tags))
+    ok(len(tags)>=2 and all(t=='Авиатор' for t in tags),'ярлыки героев: '+', '.join(tags))
     heroes('car','it');tags=pg.eval_on_selector_all('#sheetBody .pion .ng-tag','e=>e.map(x=>x.textContent)')
     ok(tags==['Фабрикант','Гонщик','Гонщик','Гонщик','Фабрикант','Гонщик'],'Италия, автомобили: '+', '.join(tags)+' (Феррари — гонщик)')
     pg.click('[data-act=rpick][data-v=lancia]');pg.wait_for_timeout(250)

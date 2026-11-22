@@ -111,7 +111,7 @@ function openRecBuild(){const s=G;recDraft=recDraft||{eng:'one',body:'std',name:
     <button class="btn primary block" style="margin-top:10px" data-act="recStart" ${P.why?'disabled':''}>${P.why?esc(P.why):`Начать · ${money(P.cost)}`}</button>`);}
 // карточка во вкладке «Гонки» и совет помощника
 function recCardHTML(s){if(!s||s.mode==='racer'||s.y<1898)return '';const L=Object.keys(REC_CLS).filter(k=>s.y>=REC_CLS[k].y0).map(k=>{const c=recCur(s,k);return `${REC_CLS[k].ic} ${fmtN(Math.round(c.v))}${c.mine?' — <b class="good">ваш</b>':''}`;});
-  return `<section class="card"><div class="row"><div><h2>Мировые рекорды</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="recOpen">Открыть</button></div></section>`;}
+  return `<section class="card" id="sec-recs"><div class="row"><div><h2>Мировые рекорды</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="recOpen">Открыть</button></div></section>`;}
 function recAdvice(s,add){if(s.mode==='racer'||isWar(s.y,s.m,s.country))return;const D=recDriver(s);
   for(const k in REC_CLS){if(recCan(s,k))continue;const E=recEntry(s,k),cur=recCur(s,k);if(cur.mine||!E)continue;const ch=recChance(E.v,cur.v,E.rel,D.sk);if(ch<0.4)continue;
     add(38,REC_CLS[k].ic,`«${E.name}» может взять мировой рекорд: ${REC_CLS[k].n.toLowerCase()} — расчёт ${fmtN(Math.round(E.v))} против ${fmtN(Math.round(cur.v))} ${k==='h24'?'км/ч':REC_CLS[k].un}, шанс ${pct(ch,0)}.`,`Попытка · ${money(recFee(s,k))}`,()=>{recTryNow(s,k);},'race');return;}}

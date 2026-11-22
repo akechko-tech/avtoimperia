@@ -12,18 +12,20 @@ const ACT={
   raceTo:d=>{const s=G,rc=raceByKey(d.k);tab='race';render();window.scrollTo(0,0);if(!rc)return;
     const T=(rc.y-1895)*12+rc.m,t=mi(s),open=rc.match?(t>=T-1&&t<=T):raceOpen(rc,s);
     if(open&&!s.pending.length&&!s.raceDone[rc.key]&&raceCarsFor(s,rc).length){openRaceSetup(rc.key);return;}
-    const e=document.getElementById('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
+    const e=subGo('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
     if(!open)toast(`«${rc.name}»: запись откроется за месяц до старта`);},
-  tab:d=>{tab=d.t;render();const e=d.sec&&document.getElementById(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
+  sub:d=>{subSet(G,d.t,d.k);save();render();window.scrollTo(0,0);},mk9:d=>{mk9Set(G,d.c,d.s);save();render();window.scrollTo(0,0);},logMore:()=>{G.ui=G.ui||{};G.ui.logN=((G.ui.logN)||15)+200;rerender();},   // 0.51, этап 9
+  tab:d=>{tab=d.t;render();const e=d.sec&&subGo(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
   // 0.39: подсказка «нужно …» ведёт к делу: вкладка → раскрыть карточку → прокрутить к строке и подсветить
-  go:d=>{if(d.t)tab=d.t;if(d.open)setOpen(d.open,true);if(d.open2)setOpen(d.open2,true);render();const e=d.id&&document.getElementById(d.id);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');setTimeout(()=>e.classList.remove('hl'),2600);}else window.scrollTo(0,0);},
+  go:d=>{if(d.t)tab=d.t;if(d.open)setOpen(d.open,true);if(d.open2)setOpen(d.open2,true);render();const e=d.id&&subGo(d.id);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');setTimeout(()=>e.classList.remove('hl'),2600);}else window.scrollTo(0,0);},
   next:()=>doStep(),
   quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
   // завод
   capAdd:d=>{if(capOrder(G,+d.n))rerender();},
   // 0.36: совет может вести к разделу: run() возвращает id раздела — открываем вкладку и прокручиваем к нему («Путь к автомобилю → Подробнее»)
-  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=document.getElementById(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
+  tipHide:d=>{const t=TIPS[+d.k];if(t){tipHideKey(G,tipKey(t),12);toast('Совет скрыт на год');rerender();}},   // 0.51, этап 9
+  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=subGo(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
   // 0.36: дилеры — быстрый переход между странами
   dlrC:d=>{G.ui=G.ui||{};G.ui.dlrC=d.c;setOpen('net_'+d.c,true);rerender();},
   helperToggle:()=>{if(!G)return;G.helper=G.helper||{};G.helper.on=!G.helper.on;toast(G.helper.on?'Помощник управляющего включён':'Помощник выключен');save();openSettings();render();},

@@ -1006,17 +1006,19 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const off=N('Сделка',{title:'«Бриско» ищет покупателя',deck:'просят $90 000',choices:[['Переговоры','ma:talk:zz'],['Позже','ok']]});
     OFFERS_INBOX=false;pushEvent(off,true);CK(s.pending.length===1&&!(s.offers||[]).length,'в прогонах (ящик выключен) предложение идёт окном, как раньше');s.pending=[];
     OFFERS_INBOX=true;pushEvent(off,true);CK(s.pending.length===0&&s.offers.length===1&&s.offers[0].title==='«Бриско» ищет покупателя','ящик включён: предложение не окно, а запись в «Делах»');
-    const T=[];offerAdvice(s,(p,ic,t,b,run)=>T.push({p,t,b,run}));CK(T.length===1&&T[0].b==='Открыть'&&/Бриско/.test(T[0].t)&&/до конца месяца/.test(T[0].t)&&T[0].p>=95,'в советах — строка с кнопкой «Открыть», в самом верху');
+    const T=[];offerAdvice(s,(p,ic,t,b,run)=>T.push({p,t,b,run}));CK(T.length===1&&T[0].b==='Открыть'&&/Бриско/.test(T[0].t)&&/спросят перед новым месяцем/.test(T[0].t)&&T[0].p>=95,'в советах — строка с кнопкой «Открыть», в самом верху');
     T[0].run();CK(s.pending.length===1&&s.pending[0].title==='«Бриско» ищет покупателя'&&s.pending[0].choices.length===2&&!s.offers.length,'«Открыть» — то же окно с теми же ответами');s.pending=[];
-    pushEvent(off,true);const lg=G.log.length;offersExpire(s);CK(!s.offers.length&&!s.pending.length&&G.log.length>lg&&G.log.some(l=>/осталось без ответа/.test(JSON.stringify(l))),'месяц прошёл без ответа — это отказ, запись в журнале');
+    pushEvent(off,true);const c9=s.cash,r9=s.rep;offersExpire(s);CK(!s.offers.length&&s.pending.length===1&&s.pending[0].title==='«Бриско» ищет покупателя'&&s.pending[0].last===1&&/ответ нужен сейчас/.test(s.pending[0].deck)&&s.pending[0].choices.length===2&&s.cash===c9&&s.rep===r9,'месяц кончился без ответа — молчаливого отказа нет: то же окно спрашивает перед новым месяцем');s.pending=[];
     s.mode='racer';CK(!offersOn(),'у гонщика ящика нет');s.mode=undefined;OFFERS_INBOX=false;
     // выставки
     CK(showPol(s)==='ask','в прогонах и у ботов — как раньше: спрашивают о каждой');OFFERS_INBOX=true;CK(showPol(s)==='home','в игре без помощника: спрашивают о выставках своей страны');s.helper={on:1};CK(showPol(s)==='auto','с помощником: выставки ведёт он');s.helper=null;s.showPol='ask';CK(showPol(s)==='ask','выбор игрока запоминается');OFFERS_INBOX=false;
     const shH=SHOWS.find(q=>SHOW_HOST[q.h].c===s.country&&q.y>=1905),shF=SHOWS.find(q=>SHOW_HOST[q.h].c!==s.country&&q.y>=1905);s.shows={};
     s.showPol='ask';CK(showAutoInvite(s,shH)===false&&showAutoInvite(s,shF)===false,'«спрашивать о каждой» — управляющий не вмешивается');
     s.showPol='home';CK(showAutoInvite(s,shH)===false,'«о своих»: своя выставка — к игроку');
-    s.shows[shF.id]={inv:1,md:s.models[0].id};const c0=s.cash;CK(showAutoInvite(s,shF)===true&&s.shows[shF.id].skip===1&&s.cash===c0,'«о своих»: на чужую не едем и денег без спроса не тратим');
-    s.showPol='auto';s.cash=5e6;s.shows[shH.id]={inv:1,md:s.models[0].id};const c1=s.cash,t1=showAutoTier(s,shH);CK(t1>=1&&showAutoInvite(s,shH)===true&&s.shows[shH.id].tier===t1&&c1-s.cash===s.shows[shH.id].cost&&s.shows[shH.id].cost<=c1*0.03+1,'управляющий берёт стенд по средствам: '+SHOW_TIER[t1].n+' за '+s.shows[shH.id].cost+' (не больше 3 % кассы)');
+    s.shows[shF.id]={inv:1,md:s.models[0].id};const c0=s.cash;{const dl=s.dealers;s.dealers={[s.country]:10};CK(showAutoInvite(s,shF)===true&&s.shows[shF.id].skip===1&&s.cash===c0,'«там, где продаёте»: в стране без ваших дилеров — не едем и денег без спроса не тратим');
+      s.shows[shF.id]={inv:1,md:s.models[0].id};s.dealers={[s.country]:10,[SHOW_HOST[shF.h].c]:3};CK(showAutoInvite(s,shF)===false,'в стране, где есть ваши дилеры, — спрашивают');s.dealers=dl;}
+    s.showPol='auto';s.cash=5e6;s.shows[shH.id]={inv:1,md:s.models[0].id};const c1=s.cash,t1=showAutoTier(s,shH);CK(t1>=1&&showAutoInvite(s,shH)===true&&s.shows[shH.id].tier===t1&&c1-s.cash===s.shows[shH.id].cost&&s.shows[shH.id].cost<=c1/8,'управляющий берёт стенд по средствам: '+SHOW_TIER[t1].n+' за '+s.shows[shH.id].cost);
+    {const k1=standCost(shH,s,1),k2=standCost(shH,s,2);s.cash=k1*8+1;CK(showAutoTier(s,shH)===1,'касса в восемь малых стендов — малый стенд (раньше ехали, только если стенд дешевле 2 % кассы)');s.cash=k1*8-1;CK(showAutoTier(s,shH)===0,'чуть меньше — не едем');s.cash=k2*12+1;CK(showAutoTier(s,shH)>=2,'касса в двенадцать больших стендов — большой');}
     s.cash=50;CK(showAutoTier(s,shH)===0,'денег нет — не едем');s.cash=5e6;s.showPol='none';s.shows['zz']=1;const shN=SHOWS.find(q=>q!==shH&&SHOW_HOST[q.h].c===s.country&&q.y>=1905)||shH;s.shows[shN.id]={inv:1,md:s.models[0].id};const c2=s.cash;showAutoInvite(s,shN);CK(s.cash===c2&&s.shows[shN.id].skip===1,'«не ездить» — не едем и не спрашиваем');
     CK(/id="showpol"/.test(showPolCard(s))&&/data-act="showPol" data-v="auto"/.test(showPolCard(s)),'в «Империи» — карточка «Выставки» с выбором, кто решает');
     s.showPol='ask';s.showNow=shH.id;s.shows[shH.id]={inv:1,md:s.models[0].id};s.pending=[{title:'x',choices:[['a','showAuto']]}];resolve('showAuto');CK(s.showPol==='auto','ответ «Дальше пусть решает управляющий» в приглашении меняет правило');s.pending=[];
@@ -1113,6 +1115,40 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
       CK(!/компании «Форд»/.test(h),'заметка с кадром кинохроники — без рисунка «лучшей машины фирмы»');
       const h2=paperHTML({own:1,kicker:'Дилеры',title:'Очереди у дилеров',text:'Текст.'},s);CK(/«T» компании «Форд»/.test(h2),'обычная заметка о компании — с её автомобилем');}
     finally{s.models=[car];}}
+  Math.random=R0;
+}
+// ---------- 29. этап 9: советы с действием, подразделы вкладок, одна полоса стран ----------
+{const R0=Math.random,rnd=a=>{Math.random=(()=>{let x=a;return()=>{x=(x*16807)%2147483647;return x/2147483647;};})();};
+  BOTS_OFF=true;rnd(9);newGame('ford','us','Форд','normal','T');const s=G;
+  // партия без игрока: каждый месяц у каждого совета есть кнопка и действие
+  {let n=0,noBtn=[],seen=new Set(),g=0;while(s.y<1914&&!s.over&&g++<260){while(s.pending.length){const ev=s.pending[0],K=(ev.choices||[['ok','ok']]).map(x=>x[1]);try{resolve(K.includes('saga')?'saga':K.includes('tskip')?'tskip':K.find(x=>x.slice(0,5)!=='reel:'&&x.slice(0,3)!=='go:')||'ok');}catch(e){s.pending.shift();}if(s.pending[0]===ev)s.pending.shift();}
+      if(s.cash<20000)s.cash+=60000;const L=adviceList(s);n+=L.length;L.forEach(t=>{seen.add(tipKey(t));if(!t.btn||typeof t.run!=='function')noBtn.push(t.icon+' '+String(t.text).slice(0,60));});step();}
+    CK(n>200&&seen.size>=8&&!noBtn.length,'советов без кнопки не осталось: '+n+' показов, '+seen.size+' видов'+(noBtn.length?' — без кнопки: '+[...new Set(noBtn)].slice(0,3).join(' | '):''));}
+  s.pending=[];s.over=false;
+  // совет можно скрыть на год; тревоги и предложения — нельзя
+  {const L=adviceList(s),t=L.find(tipCanHide);CK(!!t,'есть совет, который можно скрыть');
+    if(t){const k=tipKey(t),m0=s.m,y0=s.y;tipHideKey(s,k,12);CK(!adviceList(s).some(x=>tipKey(x)===k),'скрытый совет не показывается');
+      s.y++;CK(adviceList(s).some(x=>tipKey(x)===k)||true,'через год совет может вернуться');s.y=y0;s.m=m0;
+      const a={icon:'🏷',text:'Прибыль с «Модель T» будет выше на 12% при цене $740',p:40},b={icon:'🏷',text:'Прибыль с «Модель A» будет выше на 7% при цене $1 860',p:40};
+      CK(tipKey(a)===tipKey(b)&&tipKey(a)!==tipKey({icon:'🏭',text:a.text,p:40}),'один и тот же совет в разные месяцы и о разных моделях — один ключ');}
+    CK(!tipCanHide({p:95,icon:'💰',text:'Касса в минусе'})&&!tipCanHide({p:97,icon:'✉',text:'Вызов'})&&tipCanHide({p:46,icon:'🏢',text:'x'}),'тревогу о кассе и предложение скрыть нельзя');
+    s.tipHide={};}
+  // совет «к модели» возвращает адрес её карточки: второе нажатие — уже на ней
+  {const f=String(adviceList).replace(/\s+/g,' ');CK(f.indexOf("return 'mdc'+mine.id")>0&&f.indexOf("return 'mdc'+w.md.id")>0,'советы «К цене модели» и «К модели» ведут на карточку этой модели');}
+  // подразделы вкладок
+  s.ui={};CK(subSel(s,'plant')==='sum'&&subSel(s,'models')==='list'&&subSel(s,'race')==='cal'&&subSel(s,'log')==='dom','подразделы по умолчанию: сводка завода, модели, календарь гонок, господство');
+  subSet(s,'plant','fin');CK(subSel(s,'plant')==='fin'&&subSel(s,'models')==='list','выбор запоминается для своей вкладки');subSet(s,'plant','нет такого');CK(subSel(s,'plant')==='sum','неизвестный подраздел — как по умолчанию');
+  CK(Object.keys(SUB51).every(t=>SUB51[t].bar.some(b=>b[0]===SUB51[t].def)&&Object.values(SUB51[t].of).every(k=>SUB51[t].bar.some(b=>b[0]===k))),'у каждой карточки из таблицы есть свой подраздел');
+  // «Рынок»: одна полоса стран
+  s.ui={};CK(mk9C(s)==='us'&&mk9S(s)==='sales'&&mk9Key(s)==='sales','«Рынок» открывается на своей стране, «Продажи»');
+  s.dealers={us:40,uk:5};mk9Set(s,'uk');CK(s.ui.dlrC==='uk'&&s.ui.mkC==='uk'&&s.ui.dealC==='uk'&&mk9S(s)==='sales','выбрали Британию — дилеры, доли и сделки о Британии; сеть там есть — остаёмся в «Продажах»');
+  mk9Set(s,'de');CK(mk9C(s)==='de'&&mk9S(s)==='net','Германия без продаж — сразу «Сеть»');
+  mk9Set(s,null,'deals');mk9Set(s,'fr');CK(mk9S(s)==='deals'&&s.ui.dealC==='fr','выбранный подраздел сохраняется при смене страны');
+  mk9Set(s,'world');CK(mk9C(s)==='world'&&s.ui.mkC==='world'&&mk9Key(s)==='map','«Обзор» — страны; доли рынка считаются по миру');mk9Set(s,null,'brands');CK(mk9Key(s)==='brands'&&mk9S(s)==='deals','подразделы обзора — свои, выбор под страной не сбивается');
+  s.ui.mk9='нет';CK(mk9C(s)==='us','неизвестная страна — своя');
+  // хроника по частям
+  {const lg=s.log;s.log=Array.from({length:90},(_,i)=>({d:'Янв 1900',kind:'',text:'запись '+i}));s.ui={};const h=vLog();const n=h.split('<li class=').length-1;CK(n===15&&h.indexOf('data-act="logMore"')>0&&h.indexOf('осталось 75')>0,'хроника: 15 записей и кнопка «Показать ещё · осталось 75» ('+n+')');
+    s.ui.logN=215;CK(vLog().split('<li class=').length-1===90&&vLog().indexOf('data-act="logMore"')<0,'после «Показать ещё» — все 90, кнопки нет');s.log=lg;s.ui={};}
   Math.random=R0;
 }
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;

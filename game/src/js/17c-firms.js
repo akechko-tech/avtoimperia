@@ -256,4 +256,4 @@ function openRivals(c,fi){const s=G;c=c&&COUNTRIES[c]?c:s.country;const cs=Objec
     ${farmCardHTML(s,c)?`<section class="card" style="margin-top:10px"><h2>Тракторные заводы · ${esc(COUNTRIES[c].name)}</h2>${farmCardHTML(s,c)}</section>`:''}
     ${mfirms.length&&(typeof lineOn!=='function'||lineOn(s,'moto'))?`<section class="card" style="margin-top:10px"><h2>Мотоциклетные фирмы · ${esc(COUNTRIES[c].name)}</h2>${mfirms.map(o=>firmCardHTML(s,c,o.i,false,1)).join('')}</section>`:''}
     ${old.length?`<section class="card" style="margin-top:10px"><h2>Раньше</h2>${old.map(n=>`<p class="small" style="margin-top:4px">${RIV_ICON[n.k]||'⚔️'} <span class="muted">${MONTHS[n.m]} ${n.y}:</span> ${esc(n.t)}</p>`).join('')}</section>`:''}`);
-  if(fi!=null){const el=document.getElementById('firm'+c+fi);if(el&&el.scrollIntoView)el.scrollIntoView();}}
+  if(fi!=null){const el=typeof subGo==='function'?subGo('firm'+c+fi):document.getElementById('firm'+c+fi);if(el&&el.scrollIntoView)el.scrollIntoView();}}

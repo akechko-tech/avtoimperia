@@ -392,7 +392,7 @@ table.res td:first-child,table.res th:first-child{width:26px;text-align:left;col
 .rd-row{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)}
 .comp .num small{display:block;font-size:10px}
 .advisor{border-color:var(--brass)}
-.tip{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line-soft)}
+.tip{display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line-soft)}
 .tip:first-of-type{border-top:0}
 .tip .ic{font-size:18px;line-height:1}
 .tip .btn{white-space:normal;text-align:center;max-width:140px}
@@ -1123,6 +1123,20 @@ body.flying{overflow:hidden}
 .krow{display:grid;grid-template-columns:1fr auto;column-gap:10px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:9px 10px;cursor:pointer}
 .krow b{font-size:14px}.krow small{grid-column:1;color:var(--muted);font-size:11px;line-height:1.25}.krow em{grid-column:2;grid-row:1/3;align-self:center;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--brass);text-align:right;white-space:nowrap}
 .chip .ftag{font-style:normal;font-size:10px;border-radius:3px;padding:0 4px;margin-left:2px;white-space:nowrap}.chip .ftag.sat{background:rgba(201,162,74,.18);color:var(--brass)}.chip .ftag.bad{background:rgba(179,39,30,.18);color:var(--bad)}.chip.unfit{opacity:.6}
+
+/* 0.51, этап 9: полоса выбора подраздела — сверху выбор, ниже только выбранное */
+.subbar{margin:0 0 10px}
+.subbar .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:0;padding-bottom:2px;-webkit-overflow-scrolling:touch}.subbar .chips::-webkit-scrollbar{display:none}
+.subbar .chip{flex:0 0 auto;white-space:nowrap;padding:8px 12px;font-size:14px}.subbar .chip small{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.subbar .chip.on{border-color:var(--brass);color:var(--brass);background:rgba(226,196,122,.08)}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg3 button{background:var(--panel2);color:var(--text);border:0;border-right:1px solid var(--line);padding:10px 4px;font:inherit;font-size:14px;cursor:pointer}.seg3 button:last-child{border-right:0}
+.seg3 button.on{background:var(--brass);color:#1a1408;font-weight:700}
+body.sub9 .inner-cc,body.sub9 #fc-dealers .cc-chips{display:none}
+details.how{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}details.how summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none}details.how summary::before{content:'▸ '}details.how[open] summary::before{content:'▾ '}details.how summary::-webkit-details-marker{display:none}
+.card.nofold>.card-h>i{display:none}.card.nofold>.card-h{cursor:default}
+.dpol9{margin-top:10px}.dpol9 .chips.sm{justify-content:flex-start;margin-top:4px}.dpol9 p{margin-top:4px}
+.tip-x{background:none;border:0;color:var(--muted);font-size:14px;padding:8px 4px;cursor:pointer;line-height:1}.tip-x:active{color:var(--text)}
 </style>
 
 <div class="wrap" hidden>
@@ -4530,7 +4544,7 @@ function dealsCard(s){maMigrate(s);const sel=(s.ui&&s.ui.dealC)||s.country,cs=Ob
   const body=`<p class="small muted" style="margin-top:2px">Купите долю в марке-конкуренте — она останется отдельной маркой со своими директорами, а вам пойдут дивиденды. Или поглотите её целиком: её заводы, дилеры, права на модели и технологии станут вашими, а марка исчезнет. Владельцы отвечают сразу.</p>
     ${auc?`<p class="small warn" style="margin-top:6px">Идут торги: «${esc(auc.nm)}» (${COUNTRIES[auc.c].name}) — до ${MONTHS[(auc.until)%12]}. <button class="btn sm" data-act="aucOpen">Ставка</button></p>`:''}
     ${holdingsHTML(s)}
-    <div class="chips sm" style="margin-top:10px">${cs.map(c=>`<button class="chip ${sel===c?'on':''}" data-act="dealC" data-v="${c}">${COUNTRIES[c].name}</button>`).join('')}</div>
+    <div class="chips sm inner-cc" style="margin-top:10px">${cs.map(c=>`<button class="chip ${sel===c?'on':''}" data-act="dealC" data-v="${c}">${COUNTRIES[c].name}</button>`).join('')}</div>
     <div style="margin-top:6px">${rows||'<p class="small muted">Здесь пока нет марок.</p>'}</div>${typeof mdealsHTML==='function'?mdealsHTML(s,sel):''}
     ${typeof bbHTML==='function'?bbHTML(s):''}`;
   return foldCard('deals',false,`<h2>Сделки</h2><span class="label">доли, поглощения, торги</span>`,body,(own.length?`ваши компании: ${own.map(h=>esc(h.nm||h.n)+(h.mode==='sub'?` ${Math.round(h.st*100)}%`:'')).join(', ')}`:'купить долю, поглотить конкурента, торги после банкротств')+(typeof bbShare==='function'&&bbShare(s)>0?` · совладельцы ${Math.round(bbShare(s)*100)}% — можно выкупить`:''));}
@@ -7009,27 +7023,31 @@ function digestCard(s){const L=digestNow(s);if(!L.length)return '';const un=L.fi
   const rows=L.slice(0,12).map(d=>{const i=s.digest.indexOf(d);return `<button class="chip" style="width:100%;margin-top:6px;text-align:left${d.read?';opacity:.65':''}" data-act="digestRead" data-i="${i}"><small>${esc(d.kicker||'Новости')} · ${MONTHS[((d.t%12)+12)%12]} ${1895+Math.floor(d.t/12)}</small>${esc(d.title)}${d.deck?`<small>${esc(d.deck)}</small>`:''}</button>`;}).join('');
   return foldCard('digest',un>0,`<h2>📰 Заметки месяца</h2>`,`<p class="small muted">То, ради чего игру останавливать не стоило. Нажмите — откроется заметка целиком.</p>${rows}`,`${L.length} ${plural(L.length,'заметка','заметки','заметок')}${un?` · новых ${un}`:''}`);}
 /* ---------- предложения: не окно посреди хода, а строка в советах с кнопкой «Открыть» ----------
-   Ждёт до конца месяца; не открыли — считается отказом (тем же ответом «нет», что был в окне). */
+   Ждёт до конца месяца. Не открыли — перед новым месяцем спросят окном: молчаливого отказа нет.
+   0.51, этап 9: первая версия (этап 8) считала молчание отказом. Замер на шести партиях бота, который в советы не заглядывает:
+   четыре разорились до 1915 года (у бота, отвечающего на предложения, — ни одной). Решение за игрока больше не принимается. */
 function offersOn(){return (typeof OFFERS_INBOX==='undefined'||OFFERS_INBOX!==false)&&!(typeof G!=='undefined'&&G&&G.mode==='racer');}
 function offerAdd(s,P){s.offers=s.offers||[];P.t=mi(s);s.offers.push(P);if(typeof pendingToasts!=='undefined')pendingToasts.push('✉ '+(P.kicker?P.kicker+': ':'')+P.title);}
 function offerOpen(i){const s=G,P=(s.offers||[])[+i];if(!P)return;s.offers.splice(+i,1);s.pending.unshift(P);render();}
-function offersExpire(s){const L=s.offers||[];if(!L.length)return;s.offers=[];L.forEach(P=>{const no=offerNo(P);if(!no)return;try{s.pending.unshift(P);addLog(`Предложение осталось без ответа: ${P.title}.`,'hist');resolve(no);}catch(e){console.warn('offer expire',e);const k=s.pending.indexOf(P);if(k>=0)s.pending.splice(k,1);}});}
-function offerAdvice(s,add){(s.offers||[]).forEach((P,i)=>add(97,'✉',`${P.kicker}: ${P.title}${P.deck?' — '+P.deck:''}. Ответ — до конца месяца; без ответа это отказ.`,'Открыть',()=>offerOpen(i)));}
+function offersExpire(s){const L=s.offers||[];if(!L.length)return;s.offers=[];L.forEach(P=>{P.last=1;P.deck=(P.deck?P.deck+' · ':'')+'ответ нужен сейчас';s.pending.push(P);});}
+function offerAdvice(s,add){(s.offers||[]).forEach((P,i)=>add(97,'✉',`${P.kicker}: ${P.title}${P.deck?' — '+P.deck:''}. Ответить можно сейчас; иначе спросят перед новым месяцем.`,'Открыть',()=>offerOpen(i)));}
 /* ---------- выставки: кто решает ---------- */
-const SHOW_POL={auto:'решает управляющий',home:'спрашивать о своих, на чужие не ездить',ask:'спрашивать о каждой',none:'не ездить'};
+const SHOW_POL={auto:'решает управляющий',home:'спрашивать там, где вы продаёте; на остальные не ездить',ask:'спрашивать о каждой',none:'не ездить'};
 /* по умолчанию: с помощником — решает он; без него — спрашивают о выставках своей страны, на чужие не ездят (деньги без спроса
    не тратятся). В прогонах и у ботов (ящик предложений выключен) — как раньше: спрашивают о каждой */
 function showPol(s){return SHOW_POL[s.showPol]?s.showPol:!offersOn()?'ask':(typeof helperOn==='function'&&helperOn(s))||(typeof DIF==='function'&&DIF().simple)?'auto':'home';}
-/* стенд по средствам: павильон — на главной выставке, если он дешевле 3 % кассы; большой — до 2 %; малый — до 2 %; иначе не едем */
+// Управляющий ездит на выставки по правилу, проверенному ботом «в стиле автора»: малый стенд — когда он не дороже восьмой части
+// кассы, большой — двенадцатой, павильон на всемирной выставке — двадцать пятой. 0.51, этап 9: первое правило («не дороже 2–3 % кассы»)
+// оставляло молодую фирму без выставок: из шести партий бота пять разорились до 1915 года (с правилом бота — ни одной).
 function showAutoTier(s,sh){const H=SHOW_HOST[sh.h],cash=Math.max(0,s.cash),home=H.c===s.country,has=home||dealerCount(s,H.c)>0||tradeOk(s,H.c);if(!has)return 0;
-  const c=t=>standCost(sh,s,t);if(H.w>=3&&c(3)<=cash*0.03)return 3;if(c(2)<=cash*0.02)return 2;if(c(1)<=cash*0.02)return 1;return 0;}
+  const c=t=>standCost(sh,s,t);if(H.w>=3&&cash>c(3)*25)return 3;if(cash>c(2)*12)return 2;if(cash>c(1)*8)return 1;return 0;}
 function tradeOk(s,c){try{return !tradeBan(s,c);}catch(_){return true;}}
 /* true — приглашение решено без игрока */
-function showAutoInvite(s,sh){const pol=showPol(s),home=SHOW_HOST[sh.h].c===s.country;if(pol==='ask'||(pol==='home'&&home))return false;
+function showAutoInvite(s,sh){const pol=showPol(s),hc=SHOW_HOST[sh.h].c,home=hc===s.country||dealerCount(s,hc)>0;/* «свои» — там, где фирма продаёт: дома и в странах с её дилерами */if(pol==='ask'||(pol==='home'&&home))return false;
   const tier=pol==='auto'?showAutoTier(s,sh):0;s.showNow=sh.id;showBook(s,'show'+tier);
   if(tier)addLog(`Выставки ведёт управляющий: ${showName(sh)} — ${SHOW_TIER[tier].n.toLowerCase()}.`,'hist');return true;}
 function showPolCard(s){if(!s.shows||!Object.keys(s.shows).length)return '';const p=showPol(s);
-  return `<section class="card" id="showpol"><div class="label">Выставки — ${esc(SHOW_POL[p])}</div><div class="chips" style="margin-top:6px">${Object.keys(SHOW_POL).map(k=>`<button class="chip${p===k?' on':''}" data-act="showPol" data-v="${k}">${esc(SHOW_POL[k][0].toUpperCase()+SHOW_POL[k].slice(1))}</button>`).join('')}</div><p class="small muted" style="margin-top:6px">Управляющий берёт стенд по средствам (до 2–3 % кассы) и пишет об итогах в заметках месяца; газета выходит, только если стенд взял золото.</p></section>`;}
+  return `<section class="card" id="showpol"><div class="label">Выставки — ${esc(SHOW_POL[p])}</div><div class="chips" style="margin-top:6px">${Object.keys(SHOW_POL).map(k=>`<button class="chip${p===k?' on':''}" data-act="showPol" data-v="${k}">${esc(SHOW_POL[k][0].toUpperCase()+SHOW_POL[k].slice(1))}</button>`).join('')}</div><p class="small muted" style="margin-top:6px">Управляющий берёт стенд по средствам: малый — если он не дороже восьмой части кассы, большой — двенадцатой, павильон на всемирной выставке — двадцать пятой. Об итогах пишет в заметках месяца; газета выходит, только если стенд взял золото.</p></section>`;}
 /* ================= ГЛАВНОЕ — КРУПНО =================
    Автор: важное написано мелким текстом, приходится искать глазами, что хорошего или плохого произошло.
    Под заголовком — вывод крупно и в цвете (зелёный — хорошо, красный — плохо); если заметка зовёт на вкладку — кнопка туда. */
@@ -9035,7 +9053,7 @@ function adviceList(s){
       if(bc&&bm>size*2)parts.push(`в стране «${COUNTRIES[bc].name}» покупают ${fmtD(bm)} в месяц — найдите там импортёра`);
       if(rcN)parts.push(`победа в гонке «${rcN.name}» — в эти годы о машинах узнают из гонок, и покупателей станет в 2–3 раза больше`);
       parts.push('выставка и газеты делают то же');parts.push('цена ниже на 30% — спрос почти втрое');
-      add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':null,rcN?()=>{tab='race';window.scrollTo(0,0);}:null,'market');}}
+      add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':'Понятно',rcN?()=>{tab='race';window.scrollTo(0,0);}:()=>{tipHideKey(s,'🔎|early',1200);},'market');}}
   // 0.32: мотоциклы — мотоцех, путь к автомобилю, переносы технологий
   try{motoAdvice(s,add);}catch(e){console.warn('moto advice',e);}
   // КБ
@@ -9080,15 +9098,15 @@ function adviceList(s){
     // за границей машины видят меньше 30% покупателей
     if(act.length){let bc=null,bI=null;Object.keys(COUNTRIES).forEach(c=>{if(c===home||!dealerCount(s,c)||warCut(s,c)||tradeBan(s,c))return;const I=reachInfo(s,c);if(I.r<0.3&&I.pot>(bI?bI.pot:0)&&I.miss>0){bc=c;bI=I;}});
       if(bc){const n=Math.max(1,Math.min(bI.miss,Math.floor(Math.max(0,s.cash-3000*cpi(s))/dealerCost(s)),Math.round(bI.need*0.1)));
-        add(44,'🌍',`${inC(bc)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:null,n>=1?()=>{buyDealers(G,bc,n);}:null,'market');}}
+        add(44,'🌍',`${inC(bc)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:'К сети',n>=1&&s.cash>n*dealerCost(s)*2?()=>{buyDealers(G,bc,n);}:()=>{tab='market';if(typeof mk9Set==='function')mk9Set(G,bc,'net');return 'fc-dealers';}/* 0.51, этап 9: денег на дилеров пока нет — кнопка ведёт в сеть этой страны */,'market');}}
     // 0.51, этап 5: ход соперника против вашей модели — что он сделал и чем ответить (одно нажатие — к модели или в конструктор)
     {const mv=rivMoves(s).filter(n=>n.c===home&&n.w>=3&&/^(model|line|cut|fin|ad)$/.test(n.k))[0];
       if(mv){const F=firmGet(s,mv.c,mv.i),cp=(COMPS[mv.c]||[])[mv.i],g=F&&cp?firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0]:null,mine=g?act.filter(m=>!isMoto(m)&&segOf(m)===g).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]:null;
-        if(mine){const ans=mv.k==='model'?['Новая модель',()=>openDesigner(rivalKind(mine))]:mv.k==='cut'||mv.k==='line'?['К цене модели',()=>{tab='models';setOpen('md'+mine.id,true);}]:['Соперники',()=>openRivals(home)];
+        if(mine){const ans=mv.k==='model'?['Новая модель',()=>openDesigner(rivalKind(mine))]:mv.k==='cut'||mv.k==='line'?['К цене модели',()=>{tab='models';setOpen('md'+mine.id,true);return 'mdc'+mine.id;}]:['Соперники',()=>openRivals(home)];
           add(52,'⚔️',`${mv.t}. Это бьёт по «${mine.name}»: ${mv.k==='model'?'перевес вашей машины сократился — нужна модель лучше':mv.k==='cut'||mv.k==='line'?'у соперника машина стала дешевле — проверьте цену':mv.k==='fin'?'у соперника машину берут в рассрочку':'имя соперника стало громче'}.`,ans[0],ans[1],'models');}}}
     // модель приносит меньше, чем стоит конторе
     {let w=null;act.forEach(md=>{if(act.length<2)return;let O=null;try{O=modelOffice(md,s,priceFc(md,s,md.price));}catch(_){}if(O&&O.cost>Math.max(1,O.contrib)&&(!w||O.cost-O.contrib>w.O.cost-w.O.contrib))w={md,O};});
-      if(w)add(46,'🏢',`«${w.md.name}» приносит ${money(Math.max(0,w.O.contrib))} в месяц, а держать её в линейке стоит конторе ${money(w.O.cost)}. Снимите с производства или поднимите цену.`,'К модели',()=>{tab='models';setOpen('md'+w.md.id,true);},'models');}
+      if(w)add(46,'🏢',`«${w.md.name}» приносит ${money(Math.max(0,w.O.contrib))} в месяц, а держать её в линейке стоит конторе ${money(w.O.cost)}. Снимите с производства или поднимите цену.`,'К модели',()=>{tab='models';setOpen('md'+w.md.id,true);return 'mdc'+w.md.id;},'models');}
   }catch(e){console.warn('advice 0.34',e);}
   // технологии завода
   if(!s.techBuild){const k=TECH_ORDER.find(k=>techOpen(s,k)&&s.cash>techCost(s,k)*1.8);if(k){const nx=techNext(s,k),c=techCost(s,k);add(40,'⚙️',`Можно внедрить «${nx.name}»: ${techEffects(nx)}.`,`Внедрить · ${money(c)}`,()=>ACT.tech({k}),'plant');}}
@@ -9115,8 +9133,15 @@ function adviceList(s){
       add(46,'✂️',`Бюро и гоночный отдел стоят ${money(rdU+tmU)} в месяц${pct?` — ${pct} % прибыли`:' при убытке'}. Содержание растёт с оборотом фирмы: ступень можно сократить и вернуть позже.`,lab?'Сократить бюро':'Сократить отдел',()=>lab?ACT.rdDown():RACE_ACT.rdeptDown(),lab?'models':'race');}}
   // 0.39: дела авиацеха — в том же списке (одна система управления для авто, мото и аэро)
   if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{try{uiLine='air';}catch(_){}const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
-  return T.sort((a,b)=>b.p-a.p);
+  // 0.51, этап 9: совет, от которого игрок отказался («✕»), год не показывается; советов без кнопки не остаётся
+  const H=s.tipHide||{},now=mi(s);
+  return T.filter(t=>!((H[tipKey(t)]||0)>now)).sort((a,b)=>b.p-a.p);
 }
+// ключ совета: значок и начало текста без чисел и названий — «тот же совет» в разные месяцы
+function tipKey(t){return t.icon==='🔎'?'🔎|early':t.icon+'|'+String(t.text).replace(/«[^»]*»/g,'«»').replace(/[0-9][0-9  .,%$]*/g,'#').slice(0,44);}
+function tipHideKey(s,k,mo){s.tipHide=s.tipHide||{};s.tipHide[k]=mi(s)+(mo||12);}
+// скрыть можно всё, кроме тревог (касса, долг, закрытие завода) и предложений, ждущих ответа
+function tipCanHide(t){return t.p<85&&t.icon!=='✉';}
 // 0.51: гонки сезона одной кнопкой — строка в «Делах»: включить, бюджет на год, что команда сделала в прошлом месяце
 function raceAutoLine(s){if(!s||s.mode==='racer'||typeof raceAutoOn!=='function')return '';let cars=0;try{cars=s.models.some(m=>m.status==='prod')&&RACES.some(r=>r.y===s.y)?1:0;}catch(_){}
   if(!cars&&!raceAutoOn(s))return '';const T=s.tmMsg&&s.tmMsg.m===mi(s)-1?s.tmMsg.list:null,on=raceAutoOn(s);
@@ -9129,7 +9154,7 @@ function advisorCard(s,where){
   // 0.39: «Дела» — что сделать сейчас, кнопкой к действию (одна система для авто, мото и аэро)
   return `<section class="card advisor"><div class="row"><span class="label">📋 Дела${where?'':' и советы'}</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':`<button class="linkbtn small" data-act="helperToggle">поручить рутину помощнику</button>`}</div>
     ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${XL&&!where?`<p class="small good xlmsg" style="margin-top:6px">🏭 Линии завода: ${esc(XL.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
-    ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}</div>`).join('')}
+    ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}${tipCanHide(t)?`<button class="tip-x" data-act="tipHide" data-k="${i}" aria-label="Не предлагать год" title="Не предлагать год">✕</button>`:''}</div>`).join('')}
     ${!where&&all.length>4?`<p class="small muted" style="margin-top:6px">Ещё дел: ${all.length-4}. Сначала самые важные.</p>`:''}</section>`;}
 // Помощник управляющего: каждый месяц сам делает безопасные вещи — цены, дилеры, цеха, склад, КБ, кредит
 function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models.filter(m=>m.status==='prod'),L=s.last,home=s.country,cs=creditState(s),calm=cs.k==='ok'||cs.k==='war';
@@ -9549,7 +9574,7 @@ function openRivals(c,fi){const s=G;c=c&&COUNTRIES[c]?c:s.country;const cs=Objec
     ${farmCardHTML(s,c)?`<section class="card" style="margin-top:10px"><h2>Тракторные заводы · ${esc(COUNTRIES[c].name)}</h2>${farmCardHTML(s,c)}</section>`:''}
     ${mfirms.length&&(typeof lineOn!=='function'||lineOn(s,'moto'))?`<section class="card" style="margin-top:10px"><h2>Мотоциклетные фирмы · ${esc(COUNTRIES[c].name)}</h2>${mfirms.map(o=>firmCardHTML(s,c,o.i,false,1)).join('')}</section>`:''}
     ${old.length?`<section class="card" style="margin-top:10px"><h2>Раньше</h2>${old.map(n=>`<p class="small" style="margin-top:4px">${RIV_ICON[n.k]||'⚔️'} <span class="muted">${MONTHS[n.m]} ${n.y}:</span> ${esc(n.t)}</p>`).join('')}</section>`:''}`);
-  if(fi!=null){const el=document.getElementById('firm'+c+fi);if(el&&el.scrollIntoView)el.scrollIntoView();}}
+  if(fi!=null){const el=typeof subGo==='function'?subGo('firm'+c+fi):document.getElementById('firm'+c+fi);if(el&&el.scrollIntoView)el.scrollIntoView();}}
 
 /* ================= 0.51, этап 5б: ФИРМЫ — ГРУППЫ, ЛЮДИ, ОБИДЫ =================
    Остаток темы 4 ТЗ. Автор (21 ноября): «Что такое концерн? Как он меняет экономику других участников процесса?» —
@@ -17499,8 +17524,8 @@ function vPlant(){
   const staffHTML=`    <div class="chips" style="margin-top:8px"><button class="chip ${s.staffAuto?'on':''}" data-act="staffAuto" data-v="1">Нанимать по плану выпуска<small>отдел кадров сам держит нужный штат</small></button><button class="chip ${s.staffAuto?'':'on'}" data-act="staffAuto" data-v="0">Вручную<small>шаг — 10% штата</small></button></div>
     <div class="label" style="margin-top:12px">Зарплата</div><div class="chips">${Object.entries(WAGE_POL).map(([k,w])=>`<button class="chip ${wp===k?'on':''}" data-act="wagePol" data-v="${k}" ${w.y&&s.y<w.y-techEarly(s)?'disabled':''}>${w.name}<small>×${String(w.k).replace('.',',')} ставки · выработка ${w.prod>=1?'+':'−'}${Math.round(Math.abs(w.prod-1)*100)}% · текучесть ${w.turn}${w.y&&s.y<w.y-techEarly(s)?' · с '+(w.y-techEarly(s))+' г.':''}</small></button>`).join('')}</div>`;
   return `<div class="scene">${plantHTML(s)}</div>
-  ${monthSumCard(s)}
   ${advisorCard(s)}
+  ${monthSumCard(s)}
   ${s.pioneer!=='custom'?`<section class="card" style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center"><button class="pion-link" data-act="founder" style="width:64px" aria-label="Об основателе">${portraitHTML(s.pioneer)}</button><div><h3>${P.name} <button class="btn sm" data-act="founder">О нём ▸</button></h3><div class="bon">${P.plus.map(x=>`<span class="p">${x}</span>`).join('')}${P.minus.map(x=>`<span class="m">${x}</span>`).join('')}</div></div></section>`:''}
   <section class="card"><div class="row"><span class="label">Касса по месяцам</span><span class="small muted num">${money(s.cash)}</span></div>${spark(s.hist.cash)}</section>
   ${foldCard('cap',true,'<h2>Мощности</h2>',`
@@ -17554,7 +17579,7 @@ const UIF={};
 function isOpen(k,def){const f=G&&G.ui&&G.ui.f,v=f&&f[k]!==undefined?f[k]:UIF[k];return v===undefined?!!def:v;}
 function setOpen(k,v){UIF[k]=v;if(G){G.ui=G.ui||{};G.ui.f=G.ui.f||{};G.ui.f[k]=v;}}
 // Карточка, которую можно свернуть: заголовок — кнопка; свёрнутая показывает одну строку итога
-function foldCard(k,def,head,body,sum,cls){const o=isOpen(k,def);return `<section id="fc-${k}" class="card${cls?' '+cls:''}${o?'':' folded'}"><button class="card-h" data-act="fold" data-k="${k}" data-def="${def?1:0}" aria-expanded="${o}"><span class="ch">${head}</span><i>${o?'▴':'▾'}</i></button>${o?body:(sum?`<p class="small muted card-sum">${sum}</p>`:'')}</section>`;}
+function foldCard(k,def,head,body,sum,cls){const fz=typeof subForce==='function'&&subForce(k),o=fz||isOpen(k,def);/* 0.51, этап 9: главная карточка подраздела всегда раскрыта */return `<section id="fc-${k}" class="card${cls?' '+cls:''}${o?'':' folded'}${fz?' nofold':''}"><button class="card-h" data-act="fold" data-k="${k}" data-def="${def?1:0}" aria-expanded="${o}"><span class="ch">${head}</span><i>${o?'▴':'▾'}</i></button>${o?body:(sum?`<p class="small muted card-sum">${sum}</p>`:'')}</section>`;}
 function fold(k,title,inner,def,sub){const o=isOpen(k,def);return `<button class="fold-h" data-act="fold" data-k="${k}" data-def="${def?1:0}"><span>${title}${sub?`<small>${sub}</small>`:''}</span><i>${o?'▴':'▾'}</i></button>${o?`<div class="fold-b">${inner}</div>`:''}`;}
 // Почему продали меньше, чем хотели купить
 function lostLine(md){if(md.status!=='prod'||md.lastWant===undefined)return '';const w=md.lastWant||0,sold=md.lastSold||0;if(w<0.5)return '<p class="small muted" style="margin-top:6px">В прошлом месяце покупателей не нашлось: проверьте цену, дилеров и сравнение с соперником.</p>';
@@ -17683,13 +17708,13 @@ function vModels(){
       ${md.status==='prod'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="retire" data-id="${md.id}">Снять с производства</button></div>`:''}
       ${md.status==='sale'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="saleNow" data-id="${md.id}">Отдать остаток перекупщикам (−50%)</button></div>`:''}
       ${md.status==='off'?`<div class="btns" style="margin-top:12px"><button class="btn" data-act="revive" data-id="${md.id}">Вернуть в производство</button></div>`:''}`:ctl;
-    return `<article class="card mcard${open?'':' folded'}"><button class="card-h" data-act="fold" data-k="${key}" data-def="${!many||md.status==='dev'?1:0}" aria-expanded="${open}">${head}<i>${open?'▴':'▾'}</i></button>${body}</article>`;};
+    return `<article id="mdc${md.id}" class="card mcard${open?'':' folded'}"><button class="card-h" data-act="fold" data-k="${key}" data-def="${!many||md.status==='dev'?1:0}" aria-expanded="${open}">${head}<i>${open?'▴':'▾'}</i></button>${body}</article>`;};
   // 0.33: машины и мотоциклы — в одном списке (класс модели — в её карточке)
   const mv=motoVis(s);
   const L=s.models.slice().sort((a,b)=>ord[a.status]-ord[b.status]||b.id-a.id),live=L.filter(m=>m.status!=='off'),off=L.filter(m=>m.status==='off');
   const offCard=off.length?foldCard('offmodels',false,`<h2>Снятые</h2><span class="label">с производства · ${off.length}</span>`,`<div class="offlist">${off.map(card).join('')}</div>`,off.map(m=>esc(m.name)).join(', ')):'';
   const newBtn=(canDesign(s,'car')||canDesign(s,'moto')?`<button class="btn primary block" data-act="design">+ Новая модель</button>`:'')+(s.motoStart?lineEmptyCard(s,'car'):'');
-  return `${advisorCard(s,'models')}${planCard(s)}${trialCardHTML(s)}${rdCardHTML(s)}${newBtn}${lineOn(s,'car')?legendCardHTML(s):''}<p class="small muted" style="padding:0 4px">Похожие модели одной марки отбирают покупателей друг у друга: выгоднее разные машины для разных классов, чем несколько одинаковых.${mv?' Мотоцикл и мотоцикл с коляской — свои покупатели: одиночку берут молодые люди и почтальоны, с коляской — семьи, которым машина не по карману; дешёвый автомобиль отбирает у мотоцикла покупателей.':''} Нажмите на модель, чтобы развернуть или свернуть описание.</p>${live.map(card).join('')}${ordersCard(s)}${offCard}`;
+  return `${advisorCard(s,'models')}${planCard(s)}${trialCardHTML(s)}${rdCardHTML(s)}${newBtn}${live.map(card).join('')}${lineOn(s,'car')?legendCardHTML(s):''}<p class="small muted" style="padding:0 4px">Похожие модели одной марки отбирают покупателей друг у друга: выгоднее разные машины для разных классов, чем несколько одинаковых.${mv?' Мотоцикл и мотоцикл с коляской — свои покупатели: одиночку берут молодые люди и почтальоны, с коляской — семьи, которым машина не по карману; дешёвый автомобиль отбирает у мотоцикла покупателей.':''} Нажмите на модель, чтобы развернуть или свернуть описание.</p>${ordersCard(s)}${offCard}`;
 }
 function techRows(arr,s,extra){return arr.map(x=>`<div class="tech ${x.y<=s.y?'':'off'}"><span class="num">${x.y<=1895?'—':x.y}</span><span>${x.name}</span><span class="num">${extra(x)}</span></div>`).join('');}
 // Сколько продавали бы ваши модели в стране при полной сети дилеров
@@ -17735,7 +17760,7 @@ function sharesCard(s){const cs=Object.keys(COUNTRIES),sel=(s.ui&&s.ui.mkC)||'wo
   const rows=show.map(r=>`<tr class="${r.you?'you':''}"><td>${r.rest?'':(named.indexOf(r)+1)+'.'}</td><td>${esc(r.n)}${r.sub?` <span class="pill">ваши ${Math.round(r.sub*100)}%</span>`:''}${r.xp?' <span class="pill muted">ввоз</span>':''}${!r.you&&!r.rest&&r.bn&&typeof botMark==='function'?' '+botMark(s,r.bn):''}${sel==='world'&&!r.you&&!r.rest&&r.cs&&r.cs.length?`<small>${r.cs.map(c=>COUNTRIES[c].name).join(', ')}</small>`:''}</td><td style="width:34%"><div class="bar"><i style="width:${r.v/mx*100}%;background:${r.you?'var(--brass)':r.rest?'var(--line)':(r.color||'#888')}"></i></div></td><td class="n">${fmtN(r.v)}</td><td class="n sh">${pct(r.v/tot,r.v/tot<0.1?1:0)}</td></tr>`).join('');
   const what=sel==='world'?`во всём мире (${Object.keys(COUNTRIES).length} ${plural(Object.keys(COUNTRIES).length,'рынок','рынка','рынков')})`:COUNTRIES[sel].name+(sel===s.country?' — дома':'');
   const body=`<p class="small muted" style="margin-top:2px">Продано машин ${D.full?`за ${s.y-1} год`:'с начала года'} ${what}. На каждом рынке — свои марки и свой спрос: за границей вы соревнуетесь с местными марками этой страны${sel!=='world'&&sel!==s.country&&!dealerCount(s,sel)?'. Своих дилеров здесь пока нет — продаж тоже':''}.</p>
-    <div class="chips sm" style="margin-top:8px">${chip('world','Мир')}${cs.map(c=>chip(c,COUNTRIES[c].name)).join('')}</div>
+    <div class="chips sm inner-cc" style="margin-top:8px">${chip('world','Мир')}${cs.map(c=>chip(c,COUNTRIES[c].name)).join('')}</div>
     <table class="pl shares-t" style="margin-top:8px"><tr><th></th><th>Марка</th><th></th><th class="n">Машин</th><th class="n sh">Доля</th></tr>${rows}</table>
     <p class="small" style="margin-top:6px">Вы — <b>${place||'—'}-е</b> ${sel==='world'?'в мире':'на этом рынке'}: ${fmtN(me.v)} из ${fmtN(D.tot)} машин (${pct(me.v/tot,me.v/tot<0.1?1:0)}).</p>${sel==='world'?marketSizesHTML(s):''}`;
   const wd=sharesData(s,'world'),wme=wd.L.find(r=>r.you)||{v:0},wpl=wd.L.filter(r=>!r.rest).findIndex(r=>r.you)+1;
@@ -17792,19 +17817,22 @@ function vMarket(){
     const pmTxt=c===home||!d||cut||tradeBan(s,c)?'':`<div class="small pmk-row"><span class="muted">Цена здесь — к цене дома:</span><div class="chips sm">${PMK.map(([k,lab])=>`<button class="chip ${Math.abs(pmkOf(s,c)-k)<1e-6?'on':''}" data-act="pmk" data-c="${c}" data-v="${k}">${lab}</button>`).join('')}</div></div>`
       +(top3.length?`<p class="small muted" style="margin-top:4px">${top3.map(m=>{const n=netPer(m,c,s),mg=licOn(s,c)?n:n-unitCost(m,s);return `«${esc(m.name)}»: покупатель ${money(offerPrice(m,c,s))}, вам ${money(n)}, маржа <b class="${mg<0?'bad':'good'}">${money(mg)}</b>`;}).join(' · ')}</p>`:'');
     // 0.29: каждую страну можно свернуть — остаётся строка: рынок, продажи, дилеры
-    const fk='net_'+c,fo=isOpen(fk,c===home||d>0);
+    const fk='net_'+c,fo=(typeof subOn==='function'&&subOn(s))||isOpen(fk,c===home||d>0);/* 0.51, этап 9: страна выбрана полосой сверху — её строка раскрыта сразу */
     // 0.36: в строке страны — и мотоциклы (раньше считались только машины: «0 шт.» у мотофирмы с дилерами)
     const nC=mk?mk.sold||0:0,nM=mk?mk.msold||0:0,nSold=nC+nM,nLab=nM&&nC?`${fmtN(nC)} + ${fmtN(nM)} мото`:nM?`${fmtN(nM)} мото`:`${fmtN(nC)} шт.`;
     const head=`<button class="net-h" data-act="fold" data-k="${fk}" data-def="${c===home||d>0?1:0}" aria-expanded="${fo}"><div class="row"><div><h3>${COUNTRIES[c].name}${c===home?' · дома':''}${c!==home?` <span class="pill ${lv?'good':'muted'}">${esc(lic?'Лицензия':intIn(s,c)?'Своя марка':IMP_LV[lv].n)}</span>`:''}</h3><p class="small muted">Рынок ${fmtD(size)} в месяц · <span class="${ec.tone}">${ec.label}</span>${c!==home?(cut?' · <span class="bad">блокада</span>':tradeBan(s,c)?' · <span class="bad">ввоз закрыт</span>':` · пошлина ${Math.round(tf*100)}%`):''}${fo?'':` · дилеров ${fmtN(d)}${mk&&mk.size>0?` · доля ${pct((mk.sold||0)/Math.max(1,mk.size),1)}`:''}`}</p></div><span class="num small ${nSold?'good':''}" style="white-space:nowrap">${nLab} <i class="muted">${fo?'▴':'▾'}</i></span></div></button>`;
     if(!fo)return `<div class="net-row folded">${head}</div>`;
+    // 0.51, этап 9: скидка дилерам — одной строкой под кнопками сети (раньше — три больших плитки ниже всех пояснений)
+    const dpolRow=`<div class="dpol9"><span class="label">Скидка дилерам</span><div class="chips sm">${Object.entries(DPOL).map(([k,p])=>`<button class="chip ${(s.dpol||'std')===k?'on':''}" data-act="dpol" data-v="${k}">${p.n} · ${Math.round(p.m*100)}%</button>`).join('')}</div><p class="small muted">${(DPOL[s.dpol||'std']||{}).d||''}</p></div>`;
     return `<div class="net-row">${head}
+      <div class="btns" style="margin-top:8px">${btns}${d>(c===home?1:2)?`<button class="btn sm" data-act="dealersCut" data-c="${c}">Закрыть 20%</button>`:''}${d&&dealerMult(s,c)>1.01&&!cut?`<button class="btn sm" data-act="dealerShrink" data-c="${c}">Салоны поменьше · −${money(d*dealerUpkeep(s,c)*0.25/dealerMult(s,c))}/мес</button>`:''}${c!==home&&!cut&&impDownTo(s,c)?`<button class="btn sm" data-act="impSell" data-c="${c}">Продать ${impLv(s,c)>=4?'завод':'сборку'} · ${money(impSellValue(s,c))}</button>`:''}${c!==home&&!cut&&leaveOk(s,c)?`<button class="btn sm" data-act="leaveCountry" data-c="${c}">Уйти из страны</button>`:''}${promoOk(s,c)?`<button class="btn sm" data-act="promoSheet" data-c="${c}">📣 Спецакции${(s.promo||[]).some(p=>p.c===c&&p.until>mi(s))?' · идут':''}</button>`:''}</div><!-- 0.51, этап 9: кнопки — сразу под заголовком страны, пояснения ниже -->${dpolRow}
       ${lvTxt}${c===home?'':shTxt}${pmTxt}
       ${d&&!cut?`${pot>0&&!(c!==home&&reach<0.3)?`<p class="small" style="margin-top:4px">Будь ваши дилеры во всех городах, ваши модели брали бы ≈ <b class="num">${fmtD(pot)}</b> в месяц · сейчас их видят ${Math.round(reach*100)}% покупателей</p>`:''}${c!==home?reachHTML(s,c):''}${contestHTML(s,c)}
       <div class="row small" style="margin-top:6px"><span class="muted">Дилеров <b class="num">${fmtN(d)}</b> из ${fmtN(mx)} ${plural(mx,'возможного','возможных','возможных')} · вся страна — ${fmtN(need)} ${plural(need,'город','города','городов')}</span><span class="num">${Math.round(reach*100)}%</span></div><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,reach*100)}%;background:var(--good)"></i></div>
       <p class="small muted" style="margin-top:4px">Сеть продаёт до ${fmtN(cap)} машин в месяц — по ${fmtD(tp)} на дилера${dealerMult(s,c)>1.01?` (салоны больше обычного в ${fmtD(dealerMult(s,c))} раза)`:''}.${motoVis(s)?` Мотоциклы продают те же дилеры: мотоцикл места занимает втрое меньше — до ${fmtN(cap*MOTO_DLR)} в месяц${bikeReach(s,c)>0?', а до 1921 года их берут и велосипедные лавки':''}.`:''}</p>${econNetHTML(s,c)}
       ${lost>0.5?`<p class="small warn" style="margin-top:4px">Дилеры не успели обслужить ≈ ${fmtD(lost)} покупателей. ${short>0?`Откройте дилеров в новых городах — ещё ${fmtN(short)}.`:gs>0?`Все города уже охвачены: расширьте салоны — продавцы, гаражи, запас машин (${fmtN(gs)} ${plural(gs,'шаг','шага','шагов')} по +25%).`:'Сеть работает на пределе эпохи: больше машин здесь сейчас не продать.'}</p>`:''}`:''}
       ${c!==home&&!cut?plantRedundantHTML(s,c):''}
-      <div class="btns" style="margin-top:6px">${btns}${d>(c===home?1:2)?`<button class="btn sm" data-act="dealersCut" data-c="${c}">Закрыть 20%</button>`:''}${d&&dealerMult(s,c)>1.01&&!cut?`<button class="btn sm" data-act="dealerShrink" data-c="${c}">Салоны поменьше · −${money(d*dealerUpkeep(s,c)*0.25/dealerMult(s,c))}/мес</button>`:''}${c!==home&&!cut&&impDownTo(s,c)?`<button class="btn sm" data-act="impSell" data-c="${c}">Продать ${impLv(s,c)>=4?'завод':'сборку'} · ${money(impSellValue(s,c))}</button>`:''}${c!==home&&!cut&&leaveOk(s,c)?`<button class="btn sm" data-act="leaveCountry" data-c="${c}">Уйти из страны</button>`:''}${promoOk(s,c)?`<button class="btn sm" data-act="promoSheet" data-c="${c}">📣 Спецакции${(s.promo||[]).some(p=>p.c===c&&p.until>mi(s))?' · идут':''}</button>`:''}</div></div>`;};
+      </div>`;};
   const abroad=Object.keys(COUNTRIES).filter(c=>c!==home),nAb=abroad.filter(c=>dealerCount(s,c)>0).length;
   // 0.36: страны — переключателем наверху раздела (дома и каждая страна экспорта в одно касание), ниже — выбранная страна
   const dC=s.ui&&s.ui.dlrC&&COUNTRIES[s.ui.dlrC]?s.ui.dlrC:home;
@@ -17821,9 +17849,8 @@ function vMarket(){
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
     <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: для своих перевозок они выбирают машину, на которой дешевле тонно-километр.</p>${horseHTML(s,home,M,R0)}`,`рынок ${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))} в месяц · ваши ${L?fmtN(L.homeSold):'—'} · доля ${L?pct(L.share,1):'—'}`)}
   ${mOnly?'':vMarketMoto('mk')}
-  ${foldCard('dealers',true,'<h2>Дилеры и экспорт</h2>',`<p class="small muted" style="margin-top:2px">Дилер — торговец в своём городе: покупает у вас машины со скидкой ${Math.round(dMargin(s)*100)}%, продаёт их и чинит. Где нет вашего дилера, там машину не купить; больше дилеров, чем городов с покупателями, не бывает. Первые дилеры открываются в больших городах и сразу видят большую часть покупателей. Когда спрос растёт, дилеры сами нанимают продавцов, а к марке, которая хорошо продаётся, новые города просятся сами. Новый дилер — ${money(dc)} (разъездные агенты, вывеска, демонстрационная машина), поддержка ${money(dealerUpkeep(s))} в месяц. За границей сначала нужен импортёр, потом своё отделение и сборочный завод; покупатель там платит пошлину, а вы — доставку (по Европе ${money(40*cpi(s))}, через Атлантику ${money(90*cpi(s))}). Пошлины меняются по годам — смотрите карту «Мир».</p>
-    <div class="label" style="margin-top:10px">Скидка дилерам</div><div class="chips">${Object.entries(DPOL).map(([k,p])=>`<button class="chip ${(s.dpol||'std')===k?'on':''}" data-act="dpol" data-v="${k}">${p.n} · ${Math.round(p.m*100)}%<small>${p.d}</small></button>`).join('')}</div>
-    <div style="margin-top:6px">${net}</div>`,`дома ${fmtN(dealerCount(s,home))} ${plural(dealerCount(s,home),'дилер','дилера','дилеров')} · покупателей видят ${Math.round(reachOf(s,home)*100)}%${nAb?` · за границей: ${nAb} ${plural(nAb,'страна','страны','стран')}`:''}`)}
+  ${foldCard('dealers',true,'<h2>Дилеры и экспорт</h2>',`<div style="margin-top:2px">${net}</div>
+    <details class="how"><summary>Как устроена сеть</summary><p class="small muted" style="margin-top:6px">Дилер — торговец в своём городе: покупает у вас машины со скидкой ${Math.round(dMargin(s)*100)}%, продаёт их и чинит. Где нет вашего дилера, там машину не купить; больше дилеров, чем городов с покупателями, не бывает. Первые дилеры открываются в больших городах и сразу видят большую часть покупателей. Когда спрос растёт, дилеры сами нанимают продавцов, а к марке, которая хорошо продаётся, новые города просятся сами. Новый дилер — ${money(dc)} (разъездные агенты, вывеска, демонстрационная машина), поддержка ${money(dealerUpkeep(s))} в месяц. За границей сначала нужен импортёр, потом своё отделение и сборочный завод; покупатель там платит пошлину, а вы — доставку (по Европе ${money(40*cpi(s))}, через Атлантику ${money(90*cpi(s))}). Пошлины меняются по годам — смотрите карту «Мир».</p></details>`,`дома ${fmtN(dealerCount(s,home))} ${plural(dealerCount(s,home),'дилер','дилера','дилеров')} · покупателей видят ${Math.round(reachOf(s,home)*100)}%${nAb?` · за границей: ${nAb} ${plural(nAb,'страна','страны','стран')}`:''}`)}
   ${vMarketMoto('comps')}
   ${mo?'':sharesCard(s)}
   ${mo?'':dealsCard(s)}
@@ -17863,7 +17890,7 @@ function vLog(){
   return sold+`<section class="card emp-head"><span class="label">Империя «${esc(G.company)}»</span><h2>Наследие — смысл игры</h2><p class="small muted" style="margin-top:4px">${typeof airOnly==='function'&&airOnly(G)?'В 1930 году вашу фирму сравнят с настоящими авиастроителями: Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Boeing. Очки дают масштаб, рынок, изобретения, рекорды и призы, капитал и имя.':'В 1930 году вашу компанию сравнят с настоящими: Ford, General Motors, Citroën, FIAT, Rolls-Royce, Bugatti. Очки дают масштаб, рынок, изобретения, победы, капитал и имя.'} Здесь же — титулы года, вызовы соперников и фильм о вашем герое.</p></section>
   ${(()=>{try{return domCard(G);}catch(e){console.warn('dom',e);return '';}})()}${legacyCard()}${titlesCard(G)}${boardCard(G)}${trophyCabinetCard(G)}${sagaCard(G)}${digestCard(G)}${showPolCard(G)}${papers?foldCard('papers',false,'<h2>Газетный архив</h2>',papers,last?`${G.papers.length} ${plural(G.papers.length,'выпуск','выпуска','выпусков')} · последний: ${esc(last.title)}`:''):''}${reelsCard(G)}
   ${foldCard('ach',false,`<h2>Достижения</h2><span class="num muted">${got}/${ACH.length}</span>`,`<div class="ach">${ACH.map(a=>`<div class="${G.ach[a.id]?'got':''}"><b>${a.name}</b>${a.desc}${G.ach[a.id]?' · '+G.ach[a.id]:''}</div>`).join('')}</div>`,`получено ${got} из ${ACH.length}`)}
-  ${foldCard('log',true,'<h2>Хроника</h2>',`<ul class="log" style="margin-top:6px">${G.log.slice().reverse().map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>`,G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
+  ${foldCard('log',true,'<h2>Хроника</h2>',(()=>{const N=(G.ui&&G.ui.logN)||15,L=G.log.slice().reverse();return `<ul class="log" style="margin-top:6px">${L.slice(0,N).map(l=>`<li class="${l.kind}"><time>${l.d}</time><p>${esc(l.text)}</p></li>`).join('')}</ul>${L.length>N?`<button class="btn block" style="margin-top:8px" data-act="logMore">Показать ещё · осталось ${fmtN(L.length-N)}</button>`:''}`;})(),G.log.length?esc(G.log[G.log.length-1].d+': '+G.log[G.log.length-1].text):'')}`;
 }
 let shownCash=null,cashRaf=0,lastDate='';
 // касса в шапке: от $10 млн — коротко («$22,1 млн», «$1,25 млрд»), чтобы шапка помещалась на узком экране
@@ -17886,7 +17913,8 @@ function render(){
   if(lastDate&&lastDate!==ds){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
   lastDate=ds;setCash(s.over&&s.soldTo?s.soldTo.mine:s.cash);if(s.over&&s.soldTo){const lb=document.getElementById('cashLbl');if(lb)lb.textContent='Ваши деньги';}
   // 0.37: авиатор (только аэропланы) — свои вкладки; у автомобильной фирмы — раздел авиацеха на каждой вкладке
-  airNav();document.getElementById('view').innerHTML=airOnly(s)?airView(tab):airSwitchOn(s)&&tab!=='log'?lineSwitchHTML(s)+(uiLine==='air'?airSubView(s,tab):tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():vRace()):tab==='plant'?vPlant()+airPlantCard(s):tab==='models'?vModels()+airModelsCard(s):tab==='market'?vMarket()+airMarketCard(s):tab==='race'?vRace()+airSkyCard(s):vLog();
+  airNav();try{if(tab==='market'&&typeof subOn==='function'&&subOn(s))mk9Sync(s);}catch(_){}document.getElementById('view').innerHTML=airOnly(s)?airView(tab):airSwitchOn(s)&&tab!=='log'?lineSwitchHTML(s)+(uiLine==='air'?airSubView(s,tab):tab==='plant'?vPlant():tab==='models'?vModels():tab==='market'?vMarket():vRace()):tab==='plant'?vPlant()+airPlantCard(s):tab==='models'?vModels()+airModelsCard(s):tab==='market'?vMarket()+airMarketCard(s):tab==='race'?vRace()+airSkyCard(s):vLog();
+  try{subApply(s);}catch(e){console.warn('sub',e);}   // 0.51, этап 9: сверху выбор подраздела, ниже только выбранное (30e-sub51.js)
   {const es=document.getElementById('empStrip');if(es){es.innerHTML=empireStrip(s);es.hidden=tab==='log'&&!wideLand();es.classList.remove('flash');if(EC_FLASH&&!REDUCE){void es.offsetWidth;es.classList.add('flash');}}}
   document.body.dataset.tab=tab;
   if(tab==='plant')plantAnim();
@@ -18271,6 +18299,71 @@ function airHelperMonth(s,msg,pay,reserve){if(!airOn(s))return;const A=s.air,t=t
 /* ---------- что такое НАМИ ---------- */
 const BRAND_ABOUT={'НАМИ':'НАМИ — Научный автомоторный институт в Москве, основан в 1918 году: государственный институт, а не завод. Его малолитражку НАМИ-1 (по проекту Константина Шарапова) в 1927–1930 годах строил московский завод «Спартак» — по разным данным, от 370 до 512 машин. В партии марка появляется только там, где Россия стала советской: институт создало советское государство — без него не было бы ни института, ни машины.'};
 function brandAbout(cp){return cp&&(BRAND_ABOUT[cp.n]||cp.about)||'';}
+
+/* ================= 0.51, этап 9: разделы без длинной прокрутки — сверху выбор, ниже только выбранное =================
+   Отзыв автора: «в „Рынке“ ради дилеров или покупки марки в Германии приходится ползать вверх-вниз».
+   Вкладка рисуется как раньше (все карточки на месте, ссылки и кнопки работают), а потом subApply прячет карточки,
+   не относящиеся к выбранному подразделу. Сверху — полоса выбора. «Рынок»: полоса стран («Обзор» — отдельной кнопкой),
+   под выбранной страной — «Продажи», «Сеть», «Сделки»; одна полоса стран управляет дилерами, долями рынка и сделками
+   (раньше у каждой из трёх карточек был свой переключатель стран).
+   Ссылка на карточку из другого подраздела (совет, полоса империи, «К модели») сама открывает нужный подраздел: subReveal. */
+const SUB51={
+  plant:{def:'sum',bar:[['sum','Сводка'],['cap','Мощности'],['ppl','Люди'],['wh','Склад'],['tech','Технологии'],['fin','Финансы']],
+    of:{'fc-cap':'cap','fc-staffc':'ppl','fc-wh':'wh','fc-techc':'tech','fc-fin':'fin'}},
+  models:{def:'list',bar:[['plan','Выпуск'],['list','Модели'],['rd','Бюро']],of:{'fc-planlist':'plan','fc-rdcard':'rd','fc-trials':'plan'}},
+  race:{def:'cal',bar:[['cal','Календарь'],['champ','Чемпионаты'],['team','Команда'],['rec','Рекорды и трофеи']],
+    of:{'fc-rcal':'cal','fc-annc':'cal','fc-champs':'champ','fc-trophy':'rec','sec-team':'team','sec-recs':'rec'}},
+  log:{def:'dom',bar:[['dom','Господство'],['leg','Наследие'],['titles','Титулы'],['troph','Вызовы и трофеи'],['film','Фильм и газеты'],['log','Хроника']],
+    of:{'sec-dom':'dom','sec-legacy':'leg','sec-titles':'titles','fc-ach':'titles','sec-board':'troph','sec-trophies':'troph','sec-saga':'film','fc-digest':'film','showpol':'film','fc-reels':'film','fc-log':'log'}}
+};
+// «Рынок»: что показывать в обзоре и в каждом подразделе страны (h — только у домашней страны)
+const MK9={map:{'sec-world':1},brands:{'fc-shares':1},misc:{'fc-shows':1,'fc-graphs':1,'fc-sup':1,'fc-msup':1},
+  sales:{'fc-mkhome':'h','fc-shares':1,'fc-buyers':'h','fc-comps':'h','fc-mkmoto':'h','fc-mcomps':'h','fc-carshop':'h'},net:{'fc-dealers':1,'fc-adc':'h'},deals:{'fc-deals':1}};
+const MK9_SUB=[['sales','Продажи'],['net','Сеть'],['deals','Сделки']];
+const MK9_W=[['map','Страны'],['brands','Марки'],['misc','Выставки и графики']];   // подразделы «Обзора»
+function mk9W(s){const v=s.ui&&s.ui.mk9w;return MK9_W.some(x=>x[0]===v)?v:'map';}
+function mk9Key(s){return mk9C(s)==='world'?mk9W(s):mk9S(s);}
+// карточки, ради которых подраздел и открыт: сворачивать их незачем
+const SUB_OPEN={deals:1,techc:1,trophy:1,dealers:1,cap:1,staffc:1,wh:1,fin:1,rcal:1,champs:1,log:1,mkhome:1,planlist:1,rdcard:1};
+function subForce(k){return !!SUB_OPEN[k]&&typeof G!=='undefined'&&subOn(G)&&(!!SUB51[tab]||tab==='market');}
+function subOn(s){return !!s&&s.mode!=='racer'&&!(typeof airOnly==='function'&&airOnly(s))&&!(typeof airSwitchOn==='function'&&airSwitchOn(s)&&typeof uiLine!=='undefined'&&uiLine==='air'&&tab!=='log');}
+function subSel(s,t){const D=SUB51[t];if(!D)return '';const v=s.ui&&s.ui.sub&&s.ui.sub[t];return D.bar.some(x=>x[0]===v)?v:D.def;}
+function subSet(s,t,k){s.ui=s.ui||{};s.ui.sub=s.ui.sub||{};s.ui.sub[t]=k;}
+function mk9C(s){const v=s.ui&&s.ui.mk9;return v==='world'||(v&&COUNTRIES[v])?v:s.country;}
+function mk9S(s){const v=s.ui&&s.ui.mk9s;return MK9_SUB.some(x=>x[0]===v)?v:'sales';}
+// одна полоса стран ведёт все три прежних переключателя (дилеры, доли рынка, сделки)
+function mk9Set(s,c,sub){s.ui=s.ui||{};if(sub&&MK9_W.some(x=>x[0]===sub)){s.ui.mk9w=sub;return;}if(c){s.ui.mk9=c;if(c==='world')s.ui.mkC='world';else{s.ui.dlrC=c;s.ui.mkC=c;s.ui.dealC=c;
+    /* страна, где вас ещё нет: в «Продажах» пусто — сразу «Сеть» (импортёр, лицензия) */if(!sub&&c!==s.country&&!dealerCount(s,c)&&!(typeof impLv==='function'&&impLv(s,c))&&mk9S(s)==='sales')s.ui.mk9s='net';}}if(sub)s.ui.mk9s=sub;}
+function mk9Sync(s){const c=mk9C(s);s.ui=s.ui||{};if(c==='world')s.ui.mkC='world';else{s.ui.dlrC=c;s.ui.mkC=c;s.ui.dealC=c;}}
+function mk9BarHTML(s){const home=s.country,c0=mk9C(s),L=s.last,cs=[home,...Object.keys(COUNTRIES).filter(c=>c!==home)];
+  const chip=c=>{const d=dealerCount(s,c),mk=L&&L.mk&&L.mk[c],n=mk?(mk.sold||0)+(mk.msold||0):0;
+    return `<button class="chip ${c===c0?'on':''}" data-act="mk9" data-c="${c}">${COUNTRIES[c].name}${c===home?' · дома':''}<small>${n?`${fmtN(n)} шт. в мес.`:d?`${fmtN(d)} ${plural(d,'дилер','дилера','дилеров')}`:'нет продаж'}</small></button>`;};
+  return `<div class="subbar" id="subbar"><div class="chips sub-cc">${cs.map(chip).join('')}<button class="chip ${c0==='world'?'on':''}" data-act="mk9" data-c="world">🌍 Обзор<small>все страны</small></button></div>
+    <div class="seg3">${(c0==='world'?MK9_W:MK9_SUB).map(x=>`<button class="${mk9Key(s)===x[0]?'on':''}" data-act="mk9" data-s="${x[0]}">${x[1]}</button>`).join('')}</div></div>`;}
+function subBarHTML(s,t){if(t==='market')return mk9BarHTML(s);const D=SUB51[t];if(!D)return '';const sel=subSel(s,t);
+  return `<div class="subbar" id="subbar"><div class="chips sub-tabs">${D.bar.map(x=>`<button class="chip ${x[0]===sel?'on':''}" data-act="sub" data-t="${t}" data-k="${x[0]}">${x[1]}</button>`).join('')}</div></div>`;}
+// к какому подразделу относится карточка верхнего уровня (null — видна всегда)
+function subKeyOf(s,t,el){if(el.id==='subbar'||el.classList.contains('line-switch'))return null;
+  if(t==='market'){const c=mk9C(s),k=mk9Key(s),id=el.id;
+    if(el.classList.contains('advisor'))return k==='map'||(c===s.country&&k==='sales')?null:'__no';   // советы — в обзоре стран и на первом экране домашнего рынка
+    const v=MK9[k][id];if(v!==undefined)return v==='h'&&c!==s.country?'__no':k;
+    return Object.keys(MK9).some(x=>MK9[x][id])?'__no':(k==='misc'?null:'__no');}   // карточка без записи в таблице видна в «Обзор → Выставки и графики»
+  const D=SUB51[t];if(!D)return null;const k=D.of[el.id];if(k)return k;
+  if(el.classList.contains('advisor'))return D.def;   // советы вкладки — на её первом экране
+  return D.def;}
+function subApply(s){const V=document.getElementById('view');if(!V)return;const t=tab,on=subOn(s)&&(SUB51[t]||t==='market');document.body.classList.toggle('sub9',!!on);if(!on)return;
+  const sw=V.querySelector(':scope > .line-switch'),tmp=document.createElement('div');tmp.innerHTML=subBarHTML(s,t);const bar=tmp.firstElementChild;if(!bar)return;
+  if(sw&&sw.nextSibling)V.insertBefore(bar,sw.nextSibling);else V.insertBefore(bar,V.firstChild);
+  const sel=t==='market'?mk9Key(s):subSel(s,t);
+  [...V.children].forEach(el=>{const k=subKeyOf(s,t,el);el.hidden=k!==null&&k!==sel;});}
+// ссылка ведёт на карточку из другого подраздела — открыть его (карточки уже в документе, только спрятаны)
+function subReveal(el){try{const s=G,V=document.getElementById('view');if(!el||!V||!subOn(s))return;let top=el;while(top&&top.parentElement!==V)top=top.parentElement;if(!top||!top.hidden)return;const t=tab;
+    if(t==='market'){const id=top.id,k=['sales','net','deals'].find(k=>MK9[k][id]),w=['map','brands','misc'].find(k=>MK9[k][id]);
+      if(k&&!(w&&mk9C(s)==='world')){const h=MK9[k][id]==='h';mk9Set(s,h||mk9C(s)==='world'?s.country:mk9C(s),k);}else if(w){mk9Set(s,'world');mk9Set(s,null,w);}else{mk9Set(s,'world');mk9Set(s,null,'misc');}render();return;}
+    const D=SUB51[t];if(!D)return;const k=subKeyOf(s,t,top);if(!k)return;subSet(s,t,k);subApply0(s);}catch(e){console.warn('sub reveal',e);}}
+function subApply0(s){const V=document.getElementById('view'),b=document.getElementById('subbar');if(b)b.remove();subApply(s);}
+// найти карточку по id, открыть её подраздел и вернуть её (после перерисовки — новую)
+function subGo(id){const e=id&&document.getElementById(id);if(!e)return null;subReveal(e);return document.getElementById(id);}
 
 /* ================= SHEETS ================= */
 const sheet=document.getElementById('sheet'),sb=document.getElementById('sheetBody');
@@ -25539,7 +25632,7 @@ function openRecBuild(){const s=G;recDraft=recDraft||{eng:'one',body:'std',name:
     <button class="btn primary block" style="margin-top:10px" data-act="recStart" ${P.why?'disabled':''}>${P.why?esc(P.why):`Начать · ${money(P.cost)}`}</button>`);}
 // карточка во вкладке «Гонки» и совет помощника
 function recCardHTML(s){if(!s||s.mode==='racer'||s.y<1898)return '';const L=Object.keys(REC_CLS).filter(k=>s.y>=REC_CLS[k].y0).map(k=>{const c=recCur(s,k);return `${REC_CLS[k].ic} ${fmtN(Math.round(c.v))}${c.mine?' — <b class="good">ваш</b>':''}`;});
-  return `<section class="card"><div class="row"><div><h2>Мировые рекорды</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="recOpen">Открыть</button></div></section>`;}
+  return `<section class="card" id="sec-recs"><div class="row"><div><h2>Мировые рекорды</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="recOpen">Открыть</button></div></section>`;}
 function recAdvice(s,add){if(s.mode==='racer'||isWar(s.y,s.m,s.country))return;const D=recDriver(s);
   for(const k in REC_CLS){if(recCan(s,k))continue;const E=recEntry(s,k),cur=recCur(s,k);if(cur.mine||!E)continue;const ch=recChance(E.v,cur.v,E.rel,D.sk);if(ch<0.4)continue;
     add(38,REC_CLS[k].ic,`«${E.name}» может взять мировой рекорд: ${REC_CLS[k].n.toLowerCase()} — расчёт ${fmtN(Math.round(E.v))} против ${fmtN(Math.round(cur.v))} ${k==='h24'?'км/ч':REC_CLS[k].un}, шанс ${pct(ch,0)}.`,`Попытка · ${money(recFee(s,k))}`,()=>{recTryNow(s,k);},'race');return;}}
@@ -25658,7 +25751,7 @@ let TEAM_FREE=false;
 function teamCard(s){
   const lv=s.rdept||0,D=RDEPT[lv],N=RDEPT[lv+1],c=rdeptCost(s),own=(s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean);
   const free=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,6);
-  return `<section class="card"><div class="row"><span class="label">Команда</span><span class="pill warn">${lv}/${RDEPT.length-1}</span></div><h2 style="margin-top:2px">${esc(D.name)}</h2>
+  return `<section class="card" id="sec-team"><div class="row"><span class="label">Команда</span><span class="pill warn">${lv}/${RDEPT.length-1}</span></div><h2 style="margin-top:2px">${esc(D.name)}</h2>
     <p class="small muted" style="margin-top:4px">${D.desc}${lv?` Содержание ${money(teamUpkeep(s))} в месяц${teamUpkeep(s)>Math.round(D.up*cpi(s))?` (${(rdeptShare(lv)*100).toFixed(2).replace('.',',')} % оборота)`:''}. <button class="linkbtn small" data-act="rdeptDown">сократить отдел</button>`:''}</p>
     ${(()=>{const B=rbudOf(s),net=B.won-B.spent,P=TM_POL[tmPol(s)];return `<div class="meta" style="margin-top:8px"><div>Гонки ${s.y}: расходы<b>${money(B.spent)}</b></div><div>Призовые<b class="${B.won>0?'good':''}">${money(B.won)}</b></div><div>Итог<b class="${net>=0?'good':'bad'}">${net>=0?'+':'−'}${money(Math.abs(net))}</b></div></div>
       <p class="small muted" style="margin-top:4px">«Участвовать» у гонки: менеджер сам подбирает машины, пилотов и подготовку под лучший итог при разумных деньгах — на кнопке цена, шанс победы и приз.</p>`;})()}
@@ -25686,8 +25779,8 @@ function vRace(){
     ${dchBlock(s,y)}
     ${prevCh.map(id=>champBlock(s,id,y-1)).join('')}${dPrev}`,(ch.length?ch.map(id=>CHAMPS[id].name(y)).join(' · '):'чемпионатов марок нет')+' · личный зачёт гонщиков')}
   ${foldCard('rcal',true,`<h2>Гонки ${y} года</h2>${openR.length?'<span class="pill good">запись открыта</span>':''}`,`
-    <p class="small muted" style="margin-top:4px">Запись открывается за месяц до старта. В команде до трёх машин; каждую ведёт свой пилот — вы сами, гонщик по контракту или приглашённый на одну гонку. Во многих гонках едут и частники — любители на купленных машинах, в том числе на ваших.</p>
-    <div style="margin-top:6px">${cur.length?cur.map(r=>raceItem(r,s)).join(''):'<p class="small muted" style="padding-block:10px">В этом году больших гонок нет.</p>'}</div>`,`${cur.length} ${plural(cur.length,'гонка','гонки','гонок')}${openR.length?' · запись: '+openR.map(r=>esc(r.name)).join(', '):''}`)}
+    <div style="margin-top:6px">${cur.length?/* 0.51, этап 9: гонки с открытой записью — первыми, прошедшие — в конце: кнопка «Заявить команду» видна без прокрутки */cur.slice().sort((a,b)=>{const k=r=>openR.includes(r)?0:(s.raceDone&&s.raceDone[r.key])||r.m<s.m?2:1;return k(a)-k(b);}).map(r=>raceItem(r,s)).join(''):'<p class="small muted" style="padding-block:10px">В этом году больших гонок нет.</p>'}</div>
+    <details class="how"><summary>Как устроена запись</summary><p class="small muted" style="margin-top:6px">Запись открывается за месяц до старта. В команде до трёх машин; каждую ведёт свой пилот — вы сами, гонщик по контракту или приглашённый на одну гонку. Во многих гонках едут и частники — любители на купленных машинах, в том числе на ваших.</p></details>`,`${cur.length} ${plural(cur.length,'гонка','гонки','гонок')}${openR.length?' · запись: '+openR.map(r=>esc(r.name)).join(', '):''}`)}
   ${teamCard(s)}
   ${foldCard('trophy',false,`<h2>Трофеи</h2><span class="label">${wins} ${plural(wins,'победа','победы','побед')} · ${(s.titles||[]).length} ${plural((s.titles||[]).length,'титул','титула','титулов')}</span>`,`
     ${(s.titles||[]).length?`<div class="trophies">${s.titles.map(t=>`<span>${/^king/.test(t.id)?'👑':'🏆'} ${esc(t.name)}</span>`).join('')}</div>`:''}
@@ -32717,18 +32810,20 @@ const ACT={
   raceTo:d=>{const s=G,rc=raceByKey(d.k);tab='race';render();window.scrollTo(0,0);if(!rc)return;
     const T=(rc.y-1895)*12+rc.m,t=mi(s),open=rc.match?(t>=T-1&&t<=T):raceOpen(rc,s);
     if(open&&!s.pending.length&&!s.raceDone[rc.key]&&raceCarsFor(s,rc).length){openRaceSetup(rc.key);return;}
-    const e=document.getElementById('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
+    const e=subGo('rc-'+rc.key);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}
     if(!open)toast(`«${rc.name}»: запись откроется за месяц до старта`);},
-  tab:d=>{tab=d.t;render();const e=d.sec&&document.getElementById(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
+  sub:d=>{subSet(G,d.t,d.k);save();render();window.scrollTo(0,0);},mk9:d=>{mk9Set(G,d.c,d.s);save();render();window.scrollTo(0,0);},logMore:()=>{G.ui=G.ui||{};G.ui.logN=((G.ui.logN)||15)+200;rerender();},   // 0.51, этап 9
+  tab:d=>{tab=d.t;render();const e=d.sec&&subGo(d.sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);}else window.scrollTo(0,0);},
   // 0.39: подсказка «нужно …» ведёт к делу: вкладка → раскрыть карточку → прокрутить к строке и подсветить
-  go:d=>{if(d.t)tab=d.t;if(d.open)setOpen(d.open,true);if(d.open2)setOpen(d.open2,true);render();const e=d.id&&document.getElementById(d.id);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');setTimeout(()=>e.classList.remove('hl'),2600);}else window.scrollTo(0,0);},
+  go:d=>{if(d.t)tab=d.t;if(d.open)setOpen(d.open,true);if(d.open2)setOpen(d.open2,true);render();const e=d.id&&subGo(d.id);if(e){e.scrollIntoView({block:'center'});e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');setTimeout(()=>e.classList.remove('hl'),2600);}else window.scrollTo(0,0);},
   next:()=>doStep(),
   quarter:()=>{let ok=false;for(let i=0;i<3;i++){if(!step())break;ok=true;if(G.pending.length)break;}if(ok){save();render();afterStep();}},
   auto:()=>{if(auto){stopAuto();render();return;}auto=setInterval(()=>{if(!doStep()||G.pending.length)stopAuto();},1300);render();},
   // завод
   capAdd:d=>{if(capOrder(G,+d.n))rerender();},
   // 0.36: совет может вести к разделу: run() возвращает id раздела — открываем вкладку и прокручиваем к нему («Путь к автомобилю → Подробнее»)
-  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=document.getElementById(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
+  tipHide:d=>{const t=TIPS[+d.k];if(t){tipHideKey(G,tipKey(t),12);toast('Совет скрыт на год');rerender();}},   // 0.51, этап 9
+  tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=subGo(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
   // 0.36: дилеры — быстрый переход между странами
   dlrC:d=>{G.ui=G.ui||{};G.ui.dlrC=d.c;setOpen('net_'+d.c,true);rerender();},
   helperToggle:()=>{if(!G)return;G.helper=G.helper||{};G.helper.on=!G.helper.on;toast(G.helper.on?'Помощник управляющего включён':'Помощник выключен');save();openSettings();render();},

@@ -19,7 +19,12 @@ with sync_playwright() as p:
     def clean(): js("(()=>{for(let i=0;i<8;i++)try{closePaper();}catch(_){};try{closeSheet();}catch(_){};if(typeof SAGAP!=='undefined'&&SAGAP)try{sagaStop();}catch(_){};G.pending=[];})()")
     # 1) новая игра: путь «Мотомастерская» — свои герои
     pg.click('[data-act=newgame]');pg.wait_for_timeout(200);pg.click('[data-act=ngDir][data-v=moto]');pg.wait_for_timeout(300)
-    names=pg.eval_on_selector_all('#sheetBody .pion h3','e=>e.map(x=>x.textContent)')
+    # 0.51, этап 9: с 0.35 герои показываются по выбранной стране — собираем список по четырём странам мотогероев
+    names=[]
+    for c in ('fr','uk','de','it'):
+        pg.click('[data-act=country][data-v=%s]'%c);pg.wait_for_timeout(200)
+        names+=pg.eval_on_selector_all('#sheetBody .pion h3','e=>e.map(x=>x.textContent)')
+    pg.click('[data-act=country][data-v=de]');pg.wait_for_timeout(250)
     ok(all(any(n in x for x in names) for n in ('Альбер де Дион','Уильям Моррис','Иоганн Винкльхофер','Эдоардо Бьянки')),'мотомастерская — свои герои: '+', '.join(names))
     ok(not any('Форд' in x or 'Бенц' in x for x in names),'автомобильных героев в списке нет')
     pg.evaluate("document.querySelector('#sheetBody .pion[data-v=wanderer]').scrollIntoView({block:'center'})");pg.wait_for_timeout(150)
@@ -79,8 +84,8 @@ with sync_playwright() as p:
     # 6) контора: «как посчитано» в финансах
     js("""(()=>{AU.on.gfx='3d';G.y=1924;G.m=2;G.cash=2e6;const md=G.models[0],a=autoDesign('middle',G);Object.assign(md,{e:a.e,g:a.g,c:a.c,k:a.k,b:a.b,t:a.t,w:a.w,status:'prod',dv:undefined});
       md.price=Math.round(refPrice(md,G)/10)*10;G.cap=Math.max(G.cap,60);G.dealers.de=Math.max(G.dealers.de||0,40);
-      for(let i=0;i<3;i++){G.pending=[];step();}G.pending=[];tab='plant';setOpen('fin',true);setOpen('pl',true);render();})()""");pg.wait_for_timeout(500)
-    clean();js("render()");pg.wait_for_timeout(300)
+      for(let i=0;i<3;i++){G.pending=[];step();}G.pending=[];tab='plant';try{subSet(G,'plant','fin');}catch(_){};setOpen('fin',true);setOpen('pl',true);render();})()""");pg.wait_for_timeout(500)
+    clean();js("try{subSet(G,'plant','fin');}catch(_){};render()");pg.wait_for_timeout(300)
     el=pg.query_selector('[data-act=xadm]')
     ok(el is not None,'строка «Контора» — кнопка «как посчитано»')
     if el:
@@ -99,7 +104,7 @@ with sync_playwright() as p:
         pg.screenshot(path=out+'7c_dealers.png');js("xpopClose()")
     # 7) поглощение: модель купленной марки — в «Моделях» под её именем
     js("""(()=>{G.cash=6e7;G.y=1921;const L=(COMPS.de||[]).map((cp,i)=>({cp,i})).filter(o=>!dealBlock(G,'de',o.i)&&maStat(G,'de',o.i)).sort((a,b)=>maStat(G,'de',a.i).v-maStat(G,'de',b.i).v);
-      let done=null;for(const o of L){for(const k of [1.2,1.6,2.5]){if(G.dealNo)delete G.dealNo['de'+o.i];const r=dealDo(G,'de',o.i,'cash',k);if(r&&r.ok){done=o.cp.n;break;}}if(done)break;}window.__acq=done;G.pending=[];tab='market';setOpen('deals',true);render();})()""");pg.wait_for_timeout(500)
+      let done=null;for(const o of L){for(const k of [1.2,1.6,2.5]){if(G.dealNo)delete G.dealNo['de'+o.i];const r=dealDo(G,'de',o.i,'cash',k);if(r&&r.ok){done=o.cp.n;break;}}if(done)break;}window.__acq=done;G.pending=[];tab='market';try{mk9Set(G,'de','deals');}catch(_){};setOpen('deals',true);render();})()""");pg.wait_for_timeout(500)
     acq=js("window.__acq");t=pg.inner_text('body')
     ok(acq and ('у вас в «Моделях»' in t or 'Выпустить её модель' in t),'поглотили '+str(acq)+': в «Ваших компаниях» — её модели')
     ok(js("G.models.some(m=>m.from&&m.status==='prod')"),'её модель — в производстве, с именем марки: '+str(js("(G.models.find(m=>m.from)||{}).name")))

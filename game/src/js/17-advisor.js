@@ -76,7 +76,7 @@ function adviceList(s){
       if(bc&&bm>size*2)parts.push(`в стране «${COUNTRIES[bc].name}» покупают ${fmtD(bm)} в месяц — найдите там импортёра`);
       if(rcN)parts.push(`победа в гонке «${rcN.name}» — в эти годы о машинах узнают из гонок, и покупателей станет в 2–3 раза больше`);
       parts.push('выставка и газеты делают то же');parts.push('цена ниже на 30% — спрос почти втрое');
-      add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':null,rcN?()=>{tab='race';window.scrollTo(0,0);}:null,'market');}}
+      add(78,'🔎',`Машин пока покупают мало во всём мире: в стране «${COUNTRIES[home].name}» — ${fmtD(size)} в месяц на все марки, у вас ${fmtD(dem)}. Так было и в истории: дорог нет, мастерских нет, машина — диковинка для богатых. Что поможет: ${parts.join('; ')}.`,rcN?'К гонкам':'Понятно',rcN?()=>{tab='race';window.scrollTo(0,0);}:()=>{tipHideKey(s,'🔎|early',1200);},'market');}}
   // 0.32: мотоциклы — мотоцех, путь к автомобилю, переносы технологий
   try{motoAdvice(s,add);}catch(e){console.warn('moto advice',e);}
   // КБ
@@ -121,15 +121,15 @@ function adviceList(s){
     // за границей машины видят меньше 30% покупателей
     if(act.length){let bc=null,bI=null;Object.keys(COUNTRIES).forEach(c=>{if(c===home||!dealerCount(s,c)||warCut(s,c)||tradeBan(s,c))return;const I=reachInfo(s,c);if(I.r<0.3&&I.pot>(bI?bI.pot:0)&&I.miss>0){bc=c;bI=I;}});
       if(bc){const n=Math.max(1,Math.min(bI.miss,Math.floor(Math.max(0,s.cash-3000*cpi(s))/dealerCost(s)),Math.round(bI.need*0.1)));
-        add(44,'🌍',`${inC(bc)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:null,n>=1?()=>{buyDealers(G,bc,n);}:null,'market');}}
+        add(44,'🌍',`${inC(bc)} ваши ${waresW(s)} видят ${Math.max(1,Math.round(bI.r*100))}% покупателей. Для всей страны нужно ~${fmtN(bI.need)} дилеров (~${money(bI.cost)}); будут брать ≈ ${fmtD(bI.pot)} в месяц.${s.dpol==='low'?' При скидке дилерам 12% они уходят к конкурентам — охват падает.':''}`,n>=1&&s.cash>n*dealerCost(s)*2?`+${fmtN(n)} · ${money(n*dealerCost(s))}`:'К сети',n>=1&&s.cash>n*dealerCost(s)*2?()=>{buyDealers(G,bc,n);}:()=>{tab='market';if(typeof mk9Set==='function')mk9Set(G,bc,'net');return 'fc-dealers';}/* 0.51, этап 9: денег на дилеров пока нет — кнопка ведёт в сеть этой страны */,'market');}}
     // 0.51, этап 5: ход соперника против вашей модели — что он сделал и чем ответить (одно нажатие — к модели или в конструктор)
     {const mv=rivMoves(s).filter(n=>n.c===home&&n.w>=3&&/^(model|line|cut|fin|ad)$/.test(n.k))[0];
       if(mv){const F=firmGet(s,mv.c,mv.i),cp=(COMPS[mv.c]||[])[mv.i],g=F&&cp?firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0]:null,mine=g?act.filter(m=>!isMoto(m)&&segOf(m)===g).sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0]:null;
-        if(mine){const ans=mv.k==='model'?['Новая модель',()=>openDesigner(rivalKind(mine))]:mv.k==='cut'||mv.k==='line'?['К цене модели',()=>{tab='models';setOpen('md'+mine.id,true);}]:['Соперники',()=>openRivals(home)];
+        if(mine){const ans=mv.k==='model'?['Новая модель',()=>openDesigner(rivalKind(mine))]:mv.k==='cut'||mv.k==='line'?['К цене модели',()=>{tab='models';setOpen('md'+mine.id,true);return 'mdc'+mine.id;}]:['Соперники',()=>openRivals(home)];
           add(52,'⚔️',`${mv.t}. Это бьёт по «${mine.name}»: ${mv.k==='model'?'перевес вашей машины сократился — нужна модель лучше':mv.k==='cut'||mv.k==='line'?'у соперника машина стала дешевле — проверьте цену':mv.k==='fin'?'у соперника машину берут в рассрочку':'имя соперника стало громче'}.`,ans[0],ans[1],'models');}}}
     // модель приносит меньше, чем стоит конторе
     {let w=null;act.forEach(md=>{if(act.length<2)return;let O=null;try{O=modelOffice(md,s,priceFc(md,s,md.price));}catch(_){}if(O&&O.cost>Math.max(1,O.contrib)&&(!w||O.cost-O.contrib>w.O.cost-w.O.contrib))w={md,O};});
-      if(w)add(46,'🏢',`«${w.md.name}» приносит ${money(Math.max(0,w.O.contrib))} в месяц, а держать её в линейке стоит конторе ${money(w.O.cost)}. Снимите с производства или поднимите цену.`,'К модели',()=>{tab='models';setOpen('md'+w.md.id,true);},'models');}
+      if(w)add(46,'🏢',`«${w.md.name}» приносит ${money(Math.max(0,w.O.contrib))} в месяц, а держать её в линейке стоит конторе ${money(w.O.cost)}. Снимите с производства или поднимите цену.`,'К модели',()=>{tab='models';setOpen('md'+w.md.id,true);return 'mdc'+w.md.id;},'models');}
   }catch(e){console.warn('advice 0.34',e);}
   // технологии завода
   if(!s.techBuild){const k=TECH_ORDER.find(k=>techOpen(s,k)&&s.cash>techCost(s,k)*1.8);if(k){const nx=techNext(s,k),c=techCost(s,k);add(40,'⚙️',`Можно внедрить «${nx.name}»: ${techEffects(nx)}.`,`Внедрить · ${money(c)}`,()=>ACT.tech({k}),'plant');}}
@@ -156,8 +156,15 @@ function adviceList(s){
       add(46,'✂️',`Бюро и гоночный отдел стоят ${money(rdU+tmU)} в месяц${pct?` — ${pct} % прибыли`:' при убытке'}. Содержание растёт с оборотом фирмы: ступень можно сократить и вернуть позже.`,lab?'Сократить бюро':'Сократить отдел',()=>lab?ACT.rdDown():RACE_ACT.rdeptDown(),lab?'models':'race');}}
   // 0.39: дела авиацеха — в том же списке (одна система управления для авто, мото и аэро)
   if(airOn(s)&&typeof airAdvice==='function')try{airAdvice(s).forEach(([i,txt,b,act,k],n)=>add(80-n*6,i,txt,b,()=>{try{uiLine='air';}catch(_){}const f=ACT[act];if(f)f(act==='tab'?{t:k}:{k:String(k)});},'plant'));}catch(_){}
-  return T.sort((a,b)=>b.p-a.p);
+  // 0.51, этап 9: совет, от которого игрок отказался («✕»), год не показывается; советов без кнопки не остаётся
+  const H=s.tipHide||{},now=mi(s);
+  return T.filter(t=>!((H[tipKey(t)]||0)>now)).sort((a,b)=>b.p-a.p);
 }
+// ключ совета: значок и начало текста без чисел и названий — «тот же совет» в разные месяцы
+function tipKey(t){return t.icon==='🔎'?'🔎|early':t.icon+'|'+String(t.text).replace(/«[^»]*»/g,'«»').replace(/[0-9][0-9  .,%$]*/g,'#').slice(0,44);}
+function tipHideKey(s,k,mo){s.tipHide=s.tipHide||{};s.tipHide[k]=mi(s)+(mo||12);}
+// скрыть можно всё, кроме тревог (касса, долг, закрытие завода) и предложений, ждущих ответа
+function tipCanHide(t){return t.p<85&&t.icon!=='✉';}
 // 0.51: гонки сезона одной кнопкой — строка в «Делах»: включить, бюджет на год, что команда сделала в прошлом месяце
 function raceAutoLine(s){if(!s||s.mode==='racer'||typeof raceAutoOn!=='function')return '';let cars=0;try{cars=s.models.some(m=>m.status==='prod')&&RACES.some(r=>r.y===s.y)?1:0;}catch(_){}
   if(!cars&&!raceAutoOn(s))return '';const T=s.tmMsg&&s.tmMsg.m===mi(s)-1?s.tmMsg.list:null,on=raceAutoOn(s);
@@ -170,7 +177,7 @@ function advisorCard(s,where){
   // 0.39: «Дела» — что сделать сейчас, кнопкой к действию (одна система для авто, мото и аэро)
   return `<section class="card advisor"><div class="row"><span class="label">📋 Дела${where?'':' и советы'}</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':`<button class="linkbtn small" data-act="helperToggle">поручить рутину помощнику</button>`}</div>
     ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${XL&&!where?`<p class="small good xlmsg" style="margin-top:6px">🏭 Линии завода: ${esc(XL.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
-    ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}</div>`).join('')}
+    ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}${tipCanHide(t)?`<button class="tip-x" data-act="tipHide" data-k="${i}" aria-label="Не предлагать год" title="Не предлагать год">✕</button>`:''}</div>`).join('')}
     ${!where&&all.length>4?`<p class="small muted" style="margin-top:6px">Ещё дел: ${all.length-4}. Сначала самые важные.</p>`:''}</section>`;}
 // Помощник управляющего: каждый месяц сам делает безопасные вещи — цены, дилеры, цеха, склад, КБ, кредит
 function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models.filter(m=>m.status==='prod'),L=s.last,home=s.country,cs=creditState(s),calm=cs.k==='ok'||cs.k==='war';

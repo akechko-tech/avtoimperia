@@ -37,7 +37,7 @@ let TEAM_FREE=false;
 function teamCard(s){
   const lv=s.rdept||0,D=RDEPT[lv],N=RDEPT[lv+1],c=rdeptCost(s),own=(s.drivers||[]).map(id=>DRIVERS.find(x=>x.id===id)).filter(Boolean);
   const free=availDrivers(s).sort((a,b)=>b.sk-a.sk).slice(0,6);
-  return `<section class="card"><div class="row"><span class="label">Команда</span><span class="pill warn">${lv}/${RDEPT.length-1}</span></div><h2 style="margin-top:2px">${esc(D.name)}</h2>
+  return `<section class="card" id="sec-team"><div class="row"><span class="label">Команда</span><span class="pill warn">${lv}/${RDEPT.length-1}</span></div><h2 style="margin-top:2px">${esc(D.name)}</h2>
     <p class="small muted" style="margin-top:4px">${D.desc}${lv?` Содержание ${money(teamUpkeep(s))} в месяц${teamUpkeep(s)>Math.round(D.up*cpi(s))?` (${(rdeptShare(lv)*100).toFixed(2).replace('.',',')} % оборота)`:''}. <button class="linkbtn small" data-act="rdeptDown">сократить отдел</button>`:''}</p>
     ${(()=>{const B=rbudOf(s),net=B.won-B.spent,P=TM_POL[tmPol(s)];return `<div class="meta" style="margin-top:8px"><div>Гонки ${s.y}: расходы<b>${money(B.spent)}</b></div><div>Призовые<b class="${B.won>0?'good':''}">${money(B.won)}</b></div><div>Итог<b class="${net>=0?'good':'bad'}">${net>=0?'+':'−'}${money(Math.abs(net))}</b></div></div>
       <p class="small muted" style="margin-top:4px">«Участвовать» у гонки: менеджер сам подбирает машины, пилотов и подготовку под лучший итог при разумных деньгах — на кнопке цена, шанс победы и приз.</p>`;})()}
@@ -65,8 +65,8 @@ function vRace(){
     ${dchBlock(s,y)}
     ${prevCh.map(id=>champBlock(s,id,y-1)).join('')}${dPrev}`,(ch.length?ch.map(id=>CHAMPS[id].name(y)).join(' · '):'чемпионатов марок нет')+' · личный зачёт гонщиков')}
   ${foldCard('rcal',true,`<h2>Гонки ${y} года</h2>${openR.length?'<span class="pill good">запись открыта</span>':''}`,`
-    <p class="small muted" style="margin-top:4px">Запись открывается за месяц до старта. В команде до трёх машин; каждую ведёт свой пилот — вы сами, гонщик по контракту или приглашённый на одну гонку. Во многих гонках едут и частники — любители на купленных машинах, в том числе на ваших.</p>
-    <div style="margin-top:6px">${cur.length?cur.map(r=>raceItem(r,s)).join(''):'<p class="small muted" style="padding-block:10px">В этом году больших гонок нет.</p>'}</div>`,`${cur.length} ${plural(cur.length,'гонка','гонки','гонок')}${openR.length?' · запись: '+openR.map(r=>esc(r.name)).join(', '):''}`)}
+    <div style="margin-top:6px">${cur.length?/* 0.51, этап 9: гонки с открытой записью — первыми, прошедшие — в конце: кнопка «Заявить команду» видна без прокрутки */cur.slice().sort((a,b)=>{const k=r=>openR.includes(r)?0:(s.raceDone&&s.raceDone[r.key])||r.m<s.m?2:1;return k(a)-k(b);}).map(r=>raceItem(r,s)).join(''):'<p class="small muted" style="padding-block:10px">В этом году больших гонок нет.</p>'}</div>
+    <details class="how"><summary>Как устроена запись</summary><p class="small muted" style="margin-top:6px">Запись открывается за месяц до старта. В команде до трёх машин; каждую ведёт свой пилот — вы сами, гонщик по контракту или приглашённый на одну гонку. Во многих гонках едут и частники — любители на купленных машинах, в том числе на ваших.</p></details>`,`${cur.length} ${plural(cur.length,'гонка','гонки','гонок')}${openR.length?' · запись: '+openR.map(r=>esc(r.name)).join(', '):''}`)}
   ${teamCard(s)}
   ${foldCard('trophy',false,`<h2>Трофеи</h2><span class="label">${wins} ${plural(wins,'победа','победы','побед')} · ${(s.titles||[]).length} ${plural((s.titles||[]).length,'титул','титула','титулов')}</span>`,`
     ${(s.titles||[]).length?`<div class="trophies">${s.titles.map(t=>`<span>${/^king/.test(t.id)?'👑':'🏆'} ${esc(t.name)}</span>`).join('')}</div>`:''}

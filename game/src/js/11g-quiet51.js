@@ -36,27 +36,31 @@ function digestCard(s){const L=digestNow(s);if(!L.length)return '';const un=L.fi
   const rows=L.slice(0,12).map(d=>{const i=s.digest.indexOf(d);return `<button class="chip" style="width:100%;margin-top:6px;text-align:left${d.read?';opacity:.65':''}" data-act="digestRead" data-i="${i}"><small>${esc(d.kicker||'Новости')} · ${MONTHS[((d.t%12)+12)%12]} ${1895+Math.floor(d.t/12)}</small>${esc(d.title)}${d.deck?`<small>${esc(d.deck)}</small>`:''}</button>`;}).join('');
   return foldCard('digest',un>0,`<h2>📰 Заметки месяца</h2>`,`<p class="small muted">То, ради чего игру останавливать не стоило. Нажмите — откроется заметка целиком.</p>${rows}`,`${L.length} ${plural(L.length,'заметка','заметки','заметок')}${un?` · новых ${un}`:''}`);}
 /* ---------- предложения: не окно посреди хода, а строка в советах с кнопкой «Открыть» ----------
-   Ждёт до конца месяца; не открыли — считается отказом (тем же ответом «нет», что был в окне). */
+   Ждёт до конца месяца. Не открыли — перед новым месяцем спросят окном: молчаливого отказа нет.
+   0.51, этап 9: первая версия (этап 8) считала молчание отказом. Замер на шести партиях бота, который в советы не заглядывает:
+   четыре разорились до 1915 года (у бота, отвечающего на предложения, — ни одной). Решение за игрока больше не принимается. */
 function offersOn(){return (typeof OFFERS_INBOX==='undefined'||OFFERS_INBOX!==false)&&!(typeof G!=='undefined'&&G&&G.mode==='racer');}
 function offerAdd(s,P){s.offers=s.offers||[];P.t=mi(s);s.offers.push(P);if(typeof pendingToasts!=='undefined')pendingToasts.push('✉ '+(P.kicker?P.kicker+': ':'')+P.title);}
 function offerOpen(i){const s=G,P=(s.offers||[])[+i];if(!P)return;s.offers.splice(+i,1);s.pending.unshift(P);render();}
-function offersExpire(s){const L=s.offers||[];if(!L.length)return;s.offers=[];L.forEach(P=>{const no=offerNo(P);if(!no)return;try{s.pending.unshift(P);addLog(`Предложение осталось без ответа: ${P.title}.`,'hist');resolve(no);}catch(e){console.warn('offer expire',e);const k=s.pending.indexOf(P);if(k>=0)s.pending.splice(k,1);}});}
-function offerAdvice(s,add){(s.offers||[]).forEach((P,i)=>add(97,'✉',`${P.kicker}: ${P.title}${P.deck?' — '+P.deck:''}. Ответ — до конца месяца; без ответа это отказ.`,'Открыть',()=>offerOpen(i)));}
+function offersExpire(s){const L=s.offers||[];if(!L.length)return;s.offers=[];L.forEach(P=>{P.last=1;P.deck=(P.deck?P.deck+' · ':'')+'ответ нужен сейчас';s.pending.push(P);});}
+function offerAdvice(s,add){(s.offers||[]).forEach((P,i)=>add(97,'✉',`${P.kicker}: ${P.title}${P.deck?' — '+P.deck:''}. Ответить можно сейчас; иначе спросят перед новым месяцем.`,'Открыть',()=>offerOpen(i)));}
 /* ---------- выставки: кто решает ---------- */
-const SHOW_POL={auto:'решает управляющий',home:'спрашивать о своих, на чужие не ездить',ask:'спрашивать о каждой',none:'не ездить'};
+const SHOW_POL={auto:'решает управляющий',home:'спрашивать там, где вы продаёте; на остальные не ездить',ask:'спрашивать о каждой',none:'не ездить'};
 /* по умолчанию: с помощником — решает он; без него — спрашивают о выставках своей страны, на чужие не ездят (деньги без спроса
    не тратятся). В прогонах и у ботов (ящик предложений выключен) — как раньше: спрашивают о каждой */
 function showPol(s){return SHOW_POL[s.showPol]?s.showPol:!offersOn()?'ask':(typeof helperOn==='function'&&helperOn(s))||(typeof DIF==='function'&&DIF().simple)?'auto':'home';}
-/* стенд по средствам: павильон — на главной выставке, если он дешевле 3 % кассы; большой — до 2 %; малый — до 2 %; иначе не едем */
+// Управляющий ездит на выставки по правилу, проверенному ботом «в стиле автора»: малый стенд — когда он не дороже восьмой части
+// кассы, большой — двенадцатой, павильон на всемирной выставке — двадцать пятой. 0.51, этап 9: первое правило («не дороже 2–3 % кассы»)
+// оставляло молодую фирму без выставок: из шести партий бота пять разорились до 1915 года (с правилом бота — ни одной).
 function showAutoTier(s,sh){const H=SHOW_HOST[sh.h],cash=Math.max(0,s.cash),home=H.c===s.country,has=home||dealerCount(s,H.c)>0||tradeOk(s,H.c);if(!has)return 0;
-  const c=t=>standCost(sh,s,t);if(H.w>=3&&c(3)<=cash*0.03)return 3;if(c(2)<=cash*0.02)return 2;if(c(1)<=cash*0.02)return 1;return 0;}
+  const c=t=>standCost(sh,s,t);if(H.w>=3&&cash>c(3)*25)return 3;if(cash>c(2)*12)return 2;if(cash>c(1)*8)return 1;return 0;}
 function tradeOk(s,c){try{return !tradeBan(s,c);}catch(_){return true;}}
 /* true — приглашение решено без игрока */
-function showAutoInvite(s,sh){const pol=showPol(s),home=SHOW_HOST[sh.h].c===s.country;if(pol==='ask'||(pol==='home'&&home))return false;
+function showAutoInvite(s,sh){const pol=showPol(s),hc=SHOW_HOST[sh.h].c,home=hc===s.country||dealerCount(s,hc)>0;/* «свои» — там, где фирма продаёт: дома и в странах с её дилерами */if(pol==='ask'||(pol==='home'&&home))return false;
   const tier=pol==='auto'?showAutoTier(s,sh):0;s.showNow=sh.id;showBook(s,'show'+tier);
   if(tier)addLog(`Выставки ведёт управляющий: ${showName(sh)} — ${SHOW_TIER[tier].n.toLowerCase()}.`,'hist');return true;}
 function showPolCard(s){if(!s.shows||!Object.keys(s.shows).length)return '';const p=showPol(s);
-  return `<section class="card" id="showpol"><div class="label">Выставки — ${esc(SHOW_POL[p])}</div><div class="chips" style="margin-top:6px">${Object.keys(SHOW_POL).map(k=>`<button class="chip${p===k?' on':''}" data-act="showPol" data-v="${k}">${esc(SHOW_POL[k][0].toUpperCase()+SHOW_POL[k].slice(1))}</button>`).join('')}</div><p class="small muted" style="margin-top:6px">Управляющий берёт стенд по средствам (до 2–3 % кассы) и пишет об итогах в заметках месяца; газета выходит, только если стенд взял золото.</p></section>`;}
+  return `<section class="card" id="showpol"><div class="label">Выставки — ${esc(SHOW_POL[p])}</div><div class="chips" style="margin-top:6px">${Object.keys(SHOW_POL).map(k=>`<button class="chip${p===k?' on':''}" data-act="showPol" data-v="${k}">${esc(SHOW_POL[k][0].toUpperCase()+SHOW_POL[k].slice(1))}</button>`).join('')}</div><p class="small muted" style="margin-top:6px">Управляющий берёт стенд по средствам: малый — если он не дороже восьмой части кассы, большой — двенадцатой, павильон на всемирной выставке — двадцать пятой. Об итогах пишет в заметках месяца; газета выходит, только если стенд взял золото.</p></section>`;}
 /* ================= ГЛАВНОЕ — КРУПНО =================
    Автор: важное написано мелким текстом, приходится искать глазами, что хорошего или плохого произошло.
    Под заголовком — вывод крупно и в цвете (зелёный — хорошо, красный — плохо); если заметка зовёт на вкладку — кнопка туда. */

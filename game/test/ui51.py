@@ -142,7 +142,7 @@ with sync_playwright() as p:
     js("closeSheet();G.models=G.models.filter(m=>m.id<9000);G.xl=[];G.xlMsg=null;render();")
     # этап 4в: опыт и «Своя разработка» — строка в карточке КБ, воронка, проект; свой авиамотор
     r = js("""(()=>{let e='';try{G.pending=[];G.y=1916;G.cash=Math.max(G.cash,5e6);G.rd.lvl=8;G.rd.projs=[];G.xp={eng:52,alloy:31,aero:27,brake:38,susp:22,mass:44};G.lines=G.lines||{};G.lines.car=true;G.world=G.world||worldInit(G);G.world.my.r12=3e7;
-      tab='models';setOpen('rdcard',true);render();}catch(x){e=String(x&&x.stack||x).slice(0,300);}
+      tab='models';subSet(G,'models','rd');setOpen('rdcard',true);render();}catch(x){e=String(x&&x.stack||x).slice(0,300);}
       const c=document.getElementById('fc-rdcard');return {e,kb:c?c.textContent:'',btn:!!document.querySelector('[data-act=ownOpen]')};})()""")
     ok(not r['e'] and 'Опыт:' in r['kb'] and r['btn'], 'карточка КБ: строка опыта и кнопка «Своя разработка» %s' % r['e'])
     pg.click('[data-act=ownOpen]'); pg.wait_for_timeout(300)
@@ -180,7 +180,7 @@ with sync_playwright() as p:
     ok(r['n'] == 1 and 'особый дивиденд' in r['t'] and 'sh:pay:' in r['k'] and 'sh:no:' in r['k'], 'событие «Совладельцы требуют особый дивиденд» — две кнопки')
     js("resolve(G.pending[0].choices[1][1]);G.pending=[];G.partners=[];G.shSuit=null;BOTS_OFF=true;render();")
     # этап 6: мировые рекорды и рекордный образец; испытания ведомств
-    js("G.pending=[];try{closePaper();}catch(_){};G.cash=9e7;tab='race';render();"); pg.wait_for_timeout(400)
+    js("G.pending=[];try{closePaper();}catch(_){};G.cash=9e7;tab='race';subSet(G,'race','rec');render();"); pg.wait_for_timeout(400)
     ok(js("!!document.querySelector('[data-act=recOpen]')"), 'во вкладке «Гонки» — карточка «Мировые рекорды»')
     pg.click('[data-act=recOpen]'); pg.wait_for_timeout(300)
     t = js("document.getElementById('sheetBody').textContent")
@@ -193,7 +193,7 @@ with sync_playwright() as p:
         js("document.getElementById('recname').value='Стрела'"); pg.click('#sheetBody [data-act=recStart]'); pg.wait_for_timeout(400)
         ok(js("G.rd.projs.some(p=>p.kind==='rec'&&p.name==='Стрела')"), '«Начать» — проект «Стрела» в КБ')
         js("G.rd.projs=G.rd.projs.filter(p=>p.kind!=='rec');")
-    js("""(()=>{closeSheet();G.y=1925;G.m=2;const md={...rivalDesign('armored',1925),id:9301,name:'Броневик',status:'prod',launched:mi(G)-5,stock:0,made:10,vol:5,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)/10)*10;G.models.push(md);tab='models';render();})()"""); pg.wait_for_timeout(500)
+    js("""(()=>{closeSheet();G.y=1925;G.m=2;const md={...rivalDesign('armored',1925),id:9301,name:'Броневик',status:'prod',launched:mi(G)-5,stock:0,made:10,vol:5,paint:'#333',eq:[]};md.price=Math.round(refPrice(md,G)/10)*10;G.models.push(md);tab='models';subSet(G,'models','list');render();})()"""); pg.wait_for_timeout(500)
     ok(js("!!document.querySelector('[data-act=trOpen]')") and js("/На полигон/.test(trialModelLine(G.models.find(m=>m.id===9301),G))"), '«Модели»: строка «Испытания ведомств»; в карточке броневика — кнопка «На полигон»')
     pg.click('[data-act=trOpen]'); pg.wait_for_timeout(300)
     t = js("document.getElementById('sheetBody').textContent")

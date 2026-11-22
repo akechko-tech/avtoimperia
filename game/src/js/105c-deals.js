@@ -281,7 +281,7 @@ function dealsCard(s){maMigrate(s);const sel=(s.ui&&s.ui.dealC)||s.country,cs=Ob
   const body=`<p class="small muted" style="margin-top:2px">Купите долю в марке-конкуренте — она останется отдельной маркой со своими директорами, а вам пойдут дивиденды. Или поглотите её целиком: её заводы, дилеры, права на модели и технологии станут вашими, а марка исчезнет. Владельцы отвечают сразу.</p>
     ${auc?`<p class="small warn" style="margin-top:6px">Идут торги: «${esc(auc.nm)}» (${COUNTRIES[auc.c].name}) — до ${MONTHS[(auc.until)%12]}. <button class="btn sm" data-act="aucOpen">Ставка</button></p>`:''}
     ${holdingsHTML(s)}
-    <div class="chips sm" style="margin-top:10px">${cs.map(c=>`<button class="chip ${sel===c?'on':''}" data-act="dealC" data-v="${c}">${COUNTRIES[c].name}</button>`).join('')}</div>
+    <div class="chips sm inner-cc" style="margin-top:10px">${cs.map(c=>`<button class="chip ${sel===c?'on':''}" data-act="dealC" data-v="${c}">${COUNTRIES[c].name}</button>`).join('')}</div>
     <div style="margin-top:6px">${rows||'<p class="small muted">Здесь пока нет марок.</p>'}</div>${typeof mdealsHTML==='function'?mdealsHTML(s,sel):''}
     ${typeof bbHTML==='function'?bbHTML(s):''}`;
   return foldCard('deals',false,`<h2>Сделки</h2><span class="label">доли, поглощения, торги</span>`,body,(own.length?`ваши компании: ${own.map(h=>esc(h.nm||h.n)+(h.mode==='sub'?` ${Math.round(h.st*100)}%`:'')).join(', ')}`:'купить долю, поглотить конкурента, торги после банкротств')+(typeof bbShare==='function'&&bbShare(s)>0?` · совладельцы ${Math.round(bbShare(s)*100)}% — можно выкупить`:''));}
