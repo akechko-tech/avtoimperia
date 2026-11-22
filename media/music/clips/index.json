@@ -259,19 +259,6 @@
   "d": 246.8,
   "size": 2348739
  },
- "vienna_woods": {
-  "key": "File:PDP-CH - Mitglieder des Orchesters der Staatsoper Berlin - Hans Knappertsbusch - Tales from the Vienna Woods - Part 2 - Johann Strauss II - Hmv-eh120-4-040638.flac|start|250.3|0|v2",
-  "title": "File:PDP-CH - Mitglieder des Orchesters der Staatsoper Berlin - Hans Knappertsbusch - Tales from the Vienna Woods - Part 2 - Johann Strauss II - Hmv-eh120-4-040638.flac",
-  "page": "https://commons.wikimedia.org/wiki/File:PDP-CH_-_Mitglieder_des_Orchesters_der_Staatsoper_Berlin_-_Hans_Knappertsbusch_-_Tales_from_the_Vienna_Woods_-_Part_2_-_Johann_Strauss_II_-_Hmv-eh120-4-040638.flac",
-  "lic": "Public domain",
-  "by": "",
-  "cap": "Штраус. «Сказки Венского леса» — Берлинская опера, Кнаппертсбуш",
-  "st": "waltz",
-  "y": 1868,
-  "mood": "calm",
-  "d": 250.3,
-  "size": 2395940
- },
  "maple_leaf": {
   "key": "File:Maple Leaf Rag - Strolling Strings - United States Air Force Band.mp3|start|125.2|0|v2",
   "title": "File:Maple Leaf Rag - Strolling Strings - United States Air Force Band.mp3",
@@ -3221,22 +3208,6 @@
   "size": 1431656,
   "perf": "",
   "c": "fr",
-  "cue": 0
- },
- "alte_kameraden": {
-  "key": "File:CC0-CH - Anker-Orchester - Alte Kameraden - Carl Teike - Anker-5387-10815.flac|start|210|0|v2|h1|k64",
-  "title": "File:CC0-CH - Anker-Orchester - Alte Kameraden - Carl Teike - Anker-5387-10815.flac",
-  "page": "https://commons.wikimedia.org/wiki/File:CC0-CH_-_Anker-Orchester_-_Alte_Kameraden_-_Carl_Teike_-_Anker-5387-10815.flac",
-  "lic": "Public domain",
-  "by": "",
-  "cap": "Тайке. «Старые товарищи», марш — оркестр Anker",
-  "st": "march",
-  "y": 1912,
-  "mood": "triumph",
-  "d": 204.5,
-  "size": 1681492,
-  "perf": "",
-  "c": "de",
   "cue": 0
  },
  "kleine_gasse": {

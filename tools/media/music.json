@@ -320,22 +320,6 @@
   "from": "start"
  },
  {
-  "id": "vienna_woods",
-  "title": "File:PDP-CH - Mitglieder des Orchesters der Staatsoper Berlin - Hans Knappertsbusch - Tales from the Vienna Woods - Part 2 - Johann Strauss II - Hmv-eh120-4-040638.flac",
-  "st": "waltz",
-  "y": 1868,
-  "mood": "calm",
-  "cap": "Штраус. «Сказки Венского леса» — Берлинская опера, Кнаппертсбуш",
-  "t": 0,
-  "d": 250.3,
-  "lic": "Public domain",
-  "by": "",
-  "page": "https://commons.wikimedia.org/wiki/File:PDP-CH_-_Mitglieder_des_Orchesters_der_Staatsoper_Berlin_-_Hans_Knappertsbusch_-_Tales_from_the_Vienna_Woods_-_Part_2_-_Johann_Strauss_II_-_Hmv-eh120-4-040638.flac",
-  "kbps": 4931,
-  "dur": 250.3,
-  "from": "start"
- },
- {
   "id": "maple_leaf",
   "title": "File:Maple Leaf Rag - Strolling Strings - United States Air Force Band.mp3",
   "st": "rag",
@@ -4004,20 +3988,6 @@
   "c": "fr"
  },
  {
-  "id": "alte_kameraden",
-  "title": "File:CC0-CH - Anker-Orchester - Alte Kameraden - Carl Teike - Anker-5387-10815.flac",
-  "st": "march",
-  "y": 1912,
-  "mood": "triumph",
-  "cap": "Тайке. «Старые товарищи», марш — оркестр Anker",
-  "t": 0,
-  "d": 210,
-  "from": "start",
-  "hist": 1,
-  "kb": 64,
-  "c": "de"
- },
- {
   "id": "kleine_gasse",
   "title": "File:Gramophone-14678-b45141.ogg",
   "st": "song",
@@ -4733,5 +4703,30 @@
   "c": "ru",
   "hist": 1,
   "kb": 64
+ },
+ {
+  "id": "roses_south",
+  "title": "File:Strauss, Rosen aus dem Süden.ogg",
+  "st": "waltz",
+  "y": 1880,
+  "mood": "calm",
+  "cap": "Штраус. «Розы с юга»",
+  "t": 0,
+  "d": 200,
+  "from": "start",
+  "c": "de",
+  "perf": "исполнитель не указан"
+ },
+ {
+  "id": "merry_wives",
+  "title": "File:Overture to The Merry Wives of Windsor - U.S. Marine Band.ogg",
+  "st": "classic",
+  "y": 1849,
+  "mood": "triumph",
+  "cap": "Николаи. «Виндзорские проказницы», увертюра",
+  "t": 0,
+  "d": 200,
+  "from": "end",
+  "c": "de"
  }
 ]
