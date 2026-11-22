@@ -4041,5 +4041,37 @@
   "perf": "",
   "c": "ru",
   "cue": 0
+ },
+ "roses_south": {
+  "key": "File:Strauss, Rosen aus dem Süden.ogg|start|200|0|v2",
+  "title": "File:Strauss, Rosen aus dem Süden.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:Strauss,_Rosen_aus_dem_S%C3%BCden.ogg",
+  "lic": "CC0",
+  "by": "Unknown author Unknown author",
+  "cap": "Штраус. «Розы с юга»",
+  "st": "waltz",
+  "y": 1880,
+  "mood": "calm",
+  "d": 200,
+  "size": 1841750,
+  "perf": "исполнитель не указан",
+  "c": "de",
+  "cue": 0
+ },
+ "merry_wives": {
+  "key": "File:Overture to The Merry Wives of Windsor - U.S. Marine Band.ogg|end|200|0|v2",
+  "title": "File:Overture to The Merry Wives of Windsor - U.S. Marine Band.ogg",
+  "page": "https://commons.wikimedia.org/wiki/File:Overture_to_The_Merry_Wives_of_Windsor_-_U.S._Marine_Band.ogg",
+  "lic": "Public domain",
+  "by": "Composition: Otto Nicolai Performance: United States Marine Band",
+  "cap": "Николаи. «Виндзорские проказницы», увертюра",
+  "st": "classic",
+  "y": 1849,
+  "mood": "triumph",
+  "d": 200,
+  "size": 1826565,
+  "perf": "",
+  "c": "de",
+  "cue": 0
  }
 }
