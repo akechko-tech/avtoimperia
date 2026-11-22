@@ -66,10 +66,12 @@ function openKindStep(grp){const s=G,X2=X;
     const price=tr?PT*payK({b:body||(BODIES.find(b=>kindBodyOk(kind,b))||{}).id}):prefP(kind,c,s);
     const st=open?(tr?`≈ ${fmtD(pool)} в мес.`:'')+` · ${money(price)}`:`в истории — с ${y} года`;
     return `<button class="krow${open?'':' off'}" data-act="kkind" data-v="${kind}"${body?` data-b="${body}"`:''}${open?'':' data-lock="1"'}><b>${esc(name)}</b><small>${esc(sub)}</small><em>${st}</em></button>`;};
+  // 0.60: вид, до которого по истории больше двадцати лет, в списке не показывается (микроавтобус в 1905 году никому не нужен даже серой строкой)
+  const vis=k=>kindYear(k)<=s.y+20;
   let rows;
-  if(grp==='cargo')rows=BODIES.filter(b=>b.truck&&(bodyKind(b)==='van'||bodyKind(b)==='truck')).sort((a,b)=>(a.pay||0)-(b.pay||0)).map(b=>row(bodyKind(b),b.id,b.name,b.id==='b6'?'развозка по району: лавки, булочные':b.pay<=1.5?'по городу: мебель, уголь, стройматериалы':b.pay<=3?'между городами':'тяжёлые грузы: уголь, лес, стройки')).join('');
-  else rows=K.kinds.map(k=>row(k,null,KIND_NAME[k]||SEG[k].name,kindWho(k)||({people:'рабочие, фермеры, служащие — главное цена и расход',middle:'врачи, инженеры, лавочники — комфорт и надёжность',lux:'богачи — лучшее во всём',sport:'спортсмены — скорость и тормоза',moto:'одиночка: дёшево и быстро',moside:'с коляской: семья и ремесло'})[k]||'')).join('');
-  const lock=K.kinds.some(k=>!kindOpen(k,s))||grp==='cargo'&&BODIES.some(b=>b.truck&&bodyKind(b)==='truck'&&b.y>s.y);
+  if(grp==='cargo')rows=BODIES.filter(b=>b.truck&&(bodyKind(b)==='van'||bodyKind(b)==='truck')).sort((a,b)=>(a.pay||0)-(b.pay||0)).map(b=>row(bodyKind(b),b.id,b.name,b.id==='b6'?'развозка по району: лавки, булочные':b.pay<=1.5?'по городу: мебель, уголь, стройматериалы':b.pay<=3?'между городами':'тяжёлые грузы: уголь, лес, стройки')).join('')+K.kinds.filter(k=>k!=='van'&&k!=='truck'&&vis(k)).map(k=>row(k,null,KIND_NAME[k],kindWho(k)||'')).join('');
+  else rows=K.kinds.filter(vis).map(k=>row(k,null,KIND_NAME[k]||SEG[k].name,kindWho(k)||({people:'рабочие, фермеры, служащие — главное цена и расход',middle:'врачи, инженеры, лавочники — комфорт и надёжность',lux:'богачи — лучшее во всём',sport:'спортсмены — скорость и тормоза',moto:'одиночка: дёшево и быстро',moside:'с коляской: семья и ремесло'})[k]||'')).join('');
+  const lock=K.kinds.filter(vis).some(k=>!kindOpen(k,s))||grp==='cargo'&&BODIES.some(b=>b.truck&&bodyKind(b)==='truck'&&b.y>s.y);
   openSheet(`<div class="row"><h2>${K.ic} ${K.n}</h2>${X2}</div><div class="row"><p class="small muted">Шаг 2 из 3 · назначение</p><button class="btn sm" data-act="kgrp" data-v="">← Вид техники</button></div><div class="krows">${rows}</div>
     ${lock?`<p class="small muted" style="margin-top:10px">Серым — то, чего в этом году ещё не строят. Построить раньше истории можно: кузов-прототип заказывают в КБ, и каждый год опережения стоит в 1,6 раза дороже. <button class="btn sm" data-act="rdPick">В КБ</button></p>`:''}`);}
 // 0.30: новинки оснащения в конструкторе — стартер, электросвет, ветровое стекло… (свои — из КБ, остальные — у поставщиков)

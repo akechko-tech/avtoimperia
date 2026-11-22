@@ -76,5 +76,28 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
       if(y>=1930)for(const g of ALLSEG){if(!(tgt[g]>=2000))continue;n++;const d=Math.abs(sold[g]/tgt[g]-1);if(d>0.05)over++;if(d>worst){worst=d;wl=c+' '+y+' '+g;}}}}
   console.log('   мир без игрока, 1930–1959: '+n+' пар «страна–год–класс», вне допуска 5 % — '+over+', худшая — '+wl+', '+(worst*100).toFixed(1)+' %');
   CK(n>900&&over===0,'без игрока продажи 1930–1959 годов по странам и классам совпадают с историей в пределах 5 %: проверено '+n+' пар «страна–год–класс», вне допуска '+over+', худшая '+wl+' '+(worst*100).toFixed(1)+' %');}
+/* ================= этап 3: техника 1930–1960 ================= */
+/* ---------- 11. новые детали ---------- */
+{const NEW=ALL_PARTS().filter(p=>p.y>=1930&&p.y<1960&&/^[egkcbw][0-9]+$/.test(p.id)),E=id=>byId(ENGINES,id);
+  CK(NEW.length===37&&NEW.every(p=>p.note&&p.c>0&&p.q>0&&p.name),'деталей 1930–1959 годов — 37: у каждой год, цена, сложность и справка');
+  CK(E('e16').y===1932&&E('e16').hp===65&&E('e15').y===1930&&E('e15').hp===185&&E('e18').y===1936&&E('e18').diesel&&E('e23').y===1949&&E('e23').hp===135&&E('e25').y===1951&&E('e26').y===1955,'моторы по источникам: Ford V-8 (1932, 65 л.с.), Cadillac V-16 (1930), дизель Mercedes-Benz (1936), Oldsmobile Rocket (1949, 135 л.с.), Chrysler FirePower (1951), Chevrolet (1955)');
+  CK(byId(GEARBOX,'g8').y===1939&&byId(GEARBOX,'g9').y===1948&&byId(BRAKES,'k7').y===1953&&byId(CHASSIS,'c8').y===1934&&byId(CHASSIS,'c12').y===1955&&byId(CHASSIS,'c13').y===1959&&byId(TYRES,'w12').y===1948&&byId(BODIES,'b32').y===1948,'автомат (1939), гидротрансформатор (1948), диски (1953), несущий кузов (1934), гидропневматика (1955), поперечный мотор (1959), радиальная шина и понтонный кузов (1948)');
+  const s0={y:1929,m:0,country:'us',rd:{lvl:9},own:{},pw:{}};let none=true;try{none=!unlockedP(ENGINES,s0).some(p=>p.y>=1930);}catch(e){}CK(none,'в 1929 году деталей тридцатых в каталоге нет');}
+/* ---------- 12. эталоны соперников и новые виды ---------- */
+{const bad=[];for(const k in RIVAL_CAR)RIVAL_CAR[k].forEach(r=>{if(r[0]<1930)return;for(const pk of PART_KEYS){const x=byId(PART_CATS.find(c=>c.k===pk).arr(),r[2][pk]);if(!x||x.y>r[0])bad.push(k+' '+r[0]+' '+pk);}if(overpower({...r[2],t:'t0',ref:1}))bad.push(k+' '+r[0]+' мотор сильнее рамы');});
+  CK(!bad.length,'эталоны соперников после 1929 года: детали существуют в свой год, мотор по силам раме'+(bad.length?' — '+bad.join('; '):''));
+  CK(rivalCar('people',1933)[1]==='Ford V-8'&&rivalCar('people',1956)[1]==='Chevrolet 1955 года'&&rivalCar('lux',1950)[1]==='Cadillac 1949 года'&&rivalCar('sport',1949)[1]==='Jaguar XK120'&&rivalCar('people',1929)[1].startsWith('Ford Model A'),'эталон народной машины: 1933 — Ford V-8, 1956 — Chevrolet; люкс 1950 — Cadillac; спорт 1949 — Jaguar XK120; 1929 год не тронут');
+  CK(Object.keys(RIVAL_CAR).every(k=>k==='moto'||k==='moside'||RIVAL_CAR[k][RIVAL_CAR[k].length-1][0]>=1941),'у каждого вида техники есть эталон сороковых или пятидесятых');
+  const NK=['jeep','mtank','offroad','minibus'];CK(NK.every(k=>BODIES.some(b=>b.kind===k)&&RIVAL_CAR[k]&&CHAR_W[k]&&KIND_NAME[k]&&kindSeg(k)==='truck'&&TUSE.some(u=>TRUCK_USE[u].kinds.includes(k))&&Math.abs(Object.values(CHAR_W[k]).reduce((a,b)=>a+b,0)-1)<1e-9),'четыре новых вида: армейский вездеход, средний танк, вездеход, микроавтобус — кузов, эталон, веса черт, работа');
+  const w={y:1943,m:5,country:'us',models:[],dealers:{},pw:{},rep:50,diff:'normal'},p={y:1935,m:5,country:'us',models:[],dealers:{},pw:{},rep:50,diff:'normal'};G=w;
+  const j=jobOwnPool('jeep','us',w)*12,t=jobOwnPool('mtank','us',w)*12;CK(j>120000&&j<220000&&t>15000&&t<40000&&jobOwnPool('jeep','us',p)===0&&jobOwnPool('mtank','us',p)===0,'армия США, 1943: вездеходов около '+Math.round(j/1000)+' тыс. в год, средних танков около '+Math.round(t/1000)+' тыс.; в 1935 году таких закупок нет');
+  const q={y:1955,m:5,country:'us',models:[],dealers:{},pw:{},rep:50,diff:'normal'};G=q;const u=truckUseSh('us',q),civ=TUSE.filter(x=>!TRUCK_USE[x].own).reduce((a,x)=>a+(u[x]||0),0);
+  CK(u.offroad>0.01&&u.minibus>0.01&&Math.abs(civ-1)<1e-9,'1955 год: вездеходу и микроавтобусу есть работа, а доли рынка коммерческих машин в сумме — единица');
+  const o={y:1925,m:5,country:'us',models:[],dealers:{},pw:{},rep:50,diff:'normal'};G=o;const u25=truckUseSh('us',o);CK(!(u25.offroad>0)&&!(u25.minibus>0),'в 1925 году этих работ нет');}
+/* ---------- 13. конструктор не показывает то, до чего по истории далеко ---------- */
+{seed(63);newGame('ford','us','','normal','Техника');const s=G;s.pending=[];let html='';const os=openSheet;openSheet=h=>{html=h;};
+  s.y=1925;s.m=5;openKindStep('bus');const n25=(html.match(/class="krow[ "]/g)||[]).length;s.y=1940;openKindStep('bus');const n40=(html.match(/class="krow[ "]/g)||[]).length,l40=(html.match(/data-lock="1"/g)||[]).length;
+  s.y=1951;openKindStep('bus');const l51=(html.match(/data-lock="1"/g)||[]).length;s.y=1950;openKindStep('cargo');const off=/Вездеход/.test(html);openSheet=os;
+  CK(n25===3&&n40===4&&l40===1&&l51===0&&off,'автобусы: в 1925 году три назначения, в 1940-м видна серая строка микроавтобуса («в истории — с 1950 года»), в 1951-м он открыт; вездеход — среди грузовых');}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);
