@@ -259,7 +259,7 @@ function remoteOk(){return !AU.remoteOff||Date.now()-AU.remoteOff>600000;}
 // 0.30: страна записи (для плейлиста «Эпоха»: свои песни — чаще)
 const MUS_C=(()=>{const o={},put=(c,ids)=>ids.split(' ').forEach(k=>o[k]=c);
   put('ru','kalinka ukhnem kurgan slavianka ruslan bumblebee swan_waltz flowers_waltz czardas steppes russian_rag');
-  put('de','radetzky gypsy_baron marek_weber vienna_woods tritsch thunder_polka blue_danube kaiserwalzer rixdorf_1914 post_horn poet_peasant vienna_day light_cavalry mondnacht gladiators florentiner hungarian1 hungarian4 hd5_nikisch brahms3');
+  put('de','radetzky gypsy_baron marek_weber roses_south merry_wives tritsch thunder_polka blue_danube kaiserwalzer rixdorf_1914 post_horn poet_peasant vienna_day light_cavalry mondnacht gladiators florentiner hungarian1 hungarian4 hd5_nikisch brahms3');
   put('fr','cancan genevieve princesses danse_slave clair_de_lune golliwog gymnopedie marionette_1903');
   put('it','core_ngrato tell_finale');
   put('uk','tipperary colonel_bogey pomp mogul warriors_dance jupiter mercury first_suite faded_picture any_old_time');

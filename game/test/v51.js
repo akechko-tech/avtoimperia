@@ -1175,6 +1175,10 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   MUS_HIST=[];localStorage.removeItem('avt-mushist');AU_LOG.length=0;
   // фонотека: исправленная подпись
   CK(typeof MUS_TO==='object'&&MUS_TO.tsar_hymn===1917&&MUS_TO.worker_marseillaise===1918,'гимны 1917 года звучат только в своё время');
+  // фонотека: две записи убраны по решению автора, вместо них — другие (22.11)
+  CK(!('alte_kameraden' in MUS_C)&&!('vienna_woods' in MUS_C)&&MUS_C.roses_south==='de'&&MUS_C.merry_wives==='de','«Старые товарищи» и «Сказки Венского леса» убраны из немецкого набора, вместо них — «Розы с юга» и «Виндзорские проказницы»');
+  {const a1=awardMusicOf('de',1925),a0=awardMusicOf('de',1910),all=JSON.stringify([a0,a1,awardMusicOf('at',1925)]);
+    CK(a1.rec[0]==='merry_wives'&&a0.rec[0]==='merry_wives'&&a0.tune==='hymn_uk'&&!/kameraden|vienna_woods/.test(all),'на немецком пьедестале — увертюра Николаи, убранных записей нет');}
 }
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

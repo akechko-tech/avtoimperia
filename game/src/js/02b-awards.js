@@ -132,7 +132,8 @@ function awardMusicOf(c,y){c=c||'fr';
   const M={fr:{tune:'hymn_fr',rec:['sambre_meuse','marche_lorraine'],n:'«Марсельеза»'},mc:{tune:'hymn_fr',rec:['sambre_meuse'],n:'«Марсельеза»'},
     uk:{tune:'hymn_uk',rec:['pomp','first_suite'],n:'«God Save the King»'},ie:y<1922?{tune:'hymn_uk',rec:['pomp'],n:'«God Save the King»'}:{rec:['pomp'],n:'марш'},
     us:{tune:'hymn_us',rec:['stars_stripes','washington_post'],n:'«The Star-Spangled Banner»'},
-    de:y<1919?{tune:'hymn_uk',rec:['alte_kameraden'],n:'«Heil dir im Siegerkranz»'}:{rec:['alte_kameraden'],n:'«Старые товарищи»'},
+    // 0.51, этап 10: марш «Старые товарищи» убран из фонотеки по решению автора; на церемонии — финал увертюры Николаи
+    de:y<1919?{tune:'hymn_uk',rec:['merry_wives'],n:'«Heil dir im Siegerkranz»'}:{rec:['merry_wives'],n:'увертюра «Виндзорские проказницы»'},
     at:{rec:['radetzky','kaiserwalzer'],n:'Марш Радецкого'},ch:{tune:'hymn_uk',rec:[],n:'«Rufst du, mein Vaterland»'},
     it:{rec:['aida_marina_1906','tell_finale'],n:'Триумфальный марш из «Аиды»'},ly:{rec:['aida_marina_1906'],n:'Триумфальный марш из «Аиды»'},
     ru:y<1917.2?{rec:['tsar_hymn'],n:'«Боже, Царя храни»'}:y<1918.5?{rec:['free_russia_hymn'],n:'«Гимн свободной России»'}:{rec:['slavianka'],n:'«Прощание славянки»'},

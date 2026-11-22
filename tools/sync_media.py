@@ -88,7 +88,10 @@ def voice():
     except Exception as e: print('nav voice pack:', e)
 
 # подписи, где исполнитель уже указан отдельно (автор записи со свободной лицензией — в «by»)
-MUSIC_CAP = {'man_i_love': 'Гершвин. «Человек, которого я люблю», 1924'}
+MUSIC_CAP = {'man_i_love': 'Гершвин. «Человек, которого я люблю», 1924',
+             'dvuglav_march': 'Й. Ф. Вагнер. «Под двуглавым орлом», марш — русский военный оркестр'}
+# 0.51, этап 10: на Викискладе автором марша записан Рихард Вагнер; марш написал Йозеф Франц Вагнер
+MUSIC_BY = {'dvuglav_march': 'Й. Ф. Вагнер; русский военный оркестр'}
 
 def music():
     """0.19: оркестровые записи (aac 72 кбит/с; с 0.27 — хиты эпохи: записи тех лет моно 64, современные 112) → docs/music + index.js (window.MUSIC_INDEX)."""
@@ -117,6 +120,7 @@ def music():
         if m.get('c'): idx[cid]['c'] = m['c']  # 0.30: страна записи
         if m.get('cue'): idx[cid]['cue'] = 1  # 0.30: фанфары — не в плейлист
         if cid in MUSIC_CAP: idx[cid]['cap'] = MUSIC_CAP[cid]
+        if cid in MUSIC_BY: idx[cid]['by'] = MUSIC_BY[cid]
     # 0.22: свои мелодии игры в оркестровке (задание anthem) — own_*.m4a; в APK они вшиты (играют и без сети)
     try: own = json.loads(git('show', 'origin/media:media/music/own/index.json'))
     except Exception: own = {}

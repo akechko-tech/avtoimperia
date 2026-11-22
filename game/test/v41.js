@@ -18,7 +18,7 @@ let bad=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)bad++;};
   ok(gb.kind==='statue'&&gb.c==='us'&&/Беннетт/.test(gb.by),'Кубок Гордона Беннетта (Таунус 1904) у американца: статуэтка, музыка страны победителя — США');
   ok(ind.kind==='wreath'&&/Фишер/.test(ind.by),'Индианаполис: венок, Карл Фишер');
   const de1=awardMusicOf('de',1907),de2=awardMusicOf('de',1926),ru1=awardMusicOf('ru',1913),ru2=awardMusicOf('ru',1917.5),ru3=awardMusicOf('ru',1925);
-  ok(de1.tune==='hymn_uk'&&/Siegerkranz/.test(de1.n)&&!de2.tune&&/товарищи/.test(de2.n),'Германия: до 1919 — «Heil dir im Siegerkranz» (мелодия английского гимна), после — марш «Старые товарищи»');
+  ok(de1.tune==='hymn_uk'&&/Siegerkranz/.test(de1.n)&&!de2.tune&&/Виндзорск/.test(de2.n)&&de2.rec[0]==='merry_wives','Германия: до 1919 — «Heil dir im Siegerkranz» (мелодия английского гимна), после — увертюра «Виндзорские проказницы» (0.51: марш «Старые товарищи» убран)');
   ok(ru1.rec[0]==='tsar_hymn'&&ru2.rec[0]==='free_russia_hymn'&&ru3.rec[0]==='slavianka','Россия: «Боже, Царя храни» → «Гимн свободной России» (1917) → «Прощание славянки»');
   const sch=airAwardOf(AIR_EV.find(e=>e.key==='schneider-1913'),s),ch=airAwardOf(AIR_EV.find(e=>e.key==='channel-1909'),s),ort=airAwardOf(AIR_EV.find(e=>e.key==='orteig-1927'),s);
   ok(sch.kind==='statue'&&/Шнейдер/.test(sch.by)&&/Нортклифф/.test(ch.by)&&/Ортейг/.test(ort.by)&&ort.music.tune==='hymn_us','небо: Кубок Шнейдера — статуэтка от Шнейдера; «Дейли Мейл» — Нортклифф; приз Ортейга — Ортейг, гимн США');
