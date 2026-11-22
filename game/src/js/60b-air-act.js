@@ -24,6 +24,7 @@ Object.assign(ACT,{
   airPlan:d=>{const s=G,md=s.air.models.find(m=>m.id===+d.k);if(!md)return;const cur=md.plan==='auto'?Math.round((md.fc||0)*1.05):+md.plan,st=Math.max(1,Math.round(Math.max(cur,4)*0.15));md.plan=Math.max(0,cur+st*(+d.d));rerender();},
   airPlanAuto:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(md){md.plan='auto';rerender();}},
   airOff:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(!md)return;if(!confirmOnce('airOff'+md.id,'Нажмите ещё раз: снять с производства'))return;md.status=md.stock>0?'sale':'off';G.air.orders=G.air.orders.filter(o=>o.md!==md.id||o.left<=0);addLog(`«${md.name}» снят с производства${md.stock>0?': остаток распродаётся со скидкой':''}.`);rerender();},
+  airDrop:d=>{const md=G.air.models.find(m=>m.id===+d.k);if(!md)return;if(!confirmOnce('airDrop'+md.id,'Нажмите ещё раз: '+airDropLabel(md).toLowerCase()))return;if(airDrop(G,md)){save();rerender();}},
   airHire:d=>{if(airHire(G,d.k))rerender();},
   airFire:d=>{if(!confirmOnce('airFire'+d.k,'Нажмите ещё раз: уволить'))return;airFire(G,d.k);rerender();},
   frGo:d=>{FRS=null;openFront(d.k);},

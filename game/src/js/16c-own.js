@@ -192,19 +192,41 @@ function aeBuild(s,sp){const T1=AE_TYPE[sp.type],b=aeBase(s);if(!T1||!b)return n
   let kg=hp*sw*T1.w*(1.4-0.4*sA),rel=clamp((b.rel+0.01*up)*(0.87+0.13*sE),0.4,Math.min(0.96,rl+0.03)),sf=sfc*(1.2-0.2*sE),c=hp*med*(1.15-0.25*sM)/(tabAt(CPI,t)/tabAt(CPI,Math.max(1895,Math.floor(t))));
   const G1=AE_GOAL[sp.goal],S=OWN_GS[clamp(sp.gl||1,1,3)];if(G1){if(G1.kg)kg*=1+G1.kg*S;if(G1.hp)hp*=1+G1.hp*S;if(G1.rel)rel=clamp(rel*(1+G1.rel*S),0.4,0.96);if(G1.sfc)sf*=1+G1.sfc*S;if(G1.c)c*=1+G1.c*S;}
   const x={own:1,k:'ae',type:sp.type,name:sp.name||'',hp:Math.round(hp),kg:Math.round(kg),cool:T1.cool,rel:+rel.toFixed(3),sfc:+sf.toFixed(3),c:Math.round(c/10)*10,cty:s.country,base:b.id,goal:sp.goal,gl:sp.gl||1};
-  // год по истории: когда каталог дошёл до такой удельной мощности и до такой мощности
-  let yh=1905;[e=>e.hp/e.kg,e=>e.hp].forEach(f=>{const v=f(x),L=AIR_ENG.filter(e=>!e.own&&!e.race).map(e=>({y:e.y,v:f(e)})).sort((a,b)=>a.y-b.y);let best=-1,yr=null;for(const o of L){best=Math.max(best,o.v);if(best>=v*0.995){yr=o.y;break;}}
-    if(yr==null){const last=L[L.length-1].y,f0=L.filter(o=>o.y<=last-10).reduce((a,o)=>Math.max(a,o.v),-1),g=f0>0&&best>f0?clamp(Math.pow(best/f0,1/10)-1,0.01,0.08):0.03;yr=last+Math.ceil(Math.log(v/best)/Math.log(1+g));}yh=Math.max(yh,yr);});
-  x.yh=yh;x.y=Math.max(Math.floor(t),yh);return x;}
-function aePreview(s,sp){const x=aeBuild(s,sp);if(!x)return null;const t=tNow(s),yrs=Math.max(0,x.yh-s.y),need=Math.max(6,Math.round(AE_NEED*(1+0.2*OWN_GS[clamp(sp.gl||1,1,3)])*aheadTimeK(yrs)));
+  x.yh=aeYh(x);x.y=Math.max(Math.floor(t),x.yh);return x;}
+// год по истории: когда каталог дошёл до такой удельной мощности и до такой мощности
+function aeYh(x){let yh=1905;[e=>e.hp/e.kg,e=>e.hp].forEach(f=>{const v=f(x),L=AIR_ENG.filter(e=>!e.own&&!e.race).map(e=>({y:e.y,v:f(e)})).sort((a,b)=>a.y-b.y);let best=-1,yr=null;for(const o of L){best=Math.max(best,o.v);if(best>=v*0.995){yr=o.y;break;}}
+    if(yr==null){const last=L[L.length-1].y,f0=L.filter(o=>o.y<=last-10).reduce((a,o)=>Math.max(a,o.v),-1),g=f0>0&&best>f0?clamp(Math.pow(best/f0,1/10)-1,0.01,0.08):0.03;yr=last+Math.ceil(Math.log(v/best)/Math.log(1+g));}yh=Math.max(yh,yr);});return yh;}
+/* 0.60, правка автора 23 ноября: «авиамоторы — почему нельзя их дорабатывать, улучшать? Поменяй».
+   Доводка — тот же мотор (как у узлов автомобиля, этап 4в 0.51): имя, патент, продажи и аэропланы остаются, числа меняются на шаг
+   к выбранной цели от НЫНЕШНИХ чисел мотора, растёт номер доводки. Проект вдвое короче и дешевле нового мотора; год по истории
+   считается заново — мотор, ушедший вперёд истории, дорожает и упирается в тот же предел эпохи (OWN_LIMIT лет).
+   «Дешевле» не опускает цену ниже половины цены первого образца. */
+const AE_REF=0.5;
+function aeIntoOf(s,sp){return sp&&sp.into?(s.aeng||[]).find(x=>x.id===sp.into)||null:null;}
+function aeIntoBusy(s,id){return rdActive(s).some(p=>p.kind==='aeng'&&p.sp&&p.sp.into===id);}
+function aeRefineBuild(s,o,sp){const G1=AE_GOAL[sp.goal],S=OWN_GS[clamp(sp.gl||1,1,3)];if(!o||!G1)return null;let hp=o.hp,kg=o.kg,rel=o.rel,sf=o.sfc,c=o.c;const c0=o.c0||o.c;
+  if(G1.kg)kg*=1+G1.kg*S;if(G1.hp){hp*=1+G1.hp*S;kg*=1+0.25*G1.hp*S;/* форсировка того же мотора прибавляет и вес: четверть от прибавки мощности */}if(G1.rel)rel=clamp(rel*(1+G1.rel*S),0.4,0.96);if(G1.sfc)sf*=1+G1.sfc*S;if(G1.c)c=Math.max(c0*0.5,c*(1+G1.c*S));
+  const x={...o,hp:Math.round(hp),kg:Math.round(kg),rel:+rel.toFixed(3),sfc:+sf.toFixed(3),c:Math.round(c/10)*10,c0,goal:sp.goal,gl:sp.gl||1};x.yh=Math.max(o.yh||1905,aeYh(x));return x;}
+function aeRefPreview(s,sp){const o=aeIntoOf(s,sp),x=aeRefineBuild(s,o,sp);if(!x)return null;const t=tNow(s),yrs=Math.max(0,x.yh-s.y),need=Math.max(4,Math.round(AE_NEED*AE_REF*(1+0.2*OWN_GS[clamp(sp.gl||1,1,3)])*aheadTimeK(yrs)));
+  const pj={kind:'aeng',id:'aeng',ck:'e',cat:'Авиамотор',name:o.name,need,yrs,pc:airEngCost(x,t,s)*AE_PC*AE_REF,sp:{type:o.type,goal:sp.goal,gl:sp.gl||1,name:o.name,into:o.id}},cost=ownRdCost(pj,s);let why='';
+  const same=sp.goal==='rel'?x.rel<=o.rel:sp.goal==='cheap'?x.c>=o.c:(x.hp===o.hp&&x.kg===o.kg);
+  if(!AE_GOAL[sp.goal])why='Выберите цель';else if(aeIntoBusy(s,o.id))why='Этот мотор уже дорабатывают';else if(same)why=sp.goal==='rel'?'Надёжнее этот мотор уже не сделать':sp.goal==='cheap'?'Дешевле этот мотор уже не сделать':'Доводка ничего не изменит';
+  else if(yrs>OWN_LIMIT)why=`Предел эпохи: такой мотор история освоит только в ${x.yh} году`;
+  else if(rdActive(s).length>=rdSlots(s))why='В КБ нет свободного места для проекта';else if(s.cash<cost)why='Не хватает денег';
+  return {x,o,into:o,best:o,yrs,need,cost,pj,why,price:airEngCost(x,t,s),bestPrice:airEngCost(o,t,s),months:Math.max(1,Math.ceil(need/Math.max(0.01,rdTotal(s)/(rdActive(s).length+1)))),rework:protoRisk({kind:'aeng',yrs}),base:null};}
+function aeRefineDone(s,pj){const o=aeIntoOf(s,pj.sp),x=aeRefineBuild(s,o,pj.sp);if(!o||!x){addLog(`КБ не смогло закончить доводку «${pj.name}».`,'bad');return;}const was={hp:o.hp,kg:o.kg,rel:o.rel,c:o.c};
+  ['hp','kg','rel','sfc','c','c0','goal','gl','yh'].forEach(f=>{o[f]=x[f];});o.rev=(o.rev||1)+1;o.revY=s.y;
+  o.note=`${o.note||''} Доводка ${s.y} года: цель — ${AE_GOAL[x.goal].n.toLowerCase()}; ${o.hp} л.с., ${o.kg} кг.`.trim();ownSync(s);xpAdd(s,'eng',2);
+  addLog(`КБ закончило доводку авиамотора: ${o.name} — ${was.hp}→${o.hp} л.с., ${was.kg}→${o.kg} кг, доводка №${o.rev-1}; мотор тот же.`,'good');pendingToasts.push('✈ Доводка: '+o.name);}
+function aePreview(s,sp){if(sp&&sp.into)return aeRefPreview(s,sp);const x=aeBuild(s,sp);if(!x)return null;const t=tNow(s),yrs=Math.max(0,x.yh-s.y),need=Math.max(6,Math.round(AE_NEED*(1+0.2*OWN_GS[clamp(sp.gl||1,1,3)])*aheadTimeK(yrs)));
   const pj={kind:'aeng',id:'aeng',ck:'e',cat:'Авиамотор',name:sp.name||'',need,yrs,pc:airEngCost(x,t,s)*AE_PC,sp:{type:sp.type,goal:sp.goal,gl:sp.gl||1,name:sp.name||''}},cost=ownRdCost(pj,s);
   const P=aePeers(t).filter(e=>airPartOk(s,e,'e')),band=P.filter(e=>e.hp>=x.hp*0.6&&e.hp<=x.hp*1.6),best=(band.length?band:P).reduce((a,e)=>!a||e.hp/e.kg>a.hp/a.kg?e:a,null);let why='';
   if(!aeCan(s))why='Авиамотор — дело марки с автомобилями или мотоциклами';else if(!aeTypeOk(s,sp.type))why=`Такой мотор — с ${AE_TYPE[sp.type].y} года или с опытом «Моторы» ${AE_TYPE[sp.type].xp+20}`;
   else if(!AE_GOAL[sp.goal])why='Выберите цель';else if(yrs>OWN_LIMIT)why=`Предел эпохи: такой мотор история освоит только в ${x.yh} году`;
   else if(rdActive(s).length>=rdSlots(s))why='В КБ нет свободного места для проекта';else if(s.cash<cost)why='Не хватает денег';
   return {x,best,yrs,need,cost,pj,why,price:airEngCost(x,t,s),bestPrice:best?airEngCost(best,t,s):0,months:Math.max(1,Math.ceil(need/Math.max(0.01,rdTotal(s)/(rdActive(s).length+1)))),rework:protoRisk({kind:'aeng',yrs}),base:aeBase(s)};}
-function aeStart(s,sp){const P=aePreview(s,sp);if(!P||P.why)return false;P.pj.name=(sp.name||'').trim()||`${s.company}, ${P.x.hp} л.с.`.slice(0,40);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='aeng'+s.ownN;return rdBegin(s,P.pj);}
-function aeDone(s,pj){const x=aeBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}».`,'bad');return;}s.aeng=s.aeng||[];s.ownId=(s.ownId||0)+1;x.id='xa'+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};x.sale=1;
+function aeStart(s,sp){const P=aePreview(s,sp);if(!P||P.why)return false;if(P.into){s.ownN=(s.ownN||0)+1;P.pj.id='aeng'+s.ownN;return rdBegin(s,P.pj);}P.pj.name=(sp.name||'').trim()||`${s.company}, ${P.x.hp} л.с.`.slice(0,40);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='aeng'+s.ownN;return rdBegin(s,P.pj);}
+function aeDone(s,pj){if(pj.sp&&pj.sp.into){aeRefineDone(s,pj);return;}const x=aeBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}».`,'bad');return;}s.aeng=s.aeng||[];s.ownId=(s.ownId||0)+1;x.id='xa'+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};x.sale=1;
   const T1=AE_TYPE[x.type],yrs=Math.max(0,x.yh-s.y);x.note=`Свой авиамотор ${s.y} года: ${T1.n.toLowerCase()}, ${x.hp} л.с., ${x.kg} кг.`;s.aeng.push(x);ownSync(s);xpAdd(s,'eng',4);xpAdd(s,'alloy',2);
   addLog(`КБ закончило авиамотор: ${x.name} — ${x.hp} л.с., ${x.kg} кг${yrs>0?`, на ${yrs} ${plural(yrs,'год','года','лет')} раньше истории`:''}.`,'good');pendingToasts.push('✈ Авиамотор: '+x.name);
   if(yrs>0)try{recordFirst(s,'own_'+x.id,x.name,x.yh,'отрасль пришла к такому мотору',null,{noArt:1});}catch(_){}
@@ -297,7 +319,22 @@ function openOwn(k,moto){const s=G;ownEnsure(s);if(!k){ownDraft=null;const mv=li
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="ownStart" ${!P||P.why?'disabled':''}>${into?'Доработать':'Начать'} · ${P?money(P.cost):''}</button>`);}
 let aeDraft=null;
-function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_TYPE).filter(k=>aeTypeOk(s,k));aeDraft={type:ks[ks.length-1]||'inline',goal:'power',gl:1,name:''};}const d=aeDraft,P=aePreview(s,d),x=P&&P.x,b=P&&P.best;
+function openAengRefine(){const s=G,d=aeDraft,o=aeIntoOf(s,d);if(!o){aeDraft=null;openOwn();return;}const P=aePreview(s,d),x=P&&P.x;
+  const chip=(on,act,attrs,txt)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs}>${txt}</button>`,num=(a,b,f,up)=>`<td class="num muted">${f(a)}</td><td class="num ${a===b?'':(b>a)===up?'good':'bad'}"><b>${f(b)}</b></td>`,f0=v=>fmtN(v),f2=v=>v.toFixed(2).replace('.',',');
+  openSheet(`<div class="row"><h2>✈ Доводка авиамотора</h2>${X}</div>
+    <p class="small" style="margin-top:6px">Мотор: <b>${esc(o.name)}</b>${o.rev>1?` — доводка №${o.rev-1}`:''}. Мотор тот же: название, патент, продажи и ваши аэропланы остаются, меняются числа — сразу во всех аэропланах с этим мотором.</p>
+    <div class="label" style="margin-top:12px">Цель</div><div class="chips">${Object.keys(AE_GOAL).map(g=>chip(d.goal===g,'aeGoal',`data-g="${g}"`,AE_GOAL[g].n)).join('')}</div>
+    <div class="chips">${[1,2,3].map(n=>chip(d.gl===n,'aeGl',`data-n="${n}"`,['Шаг','Два шага','Три шага'][n-1])).join('')}</div>
+    ${x?`<div class="card" style="margin-top:12px;background:var(--panel2)"><div class="label">Что получится</div>
+      <table class="pl" style="margin-top:8px"><tr><th></th><th class="n">сейчас</th><th class="n">станет</th></tr>
+      <tr><td>мощность, л.с.</td>${num(o.hp,x.hp,f0,true)}</tr><tr><td>вес, кг</td>${num(o.kg,x.kg,f0,false)}</tr>
+      <tr><td>л.с. на кг</td>${num(o.hp/o.kg,x.hp/x.kg,f2,true)}</tr><tr><td>надёжность</td>${num(o.rel,x.rel,f2,true)}</tr>
+      <tr><td>цена мотора</td>${num(P.bestPrice,P.price,v=>money(v),false)}</tr></table>
+      <p class="small" style="margin-top:8px">Год по истории: <b class="num">${x.yh}</b>${P.yrs>0?` <span class="warn">· на ${P.yrs} ${plural(P.yrs,'год','года','лет')} раньше: проект дороже в ${aheadCostK(P.yrs).toFixed(1).replace('.',',')} раза</span>`:' <span class="muted">· не опережает историю</span>'}</p>
+      <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки ${Math.round(P.rework*100)}% · доводка вдвое короче и дешевле нового мотора</p></div>`:''}
+    ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
+    <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Доработать · ${P?money(P.cost):''}</button>`);}
+function openAeng(){const s=G;ownEnsure(s);if(aeDraft&&aeDraft.into){openAengRefine();return;}if(!aeDraft){const ks=Object.keys(AE_TYPE).filter(k=>aeTypeOk(s,k));aeDraft={type:ks[ks.length-1]||'inline',goal:'power',gl:1,name:''};}const d=aeDraft,P=aePreview(s,d),x=P&&P.x,b=P&&P.best;
   const chip=(on,act,attrs,txt,dis)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs} ${dis?'disabled':''}>${txt}</button>`,C=x?aeSaleCalc(s,{...x,made:{y:s.y-2,m:s.m}}):null;
   openSheet(`<div class="row"><h2>✈ Свой авиамотор</h2>${X}</div>
     <p class="small muted" style="margin-top:6px">Основа — ваш самый сильный мотор: ${esc(P&&P.base?P.base.name:'—')}${P&&P.base&&upgL(P.base.id)?' ★'+upgL(P.base.id):''}. Чем больше опыта в моторах и сплавах, тем легче и надёжнее выйдет авиамотор.</p>
@@ -317,7 +354,7 @@ function openAeng(){const s=G;ownEnsure(s);if(!aeDraft){const ks=Object.keys(AE_
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
 function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null,busy=!ae&&ownIntoBusy(s,x.id);
   return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
-    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p>${ae?'':`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
+    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p>${ae?`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="aeRefine" data-id="${x.id}" ${aeIntoBusy(s,x.id)?'disabled':''}>${aeIntoBusy(s,x.id)?'Дорабатывается…':'Доработать'}</button><span class="small muted">тот же мотор станет лучше во всех ваших аэропланах</span></div>`:`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
 function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}
 function ownXpHTML(md,s){if(!md||!s||!(s.custom||[]).length)return '';const L=(s.custom||[]).filter(x=>md[x.k]===x.id).map(x=>({x,G:ownGain(md,s,x)})).filter(o=>o.G);if(!L.length)return '';

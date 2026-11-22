@@ -202,6 +202,11 @@ function chalAccept(s,C){
   return false;}
 /* ---------- месячный учёт: открытие матча, неявка, итоги продаж и пробега ---------- */
 function chalMonth(s){const C=s.chal;if(!C||!C.acc)return;const t=mi(s);
+  /* 0.60, правка автора 23 ноября: «помощник долго показывает старую информацию» — принятый вызов на гонке закрывался только итогом
+     самой гонки (chalRace); если машину не выставили, вызов оставался навсегда, и строка «Miller: Гран-при … в октябре 1927» висела
+     в июне 1928-го. Теперь гонка прошла без вашей машины — пари проиграно неявкой; гонку отменила война или вызов завис со старых
+     сохранений (гонка была больше двух месяцев назад) — пари снимается без денег. */
+  if(C.type==='race'){const rc=RACES.find(r=>r.key===C.rk),T=rc?(rc.y-1895)*12+rc.m:-1;if(!rc||t>T)raceChalForfeit(s,rc,t-T);return;}
   if(C.type==='sales'&&C.mon){if(t>=C.end)chalSalesMon(s);return;}
   if(C.type==='trial'){if(t>=C.end)trialResolve(s);return;}
   if(C.type==='eleg'){if(t>=C.end)elegResolve(s);return;}if(C.type==='exped'){if(t>=C.end)expedResolve(s);return;}if(C.type==='mrec'){if(t>=C.end)mrecResolve(s);return;}
@@ -240,6 +245,10 @@ function matchField(rc,s,taken){const v=rc.rv||{},y=rc.y,t=RACE_TEAMS.find(x=>x.
     color:y>=1903&&COUNTRIES[t.c]?COUNTRIES[t.c].race:'#3a2a1c',pw:Math.pow(t.str||0.9,1.6)*boost,relK:Math.pow(t.str||0.9,0.6),tc:t.c}];}
 // машина соперника для карточки: мощность и скорость с поправкой на силу команды
 function matchRivalStats(rc){const v=rc.rv||{},st=carStats(aiCarMd(rc.y,v.n),aiPrep(rc),rc.y),pw=Math.pow(v.str||0.9,1.6)*DIF().race;return {hp:Math.round(st.hp*pw),kmh:Math.round(st.vmax*3.6*Math.cbrt(pw))};}
+function raceChalForfeit(s,rc,late){const C=s.chal;s.chal=null;let war=false;try{war=!!(rc&&raceWarBlocked(rc,s));}catch(_){}
+  if(!rc||war||late>2){addLog(`Пари с ${C.mq}${rc?` на гонке «${rc.name}»`:''} снято: ${war?'гонку отменила война':'срок давно вышел'}. Деньги остаются при вас.`);return 'void';}
+  s.cash-=C.stake;s.rep=clamp(s.rep-2,0,100);addLog(`Вы приняли вызов ${C.mq}, но не выставили машину: «${rc.name}». Пари проиграно неявкой (−${money(C.stake)}).`,'bad');
+  try{duelOutcome(s,C,false,{forfeit:1});}catch(e){console.warn('duel',e);}return 'forfeit';}
 function matchForfeit(s){const C=s.chal;s.chal=null;s.cash-=C.stake;s.rep=clamp(s.rep-3,0,100);
   addLog(`Вы приняли вызов ${C.mq}, но не приехали: ${C.rc.name}. Пари проиграно (−${money(C.stake)}), газеты смеются.`,'bad');try{duelOutcome(s,C,false,{forfeit:1});}catch(e){console.warn('duel',e);}}
 function matchResults(rc,res,mode,info){const s=G;if(!s)return;info=info||{};const k=rc.km*1000/Math.max(1,info.len||rc.km*1000);

@@ -121,26 +121,22 @@ with sync_playwright() as p:
     ok(not r['hid'] and 'Соперники' in r['txt'] and 'Их ход' in r['txt'] and r['n'] >= 1 and 'Проба' in r['txt'] and 'Готовит перестройку завода на поток' in r['txt'] and 'undefined' not in r['txt'] and 'NaN' not in r['txt'], 'экран «Соперники» одним нажатием: ход месяца и %s карточек фирм' % r['n'])
     ok('Цена: −10% к обычной' in r['txt'].replace('\u2212', '−') and 'ответ' in r['txt'], 'карточка фирмы: цена −10 %, модель-ответ, программа')
     js("closeSheet()")
-    # этап 4б: свои линии — строка «Где собирать» и «Иначе» в конструкторе, «Самая прибыльная», строки в «Заводе» и «Делах»
-    r = js("""(()=>{let e='';try{G.tech=G.tech||{};G.tech.line=2;G.cap=Math.max(G.cap,3000);G.cash=Math.max(G.cash,3e7);G.lines=G.lines||{};G.lines.car=true;G.xl=[];G.xlV=1;
+    # 0.60 (правка автора 23 ноября): своих линий под модели больше нет — ни в «Заводе», ни в «Делах», ни в конструкторе;
+    # линия из сохранения 0.51 возвращает места заводу; «Самая прибыльная» работает как раньше
+    r = js("""(()=>{let e='';try{G.tech=G.tech||{};G.tech.line=2;G.cap=Math.max(G.cap,3000);G.cash=Math.max(G.cash,3e7);G.lines=G.lines||{};G.lines.car=true;
       G.models=G.models.filter(m=>m.id<9000);[['people',2500],['middle',300],['lux',20]].forEach(([k,v],i)=>{const d=autoDesign(k,G);const m={...d,id:9000+i,name:'Л'+k,paint:'#8a1c1c',plan:'auto',status:'prod',launched:mi(G)-30,stock:0,backlog:0,made:5000,vol:v,fc:v,lastMade:v,totalSold:0,lastSold:0,lastDem:0};m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);});
-      const C=G.models.find(m=>m.id===9002),L=xlAdopt(G,60,C.id,'');L.src='own';G.xlMsg={m:mi(G),list:['«Ллюкс» — на свою линию: $90 тыс., окупится за 1,2 года']};
-      tab='plant';render();}catch(x){e=String(x&&x.stack||x).slice(0,300);}
-      return {e,plant:document.querySelector('main').textContent};})()""")
-    ok(not r['e'] and 'Свои линии под модели' in r['plant'] and 'Ллюкс' in r['plant'], '«Завод»: строка «Свои линии под модели» %s' % r['e'])
-    ok('Линии завода:' in r['plant'] and 'на свою линию' in r['plant'], '«Дела»: отчёт помощника о линиях строкой')
+      const c0=G.cap;G.xl=[{id:1,md:9002,cap:60,val:9e4,at:0,src:'own'}];G.xlMsg={m:mi(G),list:['x']};linesMonth(G,{});
+      tab='plant';render();return {e,plant:document.querySelector('main').textContent,back:G.cap-c0,xl:!!G.xl};}catch(x){e=String(x&&x.stack||x).slice(0,300);}
+      return {e,plant:'',back:0,xl:true};})()""")
+    ok(not r['e'] and 'Свои линии под модели' not in r['plant'] and 'Линии завода:' not in r['plant'] and r['back'] == 60 and not r['xl'], '«Завод» и «Дела»: о линиях ни слова; линия из сохранения 0.51 вернула заводу %s мест %s' % (r['back'], r['e']))
     js("openDesigner('sport')"); pg.wait_for_timeout(300)
     r = js("({txt:document.getElementById('sheetBody').textContent,btn:(document.querySelector('#sheetBody [data-act=dauto]')||{}).textContent||'',dxl:!!document.querySelector('#sheetBody [data-act=dxl]')})")
-    ok('Где собирать:' in r['txt'] and r['dxl'], 'конструктор: строка «Где собирать» и кнопка «Иначе»')
+    ok('Где собирать:' not in r['txt'] and not r['dxl'], 'конструктор: строки «Где собирать» и кнопки «Иначе» нет')
     ok(r['btn'] == 'Самая прибыльная', 'кнопка подбора говорит, что ищет: «%s»' % r['btn'])
-    w0 = js("(document.querySelector('#sheetBody [data-act=dxl]').parentElement.textContent)")
-    pg.click('#sheetBody [data-act=dxl]'); pg.wait_for_timeout(300)
-    w1 = js("(document.querySelector('#sheetBody [data-act=dxl]').parentElement.textContent)")
-    ok(w0 != w1 and 'по вашему решению' in w1, '«Иначе» — одно нажатие меняет решение: %s → %s' % (w0[:60], w1[:60]))
     pg.click('#sheetBody [data-act=dcopy]'); pg.wait_for_timeout(200); pg.click('#sheetBody [data-act=dauto]'); pg.wait_for_timeout(500)
     t = js("(document.querySelector('#sheetBody .dnote')||{}).textContent||''")
     ok(t.startswith('Самая прибыльная:') and ('прибыль в месяц' in t or 'менять нечего' in t) and 'NaN' not in t and 'undefined' not in t, 'строка под кнопками: %s' % t[:150])
-    js("closeSheet();G.models=G.models.filter(m=>m.id<9000);G.xl=[];G.xlMsg=null;render();")
+    js("closeSheet();G.models=G.models.filter(m=>m.id<9000);render();")
     # этап 4в: опыт и «Своя разработка» — строка в карточке КБ, воронка, проект; свой авиамотор
     r = js("""(()=>{let e='';try{G.pending=[];G.y=1916;G.cash=Math.max(G.cash,5e6);G.rd.lvl=8;G.rd.projs=[];G.xp={eng:52,alloy:31,aero:27,brake:38,susp:22,mass:44};G.lines=G.lines||{};G.lines.car=true;G.world=G.world||worldInit(G);G.world.my.r12=3e7;
       tab='models';subSet(G,'models','rd');setOpen('rdcard',true);render();}catch(x){e=String(x&&x.stack||x).slice(0,300);}

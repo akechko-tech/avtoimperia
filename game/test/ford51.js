@@ -54,7 +54,7 @@ function newModel(kind){let md=autoDesign(kind,G,null,process.env.NOCAPD?null:{c
   const dc=devCost(md,G),need=dc*1.3+tc;if(G.cash<need&&loanOpen(G)){const n=Math.min(Math.max(0,maxLoan(G)-G.loan),Math.ceil((need*1.1-G.cash)/1000)*1000);if(n>0){G.loan+=n;G.cash+=n;}}
   if(G.cash<need)return null;G.cash-=dc;
   const m={...md,id:G.nextId++,name:'Модель '+G.nextId,paint:'#333',plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
-  m.price=Math.round(refPrice(m,G)/10)*10;try{xlAtStart(G,m);}catch(_){}G.models.push(m);lastDesign=mi(G);return m;}   // линия — по решению помощника, как при запуске из конструктора
+  m.price=Math.round(refPrice(m,G)/10)*10;G.models.push(m);lastDesign=mi(G);return m;}   // линия — по решению помощника, как при запуске из конструктора
 // гоночная машина стилем автора: лучшая рама, самый сильный мотор, который она выдержит (и прототипы КБ), лучшие шины, тормоза, коробка, спортивный кузов
 let lastRaceCar=-99;
 function raceDesign(){let md=autoDesign('sport',G);const U=k=>unlockedP(PART_CATS.find(c=>c.k===k).arr(),G,false),rk=t=>{try{return rankOf(t,2,G.y);}catch(_){return 0;}};

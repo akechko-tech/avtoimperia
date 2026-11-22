@@ -285,7 +285,7 @@ function empireStrip(s){EC_FLASH=false;if(!s)return '';let t=null;try{t=legacyTa
     const ck=C.rc?C.rc.key:rc?rc.key:'';chal=`<button class="ec-row chal" ${ck?`data-act="raceTo" data-k="${esc(ck)}"`:`data-act="tab" data-t="log" data-sec="sec-board"`}><i>⚔️</i><span><b>${esc(C.mq)}</b>: ${what} · ${stakeText(C)}${sc?` · счёт ${sc}`:''}</span></button>`;}
   // 0.34: последний триумф — на виду несколько месяцев (класс мотоциклов — три), потом строка уходит (отзыв: «выиграли гонку
   // на мотоцикле — новость висит наверху и не исчезает»); все трофеи — в «Империи»
-  const lastAge=last?mi(s)-((last.y-1895)*12+(last.m||0)):0,lastOn=!!last&&lastAge<=(/\|moto$/.test(last.key||'')?3:6);
+  const lastAge=last?mi(s)-((last.y-1895)*12+(last.m||0)):0,lastOn=!!last&&lastAge<=(/\|moto$/.test(last.key||'')?2:3);   // 0.60: три месяца (было шесть) — «помощник долго показывает старое»
   const ph=lastOn&&last.carId!=null?(()=>{const md=s.models.find(m=>m.id===last.carId);return md?carArt(md,{w:140,cls:'ec-ph',prep:last.prep||0,num:last.num||0,y:last.y}):'';})():'';
   return `<div class="ec-top" data-act="tab" data-t="log" data-sec="sec-legacy" role="button" aria-label="Империя: наследие"><div class="ec-place"><b>${t?t.place:'—'}<small>-е</small></b><span>место в наследии</span></div>
       <div class="ec-pts"><b>${t?fmtN(Math.round(t.me.total)):0}</b> очков${dv?` <em class="${dv>0?'good':'bad'}">${dv>0?'▲':'▼'}${Math.abs(dv)}</em>`:''}</div></div>

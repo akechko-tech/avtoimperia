@@ -1118,3 +1118,6 @@ details.how{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}det
 .dpol9{margin-top:10px}.dpol9 .chips.sm{justify-content:flex-start;margin-top:4px}.dpol9 p{margin-top:4px}
 .tip-x{background:none;border:0;color:var(--muted);font-size:14px;padding:8px 4px;cursor:pointer;line-height:1}.tip-x:active{color:var(--text)}
 .au-now{margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);font-family:var(--mono);font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;user-select:text;-webkit-user-select:text}
+
+/* 0.60: схема трассы в настройке гонки */
+.smap{display:block;width:100%;height:auto;max-width:520px;margin:6px auto 0}

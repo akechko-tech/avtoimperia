@@ -31,7 +31,7 @@ function loadCode(code){code=String(code||'').trim();const m=/^(AVT1|AVTZ):([A-Z
   if(typeof DecompressionStream==='undefined')return Promise.resolve(false);
   return new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).text().then(parse).catch(()=>false);}
 function migrate(x){
-  try{xlMigrate(x);}catch(_){}/* 0.51, этап 4б: места купленных заводов — в свои линии */
+  try{xlFold(x);}catch(_){}/* 0.60: «свои линии» 0.51 упразднены — их места возвращаются общему заводу */
   try{ownSync(x);}catch(_){}/* 0.51, этап 4в: свои узлы партии — в реестр, чтобы их находили модели */
   x.tech=x.tech||{};x.dealers=x.dealers||{[x.country]:1};x.capBuild=x.capBuild||[];x.peak=x.peak||{year:0,share:{}};x.firsts=x.firsts||{};x.titles=x.titles||[];
   x.season=x.season||{};x.cres=x.cres||{};x.rdept=x.rdept||0;x.contracts=x.contracts||{};x.hist.share=x.hist.share||[];x.pw=x.pw||{};x.drivers=x.drivers||[];

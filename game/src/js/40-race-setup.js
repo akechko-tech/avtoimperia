@@ -118,7 +118,7 @@ function renderRaceSetup(keepScroll){
     ${champs.length||gb?`<div class="tags">${champs.map(c=>`<span class="pill warn">${esc(c)}</span>`).join('')}${gb?'<span class="pill good">Кубок наций: до 3 машин от страны</span>':''}</div>`:''}
     ${photoHTML(rc.img)}${rc.hist?`<div class="hist">${esc(rc.hist)}</div>`:''}
     ${scnSetupHTML(rc)}
-    ${(()=>{const rid=raceReelId(rc);if(!rid)return '';try{reelUnlock(s,rid);}catch(_){}return `<div style="margin-top:8px">${paperReelHTML(rid,s)}</div>`;})()}
+    ${(()=>{const rid=raceReelId(rc);if(rid)try{reelUnlock(s,rid);}catch(_){}return raceSetupMapHTML(s,rc);})()/* 0.60: вместо ролика хроники — схема трассы (40e-setupmap.js); ролик открыт в «Империи» */}
     ${rc.match?matchSetupHTML(rc,s):`<p class="small muted" style="margin-top:8px">👥 ${esc(privRule(rc).txt)}</p>`}
     ${s.chal&&s.chal.acc&&s.chal.type==='race'&&s.chal.rk===rc.key?`<p class="small warn" style="margin-top:6px">⚔️ Вызов принят: ваша лучшая машина должна финишировать выше лучшей машины ${esc(s.chal.mq)}. Пари — ${money(s.chal.stake)}.</p>`:''}
     <div class="label" style="margin-top:16px">${rc.match?'Ваша машина и пилот':'Команда · '+teamHd}</div>

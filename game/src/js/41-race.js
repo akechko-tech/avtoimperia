@@ -263,6 +263,11 @@ function placeScenery(trk,rnd){
     if(tr==='beach'){trk.bar[i]={L:W/2+11};if(i%3===0)add(i,'sea',W/2+14,0);if(i%9===0)add(i,'dune',-(W/2+12+rnd()*8));if(i%11===0&&rnd()<cfg.crowd)add(i,'crowd',-(W/2+4),Math.floor(rnd()*4),'p');continue;}
     if(town){
       trk.bar[i]={L:W/2+2.2,R:W/2+2.2};
+      // 0.60, правка автора 23 ноября («врезался в невидимую стену»): встречный проход той же трассы рядом и на той же высоте
+      // (бульвар и набережная в Монако) — посередине между ними видимая каменная стенка; коридор кончается у неё, а не посреди асфальта
+      if(typeof branchLims==='function'&&typeof branchIdx==='function'){const BL=branchLims(trk);for(const sd of [1,-1]){const lim=BL[i*2+(sd>0?0:1)];if(lim>=7||lim<0.8)continue;
+          const off=W/2+lim,j=branchIdx(trk,i,sd,W+2*lim);if(j<0||Math.abs(pts[j][1]-pts[i][1])>1.5)continue;trk.bar[i][sd>0?'L':'R']=Math.min(W/2+2.2,off+0.1);
+          if(i<j&&i%2===0){const c0=trk.col.length;if(add(i,'wall',sd*off,0,'s')&&trk.col.length>c0)trk.col[trk.col.length-1].median=1;}}}
       if(i%4===0){[-1,1].forEach(sd=>{const t=set.town[Math.floor(rnd()*set.town.length)];add(i,t,sd*(W/2+7+rnd()*1.5),Math.floor(rnd()*3),'s',3.5);});}
       if(i%150===34)add(i,set.church||'church',-(W/2+9),Math.floor(rnd()*3),'s',4);
       if(set.verst&&i%150===20)add(i,rnd()<0.5?'well':'stog',(rnd()<0.5?-1:1)*(W/2+11),0,'s');

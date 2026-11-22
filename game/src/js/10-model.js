@@ -64,14 +64,17 @@ function rdLines(s){const L=[];if(lineOn(s,'car')||s.carShopB||!lineOn(s,'moto')
    «Если Форд пытается на пять лет раньше начать производство двигателя или технологии — должен быть мультипликатор, который
    делает это более дорогим и более затратным». Замеры этапов 1–2: прототип на десять лет раньше истории стоил немногим дороже,
    чем на год (3 + 0,4 × лет), а в деньгах — тысячи долларов; гоночная машина с мотором из будущего выигрывала 9 гонок из 10.
-   Теперь каждый год опережения — ×AHEAD_COST к цене и ×AHEAD_TIME к сроку (пять лет — вдесятеро дороже и впятеро дольше),
+   В 0.51 каждый год опережения был ×AHEAD_COST к цене и ×AHEAD_TIME к сроку (пять лет — вдесятеро дороже и впятеро дольше; с 0.60 — см. ниже),
    и у цены есть нижняя планка от оборота фирмы: AHEAD_REV годовой выручки × тот же множитель (год — 0,16 %, пять лет — 1 %,
    десять лет — 11 %: «за прорыв платят как за завод»). Деталь, которую история ещё не освоила, дороже и в серии:
    +15 % за каждый год до её исторического года (aheadPartK), не больше +90 % — поставщиков ещё нет. Заводская технология
    раньше своего года дорожает тем же множителем. Риск доработки прототипа и трудной наладки был и раньше (10f-risk.js). */
+/* 0.60, правка автора 23 ноября: «штраф за передовые технологии более трёх лет неправдоподобно астрономический — поменяй формулу,
+   не делай её прогрессивной». Было 1,6^лет к цене и 1,4^лет к сроку (десять лет — в 110 раз дороже). Теперь каждый год опережения
+   прибавляет одно и то же: +60 % цены и +40 % срока от обычных (год — ×1,6, три — ×2,8, пять — ×4, десять — ×7). */
 const AHEAD_COST=1.6,AHEAD_TIME=1.4,AHEAD_REV=0.001;
-function aheadCostK(yrs){return Math.pow(AHEAD_COST,Math.max(0,yrs||0));}
-function aheadTimeK(yrs){return Math.pow(AHEAD_TIME,Math.max(0,yrs||0));}
+function aheadCostK(yrs){return 1+(AHEAD_COST-1)*Math.max(0,yrs||0);}
+function aheadTimeK(yrs){return 1+(AHEAD_TIME-1)*Math.max(0,yrs||0);}
 function aheadPartK(x,s){const d=x&&s?(x.y||1895)-yf(s):0;return d>0?1+Math.min(0.9,0.15*d):1;}
 function rdProjects(s){
   const list=[],used=new Set();s.models.filter(m=>m.status!=='off').forEach(m=>PART_KEYS.forEach(k=>used.add(m[k])));
@@ -298,25 +301,19 @@ function rivalDesign(kind,y){const r=rivalCar(kind,y);return {...r[2],t:KIND_TRI
    и пустой кассе выигрывает машина с наибольшей прибылью на место, а не та, которую больше купят.
    • модели того же вида и класса, что и новая, считаются заменёнными: их места свободны, а спрос считается без них
      (так делает игрок и так делали заводы: новая «народная» сменяет старую, а не делит с ней цех);
-   • размещение — по решению помощника (xlDecide): на своей линии мест по прогнозу и штрафа конвейера нет, но стены стоят
-     содержания; на общем конвейере соседи теряют часы — это тоже в счёт.
+   • 0.60: «своих линий» и штрафа конвейера за число моделей больше нет (13c-lines.js) — размещение ничего не стоит сверх мест.
    Замер (журнал этапа 4б): два первых варианта — «доля мест по спросу» и «только свободные места» — разоряли бота в начале
    партии: подбор предлагал малую дорогую машину под свободный угол цеха, хотя место на заводе окупается за месяцы.
    share — сколько модель получит при запуске, если ничего не строить и не снимать (модели общего конвейера ужимаются поровну). */
 function designRoom(s,kind){const all=(s.models||[]).filter(m=>m.status==='prod'),kOf=m=>{try{return designKind(m);}catch(_){return segOf(m);}},rep=kind?all.filter(m=>kOf(m)===kind):[],act=all.filter(m=>!rep.includes(m)),vol=m=>Math.max(m.fc||0,m.lastMade||0),kk=Math.max(0.05,xlK(s));
-  const w=m=>isMoto(m)?1:xlW(s,m);   // доля выпуска модели, которая идёт с общего конвейера
+  const w=()=>1;
   const cap=capEff(s)+(s.capBuild||[]).reduce((a,b)=>a+(b.units||0),0)*kk,used=act.reduce((a,m)=>a+vol(m)*placesOf(m,s)*w(m),0);
   const prof=act.reduce((a,m)=>a+vol(m)*w(m)*Math.max(0,m.price*(1-dMargin(s))-unitCost(m,s)),0);
   const cars=act.filter(m=>!isMoto(m)),hrH=wageNow(s)/Math.max(1,hoursPerWorker(s)),n=cars.reduce((a,m)=>a+w(m),0),cu=capUnitCost(s);
-  // ext — сколько часов (в долларах) потеряют соседи по общему конвейеру, если на нём появится ещё одна модель
-  const ext=techLv(s,'line')===2?cars.reduce((a,m)=>a+vol(m)*w(m)*(hoursPerCar(m,s,xlPenK(n+1))-hoursPerCar(m,s,xlPenK(n))),0)*hrH:0;
+  const ext=0;   // соседи по заводу часов не теряют: штрафа за число моделей нет
   return {cap,used,free:Math.max(0,cap-used),ppp:used>0?prof/used:0,n,ext,hrH,conv:techLv(s,'line')===2,rep:rep.map(m=>m.id),repN:rep.map(m=>m.name),
     build:Math.max(0,s.cash-xlReserve(s))/cu*kk,bcost:cu/kk*(0.009+1/XL_PAY),cu:cu/kk};}
-function designPlace(md,s,d,R){const o={cost:0,own:false,pen:null};
-  if(!isMoto(md)&&R.conv){const D=xlDecide(s,md,d);
-    if(D.own&&!D.reuse){o.own=true;o.pen=1;o.cost=Math.max(0,D.cost-(D.alt||0))*0.009;return o;}
-    if(D.why==='heir'){o.pen=1;}else{o.pen=xlPenK(R.n+1);o.cost=R.ext;}}
-  return o;}
+function designPlace(md,s,d,R){return {cost:0,own:false,pen:null};}   // 0.60: место новой модели — только места завода
 // оценка проекта: лучшая цена из шести и прибыль в месяц при ней. Возвращает {v — с поправкой на риск, prof (убыток — не меньше чем
 // на плановый выпуск: мерка поиска), raw — прибыль в месяц как есть (для показа), price, d — купят, out — сделают,
 // tight — мест не хватает, build — сколько мест достроить, share, own}
@@ -406,11 +403,11 @@ function techOpen(s,k){const nx=techNext(s,k);if(!nx)return false;if(nx.y>s.y+te
 function techCost(s,k){const nx=techNext(s,k);if(!nx)return 0;return Math.round((nx.F+nx.v*s.cap)*cpi(s)*(k==='line'&&techLv(s,k)===1?1/bn('lineCost'):1)*techCatch(s,k)*aheadCostK((nx.y||1895)-s.y)/100)*100;}   // 0.51: раньше своего года — дороже
 function techMul(s,key){let m=1;for(const k in TECH){const l=techLv(s,k);for(let i=0;i<l;i++){const v=TECH[k].lv[i][key];if(v!==undefined)m*=v;}}return m;}
 function defectRate(s){const l=techLv(s,'qc');return l?TECH.qc.lv[l-1].def:0.08;}
-// 0.51, этап 4б: штраф конвейера за число моделей платят только машины, собранные на общем конвейере, и только за соседей по нему;
-// модель на своей линии (13c-lines.js) считается и платит лишь той долей выпуска, что линия не вместила.
-// pen — штраф задан снаружи (расчёт «что если» у помощника).
+// До 0.51 каждая модель сверх первой прибавляла 12 % часов всем машинам завода с движущимся конвейером; в 0.51 штраф снимали
+// «свои линии». С 0.60 (правка автора 23 ноября) нет ни линий, ни штрафа: число моделей на часы не влияет.
+// pen — множитель задан снаружи (расчёт «что если»).
 function hoursPerCar(md,s,pen){const conv=techLv(s,'line')===2,mo=isMoto(md),mk=mo&&typeof motoLv==='function'&&motoLv(s)>=2?MSHOP2.hrs:1;
-  let pk=1;if(pen!=null)pk=pen;else if(conv){if(mo){const act=(s.models||[]).filter(m=>m.status==='prod'&&isMoto(m)).length;pk=act>1?1+0.12*(act-1):1;}else{const P=xlPenK(xlNEff(s)),L=xlOf(s,md);pk=L?1+Math.min(1,Math.max(0,L.ov||0))*(P-1):P;}}
+  const pk=pen!=null?pen:1;   // 0.60: штрафа за число моделей нет — каждая модель собирается в своём цехе (13c-lines.js)
   // в Америке станков на рабочего больше: машина требует меньше часов
   return Math.max(60*complexity(md),4500*(s.country==='us'?0.66:1)*complexity(md)*Math.pow(techMul(s,'hrs'),0.72)*pk*labLearn(md)*labRate(modelVol(md))*(md.ramp>0?1.5:1)*(s.hrsK||1)*mk);}
 function hoursPerWorker(s){return (s.y<1915?250:s.y<1921?235:215)*WAGE_POL[s.wagePol||'market'].prod*bn('workerEff')*(s.strikeNow?0.5:1);}

@@ -82,9 +82,6 @@ function adviceList(s){
   // КБ
   const free=rdSlots(s)-rdActive(s).length,pj=free>0&&suggestProject(s);
   if(pj)add(DIF().simple?72:60,'🔧',`Конструкторское бюро ${rdActive(s).length?'может вести ещё один проект':'простаивает'}. Предлагаю: ${pj.kind==='upg'?'улучшить':'построить прототип'} «${pj.name}»${pj.kind==='upg'?' — '+UPG_TXT[pj.ck]:''}.${DIF().simple?' Или выберите деталь сами: «Модели» → «Конструкторское бюро» → «+ Проект».':''}`,`Начать · ${money(rdCost(pj,s))}`,()=>{if(!rdBegin(G,pj))toast('Не хватает денег на опыты: '+money(rdCost(pj,G)));},'models');
-  // 0.51, этап 4б: линии ведёт помощник сам; совет — только когда расширение окупается, а резерв кассы не даёт его начать
-  (s.xl||[]).forEach(X=>{if(!X.want||X.grow)return;const m=s.models.find(q=>q.id===X.md);if(!m||s.cash<X.want.c)return;
-    add(62,'🏭',`Линии «${m.name}» не хватает мест. Расширение (+${fmtN(X.want.u||X.want.add)} машин в месяц) окупится ${xlPayTxt(X.want.pay)}, но касса после него уйдёт ниже резерва — помощник ждёт.`,`Расширить · ${money(X.want.c)}`,()=>{if(xlGrow(s,X,X.want.add,X.want.c,X.want.aC)){save();render();}},'plant');});
   // мощности и склад
   if(L&&act.length){const util=capUtil(s),lost=act.reduce((a,m)=>a+(m.lostS||0)*(isMoto(m)?0.15:1),0),busy=(s.capBuild||[]).length;
     if(util>0.93&&lost>Math.max(1,L.sold*0.06)&&!busy){const n=Math.max(2,Math.round(s.cap*0.25)),c=n*capUnitCost(s);if(s.cash>c*1.2)add(75,'🏭',`Завод работает на пределе, а покупателям не хватило ${fmtD(lost)} машин. Постройте цех.`,`+25% · ${money(c)}`,()=>ACT.capAdd({n}),'plant');}
@@ -172,11 +169,11 @@ function raceAutoLine(s){if(!s||s.mode==='racer'||typeof raceAutoOn!=='function'
     ${on?`<span class="btnrow" style="gap:4px"><button class="btn small" data-act="raceAutoBud" data-k="-" aria-label="Уменьшить бюджет">−</button><button class="btn small" data-act="raceAutoBud" data-k="+" aria-label="Увеличить бюджет">+</button><button class="linkbtn small" data-act="raceAutoToggle">выключить</button></span>`:`<button class="linkbtn small" data-act="raceAutoToggle">поручить команде</button>`}</div>
     ${T&&T.length?`<p class="small" style="margin-top:4px">Команда в прошлом месяце: ${esc(T.join('; '))}.</p>`:''}`;}
 function advisorCard(s,where){
-  const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:4),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null,XL=s.xlMsg&&s.xlMsg.m===mi(s)&&s.xlMsg.list.length?s.xlMsg.list:null;
-  if(!show.length&&((!H&&!XL)||where)&&(where||!raceAutoLine(s)))return '';TIPS=show;
+  const all=adviceList(s),L=where?all.filter(t=>t.tab===where):all,show=L.slice(0,where?1:4),H=s.helperMsg&&s.helperMsg.m===mi(s)?s.helperMsg.list:null;
+  if(!show.length&&(!H||where)&&(where||!raceAutoLine(s)))return '';TIPS=show;
   // 0.39: «Дела» — что сделать сейчас, кнопкой к действию (одна система для авто, мото и аэро)
   return `<section class="card advisor"><div class="row"><span class="label">📋 Дела${where?'':' и советы'}</span>${helperOn(s)?'<span class="pill good">помощник включён</span>':`<button class="linkbtn small" data-act="helperToggle">поручить рутину помощнику</button>`}</div>
-    ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${XL&&!where?`<p class="small good xlmsg" style="margin-top:6px">🏭 Линии завода: ${esc(XL.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
+    ${H&&H.length&&!where?`<p class="small good" style="margin-top:6px">Помощник в прошлом месяце: ${esc(H.join('; '))}.</p>`:''}${!where?raceAutoLine(s):''}
     ${show.map((t,i)=>`<div class="tip"><span class="ic">${t.icon}</span><p class="small">${esc(t.text)}</p>${t.btn&&t.run?`<button class="btn sm primary" data-act="tip" data-k="${i}">${esc(t.btn)}</button>`:''}${tipCanHide(t)?`<button class="tip-x" data-act="tipHide" data-k="${i}" aria-label="Не предлагать год" title="Не предлагать год">✕</button>`:''}</div>`).join('')}
     ${!where&&all.length>4?`<p class="small muted" style="margin-top:6px">Ещё дел: ${all.length-4}. Сначала самые важные.</p>`:''}</section>`;}
 // Помощник управляющего: каждый месяц сам делает безопасные вещи — цены, дилеры, цеха, склад, КБ, кредит
@@ -225,4 +222,5 @@ function helperMonth(s){if(!helperOn(s)||s.over)return;const msg=[],act=s.models
   // реклама — около 4% выручки (в кризис — вдвое меньше)
   if(L)s.ad=Math.round(Math.min(adRef(s)*0.8,Math.max(adRef(s)*0.15,(L.rev||0)*(calm?0.04:0.02)))/10)*10;
   try{airHelperMonth(s,msg,pay,reserve);}catch(e){console.warn('air helper',e);}   // 0.51, этап 7: помощник ведёт и авиацех
+  try{trialHelper(s,msg);}catch(e){console.warn('trial helper',e);}   // 0.60: помощник сам отправляет машины на испытания ведомств
   s.helperMsg={m:mi(s)+1,list:msg};if(msg.length)addLog('Помощник: '+msg.join('; ')+'.');}

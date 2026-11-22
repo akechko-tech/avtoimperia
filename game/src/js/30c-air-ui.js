@@ -72,7 +72,12 @@ function airAdvice(s){const A=s.air,t=tNow(s),T=[];
   const proto=A.models.find(m=>m.status==='proto'&&!m.flown);if(proto)T.push(['✈',`«${proto.name}» ждёт первого полёта.`,'Лететь','airFlyBtn',proto.id]);
   const flown=A.models.find(m=>m.status==='proto'&&m.flown);if(flown)T.push(['🏭',`«${flown.name}» облетан — пора в серию (оснастка ${money(airToolCost(s,flown))}).`,'В серию','airProd',flown.id]);
   if(!A.models.some(m=>m.status==='dev'||m.status==='prod'||m.status==='proto'||m.status==='tool'))T.push(['📐','Нет ни одного аэроплана в работе — начертите новый.','Конструктор','airDesign']);
-  const ev=typeof airEvSoon==='function'?airEvSoon(s)[0]:null;if(ev)T.push(['🏆',ev.dyn?`${ev.name}: победителю — заказ на ${fmtN(ev.mil.n)} машин.`:`${ev.name}: приз ${money(ev.prize)}.`,'В «Гонки»','tab','race']);
+  /* 0.60, правка автора 23 ноября: совет звал на авиагонки за три месяца до записи, а попасть на них было нельзя.
+     Теперь совет появляется, когда запись ОТКРЫТА и есть облётанный аэроплан, — и кнопка открывает само состязание.
+     Заранее совет говорит только то, что можно сделать сейчас: строить аэроплан, если лететь не на чем и в работе ничего нет. */
+  if(typeof airEvSoon==='function'){const E=airEvSoon(s),has=e=>airEvMds(s,e).length>0,o=E.find(e=>airEvStatus(s,e)==='open'&&has(e)),n=o?null:E.find(e=>!has(e));
+    if(o)T.push(['🏆',o.dyn?`${o.name}: запись открыта, победителю — заказ на ${fmtN(o.mil.n)} машин.`:`${o.name}: запись открыта, приз ${money(Math.round(o.prize*cpi(s)/tabAt(CPI,o.y)/10)*10)}.`,'К состязанию','airEv',o.key]);
+    else if(n&&!A.models.some(m=>m.status==='dev'||m.status==='proto')){const w=Math.max(0,(n.y-1895)*12+n.m-mi(s));T.push(['🏆',`${n.name} — ${w>0?`через ${w} мес.`:'в этом месяце'}: лететь не на чем, нужен облётанный ${n.sea?'гидроаэроплан':'аэроплан'}.`,'Конструктор','airDesign']);}}
   const old=A.models.find(m=>m.status==='prod'&&airQ(m,t).q<0.75);if(old)T.push(['⚠',`«${old.name}» устарел (оценка ${airQ(old,t).q.toFixed(2).replace('.',',')}) — покупатели уходят к новым.`,'Конструктор','airDesign']);
   if((A.last&&A.last.load||0)>1.05)T.push(['🔨','Ангары переполнены — заказы не успевают.','Ангар','tab','plant']);
   if(airWarOn(s.country,t)&&!A.models.some(m=>m.role==='fight')&&t>=1915.3)T.push(['⚔','Фронту нужны истребители: скорость, подъём и пулемёт через винт.','Конструктор','airDesign']);
@@ -85,6 +90,11 @@ function airModelsCard(s){if(s.mode==='racer'||!airOn(s))return '';const A=s.air
 function airModelsView(s){const A=s.air;return `<section class="card"><div class="row"><h2>✈ Аэропланы</h2><button class="btn primary" data-act="airDesign" ${airDevBusy(s)>=airDevSlots(s)?'disabled':''}>+ Новый аэроплан</button></div>
   <p class="small muted" style="margin-top:4px">Чертежи и опытный образец — несколько месяцев, потом первый полёт и серия. Проектов одновременно: ${airDevBusy(s)} из ${airDevSlots(s)}.</p></section>
   ${A.models.filter(m=>m.status!=='off').map(m=>airModelHTML(m,s)).join('')}${A.models.some(m=>m.status==='off')?foldCard('airOff',false,'<h2>Снятые с производства</h2>',A.models.filter(m=>m.status==='off').map(m=>`<p class="small" style="margin-top:6px">«${esc(m.name)}» — ${airRoleN(m.role).toLowerCase()}, сделано ${fmtN(m.made)}</p>`).join(''),'' ):''}`;}
+function airDropLabel(md){return md.status==='race'?'Списать гоночный аэроплан':md.status==='sale'?'Списать остаток и убрать':md.status==='proto'?'Списать опытный образец':'Закрыть проект';}
+// убрать аэроплан из моделей: любой статус, кроме серийного (у него — «Снять с производства»)
+function airDrop(s,md){if(!md||md.status==='off'||md.status==='prod')return false;const was=md.status,A=s.air;md.status='off';md.stock=0;md.devLeft=0;md.toolLeft=0;
+  A.orders=(A.orders||[]).filter(o=>o.md!==md.id||o.left<=0);A.proto=(A.proto||[]).filter(i=>i!==md.id);
+  addLog(was==='race'?`Гоночный аэроплан «${md.name}» списан.`:was==='sale'?`Остаток «${md.name}» списан, модель убрана.`:was==='proto'?`Опытный образец «${md.name}» списан.`:`Проект «${md.name}» закрыт.`);return true;}
 const AIR_STATUS={dev:['чертежи','warn'],proto:['опытный образец','warn'],tool:['оснастка','warn'],prod:['в серии','good'],sale:['распродажа','muted'],off:['снят','muted'],race:['гоночный','good']};
 function airCmpRow(n,a,b,fmt,lowBetter){const r=lowBetter?b/Math.max(1e-6,a):a/Math.max(1e-6,b),tone=r>=1.04?'good':r<=0.96?'bad':'';return `<tr><td>${n}</td><td class="n ${tone}">${fmt(a)}</td><td class="n muted">${fmt(b)}</td></tr>`;}
 function airStatTable(st,rs,refName,role){const R=(n,k,f,lb)=>airCmpRow(n,st[k],rs[k],f,lb),km=v=>airKm(v),min=v=>v<60?v.toFixed(1).replace('.',','):'—';
@@ -112,6 +122,9 @@ function airModelHTML(md,s){const A=s.air,t=tNow(s),Q=airQ(md,t),st=Q.st,S=AIR_S
     if(ord.length)body+=`<div class="label" style="margin-top:10px">Контракты</div>${ord.map(o=>`<p class="small" style="margin-top:4px">${esc(o.who)}: ${fmtN(o.n-o.left)} из ${fmtN(o.n)} по ${money(o.price)} · срок — ${dstr({y:1895+Math.floor(o.due/12),m:o.due%12})}</p>`).join('')}`;
     if(['recon','fight','bomb','sea'].includes(md.role)&&Math.abs(md.milRep||0)>=1)body+=`<p class="small ${md.milRep>0?'good':'bad'}" style="margin-top:6px">Слава на фронте и в отрядах: ${md.milRep>0?'+':''}${Math.round(md.milRep)}</p>`;
     if(md.status==='prod')body+=`<div class="btns" style="margin-top:10px"><button class="btn sm" data-act="airOff" data-k="${md.id}">Снять с производства</button></div>`;}
+  // 0.60, правка автора 23 ноября: «не могу убрать свой второй самолёт из моделей» — кнопка была только у серийного.
+  // Теперь любой аэроплан можно убрать из списка: гоночный и опытный — списать, чертежи и оснастку — закрыть, остаток — списать.
+  if(md.status!=='prod'&&md.status!=='off'){const lab=airDropLabel(md);body+=`<div class="btns" style="margin-top:10px"><button class="btn sm" data-act="airDrop" data-k="${md.id}">${lab}</button></div><p class="small muted" style="margin-top:4px">${md.status==='sale'?`В ангаре ${fmtN(md.stock||0)} шт.: их спишут, денег за них не будет.`:'Аэроплан уйдёт в «Снятые»; потраченное не вернётся.'}</p>`;}
   return foldCard('am'+md.id,md.status!=='prod'||A.models.filter(m=>m.status==='prod').length<=2,`<h2>${esc(md.name)}</h2><span class="pill ${S[1]}">${AIR_ROLES[md.role].ico} ${S[0]}</span>`,body,`${airRoleN(md.role)} · ${airSt(st)}`,'mcard');}
 /* ---------- 0.39: «как посчитано» — откуда берётся спрос на аэроплан и чем на него влиять (отзыв: «не понимаю, как управлять авиапродажами») ---------- */
 function airSalesExplain(s,md){const A=s.air,t=tNow(s),q=airQ(md,t).q,seg=airCivSeg(md.role),pr=airPriceOf(md,s),rp=airRefPrice(md.role,t),prK=Math.pow(clamp(pr/Math.max(1,rp),0.25,4),-2.2),fame=airFameK(s),qK=Math.exp(3.5*(q-1));

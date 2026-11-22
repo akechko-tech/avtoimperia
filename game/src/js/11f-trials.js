@@ -13,7 +13,12 @@
        закупает только после испытаний (в войну берёт всё); свидетельство — на пять лет;
      • станция испытаний тракторов (США, с 1920 года, закон Небраски): итог печатают — хороший помогает продажам, без итога
        и со слабым итогом трактор продаётся хуже.
-   Прочие заказы (почта, пивоварни, такси, города) — прежним торгом. Образцы и источники — claude/issledovanie-rekordy-ispytaniya-0.51.md. */
+   Прочие заказы (почта, пивоварни, такси, города) — прежним торгом. Образцы и источники — claude/issledovanie-rekordy-ispytaniya-0.51.md.
+   0.60, правка автора 23 ноября: «испытания ведомств — пусть подсказывает помощник, пусть хороший результат даёт рост в продажах
+   и заказы». Хороший итог (100 и выше — не хуже образца года) теперь виден в деньгах: трактор с сильным протоколом продаётся
+   заметно лучше (до +35 % к привлекательности, было до +20 %) и получает заказ кооперативов; принятую армией машину с итогом выше
+   образца армия берёт охотнее и сразу заказывает первую партию. Совет об испытаниях стоит высоко в «Делах» и говорит, что даст
+   итог; помощник управляющего отправляет машины на испытания сам. Взнос больше не растёт с оборотом без предела. */
 const TRIALS=[
   {id:'de-sub',c:'de',y0:1908,y1:1913,m:8,grp:'truck',sub:0.3,order:[20,60],n:'Испытания субсидийных грузовиков',who:'Военное министерство Пруссии',
     hist:'С 1908 года прусское военное министерство доплачивает покупателю грузовика одобренного образца — при покупке и ещё пять лет — за право призвать машину в войну.'},
@@ -42,7 +47,8 @@ function trBreakP(md,s){let ch,rf;try{ch=charOf(md,s.y);rf=charOf(rivalRef(md,s.
 function trModels(s,grp){const K=TR_GRP[grp].kinds;return (s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&!isMoto(m)&&K.includes(trKind(m)));}
 function trBest(s,grp,c){return trModels(s,grp).map(m=>({m,sc:trScore(m,grp,c,s)})).sort((a,b)=>b.sc-a.sc)[0]||null;}
 function trSells(s,c){return c===s.country||dealerCount(s,c)>0;}
-function trFee(s,T){return Math.round(Math.max(500*cpi(s),bizRev(s)*0.0002)/50)*50;}
+const TR_FEE_MAX=5000;   // взнос — дорога, механики и топливо: у большой фирмы не больше этого (в ценах 1895 года; было 0,02 % оборота без предела — $346 тыс. у «Форда» 1928 года)
+function trFee(s,T){return Math.round(Math.max(500*cpi(s),Math.min(TR_FEE_MAX*cpi(s),bizRev(s)*0.0002))/50)*50;}
 // когда конкурс этого года; открыт ли он для записи
 function trWhen(T,y){return (y-1895)*12+T.m;}
 function trOpenList(s){const t=mi(s),out=[];TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||!trSells(s,T.c))return;const at=trWhen(T,s.y);if(t>=at||at-t>TR_OPEN)return;const key=T.id+'|'+s.y,E=(s.trials&&s.trials.ent||{})[key];
@@ -77,13 +83,20 @@ function trTestWhy(s,md){const k=trTestKind(md,s);if(!k)return 'этой тех�
   if(k==='mil'&&isWar(s.y,s.m,c))return 'в войну армия берёт без испытаний';if(s.cash<trFee(s))return 'не хватает денег';return '';}
 function trialTest(s,mdId){const md=s.models.find(m=>m.id===mdId);if(!md||trTestWhy(s,md))return false;const k=trTestKind(md,s),c=trTestC(md,s,k),fee=trFee(s);s.cash-=fee;s.trials=s.trials||{};(s.trials.q=s.trials.q||[]).push({md:md.id,k,c,at:mi(s)+(k==='neb'?2:3)});
   (md.certT=md.certT||{})[c+':'+k]=mi(s);addLog(`«${md.name}» отправлена на ${k==='neb'?'станцию испытаний тракторов (Небраска)':'полигон военного ведомства'}: итог через ${k==='neb'?2:3} мес. Взнос ${money(fee)}.`);return true;}
+// заказ за хороший итог испытаний: не меньше образца года — заказ тем больше, чем выше итог (и чем больше фирма); модель должна быть в серии
+function trOrder(s,md,q,v){if(!md||md.status!=='prod'||!(v>=1))return null;const t=mi(s),scale=(1+trTierOf(s)/10)*(q.c==='us'?1.8:1),k=Math.min(2.5,1+3*(v-1)),neb=q.k==='neb';
+  const n=Math.max(Math.round((neb?15+25*Math.random():10+20*Math.random())*scale*k),Math.round((md.lastSold||0)*(neb?0.5:0.25)*k)),price=Math.round(refPrice(md,s)*1.05/10)*10;if(!(n>0))return null;
+  s.orders=s.orders||[];s.orders.push({id:'tr-'+q.k+'-'+md.id+'-'+t,md:md.id,n,left:n,price,due:t+8,who:neb?'Фермерские кооперативы Среднего Запада':`Военное министерство (${COUNTRIES[q.c].name})`,start:t});return {n,price};}
+// прибавка к привлекательности за итог (она же — в trU): чтобы сказать игроку числом
+function trBonus(k,sc){return k==='neb'?(sc>=1?Math.min(0.35,0.1+0.5*(sc-1)):sc<0.8?-0.1:0):(sc>1?Math.min(0.3,0.6*(sc-1)):0);}
+function trBonusTxt(k,sc){const b=trBonus(k,sc);return b>0.005?`спрос ${k==='neb'?'фермеров':'армии'} выше примерно на ${Math.round((Math.exp(b)-1)*100)}%`:b<-0.005?'покупателей меньше':'';}
 function trTestDone(s,q){const md=s.models.find(m=>m.id===q.md);if(!md)return;const grp=q.k==='neb'?'farm':'mil',sc=trScore(md,grp,q.c,s)*Math.exp((Math.random()+Math.random()-1)*0.05),brk=Math.random()<trBreakP(md,s)*0.6,v=brk?sc*0.9:sc;
-  if(q.k==='neb'){trSet(md,'us','neb',{sc:+v.toFixed(2)},s);const good=v>=1;
+  if(q.k==='neb'){trSet(md,'us','neb',{sc:+v.toFixed(2)},s);const good=v>=1,O=trOrder(s,md,q,v),bt=trBonusTxt('neb',v);if(good)s.rep=clamp(s.rep+1,0,100);
     pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания',title:`Станция в Небраске: «${md.name}» — ${Math.round(v*100)} к образцу года`,deck:good?'итог напечатан — фермеры это читают':v<0.8?'итог напечатан — и он не в вашу пользу':'итог напечатан: не хуже и не лучше других',
-      text:`Инженеры университета проверили заявленную мощность на крюке и на шкиве, расход и поломки. Итог «${md.name}» — ${Math.round(v*100)} (100 — образец года)${brk?'; в протоколе отмечена поломка':''}.\n${good?'С таким протоколом трактор продаётся лучше: фермер верит напечатанному числу больше, чем рекламе.':v<0.8?'Слабый итог печатают так же, как сильный: продавать будет труднее, пока трактор не доведён и не испытан заново.':'Протокол есть — трактор продаётся как все. Итог выше образца года дал бы прибавку.'}\nПо закону 1919 года ни один новый трактор нельзя продавать в Небраске без такой проверки; первым её прошёл Waterloo Boy в апреле 1920 года.`,choices:[['Ясно','ok']]},true);return;}
-  const pass=v>=TR_PASS;if(pass)trSet(md,q.c,'mil',{sc:+v.toFixed(2)},s);
+      text:`Инженеры университета проверили заявленную мощность на крюке и на шкиве, расход и поломки. Итог «${md.name}» — ${Math.round(v*100)} (100 — образец года)${brk?'; в протоколе отмечена поломка':''}.\n${good?`С таким протоколом трактор продаётся лучше: фермер верит напечатанному числу больше, чем рекламе${bt?` (${bt})`:''}.${O?` Кооперативы уже прислали заказ: ${fmtN(O.n)} машин по ${money(O.price)}.`:''}`:v<0.8?'Слабый итог печатают так же, как сильный: продавать будет труднее, пока трактор не доведён и не испытан заново.':'Протокол есть — трактор продаётся как все. Итог выше образца года дал бы прибавку.'}\nПо закону 1919 года ни один новый трактор нельзя продавать в Небраске без такой проверки; первым её прошёл Waterloo Boy в апреле 1920 года.`,choices:[['Ясно','ok']]},true);return;}
+  const pass=v>=TR_PASS;if(pass)trSet(md,q.c,'mil',{sc:+v.toFixed(2)},s);const O=pass?trOrder(s,md,q,v):null,bt=pass?trBonusTxt('mil',v):'';if(pass&&v>=1)s.rep=clamp(s.rep+1,0,100);
   pushEvent({own:1,noArt:1,carId:md.id,kicker:'Испытания ведомства',title:`Полигон: «${md.name}» ${pass?'принята':'не принята'}`,deck:`${COUNTRIES[q.c].name} · ${Math.round(v*100)} к образцу года`,
-    text:`Комиссия военного ведомства закончила испытания «${md.name}»: ${Math.round(v*100)} (100 — образец года)${brk?'; в пути была поломка':''}.\n${pass?`Машина принята: армия может закупать её пять лет — до ${1895+Math.floor((mi(s)+TR_CERT_M)/12)} года.`:`Не принята: нужно не меньше ${Math.round(TR_PASS*100)}. Доведите машину (надёжность и то, что ценит армия в этом виде техники) и заявите снова — не раньше чем через ${TR_RETEST} мес.`}`,choices:[['Ясно','ok']]},true);}
+    text:`Комиссия военного ведомства закончила испытания «${md.name}»: ${Math.round(v*100)} (100 — образец года)${brk?'; в пути была поломка':''}.\n${pass?`Машина принята: армия может закупать её пять лет — до ${1895+Math.floor((mi(s)+TR_CERT_M)/12)} года.${bt?` Итог выше образца: ${bt}.`:v<1?' Итог выше 100 дал бы больше: такую машину армия берёт охотнее и сразу заказывает первую партию.':''}${O?` Первая партия заказана: ${fmtN(O.n)} машин по ${money(O.price)}.`:''}`:`Не принята: нужно не меньше ${Math.round(TR_PASS*100)}. Доведите машину (надёжность и то, что ценит армия в этом виде техники) и заявите снова — не раньше чем через ${TR_RETEST} мес.`}`,choices:[['Ясно','ok']]},true);}
 /* ---------- месяц ---------- */
 function trialsMonth(s,r){if(s.mode==='racer')return;const t=mi(s),S=s.trials=s.trials||{};
   TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||trWhen(T,s.y)!==t)return;const key=T.id+'|'+s.y,E=(S.ent||{})[key];if(E){try{trialRun(s,T,E);}catch(e){console.warn('trial',e);}delete S.ent[key];}
@@ -96,14 +109,15 @@ function trGate(md,u,c,s){const U=TRUCK_USE[u];if(!U||U.grp!=='mil'||!md||md.pro
   return !(md.status==='prod'||md.status==='sale')&&trScore(md,'mil',c,s)>=TR_PASS;}
 // поправка к привлекательности: субсидия покупателям грузовиков со свидетельством; протокол станции испытаний тракторов
 function trU(md,u,c,s){if(!md||md.probe||md.ref)return 0;const U=TRUCK_USE[u];if(!U)return 0;
-  if(U.grp==='farm'){if(c!=='us'||s.y<TR_NEB_Y)return 0;const C=trCertS(md,'us','neb',s);return !C?-0.12:C.sc>=1?Math.min(0.2,0.1+0.4*(C.sc-1)):C.sc<0.8?-0.1:0;}
+  if(U.grp==='farm'){if(c!=='us'||s.y<TR_NEB_Y)return 0;const C=trCertS(md,'us','neb',s);return !C?-0.12:trBonus('neb',C.sc);}
+  if(U.grp==='mil'){const C=trCertS(md,c,'mil',s);return C?trBonus('mil',C.sc||1):0;}   // 0.60: принятую с итогом выше образца армия берёт охотнее
   if(u!=='haul'&&u!=='bulk'&&u!=='city')return 0;if(!TR_GRP.truck.kinds.includes(trKind(md)))return 0;const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||trCertS(md,c,'sub',s))return 0;
   return -(u==='city'?0.3:0.6)*(U.bp||2.5)*Math.log(1/(1-T.sub));}   // по городу субсидийных машин меньше: там берут и лёгкие развозные
 function trSubTxt(md,c,s){const T=TRIALS.find(x=>x.c===c&&x.grp==='truck'&&trSubOn(x,s.y));if(!T||!TR_GRP.truck.kinds.includes(trKind(md))||!trSells(s,c))return '';
   return trCertS(md,c,'sub',s)?'':`без свидетельства (${T.n.toLowerCase()}) покупатели в стране «${COUNTRIES[c].name}» не получают доплату казны — ${Math.round(T.sub*100)}% цены`;}
 /* ---------- что показать ---------- */
 function trialModelLine(md,s){const L=[],t=mi(s),mk=trMil(md);
-  Object.keys(md.cert||{}).forEach(k=>{const C=md.cert[k];if(!(C.until>t))return;const [c,kk]=k.split(':');L.push(`${kk==='mil'?'принята армией':kk==='neb'?`протокол Небраски — ${Math.round((C.sc||1)*100)}`:'субсидийное свидетельство'} · ${COUNTRIES[c]?COUNTRIES[c].name:c} до ${1895+Math.floor(C.until/12)}`);});
+  Object.keys(md.cert||{}).forEach(k=>{const C=md.cert[k];if(!(C.until>t))return;const [c,kk]=k.split(':');const bt=kk==='mil'||kk==='neb'?trBonusTxt(kk,C.sc||1):'';L.push(`${kk==='mil'?`принята армией — ${Math.round((C.sc||1)*100)}`:kk==='neb'?`протокол Небраски — ${Math.round((C.sc||1)*100)}`:'субсидийное свидетельство'}${bt?` (${bt})`:''} · ${COUNTRIES[c]?COUNTRIES[c].name:c} до ${1895+Math.floor(C.until/12)}`);});
   let warn='';if(mk&&!isWar(s.y,s.m,s.country)&&!trCertS(md,s.country,'mil',s))warn='армия в мирное время закупает только технику, принятую на полигоне';
   else if(trTestKind(md,s)==='neb'&&!trCertS(md,'us','neb',s))warn='в США трактор без протокола станции испытаний продаётся хуже';
   else{for(const c in COUNTRIES){const x=trSubTxt(md,c,s);if(x){warn=x;break;}}}
@@ -116,6 +130,7 @@ function openTrials(){const s=G,O=trOpenList(s),t=mi(s);
   const need=(s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&trTestKind(m,s)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s)).map(m=>`<div class="race-item"><h3>${esc(m.name)}</h3>${trialModelLine(m,s)}</div>`).join('');
   openSheet(`<div class="row"><h2>🎖 Испытания ведомств</h2><button class="btn sm" data-act="close">Закрыть</button></div>
     <p class="small muted">Там, где испытания были в истории, заказ и право продажи дают они. Пробег считают по машине — надёжность, груз, ход, расход; против вас — марки страны. Прочие заказы (почта, города, такси) — обычным торгом.</p>
+    <p class="small" style="margin-top:6px"><b>Что даёт итог.</b> 100 — образец года. Итог 100 и выше: машина продаётся лучше (чем выше, тем сильнее) и получает заказ — трактор от кооперативов, военная машина от армии. Трактор без протокола в США продаётся хуже; военную технику без приёмки армия в мирное время не берёт вовсе. Испытать заново можно через ${TR_RETEST} мес. — после доводки машины.</p>
     ${O.length?O.map(o=>`<div class="race-item"><div class="row"><div><span class="mo">${COUNTRIES[o.T.c].name} · ${MONTHS[o.T.m]} ${s.y}</span><h3 style="margin-top:2px">${esc(o.T.n)}</h3></div><span class="pill ${o.ent?'good':'muted'}">${o.ent?'заявлены':'запись открыта'}</span></div>
       <p class="small muted" style="margin-top:4px">${esc(o.T.hist)}</p>
       ${o.ent?`<p class="small" style="margin-top:4px">Заявлена «${esc((s.models.find(m=>m.id===o.ent.md)||{}).name||'')}».</p>`:o.best?`<p class="small" style="margin-top:4px">Ваша лучшая машина — <b>«${esc(o.best.m.name)}»</b>: ${Math.round(o.best.sc*100)} к образцу года. Победителю — заказ и свидетельство${trSubOn(o.T,s.y)?` (покупателям — доплата казны, ${Math.round(o.T.sub*100)}% цены)`:''}.</p>
@@ -124,12 +139,21 @@ function openTrials(){const s=G,O=trOpenList(s),t=mi(s);
     ${need?`<div class="label" style="margin-top:10px">Приёмка по заявке</div>${need}`:''}
     ${certs?`<div class="label" style="margin-top:10px">Свидетельства</div>${certs}`:''}`);}
 function trialAdvice(s,add){if(s.mode==='racer')return;
-  trOpenList(s).forEach(o=>{if(o.ent||!o.best||s.cash<o.fee)return;add(44,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS[o.T.m].toLowerCase()}): запись открыта. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
+  trOpenList(s).forEach(o=>{if(o.ent||!o.best||s.cash<o.fee)return;add(66,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS[o.T.m].toLowerCase()}): запись открыта. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
   const md=(s.models||[]).find(m=>(m.status==='prod'||m.status==='sale'||(m.status==='dev'&&trMil(m)))&&trTestKind(m,s)&&!trTestWhy(s,m)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s));
-  if(md){const k=trTestKind(md,s);add(43,'🎖',k==='neb'?`«${md.name}» продаётся в США без протокола станции испытаний — фермеры таким тракторам верят меньше.`:`Армия в мирное время не закупит «${md.name}» без испытаний на полигоне.`,`${k==='neb'?'На станцию':'На полигон'} · ${money(trFee(s))}`,()=>{trialTest(s,md.id);},'models');}}
+  if(md){const k=trTestKind(md,s),sc=trScore(md,k==='neb'?'farm':'mil',trTestC(md,s,k),s),est=`Прикидка итога — ${Math.round(sc*100)} (100 — образец года)`;
+    add(68,'🎖',k==='neb'?`«${md.name}» продаётся в США без протокола станции испытаний — фермеры таким тракторам верят меньше. ${est}${sc>=1?': хороший протокол прибавит продаж и принесёт заказ кооперативов':''}.`:`Армия в мирное время не закупит «${md.name}» без испытаний на полигоне. ${est}${sc>=1?': с таким итогом армия закажет первую партию':sc>=TR_PASS?': хватит для приёмки':` — для приёмки нужно ${Math.round(TR_PASS*100)}, сначала доведите машину`}.`,`${k==='neb'?'На станцию':'На полигон'} · ${money(trFee(s))}`,()=>{trialTest(s,md.id);},'models');}}
 function trialResolve(s,key){if(key==='tr:open'){try{s.pending.shift();save();render();openTrials();}catch(_){}return true;}return false;}
 // строка-вход в «Моделях»: показывается, когда есть что делать или что показать
 function trialCardHTML(s){if(!s||s.mode==='racer')return '';const O=trOpenList(s),t=mi(s),need=(s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&trTestKind(m,s)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s)).length,
     have=(s.models||[]).filter(m=>m.cert&&Object.values(m.cert).some(C=>C.until>t)).length,q=(s.trials&&s.trials.q||[]).length;
   if(!O.length&&!need&&!have&&!q)return '';const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
   return `<section class="card"><div class="row"><div><h2>🎖 Испытания ведомств</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div></section>`;}
+/* 0.60: помощник управляющего ведёт испытания сам — заявляет лучшую машину на открытый конкурс и отправляет на полигон и
+   на станцию испытаний всё, что без приёмки продаётся хуже или не продаётся вовсе (взнос мал против того, что даёт итог).
+   На полигон — только если прикидка итога проходит приёмку: иначе деньги и полгода ожидания пропадут зря. */
+function trialHelper(s,msg){if(!s||s.mode==='racer')return;
+  trOpenList(s).forEach(o=>{if(o.ent||!o.best||o.best.sc<0.9||s.cash<o.fee*3)return;if(trialEnter(s,o.T.id,o.best.m.id))msg.push(`заявил «${o.best.m.name}» на конкурс: ${o.T.n}`);});
+  (s.models||[]).forEach(md=>{if(!(md.status==='prod'||md.status==='sale'))return;const k=trTestKind(md,s);if(!k||trTestWhy(s,md))return;const c=trTestC(md,s,k);if(trCertS(md,c,k==='neb'?'neb':'mil',s))return;
+    if(s.cash<trFee(s)*3)return;const sc=trScore(md,k==='neb'?'farm':'mil',c,s);if(k==='mil'&&sc<TR_PASS)return;
+    if(trialTest(s,md.id))msg.push(`отправил «${md.name}» ${k==='neb'?'на станцию испытаний тракторов':'на полигон'}`);});}

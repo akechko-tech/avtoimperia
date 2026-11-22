@@ -123,9 +123,9 @@ function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.
   const md=maTakeModel(s,c,cp,M.v);
   if(typeof carLineByDeal==='function'&&!lineOn(s,'car'))try{carLineByDeal(s,h);}catch(e){console.warn('carLine',e);}/* 0.42: мотомастерская купила автозавод — автомобили открыты */
   try{const g=maMainClass(cp,s,c),sc=studyCar(g,s.y);if(sc&&!((s.rd.studied||[]).includes(studyKey(sc))))studyDone(s,{id:sc.kind,y:sc.y,name:sc.name});}catch(e){console.warn('ma tech',e);}
-  h.capAdd=capAdd;h.dlAdd=DS.add;h.model=md?md.id:null;xlMigrate(s);
+  h.capAdd=capAdd;h.dlAdd=DS.add;h.model=md?md.id:null;
   // мотоциклетная марка (или без модели) — места, как раньше, общему заводу
-  if(md&&!isMoto(md)){const L=xlAdopt(s,capAdd,md.id,compName(cp,s));h.xl=L.id;}else s.cap+=capAdd;return h;}
+  s.cap+=capAdd;return h;}   /* 0.60: отдельных линий нет — купленный завод прибавляет места общему (как до 0.51) */
 // её машина — теперь ваша модель (права на конструкцию): в её главном классе, на деталях своего года; продаётся под вашей маркой везде
 // 0.34: имя — с маркой («Mercer Raceabout», «Itala 35/45 HP»), чтобы в «Моделях» было видно, откуда машина (отзыв: «купил марки,
 // но их моделей не вижу и не понимаю, произошло ли слияние»)
