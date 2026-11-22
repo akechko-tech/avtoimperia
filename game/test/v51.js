@@ -161,8 +161,9 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
       G.y+=2;const L0=G.log.length;rivalNews(G);CK(G.log.slice(0,Math.max(1,G.log.length-L0+1)).some(l=>/разобрались в вашей новинке/.test(JSON.stringify(l)))||G.log.some(l=>/разобрались в вашей новинке/.test(JSON.stringify(l))),'в журнале — соперники разобрались в новинке');G.y-=2;G.seenPart={};}
     // бюджеты соперников растут от ваших побед
     const y=G.y;G.raceLog=[];CK(raceHeat(G)===0,'нет гонок — нет ответа');
-    G.raceLog=Array.from({length:9},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<3?1:4}));CK(raceHeat(G)===0,'треть побед — прибавки нет');
-    G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<6?1:3}));CK(near(raceHeat(G),(0.6-1/3)*0.75,1e-9),'шесть побед из десяти — соперники сильнее на '+Math.round(raceHeat(G)*100)+' %');
+    G.raceLog=Array.from({length:8},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<2?1:4}));CK(raceHeat(G)===0,'четверть побед — прибавки нет');
+    G.raceLog=Array.from({length:9},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<3?1:4}));CK(near(raceHeat(G),(1/3-0.25)*1.5,1e-9),'треть побед — соперники уже сильнее на '+Math.round(raceHeat(G)*100)+' % (общая калибровка: было 0)');
+    G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%2),key:'x'+i,place:i<4?1:3}));CK(near(raceHeat(G),(0.4-0.25)*1.5,1e-9),'четыре победы из десяти — соперники сильнее на '+Math.round(raceHeat(G)*100)+' %');
     G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%3),key:'x'+i,place:1}));CK(near(raceHeat(G),0.3),'все победы — предел +30 %');
     const O1=mgrOdds(G,rc,M.entries,600);G.raceLog=[];const O0=mgrOdds(G,rc,M.entries,600);CK(O1.win<O0.win||O0.win<0.03,'с ответом соперников шанс победы ниже: '+Math.round(O0.win*100)+' % → '+Math.round(O1.win*100)+' %');
     G.raceLog=Array.from({length:10},(_,i)=>({y:y-(i%3),key:'x'+i,place:1}));const F1=raceField(rc,G,1,[]).filter(e=>!e.priv&&e.cls!=='moto')[0];G.raceLog=[];const F0=raceField(rc,G,1,[]).find(e=>e.name===F1.name);
@@ -1222,6 +1223,29 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   // столбики-отбойники у обрыва: не скала
   CK(crashTier(7,'curb')===0&&crashTier(10,'curb')===1&&crashTier(22,'curb')===2&&crashTier(22,'wall')===4,'удар о столбик: до 8 м/с — толчок, до 14 — касание, выше — удар; тяжёлой аварии о столбик нет (о стену на 22 м/с — есть)');
   {const src=String(obstacleHit);CK(/gstone/.test(src)&&/hv<0\.5/.test(src),'столбик отбрасывает к дороге поперёк; торец тонкой стены — скольжение вдоль');}
+}
+/* ---------- 32. общая калибровка 0.51 ---------- */
+{{let a=32;Math.random=()=>{a=(a*16807)%2147483647;return a/2147483647;};}newGame('ford','us','','normal','Калибровка');const s=G;
+  // контора: множитель по сложности
+  CK(DIFFS.kids.org===0.4&&DIFFS.easy.org===0.7&&DIFFS.normal.org===0.85&&DIFFS.hard.org===1.05&&DIFFS.hist.org===1.25,'контора по уровням: 0,4 / 0,7 / 0,85 / 1,05 / 1,25');
+  {const r={made:150000,mmade:0};s.dealers=s.dealers||{};const a=n=>{s.diff=n;return admParts(s,r).total;};const an=a('normal'),ah=a('hist');s.diff='normal';
+    CK(an>0.10&&an<0.125&&ah>0.135&&ah<0.165&&ah<0.19,'фирма на 150 тыс. машин в месяц: контора на «Норме» '+(an*100).toFixed(1)+' % выручки (было 12,4), на «Историке» '+(ah*100).toFixed(1)+' % (было 18,1)');}
+  // победа: порог прежний
+  CK(DOM_SHARE===0.5,'порог победы — половина мира за десять лет (не менялся)');
+  // бюро: ступень раньше своего года — по правилу опережения
+  {s.y=1912;s.rd.lvl=10;const c1=rdUpCost(s);globalThis.RDYOFF=1;const c0=rdUpCost(s);globalThis.RDYOFF=0;
+    CK(RD_Y.length===RD_MAX+1&&RD_Y[14]===1926&&RD_Y.every((y,i)=>!i||y>=RD_Y[i-1]),'у ступеней бюро свои годы: высшая — '+RD_Y[14]);
+    CK(rdAhead(s,11)===RD_Y[11]-1912&&near(c1/c0,aheadCostK(RD_Y[11]-1912),0.02),'11-я ступень в 1912 году — на '+rdAhead(s,11)+' лет раньше: в '+(c1/c0).toFixed(1)+' раза дороже ('+money(c0)+' → '+money(c1)+')');
+    s.y=1926;s.rd.lvl=13;CK(rdAhead(s,14)===0,'в свой год ступень стоит как раньше');
+    s.y=1905;s.rd.lvl=3;CK(rdAhead(s,4)===0&&rdAhead(s,5)===0,'ранние ступени мастерской к 1905 году — без надбавки');
+    s.rd.lvl=1;s.y=1895;}
+  // фирмы: глубокая потеря доли — повод для ответа и при целых продажах
+  {const src=String(firmPlan);CK(FIRM_DEEP===0.75&&/deep/.test(src)&&/rsG<=FIRM_DEEP/.test(src),'фирма отвечает, когда потеряла четверть своей доли класса, даже если продажи целы');}
+  // воздушный бой: враг доводит очередь, если нос смотрит в упреждение
+  {CK(FR_DIF.kids.fa===0&&FR_DIF.easy.fa>0&&FR_DIF.normal.fa>FR_DIF.easy.fa&&FR_DIF.hard.fa>FR_DIF.normal.fa&&FR_DIF.hist.fa>=FR_DIF.hard.fa,'наводка врага растёт с уровнем: '+['kids','easy','normal','hard','hist'].map(k=>FR_DIF[k].fa).join(' / ')+' рад');
+    const me0=FL.me,me={p:[0,1000,300],v:[0,0,40],fw:[0,0,1]},a={p:[0,1000,0],v:[0,0,45],fw:[0,0,1],ai:{e:[0,0,0]},target:'me'};FL.me=me;s.diff='normal';
+    const d1=frFoeAim(a);a.fw=v3n([0.05,0,1]);const d2=frFoeAim(a);a.fw=[0,0,1];s.diff='kids';const d3k=frFoeAim(a);s.diff='normal';me.p=[0,1000,900];const d4=frFoeAim(a);FL.me=me0;
+    CK(d1&&Math.abs(d1[2]-1)<1e-6&&!d2&&!d3k&&!d4,'нос в цель — очередь идёт в упреждение; мимо на 3° — нет; на «Юном» — никогда; дальше дальности огня — нет');}
 }
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

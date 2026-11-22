@@ -1233,17 +1233,20 @@ const PIONEERS={
 // 0.40: «Юный», «Лёгкая» и «Норма» мягче (отзыв: «можно сделать уровень юный, начальный и средний полегче»): больше денег на старте,
 // конкуренты слабее, соперники в гонках медленнее (race, drv), кредит больше; air — сила соперников в авиации, fly — полёт:
 // stall — запас до срыва (сдвиг критического угла), wind — доля ветра и болтанки, fail — частота отказов, dmg — поломки, fuel — запас топлива
+// 0.51, общая калибровка: org (контора) на «Норме», «Магнате» и «Историке» — 0,85 / 1,05 / 1,25 вместо 1 / 1,3 / 1,6. Замер шести партий бота:
+// на «Историке» пять-шесть из шести разорялись в 1924–1929 годах — контора съедала 18–20 % выручки, а завод в двадцатые даёт 19–28 %;
+// на «Норме» у фирмы с 30–45 % рынка оставалось 1–4 % прибыли, и бюро приходилось сокращать с 14-й ступени до 5-й.
 const DIFFS={
   kids:{bot:{iq:0.3,bonus:0.8},name:'Юный магнат',desc:'Для детей и новичков: помощник сам ведёт цены, дилеров, цеха и склад, а вы придумываете машины, улучшаете детали в КБ и гоняетесь',cash:2.5,comp:0.6,race:0.85,bad:0.3,debt:120000,share:0.45,rvRate:0.5,rvMax:0.3,pwMin:0.85,helper:1,simple:1,
     rshare:0.45,resp:0.4,cut:0.5,rgap:18,rate:-0.01,build:0.5,quit:0.5,scandal:0,recall:0,ar:0,bshare:0.3,rboost:0.25,org:0.4,copyMax:0.5,copyRate:0.1,cutMax:0.08,maK:0.8,drv:0.85,air:0.88,fly:{stall:-0.02,wind:0.4,fail:0.3,dmg:0.4,fuel:1.3}},
   easy:{bot:{iq:0.5,bonus:0.9},name:'Лёгкая',desc:'Больше денег, конкуренты отвечают мягко, кредит дёшев, цеха строятся быстро',cash:1.8,comp:0.72,race:0.9,bad:0.6,debt:40000,share:0.3,rvRate:0.8,rvMax:0.6,pwMin:0.8,
     rshare:0.35,resp:0.6,cut:0.6,rgap:15,rate:-0.005,build:0.6,quit:0.7,scandal:0.5,recall:0.5,ar:1,bshare:0.25,rboost:0.4,org:0.7,copyMax:0.8,copyRate:0.15,cutMax:0.15,maK:0.9,drv:0.9,air:0.93,fly:{stall:-0.02,wind:0.6,fail:0.6,dmg:0.6,fuel:1.15}},
   normal:{bot:{iq:0.7,bonus:1.0},name:'Норма',desc:'Первое место требует точных решений: конкуренты отвечают, деньги приходят не сразу, кризисы бьют по должникам',cash:1.2,comp:0.9,race:0.96,bad:1,debt:20000,share:0.2,rvRate:1,rvMax:1,pwMin:0.7,
-    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:1,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:0.97,air:0.97,fly:{stall:0.02,wind:0.8,fail:1,dmg:1,fuel:1}},
+    rshare:0.25,resp:1,cut:1,rgap:12,rate:0,build:1,quit:1,scandal:1,recall:1,ar:1,bshare:0.12,rboost:0.6,org:0.85,copyMax:1,copyRate:0.2,cutMax:0.3,maK:1,drv:0.97,air:0.97,fly:{stall:0.02,wind:0.8,fail:1,dmg:1,fuel:1}},
   hard:{bot:{iq:0.9,bonus:1.15},name:'Магнат',desc:'Конкуренты агрессивнее и быстрее перенимают ваши новинки, большая компания дороже в управлении, кредит дороже, кризисы сильнее',cash:0.85,comp:1.25,race:1.05,bad:1.4,debt:10000,share:0.14,rvRate:1.5,rvMax:1.7,pwMin:0.65,
-    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.3,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}},
+    rshare:0.18,resp:1.3,cut:1.25,rgap:9,rate:0.015,build:1.15,quit:1.2,scandal:1.4,recall:1.3,ar:1,bshare:0.1,rboost:0.8,org:1.05,copyMax:1.5,copyRate:0.3,cutMax:0.38,maK:1.15,drv:1.04,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}},
   hist:{bot:{iq:1.0,bonus:1.3},name:'Историк',desc:'Как «Божество» в «Цивилизации»: соперники сильны и мгновенно отвечают, большая компания дорога в управлении — первое место в наследии здесь исключительное достижение',cash:0.75,comp:1.45,race:1.09,bad:1.7,debt:5000,share:0.1,rvRate:1.8,rvMax:1.9,pwMin:0.6,
-    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.6,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}}
+    rshare:0.14,resp:1.5,cut:1.4,rgap:8,rate:0.02,build:1.2,quit:1.3,scandal:1.7,recall:1.5,ar:1,bshare:0.08,rboost:1,org:1.25,copyMax:2,copyRate:0.4,cutMax:0.45,maK:1.3,drv:1.08,air:1,fly:{stall:0.06,wind:1,fail:1,dmg:1,fuel:1}}
 };
 // Типичная машина соперников в каждом классе: с ней покупатель сравнивает вашу (год, прототип, детали)
 const RIVAL_CAR={
@@ -3080,7 +3083,13 @@ function bizRev(s){const M=s&&s.world&&s.world.my;return M&&M.r12>0?M.r12:0;}
 function rdBizShare(lvl){return RD_SHARE*Math.pow(clamp((lvl-1)/(RD_MAX-1),0,1),1.5);}
 function rdUpkeepBase(s,lvl){return Math.round(60*Math.pow(1.65,lvl-1)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
 function rdUpkeepAt(s,lvl){return Math.max(rdUpkeepBase(s,lvl),Math.round(bizRev(s)*rdBizShare(lvl)/12));}
-function rdUpCost(s){return Math.max(Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100,Math.round(rdUpkeepAt(s,s.rd.lvl+1)*6/100)*100);}
+/* 0.51, общая калибровка: у ступени бюро есть свой год (ТЗ, тема 3: «бюро у бота доходит до высшей ступени к 1912 году» — на замере
+   в шести партиях из шести). Испытательных треков, аэродинамических труб и исследовательских институтов у автозаводов 1912 года
+   не было: General Motors Research — 1920 год, полигон в Милфорде — 1924-й, лаборатория Форда в Дирборне — 1924-й. Раньше своего
+   года ступень стоит по общему правилу опережения: ×1,6 за каждый год (годы ступеней — оценка, сверить). RDYOFF=1 — как было. */
+const RD_Y=[0,1895,1895,1897,1899,1901,1903,1906,1909,1911,1914,1917,1920,1923,1926];
+function rdAhead(s,lvl){return globalThis.RDYOFF?0:Math.max(0,(RD_Y[lvl]||0)-s.y);}
+function rdUpCost(s){return Math.round(Math.max(Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100,Math.round(rdUpkeepAt(s,s.rd.lvl+1)*6/100)*100)*aheadCostK(rdAhead(s,s.rd.lvl+1))/100)*100;}
 // 0.32: КБ мотомастерской (пока нет автомобиля) — вдвое дешевле: чертёжник и пара механиков
 function rdUpkeep(s){return rdUpkeepAt(s,s.rd.lvl);}
 function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}
@@ -9339,6 +9348,7 @@ const FIRM_BT=3,          // насколько покупатель грузо�
   FIRM_FOLLOW=globalThis.FIRMFOLLOW??0.5,   // мелкие марки без имени идут за крупными: перенимают половину их перевеса
   FIRM_NET=0.07,          // чистая прибыль фирмы в обычный год, доля выручки
   FIRM_SCALE=0.1,         // недогруз/перегруз завода: выпуск вдвое ниже обычного — себестоимость +7 %
+  FIRM_DEEP=globalThis.FIRMDEEP??0.75,   // 0.51, общая калибровка: потеряна четверть своей доли класса — фирма отвечает, даже если сами продажи целы
   FIRM_LINE_Y={us:1915,uk:1924,fr:1921,de:1926,it:1924,ru:1931},   // когда поток стал обычным делом в стране (после — он уже в ценах истории)
   FIRM_FIN_Y={us:[1915,1925],uk:[1921,1930],fr:[1921,1930],de:[1924,1931],it:[1924,1931],ru:[1999,1999]};   // рассрочка: с какого года возможна и когда стала обычной
 function firmsOn(s){return botsOn(s)&&!globalThis.FIRMOFF;}/* FIRMOFF — замер «без ходов фирм» */
@@ -9483,7 +9493,11 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   const RS=F.rs||{};let g=null,loss=0;firmSegs(cp).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*cp.mix[k];if(l>loss){loss=l;g=k;}});
   const turn=!!F.turn;if(turn&&!g)g=g0;
   const gr=F.gr>0.02?F.gr:0;   // помнит обиду — на потерю доли из-за игрока отвечает раньше
-  if(!g||(!turn&&((RS[g]||1)>(bot?0.94:0.9)+0.05*gr||(F.rg[g]==null?1:F.rg[g])>(bot?0.97:0.95)+0.03*gr)))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
+  // 0.51, общая калибровка. Мера ТЗ «соперники отбирают у игрока не меньше трети доли к 1915 году» не выполнялась: фирма отвечала,
+  // только когда теряла и долю, и сами продажи против своей истории, а до 1915 года рынок растёт быстрее, чем игрок её теснит —
+  // продажи целы, доля ушла, ответа нет. Теперь глубокая потеря доли (FIRM_DEEP) — повод и сама по себе.
+  const rsG=g?(RS[g]==null?1:RS[g]):1,rgG=g?(F.rg[g]==null?1:F.rg[g]):1,deep=rsG<=FIRM_DEEP+0.05*gr;
+  if(!g||(!turn&&(rsG>(bot?0.94:0.9)+0.05*gr||(!deep&&rgG>(bot?0.97:0.95)+0.03*gr))))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
   // 1) машина хуже — модель-ответ
   const mdOld=F.md[g],mdAge=mdOld?t-mdOld.from:999;
   if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g])),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);
@@ -17617,7 +17631,7 @@ function rdCardHTML(s){const rd=s.rd,L=rdActive(s),tot=rdTotal(s),slots=rdSlots(
     ${rows}${!L.length?'<p class="small warn" style="margin-top:10px">Бюро простаивает — выберите проект.</p>':''}
     ${typeof ownCardHTML==='function'?ownCardHTML(s):''}
     <div class="btns" style="margin-top:10px">${free>0?`<button class="btn ${L.length?'':'primary'}" data-act="rdPick">+ Проект</button>`:''}<button class="btn" data-act="rdUp" ${rd.lvl>=RD_MAX||s.cash<rdUpCost(s)?'disabled':''}>${rd.lvl>=RD_MAX?'Высший уровень':'Расширить · '+money(rdUpCost(s))}</button>${rd.lvl>1?`<button class="btn" data-act="rdDown" title="На ступень ниже: содержание меньше">Сократить</button>`:''}</div>
-    ${rd.lvl<RD_MAX?`<p class="small muted" style="margin-top:6px">Уровень ${rd.lvl+1} — «${RD_LV[rd.lvl+1]}»: больше инженеров${rdSlots({rd:{lvl:rd.lvl+1}})>slots?', ещё один проект одновременно':''}${rd.lvl+1>=5&&rd.lvl<5?', улучшения до ★4':rd.lvl+1>=7&&rd.lvl<7?', улучшения до ★5':''}, прототипы дальше в будущее.</p>`:''}${kitHTML(s,'kb')}`,`${rd.lvl}/${RD_MAX} · ${sum}`);}
+    ${rd.lvl<RD_MAX?`<p class="small muted" style="margin-top:6px">Уровень ${rd.lvl+1} — «${RD_LV[rd.lvl+1]}»: больше инженеров${rdSlots({rd:{lvl:rd.lvl+1}})>slots?', ещё один проект одновременно':''}${rd.lvl+1>=5&&rd.lvl<5?', улучшения до ★4':rd.lvl+1>=7&&rd.lvl<7?', улучшения до ★5':''}, прототипы дальше в будущее.${rdAhead(s,rd.lvl+1)>0?` <span class="warn">Такие бюро появились около ${RD_Y[rd.lvl+1]} года: на ${rdAhead(s,rd.lvl+1)} ${plural(rdAhead(s,rd.lvl+1),'год','года','лет')} раньше — в ${aheadCostK(rdAhead(s,rd.lvl+1)).toFixed(1).replace('.',',')} раза дороже.</span>`:''}</p>`:''}${kitHTML(s,'kb')}`,`${rd.lvl}/${RD_MAX} · ${sum}`);}
 // 0.36: коротко об устройстве — в заголовке свёрнутого раздела
 function specShort(md,s){try{const p=parts(md);return [p.e&&p.e.name,p.b&&p.b.name].filter(Boolean).join(' · ');}catch(_){return '';}}
 function specLine(md,s){const p=parts(md),st=x=>upgL(x.id)?' ★'+upgL(x.id):'',eq=typeof eqLine==='function'?eqLine(md):'';return PART_KEYS.map(k=>p[k].name+st(p[k])).join(' · ')+' · '+trimName(p.t,s)+(eq?' · '+eq:'');}
@@ -18944,7 +18958,7 @@ if(typeof sb!=='undefined'&&sb)sb.addEventListener('scroll',xpopScroll,{passive:
 window.addEventListener('resize',()=>xpopClose());
 
 /* ================= MAIN MENU ================= */
-const GAME_VER='0.50';
+const GAME_VER='0.51';
 const MS=document.getElementById('menuScreen');
 function menuArt(){
   // рассвет над дорогой с тополями и гоночный автомобиль начала века
@@ -20752,14 +20766,16 @@ function aiPrep(rc){return rc.t==='endurance'||rc.t==='rally'||rc.id==='mille'?1
    из будущего выигрывала 8–9 гонок из 10, сила команд от побед игрока не зависела. Теперь ответа два.
    Копирование: деталь, которую история ещё не освоила, соперники видят на вашей машине — на трассе или в серии (markSeen) —
    и через COPY_LAG лет ставят на свои гоночные машины (aiHas): преимущество «из будущего» живёт год-два, а не десятилетие.
-   Бюджеты: чем больше гонок вы выиграли за этот и два прошлых сезона, тем сильнее заводские команды (raceHeat): от трети
-   побед прибавки нет, дальше +0,75 % к силе за каждый процент побед, не больше +30 %. Сбавите — остынут и они. */
-const COPY_LAG={kids:4,easy:3,normal:2,hard:2,hist:1},HEAT_K={kids:0.3,easy:0.6,normal:1,hard:1.15,hist:1.3},HEAT_MAX=0.3;
+   Бюджеты: чем больше гонок вы выиграли за этот и два прошлых сезона, тем сильнее заводские команды (raceHeat): до четверти
+   побед прибавки нет, дальше +1,5 % к силе за каждый процент побед, не больше +30 %. Сбавите — остынут и они.
+   Общая калибровка 0.51: было «от трети, +0,75 %» — бот при этом выигрывал 36–47 % гонок, а в 1909–1914 годах 40–58 %
+   (мера ТЗ — не больше трети): ответ начинался там, где должен был уже остановить. */
+const COPY_LAG={kids:4,easy:3,normal:2,hard:2,hist:1},HEAT_K={kids:0.3,easy:0.6,normal:1,hard:1.15,hist:1.3},HEAT_MAX=0.3,HEAT_FROM=globalThis.HEATFROM??0.25,HEAT_SLOPE=globalThis.HEATSLOPE??1.5;
 function copyLag(s){return COPY_LAG[(s&&s.diff)||'normal']||2;}
 function markSeen(s,md){if(!s||!md)return;const S=s.seenPart=s.seenPart||{};['e','g','c','k','w'].forEach(k=>{const x=partById(md[k]);if(x&&x.y>s.y&&S[x.id]==null)S[x.id]=s.y;});}
 function aiHas(x,y){if(x.y<=y)return true;const s=typeof G!=='undefined'?G:null,S=s&&s.seenPart;return !!(S&&S[x.id]!=null&&y>=S[x.id]+copyLag(s));}
 function raceHeat(s){if(!s||!s.raceLog||s.mode==='racer')return 0;let n=0,w=0;for(let i=s.raceLog.length-1;i>=0;i--){const e=s.raceLog[i];if(e.y<s.y-2)break;n++;if(e.place===1)w++;}
-  return n<4?0:clamp((w/n-1/3)*0.75,0,HEAT_MAX)*(HEAT_K[s.diff]||1);}
+  return n<4?0:clamp((w/n-HEAT_FROM)*HEAT_SLOPE,0,HEAT_MAX)*(HEAT_K[s.diff]||1);}
 // новости ответа: что скопировали и насколько выросли бюджеты — по строке, когда меняется
 function rivalNews(s){if(!s||s.mode==='racer')return;const S=s.seenPart||{},said=s.copySaid=s.copySaid||{},lag=copyLag(s);
   for(const id in S){if(said[id]||s.y<S[id]+lag)continue;said[id]=1;const x=partById(id);if(x&&x.y>s.y)addLog(`Заводские команды разобрались в вашей новинке: «${x.name}» теперь стоит и на их гоночных машинах — на ${x.y-s.y} ${plural(x.y-s.y,'год','года','лет')} раньше истории.`,'bad');}
@@ -25441,7 +25457,7 @@ function frBullets(dt,M){const B=FL.bul;if(!B||!B.length)return;const me=FL.me,t
       if(Math.random()<0.3)fwPart(p1[0],p1[1]+0.3,p1[2],0,1,0,0.6,2,0.8,[120,108,90],0.35);}}}
 // огонь из пулемётов: курсовые — по ручке «огонь», стрелок — сам по ближнему врагу в задней полусфере
 function frGuns(a,dt,want,M){const g=a.gun;if(!g)return;g.cd-=dt;g.cdo=(g.cdo||0)-dt;const sh=[a.p[0]+a.fw[0]*(a.mesh.len*0.35)+a.up[0]*0.5,a.p[1]+a.fw[1]*(a.mesh.len*0.35)+a.up[1]*0.5,a.p[2]+a.fw[2]*(a.mesh.len*0.35)+a.up[2]*0.5];sh.vx=a.v[0];sh.vy=a.v[1];sh.vz=a.v[2];
-  if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;const as=a===FL.me?frAssist(a,M):null,bd=as?as.aim:a.fw;/* 0.51: автоприцел игрока — очередь доводится в точку упреждения */for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],bd,g.spread,a.side,1);}
+  if(want&&g.fwd&&g.ammo>0&&g.cd<=0){g.cd=1/g.rate;g.ammo-=g.n;const as=a===FL.me?frAssist(a,M):null,bd=as?as.aim:(a!==FL.me&&typeof frFoeAim==='function'&&frFoeAim(a))||a.fw;/* общая калибровка 0.51: наводка врага *//* 0.51: автоприцел игрока — очередь доводится в точку упреждения */for(let i=0;i<g.n;i++){const off=g.n>1?(i?0.2:-0.2):0;frBullet([sh[0]+a.rt[0]*off,sh[1],sh[2]+a.rt[2]*off],bd,g.spread,a.side,1);}
     if(Math.random()<0.5)fwPart(sh[0]+a.fw[0]*1.5,sh[1],sh[2]+a.fw[2]*1.5,0,0,0,0.35,0,0.04,[255,230,170],-2);if(a===FL.me)frSnd('gun',1);else frSnd('gun',0.6/(1+Math.hypot(a.p[0]-FL.me.p[0],a.p[1]-FL.me.p[1],a.p[2]-FL.me.p[2])/60));}
   if(g.obs&&g.cdo<=0){const foes=a.side===0?(M.foes||[]):[FL.me];let best=null,bd=420;for(const f of foes){if(f.crash||f.down)continue;const d=Math.hypot(f.p[0]-a.p[0],f.p[1]-a.p[1],f.p[2]-a.p[2]);if(d<bd){const dir=[(f.p[0]-a.p[0])/d,(f.p[1]-a.p[1])/d,(f.p[2]-a.p[2])/d];if(d3(dir,a.fw)<0.35){bd=d;best=[f,dir,d];}}}
     if(best){g.cdo=g.obsRate;const [f,dir,d]=best,lead=d/760,tp=[f.p[0]+f.v[0]*lead,f.p[1]+f.v[1]*lead,f.p[2]+f.v[2]*lead],aim=v3n([tp[0]-a.p[0],tp[1]-a.p[1],tp[2]-a.p[2]]);frBullet([a.p[0]+a.up[0]*1.2,a.p[1]+a.up[1]*1.2,a.p[2]+a.up[2]*1.2],aim,g.obsSpread,a.side,0.9);}}}
@@ -25662,12 +25678,19 @@ function recAdvice(s,add){if(s.mode==='racer'||isWar(s.y,s.m,s.country))return;c
       а повисев на хвосте, отваливает в сторону и заходит снова. */
 const FR_RANGE=450;/* дальность действительного огня, м */
 /* cone — конус автоприцела, рад; k — какая доля конуса доводится целиком («захват»); tail — сколько секунд враг держится на хвосте; err — ошибка прицеливания врага;
-   pause — пауза между его очередями; burst — длина очереди; over — шанс проскочить вперёд; see — как далеко он вас замечает */
-const FR_DIF={kids:{cone:0.16,k:1,tail:4,err:2.0,pause:1.8,burst:0.8,over:0.9,see:0.75},
-  easy:{cone:0.12,k:0.85,tail:5.5,err:1.3,pause:1.4,burst:0.9,over:0.7,see:0.85},
-  normal:{cone:0.075,k:0.6,tail:8,err:0.5,pause:0.6,burst:1.2,over:0.5,see:1},
-  hard:{cone:0.05,k:0.5,tail:11,err:0.3,pause:0.35,burst:1.6,over:0.35,see:1},
-  hist:{cone:0,k:0,tail:14,err:0.2,pause:0.25,burst:2,over:0.25,see:1}};
+   pause — пауза между его очередями; burst — длина очереди; over — шанс проскочить вперёд; see — как далеко он вас замечает;
+   fa — наводка врага, рад: если его нос смотрит в точку упреждения точнее fa, очередь идёт в неё (с его ошибкой и разбросом пулемёта).
+   Общая калибровка 0.51: без наводки враг стрелял «примерно в вашу сторону» (в конусе 7°) и по самолёту в ровном вираже почти не попадал:
+   за 150 секунд — 0–5 % прочности на любом уровне. С наводкой по тому же замеру (двенадцать боёв на уровень): «Лёгкая» ≈2 %, «Норма» ≈6 %,
+   «Магнат» ≈19 %, «Историк» ≈34 %. Манёвром от очереди по-прежнему уходят: упреждение у врага прямое, без поправки на ваш вираж. */
+const FA=String(globalThis.FOEAIM||'0,0.008,0.02,0.03,0.04').split(',').map(Number);
+const FR_DIF={kids:{cone:0.16,k:1,tail:4,err:2.0,pause:1.8,burst:0.8,over:0.9,see:0.75,fa:FA[0]},
+  easy:{cone:0.12,k:0.85,tail:5.5,err:1.3,pause:1.4,burst:0.9,over:0.7,see:0.85,fa:FA[1]},
+  normal:{cone:0.075,k:0.6,tail:8,err:0.5,pause:0.6,burst:1.2,over:0.5,see:1,fa:FA[2]},
+  hard:{cone:0.05,k:0.5,tail:11,err:0.3,pause:0.35,burst:1.6,over:0.35,see:1,fa:FA[3]},
+  hist:{cone:0,k:0,tail:14,err:0.2,pause:0.25,burst:2,over:0.25,see:1,fa:FA[4]}};
+function frFoeAim(a){const D=frDif(),me=FL.me;if(!D.fa||!me||a===me||!a.ai||a.target!=='me')return null;const L=frLead(a,me);if(L.d>FR_RANGE)return null;
+  const e=a.ai.e||[0,0,0],dir=v3n([L.dir[0]+e[0],L.dir[1]+e[1],L.dir[2]+e[2]]);return d3(dir,a.fw)>Math.cos(D.fa)?dir:null;}
 function frDif(){return FR_DIF[(typeof G!=='undefined'&&G&&G.diff)||'normal']||FR_DIF.normal;}
 /* упреждение: куда направить нос стрелку a, чтобы пуля встретила цель f. Пуля летит 760 м/с от точки выстрела и скорости
    стрелка не наследует (так считает frBullet) — значит, в расчёте только путь цели за время полёта пули */

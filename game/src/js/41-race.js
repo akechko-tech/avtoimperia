@@ -933,14 +933,16 @@ function aiPrep(rc){return rc.t==='endurance'||rc.t==='rally'||rc.id==='mille'?1
    из будущего выигрывала 8–9 гонок из 10, сила команд от побед игрока не зависела. Теперь ответа два.
    Копирование: деталь, которую история ещё не освоила, соперники видят на вашей машине — на трассе или в серии (markSeen) —
    и через COPY_LAG лет ставят на свои гоночные машины (aiHas): преимущество «из будущего» живёт год-два, а не десятилетие.
-   Бюджеты: чем больше гонок вы выиграли за этот и два прошлых сезона, тем сильнее заводские команды (raceHeat): от трети
-   побед прибавки нет, дальше +0,75 % к силе за каждый процент побед, не больше +30 %. Сбавите — остынут и они. */
-const COPY_LAG={kids:4,easy:3,normal:2,hard:2,hist:1},HEAT_K={kids:0.3,easy:0.6,normal:1,hard:1.15,hist:1.3},HEAT_MAX=0.3;
+   Бюджеты: чем больше гонок вы выиграли за этот и два прошлых сезона, тем сильнее заводские команды (raceHeat): до четверти
+   побед прибавки нет, дальше +1,5 % к силе за каждый процент побед, не больше +30 %. Сбавите — остынут и они.
+   Общая калибровка 0.51: было «от трети, +0,75 %» — бот при этом выигрывал 36–47 % гонок, а в 1909–1914 годах 40–58 %
+   (мера ТЗ — не больше трети): ответ начинался там, где должен был уже остановить. */
+const COPY_LAG={kids:4,easy:3,normal:2,hard:2,hist:1},HEAT_K={kids:0.3,easy:0.6,normal:1,hard:1.15,hist:1.3},HEAT_MAX=0.3,HEAT_FROM=globalThis.HEATFROM??0.25,HEAT_SLOPE=globalThis.HEATSLOPE??1.5;
 function copyLag(s){return COPY_LAG[(s&&s.diff)||'normal']||2;}
 function markSeen(s,md){if(!s||!md)return;const S=s.seenPart=s.seenPart||{};['e','g','c','k','w'].forEach(k=>{const x=partById(md[k]);if(x&&x.y>s.y&&S[x.id]==null)S[x.id]=s.y;});}
 function aiHas(x,y){if(x.y<=y)return true;const s=typeof G!=='undefined'?G:null,S=s&&s.seenPart;return !!(S&&S[x.id]!=null&&y>=S[x.id]+copyLag(s));}
 function raceHeat(s){if(!s||!s.raceLog||s.mode==='racer')return 0;let n=0,w=0;for(let i=s.raceLog.length-1;i>=0;i--){const e=s.raceLog[i];if(e.y<s.y-2)break;n++;if(e.place===1)w++;}
-  return n<4?0:clamp((w/n-1/3)*0.75,0,HEAT_MAX)*(HEAT_K[s.diff]||1);}
+  return n<4?0:clamp((w/n-HEAT_FROM)*HEAT_SLOPE,0,HEAT_MAX)*(HEAT_K[s.diff]||1);}
 // новости ответа: что скопировали и насколько выросли бюджеты — по строке, когда меняется
 function rivalNews(s){if(!s||s.mode==='racer')return;const S=s.seenPart||{},said=s.copySaid=s.copySaid||{},lag=copyLag(s);
   for(const id in S){if(said[id]||s.y<S[id]+lag)continue;said[id]=1;const x=partById(id);if(x&&x.y>s.y)addLog(`Заводские команды разобрались в вашей новинке: «${x.name}» теперь стоит и на их гоночных машинах — на ${x.y-s.y} ${plural(x.y-s.y,'год','года','лет')} раньше истории.`,'bad');}

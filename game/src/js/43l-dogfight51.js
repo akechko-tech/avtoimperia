@@ -7,12 +7,19 @@
       а повисев на хвосте, отваливает в сторону и заходит снова. */
 const FR_RANGE=450;/* дальность действительного огня, м */
 /* cone — конус автоприцела, рад; k — какая доля конуса доводится целиком («захват»); tail — сколько секунд враг держится на хвосте; err — ошибка прицеливания врага;
-   pause — пауза между его очередями; burst — длина очереди; over — шанс проскочить вперёд; see — как далеко он вас замечает */
-const FR_DIF={kids:{cone:0.16,k:1,tail:4,err:2.0,pause:1.8,burst:0.8,over:0.9,see:0.75},
-  easy:{cone:0.12,k:0.85,tail:5.5,err:1.3,pause:1.4,burst:0.9,over:0.7,see:0.85},
-  normal:{cone:0.075,k:0.6,tail:8,err:0.5,pause:0.6,burst:1.2,over:0.5,see:1},
-  hard:{cone:0.05,k:0.5,tail:11,err:0.3,pause:0.35,burst:1.6,over:0.35,see:1},
-  hist:{cone:0,k:0,tail:14,err:0.2,pause:0.25,burst:2,over:0.25,see:1}};
+   pause — пауза между его очередями; burst — длина очереди; over — шанс проскочить вперёд; see — как далеко он вас замечает;
+   fa — наводка врага, рад: если его нос смотрит в точку упреждения точнее fa, очередь идёт в неё (с его ошибкой и разбросом пулемёта).
+   Общая калибровка 0.51: без наводки враг стрелял «примерно в вашу сторону» (в конусе 7°) и по самолёту в ровном вираже почти не попадал:
+   за 150 секунд — 0–5 % прочности на любом уровне. С наводкой по тому же замеру (двенадцать боёв на уровень): «Лёгкая» ≈2 %, «Норма» ≈6 %,
+   «Магнат» ≈19 %, «Историк» ≈34 %. Манёвром от очереди по-прежнему уходят: упреждение у врага прямое, без поправки на ваш вираж. */
+const FA=String(globalThis.FOEAIM||'0,0.008,0.02,0.03,0.04').split(',').map(Number);
+const FR_DIF={kids:{cone:0.16,k:1,tail:4,err:2.0,pause:1.8,burst:0.8,over:0.9,see:0.75,fa:FA[0]},
+  easy:{cone:0.12,k:0.85,tail:5.5,err:1.3,pause:1.4,burst:0.9,over:0.7,see:0.85,fa:FA[1]},
+  normal:{cone:0.075,k:0.6,tail:8,err:0.5,pause:0.6,burst:1.2,over:0.5,see:1,fa:FA[2]},
+  hard:{cone:0.05,k:0.5,tail:11,err:0.3,pause:0.35,burst:1.6,over:0.35,see:1,fa:FA[3]},
+  hist:{cone:0,k:0,tail:14,err:0.2,pause:0.25,burst:2,over:0.25,see:1,fa:FA[4]}};
+function frFoeAim(a){const D=frDif(),me=FL.me;if(!D.fa||!me||a===me||!a.ai||a.target!=='me')return null;const L=frLead(a,me);if(L.d>FR_RANGE)return null;
+  const e=a.ai.e||[0,0,0],dir=v3n([L.dir[0]+e[0],L.dir[1]+e[1],L.dir[2]+e[2]]);return d3(dir,a.fw)>Math.cos(D.fa)?dir:null;}
 function frDif(){return FR_DIF[(typeof G!=='undefined'&&G&&G.diff)||'normal']||FR_DIF.normal;}
 /* упреждение: куда направить нос стрелку a, чтобы пуля встретила цель f. Пуля летит 760 м/с от точки выстрела и скорости
    стрелка не наследует (так считает frBullet) — значит, в расчёте только путь цели за время полёта пули */

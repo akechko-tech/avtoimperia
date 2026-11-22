@@ -9,7 +9,7 @@
 //            TIME=1 — строка на каждую гонку (время расчёта, место, шанс по прикидке менеджера); DBG=1900 — помесячно до этого года.
 const {spawn}=require('child_process');
 // подбор чисел этапа 5: NESTMU, NESTTH и др. — из окружения (например, NESTMU=0.7)
-for(const k of ['NESTMU','NESTTH','NESTY0','NESTY1','FIRMOFF','FIRMFOLLOW','XLOFF'])if(process.env[k]!=null)globalThis[k]=+process.env[k];
+for(const k of ['NESTMU','NESTTH','NESTY0','NESTY1','FIRMOFF','FIRMFOLLOW','XLOFF','FIRMDEEP','HEATFROM','HEATSLOPE','RDYOFF','ORGK'])if(process.env[k]!=null)globalThis[k]=+process.env[k];
 const A=process.argv.slice(2);
 if(A[0]==='all'){
   const seeds=+(A[1]||3),par=+(A[2]||3),styles=(A[3]||'ford,helper').split(','),diffs=(A[4]||'normal,hist').split(','),pio=A[5]||'ford',cc=A[6]||'us';
@@ -93,10 +93,19 @@ function trimMonth(){const pa=pAvg(),rd=rdUpkeep(G),tm=teamUpkeep(G);if(mi(G)<36
   if(rd>=tm&&G.rd.lvl>5&&rdActive(G).length<=Math.max(1,rdSlots(G)-1)){const l0=G.rd.lvl;ACT.rdDown();if(G.rd.lvl<l0)trims++;}
   else if((G.rdept||0)>1){RACE_ACT.rdeptDown();trims++;}}
 let trims=0;
+// 0.51, общая калибровка: свои поставщики (лес, сталь, рудники, стекло, железная дорога) — сильный игрок их покупает: детали дешевле
+// до 14 %, окупаются за 3–5 лет. Без них у бота в двадцатые материалы съедают две трети выручки. Каучук не берём: риск, отдача 40 %.
+// NOSUP=1 — прежний бот, без поставщиков.
+let supN=0,supSpent=0;
+function supMonth(){if(process.env.NOSUP||pAvg()<=0||G.y<1908)return;
+  for(const S of SUPPLY.slice().sort((a,b)=>a.P-b.P)){if(S.risk||G.y<S.y)continue;const u=supOf(G)[S.k],M=matSpend(G);if(u&&u.cover>=M*1.6)continue;
+    const p=u?supPrice(G,S,M*2-u.cover):supPrice(G,S,M*2);if(p>S.cut*M*12*S.P*1.6)continue;   // мал закуп — завод-поставщик не окупится
+    if(free()<p*1.3)continue;const c0=G.cash;if(supBuy(G,S.k)){supN++;supSpent+=c0-G.cash;}return;}}
 function month(){const act=G.models.filter(m=>m.status==='prod'),dev=G.models.filter(m=>m.status==='dev');
   const gap=FORD&&pAvg()>0?36:48;if(!dev.length&&mi(G)-lastDesign>=gap&&mi(G)>=6)newModel(cls());retireOld();
   if(FORD)try{trimMonth();}catch(e){if(!QUIET)console.log('trim',e.message);}
   if(RDX)labMonth();if(RACE){raceCarMonth();raceMonth();}
+  if(FORD)try{supMonth();}catch(e){if(!QUIET)console.log('sup',e.message);}
   if(LOW&&G.m%3===1)act.forEach(m=>{const bp=bestPriceFor(m,G).price||m.price,uc=unitCost(m,G);m.price=Math.round(Math.max(uc*1.12/(1-DEALER_MARGIN),bp*0.9)/10)*10;});}
 function pickChoice(ev){const K=ev.choices.map(c=>c[1]);
   if(K.includes('domScreen'))return 'ok';
@@ -136,5 +145,5 @@ for(let k=0;k<35*12+6&&G.y<ENDY;k++){
     if(!QUIET)console.log(G.y-1,'касса',(G.cash/1e6).toFixed(2),'выр12',(rev12/1e6).toFixed(2),'доля',Math.round(hs*100)+'%','КБ',G.rd.lvl,'гонки',wins+'/'+starts,'|',DOM_K.map(k=>k.slice(0,3)+' '+S[k].sh+'%/'+(S[k].hist===null?'—':S[k].hist+'%')+(S[k].ok?'✔':S[k].dom?'·':'')).join('  '));}
   if(G.over)break;
 }
-console.log(JSON.stringify({style:STYLE,diff:'${diff}',seed:${seed},pio:${JSON.stringify(pio)},win:winAt,lost:lostAt,first,firstDom,cashRev1915,share1915,wins,majors,starts,spentRace:Math.round(spentRace),endY:G.y,over:!!G.over&&G.y<1930,value:Math.round(companyValue(G)),cash:Math.round(G.cash),rd:G.rd.lvl,rdept:G.rdept||0,trims,firsts:firstsLive(G),yr}));
+console.log(JSON.stringify({style:STYLE,diff:'${diff}',seed:${seed},pio:${JSON.stringify(pio)},win:winAt,lost:lostAt,first,firstDom,cashRev1915,share1915,wins,majors,starts,spentRace:Math.round(spentRace),endY:G.y,over:!!G.over&&G.y<1930,value:Math.round(companyValue(G)),cash:Math.round(G.cash),rd:G.rd.lvl,rdept:G.rdept||0,trims,supN,supSpent:Math.round(supSpent),supK:+supK(G).toFixed(3),firsts:firstsLive(G),yr}));
 `);

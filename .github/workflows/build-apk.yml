@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TRIAL: ${{ github.ref_name != 'main' }}
-      TRIAL_VER: '0.51'
+      TRIAL_VER: '0.52'
       APK: ${{ github.ref_name == 'main' && 'avtoimperia.apk' || 'avtoimperia-proba.apk' }}
     steps:
       - uses: actions/checkout@v4

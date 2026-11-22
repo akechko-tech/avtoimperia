@@ -19,6 +19,7 @@ const FIRM_BT=3,          // насколько покупатель грузо�
   FIRM_FOLLOW=globalThis.FIRMFOLLOW??0.5,   // мелкие марки без имени идут за крупными: перенимают половину их перевеса
   FIRM_NET=0.07,          // чистая прибыль фирмы в обычный год, доля выручки
   FIRM_SCALE=0.1,         // недогруз/перегруз завода: выпуск вдвое ниже обычного — себестоимость +7 %
+  FIRM_DEEP=globalThis.FIRMDEEP??0.75,   // 0.51, общая калибровка: потеряна четверть своей доли класса — фирма отвечает, даже если сами продажи целы
   FIRM_LINE_Y={us:1915,uk:1924,fr:1921,de:1926,it:1924,ru:1931},   // когда поток стал обычным делом в стране (после — он уже в ценах истории)
   FIRM_FIN_Y={us:[1915,1925],uk:[1921,1930],fr:[1921,1930],de:[1924,1931],it:[1924,1931],ru:[1999,1999]};   // рассрочка: с какого года возможна и когда стала обычной
 function firmsOn(s){return botsOn(s)&&!globalThis.FIRMOFF;}/* FIRMOFF — замер «без ходов фирм» */
@@ -163,7 +164,11 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   const RS=F.rs||{};let g=null,loss=0;firmSegs(cp).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*cp.mix[k];if(l>loss){loss=l;g=k;}});
   const turn=!!F.turn;if(turn&&!g)g=g0;
   const gr=F.gr>0.02?F.gr:0;   // помнит обиду — на потерю доли из-за игрока отвечает раньше
-  if(!g||(!turn&&((RS[g]||1)>(bot?0.94:0.9)+0.05*gr||(F.rg[g]==null?1:F.rg[g])>(bot?0.97:0.95)+0.03*gr)))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
+  // 0.51, общая калибровка. Мера ТЗ «соперники отбирают у игрока не меньше трети доли к 1915 году» не выполнялась: фирма отвечала,
+  // только когда теряла и долю, и сами продажи против своей истории, а до 1915 года рынок растёт быстрее, чем игрок её теснит —
+  // продажи целы, доля ушла, ответа нет. Теперь глубокая потеря доли (FIRM_DEEP) — повод и сама по себе.
+  const rsG=g?(RS[g]==null?1:RS[g]):1,rgG=g?(F.rg[g]==null?1:F.rg[g]):1,deep=rsG<=FIRM_DEEP+0.05*gr;
+  if(!g||(!turn&&(rsG>(bot?0.94:0.9)+0.05*gr||(!deep&&rgG>(bot?0.97:0.95)+0.03*gr))))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
   // 1) машина хуже — модель-ответ
   const mdOld=F.md[g],mdAge=mdOld?t-mdOld.from:999;
   if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g])),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);

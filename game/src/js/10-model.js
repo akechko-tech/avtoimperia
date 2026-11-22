@@ -35,7 +35,13 @@ function bizRev(s){const M=s&&s.world&&s.world.my;return M&&M.r12>0?M.r12:0;}
 function rdBizShare(lvl){return RD_SHARE*Math.pow(clamp((lvl-1)/(RD_MAX-1),0,1),1.5);}
 function rdUpkeepBase(s,lvl){return Math.round(60*Math.pow(1.65,lvl-1)*cpi(s)*(1+0.03*T(s))*(lineOn(s,'car')?1:0.5));}
 function rdUpkeepAt(s,lvl){return Math.max(rdUpkeepBase(s,lvl),Math.round(bizRev(s)*rdBizShare(lvl)/12));}
-function rdUpCost(s){return Math.max(Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100,Math.round(rdUpkeepAt(s,s.rd.lvl+1)*6/100)*100);}
+/* 0.51, общая калибровка: у ступени бюро есть свой год (ТЗ, тема 3: «бюро у бота доходит до высшей ступени к 1912 году» — на замере
+   в шести партиях из шести). Испытательных треков, аэродинамических труб и исследовательских институтов у автозаводов 1912 года
+   не было: General Motors Research — 1920 год, полигон в Милфорде — 1924-й, лаборатория Форда в Дирборне — 1924-й. Раньше своего
+   года ступень стоит по общему правилу опережения: ×1,6 за каждый год (годы ступеней — оценка, сверить). RDYOFF=1 — как было. */
+const RD_Y=[0,1895,1895,1897,1899,1901,1903,1906,1909,1911,1914,1917,1920,1923,1926];
+function rdAhead(s,lvl){return globalThis.RDYOFF?0:Math.max(0,(RD_Y[lvl]||0)-s.y);}
+function rdUpCost(s){return Math.round(Math.max(Math.round(3000*Math.pow(1.6,s.rd.lvl-1)*cpi(s)*(1+0.05*T(s))/100)*100,Math.round(rdUpkeepAt(s,s.rd.lvl+1)*6/100)*100)*aheadCostK(rdAhead(s,s.rd.lvl+1))/100)*100;}
 // 0.32: КБ мотомастерской (пока нет автомобиля) — вдвое дешевле: чертёжник и пара механиков
 function rdUpkeep(s){return rdUpkeepAt(s,s.rd.lvl);}
 function rdMaxUpg(s){return s.rd.lvl>=7?5:s.rd.lvl>=5?4:3;}

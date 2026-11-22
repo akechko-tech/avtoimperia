@@ -1,12 +1,15 @@
 // Подбор силы реальных конкурентов: без игрока их продажи должны совпасть с историей.
-// Запуск: node test/calib.js [--write]  → src/js/106-calib.js
+// Запуск: node test/calib.js [--write | --out=файл]  → src/js/106-calib.js
 const fs=require('fs'),path=require('path');
-const write=process.argv.includes('--write');
+const outArg=process.argv.find(a=>a.startsWith('--out=')),write=process.argv.includes('--write')||!!outArg;   // --out=файл — записать таблицу в сторону, для сверки
 require('./harness.js')(`
+// 0.51: мерка калибровки — сила соперников ×1. На «Норме» с 0.40 она ×0,9 (уровень сделан мягче), и уточнение для мотоциклов,
+// которое идёт через функцию игры, поднимало таблицу на те же 0,10: «без игрока» сходилось с историей на «Норме», а не в мерке.
+DIFFS.calib={...DIFFS.normal,comp:1};
 const out={k:{},fleet:{}},warn=[],diag=[];
 for(const c of Object.keys(COUNTRIES)){
   out.k[c]={};ALLSEG.forEach(g=>out.k[c][g]={});out.fleet[c]={};
-  const s={y:1895,m:0,country:'none',pioneer:'none',models:[],dealers:{},fleet:{[c]:FLEET0[c]},pw:{},rep:50,diff:'normal'};G=s;
+  const s={y:1895,m:0,country:'none',pioneer:'none',models:[],dealers:{},fleet:{[c]:FLEET0[c]},pw:{},rep:50,diff:'calib'};G=s;
   const kap={};ALLSEG.forEach(g=>kap[g]=-4);
   for(let y=1895;y<=1930;y++){
     out.fleet[c][y]=Math.round(s.fleet[c]);if(y===1930)break;
@@ -34,7 +37,7 @@ for(const c of Object.keys(COUNTRIES)){
     if(first!=null)ys.forEach(y=>{if(y<first)tb[y]=tb[first];});}
   const CK=CALIB.k[c];CALIB.k[c]=out.k[c];let err=0;
   for(let pass=0;pass<14;pass++){
-    const s={y:1895,m:0,country:'none',pioneer:'none',models:[],dealers:{},fleet:{[c]:FLEET0[c]},pw:{},rep:50,diff:'normal'};G=s;
+    const s={y:1895,m:0,country:'none',pioneer:'none',models:[],dealers:{},fleet:{[c]:FLEET0[c]},pw:{},rep:50,diff:'calib'};G=s;
     const sold={},tgtY={};MOTOSEG.forEach(g=>{sold[g]={};tgtY[g]={};});
     for(let y=1895;y<1930;y++)for(let m=0;m<12;m++){s.y=y;s.m=m;
       const sf=[...Array(12).keys()].reduce((a,mm)=>a+SEASON[mm]*econ(y,mm,c).f,0),fm=SEASON[m]*econ(y,m,c).f*12/sf;
@@ -55,5 +58,5 @@ if(write){
   const txt='/* ================= CALIB: сила конкурентов по истории (генерируется test/calib.js) ================= */\n'+
     '// k — насколько реальные марки класса привлекательнее «средней» машины: подобрано так, чтобы без игрока\n// их продажи совпали с историей; fleet — машины на дорогах в таком мире, на 1 января\n'+
     'const CALIB={k:'+ser(out.k)+',\nfleet:'+ser(out.fleet)+'};\n';
-  fs.writeFileSync(path.join(__dirname,'../src/js/106-calib.js'),txt);console.log('written',txt.length);
+  fs.writeFileSync(outArg?outArg.slice(6):path.join(__dirname,'../src/js/106-calib.js'),txt);console.log('written',txt.length);
 }

@@ -2,6 +2,9 @@
 // спад в США после 1915 года, рост в Германии и Британии в 1920-х.  node game/test/moto_econ.js
 require('./harness.js')(`
 Math.random=(()=>{let a=11;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
+// 0.51: сверка — в мерке калибровки (сила соперников ×1). На «Норме» соперники с 0.40 слабее на десятую, и рынок мотоциклов
+// без игрока на ту же десятую меньше истории — это уровень сложности, а не ошибка таблицы; раньше проверка мерила «Норму» и падала.
+DIFFS.normal={...DIFFS.normal,comp:1};
 let bad=0,worst=0;const res={};
 for(const c of ['us','fr','uk','de','it']){newGame('custom',c,'T','normal');G.cash=1e9;G.models[0].status='off';G.helper=null;
   const yr={},exp={};
