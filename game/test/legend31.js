@@ -7,6 +7,7 @@ newGame('renault','fr','T','normal');G.cash=1e6;
 const said=[];navBubble=(t)=>said.push([R.time,t,R.me?R.me.idx:0]);
 function run(rc,secs){const md=G.models[0];{const a=aiCarMd(rc.y);['e','g','c','k','w'].forEach(k=>md[k]=a[k]);}md.b=lastOf(BODIES,rc.y,x=>!x.truck&&!x.moto).id;
   said.length=0;startRace({rc,mode:'drive',entries:[{drv:'me',md,prep:2,tyre:'hard',gear:0}]});const me=R.me;me.player=false;const TR=R.trk;
+  R.hz0=0;me.punctRate=0;   // 0.51: случайная поломка (цепь, рессора) или прокол обрывали заезд на первой минуте — проверка легенды зависела от жребия, а не от легенды
   const dt=1/30;for(let f=0;f<secs*30&&R&&!R.done;f++){R.t+=dt;R.time+=dt;raceTick(dt);if(!R)break;navTick();}
   return {TR,me};}
 const ids=process.argv[2]?[process.argv[2]]:['targa','pm1903','dieppe'];
