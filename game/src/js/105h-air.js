@@ -199,7 +199,7 @@ function airCivDemand(s,t){const A=s.air,act=A.models.filter(m=>m.status==='prod
       L.forEach((m,i)=>{const d=M*share*a[i]/Ap;(out[m.id]=out[m.id]||{})[c]=d;});}}
   return {by:out,mk};}
 // кризисы бьют по частным покупателям: послевоенный спад 1921 года, биржевой крах осени 1929-го
-function airCivK(s,c){const t=tNow(s);let k=1;if(t>=1920.9&&t<1922)k=0.7;if(t>=1929.75)k=0.55;if(c==='de'&&t>=1922.5&&t<1924)k*=0.5;return k;}
+function airCivK(s,c){const t=tNow(s);let k=1;if(t>=1920.9&&t<1922)k=0.7;if(t>=1929.75&&t<1933)k=0.55;else if(t>=1933&&t<1935)k=0.75;if(c==='de'&&t>=1922.5&&t<1924)k*=0.5;return k;}
 /* ---------- военные контракты ---------- */
 const AIR_MIL_ROLES=['recon','fight','bomb','train','sea'];
 function airCapUnits(s,md){const kg=airStats(md,tNow(s)).W;return Math.max(0.2,(s.air.cap||0)*1000/kg);}
