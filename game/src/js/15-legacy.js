@@ -107,7 +107,7 @@ function finalResults(s,show){
   if(!s.fameSaved){s.fameSaved=1;fameAdd({company:s.company,pioneer:s.pioneer,country:s.country,diff:s.diff,score:Math.round(t.me.total),place:t.place,title,year:s.y,sold:totalSold(s),bankrupt:!!(s.cash<-debtLimit(s))});}
   const text=`${sub}\nКомпания «${s.company}» заняла ${t.place}-е место среди ${t.rows.length} ${plural(t.rows.length,'автомобильной компании','автомобильных компаний','автомобильных компаний')} эпохи. Очки наследия: ${Math.round(t.me.total)}.\nПродано машин: ${totalSold(s).toLocaleString('ru-RU')}. Лучший год: ${fmtN(s.peak.year||0)} машин. Побед в гонках: ${s.raceLog.filter(x=>x.place===1).length}. Титулов: ${(s.titles||[]).length}. Первенств: ${Object.keys(s.firsts||{}).length}. Стоимость компании: ${money(companyValue(s))}.`;
   if(show){openFinal();return;}
-  s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает 1930 год`,text,paper:true,choices:[['Сравнить с историей','final']]});
+  s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает ${s.y} год`,text,paper:true,choices:[['Сравнить с историей','final']]});
 }
 /* ---------- 0.26: наследие в людях — каждая N-я семья, фирма, лимузин, спортивная машина ---------- */
 // Ваши машины на дорогах по классам (все страны игры): прибавились проданные, ушли старые

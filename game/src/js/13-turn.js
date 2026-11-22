@@ -194,7 +194,7 @@ function step(){
   // итоги месяца
   const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);s.last=r;
   const H=s.hist;H.cash.push(Math.round(s.cash));H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(Math.round(r.profit));H.share.push(+(r.share*100).toFixed(2));
-  for(const k2 in H)if(H[k2].length>420)H[k2].shift();
+  for(const k2 in H)if(H[k2].length>(END_Y-1895)*12)H[k2].shift();   // 0.60: история графиков — на всю партию (было 420 месяцев)
   // 0.24: армии и ведомствам машины тоже проданы — в итог года и в «Продано» (в долю рынка — только покупатели)
   s.yearSold=(s.yearSold||0)+r.sold+(r.milN||0)+(r.ordN||0);s.milTotal=(s.milTotal||0)+(r.milN||0);
   s.myearSold=(s.myearSold||0)+(r.msold||0)+(r.mordN||0);if((s.myearSold||0)>(s.peak.myear||0))s.peak.myear=s.myearSold;
@@ -217,7 +217,7 @@ function step(){
   // 0.32: большую и ценную компанию в кризис спасают банкиры — за долю (как Du Pont и Morgan спасли General Motors в 1920 году)
   if(s.cash<-debtLimit(s)&&rescueCan(s)){rescueOffer(s);}
   else if(s.cash<-debtLimit(s)){s.over=true;s.pending.push({title:'Банкротство',deck:`Компания «${s.company}» закрыта`,text:`Долги превысили допустимый предел. Кредиторы описали завод в ${dstr(s)}.`,paper:true,choices:[['Итоги','final']]});}
-  else if(s.y>=1930){s.over=true;finalResults(s);}
+  else if(s.y>=END_Y){s.over=true;finalResults(s);}
   else checkEvents();
   return true;
 }

@@ -1181,6 +1181,10 @@ details.how{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}det
 
 <script>
 /* ================= DATA ================= */
+/* 0.60 (ТЗ «Игра до 1960 года», решение автора 22 ноября 2026: одна сплошная партия, итог в 1960 году). END_Y — год, в январе которого
+   партия заканчивается итогом. Этап 1 — каркас: таблицы истории после 1929 года пока продлены ровно (tabAt держит последнее значение),
+   гонок, новых деталей и событий мира после 1929 года ещё нет. Путь гонщика пока идёт до END_RACER — календарь гонок кончается 1929-м. */
+const END_Y=1960,END_RACER=1930,END_OLD=1930;
 const MONTHS=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 const MONTHS_N=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const MONTHS_G=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -6686,38 +6690,38 @@ const CHANCE=[
     text:s=>`В комедиях про незадачливых полицейских машины «${s.company}» разваливаются на ходу, взлетают на трамплинах и всё равно едут дальше. Зал хохочет — и запоминает марку.\nТак и было: «Кистоунские копы» Мака Сеннета гоняли на «Фордах Т», и это была лучшая реклама дешёвой машины.`,
     mean:'Полгода народный класс во всех странах охотнее берёт ваши машины.',
     fx:s=>{wfxAdd(s,'*','people',0.3,8,'погоня в кино');}},
-  {id:'record',y0:1900,y1:1929,w:1,req:s=>!!chModel(s),title:'Тысячи миль без поломки',
+  {id:'record',y0:1900,y1:END_Y-1,w:1,req:s=>!!chModel(s),title:'Тысячи миль без поломки',
     text:s=>`Владелец машины «${s.company}» проехал на ней тысячи миль под присмотром судей автоклуба — и ни разу не поднял капот. Отчёт напечатали все журналы.\nТак и было: в 1907 году Rolls-Royce Silver Ghost прошёл 15 000 миль под надзором Королевского автоклуба — и получил славу «лучшей машины в мире».`,
     mean:'Год покупатели особенно ценят надёжность ваших машин, +3 к репутации.',
     fx:s=>{s.relFx=mi(s)+12;s.rep=clamp(s.rep+3,0,100);wfxAdd(s,'*','*',0.08,12,'рекорд пробега');}},
-  {id:'refund',y0:1896,y1:1929,w:0.9,title:'Казначейство ошиблось в вашу пользу',
+  {id:'refund',y0:1896,y1:END_Y-1,w:0.9,title:'Казначейство ошиблось в вашу пользу',
     text:s=>`Налоговое ведомство пересчитало прошлогодние сборы и вернуло «${s.company}» переплату. Бухгалтер не верит глазам.\nКак в «Монополии»: «Банковская ошибка в вашу пользу».`,
     mean:'Деньги в кассу.',fx:s=>{const v=Math.max(500,Math.round(Math.abs((s.last&&s.last.rev)||2000)*0.25/100)*100);s.cash+=v;return v;}},
-  {id:'steel',y0:1901,y1:1929,w:0.9,title:'Сталь подешевела',
+  {id:'steel',y0:1901,y1:END_Y-1,w:0.9,title:'Сталь подешевела',
     text:s=>`Новые мартеновские печи заработали в полную силу, и сталелитейные компании снизили цены. Детали для машин «${s.company}» на полгода дешевле.\nТак и было: в 1901 году появилась U.S. Steel, первая компания-миллиардер; сталь стала дешевле и доступнее.`,
     mean:'Полгода детали дешевле на 5%.',fx:s=>{s.steelCut=mi(s)+6;}},
-  {id:'suggest',y0:1905,y1:1929,w:1,req:s=>(s.workers||0)>=30,title:'Рабочий придумал приспособление',
+  {id:'suggest',y0:1905,y1:END_Y-1,w:1,req:s=>(s.workers||0)>=30,title:'Рабочий придумал приспособление',
     text:s=>`Сборщик из цеха «${s.company}» опустил ящик с болтами пониже и поставил деталь на подставку — операция стала короче на треть. Мастер передал идею инженерам.\nТак и было: на заводе Ford в 1913 году движущуюся линию сначала попробовали на сборке магнето — по подсказкам самих рабочих.`,
     mean:'Наградить — на 3% меньше часов на каждую машину навсегда, рабочие охотнее предлагают новое.',
     ch:[['Наградить премией','pay'],['Похвалить на собрании','praise']],
     res:{pay:s=>{const v=Math.round(50*cpi(s)/10)*10*10;s.cash-=v;s.hrsK=Math.max(0.8,(s.hrsK||1)*0.97);return `Премия ${money(v)} — и в ящике для предложений за месяц ещё сорок записок. Работа на каждую машину стала короче на 3%.`;},
       praise:s=>{s.hrsK=Math.max(0.8,(s.hrsK||1)*0.985);return 'Похвала на собрании — и приспособление разошлось по цехам. Работа стала короче на 1,5%.';}}},
-  {id:'wedding',y0:1903,y1:1929,w:0.8,req:s=>!!(chModel(s,'lux')||chModel(s,'middle')),title:'Свадьба на моторе',
+  {id:'wedding',y0:1903,y1:END_Y-1,w:0.8,req:s=>!!(chModel(s,'lux')||chModel(s,'middle')),title:'Свадьба на моторе',
     text:s=>`Самая громкая свадьба сезона: молодые уехали из церкви не в карете, а в машине «${s.company}», украшенной цветами. Светская хроника в восторге.\nТак и было: к 1910-м свадебный автомобиль стал модой — сначала у богатых, потом у всех.`,
     mean:'Полгода люкс и средний класс дома охотнее берут ваши машины.',fx:s=>{wfxAdd(s,s.country,'lux',0.25,6,'свадьба на моторе');wfxAdd(s,s.country,'middle',0.15,6,'свадьба на моторе');}},
   {id:'maharaja',y0:1908,y1:1929,w:0.8,req:s=>!!chModel(s,'lux'),title:'Заказ махараджи',
     text:s=>`Индийский махараджа прислал своего секретаря: ему нужны машины для охоты на тигров и для парадных выездов — с серебряной отделкой и фарами для ночной охоты.\nТак и было: махараджи Патиалы, Майсура и Хайдарабада покупали «Роллс-Ройсы» десятками.`,
     mean:'Заказ на дорогие машины по двойной цене (если успеете сделать).',fx:s=>{const md=chModel(s,'lux'),n=6+Math.floor(Math.random()*7),p=chOrder(s,md,n,2,'Махараджа',8);return `${n} машин «${md.name}» по ${money(p)}`;}},
-  {id:'press',y0:1896,y1:1929,w:1.1,title:'Восторженная статья',
+  {id:'press',y0:1896,y1:END_Y-1,w:1.1,title:'Восторженная статья',
     text:s=>`Редактор главного автомобильного журнала месяц ездил на машине «${s.company}» и написал, что ничего лучше за эти деньги не найти. Номер разошёлся за два дня.\nТак и было: журналы The Autocar (с 1895), L'Auto и Motor Age решали судьбу моделей — им верили больше, чем рекламе.`,
     mean:'+3 к репутации, полгода реклама работает на треть сильнее.',fx:s=>{s.rep=clamp(s.rep+3,0,100);s.adFx=mi(s)+6;}},
-  {id:'loan',y0:1906,y1:1929,w:0.8,title:'Банк предлагает льготный кредит',
+  {id:'loan',y0:1906,y1:END_Y-1,w:0.8,title:'Банк предлагает льготный кредит',
     text:s=>`Управляющий банком приехал на завод «${s.company}» сам: дела идут хорошо, и банк готов год давать деньги под меньший процент.\nТак и было: в 1910-х банки, которые раньше не давали автомобилистам ни цента, стали за ними охотиться.`,
     mean:'Год кредит дешевле на 1,5% годовых.',fx:s=>{s.rateCut=mi(s)+12;}},
   {id:'freeshow',y0:1899,y1:1914,w:0.9,title:'Бесплатный стенд',
     text:s=>`Организаторы выставки в большом городе приглашают «${s.company}» без платы за место: о ваших машинах спрашивают посетители.\nТак и было: на первых автомобильных выставках организаторы сами зазывали марки, о которых говорили в газетах.`,
     mean:'Полгода покупатели дома помнят ваши машины — как после выставки.',fx:s=>{s.showFx=s.showFx||{};s.showFx[s.country]={t:mi(s),u:0.3};}},
-  {id:'hollywood',y0:1920,y1:1929,w:1,req:s=>!!(chModel(s,'lux')||chModel(s,'sport')),title:'Кинозвезда выбрала вашу машину',
+  {id:'hollywood',y0:1920,y1:END_Y-1,w:1,req:s=>!!(chModel(s,'lux')||chModel(s,'sport')),title:'Кинозвезда выбрала вашу машину',
     text:s=>{const md=chModel(s,'sport')||chModel(s,'lux');return `Звезда немого кино купила «${md.name}» и снимается в ней для журналов: шофёр в ливрее, собака на сиденье, вспышки фотографов.\nТак и было: Рудольфо Валентино ездил на Isotta Fraschini и Voisin, Глория Свенсон — на Lancia: звёзды сами делали моду на марки.`;},
     mean:'Восемь месяцев ваши спортивные и дорогие машины во всех странах берут охотнее.',fx:s=>{wfxAdd(s,'*','sport',0.35,8,'кинозвезда');wfxAdd(s,'*','lux',0.3,8,'кинозвезда');}},
   {id:'aviator',y0:1909,y1:1914,w:0.7,title:'Авиатор хвалит ваш мотор',
@@ -6726,16 +6730,16 @@ const CHANCE=[
   {id:'firemen',y0:1906,y1:1925,w:0.9,req:s=>!!chModel(s,'truck'),title:'Пожарные на моторе',
     text:s=>`Пожарная машина на шасси «${s.company}» приехала на вызов раньше конной упряжки соседней части — и город решил перевести на моторы все команды.\nТак и было: в 1906 году в Спрингфилде (Массачусетс) появилась одна из первых моторных пожарных команд — на машинах Knox.`,
     mean:'Заказ на грузовые машины от города и полгода фирмы охотнее берут ваши грузовики.',fx:s=>{const md=chModel(s,'truck'),n=4+Math.floor(Math.random()*6),p=chOrder(s,md,n,1.25,'Пожарная команда',6);wfxAdd(s,s.country,'truck',0.25,6,'пожарные на моторе');return `${n} машин «${md.name}» по ${money(p)}`;}},
-  {id:'farmer',y0:1910,y1:1929,w:1,cc:'us,fr,it',req:s=>!!(chModel(s,'people')||chModel(s,'truck')),title:'Фермеры полюбили вашу машину',
+  {id:'farmer',y0:1910,y1:END_Y-1,w:1,cc:'us,fr,it',req:s=>!!(chModel(s,'people')||chModel(s,'truck')),title:'Фермеры полюбили вашу машину',
     text:s=>`Фермеры приспособили машины «${s.company}»: снимают колесо — и мотор крутит пилу, насос, маслобойку. В деревнях её зовут «рабочей лошадкой».\nТак и было: фермеры Америки превращали «Форд Т» в трактор и привод для машин; для этого даже продавали особые наборы.`,
     mean:'Восемь месяцев народный класс и фирмы охотнее берут ваши машины.',fx:s=>{wfxAdd(s,s.country,'people',0.2,8,'фермеры');wfxAdd(s,s.country,'truck',0.15,8,'фермеры');}},
   {id:'speedtrap',y0:1903,y1:1914,w:0.8,req:s=>!!chModel(s),title:'Ловушка констебля',
     text:s=>`${({ru:'Городовой',fr:'Жандарм',de:'Шуцман',it:'Карабинер',us:'Полицейский'})[s.country]||'Констебль'} с секундомером остановил вашего испытателя: на загородной дороге он ехал быстрее разрешённого. Штраф невелик, а заметка «Машина, которую не догнать» — бесплатная реклама.\nТак и было: в Англии полицейские прятались в кустах с секундомерами, а в 1905 году автомобилисты основали Автомобильную ассоциацию, чтобы предупреждать друг друга о засадах.`,
     mean:'Маленький штраф, зато полгода спортивные и средние машины берут охотнее.',fx:s=>{s.cash-=Math.round(10*cpi(s));wfxAdd(s,s.country,'sport',0.2,6,'ловушка констебля');wfxAdd(s,s.country,'middle',0.08,6,'ловушка констебля');}},
-  {id:'expo',y0:1900,y1:1929,w:0.8,req:s=>!!chModel(s),title:'Золотая медаль Всемирной выставки',
+  {id:'expo',y0:1900,y1:END_Y-1,w:0.8,req:s=>!!chModel(s),title:'Золотая медаль Всемирной выставки',
     text:s=>`Жюри Всемирной выставки наградило «${s.company}» золотой медалью — её будут чеканить на радиаторе и печатать в рекламе.\nТак и было: медали выставок 1900 года в Париже, 1904-го в Сент-Луисе и 1915-го в Сан-Франциско марки годами носили на эмблемах.`,
     mean:'+4 к репутации, год все покупатели немного охотнее берут ваши машины.',fx:s=>{s.rep=clamp(s.rep+4,0,100);wfxAdd(s,'*','*',0.1,12,'золотая медаль');}},
-  {id:'dealer',y0:1905,y1:1929,w:0.8,req:s=>dealerCount(s,s.country)>2,title:'Дилер-энтузиаст',
+  {id:'dealer',y0:1905,y1:END_Y-1,w:0.8,req:s=>dealerCount(s,s.country)>2,title:'Дилер-энтузиаст',
     text:s=>`Торговец велосипедами из провинции так поверил в машины «${s.company}», что сам открыл три салона в соседних городах — без денег завода.\nТак и было: первые дилеры Ford и Buick часто были бывшими продавцами велосипедов и швейных машинок.`,
     mean:'+3 дилера дома бесплатно.',fx:s=>{s.dealers[s.country]=(s.dealers[s.country]||0)+3;}},
   {id:'garage',y0:1900,y1:1912,w:0.7,title:'Первая заправка в городе',
@@ -7273,7 +7277,7 @@ function step(){
   // итоги месяца
   const hs=r.mk[s.country].size;r.size=hs;r.share=hs>0?r.homeSold/hs:0;r.label=dstr(s);s.last=r;
   const H=s.hist;H.cash.push(Math.round(s.cash));H.sales.push(r.sold);H.market.push(Math.round(hs));H.profit.push(Math.round(r.profit));H.share.push(+(r.share*100).toFixed(2));
-  for(const k2 in H)if(H[k2].length>420)H[k2].shift();
+  for(const k2 in H)if(H[k2].length>(END_Y-1895)*12)H[k2].shift();   // 0.60: история графиков — на всю партию (было 420 месяцев)
   // 0.24: армии и ведомствам машины тоже проданы — в итог года и в «Продано» (в долю рынка — только покупатели)
   s.yearSold=(s.yearSold||0)+r.sold+(r.milN||0)+(r.ordN||0);s.milTotal=(s.milTotal||0)+(r.milN||0);
   s.myearSold=(s.myearSold||0)+(r.msold||0)+(r.mordN||0);if((s.myearSold||0)>(s.peak.myear||0))s.peak.myear=s.myearSold;
@@ -7296,7 +7300,7 @@ function step(){
   // 0.32: большую и ценную компанию в кризис спасают банкиры — за долю (как Du Pont и Morgan спасли General Motors в 1920 году)
   if(s.cash<-debtLimit(s)&&rescueCan(s)){rescueOffer(s);}
   else if(s.cash<-debtLimit(s)){s.over=true;s.pending.push({title:'Банкротство',deck:`Компания «${s.company}» закрыта`,text:`Долги превысили допустимый предел. Кредиторы описали завод в ${dstr(s)}.`,paper:true,choices:[['Итоги','final']]});}
-  else if(s.y>=1930){s.over=true;finalResults(s);}
+  else if(s.y>=END_Y){s.over=true;finalResults(s);}
   else checkEvents();
   return true;
 }
@@ -7952,8 +7956,14 @@ function migrate(x){
   try{eqMigrate(x);}catch(e){console.warn('eq migrate',e);}try{maMigrate(x);}catch(e){console.warn('ma migrate',e);}try{if(!x.aw)awInit(x,false);}catch(e){console.warn('aw init',e);}
   // 0.31: продажа компании из сохранений 0.30 — деньги и архив для покупки другой марки
   try{rbMigrate(x);}catch(e){console.warn('rb migrate',e);}
+  try{cont60(x);}catch(e){console.warn('0.60 continue',e);}
   return x;
 }
+/* 0.60: партия идёт до 1960 года. Сохранение прежних версий, где эпоха кончилась итогом 1930 года (не банкротством, не продажей фирмы
+   и не карьерой гонщика), продолжается с того же месяца: итог 1930 года остаётся в s.final30, новый итог будет в 1960-м. */
+function cont60(x){if(!x||!x.over||x.mode==='racer'||x.soldTo||!(x.y>=END_OLD&&x.y<END_Y))return false;
+  const L=x.last,lim=(DIFFS[x.diff]||DIFFS.normal).debt*cpi(x)+(L?((L.mat||0)+(L.wage||0)):0);if(x.cash<-lim)return false;
+  x.over=false;x.final30=x.final||null;delete x.final;x.fameSaved=0;x.pending=(x.pending||[]).filter(p=>!(p.choices||[]).some(c=>c[1]==='final'));x.cont60=x.y;return true;}
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}
 function fameList(){try{return JSON.parse(localStorage.getItem(SAVE_PREFIX+'fame')||'[]');}catch(e){return [];}}
 function fameAdd(e){const L=fameList();e.at=Date.now();L.push(e);L.sort((a,b)=>b.score-a.score);try{localStorage.setItem(SAVE_PREFIX+'fame',JSON.stringify(L.slice(0,20)));}catch(_){}}
@@ -8067,7 +8077,7 @@ function finalResults(s,show){
   if(!s.fameSaved){s.fameSaved=1;fameAdd({company:s.company,pioneer:s.pioneer,country:s.country,diff:s.diff,score:Math.round(t.me.total),place:t.place,title,year:s.y,sold:totalSold(s),bankrupt:!!(s.cash<-debtLimit(s))});}
   const text=`${sub}\nКомпания «${s.company}» заняла ${t.place}-е место среди ${t.rows.length} ${plural(t.rows.length,'автомобильной компании','автомобильных компаний','автомобильных компаний')} эпохи. Очки наследия: ${Math.round(t.me.total)}.\nПродано машин: ${totalSold(s).toLocaleString('ru-RU')}. Лучший год: ${fmtN(s.peak.year||0)} машин. Побед в гонках: ${s.raceLog.filter(x=>x.place===1).length}. Титулов: ${(s.titles||[]).length}. Первенств: ${Object.keys(s.firsts||{}).length}. Стоимость компании: ${money(companyValue(s))}.`;
   if(show){openFinal();return;}
-  s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает 1930 год`,text,paper:true,choices:[['Сравнить с историей','final']]});
+  s.pending.push({title:'Итоги эпохи: '+title,deck:`«${s.company}» встречает ${s.y} год`,text,paper:true,choices:[['Сравнить с историей','final']]});
 }
 /* ---------- 0.26: наследие в людях — каждая N-я семья, фирма, лимузин, спортивная машина ---------- */
 // Ваши машины на дорогах по классам (все страны игры): прибавились проданные, ушли старые
@@ -8337,7 +8347,7 @@ function histMonthAdd(s,H,y,m){const ss={y,m,country:s.country},t=y+m/12+0.01,yf
    этому показателю за всю эпоху, сейчас до 1930 включительно»): рекорд эпохи — лучший итог настоящей истории 1895–1930 по категории,
    одно число на категорию, считается один раз за сеанс (HIST_ERA) по тем же месячным порциям histMonthAdd. Накопленные показатели
    (л. с., $, победы, первенства) — итог к концу 1930 года; капитал и узнаваемость — пик за эпоху. */
-const ERA_END=1930;let HIST_ERA=null;
+const ERA_END=END_Y;let HIST_ERA=null;   // 0.60: рекорд эпохи — за всю партию, 1895–1960 (решение автора 22.11.2026)
 // рекорд эпохи: из сборки (16a-era.js, node tools/gen_era.js — 2,5 с счёта, в игре не считаем), иначе считаем на месте
 function histEra(){if(HIST_ERA)return HIST_ERA;if(typeof HIST_ERA_DATA!=='undefined'&&HIST_ERA_DATA&&HIST_ERA_DATA.best)return HIST_ERA=HIST_ERA_DATA;return HIST_ERA=histEraCompute();}
 function histEraCompute(){const H={v:1,at:-1,co:{},cu:{},hp:0,rev:0,sport:0,firsts:0},peakVal={},ss={country:'fr'};
@@ -8455,8 +8465,8 @@ function domScreenHTML(s){const T=domTable(s),t=legacyTable(s),ks=s.dom?(s.dom.k
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" data-act="close">Играть дальше</button><button class="btn" data-act="final">Сравнить с историей</button></div></div>`;}
 
 /* ================= РЕКОРД ЭПОХИ (генерируется: node tools/gen_era.js) =================
-   Лучший итог настоящей истории 1895–1930 по категориям господства (16-world.js: histEra). Не править руками. */
-const HIST_ERA_DATA={"best":{"scale":{"n":"Ford","v":478700123,"c":"us"},"market":{"n":"Ford","v":12915447515,"c":"us"},"sport":{"n":"Bugatti","v":378,"c":"fr"},"capital":{"n":"Ford","v":1738855167,"c":"us"},"brand":{"n":"Ford","v":19371510,"c":"us"},"innov":{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"}},"world":{"hp":1638749210,"rev":49581219154,"sport":1803,"firsts":84,"cl":51822242},"innovTop":[{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"},{"n":"General Motors (Cadillac, Buick, Oldsmobile, Chevrolet)","v":18,"c":"us"},{"n":"Ford","v":15,"c":"us"},{"n":"Curtiss-Wright (Curtiss и Wright)","v":12,"c":"us"},{"n":"FIAT","v":9,"c":"it"},{"n":"Renault","v":8,"c":"fr"},{"n":"Blériot / SPAD","v":6,"c":"fr"},{"n":"Bugatti","v":6,"c":"fr"}],"y0":1895,"y1":1930};
+   Лучший итог настоящей истории 1895–1960 по категориям господства (16-world.js: histEra). Не править руками. */
+const HIST_ERA_DATA={"best":{"scale":{"n":"Ford","v":2137718874,"c":"us"},"market":{"n":"Ford","v":40755134644,"c":"us"},"sport":{"n":"Bugatti","v":378,"c":"fr"},"capital":{"n":"Ford","v":1738855167,"c":"us"},"brand":{"n":"Ford","v":65181924,"c":"us"},"innov":{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"}},"world":{"hp":7900048505,"rev":183200783961,"sport":1803,"firsts":84,"cl":207547607},"innovTop":[{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"},{"n":"General Motors (Cadillac, Buick, Oldsmobile, Chevrolet)","v":18,"c":"us"},{"n":"Ford","v":15,"c":"us"},{"n":"Curtiss-Wright (Curtiss и Wright)","v":12,"c":"us"},{"n":"FIAT","v":9,"c":"it"},{"n":"Renault","v":8,"c":"fr"},{"n":"Blériot / SPAD","v":6,"c":"fr"},{"n":"Bugatti","v":6,"c":"fr"}],"y0":1895,"y1":1960};
 
 /* ================= 0.47: ИЗОБРЕТЕНИЯ МАРОК НАСТОЯЩЕЙ ИСТОРИИ, 1895–1930 =================
    Отзыв к 0.46: «по инновациям цифра 7 занижена — пересчитай» (таблица: Mercedes / Daimler-Benz ~19, Ford ~15). Рекорд эпохи по
@@ -10118,7 +10128,7 @@ function racerStep(s){if(!s||s.over||s.pending.length)return false;const X=s.rac
   RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&!raceWarBlocked(rc,s)){const st=racerStatus(rc,s);if(st[2])addLog(`Открыта запись на гонку «${rc.name}» (в ${MONTHS_P[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');}});
   racerSeasonTick(s);racerNews(s);
   if(s.cash<-Math.round(600*cpi(s))){s.over=true;s.pending.push({title:'Карьера окончена',deck:`${X.name}: долги`,text:`Деньги кончились, а долги выросли: машину забрали кредиторы. Гоночная карьера окончена в ${dstr(s)}.`,paper:true,choices:[['Итоги','rx:final']]});}
-  else if(s.y>=1930){s.over=true;racerFinal(s);}
+  else if(s.y>=END_RACER){s.over=true;racerFinal(s);}
   else racerOffers(s);
   return true;}
 function racerSeasonTick(s){if(!s.cres)s.cres={};if(!s.season)s.season={};
@@ -18601,7 +18611,7 @@ function openNewGame(){
     const P=PIONEERS[h.k];if(h.kind==='custom')return `<button class="pion ${on?'on':''}" data-act="pion" data-v="custom">${portraitHTML('custom')}<div><h3>Свой персонаж ${tag}</h3><div class="yrs">${esc(COUNTRIES[c].name)} · ${dir==='air'?`${ASTART_C[c]||1909} год`:dir==='moto'?`${motoStartY(c)} год`:'1895 год'}</div><p>${dir==='air'?'Ангар на поле за городом, горстка мастеров и первый аэроплан.':dir==='moto'?'Мастерская с горсткой рабочих и одним мотоциклом.':P.bio}</p></div></button>`;
     return `<button class="pion ${on?'on':''}" data-act="pion" data-v="${h.k}">${portraitHTML(h.k)}<div><h3>${P.name} ${tag}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}${dir==='air'&&P.ay?` · ${P.am?MONTHS_N[P.am]+' ':''}${P.ay} год`:''}</div><p>${P.bio}</p><div class="bon">${(P.plus||[]).map(x=>`<span class="p">${x}</span>`).join('')}${(P.minus||[]).map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`;};
   const heroes=`<div class="label" style="margin-top:14px">Кто вы? · ${esc(COUNTRIES[c].name)}</div><div class="stack" style="margin-top:8px;gap:8px">${ngHeroList(dir,c).map(card).join('')}</div>`;
-  const goal=dir==='air'?'Цель — создать величайшую авиационную фирму эпохи: в 1930 году её сравнят с настоящими — Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Caproni, «Дукс».':isRacer?'Путь гонщика: призы, спонсоры и заводские команды, рейтинг лучших гонщиков эпохи; накопите капитал — и основайте свою марку, дальше игра пойдёт в режиме магната.':'Цель — создать величайшую автоимперию эпохи: в 1930 году вашу компанию сравнят с настоящими — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce.';
+  const goal=dir==='air'?'Цель — создать величайшую авиационную фирму эпохи: в '+END_Y+' году её сравнят с настоящими — Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Caproni, «Дукс».':isRacer?'Путь гонщика: призы, спонсоры и заводские команды, рейтинг лучших гонщиков эпохи; накопите капитал — и основайте свою марку, дальше игра пойдёт в режиме магната.':'Цель — создать величайшую автоимперию эпохи: в 1930 году вашу компанию сравнят с настоящими — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce.';
   const fields=isRacer?(rcust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(d.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
       <div class="label" style="margin-top:14px">Год дебюта</div><div class="chips" style="margin-top:6px">${Object.keys(RX_ERA).map(y=>`<button class="chip ${+d.ry===+y?'on':''}" data-act="ryear" data-v="${y}">${y}<small>${RX_ERA[y]}</small></button>`).join('')}</div>`:'')
     :`<label class="label" for="cname" style="display:block;margin-top:16px">Название компании</label><input type="text" id="cname" value="${esc(d.company)}" maxlength="28" style="margin-top:6px">
@@ -18657,7 +18667,7 @@ function openSettings(){
 function openHelp(){
   openSheet(`<div class="row"><h2>Как играть</h2>${X}</div>
   <div class="stack small" style="margin-top:12px">
-    <p>Один ход — один месяц, с января 1895 до конца 1929 года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук, графика и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
+    <p>Один ход — один месяц, с января 1895 до конца ${END_Y-1} года. ▶ включает автоигру, она останавливается на событиях. <b>Советник</b> на вкладке «Завод» подсказывает самое важное — у каждого совета есть кнопка. <b>Помощник управляющего</b> (включается в «Звук, графика и управление») сам ставит цены, открывает дилеров, строит цеха и склад и выбирает проекты КБ.</p>
     <p><b>Модели.</b> Машина собирается из деталей: двигатель, коробка передач, рама с подвеской, колёса и шины, тормоза, кузов, оснащение. Покупатели сравнивают её с типичной машиной соперников своего класса — по мощности, надёжности, комфорту, простоте вождения, тормозам, экономичности и вместимости. Народному классу важнее экономичность и надёжность, люксу — комфорт и мощность. Дешёвые решения вроде планетарной коробки и ванадиевой рамы Ford T часто выгоднее самых дорогих деталей. Кнопка «Самая прибыльная» предложит конструкцию сама: ищет наибольшую прибыль в месяц при выпуске, который ваш завод действительно сделает.</p>
     <p><b>Рынок.</b> Покупатели — живые семьи с разными доходами. Семья берёт машину, если та ей по карману и хороша за свои деньги, — или ждёт. Дешёвая и хорошая машина открывает рынок тем, кто раньше не мог купить. Фургоны и грузовики берут фирмы и ведомства — каждая для своих перевозок: фургон развозит товар по району, полуторатонка возит по городу, трёхтонка — между городами. Фирма выбирает машину, на которой дешевле тонно-километр: цена, ремонт и простои, бензин, шофёр. Почта, пожарные, таксомоторные парки и армия объявляют заказы — выиграть их помогают цена и надёжность.</p>
     <p><b>Конкуренты.</b> Реальные марки эпохи с их продажами. Если заберёте у них много покупателей, они ответят: новыми моделями, ценами и рекламой. С годами соперники дорабатывают свои машины — без КБ ваша модель устареет.</p>
@@ -18672,7 +18682,7 @@ function openHelp(){
     <p><b>Небо.</b> Состязания 1908–1929 годов (приз Дейча — Аршдекона, Реймс, Ла-Манш, кубки Гордона Беннетта и Шнейдера, перелёты, военные конкурсы, мировые рекорды), а в войну — фронт: патруль, перехват, аэростаты, разведка, бомбардировка. Летать можно самому в 3D (ручка — справа, газ — слева, «Огонь» и «Бомба», виды, автопилот и ускорение времени, «Сесть» — лётчик сам заводит на посадку, «Сам» — забрать ручку обратно) или узнать результат сразу — «Доверить лётчику». Первый полёт опытного аэроплана — программа из пяти заданий с оценкой испытателя.</p>
     <p><b>Путь гонщика.</b> «Новая игра» → «Начать гонщиком»: исторический пилот (Лянча, Шевроле, Рикенбакер, Мазерати, Феррари) или свой — страна и год дебюта. Купите подержанную гоночную машину, устройтесь испытателем на завод, выигрывайте призы и славу: заводы позовут в команду (жалованье, доля призов, премии), шинные фирмы платят за победы. «Рейтинг» сравнивает вас с лучшими гонщиками 1895–1929 годов. Накопив капитал, основайте марку — с нуля, с партнёром или купив слабую марку, — и игра продолжится партией магната.</p>
     <p><b>Вызовы.</b> Соперники бросают вызов в газетах, а на доске вызовов («Империя») их можно брать самим: пари на гонку, матч-гонка один на один (ипподромы, Бруклендс, Индианаполис, дощатые треки), спор о скорости на мерной миле или круге, продажи класса за квартал, полгода или год — дома и на экспорт (если силы неравны — с форой), пробег на надёжность серийных машин. Выигрыш — ставка, слава и грамота, проигрыш или неявка — ставка и насмешки прессы.</p>
-    <p><b>Цель.</b> ${G&&typeof airOnly==='function'&&airOnly(G)?'Величайшая авиационная фирма эпохи: в 1930 году её сравнят с настоящими авиастроителями':'Величайшая автоимперия эпохи: в 1930 году компанию сравнят с реальными'} по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
+    <p><b>Цель.</b> ${G&&typeof airOnly==='function'&&airOnly(G)?'Величайшая авиационная фирма эпохи: в '+END_Y+' году её сравнят с настоящими авиастроителями':'Величайшая автоимперия эпохи: в '+END_Y+' году компанию сравнят с реальными'} по шести направлениям наследия. Долг свыше ${money(DIF().debt*cpi(G))} — банкротство. Сложность: ${DIF().name}.</p></div>`);
 }
 function openLegacyInfo(){
   if(isRacer(G)){const X0=G.racer,tb=dcarTable(G),pl=tb.findIndex(r=>r.me)+1;openSheet(`<div class="row"><h2>Цель гонщика</h2>${X}</div>
@@ -18680,7 +18690,7 @@ function openLegacyInfo(){
     <table class="pl ctab" style="margin-top:10px">${tb.slice(0,10).map((r,i)=>`<tr class="${r.me?'you':''}"><td class="n">${i+1}</td><td style="padding-left:6px">${esc(r.me?X0.name:r.n)}</td><td class="n">${r.w}</td><td class="n">${fmtPts('gp',r.pts)}</td></tr>`).join('')}</table>`);return;}
   const t=legacyTable(G);
   openSheet(`<div class="row"><h2>Цель и наследие</h2>${X}</div>
-    <p class="small" style="margin-top:8px">В 1930 году «${esc(G.company)}» встанет в один ряд с реальными компаниями эпохи. Очки наследия:</p>
+    <p class="small" style="margin-top:8px">В ${END_Y} году «${esc(G.company)}» встанет в один ряд с реальными компаниями эпохи. Очки наследия:</p>
     <div class="stack small" style="margin-top:8px">
       <p><b>Масштаб</b> — лучший год по выпуску и всё, что выпущено за эпоху. Ford в 1923 году — 2 млн машин, за эпоху — 21 млн.</p>
       <p><b>Рынок</b> — доля дома, удержанная годами (15 лет с долей 100% — максимум), и заметные доли за границей. FIAT держал около 80% Италии.</p>
@@ -18700,7 +18710,7 @@ function openFinal(){
     <div style="margin-top:10px">${Object.keys(LEG_NAMES).map(k=>`<div class="leg-row"><span>${LEG_NAMES[k]}</span><div class="bar"><i style="width:${Math.min(100,t.me[k]/LEG_MAX[k]*100)}%;background:var(--brass)"></i></div><b class="num">${Math.round(t.me[k])}</b></div>`).join('')}</div>
     <table class="pl final" style="margin-top:12px"><tr><th></th><th>Компания</th><th class="n">Лучший год</th><th class="n">Очки</th></tr>${rows}</table>
     ${s.pastCos&&s.pastCos.length?`<p class="small muted" style="margin-top:8px">Прежние компании: ${s.pastCos.map(p=>`«${esc(p.n)}» (${p.y0}–${p.y1}, продана за ${money(p.price)}, ${fmtN(p.leg)} очков)`).join(', ')} — половина их очков в зачёте (+${fmtN(rbLegacy(s))}).</p>`:''}
-    <div class="stack" style="margin-top:14px">${s.soldTo&&s.over&&s.y<1930?`<button class="btn primary block" data-act="rbOpen">Купить другую марку на ${money(s.soldTo.mine)}</button>`:''}<button class="btn ${s.soldTo&&s.over?'':'primary '}block" data-act="newgame">Новая игра</button><button class="btn block" data-act="fame">Зал славы</button><button class="btn block" data-act="toMenu">Главное меню</button></div>`);
+    <div class="stack" style="margin-top:14px">${s.soldTo&&s.over&&s.y<END_Y?`<button class="btn primary block" data-act="rbOpen">Купить другую марку на ${money(s.soldTo.mine)}</button>`:''}<button class="btn ${s.soldTo&&s.over?'':'primary '}block" data-act="newgame">Новая игра</button><button class="btn block" data-act="fame">Зал славы</button><button class="btn block" data-act="toMenu">Главное меню</button></div>`);
 }
 function openFame(){
   const L=fameList();

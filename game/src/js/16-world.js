@@ -182,7 +182,7 @@ function histMonthAdd(s,H,y,m){const ss={y,m,country:s.country},t=y+m/12+0.01,yf
    этому показателю за всю эпоху, сейчас до 1930 включительно»): рекорд эпохи — лучший итог настоящей истории 1895–1930 по категории,
    одно число на категорию, считается один раз за сеанс (HIST_ERA) по тем же месячным порциям histMonthAdd. Накопленные показатели
    (л. с., $, победы, первенства) — итог к концу 1930 года; капитал и узнаваемость — пик за эпоху. */
-const ERA_END=1930;let HIST_ERA=null;
+const ERA_END=END_Y;let HIST_ERA=null;   // 0.60: рекорд эпохи — за всю партию, 1895–1960 (решение автора 22.11.2026)
 // рекорд эпохи: из сборки (16a-era.js, node tools/gen_era.js — 2,5 с счёта, в игре не считаем), иначе считаем на месте
 function histEra(){if(HIST_ERA)return HIST_ERA;if(typeof HIST_ERA_DATA!=='undefined'&&HIST_ERA_DATA&&HIST_ERA_DATA.best)return HIST_ERA=HIST_ERA_DATA;return HIST_ERA=histEraCompute();}
 function histEraCompute(){const H={v:1,at:-1,co:{},cu:{},hp:0,rev:0,sport:0,firsts:0},peakVal={},ss={country:'fr'};

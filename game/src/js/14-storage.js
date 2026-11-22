@@ -66,8 +66,14 @@ function migrate(x){
   try{eqMigrate(x);}catch(e){console.warn('eq migrate',e);}try{maMigrate(x);}catch(e){console.warn('ma migrate',e);}try{if(!x.aw)awInit(x,false);}catch(e){console.warn('aw init',e);}
   // 0.31: продажа компании из сохранений 0.30 — деньги и архив для покупки другой марки
   try{rbMigrate(x);}catch(e){console.warn('rb migrate',e);}
+  try{cont60(x);}catch(e){console.warn('0.60 continue',e);}
   return x;
 }
+/* 0.60: партия идёт до 1960 года. Сохранение прежних версий, где эпоха кончилась итогом 1930 года (не банкротством, не продажей фирмы
+   и не карьерой гонщика), продолжается с того же месяца: итог 1930 года остаётся в s.final30, новый итог будет в 1960-м. */
+function cont60(x){if(!x||!x.over||x.mode==='racer'||x.soldTo||!(x.y>=END_OLD&&x.y<END_Y))return false;
+  const L=x.last,lim=(DIFFS[x.diff]||DIFFS.normal).debt*cpi(x)+(L?((L.mat||0)+(L.wage||0)):0);if(x.cash<-lim)return false;
+  x.over=false;x.final30=x.final||null;delete x.final;x.fameSaved=0;x.pending=(x.pending||[]).filter(p=>!(p.choices||[]).some(c=>c[1]==='final'));x.cont60=x.y;return true;}
 function hasOldSave(){try{return !!localStorage.getItem('avtoimperia-v3');}catch(e){return false;}}
 function fameList(){try{return JSON.parse(localStorage.getItem(SAVE_PREFIX+'fame')||'[]');}catch(e){return [];}}
 function fameAdd(e){const L=fameList();e.at=Date.now();L.push(e);L.sort((a,b)=>b.score-a.score);try{localStorage.setItem(SAVE_PREFIX+'fame',JSON.stringify(L.slice(0,20)));}catch(_){}}

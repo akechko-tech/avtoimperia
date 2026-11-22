@@ -123,8 +123,8 @@ let cashRev1915=null,share1915=null,winAt=null,lostAt=null;const yrS={sold:0,siz
 // 0.51, этап 2: мера «доля выручки, уходящая в развитие» — бюро, команда и пилоты, оснастка, дилеры, реклама и прирост завода за год
 const devA={dev:0,rev:0,rd:0,team:0,tool:0,capex:0,profit:0,tax:0};let pv0=0;
 const INFO=+process.env.INFO||0,accI={};   // INFO=3 — раз в три года: завод, качество и цена главной модели, суммы отчёта месяца
-const ENDY=+process.env.END||1931,SW=process.env.SWITCH?process.env.SWITCH.split(':'):null;
-for(let k=0;k<35*12+6&&G.y<ENDY;k++){
+const ENDY=+process.env.END||END_Y+1,SW=process.env.SWITCH?process.env.SWITCH.split(':'):null;
+for(let k=0;k<(END_Y-1895)*12+6&&G.y<ENDY;k++){
   let guard=0;while(G.pending.length&&guard++<50){const ev=G.pending[0];if(ev.choices[0][1]==='final'||ev.choices[0][1]==='restart')break;resolve(pickChoice(ev));}
   if(G.over)break;
   if(SW&&G.y>=+SW[0]&&G.diff!==SW[1]){G.diff=SW[1];if(!QUIET)console.log('--- сложность с',G.y,'года:',DIFFS[SW[1]].name);}   // SWITCH=1906:hist — начало на выбранной сложности, дальше — на другой (бот не переживает начало «Историка»)
@@ -145,5 +145,5 @@ for(let k=0;k<35*12+6&&G.y<ENDY;k++){
     if(!QUIET)console.log(G.y-1,'касса',(G.cash/1e6).toFixed(2),'выр12',(rev12/1e6).toFixed(2),'доля',Math.round(hs*100)+'%','КБ',G.rd.lvl,'гонки',wins+'/'+starts,'|',DOM_K.map(k=>k.slice(0,3)+' '+S[k].sh+'%/'+(S[k].hist===null?'—':S[k].hist+'%')+(S[k].ok?'✔':S[k].dom?'·':'')).join('  '));}
   if(G.over)break;
 }
-console.log(JSON.stringify({style:STYLE,diff:'${diff}',seed:${seed},pio:${JSON.stringify(pio)},win:winAt,lost:lostAt,first,firstDom,cashRev1915,share1915,wins,majors,starts,spentRace:Math.round(spentRace),endY:G.y,over:!!G.over&&G.y<1930,value:Math.round(companyValue(G)),cash:Math.round(G.cash),rd:G.rd.lvl,rdept:G.rdept||0,trims,supN,supSpent:Math.round(supSpent),supK:+supK(G).toFixed(3),firsts:firstsLive(G),yr}));
+console.log(JSON.stringify({style:STYLE,diff:'${diff}',seed:${seed},pio:${JSON.stringify(pio)},win:winAt,lost:lostAt,first,firstDom,cashRev1915,share1915,wins,majors,starts,spentRace:Math.round(spentRace),endY:G.y,over:!!G.over&&G.y<END_Y,value:Math.round(companyValue(G)),cash:Math.round(G.cash),rd:G.rd.lvl,rdept:G.rdept||0,trims,supN,supSpent:Math.round(supSpent),supK:+supK(G).toFixed(3),firsts:firstsLive(G),yr}));
 `);
