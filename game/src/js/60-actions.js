@@ -24,6 +24,7 @@ const ACT={
   // завод
   capAdd:d=>{if(capOrder(G,+d.n))rerender();},
   // 0.36: совет может вести к разделу: run() возвращает id раздела — открываем вкладку и прокручиваем к нему («Путь к автомобилю → Подробнее»)
+  auNow:()=>{const e=document.getElementById('auNow');if(e)e.textContent=auNowText();},auNowCopy:()=>{const t=auNowText();const e=document.getElementById('auNow');if(e)e.textContent=t;try{navigator.clipboard.writeText(t).then(()=>toast('Список скопирован'),()=>toast('Не удалось скопировать — выделите текст вручную'));}catch(_){toast('Не удалось скопировать — выделите текст вручную');}},   // 0.51, этап 10
   tipHide:d=>{const t=TIPS[+d.k];if(t){tipHideKey(G,tipKey(t),12);toast('Совет скрыт на год');rerender();}},   // 0.51, этап 9
   tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=subGo(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
   // 0.36: дилеры — быстрый переход между странами

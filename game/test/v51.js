@@ -1151,5 +1151,30 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     s.ui.logN=215;CK(vLog().split('<li class=').length-1===90&&vLog().indexOf('data-act="logMore"')<0,'после «Показать ещё» — все 90, кнопки нет');s.log=lg;s.ui={};}
   Math.random=R0;
 }
+// ---------- 30. этап 10: «что сейчас звучит» и плейлист без повторов ----------
+{ // плейлист: слышанное — в конец, давно не звучавшее — вперёд
+  MUS_HIST=[];const L=['a','b','c','d','e','f'].map(id=>({id,title:'Запись '+id}));
+  CK(musFresh(L).map(t=>t.id).join('')==='abcdef','ничего ещё не звучало — порядок прежний');
+  musHeard(L[0]);musHeard(L[2]);CK(musHist().join()==='a,c'&&musFresh(L).map(t=>t.id).join('')==='bdefac','слышанные «a» и «c» ушли в конец, раньше — та, что звучала давнее');
+  musHeard(L[0]);CK(musHist().join()==='c,a'&&musFresh(L).map(t=>t.id).join('')==='bdefca','послушали «a» ещё раз — теперь она последняя');
+  L.forEach(t=>musHeard(t));CK(musFresh(L).map(t=>t.id).join('')==='abcdef','прозвучали все — круг начинается с той, что звучала раньше всех');
+  CK(JSON.parse(localStorage.getItem('avt-mushist')).length===6,'память о слышанном сохраняется между запусками');
+  CK(musFresh([{id:'x'},{id:'a'}]).map(t=>t.id).join('')==='xa','короткий список не трогаем');
+  {const src=String(musBuild);CK(src.indexOf('musFresh(L)')>0&&src.indexOf('musFresh(L)')<src.indexOf('первой звучит запись эпохи')&&String(musicPlay).indexOf('musHeard(tr)')>0,'плейлист пересобирается с учётом слышанного; каждая запись отмечается при запуске');}
+  // что сейчас звучит
+  AU_LOG.length=0;auLog('звук click');auLog('звук click');auLog('сигнал fan_win');CK(AU_LOG.length===2&&AU_LOG[0].n===2&&AU_LOG[1].w==='сигнал fan_win','журнал звуковых событий: повторы подряд сворачиваются');
+  for(let i=0;i<60;i++)auLog('событие '+i);CK(AU_LOG.length===40,'в журнале — последние 40 событий');
+  {const a0=AU.el,s0=AU.synth,c0=AU.cue,n0=AU.nowPlaying,v0=VOICE.el,cu=Object.assign({},CUE);try{VOICE.el=null;Object.keys(CUE).forEach(k=>delete CUE[k]);AU.el={paused:false,ended:false,currentTime:12.4,volume:0.5};AU.nowPlaying={title:'Сауза. «Вашингтон пост»'};AU.synth=null;AU.cue=null;
+      let T=auNowList();CK(T.some(x=>/^музыка, запись: Сауза. «Вашингтон пост» · 12 с · громкость 0.50/.test(x))&&!T.some(x=>/одновременно/.test(x))&&T.some(x=>/^настройки: музыка/.test(x)),'играет одна запись — она в списке, предупреждения нет');
+      AU.synth={tune:'rag1'};T=auNowList();CK(/одновременно звучит источников: 2/.test(T[0])&&T.some(x=>/^музыка, синтезатор: rag1/.test(x)),'запись и синтезатор сразу — первой строкой предупреждение о двух источниках');
+      AU.cue={a:{paused:false,ended:false,currentTime:3,src:'music/fan_win.m4a'}};T=auNowList();CK(/источников: 3/.test(T[0])&&T.some(x=>/^сигнал: fan_win.m4a · 3 с/.test(x)),'и фанфара — три источника');
+      AU.el.paused=true;AU.synth=null;T=auNowList();CK(!/одновременно/.test(T[0])&&!T.some(x=>/^музыка, запись/.test(x)),'запись на паузе в список не попадает');
+      const txt=auNowText();CK(/Сейчас звучит:/.test(txt)&&/Последние звуковые события:/.test(txt)&&/событие 59/.test(txt)&&txt.split('\\n').length>=6,'текст для отправки: что звучит и последние события');
+    }finally{AU.el=a0;AU.synth=s0;AU.cue=c0;AU.nowPlaying=n0;VOICE.el=v0;Object.assign(CUE,cu);}}
+  CK(/id="auNow"/.test(auNowHTML())&&/data-act="auNowCopy"/.test(auNowHTML())&&/Что сейчас звучит/.test(auNowHTML()),'в настройках — блок «Что сейчас звучит» с кнопкой «Скопировать»');
+  MUS_HIST=[];localStorage.removeItem('avt-mushist');AU_LOG.length=0;
+  // фонотека: исправленная подпись
+  CK(typeof MUS_TO==='object'&&MUS_TO.tsar_hymn===1917&&MUS_TO.worker_marseillaise===1918,'гимны 1917 года звучат только в своё время');
+}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

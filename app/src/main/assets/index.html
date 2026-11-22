@@ -1130,6 +1130,7 @@ details.how{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}det
 .card.nofold>.card-h>i{display:none}.card.nofold>.card-h{cursor:default}
 .dpol9{margin-top:10px}.dpol9 .chips.sm{justify-content:flex-start;margin-top:4px}.dpol9 p{margin-top:4px}
 .tip-x{background:none;border:0;color:var(--muted);font-size:14px;padding:8px 4px;cursor:pointer;line-height:1}.tip-x:active{color:var(--text)}
+.au-now{margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);font-family:var(--mono);font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;user-select:text;-webkit-user-select:text}
 </style>
 
 <div class="wrap" hidden>
@@ -18304,7 +18305,7 @@ const SUB51={
   plant:{def:'sum',bar:[['sum','Сводка'],['cap','Мощности'],['ppl','Люди'],['wh','Склад'],['tech','Технологии'],['fin','Финансы']],
     of:{'fc-cap':'cap','fc-staffc':'ppl','fc-wh':'wh','fc-techc':'tech','fc-fin':'fin'}},
   models:{def:'list',bar:[['plan','Выпуск'],['list','Модели'],['rd','Бюро']],of:{'fc-planlist':'plan','fc-rdcard':'rd','fc-trials':'plan'}},
-  race:{def:'cal',bar:[['cal','Календарь'],['champ','Чемпионаты'],['team','Команда'],['rec','Рекорды и трофеи']],
+  race:{def:'cal',lead:{cal:'fc-rcal'},bar:[['cal','Календарь'],['champ','Чемпионаты'],['team','Команда'],['rec','Рекорды и трофеи']],
     of:{'fc-rcal':'cal','fc-annc':'cal','fc-champs':'champ','fc-trophy':'rec','sec-team':'team','sec-recs':'rec'}},
   log:{def:'dom',bar:[['dom','Господство'],['leg','Наследие'],['titles','Титулы'],['troph','Вызовы и трофеи'],['film','Фильм и газеты'],['log','Хроника']],
     of:{'sec-dom':'dom','sec-legacy':'leg','sec-titles':'titles','fc-ach':'titles','sec-board':'troph','sec-trophies':'troph','sec-saga':'film','fc-digest':'film','showpol':'film','fc-reels':'film','fc-log':'log'}}
@@ -18348,7 +18349,10 @@ function subApply(s){const V=document.getElementById('view');if(!V)return;const 
   const sw=V.querySelector(':scope > .line-switch'),tmp=document.createElement('div');tmp.innerHTML=subBarHTML(s,t);const bar=tmp.firstElementChild;if(!bar)return;
   if(sw&&sw.nextSibling)V.insertBefore(bar,sw.nextSibling);else V.insertBefore(bar,V.firstChild);
   const sel=t==='market'?mk9Key(s):subSel(s,t);
-  [...V.children].forEach(el=>{const k=subKeyOf(s,t,el);el.hidden=k!==null&&k!==sel;});}
+  [...V.children].forEach(el=>{const k=subKeyOf(s,t,el);el.hidden=k!==null&&k!==sel;});
+  // главная карточка подраздела — первой после советов (вызовы и прочие карточки без своего подраздела — ниже неё)
+  const lead=SUB51[t]&&SUB51[t].lead&&SUB51[t].lead[sel],le=lead&&document.getElementById(lead);
+  if(le&&le.parentElement===V){const fv=[...V.children].find(c=>!c.hidden&&c.id!=='subbar'&&!c.classList.contains('line-switch')&&!c.classList.contains('advisor'));if(fv&&fv!==le)V.insertBefore(le,fv);}}
 // ссылка ведёт на карточку из другого подраздела — открыть его (карточки уже в документе, только спрятаны)
 function subReveal(el){try{const s=G,V=document.getElementById('view');if(!el||!V||!subOn(s))return;let top=el;while(top&&top.parentElement!==V)top=top.parentElement;if(!top||!top.hidden)return;const t=tab;
     if(t==='market'){const id=top.id,k=['sales','net','deals'].find(k=>MK9[k][id]),w=['map','brands','misc'].find(k=>MK9[k][id]);
@@ -18625,6 +18629,7 @@ function openSlots(mode){
 function openSettings(){
   openSheet(`<div class="row"><h2>Настройки</h2>${X}</div>
     <div class="label" style="margin-top:12px">Звук</div><div class="btns" style="margin-top:6px"><button class="btn ${AU.on.music?'primary':''}" data-act="audio" data-k="music">Музыка: ${AU.on.music?'вкл':'выкл'}</button><button class="btn ${AU.on.sfx?'primary':''}" data-act="audio" data-k="sfx">Звуки: ${AU.on.sfx?'вкл':'выкл'}</button><button class="btn ${AU.on.race?'primary':''}" data-act="audio" data-k="race">Музыка в гонке: ${AU.on.race?'вкл':'выкл'}</button><button class="btn" data-act="plMode">Плейлист: ${AU.on.mode==='all'?'все годы':'эпоха'}</button></div>
+    ${typeof auNowHTML==='function'?auNowHTML():''}
     ${G?`<div class="label" style="margin-top:14px">Помощник управляющего</div><p class="small muted" style="margin-top:4px">Каждый месяц сам ставит выгодные цены, открывает дилеров, строит цеха и склад${DIF().simple?'':', выбирает проекты КБ'} и берёт кредит, если касса в минусе. Машины${DIF().simple?' и проекты КБ':''} придумываете вы.</p><div class="btns" style="margin-top:6px"><button class="btn ${helperOn(G)?'primary':''}" data-act="helperToggle">Помощник: ${helperOn(G)?'вкл':'выкл'}</button></div>`:''}
     <div class="label" style="margin-top:14px">Руль в гонке</div><div class="btns" style="margin-top:6px">${[['keys','Кнопки ◀ ▶'],['tilt','Наклон телефона']].map(([k,l])=>`<button class="btn ${steerMode()===k?'primary':''}" data-act="ctlTilt" data-v="${k}">${l}</button>`).join('')}</div>
     <div class="label" style="margin-top:14px">Графика гонок</div><div class="btns" style="margin-top:6px">${[['3d','Объёмная (3D)'],['2d','Простая — для слабых телефонов']].map(([k,l])=>`<button class="btn ${(g3Can()?gfxMode():'2d')===k?'primary':''}" data-act="gfx" data-v="${k}" ${k==='3d'&&!g3Can()?'disabled':''}>${l}</button>`).join('')}</div>${g3Can()?'':'<p class="small muted" style="margin-top:4px">На этом устройстве объёмная графика недоступна — гонки рисуются по-простому.</p>'}${g3Can()&&gfxMode()==='3d'?`<div class="label" style="margin-top:12px">Качество картинки</div><div class="btns" style="margin-top:6px">${[['eco','Экономно'],['hd','HD'],['cine','Кино']].map(([k,l])=>`<button class="btn ${gfxQ()===k?'primary':''}" data-act="gq" data-v="${k}">${l}</button>`).join('')}</div>
@@ -31906,6 +31911,8 @@ function musBuild(start){
   const ctx=AU.on.mode==='all'?'calm':musMoment(G);AU.ctx0=ctx;AU.shuf=AU.shuf||(Math.random()*1e9|0);
   const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')+ctx)+AU.shuf);
   L=L.map(t=>({t,k:Math.pow(rnd(),1/Math.max(0.01,musWeight(t,G,ctx)))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
+  // 0.51, этап 10: недавно слышанное — в конец (50z-audio51.js): каждый год плейлист тасуется заново, и без этого записи возвращались
+  if(typeof musFresh==='function')L=musFresh(L);
   // 0.29: первой звучит запись эпохи, а не своя мелодия игры
   if(start){const k=L.findIndex(t=>!t.own);if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
@@ -31932,7 +31939,7 @@ function musicPlay(force){
     AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
     AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
   if(!AU.ducked)AU.el.volume=R?0.2:0.5;
-  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;
+  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;try{if(typeof musHeard==='function')musHeard(tr);}catch(_){}
     // 0.37: что звучало недавно — в следующих плейлистах реже (последние 14 записей)
     AU.recent=(AU.recent||[]).filter(x=>x!==tr.title);AU.recent.push(tr.title);if(AU.recent.length>14)AU.recent.shift();}
   if(AU.el.paused){const pr=AU.el.play();if(pr&&pr.catch)pr.catch(()=>{});}
@@ -32789,6 +32796,51 @@ function ambEvent(k,arg){if(!AMB.on||!AU.ctx||!R)return;const y=R.rc.y,E=AMB.E,m
     setTimeout(()=>{if(!R)return;const w=raceOrder()[0];if(w)annCall('win',w.num);else annCall('fin');},900);}
   if(k==='crash')annCall('crash');}
 
+/* ================= 0.51, этап 10: звук — «что сейчас звучит» и плейлист без повторов =================
+   Автор: писк и задвоение ещё слышны иногда — «в настройках показать, что сейчас звучит, чтобы прислать список в момент сбоя»;
+   музыка однообразна — «шире плейлист эпохи, реже повторы».
+   1. auNowList — всё, что играет в эту секунду (запись, синтезатор, сигнал, диктор, мотор, окружение гонки), и последние звуковые
+      события с временем. В «Настройках» — список и кнопка «Скопировать».
+   2. Плейлист помнит, что уже звучало (и между запусками игры): при каждой пересборке — а она идёт каждый игровой год — недавно
+      слышанные записи уходят в конец, давно не звучавшие — вперёд. Раньше порядок каждый год тасовался заново с теми же весами,
+      и одни и те же записи возвращались через несколько минут, хотя в эпохе их от 67 (1895) до 272 (1925). */
+// ---------- журнал звуковых событий ----------
+const AU_LOG=[];
+function auLog(what){try{const t=Date.now(),L=AU_LOG[AU_LOG.length-1];if(L&&L.w===what&&t-L.t<4000){L.n=(L.n||1)+1;L.t=t;return;}AU_LOG.push({t,w:String(what).slice(0,70)});if(AU_LOG.length>40)AU_LOG.shift();}catch(_){}}
+function auPlaying(a){return !!(a&&a.paused===false&&!a.ended);}
+function auNowList(){const L=[],p=(k,v)=>L.push(k+': '+v);let src=0;
+  try{const tr=AU.nowPlaying||(typeof musCur==='function'?musCur():null);
+    if(auPlaying(AU.el)){src++;p('музыка, запись',(tr&&tr.title||'?')+' · '+Math.round(AU.el.currentTime)+' с · громкость '+(+AU.el.volume).toFixed(2));}
+    if(AU.synth){src++;p('музыка, синтезатор',(AU.synth.tune||AU.synth.title||AU.synth.st||'?')+(AU.synth.cue?' (сигнал)':''));}
+    if(AU.cue&&auPlaying(AU.cue.a)){src++;p('сигнал',decodeURIComponent(String(AU.cue.a.src||'').split('/').pop()).slice(0,40)+' · '+Math.round(AU.cue.a.currentTime)+' с');}
+    if(typeof CUE!=='undefined')Object.keys(CUE).forEach(id=>{const a=CUE[id];if(auPlaying(a)&&!(AU.cue&&AU.cue.a===a)){src++;p('сигнал вне очереди',id);}});
+    if(typeof VOICE!=='undefined'&&auPlaying(VOICE.el)){src++;p('диктор',decodeURIComponent(String(VOICE.el.src||'').split('/').pop()).slice(0,40));}
+    if(typeof window!=='undefined'&&window.speechSynthesis&&window.speechSynthesis.speaking){src++;p('голос телефона','читает');}
+    if(AU.race)p('гонка','мотор и шины');
+    if(typeof AMB!=='undefined'&&AMB.on)p('окружение гонки',Object.keys(AMB.beds||{}).filter(k=>AMB.beds[k]).join(', ')||'включено');
+    if(typeof REEL!=='undefined'&&REEL)p('кинохроника','идёт');
+    if(typeof SAGAP!=='undefined'&&SAGAP)p('фильм','идёт');
+    p('звуковой движок',AU.ctx?AU.ctx.state+', '+AU.ctx.sampleRate+' Гц':'не запущен');
+    p('настройки','музыка '+(AU.on.music?'вкл':'выкл')+', звуки '+(AU.on.sfx?'вкл':'выкл')+', музыка в гонке '+(AU.on.race?'вкл':'выкл')+(AU.paused?', пауза':''));
+  }catch(e){p('ошибка списка',String(e));}
+  if(src>1)L.unshift('⚠ одновременно звучит источников: '+src);
+  return L;}
+function auNowText(){const now=Date.now(),ev=AU_LOG.slice(-25).map(e=>'  −'+Math.round((now-e.t)/1000)+' с  '+e.w+(e.n>1?' ×'+e.n:''));
+  return ['Автоимперия '+(typeof GAME_VER!=='undefined'?GAME_VER:'')+' · '+new Date().toLocaleString('ru-RU'),(typeof G!=='undefined'&&G?MONTHS[G.m]+' '+G.y+' · вкладка '+(typeof tab!=='undefined'?tab:'')+(typeof R!=='undefined'&&R?' · гонка':''):'меню'),'Сейчас звучит:'].concat(auNowList().map(x=>'  '+x),['Последние звуковые события:'],ev.length?ev:['  (пусто)']).join('\n');}
+function auNowHTML(){return `<div class="label" style="margin-top:14px">Что сейчас звучит</div><p class="small muted" style="margin-top:4px">Услышали писк или две мелодии сразу — откройте настройки, нажмите «Скопировать» и пришлите список.</p><pre class="au-now" id="auNow">${esc(auNowText())}</pre><div class="btns" style="margin-top:6px"><button class="btn" data-act="auNow">Обновить</button><button class="btn" data-act="auNowCopy">Скопировать</button></div>`;}
+// события: кто что запустил (обёртки не меняют звук, только записывают)
+(function(){const W=(name,fmt)=>{try{const f=eval(name);if(typeof f!=='function')return;const g=function(){try{auLog(fmt.apply(null,arguments));}catch(_){}return f.apply(this,arguments);};eval(name+'=g');}catch(_){}};
+  W('auCue',id=>'сигнал '+id);W('auCueSrc',id=>'сигнал '+id);W('auFanfare',k=>'фанфара '+k);W('auSfx',t=>'звук '+t);W('auTuneCue',k=>'мелодия-сигнал '+k);
+  W('voiceSay',t=>'диктор: '+String(t||'').slice(0,36));W('auRaceStart',()=>'гонка: старт звука');W('auRaceStop',()=>'гонка: стоп звука');W('musNext',(d,u)=>'следующая запись'+(u?' (кнопкой)':''));})();
+// ---------- плейлист без повторов ----------
+const MUS_HIST_KEY='avt-mushist';let MUS_HIST=null;
+function musHKey(t){return t?(t.id||t.title||''):'';}
+function musHist(){if(MUS_HIST)return MUS_HIST;try{MUS_HIST=JSON.parse(localStorage.getItem(MUS_HIST_KEY)||'[]');if(!Array.isArray(MUS_HIST))MUS_HIST=[];}catch(e){MUS_HIST=[];}return MUS_HIST;}
+function musHeard(t){const k=musHKey(t);if(!k)return;const H=musHist(),i=H.indexOf(k);if(i>=0)H.splice(i,1);H.push(k);while(H.length>300)H.shift();try{localStorage.setItem(MUS_HIST_KEY,JSON.stringify(H));}catch(e){}auLog('запись: '+String(t.title||k).slice(0,44));}
+// свежие (давно или никогда не звучавшие) — вперёд в своём порядке; слышанные — в конец, самые давние из них раньше
+function musFresh(L){const H=musHist();if(!H.length||L.length<4)return L;const pos={};H.forEach((k,i)=>pos[k]=i);
+  const fresh=L.filter(t=>pos[musHKey(t)]===undefined),old=L.filter(t=>pos[musHKey(t)]!==undefined).sort((a,b)=>pos[musHKey(a)]-pos[musHKey(b)]);return fresh.concat(old);}
+
 /* ================= ACTIONS ================= */
 function stopAuto(){if(auto){clearInterval(auto);auto=null;const ab=document.getElementById('autoBtn');if(ab){ab.textContent='▶';ab.classList.remove('on');}}}
 function ngKeep(){const g=id=>document.getElementById(id);if(!draft)return;if(g('cname'))draft.company=g('cname').value;if(g('fname'))draft.first=g('fname').value;if(g('rname'))draft.rname=g('rname').value;}
@@ -32815,6 +32867,7 @@ const ACT={
   // завод
   capAdd:d=>{if(capOrder(G,+d.n))rerender();},
   // 0.36: совет может вести к разделу: run() возвращает id раздела — открываем вкладку и прокручиваем к нему («Путь к автомобилю → Подробнее»)
+  auNow:()=>{const e=document.getElementById('auNow');if(e)e.textContent=auNowText();},auNowCopy:()=>{const t=auNowText();const e=document.getElementById('auNow');if(e)e.textContent=t;try{navigator.clipboard.writeText(t).then(()=>toast('Список скопирован'),()=>toast('Не удалось скопировать — выделите текст вручную'));}catch(_){toast('Не удалось скопировать — выделите текст вручную');}},   // 0.51, этап 10
   tipHide:d=>{const t=TIPS[+d.k];if(t){tipHideKey(G,tipKey(t),12);toast('Совет скрыт на год');rerender();}},   // 0.51, этап 9
   tip:d=>{const t=TIPS[+d.k];if(t&&t.run){const sec=t.run();save();render();if(typeof sec==='string'){const e=subGo(sec);if(e){e.scrollIntoView({block:'start'});window.scrollBy(0,-86);e.classList.remove('hl');void e.offsetWidth;e.classList.add('hl');}}flushToasts();}},
   // 0.36: дилеры — быстрый переход между странами

@@ -64,7 +64,7 @@ with sync_playwright() as p:
     ok(js("G.tm.auto===true&&G.tm.cap>0") and 'команда участвует сама' in t, 'одно нажатие — команда участвует сама, бюджет года назначен')
     cap0 = js("G.tm.cap"); js("document.querySelector('[data-act=raceAutoBud][data-k=\"+\"]').click()"); pg.wait_for_timeout(300)
     ok(js("G.tm.cap") > cap0, 'кнопка «+» прибавляет бюджет года')
-    r = js("(()=>{G.tm.cap=5e6;const n0=G.raceLog.length;let scr=0,msg='';for(let k=0;k<14;k++){while(G.pending.length)resolve(G.pending[0].choices[0][1]);G.over=false;step();if(!document.getElementById('raceScreen').hidden)scr++;if(G.tmMsg&&G.tmMsg.list.length)msg=G.tmMsg.list.join('; ');}G.pending=[];return {ran:G.raceLog.length-n0,scr,msg,R:!!R};})()")
+    r = js("(()=>{G.tm.cap=5e6;const n0=G.raceLog.length;let scr=0,msg='';for(let k=0;k<14;k++){let g=0;while(G.pending.length&&g++<30){const ev=G.pending[0],K=ev.choices.map(c=>c[1]);/* 0.51, этап 9: предложения приходят окном перед новым месяцем — отклоняем, чтобы вызов не открыл заезд */resolve(K.find(x=>/No$|^ok$|^tskip$|^show0$/.test(x))||K[K.length-1]);if(G.pending[0]===ev)G.pending.shift();}G.over=false;step();if(!document.getElementById('raceScreen').hidden)scr++;if(G.tmMsg&&G.tmMsg.list.length)msg=G.tmMsg.list.join('; ');}G.pending=[];return {ran:G.raceLog.length-n0,scr,msg,R:!!R};})()")
     ok(r['ran'] >= 1 and r['scr'] == 0 and not r['R'], 'за год команда сыграла %d гонок, экран заезда не открывался' % r['ran'])
     ok(len(r['msg']) > 5, 'итог — строкой: ' + r['msg'][:90])
     js("tab='plant';render();"); pg.wait_for_timeout(300); dash = js("(()=>{const e=document.querySelector('.card.advisor');return e?e.outerHTML:'';})()")

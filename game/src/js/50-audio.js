@@ -309,6 +309,8 @@ function musBuild(start){
   const ctx=AU.on.mode==='all'?'calm':musMoment(G);AU.ctx0=ctx;AU.shuf=AU.shuf||(Math.random()*1e9|0);
   const rnd=mulberry32(hashStr(AU.on.mode+y+(G?G.country:'')+ctx)+AU.shuf);
   L=L.map(t=>({t,k:Math.pow(rnd(),1/Math.max(0.01,musWeight(t,G,ctx)))})).sort((a,b)=>b.k-a.k).map(o=>o.t);
+  // 0.51, этап 10: недавно слышанное — в конец (50z-audio51.js): каждый год плейлист тасуется заново, и без этого записи возвращались
+  if(typeof musFresh==='function')L=musFresh(L);
   // 0.29: первой звучит запись эпохи, а не своя мелодия игры
   if(start){const k=L.findIndex(t=>!t.own);if(k>0)L.unshift(L.splice(k,1)[0]);}
   const cur=AU.pl[AU.idx],sig=L.map(t=>t.title).sort().join('|');
@@ -335,7 +337,7 @@ function musicPlay(force){
     AU.el.addEventListener('playing',()=>{AU.errs=0;const tr=AU.nowPlaying;if(tr&&!tr.own)AU.remoteErr=0;});
     AU.el.addEventListener('error',()=>{if(AU.el.getAttribute('src'))musErr();});}
   if(!AU.ducked)AU.el.volume=R?0.2:0.5;
-  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;
+  if(force||AU.el.getAttribute('src')!==tr.src){AU.el.src=tr.src;AU.nowPlaying=tr;try{if(typeof musHeard==='function')musHeard(tr);}catch(_){}
     // 0.37: что звучало недавно — в следующих плейлистах реже (последние 14 записей)
     AU.recent=(AU.recent||[]).filter(x=>x!==tr.title);AU.recent.push(tr.title);if(AU.recent.length>14)AU.recent.shift();}
   if(AU.el.paused){const pr=AU.el.play();if(pr&&pr.catch)pr.catch(()=>{});}

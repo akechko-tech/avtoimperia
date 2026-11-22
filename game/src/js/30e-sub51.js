@@ -9,7 +9,7 @@ const SUB51={
   plant:{def:'sum',bar:[['sum','Сводка'],['cap','Мощности'],['ppl','Люди'],['wh','Склад'],['tech','Технологии'],['fin','Финансы']],
     of:{'fc-cap':'cap','fc-staffc':'ppl','fc-wh':'wh','fc-techc':'tech','fc-fin':'fin'}},
   models:{def:'list',bar:[['plan','Выпуск'],['list','Модели'],['rd','Бюро']],of:{'fc-planlist':'plan','fc-rdcard':'rd','fc-trials':'plan'}},
-  race:{def:'cal',bar:[['cal','Календарь'],['champ','Чемпионаты'],['team','Команда'],['rec','Рекорды и трофеи']],
+  race:{def:'cal',lead:{cal:'fc-rcal'},bar:[['cal','Календарь'],['champ','Чемпионаты'],['team','Команда'],['rec','Рекорды и трофеи']],
     of:{'fc-rcal':'cal','fc-annc':'cal','fc-champs':'champ','fc-trophy':'rec','sec-team':'team','sec-recs':'rec'}},
   log:{def:'dom',bar:[['dom','Господство'],['leg','Наследие'],['titles','Титулы'],['troph','Вызовы и трофеи'],['film','Фильм и газеты'],['log','Хроника']],
     of:{'sec-dom':'dom','sec-legacy':'leg','sec-titles':'titles','fc-ach':'titles','sec-board':'troph','sec-trophies':'troph','sec-saga':'film','fc-digest':'film','showpol':'film','fc-reels':'film','fc-log':'log'}}
@@ -53,7 +53,10 @@ function subApply(s){const V=document.getElementById('view');if(!V)return;const 
   const sw=V.querySelector(':scope > .line-switch'),tmp=document.createElement('div');tmp.innerHTML=subBarHTML(s,t);const bar=tmp.firstElementChild;if(!bar)return;
   if(sw&&sw.nextSibling)V.insertBefore(bar,sw.nextSibling);else V.insertBefore(bar,V.firstChild);
   const sel=t==='market'?mk9Key(s):subSel(s,t);
-  [...V.children].forEach(el=>{const k=subKeyOf(s,t,el);el.hidden=k!==null&&k!==sel;});}
+  [...V.children].forEach(el=>{const k=subKeyOf(s,t,el);el.hidden=k!==null&&k!==sel;});
+  // главная карточка подраздела — первой после советов (вызовы и прочие карточки без своего подраздела — ниже неё)
+  const lead=SUB51[t]&&SUB51[t].lead&&SUB51[t].lead[sel],le=lead&&document.getElementById(lead);
+  if(le&&le.parentElement===V){const fv=[...V.children].find(c=>!c.hidden&&c.id!=='subbar'&&!c.classList.contains('line-switch')&&!c.classList.contains('advisor'));if(fv&&fv!==le)V.insertBefore(le,fv);}}
 // ссылка ведёт на карточку из другого подраздела — открыть его (карточки уже в документе, только спрятаны)
 function subReveal(el){try{const s=G,V=document.getElementById('view');if(!el||!V||!subOn(s))return;let top=el;while(top&&top.parentElement!==V)top=top.parentElement;if(!top||!top.hidden)return;const t=tab;
     if(t==='market'){const id=top.id,k=['sales','net','deals'].find(k=>MK9[k][id]),w=['map','brands','misc'].find(k=>MK9[k][id]);

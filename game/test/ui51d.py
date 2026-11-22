@@ -45,7 +45,7 @@ ACTS = [
     ('доли рынка в мире', [T('market'), C('world'), MS('brands')], '#fc-shares table', 0),
     ('карта мира и пошлины', [T('market'), C('world')], '#sec-world', 0),
     ('заявить команду на гонку', [T('race')], '#fc-rcal button.btn'),
-    ('команда и гонщики', [T('race'), S('team')], '#sec-team button'),
+    ('команда и гонщики', [T('race'), S('team')], '#sec-team h2', 0),
     ('мировые рекорды', [T('race'), S('rec')], '#sec-recs [data-act=recOpen]'),
     ('хроника', [T('log'), S('log')], '#fc-log ul.log li', 0),
     ('фильм о герое', [T('log'), S('film')], '#sec-saga .sg-li', 0),
