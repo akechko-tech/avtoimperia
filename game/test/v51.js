@@ -1175,10 +1175,53 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
   MUS_HIST=[];localStorage.removeItem('avt-mushist');AU_LOG.length=0;
   // фонотека: исправленная подпись
   CK(typeof MUS_TO==='object'&&MUS_TO.tsar_hymn===1917&&MUS_TO.worker_marseillaise===1918,'гимны 1917 года звучат только в своё время');
+  // писк и задвоение: мелодию «по поводу» прервали, пока она грузилась, — запись не портится и запасная не запускается
+  {const A0=Audio;let mode='AbortError',fbN=0;const c0=AU.cue,e0=AU.el,s0=AU.synth;AU.cue=null;AU.el=null;AU.synth=null;
+    try{Audio=function(src){return {paused:true,ended:false,volume:1,currentTime:0,src,addEventListener(){},pause(){this.paused=true;},play(){this.paused=false;return {catch(fn){fn({name:mode});return this;},then(){return this;}};}};};
+      delete CUE.t_ab;auCueSrc('t_ab','music/x.m4a',0.8,()=>fbN++,5,2);CK(CUE.t_ab&&!CUE.t_ab.bad&&fbN===0,'мелодию прервали во время загрузки: запись не помечена негодной, запасная не звучит (было: помечена до конца сеанса, запасная — поверх)');
+      AU.cue=null;mode='NotSupportedError';delete CUE.t_ns;auCueSrc('t_ns','music/y.m4a',0.8,()=>fbN++,5,2);CK(CUE.t_ns&&CUE.t_ns.bad===1&&fbN===1,'запись не читается: помечена, звучит запасная');
+      AU.cue=null;mode='NotAllowedError';delete CUE.t_na;fbN=0;auCueSrc('t_na','music/z.m4a',0.8,()=>fbN++,5,2);CK(CUE.t_na&&!CUE.t_na.bad&&fbN===1,'автозапуск запрещён: запись не помечена, звучит запасная');
+      AU.cue=null;mode='AbortError';delete CUE.own_cue_t5;fbN=0;auCue('t5',0.8,()=>fbN++,1);CK(CUE.t5&&!CUE.t5.bad&&fbN===0,'то же для своих тем игры (auCue)');
+    }finally{Audio=A0;AU.cue=c0;AU.el=e0;AU.synth=s0;['t_ab','t_ns','t_na','t5'].forEach(k=>delete CUE[k]);AU_LOG.length=0;}}
+  CK(/createDynamicsCompressor/.test(String(auInit))&&/AU\.lim/.test(String(auInit)),'на общем выходе стоит ограничитель');
   // фонотека: две записи убраны по решению автора, вместо них — другие (22.11)
   CK(!('alte_kameraden' in MUS_C)&&!('vienna_woods' in MUS_C)&&MUS_C.roses_south==='de'&&MUS_C.merry_wives==='de','«Старые товарищи» и «Сказки Венского леса» убраны из немецкого набора, вместо них — «Розы с юга» и «Виндзорские проказницы»');
   {const a1=awardMusicOf('de',1925),a0=awardMusicOf('de',1910),all=JSON.stringify([a0,a1,awardMusicOf('at',1925)]);
     CK(a1.rec[0]==='merry_wives'&&a0.rec[0]==='merry_wives'&&a0.tune==='hymn_uk'&&!/kameraden|vienna_woods/.test(all),'на немецком пьедестале — увертюра Николаи, убранных записей нет');}
+}
+// ===== 31. Тема 10, вторая часть: люди, техника в 3D, столбики у дороги =====
+{const CK=(c,m)=>{if(c)ok++;else{bad++;console.log('FAIL 31',m);}};
+  // зрители: по стране и эпохе, разные фигуры; модель строится для любого облика
+  const hosts=['fr','it','de','uk','us','be','mc','at','ch','es','ru','ie','ly','nl','cn','other'];let errs=0,nAll=0;const sig={},H=[],W=[],tops={},hats={};
+  hosts.forEach(c=>[1900,1910,1925].forEach(y=>{const rnd=mulberry32(hashStr('t31|'+c+y));for(let i=0;i<40;i++){nAll++;try{const o=personLook3(rnd,y,'crowd',c);sig[[c,o.type,o.top||o.wtop||'',o.hat||'',o.legs||'',o.hands].join('|')]=1;if(o.type==='man'){H.push(o.bh);W.push(o.bw);tops[o.top||'jacket']=1;hats[o.hat||'-']=1;}
+        if(i<6){const M=new Mesh();mPerson3(M,o,i%2);if(M.F.length<300)errs++;const M0=new Mesh();mPerson3(M0,Object.assign({},o,{lod:0}),0);if(!M0.F.length||M0.F.length>=M.F.length)errs++;}}catch(e){errs++;if(errs<3)console.log('  ',c,y,e.message);}}}));
+  CK(errs===0,'зрители: '+nAll+' обликов по 16 странам и трём эпохам строятся без ошибок, упрощённая модель легче подробной (ошибок '+errs+')');
+  CK(Object.keys(sig).length>=400,'зрители разные: '+Object.keys(sig).length+' сочетаний страны, одежды, шляпы и позы (было: пиджак или пальто, одна фигура)');
+  CK(Math.max(...H)-Math.min(...H)>0.12&&Math.max(...W)-Math.min(...W)>0.18,'рост мужчин от '+Math.min(...H).toFixed(2)+' до '+Math.max(...H).toFixed(2)+', ширина от '+Math.min(...W).toFixed(2)+' до '+Math.max(...W).toFixed(2));
+  CK(['jacket','frock','vest','shirt','smock','overall','tunic','robe','leather'].every(t=>tops[t]),'есть все виды одежды: пиджак, пальто, жилет, рубаха, блуза, комбинезон, мундир, халат, кожанка');
+  CK(['top','bowler','boater','cap','fedora','straw','beret','peak','tyrol','fez','turban','conic','kepi'].every(h=>hats[h]),'шляпы: '+Object.keys(hats).length+' видов');
+  {const P=(c,y)=>personLook3(mulberry32(1),y,'gend',c);CK(P('uk',1910).hat==='custodian'&&P('it',1910).hat==='bicorne'&&P('de',1910).hat==='pickel'&&P('de',1925).hat==='peak'&&P('fr',1910).hat==='kepi'&&P('ru',1910).sabre===1&&P('us',1905).hat==='custodian'&&P('us',1920).hat==='peak','страж порядка свой в каждой стране: констебль, карабинер, шуцман, жандарм, городовой');
+    const fr=mulberry32(5),ru=mulberry32(5);let smock=0,shirt=0;for(let i=0;i<300;i++){if(personLook3(fr,1910,'crowd','fr').top==='smock')smock++;if(personLook3(ru,1910,'crowd','ru').top==='shirt')shirt++;}
+    CK(smock>15&&shirt>40,'Франция — блузы ('+smock+' из 300), Россия — косоворотки ('+shirt+' из 300)');}
+  // экипаж: по роду машины, стране и эпохе
+  {const K=(b,y,c,m)=>crewKit51({num:3,y,mq:'t',cc:c,b,style:'truck'},!!m);
+    CK(K('b14',1912,'uk').top==='tunic'&&K('b14',1912,'uk').cap==='peak'&&K('b17',1912,'us').cap==='brass'&&K('b26',1915,'de').top==='tunic'&&K('b24',1920,'us').top==='shirt'&&K('b24',1920,'us').glove===0,'шофёр автобуса — в мундире и фуражке, пожарный — в каске, военный — в форме, тракторист — в рубахе и комбинезоне');
+    let jer=0,red=0,tops={},e2=0;for(let n=0;n<200;n++){const S={num:n,y:1926,mq:'q'+n,cc:'it',style:'gp1925'},k=crewKit51(S,false);tops[k.top]=1;if(k.top==='jersey'){jer++;if(/^#c0141c$/i.test(k.coat))red++;}
+      if(n<12){try{const M=new Mesh();MLOD=1;mCrew3(M,0,0.5,0,k,false,S,[0,1,0.42]);const M2=new Mesh();mCrew3(M2,0,0.5,0,crewKit51(S,true),true,S,null);if(M.F.length<400||M2.F.length<300)e2++;}catch(e){e2++;console.log('  crew',e.message);}}}
+    CK(jer>20&&red===jer&&tops.overall&&tops.leather&&e2===0,'гонщики Италии 1926: фуфайки национального красного ('+jer+' из 200), комбинезоны, кожанки; модели строятся');
+    const b1=crewBuild({num:1,y:1910,mq:'a',cc:'fr'},false,{role:'race'}),b2=crewBuild({num:7,y:1910,mq:'b',cc:'fr'},false,{role:'race'});CK(b1.bw!==b2.bw||b1.th!==b2.th,'у экипажей разные фигуры');
+    const a1=airKit51({num:1,y:1910,cc:'fr'},false),a2=airKit51({num:1,y:1917,cc:'fr'},true),a3=airKit51({num:1,y:1926,cc:'us'},false);CK(a2.cap==='helmet'&&a3.cap==='helmet'&&['coat','jersey','leather'].includes(a1.top),'лётчик одет по году: до 1912 — пиджак, фуфайка или кожанка; потом — шлем');}
+  // техника: у каждого вида свой кузов
+  {const L=[['b12','heavy'],['b13','semi'],['b17','fire'],['b20','tanker'],['b21','dump'],['b22','refuse'],['b24','tractor'],['b25','crawler'],['b28','armored'],['b29','ltank']];let e3=0;const sz={};
+    L.forEach(([b,k])=>{[1912,1924].forEach(y=>{try{const S={key:'t'+b+y,style:'truck',color:'#5a6a50',y,wheel:'wood',mech:false,num:0,b,cc:'fr'};if(workKind51(S)!==k)e3++;const M=carModel(Object.assign({},S,{lod:'hi'})),M0=carModel(Object.assign({},S,{lod:'lo'}));
+        if(!M.F.length||M0.F.length>=M.F.length||M.wheels.length>6||!(M.len[0]<M.len[1])||!(M.track>1))e3++;if(M.F.some(f=>f.w>6))e3++;sz[b+y]=M.F.length;}catch(e){e3++;console.log('  work',b,y,e.message);}});});
+    CK(e3===0,'десять видов техники строятся в 3D (подробно и упрощённо), вращающихся колёс не больше шести — столько знает шейдер');
+    CK(sz.b241912!==sz.b241924&&sz.b251912!==sz.b251924,'ранний и поздний трактор — разные модели (колёсный: '+sz.b241912+' и '+sz.b241924+' граней)');
+    const plain=carModel({key:'tp',style:'truck',color:'#5a6a50',y:1915,wheel:'wood',mech:false,num:0,b:'b8',cc:'fr',lod:'hi'}).F.length;CK(Object.values(sz).every(v=>v!==plain),'ни один из новых видов не совпадает с обычным грузовиком');
+    const md=JSON.parse(JSON.stringify(G.models[0]));md.b='b24';md.id='t31';let html='';try{html=carArt(md,{y:1920});}catch(e){html='ERR '+e.message;}CK(/<img/.test(html)&&!/<svg/.test(html),'в карточке трактора — трёхмерная модель, а не рисунок сбоку');}
+  // столбики-отбойники у обрыва: не скала
+  CK(crashTier(7,'curb')===0&&crashTier(10,'curb')===1&&crashTier(22,'curb')===2&&crashTier(22,'wall')===4,'удар о столбик: до 8 м/с — толчок, до 14 — касание, выше — удар; тяжёлой аварии о столбик нет (о стену на 22 м/с — есть)');
+  {const src=String(obstacleHit);CK(/gstone/.test(src)&&/hv<0\.5/.test(src),'столбик отбрасывает к дороге поперёк; торец тонкой стены — скольжение вдоль');}
 }
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

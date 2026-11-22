@@ -34,5 +34,5 @@ function modelSpec(md,prep,y,o){o=o||{};const p=parts(md),bid=p.b.id,style=carSt
   const drv=o.drv&&typeof faceOf==='function'&&faceOf(o.drv)?o.drv:'';
   // 0.33: мотоцикл — облик по деталям: мотор, рама, передача, шины; коляска справа (в Британии — слева)
   const mo=style==='moto'?{me:p.e.id,mf:p.c.id,mt:p.g.id,mw:p.w.id,sd:o.country==='uk'?-1:1}:null;
-  const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv].join('|')+(mo?'|'+[mo.me,mo.mf,mo.mt,mo.mw,mo.sd].join(','):'');
-  return Object.assign({key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv},mo||{});}
+  const cc=o.country||'';const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv,cc].join('|')+(mo?'|'+[mo.me,mo.mf,mo.mt,mo.mw,mo.sd].join(','):'');
+  return Object.assign({key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv,cc},mo||{});}

@@ -7,7 +7,9 @@ const mtof=n=>440*Math.pow(2,(n-69)/12);
 function auInit(){
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return;}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
-  try{const c=new C();AU.ctx=c;AU.master=c.createGain();AU.master.connect(c.destination);
+  try{const c=new C();AU.ctx=c;AU.master=c.createGain();
+    // 0.51, тема 10: ограничитель на выходе — эффекты, мотор и окружение шли на выход без него и в сумме могли перегружать (треск, визг)
+    try{const lim=c.createDynamicsCompressor();lim.threshold.value=-5;lim.knee.value=4;lim.ratio.value=14;lim.attack.value=0.003;lim.release.value=0.16;AU.master.connect(lim);lim.connect(c.destination);AU.lim=lim;}catch(_){AU.master.connect(c.destination);}
     AU.mus=c.createGain();AU.mus.connect(AU.master);AU.fx=c.createGain();AU.fx.connect(AU.master);
     const comp=c.createDynamicsCompressor();AU.mus.disconnect();AU.mus.connect(comp);comp.connect(AU.master);
     const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
@@ -204,11 +206,17 @@ function cueEnd(a){const c=AU.cue;if(!c||c.a!==a)return;AU.cue=null;clearTimeout
   if(c.was||c.want)setTimeout(()=>{if(AU.cue||(AU.synth&&AU.synth.cue))return;try{musicPlay(c.want===2);if(AU.el&&!AU.el.paused)musDuck(0.1);}catch(_){}},350);}
 // мелодию по поводу обрывает сам игрок: «следующая», «пауза», музыка гонки, выключение музыки
 function cueStop(){const c=AU.cue;if(!c)return;AU.cue=null;clearTimeout(AU.cueT);try{clearInterval(c.a.fadeI);clearTimeout(c.a.capT);c.a.pause();}catch(_){}}
+// 0.51, тема 10 (писк и задвоение). Запись «по поводу» запускается не мгновенно: пока она грузится, play() ещё не выполнен. Если в эту долю
+// секунды её сменяет более важная мелодия, игрок жмёт «паузу» или стартует гонка, pause() обрывает ожидание, и play() завершается отказом
+// «прервано». Раньше любой отказ считался поломкой записи: её помечали негодной до конца сеанса и тут же запускали запасную мелодию.
+// Отсюда и «задвоение» (запасная — поверх той, что прервала), и «писк» (гимн на церемониях дальше играл синтезатор, а не оркестр).
+// Теперь «прервано» — не ошибка: запись цела, запасная не нужна. Запрет автозапуска тоже не портит запись — играет запасная, в следующий раз — запись.
+function cuePlayFail(a,e,fb){const nm=e&&e.name||'';if(nm==='AbortError')return;if(nm!=='NotAllowedError')a.bad=1;cueEnd(a);if(fb)fb();}
 function auCue(id,vol,fb,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     if(!cueBegin(a,prio||1))return;
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
-    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(e=>cuePlayFail(a,e,fb));}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи оркестров (файлы рядом с игрой, в APK вшиты: music/fan_*.m4a);
 // без файла — свои оркестровые темы игры. Победа — «Первый сигнал» горна (его трубят на ипподромах), кубок — дробь и «Грандиозо»,
 // титул — трубы «Аиды», рекорд — «Сигнал адъютанта», первенство — «К знамени», медаль — туш, сделка — «Сбор», наследие —
@@ -237,7 +245,7 @@ function auCueSrc(id,src,vol,fb,maxSec,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb
     clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
     // 0.30: длинную запись (фанфары) после maxSec плавно уводим — праздник короче оркестровой пьесы
     if(maxSec){clearTimeout(a.capT);a.capT=setTimeout(()=>{if(a.paused)return;const t0=performance.now();a.fadeI=setInterval(()=>{const k=1-(performance.now()-t0)/1800;if(k<=0){clearInterval(a.fadeI);try{a.pause();}catch(_){}return;}try{a.volume=v0*k;}catch(_){}},60);},maxSec*1000);}
-    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(e=>cuePlayFail(a,e,fb));}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
 function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;

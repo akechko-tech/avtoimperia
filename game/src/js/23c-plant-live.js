@@ -122,11 +122,11 @@ function plgLabels(texts){const S=1024,cv=mkCanvas(S,512),g=cv.getContext('2d'),
     mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV({u0,u1,v0,v1},p0,p1,n));x+=w+3;h=Math.max(h,hh);});
   return {cv,mb};}
 // Люди: несколько обликов рабочих эпохи, у каждого 4 кадра шага и «стоит»
-function plgPeople(S){const out=[],y=S.y,rnd=mulberry32(hashStr('plgp|'+y+S.c)),work=['#3b4a5e','#4a4a44','#5a4a3a','#34465e','#6a5e4e'];
-  for(let k=0;k<6;k++){const o=personLook3(rnd,y,'crowd');Object.assign(o,{type:'man',frock:false,item:'',wave:false,hands:'down',lod:0,y});
-    if(k<4){o.coat=work[k%work.length];o.trousers=shade(o.coat,-0.2);o.hat='cap';o.hatc=['#3a3026','#4a4a44','#2a2a2e'][k%3];o.vest=false;}
-    else if(k===4){o.coat='#2b2f3a';o.hat=y<1920?'bowler':'cap';o.hatc='#1e1a18';}
-    else{o.coat='#e8e2d0';o.trousers='#5a5048';o.hat='cap';o.hatc='#3a3026';}
+function plgPeople(S){const out=[],y=S.y,rnd=mulberry32(hashStr('plgp|'+y+S.c));
+  // 0.51 (тема 10): рабочие — в одежде своей страны (блуза, жилет, комбинезон, косоворотка), разного роста и сложения; пятый — мастер или инженер
+  for(let k=0;k<6;k++){const o=personLook3(rnd,y,k<4||k===5?'worker':'town',S.c);Object.assign(o,{item:'',wave:false,hands:'down',lod:0,y,stoop:0,glasses:k===4?o.glasses:0});
+    if(k===4){o.top='jacket';o.coat='#2b2f3a';o.hat=y<1920?'bowler':'cap';o.hatc='#1e1a18';o.legs='plain';}
+    else if(k===5){o.top='jacket';o.coat='#e8e2d0';o.trousers='#5a5048';o.hat='cap';o.hatc='#3a3026';o.tie='';}
     const fr=[];for(let f=0;f<5;f++){const M=new Mesh(),q=Object.assign({},o);if(f<4)q.walk=f/4;mPerson3(M,q,0);const mb=new MB();mbFromMesh(mb,M,{lift:0.003,step:0.001});fr.push(g3Mesh(mb));}
     out.push(fr);}
   return out;}

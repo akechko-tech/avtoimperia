@@ -290,7 +290,7 @@ function placeScenery(trk,rnd){
     else if(sg===RSEG.vine){// виноградники: ряды вдоль дороги
       if(i%3===0)[1,-1].forEach(sd=>{for(let k=0;k<5;k++)add(i,'vine',sd*(W/2+5+k*2.6),0,'s',0);});if(i%40===11&&rnd()<0.6)tree((rnd()<0.5?-1:1)*(W/2+22),cfg.host==='it'||cfg.host==='es'?'cypress':'oak');}
     else if(sg===RSEG.serp){// серпантин: у обрыва — столбики-отбойники, у скалы — камни
-      const bend=trk.K[i]>0?1:-1;if(i%2===0)add(i,'gstone',-bend*(W/2+1.1),0,'s',0.18);if(i%9===0&&rnd()<0.5)add(i,'rock',bend*(W/2+4+rnd()*3),Math.floor(rnd()*3),'s',1.2);
+      const bend=trk.K[i]>0?1:-1;if(i%2===0)add(i,'gstone',-bend*(W/2+1.45),0,'s',0.18);/* 0.51, тема 10: было 1,1 м — столбик стоял у самой кромки */if(i%9===0&&rnd()<0.5)add(i,'rock',bend*(W/2+4+rnd()*3),Math.floor(rnd()*3),'s',1.2);
       // 0.40: скала со стороны горы — стена: на насыпь под 60° не заехать (отзыв: машина на Тарга Флорио вставала на бок у обочины)
       trk.bar[i]=Object.assign(trk.bar[i]||{},bend>0?{L:W/2+3.2}:{R:W/2+3.2});
       if(i%13===0&&rnd()<0.5)tree(bend*(W/2+6+rnd()*10),rnd()<0.6?'fir':'pine');}
@@ -602,7 +602,11 @@ function segSeg(S,Q){const d1x=S[2]-S[0],d1z=S[3]-S[1],d2x=Q[2]-Q[0],d2z=Q[3]-Q[
   return [S[0]+d1x*s,S[1]+d1z*s,Q[0]+d2x*t,Q[1]+d2z*t];}
 // Столкновение с препятствием: круг (дерево, столб) или прямоугольник (дом, забор, трибуна, толпа)
 function obstacleHit(c,o,dt){const [ax,az,bx,bz]=carCapsule(c),soft=!!BRUSH[o.kind];/* 0.51: куст и изгородь — не стена, машина продирается */
-  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R-(soft?0.5:0);if(d>=rr)return;if(soft){brushHit(c,o,dt);return;}const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
+  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R-(soft?0.5:0);if(d>=rr)return;if(soft){brushHit(c,o,dt);return;}const pen=rr-d;
+    // 0.51, тема 10 (Тарга Флорио: «касание столбика на 80 км/ч стоит половины машины»): ряд отбойных столбиков у обрыва работает как
+    // низкое ограждение — отбрасывает машину к дороге поперёк, а не останавливает её лбом; удар считается по скорости поперёк дороги
+    if(o.kind==='gstone'&&R&&R.trk&&R.trk.N[c.idx]){const T=R.trk,nn=T.N[c.idx],p=T.pts[c.idx],sd=Math.sign((o.x-p[0])*nn[0]+(o.z-p[2])*nn[1])||1,gx=-sd*nn[0],gz=-sd*nn[1];c.x+=gx*pen;c.z+=gz*pen;wallHit(c,gx,gz,0.15,0.6,'curb',o.x,o.z);return;}
+    const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI);c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
   const b=o.box;let best=null;
   const hu=b.hu,hv=b.hv;
   for(let k=0;k<=8;k++){const t=k/8,px=ax+(bx-ax)*t,pz=az+(bz-az)*t,lx=(px-o.x)*b.ux+(pz-o.z)*b.uz,lz=(px-o.x)*b.vx+(pz-o.z)*b.vz,cx=lx<-hu?-hu:lx>hu?hu:lx,cz=lz<-hv?-hv:lz>hv?hv:lz,dx=lx-cx,dz=lz-cz;
@@ -610,7 +614,11 @@ function obstacleHit(c,o,dt){const [ax,az,bx,bz]=carCapsule(c),soft=!!BRUSH[o.ki
     if(dx*dx+dz*dz>=CAR_R*CAR_R&&(dx!==0||dz!==0))continue;const d=Math.hypot(dx,dz);let pen,nl;
     if(d>1e-4){if(d>=CAR_R)continue;pen=CAR_R-d;nl=[dx/d,dz/d];}else{const ex=b.hu-Math.abs(lx),ez=b.hv-Math.abs(lz);if(ex<ez){nl=[Math.sign(lx)||1,0];pen=ex+CAR_R;}else{nl=[0,Math.sign(lz)||1];pen=ez+CAR_R;}}
     if(!best||pen>best.pen)best={pen,nl};}
-  if(!best)return;if(soft){brushHit(c,o,dt);return;}const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
+  if(!best)return;if(soft){brushHit(c,o,dt);return;}
+  // 0.51, тема 10: кусок стены или забора вдоль дороги тоньше метра — в торец его не «таранят»: машина задевает угол и идёт вдоль
+  // (раньше нос, попавший на торец стены в 1,2 м от кромки, останавливался как о скалу — 70 % повреждений на 80 км/ч)
+  if(hv<0.5&&hu>hv*4&&Math.abs(best.nl[0])>Math.abs(best.nl[1])){const lz=(c.x-o.x)*b.vx+(c.z-o.z)*b.vz;best.nl=[0,lz>=0?1:-1];best.pen=Math.min(best.pen,0.35);}
+  const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
 // Удар о препятствие с нормалью (nx,nz), направленной к машине: поперечная скорость отражается с потерей,
 // продольная теряет лишь трение удара, а сам удар разворачивает машину вдоль стены — она скользит и уходит от неё, а не липнет
 function wallHit(c,nx,nz,e,dmgK,kind,hx,hz){
@@ -882,9 +890,9 @@ function startRace(setup){
     else{c.style=carStyle(c.md,c.prep,rc.y);let strip=0;
       // облик по марке: «рейсэбауты» Мерсера и Стаца — как с завода; в 24-часовых гонках 1920-х — спортивные машины с крыльями и фарами (Бентли — туринг)
       if(/^gp/.test(c.style)){if(['Mercer','Stutz'].includes(c.name)&&rc.y>=1911&&rc.y<1920){c.style='sport';strip=1;}else if(rc.t==='endurance'&&rc.y>=1920)c.style=c.name==='Bentley'?'tourer':'sport';}
-      c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name+strip;
+      c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name+strip+(c.tc||'');
       const fd=fdrv&&typeof faceOf==='function'&&faceOf(fdrv)?fdrv:'';
-      c.spec3={key:c.spriteKey+(fd?'|'+fd:''),style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3,drv:fd};}
+      c.spec3={key:c.spriteKey+(fd?'|'+fd:''),style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3,drv:fd,cc:c.tc||''};}
     wearSetup(c,trk,rc);if(c.you)try{kitRaceCar(s,c);}catch(e){console.warn('kit',e);}return c;});
   // стартовая решётка: быстрые и опытные впереди, немного случайности
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);

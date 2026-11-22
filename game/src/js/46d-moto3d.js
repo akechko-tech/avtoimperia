@@ -129,9 +129,9 @@ function motoModel3(M,S,K,H){
     const zc0=z1-0.62,zc1=z0+0.08;mFace(M,[[sx-w+0.05,yt+0.004,zc0],[sx+w-0.05,yt+0.004,zc0],[sx+w-0.05,yt+0.004,zc1],[sx-w+0.05,yt+0.004,zc1]],'#1a1512','leather',[sx,yt-1,(zc0+zc1)/2]);
     if(hi&&wick)[0.35,0.65].forEach(k=>{const yy=yb+(yt-yb)*k;[-1,1].forEach(s=>tube(L.slice(1,5).map(q=>[sx+s*(q.p.reduce((m,v)=>Math.max(m,v[0]),0)+0.004),yy,q.z]),0.006,'#8c6a3c','wood'));});
     if(!wick)mSweep(M,swx,arcPath(rs,swz,rs+0.05,0.35,2.6,hi?8:4),tw+0.07,0.016,col,[rs,swz]);
-    if(crew)mCrew3(M,sx,yb+0.14,zc1+0.22,crewKit3(y,(S.num|0)+1),true,S,null);}
+    if(crew)mCrew3(M,sx,yb+0.14,zc1+0.22,Object.assign(crewKit51(S,true),{top:'coat',cap:'cap'}),true,S,null);}
   // ---------- гонщик: в гонке пригнулся к рулю; ноги — на педалях или подножках ----------
-  if(crew){const kit=crewKit3(y,S.num),ln=race?(y<1908?0.25:y<1920?0.45:0.6):0.1,hip=[0,sy+0.04,sz-0.03],g=[0,gy-0.003,gz-0.05];
+  if(crew){const kit=crewKit51(S,false),ln=race?(y<1908?0.25:y<1920?0.45:0.6):0.1,hip=[0,sy+0.04,sz-0.03],g=[0,gy-0.003,gz-0.05];
     const h0=rotYZ(g,hip,-ln),f0=M.F.length;MTAG.l=3;mCrew3(M,0,sy,sz-0.03,kit,false,S,[h0[0],h0[1],h0[2],gw+0.008]);mRotYZ(M,f0,hip,ln);
     const tr=shade(kit.coat,-0.3);
     feet.forEach(ft=>{const s=ft[0]<0?-1:1,hp=[s*0.09,sy+0.05,sz],F2=[ft[0],ft[1]+0.07,ft[2]-0.02],kn=legKnee(hp,F2,0.44,0.45);kn[0]=s*Math.max(0.15,Math.abs(kn[0]));

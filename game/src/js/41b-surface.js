@@ -86,6 +86,8 @@ const CRASH_TXT={curb:'удар о тумбу',tree:'удар о дерево',r
 // imp — скорость в препятствие поперёк (м/с); пороги сдвинуты для мягких (забор, кусты) и средних (столб, телега) препятствий
 const CRASH_TIER=['касание','удар','сильный удар','тяжёлая авария'];
 function crashTier(imp,kind){if(kind==='train')return imp>10?4:3;if(kind==='fall')return imp>11?4:imp>7?3:2;
+  if(kind==='curb')return imp<8?0:imp<14?1:2;   // 0.51: отбойный столбик — не скала: касание или удар, тяжёлой аварии о него нет
+ 
   const soft=kind==='fence'||kind==='crowd'||kind==='soft'||kind==='slope',mid=kind==='pole'||kind==='cart'||kind==='curb',L0=soft?9:kind==='curb'?8:mid?6:4.5;
   if(imp<L0)return 0;if(soft)return imp<L0+6?1:2;const x=imp-L0;return x<3?1:x<7?2:x<13?3:4;}
 function crashResolve(c){const K=c.crash;c.crash=null;if(!K||c.dnf||c.fin!==null)return;

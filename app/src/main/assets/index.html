@@ -11223,11 +11223,11 @@ function plgLabels(texts){const S=1024,cv=mkCanvas(S,512),g=cv.getContext('2d'),
     mb.poly([p0,p1,p2,p3],n,[255,255,255],MID.cloth,signUV({u0,u1,v0,v1},p0,p1,n));x+=w+3;h=Math.max(h,hh);});
   return {cv,mb};}
 // Люди: несколько обликов рабочих эпохи, у каждого 4 кадра шага и «стоит»
-function plgPeople(S){const out=[],y=S.y,rnd=mulberry32(hashStr('plgp|'+y+S.c)),work=['#3b4a5e','#4a4a44','#5a4a3a','#34465e','#6a5e4e'];
-  for(let k=0;k<6;k++){const o=personLook3(rnd,y,'crowd');Object.assign(o,{type:'man',frock:false,item:'',wave:false,hands:'down',lod:0,y});
-    if(k<4){o.coat=work[k%work.length];o.trousers=shade(o.coat,-0.2);o.hat='cap';o.hatc=['#3a3026','#4a4a44','#2a2a2e'][k%3];o.vest=false;}
-    else if(k===4){o.coat='#2b2f3a';o.hat=y<1920?'bowler':'cap';o.hatc='#1e1a18';}
-    else{o.coat='#e8e2d0';o.trousers='#5a5048';o.hat='cap';o.hatc='#3a3026';}
+function plgPeople(S){const out=[],y=S.y,rnd=mulberry32(hashStr('plgp|'+y+S.c));
+  // 0.51 (тема 10): рабочие — в одежде своей страны (блуза, жилет, комбинезон, косоворотка), разного роста и сложения; пятый — мастер или инженер
+  for(let k=0;k<6;k++){const o=personLook3(rnd,y,k<4||k===5?'worker':'town',S.c);Object.assign(o,{item:'',wave:false,hands:'down',lod:0,y,stoop:0,glasses:k===4?o.glasses:0});
+    if(k===4){o.top='jacket';o.coat='#2b2f3a';o.hat=y<1920?'bowler':'cap';o.hatc='#1e1a18';o.legs='plain';}
+    else if(k===5){o.top='jacket';o.coat='#e8e2d0';o.trousers='#5a5048';o.hat='cap';o.hatc='#3a3026';o.tie='';}
     const fr=[];for(let f=0;f<5;f++){const M=new Mesh(),q=Object.assign({},o);if(f<4)q.walk=f/4;mPerson3(M,q,0);const mb=new MB();mbFromMesh(mb,M,{lift:0.003,step:0.001});fr.push(g3Mesh(mb));}
     out.push(fr);}
   return out;}
@@ -20102,7 +20102,7 @@ function placeScenery(trk,rnd){
     else if(sg===RSEG.vine){// виноградники: ряды вдоль дороги
       if(i%3===0)[1,-1].forEach(sd=>{for(let k=0;k<5;k++)add(i,'vine',sd*(W/2+5+k*2.6),0,'s',0);});if(i%40===11&&rnd()<0.6)tree((rnd()<0.5?-1:1)*(W/2+22),cfg.host==='it'||cfg.host==='es'?'cypress':'oak');}
     else if(sg===RSEG.serp){// серпантин: у обрыва — столбики-отбойники, у скалы — камни
-      const bend=trk.K[i]>0?1:-1;if(i%2===0)add(i,'gstone',-bend*(W/2+1.1),0,'s',0.18);if(i%9===0&&rnd()<0.5)add(i,'rock',bend*(W/2+4+rnd()*3),Math.floor(rnd()*3),'s',1.2);
+      const bend=trk.K[i]>0?1:-1;if(i%2===0)add(i,'gstone',-bend*(W/2+1.45),0,'s',0.18);/* 0.51, тема 10: было 1,1 м — столбик стоял у самой кромки */if(i%9===0&&rnd()<0.5)add(i,'rock',bend*(W/2+4+rnd()*3),Math.floor(rnd()*3),'s',1.2);
       // 0.40: скала со стороны горы — стена: на насыпь под 60° не заехать (отзыв: машина на Тарга Флорио вставала на бок у обочины)
       trk.bar[i]=Object.assign(trk.bar[i]||{},bend>0?{L:W/2+3.2}:{R:W/2+3.2});
       if(i%13===0&&rnd()<0.5)tree(bend*(W/2+6+rnd()*10),rnd()<0.6?'fir':'pine');}
@@ -20414,7 +20414,11 @@ function segSeg(S,Q){const d1x=S[2]-S[0],d1z=S[3]-S[1],d2x=Q[2]-Q[0],d2z=Q[3]-Q[
   return [S[0]+d1x*s,S[1]+d1z*s,Q[0]+d2x*t,Q[1]+d2z*t];}
 // Столкновение с препятствием: круг (дерево, столб) или прямоугольник (дом, забор, трибуна, толпа)
 function obstacleHit(c,o,dt){const [ax,az,bx,bz]=carCapsule(c),soft=!!BRUSH[o.kind];/* 0.51: куст и изгородь — не стена, машина продирается */
-  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R-(soft?0.5:0);if(d>=rr)return;if(soft){brushHit(c,o,dt);return;}const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI),pen=rr-d;c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
+  if(!o.box){const q=segPt(ax,az,bx,bz,o.x,o.z),dx=q[0]-o.x,dz=q[1]-o.z,d=Math.hypot(dx,dz),rr=o.r+CAR_R-(soft?0.5:0);if(d>=rr)return;if(soft){brushHit(c,o,dt);return;}const pen=rr-d;
+    // 0.51, тема 10 (Тарга Флорио: «касание столбика на 80 км/ч стоит половины машины»): ряд отбойных столбиков у обрыва работает как
+    // низкое ограждение — отбрасывает машину к дороге поперёк, а не останавливает её лбом; удар считается по скорости поперёк дороги
+    if(o.kind==='gstone'&&R&&R.trk&&R.trk.N[c.idx]){const T=R.trk,nn=T.N[c.idx],p=T.pts[c.idx],sd=Math.sign((o.x-p[0])*nn[0]+(o.z-p[2])*nn[1])||1,gx=-sd*nn[0],gz=-sd*nn[1];c.x+=gx*pen;c.z+=gz*pen;wallHit(c,gx,gz,0.15,0.6,'curb',o.x,o.z);return;}
+    const nx=d>1e-4?dx/d:Math.sin(c.yaw+Math.PI),nz=d>1e-4?dz/d:Math.cos(c.yaw+Math.PI);c.x+=nx*pen;c.z+=nz*pen;wallHit(c,nx,nz,0.15,1.3,crashKindOf(o),o.x,o.z);return;}
   const b=o.box;let best=null;
   const hu=b.hu,hv=b.hv;
   for(let k=0;k<=8;k++){const t=k/8,px=ax+(bx-ax)*t,pz=az+(bz-az)*t,lx=(px-o.x)*b.ux+(pz-o.z)*b.uz,lz=(px-o.x)*b.vx+(pz-o.z)*b.vz,cx=lx<-hu?-hu:lx>hu?hu:lx,cz=lz<-hv?-hv:lz>hv?hv:lz,dx=lx-cx,dz=lz-cz;
@@ -20422,7 +20426,11 @@ function obstacleHit(c,o,dt){const [ax,az,bx,bz]=carCapsule(c),soft=!!BRUSH[o.ki
     if(dx*dx+dz*dz>=CAR_R*CAR_R&&(dx!==0||dz!==0))continue;const d=Math.hypot(dx,dz);let pen,nl;
     if(d>1e-4){if(d>=CAR_R)continue;pen=CAR_R-d;nl=[dx/d,dz/d];}else{const ex=b.hu-Math.abs(lx),ez=b.hv-Math.abs(lz);if(ex<ez){nl=[Math.sign(lx)||1,0];pen=ex+CAR_R;}else{nl=[0,Math.sign(lz)||1];pen=ez+CAR_R;}}
     if(!best||pen>best.pen)best={pen,nl};}
-  if(!best)return;if(soft){brushHit(c,o,dt);return;}const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
+  if(!best)return;if(soft){brushHit(c,o,dt);return;}
+  // 0.51, тема 10: кусок стены или забора вдоль дороги тоньше метра — в торец его не «таранят»: машина задевает угол и идёт вдоль
+  // (раньше нос, попавший на торец стены в 1,2 м от кромки, останавливался как о скалу — 70 % повреждений на 80 км/ч)
+  if(hv<0.5&&hu>hv*4&&Math.abs(best.nl[0])>Math.abs(best.nl[1])){const lz=(c.x-o.x)*b.vx+(c.z-o.z)*b.vz;best.nl=[0,lz>=0?1:-1];best.pen=Math.min(best.pen,0.35);}
+  const nx=best.nl[0]*b.ux+best.nl[1]*b.vx,nz=best.nl[0]*b.uz+best.nl[1]*b.vz;c.x+=nx*best.pen;c.z+=nz*best.pen;wallHit(c,nx,nz,0.12,1.2,crashKindOf(o));}
 // Удар о препятствие с нормалью (nx,nz), направленной к машине: поперечная скорость отражается с потерей,
 // продольная теряет лишь трение удара, а сам удар разворачивает машину вдоль стены — она скользит и уходит от неё, а не липнет
 function wallHit(c,nx,nz,e,dmgK,kind,hx,hz){
@@ -20694,9 +20702,9 @@ function startRace(setup){
     else{c.style=carStyle(c.md,c.prep,rc.y);let strip=0;
       // облик по марке: «рейсэбауты» Мерсера и Стаца — как с завода; в 24-часовых гонках 1920-х — спортивные машины с крыльями и фарами (Бентли — туринг)
       if(/^gp/.test(c.style)){if(['Mercer','Stutz'].includes(c.name)&&rc.y>=1911&&rc.y<1920){c.style='sport';strip=1;}else if(rc.t==='endurance'&&rc.y>=1920)c.style=c.name==='Bentley'?'tourer':'sport';}
-      c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name+strip;
+      c.wheel=rc.y>=1924&&c.style==='gp1925'&&(c.name==='Bugatti'||i%3===0)?'alloy':wheelKind(c.md,rc.y);const bid=parts(c.md).b.id;c.spriteKey=c.style+c.color+c.num+c.wheel+(c.mech?1:0)+bid+'|'+c.name+strip+(c.tc||'');
       const fd=fdrv&&typeof faceOf==='function'&&faceOf(fdrv)?fdrv:'';
-      c.spec3={key:c.spriteKey+(fd?'|'+fd:''),style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3,drv:fd};}
+      c.spec3={key:c.spriteKey+(fd?'|'+fd:''),style:c.style,color:c.color,y:rc.y,wheel:c.wheel,mech:c.mech,num:c.num,b:bid,mq:c.name,strip,hp:3,drv:fd,cc:c.tc||''};}
     wearSetup(c,trk,rc);if(c.you)try{kitRaceCar(s,c);}catch(e){console.warn('kit',e);}return c;});
   // стартовая решётка: быстрые и опытные впереди, немного случайности
   cars.forEach(c=>c.q=c.vtop*(0.9+0.2*(c.sk||0.8))*(0.94+Math.random()*0.12));cars.sort((a,b)=>b.q-a.q);
@@ -21090,6 +21098,8 @@ const CRASH_TXT={curb:'удар о тумбу',tree:'удар о дерево',r
 // imp — скорость в препятствие поперёк (м/с); пороги сдвинуты для мягких (забор, кусты) и средних (столб, телега) препятствий
 const CRASH_TIER=['касание','удар','сильный удар','тяжёлая авария'];
 function crashTier(imp,kind){if(kind==='train')return imp>10?4:3;if(kind==='fall')return imp>11?4:imp>7?3:2;
+  if(kind==='curb')return imp<8?0:imp<14?1:2;   // 0.51: отбойный столбик — не скала: касание или удар, тяжёлой аварии о него нет
+ 
   const soft=kind==='fence'||kind==='crowd'||kind==='soft'||kind==='slope',mid=kind==='pole'||kind==='cart'||kind==='curb',L0=soft?9:kind==='curb'?8:mid?6:4.5;
   if(imp<L0)return 0;if(soft)return imp<L0+6?1:2;const x=imp-L0;return x<3?1:x<7?2:x<13?3:4;}
 function crashResolve(c){const K=c.crash;c.crash=null;if(!K||c.dnf||c.fin!==null)return;
@@ -25992,8 +26002,8 @@ function modelSpec(md,prep,y,o){o=o||{};const p=parts(md),bid=p.b.id,style=carSt
   const drv=o.drv&&typeof faceOf==='function'&&faceOf(o.drv)?o.drv:'';
   // 0.33: мотоцикл — облик по деталям: мотор, рама, передача, шины; коляска справа (в Британии — слева)
   const mo=style==='moto'?{me:p.e.id,mf:p.c.id,mt:p.g.id,mw:p.w.id,sd:o.country==='uk'?-1:1}:null;
-  const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv].join('|')+(mo?'|'+[mo.me,mo.mf,mo.mt,mo.mw,mo.sd].join(','):'');
-  return Object.assign({key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv},mo||{});}
+  const cc=o.country||'';const key=['m',style,color,acc||'',num,wheel,mech?1:0,bid,hpB,strip,lux,y,drv,cc].join('|')+(mo?'|'+[mo.me,mo.mf,mo.mt,mo.mw,mo.sd].join(','):'');
+  return Object.assign({key,style,color,acc,y,wheel,mech,num,b:bid,hp:hpB,strip,lux,drv,cc},mo||{});}
 
 /* ================= 3D-МОДЕЛИ МАШИН: модели эпохи и их отрисовка в спрайты под любым углом ================= */
 // Модель — набор граней (выпуклых многоугольников) в метрах: x — вправо, y — вверх, z — вперёд.
@@ -26545,8 +26555,8 @@ function carModel(S){
     mGrid(M,G,K.tyre,'tyre',{wrap:true,ref:c=>{if(ax==='z'){const dx=c[0]-x,dy=c[1]-yy,l=Math.hypot(dx,dy)||1;return [x+dx/l*R0,yy+dy/l*R0,z];}const dz=c[2]-z,dy=c[1]-yy,l=Math.hypot(dz,dy)||1;return [x,yy+dy/l*R0,z+dz/l*R0];}});
     mLathe(M,[x,yy,z],ax,[[R0-tr,-tw*0.3],[R0-tr*0.7,tw*0.3],[0,tw*0.3]],seg,K.chassis,'paint');};
   const bumper=(z,w,yy)=>{[-0.035,0.035].forEach(dy=>tube([[-w,yy+dy,z-0.06],[-w*0.9,yy+dy,z],[w*0.9,yy+dy,z],[w,yy+dy,z-0.06]],0.018,K.bright,K.brightMat,5));};
-  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew3(M,x,seatY,z,crewKit3(y,S.num),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
-  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew3(M,x,seatY,z,crewKit3(y,(S.num|0)+1),true,S,null);};
+  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew3(M,x,seatY,z,crewKit51(S,false),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
+  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew3(M,x,seatY,z,crewKit51(S,true),true,S,null);};
   const eyeAt=(x,seatY,z)=>{if(!M.eye)M.eye=[x,seatY+0.8,z+0.06];};
   // табличка с номером: центр c, нормаль nrm (наружу), ось «вправо» u; w×h
   const plate=(c,nrm,u,w,h,round)=>{if(!S.num||!hi)return;const v=v3x(nrm,u).map(q=>-q),P=[],k=round?10:4;
@@ -26558,6 +26568,9 @@ function carModel(S){
   const hk=S.hp===undefined?0:([-0.1,-0.05,0,0.1,0.22,0.36][S.hp]||0),strip=!!S.strip,lux=K.lux;
   const r0=y<1901?0.46:y<1906?0.44:y<1914?0.42:y<1922?0.39:0.355,tw0=y<1906?0.08:y<1914?0.095:y<1922?0.11:0.14;
   let len=[-1.6,1.6],track=1.38;
+  // 0.51, тема 10: у новой техники (тяжёлый грузовик, тягач, пожарная, цистерна, самосвал, мусоровоз, тракторы, броневик, танк) — свой кузов
+  {const wk=typeof workKind51==='function'?workKind51(S):'';if(wk){const X={M,S,K,hi,y,col,crew,B,tube,WH,chassis,radiator,hood,headlamp,sideLamp,tailLamp,windscreen,steer,seat,tub,drvF,mechF,eyeAt,plate,setWt:v=>{wt=v;}};
+      const r=workModel51(wk,X);if(r){len=r.len;track=r.track;if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];M.len=len;M.track=track;return M;}}}
   if(st==='carriage'){
     const wb=1.7,t=1.22,rF=0.36,rR=0.46;wt='wood';chassis(wb,t,rF,rR,0.06,{yf:0.62,fw:0.35,zEng0:-0.6,zEng1:-0.1});
     // кузов «вис-а-ви»: высокий ящик, изогнутая спинка, крылья-щитки
@@ -26639,6 +26652,7 @@ function carModel(S){
       [-1,1].forEach(sd=>{const x=sd*(t/2+(big?tw0+0.05:0));mSweep(M,x,arcPath(rF,wb/2,rF+0.07,-0.3,Math.PI*0.7,hi?10:5),0.3,0.03,K.dark,[rF,wb/2]);});}
     else{const bw=bus?0.93:0.74,bh=bus?1.78:1.45,P=(z,w,h,rr)=>({z,p:rsec(w,w-0.02,yf+0.05,yf+h,0.02,rr,n,'o')});const box=[P(z1,bw,bh,0.08),P(z0+0.05,bw,bh,0.08),P(z0,bw-0.02,bh-0.02,0.06)];
       mLoft2(M,box,col,'paint',{wrap:true});mCap(M,box[2],col,'paint',-1);mCap(M,box[0],col,'paint',1);
+      if(!bus&&typeof vanDeco51==='function')vanDeco51({M,S,hi,tube},{bw,bh,yf,z0,z1});   // 0.51: красный крест санитарной, полоса и рожок почтовой
       // автобус: ряд окон по бортам, заднее окно, светлая крыша и пояс под окнами
       if(bus){const nw=S.b==='b15'?6:5,ya=yf+0.98,yb2=yf+1.5,za0=z0+0.3,L=z1-0.28-za0;for(let k=0;k<nw;k++){const za=za0+L*k/nw+0.05,zb=za0+L*(k+1)/nw-0.05;[-1,1].forEach(sd=>B(sd*(bw+0.004)-0.008,ya,za,sd*(bw+0.004)+0.008,yb2,zb,'#1e2a33','glass'));}
         B(-bw*0.62,ya,z0-0.012,bw*0.62,yb2,z0+0.004,'#1e2a33','glass');B(-bw-0.012,yf+bh-0.03,z0-0.02,bw+0.012,yf+bh+0.05,z1+0.03,shade(col,0.5),'paint');
@@ -26745,11 +26759,11 @@ function carModel(S){
 // Кожаный шлем с наушниками и швами или кепи (ранние гонщики носили его козырьком назад), очки-консервы с латунными ободками,
 // пыльник с поясом и пуговицами, шарф. Механик — в кепи и комбинезоне, одна рука на борту, другая держится за поручень.
 function crewLook(S,mech){const r=mulberry32(hashStr('crew|'+(S.num|0)+'|'+(S.mq||'')+(mech?'m':'d')+S.y+(S.drv||'')));
-  const skins=['#d4a47c','#c8966e','#b98460','#dcae88','#a87452'],hairs=['#2a1f18','#3b2a1e','#5a4028','#1c1714','#6b5a48','#8a8074'];
-  const L={skin:skins[Math.floor(r()*skins.length)],hair:hairs[Math.floor(r()*hairs.length)],stache:r()<(S.y<1915?0.6:0.35),beard:S.y<1906&&r()<0.18,
+  const skins=typeof pplSkin==='function'?pplSkin(S.cc||'fr'):['#d4a47c','#c8966e','#b98460','#dcae88','#a87452'],hairs=['#2a1f18','#3b2a1e','#5a4028','#1c1714','#6b5a48','#8a8074'],pk=a=>a[Math.floor(r()*a.length)];
+  const L={skin:skins[Math.floor(r()*skins.length)],hair:hairs[Math.floor(r()*hairs.length)],stache:r()<(S.y<1915?0.6:0.35)?pk(S.y<1915?[1,2,2,3,1]:[1,4,1,2]):0,beard:S.y<1906&&r()<0.18?pk([1,2,4]):S.y<1915&&r()<0.05?2:0,fw:0.95+r()*0.1,nose:0.85+r()*0.4,grey:mech&&r()<0.15?1:0,
     capBack:!mech&&S.y<1910&&r()<0.5,goggleUp:mech||r()<0.25,scarf:['#ece6d4','#b8322a','#e8e2cc','#2e4a78','#d9c9a0'][Math.floor(r()*5)]};
   // 0.21: лицо пилота — с его исторического фото (усы, борода, брови — уже на снимке); очки подняты, чтобы лицо было видно
-  const F=!mech&&S.drv&&typeof faceOf==='function'?faceOf(S.drv):null;if(F){L.face=F;L.stache=false;L.beard=false;L.goggleUp=true;L.hair=F.hair||L.hair;L.skin=F.skin||'#d4a882';}
+  const F=!mech&&S.drv&&typeof faceOf==='function'?faceOf(S.drv):null;if(F){L.face=F;L.stache=false;L.beard=false;L.fw=1;L.grey=0;L.goggleUp=true;L.hair=F.hair||L.hair;L.skin=F.skin||'#d4a882';}
   return L;}
 // Лицо с фото — мозаикой по передней части головы: каждый пиксель снимка — маленький четырёхугольник цвета кожи нужной яркости
 function mFacePhoto(M,cx,cy,cz,L,s){const F=L.face,W=F.w,H=F.h,px=F.px,XW=0.064,h0=0.012,h1=0.206,sk=hex2rgb(L.skin),dk=[34,26,22],Mt=MATS.skin;
@@ -26765,7 +26779,10 @@ function mFacePhoto(M,cx,cy,cz,L,s){const F=L.face,W=F.w,H=F.h,px=F.px,XW=0.064,
     M.F.push({p,n,vn,col:c,mat:Mt,two:false,deco:null,w:MTAG.w,l:MTAG.l});}}
 // Голова: ряды-эллипсы снизу (подбородок) вверх (макушка); лицо смотрит вперёд (+z)
 const HEAD_ROWS=[[0,0.022,0.02,0.07],[0.018,0.046,0.045,0.056],[0.045,0.063,0.07,0.034],[0.08,0.071,0.086,0.016],[0.115,0.076,0.095,0.006],[0.15,0.078,0.099,0],[0.18,0.076,0.097,-0.004],[0.205,0.066,0.085,-0.008],[0.222,0.046,0.06,-0.011],[0.232,0.012,0.016,-0.012]];
-function mHead(M,cx,cy,cz,L,hi,scale){const sg=hi?16:7,s=scale||1,rows=hi?HEAD_ROWS:HEAD_ROWS.filter((q,i)=>i%2===0||i===HEAD_ROWS.length-1);
+// 0.51: L.fw — ширина лица, L.stache — усы (1 — щёточка, 2 — «велосипедный руль», 3 — моржовые, 4 — ниточка), L.beard — борода (1 — короткая,
+// 2 — эспаньолка, 3 — окладистая, 4 — бакенбарды), L.glasses — очки или пенсне, L.grey — седина, L.woman — губы ярче
+function mHead(M,cx,cy,cz,L,hi,scale){const sg=hi?16:7,s=scale||1,fw=L.fw||1,rows=(hi?HEAD_ROWS:HEAD_ROWS.filter((q,i)=>i%2===0||i===HEAD_ROWS.length-1)).map(q=>[q[0],q[1]*fw,q[2],q[3]]);
+  if(L.grey&&!L._g){L=Object.assign({},L,{hair:L.grey===2?'#d8d4cc':'#9a958c',_g:1});}
   const G=rows.map(([h,rx,rz,dz])=>{const row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2,c=Math.cos(a),sn=Math.sin(a);
       // затылок круглее и шире лица; лицо чуть площе
       const back=sn<0?1.05:0.96;row.push([cx+c*rx*s,cy+h*s,cz+(dz+sn*rz*back)*s]);}return row;});
@@ -26776,27 +26793,38 @@ function mHead(M,cx,cy,cz,L,hi,scale){const sg=hi?16:7,s=scale||1,rows=hi?HEAD_R
     [-1,1].forEach(sd=>mLathe(M,P(sd*0.077,0.125,0.0),'x',[[0,-sd*0.004],[0.022,0],[0.018,sd*0.008],[0,sd*0.009]],6,shade(L.skin,-0.06),'skin',{ref:()=>P(sd*0.06,0.125,0)}));
     const hr=HEAD_ROWS.filter(q=>q[0]>=0.09),HG=hr.map(([h,rx,rz,dz])=>{const row=[];for(let k=0;k<=8;k++){const a=Math.PI+k/8*Math.PI,c=Math.cos(a),sn=Math.sin(a);row.push(P(c*rx*1.05,h+0.003,dz+sn*rz*1.1));}return row;});
     mGrid(M,HG,L.hair,'cloth',{ref:()=>P(0,0.14,0)});return;}
-  const fz=cz+0.098*s,P=(x,y,z)=>[cx+x*s,cy+y*s,cz+z*s];
+  const fz=cz+0.098*s,P=(x,y,z)=>[cx+x*s,cy+y*s,cz+z*s],ns=L.nose||1;
   // нос: клин от переносицы к кончику
-  mGrid(M,[[P(-0.004,0.15,0.1),P(0.004,0.15,0.1)],[P(-0.014,0.1,0.118),P(0.014,0.1,0.118)],[P(-0.012,0.088,0.106),P(0.012,0.088,0.106)]],shade(L.skin,-0.04),'skin',{ref:()=>P(0,0.11,0.07),two:true});
+  mGrid(M,[[P(-0.004,0.15,0.1),P(0.004,0.15,0.1)],[P(-0.014*ns,0.1,0.1+0.018*ns),P(0.014*ns,0.1,0.1+0.018*ns)],[P(-0.012*ns,0.088,0.106),P(0.012*ns,0.088,0.106)]],shade(L.skin,-0.04),'skin',{ref:()=>P(0,0.11,0.07),two:true});
   // уши
-  [-1,1].forEach(sd=>mLathe(M,P(sd*0.077,0.125,0.0),'x',[[0,-sd*0.004],[0.022,0],[0.018,sd*0.008],[0,sd*0.009]],6,shade(L.skin,-0.06),'skin',{ref:()=>P(sd*0.06,0.125,0)}));
+  [-1,1].forEach(sd=>mLathe(M,P(sd*0.077*fw,0.125,0.0),'x',[[0,-sd*0.004],[0.022,0],[0.018,sd*0.008],[0,sd*0.009]],6,shade(L.skin,-0.06),'skin',{ref:()=>P(sd*0.06,0.125,0)}));
   // брови, рот, усы, борода
   [-1,1].forEach(sd=>mTube(M,[P(sd*0.012,0.162,0.097),P(sd*0.03,0.166,0.094),P(sd*0.048,0.162,0.086)],0.005,3,L.hair,'cloth'));
-  mTube(M,[P(-0.02,0.066,0.089),P(0,0.064,0.093),P(0.02,0.066,0.089)],0.0035,3,'#7a4a3a','skin');
-  if(L.stache)mTube(M,[P(-0.034,0.07,0.082),P(-0.016,0.08,0.097),P(0,0.082,0.1),P(0.016,0.08,0.097),P(0.034,0.07,0.082)],[0.005,0.008,0.009,0.008,0.005],4,L.hair,'cloth');
-  if(L.beard)mGrid(M,[[P(-0.055,0.06,0.06),P(0,0.06,0.09),P(0.055,0.06,0.06)],[P(-0.05,0.02,0.055),P(0,0.0,0.085),P(0.05,0.02,0.055)]],L.hair,'cloth',{ref:()=>P(0,0.05,0.02),two:true});
+  mTube(M,[P(-0.02,0.066,0.089),P(0,0.064,0.093),P(0.02,0.066,0.089)],L.woman?0.0045:0.0035,3,L.woman?'#a8463e':'#7a4a3a','skin');
+  const st=L.stache===true?1:L.stache|0,bd=L.beard===true?1:L.beard|0,R=v=>v*s;
+  if(st===2)mTube(M,[P(-0.052,0.086,0.066),P(-0.036,0.07,0.082),P(-0.016,0.079,0.097),P(0,0.081,0.1),P(0.016,0.079,0.097),P(0.036,0.07,0.082),P(0.052,0.086,0.066)],[0.003,0.006,0.008,0.009,0.008,0.006,0.003].map(R),4,L.hair,'cloth');
+  else if(st===3)mTube(M,[P(-0.038,0.05,0.076),P(-0.022,0.072,0.095),P(0,0.08,0.1),P(0.022,0.072,0.095),P(0.038,0.05,0.076)],[0.006,0.011,0.012,0.011,0.006].map(R),4,L.hair,'cloth');
+  else if(st===4)mTube(M,[P(-0.026,0.076,0.09),P(0,0.079,0.098),P(0.026,0.076,0.09)],R(0.0035),3,L.hair,'cloth');
+  else if(st)mTube(M,[P(-0.034,0.07,0.082),P(-0.016,0.08,0.097),P(0,0.082,0.1),P(0.016,0.08,0.097),P(0.034,0.07,0.082)],[0.005,0.008,0.009,0.008,0.005].map(R),4,L.hair,'cloth');
+  if(bd===2)mGrid(M,[[P(-0.022,0.052,0.084),P(0,0.052,0.094),P(0.022,0.052,0.084)],[P(-0.015,0.0,0.068),P(0,-0.014,0.082),P(0.015,0.0,0.068)]],L.hair,'cloth',{ref:()=>P(0,0.03,0.02),two:true});
+  else if(bd===3)mGrid(M,[[P(-0.064*fw,0.085,0.045),P(-0.03,0.062,0.086),P(0,0.058,0.096),P(0.03,0.062,0.086),P(0.064*fw,0.085,0.045)],[P(-0.058*fw,0.0,0.048),P(-0.028,-0.03,0.082),P(0,-0.045,0.09),P(0.028,-0.03,0.082),P(0.058*fw,0.0,0.048)],[P(-0.03,-0.075,0.05),P(-0.015,-0.095,0.07),P(0,-0.105,0.076),P(0.015,-0.095,0.07),P(0.03,-0.075,0.05)]],L.hair,'cloth',{ref:()=>P(0,0,0),two:true});
+  else if(bd===4)[-1,1].forEach(sd=>mGrid(M,[[P(sd*0.074*fw,0.115,0.02),P(sd*0.066*fw,0.115,0.068)],[P(sd*0.07*fw,0.04,0.03),P(sd*0.046,0.032,0.078)]],L.hair,'cloth',{ref:()=>P(0,0.08,0.02),two:true}));
+  else if(bd)mGrid(M,[[P(-0.055,0.06,0.06),P(0,0.06,0.09),P(0.055,0.06,0.06)],[P(-0.05,0.02,0.055),P(0,0.0,0.085),P(0.05,0.02,0.055)]],L.hair,'cloth',{ref:()=>P(0,0.05,0.02),two:true});
+  // очки или пенсне: два ободка и переносица
+  if(L.glasses){const gc=L.glasses===2?'#b89a4a':'#26262a';[-1,1].forEach(sd=>{const C=[];for(let k=0;k<=8;k++){const a=k/8*Math.PI*2;C.push(P(sd*0.031+Math.cos(a)*0.016,0.146+Math.sin(a)*0.014,0.103));}mTube(M,C,R(0.0026),3,gc,'metal');});
+    mTube(M,[P(-0.015,0.148,0.104),P(0,0.152,0.107),P(0.015,0.148,0.104)],R(0.0024),3,gc,'metal');
+    if(L.glasses!==2)[-1,1].forEach(sd=>mTube(M,[P(sd*0.047,0.148,0.1),P(sd*0.078*fw,0.15,0.01)],R(0.0022),3,gc,'metal'));}
   // глаза (видны, когда очки подняты)
   if(L.goggleUp)[-1,1].forEach(sd=>{mLathe(M,P(sd*0.031,0.146,0.089),'z',[[0.011,-0.002],[0.009,0.004],[0,0.006]],8,'#f2eee6','skin');mLathe(M,P(sd*0.031,0.146,0.095),'z',[[0.0055,0],[0,0.0015]],6,'#2a2018','glass');});
   // волосы: оболочка затылка и макушки
   const hr=HEAD_ROWS.filter(q=>q[0]>=0.09),HG=hr.map(([h,rx,rz,dz])=>{const row=[];for(let k=0;k<=8;k++){const a=Math.PI+k/8*Math.PI,c=Math.cos(a),sn=Math.sin(a);row.push(P(c*rx*1.05,h+0.003,dz+sn*rz*1.1));}return row;});
   mGrid(M,HG,L.hair,'cloth',{ref:()=>P(0,0.14,0)});}
 // Кожаный шлем: колпак над лбом и затылком, наушники, ремешок под подбородком, швы
-function mHelmet(M,cx,cy,cz,col,hi,s){s=s||1;const sg=hi?16:7,P=(x,y,z)=>[cx+x*s,cy+y*s,cz+z*s],rows=[[0.12,1.1],[0.15,1.09],[0.18,1.08],[0.205,1.08],[0.222,1.08],[0.236,0.2]];
+function mHelmet(M,cx,cy,cz,col,hi,s,mat){s=s||1;mat=mat||'leather';const sg=hi?16:7,P=(x,y,z)=>[cx+x*s,cy+y*s,cz+z*s],rows=[[0.12,1.1],[0.15,1.09],[0.18,1.08],[0.205,1.08],[0.222,1.08],[0.236,0.2]];
   const G=rows.map(([h,k])=>{const hr=HEAD_ROWS.reduce((b,q)=>Math.abs(q[0]-h)<Math.abs(b[0]-h)?q:b),row=[];for(let j=0;j<sg;j++){const a=j/sg*Math.PI*2,c=Math.cos(a),sn=Math.sin(a),front=sn>0.55;
       // спереди колпак выше (открыт лоб)
       const hh=front&&h<0.17?0.17:h;row.push(P(c*hr[1]*k,hh,hr[3]+sn*hr[2]*k*(sn<0?1.06:0.97)));}return row;});
-  mGrid(M,G,col,'leather',{wrap:true,ref:()=>P(0,0.14,0)});
+  mGrid(M,G,col,mat,{wrap:true,ref:()=>P(0,0.14,0)});
   if(!hi)return;
   [-1,1].forEach(sd=>{mRBox(M,cx+sd*0.084*s-0.013,cy+0.055*s,cz-0.035*s,cx+sd*0.084*s+0.013,cy+0.165*s,cz+0.04*s,0.01,col,'leather');
     mTube(M,[P(sd*0.086,0.06,0.02),P(sd*0.07,0.02,0.05),P(sd*0.03,0.0,0.07)],0.005,3,shade(col,-0.25),'leather');});
@@ -26814,35 +26842,57 @@ function mGoggles(M,cx,cy,cz,up,hi,s){if(!hi)return;s=s||1;const y=up?0.2:0.148,
   mTube(M,[P(-0.012,y,z+0.008),P(0.012,y,z+0.008)],0.005,3,'#5a4a30','metal');
   const hr=HEAD_ROWS[up?7:5],strap=[];for(let k=0;k<=8;k++){const a=Math.PI*0.2+k/8*Math.PI*0.6;strap.push(P(-Math.cos(a)*hr[1]*1.12,y+(up?0.002:0.008),-Math.sin(a)*hr[2]*1.1+hr[3]));}
   mTube(M,[P(-0.058,y,z-0.008)].concat(strap).concat([P(0.058,y,z-0.008)]),0.007,3,'#2b1d12','leather');}
+// 0.51 (тема 10): экипаж — разные фигуры и одежда по эпохе, стране и роду машины (kit — из crewKit51, 46f-people51.js):
+// kit.top — coat (пыльник с поясом), leather (кожанка), jersey (вязаная фуфайка с полосой), overall (светлый комбинезон), fur (доха),
+// tunic (мундир шофёра, пожарного, военного), shirt (рубаха и комбинезон с лямками); kit.cap — helmet, cloth (полотняный шлем), cap и шляпы mHat;
+// фигура — crewBuild: ширина плеч, высота корпуса, живот
 function mCrew3(M,x,seatY,z,kit,mech,S,hand){
-  const hi=MLOD===1,sg=hi?14:6,L=crewLook(S,mech),coat=mech?shade(kit.coat,-0.12):kit.coat,y0=seatY+0.02;
+  const hi=MLOD===1,sg=hi?14:6,L=crewLook(S,mech),B=typeof crewBuild==='function'?crewBuild(S,mech,kit):{bw:1,th:1,belly:0},top=kit.top||'coat',fur=top==='fur';
+  const coat=mech&&!kit.own?shade(kit.coat,-0.12):kit.coat,y0=seatY+0.02,bw=B.bw*(fur?1.1:1),th=B.th,bd=1+(bw-1)*0.6,belly=B.belly||0,mat=top==='leather'?'leather':'cloth',bodyC=top==='shirt'?(kit.shirt||'#d8d2c2'):coat;
+  const H=v=>y0+v*th,bl=h=>belly*(h>=0.08&&h<=0.34?1:h<0.45?0.5:0);
   // торс: таз, талия, грудь, плечи (сечения-эллипсы, спина чуть откинута); пыльник — книзу шире
   const lv=[[0,0.18,0.125,0.02],[0.12,0.17,0.115,0],[0.26,0.175,0.112,-0.015],[0.4,0.195,0.115,-0.03],[0.5,0.215,0.112,-0.045],[0.56,0.222,0.1,-0.05],[0.6,0.19,0.086,-0.052],[0.625,0.1,0.065,-0.05],[0.64,0.06,0.052,-0.045]];
-  const G=lv.map(([h,wx,wz,dz])=>{const row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2,c=Math.cos(a),sn=Math.sin(a);row.push([x+c*wx*(1+0.08*Math.max(0,-sn)*(h<0.3?1:0)),y0+h,z+dz+sn*wz]);}return row;});
-  mGrid(M,G,coat,'cloth',{wrap:true,ref:(c,i)=>[x,y0+(lv[i][0]+lv[i+1][0])/2,z+lv[i][3]]});
-  if(hi){// пояс, пуговицы, воротник
-    const bl=[];for(let k=0;k<=sg;k++){const a=k/sg*Math.PI*2;bl.push([x+Math.cos(a)*0.173,y0+0.2,z-0.008+Math.sin(a)*0.117]);}mTube(M,bl,0.014,3,shade(coat,-0.3),'leather');
-    for(let k=0;k<3;k++)mLathe(M,[x,y0+0.28+k*0.1,z-0.02+0.118-k*0.004],'z',[[0.008,0],[0.006,0.004],[0,0.005]],6,shade(coat,-0.35),'metal');
-    const col=[];for(let k=0;k<=10;k++){const a=Math.PI*0.05+k/10*Math.PI*0.9;col.push([x-Math.cos(a)*0.075,y0+0.66,z-0.05-Math.sin(a)*0.06]);}
-    mTube(M,[[x-0.078,y0+0.6,z+0.02]].concat(col).concat([[x+0.078,y0+0.6,z+0.02]]),0.022,4,shade(coat,-0.08),'cloth');}
+  const G=lv.map(([h,wx,wz,dz])=>{const b=bl(h),row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2,c=Math.cos(a),sn=Math.sin(a);row.push([x+c*wx*bw*(1+0.08*Math.max(0,-sn)*(h<0.3?1:0)),H(h),z+dz+sn*(wz*bd+(sn>0?b:0))+b*0.3]);}return row;});
+  mGrid(M,G,bodyC,mat,{wrap:true,ref:(c,i)=>[x,H((lv[i][0]+lv[i+1][0])/2),z+lv[i][3]]});
+  const fz=h=>z-0.02+0.118*bd+bl(h)*1.25;
+  if(hi){const ring=(h,rx,rz,r,col,m)=>{const bl2=[];for(let k=0;k<=sg;k++){const a=k/sg*Math.PI*2,sn=Math.sin(a);bl2.push([x+Math.cos(a)*rx*bw,H(h),z-0.008+sn*(rz*bd+(sn>0?bl(h):0))+bl(h)*0.3]);}mTube(M,bl2,r,3,col,m||'leather');};
+    if(top==='coat'||top==='tunic')ring(0.2,0.173,0.117,0.014,kit.belt||shade(coat,-0.3));   // пояс
+    if(top==='jersey'){ring(0.42,0.2,0.118,0.03,kit.band||'#f2efe6','cloth');ring(0.34,0.185,0.116,0.012,kit.band||'#f2efe6','cloth');}   // полоса на груди
+    if(top==='coat'||top==='fur')for(let k=0;k<3;k++)mLathe(M,[x,H(0.28+k*0.1),fz(0.28+k*0.1)-k*0.004],'z',[[0.008,0],[0.006,0.004],[0,0.005]],6,shade(coat,-0.35),'metal');
+    if(top==='leather')[-1,1].forEach(sd=>{for(let k=0;k<3;k++)mLathe(M,[x+sd*0.045*bw,H(0.26+k*0.1),fz(0.26+k*0.1)-k*0.004],'z',[[0.009,0],[0.007,0.004],[0,0.005]],6,'#1a1612','metal');});
+    if(top==='tunic')for(let k=0;k<5;k++)mLathe(M,[x,H(0.24+k*0.075),fz(0.24+k*0.075)-k*0.003],'z',[[0.009,0],[0.007,0.004],[0,0.005]],6,kit.brass||'#d8c070','metal');
+    if(top==='overall'){for(let k=0;k<4;k++)mLathe(M,[x,H(0.16+k*0.09),fz(0.16+k*0.09)-k*0.003],'z',[[0.006,0],[0,0.004]],6,shade(coat,-0.3),'metal');
+      mRBox(M,x-0.12*bw,H(0.38),fz(0.4)-0.022,x-0.04*bw,H(0.46),fz(0.4)-0.008,0.004,shade(coat,-0.08),'cloth');}
+    if(top==='shirt'&&kit.bib){// комбинезон поверх рубахи: нагрудник и лямки
+      mGrid(M,[[[x-0.1*bw,H(0.5),fz(0.5)-0.012],[x,H(0.5),fz(0.5)-0.004],[x+0.1*bw,H(0.5),fz(0.5)-0.012]],[[x-0.15*bw,H(0.08),fz(0.1)-0.01],[x,H(0.08),fz(0.1)+0.004],[x+0.15*bw,H(0.08),fz(0.1)-0.01]]],kit.bib,'cloth',{ref:()=>[x,H(0.3),z],two:true});
+      [-1,1].forEach(sd=>mTube(M,[[x+sd*0.09*bw,H(0.5),fz(0.5)-0.01],[x+sd*0.13*bw,H(0.62),z-0.04],[x+sd*0.1*bw,H(0.5),z-0.15]],0.014,4,kit.bib,'cloth'));}
+    // воротник: у пыльника — отложной, у дохи — меховой, у фуфайки — валик, у мундира — стойка
+    const col=[];for(let k=0;k<=10;k++){const a=Math.PI*0.05+k/10*Math.PI*0.9;col.push([x-Math.cos(a)*0.075,H(0.66),z-0.05-Math.sin(a)*0.06]);}
+    if(top==='tunic'||top==='jersey')mLathe(M,[x,H(0.61),z-0.05],'y',[[0.058,0],[0.056,0.045*th]],10,top==='jersey'?(kit.band||shade(coat,-0.15)):(kit.collar||shade(coat,-0.25)),'cloth');
+    else if(top!=='shirt')mTube(M,[[x-0.078,H(0.6),z+0.02]].concat(col).concat([[x+0.078,H(0.6),z+0.02]]),fur?0.036:0.022,4,fur?shade(coat,-0.25):top==='overall'?shade(coat,-0.04):shade(coat,-0.08),'cloth');
+    if(top==='overall'&&kit.tie){mGrid(M,[[[x-0.04,H(0.63),z+0.03],[x,H(0.62),z+0.045],[x+0.04,H(0.63),z+0.03]],[[x-0.012,H(0.5),fz(0.5)-0.01],[x,H(0.5),fz(0.5)-0.006],[x+0.012,H(0.5),fz(0.5)-0.01]]],'#f2efe6','cloth',{ref:()=>[x,H(0.56),z-0.1],two:true});
+      mTube(M,[[x,H(0.615),z+0.05],[x,H(0.5),fz(0.5)-0.002]],[0.014,0.01],4,kit.tie,'cloth');}
+    if(top==='tunic'&&kit.epaul)[-1,1].forEach(sd=>mRBox(M,x+sd*0.18*bw-0.04,H(0.585),z-0.085,x+sd*0.18*bw+0.04,H(0.6),z-0.015,0.005,kit.epaul,'cloth'));}
   // шея и голова
-  const hy=y0+0.7,hz=z-0.03;mLathe(M,[x,y0+0.6,hz],'y',[[0.052,0],[0.048,0.06],[0.05,0.11]],hi?10:5,shade(L.skin,-0.05),'skin');
-  mHead(M,x,hy-0.02,hz,L,hi,1);
-  if(mech||kit.cap==='cap'){mFlatCap(M,x,hy-0.02,hz,kit.hat,!mech&&L.capBack,hi,1);if(hi)mGoggles(M,x,hy-0.02,hz,true,hi,1);}
-  else{mHelmet(M,x,hy-0.02,hz,kit.hat,hi,1);mGoggles(M,x,hy-0.02,hz,L.goggleUp,hi,1);}
+  const hy=H(0.7),hz=z-0.03;mLathe(M,[x,H(0.6),hz],'y',[[0.052,0],[0.048,0.06*th],[0.05,0.11*th]],hi?10:5,shade(L.skin,-0.05),'skin');
+  const hs=B.head||1;mHead(M,x,hy-0.02,hz,L,hi,hs);
+  const cap=mech&&!kit.own?'cap':kit.cap||'helmet',gog=kit.goggles!==false;
+  if(cap==='cap'){mFlatCap(M,x,hy-0.02,hz,kit.hat,!mech&&L.capBack,hi,hs);if(hi&&gog)mGoggles(M,x,hy-0.02,hz,true,hi,hs);}
+  else if(cap==='helmet'||cap==='cloth'){mHelmet(M,x,hy-0.02,hz,kit.hat,hi,hs,cap==='cloth'?'cloth':'leather');if(gog)mGoggles(M,x,hy-0.02,hz,L.goggleUp,hi,hs);}
+  else{const m0=MLOD;mHat(M,{hat:cap,hatc:kit.hat,band:kit.hband,badge:kit.badge,hx:x,hz},hy-0.02,hs,S.y>=1919);MLOD=m0;if(hi&&gog&&kit.gogUp)mGoggles(M,x,hy-0.02,hz,true,hi,hs);}
   // руки: плечо — локоть — кисть в краге (у пилота — на руле, у механика — одна на борту, другая на поручне)
-  const sy=y0+0.55,sz=z-0.05;[-1,1].forEach(sd=>{const sx=x+sd*0.2;
+  const sy=H(0.55),sz=z-0.05,armC=top==='shirt'?(kit.shirt||'#d8d2c2'):coat,glove=kit.glove===0?shade(L.skin,-0.06):kit.glove||'#6b4a30',gm=kit.glove===0?'skin':'leather';[-1,1].forEach(sd=>{const sx=x+sd*0.2*bw;
     const h=mech?(sd>0?[x+sd*0.3,seatY+0.3,z+0.1]:[x+sd*0.24,seatY+0.58,z+0.18]):[x+sd*(hand[3]||0.14),hand[1],hand[2]];
-    const el=[(sx+h[0])/2+sd*0.07,(sy+h[1])/2-0.13,(sz+h[2])/2-0.04],wr=[h[0]+(el[0]-h[0])*0.22,h[1]+(el[1]-h[1])*0.22,h[2]+(el[2]-h[2])*0.22];
-    mTube(M,[[sx,sy+0.02,sz],[sx+(el[0]-sx)*0.5,sy+(el[1]-sy)*0.5,sz+(el[2]-sz)*0.5],el,wr],[0.056,0.05,0.045,0.043],hi?8:3,coat,'cloth');
+    const el=[(sx+h[0])/2+sd*0.07,(sy+h[1])/2-0.13,(sz+h[2])/2-0.04],wr=[h[0]+(el[0]-h[0])*0.22,h[1]+(el[1]-h[1])*0.22,h[2]+(el[2]-h[2])*0.22],ak=fur?1.15:0.94+(bw-1)*0.8+0.06;
+    mTube(M,[[sx,sy+0.02,sz],[sx+(el[0]-sx)*0.5,sy+(el[1]-sy)*0.5,sz+(el[2]-sz)*0.5],el,wr],[0.056*ak,0.05*ak,0.045*ak,0.043*ak],hi?8:3,armC,mat);
     // крага и кисть
-    mTube(M,[wr,[wr[0]+(h[0]-wr[0])*0.6,wr[1]+(h[1]-wr[1])*0.6,wr[2]+(h[2]-wr[2])*0.6]],[0.05,0.042],hi?8:3,'#5b3e28','leather');
-    mLathe(M,h,'y',[[0,-0.035],[0.033,-0.022],[0.038,0.006],[0.026,0.03],[0,0.036]],hi?8:4,'#6b4a30','leather');
-    if(hi&&!mech)mTube(M,[[h[0]-sd*0.02,h[1]+0.01,h[2]-0.01],[h[0]-sd*0.045,h[1]+0.03,h[2]+0.02]],0.013,4,'#6b4a30','leather');});
+    if(kit.glove!==0)mTube(M,[wr,[wr[0]+(h[0]-wr[0])*0.6,wr[1]+(h[1]-wr[1])*0.6,wr[2]+(h[2]-wr[2])*0.6]],[0.05,0.042],hi?8:3,shade(glove,-0.12),'leather');
+    mLathe(M,h,'y',[[0,-0.035],[0.033,-0.022],[0.038,0.006],[0.026,0.03],[0,0.036]],hi?8:4,glove,gm);
+    if(hi&&!mech)mTube(M,[[h[0]-sd*0.02,h[1]+0.01,h[2]-0.01],[h[0]-sd*0.045,h[1]+0.03,h[2]+0.02]],0.013,4,glove,gm);});
   // шарф: кольцо на шее и развевающийся конец (у механика — нет)
-  if(!mech&&hi){const sc=L.scarf;mTube(M,[[x-0.07,y0+0.625,z-0.05],[x,y0+0.645,z+0.01],[x+0.07,y0+0.625,z-0.05],[x,y0+0.615,z-0.12],[x-0.07,y0+0.625,z-0.05]],0.028,5,sc,'cloth');
+  if(!mech&&hi&&kit.scarf!==0){const sc=kit.scarf||L.scarf;mTube(M,[[x-0.07,H(0.625),z-0.05],[x,H(0.645),z+0.01],[x+0.07,H(0.625),z-0.05],[x,H(0.615),z-0.12],[x-0.07,H(0.625),z-0.05]],0.028,5,sc,'cloth');
     // конец шарфа вьётся по ветру за плечом — узкая лента
-    const R=[];for(let k=0;k<=6;k++){const t=k/6,wv=Math.sin(t*7)*0.025;R.push([[x+0.1+t*0.2,y0+0.6+t*0.03+wv,z-0.09-t*0.34],[x+0.1+t*0.2,y0+0.66+t*0.03+wv,z-0.09-t*0.34]]);}
+    const R=[];for(let k=0;k<=6;k++){const t=k/6,wv=Math.sin(t*7)*0.025;R.push([[x+0.1+t*0.2,H(0.6)+t*0.03+wv,z-0.09-t*0.34],[x+0.1+t*0.2,H(0.66)+t*0.03+wv,z-0.09-t*0.34]]);}
     mGrid(M,R,sc,'cloth',{ref:()=>[x+0.1,y0+1.5,z-0.3],two:true});}
 }
 
@@ -26977,9 +27027,9 @@ function motoModel3(M,S,K,H){
     const zc0=z1-0.62,zc1=z0+0.08;mFace(M,[[sx-w+0.05,yt+0.004,zc0],[sx+w-0.05,yt+0.004,zc0],[sx+w-0.05,yt+0.004,zc1],[sx-w+0.05,yt+0.004,zc1]],'#1a1512','leather',[sx,yt-1,(zc0+zc1)/2]);
     if(hi&&wick)[0.35,0.65].forEach(k=>{const yy=yb+(yt-yb)*k;[-1,1].forEach(s=>tube(L.slice(1,5).map(q=>[sx+s*(q.p.reduce((m,v)=>Math.max(m,v[0]),0)+0.004),yy,q.z]),0.006,'#8c6a3c','wood'));});
     if(!wick)mSweep(M,swx,arcPath(rs,swz,rs+0.05,0.35,2.6,hi?8:4),tw+0.07,0.016,col,[rs,swz]);
-    if(crew)mCrew3(M,sx,yb+0.14,zc1+0.22,crewKit3(y,(S.num|0)+1),true,S,null);}
+    if(crew)mCrew3(M,sx,yb+0.14,zc1+0.22,Object.assign(crewKit51(S,true),{top:'coat',cap:'cap'}),true,S,null);}
   // ---------- гонщик: в гонке пригнулся к рулю; ноги — на педалях или подножках ----------
-  if(crew){const kit=crewKit3(y,S.num),ln=race?(y<1908?0.25:y<1920?0.45:0.6):0.1,hip=[0,sy+0.04,sz-0.03],g=[0,gy-0.003,gz-0.05];
+  if(crew){const kit=crewKit51(S,false),ln=race?(y<1908?0.25:y<1920?0.45:0.6):0.1,hip=[0,sy+0.04,sz-0.03],g=[0,gy-0.003,gz-0.05];
     const h0=rotYZ(g,hip,-ln),f0=M.F.length;MTAG.l=3;mCrew3(M,0,sy,sz-0.03,kit,false,S,[h0[0],h0[1],h0[2],gw+0.008]);mRotYZ(M,f0,hip,ln);
     const tr=shade(kit.coat,-0.3);
     feet.forEach(ft=>{const s=ft[0]<0?-1:1,hp=[s*0.09,sy+0.05,sz],F2=[ft[0],ft[1]+0.07,ft[2]-0.02],kn=legKnee(hp,F2,0.44,0.45);kn[0]=s*Math.max(0.15,Math.abs(kn[0]));
@@ -26995,76 +27045,178 @@ function motoModel3(M,S,K,H){
 // 0.18: раньше зрители были нарисованы плоско (фигура и цвет). Теперь каждый — объёмная модель (голова с лицом и усами,
 // пиджак или пальто с воротником, брюки и ботинки, у дам — длинная юбка, блузка, шляпа с цветами, зонтик),
 // её снимают в 3D с мягким светом и кладут в атлас: в гонке это те же лёгкие спрайты, но живые и подробные.
-function personLook3(rnd,y,kind){const o=personLook(rnd,y,kind);
-  o.skin=['#d8a882','#c8966e','#e0b48e','#b98460','#d4a47c','#a87452'][Math.floor(rnd()*6)];o.hair=['#2a1f18','#3b2a1e','#5a4028','#1c1714','#6b5a48','#8a8074','#a0784a'][Math.floor(rnd()*7)];
-  o.stache=o.type==='man'&&rnd()<(y<1915?0.6:0.35);o.beard=o.type==='man'&&y<1910&&rnd()<0.15;o.vest=rnd()<0.5;o.shirt=['#f2efe6','#e8e4d8','#dfe6ea'][Math.floor(rnd()*3)];
-  o.shoe=['#1c1612','#3a2618','#2a2420'][Math.floor(rnd()*3)];o.lean=(rnd()-0.5)*0.06;o.hands=rnd()<0.3?'back':rnd()<0.5?'pocket':'down';return o;}
-// Шляпы: цилиндр, котелок, канотье, кепи, кепка жандарма, дамская (с полями и цветами / «колокол» 1920-х)
-function mHat(M,o,hy,s,late){const P=(x,y,z)=>[x*s,hy+y*s,z*s],hc=o.hatc||'#1e1a18',h=o.hat;
-  if(h==='top'){mLathe(M,P(0,0,0),'y',[[0.13*s,0.19*s],[0.138*s,0.2*s],[0.13*s,0.212*s],[0.09*s,0.215*s],[0.086*s,0.24*s],[0.088*s,0.36*s],[0.09*s,0.4*s],[0,0.402*s]],16,hc,'cloth');mLathe(M,P(0,0,0),'y',[[0.0892*s,0.225*s],[0.0892*s,0.25*s]],16,'#3a2a2a','cloth');}
-  else if(h==='bowler'){mLathe(M,P(0,0,0),'y',[[0.135*s,0.185*s],[0.142*s,0.195*s],[0.1*s,0.2*s],[0.098*s,0.25*s],[0.085*s,0.29*s],[0.05*s,0.31*s],[0,0.315*s]],16,hc,'cloth');mLathe(M,P(0,0,0),'y',[[0.1*s,0.205*s],[0.099*s,0.225*s]],16,'#141212','cloth');}
-  else if(h==='boater'){mLathe(M,P(0,0,0),'y',[[0.17*s,0.195*s],[0.172*s,0.205*s],[0.095*s,0.21*s],[0.094*s,0.265*s],[0,0.268*s]],16,'#e2cf92','cloth');mLathe(M,P(0,0,0),'y',[[0.0955*s,0.215*s],[0.0955*s,0.24*s]],16,o.tie||'#2a2226','cloth');}
-  else if(h==='cap'){mFlatCap(M,0,hy,0,hc,false,true,s);}
-  else if(h==='kepi'){mLathe(M,P(0,0,0),'y',[[0.085*s,0.18*s],[0.092*s,0.2*s],[0.088*s,0.33*s],[0,0.335*s]],14,'#1f2b4a','cloth');mLathe(M,P(0,0,0),'y',[[0.0925*s,0.29*s],[0.0925*s,0.335*s]],14,'#b8322a','cloth');
-    mGrid(M,[[P(-0.07,0.195,0.07),P(0,0.195,0.09),P(0.07,0.195,0.07)],[P(-0.06,0.18,0.13),P(0,0.178,0.15),P(0.06,0.18,0.13)]],'#111111','leather',{ref:()=>P(0,0.3,0.1),two:true});}
-  else if(h==='fhat'){const fc=o.hatc||'#e8d9a0';
-    if(late){mLathe(M,P(0,0,0),'y',[[0.1*s,0.135*s],[0.108*s,0.17*s],[0.1*s,0.25*s],[0.07*s,0.28*s],[0,0.29*s]],16,fc,'cloth');mLathe(M,P(0,0,0),'y',[[0.1015*s,0.16*s],[0.103*s,0.18*s]],16,shade(fc,-0.3),'cloth');}
-    else{mLathe(M,P(0,0,0),'y',[[0.27*s,0.2*s],[0.275*s,0.21*s],[0.11*s,0.23*s],[0.1*s,0.3*s],[0,0.31*s]],18,fc,'cloth');
+// 0.51 (тема 10, отзыв автора: «не одинаковые человечки из конструктора, а разные фигуры, одежда по эпохе и стране, лица»):
+// у каждого свой рост, ширина плеч и живот, старики сутулятся; одежда — по сословию и стране (46f-people51.js): блуза и берет,
+// косоворотка и сапоги, комбинезон и соломенная шляпа, мундир; у женщин — платок, шаль, передник; позы — руки на груди, в боки,
+// ладонь козырьком, трость, бинокль.
+function personLook3(rnd,y,kind,c){return personLook51(rnd,y,kind,c);}
+// Шляпы: цилиндр, котелок, канотье, кепи, кепка жандарма, дамская (с полями и цветами / «колокол» 1920-х); 0.51 — федора, соломенная,
+// берет, фуражка, шлем констебля, пикельхельм, треуголка карабинера, тирольская, американская полевая, феска, чалма, коническая,
+// пробковый шлем, платок, пожарная каска. o.hx, o.hz — где голова (у экипажа машины она не в начале координат)
+function mHat(M,o,hy,s,late){const cx=o.hx||0,cz=o.hz||0,P=(x,y,z)=>[cx+x*s,hy+y*s,cz+z*s],hc=o.hatc||'#1e1a18',h=o.hat,C=P(0,0,0),lo=MLOD===0,n16=lo?8:16,n14=lo?7:14;
+  const lathe=(prof,col,mat,o2,c)=>mLathe(M,c||C,'y',prof.map(q=>[q[0]*s,q[1]*s]),n16,col,mat||'cloth',o2);
+  const visor=(col,y0,z0,z1,w)=>mGrid(M,[[P(-(w||0.07),y0,z0),P(0,y0,z0+0.02),P(w||0.07,y0,z0)],[P(-(w||0.07)*0.85,y0-0.014,z1-0.02),P(0,y0-0.017,z1),P((w||0.07)*0.85,y0-0.014,z1-0.02)]],col,'leather',{ref:()=>P(0,0.3,0.1),two:true});
+  if(h==='top'){lathe([[0.13,0.19],[0.138,0.2],[0.13,0.212],[0.09,0.215],[0.086,0.24],[0.088,0.36],[0.09,0.4],[0,0.402]],hc);lathe([[0.0892,0.225],[0.0892,0.25]],'#3a2a2a');}
+  else if(h==='bowler'){lathe([[0.135,0.185],[0.142,0.195],[0.1,0.2],[0.098,0.25],[0.085,0.29],[0.05,0.31],[0,0.315]],hc);lathe([[0.1,0.205],[0.099,0.225]],'#141212');}
+  else if(h==='boater'){lathe([[0.17,0.195],[0.172,0.205],[0.095,0.21],[0.094,0.265],[0,0.268]],'#e2cf92');lathe([[0.0955,0.215],[0.0955,0.24]],o.tie||o.band||'#2a2226');}
+  else if(h==='fedora'){lathe([[0.15,0.188],[0.156,0.197],[0.102,0.204],[0.1,0.262],[0.09,0.298],[0.05,0.306],[0,0.298]],hc);lathe([[0.1025,0.208],[0.1015,0.232]],o.band||shade(hc,-0.45));}
+  else if(h==='straw'){lathe([[0.2,0.188],[0.206,0.198],[0.1,0.212],[0.097,0.268],[0.07,0.298],[0,0.304]],o.hatc||'#d9c27a');lathe([[0.1005,0.216],[0.0995,0.236]],o.band||'#5a4630');}
+  else if(h==='beret'){mLathe(M,P(0.012,0,-0.012),'y',[[0.094,0.186],[0.128,0.216],[0.118,0.244],[0.06,0.262],[0,0.266]].map(q=>[q[0]*s,q[1]*s]),n14,hc,'cloth');}
+  else if(h==='cap'){mFlatCap(M,cx,hy,cz,hc,!!o.capBack,!lo,s);}
+  else if(h==='kepi'){const kc=o.hatc||'#1f2b4a';mLathe(M,C,'y',[[0.085,0.18],[0.092,0.2],[0.088,0.33],[0,0.335]].map(q=>[q[0]*s,q[1]*s]),n14,kc,'cloth');mLathe(M,C,'y',[[0.0925,0.29],[0.0925,0.335]].map(q=>[q[0]*s,q[1]*s]),n14,o.band||'#b8322a','cloth');
+    visor('#111111',0.195,0.07,0.15);}
+  else if(h==='peak'){// фуражка: околыш, тулья шире околыша, лакированный козырёк, кокарда
+    lathe([[0.09,0.18],[0.093,0.224]],o.band||shade(hc,-0.3));lathe([[0.093,0.224],[0.114,0.258],[0.104,0.284],[0,0.292]],hc);visor('#111111',0.192,0.072,0.152);
+    if(!lo&&o.badge)mLathe(M,P(0,0.205,0.094),'z',[[0.012*s,0],[0,0.005*s]],6,o.badge,'metal');}
+  else if(h==='custodian'){lathe([[0.1,0.165],[0.108,0.185],[0.098,0.2],[0.095,0.28],[0.075,0.35],[0.04,0.385],[0.012,0.4],[0,0.425]],hc);
+    if(!lo){lathe([[0.099,0.203],[0.097,0.218]],'#0e0e10','leather');mLathe(M,P(0,0.265,0.094),'z',[[0.022*s,0],[0.016*s,0.006*s],[0,0.008*s]],8,'#c8ccd2','metal');}}
+  else if(h==='pickel'){lathe([[0.098,0.17],[0.104,0.19],[0.097,0.26],[0.07,0.31],[0.03,0.33],[0,0.332]],'#161616','leather');lathe([[0.024,0.326],[0.013,0.342],[0.007,0.4],[0,0.425]],'#c9a24a','metal');
+    visor('#161616',0.19,0.07,0.14);mGrid(M,[[P(-0.07,0.175,-0.075),P(0,0.172,-0.095),P(0.07,0.175,-0.075)],[P(-0.06,0.14,-0.11),P(0,0.135,-0.13),P(0.06,0.14,-0.11)]],'#161616','leather',{ref:()=>P(0,0.3,-0.1),two:true});
+    if(!lo)mLathe(M,P(0,0.24,0.094),'z',[[0.026*s,0],[0.018*s,0.006*s],[0,0.008*s]],8,'#c9a24a','metal');}
+  else if(h==='bicorne'){// «лючерна» карабинера: широкая шляпа поперёк, красно-синий султан спереди
+    const N=8,F=[[],[]],Bk=[[],[]];for(let k=0;k<=N;k++){const u=k/N*2-1,x=u*0.2,yb=0.195+0.03*u*u,yt=0.315-0.1*u*u;F[0].push(P(x,yb,0.085*(1-u*u*0.7)));F[1].push(P(x,yt,0.03*(1-u*u)));Bk[0].push(P(x,yb,-0.075*(1-u*u*0.7)));Bk[1].push(P(x,yt,-0.03*(1-u*u)));}
+    mGrid(M,F,hc,'cloth',{ref:()=>P(0,0.25,-1),two:true});mGrid(M,Bk,hc,'cloth',{ref:()=>P(0,0.25,1),two:true});mGrid(M,[F[1],Bk[1]],hc,'cloth',{ref:()=>P(0,-1,0),two:true});
+    if(!lo)mLathe(M,P(0,0.3,0.045),'y',[[0.012*s,0],[0.02*s,0.03*s],[0.012*s,0.07*s],[0,0.09*s]],6,o.band||'#b8322a','cloth');}
+  else if(h==='tyrol'){lathe([[0.13,0.19],[0.136,0.198],[0.1,0.206],[0.093,0.27],[0.06,0.31],[0,0.318]],o.hatc||'#3f5a3a');lathe([[0.1005,0.21],[0.0975,0.228]],'#c9b27a');
+    if(!lo)mTube(M,[P(-0.09,0.225,-0.02),P(-0.105,0.3,-0.06),P(-0.1,0.38,-0.1)],[0.006*s,0.012*s,0.003*s],4,'#e8e2d0','cloth');}
+  else if(h==='campaign'){lathe([[0.172,0.192],[0.175,0.2],[0.1,0.206],[0.09,0.272],[0.03,0.325],[0,0.33]],o.hatc||'#8a7a52');lathe([[0.1005,0.21],[0.098,0.224]],o.band||'#4a3f2a');}
+  else if(h==='fez'){lathe([[0.086,0.19],[0.078,0.3],[0,0.302]],o.hatc||'#a02a22');if(!lo)mTube(M,[P(0,0.302,0),P(-0.05,0.3,-0.02),P(-0.085,0.22,-0.03)],0.006*s,3,'#161616','cloth');}
+  else if(h==='turban'){lathe([[0.096,0.155],[0.12,0.2],[0.117,0.25],[0.085,0.285],[0,0.292]],o.hatc||'#ece6d4');}
+  else if(h==='conic'){lathe([[0.25,0.185],[0,0.305]],o.hatc||'#d2b86a','cloth',{two:true});}
+  else if(h==='pith'){lathe([[0.142,0.185],[0.147,0.195],[0.1,0.212],[0.095,0.272],[0.06,0.31],[0,0.322]],o.hatc||'#e8e2d0');lathe([[0.1005,0.216],[0.0985,0.232]],'#b9a984');}
+  else if(h==='brass'){// каска пожарного с гребнем
+    lathe([[0.1,0.168],[0.106,0.19],[0.097,0.26],[0.07,0.31],[0.03,0.33],[0,0.332]],'#c9a24a','metal');visor('#c9a24a',0.19,0.07,0.135);
+    mTube(M,[P(0,0.25,0.092),P(0,0.335,0.045),P(0,0.36,-0.01),P(0,0.33,-0.07),P(0,0.24,-0.1)],0.013*s,4,'#c9a24a','metal');
+    mGrid(M,[[P(-0.075,0.17,-0.07),P(0,0.168,-0.095),P(0.075,0.17,-0.07)],[P(-0.07,0.11,-0.11),P(0,0.105,-0.135),P(0.07,0.11,-0.11)]],'#161616','leather',{ref:()=>P(0,0.3,-0.1),two:true});}
+  else if(h==='kerchief'){// платок: вокруг головы, открыто лицо, концы под подбородком
+    const kc=o.hatc||'#e8e2d0';mLathe(M,P(0,0,-0.004),'y',[[0.06,0.03],[0.086,0.07],[0.093,0.13],[0.093,0.2],[0.07,0.243],[0,0.254]].map(q=>[q[0]*s,q[1]*s]),n16,kc,'cloth',{a0:Math.PI/2+0.95,a1:Math.PI/2-0.95+Math.PI*2,ref:()=>P(0,0.13,0)});
+    mLathe(M,P(0,0.012,0.062),'y',[[0,-0.03*s],[0.03*s,-0.012*s],[0.026*s,0.014*s],[0,0.022*s]],6,kc,'cloth');
+    if(!lo)mGrid(M,[[P(-0.075,0.07,-0.07),P(0,0.07,-0.095),P(0.075,0.07,-0.07)],[P(-0.04,-0.07,-0.1),P(0,-0.1,-0.115),P(0.04,-0.07,-0.1)]],kc,'cloth',{ref:()=>P(0,0,-1),two:true});}
+  else if(h==='fhat'||h==='cloche'){const fc=o.hatc||'#e8d9a0';
+    if(late||h==='cloche'){lathe([[0.1,0.135],[0.108,0.17],[0.1,0.25],[0.07,0.28],[0,0.29]],fc);lathe([[0.1015,0.16],[0.103,0.18]],shade(fc,-0.3));}
+    else{mLathe(M,C,'y',[[0.27,0.2],[0.275,0.21],[0.11,0.23],[0.1,0.3],[0,0.31]].map(q=>[q[0]*s,q[1]*s]),lo?10:18,fc,'cloth');
       // цветы и лента
       for(let k=0;k<4;k++){const a=-0.6+k*0.45;mLathe(M,P(Math.cos(a)*0.12,0.25,Math.sin(a)*0.12+0.02),'y',[[0,-0.03*s],[0.035*s,-0.01*s],[0.03*s,0.02*s],[0,0.03*s]],8,k%2?(o.flower||'#b8322a'):'#f1ece0','cloth');}}}
-  else if(o.type==='woman'){mLathe(M,P(0,0,-0.01),'y',[[0.085*s,0.12*s],[0.09*s,0.2*s],[0.06*s,0.25*s],[0,0.26*s]],12,o.hair||'#4a2e1e','cloth');mLathe(M,P(0,0.18,-0.1),'y',[[0.04*s,0],[0.05*s,0.04*s],[0,0.07*s]],10,o.hair||'#4a2e1e','cloth');}}
+  else if(h==='wstraw'){const fc=o.hatc||'#e2cf92';lathe([[0.19,0.2],[0.194,0.209],[0.098,0.216],[0.096,0.262],[0,0.266]],fc);lathe([[0.0975,0.22],[0.0975,0.24]],o.flower||'#3a4a6a');}
+  else if(h==='bow'){// бант у девочки и волосы
+    lathe([[0.085,0.12],[0.09,0.2],[0.06,0.25],[0,0.26]],o.hair||'#4a2e1e','cloth',null,P(0,0,-0.01));
+    [-1,1].forEach(sd=>mLathe(M,P(sd*0.045,0.27,-0.02),'x',[[0,-sd*0.04*s],[0.035*s,-sd*0.02*s],[0.012*s,sd*0.035*s]],6,o.flower||'#b8322a','cloth'));}
+  else if(o.type==='woman'||o.girl){lathe([[0.085,0.12],[0.09,0.2],[0.06,0.25],[0,0.26]],o.hair||'#4a2e1e','cloth',null,P(0,0,-0.01));mLathe(M,P(0,0.18,-0.1),'y',[[0.04*s,0],[0.05*s,0.04*s],[0,0.07*s]],10,o.hair||'#4a2e1e','cloth');}}
 // Человек стоит в начале координат лицом к +z; frame 1 — машет рукой (шляпой, платком, флажком)
 // o.walk (0…1) — фаза шага: ноги и руки качаются (идущие рабочие на заводе); o.lod===0 — упрощённая модель (дальний план)
-function mPerson3(M,o,frame){const t=o.type,woman=t==='woman',child=t==='child',late=(o.y||1905)>=1919,s=child?0.68:woman?0.94:1,wave=o.wave&&frame===1||(t==='marsh'&&frame===1);
-  const lo=o.lod===0,MLOD0=MLOD;MLOD=lo?0:1;const sg=lo?8:14,coat=o.coat,L={skin:o.skin,hair:o.hair,stache:o.stache,beard:o.beard,goggleUp:true};
-  const Y=v=>v*s,wk=o.walk===undefined?null:o.walk*Math.PI*2;
+// 0.51: o.bh — рост, o.bw — ширина, o.belly — живот (м), o.stoop — сутулость (рад); o.top — верх одежды: jacket (пиджак), frock (пальто),
+// vest (жилет и рубашка), shirt (рубаха навыпуск с поясом), smock (блуза), overall (комбинезон), tunic (мундир), robe (халат до пят),
+// sweater, leather, sailor (матроска); o.legs — plain, boots (сапоги), breeches (бриджи и гетры), puttee (обмотки), shorts
+function mPerson3(M,o,frame){const t=o.type,woman=t==='woman',child=t==='child',girl=child&&!!o.girl,skirted=woman||girl,late=(o.y||1905)>=1919;
+  const bh=o.bh||1,bw=o.bw||1,bd=1+(bw-1)*0.5,belly=(o.belly||0)*(child?0:1),s=(child?0.68:woman?0.94:1)*bh,wave=o.wave&&frame===1||(t==='marsh'&&frame===1);
+  const lo=o.lod===0,MLOD0=MLOD;MLOD=lo?0:1;const sg=lo?8:14,coat=o.coat||'#3a3a42',top=o.top||(o.frock?'frock':'jacket');
+  const L={skin:o.skin,hair:o.hair,stache:o.stache,beard:o.beard,goggleUp:true,glasses:o.glasses,fw:o.fw,nose:o.nose,woman:skirted,grey:o.grey};
+  const Y=v=>v*s,X=v=>v*s*bw,Z=v=>v*s*bd,wk=o.walk===undefined?null:o.walk*Math.PI*2;
   // шаг: нога поворачивается в бедре (вперёд — +z), рука — в плече навстречу
   const swing=sd=>wk===null?0:Math.sin(wk+(sd>0?0:Math.PI))*0.42,rotX=(p,c,a)=>{if(!a)return p;const dy=p[1]-c[1],dz=p[2]-c[2],ca=Math.cos(a),sa=Math.sin(a);return [p[0],c[1]+dy*ca+dz*sa,c[2]-dy*sa+dz*ca];};
-  // ноги: брюки и ботинки; у дам — юбка до пят (в 1920-х — до середины икры, видны чулки)
-  if(woman){const hem=late?0.36:0.05;mLathe(M,[0,0,0],'y',[[0,Y(hem)],[Y(0.31),Y(hem)],[Y(0.26),Y(0.45)],[Y(0.19),Y(0.8)],[Y(0.15),Y(0.97)]],sg,o.skirt||'#2b2f3a','cloth');
-    if(late)[-1,1].forEach(sd=>mTube(M,[[sd*Y(0.07),Y(0.36),0],[sd*Y(0.065),Y(0.2),0],[sd*Y(0.06),Y(0.06),0.01]],[Y(0.045),Y(0.04),Y(0.032)],8,'#c8b098','cloth'));
-    [-1,1].forEach(sd=>mRBox(M,sd*Y(0.075)-Y(0.04),0,Y(-0.03),sd*Y(0.075)+Y(0.04),Y(0.07),Y(0.13),0.02,o.shoe||'#2a1e16','leather'));}
-  else{const tr=o.trousers||shade(coat,-0.15);[-1,1].forEach(sd=>{const a=swing(sd),hip=[0,Y(0.93),0],R=p=>rotX(p,hip,a),f=R([sd*Y(0.095),Y(0.0425),Y(0.045)]);
-      mTube(M,[R([sd*Y(0.095),Y(0.93),0]),R([sd*Y(0.095),Y(0.52),0.01+(a>0?Y(0.03):0)]),R([sd*Y(0.09),Y(0.09),0])],[Y(0.075),Y(0.062),Y(0.058)],lo?6:10,tr,'cloth');
+  // ноги: брюки и ботинки; сапоги, бриджи с гетрами, обмотки, короткие штаны; у дам — юбка до пят (в 1920-х — до середины икры)
+  if(skirted){const hem=o.hem!==undefined?o.hem:girl?0.42:late?0.36:0.05,sk=o.skirt||'#2b2f3a',wS=girl?0.85:1;
+    mLathe(M,[0,0,0],'y',[[0,Y(hem)],[X(0.31*wS),Y(hem)],[X(0.26*wS),Y(hem+0.4*(0.97-hem)/0.92)],[X(0.19),Y(0.8)],[X(0.15)+belly*0.5,Y(0.97)]],sg,sk,'cloth');
+    if(hem>0.2)[-1,1].forEach(sd=>mTube(M,[[sd*Y(0.07),Y(hem),0],[sd*Y(0.065),Y(0.2),0],[sd*Y(0.06),Y(0.06),0.01]],[Y(0.045),Y(0.04),Y(0.032)],lo?5:8,o.shin||'#c8b098','cloth'));
+    [-1,1].forEach(sd=>mRBox(M,sd*Y(0.075)-Y(0.04),0,Y(-0.03),sd*Y(0.075)+Y(0.04),Y(0.07),Y(0.13),0.02,o.shoe||'#2a1e16','leather'));
+    // передник поверх юбки
+    if(o.apron&&!lo){// передник лежит на юбке: радиус — по тем же точкам, что у юбки, плюс полтора сантиметра
+      const hm=hem+0.4*(0.97-hem)/0.92,PR=[[hem,0.31*wS],[hm,0.26*wS],[0.8,0.19],[0.97,0.15]],R=h=>{for(let i=0;i<3;i++)if(h<=PR[i+1][0]){const k=(h-PR[i][0])/(PR[i+1][0]-PR[i][0]);return PR[i][1]+(PR[i+1][1]-PR[i][1])*Math.max(0,k);}return 0.15;};
+      const yt=0.95,yb=Math.max(hem+0.08,0.34),hs=[yt,0.8,Math.max(hm,yb+0.02),yb].filter((h,i,a)=>i===0||h<a[i-1]-0.01);
+      const G=hs.map(h=>[-0.55,-0.28,0,0.28,0.55].map(a=>{const r=X(R(h))*1.02+Y(0.016);return [Math.sin(a)*r,Y(h),Math.cos(a)*r+belly*0.5*(h>0.8?1:0)];}));mGrid(M,G,o.apron,'cloth',{ref:()=>[0,Y(0.6),0],two:true});}}
+  else{const tr=o.trousers||shade(coat,-0.15),lg=o.legs||'plain',robe=top==='robe';
+    if(!robe)[-1,1].forEach(sd=>{const a=swing(sd),hip=[0,Y(0.93),0],R=p=>rotX(p,hip,a),f=R([sd*X(0.095),Y(0.0425),Y(0.045)]),kz=0.01+(a>0?Y(0.03):0);
+      const H=R([sd*X(0.095),Y(0.93),0]),K=R([sd*X(0.095),Y(0.52),kz]),A=R([sd*X(0.09),Y(0.09),0]);
+      if(lg==='plain')mTube(M,[H,K,A],[Y(0.075)*bd,Y(0.062),Y(0.058)],lo?6:10,tr,'cloth');
+      else{const sh=o.shin||(lg==='boots'?'#1c1612':lg==='shorts'?o.skin:'#8a8272'),mat=lg==='boots'?'leather':lg==='shorts'?'skin':'cloth',kn=lg==='boots'?0.46:lg==='shorts'?0.56:0.5,KK=R([sd*X(0.095),Y(kn),kz]);
+        mTube(M,[H,R([sd*X(0.095),Y((0.93+kn)/2),kz*0.5]),KK],[Y(0.076)*bd,Y(lg==='breeches'?0.085:0.07),Y(lg==='breeches'?0.062:0.064)],lo?6:10,tr,'cloth');
+        mTube(M,[KK,R([sd*X(0.093),Y(0.28),kz*0.5]),A],lg==='boots'?[Y(0.068),Y(0.062),Y(0.056)]:lg==='shorts'?[Y(0.05),Y(0.046),Y(0.038)]:[Y(0.056),Y(0.054),Y(0.046)],lo?6:10,sh,mat);
+        if(lg==='shorts'&&!lo)mTube(M,[R([sd*X(0.093),Y(0.24),kz*0.4]),A],[Y(0.047),Y(0.04)],8,o.sock||'#e8e4d8','cloth');}
       mRBox(M,f[0]-Y(0.048),Math.max(0,f[1]-Y(0.0425)),f[2]-Y(0.115),f[0]+Y(0.048),Math.max(0,f[1]-Y(0.0425))+Y(0.085),f[2]+Y(0.115),0.025,o.shoe||'#1c1612','leather');});
-    if(o.stripe)[-1,1].forEach(sd=>mTube(M,[[sd*Y(0.168),Y(0.9),0],[sd*Y(0.155),Y(0.1),0]],Y(0.012),4,o.stripe,'cloth'));}
-  // корпус: пиджак (или пальто до колен), у дам — блузка; воротник и пуговицы
-  const long=!woman&&!child&&o.frock,bot=woman?0.92:long?0.52:0.82;
-  const lv=woman?[[0.92,0.15,0.11,0],[1.02,0.13,0.095,0],[1.14,0.16,0.105,0.01],[1.26,0.18,0.1,0],[1.33,0.19,0.09,-0.01],[1.37,0.14,0.07,-0.01],[1.39,0.06,0.05,-0.005]]
-    :[[bot,long?0.22:0.2,long?0.15:0.13,0],[0.95,0.19,0.125,0],[1.08,0.185,0.12,0],[1.22,0.2,0.125,0],[1.34,0.22,0.115,-0.01],[1.41,0.225,0.1,-0.015],[1.45,0.17,0.08,-0.015],[1.47,0.07,0.055,-0.01]];
-  const G=lv.map(([h,wx,wz,dz])=>{const row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2;row.push([Math.cos(a)*Y(wx)+Math.sin(a)*0,Y(h),Y(dz)+Math.sin(a)*Y(wz)]);}return row;});
-  mGrid(M,G,woman?(o.coat||'#f1ece0'):coat,'cloth',{wrap:true,ref:(c,i)=>[0,Y((lv[i][0]+lv[i+1][0])/2),0]});
-  if(!woman&&t!=='gend'){// рубашка, галстук, жилет
-    mGrid(M,[[[-Y(0.05),Y(1.44),Y(0.075)],[0,Y(1.42),Y(0.095)],[Y(0.05),Y(1.44),Y(0.075)]],[[-Y(0.02),Y(1.2),Y(0.126)],[0,Y(1.2),Y(0.128)],[Y(0.02),Y(1.2),Y(0.126)]]],o.shirt||'#f2efe6','cloth',{ref:()=>[0,Y(1.3),0],two:true});
-    mTube(M,[[0,Y(1.41),Y(0.1)],[0,Y(1.3),Y(0.122)],[0,Y(1.22),Y(0.128)]],[Y(0.018),Y(0.022),Y(0.012)],4,o.tie||'#2a2226','cloth');
-    for(let k=0;k<3;k++)mLathe(M,[Y(0.03),Y(1.02+k*0.08),Y(0.125)],'z',[[Y(0.009),0],[0,Y(0.004)]],6,shade(coat,-0.4),'metal');}
-  if(t==='gend'){mTube(M,[[-Y(0.2),Y(0.95),0],[0,Y(0.95),Y(0.13)],[Y(0.2),Y(0.95),0],[0,Y(0.95),-Y(0.13)],[-Y(0.2),Y(0.95),0]],Y(0.025),4,'#2a2226','leather');
+    else [-1,1].forEach(sd=>mRBox(M,sd*X(0.085)-Y(0.045),0,-Y(0.07),sd*X(0.085)+Y(0.045),Y(0.07),Y(0.15),0.025,o.shoe||'#5a4630','leather'));
+    if(o.stripe&&!robe)[-1,1].forEach(sd=>mTube(M,[[sd*X(0.168),Y(0.9),0],[sd*X(0.155),Y(0.1),0]],Y(0.012),4,o.stripe,'cloth'));}
+  const f0=M.F.length;   // всё выше пояса наклоняется при сутулости
+  // корпус: пиджак (или пальто до колен, рубаха, блуза, халат), у дам — блузка или пальто; воротник и пуговицы
+  const long=!skirted&&(top==='frock'),robe=!skirted&&top==='robe',loose=top==='shirt'||top==='smock',wcoat=woman&&o.wtop==='wcoat';
+  const bot=skirted?(wcoat?0.42:0.92):robe?0.1:long?0.52:loose?(top==='smock'?0.66:0.74):top==='vest'||top==='overall'||top==='sweater'||top==='sailor'?0.9:0.82;
+  const bl=h=>{const k=h<0.92?0.3:h<1.06?1:h<1.24?0.85:h<1.3?0.3:0;return belly*k;};   // живот — на талии
+  const lv=skirted?(wcoat?[[bot,0.24,0.16,0],[0.7,0.21,0.14,0],[0.92,0.17,0.115,0],[1.02,0.14,0.1,0],[1.14,0.165,0.108,0.01],[1.26,0.185,0.103,0],[1.33,0.195,0.092,-0.01],[1.37,0.14,0.07,-0.01],[1.39,0.06,0.05,-0.005]]
+      :[[0.92,0.15,0.11,0],[1.02,0.13,0.095,0],[1.14,0.16,0.105,0.01],[1.26,0.18,0.1,0],[1.33,0.19,0.09,-0.01],[1.37,0.14,0.07,-0.01],[1.39,0.06,0.05,-0.005]])
+    :[[bot,robe?0.27:long?0.22:loose?0.215:0.2,robe?0.2:long?0.15:loose?0.14:0.13,0]].concat(robe?[[0.5,0.24,0.17,0]]:[]).concat([[0.95,loose?0.2:0.19,loose?0.13:0.125,0],[1.08,0.185,0.12,0],[1.22,0.2,0.125,0],[1.33,0.216,0.117,-0.01],[1.4,0.212,0.102,-0.015],[1.445,0.16,0.082,-0.015],[1.47,0.07,0.055,-0.01]]);
+  const bodyC=skirted?(o.coat||'#f1ece0'):top==='vest'?(o.vestC||shade(coat,-0.1)):top==='overall'?(o.shirt||'#d8d2c2'):coat,bodyM=top==='leather'?'leather':'cloth';
+  const G=lv.map(([h,wx,wz,dz])=>{const b=bl(h),row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2,sn=Math.sin(a);row.push([Math.cos(a)*X(wx),Y(h),Y(dz)+sn*(Z(wz)+(sn>0?b:b*0.25))+b*0.35]);}return row;});
+  mGrid(M,G,bodyC,bodyM,{wrap:true,ref:(c,i)=>[0,Y((lv[i][0]+lv[i+1][0])/2),0]});
+  const fz=h=>Z(0.126)+bl(h)*1.35;   // перёд корпуса на высоте h
+  if(!skirted&&t!=='gend'&&(top==='jacket'||top==='frock'||top==='leather')&&!lo){// рубашка, галстук, пуговицы
+    mGrid(M,[[[-Y(0.05),Y(1.44),Y(0.075)],[0,Y(1.42),Y(0.095)],[Y(0.05),Y(1.44),Y(0.075)]],[[-Y(0.02),Y(1.2),fz(1.2)],[0,Y(1.2),fz(1.2)+0.002],[Y(0.02),Y(1.2),fz(1.2)]]],o.shirt||'#f2efe6','cloth',{ref:()=>[0,Y(1.3),0],two:true});
+    if(o.tie!=='')mTube(M,[[0,Y(1.41),Y(0.1)],[0,Y(1.3),Y(0.122)+bl(1.3)],[0,Y(1.22),fz(1.22)+0.002]],[Y(0.018),Y(0.022),Y(0.012)],4,o.tie||'#2a2226','cloth');
+    for(let k=0;k<3;k++)mLathe(M,[Y(0.03),Y(1.02+k*0.08),fz(1.02+k*0.08)],'z',[[Y(0.009),0],[0,Y(0.004)]],6,shade(coat,-0.4),'metal');}
+  if(!skirted&&!lo){
+    if(top==='vest'){// жилет: вырез с рубашкой, пуговицы; рукава — рубашка
+      mGrid(M,[[[-Y(0.06),Y(1.44),Y(0.07)],[0,Y(1.42),Y(0.095)],[Y(0.06),Y(1.44),Y(0.07)]],[[-Y(0.012),Y(1.2),fz(1.2)],[0,Y(1.2),fz(1.2)+0.002],[Y(0.012),Y(1.2),fz(1.2)]]],o.shirt||'#f2efe6','cloth',{ref:()=>[0,Y(1.3),0],two:true});
+      for(let k=0;k<4;k++)mLathe(M,[0,Y(0.96+k*0.065),fz(0.96+k*0.065)],'z',[[Y(0.008),0],[0,Y(0.004)]],6,'#2a2420','metal');
+      if(o.watch)mTube(M,[[-Y(0.08),Y(1.08),fz(1.08)],[0,Y(1.04),fz(1.04)+0.004],[Y(0.08),Y(1.08),fz(1.08)]],Y(0.004),3,'#c9a24a','metal');}
+    if(top==='overall'){// комбинезон: нагрудник и лямки в цвет штанов
+      const tr=o.trousers||'#3a4a6a';mGrid(M,[[[-X(0.11),Y(1.3),Z(0.118)+0.004],[0,Y(1.3),Z(0.127)+0.004],[X(0.11),Y(1.3),Z(0.118)+0.004]],[[-X(0.16),Y(0.92),fz(0.95)*0.94],[0,Y(0.92),fz(0.95)+0.004],[X(0.16),Y(0.92),fz(0.95)*0.94]]],tr,'cloth',{ref:()=>[0,Y(1.1),0],two:true});
+      [-1,1].forEach(sd=>mTube(M,[[sd*X(0.1),Y(1.3),Z(0.12)],[sd*X(0.13),Y(1.44),Y(0.02)],[sd*X(0.11),Y(1.36),-Z(0.115)],[sd*X(0.07),Y(1.0),-Z(0.13)]],Y(0.016),4,tr,'cloth'));
+      mTube(M,[[-X(0.19),Y(0.93),0],[0,Y(0.93),Z(0.128)+bl(0.95)*1.3],[X(0.19),Y(0.93),0],[0,Y(0.93),-Z(0.128)],[-X(0.19),Y(0.93),0]],Y(0.02),4,tr,'cloth');}
+    if(loose||top==='tunic'||top==='leather'||o.belt){// пояс; у рубахи — ворот сбоку и вышивка, у мундира — пуговицы в ряд и стоячий воротник
+      const by=top==='tunic'||top==='leather'?0.98:0.97,bx=loose?0.203:0.193,bzz=loose?0.133:0.128,bc=o.belt||(top==='tunic'?'#2a2226':'#4a3424');
+      if(o.belt!==0)mTube(M,[[-X(bx),Y(by),0],[0,Y(by),Z(bzz)+bl(by)*1.3],[X(bx),Y(by),0],[0,Y(by),-Z(bzz)],[-X(bx),Y(by),0]],Y(0.02),4,bc,o.sash?'cloth':'leather');
+      if(top==='tunic'){for(let k=0;k<5;k++)mLathe(M,[0,Y(1.04+k*0.075),fz(1.04+k*0.075)+0.002],'z',[[Y(0.01),0],[0,Y(0.005)]],6,o.brass||'#d8c070','metal');
+        mLathe(M,[0,Y(1.43),-Y(0.01)],'y',[[Y(0.056),0],[Y(0.054),Y(0.04)]],10,o.collar||shade(coat,-0.25),'cloth');
+        if(o.epaul)[-1,1].forEach(sd=>mRBox(M,sd*X(0.19)-Y(0.045),Y(1.425),-Y(0.035),sd*X(0.19)+Y(0.045),Y(1.44),Y(0.035),0.006,o.epaul,'cloth'));}
+      if(top==='shirt'&&o.trim){mTube(M,[[Y(0.03),Y(1.44),Y(0.085)],[Y(0.035),Y(1.3),fz(1.3)],[Y(0.035),Y(1.2),fz(1.2)]],Y(0.009),3,o.trim,'cloth');
+        mLathe(M,[0,Y(1.43),-Y(0.008)],'y',[[Y(0.054),0],[Y(0.052),Y(0.03)]],10,o.trim,'cloth');}}
+    if(top==='sailor'){// матроска: синий воротник и галстук
+      mGrid(M,[[[-X(0.15),Y(1.42),-Z(0.06)],[0,Y(1.44),-Z(0.1)],[X(0.15),Y(1.42),-Z(0.06)]],[[-X(0.15),Y(1.25),-Z(0.125)],[0,Y(1.25),-Z(0.13)],[X(0.15),Y(1.25),-Z(0.125)]]],o.trim||'#2a3a6a','cloth',{ref:()=>[0,Y(1.3),-1],two:true});
+      mTube(M,[[-X(0.1),Y(1.43),Z(0.05)],[0,Y(1.3),Z(0.125)],[X(0.1),Y(1.43),Z(0.05)]],Y(0.018),4,o.trim||'#2a3a6a','cloth');}
+    if(top==='sweater')mLathe(M,[0,Y(1.42),-Y(0.008)],'y',[[Y(0.058),0],[Y(0.06),Y(0.035)],[Y(0.052),Y(0.05)]],10,o.trim||shade(coat,-0.15),'cloth');}
+  if(t==='gend'&&!o.top){mTube(M,[[-Y(0.2),Y(0.95),0],[0,Y(0.95),Y(0.13)],[Y(0.2),Y(0.95),0],[0,Y(0.95),-Y(0.13)],[-Y(0.2),Y(0.95),0]],Y(0.025),4,'#2a2226','leather');
     [-1,1].forEach(sd=>mLathe(M,[sd*Y(0.05),Y(1.25),Y(0.12)],'z',[[Y(0.012),0],[0,Y(0.005)]],6,'#d8c070','metal'));}
-  if(t==='marsh')mTube(M,[[Y(0.2),Y(1.22),-Y(0.08)],[Y(0.24),Y(1.22),0],[Y(0.2),Y(1.22),Y(0.08)]],Y(0.045),6,'#b8322a','cloth');
+  if(o.sabre&&!lo)mTube(M,[[-X(0.21),Y(0.96),Y(0.02)],[-X(0.25),Y(0.6),-Y(0.05)],[-X(0.27),Y(0.22),-Y(0.2)]],[Y(0.02),Y(0.014),Y(0.01)],4,'#2a2a2e','metal');
+  if(t==='marsh'||o.armband)mTube(M,[[X(0.2),Y(1.22),-Y(0.08)],[X(0.24),Y(1.22),0],[X(0.2),Y(1.22),Y(0.08)]],Y(0.045),6,o.armband||'#b8322a','cloth');
+  // шаль или накидка на плечах (у женщин), меховой воротник пальто
+  if(skirted&&o.shawl&&!lo){const sh=[[1.06,0.232,0.15],[1.17,0.24,0.152],[1.29,0.218,0.128],[1.385,0.12,0.085],[1.418,0.058,0.055]],SG=sh.map(([h,rx,rz])=>{const row=[];for(let k=0;k<sg;k++){const a=k/sg*Math.PI*2,sn=Math.sin(a);row.push([Math.cos(a)*X(rx),Y(h)-(sn<-0.3&&h<1.1?Y(0.07)*(-sn-0.3):0),-Y(0.008)+sn*Z(rz)+(sn>0?bl(h):0)]);}return row;});
+    mGrid(M,SG,o.shawl,'cloth',{wrap:true,ref:(c,i)=>[0,Y((sh[i][0]+sh[i+1][0])/2),0]});}
+  if(wcoat&&o.collar&&!lo)mLathe(M,[0,Y(1.345),-Y(0.005)],'y',[[X(0.19),0],[X(0.2),Y(0.035)],[X(0.12),Y(0.075)],[X(0.06),Y(0.08)]],sg,o.collar,'cloth');
   // шея и голова
-  const hy=Y(woman?1.46:1.52);mLathe(M,[0,Y(woman?1.37:1.43),0],'y',[[Y(0.048),0],[Y(0.045),Y(0.06)],[Y(0.047),Y(0.1)]],10,shade(o.skin,-0.05),'skin');
+  const hy=Y(skirted?1.46:1.52);mLathe(M,[0,Y(skirted?1.37:1.43),0],'y',[[Y(0.048),0],[Y(0.045),Y(0.06)],[Y(0.047),Y(0.1)]],lo?6:10,shade(o.skin,-0.05),'skin');
   mHead(M,0,hy,Y(0.005),L,!lo,s*(child?1.25:1));
-  mHat(M,o,hy,s*(child?1.25:1),late);
-  // руки: вниз, за спиной, в карманах; машет — правая вверх (со шляпой, платком или флажком)
-  const shY=Y(woman?1.32:1.4),shX=Y(woman?0.19:0.215),armC=woman?(o.coat||'#f1ece0'):coat,hand=[];
+  mHat(M,Object.assign({},o,{hx:0,hz:0}),hy,s*(child?1.25:1),late);
+  // руки: вниз, за спиной, в карманах, на груди, в боки, ладонь козырьком, трость, бинокль; машет — правая вверх (со шляпой, платком или флажком)
+  const shY=Y(skirted?1.32:1.4),shX=X(skirted?0.19:0.215),armC=skirted?(wcoat?(o.coat||'#f1ece0'):(o.sleeve||o.coat||'#f1ece0')):(top==='vest'||top==='overall')?(o.shirt||'#e8e4d8'):coat,hand=[],hp=o.hands;
   [-1,1].forEach(sd=>{let el,h;const up=wave&&(sd>0||o.both);
-    if(up){el=[sd*Y(0.32),Y(1.62),Y(0.02)];h=[sd*Y(0.36),Y(1.92),Y(0.04)];}
-    else if(o.item==='umb'&&sd>0){el=[sd*Y(0.27),Y(1.1),Y(0.1)];h=[sd*Y(0.2),Y(1.18),Y(0.22)];}
-    else if(o.hands==='back'&&!woman){el=[sd*Y(0.25),Y(1.12),-Y(0.08)];h=[sd*Y(0.1),Y(0.95),-Y(0.17)];}
-    else if(o.hands==='pocket'&&!woman){el=[sd*Y(0.29),Y(1.12),-Y(0.02)];h=[sd*Y(0.2),Y(0.93),Y(0.06)];}
-    else{const b=-swing(sd)*0.75,sh=[sd*shX,shY,0];el=rotX([sd*Y(0.27),Y(1.1),Y(0.02)],sh,b);h=rotX([sd*Y(0.26),Y(0.84),Y(0.05)+(wk!==null?Y(0.04):0)],sh,b);}
-    mTube(M,[[sd*shX,shY,0],el,h],[Y(0.058),Y(0.048),Y(0.042)],lo?6:10,armC,'cloth');
-    if(!(o.hands==='pocket'&&!woman&&!up))mLathe(M,h,'y',[[0,-Y(0.045)],[Y(0.034),-Y(0.02)],[Y(0.036),Y(0.01)],[Y(0.024),Y(0.035)],[0,Y(0.04)]],8,t==='gend'?'#f1ece0':shade(o.skin,-0.06),'skin');
+    if(up){el=[sd*X(0.32),Y(1.62),Y(0.02)];h=[sd*X(0.36),Y(1.92),Y(0.04)];}
+    else if(o.item==='umb'&&sd>0){el=[sd*X(0.27),Y(1.1),Y(0.1)];h=[sd*X(0.2),Y(1.18),Y(0.22)];}
+    else if(o.item==='binoc'){el=[sd*X(0.24),Y(1.28),Y(0.14)];h=[sd*Y(0.05),hy+Y(0.14),Y(0.2)];}
+    else if(o.item==='cane'&&sd>0){el=[sd*X(0.27),Y(1.1),Y(0.06)];h=[sd*X(0.27),Y(0.9),Y(0.2)];}
+    else if(o.item==='basket'&&sd<0){el=[sd*X(0.26),Y(1.08),Y(0.06)];h=[sd*X(0.2),Y(0.98),Y(0.2)];}
+    else if(hp==='shade'&&sd>0){el=[sd*X(0.3),hy+Y(0.02),Y(0.12)];h=[sd*Y(0.085),hy+Y(0.19),Y(0.14)];}
+    else if(hp==='cross'){el=[sd*X(0.25),Y(1.13),Y(0.1)];h=[-sd*X(0.07),Y(1.18+sd*0.02),fz(1.18)+Y(0.045)];}
+    else if(hp==='hips'){el=[sd*X(0.37),Y(1.16),-Y(0.03)];h=[sd*X(0.21),Y(0.99),Y(0.05)+bl(0.99)*0.5];}
+    else if(hp==='back'&&!skirted){el=[sd*X(0.25),Y(1.12),-Y(0.08)];h=[sd*X(0.1),Y(0.95),-Y(0.17)];}
+    else if(hp==='pocket'&&!skirted&&!robe){el=[sd*X(0.29),Y(1.12),-Y(0.02)];h=[sd*X(0.2),Y(0.93),Y(0.06)];}
+    else if(hp==='front'&&skirted){el=[sd*X(0.24),Y(1.1),Y(0.08)];h=[sd*Y(0.03),Y(0.96),Y(0.15)+belly*0.6];}
+    else{const b=-swing(sd)*0.75,sh=[sd*shX,shY,0];el=rotX([sd*X(0.27),Y(1.1),Y(0.02)],sh,b);h=rotX([sd*X(0.26),Y(0.84),Y(0.05)+(wk!==null?Y(0.04):0)],sh,b);}
+    mTube(M,[[sd*shX,shY,0],el,h],[Y(0.058),Y(0.048),Y(0.042)],lo?6:10,armC,top==='leather'&&!skirted?'leather':'cloth');
+    if(!(hp==='pocket'&&!skirted&&!up&&!robe&&!(o.item==='cane'&&sd>0)))mLathe(M,h,'y',[[0,-Y(0.045)],[Y(0.034),-Y(0.02)],[Y(0.036),Y(0.01)],[Y(0.024),Y(0.035)],[0,Y(0.04)]],lo?5:8,o.gloves||(t==='gend'?'#f1ece0':shade(o.skin,-0.06)),'skin');
     hand[sd>0?1:0]=h;});
-  // предметы: шляпа в поднятой руке, платок, флажок, зонтик
+  // предметы: шляпа в поднятой руке, платок, флажок, зонтик, бинокль, корзина
   const R=hand[1];
-  if(wave&&o.item==='hat'&&!woman){const hc=o.hatc||'#1e1a18';mLathe(M,[R[0],R[1]+Y(0.05),R[2]],'y',[[Y(0.13),0],[Y(0.1),Y(0.01)],[Y(0.095),Y(0.1)],[0,Y(0.11)]],12,hc,'cloth');}
+  if(wave&&o.item==='hat'&&!skirted){const hc=o.hatc||'#1e1a18';mLathe(M,[R[0],R[1]+Y(0.05),R[2]],'y',[[Y(0.13),0],[Y(0.1),Y(0.01)],[Y(0.095),Y(0.1)],[0,Y(0.11)]],12,hc,'cloth');}
   if(wave&&o.item==='hanky')mGrid(M,[[[R[0],R[1]+Y(0.03),R[2]],[R[0]+Y(0.03),R[1]+Y(0.05),R[2]]],[[R[0]+Y(0.16),R[1]+Y(0.1),R[2]+Y(0.02)],[R[0]+Y(0.18),R[1]-Y(0.04),R[2]+Y(0.02)]]],'#f6f2e8','cloth',{ref:()=>[R[0],R[1],R[2]-1],two:true});
   if(o.item==='flag'){mTube(M,[[R[0],R[1]-Y(0.1),R[2]],[R[0]+Y(0.02),R[1]+Y(0.55),R[2]]],Y(0.012),4,'#3a3a3a','wood');
     const fy=R[1]+Y(0.55),fx=R[0]+Y(0.02),wv=frame?0.05:-0.03;mGrid(M,[[[fx,fy,R[2]],[fx,fy-Y(0.3),R[2]]],[[fx+Y(0.22),fy+wv,R[2]+Y(0.03)],[fx+Y(0.22),fy-Y(0.3)+wv,R[2]+Y(0.03)]],[[fx+Y(0.46),fy+0.01,R[2]],[fx+Y(0.46),fy-Y(0.3),R[2]]]],o.flag||'#f0c330','cloth',{ref:()=>[fx,fy,R[2]-1],two:true});}
-  if(o.item==='umb'){const top=[R[0]+Y(0.06),R[1]+Y(0.62),R[2]+Y(0.05)];mTube(M,[[R[0],R[1]-Y(0.05),R[2]],top],Y(0.01),4,'#2a2226','wood');
-    const ribs=10,G2=[[],[]];for(let k=0;k<=ribs;k++){const a=k/ribs*Math.PI*2;G2[0].push([top[0],top[1]+Y(0.04),top[2]]);G2[1].push([top[0]+Math.cos(a)*Y(0.45),top[1]-Y(0.16),top[2]+Math.sin(a)*Y(0.45)]);}
-    mGrid(M,G2,o.umb||'#f1ece0','cloth',{ref:()=>[top[0],top[1]-1,top[2]],two:true});}
+  if(o.item==='umb'){const top2=[R[0]+Y(0.06),R[1]+Y(0.62),R[2]+Y(0.05)];mTube(M,[[R[0],R[1]-Y(0.05),R[2]],top2],Y(0.01),4,'#2a2226','wood');
+    const ribs=10,G2=[[],[]];for(let k=0;k<=ribs;k++){const a=k/ribs*Math.PI*2;G2[0].push([top2[0],top2[1]+Y(0.04),top2[2]]);G2[1].push([top2[0]+Math.cos(a)*Y(0.45),top2[1]-Y(0.16),top2[2]+Math.sin(a)*Y(0.45)]);}
+    mGrid(M,G2,o.umb||'#f1ece0','cloth',{ref:()=>[top2[0],top2[1]-1,top2[2]],two:true});}
+  if(o.item==='binoc'&&!lo){[-1,1].forEach(sd=>mLathe(M,[sd*Y(0.032),hy+Y(0.147),Y(0.12)],'z',[[Y(0.02),0],[Y(0.026),Y(0.08)],[0,Y(0.082)]],8,'#1c1c1e','leather'));}
+  if(o.item==='basket'&&!lo){const B=hand[0];mLathe(M,[B[0],B[1]-Y(0.3),B[2]],'y',[[Y(0.09),0],[Y(0.14),Y(0.14)],[Y(0.135),Y(0.16)]],10,'#b08a52','wood',{two:true});mTube(M,[[B[0]-Y(0.13),B[1]-Y(0.14),B[2]],[B[0],B[1]+Y(0.01),B[2]],[B[0]+Y(0.13),B[1]-Y(0.14),B[2]]],Y(0.01),4,'#8a6a3a','wood');}
+  // сутулость: всё выше пояса наклонено вперёд; трость — после наклона, до земли
+  if(o.stoop)mRotYZ(M,f0,[0,Y(0.95),0],o.stoop);
+  if(o.item==='cane'){const h0=o.stoop?(()=>{const c=[0,Y(0.95),0],p=R,ca=Math.cos(o.stoop),sa=Math.sin(o.stoop),dy=p[1]-c[1],dz=p[2]-c[2];return [p[0],c[1]+dy*ca-dz*sa,c[2]+dy*sa+dz*ca];})():R;
+    mTube(M,[[h0[0],h0[1]+Y(0.03),h0[2]-Y(0.03)],[h0[0],h0[1],h0[2]+Y(0.01)],[h0[0]+Y(0.02),0.01,h0[2]+Y(0.1)]],[Y(0.012),Y(0.011),Y(0.009)],4,o.cane||'#3a2618','wood');}
   MLOD=MLOD0;}
 // Фотограф с камерой на треноге
 function mPhotographer(M,o){mPerson3(M,Object.assign({},o,{hands:'down',item:''}),0);
@@ -27134,7 +27286,11 @@ function air3dMesh(md,y,c){const key=air3dKey(md,y,c);if(AIR3D_CACHE.has(key))re
       if(i===S-1)mb.poly([0,1,2,3,4].map(k=>{const q=prof(k);return [X1,Y1+q[1]*t1,q[0]];}),[sd,0,0],colD,skinM);}}
     if(mark&&marked){const xm=x1*0.74,zm=z-cc*0.47,rr=Math.min(cc*0.38,0.8);for(const sd of [-1,1]){const yb=yy+Math.abs(xm)*dh;disk(sd*xm,yb+tt*0.75,zm,rr,[0,1,0]);disk(sd*xm,yb-0.004,zm,rr,[0,-1,0]);}}};
   const strut=(a,q,w)=>mb.rod(a,q,w||0.07,hex2rgb(wood),MID.wood),wire=(a,q)=>mb.rod(a,q,0.014,hex2rgb('#8f9296'),MID.metal);
-  const pilot=(x,yy,z)=>{pBlob(pm,x,yy+0.17,z,0.13,0.15,0.14,leather,R5,lod,MID.leather);pBlob(pm,x,yy+0.1,z+0.12,0.09,0.05,0.04,'#3a3a3a',R5,0,MID.glass);pCyl(pm,[x,yy-0.15,z],[x,yy+0.03,z],0.21,0.17,'#5b4632',8,MID.cloth);};
+  // 0.51 (тема 10): лётчик — человек, а не шар на цилиндре: тот же экипаж, что в машине (46c-crew.js), одет по году и стране —
+  // кепка козырьком назад и очки у первых авиаторов, кожаный шлем, кожанка и шарф с 1912 года, у военных — в цвет формы
+  let pilN=0;const pilot=(x,yy,z)=>{try{const M=new Mesh(),m0=MLOD;MLOD=1;const S={num:(hashStr(String(md.id||md.name||'a'))%9)+pilN*3,y:Math.floor(y),mq:'air',cc:c||'fr'};pilN++;
+      mCrew3(M,x,yy-0.55,z,airKit51(S,mil&&y>=1914.6),false,S,[x,yy-0.18,z+0.3,0.09]);MLOD=m0;mbFromMesh(pm,M,{lift:0.003,step:0.001});}
+    catch(e){pBlob(pm,x,yy+0.17,z,0.13,0.15,0.14,leather,R5,lod,MID.leather);pBlob(pm,x,yy+0.1,z+0.12,0.09,0.05,0.04,'#3a3a3a',R5,0,MID.glass);pCyl(pm,[x,yy-0.15,z],[x,yy+0.03,z],0.21,0.17,'#5b4632',8,MID.cloth);}};
   const wheel=(x,yy,z,r)=>{WH.push({x,y:yy,z,r});};
   // мотор: ротативный (капот-кольцо и цилиндры), звезда, «Анзани»-веер, рядный (короб, патрубки)
   const engine=(x,yy,z,inl)=>{const e=P.e,R=clamp(0.28+Math.sqrt(e.hp)/40,0.32,0.75);
@@ -27246,6 +27402,412 @@ function air3dFreeAll(){for(const v of AIR3D_CACHE.values())air3dFreeOne(v);AIR3
 function air3dHingeMat(o,M,h,ax,ang,sc){const c=Math.cos(ang),s=Math.sin(ang),L=m4(),k=sc||1;
   if(ax==='x'){L[5]=c*k;L[6]=s*k;L[9]=-s*k;L[10]=c*k;L[0]=k;}else{L[0]=c*k;L[2]=-s*k;L[8]=s*k;L[10]=c*k;L[5]=k;}
   L[12]=h[0];L[13]=h[1];L[14]=h[2];return m4mul(o,M,L);}
+
+/* ================= 0.51, тема 10: ЛЮДИ — РАЗНЫЕ ФИГУРЫ, ОДЕЖДА ПО ЭПОХЕ И СТРАНЕ =================
+   Отзыв автора (16 ноября): «гонщики и экипажи — не одинаковые „человечки из конструктора“, а разные фигуры, одежда по эпохе и стране,
+   лица; зрители разнообразнее».
+   Было: у всех мужчин один рост и одна фигура; одежда зрителей — пиджак или пальто трёх эпох, одна на все страны; экипаж —
+   четыре цвета пыльника на эпоху, одинаковые для Франции и Америки; жандарм везде французский.
+   Стало:
+   • фигура — рост, ширина плеч, живот, сутулость стариков (personBuild; у экипажа — crewBuild);
+   • лицо — ширина, нос, четыре вида усов и четыре бороды, очки, седина, тон кожи по месту;
+   • зрители — по сословиям: господин, горожанин, рабочий, крестьянин, военный, старик; дама, горожанка, крестьянка; мальчик и девочка.
+     Доли сословий и сама одежда зависят от страны гонки и года (PPL_MIX, personLook51);
+   • страж порядка — свой в каждой стране (policeLook): жандарм, констебль, карабинер, шуцман, городовой…;
+   • экипаж — по эпохе, стране и роду машины (crewKit51): пыльник, кожанка, доха, вязаная фуфайка национального цвета, светлый
+     комбинезон; шофёр автобуса и такси — в мундире и фуражке, пожарный — в каске, военный — в форме, тракторист — в рубахе и комбинезоне.
+   Одежда нарисована по общим приметам времени; точность покроя и формы по источникам не сверялась. */
+const PPL_SKIN={eu:['#e6bd9c','#dcae8a','#d4a47c','#e8c4a6','#c8966e','#deb492'],med:['#d4a47c','#c8966e','#c08c62','#dcae8a','#b98460'],
+  af:['#b07a50','#9a6840','#c08c62','#a87452'],as:['#dcb48a','#d2a87c','#c89c70'],us:['#e6bd9c','#dcae8a','#d4a47c','#e8c4a6','#c8966e','#deb492','#e2b894','#d8aa84','#8a5a3a']};
+const PPL_HAIR=['#2a1f18','#3b2a1e','#5a4028','#1c1714','#6b5a48','#8a6a3a','#a0784a','#4a2e1e'];
+function pplSkin(c){return PPL_SKIN[c==='it'||c==='es'||c==='mc'?'med':c==='ly'?'af':c==='cn'?'as':c==='us'?'us':'eu'];}
+// Сословия зрителей-мужчин по стране: g — господин, b — горожанин, w — рабочий, p — крестьянин, s — военный, o — старик; loc — местные в халатах
+const PPL_MIX={def:{g:.14,b:.34,w:.24,p:.16,s:.04,o:.08},us:{g:.1,b:.42,w:.2,p:.17,s:.03,o:.08},ru:{g:.07,b:.2,w:.2,p:.38,s:.07,o:.08},it:{g:.1,b:.24,w:.2,p:.32,s:.06,o:.08},
+  es:{g:.1,b:.24,w:.2,p:.32,s:.06,o:.08},mc:{g:.34,b:.4,w:.1,p:.04,s:.04,o:.08},uk:{g:.18,b:.34,w:.26,p:.1,s:.04,o:.08},ie:{g:.08,b:.26,w:.22,p:.32,s:.04,o:.08},
+  ly:{g:.08,b:.08,w:0,p:.02,s:.12,o:.04,loc:.66},cn:{g:.04,b:.04,w:0,p:0,s:.04,o:.02,loc:.86},at:{g:.14,b:.3,w:.2,p:.24,s:.05,o:.07},ch:{g:.14,b:.3,w:.2,p:.24,s:.05,o:.07}};
+// Форма военного по стране и году: мундир, штаны, головной убор, околыш, ноги
+function soldierLook(c,y){const U=(coat,tr,hat,hatc,band,legs,o)=>Object.assign({top:'tunic',coat,trousers:tr,hat,hatc,band,legs:legs||'boots',belt:'#4a3424',brass:'#c9a24a'},o||{});
+  if(c==='fr'||c==='mc'||c==='be')return y<1915?U('#1f2b4a','#8e2a24','kepi','#1f2b4a','#b8322a','puttee',{shin:'#1f2b4a'}):U('#7f96ad','#7f96ad','kepi','#7f96ad','#7f96ad','puttee',{shin:'#7f96ad'});
+  if(c==='uk'||c==='ie')return U('#7a6a44','#7a6a44','peak','#7a6a44','#6a5a38','puttee',{shin:'#7a6a44',badge:'#c9a24a'});
+  if(c==='de')return y<1910?U('#1f2a44','#2a2a30','pickel','#161616',''):U('#5d6658','#5d6658','peak','#5d6658','#8e2a24');
+  if(c==='at')return U('#7d8590','#7d8590','kepi','#7d8590','#7d8590');
+  if(c==='it'||c==='ly')return U('#6a7460','#6a7460','tyrol','#6a7460','','puttee',{shin:'#6a7460'});
+  if(c==='us')return U('#6f6a44','#6f6a44','campaign','#8a7a52','','puttee',{shin:'#8a7a52'});
+  if(c==='ru')return Object.assign(U('#7c7a56','#3a3f4a','peak','#7c7a56','#7c7a56'),{top:'shirt',belt:'#4a3424'});
+  return U('#6a6a5a','#6a6a5a','peak','#6a6a5a','#4a4a40');}
+// Страж порядка у дороги — свой в каждой стране
+function policeLook(c,y){const P=(coat,tr,hat,hatc,o)=>Object.assign({type:'gend',top:'tunic',coat,trousers:tr,hat,hatc,belt:'#161616',brass:'#d8c070',legs:'plain',gloves:'#f1ece0',hands:'back',y},o||{});
+  if(c==='uk'||c==='ie')return c==='ie'&&y>=1923?P('#1f2a44','#1f2a44','peak','#1f2a44',{band:'#161a2a',badge:'#c8ccd2'}):P('#1c2238','#1c2238','custodian','#1c2238',{brass:'#c8ccd2'});
+  if(c==='it')return P('#1a1c26','#1a1c26','bicorne','#16161a',{stripe:'#b8322a',band:'#b8322a',epaul:'#c8ccd2',sabre:1});
+  if(c==='ly')return P('#e8e4d8','#e8e4d8','pith','#e8e2d0',{belt:'#4a3424',gloves:0});
+  if(c==='es')return P('#4a5448','#4a5448','bicorne','#16161a',{band:'#c9a24a',belt:'#c9a24a'});
+  if(c==='de')return y<1919?P('#1f2a44','#2a2a30','pickel','#161616',{sabre:1}):P('#3f5a4a','#3f5a4a','peak','#3f5a4a',{band:'#2a3a30',legs:'boots'});
+  if(c==='at')return P('#2f4a3a','#3a3f4a','peak','#2f4a3a',{band:'#8e2a24'});
+  if(c==='ch'||c==='nl')return P('#1f2b4a','#1f2b4a','kepi','#1f2b4a',{band:'#1f2b4a'});
+  if(c==='us')return y<1908?P('#1c2238','#1c2238','custodian','#6a6e78',{brass:'#c9a24a'}):P('#1c2238','#1c2238','peak','#1c2238',{band:'#161a2a',badge:'#c9a24a'});
+  if(c==='ru')return y<1917?P(y%2?'#e8e4d8':'#1c1c22','#1c1c22','peak','#1c1c22',{band:'#8e2a24',badge:'#c8ccd2',legs:'boots',sabre:1,stache:2}):P('#4a5a6a','#3a3f4a','peak','#4a5a6a',{band:'#8e2a24',legs:'boots'});
+  if(c==='cn')return P('#2a2f3a','#2a2f3a','peak','#2a2f3a',{band:'#c9a24a',legs:'puttee',shin:'#e8e4d8'});
+  if(c==='be')return P('#1f2b4a','#1f2b4a','kepi','#1f2b4a',{band:'#c9a24a'});
+  return P('#1f2b4a',c==='mc'?'#e8e4d8':'#8e2a24','kepi','#1f2b4a',{band:'#b8322a',top:'',legs:'plain',gloves:'#f1ece0',hands:'back'});}
+// Фигура: рост, ширина, живот; cls — сословие (у господ и стариков живот чаще)
+function personBuild(rnd,type,cls){const g=()=>(rnd()+rnd()+rnd())/3*2-1;   // колокол −1…1
+  if(type==='child')return {bh:0.8+rnd()*0.4,bw:0.92+rnd()*0.14,belly:0};
+  if(type==='woman')return {bh:clamp(1+g()*0.07,0.92,1.07),bw:clamp(1+g()*0.11+(cls==='P'?0.04:0),0.9,1.14),belly:rnd()<0.2?0.02+rnd()*0.04:0};
+  const fat=rnd()<(cls==='g'||cls==='o'?0.5:cls==='b'?0.35:0.18);
+  return {bh:clamp(1+g()*0.085,0.9,1.09),bw:clamp(1+g()*0.12+(fat?0.05:0),0.88,1.18),belly:fat?0.03+rnd()*0.07:0};}
+function personFace(rnd,o,y,c){const man=o.type==='man'||o.type==='gend'||o.type==='marsh',sk=pplSkin(c),pick=a=>a[Math.floor(rnd()*a.length)];
+  o.skin=o.skin||pick(sk);o.hair=pick(PPL_HAIR);o.fw=0.95+rnd()*0.1;o.nose=0.85+rnd()*0.4;
+  if(man){const p=y<1915?0.62:0.36;if(o.stache===undefined)o.stache=rnd()<p?pick(y<1915?[1,2,2,3,1]:[1,4,1,2]):0;
+    if(o.beard===undefined)o.beard=rnd()<(y<1910?0.16:0.05)?pick([1,2,4,2]):0;if(o.glasses===undefined)o.glasses=rnd()<0.1?(rnd()<0.5?2:1):0;}
+  else{o.stache=0;o.beard=0;if(o.type==='woman'&&o.glasses===undefined)o.glasses=rnd()<0.05?1:0;}
+  return o;}
+// Зритель: сословие по стране и году, одежда, фигура, лицо, поза
+function personLook51(rnd,y,kind,c){c=c||'fr';const late=y>=1919,mid=y>=1906&&!late,pick=a=>a[Math.floor(rnd()*a.length)],ch=p=>rnd()<p;
+  const fin=(o,cls)=>{o.y=y;Object.assign(o,personBuild(rnd,o.type,cls));personFace(rnd,o,y,c);o.shoe=o.shoe||pick(['#1c1612','#3a2618','#2a2420']);
+    if(o.type==='man'&&!o.hands)o.hands=o.item==='cane'||o.item==='binoc'?'down':pick(['down','back','pocket','cross','hips','down','shade','back']);
+    if(o.type==='woman'&&!o.hands)o.hands=pick(['down','front','hips','front','shade','down']);
+    if(o.type==='child'&&!o.hands)o.hands=pick(['down','hips','shade','down']);
+    if(o.top==='robe'&&(o.hands==='pocket'||o.hands==='hips'))o.hands='cross';return o;};
+  if(kind==='gend')return fin(policeLook(c,y),'s');
+  if(kind==='marsh'){const o={type:'marsh',coat:'#e8e2d0',trousers:'#5a5048',hat:c==='us'?'boater':c==='ru'?'peak':c==='it'||c==='es'||c==='ly'?'straw':'cap',hatc:c==='ru'?'#2a2a30':'#3a3026',item:'flag',flag:ch(0.5)?'#f0c330':'#b8322a',wave:1,hands:'down',armband:'#b8322a'};
+    if(c==='uk'||c==='ie')Object.assign(o,{coat:pick(['#6a5e44','#5a5a48']),trousers:'#4a4438'});return fin(o,'b');}
+  const force=kind==='worker'?'w':kind==='gent'?'g':kind==='town'?'b':null;   // заводской рабочий, господин, горожанин — без жребия
+  const wom=kind==='crowd'&&ch(c==='ly'||c==='cn'?0.14:0.34),kid=!wom&&kind==='crowd'&&ch(0.13),mix=PPL_MIX[c]||PPL_MIX.def,war=y>=1914&&y<=1921?3:1;
+  const darks=late?['#3a3f4a','#5a5048','#4a4a44','#2f3a4a','#6a5e4e','#3a3a42','#54483c']:['#2b2f3a','#3a302a','#4a3a2a','#2f3a2f','#3a3a42','#2a2a30','#4a4038'];
+  const tweed=['#6a5e44','#7a6a4a','#5a5a48','#6e6450','#4f5a44','#7d6e58'],ties=['#2a2226','#6a2a2a','#2a3a5a','#3a4a2a','#5a3a2a'],shirts=['#f2efe6','#e8e4d8','#dfe6ea','#e6dcc8'];
+  if(wom){// дама, горожанка, крестьянка
+    const pP=(mix.p||0)+(mix.loc||0)*0.5,r=rnd(),cls=r<(c==='mc'?0.6:0.3)?'L':r<1-pP*1.1?'T':'P',o={type:'woman',shirt:pick(shirts)};
+    if(c==='ly'||c==='cn'){if(cls!=='L')return fin(Object.assign(o,{coat:c==='ly'?'#ece6d4':pick(['#3a4a6a','#5a4a5a','#2f3a4a']),skirt:c==='ly'?'#ece6d4':pick(['#2b2f3a','#3a3a42']),hem:0.05,hat:c==='ly'?'kerchief':'',hatc:'#ece6d4',shawl:c==='ly'?'#ece6d4':0}),'P');}
+    if(cls==='L'){Object.assign(o,{coat:pick(['#f1ece0','#e8d9c0','#c9d6e0','#e6c9c9','#d8d0e8','#dfe8d6']),skirt:pick(late?['#2b2f3a','#5a3a4a','#3a4a5a','#8a4a3a','#e8e2d0','#b9c4a8','#c9a8b0']:['#2b2f3a','#5a3a4a','#3a4a5a','#6a5a48','#8a4a3a','#e8e2d0']),
+        hat:late?'cloche':ch(0.8)?'fhat':'wstraw',hatc:pick(['#e8d9a0','#f1ece0','#3a2a2a','#8a4a5a','#b9c4a8','#5a4a6a']),flower:pick(['#b8322a','#e87aa0','#6a8ad0','#e8c040']),item:ch(late?0.14:0.3)?'umb':ch(0.4)?'hanky':'',umb:pick(['#f1ece0','#e6c9c9','#c9d6e0','#e8e0b0'])});
+      if(late&&ch(0.4))Object.assign(o,{wtop:'wcoat',coat:pick(['#5a4a3a','#3a4a5a','#6a3a3a','#8a8272','#4a5a4a']),collar:pick(['#4a3424','#2a2420','#8a7a60']),item:''});
+      if(late){o.hem=0.3+rnd()*0.12;o.shin=pick(['#c8b098','#d8c4a8','#3a3a3a']);}
+      return fin(o,'L');}
+    if(cls==='T'){Object.assign(o,{coat:pick(['#e8e4d8','#d8d0c0','#c9c0b0','#b8c4cc','#d8c8c8']),skirt:pick(['#2b2f3a','#3a3a42','#4a3a3a','#3a4a4a','#5a5048']),hat:ch(0.45)?(late?'cloche':'wstraw'):ch(0.3)?'kerchief':'',hatc:pick(['#3a3a42','#5a4a3a','#e2cf92','#6a3a3a','#e8e4d8']),flower:pick(['#3a4a6a','#6a2a2a','#2a2226']),
+        apron:ch(0.3)?pick(['#f1ece0','#e8e4d8','#c9d6e0']):0,shawl:ch(0.25)?pick(['#5a4a3a','#3a3a42','#6a3a3a','#4a5a4a']):0,item:ch(0.2)?'basket':ch(0.3)?'hanky':''});
+      if(late)o.hem=0.22+rnd()*0.14;return fin(o,'T');}
+    // крестьянка: платок, шаль, передник, длинная юбка и в 1920-е
+    const ru=c==='ru',south=c==='it'||c==='es'||c==='mc';Object.assign(o,{coat:ru?pick(['#f1ece0','#e8e0d0','#d8c8b8']):south?pick(['#e8e4d8','#3a3a42','#d8d0c0']):pick(['#e8e4d8','#c9c0b0','#b8a898','#d8d0c0']),
+      skirt:ru?pick(['#8e2a24','#3a4a6a','#5a3a2a','#2f4a3a','#6a3a4a']):south?pick(['#1c1c22','#3a2a2a','#2b2f3a','#5a2a2a']):pick(['#3a3a42','#4a3a2a','#3a4a4a','#5a4a3a','#2b2f3a']),hem:0.05+rnd()*0.08,
+      hat:ch(0.85)?'kerchief':'',hatc:ru?pick(['#b8322a','#f1ece0','#e8c040','#3a5a8a','#e8e0d0']):south?pick(['#1c1c22','#3a3a42','#e8e4d8']):pick(['#e8e4d8','#f1ece0','#5a4a3a','#3a4a6a']),
+      apron:ch(0.6)?pick(ru?['#f1ece0','#e8e0d0','#b8322a']:['#f1ece0','#e8e4d8','#3a4a6a','#5a5048']):0,shawl:ch(0.4)?pick(south?['#1c1c22','#3a2a2a']:['#5a4a3a','#3a3a42','#6a3a3a','#8a7a60']):0,item:ch(0.25)?'basket':''});
+    return fin(o,'P');}
+  if(kid){const girl=ch(0.42),o={type:'child',girl,shirt:'#f2efe6'};
+    if(girl)Object.assign(o,{coat:pick(['#f1ece0','#e6c9c9','#c9d6e0','#e8e0b0','#dfe8d6']),skirt:pick(['#f1ece0','#c9d6e0','#e6c9c9','#3a4a6a','#8a4a3a']),hat:ch(0.35)?'wstraw':ch(0.2)&&(c==='ru'||c==='it')?'kerchief':'bow',hatc:pick(['#e2cf92','#f1ece0','#b8322a']),flower:pick(['#b8322a','#e87aa0','#6a8ad0']),shin:pick(['#f1ece0','#3a3a3a']),item:ch(0.3)?'hanky':''});
+    else{const sailor=ch(0.28)&&c!=='ru'&&c!=='ly'&&c!=='cn';Object.assign(o,{coat:sailor?'#f1ece0':pick(['#3a4a6a','#6a3a2a','#5a5a48','#4a4038','#e8e2d0']),top:sailor?'sailor':ch(0.4)?'sweater':c==='ru'&&ch(0.6)?'shirt':'jacket',trim:sailor?'#2a3a6a':pick(['#b8322a','#2a3a6a']),belt:c==='ru'?'#3a2618':undefined,
+        trousers:sailor?'#2a3a6a':pick(['#3a3a42','#4a4038','#5a5048']),legs:c==='ru'&&ch(0.5)?'plain':ch(0.75)?'shorts':'plain',sock:pick(['#e8e4d8','#3a3a3a','#5a5048']),hat:sailor&&ch(0.6)?'beret':ch(0.7)?'cap':ch(0.5)?'straw':'',hatc:sailor?'#2a3a6a':pick(['#3a3026','#4a4a44','#5a4a3a']),item:ch(0.25)?'flag':'',flag:pick(['#f0c330','#b8322a','#2a5aa0'])});
+      if(o.hat==='straw')o.hatc='#d9c27a';if(!o.hat)o.hair=undefined;}
+    return fin(o,'b');}
+  // мужчины: сословие
+  let r=rnd()*((mix.g+mix.b+mix.w+mix.p+mix.o+(mix.loc||0))+mix.s*war),cls='b';for(const k of ['loc','g','b','w','p','s','o']){const w=(mix[k]||0)*(k==='s'?war:1);if(r<w){cls=k;break;}r-=w;}
+  if(force)cls=force;const o={type:'man',shirt:pick(shirts),tie:pick(ties)};let old=cls==='o';if(old)cls=pick(['g','b','p','p','w']);
+  if(cls==='loc'){// местные: Триполи — халат и феска или чалма; Китай — длинный халат, шапочка или коническая шляпа
+    if(c==='ly')Object.assign(o,{top:'robe',coat:pick(['#ece6d4','#e8e0c8','#d8ceb0','#c9bfa0','#8a6a4a']),hat:pick(['fez','turban','turban','fez']),hatc:undefined,shoe:'#8a6a4a',beard:ch(0.5)?pick([1,3,2]):0,stache:ch(0.6)?1:0,item:ch(0.15)?'cane':''});
+    else Object.assign(o,{top:'robe',coat:pick(['#2f3a5a','#3a3a42','#4a4a52','#5a4a3a','#2a3a3a']),hat:pick(['conic','fez','conic','']),hatc:undefined,shoe:'#1c1612',beard:ch(0.2)?2:0,stache:ch(0.3)?4:0});
+    if(o.hat==='fez'&&c==='cn')o.hatc='#1c1c22';return fin(o,'p');}
+  if(cls==='s'){Object.assign(o,soldierLook(c,y),{type:'man',hands:pick(['back','down','hips','cross']),stache:ch(0.5)?pick([1,2]):0,beard:0,glasses:0});return fin(o,'s');}
+  if(cls==='g'){// господин: цилиндр и сюртук, позже — котелок, федора, трость, пенсне
+    const sport=(c==='uk'||c==='ie'||c==='us')&&ch(0.3);Object.assign(o,{coat:sport?pick(tweed):pick(['#1e1e24','#2a2a30','#2b2f3a','#3a302a','#24282e']),top:!sport&&ch(late?0.15:mid?0.35:0.55)?'frock':'jacket',
+      hat:sport?'cap':late?pick(['fedora','bowler','fedora','boater','top']):mid?pick(['bowler','top','boater','fedora','top']):pick(['top','top','bowler','top','boater']),hatc:'#1e1a18',
+      item:ch(0.4)?'cane':ch(0.14)?'binoc':ch(0.3)?'hat':'',glasses:ch(0.22)?2:undefined,cane:pick(['#1c1612','#3a2618','#5a4028'])});
+    if(sport)Object.assign(o,{hatc:o.coat,legs:'breeches',shin:pick(['#8a8272','#6a6a5a','#a89a80']),trousers:o.coat});
+    if(o.hat==='fedora')o.hatc=pick(['#4a4a44','#5a5048','#3a3a42','#6a5e4e']);if((c==='at'||c==='ch'||c==='de')&&ch(0.2))Object.assign(o,{hat:'tyrol',hatc:'#3f5a3a',coat:pick(['#4a5a48','#5a5a50','#3f4a3a'])});
+    if(c==='ru'&&ch(0.4))Object.assign(o,{top:'frock',coat:pick(['#1c1c22','#2a2a30','#24282e']),hat:'peak',hatc:'#1c1c22',band:'#1c1c22',legs:'boots',beard:ch(0.6)?3:undefined,tie:''});
+    if(c==='ly'||c==='cn'||((c==='it'||c==='es'||c==='mc')&&ch(0.25)))Object.assign(o,{coat:pick(['#e8e2d0','#d8d0b8','#c9c0a8']),trousers:'#e8e2d0',top:'jacket',hat:c==='ly'||c==='cn'?'pith':'boater',hatc:'#e8e2d0'});}
+  else if(cls==='b'){// горожанин: пиджак, котелок, канотье, кепка или федора
+    Object.assign(o,{coat:pick(darks.concat(c==='uk'||c==='ie'?tweed:[])),top:ch(0.15)?'frock':ch(0.2)?'vest':'jacket',vestC:pick(['#3a3a42','#5a4a3a','#4a4038','#2f3a2f','#6a5e4e']),watch:ch(0.5),
+      hat:c==='us'?pick(late?['fedora','boater','cap','fedora','boater']:['bowler','boater','cap','boater','fedora']):late?pick(['cap','fedora','boater','bowler','fedora','beret']):pick(['bowler','cap','boater','bowler','top','fedora']),
+      item:ch(0.32)?'hat':ch(0.08)?'binoc':ch(0.08)?'cane':''});
+    if(o.hat==='beret'&&c!=='fr'&&c!=='be'&&c!=='es'&&c!=='mc')o.hat='cap';
+    o.hatc=o.hat==='cap'?pick(['#3a3026','#4a4a44','#5a4a3a','#6a5e44']):o.hat==='fedora'?pick(['#4a4a44','#5a5048','#3a3a42','#6a5e4e']):o.hat==='beret'?pick(['#1c1c22','#2a3a5a']):'#1e1a18';
+    if(c==='ru'&&ch(0.45))Object.assign(o,{hat:'peak',hatc:pick(['#1c1c22','#2a2a30','#3a3a42']),band:undefined,legs:ch(0.5)?'boots':'plain',top:late&&ch(0.4)?'leather':o.top,coat:late&&o.top==='leather'?'#2a2420':o.coat});
+    if(o.top==='leather'){o.coat='#2a2420';o.belt='#1c1612';o.tie='';}
+    if((c==='at'||c==='ch')&&ch(0.25))Object.assign(o,{hat:'tyrol',hatc:'#3f5a3a'});}
+  else if(cls==='w'){// рабочий: блуза и берет, жилет и кепка, комбинезон, косоворотка
+    const cap=()=>pick(['#3a3026','#4a4a44','#5a4a3a','#2a2a30']);o.tie='';
+    if(c==='fr'||c==='be'||c==='mc')Object.assign(o,{top:'smock',coat:pick(['#3a5a8a','#44608a','#34507a','#5a6a80']),belt:0,trousers:pick(['#3a4a6a','#4a4038','#5a5048']),hat:late&&ch(0.5)?'beret':'cap',hatc:late?'#1c1c22':cap(),scarfC:'#b8322a'});
+    else if(c==='us')Object.assign(o,ch(0.55)?{top:'overall',trousers:pick(['#3f5578','#4a5a78','#5a5a50']),shirt:pick(['#d8d2c2','#b8c4cc','#c8b8a0','#a85a4a']),hat:pick(['cap','straw','fedora']),hatc:cap()}:{top:'vest',vestC:pick(['#3a3a42','#4a4038']),trousers:pick(['#3a3a42','#4a4038','#5a5048']),hat:'cap',hatc:cap()});
+    else if(c==='ru')Object.assign(o,late&&ch(0.4)?{top:'leather',coat:'#2a2420',belt:'#1c1612',trousers:'#2a2a30',legs:'boots',hat:'peak',hatc:'#2a2420',band:undefined}:{top:'shirt',coat:pick(['#8e2a24','#3a4a6a','#e8e0d0','#2f4a3a','#3a3a42']),trim:'#e8e0d0',belt:'#3a2618',trousers:pick(['#2a2a30','#3a3a42']),legs:'boots',hat:'peak',hatc:pick(['#1c1c22','#2a2a30','#3a3a42']),band:undefined});
+    else if(c==='de'||c==='at'||c==='ch'||c==='nl')Object.assign(o,{top:ch(0.5)?'jacket':'vest',coat:pick(['#3a3f4a','#4a4a44','#3a3a42','#4a5060']),vestC:'#3a3a42',trousers:pick(['#3a3a42','#4a4038']),hat:ch(0.6)?'peak':'cap',hatc:pick(['#2a2f3a','#3a3a42','#1c1c22']),band:undefined});
+    else Object.assign(o,{top:ch(0.55)?'vest':'jacket',coat:pick(['#4a4038','#5a5048','#3a3a42','#6a5e4e']),vestC:pick(['#3a3a42','#4a4038','#5a4a3a']),trousers:pick(['#3a3a42','#4a4038','#5a5048','#6a5e4e']),hat:'cap',hatc:cap()});
+    if(o.top==='jacket')o.tie=ch(0.3)?pick(ties):'';if(c==='it'||c==='es')o.sash=ch(0.4),o.belt=o.sash?'#8e2a24':undefined;
+    o.item=ch(0.3)?'hat':'';o.shoe=pick(['#1c1612','#3a2618']);}
+  else{// крестьянин: по стране
+    o.tie='';
+    if(c==='ru')Object.assign(o,{top:'shirt',coat:pick(['#e8e0d0','#8e2a24','#3a4a6a','#d8c8a8','#5a6a50','#f1ece0']),trim:pick(['#b8322a','#e8e0d0','#3a4a6a']),belt:pick(['#3a2618','#b8322a','#1c1612']),sash:ch(0.4),trousers:pick(['#2a2a30','#3a3a42','#4a4a60']),legs:ch(0.8)?'boots':'puttee',shin:'#c8b890',
+      hat:ch(0.8)?'peak':'',hatc:pick(['#1c1c22','#2a2a30','#3a3a42']),band:undefined,beard:ch(0.7)?pick([3,3,1]):0,stache:1});
+    else if(c==='us')Object.assign(o,{top:'overall',trousers:pick(['#3f5578','#4a5a78','#5a5a50','#6a6048']),shirt:pick(['#d8d2c2','#b8c4cc','#c8b8a0','#a85a4a','#e8e4d8']),hat:ch(0.7)?'straw':'cap',hatc:undefined});
+    else if(c==='uk'||c==='ie')Object.assign(o,{top:ch(0.7)?'jacket':'vest',coat:pick(tweed),vestC:pick(tweed),trousers:pick(tweed),legs:ch(0.6)?'breeches':'plain',shin:pick(['#5a4a3a','#3a3026','#6a6a5a']),hat:'cap',hatc:pick(tweed)});
+    else if(c==='at'||c==='ch'||c==='de')Object.assign(o,{top:ch(0.6)?'jacket':'vest',coat:pick(['#4a5a48','#5a5a50','#3f4a3a','#6a6458']),vestC:pick(['#8e2a24','#3f5a3a','#3a3a42']),trousers:pick(['#3a3026','#4a4038','#5a5048']),legs:c==='de'&&ch(0.5)?'boots':'breeches',shin:pick(['#e8e4d8','#8a8272','#5a6a50']),
+      hat:c==='de'&&ch(0.5)?'fedora':'tyrol',hatc:pick(['#3f5a3a','#4a4a44','#5a5048']),stache:ch(0.6)?pick([2,3]):0});
+    else if(c==='fr'||c==='be'||c==='nl')Object.assign(o,{top:'smock',coat:pick(['#3a5a8a','#44608a','#5a6a80','#34507a']),belt:0,trousers:pick(['#4a4038','#5a5048','#3a4a6a']),hat:ch(0.4)?'straw':late?'beret':'cap',hatc:late?'#1c1c22':'#3a3026'});
+    else Object.assign(o,{top:'vest',vestC:pick(['#1c1c22','#3a2a2a','#3a3a42','#5a4a3a']),shirt:pick(['#f2efe6','#e8e4d8','#e6dcc8']),sash:ch(0.6),belt:'#8e2a24',trousers:pick(['#2a2a30','#3a3a42','#4a4038','#5a5048']),hat:ch(0.5)?'straw':'cap',hatc:pick(['#1c1c22','#3a3026','#4a4a44']),stache:ch(0.7)?pick([1,2,3]):0});
+    if(o.hat==='straw')o.hatc='#d9c27a';if(!o.sash&&o.belt==='#8e2a24')o.belt=undefined;o.item=ch(0.25)?'hat':'';o.shoe=pick(['#3a2618','#2a1e16','#4a3424']);}
+  if(old){o.grey=ch(0.5)?2:1;o.stoop=0.08+rnd()*0.13;o.item='cane';o.cane=pick(['#3a2618','#5a4028','#1c1612']);if(o.beard===undefined&&ch(0.6))o.beard=pick([3,1,4,3]);if(ch(0.3))o.glasses=1;return fin(o,'o');}
+  return fin(o,cls);}
+/* ---------- экипаж: род машины, одежда, фигура ---------- */
+function crewRole(S){if(S.style==='moto')return 'race';let b=null;try{b=S.b?byId(BODIES,S.b):null;}catch(_){}const k=b&&typeof bodyKind==='function'?bodyKind(b):'';
+  if(k==='bus'||k==='coach'||k==='school'||k==='taxi')return 'chauffeur';if(k==='fire')return 'fire';if(k==='staff'||k==='mamb'||k==='armored'||k==='ltank')return 'army';
+  if(k==='tractor'||k==='crawler')return 'farm';if(k==='amb')return 'medic';if(k==='mail')return 'post';if(b&&b.truck)return 'trucker';return 'race';}
+function crewRnd(S,mech,salt){return mulberry32(hashStr('kit|'+(salt||'')+'|'+(S.num|0)+'|'+(S.mq||'')+'|'+(S.cc||'')+(mech?'m':'d')+S.y+(S.drv||'')));}
+function crewBuild(S,mech,kit){const r=crewRnd(S,mech,'b'),g=()=>(r()+r()+r())/3*2-1,role=kit&&kit.role||'race',fat=r()<(role==='race'?(mech?0.25:0.14):0.4);
+  return {bw:clamp(1+g()*0.11+(fat?0.05:0),0.9,1.17),th:clamp(1+g()*0.055,0.95,1.06),belly:fat?0.02+r()*0.05:0,head:0.97+r()*0.07};}
+// Национальный гоночный цвет страны (для фуфайки и шарфа); белый немецкий — тёмно-красная отделка
+function crewNat(c){const n=typeof COUNTRIES!=='undefined'&&COUNTRIES[c]&&COUNTRIES[c].race;return n||null;}
+function crewKit51(S,mech){const K=crewKit51raw(S,mech);if(K.cap==='straw')K.hat='#d9c27a';return K;}
+function crewKit51raw(S,mech){const y=S.y,c=S.cc||'',r=crewRnd(S,mech),pick=a=>a[Math.floor(r()*a.length)],ch=p=>r()<p,role=crewRole(S),nat=crewNat(c);
+  const work={fr:'#3a5a8a',be:'#3a5a8a',mc:'#3a5a8a',uk:'#7a6a50',ie:'#7a6a50',it:'#5a6a78',es:'#5a6a78',de:'#6a6e72',at:'#6a6e72',ch:'#6a6e72',us:'#c8c2b0',ru:'#3a3a40'}[c]||'#4a4f5a';
+  if(role==='chauffeur'){// шофёр автобуса и такси: мундир и фуражка; до 1908 года — кожаное пальто и очки на фуражке
+    const col=pick(c==='us'?['#4a4f58','#2a2f3a','#3a3f4a']:c==='uk'||c==='ie'?['#1c2238','#2a2f3a']:c==='ru'?['#1c1c22','#2a2a30']:['#22262e','#1f2b4a','#2a2a30']);
+    if(mech)return {own:1,role,top:'tunic',coat:col,cap:'peak',hat:col,hband:shade(col,-0.3),goggles:false,scarf:0,brass:'#c8ccd2',glove:0};   // кондуктор
+    return y<1908?{role,top:'leather',coat:'#2a2420',cap:'peak',hat:'#2a2420',hband:'#1c1612',badge:'#c9a24a',gogUp:true,scarf:0}:{role,top:'tunic',coat:col,cap:'peak',hat:col,hband:shade(col,-0.3),badge:'#c9a24a',goggles:false,scarf:0,brass:'#c9a24a',belt:'#161616',glove:'#3a2a1c'};}
+  if(role==='fire')return {own:1,role,top:'tunic',coat:c==='fr'||c==='be'?'#1c2238':c==='ru'?'#3a3f38':'#1f2a44',cap:'brass',hat:'#c9a24a',goggles:false,scarf:0,brass:'#d8c070',belt:'#161616',collar:'#8e2a24',glove:'#3a2a1c'};
+  if(role==='army'){const U=soldierLook(c||'fr',y);return {own:1,role,top:'tunic',coat:U.coat,cap:U.hat==='pickel'||U.hat==='tyrol'?'peak':U.hat,hat:U.hatc||U.coat,hband:U.band||shade(U.coat,-0.25),badge:'#c9a24a',goggles:y<1917,gogUp:true,scarf:0,brass:'#c9a24a',belt:'#4a3424',epaul:shade(U.coat,-0.2),glove:'#4a3424'};}
+  if(role==='medic')return {own:1,role,top:'tunic',coat:mech?'#e8e6de':'#2a2f3a',cap:'peak',hat:mech?'#e8e6de':'#2a2f3a',hband:'#8e2a24',goggles:false,scarf:0,brass:'#c8ccd2',belt:mech?0:'#161616',glove:0};
+  if(role==='post'){const col=c==='de'||c==='at'?'#2a3a5a':c==='us'?'#5a6478':'#1f2b4a';return {own:1,role,top:'tunic',coat:col,cap:c==='fr'||c==='be'||c==='ch'?'kepi':'peak',hat:col,hband:c==='de'||c==='at'?'#e8c040':c==='uk'?'#8e2a24':shade(col,-0.3),goggles:false,scarf:0,brass:'#c9a24a',belt:'#161616',glove:0};}
+  if(role==='farm'){// тракторист: рубаха и комбинезон, блуза, косоворотка; соломенная шляпа или кепка; без очков и перчаток
+    if(c==='ru')return {own:1,role,top:'coat',coat:pick(['#8e2a24','#e8e0d0','#3a4a6a']),belt:'#3a2618',cap:'peak',hat:'#2a2a30',hband:'#2a2a30',goggles:false,scarf:0,glove:0};
+    if(c==='fr'||c==='be')return {own:1,role,top:'coat',coat:'#3a5a8a',belt:0,cap:ch(0.5)?'straw':y>=1919?'beret':'cap',hat:y>=1919?'#1c1c22':'#3a3026',goggles:false,scarf:ch(0.5)?'#b8322a':0,glove:0};
+    return {own:1,role,top:'shirt',shirt:pick(['#d8d2c2','#b8c4cc','#c8b8a0','#a85a4a']),coat:'#3f5578',bib:pick(['#3f5578','#4a5a78','#5a5a50']),cap:ch(0.65)?'straw':'cap',hat:'#3a3026',goggles:false,scarf:ch(0.3)?'#b8322a':0,glove:0};}
+  if(role==='trucker'){const col=pick(['#5a5048','#4a4038','#3a3f4a','#6a5e4e',work]);
+    return {own:1,role,top:ch(0.25)?'leather':'coat',coat:col,belt:0,cap:mech?(c==='fr'&&y>=1919?'beret':'cap'):ch(0.25)&&y>=1910?'peak':'cap',hat:pick(['#3a3026','#4a4a44','#2a2a30']),hband:'#1c1c22',goggles:y<1912,scarf:!mech&&ch(0.35)?pick(['#b8322a','#2e4a78','#e8e2cc']):0,glove:ch(0.5)?0:'#5b3e28'};}
+  // гонщик и механик гоночной машины
+  if(mech){const wc=y>=1922&&ch(0.5)?pick(['#d8d4c8','#c8c2b0',work]):work;return {own:1,role,top:y<1906?'coat':'overall',coat:wc,belt:shade(wc,-0.3),cap:c==='fr'&&y>=1919&&ch(0.5)?'beret':y>=1908&&ch(0.4)?'helmet':'cap',hat:pick(['#3a3026','#4a3524','#2a2620','#4a4a44']),goggles:true,scarf:0,glove:'#5b3e28'};}
+  const scarf=()=>nat&&ch(0.45)&&hex2rgb(nat).reduce((a,b)=>a+b,0)<=620?nat:pick(['#ece6d4','#b8322a','#e8e2cc','#2e4a78','#d9c9a0','#1c1c22']),lh=()=>pick(['#5a3f28','#4a3524','#2a2420','#6a4a2e','#3a3026']);
+  const jersey=()=>{const white=!nat||hex2rgb(nat).reduce((a,b)=>a+b,0)>620,col=white?pick(['#e8e4d8','#2a3a5a','#3a3a42','#6a2a2a']):nat;return {role,top:'jersey',coat:col,band:white&&col==='#e8e4d8'?pick(['#8e2a24','#1c2238','#1c1c22']):'#f2efe6',cap:y<1908?'cap':ch(0.75)?'helmet':'cloth',hat:lh(),scarf:ch(0.3)?scarf():0};};
+  let K;
+  if(y<1906){const v=Math.floor(r()*5);K=v===0?{top:'coat',coat:pick(['#8a7a60','#7d6e58','#6b5a44']),cap:'cap',hat:'#4a4038'}:v===1?{top:'leather',coat:pick(['#2a2622','#3a2c20']),cap:'peak',hat:'#2a2622',hband:'#1c1612',gogUp:true}
+      :v===2?{top:'fur',coat:pick(['#5a4632','#6a5a48','#3c3228','#8a7a60']),cap:'cap',hat:'#3a3026'}:v===3?{top:'coat',coat:pick(['#6b6458','#4a4038','#3c3a38']),cap:'helmet',hat:lh()}:{top:'coat',coat:pick(['#d2cbbb','#c8c0a8']),cap:'cap',hat:'#5a4a3a'};}
+  else if(y<1915){const v=Math.floor(r()*5);K=v===0?{top:'coat',coat:pick(['#7a6a55','#8a7a60','#6a5e4a']),cap:'helmet',hat:lh()}:v===1?{top:'coat',coat:pick(['#d2cbbb','#dcd6c6']),cap:'cloth',hat:pick(['#e2dccb','#d8d0bc'])}
+      :v===2?{top:'leather',coat:pick(['#3a2c20','#2a2420','#4a3828']),cap:'helmet',hat:lh()}:v===3?jersey():{top:'coat',coat:pick(['#4a3f36','#5a5048']),cap:ch(0.5)?'cap':'helmet',hat:lh()};}
+  else if(y<1922){const v=Math.floor(r()*5);K=v===0?{top:'coat',coat:pick(['#8a8272','#6a5e4a','#7a7460']),cap:'helmet',hat:lh()}:v===1?{top:'leather',coat:pick(['#2e2a26','#3a3632','#3a2c20']),cap:'helmet',hat:lh()}
+      :v===2?{top:'overall',coat:pick(['#cfc8b8','#d8d2c2']),cap:'cloth',hat:'#e2dccb'}:v===3?jersey():{top:'overall',coat:pick(['#8a8272','#9a927e']),cap:'helmet',hat:lh()};}
+  else{const v=Math.floor(r()*6),light=c==='fr'?['#e2ded2','#b9c4cc','#d8d4c8']:c==='it'?['#e6e2d8','#c9d0d6']:c==='us'?['#e8e4d8','#d8ceb8']:['#e2ded2','#d8d4c8','#e6e2d8'];
+    K=v<2?{top:'overall',coat:pick(light),cap:ch(0.6)?'cloth':'helmet',hat:ch(0.5)?'#e8e4d8':lh()}:v===2?jersey():v===3?{top:'leather',coat:pick(['#3a3a3c','#2a2420','#4a3828']),cap:'helmet',hat:lh()}
+      :v===4?{top:'overall',coat:pick(['#7a6e5a','#8a8272','#5a6478']),cap:'helmet',hat:lh()}:jersey();
+    if(K.top==='overall'&&(c==='uk'||c==='ie'||ch(0.2)))K.tie=pick(['#2a3a2a','#2a2226','#5a2a2a','#2a3a5a']);if((c==='uk'||c==='ie')&&K.top==='overall'&&ch(0.4))K.cap='cap';}
+  if(K.cap==='cloth'&&!K.hat)K.hat='#e2dccb';if(K.scarf===undefined)K.scarf=K.tie?0:ch(0.82)?scarf():0;K.role=role;K.own=1;return K;}
+// Лётчик: первые авиаторы — в кепке и пиджаке или фуфайке; с 1912 года — кожаный шлем, кожанка, шарф; военные — кожанка или мундир
+function airKit51(S,mil){const y=S.y,c=S.cc||'fr',r=crewRnd(S,false,'air'),pick=a=>a[Math.floor(r()*a.length)],lh=()=>pick(['#5a3f28','#4a3524','#2a2420','#6a4a2e']),sc=()=>pick(['#ece6d4','#e8e2cc','#f2efe6','#b8322a']);
+  if(mil){const U=soldierLook(c,y),lea=r()<0.6;return {own:1,role:'air',top:lea?'leather':'tunic',coat:lea?pick(['#3a2c20','#2a2420','#4a3828']):U.coat,cap:'helmet',hat:lh(),scarf:r()<0.7?sc():0,brass:'#c9a24a',belt:'#4a3424',collar:lea?undefined:shade(U.coat,-0.25)};}
+  if(y<1912){const top=pick(['coat','jersey','leather','coat']);return {own:1,role:'air',top,coat:top==='leather'?pick(['#3a2c20','#2a2420']):top==='jersey'?pick(['#e8e4d8','#2a3a5a','#6a2a2a','#3a3a42']):pick(['#4a4038','#5a5048','#6a5e4a','#3a3f4a']),band:'#f2efe6',belt:top==='coat'?shade('#4a4038',-0.3):undefined,
+    cap:r()<0.7?'cap':'helmet',hat:pick(['#4a4038','#3a3026','#5a3f28']),scarf:r()<0.5?sc():0};}
+  if(y<1920)return {own:1,role:'air',top:'leather',coat:pick(['#3a2c20','#2a2420','#4a3828','#5a4630']),cap:'helmet',hat:lh(),scarf:r()<0.8?sc():0};
+  const suit=r()<0.45;return {own:1,role:'air',top:suit?'overall':'leather',coat:suit?pick(['#8a7a52','#7a7460','#9a8e6a']):pick(['#3a2c20','#2a2420','#4a3828']),cap:'helmet',hat:lh(),scarf:r()<0.75?sc():0};}
+
+/* ================= 0.51, тема 10: ТРЁХМЕРНЫЕ МОДЕЛИ НОВОЙ ТЕХНИКИ =================
+   С этапа 4 завод строит весь ряд техники эпохи, но в 3D у тяжёлого грузовика, тягача, пожарной машины, цистерны, самосвала, мусоровоза,
+   тракторов, бронеавтомобиля и танка был один облик — «грузовик с бортами», а в карточке модели — рисунок сбоку (ТЗ: «трёхмерных моделей
+   нет»). Здесь у каждого вида свой кузов: carModel (46b-cars.js) зовёт workModel51 и отдаёт ей свои «детали» (шасси, капот, радиатор,
+   кабина, экипаж). Санитарная и почтовая машины — фургон со знаком (vanDeco51).
+   Облик — по общим приметам вида и времени (ранний трактор — рама, котёл-радиатор, навес; с 1915 года — малый, безрамный; ранний
+   гусеничный — с рулевым колесом впереди; танк — высокие гусеницы, башня, «хвост»); точные чертежи образцов не воспроизводятся. */
+function workKind51(S){if(!S||!S.b||S.style==='moto')return '';let b=null;try{b=byId(BODIES,S.b);}catch(_){}if(!b)return '';const k=typeof bodyKind==='function'?bodyKind(b):'';
+  if(S.b==='b12')return 'heavy';if(S.b==='b13')return 'semi';return {fire:'fire',tank:'tanker',dump:'dump',refuse:'refuse',tractor:'tractor',crawler:'crawler',armored:'armored',ltank:'ltank'}[k]||'';}
+// выпуклая оболочка точек [z,y] — контур гусеницы; обход против часовой стрелки
+function wkHull(P){P=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
+  for(const p of P){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(let i=P.length-1;i>=0;i--){const p=P[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  lo.pop();up.pop();return lo.concat(up);}
+// контур гусеницы: два колеса (переднее и заднее) и опорная линия по земле; точки — с шагом step (звенья)
+function wkLoop(zf,yf,rf,zr,yr,rr,g0,g1,step){const P=[];for(let k=0;k<24;k++){const a=k/24*Math.PI*2;P.push([zf+Math.cos(a)*rf,yf+Math.sin(a)*rf],[zr+Math.cos(a)*rr,yr+Math.sin(a)*rr]);}
+  P.push([g0,0],[g1,0]);const H=wkHull(P),out=[];for(let i=0;i<H.length;i++){const a=H[i],b=H[(i+1)%H.length],d=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.round(d/step));for(let k=0;k<n;k++)out.push([a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n]);}
+  return out;}
+// гусеница: лента по контуру (звенья — поперечные полосы), борта ленты, рама внутри
+function wkTrack(X,x,w,loop,o){o=o||{};const {M,hi}=X,col=o.col||'#3a3b3e',n=loop.length,cz=loop.reduce((a,p)=>a+p[0],0)/n,cy=loop.reduce((a,p)=>a+p[1],0)/n,th=o.th||0.06;
+  const L=hi?loop:loop.filter((p,i)=>i%2===0),A=L.map(p=>[x-w/2,p[1],p[0]]),Bq=L.map(p=>[x+w/2,p[1],p[0]]);
+  const f=mGrid(M,[A,Bq],col,'metal',{wrap:true,ref:()=>[x,cy,cz]});if(hi)f.forEach(q=>{q.deco=[{a:[q.p[0][0],(q.p[0][1]+q.p[1][1])/2,(q.p[0][2]+q.p[1][2])/2],b:[q.p[3][0],(q.p[3][1]+q.p[2][1])/2,(q.p[3][2]+q.p[2][2])/2],w:0.022,c:'#17181a'}];});
+  // борта ленты: кольцо между внешним контуром и внутренним (ближе к центру на th)
+  const In=L.map(p=>{const dz=p[0]-cz,dy=p[1]-cy,d=Math.hypot(dz,dy)||1;return [p[0]-dz/d*th,p[1]-dy/d*th];});
+  [-1,1].forEach(sd=>{const xx=x+sd*w/2;mGrid(M,[L.map(p=>[xx,p[1],p[0]]),In.map(p=>[xx,p[1],p[0]])],shade(col,-0.2),'metal',{wrap:true,ref:()=>[xx-sd,cy,cz],two:true});});
+  mGrid(M,[In.map(p=>[x-w/2,p[1],p[0]]),In.map(p=>[x+w/2,p[1],p[0]])],shade(col,-0.35),'metal',{wrap:true,ref:()=>[x,cy,cz],inv:true,two:true});
+  // рама тележки: тёмная плита между катками
+  const fr=o.frame||'#232427',side=x>=0?1:-1;mFace(M,In.map(p=>[x+side*w*0.32,p[1],p[0]]),fr,'paint',[x-side,cy,cz],true);}
+// вращающаяся деталь (колесо, звёздочка): грани метятся номером колеса
+function wkWheel(X,cx,cy,cz,r,steer,draw){const M=X.M;M.wheels.push([cx,cy,cz,steer?-r:r]);MTAG.w=M.wheels.length;draw();MTAG.w=0;}
+// стальное колесо трактора: обод-лента с грунтозацепами, спицы, ступица; катки и звёздочки гусениц — диск со спицами-линиями
+function wkSteelWheel(X,cx,r,cz,w,steer,o){o=o||{};const {M,hi}=X,side=cx>=0?1:-1,seg=hi?20:10,c=[cx,r,cz],col=o.col||'#8a2a22',rim=o.rim||'#55585d';
+  wkWheel(X,cx,r,cz,r,steer,()=>{const f=mLathe(M,c,'x',[[r,-w/2],[r,w/2]],seg,rim,'metal',{two:true});
+    if(o.lugs)f.forEach((q,i)=>{q.deco=[{a:q.p[0],b:q.p[2],w:0.045,c:'#2a2b2e'}];});else if(o.rib)f.forEach(q=>{q.deco=[{a:[cx,(q.p[0][1]+q.p[3][1])/2,(q.p[0][2]+q.p[3][2])/2],b:[cx,(q.p[1][1]+q.p[2][1])/2,(q.p[1][2]+q.p[2][2])/2],w:0.03,c:'#2a2b2e'}];});
+    [-1,1].forEach(sd=>mLathe(M,[cx+sd*w/2,r,cz],'x',[[r-0.05,0],[r,0]],seg,shade(rim,-0.15),'metal',{two:true}));
+    mLathe(M,c,'x',[[0,-0.1],[0.075,-0.085],[0.075,0.085],[0,0.1]],hi?10:6,col,'paint');
+    const ns=o.spokes||(hi?10:6);for(let k=0;k<ns;k++){const a=k/ns*Math.PI*2,sn=Math.sin(a),cs=Math.cos(a),off=(k%2?1:-1)*w*0.28;mTube(M,[[cx,r+sn*0.07,cz+cs*0.07],[cx+off,r+sn*(r-0.03),cz+cs*(r-0.03)]],0.016,3,col,'paint');}});}
+function wkDisc(X,cx,cy,cz,r,w,col,spokes){const {M,hi}=X,side=cx>=0?1:-1,seg=hi?16:8;wkWheel(X,cx,cy,cz,r,false,()=>{mLathe(M,[cx,cy,cz],'x',[[r,-w/2],[r,w/2]],seg,col,'metal',{two:true});
+    const f=mLathe(M,[cx+side*w/2,cy,cz],'x',[[r,0],[0.05,0.012*side],[0,0.03*side]],seg,shade(col,0.08),'paint',{two:true});
+    if(spokes&&hi){const d=[];for(let k=0;k<spokes;k++){const a=k/spokes*Math.PI*2;d.push({a:[cx+side*(w/2+0.016),cy+Math.sin(a)*r*0.2,cz+Math.cos(a)*r*0.2],b:[cx+side*(w/2+0.004),cy+Math.sin(a)*r*0.93,cz+Math.cos(a)*r*0.93],w:0.03,c:shade(col,-0.4)});}if(f[0])f[0].deco=d;}});}
+// ноги водителя там, где их видно (трактор): бедро вперёд, голень вниз, башмак
+function wkLegs(X,x,seatY,z,fz,fy,col){if(!X.crew)return;const {M,hi}=X;MTAG.l=3;[-1,1].forEach(sd=>{const H=[x+sd*0.1,seatY+0.1,z+0.04],Kn=[x+sd*0.16,seatY+0.17,z+0.42],F=[x+sd*0.16,fy+0.07,fz];
+    mTube(M,[H,Kn],[0.085,0.07],hi?8:4,col,'cloth');mTube(M,[Kn,F],[0.066,0.052],hi?8:4,col,'cloth');mRBox(M,F[0]-0.05,fy,fz-0.07,F[0]+0.05,fy+0.09,fz+0.19,0.02,'#2a1e16','leather');});MTAG.l=0;}
+// эллиптический бак вдоль машины: полуоси rx, ry, центр по высоте yc, от z1 (перёд) до z0, выпуклые днища
+function wkTank(X,rx,ry,yc,z1,z0,col,mat){const {M,hi}=X,n=hi?18:10,ring=k=>{const p=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2;p.push([Math.cos(a)*rx*k,yc+Math.sin(a)*ry*k]);}return p;};
+  const S=[[z1,0.5],[z1-0.07,0.86],[z1-0.16,1],[z0+0.16,1],[z0+0.07,0.86],[z0,0.5]].map(([z,k])=>({z,p:ring(k)}));mLoft2(M,S,col,mat||'paint',{wrap:true});mCap(M,S[0],col,mat||'paint',1);mCap(M,S[5],col,mat||'paint',-1);}
+// Перёд грузовой машины: шасси, радиатор, капот, фары, открытая кабина с сиденьем, рулём и экипажем, крыша на стойках
+function wkFront(X,o){const {M,S,K,hi,y,B,tube}=X,wb=o.wb,t=o.t||1.45,rF=o.rF,rR=o.rR,yf=rR+0.16,zr=wb/2+0.3,zd=wb/2-0.5,yt=yf+(o.hh||0.62),cw=o.cw||0.62,dk=o.cabCol||K.dark;
+  X.setWt(o.wt||'wood');X.chassis(wb,t,rF,rR,o.tw||0.12,{dual:o.dual,solid:o.solid,yf,fw:0.42,zEng0:wb/2-0.9,zEng1:wb/2});
+  X.radiator(zr,0.34,yf,yt,y<1906?'honey':'vert',{apron:true});X.hood(zr-0.04,zd,0.36,0.4,yf,yt-(o.snub||0),yt+0.02,{louv:hi?6:0});
+  const lk=y<1920?'drum':'bowl';X.headlamp(0.42,yt-0.05,zr-0.15,0.1,lk);X.headlamp(-0.42,yt-0.05,zr-0.15,0.1,lk);
+  const zc0=zd,zc1=zd-0.75,yb=yf+0.05;X.tub([[zc0,cw,yt+0.05],[zc1,cw,yt+0.05]],yb,{floor:yb+0.1});
+  X.seat(0,zc1+0.5,yb+0.38,0.55,0.4,0.42,{});X.steer(0.25,yt+0.28,zc0-0.22,0.19,0.8);X.drvF(0.25,yb+0.35,zc1+0.5,zc0-0.26,yt+0.28);if(S.mech||o.mate)X.mechF(-0.25,yb+0.35,zc1+0.5);X.eyeAt(0.25,yb+0.35,zc1+0.5);
+  const yr=yt+1.0;
+  if(o.roof!==false){[-1,1].forEach(sd=>tube([[sd*cw,yt+0.05,zc0-0.02],[sd*cw,yr,zc0-0.06]],0.025,dk,'paint',4));mRBox(M,-cw-0.06,yr,zc1-0.1,cw+0.06,yr+0.06,zc0+0.08,0.03,dk,'paint');X.windscreen(zc0-0.02,cw-0.04,yt+0.08,yr-0.08,{lean:0.03});
+    if(o.back!==false){B(-cw,yt+0.05,zc1-0.035,cw,yr,zc1,dk,'paint');if(hi)B(-0.2,yt+0.5,zc1-0.04,0.2,yt+0.78,zc1+0.005,'#1e2a33','glass');}}
+  else if(y>=1914)X.windscreen(zc0-0.02,cw-0.04,yt+0.08,yt+0.6,{lean:0.03});
+  X.sideLamp(cw+0.06,yt,zc0-0.05);X.sideLamp(-cw-0.06,yt,zc0-0.05);
+  [-1,1].forEach(sd=>mSweep(M,sd*t/2,arcPath(rF,wb/2,rF+0.07,-0.3,Math.PI*0.7,hi?10:5),0.3,0.03,K.dark,[rF,wb/2]));
+  return {wb,t,rF,rR,yf,yt,yr,zr,zd,zc0,zc1,cw,yb,z1:zc1-0.05};}
+// лонжероны и надрамник под кузов
+function wkRails(X,F,z0,by){[-1,1].forEach(sd=>X.B(sd*0.4-0.05,F.yf-0.05,z0+0.1,sd*0.4+0.05,by,F.z1-0.1,X.K.chassis,'paint'));}
+function workModel51(kind,X){const {M,S,K,hi,y,col,B,tube}=X,n=hi?3:1;
+  if(kind==='heavy'){// грузовик 5 т: длиннее и выше, сдвоенные литые шины, цепная передача, высокие решётчатые борта
+    const F=wkFront(X,{wb:3.9,rF:0.48,rR:0.54,tw:0.15,dual:true,solid:y<1926,hh:0.66,snub:0.1}),z1=F.z1,z0=-F.wb/2-1.25,by=Math.max(F.yf,F.rR*2+0.06);wkRails(X,F,z0,by);
+    B(-1.08,by,z0,1.08,by+0.12,z1,'#6a4a2c','wood');
+    [-1,1].forEach(sd=>{for(let k=0;k<3;k++)B(sd*1.08-0.03,by+0.16+k*0.25,z0,sd*1.08+0.03,by+0.34+k*0.25,z1,'#8a6a44','wood');const np=hi?6:3;for(let k=0;k<=np;k++){const z=z0+(z1-z0)*k/np;B(sd*1.08-0.06,by+0.1,z-0.045,sd*1.08+0.06,by+0.95,z+0.045,'#5a4028','wood');}});
+    B(-1.08,by+0.12,z1-0.07,1.08,by+1.12,z1,'#8a6a44','wood');B(-1.08,by+0.12,z0,1.08,by+0.62,z0+0.06,'#8a6a44','wood');
+    if(hi)[-1,1].forEach(sd=>{const zs=-F.wb/2+1.1,ys=F.rR+0.1,x=sd*0.6;mLathe(M,[x,ys,zs],'x',[[0.11,-0.02],[0.11,0.02],[0,0.03]],10,'#2a2b2e','paint',{two:true});mLathe(M,[x,F.rR,-F.wb/2],'x',[[0.26,-0.02],[0.26,0.02]],14,'#2a2b2e','paint',{two:true});
+      tube([[x,ys+0.11,zs],[x,F.rR+0.26,-F.wb/2]],0.016,'#3a3b3e','paint',3);tube([[x,ys-0.11,zs],[x,F.rR-0.26,-F.wb/2]],0.016,'#3a3b3e','paint',3);});
+    X.tailLamp(0.7,F.yf+0.25,z0-0.03);return {len:[z0-0.05,F.zr+0.12],track:F.t+0.34};}
+  if(kind==='semi'){// тягач с полуприцепом: короткий тягач, седло, длинная платформа со своей осью, груз под брезентом
+    // колёс с отметкой «вращается» в шейдере шесть: сдвоенные делят номер со своим внутренним колесом (ось вращения у них общая)
+    const F=wkFront(X,{wb:2.9,rF:0.46,rR:0.5,tw:0.13,dual:false,solid:y<1926}),by=Math.max(F.yf,F.rR*2+0.06),zt1=F.z1-0.05,zt0=-F.wb/2-5.3,za=zt0+1.15,rT=0.5,sol=y<1926,twin=(tag,x,z,r)=>{MTAG.w=tag;mWheel2(M,x,r,z,r,0.13,'wood',K,sol);MTAG.w=0;};
+    twin(2,-(F.t/2+0.16),-F.wb/2,F.rR);twin(4,F.t/2+0.16,-F.wb/2,F.rR);
+    mLathe(M,[0,by-0.03,-F.wb/2+0.1],'y',[[0.36,0],[0.36,0.05],[0,0.06]],hi?14:8,'#3a3b3e','metal');
+    [-1,1].forEach(sd=>{B(sd*0.42-0.05,by+0.03,zt0+0.1,sd*0.42+0.05,by+0.17,zt1,K.chassis,'paint');
+      X.WH(sd*F.t/2,rT,za,rT,0.13,sol,false);twin(M.wheels.length,sd*(F.t/2+0.16),za,rT);
+      tube([[sd*0.42,by+0.03,zt1-1.0],[sd*0.42,0.3,zt1-1.05]],0.035,K.chassis,'paint',4);if(hi)mLathe(M,[sd*0.42,0.18,zt1-1.05],'x',[[0.12,-0.04],[0.12,0.04]],8,'#3a3b3e','metal',{two:true});});
+    tube([[-F.t/2,rT,za],[F.t/2,rT,za]],0.05,K.chassis,'paint',hi?8:4);
+    B(-1.05,by+0.17,zt0,1.05,by+0.27,zt1,'#6a4a2c','wood');
+    [-1,1].forEach(sd=>{B(sd*1.05-0.03,by+0.27,zt0,sd*1.05+0.03,by+0.6,zt1,'#8a6a44','wood');const np=hi?8:4;for(let k=0;k<=np;k++){const z=zt0+(zt1-zt0)*k/np;B(sd*1.05-0.055,by+0.22,z-0.04,sd*1.05+0.055,by+0.66,z+0.04,'#5a4028','wood');}});
+    B(-1.05,by+0.27,zt1-0.06,1.05,by+0.95,zt1,'#8a6a44','wood');B(-1.05,by+0.27,zt0,1.05,by+0.6,zt0+0.06,'#8a6a44','wood');
+    mRBox(M,-0.94,by+0.3,zt0+0.25,0.94,by+1.3,zt1-0.3,0.2,'#8a8262','cloth');
+    if(hi)[0.25,0.5,0.75].forEach(k=>{const z=zt0+(zt1-zt0)*k;tube([[-1.0,by+0.5,z],[-0.9,by+1.25,z],[0,by+1.33,z],[0.9,by+1.25,z],[1.0,by+0.5,z]],0.012,'#4a4030','cloth',3);});
+    X.tailLamp(0.7,by+0.1,zt0-0.03);return {len:[zt0-0.05,F.zr+0.12],track:F.t+0.34};}
+  if(kind==='fire'){// пожарный автомобиль: открытая кабина, насос, рукавная катушка, лестница на стойках, колокол, расчёт на скамье
+    const F=wkFront(X,{wb:3.4,rF:0.46,rR:0.5,tw:0.12,solid:y<1920,roof:false,mate:true}),z1=F.z1,z0=-F.wb/2-0.95,by=Math.max(F.yf,F.rR+0.36);wkRails(X,F,z0,by);
+    B(-0.92,by,z0,0.92,by+0.1,z1,col,'paint');[-1,1].forEach(sd=>{B(sd*0.92-0.03,by+0.1,z0,sd*0.92+0.03,by+0.42,z1,col,'paint');if(hi)tube([[sd*0.955,by+0.38,z0+0.05],[sd*0.955,by+0.38,z1-0.05]],0.012,K.bright,K.brightMat,3);});
+    B(-0.92,by+0.1,z0,0.92,by+0.42,z0+0.05,col,'paint');
+    // рукава в кузове, скамья расчёта, насос с воздушным колпаком
+    B(-0.86,by+0.1,z0+0.75,0.86,by+0.36,z1-1.1,'#b9a070','cloth');
+    X.seat(0,z1-0.12,by+0.5,0.8,0.36,0.34,{});X.mechF(0.42,by+0.47,z1-0.12);X.mechF(-0.42,by+0.47,z1-0.12);
+    mLathe(M,[0,by+0.1,z1-0.82],'y',[[0.2,0],[0.23,0.06],[0.23,0.4],[0.15,0.5],[0.06,0.56],[0.09,0.62],[0.12,0.74],[0.07,0.84],[0,0.86]],hi?14:8,K.bright,'metal');
+    if(hi)[-1,1].forEach(sd=>{tube([[sd*0.2,by+0.3,z1-0.82],[sd*0.5,by+0.3,z1-0.82],[sd*0.96,by+0.25,z1-0.82]],0.04,K.bright,'metal',5);mLathe(M,[sd*0.97,by+0.25,z1-0.82],'x',[[0.06,-0.02],[0.06,0.03],[0,0.04]],8,K.bright,'metal');});
+    // катушка с рукавом сзади
+    mLathe(M,[0,by+0.82,z0+0.32],'x',[[0.27,-0.5],[0.27,0.5]],hi?14:8,'#b9a070','cloth');[-1,1].forEach(sd=>{mLathe(M,[sd*0.52,by+0.82,z0+0.32],'x',[[0.34,0],[0.05,0.01*sd],[0,0.02*sd]],hi?14:8,col,'paint',{two:true});tube([[sd*0.56,by+0.42,z0+0.32],[sd*0.56,by+0.82,z0+0.32]],0.025,col,'paint',4);});
+    // лестница: стойки и два бруса с перекладинами, над кабиной выступает вперёд
+    const yL=F.yt+1.12,zL1=F.zc0+0.35,zL0=z0-0.45;[[z1-0.25],[z0+0.75]].forEach(([z])=>{[-1,1].forEach(sd=>tube([[sd*0.9,by+0.42,z],[sd*0.5,yL-0.04,z]],0.022,col,'paint',4));tube([[-0.5,yL-0.04,z],[0.5,yL-0.04,z]],0.022,col,'paint',4);});
+    [-1,1].forEach(sd=>tube([[sd*0.24,yL,zL0],[sd*0.24,yL,zL1]],0.028,'#b58a52','wood',hi?5:3));{const nr=hi?14:6;for(let k=0;k<=nr;k++){const z=zL0+0.1+(zL1-zL0-0.2)*k/nr;tube([[-0.24,yL,z],[0.24,yL,z]],0.014,'#9a7248','wood',3);}}
+    // колокол на щитке и фонарь-прожектор
+    tube([[-0.42,F.yt+0.05,F.zc0-0.02],[-0.42,F.yt+0.42,F.zc0-0.02]],0.014,K.bright,'metal',3);mLathe(M,[-0.42,F.yt+0.3,F.zc0-0.02],'y',[[0.095,0],[0.085,0.05],[0.05,0.12],[0.02,0.15],[0,0.155]],hi?10:6,'#c9a24a','metal',{two:true});
+    X.tailLamp(0.7,F.yf+0.25,z0-0.03);return {len:[zL0-0.05,F.zr+0.12],track:F.t};}
+  if(kind==='tanker'){// автоцистерна: овальный бак на ложементах, горловина, краны сзади
+    const F=wkFront(X,{wb:3.3,rF:0.46,rR:0.5,tw:0.12,solid:y<1924}),z1=F.z1,z0=-F.wb/2-0.95,by=Math.max(F.yf,F.rR+0.4),rx=0.86,ry=0.6,yc=by+0.14+ry;wkRails(X,F,z0,by);
+    [z1-0.5,(z1+z0)/2,z0+0.5].forEach(z=>B(-0.7,by,z-0.07,0.7,by+0.22,z+0.07,'#5a4028','wood'));
+    wkTank(X,rx,ry,yc,z1-0.08,z0+0.08,col,'paint');
+    if(hi)[z1-0.55,(z1+z0)/2,z0+0.55].forEach(z=>{const P=[];for(let k=0;k<=16;k++){const a=k/16*Math.PI*2;P.push([Math.cos(a)*(rx+0.008),yc+Math.sin(a)*(ry+0.008),z]);}tube(P,0.014,shade(col,-0.4),'paint',3);});
+    mLathe(M,[0,yc+ry-0.03,(z1+z0)/2],'y',[[0.2,0],[0.2,0.12],[0.13,0.18],[0,0.19]],hi?12:6,shade(col,-0.15),'paint');
+    if(hi){[-1,1].forEach(sd=>{tube([[sd*0.3,yc-ry+0.1,z0+0.12],[sd*0.3,by+0.05,z0-0.05],[sd*0.3,by-0.1,z0-0.06]],0.03,K.bright,K.brightMat,4);B(sd*0.9-0.02,by+0.02,z0+0.4,sd*0.9+0.14,by+0.07,z1-0.4,K.dark,'paint');});
+      tube([[0,yc+ry-0.02,z1-0.3],[0,yc+ry+0.04,(z1+z0)/2-0.3]],0.012,K.dark,'paint',3);}
+    X.tailLamp(0.7,F.yf+0.25,z0-0.03);return {len:[z0-0.08,F.zr+0.12],track:F.t};}
+  if(kind==='dump'){// самосвал: стальной кузов «корытом» с рёбрами, козырёк над кабиной, подъёмник под кузовом
+    const F=wkFront(X,{wb:3.3,rF:0.46,rR:0.52,tw:0.14,dual:true,solid:y<1926}),z1=F.z1,z0=-F.wb/2-0.7,by=Math.max(F.yf,F.rR*2+0.06),bc=shade(col,-0.08),wb0=0.82,wt0=1.04,h=0.78;wkRails(X,F,z0,by);
+    const sec=z=>({z,p:rsec(wb0,wt0,by+0.06,by+0.06+h,0.04,0.01,n,'u')}),A=sec(z1),Bk=sec(z0);mLoft2(M,[A,Bk],bc,'paint');mCap(M,A,bc,'paint',1);
+    if(hi){const ins=z=>({z,p:rsec(wb0-0.03,wt0-0.03,by+0.1,by+0.05+h,0.04,0.01,n,'u')});mLoft2(M,[ins(z1-0.03),ins(z0+0.02)],shade(bc,-0.3),'paint',{inv:true});
+      for(let k=0;k<5;k++){const z=z1-0.15-(z1-z0-0.3)*k/4;[-1,1].forEach(sd=>tube([[sd*(wb0+0.02),by+0.1,z],[sd*(wt0+0.025),by+0.04+h,z]],0.022,shade(bc,-0.25),'paint',3));}}
+    // задний борт на петлях сверху, козырёк над кабиной, подъёмник
+    mFace(M,[[-wb0,by+0.08,z0-0.02],[wb0,by+0.08,z0-0.02],[wt0,by+0.06+h,z0-0.05],[-wt0,by+0.06+h,z0-0.05]],bc,'paint',[0,by+0.4,z0+1],true);
+    {const a=[-wt0,by+0.06+h,z1],b=[wt0,by+0.06+h,z1],c=[F.cw+0.2,F.yr+0.12,F.zc0-0.15],d=[-F.cw-0.2,F.yr+0.12,F.zc0-0.15];mFace(M,[a,b,c,d],shade(bc,-0.12),'paint',[0,by,z1],true);tube([a,d,c,b],0.022,shade(bc,-0.3),'paint',3);
+      if(hi)[-0.33,0.33].forEach(k=>tube([[wt0*k,by+0.07+h,z1],[(F.cw+0.2)*k,F.yr+0.13,F.zc0-0.15]],0.016,shade(bc,-0.3),'paint',3));}
+    tube([[0,F.yf-0.05,z1-0.35],[0,by+0.08,z1-0.3]],0.07,'#9ea3aa','chrome',hi?8:4);
+    X.tailLamp(0.7,F.yf+0.25,z0-0.03);return {len:[z0-0.08,F.zr+0.12],track:F.t+0.34};}
+  if(kind==='refuse'){// мусоровоз: закрытый кузов со сводчатым верхом и сдвижными крышками по бортам
+    const F=wkFront(X,{wb:3.3,rF:0.46,rR:0.5,tw:0.13,dual:true,solid:y<1926}),z1=F.z1,z0=-F.wb/2-0.9,by=Math.max(F.yf,F.rR*2+0.06),w=0.98,h=1.5;wkRails(X,F,z0,by);
+    const sec=z=>({z,p:rsec(w,w,by+0.06,by+0.06+h,0.03,0.52,n,'o')}),A=sec(z1),Bk=sec(z0);mLoft2(M,[A,Bk],col,'paint',{wrap:true});mCap(M,A,col,'paint',1);mCap(M,Bk,col,'paint',-1);
+    if(hi){const L=z1-z0,yl=by+0.06+h-0.52;for(let k=0;k<3;k++){const za=z0+0.15+(L-0.3)*k/3+0.04,zb=z0+0.15+(L-0.3)*(k+1)/3-0.04;[-1,1].forEach(sd=>{tube([[sd*(w+0.006),yl-0.05,za],[sd*(w+0.006),yl-0.05,zb],[sd*(w*0.86),yl+0.3,zb],[sd*(w*0.86),yl+0.3,za],[sd*(w+0.006),yl-0.05,za]],0.012,shade(col,-0.45),'paint',3);
+          tube([[sd*(w+0.02),yl+0.02,(za+zb)/2-0.08],[sd*(w+0.02),yl+0.02,(za+zb)/2+0.08]],0.012,K.bright,K.brightMat,3);});}
+      tube([[-w*0.8,by+0.2,z0-0.006],[-w*0.8,by+h-0.45,z0-0.006],[w*0.8,by+h-0.45,z0-0.006],[w*0.8,by+0.2,z0-0.006],[-w*0.8,by+0.2,z0-0.006]],0.012,shade(col,-0.45),'paint',3);
+      [-1,1].forEach(sd=>B(sd*(w+0.02)-0.02,by-0.02,z0+0.2,sd*(w+0.02)+0.14,by+0.03,z1-0.2,K.dark,'paint'));}
+    X.tailLamp(0.7,F.yf+0.25,z0-0.03);return {len:[z0-0.08,F.zr+0.12],track:F.t+0.34};}
+  if(kind==='tractor'){const trC=()=>{try{const kit=crewKit51(S,false);return kit.bib||shade(kit.coat||'#4a4038',-0.3);}catch(_){return '#3a3a42';}};
+    if(y<1915){// ранний трактор: клёпаная рама, огромные задние колёса, короб мотора, башня-радиатор с трубой, маховик, навес
+      const rR=0.86,wR=0.42,rF=0.5,wF=0.16,zR=-1.15,zF=1.35,tR=1.75,tF=1.25,yf=0.86,iron='#4a4d52';
+      [-1,1].forEach(sd=>{wkSteelWheel(X,sd*tR/2,rR,zR,wR,false,{lugs:1,col,spokes:hi?12:6});wkSteelWheel(X,sd*tF/2,rF,zF,wF,true,{rib:1,col,spokes:hi?8:5});B(sd*0.42-0.05,yf-0.14,zR-0.5,sd*0.42+0.05,yf,zF+0.35,iron,'paint');});
+      tube([[-tR/2,rR,zR],[tR/2,rR,zR]],0.06,iron,'paint',hi?8:4);tube([[-tF/2,rF,zF],[tF/2,rF,zF]],0.045,iron,'paint',hi?8:4);B(-0.06,rF,zF-0.06,0.06,yf-0.1,zF+0.06,iron,'paint');
+      mRBox(M,-0.46,yf,-0.3,0.46,yf+0.75,1.0,0.05,col,'paint');if(hi)for(let k=0;k<5;k++)[-1,1].forEach(sd=>tube([[sd*0.467,yf+0.12,-0.15+k*0.25],[sd*0.467,yf+0.62,-0.15+k*0.25]],0.012,shade(col,-0.4),'paint',3));
+      mRBox(M,-0.4,yf,1.05,0.4,yf+1.35,1.6,0.04,shade(col,-0.12),'paint');mLathe(M,[0,yf+1.35,1.32],'y',[[0.13,0],[0.12,0.6],[0.17,0.66],[0.17,0.7],[0,0.7]],hi?12:6,'#2a2b2e','paint');
+      wkWheel(X,-0.62,yf+0.3,0.2,0.46,false,()=>{mLathe(M,[-0.62,yf+0.3,0.2],'x',[[0.46,-0.06],[0.46,0.06]],hi?18:10,iron,'metal',{two:true});const f=mLathe(M,[-0.68,yf+0.3,0.2],'x',[[0.46,0],[0.06,-0.01],[0,-0.03]],hi?18:10,shade(col,-0.2),'paint',{two:true});
+        if(hi&&f[0]){const d=[];for(let k=0;k<6;k++){const a=k/6*Math.PI*2;d.push({a:[-0.7,yf+0.3+Math.sin(a)*0.07,0.2+Math.cos(a)*0.07],b:[-0.69,yf+0.3+Math.sin(a)*0.42,0.2+Math.cos(a)*0.42],w:0.04,c:iron});}f[0].deco=d;}});
+      // площадка, сиденье, руль, навес на стойках
+      B(-0.6,yf,zR-0.55,0.6,yf+0.05,-0.3,'#6a4a2c','wood');const sy=yf+0.62;mLathe(M,[0.18,sy,zR+0.1],'y',[[0,0],[0.2,0.02],[0.24,0.09],[0.22,0.11]],hi?10:6,'#3a3b3e','paint',{two:true});tube([[0.18,yf+0.05,zR+0.1],[0.18,sy,zR+0.1]],0.03,iron,'paint',4);
+      X.steer(0.18,sy+0.52,zR+0.62,0.21,0.5);X.drvF(0.18,sy+0.05,zR+0.1,zR+0.56,sy+0.52);wkLegs(X,0.18,sy+0.05,zR+0.1,zR+0.62,yf+0.05,trC());X.eyeAt(0.18,sy+0.05,zR+0.1);
+      const yc=yf+1.95;[[zR-0.5],[0.95]].forEach(([z])=>[-1,1].forEach(sd=>tube([[sd*0.55,yf+0.02,z],[sd*0.62,yc,z]],0.025,iron,'paint',4)));mRBox(M,-0.75,yc,zR-0.7,0.75,yc+0.06,1.15,0.03,K.canvas,'cloth');
+      M.exh=[[0,yf+2.05,1.32]];return {len:[zR-rR-0.05,zF+rF+0.05],track:tR+wR};}
+    // трактор с 1915 года: безрамный — мотор и мост одним корпусом, бак-капот, сиденье на рессоре между крыльями
+    const rR=0.62,wR=0.3,rF=0.36,wF=0.12,zR=-0.78,zF=0.86,tR=1.32,tF=1.02,iron='#5a5e62';
+    [-1,1].forEach(sd=>{wkSteelWheel(X,sd*tR/2,rR,zR,wR,false,{lugs:1,col:'#8a2a22',spokes:hi?10:6});wkSteelWheel(X,sd*tF/2,rF,zF,wF,true,{rib:1,col:'#8a2a22',spokes:hi?8:5});
+      mSweep(M,sd*tR/2,arcPath(rR,zR,rR+0.09,Math.PI*0.18,Math.PI*0.98,hi?10:5),wR+0.08,0.02,col,[rR,zR]);});
+    tube([[-tR/2,rR,zR],[tR/2,rR,zR]],0.09,iron,'paint',hi?8:4);tube([[-tF/2,rF,zF],[tF/2,rF,zF]],0.035,iron,'paint',hi?6:4);B(-0.05,rF-0.02,zF-0.05,0.05,0.5,zF+0.05,iron,'paint');
+    mRBox(M,-0.2,0.42,zR-0.2,0.2,0.92,0.72,0.05,iron,'paint');mRBox(M,-0.27,0.4,zR-0.28,0.27,0.84,zR+0.28,0.08,iron,'paint');
+    {const P=(z,w,yt)=>({z,p:rsec(w,w,0.92,yt,0.01,0.2,n,'o')}),T=[P(0.7,0.24,1.24),P(0.6,0.26,1.27),P(-0.1,0.26,1.27),P(-0.18,0.24,1.24)];mLoft2(M,T,col,'paint',{wrap:true});mCap(M,T[0],col,'paint',1);mCap(M,T[3],col,'paint',-1);}
+    X.radiator(0.76,0.26,0.5,1.28,'vert',{});tube([[0.21,1.1,0.25],[0.24,1.2,0.25],[0.24,1.72,0.25]],0.03,'#2a2b2e','paint',hi?6:4);
+    if(hi){mLathe(M,[-0.22,1.0,0.1],'x',[[0,-0.1],[0.07,-0.08],[0.07,0.08],[0,0.1]],8,'#2a2b2e','paint');B(-0.05,0.3,zR-0.75,0.05,0.36,zR-0.2,iron,'paint');}
+    const sy=1.02,sz=zR-0.32;tube([[0,0.84,zR-0.05],[0,0.92,zR-0.2],[0,sy,sz]],0.035,iron,'paint',4);mLathe(M,[0,sy,sz],'y',[[0,0],[0.2,0.02],[0.25,0.1],[0.23,0.12]],hi?10:6,'#3a3b3e','paint',{two:true});
+    X.steer(0,sy+0.4,sz+0.5,0.2,0.75);X.drvF(0,sy+0.04,sz,sz+0.44,sy+0.4);wkLegs(X,0,sy+0.04,sz,zR+0.28,0.58,trC());X.eyeAt(0,sy+0.04,sz);
+    M.exh=[[0.24,1.74,0.25]];return {len:[zR-rR-0.05,zF+rF+0.12],track:tR+wR};}
+  if(kind==='crawler'){// гусеничный трактор: две гусеницы, мотор под капотом, навес; до 1917 года — рулевое колесо впереди на длинной раме
+    const xT=0.74,wT=0.34,loop=wkLoop(1.05,0.32,0.3,-1.05,0.36,0.34,-0.95,0.95,0.11),iron='#4a4d52',early=y<1917;
+    [-1,1].forEach(sd=>{wkTrack(X,sd*xT,wT,loop,{});wkDisc(X,sd*xT,0.36,-1.05,0.3,wT*0.5,iron,8);wkDisc(X,sd*xT,0.32,1.05,0.26,wT*0.5,iron,6);
+      if(hi)[-0.55,-0.1,0.35].forEach(z=>mLathe(M,[sd*(xT+wT*0.34),0.16,z],'x',[[0.12,0],[0,0.02*sd]],8,iron,'paint',{two:true}));});
+    B(-0.56,0.34,-1.2,0.56,0.6,1.15,'#232427','paint');
+    {const P=(z,w,yt)=>({z,p:rsec(w,w,0.6,yt,0.01,0.12,n,'o')}),T=[P(1.28,0.33,1.28),P(1.2,0.35,1.3),P(0.15,0.35,1.3),P(0.1,0.33,1.28)];mLoft2(M,T,col,'paint',{wrap:true});mCap(M,T[0],col,'paint',1);mCap(M,T[3],col,'paint',-1);
+      if(hi)for(let k=0;k<5;k++)[-1,1].forEach(sd=>tube([[sd*0.356,0.72,0.3+k*0.2],[sd*0.356,1.12,0.3+k*0.2]],0.011,shade(col,-0.45),'paint',3));}
+    X.radiator(1.33,0.31,0.62,1.3,'vert',{});mLathe(M,[0,0.86,-0.12],'x',[[0,-0.5],[0.17,-0.46],[0.17,0.46],[0,0.5]],hi?12:6,col,'paint');
+    tube([[0.3,1.25,0.5],[0.3,2.25,0.5]],0.035,'#2a2b2e','paint',hi?6:4);
+    B(-0.6,0.6,-1.2,0.6,0.66,0.0,'#6a4a2c','wood');X.seat(0,-0.55,1.02,0.52,0.4,0.36,{});
+    if(early){X.steer(0.22,1.5,-0.02,0.2,0.7);X.drvF(0.22,1.0,-0.55,-0.1,1.5);}else{[-1,1].forEach(sd=>tube([[0.22+sd*0.1,0.66,-0.05],[0.22+sd*0.1,1.3,-0.15]],0.014,'#8a8f96','chrome',3));X.drvF(0.22,1.0,-0.55,-0.16,1.3);}
+    wkLegs(X,0.22,1.0,-0.55,-0.1,0.66,(()=>{try{const kit=crewKit51(S,false);return kit.bib||shade(kit.coat||'#4a4038',-0.3);}catch(_){return '#3a3a42';}})());X.eyeAt(0.22,1.0,-0.55);
+    const yc=2.02;[[1.12],[-1.12]].forEach(([z])=>[-1,1].forEach(sd=>tube([[sd*0.55,0.6,z],[sd*0.66,yc,z]],0.024,iron,'paint',4)));
+    {const R=[];for(let k=0;k<=6;k++){const u=k/6*2-1;R.push([[u*0.8,yc+0.1*(1-u*u),-1.35],[u*0.8,yc+0.1*(1-u*u),1.4]]);}mGrid(M,R,K.canvas,'cloth',{ref:()=>[0,0,0],two:true});}
+    let zf=1.45;if(early){// рулевое колесо впереди: длинная балка и вилка
+      const zw=2.55,rw=0.4;tube([[0,0.72,1.2],[0,0.95,1.9],[0,1.0,zw]],0.05,iron,'paint',hi?6:4);[-1,1].forEach(sd=>tube([[sd*0.2,1.0,zw],[sd*0.2,rw,zw]],0.03,iron,'paint',4));tube([[-0.2,1.0,zw],[0.2,1.0,zw]],0.03,iron,'paint',4);
+      wkSteelWheel(X,0.0001,rw,zw,0.3,true,{rib:1,col:shade(col,-0.1),spokes:hi?8:5});zf=zw+rw;}
+    M.exh=[[0.3,2.27,0.5]];return {len:[-1.45,zf+0.08],track:xT*2+wT};}
+  if(kind==='armored'){// бронеавтомобиль: бронекапот со створками, наклонный лобовой лист со щелями, корпус, башня с пулемётом
+    const wb=3.0,t=1.5,r=0.45,yf=r+0.16,zn=wb/2+0.38,zh=wb/2-0.5,zb=-wb/2-0.45;X.setWt(y<1914?'wood':'disc');X.chassis(wb,t,r,r,0.12,{solid:true,yf,fw:0.4,zEng0:wb/2-0.9,zEng1:wb/2});
+    const P=(z,w,yt,tw)=>({z,p:rsec(w,tw===undefined?w*0.93:tw,yf-0.04,yt,0.01,0.03,n,'o')});
+    const hood=[P(zn,0.36,yf+0.6),P(zn-0.06,0.4,yf+0.66),P(zh,0.45,yf+0.72)];mLoft2(M,hood,col,'paint',{wrap:true});mCap(M,hood[0],col,'paint',1);
+    const body=[P(zh,0.72,yf+0.74,0.5),P(zh-0.42,0.75,yf+1.32,0.66),P(zb+0.3,0.75,yf+1.32,0.66),P(zb,0.66,yf+1.12,0.56)];mLoft2(M,body,col,'paint',{wrap:true});mCap(M,body[0],col,'paint',1);mCap(M,body[3],col,'paint',-1);
+    // створки радиатора, смотровые щели, заклёпки, дверь
+    if(hi){for(let k=0;k<5;k++)B(-0.3,yf+0.08+k*0.1,zn-0.005,0.3,yf+0.14+k*0.1,zn+0.012,shade(col,-0.35),'paint');
+      [-0.3,0.3].forEach(x=>B(x-0.13,yf+1.02,zh-0.3,x+0.13,yf+1.07,zh-0.2,'#0e0e10','paint'));[-1,1].forEach(sd=>{B(sd*0.71-0.01,yf+1.05,zh-0.75,sd*0.71+0.012,yf+1.1,zh-0.5,'#0e0e10','paint');
+        tube([[sd*0.752,yf+0.15,-0.1],[sd*0.72,yf+1.2,-0.1],[sd*0.72,yf+1.2,-0.75],[sd*0.752,yf+0.15,-0.75]],0.008,shade(col,-0.45),'paint',3);});}
+    const zt=-0.55,ty=yf+1.32;mLathe(M,[0,ty,zt],'y',[[0.58,0],[0.58,0.44],[0.5,0.52],[0,0.54]],hi?16:8,col,'paint');
+    tube([[0,ty+0.26,zt+0.5],[0,ty+0.26,zt+1.12]],0.045,'#2a2b2e','metal',hi?8:4);if(hi)mRBox(M,-0.09,ty+0.16,zt+0.5,0.09,ty+0.36,zt+0.66,0.02,shade(col,-0.2),'paint');
+    [-1,1].forEach(sd=>{mSweep(M,sd*t/2,arcPath(r,wb/2,r+0.08,-0.2,Math.PI*0.75,hi?10:5),0.3,0.01,col,[r,wb/2]);mSweep(M,sd*t/2,arcPath(r,-wb/2,r+0.08,Math.PI*0.25,Math.PI*1.15,hi?10:5),0.3,0.01,col,[r,-wb/2]);});
+    X.headlamp(0,yf+0.86,zn-0.3,0.11,'drum');X.tailLamp(0.5,yf+0.2,zb-0.03);X.eyeAt(0.25,yf+0.5,zh-0.6);
+    return {len:[zb-0.08,zn+0.1],track:t+0.14};}
+  if(kind==='ltank'){// лёгкий танк: высокие гусеницы с большим передним колесом, узкий корпус, башня с короткой пушкой, «хвост»
+    const xT=0.7,wT=0.34,zi=1.5,yi=0.62,ri=0.5,zs=-1.45,ysp=0.42,rs=0.38,loop=wkLoop(zi,yi,ri,zs,ysp,rs,-1.25,1.05,0.115);
+    [-1,1].forEach(sd=>{wkTrack(X,sd*xT,wT,loop,{frame:shade(col,-0.3)});wkDisc(X,sd*xT,yi,zi,ri-0.06,wT*0.45,'#8a6a44',10);wkDisc(X,sd*xT,ysp,zs,rs-0.06,wT*0.45,'#4a4d52',8);
+      if(hi)[-0.9,-0.45,0,0.45,0.9].forEach(z=>mLathe(M,[sd*(xT+wT*0.34),0.14,z],'x',[[0.1,0],[0,0.02*sd]],8,'#4a4d52','paint',{two:true}));});
+    const P=(z,w,yb,yt,tw)=>({z,p:rsec(w,tw===undefined?w*0.92:tw,yb,yt,0.01,0.03,n,'o')});
+    const H=[P(1.72,0.4,0.5,0.86),P(1.25,0.5,0.34,1.12),P(0.85,0.52,0.3,1.46),P(-0.25,0.52,0.3,1.46),P(-1.0,0.52,0.32,1.3),P(-1.75,0.46,0.4,1.0)];mLoft2(M,H,col,'paint',{wrap:true});mCap(M,H[0],col,'paint',1);mCap(M,H[5],col,'paint',-1);
+    if(hi){B(-0.2,1.14,1.1,0.2,1.19,1.21,'#0e0e10','paint');[-1,1].forEach(sd=>{for(let k=0;k<4;k++)B(sd*0.5-0.012,0.75+k*0.09,-1.55,sd*0.5+0.012,0.8+k*0.09,-0.95,shade(col,-0.35),'paint');});
+      mLathe(M,[0.58,1.2,-1.0],'z',[[0,-0.4],[0.07,-0.38],[0.07,0.3],[0,0.32]],8,'#3a2e28','paint');}
+    // башня: гранёная, с колпаком; короткая пушка в маске
+    const tz=0.3,ty=1.46;mLathe(M,[0,ty,tz],'y',[[0.5,0],[0.5,0.46],[0.44,0.54],[0.18,0.57],[0.18,0.68],[0.1,0.73],[0,0.74]],8,col,'paint');
+    mRBox(M,-0.14,ty+0.14,tz+0.42,0.14,ty+0.4,tz+0.58,0.03,shade(col,-0.15),'paint');tube([[0,ty+0.27,tz+0.5],[0,ty+0.27,tz+1.08]],0.045,'#2a2b2e','metal',hi?8:4);
+    // «хвост» для рвов: две дуги и перемычки
+    [-1,1].forEach(sd=>tube([[sd*0.42,0.95,-1.72],[sd*0.4,0.8,-2.2],[sd*0.34,0.42,-2.62]],0.03,shade(col,-0.2),'paint',hi?5:3));tube([[-0.34,0.42,-2.62],[0.34,0.42,-2.62]],0.03,shade(col,-0.2),'paint',4);tube([[-0.4,0.8,-2.2],[0.4,0.8,-2.2]],0.025,shade(col,-0.2),'paint',4);
+    X.eyeAt(0,1.0,1.0);M.exh=[[0.58,1.2,-1.42]];return {len:[-2.68,zi+ri+0.05],track:xT*2+wT};}
+  return null;}
+// Знаки на фургоне: красный крест (санитарный), полоса и рожок (почта); у военно-санитарного — брезентовый верх
+function vanDeco51(X,G){const {M,S,hi,tube}=X;let b=null;try{b=byId(BODIES,S.b);}catch(_){}const k=b&&typeof bodyKind==='function'?bodyKind(b):'';if(k!=='amb'&&k!=='mamb'&&k!=='mail')return;
+  const {bw,bh,yf,z0,z1}=G,zc=(z0+z1)/2-0.1,yc=yf+bh*0.62;
+  [-1,1].forEach(sd=>{const x=sd*(bw+0.006),nrm=[x-sd,yc,zc];
+    if(k==='mail'){mFace(M,[[x,yf+bh*0.42,z0+0.12],[x,yf+bh*0.42,z1-0.2],[x,yf+bh*0.52,z1-0.2],[x,yf+bh*0.52,z0+0.12]],'#e8c040','paint',nrm).bias=-0.6;
+      if(hi){const C=[];for(let i=0;i<=10;i++){const a=i/10*Math.PI*1.5;C.push([x+sd*0.004,yc+0.18+Math.sin(a)*0.11,zc+Math.cos(a)*0.11]);}tube(C,0.018,'#e8c040','paint',3);}return;}
+    const disc=[];for(let i=0;i<14;i++){const a=i/14*Math.PI*2;disc.push([x,yc+Math.sin(a)*0.27,zc+Math.cos(a)*0.27]);}mFace(M,disc,'#f2efe6','paint',nrm).bias=-0.6;
+    const x2=x+sd*0.004;mFace(M,[[x2,yc-0.2,zc-0.065],[x2,yc-0.2,zc+0.065],[x2,yc+0.2,zc+0.065],[x2,yc+0.2,zc-0.065]],'#b8322a','paint',nrm).bias=-0.8;mFace(M,[[x2,yc-0.065,zc-0.2],[x2,yc-0.065,zc+0.2],[x2,yc+0.065,zc+0.2],[x2,yc+0.065,zc-0.2]],'#b8322a','paint',nrm).bias=-0.8;});
+  if(k==='mamb')mRBox(M,-bw-0.012,yf+bh-0.3,z0-0.01,bw+0.012,yf+bh+0.02,z1+0.02,0.1,'#8a8262','cloth');}
 
 /* ================= МИР ГОНКИ: деревья, дома, трибуны, зрители — объёмные спрайты, свет слева сверху ================= */
 // Деревья и мелочь рисуются «живописно»: шары листвы с подсветкой как у сферы, мазки листьев, тени под кроной.
@@ -27676,8 +28238,7 @@ function carGalHTML(md,k){const v=CAR_VIEWS.find(x=>x.k===k)||CAR_VIEWS[0];
 const CARD3D=new Map();
 function carArt(md,opt={}){
   if(isMoto(md))return motoSVG(md,opt);   // 0.32: мотоцикл — рисунок сбоку (3D — в 0.33)
-  // 0.51: новые виды техники (автобус, пожарная, трактор, танк…) — рисунок сбоку: трёхмерных моделей у них пока нет, а общий «грузовик» обманывал бы
-  try{const b0=byId(BODIES,md.b);if(b0&&b0.art)return carSVG(md,opt);}catch(_){}
+  // 0.51, этап 4: у новых видов техники был рисунок сбоку — трёхмерных моделей не было; тема 10: модели есть у всех (46g-work51.js), рисунок — запасной
   try{const y=opt.y||(md.launched!=null&&md.status!=='dev'&&md.status!=='draft'?1895+Math.floor(md.launched/12):(G?G.y:1895));
     // тот же облик, что в гонке: кузов, цвет, колёса, капот по мотору; для газеты о гонке — в гоночной подготовке, с номером и экипажем
     const prep=opt.prep||0,crew=prep>0||!!opt.crew,S=modelSpec(md,prep,y,{mech:prep>0&&mechanicEra(y),num:prep>0?opt.num||0:0,country:opt.country||(G&&G.country)}),o={w:opt.w||600,crew};if(opt.yaw!==undefined){o.yaw=opt.yaw;o.pitch=opt.pitch;}
@@ -29578,7 +30139,8 @@ function pStand(){return proto('stand',(mb)=>{const {M,R2,people}=standModel(1);
   const b=mb.bb;pBox(mb,(b[0]+b[3])/2,-2.2,(b[2]+b[5])/2,(b[3]-b[0])/2*0.95,2.22,(b[5]-b[2])/2*0.95,'#6a5a48',MID.wood);});}
 /* ---------- люди: атлас фигур эпохи (два кадра — машут) ---------- */
 // Атлас зрителей из объёмных моделей (0.18): каждый снимается в 3D с мягким светом (два кадра — стоит и машет)
-function r3dPeopleAtlas3D(y){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96,rnd=mulberry32(hashStr('crowd3|'+y)),era=[1900,1910,1925][y<1906?0:y<1919?1:2],out={crowd:[],marsh:[],gend:[],photo:[]};
+// 0.51 (тема 10): атлас — свой для страны гонки (одежда по стране), зрителей 44 вместо 30; неподвижным хватает одной клетки
+function r3dPeopleAtlas3D(y,cc){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96,rnd=mulberry32(hashStr('crowd3|'+y+'|'+(cc||''))),era=[1900,1910,1925][y<1906?0:y<1919?1:2],out={crowd:[],marsh:[],gend:[],photo:[]};
   const lv=Math.floor(Math.log2(W))+1,tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texStorage2D(gl.TEXTURE_2D,lv,gl.RGBA8,W,H);
   const fbT=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbT);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
   const ms=Math.max(0,Math.min(4,gl.getParameter(gl.MAX_SAMPLES)||0)),cb=gl.createRenderbuffer(),db=gl.createRenderbuffer();
@@ -29588,23 +30150,28 @@ function r3dPeopleAtlas3D(y){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96
   gl.viewport(0,0,W,H);gl.disable(gl.SCISSOR_TEST);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.enable(gl.SCISSOR_TEST);
   const E={sun:v3n([-0.45,0.6,0.66]),sunC:[1.75,1.66,1.5],skyC:[0.52,0.56,0.63],gndC:[0.3,0.27,0.22],hzC:[0.7,0.74,0.78],zeC:[0.45,0.55,0.7],fogS:[1,1,1],fogD:0,exp:0.82,night:0,hl:0,lamp:0,envRot:0,envK:0.4};
   const sv={VP:R3.VP,eye:R3.eye,post:R3.post,shOn:R3.shOn};R3.post=true;R3.shOn=false;const Pm=m4(),V=m4(),VP=m4();
-  let x=2,yy=2,rowH=0;const cell=(w,h)=>{if(x+w*2>W){x=2;yy+=rowH+4;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*2+4;return c;};
-  const shoot=(build,wm,hm,anim)=>{const c=cell(Math.round(wm*ppm),Math.round(hm*ppm));if(c.y+c.h>H)return null;const bld=build;
-    for(let fr=0;fr<2;fr++){const M=new Mesh();build(M,fr);const mb=new MB();mbFromMesh(mb,M,{lift:0.003,step:0.001,car:true});const g=g3Mesh(mb);if(!g)continue;
+  let x=2,yy=2,rowH=0;const cell=(w,h,n)=>{if(x+w*n>W){x=2;yy+=rowH+4;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*n+4;return c;};
+  const shoot=(build,wm,hm,anim)=>{const c=cell(Math.round(wm*ppm),Math.round(hm*ppm),anim?2:1);if(c.y+c.h>H)return null;const bld=build;
+    for(let fr=0;fr<(anim?2:1);fr++){const M=new Mesh();build(M,fr);const mb=new MB();mbFromMesh(mb,M,{lift:0.003,step:0.001,car:true});const g=g3Mesh(mb);if(!g)continue;
       gl.viewport(c.x+fr*c.w,c.y,c.w,c.h);gl.scissor(c.x+fr*c.w,c.y,c.w,c.h);
       // вверх ногами: верх фигуры — в начале строки атласа (как у прежнего рисованного)
-      const ey=hm*0.5+0.5;m4ortho(Pm,-wm/2,wm/2,hm-0.05-ey,-0.05-ey,0.1,40);const eye=[0,ey,10],f=v3n([0,-0.5,-10]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);m4view(V,eye,rt,up,f);m4mul(VP,Pm,V);R3.VP=VP;R3.eye=eye;
+      // 0.51: клетка — от земли (−5 см) до hm−5 см. Раньше окно съёмки было сдвинуто на полметра вниз: шляпы и головы выше 1,75 м
+      // срезались, а ноги «плаката» висели в полуметре над землёй (камера смотрит чуть сверху — её сдвиг не был учтён)
+      const ey=hm*0.5+0.5;m4ortho(Pm,-wm/2,wm/2,hm+0.45-ey,0.45-ey,0.1,40);const eye=[0,ey,10],f=v3n([0,-0.5,-10]),rt=v3n(v3x([0,1,0],f)),up=v3x(f,rt);m4view(V,eye,rt,up,f);m4mul(VP,Pm,V);R3.VP=VP;R3.eye=eye;
       const P=r3dUse('atl',E,W,H);gl.uniformMatrix4fv(P.u.u_model,false,m4());g3Draw(g);g3Free(g);}
     return {u:c.x/W,v:c.y/H,du:c.w/W,dv:c.h/H,w:wm,h:hm,anim:anim?1:0,bld};};
   // у каждого — как построить его объёмную модель (рядом с камерой люди рисуются 3D, 0.21): полная и упрощённая
   const lod0=o=>(M,fr)=>mPerson3(M,Object.assign({},o,{lod:0}),fr);
-  try{for(let i=0;i<30;i++){const o=personLook3(rnd,era,'crowd');o.wave=rnd()<0.45;const e=shoot((M,fr)=>mPerson3(M,o,fr),o.item==='umb'?1.2:0.9,o.type==='child'?1.7:2.3,o.wave);if(e){e.child=o.type==='child';e.bld0=lod0(o);out.crowd.push(e);}}
-    for(let v=0;v<2;v++){const o=personLook3(rnd,era,'marsh');const e=shoot((M,fr)=>mPerson3(M,o,fr),1.9,2.45,1);if(e){e.bld0=lod0(o);out.marsh.push(e);}}
-    {const o=personLook3(rnd,era,'gend');const e=shoot((M,fr)=>mPerson3(M,o,0),0.9,2.1,0);if(e){e.bld0=(M)=>mPerson3(M,Object.assign({},o,{lod:0}),0);out.gend.push(e);}}
-    {const o=Object.assign(personLook3(rnd,era,'crowd'),{type:'man',hat:'cap',hatc:'#3a3026',frock:false});const e=shoot((M,fr)=>mPhotographer(M,o),1.9,2.1,0);if(e)out.photo.push(e);}
+  try{// сперва те, без кого нельзя (маршалы, страж порядка, фотограф, механики), потом зрители — сколько поместится
+    for(let v=0;v<2;v++){const o=personLook3(rnd,era,'marsh',cc);const e=shoot((M,fr)=>mPerson3(M,o,fr),1.9,2.75,1);if(e){e.bld0=lod0(o);out.marsh.push(e);}}
+    {const o=personLook3(rnd,era,'gend',cc);const e=shoot((M,fr)=>mPerson3(M,o,0),0.9,2.3,0);if(e){e.bld0=(M)=>mPerson3(M,Object.assign({},o,{lod:0}),0);out.gend.push(e);}}
+    {const o=Object.assign(personLook3(rnd,era,'crowd',cc),{type:'man',girl:false,top:'jacket',legs:'plain',hat:'cap',hatc:'#3a3026',frock:false,stoop:0,bh:1,belt:undefined});const e=shoot((M,fr)=>mPhotographer(M,o),1.9,2.1,0);if(e)out.photo.push(e);}
     // 0.30: механики — в синей робе и кепке, работают у машины (руки ходят)
-    out.mech=[];for(let v=0;v<2;v++){const o=Object.assign(personLook3(rnd,era,'crowd'),{type:'man',coat:v?'#2f3a4a':'#3a3f4a',trousers:'#2b3340',hat:'cap',hatc:'#2a2620',frock:false,vest:false,item:'',tie:'',wave:true});
-      const e=shoot((M,fr)=>mPerson3(M,o,fr),0.9,2.3,1);if(e){e.bld0=lod0(o);out.mech.push(e);}}}
+    out.mech=[];{const wk={fr:'#3a5a8a',be:'#3a5a8a',mc:'#3a5a8a',uk:'#7a6a50',ie:'#7a6a50',it:'#5a6a78',es:'#5a6a78',us:'#3f5578',ru:'#3a3a40'}[cc]||'#3a3f4a';
+      for(let v=0;v<2;v++){const o=Object.assign(personLook3(rnd,era,'crowd',cc),{type:'man',girl:false,top:v?'overall':'smock',belt:0,legs:'plain',coat:v?'#2f3a4a':wk,trousers:v?wk:'#2b3340',shirt:'#c8c2b0',hat:cc==='fr'&&era>=1919&&v?'beret':'cap',hatc:'#2a2620',frock:false,item:'',tie:'',wave:true,stoop:0,hands:'down',glasses:0});
+        const e=shoot((M,fr)=>mPerson3(M,o,fr),0.9,2.3,1);if(e){e.bld0=lod0(o);out.mech.push(e);}}}
+    for(let i=0;i<44;i++){const o=personLook3(rnd,era,'crowd',cc);o.wave=rnd()<0.42&&!o.stoop&&o.item!=='cane'&&o.item!=='binoc'&&o.item!=='basket';if(o.wave&&(o.hands==='cross'||o.hands==='shade'))o.hands='down';
+      const e=shoot((M,fr)=>mPerson3(M,o,fr),o.item==='umb'?1.2:o.hat==='conic'||o.hat==='fhat'&&era<1919?1.0:0.9,o.type==='child'?1.75:2.4,o.wave);if(e){e.child=o.type==='child';e.bld0=lod0(o);out.crowd.push(e);}}}
   finally{gl.disable(gl.SCISSOR_TEST);Object.assign(R3,sv);}
   gl.bindFramebuffer(gl.READ_FRAMEBUFFER,fbM);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,fbT);gl.blitFramebuffer(0,0,W,H,0,0,W,H,gl.COLOR_BUFFER_BIT,gl.NEAREST);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);[fbM,fbT].forEach(f=>gl.deleteFramebuffer(f));[cb,db].forEach(b=>gl.deleteRenderbuffer(b));
@@ -29613,6 +30180,11 @@ function r3dPeopleAtlas3D(y){texBind(R3.sky);const gl=G3.gl,W=2048,H=1024,ppm=96
   gl.enable(gl.CULL_FACE);gl.viewport(0,0,G3.cv.width,G3.cv.height);
   if(!out.crowd.length||!out.marsh.length||!out.gend.length||!out.photo.length){gl.deleteTexture(tex);throw new Error('atlas empty');}
   out.bld=true;return {a:out,t:tex};}
+// 0.51: атласов стало по одному на страну и эпоху — держим три последних, остальные освобождаем (фактура 2048×1024 и модели людей)
+function r3dAtlasKeep(C,key){const L=C.atlasLRU||(C.atlasLRU=[]),i=L.indexOf(key);if(i>=0)L.splice(i,1);L.push(key);
+  while(L.length>3){const k=L.shift(),A=C['atlas'+k];if(!A)continue;try{const gl=G3.gl;if(A.t)gl.deleteTexture(A.t);
+      ['crowd','marsh','gend','photo','mech'].forEach(n=>(A.a[n]||[]).forEach(e=>{const seen=new Set();(e.m3||[]).concat(e.m3l||[]).forEach(m=>{if(m&&!seen.has(m)){seen.add(m);g3Free(m);}});e.m3=e.m3l=null;}));}catch(e){console.warn('atlas free',e);}
+    delete C['atlas'+k];delete C['p3d'+k];}}
 function r3dPeopleAtlas(y){
   const S=1024,cv=mkCanvas(S,S),g=cv.getContext('2d'),P=48,cw=P,ch=Math.round(P*2.3),rnd=mulberry32(hashStr('crowd'+y)),out={crowd:[],marsh:[],gend:[],photo:[]};let x=0,yy=0,rowH=0;
   const cell=(w,h)=>{if(x+w*2>S){x=0;yy+=rowH+2;rowH=0;}rowH=Math.max(rowH,h);const c={x,y:yy,w,h};x+=w*2+2;return c;};
@@ -29832,7 +30404,9 @@ function r3dSetup(){
   R3.F=r3dField(T);R3.W=R.wx||r3dWeather(T);R3.sky=tx.sky[R3.W.mood]||tx.sky.clear||Object.values(tx.sky)[0]||null;
   // фактуры, не зависящие от трассы, живут, пока жив 3D-контекст: следующая гонка стартует быстрее
   const C=G3.cache,era=R.rc.y<1906?0:R.rc.y<1919?1:2;
-  if(!C['atlas'+era]){try{C['atlas'+era]=r3dPeopleAtlas3D([1900,1910,1925][era]);}catch(e){console.warn('atlas3d',e);const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+era]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}}R3.atlas=C['atlas'+era].a;R3.atlasEra=era;R3.texPeople=C['atlas'+era].t;
+  {const cc=(T.cfg&&T.cfg.host)||R.rc.c||'',ak=era+'|'+cc;
+    if(!C['atlas'+ak]){try{C['atlas'+ak]=r3dPeopleAtlas3D([1900,1910,1925][era],cc);}catch(e){console.warn('atlas3d',e);const a=r3dPeopleAtlas([1900,1910,1925][era]);C['atlas'+ak]={a,t:g3Tex(a.cv,{pre:true,cs:true,ct:true})};}}
+    R3.atlas=C['atlas'+ak].a;R3.atlasEra=ak;R3.texPeople=C['atlas'+ak].t;r3dAtlasKeep(C,ak);}
   const M=r3dMaps(T,R3.F,R3.W);R3.texCM=g3TexBytes(M.SZ,M.A);R3.texSM=g3TexBytes(M.SZ,M.B);R3.cmU=M.u;R3.lays=r3dLayers(T,R3.F);
   // карта земли для физики (поле, лес, песок) — уменьшенная копия
   {const S=256,st=M.SZ/S,sm=new Uint8Array(S*S*4);for(let j=0;j<S;j++)for(let i=0;i<S;i++){const o=(Math.floor(j*st)*M.SZ+Math.floor(i*st))*4,q=(j*S+i)*4;sm[q]=M.B[o];sm[q+1]=M.B[o+1];sm[q+2]=M.B[o+2];sm[q+3]=M.B[o+3];}R3.smap=sm;R3.smapS=S;}
@@ -31610,7 +32184,9 @@ const mtof=n=>440*Math.pow(2,(n-69)/12);
 function auInit(){
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return;}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
-  try{const c=new C();AU.ctx=c;AU.master=c.createGain();AU.master.connect(c.destination);
+  try{const c=new C();AU.ctx=c;AU.master=c.createGain();
+    // 0.51, тема 10: ограничитель на выходе — эффекты, мотор и окружение шли на выход без него и в сумме могли перегружать (треск, визг)
+    try{const lim=c.createDynamicsCompressor();lim.threshold.value=-5;lim.knee.value=4;lim.ratio.value=14;lim.attack.value=0.003;lim.release.value=0.16;AU.master.connect(lim);lim.connect(c.destination);AU.lim=lim;}catch(_){AU.master.connect(c.destination);}
     AU.mus=c.createGain();AU.mus.connect(AU.master);AU.fx=c.createGain();AU.fx.connect(AU.master);
     const comp=c.createDynamicsCompressor();AU.mus.disconnect();AU.mus.connect(comp);comp.connect(AU.master);
     const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
@@ -31807,11 +32383,17 @@ function cueEnd(a){const c=AU.cue;if(!c||c.a!==a)return;AU.cue=null;clearTimeout
   if(c.was||c.want)setTimeout(()=>{if(AU.cue||(AU.synth&&AU.synth.cue))return;try{musicPlay(c.want===2);if(AU.el&&!AU.el.paused)musDuck(0.1);}catch(_){}},350);}
 // мелодию по поводу обрывает сам игрок: «следующая», «пауза», музыка гонки, выключение музыки
 function cueStop(){const c=AU.cue;if(!c)return;AU.cue=null;clearTimeout(AU.cueT);try{clearInterval(c.a.fadeI);clearTimeout(c.a.capT);c.a.pause();}catch(_){}}
+// 0.51, тема 10 (писк и задвоение). Запись «по поводу» запускается не мгновенно: пока она грузится, play() ещё не выполнен. Если в эту долю
+// секунды её сменяет более важная мелодия, игрок жмёт «паузу» или стартует гонка, pause() обрывает ожидание, и play() завершается отказом
+// «прервано». Раньше любой отказ считался поломкой записи: её помечали негодной до конца сеанса и тут же запускали запасную мелодию.
+// Отсюда и «задвоение» (запасная — поверх той, что прервала), и «писк» (гимн на церемониях дальше играл синтезатор, а не оркестр).
+// Теперь «прервано» — не ошибка: запись цела, запасная не нужна. Запрет автозапуска тоже не портит запись — играет запасная, в следующий раз — запись.
+function cuePlayFail(a,e,fb){const nm=e&&e.name||'';if(nm==='AbortError')return;if(nm!=='NotAllowedError')a.bad=1;cueEnd(a);if(fb)fb();}
 function auCue(id,vol,fb,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb();return;}
   try{if(!a){a=CUE[id]=new Audio('music/own_cue_'+id+'.m4a');a.preload='auto';a.addEventListener('error',()=>{a.bad=1;});}
     if(!cueBegin(a,prio||1))return;
     a.volume=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);try{a.currentTime=0;}catch(_){}
-    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(e=>cuePlayFail(a,e,fb));}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.30: ФАНФАРЫ ПО ПОВОДУ — настоящие записи оркестров (файлы рядом с игрой, в APK вшиты: music/fan_*.m4a);
 // без файла — свои оркестровые темы игры. Победа — «Первый сигнал» горна (его трубят на ипподромах), кубок — дробь и «Грандиозо»,
 // титул — трубы «Аиды», рекорд — «Сигнал адъютанта», первенство — «К знамени», медаль — туш, сделка — «Сбор», наследие —
@@ -31840,7 +32422,7 @@ function auCueSrc(id,src,vol,fb,maxSec,prio){let a=CUE[id];if(a&&a.bad){if(fb)fb
     clearInterval(a.fadeI);const v0=clamp(vol*(AU.on.vol!==undefined?AU.on.vol:1),0,1);a.volume=v0;try{a.currentTime=0;}catch(_){}
     // 0.30: длинную запись (фанфары) после maxSec плавно уводим — праздник короче оркестровой пьесы
     if(maxSec){clearTimeout(a.capT);a.capT=setTimeout(()=>{if(a.paused)return;const t0=performance.now();a.fadeI=setInterval(()=>{const k=1-(performance.now()-t0)/1800;if(k<=0){clearInterval(a.fadeI);try{a.pause();}catch(_){}return;}try{a.volume=v0*k;}catch(_){}},60);},maxSec*1000);}
-    const p=a.play();if(p&&p.catch)p.catch(()=>{a.bad=1;cueEnd(a);if(fb)fb();});}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
+    const p=a.play();if(p&&p.catch)p.catch(e=>cuePlayFail(a,e,fb));}catch(e){if(a){a.bad=1;cueEnd(a);}if(fb)fb();}}
 // 0.25: короткая тема (фанфары, тема соперника) звучит не поверх музыки, а вместо неё: музыка приглушается и потом плавно возвращается
 function musDuck(sec){const el=AU.el;if(!el||el.paused)return;const v0=()=>R?0.2:0.5;clearTimeout(AU.duckT);clearInterval(AU.duckI);
   try{el.volume=Math.min(el.volume,v0()*0.12);}catch(_){}AU.ducked=1;

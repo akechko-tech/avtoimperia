@@ -285,8 +285,8 @@ function carModel(S){
     mGrid(M,G,K.tyre,'tyre',{wrap:true,ref:c=>{if(ax==='z'){const dx=c[0]-x,dy=c[1]-yy,l=Math.hypot(dx,dy)||1;return [x+dx/l*R0,yy+dy/l*R0,z];}const dz=c[2]-z,dy=c[1]-yy,l=Math.hypot(dz,dy)||1;return [x,yy+dy/l*R0,z+dz/l*R0];}});
     mLathe(M,[x,yy,z],ax,[[R0-tr,-tw*0.3],[R0-tr*0.7,tw*0.3],[0,tw*0.3]],seg,K.chassis,'paint');};
   const bumper=(z,w,yy)=>{[-0.035,0.035].forEach(dy=>tube([[-w,yy+dy,z-0.06],[-w*0.9,yy+dy,z],[w*0.9,yy+dy,z],[w,yy+dy,z-0.06]],0.018,K.bright,K.brightMat,5));};
-  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew3(M,x,seatY,z,crewKit3(y,S.num),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
-  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew3(M,x,seatY,z,crewKit3(y,(S.num|0)+1),true,S,null);};
+  const drvF=(x,seatY,z,handZ,handY)=>{if(!crew)return;MTAG.l=3;mCrew3(M,x,seatY,z,crewKit51(S,false),false,S,[x,handY||seatY+0.5,handZ||z+0.4]);MTAG.l=0;M.eye=[x,seatY+0.8,z+0.06];};
+  const mechF=(x,seatY,z)=>{if(!crew)return;mCrew3(M,x,seatY,z,crewKit51(S,true),true,S,null);};
   const eyeAt=(x,seatY,z)=>{if(!M.eye)M.eye=[x,seatY+0.8,z+0.06];};
   // табличка с номером: центр c, нормаль nrm (наружу), ось «вправо» u; w×h
   const plate=(c,nrm,u,w,h,round)=>{if(!S.num||!hi)return;const v=v3x(nrm,u).map(q=>-q),P=[],k=round?10:4;
@@ -298,6 +298,9 @@ function carModel(S){
   const hk=S.hp===undefined?0:([-0.1,-0.05,0,0.1,0.22,0.36][S.hp]||0),strip=!!S.strip,lux=K.lux;
   const r0=y<1901?0.46:y<1906?0.44:y<1914?0.42:y<1922?0.39:0.355,tw0=y<1906?0.08:y<1914?0.095:y<1922?0.11:0.14;
   let len=[-1.6,1.6],track=1.38;
+  // 0.51, тема 10: у новой техники (тяжёлый грузовик, тягач, пожарная, цистерна, самосвал, мусоровоз, тракторы, броневик, танк) — свой кузов
+  {const wk=typeof workKind51==='function'?workKind51(S):'';if(wk){const X={M,S,K,hi,y,col,crew,B,tube,WH,chassis,radiator,hood,headlamp,sideLamp,tailLamp,windscreen,steer,seat,tub,drvF,mechF,eyeAt,plate,setWt:v=>{wt=v;}};
+      const r=workModel51(wk,X);if(r){len=r.len;track=r.track;if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];M.len=len;M.track=track;return M;}}}
   if(st==='carriage'){
     const wb=1.7,t=1.22,rF=0.36,rR=0.46;wt='wood';chassis(wb,t,rF,rR,0.06,{yf:0.62,fw:0.35,zEng0:-0.6,zEng1:-0.1});
     // кузов «вис-а-ви»: высокий ящик, изогнутая спинка, крылья-щитки
@@ -379,6 +382,7 @@ function carModel(S){
       [-1,1].forEach(sd=>{const x=sd*(t/2+(big?tw0+0.05:0));mSweep(M,x,arcPath(rF,wb/2,rF+0.07,-0.3,Math.PI*0.7,hi?10:5),0.3,0.03,K.dark,[rF,wb/2]);});}
     else{const bw=bus?0.93:0.74,bh=bus?1.78:1.45,P=(z,w,h,rr)=>({z,p:rsec(w,w-0.02,yf+0.05,yf+h,0.02,rr,n,'o')});const box=[P(z1,bw,bh,0.08),P(z0+0.05,bw,bh,0.08),P(z0,bw-0.02,bh-0.02,0.06)];
       mLoft2(M,box,col,'paint',{wrap:true});mCap(M,box[2],col,'paint',-1);mCap(M,box[0],col,'paint',1);
+      if(!bus&&typeof vanDeco51==='function')vanDeco51({M,S,hi,tube},{bw,bh,yf,z0,z1});   // 0.51: красный крест санитарной, полоса и рожок почтовой
       // автобус: ряд окон по бортам, заднее окно, светлая крыша и пояс под окнами
       if(bus){const nw=S.b==='b15'?6:5,ya=yf+0.98,yb2=yf+1.5,za0=z0+0.3,L=z1-0.28-za0;for(let k=0;k<nw;k++){const za=za0+L*k/nw+0.05,zb=za0+L*(k+1)/nw-0.05;[-1,1].forEach(sd=>B(sd*(bw+0.004)-0.008,ya,za,sd*(bw+0.004)+0.008,yb2,zb,'#1e2a33','glass'));}
         B(-bw*0.62,ya,z0-0.012,bw*0.62,yb2,z0+0.004,'#1e2a33','glass');B(-bw-0.012,yf+bh-0.03,z0-0.02,bw+0.012,yf+bh+0.05,z1+0.03,shade(col,0.5),'paint');

@@ -61,7 +61,11 @@ function air3dMesh(md,y,c){const key=air3dKey(md,y,c);if(AIR3D_CACHE.has(key))re
       if(i===S-1)mb.poly([0,1,2,3,4].map(k=>{const q=prof(k);return [X1,Y1+q[1]*t1,q[0]];}),[sd,0,0],colD,skinM);}}
     if(mark&&marked){const xm=x1*0.74,zm=z-cc*0.47,rr=Math.min(cc*0.38,0.8);for(const sd of [-1,1]){const yb=yy+Math.abs(xm)*dh;disk(sd*xm,yb+tt*0.75,zm,rr,[0,1,0]);disk(sd*xm,yb-0.004,zm,rr,[0,-1,0]);}}};
   const strut=(a,q,w)=>mb.rod(a,q,w||0.07,hex2rgb(wood),MID.wood),wire=(a,q)=>mb.rod(a,q,0.014,hex2rgb('#8f9296'),MID.metal);
-  const pilot=(x,yy,z)=>{pBlob(pm,x,yy+0.17,z,0.13,0.15,0.14,leather,R5,lod,MID.leather);pBlob(pm,x,yy+0.1,z+0.12,0.09,0.05,0.04,'#3a3a3a',R5,0,MID.glass);pCyl(pm,[x,yy-0.15,z],[x,yy+0.03,z],0.21,0.17,'#5b4632',8,MID.cloth);};
+  // 0.51 (тема 10): лётчик — человек, а не шар на цилиндре: тот же экипаж, что в машине (46c-crew.js), одет по году и стране —
+  // кепка козырьком назад и очки у первых авиаторов, кожаный шлем, кожанка и шарф с 1912 года, у военных — в цвет формы
+  let pilN=0;const pilot=(x,yy,z)=>{try{const M=new Mesh(),m0=MLOD;MLOD=1;const S={num:(hashStr(String(md.id||md.name||'a'))%9)+pilN*3,y:Math.floor(y),mq:'air',cc:c||'fr'};pilN++;
+      mCrew3(M,x,yy-0.55,z,airKit51(S,mil&&y>=1914.6),false,S,[x,yy-0.18,z+0.3,0.09]);MLOD=m0;mbFromMesh(pm,M,{lift:0.003,step:0.001});}
+    catch(e){pBlob(pm,x,yy+0.17,z,0.13,0.15,0.14,leather,R5,lod,MID.leather);pBlob(pm,x,yy+0.1,z+0.12,0.09,0.05,0.04,'#3a3a3a',R5,0,MID.glass);pCyl(pm,[x,yy-0.15,z],[x,yy+0.03,z],0.21,0.17,'#5b4632',8,MID.cloth);}};
   const wheel=(x,yy,z,r)=>{WH.push({x,y:yy,z,r});};
   // мотор: ротативный (капот-кольцо и цилиндры), звезда, «Анзани»-веер, рядный (короб, патрубки)
   const engine=(x,yy,z,inl)=>{const e=P.e,R=clamp(0.28+Math.sqrt(e.hp)/40,0.32,0.75);
