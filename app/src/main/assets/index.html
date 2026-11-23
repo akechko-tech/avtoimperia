@@ -1867,6 +1867,19 @@ Object.assign(RIVAL_CAR,{
 for(const k of ['bus','coach','school','fire','amb','mail','tank','dump','refuse','taxi','tractor','crawler','staff','mamb','armored','ltank']){const L=RIVAL_CAR[k],last=L[L.length-1][2],farm=k==='tractor'||k==='crawler',trk=k==='ltank'||k==='crawler';
   L.push([1936,'Эталон тридцатых',{...last,e:farm?last.e:'e16',g:farm||trk?last.g:'g7',c:farm?last.c:'c5',k:farm?last.k:trk?'k2':'k4',w:farm||trk?last.w:'w8'}],
          [1950,'Эталон пятидесятых',{...last,e:farm?'e16':'e23',g:farm||trk?last.g:'g7',c:farm?'c5':'c14',k:farm?last.k:trk?'k2':'k4',w:farm||trk?last.w:'w11'}]);}
+/* ---------- доводка этапа 3 (23 ноября): ещё пять сверенных новинок ----------
+   Пикап, цельнометаллический универсал, трактор с навесной системой, мотор с впрыском; радио, усилитель руля и
+   электрические стеклоподъёмники — в оснащении (10e-equip60.js). Источники — claude/issledovanie-tehnika-1930-1960.md. */
+ENGINES.push(
+  {id:'e28',name:'Рядная «шестёрка» с впрыском топлива (Mercedes-Benz 300 SL)',y:1954,hp:215,q:96,c:1100,kg:220,rel:0.9,fuel:1.7,cx:1.9,cyl:6,note:'Mercedes-Benz 300 SL (Нью-Йорк, февраль 1954 года): первый серийный четырёхтактный мотор с непосредственным впрыском бензина — насос Bosch вместо карбюратора'});
+BODIES.push(
+  {id:'b40',name:'Пикап ½ т',y:1948,q:30,c:210,kg:620,cd:1.6,cg:0.85,cx:1.0,truck:true,seats:3,pay:0.5,comf:1.35,note:'Ford F-1 (январь 1948 года): первый послевоенный грузовик Ford — своя рама вместо легковой и кабина, в которой удобно'},
+  {id:'b41',name:'Цельнометаллический универсал',y:1949,q:42,c:250,kg:450,cd:1.0,cg:0.74,cx:1.15,seats:6,closed:1,comf:1.85,note:'Plymouth Suburban (1949): стальной кузов вместо деревянного — универсал из развозной машины стал семейной'},
+  {id:'b42',name:'Трактор с навесной системой',y:1939,q:30,c:520,kg:950,cd:2.4,cg:0.85,cx:1.15,truck:true,seats:1,pay:0.2,pk:1.05,comf:0.8,kind:'tractor',art:'tractor',farm:1,note:'Ford 9N (1939): трёхточечная гидравлическая навеска Гарри Фергюсона — плуг стал частью трактора'});
+RIVAL_CAR.tractor.push([1939,'Ford 9N',{...RIVAL_CAR.tractor[RIVAL_CAR.tractor.length-1][2],b:'b42'}]);RIVAL_CAR.tractor.sort((a,b)=>a[0]-b[0]);
+RIVAL_CAR.tractor.forEach(x=>{if(x[0]>1939)x[2]={...x[2],b:'b42'};});
+RIVAL_CAR.truck.push([1948,'Ford F-1',{e:'e16',g:'g7',c:'c14',k:'k4',b:'b40',w:'w8'}]);RIVAL_CAR.truck.sort((a,b)=>a[0]-b[0]);
+RIVAL_CAR.sport.push([1954,'Mercedes-Benz 300 SL',{e:'e28',g:'g7',c:'c14',k:'k4',b:'b35',w:'w8'}]);RIVAL_CAR.sport.sort((a,b)=>a[0]-b[0]);
 
 /* ================= HISTORICAL RACES ================= */
 const RTYPE={sprint:'Спринт на скорость',road:'Гонка по дорогам',circuit:'Кольцевая трасса',endurance:'Гонка на выносливость',hill:'Гонка в гору',rally:'Марафон',oval:'Овал'};
@@ -6113,6 +6126,19 @@ function eqMigrate(x){(x.models||[]).forEach(m=>{if(Array.isArray(m.eq))return;c
   if(m.t==='t2'||m.t==='t1'){if(y>=1904)L.push('ws');L.push(y>=1912&&m.t==='t2'?'el':y>=1905?'ac':null);if(y>=1912&&m.t==='t2')L.push('st');}
   m.eq=L.filter(Boolean);});}
 function eqLine(md){const L=eqOf(md);return L.length?L.map(id=>EQ_BY[id].name.toLowerCase()).join(', '):'';}
+
+/* ================= 0.60, этап 3 (доводка): оснащение 1930–1960 =================
+   Три новинки с годом из источника (claude/issledovanie-tehnika-1930-1960.md): радиоприёмник Motorola (июнь 1930 года),
+   усилитель руля Hydraguide и электрические стеклоподъёмники — Chrysler Imperial 1951 года. Правила прежние (10d-equip.js):
+   разработать в КБ раньше истории или купить у поставщиков через год; пока новинка редкость — за неё доплачивают. */
+EQUIP.push(
+  {id:'rd',name:'Радиоприёмник',y:1928,hist:[1930,'Galvin Manufacturing (Motorola)'],c:55,cx:0.03,u:{people:0.03,middle:0.07,lux:0.1},need:{lux:1938,middle:1950},req:'el',
+    note:'Motorola (июнь 1930 года): первый автомобильный приёмник, который делали серией и продавали по сходной цене. Новости и музыка — в дороге.'},
+  {id:'ps',name:'Усилитель руля',y:1949,hist:[1951,'Chrysler (Hydraguide)'],c:70,cx:0.05,u:{middle:0.05,lux:0.12},need:{lux:1957},
+    note:'Hydraguide на Chrysler Imperial 1951 года: насос от мотора помогает поворачивать колёса. Тяжёлая машина слушается одного пальца.'},
+  {id:'pw',name:'Электрические стеклоподъёмники',y:1949,hist:[1951,'Chrysler Imperial'],c:40,cx:0.03,u:{middle:0.02,lux:0.07},req:'el',closed:1,
+    note:'Chrysler Imperial 1951 года: четыре электромотора вместо ручек на дверях.'});
+EQUIP.forEach(e=>EQ_BY[e.id]=e);
 
 /* ================= 0.30: ОСНАЩЕНИЕ КБ И ГОНОЧНОЙ КОМАНДЫ =================
    Кроме размера бюро и уровня гоночного отдела — оборудование, которое появляется вместе с техникой эпохи.
@@ -10673,7 +10699,7 @@ function starPath(cx,cy,r){let d='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*M
    Прежний рисунок (carSVG) строит машину на раме с отдельными крыльями — так выглядели автомобили до тридцатых.
    У кузовов 1934–1959 годов свой силуэт: обтекаемый, понтонный, вагонный. Здесь — десять рисунков в том же поле
    (220×100, земля на 94, нос вправо), в цвете модели; колёса вращаются тем же классом .spin. */
-const ART60={b30:'stream',b31:'micro',b32:'pontoon',b33:'hardtop',b34:'small',b35:'roadster',b36:'jeep',b37:'offroad',b38:'minibus',b39:'mtank'};
+const ART60={b30:'stream',b31:'micro',b32:'pontoon',b33:'hardtop',b34:'small',b35:'roadster',b36:'jeep',b37:'offroad',b38:'minibus',b39:'mtank',b40:'pickup',b41:'wagon'};
 function carSVG60(md,opt){opt=opt||{};let p;try{p=parts(md);}catch(_){return null;}const k=p&&p.b?ART60[p.b.id]:null;if(!k)return null;
   const paint=md.paint||'#1b1d22',dark='#15161a',glass='#a9c6db',chrome='#cfd3da',lite=typeof shade==='function'?shade(paint,0.55):'#e8e4d8',deep=typeof shade==='function'?shade(paint,-0.25):dark,GY=94,lux=md.t==='t2';
   const wheel=(cx,R,o)=>{o=o||{};const wy=GY-R;let w=`<circle cx="${cx}" cy="${wy}" r="${R}" fill="${dark}"${o.knob?' stroke="#2c2d31" stroke-width="2.4" stroke-dasharray="2.2 2"':''}/>`;
@@ -10691,6 +10717,16 @@ function carSVG60(md,opt){opt=opt||{};let p;try{p=parts(md);}catch(_){return nul
     b+=ht?`<path d="M96,54 L101,${ry+4} H130 L143,54Z" fill="${glass}"/>`:`<path d="M92,54 L96,39 H110 V54Z" fill="${glass}"/><path d="M114,54 V39 H129 L142,54Z" fill="${glass}"/>`;
     b+=r(x0+6,67,180-x0+10,1.6,chrome)+r(200,74,6,4,chrome,1.5)+r(x0-4,74,6,4,chrome,1.5)+`<circle cx="199" cy="65" r="3" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(x0,61,3,5,'#b8322a',1)+r(196,69,6,3,chrome,1);
     b+=arch(rx,R)+arch(fx,R);w=wheel(rx,R)+wheel(fx,R);sh=[(rx+fx)/2,96];}
+  else if(k==='wagon'){const R=11,rx=64,fx=158;
+    b+=`<path d="M22,80 V44 Q22,36 32,35 H128 Q134,35 138,40 L150,56 L192,58 Q202,60 202,68 V80Z" fill="${paint}"/>`;
+    b+=`<path d="M28,54 V40 H56 V54Z" fill="${glass}"/><path d="M60,54 V40 H88 V54Z" fill="${glass}"/><path d="M92,54 V40 H110 V54Z" fill="${glass}"/><path d="M114,54 V40 H129 L142,54Z" fill="${glass}"/>`;
+    b+=r(28,67,168,1.6,chrome)+r(200,74,6,4,chrome,1.5)+r(18,74,6,4,chrome,1.5)+`<circle cx="199" cy="65" r="3" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(22,60,3,5,'#b8322a',1)+r(196,69,6,3,chrome,1);
+    b+=arch(rx,R)+arch(fx,R);w=wheel(rx,R)+wheel(fx,R);sh=[111,96];}
+  else if(k==='pickup'){const R=13,rx=62,fx=156;
+    b+=`<path d="M106,80 V58 L112,40 Q114,34 122,34 H140 Q146,34 150,40 L158,56 L190,60 Q202,62 202,70 V80Z" fill="${paint}"/>`+r(24,54,82,24,paint,1)+r(22,52,86,3,deep)+r(24,76,82,4,dark);
+    for(let i=1;i<5;i++)b+=r(24+i*16.4,56,1,20,deep,0,0.6);b+=`<path d="M118,56 L121,39 H140 Q144,40 146,44 L152,56Z" fill="${glass}"/>`;
+    for(let i=0;i<4;i++)b+=r(196,62+i*3,7,1.6,chrome);b+=r(200,76,7,4,chrome,1.5)+r(18,76,8,4,dark,1)+`<circle cx="192" cy="64" r="3.2" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(24,58,2.5,5,'#b8322a',1);
+    b+=`<path d="M${rx-R-5},80 Q${rx-R-5},${GY-2*R-6} ${rx},${GY-2*R-6} Q${rx+R+5},${GY-2*R-6} ${rx+R+5},80Z" fill="${paint}" stroke="${deep}" stroke-width="1"/>`+arch(rx,R)+arch(fx,R);w=wheel(rx,R)+wheel(fx,R);sh=[110,98];}
   else if(k==='stream'){const R=13,rx=60,fx=156;
     b+=`<path d="M24,80 L22,72 Q30,54 70,42 Q90,31 112,31 H128 Q136,32 142,41 L152,55 Q176,54 192,60 Q205,65 205,74 V80Z" fill="${paint}"/>`;
     b+=`<path d="M136,80 Q138,60 158,60 Q178,60 182,80Z" fill="${deep}"/><path d="M40,80 Q42,62 60,62 Q78,62 82,80Z" fill="${deep}"/>`;   // крылья-обтекатели
@@ -11013,7 +11049,9 @@ Object.assign(PART_WIKI,{
   c10:['Willys MB','Willys MB'],c11:['','MacPherson strut'],c12:['Гидропневматическая подвеска','Hydropneumatic suspension'],c13:['Mini','Mini'],
   w11:['Бескамерная шина','Tubeless tire'],w12:['Радиальная шина','Radial tire'],
   b30:['Chrysler Airflow','Chrysler Airflow'],b31:['','Fiat 500 "Topolino"'],b34:['Renault 4CV','Renault 4CV'],b32:['','Ponton (car)'],b35:['Jaguar XK120','Jaguar XK120'],
-  b33:['Хардтоп','Hardtop'],b36:['Willys MB','Willys MB'],b37:['Land Rover Series','Land Rover Series'],b38:['Volkswagen Transporter','Volkswagen Type 2'],b39:['Средний танк','Medium tank']});
+  b33:['Хардтоп','Hardtop'],b36:['Willys MB','Willys MB'],b37:['Land Rover Series','Land Rover Series'],b38:['Volkswagen Transporter','Volkswagen Type 2'],b39:['Средний танк','Medium tank'],
+  e28:['Mercedes-Benz 300 SL','Mercedes-Benz 300 SL'],b40:['','Ford F-Series (first generation)'],b41:['','Plymouth Suburban'],b42:['','Ford N-series tractor'],
+  'eq:rd':['Автомагнитола','Vehicle audio'],'eq:ps':['Усилитель рулевого управления','Power steering'],'eq:pw':['Стеклоподъёмник','Power window']});
 
 /* ================= ЗАВОД ОБЪЁМОМ: картинка завода в 3D — растёт вместе с компанией ================= */
 // Каждое здание — объёмная модель (как дома у трассы), нарисованная в одном ракурсе; вместе — вид на завод с улицы.
@@ -18618,7 +18656,7 @@ function openKindStep(grp){const s=G,X2=X;
   // 0.60: вид, до которого по истории больше двадцати лет, в списке не показывается (микроавтобус в 1905 году никому не нужен даже серой строкой)
   const vis=k=>kindYear(k)<=s.y+20;
   let rows;
-  if(grp==='cargo')rows=BODIES.filter(b=>b.truck&&(bodyKind(b)==='van'||bodyKind(b)==='truck')).sort((a,b)=>(a.pay||0)-(b.pay||0)).map(b=>row(bodyKind(b),b.id,b.name,b.id==='b6'?'развозка по району: лавки, булочные':b.pay<=1.5?'по городу: мебель, уголь, стройматериалы':b.pay<=3?'между городами':'тяжёлые грузы: уголь, лес, стройки')).join('')+K.kinds.filter(k=>k!=='van'&&k!=='truck'&&vis(k)).map(k=>row(k,null,KIND_NAME[k],kindWho(k)||'')).join('');
+  if(grp==='cargo')rows=BODIES.filter(b=>b.truck&&(bodyKind(b)==='van'||bodyKind(b)==='truck')&&b.y<=s.y+20).sort((a,b)=>(a.pay||0)-(b.pay||0)).map(b=>row(bodyKind(b),b.id,b.name,b.id==='b6'?'развозка по району: лавки, булочные':b.id==='b40'?'фермеры, мастерские, малые фирмы':b.pay<=1.5?'по городу: мебель, уголь, стройматериалы':b.pay<=3?'между городами':'тяжёлые грузы: уголь, лес, стройки')).join('')+K.kinds.filter(k=>k!=='van'&&k!=='truck'&&vis(k)).map(k=>row(k,null,KIND_NAME[k],kindWho(k)||'')).join('');
   else rows=K.kinds.filter(vis).map(k=>row(k,null,KIND_NAME[k]||SEG[k].name,kindWho(k)||({people:'рабочие, фермеры, служащие — главное цена и расход',middle:'врачи, инженеры, лавочники — комфорт и надёжность',lux:'богачи — лучшее во всём',sport:'спортсмены — скорость и тормоза',moto:'одиночка: дёшево и быстро',moside:'с коляской: семья и ремесло'})[k]||'')).join('');
   const lock=K.kinds.filter(vis).some(k=>!kindOpen(k,s))||grp==='cargo'&&BODIES.some(b=>b.truck&&bodyKind(b)==='truck'&&b.y>s.y);
   openSheet(`<div class="row"><h2>${K.ic} ${K.n}</h2>${X2}</div><div class="row"><p class="small muted">Шаг 2 из 3 · назначение</p><button class="btn sm" data-act="kgrp" data-v="">← Вид техники</button></div><div class="krows">${rows}</div>
@@ -28163,10 +28201,12 @@ function vanDeco51(X,G){const {M,S,hi,tube}=X;let b=null;try{b=byId(BODIES,S.b);
      jeep     — армейский вездеход (1941): плоский капот, щелевая решётка, откидное стекло, запаска сзади;
      offroad  — вездеход (1948): угловатый кузов с жёсткой крышей, запаска на капоте;
      minibus  — микроавтобус (1950): вагонная компоновка, ряд окон, светлый верх;
-     mtank    — средний танк (1939): широкие гусеницы с шестью катками, наклонный лоб, башня с длинной пушкой.
+     mtank    — средний танк (1939): широкие гусеницы с шестью катками, наклонный лоб, башня с длинной пушкой;
+     pickup   — пикап ½ т (1948): округлая кабина и открытый кузов с бортами;
+     wagon    — цельнометаллический универсал (1949): понтонный кузов с крышей до самой кормы.
    Гоночные облики (prep 2 у соперников) не трогаем: workKind60 отвечает только серийным стилям. */
 function workKind60(S){if(!S||!S.b||S.style==='moto'||/^gp|^carriage/.test(S.style||''))return '';
-  return {b30:'stream',b31:'micro',b32:'pontoon',b33:'hardtop',b34:'small',b35:'roadster',b36:'jeep',b37:'offroad',b38:'minibus',b39:'mtank'}[S.b]||'';}
+  return {b30:'stream',b31:'micro',b32:'pontoon',b33:'hardtop',b34:'small',b35:'roadster',b36:'jeep',b37:'offroad',b38:'minibus',b39:'mtank',b40:'pickup',b41:'wagon'}[S.b]||'';}
 // тёмная арка над колесом на гладком борту: полукруг чуть шире шины
 function w60Arch(X,x,r,z){const sd=x>=0?1:-1;mLathe(X.M,[x+sd*0.004,r,z],'x',[[r+0.075,0],[0,sd*0.002]],X.hi?14:8,'#0c0c0e','paint',{a0:0,a1:Math.PI,two:true});}
 // хромированный бампер: полоса с загнутыми концами
@@ -28200,16 +28240,26 @@ function w60Body(X,o){const {M,K,hi,col,tube}=X,n=hi?3:1,r=o.r,tw=o.tw;X.setWt(o
 function w60Crew(X,x,ys,z,o){o=o||{};if(o.seat!==false)X.seat(x,z,ys,0.24,0.42,0.42,{});if(o.seat2)X.seat(-x,z,ys,0.24,0.42,0.42,{});
   X.steer(x,ys+0.34,z+0.42,0.18,0.85);X.drvF(x,ys-0.03,z,z+0.45,ys+0.34);X.eyeAt(x,ys-0.03,z);}
 function workModel60(kind,X){const {M,S,K,hi,y,col,B,tube}=X,n=hi?3:1,chrome=(x0,y0,z0,x1,y1,z1)=>B(x0,y0,z0,x1,y1,z1,K.bright,K.brightMat);
-  if(kind==='pontoon'||kind==='hardtop'){const ht=kind==='hardtop',wb=ht?3.1:2.9,t=1.42,r=0.34,tw=0.17,w=0.775,zf=wb/2+0.95,zr=-wb/2-(ht?1.45:1.2);
+  if(kind==='pontoon'||kind==='hardtop'||kind==='wagon'){const ht=kind==='hardtop',wg=kind==='wagon',wb=ht?3.1:2.9,t=1.42,r=0.34,tw=0.17,w=0.775,zf=wb/2+0.95,zr=-wb/2-(ht?1.45:1.2);
     const roof=ht?shade(col,0.55):col;
-    w60Body(X,{wb,t,r,tw,yb:0.26,roofCol:roof,st:[[zf+0.02,0.58,0.72,0.42,0.12],[zf-0.12,0.74,0.86,0.34],[zf-0.5,w,0.93],[0.85,w,0.97],[-0.9,w,0.95],[zr+0.6,w,ht?0.9:0.92],[zr+0.12,0.72,0.84,0.34],[zr,0.58,0.74,0.42,0.12]],
-      green:ht?{zA:0.92,zB:0.42,zC:-0.82,zD:-1.6,wB:0.71,wT:0.6,yb:0.95,yt:1.45,wins:[[0.36,-0.76]],rearK:0.8}:{zA:0.95,zB:0.5,zC:-0.95,zD:-1.5,wB:0.72,wT:0.6,yb:0.95,yt:1.52,wins:[[0.42,-0.2],[-0.28,-0.88]]}});
+    w60Body(X,{wb,t,r,tw,yb:0.26,roofCol:roof,st:[[zf+0.02,0.58,0.72,0.42,0.12],[zf-0.12,0.74,0.86,0.34],[zf-0.5,w,0.93],[0.85,w,0.97],[-0.9,w,0.95],[zr+0.6,w,ht?0.9:wg?0.95:0.92],[zr+0.12,wg?0.76:0.72,wg?0.93:0.84,0.34],[zr,wg?0.7:0.58,wg?0.9:0.74,wg?0.36:0.42,0.12]],
+      green:wg?{zA:0.95,zB:0.5,zC:zr+0.35,zD:zr+0.06,wB:0.72,wT:0.62,yb:0.95,yt:1.55,wins:[[0.42,-0.2],[-0.28,-0.95],[-1.03,zr+0.5]],rearK:0.8,rear0:0.1}:ht?{zA:0.92,zB:0.42,zC:-0.82,zD:-1.6,wB:0.71,wT:0.6,yb:0.95,yt:1.45,wins:[[0.36,-0.76]],rearK:0.8}:{zA:0.95,zB:0.5,zC:-0.95,zD:-1.5,wB:0.72,wT:0.6,yb:0.95,yt:1.52,wins:[[0.42,-0.2],[-0.28,-0.88]]}});
     // решётка: широкая хромовая полоса; у понтона — «пуля» посередине
     chrome(-0.56,0.5,zf-0.02,0.56,0.58,zf+0.05);chrome(-0.5,0.62,zf-0.03,0.5,0.66,zf+0.04);if(!ht)mLathe(M,[0,0.55,zf+0.04],'z',[[0.09,0],[0.07,0.05],[0,0.09]],hi?12:6,K.bright,K.brightMat);else for(let k=-4;k<=4;k++)chrome(k*0.11-0.012,0.5,zf-0.02,k*0.11+0.012,0.66,zf+0.055);
     [-1,1].forEach(sd=>{X.headlamp(sd*0.6,0.8,zf-0.2,0.1,'bowl');X.tailLamp(sd*0.62,0.72,zr+0.04);if(hi)chrome(sd*(w+0.004)-0.006,0.6,zr+0.5,sd*(w+0.004)+0.006,0.63,zf-0.45);
       if(ht){B(sd*0.7-0.02,0.86,zr+0.1,sd*0.7+0.02,0.97,zr+0.55,col);B(sd*0.7-0.02,0.86,zr+0.55,sd*0.7+0.02,0.92,zr+0.8,col);}});
     w60Bumper(X,zf+0.1,0.82,0.42,1);w60Bumper(X,zr-0.08,0.82,0.42,-1);if(S.num)X.plate([0,0.56,zr-0.012],[0,0,-1],[1,0,0],0.3,0.2);
-    w60Crew(X,0.33,ht?0.47:0.52,0.0,{seat2:true});M.exh=[[0.45,0.24,zr+0.05]];return {len:[zr-0.14,zf+0.16],track:t};}
+    w60Crew(X,0.33,ht?0.47:wg?0.55:0.52,0.0,{seat2:true});M.exh=[[0.45,0.24,zr+0.05]];return {len:[zr-0.14,zf+0.16],track:t};}
+  if(kind==='pickup'){const wb=2.9,t=1.45,r=0.37,tw=0.17,w=0.79,zf=wb/2+0.8,zc=-0.45,zr=-wb/2-1.0,dk=shade(col,-0.4);
+    w60Body(X,{wb,t,r,tw,yb:0.34,noArch:true,st:[[zf+0.02,0.56,0.86,0.5,0.14],[zf-0.12,0.74,1.0,0.4],[zf-0.5,w,1.06],[0.7,w,1.1],[zc,w,1.08],[zc-0.04,w*0.6,0.6,0.4,0.04]],
+      green:{zA:0.78,zB:0.45,zC:zc+0.12,zD:zc+0.02,wB:0.72,wT:0.62,yb:1.08,yt:1.72,wins:[[0.38,zc+0.18]],rearK:0.7,rear0:0.25}});
+    [-1,1].forEach(sd=>{w60Arch(X,sd*w,r,wb/2);X.B(sd*0.4-0.05,0.4,zr+0.2,sd*0.4+0.05,0.62,zc,K.chassis);                                  // рама под кузовом
+      X.B(sd*0.86-0.03,0.66,zr,sd*0.86+0.03,1.12,zc-0.08,col);mLathe(M,[sd*0.9,r,-wb/2],'x',[[r+0.09,0],[0,sd*0.002]],hi?14:8,col,'paint',{a0:0,a1:Math.PI,two:true});   // борта и крылья над задними колёсами
+      X.headlamp(sd*0.58,0.92,zf-0.18,0.1,'bowl');X.tailLamp(sd*0.8,0.74,zr-0.02);});
+    X.B(-0.86,0.62,zr,0.86,0.68,zc-0.08,'#6a4a2c','wood');X.B(-0.86,0.66,zr-0.03,0.86,1.12,zr+0.03,col);X.B(-0.86,0.66,zc-0.12,0.86,1.12,zc-0.06,col);   // пол из досок, задний борт, передняя стенка
+    for(let k=0;k<5;k++)chrome(-0.5,0.6+k*0.07,zf-0.02,0.5,0.63+k*0.07,zf+0.045);                                                       // решётка из пяти полос
+    w60Bumper(X,zf+0.1,0.84,0.5,1);X.B(-0.8,0.44,zr-0.1,0.8,0.54,zr-0.04,dk);if(S.num)X.plate([0,0.86,zr-0.04],[0,0,-1],[1,0,0],0.28,0.18);
+    w60Crew(X,0.33,0.66,0.0,{seat2:true});M.exh=[[0.45,0.3,zr+0.05]];return {len:[zr-0.14,zf+0.16],track:t};}
   if(kind==='stream'){const wb=3.0,t=1.42,r=0.36,tw=0.15,w=0.765,zf=wb/2+0.72,zr=-wb/2-1.05;
     w60Body(X,{wb,t,r,tw,yb:0.3,st:[[zf+0.02,0.3,0.84,0.5,0.2],[zf-0.14,0.52,1.02,0.38,0.22],[zf-0.6,0.7,1.07,0.32,0.16],[0.7,w,1.08],[-1.2,w,1.04],[zr+0.6,0.7,0.96,0.32,0.2],[zr+0.12,0.5,0.76,0.38,0.2],[zr,0.34,0.62,0.44,0.18]],
       green:{zA:1.0,zB:0.55,zC:-0.7,zD:-2.3,wB:0.7,wT:0.56,yb:1.05,yt:1.6,wins:[[0.48,-0.08],[-0.16,-0.66]],rearK:0.5,rear0:0.5}});

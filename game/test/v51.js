@@ -259,7 +259,7 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
 // 19. весь ряд техники и конструктор-воронка (этап «Конструктор и новые виды техники»)
 {let sd=3;Math.random=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};newGame('ford','us','Тест','normal');G.cash=1e7;const s=G;
   const NK=Object.keys(KIND_NEW),nb=BODIES.filter(b=>b.art);
-  CK(nb.length===22&&nb.every(b=>b.truck&&b.kind&&b.pay>0&&b.c>0&&b.kg>0&&b.note),'22 кузова новых видов (18 из 0.51 и 4 из 0.60): у каждого вид, вес, цена, справка');
+  CK(nb.length===23&&nb.every(b=>b.truck&&b.kind&&b.pay>0&&b.c>0&&b.kg>0&&b.note),'23 кузова новых видов (18 из 0.51 и 5 из 0.60): у каждого вид, вес, цена, справка');
   CK(NK.length===20&&NK.every(k=>BODIES.some(b=>b.kind===k)&&RIVAL_CAR[k]&&CHAR_W[k]&&KIND_NAME[k]&&KIND_TRIM[k]==='t0'&&kindSeg(k)==='truck'&&TUSE.some(u=>TRUCK_USE[u].kinds.includes(k))),'20 новых видов (16 из 0.51 и 4 из 0.60): кузов, эталон соперника, веса черт, работа на рынке');
   {const badRef=[];NK.forEach(k=>RIVAL_CAR[k].forEach(r=>{for(const pk of PART_KEYS){const x=byId(PART_CATS.find(c=>c.k===pk).arr(),r[2][pk]);if(!x||x.y>r[0])badRef.push(k+' '+r[0]+' '+pk);}if(overpower({...r[2],t:'t0'}))badRef.push(k+' '+r[0]+' рама');if(bodyKind(byId(BODIES,r[2].b))!==k)badRef.push(k+' кузов');}));
     CK(!badRef.length,'эталоны соперников собраны из деталей своего года и своего кузова: '+badRef.join(', '));}

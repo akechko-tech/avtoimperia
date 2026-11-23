@@ -79,7 +79,8 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
 /* ================= этап 3: техника 1930–1960 ================= */
 /* ---------- 11. новые детали ---------- */
 {const NEW=ALL_PARTS().filter(p=>p.y>=1930&&p.y<1960&&/^[egkcbw][0-9]+$/.test(p.id)),E=id=>byId(ENGINES,id);
-  CK(NEW.length===37&&NEW.every(p=>p.note&&p.c>0&&p.q>0&&p.name),'деталей 1930–1959 годов — 37: у каждой год, цена, сложность и справка');
+  CK(NEW.length===41&&NEW.every(p=>p.note&&p.c>0&&p.q>0&&p.name),'деталей 1930–1959 годов — 41 (37 первой части этапа и четыре доводки): у каждой год, цена, сложность и справка');
+  CK(['rd','ps','pw'].every(k=>EQ_BY[k]&&EQ_BY[k].hist[0]>=1930&&EQ_BY[k].note)&&EQ_BY.rd.hist[0]===1930&&EQ_BY.ps.hist[0]===1951,'оснащение 1930–1960: радиоприёмник (1930), усилитель руля и электрические стеклоподъёмники (1951)');
   CK(E('e16').y===1932&&E('e16').hp===65&&E('e15').y===1930&&E('e15').hp===185&&E('e18').y===1936&&E('e18').diesel&&E('e23').y===1949&&E('e23').hp===135&&E('e25').y===1951&&E('e26').y===1955,'моторы по источникам: Ford V-8 (1932, 65 л.с.), Cadillac V-16 (1930), дизель Mercedes-Benz (1936), Oldsmobile Rocket (1949, 135 л.с.), Chrysler FirePower (1951), Chevrolet (1955)');
   CK(byId(GEARBOX,'g8').y===1939&&byId(GEARBOX,'g9').y===1948&&byId(BRAKES,'k7').y===1953&&byId(CHASSIS,'c8').y===1934&&byId(CHASSIS,'c12').y===1955&&byId(CHASSIS,'c13').y===1959&&byId(TYRES,'w12').y===1948&&byId(BODIES,'b32').y===1948,'автомат (1939), гидротрансформатор (1948), диски (1953), несущий кузов (1934), гидропневматика (1955), поперечный мотор (1959), радиальная шина и понтонный кузов (1948)');
   const s0={y:1929,m:0,country:'us',rd:{lvl:9},own:{},pw:{}};let none=true;try{none=!unlockedP(ENGINES,s0).some(p=>p.y>=1930);}catch(e){}CK(none,'в 1929 году деталей тридцатых в каталоге нет');}
@@ -100,14 +101,14 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
   s.y=1951;openKindStep('bus');const l51=(html.match(/data-lock="1"/g)||[]).length;s.y=1950;openKindStep('cargo');const off=/Вездеход/.test(html);openSheet=os;
   CK(n25===3&&n40===4&&l40===1&&l51===0&&off,'автобусы: в 1925 году три назначения, в 1940-м видна серая строка микроавтобуса («в истории — с 1950 года»), в 1951-м он открыт; вездеход — среди грузовых');}
 /* ---------- 13б. этап 3, доводка: у кузовов и видов 1930–1960 свой облик — рисунок и трёхмерная модель ---------- */
-{newGame('custom','us','Тест','normal','Первая');const s=G;s.y=1955;const d=autoDesign('people',s),ids=['b30','b31','b32','b33','b34','b35','b36','b37','b38','b39'];
+{newGame('custom','us','Тест','normal','Первая');const s=G;s.y=1955;const d=autoDesign('people',s),ids=['b30','b31','b32','b33','b34','b35','b36','b37','b38','b39','b40','b41'];
   const svg={},old=carSVG({...d,b:'b5',paint:'#7a2230'});let bad1=[];ids.forEach(b=>{const h=carSVG({...d,b,paint:'#7a2230',name:'М'});svg[b]=h;if(!/^<svg/.test(h)||h===old||/NaN|undefined/.test(h))bad1.push(b);});
-  CK(!bad1.length&&new Set(Object.values(svg)).size===ids.length,'у каждого из десяти кузовов 1934–1959 годов свой рисунок'+(bad1.length?': нет у '+bad1.join(', '):''));
+  CK(!bad1.length&&new Set(Object.values(svg)).size===ids.length,'у каждого из двенадцати кузовов 1934–1959 годов свой рисунок'+(bad1.length?': нет у '+bad1.join(', '):''));
   CK(carSVG({...d,b:'b5',paint:'#7a2230'})===old&&!carSVG60({...d,b:'b5'}),'рисунки прежних кузовов не тронуты');
   const sz={},lo={};let bad3=[];ids.forEach(b=>{try{const md={...d,b,paint:'#7a2230'},S=modelSpec(md,0,1955,{}),k=workKind60(S);const M=carModel(Object.assign({},S,{lod:'hi'})),M0=carModel(Object.assign({},S,{lod:'lo'}));sz[b]=M.F.length;lo[b]=M0.F.length;
       if(!k||!(M.F.length>200)||!(M0.F.length>40)||M0.F.length>=M.F.length||M.wheels.length!==4||!(M.len[1]-M.len[0]>2.5)||!M.eye)bad3.push(b+':'+k+':'+M.F.length+'/'+M0.F.length+':'+M.wheels.length);}catch(e){bad3.push(b+':'+String(e).slice(0,60));}});
   CK(!bad3.length,'трёхмерная модель есть у каждого: '+ids.map(b=>b+' '+sz[b]).join(', ')+(bad3.length?' — отказ: '+bad3.join('; '):''));
-  const plain=carModel(Object.assign({},modelSpec({...d,b:'b5',paint:'#7a2230'},0,1955,{}),{lod:'hi'})).F.length;CK(new Set(Object.values(sz)).size>=9&&Object.values(sz).every(v=>v!==plain),'модели новых кузовов не совпадают с седаном двадцатых и между собой');
+  const plain=carModel(Object.assign({},modelSpec({...d,b:'b5',paint:'#7a2230'},0,1955,{}),{lod:'hi'})).F.length;CK(new Set(Object.values(sz)).size>=11&&Object.values(sz).every(v=>v!==plain),'модели новых кузовов не совпадают с седаном двадцатых и между собой');
   CK(workKind60({style:'gp1925',b:'b32'})===''&&workKind60({style:'moto',b:'b32'})===''&&workKind60({style:'sedan',b:'b5'})==='','гоночные облики и прежние кузова идут по-старому');}
 
 /* ---------- 14. правки автора 23 ноября (отзыв на 0.51): девять пунктов ---------- */

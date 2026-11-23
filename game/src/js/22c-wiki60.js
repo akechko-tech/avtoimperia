@@ -10,4 +10,6 @@ Object.assign(PART_WIKI,{
   c10:['Willys MB','Willys MB'],c11:['','MacPherson strut'],c12:['Гидропневматическая подвеска','Hydropneumatic suspension'],c13:['Mini','Mini'],
   w11:['Бескамерная шина','Tubeless tire'],w12:['Радиальная шина','Radial tire'],
   b30:['Chrysler Airflow','Chrysler Airflow'],b31:['','Fiat 500 "Topolino"'],b34:['Renault 4CV','Renault 4CV'],b32:['','Ponton (car)'],b35:['Jaguar XK120','Jaguar XK120'],
-  b33:['Хардтоп','Hardtop'],b36:['Willys MB','Willys MB'],b37:['Land Rover Series','Land Rover Series'],b38:['Volkswagen Transporter','Volkswagen Type 2'],b39:['Средний танк','Medium tank']});
+  b33:['Хардтоп','Hardtop'],b36:['Willys MB','Willys MB'],b37:['Land Rover Series','Land Rover Series'],b38:['Volkswagen Transporter','Volkswagen Type 2'],b39:['Средний танк','Medium tank'],
+  e28:['Mercedes-Benz 300 SL','Mercedes-Benz 300 SL'],b40:['','Ford F-Series (first generation)'],b41:['','Plymouth Suburban'],b42:['','Ford N-series tractor'],
+  'eq:rd':['Автомагнитола','Vehicle audio'],'eq:ps':['Усилитель рулевого управления','Power steering'],'eq:pw':['Стеклоподъёмник','Power window']});

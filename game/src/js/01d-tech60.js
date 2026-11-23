@@ -71,3 +71,16 @@ Object.assign(RIVAL_CAR,{
 for(const k of ['bus','coach','school','fire','amb','mail','tank','dump','refuse','taxi','tractor','crawler','staff','mamb','armored','ltank']){const L=RIVAL_CAR[k],last=L[L.length-1][2],farm=k==='tractor'||k==='crawler',trk=k==='ltank'||k==='crawler';
   L.push([1936,'Эталон тридцатых',{...last,e:farm?last.e:'e16',g:farm||trk?last.g:'g7',c:farm?last.c:'c5',k:farm?last.k:trk?'k2':'k4',w:farm||trk?last.w:'w8'}],
          [1950,'Эталон пятидесятых',{...last,e:farm?'e16':'e23',g:farm||trk?last.g:'g7',c:farm?'c5':'c14',k:farm?last.k:trk?'k2':'k4',w:farm||trk?last.w:'w11'}]);}
+/* ---------- доводка этапа 3 (23 ноября): ещё пять сверенных новинок ----------
+   Пикап, цельнометаллический универсал, трактор с навесной системой, мотор с впрыском; радио, усилитель руля и
+   электрические стеклоподъёмники — в оснащении (10e-equip60.js). Источники — claude/issledovanie-tehnika-1930-1960.md. */
+ENGINES.push(
+  {id:'e28',name:'Рядная «шестёрка» с впрыском топлива (Mercedes-Benz 300 SL)',y:1954,hp:215,q:96,c:1100,kg:220,rel:0.9,fuel:1.7,cx:1.9,cyl:6,note:'Mercedes-Benz 300 SL (Нью-Йорк, февраль 1954 года): первый серийный четырёхтактный мотор с непосредственным впрыском бензина — насос Bosch вместо карбюратора'});
+BODIES.push(
+  {id:'b40',name:'Пикап ½ т',y:1948,q:30,c:210,kg:620,cd:1.6,cg:0.85,cx:1.0,truck:true,seats:3,pay:0.5,comf:1.35,note:'Ford F-1 (январь 1948 года): первый послевоенный грузовик Ford — своя рама вместо легковой и кабина, в которой удобно'},
+  {id:'b41',name:'Цельнометаллический универсал',y:1949,q:42,c:250,kg:450,cd:1.0,cg:0.74,cx:1.15,seats:6,closed:1,comf:1.85,note:'Plymouth Suburban (1949): стальной кузов вместо деревянного — универсал из развозной машины стал семейной'},
+  {id:'b42',name:'Трактор с навесной системой',y:1939,q:30,c:520,kg:950,cd:2.4,cg:0.85,cx:1.15,truck:true,seats:1,pay:0.2,pk:1.05,comf:0.8,kind:'tractor',art:'tractor',farm:1,note:'Ford 9N (1939): трёхточечная гидравлическая навеска Гарри Фергюсона — плуг стал частью трактора'});
+RIVAL_CAR.tractor.push([1939,'Ford 9N',{...RIVAL_CAR.tractor[RIVAL_CAR.tractor.length-1][2],b:'b42'}]);RIVAL_CAR.tractor.sort((a,b)=>a[0]-b[0]);
+RIVAL_CAR.tractor.forEach(x=>{if(x[0]>1939)x[2]={...x[2],b:'b42'};});
+RIVAL_CAR.truck.push([1948,'Ford F-1',{e:'e16',g:'g7',c:'c14',k:'k4',b:'b40',w:'w8'}]);RIVAL_CAR.truck.sort((a,b)=>a[0]-b[0]);
+RIVAL_CAR.sport.push([1954,'Mercedes-Benz 300 SL',{e:'e28',g:'g7',c:'c14',k:'k4',b:'b35',w:'w8'}]);RIVAL_CAR.sport.sort((a,b)=>a[0]-b[0]);
