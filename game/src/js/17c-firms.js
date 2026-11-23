@@ -16,6 +16,7 @@ const FIRM_BT=3,          // насколько покупатель грузо�
   FIRM_FIN=0.14,          // рассрочка: как +15 % покупателей (как у игрока: techLv credit ×1,15)
   FIRM_CAPX=1.3,          // сколько сверх построенных мощностей завод выжимает сверхурочными
   FIRM_AD=0.45,           // предел рекламной кампании и заводской гоночной команды — в единицах славы марки (у игрока слава — до ~1,2)
+  FIRM_AD2=globalThis.FIRMAD2??0.8,   // 0.60: предел второй волны — когда первая идёт, а доля не вернулась
   FIRM_FOLLOW=globalThis.FIRMFOLLOW??0.5,   // мелкие марки без имени идут за крупными: перенимают половину их перевеса
   FIRM_NET=0.07,          // чистая прибыль фирмы в обычный год, доля выручки
   FIRM_SCALE=0.1,         // недогруз/перегруз завода: выпуск вдвое ниже обычного — себестоимость +7 %
@@ -55,6 +56,7 @@ function firmMult(s,F,g){if(!F||F.st==='dead')return 1;return Math.min(firmWant(
 // марки класса с их нынешним перевесом: w — доля по истории, m — перевес, M — перевес всех соперников класса вместе
 function firmTerms(s,c,g){const L=compWeights(c,g,s),on=s&&s.firms&&firmsOn(s),mo=isMotoSeg(g);let M=1,sw=0,sd=0;
   L.forEach(o=>{if(o.bot){o.m=on?firmMult(s,firmHome(s,o.bot),g):1;M+=o.w*o.m;return;}/* пришла сверх истории — прибавляется к классу целиком */
+    if(o.ext){o.m=on?firmMult(s,s.firms[c+':'+o.i],g):1;M+=o.w*o.m;return;}/* 0.60: линия фирмы в соседнем классе — тоже сверх истории */
     o.m=on?firmMult(s,s.firms[(mo?'m:':'')+c+':'+o.i],g):1;M+=o.w*(o.m-1);sw+=o.w;sd+=o.w*(o.m-1);});
   // мелкие марки без имени («остаток» класса) идут за крупными с половинной силой — иначе большая часть класса не отвечала бы никогда
   if(on&&sw>0.02&&sw<1){const mr=1+clamp(FIRM_FOLLOW*sd/sw,-0.3,6);M+=(1-sw)*(mr-1);L.mRest=mr;}
@@ -87,8 +89,8 @@ function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D
     // сколько класс продаёт соперникам в обычный месяц (по истории): марка получает из этого свою долю — её продажи «как в истории»
     const WH={},HS={};D.segs().forEach(g=>{WH[g]={};const W=compWeights(c,g,s);HS[g]=(W.rest||0)/12*fm*dc;W.forEach(o=>{if(!o.bot)WH[g][o.i]=o.w;});});
     L.forEach((cp,i)=>{if(D.skip(s,c,i,cp))return;const x=recs[i];if(!x)return;const hv=compVol(cp,s);let F=firmGet(s,c,i,D.mo);
-      if(hv<=0){if(F&&F.st!=='dead'){F.st='dead';}return;}
-      if(!F)F=firmMake(s,c,i,cp,D.mo);if(F.st==='dead')return;const segs=firmSegs(cp);
+      if(hv<=0){if(F&&F.st!=='dead'){F.st='dead';if(F.ext&&!D.mo)for(const g in F.ext)extDrop(s,F,g);}return;}
+      if(!F)F=firmMake(s,c,i,cp,D.mo);if(F.st==='dead')return;const segs=D.mo?firmSegs(cp):firmSegsF(F,cp);
       // --- счёт месяца ---
       let rev=0,hrev=0,gross=0,fixed=0,units=0;
       segs.forEach(g=>{const u=(x.lg&&x.lg[g])||0,P=prefP(g,c,s),pk=F.pk[g]||1,wh=WH[g]&&WH[g][i]||0,hu=HS[g]*wh,c0=firmCost0(g,wh||0.02,MU),z=SG[g];
@@ -105,6 +107,7 @@ function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D
       firmGroupMonth(s,r,F,cp);   // марка в чужой группе: поток и рассрочка хозяина приходят и к ней
       // --- состояние: убытки → кредиторы → закрытие ---
       if(firmState(s,r,F,cp,i))return;
+      if(!D.mo&&F.ext)firmExtCheck(s,r,F,cp);   // 0.60: линия в соседнем классе не окупилась — снимают
       // --- готовые программы ---
       if(F.prog&&t>=F.prog.at)firmDone(s,r,F,cp);
       if(F.capP&&t>=F.capP.at){F.capP=null;F.cap=Math.min(12,(F.cap||1)*1.6);firmNote(s,r,F,{w:1,k:'cap',t:`${firmName(s,F)}: новые цеха работают`,txt:`Завод ${firmName(s,F)} расширен: марка может выпускать в полтора раза больше.`});}
@@ -130,14 +133,18 @@ function firmState(s,r,F,cp,i){const t=mi(s),lim=F.h12*0.3,N=firmName(s,F),KN=cp
       if(!F.mo&&!F.kf&&maCredPending(s,F,i))return false;   // игрок ещё думает над предложением кредиторов
       // этап 5б: до кредиторов марку может купить соседняя фирма с деньгами — «концерн» с настоящей экономикой
       if(!B&&!F.mo&&!F.kf){let done=false;try{done=firmMerge(s,r,F,cp,i);}catch(e){console.warn('merge',e);}if(done)return true;}
-      if((F.rec||0)>=1&&!B){F.st='dead';s.dead=s.dead||{};s.dead[KN]=t;firmNote(s,r,F,{w:5,k:'dead',t:`${N} закрыта`,txt:F.mo?`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу.`:`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу. В 1920-е так исчезла половина американских автозаводов: в 1921 году их было 88, в 1927-м — 44.`});return true;}
+      // 0.60, этап 4: марку концерна (Oldsmobile у GM, заводы Форда за границей) и крупную фирму не распродают — её берут новые хозяева
+      const kept=!F.mo&&!F.kf&&typeof firmKept==='function'&&firmKept(s,cp);
+      if((F.rec||0)>=1&&!B&&!kept){F.st='dead';s.dead=s.dead||{};s.dead[KN]=t;firmNote(s,r,F,{w:5,k:'dead',t:`${N} закрыта`,txt:F.mo?`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу.`:`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу. В 1920-е так исчезла половина американских автозаводов: в 1921 году их было 88, в 1927-м — 44.`});return true;}
+      if(F.ext&&!F.mo)for(const g in F.ext)extDrop(s,F,g);   // 0.60: кредиторы закрывают линии в чужих классах
       const cut=(F.rec||0)>=1?0.85:0.75;F.rec=(F.rec||0)+1;F.st='ok';F.bad=0;F.cash=F.h12*0.1;F.pk={};F.prog=null;F.capP=null;F.turn=1;s.compK=s.compK||{};s.compK[KN]=Math.max(0.4,(s.compK[KN]||1)*cut);F.r12*=cut;F.h12*=cut;F.ld=1;F.rg={};F.rs={};
+      if(kept&&F.rec>=2){firmNote(s,r,F,{w:4,k:'rec',t:`${N} — у новых хозяев`,txt:kept==='grp'?`${N} снова в убытках, но это марка концерна: её не распродают. Концерн списал долги, закрыл слабые цеха и урезал выпуск на ${Math.round((1-cut)*100)}%.`:`${N} снова в убытках, но фирму такого размера не распродают: её забрали главные кредиторы. Долги списаны, выпуск урезан на ${Math.round((1-cut)*100)}%. Так в 1934 году обанкротившийся Citroën перешёл к шинной фирме Michelin — и остался первой маркой Франции.`});return true;}
       firmNote(s,r,F,{w:4,k:'rec',t:`${N} — в руках кредиторов`,txt:`Банки взяли ${N} под управление: долги списаны, слабые заводы закрыты, выпуск урезан на ${Math.round((1-cut)*100)}%. Новый управляющий получил деньги на ${F.mo?'один новый мотоцикл':'одну новую машину'}.${F.mo?'':' Так в 1910 году банкиры спасали General Motors, а в 1912-м из развалин United States Motor осталась одна Maxwell.'}`});return true;}
     return false;}
   return false;}
 // цена: шаг к выгодной для фирмы цене; о заметном сдвиге — заметка
 function firmPrices(s,r,F,cp,i,WH,bot){const t=mi(s),N=firmName(s,F),step=bot?0.02:0.035,MU=nestMu(s);
-  firmSegs(cp).forEach(g=>{const wh=WH[g]&&WH[g][i];if(!wh)return;const pk=F.pk[g]||1;
+  (F.mo||F.kf?firmSegs(cp):firmSegsF(F,cp)).forEach(g=>{const wh=WH[g]&&WH[g][i];if(!wh)return;const pk=F.pk[g]||1;
     // в долгах цену ниже обычной не держат; иначе — к выгодной
     let tg=firmPriceOpt(F,g,wh,(F.rs&&F.rs[g])==null?1:F.rs[g],t,MU);if(F.st==='bad')tg=Math.max(tg,Math.min(1,pk+0.02));
     // завод не успевает за спросом — цену поднимают
@@ -160,8 +167,10 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   if(g0&&!F.capP&&firmWant(s,F,g0)>FIRM_CAPX*(F.cap||1)&&(F.cap||1)<12&&can(0.08)){const cost=R*0.08;F.cash-=cost;F.capP={at:t+6,cost};
     firmNote(s,r,F,{w:1,k:'cap0',t:`${N} расширяет завод`,txt:`Спрос на машины ${N} выше, чем успевает завод. Марка строит новые цеха за ${money(cost)} — через полгода выпуск вырастет в полтора раза.`});}
   if(F.prog)return;
+  // 0.60, этап 4: выход в соседний класс — когда там одна марка (вы) держит треть продаж и больше, а у фирмы есть деньги
+  if(!F.mo&&!F.kf&&F.st==='ok'&&can(0.15)&&Math.random()<0.5&&firmEnterStart(s,r,F,cp,SG,bot))return;
   // где потеряно больше всего: и доля класса, и сами продажи (один плохой год или чужой новый покупатель — ещё не повод)
-  const RS=F.rs||{};let g=null,loss=0;firmSegs(cp).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*cp.mix[k];if(l>loss){loss=l;g=k;}});
+  const RS=F.rs||{};let g=null,loss=0;(F.mo||F.kf?firmSegs(cp):firmSegsF(F,cp)).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*(cp.mix[k]||0.2);if(l>loss){loss=l;g=k;}});
   const turn=!!F.turn;if(turn&&!g)g=g0;
   const gr=F.gr>0.02?F.gr:0;   // помнит обиду — на потерю доли из-за игрока отвечает раньше
   // 0.51, общая калибровка. Мера ТЗ «соперники отбирают у игрока не меньше трети доли к 1915 году» не выполнялась: фирма отвечала,
@@ -171,7 +180,7 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   if(!g||(!turn&&(rsG>(bot?0.94:0.9)+0.05*gr||(!deep&&rgG>(bot?0.97:0.95)+0.03*gr))))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
   // 1) машина хуже — модель-ответ
   const mdOld=F.md[g],mdAge=mdOld?t-mdOld.from:999;
-  if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g])),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);
+  if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g]||0.3)),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);
     F.cash-=cost;F.prog={k:'model',g,at:t+mon,cost,q:clamp(firmDq(F,g,t)+L.q*frac,0.05,1.2),frac,who,you:L.you?1:0,lq:L.q,q0:firmDq(F,g,t)};
     if(L.you&&!F.kf)try{firmPoachEng(s,r,F,g);}catch(e){console.warn('poach eng',e);}   // этап 5б: к ответу готовятся и так — переманивают конструктора лидера
     firmNote(s,r,F,{w:2,k:'model0',t:`${N} готовит ответ ${who}`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}: ${firmCar(F)} ${who} лучше. Марка заказала новую модель за ${money(cost)} — выйдет примерно через ${mon} мес.`});return;}
@@ -184,8 +193,21 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   // 3) рассрочка — когда она в стране уже возможна, но ещё не у всех
   const FY=FIRM_FIN_Y[F.c]||[1999,1999];
   if(!F.mo&&!F.kf&&y>=FY[0]&&y<FY[1]&&!firmFin(F,t)&&can(0.05)){const cost=R*0.05;F.cash-=cost;F.prog={k:'fin',g,at:t+6,cost};
-    firmNote(s,r,F,{w:1,k:'fin0',t:`${N} готовит продажу в рассрочку`,txt:`${N} теряет покупателей и открывает кредитную контору: машину можно будет взять с первым взносом, остальное — за год. General Motors сделала это в 1919 году; к 1925-му в рассрочку продавали две трети новых машин Америки.`});return;}}
+    firmNote(s,r,F,{w:1,k:'fin0',t:`${N} готовит продажу в рассрочку`,txt:`${N} теряет покупателей и открывает кредитную контору: машину можно будет взять с первым взносом, остальное — за год. General Motors сделала это в 1919 году; к 1925-му в рассрочку продавали две трети новых машин Америки.`});return;}
+  /* 0.60, этап 4. Разбор «главная марка перестаёт отвечать, потеряв половину продаж» (замер: Chevrolet, 1918–1919 годы — полтора года
+     без единого хода при 60 % своей доли). Причина — кончились ходы: машина и цена у неё не хуже, чем у лидера, перевес лидера — имя,
+     а реклама уже идёт и больше 0,45 не даёт. Модель-ответ ждёт худшей машины, поток — худшей цены. Теперь при глубокой потере доли: */
+  if(!deep||F.mo||F.kf||globalThis.FIRMNEWOFF)return;/* FIRMNEWOFF — замер «без новых ответов» */
+  // 4) вторая волна рекламы — крупнее первой: имя лидера всё ещё громче
+  const adU=firmAd(F,t);
+  if((L.b||0)>=0.4&&L.b>=Math.max(L.q,L.p)&&F.ad&&adU>0&&adU<FIRM_AD2-0.1&&t-F.ad.from>=12&&can(0.08)){const cost=R*0.08,u=clamp(adU+L.b*0.45,0.2,FIRM_AD2);F.cash-=cost;F.prog={k:'ad',g,at:t+3,cost,u,who,wave:2};
+    firmNote(s,r,F,{w:2,k:'ad0',t:`${N}: вторая волна рекламы`,txt:`Кампания ${N} идёт, а ${lost}% своей доли ${SEG_LOC[g]||''} марка так и не вернула: имя ${who} всё ещё громче. Марка удваивает ставку — ${money(cost)} на газеты, выставки и гонки.`});return;}
+  // 5) своя новая модель: копировать у лидера нечего — фирма обновляет машину сама
+  if(mdAge>=36&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g]||0.3)),mon=Math.round((14+Math.random()*8)*(bot?0.8:1)),q0=firmDq(F,g,t),q=clamp(q0+(0.12+0.18*SK.iq)*(0.8+0.4*Math.random()),0.05,1.2);
+    F.cash-=cost;F.prog={k:'model',g,at:t+mon,cost,q,frac:0,who,you:0,own:1,q0};
+    firmNote(s,r,F,{w:2,k:'model0',t:`${N} обновляет модель`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}${L.q<0.15&&L.p<0.2?`, хотя ${firmCar(F)} и цена у неё не хуже, чем у ${who}: перевес лидера — имя`:`, а прежние ответы ${who} уже в деле`}. Марка отвечает тем, что может сама, — новой моделью за ${money(cost)}, выйдет примерно через ${mon} мес. Так в конце 1920-х Форд уступал General Motors и Chrysler: покупатель смотрел на машины богаче и новее с виду.`});return;}}
 function firmDone(s,r,F,cp){const P=F.prog,t=mi(s),y=yf(s),N=firmName(s,F),g=P.g;F.prog=null;
+  if(P.k==='enter'){firmEnterDone(s,r,F,cp,P);return;}
   if(P.k==='ad'){F.ad={u:P.u,from:t,till:t+36};firmNote(s,r,F,{w:2,k:'ad',t:`${N} — на всех афишах`,txt:`Кампания ${N} началась: полосы в газетах, стенды на выставках, заводские машины на гонках. Покупателей у марки ${BOT_IN[F.c]} станет больше примерно на ${Math.round((Math.exp(P.u)-1)*100)}% — пока кампания идёт.`});}
   else if(P.k==='model'){const life=y<1920?72:48,nm=firmModelName(cp,y),up=Math.round((Math.exp(P.q/AQ)-1)*100);F.md[g]={q:P.q,from:t,till:t+life,name:nm,who:P.who,you:P.you};
     if(P.you&&!F.mo&&!F.kf)try{ownCopied(s,r,F,g);}catch(e){console.warn('own copy',e);}   // 0.51, этап 4в: с машиной игрока перенимают и его свой узел
@@ -221,7 +243,7 @@ function firmClassHTML(s,c,g){const L=firmClassLines(s,c,g).filter(o=>o.du>0&&o.
 // ходы соперников за прошлый месяц — для полосы на главном экране
 function rivMoves(s){const r=s.last;return ((r&&r.riv)||[]).slice().sort((a,b)=>(b.w||1)-(a.w||1));}
 /* ---------- экран «Соперники»: их ход после вашего и карточки фирм ---------- */
-const RIV_ICON={merge:'🤝',offer:'🏦',poach:'🧑‍🔧',grp:'🏭',model:'🚗',model0:'📐',line:'🏭',line0:'🏗',cut:'🔻',up:'🔺',fin:'💳',fin0:'💳',ad:'📣',ad0:'📣',cap:'🏭',cap0:'🏗',bad:'📉',ok:'📈',rec:'🏦',dead:'✖️',bot:'♟'};
+const RIV_ICON={merge:'🤝',offer:'🏦',poach:'🧑‍🔧',grp:'🏭',model:'🚗',model0:'📐',line:'🏭',line0:'🏗',cut:'🔻',up:'🔺',fin:'💳',fin0:'💳',ad:'📣',ad0:'📣',cap:'🏭',cap0:'🏗',bad:'📉',ok:'📈',rec:'🏦',dead:'✖️',bot:'♟',enter0:'🧭',enter:'↔️',exit:'↩️'};
 function rivMine(s,c){return c===s.country||dealerCount(s,c)>0;}
 // полоса на главном экране: что соперники сделали после вашего хода (на рынках, где вы продаёте)
 function rivStrip(s){if(!s||!s.last||s.mode==='racer')return '';const L=rivMoves(s).filter(n=>rivMine(s,n.c)&&n.w>=2);if(!L.length)return '';
@@ -237,7 +259,8 @@ function firmCardHTML(s,c,i,open,mo){const I=firmInfo(s,c,i,mo);if(!I)return '';
   if(I.ck<0.97)L.push(`Завод: поток с ${yr(F.lineT||t)} года — себестоимость −${Math.round((1-I.ck)*100)}%`);
   if(I.cap>1.3)L.push(`Мощности: в ${(I.cap/1.15).toFixed(1).replace('.',',')} раза больше, чем в истории`);
   if(I.fin)L.push('Продаёт в рассрочку');if(I.ad>0.05)L.push(`Реклама и заводская команда на гонках — до ${yr(F.ad.till)} года`);
-  const P=F.prog,pn=P?{model:'новую модель',line:'перестройку завода на поток',fin:'продажу в рассрочку',ad:'рекламную кампанию'}[P.k]:null;
+  if(!mo&&F.ext)for(const g in F.ext)L.push(`<b>Линия ${SEG_LOC[g]||''}</b> с ${F.ext[g].y} года — сверх своей истории: ${pct(F.sh[g]||0,0)} класса`);
+  const P=F.prog,pn=P?{model:'новую модель',line:'перестройку завода на поток',fin:'продажу в рассрочку',ad:'рекламную кампанию',enter:`выход ${(typeof SEG_INTO!=='undefined'&&SEG_INTO[P.g])||'в новый класс'}`}[P.k]:null;
   if(pn)L.push(`<b>Готовит ${pn}</b> — ${P.at-t<=1?'в ближайший месяц':`через ${P.at-t} мес.`}${P.who?` (ответ ${esc(P.who)})`:''}`);
   if(F.capP)L.push(`Строит новые цеха — через ${Math.max(1,F.capP.at-t)} мес.`);
   try{firmCardExtra(s,F,I,L,mo);}catch(e){console.warn('firm card',e);}

@@ -205,11 +205,12 @@ const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),g==='truck'?ALPHA_Q[g]/ALPHA_P[g]:AQ/BR);}
 /* ---------- конкуренты ---------- */
 // 0.30: марка разорилась в вашей партии (s.dead) — её больше нет; досталась новому хозяину — слабее (s.compK); возрождённая вами — живёт и после своей даты (s.rev)
-function compVol(cp,s){const t=yf(s),KN=cp.fk||cp.n;if(s&&s.dead&&s.dead[KN]!=null&&mi(s)>=s.dead[KN])return 0;if(t<cp.since)return 0;
-  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[KN])||1);}
+// 0.60, этап 4: после 1929 года выпуск марки — её доля рынка страны × рынок страны (03e-comps60.js, 105k-comps60.js)
+function compVol(cp,s){const t=yf(s),KN=cp.fk||cp.n;COMP_CLK=t;if(s&&s.dead&&s.dead[KN]!=null&&mi(s)>=s.dead[KN])return 0;if(t<cp.since)return 0;
+  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return (cp.c60&&t>=1930?comp60Vol(cp,t):tabAt(cp.v,t,true))*((s&&s.compK&&s.compK[KN])||1);}
 function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
-function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
+function compName(cp,s){if(cp.ren){let n=null;cp.ren.forEach(x=>{if(s.y>=x[0])n=x[1];});if(n)return n;}if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
 function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>!pkIs(cp,s));}
 // Доля исторической марки игрока-первопроходца в классе: её место на рынке свободно.
 // 0.21: в Америке — лишь его часть (40%): место Ford в 1910-х заняли бы Buick, Willys, Chevrolet — играя за Форда, его ещё надо завоевать
@@ -269,6 +270,8 @@ function compWeights(c,g,s){const S=segAnnual(c,g,s),L=[];if(S<=0)return L;let s
   const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g));if(v>0){L.push({cp,i,v});sum+=v;}});
   // 0.41: живые соперники — экспорт туда, где марки по истории не было (17b-bots.js)
   if(!mo&&s&&s.bots&&botsOn(s))botExports(s,c,g,S).forEach(o=>{L.push(o);});
+  // 0.60, этап 4: линии фирм, вышедших в этот класс сверх истории (105k-comps60.js)
+  if(!mo&&s&&s.extL&&s.extL[c]&&s.extL[c][g]&&s.extL[c][g].length)firmExts(s,c,g,S).forEach(o=>{L.push(o);});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;L.forEach(o=>o.w=o.v*k);L.rest=rest;return L;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах

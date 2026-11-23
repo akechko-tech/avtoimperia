@@ -3153,6 +3153,94 @@ const AIR_HIST_CO=[
   {n:'«Руссо-Балт» (Сикорский)',c:'ru',f:1912,peak:500,cum:1500,val:1e6,share:0.05,firsts:3,wins:2,titles:0,rep:62,note:'Первый четырёхмоторный самолёт (1913), «Илья Муромец»'},
   {n:'«Дукс» / ГАЗ № 1',c:'ru',f:1910,peak:2500,cum:15000,val:1e6,share:0.2,firsts:0,wins:0,titles:0,rep:45,note:'«Фарманы» и «Ньюпоры» по лицензии, после революции — Р-1 и У-2'}];
 
+/* ================= 0.60, этап 4: СОПЕРНИКИ 1930–1960 — данные =================
+   До 0.60 таблицы выпуска марок кончались 1929 годом: после него марка держала выпуск 1929 года при любом рынке.
+   Теперь у марки после 1929 года — опорные точки в годы, где есть источник (claude/issledovanie-soperniki-1930-1960.md).
+   Точка — доля рынка легковых своей страны (число меньше 1) или выпуск за год в тысячах машин (от 1): выпуск делится на рынок
+   того же года (105k-comps60.js). Между точками доля идёт ровно, а выпуск — вместе с рынком страны из этапа 2: депрессия, война
+   и подъём 1950-х попадают в выпуск марки сами, год без источника не выдумывается.
+   est — годы, где точка стоит оценкой (прямого источника нет). mixT — классы марки меняются с этого года.
+   ren — марка с этого года зовётся иначе. Новые марки дописаны в конец списков: номера прежних марок в сохранениях не сдвигаются. */
+const COMPS60={
+  us:{
+    'Ford':{a:{1930:1141,1932:211,1934:564,1937:942,1938:410,1941:691,1946:468,1949:1118,1953:1248,1955:1451,1957:1676,1958:988,1959:1451}},
+    'Chevrolet':{a:{1930:641,1932:313,1934:551,1937:815,1938:465,1941:1009,1946:398,1949:1010,1953:1346,1955:1705,1957:1506,1958:1142,1959:1462}},
+    // Chrysler Corporation — одна фирма: Plymouth, Dodge, DeSoto, Chrysler, Imperial. 1933 — доля продаж (Time), 1937 — «больше миллиона»
+    'Maxwell / Chrysler':{a:{1930:277,1933:0.253,1937:1000,1941:899,1946:578,1949:997,1953:1273,1955:1262,1957:1300,1958:711,1959:748},est:[1930,1937,1941],mixT:[[1931,{people:.55,middle:.38,lux:.07}]]},
+    'Buick':{a:{1930:182,1932:57,1934:71,1937:220,1938:169,1941:374,1946:154,1949:409,1953:489,1955:739,1957:405,1958:242,1959:285}},
+    'Oldsmobile':{a:{1934:80,1937:201,1938:100,1941:270,1946:118,1949:288,1953:334,1955:583,1957:384,1958:294,1959:383},mixT:[[1934,{middle:1}]]},
+    'Cadillac':{a:{1946:29,1949:93,1953:110,1955:141,1957:147,1958:122,1959:142},mixT:[[1946,{lux:1}]]},
+    // «One Twenty» 1935 года: дорогая марка ушла в средний класс и пережила депрессию
+    'Packard':{a:{1937:123,1938:56,1946:31,1949:117,1953:90,1955:55,1957:5,1958:3},until:1959,mixT:[[1935,{middle:.7,lux:.3}]]},
+    'Hudson-Essex':{a:{1930:114,1932:58,1934:86,1936:123,1946:91,1949:159,1953:66,1955:46,1957:4},until:1958},
+    'Nash':{a:{1932:31,1946:94,1949:135,1953:122,1955:96,1957:102,1958:162,1959:374},ren:[[1957,'Rambler (AMC)']],mixT:[[1957,{people:.7,middle:.3}]]},
+    'Studebaker':{a:{1930:123,1931:96,1933:43,1939:86,1940:107,1946:19,1947:161,1949:129,1950:321,1953:152,1955:116,1957:63,1958:45,1959:126}},
+    'Willys-Overland':{a:{1931:66,1932:28,1953:42,1955:7},until:1956},
+    'Pierce-Arrow':{a:{1934:0.002,1939:0},est:[1934,1939]},
+    'Duesenberg':{a:{},until:1938},
+    'Stutz':{a:{},until:1936}},
+  uk:{
+    'Morris':{a:{1939:0.27,1952:0.19,1955:0.19,1959:0.19},est:[1952,1955,1959]},
+    'Austin':{a:{1939:0.24,1952:0.20,1955:0.20,1959:0.20},est:[1952,1955,1959]},
+    'Ford (Манчестер)':{a:{1939:0.15,1952:0.17,1955:0.17},est:[1952,1955]},
+    'Vauxhall':{a:{1939:0.10,1952:0.12,1955:0.12},est:[1952,1955],mixT:[[1930,{people:.4,middle:.6}]]},
+    'Singer':{a:{1939:0.02,1955:0.01},est:[1939,1955]},
+    'Humber':{a:{1939:0.02,1955:0.02},est:[1939,1955]}},
+  fr:{
+    'Citroën':{a:{1939:0.32,1948:0.255,1953:0.28,1956:0.254,1959:0.28},est:[1939,1959],mixT:[[1934,{people:.2,middle:.75,truck:.05}],[1950,{people:.45,middle:.5,truck:.05}]]},
+    'Renault':{a:{1939:0.197,1948:0.257,1949:0.369,1956:0.30,1959:0.27},est:[1959],mixT:[[1947,{people:.75,middle:.15,truck:.1}]]},
+    'Peugeot':{a:{1939:0.266,1948:0.233,1955:0.18,1956:0.175,1959:0.16},est:[1955,1956,1959],mixT:[[1948,{people:.2,middle:.8}]]},
+    'Panhard et Levassor':{a:{1939:0.01,1948:0.01,1955:0.03,1956:0.037,1959:0.02},est:[1939,1948,1959],mixT:[[1946,{people:.8,middle:.2}]]},
+    'De Dion-Bouton':{a:{1934:0},est:[1934]},
+    'De Dietrich':{a:{1936:0},est:[1936]},
+    'Berliet':{a:{},mixT:[[1940,{truck:1}]]},
+    'Delage':{a:{1935:0.005,1953:0.001},est:[1935,1953],until:1955},
+    'Bugatti':{a:{1939:0.001,1955:0.0002},est:[1939,1955],until:1957},
+    'Amilcar':{a:{1934:0.005},est:[1934],until:1940}},
+  de:{
+    'Opel':{a:{1931:0.316,1933:0.359,1934:0.414,1935:0.435,1936:0.408,1937:0.352,1938:0.377,1950:0.17,1958:0.16,1959:0.18},est:[1950,1958,1959]},
+    'Daimler':{a:{1932:0.137,1938:0.10,1950:0.08,1958:0.07},est:[1938,1950,1958]},
+    'Horch':{a:{1932:0.02,1938:0.01,1946:0},est:[1932,1938,1946]},
+    'Adler':{a:{1931:0.087,1938:0.07,1946:0},est:[1938,1946]},
+    'Brennabor':{a:{1931:0.05,1934:0},est:[1931,1934]},
+    'Импорт из США':{a:{1931:0.08,1934:0},est:[1931,1934]}},
+  it:{
+    'FIAT':{a:{1951:0.90,1952:0.92,1955:0.94,1959:0.90},est:[1959]},
+    'Lancia':{a:{1951:0.07,1952:0.054,1954:0.065,1955:0.028,1959:0.03},est:[1959]},
+    'Alfa Romeo':{a:{1951:0.03,1952:0.024,1955:0.026,1959:0.04},est:[1959]},
+    'Bianchi':{a:{1939:0.01,1946:0},est:[1939,1946]},
+    'Isotta Fraschini':{a:{1934:0.001,1950:0},est:[1934,1950]},
+    'Itala':{a:{1935:0},est:[1935]}},
+  ru:{
+    'АМО':{a:{},ren:[[1933,'ЗИС']]},
+    'НАМИ':{a:{1932:0},est:[1932]},
+    'Импорт из Франции':{a:{1934:0},est:[1934]},
+    'Импорт из Америки':{a:{1934:0},est:[1934]}}};
+// Новые марки. since — с какого года марка есть в списке соперников (год из источника; сама марка может быть старше)
+const COMPS60_NEW={
+  us:[{n:'Pontiac',since:1930,mix:{people:.3,middle:.7},a:{1931:85,1932:45,1934:79,1937:236,1938:97,1941:330,1946:138,1949:305,1953:419,1955:554,1957:334,1958:217,1959:383},models:[[1930,'Pontiac Six','']]},
+      {n:'Mercury',since:1942,mix:{middle:1},a:{1946:87,1949:301,1953:306,1955:330,1957:286,1958:133,1959:150},models:[[1942,'Mercury Eight','']]},
+      {n:'Lincoln',since:1942,mix:{lux:1},a:{1946:17,1949:74,1953:41,1955:27,1957:41,1958:30,1959:27},models:[[1942,'Lincoln','']]},
+      {n:'Kaiser-Frazer',since:1947,until:1956,mix:{middle:1},a:{1947:139,1948:140,1949:101,1951:232,1953:44,1955:1},models:[[1947,'Kaiser Special',''],[1951,'Henry J','']]}],
+  uk:[{n:'Standard',since:1930,mix:{people:.5,middle:.5},a:{1930:0.03,1939:0.13,1955:0.11,1959:0.09},est:[1930,1955,1959],models:[[1930,'Standard Nine','']]},
+      {n:'Hillman (Rootes)',since:1930,mix:{people:.6,middle:.4},a:{1930:0.03,1939:0.09,1955:0.09},est:[1930,1939,1955],models:[[1932,'Minx','']]}],
+  fr:[{n:'Simca',since:1934,mix:{people:.8,middle:.2},a:{1934:0.03,1939:0.127,1948:0.116,1955:0.20,1956:0.20,1959:0.18},est:[1934,1955,1956,1959],models:[[1936,'Simca Cinq',''],[1951,'Aronde','']]},
+      {n:'Ford France',since:1930,until:1955,mix:{middle:1},a:{1930:0.02,1939:0.03,1948:0.064,1953:0.04},est:[1930,1939,1953],models:[[1948,'Vedette','']]}],
+  de:[{n:'DKW / Auto Union',since:1931,mix:{people:.85,middle:.15},a:{1931:0.05,1933:0.13,1937:0.196,1938:0.19,1946:0.001,1949:0.001,1950:0.03,1955:0.06,1959:0.05},est:[1931,1938,1946,1949,1950,1955,1959],models:[[1931,'DKW F1','']]},
+      {n:'Hanomag',since:1930,mix:{people:.7,middle:.3},a:{1931:0.104,1938:0.05,1946:0},est:[1938,1946],models:[[1930,'Hanomag','']]},
+      {n:'Ford (Кёльн)',since:1931,mix:{people:.6,middle:.4},a:{1931:0.03,1938:0.06,1950:0.09,1959:0.09},est:[1931,1938,1950,1959],models:[[1931,'Ford Köln','']]},
+      {n:'Volkswagen',since:1946,mix:{people:.9,truck:.1},a:{1946:0.5,1950:0.4,1955:0.28,1958:0.27,1959:0.27},est:[1946,1955,1958,1959],models:[[1946,'Volkswagen «Жук»','']]},
+      {n:'Lloyd / Borgward',since:1950,mix:{people:.6,middle:.4},a:{1950:0.03,1955:0.10,1958:0.08,1959:0.07},est:[1950,1955,1958,1959],models:[[1950,'Lloyd LP 300',''],[1954,'Borgward Isabella','']]}]};
+// Слияния по истории: с этого года марку нельзя купить отдельно — она в группе (105b-trade.js: BRAND_GROUP дополняется в 105k-comps60.js).
+// Год 0 — марка всегда часть чужой фирмы (отделение GM или Ford). Auto Union — 1932; BMC — 1952; AMC и Studebaker-Packard — 1954
+const GROUP60={'Pontiac':0,'Mercury':0,'Lincoln':0,'Ford (Кёльн)':0,'Ford France':0,'Austin':1952,'Morris':1952,'Nash':1954,'Hudson-Essex':1954,'Packard':1954,'Studebaker':1954,'Horch':1932,'DKW / Auto Union':1932};
+var COMP_CLK=1895;   // год, на который сейчас смотрят классы марок (mixT): ставится в compVol
+(function(){
+  for(const c in COMPS60_NEW)COMPS60_NEW[c].forEach(o=>{const cp={n:o.n,since:o.since,mix:o.mix,v:{[o.since]:1},models:o.models||[],a60:o.a,new60:1};if(o.until)cp.until=o.until;if(o.est)cp.est60=o.est;COMPS[c].push(cp);});
+  for(const c in COMPS60){const D=COMPS60[c];COMPS[c].forEach(cp=>{const o=D[cp.n];if(!o)return;cp.a60=o.a||{};if(o.est)cp.est60=o.est;if(o.until&&!cp.until)cp.until=o.until;if(o.mixT)cp.mixT=o.mixT;if(o.ren)cp.ren=o.ren;});}
+  for(const c in COMPS)COMPS[c].forEach(cp=>{cp.c60=c;});
+})();
+
 /* ================= MODEL ================= */
 let G=null,tab='plant',draft=null,auto=null;
 const T=s=>(s.y-1895)+s.m/12;
@@ -3934,11 +4022,12 @@ const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.
 function refPrice(md,s,c){const g=segOf(md);return prefP(g,c||s.country,s)*payK(md)*Math.pow(clamp(classScore(md,s,c),0.3,2),g==='truck'?ALPHA_Q[g]/ALPHA_P[g]:AQ/BR);}
 /* ---------- конкуренты ---------- */
 // 0.30: марка разорилась в вашей партии (s.dead) — её больше нет; досталась новому хозяину — слабее (s.compK); возрождённая вами — живёт и после своей даты (s.rev)
-function compVol(cp,s){const t=yf(s),KN=cp.fk||cp.n;if(s&&s.dead&&s.dead[KN]!=null&&mi(s)>=s.dead[KN])return 0;if(t<cp.since)return 0;
-  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return tabAt(cp.v,t,true)*((s&&s.compK&&s.compK[KN])||1);}
+// 0.60, этап 4: после 1929 года выпуск марки — её доля рынка страны × рынок страны (03e-comps60.js, 105k-comps60.js)
+function compVol(cp,s){const t=yf(s),KN=cp.fk||cp.n;COMP_CLK=t;if(s&&s.dead&&s.dead[KN]!=null&&mi(s)>=s.dead[KN])return 0;if(t<cp.since)return 0;
+  if(cp.until&&t>=cp.until){const R=s&&s.rev&&s.rev[cp.n];return R?R.v:0;}return (cp.c60&&t>=1930?comp60Vol(cp,t):tabAt(cp.v,t,true))*((s&&s.compK&&s.compK[KN])||1);}
 function compAlive(cp,s){return compVol(cp,s)>0;}
 function compModel(cp,s){let m=null;(cp.models||[]).forEach(x=>{if(x[0]<=s.y)m=x;});return m;}
-function compName(cp,s){if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
+function compName(cp,s){if(cp.ren){let n=null;cp.ren.forEach(x=>{if(s.y>=x[0])n=x[1];});if(n)return n;}if(cp.n==='Daimler'&&s.y>=1926)return 'Mercedes-Benz';if(cp.n==='Maxwell / Chrysler')return s.y>=1925?'Chrysler':'Maxwell';if(cp.n==='Nash'&&s.y<1917)return 'Rambler (Jeffery)';return cp.n;}
 function compsOf(c,s){return (COMPS[c]||[]).filter(cp=>!pkIs(cp,s));}
 // Доля исторической марки игрока-первопроходца в классе: её место на рынке свободно.
 // 0.21: в Америке — лишь его часть (40%): место Ford в 1910-х заняли бы Buick, Willys, Chevrolet — играя за Форда, его ещё надо завоевать
@@ -3998,6 +4087,8 @@ function compWeights(c,g,s){const S=segAnnual(c,g,s),L=[];if(S<=0)return L;let s
   const mo=isMotoSeg(g);compList(c,g).forEach((cp,i)=>{const mx=(cp.mix&&cp.mix[g])||0;if(!mx||pkIs(cp,s)||(!mo&&acqHas(s,c,i))||(mo&&mholdOf(s,c,i)))return;const v=compVol(cp,s)*mx*(mo?1:maSubW(s,c,i,g));if(v>0){L.push({cp,i,v});sum+=v;}});
   // 0.41: живые соперники — экспорт туда, где марки по истории не было (17b-bots.js)
   if(!mo&&s&&s.bots&&botsOn(s))botExports(s,c,g,S).forEach(o=>{L.push(o);});
+  // 0.60, этап 4: линии фирм, вышедших в этот класс сверх истории (105k-comps60.js)
+  if(!mo&&s&&s.extL&&s.extL[c]&&s.extL[c][g]&&s.extL[c][g].length)firmExts(s,c,g,S).forEach(o=>{L.push(o);});
   const gs=ghostShare(c,g,s),rest=Math.max(1e-9,S*(1-gs)),k=sum>rest*0.95?0.95/sum:1/rest;L.forEach(o=>o.w=o.v*k);L.rest=rest;return L;}
 /* ---------- игрок: дилеры, реклама, репутация ---------- */
 // Какую часть покупателей страны видят ваши машины: первые дилеры открываются в больших городах
@@ -5824,6 +5915,76 @@ Object.assign(ARMY_WAR,{jeep:90,mtank:300});
 // что ценит покупатель нового вида (сумма весов — 1, как у прежних)
 Object.assign(CHAR_W,{jeep:{perf:0.3,rel:0.44,comf:0.04,ease:0.1,safe:0.06,econ:0.06,cap:0},mtank:{perf:0.36,rel:0.5,comf:0,ease:0.06,safe:0.08,econ:0,cap:0},
   offroad:{perf:0.26,rel:0.4,comf:0.04,ease:0.08,safe:0.04,econ:0.18,cap:0},minibus:{perf:0.08,rel:0.32,comf:0.12,ease:0.08,safe:0.1,econ:0.24,cap:0.06}});
+
+/* ================= 0.60, этап 4: СОПЕРНИКИ 1930–1960 — правила =================
+   1. Выпуск марки после 1929 года — её доля рынка страны × рынок страны (данные и объяснение — 03e-comps60.js).
+   2. Классы марки могут меняться со временем (mixT): Packard с 1935 года — средний класс, Renault с 1947-го — народный.
+   3. Новый ход фирмы — «выход в соседний класс» (17c-firms.js: программа enter). Здесь — список таких линий и их вес в классе. */
+Object.assign(BRAND_GROUP,GROUP60);
+// --- классы марки на год часов COMP_CLK (часы ставит compVol: она вызывается перед любым чтением классов марки)
+function c60MixAt(cp,y){let m=cp.mix0;(cp.mixT||[]).forEach(x=>{if(y>=x[0])m=x[1];});return m;}
+(function(){for(const c in COMPS)COMPS[c].forEach(cp=>{if(!cp.mixT)return;cp.mix0=cp.mix;Object.defineProperty(cp,'mix',{get(){return c60MixAt(this,COMP_CLK);},enumerable:true,configurable:true});});})();
+// --- рынок, от которого считается доля марки: легковые; у марки грузовиков — грузовые
+function c60Mkt(cp,y){const mx=cp.mixT?c60MixAt(cp,y):cp.mix,tr=((mx&&mx.truck)||0)>=0.5;return Math.max(1,mktAt((tr?MKT_TRUCK:MKT)[cp.c60],y));}
+// таблица долей: 1929 год — по последнему числу прежней таблицы выпуска, дальше — опорные точки
+function c60Tab(cp){if(cp._sh)return cp._sh;const T={},a=cp.a60||{};
+  if(!cp.new60&&!(cp.until&&cp.until<=1930))T[1929]=tabAt(cp.v,1929.5,true)/c60Mkt(cp,1929.5);
+  for(const y in a){const v=a[y];T[+y]=v<1?v:v*1000/c60Mkt(cp,+y+0.01);}
+  if(!Object.keys(T).length)T[cp.since||1930]=0;
+  return cp._sh=T;}
+function comp60Share(cp,t){return Math.max(0,tabAt(c60Tab(cp),t));}
+// выпуск за год: доля × рынок. Пока доля есть, марка жива и в год без рынка (1943–1945): не меньше одной машины
+function comp60Vol(cp,t){const sh=comp60Share(cp,t);return sh>0?Math.max(1,sh*c60Mkt(cp,t)):0;}
+/* ---------- выход в соседний класс ----------
+   Образцы (claude/issledovanie-soperniki-1930-1960.md): Packard «One Twenty» (1935) — дорогая марка в среднем классе, продажи
+   за год выросли больше чем втрое; Plymouth у Chrysler (в таблице выпуска с 1930 года — третья марка Америки к 1932-му).
+   Линия — запись F.ext[класс] у фирмы: {from, y}. Её вес в классе — часть обычного выпуска фирмы, но не больше доли класса;
+   за три года линия выходит на полный вес. Она — сверх истории и прибавляется к классу целиком, как экспорт живых марок.
+   Покупателей линия отбирает у всех марок класса; спрос игрока сам по себе не урезается. */
+const EXT_ADJ={people:['middle'],middle:['people','lux'],lux:['middle']},
+  EXT_VOL=globalThis.EXTVOL??0.5,      // линия в новом классе — до половины обычного выпуска фирмы
+  EXT_CLASS=globalThis.EXTCLASS??0.2,  // и не больше пятой части класса
+  EXT_YOU=0.35,                        // повод: одна марка (вы) держит от 35 % класса, где у фирмы машин нет
+  EXT_GAP=60,                          // в один класс страны — не чаще раза в пять лет
+  EXT_MAX=2,                           // и не больше двух таких линий в классе разом
+  EXT_MIN=0.03;                        // фирма должна быть заметной: её линия — от 3 % класса
+function extList(s,c,g){return (s.extL&&s.extL[c]&&s.extL[c][g])||[];}
+function extLive(s,c,g){return extList(s,c,g).filter(i=>{const F=s.firms&&s.firms[c+':'+i];return F&&F.st!=='dead'&&F.ext&&F.ext[g];}).length;}
+function extAdd(s,F,g,t,you){F.ext=F.ext||{};F.ext[g]={from:t,y:Math.floor(1895+t/12),you:you||0};const X=s.extL=s.extL||{},A=X[F.c]=X[F.c]||{},L=A[g]=A[g]||[];if(!L.includes(F.i))L.push(F.i);(s.extT=s.extT||{})[F.c+':'+g]=t;}
+function extDrop(s,F,g){if(F.ext)delete F.ext[g];const L=extList(s,F.c,g),k=L.indexOf(F.i);if(k>=0)L.splice(k,1);if(F.pk)delete F.pk[g];if(F.md)delete F.md[g];if(F.rs)delete F.rs[g];if(F.rg)delete F.rg[g];if(F.sh)delete F.sh[g];}
+// строки для compWeights: линии фирм, вышедших в этот класс сверх истории
+function firmExts(s,c,g,S){const I=extList(s,c,g);if(!I.length||!firmsOn(s))return [];const out=[],t=mi(s),L=COMPS[c]||[];
+  I.forEach(i=>{const F=s.firms&&s.firms[c+':'+i],cp=L[i];if(!F||!cp||F.st==='dead'||!F.ext||!F.ext[g]||pkIs(cp,s)||acqHas(s,c,i))return;const cv=compVol(cp,s);if(cv<=0)return;
+    const ramp=clamp((t-F.ext[g].from+6)/36,0.15,1),v=Math.min(cv*EXT_VOL,S*EXT_CLASS)*ramp;if(v>0)out.push({cp,i,v,ext:1});});
+  return out;}
+function firmSegsF(F,cp){const L=firmSegs(cp);if(F&&F.ext)for(const g in F.ext)if(!L.includes(g))L.push(g);return L;}
+// куда фирме выгодно выйти: соседний класс, где её машин нет, а вы держите от 35 % продаж
+function firmEnterPick(s,F,cp,SG){if(globalThis.EXTOFF)return null;/* EXTOFF — замер «без выхода в соседний класс» */const t=mi(s);let best=null;
+  firmSegs(cp).forEach(g0=>{if((cp.mix[g0]||0)<0.3)return;(EXT_ADJ[g0]||[]).forEach(g=>{if((cp.mix[g]||0)>0||(F.ext&&F.ext[g]))return;const z=SG&&SG[g];if(!z||!(z.size>0))return;
+    const you=(z.you||0)/z.size;if(you<EXT_YOU||extLive(s,F.c,g)>=EXT_MAX)return;const last=s.extT&&s.extT[F.c+':'+g];if(last!=null&&t-last<EXT_GAP)return;
+    const S=segAnnual(F.c,g,s);if(S<200)return;   // класса в стране почти нет — выходить некуда
+    if(compVol(cp,s)*EXT_VOL<S*EXT_MIN)return;   // мастерская класс не сдвинет: линия должна тянуть хотя бы на 3 % класса
+    if(!best||you>best.you)best={g,g0,you};});});
+  return best;}
+const EXT_DIR={'people>middle':'подороже','middle>lux':'подороже','middle>people':'подешевле','lux>middle':'подешевле'};
+function firmEnterStart(s,r,F,cp,SG,bot){const E=firmEnterPick(s,F,cp,SG);if(!E)return false;const t=mi(s),N=firmName(s,F),R=F.h12,cost=Math.max(20000*cpi(s),R*0.12),mon=Math.round((18+Math.random()*6)*(bot?0.85:1));
+  F.cash-=cost;F.prog={k:'enter',g:E.g,g0:E.g0,at:t+mon,cost,you:E.you};(s.extT=s.extT||{})[F.c+':'+E.g]=t;
+  firmNote(s,r,F,{w:3,k:'enter0',t:`${N} готовит машину ${EXT_DIR[E.g0+'>'+E.g]||''} — в ваш класс`,txt:`«${s.company}» держит ${Math.round(E.you*100)}% продаж ${SEG_LOC[E.g]||''} ${BOT_IN[F.c]}, а у ${N} машин этого класса нет. Марка заложила ${money(cost)} на новую модель ${EXT_DIR[E.g0+'>'+E.g]||''} своих и новые цеха под неё — выйдет примерно через ${mon} мес. Так в 1935 году Packard, марка дорогих машин, вывел «One Twenty» в средний класс: за год продажи марки выросли больше чем втрое.`});
+  return true;}
+function firmEnterDone(s,r,F,cp,P){const t=mi(s),N=firmName(s,F),g=P.g,z=r.mk&&r.mk[F.c]&&r.mk[F.c].segs&&r.mk[F.c].segs[g];
+  if(F.st!=='ok'||pkIs(cp,s)||(cp.mix[g]||0)>0)return;extAdd(s,F,g,t,z&&z.size>0?(z.you||0)/z.size:P.you);
+  // машину делали против вашей: половину вашего перевеса в качестве новинка перенимает сразу
+  const q=clamp(0.5*((z&&z.edgeQ)||0),0,0.6);if(q>0.03)F.md[g]={q,from:t,till:t+60,name:'',who:`«${s.company}»`,you:1};
+  const sh=Math.round(Math.min(EXT_CLASS,compVol(cp,s)*EXT_VOL/Math.max(1,segAnnual(F.c,g,s)))*100);
+  firmNote(s,r,F,{w:4,k:'enter',t:`${N} вышла ${SEG_INTO[g]||'в новый класс'}`,txt:`${N} начала продавать ${BOT_IN[F.c]} машину ${SEG_GEN[g]||''}. Цеха рассчитаны примерно на ${sh}% класса; на полный выпуск линия выйдет за три года. Покупателей она отбирает у всех марок класса — у вас тоже. Дальше марка ведёт себя здесь как любая другая: отвечает ценой и новой моделью, а если линия не окупится — снимет её.`});}
+// линия не окупилась: два с половиной года спустя продаёт меньше половины того, что взяла бы рядовая марка при вашей доле
+// на день выхода (вы держали you класса — рядовой марке достаётся её вес × (1 − you)) — снимают
+const EXT_FAIL=0.5;
+function firmExtCheck(s,r,F,cp){if(!F.ext)return;const t=mi(s);for(const g in F.ext){const E=F.ext[g];if(t-E.from<30)continue;const rs=F.rs&&F.rs[g];if(rs!=null&&rs<EXT_FAIL*(1-clamp(E.you||0,0,0.8))){extDrop(s,F,g);
+      firmNote(s,r,F,{w:3,k:'exit',t:`${firmName(s,F)} ушла ${SEG_OUT[g]||'из класса'}`,txt:`Линия ${firmName(s,F)} ${SEG_LOC[g]||''} ${BOT_IN[F.c]} не окупилась: продавали меньше половины расчётного. Марка сняла машину с производства и вернулась к своему классу.`});}}}
+const SEG_INTO={people:'в народный класс',middle:'в средний класс',lux:'в класс люкс'},SEG_OUT={people:'из народного класса',middle:'из среднего класса',lux:'из класса люкс'};
+// кого не распродают при втором разорении: марку исторического концерна ('grp') и фирму от 5 % рынка своей страны ('big')
+function firmKept(s,cp){const g=BRAND_GROUP[cp.n];if(g!=null&&s.y>=g)return 'grp';const c=cp.c60;if(!c)return false;return compVol(cp,s)/((s.compK&&s.compK[cp.fk||cp.n])||1)>=0.05*mktAt(MKT[c],yf(s))?'big':false;}
 
 /* ================= CALIB: сила конкурентов по истории (генерируется test/calib.js) ================= */
 // k — насколько реальные марки класса привлекательнее «средней» машины: подобрано так, чтобы без игрока
@@ -8537,7 +8698,7 @@ function domScreenHTML(s){const T=domTable(s),t=legacyTable(s),ks=s.dom?(s.dom.k
 
 /* ================= РЕКОРД ЭПОХИ (генерируется: node tools/gen_era.js) =================
    Лучший итог настоящей истории 1895–1960 по категориям господства (16-world.js: histEra). Не править руками. */
-const HIST_ERA_DATA={"best":{"scale":{"n":"Ford","v":4245721921,"c":"us"},"market":{"n":"Ford","v":70292107323,"c":"us"},"sport":{"n":"Bugatti","v":378,"c":"fr"},"capital":{"n":"Ford","v":5035636807,"c":"us"},"brand":{"n":"Ford","v":65181637,"c":"us"},"innov":{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"}},"world":{"hp":15458818341,"rev":284752997332,"sport":1803,"firsts":84,"cl":208355133},"innovTop":[{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"},{"n":"General Motors (Cadillac, Buick, Oldsmobile, Chevrolet)","v":18,"c":"us"},{"n":"Ford","v":15,"c":"us"},{"n":"Curtiss-Wright (Curtiss и Wright)","v":12,"c":"us"},{"n":"FIAT","v":9,"c":"it"},{"n":"Renault","v":8,"c":"fr"},{"n":"Blériot / SPAD","v":6,"c":"fr"},{"n":"Bugatti","v":6,"c":"fr"}],"y0":1895,"y1":1960};
+const HIST_ERA_DATA={"best":{"scale":{"n":"Ford","v":2997990816,"c":"us"},"market":{"n":"Ford","v":51047853969,"c":"us"},"sport":{"n":"Bugatti","v":378,"c":"fr"},"capital":{"n":"Ford","v":5408564227,"c":"us"},"brand":{"n":"Ford","v":44667637,"c":"us"},"innov":{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"}},"world":{"hp":16498029991,"rev":308166523766,"sport":1803,"firsts":87,"cl":192193028},"innovTop":[{"n":"Daimler-Benz (Mercedes и Benz)","v":19,"c":"de"},{"n":"General Motors (Cadillac, Buick, Oldsmobile, Chevrolet)","v":18,"c":"us"},{"n":"Ford","v":15,"c":"us"},{"n":"Curtiss-Wright (Curtiss и Wright)","v":12,"c":"us"},{"n":"FIAT","v":9,"c":"it"},{"n":"Renault","v":8,"c":"fr"},{"n":"Blériot / SPAD","v":6,"c":"fr"},{"n":"Bugatti","v":6,"c":"fr"}],"y0":1895,"y1":1960};
 
 /* ================= 0.47: ИЗОБРЕТЕНИЯ МАРОК НАСТОЯЩЕЙ ИСТОРИИ, 1895–1930 =================
    Отзыв к 0.46: «по инновациям цифра 7 занижена — пересчитай» (таблица: Mercedes / Daimler-Benz ~19, Ford ~15). Рекорд эпохи по
@@ -9454,6 +9615,7 @@ const FIRM_BT=3,          // насколько покупатель грузо�
   FIRM_FIN=0.14,          // рассрочка: как +15 % покупателей (как у игрока: techLv credit ×1,15)
   FIRM_CAPX=1.3,          // сколько сверх построенных мощностей завод выжимает сверхурочными
   FIRM_AD=0.45,           // предел рекламной кампании и заводской гоночной команды — в единицах славы марки (у игрока слава — до ~1,2)
+  FIRM_AD2=globalThis.FIRMAD2??0.8,   // 0.60: предел второй волны — когда первая идёт, а доля не вернулась
   FIRM_FOLLOW=globalThis.FIRMFOLLOW??0.5,   // мелкие марки без имени идут за крупными: перенимают половину их перевеса
   FIRM_NET=0.07,          // чистая прибыль фирмы в обычный год, доля выручки
   FIRM_SCALE=0.1,         // недогруз/перегруз завода: выпуск вдвое ниже обычного — себестоимость +7 %
@@ -9493,6 +9655,7 @@ function firmMult(s,F,g){if(!F||F.st==='dead')return 1;return Math.min(firmWant(
 // марки класса с их нынешним перевесом: w — доля по истории, m — перевес, M — перевес всех соперников класса вместе
 function firmTerms(s,c,g){const L=compWeights(c,g,s),on=s&&s.firms&&firmsOn(s),mo=isMotoSeg(g);let M=1,sw=0,sd=0;
   L.forEach(o=>{if(o.bot){o.m=on?firmMult(s,firmHome(s,o.bot),g):1;M+=o.w*o.m;return;}/* пришла сверх истории — прибавляется к классу целиком */
+    if(o.ext){o.m=on?firmMult(s,s.firms[c+':'+o.i],g):1;M+=o.w*o.m;return;}/* 0.60: линия фирмы в соседнем классе — тоже сверх истории */
     o.m=on?firmMult(s,s.firms[(mo?'m:':'')+c+':'+o.i],g):1;M+=o.w*(o.m-1);sw+=o.w;sd+=o.w*(o.m-1);});
   // мелкие марки без имени («остаток» класса) идут за крупными с половинной силой — иначе большая часть класса не отвечала бы никогда
   if(on&&sw>0.02&&sw<1){const mr=1+clamp(FIRM_FOLLOW*sd/sw,-0.3,6);M+=(1-sw)*(mr-1);L.mRest=mr;}
@@ -9525,8 +9688,8 @@ function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D
     // сколько класс продаёт соперникам в обычный месяц (по истории): марка получает из этого свою долю — её продажи «как в истории»
     const WH={},HS={};D.segs().forEach(g=>{WH[g]={};const W=compWeights(c,g,s);HS[g]=(W.rest||0)/12*fm*dc;W.forEach(o=>{if(!o.bot)WH[g][o.i]=o.w;});});
     L.forEach((cp,i)=>{if(D.skip(s,c,i,cp))return;const x=recs[i];if(!x)return;const hv=compVol(cp,s);let F=firmGet(s,c,i,D.mo);
-      if(hv<=0){if(F&&F.st!=='dead'){F.st='dead';}return;}
-      if(!F)F=firmMake(s,c,i,cp,D.mo);if(F.st==='dead')return;const segs=firmSegs(cp);
+      if(hv<=0){if(F&&F.st!=='dead'){F.st='dead';if(F.ext&&!D.mo)for(const g in F.ext)extDrop(s,F,g);}return;}
+      if(!F)F=firmMake(s,c,i,cp,D.mo);if(F.st==='dead')return;const segs=D.mo?firmSegs(cp):firmSegsF(F,cp);
       // --- счёт месяца ---
       let rev=0,hrev=0,gross=0,fixed=0,units=0;
       segs.forEach(g=>{const u=(x.lg&&x.lg[g])||0,P=prefP(g,c,s),pk=F.pk[g]||1,wh=WH[g]&&WH[g][i]||0,hu=HS[g]*wh,c0=firmCost0(g,wh||0.02,MU),z=SG[g];
@@ -9543,6 +9706,7 @@ function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D
       firmGroupMonth(s,r,F,cp);   // марка в чужой группе: поток и рассрочка хозяина приходят и к ней
       // --- состояние: убытки → кредиторы → закрытие ---
       if(firmState(s,r,F,cp,i))return;
+      if(!D.mo&&F.ext)firmExtCheck(s,r,F,cp);   // 0.60: линия в соседнем классе не окупилась — снимают
       // --- готовые программы ---
       if(F.prog&&t>=F.prog.at)firmDone(s,r,F,cp);
       if(F.capP&&t>=F.capP.at){F.capP=null;F.cap=Math.min(12,(F.cap||1)*1.6);firmNote(s,r,F,{w:1,k:'cap',t:`${firmName(s,F)}: новые цеха работают`,txt:`Завод ${firmName(s,F)} расширен: марка может выпускать в полтора раза больше.`});}
@@ -9568,14 +9732,18 @@ function firmState(s,r,F,cp,i){const t=mi(s),lim=F.h12*0.3,N=firmName(s,F),KN=cp
       if(!F.mo&&!F.kf&&maCredPending(s,F,i))return false;   // игрок ещё думает над предложением кредиторов
       // этап 5б: до кредиторов марку может купить соседняя фирма с деньгами — «концерн» с настоящей экономикой
       if(!B&&!F.mo&&!F.kf){let done=false;try{done=firmMerge(s,r,F,cp,i);}catch(e){console.warn('merge',e);}if(done)return true;}
-      if((F.rec||0)>=1&&!B){F.st='dead';s.dead=s.dead||{};s.dead[KN]=t;firmNote(s,r,F,{w:5,k:'dead',t:`${N} закрыта`,txt:F.mo?`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу.`:`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу. В 1920-е так исчезла половина американских автозаводов: в 1921 году их было 88, в 1927-м — 44.`});return true;}
+      // 0.60, этап 4: марку концерна (Oldsmobile у GM, заводы Форда за границей) и крупную фирму не распродают — её берут новые хозяева
+      const kept=!F.mo&&!F.kf&&typeof firmKept==='function'&&firmKept(s,cp);
+      if((F.rec||0)>=1&&!B&&!kept){F.st='dead';s.dead=s.dead||{};s.dead[KN]=t;firmNote(s,r,F,{w:5,k:'dead',t:`${N} закрыта`,txt:F.mo?`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу.`:`Кредиторы распродают завод ${N}: второй раз спасать марку никто не стал. Её покупатели достанутся соседям по классу. В 1920-е так исчезла половина американских автозаводов: в 1921 году их было 88, в 1927-м — 44.`});return true;}
+      if(F.ext&&!F.mo)for(const g in F.ext)extDrop(s,F,g);   // 0.60: кредиторы закрывают линии в чужих классах
       const cut=(F.rec||0)>=1?0.85:0.75;F.rec=(F.rec||0)+1;F.st='ok';F.bad=0;F.cash=F.h12*0.1;F.pk={};F.prog=null;F.capP=null;F.turn=1;s.compK=s.compK||{};s.compK[KN]=Math.max(0.4,(s.compK[KN]||1)*cut);F.r12*=cut;F.h12*=cut;F.ld=1;F.rg={};F.rs={};
+      if(kept&&F.rec>=2){firmNote(s,r,F,{w:4,k:'rec',t:`${N} — у новых хозяев`,txt:kept==='grp'?`${N} снова в убытках, но это марка концерна: её не распродают. Концерн списал долги, закрыл слабые цеха и урезал выпуск на ${Math.round((1-cut)*100)}%.`:`${N} снова в убытках, но фирму такого размера не распродают: её забрали главные кредиторы. Долги списаны, выпуск урезан на ${Math.round((1-cut)*100)}%. Так в 1934 году обанкротившийся Citroën перешёл к шинной фирме Michelin — и остался первой маркой Франции.`});return true;}
       firmNote(s,r,F,{w:4,k:'rec',t:`${N} — в руках кредиторов`,txt:`Банки взяли ${N} под управление: долги списаны, слабые заводы закрыты, выпуск урезан на ${Math.round((1-cut)*100)}%. Новый управляющий получил деньги на ${F.mo?'один новый мотоцикл':'одну новую машину'}.${F.mo?'':' Так в 1910 году банкиры спасали General Motors, а в 1912-м из развалин United States Motor осталась одна Maxwell.'}`});return true;}
     return false;}
   return false;}
 // цена: шаг к выгодной для фирмы цене; о заметном сдвиге — заметка
 function firmPrices(s,r,F,cp,i,WH,bot){const t=mi(s),N=firmName(s,F),step=bot?0.02:0.035,MU=nestMu(s);
-  firmSegs(cp).forEach(g=>{const wh=WH[g]&&WH[g][i];if(!wh)return;const pk=F.pk[g]||1;
+  (F.mo||F.kf?firmSegs(cp):firmSegsF(F,cp)).forEach(g=>{const wh=WH[g]&&WH[g][i];if(!wh)return;const pk=F.pk[g]||1;
     // в долгах цену ниже обычной не держат; иначе — к выгодной
     let tg=firmPriceOpt(F,g,wh,(F.rs&&F.rs[g])==null?1:F.rs[g],t,MU);if(F.st==='bad')tg=Math.max(tg,Math.min(1,pk+0.02));
     // завод не успевает за спросом — цену поднимают
@@ -9598,8 +9766,10 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   if(g0&&!F.capP&&firmWant(s,F,g0)>FIRM_CAPX*(F.cap||1)&&(F.cap||1)<12&&can(0.08)){const cost=R*0.08;F.cash-=cost;F.capP={at:t+6,cost};
     firmNote(s,r,F,{w:1,k:'cap0',t:`${N} расширяет завод`,txt:`Спрос на машины ${N} выше, чем успевает завод. Марка строит новые цеха за ${money(cost)} — через полгода выпуск вырастет в полтора раза.`});}
   if(F.prog)return;
+  // 0.60, этап 4: выход в соседний класс — когда там одна марка (вы) держит треть продаж и больше, а у фирмы есть деньги
+  if(!F.mo&&!F.kf&&F.st==='ok'&&can(0.15)&&Math.random()<0.5&&firmEnterStart(s,r,F,cp,SG,bot))return;
   // где потеряно больше всего: и доля класса, и сами продажи (один плохой год или чужой новый покупатель — ещё не повод)
-  const RS=F.rs||{};let g=null,loss=0;firmSegs(cp).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*cp.mix[k];if(l>loss){loss=l;g=k;}});
+  const RS=F.rs||{};let g=null,loss=0;(F.mo||F.kf?firmSegs(cp):firmSegsF(F,cp)).forEach(k=>{const l=(1-(RS[k]==null?1:RS[k]))*(cp.mix[k]||0.2);if(l>loss){loss=l;g=k;}});
   const turn=!!F.turn;if(turn&&!g)g=g0;
   const gr=F.gr>0.02?F.gr:0;   // помнит обиду — на потерю доли из-за игрока отвечает раньше
   // 0.51, общая калибровка. Мера ТЗ «соперники отбирают у игрока не меньше трети доли к 1915 году» не выполнялась: фирма отвечала,
@@ -9609,7 +9779,7 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   if(!g||(!turn&&(rsG>(bot?0.94:0.9)+0.05*gr||(!deep&&rgG>(bot?0.97:0.95)+0.03*gr))))return;const L=firmLeader(s,F,g,SG);if(!L)return;F.turn=0;const lost=Math.round((1-RS[g])*100),who=firmLeaderTxt(s,L);
   // 1) машина хуже — модель-ответ
   const mdOld=F.md[g],mdAge=mdOld?t-mdOld.from:999;
-  if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g])),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);
+  if((L.q>=0.15||(turn&&L.q>=0.05))&&L.q>=L.p*0.7&&mdAge>=30&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g]||0.3)),lost0=F.lostT!=null&&t-F.lostT<36,mon=Math.round((14+Math.random()*8)*(bot?0.8:1))+(lost0?6:0),frac=clamp((0.4+0.35*SK.iq)*(0.85+0.3*Math.random())+(L.you?0.1*gr:0)-(lost0?0.1:0),0.3,0.9);
     F.cash-=cost;F.prog={k:'model',g,at:t+mon,cost,q:clamp(firmDq(F,g,t)+L.q*frac,0.05,1.2),frac,who,you:L.you?1:0,lq:L.q,q0:firmDq(F,g,t)};
     if(L.you&&!F.kf)try{firmPoachEng(s,r,F,g);}catch(e){console.warn('poach eng',e);}   // этап 5б: к ответу готовятся и так — переманивают конструктора лидера
     firmNote(s,r,F,{w:2,k:'model0',t:`${N} готовит ответ ${who}`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}: ${firmCar(F)} ${who} лучше. Марка заказала новую модель за ${money(cost)} — выйдет примерно через ${mon} мес.`});return;}
@@ -9622,8 +9792,21 @@ function firmPlan(s,r,F,cp,i,SG,bot){const t=mi(s),y=yf(s),SK=firmSkill(),N=firm
   // 3) рассрочка — когда она в стране уже возможна, но ещё не у всех
   const FY=FIRM_FIN_Y[F.c]||[1999,1999];
   if(!F.mo&&!F.kf&&y>=FY[0]&&y<FY[1]&&!firmFin(F,t)&&can(0.05)){const cost=R*0.05;F.cash-=cost;F.prog={k:'fin',g,at:t+6,cost};
-    firmNote(s,r,F,{w:1,k:'fin0',t:`${N} готовит продажу в рассрочку`,txt:`${N} теряет покупателей и открывает кредитную контору: машину можно будет взять с первым взносом, остальное — за год. General Motors сделала это в 1919 году; к 1925-му в рассрочку продавали две трети новых машин Америки.`});return;}}
+    firmNote(s,r,F,{w:1,k:'fin0',t:`${N} готовит продажу в рассрочку`,txt:`${N} теряет покупателей и открывает кредитную контору: машину можно будет взять с первым взносом, остальное — за год. General Motors сделала это в 1919 году; к 1925-му в рассрочку продавали две трети новых машин Америки.`});return;}
+  /* 0.60, этап 4. Разбор «главная марка перестаёт отвечать, потеряв половину продаж» (замер: Chevrolet, 1918–1919 годы — полтора года
+     без единого хода при 60 % своей доли). Причина — кончились ходы: машина и цена у неё не хуже, чем у лидера, перевес лидера — имя,
+     а реклама уже идёт и больше 0,45 не даёт. Модель-ответ ждёт худшей машины, поток — худшей цены. Теперь при глубокой потере доли: */
+  if(!deep||F.mo||F.kf||globalThis.FIRMNEWOFF)return;/* FIRMNEWOFF — замер «без новых ответов» */
+  // 4) вторая волна рекламы — крупнее первой: имя лидера всё ещё громче
+  const adU=firmAd(F,t);
+  if((L.b||0)>=0.4&&L.b>=Math.max(L.q,L.p)&&F.ad&&adU>0&&adU<FIRM_AD2-0.1&&t-F.ad.from>=12&&can(0.08)){const cost=R*0.08,u=clamp(adU+L.b*0.45,0.2,FIRM_AD2);F.cash-=cost;F.prog={k:'ad',g,at:t+3,cost,u,who,wave:2};
+    firmNote(s,r,F,{w:2,k:'ad0',t:`${N}: вторая волна рекламы`,txt:`Кампания ${N} идёт, а ${lost}% своей доли ${SEG_LOC[g]||''} марка так и не вернула: имя ${who} всё ещё громче. Марка удваивает ставку — ${money(cost)} на газеты, выставки и гонки.`});return;}
+  // 5) своя новая модель: копировать у лидера нечего — фирма обновляет машину сама
+  if(mdAge>=36&&can(0.1)){const cost=Math.max(15000*cpi(s),R*0.1*Math.max(0.3,cp.mix[g]||0.3)),mon=Math.round((14+Math.random()*8)*(bot?0.8:1)),q0=firmDq(F,g,t),q=clamp(q0+(0.12+0.18*SK.iq)*(0.8+0.4*Math.random()),0.05,1.2);
+    F.cash-=cost;F.prog={k:'model',g,at:t+mon,cost,q,frac:0,who,you:0,own:1,q0};
+    firmNote(s,r,F,{w:2,k:'model0',t:`${N} обновляет модель`,txt:`${N} потеряла ${lost}% своей доли ${SEG_LOC[g]||''}${L.q<0.15&&L.p<0.2?`, хотя ${firmCar(F)} и цена у неё не хуже, чем у ${who}: перевес лидера — имя`:`, а прежние ответы ${who} уже в деле`}. Марка отвечает тем, что может сама, — новой моделью за ${money(cost)}, выйдет примерно через ${mon} мес. Так в конце 1920-х Форд уступал General Motors и Chrysler: покупатель смотрел на машины богаче и новее с виду.`});return;}}
 function firmDone(s,r,F,cp){const P=F.prog,t=mi(s),y=yf(s),N=firmName(s,F),g=P.g;F.prog=null;
+  if(P.k==='enter'){firmEnterDone(s,r,F,cp,P);return;}
   if(P.k==='ad'){F.ad={u:P.u,from:t,till:t+36};firmNote(s,r,F,{w:2,k:'ad',t:`${N} — на всех афишах`,txt:`Кампания ${N} началась: полосы в газетах, стенды на выставках, заводские машины на гонках. Покупателей у марки ${BOT_IN[F.c]} станет больше примерно на ${Math.round((Math.exp(P.u)-1)*100)}% — пока кампания идёт.`});}
   else if(P.k==='model'){const life=y<1920?72:48,nm=firmModelName(cp,y),up=Math.round((Math.exp(P.q/AQ)-1)*100);F.md[g]={q:P.q,from:t,till:t+life,name:nm,who:P.who,you:P.you};
     if(P.you&&!F.mo&&!F.kf)try{ownCopied(s,r,F,g);}catch(e){console.warn('own copy',e);}   // 0.51, этап 4в: с машиной игрока перенимают и его свой узел
@@ -9659,7 +9842,7 @@ function firmClassHTML(s,c,g){const L=firmClassLines(s,c,g).filter(o=>o.du>0&&o.
 // ходы соперников за прошлый месяц — для полосы на главном экране
 function rivMoves(s){const r=s.last;return ((r&&r.riv)||[]).slice().sort((a,b)=>(b.w||1)-(a.w||1));}
 /* ---------- экран «Соперники»: их ход после вашего и карточки фирм ---------- */
-const RIV_ICON={merge:'🤝',offer:'🏦',poach:'🧑‍🔧',grp:'🏭',model:'🚗',model0:'📐',line:'🏭',line0:'🏗',cut:'🔻',up:'🔺',fin:'💳',fin0:'💳',ad:'📣',ad0:'📣',cap:'🏭',cap0:'🏗',bad:'📉',ok:'📈',rec:'🏦',dead:'✖️',bot:'♟'};
+const RIV_ICON={merge:'🤝',offer:'🏦',poach:'🧑‍🔧',grp:'🏭',model:'🚗',model0:'📐',line:'🏭',line0:'🏗',cut:'🔻',up:'🔺',fin:'💳',fin0:'💳',ad:'📣',ad0:'📣',cap:'🏭',cap0:'🏗',bad:'📉',ok:'📈',rec:'🏦',dead:'✖️',bot:'♟',enter0:'🧭',enter:'↔️',exit:'↩️'};
 function rivMine(s,c){return c===s.country||dealerCount(s,c)>0;}
 // полоса на главном экране: что соперники сделали после вашего хода (на рынках, где вы продаёте)
 function rivStrip(s){if(!s||!s.last||s.mode==='racer')return '';const L=rivMoves(s).filter(n=>rivMine(s,n.c)&&n.w>=2);if(!L.length)return '';
@@ -9675,7 +9858,8 @@ function firmCardHTML(s,c,i,open,mo){const I=firmInfo(s,c,i,mo);if(!I)return '';
   if(I.ck<0.97)L.push(`Завод: поток с ${yr(F.lineT||t)} года — себестоимость −${Math.round((1-I.ck)*100)}%`);
   if(I.cap>1.3)L.push(`Мощности: в ${(I.cap/1.15).toFixed(1).replace('.',',')} раза больше, чем в истории`);
   if(I.fin)L.push('Продаёт в рассрочку');if(I.ad>0.05)L.push(`Реклама и заводская команда на гонках — до ${yr(F.ad.till)} года`);
-  const P=F.prog,pn=P?{model:'новую модель',line:'перестройку завода на поток',fin:'продажу в рассрочку',ad:'рекламную кампанию'}[P.k]:null;
+  if(!mo&&F.ext)for(const g in F.ext)L.push(`<b>Линия ${SEG_LOC[g]||''}</b> с ${F.ext[g].y} года — сверх своей истории: ${pct(F.sh[g]||0,0)} класса`);
+  const P=F.prog,pn=P?{model:'новую модель',line:'перестройку завода на поток',fin:'продажу в рассрочку',ad:'рекламную кампанию',enter:`выход ${(typeof SEG_INTO!=='undefined'&&SEG_INTO[P.g])||'в новый класс'}`}[P.k]:null;
   if(pn)L.push(`<b>Готовит ${pn}</b> — ${P.at-t<=1?'в ближайший месяц':`через ${P.at-t} мес.`}${P.who?` (ответ ${esc(P.who)})`:''}`);
   if(F.capP)L.push(`Строит новые цеха — через ${Math.max(1,F.capP.at-t)} мес.`);
   try{firmCardExtra(s,F,I,L,mo);}catch(e){console.warn('firm card',e);}
