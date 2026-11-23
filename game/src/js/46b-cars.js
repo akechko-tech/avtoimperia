@@ -301,6 +301,9 @@ function carModel(S){
   // 0.51, тема 10: у новой техники (тяжёлый грузовик, тягач, пожарная, цистерна, самосвал, мусоровоз, тракторы, броневик, танк) — свой кузов
   {const wk=typeof workKind51==='function'?workKind51(S):'';if(wk){const X={M,S,K,hi,y,col,crew,B,tube,WH,chassis,radiator,hood,headlamp,sideLamp,tailLamp,windscreen,steer,seat,tub,drvF,mechF,eyeAt,plate,setWt:v=>{wt=v;}};
       const r=workModel51(wk,X);if(r){len=r.len;track=r.track;if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];M.len=len;M.track=track;return M;}}}
+  // 0.60, этап 3: кузова и виды 1930–1960 — свои модели (46h-work60.js)
+  {const wk=typeof workKind60==='function'?workKind60(S):'';if(wk){const X={M,S,K,hi,y,col,crew,B,tube,WH,chassis,radiator,hood,headlamp,sideLamp,tailLamp,windscreen,steer,seat,tub,cabin,spare,drvF,mechF,eyeAt,plate,setWt:v=>{wt=v;}};
+      const r=workModel60(wk,X);if(r){len=r.len;track=r.track;if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];M.len=len;M.track=track;return M;}}}
   if(st==='carriage'){
     const wb=1.7,t=1.22,rF=0.36,rR=0.46;wt='wood';chassis(wb,t,rF,rR,0.06,{yf:0.62,fw:0.35,zEng0:-0.6,zEng1:-0.1});
     // кузов «вис-а-ви»: высокий ящик, изогнутая спинка, крылья-щитки

@@ -38,6 +38,7 @@ function kindArt(art,g){const {rear,x0,railY,front,paint,dark,glass,metal,driver
     return {b:o,w,nohood:1};}
   return null;}
 function carSVG(md,opt={}){
+  {const a6=typeof carSVG60==='function'?carSVG60(md,opt):null;if(a6)return a6;}   // 0.60: кузова 1934–1959 — свои рисунки (20d-art60.js)
   const p=parts(md),hp=p.e.hp,ei=hp<=3?0:hp<=8?1:hp<=16?2:hp<=25?3:hp<=40?4:hp<=60?5:7,cy=p.c.y,ci=cy<1896?0:cy<1902?1:cy<1910?2:cy<1920?3:4,bid=({b9:'b4',b11:'b4',b10:'b1',b30:'b5',b31:'b5',b32:'b5',b33:'b5',b34:'b5',b35:'b1'})[p.b.id]||p.b.id;
   const paint=md.paint||'#1b1d22',dark='#15161a',leather='#4a2f1f',glass='#a9c6db';
   const hoodL=[0,16,24,30,38,44,40,50][ei],R=[17,17,15,14,13][ci],GY=94,wy=GY-R,railY=wy-3;

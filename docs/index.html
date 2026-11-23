@@ -10437,6 +10437,7 @@ function kindArt(art,g){const {rear,x0,railY,front,paint,dark,glass,metal,driver
     return {b:o,w,nohood:1};}
   return null;}
 function carSVG(md,opt={}){
+  {const a6=typeof carSVG60==='function'?carSVG60(md,opt):null;if(a6)return a6;}   // 0.60: кузова 1934–1959 — свои рисунки (20d-art60.js)
   const p=parts(md),hp=p.e.hp,ei=hp<=3?0:hp<=8?1:hp<=16?2:hp<=25?3:hp<=40?4:hp<=60?5:7,cy=p.c.y,ci=cy<1896?0:cy<1902?1:cy<1910?2:cy<1920?3:4,bid=({b9:'b4',b11:'b4',b10:'b1',b30:'b5',b31:'b5',b32:'b5',b33:'b5',b34:'b5',b35:'b1'})[p.b.id]||p.b.id;
   const paint=md.paint||'#1b1d22',dark='#15161a',leather='#4a2f1f',glass='#a9c6db';
   const hoodL=[0,16,24,30,38,44,40,50][ei],R=[17,17,15,14,13][ci],GY=94,wy=GY-R,railY=wy-3;
@@ -10674,6 +10675,65 @@ function airArtSVG(md,o){o=o||{};const y=o.y||1912,P=airParts(md),f=P.f.id,col=m
   if(P.f.boat)Pp(`M0 ${ground-6} Q40 ${ground-9} 80 ${ground-6} T160 ${ground-6} T240 ${ground-6} T320 ${ground-6}`,'none','rgba(40,90,120,.35)',1);
   return `<svg viewBox="0 0 320 130" class="airart" role="img" aria-label="${esc(md.name||'')}"><g>${out.join('')}</g></svg>`;}
 function starPath(cx,cy,r){let d='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*0.42:r;d+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(1)+' '+(cy+Math.sin(a)*rr).toFixed(1);}return d+'Z';}
+
+/* ================= 0.60, этап 3 (доводка): рисунки кузовов и видов 1930–1960 =================
+   Прежний рисунок (carSVG) строит машину на раме с отдельными крыльями — так выглядели автомобили до тридцатых.
+   У кузовов 1934–1959 годов свой силуэт: обтекаемый, понтонный, вагонный. Здесь — десять рисунков в том же поле
+   (220×100, земля на 94, нос вправо), в цвете модели; колёса вращаются тем же классом .spin. */
+const ART60={b30:'stream',b31:'micro',b32:'pontoon',b33:'hardtop',b34:'small',b35:'roadster',b36:'jeep',b37:'offroad',b38:'minibus',b39:'mtank'};
+function carSVG60(md,opt){opt=opt||{};let p;try{p=parts(md);}catch(_){return null;}const k=p&&p.b?ART60[p.b.id]:null;if(!k)return null;
+  const paint=md.paint||'#1b1d22',dark='#15161a',glass='#a9c6db',chrome='#cfd3da',lite=typeof shade==='function'?shade(paint,0.55):'#e8e4d8',deep=typeof shade==='function'?shade(paint,-0.25):dark,GY=94,lux=md.t==='t2';
+  const wheel=(cx,R,o)=>{o=o||{};const wy=GY-R;let w=`<circle cx="${cx}" cy="${wy}" r="${R}" fill="${dark}"${o.knob?' stroke="#2c2d31" stroke-width="2.4" stroke-dasharray="2.2 2"':''}/>`;
+    if(lux&&!o.knob)w+=`<circle cx="${cx}" cy="${wy}" r="${R-2.2}" fill="none" stroke="#e8e6df" stroke-width="1.8"/>`;
+    if(o.wire){w+=`<g class="spin" style="transform-origin:${cx}px ${wy}px">`;for(let i=0;i<12;i++){const a=i/12*Math.PI*2;w+=`<line x1="${cx}" y1="${wy}" x2="${(cx+Math.cos(a)*(R-3)).toFixed(1)}" y2="${(wy+Math.sin(a)*(R-3)).toFixed(1)}" stroke="${chrome}" stroke-width=".7"/>`;}w+=`</g><circle cx="${cx}" cy="${wy}" r="2" fill="${chrome}"/>`;}
+    else w+=`<circle cx="${cx}" cy="${wy}" r="${R-4}" fill="${o.hub||chrome}"/><g class="spin" style="transform-origin:${cx}px ${wy}px"><circle cx="${cx}" cy="${wy}" r="${R-6}" fill="none" stroke="${dark}" stroke-width="1" stroke-dasharray="2.5 3"/></g><circle cx="${cx}" cy="${wy}" r="1.8" fill="${dark}"/>`;
+    return w;};
+  const arch=(cx,R)=>`<path d="M${cx-R-3},${GY-R+2} A${R+3},${R+3} 0 0 1 ${cx+R+3},${GY-R+2}Z" fill="${dark}"/>`;
+  const r=(x,y,w,h,f,rx,op)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}"${rx?` rx="${rx}"`:''} fill="${f}"${op?` opacity="${op}"`:''}/>`;
+  const drv=(x,y)=>`<rect x="${x-5}" y="${y}" width="10" height="11" rx="3" fill="#3c3f47"/><circle cx="${x}" cy="${y-4}" r="4.2" fill="#e0b894"/><path d="M${x-5},${y-5} q5,-6 10,0 z" fill="${dark}"/>`;
+  let b='',w='',sh=[110,84];
+  if(k==='pontoon'||k==='hardtop'){const ht=k==='hardtop',x0=ht?14:22,R=11,rx=ht?62:64,fx=158,roof=ht?lite:paint,ry=ht?37:35;
+    b+=`<path d="M${x0},80 V66 Q${x0},58 ${x0+10},57 H78 L${ht?92:88},${ry+3} Q${ht?94:90},${ry} ${ht?100:96},${ry} H128 Q134,${ry} 138,${ry+5} L150,56 L192,58 Q202,60 202,68 V80Z" fill="${paint}"/>`;
+    if(ht)b+=`<path d="M80,57 L92,${ry+3} Q94,${ry} 100,${ry} H128 Q134,${ry} 138,${ry+5} L149,56Z" fill="${roof}"/><path d="M${x0},58 l8,-7 h6 l6,6z" fill="${paint}"/>`;
+    b+=ht?`<path d="M96,54 L101,${ry+4} H130 L143,54Z" fill="${glass}"/>`:`<path d="M92,54 L96,39 H110 V54Z" fill="${glass}"/><path d="M114,54 V39 H129 L142,54Z" fill="${glass}"/>`;
+    b+=r(x0+6,67,180-x0+10,1.6,chrome)+r(200,74,6,4,chrome,1.5)+r(x0-4,74,6,4,chrome,1.5)+`<circle cx="199" cy="65" r="3" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(x0,61,3,5,'#b8322a',1)+r(196,69,6,3,chrome,1);
+    b+=arch(rx,R)+arch(fx,R);w=wheel(rx,R)+wheel(fx,R);sh=[(rx+fx)/2,96];}
+  else if(k==='stream'){const R=13,rx=60,fx=156;
+    b+=`<path d="M24,80 L22,72 Q30,54 70,42 Q90,31 112,31 H128 Q136,32 142,41 L152,55 Q176,54 192,60 Q205,65 205,74 V80Z" fill="${paint}"/>`;
+    b+=`<path d="M136,80 Q138,60 158,60 Q178,60 182,80Z" fill="${deep}"/><path d="M40,80 Q42,62 60,62 Q78,62 82,80Z" fill="${deep}"/>`;   // крылья-обтекатели
+    b+=`<path d="M96,52 L102,36 H114 V52Z" fill="${glass}"/><path d="M118,52 V36 H128 Q133,37 137,43 L143,52Z" fill="${glass}"/><path d="M74,52 Q84,42 92,38 L90,52Z" fill="${glass}"/>`;
+    for(let i=0;i<5;i++)b+=r(194+i*2.2,60+i*0.6,1,16-i*1.2,chrome);b+=r(203,76,6,3.5,chrome,1.5)+r(18,76,8,3.5,chrome,1.5)+`<circle cx="190" cy="62" r="3.2" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(84,80,50,2,dark);
+    w=wheel(rx,R)+wheel(fx,R)+`<path d="M${rx-R-2},${GY-R} Q${rx},${GY-2*R-4} ${rx+R+2},${GY-R}Z" fill="${deep}"/>`;sh=[108,98];}
+  else if(k==='micro'||k==='small'){const mc=k==='micro',R=10,rx=mc?78:74,fx=mc?142:146,x0=mc?56:44,xf=mc?166:174;
+    b+=mc?`<path d="M56,80 V66 Q58,58 68,56 L74,44 Q78,36 88,36 H112 Q120,36 124,44 L132,58 L158,62 Q166,64 166,72 V80Z" fill="${paint}"/><path d="M80,54 L84,40 H112 Q117,41 120,46 L125,54Z" fill="${glass}"/>`
+      :`<path d="M44,80 V68 Q46,60 56,55 L70,40 Q74,34 84,34 H118 Q126,34 130,42 L140,56 L166,62 Q174,64 174,72 V80Z" fill="${paint}"/><path d="M76,54 L80,38 H98 V54Z" fill="${glass}"/><path d="M102,54 V38 H118 Q123,39 126,44 L132,54Z" fill="${glass}"/>`;
+    if(mc)for(let i=0;i<4;i++)b+=r(160+i*1.6,64,0.8,10,chrome);else{for(let i=0;i<4;i++)b+=r(47+i*2.4,62+i*0.4,1,8,dark,0,0.6);b+=r(166,66,7,1.2,chrome)+r(166,69,7,1.2,chrome);}
+    b+=r(xf-2,75,6,3.5,chrome,1.5)+r(x0-4,75,6,3.5,chrome,1.5)+`<circle cx="${xf-8}" cy="${mc?63:65}" r="2.8" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(x0,63,2.5,4,'#b8322a',1);
+    b+=arch(rx,R)+arch(fx,R);w=wheel(rx,R)+wheel(fx,R);sh=[(rx+fx)/2,mc?68:76];}
+  else if(k==='roadster'){const R=12,rx=62,fx=150;
+    b+=`<path d="M26,79 Q24,66 40,62 Q60,56 84,62 L96,65 L118,63 Q124,55 132,55 L176,57 Q200,61 204,73 V79Z" fill="${paint}"/>`;
+    b+=r(92,58,14,8,'#4a2f1f',2)+drv(104,50)+`<path d="M120,63 L113,45" stroke="${chrome}" stroke-width="1.6"/><path d="M119,62 L113,46 L111,46 L116,62Z" fill="${glass}" opacity=".8"/>`;
+    b+=`<ellipse cx="200" cy="70" rx="2.6" ry="5" fill="${dark}" stroke="${chrome}" stroke-width="1"/><circle cx="190" cy="63" r="3" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(26,68,2.5,4,'#b8322a',1)+r(150,66,26,1,dark,0,0.5);
+    b+=arch(rx,R)+arch(fx,R);w=wheel(rx,R,{wire:1})+wheel(fx,R,{wire:1});sh=[106,100];}
+  else if(k==='jeep'||k==='offroad'){const jp=k==='jeep',R=13,rx=66,fx=146,top='#d9d5c6';
+    b+=r(40,56,80,22,paint,1)+r(118,57,56,21,paint,1)+r(172,55,5,24,paint)+r(126,69,44,3,deep)+r(176,74,7,4,dark,1)+r(34,74,8,4,dark,1);
+    for(let i=0;i<6;i++)b+=r(173,58+i*3,3,1.6,dark);
+    if(jp){b+=r(88,56,22,8,dark,0,0.85)+drv(98,44)+`<path d="M119,57 L114,34" stroke="${deep}" stroke-width="2.4"/><path d="M117,56 L113,36 L111,36 L114,56Z" fill="${glass}" opacity=".8"/>`+r(70,50,16,7,deep,2);}
+    else{b+=r(40,32,80,24,top,2)+r(38,29,84,4,top,2)+r(46,37,26,15,glass,1)+r(78,37,34,15,glass,1);}
+    b+=`<circle cx="33" cy="62" r="9" fill="${dark}"/><circle cx="33" cy="62" r="4" fill="${deep}"/><circle cx="168" cy="62" r="2.6" fill="#f4eccc" stroke="${dark}" stroke-width="1"/>`;
+    w=wheel(rx,R,{knob:1,hub:deep})+wheel(fx,R,{knob:1,hub:deep});sh=[106,90];}
+  else if(k==='minibus'){const R=11,rx=66,fx=150;
+    b+=`<path d="M28,80 V42 Q28,28 42,28 H176 Q192,28 196,44 L200,62 Q202,70 202,80Z" fill="${paint}"/><path d="M28,56 V42 Q28,28 42,28 H176 Q192,28 196,44 L199,56Z" fill="${typeof shade==='function'?shade(paint,0.84):'#e9e6da'}"/>`;
+    for(let i=0;i<5;i++)b+=r(38+i*26,36,22,15,glass,2);b+=`<path d="M172,36 H184 Q190,37 192,44 L195,52 H172Z" fill="${glass}"/>`;
+    b+=`<path d="M199,58 L190,72" stroke="${chrome}" stroke-width="1.4"/><circle cx="198" cy="68" r="3" fill="#f4eccc" stroke="${chrome}" stroke-width="1"/>`+r(200,76,6,3.5,chrome,1.5)+r(24,76,6,3.5,chrome,1.5)+r(28,62,2.5,4,'#b8322a',1)+r(30,56,168,1.2,chrome);
+    b+=arch(rx,R)+arch(fx,R);w=wheel(rx,R)+wheel(fx,R);sh=[112,96];}
+  else{// средний танк: гусеница с шестью катками, корпус с наклонным лбом, башня, длинная пушка
+    b+=r(24,70,172,24,'#2a2b2e',12)+r(30,74,160,16,'#1b1c1f',8);for(let i=0;i<6;i++)b+=`<circle cx="${48+i*24}" cy="84" r="8" fill="${deep}" stroke="${dark}" stroke-width="1.5"/><circle cx="${48+i*24}" cy="84" r="2.4" fill="${dark}"/>`;
+    b+=`<circle cx="32" cy="80" r="6" fill="${deep}" stroke="${dark}" stroke-width="1.5"/><circle cx="188" cy="80" r="6" fill="${deep}" stroke="${dark}" stroke-width="1.5"/>`;
+    b+=`<path d="M26,70 L32,58 L44,54 H168 L196,66 V70Z" fill="${paint}"/>`+r(24,68,174,3,deep)+`<path d="M92,54 Q92,38 106,36 H132 Q144,38 146,54Z" fill="${paint}"/>`+r(144,43,60,3.4,'#2a2b2e',1)+r(202,42,5,5.4,'#2a2b2e',1)+r(138,40,10,10,deep,2)+r(104,30,14,7,deep,3)+r(170,58,10,2,dark,1);
+    sh=[110,100];}
+  const shadow=`<ellipse cx="${sh[0]}" cy="${GY+2}" rx="${sh[1]}" ry="3" fill="#000" opacity=".28"/>`,xmlns=opt.standalone?' xmlns="http://www.w3.org/2000/svg" width="220" height="100"':'';
+  return `<svg${xmlns} viewBox="0 0 220 100" class="car ${opt.anim?'anim':''}" role="img" aria-label="${esc(md.name||'Автомобиль')}">${shadow}<g class="body">${b}</g>${w}</svg>`;}
 
 /* ================= PHOTOS (Wikipedia / Wikimedia Commons) ================= */
 const IMG={};let imgTried=false;
@@ -26856,6 +26916,9 @@ function carModel(S){
   // 0.51, тема 10: у новой техники (тяжёлый грузовик, тягач, пожарная, цистерна, самосвал, мусоровоз, тракторы, броневик, танк) — свой кузов
   {const wk=typeof workKind51==='function'?workKind51(S):'';if(wk){const X={M,S,K,hi,y,col,crew,B,tube,WH,chassis,radiator,hood,headlamp,sideLamp,tailLamp,windscreen,steer,seat,tub,drvF,mechF,eyeAt,plate,setWt:v=>{wt=v;}};
       const r=workModel51(wk,X);if(r){len=r.len;track=r.track;if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];M.len=len;M.track=track;return M;}}}
+  // 0.60, этап 3: кузова и виды 1930–1960 — свои модели (46h-work60.js)
+  {const wk=typeof workKind60==='function'?workKind60(S):'';if(wk){const X={M,S,K,hi,y,col,crew,B,tube,WH,chassis,radiator,hood,headlamp,sideLamp,tailLamp,windscreen,steer,seat,tub,cabin,spare,drvF,mechF,eyeAt,plate,setWt:v=>{wt=v;}};
+      const r=workModel60(wk,X);if(r){len=r.len;track=r.track;if(!M.exh)M.exh=[[0.42,0.26,len[0]+0.12]];M.len=len;M.track=track;return M;}}}
   if(st==='carriage'){
     const wb=1.7,t=1.22,rF=0.36,rR=0.46;wt='wood';chassis(wb,t,rF,rR,0.06,{yf:0.62,fw:0.35,zEng0:-0.6,zEng1:-0.1});
     // кузов «вис-а-ви»: высокий ящик, изогнутая спинка, крылья-щитки
@@ -28093,6 +28156,135 @@ function vanDeco51(X,G){const {M,S,hi,tube}=X;let b=null;try{b=byId(BODIES,S.b);
     const disc=[];for(let i=0;i<14;i++){const a=i/14*Math.PI*2;disc.push([x,yc+Math.sin(a)*0.27,zc+Math.cos(a)*0.27]);}mFace(M,disc,'#f2efe6','paint',nrm).bias=-0.6;
     const x2=x+sd*0.004;mFace(M,[[x2,yc-0.2,zc-0.065],[x2,yc-0.2,zc+0.065],[x2,yc+0.2,zc+0.065],[x2,yc+0.2,zc-0.065]],'#b8322a','paint',nrm).bias=-0.8;mFace(M,[[x2,yc-0.065,zc-0.2],[x2,yc-0.065,zc+0.2],[x2,yc+0.065,zc+0.2],[x2,yc+0.065,zc-0.2]],'#b8322a','paint',nrm).bias=-0.8;});
   if(k==='mamb')mRBox(M,-bw-0.012,yf+bh-0.3,z0-0.01,bw+0.012,yf+bh+0.02,z1+0.02,0.1,'#8a8262','cloth');}
+
+/* ================= 0.60, этап 3 (доводка): трёхмерные модели кузовов и видов 1930–1960 =================
+   В первой части этапа новые кузова показывались прежними моделями (седан двадцатых, фаэтон, автобус, лёгкий танк).
+   Здесь у каждого свой облик — тем же набором приёмов, что у техники 0.51 (46g-work51.js): кузов «по шпангоутам», колёса,
+   стёкла, хром, экипаж.
+     stream   — обтекаемый седан (1934): покатый нос-«водопад», крыша, сбегающая к хвосту;
+     micro    — микролитражка (1936): двухместное купе на короткой базе;
+     small    — малый заднемоторный седан (1946): короткий нос без решётки, жалюзи на корме;
+     pontoon  — понтонный седан (1948): три объёма, гладкий борт без отдельных крыльев;
+     hardtop  — хардтоп (1949): длиннее и ниже, боковое стекло без стойки, светлая крыша, плавнички;
+     roadster — спортивный родстер (1948): длинный капот, вырез дверей, низкое ветровое стекло, спицы;
+     jeep     — армейский вездеход (1941): плоский капот, щелевая решётка, откидное стекло, запаска сзади;
+     offroad  — вездеход (1948): угловатый кузов с жёсткой крышей, запаска на капоте;
+     minibus  — микроавтобус (1950): вагонная компоновка, ряд окон, светлый верх;
+     mtank    — средний танк (1939): широкие гусеницы с шестью катками, наклонный лоб, башня с длинной пушкой.
+   Гоночные облики (prep 2 у соперников) не трогаем: workKind60 отвечает только серийным стилям. */
+function workKind60(S){if(!S||!S.b||S.style==='moto'||/^gp|^carriage/.test(S.style||''))return '';
+  return {b30:'stream',b31:'micro',b32:'pontoon',b33:'hardtop',b34:'small',b35:'roadster',b36:'jeep',b37:'offroad',b38:'minibus',b39:'mtank'}[S.b]||'';}
+// тёмная арка над колесом на гладком борту: полукруг чуть шире шины
+function w60Arch(X,x,r,z){const sd=x>=0?1:-1;mLathe(X.M,[x+sd*0.004,r,z],'x',[[r+0.075,0],[0,sd*0.002]],X.hi?14:8,'#0c0c0e','paint',{a0:0,a1:Math.PI,two:true});}
+// хромированный бампер: полоса с загнутыми концами
+function w60Bumper(X,z,w,yy,dir){const K=X.K;X.tube([[-w,yy,z-dir*0.1],[-w*0.92,yy,z],[w*0.92,yy,z],[w,yy,z-dir*0.1]],0.035,K.bright,K.brightMat,X.hi?6:4);}
+/* гладкий кузов: o.st — шпангоуты спереди назад [z, полуширина, верх, низ?, радиус верха?]; o.green — надстройка со стёклами
+   {zA,zB,zC,zD — низ лобового, начало крыши, конец крыши, низ заднего стекла; wB,wT — полуширина у пояса и у крыши; yb,yt; wins} */
+function w60Body(X,o){const {M,K,hi,col,tube}=X,n=hi?3:1,r=o.r,tw=o.tw;X.setWt(o.wheel||'disc');
+  [-1,1].forEach(sd=>{X.WH(sd*o.t/2,r,o.wb/2,r,tw,false,true);X.WH(sd*o.t/2,r,-o.wb/2,r,tw,false,false);});
+  const P=a=>({z:a[0],p:rsec(a[1],a[1]*(o.tumble||0.95),a[3]===undefined?o.yb:a[3],a[2],0.06,a[4]===undefined?0.1:a[4],n,'o')});
+  const H=o.st.map(P);mLoft2(M,H,col,'paint',{wrap:true});mCap(M,H[0],col,'paint',1);mCap(M,H[H.length-1],col,'paint',-1);
+  // арки: на борту у колёс (полуширина борта в этом месте — по шпангоутам)
+  const wAt=z=>{for(let k=0;k<o.st.length-1;k++){const a=o.st[k],b=o.st[k+1];if(z<=a[0]&&z>=b[0]){const f=(a[0]-z)/((a[0]-b[0])||1);return a[1]+(b[1]-a[1])*f;}}return o.st[0][1];};
+  if(!o.noArch)[-1,1].forEach(sd=>[o.wb/2,-o.wb/2].forEach(z=>w60Arch(X,sd*wAt(z),r,z)));
+  const topAt=z=>{for(let k=0;k<o.st.length-1;k++){const a=o.st[k],b=o.st[k+1];if(z<=a[0]&&z>=b[0]){const f=(a[0]-z)/((a[0]-b[0])||1);return a[2]+(b[2]-a[2])*f;}}return o.st[0][2];};
+  const g=o.green;if(g){const rc=o.roofCol||col,rt=Math.min(0.13,(g.yt-g.yb)*0.42);
+    // надстройка: низ лобового и заднего стекла ложится на кузов — по его ширине и высоте в этом месте
+    const yA0=topAt(g.zA),wA0=Math.min(g.wB,wAt(g.zA)*0.93),yD0=topAt(g.zD),wD0=Math.min(g.wB,wAt(g.zD)*0.93);
+    const end=(z,w,yy)=>({z,p:rsec(w,w,yy-0.06,yy+0.02,0.02,0.02,n,'o')}),mid=z=>({z,p:rsec(g.wB,g.wT,g.yb-0.03,g.yt,0.02,rt,n,'o')});
+    mLoft2(M,[end(g.zA,wA0,yA0),mid(g.zB),mid(g.zC),end(g.zD,wD0,yD0)],rc,'paint',{wrap:true});
+    const h=g.yt-g.yb,yA=g.yb+0.07,yB=g.yt-0.13,xAt=yy=>g.wB+(g.wT-g.wB)*((yy-g.yb)/h)+0.007,fr=shade(rc,-0.5);
+    // боковые стёкла: у первого и последнего низ вытянут вдоль наклона стоек
+    (g.wins||[]).forEach(([za,zb],k,W)=>{const ea=k===0?(g.zA-g.zB)*0.4:0,eb=k===W.length-1?Math.min(0.5,(g.zC-g.zD)*0.4):0;
+      [-1,1].forEach(sd=>{const q=[[sd*xAt(yA),yA,za+ea],[sd*xAt(yA),yA,zb-eb],[sd*xAt(yB),yB,zb],[sd*xAt(yB),yB,za]];mFace(M,q,K.glass,'glass',[0,(yA+yB)/2,(za+zb)/2]);
+        if(hi)tube(q.concat([q[0]]),0.008,fr,'paint',3);});});
+    // лобовое и заднее стекло — на наклонных гранях
+    const slope=(z0,y0,w0,z1,f0,f1,k,ref)=>{const dz=z1-z0,dy=g.yt-y0,l=Math.hypot(dz,dy)||1,nz=Math.sign(z0-z1)*dy/l*0.014,ny=Math.abs(dz)/l*0.014,at=f=>[z0+dz*f+nz,y0+dy*f+ny],a=at(f0),b=at(f1),wa=(w0+(g.wT-w0)*f0)*k,wb2=(w0+(g.wT-w0)*f1)*k;
+      mFace(M,[[-wa,a[1],a[0]],[wa,a[1],a[0]],[wb2,b[1],b[0]],[-wb2,b[1],b[0]]],K.glass,'glass',ref);};
+    slope(g.zA,yA0,wA0,g.zB,0.16,0.88,0.84,[0,g.yb,g.zB-1]);slope(g.zD,yD0,wD0,g.zC,g.rear0===undefined?0.25:g.rear0,0.85,g.rearK||0.62,[0,g.yb,g.zC+1]);}
+  return H;}
+// экипаж в закрытом или открытом кузове: руль, сиденье, шофёр
+function w60Crew(X,x,ys,z,o){o=o||{};if(o.seat!==false)X.seat(x,z,ys,0.24,0.42,0.42,{});if(o.seat2)X.seat(-x,z,ys,0.24,0.42,0.42,{});
+  X.steer(x,ys+0.34,z+0.42,0.18,0.85);X.drvF(x,ys-0.03,z,z+0.45,ys+0.34);X.eyeAt(x,ys-0.03,z);}
+function workModel60(kind,X){const {M,S,K,hi,y,col,B,tube}=X,n=hi?3:1,chrome=(x0,y0,z0,x1,y1,z1)=>B(x0,y0,z0,x1,y1,z1,K.bright,K.brightMat);
+  if(kind==='pontoon'||kind==='hardtop'){const ht=kind==='hardtop',wb=ht?3.1:2.9,t=1.42,r=0.34,tw=0.17,w=0.775,zf=wb/2+0.95,zr=-wb/2-(ht?1.45:1.2);
+    const roof=ht?shade(col,0.55):col;
+    w60Body(X,{wb,t,r,tw,yb:0.26,roofCol:roof,st:[[zf+0.02,0.58,0.72,0.42,0.12],[zf-0.12,0.74,0.86,0.34],[zf-0.5,w,0.93],[0.85,w,0.97],[-0.9,w,0.95],[zr+0.6,w,ht?0.9:0.92],[zr+0.12,0.72,0.84,0.34],[zr,0.58,0.74,0.42,0.12]],
+      green:ht?{zA:0.92,zB:0.42,zC:-0.82,zD:-1.6,wB:0.71,wT:0.6,yb:0.95,yt:1.45,wins:[[0.36,-0.76]],rearK:0.8}:{zA:0.95,zB:0.5,zC:-0.95,zD:-1.5,wB:0.72,wT:0.6,yb:0.95,yt:1.52,wins:[[0.42,-0.2],[-0.28,-0.88]]}});
+    // решётка: широкая хромовая полоса; у понтона — «пуля» посередине
+    chrome(-0.56,0.5,zf-0.02,0.56,0.58,zf+0.05);chrome(-0.5,0.62,zf-0.03,0.5,0.66,zf+0.04);if(!ht)mLathe(M,[0,0.55,zf+0.04],'z',[[0.09,0],[0.07,0.05],[0,0.09]],hi?12:6,K.bright,K.brightMat);else for(let k=-4;k<=4;k++)chrome(k*0.11-0.012,0.5,zf-0.02,k*0.11+0.012,0.66,zf+0.055);
+    [-1,1].forEach(sd=>{X.headlamp(sd*0.6,0.8,zf-0.2,0.1,'bowl');X.tailLamp(sd*0.62,0.72,zr+0.04);if(hi)chrome(sd*(w+0.004)-0.006,0.6,zr+0.5,sd*(w+0.004)+0.006,0.63,zf-0.45);
+      if(ht){B(sd*0.7-0.02,0.86,zr+0.1,sd*0.7+0.02,0.97,zr+0.55,col);B(sd*0.7-0.02,0.86,zr+0.55,sd*0.7+0.02,0.92,zr+0.8,col);}});
+    w60Bumper(X,zf+0.1,0.82,0.42,1);w60Bumper(X,zr-0.08,0.82,0.42,-1);if(S.num)X.plate([0,0.56,zr-0.012],[0,0,-1],[1,0,0],0.3,0.2);
+    w60Crew(X,0.33,ht?0.47:0.52,0.0,{seat2:true});M.exh=[[0.45,0.24,zr+0.05]];return {len:[zr-0.14,zf+0.16],track:t};}
+  if(kind==='stream'){const wb=3.0,t=1.42,r=0.36,tw=0.15,w=0.765,zf=wb/2+0.72,zr=-wb/2-1.05;
+    w60Body(X,{wb,t,r,tw,yb:0.3,st:[[zf+0.02,0.3,0.84,0.5,0.2],[zf-0.14,0.52,1.02,0.38,0.22],[zf-0.6,0.7,1.07,0.32,0.16],[0.7,w,1.08],[-1.2,w,1.04],[zr+0.6,0.7,0.96,0.32,0.2],[zr+0.12,0.5,0.76,0.38,0.2],[zr,0.34,0.62,0.44,0.18]],
+      green:{zA:1.0,zB:0.55,zC:-0.7,zD:-2.3,wB:0.7,wT:0.56,yb:1.05,yt:1.6,wins:[[0.48,-0.08],[-0.16,-0.66]],rearK:0.5,rear0:0.5}});
+    // «водопад»: вертикальные хромовые прутья по скруглённому носу
+    for(let k=-3;k<=3;k++){const x=k*0.07,zz=zf+0.03-Math.abs(k)*0.035;tube([[x,0.52,zz],[x,0.8,zz-0.02],[x,1.0,zz-0.16]],0.012,K.bright,K.brightMat,3);}
+    [-1,1].forEach(sd=>{X.headlamp(sd*0.47,0.88,zf-0.28,0.09,'bowl');X.tailLamp(sd*0.5,0.7,zr+0.22);if(hi)chrome(sd*(w+0.004)-0.006,0.66,-1.6,sd*(w+0.004)+0.006,0.69,1.5);});
+    w60Bumper(X,zf+0.1,0.78,0.46,1);w60Bumper(X,zr-0.06,0.6,0.46,-1);if(S.num)X.plate([0,0.6,zr-0.012],[0,0,-1],[1,0,0],0.3,0.2);
+    w60Crew(X,0.32,0.6,0.05,{seat2:true});M.exh=[[0.4,0.26,zr+0.1]];return {len:[zr-0.12,zf+0.16],track:t};}
+  if(kind==='micro'||kind==='small'){const mi2=kind==='micro',wb=mi2?2.0:2.1,t=mi2?1.1:1.2,r=0.3,tw=mi2?0.12:0.13,w=t/2+tw/2-0.02,zf=wb/2+(mi2?0.55:0.65),zr=-wb/2-(mi2?0.55:0.8);
+    w60Body(X,{wb,t,r,tw,yb:0.24,st:mi2?[[zf,0.34,0.62,0.36,0.14],[zf-0.15,0.5,0.76,0.3,0.14],[0.9,w,0.84],[0.3,w,0.88],[-0.9,w,0.84],[zr+0.15,0.5,0.72,0.3,0.14],[zr,0.36,0.6,0.36,0.14]]
+        :[[zf,0.4,0.6,0.36,0.14],[zf-0.15,0.56,0.74,0.3],[1.0,w,0.84],[0.45,w,0.9],[-0.9,w,0.88],[zr+0.3,0.6,0.8,0.3],[zr,0.45,0.62,0.36,0.14]],
+      green:mi2?{zA:0.55,zB:0.25,zC:-0.55,zD:-1.0,wB:0.54,wT:0.46,yb:0.86,yt:1.36,wins:[[0.2,-0.5]]}:{zA:0.75,zB:0.4,zC:-0.75,zD:-1.35,wB:0.6,wT:0.5,yb:0.9,yt:1.42,wins:[[0.34,-0.14],[-0.22,-0.7]]}});
+    if(mi2){for(let k=-2;k<=2;k++)chrome(k*0.06-0.008,0.4,zf-0.02,k*0.06+0.008,0.6,zf+0.03);}   // узкая решётка
+    else{[0.5,0.56,0.62].forEach((yy,k)=>chrome(-0.2+k*0.04,yy,zf-0.03,0.2-k*0.04,yy+0.02,zf+0.035));   // «усы» вместо решётки: мотор сзади
+      if(hi)for(let k=0;k<5;k++)B(-0.3,0.8-k*0.035,zr+0.02+k*0.05,0.3,0.815-k*0.035,zr+0.06+k*0.05,'#0e0e10','paint');}
+    [-1,1].forEach(sd=>{X.headlamp(sd*(mi2?0.4:0.46),mi2?0.72:0.7,zf-0.18,0.08,'bowl');X.tailLamp(sd*(w-0.12),0.62,zr+0.03);});
+    w60Bumper(X,zf+0.07,w+0.03,0.38,1);w60Bumper(X,zr-0.05,w+0.03,0.38,-1);if(S.num)X.plate([0,0.5,zr-0.012],[0,0,-1],[1,0,0],0.26,0.18);
+    w60Crew(X,mi2?0.24:0.28,mi2?0.38:0.44,mi2?-0.15:0.0,{seat2:true});M.exh=[[0.3,0.22,zr+0.05]];return {len:[zr-0.1,zf+0.12],track:t};}
+  if(kind==='roadster'){const wb=2.6,t=1.3,r=0.34,tw=0.14,w=0.7,zf=wb/2+0.85,zr=-wb/2-0.8;
+    w60Body(X,{wb,t,r,tw,yb:0.24,wheel:'wire',st:[[zf,0.28,0.56,0.36,0.14],[zf-0.16,0.5,0.72,0.3,0.14],[wb/2,w,0.8],[0.75,w,0.8],[0.42,w,0.76],[0.4,w,0.42],[-0.55,w,0.42],[-0.57,w,0.76],[-wb/2,w,0.78],[zr+0.4,0.58,0.7,0.3],[zr,0.32,0.5,0.36,0.14]]});
+    // кабина: тёмный пол, два сиденья, низкое разрезное стекло
+    B(-0.62,0.42,-0.54,0.62,0.432,0.39,'#17181b','paint');[-1,1].forEach(sd=>B(sd*(w-0.02)-0.02,0.42,-0.55,sd*(w-0.02)+0.02,0.68,0.4,col));X.windscreen(0.42,0.58,0.77,1.14,{lean:0.16,split:true});
+    for(let k=-3;k<=3;k++)tube([[k*0.045,0.4,zf-0.04+0.0],[k*0.045,0.62,zf-0.12]],0.009,K.bright,K.brightMat,3);   // узкая овальная решётка
+    [-1,1].forEach(sd=>{X.headlamp(sd*0.44,0.68,zf-0.34,0.09,'bowl');X.tailLamp(sd*0.42,0.56,zr+0.16);});
+    if(S.num)X.plate([0,0.42,zr-0.012],[0,0,-1],[1,0,0],0.26,0.18);
+    w60Crew(X,0.3,0.52,-0.12,{seat2:true});M.exh=[[0.4,0.22,zr+0.05]];return {len:[zr-0.06,zf+0.06],track:t};}
+  if(kind==='jeep'||kind==='offroad'){const jp=kind==='jeep',wb=2.03,t=1.25,r=0.37,tw=0.16,zf=wb/2+0.52,zr=-wb/2-0.6,bw=0.64,yf=0.5,dk=shade(col,-0.35);X.setWt('disc');
+    [-1,1].forEach(sd=>{X.WH(sd*t/2,r,wb/2,r,tw,false,true);X.WH(sd*t/2,r,-wb/2,r,tw,false,false);});
+    B(-bw,yf,zr,bw,yf+0.1,0.42,col);                                                             // пол
+    [-1,1].forEach(sd=>{B(sd*bw-0.03,yf+0.1,zr,sd*bw+0.03,jp?0.98:1.02,-0.42,col);B(sd*bw-0.03,yf+0.1,-0.42,sd*bw+0.03,jp?0.78:1.02,0.2,col);B(sd*bw-0.03,yf+0.1,0.2,sd*bw+0.03,1.0,0.44,col);
+      B(sd*0.5-(sd>0?0:0.32),0.8,0.62,sd*0.5+(sd>0?0.32:0),0.84,zf+0.02,col);B(sd*0.82-0.02,0.62,zf-0.04,sd*0.82+0.02,0.84,zf+0.02,col);});   // борта и плоские крылья
+    B(-bw,yf+0.1,zr-0.02,bw,jp?0.98:1.02,zr+0.04,col);B(-0.48,yf+0.08,0.44,0.48,1.0,zf-0.08,col);B(-0.48,1.0,0.44,0.48,1.03,zf-0.1,shade(col,0.08));   // задний борт, капот
+    B(-0.5,yf+0.04,zf-0.08,0.5,1.02,zf-0.02,col);                                                 // лист решётки
+    if(jp){for(let k=-3;k<=3;k++)B(k*0.085-0.022,0.62,zf-0.022,k*0.085+0.022,0.96,zf-0.012,'#0c0c0e','paint');[-1,1].forEach(sd=>X.headlamp(sd*0.37,0.86,zf-0.07,0.065,'bowl'));}
+    else{B(-0.3,0.6,zf-0.022,0.3,0.94,zf-0.012,'#0c0c0e','paint');[-1,1].forEach(sd=>X.headlamp(sd*0.2,0.8,zf-0.05,0.06,'bowl'));}
+    B(-0.72,yf-0.04,zf-0.02,0.72,yf+0.08,zf+0.06,dk);B(-0.66,yf-0.04,zr-0.08,0.66,yf+0.06,zr-0.02,dk);   // бамперы-швеллеры
+    if(jp){X.windscreen(0.44,0.56,1.02,1.46,{lean:0.03,split:true});X.spare(0,0.92,zr-0.1,0.34,0.15,'z');if(hi)B(0.34,0.62,zr-0.2,0.52,0.98,zr-0.06,dk);}   // запаска и канистра сзади
+    else{X.cabin(0.44,zr+0.02,bw+0.01,1.02,1.76,{wins:[[0.34,-0.36],[-0.5,zr+0.2]],roofCol:'#d9d5c6'});X.spare(0,1.0,zr-0.1,0.33,0.14,'z');}
+    X.seat(0.3,-0.1,yf+0.3,0.22,0.4,0.36,{col:dk});X.seat(-0.3,-0.1,yf+0.3,0.22,0.4,0.36,{col:dk});X.steer(0.3,yf+0.66,0.3,0.18,0.8);X.drvF(0.3,yf+0.27,-0.1,0.3,yf+0.66);X.eyeAt(0.3,yf+0.27,-0.1);
+    if(S.num)X.plate([-0.4,0.72,zr-0.03],[0,0,-1],[1,0,0],0.24,0.16);
+    X.tailLamp(0.52,0.78,zr-0.02);M.exh=[[0.4,0.3,zr]];return {len:[zr-(jp?0.3:0.1),zf+0.08],track:t};}
+  if(kind==='minibus'){const wb=2.4,t=1.37,r=0.33,tw=0.15,w=0.84,zf=wb/2+0.85,zr=-wb/2-0.95,top=shade(col,0.6);
+    w60Body(X,{wb,t,r,tw,yb:0.3,tumble:0.97,st:[[zf,0.56,1.1,0.52,0.3],[zf-0.1,0.78,1.14,0.36,0.14],[zf-0.3,w,1.16,0.3,0.06],[zr+0.2,w,1.16,0.3,0.06],[zr,0.76,1.12,0.36,0.14]]});
+    // верх другого тона: от пояса до крыши, со скруглённым лбом
+    const U=(z,ww,yt,rt)=>({z,p:rsec(ww,ww*0.9,1.13,yt,0.02,rt,n,'o')}),T=[U(zf-0.08,0.72,1.74,0.2),U(zf-0.32,w-0.02,1.9,0.22),U(zr+0.3,w-0.01,1.92,0.2),U(zr+0.02,0.74,1.84,0.2)];
+    mLoft2(M,T,top,'paint',{wrap:true});mCap(M,T[0],top,'paint',1);mCap(M,T[3],top,'paint',-1);
+    const ya=1.24,yb2=1.62,za0=zr+0.35,L=zf-0.75-za0;for(let k=0;k<5;k++){const za=za0+L*k/5+0.04,zb=za0+L*(k+1)/5-0.04;[-1,1].forEach(sd=>B(sd*(w+0.0)-0.008,ya,za,sd*(w+0.0)+0.008,yb2,zb,'#1e2a33','glass'));}
+    [-1,1].forEach(sd=>{mFace(M,[[sd*0.05,1.24,zf-0.072],[sd*0.62,1.24,zf-0.072],[sd*0.6,1.6,zf-0.072],[sd*0.05,1.6,zf-0.072]],'#1e2a33','glass',[0,1.4,zf-1.5]);   // разрезное лобовое
+      X.headlamp(sd*0.52,0.82,zf-0.1,0.09,'bowl');X.tailLamp(sd*0.6,0.7,zr+0.02);tube([[0,1.08,zf+0.012],[sd*0.6,1.1,zf-0.12],[sd*0.78,1.12,zf-0.28]],0.012,K.bright,K.brightMat,3);tube([[0,0.6,zf+0.03],[sd*0.3,0.9,zf+0.0],[sd*0.6,1.1,zf-0.12]],0.012,K.bright,K.brightMat,3);});
+    mLathe(M,[0,0.86,zf+0.02],'z',[[0.11,0],[0.1,0.012],[0,0.02]],hi?14:8,K.bright,K.brightMat);B(-0.5,1.3,zr-0.004,0.5,1.6,zr+0.012,'#1e2a33','glass');
+    w60Bumper(X,zf+0.06,0.84,0.44,1);w60Bumper(X,zr-0.05,0.84,0.44,-1);if(S.num)X.plate([0,0.62,zr-0.012],[0,0,-1],[1,0,0],0.28,0.18);
+    X.steer(0.36,1.12,zf-0.5,0.2,0.4);X.drvF(0.36,0.72,zf-0.95,zf-0.5,1.12);X.eyeAt(0.36,0.72,zf-0.95);M.exh=[[0.4,0.26,zr+0.02]];return {len:[zr-0.1,zf+0.12],track:t};}
+  if(kind==='mtank'){// средний танк: шесть катков на борт, ленивец спереди, ведущее колесо сзади, полки над гусеницами
+    const xT=1.12,wT=0.5,zi=2.55,yi=0.72,ri=0.34,zs=-2.5,ysp=0.74,rs=0.36,loop=wkLoop(zi,yi,ri,zs,ysp,rs,-1.95,1.95,0.14),dk=shade(col,-0.3);
+    [-1,1].forEach(sd=>{wkTrack(X,sd*xT,wT,loop,{frame:dk,th:0.07});wkDisc(X,sd*xT,yi,zi,ri-0.05,wT*0.4,'#4a4d52',8);wkDisc(X,sd*xT,ysp,zs,rs-0.05,wT*0.4,'#4a4d52',10);
+      [-1.75,-1.05,-0.35,0.35,1.05,1.75].forEach(z=>{mLathe(M,[sd*(xT+wT*0.3),0.36,z],'x',[[0.33,0],[0.3,0.03*sd],[0,0.05*sd]],hi?12:8,dk,'paint',{two:true});});
+      B(sd*xT-wT*0.6,1.12,zs-0.2,sd*xT+wT*0.6,1.16,zi+0.2,col);});                                  // надгусеничные полки
+    const P=(z,w,yb,yt,twd)=>({z,p:rsec(w,twd===undefined?w*0.9:twd,yb,yt,0.02,0.05,n,'o')});
+    const H=[P(2.95,0.84,0.62,0.98),P(2.45,0.86,0.42,1.3,0.8),P(1.5,0.86,0.4,1.55,0.74),P(-1.6,0.86,0.4,1.55,0.74),P(-2.55,0.86,0.44,1.32,0.8),P(-2.95,0.82,0.62,1.05)];mLoft2(M,H,col,'paint',{wrap:true});mCap(M,H[0],col,'paint',1);mCap(M,H[5],col,'paint',-1);
+    // башня: гранёная, сдвинута вперёд; маска, длинная пушка, командирская башенка
+    const tz=0.35,ty=1.55;mLathe(M,[0,ty,tz],'y',[[0.82,0],[0.86,0.12],[0.8,0.5],[0.62,0.62],[0,0.66]],hi?12:8,col,'paint');
+    mRBox(M,-0.28,ty+0.14,tz+0.66,0.28,ty+0.5,tz+0.98,0.05,shade(col,-0.12),'paint');tube([[0,ty+0.32,tz+0.9],[0,ty+0.32,tz+3.15]],0.05,'#2a2b2e','metal',hi?8:5);
+    mLathe(M,[0,ty+0.32,tz+3.15],'z',[[0.07,-0.16],[0.07,0],[0,0.01]],8,'#2a2b2e','metal');
+    mLathe(M,[-0.3,ty+0.62,tz-0.25],'y',[[0.22,0],[0.22,0.16],[0.16,0.2],[0,0.21]],hi?10:6,shade(col,-0.1),'paint');
+    if(hi){mLathe(M,[0.45,1.0,2.6],'z',[[0.05,0],[0.05,0.3],[0,0.31]],6,'#2a2b2e','metal');                 // курсовой пулемёт
+      [-1,1].forEach(sd=>{mLathe(M,[sd*0.62,1.5,-2.4],'z',[[0,-0.3],[0.08,-0.28],[0.08,0.3],[0,0.32]],8,'#3a2e28','paint');B(sd*0.6-0.2,1.56,1.9,sd*0.6+0.2,1.6,2.3,dk);});}
+    X.eyeAt(0,1.6,1.4);M.exh=[[0.62,1.5,-2.72]];return {len:[-3.0,tz+3.2],track:xT*2+wT};}
+  return null;}
 
 /* ================= МИР ГОНКИ: деревья, дома, трибуны, зрители — объёмные спрайты, свет слева сверху ================= */
 // Деревья и мелочь рисуются «живописно»: шары листвы с подсветкой как у сферы, мазки листьев, тени под кроной.
