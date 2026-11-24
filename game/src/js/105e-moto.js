@@ -57,7 +57,7 @@ function motoTick(s){
 /* ---------- старт «Мотомастерская» ---------- */
 // год старта — когда в стране есть кому продавать: во Франции — бум трициклов де Диона (1899), в Британии — 1902 (Triumph), в Германии и Америке — 1903
 // (NSU, Wanderer; Indian, Harley-Davidson), в Италии — 1905 (Bianchi, Frera; свой рынок крошечный — продавайте и во Франции)
-const MSTART_Y=1899,MSTART_C={fr:1899,uk:1902,de:1903,us:1903,it:1905,ru:1902};
+const MSTART_Y0=1895,MSTART_Y=1899,MSTART_C={fr:1899,uk:1902,de:1903,us:1903,it:1905,ru:1902};
 function motoStartY(c){return MSTART_C[c]||MSTART_Y;}
 // 0.32: и у автомобильной марки — насколько труден старт в стране (рынок 1895 года по истории)
 const CSTART_TIP={fr:['легко','Франция — колыбель автомобиля: до 1905 года здесь покупают больше машин, чем где-либо в мире.'],
@@ -74,7 +74,7 @@ const MSTART_TIP={fr:['легко','Франция — родина мотоци
   it:['очень трудно','Италия: покупателей дома — единицы, без импортёра во Франции мастерская не выживет.'],
   ru:['очень трудно','Россия: велосипедов много, мотоциклов — сотни в год, почти все ввозные; продавайте и во Франции. В войну армии нужны мотоциклы с колясками, в 1917 году — революция.']};
 function newMotoGame(pioneer,country,company,diff,firstName){
-  newGame(pioneer||'custom',country,company||'Мотомастерская',diff,'');const g=G,y=motoStartY(country);
+  newGame(pioneer||'custom',country,company||'Мотомастерская',diff,'',{y0:1895});const g=G,HS=!START1895&&HERO_START[pioneer]&&HERO_START[pioneer].moto?HERO_START[pioneer]:null,y=HS?Math.max(HS.y,MSTART_Y0):motoStartY(country);/* 0.60, этап 5: у героя — его год, не год страны */delete g.y0;
   g.y=y;g.m=0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=1.2;g.capBuild=[];g.workers=6;g.ui=g.ui||{};
   g.fleet={};g.mkY={};for(const cc in COUNTRIES)g.fleet[cc]=fleetHist(cc,y);
   for(const cc in COUNTRIES){const R2=mkCountry(cc,g,[]);g.mkY[cc]=SEGK.reduce((a,gg)=>a+R2.segs[gg].inc,0)*12/SEASON[0];}
@@ -86,7 +86,7 @@ function newMotoGame(pioneer,country,company,diff,firstName){
   g.dealers={[country]:1};   // мотоциклы продают велосипедные лавки: своих агентов — один
   g.plantVal=g.cap*capUnitCost(g);g.wh=10;g.ad=10;
   try{awInit(g,true);}catch(_){}
-  g.log=[];addLog(`${PIONEERS[g.pioneer]&&PIONEERS[g.pioneer].name!=='Свой персонаж'?PIONEERS[g.pioneer].name+' открыл':'Вы открыли'} мотомастерскую «${g.company}», ${cityOf(g)}. ${g.workers} рабочих, первый мотоцикл — «${nm}». Его продают ${g.dealers[country]} ${plural(g.dealers[country],'агент','агента','агентов')} и велосипедные лавки.`,'hist');
+  g.log=[];if(HS&&HS.lead)addLog(HS.lead,'hist');addLog(`${PIONEERS[g.pioneer]&&PIONEERS[g.pioneer].name!=='Свой персонаж'?PIONEERS[g.pioneer].name+' открыл':'Вы открыли'} мотомастерскую «${g.company}», ${cityOf(g)}. ${g.workers} рабочих, первый мотоцикл — «${nm}». Его продают ${g.dealers[country]} ${plural(g.dealers[country],'агент','агента','агентов')} и велосипедные лавки.`,'hist');
   return g;}
 function motoIntroPapers(s){const md=s.models[0],p=parts(md),C=COUNTRIES[s.country];
   pushEvent({kicker:'Январь '+s.y,title:'Мотор на велосипеде',deck:'Трициклы де Диона и «мотоциклетка» Вернеров',img:'De Dion-Bouton tricycle',imgCap:'Трицикл De Dion-Bouton',choices:[['Читать дальше','ok']],

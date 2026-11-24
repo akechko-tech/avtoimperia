@@ -85,7 +85,7 @@ function step(){
     // почему купили меньше, чем хотели: не хватило машин (часть ждёт в очереди) или дилеры не успели
     // 0.26: грузовик — кто его взял: развозка по району, по городу, между городами (для подсказки на вкладке «Модели»)
     if(isTruck(md)){const U={};for(const c in D.mk){const b=D.mk[c].byU&&D.mk[c].byU[md.id];if(b)for(const u in b)U[u]=(U[u]||0)+b[u]*creditK;}md.useD=U;}
-    md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;if(mo){r.msold=(r.msold||0)+sold;r.mdemand=(r.mdemand||0)+sumD;}else{r.sold+=sold;r.demand+=sumD;}
+    md.lastDem=Math.round(sumD);md.lastWant=sumD+bl;md.lostS=unmet;md.lostD=lostD;md.dlrK=sumD+bl>0.5?clamp(1-lostD/(sumD+bl),0.05,1):1;md.queued=md.backlog;md.lastSold=sold;md.totalSold+=sold;if(md.status==='prod')try{md.pf6=(md.pf6||0)*5/6+sold*(md.price*(1-dMargin(s))-unitCost(md,s))/6;}catch(_){}/* 0.60, этап 5: что модель приносит в месяц сверх своей себестоимости (среднее за полгода) — для совета о новинке, которая хуже прежней */if(mo){r.msold=(r.msold||0)+sold;r.mdemand=(r.mdemand||0)+sumD;}else{r.sold+=sold;r.demand+=sumD;}
     r.war+=sold*defectRate(s)*md.price*0.25*dvFail(md);});
   // 0.25: кредит покупателям — комиссия банкам или своя кредитная компания (13c-finance.js)
   finMonth(s,r);
@@ -199,6 +199,7 @@ function step(){
   if(Math.random()<WAGE_POL[s.wagePol||'market'].strike*(s.workers>200?1.4:1)&&!s.pending.length&&s.workers>30)strikeThreat();
   s.m++;
   if(s.m>11){endOfYear(s);}
+  try{startFundsMonth(s);}catch(e){console.warn('funds',e);}   // 0.60, этап 5: взносы пайщиков по истории (10h-start60.js)
   RACES.forEach(rc=>{if(rc.y===s.y&&rc.m-1===s.m&&raceEligible(rc,s)&&!raceWarBlocked(rc,s))addLog(`Открыта запись на гонку «${rc.name}» (в ${MONTHS_P[rc.m]}). Приз ${money(racePrize(rc))}.`,'hist');});
   seasonTick(s);
   checkAch();checkMilestones(s);

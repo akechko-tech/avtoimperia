@@ -543,27 +543,34 @@ function cityOf(s){const P=s&&PIONEERS[s.pioneer],C=s&&COUNTRIES[s.country];let 
 function hostName(c){return c==='intl'?'Международная':(COUNTRIES[c]?COUNTRIES[c].name:({be:'Бельгия',es:'Испания',mc:'Монако',at:'Австрия',ch:'Швейцария'}[c]||c));}
 const fmtN=n=>{n=Math.round(n);return Math.abs(n)>=1e6?(n/1e6).toFixed(n>=1e7?1:2).replace('.',',')+' млн':Math.abs(n)>=1e4?Math.round(n/1000)+' тыс.':n.toLocaleString('ru-RU');};
 function lastOf(arr,y,f){const a=arr.filter(x=>x.y<=y&&(!f||f(x)));return a[a.length-1];}
-function newGame(pioneer,country,company,diff,firstName){
-  const C=COUNTRIES[country];
+// 0.60, этап 5: opt.y0 — год старта по выбору игрока; у героев истории год и активы — из HERO_START (01e-start60.js, 10h-start60.js)
+function newGame(pioneer,country,company,diff,firstName,opt){
+  const C=COUNTRIES[country],ST=startPlan(pioneer,country,opt);
   const comps={};for(const k in COMPS)comps[k]=COMPS[k].map((a,i)=>({name:a.n,color:COMP_COLORS[i%COMP_COLORS.length],last:0,yr:0,prev:0}));
   const mcomps={};for(const k in MCOMPS)mcomps[k]=MCOMPS[k].map((a,i)=>({name:a.n,color:COMP_COLORS[(i+3)%COMP_COLORS.length],last:0,yr:0,prev:0}));
   const mname=(firstName||'').trim()||'Тип 1';
-  G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:1895,m:0,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
-     cap:3,capBuild:[],plantVal:0,shifts:1,workers:12,staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},imp:{},dcap:{},ad:30,rep:30,wh:12,whBuild:[],
+  G={v:8,diff:diff||'normal',rd:{lvl:1,projs:[],upg:{},early:[]},drivers:[],contracts:{},pioneer,y:ST.y,m:ST.m,country,company:company||PIONEERS[pioneer].co,cash:0,loan:0,
+     cap:ST.cap,capBuild:[],plantVal:0,shifts:1,workers:Math.max(6,Math.round(ST.cap*4)),staffAuto:true,wagePol:'market',tech:{},techBuild:null,dealers:{[country]:1},imp:{},dcap:{},ad:30,rep:30,wh:Math.max(12,Math.round(ST.cap*4)),whBuild:[],
      military:false,strikeNext:false,supplyNext:1,nextId:2,comps,mcomps,lines:{car:1},pw:{},rv:{},orders:[],tenders:[],shows:{},showFx:{},medals:[],raceDone:{},raceLog:[],season:{},cres:{},rdept:0,titles:[],ach:{},firsts:{},papers:[],ui:{},
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};
+  if(!ST.legacy){G.y0=ST.y+ST.m/12;startTech(G,ST.y);}
   G.plantVal=G.cap*capUnitCost(G);
-  G.cash=Math.round(C.cash*bn('cash')*DIF().cash);G.rep=bn('rep',30);
+  G.cash=Math.round(ST.cash*bn('cash')*DIF().cash);G.rep=bn('rep',ST.rep);
   // 0.43: первая модель — легенда марки, если она ровесница старта и все её детали уже есть («Вело» Бенца 1895, «Яковлев и Фрезе» 1896).
   // Отзыв: «очень странно, что я начинаю игру с „Тип 1“, а не легендарной модели, которая также базовая и идентична»
-  let SL=null;try{SL=startLegend(G,firstName);}catch(e){console.warn('startLegend',e);}
-  const md=G.models[0];md.price=Math.round(refPrice(md,G)/10)*10;
-  G.dealers[country]=Math.max(1,Math.round(dealerNeed(country,G)/3));
-  G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,1895);const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
+  // (герою, который входит не в 1895 году, машину подбирают по рынку его года — парк и спрос нужны до подбора)
+  if(!ST.legacy){G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,yf(G));const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
+    G.dealers[country]=startDealers(G,country);}
+  let SL=null;try{SL=ST.legacy?startLegend(G,firstName):startModel(G,ST,firstName);}catch(e){console.warn('startLegend',e);}
+  const md=G.models[0];md.price=ST.legacy?Math.round(refPrice(md,G)/10)*10:startPrice(G,md);
+  G.dealers[country]=ST.legacy?Math.max(1,Math.round(dealerNeed(country,G)/3)):startDealers(G,country);
+  G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,yf(G));const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
   G.maV=30;try{awInit(G,true);}catch(_){}
   const P=PIONEERS[pioneer];
+  if(!ST.legacy){startIntroLog(G,ST,P,md,SL);try{ownSync(G);}catch(_){}return;}
+  startLead(ST);
   addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${cityOf(G)}. В мастерской ${G.workers} рабочих, первая модель — «${md.name}»${SL?' (легенда марки)':''}, дилеров — ${G.dealers[country]}.`,'hist');
   if(country==='uk')addLog('По закону перед автомобилем должен идти человек с красным флагом. Продажи пока скромные.','hist');
   if(country==='us')addLog('Богатых семей в Америке много, но дороги плохи и машины пока в диковинку. Во Франции они уже в моде — там стоит найти импортёра.','hist');

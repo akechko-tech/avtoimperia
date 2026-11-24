@@ -3,10 +3,10 @@ const el=()=>new Proxy({style:{},classList:{add(){},remove(){},toggle(){},contai
 global.document={getElementById:()=>el(),addEventListener(){},querySelectorAll:()=>[],querySelector:()=>null,createElement:()=>el(),body:el()};
 global.window={matchMedia:()=>({matches:true}),scrollTo(){},devicePixelRatio:1,addEventListener(){},orientation:0};global.matchMedia=window.matchMedia;
 const store={};global.localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=String(v)},removeItem:k=>{delete store[k]}};
-global.OFFERS_INBOX=false;/* 0.51, этап 8: в прогонах предложения идут окном, как раньше (бот отвечает на них сам); тест включает ящик сам */global.BOTS_OFF=true;/* 0.41: живые соперники выключены в прогонах, если тест не включит их сам (BOTS_OFF=false) */
+global.OFFERS_INBOX=false;/* 0.51, этап 8: в прогонах предложения идут окном, как раньше (бот отвечает на них сам); тест включает ящик сам */global.BOTS_OFF=true;global.START1895_TEST=!process.env.HIST_START;/* 0.60, этап 5: прежние наборы начинают в 1895 году; HIST_START=1 — старт героя по истории *//* 0.41: живые соперники выключены в прогонах, если тест не включит их сам (BOTS_OFF=false) */
 global.requestAnimationFrame=()=>0;global.cancelAnimationFrame=()=>{};global.performance={now:()=>Date.now()};
 global.setTimeout=()=>0;global.setInterval=()=>0;global.clearInterval=()=>{};global.fetch=()=>Promise.reject();global.Audio=function(){return el();};
 const fs=require('fs'),path=require('path');
 const dir=process.env.SRC||path.join(__dirname,'../src/js');/* SRC — папка исходников другой версии (сравнение поколений физики) */
 const code=fs.readdirSync(dir).filter(f=>f.endsWith('.js')&&f!=='99-boot.js').sort().map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
-module.exports=function(extra){return eval(code+'\n'+extra);};
+module.exports=function(extra){return eval(code+'\nSTART1895=!!global.START1895_TEST;\n'+extra);};

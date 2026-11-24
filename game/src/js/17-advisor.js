@@ -69,6 +69,12 @@ function adviceList(s){
     if(stockWarn(md)){const np=Math.max(20,Math.round(md.price*0.95/5)*5);add(70,'📦',`Машины «${md.name}» копятся на складе (${fmtN(md.stock)} шт.). Снизьте цену или выпуск.`,`Цена −5%`,()=>{md.price=np;},'models');}
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
+  // 0.60, этап 5: ловушка новинки. Замер 0.51: бот снимал машину, которая кормила фирму, ради новой — а новая приносила меньше.
+  // Совет появляется, когда новинке от четырёх месяцев до двух лет, а снятая не раньше чем два года назад машина давала заметно больше
+  try{const t=mi(s),old=s.models.filter(m=>(m.status==='off'||m.status==='sale')&&!isMoto(m)&&m.offAt!=null&&t-m.offAt<=24&&(m.pfOff||0)>0).sort((a,b)=>b.pfOff-a.pfOff)[0],
+      nw=act.filter(m=>!isMoto(m)&&t-m.launched>=4&&t-m.launched<=24&&m.revAt==null).sort((a,b)=>b.launched-a.launched)[0],now=act.reduce((a,m)=>a+(m.pf6||0),0);
+    if(old&&nw&&old.offAt>=nw.launched-12&&now<old.pfOff*0.6){const back=old.status==='off';
+      add(84,'↩️',`Новинка «${nw.name}» приносит ${money(Math.round(nw.pf6||0))} в месяц сверх себестоимости, а снятая «${old.name}» давала ${money(Math.round(old.pfOff))}. Новая машина пока хуже кормит фирму, чем прежняя.${back?' Верните прежнюю в выпуск, пока не поправите цену или не доведёте новинку.':' Прежняя ещё распродаётся — верните её, когда остаток кончится.'}`,back?`Вернуть «${old.name}»`:'',back?()=>{old.status='prod';old.launched=mi(s);old.revAt=mi(s);if(old.salePrev){old.price=old.salePrev;old.salePrev=0;}addLog(`«${old.name}» снова в производстве.`);}:null,'models');}}catch(e){console.warn('pf tip',e);}
   // 0.26: рынок крошечный — почему спрос такой маленький и что с этим делать
   if(L&&act.length&&s.y<1908){const mk=L.mk[home],size=mk&&mk.size||0,dem=act.reduce((a,m)=>a+(m.lastDem||0),0);
     if(dem<2&&size<40){let bc=null,bm=0;Object.keys(COUNTRIES).forEach(c=>{if(c===home)return;const R=L.mk[c];const z=R&&R.size||0;if(z>bm){bm=z;bc=c;}});

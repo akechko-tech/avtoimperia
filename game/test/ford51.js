@@ -39,7 +39,12 @@ newGame(${JSON.stringify(pio)},CC,'','${diff}','Первая');
 G.helper={on:1};
 if(process.env.HOOK)eval(process.env.HOOK);   // HOOK='…' — код для разовой диагностики (например, обернуть функцию игры и печатать её вызовы)
 const seenPlan={};let lastDesign=0,starts=0,wins=0,majors=0,spentRace=0;const first={},firstDom={},yr={};
-const cls=()=>CC==='us'?(G.y>=1903?'people':'middle'):(G.y>=1912?'people':'middle');
+const cls0=()=>CC==='us'?(G.y>=1903?'people':'middle'):(G.y>=1912?'people':'middle');
+// 0.60, этап 5: герой, начавший не в 1895 году, выбирает класс новой модели по расчёту кнопки «Самая прибыльная» — что выгоднее его заводу сейчас
+// (маленькой фирме 1905 года народная машина не по силам: её берут большим выпуском). Партии с 1895 года идут по прежнему правилу — ряд замеров не рвётся.
+// (и не бросает свой класс: у фирмы грузовиков или дорогих машин в сравнение идёт и класс её самой прибыльной модели)
+const cls=()=>{if(G.y0==null)return cls0();let bk=cls0(),bv=-Infinity;const top=G.models.filter(m=>m.status==='prod').sort((a,b)=>(b.pf6||0)-(a.pf6||0))[0];let k0=null;try{k0=top?designKind(top):null;}catch(_){}
+  const KS=['people','middle'];if(k0&&!KS.includes(k0)&&KIND_TRIM[k0])KS.push(k0);for(const k of KS){let v=-Infinity;try{v=designValue(autoDesign(k,G,null,{cap:true}),G,designRoom(G,k));}catch(_){}if(v>bv){bv=v;bk=k;}}return bk;};
 function pAvg(){const pr=G.hist.profit.slice(-12);return pr.length>=6?pr.reduce((a,b)=>a+b,0)/pr.length:0;}
 // запас: два месяца постоянных расходов и (0.51) двенадцатая часть годового оборота — без него спад 1920–1921 годов разоряет
 function reserve(){const L=G.last;return Math.max(3000*cpi(G),L?((L.wage||0)+(L.ovh||0)+(L.dlr||0)+(L.ad||0)+(L.rd||0)+(L.int||0))*2:0)+(FORD?bizRev(G)/12:0);}

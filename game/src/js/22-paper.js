@@ -72,7 +72,7 @@ function closePaper(){PW.hidden=true;PW.innerHTML='';}
 // Фото из истории автомобиля, которые нужны газетам (загружаются вместе с остальными)
 const HIST_PHOTOS=['Benz Patent-Motorwagen','Highland Park Ford Plant','Charles F. Kettering','Austin 7','Ford Model A (1927–1931)','Daimler Motor-Lastwagen','Oldsmobile Curved Dash','Ford Model T'];
 const C_GEN={fr:'Франции',de:'Германии',uk:'Британии',us:'Америки',it:'Италии',ru:'России'};
-function introPapers(s){const P=PIONEERS[s.pioneer],C=COUNTRIES[s.country],md=s.models[0],p=parts(md),me=P.name==='Свой персонаж',kids=DIF().simple;
+function introPapers(s){if(s.y0!=null&&(s.y>1895||s.m>0)){introPapers60(s);return;}/* 0.60, этап 5: герой начинает не в январе 1895-го */const P=PIONEERS[s.pioneer],C=COUNTRIES[s.country],md=s.models[0],p=parts(md),me=P.name==='Свой персонаж',kids=DIF().simple;
   pushEvent({kicker:'Январь 1895',title:'Экипажи без лошадей',deck:'Моторная повозка из диковинки становится делом',img:'Benz Patent-Motorwagen',imgCap:'«Моторваген» Карла Бенца, 1886 год',choices:[['Читать дальше','ok'],['▶ Кинохроника','reel:intro']],
     text:'Десять лет назад Карл Бенц проехал по Мангейму на трёхколёсном «моторвагене», и прохожие шарахались от треска мотора. Теперь Панар и Левассор, Пежо и де Дион собирают экипажи, которые обгоняют почтовых лошадей, а газеты пишут о первых состязаниях моторов. Банкиры пожимают плечами, извозчики смеются: «Купите лучше лошадь».\nНо тот, кто сегодня откроет мастерскую, может посадить за руль весь мир.'},true);
   pushEvent({own:1,kicker:cityOf(s),title:`«${s.company}» открывает мастерскую`,deck:`${me?'Новый фабрикант':P.name} берётся строить автомобили`,

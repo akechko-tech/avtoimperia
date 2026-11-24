@@ -123,6 +123,6 @@ const HIST_INNOV={
 function histInnovTop(y0,y1){y0=y0||1895;y1=y1||(typeof ERA_END!=='undefined'?ERA_END:1930);const out=[];for(const n in HIST_INNOV){const v=HIST_INNOV[n].l.filter(x=>x[0]>=y0&&x[0]<=y1).length;if(v>0)out.push({n,v,c:HIST_INNOV[n].c});}
   return out.sort((a,b)=>b.v-a.v||a.n.localeCompare(b.n));}
 // лист «Изобретения марок»: кто сколько — и что именно (из карточки «Господство»)
-function innovSheetHTML(s){const E=histEra(),top=histInnovTop(E.y0,E.y1),X='<button class="btn sm" data-act="close">✕</button>';
+function innovSheetHTML(s){const E=histEra(s),top=histInnovTop(E.y0,E.y1),X='<button class="btn sm" data-act="close">✕</button>';
   const rows=top.map(o=>`<details class="innov-co"><summary><span>${esc(o.n)}</span><b class="num">${o.v}</b></summary><ul class="small muted">${HIST_INNOV[o.n].l.filter(x=>x[0]>=E.y0&&x[0]<=E.y1).map(x=>`<li><span class="num">${x[0]}</span> ${esc(x[1])}</li>`).join('')}</ul></details>`).join('');
   return `<div class="row"><h2>Изобретения марок</h2>${X}</div><p class="small muted" style="margin-top:4px">Ключевые новшества компаний настоящей истории ${E.y0}–${E.y1} — в производстве, конструкции, гонках и небе. Рекорд эпохи по инновациям — у лучшей из них: ${esc(top[0].n)}, ${top[0].v}. Компании сгруппированы, как сложились к ${E.y1} году. Ваши первенства считаются по каталогу игры (${E.world.firsts} первенств эпохи, за которые соперничают все): чтобы победить, нужно больше половины их — и больше рекорда.</p><div style="margin-top:8px">${rows}</div>`;}

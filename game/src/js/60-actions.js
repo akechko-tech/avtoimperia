@@ -57,9 +57,9 @@ const ACT={
   planManual:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.plan==='auto'||md.plan===undefined)md.plan=autoPlan(md);rerender();},
   planAuto:d=>{const md=G.models.find(m=>m.id===+d.id);md.plan='auto';rerender();},
   plan:d=>{const md=G.models.find(m=>m.id===+d.id),base=md.plan==='auto'||md.plan===undefined?autoPlan(md):+md.plan;md.plan=Math.max(0,base+(+d.d));rerender();},
-  retire:d=>{const md=G.models.find(m=>m.id===+d.id);if(md.stock>0){md.salePrev=md.price;md.price=Math.max(20,Math.round(md.price*0.7/10)*10);md.status='sale';md.plan='auto';md.backlog=0;addLog(`«${md.name}» снята с производства. Остаток ${fmtN(md.stock)} шт. распродаётся по ${money(md.price)} (−30%).`);}else{md.status='off';md.backlog=0;addLog(`«${md.name}» снята с производства.`);}rerender();},
+  retire:d=>{const md=G.models.find(m=>m.id===+d.id);md.pfOff=md.pf6||0;md.offAt=mi(G);if(md.stock>0){md.salePrev=md.price;md.price=Math.max(20,Math.round(md.price*0.7/10)*10);md.status='sale';md.plan='auto';md.backlog=0;addLog(`«${md.name}» снята с производства. Остаток ${fmtN(md.stock)} шт. распродаётся по ${money(md.price)} (−30%).`);}else{md.status='off';md.backlog=0;addLog(`«${md.name}» снята с производства.`);}rerender();},
   saleNow:d=>{const md=G.models.find(m=>m.id===+d.id),rev=Math.round(md.stock*md.price*0.5);G.cash+=rev;addLog(`Остаток «${md.name}» (${fmtN(md.stock)} шт.) отдан перекупщикам за ${money(rev)}.`);md.stock=0;md.status='off';rerender();},
-  revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
+  revive:d=>{const md=G.models.find(m=>m.id===+d.id);md.status='prod';md.launched=mi(G);if(md.salePrev){md.price=md.salePrev;md.salePrev=0;}md.revAt=mi(G);addLog(`«${md.name}» снова в производстве.`);rerender();},
   design:()=>openDesigner(),
   // 0.51: воронка конструктора — вид техники, назначение
   kgrp:d=>openKindStep(d.v||null),dall:()=>{draft.all=!draft.all;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
@@ -183,6 +183,7 @@ const ACT={
   ngBack:()=>{ngKeep();openNewGame();sb.scrollTop=0;},
   rcountry:d=>{const top=sb.scrollTop;ngKeep();draft.country=d.v;openNewGame();sb.scrollTop=top;},
   ryear:d=>{const top=sb.scrollTop;ngKeep();draft.ry=+d.v;openNewGame();sb.scrollTop=top;},
+  syear:d=>{const top=sb.scrollTop;ngKeep();draft.sy=+d.v;openNewGame();sb.scrollTop=top;},   // 0.60, этап 5: год старта своего персонажа
   startracer:()=>{ngKeep();racerNew(draft.racer,draft.rc,draft.ry,draft.racer==='custom'?draft.rname:'',draft.diff);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';racerIntro(G);save();render();AU.lastY=null;},
   rxRace:d=>racerOpenRace(d.k),
   rxSet:d=>{if(!RRS)return;const k=d.k;RRS[k]=k==='works'||k==='tyre'||k==='mode'?d.v:+d.v;if(k==='works'){const rc=raceByKey(RRS.key);RRS.prep=d.v?aiPrep(rc):(G.racer.car&&G.racer.car.prod?1:2);}racerRaceSheet();},
@@ -193,7 +194,7 @@ const ACT={
   startgame:()=>{const f=document.getElementById('fname');if(f)draft.first=f.value;
     if(draft.path==='air'){const P=PIONEERS[draft.pioneer],fn=(draft.first||'').trim();newAirGame(P&&P.air?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,fn==='Тип 1'?'':fn);airIntroPapers(G);}
     else if(draft.path==='moto'){newMotoGame(PIONEERS[draft.pioneer]&&PIONEERS[draft.pioneer].moto?draft.pioneer:'custom',draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim()==='Тип 1'?'':(draft.first||'').trim());motoIntroPapers(G);}
-    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim());introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
+    else{newGame(draft.pioneer,draft.country,(draft.company||'').trim(),draft.diff,(draft.first||'').trim(),draft.pioneer==='custom'&&+draft.sy>1895?{y0:+draft.sy}:undefined);introPapers(G);}sagaCheck(G);closeSheet();closePaper();hideMainMenu();tab='plant';shownCash=null;lastDate='';save();render();AU.lastY=null;},
   // звук и управление
   snd:()=>{auInit();AU.on.music=!AU.on.music;AU.paused=false;auApply();musUI();toast(AU.on.music?'Музыка включена':'Музыка выключена');},
   plPrev:()=>{auInit();musNext(-1,1);},plNext:()=>{auInit();musNext(1,1);},plPlay:()=>{auInit();musToggle();},plMode:()=>{auInit();musMode();},
