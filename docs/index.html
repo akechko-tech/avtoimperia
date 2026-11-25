@@ -1898,7 +1898,8 @@ RIVAL_CAR.sport.push([1954,'Mercedes-Benz 300 SL',{e:'e28',g:'g7',c:'c14',k:'k4'
    cash   — касса в долларах своего года по источнику (иначе — обычная для страны и года);
    kind   — класс первой машины, если у героя нет своей легенды к году старта;
    rep    — известность на старте (обычная — 30);
-   funds  — взносы капитала по истории: год, месяц, сумма, текст газеты (est — месяц взноса стоит оценкой);
+   funds  — деньги пайщиков по истории: год, месяц, сумма, кто вносит, текст газеты (est — месяц стоит оценкой; day0 — предложение первого дня).
+            Это предложение, а не подарок: за деньги пайщики получают долю в деле (10h-start60.js, stakeAdd);
    est    — что в строке стоит оценкой, без числа из источника;
    lead   — что было по истории: строка журнала и газеты первого дня. */
 const HERO_START={
@@ -1913,19 +1914,20 @@ const HERO_START={
   frese:{y:1896,m:0,
     lead:'1896 год: готов автомобиль Яковлева и Фрезе.'},
   olds:{y:1897,m:7,cap:1.5,cash:50000,
-    funds:[{y:1899,m:4,sum:200000,title:'«Олдс Мотор Уоркс»',t:'9 мая 1899 года лесопромышленник Сэмюэл Смит с сыновьями вложил в дело Олдса 200 000 долларов: основана «Олдс Мотор Уоркс», завод строят в Детройте.'}],
+    funds:[{y:1899,m:4,sum:200000,who:'Сэмюэл Смит с сыновьями',title:'«Олдс Мотор Уоркс»',t:'По истории 9 мая 1899 года лесопромышленник Сэмюэл Смит с сыновьями вложил в дело Олдса 200 000 долларов: так появилась «Олдс Мотор Уоркс» с заводом в Детройте. Смит предлагает эти деньги вам.'}],
     lead:'21 августа 1897 года в Лансинге основана «Олдс Мотор Виикл» с капиталом 50 000 долларов: Рэнсому Олдсу поручено «построить один экипаж настолько совершенный, насколько возможно». За год продано четыре машины.'},
   ford:{y:1899,m:7,cap:2,cash:15000,
-    funds:[{y:1900,m:1,sum:35500,est:1,title:'Пайщики платят дальше',t:'Пайщики «Детройт Аутомобил» вносят очередные деньги. По истории за полтора года они вложили в фирму 86 000 долларов — и потеряли их.'},
-      {y:1900,m:7,sum:35500,est:1,title:'Пайщики платят дальше',t:'Пайщики вносят последнюю часть из 86 000 долларов, вложенных в фирму по истории. В январе 1901 года настоящую «Детройт Аутомобил» распустили.'},
-      {y:1903,m:5,sum:28000,title:'«Форд Мотор Компани»',t:'16 июня 1903 года двенадцать инвесторов внесли 28 000 долларов наличными: по истории в этот день основана «Форд Мотор Компани» — третья фирма Генри Форда.'}],
+    funds:[{y:1900,m:1,sum:35500,est:1,who:'Пайщики «Детройт Аутомобил»',title:'Пайщики готовы платить дальше',t:'Пайщики «Детройт Аутомобил» готовы внести ещё денег. По истории за полтора года они вложили в фирму 86 000 долларов — и потеряли их.'},
+      {y:1900,m:7,sum:35500,est:1,who:'Пайщики «Детройт Аутомобил»',title:'Пайщики готовы платить дальше',t:'Пайщики готовы внести последнюю часть из 86 000 долларов, вложенных в фирму по истории. В январе 1901 года настоящую «Детройт Аутомобил» распустили.'},
+      {y:1903,m:5,sum:28000,who:'Инвесторы «Форд Мотор Компани»',title:'«Форд Мотор Компани»',t:'По истории 16 июня 1903 года двенадцать инвесторов внесли 28 000 долларов наличными и основали «Форд Мотор Компани» — третью фирму Генри Форда. Те же деньги предлагают вам.'}],
     lead:'5 августа 1899 года двенадцать инвесторов вложили 15 000 долларов в «Детройт Аутомобил Компани»; Генри Форд ушёл из электрической компании Эдисона управлять её заводом. По истории первой машиной фирмы стал развозной фургон (январь 1900 года).'},
   renault:{y:1899,m:0,
     lead:'1899 год: марка Renault выходит на рынок.'},
   agnelli:{y:1899,m:6,est:'месяц',
     lead:'1899 год: в Турине основан ФИАТ.'},
-  durant:{y:1904,m:10,cap:4,cash:300000,kind:'middle',
-    lead:'1 ноября 1904 года Уильям Дюрант, совладелец крупнейшей каретной фирмы Америки, взял управление «Бьюик Мотор». Капитал поднят с 75 до 300 тысяч долларов; за весь 1904 год Buick собрал 37 машин.'},
+  durant:{y:1904,m:10,cap:4,cash:75000,kind:'middle',
+    funds:[{y:1904,m:10,day0:1,sum:225000,who:'Акционеры «Бьюик»',title:'Капитал «Бьюик»',t:'По истории 1 ноября 1904 года капитал «Бьюик Мотор» подняли с 75 000 до 300 000 долларов. Акционеры готовы внести эти 225 000 долларов.'}],
+    lead:'1 ноября 1904 года Уильям Дюрант, совладелец крупнейшей каретной фирмы Америки, взял управление «Бьюик Мотор» с капиталом 75 000 долларов; за весь 1904 год Buick собрал 37 машин.'},
   rolls:{y:1906,m:0,kind:'lux',
     lead:'1906 год: марка Rolls-Royce выходит на рынок.'},
   bugatti:{y:1909,m:0,kind:'sport',
@@ -5059,11 +5061,21 @@ function openRebuy(){const s=G;if(!s)return;rbMigrate(s);const cs=Object.keys(CO
     <p class="small muted" style="margin-top:8px">Цена — оценка аналитиков и 10% сверху: владельцы продают целиком, без торга.</p>`);}
 /* ---------- выкуп долей совладельцев ---------- */
 function bbPrice(s,p){return Math.max(1000,Math.round(companyValue(s)*(p.sh||0)*1.25/1000)*1000);}
+// 0.60, этап 5: крупную долю (пайщики исторического старта держат до трёх четвертей дела) выкупают частями — по десятой части дела за раз
+const BB_STEP=0.1,BB_BIG=0.25;
+function bbPartPrice(s,p){return bbPrice(s,{sh:Math.min(BB_STEP,p.sh||0)});}
+// когда выкуп стоит советовать: доля крупная (или это пайщики исторического старта), прибыль есть, свободных денег хватает на шаг, и шаг окупается за 12 лет
+function bbAdvice(s){const P=s.partners||[];let bi=-1;P.forEach((p,i)=>{if((p.sh>BB_BIG||p.hero)&&(bi<0||p.sh>P[bi].sh))bi=i;});
+  if(bi<0||!s.last||typeof shSurplus!=='function')return null;
+  const O=P[bi],part=O.sh>BB_STEP+0.005,c=part?bbPartPrice(s,O):bbPrice(s,O),st=part?BB_STEP:O.sh,k=partnersShare(s),
+    pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((x,y)=>x+y,0),out=pr>0&&k<1?pr*k/(1-k):0,yrs=out>0?c/(out*st/k):99;
+  return c>0&&shSurplus(s)>=c&&out>0&&yrs<=12?{i:bi,part,c,k,st,out,yrs}:null;}
 function bbInvPrice(s){const I=s.investor;if(!I||mi(s)>=I.until)return 0;const left=clamp((I.until-mi(s))/120,0.25,1);return Math.max(1000,Math.round(companyValue(s)*(I.sh||0)*1.2*left/1000)*1000);}
 function bbHTML(s,sh){const P=s.partners||[],I=s.investor&&mi(s)<s.investor.until?s.investor:null;if(!P.length&&!I)return '';const A=sh?' data-sh="1"':'';
   return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
     P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">получают ${Math.round(p.sh*100)}% вашей прибыли${p.t!=null?' с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
-      <button class="btn sm" data-act="bbBuy" data-k="${k}"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;}).join('')+
+      ${p.sh>BB_BIG?`<button class="btn sm" data-act="bbBuy" data-k="${k}" data-part="1"${A} ${s.cash<bbPartPrice(s,p)?'disabled':''}>10% · ${money(bbPartPrice(s,p))}</button>`:''}
+      <button class="btn sm" data-act="bbBuy" data-k="${k}"${A} ${s.cash<c?'disabled':''}>${p.sh>BB_BIG?'Всё':'Выкупить'} · ${money(c)}</button></div>`;}).join('')+
     (I?(()=>{const c=bbInvPrice(s);return `<div class="deal-row"><div style="flex:1"><b>Партнёр-инвестор</b> <span class="pill">${Math.round((I.sh||0)*100)}%</span><small class="muted">его доля — до ${1895+Math.floor(I.until/12)} года</small></div><button class="btn sm" data-act="bbInv"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;})():'')+
     `<p class="small muted" style="margin-top:4px">Выкуп — по стоимости компании с премией 25%: совладельцы уступают долю, если платят сразу и больше рынка.</p>`;}
 // 0.31: совладельцы — отдельным листом (из отчёта о прибыли и из «Сделок»)
@@ -5071,8 +5083,11 @@ function bbShare(s){const I=s.investor&&mi(s)<s.investor.until?s.investor:null;r
 function openBuyback(){const s=G;if(!s)return;const h=bbHTML(s,true);
   openSheet(`${X}<span class="label">${dstr(s)}</span><h2 style="margin-top:4px">Совладельцы «${esc(s.company)}»</h2>
     ${h||'<p class="small muted" style="margin-top:8px">Совладельцев больше нет — вся прибыль компании ваша.</p>'}
-    <p class="small muted" style="margin-top:8px">В кассе ${money(s.cash)}. Доли появляются, когда платите за сделку акциями или продаёте часть компании финансистам.</p>`);}
-function bbBuy(s,k){const p=(s.partners||[])[k];if(!p)return false;const c=bbPrice(s,p);if(s.cash<c)return false;s.cash-=c;s.partners.splice(k,1);
+    <p class="small muted" style="margin-top:8px">В кассе ${money(s.cash)}. Доли появляются, когда фирму финансируют пайщики, когда платите за сделку акциями или продаёте часть компании финансистам.</p>`);}
+function bbBuy(s,k,part){const p=(s.partners||[])[k];if(!p)return false;
+  if(part&&p.sh>BB_STEP+0.005){const c1=bbPartPrice(s,p);if(s.cash<c1)return false;s.cash-=c1;p.sh=+(p.sh-BB_STEP).toFixed(4);
+    addLog(`У «${p.n}» выкуплена десятая часть дела за ${money(c1)}: у них осталось ${Math.round(p.sh*100)}%.`,'good');return true;}
+  const c=bbPrice(s,p);if(s.cash<c)return false;s.cash-=c;s.partners.splice(k,1);
   addLog(`Выкуплена доля «${p.n}» (${Math.round(p.sh*100)}%) за ${money(c)}: эта часть прибыли теперь ваша.`,'good');return true;}
 function bbInv(s){const c=bbInvPrice(s);if(!c||s.cash<c)return false;const sh=s.investor.sh;s.cash-=c;s.investor=null;addLog(`Выкуплена доля партнёра-инвестора (${Math.round(sh*100)}%) за ${money(c)}.`,'good');return true;}
 const RB_ACT={
@@ -5080,7 +5095,7 @@ const RB_ACT={
   rbC:d=>{RB_C=d.v;openRebuy();},
   rbBuy:d=>{const s=G;if(!confirmOnce('rb'+d.c+d.i,'Нажмите ещё раз: купить марку и вести её'))return;if(rbBuy(s,d.c,+d.i)){closeSheet();tab='plant';save();render();window.scrollTo(0,0);flushToasts();}},
   bbOpen:()=>openBuyback(),
-  bbBuy:d=>{if(bbBuy(G,+d.k)){save();if(d.sh)openBuyback();rerender();flushToasts();}},bbInv:d=>{if(bbInv(G)){save();if(d.sh)openBuyback();rerender();flushToasts();}}};
+  bbBuy:d=>{if(bbBuy(G,+d.k,+d.part||0)){save();if(d.sh)openBuyback();rerender();flushToasts();}},bbInv:d=>{if(bbInv(G)){save();if(d.sh)openBuyback();rerender();flushToasts();}}};
 
 /* ================= 0.32–0.33: МОТОЦИКЛЫ НА ЗАВОДЕ — ОБОРУДОВАНИЕ, «МОТОМАСТЕРСКАЯ», ПУТЬ К АВТОМОБИЛЮ =================
    0.33 (отзыв: «не нужно два цеха — пусть это будет одна сущность»): завод один. Мотоцикл — такая же техника марки, как машина:
@@ -6569,12 +6584,31 @@ function startModel(s,ST,firstName){const m=s.models[0];m.launched=mi(s);
 // цена первой машины: не ниже выгодной по расчёту помощника — у маленькой фирмы себестоимость выше, чем у завода, и «цена класса» может оказаться ниже неё
 function startPrice(s,md){let p=refPrice(md,s);try{const bp=bestPriceFor(md,s);if(bp&&bp.price>p)p=bp.price;}catch(_){}
   let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
-// взносы капитала по истории: пайщики героя вкладывают деньги в тот месяц, когда это было на самом деле (01e-start60.js, funds).
-// Это не помощь «когда плохо»: дата и сумма заданы источником и не зависят от того, как идут дела.
+// 0.60, этап 5 (решение автора 25 ноября): деньги пайщиков — не подарок. Взнос даёт пайщикам долю в деле:
+// взнос, делённый на стоимость фирмы вместе с этими деньгами. Им идёт та же доля прибыли, пока игрок не выкупит её
+// («Совладельцы», 105d-rebuy.js). Основателю остаётся не меньше четверти — как при любых совладельцах в игре.
+const PART_MAX=0.75;
+function stakeAdd(s,name,sum){const V=Math.max(1,companyValue(s)),P=s.partners=s.partners||[],k=clamp(sum/V,0.01,PART_MAX);
+  P.forEach(p=>{p.sh=p.sh*(1-k);});
+  const same=P.find(p=>p.hero&&p.n===name);if(same){same.sh+=k;same.in=(same.in||0)+sum;}else P.push({n:name,sh:k,t:mi(s),hero:1,in:sum});
+  const tot=P.reduce((a,p)=>a+p.sh,0),f=tot>PART_MAX?PART_MAX/tot:1;P.forEach(p=>{p.sh=+(p.sh*f).toFixed(4);});
+  s.partners=P.filter(p=>p.sh>=0.001);return partnersShare(s);}
+function heroStake(s){return (s.partners||[]).filter(p=>p.hero).reduce((a,p)=>a+(p.sh||0),0);}
+// деньги пайщиков по истории (01e-start60.js, funds): в месяц, когда инвесторы по истории внесли деньги, они предлагают их игроку.
+// Это не помощь «когда плохо»: дата и сумма заданы источником и не зависят от хода дел. Взять или отказаться — решает игрок.
+function fundSum(f){return Math.round(f.sum*DIF().cash/100)*100;}
+function fundShare(s,sum){const V=Math.max(1,companyValue(s)),k=clamp(sum/(V+sum),0.01,PART_MAX),was=partnersShare(s);return {V,k,was,tot:Math.min(PART_MAX,was*(1-k)+k)};}
+function fundOffer(s,i){const HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};if(s.funds[i])return;s.funds[i]=1;
+  const sum=fundSum(f),half=Math.round(sum/200)*100,A=fundShare(s,sum),B=fundShare(s,half);
+  pushEvent({own:1,kicker:'Пайщики',title:f.title||'Новые деньги',deck:`${money(sum)} в кассу — и у совладельцев ${Math.round(A.tot*100)}% дела`,
+    text:f.t+`\nДеньги пайщиков — не подарок. Фирма сейчас стоит ${money(Math.round(A.V))}; пайщики получают долю, равную их взносу в стоимости фирмы, и ту же часть прибыли каждый месяц.\n• Все ${money(sum)} — у совладельцев будет ${Math.round(A.tot*100)}% дела.\n• Половина, ${money(half)}, — ${Math.round(B.tot*100)}%.${A.was>0.005?`\nСейчас у совладельцев ${Math.round(A.was*100)}%.`:''}\nДолю потом можно выкупить — целиком или по десятой части дела, по стоимости фирмы с премией 25%: «Финансы» → «Совладельцы». Чем лучше идут дела, тем выкуп дороже.\nОткажетесь — денег не будет, а фирма останется вашей.`+(f.est?'\n(Сумма — по источнику; месяц — оценка.)':''),
+    choices:[[`Взять ${money(sum)}`,'fund:Y:'+i],[`Взять половину`,'fund:H:'+i],['Отказаться','fund:N:'+i]]},true);}
+function fundResolve(s,key){const a=key.split(':'),i=+a[2],HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};const full=fundSum(f),sum=a[1]==='H'?Math.round(full/200)*100:full,who=f.who||'Пайщики';
+  if(a[1]==='Y'||a[1]==='H'){s.cash+=sum;const k=stakeAdd(s,who,sum);s.funds[i]=2;addLog(`${who} внесли ${money(sum)}. Совладельцам принадлежит ${Math.round(k*100)}% дела и та же часть прибыли — пока вы не выкупите долю.`,'hist');}
+  else{s.funds[i]=3;addLog(`От денег пайщиков (${money(full)}) вы отказались: фирма остаётся вашей.`,'hist');}}
 function startFundsMonth(s){if(!s||s.y0==null||s.over)return;const HS=HERO_START[s.pioneer];if(!HS||!HS.funds)return;
-  s.funds=s.funds||{};HS.funds.forEach((f,i)=>{if(s.funds[i]||s.y!==f.y||s.m!==f.m)return;s.funds[i]=1;const sum=Math.round(f.sum*DIF().cash/100)*100;s.cash+=sum;
-    pushEvent({own:1,kicker:'Пайщики',title:f.title||'Новые деньги',deck:`В кассу фирмы — ${money(sum)}`,text:f.t+(f.est?'\n(Сумма — по источнику; месяц взноса — оценка.)':''),choices:[['Хорошо','ok']]},true);});}
-function startFundsLeft(s){const HS=s&&s.y0!=null&&HERO_START[s.pioneer];if(!HS||!HS.funds)return [];return HS.funds.filter((f,i)=>!(s.funds&&s.funds[i])&&(f.y>s.y||(f.y===s.y&&f.m>s.m)));}
+  HS.funds.forEach((f,i)=>{if(f.day0||(s.funds&&s.funds[i])||s.y!==f.y||s.m!==f.m)return;fundOffer(s,i);});}
+function startFundsLeft(s){const HS=s&&s.y0!=null&&HERO_START[s.pioneer];if(!HS||!HS.funds)return [];return HS.funds.filter((f,i)=>!(s.funds&&s.funds[i])&&(f.day0||f.y>s.y||(f.y===s.y&&f.m>s.m)));}
 // дилеров на старте — треть от нужного стране, как у мастерской 1895 года, но не больше, чем фирма может содержать:
 // на годовое содержание сети — двадцатая часть кассы; и не меньше, чем нужно, чтобы продать выпуск цеха.
 // (У фирмы на четыре места не бывает шестидесяти агентов — если только за ней не стоит капитал: каретная сеть Дюранта продавала Buick с первого дня.)
@@ -6597,9 +6631,10 @@ function introPapers60(s){const P=PIONEERS[s.pioneer],md=s.models[0],p=parts(md)
   pushEvent({kicker:`${MONTHS_N[s.m][0].toUpperCase()+MONTHS_N[s.m].slice(1)} ${s.y}`,title:E[1],deck:E[2],choices:[['Читать дальше','ok']],
     text:`${startBrief(s)}\nМир до этого дня шёл по истории: марки, цены, техника — такие, какими были в ${s.y} году. С этого дня в нём есть вы.`},true);
   pushEvent({own:1,kicker:cityOf(s),title:`«${s.company}»: первый день`,deck:`${me?'Новый фабрикант':P.name} берётся за дело`,
-    text:`${HS&&HS.lead?HS.lead+'\n':''}В цехах ${s.workers} рабочих и ${s.cap} ${plural(Math.round(s.cap),'место','места','мест')}, в кассе ${money(s.cash)}. Первая машина — «${md.name}»: ${p.e.name}, ${p.b.name.toLowerCase()}. Её продают ${s.dealers[s.country]} ${plural(s.dealers[s.country],'дилер','дилера','дилеров')}.${HS&&HS.funds?`\nПо истории пайщики внесут ещё: ${HS.funds.map(f=>`${MONTHS_N[f.m]} ${f.y} — ${money(Math.round(f.sum*DIF().cash/100)*100)}`).join('; ')}.`:''}\nЦель — к ${END_Y} году стать величайшей автоимперией эпохи. Рекорд для победы считается за ваши годы: с ${s.y}-го по ${END_Y}-й.\n`+
+    text:`${HS&&HS.lead?HS.lead+'\n':''}В цехах ${s.workers} рабочих и ${s.cap} ${plural(Math.round(s.cap),'место','места','мест')}, в кассе ${money(s.cash)}. Первая машина — «${md.name}»: ${p.e.name}, ${p.b.name.toLowerCase()}. Её продают ${s.dealers[s.country]} ${plural(s.dealers[s.country],'дилер','дилера','дилеров')}.${HS&&HS.funds?`\nПо истории пайщики предложат деньги — за долю в деле: ${HS.funds.map(f=>`${f.day0?'сегодня':MONTHS_N[f.m]+' '+f.y} — ${money(fundSum(f))}`).join('; ')}.`:''}\nЦель — к ${END_Y} году стать величайшей автоимперией эпохи. Рекорд для победы считается за ваши годы: с ${s.y}-го по ${END_Y}-й.\n`+
       (kids?'Помощник сам ставит цены, открывает дилеров и строит цеха. Ваше дело — придумывать машины, улучшать детали в КБ и выигрывать гонки.'
-        :'С чего начать: следите за советником на вкладке «Завод» — у каждого совета есть кнопка. Один ход — один месяц.')},true);}
+        :'С чего начать: следите за советником на вкладке «Завод» — у каждого совета есть кнопка. Один ход — один месяц.')},true);
+  if(HS&&HS.funds)HS.funds.forEach((f,k)=>{if(f.day0)fundOffer(s,k);});}
 
 /* ================= EVENTS ================= */
 const HIST=[
@@ -6761,7 +6796,7 @@ function resolve(key){
   if(/^rdfix:/.test(key))fixStart(s,key.slice(6));
   if(/^rec:/.test(key)&&recResolve(s,key))return;if(/^tr:/.test(key)&&trialResolve(s,key))return;   // 0.51, этап 6
   if(/^own:/.test(key))ownEvent(s,key);
-  if(/^eng:/.test(key))engResolve(s,key);if(/^sh:/.test(key))shResolve(s,key);   // 0.51, этап 5б: главный конструктор, особый дивиденд   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
+  if(/^eng:/.test(key))engResolve(s,key);if(/^sh:/.test(key))shResolve(s,key);if(/^fund:/.test(key))fundResolve(s,key);   // 0.51, этап 5б: главный конструктор, особый дивиденд   // 0.51, этап 4в: патент, лицензия, иск, заказ министерства
   if(key==='rescueYes'||key==='rescueNo'){rescueResolve(s,key);}
   if(key==='carDesign'){s.pending.shift();s.ui=s.ui||{};s.ui.line='car';tab='models';save();render();openDesigner();return;}
   if(/^reel:/.test(key)){s.pending.shift();save();render();playReel(key.slice(5));return;}
@@ -9483,6 +9518,9 @@ function adviceList(s){
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
   // 0.60, этап 5: ловушка новинки. Замер 0.51: бот снимал машину, которая кормила фирму, ради новой — а новая приносила меньше.
   // Совет появляется, когда новинке от четырёх месяцев до двух лет, а снятая не раньше чем два года назад машина давала заметно больше
+  // 0.60, этап 5: у совладельцев крупная доля, прибыль есть, а в кассе лежат свободные деньги — совет выкупить часть дела
+  try{const A=typeof bbAdvice==='function'?bbAdvice(s):null;
+    if(A)add(62,'🤝',`Совладельцам принадлежит ${Math.round(A.k*100)}% дела: за последний год им ушло около ${money(Math.round(A.out))} прибыли. В кассе есть свободные деньги — ${A.part?'десятую часть дела':'их последнюю долю ('+Math.round(A.st*100)+'%)'} можно выкупить за ${money(A.c)}; при нынешней прибыли это окупится за ${A.yrs<1.5?'год':Math.round(A.yrs)+' '+plural(Math.round(A.yrs),'год','года','лет')}.`,'Совладельцы',()=>{openBuyback();});}catch(_){}
   try{const t=mi(s),old=s.models.filter(m=>(m.status==='off'||m.status==='sale')&&!isMoto(m)&&m.offAt!=null&&t-m.offAt<=24&&(m.pfOff||0)>0).sort((a,b)=>b.pfOff-a.pfOff)[0],
       nw=act.filter(m=>!isMoto(m)&&t-m.launched>=4&&t-m.launched<=24&&m.revAt==null).sort((a,b)=>b.launched-a.launched)[0],now=act.reduce((a,m)=>a+(m.pf6||0),0);
     if(old&&nw&&old.offAt>=nw.launched-12&&now<old.pfOff*0.6){const back=old.status==='off';
@@ -19150,7 +19188,7 @@ function openNewGame(){
       const P=RACERS[h.k],dr=DRIVERS.find(x=>x.id===h.k),im=dr&&IMG[DRIVER_WIKI[dr.id]];
       return `<button class="pion ${on?'on':''}" data-act="rpick" data-v="${h.k}">${im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>'}<div><h3>${esc(P.n)} ${tag}</h3><div class="yrs">дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}
     const P=PIONEERS[h.k];if(h.kind==='custom')return `<button class="pion ${on?'on':''}" data-act="pion" data-v="custom">${portraitHTML('custom')}<div><h3>Свой персонаж ${tag}</h3><div class="yrs">${esc(COUNTRIES[c].name)} · ${dir==='air'?`${ASTART_C[c]||1909} год`:dir==='moto'?`${motoStartY(c)} год`:'год старта — на выбор'}</div><p>${dir==='air'?'Ангар на поле за городом, горстка мастеров и первый аэроплан.':dir==='moto'?'Мастерская с горсткой рабочих и одним мотоциклом.':P.bio}</p></div></button>`;
-    return `<button class="pion ${on?'on':''}" data-act="pion" data-v="${h.k}">${portraitHTML(h.k)}<div><h3>${P.name} ${tag}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}${dir==='air'&&P.ay?` · ${P.am?MONTHS_N[P.am]+' ':''}${P.ay} год`:''}${dir!=='air'&&HERO_START[h.k]?` · старт — ${HERO_START[h.k].m?MONTHS_N[HERO_START[h.k].m]+' ':''}${HERO_START[h.k].y} года`:''}</div><p>${P.bio}</p>${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].lead?`<p class="small muted" style="margin-top:4px">${esc(HERO_START[h.k].lead)}</p>`:''}${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].funds?`<p class="small muted" style="margin-top:4px">Взносы пайщиков по истории: ${HERO_START[h.k].funds.map(f=>`${MONTHS_N[f.m]} ${f.y} — ${money(f.sum)}`).join('; ')}.</p>`:''}<div class="bon">${(P.plus||[]).map(x=>`<span class="p">${x}</span>`).join('')}${(P.minus||[]).map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`;};
+    return `<button class="pion ${on?'on':''}" data-act="pion" data-v="${h.k}">${portraitHTML(h.k)}<div><h3>${P.name} ${tag}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}${dir==='air'&&P.ay?` · ${P.am?MONTHS_N[P.am]+' ':''}${P.ay} год`:''}${dir!=='air'&&HERO_START[h.k]?` · старт — ${HERO_START[h.k].m?MONTHS_N[HERO_START[h.k].m]+' ':''}${HERO_START[h.k].y} года`:''}</div><p>${P.bio}</p>${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].lead?`<p class="small muted" style="margin-top:4px">${esc(HERO_START[h.k].lead)}</p>`:''}${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].funds?`<p class="small muted" style="margin-top:4px">Пайщики по истории предложат деньги — за долю в деле и в прибыли: ${HERO_START[h.k].funds.map(f=>`${f.day0?'в первый день':MONTHS_N[f.m]+' '+f.y} — ${money(f.sum)}`).join('; ')}.</p>`:''}<div class="bon">${(P.plus||[]).map(x=>`<span class="p">${x}</span>`).join('')}${(P.minus||[]).map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`;};
   const heroes=`<div class="label" style="margin-top:14px">Кто вы? · ${esc(COUNTRIES[c].name)}</div><div class="stack" style="margin-top:8px;gap:8px">${ngHeroList(dir,c).map(card).join('')}</div>`;
   const goal=dir==='air'?'Цель — создать величайшую авиационную фирму эпохи: в '+END_Y+' году её сравнят с настоящими — Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Caproni, «Дукс».':isRacer?'Путь гонщика: призы, спонсоры и заводские команды, рейтинг лучших гонщиков эпохи; накопите капитал — и основайте свою марку, дальше игра пойдёт в режиме магната.':'Цель — создать величайшую автоимперию эпохи: в 1930 году вашу компанию сравнят с настоящими — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce.';
   const fields=isRacer?(rcust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(d.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">

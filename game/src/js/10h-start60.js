@@ -42,12 +42,31 @@ function startModel(s,ST,firstName){const m=s.models[0];m.launched=mi(s);
 // цена первой машины: не ниже выгодной по расчёту помощника — у маленькой фирмы себестоимость выше, чем у завода, и «цена класса» может оказаться ниже неё
 function startPrice(s,md){let p=refPrice(md,s);try{const bp=bestPriceFor(md,s);if(bp&&bp.price>p)p=bp.price;}catch(_){}
   let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
-// взносы капитала по истории: пайщики героя вкладывают деньги в тот месяц, когда это было на самом деле (01e-start60.js, funds).
-// Это не помощь «когда плохо»: дата и сумма заданы источником и не зависят от того, как идут дела.
+// 0.60, этап 5 (решение автора 25 ноября): деньги пайщиков — не подарок. Взнос даёт пайщикам долю в деле:
+// взнос, делённый на стоимость фирмы вместе с этими деньгами. Им идёт та же доля прибыли, пока игрок не выкупит её
+// («Совладельцы», 105d-rebuy.js). Основателю остаётся не меньше четверти — как при любых совладельцах в игре.
+const PART_MAX=0.75;
+function stakeAdd(s,name,sum){const V=Math.max(1,companyValue(s)),P=s.partners=s.partners||[],k=clamp(sum/V,0.01,PART_MAX);
+  P.forEach(p=>{p.sh=p.sh*(1-k);});
+  const same=P.find(p=>p.hero&&p.n===name);if(same){same.sh+=k;same.in=(same.in||0)+sum;}else P.push({n:name,sh:k,t:mi(s),hero:1,in:sum});
+  const tot=P.reduce((a,p)=>a+p.sh,0),f=tot>PART_MAX?PART_MAX/tot:1;P.forEach(p=>{p.sh=+(p.sh*f).toFixed(4);});
+  s.partners=P.filter(p=>p.sh>=0.001);return partnersShare(s);}
+function heroStake(s){return (s.partners||[]).filter(p=>p.hero).reduce((a,p)=>a+(p.sh||0),0);}
+// деньги пайщиков по истории (01e-start60.js, funds): в месяц, когда инвесторы по истории внесли деньги, они предлагают их игроку.
+// Это не помощь «когда плохо»: дата и сумма заданы источником и не зависят от хода дел. Взять или отказаться — решает игрок.
+function fundSum(f){return Math.round(f.sum*DIF().cash/100)*100;}
+function fundShare(s,sum){const V=Math.max(1,companyValue(s)),k=clamp(sum/(V+sum),0.01,PART_MAX),was=partnersShare(s);return {V,k,was,tot:Math.min(PART_MAX,was*(1-k)+k)};}
+function fundOffer(s,i){const HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};if(s.funds[i])return;s.funds[i]=1;
+  const sum=fundSum(f),half=Math.round(sum/200)*100,A=fundShare(s,sum),B=fundShare(s,half);
+  pushEvent({own:1,kicker:'Пайщики',title:f.title||'Новые деньги',deck:`${money(sum)} в кассу — и у совладельцев ${Math.round(A.tot*100)}% дела`,
+    text:f.t+`\nДеньги пайщиков — не подарок. Фирма сейчас стоит ${money(Math.round(A.V))}; пайщики получают долю, равную их взносу в стоимости фирмы, и ту же часть прибыли каждый месяц.\n• Все ${money(sum)} — у совладельцев будет ${Math.round(A.tot*100)}% дела.\n• Половина, ${money(half)}, — ${Math.round(B.tot*100)}%.${A.was>0.005?`\nСейчас у совладельцев ${Math.round(A.was*100)}%.`:''}\nДолю потом можно выкупить — целиком или по десятой части дела, по стоимости фирмы с премией 25%: «Финансы» → «Совладельцы». Чем лучше идут дела, тем выкуп дороже.\nОткажетесь — денег не будет, а фирма останется вашей.`+(f.est?'\n(Сумма — по источнику; месяц — оценка.)':''),
+    choices:[[`Взять ${money(sum)}`,'fund:Y:'+i],[`Взять половину`,'fund:H:'+i],['Отказаться','fund:N:'+i]]},true);}
+function fundResolve(s,key){const a=key.split(':'),i=+a[2],HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};const full=fundSum(f),sum=a[1]==='H'?Math.round(full/200)*100:full,who=f.who||'Пайщики';
+  if(a[1]==='Y'||a[1]==='H'){s.cash+=sum;const k=stakeAdd(s,who,sum);s.funds[i]=2;addLog(`${who} внесли ${money(sum)}. Совладельцам принадлежит ${Math.round(k*100)}% дела и та же часть прибыли — пока вы не выкупите долю.`,'hist');}
+  else{s.funds[i]=3;addLog(`От денег пайщиков (${money(full)}) вы отказались: фирма остаётся вашей.`,'hist');}}
 function startFundsMonth(s){if(!s||s.y0==null||s.over)return;const HS=HERO_START[s.pioneer];if(!HS||!HS.funds)return;
-  s.funds=s.funds||{};HS.funds.forEach((f,i)=>{if(s.funds[i]||s.y!==f.y||s.m!==f.m)return;s.funds[i]=1;const sum=Math.round(f.sum*DIF().cash/100)*100;s.cash+=sum;
-    pushEvent({own:1,kicker:'Пайщики',title:f.title||'Новые деньги',deck:`В кассу фирмы — ${money(sum)}`,text:f.t+(f.est?'\n(Сумма — по источнику; месяц взноса — оценка.)':''),choices:[['Хорошо','ok']]},true);});}
-function startFundsLeft(s){const HS=s&&s.y0!=null&&HERO_START[s.pioneer];if(!HS||!HS.funds)return [];return HS.funds.filter((f,i)=>!(s.funds&&s.funds[i])&&(f.y>s.y||(f.y===s.y&&f.m>s.m)));}
+  HS.funds.forEach((f,i)=>{if(f.day0||(s.funds&&s.funds[i])||s.y!==f.y||s.m!==f.m)return;fundOffer(s,i);});}
+function startFundsLeft(s){const HS=s&&s.y0!=null&&HERO_START[s.pioneer];if(!HS||!HS.funds)return [];return HS.funds.filter((f,i)=>!(s.funds&&s.funds[i])&&(f.day0||f.y>s.y||(f.y===s.y&&f.m>s.m)));}
 // дилеров на старте — треть от нужного стране, как у мастерской 1895 года, но не больше, чем фирма может содержать:
 // на годовое содержание сети — двадцатая часть кассы; и не меньше, чем нужно, чтобы продать выпуск цеха.
 // (У фирмы на четыре места не бывает шестидесяти агентов — если только за ней не стоит капитал: каретная сеть Дюранта продавала Buick с первого дня.)
@@ -70,6 +89,7 @@ function introPapers60(s){const P=PIONEERS[s.pioneer],md=s.models[0],p=parts(md)
   pushEvent({kicker:`${MONTHS_N[s.m][0].toUpperCase()+MONTHS_N[s.m].slice(1)} ${s.y}`,title:E[1],deck:E[2],choices:[['Читать дальше','ok']],
     text:`${startBrief(s)}\nМир до этого дня шёл по истории: марки, цены, техника — такие, какими были в ${s.y} году. С этого дня в нём есть вы.`},true);
   pushEvent({own:1,kicker:cityOf(s),title:`«${s.company}»: первый день`,deck:`${me?'Новый фабрикант':P.name} берётся за дело`,
-    text:`${HS&&HS.lead?HS.lead+'\n':''}В цехах ${s.workers} рабочих и ${s.cap} ${plural(Math.round(s.cap),'место','места','мест')}, в кассе ${money(s.cash)}. Первая машина — «${md.name}»: ${p.e.name}, ${p.b.name.toLowerCase()}. Её продают ${s.dealers[s.country]} ${plural(s.dealers[s.country],'дилер','дилера','дилеров')}.${HS&&HS.funds?`\nПо истории пайщики внесут ещё: ${HS.funds.map(f=>`${MONTHS_N[f.m]} ${f.y} — ${money(Math.round(f.sum*DIF().cash/100)*100)}`).join('; ')}.`:''}\nЦель — к ${END_Y} году стать величайшей автоимперией эпохи. Рекорд для победы считается за ваши годы: с ${s.y}-го по ${END_Y}-й.\n`+
+    text:`${HS&&HS.lead?HS.lead+'\n':''}В цехах ${s.workers} рабочих и ${s.cap} ${plural(Math.round(s.cap),'место','места','мест')}, в кассе ${money(s.cash)}. Первая машина — «${md.name}»: ${p.e.name}, ${p.b.name.toLowerCase()}. Её продают ${s.dealers[s.country]} ${plural(s.dealers[s.country],'дилер','дилера','дилеров')}.${HS&&HS.funds?`\nПо истории пайщики предложат деньги — за долю в деле: ${HS.funds.map(f=>`${f.day0?'сегодня':MONTHS_N[f.m]+' '+f.y} — ${money(fundSum(f))}`).join('; ')}.`:''}\nЦель — к ${END_Y} году стать величайшей автоимперией эпохи. Рекорд для победы считается за ваши годы: с ${s.y}-го по ${END_Y}-й.\n`+
       (kids?'Помощник сам ставит цены, открывает дилеров и строит цеха. Ваше дело — придумывать машины, улучшать детали в КБ и выигрывать гонки.'
-        :'С чего начать: следите за советником на вкладке «Завод» — у каждого совета есть кнопка. Один ход — один месяц.')},true);}
+        :'С чего начать: следите за советником на вкладке «Завод» — у каждого совета есть кнопка. Один ход — один месяц.')},true);
+  if(HS&&HS.funds)HS.funds.forEach((f,k)=>{if(f.day0)fundOffer(s,k);});}

@@ -37,6 +37,9 @@ const STYLE=${JSON.stringify(style)},CC=${JSON.stringify(country)},QUIET=!!proce
 const FORD=/^ford/.test(STYLE),RACE=FORD&&!/norace/.test(STYLE),RDX=FORD&&!/nord/.test(STYLE),LOW=/low/.test(STYLE);
 newGame(${JSON.stringify(pio)},CC,'','${diff}','Первая');
 G.helper={on:1};
+// 0.60, этап 5: предложение пайщиков первого дня (в игре его приносят газеты первого дня)
+try{if(G.y0!=null){const HS0=HERO_START[G.pioneer];if(HS0&&HS0.funds)HS0.funds.forEach((f,k)=>{if(f.day0)fundOffer(G,k);});}}catch(_){}
+
 if(process.env.HOOK)eval(process.env.HOOK);   // HOOK='…' — код для разовой диагностики (например, обернуть функцию игры и печатать её вызовы)
 const seenPlan={};let lastDesign=0,starts=0,wins=0,majors=0,spentRace=0;const first={},firstDom={},yr={};
 const cls0=()=>CC==='us'?(G.y>=1903?'people':'middle'):(G.y>=1912?'people':'middle');
@@ -106,14 +109,17 @@ function supMonth(){if(process.env.NOSUP||pAvg()<=0||G.y<1908)return;
   for(const S of SUPPLY.slice().sort((a,b)=>a.P-b.P)){if(S.risk||G.y<S.y)continue;const u=supOf(G)[S.k],M=matSpend(G);if(u&&u.cover>=M*1.6)continue;
     const p=u?supPrice(G,S,M*2-u.cover):supPrice(G,S,M*2);if(p>S.cut*M*12*S.P*1.6)continue;   // мал закуп — завод-поставщик не окупится
     if(free()<p*1.3)continue;const c0=G.cash;if(supBuy(G,S.k)){supN++;supSpent+=c0-G.cash;}return;}}
+let buys=0,buyY=0;
 function month(){const act=G.models.filter(m=>m.status==='prod'),dev=G.models.filter(m=>m.status==='dev');
   const gap=FORD&&pAvg()>0?36:48;if(!dev.length&&mi(G)-lastDesign>=gap&&mi(G)>=6)newModel(cls());retireOld();
   if(FORD)try{trimMonth();}catch(e){if(!QUIET)console.log('trim',e.message);}
   if(RDX)labMonth();if(RACE){raceCarMonth();raceMonth();}
   if(FORD)try{supMonth();}catch(e){if(!QUIET)console.log('sup',e.message);}
   if(LOW&&G.m%3===1)act.forEach(m=>{const bp=bestPriceFor(m,G).price||m.price,uc=unitCost(m,G);m.price=Math.round(Math.max(uc*1.12/(1-DEALER_MARGIN),bp*0.9)/10)*10;});}
+const FUNDS=${JSON.stringify(/^[YH]$/.test(process.env.FUNDS||'')?process.env.FUNDS:'N')};
 function pickChoice(ev){const K=ev.choices.map(c=>c[1]);
   if(K.includes('domScreen'))return 'ok';
+  if(K.some(k=>k.indexOf('fund:')===0))return K.find(k=>k.indexOf('fund:'+FUNDS+':')===0);   // 0.60, этап 5: деньги пайщиков за долю — FUNDS=N (отказ, по умолчанию), Y (брать всё) или H (половину)
   if(K.some(k=>/^ma:/.test(k)))return K.find(k=>/^ma:\\w+:N|^ma:aucSkip|^ok$/.test(k))||K[K.length-1];
   if(K.includes('dxSim'))return 'dxSim';
   if(K.includes('ru:emig'))return 'ru:emig';if(K.some(k=>/^ru:to:/.test(k)))return 'ru:to:fr';
@@ -134,6 +140,8 @@ for(let k=0;k<(END_Y-1895)*12+6&&G.y<ENDY;k++){
   if(G.over)break;
   if(SW&&G.y>=+SW[0]&&G.diff!==SW[1]){G.diff=SW[1];if(!QUIET)console.log('--- сложность с',G.y,'года:',DIFFS[SW[1]].name);}   // SWITCH=1906:hist — начало на выбранной сложности, дальше — на другой (бот не переживает начало «Историка»)
   try{month();}catch(e){if(!QUIET)console.log('bot err',e&&e.stack);}
+  // 0.60, этап 5: свободные деньги — на выкуп у пайщиков исторического старта, по десятой части дела (то же советует помощник)
+  if(G.partners&&G.partners.some(p=>p.hero)){try{const A=bbAdvice(G);if(A&&G.partners[A.i].hero&&bbBuy(G,A.i,A.part?1:0)){buys++;buyY=G.y;}}catch(_){}}
   const ok=step();if(!ok&&!G.pending.length)break;
   const S=snap();{const mk=G.last&&G.last.mk&&G.last.mk[G.country];if(mk){yrS.sold+=mk.sold||0;yrS.size+=mk.size||0;}}
   {const L=G.last||{},cx=Math.max(0,(G.plantVal||0)-pv0);pv0=G.plantVal||0;const rdv=(L.rd||0),tm=(L.team||0)+(L.drv||0);devA.rd+=rdv;devA.team+=tm;devA.tool+=L.tool||0;devA.capex+=cx;devA.dev+=rdv+tm+(L.tool||0)+(L.dlr||0)+(L.ad||0)+cx;devA.rev+=(L.rev||0)+(L.ord||0)+(L.mil||0);devA.profit+=L.profit||0;devA.tax+=(L.tax||0)+(L.wtax||0);}
@@ -150,5 +158,5 @@ for(let k=0;k<(END_Y-1895)*12+6&&G.y<ENDY;k++){
     if(!QUIET)console.log(G.y-1,'касса',(G.cash/1e6).toFixed(2),'выр12',(rev12/1e6).toFixed(2),'доля',Math.round(hs*100)+'%','КБ',G.rd.lvl,'гонки',wins+'/'+starts,'|',DOM_K.map(k=>k.slice(0,3)+' '+S[k].sh+'%/'+(S[k].hist===null?'—':S[k].hist+'%')+(S[k].ok?'✔':S[k].dom?'·':'')).join('  '));}
   if(G.over)break;
 }
-console.log(JSON.stringify({style:STYLE,diff:'${diff}',seed:${seed},pio:${JSON.stringify(pio)},win:winAt,lost:lostAt,first,firstDom,cashRev1915,share1915,wins,majors,starts,spentRace:Math.round(spentRace),endY:G.y,over:!!G.over&&G.y<END_Y,value:Math.round(companyValue(G)),cash:Math.round(G.cash),rd:G.rd.lvl,rdept:G.rdept||0,trims,supN,supSpent:Math.round(supSpent),supK:+supK(G).toFixed(3),firsts:firstsLive(G),yr}));
+console.log(JSON.stringify({stake:+(typeof heroStake==='function'?heroStake(G):0).toFixed(2),buys,buyY,style:STYLE,diff:'${diff}',seed:${seed},pio:${JSON.stringify(pio)},win:winAt,lost:lostAt,first,firstDom,cashRev1915,share1915,wins,majors,starts,spentRace:Math.round(spentRace),endY:G.y,over:!!G.over&&G.y<END_Y,value:Math.round(companyValue(G)),cash:Math.round(G.cash),rd:G.rd.lvl,rdept:G.rdept||0,trims,supN,supSpent:Math.round(supSpent),supK:+supK(G).toFixed(3),firsts:firstsLive(G),yr}));
 `);

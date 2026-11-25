@@ -251,32 +251,56 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
    CK(s.y===1899&&s.m===7&&s.cap===2&&Math.abs(s.y0-(1899+7/12))<1e-9&&gameStartY(s)===1899,'Форд начинает в августе 1899 года — с Detroit Automobile Company');
    CK(s.cash===Math.round(15000*bn('cash')*DIF().cash)&&s.cash<legacyCash,'касса Форда — 15 000 долларов инвесторов (с поправкой сложности): '+money(s.cash));
    CK(!isTruck(md)&&['middle','people'].includes(segOf(md))&&md.launched===mi(s)&&md.price>=unitCost(md,s)*1.15/(1-DEALER_MARGIN)-10,'первая машина Форда — легковая, лучшая по прибыли из деталей 1899 года, и цена выше себестоимости: '+md.price+' при '+Math.round(unitCost(md,s)));
-   CK(startFundsLeft(s).length===3&&startFundsLeft(s).reduce((a,f)=>a+f.sum,0)===99000,'впереди у Форда три взноса пайщиков по истории: 71 000 до 1901 года и 28 000 в июне 1903-го');
+   CK(startFundsLeft(s).length===3&&startFundsLeft(s).reduce((a,f)=>a+f.sum,0)===99000&&!(s.partners&&s.partners.length),'у Форда впереди три предложения пайщиков по истории (71 000 до 1901 года и 28 000 в июне 1903-го); на старте совладельцев нет');
    CK(s.log.some(l=>/Детройт Аутомобил/.test(l.t||l.text||l))&&s.log.some(l=>/в стране продают около/.test(l.t||l.text||l)),'в журнале первого дня — что было по истории и каков мир к этому году');
    CK(Math.abs(s.fleet.us-fleetHist('us',yf(s)))<1e-6&&s.dealers.us>=3&&s.dealers.us<=Math.round(dealerNeed('us',s)/3)&&s.dealers.us*dealerUpkeep(s,'us')*12<=s.cash*0.05+1,'парк машин страны — на год старта; дилеров — сколько фирма может содержать ('+s.dealers.us+')');
    const E=histEra(s),E0=histEra(null);CK(E.y0===1899&&E0.y0===1895&&histBest(s,'scale').v<=E0.best.scale.v,'рекорд для победы — за свои годы: с 1899-го по 1960-й');
    s.pending=[];introPapers(s);CK(s.pending.length>=1||(s.papers&&s.papers.length>=1),'газеты первого дня выходят и у героя 1899 года');
-   {const c0=s.cash;let e='',got=0,ev=0;try{for(let k=0;k<7;k++){s.pending=[];const b=s.cash;step();if(s.y===1900&&s.m===1){ev=s.pending.filter(p=>/Пайщики платят дальше/.test(p.title||'')).length;got=s.funds&&s.funds[0]?1:0;}}}catch(x){e=x.message;}
-    CK(!e&&got===1&&ev===1&&startFundsLeft(s).length===2,'в феврале 1900 года первый взнос приходит в кассу, и об этом пишет газета '+e);
-    s.y=1903;s.m=4;s.pending=[];const b=s.cash;step();CK(s.funds[2]===1&&s.pending.some(p=>/Форд Мотор Компани/.test(p.title||''))&&s.cash>b,'16 июня 1903 года — 28 000 долларов «Форд Мотор Компани»');
-    s.y=1903;s.m=4;s.pending=[];step();CK(s.pending.filter(p=>/Форд Мотор Компани/.test(p.title||'')).length===0,'взнос приходит один раз');}}
+   {let e='',ev=null;try{for(let k=0;k<7&&!ev;k++){s.pending=[];step();ev=s.pending.find(p=>/Пайщики готовы платить дальше/.test(p.title||''));}}catch(x){e=x.message;}
+    const b=s.cash,ch=ev?ev.choices.map(c=>c[1]):[];
+    CK(!e&&ev&&s.y===1900&&s.m===1&&ch[0]==='fund:Y:0'&&ch[1]==='fund:H:0'&&ch[2]==='fund:N:0'&&!(s.partners&&s.partners.length)&&/не подарок/.test(ev.text)&&/Совладельцы/.test(ev.text),'в феврале 1900 года пайщики предлагают деньги за долю: взять или отказаться; до ответа ни денег, ни доли '+e);
+    resolve('fund:N:0');CK(Math.abs(s.cash-b)<2000&&!(s.partners&&s.partners.length)&&s.funds[0]===3&&startFundsLeft(s).length===2,'отказ: касса та же, совладельцев нет');
+    s.y=1900;s.m=6;s.pending=[];step();const ev2=s.pending.find(p=>/Пайщики готовы платить дальше/.test(p.title||'')),b2=s.cash,V2=companyValue(s);resolve('fund:Y:1');const P=s.partners||[],sum=fundSum(HERO_START.ford.funds[1]);
+    CK(ev2&&Math.abs(s.cash-b2-sum)<2000&&P.length===1&&P[0].hero===1&&P[0].n==='Пайщики «Детройт Аутомобил»'&&Math.abs(P[0].sh-Math.min(0.75,sum/(V2+sum)))<0.01&&s.funds[1]===2,'согласие: деньги в кассе, пайщикам — доля «взнос к стоимости фирмы с этими деньгами»: '+Math.round(P[0].sh*100)+' %');
+    s.y=1903;s.m=4;s.pending=[];step();const ev3=s.pending.filter(p=>/Форд Мотор Компани/.test(p.title||''));CK(ev3.length===1&&/fund:Y:2/.test(ev3[0].choices[0][1]),'июнь 1903 года — предложение инвесторов «Форд Мотор Компани»');
+    resolve('fund:N:2');s.y=1903;s.m=4;s.pending=[];step();CK(s.pending.filter(p=>/Форд Мотор Компани/.test(p.title||'')).length===0,'предложение приходит один раз');}}
   // все автомобильные герои: год по таблице, детали своего времени, год игры без ошибок
   {let bad1='',anach='',errs='';for(const k of Object.keys(HERO_START)){const HS=HERO_START[k];if(HS.moto)continue;seed(162);newGame(k,PIONEERS[k].c,'','normal','');const s=G,md=s.models[0];
      if(s.y!==HS.y||s.m!==(HS.m||0))bad1+=k+' ';PART_KEYS.forEach(pk=>{const cat=PART_CATS.find(q=>q.k===pk),pt=cat&&byId(cat.arr(),md[pk]);if(pt&&pt.y>s.y)anach+=k+':'+pt.name+' ';});
      const e=steps(s,12);if(e)errs+=k+': '+e+' | ';if(s.over)errs+=k+' разорён за год | ';}
    CK(!bad1,'год и месяц старта каждого героя — из таблицы '+bad1);CK(!anach,'в первой машине нет деталей из будущего '+anach);CK(!errs,'год игры без решений у каждого героя — без ошибок и разорений '+errs);}
   {seed(163);newGame('benz','de','','normal','');CK(G.y===1895&&G.cap===11&&G.models[0].legend==='benz_velo'&&G.models[0].t==='t1'&&G.rep>=40,'Бенц в 1895 году — завод на 11 мест и «Вело», а не мастерская на три');}
-  {seed(163);newGame('durant','us','','normal','');CK(G.y===1904&&G.m===10&&G.cash===Math.round(300000*bn('cash')*DIF().cash)&&(G.tech.tools||0)>=1&&G.dealers.us===Math.round(dealerNeed('us',G)/3),'Дюрант — ноябрь 1904 года, Buick с капиталом 300 тысяч и сетью дилеров на треть страны ('+G.dealers.us+')');}
+  {seed(163);newGame('durant','us','','normal','');const s=G;CK(s.y===1904&&s.m===10&&s.cash===Math.round(75000*bn('cash')*DIF().cash)&&!(s.partners&&s.partners.length),'Дюрант — ноябрь 1904 года, Buick с капиталом 75 тысяч');
+   s.pending=[];introPapers(s);const ev=s.pending.find(p=>/Капитал «Бьюик»/.test(p.title||'')),b=s.cash,sum=fundSum(HERO_START.durant.funds[0]);
+   CK(ev&&sum===Math.round(225000*DIF().cash)&&ev.choices[0][1]==='fund:Y:0','в первый день акционеры Buick предлагают 225 тысяч — подъём капитала до 300 тысяч по истории');
+   const V=companyValue(s);s.pending=[ev];resolve('fund:Y:0');CK(Math.abs(s.cash-b-sum)<3000&&Math.abs(partnersShare(s)-sum/(V+sum))<0.01&&partnersShare(s)>0.7&&s.partners[0].n==='Акционеры «Бьюик»','согласие: 225 тысяч в кассе, акционерам — доля «взнос к стоимости»: '+Math.round(partnersShare(s)*100)+' %');
+   s.pending=[];let e='';try{for(let k=0;k<3;k++){step();s.pending=[];}}catch(x){e=x.message;}CK(!e&&s.partners.length===1,'предложение первого дня не повторяется '+e);}
   {seed(163);newGame('rolls','uk','','normal','');CK(G.y===1906&&G.models[0].legend==='rr_ghost'&&segOf(G.models[0])==='lux','Роллс — 1906 год, первая машина — легенда марки');}
   {seed(163);newGame('ryabush','ru','','normal','');CK(G.y===1916&&segOf(G.models[0])==='truck','Рябушинский — 1916 год, грузовик АМО');}
-  {seed(163);newGame('olds','us','','normal','');const s=G;CK(s.y===1897&&s.m===7&&s.cash===Math.round(50000*bn('cash')*DIF().cash)&&startFundsLeft(s).length===1&&startFundsLeft(s)[0].sum===200000,'Олдс — август 1897 года, капитал 50 000 долларов; в мае 1899-го придут 200 000 Сэмюэла Смита');
-   s.y=1899;s.m=3;s.pending=[];const b=s.cash;step();CK(s.y===1899&&s.m===4&&s.cash>b+150000&&s.pending.some(p=>/Олдс Мотор Уоркс/.test(p.title||'')),'май 1899 года: 200 000 долларов — в кассе');}
+  {seed(163);newGame('olds','us','','normal','');const s=G;CK(s.y===1897&&s.m===7&&s.cash===Math.round(50000*bn('cash')*DIF().cash)&&startFundsLeft(s).length===1&&startFundsLeft(s)[0].sum===200000&&!(s.partners&&s.partners.length),'Олдс — август 1897 года, капитал 50 000 долларов; в мае 1899-го Сэмюэл Смит предложит 200 000');
+   s.y=1899;s.m=3;s.pending=[];step();const ev=s.pending.find(p=>/Олдс Мотор Уоркс/.test(p.title||'')),b=s.cash;CK(s.y===1899&&s.m===4&&ev&&/Взять/.test(ev.choices[0][0]),'май 1899 года: Смит предлагает 200 000 долларов за долю');resolve('fund:Y:0');CK(s.cash>b+150000&&partnersShare(s)===0.75&&s.partners[0].n==='Сэмюэл Смит с сыновьями','согласие: деньги в кассе, Смиту — три четверти дела');}
+  {seed(163);newGame('olds','us','','normal','');const s=G;s.y=1899;s.m=3;s.pending=[];step();const ev=s.pending.find(p=>/Олдс Мотор Уоркс/.test(p.title||'')),b=s.cash,V=companyValue(s),half=Math.round(fundSum(HERO_START.olds.funds[0])/200)*100;s.pending=[ev];resolve('fund:H:0');
+   CK(Math.abs(s.cash-b-half)<3000&&Math.abs(partnersShare(s)-Math.min(0.75,half/(V+half)))<0.01&&partnersShare(s)<0.75,'можно взять половину: 120 тысяч — и доля меньше ('+Math.round(partnersShare(s)*100)+' %)');}
   {seed(163);newGame('bugatti','fr','','normal','');const md=G.models[0];CK(G.y===1909&&md.price>=unitCost(md,G)*1.15/(1-DEALER_MARGIN)-10,'у Бугатти в 1909 году первая машина продаётся дороже себестоимости: '+md.price+' при '+Math.round(unitCost(md,G))+' ('+segOf(md)+')');}
-  {START1895=true;seed(163);newGame('olds','us','','normal','');const s=G;s.y=1899;s.m=3;s.pending=[];const b=s.cash;step();CK(s.cash<b+1000&&!s.funds,'в партии с мастерской 1895 года взносов по истории нет');START1895=false;}
   CK(RACERS.rickenbacker.y===1910&&RACERS.rickenbacker.m===5&&RACERS.a_maserati.y===1908&&RACERS.lancia.y===1900&&RACERS.l_chevrolet.y===1905&&RACERS.ferrari.y===1919,'гонщики-основатели начинают с гоночного дебюта по источникам: Лянча — 1900, Шевроле — 1905, Мазерати — 1908, Рикенбакер — июнь 1910, Феррари — 1919');
   {seed(163);newGame('peugeot','fr','','normal','');CK(G.y===1895&&G.cap===3&&G.y0==null&&G.log.some(l=>/Пежо строят экипажи/.test(l.t||l.text||l)),'у марок старше 1895 года без чисел из источника — прежняя мастерская и строка истории');}
   {seed(163);newGame('rolls','uk','','normal','');const s=G;s.y=1960;s.m=0;s.fameSaved=0;try{localStorage.removeItem(SAVE_PREFIX+'fame');}catch(_){}let e='';try{finalResults(s,false);}catch(x){e=x.message;}
    const F=fameList()[0];CK(!e&&F&&F.from===1906&&F.year===1960,'в зале славы у партии записаны её годы: 1906–1960 '+e);try{localStorage.removeItem(SAVE_PREFIX+'fame');}catch(_){}}
+  // совладельцы: выкуп по десятой части дела, совет помощника (решение автора 25 ноября)
+  {seed(163);newGame('ford','us','','normal','');const s=G;s.pending=[];introPapers(s);
+   CK(s.pending.some(p=>/пайщики предложат деньги — за долю в деле/.test(p.text||'')),'газета первого дня говорит, что деньги пайщиков — за долю в деле');
+   s.pending=[];s.cash+=100000;stakeAdd(s,'Пайщики',100000);const P=s.partners;
+   CK(P.length===1&&P[0].sh===0.75&&bbAdvice(s)===null&&!adviceList(s).some(a=>a.icon==='🤝'),'пока прибыли нет, помощник о выкупе молчит');
+   const h=bbHTML(s,true);CK(/data-part="1"/.test(h)&&/10% · /.test(h)&&/Всё · /.test(h),'в «Совладельцах» у крупной доли две кнопки: десятая часть дела и всё');
+   const c1=bbPartPrice(s,P[0]),b=s.cash;CK(c1===bbPrice(s,{sh:0.1})&&bbBuy(s,0,1)&&Math.abs(P[0].sh-0.65)<1e-9&&s.cash===b-c1,'десятая часть дела выкупается по цене десятой части: '+c1+', у пайщиков остаётся 65 %');
+   while(s.partners.length&&s.partners[0].sh>0.46)bbBuy(s,0,1);const was=partnersShare(s),V=companyValue(s);s.cash+=20000;const k=stakeAdd(s,'Пайщики',20000);
+   CK(Math.abs(was-0.45)<1e-9&&Math.abs(k-Math.min(0.75,was*(1-20000/(V+20000))+20000/(V+20000)))<0.002&&s.partners.length===1,'новый взнос тех же пайщиков разбавляет прежнюю долю и добавляет новую: '+Math.round(k*100)+' %');
+   s.pending=[];step();s.pending=[];s.partners=[{n:'Пайщики',sh:0.75,t:mi(s),hero:1}];s.hist.profit=Array(12).fill(2000);s.cash=400000;s.loan=0;const A=bbAdvice(s);
+   CK(A&&A.part&&A.c===bbPartPrice(s,s.partners[0])&&A.yrs<=12&&adviceList(s).some(a=>a.icon==='🤝'&&/десятую часть дела/.test(a.text)),'при прибыли и свободных деньгах помощник советует выкупить десятую часть дела и называет срок окупаемости');
+   s.cash=100;CK(bbAdvice(s)===null&&!adviceList(s).some(a=>a.icon==='🤝'),'нет свободных денег — совета нет');}
+  {seed(163);newGame('renault','fr','','normal','');CK(!(G.partners&&G.partners.length)&&startFundsLeft(G).length===0,'у героя без пайщиков в истории предложений нет');
+   const V=companyValue(G);G.cash+=10000;const k=stakeAdd(G,'Проба',10000);CK(Math.abs(k-10000/(V+10000))<0.002,'доля за взнос — взнос, делённый на стоимость фирмы с этими деньгами: '+(k*100).toFixed(1)+' %');
+   START1895=true;seed(163);newGame('olds','us','','normal','');const s=G;s.y=1899;s.m=3;s.pending=[];step();CK(!s.pending.some(p=>/Олдс Мотор Уоркс/.test(p.title||''))&&!s.funds,'в партии с мастерской 1895 года предложений пайщиков нет');START1895=false;}
   // свой персонаж: год выбирает игрок
   {seed(164);newGame('custom','us','','normal','',{y0:1924});const s=G,md=s.models[0];
    CK(s.y===1924&&s.cap===eraCap(1924)&&s.cash===Math.round(eraCash('us',1924)*bn('cash')*DIF().cash)&&(s.tech.tools||0)>=2&&(s.tech.elec||0)>=1&&!s.tech.line,'свой персонаж 1924 года: цех, касса и станки обычной новой фирмы этого года; конвейера нет — его строят сами');
