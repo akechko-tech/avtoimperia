@@ -84,7 +84,11 @@ function rdProjects(s){
     // unlockedP — но только если получает сам каталог, а не его отфильтрованную копию. Раньше приходила копия: своих узлов в «Улучшениях» не было
     unlockedP(cat.arr(),s,mo).forEach(x=>{const l=upgL(x.id),age=Math.max(0,s.y-Math.max(1893,x.y)-6);if(l<mx&&!busy.has('upg:'+x.id))list.push({kind:'upg',id:x.id,cat:cn,ck:cat.k,moto:mo,name:x.name,lvl:l+1,py:x.own?9999:x.y||1895,own:x.own?1:0,mine:used.has(x.id),mass:MU.has(x.id),know:!!(s.rd.know&&s.rd.know[x.id]),need:Math.max(2,Math.round(((6+x.q/8)*Math.pow(1.6,l)+(l>=3?6*(l-2):0))*(1+0.08*age)*upgCatchK(s,x.id,MU)*rk))});});
     const nx=arr.filter(x=>x.y>s.y&&!s.rd.early.includes(x.id)).sort((a,b)=>a.y-b.y)[0];
-    if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id))list.push({kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round(10*aheadTimeK(nx.y-s.y)*rk)),yrs:nx.y-s.y});
+    if(nx&&nx.y-s.y<=hz&&!busy.has('early:'+nx.id)){const pj={kind:'early',id:nx.id,cat:cn,ck:cat.k,moto:mo,name:nx.name,need:Math.max(4,Math.round(10*aheadTimeK(nx.y-s.y)*rk)),yrs:nx.y-s.y};
+      /* 0.60 (отзыв автора 26 ноября): мотор, который не выдержит ни одна ваша рама, — это деньги на прототип, который некуда ставить.
+         Проект помечается: сколько держит самая крепкая рама и какая рама каталога нужна (её прототип — отдельный проект) */
+      if(cat.k==='e'){const top=frameTop(s,mo,null);if(nx.hp>top){const fr=CHASSIS.filter(c=>!!c.moto===!!mo&&c.max*bn('chassisTol')>=nx.hp).sort((a,b)=>a.y-b.y)[0];pj.noframe={top:Math.round(top),hp:nx.hp,fr:fr?{id:fr.id,name:fr.name,y:fr.y}:null};}}
+      list.push(pj);}
   }));
   // 0.32: «Перенос» — технология, которую марка освоила в одной линейке, в другую (105e-moto.js)
   try{xferProjects(s).forEach(pj=>list.push(pj));}catch(e){console.warn('xfer',e);}
@@ -194,10 +198,15 @@ Object.assign(CHAR_W,{bus:{perf:0.08,rel:0.34,comf:0.06,ease:0.06,safe:0.1,econ:
 function kindKey(md){const g=segOf(md);if(g!=='truck')return g;const k=bodyKind(byId(BODIES,md.b));return CHAR_W[k]?k:'truck';}
 // В Европе налог на лошадиные силы и дорогой бензин: народные и средние машины ценят за экономичность
 function charW(g,c){const W=CHAR_W[g];if(c&&c!=='us'&&(g==='people'||g==='middle'))return {...W,perf:W.perf-0.07,econ:W.econ+0.07};return W;}
+/* Плавность мотора — часть комфорта: чем больше цилиндров, тем ровнее ход. 0.60 (отзыв автора 26 ноября: «V12, 46 л.с. — изобрели
+   эти двигатели, но они почему-то недоступны»): в таблице не было двенадцати и шестнадцати цилиндров — V-16 считался ровным, как
+   «четвёрка». 12 и 16 — оценка: ровнее «восьмёрки» (о V-16 1930 года писали, что на ходу слышен один вентилятор). */
+const ENG_SMOOTH={1:0.75,2:0.85,4:1,6:1.15,8:1.25,12:1.32,16:1.38};
+function engSmooth(e){return (ENG_SMOOTH[e&&e.cyl]||1)*(e&&e.sleeve?1.1:1);}
 function carChar(md,y){
   const p=parts(md),U=id=>upgOf(md,id),st=carBase(md,0,y),truck=!!p.b.truck;
   const pay=truck?(p.b.pay||1)*(1+0.05*U(p.b.id)):0,mass=st.kg+pay*500,eff=p.g.eff*(1+0.01*U(p.g.id));
-  const mtbf=1/Math.max(0.01,1-st.rel),smooth=({1:0.75,2:0.85,4:1,6:1.15,8:1.25}[p.e.cyl]||1)*(p.e.sleeve?1.1:1);
+  const mtbf=1/Math.max(0.01,1-st.rel),smooth=engSmooth(p.e);
   const fuel=p.e.fuel*Math.pow(mass/1000,0.6)/eff;
   return {perf:st.hp*eff/mass*1000,rel:Math.sqrt(mtbf),
     comf:p.c.ride*(1+0.03*U(p.c.id))*(p.w.ride||1)*(1+0.02*U(p.w.id))*(p.b.comf||1)*(1+0.04*U(p.b.id))*smooth*({t0:1,t1:1.25,t2:1.6,t3:0.95}[p.t.id]||1),
@@ -265,9 +274,13 @@ const FIT_TRAIT={e:'perf',g:'ease',c:'comf',k:'safe',w:'safe'};
 const DOM_HI={e:['hp','rel'],g:['eff','ease'],c:['max','ride'],w:['grip','life'],k:['brk','ease']},DOM_LO={e:['fuel','kg'],g:[],c:['kg'],w:[],k:[]};
 function partDominated(k,x,s,mo){const cat=PART_CATS.find(c=>c.k===k),hi=DOM_HI[k],lo=DOM_LO[k];if(!cat||!hi)return false;const cx=partCost(x,s);
   return unlockedP(cat.arr(),s,mo).some(z=>{if(z.id===x.id||!!z.solid!==!!x.solid)return false;let strict=false;for(const f of hi){if((z[f]||0)<(x[f]||0))return false;if((z[f]||0)>(x[f]||0))strict=true;}
-    for(const f of lo){if((z[f]||0)>(x[f]||0))return false;if((z[f]||0)<(x[f]||0))strict=true;}const cz=partCost(z,s);if(cz>cx)return false;return strict||cz<cx;});}
+    for(const f of lo){if((z[f]||0)>(x[f]||0))return false;if((z[f]||0)<(x[f]||0))strict=true;}
+    if(k==='e'){const a=engSmooth(z),b=engSmooth(x);if(a<b-1e-9)return false;if(a>b+1e-9)strict=true;}   // 0.60: «шестёрка» ровнее «четвёрки» — её не обогнали, если та лишь сильнее и легче
+    const cz=partCost(z,s);if(cz>cx)return false;return strict||cz<cx;});}
+// самая крепкая из доступных рам — сколько лошадиных сил она держит (с улучшениями КБ)
+function frameTop(s,mo,md){return Math.max(0,...unlockedP(CHASSIS,s,mo).map(c=>chassisMax(c,md)));}
 function partFit(md,k,x,s){try{const t={...md,[k]:x.id},mo=isMoto(md);
-    if(k==='e'){const mx=Math.max(...unlockedP(CHASSIS,s,mo).map(c=>chassisMax(c,t)));if(engineHp(x,t)>mx)return 'frame';}
+    if(k==='e'){const mx=frameTop(s,mo,t);if(engineHp(x,t)>mx)return 'frame';}
     if(k==='c'&&overpower(t))return 'frame';
     if(partDominated(k,x,s,mo))return 'old';
     const z=classCompare(t,s,s.country).zone[FIT_TRAIT[k]];return z==='low'?'low':z==='sat'?'sat':'';}catch(_){return '';}}

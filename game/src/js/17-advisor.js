@@ -49,7 +49,7 @@ function suggestProject(s){const P=rdProjects(s);if(!P.length)return null;const 
   // иначе — детали своих машин, ранний прототип; а если и их нет — самая новая массовая деталь эпохи, а не старьё
   // (в 1917 году не улучшать одноцилиндровый De Dion 1895 года только потому, что он первый в списке)
   const fresh=P.filter(p=>p.kind==='upg'&&p.py>=s.y-10).sort((a,b)=>((b.mass?1:0)-(a.mass?1:0))||(b.py-a.py)||(a.need-b.need));
-  return mine[0]||P.filter(p=>p.kind==='upg'&&p.mine)[0]||P.find(p=>p.kind==='early')||fresh[0]||null;}
+  return mine[0]||P.filter(p=>p.kind==='upg'&&p.mine)[0]||P.find(p=>p.kind==='early'&&!p.noframe)||fresh[0]||null;}   // 0.60: мотор без рамы под него советник не предлагает
 let TIPS=[];
 function adviceList(s){
   const T=[],L=s.last,act=s.models.filter(m=>m.status==='prod'),dev=s.models.filter(m=>m.status==='dev'),lim=debtLimit(s),home=s.country;

@@ -111,6 +111,7 @@ function step(){
     else if(pj.kind==='study')studyDone(s,pj);
     else if(pj.kind==='eq')eqDone(s,pj);
     else{s.rd.early.push(pj.id);addLog(`КБ построило прототип: ${pj.name} — на ${pj.yrs} г. раньше рынка!`,'good');pendingToasts.push('🔬 Прототип: '+pj.name);
+      try{const px=byId(ENGINES,pj.id);if(px&&!px.own){const top=frameTop(s,!!px.moto,null);if(px.hp>top)addLog(`Под «${pj.name}» у вас пока нет рамы: мотор даёт ${Math.round(px.hp)} л.с., самая крепкая рама держит ${Math.round(top)}. Нужен прототип рамы или её улучшение в КБ — в конструкторе мотор виден с этой пометкой.`,'bad');}}catch(_){}   // 0.60: «изобрели, но недоступны» — причина сразу
       if(PART_HIST[pj.id]||REELS['part:'+pj.id]){const h=PART_HIST[pj.id];let X=null;try{const px=ALL_PARTS().find(q=>q.id===pj.id);X={wk:partWiki(pj.id),why:px?partWhy(s,px):''};}catch(_){}
         reelOffer(s,'part:'+pj.id,'Прототип готов: '+pj.name,`На ${pj.yrs} ${plural(pj.yrs,'год','года','лет')} раньше рынка`,h?`В истории такую деталь первыми сделали ${h[1]} в ${h[0]} году. Поставьте её на новую модель — и «${s.company}» опередит историю.`:`Поставщики предложат такую деталь только через ${pj.yrs} ${plural(pj.yrs,'год','года','лет')}. Поставьте её на новую модель — покупатели заметят разницу первыми.`,X);}}
     return false;});}

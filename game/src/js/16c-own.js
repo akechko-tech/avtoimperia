@@ -16,7 +16,12 @@ const XP_AREA={eng:{n:'Моторы',ic:'⚙️'},alloy:{n:'Лёгкие спл�
 const XP_KEYS=Object.keys(XP_AREA);
 const OWN_CAT={e:{n:'Мотор',arr:()=>ENGINES},g:{n:'Коробка передач',arr:()=>GEARBOX},c:{n:'Рама и подвеска',arr:()=>CHASSIS},w:{n:'Колёса и шины',arr:()=>TYRES},k:{n:'Тормоза',arr:()=>BRAKES},b:{n:'Кузов',arr:()=>BODIES}};
 // главные черты узла — по ним считается «год по истории» и сравнение с лучшим историческим узлом года
-const OWN_MEAS={e:[['л.с. на кг',x=>x.hp/x.kg,2],['надёжность',x=>x.rel,2]],g:[['КПД',x=>x.eff,3],['лёгкость',x=>x.ease,2]],c:[['л.с. на кг рамы',x=>x.max/x.kg,2],['мягкость хода',x=>x.ride,2]],
+/* 0.60 (отзыв автора 26 ноября: «нет опции доработать экономичность (расход топлива), поэтому прорывные двигатели получаются
+   прожорливыми»): у мотора третья черта — экономичность для своей мощности, л.с.^¾ на единицу расхода (у моторов каталога расход
+   растёт примерно как мощность в степени ¾: 11 л.с. — 0,32; 50 — 0,9; 185 — 2,6). По ней тоже считается «год по истории»: между
+   моторами каталога — по прямой (lin), иначе шаг от 1922 года вёл бы сразу в 1936-й. В таблице сравнения её нет (hide) — там строка
+   «расход топлива». */
+const OWN_MEAS={e:[['л.с. на кг',x=>x.hp/x.kg,2],['надёжность',x=>x.rel,2],['экономичность',x=>Math.pow(x.hp,0.75)/x.fuel,1,{lin:1,hide:1}]],g:[['КПД',x=>x.eff,3],['лёгкость',x=>x.ease,2]],c:[['л.с. на кг рамы',x=>x.max/x.kg,2],['мягкость хода',x=>x.ride,2]],
   w:[['сцепление',x=>x.grip,2],['ресурс, км',x=>x.life,0]],k:[['сила',x=>x.brk,2],['лёгкость педали',x=>x.ease,2]],b:[['обтекаемость',x=>1/x.cd,2],['лёгкость',x=>100/x.kg,2]]};
 /* Приёмы — переносы опыта между областями. a — область опыта и xp — сколько его нужно; eff — множители черт; yh — год, когда так
    сделали в серийном автомобиле (для статьи; «год по истории» узла считается по чертам). Годы сверены — см. исследование. */
@@ -40,9 +45,13 @@ const OWN_GS=[0,1,1.7,2.2];
 const OWN_GOAL={light:{n:'Легче',eff:{e:{kg:-0.08,c:0.05},g:{kg:-0.08,c:0.05},c:{kg:-0.07,c:0.06},w:{kg:-0.06,c:0.05},k:{kg:-0.08,c:0.05},b:{kg:-0.07,c:0.06}}},
   power:{n:'Сильнее',eff:{e:{hp:0.08,fuel:0.05,rel:-0.008,c:0.04},g:{eff:0.007,c:0.06},c:{max:0.12,kg:0.03,c:0.05},w:{grip:0.03,c:0.05},k:{brk:0.06,c:0.06},b:{comf:0.04,kg:0.03,c:0.05}}},
   rel:{n:'Надёжнее',eff:{e:{rel:0.02,kg:0.03,c:0.05},g:{relK:0.006,c:0.05},c:{max:0.06,ride:0.02,c:0.04},w:{life:0.25,punct:-0.15,c:0.05},k:{ease:0.06,c:0.04},b:{comf:0.02,c:0.03}}},
-  cheap:{n:'Дешевле',eff:{e:{c:-0.1},g:{c:-0.1},c:{c:-0.1},w:{c:-0.1},k:{c:-0.1},b:{c:-0.1}}}};
+  cheap:{n:'Дешевле',eff:{e:{c:-0.1},g:{c:-0.1},c:{c:-0.1},w:{c:-0.1},k:{c:-0.1},b:{c:-0.1}}},
+  // 0.60: «Экономичнее» — только у мотора: карбюрация, степень сжатия, фазы. Шаг: расход −8 %, мощность −2 %, цена +4 % (оценка игры)
+  econ:{n:'Экономичнее',eff:{e:{fuel:-0.08,hp:-0.02,c:0.04}}}};
+function ownGoalOk(g,k){return !!(OWN_GOAL[g]&&OWN_GOAL[g].eff[k]);}
 const OWN_LIMIT=10;   // лет вперёд истории — дальше материалы эпохи не пускают
 const OWN_CAP={rel:0.97,eff:0.96,brk:0.98,ease:0.98,relK:1.03,grip:1.3};
+function ownEraEnd(){return typeof ERA_END!=='undefined'?ERA_END:1930;}   // 0.60: эпоха кончается в 1960-м — «такого в истории не было» считается от её конца, а не от 1930 года
 function ownGoalName(g,k){return g==='power'&&k==='e'?'Мощнее':OWN_GOAL[g].n;}
 /* ---------- реестр: свои узлы партии — в OWN_MAP, чтобы их находил byId ---------- */
 let OWN_FOR=null;
@@ -72,12 +81,14 @@ function xpTechOk(s,t){return xpOf(s,t.a)>=t.xp;}
 /* ---------- свой узел: расчёт ---------- */
 // свои узлы категории, от которых можно оттолкнуться: стоят на ваших машинах, улучшены в КБ или уже свои
 function ownBaseList(s,k,moto){const cat=OWN_CAT[k];if(!cat)return [];const used=new Set();(s.models||[]).forEach(m=>{if(m.status!=='off')used.add(m[k]);});
-  const U=unlockedP(cat.arr(),s,moto),L=U.filter(x=>used.has(x.id)||upgL(x.id)>0||x.own);return (L.length?L:U).slice().sort((a,b)=>(b.q||0)-(a.q||0));}
+  const early=(s.rd&&s.rd.early)||[],U=unlockedP(cat.arr(),s,moto),L=U.filter(x=>used.has(x.id)||upgL(x.id)>0||x.own||early.includes(x.id));return (L.length?L:U).slice().sort((a,b)=>(b.q||0)-(a.q||0));}   // 0.60: прототип своего КБ — тоже своя основа (иначе изобретённый мотор нельзя довести, пока он не встал на машину)
 function ownPeers(k,x){return OWN_CAT[k].arr().filter(z=>!!z.moto===!!x.moto&&!z.solid&&(k!=='b'||(!!z.truck===!!x.truck&&!!z.closed===!!x.closed)));}
 // «год по истории»: когда лучшие узлы каталога дошли до таких же черт (дальше каталога — темпом последних пятнадцати лет)
 function ownHistYear(k,x){const P=ownPeers(k,x);let Y=1885;
-  OWN_MEAS[k].forEach(([n,f])=>{const v=f(x),L=P.map(z=>({y:z.y||1895,v:f(z)})).filter(o=>isFinite(o.v)).sort((a,b)=>a.y-b.y);if(!L.length||!isFinite(v))return;
-    let best=-1e9,yr=null;const last=L[L.length-1].y;for(const o of L){best=Math.max(best,o.v);if(best>=v*0.995){yr=o.y;break;}}
+  OWN_MEAS[k].forEach(([n,f,dg,opt])=>{const v=f(x),L=P.map(z=>({y:z.y||1895,v:f(z)})).filter(o=>isFinite(o.v)).sort((a,b)=>a.y-b.y);if(!L.length||!isFinite(v))return;
+    let best=-1e9,yr=null,py=null;const last=L[L.length-1].y;for(const o of L){const nb=Math.max(best,o.v);
+      if(nb>=v*0.995){yr=o.y;if(opt&&opt.lin&&py!=null&&o.y>py&&nb>best)yr=Math.ceil(py+(o.y-py)*clamp((v*0.995-best)/(nb-best),0,1)-1e-9);best=nb;break;}
+      if(nb>best){best=nb;py=o.y;}}
     if(yr==null){const f0=L.filter(o=>o.y<=last-15).reduce((a,o)=>Math.max(a,o.v),-1e9),g=f0>0&&best>f0?clamp(Math.pow(best/f0,1/15)-1,0.008,0.06):0.02;yr=last+Math.ceil(Math.log(v/best)/Math.log(1+g));}
     Y=Math.max(Y,yr);});return Y;}
 function ownBest(s,k,x){const f=OWN_MEAS[k][0][1];return ownPeers(k,x).filter(z=>(z.y||1895)<=s.y).reduce((a,z)=>!a||f(z)>f(a)?z:a,null);}
@@ -88,7 +99,7 @@ function ownBuild(s,sp){const cat=OWN_CAT[sp.k],x0=cat&&byId(cat.arr(),sp.base);
   const G1=OWN_GOAL[sp.goal],E=G1&&G1.eff[sp.k],S=OWN_GS[clamp(sp.gl||1,1,3)];if(E)for(const f in E)if(x[f]!=null)x[f]*=1+E[f]*S;
   for(const f in OWN_CAP)if(x[f]!=null)x[f]=Math.min(Math.max(OWN_CAP[f],x0[f]),x[f]);if(x.punct!=null)x.punct=Math.max(0.08,x.punct);
   // оценка «качества» для сроков КБ и разработки — по главным чертам
-  const gain=OWN_MEAS[sp.k].reduce((a,[n,f])=>a*Math.pow(Math.max(0.2,f(x)/Math.max(1e-9,f(x0))),0.5),1);x.q=Math.max(1,Math.round((x0.q||10)*gain));
+  const gain=OWN_MEAS[sp.k].reduce((a,[n,f,dg,opt])=>opt&&opt.hide&&sp.goal!=='econ'?a:a*Math.pow(Math.max(0.2,f(x)/Math.max(1e-9,f(x0))),0.5),1);x.q=Math.max(1,Math.round((x0.q||10)*gain));
   ['hp','kg','life'].forEach(f=>{if(x[f]!=null)x[f]=Math.round(x[f]*(f==='hp'&&x[f]<20?10:1))/(f==='hp'&&x[f]<20?10:1);});x.c=Math.round(x.c);
   ['rel','eff','ease','ride','grip','brk','relK','punct','wear','cd','comf','fuel','cx','max'].forEach(f=>{if(x[f]!=null)x[f]=+x[f].toFixed(3);});
   const hist=ownHistYear(sp.k,x);x.own=1;x.k=sp.k;x.yh=hist;x.y=Math.max(s.y,hist);x.base=x0.id;x.tech=(sp.tech||[]).slice();x.goal=sp.goal;x.gl=sp.gl||1;return x;}
@@ -98,7 +109,7 @@ function ownBuild(s,sp){const cat=OWN_CAT[sp.k],x0=cat&&byId(cat.arr(),sp.base);
 function ownIntoOf(s,sp){const x=sp&&sp.into?ownGet(s,sp.base):null;return x&&x.k===sp.k?x:null;}
 function ownIntoBusy(s,id){return rdActive(s).some(p=>p.kind==='own'&&p.sp&&p.sp.into&&p.sp.base===id);}
 function ownRefine(s,o,x,pj){const keep={id:1,name:1,base:1,made:1,pat:1,ser:1,cp:1,note:1,art:1,own:1,k:1,rev:1,tech:1};for(const f in x)if(!keep[f])o[f]=x[f];
-  o.tech=[...new Set([...(o.tech||[]),...(x.tech||[])])];o.rev=(o.rev||1)+1;o.revY=s.y;const T2=(pj.sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);
+  o.tech=[...new Set([...(o.tech||[]),...(x.tech||[])])];o.rev=(o.rev||1)+1;o.revY=s.y;if(o.pat)o.pat.nov=Math.max(ownPatNov(o),Math.max(0,(o.yh||0)-s.y));/* 0.60: доведённый узел ушёл дальше от истории — патент крепче */const T2=(pj.sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);
   o.art=(o.art||'')+` Доводка ${s.y} года${T2.length?' ('+T2.map(t=>t.n.toLowerCase()).join(' и ')+')':''}: цель — ${ownGoalName(x.goal,x.k).toLowerCase()}.`;return o;}
 function ownNeed(sp,x0,yrs){return Math.max(4,Math.round((8+(x0.q||10)/8)*(1+0.45*(sp.tech||[]).length+0.2*OWN_GS[clamp(sp.gl||1,1,3)])*aheadTimeK(yrs)));}
 // цена проекта — как у прототипа КБ: опыты и образцы, цена самого узла ×3, каждый год опережения ×1,6; планка от оборота
@@ -111,17 +122,17 @@ function ownPreview(s,sp){const x=ownBuild(s,sp);if(!x)return null;const x0=byId
   const pj={kind:'own',id:'own',ck:sp.k,cat:OWN_CAT[sp.k].n,name:into?into.name:sp.name||'',need,yrs,pc:partCost(x,s),moto:!!x.moto,sp:{k:sp.k,base:sp.base,tech:(sp.tech||[]).slice(),goal:sp.goal,gl:sp.gl||1,name:into?into.name:sp.name||'',into:into?1:0}};
   const cost=ownRdCost(pj,s),T2=(sp.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean);let why='';
   if(into){const rep=T2.find(t=>(into.tech||[]).includes(t.id));if(rep)why=`Приём «${rep.n.toLowerCase()}» к этому узлу уже применён`;else if(ownIntoBusy(s,into.id))why='Этот узел уже дорабатывают';}
-  if(!OWN_GOAL[sp.goal])why='Выберите цель';else if(T2.some(t=>!xpTechOk(s,t))){const t=T2.find(t=>!xpTechOk(s,t));why=`Мало опыта: «${XP_AREA[t.a].n}» ${Math.floor(xpOf(s,t.a))} из ${t.xp}`;}
+  if(!OWN_GOAL[sp.goal])why='Выберите цель';else if(!ownGoalOk(sp.goal,sp.k))why='У этого узла такой цели нет — экономичность дорабатывают у мотора';else if(T2.some(t=>!xpTechOk(s,t))){const t=T2.find(t=>!xpTechOk(s,t));why=`Мало опыта: «${XP_AREA[t.a].n}» ${Math.floor(xpOf(s,t.a))} из ${t.xp}`;}
   else if(yrs>OWN_LIMIT)why=`Предел эпохи: такой узел история освоит только в ${x.yh} году — материалы и станки ${s.y} года этого не дадут`;
   else if(rdActive(s).length>=rdSlots(s))why='В КБ нет свободного места для проекта';else if(s.cash<cost)why='Не хватает денег';
-  const cmp=OWN_MEAS[sp.k].map(([n,f,d])=>({n,d,mine:f(x),base:f(x0),best:f(best)}));
+  const cmp=OWN_MEAS[sp.k].filter(m=>!(m[3]&&m[3].hide)).map(([n,f,d])=>({n,d,mine:f(x),base:f(x0),best:f(best)}));
   return {x,x0,best,yrs,need,cost,pj,why,cmp,months:Math.max(1,Math.ceil(need/Math.max(0.01,rdTotal(s)/(rdActive(s).length+1)))),rework:protoRisk({kind:'own',yrs}),risk:partRisk(x,s.y)};}
 function ownNextName(s,k){const n=ownParts(s,k).length+1,w={e:'мотор',g:'коробка',c:'рама',w:'шины',k:'тормоза',b:'кузов'}[k];return `${s.company}: ${w} №${n}`.slice(0,40);}
 function ownStart(s,sp){const P=ownPreview(s,sp);if(!P||P.why)return false;const into=ownIntoOf(s,sp);if(into&&ownIntoBusy(s,into.id))return false;P.pj.name=into?into.name:(sp.name||'').trim()||ownNextName(s,sp.k);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='own'+s.ownN;return rdBegin(s,P.pj);}
 // статья «Зачем и откуда»
 function ownArticle(s,x){const x0=byId(OWN_CAT[x.k].arr(),x.base),T2=(x.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean),yrs=x.yh-(x.made?x.made.y:s.y);
   return `Основа — ${x0?x0.name:'свой узел'}. `+(T2.length?`Приёмы: ${T2.map(t=>t.n.toLowerCase()).join(' и ')}. ${T2.map(t=>t.h).join(' ')} `:'')+`Цель — ${ownGoalName(x.goal,x.k).toLowerCase()}. `
-    +(x.yh>1930?`В истории до 1930 года такого узла не было: по чертам он соответствует ${x.yh} году.`:yrs>0?`По чертам это ${x.yh} год: история пришла к такому узлу на ${yrs} ${plural(yrs,'год','года','лет')} позже.`:`По чертам это ${x.yh} год: в истории такие узлы уже делали — но этот ваш, и доводить его вам.`);}
+    +(x.yh>ownEraEnd()?`В истории до ${ownEraEnd()} года такого узла не было: по чертам он соответствует ${x.yh} году.`:yrs>0?`По чертам это ${x.yh} год: история пришла к такому узлу на ${yrs} ${plural(yrs,'год','года','лет')} позже.`:`По чертам это ${x.yh} год: в истории такие узлы уже делали — но этот ваш, и доводить его вам.`);}
 function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы больше нет.`,'bad');return;}s.custom=s.custom||[];
   {const o=ownIntoOf(s,pj.sp);if(o){ownRefine(s,o,x,pj);ownSync(s);xpAdd(s,XP_CAT[o.k],2);addLog(`КБ закончило доводку: ${o.name} — доводка №${o.rev-1}, узел тот же.`,'good');pendingToasts.push('🧪 Доводка: '+o.name);return;}}s.ownId=(s.ownId||0)+1;x.id='x'+x.k+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};
   x.note=`Своя разработка ${s.y} года.`;x.art=ownArticle(s,x);s.custom.push(x);ownSync(s);s.rd.upg[x.id]=Math.floor(upgL(x.base)/2);xpAdd(s,XP_CAT[x.k],3);
@@ -134,7 +145,37 @@ function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смо
 const OWN_PAT_Y=15;
 function ownPatCost(s){return Math.round(1500*cpi(s)/100)*100;}
 function ownGet(s,id){return (s.custom||[]).find(x=>x.id===id)||(s.aeng||[]).find(x=>x.id===id)||null;}
-function ownPatent(s,id){const x=ownGet(s,id),c=ownPatCost(s);if(!x||x.pat||s.cash<c)return false;s.cash-=c;x.pat={until:mi(s)+OWN_PAT_Y*12};addLog(`Патент на «${x.name}» получен (${money(c)}), действует ${OWN_PAT_Y} лет.`,'good');return true;}
+function ownPatent(s,id){const x=ownGet(s,id),c=ownPatCost(s);if(!x||x.pat||s.cash<c)return false;s.cash-=c;x.pat={until:mi(s)+OWN_PAT_Y*12,y:s.y,nov:Math.max(0,(x.yh||0)-s.y)};
+  addLog(`Патент на «${x.name}» получен (${money(c)}), действует ${OWN_PAT_Y} лет.${x.pat.nov>0?` Узел на ${x.pat.nov} ${plural(x.pat.nov,'год','года','лет')} впереди истории — такой патент в суде не оспорить.`:' Такие узлы отрасль уже делает — в суде патент могут оспорить.'}`,'good');return true;}
+/* 0.60 (отзыв автора 26 ноября: «если я 100 % прав, то буду выигрывать и получать компенсацию; обратная сторона может делать
+   предложения по урегулированию — по аналогии с историческими примерами»). Раньше исход иска был жребием (40–85 %): суд можно было
+   проиграть и тогда, когда копия — установленный факт. Теперь сила дела считается из фактов, которые игра знает:
+   • копия — факт: фирма-соперник сняла узел с вашей машины (ownCopied); спорить в суде можно только о новизне патента;
+   • новизна — на сколько лет узел был впереди истории в день патента (pat.nov). Впереди хотя бы на год — прежних образцов у
+     отрасли нет: дело бесспорное, суд выигран всегда — компенсация, расходы на юристов с ответчика, копия снята;
+   • патент на узел, какие отрасль уже делала (nov = 0), — спорный: ответчик сошлётся на прежние образцы, шансы 50 % и ниже.
+   Мировая: через четыре месяца после иска ответчик, у которого дело плохо (шансы истца от 50 %), предлагает деньги сразу и
+   лицензию — меньше, чем присудит суд, зато без года ожидания. Образцы — мировая Фергюсона с Фордом (1952), пул патентов Райтов и
+   Кёртисса (1917), отчисления по патенту Селдена; источники — claude/issledovanie-sudy-0.60.md. */
+const OWN_SUIT_M=12,OWN_SETTLE_M=4,OWN_SETTLE_K=0.7;
+function ownPatNov(x){const P=x&&x.pat;if(!P)return 0;if(P.nov!=null)return P.nov;const y0=x.made?x.made.y:null;return y0==null?0:Math.max(0,(x.yh||0)-y0);}   // старые сохранения: по году создания
+function ownClaim(s,x){const nov=ownPatNov(x);if(nov>=1)return {p:1,sure:true,nov,late:0};
+  const P=x&&x.pat,py=P&&P.y!=null?P.y:(x&&x.made?x.made.y:s.y),late=Math.max(0,py-((x&&x.yh)||py));return {p:clamp(0.5-0.1*late,0.15,0.5),sure:false,nov:0,late};}
+function ownAward(s,F){return Math.round(Math.max(2000*cpi(s),((F&&F.r12)||0)*0.03)/100)*100;}
+function ownSettleSum(s,o,F){return Math.round(ownAward(s,F)*OWN_SETTLE_K*(o.p||0)/100)*100;}
+function ownClaimText(s,x,C){return C.sure?`Дело бесспорное: в день патента узел был на ${C.nov} ${plural(C.nov,'год','года','лет')} впереди истории — прежних образцов у отрасли нет, а копия снята с вашей машины. Суд присудит компенсацию, расходы на юристов и запретит копию.`
+  :`Дело спорное: в день патента такие узлы отрасль уже делала (год по истории — ${x.yh}). Ответчик сошлётся на прежние образцы: шансы около ${Math.round(C.p*100)} %.`;}
+// как это бывало в истории — по году партии, без событий, которых ещё не было
+function ownSettleHist(s){const y=s.y;
+  if(y>=1952)return 'Так в истории кончилось дело Гарри Фергюсона против Форда: иск на 251 миллион долларов, а в апреле 1952 года — мировая: 9,25 миллиона отчислений за патенты и обещание Форда снять спорные узлы с трактора.';
+  if(y>=1917)return 'Так в истории кончилась патентная война Райтов и Кёртисса: в июле 1917 года патенты сложили в общий пул — по 200 долларов с аэроплана вместо прежних пяти процентов цены и не больше двух миллионов каждой стороне.';
+  if(y>=1911)return 'Так в истории было с патентом Селдена: почти все фабриканты Америки платили отчисления, а не судились; Форд судился восемь лет — и в 1911 году выиграл.';
+  if(y>=1903)return 'Так в истории было с патентом Селдена: почти все фабриканты Америки предпочли платить отчисления, а не судиться; Форд платить отказался и пошёл в суд.';
+  return '';}
+function ownSettleOffer(s,o,F,x){const nm=firmName(s,F),sum=ownSettleSum(s,o,F),fee=ownLicFee(s,F),left=Math.max(1,o.until-mi(s)),aw=ownAward(s,F),h=ownSettleHist(s);
+  pushEvent({own:1,noArt:1,kicker:'Патенты и суды',title:`${nm} предлагает мировую`,deck:`Дело о «${x.name}»: до суда ${left} мес.`,
+    text:`Юристы ${nm} не хотят доводить дело до решения. Предложение: ${money(sum)} сразу и лицензия — ${money(fee)} в месяц на пять лет. Иск вы отзываете, копия остаётся на их машинах.\n${o.sure?`Ваше дело бесспорное: через ${left} мес. суд присудит около ${money(aw)}, вернёт расходы на юристов и запретит копию — но лицензионных денег тогда не будет.`:`Через ${left} мес. суд: шансы около ${Math.round(o.p*100)} %. При победе — около ${money(aw)} и запрет копии, при проигрыше — ничего, а юристы уже оплачены.`}${h?'\n'+h:''}`,
+    choices:[[`Принять мировую · ${money(sum)} и ${money(fee)}/мес.`,`own:settle:${x.id}:${o.f}`],['Отказать — до суда',`own:nosettle:${x.id}:${o.f}`]]},true);}
 function ownPatOn(s,x){return !!(x&&x.pat&&x.pat.until>mi(s));}
 // узел пошёл в серию — с этого месяца его могут разобрать соперники
 function ownSeries(s){const t=mi(s);(s.custom||[]).forEach(x=>{if(x.ser==null&&(s.models||[]).some(m=>m.status==='prod'&&m[x.k]===x.id))x.ser=t;});}
@@ -145,16 +186,21 @@ function ownCopied(s,r,F,g){const t=mi(s),key=F.c+':'+F.i,nm=firmName(s,F);
   for(const m of L){x=(s.custom||[]).find(z=>m[z.k]===z.id&&z.ser!=null&&t-z.ser>=12&&!(z.cp&&z.cp[key]));if(x)break;}if(!x)return null;
   x.cp=x.cp||{};x.cp[key]=t;const M=F.md&&F.md[g];if(M)M.q=clamp((M.q||0)+0.04,0.05,1.25);
   if(!ownPatOn(s,x)){addLog(`${nm} переняла ваш узел «${x.name}»: патента нет — возразить нечем.`,'bad');return x;}
-  const fee=ownLicFee(s,F),law=ownSuitCost(s);
-  pushEvent({own:1,noArt:1,kicker:'Патенты и суды',title:`${nm} скопировала «${x.name}»`,deck:'Ваш патент нарушен',
-    text:`В новой модели ${nm} — узел, повторяющий ваш «${x.name}». Патент действует до ${1895+Math.floor(x.pat.until/12)} года.\nИск — это юристы на год (${money(law)} в месяц) и суд: шансы тем выше, чем дальше ваш узел от того, что уже делает отрасль. Лицензия — ${money(fee)} в месяц пять лет без суда.`,
+  const fee=ownLicFee(s,F),law=ownSuitCost(s),C=ownClaim(s,x),aw=ownAward(s,F);
+  pushEvent({own:1,noArt:1,kicker:'Патенты и суды',title:`${nm} скопировала «${x.name}»`,deck:C.sure?'Ваш патент нарушен — дело бесспорное':'Ваш патент нарушен — дело спорное',
+    text:`В новой модели ${nm} — узел, повторяющий ваш «${x.name}». Патент действует до ${1895+Math.floor(x.pat.until/12)} года.\n${ownClaimText(s,x,C)}\nИск — это юристы на год (${money(law)} в месяц) и суд: при победе — около ${money(aw)}${C.sure?' и расходы на юристов':''}, копию снимут с модели.${C.p>=0.5?' Через несколько месяцев ответчик может предложить мировую.':''} Лицензия — ${money(fee)} в месяц пять лет без суда: деньги верные, но копия останется.`,
     choices:[[`Продать лицензию · ${money(fee)}/мес.`,`own:lic:${x.id}:${key}`],[`Подать иск · ${money(law)}/мес.`,`own:sue:${x.id}:${key}`],['Не замечать','ok']]},true);return x;}
 function ownLicFee(s,F){return Math.max(100,Math.round((F.r12||0)/12*0.012/50)*50);}
 function ownSuitCost(s){return Math.round(400*cpi(s)/50)*50;}
 function ownResolve(s,key){const a=key.split(':');if(a[1]==='pat'){if(!ownPatent(s,a[2]))toast('Не хватает денег на патент');return;}
   const x=ownGet(s,a[2]),fk=a[3]+':'+a[4],F=s.firms&&s.firms[fk];if(!x||!F)return;s.legal=s.legal||{};const O=s.legal.own=s.legal.own||[],t=mi(s),nm=firmName(s,F);
   if(a[1]==='lic'){const amt=ownLicFee(s,F);O.push({k:'lic',id:x.id,f:fk,amt,until:t+60});addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет.`,'good');}
-  if(a[1]==='sue'){const ahead=Math.max(0,x.yh-yf(s)),p=clamp(0.4+0.08*ahead,0.4,0.85);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),until:t+12,p});F.gr=Math.min(1,(F.gr||0)+0.4);F.grWhy=`иск за «${x.name}», ${s.y}`;addLog(`Иск к ${nm} за «${x.name}» подан: суд через год.`);}}
+  if(a[1]==='sue'){const C=ownClaim(s,x);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),t0:t,until:t+OWN_SUIT_M,p:C.p,sure:C.sure?1:0,paid:0});F.gr=Math.min(1,(F.gr||0)+0.4);F.grWhy=`иск за «${x.name}», ${s.y}`;
+    addLog(`Иск к ${nm} за «${x.name}» подан: суд через год. ${C.sure?'Дело бесспорное — суд присудит компенсацию.':`Дело спорное: шансы около ${Math.round(C.p*100)} %.`}`);}
+  if(a[1]==='settle'){const i=O.findIndex(o=>o.k==='suit'&&o.id===x.id&&o.f===fk);if(i<0)return;const o=O[i],sum=ownSettleSum(s,o,F),amt=ownLicFee(s,F),till=Math.min(t+60,x.pat&&x.pat.until>t?x.pat.until:t+60);
+    O.splice(i,1);s.cash+=sum;F.cash=(F.cash||0)-sum;if(till>t)O.push({k:'lic',id:x.id,f:fk,amt,until:till});F.gr=Math.max(0,(F.gr||0)-0.25);
+    addLog(`Мировая с ${nm} по делу о «${x.name}»: ${money(sum)} сразу и лицензия ${money(amt)} в месяц${till-t>=60?' на пять лет':' до конца патента'}. Иск отозван.`,'good');pendingToasts.push('⚖️ Мировая: '+money(sum));}
+  if(a[1]==='nosettle')addLog(`Мировая с ${nm} отклонена: дело о «${x.name}» идёт к суду.`);}
 // 0.51, этап 5б: продать лицензию по своей воле — крупнейшей фирме своей страны, у которой её ещё нет и которая не в обиде.
 // Деньги — пять лет, но её машины станут лучше: это ход против себя ради кассы (ход соперника — ownCopied).
 function ownLicBuyer(s,x){if(!s.firms||!firmsOn(s)||!x||x.k==='ae')return null;const t=mi(s),O=(s.legal&&s.legal.own)||[];let B=null;
@@ -165,10 +211,15 @@ function ownLicSell(s,id){const x=ownGet(s,id);if(!x||!ownPatOn(s,x)||x.ser==nul
   addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет. Её машины ${SEG_LOC[g]||''} станут лучше.`,'good');return true;}
 function ownLegalMonth(s,r){const O=s.legal&&s.legal.own;if(!O||!O.length)return;const t=mi(s);let inc=0,out=0;
   s.legal.own=O.filter(o=>{if(o.k==='lic'){if(o.until<=t)return false;inc+=o.amt;return true;}
-    if(o.k==='suit'){if(o.until>t){out+=o.amt;return true;}const F=s.firms&&s.firms[o.f],x=ownGet(s,o.id),nm=F?firmName(s,F):'соперник',g=F&&F.md?Object.keys(F.md)[0]:null;
-      if(Math.random()<o.p){const dmg=Math.round(Math.max(2000*cpi(s),(F&&F.r12||0)*0.03)/100)*100;s.cash+=dmg;if(F){F.cash=(F.cash||0)-dmg;if(g&&F.md[g])F.md[g].q=Math.max(0.05,F.md[g].q*0.6);}
-        addLog(`Суд за «${x?x.name:'узел'}» выигран: ${nm} платит ${money(dmg)} и снимает копию с новой модели.`,'good');pendingToasts.push('⚖️ Суд выигран');}
-      else{addLog(`Суд за «${x?x.name:'узел'}» проигран: судья счёл, что ${nm} пришла к узлу сама.`,'bad');pendingToasts.push('⚖️ Суд проигран');}return false;}return false;});
+    if(o.k==='suit'){const F=s.firms&&s.firms[o.f],x=ownGet(s,o.id),nm=F?firmName(s,F):'соперник',g=F&&F.md?Object.keys(F.md)[0]:null;
+      if(o.until>t){out+=o.amt;o.paid=(o.paid||0)+o.amt;
+        // мировая — один раз, через OWN_SETTLE_M месяцев после иска: ответчик, у которого дело плохо, предлагает деньги и лицензию
+        if(!o.off&&o.t0!=null&&t-o.t0>=OWN_SETTLE_M&&(o.p||0)>=0.5&&F&&x&&ownPatOn(s,x)){o.off=1;try{ownSettleOffer(s,o,F,x);}catch(e){console.warn('settle',e);}}
+        return true;}
+      // суд: бесспорное дело выигрывается всегда, спорное — по шансам
+      if(o.sure||Math.random()<o.p){const dmg=ownAward(s,F),fees=o.sure?Math.round(o.paid||0):0,sum=dmg+fees;s.cash+=sum;if(F){F.cash=(F.cash||0)-sum;if(g&&F.md[g])F.md[g].q=Math.max(0.05,F.md[g].q*0.6);}
+        addLog(`Суд за «${x?x.name:'узел'}» выигран: ${nm} платит ${money(dmg)} компенсации${fees?` и ${money(fees)} за ваших юристов`:''} и снимает копию с новой модели.`,'good');pendingToasts.push('⚖️ Суд выигран: '+money(sum));}
+      else{addLog(`Суд за «${x?x.name:'узел'}» проигран: судья счёл, что такие узлы отрасль делала и до вашего патента.`,'bad');pendingToasts.push('⚖️ Суд проигран');}return false;}return false;});
   r.licIn=(r.licIn||0)+Math.round(inc);r.legal=(r.legal||0)+Math.round(out);}
 /* ---------- свой авиамотор ---------- */
 // тип — по году и опыту: k — во сколько раз авиамотор мощнее автомобильной основы, w — вес против лучших моторов года
@@ -284,13 +335,15 @@ function ownRe(){ownKeep();let top=0;try{top=sb.scrollTop;}catch(_){}openOwn(own
 function aeRe(){let top=0;try{top=sb.scrollTop;}catch(_){}openAeng();try{sb.scrollTop=top;}catch(_){}}
 function aeKeep(){try{const e=document.getElementById('aename');if(e&&aeDraft&&typeof e.value==='string')aeDraft.name=e.value.trim().slice(0,40);}catch(_){}}
 function ownDraftInit(s,k,moto,base){const B=ownBaseList(s,k,moto),b0=base&&B.some(x=>x.id===base)?base:B[0]?B[0].id:null;ownDraft={k,moto:!!moto,base:b0,tech:[],goal:'power',gl:1,name:'',into:1};return ownDraft;}
+function ownFuel(x){const v=x.fuel*100;return v<20?v.toFixed(1).replace('.',','):String(Math.round(v));}   // как в конструкторе: «расход 95»
 function ownFmt(v,d){return d===0?fmtN(Math.round(v)):v.toFixed(d).replace('.',',');}
 function ownPreviewHTML(s,P){if(!P)return '';const x=P.x,rows=P.cmp.map(c=>`<tr><td>${esc(c.n)}</td><td class="num">${ownFmt(c.base,c.d)}</td><td class="num ${c.mine>c.base*1.005?'good':c.mine<c.base*0.995?'bad':''}"><b>${ownFmt(c.mine,c.d)}</b></td><td class="num muted">${ownFmt(c.best,c.d)}</td></tr>`).join('');
   const pc0=partCost(P.x0,s),pc1=partCost(x,s);
   return `<table class="pl" style="margin-top:8px"><tr><th></th><th class="n">основа</th><th class="n">свой</th><th class="n">лучший ${s.y} г.</th></tr>${rows}
+    ${x.k==='e'&&x.fuel!=null?`<tr><td>расход топлива</td><td class="num">${ownFuel(P.x0)}</td><td class="num ${x.fuel<P.x0.fuel*0.995?'good':x.fuel>P.x0.fuel*1.005?'bad':''}"><b>${ownFuel(x)}</b></td><td class="num muted">${ownFuel(P.best)}</td></tr>`:''}
     <tr><td>вес, кг</td><td class="num">${fmtN(Math.round(P.x0.kg))}</td><td class="num ${x.kg<P.x0.kg*0.995?'good':x.kg>P.x0.kg*1.005?'bad':''}"><b>${fmtN(Math.round(x.kg))}</b></td><td class="num muted">${fmtN(Math.round(P.best.kg))}</td></tr>
     <tr><td>цена в серии</td><td class="num">${money(pc0)}</td><td class="num ${pc1<pc0*0.995?'good':pc1>pc0*1.005?'bad':''}"><b>${money(pc1)}</b></td><td class="num muted">${money(partCost(P.best,s))}</td></tr></table>
-    <p class="small" style="margin-top:8px">Год по истории: <b class="num">${x.yh>1930?x.yh+' — в истории эпохи такого не было':x.yh}</b>${P.yrs>0?` <span class="warn">· на ${P.yrs} ${plural(P.yrs,'год','года','лет')} раньше: проект дороже в ${(aheadCostK(P.yrs)).toFixed(1).replace('.',',')} раза, узел в серии +${Math.round((aheadPartK(x,s)-1)*100)}%</span>`:' <span class="muted">· не опережает историю</span>'}</p>
+    <p class="small" style="margin-top:8px">Год по истории: <b class="num">${x.yh>ownEraEnd()?x.yh+' — в истории эпохи такого не было':x.yh}</b>${P.yrs>0?` <span class="warn">· на ${P.yrs} ${plural(P.yrs,'год','года','лет')} раньше: проект дороже в ${(aheadCostK(P.yrs)).toFixed(1).replace('.',',')} раза, узел в серии +${Math.round((aheadPartK(x,s)-1)*100)}%</span>`:' <span class="muted">· не опережает историю</span>'}</p>
     <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки на испытаниях ${Math.round(P.rework*100)}% · риск «не так, как задумано» в серии ${Math.round(P.risk*100)}%</p>`;}
 function openOwn(k,moto){const s=G;ownEnsure(s);if(!k){ownDraft=null;const mv=lineOn(s,'moto')||s.mshopB,cv=lineOn(s,'car')||s.carShopB||!lineOn(s,'moto');
     const cat=(q,mo)=>{const B=ownBaseList(s,q,mo)[0];return B?`<button class="race-item" data-act="ownCat" data-k="${q}" data-mo="${mo?1:0}" style="display:block;width:100%;text-align:left"><span class="mo">${mo?'🏍 ':''}${OWN_CAT[q].n}</span><h3 style="margin-top:2px">${esc(B.name)}</h3><p class="small muted">основа — ваш лучший узел · приёмов по опыту: ${OWN_TECH.filter(t=>t.cat.includes(q)&&xpTechOk(s,t)).length} из ${OWN_TECH.filter(t=>t.cat.includes(q)).length}</p></button>`:'';};
@@ -312,7 +365,7 @@ function openOwn(k,moto){const s=G;ownEnsure(s);if(!k){ownDraft=null;const mv=li
     ${bo?`<div class="chips" id="owninto" style="margin-top:6px">${chip(!!d.into,'ownInto','data-v="1"','Доработать этот узел<small>тот же узел: имя, патент и машины остаются</small>')}${chip(!d.into,'ownInto','data-v="0"','Новый узел на его основе<small>отдельное имя и отдельный патент</small>')}</div>`:''}
     <div class="label" style="margin-top:12px">Шаг 3. Приёмы — один или два (второй даёт меньше)</div>
     ${techs.length?`<div class="chips">${techs.map(t=>{const used=!!(into&&(into.tech||[]).includes(t.id)),ok=xpTechOk(s,t)&&!used,on=d.tech.includes(t.id)&&!used;return `<button class="chip${on?' on':''}" data-act="ownTech" data-id="${t.id}" ${ok?'':'disabled'}>${esc(t.n)}<small>${used?'уже применён к этому узлу':ok?esc(t.d):`нужен опыт: ${XP_AREA[t.a].n.toLowerCase()} ${Math.floor(xpOf(s,t.a))} из ${t.xp}`}</small></button>`;}).join('')}</div>`:'<p class="small muted" style="margin-top:4px">Для этого узла приёмов из опыта нет — только цель.</p>'}
-    <div class="label" style="margin-top:12px">Шаг 4. Цель</div><div class="chips">${Object.keys(OWN_GOAL).map(g=>chip(d.goal===g,'ownGoal',`data-g="${g}"`,ownGoalName(g,k))).join('')}</div>
+    <div class="label" style="margin-top:12px">Шаг 4. Цель</div><div class="chips">${Object.keys(OWN_GOAL).filter(g=>ownGoalOk(g,k)).map(g=>chip(d.goal===g,'ownGoal',`data-g="${g}"`,ownGoalName(g,k)+(g==='econ'?'<small>расход топлива меньше, мощность чуть ниже</small>':''))).join('')}</div>
     <div class="chips">${[1,2,3].map(n=>chip(d.gl===n,'ownGl',`data-n="${n}"`,['Шаг','Два шага','Три шага'][n-1])).join('')}<span class="small muted" style="align-self:center">каждый следующий шаг даёт меньше и стоит дольше</span></div>
     ${into?`<p class="small" style="margin-top:12px">Узел: <b>${esc(into.name)}</b> — доводка №${into.rev||1}. Название не меняется.</p>`:`<label class="label" for="ownname" style="display:block;margin-top:12px">Название</label><input type="text" id="ownname" value="${esc(d.name||ownNextName(s,k))}" maxlength="40" style="margin-top:6px">`}
     <div class="card" style="margin-top:12px;background:var(--panel2)"><div class="label">Что получится</div>${ownPreviewHTML(s,P)}</div>
@@ -352,8 +405,9 @@ function openAeng(){const s=G;ownEnsure(s);if(aeDraft&&aeDraft.into){openAengRef
       <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки ${Math.round(P.rework*100)}%${C?` · продажа авиазаводам: около ${fmtN(Math.round(C.dem))} в месяц по ${money(C.price)}, с мотора ${money(C.price-C.cost)}`:''}</p></div>`:''}
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
+function ownSuitLine(s,x){const O=(s.legal&&s.legal.own)||[],t=mi(s);return O.filter(o=>o.k==='suit'&&o.id===x.id&&o.until>t).map(o=>{const F=s.firms&&s.firms[o.f];return ` · ⚖️ иск${F?' к '+esc(firmName(s,F)):''}: суд через ${o.until-t} мес., ${o.sure?'дело бесспорное':'шансы '+Math.round((o.p||0)*100)+' %'}`;}).join('');}
 function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null,busy=!ae&&ownIntoBusy(s,x.id);
-  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
+  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}${ownSuitLine(s,x)}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
     <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p>${ae?`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="aeRefine" data-id="${x.id}" ${aeIntoBusy(s,x.id)?'disabled':''}>${aeIntoBusy(s,x.id)?'Дорабатывается…':'Доработать'}</button><span class="small muted">тот же мотор станет лучше во всех ваших аэропланах</span></div>`:`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
 function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}

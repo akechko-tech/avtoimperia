@@ -150,6 +150,11 @@ with sync_playwright() as p:
     pg.click('#sheetBody [data-act=ownGoal][data-g=power]'); pg.wait_for_timeout(250)
     r = js("({t:document.getElementById('sheetBody').textContent,dis:document.querySelector('#sheetBody [data-act=ownStart]').disabled,n:document.querySelectorAll('#sheetBody .chip.on').length})")
     ok('Что получится' in r['t'] and 'Год по истории' in r['t'] and 'риск' in r['t'] and not r['dis'] and r['n'] >= 4 and 'NaN' not in r['t'], 'три нажатия — узел, приём, цель: итог виден до начала работ (год по истории, срок, риск)')
+    # 0.60, правка 26 ноября: цель «Экономичнее» — чип у мотора, строка расхода в «Что получится»
+    pg.click('#sheetBody [data-act=ownGoal][data-g=econ]'); pg.wait_for_timeout(250)
+    r = js("({t:document.getElementById('sheetBody').textContent,on:!!document.querySelector('#sheetBody [data-act=ownGoal][data-g=econ].on'),good:!!document.querySelector('#sheetBody table.pl td.good')})")
+    ok(r['on'] and 'Экономичнее' in r['t'] and 'расход топлива' in r['t'] and r['good'] and 'NaN' not in r['t'], 'цель «Экономичнее»: чип выбран, в таблице строка «расход топлива»')
+    pg.click('#sheetBody [data-act=ownGoal][data-g=power]'); pg.wait_for_timeout(250)
     js("document.getElementById('ownname').value='Мотор Проба'")
     pg.click('#sheetBody [data-act=ownStart]'); pg.wait_for_timeout(400)
     r = js("({n:G.rd.projs.filter(p=>p.kind==='own').length,nm:(G.rd.projs.find(p=>p.kind==='own')||{}).name,hid:document.getElementById('sheet').hidden,kb:(document.getElementById('fc-rdcard')||{}).textContent||''})")
@@ -158,6 +163,13 @@ with sync_playwright() as p:
     t = js("document.getElementById('sheetBody').textContent")
     ok('Свой авиамотор' in t and 'Что получится' in t and 'л.с. на кг' in t and 'продажа авиазаводам' in t and 'NaN' not in t and 'undefined' not in t, 'лист «Свой авиамотор»: тип, цель, сравнение с лучшим мотором года и прикидка продаж')
     js("closeSheet();G.rd.projs=[];render();")
+    # 0.60, правка 26 ноября: изобретённый мотор без рамы — предупреждение в КБ и пометка в конструкторе (не спрятан)
+    r = js("""(()=>{let e='';const y0=G.y,e0=G.rd.early.slice();try{G.y=1925;G.rd.early=['e8','e12'];openRD();}catch(x){e=String(x&&x.stack||x).slice(0,300);}
+      const kb=document.getElementById('sheetBody').textContent;let ds='',chip=false,six=false;
+      try{G.rd.early.push('e15');openDesigner('lux');draft.open='e';draft.all=false;renderDesigner();ds=document.getElementById('sheetBody').textContent;chip=!!document.querySelector('#sheetBody .chip[data-k=e][data-v=e15] .ftag.bad');six=!!document.querySelector('#sheetBody .chip[data-k=e][data-v=e12]');}catch(x){e+=String(x&&x.stack||x).slice(0,300);}
+      closeSheet();G.y=y0;G.rd.early=e0;render();return {e,kb,ds,chip,six};})()""")
+    ok(not r['e'] and 'Под этот мотор у вас пока нет рамы' in r['kb'] and 'Длинная усиленная рама' in r['kb'], 'КБ: у прототипа V-16 — предупреждение «нет рамы» и какая рама нужна %s' % r['e'])
+    ok(r['chip'] and r['six'] and 'нет рамы: ваши держат до' in r['ds'], 'конструктор: изобретённые V-16 и «шестёрка» видны; у V-16 пометка «нет рамы: ваши держат до … л.с.»')
     # этап 5б: сделки и акционеры, группы фирм, люди
     r = js("""(()=>{BOTS_OFF=false;G.pending=[];G.cash=9e7;G.rd.lvl=3;G.firms=G.firms||{};const t=mi(G);
       const L=COMPS.us.map((cp,i)=>({cp,i})).filter(o=>!dealBlock(G,'us',o.i)&&maStat(G,'us',o.i)&&!(DEAL_PROUD[o.cp.n]>0)&&!(G.bots&&G.bots[coKey(o.cp.n)])&&compVol(o.cp,G)>300);

@@ -79,7 +79,7 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
 /* ================= этап 3: техника 1930–1960 ================= */
 /* ---------- 11. новые детали ---------- */
 {const NEW=ALL_PARTS().filter(p=>p.y>=1930&&p.y<1960&&/^[egkcbw][0-9]+$/.test(p.id)),E=id=>byId(ENGINES,id);
-  CK(NEW.length===41&&NEW.every(p=>p.note&&p.c>0&&p.q>0&&p.name),'деталей 1930–1959 годов — 41 (37 первой части этапа и четыре доводки): у каждой год, цена, сложность и справка');
+  CK(NEW.length===42&&NEW.every(p=>p.note&&p.c>0&&p.q>0&&p.name),'деталей 1930–1959 годов — 42 (37 первой части этапа, четыре доводки и рама под V-16, правка 26 ноября): у каждой год, цена, сложность и справка');
   CK(['rd','ps','pw'].every(k=>EQ_BY[k]&&EQ_BY[k].hist[0]>=1930&&EQ_BY[k].note)&&EQ_BY.rd.hist[0]===1930&&EQ_BY.ps.hist[0]===1951,'оснащение 1930–1960: радиоприёмник (1930), усилитель руля и электрические стеклоподъёмники (1951)');
   CK(E('e16').y===1932&&E('e16').hp===65&&E('e15').y===1930&&E('e15').hp===185&&E('e18').y===1936&&E('e18').diesel&&E('e23').y===1949&&E('e23').hp===135&&E('e25').y===1951&&E('e26').y===1955,'моторы по источникам: Ford V-8 (1932, 65 л.с.), Cadillac V-16 (1930), дизель Mercedes-Benz (1936), Oldsmobile Rocket (1949, 135 л.с.), Chrysler FirePower (1951), Chevrolet (1955)');
   CK(byId(GEARBOX,'g8').y===1939&&byId(GEARBOX,'g9').y===1948&&byId(BRAKES,'k7').y===1953&&byId(CHASSIS,'c8').y===1934&&byId(CHASSIS,'c12').y===1955&&byId(CHASSIS,'c13').y===1959&&byId(TYRES,'w12').y===1948&&byId(BODIES,'b32').y===1948,'автомат (1939), гидротрансформатор (1948), диски (1953), несущий кузов (1934), гидропневматика (1955), поперечный мотор (1959), радиальная шина и понтонный кузов (1948)');
@@ -361,6 +361,101 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
    A.status='off';A.offAt=mi(s)-30;CK(!adviceList(s).some(t=>/приносит .* сверх себестоимости, а снятая/.test(t.text)),'о машине, снятой больше двух лет назад, помощник не вспоминает');
    A.offAt=mi(s)-5;B.pf6=900;CK(!adviceList(s).some(t=>/сверх себестоимости, а снятая/.test(t.text)),'если новинка приносит больше прежней — совета нет');}
   START1895=true;
+}
+/* ---------- 17. правки 26 ноября: изобретённые моторы, экономичность, патентные суды ---------- */
+{const NL=String.fromCharCode(10),txt=h=>String(h||'').replace(/<[^>]+>/g,' ');
+  const co=(y,xp)=>{seed(17);START1895=true;newGame('custom','us','Мотор','normal','Первая');const s=G;s.pending=[];s.y=y;s.m=3;s.cash=5e7;s.rd.lvl=8;s.xp={...(xp||{})};s.lines={car:true,moto:true};return s;};
+  const XP={eng:60,alloy:50,aero:40,brake:45,susp:35,mass:40};
+  /* --- а) мотор изобретён — и виден --- */
+  {CK(engSmooth({cyl:6})>engSmooth({cyl:4})&&engSmooth({cyl:16})>engSmooth({cyl:12})&&engSmooth({cyl:12})>engSmooth({cyl:8})&&engSmooth({cyl:6,sleeve:1})>engSmooth({cyl:6}),'плавность мотора растёт с числом цилиндров — и у 12, и у 16: '+engSmooth({cyl:16}));
+    const E=ENGINES.filter(x=>!x.moto),bad1=E.filter(x=>!CHASSIS.some(c=>!c.moto&&c.y<=x.y&&c.max>=x.hp));
+    CK(!bad1.length,'у каждого автомобильного мотора каталога в год его появления есть рама, которая его держит'+(bad1.length?' — нет у: '+bad1.map(x=>x.name).join(', '):''));
+    const c15=byId(CHASSIS,'c15');CK(c15&&c15.y===1930&&c15.max>=byId(ENGINES,'e15').hp&&c15.kg>byId(CHASSIS,'c5').kg,'рама под V-16 — с 1930 года: держит '+(c15&&c15.max)+' л.с., тяжелее прежней');
+    const s=co(1925,XP);s.rd.early=['e8','e12'];const e12=byId(ENGINES,'e12'),e7=byId(ENGINES,'e7'),e15=byId(ENGINES,'e15');
+    CK(e7.hp>e12.hp&&e7.kg<e12.kg&&e7.fuel<e12.fuel&&!partDominated('e',e12,s,false),'«шестёрка» 46 л.с. слабее и тяжелее «четвёрки» 50 л.с., но ровнее — «устаревшей» её конструктор больше не считает');
+    const mdM=autoDesign('middle',s,null,{cap:true});CK(partFit(mdM,'e',e12,s)!=='old','изобретённая «шестёрка» в конструкторе среднего класса не скрыта: '+(partFit(mdM,'e',e12,s)||'годится'));
+    let P=rdProjects(s),pe=P.find(p=>p.kind==='early'&&p.ck==='e'&&!p.moto),pc=P.find(p=>p.kind==='early'&&p.ck==='c'&&!p.moto);
+    CK(pe&&pe.id==='e15'&&pe.noframe&&pe.noframe.top<e15.hp&&pe.noframe.fr&&pe.noframe.fr.id==='c15'&&pc&&pc.id==='c15','прототип V-16 в 1925 году помечен: рамы под него нет ('+(pe&&pe.noframe&&pe.noframe.top)+' л.с.), нужна рама 1930 года — её прототип рядом');
+    const w=txt(rdNoFrameHTML(pe,P));CK(w.indexOf('нет рамы')>0&&w.indexOf('Длинная усиленная рама')>0&&w.indexOf('здесь же')>0&&rdNoFrameHTML(pc,P)==='','КБ предупреждает до денег: '+w.trim().slice(0,110));
+    const adv=P.find(p=>p.kind==='early'&&!p.noframe);CK(adv&&adv.id!=='e15','мотор без рамы помощник не предлагает (первый прототип без пометки — '+(adv&&adv.name)+')');
+    // мотор всё-таки изобретён раньше рамы: в конструкторе он виден с причиной, а не спрятан
+    let html='';const os=openSheet,de=document.getElementById;openSheet=h=>{html=h;};document.getElementById=()=>({addEventListener(){},style:{},classList:{add(){},remove(){},toggle(){}}});
+    s.rd.early.push('e15');openDesigner('lux');draft.open='e';draft.all=false;renderDesigner();
+    CK(html.indexOf('data-k="e" data-v="e15"')>0&&html.indexOf('нет рамы: ваши держат до')>0,'изобретённый V-16 без рамы в конструкторе виден — с пометкой «нет рамы: ваши держат до … л.с.»');
+    CK(html.indexOf('data-k="e" data-v="e12"')>0,'изобретённая «шестёрка» в конструкторе люкса видна');
+    const hid=html.match(/Скрыто ([0-9]+)/),shown=(html.match(/data-k="e" data-v="/g)||[]).length;draft.all=true;renderDesigner();
+    CK(hid&&(html.match(/data-k="e" data-v="/g)||[]).length===shown+(+hid[1]),'счёт «Скрыто» не включает свои прототипы: показано '+shown+', скрыто '+(hid&&hid[1]));openSheet=os;document.getElementById=de;
+    // рама изобретена — пометки нет, мотор годится
+    s.rd.early.push('c15');P=rdProjects(s);CK(!P.some(p=>p.noframe)&&partFit(autoDesign('lux',s,null,{cap:true}),'e',e15,s)!=='frame'&&frameTop(s,false,null)>=e15.hp,'с прототипом рамы V-16 ставится: рамы держат до '+Math.round(frameTop(s,false,null))+' л.с.');
+    const a=autoDesign('lux',s,null,{cap:true}),b={...a,e:'e15',c:'c15'};CK(carChar(b,s.y).comf>carChar({...b,e:'e8'},s.y).comf&&!overpower(b),'V-16 ровнее «восьмёрки» — комфорт выше');
+    // прототип готов, а рамы нет — журнал говорит почему
+    const s2=co(1925,XP);s2.rd.early=['e8','e12'];const pj=rdProjects(s2).find(p=>p.kind==='early'&&p.id==='e15');rdBegin(s2,pj);const q=rdActive(s2).find(p=>p.id==='e15');q.prog=q.need;q.rk=1;q.tested=1;
+    let guard=0;while(!s2.rd.early.includes('e15')&&guard++<40){s2.pending=[];step();const z=rdActive(s2).find(p=>p.id==='e15');if(z)z.prog=z.need;}
+    CK(s2.rd.early.includes('e15')&&G.log.some(l=>l.text.indexOf('пока нет рамы')>0),'прототип готов без рамы — в журнале причина и что делать');}
+  /* --- б) цель «Экономичнее» --- */
+  {const s=co(1918,XP),e6=byId(ENGINES,'e6'),sp=(base,gl,goal)=>({k:'e',base,tech:[],goal:goal||'econ',gl,name:''});
+    CK(ownGoalOk('econ','e')&&!ownGoalOk('econ','g')&&!ownGoalOk('econ','b')&&ownGoalOk('power','g'),'«Экономичнее» — цель мотора; у коробки и кузова её нет');
+    const P1=ownPreview(s,sp('e6',1)),P2=ownPreview(s,sp('e6',2)),P3=ownPreview(s,sp('e6',3)),d1=1-P1.x.fuel/e6.fuel,d2=1-P2.x.fuel/P1.x.fuel,d3=1-P3.x.fuel/P2.x.fuel;
+    CK(Math.abs(d1-0.08)<0.005&&d1>d2&&d2>d3&&d3>0&&P1.x.hp<e6.hp&&P1.x.hp>=e6.hp*0.97&&!P1.why&&!P3.why,'расход V8: '+e6.fuel+' → '+P1.x.fuel+' → '+P2.x.fuel+' → '+P3.x.fuel+' (шаги −'+(d1*100).toFixed(1)+'%, −'+(d2*100).toFixed(1)+'%, −'+(d3*100).toFixed(1)+'%), мощность '+e6.hp+' → '+P3.x.hp);
+    CK(P3.x.yh>=P1.x.yh&&P3.yrs>P1.yrs&&P3.cost>P1.cost,'экономичность не даром: год по истории '+P1.x.yh+' → '+P3.x.yh+', проект '+money(P1.cost)+' → '+money(P3.cost));
+    const h=txt(ownPreviewHTML(s,P1));CK(P1.cmp.length===2&&h.indexOf('расход топлива')>0&&h.indexOf(String(Math.round(e6.fuel*100)))>0&&h.indexOf('NaN')<0,'в таблице «что получится» — строка расхода: '+h.replace(/ +/g,' ').slice(0,120));
+    CK(/такой цели нет/.test(ownPreview(s,{k:'g',base:ownBaseList(s,'g',false)[0].id,tech:[],goal:'econ',gl:1}).why),'коробке «Экономичнее» не назначить');
+    // предел эпохи: мотор на переднем крае экономичности дальше истории не уйдёт; прожорливый — доводится без опережения
+    s.y=1924;const F3=ownPreview(s,sp('e7',3)),G3=ownPreview(s,sp('e6',3));CK(/Предел эпохи/.test(F3.why)&&G3.yrs===0&&!G3.why,'1924 год: самый экономичный мотор эпохи три шага не возьмёт (предел), прожорливый V8 — возьмёт без опережения');
+    // «Мощнее» по-прежнему прибавляет расход; год по истории старых целей не сдвинулся назад
+    const Pp=ownPreview(s,sp('e6',2,'power'));CK(Pp.x.fuel>e6.fuel&&Pp.x.hp>e6.hp,'«Мощнее» — расход растёт: '+e6.fuel+' → '+Pp.x.fuel);
+    // свой мотор и доводка экономичности — тот же узел
+    s.y=1918;s.pending=[];ownStart(s,{...sp('e6',1,'power'),name:'Мотор «Зевс»'});let pj=rdActive(s).slice(-1)[0];s.rd.projs=s.rd.projs.filter(p=>p!==pj);ownDone(s,pj);s.pending=[];const x=s.custom[s.custom.length-1],f0=x.fuel,id0=x.id;
+    CK(x.fuel>e6.fuel,'свой мощный мотор прожорливее основы: '+x.fuel);
+    CK(ownStart(s,{k:'e',base:x.id,tech:[],goal:'econ',gl:2,into:1,name:''}),'доводка своего мотора на экономичность начата');pj=rdActive(s).slice(-1)[0];s.rd.projs=s.rd.projs.filter(p=>p!==pj);ownDone(s,pj);s.pending=[];
+    CK(s.custom.length===1&&x.id===id0&&x.fuel<f0&&x.rev===2&&x.goal==='econ'&&/экономичнее/.test(x.art),'доводка: тот же «'+x.name+'», расход '+f0+' → '+x.fuel);
+    const md={...autoDesign('middle',s,null,{cap:true}),e:'e6'},md2={...md,e:x.id};CK(carChar(md2,s.y).econ>0&&carChar(md2,s.y).fuel<carChar({...md,e:'e6'},s.y).fuel*1.02,'машина с доведённым мотором тратит не больше, чем с основой, хотя мотор сильнее');
+    // изобретённый прототип — тоже основа: довести можно до того, как он встал на машину
+    {const s3=co(1926,XP);s3.models[0].e='e7';s3.rd.early=['e8','e12','e15'];const BL=ownBaseList(s3,'e',false),Pv=ownPreview(s3,{k:'e',base:'e15',tech:[],goal:'econ',gl:2,name:''});
+      CK(BL[0].id==='e15'&&BL.some(z=>z.id==='e7')&&Pv&&Pv.x.fuel<byId(ENGINES,'e15').fuel*0.88,'изобретённый V-16 — первая основа своей разработки: расход '+byId(ENGINES,'e15').fuel+' → '+(Pv&&Pv.x.fuel));}
+    // мотоциклетный мотор
+    const mo=unlockedP(ENGINES,s,true).slice(-1)[0],Pm=ownPreview(s,{k:'e',base:mo.id,tech:[],goal:'econ',gl:1,name:''});CK(Pm&&Pm.x.fuel<mo.fuel&&!/NaN/.test(ownPreviewHTML(s,Pm)),'мотоциклетный мотор тоже доводится: '+mo.fuel+' → '+Pm.x.fuel);
+    // текст о годе по истории считает эпоху до 1960-го
+    s.y=1950;const Pl=ownPreview(s,sp('e23',1));CK(Pl.x.yh<=1960&&txt(ownPreviewHTML(s,Pl)).indexOf('такого не было')<0,'узел с годом по истории '+Pl.x.yh+' в 1950 году — не «такого в истории эпохи не было»');}
+  /* --- в) патентные суды --- */
+  {const s=co(1914,XP);s.models[0].e='e14';s.models[0].c='c4';s.models[0].status='prod';const B=ownBaseList(s,'e',false)[0];
+    const mk=(tech,goal,name)=>{ownStart(s,{k:'e',base:B.id,tech,goal,gl:1,name});const pj=rdActive(s).slice(-1)[0];s.rd.projs=s.rd.projs.filter(p=>p!==pj);ownDone(s,pj);s.pending=[];return s.custom[s.custom.length-1];};
+    const xa=mk(['ohc'],'power','Комета'),xb=mk([],'cheap','Простой');CK(B.id==='e14'&&xa.yh>s.y&&xb.yh<=s.y,'два своих мотора: «Комета» впереди истории ('+xa.yh+'), «Простой» — нет ('+xb.yh+')');
+    ownPatent(s,xa.id);ownPatent(s,xb.id);const Ca=ownClaim(s,xa),Cb=ownClaim(s,xb);
+    CK(xa.pat.nov===xa.yh-s.y&&xa.pat.y===s.y&&Ca.sure&&Ca.p===1&&!Cb.sure&&Cb.p<=0.5&&Cb.p>=0.15,'сила дела — из фактов: новый узел — бесспорное (100 %), узел без новизны — спорное ('+Math.round(Cb.p*100)+' %)');
+    CK(ownPatNov({yh:1922,made:{y:1914},pat:{until:999}})===8&&ownPatNov({yh:1910,made:{y:1914},pat:{until:999}})===0&&ownPatNov({yh:1922})===0,'старое сохранение: новизна патента — по году создания узла');
+    s.firms={'us:0':{c:'us',i:0,md:{},r12:6e6,cash:1e6,st:'ok'}};const F=s.firms['us:0'],m=s.models[0],g=segOf(m);F.md[g]={q:0.3};
+    const copy=x=>{m.e=x.id;x.ser=mi(s)-13;x.cp={};s.pending=[];ownCopied(s,{},F,g);return s.pending.pop();};
+    let ev=copy(xa);CK(ev&&/бесспорное/.test(ev.deck)&&/бесспорное/.test(ev.text)&&/мировую/.test(ev.text)&&ev.choices.length===3,'копия узла с новизной: газета называет дело бесспорным');
+    const aw=ownAward(s,F),fee=ownLicFee(s,F),law=ownSuitCost(s);CK(aw===180000&&fee===6000,'компенсация — 3 % годового оборота ответчика ('+money(aw)+'), лицензия — '+money(fee)+' в месяц');
+    const adv=n=>{for(let i=0;i<n;i++){s.m++;if(s.m>11){s.m=0;s.y++;}ownLegalMonth(s,{});}};
+    // бесспорное дело: предложение мировой на четвёртый месяц
+    s.legal={own:[]};ownEvent(s,'own:sue:'+xa.id+':us:0');let o=s.legal.own[0];CK(o&&o.sure===1&&o.p===1&&o.until-o.t0===OWN_SUIT_M,'иск по бесспорному делу подан: суд через '+OWN_SUIT_M+' мес.');
+    CK(txt(ownItemHTML(s,xa)).indexOf('иск к')>0&&txt(ownItemHTML(s,xa)).indexOf('дело бесспорное')>0,'в карточке своего узла видно: идёт иск, дело бесспорное');
+    s.pending=[];adv(OWN_SETTLE_M-1);CK(!s.pending.length,'три месяца — предложений нет');adv(1);ev=s.pending.pop();
+    const sum=ownSettleSum(s,o,F);CK(ev&&/предлагает мировую/.test(ev.title)&&ev.choices.length===2&&/^own:settle:/.test(ev.choices[0][1])&&/^own:nosettle:/.test(ev.choices[1][1])&&sum===Math.round(aw*OWN_SETTLE_K/100)*100&&ev.text.indexOf(money(sum))>0,'на четвёртый месяц ответчик предлагает мировую: '+money(sum)+' сразу и лицензию');
+    CK(/Селден/.test(ev.text)&&/1911/.test(ev.text),'в заметке — как бывало в истории (1914 год: патент Селдена)');adv(2);CK(!s.pending.length,'мировую предлагают один раз');
+    const sv=JSON.stringify(s.legal.own),y1=s.y,m1=s.m;
+    // принять: деньги сразу, лицензия, иска нет
+    let c0=s.cash,fc=F.cash;ownEvent(s,ev.choices[0][1]);CK(s.cash-c0===sum&&fc-F.cash===sum&&s.legal.own.length===1&&s.legal.own[0].k==='lic'&&s.legal.own[0].amt===fee,'мировая принята: '+money(sum)+' в кассу, лицензия '+money(fee)+' в месяц, иск отозван');
+    const r1={};ownLegalMonth(s,r1);CK(r1.licIn===fee&&!r1.legal,'после мировой идут лицензионные деньги, юристам платить не надо');
+    // отказать: суд выигран при любом жребии, компенсация и юристы — с ответчика, копия снята
+    s.legal.own=JSON.parse(sv);s.y=y1;s.m=m1;ownEvent(s,ev.choices[1][1]);o=s.legal.own[0];const R0=Math.random;Math.random=()=>0.999;c0=s.cash;const q1=F.md[g].q;let lg=0;
+    for(let i=0;i<OWN_SUIT_M;i++){s.m++;if(s.m>11){s.m=0;s.y++;}const r={};ownLegalMonth(s,r);lg+=r.legal||0;if(!s.legal.own.length)break;}Math.random=R0;
+    const paid=o.paid;CK(!s.legal.own.length&&s.cash-c0===aw+paid&&paid>=law*(OWN_SUIT_M-2)&&F.md[g].q<q1,'бесспорное дело выиграно и при худшем жребии: компенсация '+money(aw)+' и '+money(paid)+' за юристов, копия снята');
+    CK(G.log.some(l=>l.text.indexOf('Суд за «Комета» выигран')>=0&&l.text.indexOf('за ваших юристов')>0),'журнал: суд выигран, юристов оплатил ответчик');
+    // спорное дело: шансы 50 % — мировая вдвое меньше; жребий решает; юристов не возвращают
+    ev=copy(xb);CK(ev&&/спорное/.test(ev.deck)&&/около 50/.test(ev.text),'копия узла без новизны: дело спорное, шансы названы до иска');
+    s.legal={own:[]};ownEvent(s,'own:sue:'+xb.id+':us:0');o=s.legal.own[0];s.pending=[];adv(OWN_SETTLE_M);ev=s.pending.pop();
+    CK(o.p===0.5&&!o.sure&&ev&&/мировую/.test(ev.title)&&ownSettleSum(s,o,F)===Math.round(aw*OWN_SETTLE_K*0.5/100)*100,'спорное дело (50 %): мировая — '+money(ownSettleSum(s,o,F)));
+    const sv2=JSON.stringify(s.legal.own);Math.random=()=>0.999;c0=s.cash;adv(OWN_SUIT_M);CK(!s.legal.own.length&&s.cash===c0&&G.log.some(l=>l.text.indexOf('Суд за «Простой» проигран')>=0),'спорное дело при плохом жребии проиграно — денег нет');
+    s.legal.own=JSON.parse(sv2);Math.random=()=>0.001;c0=s.cash;adv(OWN_SUIT_M);Math.random=R0;CK(!s.legal.own.length&&s.cash-c0===aw,'спорное дело при хорошем жребии выиграно: компенсация без расходов на юристов');
+    // слабый патент (узел давно в истории): шансы ниже 50 % — мировую не предлагают
+    xb.pat.y=xb.yh+3;xb.pat.nov=0;const Cw=ownClaim(s,xb);s.legal={own:[]};xb.cp={};ownEvent(s,'own:sue:'+xb.id+':us:0');s.pending=[];adv(OWN_SETTLE_M+2);CK(Cw.p<0.5&&Cw.p>=0.15&&!s.pending.length,'патент на давно известное ('+Math.round(Cw.p*100)+' %): мировой ответчик не предлагает');
+    // история — по году, без событий из будущего
+    CK(ownSettleHist({y:1900})===''&&/Селден/.test(ownSettleHist({y:1905}))&&!/1911/.test(ownSettleHist({y:1905}))&&/1911/.test(ownSettleHist({y:1912}))&&/Райт/.test(ownSettleHist({y:1920}))&&/Фергюсон/.test(ownSettleHist({y:1955}))&&/9,25/.test(ownSettleHist({y:1955})),'исторический образец в заметке — по году партии: Селден, пул Райтов и Кёртисса (1917), Фергюсон и Форд (1952)');
+    // доводка узла с патентом: новизна не убывает
+    s.y=1916;const n0=xa.pat.nov;ownRefine(s,xa,{...xa,yh:xa.yh,tech:[],goal:'cheap'},{sp:{tech:[]}});CK(xa.pat.nov>=n0,'после доводки патент не слабее: новизна '+n0+' → '+xa.pat.nov);}
 }
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

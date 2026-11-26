@@ -6,7 +6,7 @@ Object.assign(PART_WIKI,{
   e25:['','Chrysler Hemi engine'],e26:['','Chevrolet small-block engine'],e27:['Fiat 500','Fiat 500'],
   g8:['','Hydramatic'],g9:['','Dynaflow'],g10:['Lancia Ardea','Lancia Ardea'],g11:['','Ford-O-Matic'],
   k7:['Дисковый тормоз','Disc brake'],
-  c8:['Citroën Traction Avant','Citroën Traction Avant'],c14:['Независимая подвеска','Independent suspension'],c9:['Заднемоторная компоновка','Rear-engine design'],
+  c15:['','Cadillac V-16'],c8:['Citroën Traction Avant','Citroën Traction Avant'],c14:['Независимая подвеска','Independent suspension'],c9:['Заднемоторная компоновка','Rear-engine design'],
   c10:['Willys MB','Willys MB'],c11:['','MacPherson strut'],c12:['Гидропневматическая подвеска','Hydropneumatic suspension'],c13:['Mini','Mini'],
   w11:['Бескамерная шина','Tubeless tire'],w12:['Радиальная шина','Radial tire'],
   b30:['Chrysler Airflow','Chrysler Airflow'],b31:['','Fiat 500 "Topolino"'],b34:['Renault 4CV','Renault 4CV'],b32:['','Ponton (car)'],b35:['Jaguar XK120','Jaguar XK120'],
