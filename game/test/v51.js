@@ -1026,7 +1026,7 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     const f2=opt('durant2:0').fx,a2=Math.abs(sagaCash(s,f2)),c1=s.cash,l1=s.loan,t2=sagaFxText(f2,s);sagaApply(s,f2);
     CK(Math.abs(s.cash-c1)<1&&Math.abs(s.loan-l1-a2)<1&&/в долг: касса цела/.test(t2)&&!/^−/.test(t2),'«Строить цеха в долг»: касса цела, долг вырос — '+t2);
     const f3=opt('ford3:0').fx,sh=sagaStakeSh(s,f3),t3=sagaFxText(f3,s);sagaApply(s,f3);const pp=s.partners[s.partners.length-1];
-    CK(pp&&pp.saga===1&&pp.n==='Инвесторы'&&Math.abs(pp.sh-sh)<0.002&&pp.sh>=0.02&&pp.sh<=0.2&&Math.abs(partnersShare(s)-pp.sh)<1e-9&&new RegExp(Math.round(sh*100)+'% прибыли').test(t3),'«Найти инвесторов»: у них настоящая доля прибыли — '+Math.round(pp.sh*100)+'% ('+t3+')');
+    CK(pp&&pp.saga===1&&pp.n==='Инвесторы'&&Math.abs(pp.sh-sh)<0.002&&pp.sh>=0.02&&pp.sh<=0.2&&Math.abs(partnersShare(s)-pp.sh)<1e-9&&new RegExp(Math.round(sh*100)+'% дела').test(t3),'«Найти инвесторов»: у них настоящая доля прибыли — '+Math.round(pp.sh*100)+'% ('+t3+')');
     const tw=sagaFxText(opt('frese4:0').fx,s);sagaApply(s,opt('frese4:0').fx);CK(s.wagePol==='good'&&/Выше рынка/.test(tw)&&/дороже на 25%/.test(tw),'«Восьмичасовой день и прибавка»: ставка жалованья — «Выше рынка»: '+tw);
     sagaApply(s,opt('frese4:0').fx);CK(s.wagePol==='good'&&/уже выше рынка/.test(sagaFxText(opt('frese4:0').fx,s)),'выше рынка уже платят — ставка не меняется, ответ так и говорит');
     sagaApply(s,opt('ryab6:1').fx);CK(s.strikeNext===true&&/забастовка в следующем месяце/.test(sagaFxText(opt('ryab6:1').fx,s)),'«Не уступать ни в чём»: забастовка в следующем месяце — настоящая');
@@ -1034,7 +1034,7 @@ function setWorld(W,o){W.hp=o.hp;W.rev=o.rev;W.sport=o.sport;W.firsts=o.firsts;W
     s.y=1917;s.m=6;const tm=sagaFxText(opt('custom5:0').fx,s);sagaApply(s,opt('custom5:0').fx);CK(s.military===true&&/военный контракт/.test(tm),'война идёт — «Взять военный заказ» подписывает настоящий контракт: '+tm);
     // что действует сейчас — видно в карточке фильма
     s.y=1921;s.m=2;s.sagaB={};s.sagaSeg={};sagaApply(s,opt('ford4:0').fx);const L=sagaNowList(s);
-    CK(L.some(x=>/выпуск [+]6% — до /.test(x))&&L.some(x=>/спрос: народный [+]12%/.test(x))&&L.some(x=>/Инвесторы: [0-9]+% прибыли — пока не выкупите долю/.test(x)),'список действующих решений: '+L.join(' | '));
+    CK(L.some(x=>/выпуск [+]6% — до /.test(x))&&L.some(x=>/спрос: народный [+]12%/.test(x))&&L.some(x=>/Инвесторы: [0-9]+% дела, дивидендами около [0-9]+% прибыли — пока не выкупите долю/.test(x)),'список действующих решений: '+L.join(' | '));
     CK(/Решения фильма действуют сейчас/.test(sagaCard(s)),'карточка фильма показывает действующие решения');
     {const tb=sagaFxText(opt('ford6:v0:0').fx,s);sagaApply(s,opt('ford6:v0:0').fx);CK(!s.partners.some(p=>p.saga)&&/выкуплены/.test(tb),'«Выкупить на свои деньги»: совладельцы из фильма выкуплены на самом деле — '+tb);}
     s.y=1926;CK(!sagaNowList(s).some(x=>/выпуск/.test(x)),'срок вышел — строки нет');}

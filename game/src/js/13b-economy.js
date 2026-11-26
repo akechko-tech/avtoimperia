@@ -193,9 +193,9 @@ function rescueNeed(s){return Math.round((-s.cash+3*(((s.last&&s.last.mat)||0)+(
 function rescueCan(s){if(s.over||s.pending.some(e=>e.rescue))return false;if(s.rescueY&&s.y-s.rescueY<10)return false;const sh=RESCUE_SH[s.diff||'normal']??0.3;
   return partnersShare(s)+sh<=0.75&&companyValue(s)>Math.max(200000*cpi(s),rescueNeed(s)*2.5);}
 function rescueOffer(s){const sh=RESCUE_SH[s.diff||'normal']??0.3,need=rescueNeed(s),who=s.country==='us'?'Du Pont и J. P. Morgan':s.country==='fr'?'Banque de Paris et des Pays-Bas':s.country==='de'?'Deutsche Bank':s.country==='uk'?'Barclays и Lloyds':'Banca Commerciale Italiana';
-  s.pending.push({rescue:{sh,need},kicker:'Банк',title:'Банкиры предлагают спасение',deck:`${who} · ${money(need)} за ${Math.round(sh*100)}% прибыли`,
-    text:`Касса «${s.company}» ушла в минус на ${money(-s.cash)} — больше, чем терпят поставщики и рабочие. Но компания стоит ${money(companyValue(s))}, и синдикат банкиров (${who}) готов закрыть долги и дать денег на три месяца работы: ${money(need)}. Взамен — ${Math.round(sh*100)}% прибыли навсегда (долю можно будет выкупить).\nТак в 1920 году Du Pont и Morgan спасли General Motors — а Уильям Дюрант потерял свою компанию.`,
-    choices:[[`Принять: ${money(need)} за ${Math.round(sh*100)}% прибыли`,'rescueYes'],['Отказаться — банкротство','rescueNo']]});}
+  s.pending.push({rescue:{sh,need},kicker:'Банк',title:'Банкиры предлагают спасение',deck:`${who} · ${money(need)} за ${Math.round(sh*100)}% дела`,
+    text:`Касса «${s.company}» ушла в минус на ${money(-s.cash)} — больше, чем терпят поставщики и рабочие. Но компания стоит ${money(companyValue(s))}, и синдикат банкиров (${who}) готов закрыть долги и дать денег на три месяца работы: ${money(need)}. Взамен — ${Math.round(sh*100)}% дела: дивидендами им пойдёт около ${divPct(s,sh)}% прибыли (долю можно будет выкупить).\nТак в 1920 году Du Pont и Morgan спасли General Motors — а Уильям Дюрант потерял свою компанию.`,
+    choices:[[`Принять: ${money(need)} за ${Math.round(sh*100)}% дела`,'rescueYes'],['Отказаться — банкротство','rescueNo']]});}
 function rescueResolve(s,key){const ev=s.pending[0],R=ev&&ev.rescue;if(!R)return;
   if(key==='rescueYes'){s.cash+=R.need;(s.partners=s.partners||[]).push({n:'Синдикат банкиров',sh:R.sh,t:mi(s)});s.rescueY=s.y;s.noRecall=mi(s)+12;s.rep=clamp(s.rep-5,0,100);
     addLog(`Банкиры спасли «${s.company}»: ${money(R.need)} в кассу, синдикат получает ${Math.round(R.sh*100)}% прибыли. Банк год не требует кредит назад.`,'bad');}

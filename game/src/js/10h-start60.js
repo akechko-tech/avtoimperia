@@ -43,7 +43,7 @@ function startModel(s,ST,firstName){const m=s.models[0];m.launched=mi(s);
 function startPrice(s,md){let p=refPrice(md,s);try{const bp=bestPriceFor(md,s);if(bp&&bp.price>p)p=bp.price;}catch(_){}
   let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
 // 0.60, этап 5 (решение автора 25 ноября): деньги пайщиков — не подарок. Взнос даёт пайщикам долю в деле:
-// взнос, делённый на стоимость фирмы вместе с этими деньгами. Им идёт та же доля прибыли, пока игрок не выкупит её
+// взнос, делённый на стоимость фирмы вместе с этими деньгами. С этой доли им идут дивиденды (105d-rebuy.js, divPayout), пока игрок не выкупит её
 // («Совладельцы», 105d-rebuy.js). Основателю остаётся не меньше четверти — как при любых совладельцах в игре.
 const PART_MAX=0.75;
 function stakeAdd(s,name,sum){const V=Math.max(1,companyValue(s)),P=s.partners=s.partners||[],k=clamp(sum/V,0.01,PART_MAX);
@@ -59,10 +59,10 @@ function fundShare(s,sum){const V=Math.max(1,companyValue(s)),k=clamp(sum/(V+sum
 function fundOffer(s,i){const HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};if(s.funds[i])return;s.funds[i]=1;
   const sum=fundSum(f),half=Math.round(sum/200)*100,A=fundShare(s,sum),B=fundShare(s,half);
   pushEvent({own:1,kicker:'Пайщики',title:f.title||'Новые деньги',deck:`${money(sum)} в кассу — и у совладельцев ${Math.round(A.tot*100)}% дела`,
-    text:f.t+`\nДеньги пайщиков — не подарок. Фирма сейчас стоит ${money(Math.round(A.V))}; пайщики получают долю, равную их взносу в стоимости фирмы, и ту же часть прибыли каждый месяц.\n• Все ${money(sum)} — у совладельцев будет ${Math.round(A.tot*100)}% дела.\n• Половина, ${money(half)}, — ${Math.round(B.tot*100)}%.${A.was>0.005?`\nСейчас у совладельцев ${Math.round(A.was*100)}%.`:''}\nДолю потом можно выкупить — целиком или по десятой части дела, по стоимости фирмы с премией 25%: «Финансы» → «Совладельцы». Чем лучше идут дела, тем выкуп дороже.\nОткажетесь — денег не будет, а фирма останется вашей.`+(f.est?'\n(Сумма — по источнику; месяц — оценка.)':''),
+    text:f.t+`\nДеньги пайщиков — не подарок. Фирма сейчас стоит ${money(Math.round(A.V))}; пайщики получают долю, равную их взносу в стоимости фирмы. С неё им каждый месяц идут дивиденды — ${Math.round(divPayout(s)*100)}% их части прибыли; остальное остаётся в деле.\n• Все ${money(sum)} — у совладельцев будет ${Math.round(A.tot*100)}% дела.\n• Половина, ${money(half)}, — ${Math.round(B.tot*100)}%.${A.was>0.005?`\nСейчас у совладельцев ${Math.round(A.was*100)}%.`:''}\nДолю потом можно выкупить — целиком или по десятой части дела, по стоимости фирмы с премией 25%: «Финансы» → «Совладельцы». Чем лучше идут дела, тем выкуп дороже.\nОткажетесь — денег не будет, а фирма останется вашей.`+(f.est?'\n(Сумма — по источнику; месяц — оценка.)':''),
     choices:[[`Взять ${money(sum)}`,'fund:Y:'+i],[`Взять половину`,'fund:H:'+i],['Отказаться','fund:N:'+i]]},true);}
 function fundResolve(s,key){const a=key.split(':'),i=+a[2],HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};const full=fundSum(f),sum=a[1]==='H'?Math.round(full/200)*100:full,who=f.who||'Пайщики';
-  if(a[1]==='Y'||a[1]==='H'){s.cash+=sum;const k=stakeAdd(s,who,sum);s.funds[i]=2;addLog(`${who} внесли ${money(sum)}. Совладельцам принадлежит ${Math.round(k*100)}% дела и та же часть прибыли — пока вы не выкупите долю.`,'hist');}
+  if(a[1]==='Y'||a[1]==='H'){s.cash+=sum;const k=stakeAdd(s,who,sum);s.funds[i]=2;addLog(`${who} внесли ${money(sum)}. Совладельцам принадлежит ${Math.round(k*100)}% дела; дивидендами им идёт около ${divPct(s,k)}% прибыли — пока вы не выкупите долю.`,'hist');}
   else{s.funds[i]=3;addLog(`От денег пайщиков (${money(full)}) вы отказались: фирма остаётся вашей.`,'hist');}}
 function startFundsMonth(s){if(!s||s.y0==null||s.over)return;const HS=HERO_START[s.pioneer];if(!HS||!HS.funds)return;
   HS.funds.forEach((f,i)=>{if(f.day0||(s.funds&&s.funds[i])||s.y!==f.y||s.m!==f.m)return;fundOffer(s,i);});}

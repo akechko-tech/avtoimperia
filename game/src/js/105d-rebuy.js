@@ -68,6 +68,11 @@ function openRebuy(){const s=G;if(!s)return;rbMigrate(s);const cs=Object.keys(CO
     <div style="margin-top:8px">${rows||'<p class="small muted">В этой стране продающихся марок нет.</p>'}</div>
     <p class="small muted" style="margin-top:8px">Цена — оценка аналитиков и 10% сверху: владельцы продают целиком, без торга.</p>`);}
 /* ---------- выкуп долей совладельцев ---------- */
+// 0.60, этап 5 (решение автора 26 ноября): совладельцам идут дивиденды, а не вся их доля прибыли; остальное остаётся в деле.
+// По данным Шиллера (сводка WisdomTree): до 1946 года компании США раздавали дивидендами больше 70 % прибыли, после — меньше 50 %.
+const DIV_PAY=[[1895,0.70],[1946,0.50]];
+function divPayout(s){const y=(s&&s.y)||1895;let v=DIV_PAY[0][1];for(const a of DIV_PAY)if(y>=a[0])v=a[1];return v;}
+function divPct(s,sh){return Math.round((sh||0)*divPayout(s)*100);}
 function bbPrice(s,p){return Math.max(1000,Math.round(companyValue(s)*(p.sh||0)*1.25/1000)*1000);}
 // 0.60, этап 5: крупную долю (пайщики исторического старта держат до трёх четвертей дела) выкупают частями — по десятой части дела за раз
 const BB_STEP=0.1,BB_BIG=0.25;
@@ -76,12 +81,12 @@ function bbPartPrice(s,p){return bbPrice(s,{sh:Math.min(BB_STEP,p.sh||0)});}
 function bbAdvice(s){const P=s.partners||[];let bi=-1;P.forEach((p,i)=>{if((p.sh>BB_BIG||p.hero)&&(bi<0||p.sh>P[bi].sh))bi=i;});
   if(bi<0||!s.last||typeof shSurplus!=='function')return null;
   const O=P[bi],part=O.sh>BB_STEP+0.005,c=part?bbPartPrice(s,O):bbPrice(s,O),st=part?BB_STEP:O.sh,k=partnersShare(s),
-    pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((x,y)=>x+y,0),out=pr>0&&k<1?pr*k/(1-k):0,yrs=out>0?c/(out*st/k):99;
+    kp=k*divPayout(s),pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((x,y)=>x+y,0),out=pr>0&&kp<1?pr*kp/(1-kp):0,yrs=out>0?c/(out*st/k):99;
   return c>0&&shSurplus(s)>=c&&out>0&&yrs<=12?{i:bi,part,c,k,st,out,yrs}:null;}
 function bbInvPrice(s){const I=s.investor;if(!I||mi(s)>=I.until)return 0;const left=clamp((I.until-mi(s))/120,0.25,1);return Math.max(1000,Math.round(companyValue(s)*(I.sh||0)*1.2*left/1000)*1000);}
 function bbHTML(s,sh){const P=s.partners||[],I=s.investor&&mi(s)<s.investor.until?s.investor:null;if(!P.length&&!I)return '';const A=sh?' data-sh="1"':'';
-  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
-    P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">получают ${Math.round(p.sh*100)}% вашей прибыли${p.t!=null?' с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
+  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% дела</div>${P.length?`<p class="small muted" style="margin:2px 0 6px">Совладельцам идут дивиденды — ${Math.round(divPayout(s)*100)}% их доли прибыли: сейчас это около ${divPct(s,partnersShare(s))}% прибыли фирмы. Остальное остаётся в деле.</p>`:''}${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
+    P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">дивидендами — около ${divPct(s,p.sh)}% прибыли${p.t!=null?'; с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
       ${p.sh>BB_BIG?`<button class="btn sm" data-act="bbBuy" data-k="${k}" data-part="1"${A} ${s.cash<bbPartPrice(s,p)?'disabled':''}>10% · ${money(bbPartPrice(s,p))}</button>`:''}
       <button class="btn sm" data-act="bbBuy" data-k="${k}"${A} ${s.cash<c?'disabled':''}>${p.sh>BB_BIG?'Всё':'Выкупить'} · ${money(c)}</button></div>`;}).join('')+
     (I?(()=>{const c=bbInvPrice(s);return `<div class="deal-row"><div style="flex:1"><b>Партнёр-инвестор</b> <span class="pill">${Math.round((I.sh||0)*100)}%</span><small class="muted">его доля — до ${1895+Math.floor(I.until/12)} года</small></div><button class="btn sm" data-act="bbInv"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;})():'')+
@@ -96,7 +101,7 @@ function bbBuy(s,k,part){const p=(s.partners||[])[k];if(!p)return false;
   if(part&&p.sh>BB_STEP+0.005){const c1=bbPartPrice(s,p);if(s.cash<c1)return false;s.cash-=c1;p.sh=+(p.sh-BB_STEP).toFixed(4);
     addLog(`У «${p.n}» выкуплена десятая часть дела за ${money(c1)}: у них осталось ${Math.round(p.sh*100)}%.`,'good');return true;}
   const c=bbPrice(s,p);if(s.cash<c)return false;s.cash-=c;s.partners.splice(k,1);
-  addLog(`Выкуплена доля «${p.n}» (${Math.round(p.sh*100)}%) за ${money(c)}: эта часть прибыли теперь ваша.`,'good');return true;}
+  addLog(`Выкуплена доля «${p.n}» (${Math.round(p.sh*100)}%) за ${money(c)}: дивиденды с неё больше не уходят.`,'good');return true;}
 function bbInv(s){const c=bbInvPrice(s);if(!c||s.cash<c)return false;const sh=s.investor.sh;s.cash-=c;s.investor=null;addLog(`Выкуплена доля партнёра-инвестора (${Math.round(sh*100)}%) за ${money(c)}.`,'good');return true;}
 const RB_ACT={
   rbOpen:()=>openRebuy(),

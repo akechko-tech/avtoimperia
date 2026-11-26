@@ -295,9 +295,14 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
    const c1=bbPartPrice(s,P[0]),b=s.cash;CK(c1===bbPrice(s,{sh:0.1})&&bbBuy(s,0,1)&&Math.abs(P[0].sh-0.65)<1e-9&&s.cash===b-c1,'десятая часть дела выкупается по цене десятой части: '+c1+', у пайщиков остаётся 65 %');
    while(s.partners.length&&s.partners[0].sh>0.46)bbBuy(s,0,1);const was=partnersShare(s),V=companyValue(s);s.cash+=20000;const k=stakeAdd(s,'Пайщики',20000);
    CK(Math.abs(was-0.45)<1e-9&&Math.abs(k-Math.min(0.75,was*(1-20000/(V+20000))+20000/(V+20000)))<0.002&&s.partners.length===1,'новый взнос тех же пайщиков разбавляет прежнюю долю и добавляет новую: '+Math.round(k*100)+' %');
-   s.pending=[];step();s.pending=[];s.partners=[{n:'Пайщики',sh:0.75,t:mi(s),hero:1}];s.hist.profit=Array(12).fill(2000);s.cash=400000;s.loan=0;const A=bbAdvice(s);
+   s.pending=[];step();s.pending=[];s.partners=[{n:'Пайщики',sh:0.75,t:mi(s),hero:1}];s.hist.profit=Array(12).fill(20000);s.cash=400000;s.loan=0;const A=bbAdvice(s);
    CK(A&&A.part&&A.c===bbPartPrice(s,s.partners[0])&&A.yrs<=12&&adviceList(s).some(a=>a.icon==='🤝'&&/десятую часть дела/.test(a.text)),'при прибыли и свободных деньгах помощник советует выкупить десятую часть дела и называет срок окупаемости');
-   s.cash=100;CK(bbAdvice(s)===null&&!adviceList(s).some(a=>a.icon==='🤝'),'нет свободных денег — совета нет');}
+   s.cash=100;CK(bbAdvice(s)===null&&!adviceList(s).some(a=>a.icon==='🤝'),'нет свободных денег — совета нет');
+   // дивиденды — не вся доля прибыли (решение автора 26 ноября): до 1946 года — 70 % доли, после — 50 %
+   CK(divPayout({y:1899})===0.7&&divPayout({y:1945})===0.7&&divPayout({y:1946})===0.5&&divPayout({y:1959})===0.5&&divPct({y:1900},0.75)===Math.round(0.75*0.7*100)&&divPct({y:1950},0.2)===10,'дивидендами уходит 70 % доли прибыли до 1946 года и 50 % после: с 75 % дела — около '+divPct({y:1900},0.75)+' % прибыли');
+   s.partners=[{n:'Пайщики',sh:0.75,t:mi(s),hero:1}];s.cash=400000;s.loan=0;const h2=bbHTML(s,true);CK(/Совладельцам идут дивиденды — 70% их доли прибыли/.test(h2)&&new RegExp('около '+divPct(s,0.75)+'% прибыли фирмы').test(h2)&&/75% дела/.test(h2),'«Совладельцы» объясняют правило: доля в деле и дивиденды с неё');
+   {let found=0,e='';try{for(let k=0;k<30&&!found;k++){s.pending=[];s.shHoard=0;const ok=step();const L=s.last;if(L&&L.invSh>0&&L.profit>0){const tot=L.profit+L.invSh;found=Math.abs(L.invSh-Math.round(tot*0.75*0.7))<=2?1:-1;}}}catch(x){e=x.message;}
+    CK(found===1&&!e,'в прибыльный месяц совладельцам уходит 75 % × 70 % прибыли, остальное остаётся фирме '+e+' '+found);}}
   {seed(163);newGame('renault','fr','','normal','');CK(!(G.partners&&G.partners.length)&&startFundsLeft(G).length===0,'у героя без пайщиков в истории предложений нет');
    const V=companyValue(G);G.cash+=10000;const k=stakeAdd(G,'Проба',10000);CK(Math.abs(k-10000/(V+10000))<0.002,'доля за взнос — взнос, делённый на стоимость фирмы с этими деньгами: '+(k*100).toFixed(1)+' %');
    START1895=true;seed(163);newGame('olds','us','','normal','');const s=G;s.y=1899;s.m=3;s.pending=[];step();CK(!s.pending.some(p=>/Олдс Мотор Уоркс/.test(p.title||''))&&!s.funds,'в партии с мастерской 1895 года предложений пайщиков нет');START1895=false;}

@@ -73,7 +73,7 @@ function adviceList(s){
   // Совет появляется, когда новинке от четырёх месяцев до двух лет, а снятая не раньше чем два года назад машина давала заметно больше
   // 0.60, этап 5: у совладельцев крупная доля, прибыль есть, а в кассе лежат свободные деньги — совет выкупить часть дела
   try{const A=typeof bbAdvice==='function'?bbAdvice(s):null;
-    if(A)add(62,'🤝',`Совладельцам принадлежит ${Math.round(A.k*100)}% дела: за последний год им ушло около ${money(Math.round(A.out))} прибыли. В кассе есть свободные деньги — ${A.part?'десятую часть дела':'их последнюю долю ('+Math.round(A.st*100)+'%)'} можно выкупить за ${money(A.c)}; при нынешней прибыли это окупится за ${A.yrs<1.5?'год':Math.round(A.yrs)+' '+plural(Math.round(A.yrs),'год','года','лет')}.`,'Совладельцы',()=>{openBuyback();});}catch(_){}
+    if(A)add(62,'🤝',`Совладельцам принадлежит ${Math.round(A.k*100)}% дела: за последний год им ушло около ${money(Math.round(A.out))} дивидендов. В кассе есть свободные деньги — ${A.part?'десятую часть дела':'их последнюю долю ('+Math.round(A.st*100)+'%)'} можно выкупить за ${money(A.c)}; при нынешней прибыли это окупится за ${A.yrs<1.5?'год':Math.round(A.yrs)+' '+plural(Math.round(A.yrs),'год','года','лет')}.`,'Совладельцы',()=>{openBuyback();});}catch(_){}
   try{const t=mi(s),old=s.models.filter(m=>(m.status==='off'||m.status==='sale')&&!isMoto(m)&&m.offAt!=null&&t-m.offAt<=24&&(m.pfOff||0)>0).sort((a,b)=>b.pfOff-a.pfOff)[0],
       nw=act.filter(m=>!isMoto(m)&&t-m.launched>=4&&t-m.launched<=24&&m.revAt==null).sort((a,b)=>b.launched-a.launched)[0],now=act.reduce((a,m)=>a+(m.pf6||0),0);
     if(old&&nw&&old.offAt>=nw.launched-12&&now<old.pfOff*0.6){const back=old.status==='off';

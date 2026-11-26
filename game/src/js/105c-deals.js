@@ -107,7 +107,7 @@ function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;cons
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
   const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}${h.dlSold?` (ещё ${fmtN(h.dlSold)} — в городах, где ваши дилеры уже есть: салоны проданы за ${money(h.dlSoldV||0)})`:''}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
-  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}${h.debt&&h.debt.left>0?`. Её долги — ${money(h.debt.tot)} — гасятся два года`:''}.`,'good');
+  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% дела (дивидендами — около ${divPct(s,s.partners[s.partners.length-1].sh)}% прибыли)`}${icost?`, переоформление — ${money(icost)}`:''}${h.debt&&h.debt.left>0?`. Её долги — ${money(h.debt.tot)} — гасятся два года`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
   return h;}
 // поглощение: заводы, дилеры, местное производство, права на модели и технологии, часть покупателей
@@ -186,8 +186,8 @@ function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.countr
   // 2) финансист хочет купить долю в вас (как Дюпон в General Motors в 1917 году)
   const me=companyValue(s),pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((a,b)=>a+b,0);
   if(s.y>=1906&&me>1.5e6*cpi(s)&&pr>0&&now-(s.maStakeT??-99)>=60&&partnersShare(s)<0.5&&Math.random()<0.012){s.maStakeT=now;const k=0.2,P=Math.round(me*k*(1+0.15*maRnd('stk'+now))/1000)*1000,who=maWho(s.country,'inv'+now);
-    pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} хочет купить 20% «${s.company}»`,deck:`${money(P)} сразу · 20% прибыли — им`,
-      text:`${capF(who)} предлагает ${money(P)} за пятую часть «${s.company}». Деньги придут сразу — на цеха, дилеров и новые машины; взамен новые совладельцы будут получать 20% прибыли навсегда.\nТак в 1917 году Пьер Дюпон купил долю в General Motors — и деньги Дюпонов помогли GM обогнать Ford.`,
+    pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} хочет купить 20% «${s.company}»`,deck:`${money(P)} сразу · 20% дела — им`,
+      text:`${capF(who)} предлагает ${money(P)} за пятую часть «${s.company}». Деньги придут сразу — на цеха, дилеров и новые машины; взамен новым совладельцам — пятая часть дела: дивидендами им пойдёт около ${divPct(s,0.2)}% прибыли, пока не выкупите долю.\nТак в 1917 году Пьер Дюпон купил долю в General Motors — и деньги Дюпонов помогли GM обогнать Ford.`,
       choices:[[`Продать 20% за ${money(P)}`,'ma:stk:Y:'+P],['Отказаться','ma:stk:N']]},true);return;}
   // 3) соперник предлагает слияние (как Daimler и Benz в 1924–1926 годах)
   if(now-(s.maMergeT??-99)>=48&&Math.random()<0.012){const L=[];(COMPS[s.country]||[]).forEach((cp,i)=>{if(dealBlock(s,s.country,i))return;const M=maStat(s,s.country,i);if(M&&M.tr<-0.05&&M.V>me*0.25&&M.V<me*1.6&&!(DEAL_PROUD[M.nm]>=1))L.push({i,M});});
@@ -309,7 +309,7 @@ function renderDeal(){const s=G;if(!NEG)return;const {c,i,d}=NEG,M=maStat(s,c,i)
     <div class="label" style="margin-top:10px">Какая доля будет у вас</div><div class="chips sm">${stakes}</div>
     <div class="label" style="margin-top:8px">Как управлять</div><div class="chips sm">${chip('mode','sub','Дочерняя компания',d.mode==='sub')}${chip('mode','int','Под ваш бренд',d.mode==='int',d.st<1)}</div>
     <div class="label" style="margin-top:8px">Чем платить</div><div class="chips sm">${chip('pay','cash','Деньгами',d.pay==='cash')}${chip('pay','swap','Акциями',d.pay==='swap')}</div>
-    <p class="small" style="margin-top:8px">${why}${d.pay==='swap'?` Оплата акциями: владельцы «${esc(nm)}» станут вашими совладельцами и будут получать ≈${Math.round(clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6)*100)}% вашей прибыли.`:''}</p>
+    <p class="small" style="margin-top:8px">${why}${d.pay==='swap'?` Оплата акциями: владельцы «${esc(nm)}» станут вашими совладельцами: ≈${Math.round(clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6)*100)}% дела, дивидендами — около ${divPct(s,clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6))}% прибыли.`:''}</p>
     ${maDealNotes(s,c,i,d,M,Q)}
     <div class="label" style="margin-top:10px">Ваше предложение за ${Math.round(add*100)}%</div><div class="chips sm">${ks}</div>
     ${log?`<div class="neg-log" style="margin-top:10px">${log}</div>`:''}
@@ -351,7 +351,7 @@ function maResolve(s,key){const p=key.split(':');const k2=p[2]==='Y'||p[2]==='N'
   if(p[1]==='auc'){s.pending.shift();save();render();openAuction();return true;}
   if(p[1]==='credno'){if(s.maOffer&&s.maOffer.cred)s.maOffer=null;return false;}   // 0.51, этап 5б: кредиторы ищут другого покупателя
   if(p[1]==='aucSkip'){aucFinish(s,false);return false;}
-  if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новые совладельцы получают 20% прибыли.`,'good');}return false;}
+  if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новым совладельцам — 20% дела и дивиденды с него.`,'good');}return false;}
   if(p[1]==='sell'){if(p[2]==='Y'){const P=+p[3],mine=Math.round(P*(1-partnersShare(s)));rbArchive(s,P,mine);s.soldTo={price:P,mine,y:s.y,m:s.m,co:s.company};s.over=true;s.pending.shift();
       s.pending.push({title:'Компания продана',deck:`«${s.company}» — новым хозяевам за ${money(P)}`,text:`Вы продали «${s.company}» за ${money(P)}${mine<P?` — вам ${money(mine)}, остальное совладельцам`:''}. Новые хозяева уже меняют вывески в конторе.\nНа эти деньги можно начать снова: купить действующую марку любой страны — с заводами, дилерами и машинами — и вести её до 1930 года. Или подвести итог: посмотреть, какой след остался.`,paper:true,own:1,choices:[['Купить другую марку','ma:rebuy'],['Сравнить с историей','final']]});save();render();return true;}return false;}
   if(p[1]==='rebuy'){s.pending.shift();save();render();openRebuy();return true;}

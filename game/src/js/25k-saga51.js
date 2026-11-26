@@ -89,15 +89,15 @@ function sagaStakeSh(s,fx){const a=Math.abs(sagaCash(s,fx)),v=Math.max(1,company
 function sagaRealPre(s,fx){return fx&&(fx.loan||fx.stake)?{a:Math.abs(sagaCash(s,fx)),sh:fx.stake?+sagaStakeSh(s,fx).toFixed(3):0}:null;}
 function sagaRealApply(s,fx,R){if(!fx)return;const now=mi(s);R=R||{a:0,sh:0};
   if(fx.loan){const a=R.a;if(a>0){s.loan=(s.loan||0)+a;if(fx.cash<0)s.cash+=a;addLog(`Заём по решению в фильме: долг вырос на ${money(a)}, проценты — по обычной ставке.`);}}
-  if(fx.stake){const sh=R.sh;if(sh>=0.005){(s.partners=s.partners||[]).push({n:fx.who||'Инвесторы',sh,t:now,saga:1});addLog(`${fx.who||'Инвесторы'} вошли в дело: им причитается ${Math.round(sh*100)}% прибыли «${s.company}».`);}}
+  if(fx.stake){const sh=R.sh;if(sh>=0.005){(s.partners=s.partners||[]).push({n:fx.who||'Инвесторы',sh,t:now,saga:1});addLog(`${fx.who||'Инвесторы'} вошли в дело: им принадлежит ${Math.round(sh*100)}% «${s.company}», дивидендами — около ${divPct(s,sh)}% прибыли.`);}}
   if(fx.buyout&&(s.partners||[]).some(p=>p.saga)){const k=(s.partners||[]).filter(p=>p.saga).reduce((x,p)=>x+p.sh,0);s.partners=s.partners.filter(p=>!p.saga);addLog(`Совладельцы, вошедшие в дело раньше, выкуплены: их ${Math.round(k*100)}% прибыли снова ваши.`);}
   if(fx.wage){const up=SAGA_WAGE_UP[s.wagePol];if(up){s.wagePol=up;addLog(`Жалованье поднято: ${WAGE_POL[up].name.toLowerCase()}.`);}}
   if(fx.strike)s.strikeNext=true;
   if(fx.mil&&!s.military&&sagaWarOn(s)){s.military=true;addLog('Военный контракт подписан.');}}
 function sagaRealText(fx,s){const L=[];if(!fx)return L;
   if(fx.loan){const a=Math.abs(sagaCash(s,fx)),r=(loanRate(s)*100).toFixed(1).replace('.',',');if(a>0)L.push(fx.cash<0?`в долг: касса цела, долг +${money(a)} под ${r}% годовых`:`это заём: долг +${money(a)} под ${r}% годовых`);}
-  if(fx.stake){const sh=sagaStakeSh(s,fx);if(sh>=0.005)L.push(`взамен — ${Math.round(sh*100)}% прибыли новым совладельцам, каждый месяц (долю потом можно выкупить)`);}
-  if(fx.buyout){const k=(s.partners||[]).filter(p=>p.saga).reduce((x,p)=>x+p.sh,0);if(k>0)L.push(`совладельцы из прежних глав выкуплены: их ${Math.round(k*100)}% прибыли снова ваши`);}
+  if(fx.stake){const sh=sagaStakeSh(s,fx);if(sh>=0.005)L.push(`взамен — ${Math.round(sh*100)}% дела новым совладельцам: дивидендами около ${divPct(s,sh)}% прибыли каждый месяц (долю потом можно выкупить)`);}
+  if(fx.buyout){const k=(s.partners||[]).filter(p=>p.saga).reduce((x,p)=>x+p.sh,0);if(k>0)L.push(`совладельцы из прежних глав выкуплены: их ${Math.round(k*100)}% дела снова ваши`);}
   if(fx.wage){const up=SAGA_WAGE_UP[s.wagePol];L.push(up?`жалованье: «${WAGE_POL[up].name}» — зарплата дороже на ${Math.round((WAGE_POL[up].k/WAGE_POL[s.wagePol].k-1)*100)}%`:'жалованье у вас уже выше рынка');}
   if(fx.strike)L.push('забастовка в следующем месяце');
   if(fx.mil)L.push(s.military?'военный контракт у вас уже есть':sagaWarOn(s)?'военный контракт: до 40% мощностей — армии':'');
@@ -108,7 +108,7 @@ function sagaNowList(s){const now=mi(s),L=[],dt=u=>`до ${MONTHS_G[((u%12)+12)%
   Object.entries(s.sagaB||{}).forEach(([k,o])=>{const d=SAGA_B[k];if(!d||!o||now>=o.until)return;
     if(BN_ADD[k]){L.push(`${d[0].toLowerCase()} +${Math.round(o.v*100)}% — ${dt(o.until)}`);return;}const pc=Math.round((o.v-1)*100);if(pc)L.push(`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% — ${dt(o.until)}`);});
   Object.entries(s.sagaSeg||{}).forEach(([g,o])=>{if(!o||now>=o.until||!SEG[g])return;const pc=Math.round((o.v-1)*100);if(pc)L.push(`спрос: ${SEG[g].name.toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% — ${dt(o.until)}`);});
-  (s.partners||[]).filter(p=>p.saga).forEach(p=>L.push(`${p.n}: ${Math.round(p.sh*100)}% прибыли — пока не выкупите долю`));
+  (s.partners||[]).filter(p=>p.saga).forEach(p=>L.push(`${p.n}: ${Math.round(p.sh*100)}% дела, дивидендами около ${divPct(s,p.sh)}% прибыли — пока не выкупите долю`));
   return L;}
 function sagaNowHTML(s){const L=sagaNowList(s);if(!L.length)return '';
   return `<div class="sg-now"><b>Решения фильма действуют сейчас</b><ul>${L.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;}

@@ -132,8 +132,8 @@ function step(){
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
-  // 0.29: совладельцы по слияниям марок — их доля прибыли
-  if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k);r.invSh=(r.invSh||0)+v;r.profit-=v;}
+  // 0.29: совладельцы по слияниям марок — их доля прибыли; 0.60 — дивидендами
+  if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k*divPayout(s));r.invSh=(r.invSh||0)+v;r.profit-=v;}   // 0.60: дивиденды — не вся доля прибыли (105d-rebuy.js, divPayout)
   if(r.shDiv>0){r.invSh=(r.invSh||0)+r.shDiv;r.profit-=r.shDiv;}   // 0.51, этап 5б: особый дивиденд совладельцам по решению суда
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);

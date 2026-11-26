@@ -4714,7 +4714,7 @@ function maClose(s,c,i,d,price,how){const M=maStat(s,c,i);if(!M)return null;cons
   const where=c===s.country?'':` (${COUNTRIES[c].name})`,pt=Math.round(h.st*100);
   const what=h.mode==='int'?`поглощена и уходит под марку «${s.company}»: её заводы (+${fmtN(h.capAdd||0)} машин в месяц), ${fmtN(h.dlAdd||0)} ${plural(h.dlAdd||0,'дилер','дилера','дилеров')}${h.dlSold?` (ещё ${fmtN(h.dlSold)} — в городах, где ваши дилеры уже есть: салоны проданы за ${money(h.dlSoldV||0)})`:''}, права на модели и технологии — ваши${h.model!=null&&s.models.find(m=>m.id===h.model)?`; её «${s.models.find(m=>m.id===h.model).name}» — у вас в «Моделях»`:''}`
     :`теперь ваша дочерняя компания (${pt}%): своя марка, свои директора, вам — дивиденды`;
-  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% вашей прибыли`}${icost?`, переоформление — ${money(icost)}`:''}${h.debt&&h.debt.left>0?`. Её долги — ${money(h.debt.tot)} — гасятся два года`:''}.`,'good');
+  addLog(`🤝 «${nm}»${where} ${what}. ${d.pay==='cash'?`Заплачено ${money(price)}`:`Оплата акциями: владельцы получают ${Math.round(s.partners[s.partners.length-1].sh*100)}% дела (дивидендами — около ${divPct(s,s.partners[s.partners.length-1].sh)}% прибыли)`}${icost?`, переоформление — ${money(icost)}`:''}${h.debt&&h.debt.left>0?`. Её долги — ${money(h.debt.tot)} — гасятся два года`:''}.`,'good');
   pendingToasts.push(`🤝 ${h.mode==='int'?'Поглощена':'Дочерняя компания:'} «${nm}»`);try{auFanfare('deal');}catch(_){}
   return h;}
 // поглощение: заводы, дилеры, местное производство, права на модели и технологии, часть покупателей
@@ -4793,8 +4793,8 @@ function maInbound(s){if(s.over||s.pending.length||s.y<1902||s.soviet||(s.countr
   // 2) финансист хочет купить долю в вас (как Дюпон в General Motors в 1917 году)
   const me=companyValue(s),pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((a,b)=>a+b,0);
   if(s.y>=1906&&me>1.5e6*cpi(s)&&pr>0&&now-(s.maStakeT??-99)>=60&&partnersShare(s)<0.5&&Math.random()<0.012){s.maStakeT=now;const k=0.2,P=Math.round(me*k*(1+0.15*maRnd('stk'+now))/1000)*1000,who=maWho(s.country,'inv'+now);
-    pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} хочет купить 20% «${s.company}»`,deck:`${money(P)} сразу · 20% прибыли — им`,
-      text:`${capF(who)} предлагает ${money(P)} за пятую часть «${s.company}». Деньги придут сразу — на цеха, дилеров и новые машины; взамен новые совладельцы будут получать 20% прибыли навсегда.\nТак в 1917 году Пьер Дюпон купил долю в General Motors — и деньги Дюпонов помогли GM обогнать Ford.`,
+    pushEvent({kicker:'Финансы',own:1,title:`${capF(who)} хочет купить 20% «${s.company}»`,deck:`${money(P)} сразу · 20% дела — им`,
+      text:`${capF(who)} предлагает ${money(P)} за пятую часть «${s.company}». Деньги придут сразу — на цеха, дилеров и новые машины; взамен новым совладельцам — пятая часть дела: дивидендами им пойдёт около ${divPct(s,0.2)}% прибыли, пока не выкупите долю.\nТак в 1917 году Пьер Дюпон купил долю в General Motors — и деньги Дюпонов помогли GM обогнать Ford.`,
       choices:[[`Продать 20% за ${money(P)}`,'ma:stk:Y:'+P],['Отказаться','ma:stk:N']]},true);return;}
   // 3) соперник предлагает слияние (как Daimler и Benz в 1924–1926 годах)
   if(now-(s.maMergeT??-99)>=48&&Math.random()<0.012){const L=[];(COMPS[s.country]||[]).forEach((cp,i)=>{if(dealBlock(s,s.country,i))return;const M=maStat(s,s.country,i);if(M&&M.tr<-0.05&&M.V>me*0.25&&M.V<me*1.6&&!(DEAL_PROUD[M.nm]>=1))L.push({i,M});});
@@ -4916,7 +4916,7 @@ function renderDeal(){const s=G;if(!NEG)return;const {c,i,d}=NEG,M=maStat(s,c,i)
     <div class="label" style="margin-top:10px">Какая доля будет у вас</div><div class="chips sm">${stakes}</div>
     <div class="label" style="margin-top:8px">Как управлять</div><div class="chips sm">${chip('mode','sub','Дочерняя компания',d.mode==='sub')}${chip('mode','int','Под ваш бренд',d.mode==='int',d.st<1)}</div>
     <div class="label" style="margin-top:8px">Чем платить</div><div class="chips sm">${chip('pay','cash','Деньгами',d.pay==='cash')}${chip('pay','swap','Акциями',d.pay==='swap')}</div>
-    <p class="small" style="margin-top:8px">${why}${d.pay==='swap'?` Оплата акциями: владельцы «${esc(nm)}» станут вашими совладельцами и будут получать ≈${Math.round(clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6)*100)}% вашей прибыли.`:''}</p>
+    <p class="small" style="margin-top:8px">${why}${d.pay==='swap'?` Оплата акциями: владельцы «${esc(nm)}» станут вашими совладельцами: ≈${Math.round(clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6)*100)}% дела, дивидендами — около ${divPct(s,clamp(P/(P+Math.max(1,companyValue(s))),0.01,0.6))}% прибыли.`:''}</p>
     ${maDealNotes(s,c,i,d,M,Q)}
     <div class="label" style="margin-top:10px">Ваше предложение за ${Math.round(add*100)}%</div><div class="chips sm">${ks}</div>
     ${log?`<div class="neg-log" style="margin-top:10px">${log}</div>`:''}
@@ -4958,7 +4958,7 @@ function maResolve(s,key){const p=key.split(':');const k2=p[2]==='Y'||p[2]==='N'
   if(p[1]==='auc'){s.pending.shift();save();render();openAuction();return true;}
   if(p[1]==='credno'){if(s.maOffer&&s.maOffer.cred)s.maOffer=null;return false;}   // 0.51, этап 5б: кредиторы ищут другого покупателя
   if(p[1]==='aucSkip'){aucFinish(s,false);return false;}
-  if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новые совладельцы получают 20% прибыли.`,'good');}return false;}
+  if(p[1]==='stk'){if(p[2]==='Y'){const P=+p[3];s.cash+=P;(s.partners=s.partners||[]).push({n:'Финансисты',sh:0.2,t:mi(s)});addLog(`Продано 20% «${s.company}» за ${money(P)}: новым совладельцам — 20% дела и дивиденды с него.`,'good');}return false;}
   if(p[1]==='sell'){if(p[2]==='Y'){const P=+p[3],mine=Math.round(P*(1-partnersShare(s)));rbArchive(s,P,mine);s.soldTo={price:P,mine,y:s.y,m:s.m,co:s.company};s.over=true;s.pending.shift();
       s.pending.push({title:'Компания продана',deck:`«${s.company}» — новым хозяевам за ${money(P)}`,text:`Вы продали «${s.company}» за ${money(P)}${mine<P?` — вам ${money(mine)}, остальное совладельцам`:''}. Новые хозяева уже меняют вывески в конторе.\nНа эти деньги можно начать снова: купить действующую марку любой страны — с заводами, дилерами и машинами — и вести её до 1930 года. Или подвести итог: посмотреть, какой след остался.`,paper:true,own:1,choices:[['Купить другую марку','ma:rebuy'],['Сравнить с историей','final']]});save();render();return true;}return false;}
   if(p[1]==='rebuy'){s.pending.shift();save();render();openRebuy();return true;}
@@ -5053,6 +5053,11 @@ function openRebuy(){const s=G;if(!s)return;rbMigrate(s);const cs=Object.keys(CO
     <div style="margin-top:8px">${rows||'<p class="small muted">В этой стране продающихся марок нет.</p>'}</div>
     <p class="small muted" style="margin-top:8px">Цена — оценка аналитиков и 10% сверху: владельцы продают целиком, без торга.</p>`);}
 /* ---------- выкуп долей совладельцев ---------- */
+// 0.60, этап 5 (решение автора 26 ноября): совладельцам идут дивиденды, а не вся их доля прибыли; остальное остаётся в деле.
+// По данным Шиллера (сводка WisdomTree): до 1946 года компании США раздавали дивидендами больше 70 % прибыли, после — меньше 50 %.
+const DIV_PAY=[[1895,0.70],[1946,0.50]];
+function divPayout(s){const y=(s&&s.y)||1895;let v=DIV_PAY[0][1];for(const a of DIV_PAY)if(y>=a[0])v=a[1];return v;}
+function divPct(s,sh){return Math.round((sh||0)*divPayout(s)*100);}
 function bbPrice(s,p){return Math.max(1000,Math.round(companyValue(s)*(p.sh||0)*1.25/1000)*1000);}
 // 0.60, этап 5: крупную долю (пайщики исторического старта держат до трёх четвертей дела) выкупают частями — по десятой части дела за раз
 const BB_STEP=0.1,BB_BIG=0.25;
@@ -5061,12 +5066,12 @@ function bbPartPrice(s,p){return bbPrice(s,{sh:Math.min(BB_STEP,p.sh||0)});}
 function bbAdvice(s){const P=s.partners||[];let bi=-1;P.forEach((p,i)=>{if((p.sh>BB_BIG||p.hero)&&(bi<0||p.sh>P[bi].sh))bi=i;});
   if(bi<0||!s.last||typeof shSurplus!=='function')return null;
   const O=P[bi],part=O.sh>BB_STEP+0.005,c=part?bbPartPrice(s,O):bbPrice(s,O),st=part?BB_STEP:O.sh,k=partnersShare(s),
-    pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((x,y)=>x+y,0),out=pr>0&&k<1?pr*k/(1-k):0,yrs=out>0?c/(out*st/k):99;
+    kp=k*divPayout(s),pr=((s.hist&&s.hist.profit)||[]).slice(-12).reduce((x,y)=>x+y,0),out=pr>0&&kp<1?pr*kp/(1-kp):0,yrs=out>0?c/(out*st/k):99;
   return c>0&&shSurplus(s)>=c&&out>0&&yrs<=12?{i:bi,part,c,k,st,out,yrs}:null;}
 function bbInvPrice(s){const I=s.investor;if(!I||mi(s)>=I.until)return 0;const left=clamp((I.until-mi(s))/120,0.25,1);return Math.max(1000,Math.round(companyValue(s)*(I.sh||0)*1.2*left/1000)*1000);}
 function bbHTML(s,sh){const P=s.partners||[],I=s.investor&&mi(s)<s.investor.until?s.investor:null;if(!P.length&&!I)return '';const A=sh?' data-sh="1"':'';
-  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% прибыли</div>${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
-    P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">получают ${Math.round(p.sh*100)}% вашей прибыли${p.t!=null?' с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
+  return `<div class="label" style="margin-top:12px">Совладельцы вашей компании · ${Math.round((partnersShare(s)+(I?I.sh||0:0))*100)}% дела</div>${P.length?`<p class="small muted" style="margin:2px 0 6px">Совладельцам идут дивиденды — ${Math.round(divPayout(s)*100)}% их доли прибыли: сейчас это около ${divPct(s,partnersShare(s))}% прибыли фирмы. Остальное остаётся в деле.</p>`:''}${typeof shNoteHTML==='function'?shNoteHTML(s):''}`+
+    P.map((p,k)=>{const c=bbPrice(s,p);return `<div class="deal-row"><div style="flex:1"><b>${esc(p.n)}</b> <span class="pill">${Math.round(p.sh*100)}%</span><small class="muted">дивидендами — около ${divPct(s,p.sh)}% прибыли${p.t!=null?'; с '+(1895+Math.floor(p.t/12))+' года':''}</small></div>
       ${p.sh>BB_BIG?`<button class="btn sm" data-act="bbBuy" data-k="${k}" data-part="1"${A} ${s.cash<bbPartPrice(s,p)?'disabled':''}>10% · ${money(bbPartPrice(s,p))}</button>`:''}
       <button class="btn sm" data-act="bbBuy" data-k="${k}"${A} ${s.cash<c?'disabled':''}>${p.sh>BB_BIG?'Всё':'Выкупить'} · ${money(c)}</button></div>`;}).join('')+
     (I?(()=>{const c=bbInvPrice(s);return `<div class="deal-row"><div style="flex:1"><b>Партнёр-инвестор</b> <span class="pill">${Math.round((I.sh||0)*100)}%</span><small class="muted">его доля — до ${1895+Math.floor(I.until/12)} года</small></div><button class="btn sm" data-act="bbInv"${A} ${s.cash<c?'disabled':''}>Выкупить · ${money(c)}</button></div>`;})():'')+
@@ -5081,7 +5086,7 @@ function bbBuy(s,k,part){const p=(s.partners||[])[k];if(!p)return false;
   if(part&&p.sh>BB_STEP+0.005){const c1=bbPartPrice(s,p);if(s.cash<c1)return false;s.cash-=c1;p.sh=+(p.sh-BB_STEP).toFixed(4);
     addLog(`У «${p.n}» выкуплена десятая часть дела за ${money(c1)}: у них осталось ${Math.round(p.sh*100)}%.`,'good');return true;}
   const c=bbPrice(s,p);if(s.cash<c)return false;s.cash-=c;s.partners.splice(k,1);
-  addLog(`Выкуплена доля «${p.n}» (${Math.round(p.sh*100)}%) за ${money(c)}: эта часть прибыли теперь ваша.`,'good');return true;}
+  addLog(`Выкуплена доля «${p.n}» (${Math.round(p.sh*100)}%) за ${money(c)}: дивиденды с неё больше не уходят.`,'good');return true;}
 function bbInv(s){const c=bbInvPrice(s);if(!c||s.cash<c)return false;const sh=s.investor.sh;s.cash-=c;s.investor=null;addLog(`Выкуплена доля партнёра-инвестора (${Math.round(sh*100)}%) за ${money(c)}.`,'good');return true;}
 const RB_ACT={
   rbOpen:()=>openRebuy(),
@@ -6578,7 +6583,7 @@ function startModel(s,ST,firstName){const m=s.models[0];m.launched=mi(s);
 function startPrice(s,md){let p=refPrice(md,s);try{const bp=bestPriceFor(md,s);if(bp&&bp.price>p)p=bp.price;}catch(_){}
   let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
 // 0.60, этап 5 (решение автора 25 ноября): деньги пайщиков — не подарок. Взнос даёт пайщикам долю в деле:
-// взнос, делённый на стоимость фирмы вместе с этими деньгами. Им идёт та же доля прибыли, пока игрок не выкупит её
+// взнос, делённый на стоимость фирмы вместе с этими деньгами. С этой доли им идут дивиденды (105d-rebuy.js, divPayout), пока игрок не выкупит её
 // («Совладельцы», 105d-rebuy.js). Основателю остаётся не меньше четверти — как при любых совладельцах в игре.
 const PART_MAX=0.75;
 function stakeAdd(s,name,sum){const V=Math.max(1,companyValue(s)),P=s.partners=s.partners||[],k=clamp(sum/V,0.01,PART_MAX);
@@ -6594,10 +6599,10 @@ function fundShare(s,sum){const V=Math.max(1,companyValue(s)),k=clamp(sum/(V+sum
 function fundOffer(s,i){const HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};if(s.funds[i])return;s.funds[i]=1;
   const sum=fundSum(f),half=Math.round(sum/200)*100,A=fundShare(s,sum),B=fundShare(s,half);
   pushEvent({own:1,kicker:'Пайщики',title:f.title||'Новые деньги',deck:`${money(sum)} в кассу — и у совладельцев ${Math.round(A.tot*100)}% дела`,
-    text:f.t+`\nДеньги пайщиков — не подарок. Фирма сейчас стоит ${money(Math.round(A.V))}; пайщики получают долю, равную их взносу в стоимости фирмы, и ту же часть прибыли каждый месяц.\n• Все ${money(sum)} — у совладельцев будет ${Math.round(A.tot*100)}% дела.\n• Половина, ${money(half)}, — ${Math.round(B.tot*100)}%.${A.was>0.005?`\nСейчас у совладельцев ${Math.round(A.was*100)}%.`:''}\nДолю потом можно выкупить — целиком или по десятой части дела, по стоимости фирмы с премией 25%: «Финансы» → «Совладельцы». Чем лучше идут дела, тем выкуп дороже.\nОткажетесь — денег не будет, а фирма останется вашей.`+(f.est?'\n(Сумма — по источнику; месяц — оценка.)':''),
+    text:f.t+`\nДеньги пайщиков — не подарок. Фирма сейчас стоит ${money(Math.round(A.V))}; пайщики получают долю, равную их взносу в стоимости фирмы. С неё им каждый месяц идут дивиденды — ${Math.round(divPayout(s)*100)}% их части прибыли; остальное остаётся в деле.\n• Все ${money(sum)} — у совладельцев будет ${Math.round(A.tot*100)}% дела.\n• Половина, ${money(half)}, — ${Math.round(B.tot*100)}%.${A.was>0.005?`\nСейчас у совладельцев ${Math.round(A.was*100)}%.`:''}\nДолю потом можно выкупить — целиком или по десятой части дела, по стоимости фирмы с премией 25%: «Финансы» → «Совладельцы». Чем лучше идут дела, тем выкуп дороже.\nОткажетесь — денег не будет, а фирма останется вашей.`+(f.est?'\n(Сумма — по источнику; месяц — оценка.)':''),
     choices:[[`Взять ${money(sum)}`,'fund:Y:'+i],[`Взять половину`,'fund:H:'+i],['Отказаться','fund:N:'+i]]},true);}
 function fundResolve(s,key){const a=key.split(':'),i=+a[2],HS=HERO_START[s.pioneer],f=HS&&HS.funds&&HS.funds[i];if(!f)return;s.funds=s.funds||{};const full=fundSum(f),sum=a[1]==='H'?Math.round(full/200)*100:full,who=f.who||'Пайщики';
-  if(a[1]==='Y'||a[1]==='H'){s.cash+=sum;const k=stakeAdd(s,who,sum);s.funds[i]=2;addLog(`${who} внесли ${money(sum)}. Совладельцам принадлежит ${Math.round(k*100)}% дела и та же часть прибыли — пока вы не выкупите долю.`,'hist');}
+  if(a[1]==='Y'||a[1]==='H'){s.cash+=sum;const k=stakeAdd(s,who,sum);s.funds[i]=2;addLog(`${who} внесли ${money(sum)}. Совладельцам принадлежит ${Math.round(k*100)}% дела; дивидендами им идёт около ${divPct(s,k)}% прибыли — пока вы не выкупите долю.`,'hist');}
   else{s.funds[i]=3;addLog(`От денег пайщиков (${money(full)}) вы отказались: фирма остаётся вашей.`,'hist');}}
 function startFundsMonth(s){if(!s||s.y0==null||s.over)return;const HS=HERO_START[s.pioneer];if(!HS||!HS.funds)return;
   HS.funds.forEach((f,i)=>{if(f.day0||(s.funds&&s.funds[i])||s.y!==f.y||s.m!==f.m)return;fundOffer(s,i);});}
@@ -7784,8 +7789,8 @@ function step(){
   r.trate=taxRate(s.y);r.tax=r.profit>0?r.profit*r.trate:0;r.wtax=warTax(s,r);r.tax+=r.wtax;r.profit-=r.tax;
   // 0.28: партнёр-инвестор (марка гонщика, основанная с партнёром) получает свою долю прибыли
   if(s.investor&&mi(s)<s.investor.until&&r.profit>0){r.invSh=Math.round(r.profit*s.investor.sh);r.profit-=r.invSh;}
-  // 0.29: совладельцы по слияниям марок — их доля прибыли
-  if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k);r.invSh=(r.invSh||0)+v;r.profit-=v;}
+  // 0.29: совладельцы по слияниям марок — их доля прибыли; 0.60 — дивидендами
+  if(s.partners&&s.partners.length&&r.profit>0){const k=partnersShare(s),v=Math.round(r.profit*k*divPayout(s));r.invSh=(r.invSh||0)+v;r.profit-=v;}   // 0.60: дивиденды — не вся доля прибыли (105d-rebuy.js, divPayout)
   if(r.shDiv>0){r.invSh=(r.invSh||0)+r.shDiv;r.profit-=r.shDiv;}   // 0.51, этап 5б: особый дивиденд совладельцам по решению суда
   // 0.21: деньги от дилеров и ведомств приходят через 1–2 месяца, детали и зарплата — сразу
   r.got=arCollect(s,r.rev+r.ord);
@@ -8125,9 +8130,9 @@ function rescueNeed(s){return Math.round((-s.cash+3*(((s.last&&s.last.mat)||0)+(
 function rescueCan(s){if(s.over||s.pending.some(e=>e.rescue))return false;if(s.rescueY&&s.y-s.rescueY<10)return false;const sh=RESCUE_SH[s.diff||'normal']??0.3;
   return partnersShare(s)+sh<=0.75&&companyValue(s)>Math.max(200000*cpi(s),rescueNeed(s)*2.5);}
 function rescueOffer(s){const sh=RESCUE_SH[s.diff||'normal']??0.3,need=rescueNeed(s),who=s.country==='us'?'Du Pont и J. P. Morgan':s.country==='fr'?'Banque de Paris et des Pays-Bas':s.country==='de'?'Deutsche Bank':s.country==='uk'?'Barclays и Lloyds':'Banca Commerciale Italiana';
-  s.pending.push({rescue:{sh,need},kicker:'Банк',title:'Банкиры предлагают спасение',deck:`${who} · ${money(need)} за ${Math.round(sh*100)}% прибыли`,
-    text:`Касса «${s.company}» ушла в минус на ${money(-s.cash)} — больше, чем терпят поставщики и рабочие. Но компания стоит ${money(companyValue(s))}, и синдикат банкиров (${who}) готов закрыть долги и дать денег на три месяца работы: ${money(need)}. Взамен — ${Math.round(sh*100)}% прибыли навсегда (долю можно будет выкупить).\nТак в 1920 году Du Pont и Morgan спасли General Motors — а Уильям Дюрант потерял свою компанию.`,
-    choices:[[`Принять: ${money(need)} за ${Math.round(sh*100)}% прибыли`,'rescueYes'],['Отказаться — банкротство','rescueNo']]});}
+  s.pending.push({rescue:{sh,need},kicker:'Банк',title:'Банкиры предлагают спасение',deck:`${who} · ${money(need)} за ${Math.round(sh*100)}% дела`,
+    text:`Касса «${s.company}» ушла в минус на ${money(-s.cash)} — больше, чем терпят поставщики и рабочие. Но компания стоит ${money(companyValue(s))}, и синдикат банкиров (${who}) готов закрыть долги и дать денег на три месяца работы: ${money(need)}. Взамен — ${Math.round(sh*100)}% дела: дивидендами им пойдёт около ${divPct(s,sh)}% прибыли (долю можно будет выкупить).\nТак в 1920 году Du Pont и Morgan спасли General Motors — а Уильям Дюрант потерял свою компанию.`,
+    choices:[[`Принять: ${money(need)} за ${Math.round(sh*100)}% дела`,'rescueYes'],['Отказаться — банкротство','rescueNo']]});}
 function rescueResolve(s,key){const ev=s.pending[0],R=ev&&ev.rescue;if(!R)return;
   if(key==='rescueYes'){s.cash+=R.need;(s.partners=s.partners||[]).push({n:'Синдикат банкиров',sh:R.sh,t:mi(s)});s.rescueY=s.y;s.noRecall=mi(s)+12;s.rep=clamp(s.rep-5,0,100);
     addLog(`Банкиры спасли «${s.company}»: ${money(R.need)} в кассу, синдикат получает ${Math.round(R.sh*100)}% прибыли. Банк год не требует кредит назад.`,'bad');}
@@ -9513,7 +9518,7 @@ function adviceList(s){
   // Совет появляется, когда новинке от четырёх месяцев до двух лет, а снятая не раньше чем два года назад машина давала заметно больше
   // 0.60, этап 5: у совладельцев крупная доля, прибыль есть, а в кассе лежат свободные деньги — совет выкупить часть дела
   try{const A=typeof bbAdvice==='function'?bbAdvice(s):null;
-    if(A)add(62,'🤝',`Совладельцам принадлежит ${Math.round(A.k*100)}% дела: за последний год им ушло около ${money(Math.round(A.out))} прибыли. В кассе есть свободные деньги — ${A.part?'десятую часть дела':'их последнюю долю ('+Math.round(A.st*100)+'%)'} можно выкупить за ${money(A.c)}; при нынешней прибыли это окупится за ${A.yrs<1.5?'год':Math.round(A.yrs)+' '+plural(Math.round(A.yrs),'год','года','лет')}.`,'Совладельцы',()=>{openBuyback();});}catch(_){}
+    if(A)add(62,'🤝',`Совладельцам принадлежит ${Math.round(A.k*100)}% дела: за последний год им ушло около ${money(Math.round(A.out))} дивидендов. В кассе есть свободные деньги — ${A.part?'десятую часть дела':'их последнюю долю ('+Math.round(A.st*100)+'%)'} можно выкупить за ${money(A.c)}; при нынешней прибыли это окупится за ${A.yrs<1.5?'год':Math.round(A.yrs)+' '+plural(Math.round(A.yrs),'год','года','лет')}.`,'Совладельцы',()=>{openBuyback();});}catch(_){}
   try{const t=mi(s),old=s.models.filter(m=>(m.status==='off'||m.status==='sale')&&!isMoto(m)&&m.offAt!=null&&t-m.offAt<=24&&(m.pfOff||0)>0).sort((a,b)=>b.pfOff-a.pfOff)[0],
       nw=act.filter(m=>!isMoto(m)&&t-m.launched>=4&&t-m.launched<=24&&m.revAt==null).sort((a,b)=>b.launched-a.launched)[0],now=act.reduce((a,m)=>a+(m.pf6||0),0);
     if(old&&nw&&old.offAt>=nw.launched-12&&now<old.pfOff*0.6){const back=old.status==='off';
@@ -18010,15 +18015,15 @@ function sagaStakeSh(s,fx){const a=Math.abs(sagaCash(s,fx)),v=Math.max(1,company
 function sagaRealPre(s,fx){return fx&&(fx.loan||fx.stake)?{a:Math.abs(sagaCash(s,fx)),sh:fx.stake?+sagaStakeSh(s,fx).toFixed(3):0}:null;}
 function sagaRealApply(s,fx,R){if(!fx)return;const now=mi(s);R=R||{a:0,sh:0};
   if(fx.loan){const a=R.a;if(a>0){s.loan=(s.loan||0)+a;if(fx.cash<0)s.cash+=a;addLog(`Заём по решению в фильме: долг вырос на ${money(a)}, проценты — по обычной ставке.`);}}
-  if(fx.stake){const sh=R.sh;if(sh>=0.005){(s.partners=s.partners||[]).push({n:fx.who||'Инвесторы',sh,t:now,saga:1});addLog(`${fx.who||'Инвесторы'} вошли в дело: им причитается ${Math.round(sh*100)}% прибыли «${s.company}».`);}}
+  if(fx.stake){const sh=R.sh;if(sh>=0.005){(s.partners=s.partners||[]).push({n:fx.who||'Инвесторы',sh,t:now,saga:1});addLog(`${fx.who||'Инвесторы'} вошли в дело: им принадлежит ${Math.round(sh*100)}% «${s.company}», дивидендами — около ${divPct(s,sh)}% прибыли.`);}}
   if(fx.buyout&&(s.partners||[]).some(p=>p.saga)){const k=(s.partners||[]).filter(p=>p.saga).reduce((x,p)=>x+p.sh,0);s.partners=s.partners.filter(p=>!p.saga);addLog(`Совладельцы, вошедшие в дело раньше, выкуплены: их ${Math.round(k*100)}% прибыли снова ваши.`);}
   if(fx.wage){const up=SAGA_WAGE_UP[s.wagePol];if(up){s.wagePol=up;addLog(`Жалованье поднято: ${WAGE_POL[up].name.toLowerCase()}.`);}}
   if(fx.strike)s.strikeNext=true;
   if(fx.mil&&!s.military&&sagaWarOn(s)){s.military=true;addLog('Военный контракт подписан.');}}
 function sagaRealText(fx,s){const L=[];if(!fx)return L;
   if(fx.loan){const a=Math.abs(sagaCash(s,fx)),r=(loanRate(s)*100).toFixed(1).replace('.',',');if(a>0)L.push(fx.cash<0?`в долг: касса цела, долг +${money(a)} под ${r}% годовых`:`это заём: долг +${money(a)} под ${r}% годовых`);}
-  if(fx.stake){const sh=sagaStakeSh(s,fx);if(sh>=0.005)L.push(`взамен — ${Math.round(sh*100)}% прибыли новым совладельцам, каждый месяц (долю потом можно выкупить)`);}
-  if(fx.buyout){const k=(s.partners||[]).filter(p=>p.saga).reduce((x,p)=>x+p.sh,0);if(k>0)L.push(`совладельцы из прежних глав выкуплены: их ${Math.round(k*100)}% прибыли снова ваши`);}
+  if(fx.stake){const sh=sagaStakeSh(s,fx);if(sh>=0.005)L.push(`взамен — ${Math.round(sh*100)}% дела новым совладельцам: дивидендами около ${divPct(s,sh)}% прибыли каждый месяц (долю потом можно выкупить)`);}
+  if(fx.buyout){const k=(s.partners||[]).filter(p=>p.saga).reduce((x,p)=>x+p.sh,0);if(k>0)L.push(`совладельцы из прежних глав выкуплены: их ${Math.round(k*100)}% дела снова ваши`);}
   if(fx.wage){const up=SAGA_WAGE_UP[s.wagePol];L.push(up?`жалованье: «${WAGE_POL[up].name}» — зарплата дороже на ${Math.round((WAGE_POL[up].k/WAGE_POL[s.wagePol].k-1)*100)}%`:'жалованье у вас уже выше рынка');}
   if(fx.strike)L.push('забастовка в следующем месяце');
   if(fx.mil)L.push(s.military?'военный контракт у вас уже есть':sagaWarOn(s)?'военный контракт: до 40% мощностей — армии':'');
@@ -18029,7 +18034,7 @@ function sagaNowList(s){const now=mi(s),L=[],dt=u=>`до ${MONTHS_G[((u%12)+12)%
   Object.entries(s.sagaB||{}).forEach(([k,o])=>{const d=SAGA_B[k];if(!d||!o||now>=o.until)return;
     if(BN_ADD[k]){L.push(`${d[0].toLowerCase()} +${Math.round(o.v*100)}% — ${dt(o.until)}`);return;}const pc=Math.round((o.v-1)*100);if(pc)L.push(`${d[0].toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% — ${dt(o.until)}`);});
   Object.entries(s.sagaSeg||{}).forEach(([g,o])=>{if(!o||now>=o.until||!SEG[g])return;const pc=Math.round((o.v-1)*100);if(pc)L.push(`спрос: ${SEG[g].name.toLowerCase()} ${pc>0?'+':'−'}${Math.abs(pc)}% — ${dt(o.until)}`);});
-  (s.partners||[]).filter(p=>p.saga).forEach(p=>L.push(`${p.n}: ${Math.round(p.sh*100)}% прибыли — пока не выкупите долю`));
+  (s.partners||[]).filter(p=>p.saga).forEach(p=>L.push(`${p.n}: ${Math.round(p.sh*100)}% дела, дивидендами около ${divPct(s,p.sh)}% прибыли — пока не выкупите долю`));
   return L;}
 function sagaNowHTML(s){const L=sagaNowList(s);if(!L.length)return '';
   return `<div class="sg-now"><b>Решения фильма действуют сейчас</b><ul>${L.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;}
@@ -19181,7 +19186,7 @@ function openNewGame(){
       const P=RACERS[h.k],dr=DRIVERS.find(x=>x.id===h.k),im=dr&&IMG[DRIVER_WIKI[dr.id]];
       return `<button class="pion ${on?'on':''}" data-act="rpick" data-v="${h.k}">${im?`<div class="ph-oval"><img src="${im.src}" alt="" referrerpolicy="no-referrer"></div>`:'<div class="ph-oval rx-anon"><span>🏁</span></div>'}<div><h3>${esc(P.n)} ${tag}</h3><div class="yrs">дебют в ${P.y} году · ${esc(COUNTRIES[P.c].name)}</div><p>${esc(P.bio)}</p>${P.found?`<div class="bon"><span class="p">в истории: ${esc(P.brand)}, ${P.found}</span><span class="p">мастерство до ${Math.round(P.pk*100)}</span></div>`:''}</div></button>`;}
     const P=PIONEERS[h.k];if(h.kind==='custom')return `<button class="pion ${on?'on':''}" data-act="pion" data-v="custom">${portraitHTML('custom')}<div><h3>Свой персонаж ${tag}</h3><div class="yrs">${esc(COUNTRIES[c].name)} · ${dir==='air'?`${ASTART_C[c]||1909} год`:dir==='moto'?`${motoStartY(c)} год`:'год старта — на выбор'}</div><p>${dir==='air'?'Ангар на поле за городом, горстка мастеров и первый аэроплан.':dir==='moto'?'Мастерская с горсткой рабочих и одним мотоциклом.':P.bio}</p></div></button>`;
-    return `<button class="pion ${on?'on':''}" data-act="pion" data-v="${h.k}">${portraitHTML(h.k)}<div><h3>${P.name} ${tag}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}${dir==='air'&&P.ay?` · ${P.am?MONTHS_N[P.am]+' ':''}${P.ay} год`:''}${dir!=='air'&&HERO_START[h.k]?` · старт — ${HERO_START[h.k].m?MONTHS_N[HERO_START[h.k].m]+' ':''}${HERO_START[h.k].y} года`:''}</div><p>${P.bio}</p>${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].lead?`<p class="small muted" style="margin-top:4px">${esc(HERO_START[h.k].lead)}</p>`:''}${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].funds?`<p class="small muted" style="margin-top:4px">Пайщики по истории предложат деньги — за долю в деле и в прибыли: ${HERO_START[h.k].funds.map(f=>`${f.day0?'в первый день':MONTHS_N[f.m]+' '+f.y} — ${money(f.sum)}`).join('; ')}.</p>`:''}<div class="bon">${(P.plus||[]).map(x=>`<span class="p">${x}</span>`).join('')}${(P.minus||[]).map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`;};
+    return `<button class="pion ${on?'on':''}" data-act="pion" data-v="${h.k}">${portraitHTML(h.k)}<div><h3>${P.name} ${tag}</h3><div class="yrs">${P.yrs?P.yrs+' · ':''}${COUNTRIES[P.c].name}${dir==='air'&&P.ay?` · ${P.am?MONTHS_N[P.am]+' ':''}${P.ay} год`:''}${dir!=='air'&&HERO_START[h.k]?` · старт — ${HERO_START[h.k].m?MONTHS_N[HERO_START[h.k].m]+' ':''}${HERO_START[h.k].y} года`:''}</div><p>${P.bio}</p>${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].lead?`<p class="small muted" style="margin-top:4px">${esc(HERO_START[h.k].lead)}</p>`:''}${dir!=='air'&&HERO_START[h.k]&&HERO_START[h.k].funds?`<p class="small muted" style="margin-top:4px">Пайщики по истории предложат деньги — за долю в деле и дивиденды с неё: ${HERO_START[h.k].funds.map(f=>`${f.day0?'в первый день':MONTHS_N[f.m]+' '+f.y} — ${money(f.sum)}`).join('; ')}.</p>`:''}<div class="bon">${(P.plus||[]).map(x=>`<span class="p">${x}</span>`).join('')}${(P.minus||[]).map(x=>`<span class="m">${x}</span>`).join('')}</div></div></button>`;};
   const heroes=`<div class="label" style="margin-top:14px">Кто вы? · ${esc(COUNTRIES[c].name)}</div><div class="stack" style="margin-top:8px;gap:8px">${ngHeroList(dir,c).map(card).join('')}</div>`;
   const goal=dir==='air'?'Цель — создать величайшую авиационную фирму эпохи: в '+END_Y+' году её сравнят с настоящими — Farman, Blériot / SPAD, Fokker, Junkers, Sopwith, Curtiss, Caproni, «Дукс».':isRacer?'Путь гонщика: призы, спонсоры и заводские команды, рейтинг лучших гонщиков эпохи; накопите капитал — и основайте свою марку, дальше игра пойдёт в режиме магната.':'Цель — создать величайшую автоимперию эпохи: в 1930 году вашу компанию сравнят с настоящими — Ford, General Motors, Citroën, FIAT, Bugatti, Rolls-Royce.';
   const fields=isRacer?(rcust?`<label class="label" for="rname" style="display:block;margin-top:16px">Имя гонщика</label><input type="text" id="rname" value="${esc(d.rname)}" maxlength="28" style="margin-top:6px" placeholder="Например, Пьер Дюваль">
