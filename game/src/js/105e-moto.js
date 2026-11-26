@@ -75,7 +75,7 @@ const MSTART_TIP={fr:['легко','Франция — родина мотоци
   ru:['очень трудно','Россия: велосипедов много, мотоциклов — сотни в год, почти все ввозные; продавайте и во Франции. В войну армии нужны мотоциклы с колясками, в 1917 году — революция.']};
 function newMotoGame(pioneer,country,company,diff,firstName){
   newGame(pioneer||'custom',country,company||'Мотомастерская',diff,'',{y0:1895});const g=G,HS=!START1895&&HERO_START[pioneer]&&HERO_START[pioneer].moto?HERO_START[pioneer]:null,y=HS?Math.max(HS.y,MSTART_Y0):motoStartY(country);/* 0.60, этап 5: у героя — его год, не год страны */delete g.y0;
-  g.y=y;g.m=0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=1.2;g.capBuild=[];g.workers=6;g.ui=g.ui||{};
+  g.y=y;g.m=HS?(HS.m||0):0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=1.2;g.capBuild=[];g.workers=6;g.ui=g.ui||{};
   g.fleet={};g.mkY={};for(const cc in COUNTRIES)g.fleet[cc]=fleetHist(cc,y);
   for(const cc in COUNTRIES){const R2=mkCountry(cc,g,[]);g.mkY[cc]=SEGK.reduce((a,gg)=>a+R2.segs[gg].inc,0)*12/SEASON[0];}
   // малый капитал: мастерская, а не завод (около трети автомобильного старта)

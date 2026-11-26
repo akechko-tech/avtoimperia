@@ -1231,6 +1231,21 @@ const PIONEERS={
   frese:{role:'maker',wiki:'x:ru-frese',name:'Пётр Фрезе',yrs:'1844–1918',c:'ru',city:'Петербург',co:'Фрезе и Ко',beard:1,bio:'Петербургский каретный мастер. В 1896 году с инженером Евгением Яковлевым построил первый русский автомобиль, потом — электромобили, фургоны, пожарные и санитарные машины. В 1910 году продал дело «Руссо-Балту».',plus:['Грузовики и фургоны +12%','Своё каретное ателье: детали дешевле на 6%'],minus:['Мощности −10%'],b:{seg:{truck:1.12},matCost:0.94,lineCap:0.9}},
   ryabush:{role:'money',wiki:'x:ru-ryabushinsky',name:'Павел Рябушинский',yrs:'1871–1924',c:'ru',co:'АМО Рябушинских',beard:1,bio:'Московский банкир из династии старообрядцев-фабрикантов. В 1916 году с братьями основал АМО — завод грузовиков по лицензии «Фиата». Через два года завод национализировали, а Рябушинский уехал в Париж.',plus:['Капитал +30%','Кредит больше на 25%'],minus:['Контора дороже на 10%'],b:{cash:1.3,loan:1.25,org:1.1}},
   meller:{wiki:'x:ru-meller-1914',moto:1,name:'Юлий Меллер',yrs:'',c:'ru',co:'Дукс',beard:0,bio:'Основатель московского завода «Дукс» (1893): велосипеды, мотоциклы, паровые и рельсовые автомобили, первые русские аэросани (1908), потом — дирижабль и самолёты. В Первую мировую сменил немецкую фамилию на фамилию жены — Брежнев, после революции эмигрировал.',plus:['КБ работает на 10% быстрее','Выработка рабочих +6%'],minus:['Реклама −10%'],b:{rd:1.1,workerEff:1.06,adEff:0.9}},
+  // 0.60, этап 5: тринадцать героев новых марок (выбор автора 24 ноября). Годы и факты — claude/issledovanie-geroi-start.md.
+  // Портретов и фильмов у них пока нет; годы жизни стоят только там, где сверены.
+  packard:{role:'tech',wiki:'James Ward Packard',name:'Джеймс Паккард',c:'us',co:'Огайо Аутомобил',beard:0,bio:'Братья Джеймс и Уильям Паккард из Уоррена, штат Огайо, делали электрическое оборудование. Свою машину построили в 1899 году, в 1900-м основали «Огайо Аутомобил», а с 1902 года фирма зовётся Packard Motor Car.',plus:['Качество +6%','Люкс +10%'],minus:['Народный сегмент −12%'],b:{quality:1.06,seg:{lux:1.10,people:0.88}}},
+  leland:{role:'tech',wiki:'Henry M. Leland',name:'Генри Лиланд',c:'us',co:'Кадиллак',beard:0,bio:'Мастер точной обработки: его мастерская делала моторы для Oldsmobile. В августе 1902 года уговорил пайщиков распущенной фирмы Форда не продавать завод, а строить машину с его мотором — так появился Cadillac. За первый полный год — без малого две тысячи машин.',plus:['Качество +8%','Выработка рабочих +6%'],minus:['Детали дороже на 5%'],b:{quality:1.08,workerEff:1.06,matCost:1.05}},
+  dodge:{role:'maker',wiki:'Dodge',name:'Братья Додж',yrs:'1864–1920, 1868–1920',c:'us',co:'Додж Бразерс',beard:0,bio:'Джон и Хорас Доджи с 1900 года держали в Детройте механическую мастерскую и делали для Форда моторы, коробки и оси: к 1914 году у них работало пять тысяч человек. В ноябре 1914-го выпустили машину под своим именем — с цельностальным кузовом. За 1915 год продали 45 тысяч.',plus:['Цеха дешевле на 12%','Качество +5%'],minus:['Реклама −10%'],b:{lineCost:0.88,quality:1.05,adEff:0.9}},
+  nash:{role:'money',wiki:'Charles W. Nash',name:'Чарльз Нэш',c:'us',co:'Нэш Моторс',beard:0,bio:'Пятый президент General Motors. В 1916 году ушёл, чтобы стать себе хозяином, и купил в Кеноше завод Томаса Джеффери, где с 1902 года делали Rambler. Первая машина с именем Nash вышла в 1917 году.',plus:['Выработка рабочих +8%','Детали у поставщиков дешевле на 5%'],minus:['КБ работает на 8% медленнее'],b:{workerEff:1.08,matCost:0.95,rd:0.92}},
+  chrysler:{role:'maker',wiki:'Walter Chrysler',name:'Уолтер Крайслер',c:'us',co:'Крайслер',beard:0,bio:'Родился в Канзасе в 1875 году. В 1911-м Чарльз Нэш позвал его начальником производства Buick; потом он стал президентом Buick. В 1924 году показал машину под своим именем, в 1925-м преобразовал «Максвелл» в Chrysler Corporation, в 1928-м купил Dodge Brothers.',plus:['КБ работает на 12% быстрее','Выработка рабочих +8%'],minus:['Капитал −10%'],b:{rd:1.12,workerEff:1.08,cash:0.9}},
+  opel:{role:'maker',wiki:'Opel',name:'Братья Опель',c:'de',co:'Адам Опель',beard:0,bio:'Пятеро сыновей Адама Опеля — Карл, Вильгельм, Генрих, Фриц и Людвиг. Отец делал в Рюссельсхайме швейные машины и велосипеды; после его смерти в 1895 году главная доля в фирме — у матери, Софи. 21 января 1899 года Вильгельм купил моторную фабрику Фридриха Лутцмана из Дессау.',plus:['Цеха дешевле на 10%','Народный сегмент +10%'],minus:['Люкс −10%'],b:{lineCost:0.9,seg:{people:1.10,lux:0.90}}},
+  horch:{role:'tech',wiki:'August Horch',name:'Август Хорьх',yrs:'1868–1951',c:'de',co:'Хорьх',beard:0,bio:'Три года вёл постройку моторных экипажей у Бенца в Мангейме. В ноябре 1899 года открыл в Кёльне свою мастерскую, в январе 1901-го выехал на первой машине. В 1909 году поссорился с правлением, ушёл и основал рядом новую фирму — Audi: это «Horch» по-латыни.',plus:['КБ работает на 15% быстрее','Люкс +8%'],minus:['Капитал −10%'],b:{rd:1.15,seg:{lux:1.08},cash:0.9}},
+  austin:{role:'maker',wiki:'Herbert Austin, 1st Baron Austin',name:'Герберт Остин',yrs:'1866–1941',c:'uk',co:'Остин',beard:0,bio:'Построил первый Wolseley в 1895 году и сделал эту фирму крупнейшей в Британии. В 1905 году поссорился с хозяевами из-за конструкции мотора, собрал 37 тысяч фунтов и купил заброшенную фабрику в Лонгбридже. Первый Austin вышел в 1906 году.',plus:['Выработка рабочих +8%','Народный сегмент +8%'],minus:['Реклама −8%'],b:{workerEff:1.08,seg:{people:1.08},adEff:0.92}},
+  merosi:{role:'tech',wiki:'Giuseppe Merosi',name:'Джузеппе Мерози',c:'it',co:'А.Л.Ф.А.',beard:0,bio:'Главный конструктор миланской A.L.F.A. Фирму основал 24 июня 1910 года кавалер Уго Стелла на заводе итальянского «Даррака»; первая машина, 24 HP, — работа Мерози, и уже в 1911 году она вышла на гонки. В 1915 году завод взял Никола Ромео, с 1918-го марка зовётся Alfa Romeo.',plus:['Гонки +6%','Спорт +12%'],minus:['Народный сегмент −12%'],b:{race:0.06,seg:{sport:1.12,people:0.88}}},
+  citroen:{role:'maker',wiki:'André Citroën',name:'Андре Ситроен',yrs:'1878–1935',c:'fr',co:'Ситроен',beard:0,bio:'В войну построил на набережной Жавель завод, дававший до 55 тысяч снарядов в день. Через четыре месяца после перемирия завод уже готовили под автомобили: Type A — первая в Европе машина массового выпуска, сто штук в день.',plus:['Реклама +15%','Цеха дешевле на 10%'],minus:['Детали дороже на 4%'],b:{adEff:1.15,lineCost:0.9,matCost:1.04}},
+  hendee:{wiki:'Indian Motorcycle',moto:1,name:'Хенди и Хедстром',yrs:'1866–1943, 1871–1960',c:'us',co:'Индиан',beard:0,bio:'Велогонщик Джордж Хенди делал в Спрингфилде велосипеды, швед Оскар Хедстром строил моторные машины для треков. В январе 1901 года они договорились о деле, 25 мая был готов первый «Индиан». К 1912 году их фирма — крупнейшая в мире.',plus:['Гонки +6%','КБ работает на 10% быстрее'],minus:['Детали дороже на 5%'],b:{race:0.06,rd:1.10,matCost:1.05}},
+  bettmann:{wiki:'Siegfried Bettmann',moto:1,name:'Зигфрид Беттман',yrs:'1863–1951',c:'uk',co:'Триумф',beard:0,bio:'Приехал из Нюрнберга в Ковентри в 1883 году; с 1889-го делал велосипеды Triumph вместе с инженером Морицем Шульте. В 1902 году на усиленный велосипед поставили бельгийский мотор «Минерва» — это первый мотоцикл Triumph. В 1913 году Беттман стал мэром Ковентри.',plus:['Реклама +10%','Качество +4%'],minus:['КБ работает на 8% медленнее'],b:{adEff:1.10,quality:1.04,rd:0.92}},
+  harley:{wiki:'Harley-Davidson',moto:1,name:'Харли и Дэвидсоны',c:'us',co:'Харли-Дэвидсон',beard:0,bio:'Чертёжник Уильям Харли и модельщик Артур Дэвидсон из Милуоки в 1903 году собрали мотоцикл в дворовом сарае три на четыре с половиной метра и продали его приятелю. К ним пришли братья Артура, Уолтер и Уильям; в 1906 году построили фабрику, в 1907-м основали компанию.',plus:['Качество +6%','Цеха дешевле на 8%'],minus:['Реклама −8%'],b:{quality:1.06,lineCost:0.92,adEff:0.92}},
   custom:{name:'Свой персонаж',yrs:'',c:'de',co:'Моторные мастерские',beard:0,bio:'Никаких бонусов и слабостей. Только вы и эпоха.',plus:[],minus:[],b:{}}
 };
 // share — какую долю класса конкуренты терпят без ответа; rvRate и rvMax — как быстро и как сильно они отвечают (0.32: rvMax — штраф к вашим машинам в классе,
@@ -1942,7 +1957,41 @@ const HERO_START={
   wanderer:{y:1902,m:0,moto:1,
     lead:'Велосипедное дело Винкльхофера и Йенике — в Хемнице с 1885 года. В 1902 году завод начал строить мотоциклы; автомобили пойдут в серию только в 1913-м.'},
   meller:{y:1902,m:0,moto:1,
-    lead:'1902 год: московский «Дукс» выходит на рынок моторных экипажей.'}};
+    lead:'1902 год: московский «Дукс» выходит на рынок моторных экипажей.'},
+  // --- новые герои (этап 5, вторая часть) ---
+  // vol — завод по выпуску марки за первые двенадцать месяцев из таблицы соперников (10h-start60.js, heroVolCap); касса тогда — оценка.
+  // run — завод и до героя делал автомобили (Jeffery, Maxwell, итальянский «Даррак»): у рабочих есть опыт
+  packard:{y:1899,m:10,est:'месяц',
+    lead:'1899 год: братья Паккард в Уоррене, штат Огайо, строят первую машину под своим именем. В 1900 году они основали «Огайо Аутомобил», с 1902-го фирма зовётся Packard Motor Car.'},
+  leland:{y:1902,m:7,cap:158,cash:300000,
+    lead:'22 августа 1902 года на заводе распущенной фирмы Генри Форда основана «Кадиллак Аутомобил»: капитал подняли до 300 000 долларов. Первые машины собрали в октябре, производство пошло с марта 1903 года — 1895 машин за первый полный год.'},
+  dodge:{y:1914,m:10,cap:3750,cash:5000000,
+    lead:'14 ноября 1914 года с завода в Хамтрамке вышла первая машина братьев Додж. Акций новой фирмы продано на 5 миллионов долларов; до первой продажи пришла 21 тысяча заявок от дилеров. За 1915 год — 45 тысяч машин, третье место в США.'},
+  nash:{y:1916,m:7,vol:1,run:1,est:'касса',
+    lead:'В августе 1916 года Чарльз Нэш, ушедший с поста президента General Motors, купил в Кеноше завод Томаса Джеффери — сделка в 5 миллионов долларов. Первая машина с именем Nash выйдет в 1917 году.'},
+  chrysler:{y:1924,m:0,vol:1,run:1,est:'месяц и касса',
+    lead:'1924 год: Уолтер Крайслер показывает машину под своим именем — её делает «Максвелл Мотор». Через год он преобразует «Максвелл» в Chrysler Corporation.'},
+  opel:{y:1899,m:0,cap:1.5,est:'касса',
+    lead:'21 января 1899 года Вильгельм Опель купил за 116 887 марок моторную фабрику Фридриха Лутцмана из Дессау; её перевезли в Рюссельсхайм. Весной вышел первый «Опель» системы Лутцмана — за четыре года их сделают 65.'},
+  horch:{y:1901,m:0,est:'касса и цех',
+    lead:'Январь 1901 года: Август Хорьх выезжает из своей кёльнской мастерской на первой машине. Фирму он основал 14 ноября 1899 года с капиталом 30 000 марок.'},
+  austin:{y:1906,m:0,cap:10,cash:180000,
+    lead:'Январь 1906 года: Герберт Остин, собравший 37 000 фунтов, покупает заброшенную фабрику в Лонгбридже под Бирмингемом. За первый полный год — 120 машин и 270 работников.'},
+  merosi:{y:1910,m:5,vol:1,run:1,est:'касса',
+    lead:'24 июня 1910 года в Милане основана A.L.F.A. — «Ломбардская автомобильная фабрика»: кавалер Уго Стелла выкупил завод итальянского «Даррака» в Портелло и вернул на работу больше двухсот человек. Первая машина — 24 HP конструктора Мерози.'},
+  citroen:{y:1919,m:5,vol:1,est:'касса',
+    lead:'4 июня 1919 года Андре Ситроен показывает прессе Type A: снарядный завод на набережной Жавель переделан под автомобили. Цена — 7950 франков, первому покупателю машину отдадут 7 июля.'},
+  hendee:{y:1901,m:4,moto:1,
+    lead:'25 мая 1901 года Оскар Хедстром закончил первый «Индиан»; 1 июня его показали в Спрингфилде. Продавать мотоциклы начнут в 1902 году.'},
+  bettmann:{y:1902,m:0,moto:1,
+    lead:'1902 год: в Ковентри, на Мач-Парк-стрит, фирма Зигфрида Беттмана ставит на усиленный велосипед бельгийский мотор «Минерва» в 2¼ силы — это первый мотоцикл Triumph.'},
+  harley:{y:1903,m:0,moto:1,est:'месяц',
+    lead:'1903 год: Уильям Харли и Артур Дэвидсон собирают мотоцикл в дворовом сарае в Милуоки и продают его приятелю, Генри Мейеру. Первый дилер — Карл Ланг из Чикаго.'},
+};
+// марка героя в таблице соперников: когда игрок берёт героя, его марки среди соперников нет
+const HERO_BRAND={packard:['us','Packard'],leland:['us','Cadillac'],dodge:['us','Dodge Brothers'],nash:['us','Nash'],chrysler:['us','Maxwell / Chrysler'],
+  opel:['de','Opel'],horch:['de','Horch'],austin:['uk','Austin'],merosi:['it','Alfa Romeo'],citroen:['fr','Citroën']};
+const HERO_MBRAND={hendee:['us','Indian'],harley:['us','Harley-Davidson'],bettmann:['uk','Triumph']};
 // годы старта «своего персонажа»: игрок выбирает сам (решение автора 24 ноября 2026)
 const START_ERAS={1895:'первые мастерские',1900:'машина входит в моду',1905:'сотни фирм',1910:'конвейер на пороге',1919:'после войны',1924:'рассрочка и закрытый кузов',1930:'депрессия',1946:'после второй войны'};
 var START1895=false;   // проверки прежних наборов начинают в 1895 году, как до этапа 5 (game/test/harness.js ставит true)
@@ -3864,7 +3913,9 @@ function newGame(pioneer,country,company,diff,firstName,opt){
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};
-  if(!ST.legacy){G.y0=ST.y+ST.m/12;startTech(G,ST.y);}
+  if(!ST.legacy){G.y0=ST.y+ST.m/12;startTech(G,ST.y,ST.big);}
+  // места большого завода — так, чтобы с его техникой выходил выпуск из источника (поток и станки умножают выпуск на место)
+  if(!ST.legacy&&ST.big){try{const k=capEff(G)/G.cap;if(k>1.01)G.cap=Math.max(BIG_CAP,Math.round(ST.cap/k));}catch(e){console.warn('startCap',e);}}
   G.plantVal=G.cap*capUnitCost(G);
   G.cash=Math.round(ST.cash*bn('cash')*DIF().cash);G.rep=bn('rep',ST.rep);
   // 0.43: первая модель — легенда марки, если она ровесница старта и все её детали уже есть («Вело» Бенца 1895, «Яковлев и Фрезе» 1896).
@@ -3873,11 +3924,18 @@ function newGame(pioneer,country,company,diff,firstName,opt){
   if(!ST.legacy){G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,yf(G));const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
     G.dealers[country]=startDealers(G,country);}
   let SL=null;try{SL=ST.legacy?startLegend(G,firstName):startModel(G,ST,firstName);}catch(e){console.warn('startLegend',e);}
-  const md=G.models[0];md.price=ST.legacy?Math.round(refPrice(md,G)/10)*10:startPrice(G,md);
+  const md=G.models[0];
+  // 0.60, этап 5: герой с большим заводом — касса без числа из источника и штат на четверть мощности (10h-start60.js)
+  // завод, который герой принимает на ходу: первая машина уже идёт потоком (vol), а у рабочих — год опыта на автомобилях (run)
+  if(!ST.legacy&&ST.known){try{const q=heroVolCap(pioneer,ST.y,ST.m);if(q>0){md.vol=q;if(ST.HS.run)md.made=Math.round(q*12);}}catch(e){console.warn('startRun',e);}}
+  if(!ST.legacy&&ST.cashEst){try{G.cash=Math.round(startCashEst(G,md)*bn('cash')*DIF().cash/1000)*1000;}catch(e){console.warn('startCash',e);}}
+  if(!ST.legacy&&ST.big){try{G.workers=Math.max(6,Math.ceil(hoursPerCar(md,G)*capEff(G)*START_STAFF_K/hoursPerWorker(G)));}catch(e){console.warn('startStaff',e);}}
+  md.price=ST.legacy?Math.round(refPrice(md,G)/10)*10:startPrice(G,md,ST.big);
   G.dealers[country]=ST.legacy?Math.max(1,Math.round(dealerNeed(country,G)/3)):startDealers(G,country);
   G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,yf(G));const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
   G.maV=30;try{awInit(G,true);}catch(_){}
   const P=PIONEERS[pioneer];
+  if(!ST.legacy&&ST.known){G.aw=G.aw||{};G.aw[country]=1;}   // 0.60, этап 5: марку, которую герой принимает, дома уже знают
   if(!ST.legacy){startIntroLog(G,ST,P,md,SL);try{ownSync(G);}catch(_){}return;}
   startLead(ST);
   addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${cityOf(G)}. В мастерской ${G.workers} рабочих, первая модель — «${md.name}»${SL?' (легенда марки)':''}, дилеров — ${G.dealers[country]}.`,'hist');
@@ -5179,7 +5237,7 @@ const MSTART_TIP={fr:['легко','Франция — родина мотоци
   ru:['очень трудно','Россия: велосипедов много, мотоциклов — сотни в год, почти все ввозные; продавайте и во Франции. В войну армии нужны мотоциклы с колясками, в 1917 году — революция.']};
 function newMotoGame(pioneer,country,company,diff,firstName){
   newGame(pioneer||'custom',country,company||'Мотомастерская',diff,'',{y0:1895});const g=G,HS=!START1895&&HERO_START[pioneer]&&HERO_START[pioneer].moto?HERO_START[pioneer]:null,y=HS?Math.max(HS.y,MSTART_Y0):motoStartY(country);/* 0.60, этап 5: у героя — его год, не год страны */delete g.y0;
-  g.y=y;g.m=0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=1.2;g.capBuild=[];g.workers=6;g.ui=g.ui||{};
+  g.y=y;g.m=HS?(HS.m||0):0;g.motoStart=y;g.lines={car:0,moto:1};g.cap=1.2;g.capBuild=[];g.workers=6;g.ui=g.ui||{};
   g.fleet={};g.mkY={};for(const cc in COUNTRIES)g.fleet[cc]=fleetHist(cc,y);
   for(const cc in COUNTRIES){const R2=mkCountry(cc,g,[]);g.mkY[cc]=SEGK.reduce((a,gg)=>a+R2.segs[gg].inc,0)*12/SEASON[0];}
   // малый капитал: мастерская, а не завод (около трети автомобильного старта)
@@ -6553,18 +6611,35 @@ function riskHTML(md,s){const p=parts(md),L=RISK_PK.map(k=>({k,x:p[k],r:partRisk
 function eraCap(y,kind){const k=kind==='lux'||kind==='sport'?0.5:1;return Math.max(3,Math.round(clamp(3+0.2*(y-1895),3,24)*k));}
 function eraCash(c,y){return COUNTRIES[c].cash*tabAt(CPI,y)/tabAt(CPI,1895)*(1+0.04*(y-1895));}
 // план старта героя: год, месяц и активы. opt.y0 — год по выбору игрока («свой персонаж»)
+// связь героя с его маркой в таблицах соперников (01e-start60.js): когда игрок берёт героя, этой марки среди соперников нет
+(function(){try{for(const k in HERO_BRAND){const B=HERO_BRAND[k],cp=(COMPS[B[0]]||[]).find(x=>x.n===B[1]);if(cp&&!cp.pk)cp.pk=k;}
+  for(const k in HERO_MBRAND){const B=HERO_MBRAND[k],cp=(MCOMPS[B[0]]||[]).find(x=>x.n===B[1]);if(cp&&!cp.pk)cp.pk=k;}}catch(e){console.warn('heroBrand',e);}})();
+function heroBrand(pioneer){const B=HERO_BRAND[pioneer];return B?(COMPS[B[0]]||[]).find(x=>x.n===B[1])||null:null;}
+// выпуск марки по таблице соперников на момент t (между опорными годами — по прямой)
+function brandVolAt(cp,t){const v=cp&&cp.v;if(!v)return 0;const Y=Object.keys(v).map(Number).sort((a,b)=>a-b);if(!Y.length)return 0;if(t<=Y[0])return v[Y[0]];
+  for(let i=1;i<Y.length;i++)if(t<=Y[i]){const a=Y[i-1],b=Y[i];return v[a]+(v[b]-v[a])*(t-a)/(b-a);}return v[Y[Y.length-1]];}
+// завод героя, который принимает работающую марку: её выпуск за первые двенадцать месяцев после старта, в месяц
+function heroVolCap(pioneer,y,m){const cp=heroBrand(pioneer);return cp?Math.round(brandVolAt(cp,y+(m||0)/12+0.5)/12):0;}
+// большой завод (от ста машин в месяц) получает всю заводскую технику своего времени, а не три ступени мастерской;
+// рабочих на старте — на четверть мощности (дальше штат растёт сам); касса без числа из источника — три месяца выпуска по себестоимости (шесть — когда уже продают в рассрочку)
+const BIG_CAP=100,BIG_TECH_LAG=2,START_STAFF_K=0.25,START_CASH_M=3;
+// герой принимает работающий завод и марку (vol): её дома уже знают, и слава у неё выше, чем у новичка
+const VOL_REP=50;
+// (с 1919 года машины продают в рассрочку — деньги покупателей приходят месяцами, и фирме нужно ещё столько же на оборот)
+function startCashEst(s,md){return START_CASH_M*((s.tech&&s.tech.credit)?2:1)*capEff(s)*unitCost(md,s);}
 function startPlan(pioneer,country,opt){const HS=(!START1895&&HERO_START[pioneer])||null,o=opt||{};
   const y=clamp(Math.round(o.y0!=null?+o.y0:HS?HS.y:1895),1895,END_Y-10),m=o.y0!=null?(o.m0||0):HS?(HS.m||0):0;
   const legacy=y===1895&&m===0&&!(HS&&(HS.cap||HS.cash));   // прежний старт: мастерская 1895 года
-  return {y,m,HS,legacy,cap:legacy?3:(HS&&HS.cap)||eraCap(y,HS&&HS.kind),cash:legacy?COUNTRIES[country].cash:(HS&&HS.cash)||eraCash(country,y),kind:(HS&&HS.kind)||null,rep:(HS&&HS.rep)||30};}
+  const vc=!legacy&&HS&&HS.vol?heroVolCap(pioneer,y,m):0,cap=legacy?3:(HS&&HS.cap)||Math.max(vc,eraCap(y,HS&&HS.kind));
+  return {y,m,HS,legacy,cap,big:cap>=BIG_CAP,cashEst:!legacy&&!!(HS&&HS.vol&&!HS.cash),cash:legacy?COUNTRIES[country].cash:(HS&&HS.cash)||eraCash(country,y),kind:(HS&&HS.kind)||null,rep:(HS&&HS.rep)||(HS&&HS.vol&&!legacy?VOL_REP:30),known:!legacy&&!!(HS&&HS.vol)};}
 function startYearOf(pioneer){const HS=!START1895&&HERO_START[pioneer];return HS?HS.y:1895;}
 // год начала этой партии — для рекорда «за свои годы» и подписей
 function gameStartY(s){if(!s)return 1895;if(s.y0!=null)return Math.floor(s.y0);if(s.airStart!=null)return Math.floor(s.airStart);if(s.motoStart!=null)return Math.floor(s.motoStart);if(s.racer&&s.racer.start)return s.racer.start.y;return 1895;}
 // заводская техника, обычная для фирмы этого года: ступени, которым по истории уже четыре года и больше
 // Только станки, электричество и контроль: поток, литейку и пресс новая фирма строит сама
 const START_TECH_LAG=5,START_TECH=['tools','elec','qc'];
-function startTech(s,y){const T={};let ch=true;
-  while(ch){ch=false;for(const k of START_TECH){if(!TECH[k])continue;const lv=TECH[k].lv||[],cur=T[k]||0,nx=lv[cur];if(!nx||nx.y>y-START_TECH_LAG)continue;
+function startTech(s,y,big){const T={},KS=big?Object.keys(TECH):START_TECH,lag=big?BIG_TECH_LAG:START_TECH_LAG;let ch=true;
+  while(ch){ch=false;for(const k of KS){if(!TECH[k])continue;const lv=TECH[k].lv||[],cur=T[k]||0,nx=lv[cur];if(!nx||nx.y>y-lag)continue;
       if(nx.need&&Object.keys(nx.need).some(n=>(T[n]||0)<nx.need[n]))continue;T[k]=cur+1;ch=true;}}
   if(Object.keys(T).length)s.tech=Object.assign(s.tech||{},T);return T;}
 // первая машина: легенда марки, ближайшая к году старта, иначе — машина по образцу своего времени (эталон класса двухлетней давности)
@@ -6587,8 +6662,10 @@ function startModel(s,ST,firstName){const m=s.models[0];m.launched=mi(s);
   if(R){const d=R.d;Object.assign(m,{e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t||KIND_TRIM[R.kind]||'t1',w:d.w});if(!(firstName||'').trim()&&START_NAME[R.kind])m.name=START_NAME[R.kind];}
   return null;}
 // цена первой машины: не ниже выгодной по расчёту помощника — у маленькой фирмы себестоимость выше, чем у завода, и «цена класса» может оказаться ниже неё
-function startPrice(s,md){let p=refPrice(md,s);try{const bp=bestPriceFor(md,s);if(bp&&bp.price>p)p=bp.price;}catch(_){}
-  let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
+function startPrice(s,md,big){let p=refPrice(md,s),bp=0;try{const B=bestPriceFor(md,s);bp=(B&&B.price)||0;}catch(_){}
+  // большой завод: себестоимость «на нуле выпуска» завышена, цену берём выгодную по расчёту помощника — он считает её при том выпуске, который эта цена даст
+  if(big&&bp>0)return Math.round(bp/10)*10;
+  if(bp>p)p=bp;let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
 // 0.60, этап 5 (решение автора 25 ноября): деньги пайщиков — не подарок. Взнос даёт пайщикам долю в деле:
 // взнос, делённый на стоимость фирмы вместе с этими деньгами. С этой доли им идут дивиденды (105d-rebuy.js, divPayout), пока игрок не выкупит её
 // («Совладельцы», 105d-rebuy.js). Основателю остаётся не меньше четверти — как при любых совладельцах в игре.

@@ -245,7 +245,7 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
   seed(160);newGame('ford','us','','normal','Т');CK(START1895===true&&G.y===1895&&G.m===0&&G.cap===3&&G.workers===12&&G.y0==null&&gameStartY(G)===1895,'в проверках прежних наборов герой начинает мастерской 1895 года');
   const legacyCash=G.cash;
   START1895=false;
-  CK(Object.keys(HERO_START).every(k=>PIONEERS[k]&&HERO_START[k].lead&&HERO_START[k].y>=1895&&HERO_START[k].y<=1916),'у каждого героя из таблицы старта есть год и строка «что было по истории»');
+  CK(Object.keys(HERO_START).every(k=>PIONEERS[k]&&HERO_START[k].lead&&HERO_START[k].y>=1895&&HERO_START[k].y<=1924),'у каждого героя из таблицы старта есть год и строка «что было по истории»');
   // Форд: 1899 год, Detroit Automobile Company
   {seed(161);newGame('ford','us','','normal','');const s=G,md=s.models[0];
    CK(s.y===1899&&s.m===7&&s.cap===2&&Math.abs(s.y0-(1899+7/12))<1e-9&&gameStartY(s)===1899,'Форд начинает в августе 1899 года — с Detroit Automobile Company');
@@ -306,6 +306,33 @@ CK(END_Y===1960&&ERA_END===END_Y&&END_RACER===1930,'партия идёт до '
   {seed(163);newGame('renault','fr','','normal','');CK(!(G.partners&&G.partners.length)&&startFundsLeft(G).length===0,'у героя без пайщиков в истории предложений нет');
    const V=companyValue(G);G.cash+=10000;const k=stakeAdd(G,'Проба',10000);CK(Math.abs(k-10000/(V+10000))<0.002,'доля за взнос — взнос, делённый на стоимость фирмы с этими деньгами: '+(k*100).toFixed(1)+' %');
    START1895=true;seed(163);newGame('olds','us','','normal','');const s=G;s.y=1899;s.m=3;s.pending=[];step();CK(!s.pending.some(p=>/Олдс Мотор Уоркс/.test(p.title||''))&&!s.funds,'в партии с мастерской 1895 года предложений пайщиков нет');START1895=false;}
+  // ---- новые герои (этап 5, вторая часть): тринадцать марок, выбранных автором ----
+  {const NEW=['packard','leland','dodge','nash','chrysler','opel','horch','austin','merosi','citroen'],MOTO=['hendee','bettmann','harley'];
+   CK(NEW.concat(MOTO).every(k=>PIONEERS[k]&&PIONEERS[k].name&&PIONEERS[k].bio&&PIONEERS[k].co&&HERO_START[k]&&HERO_START[k].lead&&PIONEERS[k].plus.length>=2&&PIONEERS[k].minus.length>=1),'у тринадцати новых героев есть имя, фирма, справка, сильные и слабые стороны и строка старта');
+   CK(NEW.every(k=>!!PIONEERS[k].role&&!PIONEERS[k].moto)&&MOTO.every(k=>PIONEERS[k].moto===1&&HERO_START[k].moto===1),'десять — автомобильные, три — на пути «Мотоциклы»');
+   CK(NEW.every(k=>{const cp=heroBrand(k);return cp&&cp.pk===k;})&&MCOMPS.us.find(x=>x.n==='Indian').pk==='hendee'&&MCOMPS.us.find(x=>x.n==='Harley-Davidson').pk==='harley'&&MCOMPS.uk.find(x=>x.n==='Triumph').pk==='bettmann','у каждого героя — своя марка в таблице соперников');
+   const WANT={packard:[1899,10],leland:[1902,7],dodge:[1914,10],nash:[1916,7],chrysler:[1924,0],opel:[1899,0],horch:[1901,0],austin:[1906,0],merosi:[1910,5],citroen:[1919,5]};let bad=[],e='';
+   for(const k of NEW){try{seed(171);BOTS_OFF=false;newGame(k,PIONEERS[k].c,'','normal','');const s=G,md=s.models[0],c=s.country;
+       if(s.y!==WANT[k][0]||s.m!==WANT[k][1])bad.push(k+':год');
+       if((COMPS[c]||[]).some(cp=>cp.pk===k&&!pkIs(cp,s)))bad.push(k+':марка-соперник');
+       if(startBrief(s).indexOf(heroBrand(k).n)>=0&&!/Maxwell/.test(heroBrand(k).n)&&k!=='nash')bad.push(k+':своя марка в сводке');
+       if(legendMissing&&[md.e,md.g,md.c,md.k,md.b,md.w].some(id=>!id))bad.push(k+':машина');
+       if(!(md.price>0)||!(s.cash>0)||!(s.dealers[c]>=1)||s.dealers[c]>Math.round(dealerNeed(c,s)/3))bad.push(k+':цена/касса/дилеры');
+       for(let i=0;i<12;i++){s.pending=[];step();}if(s.over)bad.push(k+':разорение за год');
+     }catch(x){e+=k+': '+x.message+'; ';}}
+   BOTS_OFF=true;CK(!bad.length&&!e,'десять новых героев: свой год и месяц, своей марки среди соперников нет, год без решений — без ошибок и разорений '+bad.join(',')+' '+e);
+   seed(171);newGame('dodge','us','','normal','');{const s=G;CK(Math.abs(capEff(s)-3750)<60&&s.cash===Math.round(5000000*bn('cash')*DIF().cash)&&(s.tech.line||0)>=1&&s.workers<capEff(s)*3,'братья Додж: завод на 45 тысяч машин в год (по источнику), 5 миллионов долларов, поточная техника своего времени; штат — на четверть мощности ('+s.cap+' мест, '+s.workers+' рабочих)');}
+   seed(171);newGame('leland','us','','normal','');CK(Math.abs(capEff(G)-158)<8&&G.cash===Math.round(300000*bn('cash')*DIF().cash),'Лиланд: 300 тысяч долларов и завод на 1895 машин в год');
+   seed(171);newGame('austin','uk','','normal','');CK(G.cap===10&&G.cash===Math.round(180000*bn('cash')*DIF().cash),'Остин: 37 тысяч фунтов и 120 машин в год');
+   seed(171);newGame('chrysler','us','','normal','');{const s=G,want=heroVolCap('chrysler',1924,0);CK(want>5000&&Math.abs(capEff(s)-want)<want*0.03&&s.aw.us===1&&s.rep>=45&&s.cash>1e6,'Крайслер принимает работающий «Максвелл»: завод по выпуску марки из таблицы ('+want+' в месяц), марку знают, касса — три месяца выпуска (оценка)');}
+   seed(171);newGame('opel','de','','normal','');CK(G.cap===1.5&&G.y===1899&&G.m===0,'Опель: январь 1899 года, 65 машин за четыре года — полторы в месяц');
+   CK(brandVolAt({v:{1900:10,1902:30}},1901)===20&&brandVolAt({v:{1900:10}},1890)===10&&brandVolAt({v:{1900:10,1902:30}},1950)===30,'выпуск марки между опорными годами — по прямой');
+   let me='';const MW={hendee:[1901,4],bettmann:[1902,0],harley:[1903,0]};for(const k of MOTO){try{seed(171);BOTS_OFF=false;newMotoGame(k,PIONEERS[k].c,'','normal','');const s=G;
+       if(s.y!==MW[k][0]||s.m!==MW[k][1]||!s.lines.moto||s.motoStart!==MW[k][0])me+=k+':год; ';if((MCOMPS[s.country]||[]).some(cp=>cp.pk===k&&!pkIs(cp,s)))me+=k+':марка; ';
+       for(let i=0;i<12;i++){s.pending=[];step();}if(s.over)me+=k+':разорение; ';}catch(x){me+=k+': '+x.message+'; ';}}
+   BOTS_OFF=true;CK(!me,'мотоциклисты: «Индиан» — май 1901-го, Triumph — 1902, Harley-Davidson — 1903; год без решений — без ошибок '+me);
+   let he='';try{const S=[];const o=openSheet;openSheet=(t,h)=>{S.push(h);};openNewGame();dispatch&&0;openSheet=o;}catch(x){he=x.message;}
+   START1895=true;seed(171);newGame('dodge','us','','normal','');CK(G.y===1895&&G.cap===3,'в партии с мастерской 1895 года новый герой начинает как все — с трёх мест');START1895=false;}
   // свой персонаж: год выбирает игрок
   {seed(164);newGame('custom','us','','normal','',{y0:1924});const s=G,md=s.models[0];
    CK(s.y===1924&&s.cap===eraCap(1924)&&s.cash===Math.round(eraCash('us',1924)*bn('cash')*DIF().cash)&&(s.tech.tools||0)>=2&&(s.tech.elec||0)>=1&&!s.tech.line,'свой персонаж 1924 года: цех, касса и станки обычной новой фирмы этого года; конвейера нет — его строят сами');

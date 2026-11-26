@@ -6,18 +6,35 @@
 function eraCap(y,kind){const k=kind==='lux'||kind==='sport'?0.5:1;return Math.max(3,Math.round(clamp(3+0.2*(y-1895),3,24)*k));}
 function eraCash(c,y){return COUNTRIES[c].cash*tabAt(CPI,y)/tabAt(CPI,1895)*(1+0.04*(y-1895));}
 // план старта героя: год, месяц и активы. opt.y0 — год по выбору игрока («свой персонаж»)
+// связь героя с его маркой в таблицах соперников (01e-start60.js): когда игрок берёт героя, этой марки среди соперников нет
+(function(){try{for(const k in HERO_BRAND){const B=HERO_BRAND[k],cp=(COMPS[B[0]]||[]).find(x=>x.n===B[1]);if(cp&&!cp.pk)cp.pk=k;}
+  for(const k in HERO_MBRAND){const B=HERO_MBRAND[k],cp=(MCOMPS[B[0]]||[]).find(x=>x.n===B[1]);if(cp&&!cp.pk)cp.pk=k;}}catch(e){console.warn('heroBrand',e);}})();
+function heroBrand(pioneer){const B=HERO_BRAND[pioneer];return B?(COMPS[B[0]]||[]).find(x=>x.n===B[1])||null:null;}
+// выпуск марки по таблице соперников на момент t (между опорными годами — по прямой)
+function brandVolAt(cp,t){const v=cp&&cp.v;if(!v)return 0;const Y=Object.keys(v).map(Number).sort((a,b)=>a-b);if(!Y.length)return 0;if(t<=Y[0])return v[Y[0]];
+  for(let i=1;i<Y.length;i++)if(t<=Y[i]){const a=Y[i-1],b=Y[i];return v[a]+(v[b]-v[a])*(t-a)/(b-a);}return v[Y[Y.length-1]];}
+// завод героя, который принимает работающую марку: её выпуск за первые двенадцать месяцев после старта, в месяц
+function heroVolCap(pioneer,y,m){const cp=heroBrand(pioneer);return cp?Math.round(brandVolAt(cp,y+(m||0)/12+0.5)/12):0;}
+// большой завод (от ста машин в месяц) получает всю заводскую технику своего времени, а не три ступени мастерской;
+// рабочих на старте — на четверть мощности (дальше штат растёт сам); касса без числа из источника — три месяца выпуска по себестоимости (шесть — когда уже продают в рассрочку)
+const BIG_CAP=100,BIG_TECH_LAG=2,START_STAFF_K=0.25,START_CASH_M=3;
+// герой принимает работающий завод и марку (vol): её дома уже знают, и слава у неё выше, чем у новичка
+const VOL_REP=50;
+// (с 1919 года машины продают в рассрочку — деньги покупателей приходят месяцами, и фирме нужно ещё столько же на оборот)
+function startCashEst(s,md){return START_CASH_M*((s.tech&&s.tech.credit)?2:1)*capEff(s)*unitCost(md,s);}
 function startPlan(pioneer,country,opt){const HS=(!START1895&&HERO_START[pioneer])||null,o=opt||{};
   const y=clamp(Math.round(o.y0!=null?+o.y0:HS?HS.y:1895),1895,END_Y-10),m=o.y0!=null?(o.m0||0):HS?(HS.m||0):0;
   const legacy=y===1895&&m===0&&!(HS&&(HS.cap||HS.cash));   // прежний старт: мастерская 1895 года
-  return {y,m,HS,legacy,cap:legacy?3:(HS&&HS.cap)||eraCap(y,HS&&HS.kind),cash:legacy?COUNTRIES[country].cash:(HS&&HS.cash)||eraCash(country,y),kind:(HS&&HS.kind)||null,rep:(HS&&HS.rep)||30};}
+  const vc=!legacy&&HS&&HS.vol?heroVolCap(pioneer,y,m):0,cap=legacy?3:(HS&&HS.cap)||Math.max(vc,eraCap(y,HS&&HS.kind));
+  return {y,m,HS,legacy,cap,big:cap>=BIG_CAP,cashEst:!legacy&&!!(HS&&HS.vol&&!HS.cash),cash:legacy?COUNTRIES[country].cash:(HS&&HS.cash)||eraCash(country,y),kind:(HS&&HS.kind)||null,rep:(HS&&HS.rep)||(HS&&HS.vol&&!legacy?VOL_REP:30),known:!legacy&&!!(HS&&HS.vol)};}
 function startYearOf(pioneer){const HS=!START1895&&HERO_START[pioneer];return HS?HS.y:1895;}
 // год начала этой партии — для рекорда «за свои годы» и подписей
 function gameStartY(s){if(!s)return 1895;if(s.y0!=null)return Math.floor(s.y0);if(s.airStart!=null)return Math.floor(s.airStart);if(s.motoStart!=null)return Math.floor(s.motoStart);if(s.racer&&s.racer.start)return s.racer.start.y;return 1895;}
 // заводская техника, обычная для фирмы этого года: ступени, которым по истории уже четыре года и больше
 // Только станки, электричество и контроль: поток, литейку и пресс новая фирма строит сама
 const START_TECH_LAG=5,START_TECH=['tools','elec','qc'];
-function startTech(s,y){const T={};let ch=true;
-  while(ch){ch=false;for(const k of START_TECH){if(!TECH[k])continue;const lv=TECH[k].lv||[],cur=T[k]||0,nx=lv[cur];if(!nx||nx.y>y-START_TECH_LAG)continue;
+function startTech(s,y,big){const T={},KS=big?Object.keys(TECH):START_TECH,lag=big?BIG_TECH_LAG:START_TECH_LAG;let ch=true;
+  while(ch){ch=false;for(const k of KS){if(!TECH[k])continue;const lv=TECH[k].lv||[],cur=T[k]||0,nx=lv[cur];if(!nx||nx.y>y-lag)continue;
       if(nx.need&&Object.keys(nx.need).some(n=>(T[n]||0)<nx.need[n]))continue;T[k]=cur+1;ch=true;}}
   if(Object.keys(T).length)s.tech=Object.assign(s.tech||{},T);return T;}
 // первая машина: легенда марки, ближайшая к году старта, иначе — машина по образцу своего времени (эталон класса двухлетней давности)
@@ -40,8 +57,10 @@ function startModel(s,ST,firstName){const m=s.models[0];m.launched=mi(s);
   if(R){const d=R.d;Object.assign(m,{e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t||KIND_TRIM[R.kind]||'t1',w:d.w});if(!(firstName||'').trim()&&START_NAME[R.kind])m.name=START_NAME[R.kind];}
   return null;}
 // цена первой машины: не ниже выгодной по расчёту помощника — у маленькой фирмы себестоимость выше, чем у завода, и «цена класса» может оказаться ниже неё
-function startPrice(s,md){let p=refPrice(md,s);try{const bp=bestPriceFor(md,s);if(bp&&bp.price>p)p=bp.price;}catch(_){}
-  let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
+function startPrice(s,md,big){let p=refPrice(md,s),bp=0;try{const B=bestPriceFor(md,s);bp=(B&&B.price)||0;}catch(_){}
+  // большой завод: себестоимость «на нуле выпуска» завышена, цену берём выгодную по расчёту помощника — он считает её при том выпуске, который эта цена даст
+  if(big&&bp>0)return Math.round(bp/10)*10;
+  if(bp>p)p=bp;let uc=0;try{uc=unitCost(md,s);}catch(_){}return Math.round(Math.max(p,uc*1.15/(1-DEALER_MARGIN))/10)*10;}
 // 0.60, этап 5 (решение автора 25 ноября): деньги пайщиков — не подарок. Взнос даёт пайщикам долю в деле:
 // взнос, делённый на стоимость фирмы вместе с этими деньгами. С этой доли им идут дивиденды (105d-rebuy.js, divPayout), пока игрок не выкупит её
 // («Совладельцы», 105d-rebuy.js). Основателю остаётся не меньше четверти — как при любых совладельцах в игре.

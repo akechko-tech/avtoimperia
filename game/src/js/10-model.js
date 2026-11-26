@@ -555,7 +555,9 @@ function newGame(pioneer,country,company,diff,firstName,opt){
      models:[{id:1,name:mname,e:'e1',g:'g2',c:'c1',k:'k1',b:'b1',t:'t1',w:'w2',paint:'#1b1d22',price:1000,plan:'auto',status:'prod',devLeft:0,launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0}],
      hist:{cash:[],sales:[],market:[],profit:[],share:[]},peak:{year:0,share:{}},yearSold:0,last:null,log:[],pending:[],seen:{},over:false};
   if(DIF().helper)G.helper={on:1};
-  if(!ST.legacy){G.y0=ST.y+ST.m/12;startTech(G,ST.y);}
+  if(!ST.legacy){G.y0=ST.y+ST.m/12;startTech(G,ST.y,ST.big);}
+  // места большого завода — так, чтобы с его техникой выходил выпуск из источника (поток и станки умножают выпуск на место)
+  if(!ST.legacy&&ST.big){try{const k=capEff(G)/G.cap;if(k>1.01)G.cap=Math.max(BIG_CAP,Math.round(ST.cap/k));}catch(e){console.warn('startCap',e);}}
   G.plantVal=G.cap*capUnitCost(G);
   G.cash=Math.round(ST.cash*bn('cash')*DIF().cash);G.rep=bn('rep',ST.rep);
   // 0.43: первая модель — легенда марки, если она ровесница старта и все её детали уже есть («Вело» Бенца 1895, «Яковлев и Фрезе» 1896).
@@ -564,11 +566,18 @@ function newGame(pioneer,country,company,diff,firstName,opt){
   if(!ST.legacy){G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,yf(G));const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
     G.dealers[country]=startDealers(G,country);}
   let SL=null;try{SL=ST.legacy?startLegend(G,firstName):startModel(G,ST,firstName);}catch(e){console.warn('startLegend',e);}
-  const md=G.models[0];md.price=ST.legacy?Math.round(refPrice(md,G)/10)*10:startPrice(G,md);
+  const md=G.models[0];
+  // 0.60, этап 5: герой с большим заводом — касса без числа из источника и штат на четверть мощности (10h-start60.js)
+  // завод, который герой принимает на ходу: первая машина уже идёт потоком (vol), а у рабочих — год опыта на автомобилях (run)
+  if(!ST.legacy&&ST.known){try{const q=heroVolCap(pioneer,ST.y,ST.m);if(q>0){md.vol=q;if(ST.HS.run)md.made=Math.round(q*12);}}catch(e){console.warn('startRun',e);}}
+  if(!ST.legacy&&ST.cashEst){try{G.cash=Math.round(startCashEst(G,md)*bn('cash')*DIF().cash/1000)*1000;}catch(e){console.warn('startCash',e);}}
+  if(!ST.legacy&&ST.big){try{G.workers=Math.max(6,Math.ceil(hoursPerCar(md,G)*capEff(G)*START_STAFF_K/hoursPerWorker(G)));}catch(e){console.warn('startStaff',e);}}
+  md.price=ST.legacy?Math.round(refPrice(md,G)/10)*10:startPrice(G,md,ST.big);
   G.dealers[country]=ST.legacy?Math.max(1,Math.round(dealerNeed(country,G)/3)):startDealers(G,country);
   G.fleet={};G.mkY={};for(const c in COUNTRIES){G.fleet[c]=fleetHist(c,yf(G));const R=mkCountry(c,G,[]);G.mkY[c]=SEGK.reduce((a,g)=>a+R.segs[g].inc,0)*12/SEASON[0];}
   G.maV=30;try{awInit(G,true);}catch(_){}
   const P=PIONEERS[pioneer];
+  if(!ST.legacy&&ST.known){G.aw=G.aw||{};G.aw[country]=1;}   // 0.60, этап 5: марку, которую герой принимает, дома уже знают
   if(!ST.legacy){startIntroLog(G,ST,P,md,SL);try{ownSync(G);}catch(_){}return;}
   startLead(ST);
   addLog(`${P.name==='Свой персонаж'?'Вы основали':P.name+' основал'} компанию «${G.company}», ${cityOf(G)}. В мастерской ${G.workers} рабочих, первая модель — «${md.name}»${SL?' (легенда марки)':''}, дилеров — ${G.dealers[country]}.`,'hist');
