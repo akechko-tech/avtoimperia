@@ -19,6 +19,7 @@ function tradeRule(c,o,t){let r={duty:0,why:'свободная торговля
   // государство (Внешторг): пошлина и квота
   else if(c==='ru'){r=t<1903?{duty:0.3,why:'тариф 1891 года: 30%'}:t<1918.25?{duty:0.35,why:'тариф 1903 года: 35%'}:t<1921.25?{ban:1,duty:0,why:'монополия внешней торговли и блокада: ввоз закрыт'}
       :{duty:0.5,quota:t<1925?300:800,why:'ввоз только через государство (Внешторг): пошлина 50%, по лицензиям'};}
+  else if(COUNTRIES[c]&&COUNTRIES[c].new60){const L=landTrade(c,o,t);if(L)r=L;}   // 0.60, этап 6
   // гражданская война: из Советской России не вывезти ничего (блокада Антанты, 1918 — начало 1921)
   if(o==='ru'&&c!=='ru'&&t>=1918.25)r={ban:1,duty:0,why:t<1921.25?'блокада Советской России: вывоза нет':'монополия внешней торговли: машины за границу трест не продаёт'};
   // война: торговли с противником нет (блокада Германии — с августа 1914 до лета 1919)
@@ -42,7 +43,7 @@ function warCut(s,c){if(c===s.country)return false;if(s.soviet)return true;const
 function tradeBan(s,c){return c!==s.country&&(warCut(s,c)||(!localMade(s,c)&&!!ruleNow(s,c).ban));}
 function tradeQuota(s,c){if(c===s.country||localMade(s,c))return 0;return ruleNow(s,c).quota||0;}
 // Доставка: через Атлантику дороже; в войну — страховка и потери от подводных лодок
-function transAtl(s,c){return (s.country==='us')!==(c==='us');}
+function transAtl(s,c){const z=x=>x==='us'?1:x==='jp'?2:0;return z(s.country)!==z(c);}/* 0.60, этап 6: Япония — за океаном и для Европы, и для Америки */
 function shipCostTo(s,c){if(c===s.country)return 0;const base=(transAtl(s,c)?90:40)*cpi(s),war=transAtl(s,c)&&s.y>=1915&&s.y<=1918?1.6:1;return base*war;}
 function shipK(s,c){if(localMade(s,c))return 0;const L=impOf(s,c);return L&&L.ship!=null?L.ship:1;}
 // Выручка в местной валюте: в гиперинфляцию (Германия 1922–1923) марки обесцениваются, пока их везут домой
@@ -149,18 +150,18 @@ function accessOf(s,c){if(c===s.country)return {k:'home',t:'дома',col:'#d9ab
   if(q)return {k:'quota',t:`квота ${fmtN(q)}/год`,col:'#b48ae0'};return d>=0.4?{k:'high',t:`пошлина ${Math.round(d*100)}%`,col:'#f09a4e'}:d>0.02?{k:'duty',t:`пошлина ${Math.round(d*100)}%`,col:'#f0c75e'}:{k:'open',t:'без пошлины',col:'#74d39a'};}
 const WORLD_XY={us:[70,92],uk:[268,58],fr:[284,98],de:[318,72],it:[318,122],ru:[346,52],ca:[78,40]};
 function worldMap(s){const home=s.country,xy=WORLD_XY,L=s.last;
-  const land=`<path d="M20 60 Q40 20 110 26 Q150 30 150 70 Q140 120 110 138 Q70 150 40 128 Q14 104 20 60Z" fill="#1d3d5e"/><path d="M240 40 Q262 22 290 34 Q330 30 345 60 Q352 100 336 136 Q316 150 292 138 Q262 128 258 104 Q246 84 240 40Z" fill="#1d3d5e"/>`;
+  const land=`<path d="M20 60 Q40 20 110 26 Q150 30 150 70 Q140 120 110 138 Q70 150 40 128 Q14 104 20 60Z" fill="#1d3d5e"/><path d="M240 40 Q262 22 290 34 Q330 30 345 60 Q352 100 336 136 Q316 150 292 138 Q262 128 258 104 Q246 84 240 40Z" fill="#1d3d5e"/>`+(xy.jp?`<path d="M388 60 Q401 58 403 80 Q404 104 391 112 Q380 104 383 84 Q382 68 388 60Z" fill="#1d3d5e"/>`:'');/* 0.60, этап 6: Япония — за правым краем прежней карты */
   const routes=Object.keys(COUNTRIES).filter(c=>c!==home&&dealerCount(s,c)>0).map(c=>{const a=xy[home],b=xy[c];return `<path d="M${a[0]} ${a[1]} Q${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-26} ${b[0]} ${b[1]}" stroke="#8ea8c3" stroke-width="1.2" stroke-dasharray="3 3" fill="none" opacity=".7"/>`;}).join('');
   const dots=Object.keys(COUNTRIES).map(c=>{const A=accessOf(s,c),[x,y]=xy[c],sold=L&&L.mk&&L.mk[c]?L.mk[c].sold||0:0;
     return `<g><circle cx="${x}" cy="${y}" r="${c===home?13:11}" fill="${A.col}" fill-opacity="${c===home?0.9:0.75}" stroke="${c===home?'#fff':'#0d2136'}" stroke-width="${c===home?2:1}"/><text x="${x}" y="${y+3.5}" text-anchor="middle" font-size="9" font-weight="700" fill="#0d2136">${c.toUpperCase()}</text>
       <text x="${x}" y="${y+(y>100?24:-16)}" text-anchor="middle" font-size="8.5" fill="#e6eef7">${esc(A.t)}${sold?' · '+fmtN(sold):''}</text></g>`;}).join('');
   const ca=hubOn(s,'ca')||(s.hub&&s.hub.ca)?`<g><rect x="${xy.ca[0]-16}" y="${xy.ca[1]-8}" width="32" height="16" rx="4" fill="${hubOn(s,'ca')?'#74d39a':'#8ea8c3'}"/><text x="${xy.ca[0]}" y="${xy.ca[1]+3.5}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#0d2136">CA</text></g>`:'';
-  return `<svg class="world" viewBox="0 0 370 160" role="img" aria-label="Карта доступа на рынки">${land}<text x="185" y="96" text-anchor="middle" font-size="9" fill="#8ea8c3" font-style="italic">Атлантика</text>${routes}${ca}${dots}</svg>`;}
+  return `<svg class="world" viewBox="0 0 ${xy.jp?416:370} 160" role="img" aria-label="Карта доступа на рынки">${land}<text x="185" y="96" text-anchor="middle" font-size="9" fill="#8ea8c3" font-style="italic">Атлантика</text>${routes}${ca}${dots}</svg>`;}
 function worldRow(s,c){const home=s.country,A=accessOf(s,c),act=s.models.filter(m=>m.status==='prod'),md=act.sort((a,b)=>(b.lastSold||0)-(a.lastSold||0))[0],L=s.last,mk=L&&L.mk&&L.mk[c],sold=mk?mk.sold||0:0;
-  if(c===home)return `<tr><td><b>${COUNTRIES[c].name}</b> <small class="muted">дома</small></td><td>—</td><td class="n">${fmtN(sold)}</td><td class="n">${md?money(md.price*(1-dMargin(s))-unitCost(md,s)):'—'}</td></tr>`;
+  if(c===home)return `<tr><td><b>${landName(c,s.y,s.m)}</b> <small class="muted">дома</small></td><td>—</td><td class="n">${fmtN(sold)}</td><td class="n">${md?money(md.price*(1-dMargin(s))-unitCost(md,s)):'—'}</td></tr>`;
   const r=ruleNow(s,c);let perCar='—';if(md&&!A.k.startsWith('ban')){const tf=tariffOf(md,c,s),sh=shipCostTo(s,c)*shipK(s,c),IL=impOf(s,c),net=netPer(md,c,s)-unitCost(md,s);perCar=money(net)+(tf>0?` <small class="muted">(пошлина ${Math.round(tf*100)}%${sh>0?`, доставка ${money(sh)}`:''})</small>`:sh>0?` <small class="muted">(доставка ${money(sh)})</small>`:'');}
   const tp=md?tastePen(md,c,s):0,why=r.why+(tp>0.3?(r.why?'; ':'')+'вкус: берут свои машины':'');
-  return `<tr><td><b>${COUNTRIES[c].name}</b><small>${esc(licOn(s,c)?'лицензия':intIn(s,c)?'марка «'+(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
+  return `<tr><td><b>${landName(c,s.y,s.m)}</b><small>${esc(licOn(s,c)?'лицензия':intIn(s,c)?'марка «'+(acqIn(s,c)[0].nm||acqIn(s,c)[0].n)+'»':IMP_LV[impLv(s,c)].n)}</small></td><td><span style="color:${A.col}">●</span> ${esc(A.t)}<small class="muted">${esc(why)}</small></td><td class="n">${fmtN(sold)}</td><td class="n">${perCar}</td></tr>`;}
 function worldCard(s){const C=Object.keys(COUNTRIES),nA=C.filter(c=>c!==s.country&&dealerCount(s,c)>0).length;
   // 0.29: и эта карточка сворачивается
   if(!isOpen('world',true))return foldCard('world',true,`<h2>🌍 Мир</h2><span class="pill">${nA} ${plural(nA,'рынок','рынка','рынков')} за границей</span>`,'','карта доступа: пошлины, квоты, запреты, свои заводы','worldc');

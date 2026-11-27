@@ -35,7 +35,7 @@ BOTS_OFF=!!process.env.NOBOTS;   // NOBOTS=1 — без живых соперн�
 Math.random=(()=>{let a=${seed}*7919%2147483647||1;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 const STYLE=${JSON.stringify(style)},CC=${JSON.stringify(country)},QUIET=!!process.env.QUIET;
 const FORD=/^ford/.test(STYLE),RACE=FORD&&!/norace/.test(STYLE),RDX=FORD&&!/nord/.test(STYLE),LOW=/low/.test(STYLE);
-newGame(${JSON.stringify(pio)},CC,'','${diff}','Первая');
+newGame(${JSON.stringify(pio)},CC,'','${diff}','Первая',process.env.Y0?{y0:+process.env.Y0}:undefined);   // Y0=1905 — год старта своего персонажа
 G.helper={on:1};
 // 0.60, этап 5: предложение пайщиков первого дня (в игре его приносят газеты первого дня)
 try{if(G.y0!=null){const HS0=HERO_START[G.pioneer];if(HS0&&HS0.funds)HS0.funds.forEach((f,k)=>{if(f.day0)fundOffer(G,k);});}}catch(_){}

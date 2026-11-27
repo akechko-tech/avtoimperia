@@ -88,6 +88,7 @@ function fleetHist(c,t){const tb=CALIB.fleet&&CALIB.fleet[c];return tb&&Object.k
 function fleetOf(s,c){return s.fleet&&s.fleet[c]!=null?s.fleet[c]:fleetHist(c,yf(s));}
 /* ---------- экономика стран ---------- */
 function isWar(y,m,c){
+  if(COUNTRIES[c]&&COUNTRIES[c].new60){const w=landWar(y,m,c);if(w!==null)return w;}   // 0.60, этап 6: Япония, Швеция, Чехословакия — свои даты (105l-lands60.js)
   // 0.60: Вторая мировая. Британия и Франция — с сентября 1939-го, Италия — с июня 1940-го, СССР — с июня 1941-го, США — с декабря 1941-го;
   // в Европе — до мая 1945-го (Италия — до апреля), Британия и США — до августа 1945-го (Япония). Оккупация считается войной: гражданского рынка нет
   if(y>=1939){const k=y*12+m,K=(Y,Mo)=>Y*12+Mo;
@@ -103,6 +104,7 @@ function isWar(y,m,c){
 // 0.60: 1930–1960. Годовой уровень рынка задают таблицы продаж; здесь — что происходит внутри года и как это называется.
 // [доля покупателей, подпись, тон]. Даты войны и кризисов — общеизвестные; подробности событий — этапы 7 и 11
 function econ60(y,m,c,war){const k=y*12+m,K=(Y,Mo)=>Y*12+Mo,B=(a,b)=>k>=a&&k<=b;
+  if(COUNTRIES[c]&&COUNTRIES[c].new60){const e=landEcon60(y,m,c,war);if(e)return e;}
   if(c==='us'){
     if(war)return [0.3,'Война','bad'];
     if(y<=1932)return [y===1930?0.8:y===1931?0.7:0.6,'Великая депрессия','bad'];
@@ -177,6 +179,7 @@ function econ(y,m,c){
     if(t>=1928.75){f=y===1929&&m>=9?0.6:0.85;label='Пятилетка';tone='warn';}}
   if(y>=1924&&y<=1928&&c!=='ru'){label='Ревущие двадцатые';tone='good';}
   if(y===1929&&m>=9&&c!=='ru'){f=0.55;label='Биржевой крах';tone='bad';}
+  if(y<1930&&COUNTRIES[c]&&COUNTRIES[c].new60){const e=landEcon(y,m,c,{f,label,tone});f=e.f;label=e.label;tone=e.tone;}
   if(y>=1930){const e=econ60(y,m,c,war);f=e[0];label=e[1];tone=e[2];}
   return {f,label,tone,war};
 }
@@ -196,7 +199,7 @@ function sportOpen(s,c){return s.y>=(SPORT_Y[c||s.country]||1910);}
 function sportAny(s){return s.y>=1901;}
 function segAnnual(c,g,s){const t=yf(s);if(g==='truck')return mktAt(MKT_TRUCK[c],t);if(g==='moto'||g==='moside')return motoAnnual(c,g,s);const sh=tabAt(c==='us'?SEGSH.us:SEGSH.eu,t),sp=tabAt(SPORTSH[c]||SPORTSH[c==='us'?'us':'eu'],t),M=mktAt(MKT[c],t);
   if(g==='sport')return M*sp;const k={people:0,middle:1,lux:2}[g];return M*(k===1?Math.max(0,sh[1]-sp*0.6):k===2?Math.max(0,sh[2]-sp*0.4):sh[k]);}
-function prefP(g,c,s){if(g==='moto'||g==='moside')return prefMoto(g,c,s);const t=yf(s);return tabAt(PREF[g],t)*PREF_C[c][g]*(c==='us'||!PREF_EU[g]?1:c==='ru'?tabAt(PREF_RU,t):tabAt(PREF_EU[g],t));}
+function prefP(g,c,s){if(g==='moto'||g==='moside')return prefMoto(g,c,s);const t=yf(s);return tabAt(PREF[g],t)*PREF_C[c][g]*(c==='us'||!PREF_EU[g]?1:c==='ru'?tabAt(PREF_RU,t):PREF_LAND[c]?tabAt(PREF_LAND[c][g],t):tabAt(PREF_EU[g],t));}
 // Типичная цена машины такого класса и качества — ориентир для игрока
 const ALPHA_P={people:5,middle:3.5,lux:1.8,sport:2.5,truck:4},ALPHA_Q={people:2.5,middle:2.5,lux:3.5,sport:3,truck:2.6};
 // 0.32: «справедливая» цена — та, при которой машина так же привлекательна, как типичная машина соперников класса:
