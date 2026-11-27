@@ -35,6 +35,7 @@ BOTS_OFF=!!process.env.NOBOTS;   // NOBOTS=1 — без живых соперн�
 Math.random=(()=>{let a=${seed}*7919%2147483647||1;return()=>{a=(a*16807)%2147483647;return a/2147483647;};})();
 const STYLE=${JSON.stringify(style)},CC=${JSON.stringify(country)},QUIET=!!process.env.QUIET;
 const FORD=/^ford/.test(STYLE),RACE=FORD&&!/norace/.test(STYLE),RDX=FORD&&!/nord/.test(STYLE),LOW=/low/.test(STYLE);
+globalThis.ERAK=+process.env.ERAK||1;   // ERAK=4 — замер: во сколько раз крупнее обычного старт своего персонажа
 newGame(${JSON.stringify(pio)},CC,'','${diff}','Первая',process.env.Y0?{y0:+process.env.Y0}:undefined);   // Y0=1905 — год старта своего персонажа
 G.helper={on:1};
 // 0.60, этап 5: предложение пайщиков первого дня (в игре его приносят газеты первого дня)

@@ -85,6 +85,8 @@ function botMA(s,B,y){if(y<1905||y-(B.maY||0)<4||B.cash<=0||(B.acq||[]).length>=
     const v=compVol(cp,s);if(v<=0||v>myV*0.5)return;const V=typeof dealValue==='function'?dealValue(s,B.c,i)*2:0;if(V>0&&B.cash>=V*1.2)L.push({cp,i,V});});
   if(!L.length)return null;const d=L[Math.floor(Math.random()*L.length)];B.cash-=d.V;B.maY=y;s.botAcq=s.botAcq||{};s.botAcq[d.cp.n]=B.n;B.acq.push(d.cp.n);
   return {w:4,t:`${B.n} покупает ${compName(d.cp,s)}`,txt:`${B.n} купила марку ${compName(d.cp,s)} за ${money(d.V)}: её заводы и покупатели теперь в зачёте ${B.n}. Так в 1908 году Дюрант собирал General Motors из Buick, Oldsmobile и Cadillac.`};}
+// 0.60, этап 6: в заметке о ходе марка названа так, как она звалась в этот год (Laurin & Klement в 1906-м, а не Škoda)
+function botNameNow(s,B,o){try{const X=botCp(s,B),nm=X?compName(X.cp,s):B.n;if(nm&&nm!==B.n)['t','txt','deck','title'].forEach(k=>{if(typeof o[k]==='string')o[k]=o[k].split(B.n).join(nm);});}catch(_){}return o;}
 function botLog(B,s,txt){B.log=B.log||[];B.log.unshift({t:mi(s),txt});if(B.log.length>8)B.log.length=8;}
 // месяц ботов — после рынка и мирового итога (13-turn.js): продажи, касса, цены, один большой ход, первенства и сделки
 function botsMonth(s,r){if(!botsOn(s))return;if(!s.bots)botsInit(s);const D=botDif(),y=yf(s);let news=[];
@@ -96,7 +98,7 @@ function botsMonth(s,r){if(!botsOn(s))return;if(!s.bots)botsInit(s);const D=botD
     B.xs={};B.r12=(B.r12==null?rev*12:B.r12)*11/12+rev;B.u12=(B.u12==null?units*12:B.u12)*11/12+units;
     B.cash+=rev*0.1*D.bonus;
     if(s.m===0||!B.goal)B.goal=botGoal(s,B);
-    const a=botPlan(s,B,r,y);if(a){B.cash-=a.cost;const o=a.go();if(o){botLog(B,s,o.t);news.push(Object.assign({B,w:a.w},o));}}
+    const a=botPlan(s,B,r,y);if(a){B.cash-=a.cost;const o=a.go();if(o){botNameNow(s,B,o);botLog(B,s,o.t);news.push(Object.assign({B,w:a.w},o));}}
     if(s.m===(bi*5+2)%12){const f=botFirst(s,B,y);if(f){botLog(B,s,f.t);news.push(Object.assign({B},f));}}
     if(s.m===(bi*7+5)%12){const m=botMA(s,B,y);if(m){botLog(B,s,m.t);news.push(Object.assign({B},m));}}
     if(s.m===11){B.xp=B.xy;B.xy={};}});

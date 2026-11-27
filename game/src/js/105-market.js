@@ -180,8 +180,8 @@ function econ(y,m,c){
   if(y>=1924&&y<=1928&&c!=='ru'){label='Ревущие двадцатые';tone='good';}
   if(y===1929&&m>=9&&c!=='ru'){f=0.55;label='Биржевой крах';tone='bad';}
   if(y<1930&&COUNTRIES[c]&&COUNTRIES[c].new60){const e=landEcon(y,m,c,{f,label,tone});f=e.f;label=e.label;tone=e.tone;}
-  if(y>=1930){const e=econ60(y,m,c,war);f=e[0];label=e[1];tone=e[2];}
-  return {f,label,tone,war};
+  let tf;if(y>=1930){const e=econ60(y,m,c,war);f=e[0];label=e[1];tone=e[2];tf=e[3];}
+  return {f,label,tone,war,tf};/* tf — своя мера для грузовиков, когда их берёт армия или государство, а легковых не продают (0.60, этап 6) */
 }
 const SEASON=[0.72,0.76,0.95,1.15,1.25,1.2,1.1,1.02,0.97,0.95,0.8,0.92];
 function taxRate(y){return y<1914?0.08:y<=1919?0.25:0.15;}
@@ -423,7 +423,7 @@ function mkCountry(c,s,models,ov,kap,rhoOv){
 }
 // Грузовики: покупает бизнес. Каждый месяц часть фирм обновляет транспорт (доля ВВП); в Америке грузовиков на доллар ВВП
 // втрое больше: фермы, большие расстояния, дешёвые Ford TT. В войну грузовики берёт армия.
-function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*tabAt(INC[c],t)/0.72*tabAt(TRUCK_POOL,t)*truckPoolC(c,t)/prefP('truck',c,s)/12*SEASON[s.m]*(ec.war?2.5:ec.f);}
+function truckPool(c,s){const t=yf(s),ec=econ(s.y,s.m,c);return households(c,s)*tabAt(INC[c],t)/0.72*tabAt(TRUCK_POOL,t)*truckPoolC(c,t)/prefP('truck',c,s)/12*SEASON[s.m]*(ec.tf!=null?ec.tf:ec.war?2.5:ec.f);}
 // 0.26: три разных перевозки — три разных машины. Лавке, которая развозит хлеб по району, нужен фургон; мебель по городу
 // возят на полуторатонке; большие партии между городами — на трёхтонке. Одна машина другую не заменяет: фирма считает,
 // во что ей обойдётся тонно-километр — машина за годы службы и проценты, ремонт и простои (надёжность), бензин, шофёр —

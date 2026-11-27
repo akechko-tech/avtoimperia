@@ -41,6 +41,7 @@ CK(isWar(1916,0,'cz')&&!isWar(1919,0,'cz')&&!isWar(1939,1,'cz')&&isWar(1939,3,'c
 CK(isWar(1916,0,'fr')&&isWar(1942,0,'uk')&&!isWar(1925,0,'de'),'у прежних стран войны на месте');
 {const lab=[];NEW.forEach(c=>[[1905,0],[1916,0],[1923,9],[1931,0],[1938,0],[1942,0],[1947,0],[1955,0]].forEach(([y,m])=>{const e=econ(y,m,c);if(!e||!(e.f>0)||!isFinite(e.f)||typeof e.label!=='string'||/undefined|NaN/.test(e.label))lab.push(c+' '+y);}));CK(!lab.length,'у каждого года в новых странах есть хозяйство и подпись'+(lab.length?' — нет: '+lab.join(', '):''));
   CK(econ(1923,9,'jp').f<econ(1922,9,'jp').f,'Япония, осень 1923 года: землетрясение Канто бьёт по рынку');
+  CK(econ(1939,5,'jp').tf===2.5&&econ(1947,5,'jp').tf===1&&econ(1955,5,'jp').tf===undefined&&econ(1942,5,'fr').tf===undefined&&econ(1935,5,'us').tf===undefined&&truckPool('jp',{y:1939,m:5})>3*truckPool('jp',{y:1936,m:5})*0.4,'Япония 1937–1941 и 1945–1949 годов: легковых почти не продают, а грузовики берут армия и государство; у прежних стран правило не менялось');
   CK(econ(1942,0,'se').f<0.5*econ(1938,0,'se').f,'Швеция в войну: страна не воюет, но бензина нет — рынок падает');}
 /* ---------- 6. торговля ---------- */
 {const tr=(c,y)=>tradeRule(c,'fr',y);
@@ -73,6 +74,8 @@ for(const c of NEW){seed(60+c.charCodeAt(0));BOTS_OFF=false;newGame('custom',c,'
 /* ---------- 9. великие марки ---------- */
 {seed(77);BOTS_OFF=false;newGame('custom','fr','','normal','Т');run(2);const B=Object.keys(G.bots||{});
   CK(['Nissan','Toyota','Volvo','Scania-Vabis','Škoda','Tatra'].every(n=>B.includes(n))&&B.includes('Ford')&&B.includes('Renault'),'среди живых марок — Nissan, Toyota, Volvo, Scania-Vabis, Škoda и Tatra');
+  {const o1=botNameNow({y:1906,m:0},{n:'Škoda',c:'cz'},{t:'Škoda открывает лабораторию',txt:'Škoda вкладывается'}),o2=botNameNow({y:1930,m:0},{n:'Škoda',c:'cz'},{t:'Škoda открывает лабораторию'}),o3=botNameNow({y:1910,m:0},{n:'Ford',c:'us'},{t:'Ford расширяет завод'});
+    CK(o1.t==='Laurin & Klement открывает лабораторию'&&/^Laurin/.test(o1.txt)&&o2.t==='Škoda открывает лабораторию'&&o3.t==='Ford расширяет завод','в заметках о ходах марка названа именем своего года: в 1906-м — Laurin & Klement, в 1930-м — Škoda');}
   CK(botMainSeg(G.bots.Toyota)==='truck'&&G.bots.Volvo.c==='se'&&G.bots['Škoda'].c==='cz','Toyota начинает с грузовиков; Volvo — шведская, Škoda — чешская');}
 /* ---------- 10. мир для игрока из прежней страны ---------- */
 {seed(81);BOTS_OFF=false;newGame('custom','de','','normal','Т',{y0:1924});const s=G;s.cash=5e6;s.helper={on:1};let e='';
@@ -93,5 +96,13 @@ for(const c of NEW){seed(90+c.charCodeAt(0));BOTS_OFF=false;let e='';try{newMoto
   CK(draft.country==='fr'&&!/data-act="country" data-v="jp"/.test(html)&&/data-act="country" data-v="de"/.test(html),'аэропланы: новых стран в списке нет (их небо — этап 10)');
   draft={ng:true,dir:'moto',country:'cz',hero:{kind:'custom',k:'custom'},company:'Т',diff:'normal',first:'Тип 1',sy:1895};openNewGame();
   CK(draft.country==='cz'&&/1899 год/.test(html)&&!/undefined|NaN/.test(html),'мотоциклы в Чехии: мастерская 1899 года');}
+/* ---------- 13. сохранение из мира шести стран ---------- */
+{seed(95);BOTS_OFF=false;newGame('custom','fr','','normal','Т');G.helper={on:1};G.cash=5e5;let e=run(14);const s=G;
+  // как выглядела партия до этапа 6: ни марок, ни парка, ни фирм, ни великих марок новых стран
+  NEW.forEach(c=>{delete s.comps[c];delete s.mcomps[c];if(s.fleet)delete s.fleet[c];if(s.pw)delete s.pw[c];if(s.mY)delete s.mY[c];if(s.mPrev)delete s.mPrev[c];});
+  for(const k in (s.firms||{}))if(NEW.some(c=>k.indexOf(c+':')===0||k.indexOf(':'+c+':')>0))delete s.firms[k];for(const n in (s.bots||{}))if(NEW.includes(s.bots[n].c))delete s.bots[n];
+  let e2='';try{G=migrate(JSON.parse(JSON.stringify(s)))||G;e2=run(30);}catch(er){e2=er.message;}
+  CK(!e&&!e2&&NEW.every(c=>G.comps[c]&&G.comps[c].length===COMPS[c].length&&G.mcomps[c])&&Object.keys(G.bots).length===12,'партия, начатая до этапа 6, читается и идёт дальше: новые страны появляются в мире, великих марок остаётся двенадцать'+(e||e2?' — '+(e||e2):''));
+  const mk=(G.last||{}).mk||{};CK(NEW.every(c=>mk[c]&&isFinite(mk[c].size)),'в такой партии рынки новых стран считаются');}
 console.log(bad?'FAILED '+bad:'ok '+ok);if(bad)process.exitCode=1;
 `);

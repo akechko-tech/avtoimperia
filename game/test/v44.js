@@ -5,7 +5,7 @@ let bad=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  FAIL ')+m);if(!c)bad++;};
 BOTS_OFF=false;const seed=k=>{let a=k;Math.random=()=>{a=(a*16807)%2147483647;return a/2147483647;};};
 seed(5);newGame('custom','fr','Проба','normal','Ласточка');G.helper={on:1};G.botsOff=1;
 for(let k=0;k<12*12;k++){while(G.pending.length)resolve(G.pending[0].choices[0][1]);G.over=false;step();}
-ok(G.bots&&Object.keys(G.bots).length===12&&botsOn(G),'соперники живые всегда — и в партии, где в 0.41–0.43 было выбрано «по истории» (botsOff)');
+ok(G.bots&&Object.keys(G.bots).length===18&&botsOn(G),'соперники живые всегда — и в партии, где в 0.41–0.43 было выбрано «по истории» (botsOff)');
 ok(!G.world.hist,'помесячного исторического мира (0.44) в сохранении больше нет');
 const E=histEra();ok(E===HIST_ERA_DATA&&E.y0===1895&&E.y1===END_Y,'рекорд эпохи берётся из сборки (16a-era.js), эпоха 1895–'+END_Y+' (0.60: было 1930)');
 {const t0=Date.now();const F=histEraCompute();const dev=Math.max(...DOM_K.map(k=>Math.abs(F.best[k].v-E.best[k].v)/Math.max(1e-9,E.best[k].v)));ok(dev<0.005&&DOM_K.every(k=>F.best[k].n===E.best[k].n),'сборка не устарела: пересчёт рекорда эпохи совпадает ('+(Date.now()-t0)+' мс, расхождение '+(dev*100).toFixed(2)+' %)');}

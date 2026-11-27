@@ -20,7 +20,7 @@ function showMainMenu(){
   stopAuto&&stopAuto();closeSheet();closePaper();document.querySelector('.wrap').hidden=true;document.querySelector('.bar-nav').hidden=true;
   const cont=slotInfo('auto'),old=hasOldSave()&&!cont;
   MS.innerHTML=`<div class="menu-in"><div class="menu-hero">${menuArt()}</div>
-    <div class="menu-titlebox"><div class="menu-kick">1895 — 1929</div><h1 class="menu-title">Автоимперия</h1><p class="menu-sub">экономическая стратегия и гонки на заре автомобиля</p></div>
+    <div class="menu-titlebox"><div class="menu-kick">1895 — 1960</div><h1 class="menu-title">Автоимперия</h1><p class="menu-sub">экономическая стратегия и гонки на заре автомобиля</p></div>
     <div class="menu-gap"><div class="menu-leader" aria-hidden="true"><i></i><b>8</b></div></div>
     <p class="menu-cap" id="menuCap"></p>
     <div class="stack menu-btns">

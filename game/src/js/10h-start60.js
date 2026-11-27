@@ -3,8 +3,8 @@
    Герой входит в этот мир в свой год с тем, что было у его фирмы (01e-start60.js), а не с одинаковой мастерской на три места. */
 // обычная новая фирма года y: мест в цеху и касса. Числа — оценка: мастерская 1895 года (три места, касса страны) растёт с эпохой
 // (у марки дорогих и спортивных машин цех вдвое меньше)
-function eraCap(y,kind){const k=kind==='lux'||kind==='sport'?0.5:1;return Math.max(3,Math.round(clamp(3+0.2*(y-1895),3,24)*k));}
-function eraCash(c,y){return COUNTRIES[c].cash*tabAt(CPI,y)/tabAt(CPI,1895)*(1+0.04*(y-1895));}
+function eraCap(y,kind){const k=kind==='lux'||kind==='sport'?0.5:1;return Math.max(3,Math.round(clamp(3+0.2*(y-1895),3,24)*k*(globalThis.ERAK||1)));}
+function eraCash(c,y){return COUNTRIES[c].cash*tabAt(CPI,y)/tabAt(CPI,1895)*(1+0.04*(y-1895))*(globalThis.ERAK||1);}
 // план старта героя: год, месяц и активы. opt.y0 — год по выбору игрока («свой персонаж»)
 // связь героя с его маркой в таблицах соперников (01e-start60.js): когда игрок берёт героя, этой марки среди соперников нет
 (function(){try{for(const k in HERO_BRAND){const B=HERO_BRAND[k],cp=(COMPS[B[0]]||[]).find(x=>x.n===B[1]);if(cp&&!cp.pk)cp.pk=k;}
