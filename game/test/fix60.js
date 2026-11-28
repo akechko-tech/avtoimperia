@@ -79,6 +79,20 @@ const at=(s,y,m)=>{s.y=y;s.m=m||0;};
   CK(!err&&!airStRun(s,md),'итог через три месяца (на четвёртом ходу) '+err);
   const q=airQ(md,tNow(s)).q;CK(q>=0.9?airStKnown(md)&&md.stOk:!airStKnown(md),'итог по оценке '+q.toFixed(2)+': '+(airStKnown(md)?'принят':'не принят'));
   CK(/небо|конкурсы министерства|государственные/.test(trialCardHTML(s)),'строки о небе — в карточке испытаний');}
+/* ---------- 2. своя разработка в три шага ---------- */
+{seed(288);newGame('ford','us','','normal','Разработка');const s=G;s.pending=[];at(s,1928,7);s.cash=1e9;ownEnsure(s);
+  const H=[];const os=openSheet;openSheet=h=>{H.push(h);};
+  openOwn(null);CK(/Шаг 1\. Тип узла/.test(H[0])&&/data-act="ownCat" data-k="e"/.test(H[0])&&/Опыт компании:/.test(H[0])&&!/xp-row|Лёгкие сплавы · открыто/.test(H[0]),'шаг 1: плитки типов, опыт свёрнут в строку');
+  ACT.ownCat({k:'e',mo:'0'});const h1=H[H.length-1];CK(/Шаг 2\./.test(h1)&&/Другой узел/.test(h1)&&/Шаг 3\. Что делаем/.test(h1),'шаг 2 свёрнут на лучшем узле, шаг 3 открыт');
+  ACT.ownPick();const h2=H[H.length-1];const G0=ownBaseGroups(s,'e',false),n=G0.reduce((a,g)=>a+g.L.length,0);
+  CK(/У поставщиков/.test(h2)&&n>5,'шаг 2: все доступные моторы — '+n+' (раньше — не больше пяти)');
+  const cat=G0.find(g=>g.n==='У поставщиков').L[0].x;ACT.ownBase({id:cat.id});CK(ownDraft.base===cat.id&&!OWN_UI.pick,'основа — любой узел поставщика, шаг 2 свернулся');
+  CK(ownPreview(s,ownDraft)!==null,'итог считается на выбранной основе');
+  const md=s.models.find(m=>m.status==='prod');ACT.ownFromMd({id:md.id});ACT.ownCat({k:'c',mo:'0'});CK(ownDraft.base===md.c,'из карточки модели: основа — узел этой модели');
+  CK(/data-act="ownFromMd"/.test(ownModelLine(md,s)),'в карточке модели — «Улучшить узел этой модели»');
+  const t=ownArtShort('Основа — X. Цель — дешевле. Доводка 1924 года: цель — дешевле. Доводка 1925 года: цель — мощнее. Доводка 1926 года (мотор большой серии): цель — дешевле.');
+  CK(t.includes('3 доводки (1924–1926): 2 — дешевле, 1 — мощнее.')&&!/Доводка 1925/.test(t),'история доводок — одной строкой: '+t);
+  openSheet=os;}
 /* ---------- итог ---------- */
 console.log('fix60: '+ok+' ок, '+bad+' ошибок');if(bad)process.exitCode=1;
 `);

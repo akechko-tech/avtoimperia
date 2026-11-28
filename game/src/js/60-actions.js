@@ -113,11 +113,14 @@ const ACT={
   /* 0.51, этап 4в: своя разработка и авиамотор (16c-own.js) */
   ownOpen:()=>openOwn(null),ownCat:d=>openOwn(d.k,d.mo==='1'),
   digestRead:d=>digestRead(d.i),showPol:d=>{if(SHOW_POL[d.v]){G.showPol=d.v;save();render();}},/* 0.51, этап 8 */
-  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
-  ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
+  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;OWN_UI.pick=false;ownRe();},
+  /* 0.60, правки 28.11: своя разработка в три шага */
+  ownXp:()=>{OWN_UI.xp=!OWN_UI.xp;if(ownDraft)ownRe();else openOwn(null);},ownPick:()=>{OWN_UI.pick=true;ownRe();},ownAll:()=>{OWN_UI.all=true;ownRe();},
+  ownFromMd:d=>{OWN_UI.md=+d.id;ownDraft=null;openOwn(null);},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
+  ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;OWN_UI.pick=false;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
   ownTech:d=>{if(!ownDraft)return;const T=ownDraft.tech,i=T.indexOf(d.id);if(i>=0)T.splice(i,1);else{if(T.length>=2)T.shift();T.push(d.id);}ownRe();},
   ownGoal:d=>{if(!ownDraft)return;ownDraft.goal=d.g;ownRe();},ownGl:d=>{if(!ownDraft)return;ownDraft.gl=+d.n;ownRe();},
-  ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
+  ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;OWN_UI.md=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
   ownPat:d=>{if(ownPatent(G,d.id)){save();openOwn(null);render();}else toast('Не хватает денег на патент');},
   ownLic:d=>{if(ownLicSell(G,d.id)){toast('Лицензия продана');save();openOwn(null);render();}else toast('Покупателя на лицензию нет');},/* 0.51, этап 5б */
   aeOpen:()=>{aeDraft=null;openAeng();},aeRefine:d=>{const o=(G.aeng||[]).find(x=>x.id===d.id);if(!o)return;aeDraft={into:o.id,type:o.type,goal:'power',gl:1,name:o.name};openAeng();},aeType:d=>{aeDraft.type=d.k;aeDraft.name='';aeRe();},aeGoal:d=>{aeDraft.goal=d.g;aeDraft.name='';aeRe();},aeGl:d=>{aeDraft.gl=+d.n;aeDraft.name='';aeRe();},
