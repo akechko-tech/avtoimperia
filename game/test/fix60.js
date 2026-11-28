@@ -59,6 +59,26 @@ const at=(s,y,m)=>{s.y=y;s.m=m||0;};
 {seed(285);global.BOTS_OFF=false;newGame('ford','us','','normal','Война');const s=G;s.pending=[];at(s,1942,5);s.cash=1e8;let err='',nm=0;
   try{for(let k=0;k<12;k++){s.pending=[];s.cash=Math.max(s.cash,1e8);step();const R=s.last&&s.last.riv||[];nm+=R.filter(o=>o.c==='us'&&o.k==='model'&&!o.mo&&!o.kf).length;}}catch(x){err=x.message;}
   CK(!err,'год войны с живыми соперниками идёт без ошибок '+err);CK(nm===0,'в войну фирмы США не выводят новых легковых моделей: '+nm);global.BOTS_OFF=true;}
+/* ---------- 4. испытания: советы заранее, без модели, в войну; карточка видна всегда ---------- */
+{seed(286);newGame('ford','de','','normal','Испытания');const s=G;s.pending=[];at(s,1908,1);s.cash=1e7;
+  const tips=adviceList(s).filter(t=>/Испытания субсидийных грузовиков/.test(t.text));
+  CK(tips.length===1&&/в сентябре 1908/.test(tips[0].text),'за полгода: совет о конкурсе заранее — '+(tips[0]&&tips[0].text.slice(0,90)));
+  at(s,1908,5);const t2=adviceList(s).filter(t=>/запись открыта/.test(t.text)&&/грузовик/.test(t.text));
+  CK(t2.length===1&&t2[0].btn==='Конструктор','запись открыта, грузовика нет: совет «нужен грузовик» с конструктором');
+  at(s,1908,7);const t3=adviceList(s).find(t=>/запись открыта/.test(t.text)&&/грузовик/.test(t.text));CK(t3&&/последний месяц/.test(t3.text),'последний месяц записи — сказано');
+  at(s,1925,3);CK(/Испытания и госзаказы/.test(trialCardHTML(s)),'карточка испытаний видна и без конкурсов');
+  at(s,1940,3);const w=adviceList(s).find(t=>t.icon==='🪖');CK(w&&/без испытаний/.test(w.text),'война: армия берёт военную технику без испытаний — совет');}
+/* ---------- 6. испытания аэропланов: государственные по заявке, совет заранее ---------- */
+{seed(287);newGame('ford','fr','','normal','Небо');const s=G;s.pending=[];at(s,1913,4);s.cash=1e7;airInit(s);const t=tNow(s);
+  const gap=adviceList(s).find(x=>x.icon==='✈');CK(gap&&/весной и осенью/.test(gap.text)&&/Годного у вас нет/.test(gap.text),'совет: министерство выбирает весной и осенью, годного нет — '+(gap&&gap.text.slice(0,80)));
+  const md=airNewModel(s,{...airRefMd('recon',t),role:'recon',name:'Разведчик'},{status:'prod',flown:1});md.flown=1;md.status='prod';
+  CK(!airStWhy(s,md)&&/data-act="airSt"/.test(airModelHTML(md,s)),'машина армии неизвестна — можно на государственные испытания');
+  const tip=adviceList(s).find(x=>x.icon==='🎖'&&/Разведчик/.test(x.text));CK(tip&&/На испытания/.test(tip.btn),'совет: отправить на испытания');
+  const c0=s.cash;CK(airStStart(s,md.id)&&s.cash<c0&&airStRun(s,md),'отправлен на испытания');CK(!airStStart(s,md.id),'второй раз — нельзя');
+  s.pending=[];let err='';try{for(let k=0;k<4;k++){s.pending=[];step();}}catch(x){err=x.message;}
+  CK(!err&&!airStRun(s,md),'итог через три месяца (на четвёртом ходу) '+err);
+  const q=airQ(md,tNow(s)).q;CK(q>=0.9?airStKnown(md)&&md.stOk:!airStKnown(md),'итог по оценке '+q.toFixed(2)+': '+(airStKnown(md)?'принят':'не принят'));
+  CK(/небо|конкурсы министерства|государственные/.test(trialCardHTML(s)),'строки о небе — в карточке испытаний');}
 /* ---------- итог ---------- */
 console.log('fix60: '+ok+' ок, '+bad+' ошибок');if(bad)process.exitCode=1;
 `);

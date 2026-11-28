@@ -53,6 +53,8 @@ function trFee(s,T){return Math.round(Math.max(500*cpi(s),Math.min(TR_FEE_MAX*cp
 function trWhen(T,y){return (y-1895)*12+T.m;}
 function trOpenList(s){const t=mi(s),out=[];TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||!trSells(s,T.c))return;const at=trWhen(T,s.y);if(t>=at||at-t>TR_OPEN)return;const key=T.id+'|'+s.y,E=(s.trials&&s.trials.ent||{})[key];
     out.push({T,at,key,ent:E||null,best:trBest(s,T.grp,T.c),fee:trFee(s,T)});});return out;}
+// 0.60, правки 28.11: конкурсы, запись на которые откроется в ближайшие n месяцев (для совета заранее и карточки)
+function trSoonList(s,n){const t=mi(s),out=[];TRIALS.forEach(T=>{if(!trSells(s,T.c))return;for(const y of [s.y,s.y+1]){if(y<T.y0||y>T.y1)continue;const at=trWhen(T,y);if(at-t<=TR_OPEN||at-t>TR_OPEN+n)continue;out.push({T,y,at,best:trBest(s,T.grp,T.c)});break;}});return out.sort((a,b)=>a.at-b.at);}
 function trialEnter(s,id,mdId){const o=trOpenList(s).find(x=>x.T.id===id);if(!o||o.ent)return false;const md=mdId!=null?s.models.find(m=>m.id===mdId):o.best&&o.best.m;if(!md||s.cash<o.fee)return false;
   s.cash-=o.fee;s.trials=s.trials||{};(s.trials.ent=s.trials.ent||{})[o.key]={md:md.id,fee:o.fee};addLog(`«${md.name}» заявлена: ${o.T.n} (${COUNTRIES[o.T.c].name}), ${MONTHS[o.T.m]} ${s.y}. Взнос ${money(o.fee)}.`);return true;}
 // соперники на конкурсе: марки страны (их сила — эталон вида и ход фирмы, если он есть)
@@ -101,7 +103,8 @@ function trTestDone(s,q){const md=s.models.find(m=>m.id===q.md);if(!md)return;co
 function trialsMonth(s,r){if(s.mode==='racer')return;const t=mi(s),S=s.trials=s.trials||{};
   TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||trWhen(T,s.y)!==t)return;const key=T.id+'|'+s.y,E=(S.ent||{})[key];if(E){try{trialRun(s,T,E);}catch(e){console.warn('trial',e);}delete S.ent[key];}
     else if(trSells(s,T.c)&&trModels(s,T.grp).length)addLog(`${T.n} (${COUNTRIES[T.c].name}) прошли без вас.`,'hist');});
-  if(S.q&&S.q.length){const D=S.q.filter(q=>q.at<=t);S.q=S.q.filter(q=>q.at>t);D.forEach(q=>{try{trTestDone(s,q);}catch(e){console.warn('trial test',e);}});}}
+  if(S.q&&S.q.length){const D=S.q.filter(q=>q.at<=t);S.q=S.q.filter(q=>q.at>t);D.forEach(q=>{try{trTestDone(s,q);}catch(e){console.warn('trial test',e);}});}
+  try{if(typeof airStMonth==='function')airStMonth(s);}catch(e){console.warn('air state trials',e);}}
 /* ---------- рынок: кого армия закупает и кому казна доплачивает ---------- */
 // армия в мирное время закупает только технику, принятую на полигоне (эталон соперников принят всегда)
 function trGate(md,u,c,s){const U=TRUCK_USE[u];if(!U||U.grp!=='mil'||!md||md.probe||md.ref)return true;if(isWar(s.y,s.m,c))return true;if(trCertS(md,c,'mil',s))return true;
@@ -138,8 +141,17 @@ function openTrials(){const s=G,O=trOpenList(s),t=mi(s);
     ${soon?`<div class="label" style="margin-top:10px">Конкурсы на ваших рынках</div>${soon}`:''}
     ${need?`<div class="label" style="margin-top:10px">Приёмка по заявке</div>${need}`:''}
     ${certs?`<div class="label" style="margin-top:10px">Свидетельства</div>${certs}`:''}`);}
-function trialAdvice(s,add){if(s.mode==='racer')return;
-  trOpenList(s).forEach(o=>{if(o.ent||!o.best||s.cash<o.fee)return;add(66,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS[o.T.m].toLowerCase()}): запись открыта. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
+function trialAdvice(s,add){if(s.mode==='racer')return;const t=mi(s);
+  // 0.60, правки 28.11: в последний месяц записи совет выше; модели нет — что нужно (раньше совет молчал)
+  trOpenList(s).forEach(o=>{if(o.ent)return;const last=trWhen(o.T,s.y)-t<=1,G2=TR_GRP[o.T.grp];
+    if(!o.best){add(last?62:52,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS_N[o.T.m]}): запись открыта${last?' — последний месяц':''}, а ${G2.n}а для заявки у вас нет. Победителю — заказ и свидетельство: нужен ${G2.n}.`,'Конструктор',()=>{openDesigner(o.T.grp==='farm'?'tractor':'truck');},'models');return;}
+    if(s.cash<o.fee)return;add(last?76:66,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS_N[o.T.m]}): запись открыта${last?' — последний месяц':''}. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
+  // заранее: запись откроется в ближайшие полгода
+  trSoonList(s,6).forEach(o=>{const G2=TR_GRP[o.T.grp];add(34,'🗓',`${o.T.n} (${COUNTRIES[o.T.c].name}) — в ${MONTHS_P[o.T.m]} ${o.y}, запись за ${TR_OPEN} месяца. ${o.best?`Ваш лучший ${G2.n} — «${o.best.m.name}», ${Math.round(o.best.sc*100)} к образцу года.`:`${G2.n[0].toUpperCase()+G2.n.slice(1)}а у вас пока нет.`}`,o.best?'Испытания':'Конструктор',()=>{if(o.best)openTrials();else openDesigner(o.T.grp==='farm'?'tractor':'truck');},'models');});
+  // в войну армия берёт военную технику без испытаний: если её нет — сказать
+  if(isWar(s.y,s.m,s.country)&&s.y>=1914&&!(s.models||[]).some(m=>(m.status==='prod'||m.status==='dev')&&trMil(m))&&typeof kindOpen==='function'&&KIND_GRP.mil.kinds.some(k=>kindOpen(k,s)))
+    add(58,'🪖','Война: армия берёт штабные и санитарные машины, бронеавтомобили и танки без испытаний на полигоне — у вас таких нет.','Конструктор',()=>{openKindStep('mil');},'models');
+  try{if(typeof airTrialAdvice==='function')airTrialAdvice(s,add);}catch(e){console.warn('air trial advice',e);}
   const md=(s.models||[]).find(m=>(m.status==='prod'||m.status==='sale'||(m.status==='dev'&&trMil(m)))&&trTestKind(m,s)&&!trTestWhy(s,m)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s));
   if(md){const k=trTestKind(md,s),sc=trScore(md,k==='neb'?'farm':'mil',trTestC(md,s,k),s),est=`Прикидка итога — ${Math.round(sc*100)} (100 — образец года)`;
     add(68,'🎖',k==='neb'?`«${md.name}» продаётся в США без протокола станции испытаний — фермеры таким тракторам верят меньше. ${est}${sc>=1?': хороший протокол прибавит продаж и принесёт заказ кооперативов':''}.`:`Армия в мирное время не закупит «${md.name}» без испытаний на полигоне. ${est}${sc>=1?': с таким итогом армия закажет первую партию':sc>=TR_PASS?': хватит для приёмки':` — для приёмки нужно ${Math.round(TR_PASS*100)}, сначала доведите машину`}.`,`${k==='neb'?'На станцию':'На полигон'} · ${money(trFee(s))}`,()=>{trialTest(s,md.id);},'models');}}
@@ -147,8 +159,12 @@ function trialResolve(s,key){if(key==='tr:open'){try{s.pending.shift();save();re
 // строка-вход в «Моделях»: показывается, когда есть что делать или что показать
 function trialCardHTML(s){if(!s||s.mode==='racer')return '';const O=trOpenList(s),t=mi(s),need=(s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&trTestKind(m,s)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s)).length,
     have=(s.models||[]).filter(m=>m.cert&&Object.values(m.cert).some(C=>C.until>t)).length,q=(s.trials&&s.trials.q||[]).length;
-  if(!O.length&&!need&&!have&&!q)return '';const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
-  return `<section class="card"><div class="row"><div><h2>🎖 Испытания ведомств</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div></section>`;}
+  // 0.60, правки 28.11: карточка видна всегда — с ближайшей датой и строками о небе (конкурсы министерства, государственные испытания)
+  const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
+  const S=trSoonList(s,24)[0];if(!O.length&&S)L.push(`ближайшее: ${esc(S.T.n)} (${COUNTRIES[S.T.c].name}) — ${MONTHS_N[S.T.m]} ${S.y}`);
+  const AL=typeof airTrialLines==='function'?airTrialLines(s):{L:[],B:[]};L.push(...AL.L);
+  if(!L.length)L.push(isWar(s.y,s.m,s.country)?'война: армия берёт технику без испытаний':'конкурсов по истории сейчас нет; военную технику армия берёт после приёмки на полигоне — кнопка в карточке модели');
+  return `<section class="card"><div class="row"><div><h2>🎖 Испытания и госзаказы</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div>${AL.B.length?`<div class="btns" style="margin-top:8px">${AL.B.join('')}</div>`:''}</section>`;}
 /* 0.60: помощник управляющего ведёт испытания сам — заявляет лучшую машину на открытый конкурс и отправляет на полигон и
    на станцию испытаний всё, что без приёмки продаётся хуже или не продаётся вовсе (взнос мал против того, что даёт итог).
    На полигон — только если прикидка итога проходит приёмку: иначе деньги и полгода ожидания пропадут зря. */

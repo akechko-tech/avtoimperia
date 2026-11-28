@@ -34,6 +34,7 @@ Object.assign(ACT,{
     if(typeof flyFront==='function'&&flyFront(m,md,P))return;frAuto(m.k);},
   frAuto:()=>{if(FRS)frAuto(FRS.k);},
   airEv:d=>{AEV=null;openAirEv(d.k);},
+  airSt:d=>{if(airStStart(G,+d.k)){save();render();}},/* 0.60, правки 28.11: государственные испытания аэроплана */
   airRec:d=>{AEV=null;openAirRec(d.k);},
   aevMd:d=>{if(!AEV)return;AEV.md=+d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
   aevPil:d=>{if(!AEV)return;AEV.pid=d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},

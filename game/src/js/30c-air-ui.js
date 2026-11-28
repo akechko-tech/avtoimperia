@@ -121,6 +121,10 @@ function airModelHTML(md,s){const A=s.air,t=tNow(s),Q=airQ(md,t),st=Q.st,S=AIR_S
     if(civ)body+=airSalesExplain(s,md);
     if(ord.length)body+=`<div class="label" style="margin-top:10px">Контракты</div>${ord.map(o=>`<p class="small" style="margin-top:4px">${esc(o.who)}: ${fmtN(o.n-o.left)} из ${fmtN(o.n)} по ${money(o.price)} · срок — ${dstr({y:1895+Math.floor(o.due/12),m:o.due%12})}</p>`).join('')}`;
     if(['recon','fight','bomb','sea'].includes(md.role)&&Math.abs(md.milRep||0)>=1)body+=`<p class="small ${md.milRep>0?'good':'bad'}" style="margin-top:6px">Слава на фронте и в отрядах: ${md.milRep>0?'+':''}${Math.round(md.milRep)}</p>`;
+    if(typeof airStWhy==='function'&&AIR_ST_ROLES.includes(md.role)){const run=airStRun(s,md),why=airStWhy(s,md);/* 0.60, правки 28.11 */
+      if(run)body+=`<p class="small muted" style="margin-top:6px">🎖 Идут государственные испытания: итог через ${Math.max(1,run.at-mi(s))} мес.</p>`;
+      else if(!why)body+=`<div class="btns" style="margin-top:8px"><button class="btn sm" data-act="airSt" data-k="${md.id}" ${s.cash<airStFee(s)?'disabled':''}>На государственные испытания · ${money(airStFee(s))}</button></div><p class="small muted" style="margin-top:4px">Армия ещё не знает эту машину. С итогом от 0,90 к эталону её будут заказывать без конкурса.</p>`;
+      else if(md.stOk)body+=`<p class="small good" style="margin-top:6px">🎖 Принят на государственных испытаниях</p>`;}
     if(md.status==='prod')body+=`<div class="btns" style="margin-top:10px"><button class="btn sm" data-act="airOff" data-k="${md.id}">Снять с производства</button></div>`;}
   // 0.60, правка автора 23 ноября: «не могу убрать свой второй самолёт из моделей» — кнопка была только у серийного.
   // Теперь любой аэроплан можно убрать из списка: гоночный и опытный — списать, чертежи и оснастку — закрыть, остаток — списать.
