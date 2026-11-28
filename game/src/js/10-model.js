@@ -8,8 +8,10 @@ const unlocked=(arr,s)=>arr.filter(x=>x.y<=s.y);
 const isTruck=md=>!!byId(BODIES,md.b).truck;
 const segOf=md=>isTruck(md)?'truck':isMoto(md)?motoSegOf(md):md.t==='t0'?'people':md.t==='t1'?'middle':md.t==='t3'?'sport':'lux';
 // Спортивное оснащение — только на открытом кузове
+// 0.60, правки 28.11: открытый кузов — по данным кузова (не закрытый, не грузовой и не мотоциклетный), а не по списку кузовов
+// до 1930 года: «Спортивный родстер» 1948 года не попадал в список, и машина с ним уезжала в «Люкс»
 const OPEN_B=['b1','b2','b3','b10'];
-const bodyOpen=id=>OPEN_B.includes(id);
+const bodyOpen=id=>{const b=typeof BODIES!=='undefined'?BODIES.find(x=>x.id===id):null;return b?!b.closed&&!b.truck&&!b.kind&&!b.moto:OPEN_B.includes(id);};
 function DIF(){return DIFFS[(G&&G.diff)||'normal'];}
 const upgL=id=>(G&&G.rd&&G.rd.upg[id])||0;
 // 0.32: детали мотоциклов — в тех же каталогах с пометкой moto: автомобилю их не предлагаем, мотоциклу — только их

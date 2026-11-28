@@ -132,7 +132,7 @@ function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.
 function maModelName(nm,cm){let b=String(cm?cm[1]:nm).replace(/\s*«.*?»/g,'').trim();const brand=String(nm).replace(/\s*&\s*Cie\.?|\s*\(.*?\)/g,'').trim(),w=brand.split(/[\s/-]/)[0].toLowerCase();
   if(w&&!b.toLowerCase().includes(w)&&!/^(Mercedes)/.test(b))b=brand+' '+b;return b.slice(0,28);}
 function maTakeModel(s,c,cp,v){try{const nm=compName(cp,s),g=maMainClass(cp,s,c),d=autoDesign(g,s),cm=compModel(cp,s);
-    const m={id:s.nextId++,name:maModelName(nm,cm),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
+    const m={id:s.nextId++,name:maModelName(nm,cm),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,eq:d.eq||[],paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
       stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:Math.round(v/12),vol:Math.round(v/12*10)/10,from:nm};m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);return m;}catch(e){console.warn('ma model',e);return null;}}
 // совладельцы (оплата акциями, инвесторы) получают свою долю прибыли
 function partnersShare(s){return Math.min(0.75,(s.partners||[]).reduce((a,p)=>a+(p.sh||0),0));}

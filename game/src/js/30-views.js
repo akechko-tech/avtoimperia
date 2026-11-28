@@ -238,7 +238,7 @@ function vModels(){
     const body=open?`
       ${ctl}
       <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><button class="mx" data-act="chx" data-k="cost" data-id="${md.id}" aria-label="Себестоимость: как посчитано">Себест.<i class="xi">i</i><b>${money(uc)}</b></button><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b>${md.status==='prod'?`<small class="${margin-offPer<0?'bad':'muted'}">после конторы ${money(margin-offPer)}</small>`:''}</div></div>
-      ${lostLine(md)}${truckHint(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
+      ${typeof sportFixLine==='function'?sportFixLine(md,s):''}${lostLine(md)}${truckHint(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
       ${(md.raceBoost||0)>mi(s)?'<p class="small good" style="margin-top:6px">Слава гоночной победы: покупатели выбирают вас охотнее</p>':''}
       ${md.dv&&md.status!=='off'&&md.status!=='dev'&&typeof dvCardHTML==='function'?dvCardHTML(md,s):''}
       ${(md.rr||0)>0.002?`<p class="small good" style="margin-top:6px">🏁 Доведена гонками: поломок меньше на ${Math.round(md.rr*100)}%, мощность +${(Math.round((md.rp||0)*1000)/10).toString().replace('.',',')}%</p>`:''}

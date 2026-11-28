@@ -41,10 +41,29 @@ function eqCx(md){return eqOf(md).reduce((a,id)=>a*(1+EQ_BY[id].cx),1);}
 function eqWait(e,g,y){const n=e.need&&e.need[g];return n?clamp((y-n)/4,0,1):0;}
 function eqU(md,g,s){if(g==='truck'||isTruck(md))return 0;const y=yf(s),L=eqOf(md);let u=0;
   EQUIP.forEach(e=>{const has=L.includes(e.id),sup=!has&&L.some(id=>EQ_BY[id].sup===e.id),w=eqWait(e,g,y),uu=(e.u[g]||0)*(e.closed&&!parts(md).b.closed?0.3:1);
-    if(has)u+=uu*(1-w);else if(!sup)u-=uu*1.4*w;});
+    if(has)u+=uu*(1-w);else if(!sup&&!eqObs(e,g,y))u-=uu*1.4*w;});
   return clamp(u,-1.2,0.55);}
 // какие новинки покупатели этого класса уже ждут
-function eqExpected(g,y){return EQUIP.filter(e=>eqWait(e,g,y)>0.25);}
+function eqExpected(g,y){return EQUIP.filter(e=>eqWait(e,g,y)>0.25&&!eqObs(e,g,y));}
+// 0.60, правки 28.11: новинку, которую сменила другая (ацетиленовые фары → электрическое освещение), покупатели перестают ждать,
+// когда класс уже ждёт её замену: в 1944 году без ацетиленовых фар машину не судят — судят без электрического света
+function eqObs(e,g,y){return EQUIP.some(x=>x.sup===e.id&&eqWait(x,g,y)>=1);}
+// чего не хватает модели из того, что покупатели её класса ждут (для строки в карточке, совета и кнопки)
+function eqMissing(md,s){const g=segOf(md);if(g==='truck'||isTruck(md)||isMoto(md))return [];const has=eqOf(md),y=yf(s);
+  return EQUIP.filter(e=>!has.includes(e.id)&&!has.some(id=>EQ_BY[id].sup===e.id)&&eqWait(e,g,y)>0.25&&!eqObs(e,g,y));}
+// 0.60, правки 28.11: доустановка оснащения на модель в выпуске или в разработке — без новой модели.
+// Новый набор — то, что уже стоит, плюс то, что ждут покупатели и что окупается (как у помощника); старое, которое сменила новинка, снимается.
+// Цена — шестая часть разработки модели (проводка, кронштейны, оснастка сборки — оценка игры); в выпуске месяц перехода:
+// часы на машину ×1,5, как в первый месяц новой модели.
+function eqFitPlan(md,s){const g=segOf(md);if(g==='truck'||isTruck(md)||isMoto(md))return null;const has=eqOf(md);let L=has.slice();
+  eqAuto(md,g,s).forEach(id=>{if(!L.includes(id))L.push(id);});
+  EQUIP.forEach(e=>{if(e.req&&L.includes(e.id)&&!L.includes(e.req)&&eqAvail(s,e.req))L.push(e.req);});
+  EQUIP.forEach(e=>{if(e.sup&&L.includes(e.id))L=L.filter(x=>x!==e.sup);});
+  L=L.filter(id=>eqAvail(s,id));const add=L.filter(id=>!has.includes(id));if(!add.length)return null;
+  const cost=Math.max(Math.round(200*cpi(s)/10)*10,Math.round((typeof devCost==='function'?devCost(md,s):0)/6/100)*100);
+  return {L,add,cost};}
+function eqFit(s,md){const P=eqFitPlan(md,s);if(!P||s.cash<P.cost)return false;s.cash-=P.cost;md.eq=P.L;if(md.status==='prod')md.ramp=Math.max(md.ramp||0,1);
+  addLog(`«${md.name}»: поставлено оснащение — ${P.add.map(id=>EQ_BY[id].name.toLowerCase()).join(', ')} (${money(P.cost)}${md.status==='prod'?', месяц перехода':''}).`,'good');return true;}
 // разумный набор для машины класса (помощник и боты): всё, что ждут, и то, что окупается (прибавка больше цены)
 function eqAuto(md,g,s){if(g==='truck'||isTruck(md))return [];const y=yf(s),P=prefP(g,s.country,s),out=[];
   EQUIP.forEach(e=>{if(!eqAvail(s,e.id))return;if(e.req&&!eqAvail(s,e.req))return;const u=e.u[g]||0;if(!u)return;
@@ -68,7 +87,20 @@ function eqDone(s,pj){const e=EQ_BY[pj.id];if(!e)return;s.rd.eq=s.rd.eq||{};s.rd
 // первенство: машина с новинкой пошла в серию раньше истории
 function eqFirsts(md){const s=G;eqOf(md).forEach(id=>{const e=EQ_BY[id];if(e&&s.y<e.hist[0]&&eqDev(s,id))recordFirst(s,'eq:'+id,e.name,e.hist[0],e.hist[1]);});}
 // старые сохранения: у люкса после 1912 года — электросвет и стартер (так было написано в оснащении), у остальных — по году выпуска
-function eqMigrate(x){(x.models||[]).forEach(m=>{if(Array.isArray(m.eq))return;const y=1895+Math.floor((m.launched||0)/12),L=[];
+function eqMigrate(x){(x.models||[]).forEach(m=>{if(Array.isArray(m.eq))return;
+  if(m.status==='dev'||!m.launched){try{m.eq=eqAuto(m,segOf(m),x);}catch(_){m.eq=[];}return;}/* 0.60, правки 28.11: модель в разработке — оснащение своего года */
+  const y=1895+Math.floor((m.launched||0)/12),L=[];
   if(m.t==='t2'||m.t==='t1'){if(y>=1904)L.push('ws');L.push(y>=1912&&m.t==='t2'?'el':y>=1905?'ac':null);if(y>=1912&&m.t==='t2')L.push('st');}
   m.eq=L.filter(Boolean);});}
 function eqLine(md){const L=eqOf(md);return L.length?L.map(id=>EQ_BY[id].name.toLowerCase()).join(', '):'';}
+
+// 0.60, правки 28.11: родстер 1948 года уезжал в «Люкс» (конструктор молча менял спортивную отделку на люкс). Модель с открытым
+// спортивным кузовом и люксовой отделкой можно перевести в спортивный класс без новой разработки: четверть цены разработки
+// (облегчённый кузов, ковши, настройка мотора — оценка игры), в выпуске — месяц перехода.
+const SPORT_BODIES=['b35'];
+function sportFixCost(md,s){return Math.max(Math.round(300*cpi(s)/10)*10,Math.round(devCost(md,s)/4/100)*100);}
+function sportFixable(md){return !!md&&md.t==='t2'&&SPORT_BODIES.includes(md.b)&&bodyOpen(md.b)&&(md.status==='prod'||md.status==='dev');}
+function sportFix(s,md){if(!sportFixable(md))return false;const c=sportFixCost(md,s);if(s.cash<c)return false;s.cash-=c;md.t='t3';if(md.status==='prod')md.ramp=Math.max(md.ramp||0,1);
+  addLog(`«${md.name}» переведена в спортивный класс (${money(c)}${md.status==='prod'?', месяц перехода':''}).`,'good');return true;}
+function sportFixLine(md,s){if(!sportFixable(md))return '';const c=sportFixCost(md,s);
+  return `<p class="small warn" style="margin-top:6px">🏎 Спортивный кузов, а отделка люксовая: машина идёт в класс «Люкс», и судят её покупатели люкса. <button class="btn sm" data-act="sportFix" data-id="${md.id}" ${s.cash<c?'disabled':''}>Перевести в спортивный класс · ${money(c)}</button></p>`;}

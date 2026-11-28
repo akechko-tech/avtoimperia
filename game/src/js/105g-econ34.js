@@ -54,7 +54,7 @@ function hiddenTerms(md,s,c){c=c||s.country;const g=segOf(md),p=parts(md),L=[],y
   if(overpower(md))add('over',-0.4,'Мотор сильнее рамы: машины ломаются, о марке говорят плохо (и «% соперника» ниже на 15%)');
   {const ht=hpTax(md,c,s);if(ht>0)add('tax',-ht,`Налог на лошадиные силы: ${hp} л.с. — владелец платит больше`);}
   {const lk=lookU(md,g,s);if(Math.abs(lk)>1e-9)add('look',lk,g==='sport'?(lk>0?'Яркий цвет: спортивную берут охотнее':'Тусклый цвет: спортивную берут хуже'):(lk>0?'Яркий цвет — в моде':'Тёмный цвет — уже не в моде'));}
-  if(typeof eqU==='function'){const u=eqU(md,g,s);if(Math.abs(u)>1e-9){const has=eqOf(md),y2=yf(s),miss=EQUIP.filter(e=>!has.includes(e.id)&&!has.some(id=>EQ_BY[id].sup===e.id)&&eqWait(e,g,y2)>0.25).map(e=>e.name.toLowerCase());
+  if(typeof eqU==='function'){const u=eqU(md,g,s);if(Math.abs(u)>1e-9){const has=eqOf(md),miss=eqMissing(md,s).map(e=>e.name.toLowerCase());
     add('eq',u,u>0?`Оснащение: ${has.map(id=>EQ_BY[id]&&EQ_BY[id].name.toLowerCase()).filter(Boolean).join(', ')||'новинки'} — покупатели доплатят`:`Нет того, что ждут покупатели${miss.length?': '+miss.join(', '):''}`);}}
   {const rb=relBonus(md,s);if(rb)add('rel',rb,rb>0?'Слава надёжной машины':'Слухи о поломках');}
   if(c!==s.country){const tp=tastePen(md,c,s);if(tp)add('taste',-tp,'Чужой вкус: машина не похожа на местные');}
@@ -64,7 +64,10 @@ function buyersPct(md,s,c){const S=classScore(md,s,c),H=hiddenTerms(md,s,c);retu
 // строки для карточки модели и конструктора: каждое слагаемое больше 0,05 по модулю — множитель продаж и причина
 function hiddenHTML(md,s,inDesigner){if(isTruck(md))return '';const B=buyersPct(md,s),show=B.H.L.filter(x=>Math.abs(x.d)>0.05);if(!show.length)return '';
   const mul=x=>'×'+(x.mul>=10?Math.round(x.mul):x.mul.toFixed(2).replace('.',',').replace(/0$/,''));
-  return `<div class="hid">${show.map(x=>`<p class="small ${x.d<0?(inDesigner?'bad':'warn'):'good'}">${x.d<0?'⚠️':'➕'} ${esc(x.txt)} — продажи ${mul(x)}</p>`).join('')}
+  // 0.60, правки 28.11: у строки «Нет того, что ждут покупатели» — кнопка доустановки (без новой модели)
+  const fit=x=>{if(inDesigner||x.id!=='eq'||x.d>=0||!(md.id>0)||!s.models.includes(md))return '';const P=eqFitPlan(md,s);if(!P)return '';
+    return ` <button class="btn sm" data-act="eqFit" data-id="${md.id}" ${s.cash<P.cost?'disabled':''}>Поставить оснащение · ${money(P.cost)}</button>`;};
+  return `<div class="hid">${show.map(x=>`<p class="small ${x.d<0?(inDesigner?'bad':'warn'):'good'}">${x.d<0?'⚠️':'➕'} ${esc(x.txt)} — продажи ${mul(x)}${fit(x)}</p>`).join('')}
     <p class="small"><b>Для покупателей ≈ ${Math.round(B.N*100)}% соперника</b> <span class="muted">(«% соперника» ${Math.round(B.S*100)}% с поправкой на то, что выше)</span></p></div>`;}
 
 /* ---------- грузовик: главное — тонно-километр ---------- */

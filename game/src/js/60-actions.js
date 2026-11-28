@@ -78,8 +78,10 @@ const ACT={
   innovTable:()=>{openSheet(innovSheetHTML(G));},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
-    if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v))draft.t='t2';
-    if(d.k==='t'&&d.v==='t3'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
+    // 0.60, правки 28.11: не молча — заметка в конструкторе говорит, что сменилось и почему; родстер — самый новый открытый кузов
+    if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v)){draft.t='t2';dNote={txt:'⚠️ Спортивная отделка — только для открытых кузовов. С этим кузовом машина идёт в класс «Люкс»; для спортивной выберите открытый кузов.',sig:dSig(draft)};}
+    if(d.k==='t'&&d.v==='t3'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id)).sort((a,c)=>a.y-c.y);const nb=b[b.length-1]||{id:'b1',name:'открытый'};draft.b=nb.id;
+      dNote={txt:`⚠️ Спортивная отделка — только для открытых кузовов: кузов сменён на «${esc(byId(BODIES,nb.id)?byId(BODIES,nb.id).name:nb.name)}».`,sig:dSig(draft)};}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dsec:d=>{draft.open=draft.open===d.k?null:d.k;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dclass:d=>{const was=designKind(draft),k=d.v;
@@ -98,11 +100,13 @@ const ACT={
   dfront:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(frontDesign(designKind(draft),G,base),'Передовая модель');},
   dauto:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(autoDesign(designKind(draft),G,base,{cap:true}),'Самая прибыльная');},
   startdev:()=>{const md={...draft,eq:eqOf(draft).slice()},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||(typeof brandNextName==='function'&&brandNextName(G))||('Тип '+G.nextId);
-    const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+    const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,eq:eqOf(md).slice()/* 0.60, правки 28.11: оснащение из конструктора не терялось у новой модели */,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
     m.price=Math.round(refPrice(m,G)/10)*10;
     // 0.51, этап 4б: общий конвейер или своя линия — решает помощник (всегда); «Иначе» в конструкторе — решение игрока
     G.models.push(m);
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
+  sportFix:d=>{const md=G.models.find(m=>String(m.id)===String(d.id));if(md&&sportFix(G,md)){save();render();}},
+  eqFit:d=>{const md=G.models.find(m=>String(m.id)===String(d.id));if(md&&eqFit(G,md)){save();render();}},/* 0.60, правки 28.11 */
   rdPick:()=>openRD(),
   legendOpen:d=>{openLegend(d.k);},
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},

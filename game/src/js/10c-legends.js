@@ -203,6 +203,7 @@ function legendStart(s,id){const L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open
   s.cash-=dc;s.legends=s.legends||{};s.legends[L.id]={y:s.y,m:s.m};
   const nm=((draft&&draft.legendDraft===id&&draft.name)||L.name).trim()||L.name;
   const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.legendDraft===id&&draft.paint)||legendPaint(L,s.y)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+  try{m.eq=eqAuto(m,segOf(m),s);}catch(_){m.eq=[];}/* 0.60, правки 28.11: легенда — с оснащением, которого ждут покупатели класса */
   m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);addLog(`Начата разработка легенды «${nm}» (${money(dc)}, ${m.devLeft} мес.).`,'good');return true;}
 // 0.43: легенда-ровесница старта становится первой моделью: та же базовая машина, но с именем, бонусами и местом среди двух легенд марки
 function startLegendOf(s){return legendsOf(s).find(L=>L.y<=s.y+1&&(L.kind==='people'||L.kind==='middle')&&!legendMissing(s,L).length)||null;}
