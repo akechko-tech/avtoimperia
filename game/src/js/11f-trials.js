@@ -164,7 +164,7 @@ function trialCardHTML(s){if(!s||s.mode==='racer')return '';const O=trOpenList(s
   const S=trSoonList(s,24)[0];if(!O.length&&S)L.push(`ближайшее: ${esc(S.T.n)} (${COUNTRIES[S.T.c].name}) — ${MONTHS_N[S.T.m]} ${S.y}`);
   const AL=typeof airTrialLines==='function'?airTrialLines(s):{L:[],B:[]};L.push(...AL.L);
   if(!L.length)L.push(isWar(s.y,s.m,s.country)?'война: армия берёт технику без испытаний':'конкурсов по истории сейчас нет; военную технику армия берёт после приёмки на полигоне — кнопка в карточке модели');
-  return `<section class="card"><div class="row"><div><h2>🎖 Испытания и госзаказы</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div>${AL.B.length?`<div class="btns" style="margin-top:8px">${AL.B.join('')}</div>`:''}</section>`;}
+  return `<section class="card" id="fc-trials"><div class="row"><div><h2>🎖 Испытания и госзаказы</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div>${AL.B.length?`<div class="btns" style="margin-top:8px">${AL.B.join('')}</div>`:''}</section>`;}
 /* 0.60: помощник управляющего ведёт испытания сам — заявляет лучшую машину на открытый конкурс и отправляет на полигон и
    на станцию испытаний всё, что без приёмки продаётся хуже или не продаётся вовсе (взнос мал против того, что даёт итог).
    На полигон — только если прикидка итога проходит приёмку: иначе деньги и полгода ожидания пропадут зря. */

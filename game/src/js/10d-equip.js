@@ -104,3 +104,7 @@ function sportFix(s,md){if(!sportFixable(md))return false;const c=sportFixCost(m
   addLog(`«${md.name}» переведена в спортивный класс (${money(c)}${md.status==='prod'?', месяц перехода':''}).`,'good');return true;}
 function sportFixLine(md,s){if(!sportFixable(md))return '';const c=sportFixCost(md,s);
   return `<p class="small warn" style="margin-top:6px">🏎 Спортивный кузов, а отделка люксовая: машина идёт в класс «Люкс», и судят её покупатели люкса. <button class="btn sm" data-act="sportFix" data-id="${md.id}" ${s.cash<c?'disabled':''}>Перевести в спортивный класс · ${money(c)}</button></p>`;}
+
+// строка в карточке модели — сразу под цифрами, а не в свёрнутом «Против соперников»: без оснащения продажи падают втрое
+function eqCardLine(md,s){if(!(md.status==='prod'||md.status==='dev'))return '';const M=eqMissing(md,s);if(!M.length)return '';const u=eqU(md,segOf(md),s);if(u>-0.1)return '';const P=eqFitPlan(md,s);
+  return `<p class="small warn" style="margin-top:6px">⚠️ Нет того, что ждут покупатели: ${M.map(e=>e.name.toLowerCase()).join(', ')} — продажи ×${Math.exp(u).toFixed(2).replace('.',',')}.${P?` <button class="btn sm" data-act="eqFit" data-id="${md.id}" ${s.cash<P.cost?'disabled':''}>Поставить оснащение · ${money(P.cost)}</button>`:''}</p>`;}

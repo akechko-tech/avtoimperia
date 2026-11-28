@@ -10,7 +10,10 @@
      • помощник управляющего ведёт и авиацех: первый полёт доверяет испытателю, облётанный образец ставит в серию, строит ангар,
        когда заказы не успевают, — и отчитывается той же строкой в «Делах». */
 let uiLine='car';
-function airSwitchOn(s){return !!(s&&s.mode!=='racer'&&!airOnly(s)&&(airOn(s)||(s.air&&s.air.b)));}
+// 0.60, правки 28.11 (автор: «кнопка „Авиа“ показывает почти ничего — один раздел; продажи остались в автомобилях, финансы
+// теряются»): переключателя «Автомобили | Аэропланы» больше нет — разделы авиации идут на тех же страницах, что автомобили,
+// свёрнутыми строками (30-views.js: FOLD60). Функция оставлена для старых проверок: всегда «нет».
+function airSwitchOn(s){return false;}
 function lineSwitchHTML(s){const A=s.air,on=airOn(s),n=on?A.models.filter(m=>m.status==='prod').length:0,adv=on?airAdvice(s).length:0;
   return `<div class="chips linesw" id="linesw"><button class="chip ${uiLine!=='air'?'on':''}" data-act="uiLine" data-v="car">🚗 Автомобили${lineOn(s,'moto')?' и мотоциклы':''}</button><button class="chip ${uiLine==='air'?'on':''}" data-act="uiLine" data-v="air">✈ Аэропланы<small>${on?`${n} в серии${adv?` · ${adv} ${plural(adv,'совет','совета','советов')}`:''}`:'авиацех строится'}</small></button></div>`;}
 // раздел авиации на вкладке — целиком, без автомобильного

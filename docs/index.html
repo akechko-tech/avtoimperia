@@ -37,7 +37,7 @@ body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-heig
 button{font:inherit;color:inherit}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(var(--bg) 82%,rgba(13,33,54,0));margin-inline:-16px;padding:12px 16px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(var(--bg) calc(100% - 3px),rgba(13,33,54,0));margin-inline:-16px;padding:12px 16px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .co{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
 .date{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;letter-spacing:.01em;display:inline-block}
 .date span{color:var(--brass)}
@@ -307,8 +307,10 @@ table.pl td small{display:block;color:var(--muted);font-size:11px;font-weight:40
 .r-board div span{color:var(--muted)}
 .r-board div small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .r-board div em{font-style:normal;color:var(--muted)}
-.r-board div.you{background:rgba(120,90,20,.55)}
-.r-board div.mine{background:rgba(90,70,20,.45)}
+.r-board div.you{background:rgba(92,66,12,.88)}
+.r-board div.mine{background:rgba(72,54,12,.84)}
+/* 0.60, правки 28.11: на светлом небе полупрозрачная золотая строка выцветала и серый текст не читался */
+.r-board div.you small,.r-board div.mine small,.r-board div.you em,.r-board div.mine em,.r-board div.you span,.r-board div.mine span{color:#eadbb0}
 .r-board div.me{outline:1px solid var(--brass)}
 .r-msg.small{font-size:26px}
 .r-mgr{padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px}
@@ -3509,8 +3511,10 @@ const unlocked=(arr,s)=>arr.filter(x=>x.y<=s.y);
 const isTruck=md=>!!byId(BODIES,md.b).truck;
 const segOf=md=>isTruck(md)?'truck':isMoto(md)?motoSegOf(md):md.t==='t0'?'people':md.t==='t1'?'middle':md.t==='t3'?'sport':'lux';
 // Спортивное оснащение — только на открытом кузове
+// 0.60, правки 28.11: открытый кузов — по данным кузова (не закрытый, не грузовой и не мотоциклетный), а не по списку кузовов
+// до 1930 года: «Спортивный родстер» 1948 года не попадал в список, и машина с ним уезжала в «Люкс»
 const OPEN_B=['b1','b2','b3','b10'];
-const bodyOpen=id=>OPEN_B.includes(id);
+const bodyOpen=id=>{const b=typeof BODIES!=='undefined'?BODIES.find(x=>x.id===id):null;return b?!b.closed&&!b.truck&&!b.kind&&!b.moto:OPEN_B.includes(id);};
 function DIF(){return DIFFS[(G&&G.diff)||'normal'];}
 const upgL=id=>(G&&G.rd&&G.rd.upg[id])||0;
 // 0.32: детали мотоциклов — в тех же каталогах с пометкой moto: автомобилю их не предлагаем, мотоциклу — только их
@@ -3727,6 +3731,9 @@ function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?bodyKind(b):segOf(md);}/* 0.51: у нового вида техники — свой эталон */
 // 0.33: грузовик сравнивают с грузовиком своей грузоподъёмности: трёхтонку — с трёхтонкой соперников (её мотор, рама, коробка),
 // а не с полуторатонкой (раньше 3-тонный грузовик выглядел «прожорливым и слабым» — на вдвое больший груз)
+// 0.60, правки 28.11: эталон класса может оказаться исторической машиной марки самого игрока (у Форда — Ford V-8): так и подписываем
+function refOwnTag(s,name){try{const P=s&&s.pioneer,hb=typeof HERO_BRAND!=='undefined'&&HERO_BRAND[P],p=typeof PIONEERS!=='undefined'&&PIONEERS[P];
+  const w=hb?String(hb[1]).split(/[\s/]/)[0]:p&&p.wiki?String(p.wiki).trim().split(/\s+/).pop():'';return w&&w.length>2&&String(name).startsWith(w)?' — историческая машина вашей марки':'';}catch(_){return '';}}
 function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y),b=byId(BODIES,md.b),tb=kind==='truck'&&b&&b.truck&&md.b!=='b6'&&(b.y||1895)<=y?md.b:null;
   return {name:r[1],y:r[0],kind,md:{...r[2],...(tb?{b:tb}:{}),t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
 /* ---------- 0.51: убывающая полезность каждой черты (ТЗ 0.51, тема 3; решение автора) ----------
@@ -4964,7 +4971,7 @@ function maIntegrate(s,h,M){const c=h.c,cp=M.cp;h.mode='int';h.st=1;h.t=mi(s);h.
 function maModelName(nm,cm){let b=String(cm?cm[1]:nm).replace(/\s*«.*?»/g,'').trim();const brand=String(nm).replace(/\s*&\s*Cie\.?|\s*\(.*?\)/g,'').trim(),w=brand.split(/[\s/-]/)[0].toLowerCase();
   if(w&&!b.toLowerCase().includes(w)&&!/^(Mercedes)/.test(b))b=brand+' '+b;return b.slice(0,28);}
 function maTakeModel(s,c,cp,v){try{const nm=compName(cp,s),g=maMainClass(cp,s,c),d=autoDesign(g,s),cm=compModel(cp,s);
-    const m={id:s.nextId++,name:maModelName(nm,cm),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
+    const m={id:s.nextId++,name:maModelName(nm,cm),e:d.e,g:d.g,c:d.c,k:d.k,b:d.b,t:d.t,w:d.w,eq:d.eq||[],paint:PAINTS[s.models.length%PAINTS.length].id,price:0,plan:'auto',status:'prod',devLeft:0,launched:mi(s),
       stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:Math.round(v/12),vol:Math.round(v/12*10)/10,from:nm};m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);return m;}catch(e){console.warn('ma model',e);return null;}}
 // совладельцы (оплата акциями, инвесторы) получают свою долю прибыли
 function partnersShare(s){return Math.min(0.75,(s.partners||[]).reduce((a,p)=>a+(p.sh||0),0));}
@@ -5116,7 +5123,7 @@ function dealsCard(s){maMigrate(s);const sel=(s.ui&&s.ui.dealC)||s.country,cs=Ob
     <div class="chips sm inner-cc" style="margin-top:10px">${cs.map(c=>`<button class="chip ${sel===c?'on':''}" data-act="dealC" data-v="${c}">${COUNTRIES[c].name}</button>`).join('')}</div>
     <div style="margin-top:6px">${rows||'<p class="small muted">Здесь пока нет марок.</p>'}</div>${typeof mdealsHTML==='function'?mdealsHTML(s,sel):''}
     ${typeof bbHTML==='function'?bbHTML(s):''}`;
-  return foldCard('deals',false,`<h2>Сделки</h2><span class="label">доли, поглощения, торги</span>`,body,(own.length?`ваши компании: ${own.map(h=>esc(h.nm||h.n)+(h.mode==='sub'?` ${Math.round(h.st*100)}%`:'')).join(', ')}`:'купить долю, поглотить конкурента, торги после банкротств')+(typeof bbShare==='function'&&bbShare(s)>0?` · совладельцы ${Math.round(bbShare(s)*100)}% — можно выкупить`:''));}
+  return foldCard('deals',false,`<h2>Купить марку или долю</h2><span class="label">доли, поглощения, торги</span>`,body,(own.length?`ваши компании: ${own.map(h=>esc(h.nm||h.n)+(h.mode==='sub'?` ${Math.round(h.st*100)}%`:'')).join(', ')}`:'купить долю, поглотить конкурента, торги после банкротств')+(typeof bbShare==='function'&&bbShare(s)>0?` · совладельцы ${Math.round(bbShare(s)*100)}% — можно выкупить`:''));}
 
 /* ---------- лист переговоров ---------- */
 let NEG=null;
@@ -5580,7 +5587,7 @@ function hiddenTerms(md,s,c){c=c||s.country;const g=segOf(md),p=parts(md),L=[],y
   if(overpower(md))add('over',-0.4,'Мотор сильнее рамы: машины ломаются, о марке говорят плохо (и «% соперника» ниже на 15%)');
   {const ht=hpTax(md,c,s);if(ht>0)add('tax',-ht,`Налог на лошадиные силы: ${hp} л.с. — владелец платит больше`);}
   {const lk=lookU(md,g,s);if(Math.abs(lk)>1e-9)add('look',lk,g==='sport'?(lk>0?'Яркий цвет: спортивную берут охотнее':'Тусклый цвет: спортивную берут хуже'):(lk>0?'Яркий цвет — в моде':'Тёмный цвет — уже не в моде'));}
-  if(typeof eqU==='function'){const u=eqU(md,g,s);if(Math.abs(u)>1e-9){const has=eqOf(md),y2=yf(s),miss=EQUIP.filter(e=>!has.includes(e.id)&&!has.some(id=>EQ_BY[id].sup===e.id)&&eqWait(e,g,y2)>0.25).map(e=>e.name.toLowerCase());
+  if(typeof eqU==='function'){const u=eqU(md,g,s);if(Math.abs(u)>1e-9){const has=eqOf(md),miss=eqMissing(md,s).map(e=>e.name.toLowerCase());
     add('eq',u,u>0?`Оснащение: ${has.map(id=>EQ_BY[id]&&EQ_BY[id].name.toLowerCase()).filter(Boolean).join(', ')||'новинки'} — покупатели доплатят`:`Нет того, что ждут покупатели${miss.length?': '+miss.join(', '):''}`);}}
   {const rb=relBonus(md,s);if(rb)add('rel',rb,rb>0?'Слава надёжной машины':'Слухи о поломках');}
   if(c!==s.country){const tp=tastePen(md,c,s);if(tp)add('taste',-tp,'Чужой вкус: машина не похожа на местные');}
@@ -5590,7 +5597,10 @@ function buyersPct(md,s,c){const S=classScore(md,s,c),H=hiddenTerms(md,s,c);retu
 // строки для карточки модели и конструктора: каждое слагаемое больше 0,05 по модулю — множитель продаж и причина
 function hiddenHTML(md,s,inDesigner){if(isTruck(md))return '';const B=buyersPct(md,s),show=B.H.L.filter(x=>Math.abs(x.d)>0.05);if(!show.length)return '';
   const mul=x=>'×'+(x.mul>=10?Math.round(x.mul):x.mul.toFixed(2).replace('.',',').replace(/0$/,''));
-  return `<div class="hid">${show.map(x=>`<p class="small ${x.d<0?(inDesigner?'bad':'warn'):'good'}">${x.d<0?'⚠️':'➕'} ${esc(x.txt)} — продажи ${mul(x)}</p>`).join('')}
+  // 0.60, правки 28.11: у строки «Нет того, что ждут покупатели» — кнопка доустановки (без новой модели)
+  const fit=x=>{if(inDesigner||x.id!=='eq'||x.d>=0||!(md.id>0)||!s.models.includes(md))return '';const P=eqFitPlan(md,s);if(!P)return '';
+    return ` <button class="btn sm" data-act="eqFit" data-id="${md.id}" ${s.cash<P.cost?'disabled':''}>Поставить оснащение · ${money(P.cost)}</button>`;};
+  return `<div class="hid">${show.map(x=>`<p class="small ${x.d<0?(inDesigner?'bad':'warn'):'good'}">${x.d<0?'⚠️':'➕'} ${esc(x.txt)} — продажи ${mul(x)}${fit(x)}</p>`).join('')}
     <p class="small"><b>Для покупателей ≈ ${Math.round(B.N*100)}% соперника</b> <span class="muted">(«% соперника» ${Math.round(B.S*100)}% с поправкой на то, что выше)</span></p></div>`;}
 
 /* ---------- грузовик: главное — тонно-километр ---------- */
@@ -6603,6 +6613,7 @@ function legendStart(s,id){const L=LEGEND_BY[id];if(!L||legendState(s,L)!=='open
   s.cash-=dc;s.legends=s.legends||{};s.legends[L.id]={y:s.y,m:s.m};
   const nm=((draft&&draft.legendDraft===id&&draft.name)||L.name).trim()||L.name;
   const m={id:s.nextId++,name:nm,e:L.d.e,g:L.d.g,c:L.d.c,k:L.d.k,b:L.d.b,t:L.d.t,w:L.d.w,legend:L.id,paint:(draft&&draft.legendDraft===id&&draft.paint)||legendPaint(L,s.y)||PAINTS[0].id,price:0,plan:'auto',status:'dev',devLeft:legendDevMonths(L),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+  try{m.eq=eqAuto(m,segOf(m),s);}catch(_){m.eq=[];}/* 0.60, правки 28.11: легенда — с оснащением, которого ждут покупатели класса */
   m.price=Math.round(refPrice(m,s)/10)*10;s.models.push(m);addLog(`Начата разработка легенды «${nm}» (${money(dc)}, ${m.devLeft} мес.).`,'good');return true;}
 // 0.43: легенда-ровесница старта становится первой моделью: та же базовая машина, но с именем, бонусами и местом среди двух легенд марки
 function startLegendOf(s){return legendsOf(s).find(L=>L.y<=s.y+1&&(L.kind==='people'||L.kind==='middle')&&!legendMissing(s,L).length)||null;}
@@ -6662,10 +6673,29 @@ function eqCx(md){return eqOf(md).reduce((a,id)=>a*(1+EQ_BY[id].cx),1);}
 function eqWait(e,g,y){const n=e.need&&e.need[g];return n?clamp((y-n)/4,0,1):0;}
 function eqU(md,g,s){if(g==='truck'||isTruck(md))return 0;const y=yf(s),L=eqOf(md);let u=0;
   EQUIP.forEach(e=>{const has=L.includes(e.id),sup=!has&&L.some(id=>EQ_BY[id].sup===e.id),w=eqWait(e,g,y),uu=(e.u[g]||0)*(e.closed&&!parts(md).b.closed?0.3:1);
-    if(has)u+=uu*(1-w);else if(!sup)u-=uu*1.4*w;});
+    if(has)u+=uu*(1-w);else if(!sup&&!eqObs(e,g,y))u-=uu*1.4*w;});
   return clamp(u,-1.2,0.55);}
 // какие новинки покупатели этого класса уже ждут
-function eqExpected(g,y){return EQUIP.filter(e=>eqWait(e,g,y)>0.25);}
+function eqExpected(g,y){return EQUIP.filter(e=>eqWait(e,g,y)>0.25&&!eqObs(e,g,y));}
+// 0.60, правки 28.11: новинку, которую сменила другая (ацетиленовые фары → электрическое освещение), покупатели перестают ждать,
+// когда класс уже ждёт её замену: в 1944 году без ацетиленовых фар машину не судят — судят без электрического света
+function eqObs(e,g,y){return EQUIP.some(x=>x.sup===e.id&&eqWait(x,g,y)>=1);}
+// чего не хватает модели из того, что покупатели её класса ждут (для строки в карточке, совета и кнопки)
+function eqMissing(md,s){const g=segOf(md);if(g==='truck'||isTruck(md)||isMoto(md))return [];const has=eqOf(md),y=yf(s);
+  return EQUIP.filter(e=>!has.includes(e.id)&&!has.some(id=>EQ_BY[id].sup===e.id)&&eqWait(e,g,y)>0.25&&!eqObs(e,g,y));}
+// 0.60, правки 28.11: доустановка оснащения на модель в выпуске или в разработке — без новой модели.
+// Новый набор — то, что уже стоит, плюс то, что ждут покупатели и что окупается (как у помощника); старое, которое сменила новинка, снимается.
+// Цена — шестая часть разработки модели (проводка, кронштейны, оснастка сборки — оценка игры); в выпуске месяц перехода:
+// часы на машину ×1,5, как в первый месяц новой модели.
+function eqFitPlan(md,s){const g=segOf(md);if(g==='truck'||isTruck(md)||isMoto(md))return null;const has=eqOf(md);let L=has.slice();
+  eqAuto(md,g,s).forEach(id=>{if(!L.includes(id))L.push(id);});
+  EQUIP.forEach(e=>{if(e.req&&L.includes(e.id)&&!L.includes(e.req)&&eqAvail(s,e.req))L.push(e.req);});
+  EQUIP.forEach(e=>{if(e.sup&&L.includes(e.id))L=L.filter(x=>x!==e.sup);});
+  L=L.filter(id=>eqAvail(s,id));const add=L.filter(id=>!has.includes(id));if(!add.length)return null;
+  const cost=Math.max(Math.round(200*cpi(s)/10)*10,Math.round((typeof devCost==='function'?devCost(md,s):0)/6/100)*100);
+  return {L,add,cost};}
+function eqFit(s,md){const P=eqFitPlan(md,s);if(!P||s.cash<P.cost)return false;s.cash-=P.cost;md.eq=P.L;if(md.status==='prod')md.ramp=Math.max(md.ramp||0,1);
+  addLog(`«${md.name}»: поставлено оснащение — ${P.add.map(id=>EQ_BY[id].name.toLowerCase()).join(', ')} (${money(P.cost)}${md.status==='prod'?', месяц перехода':''}).`,'good');return true;}
 // разумный набор для машины класса (помощник и боты): всё, что ждут, и то, что окупается (прибавка больше цены)
 function eqAuto(md,g,s){if(g==='truck'||isTruck(md))return [];const y=yf(s),P=prefP(g,s.country,s),out=[];
   EQUIP.forEach(e=>{if(!eqAvail(s,e.id))return;if(e.req&&!eqAvail(s,e.req))return;const u=e.u[g]||0;if(!u)return;
@@ -6689,10 +6719,27 @@ function eqDone(s,pj){const e=EQ_BY[pj.id];if(!e)return;s.rd.eq=s.rd.eq||{};s.rd
 // первенство: машина с новинкой пошла в серию раньше истории
 function eqFirsts(md){const s=G;eqOf(md).forEach(id=>{const e=EQ_BY[id];if(e&&s.y<e.hist[0]&&eqDev(s,id))recordFirst(s,'eq:'+id,e.name,e.hist[0],e.hist[1]);});}
 // старые сохранения: у люкса после 1912 года — электросвет и стартер (так было написано в оснащении), у остальных — по году выпуска
-function eqMigrate(x){(x.models||[]).forEach(m=>{if(Array.isArray(m.eq))return;const y=1895+Math.floor((m.launched||0)/12),L=[];
+function eqMigrate(x){(x.models||[]).forEach(m=>{if(Array.isArray(m.eq))return;
+  if(m.status==='dev'||!m.launched){try{m.eq=eqAuto(m,segOf(m),x);}catch(_){m.eq=[];}return;}/* 0.60, правки 28.11: модель в разработке — оснащение своего года */
+  const y=1895+Math.floor((m.launched||0)/12),L=[];
   if(m.t==='t2'||m.t==='t1'){if(y>=1904)L.push('ws');L.push(y>=1912&&m.t==='t2'?'el':y>=1905?'ac':null);if(y>=1912&&m.t==='t2')L.push('st');}
   m.eq=L.filter(Boolean);});}
 function eqLine(md){const L=eqOf(md);return L.length?L.map(id=>EQ_BY[id].name.toLowerCase()).join(', '):'';}
+
+// 0.60, правки 28.11: родстер 1948 года уезжал в «Люкс» (конструктор молча менял спортивную отделку на люкс). Модель с открытым
+// спортивным кузовом и люксовой отделкой можно перевести в спортивный класс без новой разработки: четверть цены разработки
+// (облегчённый кузов, ковши, настройка мотора — оценка игры), в выпуске — месяц перехода.
+const SPORT_BODIES=['b35'];
+function sportFixCost(md,s){return Math.max(Math.round(300*cpi(s)/10)*10,Math.round(devCost(md,s)/4/100)*100);}
+function sportFixable(md){return !!md&&md.t==='t2'&&SPORT_BODIES.includes(md.b)&&bodyOpen(md.b)&&(md.status==='prod'||md.status==='dev');}
+function sportFix(s,md){if(!sportFixable(md))return false;const c=sportFixCost(md,s);if(s.cash<c)return false;s.cash-=c;md.t='t3';if(md.status==='prod')md.ramp=Math.max(md.ramp||0,1);
+  addLog(`«${md.name}» переведена в спортивный класс (${money(c)}${md.status==='prod'?', месяц перехода':''}).`,'good');return true;}
+function sportFixLine(md,s){if(!sportFixable(md))return '';const c=sportFixCost(md,s);
+  return `<p class="small warn" style="margin-top:6px">🏎 Спортивный кузов, а отделка люксовая: машина идёт в класс «Люкс», и судят её покупатели люкса. <button class="btn sm" data-act="sportFix" data-id="${md.id}" ${s.cash<c?'disabled':''}>Перевести в спортивный класс · ${money(c)}</button></p>`;}
+
+// строка в карточке модели — сразу под цифрами, а не в свёрнутом «Против соперников»: без оснащения продажи падают втрое
+function eqCardLine(md,s){if(!(md.status==='prod'||md.status==='dev'))return '';const M=eqMissing(md,s);if(!M.length)return '';const u=eqU(md,segOf(md),s);if(u>-0.1)return '';const P=eqFitPlan(md,s);
+  return `<p class="small warn" style="margin-top:6px">⚠️ Нет того, что ждут покупатели: ${M.map(e=>e.name.toLowerCase()).join(', ')} — продажи ×${Math.exp(u).toFixed(2).replace('.',',')}.${P?` <button class="btn sm" data-act="eqFit" data-id="${md.id}" ${s.cash<P.cost?'disabled':''}>Поставить оснащение · ${money(P.cost)}</button>`:''}</p>`;}
 
 /* ================= 0.60, этап 3 (доводка): оснащение 1930–1960 =================
    Три новинки с годом из источника (claude/issledovanie-tehnika-1930-1960.md): радиоприёмник Motorola (июнь 1930 года),
@@ -7803,6 +7850,8 @@ function trFee(s,T){return Math.round(Math.max(500*cpi(s),Math.min(TR_FEE_MAX*cp
 function trWhen(T,y){return (y-1895)*12+T.m;}
 function trOpenList(s){const t=mi(s),out=[];TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||!trSells(s,T.c))return;const at=trWhen(T,s.y);if(t>=at||at-t>TR_OPEN)return;const key=T.id+'|'+s.y,E=(s.trials&&s.trials.ent||{})[key];
     out.push({T,at,key,ent:E||null,best:trBest(s,T.grp,T.c),fee:trFee(s,T)});});return out;}
+// 0.60, правки 28.11: конкурсы, запись на которые откроется в ближайшие n месяцев (для совета заранее и карточки)
+function trSoonList(s,n){const t=mi(s),out=[];TRIALS.forEach(T=>{if(!trSells(s,T.c))return;for(const y of [s.y,s.y+1]){if(y<T.y0||y>T.y1)continue;const at=trWhen(T,y);if(at-t<=TR_OPEN||at-t>TR_OPEN+n)continue;out.push({T,y,at,best:trBest(s,T.grp,T.c)});break;}});return out.sort((a,b)=>a.at-b.at);}
 function trialEnter(s,id,mdId){const o=trOpenList(s).find(x=>x.T.id===id);if(!o||o.ent)return false;const md=mdId!=null?s.models.find(m=>m.id===mdId):o.best&&o.best.m;if(!md||s.cash<o.fee)return false;
   s.cash-=o.fee;s.trials=s.trials||{};(s.trials.ent=s.trials.ent||{})[o.key]={md:md.id,fee:o.fee};addLog(`«${md.name}» заявлена: ${o.T.n} (${COUNTRIES[o.T.c].name}), ${MONTHS[o.T.m]} ${s.y}. Взнос ${money(o.fee)}.`);return true;}
 // соперники на конкурсе: марки страны (их сила — эталон вида и ход фирмы, если он есть)
@@ -7851,7 +7900,8 @@ function trTestDone(s,q){const md=s.models.find(m=>m.id===q.md);if(!md)return;co
 function trialsMonth(s,r){if(s.mode==='racer')return;const t=mi(s),S=s.trials=s.trials||{};
   TRIALS.forEach(T=>{if(s.y<T.y0||s.y>T.y1||trWhen(T,s.y)!==t)return;const key=T.id+'|'+s.y,E=(S.ent||{})[key];if(E){try{trialRun(s,T,E);}catch(e){console.warn('trial',e);}delete S.ent[key];}
     else if(trSells(s,T.c)&&trModels(s,T.grp).length)addLog(`${T.n} (${COUNTRIES[T.c].name}) прошли без вас.`,'hist');});
-  if(S.q&&S.q.length){const D=S.q.filter(q=>q.at<=t);S.q=S.q.filter(q=>q.at>t);D.forEach(q=>{try{trTestDone(s,q);}catch(e){console.warn('trial test',e);}});}}
+  if(S.q&&S.q.length){const D=S.q.filter(q=>q.at<=t);S.q=S.q.filter(q=>q.at>t);D.forEach(q=>{try{trTestDone(s,q);}catch(e){console.warn('trial test',e);}});}
+  try{if(typeof airStMonth==='function')airStMonth(s);}catch(e){console.warn('air state trials',e);}}
 /* ---------- рынок: кого армия закупает и кому казна доплачивает ---------- */
 // армия в мирное время закупает только технику, принятую на полигоне (эталон соперников принят всегда)
 function trGate(md,u,c,s){const U=TRUCK_USE[u];if(!U||U.grp!=='mil'||!md||md.probe||md.ref)return true;if(isWar(s.y,s.m,c))return true;if(trCertS(md,c,'mil',s))return true;
@@ -7888,8 +7938,17 @@ function openTrials(){const s=G,O=trOpenList(s),t=mi(s);
     ${soon?`<div class="label" style="margin-top:10px">Конкурсы на ваших рынках</div>${soon}`:''}
     ${need?`<div class="label" style="margin-top:10px">Приёмка по заявке</div>${need}`:''}
     ${certs?`<div class="label" style="margin-top:10px">Свидетельства</div>${certs}`:''}`);}
-function trialAdvice(s,add){if(s.mode==='racer')return;
-  trOpenList(s).forEach(o=>{if(o.ent||!o.best||s.cash<o.fee)return;add(66,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS[o.T.m].toLowerCase()}): запись открыта. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
+function trialAdvice(s,add){if(s.mode==='racer')return;const t=mi(s);
+  // 0.60, правки 28.11: в последний месяц записи совет выше; модели нет — что нужно (раньше совет молчал)
+  trOpenList(s).forEach(o=>{if(o.ent)return;const last=trWhen(o.T,s.y)-t<=1,G2=TR_GRP[o.T.grp];
+    if(!o.best){add(last?62:52,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS_N[o.T.m]}): запись открыта${last?' — последний месяц':''}, а ${G2.n}а для заявки у вас нет. Победителю — заказ и свидетельство: нужен ${G2.n}.`,'Конструктор',()=>{openDesigner(o.T.grp==='farm'?'tractor':'truck');},'models');return;}
+    if(s.cash<o.fee)return;add(last?76:66,'🎖',`${o.T.n} (${COUNTRIES[o.T.c].name}, ${MONTHS_N[o.T.m]}): запись открыта${last?' — последний месяц':''}. «${o.best.m.name}» — ${Math.round(o.best.sc*100)} к образцу года; победителю — заказ и свидетельство.`,`Заявить · ${money(o.fee)}`,()=>{trialEnter(s,o.T.id,o.best.m.id);},'market');});
+  // заранее: запись откроется в ближайшие полгода
+  trSoonList(s,6).forEach(o=>{const G2=TR_GRP[o.T.grp];add(34,'🗓',`${o.T.n} (${COUNTRIES[o.T.c].name}) — в ${MONTHS_P[o.T.m]} ${o.y}, запись за ${TR_OPEN} месяца. ${o.best?`Ваш лучший ${G2.n} — «${o.best.m.name}», ${Math.round(o.best.sc*100)} к образцу года.`:`${G2.n[0].toUpperCase()+G2.n.slice(1)}а у вас пока нет.`}`,o.best?'Испытания':'Конструктор',()=>{if(o.best)openTrials();else openDesigner(o.T.grp==='farm'?'tractor':'truck');},'models');});
+  // в войну армия берёт военную технику без испытаний: если её нет — сказать
+  if(isWar(s.y,s.m,s.country)&&s.y>=1914&&!(s.models||[]).some(m=>(m.status==='prod'||m.status==='dev')&&trMil(m))&&typeof kindOpen==='function'&&KIND_GRP.mil.kinds.some(k=>kindOpen(k,s)))
+    add(58,'🪖','Война: армия берёт штабные и санитарные машины, бронеавтомобили и танки без испытаний на полигоне — у вас таких нет.','Конструктор',()=>{openKindStep('mil');},'models');
+  try{if(typeof airTrialAdvice==='function')airTrialAdvice(s,add);}catch(e){console.warn('air trial advice',e);}
   const md=(s.models||[]).find(m=>(m.status==='prod'||m.status==='sale'||(m.status==='dev'&&trMil(m)))&&trTestKind(m,s)&&!trTestWhy(s,m)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s));
   if(md){const k=trTestKind(md,s),sc=trScore(md,k==='neb'?'farm':'mil',trTestC(md,s,k),s),est=`Прикидка итога — ${Math.round(sc*100)} (100 — образец года)`;
     add(68,'🎖',k==='neb'?`«${md.name}» продаётся в США без протокола станции испытаний — фермеры таким тракторам верят меньше. ${est}${sc>=1?': хороший протокол прибавит продаж и принесёт заказ кооперативов':''}.`:`Армия в мирное время не закупит «${md.name}» без испытаний на полигоне. ${est}${sc>=1?': с таким итогом армия закажет первую партию':sc>=TR_PASS?': хватит для приёмки':` — для приёмки нужно ${Math.round(TR_PASS*100)}, сначала доведите машину`}.`,`${k==='neb'?'На станцию':'На полигон'} · ${money(trFee(s))}`,()=>{trialTest(s,md.id);},'models');}}
@@ -7897,8 +7956,12 @@ function trialResolve(s,key){if(key==='tr:open'){try{s.pending.shift();save();re
 // строка-вход в «Моделях»: показывается, когда есть что делать или что показать
 function trialCardHTML(s){if(!s||s.mode==='racer')return '';const O=trOpenList(s),t=mi(s),need=(s.models||[]).filter(m=>(m.status==='prod'||m.status==='sale')&&trTestKind(m,s)&&!trCertS(m,trTestC(m,s,trTestKind(m,s)),trTestKind(m,s)==='neb'?'neb':'mil',s)).length,
     have=(s.models||[]).filter(m=>m.cert&&Object.values(m.cert).some(C=>C.until>t)).length,q=(s.trials&&s.trials.q||[]).length;
-  if(!O.length&&!need&&!have&&!q)return '';const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
-  return `<section class="card"><div class="row"><div><h2>🎖 Испытания ведомств</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div></section>`;}
+  // 0.60, правки 28.11: карточка видна всегда — с ближайшей датой и строками о небе (конкурсы министерства, государственные испытания)
+  const L=[];if(O.length)L.push(`запись открыта: ${O.map(o=>esc(o.T.n)+(o.ent?' ✓':'')).join(', ')}`);if(q)L.push(`идут испытания: ${q}`);if(need)L.push(`без приёмки: ${need}`);if(have)L.push(`свидетельств: ${have}`);
+  const S=trSoonList(s,24)[0];if(!O.length&&S)L.push(`ближайшее: ${esc(S.T.n)} (${COUNTRIES[S.T.c].name}) — ${MONTHS_N[S.T.m]} ${S.y}`);
+  const AL=typeof airTrialLines==='function'?airTrialLines(s):{L:[],B:[]};L.push(...AL.L);
+  if(!L.length)L.push(isWar(s.y,s.m,s.country)?'война: армия берёт технику без испытаний':'конкурсов по истории сейчас нет; военную технику армия берёт после приёмки на полигоне — кнопка в карточке модели');
+  return `<section class="card" id="fc-trials"><div class="row"><div><h2>🎖 Испытания и госзаказы</h2><p class="small muted">${L.join(' · ')}</p></div><button class="btn sm" data-act="trOpen">Открыть</button></div>${AL.B.length?`<div class="btns" style="margin-top:8px">${AL.B.join('')}</div>`:''}</section>`;}
 /* 0.60: помощник управляющего ведёт испытания сам — заявляет лучшую машину на открытый конкурс и отправляет на полигон и
    на станцию испытаний всё, что без приёмки продаётся хуже или не продаётся вовсе (взнос мал против того, что даёт итог).
    На полигон — только если прикидка итога проходит приёмку: иначе деньги и полгода ожидания пропадут зря. */
@@ -8866,6 +8929,9 @@ function humanLegacyHTML(s){if(!s.pfl)return '';const L=humanLegacy(s),m=L.me,ro
   if((m.sport||L.top.sport.length)&&sportAny(s))lines.push(row('Спорт',m.sport?`${oneIn(m.sport)} спортивная машина — ваша`:'ваших спортивных машин пока нет',cmp(L.top.sport,b=>oneIn(b.v))));
   return `<div class="label" style="margin-top:12px">Наследие в людях</div><div class="hum">${lines.join('')}</div><p class="small muted" style="margin-top:4px">Все ${Object.keys(COUNTRIES).length===6?'шесть':Object.keys(COUNTRIES).length} стран игры: семьи, машины и грузовики на дорогах (машина служит ${Math.round(tabAt(CAR_LIFE,yf(s)))} лет). Серым — самые большие марки для сравнения.</p>`;}
 
+/* 0.60, правки 28.11: надёжность выше 98,5 % не срезается ровно на 99 % — она подходит к 99,5 % плавно. С жёстким пределом в сороковые
+   и ваша машина, и соперник упирались в «99 % без поломок, 1 из 100», и лучшие детали ничего не давали («ломается так же часто»). */
+function relSoft(x){return x<=0.985?x:0.995-0.01*Math.exp(-(x-0.985)/0.01);}
 /* ================= CAR STATS: physics from components ================= */
 // Подготовка к гонке: серийная машина, облегчённая (без тента, крыльев и задних сидений), заводской гоночный кузов
 const PREP=[{id:0,name:'Серийная',desc:'как в продаже',cost:0},{id:1,name:'Облегчённая',desc:'без тента, крыльев и фонарей',cost:0.2},{id:2,name:'Заводской гоночный кузов',desc:'узкий кузов, форсированный мотор',cost:0.55}];
@@ -8902,7 +8968,7 @@ function carBase(md,prep,y){
   // надёжность: мотор, коробка, запас прочности рамы, проколы
   const load=p.e.hp/Math.max(1,chassisMax(p.c,md)),durK=1.02-0.06*clamp(load-0.5,0,0.5);
   // 0.33: деталь, вышедшая не по ТЗ, ломается чаще — через частоту поломок (10f-risk.js, dvFail), а не через «процент надёжности»
-  const rel0=clamp(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1),0.3,0.99);
+  const rel0=clamp(relSoft(p.e.rel*(1+0.02*U(p.e.id))*p.g.relK*(1+0.01*U(p.g.id))*durK*(1-0.03*(p.w.punct||0))/0.99*relK*(kc?kc.rel:1)*(overpower(md)?0.75:1)),0.3,0.995);
   // 0.36: модель, доведённая гонками (гоночная команда находит и устраняет слабые места), ломается реже — до трети поломок меньше
   const rel1=md.dv?clamp(1-(1-rel0)*dvFail(md),0.3,0.99):rel0,rel=md.rr?clamp(1-(1-rel1)*(1-Math.min(RR_MAX,md.rr)),0.3,0.995):rel1;
   return {hp,kg:Math.round(m),P,kd,crr,cd,cg,brk,grip,rel,wb:p.c.wb+(p.e.hp>40?0.3:0),wire:!!p.w.wire,mech:!mo&&mechanicEra(y),hpKg:hp/m*1000};
@@ -9554,7 +9620,7 @@ function ownNextName(s,k){const n=ownParts(s,k).length+1,w={e:'мотор',g:'к
 function ownStart(s,sp){const P=ownPreview(s,sp);if(!P||P.why)return false;const into=ownIntoOf(s,sp);if(into&&ownIntoBusy(s,into.id))return false;P.pj.name=into?into.name:(sp.name||'').trim()||ownNextName(s,sp.k);P.pj.sp.name=P.pj.name;s.ownN=(s.ownN||0)+1;P.pj.id='own'+s.ownN;return rdBegin(s,P.pj);}
 // статья «Зачем и откуда»
 function ownArticle(s,x){const x0=byId(OWN_CAT[x.k].arr(),x.base),T2=(x.tech||[]).map(id=>OWN_TECH.find(t=>t.id===id)).filter(Boolean),yrs=x.yh-(x.made?x.made.y:s.y);
-  return `Основа — ${x0?x0.name:'свой узел'}. `+(T2.length?`Приёмы: ${T2.map(t=>t.n.toLowerCase()).join(' и ')}. ${T2.map(t=>t.h).join(' ')} `:'')+`Цель — ${ownGoalName(x.goal,x.k).toLowerCase()}. `
+  return `Основа — ${String(x0?x0.name:'свой узел').replace(/\.$/,'')}. `+(T2.length?`Приёмы: ${T2.map(t=>t.n.toLowerCase()).join(' и ')}. ${T2.map(t=>t.h).join(' ')} `:'')+`Цель — ${ownGoalName(x.goal,x.k).toLowerCase()}. `
     +(x.yh>ownEraEnd()?`В истории до ${ownEraEnd()} года такого узла не было: по чертам он соответствует ${x.yh} году.`:yrs>0?`По чертам это ${x.yh} год: история пришла к такому узлу на ${yrs} ${plural(yrs,'год','года','лет')} позже.`:`По чертам это ${x.yh} год: в истории такие узлы уже делали — но этот ваш, и доводить его вам.`);}
 function ownDone(s,pj){const x=ownBuild(s,pj.sp);if(!x){addLog(`КБ не смогло закончить «${pj.name}»: основы больше нет.`,'bad');return;}s.custom=s.custom||[];
   {const o=ownIntoOf(s,pj.sp);if(o){ownRefine(s,o,x,pj);ownSync(s);xpAdd(s,XP_CAT[o.k],2);addLog(`КБ закончило доводку: ${o.name} — доводка №${o.rev-1}, узел тот же.`,'good');pendingToasts.push('🧪 Доводка: '+o.name);return;}}s.ownId=(s.ownId||0)+1;x.id='x'+x.k+s.ownId;x.name=pj.name;x.made={y:s.y,m:s.m};
@@ -9595,7 +9661,7 @@ function ownSettleHist(s){const y=s.y;
   if(y>=1911)return 'Так в истории было с патентом Селдена: почти все фабриканты Америки платили отчисления, а не судились; Форд судился восемь лет — и в 1911 году выиграл.';
   if(y>=1903)return 'Так в истории было с патентом Селдена: почти все фабриканты Америки предпочли платить отчисления, а не судиться; Форд платить отказался и пошёл в суд.';
   return '';}
-function ownSettleOffer(s,o,F,x){const nm=firmName(s,F),sum=ownSettleSum(s,o,F),fee=ownLicFee(s,F),left=Math.max(1,o.until-mi(s)),aw=ownAward(s,F),h=ownSettleHist(s);
+function ownSettleOffer(s,o,F,x){const nm=firmName(s,F),sum=ownSettleSum(s,o,F),fee=ownLicFee(s,F,x),left=Math.max(1,o.until-mi(s)),aw=ownAward(s,F),h=ownSettleHist(s);
   pushEvent({own:1,noArt:1,kicker:'Патенты и суды',title:`${nm} предлагает мировую`,deck:`Дело о «${x.name}»: до суда ${left} мес.`,
     text:`Юристы ${nm} не хотят доводить дело до решения. Предложение: ${money(sum)} сразу и лицензия — ${money(fee)} в месяц на пять лет. Иск вы отзываете, копия остаётся на их машинах.\n${o.sure?`Ваше дело бесспорное: через ${left} мес. суд присудит около ${money(aw)}, вернёт расходы на юристов и запретит копию — но лицензионных денег тогда не будет.`:`Через ${left} мес. суд: шансы около ${Math.round(o.p*100)} %. При победе — около ${money(aw)} и запрет копии, при проигрыше — ничего, а юристы уже оплачены.`}${h?'\n'+h:''}`,
     choices:[[`Принять мировую · ${money(sum)} и ${money(fee)}/мес.`,`own:settle:${x.id}:${o.f}`],['Отказать — до суда',`own:nosettle:${x.id}:${o.f}`]]},true);}
@@ -9609,18 +9675,21 @@ function ownCopied(s,r,F,g){const t=mi(s),key=F.c+':'+F.i,nm=firmName(s,F);
   for(const m of L){x=(s.custom||[]).find(z=>m[z.k]===z.id&&z.ser!=null&&t-z.ser>=12&&!(z.cp&&z.cp[key]));if(x)break;}if(!x)return null;
   x.cp=x.cp||{};x.cp[key]=t;const M=F.md&&F.md[g];if(M)M.q=clamp((M.q||0)+0.04,0.05,1.25);
   if(!ownPatOn(s,x)){addLog(`${nm} переняла ваш узел «${x.name}»: патента нет — возразить нечем.`,'bad');return x;}
-  const fee=ownLicFee(s,F),law=ownSuitCost(s),C=ownClaim(s,x),aw=ownAward(s,F);
+  const fee=ownLicFee(s,F,x),law=ownSuitCost(s),C=ownClaim(s,x),aw=ownAward(s,F);
   pushEvent({own:1,noArt:1,kicker:'Патенты и суды',title:`${nm} скопировала «${x.name}»`,deck:C.sure?'Ваш патент нарушен — дело бесспорное':'Ваш патент нарушен — дело спорное',
     text:`В новой модели ${nm} — узел, повторяющий ваш «${x.name}». Патент действует до ${1895+Math.floor(x.pat.until/12)} года.\n${ownClaimText(s,x,C)}\nИск — это юристы на год (${money(law)} в месяц) и суд: при победе — около ${money(aw)}${C.sure?' и расходы на юристов':''}, копию снимут с модели.${C.p>=0.5?' Через несколько месяцев ответчик может предложить мировую.':''} Лицензия — ${money(fee)} в месяц пять лет без суда: деньги верные, но копия останется.`,
     choices:[[`Продать лицензию · ${money(fee)}/мес.`,`own:lic:${x.id}:${key}`],[`Подать иск · ${money(law)}/мес.`,`own:sue:${x.id}:${key}`],['Не замечать','ok']]},true);return x;}
-function ownLicFee(s,F){return Math.max(100,Math.round((F.r12||0)/12*0.012/50)*50);}
+// 0.60, правки 28.11: плата по узлу — мотор дороже шин. Доля узла — как в новизне оснастки (10-model.js): мотор 35 %, рама 25 %,
+// кузов 20 %, коробка 10 %, тормоза и колёса по 5 %; мотор — прежние 1,2 % оборота покупателя, остальные — в той же пропорции
+const OWN_LIC_W={e:1,c:25/35,b:20/35,g:10/35,k:5/35,w:5/35};
+function ownLicFee(s,F,x){const w=x&&OWN_LIC_W[x.k]!=null?OWN_LIC_W[x.k]:1;return Math.max(100,Math.round((F.r12||0)/12*0.012*w/50)*50);}
 function ownSuitCost(s){return Math.round(400*cpi(s)/50)*50;}
 function ownResolve(s,key){const a=key.split(':');if(a[1]==='pat'){if(!ownPatent(s,a[2]))toast('Не хватает денег на патент');return;}
   const x=ownGet(s,a[2]),fk=a[3]+':'+a[4],F=s.firms&&s.firms[fk];if(!x||!F)return;s.legal=s.legal||{};const O=s.legal.own=s.legal.own||[],t=mi(s),nm=firmName(s,F);
-  if(a[1]==='lic'){const amt=ownLicFee(s,F);O.push({k:'lic',id:x.id,f:fk,amt,until:t+60});addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет.`,'good');}
+  if(a[1]==='lic'){const amt=ownLicFee(s,F,x);O.push({k:'lic',id:x.id,f:fk,amt,until:t+60});addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет.`,'good');}
   if(a[1]==='sue'){const C=ownClaim(s,x);O.push({k:'suit',id:x.id,f:fk,amt:ownSuitCost(s),t0:t,until:t+OWN_SUIT_M,p:C.p,sure:C.sure?1:0,paid:0});F.gr=Math.min(1,(F.gr||0)+0.4);F.grWhy=`иск за «${x.name}», ${s.y}`;
     addLog(`Иск к ${nm} за «${x.name}» подан: суд через год. ${C.sure?'Дело бесспорное — суд присудит компенсацию.':`Дело спорное: шансы около ${Math.round(C.p*100)} %.`}`);}
-  if(a[1]==='settle'){const i=O.findIndex(o=>o.k==='suit'&&o.id===x.id&&o.f===fk);if(i<0)return;const o=O[i],sum=ownSettleSum(s,o,F),amt=ownLicFee(s,F),till=Math.min(t+60,x.pat&&x.pat.until>t?x.pat.until:t+60);
+  if(a[1]==='settle'){const i=O.findIndex(o=>o.k==='suit'&&o.id===x.id&&o.f===fk);if(i<0)return;const o=O[i],sum=ownSettleSum(s,o,F),amt=ownLicFee(s,F,x),till=Math.min(t+60,x.pat&&x.pat.until>t?x.pat.until:t+60);
     O.splice(i,1);s.cash+=sum;F.cash=(F.cash||0)-sum;if(till>t)O.push({k:'lic',id:x.id,f:fk,amt,until:till});F.gr=Math.max(0,(F.gr||0)-0.25);
     addLog(`Мировая с ${nm} по делу о «${x.name}»: ${money(sum)} сразу и лицензия ${money(amt)} в месяц${till-t>=60?' на пять лет':' до конца патента'}. Иск отозван.`,'good');pendingToasts.push('⚖️ Мировая: '+money(sum));}
   if(a[1]==='nosettle')addLog(`Мировая с ${nm} отклонена: дело о «${x.name}» идёт к суду.`);}
@@ -9628,7 +9697,7 @@ function ownResolve(s,key){const a=key.split(':');if(a[1]==='pat'){if(!ownPatent
 // Деньги — пять лет, но её машины станут лучше: это ход против себя ради кассы (ход соперника — ownCopied).
 function ownLicBuyer(s,x){if(!s.firms||!firmsOn(s)||!x||x.k==='ae')return null;const t=mi(s),O=(s.legal&&s.legal.own)||[];let B=null;
   (COMPS[s.country]||[]).forEach((cp,i)=>{const F=firmGet(s,s.country,i);if(!F||F.st!=='ok'||!(F.h12>0)||F.gr>0.2||acqHas(s,s.country,i))return;const key=s.country+':'+i;if(O.some(o=>o.id===x.id&&o.f===key&&o.until>t))return;if(!B||(F.r12||0)>(B.F.r12||0))B={F,key,i};});return B;}
-function ownLicSell(s,id){const x=ownGet(s,id);if(!x||!ownPatOn(s,x)||x.ser==null)return false;const B=ownLicBuyer(s,x);if(!B)return false;const F=B.F,t=mi(s),amt=ownLicFee(s,F),nm=firmName(s,F),cp=firmCp(F),g=firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
+function ownLicSell(s,id){const x=ownGet(s,id);if(!x||!ownPatOn(s,x)||x.ser==null)return false;const B=ownLicBuyer(s,x);if(!B)return false;const F=B.F,t=mi(s),amt=ownLicFee(s,F,x),nm=firmName(s,F),cp=firmCp(F),g=firmSegs(cp).sort((a,b)=>cp.mix[b]-cp.mix[a])[0];
   s.legal=s.legal||{};(s.legal.own=s.legal.own||[]).push({k:'lic',id:x.id,f:B.key,amt,until:t+60});x.cp=x.cp||{};x.cp[B.key]=t;
   const M=F.md&&F.md[g];if(M&&t<M.till)M.q=clamp((M.q||0)+0.06,0.05,1.25);else F.md[g]={q:0.08,from:t,till:t+60,name:'',lic:1};
   addLog(`${nm} купила лицензию на «${x.name}»: ${money(amt)} в месяц, пять лет. Её машины ${SEG_LOC[g]||''} станут лучше.`,'good');return true;}
@@ -9706,7 +9775,7 @@ function aeDone(s,pj){if(pj.sp&&pj.sp.into){aeRefineDone(s,pj);return;}const x=a
   if(yrs>0)try{recordFirst(s,'own_'+x.id,x.name,x.yh,'отрасль пришла к такому мотору',null,{noArt:1});}catch(_){}
   const b=byId(ENGINES,x.base);
   pushEvent({own:1,noArt:1,kicker:'КБ · авиамотор',title:`«${s.company}» строит авиамоторы`,deck:`${x.hp} л.с., ${x.kg} кг`,
-    text:`${x.name}: ${T1.n.toLowerCase()}. Основа — ${b?b.name:'свой автомобильный мотор'}. ${T1.h}\nМотор стоит в конструкторе аэроплана рядом с покупными — без наценки поставщика${s.tech&&s.tech.foundry?' и со своей литейкой':''}, и в войну его у вас никто не отнимет. Авиазаводы страны уже спрашивают цену: продажа моторов пойдёт отдельной строкой в отчёте.`,
+    text:`${x.name}: ${T1.n.toLowerCase()}. Основа — ${String(b?b.name:'свой автомобильный мотор').replace(/\.$/,'')}. ${T1.h}\nМотор стоит в конструкторе аэроплана рядом с покупными — без наценки поставщика${s.tech&&s.tech.foundry?' и со своей литейкой':''}, и в войну его у вас никто не отнимет. Авиазаводы страны уже спрашивают цену: продажа моторов пойдёт отдельной строкой в отчёте.`,
     choices:[[`Запатентовать · ${money(ownPatCost(s))}`,'own:pat:'+x.id],['Дальше','ok']]},true);}
 /* Продажа авиамоторов: рынок — моторы для аэропланов страны (по истории, AIR_MKT), против исторических моторов того же
    класса мощности по удельной мощности, надёжности и цене. Делаются в моторном цехе: занимают свободные места завода. */
@@ -9768,27 +9837,50 @@ function ownPreviewHTML(s,P){if(!P)return '';const x=P.x,rows=P.cmp.map(c=>`<tr>
     <tr><td>цена в серии</td><td class="num">${money(pc0)}</td><td class="num ${pc1<pc0*0.995?'good':pc1>pc0*1.005?'bad':''}"><b>${money(pc1)}</b></td><td class="num muted">${money(partCost(P.best,s))}</td></tr></table>
     <p class="small" style="margin-top:8px">Год по истории: <b class="num">${x.yh>ownEraEnd()?x.yh+' — в истории эпохи такого не было':x.yh}</b>${P.yrs>0?` <span class="warn">· на ${P.yrs} ${plural(P.yrs,'год','года','лет')} раньше: проект дороже в ${(aheadCostK(P.yrs)).toFixed(1).replace('.',',')} раза, узел в серии +${Math.round((aheadPartK(x,s)-1)*100)}%</span>`:' <span class="muted">· не опережает историю</span>'}</p>
     <p class="small muted" style="margin-top:4px">Срок ~${P.months} мес. · риск доработки на испытаниях ${Math.round(P.rework*100)}% · риск «не так, как задумано» в серии ${Math.round(P.risk*100)}%</p>`;}
-function openOwn(k,moto){const s=G;ownEnsure(s);if(!k){ownDraft=null;const mv=lineOn(s,'moto')||s.mshopB,cv=lineOn(s,'car')||s.carShopB||!lineOn(s,'moto');
-    const cat=(q,mo)=>{const B=ownBaseList(s,q,mo)[0];return B?`<button class="race-item" data-act="ownCat" data-k="${q}" data-mo="${mo?1:0}" style="display:block;width:100%;text-align:left"><span class="mo">${mo?'🏍 ':''}${OWN_CAT[q].n}</span><h3 style="margin-top:2px">${esc(B.name)}</h3><p class="small muted">основа — ваш лучший узел · приёмов по опыту: ${OWN_TECH.filter(t=>t.cat.includes(q)&&xpTechOk(s,t)).length} из ${OWN_TECH.filter(t=>t.cat.includes(q)).length}</p></button>`:'';};
-    const mine=ownParts(s).concat(s.aeng||[]);
-    return openSheet(`<div class="row"><h2>Своя разработка</h2>${X}</div>
-      <p class="small muted" style="margin-top:6px">Узел, которого нет у поставщиков: основа — ваш лучший, приёмы — из накопленного опыта. Чем дальше он от того, что умеет история, тем дороже и рискованнее.</p>
-      <div class="card" style="margin-top:10px;background:var(--panel2)"><div class="label">Опыт компании</div>${xpRowsHTML(s)}</div>
-      <div class="label" style="margin-top:14px">Шаг 1. Что делаем</div>${cv?Object.keys(OWN_CAT).map(q=>cat(q,false)).join(''):''}${mv?['e','c','w','k'].map(q=>cat(q,true)).join(''):''}
-      ${aeCan(s)?`<button class="race-item" data-act="aeOpen" style="display:block;width:100%;text-align:left"><span class="mo">✈ Авиамотор</span><h3 style="margin-top:2px">${esc((aeBase(s)||{name:'—'}).name)}</h3><p class="small muted">основа — ваш самый сильный мотор · для своих аэропланов и на продажу авиазаводам</p></button>`:''}
-      ${mine.length?`<div class="label" style="margin-top:14px">Свои узлы</div>${mine.map(x=>ownItemHTML(s,x)).join('')}`:''}`);}
-  if(!ownDraft||ownDraft.k!==k||ownDraft.moto!==!!moto)ownDraftInit(s,k,moto);const d=ownDraft,B=ownBaseList(s,k,d.moto);
-  // свои узлы — в начале списка основ: их и дорабатывают; выбранная основа видна всегда
-  const BL=[...B.filter(x=>x.own),...B.filter(x=>!x.own)].slice(0,5);if(d.base&&!BL.some(x=>x.id===d.base)){const bx=B.find(x=>x.id===d.base);if(bx)BL.push(bx);}
+/* 0.60, правки 28.11 (автор: «сначала выбрать тип узла, потом — какой из существующих узлов улучшаем, потом — что с ним делаем;
+   сейчас иногда невозможно найти узлы»): один лист в три шага. Шаг 1 — тип (плитки), шаг 2 — любой доступный узел этого типа
+   (свои, на ваших моделях, прототипы КБ, у поставщиков), шаг 3 — доработать свой или новый на основе, приёмы, цель. Выбранный шаг
+   сворачивается в строку. Опыт компании — строкой, раскрывается по нажатию. Свои узлы — коротким списком. */
+const OWN_UI={xp:false,pick:false,all:false,md:null};
+function ownTypeTiles(s){const mv=lineOn(s,'moto')||s.mshopB,cv=lineOn(s,'car')||s.carShopB||!lineOn(s,'moto'),busy=new Set(rdActive(s).filter(p=>p.kind==='own'&&p.sp).map(p=>(p.sp.moto?'m':'')+p.sp.k)),d=ownDraft;
+  const tile=(q,mo)=>{if(!unlockedP(OWN_CAT[q].arr(),s,mo).length)return '';const n=ownParts(s,q).filter(x=>!!x.moto===!!mo).length,on=d&&d.k===q&&!!d.moto===!!mo;
+    return `<button class="chip${on?' on':''}" data-act="ownCat" data-k="${q}" data-mo="${mo?1:0}">${mo?'🏍 ':''}${OWN_CAT[q].n}<small>${n?`своих: ${n}`:'своих нет'}${busy.has((mo?'m':'')+q)?' · в работе':''}</small></button>`;};
+  const car=cv?Object.keys(OWN_CAT).map(q=>tile(q,false)).join(''):'',mot=mv?['e','c','w','k'].map(q=>tile(q,true)).join(''):'',ae=aeCan(s)?`<button class="chip" data-act="aeOpen">✈ Авиамотор<small>своих: ${(s.aeng||[]).length}</small></button>`:'';
+  return `${car?`<div class="chips">${car}</div>`:''}${mot?`<div class="chips" style="margin-top:4px">${mot}</div>`:''}${ae?`<div class="chips" style="margin-top:4px">${ae}</div>`:''}`;}
+// все узлы типа, к которым у фирмы есть доступ, — группами (раньше — только стоящие на моделях, и не больше пяти)
+function ownBaseGroups(s,k,moto){const cat=OWN_CAT[k];if(!cat)return [];const U=unlockedP(cat.arr(),s,moto),used=new Set();(s.models||[]).forEach(m=>{if(m.status!=='off')used.add(m[k]);});
+  const early=(s.rd&&s.rd.early)||[],G2=[['Свои узлы',x=>x.own],['На ваших моделях',x=>!x.own&&used.has(x.id)],['Прототипы КБ',x=>!x.own&&!used.has(x.id)&&early.includes(x.id)],['У поставщиков',x=>!x.own&&!used.has(x.id)&&!early.includes(x.id)]];
+  const kindN=x=>{if(k!=='b')return '';const kd=bodyKind(x);return !kd?'легковой':(KIND_NEW[kd]&&KIND_NEW[kd].n)||(kd==='truck'||kd==='van'?'грузовой':kd);};
+  return G2.map(([n,f])=>({n,L:U.filter(f).sort((a,b)=>(b.y||0)-(a.y||0)||(b.q||0)-(a.q||0)).map(x=>({x,kn:kindN(x)}))})).filter(g=>g.L.length);}
+function ownNums(k,x){const M=OWN_MEAS[k]||[];const L=k==='e'?[`${Math.round(x.hp)} л.с.`,`${fmtN(Math.round(x.kg))} кг`,`надёжность ${(x.rel||0).toFixed(2).replace('.',',')}`]:M.filter(m=>!(m[3]&&m[3].hide)).slice(0,2).map(m=>`${m[0]} ${ownFmt(m[1](x),m[2])}`);
+  return L.concat(x.y?[`${x.y} г.`]:[]).join(' · ');}
+function ownBaseRows(s,k,moto,d){const best=(ownBaseList(s,k,moto)[0]||{}).id,GR=ownBaseGroups(s,k,moto);let out='';
+  GR.forEach(g=>{const many=g.n==='У поставщиков'&&g.L.length>6&&!OWN_UI.all,L=many?g.L.slice(0,6):g.L;let lastKn=null;
+    out+=`<div class="label" style="margin-top:8px">${g.n}</div>`+L.map(o=>{const x=o.x,on=d.base===x.id,kn=k==='b'&&o.kn!==lastKn?(lastKn=o.kn,`<p class="small muted" style="margin-top:4px">${esc(o.kn)}</p>`):'';
+      return `${kn}<button class="race-item${on?' on':''}" data-act="ownBase" data-id="${x.id}" style="display:block;width:100%;text-align:left;margin-top:4px${on?';outline:1px solid var(--brass)':''}"><h3 style="margin:0">${x.own?'🧪 ':''}${esc(x.name)}${upgL(x.id)?' ★'+upgL(x.id):''}${x.id===best?' <small class="good">лучший</small>':''}</h3><p class="small muted">${ownNums(k,x)}</p></button>`;}).join('')
+      +(many?`<button class="linkbtn" data-act="ownAll">показать все: ${g.L.length}</button>`:'');});
+  return out;}
+function ownMineHTML(s){const mine=ownParts(s).concat(s.aeng||[]);if(!mine.length)return '';
+  return `<div class="label" style="margin-top:14px">Свои узлы</div>${mine.map(x=>ownItemHTML(s,x)).join('')}`;}
+function openOwn(k,moto){const s=G;ownEnsure(s);
+  const xp=`<button class="linkbtn" data-act="ownXp" style="margin-top:8px;display:block">Опыт компании: ${XP_KEYS.map(q=>`${XP_AREA[q].n.toLowerCase()} ${Math.floor(xpOf(s,q))}`).join(', ')} ${OWN_UI.xp?'▴':'▾'}</button>${OWN_UI.xp?`<div class="card" style="margin-top:6px;background:var(--panel2)">${xpRowsHTML(s)}</div>`:''}`;
+  const head=`<div class="row"><h2>Своя разработка</h2>${X}</div><p class="small muted" style="margin-top:6px">Узел, которого нет у поставщиков. Чем дальше он от того, что умеет история, тем дороже и рискованнее.</p>${xp}`;
+  const fromMd=OWN_UI.md!=null?(s.models||[]).find(m=>m.id===OWN_UI.md):null;
+  if(!k){ownDraft=null;OWN_UI.pick=false;
+    return openSheet(`${head}<div class="label" style="margin-top:14px">Шаг 1. Тип узла${fromMd?` — для «${esc(fromMd.name)}»`:''}</div>${ownTypeTiles(s)}${ownMineHTML(s)}`);}
+  if(!ownDraft||ownDraft.k!==k||ownDraft.moto!==!!moto){ownDraftInit(s,k,moto,fromMd&&!!isMoto(fromMd)===!!moto?fromMd[k]:null);OWN_UI.pick=false;OWN_UI.all=false;}
+  const d=ownDraft,bx=d.base?byId(OWN_CAT[k].arr(),d.base):null;
   const bo=ownGet(s,d.base),into=bo&&d.into?bo:null;if(into)d.tech=d.tech.filter(t=>!(into.tech||[]).includes(t));const P=d.base?ownPreview(s,d):null;
   const techs=OWN_TECH.filter(t=>t.cat.includes(k)),chip=(on,act,attrs,txt,dis)=>`<button class="chip${on?' on':''}" data-act="${act}" ${attrs} ${dis?'disabled':''}>${txt}</button>`;
-  openSheet(`<div class="row"><h2>${d.moto?'🏍 ':''}${OWN_CAT[k].n}: своя разработка</h2>${X}</div>
-    <div class="row" style="margin-top:8px"><span class="small"><b>Шаг 2. Основа</b></span><button class="btn sm" data-act="ownOpen">Изменить узел</button></div>
-    <div class="chips">${BL.map(x=>chip(d.base===x.id,'ownBase',`data-id="${x.id}"`,(x.own?'🧪 ':'')+esc(x.name)+(upgL(x.id)?' ★'+upgL(x.id):''))).join('')}</div>
-    ${bo?`<div class="chips" id="owninto" style="margin-top:6px">${chip(!!d.into,'ownInto','data-v="1"','Доработать этот узел<small>тот же узел: имя, патент и машины остаются</small>')}${chip(!d.into,'ownInto','data-v="0"','Новый узел на его основе<small>отдельное имя и отдельный патент</small>')}</div>`:''}
-    <div class="label" style="margin-top:12px">Шаг 3. Приёмы — один или два (второй даёт меньше)</div>
+  const step1=`<div class="row" style="margin-top:12px"><span class="small"><b>Шаг 1.</b> ${d.moto?'🏍 ':''}${OWN_CAT[k].n}</span><button class="btn sm" data-act="ownOpen">Другой тип</button></div>`;
+  const step2=OWN_UI.pick||!bx?`<div class="label" style="margin-top:12px">Шаг 2. Какой узел берём за основу</div>${ownBaseRows(s,k,d.moto,d)}`
+    :`<div class="row" style="margin-top:8px"><span class="small"><b>Шаг 2.</b> ${bx.own?'🧪 ':''}${esc(bx.name)}${upgL(bx.id)?' ★'+upgL(bx.id):''} <span class="muted">· ${ownNums(k,bx)}</span></span><button class="btn sm" data-act="ownPick">Другой узел</button></div>`;
+  openSheet(`${head}${step1}${step2}
+    <div class="label" style="margin-top:12px">Шаг 3. Что делаем</div>
+    ${bo?`<div class="chips" id="owninto">${chip(!!d.into,'ownInto','data-v="1"','Доработать этот узел<small>тот же узел: имя, патент и машины остаются</small>')}${chip(!d.into,'ownInto','data-v="0"','Новый узел на его основе<small>отдельное имя и отдельный патент</small>')}</div>`:''}
+    <p class="small muted" style="margin-top:6px">Приёмы из опыта — один или два (второй даёт меньше):</p>
     ${techs.length?`<div class="chips">${techs.map(t=>{const used=!!(into&&(into.tech||[]).includes(t.id)),ok=xpTechOk(s,t)&&!used,on=d.tech.includes(t.id)&&!used;return `<button class="chip${on?' on':''}" data-act="ownTech" data-id="${t.id}" ${ok?'':'disabled'}>${esc(t.n)}<small>${used?'уже применён к этому узлу':ok?esc(t.d):`нужен опыт: ${XP_AREA[t.a].n.toLowerCase()} ${Math.floor(xpOf(s,t.a))} из ${t.xp}`}</small></button>`;}).join('')}</div>`:'<p class="small muted" style="margin-top:4px">Для этого узла приёмов из опыта нет — только цель.</p>'}
-    <div class="label" style="margin-top:12px">Шаг 4. Цель</div><div class="chips">${Object.keys(OWN_GOAL).filter(g=>ownGoalOk(g,k)).map(g=>chip(d.goal===g,'ownGoal',`data-g="${g}"`,ownGoalName(g,k)+(g==='econ'?'<small>расход топлива меньше, мощность чуть ниже</small>':''))).join('')}</div>
+    <p class="small muted" style="margin-top:6px">Цель:</p><div class="chips">${Object.keys(OWN_GOAL).filter(g=>ownGoalOk(g,k)).map(g=>chip(d.goal===g,'ownGoal',`data-g="${g}"`,ownGoalName(g,k)+(g==='econ'?'<small>расход топлива меньше, мощность чуть ниже</small>':''))).join('')}</div>
     <div class="chips">${[1,2,3].map(n=>chip(d.gl===n,'ownGl',`data-n="${n}"`,['Шаг','Два шага','Три шага'][n-1])).join('')}<span class="small muted" style="align-self:center">каждый следующий шаг даёт меньше и стоит дольше</span></div>
     ${into?`<p class="small" style="margin-top:12px">Узел: <b>${esc(into.name)}</b> — доводка №${into.rev||1}. Название не меняется.</p>`:`<label class="label" for="ownname" style="display:block;margin-top:12px">Название</label><input type="text" id="ownname" value="${esc(d.name||ownNextName(s,k))}" maxlength="40" style="margin-top:6px">`}
     <div class="card" style="margin-top:12px;background:var(--panel2)"><div class="label">Что получится</div>${ownPreviewHTML(s,P)}</div>
@@ -9829,14 +9921,20 @@ function openAeng(){const s=G;ownEnsure(s);if(aeDraft&&aeDraft.into){openAengRef
     ${P&&P.why?`<p class="small warn" style="margin-top:8px">${esc(P.why)}.</p>`:''}
     <button class="btn primary block" style="margin-top:12px" data-act="aeStart" ${!P||P.why?'disabled':''}>Начать · ${P?money(P.cost):''}</button>`);}
 function ownSuitLine(s,x){const O=(s.legal&&s.legal.own)||[],t=mi(s);return O.filter(o=>o.k==='suit'&&o.id===x.id&&o.until>t).map(o=>{const F=s.firms&&s.firms[o.f];return ` · ⚖️ иск${F?' к '+esc(firmName(s,F)):''}: суд через ${o.until-t} мес., ${o.sure?'дело бесспорное':'шансы '+Math.round((o.p||0)*100)+' %'}`;}).join('');}
+// 0.60, правки 28.11: история доводок — одной строкой («5 доводок, 1924–1927: 3 — дешевле, 2 — мощнее») вместо абзаца повторов
+function ownArtShort(t){const re=/\s*Доводка (\d{4}) года(?: \([^)]*\))?: цель — ([^.]+)\./g,L=[];let m;while((m=re.exec(t)))L.push({y:+m[1],g:m[2].trim()});if(L.length<2)return t;
+  const C={},y0=Math.min(...L.map(o=>o.y)),y1=Math.max(...L.map(o=>o.y));L.forEach(o=>{C[o.g]=(C[o.g]||0)+1;});
+  return t.replace(re,'').trim()+` ${L.length} ${plural(L.length,'доводка','доводки','доводок')}${y0===y1?` (${y0})`:` (${y0}–${y1})`}: ${Object.entries(C).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${n} — ${g}`).join(', ')}.`;}
 function ownItemHTML(s,x){const ae=x.k==='ae',pat=ownPatOn(s,x),cp=x.cp?Object.keys(x.cp).length:0,lb=pat&&x.ser!=null?ownLicBuyer(s,x):null,busy=!ae&&ownIntoBusy(s,x.id);
-  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}${ownSuitLine(s,x)}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
-    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(x.art||x.note||'')}</p>${ae?`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="aeRefine" data-id="${x.id}" ${aeIntoBusy(s,x.id)?'disabled':''}>${aeIntoBusy(s,x.id)?'Дорабатывается…':'Доработать'}</button><span class="small muted">тот же мотор станет лучше во всех ваших аэропланах</span></div>`:`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
+  return `<div class="race-item"><div class="row"><div><span class="mo">${ae?'✈ авиамотор':esc(OWN_CAT[x.k].n)} · ${x.made?x.made.y:''}${x.rev>1?' · доводка №'+(x.rev-1)+' ('+x.revY+')':''}${!ae&&upgL(x.id)?' · ★'+upgL(x.id):''} · год по истории ${x.yh}${pat?' · <b class="good">патент до '+(1895+Math.floor(x.pat.until/12))+'</b>':''}${cp?` · скопировали: ${cp}`:''}${ownSuitLine(s,x)}</span><h3 style="margin-top:2px">${esc(x.name)}</h3></div>${pat?(lb?`<button class="btn sm" data-act="ownLic" data-id="${x.id}">Лицензия: ${esc(firmName(s,lb.F))} · ${money(ownLicFee(s,lb.F,x))}/мес.</button>`:''):`<button class="btn sm" data-act="ownPat" data-id="${x.id}" ${s.cash<ownPatCost(s)?'disabled':''}>Патент · ${money(ownPatCost(s))}</button>`}</div>
+    <p class="small muted" style="margin-top:4px">${ae?`${x.hp} л.с., ${x.kg} кг · продано авиазаводам ${fmtN(x.sold||0)}${x.lastDem!=null?` · спрос ${fmtN(Math.round(x.lastDem))} в месяц`:''} <button class="link" data-act="aeSale" data-id="${x.id}">${x.sale?'не продавать на сторону':'продавать авиазаводам'}</button>`:esc(ownArtShort(String(x.art||x.note||'').replace(/л\.с\.\./g,'л.с.')))}</p>${ae?`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="aeRefine" data-id="${x.id}" ${aeIntoBusy(s,x.id)?'disabled':''}>${aeIntoBusy(s,x.id)?'Дорабатывается…':'Доработать'}</button><span class="small muted">тот же мотор станет лучше во всех ваших аэропланах</span></div>`:`<div class="row" style="margin-top:6px;gap:8px;justify-content:flex-start"><button class="btn sm" data-act="ownRefine" data-id="${x.id}" ${busy?'disabled':''}>${busy?'Дорабатывается…':'Доработать'}</button><span class="small muted">${x.ser==null?'ещё не в серии — можно довести до выпуска':'тот же узел станет лучше во всех ваших машинах'}</span></div>`}</div>`;}
 // «Как посчитано» и карточка модели: что свой узел дал против своей основы
-function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s)};}
+function ownGain(md,s,x){const b=byId(OWN_CAT[x.k].arr(),x.base);if(!b)return null;const m0={...md,[x.k]:b.id};let S1=1,S0=1;try{S1=classCompare(md,s,s.country).S;S0=classCompare(m0,s,s.country).S;}catch(_){return null;}return {b,dS:S1/Math.max(1e-6,S0),dC:unitCost(md,s)-unitCost(m0,s),op:overpower(m0)&&!overpower(md)};}
 function ownXpHTML(md,s){if(!md||!s||!(s.custom||[]).length)return '';const L=(s.custom||[]).filter(x=>md[x.k]===x.id).map(x=>({x,G:ownGain(md,s,x)})).filter(o=>o.G);if(!L.length)return '';
-  return `<p class="xp-w" style="margin-top:8px">${L.map(o=>`🧪 Свой узел «${esc(o.x.name)}» против основы (${esc(o.G.b.name)}): итог <b class="${o.G.dS>1.002?'good':o.G.dS<0.998?'bad':''}">${o.G.dS>=1?'+':'−'}${Math.abs((o.G.dS-1)*100).toFixed(1).replace('.',',')}%</b>, себестоимость машины <b class="${o.G.dC<-0.5?'good':o.G.dC>0.5?'bad':''}">${o.G.dC>=0?'+':'−'}${money(Math.abs(Math.round(o.G.dC)))}</b>.`).join('<br>')}</p>`;}
-function ownModelLine(md,s){const h=ownXpHTML(md,s);return h?h.replace('class="xp-w"','class="small"'):'';}
+  return `<p class="xp-w" style="margin-top:8px">${L.map(o=>`🧪 Свой узел «${esc(o.x.name)}» против основы (${esc(o.G.b.name)}): итог <b class="${o.G.dS>1.002?'good':o.G.dS<0.998?'bad':''}">${o.G.dS>=1?'+':'−'}${Math.abs((o.G.dS-1)*100).toFixed(1).replace('.',',')}%</b>, себестоимость машины <b class="${o.G.dC<-0.5?'good':o.G.dC>0.5?'bad':''}">${o.G.dC>=0?'+':'−'}${money(Math.abs(Math.round(o.G.dC)))}</b>.${o.G.op?' <span class="muted">Основа не держит мотор этой машины — поэтому разница так велика.</span>':''}`).join('<br>')}</p>`;}
+function ownModelLine(md,s){const h=ownXpHTML(md,s);/* 0.60, правки 28.11: вход в свою разработку из карточки модели */
+  const btn=s.rd&&(md.status==='prod'||md.status==='dev')?`<p class="small" style="margin-top:6px"><button class="btn sm" data-act="ownFromMd" data-id="${md.id}">🧪 Улучшить узел этой модели</button></p>`:'';
+  return (h?h.replace('class="xp-w"','class="small"'):'')+btn;}
 function aePLRow(L){const R=L&&L.ae;if(!R||!(R.n||R.licN||R.fix))return '';return `<tr><td>Авиамоторы: ${R.n?`продано ${fmtN(R.n)}`:''}${R.n&&R.licN?', ':''}${R.licN?`по заказу министерства ${fmtN(R.licN)}`:''}</td><td class="n">${money(Math.round(R.rev+R.licRev))}</td></tr><tr><td>Себестоимость авиамоторов и испытательная станция</td><td class="n">−${money(Math.round(R.cost+R.licCost+(R.fix||0)))}</td></tr>`;}
 
 /* ================= ADVISOR & HELPER: советы с кнопками и помощник управляющего ================= */
@@ -9907,6 +10005,7 @@ function adviceList(s){
   // модели и цены
   act.forEach(md=>{const uc=unitCost(md,s),net=md.price*(1-dMargin(s)),C=classCompare(md,s,home);
     if(net<uc*0.98&&(md.lastSold||0)>0){const np=Math.round(uc/(1-dMargin(s))*1.12/10)*10;add(85,'📉',`«${md.name}» продаётся в убыток: себестоимость ${money(uc)}, а вам с машины достаётся ${money(net)}.`,`Цена ${money(np)}`,()=>{md.price=np;},'models');}
+    {const P=eqMissing(md,s).length?eqFitPlan(md,s):null;if(P){const u=eqU(md,segOf(md),s);if(u<-0.1)add(80,'🔦',`«${md.name}»: нет того, что ждут покупатели (${eqMissing(md,s).map(e=>e.name.toLowerCase()).join(', ')}) — продажи ×${Math.exp(u).toFixed(2).replace('.',',')}. Оснащение можно поставить без новой модели.`,`Поставить · ${money(P.cost)}`,()=>{eqFit(s,md);},'models');}}   // 0.60, правки 28.11
     if(stockWarn(md)){const np=Math.max(20,Math.round(md.price*0.95/5)*5);add(70,'📦',`Машины «${md.name}» копятся на складе (${fmtN(md.stock)} шт.). Снизьте цену или выпуск.`,`Цена −5%`,()=>{md.price=np;},'models');}
     if(C.S<0.85&&!dev.length&&mi(s)-md.launched>=12)add(65,'🏁',`«${md.name}» уступает сопернику ${C.ref.name}: ${Math.round(C.S*100)}%. Покупатели уходят — пора новой модели.`,'Новая модель',()=>openDesigner(rivalKind(md)),'models');
     if((md.lastSold||0)>0||(md.lastDem||0)>0.3){const bp=bestPriceFor(md,s);if(bp.gain>0.12&&bp.price!==md.price)add(55,'🏷',`Прибыль с «${md.name}» будет выше на ${Math.round(Math.min(9.99,bp.gain)*100)}% при цене ${money(bp.price)}.`,`Цена ${money(bp.price)}`,()=>{md.price=bp.price;},'models');}});
@@ -10307,7 +10406,9 @@ function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D
       if(!bot&&(t+i)%3!==0)return;
       firmPrices(s,r,F,cp,i,WH,bot);
       // у мотофирм жребий хода — от даты и имени, а не из общего потока случайных чисел: мир без действий игрока не сдвигается
-      if(F.st==='ok'&&(D.mo?maRnd('mf|'+c+'|'+i+'|'+t):Math.random())<SK.iq*(bot?0.5:1))firmPlan(s,r,F,cp,i,SG,bot);});}}
+      // 0.60, правки 28.11: во Вторую мировую гражданского рынка нет — фирмы не выводят новых моделей и не начинают программ
+      // (в снимках автора Buick вывел новую модель в декабре 1943 года, когда гражданский выпуск в США стоял с февраля 1942-го)
+      if(F.st==='ok'&&!(y>=1939&&isWar(s.y,s.m,c))&&(D.mo?maRnd('mf|'+c+'|'+i+'|'+t):Math.random())<SK.iq*(bot?0.5:1))firmPlan(s,r,F,cp,i,SG,bot);});}}
 function firmState(s,r,F,cp,i){const t=mi(s),lim=F.h12*0.3,N=firmName(s,F),KN=cpK(cp);
   if(F.st==='ok'){if(F.cash<-lim&&F.p12<0){F.st='bad';F.bad=0;F.prog=null;F.capP=null;firmNote(s,r,F,{w:3,k:'bad',t:`${N} несёт убытки`,txt:`${N} продаёт на ${Math.round((1-clamp(F.ld,0,1))*100)}% меньше обычного и второй год работает в убыток: долг перед банками и поставщиками — ${money(-F.cash)}. Программы новых ${F.mo?'мотоциклов':'машин'} остановлены. Если дела не поправятся, заводом займутся кредиторы.`});}return false;}
   if(F.st==='bad'){F.bad++;
@@ -18563,7 +18664,10 @@ function stockWarn(md){return md.status==='prod'&&md.stock>Math.max(3,(md.fc||0)
 // Сворачиваемые разделы: длинные списки открываются, когда нужны
 const UIF={};
 // что свёрнуто — запоминается в сохранении
-function isOpen(k,def){const f=G&&G.ui&&G.ui.f,v=f&&f[k]!==undefined?f[k]:UIF[k];return v===undefined?!!def:v;}
+// 0.60, правки 28.11 (автор: «меню и подменю километровые; просил подразделы, которые раскрываются»): крупные разделы по умолчанию
+// свёрнуты в строку — страница целиком видна, нужное раскрывается нажатием; раскрытое запоминается, как раньше
+const FOLD60={cap:1,staffc:1,wh:1,fin:1,rdcard:1,shares:1,dealers:1,adc:1,world:1,champs:1,mkmoto:1,mcomps:1,carshop:1,airShop:1,airLines:1,airMkt:1,planlist:1};
+function isOpen(k,def){const f=G&&G.ui&&G.ui.f,v=f&&f[k]!==undefined?f[k]:UIF[k];return v===undefined?!!(def&&!FOLD60[k]):v;}
 function setOpen(k,v){UIF[k]=v;if(G){G.ui=G.ui||{};G.ui.f=G.ui.f||{};G.ui.f[k]=v;}}
 // Карточка, которую можно свернуть: заголовок — кнопка; свёрнутая показывает одну строку итога
 function foldCard(k,def,head,body,sum,cls){const fz=typeof subForce==='function'&&subForce(k),o=fz||isOpen(k,def);/* 0.51, этап 9: главная карточка подраздела всегда раскрыта */return `<section id="fc-${k}" class="card${cls?' '+cls:''}${o?'':' folded'}${fz?' nofold':''}"><button class="card-h" data-act="fold" data-k="${k}" data-def="${def?1:0}" aria-expanded="${o}"><span class="ch">${head}</span><i>${o?'▴':'▾'}</i></button>${o?body:(sum?`<p class="small muted card-sum">${sum}</p>`:'')}</section>`;}
@@ -18678,13 +18782,13 @@ function vModels(){
     const body=open?`
       ${ctl}
       <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><button class="mx" data-act="chx" data-k="cost" data-id="${md.id}" aria-label="Себестоимость: как посчитано">Себест.<i class="xi">i</i><b>${money(uc)}</b></button><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b>${md.status==='prod'?`<small class="${margin-offPer<0?'bad':'muted'}">после конторы ${money(margin-offPer)}</small>`:''}</div></div>
-      ${lostLine(md)}${truckHint(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
+      ${typeof sportFixLine==='function'?sportFixLine(md,s):''}${typeof eqCardLine==='function'?eqCardLine(md,s):''}${lostLine(md)}${truckHint(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
       ${(md.raceBoost||0)>mi(s)?'<p class="small good" style="margin-top:6px">Слава гоночной победы: покупатели выбирают вас охотнее</p>':''}
       ${md.dv&&md.status!=='off'&&md.status!=='dev'&&typeof dvCardHTML==='function'?dvCardHTML(md,s):''}
       ${(md.rr||0)>0.002?`<p class="small good" style="margin-top:6px">🏁 Доведена гонками: поломок меньше на ${Math.round(md.rr*100)}%, мощность +${(Math.round((md.rp||0)*1000)/10).toString().replace('.',',')}%</p>`:''}
       ${md.status==='prod'?fold(fk('co'),'Себестоимость',costHTML(md,s),false,`${money(uc)} за ${isMoto(md)?'мотоцикл':'машину'} при выпуске ≈ ${fmtD(Math.max(1,modelVol(md)))} в месяц`):''}
       ${fold(fk('rv'),'Против соперников',`${TH?`<p class="small ${TH.tone}" style="margin-top:6px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)}</span></p>`:''}
-        ${qbar(C.S,'Против соперника: '+C.ref.name,md.id)}${hiddenHTML(md,s)}${md.status==='prod'?contestModelLine(md,s)+officeLine(md,s):''}${ownModelLine(md,s)}${trialModelLine(md,s)}
+        ${qbar(C.S,'Против соперника: '+C.ref.name+refOwnTag(s,C.ref.name),md.id)}${hiddenHTML(md,s)}${md.status==='prod'?contestModelLine(md,s)+officeLine(md,s):''}${ownModelLine(md,s)}${trialModelLine(md,s)}
         <div class="label" style="margin-top:10px">Что ценят покупатели</div><div>${cmpRows}</div><p class="small muted" style="margin-top:6px">●●● — главное для покупателей класса. 100% — как у соперника. Нажмите на строку — как посчитано. Улучшения в КБ поднимают эти цифры у всех ваших машин.</p>`,md.status==='dev',`${isTruck(md)&&TH?esc(TH.txt):Math.round(TT.r*100)+'% соперника'} · ${esc(C.ref.name)}`)}
       ${fold(fk('sp'),'Устройство',`<p class="spec">${specLine(md,s)}</p>
         <p class="small muted" style="margin-top:6px">На линии ${isMoto(md)?'мотоцикл':'машина'} занимает ${placesTxt(placesOf(md,s))} ${placesWord(placesOf(md,s))} (простая машина — 1).</p>
@@ -18836,7 +18940,7 @@ function vMarket(){
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
     <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: для своих перевозок они выбирают машину, на которой дешевле тонно-километр.</p>${horseHTML(s,home,M,R0)}`,`рынок ${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))} в месяц · ваши ${L?fmtN(L.homeSold):'—'} · доля ${L?pct(L.share,1):'—'}`)}
   ${mOnly?'':vMarketMoto('mk')}
-  ${foldCard('dealers',true,'<h2>Дилеры и экспорт</h2>',`<div style="margin-top:2px">${net}</div>
+  ${foldCard('dealers',true,'<h2>Нанять дилеров · экспорт</h2>',`<div style="margin-top:2px">${net}</div>
     <details class="how"><summary>Как устроена сеть</summary><p class="small muted" style="margin-top:6px">Дилер — торговец в своём городе: покупает у вас машины со скидкой ${Math.round(dMargin(s)*100)}%, продаёт их и чинит. Где нет вашего дилера, там машину не купить; больше дилеров, чем городов с покупателями, не бывает. Первые дилеры открываются в больших городах и сразу видят большую часть покупателей. Когда спрос растёт, дилеры сами нанимают продавцов, а к марке, которая хорошо продаётся, новые города просятся сами. Новый дилер — ${money(dc)} (разъездные агенты, вывеска, демонстрационная машина), поддержка ${money(dealerUpkeep(s))} в месяц. За границей сначала нужен импортёр, потом своё отделение и сборочный завод; покупатель там платит пошлину, а вы — доставку (по Европе ${money(40*cpi(s))}, через Атлантику ${money(90*cpi(s))}). Пошлины меняются по годам — смотрите карту «Мир».</p></details>`,`дома ${fmtN(dealerCount(s,home))} ${plural(dealerCount(s,home),'дилер','дилера','дилеров')} · покупателей видят ${Math.round(reachOf(s,home)*100)}%${nAb?` · за границей: ${nAb} ${plural(nAb,'страна','страны','стран')}`:''}`)}
   ${vMarketMoto('comps')}
   ${mo?'':sharesCard(s)}
@@ -19163,6 +19267,10 @@ function airModelHTML(md,s){const A=s.air,t=tNow(s),Q=airQ(md,t),st=Q.st,S=AIR_S
     if(civ)body+=airSalesExplain(s,md);
     if(ord.length)body+=`<div class="label" style="margin-top:10px">Контракты</div>${ord.map(o=>`<p class="small" style="margin-top:4px">${esc(o.who)}: ${fmtN(o.n-o.left)} из ${fmtN(o.n)} по ${money(o.price)} · срок — ${dstr({y:1895+Math.floor(o.due/12),m:o.due%12})}</p>`).join('')}`;
     if(['recon','fight','bomb','sea'].includes(md.role)&&Math.abs(md.milRep||0)>=1)body+=`<p class="small ${md.milRep>0?'good':'bad'}" style="margin-top:6px">Слава на фронте и в отрядах: ${md.milRep>0?'+':''}${Math.round(md.milRep)}</p>`;
+    if(typeof airStWhy==='function'&&AIR_ST_ROLES.includes(md.role)){const run=airStRun(s,md),why=airStWhy(s,md);/* 0.60, правки 28.11 */
+      if(run)body+=`<p class="small muted" style="margin-top:6px">🎖 Идут государственные испытания: итог через ${Math.max(1,run.at-mi(s))} мес.</p>`;
+      else if(!why)body+=`<div class="btns" style="margin-top:8px"><button class="btn sm" data-act="airSt" data-k="${md.id}" ${s.cash<airStFee(s)?'disabled':''}>На государственные испытания · ${money(airStFee(s))}</button></div><p class="small muted" style="margin-top:4px">Армия ещё не знает эту машину. С итогом от 0,90 к эталону её будут заказывать без конкурса.</p>`;
+      else if(md.stOk)body+=`<p class="small good" style="margin-top:6px">🎖 Принят на государственных испытаниях</p>`;}
     if(md.status==='prod')body+=`<div class="btns" style="margin-top:10px"><button class="btn sm" data-act="airOff" data-k="${md.id}">Снять с производства</button></div>`;}
   // 0.60, правка автора 23 ноября: «не могу убрать свой второй самолёт из моделей» — кнопка была только у серийного.
   // Теперь любой аэроплан можно убрать из списка: гоночный и опытный — списать, чертежи и оснастку — закрыть, остаток — списать.
@@ -19262,7 +19370,10 @@ function airMarketHTML(s){const A=s.air,t=tNow(s),c=s.country,war=airWarOn(c,t);
      • помощник управляющего ведёт и авиацех: первый полёт доверяет испытателю, облётанный образец ставит в серию, строит ангар,
        когда заказы не успевают, — и отчитывается той же строкой в «Делах». */
 let uiLine='car';
-function airSwitchOn(s){return !!(s&&s.mode!=='racer'&&!airOnly(s)&&(airOn(s)||(s.air&&s.air.b)));}
+// 0.60, правки 28.11 (автор: «кнопка „Авиа“ показывает почти ничего — один раздел; продажи остались в автомобилях, финансы
+// теряются»): переключателя «Автомобили | Аэропланы» больше нет — разделы авиации идут на тех же страницах, что автомобили,
+// свёрнутыми строками (30-views.js: FOLD60). Функция оставлена для старых проверок: всегда «нет».
+function airSwitchOn(s){return false;}
 function lineSwitchHTML(s){const A=s.air,on=airOn(s),n=on?A.models.filter(m=>m.status==='prod').length:0,adv=on?airAdvice(s).length:0;
   return `<div class="chips linesw" id="linesw"><button class="chip ${uiLine!=='air'?'on':''}" data-act="uiLine" data-v="car">🚗 Автомобили${lineOn(s,'moto')?' и мотоциклы':''}</button><button class="chip ${uiLine==='air'?'on':''}" data-act="uiLine" data-v="air">✈ Аэропланы<small>${on?`${n} в серии${adv?` · ${adv} ${plural(adv,'совет','совета','советов')}`:''}`:'авиацех строится'}</small></button></div>`;}
 // раздел авиации на вкладке — целиком, без автомобильного
@@ -19324,7 +19435,9 @@ const MK9={map:{'sec-world':1},brands:{'fc-shares':1},misc:{'fc-shows':1,'fc-gra
 function mk9In(id,ks){for(const k of ks){const v=MK9[k][id];if(v!==undefined)return v;}return undefined;}
 function mk9Key(s){return mk9C(s)==='world'?'world':'c';}
 // карточки, ради которых подраздел и открыт: сворачивать их незачем
-const SUB_OPEN={deals:1,dealers:1,mkhome:1,trophy:1,log:1};
+// 0.60, правки 28.11: дилеры и сделки — свёрнутыми строками «Нанять дилеров», «Купить марку или долю» (раскрываются нажатием):
+// раскрытые подряд, они делали «Рынок» длиной в пять экранов
+const SUB_OPEN={mkhome:1,trophy:1,log:1};
 function subForce(k){return !!SUB_OPEN[k]&&typeof G!=='undefined'&&subOn(G)&&(!!SUB51[tab]||tab==='market');}
 function subOn(s){return !!s&&s.mode!=='racer'&&!(typeof airOnly==='function'&&airOnly(s))&&!(typeof airSwitchOn==='function'&&airSwitchOn(s)&&typeof uiLine!=='undefined'&&uiLine==='air'&&tab!=='log');}
 function subSel(s,t){const D=SUB51[t];if(!D)return '';let v=s.ui&&s.ui.sub&&s.ui.sub[t];if(D.old&&D.old[v])v=D.old[v];return D.bar.some(x=>x[0]===v)?v:D.def;}
@@ -19360,6 +19473,23 @@ function subReveal(el){try{const s=G,V=document.getElementById('view');if(!el||!
 function subApply0(s){const V=document.getElementById('view'),b=document.getElementById('subbar');if(b)b.remove();subApply(s);}
 // найти карточку по id, открыть её подраздел и вернуть её (после перерисовки — новую)
 function subGo(id){const e=id&&document.getElementById(id);if(!e)return null;subReveal(e);return document.getElementById(id);}
+
+/* ================= 0.60, правки 28.11: БЫСТРЫЙ ПЕРЕХОД =================
+   Автор: «переосмысли систему управления — в минимальное количество нажатий и скроллинга найти нужную информацию».
+   В меню ☰ — все разделы всех вкладок: нажатие открывает вкладку на этом разделе, раскрытым, и прокручивает к нему.
+   k — ключ свёрнутой карточки (fc-…) или раздела (sec-…); mk — что выбрать в «Рынке»: своя страна или обзор мира. */
+const JUMP60=[
+  ['plant','🏭 Завод',[['fin','Финансы: выручка, расходы, прибыль'],['cap','Мощности'],['staffc','Рабочие'],['wh','Склад'],['techc','Технологии завода'],['airShop','Авиацех']]],
+  ['models','🚗 Модели',[['planlist','Выпуск'],['orders','Заказы'],['trials','Испытания и госзаказы'],['rdcard','Конструкторское бюро'],['offmodels','Снятые модели']]],
+  ['market','📊 Рынок',[['mkhome','Продажи дома',''],['dealers','Нанять дилеров','home'],['deals','Купить марку или долю','home'],['adc','Реклама','home'],['comps','Конкуренты','home'],['shares','Доли рынка','world'],['world','Мир: пошлины, заводы','world']]],
+  ['race','🏁 Гонки',[['rcal','Гонки года'],['champs','Чемпионаты'],['trophy','Трофеи'],['annc','Анонс']]],
+  ['log','👑 Империя',[['emp','Господство, наследие, титулы'],['film','Фильм и хроника']]]];
+function jumpSheetHTML(s){return `<div class="row"><h2>Быстрый переход</h2>${X}</div><p class="small muted" style="margin-top:4px">Раздел откроется сразу — без прокрутки и поиска.</p>`
+  +JUMP60.map(([t,n,L])=>`<div class="label" style="margin-top:12px">${n}</div><div class="chips">${L.filter(([k])=>k!=='airShop'||(typeof airOn==='function'&&airOn(s))).map(([k,nm,mk])=>`<button class="chip" data-act="jump" data-t="${t}" data-k="${k}" data-mk="${mk||''}">${esc(nm)}</button>`).join('')}</div>`).join('');}
+function openJump(){openSheet(jumpSheetHTML(G));}
+function jumpTo(s,t,k,mk){tab=t;if(t==='log'&&typeof subSet==='function'&&(k==='emp'||k==='film')){try{subSet(s,'log',k);}catch(_){}}
+  else{setOpen(k,true);if(t==='market'&&typeof mk9Set==='function'){try{mk9Set(s,mk==='world'?'world':s.country);}catch(_){}}}
+  save();render();try{const el=document.getElementById('fc-'+k)||document.getElementById('sec-'+k)||document.getElementById(k);if(el&&el.scrollIntoView)el.scrollIntoView({block:'start'});else window.scrollTo(0,0);}catch(_){}}
 
 /* ================= SHEETS ================= */
 const sheet=document.getElementById('sheet'),sb=document.getElementById('sheetBody');
@@ -19441,7 +19571,7 @@ function openKindStep(grp){const s=G,X2=X;
 function eqDesignHTML(d,s,kind){const g=kindIsTruck(kind)?'truck':kind;if(g==='truck'||isMotoSeg(g))return '';const y=yf(s),L=eqOf(d);
   const items=EQUIP.filter(e=>e.y<=s.y+3&&(eqAvail(s,e.id)||rdActive(s).some(p=>p.kind==='eq'&&p.id===e.id)));if(!items.length)return '';
   const chip=e=>{const on=L.includes(e.id),ok=eqAvail(s,e.id)&&(!e.req||eqAvail(s,e.req)),w=eqWait(e,g,y),u=e.u[g]||0;
-    const tag=!ok?'в КБ':w>0.25?'ждут покупатели':u>=0.15?'покупатели доплатят':u>0?'приятная мелочь':'не нужно классу';
+    const tag=!ok?'в КБ':eqObs(e,g,y)?'устарело: есть замена':w>0.25?'ждут покупатели':u>=0.15?'покупатели доплатят':u>0?'приятная мелочь':'не нужно классу';
     return `<button class="chip ${on?'on':''}" data-act="eqToggle" data-v="${e.id}" ${ok?'':'disabled'}>${esc(e.name)}${eqDev(s,e.id)&&s.y<e.hist[0]+1?' 🔬':''}<small>${tag} · ${money(eqUnitC(e,s))}</small></button>`;};
   const miss=eqExpected(g,y).filter(e=>!L.includes(e.id)&&!L.some(id=>EQ_BY[id].sup===e.id)&&eqAvail(s,e.id));
   return `<div class="label" style="margin-top:14px">Новинки оснащения</div><div class="chips">${items.map(chip).join('')}</div>${miss.length?`<p class="small warn" style="margin-top:6px">Покупатели класса уже ждут: ${miss.map(e=>e.name.toLowerCase()).join(', ')} — без этого машину берут хуже.</p>`:''}<p class="small muted" style="margin-top:4px">${esc((EQUIP.find(e=>L.includes(e.id)&&e.note)||items.find(e=>e.note)||{note:''}).note)}</p>`;}
@@ -19482,7 +19612,7 @@ function renderDesigner(){
     k:x=>`сила ${Math.round(x.brk*100)} · ${pedal(x.ease)} · ${pc(x)}`,t:x=>`${({t0:'народный',t1:'средний',t2:'люкс',t3:'спортивный'})[x.id]} класс · ${money(x.c*cpi(s))}`,b:x=>x.moto?`${(x.seats||1)>1?'коляска, '+x.seats+' '+plural(x.seats,'место','места','мест'):'одиночка'} · ${x.kg} кг · ${pc(x)}`:`${x.kind&&x.kind!=='truck'?(['bus','coach','school','taxi','staff'].includes(x.kind)?x.seats+' мест':['mail','tank','dump','refuse'].includes(x.kind)?String(x.pay).replace('.',',')+' т груза':'экипаж '+(x.crew||1)):x.truck?(String(x.pay).replace('.',',')+' т груза'):(x.seats+' мест')}${x.closed&&!x.kind?' · закрытый':''} · ${x.kg} кг · ${pc(x)}`};
   const MSN={e:'Мотор',g:'Передача',c:'Рама и вилка',w:'Шины',k:'Тормоз',b:'Седло или коляска'};
   const sec=(cat)=>{const x=p[cat.k],open=d.open===cat.k;return `<div class="dsec${open?' open':''}"><button class="dsec-h" data-act="dsec" data-k="${cat.k}"><span class="label">${mo&&MSN[cat.k]?MSN[cat.k]:cat.name}</span><b>${esc(cat.k==='t'?trimName(x,s):x.name)}${star(x)}</b><small>${SUB[cat.k](x)}</small><i>${open?'▴':'▾'}</i></button>
-    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>kindBodyOk(kind,y)):cat.k==='t'?(y=>y.id!=='t3'||bodyOpen(d.b)):null)+(x.note||cat.k==='e'?`<p class="small muted" style="margin-top:6px">${esc(x.note||'')}${cat.k==='e'&&typeof exhNote==='function'?(x.note?' ':'')+esc(exhNote(x)):''}</p>`:'')+(typeof REELS!=='undefined'&&REELS['part:'+x.id]?`<button class="btn sm" style="margin-top:6px" data-act="reel" data-k="part:${x.id}">▶ Кинохроника: как это устроено</button>`:'')+(cat.k!=='t'&&typeof partWiki==='function'&&partWiki(x.id)?` <button class="btn sm" style="margin-top:6px" data-act="partInfo" data-k="${x.id}">📖 Зачем и откуда</button>`:''):''}</div>`;};
+    ${open?chips(cat.arr(),cat.k,SUB[cat.k],cat.k==='b'?(y=>kindBodyOk(kind,y)):null/* 0.60, правки 28.11: «Спорт» виден всегда; закрытый кузов при выборе меняется на открытый с заметкой */)+(x.note||cat.k==='e'?`<p class="small muted" style="margin-top:6px">${esc(x.note||'')}${cat.k==='e'&&typeof exhNote==='function'?(x.note?' ':'')+esc(exhNote(x)):''}</p>`:'')+(typeof REELS!=='undefined'&&REELS['part:'+x.id]?`<button class="btn sm" style="margin-top:6px" data-act="reel" data-k="part:${x.id}">▶ Кинохроника: как это устроено</button>`:'')+(cat.k!=='t'&&typeof partWiki==='function'&&partWiki(x.id)?` <button class="btn sm" style="margin-top:6px" data-act="partInfo" data-k="${x.id}">📖 Зачем и откуда</button>`:''):''}</div>`;};
   const carOk=canDesign(s,'car'),motoOk=canDesign(s,'moto');
   const classNote=(carOk?'':lineEmptyCard(s,'car'))+(motoOk||!motoVis(s)?'':lineEmptyCard(s,'moto'));
   // 0.51: шаг 3 воронки — вид уже выбран; рядом только соседи по группе (класс легковой, одиночка или коляска), остальное — «Изменить»
@@ -19616,6 +19746,7 @@ function openMenuSheet(){
   openSheet(`<div class="row"><h2>Меню</h2>${X}</div>
     <p class="small muted" style="margin-top:4px">«${esc(G.company)}» · ${dstr(G)} · игра сохраняется сама каждый месяц.</p>
     <div class="stack" style="margin-top:12px">
+      <button class="btn block primary" data-act="jumpOpen">Быстрый переход к разделу</button>
       <button class="btn block" data-act="saveOpen">Сохранить в слот</button>
       <button class="btn block" data-act="loadOpen">Загрузить</button>
       <button class="btn block" data-act="legacyInfo">Цель и наследие</button>
@@ -19833,7 +19964,8 @@ function xpopChar(md,s,k,tip){const D=xCharData(md,s,k),C=D.C,w=C.W[k]||0,mo=isM
   const imp=w>0?`для покупателей класса «${esc(KIND_NAME[rivalKind(md)])}» — ${Math.round(w*100)}% оценки ${wDots(w)}`:`покупателям класса «${esc(KIND_NAME[rivalKind(md)])}» не важно`;
   let body;
   if(k==='rel'){const R=D.relSum,ratio=R.fa/Math.max(0.01,R.fr);
-    const pre=`<tr class="xp-sum"><td>Без поломок</td><td>${xpc(R.pa)}${R.dv>1.001?`<small class="bad">не по ТЗ: поломок ×${xn(R.dv,1)}</small>`:''}</td><td>${xpc(R.pr)}</td><td></td></tr><tr class="xp-sum"><td>Ломается из 100</td><td>${Math.round(R.fa)}</td><td>${Math.round(R.fr)}</td><td></td></tr>`;
+    const xpr=v=>v>=0.95?(v*100).toFixed(1).replace('.',',')+'%':xpc(v),xfl=v=>v<10?v.toFixed(1).replace('.',',').replace(',0',''):String(Math.round(v));/* 0.60, правки 28.11: точнее у верхнего края */
+    const pre=`<tr class="xp-sum"><td>Без поломок</td><td>${xpr(R.pa)}${R.dv>1.001?`<small class="bad">не по ТЗ: поломок ×${xn(R.dv,1)}</small>`:''}</td><td>${xpr(R.pr)}</td><td></td></tr><tr class="xp-sum"><td>Ломается из 100</td><td>${xfl(R.fa)}</td><td>${xfl(R.fr)}</td><td></td></tr>`;
     const why=ratio>1.02?`ломается в ${xn(ratio,1)} раза чаще → 1/√${xn(ratio,1)}`:ratio<0.98?`ломается в ${xn(1/ratio,1)} раза реже → √${xn(1/ratio,1)}`:'ломается так же часто';
     body=xpopTable(D.rows,D.extra,rn,D.by,`<small>${why}</small>`,pre);}
   else body=xpopTable(D.rows,D.extra,rn,D.by,'');
@@ -26507,6 +26639,54 @@ function airSkyHTML(s){const A=s.air,t=tNow(s),T=mi(s);if(!A||!A.lv)return '';
     ${done?foldCard('airDone',false,'<h2>Итоги</h2>',`<ul class="log" style="margin-top:6px">${done}</ul>`,`побед: ${A.wins||0} · призов: ${money(A.prizes||0)}`):''}`;}
 function airSkyCard(s){if(s.mode==='racer'||!airOn(s))return '';return `<section class="card"><h2>✈ Небо</h2><p class="small muted" style="margin-top:4px">Авиамитинги, перелёты, рекорды и лётчики авиацеха.</p></section>${airSkyHTML(s)}`;}
 function airSkyView(s){return `<section class="card"><h2>Небо: состязания и рекорды</h2><p class="small muted" style="margin-top:4px">${airWarOn(s.country,tNow(s))?'Война: состязаний нет, зато фронт ждёт ваши аэропланы.':'Авиамитинги собирают сотни тысяч зрителей. Приз — деньги, победа — заказы.'}</p></section>${airSkyHTML(s)}`;}
+
+/* ================= 0.60, правки 28.11: ИСПЫТАНИЯ АВИАТЕХНИКИ ДЛЯ АРМИИ =================
+   Замечание автора: «очень не хватает испытаний авиатехники для армии». Конкурсы министерства есть с 0.38 (105h-air.js), но объявляются,
+   только когда у фирмы уже есть годный аэроплан, и живут во вкладке «Гонки». Здесь:
+   — государственные испытания по заявке: военный аэроплан, которого армия ещё не знает, можно отправить на испытания самому.
+     Через три месяца — итог: оценка к эталону назначения не ниже 0,90 — машина принята (слава в войсках 5, как у прошедшей конкурс),
+     и министерство заказывает её без конкурса — весной и осенью, в войну раз в квартал, пока она не устарела. Взнос — как у полигона машин;
+   — советы заранее: министерство ищет такое-то назначение, ближайший выбор — в таком-то месяце; годного нет — что нужно;
+   — строки о небе в карточке «Испытания ведомств» во вкладке «Модели». */
+const AIR_ST_M=3,AIR_ST_PASS=0.9,AIR_ST_ROLES=['recon','fight','bomb','sea'];
+function airStKnown(md){return (md.milWon||0)>0||(md.milRep||0)>=5;}
+function airStRun(s,md){return ((s.air&&s.air.st)||[]).find(q=>q.md===md.id)||null;}
+function airStWhy(s,md){const A=s.air,t=tNow(s);if(!A)return 'нет авиацеха';if(!AIR_ST_ROLES.includes(md.role))return 'этой машине государственные испытания не нужны';
+  if(!(md.status==='prod'||md.status==='tool'||md.status==='sale'||(md.status==='proto'&&md.flown)))return 'аэроплан ещё не облётан';
+  if(airStKnown(md))return 'армия уже знает эту машину';if(airStRun(s,md))return 'испытания уже идут';if(t<1910.9)return 'армия ещё не покупает аэропланы';
+  if(s.country==='de'&&airVersailles(t)&&!A.abroad)return 'Германии запрещено строить аэропланы';return '';}
+function airStFee(s){return typeof trFee==='function'?trFee(s):Math.round(800*cpi(s)/50)*50;}
+function airStStart(s,id){const A=s.air,md=A&&A.models.find(m=>m.id===id);if(!md||airStWhy(s,md))return false;const fee=airStFee(s);if(s.cash<fee)return false;
+  s.cash-=fee;(A.st=A.st||[]).push({md:md.id,at:mi(s)+AIR_ST_M});
+  addLog(`«${md.name}» отправлен на государственные испытания (${money(fee)}): итог через ${AIR_ST_M} месяца.`);return true;}
+function airStMonth(s){const A=s.air;if(!A||!A.st||!A.st.length)return;const t=mi(s),D=A.st.filter(q=>q.at<=t);A.st=A.st.filter(q=>q.at>t);
+  D.forEach(q=>{const md=A.models.find(m=>m.id===q.md);if(!md||md.status==='off')return;const T=tNow(s),who=airMinistry(s.country,T,md.role),R=AIR_ROLES[md.role];
+    const sc=airQ(md,T).q*Math.exp((Math.random()+Math.random()-1)*0.04),f=x=>x.toFixed(2).replace('.',',');
+    if(sc>=AIR_ST_PASS){md.milRep=Math.max(md.milRep||0,5);md.stOk=t;
+      pushEvent({own:1,noArt:1,kicker:'Государственные испытания',title:`${who}: «${md.name}» принят`,deck:`оценка ${f(sc)} к эталону (нужно ${f(AIR_ST_PASS)})`,
+        text:`Комиссия облетала «${md.name}»: подъём на высоту на время, скорость на мерной базе, посадка в круг, разборка и осмотр. ${R.n} принят для отрядов. Теперь министерство заказывает его без конкурса — ${airWarOn(s.country,T)?'раз в квартал':'весной и осенью'}, пока машина не устарела.`,
+        choices:[['Хорошо','ok']]},true);}
+    else pushEvent({own:1,noArt:1,kicker:'Государственные испытания',title:`${who}: «${md.name}» не принят`,deck:`оценка ${f(sc)} к эталону, нужно ${f(AIR_ST_PASS)}`,
+      text:`Комиссия облетала «${md.name}» и вернула заводу с замечаниями: эталон назначения лучше. Доведите машину (мотор, крыло, конструкция) и отправьте снова — или выиграйте конкурс министерства.`,
+      choices:[['Понятно','ok']]},true);});}
+// когда министерство выбирает в следующий раз: в мирное время — в марте и сентябре, в войну — раз в квартал (как в 105h-air.js)
+function airMilNext(s){const war=airWarOn(s.country,tNow(s));for(let k=1;k<=12;k++){const m=(s.m+k)%12;if(war?m%3===1:(m===2||m===8))return {k,m,war};}return null;}
+function airTrialAdvice(s,add){const A=s.air;if(!A||!A.models||s.mode==='racer')return;const t=tNow(s);if(t<1910.9)return;if(s.country==='de'&&airVersailles(t)&&!A.abroad)return;
+  const N=airMilNext(s);if(!N)return;const who=r=>airMinistry(s.country,t,r);let gap=null;
+  AIR_ST_ROLES.forEach(role=>{const R=AIR_ROLES[role];if(!R||R.y>s.y)return;const M=airMktRole(s.country,role,t,'mil');if(!(M>0.01))return;const B=airBestFor(s,role);
+    if(B&&B.q>=0.6){const md=B.md;if(airStKnown(md)||airStRun(s,md)||airStWhy(s,md))return;
+      add(50,'🎖',`${who(role)} ещё не знает «${md.name}» (${B.q.toFixed(2).replace('.',',')} к эталону): ближайший конкурс — в ${MONTHS_P[N.m]}${B.q>=AIR_ST_PASS?', а можно сразу на государственные испытания — с итогом от 0,90 машину будут заказывать без конкурса':''}.`,
+        `На испытания · ${money(airStFee(s))}`,()=>{airStStart(s,md.id);},'models');}
+    else if(!gap||M>gap.M)gap={role,M,B};});
+  if(gap){const R=AIR_ROLES[gap.role];add(46,'✈',`${who(gap.role)} ${N.war?'раз в квартал':'весной и осенью'} выбирает: ${R.n.toLowerCase()} — ближайший раз в ${MONTHS_P[N.m]}. Годного у вас нет${gap.B?` (лучший — «${gap.B.md.name}», ${gap.B.q.toFixed(2).replace('.',',')} к эталону, нужно 0,60)`:''}: конкурс объявят, когда будет на чём лететь.`,
+    'Конструктор',()=>{try{openAirDesigner();}catch(e){console.warn(e);}},'models');}}
+// строки о небе для карточки «Испытания ведомств»
+function airTrialLines(s){const A=s.air;if(!A||!A.models)return {L:[],B:[]};const L=[],B=[],t=tNow(s);
+  try{airEvList(s).filter(ev=>ev.kind==='trial').forEach(ev=>{const st=airEvStatus(s,ev);if(st==='open'){L.push(`небо: ${esc(ev.name)} — запись открыта`);B.push(`<button class="btn sm" data-act="airEv" data-k="${esc(ev.key)}">${esc(ev.name.replace(/^Конкурс министерства: /,''))}</button>`);}
+    else if(st==='soon'&&(ev.y-s.y)*12+(ev.m-s.m)<=12)L.push(`небо: ${esc(ev.name)} — ${MONTHS_N[ev.m]} ${ev.y}`);});}catch(e){console.warn('air trials',e);}
+  const run=(A.st||[]).length;if(run)L.push(`государственные испытания аэропланов: ${run}`);
+  if(t>=1910.9&&!airWarOn(s.country,t)){const N=airMilNext(s);if(N&&AIR_ST_ROLES.some(r=>AIR_ROLES[r].y<=s.y&&airMktRole(s.country,r,t,'mil')>0.01))L.push(`конкурсы министерства — весной и осенью, ближайший выбор в ${MONTHS_P[N.m]}`);}
+  return {L,B};}
 
 /* ================= 0.37: ВОЗДУШНЫЕ БОИ 1914–1918 — ФРОНТ, ВЫЛЕТЫ, ПОБЕДЫ =================
    В войну во вкладке «Небо» — фронт: каждый месяц штаб даёт вылеты для ваших военных аэропланов (патруль, перехват разведчика,
@@ -34808,8 +34988,10 @@ const ACT={
   innovTable:()=>{openSheet(innovSheetHTML(G));},
   pick:d=>{draft[d.k]=d.v;
     // спортивное оснащение — только на открытом кузове: закрытый кузов переводит машину в люкс, спорт — ставит родстер
-    if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v))draft.t='t2';
-    if(d.k==='t'&&d.v==='t3'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id));draft.b=(b.find(x=>x.id==='b10')||b[b.length-1]||{id:'b1'}).id;}
+    // 0.60, правки 28.11: не молча — заметка в конструкторе говорит, что сменилось и почему; родстер — самый новый открытый кузов
+    if(d.k==='b'&&draft.t==='t3'&&!bodyOpen(d.v)){draft.t='t2';dNote={txt:'⚠️ Спортивная отделка — только для открытых кузовов. С этим кузовом машина идёт в класс «Люкс»; для спортивной выберите открытый кузов.',sig:dSig(draft)};}
+    if(d.k==='t'&&d.v==='t3'&&!bodyOpen(draft.b)){const b=unlockedP(BODIES,G).filter(x=>bodyOpen(x.id)).sort((a,c)=>a.y-c.y);const nb=b[b.length-1]||{id:'b1',name:'открытый'};draft.b=nb.id;
+      dNote={txt:`⚠️ Спортивная отделка — только для открытых кузовов: кузов сменён на «${esc(byId(BODIES,nb.id)?byId(BODIES,nb.id).name:nb.name)}».`,sig:dSig(draft)};}
     const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dsec:d=>{draft.open=draft.open===d.k?null:d.k;const top=sb.scrollTop;renderDesigner();sb.scrollTop=top;},
   dclass:d=>{const was=designKind(draft),k=d.v;
@@ -34828,22 +35010,28 @@ const ACT={
   dfront:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(frontDesign(designKind(draft),G,base),'Передовая модель');},
   dauto:()=>{const base={};PART_KEYS.forEach(x=>base[x]=draft[x]);dApply(autoDesign(designKind(draft),G,base,{cap:true}),'Самая прибыльная');},
   startdev:()=>{const md={...draft,eq:eqOf(draft).slice()},dc=devCost(md,G);if(G.cash<dc)return;G.cash-=dc;const nm=(draft.name||'').trim()||(typeof brandNextName==='function'&&brandNextName(G))||('Тип '+G.nextId);
-    const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
+    const m={id:G.nextId++,name:nm,e:md.e,g:md.g,c:md.c,k:md.k,b:md.b,t:md.t,w:md.w,eq:eqOf(md).slice()/* 0.60, правки 28.11: оснащение из конструктора не терялось у новой модели */,paint:md.paint,price:0,plan:'auto',status:'dev',devLeft:devMonths(md),launched:0,stock:0,backlog:0,lastDem:0,lastSold:0,lastMade:0,totalSold:0,made:0,fc:0};
     m.price=Math.round(refPrice(m,G)/10)*10;
     // 0.51, этап 4б: общий конвейер или своя линия — решает помощник (всегда); «Иначе» в конструкторе — решение игрока
     G.models.push(m);
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
+  sportFix:d=>{const md=G.models.find(m=>String(m.id)===String(d.id));if(md&&sportFix(G,md)){save();render();}},
+  eqFit:d=>{const md=G.models.find(m=>String(m.id)===String(d.id));if(md&&eqFit(G,md)){save();render();}},/* 0.60, правки 28.11 */
+  jumpOpen:()=>openJump(),jump:d=>{closeSheet();jumpTo(G,d.t,d.k,d.mk);},/* 0.60, правки 28.11: быстрый переход */
   rdPick:()=>openRD(),
   legendOpen:d=>{openLegend(d.k);},
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},
   /* 0.51, этап 4в: своя разработка и авиамотор (16c-own.js) */
   ownOpen:()=>openOwn(null),ownCat:d=>openOwn(d.k,d.mo==='1'),
   digestRead:d=>digestRead(d.i),showPol:d=>{if(SHOW_POL[d.v]){G.showPol=d.v;save();render();}},/* 0.51, этап 8 */
-  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;ownRe();},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
-  ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
+  ownBase:d=>{if(!ownDraft)return;ownDraft.base=d.id;OWN_UI.pick=false;ownRe();},
+  /* 0.60, правки 28.11: своя разработка в три шага */
+  ownXp:()=>{OWN_UI.xp=!OWN_UI.xp;if(ownDraft)ownRe();else openOwn(null);},ownPick:()=>{OWN_UI.pick=true;ownRe();},ownAll:()=>{OWN_UI.all=true;ownRe();},
+  ownFromMd:d=>{OWN_UI.md=+d.id;ownDraft=null;openOwn(null);},ownInto:d=>{if(!ownDraft)return;ownDraft.into=d.v==='1'?1:0;ownRe();},
+  ownRefine:d=>{const x=ownGet(G,d.id);if(!x||x.k==='ae')return;ownDraftInit(G,x.k,!!x.moto,x.id);ownDraft.base=x.id;ownDraft.into=1;OWN_UI.pick=false;openOwn(x.k,!!x.moto);},/* 0.51: доводка своего узла */
   ownTech:d=>{if(!ownDraft)return;const T=ownDraft.tech,i=T.indexOf(d.id);if(i>=0)T.splice(i,1);else{if(T.length>=2)T.shift();T.push(d.id);}ownRe();},
   ownGoal:d=>{if(!ownDraft)return;ownDraft.goal=d.g;ownRe();},ownGl:d=>{if(!ownDraft)return;ownDraft.gl=+d.n;ownRe();},
-  ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
+  ownStart:()=>{if(!ownDraft)return;ownKeep();if(ownStart(G,ownDraft)){ownDraft=null;OWN_UI.md=null;closeSheet();save();render();}else toast('Проект начать не удалось');},
   ownPat:d=>{if(ownPatent(G,d.id)){save();openOwn(null);render();}else toast('Не хватает денег на патент');},
   ownLic:d=>{if(ownLicSell(G,d.id)){toast('Лицензия продана');save();openOwn(null);render();}else toast('Покупателя на лицензию нет');},/* 0.51, этап 5б */
   aeOpen:()=>{aeDraft=null;openAeng();},aeRefine:d=>{const o=(G.aeng||[]).find(x=>x.id===d.id);if(!o)return;aeDraft={into:o.id,type:o.type,goal:'power',gl:1,name:o.name};openAeng();},aeType:d=>{aeDraft.type=d.k;aeDraft.name='';aeRe();},aeGoal:d=>{aeDraft.goal=d.g;aeDraft.name='';aeRe();},aeGl:d=>{aeDraft.gl=+d.n;aeDraft.name='';aeRe();},
@@ -35001,6 +35189,7 @@ Object.assign(ACT,{
     if(typeof flyFront==='function'&&flyFront(m,md,P))return;frAuto(m.k);},
   frAuto:()=>{if(FRS)frAuto(FRS.k);},
   airEv:d=>{AEV=null;openAirEv(d.k);},
+  airSt:d=>{if(airStStart(G,+d.k)){save();render();}},/* 0.60, правки 28.11: государственные испытания аэроплана */
   airRec:d=>{AEV=null;openAirRec(d.k);},
   aevMd:d=>{if(!AEV)return;AEV.md=+d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},
   aevPil:d=>{if(!AEV)return;AEV.pid=d.v;const top=sb.scrollTop;if(AEV.rec)openAirRec(AEV.rec);else openAirEv(AEV.key);sb.scrollTop=top;},

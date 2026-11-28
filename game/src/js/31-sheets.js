@@ -253,6 +253,7 @@ function openMenuSheet(){
   openSheet(`<div class="row"><h2>Меню</h2>${X}</div>
     <p class="small muted" style="margin-top:4px">«${esc(G.company)}» · ${dstr(G)} · игра сохраняется сама каждый месяц.</p>
     <div class="stack" style="margin-top:12px">
+      <button class="btn block primary" data-act="jumpOpen">Быстрый переход к разделу</button>
       <button class="btn block" data-act="saveOpen">Сохранить в слот</button>
       <button class="btn block" data-act="loadOpen">Загрузить</button>
       <button class="btn block" data-act="legacyInfo">Цель и наследие</button>

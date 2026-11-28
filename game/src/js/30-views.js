@@ -123,7 +123,10 @@ function stockWarn(md){return md.status==='prod'&&md.stock>Math.max(3,(md.fc||0)
 // Сворачиваемые разделы: длинные списки открываются, когда нужны
 const UIF={};
 // что свёрнуто — запоминается в сохранении
-function isOpen(k,def){const f=G&&G.ui&&G.ui.f,v=f&&f[k]!==undefined?f[k]:UIF[k];return v===undefined?!!def:v;}
+// 0.60, правки 28.11 (автор: «меню и подменю километровые; просил подразделы, которые раскрываются»): крупные разделы по умолчанию
+// свёрнуты в строку — страница целиком видна, нужное раскрывается нажатием; раскрытое запоминается, как раньше
+const FOLD60={cap:1,staffc:1,wh:1,fin:1,rdcard:1,shares:1,dealers:1,adc:1,world:1,champs:1,mkmoto:1,mcomps:1,carshop:1,airShop:1,airLines:1,airMkt:1,planlist:1};
+function isOpen(k,def){const f=G&&G.ui&&G.ui.f,v=f&&f[k]!==undefined?f[k]:UIF[k];return v===undefined?!!(def&&!FOLD60[k]):v;}
 function setOpen(k,v){UIF[k]=v;if(G){G.ui=G.ui||{};G.ui.f=G.ui.f||{};G.ui.f[k]=v;}}
 // Карточка, которую можно свернуть: заголовок — кнопка; свёрнутая показывает одну строку итога
 function foldCard(k,def,head,body,sum,cls){const fz=typeof subForce==='function'&&subForce(k),o=fz||isOpen(k,def);/* 0.51, этап 9: главная карточка подраздела всегда раскрыта */return `<section id="fc-${k}" class="card${cls?' '+cls:''}${o?'':' folded'}${fz?' nofold':''}"><button class="card-h" data-act="fold" data-k="${k}" data-def="${def?1:0}" aria-expanded="${o}"><span class="ch">${head}</span><i>${o?'▴':'▾'}</i></button>${o?body:(sum?`<p class="small muted card-sum">${sum}</p>`:'')}</section>`;}
@@ -238,7 +241,7 @@ function vModels(){
     const body=open?`
       ${ctl}
       <div class="meta"><div>Спрос<b>${md.status==='prod'?fmtD(md.lastDem):'—'}</b></div><div>Продано<b>${md.status==='prod'?fmtN(md.lastSold):'—'}</b></div><button class="mx" data-act="chx" data-k="cost" data-id="${md.id}" aria-label="Себестоимость: как посчитано">Себест.<i class="xi">i</i><b>${money(uc)}</b></button><div>Маржа<b class="${margin<0?'bad':''}">${money(margin)}</b>${md.status==='prod'?`<small class="${margin-offPer<0?'bad':'muted'}">после конторы ${money(margin-offPer)}</small>`:''}</div></div>
-      ${typeof sportFixLine==='function'?sportFixLine(md,s):''}${lostLine(md)}${truckHint(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
+      ${typeof sportFixLine==='function'?sportFixLine(md,s):''}${typeof eqCardLine==='function'?eqCardLine(md,s):''}${lostLine(md)}${truckHint(md,s)}${stockWarn(md)?'<p class="small warn" style="margin-top:6px">Машины копятся на складе и дешевеют: снизьте выпуск или цену.</p>':''}${overpower(md)?'<p class="small bad" style="margin-top:6px">Мотор слишком мощный для рамы: поломки бьют по репутации.</p>':''}
       ${(md.raceBoost||0)>mi(s)?'<p class="small good" style="margin-top:6px">Слава гоночной победы: покупатели выбирают вас охотнее</p>':''}
       ${md.dv&&md.status!=='off'&&md.status!=='dev'&&typeof dvCardHTML==='function'?dvCardHTML(md,s):''}
       ${(md.rr||0)>0.002?`<p class="small good" style="margin-top:6px">🏁 Доведена гонками: поломок меньше на ${Math.round(md.rr*100)}%, мощность +${(Math.round((md.rp||0)*1000)/10).toString().replace('.',',')}%</p>`:''}
@@ -396,7 +399,7 @@ function vMarket(){
     <table class="pl"><tr><th>Класс</th><th class="n">Рынок</th><th class="n">Вы</th><th class="n">Доля</th><th class="n">Цена</th></tr>${segRows}</table>
     <p class="small muted" style="margin-top:10px">Сколько машин купили в прошлом месяце у всех марок и у вас. Весной и летом покупают охотнее. Класс машины задают кузов и оснащение; цена — типичная для класса. Грузовые машины берут фирмы и ведомства: для своих перевозок они выбирают машину, на которой дешевле тонно-километр.</p>${horseHTML(s,home,M,R0)}`,`рынок ${fmtD(M&&M.size?M.size:SEGK.reduce((a,g)=>a+R0.segs[g].inc,0))} в месяц · ваши ${L?fmtN(L.homeSold):'—'} · доля ${L?pct(L.share,1):'—'}`)}
   ${mOnly?'':vMarketMoto('mk')}
-  ${foldCard('dealers',true,'<h2>Дилеры и экспорт</h2>',`<div style="margin-top:2px">${net}</div>
+  ${foldCard('dealers',true,'<h2>Нанять дилеров · экспорт</h2>',`<div style="margin-top:2px">${net}</div>
     <details class="how"><summary>Как устроена сеть</summary><p class="small muted" style="margin-top:6px">Дилер — торговец в своём городе: покупает у вас машины со скидкой ${Math.round(dMargin(s)*100)}%, продаёт их и чинит. Где нет вашего дилера, там машину не купить; больше дилеров, чем городов с покупателями, не бывает. Первые дилеры открываются в больших городах и сразу видят большую часть покупателей. Когда спрос растёт, дилеры сами нанимают продавцов, а к марке, которая хорошо продаётся, новые города просятся сами. Новый дилер — ${money(dc)} (разъездные агенты, вывеска, демонстрационная машина), поддержка ${money(dealerUpkeep(s))} в месяц. За границей сначала нужен импортёр, потом своё отделение и сборочный завод; покупатель там платит пошлину, а вы — доставку (по Европе ${money(40*cpi(s))}, через Атлантику ${money(90*cpi(s))}). Пошлины меняются по годам — смотрите карту «Мир».</p></details>`,`дома ${fmtN(dealerCount(s,home))} ${plural(dealerCount(s,home),'дилер','дилера','дилеров')} · покупателей видят ${Math.round(reachOf(s,home)*100)}%${nAb?` · за границей: ${nAb} ${plural(nAb,'страна','страны','стран')}`:''}`)}
   ${vMarketMoto('comps')}
   ${mo?'':sharesCard(s)}

@@ -107,6 +107,7 @@ const ACT={
     addLog(`Начата разработка «${nm}» (${money(dc)}, ${devMonths(md)} мес.).`);closeSheet();tab='models';checkAch();save();render();},
   sportFix:d=>{const md=G.models.find(m=>String(m.id)===String(d.id));if(md&&sportFix(G,md)){save();render();}},
   eqFit:d=>{const md=G.models.find(m=>String(m.id)===String(d.id));if(md&&eqFit(G,md)){save();render();}},/* 0.60, правки 28.11 */
+  jumpOpen:()=>openJump(),jump:d=>{closeSheet();jumpTo(G,d.t,d.k,d.mk);},/* 0.60, правки 28.11: быстрый переход */
   rdPick:()=>openRD(),
   legendOpen:d=>{openLegend(d.k);},
   legendStart:d=>{if(legendStart(G,d.k)){closeSheet();tab='models';checkAch();save();render();}},

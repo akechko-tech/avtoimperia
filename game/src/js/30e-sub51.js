@@ -22,7 +22,9 @@ const MK9={map:{'sec-world':1},brands:{'fc-shares':1},misc:{'fc-shows':1,'fc-gra
 function mk9In(id,ks){for(const k of ks){const v=MK9[k][id];if(v!==undefined)return v;}return undefined;}
 function mk9Key(s){return mk9C(s)==='world'?'world':'c';}
 // карточки, ради которых подраздел и открыт: сворачивать их незачем
-const SUB_OPEN={deals:1,dealers:1,mkhome:1,trophy:1,log:1};
+// 0.60, правки 28.11: дилеры и сделки — свёрнутыми строками «Нанять дилеров», «Купить марку или долю» (раскрываются нажатием):
+// раскрытые подряд, они делали «Рынок» длиной в пять экранов
+const SUB_OPEN={mkhome:1,trophy:1,log:1};
 function subForce(k){return !!SUB_OPEN[k]&&typeof G!=='undefined'&&subOn(G)&&(!!SUB51[tab]||tab==='market');}
 function subOn(s){return !!s&&s.mode!=='racer'&&!(typeof airOnly==='function'&&airOnly(s))&&!(typeof airSwitchOn==='function'&&airSwitchOn(s)&&typeof uiLine!=='undefined'&&uiLine==='air'&&tab!=='log');}
 function subSel(s,t){const D=SUB51[t];if(!D)return '';let v=s.ui&&s.ui.sub&&s.ui.sub[t];if(D.old&&D.old[v])v=D.old[v];return D.bar.some(x=>x[0]===v)?v:D.def;}
