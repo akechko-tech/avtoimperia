@@ -244,7 +244,7 @@ function vModels(){
       ${(md.rr||0)>0.002?`<p class="small good" style="margin-top:6px">🏁 Доведена гонками: поломок меньше на ${Math.round(md.rr*100)}%, мощность +${(Math.round((md.rp||0)*1000)/10).toString().replace('.',',')}%</p>`:''}
       ${md.status==='prod'?fold(fk('co'),'Себестоимость',costHTML(md,s),false,`${money(uc)} за ${isMoto(md)?'мотоцикл':'машину'} при выпуске ≈ ${fmtD(Math.max(1,modelVol(md)))} в месяц`):''}
       ${fold(fk('rv'),'Против соперников',`${TH?`<p class="small ${TH.tone}" style="margin-top:6px">🚚 <b>${esc(TH.txt)}</b> <span class="muted">· ${esc(TH.use)}: ${cpkTxt(TH.cp)} против ${cpkTxt(TH.cR)}</span></p>`:''}
-        ${qbar(C.S,'Против соперника: '+C.ref.name,md.id)}${hiddenHTML(md,s)}${md.status==='prod'?contestModelLine(md,s)+officeLine(md,s):''}${ownModelLine(md,s)}${trialModelLine(md,s)}
+        ${qbar(C.S,'Против соперника: '+C.ref.name+refOwnTag(s,C.ref.name),md.id)}${hiddenHTML(md,s)}${md.status==='prod'?contestModelLine(md,s)+officeLine(md,s):''}${ownModelLine(md,s)}${trialModelLine(md,s)}
         <div class="label" style="margin-top:10px">Что ценят покупатели</div><div>${cmpRows}</div><p class="small muted" style="margin-top:6px">●●● — главное для покупателей класса. 100% — как у соперника. Нажмите на строку — как посчитано. Улучшения в КБ поднимают эти цифры у всех ваших машин.</p>`,md.status==='dev',`${isTruck(md)&&TH?esc(TH.txt):Math.round(TT.r*100)+'% соперника'} · ${esc(C.ref.name)}`)}
       ${fold(fk('sp'),'Устройство',`<p class="spec">${specLine(md,s)}</p>
         <p class="small muted" style="margin-top:6px">На линии ${isMoto(md)?'мотоцикл':'машина'} занимает ${placesTxt(placesOf(md,s))} ${placesWord(placesOf(md,s))} (простая машина — 1).</p>

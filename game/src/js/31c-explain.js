@@ -110,7 +110,8 @@ function xpopChar(md,s,k,tip){const D=xCharData(md,s,k),C=D.C,w=C.W[k]||0,mo=isM
   const imp=w>0?`для покупателей класса «${esc(KIND_NAME[rivalKind(md)])}» — ${Math.round(w*100)}% оценки ${wDots(w)}`:`покупателям класса «${esc(KIND_NAME[rivalKind(md)])}» не важно`;
   let body;
   if(k==='rel'){const R=D.relSum,ratio=R.fa/Math.max(0.01,R.fr);
-    const pre=`<tr class="xp-sum"><td>Без поломок</td><td>${xpc(R.pa)}${R.dv>1.001?`<small class="bad">не по ТЗ: поломок ×${xn(R.dv,1)}</small>`:''}</td><td>${xpc(R.pr)}</td><td></td></tr><tr class="xp-sum"><td>Ломается из 100</td><td>${Math.round(R.fa)}</td><td>${Math.round(R.fr)}</td><td></td></tr>`;
+    const xpr=v=>v>=0.95?(v*100).toFixed(1).replace('.',',')+'%':xpc(v),xfl=v=>v<10?v.toFixed(1).replace('.',',').replace(',0',''):String(Math.round(v));/* 0.60, правки 28.11: точнее у верхнего края */
+    const pre=`<tr class="xp-sum"><td>Без поломок</td><td>${xpr(R.pa)}${R.dv>1.001?`<small class="bad">не по ТЗ: поломок ×${xn(R.dv,1)}</small>`:''}</td><td>${xpr(R.pr)}</td><td></td></tr><tr class="xp-sum"><td>Ломается из 100</td><td>${xfl(R.fa)}</td><td>${xfl(R.fr)}</td><td></td></tr>`;
     const why=ratio>1.02?`ломается в ${xn(ratio,1)} раза чаще → 1/√${xn(ratio,1)}`:ratio<0.98?`ломается в ${xn(1/ratio,1)} раза реже → √${xn(1/ratio,1)}`:'ломается так же часто';
     body=xpopTable(D.rows,D.extra,rn,D.by,`<small>${why}</small>`,pre);}
   else body=xpopTable(D.rows,D.extra,rn,D.by,'');

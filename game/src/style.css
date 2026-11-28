@@ -17,7 +17,7 @@ body{margin:0;color:var(--text);font-family:var(--sans);font-size:15px;line-heig
 button{font:inherit;color:inherit}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(var(--bg) 82%,rgba(13,33,54,0));margin-inline:-16px;padding:12px 16px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(var(--bg) calc(100% - 3px),rgba(13,33,54,0));margin-inline:-16px;padding:12px 16px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .co{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
 .date{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;letter-spacing:.01em;display:inline-block}
 .date span{color:var(--brass)}
@@ -287,8 +287,10 @@ table.pl td small{display:block;color:var(--muted);font-size:11px;font-weight:40
 .r-board div span{color:var(--muted)}
 .r-board div small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .r-board div em{font-style:normal;color:var(--muted)}
-.r-board div.you{background:rgba(120,90,20,.55)}
-.r-board div.mine{background:rgba(90,70,20,.45)}
+.r-board div.you{background:rgba(92,66,12,.88)}
+.r-board div.mine{background:rgba(72,54,12,.84)}
+/* 0.60, правки 28.11: на светлом небе полупрозрачная золотая строка выцветала и серый текст не читался */
+.r-board div.you small,.r-board div.mine small,.r-board div.you em,.r-board div.mine em,.r-board div.you span,.r-board div.mine span{color:#eadbb0}
 .r-board div.me{outline:1px solid var(--brass)}
 .r-msg.small{font-size:26px}
 .r-mgr{padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px}

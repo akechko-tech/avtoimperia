@@ -49,6 +49,16 @@ const at=(s,y,m)=>{s.y=y;s.m=m||0;};
   const old={...md,id:s.nextId++,t:'t2',status:'prod',launched:mi(s)};s.models.push(old);CK(segOf(old)==='lux'&&sportFixable(old)&&/Перевести в спортивный класс/.test(sportFixLine(old,s)),'старая модель-родстер в «Люксе»: в карточке кнопка перевода');
   const c0=s.cash,c=sportFixCost(old,s);ACT.sportFix({id:old.id});CK(segOf(old)==='sport'&&s.cash===c0-c&&!sportFixable(old),'переведена в спортивный класс за '+c);
   const C=classCompare(old,s,'us');CK(C&&C.S>0.3,'против соперника спортивного класса: '+Math.round(C.S*100)+'%');}
+/* ---------- 8. мелочи ---------- */
+{CK(relSoft(0.9)===0.9&&relSoft(0.985)===0.985&&relSoft(1.0)>relSoft(0.99)&&relSoft(1.2)<0.995&&relSoft(1.2)>0.994,'надёжность у верхнего края: плавно к 99,5 %, а не ровно 99 %');
+  const fa=100*(1-relSoft(1.157*0.95)),fr=100*(1-relSoft(0.998*0.95));CK(fr/fa>1.3,'детали лучше — ломается реже и у края: '+fa.toFixed(2)+' против '+fr.toFixed(2)+' из 100');
+  const F={r12:12e6};CK(ownLicFee({},F,{k:'e'})===12000&&ownLicFee({},F,{k:'w'})<ownLicFee({},F,{k:'c'})&&ownLicFee({},F,{k:'c'})<12000,'лицензия: мотор дороже рамы, рама дороже шин');
+  CK(ownLicFee({},F)===12000,'без узла — прежняя плата');
+  CK(/вашей марки/.test(refOwnTag({pioneer:'ford'},'Ford V-8'))&&!refOwnTag({pioneer:'ford'},'Chevrolet 490')&&/вашей марки/.test(refOwnTag({pioneer:'leland'},'Cadillac V-16')),'эталон — историческая машина марки игрока: подпись');
+}
+{seed(285);global.BOTS_OFF=false;newGame('ford','us','','normal','Война');const s=G;s.pending=[];at(s,1942,5);s.cash=1e8;let err='',nm=0;
+  try{for(let k=0;k<12;k++){s.pending=[];s.cash=Math.max(s.cash,1e8);step();const R=s.last&&s.last.riv||[];nm+=R.filter(o=>o.c==='us'&&o.k==='model'&&!o.mo&&!o.kf).length;}}catch(x){err=x.message;}
+  CK(!err,'год войны с живыми соперниками идёт без ошибок '+err);CK(nm===0,'в войну фирмы США не выводят новых легковых моделей: '+nm);global.BOTS_OFF=true;}
 /* ---------- итог ---------- */
 console.log('fix60: '+ok+' ок, '+bad+' ошибок');if(bad)process.exitCode=1;
 `);

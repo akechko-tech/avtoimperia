@@ -228,6 +228,9 @@ function charOf(md,y){const key=[md.e,md.g,md.c,md.k,md.b,md.t,md.w,y,md.ref?'r'
 function rivalKind(md){const b=byId(BODIES,md.b);return b.truck?bodyKind(b):segOf(md);}/* 0.51: у нового вида техники — свой эталон */
 // 0.33: грузовик сравнивают с грузовиком своей грузоподъёмности: трёхтонку — с трёхтонкой соперников (её мотор, рама, коробка),
 // а не с полуторатонкой (раньше 3-тонный грузовик выглядел «прожорливым и слабым» — на вдвое больший груз)
+// 0.60, правки 28.11: эталон класса может оказаться исторической машиной марки самого игрока (у Форда — Ford V-8): так и подписываем
+function refOwnTag(s,name){try{const P=s&&s.pioneer,hb=typeof HERO_BRAND!=='undefined'&&HERO_BRAND[P],p=typeof PIONEERS!=='undefined'&&PIONEERS[P];
+  const w=hb?String(hb[1]).split(/[\s/]/)[0]:p&&p.wiki?String(p.wiki).trim().split(/\s+/).pop():'';return w&&w.length>2&&String(name).startsWith(w)?' — историческая машина вашей марки':'';}catch(_){return '';}}
 function rivalRef(md,y){const kind=rivalKind(md),r=rivalCar(kind,y),b=byId(BODIES,md.b),tb=kind==='truck'&&b&&b.truck&&md.b!=='b6'&&(b.y||1895)<=y?md.b:null;
   return {name:r[1],y:r[0],kind,md:{...r[2],...(tb?{b:tb}:{}),t:KIND_TRIM[kind]||'t0',ref:1,rl:Math.round((clamp(0.3*(y-r[0]),0,2.5)+copyExtra(kind))*10)/10}};}
 /* ---------- 0.51: убывающая полезность каждой черты (ТЗ 0.51, тема 3; решение автора) ----------

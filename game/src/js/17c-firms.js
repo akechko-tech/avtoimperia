@@ -116,7 +116,9 @@ function firmsDom(s,r,D){const t=mi(s),y=yf(s),SK=firmSkill(),MU=nestMu(s),ALL=D
       if(!bot&&(t+i)%3!==0)return;
       firmPrices(s,r,F,cp,i,WH,bot);
       // у мотофирм жребий хода — от даты и имени, а не из общего потока случайных чисел: мир без действий игрока не сдвигается
-      if(F.st==='ok'&&(D.mo?maRnd('mf|'+c+'|'+i+'|'+t):Math.random())<SK.iq*(bot?0.5:1))firmPlan(s,r,F,cp,i,SG,bot);});}}
+      // 0.60, правки 28.11: во Вторую мировую гражданского рынка нет — фирмы не выводят новых моделей и не начинают программ
+      // (в снимках автора Buick вывел новую модель в декабре 1943 года, когда гражданский выпуск в США стоял с февраля 1942-го)
+      if(F.st==='ok'&&!(y>=1939&&isWar(s.y,s.m,c))&&(D.mo?maRnd('mf|'+c+'|'+i+'|'+t):Math.random())<SK.iq*(bot?0.5:1))firmPlan(s,r,F,cp,i,SG,bot);});}}
 function firmState(s,r,F,cp,i){const t=mi(s),lim=F.h12*0.3,N=firmName(s,F),KN=cpK(cp);
   if(F.st==='ok'){if(F.cash<-lim&&F.p12<0){F.st='bad';F.bad=0;F.prog=null;F.capP=null;firmNote(s,r,F,{w:3,k:'bad',t:`${N} несёт убытки`,txt:`${N} продаёт на ${Math.round((1-clamp(F.ld,0,1))*100)}% меньше обычного и второй год работает в убыток: долг перед банками и поставщиками — ${money(-F.cash)}. Программы новых ${F.mo?'мотоциклов':'машин'} остановлены. Если дела не поправятся, заводом займутся кредиторы.`});}return false;}
   if(F.st==='bad'){F.bad++;
